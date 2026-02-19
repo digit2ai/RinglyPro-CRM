@@ -344,6 +344,28 @@ if (fs.existsSync(dashboardDistPath)) {
     .dojo-form input:focus, .dojo-form select:focus { border-color: var(--accent); }
     .dojo-form .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
+    /* Cinematic video section */
+    .cinema-section { padding: 80px 0; background: #000; position: relative; overflow: hidden; }
+    .cinema-section::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 80px; background: linear-gradient(to bottom, #0a0a0a, transparent); z-index: 2; pointer-events: none; }
+    .cinema-section::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 80px; background: linear-gradient(to top, #0e0e0e, transparent); z-index: 2; pointer-events: none; }
+    .cinema-frame { position: relative; max-width: 900px; margin: 0 auto; padding: 0 20px; }
+    .cinema-frame-inner { position: relative; border: 3px solid #1a1a1a; border-radius: 4px; overflow: hidden; box-shadow: 0 0 60px rgba(200,16,46,.15), 0 0 120px rgba(0,0,0,.8), inset 0 0 30px rgba(0,0,0,.5); }
+    .cinema-frame-inner::before { content: ''; position: absolute; inset: 0; border: 1px solid rgba(200,16,46,.12); border-radius: 2px; z-index: 3; pointer-events: none; }
+    .cinema-aspect { position: relative; width: 100%; padding-bottom: 56.25%; background: #000; }
+    .cinema-aspect iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+    .cinema-corners span { position: absolute; width: 20px; height: 20px; z-index: 4; pointer-events: none; }
+    .cinema-corners .tl { top: -1px; left: -1px; border-top: 2px solid var(--accent); border-left: 2px solid var(--accent); }
+    .cinema-corners .tr { top: -1px; right: -1px; border-top: 2px solid var(--accent); border-right: 2px solid var(--accent); }
+    .cinema-corners .bl { bottom: -1px; left: -1px; border-bottom: 2px solid var(--accent); border-left: 2px solid var(--accent); }
+    .cinema-corners .br { bottom: -1px; right: -1px; border-bottom: 2px solid var(--accent); border-right: 2px solid var(--accent); }
+    .cinema-title { text-align: center; margin-bottom: 32px; position: relative; z-index: 3; }
+    .cinema-title h2 { font-family: 'Noto Serif', serif; font-size: 28px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #fff; }
+    .cinema-title .kanji { font-size: 16px; color: var(--accent); letter-spacing: .3em; margin-top: 6px; font-weight: 400; }
+    .cinema-title .cinema-line { display: block; width: 60px; height: 2px; background: linear-gradient(90deg, transparent, var(--accent), transparent); margin: 14px auto 0; }
+    .cinema-brush { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 200px; color: rgba(200,16,46,.04); font-family: 'Noto Serif', serif; pointer-events: none; z-index: 1; white-space: nowrap; }
+    .cinema-caption { text-align: center; margin-top: 24px; position: relative; z-index: 3; }
+    .cinema-caption p { font-size: 13px; color: var(--muted); font-style: italic; letter-spacing: .04em; }
+
     @media (max-width: 768px) {
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
       .groups-grid { grid-template-columns: 1fr; }
@@ -354,6 +376,9 @@ if (fs.existsSync(dashboardDistPath)) {
       .modal .form-row { grid-template-columns: 1fr; }
       .dojo-form .form-row { grid-template-columns: 1fr; }
       .header-auth { gap: 6px; }
+      .cinema-section { padding: 48px 0; }
+      .cinema-title h2 { font-size: 20px; }
+      .cinema-brush { font-size: 120px; }
     }
   </style>
 </head>
@@ -463,6 +488,28 @@ if (fs.existsSync(dashboardDistPath)) {
           <div class="group-desc">AI-powered dojo management platform. Automate scheduling, student tracking, belt progressions, and voice-powered customer service for your school.</div>
           <div class="group-meta"><span><a href="https://kanchoai.com" target="_blank" style="color:#c8102e;">kanchoai.com</a></span><span>Dojo Management</span><span>AI Voice Agents</span></div>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cinema-section" id="film">
+    <div class="cinema-brush">武士道</div>
+    <div class="cinema-frame">
+      <div class="cinema-title">
+        <h2>The Path of the Warrior</h2>
+        <div class="kanji">武 士 道</div>
+        <span class="cinema-line"></span>
+      </div>
+      <div class="cinema-frame-inner">
+        <div class="cinema-corners">
+          <span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span>
+        </div>
+        <div class="cinema-aspect">
+          <iframe src="https://www.youtube.com/embed/HByRigYk8Hg?rel=0&modestbranding=1&color=white" title="Ronin Brotherhood" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+      </div>
+      <div class="cinema-caption">
+        <p>"The way is in training." — Miyamoto Musashi</p>
       </div>
     </div>
   </section>
