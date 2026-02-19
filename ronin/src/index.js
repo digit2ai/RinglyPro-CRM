@@ -538,7 +538,7 @@ if (fs.existsSync(dashboardDistPath)) {
           <span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span>
         </div>
         <div class="cinema-aspect">
-          <iframe src="https://www.youtube.com/embed/HByRigYk8Hg?rel=0&modestbranding=1&color=white" title="Ronin Brotherhood" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+          <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/HByRigYk8Hg?si=1&rel=0&modestbranding=1" title="Ronin Brotherhood" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
         </div>
       </div>
       <div class="cinema-caption">
