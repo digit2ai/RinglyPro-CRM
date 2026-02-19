@@ -433,18 +433,89 @@ if (fs.existsSync(dashboardDistPath)) {
     .cinema-caption p { font-size: 13px; color: var(--muted); font-style: italic; letter-spacing: .04em; }
 
     @media (max-width: 768px) {
-      .stats-grid { grid-template-columns: repeat(2, 1fr); }
-      .groups-grid { grid-template-columns: 1fr; }
-      .products-grid { grid-template-columns: repeat(2, 1fr); }
+      /* Header */
+      .header-inner { padding: 10px 0; }
+      .brand-logo { height: 40px; }
+      .brand-sub { font-size: 7px; }
       nav { display: none; }
-      .footer-inner { flex-direction: column; gap: 12px; }
-      .modal { padding: 24px; }
-      .modal .form-row { grid-template-columns: 1fr; }
-      .dojo-form .form-row { grid-template-columns: 1fr; }
-      .header-auth { gap: 6px; }
+      .header-auth { gap: 4px; }
+      .btn-login, .btn-join { padding: 6px 10px; font-size: 11px; }
+
+      /* Hero */
+      .hero { min-height: auto; padding: 100px 0 48px; background-position: center center; }
+      .hero h1 { font-size: 28px; }
+      .hero p { font-size: 15px; }
+      .hero-actions { flex-direction: column; gap: 10px; }
+      .hero-actions .btn { width: 100%; text-align: center; }
+      .hero-quote { margin-top: 24px; padding: 12px 16px; }
+      .hero-quote p { font-size: 13px; }
+
+      /* Stats */
+      .stats { padding: 32px 0; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .stat { padding: 10px; }
+      .stat-num { font-size: 24px; }
+
+      /* Organizations */
+      .section { padding: 40px 0; }
+      .section-title { font-size: 22px; }
+      .groups-grid { grid-template-columns: 1fr; }
+      .group-meta { flex-wrap: wrap; gap: 8px; }
+
+      /* Store */
+      .products-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .product-img { height: 130px; }
+      .product-info { padding: 10px; }
+      .product-name { font-size: 12px; }
+
+      /* Courses */
+      .course-card { flex-direction: column; align-items: flex-start; gap: 10px; }
+      .course-price { font-size: 16px; }
+
+      /* CTA / Sponsors */
+      .cta-section { padding: 32px 0; }
+      .cta-inner h2 { font-size: 20px; }
+      .cta-inner { padding: 0 10px; }
+
+      /* KanchoAI pricing */
+      .kancho-section { padding: 48px 0; }
+      .kancho-header h2 { font-size: 22px; }
+      .kancho-header img { height: 56px; }
+      .kancho-header p { font-size: 13px; }
+
+      /* Cinema video */
       .cinema-section { padding: 48px 0; }
       .cinema-title h2 { font-size: 20px; }
+      .cinema-title .kanji { font-size: 13px; }
       .cinema-brush { font-size: 120px; }
+      .cinema-caption p { font-size: 12px; }
+
+      /* Founder */
+      .founder-section { padding: 48px 0; }
+
+      /* Footer */
+      .footer-inner { flex-direction: column; gap: 12px; text-align: center; }
+
+      /* Modals */
+      .modal { padding: 20px; width: 100%; max-width: 95vw; }
+      .modal h2 { font-size: 20px; }
+      .modal .form-row { grid-template-columns: 1fr; }
+      .dojo-form .form-row { grid-template-columns: 1fr; }
+
+      /* Dashboard */
+      .member-panel { padding: 20px 10px; }
+      .dash-grid { grid-template-columns: 1fr; }
+      .dash-header { flex-direction: column; gap: 10px; align-items: flex-start; }
+    }
+
+    @media (max-width: 420px) {
+      .hero h1 { font-size: 24px; }
+      .products-grid { grid-template-columns: 1fr; }
+      .photo-strip-inner img { height: 60px; }
+      .stat-num { font-size: 20px; }
+      .price-card { padding: 24px 18px; }
+      .founder-photo { max-width: 260px; }
+      .founder-name { font-size: 24px; }
     }
   </style>
 </head>
