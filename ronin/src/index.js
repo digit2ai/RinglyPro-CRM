@@ -220,7 +220,7 @@ if (fs.existsSync(dashboardDistPath)) {
     .btn-gold { background: transparent; color: var(--gold); border: 2px solid var(--gold); }
     .btn-gold:hover { background: var(--gold); color: #000; }
 
-    .hero { min-height: 100vh; display: flex; align-items: center; padding-top: 80px; background: linear-gradient(to right, rgba(10,10,10,.92) 0%, rgba(10,10,10,.7) 50%, rgba(10,10,10,.3) 100%), url('https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6997838018171513aeb6855d.png'); background-size: cover; background-position: center right; }
+    .hero { min-height: 100vh; display: flex; align-items: center; padding-top: 80px; background: linear-gradient(to right, rgba(10,10,10,.82) 0%, rgba(10,10,10,.5) 50%, rgba(10,10,10,.15) 100%), url('https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6997838018171513aeb6855d.png'); background-size: cover; background-position: center right; }
     .hero-content { max-width: 680px; }
     .hero-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--gold); color: var(--gold); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 20px; }
     .hero h1 { font-family: 'Noto Serif', serif; font-size: clamp(32px, 5vw, 52px); font-weight: 700; line-height: 1.15; margin-bottom: 16px; }
@@ -343,6 +343,29 @@ if (fs.existsSync(dashboardDistPath)) {
     .dojo-form input, .dojo-form select { width: 100%; padding: 9px 12px; background: #111; border: 1px solid var(--line); border-radius: 8px; color: #fff; font-size: 14px; font-family: inherit; outline: none; }
     .dojo-form input:focus, .dojo-form select:focus { border-color: var(--accent); }
     .dojo-form .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* Founder section */
+    .founder-section { padding: 80px 0; background: #000; position: relative; overflow: hidden; }
+    .founder-section::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 30% 50%, rgba(200,16,46,.06) 0%, transparent 70%); pointer-events: none; }
+    .founder-inner { display: grid; grid-template-columns: 400px 1fr; gap: 48px; align-items: center; max-width: 1000px; margin: 0 auto; padding: 0 20px; }
+    .founder-photo { position: relative; }
+    .founder-photo img { width: 100%; border-radius: 4px; display: block; box-shadow: 0 0 40px rgba(0,0,0,.6), 0 0 80px rgba(200,16,46,.1); }
+    .founder-photo::before { content: ''; position: absolute; inset: -6px; border: 1px solid rgba(200,16,46,.2); border-radius: 6px; pointer-events: none; }
+    .founder-photo::after { content: ''; position: absolute; bottom: -3px; left: 10%; right: 10%; height: 1px; background: linear-gradient(90deg, transparent, var(--accent), transparent); }
+    .founder-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--gold); color: var(--gold); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 16px; }
+    .founder-name { font-family: 'Noto Serif', serif; font-size: 36px; font-weight: 700; color: #fff; line-height: 1.15; margin-bottom: 6px; }
+    .founder-titles { color: var(--accent); font-size: 14px; font-weight: 600; letter-spacing: .05em; margin-bottom: 6px; }
+    .founder-titles span { color: var(--gold); }
+    .founder-role { color: var(--muted); font-size: 13px; letter-spacing: .04em; margin-bottom: 24px; }
+    .founder-bio p { color: #b0b0b0; font-size: 14px; line-height: 1.8; margin-bottom: 14px; }
+    .founder-bio p:first-letter { font-size: 18px; font-weight: 700; color: #fff; }
+    .founder-kanji { position: absolute; top: 20px; right: -30px; font-size: 160px; color: rgba(200,16,46,.04); font-family: 'Noto Serif', serif; pointer-events: none; line-height: 1; writing-mode: vertical-rl; }
+    @media (max-width: 768px) {
+      .founder-inner { grid-template-columns: 1fr; gap: 32px; }
+      .founder-photo { max-width: 320px; margin: 0 auto; }
+      .founder-name { font-size: 28px; }
+      .founder-kanji { display: none; }
+    }
 
     /* Cinematic video section */
     .cinema-section { padding: 80px 0; background: #000; position: relative; overflow: hidden; }
@@ -520,6 +543,26 @@ if (fs.existsSync(dashboardDistPath)) {
       <p class="section-sub">Premium uniforms, gear, and merchandise</p>
       <div class="products-grid" id="products-container">
         <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--muted);">Loading products...</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="founder-section" id="founder">
+    <div class="founder-kanji">創設者</div>
+    <div class="founder-inner">
+      <div class="founder-photo">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699787bc8523c56965e1b789.jpg" alt="Carlos Montalvo - Founder of Ronin Brotherhood">
+      </div>
+      <div class="founder-content">
+        <div class="founder-badge">5x World Champion</div>
+        <div class="founder-name">Carlos Montalvo</div>
+        <div class="founder-titles">5X World Champion &bull; <span>Founder of Ronin Brotherhood</span></div>
+        <div class="founder-role">Grandmaster &bull; San Sebastian, Puerto Rico</div>
+        <div class="founder-bio">
+          <p>Carlos began his career in the Martial Arts during his early middle school years in the City of San Sebastian, Puerto Rico where his father was the former City Police Chief.</p>
+          <p>He practiced first Karate and Tae Kwon Do (1969) for a short period of time at the 4-H Club near his house. Later he practiced the Chinese style of Shaolin Tsu Kempo.</p>
+          <p>His only brother began practicing Okinawa Kempo Karate Do under Sempai Luis Camara and Sensei Edwin Hernandez — a direct student of Toshimitsu Kina, Naha, Okinawa.</p>
+        </div>
       </div>
     </div>
   </section>
