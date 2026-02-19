@@ -271,6 +271,20 @@ if (fs.existsSync(dashboardDistPath)) {
     .course-meta { display: flex; gap: 16px; margin-top: 4px; font-size: 12px; color: var(--muted); }
     .course-price { font-size: 20px; font-weight: 800; color: var(--gold); }
 
+    /* Groups showcase banner */
+    .groups-banner { position: relative; overflow: hidden; background: #000; }
+    .groups-banner-img { width: 100%; display: block; }
+    .groups-banner-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,.3) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0) 70%, rgba(0,0,0,.5) 100%); pointer-events: none; }
+    .groups-banner-label { position: absolute; bottom: 24px; left: 0; right: 0; text-align: center; z-index: 2; }
+    .groups-banner-label h2 { font-family: 'Noto Serif', serif; font-size: 28px; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: .1em; text-shadow: 0 2px 20px rgba(0,0,0,.8); }
+    .groups-banner-label .banner-sub { font-size: 13px; color: rgba(255,255,255,.7); letter-spacing: .06em; margin-top: 6px; }
+    .groups-banner-corners span { position: absolute; width: 28px; height: 28px; z-index: 3; pointer-events: none; }
+    .groups-banner-corners .tl { top: 12px; left: 12px; border-top: 2px solid var(--accent); border-left: 2px solid var(--accent); }
+    .groups-banner-corners .tr { top: 12px; right: 12px; border-top: 2px solid var(--accent); border-right: 2px solid var(--accent); }
+    .groups-banner-corners .bl { bottom: 12px; left: 12px; border-bottom: 2px solid var(--accent); border-left: 2px solid var(--accent); }
+    .groups-banner-corners .br { bottom: 12px; right: 12px; border-bottom: 2px solid var(--accent); border-right: 2px solid var(--accent); }
+    @media (max-width: 768px) { .groups-banner-label h2 { font-size: 20px; } .groups-banner-label { bottom: 16px; } }
+
     .cta-section { padding: 48px 0; background: linear-gradient(135deg, rgba(209,4,4,.08), rgba(196,163,90,.05)); border-top: 1px solid var(--line); }
     .cta-inner { text-align: center; max-width: 600px; margin: 0 auto; }
     .cta-inner h2 { font-family: 'Noto Serif', serif; font-size: 24px; margin-bottom: 8px; }
@@ -574,6 +588,18 @@ if (fs.existsSync(dashboardDistPath)) {
       <div class="courses-list" id="courses-container">
         <div style="text-align: center; padding: 40px; color: var(--muted);">Loading courses...</div>
       </div>
+    </div>
+  </section>
+
+  <section class="groups-banner">
+    <div class="groups-banner-corners">
+      <span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span>
+    </div>
+    <img class="groups-banner-img" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699789283873afd1a0b1898d.jpg" alt="Martial Arts Groups - Ronin Brotherhood">
+    <div class="groups-banner-overlay"></div>
+    <div class="groups-banner-label">
+      <h2>Martial Arts Groups</h2>
+      <div class="banner-sub">United Under One Brotherhood</div>
     </div>
   </section>
 
