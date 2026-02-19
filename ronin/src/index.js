@@ -277,12 +277,77 @@ if (fs.existsSync(dashboardDistPath)) {
     .footer-links a { color: #555; text-decoration: none; font-size: 12px; }
     .footer-links a:hover { color: var(--accent); }
 
+    /* Auth buttons in header */
+    .header-auth { display: flex; align-items: center; gap: 10px; }
+    .btn-login { background: transparent; color: var(--gold); border: 1px solid var(--gold); padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; text-decoration: none; }
+    .btn-login:hover { background: var(--gold); color: #000; }
+    .btn-join { background: var(--accent); color: #fff; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; border: none; transition: all .2s; text-decoration: none; }
+    .btn-join:hover { background: #ff1a1a; }
+
+    /* Modal overlay */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.7); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+    .modal-overlay.active { display: flex; }
+    .modal { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; width: 420px; max-width: 95vw; max-height: 90vh; overflow-y: auto; padding: 32px; position: relative; animation: modalIn .25s ease; }
+    @keyframes modalIn { from { opacity: 0; transform: translateY(20px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    .modal-close { position: absolute; top: 12px; right: 16px; background: none; border: none; color: var(--muted); font-size: 22px; cursor: pointer; padding: 4px 8px; }
+    .modal-close:hover { color: #fff; }
+    .modal h2 { font-family: 'Noto Serif', serif; font-size: 22px; margin-bottom: 4px; }
+    .modal .modal-sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+    .modal .form-group { margin-bottom: 14px; }
+    .modal label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 5px; }
+    .modal input, .modal select { width: 100%; padding: 10px 12px; background: #111; border: 1px solid var(--line); border-radius: 8px; color: #fff; font-size: 14px; font-family: inherit; outline: none; transition: border-color .2s; }
+    .modal input:focus, .modal select:focus { border-color: var(--accent); }
+    .modal select option { background: #111; }
+    .modal .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .modal .btn-submit { width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 6px; transition: all .2s; }
+    .modal .btn-submit:hover { background: #ff1a1a; }
+    .modal .btn-submit:disabled { opacity: .5; cursor: not-allowed; }
+    .modal .switch-link { text-align: center; margin-top: 14px; font-size: 13px; color: var(--muted); }
+    .modal .switch-link a { color: var(--gold); cursor: pointer; text-decoration: none; }
+    .modal .switch-link a:hover { text-decoration: underline; }
+    .modal .form-error { background: rgba(209,4,4,.15); border: 1px solid rgba(209,4,4,.3); color: #ff6b6b; padding: 8px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 12px; display: none; }
+    .modal .form-success { background: rgba(4,180,4,.12); border: 1px solid rgba(4,180,4,.3); color: #6bff6b; padding: 8px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 12px; display: none; }
+
+    /* Member dashboard panel */
+    .member-panel { display: none; }
+    .member-panel.active { display: block; }
+    .dash-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .dash-header h2 { font-family: 'Noto Serif', serif; font-size: 24px; }
+    .dash-header .btn-logout { background: transparent; border: 1px solid var(--line); color: var(--muted); padding: 6px 14px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+    .dash-header .btn-logout:hover { border-color: var(--accent); color: var(--accent); }
+    .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .dash-card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+    .dash-card h3 { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+    .dash-card .dash-val { font-size: 28px; font-weight: 800; }
+    .dash-card .dash-val.grade-a { color: #22c55e; }
+    .dash-card .dash-val.grade-b { color: #84cc16; }
+    .dash-card .dash-val.grade-c { color: var(--gold); }
+    .dash-card .dash-val.grade-d { color: #f97316; }
+    .dash-card .dash-val.grade-f { color: var(--accent); }
+    .dash-card .dash-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .dash-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .dash-actions .btn { font-size: 13px; padding: 8px 16px; }
+
+    /* Dojo registration form */
+    .dojo-form { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 24px; margin-top: 16px; }
+    .dojo-form h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+    .dojo-form .dojo-sub { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+    .dojo-form .form-group { margin-bottom: 12px; }
+    .dojo-form label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+    .dojo-form input, .dojo-form select { width: 100%; padding: 9px 12px; background: #111; border: 1px solid var(--line); border-radius: 8px; color: #fff; font-size: 14px; font-family: inherit; outline: none; }
+    .dojo-form input:focus, .dojo-form select:focus { border-color: var(--accent); }
+    .dojo-form .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
     @media (max-width: 768px) {
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
       .groups-grid { grid-template-columns: 1fr; }
       .products-grid { grid-template-columns: repeat(2, 1fr); }
       nav { display: none; }
       .footer-inner { flex-direction: column; gap: 12px; }
+      .modal { padding: 24px; }
+      .modal .form-row { grid-template-columns: 1fr; }
+      .dojo-form .form-row { grid-template-columns: 1fr; }
+      .header-auth { gap: 6px; }
     }
   </style>
 </head>
@@ -303,7 +368,10 @@ if (fs.existsSync(dashboardDistPath)) {
         <a href="#events">Events</a>
         <a href="#sponsors">Sponsors</a>
       </nav>
-      <a href="/ronin/api/v1/members/register" class="btn btn-primary">Join the Brotherhood</a>
+      <div class="header-auth" id="header-auth">
+        <a href="#" class="btn-login" onclick="openModal('login'); return false;">Login</a>
+        <a href="#" class="btn-join" onclick="openModal('signup'); return false;">Join the Brotherhood</a>
+      </div>
     </div>
   </header>
 
@@ -402,10 +470,190 @@ if (fs.existsSync(dashboardDistPath)) {
         <h2>Become a Sponsor</h2>
         <p>Support martial arts excellence across 28 countries. Partner with the Ronin Brotherhood.</p>
         <a href="/ronin/api/v1/sponsors/inquiry" class="btn btn-gold" style="margin-right: 12px;">Sponsorship Inquiry</a>
-        <a href="/ronin/api/v1/members/register" class="btn btn-primary">Join as Member</a>
+        <a href="#" class="btn btn-primary" onclick="openModal('signup'); return false;">Join as Member</a>
       </div>
     </div>
   </section>
+
+  <!-- ====== MEMBER DASHBOARD (shown when logged in) ====== -->
+  <section class="section member-panel" id="member-panel">
+    <div class="container">
+      <div class="dash-header">
+        <h2>Welcome, <span id="dash-name">Member</span></h2>
+        <button class="btn-logout" onclick="logout()">Sign Out</button>
+      </div>
+      <div class="dash-grid" id="dash-grid">
+        <div class="dash-card">
+          <h3>Membership</h3>
+          <div class="dash-val" id="dash-rank">--</div>
+          <div class="dash-sub" id="dash-tier">--</div>
+        </div>
+        <div class="dash-card" id="dash-dojo-card">
+          <h3>My Dojo</h3>
+          <div class="dash-val" id="dash-dojo-name">Not Connected</div>
+          <div class="dash-sub" id="dash-dojo-status">Link your dojo to KanchoAI for health monitoring</div>
+        </div>
+        <div class="dash-card" id="dash-health-card" style="display:none;">
+          <h3>Dojo Health Score</h3>
+          <div class="dash-val" id="dash-health-score">--</div>
+          <div class="dash-sub" id="dash-health-detail">--</div>
+        </div>
+        <div class="dash-card" id="dash-students-card" style="display:none;">
+          <h3>Active Students</h3>
+          <div class="dash-val" id="dash-students">0</div>
+          <div class="dash-sub" id="dash-students-detail">--</div>
+        </div>
+      </div>
+
+      <div class="dash-actions" id="dash-actions">
+        <a href="#" class="btn btn-primary" id="btn-register-dojo" onclick="showDojoForm(); return false;">Connect Dojo to KanchoAI</a>
+        <a href="/kanchoai/" class="btn btn-gold" id="btn-kancho-dash" style="display:none;">Open KanchoAI Dashboard</a>
+      </div>
+
+      <!-- Dojo registration form -->
+      <div class="dojo-form" id="dojo-form" style="display:none;">
+        <h3>Register Your Dojo with KanchoAI</h3>
+        <div class="dojo-sub">Connect your school to get AI health monitoring, student tracking, and voice agent support.</div>
+        <div class="form-error" id="dojo-error"></div>
+        <div class="form-group">
+          <label>Dojo / School Name *</label>
+          <input type="text" id="dojo-name" placeholder="e.g. Tiger Karate Academy">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Martial Art Style</label>
+            <select id="dojo-style">
+              <option value="Goju Ryu">Goju Ryu</option>
+              <option value="Shotokan">Shotokan</option>
+              <option value="Taekwondo">Taekwondo</option>
+              <option value="Judo">Judo</option>
+              <option value="Brazilian Jiu-Jitsu">Brazilian Jiu-Jitsu</option>
+              <option value="MMA">MMA</option>
+              <option value="Krav Maga">Krav Maga</option>
+              <option value="Muay Thai">Muay Thai</option>
+              <option value="Kung Fu">Kung Fu</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Student Capacity</label>
+            <input type="number" id="dojo-capacity" placeholder="100" value="100">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>City</label>
+            <input type="text" id="dojo-city" placeholder="City">
+          </div>
+          <div class="form-group">
+            <label>Country</label>
+            <input type="text" id="dojo-country" placeholder="USA">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Website (optional)</label>
+          <input type="url" id="dojo-website" placeholder="https://mydojo.com">
+        </div>
+        <button class="btn-submit" id="btn-dojo-submit" onclick="registerDojo()">Register Dojo</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== LOGIN MODAL ====== -->
+  <div class="modal-overlay" id="modal-login" onclick="if(event.target===this)closeModals()">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModals()">&times;</button>
+      <h2>Welcome Back</h2>
+      <div class="modal-sub">Sign in to your Ronin Brotherhood account</div>
+      <div class="form-error" id="login-error"></div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="your@email.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="btn-submit" id="btn-login-submit" onclick="doLogin()">Sign In</button>
+      <div class="switch-link">Don't have an account? <a onclick="openModal('signup')">Join the Brotherhood</a></div>
+    </div>
+  </div>
+
+  <!-- ====== SIGNUP MODAL ====== -->
+  <div class="modal-overlay" id="modal-signup" onclick="if(event.target===this)closeModals()">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModals()">&times;</button>
+      <h2>Join the Brotherhood</h2>
+      <div class="modal-sub">Register as a Ronin Brotherhood member</div>
+      <div class="form-error" id="signup-error"></div>
+      <div class="form-success" id="signup-success"></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>First Name *</label>
+          <input type="text" id="signup-first" placeholder="First name">
+        </div>
+        <div class="form-group">
+          <label>Last Name *</label>
+          <input type="text" id="signup-last" placeholder="Last name">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Email *</label>
+        <input type="email" id="signup-email" placeholder="your@email.com">
+      </div>
+      <div class="form-group">
+        <label>Password *</label>
+        <input type="password" id="signup-password" placeholder="Min 6 characters">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="tel" id="signup-phone" placeholder="+1 (555) 123-4567">
+        </div>
+        <div class="form-group">
+          <label>Country</label>
+          <input type="text" id="signup-country" placeholder="USA" value="USA">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Rank</label>
+          <select id="signup-rank">
+            <option value="">Select rank...</option>
+            <option value="Shodan">Shodan (1st Dan)</option>
+            <option value="Nidan">Nidan (2nd Dan)</option>
+            <option value="Sandan">Sandan (3rd Dan)</option>
+            <option value="Yondan">Yondan (4th Dan)</option>
+            <option value="Godan">Godan (5th Dan)</option>
+            <option value="Rokudan">Rokudan (6th Dan)</option>
+            <option value="Nanadan">Nanadan (7th Dan)</option>
+            <option value="Hachidan">Hachidan (8th Dan)</option>
+            <option value="Kudan">Kudan (9th Dan)</option>
+            <option value="Judan">Judan (10th Dan)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Dojo Name</label>
+          <input type="text" id="signup-dojo" placeholder="Your school name">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Primary Style</label>
+        <select id="signup-style">
+          <option value="Goju Ryu">Goju Ryu</option>
+          <option value="Shotokan">Shotokan</option>
+          <option value="Taekwondo">Taekwondo</option>
+          <option value="Judo">Judo</option>
+          <option value="Brazilian Jiu-Jitsu">Brazilian Jiu-Jitsu</option>
+          <option value="MMA">MMA</option>
+          <option value="Krav Maga">Krav Maga</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <button class="btn-submit" id="btn-signup-submit" onclick="doSignup()">Create Account</button>
+      <div class="switch-link">Already a member? <a onclick="openModal('login')">Sign In</a></div>
+    </div>
+  </div>
 
   <footer>
     <div class="container footer-inner">
@@ -422,6 +670,250 @@ if (fs.existsSync(dashboardDistPath)) {
   </footer>
 
   <script>
+    var API = '/ronin/api/v1';
+    var KANCHO_API = '/kanchoai/api/v1';
+    var memberToken = localStorage.getItem('ronin_token');
+    var memberData = null;
+
+    // ==================== MODALS ====================
+    function openModal(type) {
+      closeModals();
+      document.getElementById('modal-' + type).classList.add('active');
+    }
+    function closeModals() {
+      document.querySelectorAll('.modal-overlay').forEach(function(m) { m.classList.remove('active'); });
+    }
+
+    // ==================== LOGIN ====================
+    function doLogin() {
+      var email = document.getElementById('login-email').value.trim();
+      var password = document.getElementById('login-password').value;
+      var errEl = document.getElementById('login-error');
+      var btn = document.getElementById('btn-login-submit');
+      errEl.style.display = 'none';
+
+      if (!email || !password) { errEl.textContent = 'Email and password are required'; errEl.style.display = 'block'; return; }
+
+      btn.disabled = true; btn.textContent = 'Signing in...';
+      fetch(API + '/members/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, password: password })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        btn.disabled = false; btn.textContent = 'Sign In';
+        if (data.success && data.token) {
+          localStorage.setItem('ronin_token', data.token);
+          memberToken = data.token;
+          memberData = data.data || data.member;
+          closeModals();
+          showDashboard();
+        } else {
+          errEl.textContent = data.error || 'Login failed';
+          errEl.style.display = 'block';
+        }
+      })
+      .catch(function(e) {
+        btn.disabled = false; btn.textContent = 'Sign In';
+        errEl.textContent = 'Connection error. Please try again.';
+        errEl.style.display = 'block';
+      });
+    }
+
+    // ==================== SIGNUP ====================
+    function doSignup() {
+      var first = document.getElementById('signup-first').value.trim();
+      var last = document.getElementById('signup-last').value.trim();
+      var email = document.getElementById('signup-email').value.trim();
+      var password = document.getElementById('signup-password').value;
+      var phone = document.getElementById('signup-phone').value.trim();
+      var country = document.getElementById('signup-country').value.trim();
+      var rank = document.getElementById('signup-rank').value;
+      var dojo = document.getElementById('signup-dojo').value.trim();
+      var style = document.getElementById('signup-style').value;
+      var errEl = document.getElementById('signup-error');
+      var successEl = document.getElementById('signup-success');
+      var btn = document.getElementById('btn-signup-submit');
+
+      errEl.style.display = 'none'; successEl.style.display = 'none';
+
+      if (!first || !last || !email || !password) {
+        errEl.textContent = 'First name, last name, email, and password are required';
+        errEl.style.display = 'block'; return;
+      }
+      if (password.length < 6) {
+        errEl.textContent = 'Password must be at least 6 characters';
+        errEl.style.display = 'block'; return;
+      }
+
+      btn.disabled = true; btn.textContent = 'Creating account...';
+      fetch(API + '/members/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          first_name: first, last_name: last, email: email, password: password,
+          phone: phone, country: country, rank: rank, dojo_name: dojo,
+          styles: style ? [style] : []
+        })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        btn.disabled = false; btn.textContent = 'Create Account';
+        if (data.success) {
+          if (data.token) {
+            localStorage.setItem('ronin_token', data.token);
+            memberToken = data.token;
+            memberData = data.data || data.member;
+            closeModals();
+            showDashboard();
+          } else {
+            successEl.textContent = 'Account created! You can now sign in.';
+            successEl.style.display = 'block';
+            setTimeout(function() { openModal('login'); }, 1500);
+          }
+        } else {
+          errEl.textContent = data.error || 'Registration failed';
+          errEl.style.display = 'block';
+        }
+      })
+      .catch(function(e) {
+        btn.disabled = false; btn.textContent = 'Create Account';
+        errEl.textContent = 'Connection error. Please try again.';
+        errEl.style.display = 'block';
+      });
+    }
+
+    // ==================== DASHBOARD ====================
+    function showDashboard() {
+      // Update header
+      var authEl = document.getElementById('header-auth');
+      authEl.innerHTML = '<a href="#member-panel" class="btn-login">My Dashboard</a><button class="btn-join" onclick="logout()" style="background:transparent;border:1px solid var(--line);color:var(--muted);font-weight:500;">Sign Out</button>';
+
+      // Show panel
+      var panel = document.getElementById('member-panel');
+      panel.classList.add('active');
+
+      // Load member profile
+      fetch(API + '/members/profile', {
+        headers: { 'Authorization': 'Bearer ' + memberToken }
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.success && data.data) {
+          var m = data.data;
+          memberData = m;
+          document.getElementById('dash-name').textContent = (m.first_name || '') + ' ' + (m.last_name || '');
+          document.getElementById('dash-rank').textContent = m.rank || m.title || 'Member';
+          document.getElementById('dash-tier').textContent = (m.membership_tier || 'basic').replace('_', ' ').toUpperCase() + ' membership';
+          loadDojoData();
+        } else if (data.error) {
+          // Token expired or invalid
+          logout();
+        }
+      }).catch(function() {});
+
+      // Scroll to panel
+      setTimeout(function() { panel.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 200);
+    }
+
+    // ==================== DOJO DATA ====================
+    function loadDojoData() {
+      fetch(API + '/bridge/kancho/my-dojo', {
+        headers: { 'Authorization': 'Bearer ' + memberToken }
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.success && data.data) {
+          var d = data.data;
+          // School info
+          document.getElementById('dash-dojo-name').textContent = d.school.name;
+          document.getElementById('dash-dojo-status').textContent = d.school.martialArtType + ' | ' + d.school.status;
+          document.getElementById('btn-register-dojo').style.display = 'none';
+          document.getElementById('btn-kancho-dash').style.display = 'inline-flex';
+
+          // Health score
+          if (d.health) {
+            var hCard = document.getElementById('dash-health-card');
+            hCard.style.display = 'block';
+            var scoreEl = document.getElementById('dash-health-score');
+            scoreEl.textContent = d.health.grade + ' (' + d.health.overallScore + ')';
+            scoreEl.className = 'dash-val grade-' + (d.health.grade || 'c').toLowerCase();
+            document.getElementById('dash-health-detail').textContent =
+              'Retention: ' + (d.health.retention || '--') + ' | Revenue: ' + (d.health.revenue || '--') + ' | Leads: ' + (d.health.leads || '--');
+          }
+
+          // Students
+          if (d.counts) {
+            document.getElementById('dash-students-card').style.display = 'block';
+            document.getElementById('dash-students').textContent = d.counts.students;
+            document.getElementById('dash-students-detail').textContent =
+              d.counts.leads + ' leads | ' + d.counts.atRisk + ' at risk';
+          }
+        }
+      }).catch(function() {});
+    }
+
+    function showDojoForm() {
+      var form = document.getElementById('dojo-form');
+      form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function registerDojo() {
+      var name = document.getElementById('dojo-name').value.trim();
+      var errEl = document.getElementById('dojo-error');
+      var btn = document.getElementById('btn-dojo-submit');
+      errEl.style.display = 'none';
+
+      if (!name) { errEl.textContent = 'Dojo name is required'; errEl.style.display = 'block'; return; }
+
+      btn.disabled = true; btn.textContent = 'Registering...';
+      fetch(API + '/bridge/kancho/register-dojo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + memberToken },
+        body: JSON.stringify({
+          dojoName: name,
+          martialArtType: document.getElementById('dojo-style').value,
+          studentCapacity: parseInt(document.getElementById('dojo-capacity').value) || 100,
+          city: document.getElementById('dojo-city').value.trim(),
+          country: document.getElementById('dojo-country').value.trim(),
+          website: document.getElementById('dojo-website').value.trim()
+        })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        btn.disabled = false; btn.textContent = 'Register Dojo';
+        if (data.success) {
+          document.getElementById('dojo-form').style.display = 'none';
+          loadDojoData();
+        } else {
+          errEl.textContent = data.error || 'Registration failed';
+          errEl.style.display = 'block';
+        }
+      })
+      .catch(function(e) {
+        btn.disabled = false; btn.textContent = 'Register Dojo';
+        errEl.textContent = 'Connection error';
+        errEl.style.display = 'block';
+      });
+    }
+
+    // ==================== LOGOUT ====================
+    function logout() {
+      localStorage.removeItem('ronin_token');
+      memberToken = null;
+      memberData = null;
+      document.getElementById('member-panel').classList.remove('active');
+      var authEl = document.getElementById('header-auth');
+      authEl.innerHTML = '<a href="#" class="btn-login" onclick="openModal(\\'login\\'); return false;">Login</a><a href="#" class="btn-join" onclick="openModal(\\'signup\\'); return false;">Join the Brotherhood</a>';
+    }
+
+    // ==================== INIT ====================
+    // Check for existing session
+    if (memberToken) {
+      showDashboard();
+    }
+
     // Load products
     fetch('/ronin/api/v1/products?featured=true&limit=4')
       .then(function(r) { return r.json(); })
