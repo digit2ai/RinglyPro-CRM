@@ -380,6 +380,36 @@ if (fs.existsSync(dashboardDistPath)) {
       .founder-kanji { display: none; }
     }
 
+    /* KanchoAI pricing section */
+    .kancho-section { padding: 80px 0; background: linear-gradient(180deg, #0a0a0a 0%, #111 50%, #0a0a0a 100%); position: relative; overflow: hidden; }
+    .kancho-section::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--accent), transparent); }
+    .kancho-header { text-align: center; margin-bottom: 48px; }
+    .kancho-header img { height: 80px; margin-bottom: 20px; }
+    .kancho-header h2 { font-family: 'Noto Serif', serif; font-size: 28px; color: #fff; margin-bottom: 8px; }
+    .kancho-header h2 .ka-accent { color: var(--accent); }
+    .kancho-header p { color: var(--muted); font-size: 14px; max-width: 600px; margin: 0 auto; line-height: 1.6; }
+    .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 1000px; margin: 0 auto; }
+    .price-card { background: rgba(20,20,20,.9); border: 1px solid var(--line); border-radius: 12px; padding: 32px 28px; position: relative; display: flex; flex-direction: column; }
+    .price-card.popular { border-color: var(--accent); box-shadow: 0 0 40px rgba(200,16,46,.12); }
+    .price-card .popular-badge { position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; padding: 5px 18px; border-radius: 999px; }
+    .price-card h3 { font-family: 'Noto Serif', serif; font-size: 20px; color: #fff; margin-bottom: 4px; }
+    .price-card .price-sub { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+    .price-card .price-amount { margin-bottom: 24px; }
+    .price-card .price-amount .price-num { font-size: 42px; font-weight: 800; color: var(--accent); }
+    .price-card .price-amount .price-period { font-size: 14px; color: var(--muted); }
+    .price-card .price-amount .price-custom { font-size: 36px; font-weight: 800; color: var(--gold); }
+    .price-features { list-style: none; padding: 0; margin: 0 0 28px; flex: 1; }
+    .price-features li { padding: 6px 0; font-size: 13px; color: #b0b0b0; display: flex; align-items: flex-start; gap: 10px; line-height: 1.4; }
+    .price-features li::before { content: '\\2714'; color: #22c55e; font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+    .price-features li.bold { color: #fff; font-weight: 600; }
+    .price-btn { display: block; width: 100%; padding: 12px; border-radius: 8px; text-align: center; font-weight: 700; font-size: 14px; text-decoration: none; transition: all .2s; cursor: pointer; border: none; }
+    .price-btn-primary { background: var(--accent); color: #fff; }
+    .price-btn-primary:hover { background: #ff1a1a; }
+    .price-btn-outline { background: transparent; border: 1px solid var(--line); color: #fff; }
+    .price-btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+    .pricing-note { text-align: center; margin-top: 24px; font-size: 12px; color: var(--muted); }
+    @media (max-width: 768px) { .pricing-grid { grid-template-columns: 1fr; max-width: 400px; } }
+
     /* Cinematic video section */
     .cinema-section { padding: 80px 0; background: #000; position: relative; overflow: hidden; }
     .cinema-section::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 80px; background: linear-gradient(to bottom, #0a0a0a, transparent); z-index: 2; pointer-events: none; }
@@ -574,6 +604,68 @@ if (fs.existsSync(dashboardDistPath)) {
           <p>His only brother began practicing Okinawa Kempo Karate Do under Sempai Luis Camara and Sensei Edwin Hernandez — a direct student of Toshimitsu Kina, Naha, Okinawa.</p>
         </div>
       </div>
+    </div>
+  </section>
+
+  <section class="kancho-section" id="kanchoai">
+    <div class="container">
+      <div class="kancho-header">
+        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/698f40f5772de9dc86d48339.png" alt="KanchoAI">
+        <h2>Choose Your <span class="ka-accent">Kancho AI</span> Plan</h2>
+        <p>Power your martial arts school with AI-driven business intelligence, automated receptionist, and complete CRM solutions.</p>
+      </div>
+      <div class="pricing-grid">
+        <div class="price-card">
+          <h3>Kancho Intelligence</h3>
+          <div class="price-sub">AI Business Intelligence</div>
+          <div class="price-amount"><span class="price-num">$197</span><span class="price-period"> /month</span></div>
+          <ul class="price-features">
+            <li>AI Business Intelligence Officer</li>
+            <li>Integrates with your existing CRM</li>
+            <li>Real-time health score monitoring</li>
+            <li>Churn risk detection &amp; alerts</li>
+            <li>Lead scoring &amp; prioritization</li>
+            <li>Revenue analytics &amp; forecasting</li>
+            <li>Voice AI business advisor</li>
+            <li>100 AI voice minutes included ($0.50 thereafter)</li>
+          </ul>
+          <a href="https://kanchoai.com" target="_blank" class="price-btn price-btn-outline">Get Started</a>
+        </div>
+        <div class="price-card popular">
+          <div class="popular-badge">Most Popular</div>
+          <h3>Kancho Pro</h3>
+          <div class="price-sub">Intelligence + AI Receptionist</div>
+          <div class="price-amount"><span class="price-num">$397</span><span class="price-period"> /month</span></div>
+          <ul class="price-features">
+            <li class="bold">Everything in Intelligence</li>
+            <li>24/7 AI Receptionist (Phone &amp; SMS)</li>
+            <li>Automated lead follow-up calls</li>
+            <li>Retention outreach campaigns</li>
+            <li>No-show recovery calls</li>
+            <li>Payment reminder automation</li>
+            <li>Bilingual support (EN/ES)</li>
+            <li>500 AI voice minutes included ($0.45 thereafter)</li>
+          </ul>
+          <a href="https://kanchoai.com" target="_blank" class="price-btn price-btn-primary">Get Started</a>
+        </div>
+        <div class="price-card">
+          <h3>Kancho Enterprise</h3>
+          <div class="price-sub">Multi-Tenant SaaS Solution</div>
+          <div class="price-amount"><span class="price-custom">Custom</span></div>
+          <ul class="price-features">
+            <li class="bold">Everything in Pro</li>
+            <li>White-label multi-tenant platform</li>
+            <li>Multi-language support</li>
+            <li>Custom integrations &amp; API access</li>
+            <li>Dedicated account manager</li>
+            <li>Priority support &amp; SLA</li>
+            <li>Volume pricing for SaaS providers</li>
+            <li>Unlimited AI voice minutes</li>
+          </ul>
+          <a href="https://kanchoai.com" target="_blank" class="price-btn price-btn-outline">Schedule a Call</a>
+        </div>
+      </div>
+      <div class="pricing-note">All plans include a 14-day free trial. No credit card required to start.</div>
     </div>
   </section>
 
