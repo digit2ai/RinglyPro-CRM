@@ -623,6 +623,41 @@ app.get('/debug/tunjoracing-error', (req, res) => {
 });
 
 // =====================================================
+// RONIN BROTHERHOOD - Martial Arts Federation Ecosystem
+// =====================================================
+
+// Mount Ronin Brotherhood platform at /ronin
+let roninApp = null;
+let roninError = null;
+try {
+  roninApp = require('../ronin/src/index');
+  app.use('/ronin', roninApp);
+  console.log('🥋 Ronin Brotherhood Ecosystem mounted at /ronin');
+  console.log('   - Dashboard UI: /ronin/');
+  console.log('   - Health Check: /ronin/health');
+  console.log('   - API: /ronin/api/v1/*');
+  console.log('   - Store: /ronin/api/v1/products');
+  console.log('   - Training: /ronin/api/v1/training');
+  console.log('   - Members: /ronin/api/v1/members');
+} catch (error) {
+  roninError = error;
+  console.log('⚠️ Ronin Brotherhood not available:', error.message);
+}
+
+// Debug endpoint to see Ronin Brotherhood error
+app.get('/debug/ronin-error', (req, res) => {
+  res.json({
+    service: 'Ronin Brotherhood Ecosystem',
+    available: !roninError,
+    error: roninError ? { message: roninError.message, stack: roninError.stack } : null,
+    env: {
+      NODE_ENV: process.env.NODE_ENV,
+      hasDbUrl: !!process.env.DATABASE_URL
+    }
+  });
+});
+
+// =====================================================
 // QUICKTASK - Voice-Powered To-Do PWA
 // =====================================================
 
