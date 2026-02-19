@@ -63,7 +63,8 @@ app.use((req, res, next) => {
 // ============================================================================
 
 let healthRoutes, memberRoutes, productRoutes, cartRoutes, orderRoutes,
-    trainingRoutes, eventRoutes, sponsorRoutes, groupRoutes, pressRoutes, adminRoutes;
+    trainingRoutes, eventRoutes, sponsorRoutes, groupRoutes, pressRoutes, adminRoutes,
+    bridgeKanchoRoutes;
 let routesLoaded = false;
 
 try {
@@ -78,13 +79,24 @@ try {
   groupRoutes = require('./routes/groups');
   pressRoutes = require('./routes/press');
   adminRoutes = require('./routes/admin');
+  bridgeKanchoRoutes = require('./routes/bridge-kancho');
   routesLoaded = true;
   console.log('✅ Ronin Brotherhood routes loaded successfully');
 
   // Auto-sync database tables on startup
   const models = require('../models');
-  models.sequelize.sync({ alter: false }).then(() => {
+  models.sequelize.sync({ alter: false }).then(async () => {
     console.log('✅ Ronin Brotherhood database tables synced');
+
+    // Bridge columns migration - add columns if they don't exist
+    const bridgeMigrations = [
+      `ALTER TABLE ronin_members ADD COLUMN IF NOT EXISTS kancho_school_id INTEGER`,
+      `ALTER TABLE ronin_members ADD COLUMN IF NOT EXISTS ringlypro_client_id INTEGER`
+    ];
+    for (const sql of bridgeMigrations) {
+      try { await models.sequelize.query(sql); } catch (e) {}
+    }
+    console.log('✅ Ronin Brotherhood bridge columns migration complete');
   }).catch(err => {
     console.log('⚠️ Ronin Brotherhood database sync warning:', err.message);
   });
@@ -125,6 +137,7 @@ if (routesLoaded) {
   app.use(`${BASE_PATH}/api/v1/sponsors`, sponsorRoutes);
   app.use(`${BASE_PATH}/api/v1/groups`, groupRoutes);
   app.use(`${BASE_PATH}/api/v1/press`, pressRoutes);
+  app.use(`${BASE_PATH}/api/v1/bridge/kancho`, bridgeKanchoRoutes);
 
   console.log('🥋 Ronin Brotherhood API routes mounted:');
   console.log('   - /health');
@@ -138,6 +151,7 @@ if (routesLoaded) {
   console.log('   - /api/v1/sponsors');
   console.log('   - /api/v1/groups');
   console.log('   - /api/v1/press');
+  console.log('   - /api/v1/bridge/kancho');
 } else {
   app.get(`${BASE_PATH}/health`, (req, res) => {
     res.json({

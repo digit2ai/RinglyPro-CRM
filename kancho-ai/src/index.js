@@ -930,6 +930,34 @@ if (models && !modelsError) {
   console.log('📅 Kancho Classes routes mounted at /api/v1/classes');
 
   // =====================================================
+  // RINGLYPRO WHITE-LABEL BRIDGE ROUTES
+  // These integrate RinglyPro CRM/voice/billing into KanchoAI
+  // =====================================================
+  try {
+    const bridgeAuthRoutes = require('./routes/bridge-auth');
+    const bridgeCrmRoutes = require('./routes/bridge-crm');
+    const bridgeVoiceRoutes = require('./routes/bridge-voice');
+    const bridgeBillingRoutes = require('./routes/bridge-billing');
+
+    // Auth routes (no auth middleware - register/login are public)
+    app.use('/api/v1/bridge/auth', bridgeAuthRoutes);
+
+    // Protected bridge routes (require bridge JWT)
+    const bridgeAuth = bridgeAuthRoutes.authenticateBridge;
+    app.use('/api/v1/bridge/crm', bridgeAuth, bridgeCrmRoutes);
+    app.use('/api/v1/bridge/voice', bridgeAuth, bridgeVoiceRoutes);
+    app.use('/api/v1/bridge/billing', bridgeAuth, bridgeBillingRoutes);
+
+    console.log('🔗 KanchoAI ↔ RinglyPro Bridge routes mounted:');
+    console.log('   /api/v1/bridge/auth     (register, login, profile)');
+    console.log('   /api/v1/bridge/crm      (contacts, appointments, messages, calls)');
+    console.log('   /api/v1/bridge/voice    (voice agent status, toggle, settings)');
+    console.log('   /api/v1/bridge/billing  (balance, plans, upgrade)');
+  } catch (bridgeError) {
+    console.log('⚠️ KanchoAI Bridge routes not available:', bridgeError.message);
+  }
+
+  // =====================================================
   // KANCHO SUBSCRIPTION PLANS - Stripe Integration
   // =====================================================
   const KANCHO_PLANS = {

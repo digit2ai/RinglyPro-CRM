@@ -105,6 +105,21 @@ module.exports = (sequelize) => {
         isIn: [['kancho', 'maestro', 'both', 'none']]
       }
     },
+    ringlypro_client_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      comment: 'Links to RinglyPro clients table for white-label CRM/voice integration'
+    },
+    ringlypro_user_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      comment: 'Links to RinglyPro users table for auth bridge'
+    },
+    ronin_member_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      comment: 'Links to ronin_members table for federation integration'
+    },
     status: {
       type: DataTypes.STRING(20),
       defaultValue: 'trial',

@@ -171,6 +171,17 @@ module.exports = (sequelize) => {
       type: DataTypes.DATE,
       allowNull: true
     },
+    // KanchoAI + RinglyPro bridge
+    kancho_school_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      comment: 'Links to kancho_schools table for dojo AI management'
+    },
+    ringlypro_client_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      comment: 'Links to RinglyPro clients table for voice/CRM features'
+    },
     created_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW

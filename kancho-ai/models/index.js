@@ -58,6 +58,17 @@ db.Sequelize = Sequelize;
     // Using alter: false to avoid modifying existing tables
     await sequelize.sync({ alter: false });
     console.log('Kancho AI: Database tables synced');
+
+    // Bridge columns migration - add columns if they don't exist
+    const bridgeMigrations = [
+      `ALTER TABLE kancho_schools ADD COLUMN IF NOT EXISTS ringlypro_client_id INTEGER`,
+      `ALTER TABLE kancho_schools ADD COLUMN IF NOT EXISTS ringlypro_user_id INTEGER`,
+      `ALTER TABLE kancho_schools ADD COLUMN IF NOT EXISTS ronin_member_id INTEGER`
+    ];
+    for (const sql of bridgeMigrations) {
+      try { await sequelize.query(sql); } catch (e) {}
+    }
+    console.log('Kancho AI: Bridge columns migration complete');
   } catch (error) {
     console.error('Kancho AI: Database sync error:', error.message);
   }
