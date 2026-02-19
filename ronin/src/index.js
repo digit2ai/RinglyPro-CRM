@@ -231,6 +231,12 @@ if (fs.existsSync(dashboardDistPath)) {
     .hero-quote p { font-family: 'Noto Serif', serif; font-style: italic; color: var(--muted); font-size: 15px; margin-bottom: 4px; }
     .hero-quote cite { color: #555; font-size: 12px; }
 
+    .photo-strip { padding: 0; overflow: hidden; background: #0a0a0a; border-top: 1px solid var(--line); }
+    .photo-strip-inner { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; }
+    .photo-strip-inner img { width: 100%; height: 220px; object-fit: cover; display: block; filter: grayscale(30%); transition: filter .3s, transform .3s; }
+    .photo-strip-inner img:hover { filter: grayscale(0%); transform: scale(1.03); z-index: 1; }
+    @media (max-width: 768px) { .photo-strip-inner { grid-template-columns: repeat(3, 1fr); } .photo-strip-inner img { height: 140px; } .photo-strip-inner img:nth-child(4), .photo-strip-inner img:nth-child(5) { display: none; } }
+
     .stats { padding: 48px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: #0e0e0e; }
     .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
     .stat { text-align: center; padding: 16px; }
@@ -390,6 +396,16 @@ if (fs.existsSync(dashboardDistPath)) {
           <cite>- Lao Tzu</cite>
         </div>
       </div>
+    </div>
+  </section>
+
+  <section class="photo-strip">
+    <div class="photo-strip-inner">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782813ff51693e263e40a.png" alt="Ronin Brotherhood">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782773873af78f3ae844f.png" alt="Ronin Brotherhood">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782768d5b5a64b992f22f.png" alt="Ronin Brotherhood">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782761817151e36b61a7f.png" alt="Ronin Brotherhood">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782763873afe6caae843d.jpg" alt="Ronin Brotherhood">
     </div>
   </section>
 
