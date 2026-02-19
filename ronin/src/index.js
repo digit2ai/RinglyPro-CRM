@@ -208,9 +208,7 @@ if (fs.existsSync(dashboardDistPath)) {
     header { position: fixed; top: 0; left: 0; right: 0; z-index: 50; background: rgba(10,10,10,.95); border-bottom: 1px solid var(--line); backdrop-filter: blur(10px); }
     .header-inner { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; }
     .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text); }
-    .brand-mark { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #8b0000); border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; color: var(--gold); font-family: 'Noto Serif', serif; }
-    .brand-title { font-weight: 700; letter-spacing: .15em; font-size: 13px; text-transform: uppercase; }
-    .brand-sub { font-size: 10px; color: var(--muted); letter-spacing: .08em; }
+    .brand-logo { height: 44px; width: auto; object-fit: contain; display: block; }
     nav { display: flex; gap: 20px; }
     nav a { color: var(--muted); text-decoration: none; font-size: 13px; font-weight: 500; }
     nav a:hover { color: var(--accent); }
@@ -423,11 +421,7 @@ if (fs.existsSync(dashboardDistPath)) {
   <header>
     <div class="container header-inner">
       <a href="/ronin/" class="brand">
-        <div class="brand-mark">R</div>
-        <div>
-          <div class="brand-title">Ronin Brotherhood</div>
-          <div class="brand-sub">Martial Arts Federation</div>
-        </div>
+        <img class="brand-logo" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69978a0f8d5b5a477096667b.png" alt="Ronin Brotherhood">
       </a>
       <nav>
         <a href="#groups">Organizations</a>
