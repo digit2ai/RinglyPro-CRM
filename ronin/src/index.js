@@ -220,7 +220,7 @@ if (fs.existsSync(dashboardDistPath)) {
     .btn-gold { background: transparent; color: var(--gold); border: 2px solid var(--gold); }
     .btn-gold:hover { background: var(--gold); color: #000; }
 
-    .hero { min-height: 100vh; display: flex; align-items: center; padding-top: 80px; background: linear-gradient(to right, rgba(10,10,10,.82) 0%, rgba(10,10,10,.5) 50%, rgba(10,10,10,.15) 100%), url('https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6997838018171513aeb6855d.png'); background-size: cover; background-position: center right; }
+    .hero { min-height: 100vh; display: flex; align-items: center; padding-top: 80px; background: linear-gradient(to right, rgba(10,10,10,.5) 0%, rgba(10,10,10,.3) 50%, rgba(10,10,10,.1) 100%), url('https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6997838018171513aeb6855d.png'); background-size: cover; background-position: center right; }
     .hero-content { max-width: 680px; }
     .hero-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--gold); color: var(--gold); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 20px; }
     .hero h1 { font-family: 'Noto Serif', serif; font-size: clamp(32px, 5vw, 52px); font-weight: 700; line-height: 1.15; margin-bottom: 16px; }
