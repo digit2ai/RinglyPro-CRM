@@ -448,7 +448,8 @@ if (fs.existsSync(dashboardDistPath)) {
       .btn-login, .btn-join { padding: 6px 10px; font-size: 11px; }
 
       /* Hero */
-      .hero { min-height: auto; padding: 100px 0 48px; background-position: center center; }
+      .hero { min-height: auto; padding: 70px 0 32px; background-size: contain; background-position: top center; background-repeat: no-repeat; }
+      .hero-content { padding-top: 56vw; }
       .hero h1 { font-size: 28px; }
       .hero p { font-size: 15px; }
       .hero-actions { flex-direction: column; gap: 10px; }
@@ -523,9 +524,17 @@ if (fs.existsSync(dashboardDistPath)) {
       .founder-photo { max-width: 260px; }
       .founder-name { font-size: 24px; }
     }
+
+    /* Language switcher */
+    .lang-switch { position: fixed; bottom: 20px; left: 20px; z-index: 100; display: flex; gap: 0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,.5); border: 1px solid var(--line); }
+    .lang-switch a { display: flex; align-items: center; justify-content: center; padding: 8px 14px; font-size: 12px; font-weight: 700; text-decoration: none; letter-spacing: .06em; transition: all .2s; }
+    .lang-switch a.active { background: var(--accent); color: #fff; }
+    .lang-switch a:not(.active) { background: var(--panel); color: var(--muted); }
+    .lang-switch a:not(.active):hover { color: #fff; background: #222; }
   </style>
 </head>
 <body>
+  <div class="lang-switch"><a href="/ronin/" class="active">EN</a><a href="/ronin/es">ES</a></div>
   <header>
     <div class="container header-inner">
       <a href="/ronin/" class="brand">
@@ -1268,6 +1277,717 @@ if (fs.existsSync(dashboardDistPath)) {
 </html>`);
   });
 }
+
+// ============================================================================
+// SPANISH LANDING PAGE
+// ============================================================================
+
+app.get(`${BASE_PATH}/es`, (req, res) => {
+  res.send(`<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ronin Brotherhood - Federaci\u00f3n de Artes Marciales</title>
+  <meta name="description" content="Ronin Brotherhood LLC - M\u00e1s de 1,000 Cintas Negras de 28 Pa\u00edses. Federaci\u00f3n de Artes Marciales, Tienda en L\u00ednea, Entrenamiento T\u00e1ctico RPDTA.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg: #0a0a0a; --panel: #1a1a1a; --accent: #d10404; --gold: #c4a35a; --text: #fff; --muted: #999; --line: #2a2a2a; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+    .container { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+
+    header { position: fixed; top: 0; left: 0; right: 0; z-index: 50; background: rgba(10,10,10,.95); border-bottom: 1px solid var(--line); backdrop-filter: blur(10px); }
+    .header-inner { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; }
+    .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
+    .brand-logo { height: 64px; width: auto; object-fit: contain; display: block; }
+    .brand-sub { font-size: 9px; color: var(--muted); letter-spacing: .12em; text-transform: uppercase; margin-top: 2px; }
+    nav { display: flex; gap: 20px; }
+    nav a { color: var(--muted); text-decoration: none; font-size: 13px; font-weight: 500; }
+    nav a:hover { color: var(--accent); }
+    .btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 22px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 14px; transition: all .2s; border: none; cursor: pointer; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: #ff1a1a; }
+    .btn-gold { background: transparent; color: var(--gold); border: 2px solid var(--gold); }
+    .btn-gold:hover { background: var(--gold); color: #000; }
+
+    .hero { min-height: 100vh; display: flex; align-items: center; padding-top: 80px; background: linear-gradient(to right, rgba(10,10,10,.5) 0%, rgba(10,10,10,.3) 50%, rgba(10,10,10,.1) 100%), url('https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6997838018171513aeb6855d.png'); background-size: cover; background-position: 70% 20%; }
+    .hero-content { max-width: 680px; }
+    .hero-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--gold); color: var(--gold); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 20px; }
+    .hero h1 { font-family: 'Noto Serif', serif; font-size: clamp(32px, 5vw, 52px); font-weight: 700; line-height: 1.15; margin-bottom: 16px; }
+    .hero h1 .highlight { color: var(--accent); }
+    .hero p { color: var(--muted); font-size: 18px; margin-bottom: 28px; max-width: 560px; }
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .hero-quote { margin-top: 40px; padding: 16px 20px; border-left: 3px solid var(--gold); }
+    .hero-quote p { font-family: 'Noto Serif', serif; font-style: italic; color: var(--muted); font-size: 15px; margin-bottom: 4px; }
+    .hero-quote cite { color: #555; font-size: 12px; }
+
+    .photo-strip { padding: 32px 0; overflow: hidden; background: #fff; border-top: 1px solid var(--line); }
+    .photo-strip-inner { display: flex; align-items: center; justify-content: center; gap: 36px; max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+    .photo-strip-inner img { height: 150px; width: auto; object-fit: contain; display: block; transition: transform .3s; }
+    .photo-strip-inner img:hover { transform: scale(1.08); }
+
+    .stats { padding: 48px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: #0e0e0e; }
+    .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+    .stat { text-align: center; padding: 16px; }
+    .stat-num { font-size: 32px; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-top: 4px; }
+
+    .section { padding: 64px 0; }
+    .section-title { font-family: 'Noto Serif', serif; font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+    .section-sub { color: var(--muted); margin-bottom: 32px; }
+
+    .groups-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+    .group-card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 24px; transition: border-color .2s; }
+    .group-card:hover { border-color: var(--accent); }
+    .group-code { font-size: 11px; color: var(--accent); font-weight: 700; letter-spacing: .1em; margin-bottom: 4px; }
+    .group-name { font-weight: 700; font-size: 16px; margin-bottom: 8px; }
+    .group-desc { color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .group-meta { display: flex; gap: 16px; margin-top: 12px; font-size: 12px; color: #666; }
+
+    .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+    .product-card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; transition: transform .2s, border-color .2s; text-decoration: none; color: var(--text); }
+    .product-card:hover { transform: translateY(-4px); border-color: var(--accent); }
+    .product-img { width: 100%; height: 180px; background: #222; display: flex; align-items: center; justify-content: center; color: #444; font-size: 48px; }
+    .product-info { padding: 14px; }
+    .product-cat { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+    .product-name { font-weight: 600; font-size: 14px; margin: 4px 0; }
+    .product-price { color: var(--accent); font-weight: 700; font-size: 16px; }
+
+    .courses-list { display: grid; gap: 12px; }
+    .course-card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px; display: flex; justify-content: space-between; align-items: center; transition: border-color .2s; }
+    .course-card:hover { border-color: var(--accent); }
+    .course-info h3 { font-size: 15px; font-weight: 600; }
+    .course-meta { display: flex; gap: 16px; margin-top: 4px; font-size: 12px; color: var(--muted); }
+    .course-price { font-size: 20px; font-weight: 800; color: var(--gold); }
+
+    .groups-banner { position: relative; overflow: hidden; background: #000; }
+    .groups-banner-img { width: 100%; display: block; }
+    .groups-banner-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,.3) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0) 70%, rgba(0,0,0,.5) 100%); pointer-events: none; }
+    .groups-banner-label { position: absolute; bottom: 24px; left: 0; right: 0; text-align: center; z-index: 2; }
+    .groups-banner-label h2 { font-family: 'Noto Serif', serif; font-size: 28px; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: .1em; text-shadow: 0 2px 20px rgba(0,0,0,.8); }
+    .groups-banner-label .banner-sub { font-size: 13px; color: rgba(255,255,255,.7); letter-spacing: .06em; margin-top: 6px; }
+    .groups-banner-corners span { position: absolute; width: 28px; height: 28px; z-index: 3; pointer-events: none; }
+    .groups-banner-corners .tl { top: 12px; left: 12px; border-top: 2px solid var(--accent); border-left: 2px solid var(--accent); }
+    .groups-banner-corners .tr { top: 12px; right: 12px; border-top: 2px solid var(--accent); border-right: 2px solid var(--accent); }
+    .groups-banner-corners .bl { bottom: 12px; left: 12px; border-bottom: 2px solid var(--accent); border-left: 2px solid var(--accent); }
+    .groups-banner-corners .br { bottom: 12px; right: 12px; border-bottom: 2px solid var(--accent); border-right: 2px solid var(--accent); }
+
+    .cta-section { padding: 48px 0; background: linear-gradient(135deg, rgba(209,4,4,.08), rgba(196,163,90,.05)); border-top: 1px solid var(--line); }
+    .cta-inner { text-align: center; max-width: 600px; margin: 0 auto; }
+    .cta-inner h2 { font-family: 'Noto Serif', serif; font-size: 24px; margin-bottom: 8px; }
+    .cta-inner p { color: var(--muted); margin-bottom: 20px; }
+
+    footer { border-top: 1px solid var(--line); padding: 24px 0; }
+    .footer-inner { display: flex; justify-content: space-between; align-items: center; }
+    .footer-copy { color: var(--muted); font-size: 12px; }
+    .footer-links { display: flex; gap: 16px; }
+    .footer-links a { color: #555; text-decoration: none; font-size: 12px; }
+    .footer-links a:hover { color: var(--accent); }
+
+    .header-auth { display: flex; align-items: center; gap: 10px; }
+    .btn-login { background: transparent; color: var(--gold); border: 1px solid var(--gold); padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; text-decoration: none; }
+    .btn-login:hover { background: var(--gold); color: #000; }
+    .btn-join { background: var(--accent); color: #fff; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; border: none; transition: all .2s; text-decoration: none; }
+    .btn-join:hover { background: #ff1a1a; }
+
+    .founder-section { padding: 80px 0; background: #000; position: relative; overflow: hidden; }
+    .founder-section::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 30% 50%, rgba(200,16,46,.06) 0%, transparent 70%); pointer-events: none; }
+    .founder-inner { display: grid; grid-template-columns: 400px 1fr; gap: 48px; align-items: center; max-width: 1000px; margin: 0 auto; padding: 0 20px; }
+    .founder-photo { position: relative; }
+    .founder-photo img { width: 100%; border-radius: 4px; display: block; box-shadow: 0 0 40px rgba(0,0,0,.6), 0 0 80px rgba(200,16,46,.1); }
+    .founder-photo::before { content: ''; position: absolute; inset: -6px; border: 1px solid rgba(200,16,46,.2); border-radius: 6px; pointer-events: none; }
+    .founder-photo::after { content: ''; position: absolute; bottom: -3px; left: 10%; right: 10%; height: 1px; background: linear-gradient(90deg, transparent, var(--accent), transparent); }
+    .founder-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--gold); color: var(--gold); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 16px; }
+    .founder-name { font-family: 'Noto Serif', serif; font-size: 36px; font-weight: 700; color: #fff; line-height: 1.15; margin-bottom: 6px; }
+    .founder-titles { color: var(--accent); font-size: 14px; font-weight: 600; letter-spacing: .05em; margin-bottom: 6px; }
+    .founder-titles span { color: var(--gold); }
+    .founder-role { color: var(--muted); font-size: 13px; letter-spacing: .04em; margin-bottom: 24px; }
+    .founder-bio p { color: #b0b0b0; font-size: 14px; line-height: 1.8; margin-bottom: 14px; }
+    .founder-bio p:first-letter { font-size: 18px; font-weight: 700; color: #fff; }
+    .founder-kanji { position: absolute; top: 20px; right: -30px; font-size: 160px; color: rgba(200,16,46,.04); font-family: 'Noto Serif', serif; pointer-events: none; line-height: 1; writing-mode: vertical-rl; }
+
+    .kancho-section { padding: 80px 0; background: linear-gradient(180deg, #0a0a0a 0%, #111 50%, #0a0a0a 100%); position: relative; overflow: hidden; }
+    .kancho-section::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--accent), transparent); }
+    .kancho-header { text-align: center; margin-bottom: 48px; }
+    .kancho-header img { height: 160px; margin-bottom: 24px; }
+    .kancho-header h2 { font-family: 'Noto Serif', serif; font-size: 28px; color: #fff; margin-bottom: 8px; }
+    .kancho-header h2 .ka-accent { color: var(--accent); }
+    .kancho-header p { color: var(--muted); font-size: 14px; max-width: 600px; margin: 0 auto; line-height: 1.6; }
+    .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 1000px; margin: 0 auto; }
+    .price-card { background: rgba(20,20,20,.9); border: 1px solid var(--line); border-radius: 12px; padding: 32px 28px; position: relative; display: flex; flex-direction: column; }
+    .price-card.popular { border-color: var(--accent); box-shadow: 0 0 40px rgba(200,16,46,.12); }
+    .price-card .popular-badge { position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; padding: 5px 18px; border-radius: 999px; }
+    .price-card h3 { font-family: 'Noto Serif', serif; font-size: 20px; color: #fff; margin-bottom: 4px; }
+    .price-card .price-sub { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+    .price-card .price-amount { margin-bottom: 24px; }
+    .price-card .price-amount .price-num { font-size: 42px; font-weight: 800; color: var(--accent); }
+    .price-card .price-amount .price-period { font-size: 14px; color: var(--muted); }
+    .price-card .price-amount .price-custom { font-size: 36px; font-weight: 800; color: var(--gold); }
+    .price-features { list-style: none; padding: 0; margin: 0 0 28px; flex: 1; }
+    .price-features li { padding: 6px 0; font-size: 13px; color: #b0b0b0; display: flex; align-items: flex-start; gap: 10px; line-height: 1.4; }
+    .price-features li::before { content: '\\2714'; color: #22c55e; font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+    .price-features li.bold { color: #fff; font-weight: 600; }
+    .price-btn { display: block; width: 100%; padding: 12px; border-radius: 8px; text-align: center; font-weight: 700; font-size: 14px; text-decoration: none; transition: all .2s; cursor: pointer; border: none; }
+    .price-btn-primary { background: var(--accent); color: #fff; }
+    .price-btn-primary:hover { background: #ff1a1a; }
+    .price-btn-outline { background: transparent; border: 1px solid var(--line); color: #fff; }
+    .price-btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+    .pricing-note { text-align: center; margin-top: 24px; font-size: 12px; color: var(--muted); }
+
+    .cinema-section { padding: 80px 0; background: #000; position: relative; overflow: hidden; }
+    .cinema-section::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 80px; background: linear-gradient(to bottom, #0a0a0a, transparent); z-index: 2; pointer-events: none; }
+    .cinema-section::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 80px; background: linear-gradient(to top, #0e0e0e, transparent); z-index: 2; pointer-events: none; }
+    .cinema-frame { position: relative; max-width: 900px; margin: 0 auto; padding: 0 20px; }
+    .cinema-poster { display: block; width: 100%; max-width: 700px; margin: 0 auto 36px; border-radius: 6px; box-shadow: 0 8px 40px rgba(0,0,0,.6); }
+    .tv-shell { position: relative; max-width: 760px; margin: 0 auto; background: linear-gradient(145deg, #2a2a2a 0%, #1a1a1a 30%, #111 60%, #1a1a1a 100%); border-radius: 18px; padding: 28px 28px 48px; box-shadow: 0 10px 60px rgba(0,0,0,.8), 0 0 80px rgba(200,16,46,.08), inset 0 1px 0 rgba(255,255,255,.06); }
+    .tv-shell::before { content: ''; position: absolute; inset: 3px; border-radius: 15px; border: 1px solid rgba(255,255,255,.04); pointer-events: none; }
+    .tv-bezel { position: relative; border-radius: 8px; overflow: hidden; border: 4px solid #0a0a0a; box-shadow: inset 0 0 20px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.05); }
+    .tv-screen { position: relative; width: 100%; padding-bottom: 56.25%; background: #000; }
+    .tv-screen iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+    .tv-screen::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,.03) 0%, transparent 50%); pointer-events: none; z-index: 2; }
+    .tv-bottom { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 14px; }
+    .tv-led { width: 8px; height: 8px; border-radius: 50%; background: #c8102e; box-shadow: 0 0 6px rgba(200,16,46,.6); }
+    .tv-brand { font-size: 11px; color: #444; letter-spacing: .2em; text-transform: uppercase; font-weight: 600; }
+    .tv-dots { display: flex; gap: 6px; }
+    .tv-dots span { width: 5px; height: 5px; border-radius: 50%; background: #333; }
+    .tv-stand { width: 120px; height: 6px; background: linear-gradient(to bottom, #2a2a2a, #1a1a1a); margin: 0 auto; border-radius: 0 0 4px 4px; }
+    .tv-stand-base { width: 180px; height: 3px; background: #222; margin: 0 auto; border-radius: 0 0 6px 6px; }
+    .cinema-title { text-align: center; margin-bottom: 32px; position: relative; z-index: 3; }
+    .cinema-title h2 { font-family: 'Noto Serif', serif; font-size: 28px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #fff; }
+    .cinema-title .kanji { font-size: 16px; color: var(--accent); letter-spacing: .3em; margin-top: 6px; font-weight: 400; }
+    .cinema-title .cinema-line { display: block; width: 60px; height: 2px; background: linear-gradient(90deg, transparent, var(--accent), transparent); margin: 14px auto 0; }
+    .cinema-brush { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 200px; color: rgba(200,16,46,.04); font-family: 'Noto Serif', serif; pointer-events: none; z-index: 1; white-space: nowrap; }
+    .cinema-caption { text-align: center; margin-top: 24px; position: relative; z-index: 3; }
+    .cinema-caption p { font-size: 13px; color: var(--muted); font-style: italic; letter-spacing: .04em; }
+
+    .lang-switch { position: fixed; bottom: 20px; left: 20px; z-index: 100; display: flex; gap: 0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,.5); border: 1px solid var(--line); }
+    .lang-switch a { display: flex; align-items: center; justify-content: center; padding: 8px 14px; font-size: 12px; font-weight: 700; text-decoration: none; letter-spacing: .06em; transition: all .2s; }
+    .lang-switch a.active { background: var(--accent); color: #fff; }
+    .lang-switch a:not(.active) { background: var(--panel); color: var(--muted); }
+    .lang-switch a:not(.active):hover { color: #fff; background: #222; }
+
+    @media (max-width: 768px) {
+      .header-inner { padding: 10px 0; }
+      .brand-logo { height: 40px; }
+      .brand-sub { font-size: 7px; }
+      nav { display: none; }
+      .header-auth { gap: 4px; }
+      .btn-login, .btn-join { padding: 6px 10px; font-size: 11px; }
+      .hero { min-height: auto; padding: 70px 0 32px; background-size: contain; background-position: top center; background-repeat: no-repeat; }
+      .hero-content { padding-top: 56vw; }
+      .hero h1 { font-size: 28px; }
+      .hero p { font-size: 15px; }
+      .hero-actions { flex-direction: column; gap: 10px; }
+      .hero-actions .btn { width: 100%; text-align: center; }
+      .hero-quote { margin-top: 24px; padding: 12px 16px; }
+      .hero-quote p { font-size: 13px; }
+      .stats { padding: 32px 0; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .stat { padding: 10px; }
+      .stat-num { font-size: 24px; }
+      .section { padding: 40px 0; }
+      .section-title { font-size: 22px; }
+      .groups-grid { grid-template-columns: 1fr; }
+      .group-meta { flex-wrap: wrap; gap: 8px; }
+      .products-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .product-img { height: 130px; }
+      .product-info { padding: 10px; }
+      .product-name { font-size: 12px; }
+      .course-card { flex-direction: column; align-items: flex-start; gap: 10px; }
+      .course-price { font-size: 16px; }
+      .cta-section { padding: 32px 0; }
+      .cta-inner h2 { font-size: 20px; }
+      .cta-inner { padding: 0 10px; }
+      .kancho-section { padding: 48px 0; }
+      .kancho-header h2 { font-size: 22px; }
+      .kancho-header img { height: 110px; }
+      .kancho-header p { font-size: 13px; }
+      .cinema-section { padding: 48px 0; }
+      .cinema-title h2 { font-size: 20px; }
+      .cinema-brush { font-size: 120px; }
+      .cinema-caption p { font-size: 12px; }
+      .founder-section { padding: 48px 0; }
+      .founder-inner { grid-template-columns: 1fr; gap: 32px; }
+      .founder-photo { max-width: 320px; margin: 0 auto; }
+      .founder-name { font-size: 28px; }
+      .founder-kanji { display: none; }
+      .footer-inner { flex-direction: column; gap: 12px; text-align: center; }
+      .pricing-grid { grid-template-columns: 1fr; max-width: 400px; }
+      .tv-shell { padding: 16px 16px 32px; border-radius: 12px; }
+      .tv-bezel { border-width: 3px; border-radius: 6px; }
+      .cinema-poster { max-width: 90%; }
+      .photo-strip-inner { gap: 16px; flex-wrap: wrap; }
+      .photo-strip-inner img { height: 90px; }
+      .groups-banner-label h2 { font-size: 20px; }
+      .groups-banner-label { bottom: 16px; }
+    }
+    @media (max-width: 420px) {
+      .hero h1 { font-size: 24px; }
+      .products-grid { grid-template-columns: 1fr; }
+      .photo-strip-inner img { height: 60px; }
+      .stat-num { font-size: 20px; }
+      .price-card { padding: 24px 18px; }
+      .founder-photo { max-width: 260px; }
+      .founder-name { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="lang-switch"><a href="/ronin/">EN</a><a href="/ronin/es" class="active">ES</a></div>
+  <header>
+    <div class="container header-inner">
+      <a href="/ronin/es" class="brand">
+        <img class="brand-logo" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69978a0f8d5b5a477096667b.png" alt="Ronin Brotherhood">
+        <div class="brand-sub">Federaci\u00f3n de Artes Marciales</div>
+      </a>
+      <nav>
+        <a href="#groups">Organizaciones</a>
+        <a href="#store">Tienda</a>
+        <a href="#training">Entrenamiento</a>
+        <a href="#events">Eventos</a>
+        <a href="#sponsors">Patrocinadores</a>
+      </nav>
+      <div class="header-auth" id="header-auth-es">
+        <a href="#" class="btn-login" onclick="openModal('login'); return false;">Iniciar Sesi\u00f3n</a>
+        <a href="#" class="btn-join" onclick="openModal('signup'); return false;">\u00danete a la Hermandad</a>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container">
+      <div class="hero-content">
+        <span class="hero-badge">28 Pa\u00edses | 1,000+ Cintas Negras</span>
+        <h1>El Camino del <span class="highlight">Ronin</span></h1>
+        <p>Una federaci\u00f3n de artes marciales compuesta por m\u00e1s de 1,000 cintas negras de 28 pa\u00edses. Cinco organizaciones distintas unidas por siete virtudes fundamentales.</p>
+        <div class="hero-actions">
+          <a href="#store" class="btn btn-primary">Tienda Oficial</a>
+          <a href="#training" class="btn btn-gold">Entrenamiento RPDTA</a>
+        </div>
+        <div class="hero-quote">
+          <p>"Un viaje de mil millas comienza con un solo paso"<br><span style="font-size:14px;color:#888;">(千里之行，始於足下)</span></p>
+          <cite>\u2013 Lao Tzu</cite>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="photo-strip">
+    <div class="photo-strip-inner">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/698d245d721397289ba56c7d.png" alt="KanchoAI">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782773873af78f3ae844f.png" alt="Ronin Brotherhood">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782768d5b5a64b992f22f.png" alt="Ronin Brotherhood">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782761817151e36b61a7f.png" alt="Ronin Brotherhood">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782763873afe6caae843d.jpg" alt="Ronin Brotherhood">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6997827620c035e70c1dce26.png" alt="Ronin Brotherhood">
+    </div>
+  </section>
+
+  <section class="stats">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat"><div class="stat-num">1,000+</div><div class="stat-label">Cintas Negras</div></div>
+        <div class="stat"><div class="stat-num">28</div><div class="stat-label">Pa\u00edses</div></div>
+        <div class="stat"><div class="stat-num">5</div><div class="stat-label">Organizaciones</div></div>
+        <div class="stat"><div class="stat-num">392</div><div class="stat-label">Posiciones en Torneos</div></div>
+        <div class="stat"><div class="stat-num">5x</div><div class="stat-label">Campe\u00f3n Mundial</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="groups">
+    <div class="container">
+      <h2 class="section-title">Nuestras Organizaciones</h2>
+      <p class="section-sub">Cinco grupos de artes marciales unidos bajo la Hermandad Ronin</p>
+      <div class="groups-grid" id="groups-container-es">
+        <div class="group-card">
+          <div class="group-code">RGRK</div>
+          <div class="group-name">Ronin Goju Ryu Kai Organizaci\u00f3n Mundial de Karate</div>
+          <div class="group-desc">Sistema acad\u00e9mico de defensa personal basado en mano vac\u00eda, enfocado en las tradiciones de karate de Okinawa y Jap\u00f3n.</div>
+          <div class="group-meta"><span>16 pa\u00edses</span><span>600+ miembros</span><span>Fundada en 2000</span></div>
+        </div>
+        <div class="group-card">
+          <div class="group-code">IRMAF</div>
+          <div class="group-name">Federaci\u00f3n Internacional de Artes Marciales Ronin</div>
+          <div class="group-desc">Federaci\u00f3n general de artes marciales que acoge practicantes de todas las disciplinas tradicionales y modernas.</div>
+          <div class="group-meta"><span>28 pa\u00edses</span><span>1,000+ miembros</span></div>
+        </div>
+        <div class="group-card">
+          <div class="group-code">RPDTA</div>
+          <div class="group-name">Asociaci\u00f3n Ronin de T\u00e1cticas Defensivas Policiales</div>
+          <div class="group-desc">Entrenamiento t\u00e1ctico de \u00e9lite para profesionales de fuerzas del orden, militares e inteligencia. Solo por invitaci\u00f3n.</div>
+          <div class="group-meta"><span>8 pa\u00edses</span><span>150+ miembros</span><span>Requiere Autorizaci\u00f3n</span></div>
+        </div>
+        <div class="group-card">
+          <div class="group-code">RBS</div>
+          <div class="group-name">Sociedad Ronin de Cintur\u00f3n Rojo</div>
+          <div class="group-desc">Sociedad exclusiva para maestros con Cintur\u00f3n Negro de 4to Grado (Yondan) y superior.</div>
+          <div class="group-meta"><span>20 pa\u00edses</span><span>100+ maestros</span></div>
+        </div>
+        <div class="group-card">
+          <div class="group-code">MMA</div>
+          <div class="group-name">Ronin Artes Marciales Mixtas Internacional</div>
+          <div class="group-desc">Uniendo las artes marciales tradicionales con la competencia moderna de MMA.</div>
+          <div class="group-meta"><span>12 pa\u00edses</span><span>200+ peleadores</span></div>
+        </div>
+        <div class="group-card" style="border-color: #c8102e;">
+          <div class="group-code" style="color: #c8102e;">AI</div>
+          <div class="group-name">KanchoAI</div>
+          <div class="group-desc">Plataforma de gesti\u00f3n de dojos impulsada por IA. Automatiza horarios, seguimiento de estudiantes, progresiones de cintur\u00f3n y servicio al cliente por voz.</div>
+          <div class="group-meta"><span><a href="https://kanchoai.com" target="_blank" style="color:#c8102e;">kanchoai.com</a></span><span>Gesti\u00f3n de Dojos</span><span>Agentes de Voz IA</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cinema-section" id="film">
+    <div class="cinema-brush">\u6b66\u58eb\u9053</div>
+    <div class="cinema-frame">
+      <div class="cinema-title">
+        <h2>El Camino del Guerrero</h2>
+        <div class="kanji">\u6b66 \u58eb \u9053</div>
+        <span class="cinema-line"></span>
+      </div>
+      <img class="cinema-poster" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6997807d8523c514badec0d4.webp" alt="Ronin Brotherhood">
+      <div class="tv-shell">
+        <div class="tv-bezel">
+          <div class="tv-screen">
+            <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/HByRigYk8Hg?si=1&rel=0&modestbranding=1" title="Ronin Brotherhood" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+          </div>
+        </div>
+        <div class="tv-bottom">
+          <div class="tv-led"></div>
+          <div class="tv-brand">Ronin TV</div>
+          <div class="tv-dots"><span></span><span></span><span></span></div>
+        </div>
+      </div>
+      <div class="tv-stand"></div>
+      <div class="tv-stand-base"></div>
+      <div class="cinema-caption">
+        <p>"El camino est\u00e1 en el entrenamiento." \u2014 Miyamoto Musashi</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="store" style="background: #0e0e0e;">
+    <div class="container">
+      <h2 class="section-title">Tienda Oficial</h2>
+      <p class="section-sub">Uniformes, equipos y mercanc\u00eda premium</p>
+      <div class="products-grid" id="products-container-es">
+        <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--muted);">Cargando productos...</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="founder-section" id="founder">
+    <div class="founder-kanji">\u5275\u8a2d\u8005</div>
+    <div class="founder-inner">
+      <div class="founder-photo">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699787bc8523c56965e1b789.jpg" alt="Carlos Montalvo - Fundador de Ronin Brotherhood">
+      </div>
+      <div class="founder-content">
+        <div class="founder-badge">5x Campe\u00f3n Mundial</div>
+        <div class="founder-name">Carlos Montalvo</div>
+        <div class="founder-titles">5X Campe\u00f3n Mundial &bull; <span>Fundador de Ronin Brotherhood</span></div>
+        <div class="founder-role">Gran Maestro &bull; San Sebasti\u00e1n, Puerto Rico</div>
+        <div class="founder-bio">
+          <p>Carlos comenz\u00f3 su carrera en las Artes Marciales durante sus primeros a\u00f1os de escuela intermedia en la Ciudad de San Sebasti\u00e1n, Puerto Rico, donde su padre fue el antiguo Jefe de la Polic\u00eda Municipal.</p>
+          <p>Practic\u00f3 primero Karate y Tae Kwon Do (1969) por un corto per\u00edodo de tiempo en el Club 4-H cerca de su casa. Luego practic\u00f3 el estilo chino de Shaolin Tsu Kempo.</p>
+          <p>Su \u00fanico hermano comenz\u00f3 a practicar Okinawa Kempo Karate Do bajo Sempai Luis C\u00e1mara y Sensei Edwin Hern\u00e1ndez \u2014 un estudiante directo de Toshimitsu Kina, Naha, Okinawa.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="kancho-section" id="kanchoai">
+    <div class="container">
+      <div class="kancho-header">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782813ff51693e263e40a.png" alt="KanchoAI">
+        <h2>Elige Tu Plan <span class="ka-accent">Kancho AI</span></h2>
+        <p>Potencia tu escuela de artes marciales con inteligencia artificial, recepcionista automatizada y soluciones CRM completas.</p>
+      </div>
+      <div class="pricing-grid">
+        <div class="price-card">
+          <h3>Kancho Intelligence</h3>
+          <div class="price-sub">Inteligencia Empresarial IA</div>
+          <div class="price-amount"><span class="price-num">$197</span><span class="price-period"> /mes</span></div>
+          <ul class="price-features">
+            <li>Oficial de Inteligencia Empresarial IA</li>
+            <li>Se integra con tu CRM existente</li>
+            <li>Monitoreo de salud en tiempo real</li>
+            <li>Detecci\u00f3n de riesgo de abandono y alertas</li>
+            <li>Puntuaci\u00f3n y priorizaci\u00f3n de prospectos</li>
+            <li>An\u00e1lisis de ingresos y pron\u00f3sticos</li>
+            <li>Asesor empresarial de voz IA</li>
+            <li>100 minutos de voz IA incluidos ($0.50 adicional)</li>
+          </ul>
+          <a href="https://kanchoai.com" target="_blank" class="price-btn price-btn-outline">Comenzar</a>
+        </div>
+        <div class="price-card popular">
+          <div class="popular-badge">M\u00e1s Popular</div>
+          <h3>Kancho Pro</h3>
+          <div class="price-sub">Inteligencia + Recepcionista IA</div>
+          <div class="price-amount"><span class="price-num">$397</span><span class="price-period"> /mes</span></div>
+          <ul class="price-features">
+            <li class="bold">Todo lo de Intelligence</li>
+            <li>Recepcionista IA 24/7 (Tel\u00e9fono y SMS)</li>
+            <li>Llamadas autom\u00e1ticas de seguimiento</li>
+            <li>Campa\u00f1as de retenci\u00f3n</li>
+            <li>Recuperaci\u00f3n de citas perdidas</li>
+            <li>Automatizaci\u00f3n de recordatorios de pago</li>
+            <li>Soporte biling\u00fce (EN/ES)</li>
+            <li>500 minutos de voz IA incluidos ($0.45 adicional)</li>
+          </ul>
+          <a href="https://kanchoai.com" target="_blank" class="price-btn price-btn-primary">Comenzar</a>
+        </div>
+        <div class="price-card">
+          <h3>Kancho Enterprise</h3>
+          <div class="price-sub">Soluci\u00f3n SaaS Multi-Tenant</div>
+          <div class="price-amount"><span class="price-custom">Personalizado</span></div>
+          <ul class="price-features">
+            <li class="bold">Todo lo de Pro</li>
+            <li>Plataforma multi-tenant marca blanca</li>
+            <li>Soporte multi-idioma</li>
+            <li>Integraciones personalizadas y acceso API</li>
+            <li>Gerente de cuenta dedicado</li>
+            <li>Soporte prioritario y SLA</li>
+            <li>Precios por volumen para proveedores SaaS</li>
+            <li>Minutos de voz IA ilimitados</li>
+          </ul>
+          <a href="https://kanchoai.com" target="_blank" class="price-btn price-btn-outline">Agendar Llamada</a>
+        </div>
+      </div>
+      <div class="pricing-note">Todos los planes incluyen 14 d\u00edas de prueba gratis. No se requiere tarjeta de cr\u00e9dito.</div>
+    </div>
+  </section>
+
+  <section class="section" id="training">
+    <div class="container">
+      <h2 class="section-title">Entrenamiento T\u00e1ctico RPDTA</h2>
+      <p class="section-sub">Programas profesionales de entrenamiento para fuerzas del orden y militares</p>
+      <div class="courses-list" id="courses-container-es">
+        <div style="text-align: center; padding: 40px; color: var(--muted);">Cargando cursos...</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="groups-banner">
+    <div class="groups-banner-corners">
+      <span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span>
+    </div>
+    <img class="groups-banner-img" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699789283873afd1a0b1898d.jpg" alt="Grupos de Artes Marciales - Ronin Brotherhood">
+    <div class="groups-banner-overlay"></div>
+    <div class="groups-banner-label">
+      <h2>Grupos de Artes Marciales</h2>
+      <div class="banner-sub">Unidos Bajo Una Hermandad</div>
+    </div>
+  </section>
+
+  <section class="cta-section" id="sponsors">
+    <div class="container">
+      <div class="cta-inner">
+        <h2>Convi\u00e9rtete en Patrocinador</h2>
+        <p>Apoya la excelencia en artes marciales en 28 pa\u00edses. As\u00f3ciate con la Hermandad Ronin.</p>
+        <a href="/ronin/api/v1/sponsors/inquiry" class="btn btn-gold" style="margin-right: 12px;">Consulta de Patrocinio</a>
+        <a href="#" class="btn btn-primary" onclick="openModal('signup'); return false;">\u00danete como Miembro</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== LOGIN MODAL ====== -->
+  <div class="modal-overlay" id="modal-login" onclick="if(event.target===this)closeModals()">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModals()">&times;</button>
+      <h2>Bienvenido de Nuevo</h2>
+      <div class="modal-sub">Inicia sesi\u00f3n en tu cuenta de Ronin Brotherhood</div>
+      <div class="form-error" id="login-error"></div>
+      <div class="form-group">
+        <label>Correo Electr\u00f3nico</label>
+        <input type="email" id="login-email" placeholder="tu@correo.com">
+      </div>
+      <div class="form-group">
+        <label>Contrase\u00f1a</label>
+        <input type="password" id="login-password" placeholder="Ingresa tu contrase\u00f1a" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="btn-submit" id="btn-login-submit" onclick="doLogin()">Iniciar Sesi\u00f3n</button>
+      <div class="switch-link">\u00bfNo tienes cuenta? <a onclick="openModal('signup')">\u00danete a la Hermandad</a></div>
+    </div>
+  </div>
+
+  <!-- ====== SIGNUP MODAL ====== -->
+  <div class="modal-overlay" id="modal-signup" onclick="if(event.target===this)closeModals()">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModals()">&times;</button>
+      <h2>\u00danete a la Hermandad</h2>
+      <div class="modal-sub">Reg\u00edstrate como miembro de Ronin Brotherhood</div>
+      <div class="form-error" id="signup-error"></div>
+      <div class="form-success" id="signup-success"></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nombre *</label>
+          <input type="text" id="signup-first" placeholder="Nombre">
+        </div>
+        <div class="form-group">
+          <label>Apellido *</label>
+          <input type="text" id="signup-last" placeholder="Apellido">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Correo Electr\u00f3nico *</label>
+        <input type="email" id="signup-email" placeholder="tu@correo.com">
+      </div>
+      <div class="form-group">
+        <label>Contrase\u00f1a *</label>
+        <input type="password" id="signup-password" placeholder="M\u00ednimo 6 caracteres">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Tel\u00e9fono</label>
+          <input type="tel" id="signup-phone" placeholder="+1 (555) 123-4567">
+        </div>
+        <div class="form-group">
+          <label>Pa\u00eds</label>
+          <input type="text" id="signup-country" placeholder="Puerto Rico" value="Puerto Rico">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Rango</label>
+          <select id="signup-rank">
+            <option value="">Selecciona rango...</option>
+            <option value="Shodan">Shodan (1er Dan)</option>
+            <option value="Nidan">Nidan (2do Dan)</option>
+            <option value="Sandan">Sandan (3er Dan)</option>
+            <option value="Yondan">Yondan (4to Dan)</option>
+            <option value="Godan">Godan (5to Dan)</option>
+            <option value="Rokudan">Rokudan (6to Dan)</option>
+            <option value="Nanadan">Nanadan (7mo Dan)</option>
+            <option value="Hachidan">Hachidan (8vo Dan)</option>
+            <option value="Kudan">Kudan (9no Dan)</option>
+            <option value="Judan">Judan (10mo Dan)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Nombre del Dojo</label>
+          <input type="text" id="signup-dojo" placeholder="Nombre de tu escuela">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Estilo Principal</label>
+        <select id="signup-style">
+          <option value="Goju Ryu">Goju Ryu</option>
+          <option value="Shotokan">Shotokan</option>
+          <option value="Taekwondo">Taekwondo</option>
+          <option value="Judo">Judo</option>
+          <option value="Brazilian Jiu-Jitsu">Brazilian Jiu-Jitsu</option>
+          <option value="MMA">MMA</option>
+          <option value="Krav Maga">Krav Maga</option>
+          <option value="Otro">Otro</option>
+        </select>
+      </div>
+      <button class="btn-submit" id="btn-signup-submit" onclick="doSignup()">Crear Cuenta</button>
+      <div class="switch-link">\u00bfYa eres miembro? <a onclick="openModal('login')">Iniciar Sesi\u00f3n</a></div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="container footer-inner">
+      <div class="footer-copy">&copy; ${new Date().getFullYear()} Ronin Brotherhood LLC. Todos los derechos reservados.</div>
+      <div class="footer-links">
+        <a href="/ronin/api/v1/groups">Grupos</a>
+        <a href="/ronin/api/v1/products">Tienda</a>
+        <a href="/ronin/api/v1/training">Entrenamiento</a>
+        <a href="/ronin/api/v1/events">Eventos</a>
+        <a href="/ronin/api/v1/press">Noticias</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    var API = '/ronin/api/v1';
+    var KANCHO_API = '/kanchoai/api/v1';
+    var memberToken = localStorage.getItem('ronin_token');
+    var memberData = null;
+
+    function openModal(type) { closeModals(); document.getElementById('modal-' + type).classList.add('active'); }
+    function closeModals() { document.querySelectorAll('.modal-overlay').forEach(function(m) { m.classList.remove('active'); }); }
+
+    function doLogin() {
+      var email = document.getElementById('login-email').value.trim();
+      var password = document.getElementById('login-password').value;
+      var errEl = document.getElementById('login-error');
+      var btn = document.getElementById('btn-login-submit');
+      errEl.style.display = 'none';
+      if (!email || !password) { errEl.textContent = 'Correo y contrase\u00f1a son requeridos'; errEl.style.display = 'block'; return; }
+      btn.disabled = true; btn.textContent = 'Iniciando sesi\u00f3n...';
+      fetch(API + '/members/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email, password: password }) })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        btn.disabled = false; btn.textContent = 'Iniciar Sesi\u00f3n';
+        if (data.success && data.token) { localStorage.setItem('ronin_token', data.token); memberToken = data.token; closeModals(); location.reload(); }
+        else { errEl.textContent = data.error || 'Error al iniciar sesi\u00f3n'; errEl.style.display = 'block'; }
+      }).catch(function() { btn.disabled = false; btn.textContent = 'Iniciar Sesi\u00f3n'; errEl.textContent = 'Error de conexi\u00f3n.'; errEl.style.display = 'block'; });
+    }
+
+    function doSignup() {
+      var first = document.getElementById('signup-first').value.trim();
+      var last = document.getElementById('signup-last').value.trim();
+      var email = document.getElementById('signup-email').value.trim();
+      var password = document.getElementById('signup-password').value;
+      var phone = document.getElementById('signup-phone').value.trim();
+      var country = document.getElementById('signup-country').value.trim();
+      var rank = document.getElementById('signup-rank').value;
+      var dojo = document.getElementById('signup-dojo').value.trim();
+      var style = document.getElementById('signup-style').value;
+      var errEl = document.getElementById('signup-error');
+      var successEl = document.getElementById('signup-success');
+      var btn = document.getElementById('btn-signup-submit');
+      errEl.style.display = 'none'; successEl.style.display = 'none';
+      if (!first || !last || !email || !password) { errEl.textContent = 'Nombre, apellido, correo y contrase\u00f1a son requeridos'; errEl.style.display = 'block'; return; }
+      if (password.length < 6) { errEl.textContent = 'La contrase\u00f1a debe tener al menos 6 caracteres'; errEl.style.display = 'block'; return; }
+      btn.disabled = true; btn.textContent = 'Creando cuenta...';
+      fetch(API + '/members/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ first_name: first, last_name: last, email: email, password: password, phone: phone, country: country, rank: rank, dojo_name: dojo, styles: style ? [style] : [] }) })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        btn.disabled = false; btn.textContent = 'Crear Cuenta';
+        if (data.success) {
+          if (data.token) { localStorage.setItem('ronin_token', data.token); memberToken = data.token; closeModals(); location.reload(); }
+          else { successEl.textContent = '\u00a1Cuenta creada! Ya puedes iniciar sesi\u00f3n.'; successEl.style.display = 'block'; setTimeout(function() { openModal('login'); }, 1500); }
+        } else { errEl.textContent = data.error || 'Error en el registro'; errEl.style.display = 'block'; }
+      }).catch(function() { btn.disabled = false; btn.textContent = 'Crear Cuenta'; errEl.textContent = 'Error de conexi\u00f3n.'; errEl.style.display = 'block'; });
+    }
+
+    function logout() { localStorage.removeItem('ronin_token'); memberToken = null; location.reload(); }
+
+    // Load products
+    fetch('/ronin/api/v1/products?featured=true&limit=4')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.success && data.data.length > 0) {
+          var c = document.getElementById('products-container-es');
+          c.innerHTML = data.data.map(function(p) {
+            return '<div class="product-card"><div class="product-img">&#x1F94B;</div><div class="product-info"><div class="product-cat">' + p.category + '</div><div class="product-name">' + p.name + '</div><div class="product-price">$' + parseFloat(p.price).toFixed(2) + '</div></div></div>';
+          }).join('');
+        }
+      }).catch(function() {});
+
+    // Load courses
+    fetch('/ronin/api/v1/training/rpdta')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.success && data.data.length > 0) {
+          var c = document.getElementById('courses-container-es');
+          c.innerHTML = data.data.map(function(course) {
+            return '<div class="course-card"><div class="course-info"><h3>' + course.title + '</h3><div class="course-meta"><span>' + course.duration_hours + ' horas</span><span>' + (course.certification_awarded || 'Certificado') + '</span><span>' + (course.requires_clearance ? 'Requiere Autorizaci\u00f3n' : 'Inscripci\u00f3n Abierta') + '</span></div></div><div class="course-price">$' + parseFloat(course.price).toFixed(2) + '</div></div>';
+          }).join('');
+        }
+      }).catch(function() {});
+  </script>
+</body>
+</html>`);
+});
 
 // ============================================================================
 // ERROR HANDLING
