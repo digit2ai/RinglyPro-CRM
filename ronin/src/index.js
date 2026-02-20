@@ -448,7 +448,7 @@ if (fs.existsSync(dashboardDistPath)) {
       .btn-login, .btn-join { padding: 6px 10px; font-size: 11px; }
 
       /* Hero */
-      .hero { min-height: auto; padding: 70px 0 32px; background-size: contain; background-position: center 65px; background-repeat: no-repeat; }
+      .hero { min-height: auto; padding: 70px 0 32px; margin-top: 0; background-size: contain; background-position: center 65px; background-repeat: no-repeat; }
       .hero-content { padding-top: 56vw; }
       .hero h1 { font-size: 28px; }
       .hero p { font-size: 15px; }
@@ -1475,7 +1475,7 @@ app.get(`${BASE_PATH}/es`, (req, res) => {
       nav { display: none; }
       .header-auth { gap: 4px; }
       .btn-login, .btn-join { padding: 6px 10px; font-size: 11px; }
-      .hero { min-height: auto; padding: 70px 0 32px; background-size: contain; background-position: center 65px; background-repeat: no-repeat; }
+      .hero { min-height: auto; padding: 70px 0 32px; margin-top: 0; background-size: contain; background-position: center 65px; background-repeat: no-repeat; }
       .hero-content { padding-top: 56vw; }
       .hero h1 { font-size: 28px; }
       .hero p { font-size: 15px; }
@@ -2164,7 +2164,7 @@ app.get(`${BASE_PATH}/fil`, (req, res) => {
     .lang-switch a:not(.active):hover { color: #fff; background: #222; }
     @media (max-width: 768px) {
       .header-inner { padding: 10px 0; } .brand-logo { height: 40px; } .brand-sub { font-size: 7px; } nav { display: none; } .header-auth { gap: 4px; } .btn-login, .btn-join { padding: 6px 10px; font-size: 11px; }
-      .hero { min-height: auto; padding: 70px 0 32px; background-size: contain; background-position: center 65px; background-repeat: no-repeat; } .hero-content { padding-top: 56vw; } .hero h1 { font-size: 28px; } .hero p { font-size: 15px; }
+      .hero { min-height: auto; padding: 70px 0 32px; margin-top: 0; background-size: contain; background-position: center 65px; background-repeat: no-repeat; } .hero-content { padding-top: 56vw; } .hero h1 { font-size: 28px; } .hero p { font-size: 15px; }
       .hero-actions { flex-direction: column; gap: 10px; } .hero-actions .btn { width: 100%; text-align: center; } .hero-quote { margin-top: 24px; padding: 12px 16px; } .hero-quote p { font-size: 13px; }
       .stats { padding: 32px 0; } .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; } .stat { padding: 10px; } .stat-num { font-size: 24px; }
       .section { padding: 40px 0; } .section-title { font-size: 22px; } .groups-grid { grid-template-columns: 1fr; } .group-meta { flex-wrap: wrap; gap: 8px; }
