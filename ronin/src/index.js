@@ -547,6 +547,7 @@ if (fs.existsSync(dashboardDistPath)) {
         <a href="#training">Training</a>
         <a href="#events">Events</a>
         <a href="#sponsors">Sponsors</a>
+        <a href="https://kanchoai.com" target="_blank">AI App</a>
       </nav>
       <div class="header-auth" id="header-auth">
         <a href="#" class="btn-login" onclick="openModal('login'); return false;">Login</a>
@@ -1546,6 +1547,7 @@ app.get(`${BASE_PATH}/es`, (req, res) => {
         <a href="#training">Entrenamiento</a>
         <a href="#events">Eventos</a>
         <a href="#sponsors">Patrocinadores</a>
+        <a href="https://kanchoai.com" target="_blank">AI App</a>
       </nav>
       <div class="header-auth" id="header-auth-es">
         <a href="#" class="btn-login" onclick="openModal('login'); return false;">Iniciar Sesi\u00f3n</a>
@@ -2192,6 +2194,7 @@ app.get(`${BASE_PATH}/fil`, (req, res) => {
         <a href="#training">Pagsasanay</a>
         <a href="#events">Mga Kaganapan</a>
         <a href="#sponsors">Mga Sponsor</a>
+        <a href="https://kanchoai.com" target="_blank">AI App</a>
       </nav>
       <div class="header-auth" id="header-auth-fil">
         <a href="#" class="btn-login" onclick="openModal('login'); return false;">Mag-login</a>
