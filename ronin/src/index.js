@@ -219,7 +219,7 @@ if (fs.existsSync(dashboardDistPath)) {
     .btn-gold { background: transparent; color: var(--gold); border: 2px solid var(--gold); }
     .btn-gold:hover { background: var(--gold); color: #000; }
 
-    .hero { min-height: 130vh; display: flex; align-items: center; padding-top: 80px; background: linear-gradient(to right, rgba(10,10,10,.5) 0%, rgba(10,10,10,.3) 50%, rgba(10,10,10,.1) 100%), url('https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6997c4dc145ac095a4d2ee05.png'); background-size: cover; background-position: 70% 35%; }
+    .hero { min-height: 130vh; display: flex; align-items: center; padding-top: 40px; margin-top: 93px; background: linear-gradient(to right, rgba(10,10,10,.5) 0%, rgba(10,10,10,.3) 50%, rgba(10,10,10,.1) 100%), url('https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6997c4dc145ac095a4d2ee05.png'); background-size: cover; background-position: 70% 35%; }
     .hero-content { max-width: 680px; }
     .hero-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--gold); color: var(--gold); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 20px; }
     .hero h1 { font-family: 'Noto Serif', serif; font-size: clamp(32px, 5vw, 52px); font-weight: 700; line-height: 1.15; margin-bottom: 16px; }
@@ -1312,7 +1312,7 @@ app.get(`${BASE_PATH}/es`, (req, res) => {
     .btn-gold { background: transparent; color: var(--gold); border: 2px solid var(--gold); }
     .btn-gold:hover { background: var(--gold); color: #000; }
 
-    .hero { min-height: 130vh; display: flex; align-items: center; padding-top: 80px; background: linear-gradient(to right, rgba(10,10,10,.5) 0%, rgba(10,10,10,.3) 50%, rgba(10,10,10,.1) 100%), url('https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6997c4dc145ac095a4d2ee05.png'); background-size: cover; background-position: 70% 35%; }
+    .hero { min-height: 130vh; display: flex; align-items: center; padding-top: 40px; margin-top: 93px; background: linear-gradient(to right, rgba(10,10,10,.5) 0%, rgba(10,10,10,.3) 50%, rgba(10,10,10,.1) 100%), url('https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6997c4dc145ac095a4d2ee05.png'); background-size: cover; background-position: 70% 35%; }
     .hero-content { max-width: 680px; }
     .hero-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--gold); color: var(--gold); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 20px; }
     .hero h1 { font-family: 'Noto Serif', serif; font-size: clamp(32px, 5vw, 52px); font-weight: 700; line-height: 1.15; margin-bottom: 16px; }
@@ -2021,7 +2021,7 @@ app.get(`${BASE_PATH}/fil`, (req, res) => {
     .btn-primary:hover { background: #ff1a1a; }
     .btn-gold { background: transparent; color: var(--gold); border: 2px solid var(--gold); }
     .btn-gold:hover { background: var(--gold); color: #000; }
-    .hero { min-height: 130vh; display: flex; align-items: center; padding-top: 80px; background: linear-gradient(to right, rgba(10,10,10,.5) 0%, rgba(10,10,10,.3) 50%, rgba(10,10,10,.1) 100%), url('https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6997c4dc145ac095a4d2ee05.png'); background-size: cover; background-position: 70% 35%; }
+    .hero { min-height: 130vh; display: flex; align-items: center; padding-top: 40px; margin-top: 93px; background: linear-gradient(to right, rgba(10,10,10,.5) 0%, rgba(10,10,10,.3) 50%, rgba(10,10,10,.1) 100%), url('https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6997c4dc145ac095a4d2ee05.png'); background-size: cover; background-position: 70% 35%; }
     .hero-content { max-width: 680px; }
     .hero-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--gold); color: var(--gold); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 20px; }
     .hero h1 { font-family: 'Noto Serif', serif; font-size: clamp(32px, 5vw, 52px); font-weight: 700; line-height: 1.15; margin-bottom: 16px; }
