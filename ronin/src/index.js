@@ -597,6 +597,10 @@ if (fs.existsSync(dashboardDistPath)) {
     </div>
   </section>
 
+  <section class="groups-banner">
+    <img class="groups-banner-img" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69988b7cdf9bdf9e185fd2e7.jpg" alt="Ronin Brotherhood">
+  </section>
+
   <section class="section" id="groups">
     <div class="container">
       <h2 class="section-title">Our Organizations</h2>
@@ -763,6 +767,10 @@ if (fs.existsSync(dashboardDistPath)) {
       </div>
       <div class="pricing-note">All plans include a 14-day free trial. No credit card required to start.</div>
     </div>
+  </section>
+
+  <section class="groups-banner">
+    <img class="groups-banner-img" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69988baf3a2afd1f8d5b1110.jpg" alt="RPDTA Tactical Training">
   </section>
 
   <section class="section" id="training">
@@ -1597,6 +1605,10 @@ app.get(`${BASE_PATH}/es`, (req, res) => {
     </div>
   </section>
 
+  <section class="groups-banner">
+    <img class="groups-banner-img" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69988b7cdf9bdf9e185fd2e7.jpg" alt="Ronin Brotherhood">
+  </section>
+
   <section class="section" id="groups">
     <div class="container">
       <h2 class="section-title">Nuestras Organizaciones</h2>
@@ -1763,6 +1775,10 @@ app.get(`${BASE_PATH}/es`, (req, res) => {
       </div>
       <div class="pricing-note">Todos los planes incluyen 14 d\u00edas de prueba gratis. No se requiere tarjeta de cr\u00e9dito.</div>
     </div>
+  </section>
+
+  <section class="groups-banner">
+    <img class="groups-banner-img" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69988baf3a2afd1f8d5b1110.jpg" alt="RPDTA Tactical Training">
   </section>
 
   <section class="section" id="training">
@@ -2244,6 +2260,10 @@ app.get(`${BASE_PATH}/fil`, (req, res) => {
     </div>
   </section>
 
+  <section class="groups-banner">
+    <img class="groups-banner-img" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69988b7cdf9bdf9e185fd2e7.jpg" alt="Ronin Brotherhood">
+  </section>
+
   <section class="section" id="groups">
     <div class="container">
       <h2 class="section-title">Mga Organisasyon Namin</h2>
@@ -2410,6 +2430,10 @@ app.get(`${BASE_PATH}/fil`, (req, res) => {
       </div>
       <div class="pricing-note">Lahat ng plano ay may kasamang 14 na araw na libreng pagsubok. Hindi kailangan ng credit card.</div>
     </div>
+  </section>
+
+  <section class="groups-banner">
+    <img class="groups-banner-img" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69988baf3a2afd1f8d5b1110.jpg" alt="RPDTA Tactical Training">
   </section>
 
   <section class="section" id="training">
