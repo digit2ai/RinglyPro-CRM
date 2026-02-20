@@ -774,6 +774,14 @@ if (fs.existsSync(dashboardDistPath)) {
     </div>
   </section>
 
+  <section class="groups-banner">
+    <div class="groups-banner-corners">
+      <span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span>
+    </div>
+    <img class="groups-banner-img" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699789283873afd1a0b1898d.jpg" alt="Ronin Brotherhood">
+    <div class="groups-banner-overlay"></div>
+  </section>
+
   <section class="cta-section" id="sponsors">
     <div class="container">
       <div class="cta-inner">
@@ -1765,6 +1773,13 @@ app.get(`${BASE_PATH}/es`, (req, res) => {
     </div>
   </section>
 
+  <section class="groups-banner">
+    <div class="groups-banner-corners">
+      <span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span>
+    </div>
+    <img class="groups-banner-img" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699789283873afd1a0b1898d.jpg" alt="Ronin Brotherhood">
+    <div class="groups-banner-overlay"></div>
+  </section>
 
   <section class="cta-section" id="sponsors">
     <div class="container">
@@ -2404,6 +2419,13 @@ app.get(`${BASE_PATH}/fil`, (req, res) => {
     </div>
   </section>
 
+  <section class="groups-banner">
+    <div class="groups-banner-corners">
+      <span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span>
+    </div>
+    <img class="groups-banner-img" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699789283873afd1a0b1898d.jpg" alt="Ronin Brotherhood">
+    <div class="groups-banner-overlay"></div>
+  </section>
 
   <section class="cta-section" id="sponsors">
     <div class="container">
