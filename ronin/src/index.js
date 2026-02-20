@@ -208,7 +208,7 @@ if (fs.existsSync(dashboardDistPath)) {
     header { position: fixed; top: 0; left: 0; right: 0; z-index: 50; background: rgba(10,10,10,.95); border-bottom: 1px solid var(--line); backdrop-filter: blur(10px); }
     .header-inner { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; }
     .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
-    .brand-logo { height: 64px; width: auto; object-fit: contain; display: block; }
+    .brand-logo { height: 90px; width: auto; object-fit: contain; display: block; }
     .brand-sub { font-size: 9px; color: var(--muted); letter-spacing: .12em; text-transform: uppercase; margin-top: 2px; }
     nav { display: flex; gap: 20px; }
     nav a { color: var(--muted); text-decoration: none; font-size: 13px; font-weight: 500; }
@@ -1299,7 +1299,7 @@ app.get(`${BASE_PATH}/es`, (req, res) => {
     header { position: fixed; top: 0; left: 0; right: 0; z-index: 50; background: rgba(10,10,10,.95); border-bottom: 1px solid var(--line); backdrop-filter: blur(10px); }
     .header-inner { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; }
     .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
-    .brand-logo { height: 64px; width: auto; object-fit: contain; display: block; }
+    .brand-logo { height: 90px; width: auto; object-fit: contain; display: block; }
     .brand-sub { font-size: 9px; color: var(--muted); letter-spacing: .12em; text-transform: uppercase; margin-top: 2px; }
     nav { display: flex; gap: 20px; }
     nav a { color: var(--muted); text-decoration: none; font-size: 13px; font-weight: 500; }
@@ -2007,7 +2007,7 @@ app.get(`${BASE_PATH}/fil`, (req, res) => {
     header { position: fixed; top: 0; left: 0; right: 0; z-index: 50; background: rgba(10,10,10,.95); border-bottom: 1px solid var(--line); backdrop-filter: blur(10px); }
     .header-inner { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; }
     .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
-    .brand-logo { height: 64px; width: auto; object-fit: contain; display: block; }
+    .brand-logo { height: 90px; width: auto; object-fit: contain; display: block; }
     .brand-sub { font-size: 9px; color: var(--muted); letter-spacing: .12em; text-transform: uppercase; margin-top: 2px; }
     nav { display: flex; gap: 20px; }
     nav a { color: var(--muted); text-decoration: none; font-size: 13px; font-weight: 500; }
