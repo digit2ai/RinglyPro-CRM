@@ -649,11 +649,13 @@ if (fs.existsSync(dashboardDistPath)) {
         <div class="kanji">武 士 道</div>
         <span class="cinema-line"></span>
       </div>
-      <img class="cinema-poster" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6997807d8523c514badec0d4.webp" alt="Ronin Brotherhood">
       <div class="tv-shell">
         <div class="tv-bezel">
-          <div class="tv-screen">
-            <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/HByRigYk8Hg?si=1&rel=0&modestbranding=1" title="Ronin Brotherhood" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+          <div class="tv-screen" onclick="this.innerHTML='<iframe width=560 height=315 src=https://www.youtube-nocookie.com/embed/HByRigYk8Hg?si=1&rel=0&modestbranding=1&autoplay=1 title=Ronin+Brotherhood frameborder=0 allow=accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share referrerpolicy=strict-origin-when-cross-origin allowfullscreen style=position:absolute;top:0;left:0;width:100%;height:100%;border:0></iframe>';this.onclick=null;this.style.cursor='default';" style="cursor:pointer;">
+              <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6997807d8523c514badec0d4.webp" alt="Ronin Brotherhood" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;">
+              <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:72px;height:72px;background:rgba(209,4,4,.85);border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:3;transition:transform .2s,background .2s;" onmouseover="this.style.transform='translate(-50%,-50%) scale(1.1)';this.style.background='rgba(209,4,4,1)';" onmouseout="this.style.transform='translate(-50%,-50%) scale(1)';this.style.background='rgba(209,4,4,.85)';">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="#fff"><polygon points="8,5 19,12 8,19"/></svg>
+              </div>
           </div>
         </div>
         <div class="tv-bottom">
@@ -1650,11 +1652,13 @@ app.get(`${BASE_PATH}/es`, (req, res) => {
         <div class="kanji">\u6b66 \u58eb \u9053</div>
         <span class="cinema-line"></span>
       </div>
-      <img class="cinema-poster" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6997807d8523c514badec0d4.webp" alt="Ronin Brotherhood">
       <div class="tv-shell">
         <div class="tv-bezel">
-          <div class="tv-screen">
-            <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/HByRigYk8Hg?si=1&rel=0&modestbranding=1" title="Ronin Brotherhood" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+          <div class="tv-screen" onclick="this.innerHTML='<iframe width=560 height=315 src=https://www.youtube-nocookie.com/embed/HByRigYk8Hg?si=1&rel=0&modestbranding=1&autoplay=1 title=Ronin+Brotherhood frameborder=0 allow=accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share referrerpolicy=strict-origin-when-cross-origin allowfullscreen style=position:absolute;top:0;left:0;width:100%;height:100%;border:0></iframe>';this.onclick=null;this.style.cursor='default';" style="cursor:pointer;">
+              <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6997807d8523c514badec0d4.webp" alt="Ronin Brotherhood" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;">
+              <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:72px;height:72px;background:rgba(209,4,4,.85);border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:3;transition:transform .2s,background .2s;" onmouseover="this.style.transform='translate(-50%,-50%) scale(1.1)';this.style.background='rgba(209,4,4,1)';" onmouseout="this.style.transform='translate(-50%,-50%) scale(1)';this.style.background='rgba(209,4,4,.85)';">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="#fff"><polygon points="8,5 19,12 8,19"/></svg>
+              </div>
           </div>
         </div>
         <div class="tv-bottom">
@@ -2298,11 +2302,13 @@ app.get(`${BASE_PATH}/fil`, (req, res) => {
         <div class="kanji">\u6b66 \u58eb \u9053</div>
         <span class="cinema-line"></span>
       </div>
-      <img class="cinema-poster" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6997807d8523c514badec0d4.webp" alt="Ronin Brotherhood">
       <div class="tv-shell">
         <div class="tv-bezel">
-          <div class="tv-screen">
-            <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/HByRigYk8Hg?si=1&rel=0&modestbranding=1" title="Ronin Brotherhood" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+          <div class="tv-screen" onclick="this.innerHTML='<iframe width=560 height=315 src=https://www.youtube-nocookie.com/embed/HByRigYk8Hg?si=1&rel=0&modestbranding=1&autoplay=1 title=Ronin+Brotherhood frameborder=0 allow=accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share referrerpolicy=strict-origin-when-cross-origin allowfullscreen style=position:absolute;top:0;left:0;width:100%;height:100%;border:0></iframe>';this.onclick=null;this.style.cursor='default';" style="cursor:pointer;">
+              <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6997807d8523c514badec0d4.webp" alt="Ronin Brotherhood" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;">
+              <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:72px;height:72px;background:rgba(209,4,4,.85);border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:3;transition:transform .2s,background .2s;" onmouseover="this.style.transform='translate(-50%,-50%) scale(1.1)';this.style.background='rgba(209,4,4,1)';" onmouseout="this.style.transform='translate(-50%,-50%) scale(1)';this.style.background='rgba(209,4,4,.85)';">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="#fff"><polygon points="8,5 19,12 8,19"/></svg>
+              </div>
           </div>
         </div>
         <div class="tv-bottom">
