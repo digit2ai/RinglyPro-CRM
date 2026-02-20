@@ -448,7 +448,7 @@ if (fs.existsSync(dashboardDistPath)) {
       .btn-login, .btn-join { padding: 6px 10px; font-size: 11px; }
 
       /* Hero */
-      .hero { min-height: auto; padding: 70px 0 32px; background-size: contain; background-position: top center; background-repeat: no-repeat; }
+      .hero { min-height: auto; padding: 70px 0 32px; background-size: contain; background-position: center 65px; background-repeat: no-repeat; }
       .hero-content { padding-top: 56vw; }
       .hero h1 { font-size: 28px; }
       .hero p { font-size: 15px; }
@@ -1475,7 +1475,7 @@ app.get(`${BASE_PATH}/es`, (req, res) => {
       nav { display: none; }
       .header-auth { gap: 4px; }
       .btn-login, .btn-join { padding: 6px 10px; font-size: 11px; }
-      .hero { min-height: auto; padding: 70px 0 32px; background-size: contain; background-position: top center; background-repeat: no-repeat; }
+      .hero { min-height: auto; padding: 70px 0 32px; background-size: contain; background-position: center 65px; background-repeat: no-repeat; }
       .hero-content { padding-top: 56vw; }
       .hero h1 { font-size: 28px; }
       .hero p { font-size: 15px; }
