@@ -774,18 +774,6 @@ if (fs.existsSync(dashboardDistPath)) {
     </div>
   </section>
 
-  <section class="groups-banner">
-    <div class="groups-banner-corners">
-      <span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span>
-    </div>
-    <img class="groups-banner-img" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699789283873afd1a0b1898d.jpg" alt="Martial Arts Groups - Ronin Brotherhood">
-    <div class="groups-banner-overlay"></div>
-    <div class="groups-banner-label">
-      <h2>Martial Arts Groups</h2>
-      <div class="banner-sub">United Under One Brotherhood</div>
-    </div>
-  </section>
-
   <section class="cta-section" id="sponsors">
     <div class="container">
       <div class="cta-inner">
@@ -1777,17 +1765,6 @@ app.get(`${BASE_PATH}/es`, (req, res) => {
     </div>
   </section>
 
-  <section class="groups-banner">
-    <div class="groups-banner-corners">
-      <span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span>
-    </div>
-    <img class="groups-banner-img" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699789283873afd1a0b1898d.jpg" alt="Grupos de Artes Marciales - Ronin Brotherhood">
-    <div class="groups-banner-overlay"></div>
-    <div class="groups-banner-label">
-      <h2>Grupos de Artes Marciales</h2>
-      <div class="banner-sub">Unidos Bajo Una Hermandad</div>
-    </div>
-  </section>
 
   <section class="cta-section" id="sponsors">
     <div class="container">
@@ -2427,17 +2404,6 @@ app.get(`${BASE_PATH}/fil`, (req, res) => {
     </div>
   </section>
 
-  <section class="groups-banner">
-    <div class="groups-banner-corners">
-      <span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span>
-    </div>
-    <img class="groups-banner-img" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699789283873afd1a0b1898d.jpg" alt="Mga Grupo ng Martial Arts - Ronin Brotherhood">
-    <div class="groups-banner-overlay"></div>
-    <div class="groups-banner-label">
-      <h2>Mga Grupo ng Martial Arts</h2>
-      <div class="banner-sub">Nagkakaisa sa Ilalim ng Isang Kapatiran</div>
-    </div>
-  </section>
 
   <section class="cta-section" id="sponsors">
     <div class="container">
