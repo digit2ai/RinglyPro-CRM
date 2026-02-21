@@ -63,7 +63,9 @@ db.Sequelize = Sequelize;
     const bridgeMigrations = [
       `ALTER TABLE kancho_schools ADD COLUMN IF NOT EXISTS ringlypro_client_id INTEGER`,
       `ALTER TABLE kancho_schools ADD COLUMN IF NOT EXISTS ringlypro_user_id INTEGER`,
-      `ALTER TABLE kancho_schools ADD COLUMN IF NOT EXISTS ronin_member_id INTEGER`
+      `ALTER TABLE kancho_schools ADD COLUMN IF NOT EXISTS ronin_member_id INTEGER`,
+      `ALTER TABLE clients ADD COLUMN IF NOT EXISTS elevenlabs_agent_id VARCHAR(100)`,
+      `ALTER TABLE clients ADD COLUMN IF NOT EXISTS elevenlabs_phone_number_id VARCHAR(100)`
     ];
     for (const sql of bridgeMigrations) {
       try { await sequelize.query(sql); } catch (e) {}

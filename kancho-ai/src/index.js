@@ -953,6 +953,15 @@ if (models && !modelsError) {
     console.log('   /api/v1/bridge/crm      (contacts, appointments, messages, calls)');
     console.log('   /api/v1/bridge/voice    (voice agent status, toggle, settings)');
     console.log('   /api/v1/bridge/billing  (balance, plans, upgrade)');
+    // Checkout + signup flow routes (no auth - public)
+    try {
+      const bridgeCheckoutRoutes = require('./routes/bridge-checkout');
+      app.use('/api/v1/bridge/checkout', bridgeCheckoutRoutes);
+      console.log('   /api/v1/bridge/checkout (Stripe-first signup flow)');
+    } catch (checkoutError) {
+      console.log('⚠️ KanchoAI Checkout routes not available:', checkoutError.message);
+    }
+
   } catch (bridgeError) {
     console.log('⚠️ KanchoAI Bridge routes not available:', bridgeError.message);
   }

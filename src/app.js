@@ -18,6 +18,19 @@ const CLIENT_DOMAIN = process.env.CLIENT_DOMAIN || 'ringlypro.com';
 
 // Middleware - MUST COME BEFORE ROUTES
 app.use(cors());
+
+// KanchoAI Stripe webhook - MUST be before body parser for raw body access
+try {
+  const kanchoCheckout = require('../kancho-ai/src/routes/bridge-checkout');
+  app.post('/webhooks/kancho-stripe',
+    express.raw({ type: 'application/json' }),
+    kanchoCheckout.stripeWebhookHandler
+  );
+  console.log('✅ Kancho Stripe webhook mounted at /webhooks/kancho-stripe');
+} catch (e) {
+  console.log('⚠️ Kancho Stripe webhook not available:', e.message);
+}
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static(path.join(__dirname, '../public')));

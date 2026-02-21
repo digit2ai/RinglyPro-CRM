@@ -89,7 +89,10 @@ const Client = crmSequelize.define('Client', {
   rachel_enabled: { type: DataTypes.BOOLEAN, defaultValue: false },
   referral_code: { type: DataTypes.STRING(10) },
   active: { type: DataTypes.BOOLEAN, defaultValue: true },
-  user_id: { type: DataTypes.INTEGER }
+  user_id: { type: DataTypes.INTEGER },
+  // ElevenLabs agent provisioning fields
+  elevenlabs_agent_id: { type: DataTypes.STRING(100), allowNull: true },
+  elevenlabs_phone_number_id: { type: DataTypes.STRING(100), allowNull: true }
 }, { tableName: 'clients' });
 
 const CreditAccount = crmSequelize.define('CreditAccount', {
