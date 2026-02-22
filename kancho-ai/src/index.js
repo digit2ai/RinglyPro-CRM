@@ -1571,15 +1571,15 @@ if (models && !modelsError) {
       const currentMonth = today.toISOString().slice(0, 7);
       const trialsStarted = randBetween(8, 18);
       const trialsConverted = Math.floor(trialsStarted * (randBetween(50, 72) / 100));
-      const trialConversionRate = ((trialsConverted / trialsStarted) * 100).toFixed(2);
+      const trialConversionRate = Math.min(parseFloat(((trialsConverted / trialsStarted) * 100).toFixed(2)), 999.99);
       const cancelledStudents = randBetween(1, 4);
       const startingStudents = activeCount + cancelledStudents;
-      const churnRate = ((cancelledStudents / startingStudents) * 100).toFixed(2);
-      const arps = (totalRevenue / Math.max(activeCount, 1)).toFixed(2);
-      const revenueAtRisk = (atRisk * parseFloat(arps)).toFixed(2);
-      const growthPotential = (hotLeads * parseFloat(arps)).toFixed(2);
+      const churnRate = Math.min(parseFloat(((cancelledStudents / startingStudents) * 100).toFixed(2)), 999.99);
+      const arps = Math.min(parseFloat((totalRevenue / Math.max(activeCount, 1)).toFixed(2)), 99999999.99);
+      const revenueAtRisk = Math.min(parseFloat((atRisk * arps).toFixed(2)), 99999999.99);
+      const growthPotential = Math.min(parseFloat((hotLeads * arps).toFixed(2)), 99999999.99);
       const revenueTarget = school.monthly_revenue_target || 30000;
-      const revenueVsTargetPercent = ((totalRevenue / revenueTarget) * 100).toFixed(2);
+      const revenueVsTargetPercent = Math.min(parseFloat(((totalRevenue / revenueTarget) * 100).toFixed(2)), 9999.99);
 
       await school.update({ active_students: activeCount });
 
@@ -1589,20 +1589,20 @@ if (models && !modelsError) {
           report_month: currentMonth,
           active_students: activeCount,
           net_student_growth: trialsConverted - cancelledStudents,
-          churn_rate: parseFloat(churnRate),
-          arps: parseFloat(arps),
-          trial_conversion_rate: parseFloat(trialConversionRate),
+          churn_rate: churnRate,
+          arps: arps,
+          trial_conversion_rate: trialConversionRate,
           trials_started: trialsStarted,
           trials_converted: trialsConverted,
           cancelled_students: cancelledStudents,
           health_score: overallScore,
           health_grade: detailedGrade,
-          revenue_at_risk: parseFloat(revenueAtRisk),
+          revenue_at_risk: revenueAtRisk,
           students_at_risk: atRisk,
-          growth_potential: parseFloat(growthPotential),
+          growth_potential: growthPotential,
           hot_leads: hotLeads,
-          monthly_revenue: totalRevenue,
-          revenue_vs_target_percent: parseFloat(revenueVsTargetPercent)
+          monthly_revenue: Math.min(totalRevenue, 99999999.99),
+          revenue_vs_target_percent: revenueVsTargetPercent
         });
       }
 
