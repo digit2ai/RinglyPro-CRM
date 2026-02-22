@@ -4,7 +4,25 @@
 
 const express = require('express');
 const path = require('path');
+const jwt = require('jsonwebtoken');
 const app = express();
+
+// Admin auth middleware - verifies bridge JWT for admin-only endpoints
+const KANCHO_JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
+function requireAdmin(req, res, next) {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ success: false, error: 'Authentication required' });
+  try {
+    const decoded = jwt.verify(token, KANCHO_JWT_SECRET);
+    req.schoolId = decoded.schoolId;
+    req.clientId = decoded.clientId;
+    req.userId = decoded.userId;
+    req.userEmail = decoded.email;
+    next();
+  } catch (error) {
+    return res.status(401).json({ success: false, error: 'Invalid or expired token' });
+  }
+}
 
 // Kancho AI Logo URL
 const KANCHO_LOGO_URL = 'https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/698d318b7f6dcf1134316df1.png';
@@ -1047,9 +1065,14 @@ if (models && !modelsError) {
     // Protected student portal routes
     app.use('/api/v1/student', studentAuth, studentPortalRoutes);
 
+    // Student payment routes (Stripe checkout, autopay, merch purchase)
+    const studentPaymentRoutes = require('./routes/student-payments')(models);
+    app.use('/api/v1/student/payments', studentAuth, studentPaymentRoutes);
+
     console.log('🎓 KanchoAI Student Portal routes mounted:');
-    console.log('   /api/v1/student/auth   (register, login, password reset)');
-    console.log('   /api/v1/student/*      (dashboard, attendance, classes, profile)');
+    console.log('   /api/v1/student/auth      (register, login, password reset)');
+    console.log('   /api/v1/student/*         (dashboard, attendance, classes, profile)');
+    console.log('   /api/v1/student/payments  (Stripe checkout, autopay, merch)');
   } catch (studentError) {
     console.log('⚠️ KanchoAI Student Portal routes not available:', studentError.message);
   }
@@ -1143,7 +1166,7 @@ if (models && !modelsError) {
   });
 
   // Comprehensive demo data seed endpoint
-  app.post('/api/v1/seed-demo', async (req, res) => {
+  app.post('/api/v1/seed-demo', requireAdmin, async (req, res) => {
     try {
       const { KanchoSchool, KanchoStudent, KanchoLead, KanchoRevenue, KanchoAiCall, KanchoHealthScore, KanchoBusinessHealthMetrics } = models;
       const today = new Date();
@@ -1462,7 +1485,7 @@ if (models && !modelsError) {
   });
 
   // Seed classes + attendance data
-  app.post('/api/v1/seed-classes-attendance', async (req, res) => {
+  app.post('/api/v1/seed-classes-attendance', requireAdmin, async (req, res) => {
     try {
       const { KanchoSchool, KanchoStudent, KanchoClass, KanchoAttendance } = models;
 
@@ -1626,7 +1649,7 @@ if (models && !modelsError) {
   });
 
   // Seed data for an existing school by ID
-  app.post('/api/v1/seed-school/:id', async (req, res) => {
+  app.post('/api/v1/seed-school/:id', requireAdmin, async (req, res) => {
     try {
       const { KanchoSchool, KanchoStudent, KanchoLead, KanchoRevenue, KanchoAiCall, KanchoHealthScore, KanchoBusinessHealthMetrics, KanchoClass } = models;
       const schoolId = parseInt(req.params.id);
@@ -1887,7 +1910,7 @@ if (models && !modelsError) {
   // =====================================================
 
   // GET /api/v1/student-accounts?school_id=X - List student portal accounts
-  app.get('/api/v1/student-accounts', async (req, res) => {
+  app.get('/api/v1/student-accounts', requireAdmin, async (req, res) => {
     try {
       const { school_id, status } = req.query;
       if (!school_id) return res.status(400).json({ error: 'school_id required' });
@@ -1909,7 +1932,7 @@ if (models && !modelsError) {
   });
 
   // PUT /api/v1/student-accounts/:id/approve - Approve a pending student account
-  app.put('/api/v1/student-accounts/:id/approve', async (req, res) => {
+  app.put('/api/v1/student-accounts/:id/approve', requireAdmin, async (req, res) => {
     try {
       const auth = await models.KanchoStudentAuth.findByPk(req.params.id);
       if (!auth) return res.status(404).json({ error: 'Account not found' });
@@ -1939,7 +1962,7 @@ if (models && !modelsError) {
   });
 
   // PUT /api/v1/student-accounts/:id/suspend - Suspend a student account
-  app.put('/api/v1/student-accounts/:id/suspend', async (req, res) => {
+  app.put('/api/v1/student-accounts/:id/suspend', requireAdmin, async (req, res) => {
     try {
       const auth = await models.KanchoStudentAuth.findByPk(req.params.id);
       if (!auth) return res.status(404).json({ error: 'Account not found' });
@@ -1955,7 +1978,7 @@ if (models && !modelsError) {
   });
 
   // PUT /api/v1/student-accounts/:id/link - Link student account to student record
-  app.put('/api/v1/student-accounts/:id/link', async (req, res) => {
+  app.put('/api/v1/student-accounts/:id/link', requireAdmin, async (req, res) => {
     try {
       const { student_id } = req.body;
       if (!student_id) return res.status(400).json({ error: 'student_id required' });
@@ -1994,7 +2017,7 @@ if (models && !modelsError) {
   });
 
   // POST /api/v1/merchandise
-  app.post('/api/v1/merchandise', async (req, res) => {
+  app.post('/api/v1/merchandise', requireAdmin, async (req, res) => {
     try {
       const { school_id, name, description, price, image_url, category, sizes, in_stock, stripe_price_id, sort_order } = req.body;
       if (!school_id || !name || price === undefined) return res.status(400).json({ error: 'school_id, name, and price required' });
@@ -2009,7 +2032,7 @@ if (models && !modelsError) {
   });
 
   // PUT /api/v1/merchandise/:id
-  app.put('/api/v1/merchandise/:id', async (req, res) => {
+  app.put('/api/v1/merchandise/:id', requireAdmin, async (req, res) => {
     try {
       const item = await models.KanchoMerchandise.findByPk(req.params.id);
       if (!item) return res.status(404).json({ error: 'Item not found' });
@@ -2023,7 +2046,7 @@ if (models && !modelsError) {
   });
 
   // DELETE /api/v1/merchandise/:id
-  app.delete('/api/v1/merchandise/:id', async (req, res) => {
+  app.delete('/api/v1/merchandise/:id', requireAdmin, async (req, res) => {
     try {
       const item = await models.KanchoMerchandise.findByPk(req.params.id);
       if (!item) return res.status(404).json({ error: 'Item not found' });
@@ -2035,7 +2058,7 @@ if (models && !modelsError) {
   });
 
   // POST /api/v1/seed-merchandise - Seed sample merchandise
-  app.post('/api/v1/seed-merchandise', async (req, res) => {
+  app.post('/api/v1/seed-merchandise', requireAdmin, async (req, res) => {
     try {
       const schools = await models.KanchoSchool.findAll({ attributes: ['id', 'name', 'martial_art_type'] });
       let total = 0;
@@ -2083,6 +2106,164 @@ if (models && !modelsError) {
     }
   });
 
+  // =====================================================
+  // STRIPE WEBHOOK - Student Payment Events
+  // =====================================================
+  app.post('/webhooks/kancho-stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    const sig = req.headers['stripe-signature'];
+    const endpointSecret = process.env.KANCHO_STRIPE_WEBHOOK_SECRET;
+
+    let event;
+    try {
+      if (endpointSecret && sig) {
+        event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+      } else {
+        event = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+      }
+    } catch (err) {
+      console.error('Webhook signature verification failed:', err.message);
+      return res.status(400).json({ error: 'Webhook signature failed' });
+    }
+
+    try {
+      if (event.type === 'checkout.session.completed') {
+        const session = event.data.object;
+        const meta = session.metadata || {};
+
+        if (meta.source && meta.source.startsWith('student_portal')) {
+          const studentId = parseInt(meta.student_id);
+          const schoolId = parseInt(meta.school_id);
+          const type = meta.type || 'membership';
+          const amount = (session.amount_total || 0) / 100;
+
+          if (studentId && schoolId && amount > 0) {
+            await models.KanchoRevenue.create({
+              school_id: schoolId,
+              student_id: studentId,
+              date: new Date().toISOString().split('T')[0],
+              type: type,
+              amount: amount,
+              description: meta.description || meta.merchandise_name || 'Student portal payment',
+              payment_method: 'stripe',
+              transaction_id: session.payment_intent || session.subscription || session.id,
+              is_recurring: session.mode === 'subscription',
+              source: meta.source
+            });
+
+            // Update student payment status
+            await models.KanchoStudent.update(
+              { payment_status: 'current', last_payment_date: new Date().toISOString().split('T')[0] },
+              { where: { id: studentId } }
+            );
+
+            console.log('[Kancho Webhook] Payment recorded: $' + amount + ' from student ' + studentId);
+          }
+        }
+      }
+
+      res.json({ received: true });
+    } catch (error) {
+      console.error('Webhook processing error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // =====================================================
+  // ADMIN: Belt Requirements Management
+  // =====================================================
+
+  // GET /api/v1/belt-requirements?school_id=X
+  app.get('/api/v1/belt-requirements', requireAdmin, async (req, res) => {
+    try {
+      const { school_id } = req.query;
+      if (!school_id) return res.status(400).json({ error: 'school_id required' });
+      const belts = await models.KanchoBeltRequirement.findAll({
+        where: { school_id },
+        order: [['sort_order', 'ASC']]
+      });
+      res.json({ success: true, data: belts });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // POST /api/v1/belt-requirements
+  app.post('/api/v1/belt-requirements', requireAdmin, async (req, res) => {
+    try {
+      const { school_id, belt_name, belt_color, sort_order, min_classes, min_months, requirements, testing_fee } = req.body;
+      if (!school_id || !belt_name) return res.status(400).json({ error: 'school_id and belt_name required' });
+      const belt = await models.KanchoBeltRequirement.create({
+        school_id, belt_name, belt_color, sort_order: sort_order || 0,
+        min_classes: min_classes || 0, min_months: min_months || 0,
+        requirements: requirements || [], testing_fee: testing_fee || 0
+      });
+      res.status(201).json({ success: true, data: belt });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // PUT /api/v1/belt-requirements/:id
+  app.put('/api/v1/belt-requirements/:id', requireAdmin, async (req, res) => {
+    try {
+      const belt = await models.KanchoBeltRequirement.findByPk(req.params.id);
+      if (!belt) return res.status(404).json({ error: 'Belt requirement not found' });
+      const fields = ['belt_name', 'belt_color', 'sort_order', 'min_classes', 'min_months', 'requirements', 'testing_fee'];
+      fields.forEach(f => { if (req.body[f] !== undefined) belt[f] = req.body[f]; });
+      await belt.save();
+      res.json({ success: true, data: belt });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // DELETE /api/v1/belt-requirements/:id
+  app.delete('/api/v1/belt-requirements/:id', requireAdmin, async (req, res) => {
+    try {
+      const belt = await models.KanchoBeltRequirement.findByPk(req.params.id);
+      if (!belt) return res.status(404).json({ error: 'Belt requirement not found' });
+      await belt.destroy();
+      res.json({ success: true, message: 'Belt requirement deleted' });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // POST /api/v1/seed-belt-requirements - Seed default belt hierarchy for all schools
+  app.post('/api/v1/seed-belt-requirements', requireAdmin, async (req, res) => {
+    try {
+      const schools = await models.KanchoSchool.findAll({ attributes: ['id', 'martial_art_type'] });
+      let total = 0;
+
+      const defaultBelts = [
+        { belt_name: 'White', belt_color: '#FFFFFF', sort_order: 0, min_classes: 0, min_months: 0, requirements: ['Basic stance and movement','Front kick','Basic blocks'], testing_fee: 0 },
+        { belt_name: 'Yellow', belt_color: '#FFD700', sort_order: 1, min_classes: 30, min_months: 3, requirements: ['All White belt requirements','Roundhouse kick','3 basic kata forms','Basic sparring concepts'], testing_fee: 35 },
+        { belt_name: 'Orange', belt_color: '#FF8C00', sort_order: 2, min_classes: 60, min_months: 6, requirements: ['All Yellow belt requirements','Side kick','Back kick','5 kata forms','Light sparring'], testing_fee: 45 },
+        { belt_name: 'Green', belt_color: '#228B22', sort_order: 3, min_classes: 100, min_months: 9, requirements: ['All Orange belt requirements','Spinning kicks','8 kata forms','Controlled sparring','Self-defense combinations'], testing_fee: 55 },
+        { belt_name: 'Blue', belt_color: '#1E90FF', sort_order: 4, min_classes: 150, min_months: 14, requirements: ['All Green belt requirements','Jump kicks','Advanced combinations','10 kata forms','Full sparring','Board breaking'], testing_fee: 65 },
+        { belt_name: 'Purple', belt_color: '#800080', sort_order: 5, min_classes: 200, min_months: 20, requirements: ['All Blue belt requirements','Advanced kata forms','Weapons basics','Teaching assist role','Competition participation'], testing_fee: 75 },
+        { belt_name: 'Brown', belt_color: '#8B4513', sort_order: 6, min_classes: 280, min_months: 28, requirements: ['All Purple belt requirements','Weapons proficiency','Advanced sparring strategies','Teaching lower belts','Written exam on principles'], testing_fee: 85 },
+        { belt_name: 'Red', belt_color: '#DC143C', sort_order: 7, min_classes: 350, min_months: 36, requirements: ['All Brown belt requirements','Master all kata forms','Advanced weapons','Lead class sessions','Demonstrate mastery of fundamentals'], testing_fee: 95 },
+        { belt_name: 'Black', belt_color: '#000000', sort_order: 8, min_classes: 500, min_months: 48, requirements: ['All Red belt requirements','Create original kata','Full weapons mastery','Teaching certification','Panel review and demonstration','Written thesis on martial arts philosophy'], testing_fee: 150 }
+      ];
+
+      for (const school of schools) {
+        const existing = await models.KanchoBeltRequirement.count({ where: { school_id: school.id } });
+        if (existing > 0) continue;
+
+        for (const belt of defaultBelts) {
+          await models.KanchoBeltRequirement.create({ school_id: school.id, ...belt });
+          total++;
+        }
+      }
+
+      res.json({ success: true, message: total + ' belt requirements seeded across ' + schools.length + ' schools' });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   console.log('Kancho AI API routes mounted:');
   console.log('  - /kanchoai/api/v1/schools');
   console.log('  - /kanchoai/api/v1/students');
@@ -2092,6 +2273,8 @@ if (models && !modelsError) {
   console.log('  - /kanchoai/api/v1/voice');
   console.log('  - /kanchoai/api/v1/student-accounts');
   console.log('  - /kanchoai/api/v1/merchandise');
+  console.log('  - /kanchoai/api/v1/belt-requirements');
+  console.log('  - /webhooks/kancho-stripe');
 } else {
   app.use('/api/v1/*', (req, res) => {
     res.status(503).json({
@@ -4023,6 +4206,12 @@ function studentPortalHandler(req, res) {
     <div id="paymentsContent"><div class="spinner"></div></div>
   </div>
 
+  <!-- Belt Progress -->
+  <div id="sectionBeltProgress" class="section">
+    <h2 class="section-title">Belt Progress</h2>
+    <div id="beltProgressContent"><div class="spinner"></div></div>
+  </div>
+
   <!-- Profile -->
   <div id="sectionProfile" class="section">
     <h2 class="section-title">Profile</h2>
@@ -4045,13 +4234,13 @@ function studentPortalHandler(req, res) {
       </div>
       <span>Check In</span>
     </button>
-    <button class="nav-item" data-section="Shop" onclick="switchSection('Shop')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
-      <span>Shop</span>
+    <button class="nav-item" data-section="BeltProgress" onclick="switchSection('BeltProgress')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15l-2 5l9-11h-5l2-5L7 15z"/></svg>
+      <span>Belts</span>
     </button>
     <button class="nav-item" data-section="Profile" onclick="switchSection('Profile')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      <span>Profile</span>
+      <span>More</span>
     </button>
   </div>
 </div>
@@ -4258,25 +4447,33 @@ function doLogout() {
 function enterApp() {
   document.getElementById('headerSchool').textContent = currentUser?.schoolName || '';
   showAuth('app');
+  // Check for payment/purchase return params
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('payment') === 'success') { showToast('Payment successful!'); window.history.replaceState({}, '', window.location.pathname); switchSection('Payments'); return; }
+  if (params.get('payment') === 'canceled') { showToast('Payment canceled', 'error'); window.history.replaceState({}, '', window.location.pathname); }
+  if (params.get('autopay') === 'success') { showToast('Autopay enabled!'); window.history.replaceState({}, '', window.location.pathname); switchSection('Payments'); return; }
+  if (params.get('purchase') === 'success') { showToast('Purchase successful!'); window.history.replaceState({}, '', window.location.pathname); switchSection('Shop'); return; }
+  if (params.get('purchase') === 'canceled') { showToast('Purchase canceled', 'error'); window.history.replaceState({}, '', window.location.pathname); }
   switchSection('Dashboard');
 }
 
 function switchSection(name) {
-  ['Dashboard','Checkin','Schedule','Shop','Payments','Profile'].forEach(s => {
+  ['Dashboard','Checkin','Schedule','Shop','Payments','BeltProgress','Profile'].forEach(s => {
     const sec = document.getElementById('section' + s);
     if (sec) sec.classList.toggle('active', s === name);
   });
   document.querySelectorAll('.nav-item').forEach(n => {
     n.classList.toggle('active', n.dataset.section === name);
   });
-  document.getElementById('headerTitle').textContent =
-    name === 'Dashboard' ? 'Dashboard' : name === 'Checkin' ? 'Check In' : name === 'Shop' ? 'Pro Shop' : name;
+  const titles = { Dashboard:'Dashboard', Checkin:'Check In', Schedule:'Schedule', Shop:'Pro Shop', Payments:'Payments', BeltProgress:'Belt Progress', Profile:'Profile' };
+  document.getElementById('headerTitle').textContent = titles[name] || name;
 
   if (name === 'Dashboard') loadDashboard();
   else if (name === 'Checkin') loadCheckin();
   else if (name === 'Schedule') loadSchedule();
   else if (name === 'Shop') loadShop();
   else if (name === 'Payments') loadPayments();
+  else if (name === 'BeltProgress') loadBeltProgress();
   else if (name === 'Profile') loadProfile();
 }
 
@@ -4594,7 +4791,7 @@ function openShopDetail(itemId) {
     (item.description ? '<div class="shop-detail-desc">' + item.description + '</div>' : '') +
     sizesHtml +
     (item.in_stock ?
-      '<button class="btn" onclick="inquireMerch(' + item.id + ', this)" style="margin-top:8px">Inquire to Purchase</button>' :
+      '<button class="btn" onclick="buyMerch(' + item.id + ', this)" style="margin-top:8px">Buy Now</button>' :
       '<button class="btn" disabled style="margin-top:8px;opacity:0.5">Out of Stock</button>'
     ) +
     '</div>';
@@ -4607,15 +4804,30 @@ function selectSize(el) {
   el.classList.add('selected');
 }
 
-function inquireMerch(itemId, btn) {
+async function buyMerch(itemId, btn) {
   const item = shopData.find(i => i.id === itemId);
   if (!item) return;
   const sizeEl = btn.closest('.shop-detail').querySelector('.shop-size.selected');
   const size = sizeEl ? sizeEl.textContent : '';
-  showToast('Inquiry sent for ' + item.name + (size ? ' (' + size + ')' : '') + '!');
-  btn.textContent = 'Inquiry Sent';
+  btn.textContent = 'Processing...';
   btn.disabled = true;
-  btn.style.background = 'var(--success)';
+  try {
+    const res = await api(API + '/payments/merchandise/buy', {
+      method: 'POST',
+      body: JSON.stringify({ item_id: itemId, size: size })
+    });
+    if (res.success && res.url) {
+      window.location.href = res.url;
+    } else {
+      showToast(res.error || 'Purchase failed', 'error');
+      btn.textContent = 'Buy Now';
+      btn.disabled = false;
+    }
+  } catch (e) {
+    showToast('Connection error', 'error');
+    btn.textContent = 'Buy Now';
+    btn.disabled = false;
+  }
 }
 
 // ============ PAYMENTS ============
@@ -4623,15 +4835,34 @@ async function loadPayments() {
   const el = document.getElementById('paymentsContent');
   el.innerHTML = '<div class="spinner"></div>';
   try {
-    const res = await api(API + '/payments');
-    if (!res.success) { el.innerHTML = '<div class="empty-state"><p>Error loading payments</p></div>'; return; }
+    const [payRes, autopayRes] = await Promise.all([
+      api(API + '/payments'),
+      api(API + '/payments/autopay/status')
+    ]);
 
-    const payments = res.data || [];
+    const payments = payRes.success ? payRes.data || [] : [];
+    const autopay = autopayRes.success ? autopayRes.data : {};
     let html = '';
 
     // Summary
     const total = payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
     html += '<div class="payment-status-card"><div class="payment-amount">$' + total.toFixed(2) + '</div><div class="payment-label">Total Paid</div></div>';
+
+    // Action buttons
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0">';
+    html += '<button class="btn" onclick="makePayment()">Make Payment</button>';
+    if (autopay.hasAutopay) {
+      html += '<button class="btn btn-outline" style="border-color:var(--success);color:var(--success)" disabled>Autopay Active</button>';
+    } else if (autopay.monthlyRate > 0) {
+      html += '<button class="btn btn-outline" onclick="setupAutopay()">Enable Autopay</button>';
+    } else {
+      html += '<button class="btn btn-outline" disabled style="opacity:0.5">Autopay N/A</button>';
+    }
+    html += '</div>';
+
+    if (autopay.monthlyRate > 0) {
+      html += '<div class="card" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="color:var(--text2)">Monthly Rate</span><span style="font-size:20px;font-weight:700">$' + parseFloat(autopay.monthlyRate).toFixed(0) + '/mo</span></div></div>';
+    }
 
     if (payments.length === 0) {
       html += '<div class="empty-state"><p>No payment history yet</p></div>';
@@ -4646,6 +4877,110 @@ async function loadPayments() {
     el.innerHTML = html;
   } catch (e) {
     el.innerHTML = '<div class="empty-state"><p>Error loading payments</p></div>';
+    console.error(e);
+  }
+}
+
+async function makePayment() {
+  const amount = prompt('Enter payment amount ($):');
+  if (!amount || isNaN(amount) || parseFloat(amount) <= 0) return;
+  const type = prompt('Payment type (membership, testing_fee, other):', 'membership') || 'membership';
+  try {
+    const res = await api(API + '/payments/pay', {
+      method: 'POST',
+      body: JSON.stringify({ amount: parseFloat(amount), type: type, description: type + ' payment' })
+    });
+    if (res.success && res.url) {
+      window.location.href = res.url;
+    } else {
+      showToast(res.error || 'Payment failed', 'error');
+    }
+  } catch (e) { showToast('Connection error', 'error'); }
+}
+
+async function setupAutopay() {
+  try {
+    const res = await api(API + '/payments/autopay/setup', { method: 'POST' });
+    if (res.success && res.url) {
+      window.location.href = res.url;
+    } else {
+      showToast(res.error || 'Autopay setup failed', 'error');
+    }
+  } catch (e) { showToast('Connection error', 'error'); }
+}
+
+// ============ BELT PROGRESS ============
+async function loadBeltProgress() {
+  const el = document.getElementById('beltProgressContent');
+  el.innerHTML = '<div class="spinner"></div>';
+  try {
+    const res = await api(API + '/belt-progress');
+    if (!res.success) { el.innerHTML = '<div class="empty-state"><p>Belt progress not available</p></div>'; return; }
+
+    const d = res.data;
+    const belts = d.belts || [];
+    if (belts.length === 0) {
+      el.innerHTML = '<div class="empty-state"><p>Belt requirements not configured yet</p></div>';
+      return;
+    }
+
+    let html = '';
+
+    // Current belt display
+    html += '<div class="card" style="text-align:center;padding:20px;margin-bottom:16px">';
+    html += '<div class="belt-display" style="justify-content:center"><div class="belt-color" style="background:' + getBeltColor(d.currentBelt) + ';width:60px;height:60px;border-radius:12px"></div></div>';
+    html += '<h3 style="margin-top:12px;font-size:20px">' + (d.currentBelt || 'White Belt') + '</h3>';
+    html += '<p style="color:var(--text2);font-size:13px;margin-top:4px">' + d.totalClasses + ' classes &middot; ' + d.monthsTraining + ' months training</p>';
+    if (d.currentStripes > 0) {
+      html += '<div class="belt-stripes" style="justify-content:center;margin-top:8px">';
+      for (let i = 0; i < 4; i++) html += '<div class="belt-stripe' + (i >= d.currentStripes ? ' empty' : '') + '"></div>';
+      html += '</div>';
+    }
+    html += '</div>';
+
+    // Progress to next belt
+    if (d.nextBelt && d.progress) {
+      const p = d.progress;
+      html += '<div class="card" style="margin-bottom:16px"><div class="card-title">Progress to ' + d.nextBelt.name + ' Belt</div>';
+      html += '<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>Classes</span><span>' + p.classesCompleted + '/' + p.classesRequired + '</span></div>';
+      html += '<div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden"><div style="height:100%;width:' + p.classProgress + '%;background:var(--accent);border-radius:4px;transition:width 0.5s"></div></div></div>';
+      html += '<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>Time</span><span>' + p.monthsCompleted + '/' + p.monthsRequired + ' months</span></div>';
+      html += '<div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden"><div style="height:100%;width:' + p.monthProgress + '%;background:var(--success);border-radius:4px;transition:width 0.5s"></div></div></div>';
+      html += '<div style="text-align:center;font-size:24px;font-weight:700;color:var(--accent);margin:12px 0">' + p.overallProgress + '%</div>';
+      if (p.testingFee > 0) {
+        html += '<div style="text-align:center;font-size:13px;color:var(--text2)">Testing fee: $' + parseFloat(p.testingFee).toFixed(0) + '</div>';
+      }
+      // Requirements checklist
+      if (p.requirements && p.requirements.length > 0) {
+        html += '<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px"><div style="font-size:13px;font-weight:600;margin-bottom:8px">Requirements</div>';
+        p.requirements.forEach(r => {
+          html += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px;color:var(--text2)"><div style="width:18px;height:18px;border:1.5px solid var(--border);border-radius:4px;flex-shrink:0"></div>' + r + '</div>';
+        });
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+
+    // Full belt ladder
+    html += '<div class="card"><div class="card-title">Belt Ladder</div>';
+    belts.forEach((b, idx) => {
+      const isCurrent = b.name.toLowerCase() === (d.currentBelt || '').toLowerCase();
+      const isPast = idx < d.currentIndex;
+      const opacity = isPast ? '0.5' : '1';
+      const border = isCurrent ? 'border:2px solid var(--accent);' : '';
+      html += '<div style="display:flex;align-items:center;gap:12px;padding:8px 0;opacity:' + opacity + ';' + border + 'border-radius:8px;padding:8px">';
+      html += '<div style="width:28px;height:28px;border-radius:6px;background:' + (b.color || '#888') + ';flex-shrink:0;border:1px solid rgba(255,255,255,0.2)"></div>';
+      html += '<div style="flex:1"><div style="font-weight:' + (isCurrent ? '700' : '500') + '">' + b.name + (isCurrent ? ' <span style="color:var(--accent);font-size:11px">CURRENT</span>' : '') + '</div>';
+      html += '<div style="font-size:11px;color:var(--text2)">' + b.minClasses + ' classes &middot; ' + b.minMonths + ' months' + (b.testingFee > 0 ? ' &middot; $' + parseFloat(b.testingFee).toFixed(0) : '') + '</div>';
+      html += '</div>';
+      if (isPast) html += '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--success)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>';
+      html += '</div>';
+    });
+    html += '</div>';
+
+    el.innerHTML = html;
+  } catch (e) {
+    el.innerHTML = '<div class="empty-state"><p>Error loading belt progress</p></div>';
     console.error(e);
   }
 }
@@ -4700,7 +5035,10 @@ async function loadProfile() {
     }
 
     html += '<button class="btn" onclick="saveProfile()" style="margin-top:8px">Save Changes</button>';
-    html += '<button class="btn btn-outline" onclick="switchSection(' + "'Payments'" + ')" style="margin-top:12px">Payment History</button>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">';
+    html += '<button class="btn btn-outline" onclick="switchSection(' + "'Payments'" + ')">Payments</button>';
+    html += '<button class="btn btn-outline" onclick="switchSection(' + "'Shop'" + ')">Pro Shop</button>';
+    html += '</div>';
     html += '<button class="btn btn-outline" onclick="doLogout()" style="margin-top:12px;border-color:var(--danger);color:var(--danger)">Sign Out</button>';
 
     el.innerHTML = html;
@@ -5064,6 +5402,11 @@ app.get('*', (req, res) => {
     .slide-panel-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 140; }
     .slide-panel-overlay.open { display: block; }
     @media (max-width: 640px) { .slide-panel { width: 100vw; right: -100vw; } }
+    /* Global Modal */
+    .modal { display: none; position: fixed; inset: 0; z-index: 200; }
+    .modal.open { display: flex; align-items: center; justify-content: center; }
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); }
+    .modal-content { position: relative; background: #1A1A1A; border: 1px solid #333; border-radius: 16px; padding: 24px; width: 90vw; max-height: 90vh; overflow-y: auto; z-index: 201; }
     /* Calendar */
     .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
     .calendar-header-cell { padding: 8px 4px; text-align: center; font-size: 11px; text-transform: uppercase; color: #6B7280; font-weight: 600; }
@@ -5890,6 +6233,9 @@ app.get('*', (req, res) => {
         <button class="tab-btn" onclick="switchTab('leads')"><i class="fas fa-fire mr-1"></i>Leads</button>
         <button class="tab-btn" onclick="switchTab('calendar')"><i class="fas fa-calendar mr-1"></i>Calendar</button>
         <button class="tab-btn" onclick="switchTab('payments')"><i class="fas fa-dollar-sign mr-1"></i>Payments</button>
+        <button class="tab-btn" onclick="switchTab('portalAccounts')"><i class="fas fa-user-shield mr-1"></i>Portal</button>
+        <button class="tab-btn" onclick="switchTab('merchandise')"><i class="fas fa-store mr-1"></i>Merch</button>
+        <button class="tab-btn" onclick="switchTab('belts')"><i class="fas fa-award mr-1"></i>Belts</button>
       </div>
 
       <!-- Tab: Overview -->
@@ -6218,6 +6564,58 @@ app.get('*', (req, res) => {
           <div id="paymentsPagination" class="pagination p-4"></div>
         </div>
         <p id="paymentsEmpty" class="hidden text-center text-gray-500 py-12">No payments found</p>
+      </div>
+
+      <!-- Tab: Portal Accounts -->
+      <div id="tabPortalAccounts" class="tab-content">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-user-shield text-kancho"></i> Student Portal Accounts</h2>
+          <select id="portalStatusFilter" onchange="loadPortalAccounts()" class="bg-gray-800 text-white border border-gray-600 rounded px-3 py-1.5 text-sm">
+            <option value="">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="active">Active</option>
+            <option value="suspended">Suspended</option>
+          </select>
+        </div>
+        <div class="card rounded-2xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="data-table">
+              <thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Linked Student</th><th>Registered</th><th>Actions</th></tr></thead>
+              <tbody id="portalAccountsBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <p id="portalAccountsEmpty" class="hidden text-center text-gray-500 py-12">No portal accounts found</p>
+      </div>
+
+      <!-- Tab: Merchandise -->
+      <div id="tabMerchandise" class="tab-content">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-store text-kancho"></i> Merchandise</h2>
+          <button class="btn-primary btn-sm" onclick="openMerchForm()"><i class="fas fa-plus mr-1"></i> Add Item</button>
+        </div>
+        <div class="card rounded-2xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="data-table">
+              <thead><tr><th>Name</th><th>Category</th><th>Price</th><th>Sizes</th><th>In Stock</th><th>Actions</th></tr></thead>
+              <tbody id="merchTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <p id="merchEmpty" class="hidden text-center text-gray-500 py-12">No merchandise items. Click "Add Item" to start.</p>
+      </div>
+
+      <!-- Tab: Belt Requirements -->
+      <div id="tabBelts" class="tab-content">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-award text-kancho"></i> Belt Requirements</h2>
+          <div class="flex gap-2">
+            <button class="btn-primary btn-sm" onclick="openBeltForm()"><i class="fas fa-plus mr-1"></i> Add Belt</button>
+            <button class="btn-ghost btn-sm" onclick="seedBeltDefaults()"><i class="fas fa-magic mr-1"></i> Seed Defaults</button>
+          </div>
+        </div>
+        <div id="beltLadder" class="space-y-3"></div>
+        <p id="beltsEmpty" class="hidden text-center text-gray-500 py-12">No belt requirements configured. Click "Seed Defaults" for a standard hierarchy.</p>
       </div>
 
     </div><!-- /dashboardSection -->
@@ -7605,6 +8003,9 @@ app.get('*', (req, res) => {
         else if (tabName === 'leads') loadLeads();
         else if (tabName === 'calendar') { const now = new Date(); calendarYear = now.getFullYear(); calendarMonth = now.getMonth() + 1; loadCalendar(); }
         else if (tabName === 'payments') loadPayments();
+        else if (tabName === 'portalAccounts') loadPortalAccounts();
+        else if (tabName === 'merchandise') loadMerchandiseAdmin();
+        else if (tabName === 'belts') loadBeltRequirements();
       }
     }
 
@@ -8386,6 +8787,184 @@ app.get('*', (req, res) => {
         console.error('loadAttendanceHistory error:', e);
         container.innerHTML = '<p class="text-sm text-gray-500">Error loading history</p>';
       }
+    }
+
+    // ==================== PORTAL ACCOUNTS TAB ====================
+    async function loadPortalAccounts() {
+      const schoolId = currentSchoolId;
+      if (!schoolId) return;
+      const status = document.getElementById('portalStatusFilter')?.value || '';
+      let url = '/kanchoai/api/v1/student-accounts?school_id=' + schoolId;
+      if (status) url += '&status=' + status;
+      try {
+        const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + authToken } });
+        const data = await res.json();
+        const tbody = document.getElementById('portalAccountsBody');
+        const empty = document.getElementById('portalAccountsEmpty');
+        if (!data.success || !data.data.length) { tbody.innerHTML = ''; empty.classList.remove('hidden'); return; }
+        empty.classList.add('hidden');
+        tbody.innerHTML = data.data.map(a => {
+          const statusBadge = a.status === 'active' ? 'bg-green-600' : a.status === 'pending' ? 'bg-yellow-600' : 'bg-red-600';
+          const linked = a.student ? a.student.first_name + ' ' + a.student.last_name + ' (' + (a.student.belt_rank || 'No belt') + ')' : '<span class="text-gray-500">Not linked</span>';
+          let actions = '';
+          if (a.status === 'pending') actions += '<button class="btn-primary btn-sm mr-1" onclick="approveAccount(' + a.id + ')">Approve</button>';
+          if (a.status !== 'suspended') actions += '<button class="btn-ghost btn-sm text-red-400" onclick="suspendAccount(' + a.id + ')">Suspend</button>';
+          if (!a.student_id) actions += '<button class="btn-ghost btn-sm text-blue-400 ml-1" onclick="linkAccount(' + a.id + ')">Link</button>';
+          return '<tr><td>' + a.first_name + ' ' + a.last_name + '</td><td>' + a.email + '</td><td><span class="inline-block px-2 py-0.5 rounded text-xs ' + statusBadge + '">' + a.status + '</span></td><td>' + linked + '</td><td>' + new Date(a.created_at).toLocaleDateString() + '</td><td class="whitespace-nowrap">' + actions + '</td></tr>';
+        }).join('');
+      } catch (e) { console.error('loadPortalAccounts error:', e); }
+    }
+    async function approveAccount(id) {
+      if (!confirm('Approve this student portal account?')) return;
+      await fetch('/kanchoai/api/v1/student-accounts/' + id + '/approve', { method: 'PUT', headers: { 'Authorization': 'Bearer ' + authToken, 'Content-Type': 'application/json' } });
+      tabsLoaded.portalAccounts = false; loadPortalAccounts();
+    }
+    async function suspendAccount(id) {
+      if (!confirm('Suspend this account?')) return;
+      await fetch('/kanchoai/api/v1/student-accounts/' + id + '/suspend', { method: 'PUT', headers: { 'Authorization': 'Bearer ' + authToken, 'Content-Type': 'application/json' } });
+      tabsLoaded.portalAccounts = false; loadPortalAccounts();
+    }
+    async function linkAccount(id) {
+      const studentId = prompt('Enter Student ID to link:');
+      if (!studentId) return;
+      await fetch('/kanchoai/api/v1/student-accounts/' + id + '/link', { method: 'PUT', headers: { 'Authorization': 'Bearer ' + authToken, 'Content-Type': 'application/json' }, body: JSON.stringify({ student_id: parseInt(studentId) }) });
+      tabsLoaded.portalAccounts = false; loadPortalAccounts();
+    }
+
+    // ==================== MERCHANDISE TAB ====================
+    async function loadMerchandiseAdmin() {
+      const schoolId = currentSchoolId;
+      if (!schoolId) return;
+      try {
+        const res = await fetch('/kanchoai/api/v1/merchandise?school_id=' + schoolId);
+        const data = await res.json();
+        const tbody = document.getElementById('merchTableBody');
+        const empty = document.getElementById('merchEmpty');
+        if (!data.success || !data.data.length) { tbody.innerHTML = ''; empty.classList.remove('hidden'); return; }
+        empty.classList.add('hidden');
+        tbody.innerHTML = data.data.map(i => {
+          const stockBadge = i.in_stock ? '<span class="text-green-400">Yes</span>' : '<span class="text-red-400">No</span>';
+          const sizes = i.sizes && i.sizes.length ? i.sizes.join(', ') : '-';
+          return '<tr><td>' + i.name + '</td><td>' + (i.category || 'other') + '</td><td>$' + parseFloat(i.price).toFixed(2) + '</td><td class="text-xs">' + sizes + '</td><td>' + stockBadge + '</td><td class="whitespace-nowrap"><button class="btn-ghost btn-sm" onclick="editMerchItem(' + i.id + ')"><i class="fas fa-edit"></i></button> <button class="btn-ghost btn-sm text-red-400" onclick="deleteMerchItem(' + i.id + ')"><i class="fas fa-trash"></i></button></td></tr>';
+        }).join('');
+      } catch (e) { console.error('loadMerchandiseAdmin error:', e); }
+    }
+    function openMerchForm(item) {
+      const existing = item || {};
+      const html = '<div class="modal-backdrop" onclick="closeModal()"></div><div class="modal-content" style="max-width:500px"><h3 class="text-lg font-bold mb-4">' + (existing.id ? 'Edit' : 'Add') + ' Merchandise</h3><form onsubmit="saveMerchItem(event,' + (existing.id || 'null') + ')">' +
+        '<div class="mb-3"><label class="block text-sm text-gray-400 mb-1">Name</label><input id="merchName" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white" value="' + (existing.name || '') + '" required></div>' +
+        '<div class="grid grid-cols-2 gap-3 mb-3"><div><label class="block text-sm text-gray-400 mb-1">Price</label><input id="merchPrice" type="number" step="0.01" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white" value="' + (existing.price || '') + '" required></div>' +
+        '<div><label class="block text-sm text-gray-400 mb-1">Category</label><select id="merchCategory" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white"><option value="gi">Gi</option><option value="gear">Gear</option><option value="apparel">Apparel</option><option value="accessories">Accessories</option><option value="supplements">Supplements</option><option value="other">Other</option></select></div></div>' +
+        '<div class="mb-3"><label class="block text-sm text-gray-400 mb-1">Description</label><textarea id="merchDesc" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white" rows="2">' + (existing.description || '') + '</textarea></div>' +
+        '<div class="mb-3"><label class="block text-sm text-gray-400 mb-1">Sizes (comma-separated)</label><input id="merchSizes" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white" value="' + (existing.sizes ? existing.sizes.join(',') : '') + '"></div>' +
+        '<div class="mb-3"><label class="block text-sm text-gray-400 mb-1">Image URL</label><input id="merchImage" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white" value="' + (existing.image_url || '') + '"></div>' +
+        '<div class="mb-4"><label class="flex items-center gap-2"><input id="merchInStock" type="checkbox"' + (existing.in_stock !== false ? ' checked' : '') + '> In Stock</label></div>' +
+        '<div class="flex gap-2"><button type="submit" class="btn-primary">Save</button><button type="button" class="btn-ghost" onclick="closeModal()">Cancel</button></div></form></div>';
+      let modal = document.getElementById('globalModal');
+      if (!modal) { modal = document.createElement('div'); modal.id = 'globalModal'; modal.className = 'modal'; document.body.appendChild(modal); }
+      modal.innerHTML = html; modal.classList.add('open');
+      if (existing.category) document.getElementById('merchCategory').value = existing.category;
+    }
+    function closeModal() { const m = document.getElementById('globalModal'); if (m) { m.classList.remove('open'); m.innerHTML = ''; } }
+    async function saveMerchItem(e, id) {
+      e.preventDefault();
+      const body = {
+        school_id: parseInt(currentSchoolId),
+        name: document.getElementById('merchName').value,
+        price: parseFloat(document.getElementById('merchPrice').value),
+        category: document.getElementById('merchCategory').value,
+        description: document.getElementById('merchDesc').value,
+        sizes: document.getElementById('merchSizes').value.split(',').map(s => s.trim()).filter(Boolean),
+        image_url: document.getElementById('merchImage').value,
+        in_stock: document.getElementById('merchInStock').checked
+      };
+      const url = id ? '/kanchoai/api/v1/merchandise/' + id : '/kanchoai/api/v1/merchandise';
+      await fetch(url, { method: id ? 'PUT' : 'POST', headers: { 'Authorization': 'Bearer ' + authToken, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      closeModal(); tabsLoaded.merchandise = false; loadMerchandiseAdmin();
+    }
+    async function editMerchItem(id) {
+      const res = await fetch('/kanchoai/api/v1/merchandise?school_id=' + currentSchoolId);
+      const data = await res.json();
+      const item = data.data?.find(i => i.id === id);
+      if (item) openMerchForm(item);
+    }
+    async function deleteMerchItem(id) {
+      if (!confirm('Delete this merchandise item?')) return;
+      await fetch('/kanchoai/api/v1/merchandise/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + authToken } });
+      tabsLoaded.merchandise = false; loadMerchandiseAdmin();
+    }
+
+    // ==================== BELT REQUIREMENTS TAB ====================
+    async function loadBeltRequirements() {
+      const schoolId = currentSchoolId;
+      if (!schoolId) return;
+      try {
+        const res = await fetch('/kanchoai/api/v1/belt-requirements?school_id=' + schoolId, { headers: { 'Authorization': 'Bearer ' + authToken } });
+        const data = await res.json();
+        const container = document.getElementById('beltLadder');
+        const empty = document.getElementById('beltsEmpty');
+        if (!data.success || !data.data.length) { container.innerHTML = ''; empty.classList.remove('hidden'); return; }
+        empty.classList.add('hidden');
+        container.innerHTML = data.data.map((b, idx) => {
+          const color = b.belt_color || '#888';
+          const reqs = (b.requirements || []);
+          return '<div class="card rounded-xl p-4 flex items-start gap-4" style="border-left:4px solid ' + color + '">' +
+            '<div class="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg" style="background:' + color + ';color:' + (color === '#FFFFFF' || color === '#FFD700' ? '#000' : '#fff') + '">' + (idx + 1) + '</div>' +
+            '<div class="flex-1 min-w-0"><div class="flex items-center justify-between"><h4 class="font-bold">' + b.belt_name + '</h4><div class="flex gap-1">' +
+            '<button class="btn-ghost btn-sm" onclick="editBelt(' + b.id + ')"><i class="fas fa-edit"></i></button>' +
+            '<button class="btn-ghost btn-sm text-red-400" onclick="deleteBelt(' + b.id + ')"><i class="fas fa-trash"></i></button></div></div>' +
+            '<div class="text-sm text-gray-400 mt-1">' + b.min_classes + ' classes &middot; ' + b.min_months + ' months' + (b.testing_fee > 0 ? ' &middot; $' + parseFloat(b.testing_fee).toFixed(0) + ' test fee' : '') + '</div>' +
+            (reqs.length ? '<ul class="mt-2 text-xs text-gray-500 list-disc list-inside">' + reqs.map(r => '<li>' + r + '</li>').join('') + '</ul>' : '') +
+            '</div></div>';
+        }).join('');
+      } catch (e) { console.error('loadBeltRequirements error:', e); }
+    }
+    function openBeltForm(existing) {
+      const b = existing || {};
+      const html = '<div class="modal-backdrop" onclick="closeModal()"></div><div class="modal-content" style="max-width:500px"><h3 class="text-lg font-bold mb-4">' + (b.id ? 'Edit' : 'Add') + ' Belt</h3><form onsubmit="saveBelt(event,' + (b.id || 'null') + ')">' +
+        '<div class="grid grid-cols-2 gap-3 mb-3"><div><label class="block text-sm text-gray-400 mb-1">Belt Name</label><input id="beltName" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white" value="' + (b.belt_name || '') + '" required></div>' +
+        '<div><label class="block text-sm text-gray-400 mb-1">Color</label><input id="beltColor" type="color" class="w-full h-10 bg-gray-800 border border-gray-600 rounded" value="' + (b.belt_color || '#FFFFFF') + '"></div></div>' +
+        '<div class="grid grid-cols-3 gap-3 mb-3"><div><label class="block text-sm text-gray-400 mb-1">Sort Order</label><input id="beltOrder" type="number" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white" value="' + (b.sort_order || 0) + '"></div>' +
+        '<div><label class="block text-sm text-gray-400 mb-1">Min Classes</label><input id="beltMinClasses" type="number" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white" value="' + (b.min_classes || 0) + '"></div>' +
+        '<div><label class="block text-sm text-gray-400 mb-1">Min Months</label><input id="beltMinMonths" type="number" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white" value="' + (b.min_months || 0) + '"></div></div>' +
+        '<div class="mb-3"><label class="block text-sm text-gray-400 mb-1">Testing Fee ($)</label><input id="beltFee" type="number" step="0.01" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white" value="' + (b.testing_fee || 0) + '"></div>' +
+        '<div class="mb-4"><label class="block text-sm text-gray-400 mb-1">Requirements (one per line)</label><textarea id="beltReqs" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white" rows="4">' + (b.requirements ? b.requirements.join('\\n') : '') + '</textarea></div>' +
+        '<div class="flex gap-2"><button type="submit" class="btn-primary">Save</button><button type="button" class="btn-ghost" onclick="closeModal()">Cancel</button></div></form></div>';
+      let modal = document.getElementById('globalModal');
+      if (!modal) { modal = document.createElement('div'); modal.id = 'globalModal'; modal.className = 'modal'; document.body.appendChild(modal); }
+      modal.innerHTML = html; modal.classList.add('open');
+    }
+    async function saveBelt(e, id) {
+      e.preventDefault();
+      const body = {
+        school_id: parseInt(currentSchoolId),
+        belt_name: document.getElementById('beltName').value,
+        belt_color: document.getElementById('beltColor').value,
+        sort_order: parseInt(document.getElementById('beltOrder').value) || 0,
+        min_classes: parseInt(document.getElementById('beltMinClasses').value) || 0,
+        min_months: parseInt(document.getElementById('beltMinMonths').value) || 0,
+        testing_fee: parseFloat(document.getElementById('beltFee').value) || 0,
+        requirements: document.getElementById('beltReqs').value.split('\\n').map(s => s.trim()).filter(Boolean)
+      };
+      const url = id ? '/kanchoai/api/v1/belt-requirements/' + id : '/kanchoai/api/v1/belt-requirements';
+      await fetch(url, { method: id ? 'PUT' : 'POST', headers: { 'Authorization': 'Bearer ' + authToken, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      closeModal(); tabsLoaded.belts = false; loadBeltRequirements();
+    }
+    async function editBelt(id) {
+      const res = await fetch('/kanchoai/api/v1/belt-requirements?school_id=' + currentSchoolId, { headers: { 'Authorization': 'Bearer ' + authToken } });
+      const data = await res.json();
+      const belt = data.data?.find(b => b.id === id);
+      if (belt) openBeltForm(belt);
+    }
+    async function deleteBelt(id) {
+      if (!confirm('Delete this belt requirement?')) return;
+      await fetch('/kanchoai/api/v1/belt-requirements/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + authToken } });
+      tabsLoaded.belts = false; loadBeltRequirements();
+    }
+    async function seedBeltDefaults() {
+      if (!confirm('Seed default belt hierarchy for this school?')) return;
+      await fetch('/kanchoai/api/v1/seed-belt-requirements', { method: 'POST', headers: { 'Authorization': 'Bearer ' + authToken, 'Content-Type': 'application/json' } });
+      tabsLoaded.belts = false; loadBeltRequirements();
     }
 
     // Initialize

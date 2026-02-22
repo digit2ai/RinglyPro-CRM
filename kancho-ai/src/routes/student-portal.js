@@ -6,7 +6,7 @@ const router = express.Router();
 const { Op } = require('sequelize');
 
 module.exports = (models) => {
-  const { KanchoStudent, KanchoClass, KanchoAttendance, KanchoClassEnrollment, KanchoRevenue, KanchoSchool, KanchoMerchandise } = models;
+  const { KanchoStudent, KanchoClass, KanchoAttendance, KanchoClassEnrollment, KanchoRevenue, KanchoSchool, KanchoMerchandise, KanchoBeltRequirement } = models;
 
   // GET /dashboard - Dashboard summary
   router.get('/dashboard', async (req, res) => {
@@ -394,6 +394,79 @@ module.exports = (models) => {
       res.json({ success: true, data: student });
     } catch (error) {
       console.error('Student profile update error:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // GET /belt-progress - Belt progression and requirements
+  router.get('/belt-progress', async (req, res) => {
+    try {
+      if (!req.studentId) {
+        return res.status(403).json({ success: false, error: 'Account not linked to student record' });
+      }
+
+      const student = await KanchoStudent.findByPk(req.studentId, {
+        attributes: ['id', 'belt_rank', 'belt_stripes', 'total_classes', 'enrollment_date']
+      });
+      if (!student) return res.status(404).json({ success: false, error: 'Student not found' });
+
+      // Get all belt requirements for this school, ordered
+      const belts = await KanchoBeltRequirement.findAll({
+        where: { school_id: req.schoolId },
+        order: [['sort_order', 'ASC']]
+      });
+
+      // Find current belt position
+      const currentBeltName = (student.belt_rank || '').toLowerCase();
+      let currentIndex = belts.findIndex(b => b.belt_name.toLowerCase() === currentBeltName);
+      if (currentIndex === -1) currentIndex = 0; // default to first belt
+
+      // Calculate months at current belt (from enrollment or rough estimate)
+      const enrollDate = student.enrollment_date ? new Date(student.enrollment_date) : new Date();
+      const monthsTraining = Math.floor((Date.now() - enrollDate.getTime()) / (30.44 * 24 * 60 * 60 * 1000));
+
+      // Next belt info
+      const nextBelt = currentIndex < belts.length - 1 ? belts[currentIndex + 1] : null;
+      let progress = {};
+      if (nextBelt) {
+        const classProgress = nextBelt.min_classes > 0 ? Math.min(100, Math.round((student.total_classes / nextBelt.min_classes) * 100)) : 100;
+        const monthProgress = nextBelt.min_months > 0 ? Math.min(100, Math.round((monthsTraining / nextBelt.min_months) * 100)) : 100;
+        const reqs = nextBelt.requirements || [];
+        progress = {
+          classesRequired: nextBelt.min_classes,
+          classesCompleted: student.total_classes,
+          classProgress,
+          monthsRequired: nextBelt.min_months,
+          monthsCompleted: monthsTraining,
+          monthProgress,
+          requirements: reqs,
+          testingFee: nextBelt.testing_fee,
+          overallProgress: Math.round((classProgress + monthProgress) / 2)
+        };
+      }
+
+      res.json({
+        success: true,
+        data: {
+          currentBelt: student.belt_rank,
+          currentStripes: student.belt_stripes,
+          currentIndex,
+          totalClasses: student.total_classes,
+          monthsTraining,
+          nextBelt: nextBelt ? { name: nextBelt.belt_name, color: nextBelt.belt_color, sortOrder: nextBelt.sort_order } : null,
+          progress,
+          belts: belts.map(b => ({
+            name: b.belt_name,
+            color: b.belt_color,
+            sortOrder: b.sort_order,
+            minClasses: b.min_classes,
+            minMonths: b.min_months,
+            testingFee: b.testing_fee
+          }))
+        }
+      });
+    } catch (error) {
+      console.error('Belt progress error:', error);
       res.status(500).json({ success: false, error: error.message });
     }
   });
