@@ -5358,6 +5358,8 @@ app.get('*', (req, res) => {
     .tab-btn { padding: 10px 20px; border: none; background: transparent; color: #6B7280; font-size: 14px; font-weight: 600; cursor: pointer; border-radius: 8px; white-space: nowrap; transition: all 0.2s; }
     .tab-btn:hover { color: #D1D5DB; background: rgba(255,255,255,0.05); }
     .tab-btn.active { color: #E85A4F; background: rgba(232,90,79,0.1); }
+    .tab-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #EF4444; color: #fff; font-size: 11px; font-weight: 700; margin-left: 6px; line-height: 1; animation: badgePulse 2s ease-in-out infinite; }
+    @keyframes badgePulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
     @media (max-width: 640px) { .tab-btn { padding: 8px 14px; font-size: 13px; } }
@@ -6233,7 +6235,7 @@ app.get('*', (req, res) => {
         <button class="tab-btn" onclick="switchTab('leads')"><i class="fas fa-fire mr-1"></i>Leads</button>
         <button class="tab-btn" onclick="switchTab('calendar')"><i class="fas fa-calendar mr-1"></i>Calendar</button>
         <button class="tab-btn" onclick="switchTab('payments')"><i class="fas fa-dollar-sign mr-1"></i>Payments</button>
-        <button class="tab-btn" onclick="switchTab('portalAccounts')"><i class="fas fa-user-shield mr-1"></i>Portal</button>
+        <button class="tab-btn" onclick="switchTab('portalAccounts')"><i class="fas fa-user-shield mr-1"></i>Portal<span id="portalBadge" class="tab-badge" style="display:none"></span></button>
         <button class="tab-btn" onclick="switchTab('merchandise')"><i class="fas fa-store mr-1"></i>Merch</button>
         <button class="tab-btn" onclick="switchTab('belts')"><i class="fas fa-award mr-1"></i>Belts</button>
       </div>
@@ -7612,6 +7614,7 @@ app.get('*', (req, res) => {
               '<button onclick="callLead(' + l.id + ', \\'' + (l.phone || '').replace(/'/g, "\\'") + '\\', this)" class="px-3 py-1 bg-green-500/20 text-green-400 rounded text-sm hover:bg-green-500/40 transition">Call</button></div>';
           });
         }
+        updatePortalBadge();
       } catch (e) {
         console.error('Failed to load dashboard:', e);
       }
@@ -8814,21 +8817,33 @@ app.get('*', (req, res) => {
         }).join('');
       } catch (e) { console.error('loadPortalAccounts error:', e); }
     }
+    async function updatePortalBadge() {
+      try {
+        if (!currentSchoolId) return;
+        const res = await fetch('/kanchoai/api/v1/student-accounts?school_id=' + currentSchoolId + '&status=pending', { headers: { 'Authorization': 'Bearer ' + authToken } });
+        const data = await res.json();
+        const badge = document.getElementById('portalBadge');
+        if (!badge) return;
+        const count = Array.isArray(data.data) ? data.data.length : 0;
+        if (count > 0) { badge.textContent = count; badge.style.display = 'inline-flex'; }
+        else { badge.style.display = 'none'; }
+      } catch (e) { console.error('updatePortalBadge error:', e); }
+    }
     async function approveAccount(id) {
       if (!confirm('Approve this student portal account?')) return;
       await fetch('/kanchoai/api/v1/student-accounts/' + id + '/approve', { method: 'PUT', headers: { 'Authorization': 'Bearer ' + authToken, 'Content-Type': 'application/json' } });
-      tabsLoaded.portalAccounts = false; loadPortalAccounts();
+      tabsLoaded.portalAccounts = false; loadPortalAccounts(); updatePortalBadge();
     }
     async function suspendAccount(id) {
       if (!confirm('Suspend this account?')) return;
       await fetch('/kanchoai/api/v1/student-accounts/' + id + '/suspend', { method: 'PUT', headers: { 'Authorization': 'Bearer ' + authToken, 'Content-Type': 'application/json' } });
-      tabsLoaded.portalAccounts = false; loadPortalAccounts();
+      tabsLoaded.portalAccounts = false; loadPortalAccounts(); updatePortalBadge();
     }
     async function linkAccount(id) {
       const studentId = prompt('Enter Student ID to link:');
       if (!studentId) return;
       await fetch('/kanchoai/api/v1/student-accounts/' + id + '/link', { method: 'PUT', headers: { 'Authorization': 'Bearer ' + authToken, 'Content-Type': 'application/json' }, body: JSON.stringify({ student_id: parseInt(studentId) }) });
-      tabsLoaded.portalAccounts = false; loadPortalAccounts();
+      tabsLoaded.portalAccounts = false; loadPortalAccounts(); updatePortalBadge();
     }
 
     // ==================== MERCHANDISE TAB ====================
