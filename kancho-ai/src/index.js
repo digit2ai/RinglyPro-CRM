@@ -3689,7 +3689,7 @@ app.get('/es', (req, res) => {
       const maxAttempts = 20;
       const statusEl = document.getElementById('voiceStatus');
 
-      function tryAutoStart() {
+      function waitForWidget() {
         attempts++;
         if (!widgetElement) return;
 
@@ -3697,22 +3697,20 @@ app.get('/es', (req, res) => {
         if (shadowRoot) {
           const btn = shadowRoot.querySelector('button');
           if (btn) {
-            console.log('[Kancho] Auto-clic en botón del widget');
-            statusEl.textContent = 'Conectado - Haz clic en el orbe para hablar';
-            btn.click();
+            console.log('[Kancho] Widget listo - esperando clic del usuario');
+            statusEl.textContent = 'Listo - Haz clic en el orbe para hablar';
             return;
           }
         }
 
         if (attempts < maxAttempts) {
-          setTimeout(tryAutoStart, 200);
+          setTimeout(waitForWidget, 200);
         } else {
-          console.log('[Kancho] Widget listo - haz clic en el orbe para comenzar');
           statusEl.textContent = 'Haz clic en el orbe para comenzar a hablar';
         }
       }
 
-      setTimeout(tryAutoStart, 500);
+      setTimeout(waitForWidget, 500);
     }
 
     function closeVoiceModal() {
@@ -7733,7 +7731,7 @@ app.get('*', (req, res) => {
       const maxAttempts = 20;
       const statusEl = document.getElementById('voiceStatus');
 
-      function tryAutoStart() {
+      function waitForWidget() {
         attempts++;
         if (!widgetElement) return;
 
@@ -7741,22 +7739,20 @@ app.get('*', (req, res) => {
         if (shadowRoot) {
           const btn = shadowRoot.querySelector('button');
           if (btn) {
-            console.log('[Kancho] Auto-clicking widget button');
-            statusEl.textContent = 'Connected - Click orb to talk';
-            btn.click();
+            console.log('[Kancho] Widget ready - waiting for user click');
+            statusEl.textContent = 'Ready - Click the orb to talk';
             return;
           }
         }
 
         if (attempts < maxAttempts) {
-          setTimeout(tryAutoStart, 200);
+          setTimeout(waitForWidget, 200);
         } else {
-          console.log('[Kancho] Widget ready - click orb to start');
           statusEl.textContent = 'Click the orb to start talking';
         }
       }
 
-      setTimeout(tryAutoStart, 500);
+      setTimeout(waitForWidget, 500);
     }
 
     function closeVoiceModal() {
