@@ -6,7 +6,7 @@ const router = express.Router();
 const { Op } = require('sequelize');
 
 module.exports = (models) => {
-  const { KanchoStudent, KanchoClass, KanchoAttendance, KanchoClassEnrollment, KanchoRevenue, KanchoSchool } = models;
+  const { KanchoStudent, KanchoClass, KanchoAttendance, KanchoClassEnrollment, KanchoRevenue, KanchoSchool, KanchoMerchandise } = models;
 
   // GET /dashboard - Dashboard summary
   router.get('/dashboard', async (req, res) => {
@@ -387,6 +387,21 @@ module.exports = (models) => {
       res.json({ success: true, data: student });
     } catch (error) {
       console.error('Student profile update error:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // GET /merchandise - School merchandise store
+  router.get('/merchandise', async (req, res) => {
+    try {
+      const items = await KanchoMerchandise.findAll({
+        where: { school_id: req.schoolId, in_stock: true },
+        order: [['sort_order', 'ASC'], ['category', 'ASC'], ['name', 'ASC']]
+      });
+
+      res.json({ success: true, data: items });
+    } catch (error) {
+      console.error('Student merchandise error:', error);
       res.status(500).json({ success: false, error: error.message });
     }
   });

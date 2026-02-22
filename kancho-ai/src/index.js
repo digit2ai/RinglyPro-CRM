@@ -1974,6 +1974,115 @@ if (models && !modelsError) {
     }
   });
 
+  // =====================================================
+  // ADMIN: Merchandise Management
+  // =====================================================
+
+  // GET /api/v1/merchandise?school_id=X
+  app.get('/api/v1/merchandise', async (req, res) => {
+    try {
+      const { school_id } = req.query;
+      if (!school_id) return res.status(400).json({ error: 'school_id required' });
+      const items = await models.KanchoMerchandise.findAll({
+        where: { school_id },
+        order: [['sort_order', 'ASC'], ['category', 'ASC'], ['name', 'ASC']]
+      });
+      res.json({ success: true, data: items });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // POST /api/v1/merchandise
+  app.post('/api/v1/merchandise', async (req, res) => {
+    try {
+      const { school_id, name, description, price, image_url, category, sizes, in_stock, stripe_price_id, sort_order } = req.body;
+      if (!school_id || !name || price === undefined) return res.status(400).json({ error: 'school_id, name, and price required' });
+      const item = await models.KanchoMerchandise.create({
+        school_id, name, description, price, image_url, category: category || 'other',
+        sizes: sizes || [], in_stock: in_stock !== false, stripe_price_id, sort_order: sort_order || 0
+      });
+      res.status(201).json({ success: true, data: item });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // PUT /api/v1/merchandise/:id
+  app.put('/api/v1/merchandise/:id', async (req, res) => {
+    try {
+      const item = await models.KanchoMerchandise.findByPk(req.params.id);
+      if (!item) return res.status(404).json({ error: 'Item not found' });
+      const fields = ['name', 'description', 'price', 'image_url', 'category', 'sizes', 'in_stock', 'stripe_price_id', 'sort_order'];
+      fields.forEach(f => { if (req.body[f] !== undefined) item[f] = req.body[f]; });
+      await item.save();
+      res.json({ success: true, data: item });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // DELETE /api/v1/merchandise/:id
+  app.delete('/api/v1/merchandise/:id', async (req, res) => {
+    try {
+      const item = await models.KanchoMerchandise.findByPk(req.params.id);
+      if (!item) return res.status(404).json({ error: 'Item not found' });
+      await item.destroy();
+      res.json({ success: true, message: 'Item deleted' });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // POST /api/v1/seed-merchandise - Seed sample merchandise
+  app.post('/api/v1/seed-merchandise', async (req, res) => {
+    try {
+      const schools = await models.KanchoSchool.findAll({ attributes: ['id', 'name', 'martial_art_type'] });
+      let total = 0;
+
+      const merchTemplates = [
+        { name: 'School Gi - White', category: 'gi', price: 89.99, sizes: ['Youth S','Youth M','Youth L','S','M','L','XL','XXL'], description: 'Official school gi in white. Lightweight pearl weave, embroidered school logo.', image_url: 'https://images.unsplash.com/photo-1555597673-b21d5c935865?w=400' },
+        { name: 'School Gi - Black', category: 'gi', price: 99.99, sizes: ['S','M','L','XL','XXL'], description: 'Premium black gi with reinforced stitching and embroidered school logo.', image_url: 'https://images.unsplash.com/photo-1555597673-b21d5c935865?w=400' },
+        { name: 'Training Rash Guard', category: 'apparel', price: 44.99, sizes: ['S','M','L','XL'], description: 'Short sleeve rash guard with school logo. Moisture-wicking fabric.', image_url: 'https://images.unsplash.com/photo-1556906781-9a412961c28c?w=400' },
+        { name: 'School T-Shirt', category: 'apparel', price: 29.99, sizes: ['Youth S','Youth M','Youth L','S','M','L','XL','XXL'], description: 'Cotton blend t-shirt with school logo and martial arts design.', image_url: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400' },
+        { name: 'Training Shorts', category: 'apparel', price: 39.99, sizes: ['S','M','L','XL'], description: 'Lightweight fight shorts with side slits for mobility.', image_url: 'https://images.unsplash.com/photo-1591195853828-11db59a44f6b?w=400' },
+        { name: 'Boxing Gloves - 16oz', category: 'gear', price: 59.99, sizes: ['12oz','14oz','16oz'], description: 'Synthetic leather boxing gloves. Great for beginners and intermediate.', image_url: 'https://images.unsplash.com/photo-1509255929945-586a420363cf?w=400' },
+        { name: 'Shin Guards', category: 'gear', price: 49.99, sizes: ['S','M','L','XL'], description: 'Padded shin guards with instep protection.', image_url: 'https://images.unsplash.com/photo-1517438322307-e67111335449?w=400' },
+        { name: 'Mouth Guard', category: 'gear', price: 14.99, sizes: ['Youth','Adult'], description: 'Boil-and-bite mouth guard with carrying case.', image_url: 'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=400' },
+        { name: 'School Gym Bag', category: 'accessories', price: 34.99, sizes: [], description: 'Duffel bag with school logo. Ventilated shoe compartment.', image_url: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400' },
+        { name: 'Water Bottle', category: 'accessories', price: 19.99, sizes: [], description: '32oz insulated stainless steel water bottle with school logo.', image_url: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=400' },
+        { name: 'Belt Display Frame', category: 'accessories', price: 39.99, sizes: [], description: 'Wall-mounted display frame for your belt collection.', image_url: 'https://images.unsplash.com/photo-1555597673-b21d5c935865?w=400' },
+        { name: 'Protein Shake Mix', category: 'supplements', price: 49.99, sizes: ['Chocolate','Vanilla','Strawberry'], description: 'Post-training recovery shake. 30 servings per container.', image_url: 'https://images.unsplash.com/photo-1593095948071-474c5cc2c838?w=400' }
+      ];
+
+      for (const school of schools) {
+        // Each school gets 6-10 random items
+        const count = 6 + Math.floor(Math.random() * 5);
+        const shuffled = merchTemplates.sort(() => 0.5 - Math.random()).slice(0, count);
+
+        for (let i = 0; i < shuffled.length; i++) {
+          const t = shuffled[i];
+          await models.KanchoMerchandise.create({
+            school_id: school.id,
+            name: t.name,
+            description: t.description,
+            price: t.price,
+            image_url: t.image_url,
+            category: t.category,
+            sizes: t.sizes,
+            in_stock: Math.random() > 0.15,
+            sort_order: i
+          });
+          total++;
+        }
+      }
+
+      res.json({ success: true, message: total + ' merchandise items seeded across ' + schools.length + ' schools' });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   console.log('Kancho AI API routes mounted:');
   console.log('  - /kanchoai/api/v1/schools');
   console.log('  - /kanchoai/api/v1/students');
@@ -1982,6 +2091,7 @@ if (models && !modelsError) {
   console.log('  - /kanchoai/api/v1/health');
   console.log('  - /kanchoai/api/v1/voice');
   console.log('  - /kanchoai/api/v1/student-accounts');
+  console.log('  - /kanchoai/api/v1/merchandise');
 } else {
   app.use('/api/v1/*', (req, res) => {
     res.status(503).json({
@@ -3691,6 +3801,33 @@ function studentPortalHandler(req, res) {
     .empty-state svg { width: 48px; height: 48px; margin-bottom: 12px; opacity: 0.5; }
     .empty-state p { font-size: 14px; }
 
+    /* Shop / Merchandise */
+    .shop-categories { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 16px; -webkit-overflow-scrolling: touch; }
+    .shop-categories::-webkit-scrollbar { display: none; }
+    .shop-cat { padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 500; background: var(--surface); border: 1px solid var(--border); color: var(--text2); cursor: pointer; white-space: nowrap; transition: all 0.2s; }
+    .shop-cat.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .shop-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: transform 0.2s; }
+    .shop-card:active { transform: scale(0.98); }
+    .shop-card-img { width: 100%; height: 140px; object-fit: cover; background: var(--surface2); }
+    .shop-card-body { padding: 12px; }
+    .shop-card-name { font-size: 13px; font-weight: 600; line-height: 1.3; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .shop-card-cat { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .shop-card-price { font-size: 16px; font-weight: 700; color: var(--accent); }
+    .shop-card-sizes { font-size: 11px; color: var(--text2); margin-top: 4px; }
+    .shop-card-oos { opacity: 0.5; }
+    .shop-card-oos .shop-card-price { color: var(--text2); text-decoration: line-through; }
+    .shop-detail-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 300; display: flex; align-items: flex-end; justify-content: center; }
+    .shop-detail { background: var(--surface); border-radius: 16px 16px 0 0; width: 100%; max-width: 480px; max-height: 85vh; overflow-y: auto; padding: 20px; padding-bottom: calc(20px + var(--safe-bottom)); }
+    .shop-detail-img { width: 100%; height: 220px; object-fit: cover; border-radius: 12px; margin-bottom: 16px; background: var(--surface2); }
+    .shop-detail-name { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+    .shop-detail-cat { font-size: 12px; color: var(--text2); text-transform: uppercase; margin-bottom: 12px; }
+    .shop-detail-price { font-size: 24px; font-weight: 700; color: var(--accent); margin-bottom: 12px; }
+    .shop-detail-desc { font-size: 14px; color: var(--text2); line-height: 1.5; margin-bottom: 16px; }
+    .shop-sizes { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .shop-size { padding: 8px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+    .shop-size.selected { border-color: var(--accent); background: rgba(232,90,79,0.15); color: var(--accent); }
+
     /* Toast */
     .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 12px 24px; border-radius: 10px; font-size: 14px; font-weight: 500; z-index: 9999; animation: toastIn 0.3s ease; }
     .toast-success { background: var(--success); color: #fff; }
@@ -3874,6 +4011,12 @@ function studentPortalHandler(req, res) {
     <div id="scheduleContent"><div class="spinner"></div></div>
   </div>
 
+  <!-- Shop -->
+  <div id="sectionShop" class="section">
+    <h2 class="section-title">Pro Shop</h2>
+    <div id="shopContent"><div class="spinner"></div></div>
+  </div>
+
   <!-- Payments -->
   <div id="sectionPayments" class="section">
     <h2 class="section-title">Payments</h2>
@@ -3902,9 +4045,9 @@ function studentPortalHandler(req, res) {
       </div>
       <span>Check In</span>
     </button>
-    <button class="nav-item" data-section="Payments" onclick="switchSection('Payments')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-      <span>Payments</span>
+    <button class="nav-item" data-section="Shop" onclick="switchSection('Shop')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+      <span>Shop</span>
     </button>
     <button class="nav-item" data-section="Profile" onclick="switchSection('Profile')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -4119,7 +4262,7 @@ function enterApp() {
 }
 
 function switchSection(name) {
-  ['Dashboard','Checkin','Schedule','Payments','Profile'].forEach(s => {
+  ['Dashboard','Checkin','Schedule','Shop','Payments','Profile'].forEach(s => {
     const sec = document.getElementById('section' + s);
     if (sec) sec.classList.toggle('active', s === name);
   });
@@ -4127,11 +4270,12 @@ function switchSection(name) {
     n.classList.toggle('active', n.dataset.section === name);
   });
   document.getElementById('headerTitle').textContent =
-    name === 'Dashboard' ? 'Dashboard' : name === 'Checkin' ? 'Check In' : name;
+    name === 'Dashboard' ? 'Dashboard' : name === 'Checkin' ? 'Check In' : name === 'Shop' ? 'Pro Shop' : name;
 
   if (name === 'Dashboard') loadDashboard();
   else if (name === 'Checkin') loadCheckin();
   else if (name === 'Schedule') loadSchedule();
+  else if (name === 'Shop') loadShop();
   else if (name === 'Payments') loadPayments();
   else if (name === 'Profile') loadProfile();
 }
@@ -4355,6 +4499,122 @@ async function dropClass(id) {
   } catch (e) { showToast('Connection error', 'error'); }
 }
 
+// ============ SHOP ============
+let shopData = [];
+let shopFilter = 'all';
+
+async function loadShop() {
+  const el = document.getElementById('shopContent');
+  el.innerHTML = '<div class="spinner"></div>';
+  try {
+    const res = await api(API + '/merchandise');
+    if (!res.success) { el.innerHTML = '<div class="empty-state"><p>Error loading shop</p></div>'; return; }
+
+    shopData = res.data || [];
+    if (shopData.length === 0) {
+      el.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg><p>No merchandise available yet</p></div>';
+      return;
+    }
+
+    renderShop();
+  } catch (e) {
+    el.innerHTML = '<div class="empty-state"><p>Error loading shop</p></div>';
+    console.error(e);
+  }
+}
+
+function renderShop() {
+  const el = document.getElementById('shopContent');
+  const categories = ['all', ...new Set(shopData.map(i => i.category))];
+  const filtered = shopFilter === 'all' ? shopData : shopData.filter(i => i.category === shopFilter);
+
+  let html = '<div class="shop-categories">';
+  categories.forEach(c => {
+    const label = c === 'all' ? 'All' : c.charAt(0).toUpperCase() + c.slice(1);
+    html += '<div class="shop-cat' + (shopFilter === c ? ' active' : '') + '" onclick="filterShop(' + "'" + c + "'" + ')">' + label + '</div>';
+  });
+  html += '</div>';
+
+  html += '<div class="shop-grid">';
+  filtered.forEach(item => {
+    const oos = !item.in_stock;
+    html += '<div class="shop-card' + (oos ? ' shop-card-oos' : '') + '" onclick="openShopDetail(' + item.id + ')">';
+    if (item.image_url) {
+      html += '<img class="shop-card-img" src="' + item.image_url + '" alt="' + item.name + '" onerror="this.style.display=' + "'none'" + '">';
+    } else {
+      html += '<div class="shop-card-img" style="display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1" style="opacity:0.3"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></div>';
+    }
+    html += '<div class="shop-card-body">';
+    html += '<div class="shop-card-cat">' + (item.category || 'other') + '</div>';
+    html += '<div class="shop-card-name">' + item.name + '</div>';
+    html += '<div class="shop-card-price">$' + parseFloat(item.price).toFixed(2) + '</div>';
+    if (oos) html += '<div style="font-size:11px;color:var(--danger);margin-top:4px">Out of Stock</div>';
+    else if (item.sizes && item.sizes.length > 0) html += '<div class="shop-card-sizes">' + item.sizes.length + ' sizes</div>';
+    html += '</div></div>';
+  });
+  html += '</div>';
+
+  el.innerHTML = html;
+}
+
+function filterShop(cat) {
+  shopFilter = cat;
+  renderShop();
+}
+
+function openShopDetail(itemId) {
+  const item = shopData.find(i => i.id === itemId);
+  if (!item) return;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'shop-detail-overlay';
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+  let sizesHtml = '';
+  if (item.sizes && item.sizes.length > 0) {
+    sizesHtml = '<div style="font-size:13px;color:var(--text2);margin-bottom:8px;font-weight:500">Select Size</div><div class="shop-sizes">';
+    item.sizes.forEach((s, i) => {
+      sizesHtml += '<div class="shop-size' + (i === 0 ? ' selected' : '') + '" onclick="selectSize(this)">' + s + '</div>';
+    });
+    sizesHtml += '</div>';
+  }
+
+  overlay.innerHTML = '<div class="shop-detail">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">' +
+    '<span style="font-size:13px;color:var(--text2)">Product Details</span>' +
+    '<button onclick="this.closest(' + "'.shop-detail-overlay'" + ').remove()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;padding:4px">&times;</button>' +
+    '</div>' +
+    (item.image_url ? '<img class="shop-detail-img" src="' + item.image_url + '" alt="' + item.name + '" onerror="this.style.display=' + "'none'" + '">' : '') +
+    '<div class="shop-detail-cat">' + (item.category || 'other') + '</div>' +
+    '<div class="shop-detail-name">' + item.name + '</div>' +
+    '<div class="shop-detail-price">$' + parseFloat(item.price).toFixed(2) + '</div>' +
+    (item.description ? '<div class="shop-detail-desc">' + item.description + '</div>' : '') +
+    sizesHtml +
+    (item.in_stock ?
+      '<button class="btn" onclick="inquireMerch(' + item.id + ', this)" style="margin-top:8px">Inquire to Purchase</button>' :
+      '<button class="btn" disabled style="margin-top:8px;opacity:0.5">Out of Stock</button>'
+    ) +
+    '</div>';
+
+  document.body.appendChild(overlay);
+}
+
+function selectSize(el) {
+  el.parentElement.querySelectorAll('.shop-size').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function inquireMerch(itemId, btn) {
+  const item = shopData.find(i => i.id === itemId);
+  if (!item) return;
+  const sizeEl = btn.closest('.shop-detail').querySelector('.shop-size.selected');
+  const size = sizeEl ? sizeEl.textContent : '';
+  showToast('Inquiry sent for ' + item.name + (size ? ' (' + size + ')' : '') + '!');
+  btn.textContent = 'Inquiry Sent';
+  btn.disabled = true;
+  btn.style.background = 'var(--success)';
+}
+
 // ============ PAYMENTS ============
 async function loadPayments() {
   const el = document.getElementById('paymentsContent');
@@ -4437,6 +4697,7 @@ async function loadProfile() {
     }
 
     html += '<button class="btn" onclick="saveProfile()" style="margin-top:8px">Save Changes</button>';
+    html += '<button class="btn btn-outline" onclick="switchSection(' + "'Payments'" + ')" style="margin-top:12px">Payment History</button>';
     html += '<button class="btn btn-outline" onclick="doLogout()" style="margin-top:12px;border-color:var(--danger);color:var(--danger)">Sign Out</button>';
 
     el.innerHTML = html;
