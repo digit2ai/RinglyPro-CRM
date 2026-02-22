@@ -6335,7 +6335,7 @@ app.get('*', (req, res) => {
         const dateStr = calendarYear + '-' + String(calendarMonth).padStart(2, '0') + '-' + String(d).padStart(2, '0');
         const appts = calendarAppointments[dateStr] || [];
         const isToday = dateStr === todayStr;
-        html += '<div class="calendar-day' + (isToday ? ' today' : '') + '" onclick="selectCalendarDay(\'' + dateStr + '\')">';
+        html += '<div class="calendar-day' + (isToday ? ' today' : '') + '" onclick="selectCalendarDay(&apos;' + dateStr + '&apos;)">';
         html += '<div class="calendar-day-number">' + d + '</div>';
         if (appts.length > 0) {
           html += '<div class="mt-1">';
