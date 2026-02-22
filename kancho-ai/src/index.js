@@ -1373,6 +1373,262 @@ if (models && !modelsError) {
     }
   });
 
+  // Seed data for an existing school by ID
+  app.post('/api/v1/seed-school/:id', async (req, res) => {
+    try {
+      const { KanchoSchool, KanchoStudent, KanchoLead, KanchoRevenue, KanchoAiCall, KanchoHealthScore, KanchoBusinessHealthMetrics, KanchoClass } = models;
+      const schoolId = parseInt(req.params.id);
+
+      const school = await KanchoSchool.findByPk(schoolId);
+      if (!school) return res.status(404).json({ error: 'School not found' });
+
+      const today = new Date();
+      const artType = school.martial_art_type || 'BJJ';
+
+      // Art-specific configs
+      const configs = {
+        'BJJ': { belts: ['White', 'Blue', 'Purple', 'Brown', 'Black'], memberships: ['Unlimited', '3x Week', '2x Week', 'Competition Team'], programs: ['Adult BJJ', 'Kids BJJ', 'No-Gi', 'Competition', 'Women Only'], rates: [149, 249] },
+        'Karate': { belts: ['White', 'Yellow', 'Orange', 'Green', 'Blue', 'Purple', 'Brown', 'Black'], memberships: ['Family Plan', 'Individual', 'Kids Only', 'Adult Only'], programs: ['Traditional Karate', 'Kids Karate', 'Kata', 'Kumite', 'Self Defense'], rates: [129, 199] },
+        'Taekwondo': { belts: ['White', 'Yellow', 'Green', 'Blue', 'Red', 'Black 1st Dan', 'Black 2nd Dan'], memberships: ['Olympic Track', 'Traditional', 'Little Tigers', 'Family'], programs: ['Olympic Sparring', 'Traditional Forms', 'Little Tigers', 'Junior Program', 'Adult Program'], rates: [139, 229] },
+        'MMA': { belts: ['Beginner', 'Intermediate', 'Advanced', 'Pro-Am', 'Professional'], memberships: ['All Access', 'Striking Only', 'Grappling Only', 'Fight Team'], programs: ['MMA Fundamentals', 'Striking', 'Wrestling', 'Submission Grappling', 'Fight Team'], rates: [169, 299] },
+        'Judo': { belts: ['White', 'Yellow', 'Orange', 'Green', 'Blue', 'Brown', 'Black'], memberships: ['Unlimited', '3x Week', 'Competition'], programs: ['Adult Judo', 'Kids Judo', 'Competition', 'Self Defense'], rates: [129, 199] }
+      };
+      const cfg = configs[artType] || configs['BJJ'];
+
+      const firstNames = ['James', 'Michael', 'Robert', 'David', 'William', 'Carlos', 'Miguel', 'Jose', 'Sofia', 'Isabella',
+        'Mary', 'Patricia', 'Jennifer', 'Sarah', 'Jessica', 'Ethan', 'Mason', 'Logan', 'Alexander', 'Lucas',
+        'Emma', 'Olivia', 'Liam', 'Noah', 'Ava', 'Mia', 'Daniel', 'Matthew', 'Aiden', 'Jackson'];
+      const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez',
+        'Anderson', 'Taylor', 'Thomas', 'Moore', 'White'];
+      const leadSources = ['Google Ads', 'Facebook', 'Instagram', 'Referral', 'Walk-in', 'Website', 'Yelp'];
+
+      const randItem = (arr) => arr[Math.floor(Math.random() * arr.length)];
+      const randBetween = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+      const randDate = (daysBack) => new Date(today.getTime() - Math.random() * daysBack * 24 * 60 * 60 * 1000);
+
+      // Clear existing data for this school first
+      await KanchoStudent.destroy({ where: { school_id: schoolId } });
+      await KanchoLead.destroy({ where: { school_id: schoolId } });
+      await KanchoRevenue.destroy({ where: { school_id: schoolId } });
+      await KanchoAiCall.destroy({ where: { school_id: schoolId } });
+      await KanchoHealthScore.destroy({ where: { school_id: schoolId } });
+      if (KanchoBusinessHealthMetrics) await KanchoBusinessHealthMetrics.destroy({ where: { school_id: schoolId } });
+      if (KanchoClass) await KanchoClass.destroy({ where: { school_id: schoolId } });
+
+      // --- STUDENTS (30-40) ---
+      const numStudents = randBetween(30, 40);
+      const usedEmails = new Set();
+      for (let i = 0; i < numStudents; i++) {
+        const firstName = randItem(firstNames);
+        const lastName = randItem(lastNames);
+        let email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}@email.com`;
+        let counter = 1;
+        while (usedEmails.has(email)) {
+          email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}${counter}@email.com`;
+          counter++;
+        }
+        usedEmails.add(email);
+
+        const churnRand = Math.random();
+        let churnRisk, churnScore;
+        if (churnRand < 0.55) { churnRisk = 'low'; churnScore = randBetween(1, 25); }
+        else if (churnRand < 0.78) { churnRisk = 'medium'; churnScore = randBetween(26, 55); }
+        else if (churnRand < 0.92) { churnRisk = 'high'; churnScore = randBetween(56, 80); }
+        else { churnRisk = 'critical'; churnScore = randBetween(81, 100); }
+
+        const beltIdx = Math.min(Math.floor(Math.pow(Math.random(), 1.5) * cfg.belts.length), cfg.belts.length - 1);
+
+        await KanchoStudent.create({
+          school_id: schoolId,
+          first_name: firstName,
+          last_name: lastName,
+          email,
+          phone: `+1${randBetween(200, 999)}${randBetween(100, 999)}${randBetween(1000, 9999)}`,
+          belt_rank: cfg.belts[beltIdx],
+          membership_type: randItem(cfg.memberships),
+          monthly_rate: randBetween(cfg.rates[0], cfg.rates[1]),
+          churn_risk: churnRisk,
+          churn_risk_score: churnScore,
+          enrollment_date: randDate(730),
+          last_attendance: randDate(churnRisk === 'critical' ? 45 : churnRisk === 'high' ? 21 : 7),
+          attendance_streak: churnRisk === 'low' ? randBetween(5, 30) : randBetween(0, 5),
+          total_classes: randBetween(10, 500),
+          status: churnRisk === 'critical' && Math.random() < 0.3 ? 'inactive' : 'active',
+          payment_status: churnRisk === 'critical' ? randItem(['current', 'past_due', 'failed']) : 'current'
+        });
+      }
+
+      // --- LEADS (10-15) ---
+      const numLeads = randBetween(10, 15);
+      for (let i = 0; i < numLeads; i++) {
+        const firstName = randItem(firstNames);
+        const lastName = randItem(lastNames);
+        const tempRand = Math.random();
+        let temperature, leadScore;
+        if (tempRand < 0.30) { temperature = 'hot'; leadScore = randBetween(80, 100); }
+        else if (tempRand < 0.70) { temperature = 'warm'; leadScore = randBetween(50, 79); }
+        else { temperature = 'cold'; leadScore = randBetween(20, 49); }
+
+        await KanchoLead.create({
+          school_id: schoolId,
+          first_name: firstName,
+          last_name: lastName,
+          email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${randBetween(1,99)}@gmail.com`,
+          phone: `+1${randBetween(200, 999)}${randBetween(100, 999)}${randBetween(1000, 9999)}`,
+          source: randItem(leadSources),
+          interest: randItem(cfg.programs),
+          temperature,
+          lead_score: leadScore,
+          status: randItem(['new', 'contacted', 'trial_scheduled', 'follow_up']),
+          contact_attempts: randBetween(0, 5),
+          last_contact_date: randDate(14)
+        });
+      }
+
+      // --- REVENUE (20-30 entries for this month) ---
+      const numRevenues = randBetween(20, 30);
+      let totalRevenue = 0;
+      for (let i = 0; i < numRevenues; i++) {
+        const revenueType = randItem(['membership', 'membership', 'membership', 'retail', 'private_lesson', 'testing_fee', 'event']);
+        const amount = revenueType === 'membership' ? randBetween(1000, 5000) : randBetween(50, 500);
+        const date = new Date(today.getFullYear(), today.getMonth(), randBetween(1, today.getDate()));
+        await KanchoRevenue.create({
+          school_id: schoolId,
+          date,
+          type: revenueType,
+          amount,
+          description: `${revenueType.replace('_', ' ')} - ${school.name}`,
+          is_recurring: revenueType === 'membership',
+          source: 'system'
+        });
+        totalRevenue += amount;
+      }
+
+      // --- AI CALLS (8-15) ---
+      const numCalls = randBetween(8, 15);
+      for (let i = 0; i < numCalls; i++) {
+        await KanchoAiCall.create({
+          school_id: schoolId,
+          agent: randItem(['kancho', 'maestro']),
+          call_type: randItem(['lead_followup', 'retention', 'no_show', 'payment_reminder']),
+          direction: 'outbound',
+          phone_number: `+1${randBetween(200, 999)}${randBetween(100, 999)}${randBetween(1000, 9999)}`,
+          duration_seconds: randBetween(60, 300),
+          status: randItem(['completed', 'completed', 'completed', 'voicemail', 'no_answer']),
+          outcome: randItem(['trial_booked', 'callback_scheduled', 'issue_resolved', 'left_voicemail', 'payment_collected']),
+          sentiment: randItem(['positive', 'positive', 'neutral', 'negative']),
+          created_at: randDate(7)
+        });
+      }
+
+      // --- CLASSES (5-6) ---
+      if (KanchoClass) {
+        const classDays = ['Monday/Wednesday/Friday', 'Tuesday/Thursday', 'Monday/Wednesday', 'Saturday', 'Tuesday/Thursday/Saturday'];
+        const classTimes = ['6:00 AM', '9:00 AM', '12:00 PM', '4:30 PM', '6:30 PM', '7:30 PM'];
+        for (let i = 0; i < Math.min(cfg.programs.length, 5); i++) {
+          await KanchoClass.create({
+            school_id: schoolId,
+            name: cfg.programs[i],
+            schedule: `${classDays[i % classDays.length]} ${classTimes[i % classTimes.length]}`,
+            instructor: school.owner_name || 'Head Instructor',
+            max_capacity: randBetween(20, 40),
+            current_enrollment: randBetween(8, 25),
+            status: 'active'
+          });
+        }
+      }
+
+      // --- HEALTH SCORE ---
+      const activeCount = await KanchoStudent.count({ where: { school_id: schoolId, status: 'active' } });
+      const atRisk = await KanchoStudent.count({ where: { school_id: schoolId, churn_risk: ['high', 'critical'] } });
+      const hotLeads = await KanchoLead.count({ where: { school_id: schoolId, temperature: 'hot' } });
+
+      const overallScore = randBetween(68, 85);
+      const grade = overallScore >= 90 ? 'A' : overallScore >= 80 ? 'B+' : overallScore >= 75 ? 'B' : overallScore >= 70 ? 'C+' : 'C';
+
+      await KanchoHealthScore.create({
+        school_id: schoolId,
+        date: today,
+        retention_score: randBetween(65, 88),
+        revenue_score: randBetween(55, 85),
+        lead_score: randBetween(50, 82),
+        attendance_score: randBetween(62, 88),
+        engagement_score: randBetween(58, 82),
+        growth_score: randBetween(50, 78),
+        overall_score: overallScore,
+        grade,
+        vs_last_week: randBetween(-3, 8),
+        insights: [
+          `${atRisk} students at risk of churning - immediate attention needed`,
+          `${hotLeads} hot leads ready for conversion`,
+          `Monthly revenue at $${totalRevenue.toLocaleString()} this month`,
+          activeCount > 30 ? 'Strong active student base' : 'Focus on student acquisition'
+        ]
+      });
+
+      // --- BUSINESS HEALTH METRICS ---
+      const currentMonth = today.toISOString().slice(0, 7);
+      const trialsStarted = randBetween(8, 18);
+      const trialsConverted = Math.floor(trialsStarted * (randBetween(50, 72) / 100));
+      const trialConversionRate = ((trialsConverted / trialsStarted) * 100).toFixed(2);
+      const cancelledStudents = randBetween(1, 4);
+      const startingStudents = activeCount + cancelledStudents;
+      const churnRate = ((cancelledStudents / startingStudents) * 100).toFixed(2);
+      const arps = (totalRevenue / Math.max(activeCount, 1)).toFixed(2);
+      const revenueAtRisk = (atRisk * parseFloat(arps)).toFixed(2);
+      const growthPotential = (hotLeads * parseFloat(arps)).toFixed(2);
+      const revenueTarget = school.monthly_revenue_target || 30000;
+      const revenueVsTargetPercent = ((totalRevenue / revenueTarget) * 100).toFixed(2);
+
+      await school.update({ active_students: activeCount });
+
+      if (KanchoBusinessHealthMetrics) {
+        await KanchoBusinessHealthMetrics.create({
+          school_id: schoolId,
+          report_month: currentMonth,
+          active_students: activeCount,
+          net_student_growth: trialsConverted - cancelledStudents,
+          churn_rate: parseFloat(churnRate),
+          arps: parseFloat(arps),
+          trial_conversion_rate: parseFloat(trialConversionRate),
+          trials_started: trialsStarted,
+          trials_converted: trialsConverted,
+          cancelled_students: cancelledStudents,
+          health_score: overallScore,
+          health_grade: grade,
+          revenue_at_risk: parseFloat(revenueAtRisk),
+          students_at_risk: atRisk,
+          growth_potential: parseFloat(growthPotential),
+          hot_leads: hotLeads,
+          monthly_revenue: totalRevenue,
+          revenue_vs_target_percent: parseFloat(revenueVsTargetPercent)
+        });
+      }
+
+      res.json({
+        success: true,
+        message: `Data seeded for ${school.name}`,
+        summary: {
+          school: school.name,
+          school_id: schoolId,
+          students: numStudents,
+          active_students: activeCount,
+          at_risk: atRisk,
+          leads: numLeads,
+          hot_leads: hotLeads,
+          revenue_entries: numRevenues,
+          total_revenue: `$${totalRevenue.toLocaleString()}`,
+          ai_calls: numCalls,
+          health_grade: grade,
+          health_score: overallScore
+        }
+      });
+    } catch (error) {
+      console.error('Seed school error:', error);
+      res.status(500).json({ error: error.message, stack: error.stack });
+    }
+  });
+
   console.log('Kancho AI API routes mounted:');
   console.log('  - /kanchoai/api/v1/schools');
   console.log('  - /kanchoai/api/v1/students');
