@@ -384,10 +384,37 @@ async function processKanchoSignup(session) {
     // ==================== STEP 2: PROVISION TWILIO NUMBER ====================
     await pending.update({ provisioning_step: 'provisioning_twilio' });
 
-    let twilioNumber = `+1555${Math.floor(Math.random() * 10000000).toString().padStart(7, '0')}`;
-    let twilioSid = `PN_PENDING_${Date.now()}`;
+    let twilioNumber, twilioSid;
 
-    if (twilioClient && process.env.SKIP_TWILIO_PROVISIONING !== 'true') {
+    // Option A: Use existing Twilio number (for testing or pre-assigned numbers)
+    if (process.env.KANCHO_TEST_TWILIO_NUMBER && process.env.KANCHO_TEST_TWILIO_SID) {
+      twilioNumber = process.env.KANCHO_TEST_TWILIO_NUMBER;
+      twilioSid = process.env.KANCHO_TEST_TWILIO_SID;
+      console.log(`[KanchoWebhook] Using existing Twilio number: ${twilioNumber}`);
+
+      // Update webhooks on the existing number to point to our app
+      if (twilioClient) {
+        try {
+          const webhookBaseUrl = process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com';
+          await twilioClient.incomingPhoneNumbers(twilioSid).update({
+            voiceUrl: `${webhookBaseUrl}/voice/rachel/`,
+            voiceMethod: 'POST',
+            statusCallback: `${webhookBaseUrl}/voice/webhook/call-status`,
+            statusCallbackMethod: 'POST',
+            smsUrl: `${webhookBaseUrl}/api/messages/incoming`,
+            smsMethod: 'POST',
+            friendlyName: `KanchoAI - ${pending.school_name}`
+          });
+          console.log(`[KanchoWebhook] Updated webhooks on existing Twilio number`);
+        } catch (updateErr) {
+          console.error('[KanchoWebhook] Failed to update Twilio webhooks (non-fatal):', updateErr.message);
+        }
+      }
+
+    // Option B: Purchase a new Twilio number
+    } else if (twilioClient && process.env.SKIP_TWILIO_PROVISIONING !== 'true') {
+      twilioNumber = `+1555${Math.floor(Math.random() * 10000000).toString().padStart(7, '0')}`;
+      twilioSid = `PN_PENDING_${Date.now()}`;
       try {
         const availableNumbers = await twilioClient.availablePhoneNumbers('US')
           .local.list({ limit: 1, voiceEnabled: true, smsEnabled: true });
@@ -411,6 +438,12 @@ async function processKanchoSignup(session) {
       } catch (twilioError) {
         console.error('[KanchoWebhook] Twilio provisioning failed (using placeholder):', twilioError.message);
       }
+
+    // Option C: No Twilio at all (placeholder)
+    } else {
+      twilioNumber = `+1555${Math.floor(Math.random() * 10000000).toString().padStart(7, '0')}`;
+      twilioSid = `PN_PENDING_${Date.now()}`;
+      console.log(`[KanchoWebhook] Twilio skipped, using placeholder: ${twilioNumber}`);
     }
 
     // ==================== STEP 3: CREATE CLIENT ====================
