@@ -60,6 +60,69 @@ app.get('/manifest.json', (req, res) => {
   res.json(manifest);
 });
 
+// Student Portal PWA manifest
+app.get('/student-manifest.json', (req, res) => {
+  const host = req.get('host') || '';
+  const isKanchoDomain = host.includes('kanchoai.com');
+  const basePath = isKanchoDomain ? '/student/' : '/kanchoai/student/';
+
+  res.setHeader('Content-Type', 'application/manifest+json');
+  res.json({
+    name: 'My Dojo - Student Portal',
+    short_name: 'My Dojo',
+    description: 'Track attendance, schedule, belt progress & payments',
+    start_url: basePath,
+    display: 'standalone',
+    background_color: '#0D0D0D',
+    theme_color: '#E85A4F',
+    orientation: 'portrait-primary',
+    icons: [
+      { src: 'https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/698d318b7f6dcf1134316df1.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+      { src: 'https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/698d318b7f6dcf1134316df1.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+    ],
+    categories: ['education', 'health-fitness'],
+    lang: 'en',
+    dir: 'ltr'
+  });
+});
+
+// Student Portal service worker
+app.get('/student-sw.js', (req, res) => {
+  res.setHeader('Content-Type', 'application/javascript');
+  res.send([
+    "const CACHE_NAME = 'student-portal-v1';",
+    "const urlsToCache = [];",
+    "",
+    "self.addEventListener('install', (event) => {",
+    "  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache)));",
+    "  self.skipWaiting();",
+    "});",
+    "",
+    "self.addEventListener('activate', (event) => {",
+    "  event.waitUntil(",
+    "    caches.keys().then(names => Promise.all(",
+    "      names.filter(name => name !== CACHE_NAME).map(name => caches.delete(name))",
+    "    ))",
+    "  );",
+    "  self.clients.claim();",
+    "});",
+    "",
+    "self.addEventListener('fetch', (event) => {",
+    "  if (event.request.method !== 'GET') return;",
+    "  if (event.request.url.includes('/api/')) return;",
+    "  event.respondWith(",
+    "    fetch(event.request).then(response => {",
+    "      if (response.ok) {",
+    "        const clone = response.clone();",
+    "        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));",
+    "      }",
+    "      return response;",
+    "    }).catch(() => caches.match(event.request))",
+    "  );",
+    "});"
+  ].join('\n'));
+});
+
 // Import models
 let models;
 let modelsError = null;
@@ -971,6 +1034,27 @@ if (models && !modelsError) {
   }
 
   // =====================================================
+  // STUDENT PORTAL ROUTES
+  // =====================================================
+  try {
+    const studentAuthRoutes = require('./routes/student-auth')(models);
+    const studentPortalRoutes = require('./routes/student-portal')(models);
+    const studentAuth = studentAuthRoutes.authenticateStudent;
+
+    // Auth routes (public - register, login, password reset)
+    app.use('/api/v1/student/auth', studentAuthRoutes);
+
+    // Protected student portal routes
+    app.use('/api/v1/student', studentAuth, studentPortalRoutes);
+
+    console.log('🎓 KanchoAI Student Portal routes mounted:');
+    console.log('   /api/v1/student/auth   (register, login, password reset)');
+    console.log('   /api/v1/student/*      (dashboard, attendance, classes, profile)');
+  } catch (studentError) {
+    console.log('⚠️ KanchoAI Student Portal routes not available:', studentError.message);
+  }
+
+  // =====================================================
   // KANCHO SUBSCRIPTION PLANS - Stripe Integration
   // =====================================================
   const KANCHO_PLANS = {
@@ -1798,6 +1882,98 @@ if (models && !modelsError) {
     }
   });
 
+  // =====================================================
+  // ADMIN: Student Portal Account Management
+  // =====================================================
+
+  // GET /api/v1/student-accounts?school_id=X - List student portal accounts
+  app.get('/api/v1/student-accounts', async (req, res) => {
+    try {
+      const { school_id, status } = req.query;
+      if (!school_id) return res.status(400).json({ error: 'school_id required' });
+
+      const where = { school_id };
+      if (status) where.status = status;
+
+      const accounts = await models.KanchoStudentAuth.findAll({
+        where,
+        include: [{ model: models.KanchoStudent, as: 'student', attributes: ['id', 'first_name', 'last_name', 'belt_rank', 'email'] }],
+        order: [['created_at', 'DESC']]
+      });
+
+      res.json({ success: true, data: accounts });
+    } catch (error) {
+      console.error('Error fetching student accounts:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // PUT /api/v1/student-accounts/:id/approve - Approve a pending student account
+  app.put('/api/v1/student-accounts/:id/approve', async (req, res) => {
+    try {
+      const auth = await models.KanchoStudentAuth.findByPk(req.params.id);
+      if (!auth) return res.status(404).json({ error: 'Account not found' });
+
+      // Try to link to student record if not already linked
+      if (!auth.student_id) {
+        const { student_id } = req.body;
+        if (student_id) {
+          auth.student_id = student_id;
+        } else {
+          // Try auto-match by email
+          const student = await models.KanchoStudent.findOne({
+            where: { email: auth.email, school_id: auth.school_id }
+          });
+          if (student) auth.student_id = student.id;
+        }
+      }
+
+      auth.status = 'active';
+      await auth.save();
+
+      res.json({ success: true, data: auth });
+    } catch (error) {
+      console.error('Error approving student account:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // PUT /api/v1/student-accounts/:id/suspend - Suspend a student account
+  app.put('/api/v1/student-accounts/:id/suspend', async (req, res) => {
+    try {
+      const auth = await models.KanchoStudentAuth.findByPk(req.params.id);
+      if (!auth) return res.status(404).json({ error: 'Account not found' });
+
+      auth.status = 'suspended';
+      await auth.save();
+
+      res.json({ success: true, data: auth });
+    } catch (error) {
+      console.error('Error suspending student account:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // PUT /api/v1/student-accounts/:id/link - Link student account to student record
+  app.put('/api/v1/student-accounts/:id/link', async (req, res) => {
+    try {
+      const { student_id } = req.body;
+      if (!student_id) return res.status(400).json({ error: 'student_id required' });
+
+      const auth = await models.KanchoStudentAuth.findByPk(req.params.id);
+      if (!auth) return res.status(404).json({ error: 'Account not found' });
+
+      auth.student_id = student_id;
+      if (auth.status === 'pending') auth.status = 'active';
+      await auth.save();
+
+      res.json({ success: true, data: auth });
+    } catch (error) {
+      console.error('Error linking student account:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   console.log('Kancho AI API routes mounted:');
   console.log('  - /kanchoai/api/v1/schools');
   console.log('  - /kanchoai/api/v1/students');
@@ -1805,6 +1981,7 @@ if (models && !modelsError) {
   console.log('  - /kanchoai/api/v1/dashboard');
   console.log('  - /kanchoai/api/v1/health');
   console.log('  - /kanchoai/api/v1/voice');
+  console.log('  - /kanchoai/api/v1/student-accounts');
 } else {
   app.use('/api/v1/*', (req, res) => {
     res.status(503).json({
@@ -3360,6 +3537,997 @@ app.get('/es', (req, res) => {
 </html>
   `);
 });
+
+// =====================================================
+// STUDENT PORTAL PWA - Mobile-first SPA
+// =====================================================
+app.get('/student', (req, res) => res.redirect('/student/'));
+app.get('/student/*', studentPortalHandler);
+app.get('/student/', studentPortalHandler);
+
+function studentPortalHandler(req, res) {
+  const host = req.get('host') || '';
+  const isKanchoDomain = host.includes('kanchoai.com');
+  const basePath = isKanchoDomain ? '/student/' : '/kanchoai/student/';
+  const apiBase = isKanchoDomain ? '' : '/kanchoai';
+
+  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  res.send(`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>My Dojo - Student Portal</title>
+  <meta name="theme-color" content="#E85A4F">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="My Dojo">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="${apiBase}/student-manifest.json">
+  <link rel="apple-touch-icon" href="${KANCHO_LOGO_URL}">
+  <link rel="icon" type="image/png" href="${KANCHO_LOGO_URL}">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #0D0D0D; --surface: #1A1A1A; --surface2: #222; --border: #333;
+      --text: #F0F0F0; --text2: #999; --accent: #E85A4F; --accent2: #D4453B;
+      --success: #22C55E; --warning: #F59E0B; --danger: #EF4444;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-height: 100vh; overflow-x: hidden; }
+
+    /* Auth screens */
+    .auth-container { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
+    .auth-logo { width: 80px; height: 80px; border-radius: 20px; margin-bottom: 16px; }
+    .auth-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+    .auth-subtitle { color: var(--text2); margin-bottom: 32px; font-size: 14px; }
+    .auth-form { width: 100%; max-width: 380px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; color: var(--text2); margin-bottom: 6px; font-weight: 500; }
+    .form-group input, .form-group select { width: 100%; padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 16px; outline: none; transition: border-color 0.2s; -webkit-appearance: none; }
+    .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+    .form-group select option { background: var(--surface); color: var(--text); }
+    .btn { width: 100%; padding: 14px; background: var(--accent); color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .btn:hover { background: var(--accent2); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); background: transparent; }
+    .btn-sm { padding: 8px 16px; font-size: 13px; width: auto; border-radius: 8px; }
+    .btn-success { background: var(--success); }
+    .btn-success:hover { background: #16A34A; }
+    .auth-link { color: var(--accent); text-decoration: none; font-size: 14px; cursor: pointer; }
+    .auth-link:hover { text-decoration: underline; }
+    .auth-links { text-align: center; margin-top: 20px; display: flex; flex-direction: column; gap: 12px; }
+    .auth-error { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: #EF4444; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; display: none; }
+    .auth-success { background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3); color: #22C55E; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; display: none; }
+
+    /* App shell */
+    .app-shell { display: none; min-height: 100vh; padding-bottom: calc(70px + var(--safe-bottom)); }
+    .app-header { background: var(--surface); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+    .app-header h1 { font-size: 18px; font-weight: 700; }
+    .app-header .school-name { font-size: 12px; color: var(--text2); }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+
+    /* Bottom nav */
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-around; padding: 8px 0 calc(8px + var(--safe-bottom)); z-index: 200; }
+    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 12px; color: var(--text2); text-decoration: none; font-size: 10px; font-weight: 500; cursor: pointer; transition: color 0.2s; border: none; background: none; }
+    .nav-item.active { color: var(--accent); }
+    .nav-item svg { width: 22px; height: 22px; }
+    .nav-checkin { position: relative; }
+    .nav-checkin .checkin-circle { width: 52px; height: 52px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -20px; box-shadow: 0 4px 12px rgba(232,90,79,0.4); }
+    .nav-checkin .checkin-circle svg { width: 26px; height: 26px; color: #fff; }
+
+    /* Sections */
+    .section { display: none; padding: 16px 20px; }
+    .section.active { display: block; }
+    .section-title { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
+
+    /* Cards */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+    .card-title { font-size: 13px; color: var(--text2); margin-bottom: 8px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+    .card-value { font-size: 28px; font-weight: 700; }
+    .card-row { display: flex; gap: 12px; }
+    .card-row .card { flex: 1; }
+
+    /* Stats grid */
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; text-align: center; }
+    .stat-value { font-size: 24px; font-weight: 700; }
+    .stat-label { font-size: 11px; color: var(--text2); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Belt display */
+    .belt-display { display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px; }
+    .belt-color { width: 48px; height: 12px; border-radius: 6px; border: 1px solid var(--border); }
+    .belt-info h3 { font-size: 16px; font-weight: 600; }
+    .belt-info p { font-size: 12px; color: var(--text2); }
+    .belt-stripes { display: flex; gap: 4px; margin-top: 4px; }
+    .belt-stripe { width: 16px; height: 4px; border-radius: 2px; background: var(--warning); }
+    .belt-stripe.empty { background: var(--border); }
+
+    /* Check-in button */
+    .checkin-hero { text-align: center; padding: 40px 20px; }
+    .checkin-hero-btn { width: 140px; height: 140px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #C0392B); border: none; color: white; font-size: 18px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 32px rgba(232,90,79,0.4); transition: transform 0.2s, box-shadow 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; margin: 0 auto; }
+    .checkin-hero-btn:hover { transform: scale(1.05); box-shadow: 0 12px 40px rgba(232,90,79,0.5); }
+    .checkin-hero-btn:active { transform: scale(0.98); }
+    .checkin-hero-btn svg { width: 36px; height: 36px; }
+    .checkin-hero-btn.checked { background: linear-gradient(135deg, var(--success), #16A34A); box-shadow: 0 8px 32px rgba(34,197,94,0.4); }
+    .checkin-class-select { margin: 20px auto; max-width: 320px; }
+    .checkin-class-select select { width: 100%; padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 15px; }
+
+    /* List items */
+    .list-item { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; }
+    .list-item-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+    .list-item-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .list-item-text h4 { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .list-item-text p { font-size: 12px; color: var(--text2); }
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .badge-success { background: rgba(34,197,94,0.15); color: var(--success); }
+    .badge-warning { background: rgba(245,158,11,0.15); color: var(--warning); }
+    .badge-danger { background: rgba(239,68,68,0.15); color: var(--danger); }
+    .badge-accent { background: rgba(232,90,79,0.15); color: var(--accent); }
+
+    /* Schedule */
+    .schedule-day { margin-bottom: 16px; }
+    .schedule-day-header { font-size: 14px; font-weight: 600; color: var(--accent); margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+    .schedule-class { padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; }
+    .schedule-class.enrolled { border-color: var(--accent); background: rgba(232,90,79,0.05); }
+    .schedule-time { font-size: 13px; font-weight: 600; color: var(--accent); min-width: 70px; }
+    .schedule-name { font-size: 14px; font-weight: 500; flex: 1; margin: 0 12px; }
+    .schedule-instructor { font-size: 12px; color: var(--text2); }
+
+    /* Profile form */
+    .profile-section { margin-bottom: 24px; }
+    .profile-section h3 { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--accent); }
+
+    /* Payment card */
+    .payment-status-card { text-align: center; padding: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 16px; }
+    .payment-amount { font-size: 36px; font-weight: 700; }
+    .payment-label { font-size: 13px; color: var(--text2); margin-top: 4px; }
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--text2); }
+    .empty-state svg { width: 48px; height: 48px; margin-bottom: 12px; opacity: 0.5; }
+    .empty-state p { font-size: 14px; }
+
+    /* Toast */
+    .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 12px 24px; border-radius: 10px; font-size: 14px; font-weight: 500; z-index: 9999; animation: toastIn 0.3s ease; }
+    .toast-success { background: var(--success); color: #fff; }
+    .toast-error { background: var(--danger); color: #fff; }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+    /* Loading */
+    .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 20px auto; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Streak fire */
+    .streak-fire { font-size: 28px; }
+
+    /* Attendance history */
+    .attendance-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .attendance-item:last-child { border-bottom: none; }
+    .attendance-date { font-size: 13px; font-weight: 500; }
+    .attendance-class { font-size: 12px; color: var(--text2); }
+  </style>
+</head>
+<body>
+
+<!-- AUTH: Welcome -->
+<div id="authWelcome" class="auth-container">
+  <img src="${KANCHO_LOGO_URL}" alt="Logo" class="auth-logo">
+  <h2 class="auth-title">Student Portal</h2>
+  <p class="auth-subtitle">Track attendance, schedule & progress</p>
+  <div class="auth-form">
+    <button class="btn" onclick="showAuth('login')">Sign In</button>
+    <div style="height:12px"></div>
+    <button class="btn btn-outline" onclick="showAuth('register')">Create Account</button>
+  </div>
+</div>
+
+<!-- AUTH: Login -->
+<div id="authLogin" class="auth-container" style="display:none">
+  <img src="${KANCHO_LOGO_URL}" alt="Logo" class="auth-logo">
+  <h2 class="auth-title">Welcome Back</h2>
+  <p class="auth-subtitle">Sign in to your student account</p>
+  <div class="auth-form">
+    <div id="loginError" class="auth-error"></div>
+    <div class="form-group">
+      <label>School</label>
+      <select id="loginSchool"><option value="">Loading schools...</option></select>
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="loginEmail" placeholder="you@email.com" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="loginPassword" placeholder="Enter password" autocomplete="current-password">
+    </div>
+    <button class="btn" id="loginBtn" onclick="doLogin()">Sign In</button>
+    <div class="auth-links">
+      <a class="auth-link" onclick="showAuth('forgot')">Forgot password?</a>
+      <a class="auth-link" onclick="showAuth('register')">Don&apos;t have an account? Register</a>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH: Register -->
+<div id="authRegister" class="auth-container" style="display:none">
+  <img src="${KANCHO_LOGO_URL}" alt="Logo" class="auth-logo">
+  <h2 class="auth-title">Create Account</h2>
+  <p class="auth-subtitle">Register for the student portal</p>
+  <div class="auth-form">
+    <div id="registerError" class="auth-error"></div>
+    <div id="registerSuccess" class="auth-success"></div>
+    <div class="form-group">
+      <label>School</label>
+      <select id="registerSchool"><option value="">Loading schools...</option></select>
+    </div>
+    <div style="display:flex;gap:12px">
+      <div class="form-group" style="flex:1">
+        <label>First Name</label>
+        <input type="text" id="registerFirst" placeholder="First" autocomplete="given-name">
+      </div>
+      <div class="form-group" style="flex:1">
+        <label>Last Name</label>
+        <input type="text" id="registerLast" placeholder="Last" autocomplete="family-name">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="registerEmail" placeholder="you@email.com" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label>Phone (optional)</label>
+      <input type="tel" id="registerPhone" placeholder="(555) 123-4567" autocomplete="tel">
+    </div>
+    <div class="form-group">
+      <label>Password (min 8 characters)</label>
+      <input type="password" id="registerPassword" placeholder="Create a password" autocomplete="new-password">
+    </div>
+    <button class="btn" id="registerBtn" onclick="doRegister()">Create Account</button>
+    <div class="auth-links">
+      <a class="auth-link" onclick="showAuth('login')">Already have an account? Sign In</a>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH: Forgot Password -->
+<div id="authForgot" class="auth-container" style="display:none">
+  <img src="${KANCHO_LOGO_URL}" alt="Logo" class="auth-logo">
+  <h2 class="auth-title">Reset Password</h2>
+  <p class="auth-subtitle">We&apos;ll send you a reset link</p>
+  <div class="auth-form">
+    <div id="forgotError" class="auth-error"></div>
+    <div id="forgotSuccess" class="auth-success"></div>
+    <div class="form-group">
+      <label>School</label>
+      <select id="forgotSchool"><option value="">Loading schools...</option></select>
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="forgotEmail" placeholder="you@email.com">
+    </div>
+    <button class="btn" onclick="doForgotPassword()">Send Reset Link</button>
+    <div class="auth-links">
+      <a class="auth-link" onclick="showAuth('login')">Back to Sign In</a>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH: Reset Password -->
+<div id="authReset" class="auth-container" style="display:none">
+  <img src="${KANCHO_LOGO_URL}" alt="Logo" class="auth-logo">
+  <h2 class="auth-title">New Password</h2>
+  <p class="auth-subtitle">Enter your new password</p>
+  <div class="auth-form">
+    <div id="resetError" class="auth-error"></div>
+    <div id="resetSuccess" class="auth-success"></div>
+    <div class="form-group">
+      <label>New Password (min 8 characters)</label>
+      <input type="password" id="resetPassword" placeholder="New password">
+    </div>
+    <div class="form-group">
+      <label>Confirm Password</label>
+      <input type="password" id="resetConfirm" placeholder="Confirm password">
+    </div>
+    <button class="btn" onclick="doResetPassword()">Set New Password</button>
+  </div>
+</div>
+
+<!-- AUTH: Pending -->
+<div id="authPending" class="auth-container" style="display:none">
+  <img src="${KANCHO_LOGO_URL}" alt="Logo" class="auth-logo">
+  <h2 class="auth-title">Account Pending</h2>
+  <p class="auth-subtitle" style="max-width:320px;text-align:center">Your account has been created. Please wait for your school to approve your student portal access.</p>
+  <div class="auth-form" style="margin-top:24px">
+    <button class="btn btn-outline" onclick="showAuth('login')">Back to Sign In</button>
+  </div>
+</div>
+
+<!-- APP SHELL -->
+<div id="appShell" class="app-shell">
+  <div class="app-header">
+    <div>
+      <h1 id="headerTitle">Dashboard</h1>
+      <div class="school-name" id="headerSchool"></div>
+    </div>
+    <div class="header-right">
+      <button onclick="doLogout()" style="background:none;border:none;color:var(--text2);font-size:13px;cursor:pointer;">Logout</button>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="sectionDashboard" class="section active">
+    <div id="dashboardContent"><div class="spinner"></div></div>
+  </div>
+
+  <!-- Check In -->
+  <div id="sectionCheckin" class="section">
+    <div id="checkinContent"><div class="spinner"></div></div>
+  </div>
+
+  <!-- Schedule -->
+  <div id="sectionSchedule" class="section">
+    <h2 class="section-title">Class Schedule</h2>
+    <div id="scheduleContent"><div class="spinner"></div></div>
+  </div>
+
+  <!-- Payments -->
+  <div id="sectionPayments" class="section">
+    <h2 class="section-title">Payments</h2>
+    <div id="paymentsContent"><div class="spinner"></div></div>
+  </div>
+
+  <!-- Profile -->
+  <div id="sectionProfile" class="section">
+    <h2 class="section-title">Profile</h2>
+    <div id="profileContent"><div class="spinner"></div></div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav">
+    <button class="nav-item active" data-section="Dashboard" onclick="switchSection('Dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Home</span>
+    </button>
+    <button class="nav-item" data-section="Schedule" onclick="switchSection('Schedule')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span>Schedule</span>
+    </button>
+    <button class="nav-item nav-checkin" data-section="Checkin" onclick="switchSection('Checkin')">
+      <div class="checkin-circle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <span>Check In</span>
+    </button>
+    <button class="nav-item" data-section="Payments" onclick="switchSection('Payments')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      <span>Payments</span>
+    </button>
+    <button class="nav-item" data-section="Profile" onclick="switchSection('Profile')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>Profile</span>
+    </button>
+  </div>
+</div>
+
+<script>
+// ============ CONFIG ============
+const API = '${apiBase}/api/v1/student';
+const AUTH_API = API + '/auth';
+const TOKEN_KEY = 'kancho_student_token';
+const USER_KEY = 'kancho_student_user';
+
+let currentUser = null;
+let currentToken = null;
+let dashboardData = null;
+let resetToken = null;
+
+// ============ HELPERS ============
+function api(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (currentToken) headers['Authorization'] = 'Bearer ' + currentToken;
+  return fetch(path, { ...opts, headers }).then(r => r.json());
+}
+
+function showToast(msg, type = 'success') {
+  const t = document.createElement('div');
+  t.className = 'toast toast-' + type;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+function getBeltColor(belt) {
+  if (!belt) return '#666';
+  const b = belt.toLowerCase();
+  const colors = { white:'#fff', yellow:'#FFD700', orange:'#FF8C00', green:'#22C55E', blue:'#3B82F6', purple:'#8B5CF6', brown:'#92400E', red:'#EF4444', black:'#111' };
+  for (const [k,v] of Object.entries(colors)) { if (b.includes(k)) return v; }
+  return '#666';
+}
+
+function formatDate(d) {
+  if (!d) return '-';
+  return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// ============ AUTH ============
+function showAuth(screen) {
+  ['authWelcome','authLogin','authRegister','authForgot','authReset','authPending','appShell'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+  const map = { welcome:'authWelcome', login:'authLogin', register:'authRegister', forgot:'authForgot', reset:'authReset', pending:'authPending', app:'appShell' };
+  const el = document.getElementById(map[screen]);
+  if (el) el.style.display = screen === 'app' ? 'block' : 'flex';
+}
+
+async function loadSchools() {
+  try {
+    const res = await api(AUTH_API + '/schools');
+    if (res.success && res.data) {
+      const opts = '<option value="">Select your school</option>' + res.data.map(s =>
+        '<option value="' + s.id + '">' + s.name + (s.city ? ' - ' + s.city + (s.state ? ', ' + s.state : '') : '') + '</option>'
+      ).join('');
+      ['loginSchool','registerSchool','forgotSchool'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = opts;
+      });
+    }
+  } catch (e) { console.error('Failed to load schools:', e); }
+}
+
+async function doLogin() {
+  const school_id = document.getElementById('loginSchool').value;
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginError');
+  errEl.style.display = 'none';
+
+  if (!school_id || !email || !password) { errEl.textContent = 'All fields are required'; errEl.style.display = 'block'; return; }
+
+  document.getElementById('loginBtn').disabled = true;
+  try {
+    const res = await api(AUTH_API + '/login', { method: 'POST', body: JSON.stringify({ email, password, school_id: parseInt(school_id) }) });
+    if (res.success) {
+      localStorage.setItem(TOKEN_KEY, res.token);
+      localStorage.setItem(USER_KEY, JSON.stringify(res.data));
+      currentToken = res.token;
+      currentUser = res.data;
+      enterApp();
+    } else {
+      errEl.textContent = res.error || 'Login failed';
+      errEl.style.display = 'block';
+    }
+  } catch (e) {
+    errEl.textContent = 'Connection error. Please try again.';
+    errEl.style.display = 'block';
+  }
+  document.getElementById('loginBtn').disabled = false;
+}
+
+async function doRegister() {
+  const school_id = document.getElementById('registerSchool').value;
+  const first_name = document.getElementById('registerFirst').value;
+  const last_name = document.getElementById('registerLast').value;
+  const email = document.getElementById('registerEmail').value;
+  const phone = document.getElementById('registerPhone').value;
+  const password = document.getElementById('registerPassword').value;
+  const errEl = document.getElementById('registerError');
+  const successEl = document.getElementById('registerSuccess');
+  errEl.style.display = 'none';
+  successEl.style.display = 'none';
+
+  if (!school_id || !first_name || !last_name || !email || !password) { errEl.textContent = 'All required fields must be filled'; errEl.style.display = 'block'; return; }
+  if (password.length < 8) { errEl.textContent = 'Password must be at least 8 characters'; errEl.style.display = 'block'; return; }
+
+  document.getElementById('registerBtn').disabled = true;
+  try {
+    const res = await api(AUTH_API + '/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, first_name, last_name, phone, school_id: parseInt(school_id) })
+    });
+    if (res.success) {
+      if (res.status === 'active' && res.token) {
+        localStorage.setItem(TOKEN_KEY, res.token);
+        localStorage.setItem(USER_KEY, JSON.stringify(res.data));
+        currentToken = res.token;
+        currentUser = res.data;
+        enterApp();
+      } else {
+        showAuth('pending');
+      }
+    } else {
+      errEl.textContent = res.error || 'Registration failed';
+      errEl.style.display = 'block';
+    }
+  } catch (e) {
+    errEl.textContent = 'Connection error. Please try again.';
+    errEl.style.display = 'block';
+  }
+  document.getElementById('registerBtn').disabled = false;
+}
+
+async function doForgotPassword() {
+  const school_id = document.getElementById('forgotSchool').value;
+  const email = document.getElementById('forgotEmail').value;
+  const errEl = document.getElementById('forgotError');
+  const successEl = document.getElementById('forgotSuccess');
+  errEl.style.display = 'none';
+  successEl.style.display = 'none';
+
+  if (!school_id || !email) { errEl.textContent = 'School and email are required'; errEl.style.display = 'block'; return; }
+
+  try {
+    const res = await api(AUTH_API + '/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email, school_id: parseInt(school_id) })
+    });
+    successEl.textContent = 'If an account exists, a reset link has been sent to your email.';
+    successEl.style.display = 'block';
+  } catch (e) {
+    errEl.textContent = 'Connection error. Please try again.';
+    errEl.style.display = 'block';
+  }
+}
+
+async function doResetPassword() {
+  const password = document.getElementById('resetPassword').value;
+  const confirm = document.getElementById('resetConfirm').value;
+  const errEl = document.getElementById('resetError');
+  const successEl = document.getElementById('resetSuccess');
+  errEl.style.display = 'none';
+  successEl.style.display = 'none';
+
+  if (!password || password.length < 8) { errEl.textContent = 'Password must be at least 8 characters'; errEl.style.display = 'block'; return; }
+  if (password !== confirm) { errEl.textContent = 'Passwords do not match'; errEl.style.display = 'block'; return; }
+
+  try {
+    const res = await api(AUTH_API + '/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token: resetToken, newPassword: password })
+    });
+    if (res.success) {
+      successEl.textContent = 'Password reset! Redirecting to login...';
+      successEl.style.display = 'block';
+      setTimeout(() => showAuth('login'), 2000);
+    } else {
+      errEl.textContent = res.error || 'Reset failed';
+      errEl.style.display = 'block';
+    }
+  } catch (e) {
+    errEl.textContent = 'Connection error. Please try again.';
+    errEl.style.display = 'block';
+  }
+}
+
+function doLogout() {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+  currentToken = null;
+  currentUser = null;
+  dashboardData = null;
+  showAuth('welcome');
+}
+
+// ============ APP ============
+function enterApp() {
+  document.getElementById('headerSchool').textContent = currentUser?.schoolName || '';
+  showAuth('app');
+  switchSection('Dashboard');
+}
+
+function switchSection(name) {
+  ['Dashboard','Checkin','Schedule','Payments','Profile'].forEach(s => {
+    const sec = document.getElementById('section' + s);
+    if (sec) sec.classList.toggle('active', s === name);
+  });
+  document.querySelectorAll('.nav-item').forEach(n => {
+    n.classList.toggle('active', n.dataset.section === name);
+  });
+  document.getElementById('headerTitle').textContent =
+    name === 'Dashboard' ? 'Dashboard' : name === 'Checkin' ? 'Check In' : name;
+
+  if (name === 'Dashboard') loadDashboard();
+  else if (name === 'Checkin') loadCheckin();
+  else if (name === 'Schedule') loadSchedule();
+  else if (name === 'Payments') loadPayments();
+  else if (name === 'Profile') loadProfile();
+}
+
+// ============ DASHBOARD ============
+async function loadDashboard() {
+  const el = document.getElementById('dashboardContent');
+  el.innerHTML = '<div class="spinner"></div>';
+  try {
+    const res = await api(API + '/dashboard');
+    if (!res.success) { el.innerHTML = '<div class="empty-state"><p>' + (res.data?.message || 'Error loading dashboard') + '</p></div>'; return; }
+    dashboardData = res.data;
+    const s = res.data.student;
+    const streak = s.attendanceStreak || 0;
+    const beltColor = getBeltColor(s.beltRank);
+
+    let html = '';
+
+    // Belt display
+    html += '<div class="belt-display"><div class="belt-color" style="background:' + beltColor + '"></div><div class="belt-info"><h3>' + (s.beltRank || 'No Belt') + '</h3><p>' + (s.membershipType || 'Member') + '</p>';
+    if (s.beltStripes > 0) {
+      html += '<div class="belt-stripes">';
+      for (let i = 0; i < 4; i++) html += '<div class="belt-stripe' + (i >= s.beltStripes ? ' empty' : '') + '"></div>';
+      html += '</div>';
+    }
+    html += '</div></div>';
+
+    // Stats
+    html += '<div class="stats-grid">';
+    html += '<div class="stat-card"><div class="stat-value">' + (streak > 0 ? '<span class="streak-fire">&#128293;</span> ' : '') + streak + '</div><div class="stat-label">Day Streak</div></div>';
+    html += '<div class="stat-card"><div class="stat-value">' + (s.totalClasses || 0) + '</div><div class="stat-label">Total Classes</div></div>';
+    html += '</div>';
+
+    // Payment status
+    const pStatus = s.paymentStatus || 'current';
+    const pBadge = pStatus === 'current' ? 'badge-success' : pStatus === 'past_due' ? 'badge-warning' : 'badge-danger';
+    html += '<div class="card"><div class="card-title">Payment Status</div><div style="display:flex;align-items:center;justify-content:space-between"><span class="badge ' + pBadge + '">' + pStatus.replace('_', ' ').toUpperCase() + '</span>';
+    if (s.monthlyRate > 0) html += '<span style="font-size:20px;font-weight:700">$' + parseFloat(s.monthlyRate).toFixed(0) + '<span style="font-size:13px;color:var(--text2)">/mo</span></span>';
+    html += '</div></div>';
+
+    // Today's classes
+    const tc = res.data.todayClasses || [];
+    const ta = res.data.todayAttendance || [];
+    const checkedClassIds = ta.map(a => a.class_id);
+
+    if (tc.length > 0) {
+      html += '<div class="card"><div class="card-title">Today&apos;s Classes</div>';
+      tc.forEach(c => {
+        const isChecked = checkedClassIds.includes(c.id);
+        html += '<div class="list-item" style="margin-bottom:8px"><div class="list-item-left"><div class="list-item-text"><h4>' + c.name + '</h4><p>' + (c.instructor || '') + ' &middot; ' + (c.durationMinutes || 60) + ' min</p></div></div>';
+        if (isChecked) html += '<span class="badge badge-success">Checked In</span>';
+        else html += '<button class="btn btn-sm btn-success" onclick="doCheckin(' + c.id + ')">Check In</button>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    // Member since
+    if (s.enrollmentDate) {
+      html += '<div class="card"><div class="card-title">Member Since</div><div style="font-size:16px;font-weight:500">' + formatDate(s.enrollmentDate) + '</div></div>';
+    }
+
+    el.innerHTML = html;
+  } catch (e) {
+    el.innerHTML = '<div class="empty-state"><p>Error loading dashboard</p></div>';
+    console.error(e);
+  }
+}
+
+// ============ CHECK IN ============
+async function loadCheckin() {
+  const el = document.getElementById('checkinContent');
+  el.innerHTML = '<div class="spinner"></div>';
+  try {
+    const [classesRes, historyRes] = await Promise.all([
+      api(API + '/classes'),
+      api(API + '/attendance/history')
+    ]);
+
+    const classes = classesRes.success ? classesRes.data.filter(c => c.enrolled) : [];
+    const history = historyRes.success ? historyRes.data : [];
+
+    // Check if already checked in today
+    const todayStr = new Date().toISOString().split('T')[0];
+    const todayCheckins = history.filter(h => h.date === todayStr);
+
+    let html = '<div class="checkin-hero">';
+
+    if (todayCheckins.length > 0) {
+      html += '<div class="checkin-hero-btn checked" onclick="doCheckinGeneral()" style="cursor:default"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg><span>Checked In!</span></div>';
+      html += '<p style="margin-top:16px;color:var(--success);font-weight:500">' + todayCheckins.length + ' check-in(s) today</p>';
+    } else {
+      html += '<div class="checkin-hero-btn" onclick="doCheckinGeneral()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg><span>Check In</span></div>';
+    }
+
+    html += '</div>';
+
+    // Class selector
+    if (classes.length > 0) {
+      html += '<div class="checkin-class-select"><select id="checkinClassSelect"><option value="">General Check-in</option>';
+      classes.forEach(c => { html += '<option value="' + c.id + '">' + c.name + '</option>'; });
+      html += '</select></div>';
+    }
+
+    // Recent history
+    if (history.length > 0) {
+      html += '<div class="card" style="margin-top:16px"><div class="card-title">Recent Attendance</div>';
+      history.slice(0, 10).forEach(h => {
+        html += '<div class="attendance-item"><div><div class="attendance-date">' + formatDate(h.date) + '</div><div class="attendance-class">' + (h.class?.name || 'General') + '</div></div><span class="badge badge-success">' + (h.status || 'present') + '</span></div>';
+      });
+      html += '</div>';
+    }
+
+    el.innerHTML = html;
+  } catch (e) {
+    el.innerHTML = '<div class="empty-state"><p>Error loading check-in</p></div>';
+    console.error(e);
+  }
+}
+
+async function doCheckin(classId) {
+  try {
+    const res = await api(API + '/attendance/check-in', {
+      method: 'POST',
+      body: JSON.stringify({ class_id: classId || null })
+    });
+    if (res.success) {
+      showToast('Checked in! Streak: ' + (res.streak || 0));
+      loadCheckin();
+      loadDashboard();
+    } else {
+      showToast(res.error || 'Check-in failed', 'error');
+    }
+  } catch (e) {
+    showToast('Connection error', 'error');
+  }
+}
+
+function doCheckinGeneral() {
+  const sel = document.getElementById('checkinClassSelect');
+  const classId = sel ? parseInt(sel.value) || null : null;
+  doCheckin(classId);
+}
+
+// ============ SCHEDULE ============
+async function loadSchedule() {
+  const el = document.getElementById('scheduleContent');
+  el.innerHTML = '<div class="spinner"></div>';
+  try {
+    const res = await api(API + '/classes');
+    if (!res.success) { el.innerHTML = '<div class="empty-state"><p>Error loading classes</p></div>'; return; }
+
+    const classes = res.data || [];
+    if (classes.length === 0) {
+      el.innerHTML = '<div class="empty-state"><p>No classes available yet</p></div>';
+      return;
+    }
+
+    const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    let html = '';
+
+    // Group classes by day
+    const byDay = {};
+    days.forEach(d => { byDay[d] = []; });
+
+    classes.forEach(c => {
+      if (!c.schedule) return;
+      const sched = c.schedule;
+      if (Array.isArray(sched)) {
+        sched.forEach(s => {
+          const day = s.day?.charAt(0).toUpperCase() + s.day?.slice(1).toLowerCase();
+          if (byDay[day]) byDay[day].push({ ...c, time: s.time || s.start_time || '' });
+        });
+      } else if (sched.days) {
+        sched.days.forEach(d => {
+          const day = d.charAt(0).toUpperCase() + d.slice(1).toLowerCase();
+          if (byDay[day]) byDay[day].push({ ...c, time: sched.time || sched.start_time || '' });
+        });
+      }
+    });
+
+    days.forEach(day => {
+      const dayClasses = byDay[day];
+      if (dayClasses.length === 0) return;
+      dayClasses.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+
+      html += '<div class="schedule-day"><div class="schedule-day-header">' + day + '</div>';
+      dayClasses.forEach(c => {
+        html += '<div class="schedule-class' + (c.enrolled ? ' enrolled' : '') + '">';
+        html += '<div class="schedule-time">' + (c.time || '-') + '</div>';
+        html += '<div class="schedule-name">' + c.name + '<br><span style="font-size:11px;color:var(--text2)">' + (c.instructor || '') + ' &middot; ' + (c.duration_minutes || 60) + 'min</span></div>';
+        if (c.enrolled) html += '<button class="btn btn-sm btn-outline" style="border-color:var(--danger);color:var(--danger)" onclick="dropClass(' + c.id + ')">Drop</button>';
+        else html += '<button class="btn btn-sm" onclick="enrollClass(' + c.id + ')">Enroll</button>';
+        html += '</div>';
+      });
+      html += '</div>';
+    });
+
+    if (!html) html = '<div class="empty-state"><p>No class schedules configured yet</p></div>';
+    el.innerHTML = html;
+  } catch (e) {
+    el.innerHTML = '<div class="empty-state"><p>Error loading schedule</p></div>';
+    console.error(e);
+  }
+}
+
+async function enrollClass(id) {
+  try {
+    const res = await api(API + '/classes/' + id + '/enroll', { method: 'POST' });
+    if (res.success) { showToast('Enrolled!'); loadSchedule(); }
+    else showToast(res.error || 'Failed', 'error');
+  } catch (e) { showToast('Connection error', 'error'); }
+}
+
+async function dropClass(id) {
+  if (!confirm('Drop this class?')) return;
+  try {
+    const res = await api(API + '/classes/' + id + '/drop', { method: 'POST' });
+    if (res.success) { showToast('Dropped from class'); loadSchedule(); }
+    else showToast(res.error || 'Failed', 'error');
+  } catch (e) { showToast('Connection error', 'error'); }
+}
+
+// ============ PAYMENTS ============
+async function loadPayments() {
+  const el = document.getElementById('paymentsContent');
+  el.innerHTML = '<div class="spinner"></div>';
+  try {
+    const res = await api(API + '/payments');
+    if (!res.success) { el.innerHTML = '<div class="empty-state"><p>Error loading payments</p></div>'; return; }
+
+    const payments = res.data || [];
+    let html = '';
+
+    // Summary
+    const total = payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+    html += '<div class="payment-status-card"><div class="payment-amount">$' + total.toFixed(2) + '</div><div class="payment-label">Total Paid</div></div>';
+
+    if (payments.length === 0) {
+      html += '<div class="empty-state"><p>No payment history yet</p></div>';
+    } else {
+      html += '<div class="card"><div class="card-title">Payment History</div>';
+      payments.forEach(p => {
+        html += '<div class="list-item" style="margin-bottom:8px"><div class="list-item-left"><div class="list-item-text"><h4>$' + parseFloat(p.amount || 0).toFixed(2) + '</h4><p>' + (p.type || 'payment') + ' &middot; ' + formatDate(p.payment_date) + '</p></div></div><span class="badge badge-success">Paid</span></div>';
+      });
+      html += '</div>';
+    }
+
+    el.innerHTML = html;
+  } catch (e) {
+    el.innerHTML = '<div class="empty-state"><p>Error loading payments</p></div>';
+    console.error(e);
+  }
+}
+
+// ============ PROFILE ============
+async function loadProfile() {
+  const el = document.getElementById('profileContent');
+  el.innerHTML = '<div class="spinner"></div>';
+  try {
+    const res = await api(AUTH_API + '/me');
+    if (!res.success) { el.innerHTML = '<div class="empty-state"><p>Error loading profile</p></div>'; return; }
+
+    const { auth, student, school } = res.data;
+    let html = '';
+
+    // Basic info
+    html += '<div class="profile-section"><h3>Personal Information</h3>';
+    html += '<div class="form-group"><label>First Name</label><input type="text" id="profFirst" value="' + (auth.firstName || '') + '" disabled></div>';
+    html += '<div class="form-group"><label>Last Name</label><input type="text" id="profLast" value="' + (auth.lastName || '') + '" disabled></div>';
+    html += '<div class="form-group"><label>Email</label><input type="email" id="profEmail" value="' + (auth.email || '') + '"></div>';
+    html += '<div class="form-group"><label>Phone</label><input type="tel" id="profPhone" value="' + (student?.phone || auth.phone || '') + '"></div>';
+    if (student?.dateOfBirth) {
+      html += '<div class="form-group"><label>Date of Birth</label><input type="date" id="profDob" value="' + (student.dateOfBirth || '') + '"></div>';
+    }
+    html += '</div>';
+
+    // Emergency contact
+    html += '<div class="profile-section"><h3>Emergency Contact</h3>';
+    const ec = student?.emergencyContact || {};
+    html += '<div class="form-group"><label>Name</label><input type="text" id="ecName" value="' + (ec.name || '') + '"></div>';
+    html += '<div class="form-group"><label>Phone</label><input type="tel" id="ecPhone" value="' + (ec.phone || '') + '"></div>';
+    html += '<div class="form-group"><label>Relationship</label><input type="text" id="ecRelation" value="' + (ec.relationship || '') + '"></div>';
+    html += '</div>';
+
+    // School info (read-only)
+    if (school) {
+      html += '<div class="profile-section"><h3>School</h3>';
+      html += '<div class="card"><h4>' + school.name + '</h4>';
+      if (school.martialArtType) html += '<p style="color:var(--text2);font-size:13px">' + school.martialArtType + '</p>';
+      html += '</div></div>';
+    }
+
+    // Belt info (read-only)
+    if (student) {
+      html += '<div class="profile-section"><h3>Training Info</h3>';
+      html += '<div class="card">';
+      html += '<div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--text2)">Belt Rank</span><span style="font-weight:600">' + (student.beltRank || 'N/A') + '</span></div>';
+      html += '<div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--text2)">Total Classes</span><span style="font-weight:600">' + (student.totalClasses || 0) + '</span></div>';
+      html += '<div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--text2)">Streak</span><span style="font-weight:600">' + (student.attendanceStreak || 0) + ' days</span></div>';
+      html += '<div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Membership</span><span style="font-weight:600">' + (student.membershipType || 'Standard') + '</span></div>';
+      html += '</div></div>';
+    }
+
+    html += '<button class="btn" onclick="saveProfile()" style="margin-top:8px">Save Changes</button>';
+    html += '<button class="btn btn-outline" onclick="doLogout()" style="margin-top:12px;border-color:var(--danger);color:var(--danger)">Sign Out</button>';
+
+    el.innerHTML = html;
+  } catch (e) {
+    el.innerHTML = '<div class="empty-state"><p>Error loading profile</p></div>';
+    console.error(e);
+  }
+}
+
+async function saveProfile() {
+  try {
+    const email = document.getElementById('profEmail')?.value;
+    const phone = document.getElementById('profPhone')?.value;
+    const ecName = document.getElementById('ecName')?.value;
+    const ecPhone = document.getElementById('ecPhone')?.value;
+    const ecRelation = document.getElementById('ecRelation')?.value;
+
+    const body = { email, phone };
+    if (ecName || ecPhone || ecRelation) {
+      body.emergency_contact = { name: ecName || '', phone: ecPhone || '', relationship: ecRelation || '' };
+    }
+
+    const res = await api(API + '/profile', { method: 'PUT', body: JSON.stringify(body) });
+    if (res.success) showToast('Profile saved!');
+    else showToast(res.error || 'Save failed', 'error');
+  } catch (e) { showToast('Connection error', 'error'); }
+}
+
+// ============ INIT ============
+async function init() {
+  // Check for reset token
+  const params = new URLSearchParams(window.location.search);
+  resetToken = params.get('reset_token');
+  if (resetToken) {
+    try {
+      const res = await api(AUTH_API + '/verify-reset-token', { method: 'POST', body: JSON.stringify({ token: resetToken }) });
+      if (res.success) { showAuth('reset'); return; }
+    } catch (e) {}
+    showAuth('login');
+    return;
+  }
+
+  // Check stored token
+  const storedToken = localStorage.getItem(TOKEN_KEY);
+  const storedUser = localStorage.getItem(USER_KEY);
+  if (storedToken && storedUser) {
+    currentToken = storedToken;
+    currentUser = JSON.parse(storedUser);
+
+    // Verify token is still valid
+    try {
+      const res = await api(AUTH_API + '/me');
+      if (res.success) {
+        enterApp();
+        return;
+      }
+    } catch (e) {}
+
+    // Token invalid
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    currentToken = null;
+    currentUser = null;
+  }
+
+  showAuth('welcome');
+  loadSchools();
+}
+
+// Add enter key handlers
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    if (document.getElementById('authLogin').style.display !== 'none') doLogin();
+    else if (document.getElementById('authRegister').style.display !== 'none') doRegister();
+  }
+});
+
+// Load schools when switching to auth screens
+const origShowAuth = showAuth;
+showAuth = function(screen) {
+  origShowAuth(screen);
+  if (['login','register','forgot'].includes(screen)) loadSchools();
+};
+
+init();
+</script>
+</body>
+</html>
+  `);
+}
 
 // Serve dashboard for all other routes (SPA fallback)
 app.get('*', (req, res) => {

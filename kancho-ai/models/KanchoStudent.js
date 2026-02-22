@@ -150,6 +150,8 @@ module.exports = (sequelize) => {
     KanchoStudent.hasMany(models.KanchoRevenue, { foreignKey: 'student_id', as: 'payments' });
     KanchoStudent.hasMany(models.KanchoAiCall, { foreignKey: 'student_id', as: 'calls' });
     KanchoStudent.hasMany(models.KanchoAttendance, { foreignKey: 'student_id', as: 'attendance' });
+    KanchoStudent.hasOne(models.KanchoStudentAuth, { foreignKey: 'student_id', as: 'auth' });
+    KanchoStudent.hasMany(models.KanchoClassEnrollment, { foreignKey: 'student_id', as: 'enrollments' });
   };
 
   return KanchoStudent;

@@ -108,6 +108,7 @@ module.exports = (sequelize) => {
   KanchoClass.associate = (models) => {
     KanchoClass.belongsTo(models.KanchoSchool, { foreignKey: 'school_id', as: 'school' });
     KanchoClass.hasMany(models.KanchoAttendance, { foreignKey: 'class_id', as: 'attendance' });
+    KanchoClass.hasMany(models.KanchoClassEnrollment, { foreignKey: 'class_id', as: 'enrollments' });
   };
 
   return KanchoClass;
