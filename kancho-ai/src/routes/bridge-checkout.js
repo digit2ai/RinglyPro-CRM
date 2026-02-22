@@ -645,6 +645,12 @@ router.post('/test-trigger/:sessionId', async (req, res) => {
       return res.json({ success: true, message: 'Already completed', status: pending.status });
     }
 
+    // Reset failed signups so we can retry
+    if (pending.status === 'failed') {
+      await pending.update({ status: 'pending', provisioning_step: null, provisioning_error: null });
+      console.log(`[KanchoCheckout] Reset failed signup for ${pending.email}`);
+    }
+
     // Build a mock session object with the fields processKanchoSignup needs
     const mockSession = {
       id: pending.stripe_checkout_session_id,
