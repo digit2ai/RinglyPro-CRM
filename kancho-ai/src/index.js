@@ -392,7 +392,7 @@ app.get('/pricing', (req, res) => {
           <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> Voice AI Advisor</li>
           <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> 100 AI Voice Minutes</li>
         </ul>
-        <a href="https://checkout.stripe.com/c/pay/cs_live_a18grG2h3V8gz0gUChQ3o2R1FfHPo5GCMNtzTW5c0lLLThzQdOPHu0Zyfs#fidnandhYHdWcXxpYCc%2FJ2FgY2RwaXEnKSdkdWxOYHwnPyd1blppbHNgWjA0V012N2RDNlRHaUF3Yn19MUkzQ2R2SFRvQVVAVVJtMVJJNkhcQ1RURGlgQUdgQ2FUfWcwN2JGakJ3VmFWQHBIQEAzSXY2QGg1N310Y31LQHdiNTBBbjw0NTVIVzxdRGlNTCcpJ2N3amhWYHdzYHcnP3F3cGApJ2dkZm5id2pwa2FGamlqdyc%2FJyZjY2NjY2MnKSdpZHxqcHFRfHVgJz8ndmxrYmlgWmxxYGgnKSdga2RnaWBVaWRmYG1qaWFgd3YnP3F3cGB4JSUl" class="block w-full py-3 text-center bg-white/10 hover:bg-kancho-coral/20 border border-kancho-dark-border rounded-xl font-medium transition text-white no-underline">Get Started</a>
+        <button onclick="selectPlan('intelligence')" class="w-full py-3 bg-white/10 hover:bg-kancho-coral/20 border border-kancho-dark-border rounded-xl font-medium transition">Get Started</button>
       </div>
 
       <div class="bg-kancho-dark-card border-2 border-kancho-coral/50 rounded-2xl p-8 relative">
@@ -415,7 +415,7 @@ app.get('/pricing', (req, res) => {
           <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> Bilingual (EN/ES)</li>
           <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check text-green-400"></i> 500 AI Voice Minutes</li>
         </ul>
-        <a href="https://checkout.stripe.com/c/pay/cs_live_a18grG2h3V8gz0gUChQ3o2R1FfHPo5GCMNtzTW5c0lLLThzQdOPHu0Zyfs#fidnandhYHdWcXxpYCc%2FJ2FgY2RwaXEnKSdkdWxOYHwnPyd1blppbHNgWjA0V012N2RDNlRHaUF3Yn19MUkzQ2R2SFRvQVVAVVJtMVJJNkhcQ1RURGlgQUdgQ2FUfWcwN2JGakJ3VmFWQHBIQEAzSXY2QGg1N310Y31LQHdiNTBBbjw0NTVIVzxdRGlNTCcpJ2N3amhWYHdzYHcnP3F3cGApJ2dkZm5id2pwa2FGamlqdyc%2FJyZjY2NjY2MnKSdpZHxqcHFRfHVgJz8ndmxrYmlgWmxxYGgnKSdga2RnaWBVaWRmYG1qaWFgd3YnP3F3cGB4JSUl" class="block w-full py-3 text-center bg-kancho-coral hover:bg-kancho-coral/80 rounded-xl font-medium transition text-white no-underline">Get Started</a>
+        <button onclick="selectPlan('pro')" class="w-full py-3 kancho-btn rounded-xl font-medium transition shadow-lg">Get Started</button>
       </div>
     </div>
 
@@ -3400,6 +3400,19 @@ app.get('*', (req, res) => {
     .provision-step.done .step-icon { background: rgba(34,197,94,0.2); color: #22C55E; }
     .auth-user-badge { display: flex; align-items: center; gap: 8px; background: #1A1A1A; border: 1px solid #2A2A2A; border-radius: 12px; padding: 6px 12px; }
     .plan-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 9999px; background: rgba(232,90,79,0.2); color: #E85A4F; }
+    /* Signup modal */
+    .signup-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 16px; backdrop-filter: blur(4px); }
+    .signup-modal { background: #111; border: 1px solid #2A2A2A; border-radius: 16px; max-width: 520px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 32px; position: relative; }
+    .signup-modal h2 { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+    .signup-modal .plan-tag { display: inline-block; background: rgba(232,90,79,0.2); color: #E85A4F; font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 9999px; margin-bottom: 20px; }
+    .signup-modal label { display: block; font-size: 13px; color: #9CA3AF; margin-bottom: 6px; margin-top: 16px; }
+    .signup-modal label:first-of-type { margin-top: 0; }
+    .signup-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .signup-modal .close-btn { position: absolute; top: 16px; right: 16px; background: none; border: none; color: #6B7280; font-size: 20px; cursor: pointer; padding: 4px 8px; border-radius: 8px; }
+    .signup-modal .close-btn:hover { color: white; background: rgba(255,255,255,0.1); }
+    .signup-modal .trial-note { text-align: center; font-size: 13px; color: #9CA3AF; margin-top: 12px; }
+    .signup-modal .trial-note strong { color: #22C55E; }
+    @media (max-width: 640px) { .signup-row { grid-template-columns: 1fr; } .signup-modal { padding: 24px 20px; } }
   </style>
 </head>
 <body class="gradient-bg min-h-screen text-white">
@@ -4236,6 +4249,63 @@ app.get('*', (req, res) => {
         </div>
       </div>
     </div>
+
+    <!-- Signup Modal -->
+    <div id="signupModal" class="signup-overlay hidden" onclick="if(event.target===this)closeSignupModal()">
+      <div class="signup-modal">
+        <button class="close-btn" onclick="closeSignupModal()">&times;</button>
+        <h2>Start Your Free Trial</h2>
+        <span id="signupPlanTag" class="plan-tag">Kancho Intelligence</span>
+        <form id="signupForm" onsubmit="handleSignup(event)">
+          <input type="hidden" id="signupPlan" value="intelligence">
+          <div class="signup-row">
+            <div>
+              <label>First Name *</label>
+              <input type="text" id="signupFirstName" class="login-input" placeholder="John" required>
+            </div>
+            <div>
+              <label>Last Name *</label>
+              <input type="text" id="signupLastName" class="login-input" placeholder="Smith" required>
+            </div>
+          </div>
+          <label>Email *</label>
+          <input type="email" id="signupEmail" class="login-input" placeholder="you@yourschool.com" required>
+          <label>Password *</label>
+          <input type="password" id="signupPassword" class="login-input" placeholder="Min 8 characters" minlength="8" required>
+          <label>Phone *</label>
+          <input type="tel" id="signupPhone" class="login-input" placeholder="+1 (555) 123-4567" required>
+          <label>School / Business Name *</label>
+          <input type="text" id="signupSchoolName" class="login-input" placeholder="Your Academy Name" required>
+          <label>Martial Art Type</label>
+          <select id="signupMartialArt" class="login-input" style="appearance:auto;">
+            <option value="BJJ">BJJ</option>
+            <option value="Karate">Karate</option>
+            <option value="Taekwondo">Taekwondo</option>
+            <option value="MMA">MMA</option>
+            <option value="Judo">Judo</option>
+            <option value="Muay Thai">Muay Thai</option>
+            <option value="Kung Fu">Kung Fu</option>
+            <option value="Other">Other</option>
+          </select>
+          <div class="signup-row" style="margin-top:16px;">
+            <div>
+              <label>City</label>
+              <input type="text" id="signupCity" class="login-input" placeholder="City">
+            </div>
+            <div>
+              <label>State</label>
+              <input type="text" id="signupState" class="login-input" placeholder="State">
+            </div>
+          </div>
+          <div id="signupError" class="text-red-400 text-sm mt-3 hidden"></div>
+          <button type="submit" id="signupSubmitBtn" class="w-full py-3 kancho-btn rounded-xl font-semibold transition shadow-lg mt-6">
+            Continue to Checkout
+          </button>
+          <p class="trial-note"><strong>14-day free trial</strong> — no charge until trial ends. Cancel anytime.</p>
+        </form>
+      </div>
+    </div>
+
   </main>
 
   <!-- Footer -->
@@ -5027,45 +5097,69 @@ app.get('*', (req, res) => {
       document.getElementById('langEs').classList.toggle('bg-kancho-coral/20', lang === 'es');
     }
 
-    // Plan selection and Stripe checkout
-    async function selectPlan(plan, btn) {
-      const planNames = {
-        intelligence: 'Kancho Intelligence',
-        pro: 'Kancho Pro'
-      };
+    // Plan selection — open signup modal
+    function selectPlan(plan) {
+      const planNames = { intelligence: 'Kancho Intelligence', pro: 'Kancho Pro' };
+      document.getElementById('signupPlan').value = plan;
+      document.getElementById('signupPlanTag').textContent = planNames[plan] || plan;
+      document.getElementById('signupError').classList.add('hidden');
+      document.getElementById('signupForm').reset();
+      document.getElementById('signupPlan').value = plan;
+      document.getElementById('signupModal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      document.getElementById('signupFirstName').focus();
+    }
 
-      const planPrices = {
-        intelligence: 197,
-        pro: 397
+    function closeSignupModal() {
+      document.getElementById('signupModal').classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+
+    async function handleSignup(event) {
+      event.preventDefault();
+      const btn = document.getElementById('signupSubmitBtn');
+      const errorEl = document.getElementById('signupError');
+      errorEl.classList.add('hidden');
+
+      const payload = {
+        plan: document.getElementById('signupPlan').value,
+        firstName: document.getElementById('signupFirstName').value.trim(),
+        lastName: document.getElementById('signupLastName').value.trim(),
+        email: document.getElementById('signupEmail').value.trim(),
+        password: document.getElementById('signupPassword').value,
+        phone: document.getElementById('signupPhone').value.trim(),
+        schoolName: document.getElementById('signupSchoolName').value.trim(),
+        martialArtType: document.getElementById('signupMartialArt').value,
+        city: document.getElementById('signupCity').value.trim() || undefined,
+        state: document.getElementById('signupState').value.trim() || undefined
       };
 
       try {
-        const originalText = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
 
-        // Create Stripe checkout session
-        const response = await fetch('/kanchoai/api/v1/subscribe', {
+        const response = await fetch('/kanchoai/api/v1/bridge/checkout/initiate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ plan })
+          body: JSON.stringify(payload)
         });
 
         const data = await response.json();
 
-        if (data.success && data.url) {
-          // Redirect to Stripe Checkout
-          window.location.href = data.url;
+        if (data.success && data.checkoutUrl) {
+          window.location.href = data.checkoutUrl;
         } else {
-          alert(data.error || 'Failed to create checkout session. Please try again.');
+          errorEl.textContent = data.error || 'Something went wrong. Please try again.';
+          errorEl.classList.remove('hidden');
           btn.disabled = false;
-          btn.innerHTML = originalText;
+          btn.innerHTML = 'Continue to Checkout';
         }
       } catch (error) {
-        console.error('Checkout error:', error);
-        alert('Something went wrong. Please try again.');
+        console.error('Signup error:', error);
+        errorEl.textContent = 'Connection error. Please try again.';
+        errorEl.classList.remove('hidden');
         btn.disabled = false;
-        btn.innerHTML = 'Get Started';
+        btn.innerHTML = 'Continue to Checkout';
       }
     }
 
