@@ -1377,6 +1377,170 @@ if (models && !modelsError) {
     }
   });
 
+  // Seed classes + attendance data
+  app.post('/api/v1/seed-classes-attendance', async (req, res) => {
+    try {
+      const { KanchoSchool, KanchoStudent, KanchoClass, KanchoAttendance } = models;
+
+      // Get all schools
+      const schools = await KanchoSchool.findAll({ raw: true });
+      if (!schools.length) return res.status(400).json({ error: 'No schools found. Run seed-demo first.' });
+
+      let totalClasses = 0, totalAttendance = 0;
+
+      const classTemplates = [
+        { name: 'Morning Fundamentals', program_type: 'Fundamentals', schedule: { days: ['Mon','Wed','Fri'], time: '06:30' }, duration_minutes: 60, capacity: 20 },
+        { name: 'Kids Beginners', program_type: 'Kids', schedule: { days: ['Tue','Thu'], time: '16:00' }, duration_minutes: 45, capacity: 15 },
+        { name: 'Advanced Sparring', program_type: 'Advanced', schedule: { days: ['Mon','Wed','Fri'], time: '18:30' }, duration_minutes: 90, capacity: 25 },
+        { name: 'All Levels Open Mat', program_type: 'Open Mat', schedule: { days: ['Sat'], time: '10:00' }, duration_minutes: 120, capacity: 30 },
+        { name: 'Competition Team', program_type: 'Competition', schedule: { days: ['Tue','Thu','Sat'], time: '17:00' }, duration_minutes: 90, capacity: 20 },
+        { name: 'Women\'s Self-Defense', program_type: 'Self-Defense', schedule: { days: ['Wed'], time: '19:00' }, duration_minutes: 60, capacity: 15 },
+        { name: 'Teens Program', program_type: 'Teens', schedule: { days: ['Mon','Wed'], time: '15:30' }, duration_minutes: 60, capacity: 18 },
+        { name: 'Evening Basics', program_type: 'Fundamentals', schedule: { days: ['Tue','Thu'], time: '19:30' }, duration_minutes: 60, capacity: 20 },
+      ];
+
+      for (const school of schools) {
+        // Create classes for this school
+        const numClasses = 4 + Math.floor(Math.random() * 5); // 4-8 classes
+        const shuffled = classTemplates.sort(() => Math.random() - 0.5).slice(0, numClasses);
+        const createdClasses = [];
+
+        for (const tmpl of shuffled) {
+          const cls = await KanchoClass.create({
+            school_id: school.id,
+            name: tmpl.name,
+            martial_art: school.martial_art_type || 'Mixed',
+            program_type: tmpl.program_type,
+            level: tmpl.program_type === 'Advanced' || tmpl.program_type === 'Competition' ? 'Advanced' : 'All Levels',
+            schedule: tmpl.schedule,
+            duration_minutes: tmpl.duration_minutes,
+            capacity: tmpl.capacity,
+            instructor: school.owner_name || 'Head Instructor',
+            is_active: true,
+            popularity_score: 50 + Math.floor(Math.random() * 50),
+            created_at: new Date(),
+            updated_at: new Date()
+          });
+          createdClasses.push(cls);
+          totalClasses++;
+        }
+
+        // Get active students for this school
+        const students = await KanchoStudent.findAll({
+          where: { school_id: school.id, status: 'active' },
+          attributes: ['id'],
+          raw: true
+        });
+
+        if (!students.length) continue;
+
+        // Generate 30 days of attendance records
+        const today = new Date();
+        const statuses = ['present', 'present', 'present', 'present', 'late']; // 80% present, 20% late
+
+        for (let daysBack = 0; daysBack < 30; daysBack++) {
+          const date = new Date(today);
+          date.setDate(date.getDate() - daysBack);
+          const dayOfWeek = date.getDay(); // 0=Sun, 6=Sat
+          if (dayOfWeek === 0) continue; // Skip Sundays
+
+          const dateStr = date.toISOString().split('T')[0];
+
+          // Pick 1-3 classes that would have run on this day
+          const dayName = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dayOfWeek];
+          const todaysClasses = createdClasses.filter(c => {
+            const sched = typeof c.schedule === 'string' ? JSON.parse(c.schedule) : c.schedule;
+            return sched?.days?.includes(dayName);
+          });
+
+          for (const cls of todaysClasses) {
+            // 50-85% of students attend each class
+            const attendanceRate = 0.5 + Math.random() * 0.35;
+            const attendees = students
+              .sort(() => Math.random() - 0.5)
+              .slice(0, Math.floor(students.length * attendanceRate));
+
+            for (const student of attendees) {
+              try {
+                await KanchoAttendance.create({
+                  school_id: school.id,
+                  student_id: student.id,
+                  class_id: cls.id,
+                  date: dateStr,
+                  checked_in_at: new Date(date.getTime() + Math.random() * 3600000),
+                  status: statuses[Math.floor(Math.random() * statuses.length)],
+                  recorded_by: 'seed'
+                });
+                totalAttendance++;
+              } catch (e) {
+                // Skip duplicates from unique constraint
+              }
+            }
+          }
+        }
+
+        // Update student aggregates (total_classes, last_attendance, streak)
+        for (const student of students) {
+          const count = await KanchoAttendance.count({
+            where: { student_id: student.id, status: ['present', 'late'] }
+          });
+          const lastRecord = await KanchoAttendance.findOne({
+            where: { student_id: student.id },
+            order: [['date', 'DESC']],
+            raw: true
+          });
+          // Simple streak: count recent consecutive attendance days
+          const records = await KanchoAttendance.findAll({
+            where: { student_id: student.id, status: ['present', 'late'] },
+            attributes: ['date'],
+            order: [['date', 'DESC']],
+            raw: true
+          });
+          let streak = 0;
+          if (records.length > 0) {
+            const uniqueDates = [...new Set(records.map(r => r.date))];
+            streak = 1;
+            for (let i = 1; i < uniqueDates.length; i++) {
+              const diff = (new Date(uniqueDates[i-1]) - new Date(uniqueDates[i])) / 86400000;
+              if (diff <= 3) streak++; else break;
+            }
+          }
+          await KanchoStudent.update(
+            { total_classes: count, last_attendance: lastRecord?.checked_in_at || null, attendance_streak: streak },
+            { where: { id: student.id } }
+          );
+        }
+
+        // Update class aggregates
+        for (const cls of createdClasses) {
+          const sessions = await KanchoAttendance.count({
+            where: { class_id: cls.id },
+            distinct: true,
+            col: 'date'
+          });
+          const totalCheckins = await KanchoAttendance.count({
+            where: { class_id: cls.id, status: ['present', 'late'] }
+          });
+          const avg = sessions > 0 ? Math.round((totalCheckins / sessions) * 100) / 100 : 0;
+          const fill = cls.capacity > 0 ? Math.round((avg / cls.capacity) * 10000) / 100 : 0;
+          await KanchoClass.update(
+            { average_attendance: avg, fill_rate: fill },
+            { where: { id: cls.id } }
+          );
+        }
+      }
+
+      res.json({
+        success: true,
+        message: 'Classes and attendance data seeded',
+        summary: { classes_created: totalClasses, attendance_records: totalAttendance, schools_processed: schools.length }
+      });
+    } catch (error) {
+      console.error('Seed classes/attendance error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Seed data for an existing school by ID
   app.post('/api/v1/seed-school/:id', async (req, res) => {
     try {
