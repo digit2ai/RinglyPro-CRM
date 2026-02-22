@@ -616,6 +616,56 @@ async function processKanchoSignup(session) {
   }
 }
 
+// =========================================================
+// POST /test-trigger/:sessionId - DEV ONLY: Skip Stripe, trigger provisioning directly
+// Protected by JWT_SECRET as auth header
+// =========================================================
+router.post('/test-trigger/:sessionId', async (req, res) => {
+  // Auth check: require JWT_SECRET as Bearer token
+  const auth = req.headers.authorization;
+  if (!auth || auth !== `Bearer ${JWT_SECRET}`) {
+    return res.status(401).json({ success: false, error: 'Unauthorized' });
+  }
+
+  try {
+    if (!kanchoModels) {
+      return res.status(503).json({ success: false, error: 'Models not available' });
+    }
+
+    const pending = await kanchoModels.KanchoPendingSignup.findOne({
+      where: { stripe_checkout_session_id: req.params.sessionId }
+    });
+
+    if (!pending) {
+      return res.status(404).json({ success: false, error: 'Pending signup not found' });
+    }
+
+    if (pending.status === 'completed') {
+      return res.json({ success: true, message: 'Already completed', status: pending.status });
+    }
+
+    // Build a mock session object with the fields processKanchoSignup needs
+    const mockSession = {
+      id: pending.stripe_checkout_session_id,
+      customer: `cus_test_${Date.now()}`,
+      subscription: `sub_test_${Date.now()}`,
+      metadata: {
+        product: 'kancho_ai',
+        plan: pending.plan,
+        email: pending.email
+      }
+    };
+
+    res.json({ success: true, message: 'Provisioning triggered', sessionId: req.params.sessionId });
+
+    // Process async (same as webhook)
+    await processKanchoSignup(mockSession);
+  } catch (error) {
+    console.error('[KanchoCheckout] Test trigger error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Export router + webhook handler separately
 router.stripeWebhookHandler = stripeWebhookHandler;
 module.exports = router;
