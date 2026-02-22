@@ -917,6 +917,7 @@ if (models && !modelsError) {
   const outboundRoutes = require('./routes/outbound')(models);
   const classesRoutes = require('./routes/classes')(models);
   const revenueRoutes = require('./routes/revenue')(models);
+  const attendanceRoutes = require('./routes/attendance')(models);
 
   app.use('/api/v1/schools', schoolsRoutes);
   app.use('/api/v1/students', studentsRoutes);
@@ -928,6 +929,7 @@ if (models && !modelsError) {
   app.use('/api/v1/outbound', outboundRoutes);
   app.use('/api/v1/classes', classesRoutes);
   app.use('/api/v1/revenue', revenueRoutes);
+  app.use('/api/v1/attendance', attendanceRoutes);
   console.log('📞 Kancho Outbound Calling routes mounted at /api/v1/outbound');
   console.log('📅 Kancho Classes routes mounted at /api/v1/classes');
 
@@ -3502,6 +3504,22 @@ app.get('*', (req, res) => {
     .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #E85A4F; }
     .form-group textarea { resize: vertical; min-height: 80px; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    /* Attendance */
+    .checkin-student-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #1A1A1A; border: 1px solid #2A2A2A; border-radius: 10px; margin-bottom: 6px; cursor: pointer; transition: border-color 0.15s; }
+    .checkin-student-row:hover { border-color: #E85A4F; }
+    .checkin-student-row.checked { border-color: #10B981; background: rgba(16,185,129,0.05); }
+    .checkin-checkbox { width: 20px; height: 20px; accent-color: #E85A4F; cursor: pointer; }
+    .checkin-student-info { flex: 1; margin-left: 12px; }
+    .checkin-student-name { font-weight: 600; font-size: 14px; }
+    .checkin-student-meta { font-size: 11px; color: #6B7280; margin-top: 2px; }
+    .checkin-actions { display: flex; gap: 8px; margin-bottom: 12px; }
+    .attendance-history-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #1A1A1A; border: 1px solid #2A2A2A; border-radius: 8px; margin-bottom: 4px; font-size: 13px; }
+    .attendance-history-item .date { color: #D1D5DB; font-weight: 500; }
+    .attendance-history-item .class-name { color: #9CA3AF; }
+    .streak-badge { display: inline-flex; align-items: center; gap: 4px; background: linear-gradient(135deg, #F59E0B, #EF4444); color: white; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .btn-checkin { background: #10B981; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; transition: opacity 0.15s; }
+    .btn-checkin:hover { opacity: 0.9; }
+    .roster-loading { text-align: center; color: #6B7280; padding: 40px 0; }
     @media (max-width: 640px) { .form-row { grid-template-columns: 1fr; } }
     .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
     .detail-row .label { color: #6B7280; font-size: 13px; }
@@ -4420,7 +4438,10 @@ app.get('*', (req, res) => {
       <div id="tabStudents" class="tab-content">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-users text-kancho"></i> Students</h2>
-          <button class="btn-primary btn-sm" onclick="openStudentForm()"><i class="fas fa-plus mr-1"></i> Add Student</button>
+          <div class="flex gap-2">
+            <button class="btn-checkin btn-sm" onclick="openAttendanceModal()"><i class="fas fa-clipboard-check mr-1"></i> Take Attendance</button>
+            <button class="btn-primary btn-sm" onclick="openStudentForm()"><i class="fas fa-plus mr-1"></i> Add Student</button>
+          </div>
         </div>
         <div class="filter-bar">
           <input type="text" id="studentSearch" placeholder="Search by name, email, phone..." oninput="debouncedSearchStudents()">
@@ -4628,6 +4649,37 @@ app.get('*', (req, res) => {
         </div>
       </div>
       <div id="leadDetailBody" class="slide-panel-body"></div>
+    </div>
+
+    <!-- Attendance Check-In Modal -->
+    <div id="attendanceCheckInModal" class="form-modal" onclick="if(event.target===this)closeAttendanceModal()">
+      <div class="form-modal-content" style="max-width:600px;">
+        <h3><i class="fas fa-clipboard-check text-kancho mr-2"></i> Take Attendance</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Class</label>
+            <select id="attendanceClassSelect" onchange="loadClassRoster()">
+              <option value="">-- All Students (No Class) --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="attendanceDate" style="color-scheme:dark;" onchange="loadClassRoster()">
+          </div>
+        </div>
+        <div class="checkin-actions">
+          <button type="button" class="btn-ghost btn-sm" onclick="toggleAllStudents(true)"><i class="fas fa-check-double mr-1"></i> Select All</button>
+          <button type="button" class="btn-ghost btn-sm" onclick="toggleAllStudents(false)"><i class="fas fa-times mr-1"></i> Deselect All</button>
+          <span id="checkinCount" style="margin-left:auto;font-size:12px;color:#6B7280;">0 selected</span>
+        </div>
+        <div id="attendanceRoster" style="max-height:360px;overflow-y:auto;">
+          <div class="roster-loading">Select a class or click Load to see students</div>
+        </div>
+        <div class="flex gap-3 mt-4">
+          <button type="button" class="btn-checkin flex-1" onclick="saveBulkAttendance()"><i class="fas fa-save mr-1"></i> Save Attendance</button>
+          <button type="button" class="btn-ghost flex-1" onclick="closeAttendanceModal()">Cancel</button>
+        </div>
+      </div>
     </div>
 
     <!-- Student Form Modal -->
@@ -6051,12 +6103,20 @@ app.get('*', (req, res) => {
             '<div class="detail-row"><span class="label">Risk Score</span><span class="value">' + (s.churn_risk_score || 0) + '%</span></div>' +
           '</div>' +
           (s.notes ? '<div class="mb-6"><h4 class="text-sm font-bold text-gray-400 uppercase mb-3">Notes</h4><p class="text-gray-300 text-sm">' + s.notes + '</p></div>' : '') +
+          '<div class="mb-6">' +
+            '<h4 class="text-sm font-bold text-gray-400 uppercase mb-3">Attendance</h4>' +
+            (s.attendance_streak > 0 ? '<div class="mb-3"><span class="streak-badge"><i class="fas fa-fire"></i> ' + s.attendance_streak + ' day streak</span></div>' : '') +
+            '<button class="btn-checkin btn-sm mb-3" onclick="quickCheckIn(' + s.id + ')"><i class="fas fa-check-circle mr-1"></i> Check In Now</button>' +
+            '<div id="studentAttendanceHistory"><div class="roster-loading" style="padding:12px 0;font-size:12px;"><i class="fas fa-spinner fa-spin"></i> Loading history...</div></div>' +
+          '</div>' +
           '<div class="flex gap-3 mt-6">' +
             '<button class="btn-primary flex-1 btn-sm" onclick="openStudentForm(' + s.id + ');closeStudentDetail()"><i class="fas fa-edit mr-1"></i> Edit</button>' +
             '<button class="btn-ghost flex-1 btn-sm" onclick="if(confirm(&quot;Delete this student?&quot;))deleteStudent(' + s.id + ')"><i class="fas fa-trash mr-1"></i> Delete</button>' +
           '</div>';
         document.getElementById('studentDetailPanel').classList.add('open');
         document.getElementById('studentPanelOverlay').classList.add('open');
+        // Load attendance history
+        loadAttendanceHistory(id, document.getElementById('studentAttendanceHistory'));
       } catch (e) { console.error('openStudentDetail error:', e); }
     }
 
@@ -6536,6 +6596,179 @@ app.get('*', (req, res) => {
         await fetch('/kanchoai/api/v1/revenue/' + id, { method: 'DELETE' });
         loadPayments();
       } catch (e) { console.error('deletePayment error:', e); }
+    }
+
+    // ==================== ATTENDANCE ====================
+
+    async function openAttendanceModal() {
+      // Set today's date
+      document.getElementById('attendanceDate').value = new Date().toISOString().split('T')[0];
+      // Load classes dropdown
+      try {
+        const res = await fetch('/kanchoai/api/v1/classes/public?school_id=' + currentSchool.id);
+        const data = await res.json();
+        const sel = document.getElementById('attendanceClassSelect');
+        sel.innerHTML = '<option value="">-- All Students (No Class) --</option>';
+        if (data.success && data.data) {
+          data.data.filter(c => c.is_active).forEach(c => {
+            sel.innerHTML += '<option value="' + c.id + '">' + c.name + '</option>';
+          });
+        }
+      } catch (e) { console.error('loadClasses error:', e); }
+      document.getElementById('attendanceCheckInModal').classList.add('open');
+      loadClassRoster();
+    }
+
+    function closeAttendanceModal() {
+      document.getElementById('attendanceCheckInModal').classList.remove('open');
+    }
+
+    async function loadClassRoster() {
+      const classId = document.getElementById('attendanceClassSelect').value;
+      const date = document.getElementById('attendanceDate').value;
+      const container = document.getElementById('attendanceRoster');
+      container.innerHTML = '<div class="roster-loading"><i class="fas fa-spinner fa-spin"></i> Loading students...</div>';
+
+      try {
+        let url = '/kanchoai/api/v1/attendance/class-roster?school_id=' + currentSchool.id + '&date=' + date;
+        if (classId) url += '&class_id=' + classId;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (!data.success || !data.data || data.data.length === 0) {
+          container.innerHTML = '<div class="roster-loading">No active students found</div>';
+          return;
+        }
+
+        let html = '';
+        data.data.forEach(s => {
+          const checked = s.checked_in ? ' checked' : '';
+          const rowClass = s.checked_in ? ' checked' : '';
+          html += '<div class="checkin-student-row' + rowClass + '" onclick="toggleCheckinRow(this)">' +
+            '<input type="checkbox" class="checkin-checkbox" data-student-id="' + s.id + '"' + checked + ' onclick="event.stopPropagation();updateCheckinCount()">' +
+            '<div class="checkin-student-info">' +
+              '<div class="checkin-student-name">' + (s.first_name || '') + ' ' + (s.last_name || '') + '</div>' +
+              '<div class="checkin-student-meta">' + (s.belt_rank || 'No belt') + ' &middot; Streak: ' + (s.attendance_streak || 0) + ' &middot; Total: ' + (s.total_classes || 0) + '</div>' +
+            '</div>' +
+            (s.checked_in ? '<span class="badge badge-active" style="font-size:10px;">Already in</span>' : '') +
+          '</div>';
+        });
+        container.innerHTML = html;
+        updateCheckinCount();
+      } catch (e) {
+        console.error('loadClassRoster error:', e);
+        container.innerHTML = '<div class="roster-loading">Error loading students</div>';
+      }
+    }
+
+    function toggleCheckinRow(row) {
+      const cb = row.querySelector('.checkin-checkbox');
+      cb.checked = !cb.checked;
+      row.classList.toggle('checked', cb.checked);
+      updateCheckinCount();
+    }
+
+    function toggleAllStudents(checked) {
+      document.querySelectorAll('#attendanceRoster .checkin-checkbox').forEach(cb => {
+        cb.checked = checked;
+        cb.closest('.checkin-student-row').classList.toggle('checked', checked);
+      });
+      updateCheckinCount();
+    }
+
+    function updateCheckinCount() {
+      const total = document.querySelectorAll('#attendanceRoster .checkin-checkbox:checked').length;
+      document.getElementById('checkinCount').textContent = total + ' selected';
+    }
+
+    async function saveBulkAttendance() {
+      const classId = document.getElementById('attendanceClassSelect').value;
+      const date = document.getElementById('attendanceDate').value;
+      const checkboxes = document.querySelectorAll('#attendanceRoster .checkin-checkbox:checked');
+      const studentIds = Array.from(checkboxes).map(cb => parseInt(cb.dataset.studentId));
+
+      if (studentIds.length === 0) {
+        alert('Please select at least one student');
+        return;
+      }
+
+      try {
+        const res = await fetch('/kanchoai/api/v1/attendance/bulk-check-in', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            school_id: currentSchool.id,
+            class_id: classId || null,
+            date: date,
+            student_ids: studentIds
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert(data.message || 'Attendance saved!');
+          closeAttendanceModal();
+          if (tabsLoaded.students) loadStudents();
+        } else {
+          alert('Error: ' + (data.error || 'Unknown error'));
+        }
+      } catch (e) {
+        console.error('saveBulkAttendance error:', e);
+        alert('Error saving attendance');
+      }
+    }
+
+    async function quickCheckIn(studentId) {
+      try {
+        const res = await fetch('/kanchoai/api/v1/attendance/check-in', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            school_id: currentSchool.id,
+            student_id: studentId,
+            date: new Date().toISOString().split('T')[0]
+          })
+        });
+        const data = await res.json();
+        if (res.status === 409) {
+          alert('Already checked in today!');
+          return;
+        }
+        if (data.success) {
+          alert('Checked in!');
+          openStudentDetail(studentId);
+        } else {
+          alert('Error: ' + (data.error || 'Unknown error'));
+        }
+      } catch (e) {
+        console.error('quickCheckIn error:', e);
+        alert('Error checking in');
+      }
+    }
+
+    async function loadAttendanceHistory(studentId, container) {
+      try {
+        const res = await fetch('/kanchoai/api/v1/attendance/student/' + studentId + '/history');
+        const data = await res.json();
+
+        if (!data.success || !data.data || data.data.length === 0) {
+          container.innerHTML = '<p class="text-sm text-gray-500">No attendance records yet</p>';
+          return;
+        }
+
+        let html = '';
+        data.data.slice(0, 10).forEach(r => {
+          const statusBadge = r.status === 'present' ? 'badge-active' : r.status === 'late' ? 'badge-warm' : r.status === 'excused' ? 'badge-medium' : 'badge-cancelled';
+          html += '<div class="attendance-history-item">' +
+            '<span class="date">' + formatDate(r.date) + '</span>' +
+            '<span class="class-name">' + (r.class ? r.class.name : 'Quick check-in') + '</span>' +
+            '<span class="badge ' + statusBadge + '" style="font-size:10px;">' + r.status + '</span>' +
+          '</div>';
+        });
+        container.innerHTML = html;
+      } catch (e) {
+        console.error('loadAttendanceHistory error:', e);
+        container.innerHTML = '<p class="text-sm text-gray-500">Error loading history</p>';
+      }
     }
 
     // Initialize
