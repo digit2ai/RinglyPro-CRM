@@ -6053,7 +6053,7 @@ app.get('*', (req, res) => {
           (s.notes ? '<div class="mb-6"><h4 class="text-sm font-bold text-gray-400 uppercase mb-3">Notes</h4><p class="text-gray-300 text-sm">' + s.notes + '</p></div>' : '') +
           '<div class="flex gap-3 mt-6">' +
             '<button class="btn-primary flex-1 btn-sm" onclick="openStudentForm(' + s.id + ');closeStudentDetail()"><i class="fas fa-edit mr-1"></i> Edit</button>' +
-            '<button class="btn-ghost flex-1 btn-sm" onclick="if(confirm(\'Delete this student?\'))deleteStudent(' + s.id + ')"><i class="fas fa-trash mr-1"></i> Delete</button>' +
+            '<button class="btn-ghost flex-1 btn-sm" onclick="if(confirm(&quot;Delete this student?&quot;))deleteStudent(' + s.id + ')"><i class="fas fa-trash mr-1"></i> Delete</button>' +
           '</div>';
         document.getElementById('studentDetailPanel').classList.add('open');
         document.getElementById('studentPanelOverlay').classList.add('open');
@@ -6211,7 +6211,7 @@ app.get('*', (req, res) => {
           '<div class="flex gap-3 mt-6">' +
             (l.status !== 'converted' ? '<button class="btn-primary flex-1 btn-sm" onclick="convertLead(' + l.id + ');closeLeadDetail()"><i class="fas fa-user-plus mr-1"></i> Convert</button>' : '') +
             '<button class="btn-ghost flex-1 btn-sm" onclick="openLeadForm(' + l.id + ');closeLeadDetail()"><i class="fas fa-edit mr-1"></i> Edit</button>' +
-            '<button class="btn-ghost flex-1 btn-sm" onclick="if(confirm(\'Delete this lead?\'))deleteLead(' + l.id + ')"><i class="fas fa-trash mr-1"></i> Delete</button>' +
+            '<button class="btn-ghost flex-1 btn-sm" onclick="if(confirm(&quot;Delete this lead?&quot;))deleteLead(' + l.id + ')"><i class="fas fa-trash mr-1"></i> Delete</button>' +
           '</div>';
         document.getElementById('leadDetailPanel').classList.add('open');
         document.getElementById('leadPanelOverlay').classList.add('open');
