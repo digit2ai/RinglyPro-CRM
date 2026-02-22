@@ -3131,6 +3131,18 @@ app.get('*', (req, res) => {
       -webkit-overflow-scrolling: touch;
       overscroll-behavior: contain;
     }
+    /* Auth styles */
+    .login-card { background: #1A1A1A; border: 1px solid #2A2A2A; max-width: 420px; margin: 0 auto; }
+    .login-input { background: #0D0D0D; border: 1px solid #2A2A2A; color: white; width: 100%; padding: 12px 16px; border-radius: 12px; font-size: 16px; transition: border-color 0.2s; }
+    .login-input:focus { outline: none; border-color: #E85A4F; }
+    .login-input::placeholder { color: #6B7280; }
+    .provision-step { display: flex; align-items: center; gap: 12px; padding: 12px 0; }
+    .provision-step .step-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .provision-step.pending .step-icon { background: rgba(255,255,255,0.05); color: #6B7280; }
+    .provision-step.active .step-icon { background: rgba(232,90,79,0.2); color: #E85A4F; }
+    .provision-step.done .step-icon { background: rgba(34,197,94,0.2); color: #22C55E; }
+    .auth-user-badge { display: flex; align-items: center; gap: 8px; background: #1A1A1A; border: 1px solid #2A2A2A; border-radius: 12px; padding: 6px 12px; }
+    .plan-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 9999px; background: rgba(232,90,79,0.2); color: #E85A4F; }
   </style>
 </head>
 <body class="gradient-bg min-h-screen text-white">
@@ -3145,22 +3157,93 @@ app.get('*', (req, res) => {
         </div>
       </div>
       <div class="flex items-center gap-2 md:gap-4 header-actions">
-        <span class="text-gray-400 text-sm font-medium demo-label hidden md:inline">DEMO</span>
-        <i class="fas fa-chevron-right text-gray-500 text-xs demo-label hidden md:inline"></i>
-        <select id="schoolSelect" class="bg-kancho-dark-card border border-kancho-dark-border rounded-lg px-3 md:px-4 py-2 md:py-2.5 text-sm focus:border-kancho-coral focus:outline-none transition">
-          <option value="">Select Business...</option>
-        </select>
-        <button onclick="talkToKancho()" class="kancho-btn px-4 md:px-5 py-2 md:py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2 shadow-lg whitespace-nowrap">
-          <i class="fas fa-microphone"></i>
-          <span class="hidden sm:inline">Talk to Kancho</span>
-          <span class="sm:hidden">Talk</span>
-        </button>
+        <!-- Unauthenticated header (demo mode) -->
+        <div id="headerUnauth" class="flex items-center gap-2 md:gap-4">
+          <span class="text-gray-400 text-sm font-medium demo-label hidden md:inline">DEMO</span>
+          <i class="fas fa-chevron-right text-gray-500 text-xs demo-label hidden md:inline"></i>
+          <select id="schoolSelect" class="bg-kancho-dark-card border border-kancho-dark-border rounded-lg px-3 md:px-4 py-2 md:py-2.5 text-sm focus:border-kancho-coral focus:outline-none transition">
+            <option value="">Select Business...</option>
+          </select>
+          <button onclick="talkToKancho()" class="kancho-btn px-4 md:px-5 py-2 md:py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2 shadow-lg whitespace-nowrap">
+            <i class="fas fa-microphone"></i>
+            <span class="hidden sm:inline">Talk to Kancho</span>
+            <span class="sm:hidden">Talk</span>
+          </button>
+          <button onclick="showLoginSection()" class="px-3 md:px-4 py-2 md:py-2.5 bg-white/10 border border-kancho-dark-border rounded-lg text-sm hover:bg-kancho-coral/20 hover:border-kancho-coral transition flex items-center gap-2">
+            <i class="fas fa-sign-in-alt"></i>
+            <span class="hidden sm:inline">Sign In</span>
+          </button>
+        </div>
+        <!-- Authenticated header -->
+        <div id="headerAuth" class="hidden flex items-center gap-2 md:gap-4">
+          <div class="auth-user-badge">
+            <div class="text-right hidden sm:block">
+              <p id="headerSchoolName" class="text-sm font-medium text-white leading-tight"></p>
+              <p id="headerUserEmail" class="text-xs text-gray-400 leading-tight"></p>
+            </div>
+            <span id="headerPlanBadge" class="plan-badge"></span>
+          </div>
+          <button onclick="talkToKancho()" class="kancho-btn px-4 md:px-5 py-2 md:py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2 shadow-lg whitespace-nowrap">
+            <i class="fas fa-microphone"></i>
+            <span class="hidden sm:inline">Talk to Kancho</span>
+            <span class="sm:hidden">Talk</span>
+          </button>
+          <button onclick="logout()" class="p-2 md:px-3 md:py-2.5 bg-white/10 border border-kancho-dark-border rounded-lg text-sm hover:bg-red-500/20 hover:border-red-500/50 transition" title="Logout">
+            <i class="fas fa-sign-out-alt text-gray-400"></i>
+          </button>
+        </div>
       </div>
     </div>
   </header>
 
   <!-- Main Content -->
   <main class="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8 mobile-main">
+
+    <!-- Login Section -->
+    <div id="loginSection" class="hidden py-16">
+      <div class="login-card rounded-2xl p-8">
+        <div class="text-center mb-8">
+          <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-20 h-20 rounded-xl mx-auto mb-4 object-contain">
+          <h2 class="text-2xl font-bold">Welcome Back</h2>
+          <p class="text-gray-400 text-sm mt-2">Sign in to your Kancho AI dashboard</p>
+        </div>
+        <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+          <div>
+            <label class="text-sm text-gray-400 block mb-1">Email</label>
+            <input type="email" id="loginEmail" class="login-input" placeholder="you@yourschool.com" required autocomplete="email">
+          </div>
+          <div>
+            <label class="text-sm text-gray-400 block mb-1">Password</label>
+            <input type="password" id="loginPassword" class="login-input" placeholder="Your password" required autocomplete="current-password">
+          </div>
+          <div id="loginError" class="hidden text-red-400 text-sm text-center py-2"></div>
+          <button type="submit" id="loginBtn" class="w-full kancho-btn py-3 rounded-xl font-medium transition shadow-lg">
+            <span id="loginBtnText">Sign In</span>
+          </button>
+        </form>
+        <div class="text-center mt-6 space-y-2">
+          <p class="text-gray-400 text-sm">Don't have an account? <a href="#pricing" onclick="showLandingPage()" class="text-kancho hover:underline">Sign Up</a></p>
+          <button onclick="showLandingPage()" class="text-gray-500 text-xs hover:text-gray-300 transition"><i class="fas fa-arrow-left mr-1"></i>Back to Home</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Signup Success / Provisioning Section -->
+    <div id="signupSuccessSection" class="hidden py-16">
+      <div class="max-w-lg mx-auto text-center">
+        <div class="w-24 h-24 bg-kancho-coral/20 rounded-full flex items-center justify-center mx-auto mb-6 glow-pulse">
+          <i class="fas fa-cog fa-spin text-kancho text-3xl" id="provisionSpinner"></i>
+        </div>
+        <h2 class="text-2xl font-bold mb-2" id="provisionTitle">Setting Up Your Account</h2>
+        <p class="text-gray-400 mb-8" id="provisionSubtitle">We're configuring everything for your school...</p>
+        <div class="card rounded-2xl p-6 text-left space-y-1" id="provisionSteps"></div>
+        <div id="provisionError" class="hidden mt-6 card card-danger rounded-xl p-4 text-center">
+          <p class="text-red-400"><i class="fas fa-exclamation-circle mr-2"></i><span id="provisionErrorMsg"></span></p>
+          <button onclick="window.location.reload()" class="mt-3 px-4 py-2 bg-white/10 rounded-lg text-sm hover:bg-white/20 transition">Try Again</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Welcome Section -->
     <div id="welcomeSection" class="py-8 md:py-16">
       <div class="text-center mb-10 md:mb-16">
@@ -3206,9 +3289,14 @@ app.get('*', (req, res) => {
       <!-- CTA -->
       <div class="text-center mb-16">
         <p class="text-gray-400 mb-6">Select a business above to see Kancho in action, or:</p>
-        <button onclick="seedDemoData()" class="kancho-btn px-8 py-4 rounded-xl font-medium transition shadow-lg">
-          <i class="fas fa-rocket mr-2"></i>Load Demo Data
-        </button>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <button onclick="seedDemoData()" class="kancho-btn px-8 py-4 rounded-xl font-medium transition shadow-lg">
+            <i class="fas fa-rocket mr-2"></i>Load Demo Data
+          </button>
+          <button onclick="showLoginSection()" class="px-8 py-4 rounded-xl font-medium border-2 border-gray-600 hover:border-kancho-coral transition">
+            <i class="fas fa-sign-in-alt mr-2"></i>Sign In to Your Dashboard
+          </button>
+        </div>
       </div>
 
       <!-- Trial Class Booking Section -->
@@ -4023,6 +4111,196 @@ app.get('*', (req, res) => {
     let currentSchoolData = null;
     let currentLanguage = 'en';
 
+    // Auth state
+    let authToken = null;
+    let authUser = null;
+    let authSchool = null;
+    let authClient = null;
+    let isAuthenticated = false;
+    const AUTH_TOKEN_KEY = 'kancho_token';
+    const API_BASE = '/kanchoai/api/v1';
+
+    // ==================== AUTH FUNCTIONS ====================
+
+    async function checkAuth() {
+      const token = localStorage.getItem(AUTH_TOKEN_KEY);
+      if (!token) return false;
+      try {
+        const res = await fetch(API_BASE + '/bridge/auth/me', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) { localStorage.removeItem(AUTH_TOKEN_KEY); return false; }
+        const result = await res.json();
+        if (!result.success) { localStorage.removeItem(AUTH_TOKEN_KEY); return false; }
+        authToken = token;
+        authUser = result.data.user;
+        authSchool = result.data.school;
+        authClient = result.data.client;
+        isAuthenticated = true;
+        return true;
+      } catch (e) {
+        console.error('[Auth] Token validation failed:', e);
+        localStorage.removeItem(AUTH_TOKEN_KEY);
+        return false;
+      }
+    }
+
+    async function handleLogin(event) {
+      event.preventDefault();
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const errorEl = document.getElementById('loginError');
+      const btn = document.getElementById('loginBtn');
+      const btnText = document.getElementById('loginBtnText');
+      errorEl.classList.add('hidden');
+      btn.disabled = true;
+      btnText.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Signing in...';
+      try {
+        const res = await fetch(API_BASE + '/bridge/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (!data.success) {
+          errorEl.textContent = data.error || 'Login failed';
+          errorEl.classList.remove('hidden');
+          btn.disabled = false;
+          btnText.textContent = 'Sign In';
+          return;
+        }
+        localStorage.setItem(AUTH_TOKEN_KEY, data.token);
+        authToken = data.token;
+        authUser = data.data.user;
+        authSchool = data.data.school;
+        authClient = data.data.client;
+        isAuthenticated = true;
+        enterAuthenticatedMode();
+      } catch (e) {
+        console.error('[Auth] Login error:', e);
+        errorEl.textContent = 'Connection error. Please try again.';
+        errorEl.classList.remove('hidden');
+        btn.disabled = false;
+        btnText.textContent = 'Sign In';
+      }
+    }
+
+    async function enterAuthenticatedMode() {
+      document.getElementById('headerUnauth').classList.add('hidden');
+      document.getElementById('headerAuth').classList.remove('hidden');
+      document.getElementById('headerSchoolName').textContent = authSchool?.name || '';
+      document.getElementById('headerUserEmail').textContent = authUser?.email || '';
+      const planBadge = document.getElementById('headerPlanBadge');
+      const planLabels = { free: 'Free', starter: 'Starter', growth: 'Intelligence', professional: 'Pro', pro: 'Pro' };
+      planBadge.textContent = planLabels[authSchool?.planType] || planLabels[authUser?.plan] || 'Trial';
+      document.getElementById('loginSection').classList.add('hidden');
+      document.getElementById('signupSuccessSection').classList.add('hidden');
+      document.getElementById('welcomeSection').classList.add('hidden');
+      document.getElementById('dashboardSection').classList.remove('hidden');
+      currentSchoolId = authSchool?.id;
+      if (currentSchoolId) await loadDashboard(currentSchoolId);
+    }
+
+    function logout() {
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+      authToken = null; authUser = null; authSchool = null; authClient = null;
+      isAuthenticated = false; currentSchoolId = null; currentSchoolData = null;
+      window.location.href = window.location.pathname;
+    }
+
+    function showLoginSection() {
+      document.getElementById('welcomeSection').classList.add('hidden');
+      document.getElementById('dashboardSection').classList.add('hidden');
+      document.getElementById('signupSuccessSection').classList.add('hidden');
+      document.getElementById('loginSection').classList.remove('hidden');
+      setTimeout(() => document.getElementById('loginEmail')?.focus(), 100);
+    }
+
+    function showLandingPage() {
+      document.getElementById('loginSection').classList.add('hidden');
+      document.getElementById('signupSuccessSection').classList.add('hidden');
+      document.getElementById('dashboardSection').classList.add('hidden');
+      document.getElementById('welcomeSection').classList.remove('hidden');
+    }
+
+    async function checkSignupSuccess() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const sessionId = urlParams.get('session_id');
+      if (!sessionId) return false;
+      document.getElementById('welcomeSection').classList.add('hidden');
+      document.getElementById('loginSection').classList.add('hidden');
+      document.getElementById('dashboardSection').classList.add('hidden');
+      document.getElementById('signupSuccessSection').classList.remove('hidden');
+      window.history.replaceState({}, document.title, window.location.pathname);
+      const steps = [
+        { key: 'starting', label: 'Processing payment...' },
+        { key: 'creating_user', label: 'Creating your account...' },
+        { key: 'provisioning_twilio', label: 'Setting up your AI phone number...' },
+        { key: 'creating_client', label: 'Configuring your business profile...' },
+        { key: 'creating_school', label: 'Building your school dashboard...' },
+        { key: 'creating_voice_agent', label: 'Training your AI voice agent...' },
+        { key: 'updating_stripe', label: 'Finalizing subscription...' },
+        { key: 'done', label: 'All set!' }
+      ];
+      renderProvisionSteps(steps, null);
+      let attempts = 0;
+      const maxAttempts = 90;
+      const pollInterval = setInterval(async () => {
+        attempts++;
+        try {
+          const res = await fetch(API_BASE + '/bridge/checkout/status/' + sessionId);
+          const result = await res.json();
+          if (!result.success) {
+            if (attempts >= maxAttempts) { clearInterval(pollInterval); showProvisionError('Taking longer than expected. Please refresh.'); }
+            return;
+          }
+          const data = result.data;
+          renderProvisionSteps(steps, data.step);
+          if (data.status === 'completed') {
+            clearInterval(pollInterval);
+            if (data.token) { localStorage.setItem(AUTH_TOKEN_KEY, data.token); authToken = data.token; }
+            document.getElementById('provisionSpinner').className = 'fas fa-check-circle text-green-400 text-3xl';
+            document.getElementById('provisionTitle').textContent = 'Welcome to Kancho AI!';
+            document.getElementById('provisionSubtitle').textContent = 'Your dashboard is ready. Redirecting...';
+            setTimeout(async () => {
+              const valid = await checkAuth();
+              if (valid) { enterAuthenticatedMode(); } else { showLoginSection(); }
+            }, 1500);
+          } else if (data.status === 'failed') {
+            clearInterval(pollInterval);
+            showProvisionError(data.error || 'Setup failed. Please contact support.');
+          }
+        } catch (e) {
+          if (attempts >= maxAttempts) { clearInterval(pollInterval); showProvisionError('Connection error. Please refresh.'); }
+        }
+      }, 2000);
+      return true;
+    }
+
+    function renderProvisionSteps(steps, currentStep) {
+      const container = document.getElementById('provisionSteps');
+      let reachedCurrent = false;
+      container.innerHTML = steps.map(step => {
+        let state = 'done';
+        if (!currentStep) { state = step.key === 'starting' ? 'active' : 'pending'; }
+        else if (step.key === currentStep) { state = currentStep === 'done' ? 'done' : 'active'; reachedCurrent = true; }
+        else if (reachedCurrent) { state = 'pending'; }
+        const icons = { pending: 'fa-circle', active: 'fa-spinner fa-spin', done: 'fa-check' };
+        const colors = { done: 'text-gray-300', active: 'text-white font-medium', pending: 'text-gray-500' };
+        return '<div class="provision-step ' + state + '"><div class="step-icon"><i class="fas ' + icons[state] + ' text-sm"></i></div><span class="text-sm ' + colors[state] + '">' + step.label + '</span></div>';
+      }).join('');
+    }
+
+    function showProvisionError(message) {
+      document.getElementById('provisionSpinner').className = 'fas fa-exclamation-triangle text-red-400 text-3xl';
+      document.getElementById('provisionTitle').textContent = 'Setup Issue';
+      document.getElementById('provisionSubtitle').textContent = '';
+      document.getElementById('provisionError').classList.remove('hidden');
+      document.getElementById('provisionErrorMsg').textContent = message;
+    }
+
+    // ==================== EXISTING FUNCTIONS ====================
+
     async function loadSchools() {
       try {
         const res = await fetch('/kanchoai/api/v1/schools?tenant_id=1');
@@ -4291,6 +4569,11 @@ app.get('*', (req, res) => {
     let widgetElement = null;
 
     function talkToKancho() {
+      if (isAuthenticated) {
+        currentSchoolId = authSchool?.id;
+        openVoiceModal();
+        return;
+      }
       if (!currentSchoolId) {
         alert('Please select a business first to talk to Kancho');
         return;
@@ -4310,9 +4593,13 @@ app.get('*', (req, res) => {
       statusEl.textContent = 'Starting conversation...';
 
       // Update school name
-      const schoolSelect = document.getElementById('schoolSelect');
-      const selectedOption = schoolSelect.options[schoolSelect.selectedIndex];
-      schoolNameEl.textContent = selectedOption ? selectedOption.text : '';
+      if (isAuthenticated && authSchool) {
+        schoolNameEl.textContent = authSchool.name;
+      } else {
+        const schoolSelect = document.getElementById('schoolSelect');
+        const selectedOption = schoolSelect.options[schoolSelect.selectedIndex];
+        schoolNameEl.textContent = selectedOption ? selectedOption.text : '';
+      }
 
       // Create widget with comprehensive dynamic variables
       const school = currentSchoolData?.school || {};
@@ -4351,7 +4638,8 @@ app.get('*', (req, res) => {
 
       // Create the ElevenLabs widget
       widgetElement = document.createElement('elevenlabs-convai');
-      widgetElement.setAttribute('agent-id', KANCHO_VOICE_AGENT_ID);
+      const agentId = (isAuthenticated && authClient?.elevenlabsAgentId) ? authClient.elevenlabsAgentId : KANCHO_VOICE_AGENT_ID;
+      widgetElement.setAttribute('agent-id', agentId);
       widgetElement.setAttribute('dynamic-variables', JSON.stringify(dynamicVars));
       container.appendChild(widgetElement);
 
@@ -4575,9 +4863,22 @@ app.get('*', (req, res) => {
     }
 
     // Initialize
-    loadSchools();
-    loadClasses();
-    checkSubscriptionSuccess();
+    async function init() {
+      // 1. Check for signup-success redirect (takes priority)
+      const isSignupRedirect = await checkSignupSuccess();
+      if (isSignupRedirect) return;
+
+      // 2. Check for existing auth token
+      const isLoggedIn = await checkAuth();
+      if (isLoggedIn) { enterAuthenticatedMode(); return; }
+
+      // 3. Not authenticated: show landing page in demo mode
+      loadSchools();
+      loadClasses();
+      checkSubscriptionSuccess(); // Legacy ?subscribe=success flow
+    }
+
+    init();
 
     // Register Service Worker for PWA
     if ('serviceWorker' in navigator) {

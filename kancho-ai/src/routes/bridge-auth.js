@@ -385,7 +385,8 @@ router.get('/me', authenticateBridge, async (req, res) => {
           businessHoursStart: client.business_hours_start,
           businessHoursEnd: client.business_hours_end,
           businessDays: client.business_days,
-          customGreeting: client.custom_greeting
+          customGreeting: client.custom_greeting,
+          elevenlabsAgentId: client.elevenlabs_agent_id || null
         } : null,
         user: user ? {
           id: user.id,
