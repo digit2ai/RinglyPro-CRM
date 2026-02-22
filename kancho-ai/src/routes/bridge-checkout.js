@@ -621,9 +621,10 @@ async function processKanchoSignup(session) {
 // Protected by JWT_SECRET as auth header
 // =========================================================
 router.post('/test-trigger/:sessionId', async (req, res) => {
-  // Auth check: require JWT_SECRET as Bearer token
+  // Auth check: require STRIPE_KANCHO_WEBHOOK_SECRET as Bearer token
   const auth = req.headers.authorization;
-  if (!auth || auth !== `Bearer ${JWT_SECRET}`) {
+  const testSecret = process.env.STRIPE_KANCHO_WEBHOOK_SECRET;
+  if (!auth || !testSecret || auth !== `Bearer ${testSecret}`) {
     return res.status(401).json({ success: false, error: 'Unauthorized' });
   }
 
