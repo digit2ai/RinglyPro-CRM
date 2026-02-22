@@ -414,6 +414,125 @@ router.get('/me', authenticateBridge, async (req, res) => {
   }
 });
 
+// =========================================================
+// POST /forgot-password - Generate reset token and send email
+// =========================================================
+router.post('/forgot-password', async (req, res) => {
+  if (!crmBridge?.ready) return res.status(503).json({ success: false, error: 'Service unavailable' });
+
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ success: false, error: 'Email is required' });
+
+    const user = await crmBridge.User.findOne({ where: { email } });
+    if (!user) {
+      return res.json({ success: true, message: 'If an account exists with that email, a reset link has been sent.' });
+    }
+
+    // Generate reset token (1 hour)
+    const resetToken = jwt.sign(
+      { userId: user.id, email: user.email, type: 'password_reset' },
+      JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    await user.update({ email_verification_token: resetToken });
+
+    const APP_URL = process.env.APP_URL || 'https://aiagent.ringlypro.com';
+    const resetLink = `${APP_URL}/kanchoai/?reset_token=${resetToken}`;
+
+    // Send email via SendGrid
+    try {
+      const sgMail = require('@sendgrid/mail');
+      if (process.env.SENDGRID_API_KEY) {
+        sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+        await sgMail.send({
+          to: email,
+          from: { email: process.env.FROM_EMAIL || 'noreply@ringlypro.com', name: 'Kancho AI' },
+          subject: 'Reset Your Kancho AI Password',
+          html: '<!DOCTYPE html><html><head><style>body{font-family:Arial,sans-serif;line-height:1.6;color:#333}.container{max-width:600px;margin:0 auto;padding:20px}.header{background:linear-gradient(135deg,#1A1A1A 0%,#2A2A2A 100%);padding:30px;text-align:center;border-radius:10px 10px 0 0}.header h1{color:#E85A4F;margin:0;font-size:24px}.content{background:#111;padding:30px;border:1px solid #2A2A2A;color:#ccc}.button{display:inline-block;background:#E85A4F;color:white;padding:14px 30px;text-decoration:none;border-radius:8px;margin:20px 0;font-weight:bold}.footer{text-align:center;color:#6b7280;margin-top:20px;font-size:14px;padding:16px}</style></head><body><div class="container"><div class="header"><h1>🥋 Kancho AI</h1></div><div class="content"><p>Hello <strong>' + (user.first_name || 'there') + '</strong>,</p><p>You requested to reset your password for your Kancho AI account.</p><div style="text-align:center"><a href="' + resetLink + '" class="button">Reset My Password</a></div><p style="color:#f59e0b"><strong>⏰ This link expires in 1 hour.</strong></p><p style="font-size:14px;color:#6b7280">If the button doesn\'t work, copy this link:<br><code style="color:#E85A4F">' + resetLink + '</code></p><hr style="border-color:#2A2A2A"><p style="font-size:14px;color:#6b7280">If you didn\'t request this, ignore this email.</p></div><div class="footer"><p>Kancho AI — AI Business Intelligence for Martial Arts</p></div></div></body></html>'
+        });
+        console.log(`✅ KanchoAI password reset email sent to: ${email}`);
+      } else {
+        console.log(`⚠️ SendGrid not configured. Reset link: ${resetLink}`);
+      }
+    } catch (emailErr) {
+      console.error('Email send error:', emailErr.message);
+    }
+
+    res.json({ success: true, message: 'If an account exists with that email, a reset link has been sent.' });
+  } catch (error) {
+    console.error('KanchoAI forgot password error:', error);
+    res.status(500).json({ success: false, error: 'Failed to process request' });
+  }
+});
+
+// =========================================================
+// POST /verify-reset-token - Verify if a reset token is valid
+// =========================================================
+router.post('/verify-reset-token', async (req, res) => {
+  if (!crmBridge?.ready) return res.status(503).json({ success: false, error: 'Service unavailable' });
+
+  try {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ success: false, error: 'Token is required' });
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, JWT_SECRET);
+      if (decoded.type !== 'password_reset') throw new Error('Invalid token type');
+    } catch (err) {
+      return res.status(400).json({ success: false, error: 'Invalid or expired reset link' });
+    }
+
+    const user = await crmBridge.User.findOne({
+      where: { id: decoded.userId, email: decoded.email, email_verification_token: token }
+    });
+
+    if (!user) return res.status(400).json({ success: false, error: 'Invalid or already used reset link' });
+
+    res.json({ success: true, email: user.email });
+  } catch (error) {
+    console.error('Verify reset token error:', error);
+    res.status(500).json({ success: false, error: 'Failed to verify token' });
+  }
+});
+
+// =========================================================
+// POST /reset-password - Set new password with valid token
+// =========================================================
+router.post('/reset-password', async (req, res) => {
+  if (!crmBridge?.ready) return res.status(503).json({ success: false, error: 'Service unavailable' });
+
+  try {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword) return res.status(400).json({ success: false, error: 'Token and new password are required' });
+    if (newPassword.length < 8) return res.status(400).json({ success: false, error: 'Password must be at least 8 characters' });
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, JWT_SECRET);
+      if (decoded.type !== 'password_reset') throw new Error('Invalid token type');
+    } catch (err) {
+      return res.status(400).json({ success: false, error: 'Invalid or expired reset link' });
+    }
+
+    const user = await crmBridge.User.findOne({
+      where: { id: decoded.userId, email: decoded.email, email_verification_token: token }
+    });
+    if (!user) return res.status(400).json({ success: false, error: 'Invalid reset token' });
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await user.update({ password_hash: hashedPassword, email_verification_token: null });
+
+    console.log(`✅ KanchoAI password reset for: ${user.email}`);
+    res.json({ success: true, message: 'Password reset successfully. You can now sign in.' });
+  } catch (error) {
+    console.error('KanchoAI reset password error:', error);
+    res.status(500).json({ success: false, error: 'Failed to reset password' });
+  }
+});
+
 // Export router and middleware
 router.authenticateBridge = authenticateBridge;
 module.exports = router;

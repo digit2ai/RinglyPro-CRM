@@ -3490,11 +3490,73 @@ app.get('*', (req, res) => {
           <button type="submit" id="loginBtn" class="w-full kancho-btn py-3 rounded-xl font-medium transition shadow-lg">
             <span id="loginBtnText">Sign In</span>
           </button>
+          <div class="text-right mt-2">
+            <button type="button" onclick="showForgotPassword()" class="text-kancho text-sm hover:underline">Forgot Password?</button>
+          </div>
         </form>
         <div class="text-center mt-6 space-y-2">
           <p class="text-gray-400 text-sm">Don't have an account? <a href="#pricing" onclick="showLandingPage()" class="text-kancho hover:underline">Sign Up</a></p>
           <button onclick="showLandingPage()" class="text-gray-500 text-xs hover:text-gray-300 transition"><i class="fas fa-arrow-left mr-1"></i>Back to Home</button>
         </div>
+      </div>
+    </div>
+
+    <!-- Forgot Password Section -->
+    <div id="forgotPasswordSection" class="hidden py-16">
+      <div class="login-card rounded-2xl p-8">
+        <div class="text-center mb-8">
+          <div class="w-16 h-16 bg-kancho-coral/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-key text-kancho text-2xl"></i>
+          </div>
+          <h2 class="text-2xl font-bold">Reset Password</h2>
+          <p class="text-gray-400 text-sm mt-2">Enter your email and we'll send you a reset link</p>
+        </div>
+        <form id="forgotPasswordForm" onsubmit="handleForgotPassword(event)" class="space-y-4">
+          <div>
+            <label class="text-sm text-gray-400 block mb-1">Email</label>
+            <input type="email" id="forgotEmail" class="login-input" placeholder="you@yourschool.com" required autocomplete="email">
+          </div>
+          <div id="forgotError" class="hidden text-red-400 text-sm text-center py-2"></div>
+          <div id="forgotSuccess" class="hidden text-green-400 text-sm text-center py-3 bg-green-400/10 rounded-xl"></div>
+          <button type="submit" id="forgotBtn" class="w-full kancho-btn py-3 rounded-xl font-medium transition shadow-lg">
+            Send Reset Link
+          </button>
+        </form>
+        <div class="text-center mt-6">
+          <button onclick="showLoginSection()" class="text-kancho text-sm hover:underline"><i class="fas fa-arrow-left mr-1"></i>Back to Sign In</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reset Password Section (shown when user clicks email link) -->
+    <div id="resetPasswordSection" class="hidden py-16">
+      <div class="login-card rounded-2xl p-8">
+        <div class="text-center mb-8">
+          <div class="w-16 h-16 bg-kancho-coral/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-lock text-kancho text-2xl"></i>
+          </div>
+          <h2 class="text-2xl font-bold">Set New Password</h2>
+          <p id="resetEmailDisplay" class="text-gray-400 text-sm mt-2"></p>
+        </div>
+        <form id="resetPasswordForm" onsubmit="handleResetPassword(event)" class="space-y-4">
+          <div>
+            <label class="text-sm text-gray-400 block mb-1">New Password</label>
+            <input type="password" id="resetNewPassword" class="login-input" placeholder="Min 8 characters" minlength="8" required autocomplete="new-password">
+          </div>
+          <div>
+            <label class="text-sm text-gray-400 block mb-1">Confirm Password</label>
+            <input type="password" id="resetConfirmPassword" class="login-input" placeholder="Confirm new password" minlength="8" required autocomplete="new-password">
+          </div>
+          <div id="resetError" class="hidden text-red-400 text-sm text-center py-2"></div>
+          <div id="resetSuccess" class="hidden text-center py-4">
+            <div class="text-green-400 mb-3"><i class="fas fa-check-circle text-3xl"></i></div>
+            <p class="text-green-400 font-medium">Password reset successfully!</p>
+            <button type="button" onclick="showLoginSection()" class="kancho-btn px-8 py-2 rounded-xl font-medium transition mt-4">Sign In Now</button>
+          </div>
+          <button type="submit" id="resetBtn" class="w-full kancho-btn py-3 rounded-xl font-medium transition shadow-lg">
+            Reset Password
+          </button>
+        </form>
       </div>
     </div>
 
@@ -4535,28 +4597,167 @@ app.get('*', (req, res) => {
       window.location.href = window.location.pathname;
     }
 
+    const allSections = ['welcomeSection','loginSection','forgotPasswordSection','resetPasswordSection','signupSuccessSection','dashboardSection'];
+    function hideAllSections() { allSections.forEach(id => document.getElementById(id)?.classList.add('hidden')); }
+
     function showLoginSection() {
-      document.getElementById('welcomeSection').classList.add('hidden');
-      document.getElementById('dashboardSection').classList.add('hidden');
-      document.getElementById('signupSuccessSection').classList.add('hidden');
+      hideAllSections();
       document.getElementById('loginSection').classList.remove('hidden');
       setTimeout(() => document.getElementById('loginEmail')?.focus(), 100);
     }
 
     function showLandingPage() {
-      document.getElementById('loginSection').classList.add('hidden');
-      document.getElementById('signupSuccessSection').classList.add('hidden');
-      document.getElementById('dashboardSection').classList.add('hidden');
+      hideAllSections();
       document.getElementById('welcomeSection').classList.remove('hidden');
+    }
+
+    function showForgotPassword() {
+      hideAllSections();
+      document.getElementById('forgotPasswordSection').classList.remove('hidden');
+      document.getElementById('forgotError').classList.add('hidden');
+      document.getElementById('forgotSuccess').classList.add('hidden');
+      document.getElementById('forgotBtn').disabled = false;
+      document.getElementById('forgotBtn').textContent = 'Send Reset Link';
+      setTimeout(() => document.getElementById('forgotEmail')?.focus(), 100);
+    }
+
+    function showResetPassword(email) {
+      hideAllSections();
+      document.getElementById('resetPasswordSection').classList.remove('hidden');
+      document.getElementById('resetEmailDisplay').textContent = email ? 'Reset password for ' + email : '';
+      document.getElementById('resetError').classList.add('hidden');
+      document.getElementById('resetSuccess').classList.add('hidden');
+      document.getElementById('resetBtn').classList.remove('hidden');
+      document.getElementById('resetBtn').disabled = false;
+      document.getElementById('resetBtn').textContent = 'Reset Password';
+      document.getElementById('resetPasswordForm').reset();
+      setTimeout(() => document.getElementById('resetNewPassword')?.focus(), 100);
+    }
+
+    async function handleForgotPassword(event) {
+      event.preventDefault();
+      const btn = document.getElementById('forgotBtn');
+      const errorEl = document.getElementById('forgotError');
+      const successEl = document.getElementById('forgotSuccess');
+      errorEl.classList.add('hidden');
+      successEl.classList.add('hidden');
+
+      const email = document.getElementById('forgotEmail').value.trim();
+      try {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
+
+        const res = await fetch(API_BASE + '/bridge/auth/forgot-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          successEl.innerHTML = '<i class="fas fa-envelope mr-2"></i>Reset link sent! Check your email inbox (and spam folder).';
+          successEl.classList.remove('hidden');
+          btn.classList.add('hidden');
+        } else {
+          errorEl.textContent = data.error || 'Failed to send reset link.';
+          errorEl.classList.remove('hidden');
+          btn.disabled = false;
+          btn.textContent = 'Send Reset Link';
+        }
+      } catch (err) {
+        errorEl.textContent = 'Connection error. Please try again.';
+        errorEl.classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = 'Send Reset Link';
+      }
+    }
+
+    async function handleResetPassword(event) {
+      event.preventDefault();
+      const btn = document.getElementById('resetBtn');
+      const errorEl = document.getElementById('resetError');
+      errorEl.classList.add('hidden');
+
+      const newPassword = document.getElementById('resetNewPassword').value;
+      const confirmPassword = document.getElementById('resetConfirmPassword').value;
+
+      if (newPassword !== confirmPassword) {
+        errorEl.textContent = 'Passwords do not match.';
+        errorEl.classList.remove('hidden');
+        return;
+      }
+      if (newPassword.length < 8) {
+        errorEl.textContent = 'Password must be at least 8 characters.';
+        errorEl.classList.remove('hidden');
+        return;
+      }
+
+      try {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Resetting...';
+
+        const res = await fetch(API_BASE + '/bridge/auth/reset-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: window._resetToken, newPassword })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          btn.classList.add('hidden');
+          document.getElementById('resetSuccess').classList.remove('hidden');
+          window._resetToken = null;
+        } else {
+          errorEl.textContent = data.error || 'Failed to reset password.';
+          errorEl.classList.remove('hidden');
+          btn.disabled = false;
+          btn.textContent = 'Reset Password';
+        }
+      } catch (err) {
+        errorEl.textContent = 'Connection error. Please try again.';
+        errorEl.classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = 'Reset Password';
+      }
+    }
+
+    async function checkResetToken() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const resetToken = urlParams.get('reset_token');
+      if (!resetToken) return false;
+
+      window.history.replaceState({}, document.title, window.location.pathname);
+      window._resetToken = resetToken;
+
+      try {
+        const res = await fetch(API_BASE + '/bridge/auth/verify-reset-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: resetToken })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          showResetPassword(data.email);
+        } else {
+          hideAllSections();
+          document.getElementById('resetPasswordSection').classList.remove('hidden');
+          document.getElementById('resetError').textContent = data.error || 'This reset link is invalid or has expired.';
+          document.getElementById('resetError').classList.remove('hidden');
+          document.getElementById('resetBtn').classList.add('hidden');
+          document.getElementById('resetEmailDisplay').textContent = '';
+        }
+      } catch (err) {
+        showLoginSection();
+      }
+      return true;
     }
 
     async function checkSignupSuccess() {
       const urlParams = new URLSearchParams(window.location.search);
       const sessionId = urlParams.get('session_id');
       if (!sessionId) return false;
-      document.getElementById('welcomeSection').classList.add('hidden');
-      document.getElementById('loginSection').classList.add('hidden');
-      document.getElementById('dashboardSection').classList.add('hidden');
+      hideAllSections();
       document.getElementById('signupSuccessSection').classList.remove('hidden');
       window.history.replaceState({}, document.title, window.location.pathname);
       const steps = [
@@ -5219,11 +5420,15 @@ app.get('*', (req, res) => {
       const isSignupRedirect = await checkSignupSuccess();
       if (isSignupRedirect) return;
 
-      // 2. Check for existing auth token
+      // 2. Check for password reset token
+      const isResetRedirect = await checkResetToken();
+      if (isResetRedirect) return;
+
+      // 3. Check for existing auth token
       const isLoggedIn = await checkAuth();
       if (isLoggedIn) { enterAuthenticatedMode(); return; }
 
-      // 3. Not authenticated: show landing page in demo mode
+      // 4. Not authenticated: show landing page in demo mode
       loadSchools();
       loadClasses();
       checkSubscriptionSuccess(); // Legacy ?subscribe=success flow
