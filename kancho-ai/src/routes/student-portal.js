@@ -66,8 +66,8 @@ module.exports = (models) => {
       // Recent payments
       const recentPayment = await KanchoRevenue.findOne({
         where: { student_id: req.studentId },
-        order: [['payment_date', 'DESC']],
-        attributes: ['amount', 'payment_date', 'type']
+        order: [['date', 'DESC']],
+        attributes: ['amount', 'date', 'type']
       });
 
       res.json({
@@ -90,7 +90,7 @@ module.exports = (models) => {
           todayAttendance,
           recentPayment: recentPayment ? {
             amount: recentPayment.amount,
-            date: recentPayment.payment_date,
+            date: recentPayment.date,
             type: recentPayment.type
           } : null
         }
@@ -328,7 +328,7 @@ module.exports = (models) => {
 
       const payments = await KanchoRevenue.findAll({
         where: { student_id: req.studentId },
-        order: [['payment_date', 'DESC']],
+        order: [['date', 'DESC']],
         limit: 50
       });
 

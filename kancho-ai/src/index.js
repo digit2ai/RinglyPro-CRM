@@ -4375,7 +4375,7 @@ async function loadPayments() {
     } else {
       html += '<div class="card"><div class="card-title">Payment History</div>';
       payments.forEach(p => {
-        html += '<div class="list-item" style="margin-bottom:8px"><div class="list-item-left"><div class="list-item-text"><h4>$' + parseFloat(p.amount || 0).toFixed(2) + '</h4><p>' + (p.type || 'payment') + ' &middot; ' + formatDate(p.payment_date) + '</p></div></div><span class="badge badge-success">Paid</span></div>';
+        html += '<div class="list-item" style="margin-bottom:8px"><div class="list-item-left"><div class="list-item-text"><h4>$' + parseFloat(p.amount || 0).toFixed(2) + '</h4><p>' + (p.type || 'payment') + ' &middot; ' + formatDate(p.date) + '</p></div></div><span class="badge badge-success">Paid</span></div>';
       });
       html += '</div>';
     }
