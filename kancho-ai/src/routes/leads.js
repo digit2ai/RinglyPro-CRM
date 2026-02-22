@@ -11,7 +11,7 @@ module.exports = (models) => {
   // GET /api/v1/leads - List leads
   router.get('/', async (req, res) => {
     try {
-      const { school_id, status, temperature, limit = 100, offset = 0 } = req.query;
+      const { school_id, status, temperature, search, limit = 100, offset = 0 } = req.query;
 
       if (!school_id) {
         return res.status(400).json({ error: 'school_id required' });
@@ -20,6 +20,14 @@ module.exports = (models) => {
       const where = { school_id };
       if (status) where.status = status;
       if (temperature) where.temperature = temperature;
+      if (search) {
+        where[Op.or] = [
+          { first_name: { [Op.iLike]: `%${search}%` } },
+          { last_name: { [Op.iLike]: `%${search}%` } },
+          { email: { [Op.iLike]: `%${search}%` } },
+          { phone: { [Op.iLike]: `%${search}%` } }
+        ];
+      }
 
       const leads = await KanchoLead.findAndCountAll({
         where,

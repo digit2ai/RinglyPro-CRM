@@ -154,6 +154,41 @@ router.get('/appointments/today', async (req, res) => {
   }
 });
 
+// GET /appointments/month - Monthly calendar view
+router.get('/appointments/month', async (req, res) => {
+  if (!crmBridge?.ready || !req.clientId) return res.status(503).json({ success: false, error: 'CRM not available' });
+
+  try {
+    const now = new Date();
+    const year = parseInt(req.query.year) || now.getFullYear();
+    const month = parseInt(req.query.month) || (now.getMonth() + 1);
+
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+    const lastDay = new Date(year, month, 0).getDate();
+    const endDate = `${year}-${String(month).padStart(2, '0')}-${lastDay}`;
+
+    const appointments = await crmBridge.Appointment.findAll({
+      where: {
+        client_id: req.clientId,
+        appointment_date: { [Op.between]: [startDate, endDate] }
+      },
+      order: [['appointment_date', 'ASC'], ['appointment_time', 'ASC']]
+    });
+
+    // Group by date
+    const byDate = {};
+    appointments.forEach(appt => {
+      const d = appt.appointment_date;
+      if (!byDate[d]) byDate[d] = [];
+      byDate[d].push(appt);
+    });
+
+    res.json({ success: true, data: { year, month, appointments, byDate } });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // POST /appointments - Create appointment
 router.post('/appointments', async (req, res) => {
   if (!crmBridge?.ready || !req.clientId) return res.status(503).json({ success: false, error: 'CRM not available' });

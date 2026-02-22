@@ -916,6 +916,7 @@ if (models && !modelsError) {
   const healthMetricsRoutes = require('./routes/health-metrics')(models);
   const outboundRoutes = require('./routes/outbound')(models);
   const classesRoutes = require('./routes/classes')(models);
+  const revenueRoutes = require('./routes/revenue')(models);
 
   app.use('/api/v1/schools', schoolsRoutes);
   app.use('/api/v1/students', studentsRoutes);
@@ -926,6 +927,7 @@ if (models && !modelsError) {
   app.use('/api/v1/health-metrics', healthMetricsRoutes);
   app.use('/api/v1/outbound', outboundRoutes);
   app.use('/api/v1/classes', classesRoutes);
+  app.use('/api/v1/revenue', revenueRoutes);
   console.log('📞 Kancho Outbound Calling routes mounted at /api/v1/outbound');
   console.log('📅 Kancho Classes routes mounted at /api/v1/classes');
 
@@ -3413,6 +3415,97 @@ app.get('*', (req, res) => {
     .signup-modal .trial-note { text-align: center; font-size: 13px; color: #9CA3AF; margin-top: 12px; }
     .signup-modal .trial-note strong { color: #22C55E; }
     @media (max-width: 640px) { .signup-row { grid-template-columns: 1fr; } .signup-modal { padding: 24px 20px; } }
+    /* Dashboard Tabs */
+    .tab-nav { display: flex; gap: 2px; background: #111; border: 1px solid #2A2A2A; border-radius: 12px; padding: 4px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .tab-btn { padding: 10px 20px; border: none; background: transparent; color: #6B7280; font-size: 14px; font-weight: 600; cursor: pointer; border-radius: 8px; white-space: nowrap; transition: all 0.2s; }
+    .tab-btn:hover { color: #D1D5DB; background: rgba(255,255,255,0.05); }
+    .tab-btn.active { color: #E85A4F; background: rgba(232,90,79,0.1); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    @media (max-width: 640px) { .tab-btn { padding: 8px 14px; font-size: 13px; } }
+    /* Data Tables */
+    .data-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    .data-table th { text-align: left; padding: 12px 16px; font-size: 11px; text-transform: uppercase; color: #6B7280; font-weight: 600; border-bottom: 1px solid #2A2A2A; }
+    .data-table td { padding: 12px 16px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .data-table tr { cursor: pointer; transition: background 0.15s; }
+    .data-table tbody tr:hover { background: rgba(232,90,79,0.05); }
+    @media (max-width: 768px) { .data-table th, .data-table td { padding: 10px 8px; font-size: 12px; } }
+    /* Filter Bar */
+    .filter-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+    .filter-bar input, .filter-bar select { background: #0D0D0D; border: 1px solid #2A2A2A; color: white; padding: 8px 14px; border-radius: 10px; font-size: 14px; }
+    .filter-bar input { flex: 1; min-width: 180px; }
+    .filter-bar input:focus, .filter-bar select:focus { outline: none; border-color: #E85A4F; }
+    .filter-bar input::placeholder { color: #6B7280; }
+    /* Badges */
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+    .badge-active { background: rgba(34,197,94,0.15); color: #22C55E; }
+    .badge-inactive { background: rgba(107,114,128,0.15); color: #9CA3AF; }
+    .badge-frozen { background: rgba(59,130,246,0.15); color: #60A5FA; }
+    .badge-cancelled { background: rgba(239,68,68,0.15); color: #EF4444; }
+    .badge-prospect { background: rgba(168,85,247,0.15); color: #A855F7; }
+    .badge-hot { background: rgba(239,68,68,0.15); color: #EF4444; }
+    .badge-warm { background: rgba(245,158,11,0.15); color: #F59E0B; }
+    .badge-cold { background: rgba(59,130,246,0.15); color: #60A5FA; }
+    .badge-new { background: rgba(34,197,94,0.15); color: #22C55E; }
+    .badge-converted { background: rgba(168,85,247,0.15); color: #A855F7; }
+    .badge-lost { background: rgba(107,114,128,0.15); color: #6B7280; }
+    .badge-low { background: rgba(34,197,94,0.15); color: #22C55E; }
+    .badge-medium { background: rgba(245,158,11,0.15); color: #F59E0B; }
+    .badge-high { background: rgba(239,68,68,0.15); color: #EF4444; }
+    .badge-critical { background: rgba(220,38,38,0.2); color: #DC2626; }
+    .badge-confirmed { background: rgba(34,197,94,0.15); color: #22C55E; }
+    .badge-pending { background: rgba(245,158,11,0.15); color: #F59E0B; }
+    .badge-completed { background: rgba(59,130,246,0.15); color: #60A5FA; }
+    /* Slide Panel */
+    .slide-panel { position: fixed; top: 0; right: -520px; width: 480px; max-width: 100vw; height: 100vh; background: #111; border-left: 1px solid #2A2A2A; z-index: 150; transition: right 0.3s ease; overflow-y: auto; box-shadow: -8px 0 32px rgba(0,0,0,0.5); }
+    .slide-panel.open { right: 0; }
+    .slide-panel-header { position: sticky; top: 0; background: #111; border-bottom: 1px solid #2A2A2A; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; z-index: 2; }
+    .slide-panel-body { padding: 24px; }
+    .slide-panel-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 140; }
+    .slide-panel-overlay.open { display: block; }
+    @media (max-width: 640px) { .slide-panel { width: 100vw; right: -100vw; } }
+    /* Calendar */
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+    .calendar-header-cell { padding: 8px 4px; text-align: center; font-size: 11px; text-transform: uppercase; color: #6B7280; font-weight: 600; }
+    .calendar-day { min-height: 80px; background: #1A1A1A; border: 1px solid #2A2A2A; border-radius: 8px; padding: 6px 8px; cursor: pointer; transition: border-color 0.15s; }
+    .calendar-day:hover { border-color: #E85A4F; }
+    .calendar-day.today { border-color: #E85A4F; background: rgba(232,90,79,0.05); }
+    .calendar-day.selected { border-color: #E85A4F; background: rgba(232,90,79,0.1); }
+    .calendar-day.other-month { opacity: 0.3; }
+    .calendar-day-number { font-size: 13px; font-weight: 600; color: #D1D5DB; }
+    .calendar-dot { width: 6px; height: 6px; border-radius: 50%; background: #E85A4F; display: inline-block; margin: 1px; }
+    @media (max-width: 640px) { .calendar-day { min-height: 48px; padding: 4px; } .calendar-day-number { font-size: 11px; } }
+    /* Pagination */
+    .pagination { display: flex; justify-content: center; align-items: center; gap: 4px; margin-top: 16px; }
+    .pagination button { padding: 6px 12px; border: 1px solid #2A2A2A; background: #1A1A1A; color: #9CA3AF; border-radius: 8px; font-size: 13px; cursor: pointer; transition: all 0.15s; }
+    .pagination button:hover { border-color: #E85A4F; color: white; }
+    .pagination button.active { background: rgba(232,90,79,0.2); border-color: #E85A4F; color: #E85A4F; }
+    .pagination button:disabled { opacity: 0.3; cursor: not-allowed; }
+    /* Summary Cards */
+    .summary-card { background: #1A1A1A; border: 1px solid #2A2A2A; border-radius: 12px; padding: 16px; text-align: center; }
+    .summary-card .label { font-size: 11px; text-transform: uppercase; color: #6B7280; margin-bottom: 6px; }
+    .summary-card .value { font-size: 24px; font-weight: 700; }
+    /* Action button */
+    .btn-primary { background: linear-gradient(135deg, #E85A4F, #F17A70); color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 600; font-size: 14px; cursor: pointer; transition: opacity 0.15s; }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-sm { padding: 6px 14px; font-size: 12px; border-radius: 8px; }
+    .btn-ghost { background: transparent; border: 1px solid #2A2A2A; color: #D1D5DB; padding: 6px 14px; border-radius: 8px; font-size: 12px; cursor: pointer; transition: all 0.15s; }
+    .btn-ghost:hover { border-color: #E85A4F; color: white; }
+    /* Form modal */
+    .form-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; display: none; align-items: center; justify-content: center; padding: 16px; backdrop-filter: blur(4px); }
+    .form-modal.open { display: flex; }
+    .form-modal-content { background: #111; border: 1px solid #2A2A2A; border-radius: 16px; max-width: 520px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 32px; position: relative; }
+    .form-modal-content h3 { font-size: 20px; font-weight: 700; margin-bottom: 20px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; color: #9CA3AF; margin-bottom: 6px; }
+    .form-group input, .form-group select, .form-group textarea { background: #0D0D0D; border: 1px solid #2A2A2A; color: white; width: 100%; padding: 10px 14px; border-radius: 10px; font-size: 14px; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #E85A4F; }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 640px) { .form-row { grid-template-columns: 1fr; } }
+    .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .detail-row .label { color: #6B7280; font-size: 13px; }
+    .detail-row .value { color: #D1D5DB; font-size: 14px; font-weight: 500; }
   </style>
 </head>
 <body class="gradient-bg min-h-screen text-white">
@@ -4174,6 +4267,17 @@ app.get('*', (req, res) => {
 
     <!-- Dashboard Section -->
     <div id="dashboardSection" class="hidden fade-in">
+      <!-- Tab Navigation -->
+      <div class="tab-nav mb-6" id="dashboardTabs">
+        <button class="tab-btn active" onclick="switchTab('overview')"><i class="fas fa-chart-pie mr-1"></i><span class="hidden sm:inline">Overview</span><span class="sm:hidden">Home</span></button>
+        <button class="tab-btn" onclick="switchTab('students')"><i class="fas fa-users mr-1"></i>Students</button>
+        <button class="tab-btn" onclick="switchTab('leads')"><i class="fas fa-fire mr-1"></i>Leads</button>
+        <button class="tab-btn" onclick="switchTab('calendar')"><i class="fas fa-calendar mr-1"></i>Calendar</button>
+        <button class="tab-btn" onclick="switchTab('payments')"><i class="fas fa-dollar-sign mr-1"></i>Payments</button>
+      </div>
+
+      <!-- Tab: Overview -->
+      <div id="tabOverview" class="tab-content active">
       <div class="card rounded-2xl p-6 mb-8 border-kancho-coral/30" style="border-color: rgba(232, 90, 79, 0.3);">
         <div class="flex items-start gap-4">
           <img src="${KANCHO_LOGO_URL}" alt="Kancho" class="w-12 h-12 rounded-xl object-contain">
@@ -4309,6 +4413,404 @@ app.get('*', (req, res) => {
           </h3>
           <div id="hotLeadsList" class="space-y-3"></div>
         </div>
+      </div>
+      </div><!-- /tabOverview -->
+
+      <!-- Tab: Students -->
+      <div id="tabStudents" class="tab-content">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-users text-kancho"></i> Students</h2>
+          <button class="btn-primary btn-sm" onclick="openStudentForm()"><i class="fas fa-plus mr-1"></i> Add Student</button>
+        </div>
+        <div class="filter-bar">
+          <input type="text" id="studentSearch" placeholder="Search by name, email, phone..." oninput="debouncedSearchStudents()">
+          <select id="studentStatusFilter" onchange="loadStudents()">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="frozen">Frozen</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="prospect">Prospect</option>
+          </select>
+          <select id="studentChurnFilter" onchange="loadStudents()">
+            <option value="">All Risk</option>
+            <option value="low">Low Risk</option>
+            <option value="medium">Medium Risk</option>
+            <option value="high">High Risk</option>
+            <option value="critical">Critical</option>
+          </select>
+        </div>
+        <div class="card rounded-2xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Belt</th>
+                  <th>Status</th>
+                  <th class="hidden md:table-cell">Churn Risk</th>
+                  <th class="hidden lg:table-cell">Last Attendance</th>
+                  <th class="hidden md:table-cell">Monthly Rate</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="studentsTableBody"></tbody>
+            </table>
+          </div>
+          <div id="studentsPagination" class="pagination p-4"></div>
+        </div>
+        <p id="studentsEmpty" class="hidden text-center text-gray-500 py-12">No students found</p>
+      </div>
+
+      <!-- Tab: Leads -->
+      <div id="tabLeads" class="tab-content">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-fire text-kancho"></i> Leads</h2>
+          <button class="btn-primary btn-sm" onclick="openLeadForm()"><i class="fas fa-plus mr-1"></i> Add Lead</button>
+        </div>
+        <div class="filter-bar">
+          <input type="text" id="leadSearch" placeholder="Search by name, email, phone..." oninput="debouncedSearchLeads()">
+          <select id="leadStatusFilter" onchange="loadLeads()">
+            <option value="">All Status</option>
+            <option value="new">New</option>
+            <option value="contacted">Contacted</option>
+            <option value="trial_scheduled">Trial Scheduled</option>
+            <option value="trial_completed">Trial Completed</option>
+            <option value="follow_up">Follow Up</option>
+            <option value="converted">Converted</option>
+            <option value="lost">Lost</option>
+          </select>
+          <select id="leadTempFilter" onchange="loadLeads()">
+            <option value="">All Temperature</option>
+            <option value="hot">Hot</option>
+            <option value="warm">Warm</option>
+            <option value="cold">Cold</option>
+          </select>
+        </div>
+        <div class="card rounded-2xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Source</th>
+                  <th>Status</th>
+                  <th class="hidden md:table-cell">Temperature</th>
+                  <th class="hidden lg:table-cell">Score</th>
+                  <th class="hidden md:table-cell">Follow-up</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="leadsTableBody"></tbody>
+            </table>
+          </div>
+          <div id="leadsPagination" class="pagination p-4"></div>
+        </div>
+        <p id="leadsEmpty" class="hidden text-center text-gray-500 py-12">No leads found</p>
+      </div>
+
+      <!-- Tab: Calendar -->
+      <div id="tabCalendar" class="tab-content">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-calendar text-kancho"></i> Calendar</h2>
+          <button class="btn-primary btn-sm" onclick="openAppointmentForm()"><i class="fas fa-plus mr-1"></i> Add Appointment</button>
+        </div>
+        <div class="card rounded-2xl p-6 mb-4">
+          <div class="flex items-center justify-between mb-4">
+            <button class="btn-ghost" onclick="prevMonth()"><i class="fas fa-chevron-left"></i></button>
+            <h3 id="calendarMonthLabel" class="text-lg font-bold">--</h3>
+            <button class="btn-ghost" onclick="nextMonth()"><i class="fas fa-chevron-right"></i></button>
+          </div>
+          <div class="calendar-grid">
+            <div class="calendar-header-cell">Sun</div>
+            <div class="calendar-header-cell">Mon</div>
+            <div class="calendar-header-cell">Tue</div>
+            <div class="calendar-header-cell">Wed</div>
+            <div class="calendar-header-cell">Thu</div>
+            <div class="calendar-header-cell">Fri</div>
+            <div class="calendar-header-cell">Sat</div>
+          </div>
+          <div id="calendarDays" class="calendar-grid mt-1"></div>
+        </div>
+        <div id="calendarDayDetail" class="hidden">
+          <div class="card rounded-2xl p-6">
+            <h3 id="calendarDayLabel" class="text-lg font-bold mb-4"></h3>
+            <div id="calendarDayAppointments" class="space-y-3"></div>
+            <p id="calendarDayEmpty" class="hidden text-gray-500 text-center py-4">No appointments on this day</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Payments -->
+      <div id="tabPayments" class="tab-content">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-dollar-sign text-kancho"></i> Revenue & Payments</h2>
+          <button class="btn-primary btn-sm" onclick="openPaymentForm()"><i class="fas fa-plus mr-1"></i> Record Payment</button>
+        </div>
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div class="summary-card">
+            <div class="label">Total Revenue</div>
+            <div id="payTotalRevenue" class="value text-white">$--</div>
+          </div>
+          <div class="summary-card">
+            <div class="label">Recurring</div>
+            <div id="payRecurring" class="value text-green-400">$--</div>
+          </div>
+          <div class="summary-card">
+            <div class="label">Avg / Student</div>
+            <div id="payAvgStudent" class="value text-blue-400">$--</div>
+          </div>
+          <div class="summary-card">
+            <div class="label">Active Students</div>
+            <div id="payActiveStudents" class="value text-kancho">--</div>
+          </div>
+        </div>
+        <div class="filter-bar">
+          <select id="payTypeFilter" onchange="loadPayments()">
+            <option value="">All Types</option>
+            <option value="membership">Membership</option>
+            <option value="retail">Retail</option>
+            <option value="event">Event</option>
+            <option value="private_lesson">Private Lesson</option>
+            <option value="testing_fee">Testing Fee</option>
+            <option value="other">Other</option>
+          </select>
+          <input type="date" id="payDateFrom" onchange="loadPayments()" style="color-scheme: dark;">
+          <input type="date" id="payDateTo" onchange="loadPayments()" style="color-scheme: dark;">
+        </div>
+        <div class="card rounded-2xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Amount</th>
+                  <th class="hidden md:table-cell">Student</th>
+                  <th class="hidden lg:table-cell">Method</th>
+                  <th class="hidden md:table-cell">Description</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="paymentsTableBody"></tbody>
+            </table>
+          </div>
+          <div id="paymentsPagination" class="pagination p-4"></div>
+        </div>
+        <p id="paymentsEmpty" class="hidden text-center text-gray-500 py-12">No payments found</p>
+      </div>
+
+    </div><!-- /dashboardSection -->
+
+    <!-- Student Detail Slide Panel -->
+    <div id="studentPanelOverlay" class="slide-panel-overlay" onclick="closeStudentDetail()"></div>
+    <div id="studentDetailPanel" class="slide-panel">
+      <div class="slide-panel-header">
+        <h3 class="text-lg font-bold">Student Profile</h3>
+        <div class="flex gap-2">
+          <button class="btn-ghost" onclick="editStudentFromPanel()"><i class="fas fa-edit mr-1"></i> Edit</button>
+          <button class="btn-ghost" onclick="closeStudentDetail()"><i class="fas fa-times"></i></button>
+        </div>
+      </div>
+      <div id="studentDetailBody" class="slide-panel-body"></div>
+    </div>
+
+    <!-- Lead Detail Slide Panel -->
+    <div id="leadPanelOverlay" class="slide-panel-overlay" onclick="closeLeadDetail()"></div>
+    <div id="leadDetailPanel" class="slide-panel">
+      <div class="slide-panel-header">
+        <h3 class="text-lg font-bold">Lead Profile</h3>
+        <div class="flex gap-2">
+          <button class="btn-ghost" onclick="convertLeadFromPanel()"><i class="fas fa-user-plus mr-1"></i> Convert</button>
+          <button class="btn-ghost" onclick="editLeadFromPanel()"><i class="fas fa-edit mr-1"></i> Edit</button>
+          <button class="btn-ghost" onclick="closeLeadDetail()"><i class="fas fa-times"></i></button>
+        </div>
+      </div>
+      <div id="leadDetailBody" class="slide-panel-body"></div>
+    </div>
+
+    <!-- Student Form Modal -->
+    <div id="studentFormModal" class="form-modal" onclick="if(event.target===this)closeStudentForm()">
+      <div class="form-modal-content">
+        <h3 id="studentFormTitle">Add Student</h3>
+        <form onsubmit="saveStudent(event)">
+          <input type="hidden" id="studentFormId">
+          <div class="form-row">
+            <div class="form-group"><label>First Name *</label><input type="text" id="sfFirstName" required></div>
+            <div class="form-group"><label>Last Name *</label><input type="text" id="sfLastName" required></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Email</label><input type="email" id="sfEmail"></div>
+            <div class="form-group"><label>Phone</label><input type="tel" id="sfPhone"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Belt Rank</label><input type="text" id="sfBelt" placeholder="e.g. White, Yellow, Blue"></div>
+            <div class="form-group">
+              <label>Membership Type</label>
+              <select id="sfMembership">
+                <option value="Unlimited">Unlimited</option>
+                <option value="2x/week">2x/week</option>
+                <option value="3x/week">3x/week</option>
+                <option value="Drop-in">Drop-in</option>
+                <option value="Family">Family</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Monthly Rate ($)</label><input type="number" id="sfRate" step="0.01" min="0"></div>
+            <div class="form-group">
+              <label>Status</label>
+              <select id="sfStatus">
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="frozen">Frozen</option>
+                <option value="prospect">Prospect</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group"><label>Notes</label><textarea id="sfNotes" rows="3"></textarea></div>
+          <div class="flex gap-3 mt-4">
+            <button type="submit" class="btn-primary flex-1">Save Student</button>
+            <button type="button" class="btn-ghost flex-1" onclick="closeStudentForm()">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Lead Form Modal -->
+    <div id="leadFormModal" class="form-modal" onclick="if(event.target===this)closeLeadForm()">
+      <div class="form-modal-content">
+        <h3 id="leadFormTitle">Add Lead</h3>
+        <form onsubmit="saveLead(event)">
+          <input type="hidden" id="leadFormId">
+          <div class="form-row">
+            <div class="form-group"><label>First Name *</label><input type="text" id="lfFirstName" required></div>
+            <div class="form-group"><label>Last Name</label><input type="text" id="lfLastName"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Email</label><input type="email" id="lfEmail"></div>
+            <div class="form-group"><label>Phone</label><input type="tel" id="lfPhone"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Source</label><input type="text" id="lfSource" placeholder="e.g. Website, Referral, Walk-in"></div>
+            <div class="form-group"><label>Interest</label><input type="text" id="lfInterest" placeholder="e.g. Kids Karate, Adult BJJ"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Status</label>
+              <select id="lfStatus">
+                <option value="new">New</option>
+                <option value="contacted">Contacted</option>
+                <option value="trial_scheduled">Trial Scheduled</option>
+                <option value="trial_completed">Trial Completed</option>
+                <option value="follow_up">Follow Up</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Temperature</label>
+              <select id="lfTemp">
+                <option value="warm">Warm</option>
+                <option value="hot">Hot</option>
+                <option value="cold">Cold</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group"><label>Notes</label><textarea id="lfNotes" rows="3"></textarea></div>
+          <div class="flex gap-3 mt-4">
+            <button type="submit" class="btn-primary flex-1">Save Lead</button>
+            <button type="button" class="btn-ghost flex-1" onclick="closeLeadForm()">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Appointment Form Modal -->
+    <div id="appointmentFormModal" class="form-modal" onclick="if(event.target===this)closeAppointmentForm()">
+      <div class="form-modal-content">
+        <h3>New Appointment</h3>
+        <form onsubmit="saveAppointment(event)">
+          <div class="form-row">
+            <div class="form-group"><label>Customer Name *</label><input type="text" id="afName" required></div>
+            <div class="form-group"><label>Phone *</label><input type="tel" id="afPhone" required></div>
+          </div>
+          <div class="form-group"><label>Email</label><input type="email" id="afEmail"></div>
+          <div class="form-row">
+            <div class="form-group"><label>Date *</label><input type="date" id="afDate" required style="color-scheme: dark;"></div>
+            <div class="form-group"><label>Time *</label><input type="time" id="afTime" required style="color-scheme: dark;"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Duration (min)</label><input type="number" id="afDuration" value="60" min="15" step="15"></div>
+            <div class="form-group">
+              <label>Purpose</label>
+              <select id="afPurpose">
+                <option value="Class trial">Class Trial</option>
+                <option value="Introductory lesson">Introductory Lesson</option>
+                <option value="Belt testing">Belt Testing</option>
+                <option value="Private lesson">Private Lesson</option>
+                <option value="Meeting">Meeting</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="flex gap-3 mt-4">
+            <button type="submit" class="btn-primary flex-1">Book Appointment</button>
+            <button type="button" class="btn-ghost flex-1" onclick="closeAppointmentForm()">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Payment Form Modal -->
+    <div id="paymentFormModal" class="form-modal" onclick="if(event.target===this)closePaymentForm()">
+      <div class="form-modal-content">
+        <h3>Record Payment</h3>
+        <form onsubmit="savePayment(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Type *</label>
+              <select id="pfType" required>
+                <option value="membership">Membership</option>
+                <option value="retail">Retail</option>
+                <option value="event">Event</option>
+                <option value="private_lesson">Private Lesson</option>
+                <option value="testing_fee">Testing Fee</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Amount ($) *</label><input type="number" id="pfAmount" step="0.01" min="0" required></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Date *</label><input type="date" id="pfDate" required style="color-scheme: dark;"></div>
+            <div class="form-group">
+              <label>Student</label>
+              <select id="pfStudent"><option value="">-- No student --</option></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Payment Method</label>
+              <select id="pfMethod">
+                <option value="credit_card">Credit Card</option>
+                <option value="cash">Cash</option>
+                <option value="bank_transfer">Bank Transfer</option>
+                <option value="check">Check</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="form-group" style="display:flex;align-items:flex-end;gap:8px;padding-bottom:0;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0;">
+                <input type="checkbox" id="pfRecurring" style="width:auto;accent-color:#E85A4F;">
+                Recurring
+              </label>
+            </div>
+          </div>
+          <div class="form-group"><label>Description</label><input type="text" id="pfDescription" placeholder="Optional description"></div>
+          <div class="flex gap-3 mt-4">
+            <button type="submit" class="btn-primary flex-1">Save Payment</button>
+            <button type="button" class="btn-ghost flex-1" onclick="closePaymentForm()">Cancel</button>
+          </div>
+        </form>
       </div>
     </div>
 
@@ -5412,6 +5914,628 @@ app.get('*', (req, res) => {
         // Clean up URL
         window.history.replaceState({}, document.title, window.location.pathname);
       }
+    }
+
+    // =====================================================
+    // DASHBOARD TABS - Students, Leads, Calendar, Payments
+    // =====================================================
+    const tabsLoaded = {};
+    let studentsPage = 1, leadsPage = 1, paymentsPage = 1;
+    let calendarYear, calendarMonth, calendarAppointments = {};
+    let currentStudentId = null, currentLeadId = null;
+    const ITEMS_PER_PAGE = 20;
+
+    function debounce(fn, ms) {
+      let timer;
+      return function(...args) { clearTimeout(timer); timer = setTimeout(() => fn.apply(this, args), ms); };
+    }
+    const debouncedSearchStudents = debounce(() => { studentsPage = 1; loadStudents(); }, 300);
+    const debouncedSearchLeads = debounce(() => { leadsPage = 1; loadLeads(); }, 300);
+
+    function formatDate(d) {
+      if (!d) return '--';
+      const dt = new Date(d);
+      return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+    function formatCurrency(v) {
+      const n = parseFloat(v) || 0;
+      return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function switchTab(tabName) {
+      document.querySelectorAll('#dashboardSection .tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('#dashboardTabs .tab-btn').forEach(el => el.classList.remove('active'));
+      const tab = document.getElementById('tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1));
+      if (tab) tab.classList.add('active');
+      event?.target?.closest?.('.tab-btn')?.classList.add('active') ||
+        document.querySelector('#dashboardTabs .tab-btn[onclick*="' + tabName + '"]')?.classList.add('active');
+      if (!tabsLoaded[tabName] && currentSchoolId) {
+        tabsLoaded[tabName] = true;
+        if (tabName === 'students') loadStudents();
+        else if (tabName === 'leads') loadLeads();
+        else if (tabName === 'calendar') { const now = new Date(); calendarYear = now.getFullYear(); calendarMonth = now.getMonth() + 1; loadCalendar(); }
+        else if (tabName === 'payments') loadPayments();
+      }
+    }
+
+    function renderPagination(containerId, currentPage, totalItems, loadFn) {
+      const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+      const container = document.getElementById(containerId);
+      if (!container || totalPages <= 1) { if (container) container.innerHTML = ''; return; }
+      let html = '<button ' + (currentPage <= 1 ? 'disabled' : '') + ' onclick="' + loadFn + '(' + (currentPage - 1) + ')"><i class="fas fa-chevron-left"></i></button>';
+      for (let i = 1; i <= totalPages && i <= 7; i++) {
+        const p = totalPages <= 7 ? i : (currentPage <= 4 ? i : (currentPage >= totalPages - 3 ? totalPages - 7 + i : currentPage - 4 + i));
+        html += '<button class="' + (p === currentPage ? 'active' : '') + '" onclick="' + loadFn + '(' + p + ')">' + p + '</button>';
+      }
+      html += '<button ' + (currentPage >= totalPages ? 'disabled' : '') + ' onclick="' + loadFn + '(' + (currentPage + 1) + ')"><i class="fas fa-chevron-right"></i></button>';
+      container.innerHTML = html;
+    }
+
+    // ---- STUDENTS TAB ----
+    async function loadStudents(page) {
+      if (page) studentsPage = page;
+      const schoolId = currentSchoolId;
+      if (!schoolId) return;
+      const search = document.getElementById('studentSearch')?.value || '';
+      const status = document.getElementById('studentStatusFilter')?.value || '';
+      const churn = document.getElementById('studentChurnFilter')?.value || '';
+      const offset = (studentsPage - 1) * ITEMS_PER_PAGE;
+      let url = '/kanchoai/api/v1/students?school_id=' + schoolId + '&limit=' + ITEMS_PER_PAGE + '&offset=' + offset;
+      if (search) url += '&search=' + encodeURIComponent(search);
+      if (status) url += '&status=' + status;
+      if (churn) url += '&churn_risk=' + churn;
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        const tbody = document.getElementById('studentsTableBody');
+        const empty = document.getElementById('studentsEmpty');
+        if (!data.data || data.data.length === 0) {
+          tbody.innerHTML = '';
+          empty.classList.remove('hidden');
+          document.getElementById('studentsPagination').innerHTML = '';
+          return;
+        }
+        empty.classList.add('hidden');
+        tbody.innerHTML = data.data.map(s => {
+          const name = (s.first_name || '') + ' ' + (s.last_name || '');
+          return '<tr onclick="openStudentDetail(' + s.id + ')">' +
+            '<td class="font-medium">' + name.trim() + '</td>' +
+            '<td>' + (s.belt_rank || '--') + '</td>' +
+            '<td><span class="badge badge-' + (s.status || 'active') + '">' + (s.status || 'active') + '</span></td>' +
+            '<td class="hidden md:table-cell"><span class="badge badge-' + (s.churn_risk || 'low') + '">' + (s.churn_risk || 'low') + '</span></td>' +
+            '<td class="hidden lg:table-cell">' + formatDate(s.last_attendance) + '</td>' +
+            '<td class="hidden md:table-cell">' + (s.monthly_rate ? formatCurrency(s.monthly_rate) : '--') + '</td>' +
+            '<td><button class="btn-ghost btn-sm" onclick="event.stopPropagation();openStudentForm(' + s.id + ')"><i class="fas fa-edit"></i></button></td>' +
+            '</tr>';
+        }).join('');
+        renderPagination('studentsPagination', studentsPage, data.total, 'loadStudents');
+      } catch (e) { console.error('loadStudents error:', e); }
+    }
+
+    async function openStudentDetail(id) {
+      currentStudentId = id;
+      try {
+        const res = await fetch('/kanchoai/api/v1/students/' + id);
+        const data = await res.json();
+        const s = data.data;
+        const body = document.getElementById('studentDetailBody');
+        body.innerHTML =
+          '<div class="text-center mb-6">' +
+            '<div class="w-16 h-16 rounded-full bg-kancho-coral/20 flex items-center justify-center mx-auto mb-3"><i class="fas fa-user text-2xl text-kancho"></i></div>' +
+            '<h3 class="text-xl font-bold">' + (s.first_name || '') + ' ' + (s.last_name || '') + '</h3>' +
+            '<span class="badge badge-' + (s.status || 'active') + ' mt-2">' + (s.status || 'active') + '</span>' +
+          '</div>' +
+          '<div class="mb-6">' +
+            '<h4 class="text-sm font-bold text-gray-400 uppercase mb-3">Contact Info</h4>' +
+            '<div class="detail-row"><span class="label">Email</span><span class="value">' + (s.email || '--') + '</span></div>' +
+            '<div class="detail-row"><span class="label">Phone</span><span class="value">' + (s.phone || '--') + '</span></div>' +
+          '</div>' +
+          '<div class="mb-6">' +
+            '<h4 class="text-sm font-bold text-gray-400 uppercase mb-3">Training</h4>' +
+            '<div class="detail-row"><span class="label">Belt Rank</span><span class="value">' + (s.belt_rank || '--') + '</span></div>' +
+            '<div class="detail-row"><span class="label">Enrolled</span><span class="value">' + formatDate(s.enrollment_date) + '</span></div>' +
+            '<div class="detail-row"><span class="label">Attendance Streak</span><span class="value">' + (s.attendance_streak || 0) + ' days</span></div>' +
+            '<div class="detail-row"><span class="label">Total Classes</span><span class="value">' + (s.total_classes || 0) + '</span></div>' +
+            '<div class="detail-row"><span class="label">Last Attendance</span><span class="value">' + formatDate(s.last_attendance) + '</span></div>' +
+          '</div>' +
+          '<div class="mb-6">' +
+            '<h4 class="text-sm font-bold text-gray-400 uppercase mb-3">Membership</h4>' +
+            '<div class="detail-row"><span class="label">Type</span><span class="value">' + (s.membership_type || '--') + '</span></div>' +
+            '<div class="detail-row"><span class="label">Monthly Rate</span><span class="value">' + (s.monthly_rate ? formatCurrency(s.monthly_rate) : '--') + '</span></div>' +
+            '<div class="detail-row"><span class="label">Payment Status</span><span class="value"><span class="badge badge-' + (s.payment_status === 'current' ? 'active' : s.payment_status === 'past_due' ? 'hot' : 'cancelled') + '">' + (s.payment_status || '--') + '</span></span></div>' +
+            '<div class="detail-row"><span class="label">Lifetime Value</span><span class="value">' + (s.lifetime_value ? formatCurrency(s.lifetime_value) : '--') + '</span></div>' +
+          '</div>' +
+          '<div class="mb-6">' +
+            '<h4 class="text-sm font-bold text-gray-400 uppercase mb-3">Risk Assessment</h4>' +
+            '<div class="detail-row"><span class="label">Churn Risk</span><span class="value"><span class="badge badge-' + (s.churn_risk || 'low') + '">' + (s.churn_risk || 'low') + '</span></span></div>' +
+            '<div class="detail-row"><span class="label">Risk Score</span><span class="value">' + (s.churn_risk_score || 0) + '%</span></div>' +
+          '</div>' +
+          (s.notes ? '<div class="mb-6"><h4 class="text-sm font-bold text-gray-400 uppercase mb-3">Notes</h4><p class="text-gray-300 text-sm">' + s.notes + '</p></div>' : '') +
+          '<div class="flex gap-3 mt-6">' +
+            '<button class="btn-primary flex-1 btn-sm" onclick="openStudentForm(' + s.id + ');closeStudentDetail()"><i class="fas fa-edit mr-1"></i> Edit</button>' +
+            '<button class="btn-ghost flex-1 btn-sm" onclick="if(confirm(\'Delete this student?\'))deleteStudent(' + s.id + ')"><i class="fas fa-trash mr-1"></i> Delete</button>' +
+          '</div>';
+        document.getElementById('studentDetailPanel').classList.add('open');
+        document.getElementById('studentPanelOverlay').classList.add('open');
+      } catch (e) { console.error('openStudentDetail error:', e); }
+    }
+
+    function closeStudentDetail() {
+      document.getElementById('studentDetailPanel').classList.remove('open');
+      document.getElementById('studentPanelOverlay').classList.remove('open');
+      currentStudentId = null;
+    }
+    function editStudentFromPanel() { if (currentStudentId) { openStudentForm(currentStudentId); closeStudentDetail(); } }
+
+    async function openStudentForm(id) {
+      document.getElementById('studentFormTitle').textContent = id ? 'Edit Student' : 'Add Student';
+      document.getElementById('studentFormId').value = id || '';
+      if (id) {
+        try {
+          const res = await fetch('/kanchoai/api/v1/students/' + id);
+          const data = await res.json();
+          const s = data.data;
+          document.getElementById('sfFirstName').value = s.first_name || '';
+          document.getElementById('sfLastName').value = s.last_name || '';
+          document.getElementById('sfEmail').value = s.email || '';
+          document.getElementById('sfPhone').value = s.phone || '';
+          document.getElementById('sfBelt').value = s.belt_rank || '';
+          document.getElementById('sfMembership').value = s.membership_type || 'Unlimited';
+          document.getElementById('sfRate').value = s.monthly_rate || '';
+          document.getElementById('sfStatus').value = s.status || 'active';
+          document.getElementById('sfNotes').value = s.notes || '';
+        } catch (e) { console.error(e); }
+      } else {
+        ['sfFirstName','sfLastName','sfEmail','sfPhone','sfBelt','sfRate','sfNotes'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('sfMembership').value = 'Unlimited';
+        document.getElementById('sfStatus').value = 'active';
+      }
+      document.getElementById('studentFormModal').classList.add('open');
+    }
+    function closeStudentForm() { document.getElementById('studentFormModal').classList.remove('open'); }
+
+    async function saveStudent(e) {
+      e.preventDefault();
+      const id = document.getElementById('studentFormId').value;
+      const body = {
+        school_id: currentSchoolId,
+        first_name: document.getElementById('sfFirstName').value,
+        last_name: document.getElementById('sfLastName').value,
+        email: document.getElementById('sfEmail').value || null,
+        phone: document.getElementById('sfPhone').value || null,
+        belt_rank: document.getElementById('sfBelt').value || null,
+        membership_type: document.getElementById('sfMembership').value,
+        monthly_rate: parseFloat(document.getElementById('sfRate').value) || null,
+        status: document.getElementById('sfStatus').value,
+        notes: document.getElementById('sfNotes').value || null
+      };
+      try {
+        const url = id ? '/kanchoai/api/v1/students/' + id : '/kanchoai/api/v1/students';
+        const method = id ? 'PUT' : 'POST';
+        await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        closeStudentForm();
+        loadStudents();
+      } catch (e) { console.error('saveStudent error:', e); }
+    }
+
+    async function deleteStudent(id) {
+      try {
+        await fetch('/kanchoai/api/v1/students/' + id, { method: 'DELETE' });
+        closeStudentDetail();
+        loadStudents();
+      } catch (e) { console.error('deleteStudent error:', e); }
+    }
+
+    // ---- LEADS TAB ----
+    async function loadLeads(page) {
+      if (page) leadsPage = page;
+      const schoolId = currentSchoolId;
+      if (!schoolId) return;
+      const search = document.getElementById('leadSearch')?.value || '';
+      const status = document.getElementById('leadStatusFilter')?.value || '';
+      const temp = document.getElementById('leadTempFilter')?.value || '';
+      const offset = (leadsPage - 1) * ITEMS_PER_PAGE;
+      let url = '/kanchoai/api/v1/leads?school_id=' + schoolId + '&limit=' + ITEMS_PER_PAGE + '&offset=' + offset;
+      if (search) url += '&search=' + encodeURIComponent(search);
+      if (status) url += '&status=' + status;
+      if (temp) url += '&temperature=' + temp;
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        const tbody = document.getElementById('leadsTableBody');
+        const empty = document.getElementById('leadsEmpty');
+        if (!data.data || data.data.length === 0) {
+          tbody.innerHTML = '';
+          empty.classList.remove('hidden');
+          document.getElementById('leadsPagination').innerHTML = '';
+          return;
+        }
+        empty.classList.add('hidden');
+        tbody.innerHTML = data.data.map(l => {
+          const name = (l.first_name || '') + ' ' + (l.last_name || '');
+          const statusLabel = (l.status || 'new').replace(/_/g, ' ');
+          return '<tr onclick="openLeadDetail(' + l.id + ')">' +
+            '<td class="font-medium">' + name.trim() + '</td>' +
+            '<td>' + (l.source || '--') + '</td>' +
+            '<td><span class="badge badge-' + (l.status === 'new' ? 'new' : l.status === 'converted' ? 'converted' : l.status === 'lost' ? 'lost' : 'warm') + '">' + statusLabel + '</span></td>' +
+            '<td class="hidden md:table-cell"><span class="badge badge-' + (l.temperature || 'warm') + '">' + (l.temperature || 'warm') + '</span></td>' +
+            '<td class="hidden lg:table-cell">' + (l.lead_score || 0) + '</td>' +
+            '<td class="hidden md:table-cell">' + formatDate(l.follow_up_date) + '</td>' +
+            '<td>' +
+              '<button class="btn-ghost btn-sm mr-1" onclick="event.stopPropagation();openLeadForm(' + l.id + ')"><i class="fas fa-edit"></i></button>' +
+              (l.status !== 'converted' ? '<button class="btn-ghost btn-sm" onclick="event.stopPropagation();convertLead(' + l.id + ')" title="Convert to student"><i class="fas fa-user-plus"></i></button>' : '') +
+            '</td></tr>';
+        }).join('');
+        renderPagination('leadsPagination', leadsPage, data.total, 'loadLeads');
+      } catch (e) { console.error('loadLeads error:', e); }
+    }
+
+    async function openLeadDetail(id) {
+      currentLeadId = id;
+      try {
+        const res = await fetch('/kanchoai/api/v1/leads/' + id);
+        const data = await res.json();
+        const l = data.data;
+        const body = document.getElementById('leadDetailBody');
+        body.innerHTML =
+          '<div class="text-center mb-6">' +
+            '<div class="w-16 h-16 rounded-full bg-kancho-coral/20 flex items-center justify-center mx-auto mb-3"><i class="fas fa-user-plus text-2xl text-kancho"></i></div>' +
+            '<h3 class="text-xl font-bold">' + (l.first_name || '') + ' ' + (l.last_name || '') + '</h3>' +
+            '<div class="flex justify-center gap-2 mt-2">' +
+              '<span class="badge badge-' + (l.status === 'new' ? 'new' : l.status === 'converted' ? 'converted' : l.status === 'lost' ? 'lost' : 'warm') + '">' + (l.status || 'new').replace(/_/g, ' ') + '</span>' +
+              '<span class="badge badge-' + (l.temperature || 'warm') + '">' + (l.temperature || 'warm') + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="mb-6">' +
+            '<h4 class="text-sm font-bold text-gray-400 uppercase mb-3">Contact Info</h4>' +
+            '<div class="detail-row"><span class="label">Email</span><span class="value">' + (l.email || '--') + '</span></div>' +
+            '<div class="detail-row"><span class="label">Phone</span><span class="value">' + (l.phone || '--') + '</span></div>' +
+            '<div class="detail-row"><span class="label">Preferred Contact</span><span class="value">' + (l.preferred_contact_method || 'any') + '</span></div>' +
+          '</div>' +
+          '<div class="mb-6">' +
+            '<h4 class="text-sm font-bold text-gray-400 uppercase mb-3">Lead Info</h4>' +
+            '<div class="detail-row"><span class="label">Source</span><span class="value">' + (l.source || '--') + '</span></div>' +
+            '<div class="detail-row"><span class="label">Interest</span><span class="value">' + (l.interest || '--') + '</span></div>' +
+            '<div class="detail-row"><span class="label">Lead Score</span><span class="value" style="font-size:18px;font-weight:700;color:' + (l.lead_score >= 70 ? '#22C55E' : l.lead_score >= 40 ? '#F59E0B' : '#EF4444') + '">' + (l.lead_score || 0) + '/100</span></div>' +
+            '<div class="detail-row"><span class="label">Contact Attempts</span><span class="value">' + (l.contact_attempts || 0) + '</span></div>' +
+          '</div>' +
+          '<div class="mb-6">' +
+            '<h4 class="text-sm font-bold text-gray-400 uppercase mb-3">Trial & Follow-up</h4>' +
+            '<div class="detail-row"><span class="label">Trial Date</span><span class="value">' + formatDate(l.trial_date) + '</span></div>' +
+            '<div class="detail-row"><span class="label">Trial Completed</span><span class="value">' + (l.trial_completed ? 'Yes' : 'No') + '</span></div>' +
+            '<div class="detail-row"><span class="label">Follow-up Date</span><span class="value">' + formatDate(l.follow_up_date) + '</span></div>' +
+            '<div class="detail-row"><span class="label">Last Contact</span><span class="value">' + formatDate(l.last_contact_date) + '</span></div>' +
+          '</div>' +
+          (l.notes ? '<div class="mb-6"><h4 class="text-sm font-bold text-gray-400 uppercase mb-3">Notes</h4><p class="text-gray-300 text-sm">' + l.notes + '</p></div>' : '') +
+          (l.ai_notes ? '<div class="mb-6"><h4 class="text-sm font-bold text-gray-400 uppercase mb-3">AI Notes</h4><p class="text-gray-300 text-sm italic">' + l.ai_notes + '</p></div>' : '') +
+          '<div class="flex gap-3 mt-6">' +
+            (l.status !== 'converted' ? '<button class="btn-primary flex-1 btn-sm" onclick="convertLead(' + l.id + ');closeLeadDetail()"><i class="fas fa-user-plus mr-1"></i> Convert</button>' : '') +
+            '<button class="btn-ghost flex-1 btn-sm" onclick="openLeadForm(' + l.id + ');closeLeadDetail()"><i class="fas fa-edit mr-1"></i> Edit</button>' +
+            '<button class="btn-ghost flex-1 btn-sm" onclick="if(confirm(\'Delete this lead?\'))deleteLead(' + l.id + ')"><i class="fas fa-trash mr-1"></i> Delete</button>' +
+          '</div>';
+        document.getElementById('leadDetailPanel').classList.add('open');
+        document.getElementById('leadPanelOverlay').classList.add('open');
+      } catch (e) { console.error('openLeadDetail error:', e); }
+    }
+
+    function closeLeadDetail() {
+      document.getElementById('leadDetailPanel').classList.remove('open');
+      document.getElementById('leadPanelOverlay').classList.remove('open');
+      currentLeadId = null;
+    }
+    function editLeadFromPanel() { if (currentLeadId) { openLeadForm(currentLeadId); closeLeadDetail(); } }
+    function convertLeadFromPanel() { if (currentLeadId) { convertLead(currentLeadId); closeLeadDetail(); } }
+
+    async function openLeadForm(id) {
+      document.getElementById('leadFormTitle').textContent = id ? 'Edit Lead' : 'Add Lead';
+      document.getElementById('leadFormId').value = id || '';
+      if (id) {
+        try {
+          const res = await fetch('/kanchoai/api/v1/leads/' + id);
+          const data = await res.json();
+          const l = data.data;
+          document.getElementById('lfFirstName').value = l.first_name || '';
+          document.getElementById('lfLastName').value = l.last_name || '';
+          document.getElementById('lfEmail').value = l.email || '';
+          document.getElementById('lfPhone').value = l.phone || '';
+          document.getElementById('lfSource').value = l.source || '';
+          document.getElementById('lfInterest').value = l.interest || '';
+          document.getElementById('lfStatus').value = l.status || 'new';
+          document.getElementById('lfTemp').value = l.temperature || 'warm';
+          document.getElementById('lfNotes').value = l.notes || '';
+        } catch (e) { console.error(e); }
+      } else {
+        ['lfFirstName','lfLastName','lfEmail','lfPhone','lfSource','lfInterest','lfNotes'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('lfStatus').value = 'new';
+        document.getElementById('lfTemp').value = 'warm';
+      }
+      document.getElementById('leadFormModal').classList.add('open');
+    }
+    function closeLeadForm() { document.getElementById('leadFormModal').classList.remove('open'); }
+
+    async function saveLead(e) {
+      e.preventDefault();
+      const id = document.getElementById('leadFormId').value;
+      const body = {
+        school_id: currentSchoolId,
+        first_name: document.getElementById('lfFirstName').value,
+        last_name: document.getElementById('lfLastName').value || null,
+        email: document.getElementById('lfEmail').value || null,
+        phone: document.getElementById('lfPhone').value || null,
+        source: document.getElementById('lfSource').value || null,
+        interest: document.getElementById('lfInterest').value || null,
+        status: document.getElementById('lfStatus').value,
+        temperature: document.getElementById('lfTemp').value,
+        notes: document.getElementById('lfNotes').value || null
+      };
+      try {
+        const url = id ? '/kanchoai/api/v1/leads/' + id : '/kanchoai/api/v1/leads';
+        const method = id ? 'PUT' : 'POST';
+        await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        closeLeadForm();
+        loadLeads();
+      } catch (e) { console.error('saveLead error:', e); }
+    }
+
+    async function convertLead(id) {
+      if (!confirm('Convert this lead to a student?')) return;
+      try {
+        const res = await fetch('/kanchoai/api/v1/leads/' + id + '/convert', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+        const data = await res.json();
+        if (data.success) {
+          loadLeads();
+          tabsLoaded['students'] = false; // Force reload students tab
+        }
+      } catch (e) { console.error('convertLead error:', e); }
+    }
+
+    async function deleteLead(id) {
+      try {
+        await fetch('/kanchoai/api/v1/leads/' + id, { method: 'DELETE' });
+        closeLeadDetail();
+        loadLeads();
+      } catch (e) { console.error('deleteLead error:', e); }
+    }
+
+    // ---- CALENDAR TAB ----
+    const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+    async function loadCalendar() {
+      if (!currentSchoolId) return;
+      const label = document.getElementById('calendarMonthLabel');
+      if (label) label.textContent = MONTH_NAMES[calendarMonth - 1] + ' ' + calendarYear;
+
+      try {
+        const headers = {};
+        if (authToken) headers['Authorization'] = 'Bearer ' + authToken;
+        const res = await fetch('/kanchoai/api/v1/bridge/crm/appointments/month?year=' + calendarYear + '&month=' + calendarMonth, { headers });
+        const data = await res.json();
+        calendarAppointments = data.data?.byDate || {};
+        renderCalendarGrid();
+      } catch (e) {
+        console.error('loadCalendar error:', e);
+        calendarAppointments = {};
+        renderCalendarGrid();
+      }
+    }
+
+    function renderCalendarGrid() {
+      const container = document.getElementById('calendarDays');
+      if (!container) return;
+      const firstDay = new Date(calendarYear, calendarMonth - 1, 1).getDay();
+      const daysInMonth = new Date(calendarYear, calendarMonth, 0).getDate();
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+      let html = '';
+      // Leading empty cells
+      for (let i = 0; i < firstDay; i++) {
+        html += '<div class="calendar-day other-month"></div>';
+      }
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = calendarYear + '-' + String(calendarMonth).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+        const appts = calendarAppointments[dateStr] || [];
+        const isToday = dateStr === todayStr;
+        html += '<div class="calendar-day' + (isToday ? ' today' : '') + '" onclick="selectCalendarDay(\'' + dateStr + '\')">';
+        html += '<div class="calendar-day-number">' + d + '</div>';
+        if (appts.length > 0) {
+          html += '<div class="mt-1">';
+          for (let i = 0; i < Math.min(appts.length, 3); i++) html += '<span class="calendar-dot"></span>';
+          if (appts.length > 3) html += '<span style="font-size:10px;color:#6B7280;margin-left:2px">+' + (appts.length - 3) + '</span>';
+          html += '</div>';
+        }
+        html += '</div>';
+      }
+      container.innerHTML = html;
+      document.getElementById('calendarDayDetail').classList.add('hidden');
+    }
+
+    function selectCalendarDay(dateStr) {
+      document.querySelectorAll('.calendar-day.selected').forEach(el => el.classList.remove('selected'));
+      event?.target?.closest?.('.calendar-day')?.classList.add('selected');
+      const detail = document.getElementById('calendarDayDetail');
+      const label = document.getElementById('calendarDayLabel');
+      const list = document.getElementById('calendarDayAppointments');
+      const empty = document.getElementById('calendarDayEmpty');
+      label.textContent = formatDate(dateStr);
+      const appts = calendarAppointments[dateStr] || [];
+      if (appts.length === 0) {
+        list.innerHTML = '';
+        empty.classList.remove('hidden');
+      } else {
+        empty.classList.add('hidden');
+        list.innerHTML = appts.map(a => {
+          return '<div class="card rounded-xl p-4">' +
+            '<div class="flex items-center justify-between mb-2">' +
+              '<span class="font-medium">' + (a.customer_name || 'No Name') + '</span>' +
+              '<span class="badge badge-' + (a.status || 'confirmed') + '">' + (a.status || 'confirmed') + '</span>' +
+            '</div>' +
+            '<div class="text-sm text-gray-400">' +
+              '<span><i class="fas fa-clock mr-1"></i>' + (a.appointment_time || '--') + '</span>' +
+              '<span class="ml-3"><i class="fas fa-tag mr-1"></i>' + (a.purpose || 'Appointment') + '</span>' +
+              (a.customer_phone ? '<span class="ml-3"><i class="fas fa-phone mr-1"></i>' + a.customer_phone + '</span>' : '') +
+            '</div>' +
+          '</div>';
+        }).join('');
+      }
+      detail.classList.remove('hidden');
+    }
+
+    function prevMonth() {
+      calendarMonth--;
+      if (calendarMonth < 1) { calendarMonth = 12; calendarYear--; }
+      loadCalendar();
+    }
+    function nextMonth() {
+      calendarMonth++;
+      if (calendarMonth > 12) { calendarMonth = 1; calendarYear++; }
+      loadCalendar();
+    }
+
+    function openAppointmentForm(dateStr) {
+      if (dateStr) document.getElementById('afDate').value = dateStr;
+      else document.getElementById('afDate').value = new Date().toISOString().split('T')[0];
+      document.getElementById('afName').value = '';
+      document.getElementById('afPhone').value = '';
+      document.getElementById('afEmail').value = '';
+      document.getElementById('afTime').value = '10:00';
+      document.getElementById('afDuration').value = '60';
+      document.getElementById('afPurpose').value = 'Class trial';
+      document.getElementById('appointmentFormModal').classList.add('open');
+    }
+    function closeAppointmentForm() { document.getElementById('appointmentFormModal').classList.remove('open'); }
+
+    async function saveAppointment(e) {
+      e.preventDefault();
+      const body = {
+        customerName: document.getElementById('afName').value,
+        customerPhone: document.getElementById('afPhone').value,
+        customerEmail: document.getElementById('afEmail').value || null,
+        date: document.getElementById('afDate').value,
+        time: document.getElementById('afTime').value,
+        duration: parseInt(document.getElementById('afDuration').value) || 60,
+        purpose: document.getElementById('afPurpose').value
+      };
+      try {
+        const headers = { 'Content-Type': 'application/json' };
+        if (authToken) headers['Authorization'] = 'Bearer ' + authToken;
+        const res = await fetch('/kanchoai/api/v1/bridge/crm/appointments', { method: 'POST', headers, body: JSON.stringify(body) });
+        const data = await res.json();
+        if (data.success) {
+          closeAppointmentForm();
+          loadCalendar();
+        } else {
+          alert('Failed to book: ' + (data.error || 'Unknown error'));
+        }
+      } catch (e) { console.error('saveAppointment error:', e); }
+    }
+
+    // ---- PAYMENTS TAB ----
+    async function loadPayments(page) {
+      if (page) paymentsPage = page;
+      const schoolId = currentSchoolId;
+      if (!schoolId) return;
+      const type = document.getElementById('payTypeFilter')?.value || '';
+      const dateFrom = document.getElementById('payDateFrom')?.value || '';
+      const dateTo = document.getElementById('payDateTo')?.value || '';
+      const offset = (paymentsPage - 1) * ITEMS_PER_PAGE;
+      let url = '/kanchoai/api/v1/revenue?school_id=' + schoolId + '&limit=' + ITEMS_PER_PAGE + '&offset=' + offset;
+      if (type) url += '&type=' + type;
+      if (dateFrom) url += '&date_from=' + dateFrom;
+      if (dateTo) url += '&date_to=' + dateTo;
+
+      // Load summary in parallel
+      loadPaymentSummary();
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        const tbody = document.getElementById('paymentsTableBody');
+        const empty = document.getElementById('paymentsEmpty');
+        if (!data.data || data.data.length === 0) {
+          tbody.innerHTML = '';
+          empty.classList.remove('hidden');
+          document.getElementById('paymentsPagination').innerHTML = '';
+          return;
+        }
+        empty.classList.add('hidden');
+        tbody.innerHTML = data.data.map(r => {
+          const studentName = r.student ? (r.student.first_name + ' ' + r.student.last_name) : '--';
+          return '<tr>' +
+            '<td>' + formatDate(r.date) + '</td>' +
+            '<td><span class="badge badge-' + (r.type === 'membership' ? 'active' : 'warm') + '">' + (r.type || '--').replace(/_/g, ' ') + '</span></td>' +
+            '<td class="font-bold text-green-400">' + formatCurrency(r.amount) + '</td>' +
+            '<td class="hidden md:table-cell">' + studentName + '</td>' +
+            '<td class="hidden lg:table-cell">' + (r.payment_method || '--').replace(/_/g, ' ') + '</td>' +
+            '<td class="hidden md:table-cell text-gray-400">' + (r.description || '--') + '</td>' +
+            '<td><button class="btn-ghost btn-sm" onclick="deletePayment(' + r.id + ')" title="Delete"><i class="fas fa-trash"></i></button></td>' +
+            '</tr>';
+        }).join('');
+        renderPagination('paymentsPagination', paymentsPage, data.total, 'loadPayments');
+      } catch (e) { console.error('loadPayments error:', e); }
+    }
+
+    async function loadPaymentSummary() {
+      try {
+        const res = await fetch('/kanchoai/api/v1/revenue/summary?school_id=' + currentSchoolId);
+        const data = await res.json();
+        const s = data.data;
+        document.getElementById('payTotalRevenue').textContent = formatCurrency(s.total);
+        document.getElementById('payRecurring').textContent = formatCurrency(s.recurring);
+        document.getElementById('payAvgStudent').textContent = formatCurrency(s.avgPerStudent);
+        document.getElementById('payActiveStudents').textContent = s.activeStudents || 0;
+      } catch (e) { console.error('loadPaymentSummary error:', e); }
+    }
+
+    function openPaymentForm() {
+      document.getElementById('pfDate').value = new Date().toISOString().split('T')[0];
+      document.getElementById('pfType').value = 'membership';
+      document.getElementById('pfAmount').value = '';
+      document.getElementById('pfStudent').value = '';
+      document.getElementById('pfMethod').value = 'credit_card';
+      document.getElementById('pfRecurring').checked = false;
+      document.getElementById('pfDescription').value = '';
+      loadStudentDropdown();
+      document.getElementById('paymentFormModal').classList.add('open');
+    }
+    function closePaymentForm() { document.getElementById('paymentFormModal').classList.remove('open'); }
+
+    async function loadStudentDropdown() {
+      try {
+        const res = await fetch('/kanchoai/api/v1/students?school_id=' + currentSchoolId + '&status=active&limit=200');
+        const data = await res.json();
+        const select = document.getElementById('pfStudent');
+        select.innerHTML = '<option value="">-- No student --</option>';
+        (data.data || []).forEach(s => {
+          select.innerHTML += '<option value="' + s.id + '">' + s.first_name + ' ' + (s.last_name || '') + '</option>';
+        });
+      } catch (e) { console.error(e); }
+    }
+
+    async function savePayment(e) {
+      e.preventDefault();
+      const body = {
+        school_id: currentSchoolId,
+        date: document.getElementById('pfDate').value,
+        type: document.getElementById('pfType').value,
+        amount: parseFloat(document.getElementById('pfAmount').value),
+        student_id: document.getElementById('pfStudent').value || null,
+        payment_method: document.getElementById('pfMethod').value,
+        is_recurring: document.getElementById('pfRecurring').checked,
+        description: document.getElementById('pfDescription').value || null
+      };
+      try {
+        await fetch('/kanchoai/api/v1/revenue', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        closePaymentForm();
+        loadPayments();
+      } catch (e) { console.error('savePayment error:', e); }
+    }
+
+    async function deletePayment(id) {
+      if (!confirm('Delete this payment?')) return;
+      try {
+        await fetch('/kanchoai/api/v1/revenue/' + id, { method: 'DELETE' });
+        loadPayments();
+      } catch (e) { console.error('deletePayment error:', e); }
     }
 
     // Initialize
