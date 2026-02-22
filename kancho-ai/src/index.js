@@ -3541,9 +3541,8 @@ app.get('/es', (req, res) => {
 // =====================================================
 // STUDENT PORTAL PWA - Mobile-first SPA
 // =====================================================
-app.get('/student', (req, res) => res.redirect('/student/'));
+app.get('/student', studentPortalHandler);
 app.get('/student/*', studentPortalHandler);
-app.get('/student/', studentPortalHandler);
 
 function studentPortalHandler(req, res) {
   const host = req.get('host') || '';
