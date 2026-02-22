@@ -6605,12 +6605,12 @@ app.get('*', (req, res) => {
       document.getElementById('attendanceDate').value = new Date().toISOString().split('T')[0];
       // Load classes dropdown
       try {
-        const res = await fetch('/kanchoai/api/v1/classes/public?school_id=' + currentSchool.id);
+        const res = await fetch('/kanchoai/api/v1/classes/public?school_id=' + currentSchoolId);
         const data = await res.json();
         const sel = document.getElementById('attendanceClassSelect');
         sel.innerHTML = '<option value="">-- All Students (No Class) --</option>';
         if (data.success && data.data) {
-          data.data.filter(c => c.is_active).forEach(c => {
+          data.data.filter(c => c.is_active !== false).forEach(c => {
             sel.innerHTML += '<option value="' + c.id + '">' + c.name + '</option>';
           });
         }
@@ -6630,7 +6630,7 @@ app.get('*', (req, res) => {
       container.innerHTML = '<div class="roster-loading"><i class="fas fa-spinner fa-spin"></i> Loading students...</div>';
 
       try {
-        let url = '/kanchoai/api/v1/attendance/class-roster?school_id=' + currentSchool.id + '&date=' + date;
+        let url = '/kanchoai/api/v1/attendance/class-roster?school_id=' + currentSchoolId + '&date=' + date;
         if (classId) url += '&class_id=' + classId;
         const res = await fetch(url);
         const data = await res.json();
@@ -6697,7 +6697,7 @@ app.get('*', (req, res) => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            school_id: currentSchool.id,
+            school_id: currentSchoolId,
             class_id: classId || null,
             date: date,
             student_ids: studentIds
@@ -6723,7 +6723,7 @@ app.get('*', (req, res) => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            school_id: currentSchool.id,
+            school_id: currentSchoolId,
             student_id: studentId,
             date: new Date().toISOString().split('T')[0]
           })
