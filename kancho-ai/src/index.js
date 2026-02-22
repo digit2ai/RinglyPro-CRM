@@ -6765,16 +6765,17 @@ app.get('*', (req, res) => {
     // ==================== ATTENDANCE ====================
 
     async function openAttendanceModal() {
+      if (!currentSchoolId) { alert('Please log in first'); return; }
       // Set today's date
       document.getElementById('attendanceDate').value = new Date().toISOString().split('T')[0];
       // Load classes dropdown
       try {
-        const res = await fetch('/kanchoai/api/v1/classes/public?school_id=' + currentSchoolId);
-        const data = await res.json();
+        const classRes = await fetch('/kanchoai/api/v1/classes/public?school_id=' + currentSchoolId);
+        const classData = await classRes.json();
         const sel = document.getElementById('attendanceClassSelect');
         sel.innerHTML = '<option value="">-- All Students (No Class) --</option>';
-        if (data.success && data.data) {
-          data.data.filter(c => c.is_active !== false).forEach(c => {
+        if (classData.success && classData.data) {
+          classData.data.filter(c => c.is_active !== false).forEach(c => {
             sel.innerHTML += '<option value="' + c.id + '">' + c.name + '</option>';
           });
         }
@@ -6821,7 +6822,7 @@ app.get('*', (req, res) => {
         updateCheckinCount();
       } catch (e) {
         console.error('loadClassRoster error:', e);
-        container.innerHTML = '<div class="roster-loading">Error loading students</div>';
+        container.innerHTML = '<div class="roster-loading">Error: ' + (e.message || 'Unknown error') + ' (school=' + currentSchoolId + ')</div>';
       }
     }
 
