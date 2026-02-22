@@ -1544,7 +1544,8 @@ if (models && !modelsError) {
       const hotLeads = await KanchoLead.count({ where: { school_id: schoolId, temperature: 'hot' } });
 
       const overallScore = randBetween(68, 85);
-      const grade = overallScore >= 90 ? 'A' : overallScore >= 80 ? 'B+' : overallScore >= 75 ? 'B' : overallScore >= 70 ? 'C+' : 'C';
+      const grade = overallScore >= 90 ? 'A' : overallScore >= 80 ? 'B' : overallScore >= 70 ? 'C' : 'D';
+      const detailedGrade = overallScore >= 93 ? 'A+' : overallScore >= 90 ? 'A' : overallScore >= 87 ? 'A-' : overallScore >= 83 ? 'B+' : overallScore >= 80 ? 'B' : overallScore >= 77 ? 'B-' : overallScore >= 73 ? 'C+' : overallScore >= 70 ? 'C' : overallScore >= 67 ? 'C-' : 'D+';
 
       await KanchoHealthScore.create({
         school_id: schoolId,
@@ -1595,7 +1596,7 @@ if (models && !modelsError) {
           trials_converted: trialsConverted,
           cancelled_students: cancelledStudents,
           health_score: overallScore,
-          health_grade: grade,
+          health_grade: detailedGrade,
           revenue_at_risk: parseFloat(revenueAtRisk),
           students_at_risk: atRisk,
           growth_potential: parseFloat(growthPotential),
