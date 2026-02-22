@@ -762,7 +762,7 @@ if (fs.existsSync(dashboardDistPath)) {
             <li>Volume pricing for SaaS providers</li>
             <li>Unlimited AI voice minutes</li>
           </ul>
-          <a href="https://kanchoai.com" target="_blank" class="price-btn price-btn-outline">Schedule a Call</a>
+          <a href="/kanchoai/?action=schedule" class="price-btn price-btn-outline">Schedule a Call</a>
         </div>
       </div>
       <div class="pricing-note">All plans include a 14-day free trial. No credit card required to start.</div>
@@ -1770,7 +1770,7 @@ app.get(`${BASE_PATH}/es`, (req, res) => {
             <li>Precios por volumen para proveedores SaaS</li>
             <li>Minutos de voz IA ilimitados</li>
           </ul>
-          <a href="https://kanchoai.com" target="_blank" class="price-btn price-btn-outline">Agendar Llamada</a>
+          <a href="/kanchoai/?action=schedule" class="price-btn price-btn-outline">Agendar Llamada</a>
         </div>
       </div>
       <div class="pricing-note">Todos los planes incluyen 14 d\u00edas de prueba gratis. No se requiere tarjeta de cr\u00e9dito.</div>
@@ -2425,7 +2425,7 @@ app.get(`${BASE_PATH}/fil`, (req, res) => {
             <li>Volume pricing para sa SaaS providers</li>
             <li>Walang limitasyong AI voice minutes</li>
           </ul>
-          <a href="https://kanchoai.com" target="_blank" class="price-btn price-btn-outline">Mag-iskedyul ng Tawag</a>
+          <a href="/kanchoai/?action=schedule" class="price-btn price-btn-outline">Mag-iskedyul ng Tawag</a>
         </div>
       </div>
       <div class="pricing-note">Lahat ng plano ay may kasamang 14 na araw na libreng pagsubok. Hindi kailangan ng credit card.</div>
