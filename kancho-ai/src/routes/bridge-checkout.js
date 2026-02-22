@@ -505,7 +505,7 @@ async function processKanchoSignup(session) {
       country: pending.country || 'USA',
       timezone: pending.timezone || 'America/New_York',
       martial_art_type: pending.martial_art_type || null,
-      plan_type: pending.plan,
+      plan_type: pending.plan === 'intelligence' ? 'growth' : pending.plan,
       monthly_revenue_target: pending.monthly_revenue_target || 0,
       student_capacity: pending.student_capacity || 100,
       website: pending.website || null,
