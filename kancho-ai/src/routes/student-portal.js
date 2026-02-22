@@ -28,31 +28,38 @@ module.exports = (models) => {
         return res.status(404).json({ success: false, error: 'Student record not found' });
       }
 
-      // Get today's classes (enrolled)
+      // Get today's classes (all school classes for today)
       const today = new Date();
-      const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-      const todayName = dayNames[today.getDay()];
+      const dayAbbrevs = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+      const dayFulls = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const todayAbbrev = dayAbbrevs[today.getDay()];
+      const todayFull = dayFulls[today.getDay()];
 
-      const enrollments = await KanchoClassEnrollment.findAll({
-        where: { student_id: req.studentId, status: 'active' },
-        include: [{ model: KanchoClass, as: 'class', attributes: ['id', 'name', 'schedule', 'duration_minutes', 'instructor'] }]
+      // Helper: check if a day string matches today (handles Mon, Monday, monday, etc.)
+      function matchesDay(d) {
+        const dl = d.toLowerCase().slice(0, 3);
+        return dl === todayAbbrev;
+      }
+
+      const allClasses = await KanchoClass.findAll({
+        where: { school_id: req.schoolId, is_active: { [Op.ne]: false } },
+        attributes: ['id', 'name', 'schedule', 'duration_minutes', 'instructor']
       });
 
-      // Filter enrolled classes that have today in their schedule
-      const todayClasses = enrollments
-        .filter(e => e.class && e.class.schedule)
-        .filter(e => {
-          const sched = e.class.schedule;
-          if (Array.isArray(sched)) return sched.some(s => s.day?.toLowerCase() === todayName);
-          if (sched.days) return sched.days.map(d => d.toLowerCase()).includes(todayName);
+      const todayClasses = allClasses
+        .filter(c => c.schedule)
+        .filter(c => {
+          const sched = c.schedule;
+          if (Array.isArray(sched)) return sched.some(s => matchesDay(s.day || ''));
+          if (sched.days) return sched.days.some(d => matchesDay(d));
           return false;
         })
-        .map(e => ({
-          id: e.class.id,
-          name: e.class.name,
-          schedule: e.class.schedule,
-          durationMinutes: e.class.duration_minutes,
-          instructor: e.class.instructor
+        .map(c => ({
+          id: c.id,
+          name: c.name,
+          schedule: c.schedule,
+          durationMinutes: c.duration_minutes,
+          instructor: c.instructor
         }));
 
       // Check if already checked in today

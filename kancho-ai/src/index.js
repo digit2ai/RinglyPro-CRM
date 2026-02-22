@@ -4355,7 +4355,7 @@ async function loadCheckin() {
       api(API + '/attendance/history')
     ]);
 
-    const classes = classesRes.success ? classesRes.data.filter(c => c.enrolled) : [];
+    const classes = classesRes.success ? classesRes.data : [];
     const history = historyRes.success ? historyRes.data : [];
 
     // Check if already checked in today
@@ -4435,9 +4435,12 @@ async function loadSchedule() {
     }
 
     const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-    let html = '';
+    // Map abbreviated or full day names to full day name
+    const dayMap = { mon:'Monday', tue:'Tuesday', wed:'Wednesday', thu:'Thursday', fri:'Friday', sat:'Saturday', sun:'Sunday',
+      monday:'Monday', tuesday:'Tuesday', wednesday:'Wednesday', thursday:'Thursday', friday:'Friday', saturday:'Saturday', sunday:'Sunday' };
+    function toFullDay(d) { return dayMap[(d || '').toLowerCase().slice(0,3)] || d; }
 
-    // Group classes by day
+    let html = '';
     const byDay = {};
     days.forEach(d => { byDay[d] = []; });
 
@@ -4446,12 +4449,12 @@ async function loadSchedule() {
       const sched = c.schedule;
       if (Array.isArray(sched)) {
         sched.forEach(s => {
-          const day = s.day?.charAt(0).toUpperCase() + s.day?.slice(1).toLowerCase();
+          const day = toFullDay(s.day);
           if (byDay[day]) byDay[day].push({ ...c, time: s.time || s.start_time || '' });
         });
       } else if (sched.days) {
         sched.days.forEach(d => {
-          const day = d.charAt(0).toUpperCase() + d.slice(1).toLowerCase();
+          const day = toFullDay(d);
           if (byDay[day]) byDay[day].push({ ...c, time: sched.time || sched.start_time || '' });
         });
       }
