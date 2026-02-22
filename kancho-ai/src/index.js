@@ -3363,6 +3363,9 @@ app.get('/es', (req, res) => {
 
 // Serve dashboard for all other routes (SPA fallback)
 app.get('*', (req, res) => {
+  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
   res.send(`
 <!DOCTYPE html>
 <html lang="en">
@@ -6764,16 +6767,23 @@ app.get('*', (req, res) => {
 
     // ==================== ATTENDANCE ====================
 
+    function getSchoolId() {
+      const id = parseInt(currentSchoolId, 10);
+      if (!id || isNaN(id)) return null;
+      return id;
+    }
+
     async function openAttendanceModal() {
-      if (!currentSchoolId) { alert('Please log in first'); return; }
+      const schoolId = getSchoolId();
+      if (!schoolId) { alert('Please log in first (no school selected)'); return; }
       // Set today's date
       document.getElementById('attendanceDate').value = new Date().toISOString().split('T')[0];
       // Load classes dropdown
+      const sel = document.getElementById('attendanceClassSelect');
+      sel.innerHTML = '<option value="">-- All Students (No Class) --</option>';
       try {
-        const classRes = await fetch('/kanchoai/api/v1/classes/public?school_id=' + currentSchoolId);
+        const classRes = await fetch('/kanchoai/api/v1/classes/public?school_id=' + schoolId);
         const classData = await classRes.json();
-        const sel = document.getElementById('attendanceClassSelect');
-        sel.innerHTML = '<option value="">-- All Students (No Class) --</option>';
         if (classData.success && classData.data) {
           classData.data.filter(c => c.is_active !== false).forEach(c => {
             sel.innerHTML += '<option value="' + c.id + '">' + c.name + '</option>';
@@ -6781,7 +6791,7 @@ app.get('*', (req, res) => {
         }
       } catch (e) { console.error('loadClasses error:', e); }
       document.getElementById('attendanceCheckInModal').classList.add('open');
-      loadClassRoster();
+      await loadClassRoster();
     }
 
     function closeAttendanceModal() {
@@ -6789,24 +6799,31 @@ app.get('*', (req, res) => {
     }
 
     async function loadClassRoster() {
+      const schoolId = getSchoolId();
       const classId = document.getElementById('attendanceClassSelect').value;
       const date = document.getElementById('attendanceDate').value;
       const container = document.getElementById('attendanceRoster');
+      if (!schoolId) { container.innerHTML = '<div class="roster-loading">No school selected</div>'; return; }
       container.innerHTML = '<div class="roster-loading"><i class="fas fa-spinner fa-spin"></i> Loading students...</div>';
 
       try {
-        let url = '/kanchoai/api/v1/attendance/class-roster?school_id=' + currentSchoolId + '&date=' + date;
+        let url = '/kanchoai/api/v1/attendance/class-roster?school_id=' + schoolId + '&date=' + date;
         if (classId) url += '&class_id=' + classId;
-        const res = await fetch(url);
-        const data = await res.json();
+        const rosterRes = await fetch(url);
+        if (!rosterRes.ok) {
+          const errText = await rosterRes.text();
+          container.innerHTML = '<div class="roster-loading">Server error (' + rosterRes.status + '): ' + errText.substring(0,100) + '</div>';
+          return;
+        }
+        const rosterData = await rosterRes.json();
 
-        if (!data.success || !data.data || data.data.length === 0) {
-          container.innerHTML = '<div class="roster-loading">No active students found</div>';
+        if (!rosterData.success || !rosterData.data || rosterData.data.length === 0) {
+          container.innerHTML = '<div class="roster-loading">No active students found for school ' + schoolId + '</div>';
           return;
         }
 
         let html = '';
-        data.data.forEach(s => {
+        rosterData.data.forEach(s => {
           const checked = s.checked_in ? ' checked' : '';
           const rowClass = s.checked_in ? ' checked' : '';
           html += '<div class="checkin-student-row' + rowClass + '" onclick="toggleCheckinRow(this)">' +
@@ -6822,7 +6839,7 @@ app.get('*', (req, res) => {
         updateCheckinCount();
       } catch (e) {
         console.error('loadClassRoster error:', e);
-        container.innerHTML = '<div class="roster-loading">Error: ' + (e.message || 'Unknown error') + ' (school=' + currentSchoolId + ')</div>';
+        container.innerHTML = '<div class="roster-loading">Error: ' + (e.message || 'Unknown') + '</div>';
       }
     }
 
@@ -6847,6 +6864,8 @@ app.get('*', (req, res) => {
     }
 
     async function saveBulkAttendance() {
+      const schoolId = getSchoolId();
+      if (!schoolId) { alert('No school selected'); return; }
       const classId = document.getElementById('attendanceClassSelect').value;
       const date = document.getElementById('attendanceDate').value;
       const checkboxes = document.querySelectorAll('#attendanceRoster .checkin-checkbox:checked');
@@ -6858,55 +6877,57 @@ app.get('*', (req, res) => {
       }
 
       try {
-        const res = await fetch('/kanchoai/api/v1/attendance/bulk-check-in', {
+        const bulkRes = await fetch('/kanchoai/api/v1/attendance/bulk-check-in', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            school_id: currentSchoolId,
-            class_id: classId || null,
+            school_id: schoolId,
+            class_id: classId ? parseInt(classId, 10) : null,
             date: date,
             student_ids: studentIds
           })
         });
-        const data = await res.json();
-        if (data.success) {
-          alert(data.message || 'Attendance saved!');
+        const bulkData = await bulkRes.json();
+        if (bulkData.success) {
+          alert(bulkData.message || 'Attendance saved!');
           closeAttendanceModal();
           if (tabsLoaded.students) loadStudents();
         } else {
-          alert('Error: ' + (data.error || 'Unknown error'));
+          alert('Error: ' + (bulkData.error || 'Unknown error'));
         }
       } catch (e) {
         console.error('saveBulkAttendance error:', e);
-        alert('Error saving attendance');
+        alert('Error saving attendance: ' + e.message);
       }
     }
 
     async function quickCheckIn(studentId) {
+      const schoolId = getSchoolId();
+      if (!schoolId) { alert('No school selected'); return; }
       try {
-        const res = await fetch('/kanchoai/api/v1/attendance/check-in', {
+        const ciRes = await fetch('/kanchoai/api/v1/attendance/check-in', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            school_id: currentSchoolId,
-            student_id: studentId,
+            school_id: schoolId,
+            student_id: parseInt(studentId, 10),
             date: new Date().toISOString().split('T')[0]
           })
         });
-        const data = await res.json();
-        if (res.status === 409) {
+        const ciData = await ciRes.json();
+        if (ciRes.status === 409) {
           alert('Already checked in today!');
           return;
         }
-        if (data.success) {
+        if (ciData.success) {
           alert('Checked in!');
           openStudentDetail(studentId);
         } else {
-          alert('Error: ' + (data.error || 'Unknown error'));
+          alert('Error: ' + (ciData.error || 'Unknown error'));
         }
       } catch (e) {
         console.error('quickCheckIn error:', e);
-        alert('Error checking in');
+        alert('Check-in error: ' + e.message);
       }
     }
 
