@@ -5428,7 +5428,17 @@ app.get('*', (req, res) => {
       const isLoggedIn = await checkAuth();
       if (isLoggedIn) { enterAuthenticatedMode(); return; }
 
-      // 4. Not authenticated: show landing page in demo mode
+      // 4. Check for ?plan= param (from Ronin or external links) — auto-open signup modal
+      const planParam = new URLSearchParams(window.location.search).get('plan');
+      if (planParam && (planParam === 'intelligence' || planParam === 'pro')) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+        loadSchools();
+        loadClasses();
+        setTimeout(() => selectPlan(planParam), 300);
+        return;
+      }
+
+      // 5. Not authenticated: show landing page in demo mode
       loadSchools();
       loadClasses();
       checkSubscriptionSuccess(); // Legacy ?subscribe=success flow

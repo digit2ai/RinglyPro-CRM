@@ -729,7 +729,7 @@ if (fs.existsSync(dashboardDistPath)) {
             <li>Voice AI business advisor</li>
             <li>100 AI voice minutes included ($0.50 thereafter)</li>
           </ul>
-          <a href="https://kanchoai.com" target="_blank" class="price-btn price-btn-outline">Get Started</a>
+          <a href="/kanchoai/?plan=intelligence" class="price-btn price-btn-outline">Get Started</a>
         </div>
         <div class="price-card popular">
           <div class="popular-badge">Most Popular</div>
@@ -746,7 +746,7 @@ if (fs.existsSync(dashboardDistPath)) {
             <li>Bilingual support (EN/ES)</li>
             <li>500 AI voice minutes included ($0.45 thereafter)</li>
           </ul>
-          <a href="https://kanchoai.com" target="_blank" class="price-btn price-btn-primary">Get Started</a>
+          <a href="/kanchoai/?plan=pro" class="price-btn price-btn-primary">Get Started</a>
         </div>
         <div class="price-card">
           <h3>Kancho Enterprise</h3>
@@ -1737,7 +1737,7 @@ app.get(`${BASE_PATH}/es`, (req, res) => {
             <li>Asesor empresarial de voz IA</li>
             <li>100 minutos de voz IA incluidos ($0.50 adicional)</li>
           </ul>
-          <a href="https://kanchoai.com" target="_blank" class="price-btn price-btn-outline">Comenzar</a>
+          <a href="/kanchoai/?plan=intelligence" class="price-btn price-btn-outline">Comenzar</a>
         </div>
         <div class="price-card popular">
           <div class="popular-badge">M\u00e1s Popular</div>
@@ -1754,7 +1754,7 @@ app.get(`${BASE_PATH}/es`, (req, res) => {
             <li>Soporte biling\u00fce (EN/ES)</li>
             <li>500 minutos de voz IA incluidos ($0.45 adicional)</li>
           </ul>
-          <a href="https://kanchoai.com" target="_blank" class="price-btn price-btn-primary">Comenzar</a>
+          <a href="/kanchoai/?plan=pro" class="price-btn price-btn-primary">Comenzar</a>
         </div>
         <div class="price-card">
           <h3>Kancho Enterprise</h3>
@@ -2392,7 +2392,7 @@ app.get(`${BASE_PATH}/fil`, (req, res) => {
             <li>Voice AI business advisor</li>
             <li>100 AI voice minutes kasama ($0.50 pagkatapos)</li>
           </ul>
-          <a href="https://kanchoai.com" target="_blank" class="price-btn price-btn-outline">Magsimula</a>
+          <a href="/kanchoai/?plan=intelligence" class="price-btn price-btn-outline">Magsimula</a>
         </div>
         <div class="price-card popular">
           <div class="popular-badge">Pinakasikat</div>
@@ -2409,7 +2409,7 @@ app.get(`${BASE_PATH}/fil`, (req, res) => {
             <li>Bilingual na suporta (EN/ES)</li>
             <li>500 AI voice minutes kasama ($0.45 pagkatapos)</li>
           </ul>
-          <a href="https://kanchoai.com" target="_blank" class="price-btn price-btn-primary">Magsimula</a>
+          <a href="/kanchoai/?plan=pro" class="price-btn price-btn-primary">Magsimula</a>
         </div>
         <div class="price-card">
           <h3>Kancho Enterprise</h3>
