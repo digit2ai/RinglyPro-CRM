@@ -165,6 +165,428 @@ if (routesLoaded) {
 }
 
 // ============================================================================
+// ADMIN PANEL
+// ============================================================================
+
+app.get(`${BASE_PATH}/admin`, (req, res) => {
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ronin Brotherhood - Admin Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg: #0a0a0a; --panel: #141414; --card: #1a1a1a; --accent: #d10404; --gold: #c4a35a; --text: #fff; --muted: #888; --line: #222; --green: #22c55e; --blue: #3b82f6; --orange: #f59e0b; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* Login */
+    .login-wrap { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .login-box { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 48px 40px; width: 100%; max-width: 400px; }
+    .login-box h1 { font-size: 22px; margin-bottom: 4px; }
+    .login-box .sub { color: var(--muted); font-size: 13px; margin-bottom: 28px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .06em; }
+    .form-group input { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--text); font-size: 14px; outline: none; }
+    .form-group input:focus { border-color: var(--accent); }
+    .login-btn { width: 100%; padding: 12px; border: none; border-radius: 8px; background: var(--accent); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 8px; }
+    .login-btn:hover { background: #ff1a1a; }
+    .login-error { color: var(--accent); font-size: 12px; margin-top: 8px; display: none; }
+
+    /* Layout */
+    .app { display: none; }
+    .sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 220px; background: var(--panel); border-right: 1px solid var(--line); padding: 20px 0; overflow-y: auto; z-index: 10; }
+    .sidebar-brand { padding: 0 20px 20px; border-bottom: 1px solid var(--line); margin-bottom: 12px; }
+    .sidebar-brand h2 { font-size: 16px; color: var(--text); }
+    .sidebar-brand span { font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: .1em; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 20px; color: var(--muted); font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s; border-left: 3px solid transparent; }
+    .nav-item:hover { color: var(--text); background: rgba(255,255,255,.03); }
+    .nav-item.active { color: var(--text); background: rgba(209,4,4,.08); border-left-color: var(--accent); }
+    .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+    .nav-sep { height: 1px; background: var(--line); margin: 12px 20px; }
+    .nav-logout { margin-top: auto; color: var(--muted); }
+    .nav-logout:hover { color: var(--accent); }
+
+    .main { margin-left: 220px; padding: 24px 32px; min-height: 100vh; }
+    .page-title { font-size: 22px; font-weight: 700; margin-bottom: 24px; }
+
+    /* Stats */
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
+    .stat-card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+    .stat-card .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
+    .stat-card .value { font-size: 28px; font-weight: 800; }
+    .stat-card .value.red { color: var(--accent); }
+    .stat-card .value.gold { color: var(--gold); }
+    .stat-card .value.green { color: var(--green); }
+    .stat-card .value.blue { color: var(--blue); }
+
+    /* Tables */
+    .table-wrap { background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin-bottom: 24px; }
+    .table-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--line); }
+    .table-header h3 { font-size: 15px; font-weight: 600; }
+    .table-filter { display: flex; gap: 8px; align-items: center; }
+    .table-filter select, .table-filter input { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--text); font-size: 12px; outline: none; }
+    .table-filter input { width: 180px; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th { text-align: left; padding: 10px 16px; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.02); }
+    tbody td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid var(--line); }
+    tbody tr:hover { background: rgba(255,255,255,.02); }
+    tbody tr:last-child td { border-bottom: none; }
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: capitalize; }
+    .badge-active, .badge-delivered, .badge-paid, .badge-published { background: rgba(34,197,94,.12); color: var(--green); }
+    .badge-pending, .badge-upcoming, .badge-draft { background: rgba(245,158,11,.12); color: var(--orange); }
+    .badge-inactive, .badge-cancelled, .badge-suspended, .badge-archived, .badge-expired { background: rgba(209,4,4,.12); color: var(--accent); }
+    .badge-basic, .badge-bronze, .badge-supporter { background: rgba(136,136,136,.12); color: var(--muted); }
+    .badge-brotherhood, .badge-gold, .badge-platinum { background: rgba(196,163,90,.12); color: var(--gold); }
+    .badge-red_belt, .badge-rpdta, .badge-lifetime { background: rgba(209,4,4,.12); color: var(--accent); }
+    .badge-silver { background: rgba(200,200,200,.12); color: #ccc; }
+    .badge-processing, .badge-shipped, .badge-confirmed, .badge-open, .badge-in_progress, .badge-registration_open { background: rgba(59,130,246,.12); color: var(--blue); }
+
+    .pagination { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 16px; }
+    .pagination button { padding: 6px 14px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--text); font-size: 12px; cursor: pointer; }
+    .pagination button:disabled { opacity: .4; cursor: default; }
+    .pagination button.active { background: var(--accent); border-color: var(--accent); }
+    .pagination span { font-size: 12px; color: var(--muted); }
+
+    .empty { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+    .loading { text-align: center; padding: 40px; color: var(--muted); }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar { width: 60px; } .sidebar-brand h2, .sidebar-brand span, .nav-item span { display: none; }
+      .nav-item { justify-content: center; padding: 12px; } .main { margin-left: 60px; padding: 16px; }
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      table { font-size: 11px; } thead th, tbody td { padding: 8px; }
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+  </style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div class="login-wrap" id="login-screen">
+  <div class="login-box">
+    <h1>Ronin Brotherhood</h1>
+    <div class="sub">Admin Panel</div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="login-email" placeholder="admin@roninbrotherhood.com">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="login-password" placeholder="Enter password">
+    </div>
+    <button class="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- App -->
+<div class="app" id="app">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <h2>Ronin Admin</h2>
+      <span>Brotherhood HQ</span>
+    </div>
+    <div class="nav-item active" data-tab="dashboard" onclick="switchTab('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span>Dashboard</span>
+    </div>
+    <div class="nav-item" data-tab="members" onclick="switchTab('members')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      <span>Members</span>
+    </div>
+    <div class="nav-item" data-tab="orders" onclick="switchTab('orders')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+      <span>Orders</span>
+    </div>
+    <div class="nav-item" data-tab="products" onclick="switchTab('products')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+      <span>Products</span>
+    </div>
+    <div class="nav-item" data-tab="courses" onclick="switchTab('courses')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+      <span>Courses</span>
+    </div>
+    <div class="nav-item" data-tab="events" onclick="switchTab('events')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span>Events</span>
+    </div>
+    <div class="nav-item" data-tab="sponsors" onclick="switchTab('sponsors')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      <span>Sponsors</span>
+    </div>
+    <div class="nav-sep"></div>
+    <div class="nav-item nav-logout" onclick="doLogout()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <span>Logout</span>
+    </div>
+  </aside>
+
+  <main class="main">
+    <!-- Dashboard Tab -->
+    <div class="tab-content active" id="tab-dashboard">
+      <h1 class="page-title">Dashboard</h1>
+      <div class="stats-row" id="dash-stats"></div>
+      <div class="table-wrap">
+        <div class="table-header"><h3>Recent Members</h3></div>
+        <table><thead><tr><th>Name</th><th>Email</th><th>Country</th><th>Tier</th><th>Status</th><th>Joined</th></tr></thead><tbody id="dash-members"></tbody></table>
+      </div>
+      <div class="table-wrap">
+        <div class="table-header"><h3>Recent Orders</h3></div>
+        <table><thead><tr><th>Order #</th><th>Customer</th><th>Total</th><th>Status</th><th>Payment</th><th>Date</th></tr></thead><tbody id="dash-orders"></tbody></table>
+      </div>
+    </div>
+
+    <!-- Members Tab -->
+    <div class="tab-content" id="tab-members">
+      <h1 class="page-title">Members</h1>
+      <div class="table-wrap">
+        <div class="table-header">
+          <h3 id="members-count">Members</h3>
+          <div class="table-filter">
+            <select id="filter-tier" onchange="loadMembers()"><option value="">All Tiers</option><option value="basic">Basic</option><option value="brotherhood">Brotherhood</option><option value="red_belt">Red Belt</option><option value="rpdta">RPDTA</option><option value="lifetime">Lifetime</option></select>
+            <select id="filter-status" onchange="loadMembers()"><option value="">All Status</option><option value="active">Active</option><option value="pending">Pending</option><option value="inactive">Inactive</option><option value="suspended">Suspended</option></select>
+          </div>
+        </div>
+        <table><thead><tr><th>Name</th><th>Email</th><th>Country</th><th>Rank</th><th>Dojo</th><th>Tier</th><th>Status</th><th>Joined</th></tr></thead><tbody id="members-body"></tbody></table>
+        <div class="pagination" id="members-pagination"></div>
+      </div>
+    </div>
+
+    <!-- Orders Tab -->
+    <div class="tab-content" id="tab-orders">
+      <h1 class="page-title">Orders</h1>
+      <div class="table-wrap">
+        <div class="table-header"><h3 id="orders-count">Orders</h3></div>
+        <table><thead><tr><th>Order #</th><th>Customer</th><th>Email</th><th>Items</th><th>Total</th><th>Status</th><th>Payment</th><th>Date</th></tr></thead><tbody id="orders-body"></tbody></table>
+        <div class="pagination" id="orders-pagination"></div>
+      </div>
+    </div>
+
+    <!-- Products Tab -->
+    <div class="tab-content" id="tab-products">
+      <h1 class="page-title">Products</h1>
+      <div class="table-wrap">
+        <div class="table-header"><h3 id="products-count">Products</h3></div>
+        <table><thead><tr><th>Name</th><th>Category</th><th>Price</th><th>Inventory</th><th>Sold</th><th>Status</th></tr></thead><tbody id="products-body"></tbody></table>
+      </div>
+    </div>
+
+    <!-- Courses Tab -->
+    <div class="tab-content" id="tab-courses">
+      <h1 class="page-title">Training Courses</h1>
+      <div class="table-wrap">
+        <div class="table-header"><h3 id="courses-count">Courses</h3></div>
+        <table><thead><tr><th>Title</th><th>Category</th><th>Group</th><th>Duration</th><th>Price</th><th>Enrolled</th><th>Status</th></tr></thead><tbody id="courses-body"></tbody></table>
+      </div>
+    </div>
+
+    <!-- Events Tab -->
+    <div class="tab-content" id="tab-events">
+      <h1 class="page-title">Events</h1>
+      <div class="table-wrap">
+        <div class="table-header"><h3 id="events-count">Events</h3></div>
+        <table><thead><tr><th>Title</th><th>Type</th><th>Group</th><th>Location</th><th>Date</th><th>Attendees</th><th>Fee</th><th>Status</th></tr></thead><tbody id="events-body"></tbody></table>
+      </div>
+    </div>
+
+    <!-- Sponsors Tab -->
+    <div class="tab-content" id="tab-sponsors">
+      <h1 class="page-title">Sponsors</h1>
+      <div class="table-wrap">
+        <div class="table-header"><h3 id="sponsors-count">Sponsors</h3></div>
+        <table><thead><tr><th>Company</th><th>Contact</th><th>Email</th><th>Tier</th><th>Amount</th><th>Contract End</th><th>Status</th></tr></thead><tbody id="sponsors-body"></tbody></table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+var API = window.location.pathname.replace(/\\/admin$/, '') + '/api/v1';
+var token = localStorage.getItem('ronin_admin_token');
+var membersPage = 1;
+var ordersPage = 1;
+
+function headers() { return { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }; }
+
+function fmt(d) { if (!d) return '-'; return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
+function money(n) { return '$' + (parseFloat(n) || 0).toFixed(2); }
+function badge(val) { var cls = 'badge-' + (val || '').toLowerCase().replace(/ /g, '_'); return '<span class="badge ' + cls + '">' + (val || '-') + '</span>'; }
+
+// Login
+function doLogin() {
+  var email = document.getElementById('login-email').value;
+  var pw = document.getElementById('login-password').value;
+  var err = document.getElementById('login-error');
+  err.style.display = 'none';
+  fetch(API + '/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email, password: pw }) })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.success && data.token) { token = data.token; localStorage.setItem('ronin_admin_token', token); showApp(); }
+      else { err.textContent = data.error || 'Invalid credentials'; err.style.display = 'block'; }
+    }).catch(function() { err.textContent = 'Connection error'; err.style.display = 'block'; });
+}
+
+function doLogout() { token = null; localStorage.removeItem('ronin_admin_token'); document.getElementById('app').style.display = 'none'; document.getElementById('login-screen').style.display = 'flex'; }
+
+document.getElementById('login-password').addEventListener('keypress', function(e) { if (e.key === 'Enter') doLogin(); });
+
+// App init
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  loadDashboard();
+}
+
+// Tabs
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
+  document.querySelectorAll('.nav-item[data-tab]').forEach(function(el) { el.classList.remove('active'); });
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelector('.nav-item[data-tab="' + tab + '"]').classList.add('active');
+  if (tab === 'dashboard') loadDashboard();
+  if (tab === 'members') loadMembers();
+  if (tab === 'orders') loadOrders();
+  if (tab === 'products') loadProducts();
+  if (tab === 'courses') loadCourses();
+  if (tab === 'events') loadEvents();
+  if (tab === 'sponsors') loadSponsors();
+}
+
+// Dashboard
+function loadDashboard() {
+  fetch(API + '/admin/dashboard', { headers: headers() }).then(function(r) { return r.json(); }).then(function(data) {
+    if (!data.success) return;
+    var s = data.stats;
+    document.getElementById('dash-stats').innerHTML =
+      '<div class="stat-card"><div class="label">Members</div><div class="value red">' + (s.members || 0) + '</div></div>' +
+      '<div class="stat-card"><div class="label">Orders</div><div class="value blue">' + (s.orders || 0) + '</div></div>' +
+      '<div class="stat-card"><div class="label">Revenue</div><div class="value gold">' + money(s.revenue) + '</div></div>' +
+      '<div class="stat-card"><div class="label">Courses</div><div class="value green">' + (s.courses || 0) + '</div></div>' +
+      '<div class="stat-card"><div class="label">Events</div><div class="value blue">' + (s.events || 0) + '</div></div>' +
+      '<div class="stat-card"><div class="label">Sponsors</div><div class="value gold">' + (s.sponsors || 0) + '</div></div>';
+    var mb = data.recentMembers || [];
+    document.getElementById('dash-members').innerHTML = mb.length ? mb.map(function(m) {
+      return '<tr><td>' + (m.first_name || '') + ' ' + (m.last_name || '') + '</td><td>' + (m.email || '') + '</td><td>' + (m.country || '-') + '</td><td>' + badge(m.membership_tier) + '</td><td>' + badge(m.membership_status) + '</td><td>' + fmt(m.createdAt) + '</td></tr>';
+    }).join('') : '<tr><td colspan="6" class="empty">No members yet</td></tr>';
+    var ob = data.recentOrders || [];
+    document.getElementById('dash-orders').innerHTML = ob.length ? ob.map(function(o) {
+      return '<tr><td>' + (o.order_number || '') + '</td><td>' + (o.customer_name || '') + '</td><td>' + money(o.total) + '</td><td>' + badge(o.status) + '</td><td>' + badge(o.payment_status) + '</td><td>' + fmt(o.createdAt) + '</td></tr>';
+    }).join('') : '<tr><td colspan="6" class="empty">No orders yet</td></tr>';
+  }).catch(function() {});
+}
+
+// Members
+function loadMembers() {
+  var tier = document.getElementById('filter-tier').value;
+  var status = document.getElementById('filter-status').value;
+  var url = API + '/members/?page=' + membersPage + '&limit=20';
+  if (tier) url += '&tier=' + tier;
+  if (status) url += '&status=' + status;
+  fetch(url, { headers: headers() }).then(function(r) { return r.json(); }).then(function(data) {
+    if (!data.success) return;
+    var members = data.members || [];
+    var total = data.pagination ? data.pagination.total : members.length;
+    document.getElementById('members-count').textContent = 'Members (' + total + ')';
+    document.getElementById('members-body').innerHTML = members.length ? members.map(function(m) {
+      return '<tr><td>' + (m.first_name || '') + ' ' + (m.last_name || '') + '</td><td>' + (m.email || '') + '</td><td>' + (m.country || '-') + '</td><td>' + (m.rank || '-') + '</td><td>' + (m.dojo_name || '-') + '</td><td>' + badge(m.membership_tier) + '</td><td>' + badge(m.membership_status) + '</td><td>' + fmt(m.createdAt) + '</td></tr>';
+    }).join('') : '<tr><td colspan="8" class="empty">No members found</td></tr>';
+    if (data.pagination) renderPagination('members-pagination', data.pagination, function(p) { membersPage = p; loadMembers(); });
+  }).catch(function() {});
+}
+
+// Orders
+function loadOrders() {
+  var url = API + '/orders?page=' + ordersPage + '&limit=20';
+  fetch(url, { headers: headers() }).then(function(r) { return r.json(); }).then(function(data) {
+    if (!data.success) return;
+    var orders = data.orders || [];
+    var total = data.pagination ? data.pagination.total : orders.length;
+    document.getElementById('orders-count').textContent = 'Orders (' + total + ')';
+    document.getElementById('orders-body').innerHTML = orders.length ? orders.map(function(o) {
+      return '<tr><td>' + (o.order_number || '') + '</td><td>' + (o.customer_name || '') + '</td><td>' + (o.customer_email || '') + '</td><td>' + (o.items ? o.items.length : 0) + '</td><td>' + money(o.total) + '</td><td>' + badge(o.status) + '</td><td>' + badge(o.payment_status) + '</td><td>' + fmt(o.createdAt) + '</td></tr>';
+    }).join('') : '<tr><td colspan="8" class="empty">No orders yet</td></tr>';
+    if (data.pagination) renderPagination('orders-pagination', data.pagination, function(p) { ordersPage = p; loadOrders(); });
+  }).catch(function() {});
+}
+
+// Products
+function loadProducts() {
+  fetch(API + '/products', { headers: headers() }).then(function(r) { return r.json(); }).then(function(data) {
+    if (!data.success) return;
+    var products = data.products || [];
+    document.getElementById('products-count').textContent = 'Products (' + (data.pagination ? data.pagination.total : products.length) + ')';
+    document.getElementById('products-body').innerHTML = products.length ? products.map(function(p) {
+      return '<tr><td>' + (p.name || '') + '</td><td>' + (p.category || '-') + '</td><td>' + money(p.price) + '</td><td>' + (p.inventory_quantity || 0) + '</td><td>' + (p.total_sold || 0) + '</td><td>' + badge(p.status) + '</td></tr>';
+    }).join('') : '<tr><td colspan="6" class="empty">No products yet</td></tr>';
+  }).catch(function() {});
+}
+
+// Courses
+function loadCourses() {
+  fetch(API + '/training', { headers: headers() }).then(function(r) { return r.json(); }).then(function(data) {
+    if (!data.success) return;
+    var courses = data.courses || [];
+    document.getElementById('courses-count').textContent = 'Courses (' + courses.length + ')';
+    document.getElementById('courses-body').innerHTML = courses.length ? courses.map(function(c) {
+      return '<tr><td>' + (c.title || '') + '</td><td>' + (c.category || '-') + '</td><td>' + (c.group || '-') + '</td><td>' + (c.duration_hours || 0) + 'h</td><td>' + money(c.price) + '</td><td>' + (c.current_enrollment || 0) + '/' + (c.max_enrollment || '-') + '</td><td>' + badge(c.status) + '</td></tr>';
+    }).join('') : '<tr><td colspan="7" class="empty">No courses yet</td></tr>';
+  }).catch(function() {});
+}
+
+// Events
+function loadEvents() {
+  fetch(API + '/events', { headers: headers() }).then(function(r) { return r.json(); }).then(function(data) {
+    if (!data.success) return;
+    var events = data.events || [];
+    document.getElementById('events-count').textContent = 'Events (' + events.length + ')';
+    document.getElementById('events-body').innerHTML = events.length ? events.map(function(e) {
+      return '<tr><td>' + (e.title || '') + '</td><td>' + (e.event_type || '-') + '</td><td>' + (e.group || '-') + '</td><td>' + (e.location || '-') + '</td><td>' + fmt(e.start_date) + '</td><td>' + (e.current_attendees || 0) + '/' + (e.max_attendees || '-') + '</td><td>' + money(e.registration_fee) + '</td><td>' + badge(e.status) + '</td></tr>';
+    }).join('') : '<tr><td colspan="8" class="empty">No events yet</td></tr>';
+  }).catch(function() {});
+}
+
+// Sponsors
+function loadSponsors() {
+  fetch(API + '/sponsors', { headers: headers() }).then(function(r) { return r.json(); }).then(function(data) {
+    if (!data.success) return;
+    var sponsors = data.sponsors || [];
+    document.getElementById('sponsors-count').textContent = 'Sponsors (' + sponsors.length + ')';
+    document.getElementById('sponsors-body').innerHTML = sponsors.length ? sponsors.map(function(s) {
+      return '<tr><td>' + (s.company_name || '') + '</td><td>' + (s.contact_name || '-') + '</td><td>' + (s.email || '-') + '</td><td>' + badge(s.tier) + '</td><td>' + money(s.sponsorship_amount) + '</td><td>' + fmt(s.contract_end) + '</td><td>' + badge(s.status) + '</td></tr>';
+    }).join('') : '<tr><td colspan="7" class="empty">No sponsors yet</td></tr>';
+  }).catch(function() {});
+}
+
+// Pagination
+function renderPagination(containerId, pg, cb) {
+  var el = document.getElementById(containerId);
+  if (!pg || pg.totalPages <= 1) { el.innerHTML = ''; return; }
+  var html = '<button ' + (pg.page <= 1 ? 'disabled' : '') + ' onclick="void(0)">Prev</button>';
+  html += '<span>Page ' + pg.page + ' of ' + pg.totalPages + '</span>';
+  html += '<button ' + (pg.page >= pg.totalPages ? 'disabled' : '') + ' onclick="void(0)">Next</button>';
+  el.innerHTML = html;
+  var btns = el.querySelectorAll('button');
+  btns[0].onclick = function() { if (pg.page > 1) cb(pg.page - 1); };
+  btns[1].onclick = function() { if (pg.page < pg.totalPages) cb(pg.page + 1); };
+}
+
+// Auto-login if token exists
+if (token) {
+  fetch(API + '/admin/dashboard', { headers: headers() }).then(function(r) { return r.json(); }).then(function(data) {
+    if (data.success) showApp(); else doLogout();
+  }).catch(function() { doLogout(); });
+}
+</script>
+</body>
+</html>`);
+});
+
+// ============================================================================
 // DASHBOARD - Serve React app or fallback landing page
 // ============================================================================
 
