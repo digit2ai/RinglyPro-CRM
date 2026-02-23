@@ -999,17 +999,6 @@ if (fs.existsSync(dashboardDistPath)) {
     </div>
   </section>
 
-  <section class="photo-strip">
-    <div class="photo-strip-inner">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782813ff51693e263e40a.png" alt="KanchoAI">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b3590acbe25cb7ea01.png" alt="Ronin Brotherhood">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b33eba040ffb3bdda3.png" alt="Ronin Brotherhood">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c6731a083025db8a56531.png" alt="Ronin Brotherhood">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b3d0716b0a0f318067.png" alt="Ronin Brotherhood">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b39598d2686ce37d70.png" alt="Ronin Brotherhood">
-    </div>
-  </section>
-
   <section class="stats">
     <div class="container">
       <div class="stats-grid">
@@ -1030,6 +1019,14 @@ if (fs.existsSync(dashboardDistPath)) {
     <div class="container">
       <h2 class="section-title">Our Organizations</h2>
       <p class="section-sub">Five martial arts groups united under the Ronin Brotherhood</p>
+      <div class="photo-strip-inner" style="margin-bottom:32px;">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782813ff51693e263e40a.png" alt="KanchoAI">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b3590acbe25cb7ea01.png" alt="Ronin Police">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b33eba040ffb3bdda3.png" alt="Red Belt Society">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c6731a083025db8a56531.png" alt="Ronin MMA">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b3d0716b0a0f318067.png" alt="IRMAF">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b39598d2686ce37d70.png" alt="RGRK">
+      </div>
       <div class="groups-grid" id="groups-container">
         <div class="group-card">
           <div class="group-code">RGRK</div>
@@ -2634,17 +2631,6 @@ app.get(`${BASE_PATH}/es`, (req, res) => {
     </div>
   </section>
 
-  <section class="photo-strip">
-    <div class="photo-strip-inner">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782813ff51693e263e40a.png" alt="KanchoAI">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b3590acbe25cb7ea01.png" alt="Ronin Brotherhood">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b33eba040ffb3bdda3.png" alt="Ronin Brotherhood">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c6731a083025db8a56531.png" alt="Ronin Brotherhood">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b3d0716b0a0f318067.png" alt="Ronin Brotherhood">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b39598d2686ce37d70.png" alt="Ronin Brotherhood">
-    </div>
-  </section>
-
   <section class="stats">
     <div class="container">
       <div class="stats-grid">
@@ -2665,6 +2651,14 @@ app.get(`${BASE_PATH}/es`, (req, res) => {
     <div class="container">
       <h2 class="section-title">Nuestras Organizaciones</h2>
       <p class="section-sub">Cinco grupos de artes marciales unidos bajo la Hermandad Ronin</p>
+      <div class="photo-strip-inner" style="margin-bottom:32px;">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782813ff51693e263e40a.png" alt="KanchoAI">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b3590acbe25cb7ea01.png" alt="Ronin Police">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b33eba040ffb3bdda3.png" alt="Red Belt Society">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c6731a083025db8a56531.png" alt="Ronin MMA">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b3d0716b0a0f318067.png" alt="IRMAF">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b39598d2686ce37d70.png" alt="RGRK">
+      </div>
       <div class="groups-grid" id="groups-container-es">
         <div class="group-card">
           <div class="group-code">RGRK</div>
@@ -3336,17 +3330,6 @@ app.get(`${BASE_PATH}/fil`, (req, res) => {
     </div>
   </section>
 
-  <section class="photo-strip">
-    <div class="photo-strip-inner">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782813ff51693e263e40a.png" alt="KanchoAI">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b3590acbe25cb7ea01.png" alt="Ronin Brotherhood">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b33eba040ffb3bdda3.png" alt="Ronin Brotherhood">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c6731a083025db8a56531.png" alt="Ronin Brotherhood">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b3d0716b0a0f318067.png" alt="Ronin Brotherhood">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b39598d2686ce37d70.png" alt="Ronin Brotherhood">
-    </div>
-  </section>
-
   <section class="stats">
     <div class="container">
       <div class="stats-grid">
@@ -3367,6 +3350,14 @@ app.get(`${BASE_PATH}/fil`, (req, res) => {
     <div class="container">
       <h2 class="section-title">Mga Organisasyon Namin</h2>
       <p class="section-sub">Limang grupo ng martial arts na nagkakaisa sa ilalim ng Ronin Brotherhood</p>
+      <div class="photo-strip-inner" style="margin-bottom:32px;">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782813ff51693e263e40a.png" alt="KanchoAI">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b3590acbe25cb7ea01.png" alt="Ronin Police">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b33eba040ffb3bdda3.png" alt="Red Belt Society">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c6731a083025db8a56531.png" alt="Ronin MMA">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b3d0716b0a0f318067.png" alt="IRMAF">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b39598d2686ce37d70.png" alt="RGRK">
+      </div>
       <div class="groups-grid">
         <div class="group-card">
           <div class="group-code">RGRK</div>
