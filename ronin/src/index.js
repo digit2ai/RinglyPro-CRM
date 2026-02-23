@@ -971,6 +971,7 @@ if (fs.existsSync(dashboardDistPath)) {
         <a href="#training">Training</a>
         <a href="#events">Events</a>
         <a href="#sponsors">Sponsors</a>
+        <a href="/ronin/red-belt-society">Red Belt Society</a>
         <a href="https://kanchoai.com" target="_blank">AI App</a>
       </nav>
       <div class="header-auth" id="header-auth">
@@ -1791,6 +1792,482 @@ if (fs.existsSync(dashboardDistPath)) {
 }
 
 // ============================================================================
+// RED BELT SOCIETY PAGE
+// ============================================================================
+
+app.get(`${BASE_PATH}/red-belt-society`, (req, res) => {
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ronin Red Belt Society - Masters 4th Dan &amp; Above</title>
+  <meta name="description" content="Ronin Red Belt Society - A multi-language, culturally diverse organization of martial arts masters holding 4th Degree Black Belt and above. 210+ members across 28 countries.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg: #0a0a0a; --panel: #1a1a1a; --accent: #d10404; --gold: #c4a35a; --text: #fff; --muted: #999; --line: #2a2a2a; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+    .container { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+
+    header { position: fixed; top: 0; left: 0; right: 0; z-index: 50; background: rgba(10,10,10,.95); border-bottom: 1px solid var(--line); backdrop-filter: blur(10px); }
+    .header-inner { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; }
+    .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
+    .brand-logo { height: 90px; width: auto; object-fit: contain; display: block; }
+    nav { display: flex; gap: 20px; align-items: center; }
+    nav a { color: var(--muted); text-decoration: none; font-size: 13px; font-weight: 500; }
+    nav a:hover { color: var(--accent); }
+    nav a.active { color: var(--accent); }
+
+    .hero-banner { margin-top: 120px; position: relative; overflow: hidden; }
+    .hero-banner img { width: 100%; display: block; max-height: 500px; object-fit: cover; }
+    .hero-banner-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,.2) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,.7) 100%); }
+    .hero-banner-text { position: absolute; bottom: 40px; left: 0; right: 0; text-align: center; z-index: 2; }
+    .hero-banner-text h1 { font-family: 'Noto Serif', serif; font-size: clamp(28px, 5vw, 48px); font-weight: 700; color: #fff; text-shadow: 0 2px 20px rgba(0,0,0,.8); margin-bottom: 8px; }
+    .hero-banner-text p { color: rgba(255,255,255,.8); font-size: 16px; text-shadow: 0 1px 10px rgba(0,0,0,.6); }
+
+    .intro { padding: 60px 0; text-align: center; border-bottom: 1px solid var(--line); }
+    .intro-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--gold); color: var(--gold); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 20px; }
+    .intro p { color: var(--muted); font-size: 16px; max-width: 800px; margin: 0 auto; line-height: 1.8; }
+    .intro .highlight { color: var(--accent); font-weight: 700; }
+
+    .masters-section { padding: 60px 0; }
+    .dan-group { margin-bottom: 48px; }
+    .dan-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--accent); }
+    .dan-rank { font-family: 'Noto Serif', serif; font-size: 24px; font-weight: 700; color: var(--accent); white-space: nowrap; }
+    .dan-japanese { color: var(--gold); font-size: 14px; font-weight: 500; }
+    .dan-count { margin-left: auto; background: rgba(209,4,4,.15); color: var(--accent); padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+
+    .masters-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 8px; }
+    .master-card { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; transition: border-color .2s; }
+    .master-card:hover { border-color: var(--accent); }
+    .master-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-top: 7px; flex-shrink: 0; }
+    .master-info { flex: 1; min-width: 0; }
+    .master-name { font-weight: 600; font-size: 14px; color: #fff; }
+    .master-name .rip { color: var(--muted); font-size: 11px; font-weight: 400; }
+    .master-style { font-size: 12px; color: var(--gold); margin-top: 2px; }
+    .master-location { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+    .stats-bar { padding: 40px 0; background: #0e0e0e; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; text-align: center; }
+    .stat-num { font-size: 32px; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-top: 4px; }
+
+    .back-link { display: inline-flex; align-items: center; gap: 8px; color: var(--gold); text-decoration: none; font-size: 14px; font-weight: 600; padding: 40px 0; }
+    .back-link:hover { color: var(--accent); }
+
+    footer { border-top: 1px solid var(--line); padding: 24px 0; }
+    .footer-inner { display: flex; justify-content: space-between; align-items: center; }
+    .footer-copy { color: var(--muted); font-size: 12px; }
+    .footer-links { display: flex; gap: 16px; }
+    .footer-links a { color: #555; text-decoration: none; font-size: 12px; }
+    .footer-links a:hover { color: var(--accent); }
+    .powered-by { text-align: center; padding: 20px 0; border-top: 1px solid var(--line); }
+    .powered-by span { color: var(--muted); font-size: 13px; }
+    .powered-by img { height: 40px; vertical-align: middle; margin-left: 8px; }
+
+    @media (max-width: 768px) {
+      .header-inner { flex-direction: column; gap: 10px; }
+      nav { flex-wrap: wrap; justify-content: center; gap: 12px; }
+      .hero-banner { margin-top: 160px; }
+      .hero-banner-text h1 { font-size: 24px; }
+      .masters-grid { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 20px; }
+      .dan-header { flex-wrap: wrap; }
+      .footer-inner { flex-direction: column; gap: 10px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <div class="header-inner">
+      <a href="/ronin" class="brand">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6655d0e1b5140c507e9b4d6e.png" alt="Ronin Brotherhood" class="brand-logo">
+      </a>
+      <nav>
+        <a href="/ronin">Home</a>
+        <a href="/ronin#organizations">Organizations</a>
+        <a href="/ronin#store">Store</a>
+        <a href="/ronin#training">Training</a>
+        <a href="/ronin#sponsors">Sponsors</a>
+        <a href="/ronin/red-belt-society" class="active">Red Belt Society</a>
+        <a href="https://kanchoai.com" target="_blank">AI App</a>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<!-- Hero Banner -->
+<section class="hero-banner">
+  <img src="https://www.roninbrotherhood.com/wp-content/uploads/2017/04/ronin_Ronin-Red-Belt-Society.jpg" alt="Ronin Red Belt Society">
+  <div class="hero-banner-overlay"></div>
+  <div class="hero-banner-text">
+    <h1>Ronin Red Belt Society</h1>
+    <p>Masters 4th Degree Black Belt &amp; Above</p>
+  </div>
+</section>
+
+<!-- Stats Bar -->
+<section class="stats-bar">
+  <div class="container">
+    <div class="stats-grid">
+      <div><div class="stat-num">210+</div><div class="stat-label">Masters</div></div>
+      <div><div class="stat-num">28</div><div class="stat-label">Countries</div></div>
+      <div><div class="stat-num">7</div><div class="stat-label">Dan Ranks</div></div>
+      <div><div class="stat-num">50+</div><div class="stat-label">Martial Arts Styles</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- Intro -->
+<section class="intro">
+  <div class="container">
+    <div class="intro-badge">&#x1F94B; United Masters</div>
+    <p>We are a <span class="highlight">multi-language and culturally diverse organization</span> open to all martial artists. The Ronin Red Belt Society comprises Ronin members holding legitimate martial arts master ranks from <span class="highlight">4th Degree Black Belt (Yondan)</span> and above. Created to unite masters for sharing experience, knowledge, and techniques to aid personal and dojo development. The group has surpassed <span class="highlight">210 members</span> across <span class="highlight">28 countries</span>.</p>
+  </div>
+</section>
+
+<!-- Masters List -->
+<section class="masters-section">
+  <div class="container">
+
+    <!-- 10th Dan -->
+    <div class="dan-group">
+      <div class="dan-header">
+        <span class="dan-rank">10th Dan</span>
+        <span class="dan-japanese">Judan</span>
+        <span class="dan-count">28 Masters</span>
+      </div>
+      <div class="masters-grid">
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Hanshi Carlos H. Montalvo</div><div class="master-style">Founder (Ronin Goju Ryu Kai)</div><div class="master-location">Florida</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Grand Master Joon P. Choi</div><div class="master-style">Kimodo TKD</div><div class="master-location">Columbus, Ohio</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Professor Maurizio Martina</div><div class="master-style">Shotokan/Kick Boxing</div><div class="master-location">Brindisi, Italy</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">So-Shihan Felton Messina</div><div class="master-style">Shindo Ryu Karate</div><div class="master-location">Dominican Republic</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Shidoshi Glenn Perry</div><div class="master-style">Chinese Goju Ryu</div><div class="master-location">Columbiana, Ohio</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Hanshi Dr. Michael Willet</div><div class="master-style">USA Goju Ryu Karate</div><div class="master-location">Bronx, New York</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Hanshi Christopher Francis</div><div class="master-style">Goshindo/JuJitsu</div><div class="master-location">Trinidad &amp; Tobago</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Sitagung Dr. Harold Mayle <span class="rip">(RIP)</span></div><div class="master-style">Tuan Chuang Fa Kung Fu</div><div class="master-location">Texas</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Hanshi Jedan Figueroa</div><div class="master-style">Jedan Ryu Ju-Jitsu</div><div class="master-location">Vega Baja, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Hanshi Dr. Diego Cardin</div><div class="master-style">Chito Ryu Karate</div><div class="master-location">Puerto Rico</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Hanshi Gary Legacy</div><div class="master-style">Legacy Shorin Ryu Karate</div><div class="master-location">St. Catherine, Canada</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Hanshi Frank Schneider</div><div class="master-style">Sekai Shigaisen Karate</div><div class="master-location">Schwerte, Germany</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Hanshi Oscar Alicea</div><div class="master-style">Shinkage Iaido Ryu/Shotokan</div><div class="master-location">Orlando, Florida</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Professor Pedro Vangas</div><div class="master-style">Tang Soo Do Moo Duk Kwan</div><div class="master-location">Panama</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Hanshi Cherry Ortega</div><div class="master-style">Kajukembo</div><div class="master-location">Isabela, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Hanshi Ignacio Moreira <span class="rip">(RIP)</span></div><div class="master-style">Nindo Ryu Ninjitsu</div><div class="master-location">Humacao, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Hanshi F\u00e9lix V\u00e1zquez</div><div class="master-style">Ninjitsu</div><div class="master-location">New York</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Si Jo Amalio Guerrero</div><div class="master-style">Tuan Shaolin Ssu Chuang Fa</div><div class="master-location">New York</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Hanshi Pierre Rene</div><div class="master-style">Chinese Shotokan Karate</div><div class="master-location">Orlando, Florida</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Hanshi Vicente Guzman</div><div class="master-style">Washi Ryu Karate</div><div class="master-location">San Juan, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Hanshi Germ\u00e1n Dom\u00ednguez</div><div class="master-style">Ninjitsu/Combatives International</div><div class="master-location">Spain</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Soke Dr. Carlos Febres <span class="rip">(RIP)</span></div><div class="master-style">Nimpo Ninjutsu</div><div class="master-location">Orlando, Florida</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Hanshi Dr. Phillip Davis</div><div class="master-style">Shotokan/Taichi</div><div class="master-location">St. Simons Island, Georgia</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Hanshi Dr. Donald McNatt</div><div class="master-style">Wado Ryu/Yoshukai Karate</div><div class="master-location">Lakeland, Florida</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Hanshi Dr. Bolivar Ramirez</div><div class="master-style">Shushinkan Aiki-Budo</div><div class="master-location">Mayaguez, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Si Jo Dr. Jose Perfume</div><div class="master-style">Tuan Shaolin Kung Fu</div><div class="master-location">Mayaguez, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Hanshi Daniel Torres</div><div class="master-style">Dantor Ryu Ju-Jitsu</div><div class="master-location">Oviedo, Florida</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Sikung Luis A. Maquilon-Andrade</div><div class="master-style">Traditional Kung Fu</div><div class="master-location">Ecuador</div></div></div>
+      </div>
+    </div>
+
+    <!-- 9th Dan -->
+    <div class="dan-group">
+      <div class="dan-header">
+        <span class="dan-rank">9th Dan</span>
+        <span class="dan-japanese">Kudan</span>
+        <span class="dan-count">12 Masters</span>
+      </div>
+      <div class="masters-grid">
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Sensei William Hern\u00e1ndez</div><div class="master-style">Hawaiian Kenpo</div><div class="master-location">Mayaguez, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Hanshi Jos\u00e9 Casas Martelo</div><div class="master-style">Ronin Goju</div><div class="master-location">Madrid, Spain</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Hanshi Edwin Lopez</div><div class="master-style">Matsumura-Te Karate</div><div class="master-location">Villa Palmeras, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Hanshi Marcos Ramos</div><div class="master-style">Ju-Jitsu/Ronin Goju Ryu Kai</div><div class="master-location">Jacksonville, Florida</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Hanshi Pedro Ort\u00edz</div><div class="master-style">Ichido Ryu Karate</div><div class="master-location">Salinas, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Hanshi Ricardo Emerson</div><div class="master-style">Okinawan Karate</div><div class="master-location">San Juan, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Hanshi Raymond Correa</div><div class="master-style">Hantei Ryu Karate</div><div class="master-location">Caguas, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Hanshi Eddie Cardona</div><div class="master-style">Shotokan/Taekwondo</div><div class="master-location">Aguadilla, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Hanshi Mar\u00eda Lebron</div><div class="master-style">Kempo Karate</div><div class="master-location">Catano, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Hanshi Jesus Lopes</div><div class="master-style">Cobra Do</div><div class="master-location">Carrizales, Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Hanshi Ruben Colon</div><div class="master-style">Ichido Ryu Karate</div><div class="master-location">Salinas, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Hanshi Hector Sotomayor</div><div class="master-style">Dento Karate Do</div><div class="master-location">Guaynabo, PR</div></div></div>
+      </div>
+    </div>
+
+    <!-- 8th Dan -->
+    <div class="dan-group">
+      <div class="dan-header">
+        <span class="dan-rank">8th Dan</span>
+        <span class="dan-japanese">Hachidan</span>
+        <span class="dan-count">26 Masters</span>
+      </div>
+      <div class="masters-grid">
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Dan Carlos Orellana</div><div class="master-style">Belgium Director</div><div class="master-location">Belgium</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Frank Barroso</div><div class="master-style">Jiu-Jitsu</div><div class="master-location">Bronx, New York</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Michelle Legacy</div><div class="master-style">Legacy Shorin Ryu Org.</div><div class="master-location">Ontario, Canada</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Shihan Freddy Lopez</div><div class="master-style">Goju Ryu/Shindo Ryu</div><div class="master-location">North Carolina</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Janice Chaki</div><div class="master-style">Legacy Shorin Ryu Org.</div><div class="master-location">Ontario, Canada</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Grand Master Eddie P\u00e9rez</div><div class="master-style">Hapkido/Guazabara</div><div class="master-location">Bethesta, Chicago</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Carlos Rosario</div><div class="master-style">Kempo Karate, IKCS</div><div class="master-location">Bayamon, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Pasquale Vasco <span class="rip">(RIP)</span></div><div class="master-style">Shotokan Kenka</div><div class="master-location">Taranto, Italy</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Ram\u00f3n Rivera</div><div class="master-style">Nindo Ryu Ninjutsu</div><div class="master-location">Ceiba, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Dr. Earl Brown</div><div class="master-style">Ju-Jitsu</div><div class="master-location">Trinidad &amp; Tobago</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Vivider V\u00e1zquez</div><div class="master-style">Ninjitsu/Ju-Jitsu</div><div class="master-location">Caguas, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Jaime Escamilla</div><div class="master-style">Kyuden Karate Do</div><div class="master-location">Mexico, DF</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Bill Gill</div><div class="master-style">Japanese Ju-Jitsu</div><div class="master-location">St. Catherines, Canada</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Freddy Adames</div><div class="master-style">Okinawan Kempo</div><div class="master-location">San Sebastian, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Ernesto Huitr\u00f3n <span class="rip">(RIP)</span></div><div class="master-style">Kyuden Karate Do</div><div class="master-location">Mexico City</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Omayra Rom\u00e1n</div><div class="master-style">Shotokan Karate</div><div class="master-location">Ceiba, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Jose Garcia</div><div class="master-style">Matsumura-Te Karate</div><div class="master-location">San Juan, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Grand Master Ian Parker</div><div class="master-style">Tang Soo Do Moo Duk Kwan MPSK</div><div class="master-location">England</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Dr. Hector Rivera</div><div class="master-style">Ninjitsu/Goju Ryu</div><div class="master-location">Carolina, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Luis Toro</div><div class="master-style">Kenpo Karate</div><div class="master-location">Caracas, Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Jose Perez</div><div class="master-style">Yosen Rai Goju Ryu</div><div class="master-location">San Sebastian, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Nelson Rodriguez</div><div class="master-style">KariKan Shotokan</div><div class="master-location">Caracas, Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Aida Ayala</div><div class="master-style">Washi Ryu Karate</div><div class="master-location">San Juan, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Carlos Cotto</div><div class="master-style">Washi Ryu/Borinquen Ryu Karate</div><div class="master-location">Hato Rey, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Hector "Caver" Nunez</div><div class="master-style">Okinawa Te Kempo</div><div class="master-location">San Sebastian, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Hon. Eduardo Otero</div><div class="master-style">Shorinji Ryu/Joshimon Karate</div><div class="master-location">San Juan, PR</div></div></div>
+      </div>
+    </div>
+
+    <!-- 7th Dan -->
+    <div class="dan-group">
+      <div class="dan-header">
+        <span class="dan-rank">7th Dan</span>
+        <span class="dan-japanese">Shichidan</span>
+        <span class="dan-count">27 Masters</span>
+      </div>
+      <div class="masters-grid">
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Bryan Dickerson</div><div class="master-style">Shorin Ryu Karate</div><div class="master-location">Columbus, Ohio</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Carlos Mart\u00ednez</div><div class="master-style">Kick Boxing</div><div class="master-location">Caracas, Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Kevin Pereira</div><div class="master-style">Nindo Ryu Ju-Jitsu</div><div class="master-location">Brooklyn, New York</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Carlos S. (Suso) V\u00e9lez II <span class="rip">(RIP)</span></div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Tamarac, Florida</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Robert O'Neil</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Seffner, Florida</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Jesus Cendan</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Miami, Florida</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Professor Miguel (Magic) Qui\u00f1ones</div><div class="master-style">Isshinryu &amp; Magic Karate</div><div class="master-location">Bayamon, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Rafael Pab\u00f3n</div><div class="master-style">Okinawa Kempo</div><div class="master-location">Virginia</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Jonathan Calzadilla</div><div class="master-style">OIAM Karate Org.</div><div class="master-location">Miranda, Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Israel (Hokami) Rodriguez</div><div class="master-style">Ronin Goju Ryu Kai/Judo/BJJ</div><div class="master-location">Lutz, Florida</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Robert Hern\u00e1ndez</div><div class="master-style">Ninjitsu</div><div class="master-location">Sabana Grande, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Dr. Manuel Alcivar</div><div class="master-style">Aikijitsu Ryu/Aikido/Iaido</div><div class="master-location">Guayaquil, Ecuador</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Adriana Garcia</div><div class="master-style">Kyuden Karate Do</div><div class="master-location">Mexico City, Mexico</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Grand Master Radam\u00e9s Santiago</div><div class="master-style">TaeKwonDo/Gumdo</div><div class="master-location">Fajardo, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Master Pablo Vangas</div><div class="master-style">Tang Soo Do, MDK</div><div class="master-location">Tampa, Florida</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Tennakoon Nissanka</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Sri Lanka/India/NY</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Ingrid Muria</div><div class="master-style">Organizacion Venezolana de Karate</div><div class="master-location">Carrizales, Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi James Fries</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Kitchener, Ontario, Canada</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Woody Best</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">South Carolina</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Liubaldo Albornoz</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Colombia</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Adette Rice</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Kitchener, Ontario, Canada</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Hans Urdaneta</div><div class="master-style">Ronin Goju Ryu Kai/MMA</div><div class="master-location">Santiago, Chile</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Randy Dauphin</div><div class="master-style">Shorin Ryu</div><div class="master-location">St. Catherines, Canada</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Jens Fricke</div><div class="master-style">Shotokan Karate</div><div class="master-location">Edem, Germany</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Emilio Rios</div><div class="master-style">Shaolin Kempo</div><div class="master-location">Moca, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Octavio Rodriguez</div><div class="master-style">Kenpo/Ju-Jitsu</div><div class="master-location">Guayaquil, Ecuador</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Kyoshi Osvaldo Acosta</div><div class="master-style">Ronin Goju Ryu</div><div class="master-location">Anasco, PR</div></div></div>
+      </div>
+    </div>
+
+    <!-- 6th Dan -->
+    <div class="dan-group">
+      <div class="dan-header">
+        <span class="dan-rank">6th Dan</span>
+        <span class="dan-japanese">Rokudan</span>
+        <span class="dan-count">28 Masters</span>
+      </div>
+      <div class="masters-grid">
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Shihan William Pyatt</div><div class="master-style">Kajukembo/WTF Taekwondo</div><div class="master-location">San Juan, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Shihan Wilfredo Vazquez</div><div class="master-style">JuJitsu</div><div class="master-location">Guaynabo, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Shihan Omar Sosa</div><div class="master-style">Matsumura-Te Karate</div><div class="master-location">San Juan, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Shihan Richard Santiago</div><div class="master-style">Ichido Ryu Karate</div><div class="master-location">Milwaukee</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Shihan Carlos Savignon</div><div class="master-style">Isshin Ryu &amp; Magic Karate</div><div class="master-location">Santurce, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Shihan Jose Castro</div><div class="master-style">Cobra Do Karate</div><div class="master-location">Edo. Miranda, Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Shihan Dr. Licesio Prieto Blanco</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Spain</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Shihan Alvaro Paz</div><div class="master-style">OIAM Karate</div><div class="master-location">Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Shihan Ricardo Morales</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Hidalgo, Mexico</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Shihan Crisostomo Lopez</div><div class="master-style">Ninjitsu/S.U.O.T.T.</div><div class="master-location">Spain</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Shihan Hugo Puentes</div><div class="master-style">Karate Do</div><div class="master-location">Pachuca, Mexico</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Shihan Frank P\u00e9rez</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Lakeland, Florida</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Sifu Jeff Moldovan <span class="rip">(RIP)</span></div><div class="master-style">Tuan Kung Fu</div><div class="master-location">Orlando, Florida</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Shihan Frank Verbakel</div><div class="master-style">Shorin Ryu</div><div class="master-location">Elora, Ontario, Canada</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Shihan Carlos Rodriguez</div><div class="master-style">Hawaiian Kempo</div><div class="master-location">Miami, Florida</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Shihan Diana Martinez</div><div class="master-style">Okinawa Kempo</div><div class="master-location">San Sebastian, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Shihan James Chambers</div><div class="master-style">Tactical Goju Ryu</div><div class="master-location">Tampa, Florida</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Master Manny Reyes Jr</div><div class="master-style">Chinese Kenpo Karate</div><div class="master-location">Miami, Florida</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Shihan Israel P\u00e9rez</div><div class="master-style">Ronin Goju Ryu/Okinawa Kempo</div><div class="master-location">Sarasota, Florida</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Shihan Rudy Toth</div><div class="master-style">Aikijitsu/Ju-Jitsu</div><div class="master-location">Miami, Florida</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Shihan John Tovar</div><div class="master-style">Ronin Goju Ryu/Shotokan</div><div class="master-location">Caracas, Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Shihan Samuel Ramirez</div><div class="master-style">Shaolin Kempo</div><div class="master-location">San Sebastian, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Shihan Alberto Salcedo <span class="rip">(RIP)</span></div><div class="master-style">Cobra Do Karate</div><div class="master-location">Edo. Miranda, Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Shihan Lilliana Farias</div><div class="master-style">Bushikan Karate Do</div><div class="master-location">Madrid, Spain</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Shihan Rafael Rodriguez</div><div class="master-style">Ronin Goju Ryu Kai/JJ/Judo</div><div class="master-location">Jacksonville, Florida</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Shihan Daniel Velez</div><div class="master-style">Shaolin Kempo</div><div class="master-location">Las Marias, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Shihan Carlos Orellana</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Brasschaat, Belgium</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Shihan Edison Mosquera</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Quito, Ecuador</div></div></div>
+      </div>
+    </div>
+
+    <!-- 5th Dan -->
+    <div class="dan-group">
+      <div class="dan-header">
+        <span class="dan-rank">5th Dan</span>
+        <span class="dan-japanese">Godan</span>
+        <span class="dan-count">45 Masters</span>
+      </div>
+      <div class="masters-grid">
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Joseph E. Ben\u00edtez JD</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Miami, Florida</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Shihan Eric Alonso</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Mexico DF</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Master Rashid Almas Tamwe</div><div class="master-style">Shotokan Karate</div><div class="master-location">Tanzania, Africa</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Jose M. Barrios</div><div class="master-style">Kick Boxing</div><div class="master-location">New York</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Sifu Orlando (Tiki) Sanchez</div><div class="master-style">Chinese Boxing/MMA/BJJ</div><div class="master-location">Mayaguez, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Leonardo Ayala</div><div class="master-style">Shorin Ryu Karate</div><div class="master-location">Carolina, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Victor Montalvo</div><div class="master-style">Shaolin Kempo</div><div class="master-location">San Sebastian, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Julio Morales</div><div class="master-style">Cobra Do</div><div class="master-location">Colombia</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Master Paul Pears</div><div class="master-style">Tang Soo Do, Moo Duk Kwan</div><div class="master-location">England</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Master Tom Arcchambault</div><div class="master-style">Gosoku Ryu</div><div class="master-location">Cape Coral, Florida</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Jose Velez Jr.</div><div class="master-style">Ju Jitsu</div><div class="master-location">El Paso, Texas</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Master Jacqueliza Bernabe</div><div class="master-style">Isshin Ryu &amp; Magic Karate</div><div class="master-location">Bayamon, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Sa\u00fal Nu\u00f1ez</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Isla Margarita, Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Gilbert Monserrate</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Gurabo, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Francisco Choy</div><div class="master-style">Kenpo/Lima Lama</div><div class="master-location">Tijuana, Mexico</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Rafael Rojas</div><div class="master-style">Cobra Do Karate</div><div class="master-location">Edo. Miranda, Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Josue Ortiz</div><div class="master-style">Isshin Ryu &amp; Magic Karate</div><div class="master-location">Caguas, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Franco Polanco</div><div class="master-style">Shotokan</div><div class="master-location">Calusso, Italy</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Elvis Padilla</div><div class="master-style">OIAM Karate</div><div class="master-location">Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Parmood Chand</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Punjar, India</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Angel Omar Castro</div><div class="master-style">Cobra Do Karate</div><div class="master-location">Aruba</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi H. M. Chandrapala</div><div class="master-style">Ronin Goju Ryu Kai &amp; JJ</div><div class="master-location">Sri Lanka</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Richard Reyes</div><div class="master-style">Isshin Ryu &amp; Magic Karate</div><div class="master-location">Toa Baja, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Brayan Rodriguez</div><div class="master-style">Karikan Shotokan</div><div class="master-location">Miami, Florida</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Rafael Angel Alvarado</div><div class="master-style">Cobra Do Karate</div><div class="master-location">Edo. Miranda, Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Michael Marchand</div><div class="master-style">Combat Bujutsu</div><div class="master-location">Trinidad &amp; Tobago</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Luis David Mu\u00f1oz</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Mexico, DF</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Mr. Priusntha Perera</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Sri Lanka</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Alvaro Paz</div><div class="master-style">OIAM Karate</div><div class="master-location">Aragua, Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Sifu Juan Carlos Miranda</div><div class="master-style">Tuan Shaolin Kung Fu</div><div class="master-location">Colombia</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Mrs. Sakunthala Tennakoon</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Sri Lanka</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Oscar (Hokori) Nu\u00f1ez</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Isla Margarita, Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Luis Maldonado</div><div class="master-style">Karikan Shotokan</div><div class="master-location">Caracas, Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Luis Beltre</div><div class="master-style">Matsumura-Te Karate</div><div class="master-location">Dominican Republic</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Robert Perez</div><div class="master-style">Karikan Shotokan</div><div class="master-location">Caracas, Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Joe L. O'Neill</div><div class="master-style">Shotokan Washi Ryu Karate</div><div class="master-location">San Juan, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Quilivio Alvarez</div><div class="master-style">Matsumura-Te Karate</div><div class="master-location">Dominican Republic</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Carlos Jos\u00e9 Montalvo</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Tampa, Florida</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Sabonim Lorena Soerensen</div><div class="master-style">TaeKwonDo</div><div class="master-location">Buenos Aires, Argentina</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Rafael Santiago</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Orlando, Florida</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Dr. Santos Ru\u00edz</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">West Palm, Florida</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Sabonim Mauro Arcia</div><div class="master-style">Taekwondo/Krav Maga</div><div class="master-location">Panama</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Dr. Angel Jimenez</div><div class="master-style">Combat Hapkido</div><div class="master-location">Bayamon, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Lucilo Barboza</div><div class="master-style">Ronin Goju Ryu</div><div class="master-location">Houston, Texas</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Stephane Quirion</div><div class="master-style">Jujitsu</div><div class="master-location">Quebec, Canada</div></div></div>
+      </div>
+    </div>
+
+    <!-- 4th Dan -->
+    <div class="dan-group">
+      <div class="dan-header">
+        <span class="dan-rank">4th Dan</span>
+        <span class="dan-japanese">Yondan</span>
+        <span class="dan-count">63 Masters</span>
+      </div>
+      <div class="masters-grid">
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Juan Carlos Montalvo <span class="rip">(RIP)</span></div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Tampa, Florida</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Jesus Barboza</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Houston, Texas</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Gresly Arellano</div><div class="master-style">Bushikan Karate Do</div><div class="master-location">Madrid, Spain</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Tubal Calzadilla</div><div class="master-style">OIAM Karate</div><div class="master-location">Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Jorvi Rojas</div><div class="master-style">Cobra Do Karate</div><div class="master-location">Edo. Miranda, Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Sarah Chambers</div><div class="master-style">Tactical Goju Ryu</div><div class="master-location">Tampa, Florida</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Luis Conky Torres</div><div class="master-style">Shotokan</div><div class="master-location">San Sebastian, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Isamar Alvarez</div><div class="master-style">Isshin Ryu &amp; Magic Karate</div><div class="master-location">Bayamon, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Amesh Persand Lakharam</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Gayana</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Daniel F. Ben\u00edtez</div><div class="master-style">Ronin Goju Kai</div><div class="master-location">Miami, Florida</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Jose Manuel Caravaca</div><div class="master-style">Ronin Goju Ryu</div><div class="master-location">Madrid, Spain</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Daniel Chacon</div><div class="master-style">Krav Maga</div><div class="master-location">Puerto Limon, Costa Rica</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Jose Gregorio Marin</div><div class="master-style">OIAM Karate</div><div class="master-location">Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Kasuo Garcia</div><div class="master-style">Ronin Goju Ryu</div><div class="master-location">Distrito Federal, Mexico</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Kumar Ramkeet</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Gayana</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Jose D. Rivera</div><div class="master-style">Shaolin Kempo</div><div class="master-location">San Sebastian, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Tim Moyniham</div><div class="master-style">Ronin Goju Ryu Kai/Shorin Ryu</div><div class="master-location">Elora, Canada</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Kelvin Rios</div><div class="master-style">Shaolin Kempo</div><div class="master-location">Ponce, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Jose Manuel Valdez</div><div class="master-style">Kenpo/Kung Fu</div><div class="master-location">Barcelona, Spain</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Juan Pablo Rivera</div><div class="master-style">Cobra Do Karate</div><div class="master-location">Edo. Miranda, Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Lucilo Barboza</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Maracay, Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Yesica Solano</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Mexico, DF</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Adrian Garc\u00eda</div><div class="master-style">Kyuden Karate Do</div><div class="master-location">Mexico DF</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Junno Farias</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Orlando, Florida</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Master Jaime Velazquez</div><div class="master-style">Isshin Ryu &amp; Magic Karate</div><div class="master-location">Germany</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Isabel Ib\u00e1\u00f1ez</div><div class="master-style">Kyuden Karate Do</div><div class="master-location">Mexico DF</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Gregory Palacios</div><div class="master-style">Cobra Do Karate</div><div class="master-location">Maracay, Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Juan Velazquez</div><div class="master-style">Isshin Ryu &amp; Magic Karate</div><div class="master-location">Toa Baja, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Alejandro Linares</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Maracay, Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Jos\u00e9 Castro</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Aragua, Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi M\u00f3nica Garcia</div><div class="master-style">Kyuden Karate Do</div><div class="master-location">Mexico, DF</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Graeme Jones</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Kitchener, Ontario, Canada</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Master Justo Ortiz</div><div class="master-style">Isshin Ryu &amp; Magic Karate</div><div class="master-location">Bayamon, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Master Miguel Sanch\u00e9z</div><div class="master-style">Ronin Goju Ryu Kai/Kung Fu</div><div class="master-location">Guayaquil, Ecuador</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Michael McGlashon</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Ontario, Canada</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Master Stanley Mendez</div><div class="master-style">Isshin Ryu &amp; Magic Karate</div><div class="master-location">Santurce, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Samuel Alejandro Casas</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Mexico DF</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Master Shannon Parker</div><div class="master-style">Tang Soo Do, Muk Duk Kwan</div><div class="master-location">England</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Master H\u00e9ctor Col\u00f3n Montalvo</div><div class="master-style">Okinawa Kempo</div><div class="master-location">San Sebastian, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Master Melissa Ortega</div><div class="master-style">Isshin Ryu &amp; Magic Karate</div><div class="master-location">Bayamon, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Guillermo Medina</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Isabela, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi George Picard</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">St. Catherines, Ontario, Canada</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Jos\u00e9 "Turpial" Fern\u00e1ndez</div><div class="master-style">Jeeyf/OVK</div><div class="master-location">Aragua, Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Anibal Nunez</div><div class="master-style">Okinawa Te Kempo Karate</div><div class="master-location">San Sebastian, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Master Ray McGill</div><div class="master-style">Kenpo Karate</div><div class="master-location">Ontario, Canada</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Master Manuel Barrios</div><div class="master-style">Cobra Do</div><div class="master-location">Edo. Miranda, Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Jorge Hern\u00e1ndez</div><div class="master-style">Karate (Garra del Oso) OVK</div><div class="master-location">Miranda, Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Juvenal Fern\u00e1ndez</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Isla Margarita, Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Ryan Potter</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Kitchener, Ontario, Canada</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Alex Castro</div><div class="master-style">Shaolin Tsu Kempo</div><div class="master-location">Mayaguez, PR</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Adam France</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Ontario, Canada</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Jos\u00e9 Manuel Casas</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Isla Margarita, Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Alejandro Reyes</div><div class="master-style">Ronin Goju Ryu Kai</div><div class="master-location">Spain</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Ronald Aponte</div><div class="master-style">Karate (Garra del Oso) OVK</div><div class="master-location">Miranda, Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Mytzi Gaston</div><div class="master-style">Ju-Jitsu Ryu, Aikido</div><div class="master-location">Panama</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Luis Pacheco</div><div class="master-style">Karikan Shotokan</div><div class="master-location">Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Estefania Velez</div><div class="master-style">Karikan Shotokan</div><div class="master-location">Caracas, Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Franger Hernandez</div><div class="master-style">Karikan Shotokan</div><div class="master-location">Caracas, Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Heynelbel Cuenca</div><div class="master-style">Karikan Shotokan</div><div class="master-location">Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Jesus Bravo</div><div class="master-style">Karikan Shotokan</div><div class="master-location">Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Selwyn Fournillier</div><div class="master-style">Karikan Shotokan</div><div class="master-location">Venezuela</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Abraham Rodriguez</div><div class="master-style">Karican Shotokan</div><div class="master-location">Ecuador</div></div></div>
+        <div class="master-card"><div class="master-dot"></div><div class="master-info"><div class="master-name">Renshi Carlos Figueredo</div><div class="master-style">Kenpo</div><div class="master-location">Valencia, Venezuela</div></div></div>
+      </div>
+    </div>
+
+    <a href="/ronin" class="back-link">&larr; Back to Ronin Brotherhood</a>
+
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-copy">&copy; 2024 Ronin Brotherhood LLC. All Rights Reserved.</div>
+      <div class="footer-links">
+        <a href="/ronin">Home</a>
+        <a href="/ronin#organizations">Organizations</a>
+        <a href="/ronin#store">Store</a>
+      </div>
+    </div>
+  </div>
+  <div class="powered-by">
+    <span>Powered by</span>
+    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/67dc2da63be61bfc66a6b3fc.png" alt="KanchoAI">
+  </div>
+</footer>
+
+</body>
+</html>`);
+});
+
+// ============================================================================
 // SPANISH LANDING PAGE
 // ============================================================================
 
@@ -2060,6 +2537,7 @@ app.get(`${BASE_PATH}/es`, (req, res) => {
         <a href="#training">Entrenamiento</a>
         <a href="#events">Eventos</a>
         <a href="#sponsors">Patrocinadores</a>
+        <a href="/ronin/red-belt-society">Red Belt Society</a>
         <a href="https://kanchoai.com" target="_blank">AI App</a>
       </nav>
       <div class="header-auth" id="header-auth-es">
@@ -2744,6 +3222,7 @@ app.get(`${BASE_PATH}/fil`, (req, res) => {
         <a href="#training">Pagsasanay</a>
         <a href="#events">Mga Kaganapan</a>
         <a href="#sponsors">Mga Sponsor</a>
+        <a href="/ronin/red-belt-society">Red Belt Society</a>
         <a href="https://kanchoai.com" target="_blank">AI App</a>
       </nav>
       <div class="header-auth" id="header-auth-fil">
