@@ -230,7 +230,7 @@ if (fs.existsSync(dashboardDistPath)) {
     .hero-quote p { font-family: 'Noto Serif', serif; font-style: italic; color: var(--muted); font-size: 15px; margin-bottom: 4px; }
     .hero-quote cite { color: #555; font-size: 12px; }
 
-    .photo-strip { padding: 32px 0; overflow: hidden; background: #fff; border-top: 1px solid var(--line); }
+    .photo-strip { padding: 32px 0; overflow: hidden; background: #000; border-top: 1px solid var(--line); }
     .photo-strip-inner { display: flex; align-items: center; justify-content: center; gap: 36px; max-width: 1100px; margin: 0 auto; padding: 0 20px; }
     .photo-strip-inner img { height: 150px; width: auto; object-fit: contain; display: block; transition: transform .3s; }
     .photo-strip-inner img:hover { transform: scale(1.08); }
@@ -576,12 +576,12 @@ if (fs.existsSync(dashboardDistPath)) {
 
   <section class="photo-strip">
     <div class="photo-strip-inner">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/698d245d721397289ba56c7d.png" alt="KanchoAI">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782773873af78f3ae844f.png" alt="Ronin Brotherhood">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782768d5b5a64b992f22f.png" alt="Ronin Brotherhood">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782761817151e36b61a7f.png" alt="Ronin Brotherhood">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782763873afe6caae843d.jpg" alt="Ronin Brotherhood">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6997827620c035e70c1dce26.png" alt="Ronin Brotherhood">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782813ff51693e263e40a.png" alt="KanchoAI">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b3590acbe25cb7ea01.png" alt="Ronin Brotherhood">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b33eba040ffb3bdda3.png" alt="Ronin Brotherhood">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b3373080c064742d9f.jpg" alt="Ronin Brotherhood">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b3d0716b0a0f318067.png" alt="Ronin Brotherhood">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b39598d2686ce37d70.png" alt="Ronin Brotherhood">
     </div>
   </section>
 
@@ -1347,7 +1347,7 @@ app.get(`${BASE_PATH}/es`, (req, res) => {
     .hero-quote p { font-family: 'Noto Serif', serif; font-style: italic; color: var(--muted); font-size: 15px; margin-bottom: 4px; }
     .hero-quote cite { color: #555; font-size: 12px; }
 
-    .photo-strip { padding: 32px 0; overflow: hidden; background: #fff; border-top: 1px solid var(--line); }
+    .photo-strip { padding: 32px 0; overflow: hidden; background: #000; border-top: 1px solid var(--line); }
     .photo-strip-inner { display: flex; align-items: center; justify-content: center; gap: 36px; max-width: 1100px; margin: 0 auto; padding: 0 20px; }
     .photo-strip-inner img { height: 150px; width: auto; object-fit: contain; display: block; transition: transform .3s; }
     .photo-strip-inner img:hover { transform: scale(1.08); }
@@ -1601,12 +1601,12 @@ app.get(`${BASE_PATH}/es`, (req, res) => {
 
   <section class="photo-strip">
     <div class="photo-strip-inner">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/698d245d721397289ba56c7d.png" alt="KanchoAI">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782773873af78f3ae844f.png" alt="Ronin Brotherhood">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782768d5b5a64b992f22f.png" alt="Ronin Brotherhood">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782761817151e36b61a7f.png" alt="Ronin Brotherhood">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782763873afe6caae843d.jpg" alt="Ronin Brotherhood">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6997827620c035e70c1dce26.png" alt="Ronin Brotherhood">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782813ff51693e263e40a.png" alt="KanchoAI">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b3590acbe25cb7ea01.png" alt="Ronin Brotherhood">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b33eba040ffb3bdda3.png" alt="Ronin Brotherhood">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b3373080c064742d9f.jpg" alt="Ronin Brotherhood">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b3d0716b0a0f318067.png" alt="Ronin Brotherhood">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b39598d2686ce37d70.png" alt="Ronin Brotherhood">
     </div>
   </section>
 
@@ -2062,7 +2062,7 @@ app.get(`${BASE_PATH}/fil`, (req, res) => {
     .hero-quote { margin-top: 40px; padding: 16px 20px; border-left: 3px solid var(--gold); }
     .hero-quote p { font-family: 'Noto Serif', serif; font-style: italic; color: var(--muted); font-size: 15px; margin-bottom: 4px; }
     .hero-quote cite { color: #555; font-size: 12px; }
-    .photo-strip { padding: 32px 0; overflow: hidden; background: #fff; border-top: 1px solid var(--line); }
+    .photo-strip { padding: 32px 0; overflow: hidden; background: #000; border-top: 1px solid var(--line); }
     .photo-strip-inner { display: flex; align-items: center; justify-content: center; gap: 36px; max-width: 1100px; margin: 0 auto; padding: 0 20px; }
     .photo-strip-inner img { height: 150px; width: auto; object-fit: contain; display: block; transition: transform .3s; }
     .photo-strip-inner img:hover { transform: scale(1.08); }
@@ -2256,12 +2256,12 @@ app.get(`${BASE_PATH}/fil`, (req, res) => {
 
   <section class="photo-strip">
     <div class="photo-strip-inner">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/698d245d721397289ba56c7d.png" alt="KanchoAI">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782773873af78f3ae844f.png" alt="Ronin Brotherhood">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782768d5b5a64b992f22f.png" alt="Ronin Brotherhood">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782761817151e36b61a7f.png" alt="Ronin Brotherhood">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782763873afe6caae843d.jpg" alt="Ronin Brotherhood">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6997827620c035e70c1dce26.png" alt="Ronin Brotherhood">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782813ff51693e263e40a.png" alt="KanchoAI">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b3590acbe25cb7ea01.png" alt="Ronin Brotherhood">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b33eba040ffb3bdda3.png" alt="Ronin Brotherhood">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b3373080c064742d9f.jpg" alt="Ronin Brotherhood">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b3d0716b0a0f318067.png" alt="Ronin Brotherhood">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b39598d2686ce37d70.png" alt="Ronin Brotherhood">
     </div>
   </section>
 
