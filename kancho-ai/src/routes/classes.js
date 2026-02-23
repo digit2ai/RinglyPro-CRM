@@ -1,11 +1,80 @@
 // kancho-ai/src/routes/classes.js
-// Public class schedule routes for Kancho AI
+// Class schedule CRUD + public routes for Kancho AI
 
 const express = require('express');
 const router = express.Router();
 
 module.exports = (models) => {
-  const { KanchoClass } = models;
+  const { KanchoClass, KanchoAttendance, KanchoClassEnrollment } = models;
+
+  // GET /api/v1/classes - List all classes for a school (admin)
+  router.get('/', async (req, res) => {
+    try {
+      const { school_id } = req.query;
+      if (!school_id) return res.status(400).json({ error: 'school_id required' });
+
+      const classes = await KanchoClass.findAll({
+        where: { school_id },
+        order: [['name', 'ASC']]
+      });
+
+      res.json({ success: true, data: classes });
+    } catch (error) {
+      console.error('Error fetching classes:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // POST /api/v1/classes - Create a class
+  router.post('/', async (req, res) => {
+    try {
+      const { school_id, name } = req.body;
+      if (!school_id || !name) return res.status(400).json({ error: 'school_id and name required' });
+
+      const cls = await KanchoClass.create({
+        ...req.body,
+        is_active: req.body.is_active !== false,
+        created_at: new Date(),
+        updated_at: new Date()
+      });
+
+      res.status(201).json({ success: true, data: cls });
+    } catch (error) {
+      console.error('Error creating class:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // PUT /api/v1/classes/:id - Update a class
+  router.put('/:id', async (req, res) => {
+    try {
+      const cls = await KanchoClass.findByPk(req.params.id);
+      if (!cls) return res.status(404).json({ error: 'Class not found' });
+
+      await cls.update({ ...req.body, updated_at: new Date() });
+      res.json({ success: true, data: cls });
+    } catch (error) {
+      console.error('Error updating class:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // DELETE /api/v1/classes/:id - Delete a class (cascade)
+  router.delete('/:id', async (req, res) => {
+    try {
+      const cls = await KanchoClass.findByPk(req.params.id);
+      if (!cls) return res.status(404).json({ error: 'Class not found' });
+
+      await KanchoAttendance.destroy({ where: { class_id: cls.id } });
+      await KanchoClassEnrollment.destroy({ where: { class_id: cls.id } });
+      await cls.destroy();
+
+      res.json({ success: true, message: 'Class deleted' });
+    } catch (error) {
+      console.error('Error deleting class:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
 
   // GET /api/v1/classes/public - Get public class listings
   router.get('/public', async (req, res) => {

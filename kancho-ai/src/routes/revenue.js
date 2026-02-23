@@ -17,7 +17,9 @@ module.exports = (models) => {
         return res.status(400).json({ error: 'school_id required' });
       }
 
+      const { student_id } = req.query;
       const where = { school_id };
+      if (student_id) where.student_id = student_id;
       if (type) where.type = type;
       if (date_from || date_to) {
         where.date = {};

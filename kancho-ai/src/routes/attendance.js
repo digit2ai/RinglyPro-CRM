@@ -52,6 +52,39 @@ module.exports = (models) => {
     }
   });
 
+  // GET /api/v1/attendance/today - Today's check-ins summary
+  router.get('/today', async (req, res) => {
+    try {
+      const { school_id } = req.query;
+      if (!school_id) return res.status(400).json({ error: 'school_id required' });
+
+      const today = new Date().toISOString().split('T')[0];
+
+      const records = await KanchoAttendance.findAll({
+        where: { school_id, date: today },
+        include: [
+          { model: KanchoStudent, as: 'student', attributes: ['id', 'first_name', 'last_name', 'belt_rank'] },
+          { model: KanchoClass, as: 'class', attributes: ['id', 'name'] }
+        ],
+        order: [['checked_in_at', 'DESC']]
+      });
+
+      // Total active students for comparison
+      const totalActive = await KanchoStudent.count({ where: { school_id, status: 'active' } });
+
+      res.json({
+        success: true,
+        data: records,
+        total: records.length,
+        totalActive,
+        date: today
+      });
+    } catch (error) {
+      console.error('Error fetching today attendance:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // GET /api/v1/attendance/class-roster - Get students with check-in status for a class+date
   router.get('/class-roster', async (req, res) => {
     try {

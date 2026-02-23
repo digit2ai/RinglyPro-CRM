@@ -6289,6 +6289,7 @@ app.get('*', (req, res) => {
         <button class="tab-btn" onclick="switchTab('portalAccounts')"><i class="fas fa-user-shield mr-1"></i>Portal<span id="portalBadge" class="tab-badge" style="display:none"></span></button>
         <button class="tab-btn" onclick="switchTab('merchandise')"><i class="fas fa-store mr-1"></i>Merch</button>
         <button class="tab-btn" onclick="switchTab('belts')"><i class="fas fa-award mr-1"></i>Belts</button>
+        <button class="tab-btn" onclick="switchTab('classes')"><i class="fas fa-chalkboard-teacher mr-1"></i>Classes</button>
       </div>
 
       <!-- Tab: Overview -->
@@ -6408,6 +6409,17 @@ app.get('*', (req, res) => {
             <p id="kpiRevenueTarget" class="text-2xl font-bold text-kancho">--%</p>
             <p class="text-xs text-gray-400 mt-1">of monthly goal</p>
           </div>
+        </div>
+      </div>
+
+      <!-- Today's Check-ins -->
+      <div class="card rounded-2xl p-6 mb-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-bold flex items-center gap-2"><i class="fas fa-clipboard-check text-kancho"></i> Today's Check-ins</h3>
+          <span id="todayCheckinCount" class="text-sm text-gray-400"></span>
+        </div>
+        <div id="todayCheckinsList" class="space-y-2">
+          <p class="text-gray-500 text-sm">Loading...</p>
         </div>
       </div>
 
@@ -6669,6 +6681,23 @@ app.get('*', (req, res) => {
         </div>
         <div id="beltLadder" class="space-y-3"></div>
         <p id="beltsEmpty" class="hidden text-center text-gray-500 py-12">No belt requirements configured. Click "Seed Defaults" for a standard hierarchy.</p>
+      </div>
+
+      <!-- Tab: Classes -->
+      <div id="tabClasses" class="tab-content">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-chalkboard-teacher text-kancho"></i> Class Schedule</h2>
+          <button class="btn-primary btn-sm" onclick="openClassForm()"><i class="fas fa-plus mr-1"></i> Add Class</button>
+        </div>
+        <div class="card rounded-2xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="data-table">
+              <thead><tr><th>Name</th><th>Martial Art</th><th>Level</th><th>Instructor</th><th>Schedule</th><th>Capacity</th><th>Active</th><th>Actions</th></tr></thead>
+              <tbody id="classesAdminTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <p id="classesAdminEmpty" class="hidden text-center text-gray-500 py-12">No classes configured. Click "Add Class" to start.</p>
       </div>
 
     </div><!-- /dashboardSection -->
@@ -7680,9 +7709,37 @@ app.get('*', (req, res) => {
           });
         }
         updatePortalBadge();
+        loadTodayCheckins();
       } catch (e) {
         console.error('Failed to load dashboard:', e);
       }
+    }
+
+    async function loadTodayCheckins() {
+      const schoolId = currentSchoolId;
+      if (!schoolId) return;
+      try {
+        const res = await fetch('/kanchoai/api/v1/attendance/today?school_id=' + schoolId);
+        const data = await res.json();
+        const container = document.getElementById('todayCheckinsList');
+        const countEl = document.getElementById('todayCheckinCount');
+        countEl.textContent = data.total + ' / ' + data.totalActive + ' active students';
+        if (!data.data || data.data.length === 0) {
+          container.innerHTML = '<p class="text-gray-500 text-sm text-center py-4">No check-ins yet today.</p>';
+          return;
+        }
+        container.innerHTML = data.data.slice(0, 15).map(r => {
+          const name = (r.student?.first_name || '') + ' ' + (r.student?.last_name || '');
+          const cls = r.class?.name || 'Open Training';
+          const time = r.checked_in_at ? new Date(r.checked_in_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--';
+          return '<div class="flex items-center justify-between p-2 rounded-lg bg-green-500/5 border-l-2 border-green-500">' +
+            '<div class="flex items-center gap-3"><i class="fas fa-check-circle text-green-400 text-sm"></i><div>' +
+            '<p class="font-medium text-sm">' + name.trim() + '</p>' +
+            '<p class="text-xs text-gray-500">' + cls + '</p></div></div>' +
+            '<span class="text-xs text-gray-400">' + time + '</span></div>';
+        }).join('') +
+        (data.data.length > 15 ? '<p class="text-center text-xs text-gray-500 mt-2">+ ' + (data.data.length - 15) + ' more</p>' : '');
+      } catch (e) { console.error('loadTodayCheckins error:', e); }
     }
 
     async function seedDemoData() {
@@ -8074,6 +8131,7 @@ app.get('*', (req, res) => {
         else if (tabName === 'portalAccounts') loadPortalAccounts();
         else if (tabName === 'merchandise') loadMerchandiseAdmin();
         else if (tabName === 'belts') loadBeltRequirements();
+        else if (tabName === 'classes') loadClassesAdmin();
       }
     }
 
@@ -8176,6 +8234,10 @@ app.get('*', (req, res) => {
             '<button class="btn-checkin btn-sm mb-3" onclick="quickCheckIn(' + s.id + ')"><i class="fas fa-check-circle mr-1"></i> Check In Now</button>' +
             '<div id="studentAttendanceHistory"><div class="roster-loading" style="padding:12px 0;font-size:12px;"><i class="fas fa-spinner fa-spin"></i> Loading history...</div></div>' +
           '</div>' +
+          '<div class="mb-6">' +
+            '<h4 class="text-sm font-bold text-gray-400 uppercase mb-3">Payment History</h4>' +
+            '<div id="studentPaymentHistory"><div class="roster-loading" style="padding:12px 0;font-size:12px;"><i class="fas fa-spinner fa-spin"></i> Loading payments...</div></div>' +
+          '</div>' +
           '<div class="flex gap-3 mt-6">' +
             '<button class="btn-primary flex-1 btn-sm" onclick="openStudentForm(' + s.id + ');closeStudentDetail()"><i class="fas fa-edit mr-1"></i> Edit</button>' +
             '<button class="btn-ghost flex-1 btn-sm" onclick="if(confirm(&quot;Delete this student?&quot;))deleteStudent(' + s.id + ')"><i class="fas fa-trash mr-1"></i> Delete</button>' +
@@ -8184,6 +8246,7 @@ app.get('*', (req, res) => {
         document.getElementById('studentPanelOverlay').classList.add('open');
         // Load attendance history
         loadAttendanceHistory(id, document.getElementById('studentAttendanceHistory'));
+        loadStudentPaymentHistory(id, document.getElementById('studentPaymentHistory'));
       } catch (e) { console.error('openStudentDetail error:', e); }
     }
 
@@ -8918,6 +8981,31 @@ app.get('*', (req, res) => {
       }
     }
 
+    async function loadStudentPaymentHistory(studentId, container) {
+      try {
+        const res = await fetch('/kanchoai/api/v1/revenue?school_id=' + currentSchoolId + '&student_id=' + studentId + '&limit=20');
+        const data = await res.json();
+        if (!data.success || !data.data || data.data.length === 0) {
+          container.innerHTML = '<p class="text-sm text-gray-500">No payment records</p>';
+          return;
+        }
+        let html = '';
+        data.data.slice(0, 10).forEach(r => {
+          const typeBadge = r.type === 'membership' ? 'badge-active' : r.type === 'retail' ? 'badge-warm' : r.type === 'belt_test' ? 'badge-medium' : 'badge-new';
+          html += '<div class="attendance-history-item">' +
+            '<span class="date">' + formatDate(r.date) + '</span>' +
+            '<span class="class-name">' + formatCurrency(r.amount) + '</span>' +
+            '<span class="badge ' + typeBadge + '" style="font-size:10px;">' + (r.type || 'payment') + '</span>' +
+          '</div>';
+        });
+        if (data.total > 10) html += '<p class="text-xs text-gray-500 mt-2 text-center">Showing 10 of ' + data.total + ' payments</p>';
+        container.innerHTML = html;
+      } catch (e) {
+        console.error('loadStudentPaymentHistory error:', e);
+        container.innerHTML = '<p class="text-sm text-gray-500">Error loading payments</p>';
+      }
+    }
+
     // ==================== PORTAL ACCOUNTS TAB ====================
     async function loadPortalAccounts() {
       const schoolId = currentSchoolId;
@@ -9033,6 +9121,97 @@ app.get('*', (req, res) => {
       if (!confirm('Delete this merchandise item?')) return;
       await fetch('/kanchoai/api/v1/merchandise/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + authToken } });
       tabsLoaded.merchandise = false; loadMerchandiseAdmin();
+    }
+
+    // ==================== CLASSES ADMIN TAB ====================
+    async function loadClassesAdmin() {
+      const schoolId = currentSchoolId;
+      if (!schoolId) return;
+      try {
+        const res = await fetch('/kanchoai/api/v1/classes?school_id=' + schoolId);
+        const data = await res.json();
+        const tbody = document.getElementById('classesAdminTableBody');
+        const empty = document.getElementById('classesAdminEmpty');
+        if (!data.data || data.data.length === 0) { tbody.innerHTML = ''; empty.classList.remove('hidden'); return; }
+        empty.classList.add('hidden');
+        tbody.innerHTML = data.data.map(c => {
+          const sched = c.schedule || {};
+          const schedText = Object.entries(sched).map(([day, time]) => day.slice(0,3) + ' ' + time).join(', ') || '--';
+          return '<tr>' +
+            '<td class="font-medium">' + c.name + '</td>' +
+            '<td>' + (c.martial_art || '--') + '</td>' +
+            '<td>' + (c.level || '--') + '</td>' +
+            '<td>' + (c.instructor || '--') + '</td>' +
+            '<td class="text-xs">' + schedText + '</td>' +
+            '<td>' + (c.capacity || '--') + '</td>' +
+            '<td><span class="badge badge-' + (c.is_active ? 'active' : 'cancelled') + '">' + (c.is_active ? 'Yes' : 'No') + '</span></td>' +
+            '<td><button class="btn-ghost btn-sm mr-1" onclick="editClass(' + c.id + ')"><i class="fas fa-edit"></i></button>' +
+            '<button class="btn-ghost btn-sm text-red-400" onclick="deleteClass(' + c.id + ')"><i class="fas fa-trash"></i></button></td></tr>';
+        }).join('');
+      } catch (e) { console.error('loadClassesAdmin error:', e); }
+    }
+
+    function openClassForm(existing) {
+      const c = existing || {};
+      const schedVal = c.schedule ? Object.entries(c.schedule).map(([d,t]) => d + ' ' + t).join('\\n') : '';
+      const html = '<div class="modal-backdrop" onclick="closeModal()"></div><div class="modal-content" style="max-width:520px"><h3 class="text-lg font-bold mb-4">' + (c.id ? 'Edit' : 'Add') + ' Class</h3><form onsubmit="saveClass(event,' + (c.id || 'null') + ')">' +
+        '<div class="grid grid-cols-2 gap-3 mb-3"><div><label class="block text-sm text-gray-400 mb-1">Class Name</label><input id="className" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white" value="' + (c.name || '') + '" required></div>' +
+        '<div><label class="block text-sm text-gray-400 mb-1">Martial Art</label><input id="classMartialArt" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white" value="' + (c.martial_art || '') + '"></div></div>' +
+        '<div class="grid grid-cols-3 gap-3 mb-3"><div><label class="block text-sm text-gray-400 mb-1">Level</label><select id="classLevel" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white"><option value="All Levels">All Levels</option><option value="Beginner">Beginner</option><option value="Intermediate">Intermediate</option><option value="Advanced">Advanced</option><option value="Kids">Kids</option></select></div>' +
+        '<div><label class="block text-sm text-gray-400 mb-1">Capacity</label><input id="classCapacity" type="number" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white" value="' + (c.capacity || 20) + '"></div>' +
+        '<div><label class="block text-sm text-gray-400 mb-1">Duration (min)</label><input id="classDuration" type="number" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white" value="' + (c.duration_minutes || 60) + '"></div></div>' +
+        '<div class="grid grid-cols-2 gap-3 mb-3"><div><label class="block text-sm text-gray-400 mb-1">Instructor</label><input id="classInstructor" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white" value="' + (c.instructor || '') + '"></div>' +
+        '<div><label class="block text-sm text-gray-400 mb-1">Price</label><input id="classPrice" type="number" step="0.01" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white" value="' + (c.price || 0) + '"></div></div>' +
+        '<div class="mb-3"><label class="block text-sm text-gray-400 mb-1">Description</label><textarea id="classDesc" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white" rows="2">' + (c.description || '') + '</textarea></div>' +
+        '<div class="mb-3"><label class="block text-sm text-gray-400 mb-1">Schedule (one per line: Day HH:MM)</label><textarea id="classSchedule" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white" rows="3" placeholder="Monday 18:00\\nWednesday 18:00\\nFriday 17:00">' + schedVal + '</textarea></div>' +
+        '<div class="mb-4"><label class="flex items-center gap-2"><input id="classActive" type="checkbox"' + (c.is_active !== false ? ' checked' : '') + '> Active</label></div>' +
+        '<div class="flex gap-2"><button type="submit" class="btn-primary">Save</button><button type="button" class="btn-ghost" onclick="closeModal()">Cancel</button></div></form></div>';
+      let modal = document.getElementById('globalModal');
+      if (!modal) { modal = document.createElement('div'); modal.id = 'globalModal'; modal.className = 'modal'; document.body.appendChild(modal); }
+      modal.innerHTML = html; modal.classList.add('open');
+      if (c.level) document.getElementById('classLevel').value = c.level;
+    }
+
+    function parseScheduleText(text) {
+      const schedule = {};
+      text.split('\\n').map(l => l.trim()).filter(Boolean).forEach(line => {
+        const parts = line.split(/\\s+/);
+        if (parts.length >= 2) schedule[parts[0]] = parts.slice(1).join(' ');
+      });
+      return schedule;
+    }
+
+    async function saveClass(e, id) {
+      e.preventDefault();
+      const body = {
+        school_id: parseInt(currentSchoolId),
+        name: document.getElementById('className').value,
+        martial_art: document.getElementById('classMartialArt').value || null,
+        level: document.getElementById('classLevel').value,
+        capacity: parseInt(document.getElementById('classCapacity').value) || 20,
+        duration_minutes: parseInt(document.getElementById('classDuration').value) || 60,
+        instructor: document.getElementById('classInstructor').value || null,
+        price: parseFloat(document.getElementById('classPrice').value) || 0,
+        description: document.getElementById('classDesc').value || null,
+        schedule: parseScheduleText(document.getElementById('classSchedule').value),
+        is_active: document.getElementById('classActive').checked
+      };
+      const url = id ? '/kanchoai/api/v1/classes/' + id : '/kanchoai/api/v1/classes';
+      await fetch(url, { method: id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      closeModal(); tabsLoaded.classes = false; loadClassesAdmin();
+    }
+
+    async function editClass(id) {
+      const res = await fetch('/kanchoai/api/v1/classes?school_id=' + currentSchoolId);
+      const data = await res.json();
+      const cls = data.data?.find(c => c.id === id);
+      if (cls) openClassForm(cls);
+    }
+
+    async function deleteClass(id) {
+      if (!confirm('Delete this class? This will also remove related attendance and enrollment records.')) return;
+      await fetch('/kanchoai/api/v1/classes/' + id, { method: 'DELETE' });
+      tabsLoaded.classes = false; loadClassesAdmin();
     }
 
     // ==================== BELT REQUIREMENTS TAB ====================
