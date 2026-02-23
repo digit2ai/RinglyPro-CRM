@@ -1450,6 +1450,20 @@ if (fs.existsSync(dashboardDistPath)) {
   </footer>
 
   <script>
+    // Geo-redirect based on user's IP country (once per session)
+    (function() {
+      if (sessionStorage.getItem('ronin_lang_checked')) return;
+      sessionStorage.setItem('ronin_lang_checked', '1');
+      var ES_COUNTRIES = ['ES','MX','AR','CO','PE','VE','CL','EC','GT','CU','BO','DO','HN','PY','SV','NI','CR','PA','UY','PR'];
+      fetch('https://ipapi.co/json/')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.country_code === 'PH') { window.location.href = '/ronin/fil'; }
+          else if (ES_COUNTRIES.indexOf(d.country_code) !== -1) { window.location.href = '/ronin/es'; }
+        })
+        .catch(function() {});
+    })();
+
     var API = '/ronin/api/v1';
     var KANCHO_API = '/kanchoai/api/v1';
     var memberToken = localStorage.getItem('ronin_token');
