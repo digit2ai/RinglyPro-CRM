@@ -1442,6 +1442,10 @@ if (fs.existsSync(dashboardDistPath)) {
         <a href="/ronin/health">Health</a>
       </div>
     </div>
+    <div style="text-align:center;padding:40px 20px 24px;border-top:1px solid var(--line);margin-top:20px;">
+      <div style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.15em;margin-bottom:16px;">Powered by</div>
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782813ff51693e263e40a.png" alt="KanchoAI" style="height:80px;width:auto;object-fit:contain;">
+    </div>
   </footer>
 
   <script>
@@ -2442,6 +2446,10 @@ app.get(`${BASE_PATH}/es`, (req, res) => {
         <a href="/ronin/api/v1/press">Noticias</a>
       </div>
     </div>
+    <div style="text-align:center;padding:40px 20px 24px;border-top:1px solid var(--line);margin-top:20px;">
+      <div style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.15em;margin-bottom:16px;">Powered by</div>
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782813ff51693e263e40a.png" alt="KanchoAI" style="height:80px;width:auto;object-fit:contain;">
+    </div>
   </footer>
 
   <script>
@@ -3122,6 +3130,10 @@ app.get(`${BASE_PATH}/fil`, (req, res) => {
         <a href="/ronin/api/v1/events">Mga Kaganapan</a>
         <a href="/ronin/api/v1/press">Balita</a>
       </div>
+    </div>
+    <div style="text-align:center;padding:40px 20px 24px;border-top:1px solid var(--line);margin-top:20px;">
+      <div style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.15em;margin-bottom:16px;">Powered by</div>
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782813ff51693e263e40a.png" alt="KanchoAI" style="height:80px;width:auto;object-fit:contain;">
     </div>
   </footer>
 
