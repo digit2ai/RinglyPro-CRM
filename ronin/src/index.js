@@ -3066,6 +3066,23 @@ app.get(`${BASE_PATH}/es`, (req, res) => {
         }
       }).catch(function() {});
   </script>
+  <elevenlabs-convai agent-id="agent_3201khw6zy03efzb8bgk4edr0ejy"></elevenlabs-convai>
+  <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+  <script>
+    (function hideElevenLabsBranding() {
+      var attempts = 0;
+      var interval = setInterval(function() {
+        var widget = document.querySelector('elevenlabs-convai');
+        if (widget && widget.shadowRoot) {
+          var style = document.createElement('style');
+          style.textContent = '.powered-by, [class*="powered"], a[href*="elevenlabs"] { display: none !important; }';
+          widget.shadowRoot.appendChild(style);
+          clearInterval(interval);
+        }
+        if (++attempts > 50) clearInterval(interval);
+      }, 200);
+    })();
+  </script>
 </body>
 </html>`);
 });
@@ -3747,6 +3764,23 @@ app.get(`${BASE_PATH}/fil`, (req, res) => {
           }).join('');
         }
       }).catch(function() {});
+  </script>
+  <elevenlabs-convai agent-id="agent_3201khw6zy03efzb8bgk4edr0ejy"></elevenlabs-convai>
+  <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+  <script>
+    (function hideElevenLabsBranding() {
+      var attempts = 0;
+      var interval = setInterval(function() {
+        var widget = document.querySelector('elevenlabs-convai');
+        if (widget && widget.shadowRoot) {
+          var style = document.createElement('style');
+          style.textContent = '.powered-by, [class*="powered"], a[href*="elevenlabs"] { display: none !important; }';
+          widget.shadowRoot.appendChild(style);
+          clearInterval(interval);
+        }
+        if (++attempts > 50) clearInterval(interval);
+      }, 200);
+    })();
   </script>
 </body>
 </html>`);
