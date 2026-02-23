@@ -1854,6 +1854,34 @@ app.get(`${BASE_PATH}/red-belt-society`, (req, res) => {
     .stat-num { font-size: 32px; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-top: 4px; }
 
+    /* Founder feature */
+    .founder-feature { padding: 80px 0; background: #000; position: relative; overflow: hidden; }
+    .founder-feature::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 30% 50%, rgba(200,16,46,.06) 0%, transparent 70%); pointer-events: none; }
+    .founder-grid { display: grid; grid-template-columns: 380px 1fr; gap: 48px; align-items: center; max-width: 1000px; margin: 0 auto; padding: 0 20px; }
+    .founder-img { position: relative; }
+    .founder-img img { width: 100%; border-radius: 4px; display: block; box-shadow: 0 0 40px rgba(0,0,0,.6), 0 0 80px rgba(200,16,46,.1); }
+    .founder-img::before { content: ''; position: absolute; inset: -6px; border: 1px solid rgba(200,16,46,.2); border-radius: 6px; pointer-events: none; }
+    .founder-img::after { content: ''; position: absolute; bottom: -3px; left: 10%; right: 10%; height: 1px; background: linear-gradient(90deg, transparent, var(--accent), transparent); }
+    .founder-detail .f-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--gold); color: var(--gold); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 16px; }
+    .founder-detail .f-name { font-family: 'Noto Serif', serif; font-size: 36px; font-weight: 700; color: #fff; line-height: 1.15; margin-bottom: 6px; }
+    .founder-detail .f-titles { color: var(--accent); font-size: 14px; font-weight: 600; letter-spacing: .05em; margin-bottom: 6px; }
+    .founder-detail .f-titles span { color: var(--gold); }
+    .founder-detail .f-role { color: var(--muted); font-size: 13px; letter-spacing: .04em; margin-bottom: 24px; }
+    .founder-detail .f-bio p { color: #b0b0b0; font-size: 14px; line-height: 1.8; margin-bottom: 14px; }
+    .founder-detail .f-bio p:first-letter { font-size: 18px; font-weight: 700; color: #fff; }
+    .founder-detail .f-stats { display: flex; gap: 24px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--line); }
+    .founder-detail .f-stat-item { text-align: center; }
+    .founder-detail .f-stat-num { font-size: 24px; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .founder-detail .f-stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-top: 2px; }
+    .founder-kanji-bg { position: absolute; top: 20px; right: -30px; font-size: 160px; color: rgba(200,16,46,.04); font-family: 'Noto Serif', serif; pointer-events: none; line-height: 1; writing-mode: vertical-rl; }
+    @media (max-width: 768px) {
+      .founder-grid { grid-template-columns: 1fr; gap: 32px; }
+      .founder-img { max-width: 320px; margin: 0 auto; }
+      .founder-detail .f-name { font-size: 28px; }
+      .founder-kanji-bg { display: none; }
+      .founder-detail .f-stats { flex-wrap: wrap; gap: 16px; }
+    }
+
     .back-link { display: inline-flex; align-items: center; gap: 8px; color: var(--gold); text-decoration: none; font-size: 14px; font-weight: 600; padding: 40px 0; }
     .back-link:hover { color: var(--accent); }
 
@@ -1927,6 +1955,33 @@ app.get(`${BASE_PATH}/red-belt-society`, (req, res) => {
   <div class="container">
     <div class="intro-badge">&#x1F94B; United Masters</div>
     <p>We are a <span class="highlight">multi-language and culturally diverse organization</span> open to all martial artists. The Ronin Red Belt Society comprises Ronin members holding legitimate martial arts master ranks from <span class="highlight">4th Degree Black Belt (Yondan)</span> and above. Created to unite masters for sharing experience, knowledge, and techniques to aid personal and dojo development. The group has surpassed <span class="highlight">210 members</span> across <span class="highlight">28 countries</span>.</p>
+  </div>
+</section>
+
+<!-- Founder Feature -->
+<section class="founder-feature">
+  <div class="founder-kanji-bg">\u5275\u8A2D\u8005</div>
+  <div class="founder-grid">
+    <div class="founder-img">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699787bc8523c56965e1b789.jpg" alt="Hanshi Carlos H. Montalvo - Founder">
+    </div>
+    <div class="founder-detail">
+      <div class="f-badge">Founder &bull; 10th Dan Judan</div>
+      <div class="f-name">Hanshi Carlos H. Montalvo</div>
+      <div class="f-titles">5X World Champion &bull; <span>Founder of the Ronin Red Belt Society</span></div>
+      <div class="f-role">Grandmaster &bull; Ronin Goju Ryu Kai &bull; San Sebastian, Puerto Rico</div>
+      <div class="f-bio">
+        <p>Hanshi Carlos H. Montalvo is the visionary founder of both the Ronin Brotherhood and the Ronin Red Belt Society. A 10th Degree Black Belt (Judan) and 5-time World Champion, he created the Red Belt Society to unite martial arts masters of the highest caliber from around the globe.</p>
+        <p>Under his leadership, the Red Belt Society has grown to over 210 masters from 28 countries, representing more than 50 distinct martial arts styles. The society serves as a platform for sharing experience, knowledge, and techniques to aid personal and dojo development.</p>
+        <p>His dedication to building bridges across cultures and martial arts disciplines has established the Red Belt Society as one of the most respected international gatherings of high-ranking martial artists in the world.</p>
+      </div>
+      <div class="f-stats">
+        <div class="f-stat-item"><div class="f-stat-num">10th</div><div class="f-stat-label">Dan Rank</div></div>
+        <div class="f-stat-item"><div class="f-stat-num">5X</div><div class="f-stat-label">World Champion</div></div>
+        <div class="f-stat-item"><div class="f-stat-num">210+</div><div class="f-stat-label">Masters United</div></div>
+        <div class="f-stat-item"><div class="f-stat-num">28</div><div class="f-stat-label">Countries</div></div>
+      </div>
+    </div>
   </div>
 </section>
 
