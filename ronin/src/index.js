@@ -1769,7 +1769,7 @@ if (fs.existsSync(dashboardDistPath)) {
         }
       }).catch(function() {});
   </script>
-  <elevenlabs-convai agent-id="agent_3201khw6zy03efzb8bgk4edr0ejy"></elevenlabs-convai>
+  <elevenlabs-convai agent-id="agent_9401kj62qh2ef61rp7605ffw3avp"></elevenlabs-convai>
   <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
   <script>
     (function hideElevenLabsBranding() {
@@ -3066,7 +3066,7 @@ app.get(`${BASE_PATH}/es`, (req, res) => {
         }
       }).catch(function() {});
   </script>
-  <elevenlabs-convai agent-id="agent_3201khw6zy03efzb8bgk4edr0ejy"></elevenlabs-convai>
+  <elevenlabs-convai agent-id="agent_9401kj62qh2ef61rp7605ffw3avp"></elevenlabs-convai>
   <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
   <script>
     (function hideElevenLabsBranding() {
@@ -3765,7 +3765,7 @@ app.get(`${BASE_PATH}/fil`, (req, res) => {
         }
       }).catch(function() {});
   </script>
-  <elevenlabs-convai agent-id="agent_3201khw6zy03efzb8bgk4edr0ejy"></elevenlabs-convai>
+  <elevenlabs-convai agent-id="agent_9401kj62qh2ef61rp7605ffw3avp"></elevenlabs-convai>
   <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
   <script>
     (function hideElevenLabsBranding() {
