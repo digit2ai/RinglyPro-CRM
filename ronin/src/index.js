@@ -737,8 +737,9 @@ if (fs.existsSync(dashboardDistPath)) {
     .modal .modal-sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
     .modal .form-group { margin-bottom: 14px; }
     .modal label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 5px; }
-    .modal input, .modal select { width: 100%; padding: 10px 12px; background: #111; border: 1px solid var(--line); border-radius: 8px; color: #fff; font-size: 14px; font-family: inherit; outline: none; transition: border-color .2s; }
-    .modal input:focus, .modal select:focus { border-color: var(--accent); }
+    .modal input, .modal select, .modal textarea { width: 100%; padding: 10px 12px; background: #111; border: 1px solid var(--line); border-radius: 8px; color: #fff; font-size: 14px; font-family: inherit; outline: none; transition: border-color .2s; }
+    .modal input:focus, .modal select:focus, .modal textarea:focus { border-color: var(--accent); }
+    .modal textarea { resize: vertical; min-height: 60px; }
     .modal select option { background: #111; }
     .modal .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .modal .btn-submit { width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 6px; transition: all .2s; }
@@ -1219,11 +1220,35 @@ if (fs.existsSync(dashboardDistPath)) {
       <div class="cta-inner">
         <h2>Become a Sponsor</h2>
         <p>Support martial arts excellence across 28 countries. Partner with the Ronin Brotherhood.</p>
-        <a href="/ronin/api/v1/sponsors/inquiry" class="btn btn-gold" style="margin-right: 12px;">Sponsorship Inquiry</a>
+        <a href="#" class="btn btn-gold" style="margin-right: 12px;" onclick="openModal('sponsor'); return false;">Sponsorship Inquiry</a>
         <a href="#" class="btn btn-primary" onclick="openModal('signup'); return false;">Join as Member</a>
       </div>
     </div>
   </section>
+
+  <div class="modal-overlay" id="modal-sponsor" onclick="if(event.target===this)closeModals()">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModals()">&times;</button>
+      <h2>Sponsorship Inquiry</h2>
+      <div class="modal-sub">Partner with the Ronin Brotherhood Federation</div>
+      <div class="form-error" id="sponsor-error"></div>
+      <div class="form-success" id="sponsor-success"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Company Name *</label><input type="text" id="sponsor-company" placeholder="Your company"></div>
+        <div class="form-group"><label>Contact Name *</label><input type="text" id="sponsor-contact" placeholder="Full name"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Email *</label><input type="email" id="sponsor-email" placeholder="you@company.com"></div>
+        <div class="form-group"><label>Phone</label><input type="tel" id="sponsor-phone" placeholder="+1 (555) 123-4567"></div>
+      </div>
+      <div class="form-group"><label>1. What are your sponsorship goals?</label><textarea id="sponsor-goals" placeholder="Brand awareness, community engagement, event naming rights..."></textarea></div>
+      <div class="form-group"><label>2. Who is your target audience?</label><textarea id="sponsor-audience" placeholder="Martial artists, fitness enthusiasts, law enforcement..."></textarea></div>
+      <div class="form-group"><label>3. What is your estimated budget range?</label><select id="sponsor-budget"><option value="">Select range...</option><option value="Under $5,000">Under $5,000</option><option value="$5,000 - $15,000">$5,000 - $15,000</option><option value="$15,000 - $50,000">$15,000 - $50,000</option><option value="$50,000+">$50,000+</option></select></div>
+      <div class="form-group"><label>4. Preferred sponsorship tier?</label><select id="sponsor-tier"><option value="supporter">Supporter</option><option value="bronze">Bronze</option><option value="silver">Silver</option><option value="gold">Gold</option><option value="platinum">Platinum</option></select></div>
+      <div class="form-group"><label>5. Anything else you'd like us to know?</label><textarea id="sponsor-additional" placeholder="Special requests, timeline, partnership ideas..."></textarea></div>
+      <button class="btn-submit" onclick="submitSponsor()">Submit Inquiry</button>
+    </div>
+  </div>
 
   <!-- ====== MEMBER DASHBOARD (shown when logged in) ====== -->
   <section class="section member-panel" id="member-panel">
@@ -1532,6 +1557,41 @@ if (fs.existsSync(dashboardDistPath)) {
         errEl.textContent = 'Connection error. Please try again.';
         errEl.style.display = 'block';
       });
+    }
+
+    // ==================== SPONSOR INQUIRY ====================
+    function submitSponsor() {
+      var company = document.getElementById('sponsor-company').value.trim();
+      var contact = document.getElementById('sponsor-contact').value.trim();
+      var email = document.getElementById('sponsor-email').value.trim();
+      var phone = document.getElementById('sponsor-phone').value.trim();
+      var goals = document.getElementById('sponsor-goals').value.trim();
+      var audience = document.getElementById('sponsor-audience').value.trim();
+      var budget = document.getElementById('sponsor-budget').value;
+      var tier = document.getElementById('sponsor-tier').value;
+      var additional = document.getElementById('sponsor-additional').value.trim();
+      var errEl = document.getElementById('sponsor-error');
+      var successEl = document.getElementById('sponsor-success');
+      errEl.style.display = 'none'; successEl.style.display = 'none';
+      if (!company || !contact || !email) { errEl.textContent = 'Please fill in Company, Contact Name, and Email.'; errEl.style.display = 'block'; return; }
+      fetch('/ronin/api/v1/sponsors/inquiry', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company_name: company, contact_name: contact, email: email, phone: phone, sponsorship_goals: goals, target_audience: audience, budget_range: budget, preferred_tier: tier, additional_info: additional })
+      }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.success) {
+          successEl.textContent = 'Thank you! Your inquiry has been submitted. We will contact you soon.';
+          successEl.style.display = 'block';
+          document.getElementById('sponsor-company').value = '';
+          document.getElementById('sponsor-contact').value = '';
+          document.getElementById('sponsor-email').value = '';
+          document.getElementById('sponsor-phone').value = '';
+          document.getElementById('sponsor-goals').value = '';
+          document.getElementById('sponsor-audience').value = '';
+          document.getElementById('sponsor-budget').value = '';
+          document.getElementById('sponsor-tier').value = 'supporter';
+          document.getElementById('sponsor-additional').value = '';
+        } else { errEl.textContent = data.error || 'Submission failed. Please try again.'; errEl.style.display = 'block'; }
+      }).catch(function() { errEl.textContent = 'Connection error. Please try again.'; errEl.style.display = 'block'; });
     }
 
     // ==================== DASHBOARD ====================
@@ -2245,7 +2305,7 @@ app.get(`${BASE_PATH}/es`, (req, res) => {
       <div class="cta-inner">
         <h2>Convi\u00e9rtete en Patrocinador</h2>
         <p>Apoya la excelencia en artes marciales en 28 pa\u00edses. As\u00f3ciate con la Hermandad Ronin.</p>
-        <a href="/ronin/api/v1/sponsors/inquiry" class="btn btn-gold" style="margin-right: 12px;">Consulta de Patrocinio</a>
+        <a href="#" class="btn btn-gold" style="margin-right: 12px;" onclick="openModal('sponsor'); return false;">Consulta de Patrocinio</a>
         <a href="#" class="btn btn-primary" onclick="openModal('signup'); return false;">\u00danete como Miembro</a>
       </div>
     </div>
@@ -2344,6 +2404,30 @@ app.get(`${BASE_PATH}/es`, (req, res) => {
       </div>
       <button class="btn-submit" id="btn-signup-submit" onclick="doSignup()">Crear Cuenta</button>
       <div class="switch-link">\u00bfYa eres miembro? <a onclick="openModal('login')">Iniciar Sesi\u00f3n</a></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-sponsor" onclick="if(event.target===this)closeModals()">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModals()">&times;</button>
+      <h2>Sponsorship Inquiry</h2>
+      <div class="modal-sub">Partner with the Ronin Brotherhood Federation</div>
+      <div class="form-error" id="sponsor-error"></div>
+      <div class="form-success" id="sponsor-success"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Company Name *</label><input type="text" id="sponsor-company" placeholder="Your company"></div>
+        <div class="form-group"><label>Contact Name *</label><input type="text" id="sponsor-contact" placeholder="Full name"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Email *</label><input type="email" id="sponsor-email" placeholder="you@company.com"></div>
+        <div class="form-group"><label>Phone</label><input type="tel" id="sponsor-phone" placeholder="+1 (555) 123-4567"></div>
+      </div>
+      <div class="form-group"><label>1. What are your sponsorship goals?</label><textarea id="sponsor-goals" placeholder="Brand awareness, community engagement, event naming rights..."></textarea></div>
+      <div class="form-group"><label>2. Who is your target audience?</label><textarea id="sponsor-audience" placeholder="Martial artists, fitness enthusiasts, law enforcement..."></textarea></div>
+      <div class="form-group"><label>3. What is your estimated budget range?</label><select id="sponsor-budget"><option value="">Select range...</option><option value="Under $5,000">Under $5,000</option><option value="$5,000 - $15,000">$5,000 - $15,000</option><option value="$15,000 - $50,000">$15,000 - $50,000</option><option value="$50,000+">$50,000+</option></select></div>
+      <div class="form-group"><label>4. Preferred sponsorship tier?</label><select id="sponsor-tier"><option value="supporter">Supporter</option><option value="bronze">Bronze</option><option value="silver">Silver</option><option value="gold">Gold</option><option value="platinum">Platinum</option></select></div>
+      <div class="form-group"><label>5. Anything else you'd like us to know?</label><textarea id="sponsor-additional" placeholder="Special requests, timeline, partnership ideas..."></textarea></div>
+      <button class="btn-submit" onclick="submitSponsor()">Submit Inquiry</button>
     </div>
   </div>
 
@@ -2901,7 +2985,7 @@ app.get(`${BASE_PATH}/fil`, (req, res) => {
       <div class="cta-inner">
         <h2>Maging Sponsor</h2>
         <p>Suportahan ang kahusayan sa martial arts sa 28 bansa. Makipagtulungan sa Ronin Brotherhood.</p>
-        <a href="/ronin/api/v1/sponsors/inquiry" class="btn btn-gold" style="margin-right: 12px;">Pagtatanong sa Sponsorship</a>
+        <a href="#" class="btn btn-gold" style="margin-right: 12px;" onclick="openModal('sponsor'); return false;">Pagtatanong sa Sponsorship</a>
         <a href="#" class="btn btn-primary" onclick="openModal('signup'); return false;">Sumali bilang Miyembro</a>
       </div>
     </div>
@@ -3001,6 +3085,30 @@ app.get(`${BASE_PATH}/fil`, (req, res) => {
       </div>
       <button class="btn-submit" id="btn-signup-submit" onclick="doSignup()">Gumawa ng Account</button>
       <div class="switch-link">Miyembro na? <a onclick="openModal('login')">Mag-sign In</a></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-sponsor" onclick="if(event.target===this)closeModals()">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModals()">&times;</button>
+      <h2>Sponsorship Inquiry</h2>
+      <div class="modal-sub">Partner with the Ronin Brotherhood Federation</div>
+      <div class="form-error" id="sponsor-error"></div>
+      <div class="form-success" id="sponsor-success"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Company Name *</label><input type="text" id="sponsor-company" placeholder="Your company"></div>
+        <div class="form-group"><label>Contact Name *</label><input type="text" id="sponsor-contact" placeholder="Full name"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Email *</label><input type="email" id="sponsor-email" placeholder="you@company.com"></div>
+        <div class="form-group"><label>Phone</label><input type="tel" id="sponsor-phone" placeholder="+1 (555) 123-4567"></div>
+      </div>
+      <div class="form-group"><label>1. What are your sponsorship goals?</label><textarea id="sponsor-goals" placeholder="Brand awareness, community engagement, event naming rights..."></textarea></div>
+      <div class="form-group"><label>2. Who is your target audience?</label><textarea id="sponsor-audience" placeholder="Martial artists, fitness enthusiasts, law enforcement..."></textarea></div>
+      <div class="form-group"><label>3. What is your estimated budget range?</label><select id="sponsor-budget"><option value="">Select range...</option><option value="Under $5,000">Under $5,000</option><option value="$5,000 - $15,000">$5,000 - $15,000</option><option value="$15,000 - $50,000">$15,000 - $50,000</option><option value="$50,000+">$50,000+</option></select></div>
+      <div class="form-group"><label>4. Preferred sponsorship tier?</label><select id="sponsor-tier"><option value="supporter">Supporter</option><option value="bronze">Bronze</option><option value="silver">Silver</option><option value="gold">Gold</option><option value="platinum">Platinum</option></select></div>
+      <div class="form-group"><label>5. Anything else you'd like us to know?</label><textarea id="sponsor-additional" placeholder="Special requests, timeline, partnership ideas..."></textarea></div>
+      <button class="btn-submit" onclick="submitSponsor()">Submit Inquiry</button>
     </div>
   </div>
 
