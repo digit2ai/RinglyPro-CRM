@@ -1671,8 +1671,9 @@ if (fs.existsSync(dashboardDistPath)) {
         if (data.success && data.data.length > 0) {
           var c = document.getElementById('products-container');
           c.innerHTML = data.data.map(function(p) {
+            var imgHtml = (p.images && p.images.length > 0) ? '<div class="product-img"><img src="' + p.images[0] + '" alt="' + p.name + '" style="width:100%;height:100%;object-fit:cover;"></div>' : '<div class="product-img">&#x1F94B;</div>';
             return '<div class="product-card">' +
-              '<div class="product-img">&#x1F94B;</div>' +
+              imgHtml +
               '<div class="product-info">' +
               '<div class="product-cat">' + p.category + '</div>' +
               '<div class="product-name">' + p.name + '</div>' +
@@ -2422,7 +2423,8 @@ app.get(`${BASE_PATH}/es`, (req, res) => {
         if (data.success && data.data.length > 0) {
           var c = document.getElementById('products-container-es');
           c.innerHTML = data.data.map(function(p) {
-            return '<div class="product-card"><div class="product-img">&#x1F94B;</div><div class="product-info"><div class="product-cat">' + p.category + '</div><div class="product-name">' + p.name + '</div><div class="product-price">$' + parseFloat(p.price).toFixed(2) + '</div></div></div>';
+            var img = (p.images && p.images.length > 0) ? '<div class="product-img"><img src="' + p.images[0] + '" alt="' + p.name + '" style="width:100%;height:100%;object-fit:cover;"></div>' : '<div class="product-img">&#x1F94B;</div>';
+            return '<div class="product-card">' + img + '<div class="product-info"><div class="product-cat">' + p.category + '</div><div class="product-name">' + p.name + '</div><div class="product-price">$' + parseFloat(p.price).toFixed(2) + '</div></div></div>';
           }).join('');
         }
       }).catch(function() {});
@@ -3075,7 +3077,8 @@ app.get(`${BASE_PATH}/fil`, (req, res) => {
         if (data.success && data.data.length > 0) {
           var c = document.getElementById('products-container-fil');
           c.innerHTML = data.data.map(function(p) {
-            return '<div class="product-card"><div class="product-img">&#x1F94B;</div><div class="product-info"><div class="product-cat">' + p.category + '</div><div class="product-name">' + p.name + '</div><div class="product-price">$' + parseFloat(p.price).toFixed(2) + '</div></div></div>';
+            var img = (p.images && p.images.length > 0) ? '<div class="product-img"><img src="' + p.images[0] + '" alt="' + p.name + '" style="width:100%;height:100%;object-fit:cover;"></div>' : '<div class="product-img">&#x1F94B;</div>';
+            return '<div class="product-card">' + img + '<div class="product-info"><div class="product-cat">' + p.category + '</div><div class="product-name">' + p.name + '</div><div class="product-price">$' + parseFloat(p.price).toFixed(2) + '</div></div></div>';
           }).join('');
         }
       }).catch(function() {});

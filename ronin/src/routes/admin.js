@@ -143,6 +143,7 @@ router.post('/seed', async (req, res) => {
         short_description: 'Official 14oz heavyweight karate gi with founder signature',
         price: 189.99, category: 'uniforms', status: 'active', featured: true,
         tags: ['gi', 'karate', 'heavyweight', 'official'], inventory_quantity: 50,
+        images: ['https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c703d590acb9d55ba20a7.jpeg'],
         has_variants: true, variant_options: ['Size']
       },
       {
@@ -151,6 +152,7 @@ router.post('/seed', async (req, res) => {
         short_description: 'Lightweight 10oz training karate gi',
         price: 99.99, category: 'uniforms', status: 'active', featured: true,
         tags: ['gi', 'training', 'lightweight'], inventory_quantity: 100,
+        images: ['https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c7047590acb2eedba2249.jpeg'],
         has_variants: true, variant_options: ['Size']
       },
       {
@@ -164,6 +166,7 @@ router.post('/seed', async (req, res) => {
         description: 'Premium black belt with Ronin Brotherhood embroidery in gold thread.',
         price: 49.99, category: 'gear', status: 'active', featured: true,
         tags: ['belt', 'black belt', 'premium'], inventory_quantity: 75,
+        images: ['https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c704710bc9c334b5c2e60.jpeg'],
         has_variants: true, variant_options: ['Size']
       },
       {
@@ -179,6 +182,7 @@ router.post('/seed', async (req, res) => {
         description: 'Premium heavyweight hoodie with embroidered Ronin Brotherhood logo.',
         price: 69.99, category: 'apparel', status: 'active', featured: true,
         tags: ['hoodie', 'apparel', 'premium'], inventory_quantity: 80,
+        images: ['https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c70479598d24eade5d3b6.jpeg'],
         has_variants: true, variant_options: ['Size', 'Color']
       },
       {
