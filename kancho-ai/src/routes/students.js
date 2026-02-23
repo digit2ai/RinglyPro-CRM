@@ -6,7 +6,7 @@ const router = express.Router();
 const { Op } = require('sequelize');
 
 module.exports = (models) => {
-  const { KanchoStudent, KanchoSchool } = models;
+  const { KanchoStudent, KanchoSchool, KanchoAttendance, KanchoClassEnrollment, KanchoRevenue, KanchoStudentAuth } = models;
 
   // GET /api/v1/students - List students
   router.get('/', async (req, res) => {
@@ -151,6 +151,14 @@ module.exports = (models) => {
       }
 
       const school_id = student.school_id;
+      const studentId = student.id;
+
+      // Cascade delete related records
+      await KanchoAttendance.destroy({ where: { student_id: studentId } });
+      await KanchoClassEnrollment.destroy({ where: { student_id: studentId } });
+      await KanchoRevenue.destroy({ where: { student_id: studentId } });
+      await KanchoStudentAuth.destroy({ where: { student_id: studentId } });
+
       await student.destroy();
 
       // Update school active_students count

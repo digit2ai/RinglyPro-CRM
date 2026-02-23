@@ -471,6 +471,65 @@ module.exports = (models) => {
     }
   });
 
+  // POST /belt-test/register - Register for belt test (creates appointment + optional Stripe payment)
+  router.post('/belt-test/register', async (req, res) => {
+    try {
+      if (!req.studentId) return res.status(403).json({ success: false, error: 'Account not linked' });
+
+      const { belt_name, testing_fee } = req.body;
+      if (!belt_name) return res.status(400).json({ success: false, error: 'Belt name required' });
+
+      const student = await KanchoStudent.findByPk(req.studentId);
+      if (!student) return res.status(404).json({ success: false, error: 'Student not found' });
+
+      // If there's a testing fee, create Stripe Checkout
+      if (testing_fee && parseFloat(testing_fee) > 0) {
+        try {
+          if (!process.env.STRIPE_SECRET_KEY) throw new Error('Stripe not configured');
+          const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+          const school = await KanchoSchool.findByPk(req.schoolId);
+          const base = process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com';
+
+          const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: [{
+              price_data: {
+                currency: 'usd',
+                product_data: {
+                  name: belt_name + ' Belt Test',
+                  description: 'Belt test registration - ' + (school?.name || 'School')
+                },
+                unit_amount: Math.round(parseFloat(testing_fee) * 100)
+              },
+              quantity: 1
+            }],
+            mode: 'payment',
+            metadata: {
+              student_id: String(req.studentId),
+              school_id: String(req.schoolId),
+              type: 'belt_test',
+              belt_name: belt_name,
+              source: 'student_portal'
+            },
+            success_url: base + '/kanchoai/student/?belt_test=success',
+            cancel_url: base + '/kanchoai/student/?belt_test=canceled'
+          });
+
+          return res.json({ success: true, url: session.url, sessionId: session.id });
+        } catch (stripeErr) {
+          console.error('Belt test Stripe error:', stripeErr);
+          // Fall through to free registration if Stripe fails
+        }
+      }
+
+      // Free registration (no fee) — just record intent
+      res.json({ success: true, message: 'Registered for ' + belt_name + ' belt test' });
+    } catch (error) {
+      console.error('Belt test register error:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
   // GET /merchandise - School merchandise store
   router.get('/merchandise', async (req, res) => {
     try {

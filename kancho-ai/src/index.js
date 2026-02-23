@@ -4466,6 +4466,8 @@ function enterApp() {
   if (params.get('autopay') === 'success') { showToast('Autopay enabled!'); window.history.replaceState({}, '', window.location.pathname); switchSection('Payments'); return; }
   if (params.get('purchase') === 'success') { showToast('Purchase successful!'); window.history.replaceState({}, '', window.location.pathname); switchSection('Shop'); return; }
   if (params.get('purchase') === 'canceled') { showToast('Purchase canceled', 'error'); window.history.replaceState({}, '', window.location.pathname); }
+  if (params.get('belt_test') === 'success') { showToast('Belt test registered! Payment confirmed.'); window.history.replaceState({}, '', window.location.pathname); switchSection('BeltProgress'); return; }
+  if (params.get('belt_test') === 'canceled') { showToast('Belt test registration canceled', 'error'); window.history.replaceState({}, '', window.location.pathname); }
   switchSection('Dashboard');
 }
 
@@ -4864,7 +4866,7 @@ async function loadPayments() {
     html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0">';
     html += '<button class="btn" onclick="makePayment()">Make Payment</button>';
     if (autopay.hasAutopay) {
-      html += '<button class="btn btn-outline" style="border-color:var(--success);color:var(--success)" disabled>Autopay Active</button>';
+      html += '<button class="btn btn-outline" style="border-color:var(--error);color:var(--error)" onclick="cancelAutopay()">Cancel Autopay</button>';
     } else if (autopay.monthlyRate > 0) {
       html += '<button class="btn btn-outline" onclick="setupAutopay()">Enable Autopay</button>';
     } else {
@@ -4921,6 +4923,19 @@ async function setupAutopay() {
   } catch (e) { showToast('Connection error', 'error'); }
 }
 
+async function cancelAutopay() {
+  if (!confirm('Cancel your monthly autopay? You can re-enable it anytime.')) return;
+  try {
+    const res = await api(API + '/payments/autopay/cancel', { method: 'POST' });
+    if (res.success) {
+      showToast('Autopay cancelled', 'success');
+      loadPayments();
+    } else {
+      showToast(res.error || 'Failed to cancel autopay', 'error');
+    }
+  } catch (e) { showToast('Connection error', 'error'); }
+}
+
 // ============ BELT PROGRESS ============
 async function loadBeltProgress() {
   const el = document.getElementById('beltProgressContent');
@@ -4960,7 +4975,10 @@ async function loadBeltProgress() {
       html += '<div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden"><div style="height:100%;width:' + p.monthProgress + '%;background:var(--success);border-radius:4px;transition:width 0.5s"></div></div></div>';
       html += '<div style="text-align:center;font-size:24px;font-weight:700;color:var(--accent);margin:12px 0">' + p.overallProgress + '%</div>';
       if (p.testingFee > 0) {
-        html += '<div style="text-align:center;font-size:13px;color:var(--text2)">Testing fee: $' + parseFloat(p.testingFee).toFixed(0) + '</div>';
+        html += '<div style="text-align:center;font-size:13px;color:var(--text2);margin-bottom:8px">Testing fee: $' + parseFloat(p.testingFee).toFixed(0) + '</div>';
+        html += '<div style="text-align:center"><button class="btn" onclick="registerBeltTest(\\''+d.nextBelt.name+'\\', '+p.testingFee+')">Register for Belt Test</button></div>';
+      } else {
+        html += '<div style="text-align:center;margin-top:8px"><button class="btn" onclick="registerBeltTest(\\''+d.nextBelt.name+'\\', 0)">Register for Belt Test</button></div>';
       }
       // Requirements checklist
       if (p.requirements && p.requirements.length > 0) {
@@ -4995,6 +5013,27 @@ async function loadBeltProgress() {
     el.innerHTML = '<div class="empty-state"><p>Error loading belt progress</p></div>';
     console.error(e);
   }
+}
+
+async function registerBeltTest(beltName, fee) {
+  if (!confirm('Register for ' + beltName + ' Belt test' + (fee > 0 ? ' ($' + fee + ' testing fee)' : '') + '?')) return;
+  try {
+    const res = await api(API + '/belt-test/register', {
+      method: 'POST',
+      body: JSON.stringify({ belt_name: beltName, testing_fee: fee })
+    });
+    if (res.success) {
+      if (res.url) {
+        // Stripe payment for testing fee
+        window.location.href = res.url;
+      } else {
+        showToast('Registered for ' + beltName + ' belt test!', 'success');
+        loadBeltProgress();
+      }
+    } else {
+      showToast(res.error || 'Registration failed', 'error');
+    }
+  } catch (e) { showToast('Connection error', 'error'); }
 }
 
 // ============ PROFILE ============
@@ -7871,8 +7910,10 @@ app.get('*', (req, res) => {
 
     function setLanguage(lang) {
       currentLanguage = lang;
-      document.getElementById('langEn').classList.toggle('bg-kancho-coral/20', lang === 'en');
-      document.getElementById('langEs').classList.toggle('bg-kancho-coral/20', lang === 'es');
+      const enBtn = document.getElementById('langEn');
+      const esBtn = document.getElementById('langEs');
+      if (enBtn) enBtn.classList.toggle('bg-kancho-coral/20', lang === 'en');
+      if (esBtn) esBtn.classList.toggle('bg-kancho-coral/20', lang === 'es');
     }
 
     // Plan selection — open signup modal

@@ -143,6 +143,50 @@ module.exports = (models) => {
     }
   });
 
+  // POST /autopay/cancel - Cancel active Stripe subscription
+  router.post('/autopay/cancel', async (req, res) => {
+    try {
+      if (!req.studentId) return res.status(403).json({ success: false, error: 'Account not linked' });
+
+      const stripe = getStripe();
+      const student = await KanchoStudent.findByPk(req.studentId);
+      if (!student) return res.status(404).json({ success: false, error: 'Student not found' });
+
+      // Find active subscriptions for this student by listing from Stripe
+      // Search by metadata.student_id
+      const subscriptions = await stripe.subscriptions.list({
+        limit: 10,
+        status: 'active'
+      });
+
+      const studentSubs = subscriptions.data.filter(
+        s => s.metadata?.student_id === String(req.studentId)
+      );
+
+      if (studentSubs.length === 0) {
+        return res.status(404).json({ success: false, error: 'No active subscription found' });
+      }
+
+      // Cancel the most recent subscription
+      const sub = studentSubs[0];
+      await stripe.subscriptions.cancel(sub.id);
+
+      // Update student record
+      await student.update({ payment_status: 'cancelled' });
+
+      // Mark recurring revenue records
+      await KanchoRevenue.update(
+        { is_recurring: false },
+        { where: { student_id: req.studentId, is_recurring: true } }
+      );
+
+      res.json({ success: true, message: 'Autopay cancelled successfully' });
+    } catch (error) {
+      console.error('Autopay cancel error:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
   // POST /merchandise/buy - Create Stripe Checkout for merchandise purchase
   router.post('/merchandise/buy', async (req, res) => {
     try {
