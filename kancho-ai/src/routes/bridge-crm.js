@@ -235,6 +235,21 @@ router.put('/appointments/:id', async (req, res) => {
   }
 });
 
+// DELETE /appointments/:id - Cancel/delete appointment
+router.delete('/appointments/:id', async (req, res) => {
+  if (!crmBridge?.ready || !req.clientId) return res.status(503).json({ success: false, error: 'CRM not available' });
+
+  try {
+    const appt = await crmBridge.Appointment.findOne({ where: { id: req.params.id, client_id: req.clientId } });
+    if (!appt) return res.status(404).json({ success: false, error: 'Appointment not found' });
+
+    await appt.update({ status: 'cancelled' });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // ==================== CALLS ====================
 
 // GET /calls - Call history

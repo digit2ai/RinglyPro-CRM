@@ -58,10 +58,6 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING(255),
       allowNull: true
     },
-    instructor_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true
-    },
     average_attendance: {
       type: DataTypes.DECIMAL(5, 2),
       defaultValue: 0

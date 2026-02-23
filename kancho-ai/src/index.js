@@ -3569,9 +3569,23 @@ app.get('/es', (req, res) => {
         else if (revenueVsTarget >= 80) targetEl.className = 'text-2xl font-bold text-amber-400';
         else targetEl.className = 'text-2xl font-bold text-red-400';
 
-        let message = 'El puntaje de salud de tu negocio es ' + score + '. ';
-        if (atRiskCount > 0) message += atRiskCount + ' estudiantes en riesgo ($' + revenueAtRisk.toLocaleString() + '). ';
-        if (hotLeadsCount > 0) message += hotLeadsCount + ' prospectos calientes listos para convertir. ';
+        // Kancho message — contextual AI insights (ES)
+        let message = '';
+        const insights = [];
+        if (score >= 80) insights.push('Tu dojo va fuerte con ' + score + '/100.');
+        else if (score >= 60) insights.push('Puntaje de salud: ' + score + '/100 — hay espacio para crecer.');
+        else insights.push('Puntaje de salud: ' + score + '/100 — necesita atención.');
+        if (atRiskCount > 0 && atRiskCount >= 5) insights.push('Alerta: ' + atRiskCount + ' estudiantes en riesgo de abandonar ($' + revenueAtRisk.toLocaleString() + ' en juego). Prioriza el contacto hoy.');
+        else if (atRiskCount > 0) insights.push(atRiskCount + ' estudiante' + (atRiskCount > 1 ? 's' : '') + ' en riesgo — una llamada rápida podría salvar $' + revenueAtRisk.toLocaleString() + '.');
+        if (hotLeadsCount >= 3) insights.push(hotLeadsCount + ' prospectos calientes listos — aprovecha el momento.');
+        else if (hotLeadsCount > 0) insights.push(hotLeadsCount + ' prospecto' + (hotLeadsCount > 1 ? 's' : '') + ' caliente' + (hotLeadsCount > 1 ? 's' : '') + ' listo' + (hotLeadsCount > 1 ? 's' : '') + ' para convertir.');
+        if (churnRate > 10) insights.push('Tasa de abandono (' + parseFloat(churnRate).toFixed(1) + '%) alta. Considera una campaña de retención.');
+        else if (churnRate < 3 && activeStudents > 10) insights.push('Excelente retención — solo ' + parseFloat(churnRate).toFixed(1) + '% de abandono.');
+        if (revenueVsTarget >= 100) insights.push('Meta de ingresos alcanzada! Considera subir tu objetivo.');
+        else if (revenueVsTarget < 50 && revenueVsTarget > 0) insights.push('Ingresos al ' + parseFloat(revenueVsTarget).toFixed(0) + '% de la meta — enfócate en conversiones y renovaciones.');
+        if (trialConversion > 50 && activeStudents > 5) insights.push('Conversión de pruebas al ' + parseFloat(trialConversion).toFixed(0) + '% — tus clases introductorias funcionan.');
+        else if (trialConversion < 20 && trialConversion > 0) insights.push('Conversión de pruebas baja (' + parseFloat(trialConversion).toFixed(0) + '%). Revisa la experiencia de primera clase.');
+        message = insights.slice(0, 3).join(' ');
         document.getElementById('kanchoMessage').textContent = message;
 
         const atRiskList = document.getElementById('atRiskList');
@@ -6776,7 +6790,8 @@ app.get('*', (req, res) => {
     <!-- Appointment Form Modal -->
     <div id="appointmentFormModal" class="form-modal" onclick="if(event.target===this)closeAppointmentForm()">
       <div class="form-modal-content">
-        <h3>New Appointment</h3>
+        <h3 id="afTitle">New Appointment</h3>
+        <input type="hidden" id="afId" value="">
         <form onsubmit="saveAppointment(event)">
           <div class="form-row">
             <div class="form-group"><label>Customer Name *</label><input type="text" id="afName" required></div>
@@ -6802,7 +6817,7 @@ app.get('*', (req, res) => {
             </div>
           </div>
           <div class="flex gap-3 mt-4">
-            <button type="submit" class="btn-primary flex-1">Book Appointment</button>
+            <button type="submit" class="btn-primary flex-1" id="afSubmitBtn">Book Appointment</button>
             <button type="button" class="btn-ghost flex-1" onclick="closeAppointmentForm()">Cancel</button>
           </div>
         </form>
@@ -7583,10 +7598,23 @@ app.get('*', (req, res) => {
         else if (revenueVsTarget >= 80) targetEl.className = 'text-2xl font-bold text-amber-400';
         else targetEl.className = 'text-2xl font-bold text-red-400';
 
-        // Kancho message
-        let message = 'Your business health score is ' + score + '. ';
-        if (atRiskCount > 0) message += atRiskCount + ' students at risk ($' + revenueAtRisk.toLocaleString() + '). ';
-        if (hotLeadsCount > 0) message += hotLeadsCount + ' hot leads ready to convert. ';
+        // Kancho message — contextual AI insights
+        let message = '';
+        const insights = [];
+        if (score >= 80) insights.push('Your dojo is performing strong at ' + score + '/100.');
+        else if (score >= 60) insights.push('Health score is ' + score + '/100 — room to grow.');
+        else insights.push('Health score is ' + score + '/100 — needs attention.');
+        if (atRiskCount > 0 && atRiskCount >= 5) insights.push('Alert: ' + atRiskCount + ' students at risk of churning ($' + revenueAtRisk.toLocaleString() + ' revenue at stake). Prioritize outreach today.');
+        else if (atRiskCount > 0) insights.push(atRiskCount + ' student' + (atRiskCount > 1 ? 's' : '') + ' at risk — a quick call could save $' + revenueAtRisk.toLocaleString() + '.');
+        if (hotLeadsCount >= 3) insights.push(hotLeadsCount + ' hot leads are ready — strike while the iron is hot.');
+        else if (hotLeadsCount > 0) insights.push(hotLeadsCount + ' hot lead' + (hotLeadsCount > 1 ? 's' : '') + ' ready to convert.');
+        if (churnRate > 10) insights.push('Churn rate (' + parseFloat(churnRate).toFixed(1) + '%) is high. Consider a retention campaign.');
+        else if (churnRate < 3 && activeStudents > 10) insights.push('Excellent retention — only ' + parseFloat(churnRate).toFixed(1) + '% churn.');
+        if (revenueVsTarget >= 100) insights.push('Revenue target hit! Consider raising your goal.');
+        else if (revenueVsTarget < 50 && revenueVsTarget > 0) insights.push('Revenue at ' + parseFloat(revenueVsTarget).toFixed(0) + '% of target — focus on conversions and renewals.');
+        if (trialConversion > 50 && activeStudents > 5) insights.push('Trial conversion at ' + parseFloat(trialConversion).toFixed(0) + '% — your intro classes are working.');
+        else if (trialConversion < 20 && trialConversion > 0) insights.push('Trial conversion is low (' + parseFloat(trialConversion).toFixed(0) + '%). Review your first-class experience.');
+        message = insights.slice(0, 3).join(' ');
         document.getElementById('kanchoMessage').textContent = message;
 
         // At-risk list
@@ -8260,7 +8288,7 @@ app.get('*', (req, res) => {
           '<div class="mb-6">' +
             '<h4 class="text-sm font-bold text-gray-400 uppercase mb-3">Trial & Follow-up</h4>' +
             '<div class="detail-row"><span class="label">Trial Date</span><span class="value">' + formatDate(l.trial_date) + '</span></div>' +
-            '<div class="detail-row"><span class="label">Trial Completed</span><span class="value">' + (l.trial_completed ? 'Yes' : 'No') + '</span></div>' +
+            '<div class="detail-row"><span class="label">Trial Completed</span><span class="value">' + (l.trial_completed ? '<span class="text-green-400"><i class="fas fa-check-circle mr-1"></i>Yes</span>' : '<span class="text-gray-500">No</span> <button class="btn-primary btn-sm ml-2" style="padding:2px 8px;font-size:11px;" onclick="markTrialComplete(' + l.id + ')"><i class="fas fa-check mr-1"></i>Mark Complete</button>') + '</span></div>' +
             '<div class="detail-row"><span class="label">Follow-up Date</span><span class="value">' + formatDate(l.follow_up_date) + '</span></div>' +
             '<div class="detail-row"><span class="label">Last Contact</span><span class="value">' + formatDate(l.last_contact_date) + '</span></div>' +
           '</div>' +
@@ -8283,6 +8311,14 @@ app.get('*', (req, res) => {
     }
     function editLeadFromPanel() { if (currentLeadId) { openLeadForm(currentLeadId); closeLeadDetail(); } }
     function convertLeadFromPanel() { if (currentLeadId) { convertLead(currentLeadId); closeLeadDetail(); } }
+    async function markTrialComplete(id) {
+      try {
+        const res = await fetch('/kanchoai/api/v1/leads/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ trial_completed: true, status: 'trial_completed' }) });
+        const data = await res.json();
+        if (data.success) { openLeadDetail(id); tabsLoaded.leads = false; }
+        else alert('Failed: ' + (data.error || 'Unknown error'));
+      } catch (e) { console.error('markTrialComplete error:', e); }
+    }
 
     async function openLeadForm(id) {
       document.getElementById('leadFormTitle').textContent = id ? 'Edit Lead' : 'Add Lead';
@@ -8422,10 +8458,15 @@ app.get('*', (req, res) => {
       } else {
         empty.classList.add('hidden');
         list.innerHTML = appts.map(a => {
-          return '<div class="card rounded-xl p-4">' +
+          const isCancelled = a.status === 'cancelled';
+          return '<div class="card rounded-xl p-4' + (isCancelled ? ' opacity-50' : '') + '">' +
             '<div class="flex items-center justify-between mb-2">' +
               '<span class="font-medium">' + (a.customer_name || 'No Name') + '</span>' +
-              '<span class="badge badge-' + (a.status || 'confirmed') + '">' + (a.status || 'confirmed') + '</span>' +
+              '<div class="flex items-center gap-2">' +
+                '<span class="badge badge-' + (a.status || 'confirmed') + '">' + (a.status || 'confirmed') + '</span>' +
+                (!isCancelled ? '<button class="text-blue-400 hover:text-blue-300 text-xs px-1" onclick="editAppointment(' + a.id + ')" title="Edit"><i class="fas fa-edit"></i></button>' +
+                '<button class="text-red-400 hover:text-red-300 text-xs px-1" onclick="cancelAppointment(' + a.id + ')" title="Cancel"><i class="fas fa-trash"></i></button>' : '') +
+              '</div>' +
             '</div>' +
             '<div class="text-sm text-gray-400">' +
               '<span><i class="fas fa-clock mr-1"></i>' + (a.appointment_time || '--') + '</span>' +
@@ -8450,6 +8491,9 @@ app.get('*', (req, res) => {
     }
 
     function openAppointmentForm(dateStr) {
+      document.getElementById('afId').value = '';
+      document.getElementById('afTitle').textContent = 'New Appointment';
+      document.getElementById('afSubmitBtn').textContent = 'Book Appointment';
       if (dateStr) document.getElementById('afDate').value = dateStr;
       else document.getElementById('afDate').value = new Date().toISOString().split('T')[0];
       document.getElementById('afName').value = '';
@@ -8462,8 +8506,40 @@ app.get('*', (req, res) => {
     }
     function closeAppointmentForm() { document.getElementById('appointmentFormModal').classList.remove('open'); }
 
+    function editAppointment(id) {
+      // Find appointment in stored data
+      let appt = null;
+      for (const dateKey of Object.keys(calendarAppointments)) {
+        appt = calendarAppointments[dateKey].find(a => a.id === id);
+        if (appt) break;
+      }
+      if (!appt) { alert('Appointment not found'); return; }
+      document.getElementById('afId').value = id;
+      document.getElementById('afTitle').textContent = 'Edit Appointment';
+      document.getElementById('afSubmitBtn').textContent = 'Update Appointment';
+      document.getElementById('afName').value = appt.customer_name || '';
+      document.getElementById('afPhone').value = appt.customer_phone || '';
+      document.getElementById('afEmail').value = appt.customer_email || '';
+      document.getElementById('afDate').value = appt.appointment_date || '';
+      document.getElementById('afTime').value = appt.appointment_time || '10:00';
+      document.getElementById('afDuration').value = appt.duration || 60;
+      document.getElementById('afPurpose').value = appt.purpose || 'Class trial';
+      document.getElementById('appointmentFormModal').classList.add('open');
+    }
+
+    async function cancelAppointment(id) {
+      if (!confirm('Cancel this appointment?')) return;
+      try {
+        const headers = {};
+        if (authToken) headers['Authorization'] = 'Bearer ' + authToken;
+        await fetch('/kanchoai/api/v1/bridge/crm/appointments/' + id, { method: 'DELETE', headers });
+        loadCalendar();
+      } catch (e) { console.error('cancelAppointment error:', e); }
+    }
+
     async function saveAppointment(e) {
       e.preventDefault();
+      const editId = document.getElementById('afId').value;
       const body = {
         customerName: document.getElementById('afName').value,
         customerPhone: document.getElementById('afPhone').value,
@@ -8476,13 +8552,26 @@ app.get('*', (req, res) => {
       try {
         const headers = { 'Content-Type': 'application/json' };
         if (authToken) headers['Authorization'] = 'Bearer ' + authToken;
-        const res = await fetch('/kanchoai/api/v1/bridge/crm/appointments', { method: 'POST', headers, body: JSON.stringify(body) });
+        let url, method;
+        if (editId) {
+          url = '/kanchoai/api/v1/bridge/crm/appointments/' + editId;
+          method = 'PUT';
+          body.customer_name = body.customerName;
+          body.customer_phone = body.customerPhone;
+          body.customer_email = body.customerEmail;
+          body.appointment_date = body.date;
+          body.appointment_time = body.time;
+        } else {
+          url = '/kanchoai/api/v1/bridge/crm/appointments';
+          method = 'POST';
+        }
+        const res = await fetch(url, { method, headers, body: JSON.stringify(body) });
         const data = await res.json();
         if (data.success) {
           closeAppointmentForm();
           loadCalendar();
         } else {
-          alert('Failed to book: ' + (data.error || 'Unknown error'));
+          alert('Failed to save: ' + (data.error || 'Unknown error'));
         }
       } catch (e) { console.error('saveAppointment error:', e); }
     }
