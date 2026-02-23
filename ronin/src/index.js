@@ -461,7 +461,8 @@ function switchTab(tab) {
 function loadDashboard() {
   fetch(API + '/admin/dashboard', { headers: headers() }).then(function(r) { return r.json(); }).then(function(data) {
     if (!data.success) return;
-    var s = data.stats;
+    var d = data.data || data;
+    var s = d.stats || {};
     document.getElementById('dash-stats').innerHTML =
       '<div class="stat-card"><div class="label">Members</div><div class="value red">' + (s.members || 0) + '</div></div>' +
       '<div class="stat-card"><div class="label">Orders</div><div class="value blue">' + (s.orders || 0) + '</div></div>' +
@@ -469,13 +470,13 @@ function loadDashboard() {
       '<div class="stat-card"><div class="label">Courses</div><div class="value green">' + (s.courses || 0) + '</div></div>' +
       '<div class="stat-card"><div class="label">Events</div><div class="value blue">' + (s.events || 0) + '</div></div>' +
       '<div class="stat-card"><div class="label">Sponsors</div><div class="value gold">' + (s.sponsors || 0) + '</div></div>';
-    var mb = data.recentMembers || [];
+    var mb = d.recentMembers || [];
     document.getElementById('dash-members').innerHTML = mb.length ? mb.map(function(m) {
-      return '<tr><td>' + (m.first_name || '') + ' ' + (m.last_name || '') + '</td><td>' + (m.email || '') + '</td><td>' + (m.country || '-') + '</td><td>' + badge(m.membership_tier) + '</td><td>' + badge(m.membership_status) + '</td><td>' + fmt(m.createdAt) + '</td></tr>';
+      return '<tr><td>' + (m.first_name || '') + ' ' + (m.last_name || '') + '</td><td>' + (m.email || '') + '</td><td>' + (m.country || '-') + '</td><td>' + badge(m.membership_tier) + '</td><td>' + badge(m.membership_status) + '</td><td>' + fmt(m.created_at || m.createdAt) + '</td></tr>';
     }).join('') : '<tr><td colspan="6" class="empty">No members yet</td></tr>';
-    var ob = data.recentOrders || [];
+    var ob = d.recentOrders || [];
     document.getElementById('dash-orders').innerHTML = ob.length ? ob.map(function(o) {
-      return '<tr><td>' + (o.order_number || '') + '</td><td>' + (o.customer_name || '') + '</td><td>' + money(o.total) + '</td><td>' + badge(o.status) + '</td><td>' + badge(o.payment_status) + '</td><td>' + fmt(o.createdAt) + '</td></tr>';
+      return '<tr><td>' + (o.order_number || '') + '</td><td>' + (o.customer_name || '') + '</td><td>' + money(o.total) + '</td><td>' + badge(o.status) + '</td><td>' + badge(o.payment_status) + '</td><td>' + fmt(o.created_at || o.createdAt) + '</td></tr>';
     }).join('') : '<tr><td colspan="6" class="empty">No orders yet</td></tr>';
   }).catch(function() {});
 }
@@ -489,11 +490,11 @@ function loadMembers() {
   if (status) url += '&status=' + status;
   fetch(url, { headers: headers() }).then(function(r) { return r.json(); }).then(function(data) {
     if (!data.success) return;
-    var members = data.members || [];
+    var members = data.data || data.members || [];
     var total = data.pagination ? data.pagination.total : members.length;
     document.getElementById('members-count').textContent = 'Members (' + total + ')';
     document.getElementById('members-body').innerHTML = members.length ? members.map(function(m) {
-      return '<tr><td>' + (m.first_name || '') + ' ' + (m.last_name || '') + '</td><td>' + (m.email || '') + '</td><td>' + (m.country || '-') + '</td><td>' + (m.rank || '-') + '</td><td>' + (m.dojo_name || '-') + '</td><td>' + badge(m.membership_tier) + '</td><td>' + badge(m.membership_status) + '</td><td>' + fmt(m.createdAt) + '</td></tr>';
+      return '<tr><td>' + (m.first_name || '') + ' ' + (m.last_name || '') + '</td><td>' + (m.email || '') + '</td><td>' + (m.country || '-') + '</td><td>' + (m.rank || '-') + '</td><td>' + (m.dojo_name || '-') + '</td><td>' + badge(m.membership_tier) + '</td><td>' + badge(m.membership_status) + '</td><td>' + fmt(m.created_at || m.createdAt) + '</td></tr>';
     }).join('') : '<tr><td colspan="8" class="empty">No members found</td></tr>';
     if (data.pagination) renderPagination('members-pagination', data.pagination, function(p) { membersPage = p; loadMembers(); });
   }).catch(function() {});
@@ -504,11 +505,11 @@ function loadOrders() {
   var url = API + '/orders?page=' + ordersPage + '&limit=20';
   fetch(url, { headers: headers() }).then(function(r) { return r.json(); }).then(function(data) {
     if (!data.success) return;
-    var orders = data.orders || [];
+    var orders = data.data || data.orders || [];
     var total = data.pagination ? data.pagination.total : orders.length;
     document.getElementById('orders-count').textContent = 'Orders (' + total + ')';
     document.getElementById('orders-body').innerHTML = orders.length ? orders.map(function(o) {
-      return '<tr><td>' + (o.order_number || '') + '</td><td>' + (o.customer_name || '') + '</td><td>' + (o.customer_email || '') + '</td><td>' + (o.items ? o.items.length : 0) + '</td><td>' + money(o.total) + '</td><td>' + badge(o.status) + '</td><td>' + badge(o.payment_status) + '</td><td>' + fmt(o.createdAt) + '</td></tr>';
+      return '<tr><td>' + (o.order_number || '') + '</td><td>' + (o.customer_name || '') + '</td><td>' + (o.customer_email || '') + '</td><td>' + (o.items ? o.items.length : 0) + '</td><td>' + money(o.total) + '</td><td>' + badge(o.status) + '</td><td>' + badge(o.payment_status) + '</td><td>' + fmt(o.created_at || o.createdAt) + '</td></tr>';
     }).join('') : '<tr><td colspan="8" class="empty">No orders yet</td></tr>';
     if (data.pagination) renderPagination('orders-pagination', data.pagination, function(p) { ordersPage = p; loadOrders(); });
   }).catch(function() {});
@@ -518,7 +519,7 @@ function loadOrders() {
 function loadProducts() {
   fetch(API + '/products', { headers: headers() }).then(function(r) { return r.json(); }).then(function(data) {
     if (!data.success) return;
-    var products = data.products || [];
+    var products = data.data || data.products || [];
     document.getElementById('products-count').textContent = 'Products (' + (data.pagination ? data.pagination.total : products.length) + ')';
     document.getElementById('products-body').innerHTML = products.length ? products.map(function(p) {
       return '<tr><td>' + (p.name || '') + '</td><td>' + (p.category || '-') + '</td><td>' + money(p.price) + '</td><td>' + (p.inventory_quantity || 0) + '</td><td>' + (p.total_sold || 0) + '</td><td>' + badge(p.status) + '</td></tr>';
@@ -530,7 +531,7 @@ function loadProducts() {
 function loadCourses() {
   fetch(API + '/training', { headers: headers() }).then(function(r) { return r.json(); }).then(function(data) {
     if (!data.success) return;
-    var courses = data.courses || [];
+    var courses = data.data || data.courses || [];
     document.getElementById('courses-count').textContent = 'Courses (' + courses.length + ')';
     document.getElementById('courses-body').innerHTML = courses.length ? courses.map(function(c) {
       return '<tr><td>' + (c.title || '') + '</td><td>' + (c.category || '-') + '</td><td>' + (c.group || '-') + '</td><td>' + (c.duration_hours || 0) + 'h</td><td>' + money(c.price) + '</td><td>' + (c.current_enrollment || 0) + '/' + (c.max_enrollment || '-') + '</td><td>' + badge(c.status) + '</td></tr>';
@@ -542,7 +543,7 @@ function loadCourses() {
 function loadEvents() {
   fetch(API + '/events', { headers: headers() }).then(function(r) { return r.json(); }).then(function(data) {
     if (!data.success) return;
-    var events = data.events || [];
+    var events = data.data || data.events || [];
     document.getElementById('events-count').textContent = 'Events (' + events.length + ')';
     document.getElementById('events-body').innerHTML = events.length ? events.map(function(e) {
       return '<tr><td>' + (e.title || '') + '</td><td>' + (e.event_type || '-') + '</td><td>' + (e.group || '-') + '</td><td>' + (e.location || '-') + '</td><td>' + fmt(e.start_date) + '</td><td>' + (e.current_attendees || 0) + '/' + (e.max_attendees || '-') + '</td><td>' + money(e.registration_fee) + '</td><td>' + badge(e.status) + '</td></tr>';
@@ -554,7 +555,7 @@ function loadEvents() {
 function loadSponsors() {
   fetch(API + '/sponsors', { headers: headers() }).then(function(r) { return r.json(); }).then(function(data) {
     if (!data.success) return;
-    var sponsors = data.sponsors || [];
+    var sponsors = data.data || data.sponsors || [];
     document.getElementById('sponsors-count').textContent = 'Sponsors (' + sponsors.length + ')';
     document.getElementById('sponsors-body').innerHTML = sponsors.length ? sponsors.map(function(s) {
       return '<tr><td>' + (s.company_name || '') + '</td><td>' + (s.contact_name || '-') + '</td><td>' + (s.email || '-') + '</td><td>' + badge(s.tier) + '</td><td>' + money(s.sponsorship_amount) + '</td><td>' + fmt(s.contract_end) + '</td><td>' + badge(s.status) + '</td></tr>';
