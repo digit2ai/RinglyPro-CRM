@@ -1444,8 +1444,8 @@ if (fs.existsSync(dashboardDistPath)) {
       </div>
     </div>
     <div style="text-align:center;padding:40px 20px 24px;border-top:1px solid var(--line);margin-top:20px;">
-      <div style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.15em;margin-bottom:16px;">Powered by</div>
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782813ff51693e263e40a.png" alt="KanchoAI" style="height:80px;width:auto;object-fit:contain;">
+      <div style="font-size:22px;color:#c4a35a;text-transform:uppercase;letter-spacing:.15em;margin-bottom:20px;font-weight:700;">Powered by</div>
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782813ff51693e263e40a.png" alt="KanchoAI" style="height:180px;width:auto;object-fit:contain;">
     </div>
   </footer>
 
@@ -1863,9 +1863,9 @@ app.get(`${BASE_PATH}/red-belt-society`, (req, res) => {
     .footer-links { display: flex; gap: 16px; }
     .footer-links a { color: #555; text-decoration: none; font-size: 12px; }
     .footer-links a:hover { color: var(--accent); }
-    .powered-by { text-align: center; padding: 20px 0; border-top: 1px solid var(--line); }
-    .powered-by span { color: var(--muted); font-size: 13px; }
-    .powered-by img { height: 40px; vertical-align: middle; margin-left: 8px; }
+    .powered-by { text-align: center; padding: 40px 20px 24px; border-top: 1px solid var(--line); }
+    .powered-by span { color: var(--gold); font-size: 22px; font-weight: 700; text-transform: uppercase; letter-spacing: .15em; display: block; margin-bottom: 20px; }
+    .powered-by img { height: 180px; width: auto; object-fit: contain; display: block; margin: 0 auto; }
 
     @media (max-width: 768px) {
       .header-inner { flex-direction: column; gap: 10px; }
@@ -2925,8 +2925,8 @@ app.get(`${BASE_PATH}/es`, (req, res) => {
       </div>
     </div>
     <div style="text-align:center;padding:40px 20px 24px;border-top:1px solid var(--line);margin-top:20px;">
-      <div style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.15em;margin-bottom:16px;">Powered by</div>
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782813ff51693e263e40a.png" alt="KanchoAI" style="height:80px;width:auto;object-fit:contain;">
+      <div style="font-size:22px;color:#c4a35a;text-transform:uppercase;letter-spacing:.15em;margin-bottom:20px;font-weight:700;">Powered by</div>
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782813ff51693e263e40a.png" alt="KanchoAI" style="height:180px;width:auto;object-fit:contain;">
     </div>
   </footer>
 
@@ -3611,8 +3611,8 @@ app.get(`${BASE_PATH}/fil`, (req, res) => {
       </div>
     </div>
     <div style="text-align:center;padding:40px 20px 24px;border-top:1px solid var(--line);margin-top:20px;">
-      <div style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.15em;margin-bottom:16px;">Powered by</div>
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782813ff51693e263e40a.png" alt="KanchoAI" style="height:80px;width:auto;object-fit:contain;">
+      <div style="font-size:22px;color:#c4a35a;text-transform:uppercase;letter-spacing:.15em;margin-bottom:20px;font-weight:700;">Powered by</div>
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782813ff51693e263e40a.png" alt="KanchoAI" style="height:180px;width:auto;object-fit:contain;">
     </div>
   </footer>
 
