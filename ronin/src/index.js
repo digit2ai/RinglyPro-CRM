@@ -2314,7 +2314,7 @@ app.get(`${BASE_PATH}/red-belt-society`, (req, res) => {
   </div>
   <div class="powered-by">
     <span>Powered by</span>
-    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/67dc2da63be61bfc66a6b3fc.png" alt="KanchoAI">
+    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699782813ff51693e263e40a.png" alt="KanchoAI">
   </div>
 </footer>
 
