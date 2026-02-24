@@ -1872,15 +1872,23 @@ router.delete('/client-manager/:client_id', async (req, res) => {
             }
         }
 
-        // Delete dependent records in order
+        // Delete ALL dependent records (every FK table referencing clients)
         const tables = [
             'admin_notes', 'admin_communications', 'ghl_integrations',
             'google_calendar_integrations', 'messages', 'calls',
-            'appointments', 'contacts', 'a2p', 'credit_accounts', 'usage_records'
+            'appointments', 'contacts', 'a2p', 'credit_accounts',
+            'usage_records', 'payment_transactions', 'credit_notifications',
+            'forwarding_logs', 'business_directory', 'storefront_businesses',
+            'press_email_events', 'press_contact_uploads', 'press_contacts',
+            'press_releases', 'social_campaigns', 'whatsapp_sessions',
+            'whatsapp_templates'
         ];
         for (const table of tables) {
             await sequelize.query(`DELETE FROM ${table} WHERE client_id = :clientId`, { replacements: { clientId } });
         }
+
+        // Nullify users.client_id FK
+        await sequelize.query('UPDATE users SET client_id = NULL WHERE client_id = :clientId', { replacements: { clientId } });
 
         // Nullify referrals pointing to this client
         await sequelize.query('UPDATE clients SET referred_by = NULL WHERE referred_by = :clientId', { replacements: { clientId } });
