@@ -170,6 +170,11 @@
             grid-column: span 2;
         }
 
+        .btn-admin {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            grid-column: span 2;
+        }
+
         /* Disabled button state */
         .action-btn:disabled,
         .action-btn.disabled {
@@ -473,6 +478,12 @@
                 <div class="action-icon">📰</div>
                 <div>Press Release Manager</div>
             </button>
+
+            <!-- Client Manager - Admin only (client 15) -->
+            <button class="action-btn btn-admin" id="clientManagerBtn" onclick="window.open('/admin/client-manager', '_blank')" style="display: none;">
+                <div class="action-icon">⚙️</div>
+                <div>Client Manager</div>
+            </button>
         </div>
     </div>
 
@@ -569,6 +580,15 @@
                 if (pressBtn) {
                     pressBtn.style.display = 'flex';
                     console.log('✅ Press Release Manager enabled for client', clientId);
+                }
+            }
+
+            // Client Manager - admin only (client 15)
+            if (clientId === 15) {
+                const cmBtn = document.getElementById('clientManagerBtn');
+                if (cmBtn) {
+                    cmBtn.style.display = 'flex';
+                    console.log('✅ Client Manager enabled for admin client', clientId);
                 }
             }
         })();
