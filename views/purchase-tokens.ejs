@@ -419,6 +419,112 @@
         .plan-card.popular .select-plan-btn:hover {
             background: #2563eb;
         }
+
+        /* Subscription Management Section */
+        .subscription-section {
+            display: none;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 25px;
+        }
+
+        .subscription-section.show {
+            display: block;
+        }
+
+        .subscription-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .subscription-header h3 {
+            font-size: 1rem;
+            color: #1f2937;
+            margin: 0;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-badge.active {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-badge.canceling {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .subscription-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .sub-detail {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .sub-detail label {
+            font-size: 0.75rem;
+            color: #6b7280;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .sub-detail span {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .cancel-warning {
+            background: #fef3c7;
+            border: 1px solid #fbbf24;
+            color: #92400e;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+        }
+
+        .btn-cancel {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #fca5a5;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .btn-cancel:hover {
+            background: #dc2626;
+            color: white;
+            border-color: #dc2626;
+        }
+
+        .btn-cancel:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -432,6 +538,38 @@
             <h3>Current Balance</h3>
             <div class="amount" id="currentBalance">Loading...</div>
             <div class="plan-badge" id="currentPlan">Free Plan</div>
+        </div>
+
+        <!-- Subscription Management Section (hidden by default, shown for paid plans) -->
+        <div class="subscription-section" id="subscriptionSection">
+            <div class="subscription-header">
+                <h3>Your Subscription</h3>
+                <span class="status-badge active" id="subStatusBadge">Active</span>
+            </div>
+            <div class="subscription-details">
+                <div class="sub-detail">
+                    <label>Plan</label>
+                    <span id="subPlanName">—</span>
+                </div>
+                <div class="sub-detail">
+                    <label>Price</label>
+                    <span id="subPrice">—</span>
+                </div>
+                <div class="sub-detail">
+                    <label>Monthly Tokens</label>
+                    <span id="subTokens">—</span>
+                </div>
+                <div class="sub-detail">
+                    <label>Billing Started</label>
+                    <span id="subBillingDate">—</span>
+                </div>
+            </div>
+            <div class="cancel-warning" id="cancelWarning" style="display:none;">
+                Cancellation scheduled — your plan stays active until <strong id="cancelDate"></strong>
+            </div>
+            <button class="btn-cancel" id="cancelBtn" onclick="cancelSubscription()">
+                Cancel Subscription
+            </button>
         </div>
 
         <div id="successMessage" class="success-message">
@@ -612,9 +750,97 @@
                         upgradeBtn.textContent = 'Change Subscription Plan';
                     }
                 }
+
+                // Also load subscription status for cancel section
+                await loadSubscriptionStatus();
             } catch (error) {
                 console.error('Error loading balance:', error);
                 document.getElementById('currentBalance').textContent = '0 tokens';
+            }
+        }
+
+        async function loadSubscriptionStatus() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/subscription/status', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) return;
+
+                const data = await response.json();
+                const sub = data.subscription;
+
+                if (!sub || !sub.hasActiveSubscription) return;
+
+                // Show subscription section
+                const section = document.getElementById('subscriptionSection');
+                section.classList.add('show');
+
+                // Populate details
+                document.getElementById('subPlanName').textContent = sub.planName + ' Plan';
+                document.getElementById('subPrice').textContent = '$' + sub.price + '/month';
+                document.getElementById('subTokens').textContent = (sub.monthlyAllocation || 0).toLocaleString();
+                document.getElementById('subBillingDate').textContent = sub.billingCycleStart
+                    ? new Date(sub.billingCycleStart).toLocaleDateString()
+                    : '—';
+
+                // Check if already canceling
+                if (sub.status === 'canceled' || sub.status === 'canceling') {
+                    document.getElementById('subStatusBadge').textContent = 'Canceling';
+                    document.getElementById('subStatusBadge').className = 'status-badge canceling';
+                    document.getElementById('cancelBtn').style.display = 'none';
+                    document.getElementById('cancelWarning').style.display = 'block';
+                    // Try to get cancel date from Stripe
+                    document.getElementById('cancelDate').textContent = 'the end of your billing period';
+                }
+            } catch (error) {
+                console.error('Error loading subscription status:', error);
+            }
+        }
+
+        async function cancelSubscription() {
+            const planName = document.getElementById('subPlanName').textContent;
+
+            if (!confirm('Are you sure you want to cancel your ' + planName + '?')) return;
+            if (!confirm('Your tokens will remain until the end of your current billing period. Confirm cancellation?')) return;
+
+            const btn = document.getElementById('cancelBtn');
+            btn.disabled = true;
+            btn.textContent = 'Canceling...';
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/subscription/cancel', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to cancel subscription');
+                }
+
+                // Update UI to show canceling state
+                document.getElementById('subStatusBadge').textContent = 'Canceling';
+                document.getElementById('subStatusBadge').className = 'status-badge canceling';
+                btn.style.display = 'none';
+
+                const cancelDate = data.cancelAt ? new Date(data.cancelAt).toLocaleDateString() : 'the end of your billing period';
+                document.getElementById('cancelDate').textContent = cancelDate;
+                document.getElementById('cancelWarning').style.display = 'block';
+
+                alert('Subscription canceled. You will keep your tokens until ' + cancelDate + '.');
+
+            } catch (error) {
+                console.error('Cancel error:', error);
+                alert('Failed to cancel: ' + error.message);
+                btn.disabled = false;
+                btn.textContent = 'Cancel Subscription';
             }
         }
 
