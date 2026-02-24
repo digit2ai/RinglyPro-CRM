@@ -776,6 +776,11 @@ app.get('/admin', async (req, res) => {
   }
 });
 
+// Admin Client Manager utility
+app.get('/admin/client-manager', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/admin-client-manager.html'));
+});
+
 // =====================================================
 // PUBLIC ROUTES - No authentication required
 // =====================================================

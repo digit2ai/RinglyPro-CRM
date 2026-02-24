@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client Manager - RinglyPro Admin</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .card-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      padding: 20px 24px;
+    }
+    .card-header h1 { font-size: 22px; font-weight: 600; }
+    .card-header p { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+    .card-body { padding: 24px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+    .form-group input:focus, .form-group select:focus {
+      border-color: #667eea;
+    }
+    .form-group input[readonly] {
+      background: #f7f7f9;
+      color: #888;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+    }
+    .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(102,126,234,0.4); }
+    .btn-success {
+      background: linear-gradient(135deg, #38b2ac, #2f855a);
+      color: #fff;
+    }
+    .btn-success:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(56,178,172,0.4); }
+    .btn-warning {
+      background: linear-gradient(135deg, #ed8936, #dd6b20);
+      color: #fff;
+    }
+    .btn-warning:hover:not(:disabled) { transform: translateY(-1px); }
+    .btn-block { width: 100%; }
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #4a5568;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    .alert {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 14px;
+      display: none;
+    }
+    .alert-success { background: #f0fff4; color: #276749; border: 1px solid #c6f6d5; }
+    .alert-error { background: #fed7d7; color: #9b2c2c; border: 1px solid #feb2b2; }
+    .divider { height: 1px; background: #e2e8f0; margin: 24px 0; }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-green { background: #c6f6d5; color: #276749; }
+    .badge-red { background: #fed7d7; color: #9b2c2c; }
+    .badge-blue { background: #bee3f8; color: #2a4365; }
+    .client-info-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: #f7fafc;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 13px;
+    }
+    .client-info-bar strong { font-size: 15px; }
+    #loginSection, #mainSection { display: none; }
+    .btn-row { display: flex; gap: 10px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Login -->
+    <div id="loginSection">
+      <div class="card">
+        <div class="card-header">
+          <h1>Client Manager</h1>
+          <p>RinglyPro Admin Utility</p>
+        </div>
+        <div class="card-body">
+          <div id="loginAlert" class="alert alert-error"></div>
+          <div class="form-group">
+            <label>Admin Email</label>
+            <input type="email" id="loginEmail" value="info@digit2ai.com">
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="loginPassword">
+          </div>
+          <button class="btn btn-primary btn-block" onclick="login()">Sign In</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main UI -->
+    <div id="mainSection">
+      <div class="card">
+        <div class="card-header">
+          <h1>Client Manager</h1>
+          <p>Manage client configuration, ElevenLabs agents, and Twilio numbers</p>
+        </div>
+        <div class="card-body">
+          <div id="mainAlert" class="alert"></div>
+
+          <!-- Client Selector -->
+          <div class="form-group">
+            <label>Select Client</label>
+            <select id="clientSelect" onchange="loadClient()">
+              <option value="">-- Select a client --</option>
+            </select>
+          </div>
+
+          <div id="clientDetails" style="display:none;">
+            <div class="client-info-bar" id="clientInfoBar"></div>
+
+            <!-- Business Info -->
+            <div class="section-title">Business Information</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Business Name</label>
+                <input type="text" id="business_name">
+              </div>
+              <div class="form-group">
+                <label>Business Phone</label>
+                <input type="text" id="business_phone">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Owner Name</label>
+                <input type="text" id="owner_name">
+              </div>
+              <div class="form-group">
+                <label>Owner Phone</label>
+                <input type="text" id="owner_phone">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Owner Email</label>
+              <input type="email" id="owner_email">
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- ElevenLabs Config -->
+            <div class="section-title">ElevenLabs Configuration</div>
+            <div class="form-group">
+              <label>ElevenLabs Agent ID</label>
+              <input type="text" id="elevenlabs_agent_id" placeholder="agent_xxxx...">
+            </div>
+            <div class="form-group">
+              <label>ElevenLabs Phone Number ID</label>
+              <input type="text" id="elevenlabs_phone_number_id" placeholder="phnum_xxxx...">
+            </div>
+
+            <button class="btn btn-primary btn-block" onclick="saveConfig()">Save Client Config</button>
+            <div id="configAlert" class="alert" style="margin-top: 12px;"></div>
+
+            <div class="divider"></div>
+
+            <!-- Twilio Info -->
+            <div class="section-title">Twilio Number</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>RinglyPro Number</label>
+                <input type="text" id="ringlypro_number" readonly>
+              </div>
+              <div class="form-group">
+                <label>Twilio Number SID</label>
+                <input type="text" id="twilio_number_sid" readonly>
+              </div>
+            </div>
+            <button class="btn btn-warning" onclick="syncTwilio()">Sync Voice URL to ElevenLabs</button>
+            <div id="twilioAlert" class="alert" style="margin-top: 12px;"></div>
+
+            <div class="divider"></div>
+
+            <!-- User Credentials -->
+            <div class="section-title">User Login Credentials</div>
+            <div id="noUserAlert" class="alert alert-error" style="display:none;">No user linked to this client.</div>
+            <div id="userSection">
+              <div class="form-group">
+                <label>User ID</label>
+                <input type="text" id="user_id_display" readonly>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Login Email</label>
+                  <input type="email" id="user_email">
+                </div>
+                <div class="form-group">
+                  <label>New Password (leave blank to keep)</label>
+                  <input type="text" id="user_password" placeholder="Enter new password...">
+                </div>
+              </div>
+              <button class="btn btn-success" onclick="saveUser()">Save User Credentials</button>
+              <div id="userAlert" class="alert" style="margin-top: 12px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const API = window.location.origin + '/api/admin';
+let token = localStorage.getItem('adminToken');
+let currentClientId = null;
+
+// Init
+(function init() {
+  if (token) {
+    showMain();
+  } else {
+    document.getElementById('loginSection').style.display = 'block';
+  }
+})();
+
+// Login
+async function login() {
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
+  hideAlert('loginAlert');
+
+  try {
+    const res = await fetch(API + '/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (data.success && data.token) {
+      token = data.token;
+      localStorage.setItem('adminToken', token);
+      showMain();
+    } else {
+      showAlert('loginAlert', data.error || 'Login failed', 'error');
+    }
+  } catch (e) {
+    showAlert('loginAlert', 'Connection error', 'error');
+  }
+}
+
+function showMain() {
+  document.getElementById('loginSection').style.display = 'none';
+  document.getElementById('mainSection').style.display = 'block';
+  loadClients();
+}
+
+// Load all clients into dropdown
+async function loadClients() {
+  try {
+    const res = await apiFetch('/clients?limit=200');
+    const data = await res.json();
+    if (!data.success) { handleAuthError(res); return; }
+
+    const select = document.getElementById('clientSelect');
+    select.innerHTML = '<option value="">-- Select a client --</option>';
+    (data.clients || []).forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = `#${c.id} - ${c.business_name} (${c.ringlypro_number || 'no number'})`;
+      select.appendChild(opt);
+    });
+  } catch (e) {
+    showAlert('mainAlert', 'Failed to load clients', 'error');
+  }
+}
+
+// Load single client
+async function loadClient() {
+  const id = document.getElementById('clientSelect').value;
+  if (!id) {
+    document.getElementById('clientDetails').style.display = 'none';
+    return;
+  }
+  currentClientId = id;
+  hideAllAlerts();
+
+  try {
+    const res = await apiFetch('/clients/' + id);
+    const data = await res.json();
+    if (!data.success) { showAlert('mainAlert', data.error, 'error'); return; }
+
+    const c = data.client;
+
+    // Populate fields
+    document.getElementById('business_name').value = c.business_name || '';
+    document.getElementById('business_phone').value = c.business_phone || '';
+    document.getElementById('owner_name').value = c.owner_name || '';
+    document.getElementById('owner_phone').value = c.owner_phone || '';
+    document.getElementById('owner_email').value = c.owner_email || '';
+    document.getElementById('elevenlabs_agent_id').value = c.elevenlabs_agent_id || '';
+    document.getElementById('elevenlabs_phone_number_id').value = c.elevenlabs_phone_number_id || '';
+    document.getElementById('ringlypro_number').value = c.ringlypro_number || '';
+    document.getElementById('twilio_number_sid').value = c.twilio_number_sid || '';
+
+    // Info bar
+    const badges = [];
+    if (c.rachel_enabled) badges.push('<span class="badge badge-green">Rachel ON</span>');
+    else badges.push('<span class="badge badge-red">Rachel OFF</span>');
+    if (c.voice_provider === 'elevenlabs') badges.push('<span class="badge badge-blue">ElevenLabs</span>');
+    else badges.push('<span class="badge badge-blue">' + (c.voice_provider || 'rachel') + '</span>');
+    document.getElementById('clientInfoBar').innerHTML =
+      '<strong>Client #' + c.id + '</strong> ' + badges.join(' ');
+
+    // User section
+    if (c.user_id) {
+      document.getElementById('noUserAlert').style.display = 'none';
+      document.getElementById('userSection').style.display = 'block';
+      document.getElementById('user_id_display').value = c.user_id;
+      // Load user email
+      loadUserInfo(c.user_id);
+    } else {
+      document.getElementById('noUserAlert').style.display = 'block';
+      document.getElementById('userSection').style.display = 'none';
+    }
+
+    document.getElementById('clientDetails').style.display = 'block';
+  } catch (e) {
+    showAlert('mainAlert', 'Failed to load client: ' + e.message, 'error');
+  }
+}
+
+async function loadUserInfo(userId) {
+  try {
+    // Use the admin clients/:id endpoint which returns user info in stats
+    // We already have user_id, query users table via a lightweight call
+    // For now just display user_id; email will load on save response
+    document.getElementById('user_email').value = '';
+    document.getElementById('user_password').value = '';
+
+    // Fetch user email from a quick query via the client-manager user endpoint
+    // We'll use a GET workaround - just display what we have
+    // Actually, admin/clients/:id returns owner_email which may differ from user email
+    // Let's fetch from the existing admin endpoint data
+    const res = await apiFetch('/clients/' + currentClientId);
+    const data = await res.json();
+    if (data.success && data.client && data.client.user_email) {
+      document.getElementById('user_email').value = data.client.user_email;
+    }
+  } catch (e) {
+    // Silently fail - user can still type new email
+  }
+}
+
+// Save client config
+async function saveConfig() {
+  if (!currentClientId) return;
+  hideAlert('configAlert');
+
+  const body = {
+    business_name: document.getElementById('business_name').value,
+    business_phone: document.getElementById('business_phone').value,
+    owner_name: document.getElementById('owner_name').value,
+    owner_phone: document.getElementById('owner_phone').value,
+    owner_email: document.getElementById('owner_email').value,
+    elevenlabs_agent_id: document.getElementById('elevenlabs_agent_id').value || null,
+    elevenlabs_phone_number_id: document.getElementById('elevenlabs_phone_number_id').value || null
+  };
+
+  try {
+    const res = await apiFetch('/client-manager/' + currentClientId + '/config', 'PUT', body);
+    const data = await res.json();
+    if (data.success) {
+      let msg = 'Client config saved successfully.';
+      if (data.twilioUpdated) msg += ' Twilio voice URL updated to ElevenLabs.';
+      showAlert('configAlert', msg, 'success');
+    } else {
+      showAlert('configAlert', data.error || 'Failed to save', 'error');
+    }
+  } catch (e) {
+    showAlert('configAlert', 'Error: ' + e.message, 'error');
+  }
+}
+
+// Sync Twilio
+async function syncTwilio() {
+  if (!currentClientId) return;
+  hideAlert('twilioAlert');
+
+  try {
+    const res = await apiFetch('/client-manager/' + currentClientId + '/twilio', 'PUT');
+    const data = await res.json();
+    if (data.success) {
+      showAlert('twilioAlert', 'Twilio voice URL synced: ' + data.voiceUrl, 'success');
+    } else {
+      showAlert('twilioAlert', data.error || 'Sync failed', 'error');
+    }
+  } catch (e) {
+    showAlert('twilioAlert', 'Error: ' + e.message, 'error');
+  }
+}
+
+// Save user credentials
+async function saveUser() {
+  if (!currentClientId) return;
+  hideAlert('userAlert');
+
+  const email = document.getElementById('user_email').value;
+  const password = document.getElementById('user_password').value;
+
+  if (!email && !password) {
+    showAlert('userAlert', 'Enter email or password to update', 'error');
+    return;
+  }
+
+  const body = {};
+  if (email) body.email = email;
+  if (password) body.password = password;
+
+  try {
+    const res = await apiFetch('/client-manager/' + currentClientId + '/user', 'PUT', body);
+    const data = await res.json();
+    if (data.success) {
+      showAlert('userAlert', 'User credentials saved. Email: ' + data.user.email, 'success');
+      document.getElementById('user_password').value = '';
+    } else {
+      showAlert('userAlert', data.error || 'Failed to save', 'error');
+    }
+  } catch (e) {
+    showAlert('userAlert', 'Error: ' + e.message, 'error');
+  }
+}
+
+// Helpers
+async function apiFetch(path, method, body) {
+  const opts = {
+    method: method || 'GET',
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json'
+    }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(API + path, opts);
+  if (res.status === 401 || res.status === 403) {
+    localStorage.removeItem('adminToken');
+    token = null;
+    document.getElementById('mainSection').style.display = 'none';
+    document.getElementById('loginSection').style.display = 'block';
+    showAlert('loginAlert', 'Session expired. Please log in again.', 'error');
+  }
+  return res;
+}
+
+function showAlert(id, msg, type) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className = 'alert alert-' + type;
+  el.style.display = 'block';
+}
+
+function hideAlert(id) {
+  document.getElementById(id).style.display = 'none';
+}
+
+function hideAllAlerts() {
+  ['mainAlert', 'configAlert', 'twilioAlert', 'userAlert'].forEach(hideAlert);
+}
+
+function handleAuthError(res) {
+  if (res.status === 401 || res.status === 403) {
+    localStorage.removeItem('adminToken');
+    location.reload();
+  }
+}
+</script>
+</body>
+</html>
