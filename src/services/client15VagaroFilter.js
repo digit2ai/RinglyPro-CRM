@@ -8,7 +8,8 @@
  * Compliant with CAN-SPAM, GDPR, and CASL - uses public data only.
  */
 
-const CLIENT_15_ID = 15;
+// Disabled — Client 15 no longer restricted to Vagaro-only businesses
+const CLIENT_15_ID = -1;
 
 /**
  * Vagaro category mappings - translates user requests to valid categories

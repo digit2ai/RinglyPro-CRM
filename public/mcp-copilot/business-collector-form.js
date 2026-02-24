@@ -7,8 +7,8 @@ let businessCollectorModal = null;
 let currentLeads = null;
 
 // CLIENT 15 SPECIAL HANDLING: Vagaro Discovery Mode
-// Client 15 only sees "Vagaro Users" category and gets filtered results
-const CLIENT_15_VAGARO_MODE = true;
+// Disabled — Client 15 now has access to all categories like any other client
+const CLIENT_15_VAGARO_MODE = false;
 const CLIENT_15_ID = 15;
 
 // US Cities by State - Top cities for each state
