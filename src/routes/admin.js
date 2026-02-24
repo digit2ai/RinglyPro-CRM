@@ -1876,7 +1876,7 @@ router.delete('/client-manager/:client_id', async (req, res) => {
         const tables = [
             'admin_notes', 'admin_communications', 'ghl_integrations',
             'google_calendar_integrations', 'messages', 'calls',
-            'appointments', 'contacts', 'a2p', 'credit_accounts'
+            'appointments', 'contacts', 'a2p', 'credit_accounts', 'usage_records'
         ];
         for (const table of tables) {
             await sequelize.query(`DELETE FROM ${table} WHERE client_id = :clientId`, { replacements: { clientId } });
