@@ -5723,6 +5723,33 @@ app.get('*', (req, res) => {
         </div>
       </div>
 
+      <!-- Feature Props Row 2 -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 mb-10 md:mb-16 mobile-value-props">
+        <div class="card rounded-2xl p-5 md:p-8 text-center" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%); border-color: rgba(99, 102, 241, 0.2);">
+          <div class="w-12 h-12 md:w-16 md:h-16 bg-indigo-500/20 rounded-xl md:rounded-2xl flex items-center justify-center mx-auto mb-3 md:mb-4">
+            <i class="fas fa-phone-alt text-indigo-400 text-xl md:text-2xl"></i>
+          </div>
+          <h3 class="text-lg md:text-xl font-bold mb-2 text-indigo-400">AI Call Handling</h3>
+          <p class="text-gray-400 text-xs md:text-sm">Automatic inbound & outbound call handling — AI answers, books appointments, and follows up with leads 24/7</p>
+        </div>
+
+        <div class="card rounded-2xl p-5 md:p-8 text-center" style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(251, 191, 36, 0.05) 100%); border-color: rgba(251, 191, 36, 0.2);">
+          <div class="w-12 h-12 md:w-16 md:h-16 bg-amber-500/20 rounded-xl md:rounded-2xl flex items-center justify-center mx-auto mb-3 md:mb-4">
+            <i class="fas fa-cogs text-amber-400 text-xl md:text-2xl"></i>
+          </div>
+          <h3 class="text-lg md:text-xl font-bold mb-2 text-amber-400">CRM Automations</h3>
+          <p class="text-gray-400 text-xs md:text-sm">Business automations that manage your pipeline — scheduling, reminders, follow-ups, and revenue tracking on autopilot</p>
+        </div>
+
+        <div class="card rounded-2xl p-5 md:p-8 text-center" style="background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%); border-color: rgba(34, 197, 94, 0.2);">
+          <div class="w-12 h-12 md:w-16 md:h-16 bg-emerald-500/20 rounded-xl md:rounded-2xl flex items-center justify-center mx-auto mb-3 md:mb-4">
+            <i class="fas fa-user-shield text-emerald-400 text-xl md:text-2xl"></i>
+          </div>
+          <h3 class="text-lg md:text-xl font-bold mb-2 text-emerald-400">Student Tracking</h3>
+          <p class="text-gray-400 text-xs md:text-sm">Churn reduction, lead handling, attendance tracking, belt progress, and payment management — all in one place</p>
+        </div>
+      </div>
+
       <!-- CTA -->
       <div class="text-center mb-16">
         <p class="text-gray-400 mb-6">Select a business above to see Kancho in action, or:</p>
