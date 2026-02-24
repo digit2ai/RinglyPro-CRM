@@ -1844,6 +1844,63 @@ router.put('/client-manager/:client_id/user', async (req, res) => {
     }
 });
 
+// Delete client and release Twilio number
+router.delete('/client-manager/:client_id', async (req, res) => {
+    if (!validateClientManagerKey(req, res)) return;
+    try {
+        const { client_id } = req.params;
+        const clientId = parseInt(client_id);
+
+        const [client] = await sequelize.query(
+            'SELECT id, business_name, twilio_number_sid, ringlypro_number, user_id FROM clients WHERE id = :clientId',
+            { replacements: { clientId }, type: sequelize.QueryTypes.SELECT }
+        );
+        if (!client) return res.status(404).json({ success: false, error: 'Client not found' });
+
+        console.log(`🗑️ Client Manager deleting client #${clientId}: ${client.business_name}`);
+
+        // Release Twilio number if configured
+        let twilioReleased = false;
+        if (client.twilio_number_sid) {
+            try {
+                const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+                await twilioClient.incomingPhoneNumbers(client.twilio_number_sid).remove();
+                twilioReleased = true;
+                console.log(`✅ Twilio number ${client.ringlypro_number} (${client.twilio_number_sid}) released`);
+            } catch (twilioErr) {
+                console.warn(`⚠️ Twilio release failed for ${client.twilio_number_sid}: ${twilioErr.message}`);
+            }
+        }
+
+        // Delete dependent records in order
+        const tables = [
+            'admin_notes', 'admin_communications', 'ghl_integrations',
+            'google_calendar_integrations', 'messages', 'calls',
+            'appointments', 'contacts', 'a2p', 'credit_accounts'
+        ];
+        for (const table of tables) {
+            await sequelize.query(`DELETE FROM ${table} WHERE client_id = :clientId`, { replacements: { clientId } });
+        }
+
+        // Nullify referrals pointing to this client
+        await sequelize.query('UPDATE clients SET referred_by = NULL WHERE referred_by = :clientId', { replacements: { clientId } });
+
+        // Delete the client
+        await sequelize.query('DELETE FROM clients WHERE id = :clientId', { replacements: { clientId } });
+
+        console.log(`✅ Client #${clientId} (${client.business_name}) fully deleted`);
+        res.json({
+            success: true,
+            deleted: { id: clientId, business_name: client.business_name },
+            twilioReleased
+        });
+
+    } catch (error) {
+        console.error('❌ Client Manager delete error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // Apply admin authentication to all routes AFTER quick endpoints
 router.use(authenticateAdmin);
 

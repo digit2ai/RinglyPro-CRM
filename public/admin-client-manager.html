@@ -255,6 +255,14 @@
               <button class="btn btn-success" onclick="saveUser()">Save User Credentials</button>
               <div id="userAlert" class="alert" style="margin-top: 12px;"></div>
             </div>
+
+            <div class="divider"></div>
+
+            <!-- Danger Zone -->
+            <div class="section-title" style="color: #e53e3e; border-color: #fed7d7;">Danger Zone</div>
+            <p style="font-size: 13px; color: #718096; margin-bottom: 12px;">Permanently delete this client and all associated data. If a Twilio number is assigned, it will be released back to your account.</p>
+            <button class="btn" style="background: linear-gradient(135deg, #e53e3e, #c53030); color: #fff;" onclick="deleteClient()">Delete Client</button>
+            <div id="deleteAlert" class="alert" style="margin-top: 12px;"></div>
           </div>
         </div>
       </div>
@@ -475,6 +483,41 @@ async function saveUser() {
   }
 }
 
+// Delete client
+async function deleteClient() {
+  if (!currentClientId) return;
+  hideAlert('deleteAlert');
+
+  const name = document.getElementById('business_name').value || 'this client';
+  const number = document.getElementById('ringlypro_number').value;
+  const numberWarning = number ? '\n\nThe Twilio number ' + number + ' will be RELEASED.' : '';
+
+  if (!confirm('Are you sure you want to delete Client #' + currentClientId + ' (' + name + ')?\n\nThis will permanently delete ALL data (calls, messages, appointments, contacts, notes, etc.).' + numberWarning)) {
+    return;
+  }
+  if (!confirm('FINAL CONFIRMATION: Delete "' + name + '" and all associated records? This cannot be undone.')) {
+    return;
+  }
+
+  try {
+    const res = await apiFetch('/client-manager/' + currentClientId, 'DELETE', { apiKey });
+    const data = await res.json();
+    if (data.success) {
+      let msg = 'Client #' + data.deleted.id + ' (' + data.deleted.business_name + ') deleted.';
+      if (data.twilioReleased) msg += ' Twilio number released.';
+      document.getElementById('clientDetails').style.display = 'none';
+      document.getElementById('clientSelect').value = '';
+      currentClientId = null;
+      loadClients();
+      showAlert('mainAlert', msg, 'success');
+    } else {
+      showAlert('deleteAlert', data.error || 'Failed to delete', 'error');
+    }
+  } catch (e) {
+    showAlert('deleteAlert', 'Error: ' + e.message, 'error');
+  }
+}
+
 function logout() {
   localStorage.removeItem('clientManagerApiKey');
   apiKey = null;
@@ -512,7 +555,7 @@ function hideAlert(id) {
 }
 
 function hideAllAlerts() {
-  ['mainAlert', 'configAlert', 'twilioAlert', 'userAlert'].forEach(hideAlert);
+  ['mainAlert', 'configAlert', 'twilioAlert', 'userAlert', 'deleteAlert'].forEach(hideAlert);
 }
 </script>
 </body>
