@@ -2812,32 +2812,7 @@ app.get('/es', (req, res) => {
               </li>
               <li class="flex items-start gap-3">
                 <i class="fas fa-check text-green-400 mt-1"></i>
-                <span class="text-gray-300 text-sm">CRM co-piloto para gestionar llamadas y prospectos</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <i class="fas fa-check text-green-400 mt-1"></i>
                 <span class="text-gray-300 text-sm">Dashboard CRM móvil</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <i class="fas fa-check text-green-400 mt-1"></i>
-                <span class="text-gray-300 text-sm">Integración con calendarios existentes</span>
-              </li>
-            </ul>
-            <div class="mb-4">
-              <p class="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">IA Saliente y Automatización de Ventas</p>
-            </div>
-            <ul class="space-y-3 mb-8">
-              <li class="flex items-start gap-3">
-                <i class="fas fa-check text-green-400 mt-1"></i>
-                <span class="text-gray-300 text-sm">Campañas de llamadas salientes automatizadas</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <i class="fas fa-check text-green-400 mt-1"></i>
-                <span class="text-gray-300 text-sm">Recolección de prospectos B2B</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <i class="fas fa-check text-green-400 mt-1"></i>
-                <span class="text-gray-300 text-sm">Sistema de generación de prospectos con IA</span>
               </li>
             </ul>
             <a href="https://aiagent.ringlypro.com/signup?plan=starter&amount=45&tokens=500&billing=monthly" class="block w-full py-3 text-center bg-white/10 hover:bg-kancho-coral/20 border border-kancho-dark-border hover:border-kancho-coral rounded-xl font-medium transition text-white no-underline">
@@ -6086,32 +6061,7 @@ app.get('*', (req, res) => {
               </li>
               <li class="flex items-start gap-3">
                 <i class="fas fa-check text-green-400 mt-1"></i>
-                <span class="text-gray-300 text-sm">CRM co-pilot for managing calls &amp; leads</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <i class="fas fa-check text-green-400 mt-1"></i>
                 <span class="text-gray-300 text-sm">Mobile CRM dashboard</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <i class="fas fa-check text-green-400 mt-1"></i>
-                <span class="text-gray-300 text-sm">Integration with existing calendars</span>
-              </li>
-            </ul>
-            <div class="mb-4">
-              <p class="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">AI Outbound &amp; Sales Automation</p>
-            </div>
-            <ul class="space-y-3 mb-8">
-              <li class="flex items-start gap-3">
-                <i class="fas fa-check text-green-400 mt-1"></i>
-                <span class="text-gray-300 text-sm">Automated outbound calling campaigns</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <i class="fas fa-check text-green-400 mt-1"></i>
-                <span class="text-gray-300 text-sm">B2B business lead collection</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <i class="fas fa-check text-green-400 mt-1"></i>
-                <span class="text-gray-300 text-sm">AI lead generation system</span>
               </li>
             </ul>
             <a href="https://aiagent.ringlypro.com/signup?plan=starter&amount=45&tokens=500&billing=monthly" class="block w-full py-3 text-center bg-white/10 hover:bg-kancho-coral/20 border border-kancho-dark-border hover:border-kancho-coral rounded-xl font-medium transition text-white no-underline">
