@@ -1008,8 +1008,43 @@ The RinglyPro Team`,
     }
 }
 
+/**
+ * Send "Set Your Password" email for voice-signup users
+ * Uses the existing /reset-password page and /api/auth/reset-password endpoint
+ */
+async function sendSetPasswordEmail(email, resetToken, userName) {
+    if (!SENDGRID_API_KEY) {
+        console.log('⚠️  SendGrid not configured - skipping set-password email');
+        console.log('🔗 Set password link: ' + APP_URL + '/reset-password?token=' + resetToken);
+        return { success: false, reason: 'SendGrid not configured' };
+    }
+
+    const setPasswordLink = APP_URL + '/reset-password?token=' + resetToken;
+
+    const msg = {
+        to: email,
+        from: {
+            email: FROM_EMAIL,
+            name: FROM_NAME
+        },
+        subject: 'Welcome to RinglyPro — Set Your Password',
+        text: 'Welcome to RinglyPro, ' + (userName || 'there') + '!\n\nYour account has been created by our team. To get started, please set your password using the link below:\n\n' + setPasswordLink + '\n\nThis link will expire in 24 hours.\n\nOnce you set your password, you can log in to your dashboard to manage your AI receptionist, view calls, and more.\n\nWelcome aboard!\nThe RinglyPro Team',
+        html: '<!DOCTYPE html><html><head><style>body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }.container { max-width: 600px; margin: 0 auto; padding: 20px; }.header { background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }.header h1 { color: white; margin: 0; font-size: 22px; }.content { background: white; padding: 30px; border: 1px solid #e5e7eb; }.button { display: inline-block; background: #4f46e5; color: white; padding: 14px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: bold; }.footer { text-align: center; color: #6b7280; margin-top: 20px; font-size: 14px; }</style></head><body><div class="container"><div class="header"><h1>Welcome to RinglyPro!</h1></div><div class="content"><p>Hi <strong>' + (userName || 'there') + '</strong>,</p><p>Your RinglyPro account has been created! To get started, set your password:</p><div style="text-align: center;"><a href="' + setPasswordLink + '" class="button">Set My Password</a></div><p>Once you set your password, you can log in to your dashboard to:</p><ul><li>Manage your AI receptionist</li><li>View calls and messages</li><li>Configure your business hours</li><li>Track appointments</li></ul><p style="color: #f59e0b;"><strong>⏰ This link expires in 24 hours.</strong></p><p style="font-size: 14px; color: #6b7280;">If the button does not work, copy this link:<br><code>' + setPasswordLink + '</code></p></div><div class="footer"><p>RinglyPro - AI-Powered Voice Assistant</p></div></div></body></html>'
+    };
+
+    try {
+        await sgMail.send(msg);
+        console.log('✅ Set-password email sent to: ' + email);
+        return { success: true };
+    } catch (error) {
+        console.error('❌ SendGrid set-password email error:', error.response ? error.response.body : error.message);
+        return { success: false, error: error.message };
+    }
+}
+
 module.exports = {
     sendPasswordResetEmail,
+    sendSetPasswordEmail,
     sendWelcomeEmail,
     sendPartnershipConfirmationEmail,
     sendPartnershipAdminNotification,

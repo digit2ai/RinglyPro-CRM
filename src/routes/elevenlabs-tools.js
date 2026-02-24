@@ -133,6 +133,10 @@ router.post('/', async (req, res) => {
         // Quick admin tool to enable/disable deposit requirement
         result = await handleAdminSetDepositRequired(params);
         break;
+      case 'signup_client':
+        // Voice signup: create full RinglyPro account from phone call
+        result = await handleSignupClient(params);
+        break;
       default:
         result = {
           success: false,
@@ -784,6 +788,346 @@ async function handleAdminSetDepositRequired(params) {
     return { success: true, client_id, deposit_required: depositRequired };
   } catch (error) {
     return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Voice Signup: Create full RinglyPro account from phone call
+ * Lina collects info over the phone, then calls this tool to:
+ * 1. Create User (random password — user sets via email link)
+ * 2. Provision Twilio number
+ * 3. Create Client record
+ * 4. Provision ElevenLabs voice agent
+ * 5. Create Stripe checkout session (14-day trial)
+ * 6. Send SMS with Stripe checkout link
+ * 7. Send email with set-password link
+ */
+async function handleSignupClient(params) {
+  const bcrypt = require('bcrypt');
+  const jwt = require('jsonwebtoken');
+  const crypto = require('crypto');
+  const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+  const { User, Client, CreditAccount } = require('../models');
+  const { normalizePhoneFromSpeech } = require('../utils/phoneNormalizer');
+  const { sendSetPasswordEmail, sendWelcomeEmail } = require('../services/emailService');
+
+  const PLANS = {
+    starter: { name: 'Starter', price: 45, tokens: 500, rollover: true },
+    growth: { name: 'Growth', price: 180, tokens: 2000, rollover: true }
+  };
+
+  try {
+    const {
+      first_name, last_name, email, business_name,
+      business_phone, plan, business_type, website_url, owner_phone
+    } = params;
+
+    // ── Validate required fields ──
+    if (!first_name || !last_name) {
+      return { success: false, error: 'I need the caller\'s first and last name to create the account.' };
+    }
+    if (!email) {
+      return { success: false, error: 'I need an email address to create the account.' };
+    }
+    if (!business_name) {
+      return { success: false, error: 'I need the business name to set up the account.' };
+    }
+    if (!business_phone) {
+      return { success: false, error: 'I need the business phone number to set up the AI receptionist.' };
+    }
+
+    const selectedPlan = PLANS[plan] ? plan : 'starter';
+    const planDetails = PLANS[selectedPlan];
+
+    // Normalize phone numbers
+    const normalizedBusinessPhone = normalizePhoneFromSpeech(business_phone);
+    const normalizedOwnerPhone = owner_phone ? normalizePhoneFromSpeech(owner_phone) : normalizedBusinessPhone;
+    const cleanWebsiteUrl = website_url && website_url.trim() !== '' ? website_url.trim() : null;
+
+    // ── Check uniqueness ──
+    const existingUser = await User.findOne({ where: { email: email.toLowerCase().trim() } });
+    if (existingUser) {
+      return { success: false, error: 'An account already exists with that email address. The caller may already have a RinglyPro account.' };
+    }
+
+    const existingClient = await Client.findOne({ where: { business_phone: normalizedBusinessPhone } });
+    if (existingClient) {
+      return { success: false, error: 'That business phone number is already registered with RinglyPro.' };
+    }
+
+    // ── Create account inside DB transaction ──
+    const transaction = await sequelize.transaction();
+
+    try {
+      // Random password (user will set their own via email link)
+      const randomPassword = crypto.randomBytes(32).toString('hex');
+      const passwordHash = await bcrypt.hash(randomPassword, 12);
+
+      // Create User
+      const user = await User.create({
+        email: email.toLowerCase().trim(),
+        password_hash: passwordHash,
+        first_name: first_name.trim(),
+        last_name: last_name.trim(),
+        business_name: business_name.trim(),
+        business_phone: normalizedBusinessPhone,
+        business_type: business_type || null,
+        website_url: cleanWebsiteUrl,
+        phone_number: normalizedOwnerPhone,
+        terms_accepted: true,
+        free_trial_minutes: 100,
+        onboarding_completed: false,
+        subscription_plan: selectedPlan,
+        billing_frequency: 'monthly',
+        subscription_status: 'pending',
+        trial_ends_at: null,
+        monthly_token_allocation: planDetails.tokens,
+        tokens_balance: 0
+      }, { transaction });
+
+      logger.info(`[Voice Signup] User created: ${user.id} (${email})`);
+
+      // Provision Twilio number
+      let twilioNumber, twilioSid;
+
+      if (process.env.SKIP_TWILIO_PROVISIONING === 'true') {
+        twilioNumber = `+1555${Math.floor(Math.random() * 10000000).toString().padStart(7, '0')}`;
+        twilioSid = `PN${Math.random().toString(36).substring(2, 15)}`;
+        logger.info(`[Voice Signup] TEST MODE: Mock Twilio number: ${twilioNumber}`);
+      } else {
+        const webhookBaseUrl = process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com';
+        const availableNumbers = await twilioClient.availablePhoneNumbers('US')
+          .local.list({ limit: 1, voiceEnabled: true, smsEnabled: true });
+
+        if (!availableNumbers || availableNumbers.length === 0) {
+          await transaction.rollback();
+          return { success: false, error: 'There was an issue provisioning a phone number. Please try again or let me transfer you to support.' };
+        }
+
+        const purchasedNumber = await twilioClient.incomingPhoneNumbers.create({
+          phoneNumber: availableNumbers[0].phoneNumber,
+          voiceUrl: `${webhookBaseUrl}/voice/rachel/`,
+          voiceMethod: 'POST',
+          statusCallback: `${webhookBaseUrl}/voice/webhook/call-status`,
+          statusCallbackMethod: 'POST',
+          statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
+          smsUrl: `${webhookBaseUrl}/api/messages/incoming`,
+          smsMethod: 'POST',
+          friendlyName: `RinglyPro - ${business_name.trim()}`
+        });
+
+        twilioNumber = purchasedNumber.phoneNumber;
+        twilioSid = purchasedNumber.sid;
+        logger.info(`[Voice Signup] Twilio number provisioned: ${twilioNumber}`);
+      }
+
+      // Generate referral code
+      let referralCode = null;
+      try {
+        const referralUtils = require('../utils/referralCode');
+        referralCode = await referralUtils.generateUniqueReferralCode();
+      } catch (e) {
+        logger.warn('[Voice Signup] Referral code generation skipped');
+      }
+
+      // Create Client record
+      const client = await Client.create({
+        business_name: business_name.trim(),
+        business_phone: normalizedBusinessPhone,
+        ringlypro_number: twilioNumber,
+        twilio_number_sid: twilioSid,
+        forwarding_status: 'active',
+        owner_name: `${first_name.trim()} ${last_name.trim()}`,
+        owner_phone: normalizedOwnerPhone,
+        owner_email: email.toLowerCase().trim(),
+        custom_greeting: `Hello! Thank you for calling ${business_name.trim()}. How may I help you today?`,
+        business_hours_start: '09:00:00',
+        business_hours_end: '17:00:00',
+        business_days: 'Mon-Fri',
+        timezone: 'America/New_York',
+        appointment_duration: 30,
+        booking_enabled: true,
+        sms_notifications: true,
+        monthly_free_minutes: 100,
+        per_minute_rate: 0.10,
+        rachel_enabled: false,
+        referral_code: referralCode,
+        active: true,
+        user_id: user.id
+      }, { transaction });
+
+      logger.info(`[Voice Signup] Client created: ${client.id}`);
+
+      // Create Credit Account
+      try {
+        if (CreditAccount) {
+          await CreditAccount.create({
+            client_id: client.id,
+            balance: 0.00,
+            free_minutes_used: 0
+          }, { transaction });
+        }
+      } catch (creditErr) {
+        logger.warn('[Voice Signup] Credit account creation error (non-fatal):', creditErr.message);
+      }
+
+      // Commit transaction
+      await transaction.commit();
+      logger.info(`[Voice Signup] Transaction committed for client ${client.id}`);
+
+      // ── Post-transaction steps (non-blocking) ──
+
+      // Provision ElevenLabs agent
+      let elevenlabsProvisioned = false;
+      if (process.env.SKIP_ELEVENLABS_PROVISIONING !== 'true') {
+        try {
+          const elevenLabsProvisioning = require('../services/elevenLabsProvisioningService');
+          const elResult = await elevenLabsProvisioning.provisionAgent(
+            {
+              businessName: business_name.trim(),
+              businessType: business_type || null,
+              websiteUrl: cleanWebsiteUrl,
+              ownerPhone: normalizedOwnerPhone,
+              language: 'en'
+            },
+            twilioNumber, twilioSid, client.id
+          );
+
+          if (elResult.success) {
+            await sequelize.query(
+              `UPDATE clients SET elevenlabs_agent_id = :agentId, elevenlabs_phone_number_id = :phoneNumberId WHERE id = :clientId`,
+              { replacements: { agentId: elResult.agentId, phoneNumberId: elResult.phoneNumberId, clientId: client.id } }
+            );
+            elevenlabsProvisioned = true;
+            logger.info(`[Voice Signup] ElevenLabs provisioned: agent=${elResult.agentId}`);
+          }
+        } catch (elErr) {
+          logger.error('[Voice Signup] ElevenLabs provisioning error (non-critical):', elErr.message);
+        }
+      }
+
+      // Create Stripe checkout session with 14-day trial
+      let stripeCheckoutUrl = null;
+      try {
+        const webhookBaseUrl = process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com';
+        const session = await stripe.checkout.sessions.create({
+          customer_email: email.toLowerCase().trim(),
+          payment_method_types: ['card'],
+          line_items: [{
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: `RinglyPro ${planDetails.name} Plan`,
+                description: `${planDetails.tokens} tokens/month (${Math.floor(planDetails.tokens / 5)} minutes of voice)`
+              },
+              unit_amount: planDetails.price * 100,
+              recurring: { interval: 'month', interval_count: 1 }
+            },
+            quantity: 1
+          }],
+          mode: 'subscription',
+          subscription_data: {
+            trial_period_days: 14,
+            metadata: {
+              userId: user.id.toString(),
+              plan: selectedPlan,
+              monthlyTokens: planDetails.tokens.toString(),
+              billing: 'monthly',
+              clientId: client.id.toString(),
+              rollover: planDetails.rollover.toString()
+            }
+          },
+          success_url: `${webhookBaseUrl}/dashboard?welcome=true`,
+          cancel_url: `${webhookBaseUrl}/pricing`,
+          metadata: {
+            userId: user.id.toString(),
+            plan: selectedPlan,
+            clientId: client.id.toString(),
+            source: 'voice_signup'
+          }
+        });
+
+        stripeCheckoutUrl = session.url;
+        logger.info(`[Voice Signup] Stripe checkout created: ${session.id}`);
+      } catch (stripeErr) {
+        logger.error('[Voice Signup] Stripe error (non-critical):', stripeErr.message);
+      }
+
+      // Generate set-password JWT (reuses existing /reset-password flow)
+      let setPasswordLink = null;
+      try {
+        const setPasswordToken = jwt.sign(
+          { userId: user.id, email: user.email, type: 'password_reset' },
+          process.env.JWT_SECRET || 'your-super-secret-jwt-key',
+          { expiresIn: '24h' }
+        );
+
+        await User.update(
+          { email_verification_token: setPasswordToken },
+          { where: { id: user.id } }
+        );
+
+        const appUrl = process.env.APP_URL || 'https://aiagent.ringlypro.com';
+        setPasswordLink = `${appUrl}/reset-password?token=${setPasswordToken}`;
+
+        // Send set-password email
+        await sendSetPasswordEmail(email.toLowerCase().trim(), setPasswordToken, first_name.trim());
+        logger.info(`[Voice Signup] Set-password email sent to ${email}`);
+      } catch (emailErr) {
+        logger.error('[Voice Signup] Set-password email error (non-critical):', emailErr.message);
+      }
+
+      // Send SMS with Stripe checkout link
+      if (stripeCheckoutUrl) {
+        try {
+          // Use RinglyPro's system number or the new client's number
+          const fromNumber = twilioNumber;
+          const smsBody = `Welcome to RinglyPro, ${first_name.trim()}! Start your 14-day free trial of the ${planDetails.name} Plan ($${planDetails.price}/mo). Complete your setup here: ${stripeCheckoutUrl}`;
+
+          await twilioClient.messages.create({
+            body: smsBody,
+            from: fromNumber,
+            to: normalizedOwnerPhone
+          });
+          logger.info(`[Voice Signup] Checkout SMS sent to ${normalizedOwnerPhone}`);
+        } catch (smsErr) {
+          logger.error('[Voice Signup] SMS error (non-critical):', smsErr.message);
+        }
+      }
+
+      // Send welcome email too
+      try {
+        await sendWelcomeEmail({
+          email: email.toLowerCase().trim(),
+          firstName: first_name.trim(),
+          lastName: last_name.trim(),
+          businessName: business_name.trim(),
+          ringlyproNumber: twilioNumber,
+          ccEmail: 'mstagg@digit2ai.com'
+        });
+      } catch (welcomeErr) {
+        logger.error('[Voice Signup] Welcome email error (non-critical):', welcomeErr.message);
+      }
+
+      return {
+        success: true,
+        message: `Account created for ${business_name.trim()}. A text message with the payment link and an email to set the password have been sent. The ${planDetails.name} Plan includes a 14-day free trial at $${planDetails.price} per month.`,
+        client_id: client.id,
+        ringlypro_number: twilioNumber,
+        plan: planDetails.name,
+        trial_days: 14,
+        elevenlabs_provisioned: elevenlabsProvisioned
+      };
+
+    } catch (innerError) {
+      try { await transaction.rollback(); } catch (rbErr) { /* already rolled back */ }
+      logger.error('[Voice Signup] Transaction error:', innerError);
+      return { success: false, error: 'There was an issue creating the account. Let me transfer you to our support team.' };
+    }
+
+  } catch (error) {
+    logger.error('[Voice Signup] Unexpected error:', error);
+    return { success: false, error: 'There was a temporary issue. Please try again in a moment.' };
   }
 }
 
