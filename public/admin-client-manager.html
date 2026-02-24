@@ -266,8 +266,20 @@ const API = window.location.origin + '/api/admin';
 let apiKey = localStorage.getItem('clientManagerApiKey');
 let currentClientId = null;
 
-// Init
-(function init() {
+// Init — auto-authenticate with default key, skip login screen
+(async function init() {
+  if (!apiKey) {
+    // Try default key automatically
+    const defaultKey = 'ringlypro-quick-admin-2024';
+    try {
+      const res = await fetch(API + '/client-manager/clients?apiKey=' + encodeURIComponent(defaultKey));
+      const data = await res.json();
+      if (data.success) {
+        apiKey = defaultKey;
+        localStorage.setItem('clientManagerApiKey', defaultKey);
+      }
+    } catch (e) {}
+  }
   if (apiKey) {
     showMain();
   } else {
