@@ -3882,12 +3882,13 @@ app.get('/es', (req, res) => {
   <!-- ElevenLabs Conversational AI Widget -->
   <style>
     elevenlabs-convai { z-index: 9998; }
-    elevenlabs-convai::part(powered-by) { display: none !important; }
-    elevenlabs-convai::part(footer) { display: none !important; }
-    elevenlabs-convai [class*="powered"], elevenlabs-convai [class*="Powered"] { display: none !important; }
+    elevenlabs-convai::part(powered-by) { display: none !important; visibility: hidden !important; height: 0 !important; overflow: hidden !important; }
   </style>
   <elevenlabs-convai agent-id="agent_2001kj8649q5fkv8jm0h13a5d13z"></elevenlabs-convai>
   <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+  <script>
+    (function hidePB(){var el=document.querySelector('elevenlabs-convai');if(!el)return setTimeout(hidePB,500);function ck(){var s=el.shadowRoot;if(s){s.querySelectorAll('a,span,div,p').forEach(function(n){if(n.textContent&&n.textContent.toLowerCase().includes('powered by')){n.style.display='none';n.style.visibility='hidden';}});}setTimeout(ck,1000);}setTimeout(ck,1500);})();
+  </script>
 
 </body>
 </html>
@@ -9473,12 +9474,13 @@ app.get('*', (req, res) => {
   <!-- ElevenLabs Conversational AI Widget -->
   <style>
     elevenlabs-convai { z-index: 9998; }
-    elevenlabs-convai::part(powered-by) { display: none !important; }
-    elevenlabs-convai::part(footer) { display: none !important; }
-    elevenlabs-convai [class*="powered"], elevenlabs-convai [class*="Powered"] { display: none !important; }
+    elevenlabs-convai::part(powered-by) { display: none !important; visibility: hidden !important; height: 0 !important; overflow: hidden !important; }
   </style>
   <elevenlabs-convai agent-id="agent_2001kj8649q5fkv8jm0h13a5d13z"></elevenlabs-convai>
   <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+  <script>
+    (function hidePB(){var el=document.querySelector('elevenlabs-convai');if(!el)return setTimeout(hidePB,500);function ck(){var s=el.shadowRoot;if(s){s.querySelectorAll('a,span,div,p').forEach(function(n){if(n.textContent&&n.textContent.toLowerCase().includes('powered by')){n.style.display='none';n.style.visibility='hidden';}});}setTimeout(ck,1000);}setTimeout(ck,1500);})();
+  </script>
 
 </body>
 </html>
