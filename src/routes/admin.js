@@ -1646,6 +1646,204 @@ router.post('/sync-appointment-to-google/:appointmentId', async (req, res) => {
     }
 });
 
+// ============= CLIENT MANAGER ENDPOINTS (API KEY AUTH) =============
+
+function validateClientManagerKey(req, res) {
+    const apiKey = req.body.apiKey || req.query.apiKey || req.headers['x-api-key'];
+    const expectedKey = process.env.ADMIN_API_KEY || 'ringlypro-quick-admin-2024';
+    if (apiKey !== expectedKey) {
+        res.status(401).json({ success: false, error: 'Invalid API key' });
+        return false;
+    }
+    return true;
+}
+
+// List all clients (for dropdown)
+router.get('/client-manager/clients', async (req, res) => {
+    if (!validateClientManagerKey(req, res)) return;
+    try {
+        const clients = await sequelize.query(
+            `SELECT c.id, c.business_name, c.ringlypro_number, c.voice_provider, c.rachel_enabled, c.active,
+                    c.elevenlabs_agent_id, c.twilio_number_sid, c.user_id, u.email as user_email
+             FROM clients c LEFT JOIN users u ON c.user_id = u.id
+             ORDER BY c.id ASC`,
+            { type: sequelize.QueryTypes.SELECT }
+        );
+        res.json({ success: true, clients });
+    } catch (error) {
+        console.error('❌ Client Manager list error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Get single client details
+router.get('/client-manager/clients/:client_id', async (req, res) => {
+    if (!validateClientManagerKey(req, res)) return;
+    try {
+        const { client_id } = req.params;
+        const [client] = await sequelize.query(
+            `SELECT c.*, u.email as user_email
+             FROM clients c LEFT JOIN users u ON c.user_id = u.id
+             WHERE c.id = :clientId`,
+            { replacements: { clientId: parseInt(client_id) }, type: sequelize.QueryTypes.SELECT }
+        );
+        if (!client) return res.status(404).json({ success: false, error: 'Client not found' });
+        res.json({ success: true, client });
+    } catch (error) {
+        console.error('❌ Client Manager get error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Update client config (business info + ElevenLabs) with auto Twilio sync
+router.put('/client-manager/:client_id/config', async (req, res) => {
+    if (!validateClientManagerKey(req, res)) return;
+    try {
+        const { client_id } = req.params;
+        const {
+            business_name, business_phone, owner_name, owner_phone, owner_email,
+            elevenlabs_agent_id, elevenlabs_phone_number_id
+        } = req.body;
+
+        console.log(`✏️ Client Manager updating client: ${client_id}`);
+
+        const [existing] = await sequelize.query(
+            'SELECT id, twilio_number_sid FROM clients WHERE id = :clientId',
+            { replacements: { clientId: parseInt(client_id) }, type: sequelize.QueryTypes.SELECT }
+        );
+        if (!existing) return res.status(404).json({ success: false, error: 'Client not found' });
+
+        const setClauses = [];
+        const replacements = { clientId: parseInt(client_id) };
+        const fields = { business_name, business_phone, owner_name, owner_phone, owner_email, elevenlabs_agent_id, elevenlabs_phone_number_id };
+
+        for (const [key, value] of Object.entries(fields)) {
+            if (value !== undefined) {
+                setClauses.push(`${key} = :${key}`);
+                replacements[key] = value;
+            }
+        }
+
+        if (setClauses.length > 0) {
+            await sequelize.query(
+                `UPDATE clients SET ${setClauses.join(', ')}, updated_at = NOW() WHERE id = :clientId`,
+                { replacements }
+            );
+        }
+
+        let twilioUpdated = false;
+        if (elevenlabs_agent_id && existing.twilio_number_sid) {
+            try {
+                const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+                await twilioClient.incomingPhoneNumbers(existing.twilio_number_sid).update({
+                    voiceUrl: 'https://api.us.elevenlabs.io/twilio/inbound_call',
+                    voiceMethod: 'POST'
+                });
+                twilioUpdated = true;
+                console.log(`✅ Twilio voice URL auto-updated for client ${client_id}`);
+            } catch (twilioErr) {
+                console.error(`⚠️ Twilio auto-update failed for client ${client_id}:`, twilioErr.message);
+            }
+        }
+
+        const [updated] = await sequelize.query(
+            'SELECT id, business_name, business_phone, ringlypro_number, twilio_number_sid, owner_name, owner_phone, owner_email, elevenlabs_agent_id, elevenlabs_phone_number_id, voice_provider, user_id, rachel_enabled, active FROM clients WHERE id = :clientId',
+            { replacements: { clientId: parseInt(client_id) }, type: sequelize.QueryTypes.SELECT }
+        );
+
+        console.log(`✅ Client Manager updated client: ${updated.business_name}`);
+        res.json({ success: true, client: updated, twilioUpdated });
+
+    } catch (error) {
+        console.error('❌ Client Manager config error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Manual Twilio voice URL sync to ElevenLabs
+router.put('/client-manager/:client_id/twilio', async (req, res) => {
+    if (!validateClientManagerKey(req, res)) return;
+    try {
+        const { client_id } = req.params;
+
+        const [client] = await sequelize.query(
+            'SELECT twilio_number_sid, elevenlabs_agent_id, ringlypro_number, business_name FROM clients WHERE id = :clientId',
+            { replacements: { clientId: parseInt(client_id) }, type: sequelize.QueryTypes.SELECT }
+        );
+
+        if (!client) return res.status(404).json({ success: false, error: 'Client not found' });
+        if (!client.twilio_number_sid) return res.status(400).json({ success: false, error: 'No Twilio number SID configured' });
+        if (!client.elevenlabs_agent_id) return res.status(400).json({ success: false, error: 'No ElevenLabs agent ID configured' });
+
+        const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+        const updated = await twilioClient.incomingPhoneNumbers(client.twilio_number_sid).update({
+            voiceUrl: 'https://api.us.elevenlabs.io/twilio/inbound_call',
+            voiceMethod: 'POST'
+        });
+
+        console.log(`✅ Twilio synced for ${client.business_name}: voiceUrl=${updated.voiceUrl}`);
+        res.json({ success: true, voiceUrl: updated.voiceUrl, phoneNumber: client.ringlypro_number });
+
+    } catch (error) {
+        console.error('❌ Twilio sync error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Update user credentials (email/password) for client's linked user — raw SQL
+router.put('/client-manager/:client_id/user', async (req, res) => {
+    if (!validateClientManagerKey(req, res)) return;
+    try {
+        const { client_id } = req.params;
+        const { email, password } = req.body;
+
+        const [client] = await sequelize.query(
+            'SELECT user_id FROM clients WHERE id = :clientId',
+            { replacements: { clientId: parseInt(client_id) }, type: sequelize.QueryTypes.SELECT }
+        );
+        if (!client) return res.status(404).json({ success: false, error: 'Client not found' });
+        if (!client.user_id) return res.status(400).json({ success: false, error: 'Client has no linked user' });
+
+        const [user] = await sequelize.query(
+            'SELECT id, email FROM users WHERE id = :userId',
+            { replacements: { userId: client.user_id }, type: sequelize.QueryTypes.SELECT }
+        );
+        if (!user) return res.status(404).json({ success: false, error: 'Linked user not found' });
+
+        const updates = [];
+        const replacements = { userId: user.id };
+
+        if (email !== undefined && email !== '') {
+            updates.push('email = :email');
+            replacements.email = email;
+        }
+        if (password && password.length >= 6) {
+            updates.push('password_hash = :passwordHash');
+            replacements.passwordHash = await bcrypt.hash(password, 10);
+        }
+
+        if (updates.length > 0) {
+            await sequelize.query(
+                `UPDATE users SET ${updates.join(', ')}, updated_at = NOW() WHERE id = :userId`,
+                { replacements }
+            );
+        }
+
+        const [updatedUser] = await sequelize.query(
+            'SELECT id, email FROM users WHERE id = :userId',
+            { replacements: { userId: user.id }, type: sequelize.QueryTypes.SELECT }
+        );
+
+        console.log(`✅ Client Manager updated user ${updatedUser.id} for client ${client_id}`);
+        res.json({ success: true, user: { id: updatedUser.id, email: updatedUser.email } });
+
+    } catch (error) {
+        console.error('❌ Client Manager user update error:', error);
+        const msg = error.message && error.message.includes('unique') ? 'Email already in use' : error.message;
+        res.status(500).json({ success: false, error: msg });
+    }
+});
+
 // Apply admin authentication to all routes AFTER quick endpoints
 router.use(authenticateAdmin);
 
@@ -2135,141 +2333,7 @@ router.put('/clients/:client_id', async (req, res) => {
     }
 });
 
-// ============= CLIENT MANAGER ENDPOINTS =============
-
-// Update client config (business info + ElevenLabs) with auto Twilio sync
-router.put('/client-manager/:client_id/config', async (req, res) => {
-    try {
-        const { client_id } = req.params;
-        const {
-            business_name, business_phone, owner_name, owner_phone, owner_email,
-            elevenlabs_agent_id, elevenlabs_phone_number_id
-        } = req.body;
-
-        console.log(`✏️ Client Manager updating client: ${client_id}`);
-
-        // Verify client exists and get current twilio_number_sid
-        const [existing] = await sequelize.query(
-            'SELECT id, twilio_number_sid FROM clients WHERE id = :clientId',
-            { replacements: { clientId: parseInt(client_id) }, type: sequelize.QueryTypes.SELECT }
-        );
-        if (!existing) {
-            return res.status(404).json({ success: false, error: 'Client not found' });
-        }
-
-        // Build dynamic UPDATE
-        const setClauses = [];
-        const replacements = { clientId: parseInt(client_id) };
-        const fields = { business_name, business_phone, owner_name, owner_phone, owner_email, elevenlabs_agent_id, elevenlabs_phone_number_id };
-
-        for (const [key, value] of Object.entries(fields)) {
-            if (value !== undefined) {
-                setClauses.push(`${key} = :${key}`);
-                replacements[key] = value;
-            }
-        }
-
-        if (setClauses.length > 0) {
-            await sequelize.query(
-                `UPDATE clients SET ${setClauses.join(', ')}, updated_at = NOW() WHERE id = :clientId`,
-                { replacements }
-            );
-        }
-
-        // Auto-update Twilio voice URL when ElevenLabs agent is set
-        let twilioUpdated = false;
-        if (elevenlabs_agent_id && existing.twilio_number_sid) {
-            try {
-                const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-                await twilioClient.incomingPhoneNumbers(existing.twilio_number_sid).update({
-                    voiceUrl: 'https://api.us.elevenlabs.io/twilio/inbound_call',
-                    voiceMethod: 'POST'
-                });
-                twilioUpdated = true;
-                console.log(`✅ Twilio voice URL auto-updated for client ${client_id}`);
-            } catch (twilioErr) {
-                console.error(`⚠️ Twilio auto-update failed for client ${client_id}:`, twilioErr.message);
-            }
-        }
-
-        // Return updated client
-        const [updated] = await sequelize.query(
-            'SELECT id, business_name, business_phone, ringlypro_number, twilio_number_sid, owner_name, owner_phone, owner_email, elevenlabs_agent_id, elevenlabs_phone_number_id, voice_provider, user_id, rachel_enabled, active FROM clients WHERE id = :clientId',
-            { replacements: { clientId: parseInt(client_id) }, type: sequelize.QueryTypes.SELECT }
-        );
-
-        console.log(`✅ Client Manager updated client: ${updated.business_name}`);
-        res.json({ success: true, client: updated, twilioUpdated });
-
-    } catch (error) {
-        console.error('❌ Client Manager config error:', error);
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-// Manual Twilio voice URL sync to ElevenLabs
-router.put('/client-manager/:client_id/twilio', async (req, res) => {
-    try {
-        const { client_id } = req.params;
-
-        const [client] = await sequelize.query(
-            'SELECT twilio_number_sid, elevenlabs_agent_id, ringlypro_number, business_name FROM clients WHERE id = :clientId',
-            { replacements: { clientId: parseInt(client_id) }, type: sequelize.QueryTypes.SELECT }
-        );
-
-        if (!client) return res.status(404).json({ success: false, error: 'Client not found' });
-        if (!client.twilio_number_sid) return res.status(400).json({ success: false, error: 'No Twilio number SID configured' });
-        if (!client.elevenlabs_agent_id) return res.status(400).json({ success: false, error: 'No ElevenLabs agent ID configured' });
-
-        const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-        const updated = await twilioClient.incomingPhoneNumbers(client.twilio_number_sid).update({
-            voiceUrl: 'https://api.us.elevenlabs.io/twilio/inbound_call',
-            voiceMethod: 'POST'
-        });
-
-        console.log(`✅ Twilio synced for ${client.business_name}: voiceUrl=${updated.voiceUrl}`);
-        res.json({
-            success: true,
-            voiceUrl: updated.voiceUrl,
-            phoneNumber: client.ringlypro_number
-        });
-
-    } catch (error) {
-        console.error('❌ Twilio sync error:', error);
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-// Update user credentials (email/password) for client's linked user
-router.put('/client-manager/:client_id/user', async (req, res) => {
-    try {
-        const { client_id } = req.params;
-        const { email, password } = req.body;
-
-        const client = await Client.findByPk(parseInt(client_id));
-        if (!client) return res.status(404).json({ success: false, error: 'Client not found' });
-        if (!client.user_id) return res.status(400).json({ success: false, error: 'Client has no linked user' });
-
-        const user = await User.findByPk(client.user_id);
-        if (!user) return res.status(404).json({ success: false, error: 'Linked user not found' });
-
-        if (email !== undefined && email !== '') user.email = email;
-        if (password && password.length >= 6) user.password_hash = await bcrypt.hash(password, 10);
-
-        await user.save();
-
-        console.log(`✅ Client Manager updated user ${user.id} for client ${client_id}`);
-        res.json({
-            success: true,
-            user: { id: user.id, email: user.email }
-        });
-
-    } catch (error) {
-        console.error('❌ Client Manager user update error:', error);
-        const msg = error.name === 'SequelizeUniqueConstraintError' ? 'Email already in use' : error.message;
-        res.status(500).json({ success: false, error: msg });
-    }
-});
+// (Client Manager endpoints moved to Quick Admin section above)
 
 // ============= ADD ADMIN NOTE =============
 
