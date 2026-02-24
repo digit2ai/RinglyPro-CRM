@@ -5530,6 +5530,11 @@ app.get('*', (req, res) => {
           <h1 class="text-lg md:text-2xl font-bold text-white tracking-tight">KANCHO AI</h1>
           <p class="text-xs text-gray-500 hidden sm:block">AI Business Intelligence</p>
         </div>
+        <a href="tel:+16197451640" class="flex items-center gap-2 ml-2 md:ml-4 px-3 py-1.5 rounded-lg bg-white/5 border border-kancho-dark-border hover:border-kancho-coral hover:bg-kancho-coral/10 transition text-sm text-gray-300 hover:text-white">
+          <i class="fas fa-phone text-kancho text-xs"></i>
+          <span class="hidden sm:inline">(619) 745-1640</span>
+          <span class="sm:hidden text-xs">Call</span>
+        </a>
       </div>
       <div class="flex items-center gap-2 md:gap-4 header-actions">
         <!-- Unauthenticated header (demo mode) -->
