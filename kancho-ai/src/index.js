@@ -3340,7 +3340,11 @@ app.get('/es', (req, res) => {
 
       <!-- Bottom Bar -->
       <div class="border-t border-kancho-dark-border mt-12 pt-8 text-center">
-        <p class="text-gray-500 text-sm">&copy; ${new Date().getFullYear()} Kancho AI. Todos los derechos reservados.</p>
+        <p class="text-gray-500 text-sm mb-6">&copy; ${new Date().getFullYear()} Kancho AI. Todos los derechos reservados.</p>
+        <p class="text-gray-400 text-sm mb-4">Powered by</p>
+        <a href="https://ringlypro.com" target="_blank" rel="noopener">
+          <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro" class="mx-auto" style="max-width:280px;width:100%;">
+        </a>
       </div>
     </div>
   </footer>
@@ -7175,7 +7179,11 @@ app.get('*', (req, res) => {
 
       <!-- Bottom Bar -->
       <div class="border-t border-kancho-dark-border mt-12 pt-8 text-center">
-        <p class="text-gray-500 text-sm">&copy; ${new Date().getFullYear()} Kancho AI. All rights reserved.</p>
+        <p class="text-gray-500 text-sm mb-6">&copy; ${new Date().getFullYear()} Kancho AI. All rights reserved.</p>
+        <p class="text-gray-400 text-sm mb-4">Powered by</p>
+        <a href="https://ringlypro.com" target="_blank" rel="noopener">
+          <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro" class="mx-auto" style="max-width:280px;width:100%;">
+        </a>
       </div>
     </div>
   </footer>
