@@ -2778,7 +2778,73 @@ app.get('/es', (req, res) => {
           <p class="text-gray-400 max-w-2xl mx-auto text-sm md:text-base px-2">Potencia tu escuela de artes marciales con inteligencia de negocio impulsada por IA, recepcionista automatizada y soluciones CRM completas.</p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 max-w-6xl mx-auto mobile-pricing-grid">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 max-w-7xl mx-auto mobile-pricing-grid">
+          <!-- Plan 0: Manejo de Llamadas Entrantes -->
+          <div class="card rounded-2xl p-8 relative hover:border-kancho-coral/50 transition-all duration-300">
+            <div class="text-center mb-6">
+              <h3 class="text-xl font-bold mb-2">Llamadas Entrantes IA</h3>
+              <p class="text-gray-400 text-sm mb-4">Para Pequeños Negocios</p>
+              <div class="flex items-baseline justify-center gap-1">
+                <span class="text-4xl font-bold text-kancho">$45</span>
+                <span class="text-gray-400">/mes</span>
+              </div>
+              <p class="text-gray-500 text-xs mt-1">500 tokens/mes &bull; 100 minutos de voz</p>
+            </div>
+            <div class="mb-4">
+              <p class="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">IA Entrante</p>
+            </div>
+            <ul class="space-y-3 mb-4">
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Servicio de respuesta IA 24/7</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Recepcionista de voz IA con tono humano</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Captura automática de prospectos por llamada</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Programación de citas por teléfono u online</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">CRM co-piloto para gestionar llamadas y prospectos</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Dashboard CRM móvil</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Integración con calendarios existentes</span>
+              </li>
+            </ul>
+            <div class="mb-4">
+              <p class="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">IA Saliente y Automatización de Ventas</p>
+            </div>
+            <ul class="space-y-3 mb-8">
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Campañas de llamadas salientes automatizadas</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Recolección de prospectos B2B</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Sistema de generación de prospectos con IA</span>
+              </li>
+            </ul>
+            <a href="https://aiagent.ringlypro.com/signup?plan=starter&amount=45&tokens=500&billing=monthly" class="block w-full py-3 text-center bg-white/10 hover:bg-kancho-coral/20 border border-kancho-dark-border hover:border-kancho-coral rounded-xl font-medium transition text-white no-underline">
+              Comenzar
+            </a>
+          </div>
+
           <!-- Plan 1: Kancho Intelligence -->
           <div class="card rounded-2xl p-8 relative hover:border-kancho-coral/50 transition-all duration-300">
             <div class="text-center mb-6">
@@ -5986,7 +6052,73 @@ app.get('*', (req, res) => {
           <p class="text-gray-400 max-w-2xl mx-auto text-sm md:text-base">Power your martial arts school with AI-driven business intelligence, automated receptionist, and complete CRM solutions.</p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 max-w-6xl mx-auto mobile-pricing-grid">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 max-w-7xl mx-auto mobile-pricing-grid">
+          <!-- Plan 0: Inbound Call Handling -->
+          <div class="card rounded-2xl p-5 md:p-8 relative hover:border-kancho-coral/50 transition-all duration-300">
+            <div class="text-center mb-6">
+              <h3 class="text-xl font-bold mb-2">Inbound Call Handling</h3>
+              <p class="text-gray-400 text-sm mb-4">For Small Businesses</p>
+              <div class="flex items-baseline justify-center gap-1">
+                <span class="text-4xl font-bold text-kancho">$45</span>
+                <span class="text-gray-400">/month</span>
+              </div>
+              <p class="text-gray-500 text-xs mt-1">500 tokens/month &bull; 100 minutes of voice</p>
+            </div>
+            <div class="mb-4">
+              <p class="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">AI Inbound</p>
+            </div>
+            <ul class="space-y-3 mb-4">
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">24/7 AI call answering service</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Human-like AI voice receptionist</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Automated lead capture from incoming calls</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Appointment scheduling by phone or online</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">CRM co-pilot for managing calls &amp; leads</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Mobile CRM dashboard</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Integration with existing calendars</span>
+              </li>
+            </ul>
+            <div class="mb-4">
+              <p class="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">AI Outbound &amp; Sales Automation</p>
+            </div>
+            <ul class="space-y-3 mb-8">
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">Automated outbound calling campaigns</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">B2B business lead collection</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-check text-green-400 mt-1"></i>
+                <span class="text-gray-300 text-sm">AI lead generation system</span>
+              </li>
+            </ul>
+            <a href="https://aiagent.ringlypro.com/signup?plan=starter&amount=45&tokens=500&billing=monthly" class="block w-full py-3 text-center bg-white/10 hover:bg-kancho-coral/20 border border-kancho-dark-border hover:border-kancho-coral rounded-xl font-medium transition text-white no-underline">
+              Get Started
+            </a>
+          </div>
+
           <!-- Plan 1: Kancho Intelligence -->
           <div class="card rounded-2xl p-5 md:p-8 relative hover:border-kancho-coral/50 transition-all duration-300">
             <div class="text-center mb-6">
