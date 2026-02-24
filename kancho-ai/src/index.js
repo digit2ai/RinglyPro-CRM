@@ -2527,11 +2527,11 @@ app.get('/es', (req, res) => {
           <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-36 h-36 sm:w-48 sm:h-48 md:w-64 md:h-64 lg:w-80 lg:h-80 object-contain">
         </div>
         <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4 mobile-title">Conoce a <span class="text-kancho">Kancho AI</span></h2>
-        <p class="text-lg md:text-xl text-gray-300 mb-2">Tu Oficial de Inteligencia de Negocio con IA</p>
+        <p class="text-lg md:text-xl text-gray-300 mb-2">La Primera IA de Voz y Software de Gestión Automatizada para Dojos</p>
         <p class="text-gray-400 max-w-2xl mx-auto text-sm md:text-base px-2">
-          Se conecta a los datos de tu empresa, entiende cómo funciona realmente tu negocio,
-          y te entrega información clara sobre dónde estás perdiendo dinero, dónde puedes crecer,
-          y qué acciones maximizarán tus ganancias y rendimiento.
+          Tu Manager de Inteligencia AI que contesta el teléfono, maneja llamadas entrantes y salientes,
+          automatiza tu CRM, rastrea estudiantes, reduce la deserción, gestiona prospectos, monitorea asistencia
+          y progreso de cinturones, y procesa pagos &mdash; todo en piloto automático, 24/7.
         </p>
       </div>
 
@@ -5703,11 +5703,11 @@ app.get('*', (req, res) => {
           <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-36 h-36 sm:w-48 sm:h-48 md:w-64 md:h-64 lg:w-80 lg:h-80 object-contain">
         </div>
         <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4 mobile-title">Meet <span class="text-kancho">Kancho AI</span></h2>
-        <p class="text-lg md:text-xl text-gray-300 mb-2">Your AI Business Intelligence Officer</p>
+        <p class="text-lg md:text-xl text-gray-300 mb-2">The First Next-Gen AI Voice &amp; Software Dojo Management</p>
         <p class="text-gray-400 max-w-2xl mx-auto text-sm md:text-base px-2">
-          Connects to your company data, understands how your business really works,
-          and delivers clear insights on where you're losing money, where you can grow,
-          and what actions will maximize your profit and performance.
+          Your AI Intelligence Manager that answers the phone, handles inbound &amp; outbound calls,
+          automates your CRM, tracks students, reduces churn, manages leads, monitors attendance
+          and belt progress, and processes payments &mdash; all on autopilot, 24/7.
         </p>
       </div>
 
