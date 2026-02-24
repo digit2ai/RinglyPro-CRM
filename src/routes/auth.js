@@ -401,6 +401,57 @@ router.post('/register', async (req, res) => {
         await transaction.commit();
         console.log('✅ Transaction committed successfully');
 
+        // ==================== ELEVENLABS VOICE AGENT PROVISIONING ====================
+        // Non-blocking: client is already created, ElevenLabs provisioning is best-effort
+        let elevenlabsProvisioned = false;
+
+        if (process.env.SKIP_ELEVENLABS_PROVISIONING !== 'true') {
+            try {
+                const elevenLabsProvisioning = require('../services/elevenLabsProvisioningService');
+                console.log('🤖 Provisioning ElevenLabs voice agent...');
+
+                const elResult = await elevenLabsProvisioning.provisionAgent(
+                    {
+                        businessName,
+                        businessType,
+                        websiteUrl: cleanWebsiteUrl,
+                        businessDescription,
+                        businessHours,
+                        services,
+                        ownerPhone: normalizedPhoneNumber || normalizedBusinessPhone,
+                        language: 'en'
+                    },
+                    twilioNumber,
+                    twilioSid,
+                    client.id
+                );
+
+                if (elResult.success) {
+                    // Update client record with ElevenLabs IDs using raw SQL
+                    // (these fields exist in DB but not in the Sequelize model)
+                    await sequelize.query(
+                        `UPDATE clients SET elevenlabs_agent_id = :agentId, elevenlabs_phone_number_id = :phoneNumberId WHERE id = :clientId`,
+                        {
+                            replacements: {
+                                agentId: elResult.agentId,
+                                phoneNumberId: elResult.phoneNumberId,
+                                clientId: client.id
+                            }
+                        }
+                    );
+                    elevenlabsProvisioned = true;
+                    console.log(`✅ ElevenLabs voice agent provisioned: agent=${elResult.agentId}, phone=${elResult.phoneNumberId}`);
+                } else {
+                    console.error(`⚠️ ElevenLabs provisioning failed (non-critical): ${elResult.error}`);
+                }
+            } catch (elError) {
+                console.error('⚠️ ElevenLabs provisioning error (non-critical):', elError.message);
+                // Don't fail registration if ElevenLabs provisioning fails
+            }
+        } else {
+            console.log('🧪 TEST MODE: Skipping ElevenLabs provisioning');
+        }
+
         // ==================== STRIPE SUBSCRIPTION CREATION ====================
         // Create Stripe subscription for paid plans (non-blocking for free tier)
         let stripeSessionUrl = null;
@@ -595,7 +646,8 @@ router.post('/register', async (req, res) => {
                     id: client.id,
                     rachelNumber: twilioNumber,
                     rachelEnabled: client.rachel_enabled,
-                    twilioSid: twilioSid
+                    twilioSid: twilioSid,
+                    elevenlabsProvisioned: elevenlabsProvisioned
                 },
                 token,
                 nextSteps: {
@@ -617,6 +669,7 @@ router.post('/register', async (req, res) => {
         
         console.log(`🎉 New user registered: ${firstName} ${lastName} (${businessName}) - ${email}`);
         console.log(`📞 Rachel AI Twilio number: ${twilioNumber}`);
+        console.log(`🤖 ElevenLabs provisioned: ${elevenlabsProvisioned ? 'YES' : 'NO'}`);
         console.log(`👤 User ID: ${user.id}, Client ID: ${client.id}`);
         
     } catch (error) {
