@@ -101,6 +101,9 @@ router.post('/', async (req, res) => {
       case 'send_sms_recovery':
         result = await handleSendSms(params);
         break;
+      case 'send_sms_ghl':
+        result = await handleSendSmsGhl(params);
+        break;
       case 'debug_zoho_settings':
         // Temporary debug tool to check Zoho settings
         result = await handleDebugZohoSettings(params);
@@ -499,6 +502,147 @@ async function handleSendSms(params) {
 
   } catch (error) {
     logger.error('[ElevenLabs Tools] send_sms error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Send SMS via GoHighLevel API (for A2P verified numbers)
+ * Uses the client's GHL integration to send SMS from their GHL number.
+ */
+async function handleSendSmsGhl(params) {
+  const {
+    client_id,
+    to_phone,
+    phone,
+    message,
+    customer_name,
+    appointment_date,
+    appointment_time,
+    confirmation_code
+  } = params;
+
+  try {
+    const toNumber = to_phone || phone;
+    if (!toNumber) {
+      return { success: false, error: 'Missing phone number' };
+    }
+
+    // Get client's GHL config from settings
+    const clients = await sequelize.query(`
+      SELECT business_name, settings->'integration'->'ghl' as ghl_settings
+      FROM clients WHERE id = :clientId
+    `, { replacements: { clientId: client_id }, type: QueryTypes.SELECT });
+
+    if (!clients || clients.length === 0) {
+      return { success: false, error: 'Client not found' };
+    }
+
+    const businessName = clients[0].business_name;
+    const ghlSettings = clients[0].ghl_settings;
+
+    if (!ghlSettings || !ghlSettings.enabled || !ghlSettings.apiKey || !ghlSettings.locationId) {
+      logger.warn(`[ElevenLabs Tools] send_sms_ghl: Client ${client_id} has no GHL integration, falling back to Twilio`);
+      return await handleSendSms(params);
+    }
+
+    const ghlApiKey = ghlSettings.apiKey;
+    const ghlLocationId = ghlSettings.locationId;
+
+    // Build message if not provided
+    let smsMessage = message;
+    if (!smsMessage && customer_name && appointment_date && appointment_time) {
+      smsMessage = `Hi ${customer_name}! Your appointment at ${businessName} is confirmed for ${appointment_date} at ${appointment_time}.`;
+      if (confirmation_code) {
+        smsMessage += ` Confirmation: ${confirmation_code}`;
+      }
+      smsMessage += ` Reply STOP to opt out.`;
+    }
+
+    if (!smsMessage) {
+      return { success: false, error: 'Missing message content' };
+    }
+
+    // Normalize phone number
+    let normalizedPhone = toNumber.replace(/[^\d+]/g, '');
+    if (!normalizedPhone.startsWith('+')) {
+      normalizedPhone = '+' + normalizedPhone;
+    }
+
+    const axios = require('axios');
+    const ghlBaseUrl = 'https://services.leadconnectorhq.com';
+    const ghlHeaders = {
+      'Authorization': `Bearer ${ghlApiKey}`,
+      'Version': '2021-07-28',
+      'Content-Type': 'application/json'
+    };
+
+    // Step 1: Find or create contact in GHL by phone number
+    let contactId;
+    try {
+      const searchResp = await axios.get(
+        `${ghlBaseUrl}/contacts/search/duplicate`,
+        {
+          params: { locationId: ghlLocationId, phone: normalizedPhone },
+          headers: ghlHeaders,
+          timeout: 10000
+        }
+      );
+      contactId = searchResp.data?.contact?.id;
+    } catch (searchErr) {
+      logger.warn(`[ElevenLabs Tools] GHL contact search failed:`, searchErr.response?.data || searchErr.message);
+    }
+
+    // If no contact found, create one
+    if (!contactId) {
+      try {
+        const createResp = await axios.post(
+          `${ghlBaseUrl}/contacts/`,
+          {
+            locationId: ghlLocationId,
+            phone: normalizedPhone,
+            name: customer_name || 'Caller',
+            source: 'RinglyPro AI'
+          },
+          { headers: ghlHeaders, timeout: 10000 }
+        );
+        contactId = createResp.data?.contact?.id;
+      } catch (createErr) {
+        logger.error(`[ElevenLabs Tools] GHL contact creation failed:`, createErr.response?.data || createErr.message);
+        // Fall back to Twilio
+        logger.warn(`[ElevenLabs Tools] Falling back to Twilio SMS for client ${client_id}`);
+        return await handleSendSms(params);
+      }
+    }
+
+    if (!contactId) {
+      logger.warn(`[ElevenLabs Tools] Could not get GHL contactId, falling back to Twilio`);
+      return await handleSendSms(params);
+    }
+
+    // Step 2: Send SMS via GHL conversations API
+    const smsResp = await axios.post(
+      `${ghlBaseUrl}/conversations/messages`,
+      {
+        type: 'SMS',
+        contactId: contactId,
+        message: smsMessage
+      },
+      { headers: ghlHeaders, timeout: 15000 }
+    );
+
+    logger.info(`[ElevenLabs Tools] GHL SMS sent to ${normalizedPhone} for client ${client_id}, messageId: ${smsResp.data?.messageId || smsResp.data?.id}`);
+
+    return {
+      success: true,
+      provider: 'ghl',
+      message_id: smsResp.data?.messageId || smsResp.data?.id,
+      contact_id: contactId,
+      to: normalizedPhone
+    };
+
+  } catch (error) {
+    logger.error('[ElevenLabs Tools] send_sms_ghl error:', error.response?.data || error.message);
     return { success: false, error: error.message };
   }
 }
