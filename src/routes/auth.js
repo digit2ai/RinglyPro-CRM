@@ -531,8 +531,11 @@ router.post('/register', async (req, res) => {
 
             } catch (stripeError) {
                 console.error('⚠️ Stripe subscription creation error (non-critical):', stripeError.message);
-                // Don't fail registration if Stripe fails - user account is already created
-                // They can subscribe later from the dashboard
+                console.error('⚠️ Stripe error details:', JSON.stringify(stripeError.raw || stripeError.statusCode || stripeError.code || 'unknown'));
+                // Store error for debugging (temporary)
+                stripeSessionUrl = null;
+                // Attach error to response for debugging
+                global._lastStripeError = stripeError.message;
             }
         }
 
@@ -657,6 +660,9 @@ router.post('/register', async (req, res) => {
         if (stripeSessionUrl) {
             responseData.stripeCheckoutUrl = stripeSessionUrl;
             responseData.message = 'Registration successful! Redirecting to payment...';
+        } else if (global._lastStripeError) {
+            responseData._debug_stripeError = global._lastStripeError;
+            global._lastStripeError = null;
         }
 
         res.status(201).json(responseData);
