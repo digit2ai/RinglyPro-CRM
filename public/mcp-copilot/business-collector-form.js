@@ -11,6 +11,10 @@ let currentLeads = null;
 const CLIENT_15_VAGARO_MODE = false;
 const CLIENT_15_ID = 15;
 
+// CLIENT 51 SPECIAL HANDLING: Martial Arts & Student Management Mode
+const CLIENT_51_MARTIAL_ARTS_MODE = true;
+const CLIENT_51_ID = 51;
+
 // US Cities by State - Top cities for each state
 const US_CITIES_BY_STATE = {
     'Florida': ['Miami', 'Orlando', 'Tampa', 'Jacksonville', 'Fort Lauderdale', 'St. Petersburg', 'Tallahassee', 'Cape Coral', 'Port St. Lucie', 'Pembroke Pines', 'Hollywood', 'Miramar', 'Coral Springs', 'Clearwater', 'Palm Bay', 'Lakeland', 'Pompano Beach', 'West Palm Beach', 'Boca Raton', 'Gainesville', 'Fort Myers', 'Daytona Beach', 'Sarasota', 'Kissimmee', 'Naples', 'Deerfield Beach', 'Boynton Beach', 'Delray Beach', 'Melbourne', 'Ocala', 'Pensacola', 'Brandon', 'Spring Hill', 'Largo'],
@@ -49,6 +53,12 @@ function isClient15ForVagaro() {
     return CLIENT_15_VAGARO_MODE && parseInt(clientId) === CLIENT_15_ID;
 }
 
+// Check if this is Client 51 (Martial Arts Mode)
+function isClient51MartialArts() {
+    const clientId = typeof currentClientId !== 'undefined' ? currentClientId : null;
+    return CLIENT_51_MARTIAL_ARTS_MODE && parseInt(clientId) === CLIENT_51_ID;
+}
+
 // Get category dropdown HTML based on client
 function getCategoryDropdownHTML() {
     // Client 15: Only show Vagaro Users category
@@ -65,6 +75,45 @@ function getCategoryDropdownHTML() {
                 </select>
                 <small style="color: #10b981; margin-top: 5px; display: block;">
                     ✨ Vagaro Discovery Mode: Only businesses using Vagaro will be returned
+                </small>
+            </div>`;
+    }
+
+    // Client 51: Only Martial Arts & Student Management categories
+    if (isClient51MartialArts()) {
+        console.log('🥋 Client 51 detected - Martial Arts Discovery Mode activated');
+        return `
+            <div class="bc-form-group">
+                <label for="bcCategory">Business Category *</label>
+                <select id="bcCategory" required>
+                    <option value="">Select a category...</option>
+                    <optgroup label="Martial Arts & Combat Sports">
+                        <option value="martial arts school">Martial Arts Schools</option>
+                        <option value="karate school">Karate Schools</option>
+                        <option value="taekwondo school">Taekwondo Schools</option>
+                        <option value="jiu jitsu school">Brazilian Jiu-Jitsu (BJJ)</option>
+                        <option value="judo school">Judo Schools</option>
+                        <option value="kung fu school">Kung Fu Schools</option>
+                        <option value="MMA gym">MMA Gyms</option>
+                        <option value="boxing gym">Boxing Gyms</option>
+                        <option value="kickboxing gym">Kickboxing Gyms</option>
+                        <option value="wrestling school">Wrestling Schools</option>
+                        <option value="kendo school">Kendo Schools</option>
+                        <option value="muay thai gym">Muay Thai Gyms</option>
+                        <option value="self defense class">Self-Defense Classes</option>
+                    </optgroup>
+                    <optgroup label="Fitness & Student-Based">
+                        <option value="gym">Gyms & Fitness Centers</option>
+                        <option value="yoga studio">Yoga Studios</option>
+                        <option value="dance studio">Dance Studios</option>
+                        <option value="gymnastics center">Gymnastics Centers</option>
+                        <option value="swimming school">Swimming Schools</option>
+                        <option value="fencing club">Fencing Clubs</option>
+                        <option value="personal trainer">Personal Trainers</option>
+                    </optgroup>
+                </select>
+                <small style="color: #10b981; margin-top: 5px; display: block;">
+                    🥋 Martial Arts Mode: Collecting martial arts schools, dojos, gyms & student-based businesses
                 </small>
             </div>`;
     }
