@@ -473,36 +473,21 @@ router.post('/complete-setup', async (req, res) => {
             // Search for available numbers
             const availableNumbers = await twilioClient.availablePhoneNumbers('US')
                 .local
-                .list({
-                    areaCode: '786',
-                    limit: 5,
-                    voiceEnabled: true,
-                    smsEnabled: true
-                });
+                .list({ limit: 1, voiceEnabled: true, smsEnabled: true });
 
-            if (availableNumbers.length === 0) {
-                // Try broader search if specific area code not available
-                const broaderSearch = await twilioClient.availablePhoneNumbers('US')
-                    .local
-                    .list({
-                        limit: 5,
-                        voiceEnabled: true,
-                        smsEnabled: true
-                    });
-
-                if (broaderSearch.length === 0) {
-                    throw new Error('No phone numbers available');
-                }
-
-                availableNumbers.push(...broaderSearch);
+            if (!availableNumbers || availableNumbers.length === 0) {
+                throw new Error('No phone numbers available');
             }
 
             // Purchase the first available number
             const purchasedNumber = await twilioClient.incomingPhoneNumbers.create({
                 phoneNumber: availableNumbers[0].phoneNumber,
-                voiceUrl: `${webhookBaseUrl}/api/voice/incoming`,
+                voiceUrl: `${webhookBaseUrl}/voice/rachel/`,
                 voiceMethod: 'POST',
-                smsUrl: `${webhookBaseUrl}/api/sms/incoming`,
+                statusCallback: `${webhookBaseUrl}/voice/webhook/call-status`,
+                statusCallbackMethod: 'POST',
+                statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
+                smsUrl: `${webhookBaseUrl}/api/messages/incoming`,
                 smsMethod: 'POST',
                 friendlyName: `RinglyPro - ${user.business_name}`
             });
@@ -514,10 +499,12 @@ router.post('/complete-setup', async (req, res) => {
 
         } catch (twilioError) {
             console.error('❌ Twilio provisioning error:', twilioError.message);
-            // Use fallback number if provisioning fails
-            twilioNumber = process.env.DEFAULT_TWILIO_NUMBER || '+17866742346';
-            twilioSid = 'FALLBACK_SID';
-            console.log(`⚠️ Using fallback number: ${twilioNumber}`);
+            await transaction.rollback();
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to provision phone number. Please try again or contact support.',
+                details: process.env.NODE_ENV === 'development' ? twilioError.message : undefined
+            });
         }
 
         // ==================== REFERRAL SYSTEM ====================

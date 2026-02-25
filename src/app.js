@@ -838,6 +838,13 @@ app.get('/register', (req, res) => {
   res.redirect('/signup');
 });
 
+// Signup completing page (after Stripe checkout redirect)
+app.get('/signup/completing', (req, res) => {
+  res.render('signup-completing', {
+    title: `${CLIENT_NAME} - Setting Up Your Account`
+  });
+});
+
 // Forgot password page route
 app.get('/forgot-password', (req, res) => {
   res.render('forgot-password', {

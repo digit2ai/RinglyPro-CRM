@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RinglyPro - Setting Up Your Account</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .dark-blue-bg {
+            background: #1f2937;
+        }
+        .glass-effect {
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            background-color: rgba(255, 255, 255, 0.75);
+            border: 1px solid rgba(209, 213, 219, 0.3);
+        }
+        @keyframes spin-slow {
+            to { transform: rotate(360deg); }
+        }
+        .spin-slow {
+            animation: spin-slow 2s linear infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(1.4); opacity: 0; }
+        }
+        .pulse-ring {
+            animation: pulse-ring 1.5s ease-out infinite;
+        }
+        @keyframes fade-in-up {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in-up {
+            animation: fade-in-up 0.5s ease-out forwards;
+        }
+        .step-item {
+            opacity: 0;
+        }
+    </style>
+</head>
+<body class="dark-blue-bg min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full">
+        <!-- Logo -->
+        <div class="text-center mb-8">
+            <a href="https://ringlypro.com" target="_blank" rel="noopener noreferrer" class="inline-block">
+                <img
+                    src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68e1d01be1be509a4f79755b.png"
+                    alt="RinglyPro Logo"
+                    class="mx-auto mb-4"
+                    style="height: 120px; width: auto;"
+                >
+            </a>
+        </div>
+
+        <!-- Setup Card -->
+        <div id="setup-card" class="glass-effect rounded-2xl shadow-xl p-8 text-center">
+            <!-- Spinner -->
+            <div class="relative mx-auto w-20 h-20 mb-6">
+                <div class="absolute inset-0 rounded-full border-4 border-indigo-200"></div>
+                <div class="absolute inset-0 rounded-full border-4 border-transparent border-t-indigo-600 spin-slow"></div>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <i class="fas fa-phone-alt text-indigo-600 text-xl"></i>
+                </div>
+            </div>
+
+            <h2 id="setup-title" class="text-2xl font-bold text-gray-800 mb-2">Setting Up Your AI Phone System</h2>
+            <p id="setup-subtitle" class="text-gray-500 mb-8">Please wait while we configure everything for you...</p>
+
+            <!-- Progress Steps -->
+            <div class="text-left space-y-4 mb-8">
+                <div id="step-payment" class="step-item flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-check text-green-600 text-sm"></i>
+                    </div>
+                    <span class="text-gray-700">Payment confirmed</span>
+                </div>
+                <div id="step-phone" class="step-item flex items-center space-x-3">
+                    <div id="step-phone-icon" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-spinner fa-spin text-indigo-600 text-sm"></i>
+                    </div>
+                    <span class="text-gray-700">Provisioning your AI phone number</span>
+                </div>
+                <div id="step-agent" class="step-item flex items-center space-x-3">
+                    <div id="step-agent-icon" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-circle text-gray-300 text-xs"></i>
+                    </div>
+                    <span class="text-gray-500">Configuring your AI voice agent</span>
+                </div>
+                <div id="step-welcome" class="step-item flex items-center space-x-3">
+                    <div id="step-welcome-icon" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-circle text-gray-300 text-xs"></i>
+                    </div>
+                    <span class="text-gray-500">Sending welcome messages</span>
+                </div>
+            </div>
+
+            <p class="text-xs text-gray-400">This usually takes about 15-30 seconds</p>
+        </div>
+
+        <!-- Error Card (hidden by default) -->
+        <div id="error-card" class="glass-effect rounded-2xl shadow-xl p-8 text-center hidden">
+            <div class="mx-auto w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
+                <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Setup Issue</h2>
+            <p id="error-message" class="text-gray-500 mb-6">Something went wrong during setup.</p>
+            <button onclick="retrySetup()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700 transition-colors mb-3">
+                <i class="fas fa-redo mr-2"></i>Try Again
+            </button>
+            <a href="/signup" class="block text-indigo-600 hover:text-indigo-700 font-medium text-sm">
+                Return to sign up
+            </a>
+        </div>
+
+        <!-- Success Card (hidden by default) -->
+        <div id="success-card" class="glass-effect rounded-2xl shadow-xl p-8 text-center hidden">
+            <div class="mx-auto w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
+                <i class="fas fa-check-circle text-green-600 text-3xl"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">You're All Set!</h2>
+            <p id="success-message" class="text-gray-500 mb-6">Your AI phone system is ready to go.</p>
+            <div id="phone-number-display" class="bg-indigo-50 rounded-xl p-4 mb-6 hidden">
+                <p class="text-sm text-indigo-600 font-medium mb-1">Your AI Phone Number</p>
+                <p id="ai-phone-number" class="text-2xl font-bold text-indigo-700"></p>
+            </div>
+            <button onclick="goToDashboard()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700 transition-colors">
+                <i class="fas fa-tachometer-alt mr-2"></i>Go to Dashboard
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Get session_id from URL params
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session_id');
+
+        let setupToken = null;
+
+        // Animate steps appearing
+        function animateSteps() {
+            const steps = document.querySelectorAll('.step-item');
+            steps.forEach((step, index) => {
+                setTimeout(() => {
+                    step.classList.add('fade-in-up');
+                }, index * 300);
+            });
+        }
+
+        // Update step to completed
+        function completeStep(stepId) {
+            const icon = document.getElementById(stepId + '-icon');
+            if (icon) {
+                icon.innerHTML = '<i class="fas fa-check text-green-600 text-sm"></i>';
+                icon.className = 'w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0';
+            }
+        }
+
+        // Update step to in-progress
+        function activateStep(stepId) {
+            const icon = document.getElementById(stepId + '-icon');
+            if (icon) {
+                icon.innerHTML = '<i class="fas fa-spinner fa-spin text-indigo-600 text-sm"></i>';
+                icon.className = 'w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center flex-shrink-0';
+            }
+        }
+
+        function showError(message) {
+            document.getElementById('setup-card').classList.add('hidden');
+            document.getElementById('error-card').classList.remove('hidden');
+            document.getElementById('error-message').textContent = message || 'Something went wrong during setup. Please try again.';
+        }
+
+        function showSuccess(data) {
+            document.getElementById('setup-card').classList.add('hidden');
+            document.getElementById('success-card').classList.remove('hidden');
+
+            if (data.client && data.client.rachelNumber) {
+                document.getElementById('phone-number-display').classList.remove('hidden');
+                document.getElementById('ai-phone-number').textContent = data.client.rachelNumber;
+            }
+
+            if (data.user) {
+                document.getElementById('success-message').textContent =
+                    `Welcome ${data.user.firstName}! Your ${data.user.subscriptionPlan} plan is active with a 14-day free trial.`;
+            }
+        }
+
+        function goToDashboard() {
+            if (setupToken) {
+                localStorage.setItem('authToken', setupToken);
+                localStorage.setItem('token', setupToken);
+            }
+            window.location.href = '/dashboard';
+        }
+
+        async function retrySetup() {
+            document.getElementById('error-card').classList.add('hidden');
+            document.getElementById('setup-card').classList.remove('hidden');
+            await runSetup();
+        }
+
+        async function runSetup() {
+            if (!sessionId) {
+                showError('Missing checkout session. Please go back and complete the signup process.');
+                return;
+            }
+
+            animateSteps();
+
+            try {
+                // Simulate step progression for UX
+                setTimeout(() => activateStep('step-phone'), 500);
+
+                const response = await fetch('/api/auth/complete-setup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ session_id: sessionId })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Animate completion of remaining steps
+                    completeStep('step-phone');
+                    setTimeout(() => {
+                        activateStep('step-agent');
+                        setTimeout(() => {
+                            completeStep('step-agent');
+                            activateStep('step-welcome');
+                            setTimeout(() => {
+                                completeStep('step-welcome');
+                                setTimeout(() => {
+                                    setupToken = result.data.token;
+                                    showSuccess(result.data);
+                                }, 500);
+                            }, 500);
+                        }, 500);
+                    }, 500);
+                } else {
+                    showError(result.error || 'Setup failed. Please try again.');
+                }
+            } catch (error) {
+                console.error('Setup error:', error);
+                showError('Connection error. Please check your internet and try again.');
+            }
+        }
+
+        // Start setup on page load
+        runSetup();
+    </script>
+</body>
+</html>
