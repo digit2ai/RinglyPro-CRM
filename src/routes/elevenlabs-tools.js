@@ -374,9 +374,29 @@ async function handleBookAppointment(params) {
     let finalTime = aptTime;
 
     if (startTime && !aptDate) {
-      const dt = new Date(startTime);
-      finalDate = dt.toISOString().split('T')[0];
-      finalTime = dt.toISOString().split('T')[1].substring(0, 5);
+      // Extract LOCAL time from ISO string (e.g., "2026-02-26T10:00:00-05:00")
+      // IMPORTANT: Do NOT use toISOString() which converts to UTC.
+      // The DB stores local time (ET) to match GHL sync convention.
+      if (typeof startTime === 'string' && startTime.includes('T')) {
+        // Parse date and time components directly from the ISO string
+        finalDate = startTime.substring(0, 10);         // "2026-02-26"
+        finalTime = startTime.substring(11, 16);        // "10:00"
+      } else {
+        // Fallback: convert to local time using the client's timezone (America/New_York)
+        const dt = new Date(startTime);
+        const localStr = dt.toLocaleString('en-US', { timeZone: 'America/New_York', hour12: false });
+        const [datePart, timePart] = localStr.split(', ');
+        const [month, day, year] = datePart.split('/');
+        finalDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        finalTime = timePart.substring(0, 5);
+      }
+      logger.info(`[ElevenLabs Tools] Parsed startTime "${startTime}" → date=${finalDate}, time=${finalTime} (local ET)`);
+    }
+
+    // Also handle case where aptTime is an ISO string (e.g., AI sends appointment_time as full ISO)
+    if (finalTime && finalTime.includes('T')) {
+      finalTime = finalTime.substring(11, 16);
+      logger.info(`[ElevenLabs Tools] Extracted time from ISO appointment_time: ${finalTime}`);
     }
 
     // Normalize time to HH:MM:SS format for dualCalendarService
