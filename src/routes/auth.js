@@ -44,13 +44,6 @@ console.log('🔍 AUTH ROUTES FILE LOADED - Routes should be available');
 // These values override any frontend-passed values for security
 // =====================================================
 const SUBSCRIPTION_PLANS = {
-    free: {
-        name: 'Free',
-        price: 0,
-        tokens: 100,
-        rollover: false,
-        description: 'Perfect for testing'
-    },
     starter: {
         name: 'Starter',
         price: 45,           // $45/month
@@ -181,7 +174,7 @@ router.post('/register', async (req, res) => {
 
         // ==================== SERVER-SIDE PLAN VALIDATION ====================
         // CRITICAL: Use server-side values, not frontend-passed values for security
-        const selectedPlan = SUBSCRIPTION_PLANS[plan] ? plan : 'free';
+        const selectedPlan = SUBSCRIPTION_PLANS[plan] ? plan : 'starter';
         const selectedBilling = (billing === 'annual') ? 'annual' : 'monthly';
 
         // Get server-validated plan details
@@ -200,8 +193,7 @@ router.post('/register', async (req, res) => {
         console.log(`   - Rollover: ${planDetails.rollover ? 'Yes' : 'No'}`);
 
         // Create user with all business fields - use normalized phone numbers
-        // Note: Paid plans get 'pending' status until Stripe payment completes
-        // Free plan gets tokens immediately, paid plans get tokens after first payment
+        // All plans start as 'pending' with 14-day trial, tokens granted immediately
         const user = await User.create({
             email,
             password_hash: passwordHash,
@@ -221,10 +213,10 @@ router.post('/register', async (req, res) => {
             // Subscription fields
             subscription_plan: selectedPlan,
             billing_frequency: selectedBilling,
-            subscription_status: selectedPlan === 'free' ? 'active' : 'pending',
-            trial_ends_at: null,  // No trial - free plan is the trial
+            subscription_status: 'pending',  // All plans start pending until Stripe checkout
+            trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),  // 14-day free trial
             monthly_token_allocation: monthlyTokens,
-            tokens_balance: selectedPlan === 'free' ? monthlyTokens : 0  // Free plan gets tokens, paid plans get tokens after payment
+            tokens_balance: monthlyTokens  // Give tokens immediately (14-day trial)
         }, { transaction });
 
         console.log('✅ User created successfully:', user.id);
@@ -453,12 +445,12 @@ router.post('/register', async (req, res) => {
         }
 
         // ==================== STRIPE SUBSCRIPTION CREATION ====================
-        // Create Stripe subscription for paid plans (non-blocking for free tier)
+        // Create Stripe checkout with 14-day free trial for ALL plans
         let stripeSessionUrl = null;
 
-        if (selectedPlan !== 'free' && actualPrice > 0) {
+        {
             try {
-                console.log('💳 Creating Stripe subscription (immediate payment)...');
+                console.log('💳 Creating Stripe checkout with 14-day free trial...');
                 console.log(`   Plan: ${planDetails.name}, Price: $${actualPrice}/${selectedBilling}`);
 
                 const webhookBaseUrl = process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com';
@@ -502,8 +494,9 @@ router.post('/register', async (req, res) => {
                     }],
                     mode: 'subscription',
 
-                    // NO TRIAL - Free plan is the trial
+                    // 14-day free trial — no charge until trial ends
                     subscription_data: {
+                        trial_period_days: 14,
                         metadata: {
                             userId: user.id.toString(),
                             plan: selectedPlan,
@@ -533,7 +526,7 @@ router.post('/register', async (req, res) => {
 
                 stripeSessionUrl = session.url;
                 console.log(`✅ Stripe checkout session created: ${session.id}`);
-                console.log(`💳 User will be charged immediately upon checkout`);
+                console.log(`💳 14-day free trial — first charge in 14 days`);
                 } // End skip Stripe check
 
             } catch (stripeError) {
@@ -639,8 +632,9 @@ router.post('/register', async (req, res) => {
                     freeTrialMinutes: user.free_trial_minutes,
                     onboardingCompleted: user.onboarding_completed,
                     subscriptionPlan: selectedPlan,
-                    subscriptionStatus: selectedPlan === 'free' ? 'active' : 'pending',
-                    tokensBalance: selectedPlan === 'free' ? monthlyTokens : 0
+                    subscriptionStatus: 'pending',
+                    tokensBalance: monthlyTokens,
+                    trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
                 },
                 client: {
                     id: client.id,

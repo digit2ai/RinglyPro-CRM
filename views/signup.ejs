@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RinglyPro is your FREE AI Office Pal - Sign Up</title>
+    <title>RinglyPro - AI Office Pal - Sign Up</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -238,12 +238,30 @@
                         <p class="text-xs text-gray-500 mt-1">What do customers typically call about?</p>
                     </div>
 
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <!-- Plan Selection -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Choose Your Plan</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div id="planStarter" onclick="selectPlan('starter')" class="plan-card selected cursor-pointer border-2 border-blue-500 bg-blue-50 rounded-lg p-4 text-center transition-all hover:shadow-md">
+                                <h4 class="font-bold text-gray-800">Starter</h4>
+                                <p class="text-2xl font-bold text-blue-600 my-1">$45<span class="text-sm text-gray-500">/mo</span></p>
+                                <p class="text-xs text-gray-500">500 tokens (100 min)</p>
+                            </div>
+                            <div id="planGrowth" onclick="selectPlan('growth')" class="plan-card cursor-pointer border-2 border-gray-200 bg-white rounded-lg p-4 text-center transition-all hover:shadow-md">
+                                <h4 class="font-bold text-gray-800">Growth</h4>
+                                <p class="text-2xl font-bold text-blue-600 my-1">$180<span class="text-sm text-gray-500">/mo</span></p>
+                                <p class="text-xs text-gray-500">2,000 tokens (400 min)</p>
+                            </div>
+                        </div>
+                        <input type="hidden" id="selectedPlan" value="starter">
+                    </div>
+
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
                         <div class="flex items-start">
-                            <i class="fas fa-gift text-blue-500 mt-1 mr-3"></i>
+                            <i class="fas fa-gift text-green-500 mt-1 mr-3"></i>
                             <div>
-                                <h4 class="font-medium text-blue-800 mb-1">100 Free Minutes, Every Month</h4>
-                                <p class="text-sm text-blue-600">Enjoy 100 minutes on us—built into your plan, forever free.</p>
+                                <h4 class="font-medium text-green-800 mb-1">14-Day Free Trial</h4>
+                                <p class="text-sm text-green-600">Try RinglyPro risk-free for 14 days. No charge until the trial ends.</p>
                             </div>
                         </div>
                     </div>
@@ -347,6 +365,18 @@
     <script>
         let currentStep = 1;
         let registrationData = {};
+
+        function selectPlan(plan) {
+            document.getElementById('selectedPlan').value = plan;
+            // Update card styles
+            document.querySelectorAll('.plan-card').forEach(card => {
+                card.classList.remove('border-blue-500', 'bg-blue-50');
+                card.classList.add('border-gray-200', 'bg-white');
+            });
+            const selected = document.getElementById(plan === 'starter' ? 'planStarter' : 'planGrowth');
+            selected.classList.remove('border-gray-200', 'bg-white');
+            selected.classList.add('border-blue-500', 'bg-blue-50');
+        }
 
         // Extract referral code from URL parameter (?ref=ABC123)
         const urlParams = new URLSearchParams(window.location.search);
@@ -473,10 +503,10 @@
                 services: document.getElementById('services').value,
                 termsAccepted: document.getElementById('termsAccepted').checked,
                 referralCode: referralCode || null,  // Include referral code if present in URL
-                // Subscription plan parameters from URL
-                plan: planFromUrl || 'free',
-                amount: amountFromUrl || '0',
-                tokens: tokensFromUrl || '100',
+                // Subscription plan (from plan selector or URL)
+                plan: planFromUrl || document.getElementById('selectedPlan').value || 'starter',
+                amount: amountFromUrl || (document.getElementById('selectedPlan').value === 'growth' ? '180' : '45'),
+                tokens: tokensFromUrl || (document.getElementById('selectedPlan').value === 'growth' ? '2000' : '500'),
                 billing: billingFromUrl || 'monthly'
             };
 
@@ -509,7 +539,15 @@
                         localStorage.setItem('token', result.token);
                     }
 
-                    // Show Step 4 (Training booking)
+                    // Redirect to Stripe checkout if URL provided (14-day free trial)
+                    if (result.stripeCheckoutUrl) {
+                        document.getElementById('loadingState').querySelector('h3').textContent = 'Redirecting to secure checkout...';
+                        document.getElementById('loadingState').querySelector('p').textContent = '14-day free trial — no charge today';
+                        window.location.href = result.stripeCheckoutUrl;
+                        return;
+                    }
+
+                    // Fallback: Show Step 4 (Training booking) if no Stripe URL
                     document.getElementById('loadingState').classList.add('hidden');
                     document.getElementById('step4').classList.remove('hidden');
                     currentStep = 4;
