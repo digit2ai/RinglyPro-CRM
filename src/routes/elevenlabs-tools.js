@@ -528,10 +528,18 @@ async function handleSendSmsGhl(params) {
       return { success: false, error: 'Missing phone number' };
     }
 
-    // Get client's GHL config from settings
+    // Get client info and GHL credentials
+    // Resolve credentials using same pattern as ghlConversationSyncService:
+    // 1. settings.integration.ghl (apiKey) — but use ghl_integrations location if available
+    // 2. ghl_integrations table (OAuth)
     const clients = await sequelize.query(`
-      SELECT business_name, settings->'integration'->'ghl' as ghl_settings
-      FROM clients WHERE id = :clientId
+      SELECT c.business_name,
+             c.settings->'integration'->'ghl' as ghl_settings,
+             g.access_token as oauth_token,
+             g.ghl_location_id as oauth_location_id
+      FROM clients c
+      LEFT JOIN ghl_integrations g ON g.client_id = c.id AND g.is_active = true
+      WHERE c.id = :clientId
     `, { replacements: { clientId: client_id }, type: QueryTypes.SELECT });
 
     if (!clients || clients.length === 0) {
@@ -540,14 +548,20 @@ async function handleSendSmsGhl(params) {
 
     const businessName = clients[0].business_name;
     const ghlSettings = clients[0].ghl_settings;
+    const oauthToken = clients[0].oauth_token;
+    const oauthLocationId = clients[0].oauth_location_id;
 
-    if (!ghlSettings || !ghlSettings.enabled || !ghlSettings.apiKey || !ghlSettings.locationId) {
+    // Resolve API key: prefer settings PIT, then OAuth token
+    const ghlApiKey = (ghlSettings?.enabled && ghlSettings?.apiKey) ? ghlSettings.apiKey : oauthToken;
+    // Resolve location: prefer OAuth location (more reliable), then settings
+    const ghlLocationId = oauthLocationId || ghlSettings?.locationId;
+
+    if (!ghlApiKey || !ghlLocationId) {
       logger.warn(`[ElevenLabs Tools] send_sms_ghl: Client ${client_id} has no GHL integration, falling back to Twilio`);
       return await handleSendSms(params);
     }
 
-    const ghlApiKey = ghlSettings.apiKey;
-    const ghlLocationId = ghlSettings.locationId;
+    logger.info(`[ElevenLabs Tools] send_sms_ghl: Using GHL API key ${ghlApiKey.substring(0, 10)}... with location ${ghlLocationId}`);
 
     // Build message if not provided
     let smsMessage = message;
@@ -583,7 +597,7 @@ async function handleSendSmsGhl(params) {
       const searchResp = await axios.get(
         `${ghlBaseUrl}/contacts/search/duplicate`,
         {
-          params: { locationId: ghlLocationId, phone: normalizedPhone },
+          params: { locationId: ghlLocationId, number: normalizedPhone },
           headers: ghlHeaders,
           timeout: 10000
         }
