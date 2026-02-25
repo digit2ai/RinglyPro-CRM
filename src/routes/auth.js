@@ -254,6 +254,7 @@ router.post('/register', async (req, res) => {
                     product_data: {
                         name: `RinglyPro ${planDetails.name} Plan`,
                         description: `${monthlyTokens} tokens/month (${Math.floor(monthlyTokens / 5)} minutes of voice)`,
+                        images: ['https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/691756ffa6f5eb21b7794f1b.png'],
                     },
                     unit_amount: actualPrice * 100,  // Server-validated price in cents
                     recurring: {

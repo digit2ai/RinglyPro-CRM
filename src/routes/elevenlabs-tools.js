@@ -1208,7 +1208,8 @@ async function handleSignupClient(params) {
               currency: 'usd',
               product_data: {
                 name: `RinglyPro ${planDetails.name} Plan`,
-                description: `${planDetails.tokens} tokens/month (${Math.floor(planDetails.tokens / 5)} minutes of voice)`
+                description: `${planDetails.tokens} tokens/month (${Math.floor(planDetails.tokens / 5)} minutes of voice)`,
+                images: ['https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/691756ffa6f5eb21b7794f1b.png']
               },
               unit_amount: planDetails.price * 100,
               recurring: { interval: 'month', interval_count: 1 }
