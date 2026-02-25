@@ -1270,8 +1270,8 @@ async function handleSignupClient(params) {
       // Send SMS with Stripe checkout link
       if (stripeCheckoutUrl) {
         try {
-          // Use RinglyPro's system number or the new client's number
-          const fromNumber = twilioNumber;
+          // Use DIGIT2AI system number (routes through GHL webhook for SMS)
+          const fromNumber = process.env.RINGLYPRO_SYSTEM_NUMBER || '+12232949184';
           const smsBody = `Welcome to RinglyPro, ${first_name.trim()}! Start your 14-day free trial of the ${planDetails.name} Plan ($${planDetails.price}/mo). Complete your setup here: ${stripeCheckoutUrl}`;
 
           await twilioClient.messages.create({
