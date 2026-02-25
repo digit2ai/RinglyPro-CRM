@@ -593,6 +593,7 @@ async function handleSendSmsGhl(params) {
 
     // Step 1: Find or create contact in GHL by phone number
     let contactId;
+    let contactData;
     try {
       const searchResp = await axios.get(
         `${ghlBaseUrl}/contacts/search/duplicate`,
@@ -603,6 +604,7 @@ async function handleSendSmsGhl(params) {
         }
       );
       contactId = searchResp.data?.contact?.id;
+      contactData = searchResp.data?.contact;
     } catch (searchErr) {
       logger.warn(`[ElevenLabs Tools] GHL contact search failed:`, searchErr.response?.data || searchErr.message);
     }
@@ -621,6 +623,7 @@ async function handleSendSmsGhl(params) {
           { headers: ghlHeaders, timeout: 10000 }
         );
         contactId = createResp.data?.contact?.id;
+        contactData = createResp.data?.contact;
       } catch (createErr) {
         logger.error(`[ElevenLabs Tools] GHL contact creation failed:`, createErr.response?.data || createErr.message);
         // Fall back to Twilio
@@ -632,6 +635,28 @@ async function handleSendSmsGhl(params) {
     if (!contactId) {
       logger.warn(`[ElevenLabs Tools] Could not get GHL contactId, falling back to Twilio`);
       return await handleSendSms(params);
+    }
+
+    // Step 1.5: Auto-clear DND if SMS is blocked on this contact
+    const smsDnd = contactData?.dndSettings?.SMS;
+    if (smsDnd && smsDnd.status === 'active') {
+      logger.warn(`[ElevenLabs Tools] Contact ${contactId} has SMS DND active (${smsDnd.message}), clearing it`);
+      try {
+        await axios.put(
+          `${ghlBaseUrl}/contacts/${contactId}`,
+          {
+            dnd: false,
+            dndSettings: {
+              SMS: { status: 'inactive', message: '' },
+              Call: { status: 'inactive', message: '' }
+            }
+          },
+          { headers: ghlHeaders, timeout: 10000 }
+        );
+        logger.info(`[ElevenLabs Tools] Cleared DND for contact ${contactId}`);
+      } catch (dndErr) {
+        logger.warn(`[ElevenLabs Tools] Failed to clear DND for contact ${contactId}:`, dndErr.response?.data || dndErr.message);
+      }
     }
 
     // Step 2: Send SMS via GHL conversations API
@@ -657,7 +682,14 @@ async function handleSendSmsGhl(params) {
 
   } catch (error) {
     logger.error('[ElevenLabs Tools] send_sms_ghl error:', error.response?.data || error.message);
-    return { success: false, error: error.message };
+    // Fall back to Twilio on any GHL failure
+    logger.warn(`[ElevenLabs Tools] GHL SMS failed, falling back to Twilio for client ${client_id}`);
+    try {
+      return await handleSendSms(params);
+    } catch (twilioErr) {
+      logger.error('[ElevenLabs Tools] Twilio fallback also failed:', twilioErr.message);
+      return { success: false, error: `GHL: ${error.response?.data?.message || error.message}, Twilio fallback also failed` };
+    }
   }
 }
 
