@@ -76,10 +76,14 @@ router.get('/simple-test', (req, res) => {
     res.json({ success: true, message: 'Auth routes are loading successfully!' });
 });
 
-// POST /api/auth/register - Enhanced User registration with Twilio auto-provisioning
+// =====================================================
+// PHASE 1: REGISTER — Validate, create User, Stripe checkout
+// Flow: Form → Stripe → Provisioning (complete-setup)
+// NO Twilio, NO Client creation, NO ElevenLabs, NO welcome SMS/email
+// =====================================================
 router.post('/register', async (req, res) => {
     const transaction = await sequelize.transaction();
-    
+
     try {
         const {
             email,
@@ -97,31 +101,22 @@ router.post('/register', async (req, res) => {
             termsAccepted,
             referralCode,  // Optional: referral code from URL parameter
             // Subscription plan parameters from pricing table
-            plan,          // 'free', 'starter', 'growth', 'professional', 'enterprise'
+            plan,          // 'starter', 'growth', 'professional'
             amount,        // Total amount (monthly or annual)
             tokens,        // Total tokens (monthly allocation or annual total)
             billing        // 'monthly' or 'annual'
         } = req.body;
-        
+
         console.log('📝 Registration attempt:', { email, firstName, lastName, businessName, businessType, businessPhone, plan, billing });
-        
-        // FIXED BUG #3: Validate Client model is available before proceeding
-        if (!Client) {
-            await transaction.rollback();
-            return res.status(500).json({ 
-                error: 'System configuration error. Please contact support.',
-                details: process.env.NODE_ENV === 'development' ? 'Client model not loaded' : undefined
-            });
-        }
-        
+
         // Validate required fields
         if (!email || !password || !firstName || !lastName) {
             await transaction.rollback();
-            return res.status(400).json({ 
-                error: 'Email, password, first name, and last name are required' 
+            return res.status(400).json({
+                error: 'Email, password, first name, and last name are required'
             });
         }
-        
+
         // Validate business phone for Rachel AI
         if (!businessPhone) {
             await transaction.rollback();
@@ -142,33 +137,35 @@ router.post('/register', async (req, res) => {
         // Validate terms acceptance
         if (!termsAccepted) {
             await transaction.rollback();
-            return res.status(400).json({ 
-                error: 'You must accept the terms and conditions to register' 
+            return res.status(400).json({
+                error: 'You must accept the terms and conditions to register'
             });
         }
-        
+
         // Check if user already exists
         const existingUser = await User.findOne({ where: { email } });
         if (existingUser) {
             await transaction.rollback();
-            return res.status(409).json({ 
-                error: 'User already exists with this email' 
-            });
-        }
-        
-        // Check if business phone already exists (for Rachel AI system) - use normalized version
-        const existingClient = await Client.findOne({ where: { business_phone: normalizedBusinessPhone } });
-        if (existingClient) {
-            await transaction.rollback();
             return res.status(409).json({
-                error: 'A Rachel AI system already exists with this phone number'
+                error: 'User already exists with this email'
             });
         }
-        
+
+        // Check if business phone already exists (for Rachel AI system) - use normalized version
+        if (Client) {
+            const existingClient = await Client.findOne({ where: { business_phone: normalizedBusinessPhone } });
+            if (existingClient) {
+                await transaction.rollback();
+                return res.status(409).json({
+                    error: 'A Rachel AI system already exists with this phone number'
+                });
+            }
+        }
+
         // Hash password
         const saltRounds = 12;
         const passwordHash = await bcrypt.hash(password, saltRounds);
-        
+
         // Clean up website_url - convert empty strings to null
         const cleanWebsiteUrl = websiteUrl && websiteUrl.trim() !== '' ? websiteUrl.trim() : null;
 
@@ -192,8 +189,7 @@ router.post('/register', async (req, res) => {
         console.log(`   - Price: $${actualPrice} (${selectedBilling})`);
         console.log(`   - Rollover: ${planDetails.rollover ? 'Yes' : 'No'}`);
 
-        // Create user with all business fields - use normalized phone numbers
-        // All plans start as 'pending' with 14-day trial, tokens granted immediately
+        // Create user with checkout_pending status - NO tokens, NO trial yet
         const user = await User.create({
             email,
             password_hash: passwordHash,
@@ -213,97 +209,330 @@ router.post('/register', async (req, res) => {
             // Subscription fields
             subscription_plan: selectedPlan,
             billing_frequency: selectedBilling,
-            subscription_status: 'pending',  // All plans start pending until Stripe checkout
-            trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),  // 14-day free trial
+            subscription_status: 'checkout_pending',  // Waiting for Stripe checkout
+            trial_ends_at: null,  // Set after Stripe checkout in complete-setup
             monthly_token_allocation: monthlyTokens,
-            tokens_balance: monthlyTokens  // Give tokens immediately (14-day trial)
+            tokens_balance: 0  // Tokens granted after Stripe checkout in complete-setup
         }, { transaction });
 
         console.log('✅ User created successfully:', user.id);
         console.log(`📊 Plan: ${selectedPlan}, Billing: ${selectedBilling}, Monthly Tokens: ${monthlyTokens}`);
-        
+
+        // Commit the user creation transaction
+        await transaction.commit();
+        console.log('✅ Transaction committed successfully');
+
+        // ==================== STRIPE CHECKOUT SESSION ====================
+        const webhookBaseUrl = process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com';
+
+        // TESTING MODE: Skip Stripe checkout
+        if (process.env.SKIP_STRIPE_CHECKOUT === 'true') {
+            console.log(`🧪 TEST MODE: Skipping Stripe checkout for ${selectedPlan} plan`);
+
+            // Mock subscription ID
+            await User.update({
+                stripe_customer_id: `cus_test_${user.id}`,
+                stripe_subscription_id: `sub_test_${user.id}`
+            }, { where: { id: user.id }, validate: false });
+
+            return res.status(201).json({
+                success: true,
+                message: 'Registration successful (test mode). Call /api/auth/complete-setup to finish provisioning.',
+                testMode: true,
+                userId: user.id
+            });
+        }
+
+        // Create Stripe Checkout Session for recurring subscription
+        // Store all needed data in metadata so complete-setup can retrieve it
+        const session = await stripe.checkout.sessions.create({
+            customer_email: email,
+            payment_method_types: ['card'],
+            line_items: [{
+                price_data: {
+                    currency: 'usd',
+                    product_data: {
+                        name: `RinglyPro ${planDetails.name} Plan`,
+                        description: `${monthlyTokens} tokens/month (${Math.floor(monthlyTokens / 5)} minutes of voice)`,
+                    },
+                    unit_amount: actualPrice * 100,  // Server-validated price in cents
+                    recurring: {
+                        interval: selectedBilling === 'annual' ? 'year' : 'month',
+                        interval_count: 1
+                    }
+                },
+                quantity: 1
+            }],
+            mode: 'subscription',
+
+            // 14-day free trial — no charge until trial ends
+            subscription_data: {
+                trial_period_days: 14,
+                metadata: {
+                    userId: user.id.toString(),
+                    plan: selectedPlan,
+                    monthlyTokens: monthlyTokens.toString(),
+                    billing: selectedBilling,
+                    rollover: planDetails.rollover.toString()
+                }
+            },
+
+            // Redirect to completing page after checkout, which calls complete-setup
+            success_url: `${webhookBaseUrl}/signup/completing?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${webhookBaseUrl}/signup`,
+
+            metadata: {
+                userId: user.id.toString(),
+                plan: selectedPlan,
+                monthlyTokens: monthlyTokens.toString(),
+                billing: selectedBilling,
+                referralCode: referralCode || ''
+            }
+        });
+
+        console.log(`✅ Stripe checkout session created: ${session.id}`);
+        console.log(`💳 14-day free trial — first charge in 14 days`);
+
+        // Update user with Stripe session info (skip validation)
+        await User.update({
+            stripe_customer_id: session.customer || null
+        }, { where: { id: user.id }, validate: false });
+
+        // Return ONLY the Stripe checkout URL - no JWT, no client data
+        res.status(201).json({
+            success: true,
+            stripeCheckoutUrl: session.url
+        });
+
+        console.log(`📝 User ${user.id} created, redirecting to Stripe checkout`);
+
+    } catch (error) {
+        try { await transaction.rollback(); } catch (e) { /* already committed or rolled back */ }
+        console.error('💥 Registration error:', error);
+        console.error('Error details:', error.message);
+        console.error('Stack trace:', error.stack);
+
+        // Check for specific database errors
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            return res.status(409).json({
+                error: 'An account with this email or phone number already exists'
+            });
+        }
+
+        if (error.name === 'SequelizeValidationError') {
+            return res.status(400).json({
+                error: 'Validation error: ' + error.errors.map(e => e.message).join(', ')
+            });
+        }
+
+        res.status(500).json({
+            error: 'Registration failed. Please try again.',
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+});
+
+// =====================================================
+// PHASE 2: COMPLETE-SETUP — After Stripe checkout success
+// Provisions Twilio, Client, ElevenLabs, welcome SMS/email
+// Called from /signup/completing page with session_id
+// =====================================================
+router.post('/complete-setup', async (req, res) => {
+    const transaction = await sequelize.transaction();
+
+    try {
+        const { session_id } = req.body;
+
+        if (!session_id) {
+            await transaction.rollback();
+            return res.status(400).json({
+                success: false,
+                error: 'Stripe session ID is required'
+            });
+        }
+
+        console.log(`🔄 Complete-setup called with session_id: ${session_id}`);
+
+        // ==================== VERIFY STRIPE SESSION ====================
+        let stripeSession;
+        try {
+            stripeSession = await stripe.checkout.sessions.retrieve(session_id, {
+                expand: ['subscription']
+            });
+        } catch (stripeError) {
+            await transaction.rollback();
+            console.error('❌ Stripe session retrieval failed:', stripeError.message);
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid or expired checkout session'
+            });
+        }
+
+        // Verify payment was successful
+        if (stripeSession.status !== 'complete') {
+            await transaction.rollback();
+            return res.status(400).json({
+                success: false,
+                error: 'Checkout session is not complete'
+            });
+        }
+
+        // Extract metadata
+        const userId = parseInt(stripeSession.metadata.userId);
+        const selectedPlan = stripeSession.metadata.plan;
+        const monthlyTokens = parseInt(stripeSession.metadata.monthlyTokens);
+        const selectedBilling = stripeSession.metadata.billing;
+        const referralCode = stripeSession.metadata.referralCode || null;
+
+        console.log(`📋 Session verified for user ${userId}, plan: ${selectedPlan}`);
+
+        // ==================== PREVENT DOUBLE-PROVISIONING ====================
+        if (Client) {
+            const existingClient = await Client.findOne({ where: { user_id: userId } });
+            if (existingClient) {
+                await transaction.rollback();
+                console.log(`⚠️ Client already exists for user ${userId} - double-provisioning prevented`);
+
+                // Still return success with existing data so the UI can proceed
+                const user = await User.findByPk(userId);
+                const token = jwt.sign(
+                    {
+                        userId: user.id,
+                        email: user.email,
+                        businessName: user.business_name,
+                        businessType: user.business_type,
+                        clientId: existingClient.id
+                    },
+                    process.env.JWT_SECRET || 'your-super-secret-jwt-key',
+                    { expiresIn: '7d' }
+                );
+
+                return res.json({
+                    success: true,
+                    message: 'Account already provisioned',
+                    alreadyProvisioned: true,
+                    data: {
+                        user: {
+                            id: user.id,
+                            email: user.email,
+                            firstName: user.first_name,
+                            lastName: user.last_name,
+                            businessName: user.business_name,
+                            businessType: user.business_type,
+                            businessPhone: user.business_phone,
+                            phoneNumber: user.phone_number,
+                            subscriptionPlan: user.subscription_plan,
+                            subscriptionStatus: user.subscription_status,
+                            tokensBalance: user.tokens_balance
+                        },
+                        client: {
+                            id: existingClient.id,
+                            rachelNumber: existingClient.ringlypro_number,
+                            rachelEnabled: existingClient.rachel_enabled
+                        },
+                        token
+                    }
+                });
+            }
+        }
+
+        // ==================== LOAD USER ====================
+        const user = await User.findByPk(userId);
+        if (!user) {
+            await transaction.rollback();
+            return res.status(404).json({
+                success: false,
+                error: 'User not found'
+            });
+        }
+
+        console.log(`👤 User found: ${user.first_name} ${user.last_name} (${user.email})`);
+
+        // ==================== UPDATE USER: Activate subscription ====================
+        const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+
+        await User.update({
+            subscription_status: 'trialing',
+            trial_ends_at: trialEndsAt,
+            tokens_balance: monthlyTokens,
+            stripe_customer_id: stripeSession.customer,
+            stripe_subscription_id: stripeSession.subscription?.id || stripeSession.subscription || null
+        }, { where: { id: userId }, validate: false, transaction });
+
+        console.log(`✅ User subscription activated: trialing until ${trialEndsAt.toISOString()}`);
+        console.log(`💰 Tokens granted: ${monthlyTokens}`);
+
         // ==================== TWILIO NUMBER PROVISIONING ====================
-        console.log('📞 Provisioning Twilio number for new client...');
-
-        let twilioNumber, twilioSid;
-
-        // TESTING MODE: Skip Twilio provisioning
-        if (process.env.SKIP_TWILIO_PROVISIONING === 'true') {
-            twilioNumber = `+1555${Math.floor(Math.random() * 10000000).toString().padStart(7, '0')}`;
-            twilioSid = `PN${Math.random().toString(36).substring(2, 15)}`;
-            console.log(`🧪 TEST MODE: Using mock Twilio number: ${twilioNumber}`);
-        } else {
+        let twilioNumber = null;
+        let twilioSid = null;
 
         try {
-            // Search for available US phone numbers
+            console.log('📞 Provisioning Twilio number...');
+            const webhookBaseUrl = process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com';
+
+            // Search for available numbers
             const availableNumbers = await twilioClient.availablePhoneNumbers('US')
                 .local
                 .list({
-                    limit: 1,
+                    areaCode: '786',
+                    limit: 5,
                     voiceEnabled: true,
                     smsEnabled: true
                 });
 
-            if (!availableNumbers || availableNumbers.length === 0) {
-                throw new Error('No Twilio numbers available');
+            if (availableNumbers.length === 0) {
+                // Try broader search if specific area code not available
+                const broaderSearch = await twilioClient.availablePhoneNumbers('US')
+                    .local
+                    .list({
+                        limit: 5,
+                        voiceEnabled: true,
+                        smsEnabled: true
+                    });
+
+                if (broaderSearch.length === 0) {
+                    throw new Error('No phone numbers available');
+                }
+
+                availableNumbers.push(...broaderSearch);
             }
 
-            console.log(`🔍 Found available number: ${availableNumbers[0].phoneNumber}`);
-
-            // Purchase the number
-            const webhookBaseUrl = process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com';
-
-            const purchasedNumber = await twilioClient.incomingPhoneNumbers
-                .create({
-                    phoneNumber: availableNumbers[0].phoneNumber,
-                    voiceUrl: `${webhookBaseUrl}/voice/rachel/`,
-                    voiceMethod: 'POST',
-                    statusCallback: `${webhookBaseUrl}/voice/webhook/call-status`,
-                    statusCallbackMethod: 'POST',
-                    statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
-                    smsUrl: `${webhookBaseUrl}/api/messages/incoming`,
-                    smsMethod: 'POST',
-                    friendlyName: `RinglyPro - ${businessName}`
-                });
-
-            console.log(`✅ Configured webhooks for ${businessName}:`);
-            console.log(`   Voice: ${webhookBaseUrl}/voice/rachel/`);
-            console.log(`   Status: ${webhookBaseUrl}/voice/webhook/call-status`);
-            console.log(`   SMS: ${webhookBaseUrl}/api/messages/incoming`);
+            // Purchase the first available number
+            const purchasedNumber = await twilioClient.incomingPhoneNumbers.create({
+                phoneNumber: availableNumbers[0].phoneNumber,
+                voiceUrl: `${webhookBaseUrl}/api/voice/incoming`,
+                voiceMethod: 'POST',
+                smsUrl: `${webhookBaseUrl}/api/sms/incoming`,
+                smsMethod: 'POST',
+                friendlyName: `RinglyPro - ${user.business_name}`
+            });
 
             twilioNumber = purchasedNumber.phoneNumber;
             twilioSid = purchasedNumber.sid;
-            
-            console.log(`✅ Provisioned Twilio number: ${twilioNumber} (${twilioSid})`);
-            
+
+            console.log(`✅ Twilio number provisioned: ${twilioNumber} (SID: ${twilioSid})`);
+
         } catch (twilioError) {
-            console.error('❌ Twilio provisioning error:', twilioError);
-            await transaction.rollback();
-            return res.status(500).json({
-                success: false,
-                error: 'Failed to provision phone number. Please try again or contact support.',
-                details: process.env.NODE_ENV === 'development' ? twilioError.message : undefined
-            });
+            console.error('❌ Twilio provisioning error:', twilioError.message);
+            // Use fallback number if provisioning fails
+            twilioNumber = process.env.DEFAULT_TWILIO_NUMBER || '+17866742346';
+            twilioSid = 'FALLBACK_SID';
+            console.log(`⚠️ Using fallback number: ${twilioNumber}`);
         }
-        } // End skip Twilio check
-        
+
         // ==================== REFERRAL SYSTEM ====================
-        // Generate unique referral code for new client
         let newClientReferralCode = null;
         let referrerId = null;
 
-        // Only try referral system if utilities are available
         if (generateUniqueReferralCode) {
             try {
                 newClientReferralCode = await generateUniqueReferralCode();
                 console.log(`🎁 Generated referral code for new client: ${newClientReferralCode}`);
             } catch (referralError) {
                 console.error('⚠️ Failed to generate referral code:', referralError.message);
-                // Non-fatal: Continue without referral code
             }
         }
 
-        // Look up referrer if referral code provided AND utility is available
         if (referralCode && getClientByReferralCode) {
             try {
                 const referrer = await getClientByReferralCode(referralCode);
@@ -315,28 +544,35 @@ router.post('/register', async (req, res) => {
                 }
             } catch (referralError) {
                 console.error('⚠️ Error looking up referrer:', referralError.message);
-                // Non-fatal: Continue without referrer tracking
             }
         }
 
         // ==================== CREATE CLIENT RECORD ====================
-        // FIXED BUG #3: Better error handling and validation
+        if (!Client) {
+            await transaction.rollback();
+            return res.status(500).json({
+                success: false,
+                error: 'System configuration error. Please contact support.',
+                details: process.env.NODE_ENV === 'development' ? 'Client model not loaded' : undefined
+            });
+        }
+
         console.log('🏢 Creating client record...');
 
         let client = null;
         try {
             client = await Client.create({
-                business_name: businessName,
-                business_phone: normalizedBusinessPhone,
-                ringlypro_number: twilioNumber,              // Twilio number (already normalized from Twilio)
-                twilio_number_sid: twilioSid,                // Twilio SID
-                forwarding_status: 'active',                  // Active status
-                owner_name: `${firstName} ${lastName}`,
-                owner_phone: normalizedPhoneNumber || normalizedBusinessPhone,
-                owner_email: email,
-                custom_greeting: `Hello! Thank you for calling ${businessName}. I'm Rachel, your AI assistant.`,
-                business_hours_start: businessHours?.open ? businessHours.open + ':00' : '09:00:00',
-                business_hours_end: businessHours?.close ? businessHours.close + ':00' : '17:00:00',
+                business_name: user.business_name,
+                business_phone: user.business_phone,
+                ringlypro_number: twilioNumber,
+                twilio_number_sid: twilioSid,
+                forwarding_status: 'active',
+                owner_name: `${user.first_name} ${user.last_name}`,
+                owner_phone: user.phone_number || user.business_phone,
+                owner_email: user.email,
+                custom_greeting: `Hello! Thank you for calling ${user.business_name}. I'm Rachel, your AI assistant.`,
+                business_hours_start: user.business_hours?.open ? user.business_hours.open + ':00' : '09:00:00',
+                business_hours_end: user.business_hours?.close ? user.business_hours.close + ':00' : '17:00:00',
                 business_days: 'Mon-Fri',
                 timezone: 'America/New_York',
                 appointment_duration: 30,
@@ -345,15 +581,15 @@ router.post('/register', async (req, res) => {
                 monthly_free_minutes: 100,
                 per_minute_rate: 0.10,
                 rachel_enabled: false,  // Client must toggle ON to activate Rachel AI
-                referral_code: newClientReferralCode,  // Unique code for this client to share
-                referred_by: referrerId,  // ID of client who referred this signup
+                referral_code: newClientReferralCode,
+                referred_by: referrerId,
                 active: true,
                 user_id: user.id  // CRITICAL: Links client to user
             }, { transaction });
-            
+
             console.log('✅ Client record created for Rachel AI:', client.id);
             console.log(`📞 Rachel AI number configured: ${twilioNumber}`);
-            
+
         } catch (clientError) {
             console.error('❌ Client creation error:', clientError);
             await transaction.rollback();
@@ -363,8 +599,7 @@ router.post('/register', async (req, res) => {
                 details: process.env.NODE_ENV === 'development' ? clientError.message : undefined
             });
         }
-        
-        // FIXED BUG #3: Validate client was actually created
+
         if (!client || !client.id) {
             console.error('❌ Client creation returned null or no ID');
             await transaction.rollback();
@@ -373,8 +608,8 @@ router.post('/register', async (req, res) => {
                 error: 'Failed to create client account. Please try again or contact support.'
             });
         }
-        
-        // Create credit account
+
+        // ==================== CREATE CREDIT ACCOUNT ====================
         try {
             if (CreditAccount) {
                 await CreditAccount.create({
@@ -386,15 +621,13 @@ router.post('/register', async (req, res) => {
             }
         } catch (creditError) {
             console.error('⚠️ Credit account creation error (non-fatal):', creditError);
-            // Don't rollback for credit account errors - it's not critical
         }
-        
-        // FIXED BUG #3: Commit transaction only after everything succeeds
+
+        // Commit transaction
         await transaction.commit();
         console.log('✅ Transaction committed successfully');
 
-        // ==================== ELEVENLABS VOICE AGENT PROVISIONING ====================
-        // Non-blocking: client is already created, ElevenLabs provisioning is best-effort
+        // ==================== ELEVENLABS VOICE AGENT PROVISIONING (non-blocking) ====================
         let elevenlabsProvisioned = false;
 
         if (process.env.SKIP_ELEVENLABS_PROVISIONING !== 'true') {
@@ -402,15 +635,16 @@ router.post('/register', async (req, res) => {
                 const elevenLabsProvisioning = require('../services/elevenLabsProvisioningService');
                 console.log('🤖 Provisioning ElevenLabs voice agent...');
 
+                const cleanWebsiteUrl = user.website_url;
                 const elResult = await elevenLabsProvisioning.provisionAgent(
                     {
-                        businessName,
-                        businessType,
+                        businessName: user.business_name,
+                        businessType: user.business_type,
                         websiteUrl: cleanWebsiteUrl,
-                        businessDescription,
-                        businessHours,
-                        services,
-                        ownerPhone: normalizedPhoneNumber || normalizedBusinessPhone,
+                        businessDescription: user.business_description,
+                        businessHours: user.business_hours,
+                        services: user.services,
+                        ownerPhone: user.phone_number || user.business_phone,
                         language: 'en'
                     },
                     twilioNumber,
@@ -419,8 +653,6 @@ router.post('/register', async (req, res) => {
                 );
 
                 if (elResult.success) {
-                    // Update client record with ElevenLabs IDs using raw SQL
-                    // (these fields exist in DB but not in the Sequelize model)
                     await sequelize.query(
                         `UPDATE clients SET elevenlabs_agent_id = :agentId, elevenlabs_phone_number_id = :phoneNumberId WHERE id = :clientId`,
                         {
@@ -438,104 +670,12 @@ router.post('/register', async (req, res) => {
                 }
             } catch (elError) {
                 console.error('⚠️ ElevenLabs provisioning error (non-critical):', elError.message);
-                // Don't fail registration if ElevenLabs provisioning fails
             }
         } else {
             console.log('🧪 TEST MODE: Skipping ElevenLabs provisioning');
         }
 
-        // ==================== STRIPE SUBSCRIPTION CREATION ====================
-        // Create Stripe checkout with 14-day free trial for ALL plans
-        let stripeSessionUrl = null;
-
-        {
-            try {
-                console.log('💳 Creating Stripe checkout with 14-day free trial...');
-                console.log(`   Plan: ${planDetails.name}, Price: $${actualPrice}/${selectedBilling}`);
-
-                const webhookBaseUrl = process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com';
-                const ghlBookingUrl = 'https://api.leadconnectorhq.com/widget/booking/nhKuDsn2At5csiDYc4d0';
-
-                // TESTING MODE: Skip Stripe checkout
-                if (process.env.SKIP_STRIPE_CHECKOUT === 'true') {
-                    console.log(`🧪 TEST MODE: Skipping Stripe checkout for ${selectedPlan} plan`);
-                    console.log(`🧪 TEST MODE: User would be charged $${actualPrice}/${selectedBilling}`);
-                    console.log(`🧪 TEST MODE: User receives ${monthlyTokens} tokens immediately`);
-
-                    // Mock subscription ID
-                    await User.update({
-                        stripe_customer_id: `cus_test_${user.id}`,
-                        stripe_subscription_id: `sub_test_${user.id}`
-                    }, { where: { id: user.id }, validate: false });
-
-                    // Don't set stripeSessionUrl, so user goes directly to dashboard
-                    stripeSessionUrl = null;
-                } else {
-
-                // Create Stripe Checkout Session for recurring subscription
-                // IMPORTANT: Uses server-validated price, not frontend-passed amount
-                const session = await stripe.checkout.sessions.create({
-                    customer_email: email,
-                    payment_method_types: ['card'],
-                    line_items: [{
-                        price_data: {
-                            currency: 'usd',
-                            product_data: {
-                                name: `RinglyPro ${planDetails.name} Plan`,
-                                description: `${monthlyTokens} tokens/month (${Math.floor(monthlyTokens / 5)} minutes of voice)`,
-                            },
-                            unit_amount: actualPrice * 100,  // Server-validated price in cents
-                            recurring: {
-                                interval: selectedBilling === 'annual' ? 'year' : 'month',
-                                interval_count: 1
-                            }
-                        },
-                        quantity: 1
-                    }],
-                    mode: 'subscription',
-
-                    // 14-day free trial — no charge until trial ends
-                    subscription_data: {
-                        trial_period_days: 14,
-                        metadata: {
-                            userId: user.id.toString(),
-                            plan: selectedPlan,
-                            monthlyTokens: monthlyTokens.toString(),
-                            billing: selectedBilling,
-                            clientId: client.id.toString(),
-                            rollover: planDetails.rollover.toString()
-                        }
-                    },
-
-                    success_url: ghlBookingUrl,  // Redirect to GHL booking after payment
-                    cancel_url: `${webhookBaseUrl}/pricing`,
-
-                    metadata: {
-                        userId: user.id.toString(),
-                        plan: selectedPlan,
-                        monthlyTokens: monthlyTokens.toString(),
-                        billing: selectedBilling,
-                        clientId: client.id.toString()
-                    }
-                });
-
-                stripeSessionUrl = session.url;
-                console.log(`✅ Stripe checkout session created: ${session.id}`);
-                console.log(`💳 14-day free trial — first charge in 14 days`);
-
-                // Update user with Stripe session info (non-transactional, skip validation)
-                await User.update({
-                    stripe_customer_id: session.customer || null
-                }, { where: { id: user.id }, validate: false });
-                } // End skip Stripe check
-
-            } catch (stripeError) {
-                console.error('⚠️ Stripe subscription creation error (non-critical):', stripeError.message);
-                // Don't fail registration if Stripe fails - user account is already created
-            }
-        }
-
-        // Process referral if referral code provided (non-blocking)
+        // ==================== PROCESS REFERRAL TRACKING (non-blocking) ====================
         if (referralCode) {
             try {
                 const referralService = require('../services/referralService');
@@ -555,68 +695,65 @@ router.post('/register', async (req, res) => {
                 }
             } catch (referralError) {
                 console.error('⚠️ Referral tracking error (non-critical):', referralError.message);
-                // Don't fail registration if referral tracking fails
             }
         }
 
-        // Send welcome SMS with Rachel activation instructions (non-blocking)
+        // ==================== SEND WELCOME SMS (non-blocking) ====================
         try {
             const smsResult = await sendWelcomeSMS({
-                ownerPhone: normalizedPhoneNumber || normalizedBusinessPhone,
-                ownerName: `${firstName} ${lastName}`,
-                businessName: businessName,
+                ownerPhone: user.phone_number || user.business_phone,
+                ownerName: `${user.first_name} ${user.last_name}`,
+                businessName: user.business_name,
                 ringlyproNumber: twilioNumber,
                 dashboardUrl: process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com'
             });
 
             if (smsResult.success) {
-                console.log(`✅ Welcome SMS sent to ${normalizedPhoneNumber || normalizedBusinessPhone}`);
+                console.log(`✅ Welcome SMS sent to ${user.phone_number || user.business_phone}`);
             } else {
                 console.log(`⚠️ Welcome SMS failed (non-critical): ${smsResult.error}`);
             }
         } catch (smsError) {
             console.error('⚠️ Welcome SMS error (non-critical):', smsError.message);
-            // Don't fail registration if SMS fails
         }
 
-        // Send welcome email with instructions and CC to admin (non-blocking)
+        // ==================== SEND WELCOME EMAIL (non-blocking) ====================
         try {
             const emailResult = await sendWelcomeEmail({
-                email: email,
-                firstName: firstName,
-                lastName: lastName,
-                businessName: businessName,
+                email: user.email,
+                firstName: user.first_name,
+                lastName: user.last_name,
+                businessName: user.business_name,
                 ringlyproNumber: twilioNumber,
                 ccEmail: 'mstagg@digit2ai.com'
             });
 
             if (emailResult.success) {
-                console.log(`✅ Welcome email sent to ${email} (CC: mstagg@digit2ai.com)`);
+                console.log(`✅ Welcome email sent to ${user.email} (CC: mstagg@digit2ai.com)`);
             } else {
                 console.log(`⚠️ Welcome email failed (non-critical): ${emailResult.error || emailResult.reason}`);
             }
         } catch (emailError) {
             console.error('⚠️ Welcome email error (non-critical):', emailError.message);
-            // Don't fail registration if email fails
         }
 
-        // Generate JWT token
+        // ==================== GENERATE JWT TOKEN ====================
         const token = jwt.sign(
-            { 
-                userId: user.id, 
+            {
+                userId: user.id,
                 email: user.email,
                 businessName: user.business_name,
                 businessType: user.business_type,
-                clientId: client.id  // Always has valid client.id now
+                clientId: client.id
             },
             process.env.JWT_SECRET || 'your-super-secret-jwt-key',
             { expiresIn: '7d' }
         );
-        
-        // Send welcome response
-        const responseData = {
+
+        // ==================== RETURN SETUP DATA ====================
+        res.json({
             success: true,
-            message: 'Registration successful! Welcome to RinglyPro!',
+            message: 'Account setup complete! Welcome to RinglyPro!',
             data: {
                 user: {
                     id: user.id,
@@ -631,9 +768,9 @@ router.post('/register', async (req, res) => {
                     freeTrialMinutes: user.free_trial_minutes,
                     onboardingCompleted: user.onboarding_completed,
                     subscriptionPlan: selectedPlan,
-                    subscriptionStatus: 'pending',
+                    subscriptionStatus: 'trialing',
                     tokensBalance: monthlyTokens,
-                    trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
+                    trialEndsAt: trialEndsAt.toISOString()
                 },
                 client: {
                     id: client.id,
@@ -650,42 +787,22 @@ router.post('/register', async (req, res) => {
                     forwardingInstructions: `Forward your calls to ${twilioNumber} to activate Rachel AI`
                 }
             }
-        };
+        });
 
-        // Add Stripe redirect URL if subscription was created
-        if (stripeSessionUrl) {
-            responseData.stripeCheckoutUrl = stripeSessionUrl;
-            responseData.message = 'Registration successful! Redirecting to payment...';
-        }
-
-        res.status(201).json(responseData);
-        
-        console.log(`🎉 New user registered: ${firstName} ${lastName} (${businessName}) - ${email}`);
+        console.log(`🎉 Setup complete for: ${user.first_name} ${user.last_name} (${user.business_name}) - ${user.email}`);
         console.log(`📞 Rachel AI Twilio number: ${twilioNumber}`);
         console.log(`🤖 ElevenLabs provisioned: ${elevenlabsProvisioned ? 'YES' : 'NO'}`);
         console.log(`👤 User ID: ${user.id}, Client ID: ${client.id}`);
-        
+
     } catch (error) {
-        await transaction.rollback();
-        console.error('💥 Registration error:', error);
+        try { await transaction.rollback(); } catch (e) { /* already committed or rolled back */ }
+        console.error('💥 Complete-setup error:', error);
         console.error('Error details:', error.message);
         console.error('Stack trace:', error.stack);
-        
-        // Check for specific database errors
-        if (error.name === 'SequelizeUniqueConstraintError') {
-            return res.status(409).json({
-                error: 'An account with this email or phone number already exists'
-            });
-        }
-        
-        if (error.name === 'SequelizeValidationError') {
-            return res.status(400).json({
-                error: 'Validation error: ' + error.errors.map(e => e.message).join(', ')
-            });
-        }
-        
-        res.status(500).json({ 
-            error: 'Registration failed. Please try again.',
+
+        res.status(500).json({
+            success: false,
+            error: 'Account setup failed. Please try again or contact support.',
             details: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }
@@ -695,45 +812,45 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
-        
+
         console.log(`🔍 Login attempt for: ${email}`);
-        
+
         if (!email || !password) {
             console.log('❌ Missing email or password');
-            return res.status(400).json({ 
-                error: 'Email and password are required' 
+            return res.status(400).json({
+                error: 'Email and password are required'
             });
         }
-        
+
         // Find user
         console.log(`🔎 Searching for user: ${email}`);
         const user = await User.findOne({ where: { email } });
-        
+
         if (!user) {
             console.log('❌ User not found in database');
-            return res.status(401).json({ 
-                error: 'Invalid email or password' 
+            return res.status(401).json({
+                error: 'Invalid email or password'
             });
         }
-        
+
         console.log(`✅ User found: ${user.first_name} ${user.last_name} (ID: ${user.id})`);
         console.log(`🏢 Business: ${user.business_name} (${user.business_type})`);
         console.log(`🔑 Stored password hash length: ${user.password_hash.length}`);
-        
+
         // Check password
         console.log('🔐 Comparing passwords...');
         const isValidPassword = await bcrypt.compare(password, user.password_hash);
         console.log(`🎯 Password comparison result: ${isValidPassword}`);
-        
+
         if (!isValidPassword) {
             console.log('❌ Password comparison failed');
-            return res.status(401).json({ 
-                error: 'Invalid email or password' 
+            return res.status(401).json({
+                error: 'Invalid email or password'
             });
         }
-        
+
         console.log('✅ Password validated successfully');
-        
+
         // Find associated client record for Rachel AI
         let client = null;
         if (Client) {
@@ -744,15 +861,15 @@ router.post('/login', async (req, res) => {
                 console.log('⚠️ No client record found for user - this should not happen after registration');
             }
         }
-        
+
         // Generate JWT token with business context
         console.log('🎫 Generating JWT token...');
         const jwtSecret = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
         console.log(`🔐 JWT Secret length: ${jwtSecret.length}`);
-        
+
         const token = jwt.sign(
-            { 
-                userId: user.id, 
+            {
+                userId: user.id,
                 email: user.email,
                 businessName: user.business_name,
                 businessType: user.business_type,
@@ -761,9 +878,9 @@ router.post('/login', async (req, res) => {
             jwtSecret,
             { expiresIn: '7d' }
         );
-        
+
         console.log(`✅ JWT token generated: ${token.substring(0, 20)}...`);
-        
+
         const response = {
             success: true,
             message: 'Login successful',
@@ -790,14 +907,14 @@ router.post('/login', async (req, res) => {
                 redirectTo: user.onboarding_completed ? '/dashboard' : '/onboarding'
             }
         };
-        
+
         console.log('📤 Sending successful login response');
         res.json(response);
-        
+
     } catch (error) {
         console.error('💥 Login error details:', error);
         console.error('Stack trace:', error.stack);
-        res.status(500).json({ 
+        res.status(500).json({
             error: 'Login failed. Please try again.',
             details: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
