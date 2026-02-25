@@ -1267,19 +1267,18 @@ async function handleSignupClient(params) {
         logger.error('[Voice Signup] Set-password email error (non-critical):', emailErr.message);
       }
 
-      // Send SMS with Stripe checkout link
+      // Send SMS with Stripe checkout link via GHL (A2P verified delivery)
       if (stripeCheckoutUrl) {
         try {
-          // Use DIGIT2AI system number (routes through GHL webhook for SMS)
-          const fromNumber = process.env.RINGLYPRO_SYSTEM_NUMBER || '+12232949184';
           const smsBody = `Welcome to RinglyPro, ${first_name.trim()}! Start your 14-day free trial of the ${planDetails.name} Plan ($${planDetails.price}/mo). Complete your setup here: ${stripeCheckoutUrl}`;
 
-          await twilioClient.messages.create({
-            body: smsBody,
-            from: fromNumber,
-            to: normalizedOwnerPhone
+          await handleSendSmsGhl({
+            client_id: process.env.RINGLYPRO_SYSTEM_CLIENT_ID || 15,
+            to_phone: normalizedOwnerPhone,
+            message: smsBody,
+            customer_name: first_name.trim()
           });
-          logger.info(`[Voice Signup] Checkout SMS sent to ${normalizedOwnerPhone}`);
+          logger.info(`[Voice Signup] Checkout SMS sent via GHL to ${normalizedOwnerPhone}`);
         } catch (smsErr) {
           logger.error('[Voice Signup] SMS error (non-critical):', smsErr.message);
         }
