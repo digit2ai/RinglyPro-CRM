@@ -466,7 +466,7 @@ router.post('/register', async (req, res) => {
                     await User.update({
                         stripe_customer_id: `cus_test_${user.id}`,
                         stripe_subscription_id: `sub_test_${user.id}`
-                    }, { where: { id: user.id } });
+                    }, { where: { id: user.id }, validate: false });
 
                     // Don't set stripeSessionUrl, so user goes directly to dashboard
                     stripeSessionUrl = null;
@@ -519,23 +519,19 @@ router.post('/register', async (req, res) => {
                     }
                 });
 
-                // Update user with Stripe session info (non-transactional)
-                await User.update({
-                    stripe_customer_id: session.customer || null
-                }, { where: { id: user.id } });
-
                 stripeSessionUrl = session.url;
                 console.log(`✅ Stripe checkout session created: ${session.id}`);
                 console.log(`💳 14-day free trial — first charge in 14 days`);
+
+                // Update user with Stripe session info (non-transactional, skip validation)
+                await User.update({
+                    stripe_customer_id: session.customer || null
+                }, { where: { id: user.id }, validate: false });
                 } // End skip Stripe check
 
             } catch (stripeError) {
                 console.error('⚠️ Stripe subscription creation error (non-critical):', stripeError.message);
-                console.error('⚠️ Stripe error details:', JSON.stringify(stripeError.raw || stripeError.statusCode || stripeError.code || 'unknown'));
-                // Store error for debugging (temporary)
-                stripeSessionUrl = null;
-                // Attach error to response for debugging
-                global._lastStripeError = stripeError.message;
+                // Don't fail registration if Stripe fails - user account is already created
             }
         }
 
@@ -660,9 +656,6 @@ router.post('/register', async (req, res) => {
         if (stripeSessionUrl) {
             responseData.stripeCheckoutUrl = stripeSessionUrl;
             responseData.message = 'Registration successful! Redirecting to payment...';
-        } else if (global._lastStripeError) {
-            responseData._debug_stripeError = global._lastStripeError;
-            global._lastStripeError = null;
         }
 
         res.status(201).json(responseData);
