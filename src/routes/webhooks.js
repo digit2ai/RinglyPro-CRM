@@ -183,7 +183,6 @@ async function handleInvoicePaid(invoice) {
 
         // Check if this is the first payment or a renewal
         const isFirstPayment = invoice.billing_reason === 'subscription_create' ||
-                               invoice.billing_reason === 'subscription_cycle' === false ||
                                user.subscription_status === 'trialing';
 
         // Calculate new token balance

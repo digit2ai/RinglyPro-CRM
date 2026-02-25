@@ -31,6 +31,11 @@ try {
   console.log('⚠️ Kancho Stripe webhook not available:', e.message);
 }
 
+// Subscription Stripe webhook - MUST be before body parser for raw body access
+const webhookRoutes = require('./routes/webhooks');
+app.use('/webhooks', webhookRoutes);
+console.log('✅ Subscription webhook mounted at /webhooks/stripe (before body parser)');
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static(path.join(__dirname, '../public')));
@@ -177,10 +182,6 @@ console.log('✅ Auth routes required successfully, type:', typeof authRoutes);
 const launchstackRoutes = require('./routes/launchstack'); // LaunchStack registration/login
 console.log('✅ LaunchStack routes loaded successfully');
 
-// Import Stripe webhook routes
-const webhookRoutes = require('./routes/webhooks'); // Stripe webhooks for subscriptions
-console.log('✅ Webhook routes loaded successfully');
-
 // Import subscription upgrade routes
 let subscriptionRoutes = null;
 try {
@@ -246,10 +247,6 @@ console.log('✅ Auth routes mounted successfully');
 // LaunchStack API routes (separate from RinglyPro)
 app.use('/api/launchstack', launchstackRoutes); // Mount LaunchStack routes
 console.log('✅ LaunchStack routes mounted at /api/launchstack');
-
-// Mount webhook routes (IMPORTANT: Must be mounted BEFORE body parser middleware)
-app.use('/webhooks', webhookRoutes); // Stripe webhooks for subscriptions
-console.log('✅ Webhook routes mounted at /webhooks');
 
 // Mount copilot access control routes
 app.use('/api/copilot', copilotAccessRoutes); // Copilot authentication and GHL checks
