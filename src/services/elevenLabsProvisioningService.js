@@ -113,11 +113,8 @@ class ElevenLabsProvisioningService {
           provider: 'twilio',
           phone_number: twilioNumber,
           label: label,
-          twilio_config: {
-            account_sid: process.env.TWILIO_ACCOUNT_SID,
-            auth_token: process.env.TWILIO_AUTH_TOKEN,
-            phone_number_sid: twilioSid
-          }
+          sid: process.env.TWILIO_ACCOUNT_SID,
+          token: process.env.TWILIO_AUTH_TOKEN
         },
         {
           headers: {
@@ -202,7 +199,7 @@ class ElevenLabsProvisioningService {
           max_tokens: 500
         },
         turn: {
-          mode: 'turn_based'
+          mode: 'turn'
         },
         conversation: {
           max_duration_seconds: 600
