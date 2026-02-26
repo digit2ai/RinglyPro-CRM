@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Call Report - RinglyPro</title>
+    <link rel="icon" type="image/png" href="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; color: #1a1a2e; min-height: 100vh; }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; padding: 20px 32px; display: flex; align-items: center; justify-content: space-between;
+        }
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .header-left img { height: 36px; }
+        .header-left h1 { font-size: 22px; font-weight: 600; }
+        .header-right a { color: white; text-decoration: none; opacity: 0.85; font-size: 14px; }
+        .header-right a:hover { opacity: 1; }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+        .controls { display: flex; gap: 12px; align-items: center; margin-bottom: 24px; flex-wrap: wrap; }
+        .controls input[type="date"] {
+            padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px;
+            background: white; cursor: pointer;
+        }
+        .controls select {
+            padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px;
+            background: white; cursor: pointer; min-width: 200px;
+        }
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5a6fd6; }
+        .btn-primary:disabled { background: #a0aec0; cursor: not-allowed; }
+
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px; margin-bottom: 24px;
+        }
+        .stat-card {
+            background: white; border-radius: 12px; padding: 16px; text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .stat-value { font-size: 28px; font-weight: 700; }
+        .stat-label { font-size: 12px; color: #6b7280; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-value.purple { color: #667eea; }
+        .stat-value.green { color: #10b981; }
+        .stat-value.orange { color: #f59e0b; }
+        .stat-value.red { color: #ef4444; }
+        .stat-value.blue { color: #3b82f6; }
+        .stat-value.gray { color: #6b7280; }
+
+        .loading {
+            text-align: center; padding: 60px 20px; background: white; border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .loading .spinner {
+            width: 48px; height: 48px; border: 4px solid #e5e7eb; border-top-color: #667eea;
+            border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading p { color: #6b7280; font-size: 15px; }
+
+        .category {
+            background: white; border-radius: 12px; margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08); overflow: hidden;
+        }
+        .category-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 20px; cursor: pointer; user-select: none; transition: background 0.15s;
+        }
+        .category-header:hover { background: #f9fafb; }
+        .category-title { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600; }
+        .category-badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 28px; height: 28px; border-radius: 14px; font-size: 13px; font-weight: 700;
+            padding: 0 8px; color: white;
+        }
+        .badge-red { background: #ef4444; }
+        .badge-orange { background: #f59e0b; }
+        .badge-blue { background: #3b82f6; }
+        .badge-green { background: #10b981; }
+        .badge-gray { background: #9ca3af; }
+        .badge-purple { background: #8b5cf6; }
+        .category-action { font-size: 13px; color: #6b7280; font-style: italic; flex: 1; margin-left: 16px; }
+        .category-toggle { font-size: 18px; color: #9ca3af; transition: transform 0.2s; }
+        .category.open .category-toggle { transform: rotate(180deg); }
+
+        .category-body { display: none; border-top: 1px solid #f3f4f6; }
+        .category.open .category-body { display: block; }
+
+        .call-item {
+            padding: 14px 20px; border-bottom: 1px solid #f3f4f6; display: flex; gap: 16px; align-items: flex-start;
+        }
+        .call-item:last-child { border-bottom: none; }
+        .call-phone {
+            min-width: 140px; font-weight: 600; font-size: 14px; white-space: nowrap;
+        }
+        .call-phone a { color: #667eea; text-decoration: none; }
+        .call-phone a:hover { text-decoration: underline; }
+        .call-phone .copy-btn {
+            background: none; border: none; cursor: pointer; font-size: 12px; color: #9ca3af;
+            margin-left: 4px; padding: 2px 4px;
+        }
+        .call-phone .copy-btn:hover { color: #667eea; }
+        .call-meta {
+            display: flex; gap: 8px; font-size: 12px; color: #9ca3af; margin-bottom: 4px; flex-wrap: wrap;
+        }
+        .call-meta span { background: #f3f4f6; padding: 2px 8px; border-radius: 4px; }
+        .call-meta .tag-inbound { background: #dbeafe; color: #1d4ed8; }
+        .call-meta .tag-outbound { background: #f3e8ff; color: #7c3aed; }
+        .call-summary { font-size: 13px; color: #4b5563; line-height: 1.5; }
+        .call-business { font-weight: 600; color: #1a1a2e; font-size: 13px; margin-bottom: 2px; }
+        .call-details { flex: 1; min-width: 0; }
+
+        .empty-state { padding: 32px 20px; text-align: center; color: #9ca3af; font-size: 14px; }
+
+        .reach-rate {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border-radius: 12px; padding: 20px; margin-bottom: 24px; text-align: center;
+        }
+        .reach-rate .rate-value { font-size: 42px; font-weight: 700; }
+        .reach-rate .rate-label { font-size: 14px; opacity: 0.85; }
+
+        .initial-state {
+            text-align: center; padding: 80px 20px; background: white; border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .initial-state h2 { font-size: 20px; margin-bottom: 8px; color: #374151; }
+        .initial-state p { color: #6b7280; font-size: 15px; }
+
+        @media (max-width: 640px) {
+            .header { padding: 16px; }
+            .container { padding: 16px; }
+            .controls { flex-direction: column; }
+            .call-item { flex-direction: column; gap: 8px; }
+            .call-phone { min-width: auto; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68689aafe4eb736da9ffe16c.png" alt="RinglyPro">
+            <h1>Daily Call Report</h1>
+        </div>
+        <div class="header-right">
+            <a href="/mcp-copilot/prospect-manager.html" id="backLink">&#8592; Back to Prospect Manager</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="controls">
+            <select id="clientSelect"><option value="">Select Client...</option></select>
+            <input type="date" id="dateInput">
+            <button class="btn btn-primary" id="generateBtn" onclick="generateReport()">Generate Report</button>
+        </div>
+
+        <div id="content">
+            <div class="initial-state">
+                <h2>Select a client and date to generate a report</h2>
+                <p>The report analyzes all ElevenLabs AI calls and categorizes them into actionable groups.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = 'ringlypro-quick-admin-2024';
+        let currentClientId = null;
+        let pollTimer = null;
+
+        // Init
+        (async function init() {
+            // Set date to today EST
+            const now = new Date();
+            const estDate = now.toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+            document.getElementById('dateInput').value = estDate;
+            document.getElementById('dateInput').max = estDate;
+
+            // Check URL params
+            const params = new URLSearchParams(window.location.search);
+            currentClientId = params.get('client_id');
+
+            // Load clients list
+            try {
+                const resp = await fetch(`/api/call-report/clients?apiKey=${API_KEY}`);
+                const data = await resp.json();
+                if (data.success && data.clients) {
+                    const select = document.getElementById('clientSelect');
+                    for (const c of data.clients) {
+                        const opt = document.createElement('option');
+                        opt.value = c.id;
+                        opt.textContent = `${c.business_name} (ID: ${c.id})`;
+                        if (String(c.id) === String(currentClientId)) opt.selected = true;
+                        select.appendChild(opt);
+                    }
+                    // Update back link with client_id
+                    if (currentClientId) {
+                        document.getElementById('backLink').href = `/mcp-copilot/prospect-manager.html?client_id=${currentClientId}`;
+                    }
+                }
+            } catch (e) { console.error('Failed to load clients:', e); }
+
+            document.getElementById('clientSelect').addEventListener('change', function() {
+                currentClientId = this.value;
+                if (currentClientId) {
+                    const url = new URL(window.location);
+                    url.searchParams.set('client_id', currentClientId);
+                    window.history.replaceState({}, '', url);
+                    document.getElementById('backLink').href = `/mcp-copilot/prospect-manager.html?client_id=${currentClientId}`;
+                }
+            });
+
+            // Auto-generate if client_id is in URL
+            if (currentClientId) {
+                generateReport();
+            }
+        })();
+
+        async function generateReport() {
+            const clientId = currentClientId || document.getElementById('clientSelect').value;
+            const date = document.getElementById('dateInput').value;
+
+            if (!clientId) {
+                alert('Please select a client');
+                return;
+            }
+
+            currentClientId = clientId;
+            document.getElementById('generateBtn').disabled = true;
+            document.getElementById('content').innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Generating report... analyzing calls for ${date}</p>
+                    <p style="font-size:13px; margin-top:8px; color:#9ca3af;">This takes ~15-20 seconds for 400 calls</p>
+                </div>
+            `;
+
+            // Start polling
+            pollForReport(clientId, date);
+        }
+
+        function pollForReport(clientId, date) {
+            if (pollTimer) clearInterval(pollTimer);
+
+            const fetchReport = async () => {
+                try {
+                    const resp = await fetch(`/api/call-report/daily?client_id=${clientId}&date=${date}&apiKey=${API_KEY}`);
+                    const data = await resp.json();
+
+                    if (data.success && data.report) {
+                        clearInterval(pollTimer);
+                        pollTimer = null;
+                        document.getElementById('generateBtn').disabled = false;
+                        renderReport(data.report);
+                    } else if (data.success && data.status === 'generating') {
+                        // Keep polling
+                    } else if (!data.success) {
+                        clearInterval(pollTimer);
+                        pollTimer = null;
+                        document.getElementById('generateBtn').disabled = false;
+                        document.getElementById('content').innerHTML = `
+                            <div class="initial-state">
+                                <h2>Error generating report</h2>
+                                <p>${data.error || 'Unknown error'}</p>
+                            </div>
+                        `;
+                    }
+                } catch (e) {
+                    console.error('Poll error:', e);
+                }
+            };
+
+            fetchReport(); // immediate first check
+            pollTimer = setInterval(fetchReport, 2500);
+        }
+
+        function renderReport(report) {
+            const s = report.summary;
+            const html = `
+                <div class="reach-rate">
+                    <div class="rate-value">${report.humanReachRate}%</div>
+                    <div class="rate-label">Human Reach Rate &mdash; ${s.actionable + s.not_interested} humans reached out of ${report.totalOutbound} outbound calls</div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-value purple">${report.totalCalls}</div><div class="stat-label">Total Calls</div></div>
+                    <div class="stat-card"><div class="stat-value green">${s.actionable}</div><div class="stat-label">Actionable</div></div>
+                    <div class="stat-card"><div class="stat-value blue">${report.totalOutbound}</div><div class="stat-label">Outbound</div></div>
+                    <div class="stat-card"><div class="stat-value orange">${report.totalInbound}</div><div class="stat-label">Inbound</div></div>
+                    <div class="stat-card"><div class="stat-value gray">${report.totalDurationMinutes}m</div><div class="stat-label">Total Talk</div></div>
+                    <div class="stat-card"><div class="stat-value gray">${report.avgDurationSeconds}s</div><div class="stat-label">Avg Duration</div></div>
+                </div>
+
+                ${renderCategory('SMS Sent to Lead', report.categories.sms_sent, 'badge-red', 'Follow up today — they received info and are warm', true)}
+                ${renderCategory('Transferred to Human', report.categories.transferred, 'badge-orange', 'Verify your team connected and check outcome', true)}
+                ${renderCategory('Callback Requested', report.categories.callback_requested, 'badge-orange', 'Call these people back today', true)}
+                ${renderCategory('Engaged Humans (60s+)', report.categories.engaged_humans, 'badge-blue', 'Review for follow-up opportunities', true)}
+                ${renderCategory('Not Interested', report.categories.not_interested, 'badge-gray', 'Consider removing from call list', false)}
+                ${renderCategory('IVR Trap', report.categories.ivr_trap, 'badge-purple', 'Exclude from future calls — wasted minutes in automated menus', false)}
+                ${renderCategory('Voicemail', report.categories.voicemail, 'badge-gray', 'No human reached', false)}
+                ${renderCategory('Brief (10-30s)', report.categories.brief, 'badge-gray', 'Too short for meaningful conversation', false)}
+                ${renderCategory('No Engagement (<10s)', report.categories.no_engagement, 'badge-gray', 'Hangups and dead lines', false)}
+
+                <p style="text-align:center; color:#9ca3af; font-size:12px; margin-top:24px;">
+                    Report generated at ${new Date(report.generatedAt).toLocaleString('en-US', { timeZone: 'America/New_York' })} EST
+                    ${report.businessName ? ' for ' + report.businessName : ''}
+                </p>
+            `;
+            document.getElementById('content').innerHTML = html;
+        }
+
+        function renderCategory(title, calls, badgeClass, actionText, defaultOpen) {
+            if (!calls) calls = [];
+            const openClass = defaultOpen && calls.length > 0 ? 'open' : '';
+            const callsHtml = calls.length === 0
+                ? '<div class="empty-state">No calls in this category</div>'
+                : calls.map(c => renderCallItem(c)).join('');
+
+            return `
+                <div class="category ${openClass}">
+                    <div class="category-header" onclick="this.parentElement.classList.toggle('open')">
+                        <div class="category-title">
+                            <span class="category-badge ${badgeClass}">${calls.length}</span>
+                            ${title}
+                        </div>
+                        <span class="category-action">${actionText}</span>
+                        <span class="category-toggle">&#9660;</span>
+                    </div>
+                    <div class="category-body">${callsHtml}</div>
+                </div>
+            `;
+        }
+
+        function renderCallItem(c) {
+            const time = new Date(c.startTime).toLocaleTimeString('en-US', {
+                timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit'
+            });
+            const dur = c.duration < 60 ? c.duration + 's' : Math.floor(c.duration / 60) + 'm' + (c.duration % 60 > 0 ? c.duration % 60 + 's' : '');
+            const dirTag = c.direction === 'inbound'
+                ? '<span class="tag-inbound">Inbound</span>'
+                : '<span class="tag-outbound">Outbound</span>';
+            const tools = c.toolNames && c.toolNames.length > 0
+                ? '<span>' + c.toolNames.join(', ') + '</span>'
+                : '';
+
+            return `
+                <div class="call-item">
+                    <div class="call-phone">
+                        <a href="tel:${c.phone}">${c.phone}</a>
+                        <button class="copy-btn" onclick="copyPhone('${c.phone}')" title="Copy">&#128203;</button>
+                    </div>
+                    <div class="call-details">
+                        ${c.businessName ? '<div class="call-business">' + escapeHtml(c.businessName) + '</div>' : ''}
+                        <div class="call-meta">
+                            <span>${time}</span>
+                            <span>${dur}</span>
+                            ${dirTag}
+                            ${tools}
+                        </div>
+                        <div class="call-summary">${escapeHtml(c.summary)}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function copyPhone(phone) {
+            navigator.clipboard.writeText(phone).then(() => {
+                // Brief visual feedback - could enhance later
+            }).catch(() => {});
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+    </script>
+</body>
+</html>

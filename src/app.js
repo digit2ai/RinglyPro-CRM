@@ -432,6 +432,11 @@ console.log('💍 Lina\'s Treasures e-commerce routes mounted at /api/linas-trea
 app.use('/api/outbound-caller', outboundCallerRoutes);
 console.log('📞 Outbound Caller routes mounted at /api/outbound-caller');
 
+// Call Report routes (ElevenLabs daily analytics)
+const callReportRoutes = require('./routes/call-report');
+app.use('/api/call-report', callReportRoutes);
+console.log('📊 Call Report routes mounted at /api/call-report');
+
 // Client Settings routes (voicemail messages, etc.)
 const clientSettingsRoutes = require('./routes/client-settings');
 app.use('/api/client-settings', clientSettingsRoutes);

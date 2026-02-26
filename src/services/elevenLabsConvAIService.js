@@ -128,6 +128,226 @@ class ElevenLabsConvAIService {
     }
 
     /**
+     * List ALL conversations for a specific day, paginating through all pages
+     * @param {string} agentId - The ElevenLabs agent ID
+     * @param {string} dateString - Date in YYYY-MM-DD format
+     * @returns {Promise<Array>} All conversations for that day
+     */
+    async listAllConversationsForDay(agentId, dateString) {
+        const dayStart = new Date(dateString + 'T00:00:00-05:00'); // EST
+        const dayEnd = new Date(dateString + 'T23:59:59-05:00');
+        const startUnix = Math.floor(dayStart.getTime() / 1000);
+        const endUnix = Math.floor(dayEnd.getTime() / 1000);
+
+        const allConversations = [];
+        let cursor = null;
+        let page = 0;
+        let done = false;
+
+        while (done === false && page < 30) {
+            page++;
+            const data = await this.listConversations(agentId, { limit: 100, cursor });
+            const conversations = data.conversations || [];
+
+            if (conversations.length === 0) break;
+
+            for (const c of conversations) {
+                if (c.start_time_unix_secs >= startUnix && c.start_time_unix_secs <= endUnix) {
+                    allConversations.push(c);
+                } else if (c.start_time_unix_secs < startUnix) {
+                    done = true;
+                    break;
+                }
+            }
+
+            cursor = data.next_cursor || data.cursor || null;
+            if (!cursor || done) break;
+            await new Promise(r => setTimeout(r, 200));
+        }
+
+        return allConversations;
+    }
+
+    /**
+     * Generate a daily actionable report for an agent
+     * @param {string} agentId - The ElevenLabs agent ID
+     * @param {string} dateString - Date in YYYY-MM-DD format
+     * @returns {Promise<object>} Categorized report
+     */
+    async generateDailyReport(agentId, dateString) {
+        console.log(`📊 Generating daily report for agent ${agentId}, date ${dateString}`);
+
+        // Step 1: Fetch all conversations for the day
+        const allConvs = await this.listAllConversationsForDay(agentId, dateString);
+        console.log(`📋 Found ${allConvs.length} total conversations for ${dateString}`);
+
+        // Step 2: Identify calls that need detail fetching
+        const needDetails = allConvs.filter(c => {
+            const tools = c.tool_names || [];
+            const hasRealTool = tools.some(t => t.includes('transfer') || t.includes('send_sms') || t.includes('book_appointment'));
+            const isInbound = c.direction === 'inbound';
+            const isLong = c.call_duration_secs >= 30;
+            const isVoicemailOnly = tools.length === 1 && tools[0] === 'voicemail_detection';
+            return hasRealTool || isInbound || (isLong && !isVoicemailOnly);
+        });
+
+        // Also add long voicemail-only calls (60s+) which might be IVR traps or real convos
+        for (const c of allConvs) {
+            const tools = c.tool_names || [];
+            const isVoicemailOnly = tools.length === 1 && tools[0] === 'voicemail_detection';
+            if (isVoicemailOnly && c.call_duration_secs >= 60) {
+                if (!needDetails.find(x => x.conversation_id === c.conversation_id)) {
+                    needDetails.push(c);
+                }
+            }
+        }
+
+        console.log(`🔍 Fetching details for ${needDetails.length} interesting conversations...`);
+
+        // Step 3: Fetch details with rate limiting
+        const detailMap = new Map();
+        let fetched = 0;
+        for (const c of needDetails) {
+            try {
+                const detail = await this.getConversation(c.conversation_id);
+                detailMap.set(c.conversation_id, detail);
+                fetched++;
+                if (fetched % 20 === 0) console.log(`  Fetched ${fetched}/${needDetails.length}...`);
+                await new Promise(r => setTimeout(r, 80));
+            } catch (e) {
+                // skip failed fetches
+            }
+        }
+        console.log(`✅ Fetched ${fetched} conversation details`);
+
+        // Step 4: Categorize
+        const report = this.categorizeConversations(allConvs, detailMap);
+        report.date = dateString;
+        report.agentId = agentId;
+        report.generatedAt = new Date().toISOString();
+
+        return report;
+    }
+
+    /**
+     * Categorize conversations into actionable groups
+     */
+    categorizeConversations(allConvs, detailMap) {
+        const categories = {
+            sms_sent: [],
+            transferred: [],
+            callback_requested: [],
+            engaged_humans: [],
+            not_interested: [],
+            voicemail: [],
+            ivr_trap: [],
+            brief: [],
+            no_engagement: []
+        };
+
+        for (const c of allConvs) {
+            const tools = c.tool_names || [];
+            const d = detailMap.get(c.conversation_id);
+            const duration = c.call_duration_secs || 0;
+            const summary = d?.analysis?.transcript_summary || c.transcript_summary || c.call_summary_title || '';
+            const summaryLower = summary.toLowerCase();
+            const termReason = d?.metadata?.termination_reason || '';
+
+            // Extract phone from detail (user_id) or metadata
+            const phone = d?.user_id || d?.metadata?.phone_call?.external_number || 'Unknown';
+
+            // Extract business name from summary
+            let businessName = '';
+            const bizMatch = summary.match(/called\s+([A-Z][A-Za-z0-9\s&'.-]+?)(?:\s+(?:but|to|and|,|\.|The|in response))/);
+            if (bizMatch) businessName = bizMatch[1].trim();
+
+            // Build transcript text for keyword analysis
+            let transcriptLower = '';
+            if (d?.transcript) {
+                transcriptLower = d.transcript.map(t => `${t.role}: ${t.message}`).join('\n').toLowerCase();
+            }
+
+            const entry = {
+                conversation_id: c.conversation_id,
+                phone,
+                businessName,
+                duration,
+                direction: c.direction || 'outbound',
+                summary: summary.substring(0, 300),
+                toolNames: tools,
+                startTime: new Date(c.start_time_unix_secs * 1000).toISOString(),
+                callSuccessful: c.call_successful,
+                terminationReason: termReason
+            };
+
+            // Categorization (priority order)
+            if (tools.some(t => t.includes('send_sms'))) {
+                categories.sms_sent.push(entry);
+            } else if (tools.some(t => t.includes('transfer')) || termReason.includes('transferred')) {
+                categories.transferred.push(entry);
+            } else if (duration < 10 && tools.length === 0) {
+                categories.no_engagement.push(entry);
+            } else if (transcriptLower.includes('call back') || transcriptLower.includes('call me back') ||
+                       transcriptLower.includes('call later') || transcriptLower.includes('busy right now') ||
+                       summaryLower.includes('callback') || summaryLower.includes('call back')) {
+                categories.callback_requested.push(entry);
+            } else if (transcriptLower.includes('not interested') || transcriptLower.includes('no thank') ||
+                       transcriptLower.includes('stop calling') || transcriptLower.includes('do not call') ||
+                       transcriptLower.includes('remove my number') || transcriptLower.includes('take me off')) {
+                categories.not_interested.push(entry);
+            } else if ((summaryLower.includes('automated') || summaryLower.includes('voicemail') ||
+                        summaryLower.includes('menu options') || termReason.includes('voicemail_detection')) &&
+                       duration >= 120 && (summaryLower.includes('menu') || summaryLower.includes('repeatedly'))) {
+                categories.ivr_trap.push(entry);
+            } else if (summaryLower.includes('voicemail') || summaryLower.includes('automated') ||
+                       summaryLower.includes('menu options') || termReason.includes('voicemail_detection')) {
+                categories.voicemail.push(entry);
+            } else if (duration >= 60) {
+                categories.engaged_humans.push(entry);
+            } else if (duration >= 10 && duration < 30) {
+                categories.brief.push(entry);
+            } else {
+                categories.brief.push(entry);
+            }
+        }
+
+        // Sort each category by duration descending (longest/most engaged first)
+        for (const key of Object.keys(categories)) {
+            categories[key].sort((a, b) => b.duration - a.duration);
+        }
+
+        const totalOutbound = allConvs.filter(c => c.direction === 'outbound').length;
+        const totalInbound = allConvs.filter(c => c.direction === 'inbound').length;
+        const actionableCount = categories.sms_sent.length + categories.transferred.length +
+                               categories.callback_requested.length + categories.engaged_humans.length;
+        const totalDuration = allConvs.reduce((s, c) => s + (c.call_duration_secs || 0), 0);
+
+        return {
+            totalCalls: allConvs.length,
+            totalOutbound,
+            totalInbound,
+            totalDurationMinutes: Math.round(totalDuration / 60),
+            avgDurationSeconds: allConvs.length > 0 ? Math.round(totalDuration / allConvs.length) : 0,
+            humanReachRate: totalOutbound > 0
+                ? ((actionableCount + categories.not_interested.length) / totalOutbound * 100).toFixed(1)
+                : '0.0',
+            categories,
+            summary: {
+                sms_sent: categories.sms_sent.length,
+                transferred: categories.transferred.length,
+                callback_requested: categories.callback_requested.length,
+                engaged_humans: categories.engaged_humans.length,
+                not_interested: categories.not_interested.length,
+                voicemail: categories.voicemail.length,
+                ivr_trap: categories.ivr_trap.length,
+                brief: categories.brief.length,
+                no_engagement: categories.no_engagement.length,
+                actionable: actionableCount
+            }
+        };
+    }
+
+    /**
      * Sync conversations from ElevenLabs to the Messages table
      * @param {number} clientId - RinglyPro client ID
      * @param {string} agentId - ElevenLabs agent ID
@@ -138,9 +358,17 @@ class ElevenLabsConvAIService {
         try {
             console.log(`🔄 Syncing ElevenLabs calls for client ${clientId}, agent ${agentId}`);
 
-            // Fetch recent conversations
-            const data = await this.listConversations(agentId, { limit: 50 });
-            const conversations = data.conversations || [];
+            // Fetch recent conversations with pagination
+            let conversations = [];
+            let cursor = null;
+            let page = 0;
+            do {
+                const data = await this.listConversations(agentId, { limit: 100, cursor });
+                conversations = conversations.concat(data.conversations || []);
+                cursor = data.next_cursor || data.cursor || null;
+                page++;
+                if (cursor) await new Promise(r => setTimeout(r, 200));
+            } while (cursor && page < 10); // up to 1000 conversations
 
             let inserted = 0;
             let skipped = 0;
@@ -148,10 +376,6 @@ class ElevenLabsConvAIService {
             const errors = [];
 
             console.log(`📋 Processing ${conversations.length} conversations from ElevenLabs`);
-            console.log(`📋 Raw data keys: ${Object.keys(data).join(', ')}`);
-            if (conversations.length > 0) {
-                console.log(`📋 First conversation sample:`, JSON.stringify(conversations[0]).substring(0, 500));
-            }
 
             for (const conv of conversations) {
                 try {
@@ -177,24 +401,19 @@ class ElevenLabsConvAIService {
                         console.log(`⚠️ Could not get details for ${conv.conversation_id}`);
                     }
 
-                    // Extract phone number from conversation data
-                    // ElevenLabs stores phone in various fields depending on setup
-                    const phoneNumber = conv.metadata?.phone_number ||
-                                       conv.call?.phone_number ||
-                                       conv.user_id ||  // Often contains phone number
-                                       details.metadata?.phone_number ||
-                                       details.user_id ||
-                                       details.analysis?.user_id ||
-                                       details.data_collection_results?.phone ||
-                                       details.data_collection_results?.caller_phone ||
+                    // Extract phone number - primary sources are detail.user_id
+                    // and detail.metadata.phone_call.external_number
+                    const phoneNumber = details.user_id ||
+                                       details.metadata?.phone_call?.external_number ||
+                                       conv.user_id ||
                                        'Unknown';
 
-                    console.log(`📞 Phone extraction - conv.user_id: ${conv.user_id}, details keys: ${Object.keys(details).join(', ')}`);
-
-                    // Build summary from transcript
-                    let summary = 'AI Phone Call';
-                    if (details.transcript && details.transcript.length > 0) {
-                        // Get first few exchanges
+                    // Build summary - prefer ElevenLabs AI analysis summary
+                    let summary = details.analysis?.transcript_summary ||
+                                 conv.transcript_summary ||
+                                 conv.call_summary_title ||
+                                 'AI Phone Call';
+                    if (summary === 'AI Phone Call' && details.transcript && details.transcript.length > 0) {
                         const firstMessages = details.transcript.slice(0, 4)
                             .map(t => t.message || t.text)
                             .filter(Boolean)
@@ -232,7 +451,7 @@ class ElevenLabsConvAIService {
                                 clientId,
                                 conv.conversation_id,
                                 audioUrl,
-                                conv.call_type === 'outbound' ? 'outgoing' : 'incoming',
+                                conv.direction === 'outbound' ? 'outgoing' : 'incoming',
                                 phoneNumber,
                                 '', // to_number
                                 summary,
