@@ -234,6 +234,7 @@ class ElevenLabsConvAIService {
      */
     categorizeConversations(allConvs, detailMap) {
         const categories = {
+            inbound: [],
             sms_sent: [],
             transferred: [],
             callback_requested: [],
@@ -281,7 +282,10 @@ class ElevenLabsConvAIService {
             };
 
             // Categorization (priority order)
-            if (tools.some(t => t.includes('send_sms'))) {
+            // Inbound calls always go to Human group
+            if ((c.direction || '').toLowerCase() === 'inbound') {
+                categories.inbound.push(entry);
+            } else if (tools.some(t => t.includes('send_sms'))) {
                 categories.sms_sent.push(entry);
             } else if (tools.some(t => t.includes('transfer')) || termReason.includes('transferred')) {
                 categories.transferred.push(entry);
@@ -322,8 +326,21 @@ class ElevenLabsConvAIService {
                                categories.callback_requested.length + categories.engaged_humans.length;
         const totalDuration = allConvs.reduce((s, c) => s + (c.call_duration_secs || 0), 0);
 
+        // Tag each call with its subcategory for display
+        categories.inbound.forEach(c => c.subcategory = 'Inbound');
+        categories.sms_sent.forEach(c => c.subcategory = 'SMS Sent');
+        categories.transferred.forEach(c => c.subcategory = 'Transferred');
+        categories.callback_requested.forEach(c => c.subcategory = 'Callback');
+        categories.engaged_humans.forEach(c => c.subcategory = 'Engaged');
+        categories.not_interested.forEach(c => c.subcategory = 'Not Interested');
+        categories.voicemail.forEach(c => c.subcategory = 'Voicemail');
+        categories.ivr_trap.forEach(c => c.subcategory = 'IVR Trap');
+        categories.brief.forEach(c => c.subcategory = 'Brief');
+        categories.no_engagement.forEach(c => c.subcategory = 'No Engagement');
+
         // Group into Human vs Machine
         const humanCalls = [
+            ...categories.inbound,
             ...categories.sms_sent,
             ...categories.transferred,
             ...categories.callback_requested,
@@ -337,17 +354,6 @@ class ElevenLabsConvAIService {
             ...categories.brief,
             ...categories.no_engagement
         ].sort((a, b) => b.duration - a.duration);
-
-        // Tag each call with its subcategory for display
-        categories.sms_sent.forEach(c => c.subcategory = 'SMS Sent');
-        categories.transferred.forEach(c => c.subcategory = 'Transferred');
-        categories.callback_requested.forEach(c => c.subcategory = 'Callback');
-        categories.engaged_humans.forEach(c => c.subcategory = 'Engaged');
-        categories.not_interested.forEach(c => c.subcategory = 'Not Interested');
-        categories.voicemail.forEach(c => c.subcategory = 'Voicemail');
-        categories.ivr_trap.forEach(c => c.subcategory = 'IVR Trap');
-        categories.brief.forEach(c => c.subcategory = 'Brief');
-        categories.no_engagement.forEach(c => c.subcategory = 'No Engagement');
 
         // Machine time wasted
         const machineMinutes = Math.round(machineCalls.reduce((s, c) => s + c.duration, 0) / 60);
@@ -366,6 +372,7 @@ class ElevenLabsConvAIService {
             machineMinutes,
             categories,
             summary: {
+                inbound: categories.inbound.length,
                 sms_sent: categories.sms_sent.length,
                 transferred: categories.transferred.length,
                 callback_requested: categories.callback_requested.length,
