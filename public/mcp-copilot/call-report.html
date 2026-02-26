@@ -354,8 +354,8 @@
                         <span class="group-count human-count">${humanCount}</span>
                         <span class="group-hint">Calls where a human answered &mdash; review and follow up</span>
                     </div>
-                    ${renderCollapsible('Inbound', humanCalls.filter(c => c.direction === 'inbound'), '#3b82f6', 'People who called you back', true, 'human-inbound')}
-                    ${renderCollapsible('Outbound', humanCalls.filter(c => c.direction !== 'inbound'), '#10b981', 'Humans reached by your AI caller', true, 'human-outbound')}
+                    ${renderCollapsible('Inbound', humanCalls.filter(c => c.direction === 'inbound'), '#3b82f6', 'People who called you back', false, 'human-inbound')}
+                    ${renderCollapsible('Outbound', humanCalls.filter(c => c.direction !== 'inbound'), '#10b981', 'Humans reached by your AI caller', false, 'human-outbound')}
                 </div>
 
                 <div class="group-section">
