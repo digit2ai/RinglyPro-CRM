@@ -92,6 +92,27 @@
         .group-header .group-count.machine-count { background: #6b7280; }
         .group-header .group-hint { font-size: 13px; color: #6b7280; margin-left: auto; }
 
+        .collapsible {
+            background: white; border-radius: 12px; margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08); overflow: hidden;
+        }
+        .collapsible-header {
+            display: flex; align-items: center; gap: 10px; padding: 14px 20px;
+            cursor: pointer; user-select: none; transition: background 0.15s;
+        }
+        .collapsible-header:hover { background: #f9fafb; }
+        .collapsible-title { font-size: 15px; font-weight: 600; }
+        .collapsible-badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 26px; height: 26px; border-radius: 13px; font-size: 13px; font-weight: 700;
+            padding: 0 8px; color: white;
+        }
+        .collapsible-hint { font-size: 12px; color: #6b7280; margin-left: auto; font-style: italic; }
+        .collapsible-toggle { font-size: 16px; color: #9ca3af; transition: transform 0.2s; margin-left: 8px; }
+        .collapsible.open .collapsible-toggle { transform: rotate(180deg); }
+        .collapsible-body { display: none; border-top: 1px solid #f3f4f6; }
+        .collapsible.open .collapsible-body { display: block; }
+
         .call-list {
             background: white; border-radius: 12px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.08); overflow: hidden;
@@ -333,7 +354,8 @@
                         <span class="group-count human-count">${humanCount}</span>
                         <span class="group-hint">Calls where a human answered &mdash; review and follow up</span>
                     </div>
-                    ${renderCallList(humanCalls, 'human')}
+                    ${renderCollapsible('Inbound', humanCalls.filter(c => c.direction === 'inbound'), '#3b82f6', 'People who called you back', true, 'human-inbound')}
+                    ${renderCollapsible('Outbound', humanCalls.filter(c => c.direction !== 'inbound'), '#10b981', 'Humans reached by your AI caller', true, 'human-outbound')}
                 </div>
 
                 <div class="group-section">
@@ -353,12 +375,44 @@
             document.getElementById('content').innerHTML = html;
         }
 
+        function renderCollapsible(title, calls, badgeColor, hint, defaultOpen, listId) {
+            if (!calls || calls.length === 0) {
+                return `
+                    <div class="collapsible">
+                        <div class="collapsible-header">
+                            <span class="collapsible-badge" style="background:${badgeColor}">0</span>
+                            <span class="collapsible-title">${title}</span>
+                            <span class="collapsible-hint">No calls</span>
+                        </div>
+                    </div>`;
+            }
+            const openClass = defaultOpen ? 'open' : '';
+            const INITIAL_SHOW = 50;
+            const items = calls.map((c, i) => renderCallItem(c, i >= INITIAL_SHOW)).join('');
+            let showMore = '';
+            if (calls.length > INITIAL_SHOW) {
+                showMore = `<button class="show-more-btn" id="${listId}-btn" onclick="showAll('${listId}', this)">
+                    Show all ${calls.length} calls (${calls.length - INITIAL_SHOW} more)
+                </button>`;
+            }
+            return `
+                <div class="collapsible ${openClass}">
+                    <div class="collapsible-header" onclick="this.parentElement.classList.toggle('open')">
+                        <span class="collapsible-badge" style="background:${badgeColor}">${calls.length}</span>
+                        <span class="collapsible-title">${title}</span>
+                        <span class="collapsible-hint">${hint}</span>
+                        <span class="collapsible-toggle">&#9660;</span>
+                    </div>
+                    <div class="collapsible-body" id="${listId}">${items}${showMore}</div>
+                </div>`;
+        }
+
         function renderCallList(calls, group) {
             if (!calls || calls.length === 0) {
                 return '<div class="call-list"><div class="empty-state">No calls in this group</div></div>';
             }
 
-            const INITIAL_SHOW = group === 'human' ? 50 : 10;
+            const INITIAL_SHOW = 10;
             const listId = group + '-list';
             const items = calls.map((c, i) => renderCallItem(c, i >= INITIAL_SHOW)).join('');
 
