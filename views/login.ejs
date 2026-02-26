@@ -146,9 +146,16 @@
                 const data = await response.json();
                 
                 if (response.ok && data.success) {
+                    // Check if user must change password (OTP first login)
+                    if (data.mustChangePassword) {
+                        localStorage.setItem('changePasswordToken', data.token);
+                        window.location.href = '/change-password';
+                        return;
+                    }
+
                     // Store JWT token
                     localStorage.setItem('token', data.token);
-                    
+
                     // Redirect to dashboard
                     window.location.href = '/';
                 } else {

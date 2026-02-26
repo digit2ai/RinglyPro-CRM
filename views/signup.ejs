@@ -117,23 +117,10 @@
                         </div>
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
-                        <div class="relative">
-                            <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                            <input type="password" id="password" class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="••••••••" required>
-                            <button type="button" onclick="togglePassword('password')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-1">Minimum 8 characters</p>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
-                        <div class="relative">
-                            <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                            <input type="password" id="confirmPassword" class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="••••••••" required>
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <div class="flex items-center">
+                            <i class="fas fa-sms text-blue-500 mr-2"></i>
+                            <p class="text-sm text-blue-700">A temporary password will be sent to your phone via SMS</p>
                         </div>
                     </div>
 
@@ -230,6 +217,56 @@
                                 <input type="time" id="closeTime" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" value="17:00">
                             </div>
                         </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Timezone</label>
+                        <div class="relative">
+                            <i class="fas fa-globe-americas absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <select id="timezone" class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none">
+                                <option value="America/New_York">Eastern Time (ET)</option>
+                                <option value="America/Chicago">Central Time (CT)</option>
+                                <option value="America/Denver">Mountain Time (MT)</option>
+                                <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                                <option value="America/Anchorage">Alaska Time (AKT)</option>
+                                <option value="Pacific/Honolulu">Hawaii Time (HT)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Business Days</label>
+                        <div class="flex flex-wrap gap-2">
+                            <label class="inline-flex items-center bg-white border border-gray-300 rounded-lg px-3 py-2 cursor-pointer hover:bg-blue-50 transition-colors">
+                                <input type="checkbox" id="day-Mon" value="Mon" class="business-day-cb h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" checked>
+                                <span class="ml-2 text-sm text-gray-700">Mon</span>
+                            </label>
+                            <label class="inline-flex items-center bg-white border border-gray-300 rounded-lg px-3 py-2 cursor-pointer hover:bg-blue-50 transition-colors">
+                                <input type="checkbox" id="day-Tue" value="Tue" class="business-day-cb h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" checked>
+                                <span class="ml-2 text-sm text-gray-700">Tue</span>
+                            </label>
+                            <label class="inline-flex items-center bg-white border border-gray-300 rounded-lg px-3 py-2 cursor-pointer hover:bg-blue-50 transition-colors">
+                                <input type="checkbox" id="day-Wed" value="Wed" class="business-day-cb h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" checked>
+                                <span class="ml-2 text-sm text-gray-700">Wed</span>
+                            </label>
+                            <label class="inline-flex items-center bg-white border border-gray-300 rounded-lg px-3 py-2 cursor-pointer hover:bg-blue-50 transition-colors">
+                                <input type="checkbox" id="day-Thu" value="Thu" class="business-day-cb h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" checked>
+                                <span class="ml-2 text-sm text-gray-700">Thu</span>
+                            </label>
+                            <label class="inline-flex items-center bg-white border border-gray-300 rounded-lg px-3 py-2 cursor-pointer hover:bg-blue-50 transition-colors">
+                                <input type="checkbox" id="day-Fri" value="Fri" class="business-day-cb h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" checked>
+                                <span class="ml-2 text-sm text-gray-700">Fri</span>
+                            </label>
+                            <label class="inline-flex items-center bg-white border border-gray-300 rounded-lg px-3 py-2 cursor-pointer hover:bg-blue-50 transition-colors">
+                                <input type="checkbox" id="day-Sat" value="Sat" class="business-day-cb h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                <span class="ml-2 text-sm text-gray-700">Sat</span>
+                            </label>
+                            <label class="inline-flex items-center bg-white border border-gray-300 rounded-lg px-3 py-2 cursor-pointer hover:bg-blue-50 transition-colors">
+                                <input type="checkbox" id="day-Sun" value="Sun" class="business-day-cb h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                <span class="ml-2 text-sm text-gray-700">Sun</span>
+                            </label>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Select the days your business is open</p>
                     </div>
 
                     <div>
@@ -451,22 +488,6 @@
                 }
             }
 
-            // Validate password match on step 1
-            if (currentStep === 1) {
-                const password = document.getElementById('password').value;
-                const confirmPassword = document.getElementById('confirmPassword').value;
-                
-                if (password !== confirmPassword) {
-                    alert('Passwords do not match');
-                    return false;
-                }
-                
-                if (password.length < 8) {
-                    alert('Password must be at least 8 characters long');
-                    return false;
-                }
-            }
-
             return true;
         }
 
@@ -475,8 +496,7 @@
                 registrationData = {
                     firstName: document.getElementById('firstName').value,
                     lastName: document.getElementById('lastName').value,
-                    email: document.getElementById('email').value,
-                    password: document.getElementById('password').value
+                    email: document.getElementById('email').value
                 };
             } else if (currentStep === 2) {
                 registrationData = {
@@ -492,6 +512,9 @@
         async function submitRegistration() {
             if (!validateCurrentStep()) return;
 
+            // Collect selected business days
+            const selectedDays = Array.from(document.querySelectorAll('.business-day-cb:checked')).map(cb => cb.value).join(',');
+
             // Store final step data
             registrationData = {
                 ...registrationData,
@@ -500,6 +523,8 @@
                     open: document.getElementById('openTime').value,
                     close: document.getElementById('closeTime').value
                 },
+                timezone: document.getElementById('timezone').value,
+                businessDays: selectedDays || 'Mon,Tue,Wed,Thu,Fri',
                 services: document.getElementById('services').value,
                 termsAccepted: document.getElementById('termsAccepted').checked,
                 referralCode: referralCode || null,  // Include referral code if present in URL

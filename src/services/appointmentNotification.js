@@ -141,21 +141,32 @@ async function sendWelcomeSMS({
     ownerName,
     businessName,
     ringlyproNumber,
-    dashboardUrl = 'https://aiagent.ringlypro.com'
+    dashboardUrl = 'https://aiagent.ringlypro.com',
+    userEmail,
+    otpCode
 }) {
     try {
         // Format the RinglyPro number for display
         const formattedNumber = ringlyproNumber.replace(/(\+1)?(\d{3})(\d{3})(\d{4})/, '($2) $3-$4');
 
+        // Build credentials block if OTP is available
+        const credentialsBlock = (userEmail && otpCode)
+            ? `\nLOGIN CREDENTIALS:\n` +
+              `User ID: ${userEmail}\n` +
+              `Temp Password: ${otpCode}\n\n` +
+              `Log in at ${dashboardUrl} and set your permanent password.\n`
+            : '';
+
         // Welcome message with activation instructions
         const message = `Welcome to RinglyPro, ${ownerName}! 🎉\n\n` +
-            `Your AI assistant Rachel is ready for ${businessName}.\n\n` +
-            `📞 Your RinglyPro Number: ${formattedNumber}\n\n` +
-            `Next Steps:\n` +
-            `1. Log in at ${dashboardUrl}\n` +
-            `2. Toggle "Rachel AI" to ON\n` +
-            `3. Follow the call forwarding instructions for your carrier\n\n` +
-            `Once activated, Rachel will answer all calls to your business phone 24/7!\n\n` +
+            `Your AI assistant Rachel is ready for ${businessName}.\n` +
+            `📞 Your RinglyPro Number: ${formattedNumber}\n` +
+            credentialsBlock +
+            `\nNext Steps:\n` +
+            `1. Log in with credentials above\n` +
+            `2. Set your new password\n` +
+            `3. Toggle "Rachel AI" to ON\n` +
+            `4. Set up call forwarding\n\n` +
             `Questions? Reply to this message.`;
 
         console.log(`📱 Sending welcome SMS to ${ownerPhone}`);

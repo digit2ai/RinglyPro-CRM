@@ -842,6 +842,11 @@ app.get('/signup/completing', (req, res) => {
   });
 });
 
+// Change password page (OTP first login)
+app.get('/change-password', (req, res) => {
+  res.render('change-password', { title: 'RinglyPro - Set New Password' });
+});
+
 // Forgot password page route
 app.get('/forgot-password', (req, res) => {
   res.render('forgot-password', {

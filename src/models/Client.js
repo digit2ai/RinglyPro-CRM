@@ -76,8 +76,8 @@ module.exports = (sequelize) => {
             defaultValue: '17:00:00'
         },
         business_days: {
-            type: DataTypes.STRING(20),
-            defaultValue: 'Mon-Fri'
+            type: DataTypes.STRING(50),
+            defaultValue: 'Mon,Tue,Wed,Thu,Fri'
         },
         timezone: {
             type: DataTypes.STRING(50),

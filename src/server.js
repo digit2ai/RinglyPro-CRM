@@ -94,6 +94,26 @@ async function startServer() {
           console.log('⚠️ Calendar sync columns migration skipped:', error.message);
         }
 
+        // AUTO-MIGRATE OTP / MUST-CHANGE-PASSWORD COLUMNS
+        console.log('🔄 Running OTP/password-change migration...');
+        try {
+          await queryWithTimeout(
+            `ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN DEFAULT false`,
+            'must_change_password migration'
+          );
+          await queryWithTimeout(
+            `ALTER TABLE users ADD COLUMN IF NOT EXISTS otp_code VARCHAR(6)`,
+            'otp_code migration'
+          );
+          await queryWithTimeout(
+            `ALTER TABLE clients ALTER COLUMN business_days TYPE VARCHAR(50)`,
+            'business_days resize migration'
+          );
+          console.log('✅ OTP columns ready (must_change_password, otp_code, business_days resized)');
+        } catch (error) {
+          console.log('⚠️ OTP migration skipped:', error.message);
+        }
+
         // AUTO-MIGRATE STORE HEALTH AI TABLES
         try {
           const { migrateStoreHealthAI } = require('../scripts/migrate-store-health-ai');

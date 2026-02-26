@@ -106,6 +106,19 @@ module.exports = (sequelize) => {
             allowNull: true
         },
 
+        // OTP / FORCE PASSWORD CHANGE FIELDS
+        must_change_password: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false,
+            comment: 'True when user has a system-generated OTP and must set their own password'
+        },
+        otp_code: {
+            type: DataTypes.STRING(6),
+            allowNull: true,
+            comment: 'System-generated 6-digit OTP sent via SMS during signup'
+        },
+
         // ADMIN FIELDS
         isAdmin: {
             type: DataTypes.BOOLEAN,

@@ -87,7 +87,7 @@ router.post('/register', async (req, res) => {
     try {
         const {
             email,
-            password,
+            password,       // Optional: kept for backward compatibility, ignored if empty
             firstName,
             lastName,
             businessName,
@@ -100,6 +100,8 @@ router.post('/register', async (req, res) => {
             services,
             termsAccepted,
             referralCode,  // Optional: referral code from URL parameter
+            timezone,      // IANA timezone (e.g., 'America/New_York')
+            businessDays,  // Comma-separated (e.g., 'Mon,Tue,Wed,Thu,Fri')
             // Subscription plan parameters from pricing table
             plan,          // 'starter', 'growth', 'professional'
             amount,        // Total amount (monthly or annual)
@@ -109,11 +111,11 @@ router.post('/register', async (req, res) => {
 
         console.log('📝 Registration attempt:', { email, firstName, lastName, businessName, businessType, businessPhone, plan, billing });
 
-        // Validate required fields
-        if (!email || !password || !firstName || !lastName) {
+        // Validate required fields (password no longer required — OTP generated server-side)
+        if (!email || !firstName || !lastName) {
             await transaction.rollback();
             return res.status(400).json({
-                error: 'Email, password, first name, and last name are required'
+                error: 'Email, first name, and last name are required'
             });
         }
 
@@ -162,9 +164,11 @@ router.post('/register', async (req, res) => {
             }
         }
 
-        // Hash password
+        // Generate OTP (6-digit) instead of user-chosen password
+        const otpCode = String(Math.floor(100000 + Math.random() * 900000));
         const saltRounds = 12;
-        const passwordHash = await bcrypt.hash(password, saltRounds);
+        const passwordHash = await bcrypt.hash(password || otpCode, saltRounds);
+        const useOtp = !password;  // If no password provided, user must change on first login
 
         // Clean up website_url - convert empty strings to null
         const cleanWebsiteUrl = websiteUrl && websiteUrl.trim() !== '' ? websiteUrl.trim() : null;
@@ -212,7 +216,9 @@ router.post('/register', async (req, res) => {
             subscription_status: 'checkout_pending',  // Waiting for Stripe checkout
             trial_ends_at: null,  // Set after Stripe checkout in complete-setup
             monthly_token_allocation: monthlyTokens,
-            tokens_balance: 0  // Tokens granted after Stripe checkout in complete-setup
+            tokens_balance: 0,  // Tokens granted after Stripe checkout in complete-setup
+            must_change_password: useOtp,
+            otp_code: useOtp ? otpCode : null
         }, { transaction });
 
         console.log('✅ User created successfully:', user.id);
@@ -274,7 +280,9 @@ router.post('/register', async (req, res) => {
                     plan: selectedPlan,
                     monthlyTokens: monthlyTokens.toString(),
                     billing: selectedBilling,
-                    rollover: planDetails.rollover.toString()
+                    rollover: planDetails.rollover.toString(),
+                    timezone: timezone || 'America/New_York',
+                    businessDays: businessDays || 'Mon,Tue,Wed,Thu,Fri'
                 }
             },
 
@@ -287,7 +295,9 @@ router.post('/register', async (req, res) => {
                 plan: selectedPlan,
                 monthlyTokens: monthlyTokens.toString(),
                 billing: selectedBilling,
-                referralCode: referralCode || ''
+                referralCode: referralCode || '',
+                timezone: timezone || 'America/New_York',
+                businessDays: businessDays || 'Mon,Tue,Wed,Thu,Fri'
             }
         });
 
@@ -384,6 +394,8 @@ router.post('/complete-setup', async (req, res) => {
         const monthlyTokens = parseInt(stripeSession.metadata.monthlyTokens);
         const selectedBilling = stripeSession.metadata.billing;
         const referralCode = stripeSession.metadata.referralCode || null;
+        const metaTimezone = stripeSession.metadata.timezone || 'America/New_York';
+        const metaBusinessDays = stripeSession.metadata.businessDays || 'Mon,Tue,Wed,Thu,Fri';
 
         console.log(`📋 Session verified for user ${userId}, plan: ${selectedPlan}`);
 
@@ -561,8 +573,8 @@ router.post('/complete-setup', async (req, res) => {
                 custom_greeting: `Hello! Thank you for calling ${user.business_name}. I'm Rachel, your AI assistant.`,
                 business_hours_start: user.business_hours?.open ? user.business_hours.open + ':00' : '09:00:00',
                 business_hours_end: user.business_hours?.close ? user.business_hours.close + ':00' : '17:00:00',
-                business_days: 'Mon-Fri',
-                timezone: 'America/New_York',
+                business_days: metaBusinessDays,
+                timezone: metaTimezone,
                 appointment_duration: 30,
                 booking_enabled: true,
                 sms_notifications: true,
@@ -633,6 +645,8 @@ router.post('/complete-setup', async (req, res) => {
                         businessHours: user.business_hours,
                         services: user.services,
                         ownerPhone: user.phone_number || user.business_phone,
+                        timezone: metaTimezone,
+                        businessDays: metaBusinessDays,
                         language: 'en'
                     },
                     twilioNumber,
@@ -693,7 +707,9 @@ router.post('/complete-setup', async (req, res) => {
                 ownerName: `${user.first_name} ${user.last_name}`,
                 businessName: user.business_name,
                 ringlyproNumber: twilioNumber,
-                dashboardUrl: process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com'
+                dashboardUrl: process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com',
+                userEmail: user.email,
+                otpCode: user.otp_code
             });
 
             if (smsResult.success) {
@@ -839,6 +855,22 @@ router.post('/login', async (req, res) => {
 
         console.log('✅ Password validated successfully');
 
+        // Check if user must change password (OTP first login)
+        if (user.must_change_password) {
+            console.log('🔒 User must change password — issuing short-lived token');
+            const changeToken = jwt.sign(
+                { userId: user.id, email: user.email, purpose: 'change_password' },
+                process.env.JWT_SECRET || 'your-super-secret-jwt-key',
+                { expiresIn: '15m' }
+            );
+            return res.json({
+                success: true,
+                mustChangePassword: true,
+                token: changeToken,
+                data: { redirectTo: '/change-password' }
+            });
+        }
+
         // Find associated client record for Rachel AI
         let client = null;
         if (Client) {
@@ -904,6 +936,102 @@ router.post('/login', async (req, res) => {
         console.error('Stack trace:', error.stack);
         res.status(500).json({
             error: 'Login failed. Please try again.',
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+});
+
+// =====================================================
+// CHANGE PASSWORD — Force OTP users to set a real password
+// =====================================================
+router.post('/change-password', async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+
+        if (!token || !newPassword) {
+            return res.status(400).json({ error: 'Token and new password are required' });
+        }
+
+        if (newPassword.length < 8) {
+            return res.status(400).json({ error: 'Password must be at least 8 characters' });
+        }
+
+        // Verify the change-password token
+        let decoded;
+        try {
+            decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key');
+        } catch (err) {
+            return res.status(401).json({ error: 'Token expired or invalid. Please log in again.' });
+        }
+
+        if (decoded.purpose !== 'change_password') {
+            return res.status(401).json({ error: 'Invalid token type' });
+        }
+
+        const user = await User.findByPk(decoded.userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Hash new password and clear OTP flags
+        const passwordHash = await bcrypt.hash(newPassword, 12);
+        await User.update({
+            password_hash: passwordHash,
+            must_change_password: false,
+            otp_code: null
+        }, { where: { id: user.id }, validate: false });
+
+        console.log(`✅ Password changed for user ${user.id} (${user.email})`);
+
+        // Find associated client
+        let client = null;
+        if (Client) {
+            client = await Client.findOne({ where: { user_id: user.id } });
+        }
+
+        // Issue a full session JWT
+        const sessionToken = jwt.sign(
+            {
+                userId: user.id,
+                email: user.email,
+                businessName: user.business_name,
+                businessType: user.business_type,
+                clientId: client ? client.id : null
+            },
+            process.env.JWT_SECRET || 'your-super-secret-jwt-key',
+            { expiresIn: '7d' }
+        );
+
+        res.json({
+            success: true,
+            message: 'Password changed successfully',
+            token: sessionToken,
+            data: {
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    firstName: user.first_name,
+                    lastName: user.last_name,
+                    businessName: user.business_name,
+                    businessType: user.business_type,
+                    businessPhone: user.business_phone,
+                    phoneNumber: user.phone_number,
+                    freeTrialMinutes: user.free_trial_minutes,
+                    onboardingCompleted: user.onboarding_completed
+                },
+                client: client ? {
+                    id: client.id,
+                    rachelNumber: client.ringlypro_number,
+                    rachelEnabled: client.rachel_enabled
+                } : null,
+                redirectTo: '/'
+            }
+        });
+
+    } catch (error) {
+        console.error('💥 Change password error:', error);
+        res.status(500).json({
+            error: 'Failed to change password. Please try again.',
             details: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }

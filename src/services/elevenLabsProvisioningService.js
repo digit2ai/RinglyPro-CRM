@@ -228,7 +228,9 @@ class ElevenLabsProvisioningService {
       businessDescription,
       services,
       ownerPhone,
-      businessHours
+      businessHours,
+      timezone,
+      businessDays
     } = clientData;
 
     let prompt = `You are the AI receptionist for ${businessName}.
@@ -267,6 +269,14 @@ You are a friendly, professional AI receptionist. Your job is to:
       } else {
         prompt += `\n- Hours: ${businessHours}`;
       }
+    }
+
+    if (timezone) {
+      prompt += `\n- Timezone: ${timezone}`;
+    }
+
+    if (businessDays) {
+      prompt += `\n- Business Days: ${businessDays}`;
     }
 
     prompt += `
