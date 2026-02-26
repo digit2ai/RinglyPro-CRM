@@ -430,6 +430,11 @@
 
         if (planFromUrl) {
             console.log('Plan parameters detected:', { plan: planFromUrl, amount: amountFromUrl, tokens: tokensFromUrl, billing: billingFromUrl });
+            // Auto-select the plan card to match URL param
+            if (planFromUrl === 'growth' || planFromUrl === 'starter') {
+                // Defer until DOM is ready
+                setTimeout(() => selectPlan(planFromUrl), 0);
+            }
         }
 
         function nextStep() {
