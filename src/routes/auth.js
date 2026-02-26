@@ -580,7 +580,7 @@ router.post('/complete-setup', async (req, res) => {
                 sms_notifications: true,
                 monthly_free_minutes: 100,
                 per_minute_rate: 0.10,
-                rachel_enabled: false,  // Client must toggle ON to activate Rachel AI
+                rachel_enabled: true,  // Enabled by default — Rachel answers calls immediately after signup
                 referral_code: newClientReferralCode,
                 referred_by: referrerId,
                 active: true,
