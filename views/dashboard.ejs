@@ -6229,7 +6229,10 @@
 
             const filteredMessages = messages.filter(msg => {
                 const createdDate = new Date(msg.createdAt || msg.created_at);
-                return createdDate >= yesterday && createdDate < tomorrow;
+                const inDateRange = createdDate >= yesterday && createdDate < tomorrow;
+                // Only show inbound calls/messages
+                const isInbound = (msg.direction === 'incoming');
+                return inDateRange && isInbound;
             });
 
             if (filteredMessages.length === 0) {
@@ -6495,9 +6498,10 @@
 
                 const messages = await response.json();
 
-                // Filter to only ElevenLabs calls (message_source = 'elevenlabs')
+                // Filter to only inbound ElevenLabs calls
                 const elevenLabsCalls = messages.filter(msg =>
-                    (msg.messageSource || msg.message_source) === 'elevenlabs'
+                    (msg.messageSource || msg.message_source) === 'elevenlabs' &&
+                    (msg.direction === 'incoming')
                 );
 
                 renderElevenLabsCalls(elevenLabsCalls);
