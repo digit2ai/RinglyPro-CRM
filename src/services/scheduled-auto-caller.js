@@ -29,8 +29,9 @@ class ScheduledAutoCallerService {
       schedule: '* 8-20 * * *', // Every 1 minute, 8am-8pm EST, Mon-Sun (all days)
       timezone: 'America/New_York',
       minInterval: 1, // minutes between calls
-      maxCallsPerHour: 30,
-      maxCallsPerDay: 200,
+      callsPerTick: 4, // Number of calls to fire per cron tick (concurrent)
+      maxCallsPerHour: 200,
+      maxCallsPerDay: 1000,
       maxConsecutiveFailures: 3, // EMERGENCY: Stop after 3 consecutive failures
       maxDuplicateDetections: 2 // EMERGENCY: Stop if same number called twice
     };
@@ -448,10 +449,21 @@ class ScheduledAutoCallerService {
       duplicateDetections: 0
     };
 
-    // Create cron job
+    // Create cron job — fires callsPerTick calls concurrently each minute
     this.cronJob = cron.schedule(
       this.config.schedule,
-      () => this.makeScheduledCall(),
+      async () => {
+        const batch = this.config.callsPerTick || 1;
+        const promises = [];
+        for (let i = 0; i < batch; i++) {
+          // Stagger calls by 5 seconds to avoid hitting Twilio 1 CPS
+          promises.push(
+            new Promise(resolve => setTimeout(resolve, i * 5000))
+              .then(() => this.makeScheduledCall())
+          );
+        }
+        await Promise.allSettled(promises);
+      },
       {
         scheduled: true,
         timezone: this.config.timezone
@@ -598,6 +610,7 @@ class ScheduledAutoCallerService {
     if (newConfig.schedule) this.config.schedule = newConfig.schedule;
     if (newConfig.timezone) this.config.timezone = newConfig.timezone;
     if (newConfig.minInterval) this.config.minInterval = newConfig.minInterval;
+    if (newConfig.callsPerTick) this.config.callsPerTick = newConfig.callsPerTick;
     if (newConfig.maxCallsPerHour) this.config.maxCallsPerHour = newConfig.maxCallsPerHour;
     if (newConfig.maxCallsPerDay) this.config.maxCallsPerDay = newConfig.maxCallsPerDay;
 
