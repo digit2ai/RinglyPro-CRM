@@ -322,6 +322,36 @@ class ElevenLabsConvAIService {
                                categories.callback_requested.length + categories.engaged_humans.length;
         const totalDuration = allConvs.reduce((s, c) => s + (c.call_duration_secs || 0), 0);
 
+        // Group into Human vs Machine
+        const humanCalls = [
+            ...categories.sms_sent,
+            ...categories.transferred,
+            ...categories.callback_requested,
+            ...categories.engaged_humans,
+            ...categories.not_interested
+        ].sort((a, b) => b.duration - a.duration);
+
+        const machineCalls = [
+            ...categories.voicemail,
+            ...categories.ivr_trap,
+            ...categories.brief,
+            ...categories.no_engagement
+        ].sort((a, b) => b.duration - a.duration);
+
+        // Tag each call with its subcategory for display
+        categories.sms_sent.forEach(c => c.subcategory = 'SMS Sent');
+        categories.transferred.forEach(c => c.subcategory = 'Transferred');
+        categories.callback_requested.forEach(c => c.subcategory = 'Callback');
+        categories.engaged_humans.forEach(c => c.subcategory = 'Engaged');
+        categories.not_interested.forEach(c => c.subcategory = 'Not Interested');
+        categories.voicemail.forEach(c => c.subcategory = 'Voicemail');
+        categories.ivr_trap.forEach(c => c.subcategory = 'IVR Trap');
+        categories.brief.forEach(c => c.subcategory = 'Brief');
+        categories.no_engagement.forEach(c => c.subcategory = 'No Engagement');
+
+        // Machine time wasted
+        const machineMinutes = Math.round(machineCalls.reduce((s, c) => s + c.duration, 0) / 60);
+
         return {
             totalCalls: allConvs.length,
             totalOutbound,
@@ -331,6 +361,9 @@ class ElevenLabsConvAIService {
             humanReachRate: totalOutbound > 0
                 ? ((actionableCount + categories.not_interested.length) / totalOutbound * 100).toFixed(1)
                 : '0.0',
+            human: humanCalls,
+            machine: machineCalls,
+            machineMinutes,
             categories,
             summary: {
                 sms_sent: categories.sms_sent.length,
@@ -342,7 +375,9 @@ class ElevenLabsConvAIService {
                 ivr_trap: categories.ivr_trap.length,
                 brief: categories.brief.length,
                 no_engagement: categories.no_engagement.length,
-                actionable: actionableCount
+                actionable: actionableCount,
+                humanTotal: humanCalls.length,
+                machineTotal: machineCalls.length
             }
         };
     }

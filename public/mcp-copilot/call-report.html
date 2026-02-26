@@ -38,22 +38,35 @@
         .btn-primary:hover { background: #5a6fd6; }
         .btn-primary:disabled { background: #a0aec0; cursor: not-allowed; }
 
-        .stats-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 12px; margin-bottom: 24px;
+        /* Two big stat cards */
+        .hero-stats {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;
         }
-        .stat-card {
-            background: white; border-radius: 12px; padding: 16px; text-align: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        .hero-card {
+            border-radius: 16px; padding: 24px 28px; color: white; position: relative; overflow: hidden;
         }
-        .stat-value { font-size: 28px; font-weight: 700; }
-        .stat-label { font-size: 12px; color: #6b7280; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .stat-value.purple { color: #667eea; }
-        .stat-value.green { color: #10b981; }
-        .stat-value.orange { color: #f59e0b; }
-        .stat-value.red { color: #ef4444; }
-        .stat-value.blue { color: #3b82f6; }
-        .stat-value.gray { color: #6b7280; }
+        .hero-card.human { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .hero-card.machine { background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); }
+        .hero-card .hero-number { font-size: 48px; font-weight: 800; line-height: 1; }
+        .hero-card .hero-label { font-size: 16px; font-weight: 600; margin-top: 4px; opacity: 0.9; }
+        .hero-card .hero-detail { font-size: 13px; opacity: 0.75; margin-top: 8px; }
+        .hero-card .hero-icon { position: absolute; right: 24px; top: 50%; transform: translateY(-50%); font-size: 64px; opacity: 0.15; }
+
+        .stats-row {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px; margin-bottom: 24px;
+        }
+        .stat-mini {
+            background: white; border-radius: 10px; padding: 12px; text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        .stat-mini .val { font-size: 22px; font-weight: 700; }
+        .stat-mini .lbl { font-size: 11px; color: #6b7280; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .val.green { color: #10b981; }
+        .val.gray { color: #6b7280; }
+        .val.purple { color: #667eea; }
+        .val.blue { color: #3b82f6; }
+        .val.orange { color: #f59e0b; }
 
         .loading {
             text-align: center; padding: 60px 20px; background: white; border-radius: 12px;
@@ -66,41 +79,30 @@
         @keyframes spin { to { transform: rotate(360deg); } }
         .loading p { color: #6b7280; font-size: 15px; }
 
-        .category {
-            background: white; border-radius: 12px; margin-bottom: 16px;
+        /* Group sections */
+        .group-section { margin-bottom: 28px; }
+        .group-header {
+            display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding: 0 4px;
+        }
+        .group-header h2 { font-size: 18px; font-weight: 700; }
+        .group-header .group-count {
+            font-size: 13px; font-weight: 600; padding: 3px 10px; border-radius: 12px; color: white;
+        }
+        .group-header .group-count.human-count { background: #10b981; }
+        .group-header .group-count.machine-count { background: #6b7280; }
+        .group-header .group-hint { font-size: 13px; color: #6b7280; margin-left: auto; }
+
+        .call-list {
+            background: white; border-radius: 12px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.08); overflow: hidden;
         }
-        .category-header {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 16px 20px; cursor: pointer; user-select: none; transition: background 0.15s;
-        }
-        .category-header:hover { background: #f9fafb; }
-        .category-title { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600; }
-        .category-badge {
-            display: inline-flex; align-items: center; justify-content: center;
-            min-width: 28px; height: 28px; border-radius: 14px; font-size: 13px; font-weight: 700;
-            padding: 0 8px; color: white;
-        }
-        .badge-red { background: #ef4444; }
-        .badge-orange { background: #f59e0b; }
-        .badge-blue { background: #3b82f6; }
-        .badge-green { background: #10b981; }
-        .badge-gray { background: #9ca3af; }
-        .badge-purple { background: #8b5cf6; }
-        .category-action { font-size: 13px; color: #6b7280; font-style: italic; flex: 1; margin-left: 16px; }
-        .category-toggle { font-size: 18px; color: #9ca3af; transition: transform 0.2s; }
-        .category.open .category-toggle { transform: rotate(180deg); }
-
-        .category-body { display: none; border-top: 1px solid #f3f4f6; }
-        .category.open .category-body { display: block; }
 
         .call-item {
-            padding: 14px 20px; border-bottom: 1px solid #f3f4f6; display: flex; gap: 16px; align-items: flex-start;
+            padding: 14px 20px; border-bottom: 1px solid #f3f4f6;
+            display: flex; gap: 16px; align-items: flex-start;
         }
         .call-item:last-child { border-bottom: none; }
-        .call-phone {
-            min-width: 140px; font-weight: 600; font-size: 14px; white-space: nowrap;
-        }
+        .call-phone { min-width: 140px; font-weight: 600; font-size: 14px; white-space: nowrap; }
         .call-phone a { color: #667eea; text-decoration: none; }
         .call-phone a:hover { text-decoration: underline; }
         .call-phone .copy-btn {
@@ -109,11 +111,21 @@
         }
         .call-phone .copy-btn:hover { color: #667eea; }
         .call-meta {
-            display: flex; gap: 8px; font-size: 12px; color: #9ca3af; margin-bottom: 4px; flex-wrap: wrap;
+            display: flex; gap: 6px; font-size: 12px; color: #9ca3af; margin-bottom: 4px; flex-wrap: wrap;
         }
         .call-meta span { background: #f3f4f6; padding: 2px 8px; border-radius: 4px; }
         .call-meta .tag-inbound { background: #dbeafe; color: #1d4ed8; }
         .call-meta .tag-outbound { background: #f3e8ff; color: #7c3aed; }
+        .call-meta .tag-sub { font-weight: 600; }
+        .tag-sms { background: #fef3c7 !important; color: #92400e !important; }
+        .tag-transferred { background: #ffedd5 !important; color: #c2410c !important; }
+        .tag-callback { background: #fce7f3 !important; color: #be185d !important; }
+        .tag-engaged { background: #d1fae5 !important; color: #065f46 !important; }
+        .tag-notinterested { background: #e5e7eb !important; color: #374151 !important; }
+        .tag-voicemail { background: #e5e7eb !important; color: #6b7280 !important; }
+        .tag-ivr { background: #ede9fe !important; color: #6d28d9 !important; }
+        .tag-brief { background: #f3f4f6 !important; color: #9ca3af !important; }
+        .tag-noeng { background: #f3f4f6 !important; color: #9ca3af !important; }
         .call-summary { font-size: 13px; color: #4b5563; line-height: 1.5; }
         .call-business { font-weight: 600; color: #1a1a2e; font-size: 13px; margin-bottom: 2px; }
         .call-details { flex: 1; min-width: 0; }
@@ -122,7 +134,7 @@
 
         .reach-rate {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white; border-radius: 12px; padding: 20px; margin-bottom: 24px; text-align: center;
+            color: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; text-align: center;
         }
         .reach-rate .rate-value { font-size: 42px; font-weight: 700; }
         .reach-rate .rate-label { font-size: 14px; opacity: 0.85; }
@@ -134,10 +146,18 @@
         .initial-state h2 { font-size: 20px; margin-bottom: 8px; color: #374151; }
         .initial-state p { color: #6b7280; font-size: 15px; }
 
+        .show-more-btn {
+            display: block; width: 100%; padding: 12px; border: none; background: #f9fafb;
+            color: #667eea; font-size: 13px; font-weight: 600; cursor: pointer;
+            border-top: 1px solid #f3f4f6;
+        }
+        .show-more-btn:hover { background: #f3f4f6; }
+
         @media (max-width: 640px) {
             .header { padding: 16px; }
             .container { padding: 16px; }
             .controls { flex-direction: column; }
+            .hero-stats { grid-template-columns: 1fr; }
             .call-item { flex-direction: column; gap: 8px; }
             .call-phone { min-width: auto; }
         }
@@ -164,7 +184,7 @@
         <div id="content">
             <div class="initial-state">
                 <h2>Select a client and date to generate a report</h2>
-                <p>The report analyzes all ElevenLabs AI calls and categorizes them into actionable groups.</p>
+                <p>The report analyzes all AI calls and groups them into Human vs Machine outcomes.</p>
             </div>
         </div>
     </div>
@@ -174,19 +194,15 @@
         let currentClientId = null;
         let pollTimer = null;
 
-        // Init
         (async function init() {
-            // Set date to today EST
             const now = new Date();
             const estDate = now.toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
             document.getElementById('dateInput').value = estDate;
             document.getElementById('dateInput').max = estDate;
 
-            // Check URL params
             const params = new URLSearchParams(window.location.search);
             currentClientId = params.get('client_id');
 
-            // Load clients list
             try {
                 const resp = await fetch(`/api/call-report/clients?apiKey=${API_KEY}`);
                 const data = await resp.json();
@@ -199,7 +215,6 @@
                         if (String(c.id) === String(currentClientId)) opt.selected = true;
                         select.appendChild(opt);
                     }
-                    // Update back link with client_id
                     if (currentClientId) {
                         document.getElementById('backLink').href = `/mcp-copilot/prospect-manager.html?client_id=${currentClientId}`;
                     }
@@ -216,7 +231,6 @@
                 }
             });
 
-            // Auto-generate if client_id is in URL
             if (currentClientId) {
                 generateReport();
             }
@@ -226,10 +240,7 @@
             const clientId = currentClientId || document.getElementById('clientSelect').value;
             const date = document.getElementById('dateInput').value;
 
-            if (!clientId) {
-                alert('Please select a client');
-                return;
-            }
+            if (!clientId) { alert('Please select a client'); return; }
 
             currentClientId = clientId;
             document.getElementById('generateBtn').disabled = true;
@@ -240,8 +251,6 @@
                     <p style="font-size:13px; margin-top:8px; color:#9ca3af;">This takes ~15-20 seconds for 400 calls</p>
                 </div>
             `;
-
-            // Start polling
             pollForReport(clientId, date);
         }
 
@@ -271,41 +280,69 @@
                             </div>
                         `;
                     }
-                } catch (e) {
-                    console.error('Poll error:', e);
-                }
+                } catch (e) { console.error('Poll error:', e); }
             };
 
-            fetchReport(); // immediate first check
+            fetchReport();
             pollTimer = setInterval(fetchReport, 2500);
         }
 
         function renderReport(report) {
             const s = report.summary;
+            const humanCount = s.humanTotal || 0;
+            const machineCount = s.machineTotal || 0;
+            const humanCalls = report.human || [];
+            const machineCalls = report.machine || [];
+
             const html = `
                 <div class="reach-rate">
                     <div class="rate-value">${report.humanReachRate}%</div>
-                    <div class="rate-label">Human Reach Rate &mdash; ${s.actionable + s.not_interested} humans reached out of ${report.totalOutbound} outbound calls</div>
+                    <div class="rate-label">Human Reach Rate &mdash; ${humanCount} humans out of ${report.totalOutbound} outbound calls</div>
                 </div>
 
-                <div class="stats-grid">
-                    <div class="stat-card"><div class="stat-value purple">${report.totalCalls}</div><div class="stat-label">Total Calls</div></div>
-                    <div class="stat-card"><div class="stat-value green">${s.actionable}</div><div class="stat-label">Actionable</div></div>
-                    <div class="stat-card"><div class="stat-value blue">${report.totalOutbound}</div><div class="stat-label">Outbound</div></div>
-                    <div class="stat-card"><div class="stat-value orange">${report.totalInbound}</div><div class="stat-label">Inbound</div></div>
-                    <div class="stat-card"><div class="stat-value gray">${report.totalDurationMinutes}m</div><div class="stat-label">Total Talk</div></div>
-                    <div class="stat-card"><div class="stat-value gray">${report.avgDurationSeconds}s</div><div class="stat-label">Avg Duration</div></div>
+                <div class="hero-stats">
+                    <div class="hero-card human">
+                        <div class="hero-number">${humanCount}</div>
+                        <div class="hero-label">Human Calls</div>
+                        <div class="hero-detail">${s.actionable} actionable &bull; ${s.not_interested} not interested</div>
+                        <div class="hero-icon">&#128100;</div>
+                    </div>
+                    <div class="hero-card machine">
+                        <div class="hero-number">${machineCount}</div>
+                        <div class="hero-label">Machine Calls</div>
+                        <div class="hero-detail">${report.machineMinutes || 0} min wasted &bull; ${s.ivr_trap} IVR traps</div>
+                        <div class="hero-icon">&#129302;</div>
+                    </div>
                 </div>
 
-                ${renderCategory('SMS Sent to Lead', report.categories.sms_sent, 'badge-red', 'Follow up today — they received info and are warm', true)}
-                ${renderCategory('Transferred to Human', report.categories.transferred, 'badge-orange', 'Verify your team connected and check outcome', true)}
-                ${renderCategory('Callback Requested', report.categories.callback_requested, 'badge-orange', 'Call these people back today', true)}
-                ${renderCategory('Engaged Humans (60s+)', report.categories.engaged_humans, 'badge-blue', 'Review for follow-up opportunities', true)}
-                ${renderCategory('Not Interested', report.categories.not_interested, 'badge-gray', 'Consider removing from call list', false)}
-                ${renderCategory('IVR Trap', report.categories.ivr_trap, 'badge-purple', 'Exclude from future calls — wasted minutes in automated menus', false)}
-                ${renderCategory('Voicemail', report.categories.voicemail, 'badge-gray', 'No human reached', false)}
-                ${renderCategory('Brief (10-30s)', report.categories.brief, 'badge-gray', 'Too short for meaningful conversation', false)}
-                ${renderCategory('No Engagement (<10s)', report.categories.no_engagement, 'badge-gray', 'Hangups and dead lines', false)}
+                <div class="stats-row">
+                    <div class="stat-mini"><div class="val purple">${report.totalCalls}</div><div class="lbl">Total Calls</div></div>
+                    <div class="stat-mini"><div class="val blue">${report.totalOutbound}</div><div class="lbl">Outbound</div></div>
+                    <div class="stat-mini"><div class="val orange">${report.totalInbound}</div><div class="lbl">Inbound</div></div>
+                    <div class="stat-mini"><div class="val green">${s.sms_sent}</div><div class="lbl">SMS Sent</div></div>
+                    <div class="stat-mini"><div class="val green">${s.transferred}</div><div class="lbl">Transferred</div></div>
+                    <div class="stat-mini"><div class="val green">${s.callback_requested}</div><div class="lbl">Callbacks</div></div>
+                    <div class="stat-mini"><div class="val gray">${report.totalDurationMinutes}m</div><div class="lbl">Total Talk</div></div>
+                    <div class="stat-mini"><div class="val gray">${report.avgDurationSeconds}s</div><div class="lbl">Avg Duration</div></div>
+                </div>
+
+                <div class="group-section">
+                    <div class="group-header">
+                        <h2>Human Calls</h2>
+                        <span class="group-count human-count">${humanCount}</span>
+                        <span class="group-hint">Calls where a human answered &mdash; review and follow up</span>
+                    </div>
+                    ${renderCallList(humanCalls, 'human')}
+                </div>
+
+                <div class="group-section">
+                    <div class="group-header">
+                        <h2>Machine Calls</h2>
+                        <span class="group-count machine-count">${machineCount}</span>
+                        <span class="group-hint">Voicemail, IVR, automated systems &mdash; no human reached</span>
+                    </div>
+                    ${renderCallList(machineCalls, 'machine')}
+                </div>
 
                 <p style="text-align:center; color:#9ca3af; font-size:12px; margin-top:24px;">
                     Report generated at ${new Date(report.generatedAt).toLocaleString('en-US', { timeZone: 'America/New_York' })} EST
@@ -315,42 +352,59 @@
             document.getElementById('content').innerHTML = html;
         }
 
-        function renderCategory(title, calls, badgeClass, actionText, defaultOpen) {
-            if (!calls) calls = [];
-            const openClass = defaultOpen && calls.length > 0 ? 'open' : '';
-            const callsHtml = calls.length === 0
-                ? '<div class="empty-state">No calls in this category</div>'
-                : calls.map(c => renderCallItem(c)).join('');
+        function renderCallList(calls, group) {
+            if (!calls || calls.length === 0) {
+                return '<div class="call-list"><div class="empty-state">No calls in this group</div></div>';
+            }
 
-            return `
-                <div class="category ${openClass}">
-                    <div class="category-header" onclick="this.parentElement.classList.toggle('open')">
-                        <div class="category-title">
-                            <span class="category-badge ${badgeClass}">${calls.length}</span>
-                            ${title}
-                        </div>
-                        <span class="category-action">${actionText}</span>
-                        <span class="category-toggle">&#9660;</span>
-                    </div>
-                    <div class="category-body">${callsHtml}</div>
-                </div>
-            `;
+            const INITIAL_SHOW = group === 'human' ? 50 : 10;
+            const listId = group + '-list';
+            const items = calls.map((c, i) => renderCallItem(c, i >= INITIAL_SHOW)).join('');
+
+            let showMore = '';
+            if (calls.length > INITIAL_SHOW) {
+                showMore = `<button class="show-more-btn" id="${listId}-btn" onclick="showAll('${listId}', this)">
+                    Show all ${calls.length} calls (${calls.length - INITIAL_SHOW} more)
+                </button>`;
+            }
+
+            return `<div class="call-list" id="${listId}">${items}${showMore}</div>`;
         }
 
-        function renderCallItem(c) {
+        function showAll(listId, btn) {
+            const list = document.getElementById(listId);
+            list.querySelectorAll('.call-item.hidden').forEach(el => el.classList.remove('hidden'));
+            btn.remove();
+        }
+
+        const subcatTagClass = {
+            'SMS Sent': 'tag-sms',
+            'Transferred': 'tag-transferred',
+            'Callback': 'tag-callback',
+            'Engaged': 'tag-engaged',
+            'Not Interested': 'tag-notinterested',
+            'Voicemail': 'tag-voicemail',
+            'IVR Trap': 'tag-ivr',
+            'Brief': 'tag-brief',
+            'No Engagement': 'tag-noeng'
+        };
+
+        function renderCallItem(c, hidden) {
             const time = new Date(c.startTime).toLocaleTimeString('en-US', {
                 timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit'
             });
-            const dur = c.duration < 60 ? c.duration + 's' : Math.floor(c.duration / 60) + 'm' + (c.duration % 60 > 0 ? c.duration % 60 + 's' : '');
+            const dur = c.duration < 60
+                ? c.duration + 's'
+                : Math.floor(c.duration / 60) + 'm' + (c.duration % 60 > 0 ? c.duration % 60 + 's' : '');
             const dirTag = c.direction === 'inbound'
                 ? '<span class="tag-inbound">Inbound</span>'
                 : '<span class="tag-outbound">Outbound</span>';
-            const tools = c.toolNames && c.toolNames.length > 0
-                ? '<span>' + c.toolNames.join(', ') + '</span>'
+            const subTag = c.subcategory
+                ? `<span class="tag-sub ${subcatTagClass[c.subcategory] || ''}">${c.subcategory}</span>`
                 : '';
 
             return `
-                <div class="call-item">
+                <div class="call-item${hidden ? ' hidden' : ''}" style="${hidden ? 'display:none;' : ''}">
                     <div class="call-phone">
                         <a href="tel:${c.phone}">${c.phone}</a>
                         <button class="copy-btn" onclick="copyPhone('${c.phone}')" title="Copy">&#128203;</button>
@@ -358,10 +412,10 @@
                     <div class="call-details">
                         ${c.businessName ? '<div class="call-business">' + escapeHtml(c.businessName) + '</div>' : ''}
                         <div class="call-meta">
+                            ${subTag}
                             <span>${time}</span>
                             <span>${dur}</span>
                             ${dirTag}
-                            ${tools}
                         </div>
                         <div class="call-summary">${escapeHtml(c.summary)}</div>
                     </div>
@@ -370,9 +424,7 @@
         }
 
         function copyPhone(phone) {
-            navigator.clipboard.writeText(phone).then(() => {
-                // Brief visual feedback - could enhance later
-            }).catch(() => {});
+            navigator.clipboard.writeText(phone).then(() => {}).catch(() => {});
         }
 
         function escapeHtml(str) {
