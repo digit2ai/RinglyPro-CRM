@@ -177,6 +177,71 @@ router.get('/clients', requireApiKey, async (req, res) => {
     }
 });
 
+/**
+ * POST /api/call-report/exclude
+ * Add a phone number to the blocklist
+ * Body: { client_id, phone_number, reason }
+ */
+router.post('/exclude', requireApiKey, async (req, res) => {
+    try {
+        const { client_id, phone_number, reason } = req.body;
+        if (!client_id || !phone_number) {
+            return res.status(400).json({ success: false, error: 'client_id and phone_number are required' });
+        }
+        await sequelize.query(
+            `INSERT INTO phone_blocklist (client_id, phone_number, reason)
+             VALUES ($1, $2, $3)
+             ON CONFLICT (client_id, phone_number) DO NOTHING`,
+            { bind: [parseInt(client_id), phone_number, reason || 'machine'] }
+        );
+        res.json({ success: true, message: `${phone_number} excluded` });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+/**
+ * DELETE /api/call-report/exclude
+ * Remove a phone number from the blocklist
+ * Body: { client_id, phone_number }
+ */
+router.delete('/exclude', requireApiKey, async (req, res) => {
+    try {
+        const { client_id, phone_number } = req.body;
+        if (!client_id || !phone_number) {
+            return res.status(400).json({ success: false, error: 'client_id and phone_number are required' });
+        }
+        await sequelize.query(
+            'DELETE FROM phone_blocklist WHERE client_id = $1 AND phone_number = $2',
+            { bind: [parseInt(client_id), phone_number] }
+        );
+        res.json({ success: true, message: `${phone_number} removed from blocklist` });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+/**
+ * GET /api/call-report/excluded
+ * List all excluded numbers for a client
+ * Query: client_id
+ */
+router.get('/excluded', requireApiKey, async (req, res) => {
+    try {
+        const { client_id } = req.query;
+        if (!client_id) {
+            return res.status(400).json({ success: false, error: 'client_id is required' });
+        }
+        const numbers = await sequelize.query(
+            'SELECT phone_number, reason, created_at FROM phone_blocklist WHERE client_id = $1 ORDER BY created_at DESC',
+            { bind: [parseInt(client_id)], type: QueryTypes.SELECT }
+        );
+        res.json({ success: true, count: numbers.length, numbers });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // Cache cleanup: clear today's stale entries every 30 minutes
 setInterval(() => {
     const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });

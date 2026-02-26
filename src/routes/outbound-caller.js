@@ -325,6 +325,50 @@ router.post('/voice', async (req, res) => {
 });
 
 /**
+ * POST /api/outbound-caller/voice-elevenlabs
+ * Twilio voice webhook for AMD + ElevenLabs calls.
+ * If human answered, connects via WebSocket stream to ElevenLabs.
+ * If machine, hangs up immediately.
+ */
+router.post('/voice-elevenlabs', (req, res) => {
+  try {
+    const { AnsweredBy } = req.body;
+    const agentId = req.query.agentId;
+    const baseUrl = process.env.BASE_URL || process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com';
+    const wsUrl = baseUrl.replace('https://', 'wss://').replace('http://', 'ws://');
+
+    logger.info(`🛡️ Voice-ElevenLabs webhook: AnsweredBy=${AnsweredBy || 'unknown'}, agentId=${agentId}`);
+
+    const twilio = require('twilio');
+    const twiml = new twilio.twiml.VoiceResponse();
+
+    if (AnsweredBy && AnsweredBy !== 'human') {
+      // Machine detected - hang up immediately, save ElevenLabs minutes
+      logger.info(`🤖 Machine detected (${AnsweredBy}) - hanging up`);
+      twiml.hangup();
+    } else {
+      // Human detected or unknown - connect to ElevenLabs via WebSocket stream
+      logger.info(`👤 Human detected - connecting to ElevenLabs agent ${agentId}`);
+      const connect = twiml.connect();
+      connect.stream({
+        url: `${wsUrl}/media-stream?agentId=${encodeURIComponent(agentId)}`
+      });
+    }
+
+    res.type('text/xml');
+    res.send(twiml.toString());
+
+  } catch (error) {
+    logger.error('Error in voice-elevenlabs webhook:', error);
+    const twilio = require('twilio');
+    const twiml = new twilio.twiml.VoiceResponse();
+    twiml.hangup();
+    res.type('text/xml');
+    res.send(twiml.toString());
+  }
+});
+
+/**
  * POST /api/outbound-caller/gather
  * Handle user input (pressed digits)
  */

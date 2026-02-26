@@ -124,6 +124,25 @@ async function startServer() {
           console.log('   Store Health AI will run in fallback mode with mock data');
         }
 
+        // AUTO-MIGRATE PHONE BLOCKLIST TABLE
+        console.log('🔄 Running phone blocklist migration...');
+        try {
+          await queryWithTimeout(
+            `CREATE TABLE IF NOT EXISTS phone_blocklist (
+              id SERIAL PRIMARY KEY,
+              client_id INTEGER NOT NULL,
+              phone_number VARCHAR(20) NOT NULL,
+              reason VARCHAR(50) DEFAULT 'machine',
+              created_at TIMESTAMP DEFAULT NOW(),
+              UNIQUE(client_id, phone_number)
+            )`,
+            'phone_blocklist migration'
+          );
+          console.log('✅ phone_blocklist table ready');
+        } catch (error) {
+          console.log('⚠️ phone_blocklist migration skipped:', error.message);
+        }
+
         console.log('✅ All migrations complete, ready to start server');
       } else {
         console.log('⚠️ No DATABASE_URL provided, running without database');
@@ -165,6 +184,121 @@ async function startServer() {
         console.log('✅ Twilio Voice Bot CRM is ready! (Memory mode)');
       }
     });
+
+    // WebSocket relay: Twilio <Stream> ↔ ElevenLabs ConvAI
+    try {
+      const WebSocket = require('ws');
+      const wss = new WebSocket.Server({ server, path: '/media-stream' });
+
+      wss.on('connection', (twilioWs, req) => {
+        const params = new URL(req.url, 'http://localhost').searchParams;
+        const agentId = params.get('agentId');
+        const apiKey = process.env.ELEVENLABS_API_KEY;
+
+        if (!agentId || !apiKey) {
+          console.error('❌ Media stream: missing agentId or ELEVENLABS_API_KEY');
+          twilioWs.close();
+          return;
+        }
+
+        console.log(`🔗 Media stream connected for agent ${agentId}`);
+        let elevenLabsWs = null;
+        let streamSid = null;
+
+        twilioWs.on('message', (data) => {
+          try {
+            const msg = JSON.parse(data);
+
+            if (msg.event === 'start') {
+              streamSid = msg.start.streamSid;
+              console.log(`🎙️ Twilio stream started: ${streamSid}`);
+
+              // Connect to ElevenLabs ConvAI WebSocket
+              const elUrl = `wss://api.elevenlabs.io/v1/convai/conversation?agent_id=${agentId}`;
+              elevenLabsWs = new WebSocket(elUrl);
+
+              elevenLabsWs.on('open', () => {
+                console.log(`✅ Connected to ElevenLabs agent ${agentId}`);
+                // Send initialization with audio config for Twilio's mulaw 8kHz
+                elevenLabsWs.send(JSON.stringify({
+                  type: 'conversation_initiation_client_data',
+                  conversation_config_override: {
+                    agent: { prompt: { prompt: '' } }, // Use agent's default prompt
+                    tts: { encoding: 'ulaw_8000' }
+                  },
+                  custom_llm_extra_body: {},
+                  dynamic_variables: {}
+                }));
+              });
+
+              elevenLabsWs.on('message', (elData) => {
+                try {
+                  const elMsg = JSON.parse(elData);
+                  if (elMsg.type === 'audio' && elMsg.audio?.chunk) {
+                    // Send ElevenLabs audio back to Twilio
+                    if (twilioWs.readyState === WebSocket.OPEN) {
+                      twilioWs.send(JSON.stringify({
+                        event: 'media',
+                        streamSid: streamSid,
+                        media: { payload: elMsg.audio.chunk }
+                      }));
+                    }
+                  }
+                } catch (e) {
+                  // Non-JSON or non-audio message, ignore
+                }
+              });
+
+              elevenLabsWs.on('close', () => {
+                console.log(`🔌 ElevenLabs WS closed for ${agentId}`);
+                if (twilioWs.readyState === WebSocket.OPEN) {
+                  twilioWs.close();
+                }
+              });
+
+              elevenLabsWs.on('error', (err) => {
+                console.error(`❌ ElevenLabs WS error: ${err.message}`);
+                if (twilioWs.readyState === WebSocket.OPEN) {
+                  twilioWs.close();
+                }
+              });
+
+            } else if (msg.event === 'media' && elevenLabsWs && elevenLabsWs.readyState === WebSocket.OPEN) {
+              // Forward Twilio audio to ElevenLabs
+              elevenLabsWs.send(JSON.stringify({
+                user_audio_chunk: msg.media.payload
+              }));
+
+            } else if (msg.event === 'stop') {
+              console.log(`🛑 Twilio stream stopped: ${streamSid}`);
+              if (elevenLabsWs && elevenLabsWs.readyState === WebSocket.OPEN) {
+                elevenLabsWs.close();
+              }
+            }
+          } catch (e) {
+            // Ignore parse errors
+          }
+        });
+
+        twilioWs.on('close', () => {
+          console.log(`🔌 Twilio stream closed: ${streamSid || 'unknown'}`);
+          if (elevenLabsWs && elevenLabsWs.readyState === WebSocket.OPEN) {
+            elevenLabsWs.close();
+          }
+        });
+
+        twilioWs.on('error', (err) => {
+          console.error(`❌ Twilio WS error: ${err.message}`);
+          if (elevenLabsWs && elevenLabsWs.readyState === WebSocket.OPEN) {
+            elevenLabsWs.close();
+          }
+        });
+      });
+
+      console.log('✅ WebSocket relay server ready at /media-stream');
+    } catch (error) {
+      console.log('⚠️ WebSocket relay setup skipped:', error.message);
+    }
 
     // Graceful shutdown handlers
     const gracefulShutdown = async (signal) => {

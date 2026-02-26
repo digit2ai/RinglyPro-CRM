@@ -152,6 +152,14 @@
         .call-business { font-weight: 600; color: #1a1a2e; font-size: 13px; margin-bottom: 2px; }
         .call-details { flex: 1; min-width: 0; }
 
+        .exclude-btn {
+            padding: 4px 10px; border: 1px solid #ef4444; border-radius: 6px; background: white;
+            color: #ef4444; font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap;
+            transition: all 0.15s;
+        }
+        .exclude-btn:hover { background: #ef4444; color: white; }
+        .exclude-btn.excluded { background: #d1d5db; border-color: #d1d5db; color: #6b7280; cursor: default; }
+
         .empty-state { padding: 32px 20px; text-align: center; color: #9ca3af; font-size: 14px; }
 
         .reach-rate {
@@ -364,7 +372,7 @@
                         <span class="group-count machine-count">${machineCount}</span>
                         <span class="group-hint">Voicemail, IVR, automated systems &mdash; no human reached</span>
                     </div>
-                    ${renderCallList(machineCalls, 'machine')}
+                    ${renderCallList(machineCalls, 'machine', true)}
                 </div>
 
                 <p style="text-align:center; color:#9ca3af; font-size:12px; margin-top:24px;">
@@ -407,14 +415,14 @@
                 </div>`;
         }
 
-        function renderCallList(calls, group) {
+        function renderCallList(calls, group, showExclude = false) {
             if (!calls || calls.length === 0) {
                 return '<div class="call-list"><div class="empty-state">No calls in this group</div></div>';
             }
 
             const INITIAL_SHOW = 10;
             const listId = group + '-list';
-            const items = calls.map((c, i) => renderCallItem(c, i >= INITIAL_SHOW)).join('');
+            const items = calls.map((c, i) => renderCallItem(c, i >= INITIAL_SHOW, showExclude)).join('');
 
             let showMore = '';
             if (calls.length > INITIAL_SHOW) {
@@ -445,7 +453,7 @@
             'No Engagement': 'tag-noeng'
         };
 
-        function renderCallItem(c, hidden) {
+        function renderCallItem(c, hidden, showExclude = false) {
             const time = new Date(c.startTime).toLocaleTimeString('en-US', {
                 timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit'
             });
@@ -457,6 +465,9 @@
                 : '<span class="tag-outbound">Outbound</span>';
             const subTag = c.subcategory
                 ? `<span class="tag-sub ${subcatTagClass[c.subcategory] || ''}">${c.subcategory}</span>`
+                : '';
+            const excludeBtn = showExclude && c.phone && c.phone !== 'Unknown'
+                ? `<button class="exclude-btn" id="excl-${c.phone.replace(/[^0-9]/g, '')}" onclick="excludeNumber('${c.phone}', this)">Exclude</button>`
                 : '';
 
             return `
@@ -475,8 +486,32 @@
                         </div>
                         <div class="call-summary">${escapeHtml(c.summary)}</div>
                     </div>
+                    ${excludeBtn}
                 </div>
             `;
+        }
+
+        async function excludeNumber(phone, btn) {
+            const clientId = currentClientId || document.getElementById('clientSelect').value;
+            if (!clientId) return;
+            btn.disabled = true;
+            btn.textContent = '...';
+            try {
+                const resp = await fetch(`/api/call-report/exclude?apiKey=${API_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ client_id: clientId, phone_number: phone, reason: 'machine' })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    btn.textContent = 'Excluded';
+                    btn.classList.add('excluded');
+                } else {
+                    btn.textContent = 'Error';
+                }
+            } catch (e) {
+                btn.textContent = 'Error';
+            }
         }
 
         function copyPhone(phone) {

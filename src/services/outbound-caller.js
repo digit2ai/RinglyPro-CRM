@@ -162,6 +162,23 @@ class OutboundCallerService {
       };
     }
 
+    // Check blocklist before calling
+    if (clientId) {
+      try {
+        const [blocked] = await sequelize.query(
+          'SELECT id FROM phone_blocklist WHERE client_id = :clientId AND phone_number = :phone LIMIT 1',
+          { replacements: { clientId, phone: validation.normalized }, type: QueryTypes.SELECT }
+        );
+        if (blocked) {
+          logger.info(`🚫 Skipping blocked number ${validation.normalized} for client ${clientId}`);
+          return { success: false, error: 'Number is on blocklist', phone: validation.normalized, blocked: true };
+        }
+      } catch (error) {
+        // Table may not exist yet, continue with call
+        logger.warn(`Blocklist check failed: ${error.message}`);
+      }
+    }
+
     // Check if client uses ElevenLabs for outbound calls
     if (clientId) {
       try {
@@ -174,10 +191,18 @@ class OutboundCallerService {
         );
 
         if (clientData && clientData.use_elevenlabs_outbound && clientData.elevenlabs_agent_id) {
-          logger.info(`📞 Client ${clientId} uses ElevenLabs outbound - initiating AI call`);
-          // Use ElevenLabs phone number ID if available, otherwise fall back to ringlypro_number
+          logger.info(`📞 Client ${clientId} uses ElevenLabs outbound - initiating AI call with AMD`);
+          const fromNumber = clientData.ringlypro_number;
+          const agentId = clientData.elevenlabs_agent_id;
+
+          // Use AMD pre-screening if Twilio is configured
+          if (this.twilioClient && fromNumber) {
+            return await this.makeElevenLabsCallWithAMD(validation.normalized, agentId, fromNumber, leadData);
+          }
+
+          // Fallback to direct ElevenLabs call (no AMD)
           const phoneNumberId = clientData.elevenlabs_phone_number_id || clientData.ringlypro_number;
-          return await this.makeElevenLabsCall(validation.normalized, clientData.elevenlabs_agent_id, phoneNumberId, leadData);
+          return await this.makeElevenLabsCall(validation.normalized, agentId, phoneNumberId, leadData);
         }
       } catch (error) {
         logger.error(`Error checking ElevenLabs config for client ${clientId}:`, error.message);
@@ -353,6 +378,55 @@ class OutboundCallerService {
         phone: phoneNumber,
         provider: 'elevenlabs'
       };
+    }
+  }
+
+  /**
+   * Make an ElevenLabs call with Twilio AMD pre-screening.
+   * Uses Twilio to dial, AMD detects machine/human, only connects to ElevenLabs if human.
+   */
+  async makeElevenLabsCallWithAMD(phoneNumber, agentId, fromNumber, leadData = {}) {
+    try {
+      const baseUrl = process.env.BASE_URL || process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com';
+      logger.info(`🛡️ AMD+ElevenLabs call to ${phoneNumber} (agent: ${agentId})`);
+
+      const call = await this.twilioClient.calls.create({
+        to: phoneNumber,
+        from: fromNumber,
+        url: `${baseUrl}/api/outbound-caller/voice-elevenlabs?agentId=${encodeURIComponent(agentId)}`,
+        statusCallback: `${baseUrl}/api/outbound-caller/call-status`,
+        statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
+        machineDetection: 'Enable',
+        machineDetectionTimeout: 5000,
+        record: false
+      });
+
+      logger.info(`✅ AMD call initiated: ${call.sid} to ${phoneNumber}`);
+
+      this.callLogs.push({
+        callSid: call.sid,
+        phone: phoneNumber,
+        leadData,
+        status: 'initiated',
+        timestamp: new Date(),
+        direction: 'outbound',
+        provider: 'elevenlabs-amd'
+      });
+
+      return {
+        success: true,
+        callSid: call.sid,
+        phone: phoneNumber,
+        status: 'initiated',
+        provider: 'elevenlabs-amd'
+      };
+
+    } catch (error) {
+      logger.error(`❌ AMD+ElevenLabs call error: ${error.message}`);
+
+      // Fallback to direct ElevenLabs call (no AMD)
+      logger.info(`↩️ Falling back to direct ElevenLabs call for ${phoneNumber}`);
+      return await this.makeElevenLabsCall(phoneNumber, agentId, fromNumber, leadData);
     }
   }
 
