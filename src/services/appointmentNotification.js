@@ -5,11 +5,19 @@
  */
 
 const twilio = require('twilio');
+const axios = require('axios');
+const { Sequelize, QueryTypes } = require('sequelize');
 
 const twilioClient = twilio(
     process.env.TWILIO_ACCOUNT_SID,
     process.env.TWILIO_AUTH_TOKEN
 );
+
+const sequelize = new Sequelize(process.env.CRM_DATABASE_URL || process.env.DATABASE_URL, {
+    dialect: 'postgres',
+    dialectOptions: { ssl: { require: true, rejectUnauthorized: false } },
+    logging: false
+});
 
 /**
  * Send appointment confirmation SMS
@@ -170,16 +178,29 @@ async function sendWelcomeSMS({
             `Questions? Reply to this message.`;
 
         console.log(`📱 Sending welcome SMS to ${ownerPhone}`);
-        console.log(`📝 Message: ${message}`);
 
+        // Send via GHL (A2P verified) using system client
+        const ghlResult = await sendSmsViaGhl({
+            toPhone: ownerPhone,
+            message,
+            customerName: ownerName
+        });
+
+        if (ghlResult.success) {
+            console.log(`✅ Welcome SMS sent via GHL! messageId: ${ghlResult.message_id}`);
+            return ghlResult;
+        }
+
+        // Fallback to Twilio if GHL fails
+        console.log(`⚠️ GHL SMS failed, falling back to Twilio`);
         const smsResponse = await twilioClient.messages.create({
             body: message,
-            from: ringlyproNumber,  // Send from their new RinglyPro number
+            from: ringlyproNumber,
             to: ownerPhone
         });
 
-        console.log(`✅ Welcome SMS sent successfully! SID: ${smsResponse.sid}`);
-        return { success: true, messageSid: smsResponse.sid };
+        console.log(`✅ Welcome SMS sent via Twilio fallback! SID: ${smsResponse.sid}`);
+        return { success: true, provider: 'twilio', messageSid: smsResponse.sid };
 
     } catch (error) {
         console.error('❌ Error sending welcome SMS:', error);
@@ -192,6 +213,137 @@ async function sendWelcomeSMS({
             error: error.message,
             code: error.code
         };
+    }
+}
+
+/**
+ * Send SMS via GoHighLevel (A2P 10DLC verified delivery)
+ * Uses the system client (client 15) GHL integration
+ */
+async function sendSmsViaGhl({ toPhone, message, customerName }) {
+    try {
+        const systemClientId = process.env.RINGLYPRO_SYSTEM_CLIENT_ID || 15;
+
+        // Get GHL credentials from system client
+        const clients = await sequelize.query(`
+            SELECT c.business_name,
+                   c.settings->'integration'->'ghl' as ghl_settings,
+                   g.access_token as oauth_token,
+                   g.ghl_location_id as oauth_location_id
+            FROM clients c
+            LEFT JOIN ghl_integrations g ON g.client_id = c.id AND g.is_active = true
+            WHERE c.id = :clientId
+        `, { replacements: { clientId: systemClientId }, type: QueryTypes.SELECT });
+
+        if (!clients || clients.length === 0) {
+            return { success: false, error: 'System client not found' };
+        }
+
+        const ghlSettings = clients[0].ghl_settings;
+        const oauthToken = clients[0].oauth_token;
+        const oauthLocationId = clients[0].oauth_location_id;
+
+        const ghlApiKey = (ghlSettings?.enabled && ghlSettings?.apiKey) ? ghlSettings.apiKey : oauthToken;
+        const ghlLocationId = oauthLocationId || ghlSettings?.locationId;
+
+        if (!ghlApiKey || !ghlLocationId) {
+            return { success: false, error: 'No GHL integration on system client' };
+        }
+
+        // Normalize phone
+        let normalizedPhone = toPhone.replace(/[^\d+]/g, '');
+        if (!normalizedPhone.startsWith('+')) {
+            normalizedPhone = '+' + normalizedPhone;
+        }
+
+        const ghlBaseUrl = 'https://services.leadconnectorhq.com';
+        const ghlHeaders = {
+            'Authorization': `Bearer ${ghlApiKey}`,
+            'Version': '2021-07-28',
+            'Content-Type': 'application/json'
+        };
+
+        // Find or create contact
+        let contactId;
+        let contactData;
+        try {
+            const searchResp = await axios.get(
+                `${ghlBaseUrl}/contacts/search/duplicate`,
+                {
+                    params: { locationId: ghlLocationId, number: normalizedPhone },
+                    headers: ghlHeaders,
+                    timeout: 10000
+                }
+            );
+            contactId = searchResp.data?.contact?.id;
+            contactData = searchResp.data?.contact;
+        } catch (searchErr) {
+            console.warn(`[WelcomeSMS] GHL contact search failed:`, searchErr.response?.data || searchErr.message);
+        }
+
+        if (!contactId) {
+            const createResp = await axios.post(
+                `${ghlBaseUrl}/contacts/`,
+                {
+                    locationId: ghlLocationId,
+                    phone: normalizedPhone,
+                    name: customerName || 'New Client',
+                    source: 'RinglyPro AI'
+                },
+                { headers: ghlHeaders, timeout: 10000 }
+            );
+            contactId = createResp.data?.contact?.id;
+            contactData = createResp.data?.contact;
+        }
+
+        if (!contactId) {
+            return { success: false, error: 'Could not get GHL contactId' };
+        }
+
+        // Clear DND if active
+        const smsDnd = contactData?.dndSettings?.SMS;
+        if (smsDnd && smsDnd.status === 'active') {
+            try {
+                await axios.put(
+                    `${ghlBaseUrl}/contacts/${contactId}`,
+                    {
+                        dnd: false,
+                        dndSettings: {
+                            SMS: { status: 'inactive', message: '' },
+                            Call: { status: 'inactive', message: '' }
+                        }
+                    },
+                    { headers: ghlHeaders, timeout: 10000 }
+                );
+            } catch (dndErr) {
+                console.warn(`[WelcomeSMS] Failed to clear DND:`, dndErr.response?.data || dndErr.message);
+            }
+        }
+
+        // Send SMS
+        const smsResp = await axios.post(
+            `${ghlBaseUrl}/conversations/messages`,
+            {
+                type: 'SMS',
+                contactId: contactId,
+                message: message
+            },
+            { headers: ghlHeaders, timeout: 15000 }
+        );
+
+        console.log(`[WelcomeSMS] GHL SMS sent to ${normalizedPhone}, messageId: ${smsResp.data?.messageId || smsResp.data?.id}`);
+
+        return {
+            success: true,
+            provider: 'ghl',
+            message_id: smsResp.data?.messageId || smsResp.data?.id,
+            contact_id: contactId,
+            to: normalizedPhone
+        };
+
+    } catch (error) {
+        console.error('[WelcomeSMS] GHL SMS error:', error.response?.data || error.message);
+        return { success: false, error: error.message };
     }
 }
 
