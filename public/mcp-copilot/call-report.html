@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Call Report - RinglyPro</title>
-    <link rel="icon" type="image/png" href="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png">
+    <link rel="icon" type="image/png" href="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68e1d01be1be509a4f79755b.png">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; color: #1a1a2e; min-height: 100vh; }
@@ -366,13 +366,14 @@
                     ${renderCollapsible('Outbound', humanCalls.filter(c => c.direction !== 'inbound'), '#10b981', 'Humans reached by your AI caller', false, 'human-outbound')}
                 </div>
 
-                <div class="group-section">
-                    <div class="group-header">
-                        <h2>Machine Calls</h2>
-                        <span class="group-count machine-count">${machineCount}</span>
-                        <span class="group-hint">Voicemail, IVR, automated systems &mdash; no human reached</span>
+                <div class="collapsible">
+                    <div class="collapsible-header" onclick="this.parentElement.classList.toggle('open')">
+                        <span class="collapsible-badge" style="background:#6b7280">${machineCount}</span>
+                        <span class="collapsible-title">Machine Calls</span>
+                        <span class="collapsible-hint">Voicemail, IVR, automated systems &mdash; ${report.machineMinutes || 0} min wasted</span>
+                        <span class="collapsible-toggle">&#9660;</span>
                     </div>
-                    ${renderCallList(machineCalls, 'machine', true)}
+                    <div class="collapsible-body">${renderMachineBody(machineCalls)}</div>
                 </div>
 
                 <p style="text-align:center; color:#9ca3af; font-size:12px; margin-top:24px;">
@@ -413,6 +414,19 @@
                     </div>
                     <div class="collapsible-body" id="${listId}">${items}${showMore}</div>
                 </div>`;
+        }
+
+        function renderMachineBody(calls) {
+            if (!calls || calls.length === 0) return '<div class="empty-state">No machine calls</div>';
+            const INITIAL_SHOW = 10;
+            const items = calls.map((c, i) => renderCallItem(c, i >= INITIAL_SHOW, true)).join('');
+            let showMore = '';
+            if (calls.length > INITIAL_SHOW) {
+                showMore = `<button class="show-more-btn" id="machine-list-btn" onclick="showAll('machine-body', this)">
+                    Show all ${calls.length} calls (${calls.length - INITIAL_SHOW} more)
+                </button>`;
+            }
+            return `<div id="machine-body">${items}${showMore}</div>`;
         }
 
         function renderCallList(calls, group, showExclude = false) {
