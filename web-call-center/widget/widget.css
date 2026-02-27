@@ -1,0 +1,268 @@
+/* Web Call Center - Embeddable Widget Styles */
+/* All styles scoped under #wcc-widget to avoid conflicts */
+
+#wcc-widget {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+
+#wcc-widget *,
+#wcc-widget *::before,
+#wcc-widget *::after {
+  box-sizing: border-box;
+}
+
+/* Floating trigger button */
+#wcc-widget .wcc-trigger {
+  position: fixed;
+  z-index: 99999;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+#wcc-widget .wcc-trigger:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+#wcc-widget .wcc-trigger.bottom-right {
+  bottom: 24px;
+  right: 24px;
+}
+
+#wcc-widget .wcc-trigger.bottom-left {
+  bottom: 24px;
+  left: 24px;
+}
+
+#wcc-widget .wcc-trigger svg {
+  width: 28px;
+  height: 28px;
+  fill: white;
+}
+
+/* Pulse animation for active call */
+#wcc-widget .wcc-trigger.wcc-active {
+  animation: wcc-pulse 1.5s infinite;
+}
+
+@keyframes wcc-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4); }
+  70% { box-shadow: 0 0 0 15px rgba(79, 70, 229, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+}
+
+/* Chat/transcript panel */
+#wcc-widget .wcc-panel {
+  position: fixed;
+  z-index: 99998;
+  width: 360px;
+  max-height: 500px;
+  border-radius: 16px;
+  background: white;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: translateY(20px) scale(0.95);
+  transition: opacity 0.3s, transform 0.3s;
+  pointer-events: none;
+}
+
+#wcc-widget .wcc-panel.wcc-open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+#wcc-widget .wcc-panel.bottom-right {
+  bottom: 96px;
+  right: 24px;
+}
+
+#wcc-widget .wcc-panel.bottom-left {
+  bottom: 96px;
+  left: 24px;
+}
+
+/* Panel header */
+#wcc-widget .wcc-header {
+  padding: 16px 20px;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#wcc-widget .wcc-header-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+#wcc-widget .wcc-header-status {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+#wcc-widget .wcc-close {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#wcc-widget .wcc-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Transcript area */
+#wcc-widget .wcc-transcript {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  max-height: 320px;
+  min-height: 120px;
+}
+
+#wcc-widget .wcc-message {
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+#wcc-widget .wcc-message.agent {
+  align-items: flex-start;
+}
+
+#wcc-widget .wcc-message.user {
+  align-items: flex-end;
+}
+
+#wcc-widget .wcc-bubble {
+  max-width: 85%;
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+#wcc-widget .wcc-message.agent .wcc-bubble {
+  background: #f3f4f6;
+  color: #1f2937;
+  border-bottom-left-radius: 4px;
+}
+
+#wcc-widget .wcc-message.user .wcc-bubble {
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+/* Controls area */
+#wcc-widget .wcc-controls {
+  padding: 12px 20px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+#wcc-widget .wcc-mic-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+#wcc-widget .wcc-mic-btn svg {
+  width: 24px;
+  height: 24px;
+  fill: white;
+}
+
+#wcc-widget .wcc-mic-btn.wcc-end {
+  background: #ef4444;
+}
+
+#wcc-widget .wcc-mic-btn.wcc-end:hover {
+  background: #dc2626;
+}
+
+#wcc-widget .wcc-status-text {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* Greeting state */
+#wcc-widget .wcc-greeting {
+  padding: 24px 20px;
+  text-align: center;
+}
+
+#wcc-widget .wcc-greeting p {
+  color: #4b5563;
+  margin: 0 0 16px;
+}
+
+#wcc-widget .wcc-start-btn {
+  border: none;
+  color: white;
+  padding: 10px 24px;
+  border-radius: 24px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+#wcc-widget .wcc-start-btn:hover {
+  opacity: 0.9;
+}
+
+#wcc-widget .wcc-start-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 420px) {
+  #wcc-widget .wcc-panel {
+    width: calc(100vw - 32px);
+    right: 16px !important;
+    left: 16px !important;
+    bottom: 88px !important;
+  }
+
+  #wcc-widget .wcc-trigger {
+    bottom: 16px !important;
+  }
+
+  #wcc-widget .wcc-trigger.bottom-right {
+    right: 16px;
+  }
+
+  #wcc-widget .wcc-trigger.bottom-left {
+    left: 16px;
+  }
+}

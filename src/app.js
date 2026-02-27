@@ -673,6 +673,32 @@ app.get('/debug/ronin-error', (req, res) => {
 });
 
 // =====================================================
+// WEB CALL CENTER - Browser-Only AI Call Center
+// =====================================================
+
+let wccApp = null;
+let wccError = null;
+try {
+  wccApp = require('../web-call-center/src/index');
+  app.use('/webcallcenter', wccApp);
+  console.log('📞 Web Call Center mounted at /webcallcenter');
+  console.log('   - Dashboard UI: /webcallcenter/');
+  console.log('   - Health Check: /webcallcenter/health');
+  console.log('   - API: /webcallcenter/api/v1/*');
+} catch (error) {
+  wccError = error;
+  console.log('⚠️ Web Call Center not available:', error.message);
+}
+
+app.get('/debug/wcc-error', (req, res) => {
+  res.json({
+    service: 'Web Call Center',
+    available: !wccError,
+    error: wccError ? { message: wccError.message, stack: wccError.stack } : null
+  });
+});
+
+// =====================================================
 // QUICKTASK - Voice-Powered To-Do PWA
 // =====================================================
 
