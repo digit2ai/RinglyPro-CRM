@@ -17,8 +17,12 @@ const logger = require('../utils/logger');
 const { sequelize } = require('../models');
 const { QueryTypes } = require('sequelize');
 const VoiceResponse = require('twilio').twiml.VoiceResponse;
+const axios = require('axios');
+const twilio = require('twilio');
 
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
+
+const FOLLOWUP_SMS_MESSAGE = `Thanks for calling RinglyPro! You can access your AI Receptionist app anytime at https://aiagent.ringlypro.com to manage calls, messages, and bookings and CRM. Thanks again for reaching out - talk to you soon!`;
 
 /**
  * Normalize phone number (handle URL encoding where + becomes space)
@@ -261,6 +265,13 @@ router.post('/post-call-webhook', async (req, res) => {
 
     logger.info(`[ElevenLabs] Post-call webhook: Saved call ${conversationId} for client ${clientId} (${clientData.business_name})`);
 
+    // Send follow-up SMS for inbound calls (fire-and-forget)
+    if (callType !== 'outbound' && phoneNumber && phoneNumber !== 'Unknown') {
+      sendFollowupSms(clientId, phoneNumber, conversationId).catch(err => {
+        logger.error(`[ElevenLabs] Follow-up SMS failed for ${conversationId}:`, err.message);
+      });
+    }
+
     res.status(200).json({
       success: true,
       message: 'Call saved',
@@ -274,6 +285,146 @@ router.post('/post-call-webhook', async (req, res) => {
     res.status(200).json({ success: false, error: error.message });
   }
 });
+
+/**
+ * Send follow-up SMS after an inbound call ends.
+ * Tries GHL first, falls back to Twilio.
+ */
+async function sendFollowupSms(clientId, callerPhone, conversationId) {
+  // Normalize phone
+  let normalizedPhone = callerPhone.replace(/[^\d+]/g, '');
+  if (!normalizedPhone.startsWith('+')) {
+    normalizedPhone = '+' + normalizedPhone;
+  }
+
+  logger.info(`[ElevenLabs] Sending follow-up SMS to ${normalizedPhone} for client ${clientId} (conv: ${conversationId})`);
+
+  // Check if we already sent a follow-up SMS to this number in the last 24 hours
+  const [recentSms] = await sequelize.query(
+    `SELECT id FROM messages
+     WHERE client_id = :clientId AND to_number = :phone AND body LIKE '%Thanks for calling RinglyPro%'
+       AND created_at > NOW() - INTERVAL '24 hours'
+     LIMIT 1`,
+    { replacements: { clientId, phone: normalizedPhone }, type: QueryTypes.SELECT }
+  );
+
+  if (recentSms) {
+    logger.info(`[ElevenLabs] Follow-up SMS already sent to ${normalizedPhone} in last 24h, skipping`);
+    return;
+  }
+
+  // Get client GHL credentials
+  const [clientInfo] = await sequelize.query(`
+    SELECT c.business_name, c.ringlypro_number,
+           c.settings->'integration'->'ghl' as ghl_settings,
+           g.access_token as oauth_token,
+           g.ghl_location_id as oauth_location_id
+    FROM clients c
+    LEFT JOIN ghl_integrations g ON g.client_id = c.id AND g.is_active = true
+    WHERE c.id = :clientId
+  `, { replacements: { clientId }, type: QueryTypes.SELECT });
+
+  if (!clientInfo) {
+    logger.warn(`[ElevenLabs] Follow-up SMS: Client ${clientId} not found`);
+    return;
+  }
+
+  const ghlSettings = clientInfo.ghl_settings;
+  const ghlApiKey = (ghlSettings?.enabled && ghlSettings?.apiKey) ? ghlSettings.apiKey : clientInfo.oauth_token;
+  const ghlLocationId = clientInfo.oauth_location_id || ghlSettings?.locationId;
+
+  let sent = false;
+
+  // Try GHL first
+  if (ghlApiKey && ghlLocationId) {
+    try {
+      const ghlBaseUrl = 'https://services.leadconnectorhq.com';
+      const ghlHeaders = {
+        'Authorization': `Bearer ${ghlApiKey}`,
+        'Version': '2021-07-28',
+        'Content-Type': 'application/json'
+      };
+
+      // Find or create contact
+      let contactId;
+      try {
+        const searchResp = await axios.get(`${ghlBaseUrl}/contacts/search/duplicate`, {
+          params: { locationId: ghlLocationId, number: normalizedPhone },
+          headers: ghlHeaders,
+          timeout: 10000
+        });
+        contactId = searchResp.data?.contact?.id;
+
+        // Auto-clear DND if active
+        const smsDnd = searchResp.data?.contact?.dndSettings?.SMS;
+        if (smsDnd && smsDnd.status === 'active') {
+          await axios.put(`${ghlBaseUrl}/contacts/${contactId}`, {
+            dnd: false,
+            dndSettings: { SMS: { status: 'inactive', message: '' }, Call: { status: 'inactive', message: '' } }
+          }, { headers: ghlHeaders, timeout: 10000 });
+        }
+      } catch (e) {
+        logger.warn(`[ElevenLabs] Follow-up SMS: GHL contact search failed:`, e.message);
+      }
+
+      if (!contactId) {
+        const createResp = await axios.post(`${ghlBaseUrl}/contacts/`, {
+          locationId: ghlLocationId,
+          phone: normalizedPhone,
+          name: 'Caller',
+          source: 'RinglyPro AI'
+        }, { headers: ghlHeaders, timeout: 10000 });
+        contactId = createResp.data?.contact?.id;
+      }
+
+      if (contactId) {
+        await axios.post(`${ghlBaseUrl}/conversations/messages`, {
+          type: 'SMS',
+          contactId,
+          message: FOLLOWUP_SMS_MESSAGE
+        }, { headers: ghlHeaders, timeout: 15000 });
+
+        sent = true;
+        logger.info(`[ElevenLabs] Follow-up SMS sent via GHL to ${normalizedPhone}`);
+      }
+    } catch (ghlErr) {
+      logger.warn(`[ElevenLabs] Follow-up SMS: GHL failed, trying Twilio:`, ghlErr.response?.data || ghlErr.message);
+    }
+  }
+
+  // Fallback to Twilio
+  if (!sent) {
+    try {
+      const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+      const fromNumber = clientInfo.ringlypro_number || process.env.TWILIO_PHONE_NUMBER;
+
+      await twilioClient.messages.create({
+        body: FOLLOWUP_SMS_MESSAGE,
+        from: fromNumber,
+        to: normalizedPhone
+      });
+
+      sent = true;
+      logger.info(`[ElevenLabs] Follow-up SMS sent via Twilio to ${normalizedPhone}`);
+    } catch (twilioErr) {
+      logger.error(`[ElevenLabs] Follow-up SMS: Twilio also failed:`, twilioErr.message);
+      throw twilioErr;
+    }
+  }
+
+  // Log the SMS in messages table
+  if (sent) {
+    try {
+      await sequelize.query(
+        `INSERT INTO messages (client_id, direction, from_number, to_number, body, status, message_type, message_source, created_at, updated_at)
+         VALUES ($1, 'outgoing', $2, $3, $4, 'sent', 'sms', 'system_followup', NOW(), NOW())`,
+        { bind: [clientId, clientInfo.ringlypro_number || '', normalizedPhone, FOLLOWUP_SMS_MESSAGE] }
+      );
+    } catch (logErr) {
+      logger.warn(`[ElevenLabs] Failed to log follow-up SMS in messages:`, logErr.message);
+    }
+  }
+}
 
 /**
  * Health check
