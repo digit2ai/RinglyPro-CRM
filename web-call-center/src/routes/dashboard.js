@@ -123,18 +123,25 @@ async function handleDashboardStats(req, res) {
       type: QueryTypes.SELECT
     });
 
+    // Calculate minutesTotal (plan limit)
+    const minutesUsed = Math.round(totalMinutes * 100) / 100;
+    const minutesTotal = creditResult && creditResult.monthly_free_minutes
+      ? parseFloat(creditResult.monthly_free_minutes)
+      : (minutesUsed + Math.round(minutesRemaining * 100) / 100);
+
     res.json({
       success: true,
       data: {
         totalCalls: parseInt(totalCallsResult.total_calls) || 0,
-        totalMinutes: Math.round(totalMinutes * 100) / 100,
+        minutesUsed,
+        minutesTotal,
         minutesRemaining: Math.round(minutesRemaining * 100) / 100,
-        avgCallDuration: Math.round(parseFloat(avgDurationResult.avg_duration) || 0),
+        avgDuration: Math.round(parseFloat(avgDurationResult.avg_duration) || 0),
         callsToday: parseInt(callsTodayResult.calls_today) || 0,
         callsThisWeek: parseInt(callsThisWeekResult.calls_this_week) || 0,
-        dailyCallVolume: dailyCallVolume.map(row => ({
+        dailyVolume: dailyCallVolume.map(row => ({
           date: row.date,
-          callCount: parseInt(row.call_count),
+          calls: parseInt(row.call_count),
           minutes: Math.round(parseFloat(row.minutes) * 100) / 100
         }))
       }
