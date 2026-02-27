@@ -2688,11 +2688,11 @@
                 Tokens
                 <div class="credit-amount" id="tokensCardAmount" style="background: #10b981;">0</div>
             </button>
-            <button class="action-btn" id="analyticsBtn" onclick="window.open('/mcp-copilot/call-report.html?client_id=' + CLIENT_ID, '_blank')" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+            <button class="action-btn" id="analyticsBtn" onclick="openAnalyticsModal()" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                 </svg>
-                Call Report
+                Analytics
             </button>
         </div>
     </div>
@@ -6815,6 +6815,16 @@
             document.getElementById('messagesList').style.display = 'none';
             loadElevenLabsCalls(false);
             loadLeadTracker();
+
+            // Switch Analytics button to Call Report for ElevenLabs clients
+            const analyticsBtn = document.getElementById('analyticsBtn');
+            if (analyticsBtn) {
+                analyticsBtn.textContent = '';
+                analyticsBtn.innerHTML = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>Call Report`;
+                analyticsBtn.onclick = function() { window.open('/mcp-copilot/call-report.html?client_id=' + CLIENT_ID, '_blank'); };
+            }
         }
 
         // ============= LEAD TRACKER =============
