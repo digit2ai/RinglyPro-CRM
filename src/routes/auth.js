@@ -871,12 +871,20 @@ router.post('/login', async (req, res) => {
             });
         }
 
-        // Find associated client record for Rachel AI
+        // Find associated client record
         let client = null;
+        let clientProductType = 'voice_ai';
         if (Client) {
             client = await Client.findOne({ where: { user_id: user.id } });
             if (client) {
-                console.log(`📞 Rachel AI found: ${client.ringlypro_number} (Client ID: ${client.id})`);
+                console.log(`📞 Client found: ${client.ringlypro_number} (Client ID: ${client.id})`);
+                // Fetch product_type via raw query (not in Sequelize model)
+                const [ptRow] = await sequelize.query(
+                    'SELECT product_type FROM clients WHERE id = :clientId',
+                    { replacements: { clientId: client.id }, type: sequelize.QueryTypes.SELECT }
+                );
+                clientProductType = (ptRow && ptRow.product_type) || 'voice_ai';
+                console.log(`📦 Product type: ${clientProductType}`);
             } else {
                 console.log('⚠️ No client record found for user - this should not happen after registration');
             }
@@ -923,9 +931,9 @@ router.post('/login', async (req, res) => {
                     id: client.id,
                     rachelNumber: client.ringlypro_number,
                     rachelEnabled: client.rachel_enabled,
-                    productType: client.product_type || 'voice_ai'
+                    productType: clientProductType
                 } : null,
-                redirectTo: (client && client.product_type === 'web_call_center')
+                redirectTo: (client && clientProductType === 'web_call_center')
                     ? '/webcallcenter/'
                     : (user.onboarding_completed ? '/dashboard' : '/onboarding')
             }
