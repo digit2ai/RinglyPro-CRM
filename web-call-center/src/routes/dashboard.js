@@ -10,7 +10,7 @@ const { authenticateAndGetClient } = require('../middleware/wcc-auth');
  * GET / - Dashboard stats
  * Returns call stats for the authenticated client
  */
-router.get('/', authenticateAndGetClient, async (req, res) => {
+router.get(['/', '/stats'], authenticateAndGetClient, async (req, res) => {
   try {
     const clientId = req.client.id;
     const now = new Date();
