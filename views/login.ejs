@@ -156,8 +156,10 @@
                     // Store JWT token
                     localStorage.setItem('token', data.token);
 
-                    // Redirect to dashboard
-                    window.location.href = '/';
+                    // Redirect: honor ?redirect= param, then API redirectTo, then default
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const redirectParam = urlParams.get('redirect');
+                    window.location.href = redirectParam || (data.data && data.data.redirectTo) || '/';
                 } else {
                     // Show error message
                     showError(data.error || 'Invalid email or password');

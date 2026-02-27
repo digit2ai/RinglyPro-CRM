@@ -922,9 +922,12 @@ router.post('/login', async (req, res) => {
                 client: client ? {
                     id: client.id,
                     rachelNumber: client.ringlypro_number,
-                    rachelEnabled: client.rachel_enabled
+                    rachelEnabled: client.rachel_enabled,
+                    productType: client.product_type || 'voice_ai'
                 } : null,
-                redirectTo: user.onboarding_completed ? '/dashboard' : '/onboarding'
+                redirectTo: (client && client.product_type === 'web_call_center')
+                    ? '/webcallcenter/'
+                    : (user.onboarding_completed ? '/dashboard' : '/onboarding')
             }
         };
 
