@@ -164,6 +164,31 @@ async function startServer() {
           console.log('⚠️ lead_followups migration skipped:', error.message);
         }
 
+        // AUTO-MIGRATE LEAD TRACKER TABLE (stores all discovered leads permanently)
+        console.log('🔄 Running lead tracker migration...');
+        try {
+          await queryWithTimeout(
+            `CREATE TABLE IF NOT EXISTS lead_tracker (
+              id SERIAL PRIMARY KEY,
+              client_id INTEGER NOT NULL,
+              conversation_id VARCHAR(100) NOT NULL,
+              lead_date DATE NOT NULL,
+              lead_type VARCHAR(20) NOT NULL,
+              subcategory VARCHAR(30),
+              phone VARCHAR(20),
+              business_name VARCHAR(200),
+              duration INTEGER DEFAULT 0,
+              summary TEXT,
+              created_at TIMESTAMP DEFAULT NOW(),
+              UNIQUE(client_id, conversation_id)
+            )`,
+            'lead_tracker migration'
+          );
+          console.log('✅ lead_tracker table ready');
+        } catch (error) {
+          console.log('⚠️ lead_tracker migration skipped:', error.message);
+        }
+
         console.log('✅ All migrations complete, ready to start server');
       } else {
         console.log('⚠️ No DATABASE_URL provided, running without database');

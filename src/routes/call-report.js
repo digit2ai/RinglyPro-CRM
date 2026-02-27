@@ -322,6 +322,75 @@ router.get('/followups', requireApiKey, async (req, res) => {
     }
 });
 
+/**
+ * POST /api/call-report/leads
+ * Bulk-save discovered leads to lead_tracker (idempotent)
+ * Body: { client_id, leads: [{ conversation_id, lead_date, lead_type, subcategory, phone, business_name, duration, summary }] }
+ */
+router.post('/leads', requireApiKey, async (req, res) => {
+    try {
+        const { client_id, leads } = req.body;
+        if (!client_id || !leads || !Array.isArray(leads)) {
+            return res.status(400).json({ success: false, error: 'client_id and leads array are required' });
+        }
+        let saved = 0;
+        for (const lead of leads) {
+            try {
+                await sequelize.query(
+                    `INSERT INTO lead_tracker (client_id, conversation_id, lead_date, lead_type, subcategory, phone, business_name, duration, summary)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                     ON CONFLICT (client_id, conversation_id) DO NOTHING`,
+                    { bind: [
+                        parseInt(client_id),
+                        lead.conversation_id,
+                        lead.lead_date,
+                        lead.lead_type,
+                        lead.subcategory || null,
+                        lead.phone || null,
+                        lead.business_name || null,
+                        lead.duration || 0,
+                        lead.summary || null
+                    ] }
+                );
+                saved++;
+            } catch (e) {
+                // Skip individual insert errors
+            }
+        }
+        res.json({ success: true, saved });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+/**
+ * GET /api/call-report/pending-leads
+ * Get all leads NOT yet followed up for a client (any date)
+ * Query: client_id
+ */
+router.get('/pending-leads', requireApiKey, async (req, res) => {
+    try {
+        const { client_id } = req.query;
+        if (!client_id) {
+            return res.status(400).json({ success: false, error: 'client_id is required' });
+        }
+        const leads = await sequelize.query(
+            `SELECT lt.conversation_id, lt.lead_date, lt.lead_type, lt.subcategory,
+                    lt.phone, lt.business_name, lt.duration, lt.summary, lt.created_at
+             FROM lead_tracker lt
+             WHERE lt.client_id = $1
+               AND lt.conversation_id NOT IN (
+                   SELECT conversation_id FROM lead_followups WHERE client_id = $1
+               )
+             ORDER BY lt.lead_date DESC, lt.created_at DESC`,
+            { bind: [parseInt(client_id)], type: QueryTypes.SELECT }
+        );
+        res.json({ success: true, count: leads.length, leads });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // Cache cleanup: clear today's stale entries every 30 minutes
 setInterval(() => {
     const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });

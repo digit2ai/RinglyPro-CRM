@@ -2559,6 +2559,16 @@
             width: 24px; height: 24px; border: 3px solid #e5e7eb; border-top-color: #667eea;
             border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 8px;
         }
+        .lead-date-badge {
+            display: inline-block; padding: 1px 6px; border-radius: 8px;
+            background: #fef3c7; color: #92400e; font-size: 10px; font-weight: 600;
+            margin-right: 4px; white-space: nowrap;
+        }
+        .lead-section.pending .lead-section-header {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            color: #78350f;
+        }
+        .lead-section.pending .lead-progress-fill { background: #f59e0b; }
         @media (max-width: 640px) {
             .lead-summary { display: none; }
             .lead-progress-bar { width: 40px; }
@@ -6817,9 +6827,9 @@
 
             const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
 
-            // Fetch follow-ups from database (last 2 days)
+            // Fetch follow-ups from database (all time)
             try {
-                const fResp = await fetch(`/api/call-report/followups?client_id=${CLIENT_ID}&days=2&apiKey=${LEAD_API_KEY}`);
+                const fResp = await fetch(`/api/call-report/followups?client_id=${CLIENT_ID}&days=9999&apiKey=${LEAD_API_KEY}`);
                 const fData = await fResp.json();
                 if (fData.success && fData.followups) {
                     followedUpSet = new Set(fData.followups.map(f => f.conversation_id));
@@ -6852,59 +6862,89 @@
                         } catch (e) { /* keep polling */ }
                     }, 3000);
                 } else {
-                    tracker.style.display = 'none';
+                    // No report yet - still show pending leads from past days
+                    await renderLeadTracker(null, today);
                 }
             } catch (e) {
                 console.log('Lead tracker error:', e.message);
-                tracker.style.display = 'none';
+                // Still try to show pending leads
+                await renderLeadTracker(null, today);
             }
         }
 
         async function renderLeadTracker(report, dateStr) {
-            const cats = report.categories;
-            const hotLeads = [
-                ...(cats.callback_requested || []),
-                ...(cats.transferred || []),
-                ...(cats.sms_sent || [])
-            ].sort((a, b) => b.duration - a.duration);
+            let hotLeads = [];
+            let warmLeads = [];
 
-            const warmLeads = [
-                ...(cats.engaged_humans || []),
-                ...(cats.inbound || [])
-            ].sort((a, b) => b.duration - a.duration);
+            if (report && report.categories) {
+                const cats = report.categories;
+                hotLeads = [
+                    ...(cats.callback_requested || []),
+                    ...(cats.transferred || []),
+                    ...(cats.sms_sent || [])
+                ].sort((a, b) => b.duration - a.duration);
 
-            // Also fetch yesterday's unfollowed leads
-            const yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
-            const yesterdayStr = yesterday.toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
-            let yesterdayUnfollowed = [];
+                warmLeads = [
+                    ...(cats.engaged_humans || []),
+                    ...(cats.inbound || [])
+                ].sort((a, b) => b.duration - a.duration);
 
-            try {
-                const yResp = await fetch(`/api/call-report/daily?client_id=${CLIENT_ID}&date=${yesterdayStr}&apiKey=${LEAD_API_KEY}`);
-                const yData = await yResp.json();
-                if (yData.success && yData.report) {
-                    const yCats = yData.report.categories;
-                    const yAll = [
-                        ...(yCats.callback_requested || []),
-                        ...(yCats.transferred || []),
-                        ...(yCats.sms_sent || []),
-                        ...(yCats.engaged_humans || []),
-                        ...(yCats.inbound || [])
-                    ];
-                    yesterdayUnfollowed = yAll.filter(l => !followedUpSet.has(l.conversation_id));
+                // Save today's leads to lead_tracker for permanent storage
+                const allTodayLeads = [...hotLeads, ...warmLeads].map(l => ({
+                    conversation_id: l.conversation_id,
+                    lead_date: dateStr,
+                    lead_type: hotLeads.includes(l) ? 'hot' : 'warm',
+                    subcategory: l.subcategory || null,
+                    phone: l.phone || null,
+                    business_name: l.businessName || null,
+                    duration: l.duration || 0,
+                    summary: l.summary || null
+                }));
+                if (allTodayLeads.length > 0) {
+                    fetch(`/api/call-report/leads?apiKey=${LEAD_API_KEY}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ client_id: CLIENT_ID, leads: allTodayLeads })
+                    }).catch(e => console.log('Lead save error:', e));
                 }
-            } catch (e) { /* no yesterday data */ }
+            }
 
-            if (hotLeads.length === 0 && warmLeads.length === 0 && yesterdayUnfollowed.length === 0) {
+            // Fetch ALL pending (unfollowed) leads from any date
+            let pendingLeads = [];
+            try {
+                const pResp = await fetch(`/api/call-report/pending-leads?client_id=${CLIENT_ID}&apiKey=${LEAD_API_KEY}`);
+                const pData = await pResp.json();
+                if (pData.success && pData.leads) {
+                    // Exclude today's leads (they show in Hot/Warm sections)
+                    pendingLeads = pData.leads.filter(l => l.lead_date !== dateStr);
+                }
+            } catch (e) { /* no pending data */ }
+
+            // Filter today's leads: remove followed-up ones from Hot/Warm
+            const hotFiltered = hotLeads.filter(l => !followedUpSet.has(l.conversation_id));
+            const warmFiltered = warmLeads.filter(l => !followedUpSet.has(l.conversation_id));
+
+            if (hotLeads.length === 0 && warmLeads.length === 0 && pendingLeads.length === 0) {
                 document.getElementById('leadTracker').style.display = 'none';
                 return;
             }
 
             let html = '';
 
-            // Yesterday's unfollowed (collapsed by default)
-            if (yesterdayUnfollowed.length > 0) {
-                html += renderLeadSection('yesterday', "Yesterday's Unfollowed", yesterdayUnfollowed, yesterdayStr, 5, false);
+            // Pending Follow-ups from past days (collapsed by default)
+            if (pendingLeads.length > 0) {
+                // Format pending leads to match the lead item structure
+                const formattedPending = pendingLeads.map(l => ({
+                    conversation_id: l.conversation_id,
+                    phone: l.phone,
+                    businessName: l.business_name,
+                    subcategory: l.subcategory,
+                    duration: l.duration || 0,
+                    summary: l.summary,
+                    lead_date: l.lead_date,
+                    lead_type: l.lead_type
+                }));
+                html += renderLeadSection('pending', `Pending Follow-ups (${pendingLeads.length})`, formattedPending, null, 5, false);
             }
 
             if (hotLeads.length > 0) {
@@ -6920,7 +6960,7 @@
         }
 
         function renderLeadSection(type, title, leads, dateStr, initialShow, defaultOpen) {
-            const icons = { hot: '🔥', warm: '🌡️', yesterday: '⚠️' };
+            const icons = { hot: '🔥', warm: '🌡️', pending: '⏳' };
             const icon = icons[type] || '📋';
             const doneCount = leads.filter(l => followedUpSet.has(l.conversation_id)).length;
             const pct = leads.length > 0 ? Math.round((doneCount / leads.length) * 100) : 0;
@@ -6938,12 +6978,23 @@
                 }[lead.subcategory] || '';
                 const summary = (lead.summary || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
                 const biz = lead.businessName ? `<strong>${lead.businessName.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</strong> · ` : '';
-                const leadType = type === 'yesterday' ? 'carryover' : type;
+                const leadDate = lead.lead_date || dateStr;
+                const leadType = lead.lead_type || type;
+
+                // Show date badge for pending leads from past days
+                let dateBadge = '';
+                if (type === 'pending' && lead.lead_date) {
+                    const daysAgo = Math.round((new Date() - new Date(lead.lead_date + 'T12:00:00')) / (1000 * 60 * 60 * 24));
+                    dateBadge = daysAgo === 1 ? '<span class="lead-date-badge">yesterday</span>'
+                        : daysAgo < 7 ? `<span class="lead-date-badge">${daysAgo}d ago</span>`
+                        : `<span class="lead-date-badge">${lead.lead_date}</span>`;
+                }
 
                 return `<div class="lead-item${done ? ' done' : ''}${hidden ? ' lead-hidden' : ''}" id="lead-${lead.conversation_id}" ${hidden ? 'style="display:none;"' : ''}>
-                    <input type="checkbox" ${done ? 'checked' : ''} onchange="toggleLeadFollowUp('${lead.conversation_id}', '${dateStr}', '${leadType}', '${lead.phone || ''}', this)">
+                    <input type="checkbox" ${done ? 'checked' : ''} onchange="toggleLeadFollowUp('${lead.conversation_id}', '${leadDate}', '${leadType}', '${lead.phone || ''}', this)">
                     <div class="lead-info">
                         <span class="lead-phone"><a href="tel:${lead.phone}">${lead.phone}</a></span>
+                        ${dateBadge}
                         <span class="lead-tag ${tagClass}">${lead.subcategory || ''}</span>
                         <span class="lead-dur">${dur}</span>
                         <span class="lead-summary">${biz}${summary}</span>
@@ -6991,7 +7042,7 @@
             }
             updateLeadProgress('hot');
             updateLeadProgress('warm');
-            updateLeadProgress('yesterday');
+            updateLeadProgress('pending');
         }
 
         function updateLeadProgress(type) {
