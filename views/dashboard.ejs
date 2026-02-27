@@ -3863,35 +3863,17 @@
                 }
             }
 
-            loadRachelStatus();
+            loadRachelStatus(); // Also detects ElevenLabs and calls initElevenLabsUI()
             loadDashboard();
             loadCreditsBalance();
             loadA2PStatus();
-            // Load messages based on client - Clients with rachel_enabled use ElevenLabs
-            // Use == for type coercion (CLIENT_ID might be string or number)
-            const usesElevenLabs = CLIENT_ID == 15 || CLIENT_ID == 17 || CLIENT_ID == 32 || CLIENT_ID == 43 || CLIENT_ID == 44;
-            console.log('CLIENT_ID check:', CLIENT_ID, typeof CLIENT_ID, 'usesElevenLabs:', usesElevenLabs);
-            if (usesElevenLabs) {
-                // Show ElevenLabs UI - keep refresh button, hide sync and voicemail/conversation toggle
-                console.log('Showing ElevenLabs UI for Client ' + CLIENT_ID);
-                document.getElementById('elevenLabsHeader').style.display = 'none';
-                document.getElementById('syncElevenLabsBtn').style.display = 'none';
-                document.getElementById('regularMessagesHeader').style.display = 'none';
-                document.getElementById('refreshMessagesBtn').style.display = 'flex';
-                document.getElementById('elevenLabsCallsList').style.display = 'block';
-                document.getElementById('messagesList').style.display = 'none';
-                loadElevenLabsCalls(false); // Initial load without showing loading spinner
-                loadLeadTracker(); // Load lead tracker for ElevenLabs clients
-            } else {
-                // Show regular messages UI for other clients
-                console.log('Showing regular messages UI');
-                document.getElementById('elevenLabsHeader').style.display = 'none';
-                document.getElementById('syncElevenLabsBtn').style.display = 'none';
-                document.getElementById('regularMessagesHeader').style.display = 'flex';
-                document.getElementById('elevenLabsCallsList').style.display = 'none';
-                document.getElementById('messagesList').style.display = 'block';
-                loadMessages();
-            }
+            // Default to regular messages UI - will switch to ElevenLabs when loadRachelStatus detects agent
+            document.getElementById('elevenLabsHeader').style.display = 'none';
+            document.getElementById('syncElevenLabsBtn').style.display = 'none';
+            document.getElementById('regularMessagesHeader').style.display = 'flex';
+            document.getElementById('elevenLabsCallsList').style.display = 'none';
+            document.getElementById('messagesList').style.display = 'block';
+            loadMessages();
             loadReferralStats(); // Load referral statistics
             loadProjectsCount(); // Load active projects count
             setupTabSwitching();
@@ -4080,6 +4062,12 @@
                     const businessNameEl = document.getElementById('businessNameDisplay');
                     if (businessNameEl && data.client.business_name) {
                         businessNameEl.textContent = data.client.business_name;
+                    }
+
+                    // Dynamically detect ElevenLabs-enabled clients
+                    const agentId = data.client.elevenlabs_agent_id;
+                    if (agentId && agentId.trim() !== '') {
+                        initElevenLabsUI();
                     }
                 }
             } catch (error) {
@@ -6813,15 +6801,28 @@
             }
         }
 
+        // ============= ELEVENLABS UI INIT =============
+        let elevenLabsInitialized = false;
+        function initElevenLabsUI() {
+            if (elevenLabsInitialized) return;
+            elevenLabsInitialized = true;
+            console.log('Showing ElevenLabs UI for Client ' + CLIENT_ID + ' (dynamic detection)');
+            document.getElementById('elevenLabsHeader').style.display = 'none';
+            document.getElementById('syncElevenLabsBtn').style.display = 'none';
+            document.getElementById('regularMessagesHeader').style.display = 'none';
+            document.getElementById('refreshMessagesBtn').style.display = 'flex';
+            document.getElementById('elevenLabsCallsList').style.display = 'block';
+            document.getElementById('messagesList').style.display = 'none';
+            loadElevenLabsCalls(false);
+            loadLeadTracker();
+        }
+
         // ============= LEAD TRACKER =============
         const LEAD_API_KEY = 'ringlypro-quick-admin-2024';
         let leadPollTimer = null;
         let followedUpSet = new Set(); // conversation_ids that have been followed up
 
         async function loadLeadTracker() {
-            const usesEL = CLIENT_ID == 15 || CLIENT_ID == 17 || CLIENT_ID == 32 || CLIENT_ID == 43 || CLIENT_ID == 44;
-            if (!usesEL) return;
-
             const tracker = document.getElementById('leadTracker');
             tracker.style.display = 'block';
 

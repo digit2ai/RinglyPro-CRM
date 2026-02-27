@@ -372,7 +372,7 @@ router.get('/rachel-status/:client_id', async (req, res) => {
         const { sequelize } = require('../models');
         
         const client = await sequelize.query(
-            'SELECT id, business_name, rachel_enabled, business_phone, ringlypro_number FROM clients WHERE id = :client_id',
+            'SELECT id, business_name, rachel_enabled, business_phone, ringlypro_number, elevenlabs_agent_id FROM clients WHERE id = :client_id',
             { 
                 replacements: { client_id: client_id },
                 type: sequelize.QueryTypes.SELECT 
