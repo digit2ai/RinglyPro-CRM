@@ -2483,6 +2483,84 @@
                 gap: 0.75rem;
             }
         }
+
+        /* Lead Tracker */
+        .lead-tracker {
+            padding: 0 1rem; margin-bottom: 0.75rem;
+        }
+        .lead-section {
+            background: white; border-radius: 12px; margin-bottom: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08); overflow: hidden;
+        }
+        .lead-section-header {
+            display: flex; align-items: center; gap: 8px; padding: 12px 16px;
+            cursor: pointer; user-select: none; transition: background 0.15s;
+        }
+        .lead-section-header:hover { background: #f9fafb; }
+        .lead-section-icon { font-size: 18px; }
+        .lead-section-title { font-size: 14px; font-weight: 700; }
+        .lead-section-progress { font-size: 11px; color: #6b7280; margin-left: auto; white-space: nowrap; }
+        .lead-progress-bar {
+            width: 60px; height: 4px; background: #e5e7eb; border-radius: 2px; overflow: hidden;
+        }
+        .lead-progress-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
+        .lead-section.hot .lead-progress-fill { background: #f97316; }
+        .lead-section.warm .lead-progress-fill { background: #3b82f6; }
+        .lead-section-toggle { font-size: 14px; color: #9ca3af; transition: transform 0.2s; margin-left: 6px; }
+        .lead-section.open .lead-section-toggle { transform: rotate(180deg); }
+        .lead-section-body { display: none; border-top: 1px solid #f3f4f6; }
+        .lead-section.open .lead-section-body { display: block; }
+        .lead-item {
+            display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+            border-bottom: 1px solid #f9fafb; font-size: 13px; transition: opacity 0.2s;
+        }
+        .lead-item:last-child { border-bottom: none; }
+        .lead-item.done { opacity: 0.4; }
+        .lead-item.done .lead-info { text-decoration: line-through; }
+        .lead-item input[type="checkbox"] {
+            width: 18px; height: 18px; cursor: pointer; accent-color: #10b981;
+            flex-shrink: 0;
+        }
+        .lead-phone { font-weight: 600; white-space: nowrap; }
+        .lead-phone a { color: #667eea; text-decoration: none; }
+        .lead-phone a:hover { text-decoration: underline; }
+        .lead-tag {
+            font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;
+            white-space: nowrap; text-transform: uppercase; letter-spacing: 0.3px;
+        }
+        .lead-tag.callback { background: #fce7f3; color: #be185d; }
+        .lead-tag.transferred { background: #ffedd5; color: #c2410c; }
+        .lead-tag.sms { background: #fef3c7; color: #92400e; }
+        .lead-tag.engaged { background: #d1fae5; color: #065f46; }
+        .lead-tag.inbound { background: #dbeafe; color: #1d4ed8; }
+        .lead-dur { color: #9ca3af; white-space: nowrap; font-size: 12px; }
+        .lead-info { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; }
+        .lead-summary { color: #6b7280; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+        .lead-tracker-footer {
+            text-align: center; padding: 6px 0 2px;
+        }
+        .lead-tracker-footer a {
+            color: #667eea; font-size: 12px; font-weight: 600; text-decoration: none;
+        }
+        .lead-tracker-footer a:hover { text-decoration: underline; }
+        .lead-empty { padding: 16px; text-align: center; color: #9ca3af; font-size: 13px; }
+        .lead-show-more {
+            display: block; width: 100%; padding: 8px; border: none; background: #f9fafb;
+            color: #667eea; font-size: 12px; font-weight: 600; cursor: pointer;
+            border-top: 1px solid #f3f4f6;
+        }
+        .lead-show-more:hover { background: #f3f4f6; }
+        .lead-loading {
+            padding: 20px; text-align: center; color: #9ca3af; font-size: 13px;
+        }
+        .lead-loading .spinner {
+            width: 24px; height: 24px; border: 3px solid #e5e7eb; border-top-color: #667eea;
+            border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 8px;
+        }
+        @media (max-width: 640px) {
+            .lead-summary { display: none; }
+            .lead-progress-bar { width: 40px; }
+        }
     </style>
 </head>
 <body>
@@ -2542,6 +2620,19 @@
                     </label>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Lead Tracker -->
+    <div class="lead-tracker" id="leadTracker" style="display:none;">
+        <div id="leadTrackerContent">
+            <div class="lead-loading">
+                <div class="spinner"></div>
+                <div>Loading today's leads...</div>
+            </div>
+        </div>
+        <div class="lead-tracker-footer" id="leadTrackerFooter" style="display:none;">
+            <a id="leadReportLink" href="#" target="_blank">View Full Report &rarr;</a>
         </div>
     </div>
 
@@ -3778,6 +3869,7 @@
                 document.getElementById('elevenLabsCallsList').style.display = 'block';
                 document.getElementById('messagesList').style.display = 'none';
                 loadElevenLabsCalls(false); // Initial load without showing loading spinner
+                loadLeadTracker(); // Load lead tracker for ElevenLabs clients
             } else {
                 // Show regular messages UI for other clients
                 console.log('Showing regular messages UI');
@@ -6707,6 +6799,172 @@
                 btn.classList.remove('refreshing');
                 btn.disabled = false;
             }
+        }
+
+        // ============= LEAD TRACKER =============
+        const LEAD_API_KEY = 'ringlypro-quick-admin-2024';
+        let leadPollTimer = null;
+
+        async function loadLeadTracker() {
+            const usesEL = CLIENT_ID == 15 || CLIENT_ID == 17 || CLIENT_ID == 32 || CLIENT_ID == 43 || CLIENT_ID == 44;
+            if (!usesEL) return;
+
+            const tracker = document.getElementById('leadTracker');
+            tracker.style.display = 'block';
+
+            const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+
+            try {
+                const resp = await fetch(`/api/call-report/daily?client_id=${CLIENT_ID}&date=${today}&apiKey=${LEAD_API_KEY}`);
+                const data = await resp.json();
+
+                if (data.success && data.report) {
+                    renderLeadTracker(data.report, today);
+                } else if (data.success && data.status === 'generating') {
+                    document.getElementById('leadTrackerContent').innerHTML = `
+                        <div class="lead-loading">
+                            <div class="spinner"></div>
+                            <div>Generating today's leads...</div>
+                        </div>`;
+                    // Poll until ready
+                    if (leadPollTimer) clearInterval(leadPollTimer);
+                    leadPollTimer = setInterval(async () => {
+                        try {
+                            const r = await fetch(`/api/call-report/daily?client_id=${CLIENT_ID}&date=${today}&apiKey=${LEAD_API_KEY}`);
+                            const d = await r.json();
+                            if (d.success && d.report) {
+                                clearInterval(leadPollTimer);
+                                leadPollTimer = null;
+                                renderLeadTracker(d.report, today);
+                            }
+                        } catch (e) { /* keep polling */ }
+                    }, 3000);
+                } else {
+                    // No report or error — show nothing disruptive
+                    tracker.style.display = 'none';
+                }
+            } catch (e) {
+                console.log('Lead tracker error:', e.message);
+                tracker.style.display = 'none';
+            }
+        }
+
+        function renderLeadTracker(report, dateStr) {
+            const cats = report.categories;
+            const hotLeads = [
+                ...(cats.callback_requested || []),
+                ...(cats.transferred || []),
+                ...(cats.sms_sent || [])
+            ].sort((a, b) => b.duration - a.duration);
+
+            const warmLeads = [
+                ...(cats.engaged_humans || []),
+                ...(cats.inbound || [])
+            ].sort((a, b) => b.duration - a.duration);
+
+            if (hotLeads.length === 0 && warmLeads.length === 0) {
+                document.getElementById('leadTracker').style.display = 'none';
+                return;
+            }
+
+            let html = '';
+            if (hotLeads.length > 0) {
+                html += renderLeadSection('hot', 'Hot Leads', hotLeads, dateStr, 10);
+            }
+            if (warmLeads.length > 0) {
+                html += renderLeadSection('warm', 'Warm Leads', warmLeads, dateStr, 5);
+            }
+
+            document.getElementById('leadTrackerContent').innerHTML = html;
+            document.getElementById('leadTrackerFooter').style.display = 'block';
+            document.getElementById('leadReportLink').href = `/mcp-copilot/call-report.html?client_id=${CLIENT_ID}`;
+        }
+
+        function renderLeadSection(type, title, leads, dateStr, initialShow) {
+            const icon = type === 'hot' ? '🔥' : '🌡️';
+            const doneCount = leads.filter(l => isLeadDone(l.conversation_id, dateStr)).length;
+            const pct = leads.length > 0 ? Math.round((doneCount / leads.length) * 100) : 0;
+
+            const items = leads.map((lead, i) => {
+                const done = isLeadDone(lead.conversation_id, dateStr);
+                const hidden = i >= initialShow;
+                const dur = lead.duration < 60
+                    ? lead.duration + 's'
+                    : Math.floor(lead.duration / 60) + 'm' + (lead.duration % 60 > 0 ? lead.duration % 60 + 's' : '');
+                const tagClass = {
+                    'Callback': 'callback', 'Transferred': 'transferred', 'SMS Sent': 'sms',
+                    'Engaged': 'engaged', 'Inbound': 'inbound'
+                }[lead.subcategory] || '';
+                const summary = (lead.summary || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                const biz = lead.businessName ? `<strong>${lead.businessName.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</strong> · ` : '';
+
+                return `<div class="lead-item${done ? ' done' : ''}${hidden ? ' lead-hidden' : ''}" id="lead-${lead.conversation_id}" ${hidden ? 'style="display:none;"' : ''}>
+                    <input type="checkbox" ${done ? 'checked' : ''} onchange="toggleLeadFollowUp('${lead.conversation_id}', '${dateStr}', this)">
+                    <div class="lead-info">
+                        <span class="lead-phone"><a href="tel:${lead.phone}">${lead.phone}</a></span>
+                        <span class="lead-tag ${tagClass}">${lead.subcategory || ''}</span>
+                        <span class="lead-dur">${dur}</span>
+                        <span class="lead-summary">${biz}${summary}</span>
+                    </div>
+                </div>`;
+            }).join('');
+
+            let showMore = '';
+            if (leads.length > initialShow) {
+                showMore = `<button class="lead-show-more" id="lead-more-${type}" onclick="showAllLeads('${type}', this)">Show all ${leads.length} leads (${leads.length - initialShow} more)</button>`;
+            }
+
+            return `<div class="lead-section ${type} open" id="lead-section-${type}">
+                <div class="lead-section-header" onclick="document.getElementById('lead-section-${type}').classList.toggle('open')">
+                    <span class="lead-section-icon">${icon}</span>
+                    <span class="lead-section-title">${title}</span>
+                    <span class="lead-section-progress" id="lead-progress-${type}">${doneCount} of ${leads.length} followed up</span>
+                    <div class="lead-progress-bar"><div class="lead-progress-fill" id="lead-bar-${type}" style="width:${pct}%"></div></div>
+                    <span class="lead-section-toggle">&#9660;</span>
+                </div>
+                <div class="lead-section-body">${items}${showMore}</div>
+            </div>`;
+        }
+
+        function isLeadDone(conversationId, dateStr) {
+            return localStorage.getItem(`lead-${CLIENT_ID}-${dateStr}-${conversationId}`) === '1';
+        }
+
+        function toggleLeadFollowUp(conversationId, dateStr, checkbox) {
+            const key = `lead-${CLIENT_ID}-${dateStr}-${conversationId}`;
+            const item = document.getElementById(`lead-${conversationId}`);
+            if (checkbox.checked) {
+                localStorage.setItem(key, '1');
+                item.classList.add('done');
+            } else {
+                localStorage.removeItem(key);
+                item.classList.remove('done');
+            }
+            // Update progress for the section this item is in
+            updateLeadProgress('hot');
+            updateLeadProgress('warm');
+        }
+
+        function updateLeadProgress(type) {
+            const section = document.getElementById(`lead-section-${type}`);
+            if (!section) return;
+            const items = section.querySelectorAll('.lead-item');
+            const total = items.length;
+            const done = section.querySelectorAll('.lead-item.done').length;
+            const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+            const progressEl = document.getElementById(`lead-progress-${type}`);
+            const barEl = document.getElementById(`lead-bar-${type}`);
+            if (progressEl) progressEl.textContent = `${done} of ${total} followed up`;
+            if (barEl) barEl.style.width = `${pct}%`;
+        }
+
+        function showAllLeads(type, btn) {
+            const section = document.getElementById(`lead-section-${type}`);
+            section.querySelectorAll('.lead-hidden').forEach(el => {
+                el.classList.remove('lead-hidden');
+                el.style.display = '';
+            });
+            btn.remove();
         }
 
         // ============= CONVERSATIONS (GHL SYNC) =============
