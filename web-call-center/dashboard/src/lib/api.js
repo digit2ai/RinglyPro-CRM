@@ -12,7 +12,7 @@ const api = axios.create({
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('auth_token');
+    const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -29,6 +29,10 @@ api.interceptors.response.use(
     return response.data;
   },
   (error) => {
+    if (error.response?.status === 401) {
+      window.location.href = '/login.html?redirect=/webcallcenter/';
+      return;
+    }
     const message = error.response?.data?.error?.message || error.message;
     console.error('API Error:', message);
     return Promise.reject(error);

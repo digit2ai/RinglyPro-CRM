@@ -11,6 +11,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const path = require('path');
+const jwt = require('jsonwebtoken');
 
 // Import sequelize from main CRM
 const { sequelize } = require('../../src/models');
@@ -167,7 +168,7 @@ if (routesLoaded) {
   });
 }
 
-// Serve widget static files at /widget/
+// Serve widget static files at /widget/ (public - embedded on customer sites)
 app.use(`${BASE_PATH}/widget`, express.static(widgetStaticPath));
 
 // Serve dashboard from dashboard/dist/
@@ -186,7 +187,6 @@ app.get(`${BASE_PATH}/*`, (req, res, next) => {
   const indexPath = path.join(dashboardDistPath, 'index.html');
   res.sendFile(indexPath, (err) => {
     if (err) {
-      // Dashboard not built yet - return a helpful message
       res.status(503).json({
         error: 'Dashboard not built',
         message: 'Run the dashboard build first: cd web-call-center/dashboard && npm run build'
