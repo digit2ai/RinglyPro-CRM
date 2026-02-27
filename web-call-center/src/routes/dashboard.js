@@ -10,7 +10,7 @@ const { authenticateAndGetClient } = require('../middleware/wcc-auth');
  * GET / - Dashboard stats
  * Returns call stats for the authenticated client
  */
-router.get(['/', '/stats'], authenticateAndGetClient, async (req, res) => {
+async function handleDashboardStats(req, res) {
   try {
     const clientId = req.client.id;
     const now = new Date();
@@ -146,6 +146,9 @@ router.get(['/', '/stats'], authenticateAndGetClient, async (req, res) => {
       error: 'Failed to fetch dashboard stats'
     });
   }
-});
+}
+
+router.get('/', authenticateAndGetClient, handleDashboardStats);
+router.get('/stats', authenticateAndGetClient, handleDashboardStats);
 
 module.exports = router;
