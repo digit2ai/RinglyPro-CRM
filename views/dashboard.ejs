@@ -6232,6 +6232,12 @@
                 const inDateRange = createdDate >= yesterday && createdDate < tomorrow;
                 // Only show inbound calls/messages
                 const isInbound = (msg.direction === 'incoming');
+                // Exclude ElevenLabs outbound calls that were incorrectly stored as 'incoming'
+                const isElevenLabs = (msg.messageSource || msg.message_source) === 'elevenlabs';
+                if (isElevenLabs && isInbound) {
+                    const body = (msg.body || '').toLowerCase();
+                    if (body.startsWith('lina ') || body.includes('this is lina')) return false;
+                }
                 return inDateRange && isInbound;
             });
 
@@ -6499,10 +6505,14 @@
                 const messages = await response.json();
 
                 // Filter to only inbound ElevenLabs calls
-                const elevenLabsCalls = messages.filter(msg =>
-                    (msg.messageSource || msg.message_source) === 'elevenlabs' &&
-                    (msg.direction === 'incoming')
-                );
+                const elevenLabsCalls = messages.filter(msg => {
+                    if ((msg.messageSource || msg.message_source) !== 'elevenlabs') return false;
+                    if (msg.direction !== 'incoming') return false;
+                    // Exclude outbound calls incorrectly stored as 'incoming'
+                    const body = (msg.body || '').toLowerCase();
+                    if (body.startsWith('lina ') || body.includes('this is lina')) return false;
+                    return true;
+                });
 
                 renderElevenLabsCalls(elevenLabsCalls);
             } catch (error) {

@@ -62,6 +62,59 @@ async function syncClientCalls(clientId, agentId, businessName) {
 }
 
 /**
+ * Fix ElevenLabs message directions in the database.
+ * Old syncs stored all calls as 'incoming' regardless of actual direction.
+ * This checks the ElevenLabs API and corrects outbound calls to 'outgoing'.
+ */
+async function fixMessageDirections() {
+    try {
+        // Check if there are any messages that might need fixing
+        const [needsFix] = await sequelize.query(
+            `SELECT COUNT(*) as cnt FROM messages WHERE message_source = 'elevenlabs' AND direction = 'incoming'`,
+            { type: QueryTypes.SELECT }
+        );
+        if (!needsFix || parseInt(needsFix.cnt) === 0) return;
+
+        console.log(`🔧 [Direction Fix] Checking ${needsFix.cnt} ElevenLabs messages...`);
+        const clients = await getElevenLabsClients();
+        let totalFixed = 0;
+
+        for (const client of clients) {
+            let cursor = null;
+            let page = 0;
+            let fixed = 0;
+            do {
+                const data = await elevenLabsConvAI.listConversations(client.elevenlabs_agent_id, { limit: 100, cursor });
+                const conversations = data.conversations || [];
+                for (const conv of conversations) {
+                    if (conv.direction === 'outbound') {
+                        const [result] = await sequelize.query(
+                            `UPDATE messages SET direction = 'outgoing' WHERE twilio_sid = $1 AND client_id = $2 AND direction = 'incoming' RETURNING id`,
+                            { bind: [conv.conversation_id, client.id], type: QueryTypes.SELECT }
+                        );
+                        if (result) fixed++;
+                    }
+                }
+                cursor = data.next_cursor || data.cursor || null;
+                page++;
+                if (cursor) await new Promise(r => setTimeout(r, 200));
+            } while (cursor && page < 20);
+            if (fixed > 0) {
+                console.log(`🔧 [Direction Fix] Fixed ${fixed} messages for ${client.business_name}`);
+                totalFixed += fixed;
+            }
+        }
+        if (totalFixed > 0) {
+            console.log(`✅ [Direction Fix] Total fixed: ${totalFixed} messages`);
+        } else {
+            console.log(`✅ [Direction Fix] All directions already correct`);
+        }
+    } catch (e) {
+        console.log('⚠️ [Direction Fix] Error:', e.message);
+    }
+}
+
+/**
  * Main sync job - runs for all ElevenLabs clients
  */
 async function runSync() {
@@ -152,8 +205,9 @@ function startScheduledSync() {
     });
 
     // Run immediately on startup (after 10 second delay to let server fully start)
-    setTimeout(() => {
+    setTimeout(async () => {
         console.log('🚀 [ElevenLabs Sync] Running initial sync...');
+        await fixMessageDirections();
         runSync();
     }, 10000);
 
