@@ -242,6 +242,86 @@ router.get('/excluded', requireApiKey, async (req, res) => {
     }
 });
 
+/**
+ * POST /api/call-report/followup
+ * Mark a lead as followed up
+ * Body: { client_id, conversation_id, lead_date, lead_type, phone }
+ */
+router.post('/followup', requireApiKey, async (req, res) => {
+    try {
+        const { client_id, conversation_id, lead_date, lead_type, phone } = req.body;
+        if (!client_id || !conversation_id) {
+            return res.status(400).json({ success: false, error: 'client_id and conversation_id are required' });
+        }
+        const date = lead_date || new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+        await sequelize.query(
+            `INSERT INTO lead_followups (client_id, conversation_id, lead_date, lead_type, phone)
+             VALUES ($1, $2, $3, $4, $5)
+             ON CONFLICT (client_id, conversation_id) DO UPDATE SET followed_up_at = NOW()`,
+            { bind: [parseInt(client_id), conversation_id, date, lead_type || 'hot', phone || ''] }
+        );
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+/**
+ * DELETE /api/call-report/followup
+ * Unmark a lead follow-up
+ * Body: { client_id, conversation_id }
+ */
+router.delete('/followup', requireApiKey, async (req, res) => {
+    try {
+        const { client_id, conversation_id } = req.body;
+        if (!client_id || !conversation_id) {
+            return res.status(400).json({ success: false, error: 'client_id and conversation_id are required' });
+        }
+        await sequelize.query(
+            'DELETE FROM lead_followups WHERE client_id = $1 AND conversation_id = $2',
+            { bind: [parseInt(client_id), conversation_id] }
+        );
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+/**
+ * GET /api/call-report/followups
+ * Get all followed-up leads for a client on a given date (or multiple dates)
+ * Query: client_id, date (YYYY-MM-DD), days (optional, fetch multiple days)
+ */
+router.get('/followups', requireApiKey, async (req, res) => {
+    try {
+        const { client_id, date, days } = req.query;
+        if (!client_id) {
+            return res.status(400).json({ success: false, error: 'client_id is required' });
+        }
+        let followups;
+        if (days) {
+            // Fetch last N days of follow-ups
+            followups = await sequelize.query(
+                `SELECT conversation_id, lead_date, lead_type, phone, followed_up_at
+                 FROM lead_followups WHERE client_id = $1 AND lead_date >= (CURRENT_DATE - $2::int)
+                 ORDER BY followed_up_at DESC`,
+                { bind: [parseInt(client_id), parseInt(days)], type: QueryTypes.SELECT }
+            );
+        } else {
+            const reportDate = date || new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+            followups = await sequelize.query(
+                `SELECT conversation_id, lead_date, lead_type, phone, followed_up_at
+                 FROM lead_followups WHERE client_id = $1 AND lead_date = $2
+                 ORDER BY followed_up_at DESC`,
+                { bind: [parseInt(client_id), reportDate], type: QueryTypes.SELECT }
+            );
+        }
+        res.json({ success: true, followups });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // Cache cleanup: clear today's stale entries every 30 minutes
 setInterval(() => {
     const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });

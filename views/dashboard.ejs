@@ -2506,6 +2506,8 @@
         .lead-progress-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
         .lead-section.hot .lead-progress-fill { background: #f97316; }
         .lead-section.warm .lead-progress-fill { background: #3b82f6; }
+        .lead-section.yesterday .lead-progress-fill { background: #f59e0b; }
+        .lead-section.yesterday .lead-section-header { background: #fffbeb; }
         .lead-section-toggle { font-size: 14px; color: #9ca3af; transition: transform 0.2s; margin-left: 6px; }
         .lead-section.open .lead-section-toggle { transform: rotate(180deg); }
         .lead-section-body { display: none; border-top: 1px solid #f3f4f6; }
@@ -6804,6 +6806,7 @@
         // ============= LEAD TRACKER =============
         const LEAD_API_KEY = 'ringlypro-quick-admin-2024';
         let leadPollTimer = null;
+        let followedUpSet = new Set(); // conversation_ids that have been followed up
 
         async function loadLeadTracker() {
             const usesEL = CLIENT_ID == 15 || CLIENT_ID == 17 || CLIENT_ID == 32 || CLIENT_ID == 43 || CLIENT_ID == 44;
@@ -6814,19 +6817,28 @@
 
             const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
 
+            // Fetch follow-ups from database (last 2 days)
+            try {
+                const fResp = await fetch(`/api/call-report/followups?client_id=${CLIENT_ID}&days=2&apiKey=${LEAD_API_KEY}`);
+                const fData = await fResp.json();
+                if (fData.success && fData.followups) {
+                    followedUpSet = new Set(fData.followups.map(f => f.conversation_id));
+                }
+            } catch (e) { /* continue without follow-up data */ }
+
+            // Fetch today's report
             try {
                 const resp = await fetch(`/api/call-report/daily?client_id=${CLIENT_ID}&date=${today}&apiKey=${LEAD_API_KEY}`);
                 const data = await resp.json();
 
                 if (data.success && data.report) {
-                    renderLeadTracker(data.report, today);
+                    await renderLeadTracker(data.report, today);
                 } else if (data.success && data.status === 'generating') {
                     document.getElementById('leadTrackerContent').innerHTML = `
                         <div class="lead-loading">
                             <div class="spinner"></div>
                             <div>Generating today's leads...</div>
                         </div>`;
-                    // Poll until ready
                     if (leadPollTimer) clearInterval(leadPollTimer);
                     leadPollTimer = setInterval(async () => {
                         try {
@@ -6835,12 +6847,11 @@
                             if (d.success && d.report) {
                                 clearInterval(leadPollTimer);
                                 leadPollTimer = null;
-                                renderLeadTracker(d.report, today);
+                                await renderLeadTracker(d.report, today);
                             }
                         } catch (e) { /* keep polling */ }
                     }, 3000);
                 } else {
-                    // No report or error — show nothing disruptive
                     tracker.style.display = 'none';
                 }
             } catch (e) {
@@ -6849,7 +6860,7 @@
             }
         }
 
-        function renderLeadTracker(report, dateStr) {
+        async function renderLeadTracker(report, dateStr) {
             const cats = report.categories;
             const hotLeads = [
                 ...(cats.callback_requested || []),
@@ -6862,17 +6873,45 @@
                 ...(cats.inbound || [])
             ].sort((a, b) => b.duration - a.duration);
 
-            if (hotLeads.length === 0 && warmLeads.length === 0) {
+            // Also fetch yesterday's unfollowed leads
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = yesterday.toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+            let yesterdayUnfollowed = [];
+
+            try {
+                const yResp = await fetch(`/api/call-report/daily?client_id=${CLIENT_ID}&date=${yesterdayStr}&apiKey=${LEAD_API_KEY}`);
+                const yData = await yResp.json();
+                if (yData.success && yData.report) {
+                    const yCats = yData.report.categories;
+                    const yAll = [
+                        ...(yCats.callback_requested || []),
+                        ...(yCats.transferred || []),
+                        ...(yCats.sms_sent || []),
+                        ...(yCats.engaged_humans || []),
+                        ...(yCats.inbound || [])
+                    ];
+                    yesterdayUnfollowed = yAll.filter(l => !followedUpSet.has(l.conversation_id));
+                }
+            } catch (e) { /* no yesterday data */ }
+
+            if (hotLeads.length === 0 && warmLeads.length === 0 && yesterdayUnfollowed.length === 0) {
                 document.getElementById('leadTracker').style.display = 'none';
                 return;
             }
 
             let html = '';
+
+            // Yesterday's unfollowed (collapsed by default)
+            if (yesterdayUnfollowed.length > 0) {
+                html += renderLeadSection('yesterday', "Yesterday's Unfollowed", yesterdayUnfollowed, yesterdayStr, 5, false);
+            }
+
             if (hotLeads.length > 0) {
-                html += renderLeadSection('hot', 'Hot Leads', hotLeads, dateStr, 10);
+                html += renderLeadSection('hot', 'Hot Leads', hotLeads, dateStr, 10, true);
             }
             if (warmLeads.length > 0) {
-                html += renderLeadSection('warm', 'Warm Leads', warmLeads, dateStr, 5);
+                html += renderLeadSection('warm', 'Warm Leads', warmLeads, dateStr, 5, true);
             }
 
             document.getElementById('leadTrackerContent').innerHTML = html;
@@ -6880,13 +6919,15 @@
             document.getElementById('leadReportLink').href = `/mcp-copilot/call-report.html?client_id=${CLIENT_ID}`;
         }
 
-        function renderLeadSection(type, title, leads, dateStr, initialShow) {
-            const icon = type === 'hot' ? '🔥' : '🌡️';
-            const doneCount = leads.filter(l => isLeadDone(l.conversation_id, dateStr)).length;
+        function renderLeadSection(type, title, leads, dateStr, initialShow, defaultOpen) {
+            const icons = { hot: '🔥', warm: '🌡️', yesterday: '⚠️' };
+            const icon = icons[type] || '📋';
+            const doneCount = leads.filter(l => followedUpSet.has(l.conversation_id)).length;
             const pct = leads.length > 0 ? Math.round((doneCount / leads.length) * 100) : 0;
+            const openClass = defaultOpen ? 'open' : '';
 
             const items = leads.map((lead, i) => {
-                const done = isLeadDone(lead.conversation_id, dateStr);
+                const done = followedUpSet.has(lead.conversation_id);
                 const hidden = i >= initialShow;
                 const dur = lead.duration < 60
                     ? lead.duration + 's'
@@ -6897,9 +6938,10 @@
                 }[lead.subcategory] || '';
                 const summary = (lead.summary || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
                 const biz = lead.businessName ? `<strong>${lead.businessName.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</strong> · ` : '';
+                const leadType = type === 'yesterday' ? 'carryover' : type;
 
                 return `<div class="lead-item${done ? ' done' : ''}${hidden ? ' lead-hidden' : ''}" id="lead-${lead.conversation_id}" ${hidden ? 'style="display:none;"' : ''}>
-                    <input type="checkbox" ${done ? 'checked' : ''} onchange="toggleLeadFollowUp('${lead.conversation_id}', '${dateStr}', this)">
+                    <input type="checkbox" ${done ? 'checked' : ''} onchange="toggleLeadFollowUp('${lead.conversation_id}', '${dateStr}', '${leadType}', '${lead.phone || ''}', this)">
                     <div class="lead-info">
                         <span class="lead-phone"><a href="tel:${lead.phone}">${lead.phone}</a></span>
                         <span class="lead-tag ${tagClass}">${lead.subcategory || ''}</span>
@@ -6914,7 +6956,7 @@
                 showMore = `<button class="lead-show-more" id="lead-more-${type}" onclick="showAllLeads('${type}', this)">Show all ${leads.length} leads (${leads.length - initialShow} more)</button>`;
             }
 
-            return `<div class="lead-section ${type} open" id="lead-section-${type}">
+            return `<div class="lead-section ${type} ${openClass}" id="lead-section-${type}">
                 <div class="lead-section-header" onclick="document.getElementById('lead-section-${type}').classList.toggle('open')">
                     <span class="lead-section-icon">${icon}</span>
                     <span class="lead-section-title">${title}</span>
@@ -6926,23 +6968,30 @@
             </div>`;
         }
 
-        function isLeadDone(conversationId, dateStr) {
-            return localStorage.getItem(`lead-${CLIENT_ID}-${dateStr}-${conversationId}`) === '1';
-        }
-
-        function toggleLeadFollowUp(conversationId, dateStr, checkbox) {
-            const key = `lead-${CLIENT_ID}-${dateStr}-${conversationId}`;
+        async function toggleLeadFollowUp(conversationId, dateStr, leadType, phone, checkbox) {
             const item = document.getElementById(`lead-${conversationId}`);
             if (checkbox.checked) {
-                localStorage.setItem(key, '1');
+                followedUpSet.add(conversationId);
                 item.classList.add('done');
+                // Save to database
+                fetch(`/api/call-report/followup?apiKey=${LEAD_API_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ client_id: CLIENT_ID, conversation_id: conversationId, lead_date: dateStr, lead_type: leadType, phone })
+                }).catch(e => console.log('Follow-up save error:', e));
             } else {
-                localStorage.removeItem(key);
+                followedUpSet.delete(conversationId);
                 item.classList.remove('done');
+                // Remove from database
+                fetch(`/api/call-report/followup?apiKey=${LEAD_API_KEY}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ client_id: CLIENT_ID, conversation_id: conversationId })
+                }).catch(e => console.log('Follow-up delete error:', e));
             }
-            // Update progress for the section this item is in
             updateLeadProgress('hot');
             updateLeadProgress('warm');
+            updateLeadProgress('yesterday');
         }
 
         function updateLeadProgress(type) {

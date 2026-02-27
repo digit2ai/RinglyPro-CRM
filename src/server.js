@@ -143,6 +143,27 @@ async function startServer() {
           console.log('⚠️ phone_blocklist migration skipped:', error.message);
         }
 
+        // AUTO-MIGRATE LEAD FOLLOWUPS TABLE
+        console.log('🔄 Running lead followups migration...');
+        try {
+          await queryWithTimeout(
+            `CREATE TABLE IF NOT EXISTS lead_followups (
+              id SERIAL PRIMARY KEY,
+              client_id INTEGER NOT NULL,
+              conversation_id VARCHAR(100) NOT NULL,
+              lead_date DATE NOT NULL,
+              lead_type VARCHAR(20) DEFAULT 'hot',
+              phone VARCHAR(20),
+              followed_up_at TIMESTAMP DEFAULT NOW(),
+              UNIQUE(client_id, conversation_id)
+            )`,
+            'lead_followups migration'
+          );
+          console.log('✅ lead_followups table ready');
+        } catch (error) {
+          console.log('⚠️ lead_followups migration skipped:', error.message);
+        }
+
         console.log('✅ All migrations complete, ready to start server');
       } else {
         console.log('⚠️ No DATABASE_URL provided, running without database');
