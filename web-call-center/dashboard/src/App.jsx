@@ -14,7 +14,7 @@ function App() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
-      window.location.href = '/login.html?redirect=/webcallcenter/';
+      window.location.href = '/login?redirect=/webcallcenter/';
       return;
     }
 
@@ -23,13 +23,13 @@ function App() {
       const payload = JSON.parse(atob(token.split('.')[1]));
       if (!payload.clientId || (payload.exp && payload.exp * 1000 < Date.now())) {
         localStorage.removeItem('token');
-        window.location.href = '/login.html?redirect=/webcallcenter/';
+        window.location.href = '/login?redirect=/webcallcenter/';
         return;
       }
       setIsAuthenticated(true);
     } catch {
       localStorage.removeItem('token');
-      window.location.href = '/login.html?redirect=/webcallcenter/';
+      window.location.href = '/login?redirect=/webcallcenter/';
     }
   }, []);
 

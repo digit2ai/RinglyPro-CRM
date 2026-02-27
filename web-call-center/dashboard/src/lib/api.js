@@ -30,7 +30,7 @@ api.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      window.location.href = '/login.html?redirect=/webcallcenter/';
+      window.location.href = '/login?redirect=/webcallcenter/';
       return;
     }
     const message = error.response?.data?.error?.message || error.message;
