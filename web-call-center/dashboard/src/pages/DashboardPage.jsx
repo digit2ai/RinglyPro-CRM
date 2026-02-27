@@ -1,6 +1,5 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Phone, Clock, TrendingUp, PhoneCall } from 'lucide-react';
 import {
   LineChart,
   Line,
@@ -11,8 +10,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { dashboardApi, callsApi } from '@/lib/api';
-import { StatCard } from '@/components/StatCard';
-import { UsageMeter } from '@/components/UsageMeter';
+import { CallCenterCockpit } from '@/components/CallCenterCockpit';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { formatDuration } from '@/lib/utils';
 
@@ -41,39 +39,8 @@ export function DashboardPage() {
         </p>
       </div>
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          icon={Phone}
-          title="Total Calls"
-          value={statsLoading ? '...' : (dashStats.totalCalls || 0).toLocaleString()}
-          subtitle="All time"
-        />
-        <StatCard
-          icon={Clock}
-          title="Minutes Used"
-          value={statsLoading ? '...' : (dashStats.minutesUsed || 0).toLocaleString()}
-          subtitle="This billing period"
-        />
-        <StatCard
-          icon={TrendingUp}
-          title="Avg Duration"
-          value={statsLoading ? '...' : formatDuration(dashStats.avgDuration || 0)}
-          subtitle="Per call"
-        />
-        <StatCard
-          icon={PhoneCall}
-          title="Calls Today"
-          value={statsLoading ? '...' : (dashStats.callsToday || 0).toLocaleString()}
-          trend={dashStats.callsTodayTrend}
-        />
-      </div>
-
-      {/* Usage meter */}
-      <UsageMeter
-        used={dashStats.minutesUsed || 0}
-        total={dashStats.minutesTotal || 1000}
-      />
+      {/* Glass Cockpit KPI Display */}
+      <CallCenterCockpit stats={dashStats} isLoading={statsLoading} />
 
       {/* Daily call volume chart */}
       <Card>
@@ -108,7 +75,7 @@ export function DashboardPage() {
                 <Line
                   type="monotone"
                   dataKey="calls"
-                  stroke="hsl(243, 75%, 59%)"
+                  stroke="hsl(218, 70%, 14%)"
                   strokeWidth={2}
                   dot={false}
                   activeDot={{ r: 4 }}
@@ -143,7 +110,7 @@ export function DashboardPage() {
                   {calls.map((call) => (
                     <tr key={call.id} className="border-b last:border-0 hover:bg-muted/50">
                       <td className="py-3 px-2 whitespace-nowrap">
-                        {new Date(call.created_at).toLocaleDateString('en-US', {
+                        {new Date(call.createdAt).toLocaleDateString('en-US', {
                           month: 'short',
                           day: 'numeric',
                           hour: '2-digit',
@@ -151,10 +118,10 @@ export function DashboardPage() {
                         })}
                       </td>
                       <td className="py-3 px-2 whitespace-nowrap">
-                        {formatDuration(call.duration)}
+                        {formatDuration(call.callDuration)}
                       </td>
                       <td className="py-3 px-2 text-muted-foreground truncate max-w-xs">
-                        {call.summary || 'No summary available'}
+                        {call.callSummary || 'No summary available'}
                       </td>
                     </tr>
                   ))}
