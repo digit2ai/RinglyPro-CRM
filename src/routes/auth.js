@@ -879,11 +879,17 @@ router.post('/login', async (req, res) => {
             if (client) {
                 console.log(`📞 Client found: ${client.ringlypro_number} (Client ID: ${client.id})`);
                 // Fetch product_type via raw query (not in Sequelize model)
-                const [ptRow] = await sequelize.query(
-                    'SELECT product_type FROM clients WHERE id = :clientId',
-                    { replacements: { clientId: client.id }, type: sequelize.QueryTypes.SELECT }
-                );
-                clientProductType = (ptRow && ptRow.product_type) || 'voice_ai';
+                try {
+                    const [ptRows] = await sequelize.query(
+                        'SELECT product_type FROM clients WHERE id = :clientId',
+                        { replacements: { clientId: client.id } }
+                    );
+                    if (ptRows && ptRows.length > 0 && ptRows[0].product_type) {
+                        clientProductType = ptRows[0].product_type;
+                    }
+                } catch (ptErr) {
+                    console.log('⚠️ Could not fetch product_type:', ptErr.message);
+                }
                 console.log(`📦 Product type: ${clientProductType}`);
             } else {
                 console.log('⚠️ No client record found for user - this should not happen after registration');

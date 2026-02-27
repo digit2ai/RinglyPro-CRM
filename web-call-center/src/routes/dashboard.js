@@ -46,7 +46,7 @@ async function handleDashboardStats(req, res) {
 
     // Minutes remaining - check credit_accounts first, fallback to monthly_free_minutes
     const [creditResult] = await sequelize.query(`
-      SELECT ca.balance_minutes, c.monthly_free_minutes
+      SELECT ca.balance, c.monthly_free_minutes
       FROM clients c
       LEFT JOIN credit_accounts ca ON ca.client_id = c.id
       WHERE c.id = :clientId
@@ -58,8 +58,8 @@ async function handleDashboardStats(req, res) {
     const totalMinutes = parseFloat(totalMinutesResult.total_minutes) || 0;
     let minutesRemaining = 0;
     if (creditResult) {
-      if (creditResult.balance_minutes !== null && creditResult.balance_minutes !== undefined) {
-        minutesRemaining = parseFloat(creditResult.balance_minutes) || 0;
+      if (creditResult.balance !== null && creditResult.balance !== undefined) {
+        minutesRemaining = parseFloat(creditResult.balance) || 0;
       } else if (creditResult.monthly_free_minutes) {
         minutesRemaining = Math.max(0, parseFloat(creditResult.monthly_free_minutes) - totalMinutes);
       }

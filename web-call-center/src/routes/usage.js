@@ -33,8 +33,8 @@ router.get('/', authenticateAndGetClient, async (req, res) => {
     const [planResult] = await sequelize.query(`
       SELECT
         c.monthly_free_minutes,
-        ca.balance_minutes,
-        ca.total_minutes_purchased
+        ca.balance,
+        ca.total_minutes_used
       FROM clients c
       LEFT JOIN credit_accounts ca ON ca.client_id = c.id
       WHERE c.id = :clientId
@@ -48,9 +48,9 @@ router.get('/', authenticateAndGetClient, async (req, res) => {
     // Determine total available minutes
     let minutesTotal = 0;
     if (planResult) {
-      if (planResult.balance_minutes !== null && planResult.balance_minutes !== undefined) {
+      if (planResult.balance !== null && planResult.balance !== undefined && parseFloat(planResult.balance) > 0) {
         // Credit-based: total is used + remaining balance
-        minutesTotal = minutesUsed + (parseFloat(planResult.balance_minutes) || 0);
+        minutesTotal = minutesUsed + (parseFloat(planResult.balance) || 0);
       } else if (planResult.monthly_free_minutes) {
         minutesTotal = parseFloat(planResult.monthly_free_minutes) || 0;
       }
