@@ -58,8 +58,8 @@ async function handleDashboardStats(req, res) {
     const totalMinutes = parseFloat(totalMinutesResult.total_minutes) || 0;
     let minutesRemaining = 0;
     if (creditResult) {
-      if (creditResult.balance !== null && creditResult.balance !== undefined) {
-        minutesRemaining = parseFloat(creditResult.balance) || 0;
+      if (creditResult.balance > 0) {
+        minutesRemaining = parseFloat(creditResult.balance);
       } else if (creditResult.monthly_free_minutes) {
         minutesRemaining = Math.max(0, parseFloat(creditResult.monthly_free_minutes) - totalMinutes);
       }
