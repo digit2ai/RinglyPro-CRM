@@ -22,7 +22,7 @@ const twilio = require('twilio');
 
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
 
-const FOLLOWUP_SMS_MESSAGE = `Thanks for calling RinglyPro! You can access your AI Receptionist app anytime at https://aiagent.ringlypro.com to manage calls, messages, and bookings and CRM. Thanks again for reaching out - talk to you soon!`;
+const FOLLOWUP_SMS_MESSAGE = `Thanks for calling RinglyPro! You can access your AI Call Center app anytime at https://aiagent.ringlypro.com to manage calls, messages, and bookings and CRM. Thanks again for reaching out - talk to you soon!`;
 
 /**
  * Normalize phone number (handle URL encoding where + becomes space)
