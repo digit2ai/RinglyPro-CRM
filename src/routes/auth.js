@@ -941,7 +941,7 @@ router.post('/login', async (req, res) => {
                 } : null,
                 redirectTo: (client && clientProductType === 'web_call_center')
                     ? '/webcallcenter/'
-                    : (user.onboarding_completed ? '/dashboard' : '/onboarding')
+                    : '/'
             }
         };
 
