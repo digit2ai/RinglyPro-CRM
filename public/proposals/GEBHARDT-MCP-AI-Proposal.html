@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RinglyPro MCP AI Automation &mdash; Endless Opportunities for GEBHARDT Intralogistics Group</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+    :root {
+      --primary: #0F2B46;
+      --primary-light: #1A3D5C;
+      --accent: #00A3E0;
+      --accent-dark: #0080B3;
+      --gold: #C5A55A;
+      --gold-light: #D4B96E;
+      --success: #2ECC71;
+      --bg: #FAFBFC;
+      --text: #2C3E50;
+      --text-light: #5D6D7E;
+      --border: #E8ECF0;
+      --white: #FFFFFF;
+      --gradient-primary: linear-gradient(135deg, #0F2B46 0%, #1A4A7A 100%);
+      --gradient-accent: linear-gradient(135deg, #00A3E0 0%, #0070A0 100%);
+      --gradient-gold: linear-gradient(135deg, #C5A55A 0%, #A08840 100%);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    /* Print styles */
+    @media print {
+      @page {
+        size: A4;
+        margin: 15mm 12mm;
+      }
+
+      body {
+        background: white;
+        font-size: 10pt;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      .page-break { page-break-before: always; }
+      .no-print { display: none !important; }
+
+      /* Cover page fixes */
+      .cover-page {
+        min-height: auto;
+        height: auto;
+        margin-top: 0 !important;
+        padding: 40px 30px 50px;
+        page-break-after: always;
+      }
+
+      .cover-page::before,
+      .cover-page::after {
+        display: none;
+      }
+
+      .cover-page img {
+        width: 200px !important;
+        margin-bottom: 25px !important;
+      }
+
+      .cover-badge {
+        font-size: 10px;
+        padding: 6px 18px;
+        margin-bottom: 25px;
+      }
+
+      .cover-title {
+        font-size: 28pt;
+        margin-bottom: 12px;
+        max-width: 100%;
+      }
+
+      .cover-subtitle {
+        font-size: 13pt;
+        margin-bottom: 25px;
+        max-width: 100%;
+      }
+
+      .cover-divider {
+        margin-bottom: 25px;
+      }
+
+      .cover-meta {
+        font-size: 11px;
+        line-height: 1.8;
+      }
+
+      .cover-logos {
+        margin-top: 30px;
+      }
+
+      .cover-logo-box {
+        font-size: 15px;
+        padding: 12px 24px;
+      }
+
+      /* Content area */
+      .content {
+        max-width: 100%;
+        padding: 30px 10px;
+      }
+
+      section { page-break-inside: avoid; }
+      .product-card { page-break-inside: avoid; }
+
+      /* Ensure backgrounds print */
+      .section-number,
+      .kpi-box,
+      .highlight-box,
+      .automation-card,
+      .phase-card,
+      .doc-footer {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      /* Footer */
+      .doc-footer {
+        margin-top: 30px;
+        padding: 25px;
+      }
+    }
+
+    /* Download button */
+    .download-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: var(--primary);
+      padding: 12px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.15);
+    }
+
+    .download-bar span {
+      color: var(--white);
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+
+    .download-btn {
+      background: var(--gradient-accent);
+      color: white;
+      border: none;
+      padding: 10px 28px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s;
+      letter-spacing: 0.3px;
+    }
+
+    .download-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(0,163,224,0.4);
+    }
+
+    /* Cover Page */
+    .cover-page {
+      min-height: 100vh;
+      background: var(--gradient-primary);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 60px 40px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      margin-top: 50px;
+    }
+
+    .cover-page::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -30%;
+      width: 80%;
+      height: 200%;
+      background: radial-gradient(ellipse, rgba(0,163,224,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .cover-page::after {
+      content: '';
+      position: absolute;
+      bottom: -30%;
+      left: -20%;
+      width: 60%;
+      height: 120%;
+      background: radial-gradient(ellipse, rgba(197,165,90,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .cover-badge {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: var(--gold-light);
+      padding: 8px 24px;
+      border-radius: 30px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 40px;
+      position: relative;
+    }
+
+    .cover-title {
+      color: var(--white);
+      font-size: 42px;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 16px;
+      max-width: 800px;
+      position: relative;
+    }
+
+    .cover-subtitle {
+      color: var(--accent);
+      font-size: 22px;
+      font-weight: 500;
+      margin-bottom: 40px;
+      max-width: 700px;
+      position: relative;
+    }
+
+    .cover-divider {
+      width: 80px;
+      height: 3px;
+      background: var(--gradient-gold);
+      margin: 0 auto 40px;
+      border-radius: 2px;
+      position: relative;
+    }
+
+    .cover-meta {
+      color: rgba(255,255,255,0.6);
+      font-size: 14px;
+      line-height: 2;
+      position: relative;
+    }
+
+    .cover-meta strong {
+      color: rgba(255,255,255,0.85);
+      font-weight: 600;
+    }
+
+    .cover-logos {
+      display: flex;
+      align-items: center;
+      gap: 30px;
+      margin-top: 50px;
+      position: relative;
+    }
+
+    .cover-logo-box {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 16px 32px;
+      border-radius: 12px;
+      color: white;
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: 0.5px;
+    }
+
+    .cover-logo-box.accent { color: var(--accent); }
+    .cover-logo-box.gold { color: var(--gold-light); }
+
+    .cover-x {
+      color: rgba(255,255,255,0.3);
+      font-size: 24px;
+      font-weight: 300;
+    }
+
+    /* Main Content */
+    .content {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 60px 40px;
+    }
+
+    /* Section Headers */
+    .section-header {
+      margin-bottom: 40px;
+    }
+
+    .section-number {
+      display: inline-block;
+      background: var(--gradient-accent);
+      color: white;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 36px;
+      font-weight: 700;
+      font-size: 15px;
+      margin-bottom: 12px;
+    }
+
+    .section-label {
+      display: block;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    h2 {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--primary);
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+
+    h3 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 12px;
+    }
+
+    h4 {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--primary-light);
+      margin-bottom: 8px;
+    }
+
+    .section-desc {
+      color: var(--text-light);
+      font-size: 16px;
+      max-width: 700px;
+    }
+
+    /* Executive Summary */
+    .exec-summary {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 40px;
+      margin-bottom: 40px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    }
+
+    .exec-summary p {
+      font-size: 16px;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+
+    .exec-summary p:last-child { margin-bottom: 0; }
+
+    .highlight-box {
+      background: linear-gradient(135deg, #F0F9FF 0%, #E8F4FD 100%);
+      border-left: 4px solid var(--accent);
+      padding: 20px 24px;
+      border-radius: 0 12px 12px 0;
+      margin: 20px 0;
+    }
+
+    .highlight-box p {
+      color: var(--primary);
+      font-weight: 500;
+      margin-bottom: 0 !important;
+    }
+
+    /* KPI Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin: 30px 0;
+    }
+
+    .kpi-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px 20px;
+      text-align: center;
+    }
+
+    .kpi-value {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .kpi-label {
+      font-size: 12px;
+      color: var(--text-light);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Product Cards */
+    .product-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      margin-bottom: 32px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    }
+
+    .product-header {
+      padding: 28px 32px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .product-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      flex-shrink: 0;
+    }
+
+    .product-icon.blue { background: linear-gradient(135deg, #E3F2FD, #BBDEFB); }
+    .product-icon.green { background: linear-gradient(135deg, #E8F5E9, #C8E6C9); }
+    .product-icon.purple { background: linear-gradient(135deg, #F3E5F5, #E1BEE7); }
+    .product-icon.orange { background: linear-gradient(135deg, #FFF3E0, #FFE0B2); }
+    .product-icon.teal { background: linear-gradient(135deg, #E0F2F1, #B2DFDB); }
+
+    .product-header h3 {
+      margin-bottom: 2px;
+    }
+
+    .product-tagline {
+      color: var(--text-light);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .product-body {
+      padding: 28px 32px;
+    }
+
+    .product-body > p {
+      margin-bottom: 20px;
+      color: var(--text);
+    }
+
+    /* Automation Blocks */
+    .automation-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 20px 0;
+    }
+
+    .automation-block {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .automation-block h4 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .automation-block h4 .badge {
+      background: var(--accent);
+      color: white;
+      font-size: 9px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .automation-block ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .automation-block li {
+      font-size: 13px;
+      color: var(--text-light);
+      padding: 3px 0;
+      padding-left: 18px;
+      position: relative;
+    }
+
+    .automation-block li::before {
+      content: '>';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    /* Impact Metrics */
+    .impact-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .impact-tag {
+      background: linear-gradient(135deg, #E8F8F0, #D5F5E3);
+      color: #1B7A43;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid #A3E4C1;
+    }
+
+    /* Architecture Diagram */
+    .arch-diagram {
+      background: var(--primary);
+      border-radius: 16px;
+      padding: 40px;
+      margin: 30px 0;
+      color: white;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      overflow-x: auto;
+      white-space: pre;
+    }
+
+    /* Timeline */
+    .timeline {
+      position: relative;
+      padding-left: 40px;
+      margin: 30px 0;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 14px;
+      top: 8px;
+      bottom: 8px;
+      width: 2px;
+      background: var(--border);
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-bottom: 28px;
+    }
+
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -32px;
+      top: 6px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 3px solid var(--bg);
+    }
+
+    .timeline-item.gold::before { background: var(--gold); }
+
+    .timeline-phase {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .timeline-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+
+    .timeline-desc {
+      font-size: 13px;
+      color: var(--text-light);
+    }
+
+    /* Pricing Table */
+    .pricing-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      background: var(--white);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .pricing-table th {
+      background: var(--primary);
+      color: white;
+      padding: 14px 20px;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .pricing-table td {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+
+    .pricing-table tr:last-child td { border-bottom: none; }
+
+    .pricing-table tr:nth-child(even) td {
+      background: var(--bg);
+    }
+
+    .pricing-table .total td {
+      background: linear-gradient(135deg, #F0F9FF, #E8F4FD) !important;
+      font-weight: 700;
+      color: var(--primary);
+      border-top: 2px solid var(--accent);
+    }
+
+    /* Footer */
+    .doc-footer {
+      background: var(--primary);
+      color: rgba(255,255,255,0.6);
+      text-align: center;
+      padding: 40px;
+      margin-top: 60px;
+      font-size: 13px;
+    }
+
+    .doc-footer strong {
+      color: white;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .content { padding: 30px 20px; }
+      .cover-title { font-size: 28px; }
+      .cover-subtitle { font-size: 17px; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .automation-grid { grid-template-columns: 1fr; }
+      .cover-logos { flex-direction: column; gap: 12px; }
+      h2 { font-size: 26px; }
+      .download-bar { padding: 10px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Download Bar -->
+<div class="download-bar no-print">
+  <span>GEBHARDT Intralogistics Group &mdash; MCP AI Automation &mdash; Endless Opportunities</span>
+  <button class="download-btn" onclick="window.print()">Download PDF</button>
+</div>
+
+<!-- COVER PAGE -->
+<div class="cover-page">
+  <a href="https://ringlypro.com" target="_blank"><img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro" style="width: 280px; height: auto; margin-bottom: 40px; position: relative; filter: drop-shadow(0 4px 20px rgba(0,0,0,0.3));"></a>
+  <div class="cover-badge">Confidential &mdash; Endless Opportunities</div>
+  <h1 class="cover-title">MCP AI Automation for Next-Generation Intralogistics</h1>
+  <p class="cover-subtitle">How RinglyPro's AI-Powered MCP Server Technology Can Transform GEBHARDT's Five Core Product Lines Into Intelligent, Self-Optimizing Systems</p>
+  <div class="cover-divider"></div>
+  <div class="cover-meta">
+    <strong>Prepared for:</strong> GEBHARDT Intralogistics Group<br>
+    <strong>Prepared by:</strong> RinglyPro AI Division<br>
+    <strong>Date:</strong> March 2026<br>
+    <strong>Version:</strong> 1.0 &mdash; Draft for Review
+  </div>
+  <div class="cover-logos">
+    <div class="cover-logo-box accent">RinglyPro</div>
+    <span class="cover-x">&times;</span>
+    <div class="cover-logo-box gold">GEBHARDT</div>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+  <!-- EXECUTIVE SUMMARY -->
+  <section style="margin-bottom: 60px;">
+    <div class="section-header">
+      <div class="section-number">1</div>
+      <span class="section-label">Executive Summary</span>
+      <h2>The Opportunity</h2>
+    </div>
+
+    <div class="exec-summary">
+      <p>GEBHARDT Intralogistics Group has built a world-class portfolio of warehouse automation products &mdash; from the StoreBiter&reg; HDS pallet storage system to the Versastore&reg; smart factory solution &mdash; serving automotive, e-commerce, FMCG, healthcare, and 3PL industries across 16 global locations.</p>
+
+      <p>However, the <strong>customer-facing sales cycle, service operations, and product lifecycle management</strong> for these complex systems still rely on manual coordination between sales engineers, CRM platforms, service teams, and customers. Each product line generates unique data streams (IoT telemetry, maintenance schedules, spare parts orders, project timelines) that today live in disconnected silos.</p>
+
+      <div class="highlight-box">
+        <p><strong>This document presents endless opportunities through a purpose-built MCP (Model Context Protocol) AI automation layer</strong> that connects GEBHARDT's five core product lines to an intelligent CRM backbone &mdash; automating lead qualification, project management, preventive maintenance dispatch, spare parts ordering, and customer communication across the entire product lifecycle.</p>
+      </div>
+
+      <p>RinglyPro's MCP server architecture &mdash; proven in production with multi-tenant CRM orchestration across GoHighLevel, HubSpot, Zoho, and Vagaro &mdash; provides the foundation. We propose extending this with GEBHARDT-specific automation modules tailored to each product line's unique workflow.</p>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-value">60%</div>
+        <div class="kpi-label">Faster Lead Response</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value">40%</div>
+        <div class="kpi-label">Reduction in Service Downtime</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value">5x</div>
+        <div class="kpi-label">More Leads Processed/Day</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value">24/7</div>
+        <div class="kpi-label">AI Voice Coverage</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 2: MCP TECHNOLOGY OVERVIEW -->
+  <section class="page-break" style="margin-bottom: 60px;">
+    <div class="section-header">
+      <div class="section-number">2</div>
+      <span class="section-label">Technology Foundation</span>
+      <h2>RinglyPro MCP Architecture</h2>
+      <p class="section-desc">A battle-tested, multi-CRM AI automation layer already running in production</p>
+    </div>
+
+    <div class="exec-summary">
+      <p><strong>MCP (Model Context Protocol)</strong> is an open standard that allows AI systems to connect to external tools and data sources through a unified interface. RinglyPro has built one of the most comprehensive MCP server implementations in the CRM space, currently powering:</p>
+
+      <ul style="margin: 16px 0; padding-left: 24px; color: var(--text);">
+        <li><strong>4 CRM integrations</strong> (GoHighLevel, HubSpot, Zoho, Vagaro) with 45+ API endpoints</li>
+        <li><strong>AI Copilot Chat Engine</strong> &mdash; natural language CRM operations with multi-step conversation state</li>
+        <li><strong>Webhook Event Processing</strong> &mdash; real-time event routing with HMAC-SHA256 verification and deduplication</li>
+        <li><strong>Workflow Automation Engine</strong> &mdash; trigger-based multi-step execution with context passing</li>
+        <li><strong>Voice AI</strong> (Rachel/Ana/Lina) &mdash; TTS/STT for inbound/outbound customer communication</li>
+        <li><strong>Business Collector</strong> &mdash; automated lead generation with CRM export pipelines</li>
+        <li><strong>Claude Desktop Integration</strong> &mdash; native MCP protocol server for AI-powered agent workflows</li>
+      </ul>
+
+      <p>For GEBHARDT, we propose adapting this infrastructure to create an <strong>"Intralogistics MCP Layer"</strong> &mdash; connecting your existing Galileo IoT&reg; platform, WMS/MES systems, and CRM to a single AI-orchestrated backbone.</p>
+    </div>
+
+    <div class="arch-diagram">
+                    GEBHARDT Intralogistics + RinglyPro MCP Architecture
+
+  +-------------------------------------------------------------------+
+  |                    GEBHARDT Product Fleet                          |
+  |  StoreBiter HDS | Omnipallet | InstaPick | ROTA-Sorter | Versastore|
+  +--------+----------+-----------+-----------+----------+------------+
+           |          |           |           |          |
+           v          v           v           v          v
+  +-------------------------------------------------------------------+
+  |              GEBHARDT Galileo IoT Platform                         |
+  |     Digital Twin | Telemetry | Maintenance Alerts | Capacity       |
+  +----------------------------+--------------------------------------+
+                               |
+                               v
+  +-------------------------------------------------------------------+
+  |              RinglyPro MCP AI Automation Layer                     |
+  |                                                                    |
+  |  +-------------+  +-------------+  +-------------------+          |
+  |  | Webhook     |  | AI Copilot  |  | Workflow Engine   |          |
+  |  | Manager     |  | (NLP Chat)  |  | (Multi-Step)      |          |
+  |  +-------------+  +-------------+  +-------------------+          |
+  |                                                                    |
+  |  +-------------+  +-------------+  +-------------------+          |
+  |  | Voice AI    |  | Lead Gen    |  | CRM Proxy Layer   |          |
+  |  | (24/7)      |  | Collector   |  | (GHL/HubSpot/Zoho)|          |
+  |  +-------------+  +-------------+  +-------------------+          |
+  +-------------------------------------------------------------------+
+           |              |              |              |
+           v              v              v              v
+  +----------+   +----------+   +-----------+   +----------+
+  | Sales    |   | Service  |   | Customer  |   | Mgmt     |
+  | Pipeline |   | Dispatch |   | Portal    |   | Reports  |
+  +----------+   +----------+   +-----------+   +----------+
+    </div>
+  </section>
+
+  <!-- SECTION 3: PRODUCT-BY-PRODUCT AUTOMATION MAP -->
+  <section class="page-break" style="margin-bottom: 60px;">
+    <div class="section-header">
+      <div class="section-number">3</div>
+      <span class="section-label">Product Automation Map</span>
+      <h2>MCP AI Enhancements by Product Line</h2>
+      <p class="section-desc">Specific automation workflows mapped to each GEBHARDT product's unique lifecycle</p>
+    </div>
+
+    <!-- PRODUCT 1: StoreBiter HDS -->
+    <div class="product-card">
+      <div class="product-header">
+        <div class="product-icon blue">&#x1F3ED;</div>
+        <div>
+          <h3>StoreBiter&reg; HDS</h3>
+          <span class="product-tagline">Hive &amp; Drone Pallet Storage System &mdash; Multi-Deep Storage up to 25 pallets</span>
+        </div>
+      </div>
+      <div class="product-body">
+        <p>The StoreBiter HDS's Galileo IoT&reg; digital twin generates continuous telemetry on storage/retrieval sequences, shuttle health, capacity utilization, and power-cap energy status. Today this data lives inside the Galileo dashboard. With MCP automation, it becomes <strong>actionable intelligence that drives sales, service, and customer success automatically</strong>.</p>
+
+        <div class="automation-grid">
+          <div class="automation-block">
+            <h4>Predictive Maintenance Dispatch <span class="badge">Webhook</span></h4>
+            <ul>
+              <li>Galileo IoT alerts trigger MCP webhook events</li>
+              <li>Workflow engine auto-creates service tickets in CRM</li>
+              <li>AI assigns technician based on proximity + specialty</li>
+              <li>Voice AI calls customer to schedule maintenance window</li>
+              <li>Spare parts auto-ordered from daughter shuttle inventory</li>
+            </ul>
+          </div>
+          <div class="automation-block">
+            <h4>Capacity Expansion Lead Trigger <span class="badge">AI Copilot</span></h4>
+            <ul>
+              <li>When utilization exceeds 85% for 30+ days, MCP flags expansion opportunity</li>
+              <li>AI Copilot generates personalized expansion proposal</li>
+              <li>Sales engineer receives pre-filled CRM opportunity</li>
+              <li>Auto-calculates ROI based on current throughput data</li>
+              <li>Schedules follow-up cadence via workflow engine</li>
+            </ul>
+          </div>
+          <div class="automation-block">
+            <h4>RFQ Intake Automation <span class="badge">Voice AI</span></h4>
+            <ul>
+              <li>Inbound calls to GEBHARDT answered by Voice AI 24/7</li>
+              <li>AI qualifies: # of SKUs, pallets/day, ceiling height, LIFO/FIFO</li>
+              <li>Creates CRM contact + opportunity with captured specs</li>
+              <li>Routes to correct regional sales engineer automatically</li>
+              <li>Follow-up email with StoreBiter HDS brochure auto-sent</li>
+            </ul>
+          </div>
+          <div class="automation-block">
+            <h4>Multi-Site Fleet Dashboard <span class="badge">MCP Proxy</span></h4>
+            <ul>
+              <li>Aggregates Galileo IoT data across all customer installations</li>
+              <li>CRM enriched with real-time system health per account</li>
+              <li>Proactive outreach when MTBF drops below threshold</li>
+              <li>Quarterly business review reports auto-generated</li>
+              <li>Customer NPS survey triggered post-maintenance</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="impact-row">
+          <span class="impact-tag">-40% unplanned downtime</span>
+          <span class="impact-tag">+25% upsell conversion</span>
+          <span class="impact-tag">100% lead capture after hours</span>
+          <span class="impact-tag">Auto spare parts ordering</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUCT 2: Omnipallet -->
+    <div class="product-card">
+      <div class="product-header">
+        <div class="product-icon green">&#x1F916;</div>
+        <div>
+          <h3>Omnipallet&reg;</h3>
+          <span class="product-tagline">2D Autonomous Pallet Shuttle System &mdash; Independent 3D Robot Movement</span>
+        </div>
+      </div>
+      <div class="product-body">
+        <p>Omnipallet's autonomous robot fleet operates without parent vehicles, making it ideal for brownfield deployments with fluctuating volumes. MCP automation focuses on the <strong>complex project lifecycle</strong> &mdash; from initial site assessment through commissioning to ongoing fleet optimization.</p>
+
+        <div class="automation-grid">
+          <div class="automation-block">
+            <h4>Brownfield Assessment Pipeline <span class="badge">Workflow</span></h4>
+            <ul>
+              <li>Prospect fills online form with warehouse dimensions + volumes</li>
+              <li>MCP workflow auto-calculates robot fleet sizing</li>
+              <li>AI generates preliminary layout proposal with cost estimate</li>
+              <li>CRM pipeline moves to "Technical Assessment" stage</li>
+              <li>Auto-assigns solution architect from nearest regional office</li>
+            </ul>
+          </div>
+          <div class="automation-block">
+            <h4>Fleet Health & Scaling Alerts <span class="badge">Webhook</span></h4>
+            <ul>
+              <li>Individual robot failures auto-logged in CRM per customer</li>
+              <li>If &gt;2 robots down simultaneously, escalation workflow triggers</li>
+              <li>Seasonal volume spikes detected via throughput webhooks</li>
+              <li>AI suggests additional robot deployment for peak seasons</li>
+              <li>Ultracapacitor degradation tracked, replacement scheduled proactively</li>
+            </ul>
+          </div>
+          <div class="automation-block">
+            <h4>Project Milestone Automation <span class="badge">AI Copilot</span></h4>
+            <ul>
+              <li>Sales engineers use AI Copilot to query project status via natural language</li>
+              <li>"Show all Omnipallet projects in commissioning phase"</li>
+              <li>Auto-updates customer on installation milestones via SMS/email</li>
+              <li>Milestone completion triggers next-phase resource allocation</li>
+              <li>Post-commissioning: auto-transitions to service contract pipeline</li>
+            </ul>
+          </div>
+          <div class="automation-block">
+            <h4>Competitive Win/Loss Intelligence <span class="badge">Lead Gen</span></h4>
+            <ul>
+              <li>Business Collector scrapes logistics industry RFPs and expansions</li>
+              <li>AI scores prospects by fit: volume profile, existing automation, region</li>
+              <li>Auto-enriches CRM with company data + decision-maker contacts</li>
+              <li>Outbound cadence launched: Voice AI intro call + email sequence</li>
+              <li>Win/loss analysis feeds back into scoring model</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="impact-row">
+          <span class="impact-tag">-50% project quoting time</span>
+          <span class="impact-tag">3x more prospects touched</span>
+          <span class="impact-tag">Zero missed escalations</span>
+          <span class="impact-tag">Automated fleet lifecycle</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUCT 3: InstaPick -->
+    <div class="product-card page-break">
+      <div class="product-header">
+        <div class="product-icon purple">&#x1F4E6;</div>
+        <div>
+          <h3>InstaPick&reg;</h3>
+          <span class="product-tagline">Modular Goods-to-Person Picking &mdash; Lightweight Robots, 12m Rack Height</span>
+        </div>
+      </div>
+      <div class="product-body">
+        <p>InstaPick's modular, low-investment positioning makes it the ideal entry point for SMBs entering warehouse automation. This means a <strong>higher volume, faster sales cycle with price-sensitive buyers</strong> &mdash; exactly where MCP automation excels at scale.</p>
+
+        <div class="automation-grid">
+          <div class="automation-block">
+            <h4>SMB Lead Qualification at Scale <span class="badge">Voice AI</span></h4>
+            <ul>
+              <li>Voice AI handles high volume of SMB inbound inquiries</li>
+              <li>Qualifies: warehouse sqft, SKU count, pick volume, budget range</li>
+              <li>AI scores lead (A/B/C) and routes to inside sales or self-service</li>
+              <li>"A" leads get instant callback from sales; "C" enters nurture drip</li>
+              <li>Multi-language support (English, German, Spanish) for global reach</li>
+            </ul>
+          </div>
+          <div class="automation-block">
+            <h4>ROI Calculator & Proposal Bot <span class="badge">AI Copilot</span></h4>
+            <ul>
+              <li>Prospect inputs current manual picking costs into web form</li>
+              <li>MCP AI calculates: robots needed, payback period, CO2 savings</li>
+              <li>Auto-generates branded PDF proposal with InstaPick specs</li>
+              <li>Sustainability metrics highlighted (150kg robot vs 2-tonne SRM)</li>
+              <li>Proposal opens tracked; follow-up triggered on first view</li>
+            </ul>
+          </div>
+          <div class="automation-block">
+            <h4>Expansion Intelligence <span class="badge">Webhook</span></h4>
+            <ul>
+              <li>Robot count and workstation utilization tracked per installation</li>
+              <li>When throughput nears max capacity, expansion alert fires</li>
+              <li>AI drafts "Scale-Up" proposal: additional robots + workstations</li>
+              <li>Customer success manager notified with account context</li>
+              <li>Zero-downtime expansion plan auto-calculated</li>
+            </ul>
+          </div>
+          <div class="automation-block">
+            <h4>Sustainability Marketing Engine <span class="badge">Social</span></h4>
+            <ul>
+              <li>MCP social media automation posts InstaPick sustainability wins</li>
+              <li>Customer success stories auto-formatted for LinkedIn/Instagram</li>
+              <li>CO2 savings calculator generates shareable infographics</li>
+              <li>Hashtag engine targets: #WarehouseAutomation #GreenLogistics</li>
+              <li>Trade show leads auto-imported from badge scans to CRM</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="impact-row">
+          <span class="impact-tag">5x lead processing capacity</span>
+          <span class="impact-tag">Auto ROI proposals in &lt;60s</span>
+          <span class="impact-tag">-70% manual qualification time</span>
+          <span class="impact-tag">Sustainability-first messaging</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUCT 4: ROTA-Sorter -->
+    <div class="product-card">
+      <div class="product-header">
+        <div class="product-icon orange">&#x1F504;</div>
+        <div>
+          <h3>ROTA-Sorter&reg;</h3>
+          <span class="product-tagline">Automated Sortation Technology &mdash; Up to 5,000 Items/Hour</span>
+        </div>
+      </div>
+      <div class="product-body">
+        <p>Acquired via Lippert GmbH (September 2024), the ROTA-Sorter and the broader sortation portfolio (Cross-Belt, SwitchSorter, GridSorter, ArmSorter) serve the <strong>high-velocity e-commerce and distribution center</strong> market. MCP automation helps GEBHARDT rapidly cross-sell and service this newly expanded product line.</p>
+
+        <div class="automation-grid">
+          <div class="automation-block">
+            <h4>Cross-Sell to Existing Accounts <span class="badge">AI Copilot</span></h4>
+            <ul>
+              <li>AI scans CRM for existing GEBHARDT customers without sorting</li>
+              <li>Matches customer throughput profile to optimal sorter model</li>
+              <li>Sales engineer gets AI brief: "Customer X does 3,200 items/hr &mdash; recommend ROTA-Sorter"</li>
+              <li>Auto-generates comparison: ROTA vs. Cross-Belt vs. ArmSorter</li>
+              <li>One-click launch of outreach sequence via MCP workflow</li>
+            </ul>
+          </div>
+          <div class="automation-block">
+            <h4>E-Commerce Peak Season Pipeline <span class="badge">Lead Gen</span></h4>
+            <ul>
+              <li>Business Collector identifies e-commerce companies scaling warehouses</li>
+              <li>Timed outreach: Q2 for Black Friday/holiday readiness</li>
+              <li>Voice AI pre-qualifies: parcel volume, sort destinations, budget</li>
+              <li>Hot leads fast-tracked to sortation sales specialist</li>
+              <li>Post-peak review: AI suggests upgrade path for next year</li>
+            </ul>
+          </div>
+          <div class="automation-block">
+            <h4>Lippert Brand Integration <span class="badge">Workflow</span></h4>
+            <ul>
+              <li>Existing Lippert customers auto-imported into GEBHARDT CRM</li>
+              <li>Welcome sequence introduces GEBHARDT's full portfolio</li>
+              <li>Service contracts migrated with automated renewal reminders</li>
+              <li>Dual-brand communication templates (Lippert by GEBHARDT)</li>
+              <li>Technician assignments unified across both service networks</li>
+            </ul>
+          </div>
+          <div class="automation-block">
+            <h4>Real-Time Sort Performance SLA <span class="badge">Webhook</span></h4>
+            <ul>
+              <li>Sort rate, error rate, jam frequency pushed via webhooks</li>
+              <li>SLA breach auto-creates priority service ticket</li>
+              <li>Customer notified via SMS/email with ETA for resolution</li>
+              <li>Recurring issues trigger engineering escalation workflow</li>
+              <li>Monthly performance reports auto-sent to account owner</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="impact-row">
+          <span class="impact-tag">+35% cross-sell revenue</span>
+          <span class="impact-tag">Seamless Lippert migration</span>
+          <span class="impact-tag">Automated SLA monitoring</span>
+          <span class="impact-tag">Seasonal pipeline timing</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUCT 5: Versastore -->
+    <div class="product-card">
+      <div class="product-header">
+        <div class="product-icon teal">&#x2699;</div>
+        <div>
+          <h3>Versastore&reg;</h3>
+          <span class="product-tagline">Smart Factory Storage &mdash; Direct Production Integration, 3.1 m/s Speed</span>
+        </div>
+      </div>
+      <div class="product-body">
+        <p>Versastore is GEBHARDT's most sophisticated product &mdash; it bridges storage and production, enabling batch-size-one manufacturing. Customers are typically in <strong>automotive, electronics, and precision engineering</strong> with complex procurement cycles and high LTV. MCP automation handles the long, multi-stakeholder sales cycle and deep post-sale integration.</p>
+
+        <div class="automation-grid">
+          <div class="automation-block">
+            <h4>Enterprise Account Orchestration <span class="badge">Workflow</span></h4>
+            <ul>
+              <li>Multi-stakeholder deal tracking: production mgr, IT, procurement, C-suite</li>
+              <li>Each stakeholder gets tailored content via MCP email automation</li>
+              <li>Production manager: throughput data &amp; flexibility metrics</li>
+              <li>CFO: ROI model &amp; TCO comparison vs. manual material flow</li>
+              <li>AI Copilot helps sales navigate complex org charts</li>
+            </ul>
+          </div>
+          <div class="automation-block">
+            <h4>WMS/MES Integration Monitoring <span class="badge">Webhook</span></h4>
+            <ul>
+              <li>Versastore software integration health monitored via webhooks</li>
+              <li>WMS sync failures auto-create engineering tickets</li>
+              <li>MES production schedule changes reflected in CRM project timeline</li>
+              <li>Customer's IT team auto-notified of firmware updates</li>
+              <li>Compatibility checks run before customer WMS upgrades</li>
+            </ul>
+          </div>
+          <div class="automation-block">
+            <h4>Smart Factory Consulting Pipeline <span class="badge">AI Copilot</span></h4>
+            <ul>
+              <li>AI identifies Industry 4.0 / smart factory initiatives in target accounts</li>
+              <li>Generates industry-specific use case briefs (auto, electronics, medical)</li>
+              <li>Sales engineer asks Copilot: "What Versastore use cases fit BMW's production model?"</li>
+              <li>AI pulls from knowledge base + customer reference library</li>
+              <li>Proposal sections auto-drafted with relevant case studies</li>
+            </ul>
+          </div>
+          <div class="automation-block">
+            <h4>Long-Cycle Nurture Automation <span class="badge">Voice AI</span></h4>
+            <ul>
+              <li>Enterprise deals average 12-18 months; AI maintains touchpoints</li>
+              <li>Quarterly check-in calls via Voice AI to maintain relationship</li>
+              <li>Automated invitations to GEBHARDT factory tours &amp; LogiMAT demos</li>
+              <li>Competitive intelligence alerts when prospect engages competitors</li>
+              <li>Deal stall detection: AI flags opportunities inactive &gt;30 days</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="impact-row">
+          <span class="impact-tag">-30% sales cycle length</span>
+          <span class="impact-tag">Zero stalled deals undetected</span>
+          <span class="impact-tag">Multi-stakeholder nurture</span>
+          <span class="impact-tag">Automated factory tour booking</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 4: CROSS-PRODUCT AUTOMATIONS -->
+  <section class="page-break" style="margin-bottom: 60px;">
+    <div class="section-header">
+      <div class="section-number">4</div>
+      <span class="section-label">Cross-Product Capabilities</span>
+      <h2>Automations That Serve the Entire GEBHARDT Portfolio</h2>
+    </div>
+
+    <div class="exec-summary">
+      <h4>1. Unified Voice AI Receptionist (24/7, Multilingual)</h4>
+      <p>A single AI voice agent answers all inbound calls to GEBHARDT &mdash; in English, German, and Spanish. It qualifies the caller (new prospect, existing customer needing service, spare parts order), captures structured data, and routes to the right team with full CRM context. After-hours calls that would previously go to voicemail become captured opportunities.</p>
+
+      <h4 style="margin-top: 24px;">2. Galileo IoT &rarr; CRM Bridge (Webhook Pipeline)</h4>
+      <p>A dedicated webhook integration between GEBHARDT's Galileo IoT&reg; platform and the MCP server. System alerts, capacity thresholds, maintenance schedules, and performance anomalies flow directly into the CRM as actionable events &mdash; triggering service tickets, expansion opportunities, and customer communications without human intervention.</p>
+
+      <h4 style="margin-top: 24px;">3. Global Sales Intelligence Engine (Business Collector + AI)</h4>
+      <p>RinglyPro's Business Collector identifies companies building new warehouses, expanding distribution networks, or investing in automation &mdash; across target industries (automotive, e-commerce, FMCG, 3PL). AI scores and routes these prospects to the correct regional team (Germany, UK, or Ohio) with product-line recommendations based on industry fit.</p>
+
+      <h4 style="margin-top: 24px;">4. Service Contract Lifecycle Automation</h4>
+      <p>From initial warranty through multi-year service agreements: automated renewal reminders, usage-based pricing adjustments, technician scheduling, post-service NPS surveys, and contract upgrade proposals. All orchestrated through the MCP workflow engine with zero manual tracking.</p>
+
+      <h4 style="margin-top: 24px;">5. Trade Show &amp; Event Pipeline (LogiMAT, ProMAT, IntraLogisteX)</h4>
+      <p>Pre-event: AI outreach to target attendees. During-event: badge scan imports to CRM with product interest tags. Post-event: automated follow-up sequences tailored by product interest, with Voice AI for high-value leads and email nurture for the rest. Social media coverage auto-posted during the event.</p>
+    </div>
+  </section>
+
+  <!-- SECTION 5: IMPLEMENTATION TIMELINE -->
+  <section style="margin-bottom: 60px;">
+    <div class="section-header">
+      <div class="section-number">5</div>
+      <span class="section-label">Implementation Roadmap</span>
+      <h2>Phased Deployment Plan</h2>
+    </div>
+
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-phase">Phase 1 &mdash; Weeks 1-4</div>
+        <div class="timeline-title">Foundation &amp; CRM Integration</div>
+        <div class="timeline-desc">Deploy MCP server infrastructure. Connect GEBHARDT's primary CRM (HubSpot or Zoho) via MCP proxy layer. Configure Voice AI with GEBHARDT product knowledge base. Launch 24/7 inbound call handling for North American operations.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-phase">Phase 2 &mdash; Weeks 5-8</div>
+        <div class="timeline-title">Galileo IoT Bridge &amp; Service Automation</div>
+        <div class="timeline-desc">Build webhook pipeline from Galileo IoT platform to MCP server. Implement predictive maintenance dispatch workflows for StoreBiter HDS and Omnipallet installations. Service ticket auto-creation and technician routing live.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-phase">Phase 3 &mdash; Weeks 9-12</div>
+        <div class="timeline-title">Sales Intelligence &amp; Lead Generation</div>
+        <div class="timeline-desc">Deploy Business Collector targeting warehouse construction, DC expansion, and Industry 4.0 initiatives. AI Copilot trained on all five product lines for sales engineer support. ROI calculator and automated proposal generation for InstaPick.</div>
+      </div>
+      <div class="timeline-item gold">
+        <div class="timeline-phase">Phase 4 &mdash; Weeks 13-16</div>
+        <div class="timeline-title">Full Portfolio Automation &amp; Optimization</div>
+        <div class="timeline-desc">Cross-sell engine active across all product lines. Versastore enterprise deal orchestration live. ROTA-Sorter seasonal pipeline automation deployed. Trade show pipeline integrated. Performance analytics dashboard with AI recommendations operational.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 6: WHY RINGLYPRO -->
+  <section style="margin-bottom: 60px;">
+    <div class="section-header">
+      <div class="section-number">6</div>
+      <span class="section-label">Why RinglyPro</span>
+      <h2>Our Differentiators</h2>
+    </div>
+
+    <div class="exec-summary">
+      <div class="automation-grid">
+        <div class="automation-block">
+          <h4>Production-Proven MCP Architecture</h4>
+          <ul>
+            <li>45+ API endpoints live in production today</li>
+            <li>Multi-tenant architecture serving diverse industries</li>
+            <li>Battle-tested webhook processing with deduplication</li>
+            <li>Not a proof-of-concept &mdash; this is production infrastructure</li>
+          </ul>
+        </div>
+        <div class="automation-block">
+          <h4>Multi-CRM Flexibility</h4>
+          <ul>
+            <li>Works with HubSpot, Zoho, GoHighLevel, or any CRM</li>
+            <li>No vendor lock-in: proxy pattern abstracts CRM specifics</li>
+            <li>Migrate between CRMs without losing automation logic</li>
+            <li>Supports GEBHARDT's existing tech stack</li>
+          </ul>
+        </div>
+        <div class="automation-block">
+          <h4>IoT-Native Design</h4>
+          <ul>
+            <li>Webhook architecture designed for real-time event streams</li>
+            <li>Async processing prevents bottlenecks at scale</li>
+            <li>HMAC-SHA256 signature verification for secure IoT payloads</li>
+            <li>Galileo IoT bridge is a natural extension, not a hack</li>
+          </ul>
+        </div>
+        <div class="automation-block">
+          <h4>Intralogistics Understanding</h4>
+          <ul>
+            <li>Endless opportunities built on deep analysis of all 5 GEBHARDT products</li>
+            <li>Automations mapped to actual product lifecycles</li>
+            <li>B2B enterprise sales cycle expertise built in</li>
+            <li>Industrial IoT-to-CRM integration is a core competency</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 7: NEXT STEPS -->
+  <section style="margin-bottom: 40px;">
+    <div class="section-header">
+      <div class="section-number">7</div>
+      <span class="section-label">Next Steps</span>
+      <h2>Moving Forward</h2>
+    </div>
+
+    <div class="exec-summary">
+      <p>We recommend the following immediate next steps:</p>
+      <ol style="padding-left: 24px; margin: 16px 0;">
+        <li style="margin-bottom: 12px;"><strong>Discovery Call (30 min)</strong> &mdash; Walk through these endless opportunities with GEBHARDT's sales and IT leadership. Identify which product line to pilot first.</li>
+        <li style="margin-bottom: 12px;"><strong>Technical Scoping (1 week)</strong> &mdash; Map GEBHARDT's existing CRM, Galileo IoT endpoints, and current sales/service workflows to define exact integration points.</li>
+        <li style="margin-bottom: 12px;"><strong>Pilot Agreement</strong> &mdash; Launch Phase 1 (MCP Core + Voice AI) for one product line in one region (recommended: InstaPick in North America) to demonstrate ROI within 30 days.</li>
+        <li style="margin-bottom: 12px;"><strong>Scale Decision</strong> &mdash; Based on pilot results, expand to full 5-product deployment with Galileo IoT bridge.</li>
+      </ol>
+
+      <div class="highlight-box">
+        <p><strong>Contact:</strong> Manuel Stagg, RinglyPro AI Division<br>
+        Ready to schedule the discovery call at GEBHARDT's convenience.</p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- Footer -->
+<div class="doc-footer">
+  <strong>RinglyPro AI Division</strong> &mdash; MCP Server Automation Platform<br>
+  This document is confidential and intended solely for GEBHARDT Intralogistics Group.<br>
+  <a href="https://ringlypro.com" target="_blank" style="color: rgba(255,255,255,0.8); text-decoration: none;">RinglyPro</a> is a service of <a href="https://digit2ai.com" target="_blank" style="color: rgba(255,255,255,0.8); text-decoration: none;">Digit2ai LLC</a>. &copy; 2026 All rights reserved.
+</div>
+
+<!-- Digit2ai Logo -->
+<div style="text-align: center; padding: 50px 40px 60px; background: #fff;">
+  <a href="https://digit2ai.com" target="_blank">
+    <img src="https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6994a52954da041fa88ac979.png" alt="Digit2ai LLC" style="max-width: 400px; width: 100%; height: auto;">
+  </a>
+</div>
+
+</body>
+</html>
