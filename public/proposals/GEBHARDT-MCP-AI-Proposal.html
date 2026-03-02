@@ -1301,12 +1301,21 @@
 </div>
 
 <!-- ElevenLabs Voice AI Widget -->
+<script src="https://unpkg.com/@elevenlabs/convai-widget-embed" type="text/javascript"></script>
 <elevenlabs-convai agent-id="agent_0001kjqqxr4nfcxvar5ve7prp2vm"></elevenlabs-convai>
-<script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
 <style>
+  elevenlabs-convai {
+    position: fixed !important;
+    bottom: 20px !important;
+    right: 20px !important;
+    z-index: 9999 !important;
+  }
   /* Hide "Powered by ElevenLabs Agents" subtitle */
   elevenlabs-convai::part(powered-by) {
     display: none !important;
+  }
+  @media print {
+    elevenlabs-convai { display: none !important; }
   }
 </style>
 <script>
