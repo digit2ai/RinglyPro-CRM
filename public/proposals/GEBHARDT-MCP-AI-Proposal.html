@@ -1310,7 +1310,6 @@
     right: 20px !important;
     z-index: 9999 !important;
   }
-  /* Hide "Powered by ElevenLabs Agents" subtitle */
   elevenlabs-convai::part(powered-by) {
     display: none !important;
   }
@@ -1319,56 +1318,67 @@
   }
 </style>
 <script>
-  // Hide "Powered by ElevenLabs" from widget
-  function hidePoweredBy() {
-    const widget = document.querySelector('elevenlabs-convai');
-    if (!widget) { setTimeout(hidePoweredBy, 300); return; }
-
-    // Try shadow DOM injection
-    if (widget.shadowRoot) {
-      const style = document.createElement('style');
-      style.textContent = `
-        [class*="powered"], [class*="Powered"],
-        a[href*="elevenlabs"], [class*="branding"],
-        div:has(> a[href*="elevenlabs"]),
-        span:has(> a[href*="elevenlabs"]) {
-          display: none !important;
-          visibility: hidden !important;
-          height: 0 !important;
-          overflow: hidden !important;
-        }
-      `;
-      widget.shadowRoot.appendChild(style);
-
-      // Also walk DOM nodes to find text containing "Powered" or "ElevenLabs"
-      const walker = document.createTreeWalker(widget.shadowRoot, NodeFilter.SHOW_ELEMENT);
-      while (walker.nextNode()) {
-        const el = walker.currentNode;
-        if (el.textContent && (el.textContent.includes('Powered') || el.textContent.includes('ElevenLabs')) && el.children.length < 3) {
-          el.style.display = 'none';
-          el.style.visibility = 'hidden';
-          el.style.height = '0';
-          el.style.overflow = 'hidden';
-        }
-      }
-    }
-
-    // Also hide from light DOM
-    const allEls = widget.querySelectorAll('*');
-    allEls.forEach(el => {
-      if (el.textContent && el.textContent.includes('Powered by') && el.children.length < 3) {
-        el.style.display = 'none';
+(function() {
+  function hideText(root) {
+    if (!root) return;
+    root.querySelectorAll('*').forEach(function(el) {
+      var txt = el.innerText || el.textContent || '';
+      if ((txt.includes('Powered') || txt.includes('ElevenLabs')) && el.children.length < 4) {
+        el.style.cssText = 'display:none!important;visibility:hidden!important;height:0!important;overflow:hidden!important;opacity:0!important;pointer-events:none!important;';
       }
     });
-
-    // Re-run after widget finishes rendering
-    setTimeout(hidePoweredBy, 2000);
   }
-  // Run at multiple intervals to catch late renders
-  setTimeout(hidePoweredBy, 500);
-  setTimeout(hidePoweredBy, 1500);
-  setTimeout(hidePoweredBy, 3000);
-  setTimeout(hidePoweredBy, 5000);
+
+  function injectShadowCSS(shadowRoot) {
+    if (!shadowRoot) return;
+    var id = 'hide-powered-css';
+    if (shadowRoot.getElementById(id)) return;
+    var s = document.createElement('style');
+    s.id = id;
+    s.textContent = '*{} [class*="powered"],a[href*="elevenlabs"],[class*="Powered"],[class*="branding"]{display:none!important;visibility:hidden!important;height:0!important;opacity:0!important;}';
+    shadowRoot.appendChild(s);
+  }
+
+  function run() {
+    var widget = document.querySelector('elevenlabs-convai');
+    if (!widget) return;
+
+    // Light DOM
+    hideText(widget);
+    hideText(document.body);
+
+    // Shadow DOM
+    if (widget.shadowRoot) {
+      injectShadowCSS(widget.shadowRoot);
+      hideText(widget.shadowRoot);
+    }
+  }
+
+  // MutationObserver to catch dynamically added "Powered by" text
+  var observer = new MutationObserver(function() { run(); });
+  observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+
+  // Also watch shadow DOM when it becomes available
+  function watchShadow() {
+    var widget = document.querySelector('elevenlabs-convai');
+    if (widget && widget.shadowRoot) {
+      var shadowObs = new MutationObserver(function() { run(); });
+      shadowObs.observe(widget.shadowRoot, { childList: true, subtree: true, characterData: true });
+      run();
+    } else {
+      setTimeout(watchShadow, 200);
+    }
+  }
+  watchShadow();
+
+  // Belt-and-suspenders interval for first 10 seconds
+  var count = 0;
+  var interval = setInterval(function() {
+    run();
+    count++;
+    if (count > 20) clearInterval(interval);
+  }, 500);
+})();
 </script>
 
 </body>
