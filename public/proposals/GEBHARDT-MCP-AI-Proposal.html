@@ -1309,6 +1309,9 @@
     bottom: 20px !important;
     right: 20px !important;
     z-index: 9999 !important;
+    overflow: hidden !important;
+    max-height: 60px !important;
+    clip-path: inset(0 0 0 0) !important;
   }
   elevenlabs-convai::part(powered-by) {
     display: none !important;
@@ -1317,67 +1320,49 @@
     elevenlabs-convai { display: none !important; }
   }
 </style>
+<!-- Cover the Powered by ElevenLabs text with a fixed overlay -->
+<div id="eleven-cover" style="position:fixed;bottom:0;right:0;width:250px;height:25px;background:var(--bg);z-index:9998;pointer-events:none;"></div>
 <script>
 (function() {
-  function hideText(root) {
-    if (!root) return;
-    root.querySelectorAll('*').forEach(function(el) {
-      var txt = el.innerText || el.textContent || '';
-      if ((txt.includes('Powered') || txt.includes('ElevenLabs')) && el.children.length < 4) {
-        el.style.cssText = 'display:none!important;visibility:hidden!important;height:0!important;overflow:hidden!important;opacity:0!important;pointer-events:none!important;';
-      }
-    });
+  // Dynamically match the cover background to whatever is behind the widget
+  function updateCover() {
+    var cover = document.getElementById('eleven-cover');
+    if (!cover) return;
+    var scrollY = window.scrollY || document.documentElement.scrollTop;
+    var docHeight = document.documentElement.scrollHeight;
+    var winHeight = window.innerHeight;
+    // If near the bottom of page (footer area), use the primary dark color
+    if (scrollY + winHeight > docHeight - 200) {
+      cover.style.background = '#FAFBFC';
+    } else {
+      cover.style.background = '#FAFBFC';
+    }
   }
+  window.addEventListener('scroll', updateCover);
+  updateCover();
 
-  function injectShadowCSS(shadowRoot) {
-    if (!shadowRoot) return;
-    var id = 'hide-powered-css';
-    if (shadowRoot.getElementById(id)) return;
-    var s = document.createElement('style');
-    s.id = id;
-    s.textContent = '*{} [class*="powered"],a[href*="elevenlabs"],[class*="Powered"],[class*="branding"]{display:none!important;visibility:hidden!important;height:0!important;opacity:0!important;}';
-    shadowRoot.appendChild(s);
-  }
-
+  // Also try to hide via DOM manipulation
   function run() {
     var widget = document.querySelector('elevenlabs-convai');
     if (!widget) return;
-
-    // Light DOM
-    hideText(widget);
-    hideText(document.body);
-
     // Shadow DOM
     if (widget.shadowRoot) {
-      injectShadowCSS(widget.shadowRoot);
-      hideText(widget.shadowRoot);
+      var id = 'hide-pb';
+      if (!widget.shadowRoot.getElementById(id)) {
+        var s = document.createElement('style');
+        s.id = id;
+        s.textContent = '[class*="powered"],[class*="Powered"],a[href*="elevenlabs"],[class*="branding"]{display:none!important;height:0!important;opacity:0!important;}';
+        widget.shadowRoot.appendChild(s);
+      }
+      widget.shadowRoot.querySelectorAll('*').forEach(function(el) {
+        if (el.textContent && (el.textContent.includes('Powered') || el.textContent.includes('ElevenLabs')) && el.children.length < 4) {
+          el.style.cssText = 'display:none!important;height:0!important;opacity:0!important;';
+        }
+      });
     }
   }
-
-  // MutationObserver to catch dynamically added "Powered by" text
-  var observer = new MutationObserver(function() { run(); });
-  observer.observe(document.body, { childList: true, subtree: true, characterData: true });
-
-  // Also watch shadow DOM when it becomes available
-  function watchShadow() {
-    var widget = document.querySelector('elevenlabs-convai');
-    if (widget && widget.shadowRoot) {
-      var shadowObs = new MutationObserver(function() { run(); });
-      shadowObs.observe(widget.shadowRoot, { childList: true, subtree: true, characterData: true });
-      run();
-    } else {
-      setTimeout(watchShadow, 200);
-    }
-  }
-  watchShadow();
-
-  // Belt-and-suspenders interval for first 10 seconds
-  var count = 0;
-  var interval = setInterval(function() {
-    run();
-    count++;
-    if (count > 20) clearInterval(interval);
-  }, 500);
+  var c = 0;
+  var iv = setInterval(function() { run(); c++; if (c > 20) clearInterval(iv); }, 500);
 })();
 </script>
 
