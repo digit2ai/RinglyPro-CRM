@@ -1309,60 +1309,31 @@
     bottom: 20px !important;
     right: 20px !important;
     z-index: 9999 !important;
-    overflow: hidden !important;
-    max-height: 60px !important;
-    clip-path: inset(0 0 0 0) !important;
-  }
-  elevenlabs-convai::part(powered-by) {
-    display: none !important;
   }
   @media print {
     elevenlabs-convai { display: none !important; }
   }
 </style>
-<!-- Cover the Powered by ElevenLabs text with a fixed overlay -->
-<div id="eleven-cover" style="position:fixed;bottom:0;right:0;width:250px;height:25px;background:var(--bg);z-index:9998;pointer-events:none;"></div>
 <script>
 (function() {
-  // Dynamically match the cover background to whatever is behind the widget
-  function updateCover() {
-    var cover = document.getElementById('eleven-cover');
-    if (!cover) return;
-    var scrollY = window.scrollY || document.documentElement.scrollTop;
-    var docHeight = document.documentElement.scrollHeight;
-    var winHeight = window.innerHeight;
-    // If near the bottom of page (footer area), use the primary dark color
-    if (scrollY + winHeight > docHeight - 200) {
-      cover.style.background = '#FAFBFC';
-    } else {
-      cover.style.background = '#FAFBFC';
-    }
-  }
-  window.addEventListener('scroll', updateCover);
-  updateCover();
-
-  // Also try to hide via DOM manipulation
-  function run() {
+  function hideText() {
     var widget = document.querySelector('elevenlabs-convai');
-    if (!widget) return;
-    // Shadow DOM
-    if (widget.shadowRoot) {
-      var id = 'hide-pb';
-      if (!widget.shadowRoot.getElementById(id)) {
-        var s = document.createElement('style');
-        s.id = id;
-        s.textContent = '[class*="powered"],[class*="Powered"],a[href*="elevenlabs"],[class*="branding"]{display:none!important;height:0!important;opacity:0!important;}';
-        widget.shadowRoot.appendChild(s);
-      }
-      widget.shadowRoot.querySelectorAll('*').forEach(function(el) {
-        if (el.textContent && (el.textContent.includes('Powered') || el.textContent.includes('ElevenLabs')) && el.children.length < 4) {
-          el.style.cssText = 'display:none!important;height:0!important;opacity:0!important;';
-        }
-      });
+    if (!widget || !widget.shadowRoot) return;
+    var id = 'hide-pb-style';
+    if (!widget.shadowRoot.getElementById(id)) {
+      var s = document.createElement('style');
+      s.id = id;
+      s.textContent = '[class*="powered"],[class*="Powered"],a[href*="elevenlabs"],[class*="branding"]{color:transparent!important;font-size:0!important;line-height:0!important;height:0!important;overflow:hidden!important;}';
+      widget.shadowRoot.appendChild(s);
     }
+    widget.shadowRoot.querySelectorAll('*').forEach(function(el) {
+      if (el.textContent && (el.textContent.includes('Powered') || el.textContent.includes('ElevenLabs')) && el.children.length < 4) {
+        el.style.cssText = 'color:transparent!important;font-size:0!important;line-height:0!important;height:0!important;overflow:hidden!important;';
+      }
+    });
   }
   var c = 0;
-  var iv = setInterval(function() { run(); c++; if (c > 20) clearInterval(iv); }, 500);
+  var iv = setInterval(function() { hideText(); c++; if (c > 30) clearInterval(iv); }, 500);
 })();
 </script>
 
