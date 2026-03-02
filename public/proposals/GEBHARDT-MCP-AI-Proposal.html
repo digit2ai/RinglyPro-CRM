@@ -1300,5 +1300,29 @@
   </a>
 </div>
 
+<!-- ElevenLabs Voice AI Widget -->
+<elevenlabs-convai agent-id="agent_0001kjqqxr4nfcxvar5ve7prp2vm"></elevenlabs-convai>
+<script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+<style>
+  /* Hide "Powered by ElevenLabs Agents" subtitle */
+  elevenlabs-convai::part(powered-by) {
+    display: none !important;
+  }
+</style>
+<script>
+  // Fallback: hide powered-by text inside shadow DOM
+  function hidePoweredBy() {
+    const widget = document.querySelector('elevenlabs-convai');
+    if (widget && widget.shadowRoot) {
+      const style = document.createElement('style');
+      style.textContent = '[class*="powered"], [class*="Powered"], a[href*="elevenlabs"] { display: none !important; visibility: hidden !important; }';
+      widget.shadowRoot.appendChild(style);
+    } else {
+      setTimeout(hidePoweredBy, 500);
+    }
+  }
+  setTimeout(hidePoweredBy, 1000);
+</script>
+
 </body>
 </html>
