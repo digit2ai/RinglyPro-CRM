@@ -12,9 +12,9 @@
 
 function generate(options = {}) {
   const {
-    skuCount = 800,
-    monthsOfData = 6,
-    avgOrdersPerDay = 60,
+    skuCount = 300,
+    monthsOfData = 3,
+    avgOrdersPerDay = 25,
     singleLinePct = 42
   } = options;
 
@@ -150,8 +150,8 @@ function generateGoodsIn(skus, months) {
   let receiptId = 10001;
 
   for (let m = 0; m < months; m++) {
-    // ~100 deliveries per month
-    const deliveriesPerMonth = randInt(80, 120);
+    // ~30 deliveries per month
+    const deliveriesPerMonth = randInt(20, 40);
 
     for (let d = 0; d < deliveriesPerMonth; d++) {
       const date = new Date(startDate);
