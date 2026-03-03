@@ -64,7 +64,7 @@ router.get('/:id', async (req, res) => {
       where,
       include: [
         { model: req.models.PinaxisUploadedFile, as: 'files' },
-        { model: req.models.PinaxisAnalysisResult, as: 'analysisResults' },
+        { model: req.models.PinaxisAnalysisResult, as: 'results' },
         { model: req.models.PinaxisProductRecommendation, as: 'recommendations' }
       ]
     });

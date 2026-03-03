@@ -14,7 +14,7 @@ const fonts = {
  */
 async function generate(project) {
   const analysisMap = {};
-  for (const r of (project.analysisResults || [])) {
+  for (const r of (project.results || [])) {
     analysisMap[r.analysis_type] = r.result_data;
   }
 

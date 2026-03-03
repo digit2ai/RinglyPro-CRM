@@ -88,6 +88,10 @@ function generateItemMaster(skus) {
     const height_mm = randInt(profile.h[0], profile.h[1]);
     const weight_kg = randFloat(profile.wt[0], profile.wt[1], 2);
 
+    // Check if fits in standard GEBHARDT bin (600x400x450mm)
+    const dims = [length_mm, width_mm, height_mm].sort((a, b) => a - b);
+    const bin_capable = dims[0] <= 400 && dims[1] <= 400 && dims[2] <= 450;
+
     return {
       sku: sku.sku,
       description: `${sku.category} Item ${sku.sku}`,
@@ -104,7 +108,8 @@ function generateItemMaster(skus) {
       batch_tracked: Math.random() < 0.15,
       dangerous_goods: Math.random() < 0.05,
       temperature_range: randChoice(['ambient', 'ambient', 'ambient', 'cool', null]),
-      category: sku.category
+      category: sku.category,
+      bin_capable
     };
   });
 }

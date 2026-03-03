@@ -9,7 +9,7 @@ router.post('/:projectId/generate', async (req, res) => {
   try {
     const project = await req.models.PinaxisProject.findByPk(req.params.projectId, {
       include: [
-        { model: req.models.PinaxisAnalysisResult, as: 'analysisResults' },
+        { model: req.models.PinaxisAnalysisResult, as: 'results' },
         { model: req.models.PinaxisProductRecommendation, as: 'recommendations' }
       ]
     });
@@ -18,7 +18,7 @@ router.post('/:projectId/generate', async (req, res) => {
       return res.status(404).json({ success: false, error: 'Project not found' });
     }
 
-    if (!project.analysisResults || project.analysisResults.length === 0) {
+    if (!project.results || project.results.length === 0) {
       return res.status(400).json({
         success: false,
         error: 'No analysis results. Run analysis first.'
@@ -46,7 +46,7 @@ router.get('/:projectId/download', async (req, res) => {
   try {
     const project = await req.models.PinaxisProject.findByPk(req.params.projectId, {
       include: [
-        { model: req.models.PinaxisAnalysisResult, as: 'analysisResults' },
+        { model: req.models.PinaxisAnalysisResult, as: 'results' },
         { model: req.models.PinaxisProductRecommendation, as: 'recommendations' }
       ]
     });
