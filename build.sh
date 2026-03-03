@@ -224,8 +224,44 @@ fi
 
 echo ""
 echo "================================================"
+echo "Building PINAXIS Analytics Dashboard"
+echo "================================================"
+
+if [ -d "pinaxis/dashboard" ]; then
+    cd pinaxis/dashboard
+    echo "PINAXIS Dashboard directory: $(pwd)"
+
+    echo "📦 Installing PINAXIS dashboard dependencies..."
+    NODE_ENV=development npm ci --include=dev || NODE_ENV=development npm install --include=dev
+
+    echo ""
+    echo "🔨 Building PINAXIS dashboard with Vite..."
+    set +e
+    NODE_ENV=production npm run build 2>&1
+    BUILD_EXIT_CODE=$?
+    set -e
+
+    if [ $BUILD_EXIT_CODE -ne 0 ]; then
+      echo "⚠️ PINAXIS build failed with exit code $BUILD_EXIT_CODE"
+    fi
+
+    if [ -d "dist" ]; then
+        echo "✅ PINAXIS dist folder created!"
+        ls -lh dist/
+    else
+        echo "⚠️ PINAXIS dist folder not created"
+    fi
+
+    cd ../..
+else
+    echo "⚠️ PINAXIS dashboard directory not found, skipping..."
+fi
+
+echo ""
+echo "================================================"
 echo "✅ Build completed successfully!"
 echo "✅ Store Health AI Dashboard built at: ./store-health-ai-dashboard-dist"
 echo "✅ TunjoRacing Dashboard built at: ./tunjoracing/dashboard/dist"
 echo "✅ Web Call Center Dashboard built at: ./web-call-center/dashboard/dist"
+echo "✅ PINAXIS Dashboard built at: ./pinaxis/dashboard/dist"
 echo "================================================"

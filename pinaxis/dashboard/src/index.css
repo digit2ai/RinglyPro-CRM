@@ -1,0 +1,118 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-900 text-slate-100 antialiased;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-slate-800;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-600 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-500;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg;
+  }
+
+  .card-header {
+    @apply text-lg font-semibold text-slate-100 mb-4;
+  }
+
+  .btn-primary {
+    @apply bg-pinaxis-600 hover:bg-pinaxis-700 text-white font-medium px-6 py-2.5 rounded-lg
+           transition-all duration-200 shadow-md hover:shadow-lg
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium px-6 py-2.5 rounded-lg
+           transition-all duration-200 border border-slate-600;
+  }
+
+  .btn-ghost {
+    @apply text-slate-400 hover:text-slate-200 hover:bg-slate-800 font-medium px-4 py-2 rounded-lg
+           transition-all duration-200;
+  }
+
+  .input-field {
+    @apply w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2.5
+           text-slate-100 placeholder-slate-400
+           focus:outline-none focus:ring-2 focus:ring-pinaxis-500 focus:border-transparent
+           transition-all duration-200;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-blue {
+    @apply badge bg-blue-500/20 text-blue-300;
+  }
+
+  .badge-green {
+    @apply badge bg-emerald-500/20 text-emerald-300;
+  }
+
+  .badge-yellow {
+    @apply badge bg-amber-500/20 text-amber-300;
+  }
+
+  .badge-red {
+    @apply badge bg-red-500/20 text-red-300;
+  }
+
+  .dropzone {
+    @apply border-2 border-dashed border-slate-600 rounded-xl p-8 text-center
+           cursor-pointer transition-all duration-200
+           hover:border-pinaxis-500 hover:bg-slate-800/50;
+  }
+
+  .dropzone-active {
+    @apply border-pinaxis-500 bg-pinaxis-500/10;
+  }
+
+  .tooltip-chart {
+    @apply bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 shadow-xl text-sm;
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.4s ease-out;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
