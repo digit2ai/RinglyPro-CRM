@@ -552,14 +552,45 @@
 <!-- ================================================================ -->
 <div class="section" id="ingestion">
   <h2 class="section-title"><span class="num">5</span> Data Ingestion Pipeline</h2>
-  <p class="section-sub">CSV/XLSX parsing, schema validation, and column normalization</p>
+  <p class="section-sub">Dual-mode data ingestion: file upload for POC, live API feeds for production</p>
 
-  <h3>Supported File Formats</h3>
-  <ul>
-    <li><strong>CSV</strong> — auto-detects delimiter (<span class="mono">;</span> or <span class="mono">,</span>), UTF-8</li>
-    <li><strong>XLSX</strong> — reads first sheet, supports cell dates</li>
-    <li><strong>Max file size:</strong> 50 MB (multer memory storage)</li>
-  </ul>
+  <div class="card" style="border-left: 4px solid var(--amber); margin-bottom: 24px;">
+    <div class="tag tag-amber" style="background: rgba(245,158,11,.15); color: var(--amber);">POC Phase — File Upload</div>
+    <p style="margin: 12px 0 8px;">For the initial <strong>Proof of Concept</strong> and sales analysis workflow, data is ingested via <strong>CSV/XLSX file uploads</strong>. The prospect customer exports data from their WMS/ERP system and uploads 4 files (Item Master, Inventory, Goods-In, Goods-Out) through the PINAXIS dashboard.</p>
+    <ul>
+      <li><strong>CSV</strong> — auto-detects delimiter (<span class="mono">;</span> or <span class="mono">,</span>), UTF-8</li>
+      <li><strong>XLSX</strong> — reads first sheet, supports cell dates</li>
+      <li><strong>Max file size:</strong> 50 MB (multer memory storage)</li>
+    </ul>
+  </div>
+
+  <div class="card" style="border-left: 4px solid var(--green); margin-bottom: 24px;">
+    <div class="tag tag-green">Production Phase — Live API Feeds</div>
+    <p style="margin: 12px 0 8px;">For <strong>live production deployments</strong> — after the customer has adopted GEBHARDT automation systems — data ingestion transitions to real-time API-based feeds:</p>
+    <table style="margin-top: 12px;">
+      <thead>
+        <tr><th>Data Source</th><th>Protocol</th><th>Data Scope</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>SAP EWM OData APIs</strong></td>
+          <td>REST / OData v4</td>
+          <td>Goods-in movements, goods-out shipments, inventory snapshots, material master data</td>
+        </tr>
+        <tr>
+          <td><strong>SAP Event Mesh</strong></td>
+          <td>Webhooks (HMAC-SHA256)</td>
+          <td>Real-time warehouse events — inbound deliveries, pick confirmations, shipping notifications, stock changes</td>
+        </tr>
+        <tr>
+          <td><strong>Direct WMS API</strong></td>
+          <td>REST / SOAP</td>
+          <td>For non-SAP customers — connects to any WMS exposing standard warehouse transaction endpoints</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="margin-top: 12px; color: var(--muted); font-size: 13px;">In production mode, the analytics engine runs on continuously updated data, enabling live dashboards, trend monitoring, and proactive product recommendations as warehouse patterns evolve.</p>
+  </div>
 
   <h3>Column Name Normalization</h3>
   <p>The parser supports <span class="hl">German and English column aliases</span>, allowing PINAXIS customers to use their native column headers:</p>
