@@ -380,22 +380,17 @@ async function computeABCClassification(models, projectId) {
   const totalPicks = skuPicks.reduce((s, r) => s + parseFloat(r.total_picks), 0);
   const n = skuPicks.length;
 
-  // Build Lorenz curve data
-  let cumVolume = 0;
-  const lorenzCurve = [{ x: 0, y: 0 }];
+  // ABC classification (descending order — A items first)
+  let cumVolumeDesc = 0;
   const skuData = [];
 
   for (let i = 0; i < n; i++) {
-    cumVolume += parseFloat(skuPicks[i].total_picks);
-    const xPct = ((i + 1) / n) * 100;
-    const yPct = (cumVolume / totalPicks) * 100;
-    lorenzCurve.push({ x: Math.round(xPct * 10) / 10, y: Math.round(yPct * 10) / 10 });
+    cumVolumeDesc += parseFloat(skuPicks[i].total_picks);
 
-    // ABC classification: A = top 80% volume, B = next 15%, C = remaining 5%
     let abcClass;
-    if ((cumVolume / totalPicks) <= 0.80) {
+    if ((cumVolumeDesc / totalPicks) <= 0.80) {
       abcClass = 'A';
-    } else if ((cumVolume / totalPicks) <= 0.95) {
+    } else if ((cumVolumeDesc / totalPicks) <= 0.95) {
       abcClass = 'B';
     } else {
       abcClass = 'C';
@@ -405,13 +400,24 @@ async function computeABCClassification(models, projectId) {
       sku: skuPicks[i].sku,
       picks: parseFloat(skuPicks[i].total_picks),
       pct: Math.round((parseFloat(skuPicks[i].total_picks) / totalPicks) * 100 * 100) / 100,
-      cumulative_pct: Math.round(yPct * 10) / 10,
+      cumulative_pct: Math.round((cumVolumeDesc / totalPicks) * 100 * 10) / 10,
       class: abcClass
     });
   }
 
-  // Compute Gini coefficient
-  // Gini = 1 - 2 * (area under Lorenz curve)
+  // Build Lorenz curve (ascending sort — small contributors first)
+  const skuPicksAsc = [...skuPicks].reverse(); // reverse the DESC sort
+  let cumVolumeAsc = 0;
+  const lorenzCurve = [{ x: 0, y: 0 }];
+  for (let i = 0; i < n; i++) {
+    cumVolumeAsc += parseFloat(skuPicksAsc[i].total_picks);
+    lorenzCurve.push({
+      x: Math.round(((i + 1) / n) * 100 * 10) / 10,
+      y: Math.round((cumVolumeAsc / totalPicks) * 100 * 10) / 10
+    });
+  }
+
+  // Compute Gini coefficient using trapezoidal rule
   let areaUnderLorenz = 0;
   for (let i = 1; i < lorenzCurve.length; i++) {
     const dx = (lorenzCurve[i].x - lorenzCurve[i - 1].x) / 100;
