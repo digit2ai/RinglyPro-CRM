@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { getProject, getAnalysisAll, getRecommendations, downloadReport } from '../lib/api'
+import { getProject, getAnalysisAll, getRecommendations, generateReport, downloadReport } from '../lib/api'
 
 export default function ReportPage() {
   const { projectId } = useParams()
@@ -39,6 +39,8 @@ export default function ReportPage() {
   const handleDownload = async () => {
     setDownloadLoading(true)
     try {
+      // Generate report first, then download
+      await generateReport(projectId)
       const blob = await downloadReport(projectId)
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -69,7 +71,15 @@ export default function ReportPage() {
     )
   }
 
-  const kpis = analysis?.kpis || {}
+  const ov = analysis?.overview_kpis || {}
+  const kpis = {
+    total_skus: ov.skus?.total,
+    active_skus: ov.skus?.active,
+    bin_capable_pct: ov.skus?.bin_capable_pct,
+    total_orders: ov.orders?.total_orders,
+    total_orderlines: ov.orders?.total_orderlines,
+    total_units: ov.orders?.total_units,
+  }
   const topProduct = recommendations.length > 0 ? recommendations[0] : null
 
   const reportSections = [

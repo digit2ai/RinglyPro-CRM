@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getProject, getAnalysisAll, runAnalysis, matchProducts, downloadReport } from '../lib/api'
+import { getProject, getAnalysisAll, runAnalysis, matchProducts, generateReport, downloadReport } from '../lib/api'
 import KpiCards from '../components/KpiCards'
 import OrderStructureChart from '../components/OrderStructureChart'
 import ThroughputChart from '../components/ThroughputChart'
@@ -56,6 +56,8 @@ export default function AnalysisPage() {
   const handleDownloadReport = async () => {
     setReportLoading(true)
     try {
+      // Generate report first, then download
+      await generateReport(projectId)
       const blob = await downloadReport(projectId)
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -104,13 +106,24 @@ export default function AnalysisPage() {
     )
   }
 
-  const kpis = analysis?.kpis || {}
-  const orderStructure = analysis?.order_structure || []
-  const throughput = analysis?.throughput || []
-  const weekday = analysis?.weekday || []
-  const hourly = analysis?.hourly || []
-  const abc = analysis?.abc_analysis || {}
-  const fitAnalysis = analysis?.fit_analysis || []
+  // Map backend response keys to component-expected shapes
+  const ov = analysis?.overview_kpis || {}
+  const kpis = {
+    total_skus: ov.skus?.total,
+    active_skus: ov.skus?.active,
+    bin_capable_pct: ov.skus?.bin_capable_pct,
+    total_orders: ov.orders?.total_orders,
+    total_orderlines: ov.orders?.total_orderlines,
+    total_units: ov.orders?.total_units,
+    avg_lines_per_order: ov.orders?.avg_lines_per_order,
+    date_range: ov.date_range
+  }
+  const orderStructure = analysis?.order_structure?.histogram || []
+  const throughput = analysis?.throughput_monthly?.months || []
+  const weekday = analysis?.throughput_weekday?.weekdays || []
+  const hourly = analysis?.throughput_hourly?.hours || []
+  const abc = analysis?.abc_classification || {}
+  const fitAnalysis = analysis?.fit_analysis?.bins || []
 
   return (
     <div className="animate-fade-in">

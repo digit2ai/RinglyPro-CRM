@@ -27,12 +27,16 @@ async function request(path, options = {}) {
     return res.blob()
   }
 
-  return res.json()
+  const json = await res.json()
+  // Unwrap { success, data } envelope if present
+  if (json && json.success && json.data !== undefined) {
+    return json.data
+  }
+  return json
 }
 
 /**
  * Create a new analysis project
- * @param {{ company_name: string, contact_name: string, industry: string, country: string }} data
  */
 export async function createProject(data) {
   return request('/projects', {
@@ -42,8 +46,7 @@ export async function createProject(data) {
 }
 
 /**
- * Get project details by ID
- * @param {string} projectId
+ * Get project details by ID or project_code
  */
 export async function getProject(projectId) {
   return request(`/projects/${projectId}`)
@@ -51,16 +54,13 @@ export async function getProject(projectId) {
 
 /**
  * Upload a file to a project
- * @param {string} projectId
- * @param {string} fileType - item_master | inventory | goods_in | goods_out
- * @param {File} file
+ * Backend: POST /upload/:projectId/:fileType
  */
 export async function uploadFile(projectId, fileType, file) {
   const formData = new FormData()
   formData.append('file', file)
-  formData.append('file_type', fileType)
 
-  return request(`/projects/${projectId}/upload`, {
+  return request(`/upload/${projectId}/${fileType}`, {
     method: 'POST',
     body: formData
   })
@@ -68,63 +68,75 @@ export async function uploadFile(projectId, fileType, file) {
 
 /**
  * Get upload/parse status for all files in a project
- * @param {string} projectId
+ * Backend: GET /upload/:projectId/status
  */
 export async function getUploadStatus(projectId) {
-  return request(`/projects/${projectId}/uploads`)
+  return request(`/upload/${projectId}/status`)
 }
 
 /**
  * Trigger analysis run for a project
- * @param {string} projectId
+ * Backend: POST /analysis/:projectId/run
  */
 export async function runAnalysis(projectId) {
-  return request(`/projects/${projectId}/analyze`, {
+  return request(`/analysis/${projectId}/run`, {
     method: 'POST'
   })
 }
 
 /**
  * Get all analysis results for a project
- * @param {string} projectId
+ * Backend: GET /analysis/:projectId/all
  */
 export async function getAnalysisAll(projectId) {
-  return request(`/projects/${projectId}/analysis`)
+  return request(`/analysis/${projectId}/all`)
 }
 
 /**
  * Trigger product matching for a project
- * @param {string} projectId
+ * Backend: POST /products/:projectId/match
  */
 export async function matchProducts(projectId) {
-  return request(`/projects/${projectId}/match`, {
+  return request(`/products/${projectId}/match`, {
     method: 'POST'
   })
 }
 
 /**
  * Get product recommendations
- * @param {string} projectId
+ * Backend: GET /products/:projectId/recommendations
  */
 export async function getRecommendations(projectId) {
-  return request(`/projects/${projectId}/recommendations`)
+  return request(`/products/${projectId}/recommendations`)
 }
 
 /**
  * Generate a demo project with synthetic data
+ * Backend: POST /demo/generate
  */
-export async function generateDemo() {
-  return request('/demo', {
+export async function generateDemo(companyName) {
+  return request('/demo/generate', {
+    method: 'POST',
+    body: JSON.stringify({ company_name: companyName || 'Demo Warehouse GmbH' })
+  })
+}
+
+/**
+ * Generate PDF report for a project
+ * Backend: POST /reports/:projectId/generate
+ */
+export async function generateReport(projectId) {
+  return request(`/reports/${projectId}/generate`, {
     method: 'POST'
   })
 }
 
 /**
  * Download the PDF report for a project
- * @param {string} projectId
+ * Backend: GET /reports/:projectId/download
  */
 export async function downloadReport(projectId) {
-  return request(`/projects/${projectId}/report`, {
+  return request(`/reports/${projectId}/download`, {
     responseType: 'blob'
   })
 }
