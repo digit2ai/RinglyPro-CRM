@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Routes, Route, NavLink, useLocation } from 'react-router-dom'
 import UploadPage from './pages/UploadPage'
 import AnalysisPage from './pages/AnalysisPage'
@@ -54,8 +54,25 @@ function ArchitectureIcon({ className }) {
   )
 }
 
+function MenuIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+    </svg>
+  )
+}
+
+function CloseIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  )
+}
+
 export default function App() {
   const location = useLocation()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const getCurrentStep = () => {
     if (location.pathname.startsWith('/analysis')) return 1
@@ -64,25 +81,43 @@ export default function App() {
     return 0
   }
 
+  const closeSidebar = () => setSidebarOpen(false)
+
   return (
     <div className="min-h-screen flex">
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
+          onClick={closeSidebar}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-slate-800 border-r border-slate-700 flex flex-col fixed h-full z-10">
-        {/* Logo */}
+      <aside className={`w-64 bg-slate-800 border-r border-slate-700 flex flex-col fixed h-full z-30 transition-transform duration-300 lg:translate-x-0 ${
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
+        {/* Logo + Close button on mobile */}
         <div className="p-6 border-b border-slate-700">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-pinaxis-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-lg">P</span>
             </div>
-            <div>
+            <div className="flex-1">
               <h1 className="text-lg font-bold text-white tracking-tight">PINAXIS</h1>
               <p className="text-xs text-slate-400">Warehouse Analytics</p>
             </div>
+            <button
+              onClick={closeSidebar}
+              className="lg:hidden p-1 text-slate-400 hover:text-white"
+            >
+              <CloseIcon className="w-5 h-5" />
+            </button>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {steps.map((step, index) => {
             const Icon = step.icon
             const isActive = getCurrentStep() === index
@@ -95,6 +130,7 @@ export default function App() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group text-slate-400 hover:text-slate-200 hover:bg-slate-700/50"
+                  onClick={closeSidebar}
                 >
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium bg-slate-700 text-slate-400 group-hover:bg-slate-600">
                     {index + 1}
@@ -111,6 +147,7 @@ export default function App() {
               <NavLink
                 key={step.path}
                 to={basePath}
+                onClick={closeSidebar}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
                   isActive
                     ? 'bg-pinaxis-600/20 text-pinaxis-500 border border-pinaxis-500/30'
@@ -139,14 +176,29 @@ export default function App() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 ml-64">
+      <main className="flex-1 lg:ml-64 min-w-0">
         {/* Top Bar */}
-        <header className="bg-slate-800/50 border-b border-slate-700 px-8 py-4 backdrop-blur-sm sticky top-0 z-10">
-          <StepIndicator currentStep={getCurrentStep()} steps={steps.map(s => s.label)} />
+        <header className="bg-slate-800/50 border-b border-slate-700 px-4 sm:px-8 py-4 backdrop-blur-sm sticky top-0 z-10">
+          <div className="flex items-center gap-3">
+            {/* Hamburger button - mobile only */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden p-2 -ml-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg"
+            >
+              <MenuIcon className="w-5 h-5" />
+            </button>
+            <div className="hidden sm:block flex-1">
+              <StepIndicator currentStep={getCurrentStep()} steps={steps.map(s => s.label)} />
+            </div>
+            {/* Mobile: show current step name */}
+            <span className="sm:hidden text-sm font-medium text-white">
+              {steps[getCurrentStep()]?.label || 'PINAXIS'}
+            </span>
+          </div>
         </header>
 
         {/* Page Content */}
-        <div className="p-8">
+        <div className="p-4 sm:p-6 lg:p-8">
           <Routes>
             <Route path="/" element={<UploadPage />} />
             <Route path="/analysis/:projectId" element={<AnalysisPage />} />

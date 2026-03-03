@@ -126,11 +126,71 @@
   .doc-footer .logo-gebhardt { color: var(--green); }
   .doc-footer .logo-ringly { color: var(--accent2); }
 
+  /* Tablet */
   @media (max-width: 768px) {
+    .container { padding: 0 16px; }
     .card-grid { grid-template-columns: 1fr; }
     .kpi-strip { grid-template-columns: repeat(2, 1fr); }
     .flow-steps { flex-direction: column; align-items: center; }
     .flow-step::after { display: none; }
+    .doc-header { padding: 48px 0 32px; }
+    .doc-header h1 { font-size: 28px; }
+    .doc-header .subtitle { font-size: 15px; }
+    .doc-header .meta { gap: 16px; font-size: 12px; }
+    .section { padding: 32px 0; }
+    .section-title { font-size: 22px; gap: 8px; }
+    .section-title .num { width: 30px; height: 30px; font-size: 14px; }
+    h3 { font-size: 17px; }
+    table { font-size: 12px; }
+    th, td { padding: 8px 10px; }
+    .toc { padding: 20px; }
+    .arch-diagram { padding: 16px; }
+    .arch-diagram pre { font-size: 9px; }
+    .layer { padding: 14px 16px; }
+    .code-block { padding: 12px; }
+    .code-block code { font-size: 11px; }
+  }
+
+  /* Mobile */
+  @media (max-width: 480px) {
+    .container { padding: 0 12px; }
+    .doc-header { padding: 32px 0 24px; }
+    .doc-header .badge { font-size: 10px; padding: 4px 12px; }
+    .doc-header h1 { font-size: 22px; }
+    .doc-header .subtitle { font-size: 13px; padding: 0 8px; }
+    .doc-header .meta { flex-direction: column; gap: 4px; font-size: 11px; }
+    .toc { padding: 16px; margin: 24px 0; }
+    .toc ol { padding-left: 16px; }
+    .toc a { font-size: 13px; }
+    .section { padding: 24px 0; }
+    .section-title { font-size: 18px; flex-wrap: wrap; }
+    .section-sub { font-size: 13px; margin-bottom: 20px; }
+    h3 { font-size: 16px; margin: 24px 0 8px; }
+    p, li { font-size: 13px; }
+    ul, ol { margin-left: 16px; }
+    .card { padding: 16px; }
+    .card h4 { font-size: 14px; }
+    .card p { font-size: 12px; }
+    .kpi-strip { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .kpi { padding: 12px; }
+    .kpi .value { font-size: 22px; }
+    .kpi .label { font-size: 10px; }
+    table { font-size: 11px; display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    th, td { padding: 6px 8px; white-space: nowrap; }
+    .mono { font-size: 10px; }
+    .arch-diagram { padding: 12px; margin: 16px 0; }
+    .arch-diagram pre { font-size: 7.5px; line-height: 1.4; }
+    .layer { padding: 12px 14px; }
+    .layer-title { font-size: 13px; }
+    .layer-desc { font-size: 11px; }
+    .code-block { padding: 10px; }
+    .code-block code { font-size: 10px; }
+    .flow-step .circle { width: 36px; height: 36px; font-size: 14px; }
+    .flow-step .label { font-size: 12px; }
+    .flow-step .desc { font-size: 10px; }
+    .doc-footer { padding: 32px 0; }
+    .doc-footer .logos { gap: 16px; }
+    .doc-footer .logo { font-size: 15px; }
   }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
