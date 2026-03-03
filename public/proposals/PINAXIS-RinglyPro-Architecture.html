@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RinglyPro MCP + PINAXIS Integration Architecture</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0e1a;
+            color: #e0e6f0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #0d1321 0%, #1a2744 50%, #0d1321 100%);
+            border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+            padding: 30px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo-badge {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #38bdf8, #6366f1);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 11px;
+            color: white;
+            letter-spacing: 0.5px;
+            text-align: center;
+            line-height: 1.1;
+        }
+
+        .header-title h1 {
+            font-size: 22px;
+            font-weight: 700;
+            background: linear-gradient(90deg, #38bdf8, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-title p {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 3px;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .badge-live { background: rgba(34, 197, 94, 0.15); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); }
+        .badge-poc { background: rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); }
+
+        /* Section titles */
+        .section-title {
+            text-align: center;
+            padding: 50px 40px 20px;
+        }
+
+        .section-title h2 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 8px;
+        }
+
+        .section-title p {
+            font-size: 14px;
+            color: #64748b;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Main Architecture Diagram */
+        .diagram-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px 40px 60px;
+        }
+
+        /* Layer system */
+        .layer {
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .layer-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            padding-left: 8px;
+        }
+
+        .layer-number {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+
+        .layer-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+        }
+
+        .layer-content {
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .layer-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            border-radius: 16px 16px 0 0;
+        }
+
+        /* Layer colors */
+        .layer-prospect .layer-number { background: rgba(251, 146, 60, 0.2); color: #fb923c; }
+        .layer-prospect .layer-label { color: #fb923c; }
+        .layer-prospect .layer-content { background: rgba(251, 146, 60, 0.04); border: 1px solid rgba(251, 146, 60, 0.12); }
+        .layer-prospect .layer-content::before { background: linear-gradient(90deg, #fb923c, transparent); }
+
+        .layer-pinaxis .layer-number { background: rgba(14, 165, 233, 0.2); color: #0ea5e9; }
+        .layer-pinaxis .layer-label { color: #0ea5e9; }
+        .layer-pinaxis .layer-content { background: rgba(14, 165, 233, 0.04); border: 1px solid rgba(14, 165, 233, 0.12); }
+        .layer-pinaxis .layer-content::before { background: linear-gradient(90deg, #0ea5e9, transparent); }
+
+        .layer-mcp .layer-number { background: rgba(139, 92, 246, 0.2); color: #8b5cf6; }
+        .layer-mcp .layer-label { color: #8b5cf6; }
+        .layer-mcp .layer-content { background: rgba(139, 92, 246, 0.04); border: 1px solid rgba(139, 92, 246, 0.12); }
+        .layer-mcp .layer-content::before { background: linear-gradient(90deg, #8b5cf6, transparent); }
+
+        .layer-ai .layer-number { background: rgba(236, 72, 153, 0.2); color: #ec4899; }
+        .layer-ai .layer-label { color: #ec4899; }
+        .layer-ai .layer-content { background: rgba(236, 72, 153, 0.04); border: 1px solid rgba(236, 72, 153, 0.12); }
+        .layer-ai .layer-content::before { background: linear-gradient(90deg, #ec4899, transparent); }
+
+        .layer-output .layer-number { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+        .layer-output .layer-label { color: #22c55e; }
+        .layer-output .layer-content { background: rgba(34, 197, 94, 0.04); border: 1px solid rgba(34, 197, 94, 0.12); }
+        .layer-output .layer-content::before { background: linear-gradient(90deg, #22c55e, transparent); }
+
+        .layer-gebhardt .layer-number { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
+        .layer-gebhardt .layer-label { color: #38bdf8; }
+        .layer-gebhardt .layer-content { background: rgba(56, 189, 248, 0.04); border: 1px solid rgba(56, 189, 248, 0.12); }
+        .layer-gebhardt .layer-content::before { background: linear-gradient(90deg, #38bdf8, transparent); }
+
+        /* Nodes inside layers */
+        .node-grid {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .node {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(148, 163, 184, 0.12);
+            border-radius: 12px;
+            padding: 16px 20px;
+            min-width: 160px;
+            max-width: 220px;
+            flex: 1;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: default;
+            position: relative;
+        }
+
+        .node:hover {
+            transform: translateY(-2px);
+            border-color: rgba(148, 163, 184, 0.3);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .node-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .node-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #e2e8f0;
+            margin-bottom: 4px;
+            line-height: 1.3;
+        }
+
+        .node-subtitle {
+            font-size: 10px;
+            color: #64748b;
+            line-height: 1.4;
+        }
+
+        .node-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 8px;
+        }
+
+        .tag-csv { background: rgba(251, 146, 60, 0.15); color: #fb923c; }
+        .tag-api { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+        .tag-webhook { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
+        .tag-ai { background: rgba(236, 72, 153, 0.15); color: #ec4899; }
+        .tag-live { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+        .tag-new { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+
+        /* Flow arrows between layers */
+        .flow-arrow {
+            display: flex;
+            justify-content: center;
+            padding: 6px 0;
+            position: relative;
+        }
+
+        .flow-arrow::before {
+            content: '';
+            width: 2px;
+            height: 28px;
+            background: linear-gradient(180deg, rgba(148, 163, 184, 0.3), rgba(148, 163, 184, 0.1));
+        }
+
+        .flow-arrow .arrow-label {
+            position: absolute;
+            right: calc(50% + 20px);
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 10px;
+            color: #475569;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .flow-arrow .arrow-label-right {
+            position: absolute;
+            left: calc(50% + 20px);
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 10px;
+            color: #475569;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        /* Data flow section */
+        .data-flow-section {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px 40px 60px;
+        }
+
+        .flow-steps {
+            display: flex;
+            gap: 0;
+            align-items: stretch;
+            overflow-x: auto;
+            padding: 20px 0;
+        }
+
+        .flow-step {
+            flex: 1;
+            min-width: 200px;
+            text-align: center;
+            position: relative;
+            padding: 0 16px;
+        }
+
+        .flow-step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 35px;
+            right: -1px;
+            width: 24px;
+            height: 2px;
+            background: linear-gradient(90deg, rgba(139, 92, 246, 0.4), rgba(56, 189, 248, 0.4));
+            z-index: 1;
+        }
+
+        .step-circle {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 28px;
+            position: relative;
+        }
+
+        .step-circle::after {
+            content: attr(data-step);
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #1e293b;
+            border: 2px solid;
+            font-size: 10px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .step-1 .step-circle { background: rgba(251, 146, 60, 0.12); border: 2px solid rgba(251, 146, 60, 0.3); }
+        .step-1 .step-circle::after { border-color: #fb923c; color: #fb923c; }
+        .step-2 .step-circle { background: rgba(14, 165, 233, 0.12); border: 2px solid rgba(14, 165, 233, 0.3); }
+        .step-2 .step-circle::after { border-color: #0ea5e9; color: #0ea5e9; }
+        .step-3 .step-circle { background: rgba(139, 92, 246, 0.12); border: 2px solid rgba(139, 92, 246, 0.3); }
+        .step-3 .step-circle::after { border-color: #8b5cf6; color: #8b5cf6; }
+        .step-4 .step-circle { background: rgba(236, 72, 153, 0.12); border: 2px solid rgba(236, 72, 153, 0.3); }
+        .step-4 .step-circle::after { border-color: #ec4899; color: #ec4899; }
+        .step-5 .step-circle { background: rgba(34, 197, 94, 0.12); border: 2px solid rgba(34, 197, 94, 0.3); }
+        .step-5 .step-circle::after { border-color: #22c55e; color: #22c55e; }
+
+        .step-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #e2e8f0;
+            margin-bottom: 6px;
+        }
+
+        .step-desc {
+            font-size: 11px;
+            color: #64748b;
+            line-height: 1.5;
+        }
+
+        /* Technical spec grid */
+        .spec-grid {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 40px 60px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .spec-card {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(148, 163, 184, 0.08);
+            border-radius: 16px;
+            padding: 28px;
+        }
+
+        .spec-card h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .spec-card h3 span {
+            font-size: 20px;
+        }
+
+        .spec-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.06);
+        }
+
+        .spec-item:last-child { border-bottom: none; }
+
+        .spec-label {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .spec-value {
+            font-size: 12px;
+            font-weight: 600;
+            color: #e2e8f0;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .spec-value.highlight {
+            color: #38bdf8;
+        }
+
+        /* POC Timeline */
+        .timeline-section {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 40px 60px;
+        }
+
+        .timeline {
+            display: flex;
+            gap: 16px;
+        }
+
+        .timeline-phase {
+            flex: 1;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(148, 163, 184, 0.08);
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .timeline-phase::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+        }
+
+        .phase-1::before { background: linear-gradient(90deg, #fb923c, #f97316); }
+        .phase-2::before { background: linear-gradient(90deg, #0ea5e9, #38bdf8); }
+        .phase-3::before { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+        .phase-4::before { background: linear-gradient(90deg, #22c55e, #34d399); }
+
+        .phase-week {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .phase-1 .phase-week { color: #fb923c; }
+        .phase-2 .phase-week { color: #0ea5e9; }
+        .phase-3 .phase-week { color: #8b5cf6; }
+        .phase-4 .phase-week { color: #22c55e; }
+
+        .phase-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #f1f5f9;
+            margin-bottom: 12px;
+        }
+
+        .phase-items {
+            list-style: none;
+        }
+
+        .phase-items li {
+            font-size: 12px;
+            color: #94a3b8;
+            padding: 4px 0;
+            padding-left: 16px;
+            position: relative;
+            line-height: 1.5;
+        }
+
+        .phase-items li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 10px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: rgba(148, 163, 184, 0.3);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px;
+            border-top: 1px solid rgba(148, 163, 184, 0.08);
+            color: #475569;
+            font-size: 12px;
+        }
+
+        .footer a {
+            color: #38bdf8;
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .spec-grid { grid-template-columns: 1fr; }
+            .timeline { flex-direction: column; }
+            .flow-steps { flex-direction: column; align-items: center; }
+            .flow-step:not(:last-child)::after { display: none; }
+        }
+
+        /* Subtle animation */
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+            display: inline-block;
+            animation: pulse-glow 2s infinite;
+            margin-right: 6px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+    <div class="header-left">
+        <div class="logo-badge">MCP<br>AI</div>
+        <div class="header-title">
+            <h1>RinglyPro MCP Server + PINAXIS Integration</h1>
+            <p>AI Orchestration Layer for Warehouse Data Analytics & Product Matching</p>
+        </div>
+    </div>
+    <div class="header-right">
+        <span class="badge badge-live"><span class="live-dot"></span>45+ Endpoints Live</span>
+        <span class="badge badge-poc">POC Phase</span>
+    </div>
+</div>
+
+<!-- Section: System Architecture -->
+<div class="section-title">
+    <h2>System Architecture</h2>
+    <p>How RinglyPro's MCP server orchestrates the data flow from prospect warehouse data through AI analysis to GEBHARDT product recommendations</p>
+</div>
+
+<div class="diagram-container">
+
+    <!-- Layer 1: Prospect Data Input -->
+    <div class="layer layer-prospect">
+        <div class="layer-header">
+            <div class="layer-number">1</div>
+            <div class="layer-label">Prospect Data Input — Customer Warehouse Data</div>
+        </div>
+        <div class="layer-content">
+            <div class="node-grid">
+                <div class="node">
+                    <div class="node-icon">📦</div>
+                    <div class="node-title">Item Master Data</div>
+                    <div class="node-subtitle">SKUs, dimensions, weight, picking units, pallet config</div>
+                    <span class="node-tag tag-csv">.CSV / .XLSX</span>
+                </div>
+                <div class="node">
+                    <div class="node-icon">📊</div>
+                    <div class="node-title">Inventory Data</div>
+                    <div class="node-subtitle">Stock levels, storage locations, bin-level quantities</div>
+                    <span class="node-tag tag-csv">.CSV / .XLSX</span>
+                </div>
+                <div class="node">
+                    <div class="node-icon">🚚</div>
+                    <div class="node-title">Goods-In Data</div>
+                    <div class="node-subtitle">Inbound deliveries, timestamps, supplier info</div>
+                    <span class="node-tag tag-csv">.CSV / .XLSX</span>
+                </div>
+                <div class="node">
+                    <div class="node-icon">📤</div>
+                    <div class="node-title">Goods-Out Data</div>
+                    <div class="node-subtitle">Sales orders, picking times, shipping methods</div>
+                    <span class="node-tag tag-csv">.CSV / .XLSX</span>
+                </div>
+                <div class="node">
+                    <div class="node-icon">🏭</div>
+                    <div class="node-title">Business Info</div>
+                    <div class="node-subtitle">Shifts, cut-off times, VAS, regulations</div>
+                    <span class="node-tag tag-csv">FORM INPUT</span>
+                </div>
+                <div class="node">
+                    <div class="node-icon">📈</div>
+                    <div class="node-title">Growth Forecast</div>
+                    <div class="node-subtitle">5-15 year planning horizon, SKU expansion, volume trends</div>
+                    <span class="node-tag tag-csv">FORM INPUT</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flow-arrow">
+        <span class="arrow-label">Upload via Portal / API</span>
+        <span class="arrow-label-right">HMAC-SHA256 verified</span>
+    </div>
+
+    <!-- Layer 2: PINAXIS Data Ingestion Layer (on RinglyPro) -->
+    <div class="layer layer-pinaxis">
+        <div class="layer-header">
+            <div class="layer-number">2</div>
+            <div class="layer-label">RinglyPro MCP Server — PINAXIS Proxy & Data Ingestion</div>
+        </div>
+        <div class="layer-content">
+            <div class="node-grid">
+                <div class="node">
+                    <div class="node-icon">🔌</div>
+                    <div class="node-title">PINAXIS MCP Proxy</div>
+                    <div class="node-subtitle">New proxy class following existing CRM proxy pattern</div>
+                    <span class="node-tag tag-new">NEW MODULE</span>
+                </div>
+                <div class="node">
+                    <div class="node-icon">📂</div>
+                    <div class="node-title">Data Parser Engine</div>
+                    <div class="node-subtitle">CSV/XLSX ingestion, schema validation, plausibility checks</div>
+                    <span class="node-tag tag-new">NEW MODULE</span>
+                </div>
+                <div class="node">
+                    <div class="node-icon">🔒</div>
+                    <div class="node-title">Webhook Manager</div>
+                    <div class="node-subtitle">Existing HMAC-SHA256 pipeline, event deduplication</div>
+                    <span class="node-tag tag-live">EXISTING</span>
+                </div>
+                <div class="node">
+                    <div class="node-icon">🗄️</div>
+                    <div class="node-title">PostgreSQL Store</div>
+                    <div class="node-subtitle">Warehouse data models, prospect records, analysis results</div>
+                    <span class="node-tag tag-new">NEW MODELS</span>
+                </div>
+                <div class="node">
+                    <div class="node-icon">⚡</div>
+                    <div class="node-title">Workflow Engine</div>
+                    <div class="node-subtitle">Trigger analysis pipeline on data upload complete</div>
+                    <span class="node-tag tag-live">EXISTING</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flow-arrow">
+        <span class="arrow-label">Parsed + Validated Data</span>
+        <span class="arrow-label-right">Triggers AI Pipeline</span>
+    </div>
+
+    <!-- Layer 3: AI Analytics Engine -->
+    <div class="layer layer-ai">
+        <div class="layer-header">
+            <div class="layer-number">3</div>
+            <div class="layer-label">AI Analytics Engine — Warehouse Data Intelligence</div>
+        </div>
+        <div class="layer-content">
+            <div class="node-grid">
+                <div class="node">
+                    <div class="node-icon">📉</div>
+                    <div class="node-title">Order Structure Analysis</div>
+                    <div class="node-subtitle">Orderlines/order distribution, units/line stats, 1-line vs n-line</div>
+                    <span class="node-tag tag-ai">AI ENGINE</span>
+                </div>
+                <div class="node">
+                    <div class="node-icon">⏱️</div>
+                    <div class="node-title">Throughput Analysis</div>
+                    <div class="node-subtitle">Orders by month/weekday/hour, peak detection, seasonality</div>
+                    <span class="node-tag tag-ai">AI ENGINE</span>
+                </div>
+                <div class="node">
+                    <div class="node-icon">🏷️</div>
+                    <div class="node-title">ABC Classification</div>
+                    <div class="node-subtitle">SKU access frequency, Gini coefficient, Pareto analysis</div>
+                    <span class="node-tag tag-ai">AI ENGINE</span>
+                </div>
+                <div class="node">
+                    <div class="node-icon">📐</div>
+                    <div class="node-title">Fit/No-Fit Analysis</div>
+                    <div class="node-subtitle">Bin type matching, SKU dimension fitting, weight distribution</div>
+                    <span class="node-tag tag-ai">AI ENGINE</span>
+                </div>
+                <div class="node">
+                    <div class="node-icon">🔮</div>
+                    <div class="node-title">Growth Projections</div>
+                    <div class="node-subtitle">Volume extrapolation to planning horizon, capacity forecasting</div>
+                    <span class="node-tag tag-ai">AI ENGINE</span>
+                </div>
+                <div class="node">
+                    <div class="node-icon">🧠</div>
+                    <div class="node-title">Claude AI Copilot</div>
+                    <div class="node-subtitle">Natural language queries on analysis results</div>
+                    <span class="node-tag tag-live">EXISTING</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flow-arrow">
+        <span class="arrow-label">Analysis Results + KPIs</span>
+        <span class="arrow-label-right">Product Matching Input</span>
+    </div>
+
+    <!-- Layer 4: Product Matching Engine -->
+    <div class="layer layer-mcp">
+        <div class="layer-header">
+            <div class="layer-number">4</div>
+            <div class="layer-label">Product Matching Engine — GEBHARDT Portfolio Intelligence</div>
+        </div>
+        <div class="layer-content">
+            <div class="node-grid">
+                <div class="node">
+                    <div class="node-icon">🏗️</div>
+                    <div class="node-title">StoreBiter MLS/OLS</div>
+                    <div class="node-subtitle">High-density shuttle: multi-deep pallet, Goods-to-Person, ASRS</div>
+                    <span class="node-tag tag-new">MATCHING RULES</span>
+                </div>
+                <div class="node">
+                    <div class="node-icon">🤖</div>
+                    <div class="node-title">Omnipallet</div>
+                    <div class="node-subtitle">Autonomous pallet shuttle: brownfield, fluctuating volumes</div>
+                    <span class="node-tag tag-new">MATCHING RULES</span>
+                </div>
+                <div class="node">
+                    <div class="node-icon">🎯</div>
+                    <div class="node-title">InstaPick</div>
+                    <div class="node-subtitle">Goods-to-Person picking: lightweight, modular, SMB entry</div>
+                    <span class="node-tag tag-new">MATCHING RULES</span>
+                </div>
+                <div class="node">
+                    <div class="node-icon">🔄</div>
+                    <div class="node-title">ROTA-Sorter</div>
+                    <div class="node-subtitle">Sortation: 5K items/hr, e-commerce, high-velocity</div>
+                    <span class="node-tag tag-new">MATCHING RULES</span>
+                </div>
+                <div class="node">
+                    <div class="node-icon">⚙️</div>
+                    <div class="node-title">Versastore</div>
+                    <div class="node-subtitle">Smart factory: production integration, batch-size-one</div>
+                    <span class="node-tag tag-new">MATCHING RULES</span>
+                </div>
+                <div class="node">
+                    <div class="node-icon">🧮</div>
+                    <div class="node-title">Scoring Algorithm</div>
+                    <div class="node-subtitle">Multi-criteria fit scoring: SKU profile, throughput, growth, industry</div>
+                    <span class="node-tag tag-ai">AI ENGINE</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flow-arrow">
+        <span class="arrow-label">Scored Recommendations</span>
+        <span class="arrow-label-right">Auto-generated Outputs</span>
+    </div>
+
+    <!-- Layer 5: Output & Delivery -->
+    <div class="layer layer-output">
+        <div class="layer-header">
+            <div class="layer-number">5</div>
+            <div class="layer-label">Output & Delivery — Sales Enablement</div>
+        </div>
+        <div class="layer-content">
+            <div class="node-grid">
+                <div class="node">
+                    <div class="node-icon">📊</div>
+                    <div class="node-title">Analytics Dashboard</div>
+                    <div class="node-subtitle">Interactive charts: order structure, ABC, throughput, fit analysis</div>
+                    <span class="node-tag tag-new">NEW UI</span>
+                </div>
+                <div class="node">
+                    <div class="node-icon">📄</div>
+                    <div class="node-title">PDF Proposal Generator</div>
+                    <div class="node-subtitle">Branded PINAXIS report with product recommendations & ROI</div>
+                    <span class="node-tag tag-new">NEW MODULE</span>
+                </div>
+                <div class="node">
+                    <div class="node-icon">🎙️</div>
+                    <div class="node-title">Voice AI (Ana)</div>
+                    <div class="node-subtitle">Present findings via phone, schedule follow-ups</div>
+                    <span class="node-tag tag-live">EXISTING</span>
+                </div>
+                <div class="node">
+                    <div class="node-icon">💬</div>
+                    <div class="node-title">AI Copilot Chat</div>
+                    <div class="node-subtitle">"What product fits this customer?" — natural language queries</div>
+                    <span class="node-tag tag-live">EXISTING</span>
+                </div>
+                <div class="node">
+                    <div class="node-icon">📧</div>
+                    <div class="node-title">Email Automation</div>
+                    <div class="node-subtitle">Auto-send analysis report to prospect and sales engineer</div>
+                    <span class="node-tag tag-live">EXISTING</span>
+                </div>
+                <div class="node">
+                    <div class="node-icon">🔗</div>
+                    <div class="node-title">CRM Sync</div>
+                    <div class="node-subtitle">Push results to GEBHARDT's SAP EWM/MFS or any connected CRM</div>
+                    <span class="node-tag tag-live">EXISTING</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flow-arrow">
+        <span class="arrow-label">Bidirectional Sync</span>
+        <span class="arrow-label-right">Feedback Loop</span>
+    </div>
+
+    <!-- Layer 6: GEBHARDT/PINAXIS -->
+    <div class="layer layer-gebhardt">
+        <div class="layer-header">
+            <div class="layer-number">6</div>
+            <div class="layer-label">GEBHARDT / PINAXIS Operations — Sales Team & Customer</div>
+        </div>
+        <div class="layer-content">
+            <div class="node-grid">
+                <div class="node">
+                    <div class="node-icon">👔</div>
+                    <div class="node-title">Sales Engineer</div>
+                    <div class="node-subtitle">Reviews AI recommendation, refines proposal, closes deal</div>
+                </div>
+                <div class="node">
+                    <div class="node-icon">🏢</div>
+                    <div class="node-title">Solutions Architect</div>
+                    <div class="node-subtitle">Validates product match, designs custom configuration</div>
+                </div>
+                <div class="node">
+                    <div class="node-icon">🏭</div>
+                    <div class="node-title">Prospect Customer</div>
+                    <div class="node-subtitle">Receives branded analytics report with product recommendations</div>
+                </div>
+                <div class="node">
+                    <div class="node-icon">🔧</div>
+                    <div class="node-title">SAP EWM/MFS</div>
+                    <div class="node-subtitle">Opportunity created, pipeline tracking, project milestones</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Section: Data Flow Pipeline -->
+<div class="section-title">
+    <h2>Data Flow Pipeline</h2>
+    <p>End-to-end journey from raw warehouse data to actionable product recommendation</p>
+</div>
+
+<div class="data-flow-section">
+    <div class="flow-steps">
+        <div class="flow-step step-1">
+            <div class="step-circle" data-step="1">📂</div>
+            <div class="step-title">Ingest</div>
+            <div class="step-desc">Prospect uploads CSV/XLSX via PINAXIS portal. RinglyPro MCP server receives, validates schema, runs plausibility checks.</div>
+        </div>
+        <div class="flow-step step-2">
+            <div class="step-circle" data-step="2">🔄</div>
+            <div class="step-title">Parse & Store</div>
+            <div class="step-desc">Data Parser normalizes units, maps to standard schema. Stored in PostgreSQL with prospect_id foreign key. Workflow triggers analysis.</div>
+        </div>
+        <div class="flow-step step-3">
+            <div class="step-circle" data-step="3">📊</div>
+            <div class="step-title">Analyze</div>
+            <div class="step-desc">AI engine runs: order structure, throughput by time, ABC classification (Gini), fit/no-fit by bin type, growth extrapolation.</div>
+        </div>
+        <div class="flow-step step-4">
+            <div class="step-circle" data-step="4">🎯</div>
+            <div class="step-title">Match</div>
+            <div class="step-desc">Scoring algorithm compares analysis KPIs against GEBHARDT product profiles. Multi-criteria scoring: SKU count, throughput, item size, industry.</div>
+        </div>
+        <div class="flow-step step-5">
+            <div class="step-circle" data-step="5">📄</div>
+            <div class="step-title">Deliver</div>
+            <div class="step-desc">Auto-generate branded PDF report with charts + recommendations. Push to CRM. Email to sales engineer + prospect. Voice AI follow-up call.</div>
+        </div>
+    </div>
+</div>
+
+<!-- Section: Technical Specifications -->
+<div class="section-title">
+    <h2>Technical Specifications</h2>
+    <p>Integration points, new modules, and existing infrastructure leveraged</p>
+</div>
+
+<div class="spec-grid">
+    <div class="spec-card">
+        <h3><span>🔌</span> New: PINAXIS MCP Proxy</h3>
+        <div class="spec-item">
+            <span class="spec-label">Class Name</span>
+            <span class="spec-value">PINAXISMCPProxy</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">Location</span>
+            <span class="spec-value">mcp-integrations/api/</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">Pattern</span>
+            <span class="spec-value highlight">Follows CRM Proxy Pattern</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">Connect Endpoint</span>
+            <span class="spec-value">/api/mcp/pinaxis/connect</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">Upload Endpoint</span>
+            <span class="spec-value">/api/mcp/pinaxis/upload</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">Analysis Endpoint</span>
+            <span class="spec-value">/api/mcp/pinaxis/analyze</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">Match Endpoint</span>
+            <span class="spec-value">/api/mcp/pinaxis/match</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">Report Endpoint</span>
+            <span class="spec-value">/api/mcp/pinaxis/report</span>
+        </div>
+    </div>
+
+    <div class="spec-card">
+        <h3><span>🗄️</span> New: Database Models</h3>
+        <div class="spec-item">
+            <span class="spec-label">ProspectWarehouse</span>
+            <span class="spec-value highlight">Prospect metadata</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">ItemMasterData</span>
+            <span class="spec-value">SKU attributes</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">InventorySnapshot</span>
+            <span class="spec-value">Stock levels</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">GoodsInRecord</span>
+            <span class="spec-value">Inbound deliveries</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">GoodsOutRecord</span>
+            <span class="spec-value">Sales orders</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">AnalysisResult</span>
+            <span class="spec-value highlight">Computed KPIs</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">ProductMatch</span>
+            <span class="spec-value highlight">Scored recommendations</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">GeneratedReport</span>
+            <span class="spec-value">PDF/HTML output</span>
+        </div>
+    </div>
+
+    <div class="spec-card">
+        <h3><span>⚡</span> Existing: Leveraged Infra</h3>
+        <div class="spec-item">
+            <span class="spec-label">Webhook Manager</span>
+            <span class="spec-value highlight">HMAC-SHA256</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">Workflow Engine</span>
+            <span class="spec-value highlight">Multi-step triggers</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">AI Copilot</span>
+            <span class="spec-value highlight">NL queries on results</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">Voice AI (Ana)</span>
+            <span class="spec-value highlight">Follow-up calls</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">Email Engine</span>
+            <span class="spec-value">SendGrid automation</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">CRM Sync</span>
+            <span class="spec-value">5 CRM integrations</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">PostgreSQL</span>
+            <span class="spec-value">Render hosted</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">Multi-Tenant Auth</span>
+            <span class="spec-value">Session + JWT</span>
+        </div>
+    </div>
+</div>
+
+<!-- Section: Product Matching Criteria -->
+<div class="section-title">
+    <h2>Product Matching Decision Matrix</h2>
+    <p>How analysis KPIs map to GEBHARDT product recommendations</p>
+</div>
+
+<div class="spec-grid">
+    <div class="spec-card">
+        <h3><span>🏗️</span> StoreBiter MLS/OLS</h3>
+        <div class="spec-item">
+            <span class="spec-label">SKU Count</span>
+            <span class="spec-value">5,000 - 50,000+</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">Throughput</span>
+            <span class="spec-value highlight">High density storage</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">Trigger</span>
+            <span class="spec-value">ABC-A items > 15% SKUs</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">Bin Fit</span>
+            <span class="spec-value">> 80% items bin-capable</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">Best For</span>
+            <span class="spec-value highlight">Pallet + bin storage</span>
+        </div>
+    </div>
+
+    <div class="spec-card">
+        <h3><span>🎯</span> InstaPick</h3>
+        <div class="spec-item">
+            <span class="spec-label">SKU Count</span>
+            <span class="spec-value">1,000 - 15,000</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">Throughput</span>
+            <span class="spec-value highlight">Medium, modular</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">Trigger</span>
+            <span class="spec-value">High pick frequency</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">Order Profile</span>
+            <span class="spec-value">> 50% single-line orders</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">Best For</span>
+            <span class="spec-value highlight">SMB, fast picks</span>
+        </div>
+    </div>
+
+    <div class="spec-card">
+        <h3><span>🔄</span> ROTA-Sorter</h3>
+        <div class="spec-item">
+            <span class="spec-label">Order Volume</span>
+            <span class="spec-value">> 50,000/month</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">Throughput</span>
+            <span class="spec-value highlight">5,000 items/hr</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">Trigger</span>
+            <span class="spec-value">Multi-destination shipping</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">Peak Pattern</span>
+            <span class="spec-value">Weekday concentration</span>
+        </div>
+        <div class="spec-item">
+            <span class="spec-label">Best For</span>
+            <span class="spec-value highlight">E-commerce, 3PL</span>
+        </div>
+    </div>
+</div>
+
+<!-- Section: POC Timeline -->
+<div class="section-title">
+    <h2>POC Implementation Timeline</h2>
+    <p>4-week sprint to deliver a working demo with synthetic data and live analysis</p>
+</div>
+
+<div class="timeline-section">
+    <div class="timeline">
+        <div class="timeline-phase phase-1">
+            <div class="phase-week">Week 1</div>
+            <div class="phase-title">Data Ingestion + Models</div>
+            <ul class="phase-items">
+                <li>Build PINAXIS MCP Proxy class</li>
+                <li>CSV/XLSX parser with schema validation</li>
+                <li>PostgreSQL models for all 6 datasets</li>
+                <li>Generate synthetic sample data per PINAXIS spec</li>
+                <li>Upload portal UI (basic)</li>
+            </ul>
+        </div>
+        <div class="timeline-phase phase-2">
+            <div class="phase-week">Week 2</div>
+            <div class="phase-title">AI Analytics Engine</div>
+            <ul class="phase-items">
+                <li>Order structure distribution analysis</li>
+                <li>Throughput by month / weekday / hour</li>
+                <li>ABC classification with Gini coefficient</li>
+                <li>Fit/No-Fit analysis by bin type</li>
+                <li>Growth extrapolation to planning horizon</li>
+            </ul>
+        </div>
+        <div class="timeline-phase phase-3">
+            <div class="phase-week">Week 3</div>
+            <div class="phase-title">Product Matching + Output</div>
+            <ul class="phase-items">
+                <li>GEBHARDT product scoring algorithm</li>
+                <li>Multi-criteria decision matrix</li>
+                <li>Analytics dashboard with interactive charts</li>
+                <li>PDF report generator (PINAXIS-branded)</li>
+                <li>AI Copilot trained on warehouse domain</li>
+            </ul>
+        </div>
+        <div class="timeline-phase phase-4">
+            <div class="phase-week">Week 4</div>
+            <div class="phase-title">Integration + Demo</div>
+            <ul class="phase-items">
+                <li>Voice AI (Ana) knowledge update for PINAXIS</li>
+                <li>Email automation: auto-send reports</li>
+                <li>CRM sync: push results to SAP / GHL</li>
+                <li>End-to-end demo with synthetic data</li>
+                <li>Handoff to Sven + PINAXIS team</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+    <p>RinglyPro MCP Server &mdash; AI Orchestration for PINAXIS / GEBHARDT Intralogistics</p>
+    <p style="margin-top: 6px;">Built by <a href="https://digit2ai.com">Digit2ai LLC</a> &middot; <a href="https://ringlypro.com">ringlypro.com</a> &middot; Contact: Manuel Stagg &middot; 656-600-1400</p>
+    <p style="margin-top: 10px; color: #334155;">March 2026</p>
+</div>
+
+</body>
+</html>
