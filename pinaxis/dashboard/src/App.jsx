@@ -10,7 +10,8 @@ const steps = [
   { path: '/', label: 'Upload', icon: UploadIcon },
   { path: '/analysis', label: 'Analysis', icon: ChartIcon },
   { path: '/products', label: 'Products', icon: BoxIcon },
-  { path: '/report', label: 'Report', icon: FileIcon }
+  { path: '/report', label: 'Report', icon: FileIcon },
+  { path: '/proposals/PINAXIS-System-Architecture-Document.html', label: 'MCP Architecture', icon: ArchitectureIcon, external: true }
 ]
 
 function UploadIcon({ className }) {
@@ -41,6 +42,14 @@ function FileIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+    </svg>
+  )
+}
+
+function ArchitectureIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 7.125C2.25 6.504 2.754 6 3.375 6h6c.621 0 1.125.504 1.125 1.125v3.75c0 .621-.504 1.125-1.125 1.125h-6a1.125 1.125 0 01-1.125-1.125v-3.75zM14.25 8.625c0-.621.504-1.125 1.125-1.125h5.25c.621 0 1.125.504 1.125 1.125v8.25c0 .621-.504 1.125-1.125 1.125h-5.25a1.125 1.125 0 01-1.125-1.125v-8.25zM3.75 16.125c0-.621.504-1.125 1.125-1.125h5.25c.621 0 1.125.504 1.125 1.125v2.25c0 .621-.504 1.125-1.125 1.125h-5.25a1.125 1.125 0 01-1.125-1.125v-2.25z" />
     </svg>
   )
 }
@@ -77,6 +86,25 @@ export default function App() {
           {steps.map((step, index) => {
             const Icon = step.icon
             const isActive = getCurrentStep() === index
+
+            if (step.external) {
+              return (
+                <a
+                  key={step.path}
+                  href={step.path}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group text-slate-400 hover:text-slate-200 hover:bg-slate-700/50"
+                >
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium bg-slate-700 text-slate-400 group-hover:bg-slate-600">
+                    {index + 1}
+                  </div>
+                  <span className="font-medium">{step.label}</span>
+                  <Icon className="w-4 h-4 ml-auto text-slate-600" />
+                </a>
+              )
+            }
+
             const basePath = index === 0 ? '/' : step.path
 
             return (
