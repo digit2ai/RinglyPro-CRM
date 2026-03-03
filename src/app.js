@@ -728,6 +728,36 @@ app.get('/debug/quicktask-error', (req, res) => {
   });
 });
 
+// =====================================================
+// PINAXIS - Warehouse Data Analytics Platform
+// =====================================================
+
+let pinaxisApp = null;
+let pinaxisError = null;
+try {
+  pinaxisApp = require('../pinaxis/src/index');
+  app.get('/pinaxis', (req, res, next) => {
+    if (!req.originalUrl.endsWith('/')) return res.redirect('/pinaxis/');
+    next();
+  });
+  app.use('/pinaxis', pinaxisApp);
+  console.log('📊 PINAXIS Analytics Platform mounted at /pinaxis');
+  console.log('   - Dashboard UI: /pinaxis/');
+  console.log('   - Health Check: /pinaxis/health');
+  console.log('   - API: /pinaxis/api/v1/*');
+} catch (error) {
+  pinaxisError = error;
+  console.log('⚠️ PINAXIS not available:', error.message);
+}
+
+app.get('/debug/pinaxis-error', (req, res) => {
+  res.json({
+    service: 'PINAXIS Analytics Platform',
+    available: !pinaxisError,
+    error: pinaxisError ? { message: pinaxisError.message, stack: pinaxisError.stack } : null
+  });
+});
+
 // Conditional forwarding webhook (for business phone forwarding)
 app.use('/webhook', conditionalForwardRoutes);
 
