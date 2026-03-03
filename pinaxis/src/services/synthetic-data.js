@@ -12,9 +12,9 @@
 
 function generate(options = {}) {
   const {
-    skuCount = 2500,
-    monthsOfData = 12,
-    avgOrdersPerDay = 180,
+    skuCount = 800,
+    monthsOfData = 6,
+    avgOrdersPerDay = 60,
     singleLinePct = 42
   } = options;
 

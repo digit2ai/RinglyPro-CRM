@@ -78,9 +78,12 @@ router.post('/generate', async (req, res) => {
       parse_status: 'parsed'
     });
 
-    // 6. Insert goods out
+    // 6. Insert goods out (batch in chunks to avoid timeout)
     const goRecords = data.goodsOut.map(row => ({ ...row, project_id: project.id }));
-    await req.models.PinaxisGoodsOutData.bulkCreate(goRecords);
+    const BATCH_SIZE = 5000;
+    for (let i = 0; i < goRecords.length; i += BATCH_SIZE) {
+      await req.models.PinaxisGoodsOutData.bulkCreate(goRecords.slice(i, i + BATCH_SIZE));
+    }
 
     await req.models.PinaxisUploadedFile.create({
       project_id: project.id,
