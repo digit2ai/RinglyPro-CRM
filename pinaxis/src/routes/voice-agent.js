@@ -15,13 +15,21 @@ function buildSpokenBriefing(project, analysisMap, recommendations, benefits) {
 
   parts.push(`Here is the full warehouse analysis report for ${project.company_name}.`);
 
-  // Overview KPIs
+  // Overview KPIs — structure: { skus: { total, active, bin_capable, bin_capable_pct }, orders: { total_orders, total_orderlines, total_units, avg_lines_per_order }, inventory: { total_stock, total_locations }, date_range: { from, to } }
   const overview = analysisMap.overview_kpis;
   if (overview) {
-    parts.push(`The warehouse contains ${overview.total_skus?.toLocaleString() || 'N/A'} unique SKUs.`);
-    if (overview.total_orders) parts.push(`There were ${overview.total_orders.toLocaleString()} total orders with ${overview.total_order_lines?.toLocaleString() || 'N/A'} order lines.`);
-    if (overview.avg_lines_per_order) parts.push(`The average order has ${overview.avg_lines_per_order} lines.`);
-    if (overview.date_range) parts.push(`The data spans from ${overview.date_range.start} to ${overview.date_range.end}.`);
+    const skuTotal = overview.skus?.total || overview.total_skus;
+    if (skuTotal) parts.push(`The warehouse contains ${skuTotal.toLocaleString()} unique SKUs.`);
+    const totalOrders = overview.orders?.total_orders || overview.total_orders;
+    const totalLines = overview.orders?.total_orderlines || overview.total_order_lines;
+    if (totalOrders) parts.push(`There were ${totalOrders.toLocaleString()} total orders with ${totalLines?.toLocaleString() || 'N/A'} order lines.`);
+    const avgLines = overview.orders?.avg_lines_per_order || overview.avg_lines_per_order;
+    if (avgLines) parts.push(`The average order has ${avgLines} lines.`);
+    const dateFrom = overview.date_range?.from || overview.date_range?.start;
+    const dateTo = overview.date_range?.to || overview.date_range?.end;
+    if (dateFrom && dateTo) parts.push(`The data spans from ${dateFrom} to ${dateTo}.`);
+    const binPct = overview.skus?.bin_capable_pct;
+    if (binPct != null) parts.push(`${binPct}% of SKUs are bin-capable for automated storage.`);
   }
 
   // Order structure
