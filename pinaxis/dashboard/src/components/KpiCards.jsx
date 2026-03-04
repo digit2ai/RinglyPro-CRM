@@ -110,6 +110,13 @@ function formatValue(value, format) {
     case 'decimal':
       return typeof value === 'number' ? value.toFixed(2) : String(value)
     case 'text':
+      if (typeof value === 'object' && value !== null) {
+        if (value.start || value.end) {
+          const fmt = (d) => d ? new Date(d).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) : '?'
+          return `${fmt(value.start)} – ${fmt(value.end)}`
+        }
+        return JSON.stringify(value)
+      }
       return String(value)
     default:
       return String(value)
