@@ -199,13 +199,14 @@ export default function UserGuidePage() {
                 { label: 'Order Release', color: 'bg-purple-600' },
                 { label: 'Picking', color: 'bg-fuchsia-600' },
                 { label: 'Packing', color: 'bg-pink-600' },
+                { label: 'Labeling', color: 'bg-orange-600' },
                 { label: 'Shipping', color: 'bg-rose-600' },
               ].map((step, i) => (
                 <div key={step.label} className="flex items-center gap-2">
                   <div className={`px-3 py-2 rounded-lg ${step.color} text-white font-medium text-xs sm:text-sm`}>
                     {step.label}
                   </div>
-                  {i < 7 && (
+                  {i < 8 && (
                     <svg className="w-4 h-4 text-slate-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                     </svg>
@@ -355,13 +356,106 @@ export default function UserGuidePage() {
 
           <StepCard
             number={4}
-            title="Shipping (Outbound)"
+            title="Label Management System"
             isActive={activeStep0 === 4}
             onClick={() => setActiveStep0(activeStep0 === 4 ? 0 : 4)}
           >
             <div className="ml-14 space-y-3">
               <p className="text-sm text-slate-300">
-                After picking and packing, orders are staged at shipping docks, labeled with carrier information, and loaded onto trucks for delivery. The outbound process must be synchronized with carrier pickup windows and customer SLAs.
+                Labels are the <strong className="text-white">backbone of warehouse traceability</strong>. Every item, bin, location, and shipment relies on accurate labeling for identification, tracking, and compliance. A Label Management System (LMS) orchestrates label creation, printing, and application across the entire DC.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                  <p className="text-sm font-medium text-white">Receiving Labels</p>
+                  <p className="text-xs text-slate-400 mt-1">Applied at goods-in: pallet ID labels, license plate numbers (LPNs), and put-away location barcodes. Links inbound shipments to WMS inventory records.</p>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                  <p className="text-sm font-medium text-white">Location / Bin Labels</p>
+                  <p className="text-xs text-slate-400 mt-1">Permanent labels on racking, shelving, and bin positions. Include aisle, bay, level, and position codes. Scannable barcodes or RFID tags for pick accuracy.</p>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                  <p className="text-sm font-medium text-white">Product / SKU Labels</p>
+                  <p className="text-xs text-slate-400 mt-1">Item-level barcodes (EAN/UPC, GS1-128) with SKU code, description, lot/batch, and expiry date. Essential for piece-level tracking in automated systems.</p>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                  <p className="text-sm font-medium text-white">Shipping Labels</p>
+                  <p className="text-xs text-slate-400 mt-1">Carrier-compliant labels (UPS, DHL, FedEx) with tracking barcode, destination address, routing code, and service level. Auto-generated from WMS/TMS integration.</p>
+                </div>
+              </div>
+
+              {/* Label Types Table */}
+              <div className="rounded-lg border border-slate-700 overflow-hidden">
+                <div className="px-4 py-3 bg-slate-700/30 border-b border-slate-700">
+                  <h4 className="text-sm font-semibold text-white">Label Technologies in a Modern DC</h4>
+                </div>
+                <div className="p-4">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-slate-400 border-b border-slate-700">
+                        <th className="pb-2 font-medium">Technology</th>
+                        <th className="pb-2 font-medium">Use Case</th>
+                        <th className="pb-2 font-medium">Read Range</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-slate-300">
+                      <tr className="border-t border-slate-700/50">
+                        <td className="py-2.5 font-medium text-white">1D Barcode</td>
+                        <td className="py-2.5 text-xs text-slate-400">Product labels, shipping labels, pick lists</td>
+                        <td className="py-2.5"><span className="px-2 py-0.5 rounded bg-slate-700 text-slate-300 text-xs font-mono">0-50 cm</span></td>
+                      </tr>
+                      <tr className="border-t border-slate-700/50">
+                        <td className="py-2.5 font-medium text-white">2D / QR Code</td>
+                        <td className="py-2.5 text-xs text-slate-400">High-density data: lot, expiry, serial number, URLs</td>
+                        <td className="py-2.5"><span className="px-2 py-0.5 rounded bg-slate-700 text-slate-300 text-xs font-mono">0-100 cm</span></td>
+                      </tr>
+                      <tr className="border-t border-slate-700/50">
+                        <td className="py-2.5 font-medium text-white">RFID (Passive)</td>
+                        <td className="py-2.5 text-xs text-slate-400">Pallet tracking, dock door reads, bulk inventory counts</td>
+                        <td className="py-2.5"><span className="px-2 py-0.5 rounded bg-green-500/20 text-green-300 text-xs font-mono">1-12 m</span></td>
+                      </tr>
+                      <tr className="border-t border-slate-700/50">
+                        <td className="py-2.5 font-medium text-white">RFID (Active)</td>
+                        <td className="py-2.5 text-xs text-slate-400">Real-time asset tracking, forklift/shuttle positioning</td>
+                        <td className="py-2.5"><span className="px-2 py-0.5 rounded bg-pinaxis-500/20 text-pinaxis-300 text-xs font-mono">10-100 m</span></td>
+                      </tr>
+                      <tr className="border-t border-slate-700/50">
+                        <td className="py-2.5 font-medium text-white">GS1-128 / SSCC</td>
+                        <td className="py-2.5 text-xs text-slate-400">Pallet-level shipping labels, EDI compliance, retail DC receiving</td>
+                        <td className="py-2.5"><span className="px-2 py-0.5 rounded bg-slate-700 text-slate-300 text-xs font-mono">0-50 cm</span></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Print & Apply Systems</p>
+                  <p className="text-sm text-slate-300">In automated DCs, <strong className="text-white">print-and-apply (P&A)</strong> machines automatically print and attach shipping labels to cartons on the conveyor line at speeds of 20-40 cartons/minute — eliminating manual labeling bottlenecks.</p>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Label Compliance</p>
+                  <p className="text-sm text-slate-300">Retail customers (Amazon, Walmart, etc.) enforce strict <strong className="text-white">GS1 label standards</strong>. Non-compliant labels result in chargebacks of $5-$25 per violation. An LMS ensures every label meets carrier and retailer specifications.</p>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-lg bg-pinaxis-900/20 border border-pinaxis-500/30">
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Why It Matters for Automation</p>
+                <p className="text-sm text-slate-300">Automated storage and retrieval systems rely entirely on <strong className="text-white">machine-readable labels</strong>. Every bin, tote, and item in a shuttle system must be accurately labeled for the system to function. PINAXIS analyzes SKU profiles to determine the right labeling strategy as part of the automation design.</p>
+              </div>
+            </div>
+          </StepCard>
+
+          <StepCard
+            number={5}
+            title="Shipping (Outbound)"
+            isActive={activeStep0 === 5}
+            onClick={() => setActiveStep0(activeStep0 === 5 ? 0 : 5)}
+          >
+            <div className="ml-14 space-y-3">
+              <p className="text-sm text-slate-300">
+                After picking, packing, and labeling, orders are staged at shipping docks, sorted by carrier and route, and loaded onto trucks for delivery. The outbound process must be synchronized with carrier pickup windows and customer SLAs.
               </p>
               <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
                 <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Why Throughput Patterns Matter</p>
@@ -371,10 +465,10 @@ export default function UserGuidePage() {
           </StepCard>
 
           <StepCard
-            number={5}
+            number={6}
             title="ABC / Pareto Analysis"
-            isActive={activeStep0 === 5}
-            onClick={() => setActiveStep0(activeStep0 === 5 ? 0 : 5)}
+            isActive={activeStep0 === 6}
+            onClick={() => setActiveStep0(activeStep0 === 6 ? 0 : 6)}
           >
             <div className="ml-14 space-y-3">
               <p className="text-sm text-slate-300">
@@ -402,10 +496,10 @@ export default function UserGuidePage() {
           </StepCard>
 
           <StepCard
-            number={6}
+            number={7}
             title="Automation & GEBHARDT Solutions"
-            isActive={activeStep0 === 6}
-            onClick={() => setActiveStep0(activeStep0 === 6 ? 0 : 6)}
+            isActive={activeStep0 === 7}
+            onClick={() => setActiveStep0(activeStep0 === 7 ? 0 : 7)}
           >
             <div className="ml-14 space-y-3">
               <p className="text-sm text-slate-300">
@@ -437,10 +531,10 @@ export default function UserGuidePage() {
           </StepCard>
 
           <StepCard
-            number={7}
+            number={8}
             title="ROI & Business Case"
-            isActive={activeStep0 === 7}
-            onClick={() => setActiveStep0(activeStep0 === 7 ? 0 : 7)}
+            isActive={activeStep0 === 8}
+            onClick={() => setActiveStep0(activeStep0 === 8 ? 0 : 8)}
           >
             <div className="ml-14 space-y-3">
               <p className="text-sm text-slate-300">
