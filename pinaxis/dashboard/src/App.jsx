@@ -70,7 +70,7 @@ function CloseIcon({ className }) {
   )
 }
 
-export default function App() {
+export default function App({ onLogout, userEmail }) {
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -168,6 +168,17 @@ export default function App() {
 
         {/* Footer */}
         <div className="p-4 border-t border-slate-700">
+          {userEmail && (
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs text-slate-400 truncate">{userEmail}</span>
+              <button
+                onClick={onLogout}
+                className="text-xs text-slate-500 hover:text-red-400 transition-colors"
+              >
+                Sign out
+              </button>
+            </div>
+          )}
           <div className="text-xs text-slate-500 text-center">
             <p>Powered by GEBHARDT</p>
             <p className="mt-1">PINAXIS Analytics v1.0</p>
