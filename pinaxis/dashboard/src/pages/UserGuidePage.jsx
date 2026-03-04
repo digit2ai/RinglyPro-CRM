@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { ITEM_MASTER_CSV, INVENTORY_CSV, GOODS_IN_CSV, GOODS_OUT_CSV, downloadCSV } from '../lib/sampleData'
 
 function ChevronDownIcon({ className }) {
   return (
@@ -13,6 +14,14 @@ function CheckCircleIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  )
+}
+
+function DownloadIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
     </svg>
   )
 }
@@ -272,6 +281,59 @@ export default function UserGuidePage() {
                 </p>
               </div>
             </div>
+          </div>
+
+          {/* Download Test Files */}
+          <div className="card border-green-500/30 bg-green-900/10 mb-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-green-600 flex items-center justify-center">
+                <DownloadIcon className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-white">Download Test Files</h3>
+                <p className="text-sm text-slate-400">Pre-built CSV files ready to upload — 30 SKUs, 3 months of data, realistic patterns.</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {[
+                { name: 'Item Master', file: 'item_master.csv', data: ITEM_MASTER_CSV, rows: 30, required: true, desc: '30 SKUs with dimensions, weights, categories' },
+                { name: 'Goods Out', file: 'goods_out.csv', data: GOODS_OUT_CSV, rows: 195, required: true, desc: '195 order lines across 143 orders (Jan-Mar)' },
+                { name: 'Inventory', file: 'inventory.csv', data: INVENTORY_CSV, rows: 30, required: false, desc: '30 stock records with bin locations' },
+                { name: 'Goods In', file: 'goods_in.csv', data: GOODS_IN_CSV, rows: 40, required: false, desc: '40 receipt lines from 8 suppliers (Jan-Mar)' },
+              ].map(item => (
+                <button
+                  key={item.file}
+                  onClick={() => downloadCSV(item.data, item.file)}
+                  className="flex items-center gap-3 p-4 rounded-lg border border-slate-700 bg-slate-800/50 hover:bg-slate-700/50 hover:border-slate-600 transition-all text-left group"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-slate-700 flex items-center justify-center flex-shrink-0 group-hover:bg-green-600/20">
+                    <DownloadIcon className="w-5 h-5 text-slate-400 group-hover:text-green-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-white">{item.name}</p>
+                      {item.required && <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-red-500/20 text-red-300">Required</span>}
+                    </div>
+                    <p className="text-xs text-slate-400 mt-0.5">{item.desc}</p>
+                    <p className="text-xs text-slate-500 mt-1 font-mono">{item.file} ({item.rows} rows)</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => {
+                downloadCSV(ITEM_MASTER_CSV, 'item_master.csv')
+                setTimeout(() => downloadCSV(GOODS_OUT_CSV, 'goods_out.csv'), 200)
+                setTimeout(() => downloadCSV(INVENTORY_CSV, 'inventory.csv'), 400)
+                setTimeout(() => downloadCSV(GOODS_IN_CSV, 'goods_in.csv'), 600)
+              }}
+              className="mt-4 w-full flex items-center justify-center gap-2 py-3 rounded-lg bg-green-600 hover:bg-green-500 text-white font-medium transition-colors"
+            >
+              <DownloadIcon className="w-5 h-5" />
+              Download All 4 Files
+            </button>
           </div>
 
           <StepCard
