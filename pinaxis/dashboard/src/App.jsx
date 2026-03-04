@@ -84,6 +84,12 @@ export default function App({ onLogout, userEmail }) {
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
+  // Extract projectId from current URL for sidebar navigation
+  const getProjectId = () => {
+    const match = location.pathname.match(/\/(analysis|products|benefits|report)\/(\d+)/)
+    return match ? match[2] : null
+  }
+
   const getCurrentStep = () => {
     if (location.pathname.startsWith('/analysis')) return 1
     if (location.pathname.startsWith('/products')) return 2
@@ -152,7 +158,8 @@ export default function App({ onLogout, userEmail }) {
               )
             }
 
-            const basePath = index === 0 ? '/' : step.path
+            const projectId = getProjectId()
+            const basePath = index === 0 ? '/' : (projectId && index > 0 ? `${step.path}/${projectId}` : step.path)
 
             return (
               <NavLink
