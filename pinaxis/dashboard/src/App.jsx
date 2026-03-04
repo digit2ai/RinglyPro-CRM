@@ -6,6 +6,7 @@ import ProductsPage from './pages/ProductsPage'
 import BenefitsPage from './pages/BenefitsPage'
 import ReportPage from './pages/ReportPage'
 import ApiIntegrationPage from './pages/ApiIntegrationPage'
+import UserGuidePage from './pages/UserGuidePage'
 import StepIndicator from './components/StepIndicator'
 
 const steps = [
@@ -15,6 +16,7 @@ const steps = [
   { path: '/benefits', label: 'ROI Projection', icon: TrendingUpIcon },
   { path: '/report', label: 'Report', icon: FileIcon },
   { path: '/api-integration', label: 'API Integration', icon: PlugIcon },
+  { path: '/user-guide', label: 'User Guide', icon: BookIcon, noProject: true },
   { path: '/proposals/PINAXIS-System-Architecture-Document.html', label: 'MCP Architecture', icon: ArchitectureIcon, external: true }
 ]
 
@@ -74,6 +76,14 @@ function ArchitectureIcon({ className }) {
   )
 }
 
+function BookIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+    </svg>
+  )
+}
+
 function MenuIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -96,7 +106,7 @@ export default function App({ onLogout, userEmail }) {
 
   // Extract projectId from current URL for sidebar navigation
   const getProjectId = () => {
-    const match = location.pathname.match(/\/(analysis|products|benefits|report|api-integration)\/(\d+)/)
+    const match = location.pathname.match(/\/(analysis|products|benefits|report|api-integration|user-guide)\/(\d+)/)
     return match ? match[2] : null
   }
 
@@ -106,6 +116,7 @@ export default function App({ onLogout, userEmail }) {
     if (location.pathname.startsWith('/benefits')) return 3
     if (location.pathname.startsWith('/report')) return 4
     if (location.pathname.startsWith('/api-integration')) return 5
+    if (location.pathname.startsWith('/user-guide')) return 6
     return 0
   }
 
@@ -170,7 +181,7 @@ export default function App({ onLogout, userEmail }) {
             }
 
             const projectId = getProjectId()
-            const basePath = index === 0 ? '/' : (projectId && index > 0 ? `${step.path}/${projectId}` : step.path)
+            const basePath = index === 0 ? '/' : (projectId && index > 0 && !step.noProject ? `${step.path}/${projectId}` : step.path)
 
             return (
               <NavLink
@@ -246,6 +257,7 @@ export default function App({ onLogout, userEmail }) {
             <Route path="/benefits/:projectId" element={<BenefitsPage />} />
             <Route path="/report/:projectId" element={<ReportPage />} />
             <Route path="/api-integration/:projectId" element={<ApiIntegrationPage />} />
+            <Route path="/user-guide" element={<UserGuidePage />} />
           </Routes>
         </div>
       </main>
