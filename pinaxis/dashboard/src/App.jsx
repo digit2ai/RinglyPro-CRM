@@ -100,7 +100,7 @@ export default function App({ onLogout, userEmail }) {
         {/* Logo + Close button on mobile */}
         <div className="p-6 border-b border-slate-700">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden">
+            <div className="w-14 h-14 rounded-lg flex items-center justify-center overflow-hidden">
               <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="PINAXIS" className="w-full h-full object-contain" />
             </div>
             <div className="flex-1">
