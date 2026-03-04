@@ -107,18 +107,40 @@ class KanchoElevenLabsProvisioning {
   }
 
   /**
-   * Apply tools to an existing agent via PATCH
-   * ElevenLabs ignores tools during CREATE, so we PATCH them on afterward.
+   * Apply tools to agent: create standalone tools then attach via tool_ids
    * Non-fatal: logs errors but does not throw to avoid failing provisioning.
    */
   async applyToolsToAgent(agentId, toolsArray) {
     try {
+      const toolIds = [];
+
+      // Create each tool as a standalone tool
+      for (const toolConfig of toolsArray) {
+        const createResp = await axios.post(
+          `${this.baseUrl}/convai/tools`,
+          { tool_config: toolConfig },
+          {
+            headers: {
+              'xi-api-key': this.apiKey,
+              'Content-Type': 'application/json'
+            },
+            timeout: 15000
+          }
+        );
+        const toolId = createResp.data.id || createResp.data.tool_id;
+        console.log(`[KanchoElevenLabs] Created tool: ${toolConfig.name} -> ${toolId}`);
+        toolIds.push(toolId);
+      }
+
+      // Attach tools to agent via tool_ids
       await axios.patch(
         `${this.baseUrl}/convai/agents/${agentId}`,
         {
           conversation_config: {
             agent: {
-              tools: toolsArray
+              prompt: {
+                tool_ids: toolIds
+              }
             }
           }
         },
@@ -130,9 +152,9 @@ class KanchoElevenLabsProvisioning {
           timeout: 15000
         }
       );
-      console.log(`[KanchoElevenLabs] Tools PATCHed successfully onto agent ${agentId} (${toolsArray.length} tools)`);
+      console.log(`[KanchoElevenLabs] Tools attached to agent ${agentId} (${toolIds.length} tools)`);
     } catch (error) {
-      console.error(`[KanchoElevenLabs] Failed to PATCH tools onto agent ${agentId}:`, error.response?.data || error.message);
+      console.error(`[KanchoElevenLabs] Failed to apply tools to agent ${agentId}:`, error.response?.data || error.message);
       console.warn(`[KanchoElevenLabs] Agent ${agentId} was created but may be missing tools - manual update required`);
     }
   }

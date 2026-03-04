@@ -179,19 +179,41 @@ class ElevenLabsProvisioningService {
   }
 
   /**
-   * Apply tools to an existing agent via PATCH
-   * ElevenLabs CREATE endpoint silently ignores tools, so they must be added post-creation
+   * Apply tools to an existing agent
+   * Flow: Create standalone tools via POST /convai/tools, then attach via tool_ids
    */
   async applyToolsToAgent(agentId, clientId, ownerPhone) {
     try {
-      const tools = this.buildToolsConfig(clientId, ownerPhone);
+      const toolConfigs = this.buildToolsConfig(clientId, ownerPhone);
+      const toolIds = [];
 
+      // Step 1: Create each tool as a standalone tool
+      for (const toolConfig of toolConfigs) {
+        const createResp = await axios.post(
+          `${this.baseUrl}/convai/tools`,
+          { tool_config: toolConfig },
+          {
+            headers: {
+              'xi-api-key': this.apiKey,
+              'Content-Type': 'application/json'
+            },
+            timeout: 15000
+          }
+        );
+        const toolId = createResp.data.id || createResp.data.tool_id;
+        console.log(`[ElevenLabsProvisioning] Created tool: ${toolConfig.name} -> ${toolId}`);
+        toolIds.push(toolId);
+      }
+
+      // Step 2: Attach tools to agent via tool_ids
       await axios.patch(
         `${this.baseUrl}/convai/agents/${agentId}`,
         {
           conversation_config: {
             agent: {
-              tools: tools
+              prompt: {
+                tool_ids: toolIds
+              }
             }
           }
         },
@@ -204,18 +226,9 @@ class ElevenLabsProvisioningService {
         }
       );
 
-      // Verify tools were applied via GET (PATCH response may not include tools)
-      const verifyResp = await axios.get(
-        `${this.baseUrl}/convai/agents/${agentId}`,
-        {
-          headers: { 'xi-api-key': this.apiKey },
-          timeout: 10000
-        }
-      );
-      const appliedTools = verifyResp.data?.conversation_config?.agent?.prompt?.tools || [];
       return {
-        success: appliedTools.length > 0,
-        toolCount: appliedTools.length
+        success: true,
+        toolCount: toolIds.length
       };
     } catch (error) {
       console.error('[ElevenLabsProvisioning] Apply tools error:', error.response?.data || error.message);
