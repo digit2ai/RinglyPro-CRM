@@ -186,14 +186,12 @@ class ElevenLabsProvisioningService {
     try {
       const tools = this.buildToolsConfig(clientId, ownerPhone);
 
-      const response = await axios.patch(
+      await axios.patch(
         `${this.baseUrl}/convai/agents/${agentId}`,
         {
           conversation_config: {
             agent: {
-              prompt: {
-                tools: tools
-              }
+              tools: tools
             }
           }
         },
@@ -206,10 +204,17 @@ class ElevenLabsProvisioningService {
         }
       );
 
-      // Verify tools were applied
-      const appliedTools = response.data?.conversation_config?.agent?.prompt?.tools || [];
+      // Verify tools were applied via GET (PATCH response may not include tools)
+      const verifyResp = await axios.get(
+        `${this.baseUrl}/convai/agents/${agentId}`,
+        {
+          headers: { 'xi-api-key': this.apiKey },
+          timeout: 10000
+        }
+      );
+      const appliedTools = verifyResp.data?.conversation_config?.agent?.prompt?.tools || [];
       return {
-        success: true,
+        success: appliedTools.length > 0,
         toolCount: appliedTools.length
       };
     } catch (error) {

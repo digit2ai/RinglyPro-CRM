@@ -118,9 +118,7 @@ class KanchoElevenLabsProvisioning {
         {
           conversation_config: {
             agent: {
-              prompt: {
-                tools: toolsArray
-              }
+              tools: toolsArray
             }
           }
         },
