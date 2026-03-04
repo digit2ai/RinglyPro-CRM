@@ -122,17 +122,6 @@ export default function App({ onLogout, userEmail }) {
 
   const closeSidebar = () => setSidebarOpen(false)
 
-  // Load ElevenLabs ConvAI widget script once
-  useEffect(() => {
-    if (document.getElementById('elevenlabs-convai-script')) return
-    const script = document.createElement('script')
-    script.id = 'elevenlabs-convai-script'
-    script.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed'
-    script.async = true
-    script.type = 'text/javascript'
-    document.body.appendChild(script)
-  }, [])
-
   return (
     <div className="min-h-screen flex">
       {/* Mobile overlay */}

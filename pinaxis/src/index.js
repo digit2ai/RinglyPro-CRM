@@ -11,7 +11,6 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const helmet = require('helmet');
 const path = require('path');
 const fs = require('fs');
 
@@ -25,14 +24,6 @@ console.log('📊 PINAXIS: Checking dashboard at:', dashboardDistPath);
 // ============================================================================
 // MIDDLEWARE
 // ============================================================================
-
-app.use(helmet({
-  contentSecurityPolicy: false,
-  crossOriginEmbedderPolicy: false,
-  crossOriginOpenerPolicy: false,
-  crossOriginResourcePolicy: false,
-  permissionsPolicy: false
-}));
 
 app.use(cors({
   origin: process.env.CORS_ORIGIN || '*',
