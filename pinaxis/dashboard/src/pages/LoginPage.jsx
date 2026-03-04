@@ -30,8 +30,8 @@ export default function LoginPage({ onLogin }) {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-pinaxis-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-pinaxis-600/20">
-            <span className="text-white font-bold text-2xl">P</span>
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-pinaxis-600/20 overflow-hidden">
+            <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="PINAXIS" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-2xl font-bold text-white tracking-tight">PINAXIS</h1>
           <p className="text-slate-400 text-sm mt-1">Warehouse Data Analytics Platform</p>
