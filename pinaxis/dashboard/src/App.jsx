@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Routes, Route, NavLink, useLocation } from 'react-router-dom'
 import UploadPage from './pages/UploadPage'
 import AnalysisPage from './pages/AnalysisPage'
@@ -121,6 +121,17 @@ export default function App({ onLogout, userEmail }) {
   }
 
   const closeSidebar = () => setSidebarOpen(false)
+
+  // Load ElevenLabs ConvAI widget script once
+  useEffect(() => {
+    if (document.getElementById('elevenlabs-convai-script')) return
+    const script = document.createElement('script')
+    script.id = 'elevenlabs-convai-script'
+    script.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed'
+    script.async = true
+    script.type = 'text/javascript'
+    document.body.appendChild(script)
+  }, [])
 
   return (
     <div className="min-h-screen flex">
@@ -261,6 +272,9 @@ export default function App({ onLogout, userEmail }) {
           </Routes>
         </div>
       </main>
+
+      {/* ElevenLabs Voice Agent Widget */}
+      <elevenlabs-convai agent-id="agent_0001kjqqxr4nfcxvar5ve7prp2vm"></elevenlabs-convai>
     </div>
   )
 }
