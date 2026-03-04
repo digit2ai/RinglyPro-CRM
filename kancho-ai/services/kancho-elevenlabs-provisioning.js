@@ -331,12 +331,9 @@ You speak fluent English and Spanish. Respond in whichever language the caller u
 
   /**
    * Build tools configuration for ElevenLabs agent
-   * Uses the correct ElevenLabs ConvAI API schema format:
-   * - Tools go inside conversation_config.agent.prompt.tools
-   * - properties must be an object (not an array)
-   * - required is a top-level array of field names
-   * - constant values use constant_value field
-   * - transfer_to_number is NOT a valid tool type
+   * IMPORTANT: ElevenLabs API rule - each property can have ONLY ONE of:
+   *   description | dynamic_variable | is_system_provided | constant_value
+   * Constants use constant_value only. LLM-filled fields use description only.
    */
   buildToolsConfig(clientId, ownerPhone) {
     const toolsWebhookUrl = `${this.webhookBaseUrl}/api/elevenlabs/tools`;
@@ -346,61 +343,41 @@ You speak fluent English and Spanish. Respond in whichever language the caller u
         type: 'webhook',
         name: 'check_availability',
         description: 'Check available time slots for classes, trial lessons, or appointments.',
-        response_timeout_secs: 20,
-        disable_interruptions: false,
-        force_pre_tool_speech: false,
-        execution_mode: 'immediate',
         api_schema: {
           url: toolsWebhookUrl,
           method: 'POST',
-          path_params_schema: {},
-          query_params_schema: null,
           request_body_schema: {
             type: 'object',
             required: ['tool_name', 'client_id', 'days_ahead'],
-            description: 'Check availability parameters',
             properties: {
-              tool_name: { type: 'string', description: '', enum: null, is_system_provided: false, dynamic_variable: '', constant_value: 'check_availability' },
-              client_id: { type: 'string', description: '', enum: null, is_system_provided: false, dynamic_variable: '', constant_value: String(clientId) },
-              days_ahead: { type: 'string', description: '', enum: null, is_system_provided: false, dynamic_variable: '', constant_value: '7' }
+              tool_name: { type: 'string', constant_value: 'check_availability' },
+              client_id: { type: 'string', constant_value: String(clientId) },
+              days_ahead: { type: 'string', constant_value: '7' }
             }
-          },
-          request_headers: {},
-          content_type: 'application/json',
-          auth_connection: null
+          }
         }
       },
       {
         type: 'webhook',
         name: 'book_appointment',
         description: 'Book a trial class, introductory lesson, or appointment for the caller.',
-        response_timeout_secs: 30,
-        disable_interruptions: false,
-        force_pre_tool_speech: false,
-        execution_mode: 'immediate',
         api_schema: {
           url: toolsWebhookUrl,
           method: 'POST',
-          path_params_schema: {},
-          query_params_schema: null,
           request_body_schema: {
             type: 'object',
             required: ['tool_name', 'client_id', 'customer_name', 'customer_phone', 'appointment_date', 'appointment_time'],
-            description: 'Appointment booking parameters',
             properties: {
-              tool_name: { type: 'string', description: '', enum: null, is_system_provided: false, dynamic_variable: '', constant_value: 'book_appointment' },
-              client_id: { type: 'string', description: '', enum: null, is_system_provided: false, dynamic_variable: '', constant_value: String(clientId) },
-              customer_name: { type: 'string', description: 'Full name of the caller', enum: null, is_system_provided: false, dynamic_variable: '', constant_value: '' },
-              customer_phone: { type: 'string', description: 'Caller phone number', enum: null, is_system_provided: false, dynamic_variable: '', constant_value: '' },
-              customer_email: { type: 'string', description: 'Caller email (optional)', enum: null, is_system_provided: false, dynamic_variable: '', constant_value: '' },
-              appointment_date: { type: 'string', description: 'Date in YYYY-MM-DD format', enum: null, is_system_provided: false, dynamic_variable: '', constant_value: '' },
-              appointment_time: { type: 'string', description: 'Time in HH:MM format (24-hour)', enum: null, is_system_provided: false, dynamic_variable: '', constant_value: '' },
-              purpose: { type: 'string', description: 'Reason for the visit', enum: null, is_system_provided: false, dynamic_variable: '', constant_value: '' }
+              tool_name: { type: 'string', constant_value: 'book_appointment' },
+              client_id: { type: 'string', constant_value: String(clientId) },
+              customer_name: { type: 'string', description: 'Full name of the caller' },
+              customer_phone: { type: 'string', description: 'Caller phone number' },
+              customer_email: { type: 'string', description: 'Caller email (optional)' },
+              appointment_date: { type: 'string', description: 'Date in YYYY-MM-DD format' },
+              appointment_time: { type: 'string', description: 'Time in HH:MM format (24-hour)' },
+              purpose: { type: 'string', description: 'Reason for the visit' }
             }
-          },
-          request_headers: {},
-          content_type: 'application/json',
-          auth_connection: null
+          }
         }
       }
     ];
