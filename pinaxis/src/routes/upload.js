@@ -63,7 +63,11 @@ router.post('/:projectId/:fileType', upload.single('file'), async (req, res) => 
       }));
 
       if (records.length > 0) {
-        await Model.bulkCreate(records, { ignoreDuplicates: true });
+        // Chunk large inserts to avoid DB connection timeouts
+        const CHUNK_SIZE = 500;
+        for (let i = 0; i < records.length; i += CHUNK_SIZE) {
+          await Model.bulkCreate(records.slice(i, i + CHUNK_SIZE), { ignoreDuplicates: true });
+        }
       }
 
       // Update file record
