@@ -28,13 +28,26 @@ class ElevenLabsProvisioningService {
     try {
       console.log(`[ElevenLabsProvisioning] Starting agent provisioning for: ${clientData.businessName} (client ${clientId})`);
 
-      // Step 1: Create the agent with tools
+      // Step 1: Create the agent (tools are added separately via PATCH)
       const agentConfig = this.buildAgentConfig(clientData, clientId);
       const agentResult = await this.createAgent(agentConfig);
       if (!agentResult.success) {
         throw new Error(`Agent creation failed: ${agentResult.error}`);
       }
       console.log(`[ElevenLabsProvisioning] Agent created: ${agentResult.agentId}`);
+
+      // Step 1b: PATCH tools onto agent (ElevenLabs CREATE silently ignores tools)
+      const toolsResult = await this.applyToolsToAgent(
+        agentResult.agentId,
+        clientId,
+        clientData.ownerPhone
+      );
+      if (!toolsResult.success) {
+        console.error(`[ElevenLabsProvisioning] WARNING: Tools failed to apply: ${toolsResult.error}`);
+        // Continue provisioning even if tools fail - agent still works for basic calls
+      } else {
+        console.log(`[ElevenLabsProvisioning] Tools applied: ${toolsResult.toolCount} tools`);
+      }
 
       // Step 2: Import Twilio number to ElevenLabs
       const phoneResult = await this.importPhoneNumber(
@@ -166,6 +179,49 @@ class ElevenLabsProvisioningService {
   }
 
   /**
+   * Apply tools to an existing agent via PATCH
+   * ElevenLabs CREATE endpoint silently ignores tools, so they must be added post-creation
+   */
+  async applyToolsToAgent(agentId, clientId, ownerPhone) {
+    try {
+      const tools = this.buildToolsConfig(clientId, ownerPhone);
+
+      const response = await axios.patch(
+        `${this.baseUrl}/convai/agents/${agentId}`,
+        {
+          conversation_config: {
+            agent: {
+              prompt: {
+                tools: tools
+              }
+            }
+          }
+        },
+        {
+          headers: {
+            'xi-api-key': this.apiKey,
+            'Content-Type': 'application/json'
+          },
+          timeout: 15000
+        }
+      );
+
+      // Verify tools were applied
+      const appliedTools = response.data?.conversation_config?.agent?.prompt?.tools || [];
+      return {
+        success: true,
+        toolCount: appliedTools.length
+      };
+    } catch (error) {
+      console.error('[ElevenLabsProvisioning] Apply tools error:', error.response?.data || error.message);
+      return {
+        success: false,
+        error: error.response?.data?.detail || error.message
+      };
+    }
+  }
+
+  /**
    * Build complete agent config for ElevenLabs API
    */
   buildAgentConfig(clientData, clientId) {
@@ -176,7 +232,8 @@ class ElevenLabsProvisioningService {
       conversation_config: {
         agent: {
           prompt: {
-            prompt: systemPrompt
+            prompt: systemPrompt,
+            tools: this.buildToolsConfig(clientId, clientData.ownerPhone)
           },
           first_message: `Hello! Thank you for calling ${clientData.businessName}. How may I help you today?`,
           language: clientData.language || 'en'
@@ -209,8 +266,7 @@ class ElevenLabsProvisioningService {
         widget: {
           variant: 'full'
         }
-      },
-      tools: this.buildToolsConfig(clientId, clientData.ownerPhone)
+      }
     };
   }
 
@@ -310,7 +366,13 @@ You speak fluent English and Spanish. Respond in whichever language the caller u
 
   /**
    * Build tools configuration for ElevenLabs agent
-   * Uses the exact ElevenLabs API schema format
+   * Uses the correct ElevenLabs ConvAI API schema format:
+   * - Tools go inside conversation_config.agent.prompt.tools
+   * - properties must be an object (not an array)
+   * - required is a top-level array of field names
+   * - constant values use constant_value field
+   * - transfer_to_number is NOT a valid tool type; call transfer
+   *   is handled via the system prompt instructions instead
    */
   buildToolsConfig(clientId, ownerPhone) {
     const toolsWebhookUrl = `${this.webhookBaseUrl}/api/elevenlabs/tools`;
@@ -320,195 +382,138 @@ You speak fluent English and Spanish. Respond in whichever language the caller u
         type: 'webhook',
         name: 'check_availability',
         description: 'Check available appointment slots. Use this to find open times before booking.',
+        response_timeout_secs: 20,
         disable_interruptions: false,
-        force_pre_tool_speech: 'auto',
-        tool_call_sound: null,
-        tool_call_sound_behavior: 'auto',
-        tool_error_handling_mode: 'auto',
+        force_pre_tool_speech: false,
         execution_mode: 'immediate',
         api_schema: {
           url: toolsWebhookUrl,
           method: 'POST',
-          path_params_schema: [],
-          query_params_schema: [],
+          path_params_schema: {},
+          query_params_schema: null,
           request_body_schema: {
-            id: 'body',
             type: 'object',
-            description: 'Parameters for checking availability',
-            properties: [
-              {
-                id: 'tool_name',
+            required: ['tool_name', 'client_id', 'days_ahead'],
+            description: 'Check availability parameters',
+            properties: {
+              tool_name: {
                 type: 'string',
-                value_type: 'constant',
                 description: '',
-                dynamic_variable: '',
-                constant_value: 'check_availability',
                 enum: null,
                 is_system_provided: false,
-                required: true
+                dynamic_variable: '',
+                constant_value: 'check_availability'
               },
-              {
-                id: 'client_id',
+              client_id: {
                 type: 'string',
-                value_type: 'constant',
                 description: '',
-                dynamic_variable: '',
-                constant_value: String(clientId),
                 enum: null,
                 is_system_provided: false,
-                required: true
+                dynamic_variable: '',
+                constant_value: String(clientId)
               },
-              {
-                id: 'days_ahead',
+              days_ahead: {
                 type: 'string',
-                value_type: 'constant',
                 description: '',
-                dynamic_variable: '',
-                constant_value: '30',
                 enum: null,
                 is_system_provided: false,
-                required: true
+                dynamic_variable: '',
+                constant_value: '30'
               }
-            ],
-            required: false,
-            value_type: 'llm_prompt'
+            }
           },
-          request_headers: [],
+          request_headers: {},
+          content_type: 'application/json',
           auth_connection: null
-        },
-        assignments: [],
-        response_timeout_secs: 20,
-        dynamic_variables: {
-          dynamic_variable_placeholders: {}
         }
       },
       {
         type: 'webhook',
         name: 'book_appointment',
         description: 'Book an appointment for the caller. Use this after confirming date, time, and customer details.',
+        response_timeout_secs: 30,
         disable_interruptions: false,
-        force_pre_tool_speech: 'auto',
-        tool_call_sound: null,
-        tool_call_sound_behavior: 'auto',
-        tool_error_handling_mode: 'auto',
+        force_pre_tool_speech: false,
         execution_mode: 'immediate',
         api_schema: {
           url: toolsWebhookUrl,
           method: 'POST',
-          path_params_schema: [],
-          query_params_schema: [],
+          path_params_schema: {},
+          query_params_schema: null,
           request_body_schema: {
-            id: 'body',
             type: 'object',
-            description: 'Parameters for booking appointment',
-            properties: [
-              {
-                id: 'tool_name',
+            required: ['tool_name', 'client_id', 'customer_name', 'customer_phone', 'appointment_date', 'appointment_time'],
+            description: 'Appointment booking parameters',
+            properties: {
+              tool_name: {
                 type: 'string',
-                value_type: 'constant',
                 description: '',
-                dynamic_variable: '',
-                constant_value: 'book_appointment',
                 enum: null,
                 is_system_provided: false,
-                required: true
-              },
-              {
-                id: 'client_id',
-                type: 'string',
-                value_type: 'constant',
-                description: '',
                 dynamic_variable: '',
-                constant_value: String(clientId),
+                constant_value: 'book_appointment'
+              },
+              client_id: {
+                type: 'string',
+                description: '',
                 enum: null,
                 is_system_provided: false,
-                required: true
+                dynamic_variable: '',
+                constant_value: String(clientId)
               },
-              {
-                id: 'customer_name',
+              customer_name: {
                 type: 'string',
-                value_type: 'llm_prompt',
                 description: "Customer's full name",
-                dynamic_variable: '',
-                constant_value: '',
                 enum: null,
                 is_system_provided: false,
-                required: true
+                dynamic_variable: '',
+                constant_value: ''
               },
-              {
-                id: 'customer_phone',
+              customer_phone: {
                 type: 'string',
-                value_type: 'llm_prompt',
                 description: "Customer's phone number",
-                dynamic_variable: '',
-                constant_value: '',
                 enum: null,
                 is_system_provided: false,
-                required: true
+                dynamic_variable: '',
+                constant_value: ''
               },
-              {
-                id: 'customer_email',
+              customer_email: {
                 type: 'string',
-                value_type: 'llm_prompt',
                 description: "Customer's email address (optional)",
-                dynamic_variable: '',
-                constant_value: '',
                 enum: null,
                 is_system_provided: false,
-                required: false
+                dynamic_variable: '',
+                constant_value: ''
               },
-              {
-                id: 'appointment_date',
+              appointment_date: {
                 type: 'string',
-                value_type: 'llm_prompt',
                 description: 'Appointment date in YYYY-MM-DD format',
-                dynamic_variable: '',
-                constant_value: '',
                 enum: null,
                 is_system_provided: false,
-                required: true
+                dynamic_variable: '',
+                constant_value: ''
               },
-              {
-                id: 'appointment_time',
+              appointment_time: {
                 type: 'string',
-                value_type: 'llm_prompt',
                 description: 'Appointment time in HH:MM format (24-hour)',
-                dynamic_variable: '',
-                constant_value: '',
                 enum: null,
                 is_system_provided: false,
-                required: true
+                dynamic_variable: '',
+                constant_value: ''
               },
-              {
-                id: 'purpose',
+              purpose: {
                 type: 'string',
-                value_type: 'llm_prompt',
                 description: 'Reason for the appointment',
-                dynamic_variable: '',
-                constant_value: '',
                 enum: null,
                 is_system_provided: false,
-                required: false
+                dynamic_variable: '',
+                constant_value: ''
               }
-            ],
-            required: false,
-            value_type: 'llm_prompt'
+            }
           },
-          request_headers: [],
+          request_headers: {},
+          content_type: 'application/json',
           auth_connection: null
-        },
-        assignments: [],
-        response_timeout_secs: 30,
-        dynamic_variables: {
-          dynamic_variable_placeholders: {}
-        }
-      },
-      {
-        type: 'transfer_to_number',
-        name: 'transfer_call',
-        description: 'Transfer the call to the business owner or manager',
-        transfer_to_number: {
-          phone_number: ownerPhone || '+12232949184'
         }
       }
     ];

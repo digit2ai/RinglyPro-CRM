@@ -36,6 +36,10 @@ class KanchoElevenLabsProvisioning {
       }
       console.log(`[KanchoElevenLabs] Agent created: ${agentResult.agentId}`);
 
+      // Step 1b: PATCH tools onto agent (ElevenLabs ignores tools during CREATE)
+      const toolsArray = this.buildToolsConfig(clientId, schoolData.ownerPhone);
+      await this.applyToolsToAgent(agentResult.agentId, toolsArray);
+
       // Step 2: Import Twilio number to ElevenLabs
       const phoneResult = await this.importPhoneNumber(
         twilioNumber,
@@ -99,6 +103,39 @@ class KanchoElevenLabsProvisioning {
         success: false,
         error: error.response?.data?.detail || error.message
       };
+    }
+  }
+
+  /**
+   * Apply tools to an existing agent via PATCH
+   * ElevenLabs ignores tools during CREATE, so we PATCH them on afterward.
+   * Non-fatal: logs errors but does not throw to avoid failing provisioning.
+   */
+  async applyToolsToAgent(agentId, toolsArray) {
+    try {
+      await axios.patch(
+        `${this.baseUrl}/convai/agents/${agentId}`,
+        {
+          conversation_config: {
+            agent: {
+              prompt: {
+                tools: toolsArray
+              }
+            }
+          }
+        },
+        {
+          headers: {
+            'xi-api-key': this.apiKey,
+            'Content-Type': 'application/json'
+          },
+          timeout: 15000
+        }
+      );
+      console.log(`[KanchoElevenLabs] Tools PATCHed successfully onto agent ${agentId} (${toolsArray.length} tools)`);
+    } catch (error) {
+      console.error(`[KanchoElevenLabs] Failed to PATCH tools onto agent ${agentId}:`, error.response?.data || error.message);
+      console.warn(`[KanchoElevenLabs] Agent ${agentId} was created but may be missing tools - manual update required`);
     }
   }
 
@@ -180,7 +217,8 @@ class KanchoElevenLabsProvisioning {
       conversation_config: {
         agent: {
           prompt: {
-            prompt: systemPrompt
+            prompt: systemPrompt,
+            tools: this.buildToolsConfig(clientId, schoolData.ownerPhone)
           },
           first_message: `Hello! Thank you for calling ${schoolName}. This is your Kancho AI assistant. How may I help you today?`,
           language: 'en'
@@ -213,8 +251,7 @@ class KanchoElevenLabsProvisioning {
         widget: {
           variant: 'full'
         }
-      },
-      tools: this.buildToolsConfig(clientId, schoolData.ownerPhone)
+      }
     };
   }
 
@@ -296,7 +333,12 @@ You speak fluent English and Spanish. Respond in whichever language the caller u
 
   /**
    * Build tools configuration for ElevenLabs agent
-   * All tools point to the existing /api/elevenlabs/tools endpoint
+   * Uses the correct ElevenLabs ConvAI API schema format:
+   * - Tools go inside conversation_config.agent.prompt.tools
+   * - properties must be an object (not an array)
+   * - required is a top-level array of field names
+   * - constant values use constant_value field
+   * - transfer_to_number is NOT a valid tool type
    */
   buildToolsConfig(clientId, ownerPhone) {
     const toolsWebhookUrl = `${this.webhookBaseUrl}/api/elevenlabs/tools`;
@@ -304,131 +346,63 @@ You speak fluent English and Spanish. Respond in whichever language the caller u
     return [
       {
         type: 'webhook',
-        name: 'get_business_info',
-        description: 'Get information about the martial arts school for the current call',
-        webhook: {
-          url: toolsWebhookUrl,
-          method: 'POST'
-        },
-        parameters: {
-          type: 'object',
-          properties: {
-            client_id: {
-              type: 'string',
-              description: 'The client ID',
-              const: String(clientId)
-            }
-          },
-          required: ['client_id']
-        }
-      },
-      {
-        type: 'webhook',
         name: 'check_availability',
-        description: 'Check available time slots for classes, trial lessons, or appointments',
-        webhook: {
+        description: 'Check available time slots for classes, trial lessons, or appointments.',
+        response_timeout_secs: 20,
+        disable_interruptions: false,
+        force_pre_tool_speech: false,
+        execution_mode: 'immediate',
+        api_schema: {
           url: toolsWebhookUrl,
-          method: 'POST'
-        },
-        parameters: {
-          type: 'object',
-          properties: {
-            client_id: {
-              type: 'string',
-              description: 'The client ID',
-              const: String(clientId)
-            },
-            date: {
-              type: 'string',
-              description: 'Date to check in YYYY-MM-DD format (optional, defaults to tomorrow)'
-            },
-            days_ahead: {
-              type: 'integer',
-              description: 'Number of days to look ahead (default 7)',
-              default: 7
+          method: 'POST',
+          path_params_schema: {},
+          query_params_schema: null,
+          request_body_schema: {
+            type: 'object',
+            required: ['tool_name', 'client_id', 'days_ahead'],
+            description: 'Check availability parameters',
+            properties: {
+              tool_name: { type: 'string', description: '', enum: null, is_system_provided: false, dynamic_variable: '', constant_value: 'check_availability' },
+              client_id: { type: 'string', description: '', enum: null, is_system_provided: false, dynamic_variable: '', constant_value: String(clientId) },
+              days_ahead: { type: 'string', description: '', enum: null, is_system_provided: false, dynamic_variable: '', constant_value: '7' }
             }
           },
-          required: ['client_id']
+          request_headers: {},
+          content_type: 'application/json',
+          auth_connection: null
         }
       },
       {
         type: 'webhook',
         name: 'book_appointment',
-        description: 'Book a trial class, introductory lesson, or appointment for the caller',
-        webhook: {
+        description: 'Book a trial class, introductory lesson, or appointment for the caller.',
+        response_timeout_secs: 30,
+        disable_interruptions: false,
+        force_pre_tool_speech: false,
+        execution_mode: 'immediate',
+        api_schema: {
           url: toolsWebhookUrl,
-          method: 'POST'
-        },
-        parameters: {
-          type: 'object',
-          properties: {
-            client_id: {
-              type: 'string',
-              description: 'The client ID',
-              const: String(clientId)
-            },
-            customer_name: {
-              type: 'string',
-              description: 'Full name of the caller'
-            },
-            customer_phone: {
-              type: 'string',
-              description: 'Caller phone number'
-            },
-            customer_email: {
-              type: 'string',
-              description: 'Caller email (optional)'
-            },
-            appointment_date: {
-              type: 'string',
-              description: 'Date in YYYY-MM-DD format'
-            },
-            appointment_time: {
-              type: 'string',
-              description: 'Time in HH:MM format (24-hour)'
-            },
-            purpose: {
-              type: 'string',
-              description: 'Reason for the visit (e.g., trial class, introductory lesson, belt testing)'
+          method: 'POST',
+          path_params_schema: {},
+          query_params_schema: null,
+          request_body_schema: {
+            type: 'object',
+            required: ['tool_name', 'client_id', 'customer_name', 'customer_phone', 'appointment_date', 'appointment_time'],
+            description: 'Appointment booking parameters',
+            properties: {
+              tool_name: { type: 'string', description: '', enum: null, is_system_provided: false, dynamic_variable: '', constant_value: 'book_appointment' },
+              client_id: { type: 'string', description: '', enum: null, is_system_provided: false, dynamic_variable: '', constant_value: String(clientId) },
+              customer_name: { type: 'string', description: 'Full name of the caller', enum: null, is_system_provided: false, dynamic_variable: '', constant_value: '' },
+              customer_phone: { type: 'string', description: 'Caller phone number', enum: null, is_system_provided: false, dynamic_variable: '', constant_value: '' },
+              customer_email: { type: 'string', description: 'Caller email (optional)', enum: null, is_system_provided: false, dynamic_variable: '', constant_value: '' },
+              appointment_date: { type: 'string', description: 'Date in YYYY-MM-DD format', enum: null, is_system_provided: false, dynamic_variable: '', constant_value: '' },
+              appointment_time: { type: 'string', description: 'Time in HH:MM format (24-hour)', enum: null, is_system_provided: false, dynamic_variable: '', constant_value: '' },
+              purpose: { type: 'string', description: 'Reason for the visit', enum: null, is_system_provided: false, dynamic_variable: '', constant_value: '' }
             }
           },
-          required: ['client_id', 'customer_name', 'customer_phone', 'appointment_date', 'appointment_time']
-        }
-      },
-      {
-        type: 'webhook',
-        name: 'send_sms',
-        description: 'Send an SMS confirmation or message to a phone number',
-        webhook: {
-          url: toolsWebhookUrl,
-          method: 'POST'
-        },
-        parameters: {
-          type: 'object',
-          properties: {
-            client_id: {
-              type: 'string',
-              description: 'The client ID',
-              const: String(clientId)
-            },
-            to_phone: {
-              type: 'string',
-              description: 'Phone number to send SMS to'
-            },
-            message: {
-              type: 'string',
-              description: 'SMS message content'
-            }
-          },
-          required: ['client_id', 'to_phone', 'message']
-        }
-      },
-      {
-        type: 'transfer_to_number',
-        name: 'transfer_call',
-        description: 'Transfer the call to the instructor or school owner',
-        transfer_to_number: {
-          phone_number: ownerPhone || '+12232949184'
+          request_headers: {},
+          content_type: 'application/json',
+          auth_connection: null
         }
       }
     ];
