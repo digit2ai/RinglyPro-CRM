@@ -111,9 +111,11 @@ function formatValue(value, format) {
       return typeof value === 'number' ? value.toFixed(2) : String(value)
     case 'text':
       if (typeof value === 'object' && value !== null) {
-        if (value.start || value.end) {
+        if (value.start || value.end || value.from || value.to) {
           const fmt = (d) => d ? new Date(d).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) : '?'
-          return `${fmt(value.start)} – ${fmt(value.end)}`
+          const startDate = value.start || value.from
+          const endDate = value.end || value.to
+          return `${fmt(startDate)} – ${fmt(endDate)}`
         }
         return JSON.stringify(value)
       }
