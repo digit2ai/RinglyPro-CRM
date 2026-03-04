@@ -191,3 +191,39 @@ export async function revokeApiKey(projectId) {
     method: 'DELETE'
   })
 }
+
+// ============================================================================
+// TELEMETRY / OBSERVABILITY
+// ============================================================================
+
+/**
+ * Get live operational health for a project
+ * Backend: GET /telemetry/:projectId/health
+ */
+export async function getTelemetryHealth(projectId) {
+  return request(`/telemetry/${projectId}/health`)
+}
+
+/**
+ * Query telemetry events with optional filters
+ * Backend: GET /telemetry/:projectId/events
+ */
+export async function getTelemetryEvents(projectId, filters = {}) {
+  const params = new URLSearchParams()
+  if (filters.event_type) params.set('event_type', filters.event_type)
+  if (filters.source) params.set('source', filters.source)
+  if (filters.severity) params.set('severity', filters.severity)
+  if (filters.hours) params.set('hours', filters.hours)
+  if (filters.limit) params.set('limit', filters.limit)
+  const qs = params.toString()
+  return request(`/telemetry/${projectId}/events${qs ? '?' + qs : ''}`)
+}
+
+/**
+ * Get system architecture readiness analysis
+ * Backend: GET /analysis/:projectId/system-architecture (via all endpoint)
+ */
+export async function getSystemArchitecture(projectId) {
+  const all = await getAnalysisAll(projectId)
+  return all?.system_architecture || null
+}

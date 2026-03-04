@@ -72,6 +72,9 @@ module.exports = (sequelize, DataTypes) => {
     Project.hasMany(models.PinaxisAnalysisResult, { foreignKey: 'project_id', as: 'results' });
     Project.hasMany(models.PinaxisProductRecommendation, { foreignKey: 'project_id', as: 'recommendations' });
     Project.hasMany(models.PinaxisApiKey, { foreignKey: 'project_id', as: 'apiKeys' });
+    if (models.PinaxisTelemetryEvent) {
+      Project.hasMany(models.PinaxisTelemetryEvent, { foreignKey: 'project_id', as: 'telemetry' });
+    }
   };
 
   return Project;

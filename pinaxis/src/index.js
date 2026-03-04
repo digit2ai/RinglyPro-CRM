@@ -99,6 +99,7 @@ try {
   const benefitRoutes = require('./routes/benefits');
   const ingestRoutes = require('./routes/ingest');
   const voiceAgentRoutes = require('./routes/voice-agent');
+  const telemetryRoutes = require('./routes/telemetry');
 
   // Health check
   app.use(`${BASE_PATH}/health`, healthRoutes);
@@ -113,6 +114,7 @@ try {
   app.use(`${BASE_PATH}/api/v1/benefits`, benefitRoutes);
   app.use(`${BASE_PATH}/api/v1/ingest`, ingestRoutes);
   app.use(`${BASE_PATH}/api/v1/voice`, voiceAgentRoutes);
+  app.use(`${BASE_PATH}/api/v1/telemetry`, telemetryRoutes);
 
   routesLoaded = true;
   console.log('✅ PINAXIS routes loaded successfully');
@@ -126,6 +128,7 @@ try {
   console.log('   - /api/v1/demo');
   console.log('   - /api/v1/ingest (Production API - auth required)');
   console.log('   - /api/v1/voice (ElevenLabs Voice Agent)');
+  console.log('   - /api/v1/telemetry (Live Observability)');
 } catch (error) {
   console.log('⚠️ Some PINAXIS routes failed to load:', error.message);
   console.log('   Error stack:', error.stack);

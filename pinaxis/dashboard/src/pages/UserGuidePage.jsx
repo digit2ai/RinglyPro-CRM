@@ -563,6 +563,254 @@ export default function UserGuidePage() {
               </div>
             </div>
           </StepCard>
+
+          <StepCard
+            number={9}
+            title="DC Software Stack (WMS / WES / WCS)"
+            isActive={activeStep0 === 9}
+            onClick={() => setActiveStep0(activeStep0 === 9 ? 0 : 9)}
+          >
+            <div className="ml-14 space-y-3">
+              <p className="text-sm text-slate-300">
+                A modern automated distribution center runs on a <strong className="text-white">three-layer software stack</strong> that coordinates everything from business-level order management down to individual motor commands on conveyor belts.
+              </p>
+
+              {/* Three-Layer Architecture Diagram */}
+              <div className="rounded-lg border border-slate-700 overflow-hidden">
+                <div className="px-4 py-3 bg-slate-700/30 border-b border-slate-700">
+                  <h4 className="text-sm font-semibold text-white">Three-Layer Control Architecture</h4>
+                </div>
+                <div className="p-4 space-y-2">
+                  {/* WMS Layer */}
+                  <div className="p-4 rounded-lg bg-blue-900/20 border border-blue-500/30">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="text-xs font-bold px-2 py-0.5 rounded bg-blue-600 text-white">LAYER 1</span>
+                      <h5 className="text-sm font-bold text-blue-300">WMS — Warehouse Management System</h5>
+                    </div>
+                    <p className="text-xs text-slate-300 mb-2">The <strong className="text-white">business brain</strong> — manages inventory, orders, labor, and warehouse rules. Decides WHAT needs to happen.</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                      <div className="p-2 rounded bg-slate-900/50 text-slate-400 text-center">Inventory Mgmt</div>
+                      <div className="p-2 rounded bg-slate-900/50 text-slate-400 text-center">Order Release</div>
+                      <div className="p-2 rounded bg-slate-900/50 text-slate-400 text-center">Wave Planning</div>
+                      <div className="p-2 rounded bg-slate-900/50 text-slate-400 text-center">Labor Allocation</div>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2">Examples: SAP EWM, Manhattan Active WM, Blue Yonder, Korber WMS</p>
+                  </div>
+
+                  {/* Arrow */}
+                  <div className="flex justify-center">
+                    <svg className="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 13.5L12 21m0 0l-7.5-7.5M12 21V3" />
+                    </svg>
+                  </div>
+
+                  {/* WES Layer */}
+                  <div className="p-4 rounded-lg bg-violet-900/20 border border-violet-500/30">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="text-xs font-bold px-2 py-0.5 rounded bg-violet-600 text-white">LAYER 2</span>
+                      <h5 className="text-sm font-bold text-violet-300">WES — Warehouse Execution System</h5>
+                    </div>
+                    <p className="text-xs text-slate-300 mb-2">The <strong className="text-white">operational brain</strong> — orchestrates real-time workflows between manual and automated zones. Decides HOW and WHEN to execute.</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                      <div className="p-2 rounded bg-slate-900/50 text-slate-400 text-center">Task Orchestration</div>
+                      <div className="p-2 rounded bg-slate-900/50 text-slate-400 text-center">Real-Time Priority</div>
+                      <div className="p-2 rounded bg-slate-900/50 text-slate-400 text-center">Zone Balancing</div>
+                      <div className="p-2 rounded bg-slate-900/50 text-slate-400 text-center">Pick Sequencing</div>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2">Examples: Korber WES, Honeywell Intelligrated Momentum, Dematic iQ, Pyramid Director</p>
+                  </div>
+
+                  {/* Arrow */}
+                  <div className="flex justify-center">
+                    <svg className="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 13.5L12 21m0 0l-7.5-7.5M12 21V3" />
+                    </svg>
+                  </div>
+
+                  {/* WCS Layer */}
+                  <div className="p-4 rounded-lg bg-emerald-900/20 border border-emerald-500/30">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="text-xs font-bold px-2 py-0.5 rounded bg-emerald-600 text-white">LAYER 3</span>
+                      <h5 className="text-sm font-bold text-emerald-300">WCS — Warehouse Control System</h5>
+                    </div>
+                    <p className="text-xs text-slate-300 mb-2">The <strong className="text-white">equipment brain</strong> — directly controls PLCs, motors, scanners, and automation hardware. Executes physical movements.</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                      <div className="p-2 rounded bg-slate-900/50 text-slate-400 text-center">PLC Control</div>
+                      <div className="p-2 rounded bg-slate-900/50 text-slate-400 text-center">Conveyor Routing</div>
+                      <div className="p-2 rounded bg-slate-900/50 text-slate-400 text-center">Shuttle Commands</div>
+                      <div className="p-2 rounded bg-slate-900/50 text-slate-400 text-center">Scanner Integration</div>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2">Examples: GEBHARDT Galileo WCS, Siemens WinCC, Beckhoff TwinCAT, Rockwell FactoryTalk</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Key Platform Examples */}
+              <div className="rounded-lg border border-slate-700 overflow-hidden">
+                <div className="px-4 py-3 bg-slate-700/30 border-b border-slate-700">
+                  <h4 className="text-sm font-semibold text-white">Key WES / WCS Platforms in Intralogistics</h4>
+                </div>
+                <div className="p-4">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-slate-400 border-b border-slate-700">
+                        <th className="pb-2 font-medium">Platform</th>
+                        <th className="pb-2 font-medium">Vendor</th>
+                        <th className="pb-2 font-medium">Layer</th>
+                        <th className="pb-2 font-medium hidden sm:table-cell">Strength</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-slate-300">
+                      <tr className="border-t border-slate-700/50">
+                        <td className="py-2.5 font-medium text-white">Pyramid Director</td>
+                        <td className="py-2.5 text-xs text-slate-400">Pyramid (Korber)</td>
+                        <td className="py-2.5"><span className="px-2 py-0.5 rounded bg-violet-500/20 text-violet-300 text-xs">WES</span></td>
+                        <td className="py-2.5 text-xs text-slate-400 hidden sm:table-cell">Multi-vendor orchestration, real-time optimization</td>
+                      </tr>
+                      <tr className="border-t border-slate-700/50">
+                        <td className="py-2.5 font-medium text-white">Korber WES</td>
+                        <td className="py-2.5 text-xs text-slate-400">Korber Supply Chain</td>
+                        <td className="py-2.5"><span className="px-2 py-0.5 rounded bg-violet-500/20 text-violet-300 text-xs">WES</span></td>
+                        <td className="py-2.5 text-xs text-slate-400 hidden sm:table-cell">Unified warehouse execution across manual + automated</td>
+                      </tr>
+                      <tr className="border-t border-slate-700/50">
+                        <td className="py-2.5 font-medium text-white">Momentum</td>
+                        <td className="py-2.5 text-xs text-slate-400">Honeywell Intelligrated</td>
+                        <td className="py-2.5"><span className="px-2 py-0.5 rounded bg-violet-500/20 text-violet-300 text-xs">WES</span></td>
+                        <td className="py-2.5 text-xs text-slate-400 hidden sm:table-cell">Connected distribution, predictive analytics</td>
+                      </tr>
+                      <tr className="border-t border-slate-700/50">
+                        <td className="py-2.5 font-medium text-white">Dematic iQ</td>
+                        <td className="py-2.5 text-xs text-slate-400">Dematic (KION)</td>
+                        <td className="py-2.5"><span className="px-2 py-0.5 rounded bg-violet-500/20 text-violet-300 text-xs">WES/WCS</span></td>
+                        <td className="py-2.5 text-xs text-slate-400 hidden sm:table-cell">Integrated WES+WCS for shuttle and AS/RS systems</td>
+                      </tr>
+                      <tr className="border-t border-slate-700/50">
+                        <td className="py-2.5 font-medium text-white">Galileo WCS</td>
+                        <td className="py-2.5 text-xs text-slate-400">GEBHARDT</td>
+                        <td className="py-2.5"><span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-xs">WCS</span></td>
+                        <td className="py-2.5 text-xs text-slate-400 hidden sm:table-cell">Native control for GEBHARDT shuttle and conveyor systems</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Why Three Layers?</p>
+                  <p className="text-sm text-slate-300">Each layer operates at a different <strong className="text-white">time scale</strong>: WMS plans in minutes-to-hours (order waves), WES orchestrates in seconds (task priority), WCS executes in milliseconds (motor commands). Separating these concerns allows best-of-breed integration and independent scaling.</p>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Integration Challenge</p>
+                  <p className="text-sm text-slate-300">The biggest risk in DC automation is poor software integration between layers. <strong className="text-white">PINAXIS analyzes</strong> your operational profile to recommend which combination of WMS/WES/WCS platforms best fits your throughput, complexity, and existing IT landscape.</p>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-lg bg-pinaxis-900/20 border border-pinaxis-500/30">
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">PINAXIS System Architecture Readiness</p>
+                <p className="text-sm text-slate-300">PINAXIS evaluates your warehouse data to determine which <strong className="text-white">software stack tier</strong> your operation needs — from standalone WCS for simple automation, to full WMS+WES+WCS integration for complex multi-zone DCs. This assessment is part of the analysis pipeline and feeds into the product recommendation scoring.</p>
+              </div>
+            </div>
+          </StepCard>
+
+          <StepCard
+            number={10}
+            title="DC Observability & Monitoring"
+            isActive={activeStep0 === 10}
+            onClick={() => setActiveStep0(activeStep0 === 10 ? 0 : 10)}
+          >
+            <div className="ml-14 space-y-3">
+              <p className="text-sm text-slate-300">
+                Operational visibility is critical for automated DCs. <strong className="text-white">DC Observability</strong> bridges the gap between equipment telemetry (WCS), operational KPIs (WES/WMS), and business intelligence — giving stakeholders a unified view of warehouse health.
+              </p>
+
+              {/* Observability Layers */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="p-3 rounded-lg bg-emerald-900/20 border border-emerald-500/30">
+                  <p className="text-sm font-bold text-emerald-400">Equipment Health</p>
+                  <p className="text-xs text-slate-300 mt-1">Real-time status of shuttles, conveyors, lifts, and scanners. Motor temperatures, cycle counts, fault codes, and predictive maintenance alerts.</p>
+                  <p className="text-xs text-slate-500 mt-2">Source: WCS / PLC telemetry</p>
+                </div>
+                <div className="p-3 rounded-lg bg-violet-900/20 border border-violet-500/30">
+                  <p className="text-sm font-bold text-violet-400">Operational KPIs</p>
+                  <p className="text-xs text-slate-300 mt-1">Live CPH per station, order cycle times, zone throughput, pick accuracy rates, and queue depths at workstations.</p>
+                  <p className="text-xs text-slate-500 mt-2">Source: WES / WMS events</p>
+                </div>
+                <div className="p-3 rounded-lg bg-blue-900/20 border border-blue-500/30">
+                  <p className="text-sm font-bold text-blue-400">Business Intelligence</p>
+                  <p className="text-xs text-slate-300 mt-1">SLA compliance, order-to-ship lead times, labor utilization, cost-per-order trends, and capacity vs. demand forecasting.</p>
+                  <p className="text-xs text-slate-500 mt-2">Source: WMS / ERP aggregates</p>
+                </div>
+              </div>
+
+              {/* Key Metrics Table */}
+              <div className="rounded-lg border border-slate-700 overflow-hidden">
+                <div className="px-4 py-3 bg-slate-700/30 border-b border-slate-700">
+                  <h4 className="text-sm font-semibold text-white">Key Observability Metrics for Automated DCs</h4>
+                </div>
+                <div className="p-4">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-slate-400 border-b border-slate-700">
+                        <th className="pb-2 font-medium">Metric</th>
+                        <th className="pb-2 font-medium">Target</th>
+                        <th className="pb-2 font-medium hidden sm:table-cell">Alert Threshold</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-slate-300">
+                      <tr className="border-t border-slate-700/50">
+                        <td className="py-2.5 font-medium text-white">System Uptime</td>
+                        <td className="py-2.5"><span className="px-2 py-0.5 rounded bg-green-500/20 text-green-300 text-xs font-mono">&ge;99.5%</span></td>
+                        <td className="py-2.5 text-xs text-slate-400 hidden sm:table-cell">&lt;98% triggers maintenance review</td>
+                      </tr>
+                      <tr className="border-t border-slate-700/50">
+                        <td className="py-2.5 font-medium text-white">Shuttle Availability</td>
+                        <td className="py-2.5"><span className="px-2 py-0.5 rounded bg-green-500/20 text-green-300 text-xs font-mono">&ge;95%</span></td>
+                        <td className="py-2.5 text-xs text-slate-400 hidden sm:table-cell">&lt;90% impacts throughput capacity</td>
+                      </tr>
+                      <tr className="border-t border-slate-700/50">
+                        <td className="py-2.5 font-medium text-white">CPH (Cases/Hour)</td>
+                        <td className="py-2.5"><span className="px-2 py-0.5 rounded bg-pinaxis-500/20 text-pinaxis-300 text-xs font-mono">Per design</span></td>
+                        <td className="py-2.5 text-xs text-slate-400 hidden sm:table-cell">&lt;80% of design CPH = bottleneck</td>
+                      </tr>
+                      <tr className="border-t border-slate-700/50">
+                        <td className="py-2.5 font-medium text-white">Pick Accuracy</td>
+                        <td className="py-2.5"><span className="px-2 py-0.5 rounded bg-green-500/20 text-green-300 text-xs font-mono">&ge;99.9%</span></td>
+                        <td className="py-2.5 text-xs text-slate-400 hidden sm:table-cell">&lt;99.5% requires root cause analysis</td>
+                      </tr>
+                      <tr className="border-t border-slate-700/50">
+                        <td className="py-2.5 font-medium text-white">Order Cycle Time</td>
+                        <td className="py-2.5"><span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-xs font-mono">&le;SLA</span></td>
+                        <td className="py-2.5 text-xs text-slate-400 hidden sm:table-cell">&gt;120% of SLA = escalation</td>
+                      </tr>
+                      <tr className="border-t border-slate-700/50">
+                        <td className="py-2.5 font-medium text-white">Conveyor Utilization</td>
+                        <td className="py-2.5"><span className="px-2 py-0.5 rounded bg-green-500/20 text-green-300 text-xs font-mono">60-85%</span></td>
+                        <td className="py-2.5 text-xs text-slate-400 hidden sm:table-cell">&gt;90% = congestion risk</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Predictive Maintenance</p>
+                  <p className="text-sm text-slate-300">By analyzing equipment cycle counts, motor temperatures, and fault frequency over time, an observability platform can predict failures <strong className="text-white">before they cause unplanned downtime</strong>. This shifts maintenance from reactive to proactive — reducing costly production stops.</p>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Anomaly Detection</p>
+                  <p className="text-sm text-slate-300">Comparing real-time throughput against historical baselines enables automatic detection of <strong className="text-white">performance anomalies</strong> — a sudden CPH drop, unusual fault patterns, or unexpected queue buildup — triggering alerts before they cascade into SLA breaches.</p>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-lg bg-pinaxis-900/20 border border-pinaxis-500/30">
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">PINAXIS Observability</p>
+                <p className="text-sm text-slate-300">In production mode, PINAXIS can ingest live equipment telemetry and operational events via the Production API, providing a <strong className="text-white">real-time observability dashboard</strong> with system health gauges, throughput heatmaps, and anomaly alerts. The voice agent can also speak about current operational status on demand.</p>
+              </div>
+            </div>
+          </StepCard>
         </div>
       )}
 

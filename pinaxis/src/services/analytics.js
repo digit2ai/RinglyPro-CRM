@@ -40,6 +40,10 @@ async function runAll(models, projectId) {
   results.fit_analysis = await computeFitAnalysis(models, projectId);
   await storeResult(models, projectId, 'fit_analysis', results.fit_analysis);
 
+  // 9. System Architecture Readiness
+  results.system_architecture = computeSystemArchitecture(results);
+  await storeResult(models, projectId, 'system_architecture', results.system_architecture);
+
   return results;
 }
 
@@ -511,6 +515,110 @@ async function computeFitAnalysis(models, projectId) {
   results.overall_bin_capable_pct = largestBinFit?.fit_pct || 0;
 
   return results;
+}
+
+// ============================================================================
+// 9. SYSTEM ARCHITECTURE READINESS
+// Determines which DC software stack tier the warehouse needs
+// ============================================================================
+
+function computeSystemArchitecture(analysisResults) {
+  const overview = analysisResults.overview_kpis || {};
+  const orderStructure = analysisResults.order_structure || {};
+  const abc = analysisResults.abc_classification || {};
+  const fit = analysisResults.fit_analysis || {};
+  const throughputMonthly = analysisResults.throughput_monthly || {};
+
+  const skus = overview.skus || {};
+  const orders = overview.orders || {};
+  const dateRange = overview.date_range || {};
+
+  const dayCount = dateRange.from && dateRange.to
+    ? Math.max(1, (new Date(dateRange.to) - new Date(dateRange.from)) / (1000 * 60 * 60 * 24))
+    : 1;
+
+  const orderlinesPerDay = dayCount > 0 ? (orders.total_orderlines || 0) / dayCount : 0;
+  const totalSKUs = skus.total || 0;
+  const binCapablePct = fit.overall_bin_capable_pct || skus.bin_capable_pct || 0;
+  const multiLinePct = orderStructure.multi_line_pct || 0;
+  const gini = abc.gini || 0;
+
+  // Complexity score (0-100) determines which tier
+  let complexityScore = 0;
+
+  // Factor 1: Throughput volume (max 25 pts)
+  if (orderlinesPerDay >= 5000) complexityScore += 25;
+  else if (orderlinesPerDay >= 1000) complexityScore += 15 + ((orderlinesPerDay - 1000) / 4000) * 10;
+  else if (orderlinesPerDay >= 200) complexityScore += 5 + ((orderlinesPerDay - 200) / 800) * 10;
+  else complexityScore += (orderlinesPerDay / 200) * 5;
+
+  // Factor 2: SKU count / diversity (max 20 pts)
+  if (totalSKUs >= 10000) complexityScore += 20;
+  else if (totalSKUs >= 2000) complexityScore += 10 + ((totalSKUs - 2000) / 8000) * 10;
+  else if (totalSKUs >= 500) complexityScore += 5 + ((totalSKUs - 500) / 1500) * 5;
+  else complexityScore += (totalSKUs / 500) * 5;
+
+  // Factor 3: Order complexity (max 20 pts)
+  if (multiLinePct >= 60) complexityScore += 20;
+  else if (multiLinePct >= 30) complexityScore += 10 + ((multiLinePct - 30) / 30) * 10;
+  else complexityScore += (multiLinePct / 30) * 10;
+
+  // Factor 4: Automation readiness (max 20 pts)
+  if (binCapablePct >= 80) complexityScore += 20;
+  else if (binCapablePct >= 50) complexityScore += 10 + ((binCapablePct - 50) / 30) * 10;
+  else complexityScore += (binCapablePct / 50) * 10;
+
+  // Factor 5: SKU concentration / Gini (max 15 pts)
+  if (gini >= 0.7) complexityScore += 15;
+  else if (gini >= 0.4) complexityScore += 5 + ((gini - 0.4) / 0.3) * 10;
+  else complexityScore += (gini / 0.4) * 5;
+
+  complexityScore = Math.round(complexityScore * 10) / 10;
+
+  // Determine recommended tier
+  let recommended_tier, tier_label, tier_description;
+  const software_recommendations = [];
+
+  if (complexityScore >= 65) {
+    recommended_tier = 3;
+    tier_label = 'Full Stack (WMS + WES + WCS)';
+    tier_description = 'Your operation has high throughput, complex order profiles, and strong automation readiness. A full three-layer software stack with WMS, WES, and WCS is recommended for optimal orchestration.';
+    software_recommendations.push(
+      { layer: 'WMS', recommendation: 'SAP EWM or Manhattan Active WM', reason: 'Enterprise-grade inventory and order management for high-complexity operations' },
+      { layer: 'WES', recommendation: 'Korber WES or Pyramid Director', reason: 'Real-time task orchestration across multiple automated and manual zones' },
+      { layer: 'WCS', recommendation: 'GEBHARDT Galileo WCS', reason: 'Native integration with GEBHARDT shuttle and conveyor systems for direct equipment control' }
+    );
+  } else if (complexityScore >= 35) {
+    recommended_tier = 2;
+    tier_label = 'WES + WCS Integration';
+    tier_description = 'Your operation has moderate complexity with growing automation potential. A WES layer coordinating with WCS provides the right balance of orchestration and equipment control.';
+    software_recommendations.push(
+      { layer: 'WES/WCS', recommendation: 'Dematic iQ or Honeywell Momentum', reason: 'Combined WES+WCS platform for integrated execution and equipment control' },
+      { layer: 'WCS', recommendation: 'GEBHARDT Galileo WCS', reason: 'Direct shuttle and conveyor control with built-in diagnostics' }
+    );
+  } else {
+    recommended_tier = 1;
+    tier_label = 'Standalone WCS';
+    tier_description = 'Your operation has straightforward automation needs. A standalone WCS controlling the automated equipment, interfacing directly with your existing WMS, is sufficient.';
+    software_recommendations.push(
+      { layer: 'WCS', recommendation: 'GEBHARDT Galileo WCS', reason: 'Efficient standalone equipment control with WMS interface capability' }
+    );
+  }
+
+  return {
+    complexity_score: complexityScore,
+    recommended_tier,
+    tier_label,
+    tier_description,
+    software_recommendations,
+    scoring_breakdown: {
+      throughput_volume: { value: Math.round(orderlinesPerDay), label: 'Orderlines / Day', max_points: 25 },
+      sku_diversity: { value: totalSKUs, label: 'Total SKUs', max_points: 20 },
+      order_complexity: { value: Math.round(multiLinePct * 10) / 10, label: 'Multi-Line %', max_points: 20 },
+      automation_readiness: { value: Math.round(binCapablePct * 10) / 10, label: 'Bin-Capable %', max_points: 20 },
+      sku_concentration: { value: Math.round(gini * 1000) / 1000, label: 'Gini Coefficient', max_points: 15 }
+    }
+  };
 }
 
 module.exports = { runAll };

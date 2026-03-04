@@ -24,7 +24,8 @@ module.exports = (sequelize, DataTypes) => {
           'throughput_hourly',
           'abc_classification',
           'fit_analysis',
-          'benefit_projections'
+          'benefit_projections',
+          'system_architecture'
         ]]
       }
     },

@@ -124,6 +124,7 @@ export default function AnalysisPage() {
   const hourly = analysis?.throughput_hourly?.hours || []
   const abc = analysis?.abc_classification || {}
   const fitAnalysis = analysis?.fit_analysis?.bins || []
+  const sysArch = analysis?.system_architecture || null
 
   return (
     <div className="animate-fade-in">
@@ -251,6 +252,93 @@ export default function AnalysisPage() {
           <FitAnalysisTable data={fitAnalysis} />
         </div>
       </div>
+
+      {/* System Architecture Readiness — only show if analysis has been computed */}
+      {sysArch && (
+        <div className="mt-8 card">
+          <h3 className="card-header flex items-center gap-2 mb-4">
+            <svg className="w-5 h-5 text-pinaxis-500" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 7.125C2.25 6.504 2.754 6 3.375 6h6c.621 0 1.125.504 1.125 1.125v3.75c0 .621-.504 1.125-1.125 1.125h-6a1.125 1.125 0 01-1.125-1.125v-3.75zM14.25 8.625c0-.621.504-1.125 1.125-1.125h5.25c.621 0 1.125.504 1.125 1.125v8.25c0 .621-.504 1.125-1.125 1.125h-5.25a1.125 1.125 0 01-1.125-1.125v-8.25zM3.75 16.125c0-.621.504-1.125 1.125-1.125h5.25c.621 0 1.125.504 1.125 1.125v2.25c0 .621-.504 1.125-1.125 1.125h-5.25a1.125 1.125 0 01-1.125-1.125v-2.25z" />
+            </svg>
+            System Architecture Readiness
+          </h3>
+
+          <div className="flex flex-col sm:flex-row items-start gap-6">
+            {/* Score + Tier */}
+            <div className="flex-shrink-0 text-center">
+              <div className="relative w-28 h-28 mx-auto">
+                <svg className="w-28 h-28 -rotate-90" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="42" fill="none" stroke="#334155" strokeWidth="8" />
+                  <circle cx="50" cy="50" r="42" fill="none"
+                    stroke={sysArch.complexity_score >= 65 ? '#8b5cf6' : sysArch.complexity_score >= 35 ? '#f59e0b' : '#22c55e'}
+                    strokeWidth="8" strokeLinecap="round"
+                    strokeDasharray={`${(sysArch.complexity_score / 100) * 264} 264`}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-2xl font-bold text-white">{sysArch.complexity_score}</span>
+                  <span className="text-xs text-slate-400">/ 100</span>
+                </div>
+              </div>
+              <div className="mt-3">
+                <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
+                  sysArch.recommended_tier === 3 ? 'bg-violet-500/20 text-violet-300' :
+                  sysArch.recommended_tier === 2 ? 'bg-amber-500/20 text-amber-300' :
+                  'bg-green-500/20 text-green-300'
+                }`}>
+                  Tier {sysArch.recommended_tier}
+                </span>
+              </div>
+            </div>
+
+            {/* Details */}
+            <div className="flex-1 min-w-0">
+              <h4 className="text-lg font-semibold text-white mb-1">{sysArch.tier_label}</h4>
+              <p className="text-sm text-slate-300 mb-4">{sysArch.tier_description}</p>
+
+              {/* Scoring Breakdown */}
+              {sysArch.scoring_breakdown && (
+                <div className="space-y-2 mb-4">
+                  {Object.entries(sysArch.scoring_breakdown).map(([key, item]) => (
+                    <div key={key} className="flex items-center gap-3 text-sm">
+                      <span className="w-32 text-slate-400 text-xs flex-shrink-0">{item.label}</span>
+                      <div className="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-pinaxis-500 rounded-full transition-all"
+                          style={{ width: `${Math.min(100, (typeof item.value === 'number' ? item.value : 0) / (item.max_points > 100 ? item.max_points : 100) * 100)}%` }}
+                        />
+                      </div>
+                      <span className="text-xs text-slate-300 w-16 text-right flex-shrink-0 font-mono">
+                        {typeof item.value === 'number' ? item.value.toLocaleString() : item.value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Software Recommendations */}
+              {sysArch.software_recommendations && sysArch.software_recommendations.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs text-slate-500 uppercase tracking-wider">Recommended Software Stack</p>
+                  {sysArch.software_recommendations.map((rec, i) => (
+                    <div key={i} className="flex items-start gap-2 p-2 rounded bg-slate-900/50">
+                      <span className={`text-xs font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${
+                        rec.layer === 'WMS' ? 'bg-blue-500/20 text-blue-300' :
+                        rec.layer === 'WES' || rec.layer === 'WES/WCS' ? 'bg-violet-500/20 text-violet-300' :
+                        'bg-emerald-500/20 text-emerald-300'
+                      }`}>{rec.layer}</span>
+                      <div>
+                        <p className="text-sm font-medium text-white">{rec.recommendation}</p>
+                        <p className="text-xs text-slate-400">{rec.reason}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

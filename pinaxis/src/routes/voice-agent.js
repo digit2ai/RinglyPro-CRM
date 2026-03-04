@@ -312,6 +312,121 @@ router.get('/:projectId/abc', async (req, res) => {
   }
 });
 
+// GET /api/v1/voice/:projectId/system-architecture — System architecture readiness
+router.get('/:projectId/system-architecture', async (req, res) => {
+  try {
+    const project = await req.models.PinaxisProject.findByPk(req.params.projectId);
+    if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+
+    const result = await req.models.PinaxisAnalysisResult.findOne({
+      where: { project_id: project.id, analysis_type: 'system_architecture' }
+    });
+
+    res.json({
+      success: true,
+      data: {
+        company_name: project.company_name,
+        system_architecture: result ? result.result_data : null
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// GET /api/v1/voice/:projectId/operational-health — Live operational health for voice agent
+router.get('/:projectId/operational-health', async (req, res) => {
+  try {
+    const project = await req.models.PinaxisProject.findByPk(req.params.projectId);
+    if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+
+    const seq = req.models.sequelize;
+    const projectId = project.id;
+
+    // Check if telemetry table exists
+    let hasTelemetry = false;
+    try {
+      const [tables] = await seq.query(
+        "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'pinaxis_telemetry_events'"
+      );
+      hasTelemetry = tables.length > 0;
+    } catch (e) { /* ignore */ }
+
+    if (!hasTelemetry) {
+      return res.json({
+        success: true,
+        data: {
+          company_name: project.company_name,
+          status: 'no_telemetry',
+          spoken_summary: `No live telemetry data is available yet for ${project.company_name}. The observability system is ready to receive equipment telemetry via the Production API. Once connected, I can report on real-time equipment health, throughput metrics, and active faults.`
+        }
+      });
+    }
+
+    // Get recent event counts
+    const [severityCounts] = await seq.query(`
+      SELECT severity, COUNT(*) as count
+      FROM pinaxis_telemetry_events
+      WHERE project_id = :projectId AND recorded_at >= NOW() - INTERVAL '1 hour'
+      GROUP BY severity
+    `, { replacements: { projectId } });
+
+    const criticalCount = parseInt(severityCounts.find(s => s.severity === 'critical')?.count || 0);
+    const warningCount = parseInt(severityCounts.find(s => s.severity === 'warning')?.count || 0);
+    const infoCount = parseInt(severityCounts.find(s => s.severity === 'info')?.count || 0);
+
+    let overall_status = 'healthy';
+    if (criticalCount > 0) overall_status = 'critical';
+    else if (warningCount > 3) overall_status = 'degraded';
+    else if (warningCount > 0) overall_status = 'warning';
+
+    // Active faults
+    const [faults] = await seq.query(`
+      SELECT source, event_data, recorded_at
+      FROM pinaxis_telemetry_events
+      WHERE project_id = :projectId AND event_type = 'fault' AND recorded_at >= NOW() - INTERVAL '24 hours'
+      ORDER BY recorded_at DESC
+      LIMIT 5
+    `, { replacements: { projectId } });
+
+    // Build spoken summary
+    const parts = [];
+    parts.push(`Operational health report for ${project.company_name}.`);
+
+    if (overall_status === 'healthy') {
+      parts.push('All systems are operating normally. No critical alerts in the last hour.');
+    } else if (overall_status === 'critical') {
+      parts.push(`Warning: there are ${criticalCount} critical alerts in the last hour requiring immediate attention.`);
+    } else if (overall_status === 'degraded') {
+      parts.push(`The system is in a degraded state with ${warningCount} warnings in the last hour.`);
+    } else {
+      parts.push(`There are ${warningCount} minor warnings in the last hour but overall operation is stable.`);
+    }
+
+    parts.push(`In the last hour: ${infoCount} info events, ${warningCount} warnings, ${criticalCount} critical alerts.`);
+
+    if (faults.length > 0) {
+      parts.push(`There are ${faults.length} equipment faults in the last 24 hours.`);
+      for (const f of faults.slice(0, 3)) {
+        parts.push(`${f.source}: ${f.event_data?.message || f.event_data?.fault_code || 'fault reported'}.`);
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        company_name: project.company_name,
+        overall_status,
+        last_hour: { info: infoCount, warning: warningCount, critical: criticalCount },
+        active_faults: faults.length,
+        spoken_summary: parts.join(' ')
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // GET /api/v1/voice/projects/list — List all projects (for agent to discover)
 router.get('/projects/list', async (req, res) => {
   try {
