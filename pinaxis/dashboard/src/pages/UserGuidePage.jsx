@@ -77,7 +77,8 @@ function StepCard({ number, title, children, isActive, onClick }) {
 
 export default function UserGuidePage() {
   const navigate = useNavigate()
-  const [activeScenario, setActiveScenario] = useState(1)
+  const [activeScenario, setActiveScenario] = useState(0)
+  const [activeStep0, setActiveStep0] = useState(1)
   const [activeStep1, setActiveStep1] = useState(1)
   const [activeStep2, setActiveStep2] = useState(1)
 
@@ -92,7 +93,31 @@ export default function UserGuidePage() {
       </div>
 
       {/* Scenario Selector */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <button
+          onClick={() => setActiveScenario(0)}
+          className={`p-6 rounded-lg border-2 text-left transition-all ${
+            activeScenario === 0
+              ? 'border-pinaxis-500 bg-pinaxis-600/10'
+              : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
+          }`}
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+              activeScenario === 0 ? 'bg-pinaxis-600 text-white' : 'bg-slate-700 text-slate-400'
+            }`}>
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
+              </svg>
+            </div>
+            <span className={`text-xs font-medium px-2 py-0.5 rounded ${
+              activeScenario === 0 ? 'bg-pinaxis-600/30 text-pinaxis-300' : 'bg-slate-700 text-slate-400'
+            }`}>Overview</span>
+          </div>
+          <h3 className="text-lg font-semibold text-white mb-1">How a Warehouse Works</h3>
+          <p className="text-sm text-slate-400">Learn the fundamentals of warehouse logistics and how PINAXIS analyzes operations.</p>
+        </button>
+
         <button
           onClick={() => setActiveScenario(1)}
           className={`p-6 rounded-lg border-2 text-left transition-all ${
@@ -141,6 +166,260 @@ export default function UserGuidePage() {
           <p className="text-sm text-slate-400">Upload your own data files (CSV or XLSX) through the dashboard upload flow.</p>
         </button>
       </div>
+
+      {/* ============================================================ */}
+      {/* SCENARIO 0: How a Warehouse / Distribution Center Works */}
+      {/* ============================================================ */}
+      {activeScenario === 0 && (
+        <div className="space-y-6">
+          {/* Intro */}
+          <div className="card bg-gradient-to-r from-pinaxis-900/30 to-slate-800 border-pinaxis-700/30">
+            <div className="flex items-start gap-3">
+              <svg className="w-6 h-6 text-pinaxis-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
+              </svg>
+              <div>
+                <h3 className="text-white font-semibold mb-1">How a Tier-1 Distribution Center Works</h3>
+                <p className="text-sm text-slate-300">
+                  A modern distribution center (DC) is the operational heart of any supply chain. It receives goods from suppliers, stores them efficiently, and fulfills customer orders as fast as possible. Understanding these core processes is essential to evaluating where automation delivers the highest ROI.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Visual Flow Diagram */}
+          <div className="card">
+            <h3 className="text-lg font-semibold text-white mb-4">End-to-End Material Flow</h3>
+            <div className="flex flex-wrap items-center justify-center gap-2 text-sm">
+              {[
+                { label: 'Goods Receiving', color: 'bg-blue-600' },
+                { label: 'Quality Check', color: 'bg-blue-500' },
+                { label: 'Put-Away', color: 'bg-indigo-600' },
+                { label: 'Storage', color: 'bg-violet-600' },
+                { label: 'Order Release', color: 'bg-purple-600' },
+                { label: 'Picking', color: 'bg-fuchsia-600' },
+                { label: 'Packing', color: 'bg-pink-600' },
+                { label: 'Shipping', color: 'bg-rose-600' },
+              ].map((step, i) => (
+                <div key={step.label} className="flex items-center gap-2">
+                  <div className={`px-3 py-2 rounded-lg ${step.color} text-white font-medium text-xs sm:text-sm`}>
+                    {step.label}
+                  </div>
+                  {i < 7 && (
+                    <svg className="w-4 h-4 text-slate-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Process Details */}
+          <StepCard
+            number={1}
+            title="Goods Receiving (Inbound)"
+            isActive={activeStep0 === 1}
+            onClick={() => setActiveStep0(activeStep0 === 1 ? 0 : 1)}
+          >
+            <div className="ml-14 space-y-3">
+              <p className="text-sm text-slate-300">
+                Trucks arrive at the receiving dock carrying pallets, cartons, or containers from suppliers. Each delivery is checked against a <strong className="text-white">Purchase Order (PO)</strong> to verify quantities, SKU codes, and condition.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Key Data Captured</p>
+                  <ul className="text-sm text-slate-300 space-y-1">
+                    <li>- Receipt ID and date</li>
+                    <li>- SKU and quantity received</li>
+                    <li>- Supplier / vendor name</li>
+                    <li>- Lot / batch numbers</li>
+                  </ul>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">PINAXIS Mapping</p>
+                  <p className="text-sm text-slate-300">This data maps to the <strong className="text-pinaxis-300">Goods In</strong> file. PINAXIS uses it to analyze inbound throughput patterns and supplier delivery frequency.</p>
+                </div>
+              </div>
+            </div>
+          </StepCard>
+
+          <StepCard
+            number={2}
+            title="Storage & Inventory Management"
+            isActive={activeStep0 === 2}
+            onClick={() => setActiveStep0(activeStep0 === 2 ? 0 : 2)}
+          >
+            <div className="ml-14 space-y-3">
+              <p className="text-sm text-slate-300">
+                After receiving, items are <strong className="text-white">put away</strong> into designated storage locations. A modern DC uses multiple storage zones optimized for different item types:
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                  <p className="text-sm font-medium text-white">Pallet Racking</p>
+                  <p className="text-xs text-slate-400 mt-1">Large / heavy items stored on pallets in floor-to-ceiling racks. Accessed by forklifts or automated storage/retrieval systems (AS/RS).</p>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                  <p className="text-sm font-medium text-white">Bin / Tote Storage</p>
+                  <p className="text-xs text-slate-400 mt-1">Small to medium items in standardized bins (600x400mm). Ideal for shuttle systems and goods-to-person automation.</p>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                  <p className="text-sm font-medium text-white">Flow Racks / Shelving</p>
+                  <p className="text-xs text-slate-400 mt-1">Fast-moving items placed at pick-face level for quick manual or automated access. FIFO rotation.</p>
+                </div>
+              </div>
+              <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">PINAXIS Mapping</p>
+                <p className="text-sm text-slate-300">The <strong className="text-pinaxis-300">Item Master</strong> file provides SKU dimensions and weights to determine bin-capability. The <strong className="text-pinaxis-300">Inventory</strong> snapshot shows current stock levels and storage locations. PINAXIS calculates what percentage of items fit in standard bins — a key metric for automation feasibility.</p>
+              </div>
+            </div>
+          </StepCard>
+
+          <StepCard
+            number={3}
+            title="Order Fulfillment (Picking & Packing)"
+            isActive={activeStep0 === 3}
+            onClick={() => setActiveStep0(activeStep0 === 3 ? 0 : 3)}
+          >
+            <div className="ml-14 space-y-3">
+              <p className="text-sm text-slate-300">
+                When a customer order arrives, the Warehouse Management System (WMS) releases it for <strong className="text-white">picking</strong> — retrieving the correct items from storage locations. This is typically the most labor-intensive and costly process in a DC.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                  <p className="text-sm font-medium text-white">Single-Line Orders</p>
+                  <p className="text-xs text-slate-400 mt-1">Orders with just 1 product. Common in e-commerce. Can be fulfilled with simple pick-and-pack processes or directly from goods-to-person stations.</p>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                  <p className="text-sm font-medium text-white">Multi-Line Orders</p>
+                  <p className="text-xs text-slate-400 mt-1">Orders with 2+ different products that must be consolidated. Requires batch picking, zone picking, or multi-shuttle sequencing to minimize travel time.</p>
+                </div>
+              </div>
+              <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">PINAXIS Mapping</p>
+                <p className="text-sm text-slate-300">The <strong className="text-pinaxis-300">Goods Out</strong> file is the most critical dataset. PINAXIS analyzes order structure (single vs multi-line split), throughput patterns (monthly, weekday, hourly peaks), and <strong className="text-white">ABC classification</strong> to identify which items drive 80% of activity (A-items) vs slow movers (C-items).</p>
+              </div>
+            </div>
+          </StepCard>
+
+          <StepCard
+            number={4}
+            title="Shipping (Outbound)"
+            isActive={activeStep0 === 4}
+            onClick={() => setActiveStep0(activeStep0 === 4 ? 0 : 4)}
+          >
+            <div className="ml-14 space-y-3">
+              <p className="text-sm text-slate-300">
+                After picking and packing, orders are staged at shipping docks, labeled with carrier information, and loaded onto trucks for delivery. The outbound process must be synchronized with carrier pickup windows and customer SLAs.
+              </p>
+              <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Why Throughput Patterns Matter</p>
+                <p className="text-sm text-slate-300">Peak shipping days (often Monday-Wednesday) create bottlenecks. PINAXIS identifies weekday and seasonal patterns so automation systems can be sized for actual peak demand, not just averages.</p>
+              </div>
+            </div>
+          </StepCard>
+
+          <StepCard
+            number={5}
+            title="ABC / Pareto Analysis"
+            isActive={activeStep0 === 5}
+            onClick={() => setActiveStep0(activeStep0 === 5 ? 0 : 5)}
+          >
+            <div className="ml-14 space-y-3">
+              <p className="text-sm text-slate-300">
+                The <strong className="text-white">Pareto Principle</strong> (80/20 rule) applies to almost every warehouse: a small fraction of SKUs drives the majority of order activity.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="p-3 rounded-lg bg-green-900/20 border border-green-500/30">
+                  <p className="text-sm font-bold text-green-400">A Items</p>
+                  <p className="text-xs text-slate-300 mt-1">Top ~20% of SKUs generating ~80% of orders. These are the fast movers — prime candidates for automated goods-to-person systems.</p>
+                </div>
+                <div className="p-3 rounded-lg bg-amber-900/20 border border-amber-500/30">
+                  <p className="text-sm font-bold text-amber-400">B Items</p>
+                  <p className="text-xs text-slate-300 mt-1">Middle ~30% of SKUs generating ~15% of orders. Medium movers suited for semi-automated storage with shuttle or mini-load systems.</p>
+                </div>
+                <div className="p-3 rounded-lg bg-red-900/20 border border-red-500/30">
+                  <p className="text-sm font-bold text-red-400">C Items</p>
+                  <p className="text-xs text-slate-300 mt-1">Bottom ~50% of SKUs generating ~5% of orders. Slow movers often stored in static racking with manual picking.</p>
+                </div>
+              </div>
+              <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">PINAXIS Insight</p>
+                <p className="text-sm text-slate-300">PINAXIS computes ABC classification by both <strong className="text-white">order frequency</strong> (how often an item is ordered) and <strong className="text-white">shipping volume</strong> (total units shipped). This dual classification reveals which items benefit most from automation investment.</p>
+              </div>
+            </div>
+          </StepCard>
+
+          <StepCard
+            number={6}
+            title="Automation & GEBHARDT Solutions"
+            isActive={activeStep0 === 6}
+            onClick={() => setActiveStep0(activeStep0 === 6 ? 0 : 6)}
+          >
+            <div className="ml-14 space-y-3">
+              <p className="text-sm text-slate-300">
+                GEBHARDT manufactures intralogistics automation systems that replace or augment manual warehouse processes. The right solution depends on item profiles, order structure, and throughput requirements.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                  <p className="text-sm font-medium text-white">StoreBiter One-Level Shuttle</p>
+                  <p className="text-xs text-slate-400 mt-1">High-speed bin storage and retrieval. Each shuttle operates on a single level for maximum throughput. Ideal for A-items and high-velocity picking.</p>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                  <p className="text-sm font-medium text-white">StoreBiter Multi-Level Shuttle</p>
+                  <p className="text-xs text-slate-400 mt-1">Shuttles travel across multiple levels via lifts. Balances throughput and storage density. Suited for mixed A/B item profiles.</p>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                  <p className="text-sm font-medium text-white">Mini-Load AS/RS</p>
+                  <p className="text-xs text-slate-400 mt-1">Automated crane systems for bin and tray handling. High storage density in narrow aisles. Best for B/C items needing compact storage.</p>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                  <p className="text-sm font-medium text-white">Conveyor & Sortation</p>
+                  <p className="text-xs text-slate-400 mt-1">Connects all systems together. Belt conveyors, roller conveyors, and sorters move bins between storage, picking stations, and packing areas.</p>
+                </div>
+              </div>
+              <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">PINAXIS Product Matching</p>
+                <p className="text-sm text-slate-300">PINAXIS analyzes your warehouse data and scores each GEBHARDT product with a <strong className="text-white">fit score (0-100)</strong> based on your item dimensions, order structure, throughput requirements, and ABC distribution. This data-driven approach replaces subjective guesswork with quantifiable recommendations.</p>
+              </div>
+            </div>
+          </StepCard>
+
+          <StepCard
+            number={7}
+            title="ROI & Business Case"
+            isActive={activeStep0 === 7}
+            onClick={() => setActiveStep0(activeStep0 === 7 ? 0 : 7)}
+          >
+            <div className="ml-14 space-y-3">
+              <p className="text-sm text-slate-300">
+                Automation investment decisions require a clear financial justification. PINAXIS projects ROI across multiple benefit categories:
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                  <p className="text-sm font-medium text-white">Labor Savings</p>
+                  <p className="text-xs text-slate-400 mt-1">Reduced manual picking, packing, and put-away labor through goods-to-person automation.</p>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                  <p className="text-sm font-medium text-white">Space Optimization</p>
+                  <p className="text-xs text-slate-400 mt-1">High-density automated storage uses 40-60% less floor space than conventional racking.</p>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                  <p className="text-sm font-medium text-white">Error Reduction</p>
+                  <p className="text-xs text-slate-400 mt-1">Automated systems achieve 99.9%+ pick accuracy, reducing costly returns and re-shipments.</p>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                  <p className="text-sm font-medium text-white">Throughput Increase</p>
+                  <p className="text-xs text-slate-400 mt-1">Shuttle systems can achieve 300-1000+ picks per hour vs 60-120 for manual picking.</p>
+                </div>
+              </div>
+              <div className="p-3 rounded-lg bg-pinaxis-900/20 border border-pinaxis-500/30">
+                <p className="text-sm text-slate-300">PINAXIS calculates <strong className="text-white">total annual savings</strong>, <strong className="text-white">payback period</strong>, and <strong className="text-white">5-year ROI</strong> based on your actual operational data — giving you the numbers to build a boardroom-ready business case.</p>
+              </div>
+            </div>
+          </StepCard>
+        </div>
+      )}
 
       {/* ============================================================ */}
       {/* SCENARIO 1: Synthetic Demo */}
