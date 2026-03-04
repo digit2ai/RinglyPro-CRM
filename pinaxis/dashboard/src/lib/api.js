@@ -158,3 +158,36 @@ export async function computeBenefits(projectId) {
 export async function getBenefits(projectId) {
   return request(`/benefits/${projectId}`)
 }
+
+// ============================================================================
+// API KEY MANAGEMENT (Production API)
+// ============================================================================
+
+/**
+ * Generate a new API key for a project
+ * Backend: POST /projects/:projectId/api-key
+ */
+export async function generateApiKey(projectId, label) {
+  return request(`/projects/${projectId}/api-key`, {
+    method: 'POST',
+    body: JSON.stringify({ label })
+  })
+}
+
+/**
+ * Get API key status for a project (masked)
+ * Backend: GET /projects/:projectId/api-key
+ */
+export async function getApiKeyStatus(projectId) {
+  return request(`/projects/${projectId}/api-key`)
+}
+
+/**
+ * Revoke active API key for a project
+ * Backend: DELETE /projects/:projectId/api-key
+ */
+export async function revokeApiKey(projectId) {
+  return request(`/projects/${projectId}/api-key`, {
+    method: 'DELETE'
+  })
+}

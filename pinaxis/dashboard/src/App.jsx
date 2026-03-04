@@ -5,6 +5,7 @@ import AnalysisPage from './pages/AnalysisPage'
 import ProductsPage from './pages/ProductsPage'
 import BenefitsPage from './pages/BenefitsPage'
 import ReportPage from './pages/ReportPage'
+import ApiIntegrationPage from './pages/ApiIntegrationPage'
 import StepIndicator from './components/StepIndicator'
 
 const steps = [
@@ -13,6 +14,7 @@ const steps = [
   { path: '/products', label: 'Products', icon: BoxIcon },
   { path: '/benefits', label: 'ROI Projection', icon: TrendingUpIcon },
   { path: '/report', label: 'Report', icon: FileIcon },
+  { path: '/api-integration', label: 'API Integration', icon: PlugIcon },
   { path: '/proposals/PINAXIS-System-Architecture-Document.html', label: 'MCP Architecture', icon: ArchitectureIcon, external: true }
 ]
 
@@ -56,6 +58,14 @@ function TrendingUpIcon({ className }) {
   )
 }
 
+function PlugIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+    </svg>
+  )
+}
+
 function ArchitectureIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -86,7 +96,7 @@ export default function App({ onLogout, userEmail }) {
 
   // Extract projectId from current URL for sidebar navigation
   const getProjectId = () => {
-    const match = location.pathname.match(/\/(analysis|products|benefits|report)\/(\d+)/)
+    const match = location.pathname.match(/\/(analysis|products|benefits|report|api-integration)\/(\d+)/)
     return match ? match[2] : null
   }
 
@@ -95,6 +105,7 @@ export default function App({ onLogout, userEmail }) {
     if (location.pathname.startsWith('/products')) return 2
     if (location.pathname.startsWith('/benefits')) return 3
     if (location.pathname.startsWith('/report')) return 4
+    if (location.pathname.startsWith('/api-integration')) return 5
     return 0
   }
 
@@ -234,6 +245,7 @@ export default function App({ onLogout, userEmail }) {
             <Route path="/products/:projectId" element={<ProductsPage />} />
             <Route path="/benefits/:projectId" element={<BenefitsPage />} />
             <Route path="/report/:projectId" element={<ReportPage />} />
+            <Route path="/api-integration/:projectId" element={<ApiIntegrationPage />} />
           </Routes>
         </div>
       </main>

@@ -66,6 +66,17 @@ models.sequelize.sync({ alter: false }).then(async () => {
   } catch (e) {
     console.log('⚠️ PINAXIS table check:', e.message);
   }
+
+  // Unique indexes for production API upsert support
+  try {
+    await models.sequelize.query(`CREATE UNIQUE INDEX IF NOT EXISTS pinaxis_item_master_project_sku_uq ON pinaxis_item_master (project_id, sku)`);
+    await models.sequelize.query(`CREATE UNIQUE INDEX IF NOT EXISTS pinaxis_inventory_project_sku_date_uq ON pinaxis_inventory_data (project_id, sku, COALESCE(snapshot_date, '1970-01-01'))`);
+    await models.sequelize.query(`CREATE UNIQUE INDEX IF NOT EXISTS pinaxis_goods_in_project_receipt_sku_uq ON pinaxis_goods_in_data (project_id, COALESCE(receipt_id, ''), sku, receipt_date)`);
+    await models.sequelize.query(`CREATE UNIQUE INDEX IF NOT EXISTS pinaxis_goods_out_project_order_sku_uq ON pinaxis_goods_out_data (project_id, order_id, sku, ship_date)`);
+    console.log('📊 PINAXIS unique indexes verified for production API');
+  } catch (e) {
+    console.log('⚠️ PINAXIS unique index migration:', e.message);
+  }
 }).catch(err => {
   console.log('⚠️ PINAXIS database sync warning:', err.message);
 });
@@ -92,6 +103,7 @@ try {
   const reportRoutes = require('./routes/reports');
   const demoRoutes = require('./routes/demo');
   const benefitRoutes = require('./routes/benefits');
+  const ingestRoutes = require('./routes/ingest');
 
   // Health check
   app.use(`${BASE_PATH}/health`, healthRoutes);
@@ -104,6 +116,7 @@ try {
   app.use(`${BASE_PATH}/api/v1/reports`, reportRoutes);
   app.use(`${BASE_PATH}/api/v1/demo`, demoRoutes);
   app.use(`${BASE_PATH}/api/v1/benefits`, benefitRoutes);
+  app.use(`${BASE_PATH}/api/v1/ingest`, ingestRoutes);
 
   routesLoaded = true;
   console.log('✅ PINAXIS routes loaded successfully');
@@ -115,6 +128,7 @@ try {
   console.log('   - /api/v1/products');
   console.log('   - /api/v1/reports');
   console.log('   - /api/v1/demo');
+  console.log('   - /api/v1/ingest (Production API - auth required)');
 } catch (error) {
   console.log('⚠️ Some PINAXIS routes failed to load:', error.message);
   console.log('   Error stack:', error.stack);

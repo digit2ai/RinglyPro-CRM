@@ -3,6 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 
 // Generate project code
 function generateProjectCode() {
@@ -100,6 +101,99 @@ router.patch('/:id', async (req, res) => {
     res.json({ success: true, data: project });
   } catch (error) {
     console.error('PINAXIS update project error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ============================================================================
+// API KEY MANAGEMENT
+// ============================================================================
+
+// POST /api/v1/projects/:projectId/api-key — Generate a new API key
+router.post('/:projectId/api-key', async (req, res) => {
+  try {
+    const project = await req.models.PinaxisProject.findByPk(req.params.projectId);
+    if (!project) {
+      return res.status(404).json({ success: false, error: 'Project not found' });
+    }
+
+    // Check for existing active key
+    const existingKey = await req.models.PinaxisApiKey.findOne({
+      where: { project_id: project.id, is_active: true }
+    });
+    if (existingKey) {
+      return res.status(409).json({
+        success: false,
+        error: 'Project already has an active API key. Revoke the existing key first.',
+        key_prefix: existingKey.key_prefix
+      });
+    }
+
+    // Generate key: pnx_ + 32 hex chars
+    const rawKey = `pnx_${crypto.randomBytes(16).toString('hex')}`;
+    const prefix = rawKey.substring(0, 12);
+    const hash = await bcrypt.hash(rawKey, 10);
+
+    const label = req.body.label || 'Production API Key';
+    const expires_at = req.body.expires_at || null;
+
+    const apiKeyRecord = await req.models.PinaxisApiKey.create({
+      project_id: project.id,
+      key_prefix: prefix,
+      key_hash: hash,
+      label,
+      is_active: true,
+      expires_at
+    });
+
+    // Raw key returned ONCE — cannot be retrieved again
+    res.status(201).json({
+      success: true,
+      data: {
+        id: apiKeyRecord.id,
+        key: rawKey,
+        prefix,
+        label,
+        created_at: apiKeyRecord.created_at,
+        expires_at,
+        warning: 'Save this key now. It cannot be retrieved again.'
+      }
+    });
+  } catch (error) {
+    console.error('PINAXIS API key generate error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// GET /api/v1/projects/:projectId/api-key — Check key status (masked)
+router.get('/:projectId/api-key', async (req, res) => {
+  try {
+    const key = await req.models.PinaxisApiKey.findOne({
+      where: { project_id: req.params.projectId, is_active: true },
+      attributes: ['id', 'key_prefix', 'label', 'is_active', 'last_used_at', 'request_count', 'created_at', 'expires_at']
+    });
+
+    res.json({
+      success: true,
+      data: key ? { has_key: true, ...key.toJSON() } : { has_key: false }
+    });
+  } catch (error) {
+    console.error('PINAXIS API key status error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// DELETE /api/v1/projects/:projectId/api-key — Revoke active key
+router.delete('/:projectId/api-key', async (req, res) => {
+  try {
+    const updated = await req.models.PinaxisApiKey.update(
+      { is_active: false },
+      { where: { project_id: req.params.projectId, is_active: true } }
+    );
+
+    res.json({ success: true, data: { revoked: updated[0] } });
+  } catch (error) {
+    console.error('PINAXIS API key revoke error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
