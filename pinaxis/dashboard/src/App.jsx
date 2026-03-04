@@ -198,7 +198,7 @@ export default function App({ onLogout, userEmail }) {
             </div>
           )}
           <div className="text-xs text-slate-500 text-center">
-            <p>Powered by GEBHARDT</p>
+            <p>Powered by RinglyPro</p>
             <p className="mt-1">PINAXIS Analytics v1.0</p>
           </div>
         </div>
