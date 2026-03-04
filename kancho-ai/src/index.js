@@ -7523,51 +7523,72 @@ app.get('*', (req, res) => {
       const urlParams = new URLSearchParams(window.location.search);
       const sessionId = urlParams.get('session_id');
       if (!sessionId) return false;
+
+      // Show provisioning UI
       hideAllSections();
       document.getElementById('signupSuccessSection').classList.remove('hidden');
       window.history.replaceState({}, document.title, window.location.pathname);
+
       const steps = [
-        { key: 'starting', label: 'Processing payment...' },
-        { key: 'creating_user', label: 'Creating your account...' },
+        { key: 'starting', label: 'Verifying payment...' },
+        { key: 'creating_user', label: 'Activating your account...' },
         { key: 'provisioning_twilio', label: 'Setting up your AI phone number...' },
         { key: 'creating_client', label: 'Configuring your business profile...' },
         { key: 'creating_school', label: 'Building your school dashboard...' },
         { key: 'creating_voice_agent', label: 'Training your AI voice agent...' },
-        { key: 'updating_stripe', label: 'Finalizing subscription...' },
         { key: 'done', label: 'All set!' }
       ];
-      renderProvisionSteps(steps, null);
-      let attempts = 0;
-      const maxAttempts = 90;
-      const pollInterval = setInterval(async () => {
-        attempts++;
-        try {
-          const res = await fetch(API_BASE + '/bridge/checkout/status/' + sessionId);
-          const result = await res.json();
-          if (!result.success) {
-            if (attempts >= maxAttempts) { clearInterval(pollInterval); showProvisionError('Taking longer than expected. Please refresh.'); }
-            return;
-          }
-          const data = result.data;
-          renderProvisionSteps(steps, data.step);
-          if (data.status === 'completed') {
-            clearInterval(pollInterval);
-            if (data.token) { localStorage.setItem(AUTH_TOKEN_KEY, data.token); authToken = data.token; }
-            document.getElementById('provisionSpinner').className = 'fas fa-check-circle text-green-400 text-3xl';
-            document.getElementById('provisionTitle').textContent = 'Welcome to Kancho AI!';
-            document.getElementById('provisionSubtitle').textContent = 'Your dashboard is ready. Redirecting...';
-            setTimeout(async () => {
-              const valid = await checkAuth();
-              if (valid) { enterAuthenticatedMode(); } else { showLoginSection(); }
-            }, 1500);
-          } else if (data.status === 'failed') {
-            clearInterval(pollInterval);
-            showProvisionError(data.error || 'Setup failed. Please contact support.');
-          }
-        } catch (e) {
-          if (attempts >= maxAttempts) { clearInterval(pollInterval); showProvisionError('Connection error. Please refresh.'); }
+      renderProvisionSteps(steps, 'starting');
+
+      // Cosmetic step animation while the single API call runs
+      let stepIndex = 0;
+      const stepTimer = setInterval(() => {
+        stepIndex++;
+        if (stepIndex < steps.length - 1) {
+          renderProvisionSteps(steps, steps[stepIndex].key);
         }
-      }, 2000);
+      }, 2500);
+
+      try {
+        // Single synchronous call to complete-setup (replaces polling loop)
+        const res = await fetch(API_BASE + '/bridge/checkout/complete-setup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ session_id: sessionId })
+        });
+
+        clearInterval(stepTimer);
+        const result = await res.json();
+
+        if (result.success) {
+          // Show all steps as done
+          renderProvisionSteps(steps, 'done');
+
+          // Store auth token
+          if (result.data && result.data.token) {
+            localStorage.setItem(AUTH_TOKEN_KEY, result.data.token);
+            authToken = result.data.token;
+          }
+
+          // Update UI to show success
+          document.getElementById('provisionSpinner').className = 'fas fa-check-circle text-green-400 text-3xl';
+          document.getElementById('provisionTitle').textContent = 'Welcome to Kancho AI!';
+          document.getElementById('provisionSubtitle').textContent = 'Your dashboard is ready. Redirecting...';
+
+          // Enter authenticated mode after brief delay
+          setTimeout(async () => {
+            const valid = await checkAuth();
+            if (valid) { enterAuthenticatedMode(); } else { showLoginSection(); }
+          }, 1500);
+        } else {
+          showProvisionError(result.error || 'Setup failed. Please try again.');
+        }
+      } catch (e) {
+        clearInterval(stepTimer);
+        console.error('[Signup] Complete-setup error:', e);
+        showProvisionError('Connection error. Please check your internet and try again.');
+      }
+
       return true;
     }
 
@@ -8147,7 +8168,7 @@ app.get('*', (req, res) => {
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
 
-        const response = await fetch('/kanchoai/api/v1/bridge/checkout/initiate', {
+        const response = await fetch('/kanchoai/api/v1/bridge/checkout/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -8155,8 +8176,8 @@ app.get('*', (req, res) => {
 
         const data = await response.json();
 
-        if (data.success && data.checkoutUrl) {
-          window.location.href = data.checkoutUrl;
+        if (data.success && data.stripeCheckoutUrl) {
+          window.location.href = data.stripeCheckoutUrl;
         } else {
           errorEl.textContent = data.error || 'Something went wrong. Please try again.';
           errorEl.classList.remove('hidden');

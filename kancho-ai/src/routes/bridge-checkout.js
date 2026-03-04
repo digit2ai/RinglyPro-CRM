@@ -60,7 +60,8 @@ const KANCHO_PLANS = {
 const KANCHO_STRIPE_LOGO_URL = 'https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/698d245d721397289ba56c7d.png';
 
 // =========================================================
-// POST /initiate - Validate form, save pending, create Stripe session
+// DEPRECATED: POST /initiate - Old webhook-based signup flow
+// Kept for backward compatibility. New signups use POST /register + POST /complete-setup.
 // =========================================================
 router.post('/initiate', async (req, res) => {
   if (!stripe) {
@@ -217,7 +218,489 @@ router.post('/initiate', async (req, res) => {
 });
 
 // =========================================================
-// GET /status/:sessionId - Poll for signup completion status
+// POST /register - Create User + Stripe checkout (synchronous flow, matches RinglyPro pattern)
+// Flow: Form → /register (creates User) → Stripe Checkout → /complete-setup (provisions everything)
+// =========================================================
+router.post('/register', async (req, res) => {
+  if (!stripe) {
+    return res.status(503).json({ success: false, error: 'Payment system not configured' });
+  }
+  if (!crmBridge?.ready || !kanchoModels) {
+    return res.status(503).json({ success: false, error: 'Service temporarily unavailable' });
+  }
+
+  try {
+    const {
+      email, password, firstName, lastName, phone,
+      schoolName, martialArtType,
+      address, city, state, zip, country, timezone,
+      website, monthlyRevenueTarget, studentCapacity,
+      plan
+    } = req.body;
+
+    // 1. Validate required fields
+    if (!email || !password || !firstName || !lastName || !phone || !schoolName || !plan) {
+      return res.status(400).json({
+        success: false,
+        error: 'Required fields: email, password, firstName, lastName, phone, schoolName, plan'
+      });
+    }
+    if (!KANCHO_PLANS[plan]) {
+      return res.status(400).json({ success: false, error: 'Invalid plan. Choose: intelligence or pro' });
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ success: false, error: 'Password must be at least 8 characters' });
+    }
+
+    // 2. Check for existing accounts
+    const existingUser = await crmBridge.User.findOne({ where: { email } });
+    if (existingUser) {
+      // If user exists with checkout_pending, they may be retrying — clean up and recreate
+      if (existingUser.subscription_status === 'checkout_pending') {
+        const existingClient = await crmBridge.Client.findOne({ where: { user_id: existingUser.id } });
+        if (!existingClient) {
+          await existingUser.destroy();
+          console.log(`[KanchoRegister] Cleaned up stale checkout_pending user ${existingUser.id}`);
+        } else {
+          return res.status(409).json({ success: false, error: 'An account already exists with this email' });
+        }
+      } else {
+        return res.status(409).json({ success: false, error: 'An account already exists with this email' });
+      }
+    }
+
+    const existingSchool = await kanchoModels.KanchoSchool.findOne({ where: { owner_email: email } });
+    if (existingSchool) {
+      return res.status(409).json({ success: false, error: 'A school is already registered with this email' });
+    }
+
+    // 3. Hash password
+    const passwordHash = await bcrypt.hash(password, 12);
+
+    // 4. Create User in CRM DB with checkout_pending status (no tokens yet)
+    const planDetails = KANCHO_PLANS[plan];
+    const planMapping = { intelligence: 'growth', pro: 'professional' };
+    const ringlyproPlan = planMapping[plan] || 'growth';
+
+    const user = await crmBridge.User.create({
+      email,
+      password_hash: passwordHash,
+      first_name: firstName,
+      last_name: lastName,
+      business_name: schoolName,
+      business_phone: phone,
+      business_type: 'fitness',
+      website_url: website || null,
+      terms_accepted: true,
+      free_trial_minutes: 100,
+      onboarding_completed: false,
+      subscription_plan: ringlyproPlan,
+      billing_frequency: 'monthly',
+      subscription_status: 'checkout_pending',
+      monthly_token_allocation: planDetails.tokens,
+      tokens_balance: 0
+    });
+
+    console.log(`[KanchoRegister] Created User ${user.id} for ${email} (checkout_pending)`);
+
+    // 5. Create Stripe Checkout Session with all school data in metadata
+    const webhookBaseUrl = process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com';
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      mode: 'subscription',
+      customer_email: email,
+      line_items: [{
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: planDetails.name,
+            description: planDetails.description,
+            images: [KANCHO_STRIPE_LOGO_URL]
+          },
+          unit_amount: planDetails.price * 100,
+          recurring: { interval: 'month' }
+        },
+        quantity: 1
+      }],
+      subscription_data: {
+        trial_period_days: 14,
+        metadata: {
+          product: 'kancho_ai',
+          plan: plan,
+          userId: user.id.toString()
+        }
+      },
+      metadata: {
+        product: 'kancho_ai',
+        plan: plan,
+        userId: user.id.toString(),
+        email: email,
+        schoolName: schoolName,
+        martialArtType: martialArtType || '',
+        phone: phone,
+        city: city || '',
+        state: state || '',
+        timezone: timezone || 'America/New_York',
+        address: address || '',
+        zip: zip || '',
+        country: country || 'USA',
+        website: website || '',
+        monthlyRevenueTarget: (monthlyRevenueTarget || 0).toString(),
+        studentCapacity: (studentCapacity || 100).toString()
+      },
+      success_url: `${webhookBaseUrl}/kanchoai/signup-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${webhookBaseUrl}/kanchoai/pricing?canceled=true`
+    });
+
+    // Update user with Stripe customer reference
+    await crmBridge.User.update({
+      stripe_customer_id: session.customer || null
+    }, { where: { id: user.id } });
+
+    console.log(`[KanchoRegister] Stripe session ${session.id} created for User ${user.id}`);
+
+    res.status(201).json({
+      success: true,
+      stripeCheckoutUrl: session.url
+    });
+
+  } catch (error) {
+    console.error('[KanchoRegister] Error:', error);
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      return res.status(409).json({ success: false, error: 'An account with this email already exists' });
+    }
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// =========================================================
+// POST /complete-setup - Synchronous provisioning after Stripe checkout
+// Called by frontend after user returns from Stripe (replaces webhook + polling)
+// =========================================================
+router.post('/complete-setup', async (req, res) => {
+  if (!stripe) {
+    return res.status(503).json({ success: false, error: 'Payment system not configured' });
+  }
+  if (!crmBridge?.ready || !kanchoModels) {
+    return res.status(503).json({ success: false, error: 'Service temporarily unavailable' });
+  }
+
+  const crmTransaction = await crmBridge.crmSequelize.transaction();
+
+  try {
+    const { session_id } = req.body;
+    if (!session_id) {
+      await crmTransaction.rollback();
+      return res.status(400).json({ success: false, error: 'Stripe session ID is required' });
+    }
+
+    console.log(`[KanchoSetup] Complete-setup called with session_id: ${session_id}`);
+
+    // 1. Verify Stripe session
+    let stripeSession;
+    try {
+      stripeSession = await stripe.checkout.sessions.retrieve(session_id, {
+        expand: ['subscription']
+      });
+    } catch (stripeError) {
+      await crmTransaction.rollback();
+      console.error('[KanchoSetup] Stripe session retrieval failed:', stripeError.message);
+      return res.status(400).json({ success: false, error: 'Invalid or expired checkout session' });
+    }
+
+    if (stripeSession.status !== 'complete') {
+      await crmTransaction.rollback();
+      return res.status(400).json({ success: false, error: 'Checkout session is not complete' });
+    }
+
+    if (stripeSession.metadata?.product !== 'kancho_ai') {
+      await crmTransaction.rollback();
+      return res.status(400).json({ success: false, error: 'Invalid checkout session' });
+    }
+
+    // 2. Extract metadata
+    const userId = parseInt(stripeSession.metadata.userId);
+    const plan = stripeSession.metadata.plan;
+    const email = stripeSession.metadata.email;
+    const schoolName = stripeSession.metadata.schoolName;
+    const phone = stripeSession.metadata.phone;
+    const martialArtType = stripeSession.metadata.martialArtType || null;
+    const city = stripeSession.metadata.city || null;
+    const state = stripeSession.metadata.state || null;
+    const timezone = stripeSession.metadata.timezone || 'America/New_York';
+    const address = stripeSession.metadata.address || null;
+    const zip = stripeSession.metadata.zip || null;
+    const country = stripeSession.metadata.country || 'USA';
+    const website = stripeSession.metadata.website || null;
+    const monthlyRevenueTarget = parseFloat(stripeSession.metadata.monthlyRevenueTarget) || 0;
+    const studentCapacity = parseInt(stripeSession.metadata.studentCapacity) || 100;
+
+    const planDetails = KANCHO_PLANS[plan];
+    if (!planDetails) {
+      await crmTransaction.rollback();
+      return res.status(400).json({ success: false, error: 'Invalid plan in session metadata' });
+    }
+
+    console.log(`[KanchoSetup] Session verified for user ${userId}, plan: ${plan}`);
+
+    // 3. Double-provisioning guard: if Client already exists, return existing data
+    const existingClient = await crmBridge.Client.findOne({ where: { user_id: userId } });
+    if (existingClient) {
+      await crmTransaction.rollback();
+      console.log(`[KanchoSetup] Already provisioned for user ${userId} — returning existing data`);
+
+      const user = await crmBridge.User.findByPk(userId);
+      const school = await kanchoModels.KanchoSchool.findOne({
+        where: { ringlypro_client_id: existingClient.id }
+      });
+
+      const token = jwt.sign({
+        userId: user.id,
+        email: user.email,
+        clientId: existingClient.id,
+        schoolId: school?.id || null,
+        businessName: user.business_name,
+        source: 'kanchoai'
+      }, JWT_SECRET, { expiresIn: '7d' });
+
+      return res.json({
+        success: true,
+        alreadyProvisioned: true,
+        data: {
+          user: { id: user.id, email: user.email, firstName: user.first_name, lastName: user.last_name },
+          client: { id: existingClient.id, aiNumber: existingClient.ringlypro_number },
+          school: school ? { id: school.id, name: school.name, aiNumber: existingClient.ringlypro_number, hasVoiceAgent: !!existingClient.elevenlabs_agent_id } : null,
+          token
+        }
+      });
+    }
+
+    // 4. Load user (created in /register)
+    const user = await crmBridge.User.findByPk(userId);
+    if (!user) {
+      await crmTransaction.rollback();
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+
+    console.log(`[KanchoSetup] User found: ${user.first_name} ${user.last_name} (${user.email})`);
+
+    // 5. Activate User subscription
+    const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+    await crmBridge.User.update({
+      subscription_status: 'trialing',
+      trial_ends_at: trialEndsAt,
+      tokens_balance: planDetails.tokens,
+      stripe_customer_id: stripeSession.customer,
+      stripe_subscription_id: stripeSession.subscription?.id || stripeSession.subscription || null
+    }, { where: { id: userId }, transaction: crmTransaction });
+
+    console.log(`[KanchoSetup] Subscription activated: trialing until ${trialEndsAt.toISOString()}, tokens: ${planDetails.tokens}`);
+
+    // 6. Provision Twilio number
+    let twilioNumber, twilioSid;
+    const webhookBaseUrl = process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com';
+
+    if (process.env.KANCHO_TEST_TWILIO_NUMBER && process.env.KANCHO_TEST_TWILIO_SID) {
+      twilioNumber = process.env.KANCHO_TEST_TWILIO_NUMBER;
+      twilioSid = process.env.KANCHO_TEST_TWILIO_SID;
+      console.log(`[KanchoSetup] Using test Twilio number: ${twilioNumber}`);
+      if (twilioClient) {
+        try {
+          await twilioClient.incomingPhoneNumbers(twilioSid).update({
+            voiceUrl: `${webhookBaseUrl}/voice/rachel/`,
+            voiceMethod: 'POST',
+            statusCallback: `${webhookBaseUrl}/voice/webhook/call-status`,
+            statusCallbackMethod: 'POST',
+            smsUrl: `${webhookBaseUrl}/api/messages/incoming`,
+            smsMethod: 'POST',
+            friendlyName: `KanchoAI - ${schoolName}`
+          });
+        } catch (e) { console.error('[KanchoSetup] Twilio webhook update (non-fatal):', e.message); }
+      }
+    } else if (twilioClient && process.env.SKIP_TWILIO_PROVISIONING !== 'true') {
+      twilioNumber = `+1555${Math.floor(Math.random() * 10000000).toString().padStart(7, '0')}`;
+      twilioSid = `PN_PENDING_${Date.now()}`;
+      try {
+        const availableNumbers = await twilioClient.availablePhoneNumbers('US')
+          .local.list({ limit: 1, voiceEnabled: true, smsEnabled: true });
+        if (availableNumbers.length > 0) {
+          const purchased = await twilioClient.incomingPhoneNumbers.create({
+            phoneNumber: availableNumbers[0].phoneNumber,
+            voiceUrl: `${webhookBaseUrl}/voice/rachel/`,
+            voiceMethod: 'POST',
+            statusCallback: `${webhookBaseUrl}/voice/webhook/call-status`,
+            statusCallbackMethod: 'POST',
+            statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
+            smsUrl: `${webhookBaseUrl}/api/messages/incoming`,
+            smsMethod: 'POST',
+            friendlyName: `KanchoAI - ${schoolName}`
+          });
+          twilioNumber = purchased.phoneNumber;
+          twilioSid = purchased.sid;
+          console.log(`[KanchoSetup] Twilio provisioned: ${twilioNumber} (SID: ${twilioSid})`);
+        }
+      } catch (twilioError) {
+        console.error('[KanchoSetup] Twilio provisioning failed (using placeholder):', twilioError.message);
+      }
+    } else {
+      twilioNumber = `+1555${Math.floor(Math.random() * 10000000).toString().padStart(7, '0')}`;
+      twilioSid = `PN_PENDING_${Date.now()}`;
+      console.log(`[KanchoSetup] Twilio skipped, using placeholder: ${twilioNumber}`);
+    }
+
+    // 7. Create Client
+    const client = await crmBridge.Client.create({
+      business_name: schoolName,
+      business_phone: phone,
+      ringlypro_number: twilioNumber,
+      twilio_number_sid: twilioSid,
+      forwarding_status: 'active',
+      owner_name: `${user.first_name} ${user.last_name}`,
+      owner_phone: phone,
+      owner_email: email,
+      custom_greeting: `Hello! Thank you for calling ${schoolName}. I'm your AI assistant, powered by Kancho AI. How can I help you today?`,
+      business_hours_start: '09:00:00',
+      business_hours_end: '21:00:00',
+      business_days: 'Mon-Sat',
+      timezone: timezone,
+      appointment_duration: 60,
+      booking_enabled: true,
+      sms_notifications: true,
+      monthly_free_minutes: 100,
+      per_minute_rate: 0.10,
+      rachel_enabled: false,
+      active: true,
+      user_id: user.id
+    }, { transaction: crmTransaction });
+
+    console.log(`[KanchoSetup] Client created: ${client.id}`);
+
+    // 8. Create CreditAccount
+    try {
+      await crmBridge.CreditAccount.create({
+        client_id: client.id,
+        balance: 0.00,
+        free_minutes_used: 0
+      }, { transaction: crmTransaction });
+      console.log('[KanchoSetup] Credit account created');
+    } catch (creditError) {
+      console.error('[KanchoSetup] Credit account error (non-fatal):', creditError.message);
+    }
+
+    // 9. Commit CRM transaction
+    await crmTransaction.commit();
+    console.log('[KanchoSetup] CRM transaction committed');
+
+    // 10. Create KanchoSchool (separate DB)
+    const school = await kanchoModels.KanchoSchool.create({
+      tenant_id: 1,
+      name: schoolName,
+      owner_name: `${user.first_name} ${user.last_name}`,
+      owner_email: email,
+      owner_phone: phone,
+      address: address,
+      city: city,
+      state: state,
+      zip: zip,
+      country: country,
+      timezone: timezone,
+      martial_art_type: martialArtType,
+      plan_type: plan === 'intelligence' ? 'growth' : plan,
+      monthly_revenue_target: monthlyRevenueTarget,
+      student_capacity: studentCapacity,
+      website: website,
+      ai_enabled: true,
+      voice_agent: 'kancho',
+      status: 'trial',
+      trial_ends_at: trialEndsAt,
+      ringlypro_client_id: client.id,
+      ringlypro_user_id: user.id
+    });
+
+    console.log(`[KanchoSetup] School created: ${school.id}`);
+
+    // 11. ElevenLabs provisioning (non-blocking, non-fatal)
+    let elevenlabsAgentId = null;
+    if (elevenlabsProvisioning && process.env.ELEVENLABS_API_KEY &&
+        process.env.SKIP_ELEVENLABS_PROVISIONING !== 'true') {
+      try {
+        const result = await elevenlabsProvisioning.provisionAgentForSchool(
+          { schoolName, ownerPhone: phone, martialArtType, timezone, website },
+          twilioNumber, twilioSid, client.id
+        );
+        if (result.success) {
+          elevenlabsAgentId = result.agentId;
+          await crmBridge.Client.update({
+            elevenlabs_agent_id: result.agentId,
+            elevenlabs_phone_number_id: result.phoneNumberId
+          }, { where: { id: client.id } });
+          console.log(`[KanchoSetup] ElevenLabs agent created: ${result.agentId}`);
+        } else {
+          console.error('[KanchoSetup] ElevenLabs failed (non-fatal):', result.error);
+        }
+      } catch (elError) {
+        console.error('[KanchoSetup] ElevenLabs error (non-fatal):', elError.message);
+      }
+    }
+
+    // 12. Update Stripe subscription metadata
+    try {
+      const subId = stripeSession.subscription?.id || stripeSession.subscription;
+      if (subId) {
+        await stripe.subscriptions.update(subId, {
+          metadata: {
+            userId: user.id.toString(),
+            plan: plan,
+            product: 'kancho_ai',
+            schoolId: school.id.toString(),
+            clientId: client.id.toString(),
+            monthlyTokens: planDetails.tokens.toString(),
+            rollover: 'true'
+          }
+        });
+      }
+    } catch (stripeError) {
+      console.error('[KanchoSetup] Stripe metadata update (non-fatal):', stripeError.message);
+    }
+
+    // 13. Generate JWT
+    const token = jwt.sign({
+      userId: user.id,
+      email: user.email,
+      clientId: client.id,
+      schoolId: school.id,
+      businessName: schoolName,
+      source: 'kanchoai'
+    }, JWT_SECRET, { expiresIn: '7d' });
+
+    console.log(`[KanchoSetup] COMPLETE for ${email} — User:${user.id} Client:${client.id} School:${school.id} Twilio:${twilioNumber} Agent:${elevenlabsAgentId || 'none'}`);
+
+    // 14. Return success
+    res.json({
+      success: true,
+      data: {
+        user: { id: user.id, email: user.email, firstName: user.first_name, lastName: user.last_name },
+        client: { id: client.id, aiNumber: twilioNumber },
+        school: { id: school.id, name: school.name, aiNumber: twilioNumber, hasVoiceAgent: !!elevenlabsAgentId },
+        token
+      }
+    });
+
+  } catch (error) {
+    try { await crmTransaction.rollback(); } catch (e) {}
+    console.error('[KanchoSetup] Complete-setup error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Account setup failed. Please try again or contact support.'
+    });
+  }
+});
+
+// =========================================================
+// DEPRECATED: GET /status/:sessionId - Poll for signup completion status
+// Kept for backward compatibility with in-flight signups using the old /initiate flow.
+// New signups use POST /register + POST /complete-setup instead.
 // =========================================================
 router.get('/status/:sessionId', async (req, res) => {
   try {
@@ -326,13 +809,25 @@ async function processKanchoSignup(session) {
     return;
   }
 
-  // 1. Find pending signup
+  // === IDEMPOTENCY GUARD: Check if /complete-setup already provisioned this user ===
+  const metaUserId = session.metadata?.userId ? parseInt(session.metadata.userId) : null;
+  if (metaUserId) {
+    const existingClient = await bridge.Client.findOne({ where: { user_id: metaUserId } });
+    if (existingClient) {
+      console.log(`[KanchoWebhook] Client already exists for user ${metaUserId} — complete-setup already ran. Skipping webhook provisioning.`);
+      return;
+    }
+  }
+
+  // 1. Find pending signup (old /initiate flow)
   const pending = await models.KanchoPendingSignup.findOne({
     where: { stripe_checkout_session_id: session.id }
   });
 
   if (!pending) {
-    console.error(`[KanchoWebhook] No pending signup for session: ${session.id}`);
+    // No pending signup found — this may be a /register flow signup where complete-setup hasn't run yet
+    // The /complete-setup endpoint will handle provisioning when the user's browser calls it
+    console.log(`[KanchoWebhook] No pending signup for session ${session.id} — likely using /register flow, skipping.`);
     return;
   }
 
