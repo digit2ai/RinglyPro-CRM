@@ -11,7 +11,8 @@ const router = express.Router();
 
 let requireApiKey;
 try {
-  requireApiKey = require('../middleware/api-auth');
+  const authModule = require('../middleware/api-auth');
+  requireApiKey = authModule.requireApiKey || authModule;
 } catch (e) {
   // Fallback if api-auth middleware not available
   requireApiKey = (req, res, next) => next();
