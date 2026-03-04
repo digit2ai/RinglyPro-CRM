@@ -94,7 +94,7 @@ function buildSpokenBriefing(project, analysisMap, recommendations, benefits) {
     parts.push(`Based on the analysis, ${recommendations.length} GEBHARDT products are recommended.`);
     const top3 = recommendations.slice(0, 3);
     for (const rec of top3) {
-      parts.push(`${rec.product_name} with a fit score of ${rec.fit_score} out of 100. ${rec.rationale || ''}`);
+      parts.push(`${rec.product_name} with a fit score of ${rec.fit_score} out of 100. ${rec.description || ''}`);
     }
   }
 
@@ -246,7 +246,7 @@ router.get('/:projectId/product-recommendations', async (req, res) => {
     const recommendations = await req.models.PinaxisProductRecommendation.findAll({
       where: { project_id: project.id },
       order: [['fit_score', 'DESC']],
-      attributes: ['product_name', 'product_category', 'fit_score', 'rationale', 'key_benefits']
+      attributes: ['product_name', 'product_category', 'fit_score', 'reasoning', 'description']
     });
 
     const fitResult = await req.models.PinaxisAnalysisResult.findOne({
