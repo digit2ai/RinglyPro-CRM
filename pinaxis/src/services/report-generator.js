@@ -751,7 +751,7 @@ async function generate(project) {
           { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 0.5, lineColor: COLORS.grayLight }] },
           {
             columns: [
-              { text: 'Confidential — Powered by RinglyPro's AI Division', fontSize: 7, color: COLORS.gray, margin: [0, 6, 0, 0] },
+              { text: 'Confidential — Powered by RinglyPro AI Division', fontSize: 7, color: COLORS.gray, margin: [0, 6, 0, 0] },
               { text: `${currentPage} / ${pageCount}`, fontSize: 8, color: COLORS.navy, alignment: 'right', margin: [0, 5, 0, 0], bold: true }
             ]
           }
