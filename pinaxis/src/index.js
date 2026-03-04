@@ -29,6 +29,8 @@ console.log('📊 PINAXIS: Checking dashboard at:', dashboardDistPath);
 app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false,
+  crossOriginOpenerPolicy: false,
+  crossOriginResourcePolicy: false,
   permissionsPolicy: false
 }));
 
