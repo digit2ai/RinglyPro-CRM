@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { getTelemetryHealth, getTelemetryEvents } from '../lib/api'
+
+const BASE = '/pinaxis/api/v1'
 
 function RefreshIcon({ className }) {
   return (
@@ -42,6 +44,7 @@ function SeverityTag({ severity }) {
 
 export default function ObservabilityPage() {
   const { projectId } = useParams()
+  const navigate = useNavigate()
   const [health, setHealth] = useState(null)
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
@@ -49,8 +52,29 @@ export default function ObservabilityPage() {
   const [autoRefresh, setAutoRefresh] = useState(false)
   const [eventFilter, setEventFilter] = useState('all')
   const [lastRefresh, setLastRefresh] = useState(null)
+  const [projects, setProjects] = useState(null)
+
+  // If no projectId, fetch project list and show selector
+  useEffect(() => {
+    if (!projectId) {
+      setLoading(true)
+      fetch(`${BASE}/projects`)
+        .then(r => r.json())
+        .then(json => {
+          const list = json.success ? json.data : json
+          setProjects(Array.isArray(list) ? list : [])
+          // Auto-redirect if only one project
+          if (Array.isArray(list) && list.length === 1) {
+            navigate(`/observability/${list[0].id}`, { replace: true })
+          }
+        })
+        .catch(() => setProjects([]))
+        .finally(() => setLoading(false))
+    }
+  }, [projectId, navigate])
 
   const fetchData = useCallback(async () => {
+    if (!projectId) return
     try {
       setError(null)
       const [healthData, eventsData] = await Promise.all([
@@ -68,8 +92,8 @@ export default function ObservabilityPage() {
   }, [projectId])
 
   useEffect(() => {
-    fetchData()
-  }, [fetchData])
+    if (projectId) fetchData()
+  }, [projectId, fetchData])
 
   // Auto-refresh every 30 seconds
   useEffect(() => {
@@ -91,6 +115,54 @@ export default function ObservabilityPage() {
             <p className="text-slate-400">Loading observability data...</p>
           </div>
         </div>
+      </div>
+    )
+  }
+
+  // Project selector when no projectId
+  if (!projectId) {
+    return (
+      <div className="max-w-3xl mx-auto animate-fade-in">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-white mb-1">Observability</h1>
+          <p className="text-slate-400">Select a project to view live telemetry and equipment health.</p>
+        </div>
+        {projects && projects.length === 0 ? (
+          <div className="card text-center py-12">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-700 flex items-center justify-center">
+              <svg className="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-white mb-2">No Projects Found</h3>
+            <p className="text-slate-400 text-sm">Create a project first by uploading data on the Upload page.</p>
+          </div>
+        ) : (
+          <div className="grid gap-3">
+            {(projects || []).map(p => (
+              <button
+                key={p.id}
+                onClick={() => navigate(`/observability/${p.id}`)}
+                className="card flex items-center gap-4 text-left hover:border-pinaxis-500/50 transition-colors group"
+              >
+                <div className="w-10 h-10 rounded-lg bg-pinaxis-600/20 flex items-center justify-center flex-shrink-0 group-hover:bg-pinaxis-600/30">
+                  <svg className="w-5 h-5 text-pinaxis-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-medium">{p.company_name || p.project_code || `Project ${p.id}`}</p>
+                  <p className="text-xs text-slate-400">
+                    {p.status || 'unknown'} — created {p.created_at ? new Date(p.created_at).toLocaleDateString() : '—'}
+                  </p>
+                </div>
+                <svg className="w-5 h-5 text-slate-500 group-hover:text-pinaxis-400 transition-colors" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                </svg>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     )
   }

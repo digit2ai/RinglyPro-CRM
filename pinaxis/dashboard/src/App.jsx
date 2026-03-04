@@ -269,6 +269,7 @@ export default function App({ onLogout, userEmail }) {
             <Route path="/report/:projectId" element={<ReportPage />} />
             <Route path="/api-integration/:projectId" element={<ApiIntegrationPage />} />
             <Route path="/observability/:projectId" element={<ObservabilityPage />} />
+            <Route path="/observability" element={<ObservabilityPage />} />
             <Route path="/user-guide" element={<UserGuidePage />} />
           </Routes>
         </div>
