@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KanchoAI × Ronin Brotherhood — Partnership Agreement</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0a1628;
+      color: #e0e0e0;
+      font-family: 'Georgia', 'Times New Roman', serif;
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+    .header {
+      background: linear-gradient(135deg, #0a1628 0%, #142240 100%);
+      border-bottom: 2px solid #ff4444;
+      padding: 30px 20px;
+      text-align: center;
+    }
+    .header h1 {
+      font-size: 28px;
+      color: #fff;
+      letter-spacing: 2px;
+      margin-bottom: 5px;
+    }
+    .header h1 span { color: #ff4444; }
+    .header .subtitle {
+      color: #8899aa;
+      font-size: 14px;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 30px;
+    }
+    .contract-title {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .contract-title h2 {
+      font-size: 26px;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .contract-title .version {
+      color: #ff4444;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 14px;
+    }
+    .section { margin-bottom: 35px; }
+    .section h3 {
+      color: #ff4444;
+      font-size: 18px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border-bottom: 1px solid #1e3050;
+      padding-bottom: 8px;
+      margin-bottom: 15px;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+    }
+    .section h4 {
+      color: #ccd;
+      font-size: 15px;
+      margin: 18px 0 8px;
+    }
+    .section p, .section li {
+      font-size: 15px;
+      color: #c0c8d0;
+      margin-bottom: 8px;
+    }
+    .section ul, .section ol {
+      padding-left: 25px;
+      margin-bottom: 12px;
+    }
+    .section li { margin-bottom: 5px; }
+    table.profit-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 14px;
+    }
+    table.profit-table th {
+      background: #1a2a44;
+      color: #ff4444;
+      text-align: left;
+      padding: 10px 12px;
+      border: 1px solid #1e3050;
+      font-weight: 600;
+    }
+    table.profit-table td {
+      padding: 10px 12px;
+      border: 1px solid #1e3050;
+      color: #c0c8d0;
+    }
+    table.profit-table tr:nth-child(even) td { background: #0d1e35; }
+    .timeline-box {
+      background: #0d1e35;
+      border-left: 3px solid #ff4444;
+      padding: 15px 20px;
+      margin: 15px 0;
+      border-radius: 0 6px 6px 0;
+    }
+    .timeline-box p {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 14px;
+      color: #8899aa;
+      margin-bottom: 4px;
+    }
+
+    /* Signature Section */
+    .signatures-section {
+      margin-top: 60px;
+      border-top: 2px solid #ff4444;
+      padding-top: 40px;
+    }
+    .signatures-section h3 {
+      text-align: center;
+      color: #fff;
+      font-size: 22px;
+      margin-bottom: 30px;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+    }
+    .sig-block {
+      background: #0d1e35;
+      border: 1px solid #1e3050;
+      border-radius: 10px;
+      padding: 25px;
+      margin-bottom: 25px;
+    }
+    .sig-block h4 {
+      color: #ff4444;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 16px;
+      margin-bottom: 18px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .sig-block.signed { border-color: #22c55e; }
+    .sig-block.signed h4::after {
+      content: ' ✓ SIGNED';
+      color: #22c55e;
+      font-size: 12px;
+    }
+    .form-row {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 12px;
+    }
+    .form-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .form-group label {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 12px;
+      color: #8899aa;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 5px;
+    }
+    .form-group input {
+      background: #0a1628;
+      border: 1px solid #1e3050;
+      color: #fff;
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus { border-color: #ff4444; }
+    .form-group input:disabled {
+      background: #0d1e35;
+      color: #6688aa;
+      cursor: not-allowed;
+    }
+    .canvas-wrapper {
+      margin-top: 10px;
+    }
+    .canvas-wrapper label {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 12px;
+      color: #8899aa;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: block;
+      margin-bottom: 5px;
+    }
+    canvas.sig-pad {
+      width: 100%;
+      height: 120px;
+      background: #fff;
+      border-radius: 6px;
+      cursor: crosshair;
+      touch-action: none;
+    }
+    .sig-img {
+      width: 100%;
+      max-height: 120px;
+      object-fit: contain;
+      background: #fff;
+      border-radius: 6px;
+      padding: 5px;
+    }
+    .sig-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .btn {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.2s;
+    }
+    .btn-clear {
+      background: #1e3050;
+      color: #8899aa;
+    }
+    .btn-clear:hover { background: #263a56; }
+    .btn-sign {
+      background: #ff4444;
+      color: #fff;
+    }
+    .btn-sign:hover { background: #e63030; }
+    .btn-sign:disabled, .btn-submit:disabled {
+      background: #333;
+      color: #666;
+      cursor: not-allowed;
+    }
+    .sig-timestamp {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 12px;
+      color: #22c55e;
+      margin-top: 8px;
+    }
+    .submit-section {
+      text-align: center;
+      margin-top: 40px;
+    }
+    .btn-submit {
+      background: #ff4444;
+      color: #fff;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      padding: 15px 50px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: all 0.2s;
+    }
+    .btn-submit:hover { background: #e63030; transform: translateY(-1px); }
+    .submit-note {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 12px;
+      color: #6688aa;
+      margin-top: 10px;
+    }
+
+    /* Confirmation */
+    .confirmation {
+      display: none;
+      text-align: center;
+      padding: 60px 20px;
+    }
+    .confirmation h2 {
+      color: #22c55e;
+      font-size: 28px;
+      margin-bottom: 20px;
+    }
+    .confirmation .contract-id {
+      background: #0d1e35;
+      border: 1px solid #1e3050;
+      padding: 15px 25px;
+      border-radius: 8px;
+      display: inline-block;
+      margin: 15px 0;
+    }
+    .confirmation .contract-id span {
+      color: #ff4444;
+      font-family: monospace;
+      font-size: 16px;
+    }
+    .btn-pdf {
+      background: #1e3050;
+      color: #fff;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 12px 30px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 20px;
+      text-transform: uppercase;
+    }
+    .btn-pdf:hover { background: #263a56; }
+
+    /* View mode */
+    .view-badge {
+      background: #22c55e;
+      color: #fff;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      display: inline-block;
+      margin-top: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Loading overlay */
+    .loading-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(10,22,40,0.9);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .loading-overlay.active { display: flex; }
+    .spinner {
+      width: 50px; height: 50px;
+      border: 4px solid #1e3050;
+      border-top-color: #ff4444;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Print styles */
+    @media print {
+      body { background: #fff; color: #000; }
+      .header { background: #fff; border-bottom-color: #333; }
+      .header h1 { color: #000; }
+      .header h1 span { color: #c00; }
+      .section h3 { color: #c00; border-bottom-color: #ddd; }
+      .section p, .section li { color: #333; }
+      .section h4 { color: #333; }
+      table.profit-table th { background: #eee; color: #c00; border-color: #ccc; }
+      table.profit-table td { color: #333; border-color: #ccc; }
+      table.profit-table tr:nth-child(even) td { background: #f8f8f8; }
+      .timeline-box { background: #f5f5f5; border-left-color: #c00; }
+      .timeline-box p { color: #555; }
+      .sig-block { background: #f9f9f9; border-color: #ddd; page-break-inside: avoid; }
+      .sig-block h4 { color: #c00; }
+      .sig-buttons, .submit-section, .btn-pdf { display: none !important; }
+      .form-group input { background: #fff; border-color: #ccc; color: #000; }
+      canvas.sig-pad { display: none; }
+      .container { padding: 20px; }
+      .confirmation { display: none !important; }
+    }
+
+    @media (max-width: 600px) {
+      .container { padding: 20px 15px; }
+      .form-row { flex-direction: column; gap: 8px; }
+      .header h1 { font-size: 22px; }
+      .contract-title h2 { font-size: 20px; }
+      .btn-submit { width: 100%; padding: 15px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+</div>
+
+<div id="mainContent">
+  <div class="header">
+    <h1><span>Kancho</span>AI</h1>
+    <div class="subtitle">PARTNERSHIP AGREEMENT</div>
+    <div id="viewBadge" style="display:none" class="view-badge">Signed Contract — Read Only</div>
+  </div>
+
+  <div class="container" id="contractBody">
+    <div class="contract-title">
+      <h2>Partnership Agreement</h2>
+      <div class="version">KanchoAI.com × Ronin Brotherhood</div>
+      <div class="version">Version 1.0 | Effective Date: <span id="effectiveDate">Date of Signing</span></div>
+    </div>
+
+    <!-- PARTIES -->
+    <div class="section">
+      <h3>Parties</h3>
+      <p>This Partnership Agreement ("Agreement") is entered into by and between:</p>
+      <ol>
+        <li><strong>KanchoAI LLC</strong>, operating KanchoAI.com ("KanchoAI"), a technology platform provider</li>
+        <li><strong>Ronin Brotherhood Federation</strong>, operating RoninBrotherhood.com ("RB"), a martial arts distribution channel</li>
+        <li><strong>Unai [Last Name]</strong> ("Unai"), a performance-based profit participant</li>
+      </ol>
+    </div>
+
+    <!-- SECTION 1 -->
+    <div class="section">
+      <h3>Section 1 — Roles & Responsibilities</h3>
+      <h4>1.1 KanchoAI shall be solely responsible for:</h4>
+      <ul>
+        <li>Platform technology, hosting, uptime, and maintenance</li>
+        <li>Billing, payment processing, and customer accounts</li>
+        <li>Data security, compliance, and customer support</li>
+        <li>Product development and feature updates</li>
+      </ul>
+      <h4>1.2 Ronin Brotherhood shall be solely responsible for:</h4>
+      <ul>
+        <li>Leveraging federation network to introduce and refer schools to KanchoAI</li>
+        <li>Active promotion of KanchoAI to its 150+ senior masters and 1,000+ black belts</li>
+        <li>Providing formal federation endorsement of KanchoAI as the official platform</li>
+        <li>Participation in onboarding calls for the first cohort of schools</li>
+      </ul>
+      <h4>1.3</h4>
+      <p>Unai shall provide supporting services to both parties as mutually agreed, with compensation tied to RB's delivery performance.</p>
+    </div>
+
+    <!-- SECTION 2 -->
+    <div class="section">
+      <h3>Section 2 — Profit Share Distribution</h3>
+      <h4>2.1 Tiered Waterfall with Proportional Cost Sharing</h4>
+      <p>All profit share is calculated on Net Profit, defined as gross subscription revenue from Ronin Brotherhood-sourced schools minus platform operating costs, payment processing fees, and applicable taxes.</p>
+      <table class="profit-table">
+        <thead>
+          <tr>
+            <th>RB Schools Delivered</th>
+            <th>RB Net Profit Share</th>
+            <th>Unai Profit Share</th>
+            <th>KanchoAI Net Profit Share</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>1–499 schools</td><td>30%</td><td>10%</td><td>60%</td></tr>
+          <tr><td>500–999 schools</td><td>35%</td><td>15%</td><td>50%</td></tr>
+          <tr><td>1,000+ schools</td><td>40%</td><td>20%</td><td>40%</td></tr>
+        </tbody>
+      </table>
+      <h4>2.2 Unai Funding Formula</h4>
+      <p>Unai's profit share is jointly funded at a fixed 40/60 ratio — 40% contributed by Ronin Brotherhood, 60% by KanchoAI — at every tier. This is embedded within the percentages shown in Section 2.1.</p>
+      <h4>2.3 KanchoAI Direct Revenue</h4>
+      <p>Revenue from schools acquired by KanchoAI through its own marketing, advertising, SEO, or independent outreach carries zero profit share obligation to RB or Unai. KanchoAI's independently acquired revenue is 100% retained by KanchoAI.</p>
+    </div>
+
+    <!-- SECTION 3 -->
+    <div class="section">
+      <h3>Section 3 — Attribution Rules</h3>
+      <h4>3.1 Full RB Attribution</h4>
+      <p>A school is fully attributed to Ronin Brotherhood when it signs up using RB's unique referral code or link. Full profit share per Section 2.1 applies.</p>
+      <h4>3.2 Full KanchoAI Direct</h4>
+      <p>A school with no Ronin Brotherhood federation affiliation that signs up without a referral code is 100% KanchoAI direct. No profit share applies.</p>
+      <h4>3.3 Split Attribution (Grey Zone)</h4>
+      <p>A verified Ronin Brotherhood federation member who signs up through KanchoAI's own marketing without using the referral code shall be subject to a 50/50 split attribution. RB receives 50% of its applicable tier profit share on that school; KanchoAI retains the remaining 50%.</p>
+      <h4>3.4 Tracking</h4>
+      <p>Attribution is tracked via a unique referral code or link assigned exclusively to Ronin Brotherhood. The referral code is the single source of truth. KanchoAI shall maintain CRM records of all attribution designations.</p>
+    </div>
+
+    <!-- SECTION 4 -->
+    <div class="section">
+      <h3>Section 4 — Exclusivity</h3>
+      <h4>4.1 Unconditional Baseline Commitment</h4>
+      <p>KanchoAI shall never directly recruit, solicit, or pursue any member, school, or contact within the Ronin Brotherhood federation at any time during or after this partnership. This commitment is permanent and not subject to any tier threshold.</p>
+      <h4>4.2 Performance-Based External Market Exclusivity</h4>
+      <table class="profit-table">
+        <thead>
+          <tr><th>RB Schools Delivered</th><th>KanchoAI External Market Exclusivity</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1–499 schools</td><td>KanchoAI free to sign any other federation</td></tr>
+          <tr><td>500–999 schools</td><td>KanchoAI will not sign any new federation partnerships nationally</td></tr>
+          <tr><td>1,000+ schools</td><td>KanchoAI exclusively partners with Ronin Brotherhood as its sole federation channel</td></tr>
+        </tbody>
+      </table>
+      <h4>4.3 Exclusivity Maintenance</h4>
+      <p>Exclusivity at each tier is maintained only while the minimum verified active subscription count is sustained. If RB's active school count drops below a tier threshold for 3 consecutive months, exclusivity automatically adjusts to the lower tier.</p>
+    </div>
+
+    <!-- SECTION 5 -->
+    <div class="section">
+      <h3>Section 5 — Payment Schedule</h3>
+      <h4>5.1 Frequency</h4>
+      <p>Monthly, covering all verified active subscriptions from the prior calendar month.</p>
+      <h4>5.2 Method</h4>
+      <p>PayPal or Stripe transfer to each party's registered account on file.</p>
+      <h4>5.3 Timing</h4>
+      <p>Net 15. Payment is issued within 15 days after the calendar month closes.</p>
+      <h4>5.4 Monthly Earnings Statement</h4>
+      <p>KanchoAI shall issue a monthly earnings statement to RB and Unai no later than 5 business days after month close. The statement shall include:</p>
+      <ul>
+        <li>Total RB-attributed schools active that month</li>
+        <li>Grey zone schools and 50/50 split applied</li>
+        <li>Gross revenue, itemized deductible costs, taxes</li>
+        <li>Net profit and each party's calculated share</li>
+      </ul>
+      <h4>5.5 Payment Release</h4>
+      <p>Payment releases upon written acknowledgment (email or platform confirmation) from both RB and Unai of the monthly earnings statement.</p>
+      <h4>5.6 Example Timeline</h4>
+      <div class="timeline-box">
+        <p><strong>March 31</strong> — Period closes</p>
+        <p><strong>April 5</strong> — Earnings statement issued</p>
+        <p><strong>April 15</strong> — Payment released after acknowledgment</p>
+      </div>
+    </div>
+
+    <!-- SECTION 6 -->
+    <div class="section">
+      <h3>Section 6 — Contract Duration & Renewal</h3>
+      <h4>6.1 Term</h4>
+      <p>This Agreement is open-ended, effective from the date of signing, with no fixed expiration date.</p>
+      <h4>6.2 Renewal</h4>
+      <p>The Agreement automatically continues on a month-to-month basis unless either party provides written notice of termination.</p>
+      <h4>6.3 Notice Period</h4>
+      <p>Either party may terminate this Agreement with 30 days written notice delivered via email to all parties.</p>
+      <h4>6.4 Annual Performance Review</h4>
+      <p>Every 12 months from the effective date, all parties shall conduct a joint review to assess school delivery, attribution accuracy, payment compliance, and mutual terms adjustment if agreed in writing.</p>
+      <h4>6.5 Tier Downgrade</h4>
+      <p>If RB's active school count drops below a tier threshold for 3 consecutive months, profit share automatically adjusts to the lower tier without requiring amendment to this Agreement.</p>
+    </div>
+
+    <!-- SECTION 7 -->
+    <div class="section">
+      <h3>Section 7 — Exit Conditions</h3>
+      <h4>7.1 Standard Termination</h4>
+      <p>Either party may exit with 30 days written notice, no cause required.</p>
+      <h4>7.2 Immediate Termination by KanchoAI</h4>
+      <p>KanchoAI may terminate this Agreement immediately and without notice if Ronin Brotherhood enters a formal partnership, distribution agreement, or endorsement deal with a competing martial arts school management platform.</p>
+      <h4>7.3 Post-Termination Profit Share Tail</h4>
+      <p>Upon termination, RB and Unai shall continue receiving their respective profit share on already-onboarded active schools for 6 months following the termination date, paid monthly per the Net 15 schedule.</p>
+      <h4>7.4 KanchoAI Retained Rights</h4>
+      <p>Upon exit, KanchoAI retains all school data, platform accounts, billing relationships, technology, and the right to continue serving any school that chooses to remain.</p>
+      <h4>7.5 RB Retained Rights</h4>
+      <p>Upon exit, RB retains its federation network, member relationships, all earned profit share through the 6-month tail period, and the right to endorse any platform after the tail period ends.</p>
+      <h4>7.6 School Migration</h4>
+      <p>The disposition of RB-sourced schools at time of exit shall be resolved by mutual written agreement between KanchoAI and RB.</p>
+    </div>
+
+    <!-- SECTION 8 -->
+    <div class="section">
+      <h3>Section 8 — Government & Law Enforcement Vertical (Addendum A)</h3>
+      <h4>8.1 Roles</h4>
+      <p>KanchoAI provides all technology, platform, proposals, compliance documentation, and contract fulfillment. Ronin Brotherhood leverages government and law enforcement contacts, actively pursues and closes deals, and provides introductions and endorsements.</p>
+      <h4>8.2 Revenue Share</h4>
+      <p>RB receives 40% of gross contract value on every government or law enforcement contract they close. KanchoAI retains 60% of gross contract value. This is a gross split — no cost deductions before calculating shares — given the higher contract values and longer sales cycles.</p>
+      <h4>8.3 Payment Timing</h4>
+      <p>RB revenue share on government contracts is paid within 15 days of KanchoAI receiving each government payment installment. For multi-installment contracts, RB receives their 40% proportionally with each installment.</p>
+      <h4>8.4 Attribution</h4>
+      <p>A government contract is attributed to RB only if they made the initial introduction or were actively involved in closing the deal, documented in writing at the time of introduction.</p>
+      <h4>8.5 Scope</h4>
+      <p>Covers law enforcement agencies, military, municipal governments, and federal training programs. Any other government vertical requires mutual written agreement before RB attribution applies.</p>
+    </div>
+
+    <!-- SECTION 9 -->
+    <div class="section">
+      <h3>Section 9 — Dispute Resolution</h3>
+      <h4>9.1 Internal Resolution</h4>
+      <p>Before any formal action, all parties must attempt to resolve the dispute directly through good faith negotiation for a minimum of 30 days from the date the dispute is raised in writing.</p>
+      <h4>9.2 Mediation</h4>
+      <p>If unresolved after 30 days, all parties agree to engage a neutral third-party mediator. Mediation costs are split equally between KanchoAI and RB.</p>
+      <h4>9.3 Governing Law</h4>
+      <p>This Agreement is governed by the laws of the State of Florida.</p>
+      <h4>9.4 Jurisdiction</h4>
+      <p>Any formal proceedings shall take place in the courts of the State of Florida.</p>
+      <h4>9.5 Business Continuity</h4>
+      <p>During any dispute or mediation, all parties agree to continue fulfilling their obligations. Profit share payments continue on schedule, schools continue to be serviced, and neither party may use a dispute as grounds to withhold payment or terminate without proper notice.</p>
+    </div>
+
+    <!-- SECTION 10 -->
+    <div class="section">
+      <h3>Section 10 — General Provisions</h3>
+      <h4>10.1 Entire Agreement</h4>
+      <p>This Agreement constitutes the entire agreement between the parties and supersedes all prior discussions, negotiations, and understandings.</p>
+      <h4>10.2 Amendments</h4>
+      <p>Any amendment to this Agreement must be made in writing and signed by all parties.</p>
+      <h4>10.3 Severability</h4>
+      <p>If any provision of this Agreement is found unenforceable, the remaining provisions remain in full force.</p>
+      <h4>10.4 Confidentiality</h4>
+      <p>All parties agree to keep the terms of this Agreement confidential and not disclose them to third parties without written consent.</p>
+    </div>
+
+    <!-- SIGNATURES -->
+    <div class="signatures-section" id="signaturesSection">
+      <h3>Signatures</h3>
+      <p style="text-align:center; color:#8899aa; font-family:'Helvetica Neue',Arial,sans-serif; font-size:14px; margin-bottom:30px;">By signing below, each party agrees to be bound by the terms of this Agreement.</p>
+
+      <!-- RB Signature Block -->
+      <div class="sig-block" id="rbBlock">
+        <h4>Ronin Brotherhood Federation</h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="rbName" placeholder="Full legal name">
+          </div>
+          <div class="form-group">
+            <label>Title / Role</label>
+            <input type="text" id="rbTitle" placeholder="e.g. Grand Master, President">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="rbEmail" placeholder="email@roninbrotherhood.com">
+          </div>
+        </div>
+        <div class="canvas-wrapper" id="rbCanvasWrapper">
+          <label>Signature (draw below)</label>
+          <canvas class="sig-pad" id="rbCanvas"></canvas>
+        </div>
+        <div class="sig-buttons" id="rbButtons">
+          <button class="btn btn-clear" onclick="clearPad('rb')">Clear</button>
+          <button class="btn btn-sign" id="rbSignBtn" onclick="signParty('rb')">Sign</button>
+        </div>
+        <div class="sig-timestamp" id="rbTimestamp" style="display:none"></div>
+      </div>
+
+      <!-- KanchoAI Signature Block -->
+      <div class="sig-block" id="kanchoBlock">
+        <h4>KanchoAI LLC</h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="kanchoName" placeholder="Full legal name">
+          </div>
+          <div class="form-group">
+            <label>Title / Role</label>
+            <input type="text" id="kanchoTitle" placeholder="e.g. CEO, Founder">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="kanchoEmail" placeholder="email@kanchoai.com">
+          </div>
+        </div>
+        <div class="canvas-wrapper" id="kanchoCanvasWrapper">
+          <label>Signature (draw below)</label>
+          <canvas class="sig-pad" id="kanchoCanvas"></canvas>
+        </div>
+        <div class="sig-buttons" id="kanchoButtons">
+          <button class="btn btn-clear" onclick="clearPad('kancho')">Clear</button>
+          <button class="btn btn-sign" id="kanchoSignBtn" onclick="signParty('kancho')">Sign</button>
+        </div>
+        <div class="sig-timestamp" id="kanchoTimestamp" style="display:none"></div>
+      </div>
+
+      <!-- Unai Signature Block -->
+      <div class="sig-block" id="unaiBlock">
+        <h4>Unai — Profit Participant</h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="unaiName" placeholder="Full legal name">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="unaiEmail" placeholder="email@example.com">
+          </div>
+        </div>
+        <div class="canvas-wrapper" id="unaiCanvasWrapper">
+          <label>Signature (draw below)</label>
+          <canvas class="sig-pad" id="unaiCanvas"></canvas>
+        </div>
+        <div class="sig-buttons" id="unaiButtons">
+          <button class="btn btn-clear" onclick="clearPad('unai')">Clear</button>
+          <button class="btn btn-sign" id="unaiSignBtn" onclick="signParty('unai')">Sign</button>
+        </div>
+        <div class="sig-timestamp" id="unaiTimestamp" style="display:none"></div>
+      </div>
+
+      <!-- Submit -->
+      <div class="submit-section" id="submitSection">
+        <button class="btn-submit" id="submitBtn" disabled onclick="submitContract()">Submit Signed Contract</button>
+        <div class="submit-note">All three parties must sign before submission is enabled.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Screen -->
+  <div class="confirmation" id="confirmationScreen">
+    <h2>Contract Signed Successfully</h2>
+    <p style="color:#c0c8d0; font-size:16px; margin-bottom:10px;">All parties have signed. The agreement is now in effect.</p>
+    <div class="contract-id">
+      Contract ID: <span id="contractIdDisplay"></span>
+    </div>
+    <br>
+    <button class="btn-pdf" onclick="window.print()">Download PDF (Print)</button>
+    <br><br>
+    <button class="btn-pdf" id="viewLinkBtn" onclick="copyViewLink()">Copy Shareable Link</button>
+  </div>
+</div>
+
+<script>
+// ============== Signature Pad Logic ==============
+const pads = {};
+const signedParties = { rb: false, kancho: false, unai: false };
+const signatureData = { rb: null, kancho: null, unai: null };
+const signedTimestamps = { rb: null, kancho: null, unai: null };
+
+function initPad(id) {
+  const canvas = document.getElementById(id + 'Canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  // Set actual canvas dimensions
+  function resize() {
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+  }
+  resize();
+
+  let drawing = false;
+  let hasContent = false;
+
+  function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches ? e.touches[0] : e;
+    return {
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top
+    };
+  }
+
+  function start(e) {
+    e.preventDefault();
+    drawing = true;
+    const pos = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
+  }
+
+  function draw(e) {
+    if (!drawing) return;
+    e.preventDefault();
+    hasContent = true;
+    const pos = getPos(e);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.stroke();
+  }
+
+  function stop(e) {
+    if (e) e.preventDefault();
+    drawing = false;
+  }
+
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('mouseup', stop);
+  canvas.addEventListener('mouseleave', stop);
+  canvas.addEventListener('touchstart', start, { passive: false });
+  canvas.addEventListener('touchmove', draw, { passive: false });
+  canvas.addEventListener('touchend', stop);
+
+  pads[id] = { canvas, ctx, resize, hasContent: () => hasContent, reset: () => { hasContent = false; } };
+
+  window.addEventListener('resize', resize);
+}
+
+function clearPad(id) {
+  const pad = pads[id];
+  if (!pad) return;
+  pad.ctx.clearRect(0, 0, pad.canvas.width, pad.canvas.height);
+  pad.reset();
+}
+
+function signParty(id) {
+  const pad = pads[id];
+  if (!pad || !pad.hasContent()) {
+    alert('Please draw your signature before signing.');
+    return;
+  }
+
+  // Validate fields
+  const nameEl = document.getElementById(id + 'Name');
+  const emailEl = document.getElementById(id + 'Email');
+  if (!nameEl.value.trim()) { alert('Please enter your full name.'); nameEl.focus(); return; }
+  if (!emailEl.value.trim()) { alert('Please enter your email.'); emailEl.focus(); return; }
+
+  // Lock signature
+  const now = new Date();
+  signedParties[id] = true;
+  signatureData[id] = pad.canvas.toDataURL('image/png');
+  signedTimestamps[id] = now.toISOString();
+
+  // Disable inputs
+  const block = document.getElementById(id + 'Block');
+  block.classList.add('signed');
+  block.querySelectorAll('input').forEach(i => i.disabled = true);
+
+  // Replace canvas with image
+  const wrapper = document.getElementById(id + 'CanvasWrapper');
+  wrapper.innerHTML = '<label>Signature</label><img class="sig-img" src="' + signatureData[id] + '" alt="Signature">';
+
+  // Hide buttons, show timestamp
+  document.getElementById(id + 'Buttons').style.display = 'none';
+  const tsEl = document.getElementById(id + 'Timestamp');
+  tsEl.style.display = 'block';
+  tsEl.textContent = 'Signed on ' + now.toLocaleString('en-US', { dateStyle: 'full', timeStyle: 'long' });
+
+  checkAllSigned();
+}
+
+function checkAllSigned() {
+  const allSigned = signedParties.rb && signedParties.kancho && signedParties.unai;
+  document.getElementById('submitBtn').disabled = !allSigned;
+}
+
+async function submitContract() {
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting...';
+  document.getElementById('loadingOverlay').classList.add('active');
+
+  const payload = {
+    party_rb_name: document.getElementById('rbName').value,
+    party_rb_title: document.getElementById('rbTitle').value,
+    party_rb_email: document.getElementById('rbEmail').value,
+    party_kancho_name: document.getElementById('kanchoName').value,
+    party_kancho_title: document.getElementById('kanchoTitle').value,
+    party_kancho_email: document.getElementById('kanchoEmail').value,
+    party_unai_name: document.getElementById('unaiName').value,
+    party_unai_email: document.getElementById('unaiEmail').value,
+    rb_signature: signatureData.rb,
+    kancho_signature: signatureData.kancho,
+    unai_signature: signatureData.unai,
+    rb_signed_at: signedTimestamps.rb,
+    kancho_signed_at: signedTimestamps.kancho,
+    unai_signed_at: signedTimestamps.unai
+  };
+
+  try {
+    // Determine API base path based on current URL
+    const basePath = window.location.pathname.includes('/kanchoai') ? '/kanchoai' : '';
+    const resp = await fetch(basePath + '/api/kanchoai/contract/sign', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await resp.json();
+    if (!data.success) throw new Error(data.error);
+
+    document.getElementById('loadingOverlay').classList.remove('active');
+    document.getElementById('contractBody').style.display = 'none';
+    document.getElementById('confirmationScreen').style.display = 'block';
+    document.getElementById('contractIdDisplay').textContent = data.contract_id;
+
+    // Update effective date
+    document.getElementById('effectiveDate').textContent = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  } catch (err) {
+    document.getElementById('loadingOverlay').classList.remove('active');
+    btn.disabled = false;
+    btn.textContent = 'Submit Signed Contract';
+    alert('Error submitting contract: ' + err.message);
+  }
+}
+
+function copyViewLink() {
+  const id = document.getElementById('contractIdDisplay').textContent;
+  const url = window.location.origin + window.location.pathname + '?view=' + id;
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById('viewLinkBtn');
+    btn.textContent = 'Link Copied!';
+    setTimeout(() => btn.textContent = 'Copy Shareable Link', 2000);
+  });
+}
+
+// ============== View Mode ==============
+async function loadViewMode(contractId) {
+  document.getElementById('loadingOverlay').classList.add('active');
+  document.getElementById('viewBadge').style.display = 'inline-block';
+
+  try {
+    const basePath = window.location.pathname.includes('/kanchoai') ? '/kanchoai' : '';
+    const resp = await fetch(basePath + '/api/kanchoai/contract/' + contractId);
+    const data = await resp.json();
+    if (!data.success) throw new Error(data.error);
+
+    const c = data.contract;
+
+    // Fill in fields and disable
+    document.getElementById('rbName').value = c.party_rb_name || '';
+    document.getElementById('rbTitle').value = c.party_rb_title || '';
+    document.getElementById('rbEmail').value = c.party_rb_email || '';
+    document.getElementById('kanchoName').value = c.party_kancho_name || '';
+    document.getElementById('kanchoTitle').value = c.party_kancho_title || '';
+    document.getElementById('kanchoEmail').value = c.party_kancho_email || '';
+    document.getElementById('unaiName').value = c.party_unai_name || '';
+    document.getElementById('unaiEmail').value = c.party_unai_email || '';
+
+    // Disable all inputs
+    document.querySelectorAll('.sig-block input').forEach(i => i.disabled = true);
+
+    // Replace canvases with signature images
+    ['rb', 'kancho', 'unai'].forEach(id => {
+      const sigField = id + '_signature';
+      const tsField = id + '_signed_at';
+      const block = document.getElementById(id + 'Block');
+
+      if (c[sigField]) {
+        block.classList.add('signed');
+        const wrapper = document.getElementById(id + 'CanvasWrapper');
+        wrapper.innerHTML = '<label>Signature</label><img class="sig-img" src="' + c[sigField] + '" alt="Signature">';
+        document.getElementById(id + 'Buttons').style.display = 'none';
+        const tsEl = document.getElementById(id + 'Timestamp');
+        tsEl.style.display = 'block';
+        if (c[tsField]) {
+          tsEl.textContent = 'Signed on ' + new Date(c[tsField]).toLocaleString('en-US', { dateStyle: 'full', timeStyle: 'long' });
+        }
+      }
+    });
+
+    // Hide submit
+    document.getElementById('submitSection').style.display = 'none';
+
+    // Set effective date
+    if (c.created_at) {
+      document.getElementById('effectiveDate').textContent = new Date(c.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+
+  } catch (err) {
+    alert('Error loading contract: ' + err.message);
+  }
+
+  document.getElementById('loadingOverlay').classList.remove('active');
+}
+
+// ============== Init ==============
+document.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const viewId = params.get('view');
+
+  if (viewId) {
+    loadViewMode(viewId);
+  } else {
+    initPad('rb');
+    initPad('kancho');
+    initPad('unai');
+  }
+});
+</script>
+</body>
+</html>

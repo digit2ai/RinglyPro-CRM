@@ -2285,6 +2285,19 @@ if (models && !modelsError) {
   });
 }
 
+// =====================================================
+// CONTRACT SIGNING ROUTES
+// Partnership Agreement e-sign system
+// =====================================================
+try {
+  const contractRoutes = require('./routes/contract');
+  app.use('/contract', contractRoutes);
+  app.use('/api/kanchoai/contract', contractRoutes);
+  console.log('📝 KanchoAI Contract routes mounted at /contract and /api/kanchoai/contract');
+} catch (contractError) {
+  console.log('⚠️ KanchoAI Contract routes not available:', contractError.message);
+}
+
 // Spanish Landing Page
 app.get('/es', (req, res) => {
   res.send(`
