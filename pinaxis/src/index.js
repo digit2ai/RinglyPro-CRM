@@ -29,13 +29,7 @@ console.log('📊 PINAXIS: Checking dashboard at:', dashboardDistPath);
 app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false,
-  permissionsPolicy: {
-    features: {
-      microphone: ['self', 'https://elevenlabs.io'],
-      camera: [],
-      geolocation: []
-    }
-  }
+  permissionsPolicy: false
 }));
 
 app.use(cors({
