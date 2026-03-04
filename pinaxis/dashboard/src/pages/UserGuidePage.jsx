@@ -283,7 +283,7 @@ export default function UserGuidePage() {
           >
             <div className="ml-14 space-y-3">
               <p className="text-sm text-slate-300">
-                When a customer order arrives, the Warehouse Management System (WMS) releases it for <strong className="text-white">picking</strong> — retrieving the correct items from storage locations. This is typically the most labor-intensive and costly process in a DC.
+                When a customer order arrives, the Warehouse Management System (WMS) releases it for <strong className="text-white">picking</strong> — retrieving the correct items from storage locations. This is typically the most labor-intensive and costly process in a DC. Performance is measured in <strong className="text-white">CPH (Cases Per Hour)</strong> — the number of items a picker or automated system can process per hour.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
@@ -295,9 +295,60 @@ export default function UserGuidePage() {
                   <p className="text-xs text-slate-400 mt-1">Orders with 2+ different products that must be consolidated. Requires batch picking, zone picking, or multi-shuttle sequencing to minimize travel time.</p>
                 </div>
               </div>
+
+              {/* CPH Benchmark Table */}
+              <div className="rounded-lg border border-slate-700 overflow-hidden">
+                <div className="px-4 py-3 bg-slate-700/30 border-b border-slate-700">
+                  <h4 className="text-sm font-semibold text-white">CPH Benchmarks — Cases Per Hour by Picking Method</h4>
+                </div>
+                <div className="p-4">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-slate-400 border-b border-slate-700">
+                        <th className="pb-2 font-medium">Picking Method</th>
+                        <th className="pb-2 font-medium text-center">CPH Range</th>
+                        <th className="pb-2 font-medium">Best For</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-slate-300">
+                      <tr className="border-t border-slate-700/50">
+                        <td className="py-2.5 font-medium text-white">Manual Pick-to-Cart</td>
+                        <td className="py-2.5 text-center"><span className="px-2 py-0.5 rounded bg-red-500/20 text-red-300 text-xs font-mono">60–120</span></td>
+                        <td className="py-2.5 text-xs text-slate-400">Low-volume, high-variety warehouses</td>
+                      </tr>
+                      <tr className="border-t border-slate-700/50">
+                        <td className="py-2.5 font-medium text-white">Pick-to-Light</td>
+                        <td className="py-2.5 text-center"><span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-xs font-mono">150–300</span></td>
+                        <td className="py-2.5 text-xs text-slate-400">Medium-volume with fixed pick faces</td>
+                      </tr>
+                      <tr className="border-t border-slate-700/50">
+                        <td className="py-2.5 font-medium text-white">Goods-to-Person (Shuttle)</td>
+                        <td className="py-2.5 text-center"><span className="px-2 py-0.5 rounded bg-green-500/20 text-green-300 text-xs font-mono">300–600</span></td>
+                        <td className="py-2.5 text-xs text-slate-400">High-volume e-commerce, small-parts</td>
+                      </tr>
+                      <tr className="border-t border-slate-700/50">
+                        <td className="py-2.5 font-medium text-white">High-Speed Shuttle + Sortation</td>
+                        <td className="py-2.5 text-center"><span className="px-2 py-0.5 rounded bg-pinaxis-500/20 text-pinaxis-300 text-xs font-mono">600–1,200</span></td>
+                        <td className="py-2.5 text-xs text-slate-400">Tier-1 DCs, peak-driven fulfillment</td>
+                      </tr>
+                      <tr className="border-t border-slate-700/50">
+                        <td className="py-2.5 font-medium text-white">Robotic Piece Picking</td>
+                        <td className="py-2.5 text-center"><span className="px-2 py-0.5 rounded bg-violet-500/20 text-violet-300 text-xs font-mono">400–800</span></td>
+                        <td className="py-2.5 text-xs text-slate-400">24/7 operations, labor-scarce markets</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-lg bg-pinaxis-900/20 border border-pinaxis-500/30">
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Why CPH Matters</p>
+                <p className="text-sm text-slate-300">CPH directly determines how many <strong className="text-white">pick stations and workers</strong> you need. Doubling CPH from 120 (manual) to 600 (goods-to-person) means you need <strong className="text-white">5x fewer pick stations</strong> to handle the same volume — this is the core driver of automation ROI.</p>
+              </div>
+
               <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
                 <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">PINAXIS Mapping</p>
-                <p className="text-sm text-slate-300">The <strong className="text-pinaxis-300">Goods Out</strong> file is the most critical dataset. PINAXIS analyzes order structure (single vs multi-line split), throughput patterns (monthly, weekday, hourly peaks), and <strong className="text-white">ABC classification</strong> to identify which items drive 80% of activity (A-items) vs slow movers (C-items).</p>
+                <p className="text-sm text-slate-300">The <strong className="text-pinaxis-300">Goods Out</strong> file is the most critical dataset. PINAXIS analyzes order structure (single vs multi-line split), throughput patterns (monthly, weekday, hourly peaks), and <strong className="text-white">ABC classification</strong> to identify which items drive 80% of activity (A-items) vs slow movers (C-items). Peak CPH requirements are derived from the busiest hours in your data.</p>
               </div>
             </div>
           </StepCard>
@@ -409,8 +460,8 @@ export default function UserGuidePage() {
                   <p className="text-xs text-slate-400 mt-1">Automated systems achieve 99.9%+ pick accuracy, reducing costly returns and re-shipments.</p>
                 </div>
                 <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
-                  <p className="text-sm font-medium text-white">Throughput Increase</p>
-                  <p className="text-xs text-slate-400 mt-1">Shuttle systems can achieve 300-1000+ picks per hour vs 60-120 for manual picking.</p>
+                  <p className="text-sm font-medium text-white">Throughput Increase (CPH)</p>
+                  <p className="text-xs text-slate-400 mt-1">Manual picking: 60-120 CPH. Goods-to-person shuttle: 300-600 CPH. High-speed shuttle + sortation: 600-1,200 CPH. Up to 10x throughput gain per station.</p>
                 </div>
               </div>
               <div className="p-3 rounded-lg bg-pinaxis-900/20 border border-pinaxis-500/30">
