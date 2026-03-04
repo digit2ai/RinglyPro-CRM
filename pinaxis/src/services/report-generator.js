@@ -73,7 +73,8 @@ const executiveTableLayout = {
   paddingLeft: () => 10,
   paddingRight: () => 10,
   paddingTop: () => 7,
-  paddingBottom: () => 7
+  paddingBottom: () => 7,
+  dontBreakRows: true
 };
 
 const accentTableLayout = {
@@ -84,7 +85,8 @@ const accentTableLayout = {
   paddingLeft: () => 12,
   paddingRight: () => 12,
   paddingTop: () => 8,
-  paddingBottom: () => 8
+  paddingBottom: () => 8,
+  dontBreakRows: true
 };
 
 const kpiCardLayout = {
@@ -434,7 +436,8 @@ async function generate(project) {
         kpiCard('Bin-Capable', skus.bin_capable_pct != null ? `${skus.bin_capable_pct}%` : '—', `${fmtNum(skus.bin_capable)} items`, COLORS.green),
       ],
       columnGap: 12,
-      margin: [0, 0, 0, 12]
+      margin: [0, 0, 0, 12],
+      unbreakable: true
     },
 
     // KPI Cards Row 2
@@ -445,7 +448,8 @@ async function generate(project) {
         kpiCard('Avg Lines/Order', orders.avg_lines_per_order != null ? String(orders.avg_lines_per_order) : '—', 'Order complexity', COLORS.gold),
       ],
       columnGap: 12,
-      margin: [0, 0, 0, 16]
+      margin: [0, 0, 0, 16],
+      unbreakable: true
     },
 
     // Data period
@@ -463,7 +467,8 @@ async function generate(project) {
         hLineColor: () => COLORS.blueLight
       },
       fillColor: COLORS.blueLight,
-      margin: [0, 0, 0, 16]
+      margin: [0, 0, 0, 16],
+      unbreakable: true
     } : { text: '' },
 
     // Key findings
@@ -493,15 +498,16 @@ async function generate(project) {
         metricBox('Avg Lines/Order', String(orders.avg_lines_per_order || '—'))
       ],
       columnGap: 10,
-      margin: [0, 0, 0, 16]
+      margin: [0, 0, 0, 16],
+      unbreakable: true
     },
 
     // Histogram table
     buildOrderHistogramTable(orderStructure),
     { text: '\n' },
 
-    // Chart
-    ...buildOrderStructureChart(orderStructure),
+    // Chart — keep together
+    { stack: [...buildOrderStructureChart(orderStructure)], unbreakable: true },
     { text: '\n' },
 
     { text: '', pageBreak: 'after' }
@@ -519,16 +525,18 @@ async function generate(project) {
       fontSize: 10, color: COLORS.grayDark, lineHeight: 1.45, margin: [0, 0, 0, 14]
     },
 
-    subSectionHeader('Monthly Throughput'),
-    buildMonthlyTable(throughputMonthly),
+    // Monthly subsection — keep header + table together
+    { stack: [subSectionHeader('Monthly Throughput'), buildMonthlyTable(throughputMonthly)], unbreakable: true },
     { text: '\n' },
-    ...buildMonthlyChart(throughputMonthly),
+    // Monthly chart — keep together
+    { stack: [...buildMonthlyChart(throughputMonthly)], unbreakable: true },
     { text: '\n\n' },
 
-    subSectionHeader('Weekday Distribution'),
-    buildWeekdayTable(throughputWeekday),
+    // Weekday subsection — keep header + table together
+    { stack: [subSectionHeader('Weekday Distribution'), buildWeekdayTable(throughputWeekday)], unbreakable: true },
     { text: '\n' },
-    ...buildWeekdayChart(throughputWeekday),
+    // Weekday chart — keep together
+    { stack: [...buildWeekdayChart(throughputWeekday)], unbreakable: true },
 
     { text: '', pageBreak: 'after' }
   ];
@@ -545,30 +553,37 @@ async function generate(project) {
       fontSize: 10, color: COLORS.grayDark, lineHeight: 1.45, margin: [0, 0, 0, 14]
     },
 
-    abc.gini ? {
-      table: {
-        widths: ['*'],
-        body: [[{
-          text: [
-            { text: 'Gini Coefficient: ', fontSize: 10, color: COLORS.grayDark },
-            { text: String(abc.gini), fontSize: 14, bold: true, color: COLORS.navy },
-            { text: '  —  A higher Gini coefficient indicates more concentrated demand among fewer SKUs, increasing the case for automated fast-mover handling.', fontSize: 9, color: COLORS.gray }
-          ],
-          margin: [12, 10, 12, 10]
-        }]]
-      },
-      layout: { hLineWidth: () => 1, vLineWidth: () => 1, hLineColor: () => COLORS.gold, vLineColor: () => COLORS.gold },
-      fillColor: COLORS.goldPale,
-      margin: [0, 0, 0, 14]
-    } : { text: '' },
-
-    buildABCTable(abc),
+    // Gini + ABC table — keep together
+    {
+      stack: [
+        abc.gini ? {
+          table: {
+            widths: ['*'],
+            body: [[{
+              text: [
+                { text: 'Gini Coefficient: ', fontSize: 10, color: COLORS.grayDark },
+                { text: String(abc.gini), fontSize: 14, bold: true, color: COLORS.navy },
+                { text: '  —  A higher Gini coefficient indicates more concentrated demand among fewer SKUs, increasing the case for automated fast-mover handling.', fontSize: 9, color: COLORS.gray }
+              ],
+              margin: [12, 10, 12, 10]
+            }]]
+          },
+          layout: { hLineWidth: () => 1, vLineWidth: () => 1, hLineColor: () => COLORS.gold, vLineColor: () => COLORS.gold },
+          fillColor: COLORS.goldPale,
+          margin: [0, 0, 0, 14]
+        } : { text: '' },
+        buildABCTable(abc)
+      ],
+      unbreakable: true
+    },
     { text: '\n' },
-    ...buildABCCharts(abc),
+
+    // ABC donut charts — keep together
+    { stack: [...buildABCCharts(abc)], unbreakable: true },
     { text: '\n' },
 
-    subSectionHeader('Top 10 SKUs by Pick Frequency'),
-    buildTopSKUTable(abc),
+    // Top SKUs — keep header + table together
+    { stack: [subSectionHeader('Top 10 SKUs by Pick Frequency'), buildTopSKUTable(abc)], unbreakable: true },
 
     { text: '', pageBreak: 'after' }
   ];
@@ -593,12 +608,19 @@ async function generate(project) {
         metricBox('Overall Bin-Capable', skus.bin_capable_pct != null ? `${skus.bin_capable_pct}%` : '—'),
       ],
       columnGap: 10,
-      margin: [0, 0, 0, 14]
+      margin: [0, 0, 0, 14],
+      unbreakable: true
     },
 
-    buildFitTable(fit),
-    { text: '\n' },
-    ...buildFitChart(fit),
+    // Fit table + chart — keep together
+    {
+      stack: [
+        buildFitTable(fit),
+        { text: '\n' },
+        ...buildFitChart(fit)
+      ],
+      unbreakable: true
+    },
 
     { text: '\n' },
     { text: '', pageBreak: 'after' }
@@ -616,7 +638,8 @@ async function generate(project) {
       fontSize: 10, color: COLORS.grayDark, lineHeight: 1.45, margin: [0, 0, 0, 14]
     },
 
-    ...buildProductScoresChart(recommendations),
+    // Product scores chart — keep together
+    { stack: [...buildProductScoresChart(recommendations)], unbreakable: true },
     { text: '\n' },
     ...buildRecommendationCards(recommendations)
   ];
@@ -634,17 +657,19 @@ async function generate(project) {
       fontSize: 10, color: COLORS.grayDark, lineHeight: 1.45, margin: [0, 0, 0, 14]
     },
 
-    ...buildROICharts(benefitData),
+    // ROI charts — keep together
+    { stack: [...buildROICharts(benefitData)], unbreakable: true },
     { text: '\n' },
-    buildROISummaryTable(benefitData.summary || {}),
-    { text: '\n' },
-
-    subSectionHeader('Warehouse Automation Benefits'),
-    buildBenefitsTable((benefitData.projections || []).filter(p => p.category === 'warehouse_automation')),
+    // ROI summary table — keep together
+    { stack: [buildROISummaryTable(benefitData.summary || {})], unbreakable: true },
     { text: '\n' },
 
-    subSectionHeader('Platform & AI Benefits'),
-    buildBenefitsTable((benefitData.projections || []).filter(p => p.category === 'platform_ai'))
+    // Warehouse automation benefits — keep header + table together
+    { stack: [subSectionHeader('Warehouse Automation Benefits'), buildBenefitsTable((benefitData.projections || []).filter(p => p.category === 'warehouse_automation'))], unbreakable: true },
+    { text: '\n' },
+
+    // Platform & AI benefits — keep header + table together
+    { stack: [subSectionHeader('Platform & AI Benefits'), buildBenefitsTable((benefitData.projections || []).filter(p => p.category === 'platform_ai'))], unbreakable: true }
   ] : [];
 
   // ========================================================================
@@ -891,7 +916,8 @@ function keyFindingsBlock(overview, orderStructure, abc, fit, recommendations, b
       hLineColor: () => COLORS.blue, vLineColor: () => COLORS.blue
     },
     fillColor: COLORS.blueLight,
-    margin: [0, 0, 0, 0]
+    margin: [0, 0, 0, 0],
+    unbreakable: true
   };
 }
 
@@ -1080,34 +1106,38 @@ function buildRecommendationCards(recommendations) {
     const scoreColor = rec.fit_score >= 70 ? COLORS.green : rec.fit_score >= 40 ? COLORS.amber : COLORS.gray;
 
     content.push({
-      table: {
-        widths: [70, '*'],
-        body: [[
-          {
-            stack: [
-              { text: Math.round(rec.fit_score), fontSize: 28, bold: true, color: scoreColor, alignment: 'center' },
-              { text: '/ 100', fontSize: 9, color: COLORS.gray, alignment: 'center' },
-              { text: 'FIT SCORE', fontSize: 7, color: COLORS.gray, alignment: 'center', characterSpacing: 1, margin: [0, 2, 0, 0] }
-            ],
-            margin: [0, 12, 0, 12]
-          },
-          {
-            stack: [
-              { text: rec.product_name, fontSize: 13, bold: true, color: COLORS.navy },
-              { text: rec.product_category, fontSize: 9, color: COLORS.blue, margin: [0, 2, 0, 5] },
-              { text: rec.description || rec.rationale || '', fontSize: 9, color: COLORS.grayDark, lineHeight: 1.35 }
-            ],
-            margin: [8, 10, 8, 10]
-          }
-        ]]
-      },
-      layout: {
-        hLineWidth: () => 1,
-        vLineWidth: (i) => i === 0 ? 3 : 1,
-        hLineColor: () => COLORS.grayLight,
-        vLineColor: (i) => i === 0 ? scoreColor : COLORS.grayLight
-      },
-      margin: [0, 4, 0, 4]
+      // Each recommendation card is unbreakable
+      unbreakable: true,
+      stack: [{
+        table: {
+          widths: [70, '*'],
+          body: [[
+            {
+              stack: [
+                { text: Math.round(rec.fit_score), fontSize: 28, bold: true, color: scoreColor, alignment: 'center' },
+                { text: '/ 100', fontSize: 9, color: COLORS.gray, alignment: 'center' },
+                { text: 'FIT SCORE', fontSize: 7, color: COLORS.gray, alignment: 'center', characterSpacing: 1, margin: [0, 2, 0, 0] }
+              ],
+              margin: [0, 12, 0, 12]
+            },
+            {
+              stack: [
+                { text: rec.product_name, fontSize: 13, bold: true, color: COLORS.navy },
+                { text: rec.product_category, fontSize: 9, color: COLORS.blue, margin: [0, 2, 0, 5] },
+                { text: rec.description || rec.rationale || '', fontSize: 9, color: COLORS.grayDark, lineHeight: 1.35 }
+              ],
+              margin: [8, 10, 8, 10]
+            }
+          ]]
+        },
+        layout: {
+          hLineWidth: () => 1,
+          vLineWidth: (i) => i === 0 ? 3 : 1,
+          hLineColor: () => COLORS.grayLight,
+          vLineColor: (i) => i === 0 ? scoreColor : COLORS.grayLight
+        },
+        margin: [0, 4, 0, 4]
+      }]
     });
   }
 
