@@ -91,6 +91,7 @@ try {
   const productRoutes = require('./routes/products');
   const reportRoutes = require('./routes/reports');
   const demoRoutes = require('./routes/demo');
+  const benefitRoutes = require('./routes/benefits');
 
   // Health check
   app.use(`${BASE_PATH}/health`, healthRoutes);
@@ -102,6 +103,7 @@ try {
   app.use(`${BASE_PATH}/api/v1/products`, productRoutes);
   app.use(`${BASE_PATH}/api/v1/reports`, reportRoutes);
   app.use(`${BASE_PATH}/api/v1/demo`, demoRoutes);
+  app.use(`${BASE_PATH}/api/v1/benefits`, benefitRoutes);
 
   routesLoaded = true;
   console.log('✅ PINAXIS routes loaded successfully');

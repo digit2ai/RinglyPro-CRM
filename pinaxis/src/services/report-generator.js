@@ -26,6 +26,7 @@ async function generate(project) {
   const fit = analysisMap.fit_analysis || {};
   const throughputMonthly = analysisMap.throughput_monthly || {};
   const throughputWeekday = analysisMap.throughput_weekday || {};
+  const benefitData = analysisMap.benefit_projections || {};
 
   const docDefinition = {
     pageSize: 'A4',
@@ -123,7 +124,22 @@ async function generate(project) {
       { text: 'Based on the warehouse data analysis, the following GEBHARDT products are recommended:', style: 'bodyText' },
       { text: '\n' },
 
-      ...buildRecommendationCards(recommendations)
+      ...buildRecommendationCards(recommendations),
+
+      // Section 7: Client Benefit Projections
+      ...(benefitData.projections ? [
+        { text: '', pageBreak: 'after' },
+        { text: '7. Client Benefit Projections', style: 'sectionTitle' },
+        { text: 'Data-driven ROI projections based on your warehouse analytics and GEBHARDT product matching.', style: 'bodyText' },
+        { text: '\n' },
+        buildROISummaryTable(benefitData.summary || {}),
+        { text: '\n' },
+        { text: '7.1 Warehouse Automation Benefits', style: 'subsectionTitle' },
+        buildBenefitsTable((benefitData.projections || []).filter(p => p.category === 'warehouse_automation')),
+        { text: '\n' },
+        { text: '7.2 Platform & AI Benefits', style: 'subsectionTitle' },
+        buildBenefitsTable((benefitData.projections || []).filter(p => p.category === 'platform_ai'))
+      ] : [])
     ],
 
     styles: {
@@ -425,6 +441,68 @@ function buildRecommendationCards(recommendations) {
   }
 
   return content;
+}
+
+function buildROISummaryTable(summary) {
+  const fmtCurrency = (v) => {
+    if (!v) return 'N/A';
+    if (v >= 1000000) return `EUR ${(v / 1000000).toFixed(1)}M`;
+    if (v >= 1000) return `EUR ${Math.round(v / 1000)}K`;
+    return `EUR ${v.toLocaleString()}`;
+  };
+
+  return {
+    table: {
+      widths: ['*', '*', '*', '*'],
+      body: [
+        [
+          { text: 'Automation Readiness', style: 'tableHeader', alignment: 'center' },
+          { text: 'Est. Annual Savings', style: 'tableHeader', alignment: 'center' },
+          { text: 'Payback Period', style: 'tableHeader', alignment: 'center' },
+          { text: 'High-Confidence Benefits', style: 'tableHeader', alignment: 'center' }
+        ],
+        [
+          { text: `${summary.automation_readiness_score || 0}/100`, style: 'tableCell', alignment: 'center', bold: true, fontSize: 14 },
+          { text: `${fmtCurrency(summary.annual_savings_low)} – ${fmtCurrency(summary.annual_savings_high)}`, style: 'tableCell', alignment: 'center' },
+          { text: `${summary.payback_months_low || 12}–${summary.payback_months_high || 24} months`, style: 'tableCell', alignment: 'center' },
+          { text: `${summary.high_confidence_count || 0} of ${summary.total_projections || 0}`, style: 'tableCell', alignment: 'center' }
+        ]
+      ]
+    },
+    layout: {
+      hLineWidth: () => 1,
+      vLineWidth: () => 1,
+      hLineColor: () => '#3b82f6',
+      vLineColor: () => '#3b82f6'
+    }
+  };
+}
+
+function buildBenefitsTable(projections) {
+  if (!projections || projections.length === 0) return { text: 'No projections available.', style: 'bodyText' };
+
+  const confLabel = { high: 'High', medium: 'Medium', low: 'Benchmark' };
+
+  return {
+    table: {
+      widths: ['*', 'auto', 'auto', '*'],
+      body: [
+        [
+          { text: 'Benefit', style: 'tableHeader' },
+          { text: 'Improvement', style: 'tableHeader' },
+          { text: 'Confidence', style: 'tableHeader' },
+          { text: 'Key Driver', style: 'tableHeader' }
+        ],
+        ...projections.map(p => [
+          { text: p.title, style: 'tableCell', bold: true },
+          { text: `${p.improvement_pct}%`, style: 'tableCell', color: '#22c55e', bold: true },
+          { text: confLabel[p.confidence] || p.confidence, style: 'tableCell' },
+          { text: p.data_drivers?.[0]?.explanation || '', style: 'tableCell', fontSize: 9 }
+        ])
+      ]
+    },
+    layout: 'lightHorizontalLines'
+  };
 }
 
 module.exports = { generate };

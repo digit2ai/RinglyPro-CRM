@@ -140,3 +140,21 @@ export async function downloadReport(projectId) {
     responseType: 'blob'
   })
 }
+
+/**
+ * Compute benefit projections for a project
+ * Backend: POST /benefits/:projectId/compute
+ */
+export async function computeBenefits(projectId) {
+  return request(`/benefits/${projectId}/compute`, {
+    method: 'POST'
+  })
+}
+
+/**
+ * Get stored benefit projections
+ * Backend: GET /benefits/:projectId
+ */
+export async function getBenefits(projectId) {
+  return request(`/benefits/${projectId}`)
+}

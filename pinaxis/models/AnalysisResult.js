@@ -23,7 +23,8 @@ module.exports = (sequelize, DataTypes) => {
           'throughput_weekday',
           'throughput_hourly',
           'abc_classification',
-          'fit_analysis'
+          'fit_analysis',
+          'benefit_projections'
         ]]
       }
     },

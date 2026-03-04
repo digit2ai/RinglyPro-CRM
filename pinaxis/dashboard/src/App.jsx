@@ -3,6 +3,7 @@ import { Routes, Route, NavLink, useLocation } from 'react-router-dom'
 import UploadPage from './pages/UploadPage'
 import AnalysisPage from './pages/AnalysisPage'
 import ProductsPage from './pages/ProductsPage'
+import BenefitsPage from './pages/BenefitsPage'
 import ReportPage from './pages/ReportPage'
 import StepIndicator from './components/StepIndicator'
 
@@ -10,6 +11,7 @@ const steps = [
   { path: '/', label: 'Upload', icon: UploadIcon },
   { path: '/analysis', label: 'Analysis', icon: ChartIcon },
   { path: '/products', label: 'Products', icon: BoxIcon },
+  { path: '/benefits', label: 'ROI Projection', icon: TrendingUpIcon },
   { path: '/report', label: 'Report', icon: FileIcon },
   { path: '/proposals/PINAXIS-System-Architecture-Document.html', label: 'MCP Architecture', icon: ArchitectureIcon, external: true }
 ]
@@ -46,6 +48,14 @@ function FileIcon({ className }) {
   )
 }
 
+function TrendingUpIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+    </svg>
+  )
+}
+
 function ArchitectureIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -77,7 +87,8 @@ export default function App({ onLogout, userEmail }) {
   const getCurrentStep = () => {
     if (location.pathname.startsWith('/analysis')) return 1
     if (location.pathname.startsWith('/products')) return 2
-    if (location.pathname.startsWith('/report')) return 3
+    if (location.pathname.startsWith('/benefits')) return 3
+    if (location.pathname.startsWith('/report')) return 4
     return 0
   }
 
@@ -214,6 +225,7 @@ export default function App({ onLogout, userEmail }) {
             <Route path="/" element={<UploadPage />} />
             <Route path="/analysis/:projectId" element={<AnalysisPage />} />
             <Route path="/products/:projectId" element={<ProductsPage />} />
+            <Route path="/benefits/:projectId" element={<BenefitsPage />} />
             <Route path="/report/:projectId" element={<ReportPage />} />
           </Routes>
         </div>
