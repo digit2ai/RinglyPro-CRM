@@ -374,6 +374,14 @@ async function generate(project) {
         {
           width: '*',
           stack: [
+            { text: 'PROJECT ID', fontSize: 8, color: COLORS.gray, characterSpacing: 1.5 },
+            { text: String(project.id || '—'), fontSize: 12, color: COLORS.navy, bold: true, margin: [0, 3, 0, 0] }
+          ],
+          alignment: 'center'
+        },
+        {
+          width: '*',
+          stack: [
             { text: 'PROJECT CODE', fontSize: 8, color: COLORS.gray, characterSpacing: 1.5 },
             { text: project.project_code || '—', fontSize: 12, color: COLORS.navy, bold: true, margin: [0, 3, 0, 0] }
           ],
