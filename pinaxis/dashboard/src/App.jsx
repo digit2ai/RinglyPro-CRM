@@ -274,7 +274,7 @@ export default function App({ onLogout, userEmail }) {
       </main>
 
       {/* ElevenLabs Voice Agent Widget */}
-      <elevenlabs-convai agent-id="agent_0001kjqqxr4nfcxvar5ve7prp2vm"></elevenlabs-convai>
+      <elevenlabs-convai agent-id="agent_1801kjx55tabedbvx4y7x4eptbz4"></elevenlabs-convai>
     </div>
   )
 }
