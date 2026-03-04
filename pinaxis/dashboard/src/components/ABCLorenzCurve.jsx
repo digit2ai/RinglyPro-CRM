@@ -30,7 +30,18 @@ const CustomTooltip = ({ active, payload }) => {
 export default function ABCLorenzCurve({ data = {} }) {
   const lorenzPoints = data.lorenz_curve || data.lorenz || []
   const gini = data.gini_coefficient ?? data.gini
-  const abcSummary = data.abc_summary || data.classes || []
+  const rawSummary = data.abc_summary || data.classes || []
+  // Convert object {A: {...}, B: {...}} to array [{class: 'A', ...}, ...]
+  const abcSummary = Array.isArray(rawSummary)
+    ? rawSummary
+    : typeof rawSummary === 'object' && rawSummary !== null
+      ? Object.entries(rawSummary).map(([key, val]) => ({
+          class: key,
+          count: val.count || 0,
+          sku_pct: val.pct || 0,
+          volume_pct: val.volume_pct || 0
+        }))
+      : []
 
   if (!lorenzPoints.length) {
     return (

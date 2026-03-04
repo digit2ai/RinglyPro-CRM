@@ -39,7 +39,10 @@ export default function FitAnalysisTable({ data = [] }) {
         <tbody>
           {sorted.map((row, index) => {
             const name = row.bin_name || row.name || row.label || `Bin ${index + 1}`
-            const dimensions = row.dimensions || row.size || ''
+            const rawDim = row.dimensions || row.size || ''
+            const dimensions = typeof rawDim === 'object' && rawDim !== null
+              ? `${rawDim.length || 0} x ${rawDim.width || 0} x ${rawDim.height || 0}`
+              : String(rawDim)
             const skusFit = row.skus_fit ?? row.fit_count ?? row.count ?? 0
             const fitPct = row.fit_pct ?? row.fit_percentage ?? row.pct ?? 0
             const colors = getFitColor(fitPct)
