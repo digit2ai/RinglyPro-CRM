@@ -14,18 +14,33 @@
       min-height: 100vh;
     }
     .header {
-      background: linear-gradient(135deg, #000 0%, #111 100%);
+      background: #000;
       border-bottom: 2px solid #ff4444;
-      padding: 30px 20px;
+      padding: 50px 20px 30px;
       text-align: center;
     }
-    .header h1 {
-      font-size: 28px;
-      color: #fff;
-      letter-spacing: 2px;
-      margin-bottom: 5px;
+    .hero-logo {
+      width: 180px;
+      height: 180px;
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      background: #1A1A1A;
+      border: 1px solid #2A2A2A;
+      overflow: hidden;
+      animation: glow-pulse 2s ease-in-out infinite;
     }
-    .header h1 span { color: #ff4444; }
+    .hero-logo img {
+      width: 140px;
+      height: 140px;
+      object-fit: contain;
+    }
+    @keyframes glow-pulse {
+      0%, 100% { box-shadow: 0 0 40px rgba(232, 90, 79, 0.3); }
+      50% { box-shadow: 0 0 60px rgba(232, 90, 79, 0.5); }
+    }
     .header .subtitle {
       color: #8899aa;
       font-size: 14px;
@@ -372,9 +387,10 @@
     @media (max-width: 600px) {
       .container { padding: 20px 15px; }
       .form-row { flex-direction: column; gap: 8px; }
-      .header h1 { font-size: 22px; }
       .contract-title h2 { font-size: 20px; }
       .btn-submit { width: 100%; padding: 15px; }
+      .hero-logo { width: 140px; height: 140px; }
+      .hero-logo img { width: 110px; height: 110px; }
     }
   </style>
 </head>
@@ -386,8 +402,9 @@
 
 <div id="mainContent">
   <div class="header">
-    <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/698d318b7f6dcf1134316df1.png" alt="KanchoAI" style="height:60px; margin-bottom:10px;">
-    <h1><span>Kancho</span>AI</h1>
+    <div class="hero-logo">
+      <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/698d318b7f6dcf1134316df1.png" alt="KanchoAI">
+    </div>
     <div class="subtitle">PARTNERSHIP AGREEMENT</div>
     <div id="viewBadge" style="display:none" class="view-badge">Signed Contract — Read Only</div>
   </div>
