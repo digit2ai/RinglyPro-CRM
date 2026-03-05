@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OEE Dashboard — Shop Floor Monitor</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --card: #1a1d27;
+      --border: #2a2d3a;
+      --text: #e4e6ed;
+      --muted: #8b8fa3;
+      --green: #22c55e;
+      --yellow: #eab308;
+      --red: #ef4444;
+      --blue: #3b82f6;
+      --orange: #f97316;
+      --purple: #a855f7;
+      --cyan: #06b6d4;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .header {
+      background: linear-gradient(135deg, #1e2235 0%, #151826 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .logo {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--blue), var(--purple));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px;
+    }
+    .header h1 { font-size: 18px; font-weight: 600; }
+    .header h1 span { color: var(--muted); font-weight: 400; }
+    .header-right { display: flex; gap: 10px; align-items: center; }
+    .live-badge {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(34,197,94,0.12); color: var(--green);
+      padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    }
+    .live-dot {
+      width: 8px; height: 8px; background: var(--green);
+      border-radius: 50%; animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .btn {
+      padding: 8px 16px; border: 1px solid var(--border);
+      border-radius: 8px; background: var(--card); color: var(--text);
+      cursor: pointer; font-size: 13px; font-weight: 500;
+      transition: all 0.2s;
+    }
+    .btn:hover { background: #252838; border-color: #3a3d4a; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--blue), #2563eb);
+      border-color: var(--blue); color: white;
+    }
+    .btn-primary:hover { filter: brightness(1.1); }
+    .btn-seed {
+      background: linear-gradient(135deg, var(--green), #16a34a);
+      border-color: var(--green); color: white;
+    }
+    .btn-seed:hover { filter: brightness(1.1); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .main { padding: 20px 24px; max-width: 1400px; margin: 0 auto; }
+
+    /* Floor Summary Cards */
+    .floor-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .summary-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .summary-card .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .summary-card .value { font-size: 32px; font-weight: 700; margin-top: 4px; }
+    .summary-card .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .summary-card::after {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    }
+    .summary-card.oee::after { background: linear-gradient(90deg, var(--blue), var(--purple)); }
+    .summary-card.running::after { background: var(--green); }
+    .summary-card.stopped::after { background: var(--red); }
+    .summary-card.idle::after { background: var(--yellow); }
+    .summary-card.fault::after { background: var(--orange); }
+    .summary-card.total::after { background: var(--cyan); }
+
+    /* OEE Gauge */
+    .oee-value { color: var(--blue); }
+    .oee-value.good { color: var(--green); }
+    .oee-value.warning { color: var(--yellow); }
+    .oee-value.bad { color: var(--red); }
+
+    /* Machines Grid */
+    .section-title {
+      font-size: 16px; font-weight: 600; margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .machines-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .machine-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      transition: border-color 0.2s;
+    }
+    .machine-card:hover { border-color: #3a3d4a; }
+    .machine-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 14px;
+    }
+    .machine-name { font-weight: 600; font-size: 15px; }
+    .machine-line { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .status-badge {
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+    }
+    .status-running { background: rgba(34,197,94,0.15); color: var(--green); }
+    .status-stopped { background: rgba(239,68,68,0.15); color: var(--red); }
+    .status-idle { background: rgba(234,179,8,0.15); color: var(--yellow); }
+    .status-fault { background: rgba(249,115,22,0.15); color: var(--orange); }
+    .status-unknown { background: rgba(139,143,163,0.15); color: var(--muted); }
+
+    .machine-oee-bar {
+      margin-bottom: 12px;
+    }
+    .oee-bar-header {
+      display: flex; justify-content: space-between; margin-bottom: 4px;
+    }
+    .oee-bar-header span { font-size: 12px; color: var(--muted); }
+    .oee-bar-header strong { font-size: 14px; font-weight: 700; }
+    .oee-bar-track {
+      height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px;
+      overflow: hidden;
+    }
+    .oee-bar-fill {
+      height: 100%; border-radius: 4px;
+      transition: width 0.8s ease;
+    }
+
+    .machine-metrics {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
+    }
+    .metric {
+      text-align: center;
+      padding: 8px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 8px;
+    }
+    .metric .metric-label { font-size: 10px; color: var(--muted); text-transform: uppercase; }
+    .metric .metric-value { font-size: 16px; font-weight: 600; margin-top: 2px; }
+
+    /* Downtime Table */
+    .downtime-section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; font-size: 11px; color: var(--muted); text-transform: uppercase;
+         letter-spacing: 0.5px; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+    td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    tr:last-child td { border-bottom: none; }
+    .downtime-bar {
+      height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px;
+      overflow: hidden; min-width: 80px;
+    }
+    .downtime-bar-fill { height: 100%; background: var(--red); border-radius: 3px; }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      background: var(--card);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+    }
+    .empty-state svg { width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.4; }
+    .empty-state h3 { font-size: 16px; margin-bottom: 8px; }
+    .empty-state p { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+
+    /* Loading */
+    .spinner {
+      display: inline-block; width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: white; border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .refresh-timer { font-size: 11px; color: var(--muted); }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .floor-summary { grid-template-columns: repeat(3, 1fr); }
+      .machines-grid { grid-template-columns: 1fr; }
+      .header { flex-direction: column; gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-left">
+      <div class="logo">OEE</div>
+      <h1>Shop Floor Monitor <span>/ OEE Dashboard</span></h1>
+    </div>
+    <div class="header-right">
+      <span class="refresh-timer" id="timer">Refreshes in 30s</span>
+      <div class="live-badge"><div class="live-dot"></div> LIVE</div>
+      <button class="btn btn-seed" id="seedBtn" onclick="seedDemo()">Seed Demo Data</button>
+      <button class="btn btn-primary" onclick="refreshAll()">Refresh</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="floor-summary" id="floorSummary">
+      <div class="summary-card oee">
+        <div class="label">Floor OEE</div>
+        <div class="value oee-value" id="floorOEE">—</div>
+        <div class="sub" id="floorOEELabel">Loading...</div>
+      </div>
+      <div class="summary-card running">
+        <div class="label">Running</div>
+        <div class="value" id="countRunning" style="color:var(--green)">—</div>
+        <div class="sub">machines</div>
+      </div>
+      <div class="summary-card stopped">
+        <div class="label">Stopped</div>
+        <div class="value" id="countStopped" style="color:var(--red)">—</div>
+        <div class="sub">machines</div>
+      </div>
+      <div class="summary-card idle">
+        <div class="label">Idle</div>
+        <div class="value" id="countIdle" style="color:var(--yellow)">—</div>
+        <div class="sub">machines</div>
+      </div>
+      <div class="summary-card fault">
+        <div class="label">Faults</div>
+        <div class="value" id="countFault" style="color:var(--orange)">—</div>
+        <div class="sub">machines</div>
+      </div>
+      <div class="summary-card total">
+        <div class="label">Total Machines</div>
+        <div class="value" id="countTotal" style="color:var(--cyan)">—</div>
+        <div class="sub">active</div>
+      </div>
+    </div>
+
+    <div class="section-title">Machines — Live Status & OEE</div>
+    <div id="machinesContainer" class="machines-grid">
+      <div class="empty-state">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 0-6.23.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/></svg>
+        <h3>No Machines Found</h3>
+        <p>Click "Seed Demo Data" to generate a realistic shop floor with 6 machines, production runs, and status events.</p>
+      </div>
+    </div>
+
+    <div class="section-title">Downtime Analysis — Last 24 Hours</div>
+    <div class="downtime-section" id="downtimeSection">
+      <table>
+        <thead>
+          <tr>
+            <th>Reason</th>
+            <th>Occurrences</th>
+            <th>Total Minutes</th>
+            <th>Impact</th>
+          </tr>
+        </thead>
+        <tbody id="downtimeBody">
+          <tr><td colspan="4" style="text-align:center;color:var(--muted);">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin + '/api/oee';
+    const TENANT_ID = 1;
+    let refreshInterval;
+    let countdown = 30;
+
+    function getOEEColor(value) {
+      if (value >= 85) return 'good';
+      if (value >= 60) return 'warning';
+      return 'bad';
+    }
+
+    function getBarColor(value) {
+      if (value >= 85) return 'var(--green)';
+      if (value >= 60) return 'var(--yellow)';
+      return 'var(--red)';
+    }
+
+    async function apiCall(method, path, body) {
+      const opts = { method, headers: { 'Content-Type': 'application/json' } };
+      if (body) opts.body = JSON.stringify(body);
+      const res = await fetch(API_BASE + path, opts);
+      return res.json();
+    }
+
+    async function loadFloorSummary() {
+      try {
+        const res = await apiCall('POST', '/tools/call', {
+          name: 'get_floor_summary',
+          input: { tenant_id: TENANT_ID }
+        });
+        if (!res.success) return;
+        const d = res.data;
+        document.getElementById('floorOEE').textContent = d.floorOEE !== null ? d.floorOEE + '%' : '—';
+        document.getElementById('floorOEE').className = 'value oee-value ' + (d.floorOEE !== null ? getOEEColor(d.floorOEE) : '');
+        document.getElementById('floorOEELabel').textContent = d.floorOEE !== null ? (d.floorOEE >= 85 ? 'World Class' : d.floorOEE >= 60 ? 'Acceptable' : 'Needs Improvement') : 'No data';
+        document.getElementById('countRunning').textContent = d.running;
+        document.getElementById('countStopped').textContent = d.stopped;
+        document.getElementById('countIdle').textContent = d.idle;
+        document.getElementById('countFault').textContent = d.fault;
+        document.getElementById('countTotal').textContent = d.totalMachines;
+      } catch (e) { console.error('Floor summary error:', e); }
+    }
+
+    async function loadMachines() {
+      try {
+        const statusRes = await apiCall('POST', '/tools/call', {
+          name: 'get_machine_status',
+          input: { tenant_id: TENANT_ID }
+        });
+        if (!statusRes.success || !statusRes.data.machines.length) {
+          document.getElementById('machinesContainer').innerHTML = `
+            <div class="empty-state" style="grid-column:1/-1">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 0-6.23.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/></svg>
+              <h3>No Machines Found</h3>
+              <p>Click "Seed Demo Data" to generate a realistic shop floor with 6 machines, production runs, and events.</p>
+            </div>`;
+          return;
+        }
+
+        const machines = statusRes.data.machines;
+
+        // Fetch OEE for each machine
+        const oeePromises = machines.map(m =>
+          apiCall('POST', '/tools/call', {
+            name: 'get_oee_report',
+            input: { machine_id: m.id, tenant_id: TENANT_ID }
+          }).catch(() => null)
+        );
+        const oeeResults = await Promise.all(oeePromises);
+
+        let html = '';
+        machines.forEach((m, idx) => {
+          const oee = oeeResults[idx]?.data || {};
+          const hasOEE = oee.oee !== undefined && oee.oee !== null;
+          const oeeVal = hasOEE ? oee.oee : 0;
+
+          html += `
+            <div class="machine-card">
+              <div class="machine-header">
+                <div>
+                  <div class="machine-name">${m.name}</div>
+                  <div class="machine-line">${m.line || 'No line'} ${m.reason ? '— ' + m.reason : ''}</div>
+                </div>
+                <span class="status-badge status-${m.current_status}">${m.current_status}</span>
+              </div>
+              <div class="machine-oee-bar">
+                <div class="oee-bar-header">
+                  <span>OEE Score</span>
+                  <strong style="color:${hasOEE ? getBarColor(oeeVal) : 'var(--muted)'}">${hasOEE ? oeeVal + '%' : 'N/A'}</strong>
+                </div>
+                <div class="oee-bar-track">
+                  <div class="oee-bar-fill" style="width:${hasOEE ? oeeVal : 0}%;background:${getBarColor(oeeVal)}"></div>
+                </div>
+              </div>
+              <div class="machine-metrics">
+                <div class="metric">
+                  <div class="metric-label">Availability</div>
+                  <div class="metric-value" style="color:${hasOEE ? getBarColor(oee.availability) : 'var(--muted)'}">${hasOEE ? oee.availability + '%' : '—'}</div>
+                </div>
+                <div class="metric">
+                  <div class="metric-label">Performance</div>
+                  <div class="metric-value" style="color:${hasOEE ? getBarColor(oee.performance) : 'var(--muted)'}">${hasOEE ? oee.performance + '%' : '—'}</div>
+                </div>
+                <div class="metric">
+                  <div class="metric-label">Quality</div>
+                  <div class="metric-value" style="color:${hasOEE ? getBarColor(oee.quality) : 'var(--muted)'}">${hasOEE ? oee.quality + '%' : '—'}</div>
+                </div>
+              </div>
+            </div>`;
+        });
+
+        document.getElementById('machinesContainer').innerHTML = html;
+      } catch (e) {
+        console.error('Machines load error:', e);
+      }
+    }
+
+    async function loadDowntime() {
+      try {
+        const res = await apiCall('POST', '/tools/call', {
+          name: 'get_downtime_summary',
+          input: { tenant_id: TENANT_ID }
+        });
+        if (!res.success || !res.data.reasons.length) {
+          document.getElementById('downtimeBody').innerHTML =
+            '<tr><td colspan="4" style="text-align:center;color:var(--muted);">No downtime events recorded</td></tr>';
+          return;
+        }
+
+        const maxMin = Math.max(...res.data.reasons.map(r => r.total_minutes));
+        let html = '';
+        res.data.reasons.forEach(r => {
+          const pct = maxMin > 0 ? (r.total_minutes / maxMin * 100) : 0;
+          html += `
+            <tr>
+              <td>${r.reason}</td>
+              <td>${r.occurrences}</td>
+              <td>${r.total_minutes} min</td>
+              <td><div class="downtime-bar"><div class="downtime-bar-fill" style="width:${pct}%"></div></div></td>
+            </tr>`;
+        });
+        html += `
+          <tr style="font-weight:600;border-top:1px solid var(--border)">
+            <td>Total</td>
+            <td></td>
+            <td>${res.data.grand_total_downtime_min} min</td>
+            <td></td>
+          </tr>`;
+
+        document.getElementById('downtimeBody').innerHTML = html;
+      } catch (e) {
+        console.error('Downtime load error:', e);
+      }
+    }
+
+    async function seedDemo() {
+      const btn = document.getElementById('seedBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Seeding...';
+      try {
+        const res = await apiCall('POST', '/demo-seed', { tenant_id: TENANT_ID });
+        if (res.success) {
+          btn.textContent = 'Seeded!';
+          setTimeout(() => { btn.textContent = 'Seed Demo Data'; btn.disabled = false; }, 2000);
+          await refreshAll();
+        } else {
+          btn.textContent = 'Error: ' + (res.error || 'Unknown');
+          setTimeout(() => { btn.textContent = 'Seed Demo Data'; btn.disabled = false; }, 3000);
+        }
+      } catch (e) {
+        btn.textContent = 'Error';
+        setTimeout(() => { btn.textContent = 'Seed Demo Data'; btn.disabled = false; }, 3000);
+      }
+    }
+
+    async function refreshAll() {
+      countdown = 30;
+      await Promise.all([loadFloorSummary(), loadMachines(), loadDowntime()]);
+    }
+
+    // Auto-refresh every 30 seconds
+    function startTimer() {
+      setInterval(() => {
+        countdown--;
+        if (countdown <= 0) {
+          countdown = 30;
+          refreshAll();
+        }
+        document.getElementById('timer').textContent = `Refreshes in ${countdown}s`;
+      }, 1000);
+    }
+
+    // Init
+    refreshAll();
+    startTimer();
+  </script>
+</body>
+</html>

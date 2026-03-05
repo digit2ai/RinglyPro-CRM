@@ -532,6 +532,140 @@ router.post('/webhooks/machine-event', async (req, res) => {
   }
 });
 
+// ============================================================================
+// POST /demo-seed — Generate realistic demo data for client demos
+// ============================================================================
+router.post('/demo-seed', async (req, res) => {
+  try {
+    const tenant_id = parseInt(req.body.tenant_id) || 1;
+
+    // Clear existing demo data for this tenant
+    await sequelize.query(`
+      DELETE FROM machine_events WHERE machine_id IN (SELECT id FROM machines WHERE tenant_id = :tenant_id);
+      DELETE FROM production_runs WHERE machine_id IN (SELECT id FROM machines WHERE tenant_id = :tenant_id);
+      DELETE FROM machines WHERE tenant_id = :tenant_id;
+    `, { replacements: { tenant_id } });
+
+    // Create 6 realistic machines
+    const machineData = [
+      { name: 'CNC-Lathe-01', line: 'Line A', expectedCycleTimeSec: 45 },
+      { name: 'CNC-Mill-02', line: 'Line A', expectedCycleTimeSec: 60 },
+      { name: 'Injection-Mold-03', line: 'Line B', expectedCycleTimeSec: 30 },
+      { name: 'Assembly-Robot-04', line: 'Line B', expectedCycleTimeSec: 20 },
+      { name: 'Packaging-05', line: 'Line C', expectedCycleTimeSec: 15 },
+      { name: 'Quality-Station-06', line: 'Line C', expectedCycleTimeSec: 25 }
+    ];
+
+    const machines = [];
+    for (const m of machineData) {
+      const machine = await Machine.create({
+        tenantId: tenant_id,
+        name: m.name,
+        line: m.line,
+        expectedCycleTimeSec: m.expectedCycleTimeSec
+      });
+      machines.push(machine);
+    }
+
+    const now = new Date();
+    const shiftStart = new Date(now);
+    shiftStart.setHours(6, 0, 0, 0);
+    const shiftEnd = new Date(now);
+    shiftEnd.setHours(14, 0, 0, 0);
+
+    const statuses = ['running', 'stopped', 'idle', 'fault'];
+    const stopReasons = [
+      'Material changeover', 'Tool wear replacement', 'Scheduled maintenance',
+      'Conveyor jam', 'Sensor calibration', 'Operator break',
+      'Raw material shortage', 'Quality hold'
+    ];
+    const faultReasons = [
+      'Spindle overheating', 'Hydraulic pressure drop', 'E-Stop triggered',
+      'Motor overload', 'Communication timeout'
+    ];
+
+    // Current status profile (for realistic floor summary)
+    const currentStatuses = ['running', 'running', 'running', 'stopped', 'running', 'idle'];
+
+    let eventRows = [];
+
+    for (let i = 0; i < machines.length; i++) {
+      const machine = machines[i];
+      const cycleTimeSec = machineData[i].expectedCycleTimeSec;
+
+      // Generate events every 10-30 minutes during the shift
+      let t = new Date(shiftStart);
+      while (t < now && t < shiftEnd) {
+        const rnd = Math.random();
+        let status, reason;
+        if (rnd < 0.65) {
+          status = 'running'; reason = null;
+        } else if (rnd < 0.82) {
+          status = 'stopped';
+          reason = stopReasons[Math.floor(Math.random() * stopReasons.length)];
+        } else if (rnd < 0.93) {
+          status = 'idle'; reason = 'Waiting for parts';
+        } else {
+          status = 'fault';
+          reason = faultReasons[Math.floor(Math.random() * faultReasons.length)];
+        }
+
+        eventRows.push({
+          machineId: machine.id,
+          status,
+          reason,
+          recordedAt: new Date(t)
+        });
+
+        // Advance 10-30 min
+        t = new Date(t.getTime() + (10 + Math.random() * 20) * 60 * 1000);
+      }
+
+      // Ensure the latest event matches our designed current status
+      eventRows.push({
+        machineId: machine.id,
+        status: currentStatuses[i],
+        reason: currentStatuses[i] === 'stopped' ? 'Material changeover' : null,
+        recordedAt: new Date(now.getTime() - 60000) // 1 min ago
+      });
+
+      // Create production run for today
+      const plannedMin = (Math.min(now.getTime(), shiftEnd.getTime()) - shiftStart.getTime()) / 60000;
+      const partsPerMin = 60 / cycleTimeSec;
+      const maxParts = Math.floor(partsPerMin * plannedMin * (0.7 + Math.random() * 0.25));
+      const goodParts = Math.floor(maxParts * (0.92 + Math.random() * 0.07));
+
+      await ProductionRun.create({
+        machineId: machine.id,
+        shiftStart,
+        shiftEnd: now > shiftEnd ? shiftEnd : null,
+        plannedProductionTimeMin: Math.round(plannedMin),
+        totalParts: maxParts,
+        goodParts,
+        actualCycleTimeSec: cycleTimeSec * (0.95 + Math.random() * 0.15)
+      });
+    }
+
+    // Bulk insert events in chunks
+    const chunkSize = 500;
+    for (let j = 0; j < eventRows.length; j += chunkSize) {
+      await MachineEvent.bulkCreate(eventRows.slice(j, j + chunkSize));
+    }
+
+    res.json({
+      success: true,
+      message: `Demo data seeded for tenant ${tenant_id}`,
+      machines_created: machines.length,
+      events_created: eventRows.length,
+      production_runs_created: machines.length,
+      tenant_id
+    });
+  } catch (error) {
+    console.error('OEE demo seed error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Health check
 router.get('/health', (req, res) => {
   res.json({
