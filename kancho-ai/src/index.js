@@ -3410,12 +3410,15 @@ app.get('/es', (req, res) => {
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 120px;
+      min-height: 180px;
     }
     #voiceWidgetContainer elevenlabs-convai {
       position: relative !important;
       bottom: auto !important;
       right: auto !important;
+      transform: scale(1.8);
+      transform-origin: center center;
+      margin: 30px 0;
     }
     elevenlabs-convai::part(powered-by) {
       display: none !important;
@@ -7257,12 +7260,15 @@ app.get('*', (req, res) => {
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 120px;
+      min-height: 180px;
     }
     #voiceWidgetContainer elevenlabs-convai {
       position: relative !important;
       bottom: auto !important;
       right: auto !important;
+      transform: scale(1.8);
+      transform-origin: center center;
+      margin: 30px 0;
     }
     /* Hide the powered-by branding */
     elevenlabs-convai::part(powered-by) {
