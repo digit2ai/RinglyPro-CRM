@@ -208,7 +208,7 @@ router.post('/register', async (req, res) => {
             business_hours: businessHours,
             services: services,
             terms_accepted: termsAccepted,
-            free_trial_minutes: 100,
+            free_trial_minutes: 0,
             onboarding_completed: false,
             // Subscription fields
             subscription_plan: selectedPlan,
@@ -272,9 +272,8 @@ router.post('/register', async (req, res) => {
             }],
             mode: 'subscription',
 
-            // 14-day free trial — no charge until trial ends
+            // No trial — client pays immediately
             subscription_data: {
-                trial_period_days: 14,
                 metadata: {
                     userId: user.id.toString(),
                     plan: selectedPlan,
@@ -302,7 +301,7 @@ router.post('/register', async (req, res) => {
         });
 
         console.log(`✅ Stripe checkout session created: ${session.id}`);
-        console.log(`💳 14-day free trial — first charge in 14 days`);
+        console.log(`💳 Subscription active — client charged immediately`);
 
         // Update user with Stripe session info (skip validation)
         await User.update({
@@ -462,17 +461,15 @@ router.post('/complete-setup', async (req, res) => {
         console.log(`👤 User found: ${user.first_name} ${user.last_name} (${user.email})`);
 
         // ==================== UPDATE USER: Activate subscription ====================
-        const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
-
         await User.update({
-            subscription_status: 'trialing',
-            trial_ends_at: trialEndsAt,
+            subscription_status: 'active',
+            trial_ends_at: null,
             tokens_balance: monthlyTokens,
             stripe_customer_id: stripeSession.customer,
             stripe_subscription_id: stripeSession.subscription?.id || stripeSession.subscription || null
         }, { where: { id: userId }, validate: false, transaction });
 
-        console.log(`✅ User subscription activated: trialing until ${trialEndsAt.toISOString()}`);
+        console.log(`✅ User subscription activated: active (no trial)`);
         console.log(`💰 Tokens granted: ${monthlyTokens}`);
 
         // ==================== TWILIO NUMBER PROVISIONING ====================
@@ -769,12 +766,12 @@ router.post('/complete-setup', async (req, res) => {
                     businessPhone: user.business_phone,
                     phoneNumber: user.phone_number,
                     websiteUrl: user.website_url,
-                    freeTrialMinutes: user.free_trial_minutes,
+                    freeTrialMinutes: 0,
                     onboardingCompleted: user.onboarding_completed,
                     subscriptionPlan: selectedPlan,
-                    subscriptionStatus: 'trialing',
+                    subscriptionStatus: 'active',
                     tokensBalance: monthlyTokens,
-                    trialEndsAt: trialEndsAt.toISOString()
+                    trialEndsAt: null
                 },
                 client: {
                     id: client.id,
