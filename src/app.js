@@ -385,6 +385,16 @@ if (ghlMCPRoutes) {
     console.log('⚠️ GoHighLevel MCP routes not available - skipping mount');
 }
 
+// OEE Tracking MCP routes (shop floor monitoring & OEE calculation)
+let mcpOEERoutes = null;
+try {
+    mcpOEERoutes = require('./routes/mcp-oee');
+    app.use('/api/oee', mcpOEERoutes);
+    console.log('🏭 OEE Tracking MCP routes mounted at /api/oee');
+} catch (error) {
+    console.log('⚠️ OEE Tracking routes not available:', error.message);
+}
+
 // ElevenLabs Conversational AI tools routes
 if (elevenlabsToolsRoutes) {
     app.use('/api/elevenlabs/tools', elevenlabsToolsRoutes);

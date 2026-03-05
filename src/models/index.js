@@ -129,6 +129,32 @@ try {
   console.log('Note: A2P model needed for 10DLC SMS verification');
 }
 
+// Import OEE Tracking models
+let Machine;
+let MachineEvent;
+let ProductionRun;
+
+try {
+  Machine = require('./Machine');
+  console.log('Machine model imported successfully');
+} catch (error) {
+  console.log('Machine model not found:', error.message);
+}
+
+try {
+  MachineEvent = require('./MachineEvent');
+  console.log('MachineEvent model imported successfully');
+} catch (error) {
+  console.log('MachineEvent model not found:', error.message);
+}
+
+try {
+  ProductionRun = require('./ProductionRun');
+  console.log('ProductionRun model imported successfully');
+} catch (error) {
+  console.log('ProductionRun model not found:', error.message);
+}
+
 // Initialize models object
 const models = {
   sequelize
@@ -149,6 +175,9 @@ if (Project) models.Project = Project;
 if (ProjectMilestone) models.ProjectMilestone = ProjectMilestone;
 if (ProjectMessage) models.ProjectMessage = ProjectMessage;
 if (A2P) models.A2P = A2P;
+if (Machine) models.Machine = Machine;
+if (MachineEvent) models.MachineEvent = MachineEvent;
+if (ProductionRun) models.ProductionRun = ProductionRun;
 
 // Set up associations if models exist
 if (Contact && Message) {
@@ -397,6 +426,27 @@ if (User && ProjectMessage) {
   }
 }
 
+// OEE Tracking associations
+if (Machine && MachineEvent) {
+  try {
+    Machine.hasMany(MachineEvent, { foreignKey: 'machine_id', as: 'events' });
+    MachineEvent.belongsTo(Machine, { foreignKey: 'machine_id', as: 'machine' });
+    console.log('Machine-MachineEvent associations configured');
+  } catch (error) {
+    console.log('Could not set up Machine-MachineEvent associations:', error.message);
+  }
+}
+
+if (Machine && ProductionRun) {
+  try {
+    Machine.hasMany(ProductionRun, { foreignKey: 'machine_id', as: 'productionRuns' });
+    ProductionRun.belongsTo(Machine, { foreignKey: 'machine_id', as: 'machine' });
+    console.log('Machine-ProductionRun associations configured');
+  } catch (error) {
+    console.log('Could not set up Machine-ProductionRun associations:', error.message);
+  }
+}
+
 // Database synchronization function - safe for production
 const syncDatabase = async (options = {}) => {
   try {
@@ -501,6 +551,34 @@ const syncDatabase = async (options = {}) => {
         console.log('GoogleCalendarIntegration table synchronized - Google Calendar OAuth ready');
       } catch (error) {
         console.log('GoogleCalendarIntegration table sync issues:', error.message);
+      }
+    }
+
+    // Sync OEE Tracking models (Machine must come first due to FK)
+    if (Machine) {
+      try {
+        await syncWithTimeout(Machine, 'Machine');
+        console.log('Machine table synchronized - OEE tracking ready');
+      } catch (error) {
+        console.log('Machine table sync issues:', error.message);
+      }
+    }
+
+    if (MachineEvent) {
+      try {
+        await syncWithTimeout(MachineEvent, 'MachineEvent');
+        console.log('MachineEvent table synchronized');
+      } catch (error) {
+        console.log('MachineEvent table sync issues:', error.message);
+      }
+    }
+
+    if (ProductionRun) {
+      try {
+        await syncWithTimeout(ProductionRun, 'ProductionRun');
+        console.log('ProductionRun table synchronized');
+      } catch (error) {
+        console.log('ProductionRun table sync issues:', error.message);
       }
     }
 
