@@ -8,6 +8,7 @@ import ReportPage from './pages/ReportPage'
 import ApiIntegrationPage from './pages/ApiIntegrationPage'
 import ObservabilityPage from './pages/ObservabilityPage'
 import UserGuidePage from './pages/UserGuidePage'
+import OEEDashboardPage from './pages/OEEDashboardPage'
 import StepIndicator from './components/StepIndicator'
 
 const steps = [
@@ -17,7 +18,7 @@ const steps = [
   { path: '/benefits', label: 'ROI Projection', icon: TrendingUpIcon },
   { path: '/report', label: 'Report', icon: FileIcon },
   { path: '/api-integration', label: 'API Integration', icon: PlugIcon },
-  { path: '/oee-dashboard/', label: 'OEE Dashboard', icon: GaugeIcon, external: true },
+  { path: '/oee-dashboard', label: 'OEE Dashboard', icon: GaugeIcon, noProject: true },
   { path: '/user-guide', label: 'User Guide', icon: BookIcon, noProject: true },
   { path: '/proposals/PINAXIS-System-Architecture-Document.html', label: 'MCP Architecture', icon: ArchitectureIcon, external: true }
 ]
@@ -135,7 +136,8 @@ export default function App({ onLogout, userEmail }) {
     if (location.pathname.startsWith('/benefits')) return 3
     if (location.pathname.startsWith('/report')) return 4
     if (location.pathname.startsWith('/api-integration')) return 5
-    if (location.pathname.startsWith('/observability')) return 6
+    if (location.pathname.startsWith('/oee-dashboard')) return 6
+    if (location.pathname.startsWith('/observability')) return 7
     if (location.pathname.startsWith('/user-guide')) return 7
     return 0
   }
@@ -277,6 +279,7 @@ export default function App({ onLogout, userEmail }) {
             <Route path="/benefits/:projectId" element={<BenefitsPage />} />
             <Route path="/report/:projectId" element={<ReportPage />} />
             <Route path="/api-integration/:projectId" element={<ApiIntegrationPage />} />
+            <Route path="/oee-dashboard" element={<OEEDashboardPage />} />
             <Route path="/observability/:projectId" element={<ObservabilityPage />} />
             <Route path="/observability" element={<ObservabilityPage />} />
             <Route path="/user-guide" element={<UserGuidePage />} />
