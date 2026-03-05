@@ -3764,6 +3764,16 @@ app.get('/es', (req, res) => {
       const maxAttempts = 20;
       const statusEl = document.getElementById('voiceStatus');
 
+      // Check microphone permission first
+      if (navigator.permissions && navigator.permissions.query) {
+        navigator.permissions.query({ name: 'microphone' }).then(function(result) {
+          if (result.state === 'denied') {
+            statusEl.innerHTML = '🎤 Acceso al micrófono bloqueado.<br><span style="font-size:12px;">Haz clic en el ícono de candado 🔒 en la barra de direcciones → Permitir Micrófono → Recarga la página.</span>';
+            statusEl.style.color = '#ff6b6b';
+          }
+        }).catch(function() {});
+      }
+
       function waitForWidget() {
         attempts++;
         if (!widgetElement) return;
@@ -8027,6 +8037,16 @@ app.get('*', (req, res) => {
       let attempts = 0;
       const maxAttempts = 20;
       const statusEl = document.getElementById('voiceStatus');
+
+      // Check microphone permission first
+      if (navigator.permissions && navigator.permissions.query) {
+        navigator.permissions.query({ name: 'microphone' }).then(function(result) {
+          if (result.state === 'denied') {
+            statusEl.innerHTML = '🎤 Microphone access blocked.<br><span style="font-size:12px;">Please click the lock icon 🔒 in your browser address bar → Allow Microphone → Reload the page.</span>';
+            statusEl.style.color = '#ff6b6b';
+          }
+        }).catch(function() {});
+      }
 
       function waitForWidget() {
         attempts++;
