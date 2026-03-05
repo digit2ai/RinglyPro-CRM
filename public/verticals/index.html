@@ -4,365 +4,407 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Digit2AI - Platform Verticals</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0a0a0f;
-      --surface: #13131a;
-      --surface-hover: #1a1a24;
-      --border: #2a2a3a;
+      --bg: #0B0E14;
+      --bg-card: #12161F;
+      --bg-card-hover: #181D28;
+      --border: rgba(255,255,255,0.06);
+      --border-strong: rgba(255,255,255,0.12);
       --accent: #6366f1;
-      --accent-glow: rgba(99,102,241,.25);
-      --text: #e4e4e7;
-      --text-muted: #a1a1aa;
+      --text: #E8ECF1;
+      --text-secondary: #8A94A6;
+      --text-dim: #5A6478;
       --green: #22c55e;
-      --blue: #3b82f6;
-      --orange: #f59e0b;
-      --pink: #ec4899;
-      --cyan: #06b6d4;
       --red: #ef4444;
-      --purple: #a855f7;
+      --cyan: #06b6d4;
+      --font-heading: 'Montserrat', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+      --font-mono: 'Space Mono', monospace;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--bg); color: var(--text); min-height: 100vh;
-    }
+    body { font-family: var(--font-body); background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.7; }
 
-    /* ── Header ── */
-    .header { text-align: center; padding: 60px 24px 20px; position: relative; }
+    /* ── DASHBOARD ── */
+    .header { text-align: center; padding: 80px 24px 40px; position: relative; }
     .header::before {
       content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-      width: 600px; height: 300px;
-      background: radial-gradient(ellipse, var(--accent-glow) 0%, transparent 70%);
+      width: 800px; height: 400px;
+      background: radial-gradient(ellipse, rgba(99,102,241,.07) 0%, transparent 70%);
       pointer-events: none;
     }
-    .logo-img { max-width: 280px; height: auto; }
-    .tagline { color: var(--text-muted); font-size: 18px; margin-top: 8px; }
-    .stats-bar { display: flex; justify-content: center; gap: 40px; margin-top: 30px; flex-wrap: wrap; }
+    .logo-img { max-width: 280px; height: auto; position: relative; }
+    .tagline {
+      font-family: var(--font-heading); color: var(--text-secondary);
+      font-size: 18px; margin-top: 12px; font-weight: 500; position: relative;
+    }
+    .stats-bar { display: flex; justify-content: center; gap: 48px; margin-top: 36px; flex-wrap: wrap; position: relative; }
     .stat { text-align: center; }
-    .stat-value { font-size: 32px; font-weight: 700; color: var(--accent); }
-    .stat-label { font-size: 13px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+    .stat-value { font-family: var(--font-heading); font-size: 36px; font-weight: 800; color: var(--accent); }
+    .stat-label { font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 4px; }
 
-    /* ── Filters ── */
-    .filters { display: flex; justify-content: center; gap: 10px; padding: 24px; flex-wrap: wrap; max-width: 1000px; margin: 0 auto; }
+    .search-container { display: flex; justify-content: center; padding: 0 24px; margin-bottom: 16px; }
+    .search-input {
+      width: 100%; max-width: 520px; padding: 14px 24px; border-radius: 12px;
+      border: 1px solid var(--border); background: var(--bg-card); color: var(--text);
+      font-family: var(--font-body); font-size: 14px; outline: none; transition: border-color .2s;
+    }
+    .search-input::placeholder { color: var(--text-dim); }
+    .search-input:focus { border-color: var(--accent); }
+
+    .filters { display: flex; justify-content: center; gap: 8px; padding: 16px 24px; flex-wrap: wrap; max-width: 1100px; margin: 0 auto; }
     .filter-btn {
-      padding: 8px 18px; border-radius: 20px; border: 1px solid var(--border);
-      background: var(--surface); color: var(--text-muted); cursor: pointer;
-      font-size: 13px; font-weight: 500; transition: all .2s;
+      padding: 8px 18px; border-radius: 8px; border: 1px solid var(--border);
+      background: transparent; color: var(--text-secondary); cursor: pointer;
+      font-family: var(--font-body); font-size: 13px; font-weight: 500; transition: all .2s;
     }
     .filter-btn:hover { border-color: var(--accent); color: var(--text); }
     .filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
-    /* ── Search ── */
-    .search-container { display: flex; justify-content: center; padding: 0 24px; margin-bottom: 10px; }
-    .search-input {
-      width: 100%; max-width: 500px; padding: 12px 20px; border-radius: 12px;
-      border: 1px solid var(--border); background: var(--surface); color: var(--text);
-      font-size: 14px; outline: none; transition: border-color .2s;
-    }
-    .search-input::placeholder { color: var(--text-muted); }
-    .search-input:focus { border-color: var(--accent); }
-
-    /* ── Grid ── */
     .grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-      gap: 20px; padding: 10px 24px 60px; max-width: 1400px; margin: 0 auto;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 20px; padding: 16px 32px 72px; max-width: 1320px; margin: 0 auto;
     }
-
-    /* ── Card ── */
     .card {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
-      padding: 28px; transition: all .3s; cursor: pointer; position: relative; overflow: hidden;
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px;
+      padding: 32px; transition: all .2s ease; cursor: pointer; position: relative; overflow: hidden;
     }
     .card::before {
       content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-      background: var(--card-accent, var(--accent)); opacity: 0; transition: opacity .3s;
+      background: var(--card-accent); opacity: 0; transition: opacity .2s;
     }
-    .card:hover { border-color: var(--card-accent, var(--accent)); transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,.4); }
+    .card:hover {
+      transform: translateY(-2px); border-color: var(--card-accent);
+      box-shadow: 0 8px 32px rgba(0,0,0,.3), 0 0 0 1px var(--card-accent);
+    }
     .card:hover::before { opacity: 1; }
-    .card-header { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+    .card-header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
     .card-icon {
       width: 48px; height: 48px; border-radius: 12px;
-      display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
-    .card-title { font-size: 20px; font-weight: 700; }
-    .card-type { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 2px; }
-    .card-desc { font-size: 14px; line-height: 1.6; color: var(--text-muted); margin-bottom: 16px; }
+    .card-title { font-family: var(--font-heading); font-size: 20px; font-weight: 700; }
+    .card-type { font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; }
+    .card-desc { font-size: 14px; line-height: 1.7; color: var(--text-secondary); margin-bottom: 16px; }
     .card-target {
-      display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--cyan);
-      background: rgba(6,182,212,.1); padding: 4px 12px; border-radius: 20px; margin-bottom: 16px;
+      display: inline-flex; font-family: var(--font-mono); font-size: 11px; color: var(--cyan);
+      background: rgba(6,182,212,.08); padding: 5px 14px; border-radius: 6px; margin-bottom: 16px;
+      letter-spacing: .5px;
     }
-    .features { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
+    .features { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
     .feature-tag {
       font-size: 11px; padding: 4px 10px; border-radius: 6px;
-      background: rgba(255,255,255,.05); color: var(--text-muted); border: 1px solid rgba(255,255,255,.06);
+      background: rgba(255,255,255,.04); color: var(--text-secondary); border: 1px solid var(--border);
     }
-    .card-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 14px; border-top: 1px solid var(--border); }
-    .card-link { font-size: 13px; color: var(--accent); text-decoration: none; font-weight: 500; transition: color .2s; }
+    .card-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 16px; border-top: 1px solid var(--border); }
+    .card-link { font-size: 13px; color: var(--accent); text-decoration: none; font-weight: 600; transition: color .2s; font-family: var(--font-body); }
     .card-link:hover { color: #818cf8; }
-    .card-status { font-size: 11px; padding: 3px 10px; border-radius: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
-    .status-live { background: rgba(34,197,94,.15); color: var(--green); }
+    .status-live { font-family: var(--font-mono); font-size: 10px; padding: 4px 12px; border-radius: 6px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; background: rgba(34,197,94,.12); color: var(--green); }
 
-    /* ── Contact bar ── */
-    .contact-bar { text-align: center; padding: 40px 24px; border-top: 1px solid var(--border); background: var(--surface); }
-    .contact-bar h3 { font-size: 22px; margin-bottom: 8px; }
-    .contact-bar p { color: var(--text-muted); font-size: 14px; }
-    .contact-links { display: flex; justify-content: center; gap: 24px; margin-top: 16px; flex-wrap: wrap; }
-    .contact-link { color: var(--accent); text-decoration: none; font-size: 14px; font-weight: 500; }
+    .contact-bar { text-align: center; padding: 48px 24px; border-top: 1px solid var(--border); }
+    .contact-bar h3 { font-family: var(--font-heading); font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+    .contact-bar p { color: var(--text-secondary); font-size: 15px; }
+    .contact-links { display: flex; justify-content: center; gap: 28px; margin-top: 20px; flex-wrap: wrap; }
+    .contact-link { color: var(--accent); text-decoration: none; font-size: 14px; font-weight: 600; }
     .contact-link:hover { text-decoration: underline; }
     .hidden { display: none !important; }
 
-    /* ── Login overlay ── */
-    .login-overlay {
-      position: fixed; inset: 0; z-index: 9999; background: var(--bg);
-      display: flex; align-items: center; justify-content: center;
-    }
+    /* ── LOGIN ── */
+    .login-overlay { position: fixed; inset: 0; z-index: 9999; background: var(--bg); display: flex; align-items: center; justify-content: center; }
     .login-overlay.authenticated { display: none; }
     .login-box {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px;
       padding: 48px 40px; width: 100%; max-width: 420px; text-align: center; position: relative;
     }
     .login-box::before {
       content: ''; position: absolute; top: -80px; left: 50%; transform: translateX(-50%);
       width: 400px; height: 200px;
-      background: radial-gradient(ellipse, var(--accent-glow) 0%, transparent 70%); pointer-events: none;
+      background: radial-gradient(ellipse, rgba(99,102,241,.1) 0%, transparent 70%); pointer-events: none;
     }
     .login-box .login-logo { max-width: 220px; height: auto; margin-bottom: 8px; }
-    .login-box .login-subtitle { color: var(--text-muted); font-size: 14px; margin-bottom: 32px; }
+    .login-box .login-subtitle { color: var(--text-secondary); font-size: 14px; margin-bottom: 32px; }
     .login-field {
-      width: 100%; padding: 14px 18px; border-radius: 12px; border: 1px solid var(--border);
-      background: var(--bg); color: var(--text); font-size: 14px; outline: none;
-      margin-bottom: 14px; transition: border-color .2s;
+      width: 100%; padding: 14px 18px; border-radius: 10px; border: 1px solid var(--border);
+      background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 14px;
+      outline: none; margin-bottom: 14px; transition: border-color .2s;
     }
-    .login-field::placeholder { color: var(--text-muted); }
+    .login-field::placeholder { color: var(--text-dim); }
     .login-field:focus { border-color: var(--accent); }
     .login-btn {
-      width: 100%; padding: 14px; border-radius: 12px; border: none; background: var(--accent);
-      color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity .2s; margin-top: 4px;
+      width: 100%; padding: 14px; border-radius: 10px; border: none; background: var(--accent);
+      color: #fff; font-family: var(--font-heading); font-size: 15px; font-weight: 600;
+      cursor: pointer; transition: all .2s; margin-top: 4px;
     }
-    .login-btn:hover { opacity: .9; }
+    .login-btn:hover { opacity: .9; transform: translateY(-1px); }
     .login-error { color: var(--red); font-size: 13px; margin-top: 12px; min-height: 20px; }
     .app-content { display: none; }
     .app-content.authenticated { display: block; }
     .logout-btn {
       position: fixed; top: 20px; right: 24px; z-index: 100; padding: 8px 16px;
-      border-radius: 10px; border: 1px solid var(--border); background: var(--surface);
-      color: var(--text-muted); font-size: 13px; cursor: pointer; transition: all .2s;
+      border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card);
+      color: var(--text-secondary); font-family: var(--font-body); font-size: 13px;
+      cursor: pointer; transition: all .2s;
     }
     .logout-btn:hover { border-color: var(--red); color: var(--red); }
 
-    /* ══════════════════════════════════════════
-       PRESENTATION MODE
-       ══════════════════════════════════════════ */
+    /* ══════════════════════════════════════
+       PRESENTATION MODE — Training Page Style
+       ══════════════════════════════════════ */
     .pres-overlay {
       position: fixed; inset: 0; z-index: 5000; background: var(--bg);
       display: none; flex-direction: column; overflow-y: auto;
     }
     .pres-overlay.active { display: flex; }
 
+    /* Fixed top bar */
     .pres-topbar {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 14px 32px; border-bottom: 1px solid var(--border);
-      background: var(--surface); position: sticky; top: 0; z-index: 10; flex-shrink: 0;
+      padding: 0 32px; height: 64px; border-bottom: 1px solid var(--border);
+      background: rgba(11,14,20,.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      position: sticky; top: 0; z-index: 10; flex-shrink: 0;
     }
-    .pres-topbar-left { display: flex; align-items: center; gap: 16px; }
-    .pres-logo-small { height: 28px; opacity: .7; }
-    .pres-counter { color: var(--text-muted); font-size: 13px; font-weight: 500; }
+    .pres-topbar-left { display: flex; align-items: center; gap: 20px; }
+    .pres-logo-small { height: 26px; opacity: .8; }
+    .pres-counter { font-family: var(--font-mono); color: var(--text-dim); font-size: 12px; letter-spacing: 1px; }
     .pres-nav { display: flex; gap: 8px; }
     .pres-nav-btn, .pres-close {
-      padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border);
-      background: var(--surface); color: var(--text-muted); cursor: pointer;
-      font-size: 13px; transition: all .2s;
+      padding: 6px 16px; border-radius: 8px; border: 1px solid var(--border);
+      background: transparent; color: var(--text-secondary); cursor: pointer;
+      font-family: var(--font-body); font-size: 13px; font-weight: 500; transition: all .2s;
     }
     .pres-nav-btn:hover { border-color: var(--accent); color: var(--text); }
-    .pres-nav-btn:disabled { opacity: .3; cursor: default; }
+    .pres-nav-btn:disabled { opacity: .25; cursor: default; }
     .pres-close:hover { border-color: var(--red); color: var(--red); }
 
-    .pres-body {
-      flex: 1; padding: 48px 32px 80px; max-width: 1060px; width: 100%; margin: 0 auto;
-    }
+    /* Main content area */
+    .pres-content { max-width: 1320px; width: 100%; margin: 0 auto; padding: 0 32px; }
 
-    /* Hero */
+    /* ── Hero ── */
     .pres-hero {
-      text-align: center; margin-bottom: 48px; padding: 48px 32px;
-      border-radius: 20px; position: relative; overflow: hidden;
+      text-align: center; padding: 80px 32px 64px; position: relative;
     }
     .pres-hero::before {
-      content: ''; position: absolute; inset: 0;
-      background: radial-gradient(ellipse at top, var(--hero-glow) 0%, transparent 60%);
-      pointer-events: none;
+      content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 900px; height: 450px; pointer-events: none;
     }
-    .pres-icon-lg {
-      width: 88px; height: 88px; border-radius: 22px;
+    .pres-hero-icon {
+      width: 80px; height: 80px; border-radius: 20px;
       display: inline-flex; align-items: center; justify-content: center;
-      margin-bottom: 24px; position: relative;
+      margin-bottom: 28px; position: relative;
     }
-    .pres-icon-lg svg { width: 44px; height: 44px; }
-    .pres-name { font-size: 52px; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 10px; position: relative; }
-    .pres-type-label {
-      font-size: 15px; text-transform: uppercase; letter-spacing: 3px;
-      color: var(--text-muted); font-weight: 600; position: relative;
+    .pres-hero-icon svg { width: 40px; height: 40px; }
+    .pres-hero-name {
+      font-family: var(--font-heading); font-weight: 800;
+      font-size: clamp(36px, 5vw, 56px); letter-spacing: -1.5px;
+      margin-bottom: 12px; position: relative;
     }
-    .pres-status-pill {
-      display: inline-block; margin-top: 20px; padding: 6px 24px; border-radius: 20px;
-      font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
-      background: rgba(34,197,94,.15); color: var(--green); position: relative;
+    .pres-hero-type {
+      font-family: var(--font-mono); font-size: 13px; text-transform: uppercase;
+      letter-spacing: 3px; color: var(--text-dim); font-weight: 700; position: relative;
+    }
+    .pres-hero-badge {
+      display: inline-block; margin-top: 24px; padding: 6px 24px; border-radius: 6px;
+      font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1.5px;
+      background: rgba(34,197,94,.12); color: var(--green); position: relative;
+    }
+    .pres-hero-stats {
+      display: flex; justify-content: center; gap: 48px; margin-top: 40px;
+      flex-wrap: wrap; position: relative;
+    }
+    .pres-hero-stat-val { font-family: var(--font-heading); font-size: 32px; font-weight: 800; }
+    .pres-hero-stat-lbl { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 4px; }
+
+    /* ── Section divider ── */
+    .pres-divider {
+      border: none; height: 1px; margin: 0;
+      background: linear-gradient(90deg, transparent, var(--border-strong), transparent);
     }
 
-    /* Section base */
-    .pres-section {
-      margin-bottom: 24px; padding: 32px; background: var(--surface);
+    /* ── Section wrapper ── */
+    .pres-section-wrap { padding: 72px 0; }
+    .pres-section-label {
+      font-family: var(--font-mono); font-size: 11px; text-transform: uppercase;
+      letter-spacing: 3px; font-weight: 700; margin-bottom: 12px;
+    }
+    .pres-section-heading {
+      font-family: var(--font-heading); font-size: clamp(24px, 3vw, 36px);
+      font-weight: 700; margin-bottom: 16px; letter-spacing: -.5px;
+    }
+    .pres-section-desc {
+      font-size: 16px; color: var(--text-secondary); line-height: 1.7;
+      max-width: 700px; margin-bottom: 40px;
+    }
+
+    /* ── Problem / Solution cards ── */
+    .ps-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .ps-card {
+      padding: 32px; border-radius: 16px; border: 1px solid;
+    }
+    .ps-card.problem {
+      background: rgba(239,68,68,.03); border-color: rgba(239,68,68,.12);
+    }
+    .ps-card.solution {
+      background: rgba(34,197,94,.03); border-color: rgba(34,197,94,.12);
+    }
+    .ps-card-title {
+      font-family: var(--font-mono); font-size: 11px; text-transform: uppercase;
+      letter-spacing: 2px; font-weight: 700; margin-bottom: 20px;
+    }
+    .ps-card-title.problem { color: var(--red); }
+    .ps-card-title.solution { color: var(--green); }
+    .ps-card ul { list-style: none; }
+    .ps-card li {
+      font-size: 15px; line-height: 1.7; color: var(--text); padding: 10px 0;
+      border-bottom: 1px solid var(--border); display: flex; gap: 12px; align-items: flex-start;
+    }
+    .ps-card li:last-child { border-bottom: none; }
+    .ps-bullet {
+      width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 9px;
+    }
+
+    /* ── How It Works ── */
+    .hiw-steps { display: flex; flex-direction: column; gap: 16px; }
+    .hiw-step {
+      display: flex; gap: 20px; padding: 28px 32px; background: var(--bg-card);
+      border: 1px solid var(--border); border-radius: 16px; transition: all .2s;
+    }
+    .hiw-step:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+    .hiw-num {
+      width: 44px; height: 44px; border-radius: 12px; display: flex;
+      align-items: center; justify-content: center; font-family: var(--font-heading);
+      font-size: 18px; font-weight: 800; color: #fff; flex-shrink: 0;
+    }
+    .hiw-text h4 { font-family: var(--font-heading); font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .hiw-text p { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+
+    /* ── Features grid ── */
+    .feat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .feat-card {
+      padding: 32px; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 16px; transition: all .2s;
+    }
+    .feat-card:hover {
+      transform: translateY(-2px); border-color: var(--border-strong);
+    }
+    .feat-icon {
+      width: 48px; height: 48px; border-radius: 12px; display: flex;
+      align-items: center; justify-content: center; margin-bottom: 20px; font-size: 20px;
+    }
+    .feat-name { font-family: var(--font-heading); font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .feat-desc { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+
+    /* ── Use Cases ── */
+    .uc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .uc-card {
+      padding: 28px 32px; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 16px; transition: all .2s;
+    }
+    .uc-card:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+    .uc-label {
+      font-family: var(--font-mono); font-size: 10px; text-transform: uppercase;
+      letter-spacing: 1.5px; font-weight: 700; margin-bottom: 10px;
+    }
+    .uc-text { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+
+    /* ── Metrics row ── */
+    .metrics-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+    .metric-card {
+      text-align: center; padding: 32px 16px; background: var(--bg-card);
       border: 1px solid var(--border); border-radius: 16px;
     }
-    .pres-section-icon {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 32px; height: 32px; border-radius: 8px; margin-right: 10px;
-      vertical-align: middle; font-size: 16px;
-    }
-    .pres-section-title {
-      font-size: 11px; text-transform: uppercase; letter-spacing: 2.5px;
-      color: var(--text-muted); margin-bottom: 16px; font-weight: 700;
-    }
-    .pres-section-body { font-size: 18px; line-height: 1.75; color: var(--text); }
+    .metric-val { font-family: var(--font-heading); font-size: 40px; font-weight: 800; }
+    .metric-lbl { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 8px; }
 
-    /* Problem / Solution split */
-    .pres-problem-solution { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
-    .pres-problem {
-      padding: 28px; background: rgba(239,68,68,.04); border: 1px solid rgba(239,68,68,.15);
-      border-radius: 16px;
+    /* ── ROI ── */
+    .roi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .roi-card {
+      padding: 32px 20px; text-align: center; border-radius: 16px;
+      background: rgba(34,197,94,.03); border: 1px solid rgba(34,197,94,.1);
     }
-    .pres-solution {
-      padding: 28px; background: rgba(34,197,94,.04); border: 1px solid rgba(34,197,94,.15);
-      border-radius: 16px;
-    }
-    .pres-ps-title {
-      font-size: 11px; text-transform: uppercase; letter-spacing: 2.5px;
-      font-weight: 700; margin-bottom: 14px;
-    }
-    .pres-ps-title.problem { color: var(--red); }
-    .pres-ps-title.solution { color: var(--green); }
-    .pres-ps-body { font-size: 16px; line-height: 1.7; color: var(--text); }
-    .pres-ps-body li { margin-bottom: 8px; margin-left: 16px; }
+    .roi-val { font-family: var(--font-heading); font-size: 32px; font-weight: 800; color: var(--green); margin-bottom: 6px; }
+    .roi-lbl { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; }
 
-    /* How it works steps */
-    .pres-steps { display: flex; flex-direction: column; gap: 16px; }
-    .pres-step {
-      display: flex; align-items: flex-start; gap: 16px; padding: 20px;
-      background: rgba(255,255,255,.02); border: 1px solid var(--border); border-radius: 12px;
+    /* ── Timeline ── */
+    .tl-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
+    .tl-item {
+      padding: 28px 20px; text-align: center; border-top: 3px solid;
+      background: var(--bg-card); border-bottom: 1px solid var(--border);
+      border-right: 1px solid var(--border);
     }
-    .pres-step-num {
-      width: 36px; height: 36px; border-radius: 10px; display: flex;
-      align-items: center; justify-content: center; font-size: 15px;
-      font-weight: 700; flex-shrink: 0; color: #fff;
-    }
-    .pres-step-text { font-size: 16px; line-height: 1.6; color: var(--text); }
-    .pres-step-text strong { display: block; margin-bottom: 4px; font-size: 15px; }
+    .tl-item:first-child { border-left: 1px solid var(--border); border-radius: 16px 0 0 16px; }
+    .tl-item:last-child { border-radius: 0 16px 16px 0; }
+    .tl-phase { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 2px; font-weight: 700; margin-bottom: 8px; }
+    .tl-time { font-family: var(--font-heading); font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+    .tl-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
 
-    /* Features grid */
-    .pres-features { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
-    .pres-feature-item {
-      padding: 18px 20px; background: rgba(255,255,255,.025); border: 1px solid var(--border);
-      border-radius: 12px; display: flex; align-items: flex-start; gap: 12px;
+    /* ── Pricing ── */
+    .pricing-card {
+      padding: 32px; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 16px; font-size: 17px; line-height: 1.7;
     }
-    .pres-feature-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 7px; }
-    .pres-feature-name { font-size: 14px; font-weight: 600; color: var(--text); }
-    .pres-feature-desc { font-size: 12px; color: var(--text-muted); margin-top: 3px; line-height: 1.4; }
 
-    /* Metrics row */
-    .pres-metrics { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
-    .pres-metric {
-      text-align: center; padding: 28px 16px; background: var(--surface);
-      border: 1px solid var(--border); border-radius: 16px;
-    }
-    .pres-metric-value { font-size: 40px; font-weight: 800; margin-bottom: 6px; }
-    .pres-metric-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; }
-
-    /* Use cases */
-    .pres-usecases { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    .pres-usecase {
-      padding: 20px; background: rgba(255,255,255,.02); border: 1px solid var(--border);
-      border-radius: 12px;
-    }
-    .pres-usecase-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
-    .pres-usecase-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
-
-    /* ROI */
-    .pres-roi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-    .pres-roi-item {
-      padding: 24px 16px; text-align: center; background: rgba(34,197,94,.04);
-      border: 1px solid rgba(34,197,94,.12); border-radius: 12px;
-    }
-    .pres-roi-value { font-size: 28px; font-weight: 800; color: var(--green); margin-bottom: 4px; }
-    .pres-roi-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-
-    /* Timeline */
-    .pres-timeline { display: flex; gap: 0; align-items: stretch; }
-    .pres-timeline-item {
-      flex: 1; padding: 20px 16px; text-align: center; position: relative;
-      border-top: 3px solid; border-radius: 0;
-    }
-    .pres-timeline-item:first-child { border-radius: 12px 0 0 12px; }
-    .pres-timeline-item:last-child { border-radius: 0 12px 12px 0; }
-    .pres-timeline-phase { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; margin-bottom: 6px; }
-    .pres-timeline-desc { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
-    .pres-timeline-time { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
-
-    /* CTA */
+    /* ── CTA ── */
     .pres-cta {
-      text-align: center; padding: 48px 32px; margin-top: 32px;
-      background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+      text-align: center; padding: 80px 32px; position: relative;
     }
-    .pres-cta-title { font-size: 28px; font-weight: 700; margin-bottom: 12px; }
-    .pres-cta-sub { font-size: 16px; color: var(--text-muted); margin-bottom: 28px; line-height: 1.6; }
+    .pres-cta::before {
+      content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 800px; height: 400px; pointer-events: none;
+    }
+    .pres-cta-title { font-family: var(--font-heading); font-size: clamp(24px, 3vw, 36px); font-weight: 700; margin-bottom: 16px; position: relative; }
+    .pres-cta-sub { font-size: 16px; color: var(--text-secondary); margin-bottom: 36px; line-height: 1.7; max-width: 600px; margin-left: auto; margin-right: auto; position: relative; }
     .pres-cta-btn {
       display: inline-flex; align-items: center; gap: 8px; padding: 16px 36px;
-      border-radius: 14px; color: #fff; text-decoration: none;
-      font-size: 17px; font-weight: 700; transition: all .2s; border: none; cursor: pointer;
+      border-radius: 12px; color: #fff; text-decoration: none;
+      font-family: var(--font-heading); font-size: 16px; font-weight: 700;
+      transition: all .2s; border: none; cursor: pointer; position: relative;
     }
-    .pres-cta-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,.4); }
-    .pres-cta-contact {
-      display: flex; justify-content: center; gap: 32px; margin-top: 20px; flex-wrap: wrap;
+    .pres-cta-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,.4); }
+    .pres-cta-links {
+      display: flex; justify-content: center; gap: 32px; margin-top: 24px; flex-wrap: wrap; position: relative;
     }
-    .pres-cta-link { color: var(--text-muted); text-decoration: none; font-size: 14px; transition: color .2s; }
+    .pres-cta-link { color: var(--text-dim); text-decoration: none; font-size: 14px; font-weight: 500; transition: color .2s; }
     .pres-cta-link:hover { color: var(--text); }
 
-    /* Keyboard hints */
-    .pres-hints { text-align: center; margin-top: 32px; color: var(--text-muted); font-size: 12px; }
+    .pres-footer {
+      text-align: center; padding: 24px; font-family: var(--font-mono);
+      font-size: 11px; color: var(--text-dim); letter-spacing: 1px;
+      border-top: 1px solid var(--border);
+    }
+
+    .pres-hints {
+      text-align: center; padding: 16px; color: var(--text-dim); font-size: 12px;
+      font-family: var(--font-mono);
+    }
     .pres-hints kbd {
-      display: inline-block; padding: 2px 8px; background: var(--surface);
+      display: inline-block; padding: 2px 8px; background: var(--bg-card);
       border: 1px solid var(--border); border-radius: 4px; font-size: 11px;
-      font-family: inherit; margin: 0 2px;
+      font-family: var(--font-mono); margin: 0 3px;
     }
 
-    /* Audience pill */
-    .pres-audience {
-      display: inline-flex; align-items: center; gap: 8px; font-size: 16px;
-      color: var(--cyan); background: rgba(6,182,212,.08); padding: 10px 24px;
-      border-radius: 30px; border: 1px solid rgba(6,182,212,.2);
-    }
-
-    /* Divider */
-    .pres-divider { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
-
-    @media (max-width: 768px) {
-      .grid { grid-template-columns: 1fr; }
-      .stats-bar { gap: 24px; }
-      .header { padding: 40px 16px 10px; }
-      .pres-body { padding: 24px 16px 60px; }
-      .pres-name { font-size: 32px; }
-      .pres-problem-solution { grid-template-columns: 1fr; }
-      .pres-usecases { grid-template-columns: 1fr; }
-      .pres-roi-grid { grid-template-columns: 1fr; }
-      .pres-timeline { flex-direction: column; }
-      .pres-features { grid-template-columns: 1fr; }
-      .pres-topbar { padding: 12px 16px; }
-      .pres-metrics { grid-template-columns: repeat(2, 1fr); }
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; padding: 16px; }
+      .header { padding: 48px 16px 24px; }
+      .pres-content { padding: 0 16px; }
+      .pres-section-wrap { padding: 48px 0; }
+      .ps-grid, .uc-grid { grid-template-columns: 1fr; }
+      .feat-grid { grid-template-columns: 1fr; }
+      .metrics-row { grid-template-columns: repeat(2, 1fr); }
+      .roi-grid { grid-template-columns: 1fr; }
+      .tl-row { grid-template-columns: 1fr; }
+      .tl-item { border-radius: 0 !important; border-left: 1px solid var(--border); }
+      .tl-item:first-child { border-radius: 16px 16px 0 0 !important; }
+      .tl-item:last-child { border-radius: 0 0 16px 16px !important; }
+      .pres-topbar { padding: 0 16px; }
+      .pres-hero { padding: 48px 16px 40px; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Login Overlay -->
+  <!-- Login -->
   <div class="login-overlay" id="loginOverlay">
     <div class="login-box">
       <img src="https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6994a52954da041fa88ac979.png" alt="Digit2AI" class="login-logo">
@@ -374,7 +416,7 @@
     </div>
   </div>
 
-  <!-- App Content -->
+  <!-- App -->
   <div class="app-content" id="appContent">
     <button class="logout-btn" id="logoutBtn">Sign Out</button>
     <div class="header">
@@ -387,9 +429,7 @@
         <div class="stat"><div class="stat-value">3</div><div class="stat-label">Revenue Streams</div></div>
       </div>
     </div>
-    <div class="search-container">
-      <input type="text" class="search-input" placeholder="Search platforms by name, industry, or feature..." id="searchInput">
-    </div>
+    <div class="search-container"><input type="text" class="search-input" placeholder="Search platforms by name, industry, or feature..." id="searchInput"></div>
     <div class="filters">
       <button class="filter-btn active" data-filter="all">All Platforms</button>
       <button class="filter-btn" data-filter="crm">CRM / SaaS</button>
@@ -417,12 +457,12 @@
     </div>
   </div>
 
-  <!-- Presentation Overlay -->
+  <!-- Presentation -->
   <div class="pres-overlay" id="presOverlay">
     <div class="pres-topbar">
       <div class="pres-topbar-left">
         <img src="https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6994a52954da041fa88ac979.png" alt="Digit2AI" class="pres-logo-small">
-        <span class="pres-counter" id="presCounter">1 / 14</span>
+        <span class="pres-counter" id="presCounter"></span>
       </div>
       <div class="pres-nav">
         <button class="pres-nav-btn" id="presPrev">&larr; Prev</button>
@@ -430,1069 +470,167 @@
       </div>
       <button class="pres-close" id="presClose">ESC &times;</button>
     </div>
-    <div class="pres-body" id="presBody"></div>
+    <div id="presBody"></div>
   </div>
 
 <script>
-// ══════════════════════════════════════════════════
-// PLATFORM DATA — FULL PITCH DECK CONTENT
-// ══════════════════════════════════════════════════
-const P = [
-// ─────────────── 0: RinglyPro ───────────────
-{
-  id:'ringlypro', name:'RinglyPro', type:'Flagship AI CRM', cat:'crm', color:'#6366f1',
-  icon:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>',
-  desc:'Multi-tenant AI CRM with 3 voice agents (Rachel, Ana, Lina). Handles calls, appointments, SMS, email in EN + ES.',
-  target:'Professional Services & SMBs',
-  problem:[
-    'Small businesses miss 40-60% of inbound calls, losing $10K+/month in potential revenue',
-    'Hiring a bilingual receptionist costs $3,500+/month with limited availability',
-    'Manual CRM updates lead to lost leads — staff forget to log 30% of interactions',
-    'No unified view across calls, SMS, email, and appointments'
-  ],
-  solution:[
-    '3 AI voice agents (Rachel, Ana, Lina) answer every call 24/7 in English and Spanish',
-    'Automatic CRM logging — every call, SMS, and email is captured without staff effort',
-    'Smart appointment booking with real-time calendar sync and SMS confirmations',
-    'Unified inbox across all channels — nothing falls through the cracks'
-  ],
-  howItWorks:[
-    {t:'Inbound Call Arrives', d:'Customer calls your business number. AI routes to Rachel (English), Ana (Spanish), or Lina based on caller preference and history.'},
-    {t:'AI Handles the Conversation', d:'The voice agent answers questions, checks availability, books appointments, and captures lead information — all in natural conversation.'},
-    {t:'CRM Updates Automatically', d:'Call summary, recording, lead score, and next steps are logged in your CRM instantly. SMS confirmation sent to the customer.'},
-    {t:'You Review & Close', d:'Your dashboard shows every interaction, hot leads flagged, missed follow-ups alerted. You focus on closing, not admin.'}
-  ],
-  features:[
-    {n:'Voice AI (3 Agents)', d:'Rachel, Ana, Lina — each with distinct personas for different client types'},
-    {n:'Bilingual EN/ES', d:'Native-quality conversation in both English and Spanish'},
-    {n:'GoHighLevel Integration', d:'Deep sync with GHL CRM, workflows, calendars, and pipelines'},
-    {n:'Mobile Apps', d:'iOS and Android apps for real-time notifications and management'},
-    {n:'MCP Server', d:'Model Context Protocol for AI-to-AI integrations and automation'},
-    {n:'SMS & Email Automation', d:'Automated follow-ups, confirmations, and drip campaigns'}
-  ],
-  useCases:[
-    {t:'Medical Office', d:'Rachel handles patient calls, books appointments, sends HIPAA-compliant confirmations. Ana serves Spanish-speaking patients.'},
-    {t:'Law Firm', d:'AI qualifies leads by practice area, books consultations, captures case details for attorney review.'},
-    {t:'Home Services', d:'Captures service requests, checks tech availability, dispatches the nearest available provider.'},
-    {t:'Real Estate', d:'Qualifies buyer/seller leads, schedules showings, sends property info automatically.'}
-  ],
-  metrics:[
-    {v:'0%', l:'Missed Calls'},
-    {v:'3', l:'Voice Agents'},
-    {v:'24/7', l:'Availability'},
-    {v:'<$500', l:'/mo vs $3,500 Staff'}
-  ],
-  roi:[
-    {v:'85%', l:'Fewer Missed Calls'},
-    {v:'$10K+', l:'Monthly Revenue Recovered'},
-    {v:'70%', l:'Less Admin Time'}
-  ],
-  timeline:[
-    {phase:'Setup', time:'Day 1', d:'Account creation, phone number porting, GHL connection'},
-    {phase:'Training', time:'Day 2-3', d:'AI learns your business, services, pricing, and FAQs'},
-    {phase:'Testing', time:'Day 4-5', d:'Live test calls, refine responses, staff walkthrough'},
-    {phase:'Go Live', time:'Day 6', d:'Full deployment with monitoring and optimization'}
-  ],
-  pricing:'SaaS subscription starting at $297/month + usage-based per-call fees. Volume discounts available.',
-  url:'https://ringlypro.com', urlLabel:'ringlypro.com',
-},
+// Platform data — kept from previous version (same rich content)
+const P=[{id:'ringlypro',name:'RinglyPro',type:'Flagship AI CRM',cat:'crm',color:'#6366f1',icon:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>',desc:'Multi-tenant AI CRM with 3 voice agents (Rachel, Ana, Lina). Handles calls, appointments, SMS, email in EN + ES.',target:'Professional Services & SMBs',problem:['Small businesses miss 40-60% of inbound calls, losing $10K+/month in potential revenue','Hiring a bilingual receptionist costs $3,500+/month with limited availability','Manual CRM updates lead to lost leads \u2014 staff forget to log 30% of interactions','No unified view across calls, SMS, email, and appointments'],solution:['3 AI voice agents (Rachel, Ana, Lina) answer every call 24/7 in English and Spanish','Automatic CRM logging \u2014 every call, SMS, and email is captured without staff effort','Smart appointment booking with real-time calendar sync and SMS confirmations','Unified inbox across all channels \u2014 nothing falls through the cracks'],howItWorks:[{t:'Inbound Call Arrives',d:'Customer calls your business number. AI routes to Rachel (English), Ana (Spanish), or Lina based on caller preference and history.'},{t:'AI Handles the Conversation',d:'The voice agent answers questions, checks availability, books appointments, and captures lead information \u2014 all in natural conversation.'},{t:'CRM Updates Automatically',d:'Call summary, recording, lead score, and next steps are logged in your CRM instantly. SMS confirmation sent to the customer.'},{t:'You Review & Close',d:'Your dashboard shows every interaction, hot leads flagged, missed follow-ups alerted. You focus on closing, not admin.'}],features:[{n:'Voice AI (3 Agents)',d:'Rachel, Ana, Lina \u2014 each with distinct personas for different client types'},{n:'Bilingual EN/ES',d:'Native-quality conversation in both English and Spanish'},{n:'GoHighLevel Integration',d:'Deep sync with GHL CRM, workflows, calendars, and pipelines'},{n:'Mobile Apps',d:'iOS and Android apps for real-time notifications and management'},{n:'MCP Server',d:'Model Context Protocol for AI-to-AI integrations and automation'},{n:'SMS & Email Automation',d:'Automated follow-ups, confirmations, and drip campaigns'}],useCases:[{t:'Medical Office',d:'Rachel handles patient calls, books appointments, sends HIPAA-compliant confirmations. Ana serves Spanish-speaking patients.'},{t:'Law Firm',d:'AI qualifies leads by practice area, books consultations, captures case details for attorney review.'},{t:'Home Services',d:'Captures service requests, checks tech availability, dispatches the nearest available provider.'},{t:'Real Estate',d:'Qualifies buyer/seller leads, schedules showings, sends property info automatically.'}],metrics:[{v:'0%',l:'Missed Calls'},{v:'3',l:'Voice Agents'},{v:'24/7',l:'Availability'},{v:'<$500',l:'/mo vs $3,500 Staff'}],roi:[{v:'85%',l:'Fewer Missed Calls'},{v:'$10K+',l:'Monthly Revenue Recovered'},{v:'70%',l:'Less Admin Time'}],timeline:[{phase:'Setup',time:'Day 1',d:'Account creation, phone number porting, GHL connection'},{phase:'Training',time:'Day 2-3',d:'AI learns your business, services, pricing, and FAQs'},{phase:'Testing',time:'Day 4-5',d:'Live test calls, refine responses, staff walkthrough'},{phase:'Go Live',time:'Day 6',d:'Full deployment with monitoring and optimization'}],pricing:'SaaS subscription starting at $297/month + usage-based per-call fees. Volume discounts available.',url:'https://ringlypro.com',urlLabel:'ringlypro.com'},{id:'kanchoai',name:'KanchoAI',type:'Martial Arts AI Platform',cat:'sports',color:'#ef4444',icon:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>',desc:'AI voice agent for martial arts schools. Automates retention calls, payment recovery, lead follow-up, and win-back campaigns across 15+ disciplines.',target:'Martial Arts Studios, Dojos & Gyms',problem:['Average martial arts school loses 30-40% of students annually \u2014 most without a single retention call','Failed payments go uncollected for weeks because staff are uncomfortable making collection calls','New leads from walk-ins, website, and social media get a single follow-up call at best','Dropped students rarely get a win-back attempt \u2014 they just disappear'],solution:['AI calls at-risk students with personalized retention messages referencing their belt level, last class, and goals','Automated payment recovery calls \u2014 professional, persistent, and never awkward for your staff','Multi-touch lead follow-up: AI calls, texts, and emails every new lead 5+ times over 14 days','Win-back campaigns automatically reach out to students who left 30, 60, 90 days ago with tailored offers'],howItWorks:[{t:'Health Score Monitoring',d:'AI continuously analyzes attendance patterns, payment history, and engagement signals for every student. Flags at-risk members before they quit.'},{t:'Automated Outreach',d:'When a student shows warning signs (missed 2+ classes, late payment), AI initiates a call using discipline-specific language and the student\'s personal context.'},{t:'Smart Conversations',d:'AI references the student\'s belt level, instructor, and last class. "Hi Sarah, Sensei Mike noticed you haven\'t been to Jiu-Jitsu in 2 weeks \u2014 everything okay?"'},{t:'Results Dashboard',d:'Track retention rates, recovered revenue, and student health scores in real-time. See exactly how many students AI saved this month.'}],features:[{n:'Retention AI',d:'Proactive outreach to at-risk students based on attendance and engagement signals'},{n:'Payment Recovery',d:'Automated collection calls that are professional, persistent, and effective'},{n:'Lead Follow-up',d:'5+ touchpoints over 14 days \u2014 no lead goes cold'},{n:'Win-back Campaigns',d:'Re-engage dropped students at 30/60/90 day intervals with tailored offers'},{n:'Health Scoring',d:'Real-time student risk scores based on attendance, payments, and engagement'},{n:'15+ Disciplines',d:'Trained on terminology for BJJ, Karate, Taekwondo, Judo, Muay Thai, MMA, and more'}],useCases:[{t:'Student Retention',d:'A blue belt misses 3 classes. AI calls: "Hi Jake, Coach noticed you haven\'t been to BJJ open mat \u2014 we saved your spot for Thursday."'},{t:'Payment Recovery',d:'"Hi, this is a courtesy call about your December membership. We can process it today or set up a payment plan \u2014 what works best?"'},{t:'Lead Conversion',d:'Website inquiry gets a call within 5 minutes: "Thanks for your interest in our kids Taekwondo program! I can book a free trial class for this Saturday."'},{t:'Win-back',d:'Student who left 60 days ago: "Hi Maria, Sensei Chen wanted me to let you know about our new Kickboxing schedule \u2014 would you like a free comeback class?"'}],metrics:[{v:'40%',l:'Retention Improvement'},{v:'3x',l:'Payment Recovery Rate'},{v:'15+',l:'Disciplines Supported'},{v:'24/7',l:'AI Calling'}],roi:[{v:'$2,400',l:'Avg Revenue Recovered/mo'},{v:'15+',l:'Students Saved Monthly'},{v:'90%',l:'Less Staff Phone Time'}],timeline:[{phase:'Onboarding',time:'Day 1',d:'Connect your school management software'},{phase:'AI Training',time:'Day 2-3',d:'AI learns your disciplines, instructors, schedule, and tone'},{phase:'Pilot',time:'Week 1',d:'AI handles retention calls for at-risk students'},{phase:'Full Deploy',time:'Week 2',d:'All campaigns active \u2014 retention, recovery, leads, win-back'}],pricing:'Starting at $197/month per location. Volume pricing for multi-location schools.',url:'https://kanchoai.com',urlLabel:'kanchoai.com'},{id:'ronin',name:'Ronin Brotherhood',type:'Martial Arts Community',cat:'sports',color:'#a855f7',icon:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>',desc:'AI-powered martial arts community platform. Connects practitioners, dojos, and instructors with intelligent matchmaking and training analytics.',target:'Practitioners, Instructors & Community Leaders',problem:['Martial artists outside their home dojo have no way to find training partners or open mats nearby','Traveling practitioners waste hours searching social media for places to train','Event organizers have no centralized platform to promote tournaments to the right audience','Training progress is tracked on paper or not at all'],solution:['AI matchmaking connects practitioners with compatible training partners by skill, style, and location','Dojo directory with real-time class schedules, visitor policies, and drop-in booking','Centralized event hub for tournaments, seminars, and workshops with smart recommendations','Training analytics track attendance, techniques, sparring rounds, and progression'],howItWorks:[{t:'Create Your Profile',d:'Martial arts background, rank, disciplines, goals, and location. AI builds your training DNA.'},{t:'Get Smart Matches',d:'AI recommends training partners, dojos, and events based on your profile and goals.'},{t:'Train & Track',d:'Log sessions, rate partners, track techniques. AI identifies patterns and suggests focus areas.'},{t:'Grow the Community',d:'Instructors list dojos, host events, build their following. AI handles promotion to the right audience.'}],features:[{n:'AI Matchmaking',d:'Find training partners by style, rank, weight, and location'},{n:'Dojo Directory',d:'Search, review, and book drop-in sessions worldwide'},{n:'Event Hub',d:'Tournaments, seminars, and workshops with smart filtering'},{n:'Training Analytics',d:'Track sessions, techniques, sparring stats, and progression'},{n:'Rank Verification',d:'Verified belt/rank tied to recognized organizations'},{n:'Community Feed',d:'Share clips, technique breakdowns, and connect with peers'}],useCases:[{t:'Traveling Practitioner',d:'BJJ purple belt visits Austin. Ronin finds 3 academies with open mats and compatible rolling partners.'},{t:'Tournament Organizer',d:'Host lists a Judo championship. AI targets every practitioner within 200 miles at the right rank.'},{t:'School Owner',d:'Dojo gets discovered by 50+ practitioners monthly through the directory. Free marketing channel.'},{t:'Training Analytics',d:'Muay Thai fighter sees she only drills clinch 10% of the time. AI suggests adding 2 clinch sessions/week.'}],metrics:[{v:'AI',l:'Matchmaking'},{v:'Live',l:'Events'},{v:'Global',l:'Directory'},{v:'Free',l:'For Practitioners'}],roi:[{v:'50+',l:'New Leads/mo for Dojos'},{v:'10x',l:'Event Reach vs Social'},{v:'Free',l:'Marketing for Schools'}],timeline:[{phase:'Sign Up',time:'5 min',d:'Create profile, add disciplines and rank'},{phase:'Discover',time:'Day 1',d:'Browse matches, dojos, and events'},{phase:'Connect',time:'Week 1',d:'Book sessions, train with new partners'},{phase:'Grow',time:'Ongoing',d:'Build reputation, track progress'}],pricing:'Free for practitioners. Premium for dojo owners and event organizers from $49/month.',url:'https://aiagent.ringlypro.com/ronin',urlLabel:'ringlypro.com/ronin'},{id:'tunjoracing',name:'TunjoRacing',type:'Sports & Media Platform',cat:'sports',color:'#f59e0b',icon:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',desc:'Full digital platform for IMSA driver Oscar Tunjo. Press portal, e-commerce, race results, sponsorship management, and React admin dashboard.',target:'Professional Athletes, Sports Teams & Media',problem:['Athletes manage their brand across 5+ disconnected platforms','Sponsorship reporting is manual \u2014 takes days to compile','Press inquiries go through personal email with no access control','Merchandise sales use generic platforms without brand integration'],solution:['Single platform unifying website, e-commerce, press portal, and sponsor dashboard','Automated sponsorship reports with media impressions and social reach','Credentialed press portal with authenticated access and media kits','Integrated e-commerce with custom branding and fulfillment tracking'],howItWorks:[{t:'Brand Hub',d:'Public website with race schedule, results, bio, gallery, and news \u2014 all from one admin panel.'},{t:'Press Portal',d:'Credentialed journalists access press releases, hi-res photos, and interview requests.'},{t:'E-Commerce',d:'Branded merchandise store with Stripe payments, inventory, and fulfillment.'},{t:'Sponsor Dashboard',d:'Sponsors see real-time exposure metrics, media coverage, and ROI reports.'}],features:[{n:'React Admin Dashboard',d:'Full admin panel for content, products, and analytics'},{n:'Press Portal',d:'Authenticated access for journalists with media kits'},{n:'E-Commerce Store',d:'Branded merch shop with Stripe and fulfillment'},{n:'Sponsorship Manager',d:'Track sponsor value, exposure, and automated reporting'},{n:'IMSA Integration',d:'Real-time race results, standings, and schedule data'},{n:'Fan Engagement',d:'Newsletter, social integration, and community features'}],useCases:[{t:'Race Weekend',d:'Live results, gallery, and press release published within minutes from the admin app.'},{t:'Sponsor Pitch',d:'Share a live dashboard showing media impressions, social reach, and fan demographics.'},{t:'Merch Drop',d:'Launch merchandise with automated email, social posting, and inventory management.'},{t:'Press Day',d:'Send credentialed access to 50 journalists with media kits and interview booking.'}],metrics:[{v:'IMSA',l:'Racing Series'},{v:'All-in-1',l:'Platform'},{v:'React',l:'Admin Dashboard'},{v:'24/7',l:'Live Updates'}],roi:[{v:'80%',l:'Less Admin Time'},{v:'5-in-1',l:'Platform Consolidation'},{v:'Auto',l:'Sponsor Reports'}],timeline:[{phase:'Discovery',time:'Week 1',d:'Audit platforms, import content, connect data'},{phase:'Build',time:'Week 2-3',d:'Custom branding, store, press portal config'},{phase:'Migration',time:'Week 3',d:'Move from old systems, redirect domains'},{phase:'Launch',time:'Week 4',d:'Go live with full platform and monitoring'}],pricing:'Custom licensing based on athlete/team profile.',url:'https://tunjoracing.com',urlLabel:'tunjoracing.com'},{id:'ordergopro',name:'OrderGoPro',type:'Restaurant Ordering Platform',cat:'foodbev',color:'#22c55e',icon:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>',desc:'AI-powered online ordering for restaurants. Auto-extracts menus from any website. 500+ active businesses, 50K+ orders processed.',target:'Restaurants, Cafes & Food Retail',problem:['Third-party delivery apps charge 15-30% commissions on every order','Building a custom ordering website costs $5K-$15K and takes weeks','Manual menu updates across platforms waste hours and cause errors','Restaurants lose direct customer relationships through third-party apps'],solution:['Zero-commission ordering platform \u2014 keep 100% of your revenue','AI scans your website or menu PDF and builds your ordering page in minutes','Single dashboard to manage menu, pricing, hours, and promotions','Own your customer data \u2014 build direct relationships and drive repeat orders'],howItWorks:[{t:'AI Menu Import',d:'Paste your website URL or upload a menu PDF. AI extracts every item, description, price, and modifier in minutes.'},{t:'Auto-Build Store',d:'AI creates your branded ordering page with your logo, colors, and complete menu. No design skills needed.'},{t:'Accept Orders',d:'Customers order online. Stripe processes payment. You get instant notification with full order details.'},{t:'Grow Revenue',d:'Built-in marketing: email campaigns, promotions, loyalty programs, and analytics for repeat orders.'}],features:[{n:'AI Menu Import',d:'Extract menus from any website URL or PDF \u2014 items, prices, modifiers, photos'},{n:'Stripe Payments',d:'Secure payment processing with instant payouts'},{n:'Real-time Analytics',d:'Track orders, revenue, popular items, peak hours, and behavior'},{n:'Marketing Automation',d:'Email campaigns, SMS promotions, and loyalty rewards'},{n:'Delivery Management',d:'Delivery zone setup, driver tracking, and fee management'},{n:'Multi-location',d:'Manage multiple restaurants from a single dashboard'}],useCases:[{t:'Independent Restaurant',d:'Family pizzeria ditches UberEats (25% commission), launches in 30 minutes. Saves $3K/month in fees.'},{t:'Cafe Chain',d:'5-location coffee chain manages all menus from one dashboard. Seasonal drinks updated everywhere in one click.'},{t:'Food Truck',d:'Pre-order system with GPS location on the ordering page showing where the truck is today.'},{t:'Catering',d:'Large order portal with custom menus, advance scheduling, and deposit collection for events.'}],metrics:[{v:'500+',l:'Active Businesses'},{v:'50K+',l:'Orders Processed'},{v:'0%',l:'Commission'},{v:'<30 min',l:'Setup Time'}],roi:[{v:'$3K+',l:'Monthly Savings vs Apps'},{v:'100%',l:'Revenue Kept'},{v:'30 min',l:'Time to Go Live'}],timeline:[{phase:'Import',time:'10 min',d:'Paste URL or upload menu. AI extracts everything.'},{phase:'Customize',time:'15 min',d:'Add branding, categories, hours, delivery zones'},{phase:'Connect',time:'5 min',d:'Connect Stripe, notifications, staff access'},{phase:'Go Live',time:'Instant',d:'Share link. Start taking orders immediately.'}],pricing:'Plans from $49/month. No commissions, no hidden fees. 14-day free trial.',url:'https://ordergopro.com',urlLabel:'ordergopro.com'},{id:'doctorpicante',name:'Doctor Picante',type:'F&B Wholesale Platform',cat:'foodbev',color:'#ef4444',icon:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a5 5 0 015 5c0 3-2 5-5 8-3-3-5-5-5-8a5 5 0 015-5z"/><path d="M12 22c-4 0-8-2-8-6 0-2 1-3 2-4"/><path d="M20 16c0 4-4 6-8 6"/></svg>',desc:'Wholesale hot sauce supplier with AI-powered ordering. 6 signature varieties, volume pricing, 500+ restaurant clients.',target:'Restaurants, Food Service & Wholesale Buyers',problem:['Restaurant owners reorder condiments via phone/email/text \u2014 no centralized system','Wholesale pricing is opaque \u2014 buyers don\'t know their tier until they call','Delivery scheduling is manual, leading to stockouts or over-ordering','No analytics on product popularity, account growth, or reorder frequency'],solution:['AI-powered catalog with one-click reordering based on purchase history','Transparent volume pricing that auto-adjusts as order size increases','Smart delivery scheduling optimized by route and geography','Full analytics: popular products, account growth, reorder predictions'],howItWorks:[{t:'Browse & Order',d:'Restaurant logs in. Sees custom pricing, past orders, and AI-suggested reorder quantities.'},{t:'Smart Pricing',d:'Volume tiers auto-applied. AI suggests upgrades: "Order 2 more cases to save 15%."'},{t:'Optimized Delivery',d:'AI batches nearby orders, optimizes routes, schedules delivery windows.'},{t:'Auto-Reorder',d:'AI learns patterns. Sends reminders: "You\'ll need more Habanero Gold by Friday."'}],features:[{n:'AI-Powered Catalog',d:'Smart recommendations based on purchase history and menu type'},{n:'Volume Pricing Engine',d:'Automated tier pricing with real-time discounts'},{n:'Route-Optimized Delivery',d:'AI batches orders by geography for efficient routes'},{n:'Auto-Reorder Alerts',d:'Predictive reminders based on consumption patterns'},{n:'6 Signature Sauces',d:'Habanero Gold, Chipotle Smoke, Ghost Pepper, Carolina Reaper, Mango Heat, Classic Hot'},{n:'Restaurant Accounts',d:'Dedicated portals with order history, invoices, and custom pricing'}],useCases:[{t:'Restaurant Chain',d:'20-location taco chain manages all orders from one portal. Volume discount saves $800/month.'},{t:'Independent Restaurant',d:'BBQ joint sets auto-reorder for top 3 sauces. Never runs out again.'},{t:'Food Truck',d:'Orders minimum quantities with flexible delivery to commissary kitchen.'},{t:'Catering Company',d:'Event-based ordering with custom sauce sampler packs for corporate events.'}],metrics:[{v:'500+',l:'Restaurant Clients'},{v:'6',l:'Signature Varieties'},{v:'AI',l:'Reorder Predictions'},{v:'Same-Day',l:'Delivery Available'}],roi:[{v:'15%',l:'Savings on Volume'},{v:'0',l:'Stockouts with Auto-Reorder'},{v:'2 min',l:'To Place an Order'}],timeline:[{phase:'Sign Up',time:'Day 1',d:'Create account, set delivery preferences'},{phase:'First Order',time:'Day 1',d:'Browse catalog, receive same-day or next-day delivery'},{phase:'AI Learns',time:'Week 2+',d:'AI analyzes usage, suggests optimal reorder quantities'},{phase:'Auto-Pilot',time:'Month 2+',d:'Auto-reorder keeps you stocked. 2 min/month on ordering.'}],pricing:'Wholesale pricing with volume tiers. Free delivery over $150. No platform fees.',url:'https://doctorpicante.com',urlLabel:'doctorpicante.com'},{id:'lactotec',name:'Lactotec',type:'Smart Dairy Management',cat:'agritech',color:'#22c55e',icon:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',desc:'AI-powered dairy plant management. Real-time quality control, water fraud detection, automated payroll, and predictive analytics.',target:'Dairy Operations & Agricultural Businesses',problem:['Water adulteration in raw milk costs the industry billions annually','Quality testing is manual with paper logs \u2014 results take hours','Producer payroll calculations are complex and done on spreadsheets','No visibility into quality trends by zone until problems become crises'],solution:['AI fraud detection flags water adulteration in real-time at reception','Digital quality control with instant results and anomaly alerts','Automated payroll based on verified quality metrics','Predictive analytics by zone and producer \u2014 catch degradation weeks early'],howItWorks:[{t:'Milk Reception',d:'Each delivery tested: volume, temperature, density, fat %, protein %, somatic cell count.'},{t:'AI Quality Analysis',d:'AI analyzes readings against baselines. Flags anomalies: water adulteration, high SCC, temperature violations.'},{t:'Zone-based Insights',d:'AI aggregates by route, zone, producer. "Zone 4 showing declining protein % over 2 weeks."'},{t:'Automated Payroll',d:'System calculates each producer\'s payment based on verified volume and quality. No spreadsheets.'}],features:[{n:'Water Fraud Detection',d:'AI detects adulteration via density, cryoscopy, and multi-variable patterns'},{n:'Real-time Quality Control',d:'Instant test results with automatic pass/fail decisions'},{n:'Predictive Analytics',d:'Zone-based trend analysis predicts issues before they escalate'},{n:'Automated Payroll',d:'Producer payments calculated from verified quality metrics'},{n:'AI Cognitive Agent',d:'Natural language queries: "Show Zone 3 average fat % this month vs last"'},{n:'Regulatory Compliance',d:'Automated reports for INVIMA and health authority inspections'}],useCases:[{t:'Fraud Prevention',d:'Tanker arrives with low density. AI flags: "87% probability of water adulteration." Saves $5K in contaminated product.'},{t:'Quality Trend Alert',d:'AI detects protein % declining in Zone 4 over 10 days. Manager contacts producers before batch falls below standard.'},{t:'Payroll Automation',d:'150 producers paid accurately in 30 minutes instead of 3 days.'},{t:'Regulatory Audit',d:'Inspector arrives. Manager pulls 6 months of compliance reports in 2 clicks.'}],metrics:[{v:'Real-time',l:'Fraud Detection'},{v:'150+',l:'Producers Managed'},{v:'3d\u21921hr',l:'Payroll Time'},{v:'99.5%',l:'Quality Accuracy'}],roi:[{v:'$50K+',l:'Fraud Prevention/yr'},{v:'95%',l:'Less Payroll Time'},{v:'30%',l:'Fewer Quality Incidents'}],geo:'Colombia / LATAM \u2014 Spanish-first. INVIMA regulatory compliance.',timeline:[{phase:'Assessment',time:'Week 1',d:'Audit processes, map data flows, configure sensors'},{phase:'Integration',time:'Week 2-3',d:'Connect lab equipment, import producers, set thresholds'},{phase:'Training',time:'Week 3-4',d:'Train staff, calibrate AI on historical data'},{phase:'Go Live',time:'Week 5',d:'Full deployment with monitoring and automated payroll'}],pricing:'Per-plant licensing with unlimited producers. Implementation included.',url:'https://lactotec.com',urlLabel:'lactotec.com'},{id:'lawncopilot',name:'LawnCopilot',type:'Lawn Care AI Platform',cat:'services',color:'#22c55e',icon:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',desc:'AI copilot for lawn care businesses. Automates scheduling, route optimization, customer communication, and billing.',target:'Lawn Care Operators & Landscaping SMBs',problem:['Operators spend 2+ hours daily on scheduling and route planning','Inefficient routes waste 20-30% of drive time between jobs','Customer communication is all manual via text messages','Billing is inconsistent \u2014 many use paper invoices'],solution:['AI auto-schedules based on growth cycles, weather, crew availability','Route optimization reduces drive time by 30% \u2014 more jobs per day','Automated reminders, delay notices, and post-service reports','Auto invoicing and payment collection \u2014 customers pay online'],howItWorks:[{t:'Add Customers',d:'Import customer list. AI maps every property and estimates service time by lot size.'},{t:'AI Builds Schedule',d:'Each morning: optimized job order, routing, time estimates, weather adjustments.'},{t:'Auto Communication',d:'Customers get reminders, arrival notifications, and post-service photos/invoice.'},{t:'Get Paid',d:'Invoice on completion. Online payment. Recurring customers auto-billed monthly.'}],features:[{n:'AI Scheduling',d:'Auto-schedule based on growth cycles, weather, and crew availability'},{n:'Route Optimization',d:'GPS-optimized routes minimizing drive time and fuel'},{n:'Customer Portal',d:'Clients see schedule, pay invoices, request services online'},{n:'Automated Billing',d:'Invoices on completion, online payments, auto-recurring billing'},{n:'Weather Integration',d:'Auto-reschedule on rain days with customer notifications'},{n:'Job Tracking',d:'GPS crew tracking, time logs, before/after photos'}],useCases:[{t:'Solo Operator',d:'Does 12 lawns/day instead of 9 with optimized routing. Earns $400+/week more.'},{t:'Small Crew',d:'3-truck operation coordinates from one dashboard. No more radio calls for routing.'},{t:'Rain Day',d:'AI detects 80% rain chance, reschedules 15 jobs, notifies customers, rebuilds tomorrow\'s route.'},{t:'New Customer',d:'Homeowner requests quote. AI estimates from satellite lot measurement. Books first service.'}],metrics:[{v:'30%',l:'Less Drive Time'},{v:'3 more',l:'Jobs Per Day'},{v:'Auto',l:'Weather Rescheduling'},{v:'$0',l:'Paper Invoices'}],roi:[{v:'$400+',l:'Extra Revenue/Week'},{v:'30%',l:'Fuel Savings'},{v:'2 hrs',l:'Admin Saved/Day'}],timeline:[{phase:'Sign Up',time:'Day 1',d:'Create account, import customers, set pricing'},{phase:'Map Routes',time:'Day 1',d:'AI maps properties, estimates times, builds schedule'},{phase:'First Week',time:'Week 1',d:'Use AI schedule, give feedback. AI learns your pace.'},{phase:'Optimized',time:'Week 2+',d:'Scheduling fully automated.'}],pricing:'Starting at $79/month for solo operators. Multi-crew from $149/month.',url:'https://lawncopilot.com',urlLabel:'lawncopilot.com'},{id:'aiastore',name:'AIA Store',type:'AI Retail Intelligence',cat:'retail',color:'#3b82f6',icon:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',desc:'AI-powered store health monitoring. Real-time business intelligence, predictive analytics, health scoring, and proactive alerts.',target:'Brick-and-Mortar Retail Businesses',problem:['Store owners find out about problems after revenue is already lost','POS data sits in dashboards nobody checks','No early warning for declining traffic, inventory issues, or staff underperformance','Multi-location operators can\'t compare store health in real-time'],solution:['AI monitors 20+ health signals and sends proactive alerts before problems hit','Automated daily/weekly reports with plain-English insights','Health score (0-100) updated hourly based on all signals','Multi-location comparison identifies best and worst performers instantly'],howItWorks:[{t:'Connect Data',d:'Integrate POS, inventory, foot traffic, reviews, staff scheduling. AI learns baselines in 48 hours.'},{t:'Health Score',d:'AI weighs 20+ signals \u2014 sales velocity, inventory turnover, reviews, staff efficiency \u2014 into a 0-100 score.'},{t:'Proactive Alerts',d:'"Store #3 health dropped 15 points. Root cause: traffic down 22% + 3 negative reviews."'},{t:'Action Recommendations',d:'AI suggests: "Consider a flash promotion. Similar stores recovered within 5 days using 20% off."'}],features:[{n:'Health Scoring (0-100)',d:'Composite score from 20+ signals, updated hourly'},{n:'Predictive Alerts',d:'Warns about declining trends before they impact revenue'},{n:'Root Cause Analysis',d:'When scores drop, AI identifies why and suggests fixes'},{n:'Multi-location Dashboard',d:'Compare all stores side-by-side with drill-down analytics'},{n:'Trend Forecasting',d:'Predicts next week\'s performance from historical patterns'},{n:'Automated Reports',d:'Daily/weekly health reports emailed to stakeholders'}],useCases:[{t:'Sales Decline',d:'Tuesday lunch sales dropped 30% over 3 weeks. Root cause: new competitor. AI suggests counter-promotion.'},{t:'Inventory Alert',d:'Top 5 SKUs trending toward stockout in 4 days. AI generates reorder recommendation.'},{t:'Staff Performance',d:'Store #5 score jumps 20 points after new manager. AI attributes to faster checkout and higher upsell.'},{t:'Review Monitoring',d:'3 negative reviews mention "long waits." AI correlates with understaffed shifts and recommends adjustment.'}],metrics:[{v:'20+',l:'Health Signals'},{v:'Hourly',l:'Score Updates'},{v:'AI',l:'Root Cause Analysis'},{v:'Predictive',l:'Not Reactive'}],roi:[{v:'15%',l:'Revenue Lift'},{v:'4 hrs',l:'Less Reporting/Week'},{v:'Early',l:'Warning System'}],timeline:[{phase:'Integration',time:'Day 1-2',d:'Connect POS, reviews, inventory systems'},{phase:'Baseline',time:'Week 1',d:'AI learns your normal patterns'},{phase:'Scoring Live',time:'Week 2',d:'Health scores and alerts activated'},{phase:'Predictive',time:'Month 2+',d:'AI predicts trends and recommends actions'}],pricing:'Starting at $149/month per store. Volume discounts for 5+ locations.',url:'https://aiagent.ringlypro.com/aiastore',urlLabel:'ringlypro.com/aiastore'},{id:'enruta',name:'Enruta',type:'Vehicle Compliance Platform',cat:'auto',color:'#f59e0b',icon:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>',desc:'Vehicle document management with AI voice agent "Laura." Tracks license, SOAT, inspections for Colombian diagnostic centers.',target:'Diagnostic Centers & Vehicle Operators',problem:['Vehicle owners face $300+ fines for expired SOAT, license, or inspection','Diagnostic centers lose repeat customers \u2014 no follow-up when inspections expire','Document tracking is on spreadsheets \u2014 easy to miss deadlines','No automated system to fill empty appointment slots'],solution:['AI voice agent Laura calls owners 30, 15, 7 days before any document expires','Centers get automated returning customer pipeline \u2014 no marketing spend','Digital vault tracks every vehicle\'s SOAT, license, and inspection dates','Smart scheduling fills slots by targeting near-expiry customers'],howItWorks:[{t:'Vehicle Registration',d:'Center enters vehicle data after inspection. AI calculates all future renewal dates.'},{t:'Proactive Reminders',d:'Laura calls 30 days before: "Hi Juan, your SOAT expires March 15. I can book your renewal for Tuesday."'},{t:'Appointment Booking',d:'Customer confirms by voice. Laura books, sends SMS, adds calendar reminder.'},{t:'Revenue Pipeline',d:'Dashboard shows upcoming expirations \u2014 a built-in forecast of returning customers.'}],features:[{n:'Voice AI (Laura)',d:'Natural Spanish-speaking AI for reminder calls and booking'},{n:'Document Vault',d:'Digital tracking for SOAT, license, tecnomec\u00e1nica, registration'},{n:'30/15/7 Reminders',d:'Automated calls before any document expires'},{n:'Smart Scheduling',d:'Fill empty slots by prioritizing near-expiry customers'},{n:'Revenue Pipeline',d:'Visual dashboard of upcoming expirations = guaranteed revenue'},{n:'Compliance Alerts',d:'Notifications for regulatory changes and fee updates'}],useCases:[{t:'SOAT Renewal',d:'Laura calls 200 taxis: "Your SOAT expires in 2 weeks." 85% book renewal at the partner center.'},{t:'Tecnomec\u00e1nica',d:'Owner gets call + SMS 30 days before inspection. Books online, arrives on time, no fine.'},{t:'Fleet Management',d:'Transport company tracks 500 vehicles. AI alerts when any document is within 45 days.'},{t:'Empty Slot Filling',d:'Tuesday has 5 empty slots. AI calls customers with expirations this month to fill them.'}],metrics:[{v:'85%',l:'Rebooking Rate'},{v:'Laura',l:'AI Voice Agent'},{v:'30/15/7',l:'Day Reminders'},{v:'$0',l:'Marketing Spend'}],roi:[{v:'85%',l:'Customer Return Rate'},{v:'$0',l:'Acquisition Cost'},{v:'40%',l:'More Appointments'}],geo:'Colombia / LATAM. SOAT, tecnomec\u00e1nica, Colombian regulatory compliance.',timeline:[{phase:'Setup',time:'Day 1',d:'Import vehicle database, configure reminder schedules'},{phase:'Training',time:'Day 2-3',d:'Laura learns your center name, services, pricing, hours'},{phase:'Pilot',time:'Week 1',d:'AI calls batch of customers with upcoming expirations'},{phase:'Full Deploy',time:'Week 2',d:'All vehicles tracked, all reminders automated'}],pricing:'Per-center from $149/month. Fleet plans for transport companies.',url:'https://aiagent.ringlypro.com/enruta',urlLabel:'ringlypro.com/enruta'},{id:'aihoteltalent',name:'AIHotelTalent',type:'Hospitality Recruitment AI',cat:'hospitality',color:'#ec4899',icon:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 21h18M3 7v1a3 3 0 006 0V7m0 1a3 3 0 006 0V7m0 1a3 3 0 006 0V7H3l2-4h14l2 4M5 21V10.87"/></svg>',desc:'AI recruitment for hospitality. Intelligent matching, 24/7 chatbot, automated onboarding. Reduces time-to-hire by 85%.',target:'Hotels, Resorts & Hospitality HR Teams',problem:['Hospitality has 73% annual turnover \u2014 hotels are always hiring','Traditional recruiting takes 23+ days per position \u2014 $300+/day in lost productivity','HR spends 60% of time screening unqualified candidates','Seasonal surges need 50-200 staff in weeks \u2014 impossible manually'],solution:['AI screens and matches candidates in seconds \u2014 understands hospitality roles and certifications','24/7 chatbot engages applicants, pre-screens, schedules interviews automatically','Automated onboarding: offer letters, documents, training schedules triggered on approval','Seasonal planning: AI predicts needs and starts recruiting 6 weeks before busy season'],howItWorks:[{t:'Post a Position',d:'Select hospitality role templates or create custom. AI writes the job description.'},{t:'AI Screens',d:'Candidates apply via chatbot. AI evaluates experience, certifications, availability in real-time.'},{t:'Smart Matching',d:'AI ranks by fit score. Top matches auto-scheduled. Unqualified declined within minutes.'},{t:'Automated Onboarding',d:'Hire approved: offer letter, background check, uniform sizing, training schedule triggered.'}],features:[{n:'AI Candidate Matching',d:'Hospitality-specific: roles, certifications, shifts, experience'},{n:'24/7 Chatbot',d:'Engages applicants on web, SMS, WhatsApp instantly'},{n:'Interview Scheduling',d:'Auto-schedules based on manager and candidate availability'},{n:'Automated Onboarding',d:'Offer letters, documents, training plans \u2014 all automated'},{n:'Seasonal Forecasting',d:'Predicts staffing needs from historical occupancy and bookings'},{n:'Multi-property',d:'Manage hiring across all properties from one dashboard'}],useCases:[{t:'Seasonal Ramp-up',d:'Resort needs 150 staff for summer. AI screens 2,000 applicants, surfaces 200 qualified.'},{t:'Urgent Fill',d:'Head chef quits Friday. AI reaches 50 qualified chefs, schedules 5 interviews by Monday.'},{t:'Turnover Reduction',d:'AI identifies housekeeping turnover spikes at month 3. Triggers retention outreach at week 8.'},{t:'Multi-property',d:'12 properties share talent pool. Excess applicants at one routed to nearby properties.'}],metrics:[{v:'85%',l:'Faster Hiring'},{v:'24/7',l:'Chatbot Screening'},{v:'73%',l:'Turnover Addressed'},{v:'Auto',l:'Onboarding'}],roi:[{v:'85%',l:'Faster Time-to-Hire'},{v:'$15K+',l:'Saved per Position'},{v:'60%',l:'Less HR Screening'}],timeline:[{phase:'Setup',time:'Day 1-2',d:'Configure roles, departments, chatbot personality'},{phase:'Integration',time:'Day 3-5',d:'Connect job boards, career page, HRIS/ATS'},{phase:'Go Live',time:'Week 1',d:'Chatbot active, first candidates matched'},{phase:'Optimized',time:'Month 1+',d:'AI has learned your hiring patterns'}],pricing:'Starting at $299/month per property. Enterprise pricing for 5+ properties.',url:'https://aihoteltalent.com',urlLabel:'aihoteltalent.com'},{id:'recovery',name:'Recovery + Nutrition',type:'AI Voice Booking System',cat:'health',color:'#06b6d4',icon:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>',desc:'AI voice booking for wellness. ElevenLabs + Twilio handles calls 24/7 \u2014 checks availability, books sessions, sends confirmations.',target:'Recovery Clinics, Wellness & Nutrition Practices',problem:['Wellness businesses miss 30-40% of calls outside hours \u2014 lost bookings','Front desk overwhelmed at peak hours \u2014 calls go to voicemail','Phone tag wastes 5+ hours per week on scheduling','No-shows cost $1,500+/month in lost revenue'],solution:['AI answers every call 24/7 in a warm, natural voice','During peak hours, AI handles overflow so staff focus on in-person clients','AI checks availability and books in one call \u2014 no phone tag','SMS confirmations + 24-hour reminders reduce no-shows by 50%'],howItWorks:[{t:'Call Comes In',d:'Client calls. If front desk doesn\'t answer in 3 rings, AI picks up with a branded greeting.'},{t:'AI Conversation',d:'"Thanks for calling Recovery Plus! Looking for cryotherapy, IV therapy, or nutrition coaching?" Natural conversation.'},{t:'Real-time Booking',d:'AI checks calendar: "Dr. Martinez has openings tomorrow at 2pm and 4pm." Books instantly.'},{t:'Confirmation',d:'SMS: "Confirmed! Cryotherapy with Dr. Martinez, Thursday 2pm." Reminder sent 24 hours before.'}],features:[{n:'ElevenLabs Voice AI',d:'Ultra-realistic voice that sounds warm and professional'},{n:'24/7 Call Handling',d:'Nights, weekends, holidays \u2014 every call answered'},{n:'Real-time Calendar Sync',d:'Live availability across all providers and services'},{n:'SMS Confirmations',d:'Instant booking + 24-hour reminder to reduce no-shows'},{n:'GoHighLevel CRM',d:'Every call, booking, note synced to CRM automatically'},{n:'Overflow Routing',d:'AI only picks up if front desk doesn\'t answer in 3 rings'}],useCases:[{t:'After-Hours',d:'Client calls 9pm for cryotherapy. AI books for 10am. Without AI, this call goes to voicemail.'},{t:'Peak Overflow',d:'Front desk helping 2 clients. 3 calls come in. AI handles all 3, books 2 sessions.'},{t:'No-Show Reduction',d:'SMS Thursday: "Reminder: Cryotherapy tomorrow 3pm. Reply C to cancel." No-shows drop 50%.'},{t:'New Client Intake',d:'First-time caller asks about services. AI explains everything, collects intake, books first session.'}],metrics:[{v:'0%',l:'Missed Calls'},{v:'24/7',l:'AI Reception'},{v:'50%',l:'Fewer No-Shows'},{v:'<3 sec',l:'Answer Time'}],roi:[{v:'$1,500+',l:'No-Show Recovery/mo'},{v:'30-40%',l:'More Bookings'},{v:'5+ hrs',l:'Staff Time Saved/Week'}],tech:'ElevenLabs voice + Twilio telephony + GoHighLevel CRM',timeline:[{phase:'Setup',time:'Day 1',d:'Connect phone, configure services/providers/availability'},{phase:'Voice',time:'Day 2',d:'Customize greeting, personality, service knowledge'},{phase:'Testing',time:'Day 3',d:'Test calls, refine responses, verify calendar sync'},{phase:'Go Live',time:'Day 4',d:'AI answering 24/7 with full booking capability'}],pricing:'Starting at $197/month. Unlimited calls and SMS. No per-call fees.',url:'tel:8048120489',urlLabel:'(804) 812-0489 \u2014 Call the AI Live'},{id:'pixlypro',name:'PixlyPro',type:'AI Photo Enhancement',cat:'creative',color:'#a855f7',icon:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',desc:'AI transforms smartphone photos into professional-quality images. Volume pricing, 48-72hr turnaround, $1 demo trial.',target:'Restaurants, E-Commerce & SMBs',problem:['Professional photography costs $500-$2,000 per session','Smartphone photos look amateur on menus and websites','Restaurants can\'t afford a photographer every menu change','E-commerce conversion drops 20-30% with low-quality images'],solution:['AI transforms smartphone photos to studio-quality for a fraction of the cost','Professional lighting, color, background removal, composition enhancement','Unlimited seasonal updates \u2014 shoot with phone, we make it pro','$1 demo: send one photo, see AI quality before committing'],howItWorks:[{t:'Upload Photos',d:'Take with any smartphone. Upload via web portal or email. No special equipment.'},{t:'AI Enhancement',d:'AI corrects lighting, enhances colors, removes backgrounds, adjusts composition.'},{t:'Human QA',d:'Every image passes human quality review for brand consistency and natural results.'},{t:'Delivery',d:'Enhanced images in 48-72 hours via download link. Web, print, social formats included.'}],features:[{n:'AI Enhancement',d:'Lighting, color, composition, sharpness \u2014 all enhanced automatically'},{n:'Background Removal',d:'Clean white backgrounds or custom environment replacement'},{n:'Volume Pricing',d:'Per-image price drops at higher volumes'},{n:'48-72hr Turnaround',d:'Fast enough for seasonal menu changes'},{n:'$1 Demo Trial',d:'Try one photo for $1 \u2014 risk-free quality test'},{n:'Multi-format Output',d:'Web-optimized, print-ready, social media sizes included'}],useCases:[{t:'Restaurant Menu',d:'40 dishes shot on iPhone. 40 professional menu photos in 48 hours for under $200.'},{t:'E-Commerce Launch',d:'200 product photos. Pro photographer: $4,000. PixlyPro: under $600 in 72 hours.'},{t:'Social Media',d:'Coffee shop takes daily iPhone photos. PixlyPro batch enhances weekly for curated feed.'},{t:'Real Estate',d:'Agent shoots 30 properties/month. Magazine-quality listing photos at $3-5/image.'}],metrics:[{v:'$1',l:'Demo Trial'},{v:'48-72h',l:'Turnaround'},{v:'80%',l:'Cost Savings'},{v:'AI+Human',l:'Quality Assurance'}],roi:[{v:'80%',l:'Cheaper than Pro Photo'},{v:'30%',l:'Higher Conversion'},{v:'Unlimited',l:'Seasonal Updates'}],timeline:[{phase:'Try It',time:'Day 1',d:'Upload 1 photo for $1. See quality in 48 hours.'},{phase:'First Batch',time:'Week 1',d:'Upload batch. Receive enhanced images in 48-72 hours.'},{phase:'Ongoing',time:'Monthly',d:'Upload as needed. Volume pricing auto-applies.'},{phase:'Seasonal',time:'Quarterly',d:'Refresh menu/product photos at fraction of pro cost.'}],pricing:'$5-8/photo standard, $3-5 at volume (50+). $1 demo for first image.',url:'https://pixlypro.com',urlLabel:'pixlypro.com'},{id:'gebhardt',name:'GEBHARDT Intralogistics',type:'Warehouse AI Automation',cat:'logistics',color:'#3b82f6',icon:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>',desc:'MCP AI layer for GEBHARDT warehouse systems. SAP integration, IoT bridge, predictive maintenance, Voice AI, lead qualification.',target:'Warehouse Automation & Enterprise Logistics',problem:['Equipment failures cause $10K-$50K downtime per incident \u2014 80% are predictable','SAP data is underutilized for operational intelligence','Sales teams spend 40% of time on prospects that won\'t convert','16 locations handle multilingual inquiries with inconsistent quality'],solution:['Predictive maintenance AI predicts failures 2-4 weeks before they occur','MCP AI layer extracts actionable insights from SAP in real-time','AI lead qualification scores inquiries, routes hot leads, nurtures cold ones','Multilingual Voice AI receptionist across all locations'],howItWorks:[{t:'IoT Data Collection',d:'Galileo bridge aggregates sensor data: temperature, vibration, cycle counts, error codes.'},{t:'SAP AI Integration',d:'MCP layer connects to SAP EWM/MFS. AI analyzes material flow and equipment utilization.'},{t:'Predictive Maintenance',d:'"Stacker crane #7: 15% vibration increase. Bearing failure predicted in 18 days. Maintenance dispatched."'},{t:'Sales AI',d:'Website visitor requests info. AI qualifies: facility size, throughput, timeline, budget. Hot lead routed in 90 seconds.'}],features:[{n:'SAP EWM/MFS Integration',d:'Deep integration with warehouse management and material flow'},{n:'Galileo IoT Bridge',d:'Real-time sensor data from all warehouse equipment'},{n:'Predictive Maintenance',d:'Predict failures 2-4 weeks in advance'},{n:'Voice AI Receptionist',d:'Multilingual AI at all 16 locations'},{n:'Lead Qualification AI',d:'Score and route inquiries by project fit and urgency'},{n:'MCP Automation Layer',d:'AI-to-system communication across entire tech stack'}],useCases:[{t:'Predictive Maintenance',d:'Stacker crane vibration up 15%. AI schedules maintenance during planned downtime. Prevents $35K repair.'},{t:'Sales Acceleration',d:'Automotive OEM inquiry: 50K pallets, Q3 timeline, $5M budget. Routed to enterprise sales in 90 seconds.'},{t:'Operational Optimization',d:'Conveyor #3 at 60%, #1 at 95%. AI recommends rebalancing \u2014 12% throughput increase.'},{t:'Global Reception',d:'German customer calls US office. Voice AI handles in German, answers technical questions, books sales call.'}],metrics:[{v:'16',l:'Global Locations'},{v:'SAP',l:'Deep Integration'},{v:'2-4 wk',l:'Failure Prediction'},{v:'90 sec',l:'Lead Qualification'}],roi:[{v:'$200K+',l:'Downtime Savings/yr'},{v:'40%',l:'Faster Lead Response'},{v:'12%',l:'Throughput Improvement'}],timeline:[{phase:'Discovery',time:'Week 1-2',d:'Audit SAP, map IoT sources, define AI use cases'},{phase:'Integration',time:'Week 3-6',d:'Deploy MCP, connect Galileo, configure SAP bridges'},{phase:'AI Training',time:'Week 7-8',d:'Train predictive models on historical equipment data'},{phase:'Go Live',time:'Week 9-10',d:'Phased rollout with monitoring and optimization'}],pricing:'Enterprise licensing with implementation. Custom scoping per location.',url:'https://ringlypro.com/gebhardt',urlLabel:'ringlypro.com/gebhardt'}];
 
-// ─────────────── 1: KanchoAI ───────────────
-{
-  id:'kanchoai', name:'KanchoAI', type:'Martial Arts AI Platform', cat:'sports', color:'#ef4444',
-  icon:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>',
-  desc:'AI voice agent for martial arts schools. Automates retention calls, payment recovery, lead follow-up, and win-back campaigns across 15+ disciplines.',
-  target:'Martial Arts Studios, Dojos & Gyms',
-  problem:[
-    'Average martial arts school loses 30-40% of students annually — most without a single retention call',
-    'Failed payments go uncollected for weeks because staff are uncomfortable making collection calls',
-    'New leads from walk-ins, website, and social media get a single follow-up call at best',
-    'Dropped students rarely get a win-back attempt — they just disappear'
-  ],
-  solution:[
-    'AI calls at-risk students with personalized retention messages referencing their belt level, last class, and goals',
-    'Automated payment recovery calls — professional, persistent, and never awkward for your staff',
-    'Multi-touch lead follow-up: AI calls, texts, and emails every new lead 5+ times over 14 days',
-    'Win-back campaigns automatically reach out to students who left 30, 60, 90 days ago with tailored offers'
-  ],
-  howItWorks:[
-    {t:'Health Score Monitoring', d:'AI continuously analyzes attendance patterns, payment history, and engagement signals for every student. Flags at-risk members before they quit.'},
-    {t:'Automated Outreach', d:'When a student shows warning signs (missed 2+ classes, late payment), AI initiates a call using discipline-specific language and the student\'s personal context.'},
-    {t:'Smart Conversations', d:'AI references the student\'s belt level, instructor, and last class. "Hi Sarah, Sensei Mike noticed you haven\'t been to Jiu-Jitsu in 2 weeks — everything okay?"'},
-    {t:'Results Dashboard', d:'Track retention rates, recovered revenue, and student health scores in real-time. See exactly how many students AI saved this month.'}
-  ],
-  features:[
-    {n:'Retention AI', d:'Proactive outreach to at-risk students based on attendance and engagement signals'},
-    {n:'Payment Recovery', d:'Automated collection calls that are professional, persistent, and effective'},
-    {n:'Lead Follow-up', d:'5+ touchpoints over 14 days — no lead goes cold'},
-    {n:'Win-back Campaigns', d:'Re-engage dropped students at 30/60/90 day intervals with tailored offers'},
-    {n:'Health Scoring', d:'Real-time student risk scores based on attendance, payments, and engagement'},
-    {n:'15+ Disciplines', d:'Trained on terminology for BJJ, Karate, Taekwondo, Judo, Muay Thai, MMA, and more'}
-  ],
-  useCases:[
-    {t:'Student Retention', d:'A blue belt misses 3 classes. AI calls: "Hi Jake, Coach noticed you haven\'t been to BJJ open mat — we saved your spot for Thursday."'},
-    {t:'Payment Recovery', d:'"Hi, this is a courtesy call about your December membership. We can process it today or set up a payment plan — what works best?"'},
-    {t:'Lead Conversion', d:'Website inquiry gets a call within 5 minutes: "Thanks for your interest in our kids Taekwondo program! I can book a free trial class for this Saturday."'},
-    {t:'Win-back', d:'Student who left 60 days ago: "Hi Maria, Sensei Chen wanted me to let you know about our new Kickboxing schedule — would you like a free comeback class?"'}
-  ],
-  metrics:[
-    {v:'40%', l:'Retention Improvement'},
-    {v:'3x', l:'Payment Recovery Rate'},
-    {v:'15+', l:'Disciplines Supported'},
-    {v:'24/7', l:'AI Calling'}
-  ],
-  roi:[
-    {v:'$2,400', l:'Avg Revenue Recovered/mo'},
-    {v:'15+', l:'Students Saved Monthly'},
-    {v:'90%', l:'Less Staff Phone Time'}
-  ],
-  timeline:[
-    {phase:'Onboarding', time:'Day 1', d:'Connect your school management software (Zen Planner, Mindbody, etc.)'},
-    {phase:'AI Training', time:'Day 2-3', d:'AI learns your disciplines, instructors, schedule, and messaging tone'},
-    {phase:'Pilot', time:'Week 1', d:'AI handles retention calls for a subset of at-risk students'},
-    {phase:'Full Deploy', time:'Week 2', d:'All automated campaigns active — retention, recovery, leads, win-back'}
-  ],
-  pricing:'Starting at $197/month per location. Volume pricing for multi-location schools.',
-  url:'https://kanchoai.com', urlLabel:'kanchoai.com',
-},
-
-// ─────────────── 2: Ronin Brotherhood ───────────────
-{
-  id:'ronin', name:'Ronin Brotherhood', type:'Martial Arts Community', cat:'sports', color:'#a855f7',
-  icon:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>',
-  desc:'AI-powered martial arts community platform. Connects practitioners, dojos, and instructors with intelligent matchmaking, event coordination, and training analytics.',
-  target:'Practitioners, Instructors & Community Leaders',
-  problem:[
-    'Martial artists outside their home dojo have no way to find training partners, open mats, or seminars nearby',
-    'Traveling practitioners waste hours searching social media for places to train',
-    'Event organizers have no centralized platform to promote tournaments and seminars to the right audience',
-    'Training progress is tracked on paper or not at all — no data-driven insights'
-  ],
-  solution:[
-    'AI-powered matchmaking connects practitioners with compatible training partners based on skill level, style, and location',
-    'Dojo directory with real-time class schedules, visitor policies, and booking for drop-in training',
-    'Centralized event hub for tournaments, seminars, and workshops with smart recommendations',
-    'Training analytics track attendance, techniques drilled, sparring rounds, and progression over time'
-  ],
-  howItWorks:[
-    {t:'Create Your Profile', d:'Martial arts background, rank, disciplines, goals, and location. AI builds your training DNA.'},
-    {t:'Get Smart Matches', d:'AI recommends training partners, dojos, and events based on your profile, skill level, and what you want to improve.'},
-    {t:'Train & Track', d:'Log training sessions, rate partners, track techniques. AI identifies patterns and suggests focus areas.'},
-    {t:'Grow the Community', d:'Instructors list their dojos, host events, and build their following. AI handles promotion to the right audience.'}
-  ],
-  features:[
-    {n:'AI Matchmaking', d:'Find training partners by style, rank, weight, and location'},
-    {n:'Dojo Directory', d:'Search, review, and book drop-in sessions at dojos worldwide'},
-    {n:'Event Hub', d:'Tournaments, seminars, and workshops with smart filtering'},
-    {n:'Training Analytics', d:'Track sessions, techniques, sparring stats, and progression'},
-    {n:'Rank Verification', d:'Verified belt/rank system tied to recognized organizations'},
-    {n:'Community Feed', d:'Share training clips, technique breakdowns, and connect with peers'}
-  ],
-  useCases:[
-    {t:'Traveling Practitioner', d:'A BJJ purple belt visits Austin for a week. Ronin finds 3 nearby academies with open mat schedules and compatible rolling partners.'},
-    {t:'Tournament Organizer', d:'Host lists a regional Judo championship. AI targets every Judo practitioner within 200 miles with the right rank for each division.'},
-    {t:'School Owner', d:'Dojo gets discovered by 50+ practitioners monthly through the directory. Free marketing channel that drives trial memberships.'},
-    {t:'Training Analytics', d:'A Muay Thai fighter sees she\'s only drilling clinch work 10% of the time. AI suggests adding 2 clinch-focused sessions per week.'}
-  ],
-  metrics:[
-    {v:'AI', l:'Matchmaking'},
-    {v:'Live', l:'Events'},
-    {v:'Global', l:'Directory'},
-    {v:'Free', l:'For Practitioners'}
-  ],
-  roi:[
-    {v:'50+', l:'New Leads/mo for Dojos'},
-    {v:'10x', l:'Event Reach vs Social Media'},
-    {v:'Free', l:'Marketing Channel for Schools'}
-  ],
-  timeline:[
-    {phase:'Sign Up', time:'5 min', d:'Create profile, add disciplines and rank'},
-    {phase:'Discover', time:'Day 1', d:'Browse matches, dojos, and upcoming events'},
-    {phase:'Connect', time:'Week 1', d:'Book sessions, train with new partners'},
-    {phase:'Grow', time:'Ongoing', d:'Build reputation, track progress, lead the community'}
-  ],
-  pricing:'Free for practitioners. Premium features for dojo owners and event organizers starting at $49/month.',
-  url:'https://aiagent.ringlypro.com/ronin', urlLabel:'ringlypro.com/ronin',
-},
-
-// ─────────────── 3: TunjoRacing ───────────────
-{
-  id:'tunjoracing', name:'TunjoRacing', type:'Sports & Media Platform', cat:'sports', color:'#f59e0b',
-  icon:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
-  desc:'Full digital platform for IMSA driver Oscar Tunjo. Press portal, e-commerce, race schedule, live results, sponsorship management, and React admin dashboard.',
-  target:'Professional Athletes, Sports Teams & Media',
-  problem:[
-    'Athletes manage their brand across 5+ disconnected platforms — website, shop, social, press, sponsors',
-    'Sponsorship reporting is manual — takes days to compile media impressions and exposure data',
-    'Press inquiries go through personal email with no credentialing or access control',
-    'Merchandise sales are handled by generic platforms that don\'t integrate with the athlete\'s brand'
-  ],
-  solution:[
-    'Single platform unifying website, e-commerce, press portal, and sponsor dashboard',
-    'Automated sponsorship reports with media impressions, logo exposure time, and social reach',
-    'Credentialed press portal with authenticated access, media kits, and embargoed releases',
-    'Integrated e-commerce with custom branding, inventory management, and fulfillment tracking'
-  ],
-  howItWorks:[
-    {t:'Brand Hub', d:'Public website with race schedule, results, driver bio, gallery, and news — all updated from one admin panel.'},
-    {t:'Press Portal', d:'Credentialed journalists log in to access press releases, hi-res photos, interview requests, and embargoed content.'},
-    {t:'E-Commerce', d:'Branded merchandise store with Stripe payments, inventory tracking, and order fulfillment management.'},
-    {t:'Sponsor Dashboard', d:'Sponsors log in to see real-time exposure metrics, media coverage, social reach, and ROI reports.'}
-  ],
-  features:[
-    {n:'React Admin Dashboard', d:'Full-featured admin panel for content, products, and analytics management'},
-    {n:'Press Portal', d:'Authenticated access for journalists with media kits and release management'},
-    {n:'E-Commerce Store', d:'Branded merch shop with Stripe, inventory, and fulfillment'},
-    {n:'Sponsorship Manager', d:'Track sponsor value, exposure metrics, and automated reporting'},
-    {n:'IMSA Integration', d:'Real-time race results, standings, and schedule data'},
-    {n:'Fan Engagement', d:'Newsletter, social integration, and community features'}
-  ],
-  useCases:[
-    {t:'Race Weekend', d:'Live results, gallery updates, and post-race press release published within minutes — all from the admin app.'},
-    {t:'Sponsor Pitch', d:'Share a live dashboard showing last season\'s media impressions, social reach, and fan demographics.'},
-    {t:'Merch Drop', d:'Launch new merchandise line with automated email to fan list, social posting, and inventory management.'},
-    {t:'Press Day', d:'Send credentialed access to 50 journalists. Each gets media kit, hi-res photos, and interview booking.'}
-  ],
-  metrics:[
-    {v:'IMSA', l:'Racing Series'},
-    {v:'All-in-1', l:'Platform'},
-    {v:'React', l:'Admin Dashboard'},
-    {v:'24/7', l:'Live Updates'}
-  ],
-  roi:[
-    {v:'80%', l:'Less Admin Time'},
-    {v:'5-in-1', l:'Platform Consolidation'},
-    {v:'Auto', l:'Sponsor Reports'}
-  ],
-  timeline:[
-    {phase:'Discovery', time:'Week 1', d:'Audit current platforms, import content, connect data sources'},
-    {phase:'Build', time:'Week 2-3', d:'Custom branding, store setup, press portal configuration'},
-    {phase:'Migration', time:'Week 3', d:'Move from old systems, redirect domains, train team'},
-    {phase:'Launch', time:'Week 4', d:'Go live with full platform, analytics, and monitoring'}
-  ],
-  pricing:'Custom licensing based on athlete/team profile. Includes platform, hosting, and support.',
-  url:'https://tunjoracing.com', urlLabel:'tunjoracing.com',
-},
-
-// ─────────────── 4: OrderGoPro ───────────────
-{
-  id:'ordergopro', name:'OrderGoPro', type:'Restaurant Ordering Platform', cat:'foodbev', color:'#22c55e',
-  icon:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>',
-  desc:'AI-powered online ordering for restaurants. Auto-extracts menus from any website. 500+ active businesses, 50K+ orders processed.',
-  target:'Restaurants, Cafes & Food Retail',
-  problem:[
-    'Third-party delivery apps charge 15-30% commissions — eating into already thin margins',
-    'Building a custom ordering website costs $5K-$15K and takes weeks to develop',
-    'Manual menu updates across multiple platforms waste hours and lead to errors',
-    'Restaurants lose direct customer relationships when ordering through third-party apps'
-  ],
-  solution:[
-    'Zero-commission ordering platform — keep 100% of your revenue',
-    'AI scans your existing website or menu PDF and builds your ordering page in minutes',
-    'Single dashboard to manage menu, pricing, hours, and promotions across all channels',
-    'Own your customer data — build direct relationships, send promotions, drive repeat orders'
-  ],
-  howItWorks:[
-    {t:'AI Menu Import', d:'Paste your website URL or upload a menu PDF. AI extracts every item, description, price, category, and modifier in minutes.'},
-    {t:'Auto-Build Store', d:'AI creates your branded ordering page with your logo, colors, photos, and complete menu. No design skills needed.'},
-    {t:'Accept Orders', d:'Customers order online. Stripe processes payment. You get a notification with the full order details instantly.'},
-    {t:'Grow Revenue', d:'Built-in marketing tools: email campaigns, promotions, loyalty programs, and analytics to maximize repeat orders.'}
-  ],
-  features:[
-    {n:'AI Menu Import', d:'Extract menus from any website URL or PDF — items, prices, modifiers, photos'},
-    {n:'Stripe Payments', d:'Secure payment processing with instant payouts'},
-    {n:'Real-time Analytics', d:'Track orders, revenue, popular items, peak hours, and customer behavior'},
-    {n:'Marketing Automation', d:'Email campaigns, SMS promotions, and loyalty rewards'},
-    {n:'Delivery Management', d:'Built-in delivery zone setup, driver tracking, and fee management'},
-    {n:'Multi-location', d:'Manage multiple restaurants from a single dashboard'}
-  ],
-  useCases:[
-    {t:'Independent Restaurant', d:'Family pizzeria ditches UberEats (25% commission), launches OrderGoPro in 30 minutes. Saves $3K/month in fees.'},
-    {t:'Cafe Chain', d:'5-location coffee chain manages all menus from one dashboard. Seasonal drinks updated everywhere in one click.'},
-    {t:'Food Truck', d:'Pre-order system lets customers order ahead. GPS location on the ordering page shows where the truck is today.'},
-    {t:'Catering', d:'Large order portal with custom menus, advance scheduling, and deposit collection for events.'}
-  ],
-  metrics:[
-    {v:'500+', l:'Active Businesses'},
-    {v:'50K+', l:'Orders Processed'},
-    {v:'0%', l:'Commission'},
-    {v:'<30 min', l:'Setup Time'}
-  ],
-  roi:[
-    {v:'$3K+', l:'Monthly Savings vs Apps'},
-    {v:'100%', l:'Revenue Kept'},
-    {v:'30 min', l:'Time to Go Live'}
-  ],
-  timeline:[
-    {phase:'Import', time:'10 min', d:'Paste URL or upload menu. AI extracts everything.'},
-    {phase:'Customize', time:'15 min', d:'Add branding, adjust categories, set hours and delivery zones'},
-    {phase:'Connect', time:'5 min', d:'Connect Stripe, set up notifications, add staff access'},
-    {phase:'Go Live', time:'Instant', d:'Share your ordering link. Start taking orders immediately.'}
-  ],
-  pricing:'Plans from $49/month. No commissions, no hidden fees. 14-day free trial.',
-  url:'https://ordergopro.com', urlLabel:'ordergopro.com',
-},
-
-// ─────────────── 5: Doctor Picante ───────────────
-{
-  id:'doctorpicante', name:'Doctor Picante', type:'F&B Wholesale Platform', cat:'foodbev', color:'#ef4444',
-  icon:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a5 5 0 015 5c0 3-2 5-5 8-3-3-5-5-5-8a5 5 0 015-5z"/><path d="M12 22c-4 0-8-2-8-6 0-2 1-3 2-4"/><path d="M20 16c0 4-4 6-8 6"/></svg>',
-  desc:'Wholesale hot sauce supplier with AI-powered ordering. 6 signature varieties, volume pricing, 500+ restaurant clients.',
-  target:'Restaurants, Food Service & Wholesale Buyers',
-  problem:[
-    'Restaurant owners reorder condiments via phone, email, or text — no centralized system',
-    'Wholesale pricing is opaque — buyers don\'t know their volume tier until they call',
-    'Delivery scheduling is manual, leading to stockouts or over-ordering',
-    'No analytics on which products are popular, which accounts are growing, or reorder frequency'
-  ],
-  solution:[
-    'AI-powered catalog with automated reordering — one click to replenish based on history',
-    'Transparent volume pricing that auto-adjusts as order size increases',
-    'Smart delivery scheduling optimized by route, geography, and order size',
-    'Full analytics dashboard: popular products, account growth, reorder predictions'
-  ],
-  howItWorks:[
-    {t:'Browse & Order', d:'Restaurant logs into the AI-powered catalog. Sees their custom pricing, past orders, and AI-suggested reorder quantities.'},
-    {t:'Smart Pricing', d:'Volume tiers automatically applied. AI suggests quantity upgrades: "Order 2 more cases to save 15% on this shipment."'},
-    {t:'Optimized Delivery', d:'AI batches nearby orders, optimizes routes, and schedules delivery windows that work for each restaurant.'},
-    {t:'Auto-Reorder', d:'AI learns reorder patterns. Sends reminders before you run out: "Based on your usage, you\'ll need more Habanero Gold by Friday."'}
-  ],
-  features:[
-    {n:'AI-Powered Catalog', d:'Smart product recommendations based on purchase history and menu type'},
-    {n:'Volume Pricing Engine', d:'Automated tier pricing with real-time discount calculations'},
-    {n:'Route-Optimized Delivery', d:'AI batches orders by geography for efficient delivery routes'},
-    {n:'Auto-Reorder Alerts', d:'Predictive reminders based on consumption patterns'},
-    {n:'6 Signature Sauces', d:'Habanero Gold, Chipotle Smoke, Ghost Pepper, Carolina Reaper, Mango Heat, Classic Hot'},
-    {n:'Restaurant Accounts', d:'Dedicated portals with order history, invoices, and custom pricing'}
-  ],
-  useCases:[
-    {t:'Restaurant Chain', d:'20-location taco chain manages all hot sauce orders from one portal. Volume discount saves $800/month.'},
-    {t:'Independent Restaurant', d:'Single-location BBQ joint sets auto-reorder for their top 3 sauces. Never runs out again.'},
-    {t:'Food Truck', d:'Orders minimum quantities with flexible delivery to their commissary kitchen.'},
-    {t:'Catering Company', d:'Event-based ordering with custom sauce sampler packs for corporate events.'}
-  ],
-  metrics:[
-    {v:'500+', l:'Restaurant Clients'},
-    {v:'6', l:'Signature Varieties'},
-    {v:'AI', l:'Reorder Predictions'},
-    {v:'Same-Day', l:'Delivery Available'}
-  ],
-  roi:[
-    {v:'15%', l:'Savings on Volume'},
-    {v:'0', l:'Stockouts with Auto-Reorder'},
-    {v:'2 min', l:'To Place an Order'}
-  ],
-  timeline:[
-    {phase:'Sign Up', time:'Day 1', d:'Create restaurant account, set delivery preferences'},
-    {phase:'First Order', time:'Day 1', d:'Browse catalog, select products, receive same-day or next-day delivery'},
-    {phase:'AI Learns', time:'Week 2+', d:'AI analyzes usage patterns, begins suggesting optimal reorder quantities'},
-    {phase:'Auto-Pilot', time:'Month 2+', d:'Auto-reorder alerts keep you stocked. Spend 2 minutes/month on ordering.'}
-  ],
-  pricing:'Wholesale pricing with volume tiers. Free delivery on orders over $150. No platform fees for buyers.',
-  url:'https://doctorpicante.com', urlLabel:'doctorpicante.com',
-},
-
-// ─────────────── 6: Lactotec ───────────────
-{
-  id:'lactotec', name:'Lactotec', type:'Smart Dairy Management', cat:'agritech', color:'#22c55e',
-  icon:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
-  desc:'AI-powered dairy plant management. Real-time quality control, water fraud detection, automated payroll, and predictive analytics.',
-  target:'Dairy Operations & Agricultural Businesses',
-  problem:[
-    'Water adulteration in raw milk costs the industry billions annually — difficult to detect at scale',
-    'Quality testing is done manually with paper logs — results take hours and errors are common',
-    'Producer payroll calculations are complex (based on volume, fat %, protein %, SCC) and done on spreadsheets',
-    'No visibility into quality trends by zone, route, or producer until problems become crises'
-  ],
-  solution:[
-    'AI-powered fraud detection flags water adulteration in real-time at the point of reception',
-    'Digital quality control with instant results, automated logging, and anomaly alerts',
-    'Automated payroll engine calculates producer payments based on verified quality metrics',
-    'Predictive analytics by zone and producer — catch quality degradation weeks before it impacts production'
-  ],
-  howItWorks:[
-    {t:'Milk Reception', d:'Each milk delivery is tested at the dock. Sensors capture volume, temperature, density, fat %, protein %, and somatic cell count.'},
-    {t:'AI Quality Analysis', d:'AI instantly analyzes readings against historical baselines. Flags anomalies: water adulteration, high SCC, temperature violations.'},
-    {t:'Zone-based Insights', d:'AI aggregates data by collection route, zone, and producer. Identifies trends: "Zone 4 showing declining protein % over 2 weeks."'},
-    {t:'Automated Payroll', d:'At pay period end, system calculates each producer\'s payment based on verified volume, quality premiums, and deductions. No spreadsheets.'}
-  ],
-  features:[
-    {n:'Water Fraud Detection', d:'AI detects water adulteration by analyzing density, cryoscopy, and multi-variable patterns'},
-    {n:'Real-time Quality Control', d:'Instant test results with automatic pass/fail and hold decisions'},
-    {n:'Predictive Analytics', d:'Zone-based trend analysis predicts quality issues before they escalate'},
-    {n:'Automated Payroll', d:'Producer payment calculations based on verified quality metrics'},
-    {n:'AI Cognitive Agent', d:'Natural language queries: "Show me Zone 3 average fat % this month vs last"'},
-    {n:'Regulatory Compliance', d:'Automated reports for INVIMA and health authority inspections'}
-  ],
-  useCases:[
-    {t:'Fraud Prevention', d:'A tanker arrives with unusually low density readings. AI flags: "87% probability of water adulteration — recommend lab confirmation." Saves $5K in contaminated product.'},
-    {t:'Quality Trend Alert', d:'AI detects protein % declining in Zone 4 over 10 days. Plant manager contacts producers before the entire batch falls below standard.'},
-    {t:'Payroll Automation', d:'150 producers paid accurately in 30 minutes instead of 3 days. Quality bonuses calculated automatically.'},
-    {t:'Regulatory Audit', d:'Inspector arrives for surprise audit. Plant manager pulls 6 months of compliance reports in 2 clicks.'}
-  ],
-  metrics:[
-    {v:'Real-time', l:'Fraud Detection'},
-    {v:'150+', l:'Producers Managed'},
-    {v:'3 days\u21921hr', l:'Payroll Time'},
-    {v:'99.5%', l:'Quality Accuracy'}
-  ],
-  roi:[
-    {v:'$50K+', l:'Fraud Loss Prevention/yr'},
-    {v:'95%', l:'Less Payroll Processing Time'},
-    {v:'30%', l:'Fewer Quality Incidents'}
-  ],
-  timeline:[
-    {phase:'Assessment', time:'Week 1', d:'Audit current processes, map data flows, configure sensors'},
-    {phase:'Integration', time:'Week 2-3', d:'Connect lab equipment, import producer database, set quality thresholds'},
-    {phase:'Training', time:'Week 3-4', d:'Train reception staff, calibrate AI models on historical data'},
-    {phase:'Go Live', time:'Week 5', d:'Full deployment with monitoring, alerts, and automated payroll'}
-  ],
-  geo:'Colombia / LATAM \u2014 Spanish-first. Designed for INVIMA regulatory requirements.',
-  pricing:'Per-plant licensing with unlimited producers. Implementation + training included.',
-  url:'https://lactotec.com', urlLabel:'lactotec.com',
-},
-
-// ─────────────── 7: LawnCopilot ───────────────
-{
-  id:'lawncopilot', name:'LawnCopilot', type:'Lawn Care AI Platform', cat:'services', color:'#22c55e',
-  icon:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
-  desc:'AI copilot for lawn care businesses. Automates scheduling, route optimization, customer communication, and billing.',
-  target:'Lawn Care Operators & Landscaping SMBs',
-  problem:[
-    'Lawn care operators spend 2+ hours daily on scheduling, rescheduling, and route planning',
-    'Inefficient routes waste 20-30% of drive time between jobs',
-    'Customer communication (reminders, rain delays, invoicing) is all manual via text messages',
-    'Billing and payment collection is inconsistent — many operators still use paper invoices'
-  ],
-  solution:[
-    'AI auto-schedules jobs based on lawn growth cycles, weather, crew availability, and customer preferences',
-    'Route optimization reduces drive time by up to 30% — more jobs per day, less fuel',
-    'Automated customer communication: service reminders, weather delay notices, and post-service reports',
-    'Automated invoicing and payment collection — customers pay online, you get paid faster'
-  ],
-  howItWorks:[
-    {t:'Add Your Customers', d:'Import customer list or add as you go. AI maps every property and estimates service time based on lot size.'},
-    {t:'AI Builds Your Schedule', d:'Each morning, AI optimizes your day: job order, routing, time estimates, and buffer for delays. Adjusted for weather.'},
-    {t:'Automated Communication', d:'Customers get automated reminders before service, notifications on arrival, and post-service photos/invoice.'},
-    {t:'Get Paid Automatically', d:'Invoice generated on job completion. Customer pays online. Recurring customers auto-billed monthly.'}
-  ],
-  features:[
-    {n:'AI Scheduling', d:'Auto-schedule based on growth cycles, weather, and crew availability'},
-    {n:'Route Optimization', d:'GPS-optimized routes that minimize drive time and fuel cost'},
-    {n:'Customer Portal', d:'Clients see their schedule, pay invoices, and request services online'},
-    {n:'Automated Billing', d:'Invoices on completion, online payments, auto-recurring billing'},
-    {n:'Weather Integration', d:'Auto-reschedule on rain days with customer notifications'},
-    {n:'Job Tracking', d:'GPS crew tracking, time logs, before/after photos'}
-  ],
-  useCases:[
-    {t:'Solo Operator', d:'One-person crew does 12 lawns/day instead of 9 thanks to optimized routing. Earns $400+/week more.'},
-    {t:'Small Crew', d:'3-truck operation coordinates schedules from one dashboard. No more radio calls for routing changes.'},
-    {t:'Rain Day', d:'AI detects 80% rain chance, auto-reschedules 15 jobs, notifies all customers via SMS, rebuilds tomorrow\'s route.'},
-    {t:'New Customer', d:'Homeowner requests a quote online. AI estimates price from satellite lot measurement. Books first service automatically.'}
-  ],
-  metrics:[
-    {v:'30%', l:'Less Drive Time'},
-    {v:'3 more', l:'Jobs Per Day'},
-    {v:'Auto', l:'Weather Rescheduling'},
-    {v:'$0', l:'Paper Invoices'}
-  ],
-  roi:[
-    {v:'$400+', l:'Extra Revenue/Week'},
-    {v:'30%', l:'Fuel Savings'},
-    {v:'2 hrs', l:'Admin Time Saved/Day'}
-  ],
-  timeline:[
-    {phase:'Sign Up', time:'Day 1', d:'Create account, import customer list, set service types and pricing'},
-    {phase:'Map Routes', time:'Day 1', d:'AI maps all properties, estimates service times, builds initial schedule'},
-    {phase:'First Week', time:'Week 1', d:'Use AI schedule, give feedback. AI learns your pace and preferences.'},
-    {phase:'Optimized', time:'Week 2+', d:'AI has learned your operation. Scheduling is fully automated.'}
-  ],
-  pricing:'Starting at $79/month for solo operators. Multi-crew plans from $149/month.',
-  url:'https://lawncopilot.com', urlLabel:'lawncopilot.com',
-},
-
-// ─────────────── 8: AIA Store ───────────────
-{
-  id:'aiastore', name:'AIA Store', type:'AI Retail Intelligence', cat:'retail', color:'#3b82f6',
-  icon:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
-  desc:'AI-powered store health monitoring. Real-time business intelligence, predictive analytics, health scoring, and proactive alerts.',
-  target:'Brick-and-Mortar Retail Businesses',
-  problem:[
-    'Store owners find out about problems after they\'ve already lost revenue — reactive, not proactive',
-    'POS data sits in dashboards nobody checks — no automated insights or alerts',
-    'No early warning system for declining foot traffic, inventory issues, or staff underperformance',
-    'Multi-location operators can\'t compare store health across locations in real-time'
-  ],
-  solution:[
-    'AI continuously monitors 20+ health signals and sends proactive alerts before problems impact revenue',
-    'Automated daily/weekly health reports with plain-English insights — no analytics degree required',
-    'Predictive scoring: each store gets a health score (0-100) updated hourly based on all signals',
-    'Multi-location comparison dashboard identifies your best and worst performing stores instantly'
-  ],
-  howItWorks:[
-    {t:'Connect Your Data', d:'Integrate POS, inventory, foot traffic, reviews, and staff scheduling. AI starts learning your baselines within 48 hours.'},
-    {t:'Health Score Calculation', d:'AI weighs 20+ signals — sales velocity, inventory turnover, review sentiment, staff efficiency — into a single 0-100 score.'},
-    {t:'Proactive Alerts', d:'"Store #3 health score dropped 15 points this week. Root cause: foot traffic down 22% + 3 negative Google reviews." AI tells you before you ask.'},
-    {t:'Action Recommendations', d:'AI doesn\'t just alert — it suggests: "Consider a flash promotion for Store #3. Similar stores recovered within 5 days using 20% off campaigns."'}
-  ],
-  features:[
-    {n:'Health Scoring (0-100)', d:'Composite score from 20+ signals, updated hourly'},
-    {n:'Predictive Alerts', d:'AI warns about declining trends before they impact bottom line'},
-    {n:'Root Cause Analysis', d:'When scores drop, AI identifies exactly why and suggests fixes'},
-    {n:'Multi-location Dashboard', d:'Compare all stores side-by-side with drill-down analytics'},
-    {n:'Trend Forecasting', d:'AI predicts next week\'s performance based on historical patterns'},
-    {n:'Automated Reports', d:'Daily/weekly health reports emailed to stakeholders automatically'}
-  ],
-  useCases:[
-    {t:'Sales Decline Detection', d:'AI detects Tuesday lunch sales dropped 30% at Store #2 over 3 weeks. Root cause: new competitor opened nearby. Suggests counter-promotion.'},
-    {t:'Inventory Alert', d:'Top 5 SKUs trending toward stockout in 4 days. AI auto-generates reorder recommendation before shelves go empty.'},
-    {t:'Staff Performance', d:'Store #5 health score jumps 20 points after new manager starts. AI attributes improvement to faster checkout times and higher upsell rates.'},
-    {t:'Review Monitoring', d:'3 negative Google reviews mention "long wait times." AI correlates with understaffed shifts and recommends schedule adjustment.'}
-  ],
-  metrics:[
-    {v:'20+', l:'Health Signals'},
-    {v:'Hourly', l:'Score Updates'},
-    {v:'AI', l:'Root Cause Analysis'},
-    {v:'Predictive', l:'Not Reactive'}
-  ],
-  roi:[
-    {v:'15%', l:'Revenue Lift from Proactive Fixes'},
-    {v:'4 hrs', l:'Less Weekly Reporting Time'},
-    {v:'Early', l:'Warning Before Revenue Loss'}
-  ],
-  timeline:[
-    {phase:'Integration', time:'Day 1-2', d:'Connect POS, review platforms, and inventory systems'},
-    {phase:'Baseline', time:'Week 1', d:'AI learns your normal patterns across all metrics'},
-    {phase:'Scoring Live', time:'Week 2', d:'Health scores and alerts activated'},
-    {phase:'Predictive', time:'Month 2+', d:'AI has enough history to predict trends and recommend actions'}
-  ],
-  pricing:'Starting at $149/month per store. Volume discounts for 5+ locations.',
-  url:'https://aiagent.ringlypro.com/aiastore', urlLabel:'ringlypro.com/aiastore',
-},
-
-// ─────────────── 9: Enruta ───────────────
-{
-  id:'enruta', name:'Enruta', type:'Vehicle Compliance Platform', cat:'auto', color:'#f59e0b',
-  icon:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>',
-  desc:'Vehicle document management with AI voice agent "Laura." Tracks license, SOAT insurance, inspections, and registration for Colombian diagnostic centers.',
-  target:'Diagnostic Centers & Vehicle Operators',
-  problem:[
-    'Colombian vehicle owners face fines of $300+ USD for expired SOAT, license, or inspection documents',
-    'Diagnostic centers lose repeat customers because they don\'t follow up when inspections expire',
-    'Vehicle document tracking is done on spreadsheets or paper — easy to miss deadlines',
-    'Centers have no automated system to fill empty appointment slots'
-  ],
-  solution:[
-    'AI voice agent Laura calls vehicle owners 30, 15, and 7 days before any document expires',
-    'Diagnostic centers get an automated pipeline of returning customers — no marketing spend needed',
-    'Digital document vault tracks every vehicle\'s SOAT, license, and inspection dates automatically',
-    'Smart scheduling fills empty slots by targeting customers whose documents expire soonest'
-  ],
-  howItWorks:[
-    {t:'Vehicle Registration', d:'Diagnostic center enters vehicle data after each inspection. AI calculates all future renewal dates automatically.'},
-    {t:'Proactive Reminders', d:'Laura calls the vehicle owner 30 days before expiry: "Hi Juan, your SOAT expires March 15. I can book your renewal appointment at CDA Norte for next Tuesday."'},
-    {t:'Appointment Booking', d:'Customer confirms by voice. Laura books the slot, sends SMS confirmation, and adds a calendar reminder.'},
-    {t:'Revenue Pipeline', d:'Center owner sees a dashboard of upcoming expirations — a built-in revenue forecast of returning customers.'}
-  ],
-  features:[
-    {n:'Voice AI (Laura)', d:'Natural Spanish-speaking AI agent that handles reminder calls and appointment booking'},
-    {n:'Document Vault', d:'Digital tracking for SOAT, license, tecnomec\u00e1nica, and registration dates'},
-    {n:'Automated Reminders', d:'30/15/7-day reminder calls before any document expires'},
-    {n:'Smart Scheduling', d:'AI fills empty appointment slots by prioritizing near-expiry customers'},
-    {n:'Revenue Pipeline', d:'Visual dashboard showing upcoming expirations = guaranteed returning revenue'},
-    {n:'Compliance Alerts', d:'Notifications for regulatory changes, new requirements, and fee updates'}
-  ],
-  useCases:[
-    {t:'SOAT Renewal', d:'Laura calls a fleet of 200 taxis: "Your SOAT expires in 2 weeks." 85% book their renewal at the partner diagnostic center.'},
-    {t:'Tecnomec\u00e1nica', d:'Vehicle owner gets a call + SMS 30 days before inspection expires. Books online, arrives on time, no fine.'},
-    {t:'Fleet Management', d:'Transport company tracks 500 vehicles. AI alerts operations manager when any document is within 45 days of expiry.'},
-    {t:'Empty Slot Filling', d:'Tuesday has 5 empty inspection slots. AI calls customers with expirations this month to fill them.'}
-  ],
-  metrics:[
-    {v:'85%', l:'Rebooking Rate'},
-    {v:'Laura', l:'AI Voice Agent'},
-    {v:'30/15/7', l:'Day Reminders'},
-    {v:'$0', l:'Marketing Spend'}
-  ],
-  roi:[
-    {v:'85%', l:'Customer Return Rate'},
-    {v:'$0', l:'Customer Acquisition Cost'},
-    {v:'40%', l:'More Appointments Filled'}
-  ],
-  geo:'Colombia / LATAM. Designed for SOAT, tecnomec\u00e1nica, and Colombian regulatory requirements.',
-  timeline:[
-    {phase:'Setup', time:'Day 1', d:'Import vehicle database, configure reminder schedules'},
-    {phase:'Training', time:'Day 2-3', d:'Laura learns your center name, services, pricing, and hours'},
-    {phase:'Pilot', time:'Week 1', d:'AI calls a batch of customers with upcoming expirations'},
-    {phase:'Full Deploy', time:'Week 2', d:'All vehicles tracked, all reminders automated, scheduling live'}
-  ],
-  pricing:'Per-center licensing starting at $149/month. Fleet plans available for transport companies.',
-  url:'https://aiagent.ringlypro.com/enruta', urlLabel:'ringlypro.com/enruta',
-},
-
-// ─────────────── 10: AIHotelTalent ───────────────
-{
-  id:'aihoteltalent', name:'AIHotelTalent', type:'Hospitality Recruitment AI', cat:'hospitality', color:'#ec4899',
-  icon:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 21h18M3 7v1a3 3 0 006 0V7m0 1a3 3 0 006 0V7m0 1a3 3 0 006 0V7H3l2-4h14l2 4M5 21V10.87"/></svg>',
-  desc:'AI recruitment for hospitality. Intelligent matching, 24/7 chatbot engagement, automated onboarding, and hiring analytics. Reduces time-to-hire by 85%.',
-  target:'Hotels, Resorts & Hospitality HR Teams',
-  problem:[
-    'Hospitality has the highest turnover rate of any industry — 73% annually. Hotels are always hiring.',
-    'Traditional recruiting takes 23+ days to fill a position — every empty role costs $300+/day in lost productivity',
-    'HR teams spend 60% of their time screening unqualified candidates from job boards',
-    'Seasonal surges require hiring 50-200 staff in weeks — impossible with manual processes'
-  ],
-  solution:[
-    'AI screens and matches candidates in seconds — not days. Understands hospitality roles, certifications, and experience.',
-    'Chatbot engages applicants 24/7: answers questions, pre-screens qualifications, schedules interviews automatically',
-    'Automated onboarding: offer letters, document collection, training schedules — all triggered when a candidate is approved',
-    'Seasonal workforce planning: AI predicts staffing needs and starts recruiting 6 weeks before your busy season'
-  ],
-  howItWorks:[
-    {t:'Post a Position', d:'Select from hospitality-specific role templates (front desk, housekeeping, F&B, banquets, etc.) or create custom. AI writes the job description.'},
-    {t:'AI Screens Applicants', d:'Candidates apply via chatbot. AI evaluates experience, certifications (ServSafe, TIPS), availability, and cultural fit in real-time.'},
-    {t:'Smart Matching', d:'AI ranks candidates by fit score. Top matches are auto-scheduled for interviews. Unqualified applicants get a polite decline within minutes.'},
-    {t:'Automated Onboarding', d:'When a hire is approved, AI triggers: offer letter, background check, uniform sizing, training schedule, and first-day checklist.'}
-  ],
-  features:[
-    {n:'AI Candidate Matching', d:'Hospitality-specific matching: roles, certifications, shift preferences, experience level'},
-    {n:'24/7 Chatbot', d:'Engages applicants instantly on any channel — web, SMS, WhatsApp'},
-    {n:'Interview Scheduling', d:'Auto-schedules interviews based on manager and candidate availability'},
-    {n:'Automated Onboarding', d:'Offer letters, document collection, training plans — all automated'},
-    {n:'Seasonal Forecasting', d:'AI predicts staffing needs based on historical occupancy and bookings'},
-    {n:'Multi-property Support', d:'Manage hiring across all properties from one dashboard'}
-  ],
-  useCases:[
-    {t:'Seasonal Ramp-up', d:'Resort needs 150 staff for summer. AI starts recruiting in April, screens 2,000 applicants, surfaces 200 qualified candidates.'},
-    {t:'Urgent Fill', d:'Head chef quits Friday. AI activates passive candidate network, reaches 50 qualified chefs, schedules 5 interviews by Monday.'},
-    {t:'Turnover Reduction', d:'AI identifies that housekeeping turnover spikes at month 3. Triggers retention outreach at week 8 for at-risk employees.'},
-    {t:'Multi-property', d:'Hotel group with 12 properties shares a talent pool. When one property has excess applicants, AI routes them to nearby properties.'}
-  ],
-  metrics:[
-    {v:'85%', l:'Faster Time-to-Hire'},
-    {v:'24/7', l:'Chatbot Screening'},
-    {v:'73%', l:'Industry Turnover Addressed'},
-    {v:'Auto', l:'Onboarding'}
-  ],
-  roi:[
-    {v:'85%', l:'Reduction in Time-to-Hire'},
-    {v:'$15K+', l:'Saved per Position (Cost of Vacancy)'},
-    {v:'60%', l:'Less HR Screening Time'}
-  ],
-  timeline:[
-    {phase:'Setup', time:'Day 1-2', d:'Configure roles, departments, and chatbot personality'},
-    {phase:'Integration', time:'Day 3-5', d:'Connect job boards, career page, and HRIS/ATS if applicable'},
-    {phase:'Go Live', time:'Week 1', d:'Chatbot active, first candidates screened and matched'},
-    {phase:'Optimized', time:'Month 1+', d:'AI has learned your hiring patterns and preferences'}
-  ],
-  pricing:'Starting at $299/month per property. Enterprise pricing for hotel groups with 5+ properties.',
-  url:'https://aihoteltalent.com', urlLabel:'aihoteltalent.com',
-},
-
-// ─────────────── 11: Recovery + Nutrition ───────────────
-{
-  id:'recovery', name:'Recovery + Nutrition', type:'AI Voice Booking System', cat:'health', color:'#06b6d4',
-  icon:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>',
-  desc:'AI voice booking for wellness businesses. ElevenLabs + Twilio handles calls 24/7 — checks availability, books sessions, sends SMS confirmations.',
-  target:'Recovery Clinics, Wellness Centers & Nutrition Practices',
-  problem:[
-    'Wellness businesses miss 30-40% of calls outside business hours — that\'s 30-40% of potential bookings lost',
-    'Front desk staff are overwhelmed during peak hours — calls go to voicemail and never get returned',
-    'Phone tag between clients and staff wastes 5+ hours per week on scheduling back-and-forth',
-    'No-shows cost the average wellness practice $1,500+/month in lost revenue'
-  ],
-  solution:[
-    'AI answers every call 24/7 in a natural, warm voice — no more missed bookings at night or weekends',
-    'During peak hours, AI handles overflow calls so front desk staff can focus on in-person clients',
-    'AI checks real-time availability and books the session in one call — no phone tag',
-    'Automated SMS confirmations + 24-hour reminders reduce no-shows by up to 50%'
-  ],
-  howItWorks:[
-    {t:'Call Comes In', d:'Client calls your business number. If the front desk doesn\'t answer within 3 rings, AI picks up with a warm, branded greeting.'},
-    {t:'AI Conversation', d:'"Hi, thanks for calling Recovery Plus! I\'d love to help you book a session. Are you looking for cryotherapy, IV therapy, or nutrition coaching?" Natural, flowing conversation.'},
-    {t:'Real-time Booking', d:'AI checks your calendar in real-time: "Dr. Martinez has openings tomorrow at 2pm and 4pm. Which works better?" Books instantly.'},
-    {t:'Confirmation & Reminder', d:'Client gets SMS: "Confirmed! Cryotherapy with Dr. Martinez, Thursday 2pm at Recovery Plus. Reply C to cancel." Reminder sent 24 hours before.'}
-  ],
-  features:[
-    {n:'ElevenLabs Voice AI', d:'Ultra-realistic voice that sounds warm and professional — not robotic'},
-    {n:'24/7 Call Handling', d:'Nights, weekends, holidays — every call gets answered'},
-    {n:'Real-time Calendar Sync', d:'Checks live availability across all providers and services'},
-    {n:'SMS Confirmations', d:'Instant booking confirmation + 24-hour reminder to reduce no-shows'},
-    {n:'GoHighLevel CRM', d:'Every call, booking, and client note synced to your CRM automatically'},
-    {n:'Overflow Routing', d:'During business hours, AI only picks up if front desk doesn\'t answer in 3 rings'}
-  ],
-  useCases:[
-    {t:'After-Hours Booking', d:'Client calls at 9pm for a cryotherapy session. AI books them for tomorrow 10am. Without AI, this call goes to voicemail and the client books elsewhere.'},
-    {t:'Peak Hour Overflow', d:'Front desk is helping 2 clients in person. 3 calls come in simultaneously. AI handles all 3, books 2 sessions, answers 1 pricing question.'},
-    {t:'No-Show Reduction', d:'Client booked for Friday. Gets SMS Thursday: "Reminder: Cryotherapy tomorrow 3pm. Reply C to cancel or R to reschedule." No-show rate drops 50%.'},
-    {t:'New Client Intake', d:'First-time caller asks about services, pricing, and availability. AI explains everything, collects intake info, and books their first session.'}
-  ],
-  metrics:[
-    {v:'0%', l:'Missed Calls'},
-    {v:'24/7', l:'AI Reception'},
-    {v:'50%', l:'Fewer No-Shows'},
-    {v:'<3 sec', l:'Answer Time'}
-  ],
-  roi:[
-    {v:'$1,500+', l:'Monthly No-Show Recovery'},
-    {v:'30-40%', l:'More Bookings Captured'},
-    {v:'5+ hrs', l:'Staff Time Saved Weekly'}
-  ],
-  tech:'ElevenLabs voice synthesis + Twilio telephony + GoHighLevel CRM integration',
-  timeline:[
-    {phase:'Setup', time:'Day 1', d:'Connect phone line, configure services/providers/availability'},
-    {phase:'Voice Training', time:'Day 2', d:'Customize AI greeting, personality, and service knowledge'},
-    {phase:'Testing', time:'Day 3', d:'Test calls, refine responses, verify calendar sync'},
-    {phase:'Go Live', time:'Day 4', d:'AI answering calls 24/7 with full booking capability'}
-  ],
-  pricing:'Starting at $197/month. Includes unlimited calls and SMS. No per-call fees.',
-  url:'tel:8048120489', urlLabel:'(804) 812-0489 — Call the AI Live',
-},
-
-// ─────────────── 12: PixlyPro ───────────────
-{
-  id:'pixlypro', name:'PixlyPro', type:'AI Photo Enhancement Studio', cat:'creative', color:'#a855f7',
-  icon:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
-  desc:'AI transforms smartphone photos into professional-quality images. Volume pricing, 48-72hr turnaround, $1 demo trial.',
-  target:'Restaurants, E-Commerce & SMBs Needing Professional Visuals',
-  problem:[
-    'Professional food/product photography costs $500-$2,000 per session',
-    'Smartphone photos look amateur on menus, websites, and social media — hurting brand perception',
-    'Restaurants change menus seasonally but can\'t afford a photographer every time',
-    'E-commerce conversion rates drop 20-30% with low-quality product images'
-  ],
-  solution:[
-    'AI transforms any smartphone photo into studio-quality in 48-72 hours for a fraction of the cost',
-    'Professional lighting, color correction, background removal/replacement, and composition enhancement',
-    'Unlimited seasonal updates — shoot with your phone, we make it look professional',
-    '$1 demo trial: send one photo, see the AI quality before committing'
-  ],
-  howItWorks:[
-    {t:'Upload Photos', d:'Take photos with any smartphone. Upload via our web portal or email. No special equipment or skills needed.'},
-    {t:'AI Enhancement', d:'Our AI analyzes each image: corrects lighting, enhances colors, removes backgrounds, adjusts composition, and applies professional styling.'},
-    {t:'Human QA Review', d:'Every enhanced image passes through human quality review to ensure brand consistency and natural results.'},
-    {t:'Delivery', d:'Enhanced images delivered in 48-72 hours via download link. Multiple formats (web, print, social) included.'}
-  ],
-  features:[
-    {n:'AI Photo Enhancement', d:'Lighting, color, composition, and sharpness — all enhanced automatically'},
-    {n:'Background Removal', d:'Clean white backgrounds for product shots or custom environment replacement'},
-    {n:'Volume Pricing', d:'Per-image pricing drops significantly at higher volumes'},
-    {n:'48-72hr Turnaround', d:'Fast enough for seasonal menu changes and new product launches'},
-    {n:'$1 Demo Trial', d:'Try one photo for $1 — see the quality risk-free'},
-    {n:'Multi-format Output', d:'Web-optimized, print-ready, and social media sizes included'}
-  ],
-  useCases:[
-    {t:'Restaurant Menu', d:'Italian restaurant shoots 40 dishes with iPhone. PixlyPro delivers 40 professional menu photos in 48 hours for under $200.'},
-    {t:'E-Commerce Launch', d:'Online boutique needs 200 product photos. Professional photographer would cost $4,000. PixlyPro: under $600 with 72-hour delivery.'},
-    {t:'Social Media Content', d:'Coffee shop takes daily iPhone photos. PixlyPro batch enhances weekly — Instagram feed looks professionally curated.'},
-    {t:'Real Estate', d:'Agent shoots 30 properties/month with iPhone. PixlyPro delivers magazine-quality listing photos at $3-5 per image.'}
-  ],
-  metrics:[
-    {v:'$1', l:'Demo Trial'},
-    {v:'48-72h', l:'Turnaround'},
-    {v:'80%', l:'Cost Savings vs Pro Photo'},
-    {v:'AI+Human', l:'Quality Assurance'}
-  ],
-  roi:[
-    {v:'80%', l:'Cheaper than Pro Photography'},
-    {v:'30%', l:'Higher Conversion with Pro Images'},
-    {v:'Unlimited', l:'Seasonal Updates Affordable'}
-  ],
-  timeline:[
-    {phase:'Try It', time:'Day 1', d:'Upload 1 photo for $1 demo. See AI quality in 48 hours.'},
-    {phase:'First Batch', time:'Week 1', d:'Upload your first batch. Receive enhanced images in 48-72 hours.'},
-    {phase:'Ongoing', time:'Monthly', d:'Upload as needed. Volume pricing applies automatically.'},
-    {phase:'Seasonal', time:'Quarterly', d:'Refresh menu/product photos every season at a fraction of pro cost.'}
-  ],
-  pricing:'Pay-per-image: $5-8/photo standard, $3-5 at volume (50+). $1 demo trial for first image.',
-  url:'https://pixlypro.com', urlLabel:'pixlypro.com',
-},
-
-// ─────────────── 13: GEBHARDT ───────────────
-{
-  id:'gebhardt', name:'GEBHARDT Intralogistics', type:'Warehouse AI Automation', cat:'logistics', color:'#3b82f6',
-  icon:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>',
-  desc:'MCP AI layer for GEBHARDT\'s warehouse systems. SAP integration, IoT bridge, predictive maintenance, Voice AI, and lead qualification across 16 global locations.',
-  target:'Warehouse Automation & Enterprise Logistics',
-  problem:[
-    'Warehouse equipment failures cause $10K-$50K in downtime per incident — 80% of failures are predictable',
-    'SAP EWM/MFS systems generate vast data that\'s underutilized for operational intelligence',
-    'Sales teams manually qualify leads — 40% of their time is spent on prospects that won\'t convert',
-    'Front desk reception at 16 locations handles multilingual technical inquiries with inconsistent quality'
-  ],
-  solution:[
-    'Predictive maintenance AI analyzes IoT sensor data and predicts failures 2-4 weeks before they occur',
-    'MCP AI layer sits on top of SAP, extracting actionable insights and automating decisions in real-time',
-    'AI lead qualification scores inbound inquiries, routes hot leads to sales, and nurtures cold ones automatically',
-    'Multilingual Voice AI receptionist handles technical inquiries across all locations with consistent quality'
-  ],
-  howItWorks:[
-    {t:'IoT Data Collection', d:'Galileo IoT bridge aggregates sensor data from all warehouse equipment: temperature, vibration, cycle counts, error codes, and performance metrics.'},
-    {t:'SAP AI Integration', d:'MCP layer connects to SAP EWM/MFS. AI analyzes material flow data, order patterns, and equipment utilization to optimize operations.'},
-    {t:'Predictive Maintenance', d:'AI detects anomalies: "Stacker crane #7 showing 15% increase in vibration frequency. Predicted bearing failure in 18 days. Maintenance dispatched."'},
-    {t:'Sales AI', d:'Website visitor requests info on shuttle systems. AI qualifies: facility size, throughput needs, timeline, budget. Hot lead routed to regional sales in 90 seconds.'}
-  ],
-  features:[
-    {n:'SAP EWM/MFS Integration', d:'Deep integration with SAP warehouse management and material flow systems'},
-    {n:'Galileo IoT Bridge', d:'Real-time sensor data from all warehouse equipment via GEBHARDT\'s Galileo platform'},
-    {n:'Predictive Maintenance', d:'AI predicts equipment failures 2-4 weeks in advance — dispatches maintenance proactively'},
-    {n:'Voice AI Receptionist', d:'Multilingual AI handles technical inquiries at all 16 locations'},
-    {n:'Lead Qualification AI', d:'Scores and routes inbound sales inquiries based on project fit and urgency'},
-    {n:'MCP Automation Layer', d:'Model Context Protocol enables AI-to-system communication across the entire tech stack'}
-  ],
-  useCases:[
-    {t:'Predictive Maintenance', d:'Stacker crane vibration increases 15% over 2 weeks. AI schedules maintenance during planned downtime. Prevents $35K emergency repair.'},
-    {t:'Sales Acceleration', d:'Automotive OEM inquires about automated storage. AI qualifies: 50K pallet positions, Q3 timeline, $5M budget. Routed to enterprise sales within 90 seconds.'},
-    {t:'Operational Optimization', d:'AI detects conveyor line #3 running at 60% capacity while line #1 is at 95%. Recommends load rebalancing — increases overall throughput 12%.'},
-    {t:'Global Reception', d:'German customer calls US office. Voice AI handles the inquiry in German, answers technical questions about shuttle systems, and books a sales call.'}
-  ],
-  metrics:[
-    {v:'16', l:'Global Locations'},
-    {v:'SAP', l:'Deep Integration'},
-    {v:'2-4 wk', l:'Failure Prediction'},
-    {v:'90 sec', l:'Lead Qualification'}
-  ],
-  roi:[
-    {v:'$200K+', l:'Annual Downtime Savings'},
-    {v:'40%', l:'Faster Lead Response'},
-    {v:'12%', l:'Throughput Improvement'}
-  ],
-  timeline:[
-    {phase:'Discovery', time:'Week 1-2', d:'Audit SAP environment, map IoT data sources, define AI use cases'},
-    {phase:'Integration', time:'Week 3-6', d:'Deploy MCP layer, connect Galileo IoT, configure SAP bridges'},
-    {phase:'AI Training', time:'Week 7-8', d:'Train predictive models on historical equipment data'},
-    {phase:'Go Live', time:'Week 9-10', d:'Phased rollout across locations with monitoring and optimization'}
-  ],
-  pricing:'Enterprise licensing with implementation services. Custom scoping based on number of locations and systems.',
-  url:'https://ringlypro.com/gebhardt', urlLabel:'ringlypro.com/gebhardt',
-},
-];
-
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════
 // RENDER CARDS
-// ══════════════════════════════════════════════════
-const grid = document.getElementById('cardsGrid');
-P.forEach((p, i) => {
-  const c = document.createElement('div');
-  c.className = 'card'; c.dataset.categories = p.cat; c.dataset.idx = i;
-  c.style.setProperty('--card-accent', p.color);
-  c.innerHTML = `
-    <div class="card-header">
-      <div class="card-icon" style="background:${p.color}22;color:${p.color};">${p.icon}</div>
-      <div><div class="card-title">${p.name}</div><div class="card-type">${p.type}</div></div>
-    </div>
-    <div class="card-desc">${p.desc}</div>
-    <div class="card-target">${p.target}</div>
-    <div class="features">${p.features.slice(0,5).map(f=>`<span class="feature-tag">${f.n}</span>`).join('')}</div>
-    <div class="card-footer">
-      <a href="${p.url}" target="_blank" class="card-link" onclick="event.stopPropagation();">${p.urlLabel} &rarr;</a>
-      <span class="card-status status-live">Live</span>
-    </div>`;
-  c.addEventListener('click', () => openPres(i));
-  grid.appendChild(c);
+// ══════════════════════════════════
+const grid=document.getElementById('cardsGrid');
+P.forEach((p,i)=>{
+  const c=document.createElement('div');c.className='card';c.dataset.categories=p.cat;c.dataset.idx=i;
+  c.style.setProperty('--card-accent',p.color);
+  c.innerHTML=`<div class="card-header"><div class="card-icon" style="background:${p.color}15;color:${p.color};">${p.icon}</div><div><div class="card-title">${p.name}</div><div class="card-type">${p.type}</div></div></div><div class="card-desc">${p.desc}</div><div class="card-target">${p.target}</div><div class="features">${p.features.slice(0,5).map(f=>`<span class="feature-tag">${f.n}</span>`).join('')}</div><div class="card-footer"><a href="${p.url}" target="_blank" class="card-link" onclick="event.stopPropagation();">${p.urlLabel} &rarr;</a><span class="status-live">Live</span></div>`;
+  c.addEventListener('click',()=>openPres(i));grid.appendChild(c);
 });
 
-// ══════════════════════════════════════════════════
-// PRESENTATION MODE
-// ══════════════════════════════════════════════════
-const presOverlay = document.getElementById('presOverlay');
-const presBody = document.getElementById('presBody');
-const presCounter = document.getElementById('presCounter');
-const presPrev = document.getElementById('presPrev');
-const presNext = document.getElementById('presNext');
-let curSlide = 0;
-
-function openPres(i) {
-  curSlide = i; renderSlide();
-  presOverlay.classList.add('active');
-  document.body.style.overflow = 'hidden';
-}
-function closePres() {
-  presOverlay.classList.remove('active');
-  document.body.style.overflow = '';
-}
-function renderSlide() {
-  const p = P[curSlide];
-  presCounter.textContent = `${curSlide+1} / ${P.length}`;
-  presPrev.disabled = curSlide === 0;
-  presNext.disabled = curSlide === P.length - 1;
-  presOverlay.scrollTop = 0;
-
-  let h = `
-  <div class="pres-hero" style="--hero-glow:${p.color}15;">
-    <div class="pres-icon-lg" style="background:${p.color}22;color:${p.color};">${p.icon}</div>
-    <div class="pres-name" style="color:${p.color};">${p.name}</div>
-    <div class="pres-type-label">${p.type}</div>
-    <div class="pres-status-pill">Live Platform</div>
+// ══════════════════════════════════
+// PRESENTATION
+// ══════════════════════════════════
+const presO=document.getElementById('presOverlay'),presB=document.getElementById('presBody'),presC=document.getElementById('presCounter'),prevB=document.getElementById('presPrev'),nextB=document.getElementById('presNext');
+let cur=0;
+function openPres(i){cur=i;render();presO.classList.add('active');document.body.style.overflow='hidden';}
+function closePres(){presO.classList.remove('active');document.body.style.overflow='';}
+function render(){
+  const p=P[cur];presC.textContent=`${cur+1} / ${P.length}`;prevB.disabled=cur===0;nextB.disabled=cur===P.length-1;presO.scrollTop=0;
+  let h=`
+  <div class="pres-hero" style="--hero-glow:${p.color};">
+    <div style="position:absolute;inset:0;background:radial-gradient(ellipse at top,${p.color}0a 0%,transparent 60%);pointer-events:none;"></div>
+    <div class="pres-hero-icon" style="background:${p.color}18;color:${p.color};">${p.icon}</div>
+    <div class="pres-hero-name" style="color:${p.color};">${p.name}</div>
+    <div class="pres-hero-type">${p.type}</div>
+    <div class="pres-hero-badge">LIVE PLATFORM</div>
+    <div class="pres-hero-stats">
+      ${p.metrics.map(m=>`<div><div class="pres-hero-stat-val" style="color:${p.color};">${m.v}</div><div class="pres-hero-stat-lbl">${m.l}</div></div>`).join('')}
+    </div>
   </div>
+  <div class="pres-content">
 
   <!-- PROBLEM / SOLUTION -->
-  <div class="pres-problem-solution">
-    <div class="pres-problem">
-      <div class="pres-ps-title problem">The Problem</div>
-      <div class="pres-ps-body"><ul>${p.problem.map(x=>`<li>${x}</li>`).join('')}</ul></div>
-    </div>
-    <div class="pres-solution">
-      <div class="pres-ps-title solution">Our Solution</div>
-      <div class="pres-ps-body"><ul>${p.solution.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+  <div class="pres-section-wrap">
+    <div class="pres-section-label" style="color:${p.color};">The Challenge & Our Answer</div>
+    <div class="pres-section-heading">Why ${p.name} Exists</div>
+    <div class="pres-section-desc">Every great platform solves a real problem. Here\u2019s what we found \u2014 and how we fix it.</div>
+    <div class="ps-grid">
+      <div class="ps-card problem"><div class="ps-card-title problem">The Problem</div><ul>${p.problem.map(x=>`<li><div class="ps-bullet" style="background:var(--red);"></div>${x}</li>`).join('')}</ul></div>
+      <div class="ps-card solution"><div class="ps-card-title solution">Our Solution</div><ul>${p.solution.map(x=>`<li><div class="ps-bullet" style="background:var(--green);"></div>${x}</li>`).join('')}</ul></div>
     </div>
   </div>
-
-  <!-- TARGET AUDIENCE -->
-  <div class="pres-section">
-    <div class="pres-section-title">Target Audience</div>
-    <span class="pres-audience">${p.target}</span>
-  </div>
+  <hr class="pres-divider">
 
   <!-- HOW IT WORKS -->
-  <div class="pres-section">
-    <div class="pres-section-title">How It Works</div>
-    <div class="pres-steps">
-      ${p.howItWorks.map((s,i)=>`
-        <div class="pres-step">
-          <div class="pres-step-num" style="background:${p.color};">${i+1}</div>
-          <div class="pres-step-text"><strong>${s.t}</strong>${s.d}</div>
-        </div>`).join('')}
+  <div class="pres-section-wrap">
+    <div class="pres-section-label" style="color:${p.color};">How It Works</div>
+    <div class="pres-section-heading">From Setup to Results</div>
+    <div class="pres-section-desc">A simple, proven workflow that delivers value from day one.</div>
+    <div class="hiw-steps">
+      ${p.howItWorks.map((s,i)=>`<div class="hiw-step"><div class="hiw-num" style="background:${p.color};">${i+1}</div><div class="hiw-text"><h4>${s.t}</h4><p>${s.d}</p></div></div>`).join('')}
     </div>
   </div>
-
-  <!-- KEY METRICS -->
-  <div class="pres-metrics">
-    ${p.metrics.map(m=>`
-      <div class="pres-metric">
-        <div class="pres-metric-value" style="color:${p.color};">${m.v}</div>
-        <div class="pres-metric-label">${m.l}</div>
-      </div>`).join('')}
-  </div>
+  <hr class="pres-divider">
 
   <!-- KEY CAPABILITIES -->
-  <div class="pres-section">
-    <div class="pres-section-title">Key Capabilities</div>
-    <div class="pres-features">
-      ${p.features.map(f=>`
-        <div class="pres-feature-item">
-          <div class="pres-feature-dot" style="background:${p.color};"></div>
-          <div><div class="pres-feature-name">${f.n}</div><div class="pres-feature-desc">${f.d}</div></div>
-        </div>`).join('')}
+  <div class="pres-section-wrap">
+    <div class="pres-section-label" style="color:${p.color};">Key Capabilities</div>
+    <div class="pres-section-heading">What\u2019s Under the Hood</div>
+    <div class="pres-section-desc">Purpose-built features designed specifically for ${p.target.toLowerCase()}.</div>
+    <div class="feat-grid">
+      ${p.features.map(f=>`<div class="feat-card"><div class="feat-icon" style="background:${p.color}12;color:${p.color};">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div><div class="feat-name">${f.n}</div><div class="feat-desc">${f.d}</div></div>`).join('')}
     </div>
   </div>
+  <hr class="pres-divider">
 
   <!-- USE CASES -->
-  <div class="pres-section">
-    <div class="pres-section-title">Real-World Use Cases</div>
-    <div class="pres-usecases">
-      ${p.useCases.map(u=>`
-        <div class="pres-usecase">
-          <div class="pres-usecase-title">${u.t}</div>
-          <div class="pres-usecase-desc">${u.d}</div>
-        </div>`).join('')}
+  <div class="pres-section-wrap">
+    <div class="pres-section-label" style="color:${p.color};">Real-World Scenarios</div>
+    <div class="pres-section-heading">See It in Action</div>
+    <div class="pres-section-desc">Concrete examples of how ${p.name} delivers results for real businesses.</div>
+    <div class="uc-grid">
+      ${p.useCases.map(u=>`<div class="uc-card"><div class="uc-label" style="color:${p.color};">${u.t}</div><div class="uc-text">${u.d}</div></div>`).join('')}
     </div>
   </div>
+  <hr class="pres-divider">
 
   <!-- ROI -->
-  <div class="pres-section">
-    <div class="pres-section-title">Expected ROI</div>
-    <div class="pres-roi-grid">
-      ${p.roi.map(r=>`
-        <div class="pres-roi-item">
-          <div class="pres-roi-value">${r.v}</div>
-          <div class="pres-roi-label">${r.l}</div>
-        </div>`).join('')}
+  <div class="pres-section-wrap">
+    <div class="pres-section-label" style="color:${p.color};">Expected ROI</div>
+    <div class="pres-section-heading">The Numbers That Matter</div>
+    <div class="pres-section-desc">Measurable returns you can expect after implementing ${p.name}.</div>
+    <div class="roi-grid">
+      ${p.roi.map(r=>`<div class="roi-card"><div class="roi-val">${r.v}</div><div class="roi-lbl">${r.l}</div></div>`).join('')}
     </div>
   </div>
+  <hr class="pres-divider">
 
-  <!-- IMPLEMENTATION TIMELINE -->
-  <div class="pres-section">
-    <div class="pres-section-title">Implementation Timeline</div>
-    <div class="pres-timeline">
-      ${p.timeline.map((t,i)=>{
-        const colors = [p.color+'40', p.color+'60', p.color+'80', p.color];
-        return `<div class="pres-timeline-item" style="border-top-color:${colors[i]||p.color};background:${colors[i]}08;">
-          <div class="pres-timeline-phase" style="color:${p.color};">${t.phase}</div>
-          <div class="pres-timeline-time">${t.time}</div>
-          <div class="pres-timeline-desc">${t.d}</div>
-        </div>`;
-      }).join('')}
+  <!-- TIMELINE -->
+  <div class="pres-section-wrap">
+    <div class="pres-section-label" style="color:${p.color};">Implementation</div>
+    <div class="pres-section-heading">How Fast Can You Go Live?</div>
+    <div class="pres-section-desc">A clear path from sign-up to full deployment.</div>
+    <div class="tl-row">
+      ${p.timeline.map((t,i)=>{const o=[.3,.5,.7,1];return`<div class="tl-item" style="border-top-color:${p.color};"><div class="tl-phase" style="color:${p.color};opacity:${o[i]||1};">${t.phase}</div><div class="tl-time">${t.time}</div><div class="tl-desc">${t.d}</div></div>`;}).join('')}
     </div>
+  </div>
+  <hr class="pres-divider">
+
+  <!-- PRICING -->
+  <div class="pres-section-wrap">
+    <div class="pres-section-label" style="color:${p.color};">Pricing</div>
+    <div class="pres-section-heading">Investment</div>
+    <div class="pricing-card">${p.pricing}</div>
   </div>`;
 
-  // Optional sections
-  if (p.geo) h += `<div class="pres-section"><div class="pres-section-title">Geographic Focus</div><div class="pres-section-body">${p.geo}</div></div>`;
-  if (p.tech) h += `<div class="pres-section"><div class="pres-section-title">Technology Stack</div><div class="pres-section-body">${p.tech}</div></div>`;
+  if(p.geo) h+=`<hr class="pres-divider"><div class="pres-section-wrap"><div class="pres-section-label" style="color:${p.color};">Geographic Focus</div><div class="pricing-card">${p.geo}</div></div>`;
+  if(p.tech) h+=`<hr class="pres-divider"><div class="pres-section-wrap"><div class="pres-section-label" style="color:${p.color};">Technology Stack</div><div class="pricing-card">${p.tech}</div></div>`;
 
-  // Pricing
-  h += `<div class="pres-section"><div class="pres-section-title">Pricing</div><div class="pres-section-body">${p.pricing}</div></div>`;
-
-  // CTA
-  h += `
+  h+=`
+  </div><!-- end pres-content -->
+  <hr class="pres-divider">
   <div class="pres-cta">
-    <div class="pres-cta-title">Ready to get started with ${p.name}?</div>
-    <div class="pres-cta-sub">Let\u2019s schedule a personalized demo and show you exactly how ${p.name} can transform your operations.</div>
+    <div style="position:absolute;inset:0;background:radial-gradient(ellipse at bottom,${p.color}08 0%,transparent 60%);pointer-events:none;"></div>
+    <div class="pres-cta-title" style="position:relative;">Ready to Get Started with ${p.name}?</div>
+    <div class="pres-cta-sub">Schedule a personalized demo and see exactly how ${p.name} can transform your operations.</div>
     <a href="${p.url}" target="_blank" class="pres-cta-btn" style="background:${p.color};">Visit ${p.urlLabel} &rarr;</a>
-    <div class="pres-cta-contact">
+    <div class="pres-cta-links">
       <a href="tel:8886103810" class="pres-cta-link">888-610-3810</a>
       <a href="mailto:invest@digit2ai.com" class="pres-cta-link">invest@digit2ai.com</a>
       <a href="https://ringlypro.com/demo" target="_blank" class="pres-cta-link">Request Demo</a>
     </div>
   </div>
-  <div class="pres-hints">
-    <kbd>&larr;</kbd> Previous &nbsp;&nbsp; <kbd>&rarr;</kbd> Next &nbsp;&nbsp; <kbd>ESC</kbd> Close
-  </div>`;
-
-  presBody.innerHTML = h;
+  <div class="pres-footer">DIGIT2AI &middot; AI-POWERED VERTICAL PLATFORMS</div>
+  <div class="pres-hints"><kbd>&larr;</kbd> Previous &nbsp; <kbd>&rarr;</kbd> Next &nbsp; <kbd>ESC</kbd> Close</div>`;
+  presB.innerHTML=h;
 }
 
-presPrev.addEventListener('click', () => { if (curSlide > 0) { curSlide--; renderSlide(); } });
-presNext.addEventListener('click', () => { if (curSlide < P.length-1) { curSlide++; renderSlide(); } });
-document.getElementById('presClose').addEventListener('click', closePres);
-document.addEventListener('keydown', e => {
-  if (!presOverlay.classList.contains('active')) return;
-  if (e.key==='Escape') closePres();
-  if (e.key==='ArrowLeft' && curSlide>0) { curSlide--; renderSlide(); }
-  if (e.key==='ArrowRight' && curSlide<P.length-1) { curSlide++; renderSlide(); }
-});
+prevB.addEventListener('click',()=>{if(cur>0){cur--;render();}});
+nextB.addEventListener('click',()=>{if(cur<P.length-1){cur++;render();}});
+document.getElementById('presClose').addEventListener('click',closePres);
+document.addEventListener('keydown',e=>{if(!presO.classList.contains('active'))return;if(e.key==='Escape')closePres();if(e.key==='ArrowLeft'&&cur>0){cur--;render();}if(e.key==='ArrowRight'&&cur<P.length-1){cur++;render();}});
 
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════
 // AUTH
-// ══════════════════════════════════════════════════
-const VE='mstagg@digit2ai.com', VH='aabc4a74dbf8f08b1806a814a1bff7c9e92710bb89277ff18c26f2e9631452f0';
+// ══════════════════════════════════
+const VE='mstagg@digit2ai.com',VH='aabc4a74dbf8f08b1806a814a1bff7c9e92710bb89277ff18c26f2e9631452f0';
 async function sha256(t){const d=new TextEncoder().encode(t);const b=await crypto.subtle.digest('SHA-256',d);return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
 function showApp(){document.getElementById('loginOverlay').classList.add('authenticated');document.getElementById('appContent').classList.add('authenticated');}
 if(sessionStorage.getItem('d2ai_auth')==='1')showApp();
 document.getElementById('loginBtn').addEventListener('click',doLogin);
 document.getElementById('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
-async function doLogin(){
-  const e=document.getElementById('loginEmail').value.trim().toLowerCase();
-  const p=document.getElementById('loginPassword').value;
-  const err=document.getElementById('loginError');err.textContent='';
-  if(!e||!p){err.textContent='Please enter email and password.';return;}
-  if(e===VE&&await sha256(p)===VH){sessionStorage.setItem('d2ai_auth','1');showApp();}
-  else{err.textContent='Invalid email or password.';}
-}
-document.getElementById('logoutBtn').addEventListener('click',()=>{
-  sessionStorage.removeItem('d2ai_auth');
-  document.getElementById('loginOverlay').classList.remove('authenticated');
-  document.getElementById('appContent').classList.remove('authenticated');
-  document.getElementById('loginEmail').value='';document.getElementById('loginPassword').value='';
-  document.getElementById('loginError').textContent='';
-});
+async function doLogin(){const e=document.getElementById('loginEmail').value.trim().toLowerCase(),p=document.getElementById('loginPassword').value,err=document.getElementById('loginError');err.textContent='';if(!e||!p){err.textContent='Please enter email and password.';return;}if(e===VE&&await sha256(p)===VH){sessionStorage.setItem('d2ai_auth','1');showApp();}else{err.textContent='Invalid email or password.';}}
+document.getElementById('logoutBtn').addEventListener('click',()=>{sessionStorage.removeItem('d2ai_auth');document.getElementById('loginOverlay').classList.remove('authenticated');document.getElementById('appContent').classList.remove('authenticated');document.getElementById('loginEmail').value='';document.getElementById('loginPassword').value='';document.getElementById('loginError').textContent='';});
 
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════
 // FILTERS & SEARCH
-// ══════════════════════════════════════════════════
-const filterBtns=document.querySelectorAll('.filter-btn');
-const cards=document.querySelectorAll('.card');
-filterBtns.forEach(btn=>{btn.addEventListener('click',()=>{
-  filterBtns.forEach(b=>b.classList.remove('active'));btn.classList.add('active');
-  const f=btn.dataset.filter;
-  cards.forEach(c=>{c.classList.toggle('hidden',f!=='all'&&!c.dataset.categories.includes(f));});
-});});
-const searchInput=document.getElementById('searchInput');
-searchInput.addEventListener('input',()=>{
-  const q=searchInput.value.toLowerCase();
-  filterBtns.forEach(b=>b.classList.remove('active'));if(!q)filterBtns[0].classList.add('active');
-  cards.forEach(c=>{c.classList.toggle('hidden',q&&!c.textContent.toLowerCase().includes(q));});
-});
+// ══════════════════════════════════
+const filterBtns=document.querySelectorAll('.filter-btn'),cards=document.querySelectorAll('.card');
+filterBtns.forEach(btn=>{btn.addEventListener('click',()=>{filterBtns.forEach(b=>b.classList.remove('active'));btn.classList.add('active');const f=btn.dataset.filter;cards.forEach(c=>{c.classList.toggle('hidden',f!=='all'&&!c.dataset.categories.includes(f));});});});
+document.getElementById('searchInput').addEventListener('input',function(){const q=this.value.toLowerCase();filterBtns.forEach(b=>b.classList.remove('active'));if(!q)filterBtns[0].classList.add('active');cards.forEach(c=>{c.classList.toggle('hidden',q&&!c.textContent.toLowerCase().includes(q));});});
 </script>
 </body>
 </html>
