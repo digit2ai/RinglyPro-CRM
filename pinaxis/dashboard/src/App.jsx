@@ -17,7 +17,6 @@ const steps = [
   { path: '/benefits', label: 'ROI Projection', icon: TrendingUpIcon },
   { path: '/report', label: 'Report', icon: FileIcon },
   { path: '/api-integration', label: 'API Integration', icon: PlugIcon },
-  { path: '/observability', label: 'Observability', icon: PulseIcon },
   { path: '/user-guide', label: 'User Guide', icon: BookIcon, noProject: true },
   { path: '/proposals/PINAXIS-System-Architecture-Document.html', label: 'MCP Architecture', icon: ArchitectureIcon, external: true }
 ]
