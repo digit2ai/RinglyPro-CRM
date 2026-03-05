@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getTelemetryHealth, getTelemetryEvents } from '../lib/api'
+import { getTelemetryHealth, getTelemetryEvents, seedDemoTelemetry } from '../lib/api'
 
 const BASE = '/pinaxis/api/v1'
 
@@ -53,6 +53,19 @@ export default function ObservabilityPage() {
   const [eventFilter, setEventFilter] = useState('all')
   const [lastRefresh, setLastRefresh] = useState(null)
   const [projects, setProjects] = useState(null)
+  const [seeding, setSeeding] = useState(false)
+
+  const handleSeedDemo = async () => {
+    setSeeding(true)
+    try {
+      await seedDemoTelemetry(projectId)
+      await fetchData()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSeeding(false)
+    }
+  }
 
   // If no projectId, fetch project list and show selector
   useEffect(() => {
@@ -217,10 +230,24 @@ export default function ObservabilityPage() {
               </svg>
             </div>
             <h3 className="text-xl font-semibold text-white mb-2">Observability Ready</h3>
-            <p className="text-slate-400 max-w-lg mx-auto mb-6">
+            <p className="text-slate-400 max-w-lg mx-auto mb-4">
               No telemetry data has been received yet. Connect your WCS/WES systems to push
-              equipment telemetry via the Production API.
+              equipment telemetry via the Production API, or generate demo data to preview the dashboard.
             </p>
+            <button
+              onClick={handleSeedDemo}
+              disabled={seeding}
+              className="px-6 py-3 rounded-lg bg-pinaxis-600 hover:bg-pinaxis-500 text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-6"
+            >
+              {seeding ? (
+                <span className="flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Generating GEBHARDT equipment telemetry...
+                </span>
+              ) : (
+                'Generate Demo Telemetry'
+              )}
+            </button>
             <div className="max-w-2xl mx-auto text-left">
               <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Example: Send equipment status</p>
               <pre className="p-4 rounded-lg bg-slate-900/50 border border-slate-700 text-sm text-slate-300 overflow-x-auto whitespace-pre">{`curl -X POST /pinaxis/api/v1/telemetry/${projectId}/events \\

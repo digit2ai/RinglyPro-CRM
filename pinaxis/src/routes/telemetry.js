@@ -224,4 +224,156 @@ router.get('/:projectId/events', async (req, res) => {
   }
 });
 
+// ============================================================================
+// POST /:projectId/demo-seed — Generate realistic demo telemetry data
+// ============================================================================
+router.post('/:projectId/demo-seed', async (req, res) => {
+  try {
+    const project = await req.models.PinaxisProject.findByPk(req.params.projectId);
+    if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+
+    const projectId = project.id;
+    const now = Date.now();
+    const records = [];
+
+    // Equipment definitions (GEBHARDT warehouse)
+    const equipment = [
+      { source: 'Shuttle-A1', type: 'GEBHARDT StoreBiter', zone: 'Aisle 1' },
+      { source: 'Shuttle-A2', type: 'GEBHARDT StoreBiter', zone: 'Aisle 2' },
+      { source: 'Shuttle-B1', type: 'GEBHARDT StoreBiter', zone: 'Aisle 3' },
+      { source: 'Conveyor-Main', type: 'GEBHARDT FlexConveyor', zone: 'Inbound' },
+      { source: 'Conveyor-Outbound', type: 'GEBHARDT FlexConveyor', zone: 'Outbound' },
+      { source: 'Lift-01', type: 'GEBHARDT MultiLevel Lift', zone: 'Aisle 1' },
+      { source: 'Lift-02', type: 'GEBHARDT MultiLevel Lift', zone: 'Aisle 2' },
+      { source: 'Pick-Station-1', type: 'GEBHARDT Goods-to-Person', zone: 'Pick Area' },
+      { source: 'Pick-Station-2', type: 'GEBHARDT Goods-to-Person', zone: 'Pick Area' },
+      { source: 'Charging-Bay', type: 'GEBHARDT AutoCharge', zone: 'Maintenance' }
+    ];
+
+    const rand = (min, max) => Math.random() * (max - min) + min;
+    const randInt = (min, max) => Math.floor(rand(min, max));
+
+    // Generate 1 hour of telemetry (every ~2 minutes per equipment = ~300 events)
+    for (let minutesAgo = 60; minutesAgo >= 0; minutesAgo -= 2) {
+      const ts = new Date(now - minutesAgo * 60 * 1000);
+
+      for (const eq of equipment) {
+        // Equipment status events
+        const isRunning = Math.random() > 0.05;
+        const temp = rand(28, 52).toFixed(1);
+        const utilization = isRunning ? randInt(55, 98) : 0;
+
+        records.push({
+          project_id: projectId,
+          event_type: 'equipment_status',
+          source: eq.source,
+          event_data: {
+            status: isRunning ? 'running' : 'idle',
+            equipment_type: eq.type,
+            zone: eq.zone,
+            temperature_c: parseFloat(temp),
+            utilization_pct: utilization,
+            cycles_today: randInt(800, 4500),
+            uptime_hours: rand(6, 23.5).toFixed(1)
+          },
+          severity: parseFloat(temp) > 48 ? 'warning' : 'info',
+          recorded_at: ts
+        });
+      }
+
+      // Throughput snapshots (every 2 min from main zones)
+      if (minutesAgo <= 60) {
+        records.push({
+          project_id: projectId,
+          event_type: 'throughput_snapshot',
+          source: 'Zone-Inbound',
+          event_data: {
+            cases_per_hour: randInt(180, 320),
+            orders_per_hour: randInt(45, 85),
+            picks_per_hour: randInt(250, 500),
+            avg_cycle_time_sec: rand(8, 18).toFixed(1)
+          },
+          severity: 'info',
+          recorded_at: ts
+        });
+        records.push({
+          project_id: projectId,
+          event_type: 'throughput_snapshot',
+          source: 'Zone-Outbound',
+          event_data: {
+            cases_per_hour: randInt(150, 280),
+            orders_per_hour: randInt(40, 75),
+            pallets_per_hour: randInt(12, 28),
+            avg_cycle_time_sec: rand(10, 22).toFixed(1)
+          },
+          severity: 'info',
+          recorded_at: ts
+        });
+      }
+    }
+
+    // Inject some realistic faults
+    const faultScenarios = [
+      { source: 'Shuttle-B1', severity: 'warning', data: { fault_code: 'SB-W-042', message: 'Vibration threshold exceeded on drive motor', action: 'Schedule preventive maintenance', vibration_mm_s: 4.8 } },
+      { source: 'Conveyor-Main', severity: 'warning', data: { fault_code: 'FC-W-018', message: 'Belt tension below nominal — auto-adjusted', action: 'Monitor next 30 min', tension_pct: 82 } },
+      { source: 'Lift-01', severity: 'critical', data: { fault_code: 'ML-C-003', message: 'Emergency stop triggered — obstruction detected Level 3', action: 'Operator intervention required', level: 3 } },
+      { source: 'Pick-Station-2', severity: 'warning', data: { fault_code: 'GP-W-011', message: 'Scanner read rate dropped below 98%', action: 'Clean scanner lens', read_rate_pct: 96.2 } },
+      { source: 'Shuttle-A1', severity: 'warning', data: { fault_code: 'SB-W-055', message: 'Battery charge below 20% — returning to charge bay', action: 'Auto-routing to Charging-Bay', battery_pct: 18 } }
+    ];
+
+    for (let i = 0; i < faultScenarios.length; i++) {
+      const f = faultScenarios[i];
+      records.push({
+        project_id: projectId,
+        event_type: 'fault',
+        source: f.source,
+        event_data: f.data,
+        severity: f.severity,
+        recorded_at: new Date(now - randInt(5, 50) * 60 * 1000)
+      });
+    }
+
+    // KPI updates
+    const kpiSources = ['System-Overall', 'Zone-Inbound', 'Zone-Outbound'];
+    for (const src of kpiSources) {
+      records.push({
+        project_id: projectId,
+        event_type: 'kpi_update',
+        source: src,
+        event_data: {
+          pick_accuracy_pct: rand(98.5, 99.9).toFixed(2),
+          order_fill_rate_pct: rand(96, 99.5).toFixed(1),
+          avg_order_cycle_min: rand(12, 35).toFixed(1),
+          throughput_vs_target_pct: randInt(88, 115),
+          labor_productivity_uph: randInt(120, 280)
+        },
+        severity: 'info',
+        recorded_at: new Date(now - randInt(1, 10) * 60 * 1000)
+      });
+    }
+
+    // Bulk insert in chunks
+    const chunkSize = 500;
+    let inserted = 0;
+    for (let i = 0; i < records.length; i += chunkSize) {
+      const chunk = records.slice(i, i + chunkSize);
+      await req.models.PinaxisTelemetryEvent.bulkCreate(chunk, { ignoreDuplicates: true });
+      inserted += chunk.length;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        events_generated: inserted,
+        equipment_count: equipment.length,
+        fault_count: faultScenarios.length,
+        time_span: '1 hour of simulated telemetry'
+      }
+    });
+  } catch (error) {
+    console.error('PINAXIS demo telemetry seed error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 module.exports = router;

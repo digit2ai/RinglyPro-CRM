@@ -220,6 +220,16 @@ export async function getTelemetryEvents(projectId, filters = {}) {
 }
 
 /**
+ * Seed demo telemetry data for a project
+ * Backend: POST /telemetry/:projectId/demo-seed
+ */
+export async function seedDemoTelemetry(projectId) {
+  return request(`/telemetry/${projectId}/demo-seed`, {
+    method: 'POST'
+  })
+}
+
+/**
  * Get system architecture readiness analysis
  * Backend: GET /analysis/:projectId/system-architecture (via all endpoint)
  */
