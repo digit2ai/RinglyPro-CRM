@@ -47,13 +47,9 @@
       background: radial-gradient(ellipse, var(--accent-glow) 0%, transparent 70%);
       pointer-events: none;
     }
-    .logo-text {
-      font-size: 42px;
-      font-weight: 800;
-      background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      letter-spacing: -1px;
+    .logo-img {
+      max-width: 280px;
+      height: auto;
     }
     .tagline {
       color: var(--text-muted);
@@ -324,12 +320,127 @@
     .search-input:focus { border-color: var(--accent); }
 
     .hidden { display: none !important; }
+
+    /* Login overlay */
+    .login-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .login-overlay.authenticated { display: none; }
+    .login-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+      position: relative;
+    }
+    .login-box::before {
+      content: '';
+      position: absolute;
+      top: -80px; left: 50%;
+      transform: translateX(-50%);
+      width: 400px; height: 200px;
+      background: radial-gradient(ellipse, var(--accent-glow) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .login-box .login-logo {
+      max-width: 220px;
+      height: auto;
+      margin-bottom: 8px;
+    }
+    .login-box .login-subtitle {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 32px;
+    }
+    .login-field {
+      width: 100%;
+      padding: 14px 18px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      margin-bottom: 14px;
+      transition: border-color .2s;
+    }
+    .login-field::placeholder { color: var(--text-muted); }
+    .login-field:focus { border-color: var(--accent); }
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .2s;
+      margin-top: 4px;
+    }
+    .login-btn:hover { opacity: .9; }
+    .login-error {
+      color: var(--red);
+      font-size: 13px;
+      margin-top: 12px;
+      min-height: 20px;
+    }
+
+    .app-content { display: none; }
+    .app-content.authenticated { display: block; }
+
+    /* Logout button */
+    .logout-btn {
+      position: fixed;
+      top: 20px;
+      right: 24px;
+      z-index: 100;
+      padding: 8px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-muted);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .logout-btn:hover {
+      border-color: var(--red);
+      color: var(--red);
+    }
   </style>
 </head>
 <body>
 
+  <!-- Login Overlay -->
+  <div class="login-overlay" id="loginOverlay">
+    <div class="login-box">
+      <img src="https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6994a52954da041fa88ac979.png" alt="Digit2AI" class="login-logo">
+      <div class="login-subtitle">Sign in to access platform verticals</div>
+      <input type="email" class="login-field" id="loginEmail" placeholder="Email address" autocomplete="email">
+      <input type="password" class="login-field" id="loginPassword" placeholder="Password" autocomplete="current-password">
+      <button class="login-btn" id="loginBtn">Sign In</button>
+      <div class="login-error" id="loginError"></div>
+    </div>
+  </div>
+
+  <!-- App Content (hidden until authenticated) -->
+  <div class="app-content" id="appContent">
+
+  <button class="logout-btn" id="logoutBtn">Sign Out</button>
+
   <div class="header">
-    <div class="logo-text">Digit2AI</div>
+    <img src="https://images.leadconnectorhq.com/image/f_webp/q_80/r_1200/u_https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6994a52954da041fa88ac979.png" alt="Digit2AI" class="logo-img">
     <div class="tagline">AI-Powered Vertical Platforms</div>
     <div class="stats-bar">
       <div class="stat">
@@ -839,8 +950,57 @@
     </div>
   </div>
 
+  </div><!-- end app-content -->
+
   <script>
-    // Filter logic
+    // ── Auth ──
+    const VALID_EMAIL = 'mstagg@digit2ai.com';
+    const VALID_PW_HASH = 'aabc4a74dbf8f08b1806a814a1bff7c9e92710bb89277ff18c26f2e9631452f0';
+
+    async function sha256(text) {
+      const data = new TextEncoder().encode(text);
+      const buf = await crypto.subtle.digest('SHA-256', data);
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function showApp() {
+      document.getElementById('loginOverlay').classList.add('authenticated');
+      document.getElementById('appContent').classList.add('authenticated');
+    }
+
+    // Check session
+    if (sessionStorage.getItem('d2ai_auth') === '1') showApp();
+
+    document.getElementById('loginBtn').addEventListener('click', doLogin);
+    document.getElementById('loginPassword').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+    async function doLogin() {
+      const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+      const pw = document.getElementById('loginPassword').value;
+      const errEl = document.getElementById('loginError');
+      errEl.textContent = '';
+
+      if (!email || !pw) { errEl.textContent = 'Please enter email and password.'; return; }
+
+      const hash = await sha256(pw);
+      if (email === VALID_EMAIL && hash === VALID_PW_HASH) {
+        sessionStorage.setItem('d2ai_auth', '1');
+        showApp();
+      } else {
+        errEl.textContent = 'Invalid email or password.';
+      }
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      sessionStorage.removeItem('d2ai_auth');
+      document.getElementById('loginOverlay').classList.remove('authenticated');
+      document.getElementById('appContent').classList.remove('authenticated');
+      document.getElementById('loginEmail').value = '';
+      document.getElementById('loginPassword').value = '';
+      document.getElementById('loginError').textContent = '';
+    });
+
+    // ── Filter logic ──
     const filterBtns = document.querySelectorAll('.filter-btn');
     const cards = document.querySelectorAll('.card');
 
@@ -859,7 +1019,7 @@
       });
     });
 
-    // Search logic
+    // ── Search logic ──
     const searchInput = document.getElementById('searchInput');
     searchInput.addEventListener('input', () => {
       const q = searchInput.value.toLowerCase();
