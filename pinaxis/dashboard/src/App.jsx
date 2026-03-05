@@ -17,6 +17,7 @@ const steps = [
   { path: '/benefits', label: 'ROI Projection', icon: TrendingUpIcon },
   { path: '/report', label: 'Report', icon: FileIcon },
   { path: '/api-integration', label: 'API Integration', icon: PlugIcon },
+  { path: '/oee-dashboard/', label: 'OEE Dashboard', icon: GaugeIcon, external: true },
   { path: '/user-guide', label: 'User Guide', icon: BookIcon, noProject: true },
   { path: '/proposals/PINAXIS-System-Architecture-Document.html', label: 'MCP Architecture', icon: ArchitectureIcon, external: true }
 ]
@@ -81,6 +82,15 @@ function PulseIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" d="M3 12h3l3-9 4 18 3-9h5" />
+    </svg>
+  )
+}
+
+function GaugeIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v2m10 8h-2M4 12H2m15.07-7.07l-1.41 1.41M6.34 6.34L4.93 4.93" />
     </svg>
   )
 }
