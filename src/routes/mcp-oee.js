@@ -1,17 +1,17 @@
 // src/routes/mcp-oee.js — MCP OEE (Overall Equipment Effectiveness) Tool Handlers
-// 5 MCP tools + inbound webhook for machine events
+// Rewired to PINAXIS models (project_id scoping, machine_name text refs)
 'use strict';
 
 const express = require('express');
 const router = express.Router();
-const sequelize = require('../config/database');
-const { QueryTypes } = require('sequelize');
 const { calculateOEE } = require('../utils/oee');
 
-// Import models
-const Machine = require('../models/Machine');
-const MachineEvent = require('../models/MachineEvent');
-const ProductionRun = require('../models/ProductionRun');
+// Import PINAXIS models (auto-loaded from pinaxis/models/)
+const models = require('../../pinaxis/models');
+const sequelize = models.sequelize;
+const OEEMachine = models.PinaxisOEEMachine;
+const OEEMachineEvent = models.PinaxisOEEMachineEvent;
+const OEEProductionRun = models.PinaxisOEEProductionRun;
 
 // ============================================================================
 // MCP TOOL DEFINITIONS
@@ -24,10 +24,10 @@ const OEE_TOOLS = [
     input_schema: {
       type: 'object',
       properties: {
-        machine_id: { type: 'integer', description: 'Optional. If omitted, returns all machines.' },
-        tenant_id: { type: 'integer', description: 'Required for multi-tenant scoping.' }
+        machine_name: { type: 'string', description: 'Optional. If omitted, returns all machines.' },
+        project_id: { type: 'integer', description: 'Required for PINAXIS project scoping.' }
       },
-      required: ['tenant_id']
+      required: ['project_id']
     }
   },
   {
@@ -36,11 +36,11 @@ const OEE_TOOLS = [
     input_schema: {
       type: 'object',
       properties: {
-        machine_id: { type: 'integer' },
+        machine_name: { type: 'string' },
         shift_date: { type: 'string', description: 'ISO date string e.g. 2025-03-05. Defaults to today.' },
-        tenant_id: { type: 'integer' }
+        project_id: { type: 'integer' }
       },
-      required: ['machine_id', 'tenant_id']
+      required: ['machine_name', 'project_id']
     }
   },
   {
@@ -51,10 +51,10 @@ const OEE_TOOLS = [
       properties: {
         from: { type: 'string', description: 'ISO datetime start' },
         to: { type: 'string', description: 'ISO datetime end' },
-        machine_id: { type: 'integer', description: 'Optional. Omit for floor-wide summary.' },
-        tenant_id: { type: 'integer' }
+        machine_name: { type: 'string', description: 'Optional. Omit for floor-wide summary.' },
+        project_id: { type: 'integer' }
       },
-      required: ['tenant_id']
+      required: ['project_id']
     }
   },
   {
@@ -63,12 +63,12 @@ const OEE_TOOLS = [
     input_schema: {
       type: 'object',
       properties: {
-        machine_id: { type: 'integer' },
+        machine_name: { type: 'string' },
         status: { type: 'string', enum: ['running', 'stopped', 'idle', 'fault'] },
         reason: { type: 'string', description: 'Optional downtime reason or fault code.' },
-        tenant_id: { type: 'integer' }
+        project_id: { type: 'integer' }
       },
-      required: ['machine_id', 'status', 'tenant_id']
+      required: ['machine_name', 'status', 'project_id']
     }
   },
   {
@@ -77,9 +77,9 @@ const OEE_TOOLS = [
     input_schema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'integer' }
+        project_id: { type: 'integer' }
       },
-      required: ['tenant_id']
+      required: ['project_id']
     }
   }
 ];
@@ -136,27 +136,27 @@ router.post('/tools/call', async (req, res) => {
 // ============================================================================
 
 /**
- * get_machine_status — Latest status per machine using DISTINCT ON
+ * get_machine_status — Latest status per machine using LATERAL join
  */
-async function handleGetMachineStatus({ tenant_id, machine_id }) {
+async function handleGetMachineStatus({ project_id, machine_name }) {
   let query = `
     SELECT m.id, m.name, m.line, m.is_active,
            me.status, me.reason, me.recorded_at
-    FROM machines m
+    FROM pinaxis_oee_machines m
     LEFT JOIN LATERAL (
       SELECT status, reason, recorded_at
-      FROM machine_events
-      WHERE machine_id = m.id
+      FROM pinaxis_oee_machine_events
+      WHERE machine_name = m.name AND project_id = m.project_id
       ORDER BY recorded_at DESC
       LIMIT 1
     ) me ON true
-    WHERE m.tenant_id = :tenant_id
+    WHERE m.project_id = :project_id
   `;
-  const replacements = { tenant_id };
+  const replacements = { project_id };
 
-  if (machine_id) {
-    query += ' AND m.id = :machine_id';
-    replacements.machine_id = machine_id;
+  if (machine_name) {
+    query += ' AND m.name = :machine_name';
+    replacements.machine_name = machine_name;
   }
 
   query += ' ORDER BY m.name';
@@ -179,25 +179,26 @@ async function handleGetMachineStatus({ tenant_id, machine_id }) {
 /**
  * get_oee_report — Full OEE breakdown for a machine on a shift date
  */
-async function handleGetOEEReport({ tenant_id, machine_id, shift_date }) {
+async function handleGetOEEReport({ project_id, machine_name, shift_date }) {
   const date = shift_date || new Date().toISOString().slice(0, 10);
 
-  // Verify machine belongs to tenant
-  const machine = await Machine.findOne({
-    where: { id: machine_id, tenantId: tenant_id }
+  // Verify machine exists for this project
+  const machine = await OEEMachine.findOne({
+    where: { project_id, name: machine_name }
   });
   if (!machine) {
-    return { error: 'Machine not found for this tenant' };
+    return { error: 'Machine not found for this project' };
   }
 
   // Get production run for this date
   const [runs] = await sequelize.query(`
-    SELECT * FROM production_runs
-    WHERE machine_id = :machine_id
+    SELECT * FROM pinaxis_oee_production_runs
+    WHERE project_id = :project_id
+      AND machine_name = :machine_name
       AND shift_start::date = :date
     ORDER BY shift_start DESC
     LIMIT 1
-  `, { replacements: { machine_id, date } });
+  `, { replacements: { project_id, machine_name, date } });
 
   if (runs.length === 0) {
     return {
@@ -215,8 +216,9 @@ async function handleGetOEEReport({ tenant_id, machine_id, shift_date }) {
     WITH events_ordered AS (
       SELECT status, recorded_at,
              LEAD(recorded_at) OVER (ORDER BY recorded_at) AS next_at
-      FROM machine_events
-      WHERE machine_id = :machine_id
+      FROM pinaxis_oee_machine_events
+      WHERE project_id = :project_id
+        AND machine_name = :machine_name
         AND recorded_at >= :shift_start
         AND recorded_at <= COALESCE(:shift_end, NOW())
       ORDER BY recorded_at
@@ -228,7 +230,8 @@ async function handleGetOEEReport({ tenant_id, machine_id, shift_date }) {
     WHERE status = 'stopped'
   `, {
     replacements: {
-      machine_id,
+      project_id,
+      machine_name,
       shift_start: run.shift_start,
       shift_end: run.shift_end
     }
@@ -239,7 +242,7 @@ async function handleGetOEEReport({ tenant_id, machine_id, shift_date }) {
   const oee = calculateOEE({
     plannedTime: run.planned_production_time_min,
     downtime,
-    idealCycleTimeSec: machine.expectedCycleTimeSec,
+    idealCycleTimeSec: machine.expected_cycle_time_sec,
     totalParts: run.total_parts,
     goodParts: run.good_parts
   });
@@ -253,7 +256,7 @@ async function handleGetOEEReport({ tenant_id, machine_id, shift_date }) {
     total_parts: run.total_parts,
     good_parts: run.good_parts,
     reject_parts: run.total_parts - run.good_parts,
-    ideal_cycle_time_sec: machine.expectedCycleTimeSec,
+    ideal_cycle_time_sec: machine.expected_cycle_time_sec,
     ...oee
   };
 }
@@ -261,25 +264,24 @@ async function handleGetOEEReport({ tenant_id, machine_id, shift_date }) {
 /**
  * get_downtime_summary — Ranked downtime reasons
  */
-async function handleGetDowntimeSummary({ tenant_id, machine_id, from, to }) {
+async function handleGetDowntimeSummary({ project_id, machine_name, from, to }) {
   const fromDate = from || new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const toDate = to || new Date().toISOString();
 
   let query = `
     WITH events_ordered AS (
-      SELECT me.machine_id, me.status, me.reason, me.recorded_at,
-             LEAD(me.recorded_at) OVER (PARTITION BY me.machine_id ORDER BY me.recorded_at) AS next_at
-      FROM machine_events me
-      JOIN machines m ON m.id = me.machine_id
-      WHERE m.tenant_id = :tenant_id
+      SELECT me.machine_name, me.status, me.reason, me.recorded_at,
+             LEAD(me.recorded_at) OVER (PARTITION BY me.machine_name ORDER BY me.recorded_at) AS next_at
+      FROM pinaxis_oee_machine_events me
+      WHERE me.project_id = :project_id
         AND me.recorded_at >= :from_date
         AND me.recorded_at <= :to_date
   `;
-  const replacements = { tenant_id, from_date: fromDate, to_date: toDate };
+  const replacements = { project_id, from_date: fromDate, to_date: toDate };
 
-  if (machine_id) {
-    query += ' AND me.machine_id = :machine_id';
-    replacements.machine_id = machine_id;
+  if (machine_name) {
+    query += ' AND me.machine_name = :machine_name';
+    replacements.machine_name = machine_name;
   }
 
   query += `
@@ -304,7 +306,7 @@ async function handleGetDowntimeSummary({ tenant_id, machine_id, from, to }) {
 
   return {
     period: { from: fromDate, to: toDate },
-    machine_id: machine_id || 'all',
+    machine_name: machine_name || 'all',
     grand_total_downtime_min: +grandTotal.toFixed(1),
     reasons: rows.map(r => ({
       reason: r.reason,
@@ -317,55 +319,57 @@ async function handleGetDowntimeSummary({ tenant_id, machine_id, from, to }) {
 /**
  * log_machine_event — Insert a status change event
  */
-async function handleLogMachineEvent({ tenant_id, machine_id, status, reason }) {
-  // Verify machine belongs to tenant
-  const machine = await Machine.findOne({
-    where: { id: machine_id, tenantId: tenant_id }
+async function handleLogMachineEvent({ project_id, machine_name, status, reason }) {
+  // Verify machine exists for this project
+  const machine = await OEEMachine.findOne({
+    where: { project_id, name: machine_name }
   });
   if (!machine) {
-    return { error: 'Machine not found for this tenant' };
+    return { error: 'Machine not found for this project' };
   }
 
-  const event = await MachineEvent.create({
-    machineId: machine_id,
+  const event = await OEEMachineEvent.create({
+    project_id,
+    machine_name,
     status,
     reason: reason || null,
-    recordedAt: new Date()
+    recorded_at: new Date()
   });
 
   if (status === 'fault') {
-    console.warn(`[OEE ALERT] FAULT on machine ${machine.name} (ID: ${machine_id}): ${reason || 'No reason provided'}`);
+    console.warn(`[OEE ALERT] FAULT on machine ${machine_name} (project ${project_id}): ${reason || 'No reason provided'}`);
   }
 
   return {
     id: event.id,
-    machine_id,
-    machine_name: machine.name,
+    project_id,
+    machine_name,
     status,
     reason,
-    recorded_at: event.recordedAt
+    recorded_at: event.recorded_at
   };
 }
 
 /**
  * get_floor_summary — Live shop floor snapshot
  */
-async function handleGetFloorSummary({ tenant_id }) {
+async function handleGetFloorSummary({ project_id }) {
   // Count machines by current status
   const [statusCounts] = await sequelize.query(`
     WITH latest_events AS (
-      SELECT DISTINCT ON (m.id) m.id, me.status
-      FROM machines m
-      LEFT JOIN machine_events me ON me.machine_id = m.id
-      WHERE m.tenant_id = :tenant_id AND m.is_active = true
-      ORDER BY m.id, me.recorded_at DESC
+      SELECT DISTINCT ON (m.name) m.name, me.status
+      FROM pinaxis_oee_machines m
+      LEFT JOIN pinaxis_oee_machine_events me
+        ON me.machine_name = m.name AND me.project_id = m.project_id
+      WHERE m.project_id = :project_id AND m.is_active = true
+      ORDER BY m.name, me.recorded_at DESC
     )
     SELECT
       COALESCE(status, 'unknown') AS status,
       COUNT(*) AS count
     FROM latest_events
     GROUP BY status
-  `, { replacements: { tenant_id } });
+  `, { replacements: { project_id } });
 
   const counts = { running: 0, stopped: 0, idle: 0, fault: 0, unknown: 0 };
   let totalMachines = 0;
@@ -378,17 +382,18 @@ async function handleGetFloorSummary({ tenant_id }) {
   const today = new Date().toISOString().slice(0, 10);
   const [oeeRows] = await sequelize.query(`
     SELECT
-      pr.machine_id,
+      pr.machine_name,
       m.expected_cycle_time_sec,
       pr.planned_production_time_min,
       pr.total_parts,
       pr.good_parts
-    FROM production_runs pr
-    JOIN machines m ON m.id = pr.machine_id
-    WHERE m.tenant_id = :tenant_id
+    FROM pinaxis_oee_production_runs pr
+    JOIN pinaxis_oee_machines m
+      ON m.name = pr.machine_name AND m.project_id = pr.project_id
+    WHERE m.project_id = :project_id
       AND m.is_active = true
       AND pr.shift_start::date = :today
-  `, { replacements: { tenant_id, today } });
+  `, { replacements: { project_id, today } });
 
   let floorOEE = null;
   if (oeeRows.length > 0) {
@@ -422,14 +427,14 @@ async function handleGetFloorSummary({ tenant_id }) {
 // REST API ENDPOINTS (direct CRUD — no MCP wrapper needed)
 // ============================================================================
 
-// GET /machines — List machines for a tenant
+// GET /machines — List machines for a project
 router.get('/machines', async (req, res) => {
   try {
-    const { tenant_id } = req.query;
-    if (!tenant_id) return res.status(400).json({ success: false, error: 'tenant_id required' });
+    const { project_id } = req.query;
+    if (!project_id) return res.status(400).json({ success: false, error: 'project_id required' });
 
-    const machines = await Machine.findAll({
-      where: { tenantId: tenant_id },
+    const machines = await OEEMachine.findAll({
+      where: { project_id },
       order: [['name', 'ASC']]
     });
     res.json({ success: true, data: machines });
@@ -441,16 +446,16 @@ router.get('/machines', async (req, res) => {
 // POST /machines — Register a new machine
 router.post('/machines', async (req, res) => {
   try {
-    const { tenant_id, name, line, expected_cycle_time_sec } = req.body;
-    if (!tenant_id || !name) {
-      return res.status(400).json({ success: false, error: 'tenant_id and name required' });
+    const { project_id, name, line, expected_cycle_time_sec } = req.body;
+    if (!project_id || !name) {
+      return res.status(400).json({ success: false, error: 'project_id and name required' });
     }
 
-    const machine = await Machine.create({
-      tenantId: tenant_id,
+    const machine = await OEEMachine.create({
+      project_id,
       name,
       line: line || null,
-      expectedCycleTimeSec: expected_cycle_time_sec || 30
+      expected_cycle_time_sec: expected_cycle_time_sec || 30
     });
     res.status(201).json({ success: true, data: machine });
   } catch (error) {
@@ -461,19 +466,20 @@ router.post('/machines', async (req, res) => {
 // POST /production-runs — Record a production run
 router.post('/production-runs', async (req, res) => {
   try {
-    const { machine_id, shift_start, shift_end, planned_production_time_min, total_parts, good_parts, actual_cycle_time_sec } = req.body;
-    if (!machine_id || !shift_start || !planned_production_time_min) {
-      return res.status(400).json({ success: false, error: 'machine_id, shift_start, and planned_production_time_min required' });
+    const { project_id, machine_name, shift_start, shift_end, planned_production_time_min, total_parts, good_parts, actual_cycle_time_sec } = req.body;
+    if (!project_id || !machine_name || !shift_start || !planned_production_time_min) {
+      return res.status(400).json({ success: false, error: 'project_id, machine_name, shift_start, and planned_production_time_min required' });
     }
 
-    const run = await ProductionRun.create({
-      machineId: machine_id,
-      shiftStart: shift_start,
-      shiftEnd: shift_end || null,
-      plannedProductionTimeMin: planned_production_time_min,
-      totalParts: total_parts || 0,
-      goodParts: good_parts || 0,
-      actualCycleTimeSec: actual_cycle_time_sec || null
+    const run = await OEEProductionRun.create({
+      project_id,
+      machine_name,
+      shift_start,
+      shift_end: shift_end || null,
+      planned_production_time_min,
+      total_parts: total_parts || 0,
+      good_parts: good_parts || 0,
+      actual_cycle_time_sec: actual_cycle_time_sec || null
     });
     res.status(201).json({ success: true, data: run });
   } catch (error) {
@@ -486,7 +492,7 @@ router.post('/production-runs', async (req, res) => {
 // ============================================================================
 router.post('/webhooks/machine-event', async (req, res) => {
   try {
-    const { machine_id, status, reason, tenant_id, api_key } = req.body;
+    const { machine_name, status, reason, project_id, api_key } = req.body;
 
     // Validate webhook API key
     const expectedKey = process.env.WEBHOOK_API_KEY || process.env.OEE_WEBHOOK_KEY;
@@ -494,8 +500,8 @@ router.post('/webhooks/machine-event', async (req, res) => {
       return res.status(401).json({ success: false, error: 'Invalid api_key' });
     }
 
-    if (!machine_id || !status || !tenant_id) {
-      return res.status(400).json({ success: false, error: 'machine_id, status, and tenant_id required' });
+    if (!machine_name || !status || !project_id) {
+      return res.status(400).json({ success: false, error: 'machine_name, status, and project_id required' });
     }
 
     const validStatuses = ['running', 'stopped', 'idle', 'fault'];
@@ -503,28 +509,29 @@ router.post('/webhooks/machine-event', async (req, res) => {
       return res.status(400).json({ success: false, error: `status must be one of: ${validStatuses.join(', ')}` });
     }
 
-    // Verify machine belongs to tenant
-    const machine = await Machine.findOne({
-      where: { id: machine_id, tenantId: tenant_id }
+    // Verify machine exists for this project
+    const machine = await OEEMachine.findOne({
+      where: { project_id, name: machine_name }
     });
     if (!machine) {
-      return res.status(404).json({ success: false, error: 'Machine not found for this tenant' });
+      return res.status(404).json({ success: false, error: 'Machine not found for this project' });
     }
 
-    const event = await MachineEvent.create({
-      machineId: machine_id,
+    const event = await OEEMachineEvent.create({
+      project_id,
+      machine_name,
       status,
       reason: reason || null,
-      recordedAt: new Date()
+      recorded_at: new Date()
     });
 
     if (status === 'fault') {
-      console.warn(`[OEE WEBHOOK ALERT] FAULT on ${machine.name} (ID: ${machine_id}): ${reason || 'No reason'}`);
+      console.warn(`[OEE WEBHOOK ALERT] FAULT on ${machine_name} (project ${project_id}): ${reason || 'No reason'}`);
     }
 
     res.json({
       success: true,
-      recorded_at: event.recordedAt
+      recorded_at: event.recorded_at
     });
   } catch (error) {
     console.error('OEE webhook error:', error);
@@ -537,32 +544,32 @@ router.post('/webhooks/machine-event', async (req, res) => {
 // ============================================================================
 router.post('/demo-seed', async (req, res) => {
   try {
-    const tenant_id = parseInt(req.body.tenant_id) || 1;
+    const project_id = parseInt(req.body.project_id) || 1;
 
-    // Clear existing demo data for this tenant
+    // Clear existing demo data for this project
     await sequelize.query(`
-      DELETE FROM machine_events WHERE machine_id IN (SELECT id FROM machines WHERE tenant_id = :tenant_id);
-      DELETE FROM production_runs WHERE machine_id IN (SELECT id FROM machines WHERE tenant_id = :tenant_id);
-      DELETE FROM machines WHERE tenant_id = :tenant_id;
-    `, { replacements: { tenant_id } });
+      DELETE FROM pinaxis_oee_machine_events WHERE project_id = :project_id;
+      DELETE FROM pinaxis_oee_production_runs WHERE project_id = :project_id;
+      DELETE FROM pinaxis_oee_machines WHERE project_id = :project_id;
+    `, { replacements: { project_id } });
 
     // Create 6 realistic machines
     const machineData = [
-      { name: 'CNC-Lathe-01', line: 'Line A', expectedCycleTimeSec: 45 },
-      { name: 'CNC-Mill-02', line: 'Line A', expectedCycleTimeSec: 60 },
-      { name: 'Injection-Mold-03', line: 'Line B', expectedCycleTimeSec: 30 },
-      { name: 'Assembly-Robot-04', line: 'Line B', expectedCycleTimeSec: 20 },
-      { name: 'Packaging-05', line: 'Line C', expectedCycleTimeSec: 15 },
-      { name: 'Quality-Station-06', line: 'Line C', expectedCycleTimeSec: 25 }
+      { name: 'CNC-Lathe-01', line: 'Line A', expected_cycle_time_sec: 45 },
+      { name: 'CNC-Mill-02', line: 'Line A', expected_cycle_time_sec: 60 },
+      { name: 'Injection-Mold-03', line: 'Line B', expected_cycle_time_sec: 30 },
+      { name: 'Assembly-Robot-04', line: 'Line B', expected_cycle_time_sec: 20 },
+      { name: 'Packaging-05', line: 'Line C', expected_cycle_time_sec: 15 },
+      { name: 'Quality-Station-06', line: 'Line C', expected_cycle_time_sec: 25 }
     ];
 
     const machines = [];
     for (const m of machineData) {
-      const machine = await Machine.create({
-        tenantId: tenant_id,
+      const machine = await OEEMachine.create({
+        project_id,
         name: m.name,
         line: m.line,
-        expectedCycleTimeSec: m.expectedCycleTimeSec
+        expected_cycle_time_sec: m.expected_cycle_time_sec
       });
       machines.push(machine);
     }
@@ -573,7 +580,6 @@ router.post('/demo-seed', async (req, res) => {
     const shiftEnd = new Date(now);
     shiftEnd.setHours(14, 0, 0, 0);
 
-    const statuses = ['running', 'stopped', 'idle', 'fault'];
     const stopReasons = [
       'Material changeover', 'Tool wear replacement', 'Scheduled maintenance',
       'Conveyor jam', 'Sensor calibration', 'Operator break',
@@ -591,7 +597,7 @@ router.post('/demo-seed', async (req, res) => {
 
     for (let i = 0; i < machines.length; i++) {
       const machine = machines[i];
-      const cycleTimeSec = machineData[i].expectedCycleTimeSec;
+      const cycleTimeSec = machineData[i].expected_cycle_time_sec;
 
       // Generate events every 10-30 minutes during the shift
       let t = new Date(shiftStart);
@@ -611,10 +617,11 @@ router.post('/demo-seed', async (req, res) => {
         }
 
         eventRows.push({
-          machineId: machine.id,
+          project_id,
+          machine_name: machine.name,
           status,
           reason,
-          recordedAt: new Date(t)
+          recorded_at: new Date(t)
         });
 
         // Advance 10-30 min
@@ -623,10 +630,11 @@ router.post('/demo-seed', async (req, res) => {
 
       // Ensure the latest event matches our designed current status
       eventRows.push({
-        machineId: machine.id,
+        project_id,
+        machine_name: machine.name,
         status: currentStatuses[i],
         reason: currentStatuses[i] === 'stopped' ? 'Material changeover' : null,
-        recordedAt: new Date(now.getTime() - 60000) // 1 min ago
+        recorded_at: new Date(now.getTime() - 60000) // 1 min ago
       });
 
       // Create production run for today
@@ -635,30 +643,31 @@ router.post('/demo-seed', async (req, res) => {
       const maxParts = Math.floor(partsPerMin * plannedMin * (0.7 + Math.random() * 0.25));
       const goodParts = Math.floor(maxParts * (0.92 + Math.random() * 0.07));
 
-      await ProductionRun.create({
-        machineId: machine.id,
-        shiftStart,
-        shiftEnd: now > shiftEnd ? shiftEnd : null,
-        plannedProductionTimeMin: Math.round(plannedMin),
-        totalParts: maxParts,
-        goodParts,
-        actualCycleTimeSec: cycleTimeSec * (0.95 + Math.random() * 0.15)
+      await OEEProductionRun.create({
+        project_id,
+        machine_name: machine.name,
+        shift_start: shiftStart,
+        shift_end: now > shiftEnd ? shiftEnd : null,
+        planned_production_time_min: Math.round(plannedMin),
+        total_parts: maxParts,
+        good_parts: goodParts,
+        actual_cycle_time_sec: cycleTimeSec * (0.95 + Math.random() * 0.15)
       });
     }
 
     // Bulk insert events in chunks
     const chunkSize = 500;
     for (let j = 0; j < eventRows.length; j += chunkSize) {
-      await MachineEvent.bulkCreate(eventRows.slice(j, j + chunkSize));
+      await OEEMachineEvent.bulkCreate(eventRows.slice(j, j + chunkSize));
     }
 
     res.json({
       success: true,
-      message: `Demo data seeded for tenant ${tenant_id}`,
+      message: `Demo data seeded for project ${project_id}`,
       machines_created: machines.length,
       events_created: eventRows.length,
       production_runs_created: machines.length,
-      tenant_id
+      project_id
     });
   } catch (error) {
     console.error('OEE demo seed error:', error);
@@ -670,7 +679,7 @@ router.post('/demo-seed', async (req, res) => {
 router.get('/health', (req, res) => {
   res.json({
     status: 'ok',
-    module: 'OEE Tracking',
+    module: 'OEE Tracking (PINAXIS)',
     tools: OEE_TOOLS.length,
     timestamp: new Date().toISOString()
   });

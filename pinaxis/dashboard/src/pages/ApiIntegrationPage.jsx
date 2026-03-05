@@ -46,6 +46,36 @@ const ENDPOINTS = [
     required: ['sku', 'ship_date', 'order_id']
   },
   {
+    method: 'POST',
+    path: '/ingest/:projectId/oee-machines',
+    description: 'Ingest OEE machine / equipment registry records',
+    bodySchema: {
+      records: [{ name: 'CNC-Lathe-01', line: 'Line A', expected_cycle_time_sec: 45, is_active: true }],
+      mode: 'upsert'
+    },
+    required: ['name']
+  },
+  {
+    method: 'POST',
+    path: '/ingest/:projectId/oee-machine-events',
+    description: 'Ingest OEE machine status change events (running/stopped/idle/fault)',
+    bodySchema: {
+      records: [{ machine_name: 'CNC-Lathe-01', status: 'running', reason: null, recorded_at: '2026-03-05T08:30:00Z' }],
+      mode: 'insert'
+    },
+    required: ['machine_name', 'status']
+  },
+  {
+    method: 'POST',
+    path: '/ingest/:projectId/oee-production-runs',
+    description: 'Ingest OEE production run / shift output records',
+    bodySchema: {
+      records: [{ machine_name: 'CNC-Lathe-01', shift_start: '2026-03-05T06:00:00Z', shift_end: '2026-03-05T14:00:00Z', planned_production_time_min: 480, total_parts: 520, good_parts: 505 }],
+      mode: 'upsert'
+    },
+    required: ['machine_name', 'shift_start', 'planned_production_time_min']
+  },
+  {
     method: 'GET',
     path: '/ingest/:projectId/status',
     description: 'Get row counts and last sync time for all data types',
@@ -347,11 +377,32 @@ export default function ApiIntegrationPage() {
                 <td className="py-3 pr-4"><code className="text-xs font-mono text-amber-400">sku, receipt_date</code></td>
                 <td className="py-3 text-xs text-slate-400">Inbound receiving records, suppliers</td>
               </tr>
-              <tr>
+              <tr className="border-b border-slate-800">
                 <td className="py-3 pr-4 font-medium text-white">Goods Out</td>
                 <td className="py-3 pr-4"><code className="text-xs font-mono text-blue-400">/goods-out</code></td>
                 <td className="py-3 pr-4"><code className="text-xs font-mono text-amber-400">sku, ship_date, order_id</code></td>
                 <td className="py-3 text-xs text-slate-400">Outbound orders, shipments, customer data</td>
+              </tr>
+              <tr className="border-b border-slate-800">
+                <td colSpan="4" className="py-2 text-xs text-slate-500 uppercase font-semibold bg-slate-800/30">OEE / Equipment Data</td>
+              </tr>
+              <tr className="border-b border-slate-800">
+                <td className="py-3 pr-4 font-medium text-white">OEE Machines</td>
+                <td className="py-3 pr-4"><code className="text-xs font-mono text-blue-400">/oee-machines</code></td>
+                <td className="py-3 pr-4"><code className="text-xs font-mono text-amber-400">name</code></td>
+                <td className="py-3 text-xs text-slate-400">Equipment registry with production lines and cycle times</td>
+              </tr>
+              <tr className="border-b border-slate-800">
+                <td className="py-3 pr-4 font-medium text-white">OEE Machine Events</td>
+                <td className="py-3 pr-4"><code className="text-xs font-mono text-blue-400">/oee-machine-events</code></td>
+                <td className="py-3 pr-4"><code className="text-xs font-mono text-amber-400">machine_name, status</code></td>
+                <td className="py-3 text-xs text-slate-400">Status change stream: running, stopped, idle, fault</td>
+              </tr>
+              <tr>
+                <td className="py-3 pr-4 font-medium text-white">OEE Production Runs</td>
+                <td className="py-3 pr-4"><code className="text-xs font-mono text-blue-400">/oee-production-runs</code></td>
+                <td className="py-3 pr-4"><code className="text-xs font-mono text-amber-400">machine_name, shift_start, planned_production_time_min</code></td>
+                <td className="py-3 text-xs text-slate-400">Shift output: planned time, total/good parts, cycle time</td>
               </tr>
             </tbody>
           </table>

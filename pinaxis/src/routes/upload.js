@@ -6,7 +6,7 @@ const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
 const parserService = require('../services/parser');
 
-const VALID_FILE_TYPES = ['item_master', 'inventory', 'goods_in', 'goods_out'];
+const VALID_FILE_TYPES = ['item_master', 'inventory', 'goods_in', 'goods_out', 'oee_machines', 'oee_machine_events', 'oee_production_runs'];
 
 // POST /api/v1/upload/:projectId/:fileType — Upload a data file
 router.post('/:projectId/:fileType', upload.single('file'), async (req, res) => {
@@ -48,7 +48,10 @@ router.post('/:projectId/:fileType', upload.single('file'), async (req, res) => 
         item_master: 'PinaxisItemMaster',
         inventory: 'PinaxisInventoryData',
         goods_in: 'PinaxisGoodsInData',
-        goods_out: 'PinaxisGoodsOutData'
+        goods_out: 'PinaxisGoodsOutData',
+        oee_machines: 'PinaxisOEEMachine',
+        oee_machine_events: 'PinaxisOEEMachineEvent',
+        oee_production_runs: 'PinaxisOEEProductionRun'
       };
 
       const modelName = modelMap[fileType];

@@ -18,10 +18,13 @@ router.use(requireApiKey);
 
 // Model map for each data type
 const MODEL_MAP = {
-  'item-master':  { model: 'PinaxisItemMaster',     fileType: 'item_master' },
-  'inventory':    { model: 'PinaxisInventoryData',   fileType: 'inventory' },
-  'goods-in':     { model: 'PinaxisGoodsInData',     fileType: 'goods_in' },
-  'goods-out':    { model: 'PinaxisGoodsOutData',    fileType: 'goods_out' }
+  'item-master':          { model: 'PinaxisItemMaster',         fileType: 'item_master' },
+  'inventory':            { model: 'PinaxisInventoryData',       fileType: 'inventory' },
+  'goods-in':             { model: 'PinaxisGoodsInData',         fileType: 'goods_in' },
+  'goods-out':            { model: 'PinaxisGoodsOutData',        fileType: 'goods_out' },
+  'oee-machines':         { model: 'PinaxisOEEMachine',          fileType: 'oee_machines' },
+  'oee-machine-events':   { model: 'PinaxisOEEMachineEvent',     fileType: 'oee_machine_events' },
+  'oee-production-runs':  { model: 'PinaxisOEEProductionRun',    fileType: 'oee_production_runs' }
 };
 
 /**
@@ -44,7 +47,7 @@ for (const [urlSegment, config] of Object.entries(MODEL_MAP)) {
       // Accept single record or batch
       let records = req.body.records || req.body.data;
       if (!records) {
-        if (req.body.sku || req.body.order_id) {
+        if (req.body.sku || req.body.order_id || req.body.name || req.body.machine_name) {
           records = [req.body];
         } else {
           return res.status(400).json({

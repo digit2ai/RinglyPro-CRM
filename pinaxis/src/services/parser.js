@@ -51,6 +51,33 @@ const SCHEMAS = {
       picking_time: v => v || null,
       ship_time: v => v || null
     }
+  },
+  oee_machines: {
+    required: ['name'],
+    optional: ['line', 'expected_cycle_time_sec', 'is_active'],
+    transforms: {
+      expected_cycle_time_sec: parseFloat,
+      is_active: v => v === true || v === 'true' || v === '1' || v === 'yes' || v === 'Y'
+    }
+  },
+  oee_machine_events: {
+    required: ['machine_name', 'status'],
+    optional: ['reason', 'recorded_at'],
+    transforms: {
+      recorded_at: v => v || null,
+      status: v => v ? v.toString().toLowerCase().trim() : v
+    }
+  },
+  oee_production_runs: {
+    required: ['machine_name', 'shift_start', 'planned_production_time_min'],
+    optional: ['shift_end', 'total_parts', 'good_parts', 'actual_cycle_time_sec'],
+    transforms: {
+      planned_production_time_min: parseFloat,
+      total_parts: v => parseInt(v, 10),
+      good_parts: v => parseInt(v, 10),
+      actual_cycle_time_sec: parseFloat,
+      shift_end: v => v || null
+    }
   }
 };
 
@@ -68,7 +95,22 @@ const COLUMN_ALIASES = {
   'customer': 'customer_id', 'kunde': 'customer_id',
   'location_name': 'location', 'lagerort': 'location', 'lagerplatz': 'storage_space',
   'lieferant': 'supplier', 'vendor': 'supplier',
-  'versandart': 'shipping_method', 'ship_method': 'shipping_method'
+  'versandart': 'shipping_method', 'ship_method': 'shipping_method',
+  // OEE aliases (German + English)
+  'machine': 'machine_name', 'maschine': 'machine_name', 'equipment': 'machine_name',
+  'equipment_name': 'machine_name', 'maschinen_name': 'machine_name',
+  'maschinenname': 'name', 'machine_name_id': 'machine_name',
+  'linie': 'line', 'production_line': 'line',
+  'cycle_time': 'expected_cycle_time_sec', 'zykluszeit': 'expected_cycle_time_sec',
+  'aktiv': 'is_active', 'active': 'is_active',
+  'grund': 'reason', 'cause': 'reason', 'stoergrund': 'reason',
+  'zeitpunkt': 'recorded_at', 'event_time': 'recorded_at',
+  'schichtbeginn': 'shift_start', 'shift_begin': 'shift_start',
+  'schichtende': 'shift_end',
+  'geplante_zeit': 'planned_production_time_min', 'planned_time': 'planned_production_time_min',
+  'gesamt_teile': 'total_parts', 'parts_produced': 'total_parts',
+  'gut_teile': 'good_parts', 'good_count': 'good_parts',
+  'ist_zykluszeit': 'actual_cycle_time_sec'
 };
 
 function normalizeColumnName(name) {
@@ -174,6 +216,15 @@ function validateAndTransform(rawRows, headers, fileType) {
     for (const req of schema.required) {
       if (row[req] == null || row[req] === '') {
         errors.push({ row: i + 2, column: req, message: `Required field '${req}' is empty` });
+        rowValid = false;
+      }
+    }
+
+    // Validate status for oee_machine_events
+    if (fileType === 'oee_machine_events' && row.status) {
+      const validStatuses = ['running', 'stopped', 'idle', 'fault'];
+      if (!validStatuses.includes(row.status)) {
+        warnings.push({ row: i + 2, column: 'status', message: `Invalid status '${row.status}'. Must be: ${validStatuses.join(', ')}` });
         rowValid = false;
       }
     }

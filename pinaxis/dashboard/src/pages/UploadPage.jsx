@@ -77,7 +77,10 @@ export default function UploadPage() {
     item_master: { file: null, status: 'pending', rows: 0, warnings: [] },
     inventory: { file: null, status: 'pending', rows: 0, warnings: [] },
     goods_in: { file: null, status: 'pending', rows: 0, warnings: [] },
-    goods_out: { file: null, status: 'pending', rows: 0, warnings: [] }
+    goods_out: { file: null, status: 'pending', rows: 0, warnings: [] },
+    oee_machines: { file: null, status: 'pending', rows: 0, warnings: [] },
+    oee_machine_events: { file: null, status: 'pending', rows: 0, warnings: [] },
+    oee_production_runs: { file: null, status: 'pending', rows: 0, warnings: [] }
   })
 
   const handleCompanyChange = (field, value) => {
@@ -318,7 +321,7 @@ export default function UploadPage() {
               <h2 className="text-xl font-semibold text-white">Upload Data Files</h2>
             </div>
             <p className="text-sm text-slate-400 ml-11 mb-6">
-              Upload CSV or Excel files. Item Master and Goods Out are required. {uploadedCount}/4 files uploaded.
+              Upload CSV or Excel files. Item Master and Goods Out are required for warehouse analysis. {uploadedCount} files uploaded.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -338,6 +341,64 @@ export default function UploadPage() {
                   onDrop={acceptedFiles => handleFileDrop(ft.key, acceptedFiles)}
                 />
               ))}
+            </div>
+          </div>
+
+          {/* OEE Equipment Data */}
+          <div className="card">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center text-white text-sm font-bold">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-semibold text-white">OEE / Equipment Data</h2>
+              <span className="text-xs text-slate-500 bg-slate-700 px-2 py-0.5 rounded">Optional</span>
+            </div>
+            <p className="text-sm text-slate-400 ml-11 mb-6">
+              Upload equipment data to enable OEE (Overall Equipment Effectiveness) analysis. Upload machines first, then events and production runs.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <FileUploader
+                fileType="oee_machines"
+                label="OEE Machines"
+                description="Equipment registry: names, lines, cycle times"
+                icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17l-5.1-5.1M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-1.5 3H6m3 12h0" /></svg>}
+                required={false}
+                status={files.oee_machines.status}
+                fileName={files.oee_machines.file?.name}
+                fileSize={files.oee_machines.file?.size}
+                rowCount={files.oee_machines.rows}
+                warnings={files.oee_machines.warnings}
+                onDrop={acceptedFiles => handleFileDrop('oee_machines', acceptedFiles)}
+              />
+              <FileUploader
+                fileType="oee_machine_events"
+                label="Machine Events"
+                description="Status stream: running, stopped, idle, fault"
+                icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>}
+                required={false}
+                status={files.oee_machine_events.status}
+                fileName={files.oee_machine_events.file?.name}
+                fileSize={files.oee_machine_events.file?.size}
+                rowCount={files.oee_machine_events.rows}
+                warnings={files.oee_machine_events.warnings}
+                onDrop={acceptedFiles => handleFileDrop('oee_machine_events', acceptedFiles)}
+              />
+              <FileUploader
+                fileType="oee_production_runs"
+                label="Production Runs"
+                description="Shift output: planned time, total/good parts"
+                icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>}
+                required={false}
+                status={files.oee_production_runs.status}
+                fileName={files.oee_production_runs.file?.name}
+                fileSize={files.oee_production_runs.file?.size}
+                rowCount={files.oee_production_runs.rows}
+                warnings={files.oee_production_runs.warnings}
+                onDrop={acceptedFiles => handleFileDrop('oee_production_runs', acceptedFiles)}
+              />
             </div>
           </div>
 

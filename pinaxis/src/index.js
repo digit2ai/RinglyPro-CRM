@@ -67,7 +67,11 @@ models.sequelize.sync({ alter: false }).then(async () => {
     await models.sequelize.query(`CREATE UNIQUE INDEX IF NOT EXISTS pinaxis_inventory_project_sku_date_uq ON pinaxis_inventory_data (project_id, sku, COALESCE(snapshot_date, '1970-01-01'))`);
     await models.sequelize.query(`CREATE UNIQUE INDEX IF NOT EXISTS pinaxis_goods_in_project_receipt_sku_uq ON pinaxis_goods_in_data (project_id, COALESCE(receipt_id, ''), sku, receipt_date)`);
     await models.sequelize.query(`CREATE UNIQUE INDEX IF NOT EXISTS pinaxis_goods_out_project_order_sku_uq ON pinaxis_goods_out_data (project_id, order_id, sku, ship_date)`);
-    console.log('📊 PINAXIS unique indexes verified for production API');
+    // OEE unique indexes
+    await models.sequelize.query(`CREATE UNIQUE INDEX IF NOT EXISTS pinaxis_oee_machines_project_name_uq ON pinaxis_oee_machines (project_id, name)`);
+    await models.sequelize.query(`CREATE UNIQUE INDEX IF NOT EXISTS pinaxis_oee_machine_events_project_machine_time_uq ON pinaxis_oee_machine_events (project_id, machine_name, recorded_at)`);
+    await models.sequelize.query(`CREATE UNIQUE INDEX IF NOT EXISTS pinaxis_oee_production_runs_project_machine_shift_uq ON pinaxis_oee_production_runs (project_id, machine_name, shift_start)`);
+    console.log('📊 PINAXIS unique indexes verified for production API (including OEE)');
   } catch (e) {
     console.log('⚠️ PINAXIS unique index migration:', e.message);
   }
