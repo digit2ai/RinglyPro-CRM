@@ -644,36 +644,6 @@
         <div class="sig-timestamp" id="rbTimestamp" style="display:none"></div>
       </div>
 
-      <!-- KanchoAI Signature Block -->
-      <div class="sig-block" id="kanchoBlock">
-        <h4>Digit2AI LLC</h4>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Full Name</label>
-            <input type="text" id="kanchoName" placeholder="Full legal name">
-          </div>
-          <div class="form-group">
-            <label>Title / Role</label>
-            <input type="text" id="kanchoTitle" placeholder="e.g. CEO, Founder">
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Email</label>
-            <input type="email" id="kanchoEmail" placeholder="email@kanchoai.com">
-          </div>
-        </div>
-        <div class="canvas-wrapper" id="kanchoCanvasWrapper">
-          <label>Signature (draw below)</label>
-          <canvas class="sig-pad" id="kanchoCanvas"></canvas>
-        </div>
-        <div class="sig-buttons" id="kanchoButtons">
-          <button class="btn btn-clear" onclick="clearPad('kancho')">Clear</button>
-          <button class="btn btn-sign" id="kanchoSignBtn" onclick="signParty('kancho')">Sign</button>
-        </div>
-        <div class="sig-timestamp" id="kanchoTimestamp" style="display:none"></div>
-      </div>
-
       <!-- Unai Signature Block -->
       <div class="sig-block" id="unaiBlock">
         <h4>Unai — Profit Participant</h4>
@@ -703,7 +673,7 @@
       <!-- Submit -->
       <div class="submit-section" id="submitSection">
         <button class="btn-submit" id="submitBtn" disabled onclick="submitContract()">Submit Signed Contract</button>
-        <div class="submit-note">All three parties must sign before submission is enabled.</div>
+        <div class="submit-note">Both parties must sign before submission is enabled.</div>
       </div>
     </div>
   </div>
@@ -725,9 +695,9 @@
 <script>
 // ============== Signature Pad Logic ==============
 const pads = {};
-const signedParties = { rb: false, kancho: false, unai: false };
-const signatureData = { rb: null, kancho: null, unai: null };
-const signedTimestamps = { rb: null, kancho: null, unai: null };
+const signedParties = { rb: false, unai: false };
+const signatureData = { rb: null, unai: null };
+const signedTimestamps = { rb: null, unai: null };
 
 function initPad(id) {
   const canvas = document.getElementById(id + 'Canvas');
@@ -838,7 +808,7 @@ function signParty(id) {
 }
 
 function checkAllSigned() {
-  const allSigned = signedParties.rb && signedParties.kancho && signedParties.unai;
+  const allSigned = signedParties.rb && signedParties.unai;
   document.getElementById('submitBtn').disabled = !allSigned;
 }
 
@@ -852,16 +822,11 @@ async function submitContract() {
     party_rb_name: document.getElementById('rbName').value,
     party_rb_title: document.getElementById('rbTitle').value,
     party_rb_email: document.getElementById('rbEmail').value,
-    party_kancho_name: document.getElementById('kanchoName').value,
-    party_kancho_title: document.getElementById('kanchoTitle').value,
-    party_kancho_email: document.getElementById('kanchoEmail').value,
     party_unai_name: document.getElementById('unaiName').value,
     party_unai_email: document.getElementById('unaiEmail').value,
     rb_signature: signatureData.rb,
-    kancho_signature: signatureData.kancho,
     unai_signature: signatureData.unai,
     rb_signed_at: signedTimestamps.rb,
-    kancho_signed_at: signedTimestamps.kancho,
     unai_signed_at: signedTimestamps.unai
   };
 
@@ -919,9 +884,6 @@ async function loadViewMode(contractId) {
     document.getElementById('rbName').value = c.party_rb_name || '';
     document.getElementById('rbTitle').value = c.party_rb_title || '';
     document.getElementById('rbEmail').value = c.party_rb_email || '';
-    document.getElementById('kanchoName').value = c.party_kancho_name || '';
-    document.getElementById('kanchoTitle').value = c.party_kancho_title || '';
-    document.getElementById('kanchoEmail').value = c.party_kancho_email || '';
     document.getElementById('unaiName').value = c.party_unai_name || '';
     document.getElementById('unaiEmail').value = c.party_unai_email || '';
 
@@ -929,7 +891,7 @@ async function loadViewMode(contractId) {
     document.querySelectorAll('.sig-block input').forEach(i => i.disabled = true);
 
     // Replace canvases with signature images
-    ['rb', 'kancho', 'unai'].forEach(id => {
+    ['rb', 'unai'].forEach(id => {
       const sigField = id + '_signature';
       const tsField = id + '_signed_at';
       const block = document.getElementById(id + 'Block');
@@ -971,7 +933,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadViewMode(viewId);
   } else {
     initPad('rb');
-    initPad('kancho');
     initPad('unai');
   }
 });

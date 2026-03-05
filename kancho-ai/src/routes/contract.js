@@ -100,19 +100,18 @@ router.post('/sign', async (req, res) => {
   try {
     const {
       party_rb_name, party_rb_title, party_rb_email,
-      party_kancho_name, party_kancho_title, party_kancho_email,
       party_unai_name, party_unai_email,
-      rb_signature, kancho_signature, unai_signature,
-      rb_signed_at, kancho_signed_at, unai_signed_at
+      rb_signature, unai_signature,
+      rb_signed_at, unai_signed_at
     } = req.body;
 
     // Validate all signatures present
-    if (!rb_signature || !kancho_signature || !unai_signature) {
-      return res.status(400).json({ success: false, error: 'All three signatures are required' });
+    if (!rb_signature || !unai_signature) {
+      return res.status(400).json({ success: false, error: 'Both signatures are required' });
     }
 
     // Validate required fields
-    if (!party_rb_name || !party_rb_email || !party_kancho_name || !party_kancho_email || !party_unai_name || !party_unai_email) {
+    if (!party_rb_name || !party_rb_email || !party_unai_name || !party_unai_email) {
       return res.status(400).json({ success: false, error: 'All party names and emails are required' });
     }
 
@@ -120,11 +119,9 @@ router.post('/sign', async (req, res) => {
 
     const contract = await KanchoContract.create({
       party_rb_name, party_rb_title, party_rb_email,
-      party_kancho_name, party_kancho_title, party_kancho_email,
       party_unai_name, party_unai_email,
-      rb_signature, kancho_signature, unai_signature,
+      rb_signature, unai_signature,
       rb_signed_at: rb_signed_at || new Date(),
-      kancho_signed_at: kancho_signed_at || new Date(),
       unai_signed_at: unai_signed_at || new Date(),
       ip_address: ip,
       status: 'signed'
