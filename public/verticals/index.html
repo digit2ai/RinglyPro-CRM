@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Digit2AI - Platform Verticals</title>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --surface-hover: #1a1a24;
+      --border: #2a2a3a;
+      --accent: #6366f1;
+      --accent-glow: rgba(99,102,241,.25);
+      --text: #e4e4e7;
+      --text-muted: #a1a1aa;
+      --green: #22c55e;
+      --blue: #3b82f6;
+      --orange: #f59e0b;
+      --pink: #ec4899;
+      --cyan: #06b6d4;
+      --red: #ef4444;
+      --purple: #a855f7;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      padding: 60px 24px 20px;
+      position: relative;
+    }
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 600px; height: 300px;
+      background: radial-gradient(ellipse, var(--accent-glow) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .logo-text {
+      font-size: 42px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -1px;
+    }
+    .tagline {
+      color: var(--text-muted);
+      font-size: 18px;
+      margin-top: 8px;
+    }
+    .stats-bar {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-top: 30px;
+      flex-wrap: wrap;
+    }
+    .stat {
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .stat-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Filters */
+    .filters {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      padding: 24px;
+      flex-wrap: wrap;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .filter-btn {
+      padding: 8px 18px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all .2s;
+    }
+    .filter-btn:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+    .filter-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    /* Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 20px;
+      padding: 10px 24px 60px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* Card */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      transition: all .3s;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--card-accent, var(--accent));
+      opacity: 0;
+      transition: opacity .3s;
+    }
+    .card:hover {
+      border-color: var(--card-accent, var(--accent));
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0,0,0,.4);
+    }
+    .card:hover::before { opacity: 1; }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    .card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+    .card-title {
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .card-type {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-top: 2px;
+    }
+
+    .card-desc {
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .card-target {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--cyan);
+      background: rgba(6,182,212,.1);
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+    }
+
+    .features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 18px;
+    }
+    .feature-tag {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: rgba(255,255,255,.05);
+      color: var(--text-muted);
+      border: 1px solid rgba(255,255,255,.06);
+    }
+
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+    .card-link {
+      font-size: 13px;
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color .2s;
+    }
+    .card-link:hover { color: #818cf8; }
+
+    .card-status {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+    .status-live {
+      background: rgba(34,197,94,.15);
+      color: var(--green);
+    }
+
+    /* Contact bar */
+    .contact-bar {
+      text-align: center;
+      padding: 40px 24px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .contact-bar h3 {
+      font-size: 22px;
+      margin-bottom: 8px;
+    }
+    .contact-bar p {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+    .contact-links {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    .contact-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .contact-link:hover { text-decoration: underline; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .grid { grid-template-columns: 1fr; }
+      .logo-text { font-size: 32px; }
+      .stats-bar { gap: 24px; }
+      .header { padding: 40px 16px 10px; }
+    }
+
+    /* Expand details */
+    .card-expanded {
+      display: none;
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+    .card.expanded .card-expanded { display: block; }
+    .expanded-section h4 {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .expanded-section p {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+
+    /* Search */
+    .search-container {
+      display: flex;
+      justify-content: center;
+      padding: 0 24px;
+      margin-bottom: 10px;
+    }
+    .search-input {
+      width: 100%;
+      max-width: 500px;
+      padding: 12px 20px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .search-input::placeholder { color: var(--text-muted); }
+    .search-input:focus { border-color: var(--accent); }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="logo-text">Digit2AI</div>
+    <div class="tagline">AI-Powered Vertical Platforms</div>
+    <div class="stats-bar">
+      <div class="stat">
+        <div class="stat-value">14</div>
+        <div class="stat-label">Platforms</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">10+</div>
+        <div class="stat-label">Industries</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">EN/ES</div>
+        <div class="stat-label">Bilingual</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">3</div>
+        <div class="stat-label">Revenue Streams</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="search-container">
+    <input type="text" class="search-input" placeholder="Search platforms by name, industry, or feature..." id="searchInput">
+  </div>
+
+  <div class="filters">
+    <button class="filter-btn active" data-filter="all">All Platforms</button>
+    <button class="filter-btn" data-filter="crm">CRM / SaaS</button>
+    <button class="filter-btn" data-filter="foodbev">Food & Beverage</button>
+    <button class="filter-btn" data-filter="sports">Sports & Fitness</button>
+    <button class="filter-btn" data-filter="health">Health & Wellness</button>
+    <button class="filter-btn" data-filter="agritech">AgriTech</button>
+    <button class="filter-btn" data-filter="auto">Automotive</button>
+    <button class="filter-btn" data-filter="hospitality">Hospitality</button>
+    <button class="filter-btn" data-filter="logistics">Logistics</button>
+    <button class="filter-btn" data-filter="services">Services</button>
+    <button class="filter-btn" data-filter="creative">Creative</button>
+    <button class="filter-btn" data-filter="retail">Retail</button>
+  </div>
+
+  <div class="grid" id="cardsGrid">
+
+    <!-- RinglyPro -->
+    <div class="card" data-categories="crm" style="--card-accent: #6366f1;" onclick="this.classList.toggle('expanded')">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(99,102,241,.15);color:#6366f1;">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+        </div>
+        <div>
+          <div class="card-title">RinglyPro</div>
+          <div class="card-type">Flagship CRM</div>
+        </div>
+      </div>
+      <div class="card-desc">Multi-tenant AI CRM with 3 voice agents (Rachel, Ana, Lina). Handles calls, appointments, SMS, email in EN + ES. GoHighLevel integration, mobile apps, and MCP server.</div>
+      <div class="card-target">Professional Services &bull; SMBs</div>
+      <div class="features">
+        <span class="feature-tag">Voice AI</span>
+        <span class="feature-tag">Bilingual</span>
+        <span class="feature-tag">GoHighLevel</span>
+        <span class="feature-tag">Mobile Apps</span>
+        <span class="feature-tag">MCP Server</span>
+      </div>
+      <div class="card-expanded">
+        <div class="expanded-section">
+          <h4>Revenue Model</h4>
+          <p>SaaS subscription + usage-based per-call/message fees</p>
+          <h4>Key Differentiator</h4>
+          <p>Foundation platform — all verticals built on RinglyPro infrastructure. 3 distinct voice agents for different client personas.</p>
+        </div>
+      </div>
+      <div class="card-footer">
+        <a href="https://ringlypro.com" target="_blank" class="card-link">ringlypro.com &rarr;</a>
+        <span class="card-status status-live">Live</span>
+      </div>
+    </div>
+
+    <!-- KanchoAI -->
+    <div class="card" data-categories="sports" style="--card-accent: #ef4444;" onclick="this.classList.toggle('expanded')">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(239,68,68,.15);color:#ef4444;">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        </div>
+        <div>
+          <div class="card-title">KanchoAI</div>
+          <div class="card-type">Martial Arts Vertical</div>
+        </div>
+      </div>
+      <div class="card-desc">AI voice agent for martial arts schools. Automates retention calls, payment recovery, lead follow-up, and win-back campaigns across 15+ disciplines.</div>
+      <div class="card-target">Martial Arts Studios &bull; Dojos</div>
+      <div class="features">
+        <span class="feature-tag">Voice AI</span>
+        <span class="feature-tag">Retention</span>
+        <span class="feature-tag">Health Scoring</span>
+        <span class="feature-tag">15+ Disciplines</span>
+        <span class="feature-tag">Payment Recovery</span>
+      </div>
+      <div class="card-expanded">
+        <div class="expanded-section">
+          <h4>Key Differentiator</h4>
+          <p>Industry-first AI voice agent specifically trained for martial arts terminology and retention workflows. Supports 15+ disciplines.</p>
+        </div>
+      </div>
+      <div class="card-footer">
+        <a href="https://kanchoai.com" target="_blank" class="card-link">kanchoai.com &rarr;</a>
+        <span class="card-status status-live">Live</span>
+      </div>
+    </div>
+
+    <!-- Ronin Brotherhood -->
+    <div class="card" data-categories="sports" style="--card-accent: #a855f7;" onclick="this.classList.toggle('expanded')">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(168,85,247,.15);color:#a855f7;">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        </div>
+        <div>
+          <div class="card-title">Ronin Brotherhood</div>
+          <div class="card-type">Martial Arts Community</div>
+        </div>
+      </div>
+      <div class="card-desc">AI-powered martial arts community platform. Connects practitioners, dojos, and instructors with intelligent matchmaking, event coordination, and training analytics.</div>
+      <div class="card-target">Practitioners &bull; Instructors &bull; Community</div>
+      <div class="features">
+        <span class="feature-tag">AI Matchmaking</span>
+        <span class="feature-tag">Events</span>
+        <span class="feature-tag">Training Analytics</span>
+        <span class="feature-tag">Community</span>
+      </div>
+      <div class="card-expanded">
+        <div class="expanded-section">
+          <h4>Key Differentiator</h4>
+          <p>Companion platform to KanchoAI — focuses on community building while KanchoAI handles business operations.</p>
+        </div>
+      </div>
+      <div class="card-footer">
+        <a href="https://aiagent.ringlypro.com/ronin" target="_blank" class="card-link">ringlypro.com/ronin &rarr;</a>
+        <span class="card-status status-live">Live</span>
+      </div>
+    </div>
+
+    <!-- TunjoRacing -->
+    <div class="card" data-categories="sports" style="--card-accent: #f59e0b;" onclick="this.classList.toggle('expanded')">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(245,158,11,.15);color:#f59e0b;">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+        <div>
+          <div class="card-title">TunjoRacing</div>
+          <div class="card-type">Sports & Media</div>
+        </div>
+      </div>
+      <div class="card-desc">Full digital platform for IMSA driver Oscar Tunjo. Press portal with auth, e-commerce, race schedule, live results, sponsorship management, and React admin dashboard.</div>
+      <div class="card-target">Motorsports &bull; Sports Media</div>
+      <div class="features">
+        <span class="feature-tag">E-Commerce</span>
+        <span class="feature-tag">Press Portal</span>
+        <span class="feature-tag">React Admin</span>
+        <span class="feature-tag">IMSA Integration</span>
+      </div>
+      <div class="card-expanded">
+        <div class="expanded-section">
+          <h4>Key Differentiator</h4>
+          <p>Complete digital presence for professional athletes — combines media management, commerce, and fan engagement in one platform.</p>
+        </div>
+      </div>
+      <div class="card-footer">
+        <a href="https://tunjoracing.com" target="_blank" class="card-link">tunjoracing.com &rarr;</a>
+        <span class="card-status status-live">Live</span>
+      </div>
+    </div>
+
+    <!-- OrderGoPro -->
+    <div class="card" data-categories="foodbev" style="--card-accent: #22c55e;" onclick="this.classList.toggle('expanded')">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(34,197,94,.15);color:#22c55e;">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+        </div>
+        <div>
+          <div class="card-title">OrderGoPro</div>
+          <div class="card-type">Restaurant Tech</div>
+        </div>
+      </div>
+      <div class="card-desc">AI-powered online ordering platform for restaurants, cafes, and retail. Auto-extracts menus, branding, and pricing from any website. 500+ active businesses, 50K+ orders.</div>
+      <div class="card-target">Restaurants &bull; Cafes &bull; Food Retail</div>
+      <div class="features">
+        <span class="feature-tag">AI Menu Import</span>
+        <span class="feature-tag">Stripe Payments</span>
+        <span class="feature-tag">Real-time Analytics</span>
+        <span class="feature-tag">Marketing Automation</span>
+        <span class="feature-tag">Delivery</span>
+      </div>
+      <div class="card-expanded">
+        <div class="expanded-section">
+          <h4>Traction</h4>
+          <p>500+ active businesses, 50K+ orders processed</p>
+          <h4>Key Differentiator</h4>
+          <p>AI auto-extracts menus from any existing website — restaurants can be live in minutes, not days.</p>
+        </div>
+      </div>
+      <div class="card-footer">
+        <a href="https://ordergopro.com" target="_blank" class="card-link">ordergopro.com &rarr;</a>
+        <span class="card-status status-live">Live</span>
+      </div>
+    </div>
+
+    <!-- Doctor Picante -->
+    <div class="card" data-categories="foodbev" style="--card-accent: #ef4444;" onclick="this.classList.toggle('expanded')">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(239,68,68,.15);color:#ef4444;">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a5 5 0 015 5c0 3-2 5-5 8-3-3-5-5-5-8a5 5 0 015-5z"/><path d="M12 22c-4 0-8-2-8-6 0-2 1-3 2-4"/><path d="M20 16c0 4-4 6-8 6"/></svg>
+        </div>
+        <div>
+          <div class="card-title">Doctor Picante</div>
+          <div class="card-type">F&B Wholesale</div>
+        </div>
+      </div>
+      <div class="card-desc">Wholesale hot sauce supplier for restaurants and food businesses. 6 signature sauce varieties with volume-based pricing. AI-powered catalog and automated ordering.</div>
+      <div class="card-target">Restaurant Supply &bull; Food Service</div>
+      <div class="features">
+        <span class="feature-tag">AI Catalog</span>
+        <span class="feature-tag">Automated Ordering</span>
+        <span class="feature-tag">Delivery Logistics</span>
+        <span class="feature-tag">Volume Pricing</span>
+      </div>
+      <div class="card-expanded">
+        <div class="expanded-section">
+          <h4>Traction</h4>
+          <p>500+ restaurant clients nationwide</p>
+          <h4>Key Differentiator</h4>
+          <p>Combines physical product distribution with AI-powered ordering and logistics management.</p>
+        </div>
+      </div>
+      <div class="card-footer">
+        <a href="https://doctorpicante.com" target="_blank" class="card-link">doctorpicante.com &rarr;</a>
+        <span class="card-status status-live">Live</span>
+      </div>
+    </div>
+
+    <!-- Lactotec -->
+    <div class="card" data-categories="agritech" style="--card-accent: #22c55e;" onclick="this.classList.toggle('expanded')">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(34,197,94,.15);color:#22c55e;">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div>
+          <div class="card-title">Lactotec</div>
+          <div class="card-type">AgriTech</div>
+        </div>
+      </div>
+      <div class="card-desc">Smart dairy plant management. Milk reception, real-time quality control, automated payroll, water fraud detection, AI cognitive agent, and predictive analytics by zone and producer.</div>
+      <div class="card-target">Dairy Operations &bull; Agriculture</div>
+      <div class="features">
+        <span class="feature-tag">Quality Control AI</span>
+        <span class="feature-tag">Predictive Analytics</span>
+        <span class="feature-tag">Automated Payroll</span>
+        <span class="feature-tag">Fraud Detection</span>
+      </div>
+      <div class="card-expanded">
+        <div class="expanded-section">
+          <h4>Geographic Focus</h4>
+          <p>Colombia / LATAM — Spanish-first deployment</p>
+          <h4>Key Differentiator</h4>
+          <p>Water fraud detection and zone-based predictive analytics are industry-first AI features for dairy operations.</p>
+        </div>
+      </div>
+      <div class="card-footer">
+        <a href="https://lactotec.com" target="_blank" class="card-link">lactotec.com &rarr;</a>
+        <span class="card-status status-live">Live</span>
+      </div>
+    </div>
+
+    <!-- LawnCopilot -->
+    <div class="card" data-categories="services" style="--card-accent: #22c55e;" onclick="this.classList.toggle('expanded')">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(34,197,94,.15);color:#22c55e;">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+        <div>
+          <div class="card-title">LawnCopilot</div>
+          <div class="card-type">Lawn Care Vertical</div>
+        </div>
+      </div>
+      <div class="card-desc">AI copilot for lawn care businesses. Automates scheduling, route optimization, customer communication, and billing.</div>
+      <div class="card-target">Lawn Care Operators &bull; Landscaping SMBs</div>
+      <div class="features">
+        <span class="feature-tag">Scheduling AI</span>
+        <span class="feature-tag">Route Optimization</span>
+        <span class="feature-tag">Billing</span>
+        <span class="feature-tag">Customer Comms</span>
+      </div>
+      <div class="card-expanded">
+        <div class="expanded-section">
+          <h4>Key Differentiator</h4>
+          <p>Newest vertical — validates repeatable playbook for rapid vertical deployment. Built on proven RinglyPro infrastructure.</p>
+        </div>
+      </div>
+      <div class="card-footer">
+        <a href="https://lawncopilot.com" target="_blank" class="card-link">lawncopilot.com &rarr;</a>
+        <span class="card-status status-live">Live</span>
+      </div>
+    </div>
+
+    <!-- AIA Store -->
+    <div class="card" data-categories="retail" style="--card-accent: #3b82f6;" onclick="this.classList.toggle('expanded')">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(59,130,246,.15);color:#3b82f6;">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </div>
+        <div>
+          <div class="card-title">AIA Store</div>
+          <div class="card-type">AI Retail Monitoring</div>
+        </div>
+      </div>
+      <div class="card-desc">AI-powered store health monitoring platform. Real-time business intelligence, predictive analytics, automated health scoring, and proactive alerts for brick-and-mortar retail.</div>
+      <div class="card-target">Brick-and-Mortar Retail</div>
+      <div class="features">
+        <span class="feature-tag">Health Scoring</span>
+        <span class="feature-tag">Predictive AI</span>
+        <span class="feature-tag">Real-time Alerts</span>
+        <span class="feature-tag">Business Intelligence</span>
+      </div>
+      <div class="card-expanded">
+        <div class="expanded-section">
+          <h4>Key Differentiator</h4>
+          <p>Proactive AI alerts store owners to issues before they impact revenue — not just reporting, but predicting.</p>
+        </div>
+      </div>
+      <div class="card-footer">
+        <a href="https://aiagent.ringlypro.com/aiastore" target="_blank" class="card-link">ringlypro.com/aiastore &rarr;</a>
+        <span class="card-status status-live">Live</span>
+      </div>
+    </div>
+
+    <!-- Enruta -->
+    <div class="card" data-categories="auto" style="--card-accent: #f59e0b;" onclick="this.classList.toggle('expanded')">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(245,158,11,.15);color:#f59e0b;">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+        </div>
+        <div>
+          <div class="card-title">Enruta</div>
+          <div class="card-type">AutoTech</div>
+        </div>
+      </div>
+      <div class="card-desc">Vehicle document management with AI voice agent "Laura." Tracks license, SOAT insurance, inspections, and registration for Colombian diagnostic centers.</div>
+      <div class="card-target">Diagnostic Centers &bull; Vehicle Operators</div>
+      <div class="features">
+        <span class="feature-tag">Voice AI (Laura)</span>
+        <span class="feature-tag">Document Mgmt</span>
+        <span class="feature-tag">Automated Reminders</span>
+        <span class="feature-tag">SOAT Tracking</span>
+      </div>
+      <div class="card-expanded">
+        <div class="expanded-section">
+          <h4>Geographic Focus</h4>
+          <p>Colombia / LATAM</p>
+          <h4>Key Differentiator</h4>
+          <p>Solves a universal pain point for vehicle operators in Colombia — automated compliance tracking with AI voice reminders.</p>
+        </div>
+      </div>
+      <div class="card-footer">
+        <a href="https://aiagent.ringlypro.com/enruta" target="_blank" class="card-link">ringlypro.com/enruta &rarr;</a>
+        <span class="card-status status-live">Live</span>
+      </div>
+    </div>
+
+    <!-- AIHotelTalent -->
+    <div class="card" data-categories="hospitality" style="--card-accent: #ec4899;" onclick="this.classList.toggle('expanded')">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(236,72,153,.15);color:#ec4899;">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 21h18M3 7v1a3 3 0 006 0V7m0 1a3 3 0 006 0V7m0 1a3 3 0 006 0V7H3l2-4h14l2 4M5 21V10.87"/></svg>
+        </div>
+        <div>
+          <div class="card-title">AIHotelTalent</div>
+          <div class="card-type">Hospitality Recruitment</div>
+        </div>
+      </div>
+      <div class="card-desc">AI-powered recruitment platform for the hospitality industry. Intelligent candidate matching, 24/7 applicant engagement via AI chatbots, automated onboarding, and hiring analytics.</div>
+      <div class="card-target">Hotels &bull; Hospitality HR Teams</div>
+      <div class="features">
+        <span class="feature-tag">AI Matching</span>
+        <span class="feature-tag">24/7 Chatbot</span>
+        <span class="feature-tag">Auto Onboarding</span>
+        <span class="feature-tag">Hiring Analytics</span>
+      </div>
+      <div class="card-expanded">
+        <div class="expanded-section">
+          <h4>Key Metric</h4>
+          <p>Reduces time-to-hire by up to 85%</p>
+          <h4>Key Differentiator</h4>
+          <p>Industry-specific AI matching understands hospitality roles, certifications, and seasonal hiring patterns.</p>
+        </div>
+      </div>
+      <div class="card-footer">
+        <a href="https://aihoteltalent.com" target="_blank" class="card-link">aihoteltalent.com &rarr;</a>
+        <span class="card-status status-live">Live</span>
+      </div>
+    </div>
+
+    <!-- Recovery + Nutrition -->
+    <div class="card" data-categories="health" style="--card-accent: #06b6d4;" onclick="this.classList.toggle('expanded')">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(6,182,212,.15);color:#06b6d4;">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+        </div>
+        <div>
+          <div class="card-title">Recovery + Nutrition</div>
+          <div class="card-type">Wellness Vertical</div>
+        </div>
+      </div>
+      <div class="card-desc">AI voice booking system for recovery and nutrition businesses. ElevenLabs AI + Twilio handles inbound calls 24/7 — checks availability, books sessions, sends SMS confirmations.</div>
+      <div class="card-target">Recovery Clinics &bull; Wellness Businesses</div>
+      <div class="features">
+        <span class="feature-tag">Voice AI</span>
+        <span class="feature-tag">SMS Booking</span>
+        <span class="feature-tag">Calendar Sync</span>
+        <span class="feature-tag">GoHighLevel CRM</span>
+      </div>
+      <div class="card-expanded">
+        <div class="expanded-section">
+          <h4>Technology</h4>
+          <p>ElevenLabs voice + Twilio telephony</p>
+          <h4>Key Differentiator</h4>
+          <p>24/7 AI receptionist specifically trained for wellness and recovery terminology — never misses a booking.</p>
+        </div>
+      </div>
+      <div class="card-footer">
+        <a href="tel:8048120489" class="card-link">(804) 812-0489 &rarr;</a>
+        <span class="card-status status-live">Live</span>
+      </div>
+    </div>
+
+    <!-- PixlyPro -->
+    <div class="card" data-categories="creative" style="--card-accent: #a855f7;" onclick="this.classList.toggle('expanded')">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(168,85,247,.15);color:#a855f7;">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        </div>
+        <div>
+          <div class="card-title">PixlyPro</div>
+          <div class="card-type">Creative Services</div>
+        </div>
+      </div>
+      <div class="card-desc">AI-enhanced photo studio that transforms smartphone photos into professional-quality images. Tiered volume pricing, 48-72 hour turnaround, and a $1 demo trial.</div>
+      <div class="card-target">Restaurants &bull; E-Commerce &bull; SMBs</div>
+      <div class="features">
+        <span class="feature-tag">Photo AI</span>
+        <span class="feature-tag">Volume Pricing</span>
+        <span class="feature-tag">48-72hr Turnaround</span>
+        <span class="feature-tag">$1 Demo</span>
+      </div>
+      <div class="card-expanded">
+        <div class="expanded-section">
+          <h4>Key Differentiator</h4>
+          <p>Democratizes professional photography — smartphone photos become studio-quality at a fraction of the cost.</p>
+        </div>
+      </div>
+      <div class="card-footer">
+        <a href="https://pixlypro.com" target="_blank" class="card-link">pixlypro.com &rarr;</a>
+        <span class="card-status status-live">Live</span>
+      </div>
+    </div>
+
+    <!-- GEBHARDT -->
+    <div class="card" data-categories="logistics" style="--card-accent: #3b82f6;" onclick="this.classList.toggle('expanded')">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(59,130,246,.15);color:#3b82f6;">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        </div>
+        <div>
+          <div class="card-title">GEBHARDT Intralogistics</div>
+          <div class="card-type">Warehouse / Intralogistics</div>
+        </div>
+      </div>
+      <div class="card-desc">MCP AI automation layer for GEBHARDT's five core product lines. SAP EWM/MFS integration, Galileo IoT bridge, predictive maintenance dispatch, Voice AI receptionist, and intelligent lead qualification.</div>
+      <div class="card-target">Warehouse Automation &bull; Logistics</div>
+      <div class="features">
+        <span class="feature-tag">SAP Integration</span>
+        <span class="feature-tag">IoT Bridge</span>
+        <span class="feature-tag">Voice AI</span>
+        <span class="feature-tag">Predictive Maintenance</span>
+        <span class="feature-tag">Lead Qualification</span>
+      </div>
+      <div class="card-expanded">
+        <div class="expanded-section">
+          <h4>Geographic Reach</h4>
+          <p>16 global locations</p>
+          <h4>Key Differentiator</h4>
+          <p>Enterprise-grade MCP integration with SAP ecosystem — bridges AI with existing warehouse management systems.</p>
+        </div>
+      </div>
+      <div class="card-footer">
+        <a href="https://ringlypro.com/gebhardt" target="_blank" class="card-link">ringlypro.com/gebhardt &rarr;</a>
+        <span class="card-status status-live">Live</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="contact-bar">
+    <h3>Ready to deploy AI for your vertical?</h3>
+    <p>New verticals launch in weeks — 60% of the infrastructure is already built.</p>
+    <div class="contact-links">
+      <a href="tel:8886103810" class="contact-link">888-610-3810</a>
+      <a href="mailto:invest@digit2ai.com" class="contact-link">invest@digit2ai.com</a>
+      <a href="https://ringlypro.com/demo" target="_blank" class="contact-link">Request Demo</a>
+      <a href="https://digit2ai.com" target="_blank" class="contact-link">digit2ai.com</a>
+    </div>
+  </div>
+
+  <script>
+    // Filter logic
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const cards = document.querySelectorAll('.card');
+
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const filter = btn.dataset.filter;
+        cards.forEach(card => {
+          if (filter === 'all' || card.dataset.categories.includes(filter)) {
+            card.classList.remove('hidden');
+          } else {
+            card.classList.add('hidden');
+          }
+        });
+      });
+    });
+
+    // Search logic
+    const searchInput = document.getElementById('searchInput');
+    searchInput.addEventListener('input', () => {
+      const q = searchInput.value.toLowerCase();
+      filterBtns.forEach(b => b.classList.remove('active'));
+      if (!q) filterBtns[0].classList.add('active');
+
+      cards.forEach(card => {
+        const text = card.textContent.toLowerCase();
+        card.classList.toggle('hidden', q && !text.includes(q));
+      });
+    });
+  </script>
+
+</body>
+</html>
