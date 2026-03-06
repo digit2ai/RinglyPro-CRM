@@ -24,9 +24,9 @@ try {
 } catch (e) { console.log('Twilio not available for bridge:', e.message); }
 
 // DEBUG: Test auth flow (REMOVE AFTER DEBUG)
-router.get('/debug-auth', async (req, res) => {
+router.post('/debug-auth', async (req, res) => {
   try {
-    const email = req.query.email || 'carlos@tampabaybjj.com';
+    const email = req.body.email || 'carlos@tampabaybjj.com';
     const result = { email, bridgeReady: !!crmBridge?.ready, kanchoModelsReady: !!kanchoModels };
 
     if (kanchoModels) {
