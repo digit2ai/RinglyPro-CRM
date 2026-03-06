@@ -1015,6 +1015,41 @@ if (models && !modelsError) {
   console.log('📅 Kancho Classes routes mounted at /api/v1/classes');
 
   // =====================================================
+  // PLATFORM MODULES (Membership, Billing, Staff, Families, AI Automation)
+  // =====================================================
+  try {
+    const membershipPlansRoutes = require('./routes/membership-plans');
+    const subscriptionsRoutes = require('./routes/subscriptions');
+    const paymentsRoutes = require('./routes/payments');
+    const instructorsRoutes = require('./routes/instructors');
+    const familiesRoutes = require('./routes/families');
+    const automationsRoutes = require('./routes/automations');
+    const tasksRoutes = require('./routes/tasks');
+    const communicationsRoutes = require('./routes/communications');
+
+    app.use('/api/v1/membership-plans', membershipPlansRoutes);
+    app.use('/api/v1/subscriptions', subscriptionsRoutes);
+    app.use('/api/v1/payments', paymentsRoutes);
+    app.use('/api/v1/instructors', instructorsRoutes);
+    app.use('/api/v1/families', familiesRoutes);
+    app.use('/api/v1/automations', automationsRoutes);
+    app.use('/api/v1/tasks', tasksRoutes);
+    app.use('/api/v1/communications', communicationsRoutes);
+
+    console.log('🏛️ KanchoAI Platform modules mounted:');
+    console.log('   /api/v1/membership-plans  (plan definitions)');
+    console.log('   /api/v1/subscriptions     (student billing)');
+    console.log('   /api/v1/payments          (payment tracking)');
+    console.log('   /api/v1/instructors       (staff management)');
+    console.log('   /api/v1/families          (family accounts)');
+    console.log('   /api/v1/automations       (AI workflows)');
+    console.log('   /api/v1/tasks             (task management)');
+    console.log('   /api/v1/communications    (SMS/email/voice log)');
+  } catch (platformError) {
+    console.log('⚠️ KanchoAI Platform modules error:', platformError.message);
+  }
+
+  // =====================================================
   // RINGLYPRO WHITE-LABEL BRIDGE ROUTES
   // These integrate RinglyPro CRM/voice/billing into KanchoAI
   // =====================================================
@@ -6454,6 +6489,11 @@ app.get('*', (req, res) => {
         <button class="tab-btn" onclick="switchTab('merchandise')"><i class="fas fa-store mr-1"></i>Merch</button>
         <button class="tab-btn" onclick="switchTab('belts')"><i class="fas fa-award mr-1"></i>Belts</button>
         <button class="tab-btn" onclick="switchTab('classes')"><i class="fas fa-chalkboard-teacher mr-1"></i>Classes</button>
+        <button class="tab-btn" onclick="switchTab('billing')"><i class="fas fa-credit-card mr-1"></i>Billing</button>
+        <button class="tab-btn" onclick="switchTab('families')"><i class="fas fa-people-roof mr-1"></i>Families</button>
+        <button class="tab-btn" onclick="switchTab('staff')"><i class="fas fa-id-badge mr-1"></i>Staff</button>
+        <button class="tab-btn" onclick="switchTab('automations')"><i class="fas fa-robot mr-1"></i>AI Auto</button>
+        <button class="tab-btn" onclick="switchTab('taskBoard')"><i class="fas fa-tasks mr-1"></i>Tasks</button>
       </div>
 
       <!-- Tab: Overview -->
@@ -6862,6 +6902,98 @@ app.get('*', (req, res) => {
           </div>
         </div>
         <p id="classesAdminEmpty" class="hidden text-center text-gray-500 py-12">No classes configured. Click "Add Class" to start.</p>
+      </div>
+
+      <!-- Tab: Billing / Subscriptions -->
+      <div id="tabBilling" class="tab-content">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-credit-card text-kancho"></i> Billing & Subscriptions</h2>
+          <div class="flex gap-2">
+            <button class="btn-primary btn-sm" onclick="openPlanForm()"><i class="fas fa-plus mr-1"></i> New Plan</button>
+          </div>
+        </div>
+        <!-- Billing Stats -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+          <div class="card p-3 text-center"><div class="text-2xl font-bold text-green-400" id="billingMrr">$0</div><div class="text-xs text-gray-500">Monthly Recurring</div></div>
+          <div class="card p-3 text-center"><div class="text-2xl font-bold" id="billingActive">0</div><div class="text-xs text-gray-500">Active Subs</div></div>
+          <div class="card p-3 text-center"><div class="text-2xl font-bold text-yellow-400" id="billingPastDue">0</div><div class="text-xs text-gray-500">Past Due</div></div>
+          <div class="card p-3 text-center"><div class="text-2xl font-bold text-blue-400" id="billingTrial">0</div><div class="text-xs text-gray-500">In Trial</div></div>
+        </div>
+        <!-- Plans -->
+        <h3 class="font-bold text-sm text-gray-400 mb-2 mt-4">MEMBERSHIP PLANS</h3>
+        <div id="plansContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4"></div>
+        <p id="plansEmpty" class="hidden text-center text-gray-500 py-6">No plans configured. Click "New Plan" to create one.</p>
+        <!-- Recent Payments -->
+        <h3 class="font-bold text-sm text-gray-400 mb-2 mt-4">RECENT PAYMENTS</h3>
+        <div class="card rounded-2xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="data-table"><thead><tr><th>Date</th><th>Student</th><th>Type</th><th>Amount</th><th>Method</th><th>Status</th></tr></thead>
+            <tbody id="billingPaymentsBody"></tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Families -->
+      <div id="tabFamilies" class="tab-content">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-people-roof text-kancho"></i> Family Accounts</h2>
+          <button class="btn-primary btn-sm" onclick="openFamilyForm()"><i class="fas fa-plus mr-1"></i> Add Family</button>
+        </div>
+        <div id="familiesContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+        <p id="familiesEmpty" class="hidden text-center text-gray-500 py-12">No family accounts yet. Group students by family for combined billing.</p>
+      </div>
+
+      <!-- Tab: Staff / Instructors -->
+      <div id="tabStaff" class="tab-content">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-id-badge text-kancho"></i> Staff & Instructors</h2>
+          <button class="btn-primary btn-sm" onclick="openInstructorForm()"><i class="fas fa-plus mr-1"></i> Add Staff</button>
+        </div>
+        <div class="card rounded-2xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="data-table">
+              <thead><tr><th>Name</th><th>Role</th><th>Belt Rank</th><th>Phone</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="staffTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <p id="staffEmpty" class="hidden text-center text-gray-500 py-12">No staff members added yet.</p>
+      </div>
+
+      <!-- Tab: AI Automations -->
+      <div id="tabAutomations" class="tab-content">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-robot text-kancho"></i> AI Automations</h2>
+          <button class="btn-primary btn-sm" onclick="installAllAutomations()"><i class="fas fa-magic mr-1"></i> Install All Templates</button>
+        </div>
+        <p class="text-sm text-gray-400 mb-4">Automated workflows that run 24/7 to follow up leads, retain students, remind payments, and grow your school.</p>
+        <div id="automationsContainer" class="grid grid-cols-1 gap-3"></div>
+        <p id="automationsEmpty" class="hidden text-center text-gray-500 py-12">No automations configured. Click "Install All Templates" to get started.</p>
+      </div>
+
+      <!-- Tab: Task Board -->
+      <div id="tabTaskBoard" class="tab-content">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-tasks text-kancho"></i> Task Board</h2>
+          <button class="btn-primary btn-sm" onclick="openTaskForm()"><i class="fas fa-plus mr-1"></i> New Task</button>
+        </div>
+        <!-- Task Stats -->
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
+          <div class="card p-3 text-center"><div class="text-2xl font-bold" id="taskPending">0</div><div class="text-xs text-gray-500">Pending</div></div>
+          <div class="card p-3 text-center"><div class="text-2xl font-bold text-blue-400" id="taskInProgress">0</div><div class="text-xs text-gray-500">In Progress</div></div>
+          <div class="card p-3 text-center"><div class="text-2xl font-bold text-red-400" id="taskOverdue">0</div><div class="text-xs text-gray-500">Overdue</div></div>
+          <div class="card p-3 text-center"><div class="text-2xl font-bold text-orange-400" id="taskUrgent">0</div><div class="text-xs text-gray-500">Urgent</div></div>
+          <div class="card p-3 text-center"><div class="text-2xl font-bold text-green-400" id="taskDoneToday">0</div><div class="text-xs text-gray-500">Done Today</div></div>
+        </div>
+        <div class="card rounded-2xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="data-table">
+              <thead><tr><th>Priority</th><th>Title</th><th>Type</th><th>Related To</th><th>Due</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="taskTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <p id="tasksEmpty" class="hidden text-center text-gray-500 py-12">No tasks. Your to-do list is clear!</p>
       </div>
 
     </div><!-- /dashboardSection -->
@@ -8334,6 +8466,11 @@ app.get('*', (req, res) => {
         else if (tabName === 'merchandise') loadMerchandiseAdmin();
         else if (tabName === 'belts') loadBeltRequirements();
         else if (tabName === 'classes') loadClassesAdmin();
+        else if (tabName === 'billing') loadBillingTab();
+        else if (tabName === 'families') loadFamilies();
+        else if (tabName === 'staff') loadStaff();
+        else if (tabName === 'automations') loadAutomations();
+        else if (tabName === 'taskBoard') loadTasks();
       }
     }
 
@@ -9415,6 +9552,225 @@ app.get('*', (req, res) => {
       await fetch('/kanchoai/api/v1/classes/' + id, { method: 'DELETE' });
       tabsLoaded.classes = false; loadClassesAdmin();
     }
+
+    // ==================== BILLING / SUBSCRIPTIONS TAB ====================
+    async function loadBillingTab() {
+      const schoolId = currentSchoolId;
+      if (!schoolId) return;
+      try {
+        const headers = { 'Authorization': 'Bearer ' + authToken };
+        const [subsRes, plansRes, paymentsRes] = await Promise.all([
+          fetch('/kanchoai/api/v1/subscriptions/summary?school_id=' + schoolId, { headers }),
+          fetch('/kanchoai/api/v1/membership-plans?school_id=' + schoolId, { headers }),
+          fetch('/kanchoai/api/v1/payments?school_id=' + schoolId + '&limit=20', { headers })
+        ]);
+        const [subsData, plansData, paymentsData] = await Promise.all([subsRes.json(), plansRes.json(), paymentsRes.json()]);
+
+        if (subsData.success) {
+          document.getElementById('billingMrr').textContent = formatCurrency(subsData.data.mrr);
+          document.getElementById('billingActive').textContent = subsData.data.active;
+          document.getElementById('billingPastDue').textContent = subsData.data.pastDue;
+          document.getElementById('billingTrial').textContent = subsData.data.trial;
+        }
+
+        const plansContainer = document.getElementById('plansContainer');
+        const plansEmpty = document.getElementById('plansEmpty');
+        if (plansData.success && plansData.data.length) {
+          plansEmpty.classList.add('hidden');
+          plansContainer.innerHTML = plansData.data.map(p => '<div class="card p-4 rounded-xl">' +
+            '<div class="flex justify-between items-start mb-2"><h4 class="font-bold">' + p.name + '</h4><span class="text-xl font-bold text-green-400">' + formatCurrency(p.price) + '<span class="text-xs text-gray-500">/' + (p.billing_frequency || 'mo') + '</span></span></div>' +
+            '<div class="text-xs text-gray-400 mb-2">' + (p.type || 'recurring') + (p.contract_months ? ' &middot; ' + p.contract_months + 'mo contract' : ' &middot; month-to-month') + '</div>' +
+            '<div class="text-xs text-gray-500">' + (p.description || '') + '</div>' +
+            '<div class="flex justify-between items-center mt-3"><span class="text-xs text-gray-500">' + (p.active_subscribers || 0) + ' subscribers</span>' +
+            '<div class="flex gap-1"><button class="btn-ghost btn-xs" onclick="editPlan(' + p.id + ')"><i class="fas fa-edit"></i></button>' +
+            '<button class="btn-ghost btn-xs text-red-400" onclick="deletePlan(' + p.id + ')"><i class="fas fa-trash"></i></button></div></div></div>').join('');
+        } else { plansContainer.innerHTML = ''; plansEmpty.classList.remove('hidden'); }
+
+        const tbody = document.getElementById('billingPaymentsBody');
+        if (paymentsData.success && paymentsData.data.length) {
+          tbody.innerHTML = paymentsData.data.map(p => '<tr>' +
+            '<td>' + formatDate(p.payment_date) + '</td>' +
+            '<td>' + (p.student ? p.student.first_name + ' ' + p.student.last_name : '--') + '</td>' +
+            '<td><span class="badge">' + (p.type || '--') + '</span></td>' +
+            '<td class="font-bold text-green-400">' + formatCurrency(p.total) + '</td>' +
+            '<td>' + (p.payment_method || '--') + '</td>' +
+            '<td><span class="badge badge-' + (p.status === 'completed' ? 'green' : p.status === 'failed' ? 'red' : 'yellow') + '">' + p.status + '</span></td></tr>').join('');
+        } else { tbody.innerHTML = '<tr><td colspan="6" class="text-center text-gray-500 py-6">No payments recorded yet</td></tr>'; }
+      } catch (e) { console.error('loadBillingTab error:', e); }
+    }
+
+    function openPlanForm(existing) {
+      const name = existing ? existing.name : prompt('Plan Name:');
+      if (!name) return;
+      const price = prompt('Monthly Price ($):', existing ? existing.price : '');
+      if (!price) return;
+      const type = prompt('Type (recurring, drop_in, trial, annual, family):', existing ? existing.type : 'recurring') || 'recurring';
+      const contractMonths = prompt('Contract Months (0 = month-to-month):', existing ? existing.contract_months : '0') || '0';
+      const desc = prompt('Description:', existing ? existing.description : '') || '';
+
+      const method = existing ? 'PUT' : 'POST';
+      const url = existing ? '/kanchoai/api/v1/membership-plans/' + existing.id : '/kanchoai/api/v1/membership-plans';
+      fetch(url, { method, headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+        body: JSON.stringify({ school_id: currentSchoolId, name, price: parseFloat(price), type, contract_months: parseInt(contractMonths), description: desc })
+      }).then(r => r.json()).then(d => { if (d.success) { tabsLoaded.billing = false; loadBillingTab(); } else alert(d.error); });
+    }
+    function editPlan(id) { fetch('/kanchoai/api/v1/membership-plans/' + id, { headers: { 'Authorization': 'Bearer ' + authToken } }).then(r => r.json()).then(d => { if (d.success) openPlanForm(d.data); }); }
+    function deletePlan(id) { if (!confirm('Deactivate this plan?')) return; fetch('/kanchoai/api/v1/membership-plans/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + authToken } }).then(() => { tabsLoaded.billing = false; loadBillingTab(); }); }
+
+    // ==================== FAMILIES TAB ====================
+    async function loadFamilies() {
+      const schoolId = currentSchoolId;
+      if (!schoolId) return;
+      try {
+        const res = await fetch('/kanchoai/api/v1/families?school_id=' + schoolId, { headers: { 'Authorization': 'Bearer ' + authToken } });
+        const data = await res.json();
+        const container = document.getElementById('familiesContainer');
+        const empty = document.getElementById('familiesEmpty');
+        if (!data.success || !data.data.length) { container.innerHTML = ''; empty.classList.remove('hidden'); return; }
+        empty.classList.add('hidden');
+        container.innerHTML = data.data.map(f => '<div class="card p-4 rounded-xl">' +
+          '<div class="flex justify-between items-start mb-2"><h4 class="font-bold"><i class="fas fa-people-roof text-kancho mr-1"></i> ' + f.family_name + '</h4>' +
+          '<button class="btn-ghost btn-xs" onclick="editFamily(' + f.id + ')"><i class="fas fa-edit"></i></button></div>' +
+          '<div class="text-sm text-gray-400 mb-2">' + f.primary_contact_name + (f.primary_contact_phone ? ' &middot; ' + f.primary_contact_phone : '') + '</div>' +
+          '<div class="text-xs text-gray-500 mb-2">' + (f.members || []).length + ' member' + ((f.members || []).length !== 1 ? 's' : '') + '</div>' +
+          '<div class="flex flex-wrap gap-1">' + (f.members || []).map(m => '<span class="badge">' + m.first_name + ' ' + m.last_name + ' <span class="text-gray-600">(' + (m.belt_rank || 'White') + ')</span></span>').join('') + '</div>' +
+          '</div>').join('');
+      } catch (e) { console.error('loadFamilies error:', e); }
+    }
+    function openFamilyForm() {
+      const name = prompt('Family Last Name:');
+      if (!name) return;
+      const contact = prompt('Primary Contact Full Name:');
+      if (!contact) return;
+      const phone = prompt('Phone:') || '';
+      const email = prompt('Email:') || '';
+      fetch('/kanchoai/api/v1/families', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+        body: JSON.stringify({ school_id: currentSchoolId, family_name: name, primary_contact_name: contact, primary_contact_phone: phone, primary_contact_email: email })
+      }).then(r => r.json()).then(d => { if (d.success) { tabsLoaded.families = false; loadFamilies(); } else alert(d.error); });
+    }
+    function editFamily(id) { alert('Family editing coming soon - use API for now'); }
+
+    // ==================== STAFF / INSTRUCTORS TAB ====================
+    async function loadStaff() {
+      const schoolId = currentSchoolId;
+      if (!schoolId) return;
+      try {
+        const res = await fetch('/kanchoai/api/v1/instructors?school_id=' + schoolId, { headers: { 'Authorization': 'Bearer ' + authToken } });
+        const data = await res.json();
+        const tbody = document.getElementById('staffTableBody');
+        const empty = document.getElementById('staffEmpty');
+        if (!data.success || !data.data.length) { tbody.innerHTML = ''; empty.classList.remove('hidden'); return; }
+        empty.classList.add('hidden');
+        tbody.innerHTML = data.data.map(i => '<tr>' +
+          '<td class="font-bold">' + i.first_name + ' ' + i.last_name + '</td>' +
+          '<td><span class="badge">' + (i.role || 'instructor') + '</span></td>' +
+          '<td>' + (i.belt_rank || '--') + '</td>' +
+          '<td>' + (i.phone || '--') + '</td>' +
+          '<td>' + (i.email || '--') + '</td>' +
+          '<td><span class="badge badge-' + (i.is_active ? 'green' : 'red') + '">' + (i.is_active ? 'Active' : 'Inactive') + '</span></td>' +
+          '<td><button class="btn-ghost btn-xs" onclick="editInstructor(' + i.id + ')"><i class="fas fa-edit"></i></button> ' +
+          '<button class="btn-ghost btn-xs text-red-400" onclick="deleteInstructor(' + i.id + ')"><i class="fas fa-trash"></i></button></td></tr>').join('');
+      } catch (e) { console.error('loadStaff error:', e); }
+    }
+    function openInstructorForm(existing) {
+      const fn = prompt('First Name:', existing ? existing.first_name : '');
+      if (!fn) return;
+      const ln = prompt('Last Name:', existing ? existing.last_name : '');
+      if (!ln) return;
+      const role = prompt('Role (owner, head_instructor, instructor, assistant, front_desk):', existing ? existing.role : 'instructor') || 'instructor';
+      const belt = prompt('Belt Rank:', existing ? existing.belt_rank : '') || '';
+      const phone = prompt('Phone:', existing ? existing.phone : '') || '';
+      const email = prompt('Email:', existing ? existing.email : '') || '';
+
+      const method = existing ? 'PUT' : 'POST';
+      const url = existing ? '/kanchoai/api/v1/instructors/' + existing.id : '/kanchoai/api/v1/instructors';
+      fetch(url, { method, headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+        body: JSON.stringify({ school_id: currentSchoolId, first_name: fn, last_name: ln, role, belt_rank: belt, phone, email })
+      }).then(r => r.json()).then(d => { if (d.success) { tabsLoaded.staff = false; loadStaff(); } else alert(d.error); });
+    }
+    function editInstructor(id) { fetch('/kanchoai/api/v1/instructors/' + id, { headers: { 'Authorization': 'Bearer ' + authToken } }).then(r => r.json()).then(d => { if (d.success) openInstructorForm(d.data); }); }
+    function deleteInstructor(id) { if (!confirm('Deactivate this instructor?')) return; fetch('/kanchoai/api/v1/instructors/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + authToken } }).then(() => { tabsLoaded.staff = false; loadStaff(); }); }
+
+    // ==================== AI AUTOMATIONS TAB ====================
+    async function loadAutomations() {
+      const schoolId = currentSchoolId;
+      if (!schoolId) return;
+      try {
+        const res = await fetch('/kanchoai/api/v1/automations?school_id=' + schoolId, { headers: { 'Authorization': 'Bearer ' + authToken } });
+        const data = await res.json();
+        const container = document.getElementById('automationsContainer');
+        const empty = document.getElementById('automationsEmpty');
+        if (!data.success || !data.data.length) { container.innerHTML = ''; empty.classList.remove('hidden'); return; }
+        empty.classList.add('hidden');
+        const typeIcons = { lead_followup: 'fa-bolt', trial_booking: 'fa-calendar-check', retention: 'fa-heart', reactivation: 'fa-redo', payment_reminder: 'fa-dollar-sign', welcome: 'fa-hand-sparkles', birthday: 'fa-birthday-cake', belt_promotion: 'fa-award', attendance_alert: 'fa-exclamation-triangle', custom: 'fa-cogs' };
+        const typeColors = { lead_followup: 'text-blue-400', trial_booking: 'text-green-400', retention: 'text-pink-400', reactivation: 'text-purple-400', payment_reminder: 'text-yellow-400', welcome: 'text-emerald-400', birthday: 'text-orange-400', belt_promotion: 'text-red-400', attendance_alert: 'text-amber-400', custom: 'text-gray-400' };
+        container.innerHTML = data.data.map(a => '<div class="card p-4 rounded-xl flex items-start gap-4">' +
+          '<div class="text-2xl ' + (typeColors[a.type] || 'text-gray-400') + '"><i class="fas ' + (typeIcons[a.type] || 'fa-cogs') + '"></i></div>' +
+          '<div class="flex-1">' +
+          '<div class="flex justify-between items-start"><h4 class="font-bold">' + a.name + '</h4>' +
+          '<label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" ' + (a.is_active ? 'checked' : '') + ' onchange="toggleAutomation(' + a.id + ')" class="sr-only peer">' +
+          '<div class="w-9 h-5 bg-gray-600 rounded-full peer peer-checked:bg-green-500 after:content-[\'\'] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div></label></div>' +
+          '<div class="text-xs text-gray-400 mt-1">' + (a.type || '').replace(/_/g, ' ') + ' &middot; ' + a.trigger_type + '</div>' +
+          '<div class="text-xs text-gray-500 mt-1">' + (a.actions || []).length + ' action' + ((a.actions || []).length !== 1 ? 's' : '') + ' &middot; ' + (a.runs_count || 0) + ' runs &middot; ' + (a.success_count || 0) + ' success</div>' +
+          '</div></div>').join('');
+      } catch (e) { console.error('loadAutomations error:', e); }
+    }
+    function toggleAutomation(id) { fetch('/kanchoai/api/v1/automations/' + id + '/toggle', { method: 'POST', headers: { 'Authorization': 'Bearer ' + authToken } }).then(() => { tabsLoaded.automations = false; loadAutomations(); }); }
+    function installAllAutomations() {
+      fetch('/kanchoai/api/v1/automations/install-all', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+        body: JSON.stringify({ school_id: currentSchoolId })
+      }).then(r => r.json()).then(d => { if (d.success) { alert(d.message); tabsLoaded.automations = false; loadAutomations(); } else alert(d.error || 'Failed'); });
+    }
+
+    // ==================== TASK BOARD TAB ====================
+    async function loadTasks() {
+      const schoolId = currentSchoolId;
+      if (!schoolId) return;
+      try {
+        const headers = { 'Authorization': 'Bearer ' + authToken };
+        const [tasksRes, summaryRes] = await Promise.all([
+          fetch('/kanchoai/api/v1/tasks?school_id=' + schoolId, { headers }),
+          fetch('/kanchoai/api/v1/tasks/summary?school_id=' + schoolId, { headers })
+        ]);
+        const [tasksData, summaryData] = await Promise.all([tasksRes.json(), summaryRes.json()]);
+
+        if (summaryData.success) {
+          document.getElementById('taskPending').textContent = summaryData.data.pending;
+          document.getElementById('taskInProgress').textContent = summaryData.data.inProgress;
+          document.getElementById('taskOverdue').textContent = summaryData.data.overdue;
+          document.getElementById('taskUrgent').textContent = summaryData.data.urgent;
+          document.getElementById('taskDoneToday').textContent = summaryData.data.completedToday;
+        }
+
+        const tbody = document.getElementById('taskTableBody');
+        const empty = document.getElementById('tasksEmpty');
+        if (!tasksData.success || !tasksData.data.length) { tbody.innerHTML = ''; empty.classList.remove('hidden'); return; }
+        empty.classList.add('hidden');
+        const prioColors = { urgent: 'text-red-500', high: 'text-orange-400', medium: 'text-yellow-400', low: 'text-gray-500' };
+        const prioIcons = { urgent: 'fa-circle-exclamation', high: 'fa-arrow-up', medium: 'fa-minus', low: 'fa-arrow-down' };
+        tbody.innerHTML = tasksData.data.map(t => '<tr>' +
+          '<td class="' + (prioColors[t.priority] || '') + '"><i class="fas ' + (prioIcons[t.priority] || 'fa-minus') + ' mr-1"></i>' + t.priority + '</td>' +
+          '<td class="font-medium">' + t.title + '</td>' +
+          '<td><span class="badge">' + (t.type || 'general') + '</span></td>' +
+          '<td>' + (t.student ? t.student.first_name + ' ' + t.student.last_name : t.lead ? t.lead.first_name + ' ' + t.lead.last_name : '--') + '</td>' +
+          '<td>' + (t.due_date ? formatDate(t.due_date) : '--') + '</td>' +
+          '<td><span class="badge badge-' + (t.status === 'completed' ? 'green' : t.status === 'in_progress' ? 'blue' : t.status === 'overdue' ? 'red' : 'yellow') + '">' + t.status + '</span></td>' +
+          '<td>' + (t.status !== 'completed' ? '<button class="btn-ghost btn-xs text-green-400" onclick="completeTask(' + t.id + ')" title="Complete"><i class="fas fa-check"></i></button> ' : '') +
+          '<button class="btn-ghost btn-xs text-red-400" onclick="deleteTask(' + t.id + ')"><i class="fas fa-trash"></i></button></td></tr>').join('');
+      } catch (e) { console.error('loadTasks error:', e); }
+    }
+    function openTaskForm() {
+      const title = prompt('Task Title:');
+      if (!title) return;
+      const type = prompt('Type (general, follow_up, call, meeting, billing, retention, onboarding):', 'general') || 'general';
+      const priority = prompt('Priority (low, medium, high, urgent):', 'medium') || 'medium';
+      const dueDate = prompt('Due Date (YYYY-MM-DD) or leave blank:', '') || null;
+      fetch('/kanchoai/api/v1/tasks', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+        body: JSON.stringify({ school_id: currentSchoolId, title, type, priority, due_date: dueDate })
+      }).then(r => r.json()).then(d => { if (d.success) { tabsLoaded.taskBoard = false; loadTasks(); } else alert(d.error); });
+    }
+    function completeTask(id) { fetch('/kanchoai/api/v1/tasks/' + id + '/complete', { method: 'POST', headers: { 'Authorization': 'Bearer ' + authToken } }).then(() => { tabsLoaded.taskBoard = false; loadTasks(); }); }
+    function deleteTask(id) { if (!confirm('Delete this task?')) return; fetch('/kanchoai/api/v1/tasks/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + authToken } }).then(() => { tabsLoaded.taskBoard = false; loadTasks(); }); }
 
     // ==================== BELT REQUIREMENTS TAB ====================
     async function loadBeltRequirements() {

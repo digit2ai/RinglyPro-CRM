@@ -72,6 +72,15 @@ db.Sequelize = Sequelize;
     }
     console.log('Kancho AI: Bridge columns migration complete');
 
+    // Platform upgrade migrations
+    const platformMigrations = [
+      `ALTER TABLE kancho_students ADD COLUMN IF NOT EXISTS family_id INTEGER REFERENCES kancho_families(id)`
+    ];
+    for (const sql of platformMigrations) {
+      try { await sequelize.query(sql); } catch (e) {}
+    }
+    console.log('Kancho AI: Platform migrations complete');
+
     // Auto-seed belt requirements for schools that don't have any
     try {
       const schools = await db.KanchoSchool.findAll({ attributes: ['id'] });

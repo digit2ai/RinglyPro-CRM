@@ -159,6 +159,14 @@ module.exports = (sequelize) => {
     KanchoSchool.hasMany(models.KanchoAiCall, { foreignKey: 'school_id', as: 'aiCalls' });
     KanchoSchool.hasMany(models.KanchoBusinessHealthMetrics, { foreignKey: 'school_id', as: 'businessHealthMetrics' });
     KanchoSchool.hasMany(models.KanchoAppointment, { foreignKey: 'school_id', as: 'appointments' });
+    KanchoSchool.hasMany(models.KanchoMembershipPlan, { foreignKey: 'school_id', as: 'membershipPlans' });
+    KanchoSchool.hasMany(models.KanchoSubscription, { foreignKey: 'school_id', as: 'subscriptions' });
+    KanchoSchool.hasMany(models.KanchoPayment, { foreignKey: 'school_id', as: 'payments' });
+    KanchoSchool.hasMany(models.KanchoInstructor, { foreignKey: 'school_id', as: 'instructors' });
+    KanchoSchool.hasMany(models.KanchoFamily, { foreignKey: 'school_id', as: 'families' });
+    KanchoSchool.hasMany(models.KanchoAutomation, { foreignKey: 'school_id', as: 'automations' });
+    KanchoSchool.hasMany(models.KanchoTask, { foreignKey: 'school_id', as: 'tasks' });
+    KanchoSchool.hasMany(models.KanchoCommunication, { foreignKey: 'school_id', as: 'communications' });
   };
 
   return KanchoSchool;

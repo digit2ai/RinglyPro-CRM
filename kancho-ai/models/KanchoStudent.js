@@ -123,6 +123,11 @@ module.exports = (sequelize) => {
       type: DataTypes.JSONB,
       defaultValue: {}
     },
+    family_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: { model: 'kancho_families', key: 'id' }
+    },
     created_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW
@@ -152,6 +157,12 @@ module.exports = (sequelize) => {
     KanchoStudent.hasMany(models.KanchoAttendance, { foreignKey: 'student_id', as: 'attendance' });
     KanchoStudent.hasOne(models.KanchoStudentAuth, { foreignKey: 'student_id', as: 'auth' });
     KanchoStudent.hasMany(models.KanchoClassEnrollment, { foreignKey: 'student_id', as: 'enrollments' });
+    KanchoStudent.belongsTo(models.KanchoFamily, { foreignKey: 'family_id', as: 'family' });
+    KanchoStudent.hasMany(models.KanchoSubscription, { foreignKey: 'student_id', as: 'subscriptions' });
+    KanchoStudent.hasMany(models.KanchoPayment, { foreignKey: 'student_id', as: 'billingPayments' });
+    KanchoStudent.hasMany(models.KanchoTask, { foreignKey: 'related_student_id', as: 'tasks' });
+    KanchoStudent.hasMany(models.KanchoCommunication, { foreignKey: 'student_id', as: 'communications' });
+    KanchoStudent.hasMany(models.KanchoAppointment, { foreignKey: 'student_id', as: 'appointments' });
   };
 
   return KanchoStudent;
