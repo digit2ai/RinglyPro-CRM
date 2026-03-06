@@ -9951,7 +9951,7 @@ app.get('*', (req, res) => {
             '<div class="flex-1">' +
             '<div class="flex justify-between items-start"><h4 class="font-bold">' + a.name + '</h4>' +
             '<label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" ' + (a.is_active ? 'checked' : '') + ' onchange="toggleAutomation(' + a.id + ')" class="sr-only peer">' +
-            '<div class="w-9 h-5 bg-gray-600 rounded-full peer peer-checked:bg-green-500 after:content-[\'\'] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div></label></div>' +
+            "<div class=\"w-9 h-5 bg-gray-600 rounded-full peer peer-checked:bg-green-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full\"></div></label></div>" +
             '<div class="text-xs text-gray-400 mt-1">' + (a.type || '').replace(/_/g, ' ') + '</div>' +
             flowViz +
             '<div class="flex gap-4 text-xs text-gray-500 mt-2"><span><i class="fas fa-play mr-1"></i>' + (a.runs_count || 0) + ' runs</span><span class="text-green-400"><i class="fas fa-check mr-1"></i>' + (a.success_count || 0) + '</span><span class="text-red-400"><i class="fas fa-times mr-1"></i>' + (a.failure_count || 0) + '</span>' +
