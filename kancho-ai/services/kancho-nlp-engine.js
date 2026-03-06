@@ -24,7 +24,7 @@ const { Op } = require('sequelize');
 
 const DOMAINS = {
   students: { aliases: ['student', 'member', 'members', 'kid', 'kids', 'enrollment'] },
-  leads: { aliases: ['lead', 'prospect', 'prospects', 'inquiry', 'inquiries'] },
+  leads: { aliases: ['lead', 'prospect', 'prospects', 'inquiry', 'inquiries', 'convert lead', 'convert a lead'] },
   families: { aliases: ['family', 'parent', 'parents', 'guardian', 'household'] },
   staff: { aliases: ['instructor', 'instructors', 'coach', 'coaches', 'employee', 'employees', 'teacher'] },
   training: { aliases: ['program', 'programs', 'curriculum', 'level', 'levels'] },
