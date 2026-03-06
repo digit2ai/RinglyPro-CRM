@@ -184,7 +184,7 @@ router.put('/:id', async (req, res) => {
     const automation = await kanchoModels.KanchoAutomation.findByPk(req.params.id);
     if (!automation) return res.status(404).json({ success: false, error: 'Automation not found' });
 
-    const allowed = ['name', 'trigger_config', 'actions', 'is_active'];
+    const allowed = ['name', 'type', 'trigger_type', 'trigger_config', 'actions', 'is_active'];
     const updates = {};
     for (const key of allowed) {
       if (req.body[key] !== undefined) updates[key] = req.body[key];

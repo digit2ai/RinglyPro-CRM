@@ -7035,7 +7035,7 @@ app.get('*', (req, res) => {
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-robot text-kancho"></i> AI Automations</h2>
           <div class="flex gap-2">
-            <button class="btn-ghost btn-sm" onclick="openWorkflowBuilder()"><i class="fas fa-project-diagram mr-1"></i> New Workflow</button>
+            <button class="btn-ghost btn-sm" onclick="openAutomationEditor(null)"><i class="fas fa-plus mr-1"></i> New Automation</button>
             <button class="btn-primary btn-sm" onclick="installAllAutomations()"><i class="fas fa-magic mr-1"></i> Install All Templates</button>
           </div>
         </div>
@@ -7049,19 +7049,37 @@ app.get('*', (req, res) => {
         </div>
         <div id="automationsContainer" class="grid grid-cols-1 gap-3"></div>
         <p id="automationsEmpty" class="hidden text-center text-gray-500 py-12">No automations configured. Click "Install All Templates" to get started.</p>
-        <!-- Workflow Builder Modal -->
-        <div id="workflowModal" class="hidden fixed inset-0 z-50 flex items-center justify-center" style="background: rgba(0,0,0,0.8)">
+        <!-- Automation Editor Modal -->
+        <div id="automationEditorModal" class="hidden fixed inset-0 z-50 flex items-center justify-center" style="background: rgba(0,0,0,0.8)" onclick="if(event.target===this)closeAutomationEditor()">
           <div class="card rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div class="flex items-center justify-between mb-4">
-              <h3 class="text-lg font-bold"><i class="fas fa-project-diagram text-kancho mr-2"></i>Workflow Builder</h3>
-              <button class="btn-ghost" onclick="closeWorkflowBuilder()"><i class="fas fa-times"></i></button>
+              <h3 class="text-lg font-bold" id="aeTitle"><i class="fas fa-robot text-kancho mr-2"></i>New Automation</h3>
+              <button class="btn-ghost" onclick="closeAutomationEditor()"><i class="fas fa-times"></i></button>
             </div>
             <div class="space-y-4">
-              <div><label class="block text-sm text-gray-400 mb-1">Workflow Name</label><input type="text" id="wfName" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="e.g. New Lead Follow-Up"></div>
+              <input type="hidden" id="aeId" value="">
+              <!-- Name & Type -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div><label class="block text-sm text-gray-400 mb-1">Automation Name</label><input type="text" id="aeName" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="e.g. New Lead Follow-Up"></div>
+                <div><label class="block text-sm text-gray-400 mb-1">Type</label>
+                  <select id="aeType" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff">
+                    <option value="lead_followup">Lead Follow-Up</option>
+                    <option value="trial_booking">Trial Booking</option>
+                    <option value="retention">Retention</option>
+                    <option value="reactivation">Reactivation</option>
+                    <option value="payment_reminder">Payment Reminder</option>
+                    <option value="welcome">Welcome</option>
+                    <option value="birthday">Birthday</option>
+                    <option value="belt_promotion">Belt Promotion</option>
+                    <option value="attendance_alert">Attendance Alert</option>
+                    <option value="custom">Custom</option>
+                  </select>
+                </div>
+              </div>
               <!-- Step 1: Trigger -->
               <div class="card p-4 rounded-xl" style="border-left: 3px solid #E85A4F">
                 <div class="flex items-center gap-2 mb-2"><span class="w-6 h-6 rounded-full bg-kancho text-white text-xs flex items-center justify-center font-bold">1</span><span class="font-bold">WHEN (Trigger)</span></div>
-                <select id="wfTrigger" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff">
+                <select id="aeTrigger" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff">
                   <option value="event:lead_created">New lead is created</option>
                   <option value="event:student_enrolled">Student enrolls</option>
                   <option value="event:lead_converted">Lead converts to student</option>
@@ -7073,32 +7091,15 @@ app.get('*', (req, res) => {
                   <option value="schedule:appointment_upcoming">Appointment is upcoming</option>
                 </select>
               </div>
-              <!-- Step 2: Wait -->
+              <!-- Actions list -->
               <div class="flex justify-center"><i class="fas fa-arrow-down text-gray-600"></i></div>
-              <div class="card p-4 rounded-xl" style="border-left: 3px solid #3B82F6">
-                <div class="flex items-center gap-2 mb-2"><span class="w-6 h-6 rounded-full bg-blue-500 text-white text-xs flex items-center justify-center font-bold">2</span><span class="font-bold">WAIT (Optional Delay)</span></div>
-                <div class="flex gap-2">
-                  <input type="number" id="wfDelay" class="flex-1 p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="0" min="0" value="0">
-                  <select id="wfDelayUnit" class="p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff">
-                    <option value="minutes">Minutes</option>
-                    <option value="hours" selected>Hours</option>
-                    <option value="days">Days</option>
-                  </select>
-                </div>
+              <div id="aeActionsContainer"></div>
+              <button onclick="addActionRow()" class="w-full py-2 rounded-lg border border-dashed border-gray-600 text-gray-400 hover:border-kancho hover:text-kancho transition-colors text-sm"><i class="fas fa-plus mr-1"></i> Add Action Step</button>
+              <!-- Save -->
+              <div class="flex gap-3">
+                <button class="btn-primary flex-1 py-3" onclick="saveAutomationEditor()"><i class="fas fa-save mr-2"></i><span id="aeSaveLabel">Create & Activate</span></button>
+                <button class="btn-ghost py-3 px-4" onclick="closeAutomationEditor()">Cancel</button>
               </div>
-              <!-- Step 3: Action -->
-              <div class="flex justify-center"><i class="fas fa-arrow-down text-gray-600"></i></div>
-              <div class="card p-4 rounded-xl" style="border-left: 3px solid #10B981">
-                <div class="flex items-center gap-2 mb-2"><span class="w-6 h-6 rounded-full bg-green-500 text-white text-xs flex items-center justify-center font-bold">3</span><span class="font-bold">THEN (Action)</span></div>
-                <select id="wfAction" class="w-full p-3 rounded-lg mb-2" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff">
-                  <option value="sms">Send SMS</option>
-                  <option value="call">AI Phone Call</option>
-                  <option value="task">Create Task</option>
-                  <option value="update">Update Record</option>
-                </select>
-                <textarea id="wfActionContent" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" rows="3" placeholder="Message template or task details. Use {first_name}, {phone}, {belt_rank} placeholders."></textarea>
-              </div>
-              <button class="btn-primary w-full py-3" onclick="saveWorkflow()"><i class="fas fa-save mr-2"></i>Save & Activate Workflow</button>
             </div>
           </div>
         </div>
@@ -10005,8 +10006,11 @@ app.get('*', (req, res) => {
             '<div class="w-9 h-5 rounded-full transition-colors ' + (a.is_active ? 'bg-green-500' : 'bg-gray-600') + '"><div class="w-4 h-4 mt-0.5 rounded-full bg-white transition-transform ' + (a.is_active ? 'translate-x-4 ml-0.5' : 'ml-0.5') + '"></div></div></label></div>' +
             '<div class="text-xs text-gray-400 mt-1">' + (a.type || '').replace(/_/g, ' ') + '</div>' +
             flowViz +
-            '<div class="flex gap-4 text-xs text-gray-500 mt-2"><span><i class="fas fa-play mr-1"></i>' + (a.runs_count || 0) + ' runs</span><span class="text-green-400"><i class="fas fa-check mr-1"></i>' + (a.success_count || 0) + '</span><span class="text-red-400"><i class="fas fa-times mr-1"></i>' + (a.failure_count || 0) + '</span>' +
-            (a.last_run_at ? '<span><i class="fas fa-clock mr-1"></i>Last: ' + new Date(a.last_run_at).toLocaleDateString() + '</span>' : '') + '</div>' +
+            '<div class="flex items-center gap-4 text-xs text-gray-500 mt-2"><span><i class="fas fa-play mr-1"></i>' + (a.runs_count || 0) + ' runs</span><span class="text-green-400"><i class="fas fa-check mr-1"></i>' + (a.success_count || 0) + '</span><span class="text-red-400"><i class="fas fa-times mr-1"></i>' + (a.failure_count || 0) + '</span>' +
+            (a.last_run_at ? '<span><i class="fas fa-clock mr-1"></i>Last: ' + new Date(a.last_run_at).toLocaleDateString() + '</span>' : '') +
+            '<button onclick="openAutomationEditor(' + a.id + ')" class="ml-auto px-3 py-1 rounded-lg text-xs font-medium bg-white/10 hover:bg-white/20 text-kancho transition-colors"><i class="fas fa-pen mr-1"></i>Edit</button>' +
+            '<button onclick="deleteAutomation(' + a.id + ')" class="px-3 py-1 rounded-lg text-xs font-medium bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-colors"><i class="fas fa-trash mr-1"></i></button>' +
+            '</div>' +
             '</div></div></div>';
         }).join('');
       } catch (e) { console.error('loadAutomations error:', e); }
@@ -10025,30 +10029,232 @@ app.get('*', (req, res) => {
         body: JSON.stringify({ school_id: currentSchoolId })
       }).then(r => r.json()).then(d => { if (d.success) { alert(d.message); tabsLoaded.automations = false; loadAutomations(); } else alert(d.error || 'Failed'); });
     }
-    function openWorkflowBuilder() { document.getElementById('workflowModal').classList.remove('hidden'); }
-    function closeWorkflowBuilder() { document.getElementById('workflowModal').classList.add('hidden'); }
-    function saveWorkflow() {
-      const name = document.getElementById('wfName').value;
-      if (!name) { alert('Workflow name is required'); return; }
-      const trigger = document.getElementById('wfTrigger').value;
-      const [triggerType, triggerEvent] = trigger.split(':');
-      const delay = parseInt(document.getElementById('wfDelay').value) || 0;
-      const delayUnit = document.getElementById('wfDelayUnit').value;
-      const actionType = document.getElementById('wfAction').value;
-      const actionContent = document.getElementById('wfActionContent').value;
-      const triggerConfig = {};
-      if (triggerType === 'event') triggerConfig.event = triggerEvent;
-      if (triggerType === 'condition') triggerConfig.condition = triggerEvent;
-      if (triggerType === 'schedule') triggerConfig.schedule = triggerEvent;
-      const actions = [];
-      if (delay > 0) actions.push({ type: 'wait', delay, unit: delayUnit });
-      actions.push({ type: actionType, content: actionContent, to: actionType === 'sms' ? '{phone}' : undefined });
-      fetch('/kanchoai/api/v1/automations', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
-        body: JSON.stringify({ school_id: currentSchoolId, name, type: 'custom', trigger_type: triggerType, trigger_config: triggerConfig, actions, is_active: true })
-      }).then(r => r.json()).then(d => {
-        if (d.success) { closeWorkflowBuilder(); tabsLoaded.automations = false; loadAutomations(); alert('Workflow created and activated!'); }
-        else alert(d.error || 'Failed');
+    function deleteAutomation(id) {
+      if (!confirm('Delete this automation? This cannot be undone.')) return;
+      fetch('/kanchoai/api/v1/automations/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + authToken } })
+        .then(r => r.json()).then(d => { if (d.success) { tabsLoaded.automations = false; loadAutomations(); } else alert(d.error || 'Failed'); });
+    }
+
+    // Automation editor state
+    var aeActionCount = 0;
+    var aeAllAutomations = [];
+
+    function openWorkflowBuilder() { openAutomationEditor(null); }
+    function closeWorkflowBuilder() { closeAutomationEditor(); }
+
+    function openAutomationEditor(id) {
+      aeActionCount = 0;
+      document.getElementById('aeActionsContainer').innerHTML = '';
+      document.getElementById('aeId').value = id || '';
+      if (id) {
+        // Edit existing
+        document.getElementById('aeTitle').innerHTML = '<i class="fas fa-pen text-kancho mr-2"></i>Edit Automation';
+        document.getElementById('aeSaveLabel').textContent = 'Save Changes';
+        // Fetch the automation data
+        fetch('/kanchoai/api/v1/automations?school_id=' + currentSchoolId, { headers: { 'Authorization': 'Bearer ' + authToken } })
+          .then(r => r.json()).then(d => {
+            if (!d.success) return;
+            var auto = d.data.find(function(a) { return a.id === id; });
+            if (!auto) { alert('Automation not found'); return; }
+            document.getElementById('aeName').value = auto.name || '';
+            document.getElementById('aeType').value = auto.type || 'custom';
+            // Set trigger
+            var tc = auto.trigger_config || {};
+            var trigVal = '';
+            if (auto.trigger_type === 'event') trigVal = 'event:' + (tc.event || 'lead_created');
+            else if (auto.trigger_type === 'condition') trigVal = 'condition:' + (tc.condition || 'student_missed_classes');
+            else if (auto.trigger_type === 'schedule') trigVal = 'schedule:' + (tc.event || tc.condition || tc.schedule || 'student_birthday');
+            var trigSelect = document.getElementById('aeTrigger');
+            // Try to set value, if not in options add it
+            trigSelect.value = trigVal;
+            if (trigSelect.value !== trigVal) {
+              var opt = document.createElement('option');
+              opt.value = trigVal; opt.textContent = trigVal.replace(':', ': ').replace(/_/g, ' ');
+              trigSelect.appendChild(opt);
+              trigSelect.value = trigVal;
+            }
+            // Load actions
+            var actions = auto.actions || [];
+            if (actions.length === 0) { addActionRow(); }
+            else {
+              actions.forEach(function(act) {
+                addActionRow(act);
+              });
+            }
+          });
+      } else {
+        // New
+        document.getElementById('aeTitle').innerHTML = '<i class="fas fa-robot text-kancho mr-2"></i>New Automation';
+        document.getElementById('aeSaveLabel').textContent = 'Create & Activate';
+        document.getElementById('aeName').value = '';
+        document.getElementById('aeType').value = 'custom';
+        document.getElementById('aeTrigger').value = 'event:lead_created';
+        addActionRow();
+      }
+      document.getElementById('automationEditorModal').classList.remove('hidden');
+    }
+
+    function closeAutomationEditor() { document.getElementById('automationEditorModal').classList.add('hidden'); }
+
+    function addActionRow(existingAction) {
+      aeActionCount++;
+      var idx = aeActionCount;
+      var container = document.getElementById('aeActionsContainer');
+      var act = existingAction || {};
+      var actType = act.type || 'sms';
+      var actTemplate = '';
+      var actConfig = act.config || {};
+      // Determine content display based on action type
+      if (actType === 'sms') actTemplate = actConfig.template || act.content || '';
+      else if (actType === 'call') actTemplate = actConfig.script || act.content || '';
+      else if (actType === 'task') actTemplate = actConfig.title || act.content || '';
+      else if (actType === 'wait') actTemplate = (act.delay || actConfig.delay || '') + ' ' + (act.unit || actConfig.unit || 'hours');
+      else if (actType === 'update') actTemplate = act.content || actConfig.field || '';
+      else actTemplate = act.content || JSON.stringify(actConfig || '');
+
+      var isWait = actType === 'wait';
+      var stepColor = isWait ? '#3B82F6' : '#10B981';
+      var stepIcon = isWait ? 'bg-blue-500' : 'bg-green-500';
+      var stepLabel = isWait ? 'WAIT' : 'THEN (Action)';
+
+      var html = '<div id="aeAction' + idx + '" class="ae-action-row">' +
+        '<div class="flex justify-center mb-2"><i class="fas fa-arrow-down text-gray-600"></i></div>' +
+        '<div class="card p-4 rounded-xl" style="border-left: 3px solid ' + stepColor + '">' +
+        '<div class="flex items-center justify-between mb-2">' +
+        '<div class="flex items-center gap-2"><span class="w-6 h-6 rounded-full ' + stepIcon + ' text-white text-xs flex items-center justify-center font-bold">' + idx + '</span><span class="font-bold">' + stepLabel + '</span></div>' +
+        '<button onclick="removeActionRow(' + idx + ')" class="text-red-400 hover:text-red-300 text-sm"><i class="fas fa-trash"></i></button>' +
+        '</div>' +
+        '<select id="aeActType' + idx + '" onchange="onActionTypeChange(' + idx + ')" class="w-full p-3 rounded-lg mb-2" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff">' +
+        '<option value="sms"' + (actType === 'sms' ? ' selected' : '') + '>Send SMS</option>' +
+        '<option value="call"' + (actType === 'call' ? ' selected' : '') + '>AI Phone Call</option>' +
+        '<option value="task"' + (actType === 'task' ? ' selected' : '') + '>Create Task</option>' +
+        '<option value="update"' + (actType === 'update' ? ' selected' : '') + '>Update Record</option>' +
+        '<option value="wait"' + (actType === 'wait' ? ' selected' : '') + '>Wait / Delay</option>' +
+        '</select>' +
+        '<div id="aeActFields' + idx + '">' + getActionFieldsHTML(idx, actType, act) + '</div>' +
+        '</div></div>';
+      container.insertAdjacentHTML('beforeend', html);
+    }
+
+    function getActionFieldsHTML(idx, actType, act) {
+      act = act || {};
+      var cfg = act.config || {};
+      if (actType === 'wait') {
+        return '<div class="flex gap-2">' +
+          '<input type="number" id="aeActDelay' + idx + '" class="flex-1 p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="0" min="0" value="' + (act.delay || cfg.delay || 0) + '">' +
+          '<select id="aeActDelayUnit' + idx + '" class="p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff">' +
+          '<option value="minutes"' + ((act.unit || cfg.unit) === 'minutes' ? ' selected' : '') + '>Minutes</option>' +
+          '<option value="hours"' + ((act.unit || cfg.unit || 'hours') === 'hours' ? ' selected' : '') + '>Hours</option>' +
+          '<option value="days"' + ((act.unit || cfg.unit) === 'days' ? ' selected' : '') + '>Days</option>' +
+          '</select></div>';
+      }
+      if (actType === 'sms') {
+        return '<textarea id="aeActContent' + idx + '" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" rows="3" placeholder="SMS message. Use {{student.first_name}}, {{school.name}} etc.">' + (cfg.template || act.content || '') + '</textarea>';
+      }
+      if (actType === 'call') {
+        return '<input type="text" id="aeActAgent' + idx + '" class="w-full p-3 rounded-lg mb-2" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="Agent name (e.g. kancho)" value="' + (cfg.agent || 'kancho') + '">' +
+          '<input type="text" id="aeActCallType' + idx + '" class="w-full p-3 rounded-lg mb-2" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="Call type (e.g. retention, winback)" value="' + (cfg.call_type || '') + '">' +
+          '<textarea id="aeActContent' + idx + '" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" rows="2" placeholder="Call script / instructions">' + (cfg.script || act.content || '') + '</textarea>';
+      }
+      if (actType === 'task') {
+        return '<input type="text" id="aeActContent' + idx + '" class="w-full p-3 rounded-lg mb-2" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="Task title. Use {{student.first_name}} etc." value="' + (cfg.title || act.content || '') + '">' +
+          '<div class="grid grid-cols-2 gap-2">' +
+          '<select id="aeActPriority' + idx + '" class="p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff">' +
+          '<option value="low"' + (cfg.priority === 'low' ? ' selected' : '') + '>Low Priority</option>' +
+          '<option value="medium"' + ((cfg.priority || 'medium') === 'medium' ? ' selected' : '') + '>Medium Priority</option>' +
+          '<option value="high"' + (cfg.priority === 'high' ? ' selected' : '') + '>High Priority</option>' +
+          '<option value="urgent"' + (cfg.priority === 'urgent' ? ' selected' : '') + '>Urgent</option>' +
+          '</select>' +
+          '<input type="number" id="aeActDueDays' + idx + '" class="p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="Due in days" min="0" value="' + (cfg.due_days || 1) + '">' +
+          '</div>';
+      }
+      // update / default
+      return '<textarea id="aeActContent' + idx + '" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" rows="2" placeholder="Configuration details">' + (act.content || JSON.stringify(cfg || '')) + '</textarea>';
+    }
+
+    function onActionTypeChange(idx) {
+      var newType = document.getElementById('aeActType' + idx).value;
+      document.getElementById('aeActFields' + idx).innerHTML = getActionFieldsHTML(idx, newType, {});
+      // Update step label & color
+      var row = document.getElementById('aeAction' + idx);
+      if (row) {
+        var card = row.querySelector('.card');
+        var badge = row.querySelector('.font-bold:last-child') || row.querySelectorAll('.font-bold')[1];
+        if (newType === 'wait') {
+          card.style.borderLeftColor = '#3B82F6';
+          if (badge) badge.textContent = 'WAIT';
+        } else {
+          card.style.borderLeftColor = '#10B981';
+          if (badge) badge.textContent = 'THEN (Action)';
+        }
+      }
+    }
+
+    function removeActionRow(idx) {
+      var row = document.getElementById('aeAction' + idx);
+      if (row) row.remove();
+    }
+
+    function collectEditorActions() {
+      var actions = [];
+      var rows = document.querySelectorAll('.ae-action-row');
+      rows.forEach(function(row) {
+        var idxMatch = row.id.match(/aeAction(\d+)/);
+        if (!idxMatch) return;
+        var idx = idxMatch[1];
+        var typeEl = document.getElementById('aeActType' + idx);
+        if (!typeEl) return;
+        var actType = typeEl.value;
+        if (actType === 'wait') {
+          var delay = parseInt(document.getElementById('aeActDelay' + idx).value) || 0;
+          var unit = document.getElementById('aeActDelayUnit' + idx).value;
+          if (delay > 0) actions.push({ type: 'wait', delay: delay, unit: unit });
+        } else if (actType === 'sms') {
+          var content = document.getElementById('aeActContent' + idx).value;
+          actions.push({ type: 'sms', config: { template: content } });
+        } else if (actType === 'call') {
+          var agent = document.getElementById('aeActAgent' + idx).value;
+          var callType = document.getElementById('aeActCallType' + idx).value;
+          var script = document.getElementById('aeActContent' + idx).value;
+          actions.push({ type: 'call', config: { agent: agent, call_type: callType, script: script } });
+        } else if (actType === 'task') {
+          var title = document.getElementById('aeActContent' + idx).value;
+          var priority = document.getElementById('aeActPriority' + idx).value;
+          var dueDays = parseInt(document.getElementById('aeActDueDays' + idx).value) || 1;
+          actions.push({ type: 'task', config: { title: title, priority: priority, due_days: dueDays } });
+        } else {
+          var ct = document.getElementById('aeActContent' + idx).value;
+          actions.push({ type: actType, content: ct });
+        }
       });
+      return actions;
+    }
+
+    function saveAutomationEditor() {
+      var name = document.getElementById('aeName').value.trim();
+      if (!name) { alert('Automation name is required'); return; }
+      var type = document.getElementById('aeType').value;
+      var trigger = document.getElementById('aeTrigger').value;
+      var parts = trigger.split(':');
+      var triggerType = parts[0];
+      var triggerEvent = parts.slice(1).join(':');
+      var triggerConfig = {};
+      if (triggerType === 'event') triggerConfig.event = triggerEvent;
+      else if (triggerType === 'condition') triggerConfig.condition = triggerEvent;
+      else if (triggerType === 'schedule') triggerConfig.schedule = triggerEvent;
+      var actions = collectEditorActions();
+      if (actions.length === 0) { alert('Add at least one action'); return; }
+      var editId = document.getElementById('aeId').value;
+      var isEdit = !!editId;
+      var url = isEdit ? '/kanchoai/api/v1/automations/' + editId : '/kanchoai/api/v1/automations';
+      var method = isEdit ? 'PUT' : 'POST';
+      var body = { name: name, type: type, trigger_type: triggerType, trigger_config: triggerConfig, actions: actions, is_active: true };
+      if (!isEdit) body.school_id = currentSchoolId;
+      fetch(url, { method: method, headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken }, body: JSON.stringify(body) })
+        .then(r => r.json()).then(d => {
+          if (d.success) { closeAutomationEditor(); tabsLoaded.automations = false; loadAutomations(); }
+          else alert(d.error || 'Failed');
+        });
     }
 
     // ==================== TASK BOARD TAB ====================
