@@ -7001,6 +7001,37 @@ app.get('*', (req, res) => {
             <tbody id="billingPaymentsBody"></tbody></table>
           </div>
         </div>
+        <!-- Plan Editor Modal -->
+        <div id="planEditorModal" class="hidden fixed inset-0 z-50 flex items-center justify-center" style="background:rgba(0,0,0,0.8)" onclick="if(event.target===this)closePlanEditor()">
+          <div class="card rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-bold" id="planEdTitle"><i class="fas fa-credit-card text-kancho mr-2"></i>New Plan</h3>
+              <button class="btn-ghost" onclick="closePlanEditor()"><i class="fas fa-times"></i></button>
+            </div>
+            <input type="hidden" id="planEdId" value="">
+            <div class="space-y-4">
+              <div><label class="block text-sm text-gray-400 mb-1">Plan Name *</label><input type="text" id="planEdName" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="e.g. Adult Monthly"></div>
+              <div class="grid grid-cols-2 gap-3">
+                <div><label class="block text-sm text-gray-400 mb-1">Monthly Price ($) *</label><input type="number" id="planEdPrice" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="149.00" min="0" step="0.01"></div>
+                <div><label class="block text-sm text-gray-400 mb-1">Type</label>
+                  <select id="planEdType" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff">
+                    <option value="recurring" selected>Recurring</option>
+                    <option value="drop_in">Drop-In</option>
+                    <option value="trial">Trial</option>
+                    <option value="annual">Annual</option>
+                    <option value="family">Family</option>
+                  </select>
+                </div>
+              </div>
+              <div><label class="block text-sm text-gray-400 mb-1">Contract Months (0 = month-to-month)</label><input type="number" id="planEdContract" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="0" min="0" value="0"></div>
+              <div><label class="block text-sm text-gray-400 mb-1">Description</label><textarea id="planEdDesc" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" rows="2" placeholder="What's included in this plan..."></textarea></div>
+              <div class="flex gap-3">
+                <button class="btn-primary flex-1 py-3" onclick="savePlanEditor()"><i class="fas fa-save mr-2"></i><span id="planEdSaveLabel">Create Plan</span></button>
+                <button class="btn-ghost py-3 px-4" onclick="closePlanEditor()">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Tab: Families -->
@@ -7011,6 +7042,28 @@ app.get('*', (req, res) => {
         </div>
         <div id="familiesContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
         <p id="familiesEmpty" class="hidden text-center text-gray-500 py-12">No family accounts yet. Group students by family for combined billing.</p>
+        <!-- Family Editor Modal -->
+        <div id="familyEditorModal" class="hidden fixed inset-0 z-50 flex items-center justify-center" style="background:rgba(0,0,0,0.8)" onclick="if(event.target===this)closeFamilyEditor()">
+          <div class="card rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-bold" id="famEdTitle"><i class="fas fa-people-roof text-kancho mr-2"></i>Add Family</h3>
+              <button class="btn-ghost" onclick="closeFamilyEditor()"><i class="fas fa-times"></i></button>
+            </div>
+            <input type="hidden" id="famEdId" value="">
+            <div class="space-y-4">
+              <div><label class="block text-sm text-gray-400 mb-1">Family Last Name *</label><input type="text" id="famEdName" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="e.g. Johnson"></div>
+              <div><label class="block text-sm text-gray-400 mb-1">Primary Contact Name *</label><input type="text" id="famEdContact" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="e.g. Sarah Johnson"></div>
+              <div class="grid grid-cols-2 gap-3">
+                <div><label class="block text-sm text-gray-400 mb-1">Phone</label><input type="tel" id="famEdPhone" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="+1 555-0100"></div>
+                <div><label class="block text-sm text-gray-400 mb-1">Email</label><input type="email" id="famEdEmail" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="email@example.com"></div>
+              </div>
+              <div class="flex gap-3">
+                <button class="btn-primary flex-1 py-3" onclick="saveFamilyEditor()"><i class="fas fa-save mr-2"></i><span id="famEdSaveLabel">Add Family</span></button>
+                <button class="btn-ghost py-3 px-4" onclick="closeFamilyEditor()">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Tab: Staff / Instructors -->
@@ -7028,6 +7081,66 @@ app.get('*', (req, res) => {
           </div>
         </div>
         <p id="staffEmpty" class="hidden text-center text-gray-500 py-12">No staff members added yet.</p>
+        <!-- Staff Editor Modal -->
+        <div id="staffEditorModal" class="hidden fixed inset-0 z-50 flex items-center justify-center" style="background:rgba(0,0,0,0.8)" onclick="if(event.target===this)closeStaffEditor()">
+          <div class="card rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-bold" id="staffEdTitle"><i class="fas fa-id-badge text-kancho mr-2"></i>Add Staff</h3>
+              <button class="btn-ghost" onclick="closeStaffEditor()"><i class="fas fa-times"></i></button>
+            </div>
+            <input type="hidden" id="staffEdId" value="">
+            <div class="space-y-4">
+              <div class="grid grid-cols-2 gap-3">
+                <div><label class="block text-sm text-gray-400 mb-1">First Name *</label><input type="text" id="staffEdFirstName" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="John"></div>
+                <div><label class="block text-sm text-gray-400 mb-1">Last Name *</label><input type="text" id="staffEdLastName" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="Doe"></div>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div><label class="block text-sm text-gray-400 mb-1">Email</label><input type="email" id="staffEdEmail" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="john@example.com"></div>
+                <div><label class="block text-sm text-gray-400 mb-1">Phone</label><input type="tel" id="staffEdPhone" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="+1 555-0100"></div>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div><label class="block text-sm text-gray-400 mb-1">Role</label>
+                  <select id="staffEdRole" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff">
+                    <option value="owner">Owner</option>
+                    <option value="head_instructor">Head Instructor</option>
+                    <option value="instructor" selected>Instructor</option>
+                    <option value="assistant">Assistant</option>
+                    <option value="front_desk">Front Desk</option>
+                  </select>
+                </div>
+                <div><label class="block text-sm text-gray-400 mb-1">Belt Rank</label><input type="text" id="staffEdBelt" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="e.g. Black Belt 3rd Dan"></div>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div><label class="block text-sm text-gray-400 mb-1">Hire Date</label><input type="date" id="staffEdHireDate" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff"></div>
+                <div><label class="block text-sm text-gray-400 mb-1">Status</label>
+                  <select id="staffEdStatus" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff">
+                    <option value="true" selected>Active</option>
+                    <option value="false">Inactive</option>
+                  </select>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div><label class="block text-sm text-gray-400 mb-1">Pay Type</label>
+                  <select id="staffEdPayType" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff">
+                    <option value="">-- None --</option>
+                    <option value="salary">Salary</option>
+                    <option value="hourly">Hourly</option>
+                    <option value="per_class">Per Class</option>
+                    <option value="volunteer">Volunteer</option>
+                  </select>
+                </div>
+                <div><label class="block text-sm text-gray-400 mb-1">Pay Rate ($)</label><input type="number" id="staffEdPayRate" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="0.00" min="0" step="0.01"></div>
+              </div>
+              <div><label class="block text-sm text-gray-400 mb-1">Specialties</label><input type="text" id="staffEdSpecialties" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="e.g. BJJ, Muay Thai, Kids Classes (comma-separated)"></div>
+              <div><label class="block text-sm text-gray-400 mb-1">Certifications</label><input type="text" id="staffEdCerts" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="e.g. CPR, First Aid, IBJJF Ref (comma-separated)"></div>
+              <div><label class="block text-sm text-gray-400 mb-1">Bio</label><textarea id="staffEdBio" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" rows="3" placeholder="Short bio or notes about this staff member..."></textarea></div>
+              <div class="flex gap-3">
+                <button class="btn-primary flex-1 py-3" onclick="saveStaffEditor()"><i class="fas fa-save mr-2"></i><span id="staffEdSaveLabel">Add Staff</span></button>
+                <button class="btn-ghost py-3 px-4" onclick="closeStaffEditor()">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Tab: AI Automations -->
@@ -7128,6 +7241,46 @@ app.get('*', (req, res) => {
           </div>
         </div>
         <p id="tasksEmpty" class="hidden text-center text-gray-500 py-12">No tasks. Your to-do list is clear!</p>
+        <!-- Task Editor Modal -->
+        <div id="taskEditorModal" class="hidden fixed inset-0 z-50 flex items-center justify-center" style="background:rgba(0,0,0,0.8)" onclick="if(event.target===this)closeTaskEditor()">
+          <div class="card rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-bold" id="taskEdTitle"><i class="fas fa-tasks text-kancho mr-2"></i>New Task</h3>
+              <button class="btn-ghost" onclick="closeTaskEditor()"><i class="fas fa-times"></i></button>
+            </div>
+            <input type="hidden" id="taskEdId" value="">
+            <div class="space-y-4">
+              <div><label class="block text-sm text-gray-400 mb-1">Task Title *</label><input type="text" id="taskEdTitleInput" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="e.g. Follow up with new lead"></div>
+              <div class="grid grid-cols-2 gap-3">
+                <div><label class="block text-sm text-gray-400 mb-1">Type</label>
+                  <select id="taskEdType" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff">
+                    <option value="general" selected>General</option>
+                    <option value="follow_up">Follow Up</option>
+                    <option value="call">Call</option>
+                    <option value="meeting">Meeting</option>
+                    <option value="billing">Billing</option>
+                    <option value="retention">Retention</option>
+                    <option value="onboarding">Onboarding</option>
+                  </select>
+                </div>
+                <div><label class="block text-sm text-gray-400 mb-1">Priority</label>
+                  <select id="taskEdPriority" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                    <option value="urgent">Urgent</option>
+                  </select>
+                </div>
+              </div>
+              <div><label class="block text-sm text-gray-400 mb-1">Due Date</label><input type="date" id="taskEdDueDate" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff"></div>
+              <div><label class="block text-sm text-gray-400 mb-1">Notes</label><textarea id="taskEdNotes" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" rows="2" placeholder="Additional details..."></textarea></div>
+              <div class="flex gap-3">
+                <button class="btn-primary flex-1 py-3" onclick="saveTaskEditor()"><i class="fas fa-save mr-2"></i><span id="taskEdSaveLabel">Create Task</span></button>
+                <button class="btn-ghost py-3 px-4" onclick="closeTaskEditor()">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Tab: Campaigns -->
@@ -7151,6 +7304,94 @@ app.get('*', (req, res) => {
           </div>
         </div>
         <p id="campaignsEmpty" class="hidden text-center text-gray-500 py-12">No campaigns yet. Create your first marketing campaign!</p>
+        <!-- Campaign Editor Modal -->
+        <div id="campaignEditorModal" class="hidden fixed inset-0 z-50 flex items-center justify-center" style="background:rgba(0,0,0,0.8)" onclick="if(event.target===this)closeCampaignEditor()">
+          <div class="card rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-bold" id="campEdTitle"><i class="fas fa-bullhorn text-kancho mr-2"></i>New Campaign</h3>
+              <button class="btn-ghost" onclick="closeCampaignEditor()"><i class="fas fa-times"></i></button>
+            </div>
+            <input type="hidden" id="campEdId" value="">
+            <div class="space-y-4">
+              <div><label class="block text-sm text-gray-400 mb-1">Campaign Name *</label><input type="text" id="campEdName" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="e.g. Spring Trial Blitz"></div>
+              <div class="grid grid-cols-3 gap-3">
+                <div><label class="block text-sm text-gray-400 mb-1">Type</label>
+                  <select id="campEdType" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff">
+                    <option value="sms">SMS</option>
+                    <option value="email">Email</option>
+                    <option value="voice">Voice</option>
+                    <option value="multi_channel">Multi-Channel</option>
+                  </select>
+                </div>
+                <div><label class="block text-sm text-gray-400 mb-1">Goal</label>
+                  <select id="campEdGoal" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff">
+                    <option value="lead_generation">Lead Generation</option>
+                    <option value="trial_booking">Trial Booking</option>
+                    <option value="retention">Retention</option>
+                    <option value="reactivation">Reactivation</option>
+                    <option value="upsell">Upsell</option>
+                    <option value="engagement" selected>Engagement</option>
+                    <option value="referral">Referral</option>
+                    <option value="promotion">Promotion</option>
+                    <option value="announcement">Announcement</option>
+                  </select>
+                </div>
+                <div><label class="block text-sm text-gray-400 mb-1">Status</label>
+                  <select id="campEdStatus" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff">
+                    <option value="draft" selected>Draft</option>
+                    <option value="scheduled">Scheduled</option>
+                    <option value="active">Active</option>
+                    <option value="paused">Paused</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div><label class="block text-sm text-gray-400 mb-1">Budget ($)</label><input type="number" id="campEdBudget" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="0.00" min="0" step="0.01"></div>
+                <div><label class="block text-sm text-gray-400 mb-1">Target Audience</label>
+                  <select id="campEdAudience" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff">
+                    <option value="all">All Contacts</option>
+                    <option value="leads">Leads Only</option>
+                    <option value="students">Students Only</option>
+                    <option value="inactive">Inactive Students</option>
+                    <option value="at_risk">At-Risk Students</option>
+                  </select>
+                </div>
+              </div>
+              <!-- Content section depends on type -->
+              <div class="card p-4 rounded-xl" style="border-left:3px solid #10B981">
+                <div class="flex items-center gap-2 mb-2"><i class="fas fa-envelope text-green-400"></i><span class="font-bold">Campaign Content</span></div>
+                <div id="campEdContentSMS">
+                  <label class="block text-sm text-gray-400 mb-1">SMS Message</label>
+                  <textarea id="campEdSmsTemplate" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" rows="3" placeholder="Hi {{first_name}}, ..."></textarea>
+                </div>
+                <div id="campEdContentEmail" class="mt-3">
+                  <label class="block text-sm text-gray-400 mb-1">Email Subject</label>
+                  <input type="text" id="campEdEmailSubject" class="w-full p-3 rounded-lg mb-2" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="e.g. Special Offer for You!">
+                  <label class="block text-sm text-gray-400 mb-1">Email Body</label>
+                  <textarea id="campEdEmailBody" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" rows="4" placeholder="Email content..."></textarea>
+                </div>
+                <div id="campEdContentVoice" class="mt-3">
+                  <label class="block text-sm text-gray-400 mb-1">Voice Script</label>
+                  <textarea id="campEdVoiceScript" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" rows="3" placeholder="AI call script..."></textarea>
+                </div>
+              </div>
+              <!-- Schedule -->
+              <div class="card p-4 rounded-xl" style="border-left:3px solid #3B82F6">
+                <div class="flex items-center gap-2 mb-2"><i class="fas fa-calendar text-blue-400"></i><span class="font-bold">Schedule (Optional)</span></div>
+                <div class="grid grid-cols-2 gap-3">
+                  <div><label class="block text-sm text-gray-400 mb-1">Start Date</label><input type="date" id="campEdStartDate" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff"></div>
+                  <div><label class="block text-sm text-gray-400 mb-1">End Date</label><input type="date" id="campEdEndDate" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff"></div>
+                </div>
+                <div class="mt-2"><label class="block text-sm text-gray-400 mb-1">Send Time</label><input type="time" id="campEdSendTime" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" value="10:00"></div>
+              </div>
+              <div class="flex gap-3">
+                <button class="btn-primary flex-1 py-3" onclick="saveCampaignEditor()"><i class="fas fa-save mr-2"></i><span id="campEdSaveLabel">Create Campaign</span></button>
+                <button class="btn-ghost py-3 px-4" onclick="closeCampaignEditor()">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Tab: Growth Advisor -->
@@ -7194,6 +7435,44 @@ app.get('*', (req, res) => {
           </div>
         </div>
         <p id="promotionsEmpty" class="hidden text-center text-gray-500 py-12">No promotions recorded yet.</p>
+        <!-- Promotion Editor Modal -->
+        <div id="promoEditorModal" class="hidden fixed inset-0 z-50 flex items-center justify-center" style="background:rgba(0,0,0,0.8)" onclick="if(event.target===this)closePromoEditor()">
+          <div class="card rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-bold"><i class="fas fa-medal text-kancho mr-2"></i>Record Promotion</h3>
+              <button class="btn-ghost" onclick="closePromoEditor()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="space-y-4">
+              <div><label class="block text-sm text-gray-400 mb-1">Student ID *</label><input type="number" id="promoEdStudentId" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="Enter student ID"></div>
+              <div><label class="block text-sm text-gray-400 mb-1">New Belt Rank *</label>
+                <select id="promoEdToBelt" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff">
+                  <option value="">-- Select Belt --</option>
+                  <option value="White">White</option>
+                  <option value="Yellow">Yellow</option>
+                  <option value="Orange">Orange</option>
+                  <option value="Green">Green</option>
+                  <option value="Blue">Blue</option>
+                  <option value="Purple">Purple</option>
+                  <option value="Brown">Brown</option>
+                  <option value="Red">Red</option>
+                  <option value="Black">Black</option>
+                  <option value="Black 1st Dan">Black 1st Dan</option>
+                  <option value="Black 2nd Dan">Black 2nd Dan</option>
+                  <option value="Black 3rd Dan">Black 3rd Dan</option>
+                </select>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div><label class="block text-sm text-gray-400 mb-1">Testing Score (%)</label><input type="number" id="promoEdScore" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="e.g. 85" min="0" max="100"></div>
+                <div><label class="block text-sm text-gray-400 mb-1">Testing Fee ($)</label><input type="number" id="promoEdFee" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="0" min="0" step="0.01" value="0"></div>
+              </div>
+              <div><label class="block text-sm text-gray-400 mb-1">Notes</label><textarea id="promoEdNotes" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" rows="2" placeholder="Optional notes..."></textarea></div>
+              <div class="flex gap-3">
+                <button class="btn-primary flex-1 py-3" onclick="savePromoEditor()"><i class="fas fa-save mr-2"></i>Record Promotion</button>
+                <button class="btn-ghost py-3 px-4" onclick="closePromoEditor()">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Tab: Reports -->
@@ -7250,6 +7529,43 @@ app.get('*', (req, res) => {
         </div>
         <div id="funnelsList"></div>
         <p id="funnelsEmpty" class="hidden text-center text-gray-500 py-12">No funnels yet. Create your first lead capture funnel!</p>
+        <!-- Funnel Editor Modal -->
+        <div id="funnelEditorModal" class="hidden fixed inset-0 z-50 flex items-center justify-center" style="background:rgba(0,0,0,0.8)" onclick="if(event.target===this)closeFunnelEditor()">
+          <div class="card rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-bold" id="funnelEdTitle"><i class="fas fa-filter text-kancho mr-2"></i>New Funnel</h3>
+              <button class="btn-ghost" onclick="closeFunnelEditor()"><i class="fas fa-times"></i></button>
+            </div>
+            <input type="hidden" id="funnelEdId" value="">
+            <div class="space-y-4">
+              <div><label class="block text-sm text-gray-400 mb-1">Funnel Name *</label><input type="text" id="funnelEdName" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="e.g. Free Trial Funnel"></div>
+              <div class="grid grid-cols-2 gap-3">
+                <div><label class="block text-sm text-gray-400 mb-1">Type</label>
+                  <select id="funnelEdType" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff">
+                    <option value="lead_capture">Lead Capture</option>
+                    <option value="trial_booking" selected>Trial Booking</option>
+                    <option value="event_registration">Event Registration</option>
+                    <option value="membership_signup">Membership Signup</option>
+                    <option value="referral">Referral</option>
+                  </select>
+                </div>
+                <div><label class="block text-sm text-gray-400 mb-1">Status</label>
+                  <select id="funnelEdStatus" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff">
+                    <option value="draft">Draft</option>
+                    <option value="active" selected>Active</option>
+                    <option value="paused">Paused</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </div>
+              </div>
+              <div><label class="block text-sm text-gray-400 mb-1">Landing Page Headline</label><input type="text" id="funnelEdHeadline" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="Start Your Martial Arts Journey Today" value="Start Your Martial Arts Journey Today"></div>
+              <div class="flex gap-3">
+                <button class="btn-primary flex-1 py-3" onclick="saveFunnelEditor()"><i class="fas fa-save mr-2"></i><span id="funnelEdSaveLabel">Create Funnel</span></button>
+                <button class="btn-ghost py-3 px-4" onclick="closeFunnelEditor()">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
     </div><!-- /tab-content-area -->
@@ -9883,19 +10199,34 @@ app.get('*', (req, res) => {
     }
 
     function openPlanForm(existing) {
-      const name = existing ? existing.name : prompt('Plan Name:');
-      if (!name) return;
-      const price = prompt('Monthly Price ($):', existing ? existing.price : '');
-      if (!price) return;
-      const type = prompt('Type (recurring, drop_in, trial, annual, family):', existing ? existing.type : 'recurring') || 'recurring';
-      const contractMonths = prompt('Contract Months (0 = month-to-month):', existing ? existing.contract_months : '0') || '0';
-      const desc = prompt('Description:', existing ? existing.description : '') || '';
-
-      const method = existing ? 'PUT' : 'POST';
-      const url = existing ? '/kanchoai/api/v1/membership-plans/' + existing.id : '/kanchoai/api/v1/membership-plans';
-      fetch(url, { method, headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
-        body: JSON.stringify({ school_id: currentSchoolId, name, price: parseFloat(price), type, contract_months: parseInt(contractMonths), description: desc })
-      }).then(r => r.json()).then(d => { if (d.success) { tabsLoaded.billing = false; loadBillingTab(); } else alert(d.error); });
+      document.getElementById('planEdId').value = existing ? existing.id : '';
+      document.getElementById('planEdName').value = existing ? (existing.name || '') : '';
+      document.getElementById('planEdPrice').value = existing ? (existing.price || '') : '';
+      document.getElementById('planEdType').value = existing ? (existing.type || 'recurring') : 'recurring';
+      document.getElementById('planEdContract').value = existing ? (existing.contract_months || 0) : 0;
+      document.getElementById('planEdDesc').value = existing ? (existing.description || '') : '';
+      document.getElementById('planEdTitle').innerHTML = existing ? '<i class="fas fa-pen text-kancho mr-2"></i>Edit Plan' : '<i class="fas fa-credit-card text-kancho mr-2"></i>New Plan';
+      document.getElementById('planEdSaveLabel').textContent = existing ? 'Save Changes' : 'Create Plan';
+      document.getElementById('planEditorModal').classList.remove('hidden');
+    }
+    function closePlanEditor() { document.getElementById('planEditorModal').classList.add('hidden'); }
+    function savePlanEditor() {
+      var name = document.getElementById('planEdName').value.trim();
+      var price = document.getElementById('planEdPrice').value;
+      if (!name || !price) { alert('Name and price are required'); return; }
+      var body = {
+        school_id: currentSchoolId,
+        name: name,
+        price: parseFloat(price),
+        type: document.getElementById('planEdType').value,
+        contract_months: parseInt(document.getElementById('planEdContract').value) || 0,
+        description: document.getElementById('planEdDesc').value.trim()
+      };
+      var editId = document.getElementById('planEdId').value;
+      var method = editId ? 'PUT' : 'POST';
+      var url = editId ? '/kanchoai/api/v1/membership-plans/' + editId : '/kanchoai/api/v1/membership-plans';
+      fetch(url, { method: method, headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken }, body: JSON.stringify(body) })
+        .then(r => r.json()).then(d => { if (d.success) { closePlanEditor(); tabsLoaded.billing = false; loadBillingTab(); } else alert(d.error || 'Failed'); });
     }
     function editPlan(id) { fetch('/kanchoai/api/v1/membership-plans/' + id, { headers: { 'Authorization': 'Bearer ' + authToken } }).then(r => r.json()).then(d => { if (d.success) openPlanForm(d.data); }); }
     function deletePlan(id) { if (!confirm('Deactivate this plan?')) return; fetch('/kanchoai/api/v1/membership-plans/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + authToken } }).then(() => { tabsLoaded.billing = false; loadBillingTab(); }); }
@@ -9920,18 +10251,38 @@ app.get('*', (req, res) => {
           '</div>').join('');
       } catch (e) { console.error('loadFamilies error:', e); }
     }
-    function openFamilyForm() {
-      const name = prompt('Family Last Name:');
-      if (!name) return;
-      const contact = prompt('Primary Contact Full Name:');
-      if (!contact) return;
-      const phone = prompt('Phone:') || '';
-      const email = prompt('Email:') || '';
-      fetch('/kanchoai/api/v1/families', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
-        body: JSON.stringify({ school_id: currentSchoolId, family_name: name, primary_contact_name: contact, primary_contact_phone: phone, primary_contact_email: email })
-      }).then(r => r.json()).then(d => { if (d.success) { tabsLoaded.families = false; loadFamilies(); } else alert(d.error); });
+    function openFamilyForm(existing) {
+      document.getElementById('famEdId').value = existing ? existing.id : '';
+      document.getElementById('famEdName').value = existing ? (existing.family_name || '') : '';
+      document.getElementById('famEdContact').value = existing ? (existing.primary_contact_name || '') : '';
+      document.getElementById('famEdPhone').value = existing ? (existing.primary_contact_phone || '') : '';
+      document.getElementById('famEdEmail').value = existing ? (existing.primary_contact_email || '') : '';
+      document.getElementById('famEdTitle').innerHTML = existing ? '<i class="fas fa-pen text-kancho mr-2"></i>Edit Family' : '<i class="fas fa-people-roof text-kancho mr-2"></i>Add Family';
+      document.getElementById('famEdSaveLabel').textContent = existing ? 'Save Changes' : 'Add Family';
+      document.getElementById('familyEditorModal').classList.remove('hidden');
     }
-    function editFamily(id) { alert('Family editing coming soon - use API for now'); }
+    function closeFamilyEditor() { document.getElementById('familyEditorModal').classList.add('hidden'); }
+    function saveFamilyEditor() {
+      var name = document.getElementById('famEdName').value.trim();
+      var contact = document.getElementById('famEdContact').value.trim();
+      if (!name || !contact) { alert('Family name and contact name are required'); return; }
+      var body = {
+        school_id: currentSchoolId,
+        family_name: name,
+        primary_contact_name: contact,
+        primary_contact_phone: document.getElementById('famEdPhone').value.trim() || null,
+        primary_contact_email: document.getElementById('famEdEmail').value.trim() || null
+      };
+      var editId = document.getElementById('famEdId').value;
+      var method = editId ? 'PUT' : 'POST';
+      var url = editId ? '/kanchoai/api/v1/families/' + editId : '/kanchoai/api/v1/families';
+      fetch(url, { method: method, headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken }, body: JSON.stringify(body) })
+        .then(r => r.json()).then(d => { if (d.success) { closeFamilyEditor(); tabsLoaded.families = false; loadFamilies(); } else alert(d.error || 'Failed'); });
+    }
+    function editFamily(id) {
+      fetch('/kanchoai/api/v1/families/' + id, { headers: { 'Authorization': 'Bearer ' + authToken } })
+        .then(r => r.json()).then(d => { if (d.success) openFamilyForm(d.data); else alert(d.error || 'Not found'); });
+    }
 
     // ==================== STAFF / INSTRUCTORS TAB ====================
     async function loadStaff() {
@@ -9956,20 +10307,54 @@ app.get('*', (req, res) => {
       } catch (e) { console.error('loadStaff error:', e); }
     }
     function openInstructorForm(existing) {
-      const fn = prompt('First Name:', existing ? existing.first_name : '');
-      if (!fn) return;
-      const ln = prompt('Last Name:', existing ? existing.last_name : '');
-      if (!ln) return;
-      const role = prompt('Role (owner, head_instructor, instructor, assistant, front_desk):', existing ? existing.role : 'instructor') || 'instructor';
-      const belt = prompt('Belt Rank:', existing ? existing.belt_rank : '') || '';
-      const phone = prompt('Phone:', existing ? existing.phone : '') || '';
-      const email = prompt('Email:', existing ? existing.email : '') || '';
-
-      const method = existing ? 'PUT' : 'POST';
-      const url = existing ? '/kanchoai/api/v1/instructors/' + existing.id : '/kanchoai/api/v1/instructors';
-      fetch(url, { method, headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
-        body: JSON.stringify({ school_id: currentSchoolId, first_name: fn, last_name: ln, role, belt_rank: belt, phone, email })
-      }).then(r => r.json()).then(d => { if (d.success) { tabsLoaded.staff = false; loadStaff(); } else alert(d.error); });
+      document.getElementById('staffEdId').value = existing ? existing.id : '';
+      document.getElementById('staffEdFirstName').value = existing ? existing.first_name : '';
+      document.getElementById('staffEdLastName').value = existing ? existing.last_name : '';
+      document.getElementById('staffEdEmail').value = existing ? (existing.email || '') : '';
+      document.getElementById('staffEdPhone').value = existing ? (existing.phone || '') : '';
+      document.getElementById('staffEdRole').value = existing ? (existing.role || 'instructor') : 'instructor';
+      document.getElementById('staffEdBelt').value = existing ? (existing.belt_rank || '') : '';
+      document.getElementById('staffEdHireDate').value = existing ? (existing.hire_date || '') : '';
+      document.getElementById('staffEdStatus').value = existing ? String(existing.is_active !== false) : 'true';
+      document.getElementById('staffEdPayType').value = existing ? (existing.pay_type || '') : '';
+      document.getElementById('staffEdPayRate').value = existing ? (existing.pay_rate || '') : '';
+      document.getElementById('staffEdSpecialties').value = existing && existing.specialties ? (Array.isArray(existing.specialties) ? existing.specialties.join(', ') : '') : '';
+      document.getElementById('staffEdCerts').value = existing && existing.certifications ? (Array.isArray(existing.certifications) ? existing.certifications.join(', ') : '') : '';
+      document.getElementById('staffEdBio').value = existing ? (existing.bio || '') : '';
+      document.getElementById('staffEdTitle').innerHTML = existing ? '<i class="fas fa-pen text-kancho mr-2"></i>Edit Staff' : '<i class="fas fa-id-badge text-kancho mr-2"></i>Add Staff';
+      document.getElementById('staffEdSaveLabel').textContent = existing ? 'Save Changes' : 'Add Staff';
+      document.getElementById('staffEditorModal').classList.remove('hidden');
+    }
+    function closeStaffEditor() { document.getElementById('staffEditorModal').classList.add('hidden'); }
+    function saveStaffEditor() {
+      var fn = document.getElementById('staffEdFirstName').value.trim();
+      var ln = document.getElementById('staffEdLastName').value.trim();
+      if (!fn || !ln) { alert('First and last name are required'); return; }
+      var specStr = document.getElementById('staffEdSpecialties').value;
+      var specialties = specStr ? specStr.split(',').map(function(s) { return s.trim(); }).filter(Boolean) : [];
+      var certStr = document.getElementById('staffEdCerts').value;
+      var certifications = certStr ? certStr.split(',').map(function(s) { return s.trim(); }).filter(Boolean) : [];
+      var body = {
+        school_id: currentSchoolId,
+        first_name: fn,
+        last_name: ln,
+        email: document.getElementById('staffEdEmail').value.trim() || null,
+        phone: document.getElementById('staffEdPhone').value.trim() || null,
+        role: document.getElementById('staffEdRole').value,
+        belt_rank: document.getElementById('staffEdBelt').value.trim() || null,
+        hire_date: document.getElementById('staffEdHireDate').value || null,
+        is_active: document.getElementById('staffEdStatus').value === 'true',
+        pay_type: document.getElementById('staffEdPayType').value || null,
+        pay_rate: parseFloat(document.getElementById('staffEdPayRate').value) || null,
+        specialties: specialties,
+        certifications: certifications,
+        bio: document.getElementById('staffEdBio').value.trim() || null
+      };
+      var editId = document.getElementById('staffEdId').value;
+      var method = editId ? 'PUT' : 'POST';
+      var url = editId ? '/kanchoai/api/v1/instructors/' + editId : '/kanchoai/api/v1/instructors';
+      fetch(url, { method: method, headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken }, body: JSON.stringify(body) })
+        .then(r => r.json()).then(d => { if (d.success) { closeStaffEditor(); tabsLoaded.staff = false; loadStaff(); } else alert(d.error || 'Failed'); });
     }
     function editInstructor(id) { fetch('/kanchoai/api/v1/instructors/' + id, { headers: { 'Authorization': 'Bearer ' + authToken } }).then(r => r.json()).then(d => { if (d.success) openInstructorForm(d.data); }); }
     function deleteInstructor(id) { if (!confirm('Deactivate this instructor?')) return; fetch('/kanchoai/api/v1/instructors/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + authToken } }).then(() => { tabsLoaded.staff = false; loadStaff(); }); }
@@ -10291,18 +10676,42 @@ app.get('*', (req, res) => {
           '<td>' + (t.due_date ? formatDate(t.due_date) : '--') + '</td>' +
           '<td><span class="badge badge-' + (t.status === 'completed' ? 'green' : t.status === 'in_progress' ? 'blue' : t.status === 'overdue' ? 'red' : 'yellow') + '">' + t.status + '</span></td>' +
           '<td>' + (t.status !== 'completed' ? '<button class="btn-ghost btn-xs text-green-400" onclick="completeTask(' + t.id + ')" title="Complete"><i class="fas fa-check"></i></button> ' : '') +
+          '<button class="btn-ghost btn-xs" onclick="editTask(' + t.id + ')" title="Edit"><i class="fas fa-edit"></i></button> ' +
           '<button class="btn-ghost btn-xs text-red-400" onclick="deleteTask(' + t.id + ')"><i class="fas fa-trash"></i></button></td></tr>').join('');
       } catch (e) { console.error('loadTasks error:', e); }
     }
-    function openTaskForm() {
-      const title = prompt('Task Title:');
-      if (!title) return;
-      const type = prompt('Type (general, follow_up, call, meeting, billing, retention, onboarding):', 'general') || 'general';
-      const priority = prompt('Priority (low, medium, high, urgent):', 'medium') || 'medium';
-      const dueDate = prompt('Due Date (YYYY-MM-DD) or leave blank:', '') || null;
-      fetch('/kanchoai/api/v1/tasks', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
-        body: JSON.stringify({ school_id: currentSchoolId, title, type, priority, due_date: dueDate })
-      }).then(r => r.json()).then(d => { if (d.success) { tabsLoaded.taskBoard = false; loadTasks(); } else alert(d.error); });
+    function openTaskForm(existing) {
+      document.getElementById('taskEdId').value = existing ? existing.id : '';
+      document.getElementById('taskEdTitleInput').value = existing ? (existing.title || '') : '';
+      document.getElementById('taskEdType').value = existing ? (existing.type || 'general') : 'general';
+      document.getElementById('taskEdPriority').value = existing ? (existing.priority || 'medium') : 'medium';
+      document.getElementById('taskEdDueDate').value = existing ? (existing.due_date || '') : '';
+      document.getElementById('taskEdNotes').value = existing ? (existing.notes || '') : '';
+      document.getElementById('taskEdTitle').innerHTML = existing ? '<i class="fas fa-pen text-kancho mr-2"></i>Edit Task' : '<i class="fas fa-tasks text-kancho mr-2"></i>New Task';
+      document.getElementById('taskEdSaveLabel').textContent = existing ? 'Save Changes' : 'Create Task';
+      document.getElementById('taskEditorModal').classList.remove('hidden');
+    }
+    function closeTaskEditor() { document.getElementById('taskEditorModal').classList.add('hidden'); }
+    function saveTaskEditor() {
+      var title = document.getElementById('taskEdTitleInput').value.trim();
+      if (!title) { alert('Task title is required'); return; }
+      var body = {
+        school_id: currentSchoolId,
+        title: title,
+        type: document.getElementById('taskEdType').value,
+        priority: document.getElementById('taskEdPriority').value,
+        due_date: document.getElementById('taskEdDueDate').value || null,
+        notes: document.getElementById('taskEdNotes').value.trim() || null
+      };
+      var editId = document.getElementById('taskEdId').value;
+      var method = editId ? 'PUT' : 'POST';
+      var url = editId ? '/kanchoai/api/v1/tasks/' + editId : '/kanchoai/api/v1/tasks';
+      fetch(url, { method: method, headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken }, body: JSON.stringify(body) })
+        .then(r => r.json()).then(d => { if (d.success) { closeTaskEditor(); tabsLoaded.taskBoard = false; loadTasks(); } else alert(d.error || 'Failed'); });
+    }
+    function editTask(id) {
+      fetch('/kanchoai/api/v1/tasks/' + id, { headers: { 'Authorization': 'Bearer ' + authToken } })
+        .then(r => r.json()).then(d => { if (d.success) openTaskForm(d.data); else alert(d.error || 'Not found'); });
     }
     function completeTask(id) { fetch('/kanchoai/api/v1/tasks/' + id + '/complete', { method: 'POST', headers: { 'Authorization': 'Bearer ' + authToken } }).then(() => { tabsLoaded.taskBoard = false; loadTasks(); }); }
     function deleteTask(id) { if (!confirm('Delete this task?')) return; fetch('/kanchoai/api/v1/tasks/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + authToken } }).then(() => { tabsLoaded.taskBoard = false; loadTasks(); }); }
@@ -10335,21 +10744,68 @@ app.get('*', (req, res) => {
       document.getElementById('campaignScheduled').textContent = campaigns.filter(c => c.status === 'scheduled').length;
       document.getElementById('campaignCompleted').textContent = campaigns.filter(c => c.status === 'completed').length;
     }
-    function openCampaignForm() {
-      const name = prompt('Campaign Name:');
-      if (!name) return;
-      const type = prompt('Type (sms, email, voice, multi_channel):', 'sms') || 'sms';
-      const goal = prompt('Goal (lead_generation, trial_booking, retention, engagement, reactivation, promotion, announcement):', 'engagement') || 'engagement';
-      fetch('/kanchoai/api/v1/campaigns', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
-        body: JSON.stringify({ school_id: currentSchoolId, name, type, goal })
-      }).then(r => r.json()).then(d => { if (d.success) { tabsLoaded.campaigns = false; loadCampaigns(); } else alert(d.error); });
+    function openCampaignForm(existing) {
+      document.getElementById('campEdId').value = existing ? existing.id : '';
+      document.getElementById('campEdName').value = existing ? (existing.name || '') : '';
+      document.getElementById('campEdType').value = existing ? (existing.type || 'sms') : 'sms';
+      document.getElementById('campEdGoal').value = existing ? (existing.goal || 'engagement') : 'engagement';
+      document.getElementById('campEdStatus').value = existing ? (existing.status || 'draft') : 'draft';
+      document.getElementById('campEdBudget').value = existing ? (existing.budget || '') : '';
+      var aud = existing && existing.audience ? existing.audience : {};
+      document.getElementById('campEdAudience').value = aud.target || 'all';
+      var cnt = existing && existing.content ? existing.content : {};
+      document.getElementById('campEdSmsTemplate').value = cnt.sms_template || '';
+      document.getElementById('campEdEmailSubject').value = cnt.email_subject || '';
+      document.getElementById('campEdEmailBody').value = cnt.email_body || '';
+      document.getElementById('campEdVoiceScript').value = cnt.voice_script || '';
+      var sched = existing && existing.schedule ? existing.schedule : {};
+      document.getElementById('campEdStartDate').value = sched.start_date || '';
+      document.getElementById('campEdEndDate').value = sched.end_date || '';
+      document.getElementById('campEdSendTime').value = sched.send_time || '10:00';
+      document.getElementById('campEdTitle').innerHTML = existing ? '<i class="fas fa-pen text-kancho mr-2"></i>Edit Campaign' : '<i class="fas fa-bullhorn text-kancho mr-2"></i>New Campaign';
+      document.getElementById('campEdSaveLabel').textContent = existing ? 'Save Changes' : 'Create Campaign';
+      document.getElementById('campaignEditorModal').classList.remove('hidden');
+    }
+    function closeCampaignEditor() { document.getElementById('campaignEditorModal').classList.add('hidden'); }
+    function saveCampaignEditor() {
+      var name = document.getElementById('campEdName').value.trim();
+      if (!name) { alert('Campaign name is required'); return; }
+      var content = {};
+      var sms = document.getElementById('campEdSmsTemplate').value.trim();
+      var emailSubj = document.getElementById('campEdEmailSubject').value.trim();
+      var emailBody = document.getElementById('campEdEmailBody').value.trim();
+      var voiceScript = document.getElementById('campEdVoiceScript').value.trim();
+      if (sms) content.sms_template = sms;
+      if (emailSubj) content.email_subject = emailSubj;
+      if (emailBody) content.email_body = emailBody;
+      if (voiceScript) content.voice_script = voiceScript;
+      var schedule = {};
+      var startDate = document.getElementById('campEdStartDate').value;
+      var endDate = document.getElementById('campEdEndDate').value;
+      var sendTime = document.getElementById('campEdSendTime').value;
+      if (startDate) schedule.start_date = startDate;
+      if (endDate) schedule.end_date = endDate;
+      if (sendTime) schedule.send_time = sendTime;
+      var body = {
+        school_id: currentSchoolId,
+        name: name,
+        type: document.getElementById('campEdType').value,
+        goal: document.getElementById('campEdGoal').value,
+        status: document.getElementById('campEdStatus').value,
+        budget: parseFloat(document.getElementById('campEdBudget').value) || 0,
+        audience: { target: document.getElementById('campEdAudience').value },
+        content: content,
+        schedule: Object.keys(schedule).length ? schedule : null
+      };
+      var editId = document.getElementById('campEdId').value;
+      var method = editId ? 'PUT' : 'POST';
+      var url = editId ? '/kanchoai/api/v1/campaigns/' + editId : '/kanchoai/api/v1/campaigns';
+      fetch(url, { method: method, headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken }, body: JSON.stringify(body) })
+        .then(r => r.json()).then(d => { if (d.success) { closeCampaignEditor(); tabsLoaded.campaigns = false; loadCampaigns(); } else alert(d.error || 'Failed'); });
     }
     function editCampaign(id) {
-      const status = prompt('New Status (draft, scheduled, active, paused, completed):', 'active');
-      if (!status) return;
-      fetch('/kanchoai/api/v1/campaigns/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
-        body: JSON.stringify({ status })
-      }).then(r => r.json()).then(d => { if (d.success) { tabsLoaded.campaigns = false; loadCampaigns(); } else alert(d.error); });
+      fetch('/kanchoai/api/v1/campaigns/' + id, { headers: { 'Authorization': 'Bearer ' + authToken } })
+        .then(r => r.json()).then(d => { if (d.success) openCampaignForm(d.data); else alert(d.error || 'Not found'); });
     }
     function deleteCampaign(id) {
       if (!confirm('Delete this campaign?')) return;
@@ -10429,16 +10885,24 @@ app.get('*', (req, res) => {
       } catch (err) { console.error('Promotions load error:', err); }
     }
     function openPromotionForm() {
-      const studentId = prompt('Student ID:');
-      if (!studentId) return;
-      const toBelt = prompt('New Belt Rank (e.g. Yellow, Green, Blue, Brown, Black):');
-      if (!toBelt) return;
-      const score = prompt('Testing Score % (optional):', '') || null;
-      const fee = prompt('Testing Fee Paid ($):', '0') || '0';
-      const notes = prompt('Notes (optional):', '') || null;
+      document.getElementById('promoEdStudentId').value = '';
+      document.getElementById('promoEdToBelt').value = '';
+      document.getElementById('promoEdScore').value = '';
+      document.getElementById('promoEdFee').value = '0';
+      document.getElementById('promoEdNotes').value = '';
+      document.getElementById('promoEditorModal').classList.remove('hidden');
+    }
+    function closePromoEditor() { document.getElementById('promoEditorModal').classList.add('hidden'); }
+    function savePromoEditor() {
+      var studentId = document.getElementById('promoEdStudentId').value;
+      var toBelt = document.getElementById('promoEdToBelt').value;
+      if (!studentId || !toBelt) { alert('Student ID and belt rank are required'); return; }
+      var score = document.getElementById('promoEdScore').value;
+      var fee = document.getElementById('promoEdFee').value;
+      var notes = document.getElementById('promoEdNotes').value.trim();
       fetch('/kanchoai/api/v1/promotions', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
-        body: JSON.stringify({ school_id: currentSchoolId, student_id: parseInt(studentId), to_belt: toBelt, testing_score: score ? parseFloat(score) : null, testing_fee_paid: parseFloat(fee), notes })
-      }).then(r => r.json()).then(d => { if (d.success) { tabsLoaded.promotionHistory = false; loadPromotions(); alert('Promotion recorded! Student belt updated to ' + toBelt); } else alert(d.error); });
+        body: JSON.stringify({ school_id: currentSchoolId, student_id: parseInt(studentId), to_belt: toBelt, testing_score: score ? parseFloat(score) : null, testing_fee_paid: parseFloat(fee) || 0, notes: notes || null })
+      }).then(r => r.json()).then(d => { if (d.success) { closePromoEditor(); tabsLoaded.promotionHistory = false; loadPromotions(); alert('Promotion recorded! Student belt updated to ' + toBelt); } else alert(d.error); });
     }
 
     // ==================== REPORTS TAB ====================
@@ -10512,35 +10976,54 @@ app.get('*', (req, res) => {
       document.getElementById('funnelViews').textContent = totalViews;
       document.getElementById('funnelSubmissions').textContent = totalSubs;
     }
-    function openFunnelForm() {
-      const name = prompt('Funnel Name:');
-      if (!name) return;
-      const type = prompt('Type (lead_capture, trial_booking, event_registration, membership_signup, referral):', 'trial_booking') || 'trial_booking';
-      const headline = prompt('Landing Page Headline:', 'Start Your Martial Arts Journey Today') || 'Start Your Martial Arts Journey Today';
-      fetch('/kanchoai/api/v1/funnels', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
-        body: JSON.stringify({ school_id: currentSchoolId, name, type, headline })
-      }).then(r => r.json()).then(d => {
-        if (d.success) {
-          // Auto-publish the landing page
-          const pageId = d.data.page ? d.data.page.id : null;
-          if (pageId) {
-            fetch('/kanchoai/api/v1/landing-pages/' + pageId + '/publish', { method: 'POST', headers: { 'Authorization': 'Bearer ' + authToken } })
-              .then(() => { tabsLoaded.funnels = false; loadFunnels(); });
-          }
-          // Activate the funnel
-          fetch('/kanchoai/api/v1/funnels/' + d.data.funnel.id, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
-            body: JSON.stringify({ status: 'active' })
-          }).then(() => { tabsLoaded.funnels = false; loadFunnels(); });
-          alert('Funnel created! Landing page auto-published.');
-        } else alert(d.error);
-      });
+    function openFunnelForm(existing) {
+      document.getElementById('funnelEdId').value = existing ? existing.id : '';
+      document.getElementById('funnelEdName').value = existing ? (existing.name || '') : '';
+      document.getElementById('funnelEdType').value = existing ? (existing.type || 'trial_booking') : 'trial_booking';
+      document.getElementById('funnelEdStatus').value = existing ? (existing.status || 'active') : 'active';
+      document.getElementById('funnelEdHeadline').value = existing ? (existing.headline || 'Start Your Martial Arts Journey Today') : 'Start Your Martial Arts Journey Today';
+      document.getElementById('funnelEdTitle').innerHTML = existing ? '<i class="fas fa-pen text-kancho mr-2"></i>Edit Funnel' : '<i class="fas fa-filter text-kancho mr-2"></i>New Funnel';
+      document.getElementById('funnelEdSaveLabel').textContent = existing ? 'Save Changes' : 'Create Funnel';
+      document.getElementById('funnelEditorModal').classList.remove('hidden');
+    }
+    function closeFunnelEditor() { document.getElementById('funnelEditorModal').classList.add('hidden'); }
+    function saveFunnelEditor() {
+      var name = document.getElementById('funnelEdName').value.trim();
+      if (!name) { alert('Funnel name is required'); return; }
+      var editId = document.getElementById('funnelEdId').value;
+      var type = document.getElementById('funnelEdType').value;
+      var status = document.getElementById('funnelEdStatus').value;
+      var headline = document.getElementById('funnelEdHeadline').value.trim() || 'Start Your Martial Arts Journey Today';
+      if (editId) {
+        // Edit existing
+        fetch('/kanchoai/api/v1/funnels/' + editId, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+          body: JSON.stringify({ name: name, type: type, status: status, headline: headline })
+        }).then(r => r.json()).then(d => { if (d.success) { closeFunnelEditor(); tabsLoaded.funnels = false; loadFunnels(); } else alert(d.error || 'Failed'); });
+      } else {
+        // Create new
+        fetch('/kanchoai/api/v1/funnels', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+          body: JSON.stringify({ school_id: currentSchoolId, name: name, type: type, headline: headline })
+        }).then(r => r.json()).then(d => {
+          if (d.success) {
+            var pageId = d.data.page ? d.data.page.id : null;
+            if (pageId) {
+              fetch('/kanchoai/api/v1/landing-pages/' + pageId + '/publish', { method: 'POST', headers: { 'Authorization': 'Bearer ' + authToken } })
+                .then(function() { tabsLoaded.funnels = false; loadFunnels(); });
+            }
+            if (status === 'active') {
+              fetch('/kanchoai/api/v1/funnels/' + d.data.funnel.id, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+                body: JSON.stringify({ status: 'active' })
+              }).then(function() { tabsLoaded.funnels = false; loadFunnels(); });
+            }
+            closeFunnelEditor();
+            tabsLoaded.funnels = false; loadFunnels();
+          } else alert(d.error);
+        });
+      }
     }
     function editFunnel(id) {
-      const status = prompt('New Status (draft, active, paused, archived):', 'active');
-      if (!status) return;
-      fetch('/kanchoai/api/v1/funnels/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
-        body: JSON.stringify({ status })
-      }).then(r => r.json()).then(d => { if (d.success) { tabsLoaded.funnels = false; loadFunnels(); } else alert(d.error); });
+      fetch('/kanchoai/api/v1/funnels/' + id, { headers: { 'Authorization': 'Bearer ' + authToken } })
+        .then(r => r.json()).then(d => { if (d.success) openFunnelForm(d.data); else alert(d.error || 'Not found'); });
     }
     function deleteFunnel(id) {
       if (!confirm('Delete this funnel and all its landing pages?')) return;
