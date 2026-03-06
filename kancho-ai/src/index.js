@@ -1053,6 +1053,10 @@ if (models && !modelsError) {
     app.use('/api/v1/funnels', funnelsRoutes);
     app.use('/api/v1/landing-pages', landingPagesRoutes);
 
+    // Admin routes (seed, etc.)
+    const adminSeedRoutes = require('./routes/admin-seed');
+    app.use('/api/v1/admin', adminSeedRoutes);
+
     // Start Automation Engine (5-minute cron cycle)
     try {
       const KanchoAutomationEngine = require('../../services/kancho-automation-engine');
