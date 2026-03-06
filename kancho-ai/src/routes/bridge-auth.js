@@ -40,54 +40,30 @@ function authenticateBridge(req, res, next) {
   }
 }
 
-// POST /register - Create KanchoAI school + RinglyPro User + Client in one transaction
+// POST /register - Create KanchoAI school (+ RinglyPro User + Client if bridge available)
 router.post('/register', async (req, res) => {
-  if (!crmBridge?.ready) return res.status(503).json({ success: false, error: 'CRM bridge not available' });
-
-  const crmTransaction = await crmBridge.crmSequelize.transaction();
-
   try {
     const {
-      // School info
       schoolName, martialArtType, address, city, state, zip, country, timezone,
-      // Owner info (becomes RinglyPro User + Client owner)
       email, password, firstName, lastName, phone, businessPhone,
-      // Optional
       website, monthlyRevenueTarget, studentCapacity,
-      // Subscription
       plan, billing
     } = req.body;
 
-    // Validate required fields
     if (!email || !password || !firstName || !lastName || !schoolName) {
-      await crmTransaction.rollback();
       return res.status(400).json({ success: false, error: 'Email, password, first name, last name, and school name are required' });
     }
 
-    const ownerPhone = businessPhone || phone;
-    if (!ownerPhone) {
-      await crmTransaction.rollback();
-      return res.status(400).json({ success: false, error: 'A phone number is required for your AI voice system' });
-    }
-
-    // Check if email already exists in RinglyPro
-    const existingUser = await crmBridge.User.findOne({ where: { email } });
-    if (existingUser) {
-      await crmTransaction.rollback();
-      return res.status(409).json({ success: false, error: 'An account already exists with this email' });
-    }
+    const ownerPhone = businessPhone || phone || '';
 
     // Check if school owner email already exists in KanchoAI
     const existingSchool = await kanchoModels.KanchoSchool.findOne({ where: { owner_email: email } });
     if (existingSchool) {
-      await crmTransaction.rollback();
       return res.status(409).json({ success: false, error: 'A school is already registered with this email' });
     }
 
-    // Hash password
     const passwordHash = await bcrypt.hash(password, 12);
 
-    // Subscription plan validation
     const PLANS = {
       free: { tokens: 100, price: 0 },
       starter: { tokens: 500, price: 45 },
@@ -95,247 +71,154 @@ router.post('/register', async (req, res) => {
       professional: { tokens: 7500, price: 675 }
     };
     const selectedPlan = PLANS[plan] ? plan : 'free';
-    const planDetails = PLANS[selectedPlan];
 
-    // ==================== 1. CREATE RINGLYPRO USER ====================
-    const user = await crmBridge.User.create({
-      email,
-      password_hash: passwordHash,
-      first_name: firstName,
-      last_name: lastName,
-      business_name: schoolName,
-      business_phone: ownerPhone,
-      business_type: 'fitness', // Martial arts maps to fitness
-      website_url: website || null,
-      terms_accepted: true,
-      free_trial_minutes: 100,
-      onboarding_completed: false,
-      subscription_plan: selectedPlan,
-      billing_frequency: billing === 'annual' ? 'annual' : 'monthly',
-      subscription_status: selectedPlan === 'free' ? 'active' : 'pending',
-      monthly_token_allocation: planDetails.tokens,
-      tokens_balance: selectedPlan === 'free' ? planDetails.tokens : 0
-    }, { transaction: crmTransaction });
+    let userId = null, clientId = null, twilioNumber = null;
 
-    console.log(`KanchoAI Bridge: Created RinglyPro User ${user.id} for ${email}`);
-
-    // ==================== 2. PROVISION TWILIO NUMBER ====================
-    let twilioNumber = `+1555${Math.floor(Math.random() * 10000000).toString().padStart(7, '0')}`;
-    let twilioSid = `PN_PENDING_${Date.now()}`;
-
-    if (twilioClient && process.env.SKIP_TWILIO_PROVISIONING !== 'true') {
+    // Bridge path: also create RinglyPro User + Client
+    if (crmBridge?.ready) {
+      const crmTransaction = await crmBridge.crmSequelize.transaction();
       try {
-        const availableNumbers = await twilioClient.availablePhoneNumbers('US')
-          .local.list({ limit: 1, voiceEnabled: true, smsEnabled: true });
-
-        if (availableNumbers.length > 0) {
-          const webhookBaseUrl = process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com';
-          const purchased = await twilioClient.incomingPhoneNumbers.create({
-            phoneNumber: availableNumbers[0].phoneNumber,
-            voiceUrl: `${webhookBaseUrl}/voice/rachel/`,
-            voiceMethod: 'POST',
-            statusCallback: `${webhookBaseUrl}/voice/webhook/call-status`,
-            statusCallbackMethod: 'POST',
-            smsUrl: `${webhookBaseUrl}/api/messages/incoming`,
-            smsMethod: 'POST',
-            friendlyName: `KanchoAI - ${schoolName}`
-          });
-          twilioNumber = purchased.phoneNumber;
-          twilioSid = purchased.sid;
-          console.log(`KanchoAI Bridge: Provisioned Twilio number ${twilioNumber}`);
+        const existingUser = await crmBridge.User.findOne({ where: { email } });
+        if (existingUser) {
+          await crmTransaction.rollback();
+          return res.status(409).json({ success: false, error: 'An account already exists with this email' });
         }
-      } catch (twilioError) {
-        console.error('KanchoAI Bridge: Twilio provisioning failed (using placeholder):', twilioError.message);
+
+        const user = await crmBridge.User.create({
+          email, password_hash: passwordHash, first_name: firstName, last_name: lastName,
+          business_name: schoolName, business_phone: ownerPhone, business_type: 'fitness',
+          website_url: website || null, terms_accepted: true, free_trial_minutes: 100,
+          onboarding_completed: false, subscription_plan: selectedPlan,
+          billing_frequency: billing === 'annual' ? 'annual' : 'monthly',
+          subscription_status: selectedPlan === 'free' ? 'active' : 'pending',
+          monthly_token_allocation: PLANS[selectedPlan].tokens,
+          tokens_balance: selectedPlan === 'free' ? PLANS[selectedPlan].tokens : 0
+        }, { transaction: crmTransaction });
+        userId = user.id;
+
+        twilioNumber = `+1555${Math.floor(Math.random() * 10000000).toString().padStart(7, '0')}`;
+        const client = await crmBridge.Client.create({
+          business_name: schoolName, business_phone: ownerPhone, ringlypro_number: twilioNumber,
+          twilio_number_sid: `PN_PENDING_${Date.now()}`, forwarding_status: 'active',
+          owner_name: `${firstName} ${lastName}`, owner_phone: ownerPhone, owner_email: email,
+          custom_greeting: `Hello! Thank you for calling ${schoolName}. I'm your AI assistant.`,
+          business_hours_start: '09:00:00', business_hours_end: '21:00:00', business_days: 'Mon-Sat',
+          timezone: timezone || 'America/New_York', appointment_duration: 60, booking_enabled: true,
+          sms_notifications: true, monthly_free_minutes: 100, per_minute_rate: 0.10,
+          rachel_enabled: false, active: true, user_id: user.id
+        }, { transaction: crmTransaction });
+        clientId = client.id;
+
+        try { await crmBridge.CreditAccount.create({ client_id: client.id, balance: 0, free_minutes_used: 0 }, { transaction: crmTransaction }); } catch (e) {}
+        await crmTransaction.commit();
+        console.log(`KanchoAI: Created bridge User ${userId} + Client ${clientId}`);
+      } catch (bridgeErr) {
+        try { await crmTransaction.rollback(); } catch (e) {}
+        console.log('KanchoAI: Bridge registration failed, using direct mode:', bridgeErr.message);
       }
     }
 
-    // ==================== 3. CREATE RINGLYPRO CLIENT ====================
-    const client = await crmBridge.Client.create({
-      business_name: schoolName,
-      business_phone: ownerPhone,
-      ringlypro_number: twilioNumber,
-      twilio_number_sid: twilioSid,
-      forwarding_status: 'active',
-      owner_name: `${firstName} ${lastName}`,
-      owner_phone: ownerPhone,
-      owner_email: email,
-      custom_greeting: `Hello! Thank you for calling ${schoolName}. I'm your AI assistant, powered by KanchoAI. How can I help you today?`,
-      business_hours_start: '09:00:00',
-      business_hours_end: '21:00:00',
-      business_days: 'Mon-Sat',
-      timezone: timezone || 'America/New_York',
-      appointment_duration: 60,
-      booking_enabled: true,
-      sms_notifications: true,
-      monthly_free_minutes: 100,
-      per_minute_rate: 0.10,
-      rachel_enabled: false,
-      active: true,
-      user_id: user.id
-    }, { transaction: crmTransaction });
-
-    console.log(`KanchoAI Bridge: Created RinglyPro Client ${client.id}`);
-
-    // ==================== 4. CREATE CREDIT ACCOUNT ====================
-    try {
-      await crmBridge.CreditAccount.create({
-        client_id: client.id,
-        balance: 0.00,
-        free_minutes_used: 0
-      }, { transaction: crmTransaction });
-    } catch (creditError) {
-      console.error('KanchoAI Bridge: Credit account creation non-fatal error:', creditError.message);
-    }
-
-    // Commit CRM transaction
-    await crmTransaction.commit();
-
-    // ==================== 5. CREATE KANCHOAI SCHOOL ====================
+    // Create KanchoAI school
     const school = await kanchoModels.KanchoSchool.create({
-      tenant_id: 1,
-      name: schoolName,
-      owner_name: `${firstName} ${lastName}`,
-      owner_email: email,
-      owner_phone: ownerPhone,
-      address: address || null,
-      city: city || null,
-      state: state || null,
-      zip: zip || null,
-      country: country || 'USA',
-      timezone: timezone || 'America/New_York',
+      tenant_id: 1, name: schoolName, owner_name: `${firstName} ${lastName}`,
+      owner_email: email, owner_phone: ownerPhone,
+      address: address || null, city: city || null, state: state || null,
+      zip: zip || null, country: country || 'USA', timezone: timezone || 'America/New_York',
       martial_art_type: martialArtType || null,
       plan_type: selectedPlan === 'free' ? 'starter' : selectedPlan,
-      monthly_revenue_target: monthlyRevenueTarget || 0,
-      student_capacity: studentCapacity || 100,
-      website: website || null,
-      ai_enabled: true,
-      voice_agent: 'kancho',
-      status: 'trial',
+      monthly_revenue_target: monthlyRevenueTarget || 0, student_capacity: studentCapacity || 100,
+      website: website || null, ai_enabled: true, voice_agent: 'kancho', status: 'trial',
       trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-      ringlypro_client_id: client.id,
-      ringlypro_user_id: user.id
+      settings: { password_hash: passwordHash },
+      ringlypro_client_id: clientId, ringlypro_user_id: userId
     });
 
-    console.log(`KanchoAI Bridge: Created KanchoSchool ${school.id} linked to Client ${client.id}`);
+    console.log(`KanchoAI: Created school ${school.id} for ${email}`);
 
-    // ==================== 6. GENERATE JWT ====================
     const token = jwt.sign({
-      userId: user.id,
-      email: user.email,
-      clientId: client.id,
-      schoolId: school.id,
-      businessName: schoolName,
-      source: 'kanchoai'
+      userId, email, clientId, schoolId: school.id, businessName: schoolName,
+      source: userId ? 'kanchoai' : 'kanchoai-direct'
     }, JWT_SECRET, { expiresIn: '7d' });
 
     res.status(201).json({
-      success: true,
-      token,
+      success: true, token,
       data: {
-        school: {
-          id: school.id,
-          name: school.name,
-          martialArtType: school.martial_art_type,
-          status: school.status,
-          voiceAgent: school.voice_agent,
-          trialEndsAt: school.trial_ends_at
-        },
-        client: {
-          id: client.id,
-          aiNumber: twilioNumber,
-          rachelEnabled: client.rachel_enabled
-        },
-        user: {
-          id: user.id,
-          email: user.email,
-          firstName: user.first_name,
-          lastName: user.last_name,
-          plan: selectedPlan,
-          tokensBalance: user.tokens_balance
-        }
+        school: { id: school.id, name: school.name, martialArtType: school.martial_art_type, status: school.status, voiceAgent: school.voice_agent, trialEndsAt: school.trial_ends_at },
+        client: clientId ? { id: clientId, aiNumber: twilioNumber, rachelEnabled: false } : null,
+        user: { id: userId, email, firstName, lastName, plan: selectedPlan, tokensBalance: PLANS[selectedPlan].tokens }
       }
     });
   } catch (error) {
-    try { await crmTransaction.rollback(); } catch (e) {}
-    console.error('KanchoAI Bridge Register error:', error);
+    console.error('KanchoAI Register error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
 // POST /login - Authenticate against RinglyPro User, return combined JWT
 router.post('/login', async (req, res) => {
-  if (!crmBridge?.ready) return res.status(503).json({ success: false, error: 'CRM bridge not available' });
-
   try {
     const { email, password } = req.body;
     if (!email || !password) {
       return res.status(400).json({ success: false, error: 'Email and password are required' });
     }
 
-    // Find user in RinglyPro
-    const user = await crmBridge.User.findOne({ where: { email } });
-    if (!user) return res.status(401).json({ success: false, error: 'Invalid credentials' });
+    // Strategy 1: Try RinglyPro bridge login (if bridge is available)
+    if (crmBridge?.ready) {
+      const user = await crmBridge.User.findOne({ where: { email } });
+      if (user) {
+        const isValid = await bcrypt.compare(password, user.password_hash);
+        if (isValid) {
+          const client = await crmBridge.Client.findOne({ where: { user_id: user.id } });
+          let school = null;
+          if (client) school = await kanchoModels.KanchoSchool.findOne({ where: { ringlypro_client_id: client.id } });
+          if (!school) school = await kanchoModels.KanchoSchool.findOne({ where: { owner_email: email } });
 
-    // Verify password
-    const isValid = await bcrypt.compare(password, user.password_hash);
-    if (!isValid) return res.status(401).json({ success: false, error: 'Invalid credentials' });
-
-    // Find linked client
-    const client = await crmBridge.Client.findOne({ where: { user_id: user.id } });
-
-    // Find linked KanchoAI school
-    let school = null;
-    if (client) {
-      school = await kanchoModels.KanchoSchool.findOne({ where: { ringlypro_client_id: client.id } });
-    }
-    if (!school) {
-      school = await kanchoModels.KanchoSchool.findOne({ where: { owner_email: email } });
-    }
-
-    if (!school) {
-      return res.status(404).json({ success: false, error: 'No KanchoAI school found for this account. Please register first.' });
-    }
-
-    // Generate combined JWT
-    const token = jwt.sign({
-      userId: user.id,
-      email: user.email,
-      clientId: client?.id || null,
-      schoolId: school.id,
-      businessName: school.name,
-      source: 'kanchoai'
-    }, JWT_SECRET, { expiresIn: '7d' });
-
-    // Update last login
-    await user.update({ updated_at: new Date() });
-
-    res.json({
-      success: true,
-      token,
-      data: {
-        school: {
-          id: school.id,
-          name: school.name,
-          martialArtType: school.martial_art_type,
-          status: school.status,
-          voiceAgent: school.voice_agent,
-          healthScore: null // Will be fetched separately
-        },
-        client: client ? {
-          id: client.id,
-          aiNumber: client.ringlypro_number,
-          rachelEnabled: client.rachel_enabled
-        } : null,
-        user: {
-          id: user.id,
-          email: user.email,
-          firstName: user.first_name,
-          lastName: user.last_name,
-          plan: user.subscription_plan,
-          tokensBalance: user.tokens_balance
+          if (school) {
+            const token = jwt.sign({
+              userId: user.id, email: user.email, clientId: client?.id || null,
+              schoolId: school.id, businessName: school.name, source: 'kanchoai'
+            }, JWT_SECRET, { expiresIn: '7d' });
+            await user.update({ updated_at: new Date() });
+            return res.json({
+              success: true, token,
+              data: {
+                school: { id: school.id, name: school.name, martialArtType: school.martial_art_type, status: school.status, voiceAgent: school.voice_agent, planType: school.plan_type },
+                client: client ? { id: client.id, aiNumber: client.ringlypro_number, rachelEnabled: client.rachel_enabled } : null,
+                user: { id: user.id, email: user.email, firstName: user.first_name, lastName: user.last_name, plan: user.subscription_plan, tokensBalance: user.tokens_balance }
+              }
+            });
+          }
         }
       }
-    });
+    }
+
+    // Strategy 2: Direct KanchoAI school login (owner_email + password_hash on school settings)
+    if (kanchoModels) {
+      const school = await kanchoModels.KanchoSchool.findOne({ where: { owner_email: email } });
+      if (school) {
+        const settings = school.settings || {};
+        if (settings.password_hash) {
+          const isValid = await bcrypt.compare(password, settings.password_hash);
+          if (isValid) {
+            const token = jwt.sign({
+              userId: null, email, clientId: null,
+              schoolId: school.id, businessName: school.name, source: 'kanchoai-direct'
+            }, JWT_SECRET, { expiresIn: '7d' });
+            await school.update({ updated_at: new Date() });
+            return res.json({
+              success: true, token,
+              data: {
+                school: { id: school.id, name: school.name, martialArtType: school.martial_art_type, status: school.status, voiceAgent: school.voice_agent, planType: school.plan_type },
+                client: null,
+                user: { id: null, email, firstName: school.owner_name?.split(' ')[0] || 'Admin', lastName: school.owner_name?.split(' ').slice(1).join(' ') || '', plan: school.plan_type, tokensBalance: 1000 }
+              }
+            });
+          }
+        }
+      }
+    }
+
+    return res.status(401).json({ success: false, error: 'Invalid credentials' });
   } catch (error) {
     console.error('KanchoAI Bridge Login error:', error);
     res.status(500).json({ success: false, error: error.message });
@@ -345,13 +228,21 @@ router.post('/login', async (req, res) => {
 // GET /me - Get combined profile (school + client + user)
 router.get('/me', authenticateBridge, async (req, res) => {
   try {
-    const [user, client, school] = await Promise.all([
-      crmBridge.User.findByPk(req.userId, { attributes: { exclude: ['password_hash'] } }),
-      req.clientId ? crmBridge.Client.findByPk(req.clientId) : null,
-      kanchoModels.KanchoSchool.findByPk(req.schoolId)
-    ]);
-
+    const school = await kanchoModels.KanchoSchool.findByPk(req.schoolId);
     if (!school) return res.status(404).json({ success: false, error: 'School not found' });
+
+    // Bridge user/client lookup (only if userId exists — skip for direct login)
+    let user = null, client = null;
+    if (req.userId && crmBridge?.ready) {
+      try {
+        [user, client] = await Promise.all([
+          crmBridge.User.findByPk(req.userId, { attributes: { exclude: ['password_hash'] } }),
+          req.clientId ? crmBridge.Client.findByPk(req.clientId) : null
+        ]);
+      } catch (bridgeErr) {
+        console.log('Bridge lookup skipped:', bridgeErr.message);
+      }
+    }
 
     // Get latest health score
     let healthScore = null;
@@ -397,7 +288,16 @@ router.get('/me', authenticateBridge, async (req, res) => {
           tokensBalance: user.tokens_balance,
           tokensUsedThisMonth: user.tokens_used_this_month,
           monthlyAllocation: user.monthly_token_allocation
-        } : null,
+        } : {
+          id: null,
+          email: school.owner_email || req.userEmail,
+          firstName: school.owner_name?.split(' ')[0] || 'Admin',
+          lastName: school.owner_name?.split(' ').slice(1).join(' ') || '',
+          plan: school.plan_type,
+          tokensBalance: 1000,
+          tokensUsedThisMonth: 0,
+          monthlyAllocation: 1000
+        },
         healthScore: healthScore ? {
           overall: healthScore.overall_score,
           grade: healthScore.grade,
@@ -418,25 +318,39 @@ router.get('/me', authenticateBridge, async (req, res) => {
 // POST /forgot-password - Generate reset token and send email
 // =========================================================
 router.post('/forgot-password', async (req, res) => {
-  if (!crmBridge?.ready) return res.status(503).json({ success: false, error: 'Service unavailable' });
-
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ success: false, error: 'Email is required' });
 
-    const user = await crmBridge.User.findOne({ where: { email } });
-    if (!user) {
+    // Try bridge user first, then direct school
+    let user = null;
+    if (crmBridge?.ready) {
+      user = await crmBridge.User.findOne({ where: { email } });
+    }
+
+    // Also check for direct school login
+    let school = null;
+    if (kanchoModels) {
+      school = await kanchoModels.KanchoSchool.findOne({ where: { owner_email: email } });
+    }
+
+    if (!user && !school) {
       return res.json({ success: true, message: 'If an account exists with that email, a reset link has been sent.' });
     }
 
     // Generate reset token (1 hour)
     const resetToken = jwt.sign(
-      { userId: user.id, email: user.email, type: 'password_reset' },
+      { userId: user ? user.id : null, email, schoolId: school ? school.id : null, type: 'password_reset' },
       JWT_SECRET,
       { expiresIn: '1h' }
     );
 
-    await user.update({ email_verification_token: resetToken });
+    if (user) await user.update({ email_verification_token: resetToken });
+    if (school) {
+      const settings = school.settings || {};
+      settings.reset_token = resetToken;
+      await school.update({ settings });
+    }
 
     const APP_URL = process.env.APP_URL || 'https://aiagent.ringlypro.com';
     const resetLink = `${APP_URL}/kanchoai/?reset_token=${resetToken}`;
@@ -471,8 +385,6 @@ router.post('/forgot-password', async (req, res) => {
 // POST /verify-reset-token - Verify if a reset token is valid
 // =========================================================
 router.post('/verify-reset-token', async (req, res) => {
-  if (!crmBridge?.ready) return res.status(503).json({ success: false, error: 'Service unavailable' });
-
   try {
     const { token } = req.body;
     if (!token) return res.status(400).json({ success: false, error: 'Token is required' });
@@ -485,13 +397,20 @@ router.post('/verify-reset-token', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Invalid or expired reset link' });
     }
 
-    const user = await crmBridge.User.findOne({
-      where: { id: decoded.userId, email: decoded.email, email_verification_token: token }
-    });
+    // Check bridge user or direct school
+    let valid = false;
+    if (decoded.userId && crmBridge?.ready) {
+      const user = await crmBridge.User.findOne({ where: { id: decoded.userId, email: decoded.email, email_verification_token: token } });
+      if (user) valid = true;
+    }
+    if (!valid && decoded.schoolId && kanchoModels) {
+      const school = await kanchoModels.KanchoSchool.findByPk(decoded.schoolId);
+      if (school && school.settings?.reset_token === token) valid = true;
+    }
 
-    if (!user) return res.status(400).json({ success: false, error: 'Invalid or already used reset link' });
+    if (!valid) return res.status(400).json({ success: false, error: 'Invalid or already used reset link' });
 
-    res.json({ success: true, email: user.email });
+    res.json({ success: true, email: decoded.email });
   } catch (error) {
     console.error('Verify reset token error:', error);
     res.status(500).json({ success: false, error: 'Failed to verify token' });
@@ -502,8 +421,6 @@ router.post('/verify-reset-token', async (req, res) => {
 // POST /reset-password - Set new password with valid token
 // =========================================================
 router.post('/reset-password', async (req, res) => {
-  if (!crmBridge?.ready) return res.status(503).json({ success: false, error: 'Service unavailable' });
-
   try {
     const { token, newPassword } = req.body;
     if (!token || !newPassword) return res.status(400).json({ success: false, error: 'Token and new password are required' });
@@ -517,15 +434,31 @@ router.post('/reset-password', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Invalid or expired reset link' });
     }
 
-    const user = await crmBridge.User.findOne({
-      where: { id: decoded.userId, email: decoded.email, email_verification_token: token }
-    });
-    if (!user) return res.status(400).json({ success: false, error: 'Invalid reset token' });
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    let reset = false;
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    await user.update({ password_hash: hashedPassword, email_verification_token: null });
+    // Reset bridge user password
+    if (decoded.userId && crmBridge?.ready) {
+      const user = await crmBridge.User.findOne({ where: { id: decoded.userId, email: decoded.email, email_verification_token: token } });
+      if (user) {
+        await user.update({ password_hash: hashedPassword, email_verification_token: null });
+        reset = true;
+      }
+    }
 
-    console.log(`✅ KanchoAI password reset for: ${user.email}`);
+    // Reset direct school password
+    if (decoded.schoolId && kanchoModels) {
+      const school = await kanchoModels.KanchoSchool.findByPk(decoded.schoolId);
+      if (school && school.settings?.reset_token === token) {
+        const settings = { ...school.settings, password_hash: hashedPassword, reset_token: null };
+        await school.update({ settings });
+        reset = true;
+      }
+    }
+
+    if (!reset) return res.status(400).json({ success: false, error: 'Invalid reset token' });
+
+    console.log('KanchoAI password reset for: ' + decoded.email);
     res.json({ success: true, message: 'Password reset successfully. You can now sign in.' });
   } catch (error) {
     console.error('KanchoAI reset password error:', error);

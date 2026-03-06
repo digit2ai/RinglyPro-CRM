@@ -81,6 +81,35 @@ db.Sequelize = Sequelize;
     }
     console.log('Kancho AI: Platform migrations complete');
 
+    // Auto-seed admin login for schools without owner_email or password
+    try {
+      const bcrypt = require('bcryptjs');
+      const schoolsNoAuth = await db.KanchoSchool.findAll({
+        where: sequelize.literal("owner_email IS NULL OR settings->>'password_hash' IS NULL OR settings->>'password_hash' = ''")
+      });
+      let authSeeded = 0;
+      for (const school of schoolsNoAuth) {
+        const updates = {};
+        if (!school.owner_email) {
+          const slug = school.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+          updates.owner_email = slug + '@kanchoai.com';
+        }
+        const settings = school.settings || {};
+        if (!settings.password_hash) {
+          settings.password_hash = await bcrypt.hash('KanchoAI2024!', 12);
+          updates.settings = settings;
+        }
+        if (Object.keys(updates).length > 0) {
+          await school.update(updates);
+          authSeeded++;
+          console.log('Kancho AI: Auth seeded for school ' + school.id + ' (' + (updates.owner_email || school.owner_email) + ')');
+        }
+      }
+      if (authSeeded > 0) console.log('Kancho AI: Created admin login for ' + authSeeded + ' schools (password: KanchoAI2024!)');
+    } catch (authSeedErr) {
+      console.log('Kancho AI: Auth seed skipped:', authSeedErr.message);
+    }
+
     // Auto-seed belt requirements for schools that don't have any
     try {
       const schools = await db.KanchoSchool.findAll({ attributes: ['id'] });
