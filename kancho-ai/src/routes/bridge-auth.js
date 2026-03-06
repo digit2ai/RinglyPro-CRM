@@ -23,45 +23,6 @@ try {
   }
 } catch (e) { console.log('Twilio not available for bridge:', e.message); }
 
-// DEBUG: Test auth flow (REMOVE AFTER DEBUG)
-router.post('/debug-auth', async (req, res) => {
-  try {
-    const email = req.body.email || 'carlos@tampabaybjj.com';
-    const result = { email, bridgeReady: !!crmBridge?.ready, kanchoModelsReady: !!kanchoModels };
-
-    if (kanchoModels) {
-      const school = await kanchoModels.KanchoSchool.findOne({ where: { owner_email: email } });
-      if (school) {
-        result.schoolFound = true;
-        result.schoolId = school.id;
-        result.settingsType = typeof school.settings;
-        result.settingsKeys = Object.keys(school.settings || {});
-        result.hasPasswordHash = !!(school.settings && school.settings.password_hash);
-        if (school.settings?.password_hash) {
-          result.hashPrefix = school.settings.password_hash.substring(0, 10);
-          const testMatch = await bcrypt.compare('KanchoAI2024!', school.settings.password_hash);
-          result.testPasswordMatch = testMatch;
-        }
-      } else {
-        result.schoolFound = false;
-      }
-    }
-
-    if (crmBridge?.ready) {
-      try {
-        const user = await crmBridge.User.findOne({ where: { email } });
-        result.bridgeUserFound = !!user;
-      } catch (e) {
-        result.bridgeError = e.message;
-      }
-    }
-
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
 // Middleware: authenticate bridge JWT
 function authenticateBridge(req, res, next) {
   const token = req.headers.authorization?.replace('Bearer ', '');
@@ -201,11 +162,8 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Email and password are required' });
     }
 
-    console.log('LOGIN attempt for:', email, 'password length:', password?.length, 'password first 3:', password?.substring(0, 3));
-
     // Strategy 1: Try RinglyPro bridge login (if bridge is available)
     if (crmBridge?.ready) {
-      console.log('LOGIN: Trying bridge strategy');
       try {
         const user = await crmBridge.User.findOne({ where: { email } });
         if (user) {
@@ -222,7 +180,6 @@ router.post('/login', async (req, res) => {
                 schoolId: school.id, businessName: school.name, source: 'kanchoai'
               }, JWT_SECRET, { expiresIn: '7d' });
               await user.update({ updated_at: new Date() });
-              console.log('LOGIN: Bridge success for school', school.id);
               return res.json({
                 success: true, token,
                 data: {
@@ -231,40 +188,27 @@ router.post('/login', async (req, res) => {
                   user: { id: user.id, email: user.email, firstName: user.first_name, lastName: user.last_name, plan: user.subscription_plan, tokensBalance: user.tokens_balance }
                 }
               });
-            } else {
-              console.log('LOGIN: Bridge user found but no linked school');
             }
-          } else {
-            console.log('LOGIN: Bridge user found but password mismatch');
           }
-        } else {
-          console.log('LOGIN: No bridge user found for', email);
         }
       } catch (bridgeErr) {
-        console.log('LOGIN: Bridge strategy error:', bridgeErr.message);
+        console.log('Bridge login error (falling back to direct):', bridgeErr.message);
       }
-    } else {
-      console.log('LOGIN: Bridge not available');
     }
 
     // Strategy 2: Direct KanchoAI school login (owner_email + password_hash on school settings)
     if (kanchoModels) {
-      console.log('LOGIN: Trying direct strategy');
       const school = await kanchoModels.KanchoSchool.findOne({ where: { owner_email: email } });
       if (school) {
         const settings = school.settings || {};
-        console.log('LOGIN: School found id:', school.id, 'settingsType:', typeof settings, 'keys:', Object.keys(settings), 'has pw:', !!settings.password_hash);
         if (settings.password_hash) {
-          console.log('LOGIN: Comparing password:', JSON.stringify(password), 'hash prefix:', settings.password_hash.substring(0, 10));
           const isValid = await bcrypt.compare(password, settings.password_hash);
-          console.log('LOGIN: Password valid:', isValid);
           if (isValid) {
             const token = jwt.sign({
               userId: null, email, clientId: null,
               schoolId: school.id, businessName: school.name, source: 'kanchoai-direct'
             }, JWT_SECRET, { expiresIn: '7d' });
             await school.update({ updated_at: new Date() });
-            console.log('LOGIN: Direct success for school', school.id);
             return res.json({
               success: true, token,
               data: {
@@ -275,12 +219,9 @@ router.post('/login', async (req, res) => {
             });
           }
         }
-      } else {
-        console.log('LOGIN: No school found for', email);
       }
     }
 
-    console.log('LOGIN: All strategies failed for', email);
     return res.status(401).json({ success: false, error: 'Invalid credentials' });
   } catch (error) {
     console.error('KanchoAI Bridge Login error:', error);
