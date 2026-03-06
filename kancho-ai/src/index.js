@@ -1042,6 +1042,13 @@ if (models && !modelsError) {
     app.use('/api/v1/growth-advisor', growthAdvisorRoutes);
     app.use('/api/v1/locations', locationsRoutes);
 
+    const rolesRoutes = require('./routes/roles');
+    const promotionsRoutes = require('./routes/promotions');
+    const reportsRoutes = require('./routes/reports');
+    app.use('/api/v1/roles', rolesRoutes);
+    app.use('/api/v1/promotions', promotionsRoutes);
+    app.use('/api/v1/reports', reportsRoutes);
+
     // Start Automation Engine (5-minute cron cycle)
     try {
       const KanchoAutomationEngine = require('../../services/kancho-automation-engine');
@@ -1065,6 +1072,9 @@ if (models && !modelsError) {
     console.log('   /api/v1/campaigns         (marketing campaigns)');
     console.log('   /api/v1/growth-advisor    (AI business insights)');
     console.log('   /api/v1/locations         (multi-location)');
+    console.log('   /api/v1/roles             (RBAC permissions)');
+    console.log('   /api/v1/promotions        (belt promotion history)');
+    console.log('   /api/v1/reports           (CSV/JSON exports)');
   } catch (platformError) {
     console.log('⚠️ KanchoAI Platform modules error:', platformError.message);
   }
@@ -6514,6 +6524,10 @@ app.get('*', (req, res) => {
         <button class="tab-btn" onclick="switchTab('staff')"><i class="fas fa-id-badge mr-1"></i>Staff</button>
         <button class="tab-btn" onclick="switchTab('automations')"><i class="fas fa-robot mr-1"></i>AI Auto</button>
         <button class="tab-btn" onclick="switchTab('taskBoard')"><i class="fas fa-tasks mr-1"></i>Tasks</button>
+        <button class="tab-btn" onclick="switchTab('campaigns')"><i class="fas fa-bullhorn mr-1"></i>Campaigns</button>
+        <button class="tab-btn" onclick="switchTab('growthAdvisor')"><i class="fas fa-brain mr-1"></i>Growth AI</button>
+        <button class="tab-btn" onclick="switchTab('promotionHistory')"><i class="fas fa-medal mr-1"></i>Promotions</button>
+        <button class="tab-btn" onclick="switchTab('reports')"><i class="fas fa-file-export mr-1"></i>Reports</button>
       </div>
 
       <!-- Tab: Overview -->
@@ -7014,6 +7028,112 @@ app.get('*', (req, res) => {
           </div>
         </div>
         <p id="tasksEmpty" class="hidden text-center text-gray-500 py-12">No tasks. Your to-do list is clear!</p>
+      </div>
+
+      <!-- Tab: Campaigns -->
+      <div id="tabCampaigns" class="tab-content">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-bullhorn text-kancho"></i> Marketing Campaigns</h2>
+          <button class="btn-primary btn-sm" onclick="openCampaignForm()"><i class="fas fa-plus mr-1"></i> New Campaign</button>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+          <div class="card p-3 text-center"><div class="text-2xl font-bold" id="campaignDraft">0</div><div class="text-xs text-gray-500">Draft</div></div>
+          <div class="card p-3 text-center"><div class="text-2xl font-bold text-blue-400" id="campaignActive">0</div><div class="text-xs text-gray-500">Active</div></div>
+          <div class="card p-3 text-center"><div class="text-2xl font-bold text-yellow-400" id="campaignScheduled">0</div><div class="text-xs text-gray-500">Scheduled</div></div>
+          <div class="card p-3 text-center"><div class="text-2xl font-bold text-green-400" id="campaignCompleted">0</div><div class="text-xs text-gray-500">Completed</div></div>
+        </div>
+        <div class="card rounded-2xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="data-table">
+              <thead><tr><th>Name</th><th>Type</th><th>Goal</th><th>Status</th><th>Budget</th><th>Actions</th></tr></thead>
+              <tbody id="campaignTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <p id="campaignsEmpty" class="hidden text-center text-gray-500 py-12">No campaigns yet. Create your first marketing campaign!</p>
+      </div>
+
+      <!-- Tab: Growth Advisor -->
+      <div id="tabGrowthAdvisor" class="tab-content">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-brain text-kancho"></i> AI Growth Advisor</h2>
+          <button class="btn-primary btn-sm" onclick="loadGrowthAdvisor()"><i class="fas fa-sync mr-1"></i> Refresh</button>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
+          <div class="card p-3 text-center"><div class="text-2xl font-bold" id="gaActiveStudents">0</div><div class="text-xs text-gray-500">Active Students</div></div>
+          <div class="card p-3 text-center"><div class="text-2xl font-bold text-green-400" id="gaRevenue">$0</div><div class="text-xs text-gray-500">Revenue (Month)</div></div>
+          <div class="card p-3 text-center"><div class="text-2xl font-bold text-red-400" id="gaChurn">0%</div><div class="text-xs text-gray-500">Churn Rate</div></div>
+          <div class="card p-3 text-center"><div class="text-2xl font-bold text-blue-400" id="gaConversion">0%</div><div class="text-xs text-gray-500">Lead Conversion</div></div>
+          <div class="card p-3 text-center"><div class="text-2xl font-bold text-purple-400" id="gaCapacity">0%</div><div class="text-xs text-gray-500">Capacity Used</div></div>
+        </div>
+        <!-- Top Actions -->
+        <div id="gaTopActions" class="mb-4"></div>
+        <!-- Insights List -->
+        <div id="gaInsightsList"></div>
+        <p id="gaLoading" class="text-center text-gray-500 py-12">Loading AI insights...</p>
+      </div>
+
+      <!-- Tab: Promotion History -->
+      <div id="tabPromotionHistory" class="tab-content">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-medal text-kancho"></i> Promotion History</h2>
+          <button class="btn-primary btn-sm" onclick="openPromotionForm()"><i class="fas fa-plus mr-1"></i> Record Promotion</button>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+          <div class="card p-3 text-center"><div class="text-2xl font-bold" id="promoThisMonth">0</div><div class="text-xs text-gray-500">This Month</div></div>
+          <div class="card p-3 text-center"><div class="text-2xl font-bold text-blue-400" id="promoThisYear">0</div><div class="text-xs text-gray-500">This Year</div></div>
+          <div class="card p-3 text-center"><div class="text-2xl font-bold text-green-400" id="promoFees">$0</div><div class="text-xs text-gray-500">Testing Fees</div></div>
+          <div class="card p-3 text-center"><div class="text-2xl font-bold text-purple-400" id="promoByBeltCount">0</div><div class="text-xs text-gray-500">Belt Levels</div></div>
+        </div>
+        <div class="card rounded-2xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="data-table">
+              <thead><tr><th>Date</th><th>Student</th><th>From</th><th>To</th><th>Score</th><th>Fee</th><th>Notes</th></tr></thead>
+              <tbody id="promotionTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <p id="promotionsEmpty" class="hidden text-center text-gray-500 py-12">No promotions recorded yet.</p>
+      </div>
+
+      <!-- Tab: Reports -->
+      <div id="tabReports" class="tab-content">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-file-export text-kancho"></i> Reports & Exports</h2>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div class="card p-6 rounded-2xl hover:border-kancho/50 transition cursor-pointer" onclick="exportReport('students')">
+            <div class="flex items-center gap-3 mb-2"><i class="fas fa-users text-2xl text-kancho"></i><h3 class="font-bold text-lg">Students</h3></div>
+            <p class="text-sm text-gray-400 mb-3">Export all student data with status, belt rank, contact info, and membership details.</p>
+            <div class="flex gap-2"><span class="badge badge-blue">CSV</span><span class="badge badge-green">JSON</span></div>
+          </div>
+          <div class="card p-6 rounded-2xl hover:border-kancho/50 transition cursor-pointer" onclick="exportReport('leads')">
+            <div class="flex items-center gap-3 mb-2"><i class="fas fa-fire text-2xl text-orange-400"></i><h3 class="font-bold text-lg">Leads</h3></div>
+            <p class="text-sm text-gray-400 mb-3">Export lead pipeline data with scores, sources, and follow-up dates.</p>
+            <div class="flex gap-2"><span class="badge badge-blue">CSV</span><span class="badge badge-green">JSON</span></div>
+          </div>
+          <div class="card p-6 rounded-2xl hover:border-kancho/50 transition cursor-pointer" onclick="exportReport('payments')">
+            <div class="flex items-center gap-3 mb-2"><i class="fas fa-dollar-sign text-2xl text-green-400"></i><h3 class="font-bold text-lg">Payments</h3></div>
+            <p class="text-sm text-gray-400 mb-3">Export payment history with amounts, methods, and invoice numbers.</p>
+            <div class="flex gap-2"><span class="badge badge-blue">CSV</span><span class="badge badge-green">JSON</span></div>
+          </div>
+          <div class="card p-6 rounded-2xl hover:border-kancho/50 transition cursor-pointer" onclick="exportReport('attendance')">
+            <div class="flex items-center gap-3 mb-2"><i class="fas fa-clipboard-check text-2xl text-blue-400"></i><h3 class="font-bold text-lg">Attendance</h3></div>
+            <p class="text-sm text-gray-400 mb-3">Export check-in records with dates, classes, and student data.</p>
+            <div class="flex gap-2"><span class="badge badge-blue">CSV</span><span class="badge badge-green">JSON</span></div>
+          </div>
+          <div class="card p-6 rounded-2xl hover:border-kancho/50 transition cursor-pointer" onclick="exportReport('promotions')">
+            <div class="flex items-center gap-3 mb-2"><i class="fas fa-medal text-2xl text-purple-400"></i><h3 class="font-bold text-lg">Promotions</h3></div>
+            <p class="text-sm text-gray-400 mb-3">Export belt promotion history with scores, fees, and training time.</p>
+            <div class="flex gap-2"><span class="badge badge-blue">CSV</span><span class="badge badge-green">JSON</span></div>
+          </div>
+          <div class="card p-6 rounded-2xl hover:border-kancho/50 transition cursor-pointer" onclick="exportReport('revenue-summary')">
+            <div class="flex items-center gap-3 mb-2"><i class="fas fa-chart-bar text-2xl text-yellow-400"></i><h3 class="font-bold text-lg">Revenue Summary</h3></div>
+            <p class="text-sm text-gray-400 mb-3">Monthly revenue breakdown with transaction counts.</p>
+            <div class="flex gap-2"><span class="badge badge-blue">CSV</span><span class="badge badge-green">JSON</span></div>
+          </div>
+        </div>
+        <p class="text-center text-gray-500 text-sm mt-4">Click any report card to download as CSV. Data is scoped to your school.</p>
       </div>
 
     </div><!-- /dashboardSection -->
@@ -8491,6 +8611,10 @@ app.get('*', (req, res) => {
         else if (tabName === 'staff') loadStaff();
         else if (tabName === 'automations') loadAutomations();
         else if (tabName === 'taskBoard') loadTasks();
+        else if (tabName === 'campaigns') loadCampaigns();
+        else if (tabName === 'growthAdvisor') loadGrowthAdvisor();
+        else if (tabName === 'promotionHistory') loadPromotions();
+        else if (tabName === 'reports') {} // static, no data load needed
       }
     }
 
@@ -9791,6 +9915,162 @@ app.get('*', (req, res) => {
     }
     function completeTask(id) { fetch('/kanchoai/api/v1/tasks/' + id + '/complete', { method: 'POST', headers: { 'Authorization': 'Bearer ' + authToken } }).then(() => { tabsLoaded.taskBoard = false; loadTasks(); }); }
     function deleteTask(id) { if (!confirm('Delete this task?')) return; fetch('/kanchoai/api/v1/tasks/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + authToken } }).then(() => { tabsLoaded.taskBoard = false; loadTasks(); }); }
+
+    // ==================== CAMPAIGNS TAB ====================
+    async function loadCampaigns() {
+      if (!currentSchoolId) return;
+      try {
+        const res = await fetch('/kanchoai/api/v1/campaigns?school_id=' + currentSchoolId, { headers: { 'Authorization': 'Bearer ' + authToken } });
+        const data = await res.json();
+        const tbody = document.getElementById('campaignTableBody');
+        const empty = document.getElementById('campaignsEmpty');
+        if (!data.success || !data.data.length) { tbody.innerHTML = ''; empty.classList.remove('hidden'); updateCampaignStats([]); return; }
+        empty.classList.add('hidden');
+        updateCampaignStats(data.data);
+        tbody.innerHTML = data.data.map(c => {
+          const statusColors = { draft: 'badge-gray', active: 'badge-green', scheduled: 'badge-blue', paused: 'badge-yellow', completed: 'badge-purple' };
+          return '<tr><td class="font-medium">' + (c.name || 'Untitled') + '</td><td>' + (c.type || '-') + '</td><td>' + (c.goal || '-') + '</td>' +
+            '<td><span class="badge ' + (statusColors[c.status] || 'badge-gray') + '">' + (c.status || 'draft') + '</span></td>' +
+            '<td>$' + (c.budget || 0) + '</td>' +
+            '<td><button class="btn-ghost btn-sm" onclick="editCampaign(' + c.id + ')"><i class="fas fa-edit"></i></button>' +
+            '<button class="btn-ghost btn-sm text-red-400" onclick="deleteCampaign(' + c.id + ')"><i class="fas fa-trash"></i></button></td></tr>';
+        }).join('');
+        tabsLoaded.campaigns = true;
+      } catch (err) { console.error('Campaigns load error:', err); }
+    }
+    function updateCampaignStats(campaigns) {
+      document.getElementById('campaignDraft').textContent = campaigns.filter(c => c.status === 'draft').length;
+      document.getElementById('campaignActive').textContent = campaigns.filter(c => c.status === 'active').length;
+      document.getElementById('campaignScheduled').textContent = campaigns.filter(c => c.status === 'scheduled').length;
+      document.getElementById('campaignCompleted').textContent = campaigns.filter(c => c.status === 'completed').length;
+    }
+    function openCampaignForm() {
+      const name = prompt('Campaign Name:');
+      if (!name) return;
+      const type = prompt('Type (sms, email, voice, multi_channel):', 'sms') || 'sms';
+      const goal = prompt('Goal (lead_generation, trial_booking, retention, engagement, reactivation, promotion, announcement):', 'engagement') || 'engagement';
+      fetch('/kanchoai/api/v1/campaigns', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+        body: JSON.stringify({ school_id: currentSchoolId, name, type, goal })
+      }).then(r => r.json()).then(d => { if (d.success) { tabsLoaded.campaigns = false; loadCampaigns(); } else alert(d.error); });
+    }
+    function editCampaign(id) {
+      const status = prompt('New Status (draft, scheduled, active, paused, completed):', 'active');
+      if (!status) return;
+      fetch('/kanchoai/api/v1/campaigns/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+        body: JSON.stringify({ status })
+      }).then(r => r.json()).then(d => { if (d.success) { tabsLoaded.campaigns = false; loadCampaigns(); } else alert(d.error); });
+    }
+    function deleteCampaign(id) {
+      if (!confirm('Delete this campaign?')) return;
+      fetch('/kanchoai/api/v1/campaigns/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + authToken } }).then(() => { tabsLoaded.campaigns = false; loadCampaigns(); });
+    }
+
+    // ==================== GROWTH ADVISOR TAB ====================
+    async function loadGrowthAdvisor() {
+      if (!currentSchoolId) return;
+      const loading = document.getElementById('gaLoading');
+      const actionsCont = document.getElementById('gaTopActions');
+      const insightsCont = document.getElementById('gaInsightsList');
+      loading.classList.remove('hidden');
+      actionsCont.innerHTML = '';
+      insightsCont.innerHTML = '';
+      try {
+        const res = await fetch('/kanchoai/api/v1/growth-advisor?school_id=' + currentSchoolId, { headers: { 'Authorization': 'Bearer ' + authToken } });
+        const data = await res.json();
+        loading.classList.add('hidden');
+        if (!data.success) { loading.textContent = 'Failed to load insights.'; loading.classList.remove('hidden'); return; }
+        const m = data.data.metrics;
+        document.getElementById('gaActiveStudents').textContent = m.activeStudents || 0;
+        document.getElementById('gaRevenue').textContent = '$' + (m.revenueThisMonth || 0).toLocaleString();
+        document.getElementById('gaChurn').textContent = (m.churnRate || 0) + '%';
+        document.getElementById('gaConversion').textContent = (m.conversionRate || 0) + '%';
+        document.getElementById('gaCapacity').textContent = (m.capacity || 0) + '%';
+        // Top Actions
+        if (data.data.topActions && data.data.topActions.length) {
+          actionsCont.innerHTML = '<h3 class="font-bold mb-2 text-kancho"><i class="fas fa-bolt mr-1"></i> Top Actions</h3>' +
+            data.data.topActions.map(a => {
+              const prioColor = a.priority === 'urgent' ? 'text-red-400' : a.priority === 'high' ? 'text-orange-400' : 'text-blue-400';
+              return '<div class="card p-3 mb-2 flex items-center gap-3"><span class="' + prioColor + ' font-bold uppercase text-xs">' + a.priority + '</span><span class="flex-1">' + a.title + '</span><span class="text-xs text-gray-500">' + (a.action || '') + '</span></div>';
+            }).join('');
+        }
+        // Insights
+        if (data.data.insights && data.data.insights.length) {
+          const catIcons = { revenue: 'fa-dollar-sign text-green-400', retention: 'fa-heart text-red-400', leads: 'fa-fire text-orange-400', growth: 'fa-chart-line text-blue-400', operations: 'fa-cog text-purple-400', ai: 'fa-robot text-cyan-400' };
+          insightsCont.innerHTML = '<h3 class="font-bold mb-2"><i class="fas fa-lightbulb mr-1 text-yellow-400"></i> Insights</h3>' +
+            data.data.insights.map(i => {
+              const icon = catIcons[i.category] || 'fa-info-circle text-gray-400';
+              const typeColor = i.type === 'alert' ? 'border-red-500/30' : i.type === 'warning' ? 'border-yellow-500/30' : i.type === 'positive' ? 'border-green-500/30' : 'border-blue-500/30';
+              return '<div class="card p-4 mb-2 ' + typeColor + '" style="border-left: 3px solid"><div class="flex items-start gap-3"><i class="fas ' + icon + ' mt-1"></i><div><strong>' + i.title + '</strong><p class="text-sm text-gray-400 mt-1">' + i.message + '</p>' +
+                (i.action ? '<p class="text-xs text-kancho mt-1"><i class="fas fa-arrow-right mr-1"></i>' + i.action + '</p>' : '') + '</div></div></div>';
+            }).join('');
+        }
+        tabsLoaded.growthAdvisor = true;
+      } catch (err) { loading.textContent = 'Error loading insights.'; console.error(err); }
+    }
+
+    // ==================== PROMOTIONS TAB ====================
+    async function loadPromotions() {
+      if (!currentSchoolId) return;
+      try {
+        const [listRes, summaryRes] = await Promise.all([
+          fetch('/kanchoai/api/v1/promotions?school_id=' + currentSchoolId, { headers: { 'Authorization': 'Bearer ' + authToken } }),
+          fetch('/kanchoai/api/v1/promotions/summary?school_id=' + currentSchoolId, { headers: { 'Authorization': 'Bearer ' + authToken } })
+        ]);
+        const listData = await listRes.json();
+        const summaryData = await summaryRes.json();
+        const tbody = document.getElementById('promotionTableBody');
+        const empty = document.getElementById('promotionsEmpty');
+        // Stats
+        if (summaryData.success) {
+          document.getElementById('promoThisMonth').textContent = summaryData.data.thisMonth || 0;
+          document.getElementById('promoThisYear').textContent = summaryData.data.thisYear || 0;
+          document.getElementById('promoFees').textContent = '$' + (summaryData.data.totalFees || 0);
+          document.getElementById('promoByBeltCount').textContent = (summaryData.data.byBelt || []).length;
+        }
+        if (!listData.success || !listData.data.length) { tbody.innerHTML = ''; empty.classList.remove('hidden'); return; }
+        empty.classList.add('hidden');
+        tbody.innerHTML = listData.data.map(p => {
+          const name = p.student ? (p.student.first_name + ' ' + p.student.last_name) : 'Unknown';
+          return '<tr><td>' + (p.promotion_date || '-') + '</td><td>' + name + '</td><td>' + (p.from_belt || '-') + '</td><td class="font-bold">' + (p.to_belt || '-') + '</td>' +
+            '<td>' + (p.testing_score ? p.testing_score + '%' : '-') + '</td><td>$' + (p.testing_fee_paid || 0) + '</td><td class="text-xs">' + (p.notes || '-') + '</td></tr>';
+        }).join('');
+        tabsLoaded.promotionHistory = true;
+      } catch (err) { console.error('Promotions load error:', err); }
+    }
+    function openPromotionForm() {
+      const studentId = prompt('Student ID:');
+      if (!studentId) return;
+      const toBelt = prompt('New Belt Rank (e.g. Yellow, Green, Blue, Brown, Black):');
+      if (!toBelt) return;
+      const score = prompt('Testing Score % (optional):', '') || null;
+      const fee = prompt('Testing Fee Paid ($):', '0') || '0';
+      const notes = prompt('Notes (optional):', '') || null;
+      fetch('/kanchoai/api/v1/promotions', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+        body: JSON.stringify({ school_id: currentSchoolId, student_id: parseInt(studentId), to_belt: toBelt, testing_score: score ? parseFloat(score) : null, testing_fee_paid: parseFloat(fee), notes })
+      }).then(r => r.json()).then(d => { if (d.success) { tabsLoaded.promotionHistory = false; loadPromotions(); alert('Promotion recorded! Student belt updated to ' + toBelt); } else alert(d.error); });
+    }
+
+    // ==================== REPORTS TAB ====================
+    function exportReport(type) {
+      if (!currentSchoolId) return;
+      const url = '/kanchoai/api/v1/reports/' + type + '?school_id=' + currentSchoolId + '&format=csv';
+      // Create a temporary link to trigger download
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = type + '_export.csv';
+      // Need to fetch with auth then create blob
+      fetch(url, { headers: { 'Authorization': 'Bearer ' + authToken } })
+        .then(r => r.blob())
+        .then(blob => {
+          const blobUrl = URL.createObjectURL(blob);
+          a.href = blobUrl;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(blobUrl);
+        })
+        .catch(err => alert('Export failed: ' + err.message));
+    }
 
     // ==================== BELT REQUIREMENTS TAB ====================
     async function loadBeltRequirements() {

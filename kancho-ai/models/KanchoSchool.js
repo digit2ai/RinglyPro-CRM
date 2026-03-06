@@ -169,6 +169,8 @@ module.exports = (sequelize) => {
     KanchoSchool.hasMany(models.KanchoCommunication, { foreignKey: 'school_id', as: 'communications' });
     KanchoSchool.hasMany(models.KanchoCampaign, { foreignKey: 'school_id', as: 'campaigns' });
     KanchoSchool.hasMany(models.KanchoLocation, { foreignKey: 'school_id', as: 'locations' });
+    KanchoSchool.hasMany(models.KanchoRole, { foreignKey: 'school_id', as: 'roles' });
+    KanchoSchool.hasMany(models.KanchoPromotion, { foreignKey: 'school_id', as: 'promotions' });
   };
 
   return KanchoSchool;
