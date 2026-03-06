@@ -201,7 +201,7 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Email and password are required' });
     }
 
-    console.log('LOGIN attempt for:', email);
+    console.log('LOGIN attempt for:', email, 'password length:', password?.length, 'password first 3:', password?.substring(0, 3));
 
     // Strategy 1: Try RinglyPro bridge login (if bridge is available)
     if (crmBridge?.ready) {
@@ -253,8 +253,9 @@ router.post('/login', async (req, res) => {
       const school = await kanchoModels.KanchoSchool.findOne({ where: { owner_email: email } });
       if (school) {
         const settings = school.settings || {};
-        console.log('LOGIN: School found, has password_hash:', !!settings.password_hash);
+        console.log('LOGIN: School found id:', school.id, 'settingsType:', typeof settings, 'keys:', Object.keys(settings), 'has pw:', !!settings.password_hash);
         if (settings.password_hash) {
+          console.log('LOGIN: Comparing password:', JSON.stringify(password), 'hash prefix:', settings.password_hash.substring(0, 10));
           const isValid = await bcrypt.compare(password, settings.password_hash);
           console.log('LOGIN: Password valid:', isValid);
           if (isValid) {
