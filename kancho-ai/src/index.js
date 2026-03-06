@@ -11221,9 +11221,9 @@ app.get('*', (req, res) => {
         msgs.scrollTop = msgs.scrollHeight;
         // Refresh relevant tab if action was executed
         if (d.success && d.parsed && d.parsed.domain) {
-          var tabMap = { students: 'students', leads: 'leads', families: 'families', staff: 'staff', classes: 'classes', calendar: 'calendar', payments: 'billing', billing: 'billing', merch: 'merch', automations: 'automations', tasks: 'taskBoard', funnels: 'funnels', campaigns: 'campaigns', belts: 'beltRequirements' };
+          var tabMap = { students: 'students', leads: 'leads', families: 'families', staff: 'staff', classes: 'classes', calendar: 'calendar', payments: 'payments', billing: 'billing', merch: 'merchandise', automations: 'automations', tasks: 'taskBoard', funnels: 'funnels', campaigns: 'campaigns', belts: 'beltRequirements', growth: 'growth', promotions: 'promotions', training: 'classes', portal: 'portal' };
           var tab = tabMap[d.parsed.domain];
-          if (tab && tabsLoaded[tab] !== undefined) tabsLoaded[tab] = false;
+          if (tab) tabsLoaded[tab] = false;
         }
       }).catch(function(err) {
         var typing = document.getElementById(typingId);

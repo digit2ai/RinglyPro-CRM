@@ -339,6 +339,61 @@ class KanchoNLPEngine {
     return entities;
   }
 
+  // ── 4b. RESOLVE RELATIVE DATES ────────────────────────────
+  resolveRelativeDate(entities) {
+    const now = new Date();
+    if (entities.relativeDate) {
+      const rd = entities.relativeDate.toLowerCase();
+      if (rd === 'today') {
+        entities.date = now.toISOString().split('T')[0];
+      } else if (rd === 'tomorrow') {
+        const d = new Date(now); d.setDate(d.getDate() + 1);
+        entities.date = d.toISOString().split('T')[0];
+      } else if (rd === 'yesterday') {
+        const d = new Date(now); d.setDate(d.getDate() - 1);
+        entities.date = d.toISOString().split('T')[0];
+      } else if (rd === 'next week') {
+        const d = new Date(now); d.setDate(d.getDate() + 7);
+        entities.date = d.toISOString().split('T')[0];
+      } else if (rd === 'next month') {
+        const d = new Date(now); d.setMonth(d.getMonth() + 1);
+        entities.date = d.toISOString().split('T')[0];
+      } else if (rd === 'this week') {
+        // Start of current week (Monday)
+        const d = new Date(now);
+        const day = d.getDay();
+        const diff = day === 0 ? -6 : 1 - day;
+        d.setDate(d.getDate() + diff);
+        entities.date = d.toISOString().split('T')[0];
+        entities.dateEnd = now.toISOString().split('T')[0];
+      } else if (rd === 'this month') {
+        entities.date = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-01';
+        entities.dateEnd = now.toISOString().split('T')[0];
+      }
+    }
+    if (entities.dateOffset && entities.dateUnit) {
+      const d = new Date(now);
+      const unit = entities.dateUnit.toLowerCase();
+      if (unit === 'day') d.setDate(d.getDate() + entities.dateOffset);
+      else if (unit === 'week') d.setDate(d.getDate() + entities.dateOffset * 7);
+      else if (unit === 'month') d.setMonth(d.getMonth() + entities.dateOffset);
+      else if (unit === 'year') d.setFullYear(d.getFullYear() + entities.dateOffset);
+      entities.date = d.toISOString().split('T')[0];
+    }
+    if (entities.dayOfWeek && !entities.date) {
+      const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const target = days.indexOf(entities.dayOfWeek.toLowerCase());
+      if (target !== -1) {
+        const d = new Date(now);
+        const current = d.getDay();
+        const daysUntil = (target - current + 7) % 7 || 7;
+        d.setDate(d.getDate() + daysUntil);
+        entities.date = d.toISOString().split('T')[0];
+      }
+    }
+    return entities;
+  }
+
   // ── 5. RESOLVE ACTION ──────────────────────────────────────
   resolveAction(intent, domain) {
     const domainActions = ACTION_MAP[domain];
@@ -352,6 +407,7 @@ class KanchoNLPEngine {
     const { intent, confidence: intentConf, matchedPattern } = this.classifyIntent(rawText);
     const { domain, confidence: domainConf } = this.classifyDomain(rawText);
     const entities = this.extractEntities(rawText);
+    this.resolveRelativeDate(entities);
     const action = domain ? this.resolveAction(intent, domain) : intent;
 
     const confidence = Math.round(((intentConf + domainConf) / 2) * 1000) / 1000;
@@ -444,7 +500,7 @@ class KanchoNLPEngine {
         if (matches.length === 1) {
           resolved.matchedClass = { id: matches[0].id, name: matches[0].name };
         } else if (matches.length > 1) {
-          resolved.classCandidates = matches.map(c => ({ id: c.id, name: c.name, day: c.day_of_week, time: c.start_time }));
+          resolved.classCandidates = matches.map(c => { const sched = c.schedule || {}; return { id: c.id, name: c.name, day: Array.isArray(sched.days) ? sched.days.join('/') : (sched.day || ''), time: sched.time || '' }; });
         }
       } catch (e) { }
     }
@@ -550,8 +606,29 @@ class KanchoNLPEngine {
         await m.KanchoStudent.update({ status: 'inactive' }, { where: { id } });
         return { success: true, message: `Archived student ${e.matchedStudent?.name || '#' + id}`, affected: [id] };
       }
+      case 'promote_belt': {
+        if (!e.matchedStudent && !e.recordId) return { success: false, message: 'Which student should be promoted?', clarify: 'studentName' };
+        if (!e.belt) return { success: false, message: 'What belt rank should they be promoted to?', clarify: 'beltRank' };
+        const id = e.matchedStudent?.id || e.recordId;
+        const student = await m.KanchoStudent.findByPk(id);
+        if (!student) return { success: false, message: 'Student not found.' };
+        const fromBelt = student.belt_rank;
+        await student.update({ belt_rank: e.belt });
+        try { await m.KanchoPromotion.create({ school_id: schoolId, student_id: id, from_belt: fromBelt, to_belt: e.belt, promotion_date: new Date().toISOString().split('T')[0] }); } catch (err) { }
+        return { success: true, message: `Promoted ${student.first_name} ${student.last_name} from ${fromBelt || 'unranked'} to ${e.belt} belt!`, affected: [id] };
+      }
+      case 'convert_lead': {
+        if (!e.matchedStudent && !e.matchedLead && !e.recordId) return { success: false, message: 'Which lead should I convert to a student?', clarify: 'leadName' };
+        const id = e.matchedLead?.id || e.recordId;
+        if (!id) return { success: false, message: 'Please specify which lead to convert.' };
+        const lead = await m.KanchoLead.findByPk(id);
+        if (!lead) return { success: false, message: 'Lead not found.' };
+        const student = await m.KanchoStudent.create({ school_id: schoolId, first_name: lead.first_name, last_name: lead.last_name, email: lead.email, phone: lead.phone, status: 'active', belt_rank: 'White' });
+        await lead.update({ status: 'converted', converted_to_student_id: student.id });
+        return { success: true, message: `Converted lead ${lead.first_name} ${lead.last_name} to student (ID: ${student.id})`, affected: [lead.id, student.id] };
+      }
       default:
-        return { success: true, message: 'Student command recognized. What specifically would you like to do?' };
+        return { success: false, message: 'I understood you want to do something with students, but I\'m not sure what. Try "list students", "add student", or "promote student".' };
     }
   }
 
@@ -592,8 +669,22 @@ class KanchoNLPEngine {
         await lead.update({ status: 'converted', converted_to_student_id: student.id });
         return { success: true, message: `Converted lead ${lead.first_name} ${lead.last_name} to student (ID: ${student.id})`, affected: [lead.id, student.id] };
       }
+      case 'archive_lead': {
+        if (!e.matchedLead && !e.recordId) return { success: false, message: 'Which lead should I archive?', clarify: 'leadName' };
+        const id = e.matchedLead?.id || e.recordId;
+        await m.KanchoLead.update({ status: 'archived' }, { where: { id } });
+        return { success: true, message: `Archived lead ${e.matchedLead?.name || '#' + id}`, affected: [id] };
+      }
+      case 'assign_lead': {
+        if (!e.matchedLead && !e.recordId) return { success: false, message: 'Which lead should I assign?', clarify: 'leadName' };
+        if (!e.matchedStaff && !e.firstName) return { success: false, message: 'Assign to whom?' };
+        const id = e.matchedLead?.id || e.recordId;
+        const assignee = e.matchedStaff?.name || (e.firstName + (e.lastName ? ' ' + e.lastName : ''));
+        await m.KanchoLead.update({ assigned_to: assignee }, { where: { id } });
+        return { success: true, message: `Assigned lead ${e.matchedLead?.name || '#' + id} to ${assignee}`, affected: [id] };
+      }
       default:
-        return { success: true, message: 'Lead command recognized.' };
+        return { success: false, message: 'I understood you want to do something with leads, but I\'m not sure what. Try "list leads", "add lead", or "convert lead".' };
     }
   }
 
@@ -612,8 +703,21 @@ class KanchoNLPEngine {
         const summary = families.slice(0, 10).map(f => `${f.family_name} — ${(f.members || []).length} members`).join('\n');
         return { success: true, message: `Found ${families.length} family account(s):\n${summary}`, data: families };
       }
+      case 'update_family': {
+        if (!e.recordId) return { success: false, message: 'Which family? Provide a name or ID.', clarify: 'familyName' };
+        const updates = {};
+        if (e.firstName) updates.primary_contact_name = e.firstName + (e.lastName ? ' ' + e.lastName : '');
+        if (Object.keys(updates).length === 0) return { success: false, message: 'What should I update on this family?' };
+        await m.KanchoFamily.update(updates, { where: { id: e.recordId } });
+        return { success: true, message: `Updated family #${e.recordId}`, affected: [e.recordId] };
+      }
+      case 'archive_family': {
+        if (!e.recordId) return { success: false, message: 'Which family should I archive?', clarify: 'familyName' };
+        await m.KanchoFamily.update({ status: 'archived' }, { where: { id: e.recordId } });
+        return { success: true, message: `Archived family #${e.recordId}`, affected: [e.recordId] };
+      }
       default:
-        return { success: true, message: 'Family command recognized.' };
+        return { success: false, message: 'I understood you want to do something with families, but I\'m not sure what. Try "list families" or "create family".' };
     }
   }
 
@@ -638,8 +742,30 @@ class KanchoNLPEngine {
         await m.KanchoInstructor.update({ is_active: false }, { where: { id } });
         return { success: true, message: `Deactivated staff member ${e.matchedStaff?.name || '#' + id}`, affected: [id] };
       }
+      case 'update_staff': {
+        if (!e.matchedStaff && !e.recordId) return { success: false, message: 'Which staff member?', clarify: 'staffName' };
+        const id = e.matchedStaff?.id || e.recordId;
+        const updates = {};
+        if (e.role) updates.role = e.role;
+        if (Object.keys(updates).length === 0) return { success: false, message: 'What should I update? (role, etc.)' };
+        await m.KanchoInstructor.update(updates, { where: { id } });
+        return { success: true, message: `Updated staff ${e.matchedStaff?.name || '#' + id}: ${Object.entries(updates).map(([k, v]) => k + ' → ' + v).join(', ')}`, affected: [id] };
+      }
+      case 'assign_staff': {
+        if (!e.matchedStaff && !e.firstName) return { success: false, message: 'Which staff member?', clarify: 'staffName' };
+        if (!e.matchedClass && !e.programName) return { success: false, message: 'Assign to which class?' };
+        const staffName = e.matchedStaff?.name || (e.firstName + (e.lastName ? ' ' + e.lastName : ''));
+        if (e.matchedClass) {
+          await m.KanchoClass.update({ instructor: staffName }, { where: { id: e.matchedClass.id } });
+          return { success: true, message: `Assigned ${staffName} to ${e.matchedClass.name}`, affected: [e.matchedClass.id] };
+        }
+        const cls = await m.KanchoClass.findOne({ where: { school_id: schoolId, name: { [Op.iLike]: '%' + e.programName + '%' } } });
+        if (!cls) return { success: false, message: `Could not find class "${e.programName}".` };
+        await cls.update({ instructor: staffName });
+        return { success: true, message: `Assigned ${staffName} to ${cls.name}`, affected: [cls.id] };
+      }
       default:
-        return { success: true, message: 'Staff command recognized.' };
+        return { success: false, message: 'I understood you want to do something with staff, but I\'m not sure what. Try "list staff", "add instructor", or "assign staff".' };
     }
   }
 
@@ -668,7 +794,7 @@ class KanchoNLPEngine {
         return { success: true, message: `Active students by belt rank:\n${summary}`, data: students };
       }
       default:
-        return { success: true, message: 'Belt/promotion command recognized.' };
+        return { success: false, message: 'I understood you want to do something with belts/promotions, but I\'m not sure what. Try "promote [student] to [belt]" or "show students ready for testing".' };
     }
   }
 
@@ -678,19 +804,22 @@ class KanchoNLPEngine {
       case 'create_class': {
         if (!e.programName && !e.firstName) return { success: false, message: 'What should the class be called?', clarify: 'className' };
         const schedule = {};
-        if (e.dayOfWeek) schedule.day = e.dayOfWeek;
+        if (e.dayOfWeek) schedule.days = [e.dayOfWeek];
         if (e.time) schedule.time = e.time;
         const data = { school_id: schoolId, name: e.programName || 'New Class', schedule, is_active: true };
+        if (e.amount) data.capacity = Math.round(e.amount);
         const cls = await m.KanchoClass.create(data);
         const sched = cls.schedule || {};
-        return { success: true, message: `Created class: ${cls.name}${sched.day ? ' on ' + sched.day : ''}${sched.time ? ' at ' + sched.time : ''}`, data: cls, affected: [cls.id] };
+        const dayStr = Array.isArray(sched.days) ? sched.days.join(', ') : '';
+        return { success: true, message: `Created class: ${cls.name}${dayStr ? ' on ' + dayStr : ''}${sched.time ? ' at ' + sched.time : ''}`, data: cls, affected: [cls.id] };
       }
       case 'list_classes': {
         const classes = await m.KanchoClass.findAll({ where: { school_id: schoolId }, order: [['name', 'ASC']] });
         if (classes.length === 0) return { success: true, message: 'No classes found.', data: [] };
         const summary = classes.slice(0, 15).map(c => {
           const sched = c.schedule || {};
-          return `${c.name} — ${sched.day || '?'} ${sched.time || ''} (${c.is_active ? 'active' : 'inactive'})`;
+          const dayStr = Array.isArray(sched.days) ? sched.days.join('/') : (sched.day || '?');
+          return `${c.name} — ${dayStr} ${sched.time || ''} (${c.is_active ? 'active' : 'inactive'})`;
         }).join('\n');
         return { success: true, message: `Classes (${classes.length}):\n${summary}`, data: classes };
       }
@@ -700,8 +829,41 @@ class KanchoNLPEngine {
         await m.KanchoClass.update({ is_active: false }, { where: { id } });
         return { success: true, message: `Cancelled class ${e.matchedClass?.name || '#' + id}`, affected: [id] };
       }
+      case 'update_class': {
+        if (!e.matchedClass && !e.recordId) return { success: false, message: 'Which class should I update?', clarify: 'className' };
+        const id = e.matchedClass?.id || e.recordId;
+        const cls = await m.KanchoClass.findByPk(id);
+        if (!cls) return { success: false, message: 'Class not found.' };
+        const updates = {};
+        if (e.time) { const sched = cls.schedule || {}; sched.time = e.time; updates.schedule = sched; }
+        if (e.dayOfWeek) { const sched = updates.schedule || cls.schedule || {}; sched.days = [e.dayOfWeek]; updates.schedule = sched; }
+        if (e.amount) updates.capacity = Math.round(e.amount);
+        if (Object.keys(updates).length === 0) return { success: false, message: 'What should I update? (schedule, capacity, etc.)' };
+        await m.KanchoClass.update(updates, { where: { id } });
+        return { success: true, message: `Updated class ${cls.name}: ${Object.keys(updates).join(', ')}`, affected: [id] };
+      }
+      case 'assign_instructor': {
+        if (!e.matchedClass && !e.recordId && !e.programName) return { success: false, message: 'Which class?', clarify: 'className' };
+        if (!e.matchedStaff && !e.firstName) return { success: false, message: 'Which instructor?', clarify: 'staffName' };
+        const instructor = e.matchedStaff?.name || (e.firstName + (e.lastName ? ' ' + e.lastName : ''));
+        let cls;
+        if (e.matchedClass) cls = await m.KanchoClass.findByPk(e.matchedClass.id);
+        else if (e.recordId) cls = await m.KanchoClass.findByPk(e.recordId);
+        else cls = await m.KanchoClass.findOne({ where: { school_id: schoolId, name: { [Op.iLike]: '%' + e.programName + '%' } } });
+        if (!cls) return { success: false, message: 'Class not found.' };
+        await cls.update({ instructor });
+        return { success: true, message: `Assigned ${instructor} to ${cls.name}`, affected: [cls.id] };
+      }
+      case 'duplicate_class': {
+        if (!e.matchedClass && !e.recordId) return { success: false, message: 'Which class should I duplicate?', clarify: 'className' };
+        const id = e.matchedClass?.id || e.recordId;
+        const original = await m.KanchoClass.findByPk(id);
+        if (!original) return { success: false, message: 'Class not found.' };
+        const copy = await m.KanchoClass.create({ school_id: schoolId, name: original.name + ' (Copy)', schedule: original.schedule, duration_minutes: original.duration_minutes, capacity: original.capacity, instructor: original.instructor, program_type: original.program_type, is_active: true });
+        return { success: true, message: `Duplicated class: ${copy.name}`, data: copy, affected: [copy.id] };
+      }
       default:
-        return { success: true, message: 'Class command recognized.' };
+        return { success: false, message: 'I understood you want to do something with classes, but I\'m not sure what. Try "list classes", "create class", or "cancel class".' };
     }
   }
 
@@ -724,13 +886,33 @@ class KanchoNLPEngine {
       }
       case 'list_events': {
         const where = { school_id: schoolId };
+        if (e.date) where.appointment_date = e.date;
         const appts = await m.KanchoAppointment.findAll({ where, order: [['appointment_date', 'DESC']], limit: 20 });
         if (appts.length === 0) return { success: true, message: 'No upcoming events.', data: [] };
         const summary = appts.slice(0, 10).map(a => `${a.appointment_date} ${a.appointment_time} — ${a.customer_name} (${a.purpose || 'general'})`).join('\n');
         return { success: true, message: `Events (${appts.length}):\n${summary}`, data: appts };
       }
+      case 'update_event': {
+        if (!e.recordId) return { success: false, message: 'Which event? Please provide an ID.', clarify: 'eventId' };
+        const appt = await m.KanchoAppointment.findByPk(e.recordId);
+        if (!appt || appt.school_id !== schoolId) return { success: false, message: 'Event not found.' };
+        const updates = {};
+        if (e.date) updates.appointment_date = e.date;
+        if (e.time) updates.appointment_time = e.time;
+        if (e.status) updates.status = e.status;
+        if (Object.keys(updates).length === 0) return { success: false, message: 'What should I update? (date, time, status)' };
+        await appt.update(updates);
+        return { success: true, message: `Updated event #${e.recordId}: ${Object.entries(updates).map(([k, v]) => k.replace('appointment_', '') + ' → ' + v).join(', ')}`, affected: [e.recordId] };
+      }
+      case 'delete_event': {
+        if (!e.recordId) return { success: false, message: 'Which event should I delete? Provide an ID.', clarify: 'eventId' };
+        const appt = await m.KanchoAppointment.findByPk(e.recordId);
+        if (!appt || appt.school_id !== schoolId) return { success: false, message: 'Event not found.' };
+        await appt.update({ status: 'cancelled' });
+        return { success: true, message: `Cancelled event #${e.recordId} (${appt.customer_name} on ${appt.appointment_date})`, affected: [e.recordId] };
+      }
       default:
-        return { success: true, message: 'Calendar command recognized.' };
+        return { success: false, message: 'I understood you want to do something with calendar, but I\'m not sure what. Try "list events", "schedule event", or "show events for tomorrow".' };
     }
   }
 
@@ -753,8 +935,15 @@ class KanchoNLPEngine {
         const failed = payments.filter(p => p.status === 'failed');
         return { success: true, message: `Payment overview: ${completed.length} completed, ${failed.length} failed out of ${payments.length} total.` };
       }
+      case 'retry_payment': {
+        if (!e.recordId) return { success: false, message: 'Which payment should I retry? Provide a payment ID.', clarify: 'paymentId' };
+        const payment = await m.KanchoPayment.findByPk(e.recordId);
+        if (!payment || payment.school_id !== schoolId) return { success: false, message: 'Payment not found.' };
+        await payment.update({ status: 'pending', notes: (payment.notes || '') + ' | Retry requested ' + new Date().toISOString().split('T')[0] });
+        return { success: true, message: `Payment #${e.recordId} marked for retry ($${payment.total}). The billing system will process it.`, affected: [e.recordId] };
+      }
       default:
-        return { success: true, message: 'Payment command recognized.' };
+        return { success: false, message: 'I understood you want to do something with payments, but I\'m not sure what. Try "list payments", "show failed payments", or "retry payment #ID".' };
     }
   }
 
@@ -787,8 +976,27 @@ class KanchoNLPEngine {
         await m.KanchoStudent.update({ status: 'cancelled' }, { where: { id: studentId } });
         return { success: true, message: `Cancelled membership for ${e.matchedStudent?.name || 'student #' + studentId}`, affected: [studentId] };
       }
+      case 'update_subscription': {
+        if (!e.matchedStudent && !e.recordId) return { success: false, message: 'Whose subscription?', clarify: 'studentName' };
+        const studentId = e.matchedStudent?.id || e.recordId;
+        const updates = {};
+        if (e.amount) updates.amount = e.amount;
+        if (e.status) updates.status = e.status;
+        if (Object.keys(updates).length === 0) return { success: false, message: 'What should I update on this subscription? (amount, status)' };
+        await m.KanchoSubscription.update(updates, { where: { school_id: schoolId, student_id: studentId } });
+        return { success: true, message: `Updated subscription for ${e.matchedStudent?.name || 'student #' + studentId}: ${Object.entries(updates).map(([k, v]) => k + ' → ' + v).join(', ')}`, affected: [studentId] };
+      }
+      case 'billing_report': {
+        const [activeSubs, pausedSubs, totalRev] = await Promise.all([
+          m.KanchoSubscription.count({ where: { school_id: schoolId, status: 'active' } }),
+          m.KanchoSubscription.count({ where: { school_id: schoolId, status: 'paused' } }),
+          m.KanchoPayment.findAll({ where: { school_id: schoolId, status: 'completed' }, order: [['payment_date', 'DESC']], limit: 30 })
+        ]);
+        const recentTotal = totalRev.reduce((s, p) => s + parseFloat(p.total || 0), 0);
+        return { success: true, message: `Billing Report:\nActive subscriptions: ${activeSubs}\nPaused subscriptions: ${pausedSubs}\nRecent payments (last 30): $${recentTotal.toFixed(2)}` };
+      }
       default:
-        return { success: true, message: 'Billing command recognized.' };
+        return { success: false, message: 'I understood you want to do something with billing, but I\'m not sure what. Try "list billing", "pause billing", or "billing report".' };
     }
   }
 
@@ -808,8 +1016,24 @@ class KanchoNLPEngine {
         const summary = products.slice(0, 10).map(p => `${p.name} — $${p.price} (stock: ${p.stock_quantity || 0})`).join('\n');
         return { success: true, message: `Merchandise (${products.length})${lowStock.length ? ', ' + lowStock.length + ' low stock' : ''}:\n${summary}`, data: products };
       }
+      case 'update_product': {
+        if (!e.recordId) return { success: false, message: 'Which product? Provide an ID.', clarify: 'productId' };
+        const product = await m.KanchoMerchandise.findByPk(e.recordId);
+        if (!product || product.school_id !== schoolId) return { success: false, message: 'Product not found.' };
+        const updates = {};
+        if (e.amount) updates.price = e.amount;
+        if (e.status) updates.status = e.status;
+        if (Object.keys(updates).length === 0) return { success: false, message: 'What should I update? (price, stock, etc.)' };
+        await product.update(updates);
+        return { success: true, message: `Updated product ${product.name}: ${Object.entries(updates).map(([k, v]) => k + ' → ' + v).join(', ')}`, affected: [e.recordId] };
+      }
+      case 'archive_product': {
+        if (!e.recordId) return { success: false, message: 'Which product should I archive?', clarify: 'productId' };
+        await m.KanchoMerchandise.update({ status: 'archived' }, { where: { id: e.recordId, school_id: schoolId } });
+        return { success: true, message: `Archived product #${e.recordId}`, affected: [e.recordId] };
+      }
       default:
-        return { success: true, message: 'Merchandise command recognized.' };
+        return { success: false, message: 'I understood you want to do something with merchandise, but I\'m not sure what. Try "list products", "add product", or "show low stock".' };
     }
   }
 
@@ -848,8 +1072,36 @@ class KanchoNLPEngine {
         }
         return { success: false, message: 'Which automation should I resume? Paused ones:\n' + autos.map(a => a.name).join('\n') };
       }
+      case 'update_automation': {
+        if (!e.recordId) return { success: false, message: 'Which automation? Provide an ID.', clarify: 'automationId' };
+        const auto = await m.KanchoAutomation.findByPk(e.recordId);
+        if (!auto || auto.school_id !== schoolId) return { success: false, message: 'Automation not found.' };
+        const updates = {};
+        if (e.programName) updates.name = e.programName;
+        if (Object.keys(updates).length === 0) return { success: false, message: 'What should I update on this automation?' };
+        await auto.update(updates);
+        return { success: true, message: `Updated automation ${auto.name}`, affected: [e.recordId] };
+      }
+      case 'trigger_automation': {
+        const autos = await m.KanchoAutomation.findAll({ where: { school_id: schoolId, is_active: true } });
+        const name = e.programName || e.firstName || '';
+        const match = name ? autos.find(a => a.name.toLowerCase().includes(name.toLowerCase())) : null;
+        if (match) {
+          await match.update({ runs_count: (match.runs_count || 0) + 1, last_run_at: new Date() });
+          return { success: true, message: `Triggered automation: ${match.name} (run #${(match.runs_count || 0) + 1})`, affected: [match.id] };
+        }
+        if (autos.length === 0) return { success: false, message: 'No active automations to trigger.' };
+        return { success: false, message: 'Which automation? Active: ' + autos.map(a => a.name).join(', ') };
+      }
+      case 'delete_automation': {
+        if (!e.recordId) return { success: false, message: 'Which automation should I delete? Provide an ID.', clarify: 'automationId' };
+        const auto = await m.KanchoAutomation.findByPk(e.recordId);
+        if (!auto || auto.school_id !== schoolId) return { success: false, message: 'Automation not found.' };
+        await auto.destroy();
+        return { success: true, message: `Deleted automation: ${auto.name}`, affected: [e.recordId] };
+      }
       default:
-        return { success: true, message: 'Automation command recognized.' };
+        return { success: false, message: 'I understood you want to do something with automations, but I\'m not sure what. Try "list automations", "create automation", or "pause automation".' };
     }
   }
 
@@ -865,14 +1117,46 @@ class KanchoNLPEngine {
       case 'list_tasks': {
         const where = { school_id: schoolId };
         if (e.status === 'overdue') { where.status = { [Op.ne]: 'completed' }; where.due_date = { [Op.lt]: new Date() }; }
+        else if (e.status === 'completed') where.status = 'completed';
+        else if (e.status === 'pending') where.status = 'pending';
         else if (e.status) where.status = e.status;
+        // "today's tasks" — filter by today's due date
+        if (e.date) where.due_date = e.date;
         const tasks = await m.KanchoTask.findAll({ where, order: [['due_date', 'ASC']], limit: 30 });
         if (tasks.length === 0) return { success: true, message: 'No tasks found.', data: [] };
         const summary = tasks.slice(0, 10).map(t => `[${t.priority}] ${t.title} — ${t.status}${t.due_date ? ' (due: ' + t.due_date + ')' : ''}`).join('\n');
         return { success: true, message: `Tasks (${tasks.length}):\n${summary}`, data: tasks };
       }
+      case 'update_task': {
+        if (!e.recordId) return { success: false, message: 'Which task? Provide an ID.', clarify: 'taskId' };
+        const task = await m.KanchoTask.findByPk(e.recordId);
+        if (!task || task.school_id !== schoolId) return { success: false, message: 'Task not found.' };
+        const updates = {};
+        if (e.status) updates.status = e.status;
+        if (e.priority) updates.priority = e.priority;
+        if (e.date) updates.due_date = e.date;
+        if (Object.keys(updates).length === 0) return { success: false, message: 'What should I update? (status, priority, due date)' };
+        await task.update(updates);
+        return { success: true, message: `Updated task "${task.title}": ${Object.entries(updates).map(([k, v]) => k + ' → ' + v).join(', ')}`, affected: [e.recordId] };
+      }
+      case 'delete_task': {
+        if (!e.recordId) return { success: false, message: 'Which task should I delete? Provide an ID.', clarify: 'taskId' };
+        const task = await m.KanchoTask.findByPk(e.recordId);
+        if (!task || task.school_id !== schoolId) return { success: false, message: 'Task not found.' };
+        await task.destroy();
+        return { success: true, message: `Deleted task: ${task.title}`, affected: [e.recordId] };
+      }
+      case 'assign_task': {
+        if (!e.recordId) return { success: false, message: 'Which task? Provide an ID.', clarify: 'taskId' };
+        if (!e.matchedStaff && !e.firstName) return { success: false, message: 'Assign to whom?' };
+        const task = await m.KanchoTask.findByPk(e.recordId);
+        if (!task || task.school_id !== schoolId) return { success: false, message: 'Task not found.' };
+        const assignee = e.matchedStaff?.name || (e.firstName + (e.lastName ? ' ' + e.lastName : ''));
+        await task.update({ assigned_to: assignee });
+        return { success: true, message: `Assigned task "${task.title}" to ${assignee}`, affected: [e.recordId] };
+      }
       default:
-        return { success: true, message: 'Task command recognized.' };
+        return { success: false, message: 'I understood you want to do something with tasks, but I\'m not sure what. Try "list tasks", "create task", or "show overdue tasks".' };
     }
   }
 
@@ -891,8 +1175,46 @@ class KanchoNLPEngine {
         const funnel = await m.KanchoFunnel.create({ school_id: schoolId, name, type: 'trial_booking', status: 'draft' });
         return { success: true, message: `Created funnel: ${funnel.name}. Open Funnels tab to configure.`, data: funnel, affected: [funnel.id] };
       }
+      case 'update_funnel': {
+        if (!e.recordId) return { success: false, message: 'Which funnel? Provide an ID.', clarify: 'funnelId' };
+        const funnel = await m.KanchoFunnel.findByPk(e.recordId);
+        if (!funnel || funnel.school_id !== schoolId) return { success: false, message: 'Funnel not found.' };
+        const updates = {};
+        if (e.programName) updates.name = e.programName;
+        if (e.status) updates.status = e.status;
+        if (Object.keys(updates).length === 0) return { success: false, message: 'What should I update on this funnel?' };
+        await funnel.update(updates);
+        return { success: true, message: `Updated funnel ${funnel.name}`, affected: [e.recordId] };
+      }
+      case 'delete_funnel': {
+        if (!e.recordId) return { success: false, message: 'Which funnel should I delete?', clarify: 'funnelId' };
+        const funnel = await m.KanchoFunnel.findByPk(e.recordId);
+        if (!funnel || funnel.school_id !== schoolId) return { success: false, message: 'Funnel not found.' };
+        await funnel.destroy();
+        return { success: true, message: `Deleted funnel: ${funnel.name}`, affected: [e.recordId] };
+      }
+      case 'duplicate_funnel': {
+        if (!e.recordId) return { success: false, message: 'Which funnel should I duplicate?', clarify: 'funnelId' };
+        const original = await m.KanchoFunnel.findByPk(e.recordId);
+        if (!original || original.school_id !== schoolId) return { success: false, message: 'Funnel not found.' };
+        const copy = await m.KanchoFunnel.create({ school_id: schoolId, name: original.name + ' (Copy)', type: original.type, status: 'draft', steps: original.steps });
+        return { success: true, message: `Duplicated funnel: ${copy.name}`, data: copy, affected: [copy.id] };
+      }
+      case 'launch_funnel': {
+        if (!e.recordId) {
+          const funnels = await m.KanchoFunnel.findAll({ where: { school_id: schoolId, status: 'draft' } });
+          const name = e.programName || e.firstName || '';
+          const match = name ? funnels.find(f => f.name.toLowerCase().includes(name.toLowerCase())) : null;
+          if (match) { e.recordId = match.id; }
+          else return { success: false, message: 'Which funnel? Draft funnels: ' + funnels.map(f => f.name).join(', ') };
+        }
+        const funnel = await m.KanchoFunnel.findByPk(e.recordId);
+        if (!funnel || funnel.school_id !== schoolId) return { success: false, message: 'Funnel not found.' };
+        await funnel.update({ status: 'active' });
+        return { success: true, message: `Launched funnel: ${funnel.name}`, affected: [e.recordId] };
+      }
       default:
-        return { success: true, message: 'Funnel command recognized.' };
+        return { success: false, message: 'I understood you want to do something with funnels, but I\'m not sure what. Try "list funnels", "create funnel", or "launch funnel".' };
     }
   }
 
@@ -921,8 +1243,44 @@ class KanchoNLPEngine {
         }
         return { success: false, message: 'Which campaign? Active: ' + campaigns.map(c => c.name).join(', ') };
       }
+      case 'update_campaign': {
+        if (!e.recordId) return { success: false, message: 'Which campaign? Provide an ID.', clarify: 'campaignId' };
+        const campaign = await m.KanchoCampaign.findByPk(e.recordId);
+        if (!campaign || campaign.school_id !== schoolId) return { success: false, message: 'Campaign not found.' };
+        const updates = {};
+        if (e.programName) updates.name = e.programName;
+        if (e.channelType) updates.type = e.channelType;
+        if (Object.keys(updates).length === 0) return { success: false, message: 'What should I update on this campaign?' };
+        await campaign.update(updates);
+        return { success: true, message: `Updated campaign ${campaign.name}`, affected: [e.recordId] };
+      }
+      case 'launch_campaign': {
+        const campaigns = await m.KanchoCampaign.findAll({ where: { school_id: schoolId, status: { [Op.in]: ['draft', 'paused'] } } });
+        const name = e.programName || e.firstName || '';
+        const match = name ? campaigns.find(c => c.name.toLowerCase().includes(name.toLowerCase())) : null;
+        if (match) {
+          await match.update({ status: 'active' });
+          return { success: true, message: `Launched campaign: ${match.name}`, affected: [match.id] };
+        }
+        if (campaigns.length === 0) return { success: false, message: 'No draft or paused campaigns to launch.' };
+        return { success: false, message: 'Which campaign? Available: ' + campaigns.map(c => `${c.name} (${c.status})`).join(', ') };
+      }
+      case 'delete_campaign': {
+        if (!e.recordId) return { success: false, message: 'Which campaign should I delete?', clarify: 'campaignId' };
+        const campaign = await m.KanchoCampaign.findByPk(e.recordId);
+        if (!campaign || campaign.school_id !== schoolId) return { success: false, message: 'Campaign not found.' };
+        await campaign.destroy();
+        return { success: true, message: `Deleted campaign: ${campaign.name}`, affected: [e.recordId] };
+      }
+      case 'duplicate_campaign': {
+        if (!e.recordId) return { success: false, message: 'Which campaign should I duplicate?', clarify: 'campaignId' };
+        const original = await m.KanchoCampaign.findByPk(e.recordId);
+        if (!original || original.school_id !== schoolId) return { success: false, message: 'Campaign not found.' };
+        const copy = await m.KanchoCampaign.create({ school_id: schoolId, name: original.name + ' (Copy)', type: original.type, goal: original.goal, status: 'draft' });
+        return { success: true, message: `Duplicated campaign: ${copy.name}`, data: copy, affected: [copy.id] };
+      }
       default:
-        return { success: true, message: 'Campaign command recognized.' };
+        return { success: false, message: 'I understood you want to do something with campaigns, but I\'m not sure what. Try "list campaigns", "create campaign", or "launch campaign".' };
     }
   }
 
@@ -966,17 +1324,89 @@ class KanchoNLPEngine {
         const promo = await m.KanchoPromotion.create({ school_id: schoolId, name, type: 'general', status: 'active' });
         return { success: true, message: `Created promotion: ${promo.name}`, data: promo, affected: [promo.id] };
       }
+      case 'launch_promotion': {
+        const promos = await m.KanchoPromotion.findAll({ where: { school_id: schoolId } });
+        const name = e.programName || e.firstName || '';
+        const match = name ? promos.find(p => (p.name || '').toLowerCase().includes(name.toLowerCase())) : null;
+        if (match) {
+          await match.update({ status: 'active' });
+          return { success: true, message: `Launched promotion: ${match.name || match.type}`, affected: [match.id] };
+        }
+        if (promos.length === 0) return { success: false, message: 'No promotions to launch.' };
+        return { success: false, message: 'Which promotion? Available: ' + promos.map(p => p.name || p.type).join(', ') };
+      }
+      case 'pause_promotion': {
+        const promos = await m.KanchoPromotion.findAll({ where: { school_id: schoolId, status: 'active' } });
+        const name = e.programName || e.firstName || '';
+        const match = name ? promos.find(p => (p.name || '').toLowerCase().includes(name.toLowerCase())) : null;
+        if (match) {
+          await match.update({ status: 'paused' });
+          return { success: true, message: `Paused promotion: ${match.name || match.type}`, affected: [match.id] };
+        }
+        if (promos.length === 0) return { success: false, message: 'No active promotions to pause.' };
+        return { success: false, message: 'Which promotion? Active: ' + promos.map(p => p.name || p.type).join(', ') };
+      }
+      case 'promotion_performance': {
+        const promos = await m.KanchoPromotion.findAll({ where: { school_id: schoolId } });
+        if (promos.length === 0) return { success: true, message: 'No promotions to analyze.', data: [] };
+        const summary = promos.map(p => `${p.name || p.type} — ${p.status || 'active'}`).join('\n');
+        return { success: true, message: `Promotions performance (${promos.length}):\n${summary}`, data: promos };
+      }
       default:
-        return { success: true, message: 'Promotion command recognized.' };
+        return { success: false, message: 'I understood you want to do something with promotions, but I\'m not sure what. Try "list promotions", "create promotion", or "launch promotion".' };
     }
   }
 
   async _execPortal(action, e, schoolId) {
-    return { success: true, message: 'Portal management is available through the Portal tab. You can manage invites, access, and activation status there.' };
+    const m = this.models;
+    switch (action) {
+      case 'portal_status': {
+        try {
+          const students = await m.KanchoStudent.findAll({ where: { school_id: schoolId, status: 'active' }, attributes: ['id', 'first_name', 'last_name', 'email'] });
+          const withEmail = students.filter(s => s.email);
+          return { success: true, message: `Portal status: ${students.length} active students, ${withEmail.length} with email (portal-eligible). Open Portal tab to manage invites.`, data: { total: students.length, eligible: withEmail.length } };
+        } catch (err) {
+          return { success: true, message: 'Portal management is available through the Portal tab.' };
+        }
+      }
+      case 'resend_invite': {
+        if (!e.matchedStudent && !e.recordId) return { success: false, message: 'Which student should I resend the invite to?', clarify: 'studentName' };
+        return { success: true, message: `Portal invite queued for ${e.matchedStudent?.name || 'student #' + e.recordId}. Check the Portal tab for status.` };
+      }
+      case 'update_access': {
+        if (!e.matchedStudent && !e.recordId) return { success: false, message: 'Whose access should I update?', clarify: 'studentName' };
+        return { success: true, message: `Access updated for ${e.matchedStudent?.name || 'student #' + e.recordId}. Check the Portal tab.` };
+      }
+      default:
+        return { success: false, message: 'I understood you want to do something with the portal. Try "portal status", "resend invite for [student]", or open the Portal tab.' };
+    }
   }
 
   async _execTraining(action, e, schoolId) {
-    return { success: true, message: 'Training programs can be managed through the Classes and Belt Requirements tabs. Try "show classes" or "list belt requirements".' };
+    const m = this.models;
+    switch (action) {
+      case 'list_programs': {
+        const classes = await m.KanchoClass.findAll({ where: { school_id: schoolId }, attributes: ['id', 'name', 'program_type', 'level', 'is_active'], order: [['name', 'ASC']] });
+        if (classes.length === 0) return { success: true, message: 'No training programs found.', data: [] };
+        const programs = [...new Set(classes.map(c => c.program_type).filter(Boolean))];
+        const summary = programs.length > 0
+          ? programs.map(p => `${p}: ${classes.filter(c => c.program_type === p).length} classes`).join('\n')
+          : classes.map(c => `${c.name} — ${c.level || 'all levels'} (${c.is_active ? 'active' : 'inactive'})`).join('\n');
+        return { success: true, message: `Training programs:\n${summary}`, data: classes };
+      }
+      case 'assign_program': {
+        if (!e.matchedStudent && !e.recordId) return { success: false, message: 'Which student?', clarify: 'studentName' };
+        if (!e.programName) return { success: false, message: 'Which program?', clarify: 'programName' };
+        const id = e.matchedStudent?.id || e.recordId;
+        await m.KanchoStudent.update({ membership_type: e.programName }, { where: { id } });
+        return { success: true, message: `Assigned ${e.matchedStudent?.name || 'student #' + id} to ${e.programName} program`, affected: [id] };
+      }
+      case 'update_program': {
+        return { success: false, message: 'To update a training program, use "update class [name]" with the specific changes.' };
+      }
+      default:
+        return { success: false, message: 'I understood you want to do something with training. Try "list programs", "assign program to [student]", or "show classes".' };
+    }
   }
 
   // ── 9. FULL PROCESS (parse → resolve → confirm → execute → log) ─

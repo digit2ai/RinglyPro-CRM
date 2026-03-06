@@ -12,6 +12,8 @@ try { nlpEngine = new KanchoNLPEngine(kanchoModels); } catch (e) { console.log('
 
 // Pending confirmations stored in memory (keyed by schoolId:userId)
 const pendingConfirmations = new Map();
+// Pending disambiguation stored in memory (keyed by schoolId:userId)
+const pendingDisambiguations = new Map();
 
 // POST /process — Main NLP endpoint (chat + voice transcript)
 router.post('/process', async (req, res) => {
@@ -25,36 +27,79 @@ router.post('/process', async (req, res) => {
     if (!schoolId) return res.status(400).json({ success: false, error: 'school_id required' });
     if (!text) return res.status(400).json({ success: false, error: 'text required' });
 
+    const stateKey = schoolId + ':' + (userId || 'anon');
+
     // Check if this is a confirmation response to a pending action
-    const confirmKey = schoolId + ':' + (userId || 'anon');
-    const pending = pendingConfirmations.get(confirmKey);
+    const pending = pendingConfirmations.get(stateKey);
     if (pending) {
       const lower = text.toLowerCase().trim();
       if (lower === 'yes' || lower === 'y' || lower === 'confirm' || lower === 'ok' || lower === 'do it') {
-        pendingConfirmations.delete(confirmKey);
-        // Execute the pending command
+        pendingConfirmations.delete(stateKey);
         const result = await nlpEngine.execute(pending, schoolId, userId);
         await nlpEngine._log(schoolId, userId, channel, 'CONFIRM: ' + pending.raw, pending, result.success ? 'executed' : 'failed', result.message, result.affected);
         return res.json({ success: true, type: 'result', message: result.message, data: result.data });
       } else if (lower === 'no' || lower === 'n' || lower === 'cancel' || lower === 'nevermind') {
-        pendingConfirmations.delete(confirmKey);
+        pendingConfirmations.delete(stateKey);
         return res.json({ success: true, type: 'result', message: 'Action cancelled.' });
       }
-      // If not a yes/no, treat as a new command (clear pending)
-      pendingConfirmations.delete(confirmKey);
+      pendingConfirmations.delete(stateKey);
     }
 
     // Check if this is a disambiguation response (e.g. "1", "2", "#3")
-    // For now, let normal flow handle it
+    const disambig = pendingDisambiguations.get(stateKey);
+    if (disambig) {
+      const lower = text.toLowerCase().trim();
+      const numMatch = lower.match(/^#?(\d+)$/);
+      if (numMatch) {
+        const choice = parseInt(numMatch[1]) - 1; // 0-indexed
+        if (choice >= 0 && choice < disambig.candidates.length) {
+          pendingDisambiguations.delete(stateKey);
+          const chosen = disambig.candidates[choice];
+          const parsed = disambig.parsed;
+          // Set the matched entity based on domain
+          if (parsed.entities.studentCandidates) {
+            parsed.entities.matchedStudent = { id: chosen.id, name: chosen.name };
+            delete parsed.entities.studentCandidates;
+          } else if (parsed.entities.leadCandidates) {
+            parsed.entities.matchedLead = { id: chosen.id, name: chosen.name };
+            delete parsed.entities.leadCandidates;
+          } else if (parsed.entities.staffCandidates) {
+            parsed.entities.matchedStaff = { id: chosen.id, name: chosen.name };
+            delete parsed.entities.staffCandidates;
+          } else if (parsed.entities.classCandidates) {
+            parsed.entities.matchedClass = { id: chosen.id, name: chosen.name };
+            delete parsed.entities.classCandidates;
+          }
+          // Check if confirmation needed before executing
+          if (parsed.requiresConfirmation) {
+            pendingConfirmations.set(stateKey, parsed);
+            setTimeout(() => pendingConfirmations.delete(stateKey), 120000);
+            const preview = `I'm about to: **${parsed.action.replace(/_/g, ' ')}** for ${chosen.name}. Confirm? (yes/no)`;
+            return res.json({ success: true, type: 'confirmation', message: preview, parsed: { intent: parsed.intent, domain: parsed.domain, action: parsed.action, confidence: parsed.confidence, entities: Object.keys(parsed.entities).filter(k => !k.startsWith('matched') && !k.endsWith('Candidates')) } });
+          }
+          // Execute with resolved entity
+          const result = await nlpEngine.execute(parsed, schoolId, userId);
+          await nlpEngine._log(schoolId, userId, channel, 'DISAMBIG: ' + parsed.raw + ' → ' + chosen.name, parsed, result.success ? 'executed' : 'failed', result.message, result.affected);
+          return res.json({ success: true, type: 'result', message: result.message, data: result.data, parsed: { intent: parsed.intent, domain: parsed.domain, action: parsed.action, confidence: parsed.confidence, entities: Object.keys(parsed.entities).filter(k => !k.startsWith('matched') && !k.endsWith('Candidates')) } });
+        }
+      }
+      // If not a valid number, treat as a new command
+      pendingDisambiguations.delete(stateKey);
+    }
 
     // Process the command
     const result = await nlpEngine.process(text, schoolId, userId, channel);
 
     // If confirmation needed, store pending
     if (result.type === 'confirmation' && result.parsed) {
-      pendingConfirmations.set(confirmKey, result.parsed);
-      // Auto-expire after 2 minutes
-      setTimeout(() => pendingConfirmations.delete(confirmKey), 120000);
+      pendingConfirmations.set(stateKey, result.parsed);
+      setTimeout(() => pendingConfirmations.delete(stateKey), 120000);
+    }
+
+    // If disambiguation needed, store pending
+    if (result.type === 'disambiguation' && result.parsed && result.candidates) {
+      pendingDisambiguations.set(stateKey, { parsed: result.parsed, candidates: result.candidates });
+      setTimeout(() => pendingDisambiguations.delete(stateKey), 120000);
     }
 
     return res.json({
