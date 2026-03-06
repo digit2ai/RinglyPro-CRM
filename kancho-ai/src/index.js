@@ -8752,25 +8752,17 @@ app.get('*', (req, res) => {
         revenue_target: revenue.target || 0, revenue_percent: revenue.percent || 0
       };
 
-      // Show the "Start Talking" button instead of auto-creating widget
-      // This ensures the widget creation happens on a fresh user gesture (required for mic access)
-      container.innerHTML = '<button onclick="startVoiceWidget()" class="voice-start-btn"><div class="voice-start-orb"><i class="fas fa-microphone"></i></div><span>Tap to Start Talking</span></button>';
-      statusEl.textContent = 'Ready - Tap the microphone to begin';
-    }
+      // Auto-initiate: request mic permission then create widget immediately
+      statusEl.textContent = 'Requesting microphone...';
+      container.innerHTML = '<div style="text-align:center;padding:40px;"><div class="voice-start-orb" style="margin:0 auto;animation:orbPulse 1s ease-in-out infinite;"><i class="fas fa-microphone"></i></div><p style="color:#999;font-size:13px;margin-top:16px;">Connecting...</p></div>';
 
-    function startVoiceWidget() {
-      const container = document.getElementById('voiceWidgetContainer');
-      const statusEl = document.getElementById('voiceStatus');
-
-      // Request mic permission first (on this direct user gesture)
+      // Request mic on this user gesture (the button click that opened the modal)
       navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
-        // Permission granted - stop the test stream
         stream.getTracks().forEach(function(t) { t.stop(); });
-
         statusEl.textContent = 'Connecting...';
         container.innerHTML = '';
 
-        // Now create the ElevenLabs widget (mic already permitted)
+        // Create the ElevenLabs widget (mic already permitted)
         widgetElement = document.createElement('elevenlabs-convai');
         const agentId = (isAuthenticated && authClient?.elevenlabsAgentId) ? authClient.elevenlabsAgentId : KANCHO_VOICE_AGENT_ID;
         widgetElement.setAttribute('agent-id', agentId);
@@ -8778,10 +8770,8 @@ app.get('*', (req, res) => {
           widgetElement.setAttribute('dynamic-variables', JSON.stringify(pendingWidgetVars));
         }
         container.appendChild(widgetElement);
-
         console.log('[Kancho] Widget created with mic permission');
 
-        // Wait for widget to render, then update status
         let attempts = 0;
         function waitReady() {
           attempts++;
