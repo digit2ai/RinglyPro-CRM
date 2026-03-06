@@ -6565,6 +6565,8 @@ app.get('*', (req, res) => {
         <button class="tab-btn" onclick="switchTab('growthAdvisor')"><i class="fas fa-brain"></i> Growth AI</button>
         <button class="tab-btn" onclick="switchTab('promotionHistory')"><i class="fas fa-medal"></i> Promotions</button>
         <button class="tab-btn" onclick="switchTab('reports')"><i class="fas fa-file-export"></i> Reports</button>
+        <div style="border-top:1px solid #2A2A2A;margin:8px 0;"></div>
+        <button class="tab-btn" onclick="switchTab('userGuide')" style="color:#E85A4F;"><i class="fas fa-book-open"></i> User Guide</button>
       </div>
 
       <!-- Tab Content Area -->
@@ -7571,6 +7573,391 @@ app.get('*', (req, res) => {
           </div>
         </div>
       </div>
+
+    <!-- Tab: User Guide -->
+      <div id="tabUserGuide" class="tab-content">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-book-open text-kancho"></i> School User Guide</h2>
+          <button onclick="window.print()" class="btn-ghost text-sm"><i class="fas fa-print mr-1"></i> Print</button>
+        </div>
+
+        <!-- Welcome -->
+        <div class="card rounded-2xl p-6 mb-6" style="border:1px solid rgba(232,90,79,0.3);">
+          <div class="flex items-start gap-4">
+            <div class="w-12 h-12 rounded-xl bg-kancho-coral/20 flex items-center justify-center flex-shrink-0"><i class="fas fa-graduation-cap text-kancho text-xl"></i></div>
+            <div>
+              <h3 class="text-lg font-bold text-kancho mb-1">Welcome to KanchoAI</h3>
+              <p class="text-gray-300">KanchoAI is your all-in-one martial arts school management platform. This guide covers every feature available to help you manage students, instructors, billing, classes, marketing, and more — all from one dashboard.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table of Contents -->
+        <div class="card rounded-2xl p-6 mb-6">
+          <h3 class="text-lg font-bold mb-3"><i class="fas fa-list-ol text-kancho mr-2"></i>Table of Contents</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+            <div><a href="#" onclick="document.getElementById('guideGettingStarted').scrollIntoView({behavior:'smooth'});return false;" class="text-kancho hover:underline">1. Getting Started</a></div>
+            <div><a href="#" onclick="document.getElementById('guideStudents').scrollIntoView({behavior:'smooth'});return false;" class="text-kancho hover:underline">2. Students</a></div>
+            <div><a href="#" onclick="document.getElementById('guideLeads').scrollIntoView({behavior:'smooth'});return false;" class="text-kancho hover:underline">3. Leads</a></div>
+            <div><a href="#" onclick="document.getElementById('guideFamilies').scrollIntoView({behavior:'smooth'});return false;" class="text-kancho hover:underline">4. Families</a></div>
+            <div><a href="#" onclick="document.getElementById('guideStaff').scrollIntoView({behavior:'smooth'});return false;" class="text-kancho hover:underline">5. Staff & Instructors</a></div>
+            <div><a href="#" onclick="document.getElementById('guideBelts').scrollIntoView({behavior:'smooth'});return false;" class="text-kancho hover:underline">6. Belts & Promotions</a></div>
+            <div><a href="#" onclick="document.getElementById('guideClasses').scrollIntoView({behavior:'smooth'});return false;" class="text-kancho hover:underline">7. Classes & Schedule</a></div>
+            <div><a href="#" onclick="document.getElementById('guideCalendar').scrollIntoView({behavior:'smooth'});return false;" class="text-kancho hover:underline">8. Calendar</a></div>
+            <div><a href="#" onclick="document.getElementById('guidePayments').scrollIntoView({behavior:'smooth'});return false;" class="text-kancho hover:underline">9. Payments & Billing</a></div>
+            <div><a href="#" onclick="document.getElementById('guideMerch').scrollIntoView({behavior:'smooth'});return false;" class="text-kancho hover:underline">10. Merchandise</a></div>
+            <div><a href="#" onclick="document.getElementById('guidePortal').scrollIntoView({behavior:'smooth'});return false;" class="text-kancho hover:underline">11. Student Portal</a></div>
+            <div><a href="#" onclick="document.getElementById('guideAutomations').scrollIntoView({behavior:'smooth'});return false;" class="text-kancho hover:underline">12. AI Automations</a></div>
+            <div><a href="#" onclick="document.getElementById('guideTasks').scrollIntoView({behavior:'smooth'});return false;" class="text-kancho hover:underline">13. Tasks</a></div>
+            <div><a href="#" onclick="document.getElementById('guideCampaigns').scrollIntoView({behavior:'smooth'});return false;" class="text-kancho hover:underline">14. Campaigns</a></div>
+            <div><a href="#" onclick="document.getElementById('guideFunnels').scrollIntoView({behavior:'smooth'});return false;" class="text-kancho hover:underline">15. Funnels</a></div>
+            <div><a href="#" onclick="document.getElementById('guideGrowth').scrollIntoView({behavior:'smooth'});return false;" class="text-kancho hover:underline">16. Growth Advisor</a></div>
+            <div><a href="#" onclick="document.getElementById('guideReports').scrollIntoView({behavior:'smooth'});return false;" class="text-kancho hover:underline">17. Reports</a></div>
+            <div><a href="#" onclick="document.getElementById('guideNLP').scrollIntoView({behavior:'smooth'});return false;" class="text-kancho hover:underline">18. AI Command Center</a></div>
+            <div><a href="#" onclick="document.getElementById('guideVoice').scrollIntoView({behavior:'smooth'});return false;" class="text-kancho hover:underline">19. Voice Assistant</a></div>
+            <div><a href="#" onclick="document.getElementById('guideTips').scrollIntoView({behavior:'smooth'});return false;" class="text-kancho hover:underline">20. Tips & Best Practices</a></div>
+          </div>
+        </div>
+
+        <!-- 1. Getting Started -->
+        <div id="guideGettingStarted" class="card rounded-2xl p-6 mb-4">
+          <h3 class="text-lg font-bold mb-3 text-kancho"><i class="fas fa-rocket mr-2"></i>1. Getting Started</h3>
+          <div class="text-gray-300 text-sm space-y-3">
+            <p><strong class="text-white">Logging In:</strong> Enter your school email and password on the login page. After logging in, you'll see your <strong>Dashboard Overview</strong> with real-time metrics about your school's health.</p>
+            <p><strong class="text-white">Navigation:</strong> Use the sidebar on the left to switch between modules. Each tab opens a different management area. On mobile devices, the sidebar becomes a horizontal scrollable menu at the top.</p>
+            <p><strong class="text-white">Business Health Score:</strong> The Overview tab shows a score from 0-100 that reflects your school's overall health based on enrollment, retention, revenue trends, and class capacity. Aim for 70+ (Grade B or above).</p>
+            <p><strong class="text-white">Quick Actions:</strong> Use the red <i class="fas fa-terminal"></i> button in the bottom-right corner to open the AI Command Center. You can type natural language commands like "show at-risk students" or "add a new lead" instead of navigating through tabs.</p>
+          </div>
+        </div>
+
+        <!-- 2. Students -->
+        <div id="guideStudents" class="card rounded-2xl p-6 mb-4">
+          <h3 class="text-lg font-bold mb-3 text-kancho"><i class="fas fa-users mr-2"></i>2. Students</h3>
+          <div class="text-gray-300 text-sm space-y-3">
+            <p>The Students tab is your central hub for managing all enrolled members.</p>
+            <p><strong class="text-white">Adding a Student:</strong> Click the <strong>+ Add Student</strong> button. Fill in the name, email, phone, belt rank, and membership type. The student will be created with "Active" status.</p>
+            <p><strong class="text-white">Student Status Types:</strong></p>
+            <ul class="list-disc list-inside ml-4 space-y-1">
+              <li><span class="text-green-400">Active</span> — Currently enrolled and attending</li>
+              <li><span class="text-yellow-400">Trial</span> — On a trial period</li>
+              <li><span class="text-gray-400">Inactive</span> — Paused or no longer attending</li>
+              <li><span class="text-red-400">Cancelled</span> — Membership terminated</li>
+              <li><span class="text-orange-400">At Risk</span> — AI detected high churn risk (low attendance, missed payments)</li>
+            </ul>
+            <p><strong class="text-white">Filtering:</strong> Use the status dropdown at the top to filter by Active, Inactive, Trial, At-Risk, or All. Use the search bar to find students by name.</p>
+            <p><strong class="text-white">Editing:</strong> Click on any student row to view their profile. You can update their belt rank, status, membership type, contact info, and more.</p>
+            <p><strong class="text-white">Churn Risk:</strong> KanchoAI automatically scores students based on attendance frequency, payment history, and engagement. Students with high/critical churn risk appear as "At Risk" and are flagged in the overview dashboard.</p>
+          </div>
+        </div>
+
+        <!-- 3. Leads -->
+        <div id="guideLeads" class="card rounded-2xl p-6 mb-4">
+          <h3 class="text-lg font-bold mb-3 text-kancho"><i class="fas fa-fire mr-2"></i>3. Leads</h3>
+          <div class="text-gray-300 text-sm space-y-3">
+            <p>Leads are potential students who have shown interest but haven't enrolled yet.</p>
+            <p><strong class="text-white">Lead Sources:</strong> Track where each lead comes from — Facebook, Instagram, Google, Referral, Walk-in, Website, Phone, or Ads.</p>
+            <p><strong class="text-white">Lead Status:</strong></p>
+            <ul class="list-disc list-inside ml-4 space-y-1">
+              <li><span class="text-blue-400">New</span> — Just entered the system</li>
+              <li><span class="text-red-400">Hot</span> — High interest, follow up immediately</li>
+              <li><span class="text-yellow-400">Warm</span> — Interested but not ready yet</li>
+              <li><span class="text-gray-400">Cold</span> — Low interest, needs nurturing</li>
+              <li><span class="text-green-400">Converted</span> — Became a student</li>
+              <li><span class="text-gray-500">Archived</span> — No longer pursuing</li>
+            </ul>
+            <p><strong class="text-white">Converting Leads:</strong> When a lead enrolls, use the "Convert to Student" action. This creates a student record and links it back to the original lead for tracking your conversion pipeline.</p>
+            <p><strong class="text-white">AI Tip:</strong> Use the Command Center: <code class="bg-white/10 px-2 py-0.5 rounded text-xs">convert lead Emma Johnson to student</code></p>
+          </div>
+        </div>
+
+        <!-- 4. Families -->
+        <div id="guideFamilies" class="card rounded-2xl p-6 mb-4">
+          <h3 class="text-lg font-bold mb-3 text-kancho"><i class="fas fa-people-roof mr-2"></i>4. Families</h3>
+          <div class="text-gray-300 text-sm space-y-3">
+            <p>Group students into family accounts for unified billing, communication, and discounts.</p>
+            <p><strong class="text-white">Creating a Family:</strong> Click + New Family, enter the family name and primary contact info. Then assign students to the family from the student edit screen.</p>
+            <p><strong class="text-white">Family Benefits:</strong> Family accounts let you apply multi-student discounts, send communications to the parent/guardian, and view combined billing across all family members.</p>
+          </div>
+        </div>
+
+        <!-- 5. Staff & Instructors -->
+        <div id="guideStaff" class="card rounded-2xl p-6 mb-4">
+          <h3 class="text-lg font-bold mb-3 text-kancho"><i class="fas fa-id-badge mr-2"></i>5. Staff & Instructors</h3>
+          <div class="text-gray-300 text-sm space-y-3">
+            <p>Manage your teaching team, front desk staff, and school leadership.</p>
+            <p><strong class="text-white">Roles:</strong> Owner, Head Instructor, Instructor, Assistant, Front Desk. Each role can be assigned when adding or editing a staff member.</p>
+            <p><strong class="text-white">Assigning to Classes:</strong> Staff members can be assigned as the instructor for one or more classes. Use the Classes tab or type: <code class="bg-white/10 px-2 py-0.5 rounded text-xs">assign Marcus to Adult BJJ</code></p>
+            <p><strong class="text-white">Deactivation:</strong> When a staff member leaves, deactivate them instead of deleting to preserve history. This is a destructive action that requires confirmation.</p>
+          </div>
+        </div>
+
+        <!-- 6. Belts & Promotions -->
+        <div id="guideBelts" class="card rounded-2xl p-6 mb-4">
+          <h3 class="text-lg font-bold mb-3 text-kancho"><i class="fas fa-award mr-2"></i>6. Belts & Promotions</h3>
+          <div class="text-gray-300 text-sm space-y-3">
+            <p>Track student progression through the belt ranking system.</p>
+            <p><strong class="text-white">Belt Requirements:</strong> Define what each rank requires — minimum time in rank, attendance count, techniques, forms/kata, sparring rounds, etc. Students meeting requirements show up as "ready for testing."</p>
+            <p><strong class="text-white">Promoting a Student:</strong> From the Belts tab or the Command Center:</p>
+            <ul class="list-disc list-inside ml-4 space-y-1">
+              <li>Select the student and new belt rank</li>
+              <li>The old rank is recorded for history</li>
+              <li>A promotion record is automatically created</li>
+            </ul>
+            <p><strong class="text-white">AI Tip:</strong> <code class="bg-white/10 px-2 py-0.5 rounded text-xs">promote student Aiden Thompson to blue belt</code></p>
+          </div>
+        </div>
+
+        <!-- 7. Classes & Schedule -->
+        <div id="guideClasses" class="card rounded-2xl p-6 mb-4">
+          <h3 class="text-lg font-bold mb-3 text-kancho"><i class="fas fa-chalkboard-teacher mr-2"></i>7. Classes & Schedule</h3>
+          <div class="text-gray-300 text-sm space-y-3">
+            <p>Manage your weekly class schedule, instructor assignments, and capacity.</p>
+            <p><strong class="text-white">Class Properties:</strong> Each class has a name, program type (Kids, Teen, Adult, Competition, etc.), schedule (days + time), instructor, capacity, and active/inactive status.</p>
+            <p><strong class="text-white">Schedule Format:</strong> Classes use a weekly recurring schedule. For example, "Mon/Wed/Fri at 17:00" or "Tue/Thu at 18:15". The days and times appear in the class listing.</p>
+            <p><strong class="text-white">Capacity Tracking:</strong> Set maximum capacity per class. The system tracks fill rate to help you identify popular or underperforming classes.</p>
+            <p><strong class="text-white">Duplicating:</strong> Use "Duplicate Class" to quickly create a copy of an existing class with a different time slot or day.</p>
+          </div>
+        </div>
+
+        <!-- 8. Calendar -->
+        <div id="guideCalendar" class="card rounded-2xl p-6 mb-4">
+          <h3 class="text-lg font-bold mb-3 text-kancho"><i class="fas fa-calendar mr-2"></i>8. Calendar</h3>
+          <div class="text-gray-300 text-sm space-y-3">
+            <p>Schedule appointments, trial classes, private lessons, and events.</p>
+            <p><strong class="text-white">Creating Events:</strong> Click on a date in the monthly calendar view or click "+ New Appointment." Fill in the customer name, date, time, and purpose.</p>
+            <p><strong class="text-white">Confirmation Codes:</strong> Each appointment gets a unique code (e.g., KA-Q5F2TO) for easy lookup and confirmation via phone or SMS.</p>
+            <p><strong class="text-white">Event Types:</strong> Trial classes, private lessons, consultations, testing/grading events, parent meetings, and custom events.</p>
+            <p><strong class="text-white">AI Tip:</strong> <code class="bg-white/10 px-2 py-0.5 rounded text-xs">schedule private lesson for tomorrow at 3pm</code></p>
+          </div>
+        </div>
+
+        <!-- 9. Payments & Billing -->
+        <div id="guidePayments" class="card rounded-2xl p-6 mb-4">
+          <h3 class="text-lg font-bold mb-3 text-kancho"><i class="fas fa-dollar-sign mr-2"></i>9. Payments & Billing</h3>
+          <div class="text-gray-300 text-sm space-y-3">
+            <p><strong class="text-white">Payments Tab:</strong> View all transaction records — completed, failed, refunded. Filter by status to quickly see failed payments that need attention.</p>
+            <p><strong class="text-white">Billing Tab:</strong> Manage subscriptions for each student. You can:</p>
+            <ul class="list-disc list-inside ml-4 space-y-1">
+              <li><strong>Pause Billing</strong> — Temporarily freeze (vacation, injury)</li>
+              <li><strong>Resume Billing</strong> — Reactivate a paused subscription</li>
+              <li><strong>Cancel Membership</strong> — Permanently end (requires confirmation)</li>
+            </ul>
+            <p><strong class="text-white">Billing Report:</strong> Use the Command Center for a quick summary: <code class="bg-white/10 px-2 py-0.5 rounded text-xs">billing report</code></p>
+            <p><strong class="text-white">Revenue Tracking:</strong> The Overview dashboard shows monthly revenue trends and revenue at risk from at-risk students.</p>
+          </div>
+        </div>
+
+        <!-- 10. Merchandise -->
+        <div id="guideMerch" class="card rounded-2xl p-6 mb-4">
+          <h3 class="text-lg font-bold mb-3 text-kancho"><i class="fas fa-store mr-2"></i>10. Merchandise</h3>
+          <div class="text-gray-300 text-sm space-y-3">
+            <p>Track inventory for gis, belts, sparring gear, hoodies, and other pro-shop items.</p>
+            <p><strong class="text-white">Adding Products:</strong> Click + Add Product. Set the name, price, category, and initial stock quantity.</p>
+            <p><strong class="text-white">Low Stock Alerts:</strong> Products with fewer than 5 items in stock are flagged as "low stock" in the listing and in the overview dashboard.</p>
+            <p><strong class="text-white">AI Tip:</strong> <code class="bg-white/10 px-2 py-0.5 rounded text-xs">show low stock items</code></p>
+          </div>
+        </div>
+
+        <!-- 11. Student Portal -->
+        <div id="guidePortal" class="card rounded-2xl p-6 mb-4">
+          <h3 class="text-lg font-bold mb-3 text-kancho"><i class="fas fa-user-shield mr-2"></i>11. Student Portal</h3>
+          <div class="text-gray-300 text-sm space-y-3">
+            <p>The Student Portal gives parents and adult students a self-service view of their account.</p>
+            <p><strong class="text-white">Portal Features:</strong> Students can view their profile, belt history, upcoming classes, payment history, and attendance records.</p>
+            <p><strong class="text-white">Invitations:</strong> Send portal access invites to students who have email addresses on file. The portal badge in the sidebar shows how many accounts need attention.</p>
+          </div>
+        </div>
+
+        <!-- 12. AI Automations -->
+        <div id="guideAutomations" class="card rounded-2xl p-6 mb-4">
+          <h3 class="text-lg font-bold mb-3 text-kancho"><i class="fas fa-robot mr-2"></i>12. AI Automations</h3>
+          <div class="text-gray-300 text-sm space-y-3">
+            <p>Automations run actions automatically based on triggers you define.</p>
+            <p><strong class="text-white">How It Works:</strong></p>
+            <ol class="list-decimal list-inside ml-4 space-y-1">
+              <li><strong>Trigger</strong> — An event occurs (new lead, missed payment, student inactive for X days)</li>
+              <li><strong>Condition</strong> — Optional filter (only if status = hot, only if belt = white)</li>
+              <li><strong>Action</strong> — What happens (send SMS, create task, send email, change status)</li>
+            </ol>
+            <p><strong class="text-white">Examples:</strong></p>
+            <ul class="list-disc list-inside ml-4 space-y-1">
+              <li>When a lead is created, auto-send a welcome SMS</li>
+              <li>When a student misses 2 weeks, create a follow-up task</li>
+              <li>When a payment fails, send a reminder email</li>
+            </ul>
+            <p><strong class="text-white">Pause/Resume:</strong> You can pause any automation without deleting it. Use: <code class="bg-white/10 px-2 py-0.5 rounded text-xs">pause automation Follow-Up</code></p>
+          </div>
+        </div>
+
+        <!-- 13. Tasks -->
+        <div id="guideTasks" class="card rounded-2xl p-6 mb-4">
+          <h3 class="text-lg font-bold mb-3 text-kancho"><i class="fas fa-tasks mr-2"></i>13. Tasks</h3>
+          <div class="text-gray-300 text-sm space-y-3">
+            <p>A built-in task board for tracking follow-ups, to-dos, and action items.</p>
+            <p><strong class="text-white">Task Properties:</strong> Title, priority (low/medium/high/urgent), status (pending/in_progress/completed), due date, and assignee.</p>
+            <p><strong class="text-white">Overdue Tasks:</strong> Tasks past their due date that aren't completed are flagged as overdue.</p>
+            <p><strong class="text-white">AI Tip:</strong> <code class="bg-white/10 px-2 py-0.5 rounded text-xs">create task Follow up with Lisa Chen priority high due tomorrow</code></p>
+            <p><code class="bg-white/10 px-2 py-0.5 rounded text-xs">show overdue tasks</code></p>
+          </div>
+        </div>
+
+        <!-- 14. Campaigns -->
+        <div id="guideCampaigns" class="card rounded-2xl p-6 mb-4">
+          <h3 class="text-lg font-bold mb-3 text-kancho"><i class="fas fa-bullhorn mr-2"></i>14. Campaigns</h3>
+          <div class="text-gray-300 text-sm space-y-3">
+            <p>Run targeted marketing campaigns via SMS, email, or multi-channel outreach.</p>
+            <p><strong class="text-white">Campaign Types:</strong> SMS, Email, Voice, Multi-channel. Choose based on your audience and goal.</p>
+            <p><strong class="text-white">Campaign Lifecycle:</strong></p>
+            <ul class="list-disc list-inside ml-4 space-y-1">
+              <li><span class="text-gray-400">Draft</span> — Being set up, not yet sent</li>
+              <li><span class="text-green-400">Active</span> — Currently running</li>
+              <li><span class="text-yellow-400">Paused</span> — Temporarily stopped</li>
+              <li><span class="text-blue-400">Completed</span> — Finished its run</li>
+            </ul>
+            <p><strong class="text-white">Common Uses:</strong> Reactivation campaigns for inactive students, referral drives, seasonal specials, trial class promotions.</p>
+          </div>
+        </div>
+
+        <!-- 15. Funnels -->
+        <div id="guideFunnels" class="card rounded-2xl p-6 mb-4">
+          <h3 class="text-lg font-bold mb-3 text-kancho"><i class="fas fa-filter mr-2"></i>15. Funnels</h3>
+          <div class="text-gray-300 text-sm space-y-3">
+            <p>Build landing pages and conversion funnels to capture leads online.</p>
+            <p><strong class="text-white">Funnel Types:</strong> Trial Booking, Event Registration, Membership Signup, Referral.</p>
+            <p><strong class="text-white">How It Works:</strong> Create a funnel, customize the headline and form fields, then share the link on social media, your website, or in ads. Submissions automatically create leads in your pipeline.</p>
+            <p><strong class="text-white">Performance Tracking:</strong> View page views, form submissions, and conversion rates for each funnel.</p>
+          </div>
+        </div>
+
+        <!-- 16. Growth Advisor -->
+        <div id="guideGrowth" class="card rounded-2xl p-6 mb-4">
+          <h3 class="text-lg font-bold mb-3 text-kancho"><i class="fas fa-brain mr-2"></i>16. Growth Advisor</h3>
+          <div class="text-gray-300 text-sm space-y-3">
+            <p>AI-powered analytics that analyzes your school's data and provides actionable recommendations.</p>
+            <p><strong class="text-white">What It Shows:</strong></p>
+            <ul class="list-disc list-inside ml-4 space-y-1">
+              <li>Active student count and trends</li>
+              <li>Lead pipeline summary</li>
+              <li>Revenue trends and forecasts</li>
+              <li>At-risk student alerts</li>
+              <li>Program popularity analysis</li>
+            </ul>
+            <p><strong class="text-white">AI Tip:</strong> <code class="bg-white/10 px-2 py-0.5 rounded text-xs">give me growth insights</code></p>
+          </div>
+        </div>
+
+        <!-- 17. Reports -->
+        <div id="guideReports" class="card rounded-2xl p-6 mb-4">
+          <h3 class="text-lg font-bold mb-3 text-kancho"><i class="fas fa-file-export mr-2"></i>17. Reports</h3>
+          <div class="text-gray-300 text-sm space-y-3">
+            <p>Export data and generate summary reports for your records.</p>
+            <p><strong class="text-white">Available Reports:</strong> Student roster, billing summary, attendance reports, lead pipeline, revenue breakdown, and promotion history.</p>
+          </div>
+        </div>
+
+        <!-- 18. AI Command Center -->
+        <div id="guideNLP" class="card rounded-2xl p-6 mb-4">
+          <h3 class="text-lg font-bold mb-3 text-kancho"><i class="fas fa-terminal mr-2"></i>18. AI Command Center</h3>
+          <div class="text-gray-300 text-sm space-y-3">
+            <p>The red <i class="fas fa-terminal"></i> button in the bottom-right opens a chat interface where you can type natural language commands instead of clicking through tabs.</p>
+            <p><strong class="text-white">How It Works:</strong> Type what you want in plain English. The AI parses your intent, identifies the domain, extracts entities (names, dates, amounts), and executes the action.</p>
+            <p><strong class="text-white">Example Commands by Category:</strong></p>
+            <div class="space-y-2 mt-2">
+              <div><span class="text-xs text-kancho uppercase font-bold">Students</span>
+                <div class="ml-4 text-xs space-y-0.5 text-gray-400">
+                  <div><code class="bg-white/10 px-1.5 py-0.5 rounded">show at-risk students</code> <code class="bg-white/10 px-1.5 py-0.5 rounded">add student named John Smith</code> <code class="bg-white/10 px-1.5 py-0.5 rounded">list active students</code></div>
+                </div>
+              </div>
+              <div><span class="text-xs text-kancho uppercase font-bold">Leads</span>
+                <div class="ml-4 text-xs space-y-0.5 text-gray-400">
+                  <div><code class="bg-white/10 px-1.5 py-0.5 rounded">show hot leads</code> <code class="bg-white/10 px-1.5 py-0.5 rounded">create a new lead named Emma Johnson</code> <code class="bg-white/10 px-1.5 py-0.5 rounded">convert lead to student</code></div>
+                </div>
+              </div>
+              <div><span class="text-xs text-kancho uppercase font-bold">Classes</span>
+                <div class="ml-4 text-xs space-y-0.5 text-gray-400">
+                  <div><code class="bg-white/10 px-1.5 py-0.5 rounded">list all classes</code> <code class="bg-white/10 px-1.5 py-0.5 rounded">create class Kids BJJ on Monday at 4pm</code></div>
+                </div>
+              </div>
+              <div><span class="text-xs text-kancho uppercase font-bold">Calendar</span>
+                <div class="ml-4 text-xs space-y-0.5 text-gray-400">
+                  <div><code class="bg-white/10 px-1.5 py-0.5 rounded">show events for tomorrow</code> <code class="bg-white/10 px-1.5 py-0.5 rounded">schedule appointment for next week</code></div>
+                </div>
+              </div>
+              <div><span class="text-xs text-kancho uppercase font-bold">Belts</span>
+                <div class="ml-4 text-xs space-y-0.5 text-gray-400">
+                  <div><code class="bg-white/10 px-1.5 py-0.5 rounded">promote student Aiden to blue belt</code> <code class="bg-white/10 px-1.5 py-0.5 rounded">show students ready for testing</code></div>
+                </div>
+              </div>
+              <div><span class="text-xs text-kancho uppercase font-bold">Billing</span>
+                <div class="ml-4 text-xs space-y-0.5 text-gray-400">
+                  <div><code class="bg-white/10 px-1.5 py-0.5 rounded">show failed payments</code> <code class="bg-white/10 px-1.5 py-0.5 rounded">pause billing for student #5</code> <code class="bg-white/10 px-1.5 py-0.5 rounded">billing report</code></div>
+                </div>
+              </div>
+              <div><span class="text-xs text-kancho uppercase font-bold">Tasks</span>
+                <div class="ml-4 text-xs space-y-0.5 text-gray-400">
+                  <div><code class="bg-white/10 px-1.5 py-0.5 rounded">show overdue tasks</code> <code class="bg-white/10 px-1.5 py-0.5 rounded">create task follow up with Lisa high priority</code></div>
+                </div>
+              </div>
+              <div><span class="text-xs text-kancho uppercase font-bold">Growth</span>
+                <div class="ml-4 text-xs space-y-0.5 text-gray-400">
+                  <div><code class="bg-white/10 px-1.5 py-0.5 rounded">give me growth insights</code> <code class="bg-white/10 px-1.5 py-0.5 rounded">list training programs</code></div>
+                </div>
+              </div>
+            </div>
+            <p class="mt-3"><strong class="text-white">Confirmation Flow:</strong> Destructive actions (delete, archive, cancel) require you to type "yes" or "confirm" before executing.</p>
+            <p><strong class="text-white">Disambiguation:</strong> If multiple records match (e.g., two students named "Smith"), you'll be shown a numbered list. Type "1", "2", or "#3" to select.</p>
+            <p><strong class="text-white">Date Support:</strong> Use relative dates like "today", "tomorrow", "next week", "next month", or specific weekday names. They're automatically converted to actual dates.</p>
+          </div>
+        </div>
+
+        <!-- 19. Voice Assistant -->
+        <div id="guideVoice" class="card rounded-2xl p-6 mb-4">
+          <h3 class="text-lg font-bold mb-3 text-kancho"><i class="fas fa-microphone mr-2"></i>19. Voice Assistant</h3>
+          <div class="text-gray-300 text-sm space-y-3">
+            <p>KanchoAI includes a voice assistant powered by ElevenLabs. Look for the voice widget in the bottom-left corner.</p>
+            <p><strong class="text-white">What It Can Do:</strong> Answer questions about your school, help with booking appointments, provide quick summaries, and handle basic commands — all via natural conversation.</p>
+            <p><strong class="text-white">Best Used For:</strong> Hands-free operation when you're on the mat, quick lookups, and demonstrating AI capabilities to prospects.</p>
+          </div>
+        </div>
+
+        <!-- 20. Tips & Best Practices -->
+        <div id="guideTips" class="card rounded-2xl p-6 mb-4">
+          <h3 class="text-lg font-bold mb-3 text-kancho"><i class="fas fa-lightbulb mr-2"></i>20. Tips & Best Practices</h3>
+          <div class="text-gray-300 text-sm space-y-3">
+            <p><strong class="text-white">Daily Routine:</strong></p>
+            <ol class="list-decimal list-inside ml-4 space-y-1">
+              <li>Check the Overview dashboard for health score and alerts</li>
+              <li>Review today's calendar for upcoming trials and appointments</li>
+              <li>Check the Tasks tab for overdue follow-ups</li>
+              <li>Review any new leads and assign follow-up tasks</li>
+            </ol>
+            <p><strong class="text-white">Weekly Routine:</strong></p>
+            <ol class="list-decimal list-inside ml-4 space-y-1">
+              <li>Review at-risk students and reach out personally</li>
+              <li>Check failed payments and follow up</li>
+              <li>Review Growth Advisor insights</li>
+              <li>Update class capacity based on trends</li>
+              <li>Review campaign performance</li>
+            </ol>
+            <p><strong class="text-white">Pro Tips:</strong></p>
+            <ul class="list-disc list-inside ml-4 space-y-1">
+              <li>Use the AI Command Center for quick actions — it's faster than navigating tabs for common tasks</li>
+              <li>Set up automations for repetitive tasks (welcome SMS, follow-up reminders)</li>
+              <li>Keep lead sources accurate — this helps optimize your marketing spend</li>
+              <li>Update belt requirements to match your curriculum — the system will automatically flag students ready for testing</li>
+              <li>Use family accounts for sibling discounts and unified billing</li>
+              <li>Check merchandise stock weekly to avoid running out of gis before testing events</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Support -->
+        <div class="card rounded-2xl p-6 mb-4 text-center" style="border:1px solid rgba(232,90,79,0.3);">
+          <p class="text-gray-400 text-sm">Need help? Use the <strong class="text-kancho">AI Command Center</strong> or contact support via the WhatsApp button in the bottom-left corner.</p>
+          <p class="text-xs text-gray-600 mt-2">KanchoAI v1.0 — Powered by Digit2AI</p>
+        </div>
+
+      </div><!-- /tabUserGuide -->
 
     </div><!-- /tab-content-area -->
     </div><!-- /dashboard-layout -->
@@ -9102,6 +9489,7 @@ app.get('*', (req, res) => {
         else if (tabName === 'growthAdvisor') loadGrowthAdvisor();
         else if (tabName === 'promotionHistory') loadPromotions();
         else if (tabName === 'reports') {} // static, no data load needed
+        else if (tabName === 'userGuide') {} // static, no data load needed
         else if (tabName === 'funnels') loadFunnels();
       }
     }
