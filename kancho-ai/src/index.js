@@ -1053,6 +1053,10 @@ if (models && !modelsError) {
     app.use('/api/v1/funnels', funnelsRoutes);
     app.use('/api/v1/landing-pages', landingPagesRoutes);
 
+    // NLP Command Center route
+    const commandRoutes = require('./routes/command');
+    app.use('/api/v1/command', commandRoutes);
+
     // Admin routes (seed, etc.)
     const adminSeedRoutes = require('./routes/admin-seed');
     app.use('/api/v1/admin', adminSeedRoutes);
@@ -7572,6 +7576,42 @@ app.get('*', (req, res) => {
     </div><!-- /dashboard-layout -->
     </div><!-- /dashboardSection -->
 
+    <!-- NLP Command Center Chat Widget -->
+    <button id="cmdCenterBtn" onclick="toggleCommandCenter()" class="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-gradient-to-r from-kancho-coral to-red-600 text-white shadow-lg hover:shadow-xl transition-all flex items-center justify-center text-xl" title="Command Center" style="display:none;">
+      <i class="fas fa-terminal"></i>
+    </button>
+    <div id="cmdCenterPanel" class="hidden fixed bottom-24 right-6 z-50 w-96 max-h-[70vh] flex flex-col rounded-2xl shadow-2xl overflow-hidden" style="background:#1a1a1a;border:1px solid #2a2a2a;">
+      <!-- Header -->
+      <div class="px-4 py-3 flex items-center justify-between" style="background:#111;border-bottom:1px solid #2a2a2a;">
+        <div class="flex items-center gap-2">
+          <i class="fas fa-terminal text-kancho"></i>
+          <span class="font-bold text-sm">Command Center</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400">NLP</span>
+        </div>
+        <button onclick="toggleCommandCenter()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+      </div>
+      <!-- Suggestions -->
+      <div id="cmdSuggestions" class="px-3 py-2 flex gap-2 overflow-x-auto text-xs" style="border-bottom:1px solid #222;">
+        <button onclick="cmdSend('Show at-risk students')" class="whitespace-nowrap px-2 py-1 rounded-full bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition">At-risk students</button>
+        <button onclick="cmdSend('Show growth insights')" class="whitespace-nowrap px-2 py-1 rounded-full bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition">Growth insights</button>
+        <button onclick="cmdSend('List overdue tasks')" class="whitespace-nowrap px-2 py-1 rounded-full bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition">Overdue tasks</button>
+        <button onclick="cmdSend('Show failed payments')" class="whitespace-nowrap px-2 py-1 rounded-full bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition">Failed payments</button>
+      </div>
+      <!-- Messages -->
+      <div id="cmdMessages" class="flex-1 overflow-y-auto px-4 py-3 space-y-3" style="min-height:200px;max-height:400px;">
+        <div class="text-center text-gray-500 text-xs py-8">
+          <i class="fas fa-robot text-2xl text-kancho mb-2 block"></i>
+          Ask me anything about your school.<br>
+          <span class="text-gray-600">Try: "Show me at-risk students" or "Add a new lead named Emma"</span>
+        </div>
+      </div>
+      <!-- Input -->
+      <div class="px-3 py-3 flex gap-2" style="border-top:1px solid #2a2a2a;">
+        <input type="text" id="cmdInput" class="flex-1 px-3 py-2 rounded-lg text-sm" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#fff;" placeholder="Type a command..." onkeydown="if(event.key==='Enter')cmdSendInput()">
+        <button onclick="cmdSendInput()" class="px-3 py-2 rounded-lg bg-kancho text-white text-sm font-medium hover:bg-red-600 transition"><i class="fas fa-paper-plane"></i></button>
+      </div>
+    </div>
+
     <!-- Student Detail Slide Panel -->
     <div id="studentPanelOverlay" class="slide-panel-overlay" onclick="closeStudentDetail()"></div>
     <div id="studentDetailPanel" class="slide-panel">
@@ -8124,12 +8164,15 @@ app.get('*', (req, res) => {
       document.getElementById('dashboardSection').classList.remove('hidden');
       currentSchoolId = authSchool?.id;
       if (currentSchoolId) await loadDashboard(currentSchoolId);
+      showCmdCenter();
     }
 
     function logout() {
       localStorage.removeItem(AUTH_TOKEN_KEY);
       authToken = null; authUser = null; authSchool = null; authClient = null;
       isAuthenticated = false; currentSchoolId = null; currentSchoolData = null;
+      var cmdBtn = document.getElementById('cmdCenterBtn'); if (cmdBtn) cmdBtn.style.display = 'none';
+      var cmdPanel = document.getElementById('cmdCenterPanel'); if (cmdPanel) cmdPanel.classList.add('hidden'); cmdOpen = false;
       window.location.href = window.location.pathname;
     }
 
@@ -11132,6 +11175,69 @@ app.get('*', (req, res) => {
       loadSchools();
       loadClasses();
       checkSubscriptionSuccess(); // Legacy ?subscribe=success flow
+    }
+
+    // ==================== COMMAND CENTER (NLP) ====================
+    var cmdOpen = false;
+    function toggleCommandCenter() {
+      cmdOpen = !cmdOpen;
+      document.getElementById('cmdCenterPanel').classList.toggle('hidden', !cmdOpen);
+      if (cmdOpen) document.getElementById('cmdInput').focus();
+    }
+    function cmdSendInput() {
+      var input = document.getElementById('cmdInput');
+      var text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+      cmdSend(text);
+    }
+    function cmdSend(text) {
+      if (!currentSchoolId) { alert('Select a school first'); return; }
+      var msgs = document.getElementById('cmdMessages');
+      // Add user message
+      msgs.innerHTML += '<div class="flex justify-end"><div class="bg-kancho/20 text-white px-3 py-2 rounded-xl rounded-br-sm text-sm max-w-[80%]">' + escapeHtml(text) + '</div></div>';
+      msgs.scrollTop = msgs.scrollHeight;
+      // Show typing indicator
+      var typingId = 'typing-' + Date.now();
+      msgs.innerHTML += '<div id="' + typingId + '" class="flex justify-start"><div class="bg-white/5 text-gray-400 px-3 py-2 rounded-xl rounded-bl-sm text-sm"><i class="fas fa-circle-notch fa-spin mr-1"></i>Thinking...</div></div>';
+      msgs.scrollTop = msgs.scrollHeight;
+      // Call NLP API
+      fetch('/kanchoai/api/v1/command/process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+        body: JSON.stringify({ text: text, school_id: currentSchoolId, channel: 'chat' })
+      }).then(function(r) { return r.json(); }).then(function(d) {
+        var typing = document.getElementById(typingId);
+        if (typing) typing.remove();
+        var message = d.message || 'Done.';
+        var typeIcon = '';
+        if (d.type === 'confirmation') typeIcon = '<i class="fas fa-exclamation-triangle text-yellow-400 mr-1"></i>';
+        else if (d.type === 'disambiguation') typeIcon = '<i class="fas fa-question-circle text-blue-400 mr-1"></i>';
+        else if (d.type === 'clarification') typeIcon = '<i class="fas fa-comment-dots text-gray-400 mr-1"></i>';
+        else if (d.success) typeIcon = '<i class="fas fa-check-circle text-green-400 mr-1"></i>';
+        else typeIcon = '<i class="fas fa-times-circle text-red-400 mr-1"></i>';
+        var parsedBadge = d.parsed && d.parsed.domain ? '<div class="flex gap-1 mt-1"><span class="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-gray-500">' + d.parsed.domain + '</span><span class="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-gray-500">' + (d.parsed.action || d.parsed.intent) + '</span></div>' : '';
+        msgs.innerHTML += '<div class="flex justify-start"><div class="bg-white/5 text-gray-200 px-3 py-2 rounded-xl rounded-bl-sm text-sm max-w-[85%]">' + typeIcon + '<span style="white-space:pre-wrap;">' + escapeHtml(message) + '</span>' + parsedBadge + '</div></div>';
+        msgs.scrollTop = msgs.scrollHeight;
+        // Refresh relevant tab if action was executed
+        if (d.success && d.parsed && d.parsed.domain) {
+          var tabMap = { students: 'students', leads: 'leads', families: 'families', staff: 'staff', classes: 'classes', calendar: 'calendar', payments: 'billing', billing: 'billing', merch: 'merch', automations: 'automations', tasks: 'taskBoard', funnels: 'funnels', campaigns: 'campaigns', belts: 'beltRequirements' };
+          var tab = tabMap[d.parsed.domain];
+          if (tab && tabsLoaded[tab] !== undefined) tabsLoaded[tab] = false;
+        }
+      }).catch(function(err) {
+        var typing = document.getElementById(typingId);
+        if (typing) typing.remove();
+        msgs.innerHTML += '<div class="flex justify-start"><div class="bg-red-500/10 text-red-400 px-3 py-2 rounded-xl rounded-bl-sm text-sm">Error: ' + err.message + '</div></div>';
+        msgs.scrollTop = msgs.scrollHeight;
+      });
+    }
+    function escapeHtml(str) { return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+    // Show command center button when authenticated
+    function showCmdCenter() {
+      var btn = document.getElementById('cmdCenterBtn');
+      if (btn) btn.style.display = 'flex';
     }
 
     init();
