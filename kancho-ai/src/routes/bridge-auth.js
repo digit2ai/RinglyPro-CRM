@@ -23,6 +23,45 @@ try {
   }
 } catch (e) { console.log('Twilio not available for bridge:', e.message); }
 
+// DEBUG: Test auth flow (REMOVE AFTER DEBUG)
+router.get('/debug-auth', async (req, res) => {
+  try {
+    const email = req.query.email || 'carlos@tampabaybjj.com';
+    const result = { email, bridgeReady: !!crmBridge?.ready, kanchoModelsReady: !!kanchoModels };
+
+    if (kanchoModels) {
+      const school = await kanchoModels.KanchoSchool.findOne({ where: { owner_email: email } });
+      if (school) {
+        result.schoolFound = true;
+        result.schoolId = school.id;
+        result.settingsType = typeof school.settings;
+        result.settingsKeys = Object.keys(school.settings || {});
+        result.hasPasswordHash = !!(school.settings && school.settings.password_hash);
+        if (school.settings?.password_hash) {
+          result.hashPrefix = school.settings.password_hash.substring(0, 10);
+          const testMatch = await bcrypt.compare('KanchoAI2024!', school.settings.password_hash);
+          result.testPasswordMatch = testMatch;
+        }
+      } else {
+        result.schoolFound = false;
+      }
+    }
+
+    if (crmBridge?.ready) {
+      try {
+        const user = await crmBridge.User.findOne({ where: { email } });
+        result.bridgeUserFound = !!user;
+      } catch (e) {
+        result.bridgeError = e.message;
+      }
+    }
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Middleware: authenticate bridge JWT
 function authenticateBridge(req, res, next) {
   const token = req.headers.authorization?.replace('Bearer ', '');
