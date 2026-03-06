@@ -7691,6 +7691,27 @@ app.get('*', (req, res) => {
     body > elevenlabs-convai {
       display: none !important;
     }
+    /* Start Talking button */
+    .voice-start-btn {
+      display: flex; flex-direction: column; align-items: center; gap: 16px;
+      background: none; border: none; cursor: pointer; padding: 20px; color: #fff;
+      transition: transform 0.2s;
+    }
+    .voice-start-btn:hover { transform: scale(1.05); }
+    .voice-start-btn:active { transform: scale(0.95); }
+    .voice-start-orb {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: linear-gradient(135deg, #E85A4F, #c94a40);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px; color: white;
+      box-shadow: 0 0 30px rgba(232, 90, 79, 0.4), 0 4px 15px rgba(0,0,0,0.3);
+      animation: orbPulse 2s ease-in-out infinite;
+    }
+    @keyframes orbPulse {
+      0%, 100% { box-shadow: 0 0 30px rgba(232, 90, 79, 0.4), 0 4px 15px rgba(0,0,0,0.3); }
+      50% { box-shadow: 0 0 50px rgba(232, 90, 79, 0.6), 0 4px 20px rgba(0,0,0,0.4); }
+    }
+    .voice-start-btn span { font-size: 14px; font-weight: 600; color: #ccc; }
   </style>
 
   <script>
@@ -8370,6 +8391,9 @@ app.get('*', (req, res) => {
       openVoiceModal();
     }
 
+    // Store dynamic vars so we can create widget on user click
+    let pendingWidgetVars = null;
+
     function openVoiceModal() {
       const modal = document.getElementById('voiceModal');
       const schoolNameEl = document.getElementById('widgetSchoolName');
@@ -8379,7 +8403,6 @@ app.get('*', (req, res) => {
       // Show modal
       modal.classList.remove('hidden');
       modal.classList.add('flex');
-      statusEl.textContent = 'Starting conversation...';
 
       // Update school name
       if (isAuthenticated && authSchool) {
@@ -8390,89 +8413,81 @@ app.get('*', (req, res) => {
         schoolNameEl.textContent = selectedOption ? selectedOption.text : '';
       }
 
-      // Create widget with comprehensive dynamic variables
+      // Build dynamic variables
       const school = currentSchoolData?.school || {};
       const health = currentSchoolData?.health || {};
       const students = currentSchoolData?.students || {};
       const revenue = currentSchoolData?.revenue || {};
       const leads = currentSchoolData?.leads || {};
-
       const atRiskCount = students.at_risk || 0;
       const hotLeads = leads.hot || 0;
-
       const schoolId = parseInt(currentSchoolId, 10);
-      const dynamicVars = {
-        // ElevenLabs tool placeholder - maps to school_id
-        dynamic_variable: schoolId,
-        school_id: schoolId,
+
+      pendingWidgetVars = {
+        dynamic_variable: schoolId, school_id: schoolId,
         language: currentLanguage || 'en',
         school_name: school.name || 'your school',
         martial_art: school.martial_art_type || 'martial arts',
-        health_score: health.overall_score || 0,
-        health_grade: health.grade || 'N/A',
-        active_students: students.active || 0,
-        at_risk_students: atRiskCount,
-        revenue_at_risk: atRiskCount * 175,
-        hot_leads: hotLeads,
-        growth_potential: hotLeads * 175,
-        monthly_revenue: revenue.this_month || 0,
-        revenue_target: revenue.target || 0,
-        revenue_percent: revenue.percent || 0
+        health_score: health.overall_score || 0, health_grade: health.grade || 'N/A',
+        active_students: students.active || 0, at_risk_students: atRiskCount,
+        revenue_at_risk: atRiskCount * 175, hot_leads: hotLeads,
+        growth_potential: hotLeads * 175, monthly_revenue: revenue.this_month || 0,
+        revenue_target: revenue.target || 0, revenue_percent: revenue.percent || 0
       };
 
-      console.log('[Kancho] Creating widget with:', dynamicVars);
-
-      // Clear any existing widget
-      container.innerHTML = '';
-
-      // Create the ElevenLabs widget
-      widgetElement = document.createElement('elevenlabs-convai');
-      const agentId = (isAuthenticated && authClient?.elevenlabsAgentId) ? authClient.elevenlabsAgentId : KANCHO_VOICE_AGENT_ID;
-      widgetElement.setAttribute('agent-id', agentId);
-      widgetElement.setAttribute('dynamic-variables', JSON.stringify(dynamicVars));
-      container.appendChild(widgetElement);
-
-      // Auto-click the widget to start conversation
-      autoStartWidget();
+      // Show the "Start Talking" button instead of auto-creating widget
+      // This ensures the widget creation happens on a fresh user gesture (required for mic access)
+      container.innerHTML = '<button onclick="startVoiceWidget()" class="voice-start-btn"><div class="voice-start-orb"><i class="fas fa-microphone"></i></div><span>Tap to Start Talking</span></button>';
+      statusEl.textContent = 'Ready - Tap the microphone to begin';
     }
 
-    function autoStartWidget() {
-      let attempts = 0;
-      const maxAttempts = 20;
+    function startVoiceWidget() {
+      const container = document.getElementById('voiceWidgetContainer');
       const statusEl = document.getElementById('voiceStatus');
 
-      // Check microphone permission first
-      if (navigator.permissions && navigator.permissions.query) {
-        navigator.permissions.query({ name: 'microphone' }).then(function(result) {
-          if (result.state === 'denied') {
-            statusEl.innerHTML = '🎤 Microphone access blocked.<br><span style="font-size:12px;">Please click the lock icon 🔒 in your browser address bar → Allow Microphone → Reload the page.</span>';
-            statusEl.style.color = '#ff6b6b';
-          }
-        }).catch(function() {});
-      }
+      // Request mic permission first (on this direct user gesture)
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+        // Permission granted - stop the test stream
+        stream.getTracks().forEach(function(t) { t.stop(); });
 
-      function waitForWidget() {
-        attempts++;
-        if (!widgetElement) return;
+        statusEl.textContent = 'Connecting...';
+        container.innerHTML = '';
 
-        const shadowRoot = widgetElement.shadowRoot;
-        if (shadowRoot) {
-          const btn = shadowRoot.querySelector('button');
-          if (btn) {
-            console.log('[Kancho] Widget ready - waiting for user click');
-            statusEl.textContent = 'Ready - Click the orb to talk';
+        // Now create the ElevenLabs widget (mic already permitted)
+        widgetElement = document.createElement('elevenlabs-convai');
+        const agentId = (isAuthenticated && authClient?.elevenlabsAgentId) ? authClient.elevenlabsAgentId : KANCHO_VOICE_AGENT_ID;
+        widgetElement.setAttribute('agent-id', agentId);
+        if (pendingWidgetVars) {
+          widgetElement.setAttribute('dynamic-variables', JSON.stringify(pendingWidgetVars));
+        }
+        container.appendChild(widgetElement);
+
+        console.log('[Kancho] Widget created with mic permission');
+
+        // Wait for widget to render, then update status
+        let attempts = 0;
+        function waitReady() {
+          attempts++;
+          if (widgetElement?.shadowRoot?.querySelector('button')) {
+            statusEl.textContent = 'Connected - Click the orb to talk';
             return;
           }
+          if (attempts < 30) setTimeout(waitReady, 200);
+          else statusEl.textContent = 'Ready - Click the orb to talk';
         }
+        setTimeout(waitReady, 500);
 
-        if (attempts < maxAttempts) {
-          setTimeout(waitForWidget, 200);
+      }).catch(function(err) {
+        console.error('[Kancho] Mic permission error:', err);
+        statusEl.style.color = '#ff6b6b';
+        if (err.name === 'NotAllowedError') {
+          statusEl.textContent = 'Microphone blocked - check browser permissions';
+          container.innerHTML = '<div style="text-align:center;padding:20px;"><p style="color:#ff6b6b;font-size:16px;margin-bottom:12px;"><i class="fas fa-microphone-slash"></i> Microphone Access Required</p><p style="color:#999;font-size:13px;line-height:1.6;">Your browser blocked microphone access.<br>Click the <i class="fas fa-lock"></i> lock icon in your address bar,<br>set Microphone to <b>Allow</b>, then reload the page.</p></div>';
         } else {
-          statusEl.textContent = 'Click the orb to start talking';
+          statusEl.textContent = 'Microphone error: ' + err.message;
+          container.innerHTML = '<div style="text-align:center;padding:20px;color:#999;">Could not access microphone. Please try again.</div>';
         }
-      }
-
-      setTimeout(waitForWidget, 500);
+      });
     }
 
     function closeVoiceModal() {
