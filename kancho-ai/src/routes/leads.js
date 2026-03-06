@@ -138,6 +138,14 @@ module.exports = (models) => {
         lead_score: req.body.lead_score || 50
       });
 
+      // Fire automation event
+      try {
+        const app = req.app;
+        if (app.locals.automationEngine) {
+          app.locals.automationEngine.fireEvent('lead_created', lead.school_id, lead.toJSON());
+        }
+      } catch (ae) { /* non-blocking */ }
+
       res.status(201).json({ success: true, data: lead });
     } catch (error) {
       console.error('Error creating lead:', error);
@@ -200,6 +208,15 @@ module.exports = (models) => {
 
       // Update school active_students count
       await KanchoSchool.increment('active_students', { where: { id: lead.school_id } });
+
+      // Fire automation events
+      try {
+        const app = req.app;
+        if (app.locals.automationEngine) {
+          app.locals.automationEngine.fireEvent('lead_converted', lead.school_id, { lead: lead.toJSON(), student: student.toJSON() });
+          app.locals.automationEngine.fireEvent('student_enrolled', lead.school_id, student.toJSON());
+        }
+      } catch (ae) { /* non-blocking */ }
 
       res.json({
         success: true,

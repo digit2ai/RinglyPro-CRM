@@ -113,6 +113,14 @@ module.exports = (models) => {
       // Update school active_students count
       await KanchoSchool.increment('active_students', { where: { id: school_id } });
 
+      // Fire automation event
+      try {
+        const app = req.app;
+        if (app.locals.automationEngine) {
+          app.locals.automationEngine.fireEvent('student_enrolled', school_id, student.toJSON());
+        }
+      } catch (ae) { /* non-blocking */ }
+
       res.status(201).json({ success: true, data: student });
     } catch (error) {
       console.error('Error creating student:', error);
@@ -129,10 +137,21 @@ module.exports = (models) => {
         return res.status(404).json({ error: 'Student not found' });
       }
 
+      const oldBeltRank = student.belt_rank;
       await student.update({
         ...req.body,
         updated_at: new Date()
       });
+
+      // Fire belt rank automation if changed
+      if (req.body.belt_rank && req.body.belt_rank !== oldBeltRank) {
+        try {
+          const app = req.app;
+          if (app.locals.automationEngine) {
+            app.locals.automationEngine.fireEvent('belt_rank_updated', student.school_id, { ...student.toJSON(), old_belt_rank: oldBeltRank });
+          }
+        } catch (ae) { /* non-blocking */ }
+      }
 
       res.json({ success: true, data: student });
     } catch (error) {

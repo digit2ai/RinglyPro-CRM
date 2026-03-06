@@ -1026,6 +1026,9 @@ if (models && !modelsError) {
     const automationsRoutes = require('./routes/automations');
     const tasksRoutes = require('./routes/tasks');
     const communicationsRoutes = require('./routes/communications');
+    const campaignsRoutes = require('./routes/campaigns');
+    const growthAdvisorRoutes = require('./routes/growth-advisor');
+    const locationsRoutes = require('./routes/locations');
 
     app.use('/api/v1/membership-plans', membershipPlansRoutes);
     app.use('/api/v1/subscriptions', subscriptionsRoutes);
@@ -1035,6 +1038,20 @@ if (models && !modelsError) {
     app.use('/api/v1/automations', automationsRoutes);
     app.use('/api/v1/tasks', tasksRoutes);
     app.use('/api/v1/communications', communicationsRoutes);
+    app.use('/api/v1/campaigns', campaignsRoutes);
+    app.use('/api/v1/growth-advisor', growthAdvisorRoutes);
+    app.use('/api/v1/locations', locationsRoutes);
+
+    // Start Automation Engine (5-minute cron cycle)
+    try {
+      const KanchoAutomationEngine = require('../../services/kancho-automation-engine');
+      const automationEngine = new KanchoAutomationEngine(kanchoModels);
+      automationEngine.start();
+      app.locals.automationEngine = automationEngine;
+      console.log('🤖 KanchoAI Automation Engine started (5-min cycle)');
+    } catch (aeErr) {
+      console.log('⚠️ Automation Engine not started:', aeErr.message);
+    }
 
     console.log('🏛️ KanchoAI Platform modules mounted:');
     console.log('   /api/v1/membership-plans  (plan definitions)');
@@ -1045,6 +1062,9 @@ if (models && !modelsError) {
     console.log('   /api/v1/automations       (AI workflows)');
     console.log('   /api/v1/tasks             (task management)');
     console.log('   /api/v1/communications    (SMS/email/voice log)');
+    console.log('   /api/v1/campaigns         (marketing campaigns)');
+    console.log('   /api/v1/growth-advisor    (AI business insights)');
+    console.log('   /api/v1/locations         (multi-location)');
   } catch (platformError) {
     console.log('⚠️ KanchoAI Platform modules error:', platformError.message);
   }
