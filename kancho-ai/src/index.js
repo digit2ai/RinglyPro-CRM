@@ -3453,16 +3453,16 @@ app.get('/es', (req, res) => {
   </div>
 
   <!-- Voice Chat Modal -->
-  <div id="voiceModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] items-center justify-center p-4">
-    <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl">
-      <div class="p-6 border-b border-kancho-dark-border flex items-center justify-between">
+  <div id="voiceModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] items-center justify-center p-4" onclick="if(event.target===this)closeVoiceModal()">
+    <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-3xl w-full max-w-md overflow-hidden shadow-2xl" style="max-height:90vh;">
+      <div class="px-5 py-4 border-b border-kancho-dark-border flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <div class="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden bg-kancho-coral/20">
-            <img src="${KANCHO_LOGO_URL}" alt="Kancho" class="w-10 h-10 object-contain">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden bg-kancho-coral/20">
+            <img src="${KANCHO_LOGO_URL}" alt="Kancho" class="w-8 h-8 object-contain">
           </div>
           <div>
-            <h3 class="text-lg font-bold">Habla con Kancho</h3>
-            <p id="voiceStatus" class="text-sm text-gray-400">Iniciando conversación...</p>
+            <h3 class="text-base font-bold">Habla con Kancho</h3>
+            <p id="voiceStatus" class="text-xs text-gray-400">Listo - Haz clic en el orbe</p>
           </div>
         </div>
         <button onclick="closeVoiceModal()" class="p-2 hover:bg-white/10 rounded-lg transition">
@@ -3470,17 +3470,15 @@ app.get('/es', (req, res) => {
         </button>
       </div>
 
-      <div class="p-8 flex flex-col items-center justify-center min-h-[300px]">
-        <div id="voiceWidgetContainer" class="mb-4"></div>
-        <p id="widgetSchoolName" class="text-lg font-medium text-white mb-2"></p>
-        <p class="text-sm text-gray-400 text-center">
-          Haz clic en el orbe para hablar con Kancho.<br>
-          Pregunta sobre ingresos, miembros, prospectos y más.
-        </p>
+      <div id="voiceWidgetContainer" class="voice-widget-area"></div>
+
+      <div class="px-5 pb-3 text-center">
+        <p id="widgetSchoolName" class="text-base font-medium text-white mb-1"></p>
+        <p class="text-xs text-gray-500">Haz clic en el orbe para hablar. Pregunta sobre ingresos, miembros y más.</p>
       </div>
 
-      <div class="p-4 border-t border-kancho-dark-border">
-        <button onclick="closeVoiceModal()" class="w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl font-medium transition">
+      <div class="px-5 pb-5">
+        <button onclick="closeVoiceModal()" class="w-full py-2.5 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-medium transition">
           Terminar Conversación
         </button>
       </div>
@@ -3490,24 +3488,29 @@ app.get('/es', (req, res) => {
   <script src="https://elevenlabs.io/convai-widget/index.js" async type="text/javascript"></script>
 
   <style>
-    #voiceWidgetContainer {
+    .voice-widget-area {
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 180px;
+      min-height: 200px;
+      padding: 20px 0;
+      position: relative;
     }
-    #voiceWidgetContainer elevenlabs-convai {
+    .voice-widget-area elevenlabs-convai {
       position: relative !important;
       bottom: auto !important;
       right: auto !important;
-      transform: scale(1.8);
-      transform-origin: center center;
-      margin: 30px 0;
+      left: auto !important;
+      top: auto !important;
+      width: 100% !important;
+      height: 200px !important;
+      display: flex !important;
+      justify-content: center !important;
+      align-items: center !important;
     }
     elevenlabs-convai::part(powered-by) {
       display: none !important;
     }
-    /* Hide the default ElevenLabs widget that auto-renders in bottom-right */
     body > elevenlabs-convai {
       display: none !important;
     }
@@ -7616,17 +7619,17 @@ app.get('*', (req, res) => {
   </div>
 
   <!-- Voice Chat Modal - ElevenLabs Widget Auto-Start -->
-  <div id="voiceModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] items-center justify-center p-4">
-    <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl">
+  <div id="voiceModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] items-center justify-center p-4" onclick="if(event.target===this)closeVoiceModal()">
+    <div class="bg-kancho-dark-card border border-kancho-dark-border rounded-3xl w-full max-w-md overflow-hidden shadow-2xl" style="max-height:90vh;">
       <!-- Modal Header -->
-      <div class="p-6 border-b border-kancho-dark-border flex items-center justify-between">
+      <div class="px-5 py-4 border-b border-kancho-dark-border flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <div class="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden bg-kancho-coral/20">
-            <img src="${KANCHO_LOGO_URL}" alt="Kancho" class="w-10 h-10 object-contain">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden bg-kancho-coral/20">
+            <img src="${KANCHO_LOGO_URL}" alt="Kancho" class="w-8 h-8 object-contain">
           </div>
           <div>
-            <h3 class="text-lg font-bold">Talk to Kancho</h3>
-            <p id="voiceStatus" class="text-sm text-gray-400">Starting conversation...</p>
+            <h3 class="text-base font-bold">Talk to Kancho</h3>
+            <p id="voiceStatus" class="text-xs text-gray-400">Ready - Click the orb to talk</p>
           </div>
         </div>
         <button onclick="closeVoiceModal()" class="p-2 hover:bg-white/10 rounded-lg transition">
@@ -7635,21 +7638,19 @@ app.get('*', (req, res) => {
       </div>
 
       <!-- ElevenLabs Widget Container -->
-      <div class="p-8 flex flex-col items-center justify-center min-h-[300px]">
-        <div id="voiceWidgetContainer" class="mb-4">
-          <!-- Widget inserted here by JS and auto-started -->
-        </div>
+      <div id="voiceWidgetContainer" class="voice-widget-area">
+        <!-- Widget inserted here by JS -->
+      </div>
 
-        <p id="widgetSchoolName" class="text-lg font-medium text-white mb-2"></p>
-        <p class="text-sm text-gray-400 text-center">
-          Click the orb to talk to Kancho.<br>
-          Ask about revenue, members, leads, and more.
-        </p>
+      <!-- School name + instructions -->
+      <div class="px-5 pb-3 text-center">
+        <p id="widgetSchoolName" class="text-base font-medium text-white mb-1"></p>
+        <p class="text-xs text-gray-500">Click the orb to talk. Ask about revenue, members, leads, and more.</p>
       </div>
 
       <!-- Close Button -->
-      <div class="p-4 border-t border-kancho-dark-border">
-        <button onclick="closeVoiceModal()" class="w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl font-medium transition">
+      <div class="px-5 pb-5">
+        <button onclick="closeVoiceModal()" class="w-full py-2.5 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-medium transition">
           End Conversation
         </button>
       </div>
@@ -7660,20 +7661,27 @@ app.get('*', (req, res) => {
   <script src="https://elevenlabs.io/convai-widget/index.js" async type="text/javascript"></script>
 
   <style>
-    /* Style ElevenLabs widget in modal - center it */
-    #voiceWidgetContainer {
+    /* Voice widget area - give it room to render */
+    .voice-widget-area {
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 180px;
+      min-height: 200px;
+      padding: 20px 0;
+      position: relative;
     }
-    #voiceWidgetContainer elevenlabs-convai {
+    /* Force widget out of fixed positioning into flow */
+    .voice-widget-area elevenlabs-convai {
       position: relative !important;
       bottom: auto !important;
       right: auto !important;
-      transform: scale(1.8);
-      transform-origin: center center;
-      margin: 30px 0;
+      left: auto !important;
+      top: auto !important;
+      width: 100% !important;
+      height: 200px !important;
+      display: flex !important;
+      justify-content: center !important;
+      align-items: center !important;
     }
     /* Hide the powered-by branding */
     elevenlabs-convai::part(powered-by) {
