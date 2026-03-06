@@ -5567,15 +5567,16 @@ app.get('*', (req, res) => {
     .signup-modal .trial-note strong { color: #22C55E; }
     @media (max-width: 640px) { .signup-row { grid-template-columns: 1fr; } .signup-modal { padding: 24px 20px; } }
     /* Dashboard Tabs */
-    .tab-nav { display: flex; gap: 2px; background: #111; border: 1px solid #2A2A2A; border-radius: 12px; padding: 4px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .tab-btn { padding: 10px 20px; border: none; background: transparent; color: #6B7280; font-size: 14px; font-weight: 600; cursor: pointer; border-radius: 8px; white-space: nowrap; transition: all 0.2s; }
+    .tab-nav { display: flex; flex-wrap: wrap; gap: 2px; background: #111; border: 1px solid #2A2A2A; border-radius: 12px; padding: 4px; }
+    .tab-btn { padding: 8px 14px; border: none; background: transparent; color: #6B7280; font-size: 13px; font-weight: 600; cursor: pointer; border-radius: 8px; white-space: nowrap; transition: all 0.2s; }
     .tab-btn:hover { color: #D1D5DB; background: rgba(255,255,255,0.05); }
     .tab-btn.active { color: #E85A4F; background: rgba(232,90,79,0.1); }
+    .tab-separator { width: 1px; height: 28px; background: #2A2A2A; margin: auto 4px; flex-shrink: 0; }
     .tab-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #EF4444; color: #fff; font-size: 11px; font-weight: 700; margin-left: 6px; line-height: 1; animation: badgePulse 2s ease-in-out infinite; }
     @keyframes badgePulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
-    @media (max-width: 640px) { .tab-btn { padding: 8px 14px; font-size: 13px; } }
+    @media (max-width: 640px) { .tab-btn { padding: 6px 10px; font-size: 12px; } }
     /* Data Tables */
     .data-table { width: 100%; border-collapse: separate; border-spacing: 0; }
     .data-table th { text-align: left; padding: 12px 16px; font-size: 11px; text-transform: uppercase; color: #6B7280; font-weight: 600; border-bottom: 1px solid #2A2A2A; }
@@ -6516,25 +6517,28 @@ app.get('*', (req, res) => {
     <div id="dashboardSection" class="hidden fade-in">
       <!-- Tab Navigation -->
       <div class="tab-nav mb-6" id="dashboardTabs">
-        <button class="tab-btn active" onclick="switchTab('overview')"><i class="fas fa-chart-pie mr-1"></i><span class="hidden sm:inline">Overview</span><span class="sm:hidden">Home</span></button>
+        <button class="tab-btn active" onclick="switchTab('overview')"><i class="fas fa-chart-pie mr-1"></i>Overview</button>
         <button class="tab-btn" onclick="switchTab('students')"><i class="fas fa-users mr-1"></i>Students</button>
         <button class="tab-btn" onclick="switchTab('leads')"><i class="fas fa-fire mr-1"></i>Leads</button>
-        <button class="tab-btn" onclick="switchTab('calendar')"><i class="fas fa-calendar mr-1"></i>Calendar</button>
-        <button class="tab-btn" onclick="switchTab('payments')"><i class="fas fa-dollar-sign mr-1"></i>Payments</button>
-        <button class="tab-btn" onclick="switchTab('portalAccounts')"><i class="fas fa-user-shield mr-1"></i>Portal<span id="portalBadge" class="tab-badge" style="display:none"></span></button>
-        <button class="tab-btn" onclick="switchTab('merchandise')"><i class="fas fa-store mr-1"></i>Merch</button>
-        <button class="tab-btn" onclick="switchTab('belts')"><i class="fas fa-award mr-1"></i>Belts</button>
-        <button class="tab-btn" onclick="switchTab('classes')"><i class="fas fa-chalkboard-teacher mr-1"></i>Classes</button>
-        <button class="tab-btn" onclick="switchTab('billing')"><i class="fas fa-credit-card mr-1"></i>Billing</button>
         <button class="tab-btn" onclick="switchTab('families')"><i class="fas fa-people-roof mr-1"></i>Families</button>
         <button class="tab-btn" onclick="switchTab('staff')"><i class="fas fa-id-badge mr-1"></i>Staff</button>
+        <button class="tab-btn" onclick="switchTab('belts')"><i class="fas fa-award mr-1"></i>Belts</button>
+        <button class="tab-btn" onclick="switchTab('classes')"><i class="fas fa-chalkboard-teacher mr-1"></i>Classes</button>
+        <div class="tab-separator"></div>
+        <button class="tab-btn" onclick="switchTab('calendar')"><i class="fas fa-calendar mr-1"></i>Calendar</button>
+        <button class="tab-btn" onclick="switchTab('payments')"><i class="fas fa-dollar-sign mr-1"></i>Payments</button>
+        <button class="tab-btn" onclick="switchTab('billing')"><i class="fas fa-credit-card mr-1"></i>Billing</button>
+        <button class="tab-btn" onclick="switchTab('merchandise')"><i class="fas fa-store mr-1"></i>Merch</button>
+        <button class="tab-btn" onclick="switchTab('portalAccounts')"><i class="fas fa-user-shield mr-1"></i>Portal<span id="portalBadge" class="tab-badge" style="display:none"></span></button>
+        <div class="tab-separator"></div>
         <button class="tab-btn" onclick="switchTab('automations')"><i class="fas fa-robot mr-1"></i>AI Auto</button>
         <button class="tab-btn" onclick="switchTab('taskBoard')"><i class="fas fa-tasks mr-1"></i>Tasks</button>
         <button class="tab-btn" onclick="switchTab('campaigns')"><i class="fas fa-bullhorn mr-1"></i>Campaigns</button>
+        <button class="tab-btn" onclick="switchTab('funnels')"><i class="fas fa-filter mr-1"></i>Funnels</button>
+        <div class="tab-separator"></div>
         <button class="tab-btn" onclick="switchTab('growthAdvisor')"><i class="fas fa-brain mr-1"></i>Growth AI</button>
         <button class="tab-btn" onclick="switchTab('promotionHistory')"><i class="fas fa-medal mr-1"></i>Promotions</button>
         <button class="tab-btn" onclick="switchTab('reports')"><i class="fas fa-file-export mr-1"></i>Reports</button>
-        <button class="tab-btn" onclick="switchTab('funnels')"><i class="fas fa-filter mr-1"></i>Funnels</button>
       </div>
 
       <!-- Tab: Overview -->
