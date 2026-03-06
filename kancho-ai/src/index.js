@@ -1047,6 +1047,15 @@ if (models && !modelsError) {
       console.log('⚠️ KanchoAI Checkout routes not available:', checkoutError.message);
     }
 
+    // Native appointments route (replaces GHL appointment data with kancho_appointments table)
+    try {
+      const nativeAppointmentsRoutes = require('./routes/native-appointments');
+      app.use('/api/v1/appointments', bridgeAuth, nativeAppointmentsRoutes);
+      console.log('   /api/v1/appointments   (native KanchoAI appointments)');
+    } catch (apptError) {
+      console.log('⚠️ KanchoAI Native Appointments not available:', apptError.message);
+    }
+
   } catch (bridgeError) {
     console.log('⚠️ KanchoAI Bridge routes not available:', bridgeError.message);
   }
@@ -8699,7 +8708,7 @@ app.get('*', (req, res) => {
       try {
         const headers = {};
         if (authToken) headers['Authorization'] = 'Bearer ' + authToken;
-        const res = await fetch('/kanchoai/api/v1/bridge/crm/appointments/month?year=' + calendarYear + '&month=' + calendarMonth, { headers });
+        const res = await fetch('/kanchoai/api/v1/appointments/month?year=' + calendarYear + '&month=' + calendarMonth, { headers });
         const data = await res.json();
         calendarAppointments = data.data?.byDate || {};
         renderCalendarGrid();
@@ -8829,7 +8838,7 @@ app.get('*', (req, res) => {
       try {
         const headers = {};
         if (authToken) headers['Authorization'] = 'Bearer ' + authToken;
-        await fetch('/kanchoai/api/v1/bridge/crm/appointments/' + id, { method: 'DELETE', headers });
+        await fetch('/kanchoai/api/v1/appointments/' + id, { method: 'DELETE', headers });
         loadCalendar();
       } catch (e) { console.error('cancelAppointment error:', e); }
     }
@@ -8851,7 +8860,7 @@ app.get('*', (req, res) => {
         if (authToken) headers['Authorization'] = 'Bearer ' + authToken;
         let url, method;
         if (editId) {
-          url = '/kanchoai/api/v1/bridge/crm/appointments/' + editId;
+          url = '/kanchoai/api/v1/appointments/' + editId;
           method = 'PUT';
           body.customer_name = body.customerName;
           body.customer_phone = body.customerPhone;
@@ -8859,7 +8868,7 @@ app.get('*', (req, res) => {
           body.appointment_date = body.date;
           body.appointment_time = body.time;
         } else {
-          url = '/kanchoai/api/v1/bridge/crm/appointments';
+          url = '/kanchoai/api/v1/appointments';
           method = 'POST';
         }
         const res = await fetch(url, { method, headers, body: JSON.stringify(body) });
