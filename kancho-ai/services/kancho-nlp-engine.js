@@ -36,7 +36,7 @@ const DOMAINS = {
   merch: { aliases: ['merchandise', 'product', 'products', 'item', 'items', 'stock', 'inventory', 'hoodie', 'gi', 'gear'] },
   portal: { aliases: ['portal', 'access', 'invite', 'activation'] },
   automations: { aliases: ['automation', 'workflow', 'workflows', 'auto', 'trigger'] },
-  tasks: { aliases: ['task', 'to-do', 'todo', 'follow-up', 'followup', 'action item'] },
+  tasks: { aliases: ['task', 'tasks', 'to-do', 'todo', 'follow-up', 'followup', 'action item', 'overdue task', 'overdue tasks', 'pending task', 'pending tasks', 'create task', 'create a task'] },
   funnels: { aliases: ['funnel', 'pipeline', 'conversion'] },
   campaigns: { aliases: ['campaign', 'outreach', 'marketing', 'email blast', 'sms blast'] },
   growth: { aliases: ['growth', 'insight', 'insights', 'analytics', 'trend', 'trends', 'ai', 'advisor', 'summary', 'report'] },
@@ -47,7 +47,7 @@ const INTENT_PATTERNS = [
   // Create
   { intent: 'create', patterns: ['add', 'create', 'new', 'register', 'enroll', 'sign up', 'record', 'log', 'build', 'make', 'set up', 'setup', 'open'] },
   // Read
-  { intent: 'read', patterns: ['show', 'list', 'get', 'find', 'search', 'look up', 'lookup', 'view', 'display', 'who', 'what', 'how many', 'count', 'check'] },
+  { intent: 'read', patterns: ['show', 'list', 'get', 'give me', 'find', 'search', 'look up', 'lookup', 'view', 'display', 'who', 'what', 'how many', 'count', 'check'] },
   // Update
   { intent: 'update', patterns: ['update', 'edit', 'change', 'modify', 'move', 'set', 'assign', 'rename', 'switch', 'transfer', 'adjust'] },
   // Delete/Archive
@@ -69,7 +69,7 @@ const INTENT_PATTERNS = [
   // Schedule
   { intent: 'schedule', patterns: ['schedule', 'book', 'reserve', 'plan'] },
   // Assign
-  { intent: 'assign', patterns: ['assign', 'delegate', 'give'] },
+  { intent: 'assign', patterns: ['assign', 'delegate'] },
   // Duplicate
   { intent: 'duplicate', patterns: ['duplicate', 'copy', 'clone'] }
 ];
@@ -247,8 +247,8 @@ class KanchoNLPEngine {
 
     // Names — "named X Y", "called X Y", proper nouns
     const namePatterns = [
-      /(?:named?|called?|for|with)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i,
-      /(?:student|lead|member|coach|instructor|staff)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i
+      /(?:named?|called?|for|with)\s+([A-Z][a-z]+(?:\s+(?!from\b|in\b|on\b|to\b|at\b|for\b|with\b|and\b|or\b|the\b|into\b|as\b|by\b|about\b)[A-Z][a-z]+)?)/i,
+      /(?:student|lead|member|coach|instructor|staff)\s+([A-Z][a-z]+(?:\s+(?!from\b|in\b|on\b|to\b|at\b|for\b|with\b|and\b|or\b|the\b|into\b|as\b|by\b|about\b)[A-Z][a-z]+)?)/i
     ];
     for (const re of namePatterns) {
       const m = text.match(re);
@@ -298,7 +298,7 @@ class KanchoNLPEngine {
     if (daysMatch && !entities.dateOffset) entities.daysCount = parseInt(daysMatch[1]);
 
     // Status keywords
-    const statusKeywords = ['active', 'inactive', 'cancelled', 'past due', 'overdue', 'failed', 'pending', 'trial', 'paused', 'draft', 'completed', 'hot', 'warm', 'cold'];
+    const statusKeywords = ['at-risk', 'at risk', 'active', 'inactive', 'cancelled', 'past due', 'overdue', 'failed', 'pending', 'trial', 'paused', 'draft', 'completed', 'hot', 'warm', 'cold'];
     for (const s of statusKeywords) {
       if (norm.includes(s)) { entities.status = s; break; }
     }
@@ -523,9 +523,10 @@ class KanchoNLPEngine {
         else if (e.status === 'cancelled') where.status = 'cancelled';
         else if (e.status === 'trial') where.status = 'trial';
         else if (e.status === 'active') where.status = 'active';
-        // At-risk query
-        if (/at.risk|churn|retain/.test(e.status || '') || e.matchedStudent === undefined && /at.risk|churn/.test(JSON.stringify(e))) {
+        // At-risk query — status "at-risk" or "at risk" captured by entity extractor
+        if (/at.?risk|churn|retain/.test(e.status || '')) {
           where.churn_risk = { [Op.in]: ['high', 'critical'] };
+          delete where.status; // don't also filter by regular status when looking for at-risk
         }
         const students = await m.KanchoStudent.findAll({ where, order: [['first_name', 'ASC']], limit: 50 });
         if (students.length === 0) return { success: true, message: 'No students found matching that criteria.', data: [] };
@@ -676,20 +677,27 @@ class KanchoNLPEngine {
     switch (action) {
       case 'create_class': {
         if (!e.programName && !e.firstName) return { success: false, message: 'What should the class be called?', clarify: 'className' };
-        const data = { school_id: schoolId, name: e.programName || 'New Class', day_of_week: e.dayOfWeek || null, start_time: e.time || null, status: 'active' };
+        const schedule = {};
+        if (e.dayOfWeek) schedule.day = e.dayOfWeek;
+        if (e.time) schedule.time = e.time;
+        const data = { school_id: schoolId, name: e.programName || 'New Class', schedule, is_active: true };
         const cls = await m.KanchoClass.create(data);
-        return { success: true, message: `Created class: ${cls.name}${cls.day_of_week ? ' on ' + cls.day_of_week : ''}${cls.start_time ? ' at ' + cls.start_time : ''}`, data: cls, affected: [cls.id] };
+        const sched = cls.schedule || {};
+        return { success: true, message: `Created class: ${cls.name}${sched.day ? ' on ' + sched.day : ''}${sched.time ? ' at ' + sched.time : ''}`, data: cls, affected: [cls.id] };
       }
       case 'list_classes': {
-        const classes = await m.KanchoClass.findAll({ where: { school_id: schoolId }, order: [['day_of_week', 'ASC'], ['start_time', 'ASC']] });
+        const classes = await m.KanchoClass.findAll({ where: { school_id: schoolId }, order: [['name', 'ASC']] });
         if (classes.length === 0) return { success: true, message: 'No classes found.', data: [] };
-        const summary = classes.slice(0, 15).map(c => `${c.name} — ${c.day_of_week || '?'} ${c.start_time || ''} (${c.status})`).join('\n');
+        const summary = classes.slice(0, 15).map(c => {
+          const sched = c.schedule || {};
+          return `${c.name} — ${sched.day || '?'} ${sched.time || ''} (${c.is_active ? 'active' : 'inactive'})`;
+        }).join('\n');
         return { success: true, message: `Classes (${classes.length}):\n${summary}`, data: classes };
       }
       case 'cancel_class': {
         if (!e.matchedClass && !e.recordId) return { success: false, message: 'Which class should I cancel?', clarify: 'className' };
         const id = e.matchedClass?.id || e.recordId;
-        await m.KanchoClass.update({ status: 'cancelled' }, { where: { id } });
+        await m.KanchoClass.update({ is_active: false }, { where: { id } });
         return { success: true, message: `Cancelled class ${e.matchedClass?.name || '#' + id}`, affected: [id] };
       }
       default:
