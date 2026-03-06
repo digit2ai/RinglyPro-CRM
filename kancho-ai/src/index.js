@@ -1045,9 +1045,13 @@ if (models && !modelsError) {
     const rolesRoutes = require('./routes/roles');
     const promotionsRoutes = require('./routes/promotions');
     const reportsRoutes = require('./routes/reports');
+    const funnelsRoutes = require('./routes/funnels');
+    const landingPagesRoutes = require('./routes/landing-pages');
     app.use('/api/v1/roles', rolesRoutes);
     app.use('/api/v1/promotions', promotionsRoutes);
     app.use('/api/v1/reports', reportsRoutes);
+    app.use('/api/v1/funnels', funnelsRoutes);
+    app.use('/api/v1/landing-pages', landingPagesRoutes);
 
     // Start Automation Engine (5-minute cron cycle)
     try {
@@ -1075,6 +1079,8 @@ if (models && !modelsError) {
     console.log('   /api/v1/roles             (RBAC permissions)');
     console.log('   /api/v1/promotions        (belt promotion history)');
     console.log('   /api/v1/reports           (CSV/JSON exports)');
+    console.log('   /api/v1/funnels           (marketing funnels)');
+    console.log('   /api/v1/landing-pages     (hosted pages + public renderer)');
   } catch (platformError) {
     console.log('⚠️ KanchoAI Platform modules error:', platformError.message);
   }
@@ -6528,6 +6534,7 @@ app.get('*', (req, res) => {
         <button class="tab-btn" onclick="switchTab('growthAdvisor')"><i class="fas fa-brain mr-1"></i>Growth AI</button>
         <button class="tab-btn" onclick="switchTab('promotionHistory')"><i class="fas fa-medal mr-1"></i>Promotions</button>
         <button class="tab-btn" onclick="switchTab('reports')"><i class="fas fa-file-export mr-1"></i>Reports</button>
+        <button class="tab-btn" onclick="switchTab('funnels')"><i class="fas fa-filter mr-1"></i>Funnels</button>
       </div>
 
       <!-- Tab: Overview -->
@@ -6998,11 +7005,74 @@ app.get('*', (req, res) => {
       <div id="tabAutomations" class="tab-content">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-robot text-kancho"></i> AI Automations</h2>
-          <button class="btn-primary btn-sm" onclick="installAllAutomations()"><i class="fas fa-magic mr-1"></i> Install All Templates</button>
+          <div class="flex gap-2">
+            <button class="btn-ghost btn-sm" onclick="openWorkflowBuilder()"><i class="fas fa-project-diagram mr-1"></i> New Workflow</button>
+            <button class="btn-primary btn-sm" onclick="installAllAutomations()"><i class="fas fa-magic mr-1"></i> Install All Templates</button>
+          </div>
         </div>
         <p class="text-sm text-gray-400 mb-4">Automated workflows that run 24/7 to follow up leads, retain students, remind payments, and grow your school.</p>
+        <!-- Automation Stats -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+          <div class="card p-3 text-center"><div class="text-2xl font-bold text-green-400" id="autoActive">0</div><div class="text-xs text-gray-500">Active</div></div>
+          <div class="card p-3 text-center"><div class="text-2xl font-bold" id="autoTotal">0</div><div class="text-xs text-gray-500">Total</div></div>
+          <div class="card p-3 text-center"><div class="text-2xl font-bold text-blue-400" id="autoRuns">0</div><div class="text-xs text-gray-500">Total Runs</div></div>
+          <div class="card p-3 text-center"><div class="text-2xl font-bold text-purple-400" id="autoSuccess">0</div><div class="text-xs text-gray-500">Success Rate</div></div>
+        </div>
         <div id="automationsContainer" class="grid grid-cols-1 gap-3"></div>
         <p id="automationsEmpty" class="hidden text-center text-gray-500 py-12">No automations configured. Click "Install All Templates" to get started.</p>
+        <!-- Workflow Builder Modal -->
+        <div id="workflowModal" class="hidden fixed inset-0 z-50 flex items-center justify-center" style="background: rgba(0,0,0,0.8)">
+          <div class="card rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-bold"><i class="fas fa-project-diagram text-kancho mr-2"></i>Workflow Builder</h3>
+              <button class="btn-ghost" onclick="closeWorkflowBuilder()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="space-y-4">
+              <div><label class="block text-sm text-gray-400 mb-1">Workflow Name</label><input type="text" id="wfName" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="e.g. New Lead Follow-Up"></div>
+              <!-- Step 1: Trigger -->
+              <div class="card p-4 rounded-xl" style="border-left: 3px solid #E85A4F">
+                <div class="flex items-center gap-2 mb-2"><span class="w-6 h-6 rounded-full bg-kancho text-white text-xs flex items-center justify-center font-bold">1</span><span class="font-bold">WHEN (Trigger)</span></div>
+                <select id="wfTrigger" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff">
+                  <option value="event:lead_created">New lead is created</option>
+                  <option value="event:student_enrolled">Student enrolls</option>
+                  <option value="event:lead_converted">Lead converts to student</option>
+                  <option value="event:belt_rank_updated">Belt rank changes</option>
+                  <option value="condition:student_missed_classes">Student misses classes (3+ days)</option>
+                  <option value="condition:payment_past_due">Payment is past due</option>
+                  <option value="condition:student_cancelled">Student cancels</option>
+                  <option value="schedule:student_birthday">It's student's birthday</option>
+                  <option value="schedule:appointment_upcoming">Appointment is upcoming</option>
+                </select>
+              </div>
+              <!-- Step 2: Wait -->
+              <div class="flex justify-center"><i class="fas fa-arrow-down text-gray-600"></i></div>
+              <div class="card p-4 rounded-xl" style="border-left: 3px solid #3B82F6">
+                <div class="flex items-center gap-2 mb-2"><span class="w-6 h-6 rounded-full bg-blue-500 text-white text-xs flex items-center justify-center font-bold">2</span><span class="font-bold">WAIT (Optional Delay)</span></div>
+                <div class="flex gap-2">
+                  <input type="number" id="wfDelay" class="flex-1 p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" placeholder="0" min="0" value="0">
+                  <select id="wfDelayUnit" class="p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff">
+                    <option value="minutes">Minutes</option>
+                    <option value="hours" selected>Hours</option>
+                    <option value="days">Days</option>
+                  </select>
+                </div>
+              </div>
+              <!-- Step 3: Action -->
+              <div class="flex justify-center"><i class="fas fa-arrow-down text-gray-600"></i></div>
+              <div class="card p-4 rounded-xl" style="border-left: 3px solid #10B981">
+                <div class="flex items-center gap-2 mb-2"><span class="w-6 h-6 rounded-full bg-green-500 text-white text-xs flex items-center justify-center font-bold">3</span><span class="font-bold">THEN (Action)</span></div>
+                <select id="wfAction" class="w-full p-3 rounded-lg mb-2" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff">
+                  <option value="sms">Send SMS</option>
+                  <option value="call">AI Phone Call</option>
+                  <option value="task">Create Task</option>
+                  <option value="update">Update Record</option>
+                </select>
+                <textarea id="wfActionContent" class="w-full p-3 rounded-lg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff" rows="3" placeholder="Message template or task details. Use {first_name}, {phone}, {belt_rank} placeholders."></textarea>
+              </div>
+              <button class="btn-primary w-full py-3" onclick="saveWorkflow()"><i class="fas fa-save mr-2"></i>Save & Activate Workflow</button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Tab: Task Board -->
@@ -7134,6 +7204,22 @@ app.get('*', (req, res) => {
           </div>
         </div>
         <p class="text-center text-gray-500 text-sm mt-4">Click any report card to download as CSV. Data is scoped to your school.</p>
+      </div>
+
+      <!-- Tab: Funnels -->
+      <div id="tabFunnels" class="tab-content">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-filter text-kancho"></i> Marketing Funnels</h2>
+          <button class="btn-primary btn-sm" onclick="openFunnelForm()"><i class="fas fa-plus mr-1"></i> New Funnel</button>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+          <div class="card p-3 text-center"><div class="text-2xl font-bold" id="funnelTotal">0</div><div class="text-xs text-gray-500">Total Funnels</div></div>
+          <div class="card p-3 text-center"><div class="text-2xl font-bold text-green-400" id="funnelActive">0</div><div class="text-xs text-gray-500">Active</div></div>
+          <div class="card p-3 text-center"><div class="text-2xl font-bold text-blue-400" id="funnelViews">0</div><div class="text-xs text-gray-500">Total Views</div></div>
+          <div class="card p-3 text-center"><div class="text-2xl font-bold text-purple-400" id="funnelSubmissions">0</div><div class="text-xs text-gray-500">Submissions</div></div>
+        </div>
+        <div id="funnelsList"></div>
+        <p id="funnelsEmpty" class="hidden text-center text-gray-500 py-12">No funnels yet. Create your first lead capture funnel!</p>
       </div>
 
     </div><!-- /dashboardSection -->
@@ -8615,6 +8701,7 @@ app.get('*', (req, res) => {
         else if (tabName === 'growthAdvisor') loadGrowthAdvisor();
         else if (tabName === 'promotionHistory') loadPromotions();
         else if (tabName === 'reports') {} // static, no data load needed
+        else if (tabName === 'funnels') loadFunnels();
       }
     }
 
@@ -9844,26 +9931,73 @@ app.get('*', (req, res) => {
         const data = await res.json();
         const container = document.getElementById('automationsContainer');
         const empty = document.getElementById('automationsEmpty');
-        if (!data.success || !data.data.length) { container.innerHTML = ''; empty.classList.remove('hidden'); return; }
+        if (!data.success || !data.data.length) { container.innerHTML = ''; empty.classList.remove('hidden'); updateAutoStats([]); return; }
         empty.classList.add('hidden');
+        updateAutoStats(data.data);
         const typeIcons = { lead_followup: 'fa-bolt', trial_booking: 'fa-calendar-check', retention: 'fa-heart', reactivation: 'fa-redo', payment_reminder: 'fa-dollar-sign', welcome: 'fa-hand-sparkles', birthday: 'fa-birthday-cake', belt_promotion: 'fa-award', attendance_alert: 'fa-exclamation-triangle', custom: 'fa-cogs' };
         const typeColors = { lead_followup: 'text-blue-400', trial_booking: 'text-green-400', retention: 'text-pink-400', reactivation: 'text-purple-400', payment_reminder: 'text-yellow-400', welcome: 'text-emerald-400', birthday: 'text-orange-400', belt_promotion: 'text-red-400', attendance_alert: 'text-amber-400', custom: 'text-gray-400' };
-        container.innerHTML = data.data.map(a => '<div class="card p-4 rounded-xl flex items-start gap-4">' +
-          '<div class="text-2xl ' + (typeColors[a.type] || 'text-gray-400') + '"><i class="fas ' + (typeIcons[a.type] || 'fa-cogs') + '"></i></div>' +
-          '<div class="flex-1">' +
-          '<div class="flex justify-between items-start"><h4 class="font-bold">' + a.name + '</h4>' +
-          '<label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" ' + (a.is_active ? 'checked' : '') + ' onchange="toggleAutomation(' + a.id + ')" class="sr-only peer">' +
-          '<div class="w-9 h-5 bg-gray-600 rounded-full peer peer-checked:bg-green-500 after:content-[\'\'] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div></label></div>' +
-          '<div class="text-xs text-gray-400 mt-1">' + (a.type || '').replace(/_/g, ' ') + ' &middot; ' + a.trigger_type + '</div>' +
-          '<div class="text-xs text-gray-500 mt-1">' + (a.actions || []).length + ' action' + ((a.actions || []).length !== 1 ? 's' : '') + ' &middot; ' + (a.runs_count || 0) + ' runs &middot; ' + (a.success_count || 0) + ' success</div>' +
-          '</div></div>').join('');
+        const triggerLabels = { event: 'Event-based', schedule: 'Scheduled', condition: 'Condition-based' };
+        container.innerHTML = data.data.map(a => {
+          const actions = a.actions || [];
+          const actionIcons = { sms: 'fa-sms text-green-400', call: 'fa-phone text-blue-400', task: 'fa-tasks text-yellow-400', update: 'fa-edit text-purple-400' };
+          const flowViz = '<div class="flex items-center gap-1 mt-2 text-xs">' +
+            '<span class="px-2 py-1 rounded bg-red-500/20 text-red-300"><i class="fas fa-bolt mr-1"></i>' + (triggerLabels[a.trigger_type] || a.trigger_type) + '</span>' +
+            '<i class="fas fa-arrow-right text-gray-600"></i>' +
+            actions.map(act => '<span class="px-2 py-1 rounded bg-green-500/20 text-green-300"><i class="fas ' + (actionIcons[act.type] || 'fa-cog') + ' mr-1"></i>' + (act.type || '?') + '</span>').join('<i class="fas fa-arrow-right text-gray-600"></i>') +
+            '</div>';
+          return '<div class="card p-4 rounded-xl">' +
+            '<div class="flex items-start gap-4">' +
+            '<div class="text-2xl ' + (typeColors[a.type] || 'text-gray-400') + '"><i class="fas ' + (typeIcons[a.type] || 'fa-cogs') + '"></i></div>' +
+            '<div class="flex-1">' +
+            '<div class="flex justify-between items-start"><h4 class="font-bold">' + a.name + '</h4>' +
+            '<label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" ' + (a.is_active ? 'checked' : '') + ' onchange="toggleAutomation(' + a.id + ')" class="sr-only peer">' +
+            '<div class="w-9 h-5 bg-gray-600 rounded-full peer peer-checked:bg-green-500 after:content-[\'\'] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div></label></div>' +
+            '<div class="text-xs text-gray-400 mt-1">' + (a.type || '').replace(/_/g, ' ') + '</div>' +
+            flowViz +
+            '<div class="flex gap-4 text-xs text-gray-500 mt-2"><span><i class="fas fa-play mr-1"></i>' + (a.runs_count || 0) + ' runs</span><span class="text-green-400"><i class="fas fa-check mr-1"></i>' + (a.success_count || 0) + '</span><span class="text-red-400"><i class="fas fa-times mr-1"></i>' + (a.failure_count || 0) + '</span>' +
+            (a.last_run_at ? '<span><i class="fas fa-clock mr-1"></i>Last: ' + new Date(a.last_run_at).toLocaleDateString() + '</span>' : '') + '</div>' +
+            '</div></div></div>';
+        }).join('');
       } catch (e) { console.error('loadAutomations error:', e); }
+    }
+    function updateAutoStats(automations) {
+      document.getElementById('autoActive').textContent = automations.filter(a => a.is_active).length;
+      document.getElementById('autoTotal').textContent = automations.length;
+      const totalRuns = automations.reduce((s, a) => s + (a.runs_count || 0), 0);
+      const totalSuccess = automations.reduce((s, a) => s + (a.success_count || 0), 0);
+      document.getElementById('autoRuns').textContent = totalRuns;
+      document.getElementById('autoSuccess').textContent = totalRuns > 0 ? Math.round((totalSuccess / totalRuns) * 100) + '%' : '-';
     }
     function toggleAutomation(id) { fetch('/kanchoai/api/v1/automations/' + id + '/toggle', { method: 'POST', headers: { 'Authorization': 'Bearer ' + authToken } }).then(() => { tabsLoaded.automations = false; loadAutomations(); }); }
     function installAllAutomations() {
       fetch('/kanchoai/api/v1/automations/install-all', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
         body: JSON.stringify({ school_id: currentSchoolId })
       }).then(r => r.json()).then(d => { if (d.success) { alert(d.message); tabsLoaded.automations = false; loadAutomations(); } else alert(d.error || 'Failed'); });
+    }
+    function openWorkflowBuilder() { document.getElementById('workflowModal').classList.remove('hidden'); }
+    function closeWorkflowBuilder() { document.getElementById('workflowModal').classList.add('hidden'); }
+    function saveWorkflow() {
+      const name = document.getElementById('wfName').value;
+      if (!name) { alert('Workflow name is required'); return; }
+      const trigger = document.getElementById('wfTrigger').value;
+      const [triggerType, triggerEvent] = trigger.split(':');
+      const delay = parseInt(document.getElementById('wfDelay').value) || 0;
+      const delayUnit = document.getElementById('wfDelayUnit').value;
+      const actionType = document.getElementById('wfAction').value;
+      const actionContent = document.getElementById('wfActionContent').value;
+      const triggerConfig = {};
+      if (triggerType === 'event') triggerConfig.event = triggerEvent;
+      if (triggerType === 'condition') triggerConfig.condition = triggerEvent;
+      if (triggerType === 'schedule') triggerConfig.schedule = triggerEvent;
+      const actions = [];
+      if (delay > 0) actions.push({ type: 'wait', delay, unit: delayUnit });
+      actions.push({ type: actionType, content: actionContent, to: actionType === 'sms' ? '{phone}' : undefined });
+      fetch('/kanchoai/api/v1/automations', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+        body: JSON.stringify({ school_id: currentSchoolId, name, type: 'custom', trigger_type: triggerType, trigger_config: triggerConfig, actions, is_active: true })
+      }).then(r => r.json()).then(d => {
+        if (d.success) { closeWorkflowBuilder(); tabsLoaded.automations = false; loadAutomations(); alert('Workflow created and activated!'); }
+        else alert(d.error || 'Failed');
+      });
     }
 
     // ==================== TASK BOARD TAB ====================
@@ -10070,6 +10204,90 @@ app.get('*', (req, res) => {
           URL.revokeObjectURL(blobUrl);
         })
         .catch(err => alert('Export failed: ' + err.message));
+    }
+
+    // ==================== FUNNELS TAB ====================
+    async function loadFunnels() {
+      if (!currentSchoolId) return;
+      try {
+        const res = await fetch('/kanchoai/api/v1/funnels?school_id=' + currentSchoolId, { headers: { 'Authorization': 'Bearer ' + authToken } });
+        const data = await res.json();
+        const container = document.getElementById('funnelsList');
+        const empty = document.getElementById('funnelsEmpty');
+        if (!data.success || !data.data.length) { container.innerHTML = ''; empty.classList.remove('hidden'); updateFunnelStats([]); return; }
+        empty.classList.add('hidden');
+        updateFunnelStats(data.data);
+        const host = window.location.origin + '/kanchoai';
+        container.innerHTML = data.data.map(f => {
+          const stats = f.stats || { views: 0, submissions: 0, conversions: 0 };
+          const convRate = stats.views > 0 ? ((stats.submissions / stats.views) * 100).toFixed(1) : '0.0';
+          const statusColors = { draft: 'badge-gray', active: 'badge-green', paused: 'badge-yellow', archived: 'badge-gray' };
+          const pages = f.pages || [];
+          const publishedPage = pages.find(p => p.is_published);
+          const publicUrl = publishedPage ? host + '/api/v1/landing-pages/public/' + currentSchoolId + '/' + publishedPage.slug : null;
+          return '<div class="card rounded-xl p-4 mb-3">' +
+            '<div class="flex items-center justify-between mb-2">' +
+            '<div><h3 class="font-bold text-lg">' + f.name + '</h3>' +
+            '<div class="flex gap-2 mt-1"><span class="badge ' + (statusColors[f.status] || 'badge-gray') + '">' + (f.status || 'draft') + '</span>' +
+            '<span class="badge badge-blue">' + (f.type || 'lead_capture') + '</span>' +
+            '<span class="text-xs text-gray-500">' + pages.length + ' page(s)</span></div></div>' +
+            '<div class="flex gap-1">' +
+            (publicUrl ? '<a href="' + publicUrl + '" target="_blank" class="btn-ghost btn-sm text-green-400" title="View Live"><i class="fas fa-external-link-alt"></i></a>' : '') +
+            '<button class="btn-ghost btn-sm" onclick="editFunnel(' + f.id + ')"><i class="fas fa-edit"></i></button>' +
+            '<button class="btn-ghost btn-sm text-red-400" onclick="deleteFunnel(' + f.id + ')"><i class="fas fa-trash"></i></button></div></div>' +
+            '<div class="grid grid-cols-4 gap-3 text-center text-sm">' +
+            '<div><span class="text-lg font-bold">' + stats.views + '</span><br><span class="text-gray-500">Views</span></div>' +
+            '<div><span class="text-lg font-bold">' + stats.submissions + '</span><br><span class="text-gray-500">Submissions</span></div>' +
+            '<div><span class="text-lg font-bold">' + convRate + '%</span><br><span class="text-gray-500">Conv Rate</span></div>' +
+            '<div><span class="text-lg font-bold">' + stats.conversions + '</span><br><span class="text-gray-500">Conversions</span></div>' +
+            '</div>' +
+            (publicUrl ? '<div class="mt-2 text-xs text-gray-500 truncate"><i class="fas fa-link mr-1"></i>' + publicUrl + '</div>' : '') +
+            '</div>';
+        }).join('');
+        tabsLoaded.funnels = true;
+      } catch (err) { console.error('Funnels load error:', err); }
+    }
+    function updateFunnelStats(funnels) {
+      document.getElementById('funnelTotal').textContent = funnels.length;
+      document.getElementById('funnelActive').textContent = funnels.filter(f => f.status === 'active').length;
+      const totalViews = funnels.reduce((s, f) => s + ((f.stats || {}).views || 0), 0);
+      const totalSubs = funnels.reduce((s, f) => s + ((f.stats || {}).submissions || 0), 0);
+      document.getElementById('funnelViews').textContent = totalViews;
+      document.getElementById('funnelSubmissions').textContent = totalSubs;
+    }
+    function openFunnelForm() {
+      const name = prompt('Funnel Name:');
+      if (!name) return;
+      const type = prompt('Type (lead_capture, trial_booking, event_registration, membership_signup, referral):', 'trial_booking') || 'trial_booking';
+      const headline = prompt('Landing Page Headline:', 'Start Your Martial Arts Journey Today') || 'Start Your Martial Arts Journey Today';
+      fetch('/kanchoai/api/v1/funnels', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+        body: JSON.stringify({ school_id: currentSchoolId, name, type, headline })
+      }).then(r => r.json()).then(d => {
+        if (d.success) {
+          // Auto-publish the landing page
+          const pageId = d.data.page ? d.data.page.id : null;
+          if (pageId) {
+            fetch('/kanchoai/api/v1/landing-pages/' + pageId + '/publish', { method: 'POST', headers: { 'Authorization': 'Bearer ' + authToken } })
+              .then(() => { tabsLoaded.funnels = false; loadFunnels(); });
+          }
+          // Activate the funnel
+          fetch('/kanchoai/api/v1/funnels/' + d.data.funnel.id, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+            body: JSON.stringify({ status: 'active' })
+          }).then(() => { tabsLoaded.funnels = false; loadFunnels(); });
+          alert('Funnel created! Landing page auto-published.');
+        } else alert(d.error);
+      });
+    }
+    function editFunnel(id) {
+      const status = prompt('New Status (draft, active, paused, archived):', 'active');
+      if (!status) return;
+      fetch('/kanchoai/api/v1/funnels/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+        body: JSON.stringify({ status })
+      }).then(r => r.json()).then(d => { if (d.success) { tabsLoaded.funnels = false; loadFunnels(); } else alert(d.error); });
+    }
+    function deleteFunnel(id) {
+      if (!confirm('Delete this funnel and all its landing pages?')) return;
+      fetch('/kanchoai/api/v1/funnels/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + authToken } }).then(() => { tabsLoaded.funnels = false; loadFunnels(); });
     }
 
     // ==================== BELT REQUIREMENTS TAB ====================
