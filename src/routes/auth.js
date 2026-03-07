@@ -809,6 +809,537 @@ router.post('/complete-setup', async (req, res) => {
     }
 });
 
+// =====================================================
+// WCC PHASE 1: WCC-REGISTER — Web Call Center signup (no Twilio)
+// Skips business phone requirement, sets product_type = web_call_center
+// =====================================================
+router.post('/wcc-register', async (req, res) => {
+    const transaction = await sequelize.transaction();
+
+    try {
+        const {
+            email,
+            firstName,
+            lastName,
+            businessName,
+            businessPhone,  // Optional for WCC
+            businessType,
+            websiteUrl,
+            businessDescription,
+            businessHours,
+            services,
+            termsAccepted,
+            referralCode,
+            timezone,
+            businessDays,
+            plan,
+            billing
+        } = req.body;
+
+        console.log('📝 WCC Registration attempt:', { email, firstName, lastName, businessName, businessType, plan, billing });
+
+        // Validate required fields (NO business phone required for WCC)
+        if (!email || !firstName || !lastName) {
+            await transaction.rollback();
+            return res.status(400).json({ error: 'Email, first name, and last name are required' });
+        }
+
+        if (!businessName) {
+            await transaction.rollback();
+            return res.status(400).json({ error: 'Business name is required' });
+        }
+
+        if (!termsAccepted) {
+            await transaction.rollback();
+            return res.status(400).json({ error: 'You must accept the terms and conditions to register' });
+        }
+
+        // Check if user already exists
+        const existingUser = await User.findOne({ where: { email } });
+        if (existingUser) {
+            await transaction.rollback();
+            return res.status(409).json({ error: 'User already exists with this email' });
+        }
+
+        // Normalize optional phone
+        const normalizedBusinessPhone = businessPhone ? normalizePhoneFromSpeech(businessPhone) : null;
+
+        // Generate OTP
+        const otpCode = String(Math.floor(100000 + Math.random() * 900000));
+        const saltRounds = 12;
+        const passwordHash = await bcrypt.hash(otpCode, saltRounds);
+
+        const cleanWebsiteUrl = websiteUrl && websiteUrl.trim() !== '' ? websiteUrl.trim() : null;
+
+        // Server-side plan validation
+        const selectedPlan = SUBSCRIPTION_PLANS[plan] ? plan : 'starter';
+        const selectedBilling = (billing === 'annual') ? 'annual' : 'monthly';
+        const planDetails = SUBSCRIPTION_PLANS[selectedPlan];
+        const monthlyTokens = planDetails.tokens;
+        const monthlyPrice = planDetails.price;
+        const actualPrice = selectedBilling === 'annual'
+            ? Math.floor(monthlyPrice * 12 * (1 - ANNUAL_DISCOUNT))
+            : monthlyPrice;
+
+        console.log(`📊 WCC Plan: ${selectedPlan}, Price: $${actualPrice} (${selectedBilling}), Tokens: ${monthlyTokens}`);
+
+        // Create user
+        const user = await User.create({
+            email,
+            password_hash: passwordHash,
+            first_name: firstName,
+            last_name: lastName,
+            business_name: businessName,
+            business_phone: normalizedBusinessPhone,
+            business_type: businessType,
+            website_url: cleanWebsiteUrl,
+            business_description: businessDescription,
+            business_hours: businessHours,
+            services: services,
+            terms_accepted: termsAccepted,
+            free_trial_minutes: 0,
+            onboarding_completed: false,
+            subscription_plan: selectedPlan,
+            billing_frequency: selectedBilling,
+            subscription_status: 'checkout_pending',
+            trial_ends_at: null,
+            monthly_token_allocation: monthlyTokens,
+            tokens_balance: 0,
+            must_change_password: true,
+            otp_code: otpCode
+        }, { transaction });
+
+        console.log('✅ WCC User created:', user.id);
+
+        await transaction.commit();
+
+        // Stripe Checkout Session
+        const webhookBaseUrl = process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com';
+
+        if (process.env.SKIP_STRIPE_CHECKOUT === 'true') {
+            console.log(`🧪 TEST MODE: Skipping Stripe for WCC`);
+            await User.update({
+                stripe_customer_id: `cus_test_${user.id}`,
+                stripe_subscription_id: `sub_test_${user.id}`
+            }, { where: { id: user.id }, validate: false });
+
+            return res.status(201).json({
+                success: true,
+                message: 'WCC Registration successful (test mode). Call /api/auth/wcc-complete-setup.',
+                testMode: true,
+                userId: user.id
+            });
+        }
+
+        const session = await stripe.checkout.sessions.create({
+            customer_email: email,
+            payment_method_types: ['card'],
+            line_items: [{
+                price_data: {
+                    currency: 'usd',
+                    product_data: {
+                        name: `RinglyPro Web Call Center - ${planDetails.name} Plan`,
+                        description: `${monthlyTokens} tokens/month (${Math.floor(monthlyTokens / 5)} minutes of voice)`,
+                        images: ['https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/691756ffa6f5eb21b7794f1b.png'],
+                    },
+                    unit_amount: actualPrice * 100,
+                    recurring: {
+                        interval: selectedBilling === 'annual' ? 'year' : 'month',
+                        interval_count: 1
+                    }
+                },
+                quantity: 1
+            }],
+            mode: 'subscription',
+            subscription_data: {
+                metadata: {
+                    userId: user.id.toString(),
+                    plan: selectedPlan,
+                    monthlyTokens: monthlyTokens.toString(),
+                    billing: selectedBilling,
+                    rollover: planDetails.rollover.toString(),
+                    timezone: timezone || 'America/New_York',
+                    businessDays: businessDays || 'Mon,Tue,Wed,Thu,Fri',
+                    productType: 'web_call_center'
+                }
+            },
+            // Redirect to WCC completing page
+            success_url: `${webhookBaseUrl}/signup/webcallcenter/completing?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${webhookBaseUrl}/signup/webcallcenter`,
+            metadata: {
+                userId: user.id.toString(),
+                plan: selectedPlan,
+                monthlyTokens: monthlyTokens.toString(),
+                billing: selectedBilling,
+                referralCode: referralCode || '',
+                timezone: timezone || 'America/New_York',
+                businessDays: businessDays || 'Mon,Tue,Wed,Thu,Fri',
+                productType: 'web_call_center'
+            }
+        });
+
+        console.log(`✅ WCC Stripe checkout session: ${session.id}`);
+
+        await User.update({
+            stripe_customer_id: session.customer || null
+        }, { where: { id: user.id }, validate: false });
+
+        res.status(201).json({
+            success: true,
+            stripeCheckoutUrl: session.url
+        });
+
+    } catch (error) {
+        try { await transaction.rollback(); } catch (e) { /* already committed */ }
+        console.error('💥 WCC Registration error:', error);
+
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            return res.status(409).json({ error: 'An account with this email already exists' });
+        }
+        if (error.name === 'SequelizeValidationError') {
+            return res.status(400).json({ error: 'Validation error: ' + error.errors.map(e => e.message).join(', ') });
+        }
+
+        res.status(500).json({
+            error: 'Registration failed. Please try again.',
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+});
+
+// =====================================================
+// WCC PHASE 2: WCC-COMPLETE-SETUP — After Stripe checkout
+// Provisions ElevenLabs web agent only (NO Twilio)
+// Sets product_type = 'web_call_center' on client
+// =====================================================
+router.post('/wcc-complete-setup', async (req, res) => {
+    const transaction = await sequelize.transaction();
+
+    try {
+        const { session_id } = req.body;
+
+        if (!session_id) {
+            await transaction.rollback();
+            return res.status(400).json({ success: false, error: 'Stripe session ID is required' });
+        }
+
+        console.log(`🔄 WCC Complete-setup called with session_id: ${session_id}`);
+
+        // Verify Stripe session
+        let stripeSession;
+        try {
+            stripeSession = await stripe.checkout.sessions.retrieve(session_id, {
+                expand: ['subscription']
+            });
+        } catch (stripeError) {
+            await transaction.rollback();
+            console.error('❌ WCC Stripe session retrieval failed:', stripeError.message);
+            return res.status(400).json({ success: false, error: 'Invalid or expired checkout session' });
+        }
+
+        if (stripeSession.status !== 'complete') {
+            await transaction.rollback();
+            return res.status(400).json({ success: false, error: 'Checkout session is not complete' });
+        }
+
+        const userId = parseInt(stripeSession.metadata.userId);
+        const selectedPlan = stripeSession.metadata.plan;
+        const monthlyTokens = parseInt(stripeSession.metadata.monthlyTokens);
+        const selectedBilling = stripeSession.metadata.billing;
+        const referralCode = stripeSession.metadata.referralCode || null;
+        const metaTimezone = stripeSession.metadata.timezone || 'America/New_York';
+        const metaBusinessDays = stripeSession.metadata.businessDays || 'Mon,Tue,Wed,Thu,Fri';
+
+        console.log(`📋 WCC Session verified for user ${userId}, plan: ${selectedPlan}`);
+
+        // Prevent double-provisioning
+        if (Client) {
+            const existingClient = await Client.findOne({ where: { user_id: userId } });
+            if (existingClient) {
+                await transaction.rollback();
+                console.log(`⚠️ WCC Client already exists for user ${userId}`);
+
+                const user = await User.findByPk(userId);
+                const token = jwt.sign(
+                    {
+                        userId: user.id,
+                        email: user.email,
+                        businessName: user.business_name,
+                        businessType: user.business_type,
+                        clientId: existingClient.id
+                    },
+                    process.env.JWT_SECRET || 'your-super-secret-jwt-key',
+                    { expiresIn: '7d' }
+                );
+
+                return res.json({
+                    success: true,
+                    message: 'WCC Account already provisioned',
+                    alreadyProvisioned: true,
+                    data: {
+                        user: {
+                            id: user.id,
+                            email: user.email,
+                            firstName: user.first_name,
+                            lastName: user.last_name,
+                            businessName: user.business_name,
+                            subscriptionPlan: user.subscription_plan,
+                            subscriptionStatus: user.subscription_status,
+                            tokensBalance: user.tokens_balance
+                        },
+                        client: {
+                            id: existingClient.id,
+                            productType: 'web_call_center'
+                        },
+                        token
+                    }
+                });
+            }
+        }
+
+        // Load user
+        const user = await User.findByPk(userId);
+        if (!user) {
+            await transaction.rollback();
+            return res.status(404).json({ success: false, error: 'User not found' });
+        }
+
+        console.log(`👤 WCC User: ${user.first_name} ${user.last_name} (${user.email})`);
+
+        // Activate subscription
+        await User.update({
+            subscription_status: 'active',
+            trial_ends_at: null,
+            tokens_balance: monthlyTokens,
+            stripe_customer_id: stripeSession.customer,
+            stripe_subscription_id: stripeSession.subscription?.id || stripeSession.subscription || null
+        }, { where: { id: userId }, validate: false, transaction });
+
+        console.log(`✅ WCC User subscription activated, tokens: ${monthlyTokens}`);
+
+        // NO TWILIO PROVISIONING — WCC is web-only
+
+        // Referral code generation
+        let newClientReferralCode = null;
+        let referrerId = null;
+
+        if (generateUniqueReferralCode) {
+            try {
+                newClientReferralCode = await generateUniqueReferralCode();
+            } catch (e) {
+                console.error('⚠️ WCC Referral code generation error:', e.message);
+            }
+        }
+
+        if (referralCode && getClientByReferralCode) {
+            try {
+                const referrer = await getClientByReferralCode(referralCode);
+                if (referrer) referrerId = referrer.id;
+            } catch (e) {
+                console.error('⚠️ WCC Referrer lookup error:', e.message);
+            }
+        }
+
+        // Create Client record with product_type = web_call_center
+        if (!Client) {
+            await transaction.rollback();
+            return res.status(500).json({ success: false, error: 'System configuration error.' });
+        }
+
+        // For WCC clients: use unique placeholders for phone fields since no Twilio number
+        const wccPhonePlaceholder = `wcc-${userId}`;
+        const wccNumberPlaceholder = `wcc-agent-${userId}`;
+
+        let client = null;
+        try {
+            client = await Client.create({
+                business_name: user.business_name,
+                business_phone: user.business_phone || wccPhonePlaceholder,
+                ringlypro_number: wccNumberPlaceholder,
+                twilio_number_sid: null,
+                forwarding_status: 'inactive',
+                owner_name: `${user.first_name} ${user.last_name}`,
+                owner_phone: user.phone_number || user.business_phone || wccPhonePlaceholder,
+                owner_email: user.email,
+                custom_greeting: `Hello! Thank you for contacting ${user.business_name}. I'm your AI assistant.`,
+                business_hours_start: user.business_hours?.open ? user.business_hours.open + ':00' : '09:00:00',
+                business_hours_end: user.business_hours?.close ? user.business_hours.close + ':00' : '17:00:00',
+                business_days: metaBusinessDays,
+                timezone: metaTimezone,
+                appointment_duration: 30,
+                booking_enabled: true,
+                sms_notifications: false,  // No SMS for WCC
+                monthly_free_minutes: 100,
+                per_minute_rate: 0.10,
+                rachel_enabled: false,  // No phone Rachel for WCC
+                referral_code: newClientReferralCode,
+                referred_by: referrerId,
+                active: true,
+                user_id: user.id
+            }, { transaction });
+
+            console.log('✅ WCC Client record created:', client.id);
+
+            // Set product_type = web_call_center via raw query
+            await sequelize.query(
+                `UPDATE clients SET product_type = 'web_call_center' WHERE id = :clientId`,
+                { replacements: { clientId: client.id }, transaction }
+            );
+            console.log('✅ WCC product_type set to web_call_center');
+
+        } catch (clientError) {
+            console.error('❌ WCC Client creation error:', clientError);
+            await transaction.rollback();
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to create call center account.',
+                details: process.env.NODE_ENV === 'development' ? clientError.message : undefined
+            });
+        }
+
+        // Create credit account
+        try {
+            if (CreditAccount) {
+                await CreditAccount.create({
+                    client_id: client.id,
+                    balance: 0.00,
+                    free_minutes_used: 0
+                }, { transaction });
+                console.log('✅ WCC Credit account created');
+            }
+        } catch (creditError) {
+            console.error('⚠️ WCC Credit account error (non-fatal):', creditError);
+        }
+
+        // Commit transaction
+        await transaction.commit();
+        console.log('✅ WCC Transaction committed');
+
+        // ElevenLabs WEB agent provisioning (no phone import)
+        let elevenlabsProvisioned = false;
+
+        if (process.env.SKIP_ELEVENLABS_PROVISIONING !== 'true') {
+            try {
+                const elevenLabsProvisioning = require('../services/elevenLabsProvisioningService');
+                console.log('🤖 WCC: Provisioning ElevenLabs web agent...');
+
+                const elResult = await elevenLabsProvisioning.provisionWebAgent(
+                    {
+                        businessName: user.business_name,
+                        businessType: user.business_type,
+                        websiteUrl: user.website_url,
+                        businessDescription: user.business_description,
+                        businessHours: user.business_hours,
+                        services: user.services,
+                        ownerPhone: user.phone_number || user.business_phone || '',
+                        timezone: metaTimezone,
+                        businessDays: metaBusinessDays,
+                        language: 'en'
+                    },
+                    client.id
+                );
+
+                if (elResult.success) {
+                    await sequelize.query(
+                        `UPDATE clients SET elevenlabs_agent_id = :agentId WHERE id = :clientId`,
+                        { replacements: { agentId: elResult.agentId, clientId: client.id } }
+                    );
+                    elevenlabsProvisioned = true;
+                    console.log(`✅ WCC ElevenLabs web agent provisioned: ${elResult.agentId}`);
+                } else {
+                    console.error(`⚠️ WCC ElevenLabs failed (non-critical): ${elResult.error}`);
+                }
+            } catch (elError) {
+                console.error('⚠️ WCC ElevenLabs error (non-critical):', elError.message);
+            }
+        }
+
+        // Referral tracking
+        if (referralCode) {
+            try {
+                const referralService = require('../services/referralService');
+                await referralService.recordReferralSignup(user.id, referralCode, {
+                    signupIp: req.ip,
+                    source: 'wcc_registration'
+                });
+            } catch (e) {
+                console.error('⚠️ WCC Referral tracking error:', e.message);
+            }
+        }
+
+        // Send welcome email (no SMS for WCC - no phone)
+        try {
+            const emailResult = await sendWelcomeEmail({
+                email: user.email,
+                firstName: user.first_name,
+                lastName: user.last_name,
+                businessName: user.business_name,
+                ringlyproNumber: 'Web Call Center (browser-based)',
+                ccEmail: 'mstagg@digit2ai.com'
+            });
+
+            if (emailResult.success) {
+                console.log(`✅ WCC Welcome email sent to ${user.email}`);
+            }
+        } catch (emailError) {
+            console.error('⚠️ WCC Welcome email error:', emailError.message);
+        }
+
+        // Generate JWT
+        const token = jwt.sign(
+            {
+                userId: user.id,
+                email: user.email,
+                businessName: user.business_name,
+                businessType: user.business_type,
+                clientId: client.id
+            },
+            process.env.JWT_SECRET || 'your-super-secret-jwt-key',
+            { expiresIn: '7d' }
+        );
+
+        // Return success
+        res.json({
+            success: true,
+            message: 'Web Call Center setup complete!',
+            data: {
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    firstName: user.first_name,
+                    lastName: user.last_name,
+                    businessName: user.business_name,
+                    businessType: user.business_type,
+                    subscriptionPlan: selectedPlan,
+                    subscriptionStatus: 'active',
+                    tokensBalance: monthlyTokens
+                },
+                client: {
+                    id: client.id,
+                    productType: 'web_call_center',
+                    elevenlabsProvisioned: elevenlabsProvisioned
+                },
+                token,
+                redirectTo: '/webcallcenter/'
+            }
+        });
+
+        console.log(`🎉 WCC Setup complete: ${user.first_name} ${user.last_name} (${user.email})`);
+        console.log(`🤖 ElevenLabs: ${elevenlabsProvisioned ? 'YES' : 'NO'}`);
+        console.log(`👤 User: ${user.id}, Client: ${client.id}, Product: web_call_center`);
+
+    } catch (error) {
+        try { await transaction.rollback(); } catch (e) { /* already committed */ }
+        console.error('💥 WCC Complete-setup error:', error);
+
+        res.status(500).json({
+            success: false,
+            error: 'Web Call Center setup failed. Please try again or contact support.',
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+});
+
 // POST /api/auth/login - User login with enhanced debugging and business data
 router.post('/login', async (req, res) => {
     try {

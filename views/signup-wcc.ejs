@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RinglyPro - Web Call Center - Sign Up</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .dark-blue-bg {
+            background: #1f2937;
+        }
+        .glass-effect {
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            background-color: rgba(255, 255, 255, 0.75);
+            border: 1px solid rgba(209, 213, 219, 0.3);
+        }
+        .step-indicator {
+            transition: all 0.3s ease;
+        }
+        .step-active {
+            background: #d97706;
+            color: white;
+        }
+        .step-completed {
+            background: #10b981;
+            color: white;
+        }
+        .form-slide {
+            transition: transform 0.4s ease-in-out, opacity 0.4s ease-in-out;
+        }
+    </style>
+</head>
+<body class="dark-blue-bg min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full">
+        <!-- Logo and Header -->
+        <div class="text-center mb-8">
+            <a href="https://ringlypro.com" target="_blank" rel="noopener noreferrer" class="inline-block">
+                <img
+                    src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68e1d01be1be509a4f79755b.png"
+                    alt="RinglyPro Logo"
+                    class="mx-auto mb-4 hover:opacity-90 transition-opacity duration-200"
+                    style="height: 160px; width: auto;"
+                >
+            </a>
+            <div class="inline-flex items-center bg-amber-600/20 border border-amber-500/40 rounded-full px-4 py-1.5 mb-3">
+                <i class="fas fa-headset text-amber-400 mr-2"></i>
+                <span class="text-amber-300 text-sm font-semibold">Web Call Center</span>
+            </div>
+            <p class="text-gray-400">Create your browser-based AI call center</p>
+        </div>
+
+        <!-- Step Indicator with Labels -->
+        <div class="mb-8">
+            <div class="flex justify-between mb-3 px-2">
+                <div class="text-center flex-1">
+                    <p id="step1-label" class="text-xs font-medium text-amber-400">Account</p>
+                </div>
+                <div class="text-center flex-1">
+                    <p id="step2-label" class="text-xs font-medium text-gray-500">Business</p>
+                </div>
+                <div class="text-center flex-1">
+                    <p id="step3-label" class="text-xs font-medium text-gray-500">Customize</p>
+                </div>
+            </div>
+            <div class="flex justify-center">
+                <div class="flex items-center">
+                    <div id="step1-indicator" class="step-indicator step-active w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shadow-lg">1</div>
+                    <div class="w-12 h-1 bg-white bg-opacity-30"></div>
+                    <div id="step2-indicator" class="step-indicator w-10 h-10 rounded-full bg-white bg-opacity-30 flex items-center justify-center text-sm font-bold text-white">2</div>
+                    <div class="w-12 h-1 bg-white bg-opacity-30"></div>
+                    <div id="step3-indicator" class="step-indicator w-10 h-10 rounded-full bg-white bg-opacity-30 flex items-center justify-center text-sm font-bold text-white">3</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Form Container -->
+        <div class="glass-effect rounded-2xl shadow-2xl p-8 relative overflow-hidden">
+            <!-- Step 1: Account Information -->
+            <div id="step1" class="form-slide">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Account Information</h2>
+
+                <form id="accountForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                        <div class="relative">
+                            <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" id="firstName" class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent" placeholder="John" required>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                        <div class="relative">
+                            <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" id="lastName" class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent" placeholder="Doe" required>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                        <div class="relative">
+                            <i class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="email" id="email" class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent" placeholder="john@example.com" required>
+                        </div>
+                    </div>
+
+                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                        <div class="flex items-center">
+                            <i class="fas fa-headset text-amber-500 mr-2"></i>
+                            <p class="text-sm text-amber-700">Your AI call center will be browser-based — no phone number needed</p>
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="nextStep()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 transform hover:scale-105">
+                        Next Step <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Step 2: Business Information -->
+            <div id="step2" class="form-slide hidden">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Business Information</h2>
+
+                <form id="businessForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Business Name</label>
+                        <div class="relative">
+                            <i class="fas fa-building absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" id="businessName" class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent" placeholder="Acme Corporation" required>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Business Type</label>
+                        <div class="relative">
+                            <i class="fas fa-briefcase absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <select id="businessType" class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent appearance-none" required>
+                                <option value="">Select your industry</option>
+                                <option value="healthcare">Healthcare & Medical</option>
+                                <option value="legal">Legal Services</option>
+                                <option value="realestate">Real Estate</option>
+                                <option value="automotive">Automotive</option>
+                                <option value="retail">Retail & E-commerce</option>
+                                <option value="restaurant">Restaurant & Food</option>
+                                <option value="beauty">Beauty & Wellness</option>
+                                <option value="fitness">Fitness & Gym</option>
+                                <option value="professional">Professional Services</option>
+                                <option value="technology">Technology</option>
+                                <option value="education">Education</option>
+                                <option value="nonprofit">Non-Profit / Chamber</option>
+                                <option value="government">Government</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Website URL <span class="text-gray-400">(optional)</span></label>
+                        <div class="relative">
+                            <i class="fas fa-globe absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="url" id="websiteUrl" class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent" placeholder="https://your-website.com">
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">We'll analyze your website to customize AI responses</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Contact Phone <span class="text-gray-400">(optional)</span></label>
+                        <div class="relative">
+                            <i class="fas fa-phone absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="tel" id="phoneNumber" class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent" placeholder="+1 (555) 123-4567">
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Optional — for account recovery and notifications only</p>
+                    </div>
+
+                    <div class="flex space-x-3">
+                        <button type="button" onclick="previousStep()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold py-3 px-4 rounded-lg transition duration-300">
+                            <i class="fas fa-arrow-left mr-2"></i> Back
+                        </button>
+                        <button type="button" onclick="nextStep()" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300">
+                            Next Step <i class="fas fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Step 3: AI Customization + Plan Selection -->
+            <div id="step3" class="form-slide hidden">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">AI Customization</h2>
+
+                <form id="descriptionForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Business Description</label>
+                        <textarea id="businessDescription" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent resize-none" placeholder="Describe your business and services..." required></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Business Hours</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-xs text-gray-600">Open Time</label>
+                                <input type="time" id="openTime" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500" value="09:00">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-600">Close Time</label>
+                                <input type="time" id="closeTime" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500" value="17:00">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Timezone</label>
+                        <div class="relative">
+                            <i class="fas fa-globe-americas absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <select id="timezone" class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent appearance-none">
+                                <option value="America/New_York">Eastern Time (ET)</option>
+                                <option value="America/Chicago">Central Time (CT)</option>
+                                <option value="America/Denver">Mountain Time (MT)</option>
+                                <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                                <option value="America/Anchorage">Alaska Time (AKT)</option>
+                                <option value="Pacific/Honolulu">Hawaii Time (HT)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Business Days</label>
+                        <div class="flex flex-wrap gap-2">
+                            <label class="inline-flex items-center bg-white border border-gray-300 rounded-lg px-3 py-2 cursor-pointer hover:bg-amber-50 transition-colors">
+                                <input type="checkbox" value="Mon" class="business-day-cb h-4 w-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500" checked>
+                                <span class="ml-2 text-sm text-gray-700">Mon</span>
+                            </label>
+                            <label class="inline-flex items-center bg-white border border-gray-300 rounded-lg px-3 py-2 cursor-pointer hover:bg-amber-50 transition-colors">
+                                <input type="checkbox" value="Tue" class="business-day-cb h-4 w-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500" checked>
+                                <span class="ml-2 text-sm text-gray-700">Tue</span>
+                            </label>
+                            <label class="inline-flex items-center bg-white border border-gray-300 rounded-lg px-3 py-2 cursor-pointer hover:bg-amber-50 transition-colors">
+                                <input type="checkbox" value="Wed" class="business-day-cb h-4 w-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500" checked>
+                                <span class="ml-2 text-sm text-gray-700">Wed</span>
+                            </label>
+                            <label class="inline-flex items-center bg-white border border-gray-300 rounded-lg px-3 py-2 cursor-pointer hover:bg-amber-50 transition-colors">
+                                <input type="checkbox" value="Thu" class="business-day-cb h-4 w-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500" checked>
+                                <span class="ml-2 text-sm text-gray-700">Thu</span>
+                            </label>
+                            <label class="inline-flex items-center bg-white border border-gray-300 rounded-lg px-3 py-2 cursor-pointer hover:bg-amber-50 transition-colors">
+                                <input type="checkbox" value="Fri" class="business-day-cb h-4 w-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500" checked>
+                                <span class="ml-2 text-sm text-gray-700">Fri</span>
+                            </label>
+                            <label class="inline-flex items-center bg-white border border-gray-300 rounded-lg px-3 py-2 cursor-pointer hover:bg-amber-50 transition-colors">
+                                <input type="checkbox" value="Sat" class="business-day-cb h-4 w-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500">
+                                <span class="ml-2 text-sm text-gray-700">Sat</span>
+                            </label>
+                            <label class="inline-flex items-center bg-white border border-gray-300 rounded-lg px-3 py-2 cursor-pointer hover:bg-amber-50 transition-colors">
+                                <input type="checkbox" value="Sun" class="business-day-cb h-4 w-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500">
+                                <span class="ml-2 text-sm text-gray-700">Sun</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Common Services/Products</label>
+                        <input type="text" id="services" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent" placeholder="e.g., Appointments, Consultations, Support">
+                    </div>
+
+                    <!-- Plan Selection -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Choose Your Plan</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div id="planStarter" onclick="selectPlan('starter')" class="plan-card selected cursor-pointer border-2 border-amber-500 bg-amber-50 rounded-lg p-4 text-center transition-all hover:shadow-md">
+                                <h4 class="font-bold text-gray-800">Starter</h4>
+                                <p class="text-2xl font-bold text-amber-600 my-1">$45<span class="text-sm text-gray-500">/mo</span></p>
+                                <p class="text-xs text-gray-500">500 tokens (100 min)</p>
+                            </div>
+                            <div id="planGrowth" onclick="selectPlan('growth')" class="plan-card cursor-pointer border-2 border-gray-200 bg-white rounded-lg p-4 text-center transition-all hover:shadow-md">
+                                <h4 class="font-bold text-gray-800">Growth</h4>
+                                <p class="text-2xl font-bold text-amber-600 my-1">$180<span class="text-sm text-gray-500">/mo</span></p>
+                                <p class="text-xs text-gray-500">2,000 tokens (400 min)</p>
+                            </div>
+                        </div>
+                        <input type="hidden" id="selectedPlan" value="starter">
+                    </div>
+
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div class="flex items-start">
+                            <i class="fas fa-gift text-green-500 mt-1 mr-3"></i>
+                            <div>
+                                <h4 class="font-medium text-green-800 mb-1">14-Day Free Trial</h4>
+                                <p class="text-sm text-green-600">Try your Web Call Center risk-free for 14 days. No charge until the trial ends.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center">
+                        <input type="checkbox" id="termsAccepted" class="h-4 w-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500" required>
+                        <label for="termsAccepted" class="ml-2 text-sm text-gray-600">
+                            I agree to the <a href="#" class="text-amber-600 hover:underline">Terms of Service</a> and <a href="#" class="text-amber-600 hover:underline">Privacy Policy</a>
+                        </label>
+                    </div>
+
+                    <div class="flex space-x-3">
+                        <button type="button" onclick="previousStep()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold py-3 px-4 rounded-lg transition duration-300">
+                            <i class="fas fa-arrow-left mr-2"></i> Back
+                        </button>
+                        <button type="button" onclick="submitRegistration()" id="submitBtn" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 transform hover:scale-105">
+                            Create Account <i class="fas fa-check ml-2"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loadingState" class="hidden text-center py-12">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto mb-4"></div>
+                <h3 class="text-lg font-medium text-gray-700 mb-2">Setting up your account...</h3>
+                <p class="text-gray-500">This may take a moment</p>
+            </div>
+        </div>
+
+        <!-- Login Link -->
+        <div class="text-center mt-6">
+            <p class="text-gray-400">
+                Already have an account?
+                <a href="/login" class="text-amber-400 font-medium hover:underline">Sign in</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        let registrationData = {};
+
+        function selectPlan(plan) {
+            document.getElementById('selectedPlan').value = plan;
+            document.querySelectorAll('.plan-card').forEach(card => {
+                card.classList.remove('border-amber-500', 'bg-amber-50');
+                card.classList.add('border-gray-200', 'bg-white');
+            });
+            const selected = document.getElementById(plan === 'starter' ? 'planStarter' : 'planGrowth');
+            selected.classList.remove('border-gray-200', 'bg-white');
+            selected.classList.add('border-amber-500', 'bg-amber-50');
+        }
+
+        // Extract URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const referralCode = urlParams.get('ref');
+        const planFromUrl = urlParams.get('plan');
+        const billingFromUrl = urlParams.get('billing');
+
+        if (planFromUrl && (planFromUrl === 'growth' || planFromUrl === 'starter')) {
+            setTimeout(() => selectPlan(planFromUrl), 0);
+        }
+
+        function nextStep() {
+            if (!validateCurrentStep()) return;
+            storeCurrentStepData();
+            if (currentStep < 3) {
+                document.getElementById('step' + currentStep).classList.add('hidden');
+                currentStep++;
+                document.getElementById('step' + currentStep).classList.remove('hidden');
+                updateStepIndicators();
+            }
+        }
+
+        function previousStep() {
+            if (currentStep > 1) {
+                document.getElementById('step' + currentStep).classList.add('hidden');
+                currentStep--;
+                document.getElementById('step' + currentStep).classList.remove('hidden');
+                updateStepIndicators();
+            }
+        }
+
+        function updateStepIndicators() {
+            for (let i = 1; i <= 3; i++) {
+                const indicator = document.getElementById('step' + i + '-indicator');
+                const label = document.getElementById('step' + i + '-label');
+                indicator.className = 'step-indicator w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold';
+                if (i < currentStep) {
+                    indicator.className += ' step-completed shadow-lg';
+                    label.className = 'text-xs font-medium text-green-400';
+                } else if (i === currentStep) {
+                    indicator.className += ' step-active shadow-lg';
+                    label.className = 'text-xs font-medium text-amber-400';
+                } else {
+                    indicator.className += ' bg-white bg-opacity-30 text-white';
+                    label.className = 'text-xs font-medium text-gray-500';
+                }
+            }
+        }
+
+        function validateCurrentStep() {
+            const formId = currentStep === 1 ? 'accountForm' : currentStep === 2 ? 'businessForm' : 'descriptionForm';
+            const currentForm = document.getElementById(formId);
+            const requiredFields = currentForm.querySelectorAll('[required]');
+            for (const field of requiredFields) {
+                if (!field.value.trim()) {
+                    field.focus();
+                    field.classList.add('border-red-500');
+                    setTimeout(() => field.classList.remove('border-red-500'), 3000);
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function storeCurrentStepData() {
+            if (currentStep === 1) {
+                registrationData = {
+                    firstName: document.getElementById('firstName').value,
+                    lastName: document.getElementById('lastName').value,
+                    email: document.getElementById('email').value
+                };
+            } else if (currentStep === 2) {
+                registrationData = {
+                    ...registrationData,
+                    businessName: document.getElementById('businessName').value,
+                    businessType: document.getElementById('businessType').value,
+                    websiteUrl: document.getElementById('websiteUrl').value,
+                    businessPhone: document.getElementById('phoneNumber').value || null
+                };
+            }
+        }
+
+        async function submitRegistration() {
+            if (!validateCurrentStep()) return;
+
+            const selectedDays = Array.from(document.querySelectorAll('.business-day-cb:checked')).map(cb => cb.value).join(',');
+
+            registrationData = {
+                ...registrationData,
+                businessDescription: document.getElementById('businessDescription').value,
+                businessHours: {
+                    open: document.getElementById('openTime').value,
+                    close: document.getElementById('closeTime').value
+                },
+                timezone: document.getElementById('timezone').value,
+                businessDays: selectedDays || 'Mon,Tue,Wed,Thu,Fri',
+                services: document.getElementById('services').value,
+                termsAccepted: document.getElementById('termsAccepted').checked,
+                referralCode: referralCode || null,
+                plan: planFromUrl || document.getElementById('selectedPlan').value || 'starter',
+                billing: billingFromUrl || 'monthly',
+                productType: 'web_call_center'
+            };
+
+            if (!registrationData.termsAccepted) {
+                alert('Please accept the Terms of Service and Privacy Policy');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('step3').classList.add('hidden');
+            document.getElementById('loadingState').classList.remove('hidden');
+
+            try {
+                const response = await fetch('/api/auth/wcc-register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(registrationData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    if (result.token) {
+                        localStorage.setItem('token', result.token);
+                    }
+                    if (result.stripeCheckoutUrl) {
+                        document.getElementById('loadingState').querySelector('h3').textContent = 'Redirecting to secure checkout...';
+                        document.getElementById('loadingState').querySelector('p').textContent = '14-day free trial — no charge today';
+                        window.location.href = result.stripeCheckoutUrl;
+                        return;
+                    }
+                    // Fallback: go to WCC dashboard
+                    window.location.href = '/webcallcenter/';
+                } else {
+                    throw new Error(result.error || 'Registration failed');
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                alert(error.message || 'Registration failed. Please try again.');
+                document.getElementById('loadingState').classList.add('hidden');
+                document.getElementById('step3').classList.remove('hidden');
+            }
+        }
+
+        // Phone number formatting (optional field)
+        document.getElementById('phoneNumber').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length >= 10) {
+                value = value.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
+            }
+            e.target.value = value;
+        });
+    </script>
+</body>
+</html>

@@ -240,6 +240,54 @@ class ElevenLabsProvisioningService {
   }
 
   /**
+   * Provision a web-only ElevenLabs agent (no Twilio phone import/linking)
+   * Used for Web Call Center signups where calls happen via browser WebRTC
+   * @param {Object} clientData - { businessName, businessType, websiteUrl, businessDescription, businessHours, services, ownerPhone, language }
+   * @param {number} clientId - RinglyPro client ID (for tool webhooks)
+   * @returns {Object} { success, agentId, error }
+   */
+  async provisionWebAgent(clientData, clientId) {
+    try {
+      console.log(`[ElevenLabsProvisioning] Starting WEB agent provisioning for: ${clientData.businessName} (client ${clientId})`);
+
+      // Step 1: Create the agent
+      const agentConfig = this.buildAgentConfig(clientData, clientId);
+      const agentResult = await this.createAgent(agentConfig);
+      if (!agentResult.success) {
+        throw new Error(`Agent creation failed: ${agentResult.error}`);
+      }
+      console.log(`[ElevenLabsProvisioning] Web agent created: ${agentResult.agentId}`);
+
+      // Step 2: Apply tools to agent
+      const toolsResult = await this.applyToolsToAgent(
+        agentResult.agentId,
+        clientId,
+        clientData.ownerPhone
+      );
+      if (!toolsResult.success) {
+        console.error(`[ElevenLabsProvisioning] WARNING: Tools failed to apply: ${toolsResult.error}`);
+      } else {
+        console.log(`[ElevenLabsProvisioning] Tools applied: ${toolsResult.toolCount} tools`);
+      }
+
+      // NO Step 3 (phone import) or Step 4 (link agent) — web-only agent
+      console.log(`[ElevenLabsProvisioning] Web agent provisioning complete (no phone linking)`);
+
+      return {
+        success: true,
+        agentId: agentResult.agentId
+      };
+
+    } catch (error) {
+      console.error(`[ElevenLabsProvisioning] Web agent provisioning failed:`, error.message);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
    * Build complete agent config for ElevenLabs API
    */
   buildAgentConfig(clientData, clientId) {

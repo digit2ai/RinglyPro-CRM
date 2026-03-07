@@ -913,6 +913,20 @@ app.get('/signup/completing', (req, res) => {
   });
 });
 
+// Web Call Center signup page
+app.get('/signup/webcallcenter', (req, res) => {
+  res.render('signup-wcc', {
+    title: `${CLIENT_NAME} - Web Call Center - Sign Up`
+  });
+});
+
+// Web Call Center completing page (after Stripe checkout redirect)
+app.get('/signup/webcallcenter/completing', (req, res) => {
+  res.render('signup-wcc-completing', {
+    title: `${CLIENT_NAME} - Setting Up Your Web Call Center`
+  });
+});
+
 // Change password page (OTP first login)
 app.get('/change-password', (req, res) => {
   res.render('change-password', { title: 'RinglyPro - Set New Password' });
