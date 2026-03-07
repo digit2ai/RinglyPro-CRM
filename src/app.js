@@ -962,6 +962,11 @@ app.get('/pricing', (req, res) => {
   res.sendFile(path.join(__dirname, '../views/pricing-table.html'));
 });
 
+// Call Center Enterprise landing page
+app.get('/call-center-enterprise', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/call-center-enterprise.html'));
+});
+
 // Photo Studio success page route
 // Photo Studio landing page route
 app.get('/photo-studio', (req, res) => {
