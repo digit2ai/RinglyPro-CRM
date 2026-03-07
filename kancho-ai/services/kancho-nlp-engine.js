@@ -248,8 +248,9 @@ class KanchoNLPEngine {
     const norm = this.normalize(text);
     const entities = {};
 
-    // Family name — "Johnson family", "the Smith family" (case-sensitive to avoid capturing verbs)
-    const familyMatch = text.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+[Ff]amily\b/);
+    // Family name — "Johnson family", "the Smith family"
+    // Single-word capture only to avoid greedy match on verbs like "Show Johnson family" → "Show Johnson"
+    const familyMatch = text.match(/\b([A-Z][a-z]+)\s+[Ff]amily\b/);
     if (familyMatch) {
       entities.lastName = familyMatch[1].trim();
       if (!entities.firstName) entities.firstName = entities.lastName;
@@ -553,7 +554,7 @@ class KanchoNLPEngine {
         } else if (matches.length > 1) {
           resolved.familyCandidates = matches.map(f => ({ id: f.id, name: f.family_name, members: (f.members || []).length }));
         }
-      } catch (e) { }
+      } catch (e) { console.error('Family resolve error:', e.message); }
     }
 
     // Fuzzy match class
