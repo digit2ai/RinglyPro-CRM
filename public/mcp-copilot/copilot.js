@@ -117,43 +117,28 @@ function downloadCSVFromPopup(csvData, filename) {
     URL.revokeObjectURL(url);
 }
 
-// Disable all feature buttons
+// Disable all feature buttons (only when tokens are zero)
 function disableAllButtons() {
     const buttons = document.querySelectorAll('.action-btn');
     buttons.forEach(button => {
-        // Skip Business Collector, Prospect Manager, Outbound Call, and Press Release Manager - they work without GHL
-        if (button.classList.contains('btn-business') ||
-            button.classList.contains('btn-prospects') ||
-            button.classList.contains('btn-call') ||
-            button.classList.contains('btn-press')) {
-            return; // Skip these buttons
-        }
-
-        // Don't fully disable - keep clickable but add visual indicator
         button.classList.add('requires-ghl');
         button.style.textDecoration = 'line-through';
         button.style.cursor = 'pointer';
 
-        // Add lock emoji to button text if not already there
         const buttonText = button.querySelector('div:last-child');
         if (buttonText && !buttonText.textContent.includes('🔒')) {
             buttonText.textContent = '🔒 ' + buttonText.textContent;
         }
 
-        // Override onclick to show GHL upgrade prompt
         const originalOnclick = button.getAttribute('onclick');
         button.setAttribute('data-original-onclick', originalOnclick);
         button.setAttribute('onclick', 'showGHLUpgradePrompt()');
     });
 
-    // Also disable chat input
     const messageInput = document.getElementById('messageInput');
     if (messageInput) {
         messageInput.disabled = true;
-        const reason = (featuresDisabled || tokenBalance <= 0)
-            ? 'Purchase tokens to use AI Copilot features'
-            : 'Configure GoHighLevel in Settings to use features';
-        messageInput.placeholder = reason;
+        messageInput.placeholder = 'Purchase tokens to use AI Copilot features';
     }
 
     const sendButton = document.querySelector('button[onclick="sendMessage()"]');
@@ -163,78 +148,13 @@ function disableAllButtons() {
         sendButton.style.cursor = 'not-allowed';
     }
 
-    const lockReason = (featuresDisabled || tokenBalance <= 0)
-        ? `Zero token balance (${tokenBalance} tokens)`
-        : 'CRM not configured';
-    console.log(`🔒 CRM-dependent buttons require upgrade - ${lockReason} (Business tools remain available)`);
+    console.log(`🔒 All buttons disabled - Zero token balance (${tokenBalance} tokens)`);
 }
 
-// Enable only token-based features (Business Collector, Outbound Caller, Prospect Manager)
-// These DO NOT require CRM, only tokens
+// Enable all features when tokens are available
 function enableTokenBasedFeatures() {
-    const buttons = document.querySelectorAll('.action-btn');
-    buttons.forEach(button => {
-        // Enable Business Collector, Prospect Manager, Outbound Call, and Press Release Manager
-        if (button.classList.contains('btn-business') ||
-            button.classList.contains('btn-prospects') ||
-            button.classList.contains('btn-call') ||
-            button.classList.contains('btn-press')) {
-            button.disabled = false;
-            button.classList.remove('disabled', 'requires-ghl', 'requires-crm');
-            button.style.opacity = '';
-            button.style.cursor = '';
-            button.style.textDecoration = '';
-            button.style.pointerEvents = '';
-
-            // Restore original onclick if it was saved
-            const originalOnclick = button.getAttribute('data-original-onclick');
-            if (originalOnclick) {
-                button.setAttribute('onclick', originalOnclick);
-                button.removeAttribute('data-original-onclick');
-            }
-
-            // Remove lock emoji from button text
-            const buttonText = button.querySelector('div:last-child');
-            if (buttonText && buttonText.textContent.includes('🔒 ')) {
-                buttonText.textContent = buttonText.textContent.replace('🔒 ', '');
-            }
-        } else {
-            // Disable CRM-dependent features (CRM AI Agent, Social Media, Email Marketing)
-            button.classList.add('requires-crm');
-            button.style.textDecoration = 'line-through';
-            button.style.cursor = 'pointer';
-
-            // Add lock emoji if not there
-            const buttonText = button.querySelector('div:last-child');
-            if (buttonText && !buttonText.textContent.includes('🔒')) {
-                buttonText.textContent = '🔒 ' + buttonText.textContent;
-            }
-
-            // Override onclick to show CRM upgrade prompt
-            const originalOnclick = button.getAttribute('onclick');
-            if (originalOnclick && !button.getAttribute('data-original-onclick')) {
-                button.setAttribute('data-original-onclick', originalOnclick);
-            }
-            button.setAttribute('onclick', 'showCRMUpgradePrompt()');
-        }
-    });
-
-    // Keep chat disabled (requires CRM for AI responses)
-    const messageInput = document.getElementById('messageInput');
-    if (messageInput) {
-        messageInput.disabled = true;
-        messageInput.placeholder = 'Configure a CRM (GHL, HubSpot, or Vagaro) to use AI chat features';
-    }
-
-    const sendButton = document.querySelector('button[onclick="sendMessage()"]');
-    if (sendButton) {
-        sendButton.disabled = true;
-        sendButton.style.opacity = '0.4';
-        sendButton.style.cursor = 'not-allowed';
-    }
-
-    console.log('✅ Token-based features enabled (Business Collector, Outbound Caller, Prospect Manager)');
-    console.log('🔒 CRM-dependent features locked (AI Chat, Social Media, Email Marketing)');
+    enableAllButtons();
+    console.log('✅ All features enabled (tokens available)');
 }
 
 // Enable all feature buttons
@@ -483,18 +403,14 @@ async function checkGHLConfiguration() {
         console.log(`🎯 Final decision: crmConfigured=${crmConfigured}, activeCRM=${activeCRM}, hasTokens=${hasTokens}`);
 
         if (hasTokens) {
-            // Has tokens - enable token-based features (Business Collector, Outbound, Prospects)
-            // CRM-dependent features will be controlled separately
+            // Has tokens - enable ALL features regardless of CRM status
+            console.log(`✅ ENABLING all buttons (Tokens available: ${tokenBalance})`);
+            enableAllButtons();
             if (crmConfigured) {
-                console.log(`✅ ENABLING all buttons (${activeCRM} + Tokens)`);
-                enableAllButtons();
-                // Show which CRM is connected
                 const crmDisplayName = getCRMDisplayName(activeCRM);
                 updateConnectionStatus(`Connected to ${crmDisplayName}`, 'success');
             } else {
-                console.log('✅ ENABLING token-based features only (No CRM)');
-                enableTokenBasedFeatures();
-                updateConnectionStatus('Business tools ready (CRM not configured)', 'warning');
+                updateConnectionStatus('All tools ready', 'success');
             }
         } else {
             console.log(`❌ DISABLING all buttons (No tokens: ${tokenBalance})`);
@@ -531,28 +447,16 @@ function getCRMDisplayName(crm) {
     }
 }
 
-// Check if feature requires CRM and tokens
+// Check if feature requires tokens
 function requireGHL(featureName) {
     if (!ghlCheckComplete) {
-        console.log('⏳ CRM check not complete yet');
+        console.log('⏳ Access check not complete yet');
         return false;
     }
 
-    // Check token balance first (more critical)
-    // Lock screen already displayed, just log and return false
+    // Check token balance (only requirement)
     if (featuresDisabled || tokenBalance <= 0) {
         console.log(`⚠️ ${featureName} blocked: Insufficient tokens (balance: ${tokenBalance})`);
-        return false;
-    }
-
-    // Then check CRM configuration (any of GHL, HubSpot, or Vagaro)
-    if (!crmConfigured) {
-        console.log(`⚠️ ${featureName} requires CRM configuration (GHL, HubSpot, or Vagaro)`);
-        if (window.ghlUpgrade && window.ghlUpgrade.show) {
-            window.ghlUpgrade.show();
-        } else {
-            alert('You must configure a CRM (GoHighLevel, HubSpot, or Vagaro) in Settings to use this feature.');
-        }
         return false;
     }
 
@@ -564,25 +468,14 @@ function requireCRM(featureName) {
     return requireGHL(featureName);
 }
 
-// Show CRM upgrade prompt when locked features are clicked
+// Show prompt when locked features are clicked (only for zero token balance)
 function showGHLUpgradePrompt() {
     showCRMUpgradePrompt();
 }
 
-// Show CRM integration prompt (supports GHL, HubSpot, Vagaro)
 function showCRMUpgradePrompt() {
-    console.log('🔒 User clicked CRM-required feature - showing integration prompt');
-    if (window.ghlUpgrade && window.ghlUpgrade.show) {
-        window.ghlUpgrade.show();
-    } else {
-        // Fallback if upgrade modal not loaded
-        const settingsUrl = currentClientId
-            ? `${window.location.origin}/settings?client_id=${currentClientId}`
-            : `${window.location.origin}/settings`;
-        if (confirm('This feature requires a CRM integration (GoHighLevel, HubSpot, or Vagaro).\n\nWould you like to configure your CRM in Settings?')) {
-            window.open(settingsUrl, '_blank');
-        }
-    }
+    console.log('🔒 User clicked locked feature - insufficient tokens');
+    alert('Your token balance is zero. Please purchase tokens to use this feature.');
 }
 
 // Check for client_id in URL and auto-load credentials
