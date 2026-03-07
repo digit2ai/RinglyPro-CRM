@@ -542,6 +542,7 @@ class KanchoNLPEngine {
     // Fuzzy match family by name
     if ((entities.firstName || entities.lastName) && domain === 'families') {
       const famName = entities.lastName || entities.firstName;
+      console.log('[DEBUG resolveEntities] famName:', famName, '| schoolId:', schoolId);
       try {
         const matches = await this.models.KanchoFamily.findAll({
           where: { school_id: schoolId, family_name: { [Op.iLike]: '%' + famName + '%' } },
@@ -754,6 +755,7 @@ class KanchoNLPEngine {
         return { success: true, message: `Created family: ${family.family_name}`, data: family, affected: [family.id] };
       }
       case 'list_families': {
+        console.log('[DEBUG list_families] e.lastName:', e.lastName, '| e.firstName:', e.firstName, '| e.matchedFamily:', JSON.stringify(e.matchedFamily));
         // If a specific family was matched by name, show just that one
         if (e.matchedFamily) {
           const fam = await m.KanchoFamily.findOne({ where: { id: e.matchedFamily.id, school_id: schoolId }, include: [{ model: m.KanchoStudent, as: 'members', attributes: ['id', 'first_name', 'last_name', 'belt_rank', 'status'] }] });
@@ -764,7 +766,7 @@ class KanchoNLPEngine {
         const where = { school_id: schoolId };
         if (e.lastName && !e.matchedFamily) where.family_name = { [Op.iLike]: '%' + e.lastName + '%' };
         const families = await m.KanchoFamily.findAll({ where, include: [{ model: m.KanchoStudent, as: 'members', attributes: ['id'] }], limit: 50 });
-        if (families.length === 0) return { success: true, message: 'No families found.', data: [] };
+        if (families.length === 0) return { success: true, message: `No families found. [DEBUG: lastName=${e.lastName}, firstName=${e.firstName}, matchedFamily=${JSON.stringify(e.matchedFamily)}, whereKeys=${JSON.stringify(Object.keys(where))}]`, data: [] };
         const summary = families.slice(0, 10).map(f => `${f.family_name} — ${(f.members || []).length} members`).join('\n');
         return { success: true, message: `Found ${families.length} family account(s):\n${summary}`, data: families };
       }
