@@ -28,7 +28,7 @@ const DOMAINS = {
   families: { aliases: ['family', 'parent', 'parents', 'guardian', 'household'] },
   staff: { aliases: ['instructor', 'instructors', 'coach', 'coaches', 'employee', 'employees', 'teacher', 'trainer'] },
   training: { aliases: ['program', 'programs', 'curriculum', 'level', 'levels'] },
-  belts: { aliases: ['belt', 'rank', 'ranks', 'promotion', 'promotions', 'testing', 'grading'] },
+  belts: { aliases: ['belt', 'rank', 'ranks', 'belt promotion', 'belt test', 'testing', 'grading'] },
   classes: { aliases: ['class', 'session', 'sessions', 'schedule', 'lesson', 'lessons'] },
   calendar: { aliases: ['event', 'events', 'appointment', 'appointments', 'reminder', 'meeting'] },
   payments: { aliases: ['payment', 'charge', 'charges', 'transaction', 'transactions', 'refund'] },
@@ -40,7 +40,7 @@ const DOMAINS = {
   funnels: { aliases: ['funnel', 'pipeline', 'conversion'] },
   campaigns: { aliases: ['campaign', 'outreach', 'marketing', 'email blast', 'sms blast'] },
   growth: { aliases: ['growth', 'insight', 'insights', 'analytics', 'trend', 'trends', 'ai', 'advisor', 'summary', 'report'] },
-  promotions: { aliases: ['promo', 'offer', 'discount', 'referral', 'deal', 'special'] }
+  promotions: { aliases: ['promo', 'promotion', 'promotions', 'offer', 'discount', 'referral', 'deal', 'special'] }
 };
 
 const INTENT_PATTERNS = [
@@ -248,10 +248,17 @@ class KanchoNLPEngine {
     const norm = this.normalize(text);
     const entities = {};
 
+    // Family name — "X family", "the X family"
+    const familyMatch = text.match(/(?:the\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+family/i);
+    if (familyMatch) {
+      entities.lastName = familyMatch[1].trim();
+      if (!entities.firstName) entities.firstName = entities.lastName;
+    }
+
     // Names — "named X Y", "called X Y", proper nouns
     const namePatterns = [
-      /(?:named?|called?|for|with)\s+([A-Z][a-z]+(?:\s+(?!from\b|in\b|on\b|to\b|at\b|for\b|with\b|and\b|or\b|the\b|into\b|as\b|by\b|about\b)[A-Z][a-z]+)?)/i,
-      /(?:student|lead|member|coach|instructor|staff)\s+([A-Z][a-z]+(?:\s+(?!from\b|in\b|on\b|to\b|at\b|for\b|with\b|and\b|or\b|the\b|into\b|as\b|by\b|about\b)[A-Z][a-z]+)?)/i
+      /(?:named?|called?|for|with)\s+([A-Z][a-z]+(?:\s+(?!from\b|in\b|on\b|to\b|at\b|for\b|with\b|and\b|or\b|the\b|into\b|as\b|by\b|about\b|family\b)[A-Z][a-z]+)?)/i,
+      /(?:student|lead|member|coach|instructor|staff)\s+([A-Z][a-z]+(?:\s+(?!from\b|in\b|on\b|to\b|at\b|for\b|with\b|and\b|or\b|the\b|into\b|as\b|by\b|about\b|family\b)[A-Z][a-z]+)?)/i
     ];
     for (const re of namePatterns) {
       const m = text.match(re);
