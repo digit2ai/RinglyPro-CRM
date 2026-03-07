@@ -248,8 +248,8 @@ class KanchoNLPEngine {
     const norm = this.normalize(text);
     const entities = {};
 
-    // Family name — "X family", "the X family"
-    const familyMatch = text.match(/(?:the\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+family/i);
+    // Family name — "Johnson family", "the Smith family" (case-sensitive to avoid capturing verbs)
+    const familyMatch = text.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+[Ff]amily\b/);
     if (familyMatch) {
       entities.lastName = familyMatch[1].trim();
       if (!entities.firstName) entities.firstName = entities.lastName;
