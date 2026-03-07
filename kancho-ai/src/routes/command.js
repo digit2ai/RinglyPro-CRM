@@ -42,7 +42,8 @@ router.post('/process', async (req, res) => {
         pendingConfirmations.delete(stateKey);
         return res.json({ success: true, type: 'result', message: 'Action cancelled.' });
       }
-      pendingConfirmations.delete(stateKey);
+      // Unrecognized response — don't silently discard, give feedback
+      return res.json({ success: true, type: 'clarification', message: 'Please say "yes" to confirm or "no" to cancel.' });
     }
 
     // Check if this is a disambiguation response (e.g. "1", "2", "#3")
@@ -69,6 +70,10 @@ router.post('/process', async (req, res) => {
           } else if (parsed.entities.classCandidates) {
             parsed.entities.matchedClass = { id: chosen.id, name: chosen.name };
             delete parsed.entities.classCandidates;
+          } else if (parsed.entities.familyCandidates) {
+            parsed.entities.matchedFamily = { id: chosen.id, name: chosen.name };
+            parsed.entities.recordId = chosen.id;
+            delete parsed.entities.familyCandidates;
           }
           // Check if confirmation needed before executing
           if (parsed.requiresConfirmation) {
@@ -83,8 +88,8 @@ router.post('/process', async (req, res) => {
           return res.json({ success: true, type: 'result', message: result.message, data: result.data, parsed: { intent: parsed.intent, domain: parsed.domain, action: parsed.action, confidence: parsed.confidence, entities: Object.keys(parsed.entities).filter(k => !k.startsWith('matched') && !k.endsWith('Candidates')) } });
         }
       }
-      // If not a valid number, treat as a new command
-      pendingDisambiguations.delete(stateKey);
+      // If not a valid number, give feedback instead of silently discarding
+      return res.json({ success: true, type: 'clarification', message: 'Please pick a number from the list (e.g. "1" or "2"), or type a new command.' });
     }
 
     // Process the command

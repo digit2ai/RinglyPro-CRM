@@ -26,14 +26,14 @@ const DOMAINS = {
   students: { aliases: ['student', 'member', 'members', 'kid', 'kids', 'enrollment'] },
   leads: { aliases: ['lead', 'prospect', 'prospects', 'inquiry', 'inquiries', 'convert lead', 'convert a lead'] },
   families: { aliases: ['family', 'parent', 'parents', 'guardian', 'household'] },
-  staff: { aliases: ['instructor', 'instructors', 'coach', 'coaches', 'employee', 'employees', 'teacher'] },
+  staff: { aliases: ['instructor', 'instructors', 'coach', 'coaches', 'employee', 'employees', 'teacher', 'trainer'] },
   training: { aliases: ['program', 'programs', 'curriculum', 'level', 'levels'] },
   belts: { aliases: ['belt', 'rank', 'ranks', 'promotion', 'promotions', 'testing', 'grading'] },
   classes: { aliases: ['class', 'session', 'sessions', 'schedule', 'lesson', 'lessons'] },
   calendar: { aliases: ['event', 'events', 'appointment', 'appointments', 'reminder', 'meeting'] },
   payments: { aliases: ['payment', 'charge', 'charges', 'transaction', 'transactions', 'refund'] },
   billing: { aliases: ['invoice', 'invoices', 'subscription', 'subscriptions', 'plan', 'billing', 'overdue', 'balance'] },
-  merch: { aliases: ['merchandise', 'product', 'products', 'item', 'items', 'stock', 'inventory', 'hoodie', 'gi', 'gear'] },
+  merch: { aliases: ['merchandise', 'product', 'products', 'item', 'items', 'stock', 'inventory', 'hoodie', 'gi', 'gear', 'order', 'orders'] },
   portal: { aliases: ['portal', 'access', 'invite', 'activation'] },
   automations: { aliases: ['automation', 'workflow', 'workflows', 'auto', 'trigger'] },
   tasks: { aliases: ['task', 'tasks', 'to-do', 'todo', 'follow-up', 'followup', 'action item', 'overdue task', 'overdue tasks', 'pending task', 'pending tasks', 'create task', 'create a task'] },
@@ -77,10 +77,10 @@ const INTENT_PATTERNS = [
 // Actions that require confirmation before execution
 const DESTRUCTIVE_ACTIONS = new Set([
   'delete', 'cancel', 'archive', 'deactivate', 'refund', 'bulk_update',
-  'pause_billing', 'cancel_membership', 'cancel_class',
+  'pause_billing', 'cancel_membership', 'cancel_class', 'convert_lead',
   'archive_student', 'archive_lead', 'archive_family', 'archive_product',
   'deactivate_staff', 'delete_event', 'delete_automation', 'delete_task',
-  'delete_funnel', 'delete_campaign'
+  'delete_funnel', 'delete_campaign', 'delete_promotion'
 ]);
 
 // Domain-specific action mappings
@@ -232,7 +232,7 @@ class KanchoNLPEngine {
 
     // Contextual hints when no explicit domain keyword
     if (!bestDomain) {
-      if (/at.risk|churn|inactive|retain|retention|hasn't attended|no attendance/.test(norm)) bestDomain = 'students';
+      if (/at[\s-]?risk|churn|inactive|retain|retention|dropout|hasn't attended|no attendance/.test(norm)) bestDomain = 'students';
       else if (/revenue|mrr|income|money|earnings/.test(norm)) bestDomain = 'growth';
       else if (/overdue|unpaid|past due|failed payment/.test(norm)) bestDomain = 'billing';
       else if (/schedule|book|lesson|private/.test(norm)) bestDomain = 'calendar';
@@ -264,15 +264,16 @@ class KanchoNLPEngine {
     }
 
     // Dollar amounts
-    const moneyMatch = norm.match(/\$\s?(\d+(?:\.\d{1,2})?)|(\d+(?:\.\d{1,2})?)\s*(?:dollars|bucks)/);
-    if (moneyMatch) entities.amount = parseFloat(moneyMatch[1] || moneyMatch[2]);
+    const moneyMatch = norm.match(/\$\s?([\d,]+(?:\.\d{1,2})?)|([\d,]+(?:\.\d{1,2})?)\s*(?:dollars|bucks)/);
+    if (moneyMatch) entities.amount = parseFloat((moneyMatch[1] || moneyMatch[2]).replace(/,/g, ''));
 
     // Dates
     const datePatterns = [
       { re: /(?:on|for|by|due|starting|until|from)\s+(\d{4}-\d{2}-\d{2})/, type: 'iso' },
       { re: /(?:on|for|by)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i, type: 'weekday' },
-      { re: /(?:on|for|by)\s+(today|tomorrow|next week|next month|this week|this month)/i, type: 'relative' },
-      { re: /(?:in|for)\s+(\d+)\s+(day|week|month|year)s?/i, type: 'relative_num' }
+      { re: /(?:on|for|by)\s+(today|tomorrow|yesterday|next week|next month|last week|last month|this week|this month)/i, type: 'relative' },
+      { re: /(?:in|for)\s+(\d+)\s+(day|week|month|year)s?/i, type: 'relative_num' },
+      { re: /(\d+)\s+(day|week|month|year)s?\s+ago/i, type: 'relative_ago' }
     ];
     for (const { re, type } of datePatterns) {
       const m = norm.match(re);
@@ -281,6 +282,7 @@ class KanchoNLPEngine {
         else if (type === 'weekday') entities.dayOfWeek = m[1];
         else if (type === 'relative') entities.relativeDate = m[1];
         else if (type === 'relative_num') { entities.dateOffset = parseInt(m[1]); entities.dateUnit = m[2]; }
+        else if (type === 'relative_ago') { entities.dateOffset = -parseInt(m[1]); entities.dateUnit = m[2]; }
         break;
       }
     }
@@ -361,6 +363,19 @@ class KanchoNLPEngine {
       } else if (rd === 'next month') {
         const d = new Date(now); d.setMonth(d.getMonth() + 1);
         entities.date = d.toISOString().split('T')[0];
+      } else if (rd === 'last week') {
+        const d = new Date(now); d.setDate(d.getDate() - 7);
+        const day = d.getDay();
+        const diff = day === 0 ? -6 : 1 - day;
+        d.setDate(d.getDate() + diff);
+        entities.date = d.toISOString().split('T')[0];
+        const end = new Date(d); end.setDate(end.getDate() + 6);
+        entities.dateEnd = end.toISOString().split('T')[0];
+      } else if (rd === 'last month') {
+        const d = new Date(now); d.setMonth(d.getMonth() - 1);
+        entities.date = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-01';
+        const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+        entities.dateEnd = lastDay.toISOString().split('T')[0];
       } else if (rd === 'this week') {
         // Start of current week (Monday)
         const d = new Date(now);
@@ -505,6 +520,24 @@ class KanchoNLPEngine {
       } catch (e) { }
     }
 
+    // Fuzzy match family by name
+    if ((entities.firstName || entities.lastName) && domain === 'families') {
+      const famName = entities.lastName || entities.firstName;
+      try {
+        const matches = await this.models.KanchoFamily.findAll({
+          where: { school_id: schoolId, family_name: { [Op.iLike]: '%' + famName + '%' } },
+          include: [{ model: this.models.KanchoStudent, as: 'members', attributes: ['id'] }],
+          limit: 5
+        });
+        if (matches.length === 1) {
+          resolved.matchedFamily = { id: matches[0].id, name: matches[0].family_name };
+          resolved.recordId = matches[0].id;
+        } else if (matches.length > 1) {
+          resolved.familyCandidates = matches.map(f => ({ id: f.id, name: f.family_name, members: (f.members || []).length }));
+        }
+      } catch (e) { }
+    }
+
     // Fuzzy match class
     if (entities.programName && ['classes', 'students'].includes(domain)) {
       try {
@@ -611,13 +644,13 @@ class KanchoNLPEngine {
         if (e.status) updates.status = e.status;
         if (e.programName) updates.membership_type = e.programName;
         if (Object.keys(updates).length === 0) return { success: false, message: 'What would you like to update? (belt, status, program, etc.)' };
-        await m.KanchoStudent.update(updates, { where: { id } });
+        await m.KanchoStudent.update(updates, { where: { id, school_id: schoolId } });
         return { success: true, message: `Updated student ${e.matchedStudent?.name || '#' + id}: ${Object.entries(updates).map(([k, v]) => k + ' → ' + v).join(', ')}`, affected: [id] };
       }
       case 'archive_student': {
         if (!e.matchedStudent && !e.recordId) return { success: false, message: 'Which student should I archive?', clarify: 'studentName' };
         const id = e.matchedStudent?.id || e.recordId;
-        await m.KanchoStudent.update({ status: 'inactive' }, { where: { id } });
+        await m.KanchoStudent.update({ status: 'inactive' }, { where: { id, school_id: schoolId } });
         return { success: true, message: `Archived student ${e.matchedStudent?.name || '#' + id}`, affected: [id] };
       }
       case 'promote_belt': {
@@ -661,7 +694,7 @@ class KanchoNLPEngine {
         if (e.status) updates.status = e.status;
         if (e.source) updates.source = e.source;
         if (Object.keys(updates).length === 0) return { success: false, message: 'What should I update on this lead?' };
-        await m.KanchoLead.update(updates, { where: { id } });
+        await m.KanchoLead.update(updates, { where: { id, school_id: schoolId } });
         return { success: true, message: `Updated lead ${e.matchedLead?.name || '#' + id}`, affected: [id] };
       }
       case 'convert_lead': {
@@ -676,7 +709,7 @@ class KanchoNLPEngine {
       case 'archive_lead': {
         if (!e.matchedLead && !e.recordId) return { success: false, message: 'Which lead should I archive?', clarify: 'leadName' };
         const id = e.matchedLead?.id || e.recordId;
-        await m.KanchoLead.update({ status: 'archived' }, { where: { id } });
+        await m.KanchoLead.update({ status: 'archived' }, { where: { id, school_id: schoolId } });
         return { success: true, message: `Archived lead ${e.matchedLead?.name || '#' + id}`, affected: [id] };
       }
       case 'assign_lead': {
@@ -684,7 +717,7 @@ class KanchoNLPEngine {
         if (!e.matchedStaff && !e.firstName) return { success: false, message: 'Assign to whom?' };
         const id = e.matchedLead?.id || e.recordId;
         const assignee = e.matchedStaff?.name || (e.firstName + (e.lastName ? ' ' + e.lastName : ''));
-        await m.KanchoLead.update({ assigned_to: assignee }, { where: { id } });
+        await m.KanchoLead.update({ assigned_to: assignee }, { where: { id, school_id: schoolId } });
         return { success: true, message: `Assigned lead ${e.matchedLead?.name || '#' + id} to ${assignee}`, affected: [id] };
       }
       default:
@@ -708,17 +741,19 @@ class KanchoNLPEngine {
         return { success: true, message: `Found ${families.length} family account(s):\n${summary}`, data: families };
       }
       case 'update_family': {
-        if (!e.recordId) return { success: false, message: 'Which family? Provide a name or ID.', clarify: 'familyName' };
+        if (!e.matchedFamily && !e.recordId) return { success: false, message: 'Which family? Provide a name or ID.', clarify: 'familyName' };
+        if (e.matchedFamily && !e.recordId) e.recordId = e.matchedFamily.id;
         const updates = {};
         if (e.firstName) updates.primary_contact_name = e.firstName + (e.lastName ? ' ' + e.lastName : '');
         if (Object.keys(updates).length === 0) return { success: false, message: 'What should I update on this family?' };
-        await m.KanchoFamily.update(updates, { where: { id: e.recordId } });
-        return { success: true, message: `Updated family #${e.recordId}`, affected: [e.recordId] };
+        await m.KanchoFamily.update(updates, { where: { id: e.recordId, school_id: schoolId } });
+        return { success: true, message: `Updated family ${e.matchedFamily?.name || '#' + e.recordId}`, affected: [e.recordId] };
       }
       case 'archive_family': {
-        if (!e.recordId) return { success: false, message: 'Which family should I archive?', clarify: 'familyName' };
-        await m.KanchoFamily.update({ status: 'archived' }, { where: { id: e.recordId } });
-        return { success: true, message: `Archived family #${e.recordId}`, affected: [e.recordId] };
+        if (!e.matchedFamily && !e.recordId) return { success: false, message: 'Which family should I archive?', clarify: 'familyName' };
+        const fid = e.matchedFamily?.id || e.recordId;
+        await m.KanchoFamily.update({ is_active: false }, { where: { id: fid, school_id: schoolId } });
+        return { success: true, message: `Archived family ${e.matchedFamily?.name || '#' + fid}`, affected: [fid] };
       }
       default:
         return { success: false, message: 'I understood you want to do something with families, but I\'m not sure what. Try "list families" or "create family".' };
@@ -743,7 +778,7 @@ class KanchoNLPEngine {
       case 'deactivate_staff': {
         if (!e.matchedStaff && !e.recordId) return { success: false, message: 'Which staff member?', clarify: 'staffName' };
         const id = e.matchedStaff?.id || e.recordId;
-        await m.KanchoInstructor.update({ is_active: false }, { where: { id } });
+        await m.KanchoInstructor.update({ is_active: false }, { where: { id, school_id: schoolId } });
         return { success: true, message: `Deactivated staff member ${e.matchedStaff?.name || '#' + id}`, affected: [id] };
       }
       case 'update_staff': {
@@ -752,7 +787,7 @@ class KanchoNLPEngine {
         const updates = {};
         if (e.role) updates.role = e.role;
         if (Object.keys(updates).length === 0) return { success: false, message: 'What should I update? (role, etc.)' };
-        await m.KanchoInstructor.update(updates, { where: { id } });
+        await m.KanchoInstructor.update(updates, { where: { id, school_id: schoolId } });
         return { success: true, message: `Updated staff ${e.matchedStaff?.name || '#' + id}: ${Object.entries(updates).map(([k, v]) => k + ' → ' + v).join(', ')}`, affected: [id] };
       }
       case 'assign_staff': {
@@ -830,7 +865,7 @@ class KanchoNLPEngine {
       case 'cancel_class': {
         if (!e.matchedClass && !e.recordId) return { success: false, message: 'Which class should I cancel?', clarify: 'className' };
         const id = e.matchedClass?.id || e.recordId;
-        await m.KanchoClass.update({ is_active: false }, { where: { id } });
+        await m.KanchoClass.update({ is_active: false }, { where: { id, school_id: schoolId } });
         return { success: true, message: `Cancelled class ${e.matchedClass?.name || '#' + id}`, affected: [id] };
       }
       case 'update_class': {
@@ -847,7 +882,7 @@ class KanchoNLPEngine {
         }
         if (e.amount) updates.capacity = Math.round(e.amount);
         if (Object.keys(updates).length === 0) return { success: false, message: 'What should I update? (schedule, capacity, etc.)' };
-        await m.KanchoClass.update(updates, { where: { id } });
+        await m.KanchoClass.update(updates, { where: { id, school_id: schoolId } });
         return { success: true, message: `Updated class ${cls.name}: ${Object.keys(updates).join(', ')}`, affected: [id] };
       }
       case 'assign_instructor': {
@@ -981,7 +1016,7 @@ class KanchoNLPEngine {
         if (!e.matchedStudent && !e.recordId) return { success: false, message: 'Whose membership should I cancel?', clarify: 'studentName' };
         const studentId = e.matchedStudent?.id || e.recordId;
         await m.KanchoSubscription.update({ status: 'cancelled' }, { where: { school_id: schoolId, student_id: studentId } });
-        await m.KanchoStudent.update({ status: 'cancelled' }, { where: { id: studentId } });
+        await m.KanchoStudent.update({ status: 'cancelled' }, { where: { id: studentId, school_id: schoolId } });
         return { success: true, message: `Cancelled membership for ${e.matchedStudent?.name || 'student #' + studentId}`, affected: [studentId] };
       }
       case 'update_subscription': {
@@ -1124,7 +1159,7 @@ class KanchoNLPEngine {
       }
       case 'list_tasks': {
         const where = { school_id: schoolId };
-        if (e.status === 'overdue') { where.status = { [Op.ne]: 'completed' }; where.due_date = { [Op.lt]: new Date() }; }
+        if (e.status === 'overdue') { where.status = { [Op.ne]: 'completed' }; where.due_date = { [Op.lt]: new Date().toISOString().split('T')[0] }; }
         else if (e.status === 'completed') where.status = 'completed';
         else if (e.status === 'pending') where.status = 'pending';
         else if (e.status) where.status = e.status;
@@ -1305,82 +1340,102 @@ class KanchoNLPEngine {
 
   async _execGrowth(action, e, schoolId) {
     const m = this.models;
-    // Aggregate key metrics
     try {
-      const [students, leads, revenue, atRisk] = await Promise.all([
+      const [activeStudents, totalLeads, newLeads, atRisk, recentPayments] = await Promise.all([
         m.KanchoStudent.count({ where: { school_id: schoolId, status: 'active' } }),
         m.KanchoLead.count({ where: { school_id: schoolId } }),
-        m.KanchoRevenue.findAll({ where: { school_id: schoolId }, order: [['month', 'DESC']], limit: 3 }),
-        m.KanchoStudent.count({ where: { school_id: schoolId, churn_risk: { [Op.in]: ['high', 'critical'] } } })
+        m.KanchoLead.count({ where: { school_id: schoolId, status: 'new' } }),
+        m.KanchoStudent.count({ where: { school_id: schoolId, churn_risk: { [Op.in]: ['high', 'critical'] } } }),
+        m.KanchoPayment.findAll({ where: { school_id: schoolId, status: 'completed' }, order: [['payment_date', 'DESC']], limit: 30 })
       ]);
-      const recentRev = revenue.length > 0 ? revenue[0] : {};
-      return {
-        success: true,
-        message: `Growth Summary:\n` +
-          `Active students: ${students}\n` +
-          `Total leads: ${leads}\n` +
-          `At-risk students: ${atRisk}\n` +
-          `Latest revenue: $${recentRev.total_revenue || recentRev.amount || 0}\n` +
-          `Use specific commands like "show at-risk students" or "list recent leads" for details.`,
-        data: { students, leads, atRisk, revenue: recentRev }
-      };
+      const recentRevenue = recentPayments.reduce((s, p) => s + parseFloat(p.total || 0), 0);
+
+      switch (action) {
+        case 'growth_summary':
+          return {
+            success: true,
+            message: `Growth Summary:\n` +
+              `Active students: ${activeStudents}\n` +
+              `Total leads: ${totalLeads} (${newLeads} new)\n` +
+              `At-risk students: ${atRisk}\n` +
+              `Recent revenue (last 30 payments): $${recentRevenue.toFixed(2)}\n` +
+              `Revenue at risk: ~$${(atRisk * 175).toFixed(0)}/mo`,
+            data: { activeStudents, totalLeads, newLeads, atRisk, recentRevenue }
+          };
+        case 'growth_insights':
+        default: {
+          const insights = [];
+          if (atRisk > 0) insights.push(`${atRisk} student(s) at high/critical churn risk — consider retention outreach`);
+          if (newLeads > 0) insights.push(`${newLeads} new lead(s) awaiting follow-up`);
+          const conversionRate = totalLeads > 0 ? ((activeStudents / (activeStudents + totalLeads)) * 100).toFixed(1) : '0';
+          insights.push(`Estimated conversion rate: ${conversionRate}%`);
+          if (atRisk > activeStudents * 0.2) insights.push(`WARNING: ${((atRisk / activeStudents) * 100).toFixed(0)}% of active students are at risk`);
+          else insights.push(`Churn risk is manageable at ${activeStudents > 0 ? ((atRisk / activeStudents) * 100).toFixed(0) : 0}%`);
+          return {
+            success: true,
+            message: `Growth Insights:\n${insights.map((ins, i) => `${i + 1}. ${ins}`).join('\n')}\n\nActive: ${activeStudents} | Leads: ${totalLeads} | At-risk: ${atRisk} | Revenue: $${recentRevenue.toFixed(2)}`,
+            data: { activeStudents, totalLeads, newLeads, atRisk, recentRevenue, insights }
+          };
+        }
+      }
     } catch (err) {
-      return { success: true, message: 'Growth insights are available. Try "show at-risk students" or "list recent leads".' };
+      console.error('[NLP Growth Error]', err.message);
+      return { success: false, message: 'Could not load growth data: ' + err.message };
     }
   }
 
   async _execPromotions(action, e, schoolId) {
+    // Marketing promotions use KanchoCampaign with goal='promotion' (KanchoPromotion is for belt rank changes)
     const m = this.models;
+    const promoWhere = { school_id: schoolId, goal: 'promotion' };
     switch (action) {
-      case 'list_promotions_marketing': {
-        const promos = await m.KanchoPromotion.findAll({ where: { school_id: schoolId }, order: [['created_at', 'DESC']] });
-        if (promos.length === 0) return { success: true, message: 'No marketing promotions found.', data: [] };
-        const summary = promos.map(p => `${p.name || p.type} — ${p.status || 'active'}`).join('\n');
-        return { success: true, message: `Promotions (${promos.length}):\n${summary}`, data: promos };
+      case 'list_promotions_marketing':
+      case 'promotion_performance': {
+        const promos = await m.KanchoCampaign.findAll({ where: promoWhere, order: [['created_at', 'DESC']] });
+        if (promos.length === 0) return { success: true, message: 'No marketing promotions found. Use "create promotion" to add one.', data: [] };
+        const summary = promos.map(p => {
+          const stats = p.stats || {};
+          return `${p.name} — ${p.status} (sent: ${stats.sent || 0}, opened: ${stats.opened || 0}, converted: ${stats.converted || 0})`;
+        }).join('\n');
+        return { success: true, message: `Marketing Promotions (${promos.length}):\n${summary}`, data: promos };
       }
       case 'create_promotion': {
         const name = e.programName || 'New Promotion';
-        const promo = await m.KanchoPromotion.create({ school_id: schoolId, name, type: 'general', status: 'active' });
-        return { success: true, message: `Created promotion: ${promo.name}`, data: promo, affected: [promo.id] };
+        const promo = await m.KanchoCampaign.create({ school_id: schoolId, name, type: e.channelType || 'sms', goal: 'promotion', status: 'draft', stats: { sent: 0, delivered: 0, opened: 0, clicked: 0, converted: 0 } });
+        return { success: true, message: `Created promotion: ${promo.name} (${promo.type}). Open Campaigns tab to configure.`, data: promo, affected: [promo.id] };
       }
       case 'launch_promotion': {
-        const promos = await m.KanchoPromotion.findAll({ where: { school_id: schoolId } });
+        const promos = await m.KanchoCampaign.findAll({ where: { ...promoWhere, status: { [Op.in]: ['draft', 'paused'] } } });
         const name = e.programName || e.firstName || '';
-        const match = name ? promos.find(p => (p.name || '').toLowerCase().includes(name.toLowerCase())) : null;
+        const match = name ? promos.find(p => p.name.toLowerCase().includes(name.toLowerCase())) : null;
         if (match) {
           await match.update({ status: 'active' });
-          return { success: true, message: `Launched promotion: ${match.name || match.type}`, affected: [match.id] };
+          return { success: true, message: `Launched promotion: ${match.name}`, affected: [match.id] };
         }
-        if (promos.length === 0) return { success: false, message: 'No promotions to launch.' };
-        return { success: false, message: 'Which promotion? Available: ' + promos.map(p => p.name || p.type).join(', ') };
+        if (promos.length === 0) return { success: false, message: 'No draft/paused promotions to launch.' };
+        return { success: false, message: 'Which promotion? Available: ' + promos.map(p => `${p.name} (${p.status})`).join(', ') };
       }
       case 'pause_promotion': {
-        const promos = await m.KanchoPromotion.findAll({ where: { school_id: schoolId, status: 'active' } });
+        const promos = await m.KanchoCampaign.findAll({ where: { ...promoWhere, status: 'active' } });
         const name = e.programName || e.firstName || '';
-        const match = name ? promos.find(p => (p.name || '').toLowerCase().includes(name.toLowerCase())) : null;
+        const match = name ? promos.find(p => p.name.toLowerCase().includes(name.toLowerCase())) : null;
         if (match) {
           await match.update({ status: 'paused' });
-          return { success: true, message: `Paused promotion: ${match.name || match.type}`, affected: [match.id] };
+          return { success: true, message: `Paused promotion: ${match.name}`, affected: [match.id] };
         }
         if (promos.length === 0) return { success: false, message: 'No active promotions to pause.' };
-        return { success: false, message: 'Which promotion? Active: ' + promos.map(p => p.name || p.type).join(', ') };
+        return { success: false, message: 'Which promotion? Active: ' + promos.map(p => p.name).join(', ') };
       }
       case 'resume_promotion': {
-        const promos = await m.KanchoPromotion.findAll({ where: { school_id: schoolId, status: 'paused' } });
+        const promos = await m.KanchoCampaign.findAll({ where: { ...promoWhere, status: 'paused' } });
         const name = e.programName || e.firstName || '';
-        const match = name ? promos.find(p => (p.name || '').toLowerCase().includes(name.toLowerCase())) : null;
+        const match = name ? promos.find(p => p.name.toLowerCase().includes(name.toLowerCase())) : null;
         if (match) {
           await match.update({ status: 'active' });
-          return { success: true, message: `Resumed promotion: ${match.name || match.type}`, affected: [match.id] };
+          return { success: true, message: `Resumed promotion: ${match.name}`, affected: [match.id] };
         }
         if (promos.length === 0) return { success: false, message: 'No paused promotions to resume.' };
-        return { success: false, message: 'Which promotion? Paused: ' + promos.map(p => p.name || p.type).join(', ') };
-      }
-      case 'promotion_performance': {
-        const promos = await m.KanchoPromotion.findAll({ where: { school_id: schoolId } });
-        if (promos.length === 0) return { success: true, message: 'No promotions to analyze.', data: [] };
-        const summary = promos.map(p => `${p.name || p.type} — ${p.status || 'active'}`).join('\n');
-        return { success: true, message: `Promotions performance (${promos.length}):\n${summary}`, data: promos };
+        return { success: false, message: 'Which promotion? Paused: ' + promos.map(p => p.name).join(', ') };
       }
       default:
         return { success: false, message: 'I understood you want to do something with promotions, but I\'m not sure what. Try "list promotions", "create promotion", or "launch promotion".' };
@@ -1401,11 +1456,35 @@ class KanchoNLPEngine {
       }
       case 'resend_invite': {
         if (!e.matchedStudent && !e.recordId) return { success: false, message: 'Which student should I resend the invite to?', clarify: 'studentName' };
-        return { success: true, message: `Portal invite queued for ${e.matchedStudent?.name || 'student #' + e.recordId}. Check the Portal tab for status.` };
+        const studentId = e.matchedStudent?.id || e.recordId;
+        const student = await m.KanchoStudent.findOne({ where: { id: studentId, school_id: schoolId } });
+        if (!student) return { success: false, message: 'Student not found.' };
+        if (!student.email) return { success: false, message: `${student.first_name} ${student.last_name} has no email on file. Add an email first.` };
+        // Reset or create portal auth entry
+        try {
+          const token = require('crypto').randomBytes(32).toString('hex');
+          const [auth, created] = await m.KanchoStudentAuth.findOrCreate({
+            where: { student_id: studentId, school_id: schoolId },
+            defaults: { email: student.email, first_name: student.first_name, last_name: student.last_name, phone: student.phone || '', password_hash: '', status: 'pending', email_verification_token: token }
+          });
+          if (!created) await auth.update({ status: 'pending', email_verification_token: token });
+          return { success: true, message: `Portal invite reset for ${student.first_name} ${student.last_name} (${student.email}). They can now set up their portal account.`, affected: [studentId] };
+        } catch (err) {
+          return { success: false, message: 'Could not process invite: ' + err.message };
+        }
       }
       case 'update_access': {
         if (!e.matchedStudent && !e.recordId) return { success: false, message: 'Whose access should I update?', clarify: 'studentName' };
-        return { success: true, message: `Access updated for ${e.matchedStudent?.name || 'student #' + e.recordId}. Check the Portal tab.` };
+        const sid = e.matchedStudent?.id || e.recordId;
+        try {
+          const auth = await m.KanchoStudentAuth.findOne({ where: { student_id: sid, school_id: schoolId } });
+          if (!auth) return { success: false, message: 'No portal account found for this student. Use "resend invite" to create one.' };
+          const newStatus = e.status === 'suspended' ? 'suspended' : (e.status === 'active' ? 'active' : (auth.status === 'active' ? 'suspended' : 'active'));
+          await auth.update({ status: newStatus });
+          return { success: true, message: `Portal access ${newStatus} for ${e.matchedStudent?.name || 'student #' + sid}`, affected: [sid] };
+        } catch (err) {
+          return { success: false, message: 'Could not update access: ' + err.message };
+        }
       }
       default:
         return { success: false, message: 'I understood you want to do something with the portal. Try "portal status", "resend invite for [student]", or open the Portal tab.' };
@@ -1428,7 +1507,7 @@ class KanchoNLPEngine {
         if (!e.matchedStudent && !e.recordId) return { success: false, message: 'Which student?', clarify: 'studentName' };
         if (!e.programName) return { success: false, message: 'Which program?', clarify: 'programName' };
         const id = e.matchedStudent?.id || e.recordId;
-        await m.KanchoStudent.update({ membership_type: e.programName }, { where: { id } });
+        await m.KanchoStudent.update({ membership_type: e.programName }, { where: { id, school_id: schoolId } });
         return { success: true, message: `Assigned ${e.matchedStudent?.name || 'student #' + id} to ${e.programName} program`, affected: [id] };
       }
       case 'update_program': {
@@ -1461,8 +1540,8 @@ class KanchoNLPEngine {
     }
 
     // Check for disambiguation
-    if (parsed.entities.studentCandidates || parsed.entities.leadCandidates || parsed.entities.staffCandidates || parsed.entities.classCandidates) {
-      const candidates = parsed.entities.studentCandidates || parsed.entities.leadCandidates || parsed.entities.staffCandidates || parsed.entities.classCandidates;
+    if (parsed.entities.studentCandidates || parsed.entities.leadCandidates || parsed.entities.staffCandidates || parsed.entities.classCandidates || parsed.entities.familyCandidates) {
+      const candidates = parsed.entities.studentCandidates || parsed.entities.leadCandidates || parsed.entities.staffCandidates || parsed.entities.classCandidates || parsed.entities.familyCandidates;
       const msg = `I found multiple matches. Which one?\n` + candidates.map((c, i) => `${i + 1}. ${c.name} (ID: ${c.id})`).join('\n');
       await this._log(schoolId, userId, channel, rawText, parsed, 'clarification_needed', msg);
       return { type: 'disambiguation', message: msg, candidates, parsed };
