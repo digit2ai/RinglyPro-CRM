@@ -7993,8 +7993,9 @@ app.get('*', (req, res) => {
         </div>
       </div>
       <!-- Input -->
-      <div class="px-3 py-3 flex gap-2" style="border-top:1px solid #2a2a2a;">
-        <input type="text" id="cmdInput" class="flex-1 px-3 py-2 rounded-lg text-sm" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#fff;" placeholder="Type a command..." onkeydown="if(event.key==='Enter')cmdSendInput()">
+      <div class="px-3 py-3 flex gap-2 items-center" style="border-top:1px solid #2a2a2a;">
+        <input type="text" id="cmdInput" class="flex-1 px-3 py-2 rounded-lg text-sm" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#fff;" placeholder="Type or speak a command..." onkeydown="if(event.key==='Enter')cmdSendInput()">
+        <button id="cmdMicBtn" onclick="cmdVoiceToggle()" class="px-3 py-2 rounded-lg text-white text-sm font-medium transition-all" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);" title="Voice Command"><i class="fas fa-microphone"></i></button>
         <button onclick="cmdSendInput()" class="px-3 py-2 rounded-lg bg-kancho text-white text-sm font-medium hover:bg-red-600 transition"><i class="fas fa-paper-plane"></i></button>
       </div>
     </div>
@@ -8456,6 +8457,10 @@ app.get('*', (req, res) => {
       50% { box-shadow: 0 0 50px rgba(232, 90, 79, 0.6), 0 4px 20px rgba(0,0,0,0.4); }
     }
     .voice-start-btn span { font-size: 14px; font-weight: 600; color: #ccc; }
+    @keyframes cmdMicPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.2); }
+    }
   </style>
 
   <script>
@@ -11621,6 +11626,99 @@ app.get('*', (req, res) => {
       });
     }
     function escapeHtml(str) { return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+    // ==================== VOICE INPUT (Web Speech API) ====================
+    var cmdRecognition = null;
+    var cmdListening = false;
+
+    function cmdVoiceToggle() {
+      if (cmdListening) { cmdVoiceStop(); return; }
+      var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert('Speech recognition not supported in this browser. Try Chrome or Edge.');
+        return;
+      }
+      cmdRecognition = new SpeechRecognition();
+      cmdRecognition.continuous = false;
+      cmdRecognition.interimResults = true;
+      cmdRecognition.lang = (currentLanguage === 'es') ? 'es-ES' : 'en-US';
+
+      var micBtn = document.getElementById('cmdMicBtn');
+      var input = document.getElementById('cmdInput');
+
+      cmdRecognition.onstart = function() {
+        cmdListening = true;
+        micBtn.style.background = '#ef4444';
+        micBtn.style.borderColor = '#ef4444';
+        micBtn.innerHTML = '<i class="fas fa-microphone-alt" style="animation:cmdMicPulse 1s ease-in-out infinite;"></i>';
+        input.placeholder = 'Listening...';
+        // Add listening indicator to messages
+        var msgs = document.getElementById('cmdMessages');
+        msgs.innerHTML += '<div id="cmdListeningIndicator" class="flex justify-end"><div class="bg-red-500/20 text-red-300 px-3 py-2 rounded-xl rounded-br-sm text-sm flex items-center gap-2"><i class="fas fa-microphone-alt" style="animation:cmdMicPulse 1s ease-in-out infinite;"></i> Listening...</div></div>';
+        msgs.scrollTop = msgs.scrollHeight;
+      };
+
+      cmdRecognition.onresult = function(event) {
+        var transcript = '';
+        var isFinal = false;
+        for (var i = event.resultIndex; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+          if (event.results[i].isFinal) isFinal = true;
+        }
+        input.value = transcript;
+        // Update listening indicator with live text
+        var indicator = document.getElementById('cmdListeningIndicator');
+        if (indicator) {
+          indicator.querySelector('div').innerHTML = '<i class="fas fa-microphone-alt" style="animation:cmdMicPulse 1s ease-in-out infinite;"></i> ' + escapeHtml(transcript);
+        }
+        if (isFinal) {
+          cmdVoiceStop();
+          if (transcript.trim()) {
+            input.value = '';
+            // Remove listening indicator
+            var ind = document.getElementById('cmdListeningIndicator');
+            if (ind) ind.remove();
+            cmdSend(transcript.trim());
+          }
+        }
+      };
+
+      cmdRecognition.onerror = function(event) {
+        console.error('Speech recognition error:', event.error);
+        cmdVoiceStop();
+        var ind = document.getElementById('cmdListeningIndicator');
+        if (ind) ind.remove();
+        if (event.error === 'not-allowed') {
+          var msgs = document.getElementById('cmdMessages');
+          msgs.innerHTML += '<div class="flex justify-start"><div class="bg-red-500/10 text-red-400 px-3 py-2 rounded-xl rounded-bl-sm text-sm"><i class="fas fa-microphone-slash mr-1"></i> Microphone blocked. Allow mic access in browser settings.</div></div>';
+          msgs.scrollTop = msgs.scrollHeight;
+        }
+      };
+
+      cmdRecognition.onend = function() {
+        if (cmdListening) {
+          // Cleanup if ended unexpectedly
+          var ind = document.getElementById('cmdListeningIndicator');
+          if (ind) ind.remove();
+          cmdVoiceStop();
+        }
+      };
+
+      cmdRecognition.start();
+    }
+
+    function cmdVoiceStop() {
+      cmdListening = false;
+      if (cmdRecognition) { try { cmdRecognition.stop(); } catch(e) {} }
+      var micBtn = document.getElementById('cmdMicBtn');
+      if (micBtn) {
+        micBtn.style.background = 'rgba(255,255,255,0.08)';
+        micBtn.style.borderColor = 'rgba(255,255,255,0.15)';
+        micBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+      }
+      var input = document.getElementById('cmdInput');
+      if (input && input.placeholder === 'Listening...') input.placeholder = 'Type or speak a command...';
+    }
 
     // Show command center button when authenticated
     function showCmdCenter() {
