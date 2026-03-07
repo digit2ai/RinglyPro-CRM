@@ -23,25 +23,65 @@ const { Op } = require('sequelize');
 // ============================================================
 
 const DOMAINS = {
-  students: { aliases: ['student', 'member', 'members', 'kid', 'kids', 'enrollment'] },
-  leads: { aliases: ['lead', 'prospect', 'prospects', 'inquiry', 'inquiries', 'convert lead', 'convert a lead'] },
-  families: { aliases: ['family', 'parent', 'parents', 'guardian', 'household'] },
-  staff: { aliases: ['instructor', 'instructors', 'coach', 'coaches', 'employee', 'employees', 'teacher', 'trainer'] },
+  students: { aliases: ['student', 'member', 'members', 'kid', 'kids', 'enrollment'], entity: true },
+  leads: { aliases: ['lead', 'prospect', 'prospects', 'inquiry', 'inquiries'], entity: true },
+  families: { aliases: ['family', 'parent', 'parents', 'guardian', 'household'], entity: true },
+  staff: { aliases: ['instructor', 'instructors', 'coach', 'coaches', 'employee', 'employees', 'teacher', 'trainer'], entity: true },
   training: { aliases: ['program', 'programs', 'curriculum', 'level', 'levels'] },
   belts: { aliases: ['belt', 'rank', 'ranks', 'belt promotion', 'belt test', 'testing', 'grading'] },
-  classes: { aliases: ['class', 'session', 'sessions', 'schedule', 'lesson', 'lessons'] },
-  calendar: { aliases: ['event', 'events', 'appointment', 'appointments', 'reminder', 'meeting'] },
+  classes: { aliases: ['class', 'session', 'sessions'] },
+  calendar: { aliases: ['event', 'events', 'appointment', 'appointments', 'reminder', 'meeting', 'schedule', 'lesson', 'lessons', 'private lesson'] },
   payments: { aliases: ['payment', 'charge', 'charges', 'transaction', 'transactions', 'refund'] },
   billing: { aliases: ['invoice', 'invoices', 'subscription', 'subscriptions', 'plan', 'billing', 'overdue', 'balance'] },
   merch: { aliases: ['merchandise', 'product', 'products', 'item', 'items', 'stock', 'inventory', 'hoodie', 'gi', 'gear', 'order', 'orders'] },
-  portal: { aliases: ['portal', 'access', 'invite', 'activation'] },
-  automations: { aliases: ['automation', 'workflow', 'workflows', 'auto', 'trigger'] },
-  tasks: { aliases: ['task', 'tasks', 'to-do', 'todo', 'follow-up', 'followup', 'action item', 'overdue task', 'overdue tasks', 'pending task', 'pending tasks', 'create task', 'create a task'] },
+  portal: { aliases: ['portal', 'invite'] },
+  automations: { aliases: ['automation', 'workflow', 'workflows', 'auto'] },
+  tasks: { aliases: ['task', 'tasks', 'to-do', 'todo', 'follow-up', 'followup', 'action item'] },
   funnels: { aliases: ['funnel', 'pipeline', 'conversion'] },
   campaigns: { aliases: ['campaign', 'outreach', 'marketing', 'email blast', 'sms blast'] },
-  growth: { aliases: ['growth', 'insight', 'insights', 'analytics', 'trend', 'trends', 'ai', 'advisor', 'summary', 'report'] },
+  growth: { aliases: ['growth', 'insight', 'insights', 'analytics', 'trend', 'trends', 'advisor', 'summary'] },
   promotions: { aliases: ['promo', 'promotion', 'promotions', 'offer', 'discount', 'referral', 'deal', 'special'] }
 };
+
+// Composite phrases — checked before single-word matching, always win
+const COMPOSITE_PHRASES = [
+  { phrase: 'pause billing', domain: 'billing' },
+  { phrase: 'resume billing', domain: 'billing' },
+  { phrase: 'cancel membership', domain: 'billing' },
+  { phrase: 'cancel subscription', domain: 'billing' },
+  { phrase: 'private lesson', domain: 'calendar' },
+  { phrase: 'schedule lesson', domain: 'calendar' },
+  { phrase: 'book lesson', domain: 'calendar' },
+  { phrase: 'book appointment', domain: 'calendar' },
+  { phrase: 'schedule appointment', domain: 'calendar' },
+  { phrase: 'portal invite', domain: 'portal' },
+  { phrase: 'portal access', domain: 'portal' },
+  { phrase: 'portal status', domain: 'portal' },
+  { phrase: 'resend invite', domain: 'portal' },
+  { phrase: 'promote student', domain: 'belts' },
+  { phrase: 'promote a student', domain: 'belts' },
+  { phrase: 'convert lead', domain: 'leads' },
+  { phrase: 'convert a lead', domain: 'leads' },
+  { phrase: 'assign program', domain: 'training' },
+  { phrase: 'assign training', domain: 'training' },
+  { phrase: 'growth insight', domain: 'growth' },
+  { phrase: 'growth insights', domain: 'growth' },
+  { phrase: 'revenue trend', domain: 'growth' },
+  { phrase: 'revenue trends', domain: 'growth' },
+  { phrase: 'low stock', domain: 'merch' },
+  { phrase: 'overdue task', domain: 'tasks' },
+  { phrase: 'overdue tasks', domain: 'tasks' },
+  { phrase: 'pending task', domain: 'tasks' },
+  { phrase: 'create task', domain: 'tasks' },
+  { phrase: 'follow-up task', domain: 'tasks' },
+  { phrase: 'followup task', domain: 'tasks' },
+  { phrase: 'failed payment', domain: 'payments' },
+  { phrase: 'belt promotion', domain: 'belts' },
+  { phrase: 'belt test', domain: 'belts' },
+  { phrase: 'reactivation campaign', domain: 'campaigns' },
+  { phrase: 'email campaign', domain: 'campaigns' },
+  { phrase: 'sms campaign', domain: 'campaigns' },
+];
 
 const INTENT_PATTERNS = [
   // Create
@@ -217,24 +257,43 @@ class KanchoNLPEngine {
     let bestDomain = null;
     let bestScore = 0;
 
-    for (const [domain, { aliases }] of Object.entries(DOMAINS)) {
-      for (const alias of [domain, ...aliases]) {
-        const idx = norm.indexOf(alias);
-        if (idx !== -1) {
-          const score = alias.length + (idx < 20 ? 0.5 : 0);
-          if (score > bestScore) {
-            bestScore = score;
-            bestDomain = domain;
+    // 1) Composite phrase matching — highest priority, always wins
+    for (const { phrase, domain } of COMPOSITE_PHRASES) {
+      if (norm.includes(phrase)) {
+        const score = phrase.length + 100; // composite phrases always beat single words
+        if (score > bestScore) {
+          bestScore = score;
+          bestDomain = domain;
+        }
+      }
+    }
+
+    // 2) Single-word alias matching with word boundary and entity deprioritization
+    if (!bestDomain) {
+      for (const [domain, { aliases, entity }] of Object.entries(DOMAINS)) {
+        for (const alias of [domain, ...aliases]) {
+          const escaped = alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const re = new RegExp('\\b' + escaped + '\\b');
+          const match = re.exec(norm);
+          if (match) {
+            let score = alias.length + (match.index < 20 ? 0.5 : 0);
+            // Entity-type domains (student, lead, staff, family) get deprioritized
+            // so domain keywords like "billing", "portal", "campaign" win ties
+            if (entity) score -= 2;
+            if (score > bestScore) {
+              bestScore = score;
+              bestDomain = domain;
+            }
           }
         }
       }
     }
 
-    // Contextual hints when no explicit domain keyword
+    // 3) Contextual hints when no explicit domain keyword found
     if (!bestDomain) {
       if (/at[\s-]?risk|churn|inactive|retain|retention|dropout|hasn't attended|no attendance/.test(norm)) bestDomain = 'students';
       else if (/revenue|mrr|income|money|earnings/.test(norm)) bestDomain = 'growth';
-      else if (/overdue|unpaid|past due|failed payment/.test(norm)) bestDomain = 'billing';
+      else if (/overdue|unpaid|past due/.test(norm)) bestDomain = 'billing';
       else if (/schedule|book|lesson|private/.test(norm)) bestDomain = 'calendar';
       else if (/belt|rank|promote|testing|grading/.test(norm)) bestDomain = 'belts';
       else if (/enroll|sign up|signup|register/.test(norm)) bestDomain = 'students';
@@ -310,10 +369,11 @@ class KanchoNLPEngine {
     const daysMatch = norm.match(/(\d+)\s*days?/);
     if (daysMatch && !entities.dateOffset) entities.daysCount = parseInt(daysMatch[1]);
 
-    // Status keywords
-    const statusKeywords = ['at-risk', 'at risk', 'active', 'inactive', 'cancelled', 'past due', 'overdue', 'failed', 'pending', 'trial', 'paused', 'draft', 'completed', 'hot', 'warm', 'cold'];
+    // Status keywords — use word boundary regex to prevent "active" matching inside "inactive"
+    const statusKeywords = ['at-risk', 'at risk', 'inactive', 'active', 'cancelled', 'past due', 'overdue', 'failed', 'pending', 'trial', 'paused', 'draft', 'completed', 'hot', 'warm', 'cold'];
     for (const s of statusKeywords) {
-      if (norm.includes(s)) { entities.status = s; break; }
+      const escaped = s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      if (new RegExp('\\b' + escaped + '\\b').test(norm)) { entities.status = s; break; }
     }
 
     // Source keywords
@@ -445,7 +505,12 @@ class KanchoNLPEngine {
     const { domain, confidence: domainConf } = this.classifyDomain(rawText);
     const entities = this.extractEntities(rawText);
     this.resolveRelativeDate(entities);
-    const action = domain ? this.resolveAction(intent, domain) : intent;
+    let action = domain ? this.resolveAction(intent, domain) : intent;
+
+    // Domain-specific action overrides based on text content
+    if (domain === 'growth' && /insight|trend|analys|breakdown|compare/.test(normalized)) {
+      action = 'growth_insights';
+    }
 
     const confidence = Math.round(((intentConf + domainConf) / 2) * 1000) / 1000;
     const requiresConfirmation = DESTRUCTIVE_ACTIONS.has(action) || DESTRUCTIVE_ACTIONS.has(intent);
@@ -577,6 +642,7 @@ class KanchoNLPEngine {
   // ── 8. EXECUTE ─────────────────────────────────────────────
   async execute(parsed, schoolId, userId) {
     const { domain, action, intent, entities } = parsed;
+    entities.raw = parsed.raw; // pass raw text for contextual filtering
     const m = this.models;
 
     try {
@@ -640,6 +706,12 @@ class KanchoNLPEngine {
       }
       case 'list_students':
       case 'analyze_students': {
+        // If a specific student was matched, show detail view
+        if (e.matchedStudent) {
+          const stu = await m.KanchoStudent.findOne({ where: { id: e.matchedStudent.id, school_id: schoolId } });
+          if (!stu) return { success: false, message: 'Student not found.' };
+          return { success: true, message: `${stu.first_name} ${stu.last_name}\nBelt: ${stu.belt_rank || 'White'} | Status: ${stu.status}\nEmail: ${stu.email || 'N/A'} | Phone: ${stu.phone || 'N/A'}\nChurn risk: ${stu.churn_risk || 'low'} | Joined: ${stu.created_at ? new Date(stu.created_at).toLocaleDateString() : 'N/A'}`, data: stu };
+        }
         const where = { school_id: schoolId };
         if (e.status === 'inactive') where.status = 'inactive';
         else if (e.status === 'cancelled') where.status = 'cancelled';
@@ -649,6 +721,13 @@ class KanchoNLPEngine {
         if (/at.?risk|churn|retain/.test(e.status || '')) {
           where.churn_risk = { [Op.in]: ['high', 'critical'] };
           delete where.status; // don't also filter by regular status when looking for at-risk
+        }
+        // Name-based filter when no exact match but name was extracted
+        if (e.firstName && !e.matchedStudent) {
+          where[Op.or] = [
+            { first_name: { [Op.iLike]: '%' + e.firstName + '%' } },
+            { last_name: { [Op.iLike]: '%' + (e.lastName || e.firstName) + '%' } }
+          ];
         }
         const students = await m.KanchoStudent.findAll({ where, order: [['first_name', 'ASC']], limit: 50 });
         if (students.length === 0) return { success: true, message: 'No students found matching that criteria.', data: [] };
@@ -883,12 +962,19 @@ class KanchoNLPEngine {
       case 'list_classes': {
         const classes = await m.KanchoClass.findAll({ where: { school_id: schoolId }, order: [['name', 'ASC']] });
         if (classes.length === 0) return { success: true, message: 'No classes found.', data: [] };
-        const summary = classes.slice(0, 15).map(c => {
+        // Filter for full capacity if requested
+        const raw = (e.raw || '').toLowerCase();
+        let filtered = classes;
+        if (/full|capacity|full capacity/.test(raw) || /full|capacity/.test(e.status || '')) {
+          filtered = classes.filter(c => c.max_students && c.current_students >= c.max_students);
+          if (filtered.length === 0) return { success: true, message: 'No classes are at full capacity.', data: [] };
+        }
+        const summary = filtered.slice(0, 15).map(c => {
           const sched = c.schedule || {};
           const dayStr = Array.isArray(sched.days) ? sched.days.join('/') : (sched.day || '?');
-          return `${c.name} — ${dayStr} ${sched.time || ''} (${c.is_active ? 'active' : 'inactive'})`;
+          return `${c.name} — ${dayStr} ${sched.time || ''} (${c.is_active ? 'active' : 'inactive'})${c.max_students ? ' [' + (c.current_students || 0) + '/' + c.max_students + ']' : ''}`;
         }).join('\n');
-        return { success: true, message: `Classes (${classes.length}):\n${summary}`, data: classes };
+        return { success: true, message: `Classes (${filtered.length}):\n${summary}`, data: filtered };
       }
       case 'cancel_class': {
         if (!e.matchedClass && !e.recordId) return { success: false, message: 'Which class should I cancel?', clarify: 'className' };
@@ -943,9 +1029,11 @@ class KanchoNLPEngine {
     switch (action) {
       case 'create_event':
       case 'schedule_event': {
+        if (!e.firstName && !e.matchedStudent) return { success: false, message: 'Who is the appointment for? Please provide a name.', clarify: 'customerName' };
         const data = {
           school_id: schoolId,
           customer_name: e.firstName ? (e.firstName + ' ' + (e.lastName || '')) : 'Event',
+          customer_phone: e.phone || 'TBD',
           appointment_date: e.date || new Date().toISOString().split('T')[0],
           appointment_time: e.time || '10:00',
           purpose: e.programName || 'appointment',
@@ -1243,7 +1331,8 @@ class KanchoNLPEngine {
       }
       case 'create_funnel': {
         const name = e.programName || 'New Funnel';
-        const funnel = await m.KanchoFunnel.create({ school_id: schoolId, name, type: 'trial_booking', status: 'draft' });
+        const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now().toString(36);
+        const funnel = await m.KanchoFunnel.create({ school_id: schoolId, name, slug, type: 'trial_booking', status: 'draft' });
         return { success: true, message: `Created funnel: ${funnel.name}. Open Funnels tab to configure.`, data: funnel, affected: [funnel.id] };
       }
       case 'update_funnel': {
