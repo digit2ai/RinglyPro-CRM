@@ -345,8 +345,19 @@ class KanchoNLPEngine {
     if (typeMatch) entities.channelType = typeMatch[1].toLowerCase().replace(/[^a-z]/g, '_');
 
     // Numeric ID
+    // Numeric ID
     const idMatch = norm.match(/(?:id|#)\s*(\d+)/);
     if (idMatch) entities.recordId = parseInt(idMatch[1]);
+
+    // Generic entity name — capture remaining proper-cased text after action keywords
+    // Used for campaigns, promotions, funnels, automations where name doesn't match other patterns
+    if (!entities.programName && !entities.firstName) {
+      const genMatch = text.match(/(?:create|add|launch|new|named?|called?)\s+(?:a\s+)?(?:promotion|campaign|funnel|automation|task)\s+(?:named?\s+|called?\s+)?(.+)/i);
+      if (genMatch) {
+        const captured = genMatch[1].trim().replace(/[.,!?]+$/, '');
+        if (captured.length > 0 && captured.length < 100) entities.programName = captured;
+      }
+    }
 
     return entities;
   }
@@ -742,7 +753,16 @@ class KanchoNLPEngine {
         return { success: true, message: `Created family: ${family.family_name}`, data: family, affected: [family.id] };
       }
       case 'list_families': {
-        const families = await m.KanchoFamily.findAll({ where: { school_id: schoolId }, include: [{ model: m.KanchoStudent, as: 'members', attributes: ['id'] }], limit: 50 });
+        // If a specific family was matched by name, show just that one
+        if (e.matchedFamily) {
+          const fam = await m.KanchoFamily.findOne({ where: { id: e.matchedFamily.id, school_id: schoolId }, include: [{ model: m.KanchoStudent, as: 'members', attributes: ['id', 'first_name', 'last_name', 'belt_rank', 'status'] }] });
+          if (!fam) return { success: false, message: 'Family not found.' };
+          const memberList = (fam.members || []).map(s => `  - ${s.first_name} ${s.last_name} (${s.belt_rank || 'White'}, ${s.status})`).join('\n');
+          return { success: true, message: `${fam.family_name}\nContact: ${fam.primary_contact_name || 'N/A'} (${fam.primary_contact_email || 'no email'})\nMembers (${(fam.members || []).length}):\n${memberList || '  No members'}`, data: fam };
+        }
+        const where = { school_id: schoolId };
+        if (e.lastName && !e.matchedFamily) where.family_name = { [Op.iLike]: '%' + e.lastName + '%' };
+        const families = await m.KanchoFamily.findAll({ where, include: [{ model: m.KanchoStudent, as: 'members', attributes: ['id'] }], limit: 50 });
         if (families.length === 0) return { success: true, message: 'No families found.', data: [] };
         const summary = families.slice(0, 10).map(f => `${f.family_name} — ${(f.members || []).length} members`).join('\n');
         return { success: true, message: `Found ${families.length} family account(s):\n${summary}`, data: families };
