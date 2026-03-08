@@ -48,6 +48,23 @@ router.get('/overdue', async (req, res) => {
   }
 });
 
+// GET /api/v1/tasks/:id - Single task
+router.get('/:id', async (req, res) => {
+  try {
+    const task = await Task.findOne({
+      where: { id: req.params.id, workspace_id: 1 },
+      include: [
+        { model: Project, as: 'project', attributes: ['id', 'name', 'status'] },
+        { model: Contact, as: 'contact', attributes: ['id', 'first_name', 'last_name', 'email'] }
+      ]
+    });
+    if (!task) return res.status(404).json({ success: false, error: 'Task not found' });
+    res.json({ success: true, data: task });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // POST /api/v1/tasks - Create task
 router.post('/', async (req, res) => {
   try {

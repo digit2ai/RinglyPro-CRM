@@ -56,6 +56,23 @@ router.get('/upcoming', async (req, res) => {
   }
 });
 
+// GET /api/v1/calendar/:id - Single event
+router.get('/:id', async (req, res) => {
+  try {
+    const event = await CalendarEvent.findOne({
+      where: { id: req.params.id, workspace_id: 1 },
+      include: [
+        { model: Project, as: 'project', attributes: ['id', 'name', 'status'] },
+        { model: Contact, as: 'contact', attributes: ['id', 'first_name', 'last_name', 'email'] }
+      ]
+    });
+    if (!event) return res.status(404).json({ success: false, error: 'Event not found' });
+    res.json({ success: true, data: event });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // POST /api/v1/calendar - Create event
 router.post('/', async (req, res) => {
   try {

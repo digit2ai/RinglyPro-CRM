@@ -87,6 +87,7 @@ function logout() {
 // NAVIGATION
 // =====================================================
 function navigateTo(view) {
+  _lastDrilldown = null;
   currentView = view;
   document.querySelectorAll('.sidebar-nav li').forEach(li => {
     li.classList.toggle('active', li.dataset.view === view);
@@ -240,7 +241,10 @@ async function renderOverview(container) {
 // =====================================================
 // DRILL-DOWN: Click a KPI card to see the underlying data
 // =====================================================
+let _lastDrilldown = null;
+
 async function drillDown(metric, filterValue) {
+  _lastDrilldown = { metric, filterValue };
   const container = document.getElementById('view-container');
   container.innerHTML = '<div class="spinner"></div>';
 
@@ -350,13 +354,13 @@ function renderDrillTable(container, title, items, type) {
     tableHtml = `<table class="data-table"><thead><tr><th>Task</th><th>Type</th><th>Priority</th><th>Project</th><th>Due</th><th>Actions</th></tr></thead><tbody>` +
       (items.length > 0 ? items.map(t => {
         const isOverdue = t.due_date && new Date(t.due_date) < now && t.status === 'pending';
-        return `<tr>
+        return `<tr class="clickable" onclick="showTaskDetail(${t.id})">
           <td><strong>${t.title}</strong>${t.description ? '<br><span style="font-size:12px;color:var(--text-muted)">'+t.description.substring(0,60)+'</span>' : ''}</td>
           <td><span class="status-badge status-${t.task_type === 'reminder' ? 'on_hold' : 'planning'}">${t.task_type}</span></td>
           <td><span class="priority-badge priority-${t.priority}">${t.priority}</span></td>
           <td>${t.project?.name || '-'}</td>
           <td><span style="color:${isOverdue ? 'var(--danger)' : 'var(--text-secondary)'}">${t.due_date ? fmtDate(t.due_date) : '-'}${isOverdue ? ' (overdue)' : ''}</span></td>
-          <td>${t.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="completeTask(${t.id})">Done</button>` : '<span class="status-badge status-completed">done</span>'}</td>
+          <td>${t.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="event.stopPropagation();completeTask(${t.id})">Done</button>` : '<span class="status-badge status-completed">done</span>'}</td>
         </tr>`;
       }).join('') : '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted)">No items found</td></tr>') +
       '</tbody></table>';
@@ -616,13 +620,13 @@ function renderTasksList(tasks) {
     ? `<table class="data-table"><thead><tr><th>Task</th><th>Type</th><th>Priority</th><th>Project</th><th>Due</th><th>Actions</th></tr></thead><tbody>` +
       tasks.map(t => {
         const isOverdue = t.due_date && new Date(t.due_date) < now && t.status === 'pending';
-        return `<tr>
+        return `<tr class="clickable" onclick="showTaskDetail(${t.id})">
           <td><strong>${t.title}</strong>${t.description ? '<br><span style="font-size:12px;color:var(--text-muted)">'+t.description.substring(0,60)+'</span>' : ''}</td>
           <td><span class="status-badge status-${t.task_type === 'reminder' ? 'on_hold' : 'planning'}">${t.task_type}</span></td>
           <td><span class="priority-badge priority-${t.priority}">${t.priority}</span></td>
           <td>${t.project?.name || '-'}</td>
           <td><span style="color:${isOverdue ? 'var(--danger)' : 'var(--text-secondary)'}">${t.due_date ? fmtDate(t.due_date) : '-'}${isOverdue ? ' (overdue)' : ''}</span></td>
-          <td>${t.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="completeTask(${t.id})">Done</button>` : '<span class="status-badge status-completed">completed</span>'}</td>
+          <td>${t.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="event.stopPropagation();completeTask(${t.id})">Done</button>` : '<span class="status-badge status-completed">completed</span>'}</td>
         </tr>`;
       }).join('') + '</tbody></table>'
     : '<div class="empty-state"><div class="empty-icon">&#9745;</div><h3>No tasks</h3><p>Create a task or use the AI command to add one.</p></div>';
@@ -631,6 +635,124 @@ function renderTasksList(tasks) {
 async function completeTask(id) {
   await api(`/tasks/${id}`, { method: 'PUT', body: JSON.stringify({ status: 'completed' }) });
   renderView('tasks');
+}
+
+async function completeTaskFromDetail(id) {
+  await api(`/tasks/${id}`, { method: 'PUT', body: JSON.stringify({ status: 'completed' }) });
+  showTaskDetail(id);
+}
+
+async function deleteTask(id) {
+  if (!confirm('Delete this task permanently?')) return;
+  await api(`/tasks/${id}`, { method: 'DELETE' });
+  navigateTo('tasks');
+}
+
+async function showTaskDetail(id) {
+  const container = document.getElementById('view-container');
+  container.innerHTML = '<div class="spinner"></div>';
+  const res = await api(`/tasks/${id}`);
+  if (!res.success) { container.innerHTML = '<div class="empty-state"><h3>Task not found</h3><button class="btn btn-ghost" onclick="navigateTo(\'tasks\')">Back</button></div>'; return; }
+  const t = res.data;
+  const isOverdue = t.due_date && new Date(t.due_date) < new Date() && t.status === 'pending';
+  const backAction = _lastDrilldown ? `drillDown('${_lastDrilldown.metric}'${_lastDrilldown.filterValue ? ",'" + _lastDrilldown.filterValue + "'" : ''})` : "navigateTo('tasks')";
+  const backLabel = _lastDrilldown ? '&#8592; Back to List' : '&#8592; Back to Tasks';
+
+  container.innerHTML = `
+    <div class="detail-panel">
+      <div class="detail-header">
+        <div>
+          <button class="btn btn-ghost btn-sm" onclick="${backAction}" style="margin-bottom:8px">${backLabel}</button>
+          <h2>${t.title}</h2>
+        </div>
+        <div style="display:flex;gap:8px">
+          ${t.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="completeTaskFromDetail(${t.id})">&#10003; Complete</button>` : ''}
+          <button class="btn btn-ghost btn-sm" onclick="openTaskEditModal(${t.id})">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteTask(${t.id})">Delete</button>
+        </div>
+      </div>
+      <div class="detail-meta">
+        <span class="status-badge status-${t.status === 'completed' ? 'completed' : isOverdue ? 'overdue' : 'pending'}">${t.status === 'completed' ? 'COMPLETED' : isOverdue ? 'OVERDUE' : t.status.toUpperCase()}</span>
+        <span class="priority-badge priority-${t.priority}">${t.priority}</span>
+        <span class="status-badge status-${t.task_type === 'reminder' ? 'on_hold' : 'planning'}">${t.task_type}</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;margin-top:24px">
+        <div>
+          ${t.description ? `<div class="detail-section"><h4>Description</h4><p style="font-size:14px;color:var(--text-secondary);white-space:pre-wrap">${t.description}</p></div>` : '<div class="detail-section"><h4>Description</h4><p style="font-size:14px;color:var(--text-muted);font-style:italic">No description</p></div>'}
+
+          ${t.project ? `<div class="detail-section"><h4>Linked Project</h4><div class="timeline-item" style="cursor:pointer" onclick="showProjectDetail(${t.project.id})"><div class="timeline-dot" style="background:var(--accent)"></div><div class="timeline-content"><strong>${t.project.name}</strong><br><span style="font-size:12px;color:var(--text-muted)">${t.project.status || ''}</span></div></div></div>` : ''}
+
+          ${t.contact ? `<div class="detail-section"><h4>Linked Contact</h4><div class="timeline-item" style="cursor:pointer" onclick="showContactDetail(${t.contact.id})"><div class="timeline-dot" style="background:var(--success)"></div><div class="timeline-content"><strong>${t.contact.first_name} ${t.contact.last_name || ''}</strong>${t.contact.email ? '<br><span style="font-size:12px;color:var(--text-muted)">'+t.contact.email+'</span>' : ''}</div></div></div>` : ''}
+        </div>
+
+        <div>
+          <div class="detail-section">
+            <h4>Details</h4>
+            <div style="font-size:14px;display:flex;flex-direction:column;gap:8px">
+              <div><span style="color:var(--text-muted)">Status:</span> <span class="status-badge status-${t.status}">${t.status}</span></div>
+              <div><span style="color:var(--text-muted)">Priority:</span> <span class="priority-badge priority-${t.priority}">${t.priority}</span></div>
+              <div><span style="color:var(--text-muted)">Type:</span> ${t.task_type}</div>
+              ${t.due_date ? `<div><span style="color:var(--text-muted)">Due:</span> <strong style="color:${isOverdue ? 'var(--danger)' : 'var(--text-primary)'}">${fmtDateTime(t.due_date)}</strong></div>` : '<div><span style="color:var(--text-muted)">Due:</span> Not set</div>'}
+              ${t.completed_at ? `<div><span style="color:var(--text-muted)">Completed:</span> ${fmtDateTime(t.completed_at)}</div>` : ''}
+              <div><span style="color:var(--text-muted)">Created:</span> ${fmtDateTime(t.created_at)}</div>
+              ${t.user_email ? `<div><span style="color:var(--text-muted)">Assigned to:</span> ${t.user_email}</div>` : ''}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function openTaskEditModal(id) {
+  const res = await api(`/tasks/${id}`);
+  if (!res.success) return;
+  const t = res.data;
+
+  openModal('Edit Task', `
+    <div class="form-group"><label>Title *</label><input type="text" id="m-ttitle" value="${t.title || ''}"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Type</label>
+        <select id="m-ttype">
+          <option value="task" ${t.task_type==='task'?'selected':''}>Task</option>
+          <option value="reminder" ${t.task_type==='reminder'?'selected':''}>Reminder</option>
+          <option value="followup" ${t.task_type==='followup'?'selected':''}>Follow-up</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Priority</label>
+        <select id="m-tpriority">
+          <option value="low" ${t.priority==='low'?'selected':''}>Low</option>
+          <option value="medium" ${t.priority==='medium'?'selected':''}>Medium</option>
+          <option value="high" ${t.priority==='high'?'selected':''}>High</option>
+          <option value="critical" ${t.priority==='critical'?'selected':''}>Critical</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Status</label>
+        <select id="m-tstatus">
+          <option value="pending" ${t.status==='pending'?'selected':''}>Pending</option>
+          <option value="completed" ${t.status==='completed'?'selected':''}>Completed</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Due Date</label><input type="datetime-local" id="m-tdue" value="${t.due_date ? t.due_date.substring(0,16) : ''}"></div>
+    </div>
+    <div class="form-group"><label>Description</label><textarea id="m-tdesc">${t.description || ''}</textarea></div>
+  `, async () => {
+    const data = {
+      title: document.getElementById('m-ttitle').value.trim(),
+      task_type: document.getElementById('m-ttype').value,
+      priority: document.getElementById('m-tpriority').value,
+      status: document.getElementById('m-tstatus').value,
+      due_date: document.getElementById('m-tdue').value || null,
+      description: document.getElementById('m-tdesc').value.trim()
+    };
+    if (!data.title) { alert('Title is required'); return; }
+    await api(`/tasks/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+    closeModal();
+    showTaskDetail(id);
+  });
 }
 
 // =====================================================
@@ -800,11 +922,14 @@ async function showContactDetail(id) {
   if (!res.success) return;
   const c = res.data;
 
+  const cBackAction = _lastDrilldown ? `drillDown('${_lastDrilldown.metric}'${_lastDrilldown.filterValue ? ",'" + _lastDrilldown.filterValue + "'" : ''})` : "navigateTo('contacts')";
+  const cBackLabel = _lastDrilldown ? '&#8592; Back to List' : '&#8592; Back to Contacts';
+
   container.innerHTML = `
     <div class="detail-panel">
       <div class="detail-header">
         <div>
-          <button class="btn btn-ghost btn-sm" onclick="navigateTo('contacts')" style="margin-bottom:8px">&#8592; Back</button>
+          <button class="btn btn-ghost btn-sm" onclick="${cBackAction}" style="margin-bottom:8px">${cBackLabel}</button>
           <h2>${c.first_name} ${c.last_name || ''}</h2>
           ${c.title ? `<p style="color:var(--text-secondary)">${c.title}${c.company ? ' at ' + c.company.name : ''}</p>` : ''}
         </div>
@@ -861,11 +986,14 @@ async function showProjectDetail(id) {
   const p = res.data;
   const isOverdue = p.due_date && new Date(p.due_date) < new Date() && !['completed','cancelled'].includes(p.status);
 
+  const pBackAction = _lastDrilldown ? `drillDown('${_lastDrilldown.metric}'${_lastDrilldown.filterValue ? ",'" + _lastDrilldown.filterValue + "'" : ''})` : "navigateTo('projects')";
+  const pBackLabel = _lastDrilldown ? '&#8592; Back to List' : '&#8592; Back to Projects';
+
   container.innerHTML = `
     <div class="detail-panel">
       <div class="detail-header">
         <div>
-          <button class="btn btn-ghost btn-sm" onclick="navigateTo('projects')" style="margin-bottom:8px">&#8592; Back</button>
+          <button class="btn btn-ghost btn-sm" onclick="${pBackAction}" style="margin-bottom:8px">${pBackLabel}</button>
           <h2>${p.name}</h2>
           ${p.code ? `<p style="color:var(--text-muted);font-size:13px">${p.code}</p>` : ''}
         </div>
