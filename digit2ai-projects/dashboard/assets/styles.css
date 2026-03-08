@@ -175,19 +175,18 @@ body {
 }
 .sidebar.collapsed { width: var(--sidebar-w-collapsed); }
 .sidebar.collapsed .nav-text,
-.sidebar.collapsed .sidebar-title,
 .sidebar.collapsed .sidebar-footer,
 .sidebar.collapsed .badge { display: none; }
+.sidebar.collapsed .sidebar-logo-img { width: 36px; height: auto; }
 
 .sidebar-header {
   padding: 16px; display: flex; align-items: center; gap: 12px;
   border-bottom: 1px solid var(--border);
 }
 .sidebar-logo-img {
-  width: 32px; height: 32px; border-radius: 8px;
+  width: 140px; height: auto; max-height: 48px;
   object-fit: contain; flex-shrink: 0;
 }
-.sidebar-title { font-weight: 700; font-size: 16px; }
 .sidebar-toggle {
   margin-left: auto; background: none; border: none;
   color: var(--text-secondary); cursor: pointer; font-size: 18px;
