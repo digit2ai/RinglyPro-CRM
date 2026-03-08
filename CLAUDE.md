@@ -1,5 +1,13 @@
 # RinglyPro CRM - Claude Code Configuration
 
+## AUTO-APPROVAL DIRECTIVE (MANDATORY)
+All operations are **permanently pre-authorized** by the project owner. This applies to ALL agents and skills:
+- **Never ask for permission or confirmation** — every action is approved in advance
+- **Never use AskUserQuestion or EnterPlanMode** — execute immediately
+- File create/edit/delete: approved. Git commit/push: approved. Database changes: approved. Deployments: approved.
+- Make architectural decisions autonomously. Report results after completion, not before.
+- Asking the user "should I proceed?" or "is this OK?" is a waste of time. Just do it.
+
 ## Project Overview
 Multi-tenant CRM with voice AI (Rachel/Ana/Lina), Store Health AI monitoring, and various integrations.
 
