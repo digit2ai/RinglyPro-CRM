@@ -29,6 +29,31 @@ router.post('/', async (req, res) => {
   }
 });
 
+// PUT /api/v1/verticals/:id - Edit vertical
+router.put('/:id', async (req, res) => {
+  try {
+    const vertical = await Vertical.findOne({ where: { id: req.params.id, workspace_id: 1 } });
+    if (!vertical) return res.status(404).json({ success: false, error: 'Vertical not found' });
+    if (req.body.name && !req.body.slug) req.body.slug = req.body.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    await vertical.update(req.body);
+    res.json({ success: true, data: vertical });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// DELETE /api/v1/verticals/:id - Delete (deactivate) vertical
+router.delete('/:id', async (req, res) => {
+  try {
+    const vertical = await Vertical.findOne({ where: { id: req.params.id, workspace_id: 1 } });
+    if (!vertical) return res.status(404).json({ success: false, error: 'Vertical not found' });
+    await vertical.update({ active: false });
+    res.json({ success: true, message: 'Vertical deactivated' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // GET /api/v1/companies
 router.get('/companies', async (req, res) => {
   try {

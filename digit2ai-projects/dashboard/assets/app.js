@@ -576,7 +576,7 @@ async function renderActivity(container) {
 // =====================================================
 function renderSettings(container) {
   container.innerHTML = `
-    <div class="card" style="max-width:600px">
+    <div class="card" style="max-width:700px">
       <h3 style="margin-bottom:20px">Settings</h3>
       <div class="detail-section">
         <h4>Account</h4>
@@ -584,10 +584,15 @@ function renderSettings(container) {
       </div>
       <div class="detail-section">
         <h4>Verticals</h4>
+        <p style="color:var(--text-muted);font-size:13px;margin-bottom:12px">Organize contacts and projects by vertical. Click Edit to modify or Delete to remove.</p>
         <div id="verticals-list" style="margin-bottom:16px"></div>
-        <div class="form-row">
-          <div class="form-group"><input type="text" id="new-vertical-name" placeholder="New vertical name"></div>
-          <div class="form-group"><button class="btn btn-primary" onclick="addVertical()">Add Vertical</button></div>
+        <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px">
+          <p style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--text-secondary)">Add New Vertical</p>
+          <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+            <div class="form-group" style="margin:0;flex:1;min-width:150px"><input type="text" id="new-vertical-name" placeholder="Name"></div>
+            <div class="form-group" style="margin:0;width:100px"><input type="color" id="new-vertical-color" value="#6366f1" style="height:38px;padding:4px"></div>
+            <div class="form-group" style="margin:0"><button class="btn btn-primary" onclick="addVertical()">Add</button></div>
+          </div>
         </div>
       </div>
       <div class="detail-section">
@@ -597,21 +602,55 @@ function renderSettings(container) {
     </div>
   `;
 
+  renderVerticalsList();
+}
+
+function renderVerticalsList() {
   document.getElementById('verticals-list').innerHTML = VERTICALS.map(v =>
-    `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
-      <span class="vertical-dot" style="background:${v.color}"></span>
-      <span>${v.name}</span>
-      <span style="color:var(--text-muted);font-size:12px;margin-left:auto">${v.slug}</span>
+    `<div id="vert-row-${v.id}" style="display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <span class="vertical-dot" style="background:${v.color};width:12px;height:12px"></span>
+      <span style="font-weight:500;flex:1">${v.name}</span>
+      <span style="color:var(--text-muted);font-size:12px">${v.slug}</span>
+      <button class="btn btn-ghost btn-sm" onclick="editVertical(${v.id},'${v.name.replace(/'/g,"\\'")}','${v.color}','${v.description||''}')">Edit</button>
+      <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteVertical(${v.id},'${v.name.replace(/'/g,"\\'")}')">Delete</button>
     </div>`
-  ).join('');
+  ).join('') || '<p style="color:var(--text-muted);font-size:13px">No verticals configured.</p>';
 }
 
 async function addVertical() {
   const name = document.getElementById('new-vertical-name').value.trim();
-  if (!name) return;
-  await api('/verticals', { method: 'POST', body: JSON.stringify({ name }) });
+  const color = document.getElementById('new-vertical-color').value || '#6366f1';
+  if (!name) { alert('Vertical name is required'); return; }
+  await api('/verticals', { method: 'POST', body: JSON.stringify({ name, color }) });
+  document.getElementById('new-vertical-name').value = '';
   await loadVerticals();
-  renderSettings(document.getElementById('view-container'));
+  renderVerticalsList();
+}
+
+function editVertical(id, name, color, description) {
+  openModal('Edit Vertical', `
+    <div class="form-group"><label>Name *</label><input type="text" id="m-vname" value="${name}"></div>
+    <div class="form-group"><label>Color</label><input type="color" id="m-vcolor" value="${color}" style="height:40px;width:100%"></div>
+    <div class="form-group"><label>Description</label><textarea id="m-vdesc">${description}</textarea></div>
+  `, async () => {
+    const data = {
+      name: document.getElementById('m-vname').value.trim(),
+      color: document.getElementById('m-vcolor').value,
+      description: document.getElementById('m-vdesc').value.trim()
+    };
+    if (!data.name) { alert('Name is required'); return; }
+    await api(`/verticals/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+    closeModal();
+    await loadVerticals();
+    renderVerticalsList();
+  });
+}
+
+async function deleteVertical(id, name) {
+  if (!confirm(`Delete vertical "${name}"? Contacts and projects using this vertical will be unlinked.`)) return;
+  await api(`/verticals/${id}`, { method: 'DELETE' });
+  await loadVerticals();
+  renderVerticalsList();
 }
 
 // =====================================================
