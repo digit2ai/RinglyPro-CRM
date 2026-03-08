@@ -34,16 +34,6 @@ app.get('/health', (req, res) => {
   });
 });
 
-// TEMPORARY: Test token generator (remove after testing)
-app.get('/api/test-token', (req, res) => {
-  const jwt = require('jsonwebtoken');
-  const token = jwt.sign(
-    { userId: 22, email: 'info@digit2ai.com', isAdmin: true },
-    process.env.JWT_SECRET,
-    { expiresIn: '1h' }
-  );
-  res.json({ token });
-});
 
 // Serve dashboard static files
 const dashboardPath = path.join(__dirname, '..', 'dashboard');
