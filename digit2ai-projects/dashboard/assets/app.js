@@ -84,6 +84,31 @@ function logout() {
 }
 
 // =====================================================
+// THEME (dark/light)
+// =====================================================
+function getTheme() {
+  return localStorage.getItem('d2ai_theme') || 'dark';
+}
+
+function setTheme(theme) {
+  localStorage.setItem('d2ai_theme', theme);
+  document.documentElement.setAttribute('data-theme', theme);
+  updateThemeIcon();
+  if (currentView === 'settings') renderView('settings');
+}
+
+function initTheme() {
+  const theme = getTheme();
+  document.documentElement.setAttribute('data-theme', theme);
+  updateThemeIcon();
+}
+
+function updateThemeIcon() {
+  const btn = document.getElementById('theme-toggle-btn');
+  if (btn) btn.innerHTML = getTheme() === 'dark' ? '&#9728;' : '&#127769;';
+}
+
+// =====================================================
 // NAVIGATION
 // =====================================================
 function navigateTo(view) {
@@ -247,10 +272,10 @@ async function renderOverview(container) {
   `;
 
   // Status chart - clickable bars
-  const statusColors = { planning: '#6366f1', active: '#10b981', in_progress: '#3b82f6', on_hold: '#f59e0b', completed: '#64748b', cancelled: '#475569' };
+  const statusColors = { planning: '#2563eb', active: '#10b981', in_progress: '#3b82f6', on_hold: '#f59e0b', completed: '#64748b', cancelled: '#475569' };
   const maxStatus = Math.max(...d.projects_by_status.map(s => parseInt(s.count)), 1);
   document.getElementById('status-chart').innerHTML = d.projects_by_status.map(s =>
-    `<div class="bar-row card-clickable" onclick="drillDown('projects_by_status','${s.status}')"><div class="bar-label">${s.status}</div><div class="bar-track"><div class="bar-fill" style="width:${(s.count/maxStatus)*100}%;background:${statusColors[s.status]||'#6366f1'}">${s.count}</div></div></div>`
+    `<div class="bar-row card-clickable" onclick="drillDown('projects_by_status','${s.status}')"><div class="bar-label">${s.status}</div><div class="bar-track"><div class="bar-fill" style="width:${(s.count/maxStatus)*100}%;background:${statusColors[s.status]||'#2563eb'}">${s.count}</div></div></div>`
   ).join('') || '<p style="color:var(--text-muted);font-size:13px">No projects yet. <a href="#" onclick="event.preventDefault();openProjectModal()" style="color:var(--accent)">Create your first one!</a></p>';
 
   // Vertical chart - clickable bars
@@ -608,8 +633,8 @@ async function renderCalendar(container) {
     const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const isToday = dateStr === todayStr;
     const dayEvents = eventsByDate[dateStr] || [];
-    const typeColors = { meeting: '#6366f1', deadline: '#ef4444', followup: '#f59e0b', milestone: '#10b981', event: '#3b82f6' };
-    grid.innerHTML += `<div class="calendar-cell${isToday ? ' today' : ''}"><div class="calendar-day">${d}</div>${dayEvents.slice(0,3).map(e => `<div class="calendar-event-dot" style="background:${typeColors[e.event_type]||'#6366f1'};color:white;cursor:pointer" onclick="showEventDetail(${e.id})">${e.title}</div>`).join('')}${dayEvents.length > 3 ? `<div style="font-size:10px;color:var(--text-muted)">+${dayEvents.length-3} more</div>` : ''}</div>`;
+    const typeColors = { meeting: '#2563eb', deadline: '#ef4444', followup: '#f59e0b', milestone: '#10b981', event: '#3b82f6' };
+    grid.innerHTML += `<div class="calendar-cell${isToday ? ' today' : ''}"><div class="calendar-day">${d}</div>${dayEvents.slice(0,3).map(e => `<div class="calendar-event-dot" style="background:${typeColors[e.event_type]||'#2563eb'};color:white;cursor:pointer" onclick="showEventDetail(${e.id})">${e.title}</div>`).join('')}${dayEvents.length > 3 ? `<div style="font-size:10px;color:var(--text-muted)">+${dayEvents.length-3} more</div>` : ''}</div>`;
   }
 
   // Next month fill
@@ -632,7 +657,7 @@ async function showEventDetail(id) {
   if (!res.success) { container.innerHTML = '<div class="empty-state"><h3>Event not found</h3><button class="btn btn-ghost" onclick="navigateTo(\'calendar\')">Back</button></div>'; return; }
   const e = res.data;
   const isPast = e.start_time && new Date(e.start_time) < new Date();
-  const typeColors = { meeting: '#6366f1', deadline: '#ef4444', followup: '#f59e0b', milestone: '#10b981', event: '#3b82f6' };
+  const typeColors = { meeting: '#2563eb', deadline: '#ef4444', followup: '#f59e0b', milestone: '#10b981', event: '#3b82f6' };
 
   container.innerHTML = `
     <div class="detail-panel">
@@ -647,7 +672,7 @@ async function showEventDetail(id) {
         </div>
       </div>
       <div class="detail-meta">
-        <span class="status-badge" style="background:${typeColors[e.event_type] || '#6366f1'}20;color:${typeColors[e.event_type] || '#6366f1'}">${e.event_type || 'event'}</span>
+        <span class="status-badge" style="background:${typeColors[e.event_type] || '#2563eb'}20;color:${typeColors[e.event_type] || '#2563eb'}">${e.event_type || 'event'}</span>
         ${isPast ? '<span class="status-badge status-completed">Past</span>' : '<span class="status-badge status-active">Upcoming</span>'}
         ${e.all_day ? '<span class="status-badge status-planning">All Day</span>' : ''}
       </div>
@@ -1016,9 +1041,17 @@ function renderSettings(container) {
           <p style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--text-secondary)">Add New Vertical</p>
           <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
             <div class="form-group" style="margin:0;flex:1;min-width:150px"><input type="text" id="new-vertical-name" placeholder="Name"></div>
-            <div class="form-group" style="margin:0;width:100px"><input type="color" id="new-vertical-color" value="#6366f1" style="height:38px;padding:4px"></div>
+            <div class="form-group" style="margin:0;width:100px"><input type="color" id="new-vertical-color" value="#2563eb" style="height:38px;padding:4px"></div>
             <div class="form-group" style="margin:0"><button class="btn btn-primary" onclick="addVertical()">Add</button></div>
           </div>
+        </div>
+      </div>
+      <div class="detail-section">
+        <h4>Appearance</h4>
+        <p style="color:var(--text-muted);font-size:13px;margin-bottom:12px">Choose your preferred look</p>
+        <div style="display:flex;gap:12px">
+          <button class="btn ${getTheme() === 'dark' ? 'btn-primary' : 'btn-ghost'}" onclick="setTheme('dark')">&#127769; Dark Mode</button>
+          <button class="btn ${getTheme() === 'light' ? 'btn-primary' : 'btn-ghost'}" onclick="setTheme('light')">&#9728; Light Mode</button>
         </div>
       </div>
       <div class="detail-section">
@@ -1049,7 +1082,7 @@ function renderVerticalsList() {
 
 async function addVertical() {
   const name = document.getElementById('new-vertical-name').value.trim();
-  const color = document.getElementById('new-vertical-color').value || '#6366f1';
+  const color = document.getElementById('new-vertical-color').value || '#2563eb';
   if (!name) { alert('Vertical name is required'); return; }
   await api('/verticals', { method: 'POST', body: JSON.stringify({ name, color }) });
   document.getElementById('new-vertical-name').value = '';
@@ -1614,6 +1647,9 @@ function escHtml(s) {
 // EVENT LISTENERS
 // =====================================================
 document.addEventListener('DOMContentLoaded', () => {
+  // Theme
+  initTheme();
+
   // Auth
   document.getElementById('login-btn').addEventListener('click', doLogin);
   document.getElementById('login-password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
