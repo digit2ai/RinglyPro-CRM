@@ -3,7 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const { Op } = require('sequelize');
-const { Task, Project, Contact } = require('../models');
+const { Task, Project, Contact, StaffMember } = require('../models');
 const { logActivity } = require('../services/activityService');
 
 // GET /api/v1/tasks - List tasks
@@ -21,7 +21,8 @@ router.get('/', async (req, res) => {
       where,
       include: [
         { model: Project, as: 'project', attributes: ['id', 'name'] },
-        { model: Contact, as: 'contact', attributes: ['id', 'first_name', 'last_name'] }
+        { model: Contact, as: 'contact', attributes: ['id', 'first_name', 'last_name'] },
+        { model: StaffMember, as: 'assignee', attributes: ['id', 'first_name', 'last_name'] }
       ],
       order: [['due_date', 'ASC NULLS LAST'], ['priority', 'ASC']]
     });
@@ -38,7 +39,8 @@ router.get('/overdue', async (req, res) => {
       where: { workspace_id: 1, status: 'pending', due_date: { [Op.lt]: new Date() } },
       include: [
         { model: Project, as: 'project', attributes: ['id', 'name'] },
-        { model: Contact, as: 'contact', attributes: ['id', 'first_name', 'last_name'] }
+        { model: Contact, as: 'contact', attributes: ['id', 'first_name', 'last_name'] },
+        { model: StaffMember, as: 'assignee', attributes: ['id', 'first_name', 'last_name'] }
       ],
       order: [['due_date', 'ASC']]
     });
@@ -55,7 +57,8 @@ router.get('/:id', async (req, res) => {
       where: { id: req.params.id, workspace_id: 1 },
       include: [
         { model: Project, as: 'project', attributes: ['id', 'name', 'status'] },
-        { model: Contact, as: 'contact', attributes: ['id', 'first_name', 'last_name', 'email'] }
+        { model: Contact, as: 'contact', attributes: ['id', 'first_name', 'last_name', 'email'] },
+        { model: StaffMember, as: 'assignee', attributes: ['id', 'first_name', 'last_name', 'email', 'position'] }
       ]
     });
     if (!task) return res.status(404).json({ success: false, error: 'Task not found' });

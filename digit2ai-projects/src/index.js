@@ -18,6 +18,7 @@ const notificationsRoutes = require('./routes/notifications');
 const activityRoutes = require('./routes/activity');
 const verticalsRoutes = require('./routes/verticals');
 const nlpRoutes = require('./routes/nlp');
+const staffRoutes = require('./routes/staff');
 
 const app = express();
 
@@ -49,6 +50,7 @@ app.use('/api/v1/notifications', authenticateToken, notificationsRoutes);
 app.use('/api/v1/activity', authenticateToken, activityRoutes);
 app.use('/api/v1/verticals', authenticateToken, verticalsRoutes);
 app.use('/api/v1/nlp', authenticateToken, nlpRoutes);
+app.use('/api/v1/staff', authenticateToken, staffRoutes);
 
 // SPA catch-all: serve dashboard for all non-API routes
 app.get('*', (req, res) => {

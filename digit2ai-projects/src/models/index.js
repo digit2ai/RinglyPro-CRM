@@ -101,6 +101,7 @@ const Project = sequelize.define('Project', {
   stage: { type: DataTypes.STRING(100), defaultValue: 'initiation' },
   priority: { type: DataTypes.STRING(20), defaultValue: 'medium' },
   owner_user_id: DataTypes.INTEGER,
+  lead_staff_id: DataTypes.INTEGER,
   team_members: { type: DataTypes.JSONB, defaultValue: [] },
   start_date: DataTypes.DATEONLY,
   due_date: DataTypes.DATEONLY,
@@ -157,6 +158,7 @@ const Task = sequelize.define('Task', {
   user_email: DataTypes.STRING(255),
   project_id: DataTypes.INTEGER,
   contact_id: DataTypes.INTEGER,
+  assigned_staff_id: DataTypes.INTEGER,
   title: { type: DataTypes.STRING(500), allowNull: false },
   description: DataTypes.TEXT,
   task_type: { type: DataTypes.STRING(50), defaultValue: 'task' },
@@ -234,6 +236,58 @@ const NlpCommand = sequelize.define('NlpCommand', {
 }, { tableName: 'd2_nlp_commands', updatedAt: false });
 
 // =====================================================
+// STAFF MEMBER
+// =====================================================
+const StaffMember = sequelize.define('StaffMember', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  workspace_id: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
+  first_name: { type: DataTypes.STRING(255), allowNull: false },
+  last_name: DataTypes.STRING(255),
+  email: DataTypes.STRING(255),
+  phone: DataTypes.STRING(50),
+  avatar_url: DataTypes.STRING(500),
+  department: DataTypes.STRING(100),
+  position: DataTypes.STRING(255),
+  status: { type: DataTypes.STRING(50), defaultValue: 'active' },
+  hire_date: DataTypes.DATEONLY,
+  notes: DataTypes.TEXT,
+  archived_at: DataTypes.DATE
+}, { tableName: 'd2_staff_members' });
+
+// =====================================================
+// ROLE
+// =====================================================
+const Role = sequelize.define('Role', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  workspace_id: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
+  name: { type: DataTypes.STRING(255), allowNull: false },
+  description: DataTypes.TEXT,
+  color: { type: DataTypes.STRING(20), defaultValue: '#2563eb' },
+  sort_order: { type: DataTypes.INTEGER, defaultValue: 0 }
+}, { tableName: 'd2_roles' });
+
+// =====================================================
+// STAFF ROLE LINK (many-to-many)
+// =====================================================
+const StaffRole = sequelize.define('StaffRole', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  staff_id: { type: DataTypes.INTEGER, allowNull: false },
+  role_id: { type: DataTypes.INTEGER, allowNull: false }
+}, { tableName: 'd2_staff_roles', updatedAt: false });
+
+// =====================================================
+// RESPONSIBILITY
+// =====================================================
+const Responsibility = sequelize.define('Responsibility', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  workspace_id: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
+  role_id: DataTypes.INTEGER,
+  name: { type: DataTypes.STRING(500), allowNull: false },
+  description: DataTypes.TEXT,
+  category: DataTypes.STRING(100)
+}, { tableName: 'd2_responsibilities' });
+
+// =====================================================
 // ASSOCIATIONS
 // =====================================================
 
@@ -281,6 +335,22 @@ CalendarEvent.belongsTo(Project, { foreignKey: 'project_id', as: 'project' });
 Contact.hasMany(CalendarEvent, { foreignKey: 'contact_id', as: 'events' });
 CalendarEvent.belongsTo(Contact, { foreignKey: 'contact_id', as: 'contact' });
 
+// Staff <-> Roles (many-to-many)
+StaffMember.belongsToMany(Role, { through: StaffRole, foreignKey: 'staff_id', otherKey: 'role_id', as: 'roles' });
+Role.belongsToMany(StaffMember, { through: StaffRole, foreignKey: 'role_id', otherKey: 'staff_id', as: 'staff' });
+
+// Role <-> Responsibilities
+Role.hasMany(Responsibility, { foreignKey: 'role_id', as: 'responsibilities' });
+Responsibility.belongsTo(Role, { foreignKey: 'role_id', as: 'role' });
+
+// Staff <-> Tasks (assigned_to)
+StaffMember.hasMany(Task, { foreignKey: 'assigned_staff_id', as: 'tasks' });
+Task.belongsTo(StaffMember, { foreignKey: 'assigned_staff_id', as: 'assignee' });
+
+// Staff <-> Projects (project lead)
+StaffMember.hasMany(Project, { foreignKey: 'lead_staff_id', as: 'led_projects' });
+Project.belongsTo(StaffMember, { foreignKey: 'lead_staff_id', as: 'lead' });
+
 module.exports = {
   sequelize,
   Workspace,
@@ -296,5 +366,9 @@ module.exports = {
   CalendarEvent,
   Notification,
   ActivityLog,
-  NlpCommand
+  NlpCommand,
+  StaffMember,
+  Role,
+  StaffRole,
+  Responsibility
 };

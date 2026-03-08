@@ -3,7 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const { Op } = require('sequelize');
-const { Project, Contact, Company, Vertical, ProjectContact, ProjectMilestone, ProjectUpdate, ActivityLog, sequelize } = require('../models');
+const { Project, Contact, Company, Vertical, ProjectContact, ProjectMilestone, ProjectUpdate, ActivityLog, StaffMember, sequelize } = require('../models');
 const { logActivity } = require('../services/activityService');
 
 // GET /api/v1/projects - List projects
@@ -28,7 +28,8 @@ router.get('/', async (req, res) => {
       where,
       include: [
         { model: Vertical, as: 'vertical', attributes: ['id', 'name', 'color'] },
-        { model: Company, as: 'company', attributes: ['id', 'name'] }
+        { model: Company, as: 'company', attributes: ['id', 'name'] },
+        { model: StaffMember, as: 'lead', attributes: ['id', 'first_name', 'last_name'] }
       ],
       order: [['updated_at', 'DESC']],
       limit: parseInt(limit),
@@ -91,6 +92,7 @@ router.get('/:id', async (req, res) => {
       include: [
         { model: Vertical, as: 'vertical' },
         { model: Company, as: 'company' },
+        { model: StaffMember, as: 'lead', attributes: ['id', 'first_name', 'last_name', 'position'] },
         { model: Contact, as: 'contacts', through: { attributes: ['role'] } },
         { model: ProjectMilestone, as: 'milestones', order: [['sort_order', 'ASC']] },
         { model: ProjectUpdate, as: 'updates', order: [['created_at', 'DESC']], limit: 20 }

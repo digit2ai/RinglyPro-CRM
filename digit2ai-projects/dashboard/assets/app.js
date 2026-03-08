@@ -43,6 +43,8 @@ function showApp() {
   document.getElementById('main-app').classList.remove('hidden');
   document.getElementById('user-info').textContent = USER?.email || '';
   loadVerticals();
+  loadStaff();
+  loadRoles();
   navigateTo('overview');
 }
 
@@ -119,8 +121,8 @@ function navigateTo(view) {
   });
   const titles = {
     overview: 'Home', contacts: 'People & Contacts', projects: 'My Projects',
-    calendar: 'Calendar', tasks: 'My To-Do List', notifications: 'Alerts & Updates',
-    ai: 'Ask AI', activity: 'Recent History', settings: 'Settings'
+    calendar: 'Calendar', tasks: 'My To-Do List', staff: 'Staff & Roles',
+    notifications: 'Alerts & Updates', ai: 'Ask AI', activity: 'Recent History', settings: 'Settings'
   };
   document.getElementById('page-title').textContent = titles[view] || view;
   renderView(view);
@@ -136,6 +138,7 @@ async function renderView(view) {
       case 'projects': await renderProjects(container); break;
       case 'calendar': await renderCalendar(container); break;
       case 'tasks': await renderTasks(container); break;
+      case 'staff': await renderStaff(container); break;
       case 'notifications': await renderNotifications(container); break;
       case 'ai': renderAIWorkspace(container); break;
       case 'activity': await renderActivity(container); break;
@@ -783,13 +786,15 @@ async function renderTasks(container) {
 function renderTasksList(tasks) {
   const now = new Date();
   document.getElementById('tasks-list').innerHTML = tasks.length > 0
-    ? `<table class="data-table"><thead><tr><th>Task</th><th>Type</th><th>Priority</th><th>Project</th><th>Due</th><th>Actions</th></tr></thead><tbody>` +
+    ? `<table class="data-table"><thead><tr><th>Task</th><th>Type</th><th>Priority</th><th>Assigned To</th><th>Project</th><th>Due</th><th>Actions</th></tr></thead><tbody>` +
       tasks.map(t => {
         const isOverdue = t.due_date && new Date(t.due_date) < now && t.status === 'pending';
+        const assigneeName = t.assignee ? `${t.assignee.first_name} ${t.assignee.last_name || ''}`.trim() : '';
         return `<tr class="clickable" onclick="showTaskDetail(${t.id})">
           <td><strong>${t.title}</strong>${t.description ? '<br><span style="font-size:12px;color:var(--text-muted)">'+t.description.substring(0,60)+'</span>' : ''}</td>
           <td><span class="status-badge status-${t.task_type === 'reminder' ? 'on_hold' : 'planning'}">${t.task_type}</span></td>
           <td><span class="priority-badge priority-${t.priority}">${t.priority}</span></td>
+          <td>${assigneeName ? `<span style="font-size:13px">&#128100; ${assigneeName}</span>` : '<span style="color:var(--text-muted);font-size:12px">Unassigned</span>'}</td>
           <td>${t.project?.name || '-'}</td>
           <td><span style="color:${isOverdue ? 'var(--danger)' : 'var(--text-secondary)'}">${t.due_date ? fmtDate(t.due_date) : '-'}${isOverdue ? ' (overdue)' : ''}</span></td>
           <td>${t.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="event.stopPropagation();completeTask(${t.id})">Done</button>` : '<span class="status-badge status-completed">completed</span>'}</td>
@@ -850,6 +855,8 @@ async function showTaskDetail(id) {
           ${t.project ? `<div class="detail-section"><h4>Linked Project</h4><div class="timeline-item" style="cursor:pointer" onclick="showProjectDetail(${t.project.id})"><div class="timeline-dot" style="background:var(--accent)"></div><div class="timeline-content"><strong>${t.project.name}</strong><br><span style="font-size:12px;color:var(--text-muted)">${t.project.status || ''}</span></div></div></div>` : ''}
 
           ${t.contact ? `<div class="detail-section"><h4>Linked Contact</h4><div class="timeline-item" style="cursor:pointer" onclick="showContactDetail(${t.contact.id})"><div class="timeline-dot" style="background:var(--success)"></div><div class="timeline-content"><strong>${t.contact.first_name} ${t.contact.last_name || ''}</strong>${t.contact.email ? '<br><span style="font-size:12px;color:var(--text-muted)">'+t.contact.email+'</span>' : ''}</div></div></div>` : ''}
+
+          ${t.assignee ? `<div class="detail-section"><h4>Assigned Staff Member</h4><div class="timeline-item" style="cursor:pointer" onclick="showStaffDetail(${t.assignee.id})"><div class="timeline-dot" style="background:var(--accent)"></div><div class="timeline-content"><strong>&#128100; ${t.assignee.first_name} ${t.assignee.last_name || ''}</strong>${t.assignee.position ? '<br><span style="font-size:12px;color:var(--text-muted)">'+t.assignee.position+'</span>' : ''}</div></div></div>` : ''}
         </div>
 
         <div>
@@ -862,7 +869,7 @@ async function showTaskDetail(id) {
               ${t.due_date ? `<div><span style="color:var(--text-muted)">Due:</span> <strong style="color:${isOverdue ? 'var(--danger)' : 'var(--text-primary)'}">${fmtDateTime(t.due_date)}</strong></div>` : '<div><span style="color:var(--text-muted)">Due:</span> Not set</div>'}
               ${t.completed_at ? `<div><span style="color:var(--text-muted)">Completed:</span> ${fmtDateTime(t.completed_at)}</div>` : ''}
               <div><span style="color:var(--text-muted)">Created:</span> ${fmtDateTime(t.created_at)}</div>
-              ${t.user_email ? `<div><span style="color:var(--text-muted)">Assigned to:</span> ${t.user_email}</div>` : ''}
+              ${t.assignee ? `<div><span style="color:var(--text-muted)">Assigned to:</span> &#128100; ${t.assignee.first_name} ${t.assignee.last_name || ''}</div>` : t.user_email ? `<div><span style="color:var(--text-muted)">Assigned to:</span> ${t.user_email}</div>` : '<div><span style="color:var(--text-muted)">Assigned to:</span> <span style="color:var(--text-muted);font-style:italic">Unassigned</span></div>'}
             </div>
           </div>
         </div>
@@ -904,6 +911,7 @@ async function openTaskEditModal(id) {
       </div>
       <div class="form-group"><label>Due Date</label><input type="datetime-local" id="m-tdue" value="${t.due_date ? t.due_date.substring(0,16) : ''}"></div>
     </div>
+    <div class="form-group"><label>Assign To</label><select id="m-tstaff">${staffOptions(t.assigned_staff_id)}</select></div>
     <div class="form-group"><label>Description</label><textarea id="m-tdesc">${t.description || ''}</textarea></div>
   `, async () => {
     const data = {
@@ -912,6 +920,7 @@ async function openTaskEditModal(id) {
       priority: document.getElementById('m-tpriority').value,
       status: document.getElementById('m-tstatus').value,
       due_date: document.getElementById('m-tdue').value || null,
+      assigned_staff_id: document.getElementById('m-tstaff').value || null,
       description: document.getElementById('m-tdesc').value.trim()
     };
     if (!data.title) { alert('Title is required'); return; }
@@ -1247,6 +1256,7 @@ async function showProjectDetail(id) {
                 <div class="timeline-content">
                   <strong>${t.title}</strong> <span class="status-badge status-${t.status === 'completed' ? 'completed' : tOverdue ? 'overdue' : 'pending'}">${t.status === 'completed' ? 'done' : tOverdue ? 'overdue' : t.status}</span>
                   <span class="priority-badge priority-${t.priority}" style="margin-left:4px">${t.priority}</span>
+                  ${t.assignee ? '<br><span style="font-size:12px;color:var(--text-secondary)">&#128100; '+t.assignee.first_name+' '+(t.assignee.last_name||'')+'</span>' : ''}
                   ${t.due_date ? '<br><span class="timeline-time">Due: '+fmtDate(t.due_date)+'</span>' : ''}
                 </div>
               </div>`;
@@ -1267,6 +1277,7 @@ async function showProjectDetail(id) {
           <div class="detail-section">
             <h4>Details</h4>
             <div style="font-size:14px;display:flex;flex-direction:column;gap:6px">
+              ${p.lead ? `<div><span style="color:var(--text-muted)">Lead:</span> <span style="cursor:pointer;color:var(--accent)" onclick="showStaffDetail(${p.lead.id})">&#128100; ${p.lead.first_name} ${p.lead.last_name || ''}</span></div>` : ''}
               ${p.start_date ? `<div><span style="color:var(--text-muted)">Start:</span> ${fmtDate(p.start_date)}</div>` : ''}
               ${p.due_date ? `<div><span style="color:var(--text-muted)">Due:</span> <strong style="color:${isOverdue ? 'var(--danger)' : 'var(--text-primary)'}">${fmtDate(p.due_date)}</strong></div>` : ''}
               ${p.stage ? `<div><span style="color:var(--text-muted)">Stage:</span> ${p.stage}</div>` : ''}
@@ -1307,6 +1318,7 @@ function openTaskModalForProject(projectId) {
         <select id="m-tpriority"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option><option value="critical">Critical</option></select>
       </div>
     </div>
+    <div class="form-group"><label>Assign To</label><select id="m-tstaff">${staffOptions()}</select></div>
     <div class="form-group"><label>Due Date</label><input type="datetime-local" id="m-tdue"></div>
     <div class="form-group"><label>Description</label><textarea id="m-tdesc"></textarea></div>
   `, async () => {
@@ -1315,6 +1327,7 @@ function openTaskModalForProject(projectId) {
       task_type: document.getElementById('m-ttype').value,
       priority: document.getElementById('m-tpriority').value,
       due_date: document.getElementById('m-tdue').value || null,
+      assigned_staff_id: document.getElementById('m-tstaff').value || null,
       description: document.getElementById('m-tdesc').value.trim(),
       project_id: projectId
     };
@@ -1449,7 +1462,10 @@ function openProjectModal(existing) {
       <div class="form-group"><label>Start Date</label><input type="date" id="m-pstart" value="${p.start_date || ''}"></div>
       <div class="form-group"><label>Due Date</label><input type="date" id="m-pdue" value="${p.due_date || ''}"></div>
     </div>
-    <div class="form-group"><label>Progress (%)</label><input type="number" id="m-pprogress" min="0" max="100" value="${p.progress || 0}"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Progress (%)</label><input type="number" id="m-pprogress" min="0" max="100" value="${p.progress || 0}"></div>
+      <div class="form-group"><label>Project Lead</label><select id="m-plead">${staffOptions(p.lead_staff_id)}</select></div>
+    </div>
     <div class="form-group"><label>Description</label><textarea id="m-pdesc">${p.description || ''}</textarea></div>
     <div class="form-group"><label>Next Step</label><input type="text" id="m-pnext" value="${p.next_step || ''}"></div>
     <div class="form-group"><label>Blockers</label><input type="text" id="m-pblockers" value="${p.blockers || ''}"></div>
@@ -1464,6 +1480,7 @@ function openProjectModal(existing) {
       start_date: document.getElementById('m-pstart').value || null,
       due_date: document.getElementById('m-pdue').value || null,
       progress: parseInt(document.getElementById('m-pprogress').value) || 0,
+      lead_staff_id: document.getElementById('m-plead').value || null,
       description: document.getElementById('m-pdesc').value.trim(),
       next_step: document.getElementById('m-pnext').value.trim(),
       blockers: document.getElementById('m-pblockers').value.trim(),
@@ -1492,6 +1509,7 @@ function openTaskModal() {
         <select id="m-tpriority"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option><option value="critical">Critical</option></select>
       </div>
     </div>
+    <div class="form-group"><label>Assign To</label><select id="m-tstaff">${staffOptions()}</select></div>
     <div class="form-group"><label>Due Date</label><input type="datetime-local" id="m-tdue"></div>
     <div class="form-group"><label>Description</label><textarea id="m-tdesc"></textarea></div>
   `, async () => {
@@ -1500,6 +1518,7 @@ function openTaskModal() {
       task_type: document.getElementById('m-ttype').value,
       priority: document.getElementById('m-tpriority').value,
       due_date: document.getElementById('m-tdue').value || null,
+      assigned_staff_id: document.getElementById('m-tstaff').value || null,
       description: document.getElementById('m-tdesc').value.trim()
     };
     if (!data.title) { alert('Title is required'); return; }
@@ -1609,6 +1628,367 @@ async function sendAICommand(target) {
     msgContainer.innerHTML += `<div class="nlp-msg system" style="color:var(--danger)">Error: ${err.message}</div>`;
   }
   msgContainer.scrollTop = msgContainer.scrollHeight;
+}
+
+// =====================================================
+// STAFF & ROLES
+// =====================================================
+let ROLES = [];
+let STAFF = [];
+
+async function loadRoles() {
+  try {
+    const res = await api('/staff/roles/list');
+    if (res.success) ROLES = res.data;
+  } catch (e) { console.log('Roles load error'); }
+}
+
+async function loadStaff() {
+  try {
+    const res = await api('/staff');
+    if (res.success) STAFF = res.data;
+  } catch (e) { console.log('Staff load error'); }
+}
+
+async function renderStaff(container) {
+  await Promise.all([loadRoles(), loadStaff()]);
+  const staff = STAFF;
+
+  container.innerHTML = `
+    <div class="section-header">
+      <div class="filter-bar">
+        <input type="text" placeholder="Search staff..." id="staff-search" style="width:250px">
+        <select id="staff-dept-filter">
+          <option value="">All Departments</option>
+          ${[...new Set(staff.map(s => s.department).filter(Boolean))].map(d => `<option value="${d}">${d}</option>`).join('')}
+        </select>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="showRolesManager()">&#128119; Manage Roles</button>
+        <button class="btn btn-primary btn-sm" onclick="openStaffModal()">+ Add Staff</button>
+      </div>
+    </div>
+    <p class="section-hint">Your team members. Click on a person to see their details, roles, and responsibilities.</p>
+    <div id="staff-list"></div>
+  `;
+
+  renderStaffList(staff);
+
+  const searchInput = document.getElementById('staff-search');
+  searchInput?.addEventListener('input', () => {
+    const q = searchInput.value.toLowerCase();
+    const dept = document.getElementById('staff-dept-filter').value;
+    const filtered = STAFF.filter(s => {
+      const matchSearch = !q || `${s.first_name} ${s.last_name} ${s.email} ${s.position}`.toLowerCase().includes(q);
+      const matchDept = !dept || s.department === dept;
+      return matchSearch && matchDept;
+    });
+    renderStaffList(filtered);
+  });
+  document.getElementById('staff-dept-filter')?.addEventListener('change', () => {
+    searchInput.dispatchEvent(new Event('input'));
+  });
+}
+
+function renderStaffList(staff) {
+  document.getElementById('staff-list').innerHTML = staff.length > 0
+    ? `<table class="data-table"><thead><tr><th>Name</th><th>Position</th><th>Department</th><th>Email</th><th>Roles</th><th>Status</th></tr></thead><tbody>` +
+      staff.map(s => `<tr class="clickable" onclick="showStaffDetail(${s.id})">
+        <td><strong>${s.first_name} ${s.last_name || ''}</strong></td>
+        <td>${s.position || '-'}</td>
+        <td>${s.department || '-'}</td>
+        <td>${s.email || '-'}</td>
+        <td>${s.roles?.length ? s.roles.map(r => `<span class="tag" style="background:${r.color}20;color:${r.color}">${r.name}</span>`).join(' ') : '<span style="color:var(--text-muted)">None</span>'}</td>
+        <td><span class="status-badge status-${s.status}">${s.status}</span></td>
+      </tr>`).join('') + '</tbody></table>'
+    : '<div class="empty-state"><div class="empty-icon">&#128119;</div><h3>No staff members yet</h3><p>Add your team members to assign them to projects and tasks.</p><button class="get-started-btn" onclick="openStaffModal()">&#128119; Add Your First Staff Member</button></div>';
+}
+
+async function showStaffDetail(id) {
+  const container = document.getElementById('view-container');
+  container.innerHTML = '<div class="spinner"></div>';
+  const res = await api(`/staff/${id}`);
+  if (!res.success) { container.innerHTML = '<div class="empty-state"><h3>Staff member not found</h3><button class="btn btn-ghost" onclick="navigateTo(\'staff\')">Back</button></div>'; return; }
+  const s = res.data;
+
+  container.innerHTML = `
+    <div class="detail-panel">
+      <div class="detail-header">
+        <div>
+          <button class="btn btn-ghost btn-sm" onclick="navigateTo('staff')" style="margin-bottom:8px">&#8592; Back to Staff</button>
+          <h2>${s.first_name} ${s.last_name || ''}</h2>
+          ${s.position ? `<p style="color:var(--text-secondary)">${s.position}${s.department ? ' — ' + s.department : ''}</p>` : ''}
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="openStaffModal(${JSON.stringify(s).replace(/"/g,'&quot;')})">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="archiveStaff(${s.id})">Archive</button>
+        </div>
+      </div>
+      <div class="detail-meta">
+        <span class="status-badge status-${s.status}">${s.status}</span>
+        ${s.department ? `<div class="detail-meta-item">&#127970; ${s.department}</div>` : ''}
+        ${s.hire_date ? `<div class="detail-meta-item">&#128197; Hired: ${fmtDate(s.hire_date)}</div>` : ''}
+      </div>
+
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;margin-top:24px">
+        <div>
+          <div class="detail-section">
+            <h4>Roles & Responsibilities</h4>
+            ${s.roles?.length ? s.roles.map(r => `
+              <div class="card" style="margin-bottom:12px;border-left:3px solid ${r.color}">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                  <strong style="color:${r.color}">${r.name}</strong>
+                </div>
+                ${r.description ? `<p style="font-size:13px;color:var(--text-secondary);margin-bottom:8px">${r.description}</p>` : ''}
+                ${r.responsibilities?.length ? `<div style="font-size:13px"><strong style="color:var(--text-muted)">Responsibilities:</strong><ul style="margin:4px 0 0 16px;color:var(--text-secondary)">` +
+                  r.responsibilities.map(resp => `<li>${resp.name}${resp.description ? ' — <span style="color:var(--text-muted)">'+resp.description+'</span>' : ''}</li>`).join('') +
+                  '</ul></div>' : '<p style="font-size:12px;color:var(--text-muted);font-style:italic">No responsibilities defined for this role</p>'}
+              </div>
+            `).join('') : '<p style="font-size:13px;color:var(--text-muted)">No roles assigned. <a href="#" onclick="event.preventDefault();openStaffModal(${JSON.stringify(s).replace(/"/g,\'&quot;\')})" style="color:var(--accent)">Edit to add roles</a></p>'}
+          </div>
+
+          <div class="detail-section">
+            <h4>Assigned Tasks</h4>
+            ${s.tasks?.length ? s.tasks.map(t => {
+              const tOverdue = t.due_date && new Date(t.due_date) < new Date() && t.status === 'pending';
+              return `<div class="timeline-item" style="cursor:pointer;border-left:3px solid ${t.status === 'completed' ? 'var(--success)' : tOverdue ? 'var(--danger)' : 'var(--accent)'}" onclick="showTaskDetail(${t.id})">
+                <div class="timeline-content">
+                  <strong>${t.title}</strong> <span class="priority-badge priority-${t.priority}">${t.priority}</span>
+                  ${t.due_date ? '<br><span class="timeline-time">Due: '+fmtDate(t.due_date)+'</span>' : ''}
+                </div>
+              </div>`;
+            }).join('') : '<p style="font-size:13px;color:var(--text-muted)">No pending tasks assigned</p>'}
+          </div>
+
+          <div class="detail-section">
+            <h4>Leading Projects</h4>
+            ${s.led_projects?.length ? s.led_projects.map(p => `<div class="timeline-item" style="cursor:pointer" onclick="showProjectDetail(${p.id})">
+              <div class="timeline-dot" style="background:var(--accent)"></div>
+              <div class="timeline-content"><strong>${p.name}</strong> <span class="status-badge status-${p.status}">${p.status}</span></div>
+            </div>`).join('') : '<p style="font-size:13px;color:var(--text-muted)">Not leading any projects</p>'}
+          </div>
+        </div>
+
+        <div>
+          <div class="detail-section">
+            <h4>Contact Info</h4>
+            <div style="font-size:14px;display:flex;flex-direction:column;gap:8px">
+              ${s.email ? `<div><span style="color:var(--text-muted)">Email:</span> ${s.email}</div>` : ''}
+              ${s.phone ? `<div><span style="color:var(--text-muted)">Phone:</span> ${s.phone}</div>` : ''}
+              ${s.hire_date ? `<div><span style="color:var(--text-muted)">Hire Date:</span> ${fmtDate(s.hire_date)}</div>` : ''}
+              <div><span style="color:var(--text-muted)">Created:</span> ${fmtDate(s.created_at)}</div>
+            </div>
+          </div>
+          ${s.notes ? `<div class="detail-section"><h4>Notes</h4><p style="font-size:14px;color:var(--text-secondary);white-space:pre-wrap">${s.notes}</p></div>` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function roleCheckboxes(selectedIds = []) {
+  return ROLES.map(r => `<label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer">
+    <input type="checkbox" class="role-cb" value="${r.id}" ${selectedIds.includes(r.id) ? 'checked' : ''}>
+    <span class="tag" style="background:${r.color}20;color:${r.color}">${r.name}</span>
+    ${r.description ? `<span style="font-size:11px;color:var(--text-muted)">${r.description}</span>` : ''}
+  </label>`).join('');
+}
+
+function staffOptions(selectedId) {
+  return `<option value="">-- No Assignee --</option>` +
+    STAFF.map(s => `<option value="${s.id}" ${s.id == selectedId ? 'selected' : ''}>${s.first_name} ${s.last_name || ''}${s.position ? ' (' + s.position + ')' : ''}</option>`).join('');
+}
+
+async function openStaffModal(existing) {
+  await loadRoles();
+  const s = existing || {};
+  const selectedRoleIds = (s.roles || []).map(r => r.id);
+
+  openModal(s.id ? 'Edit Staff Member' : 'Add Staff Member', `
+    <div class="form-row">
+      <div class="form-group"><label>First Name *</label><input type="text" id="m-sfirst" value="${s.first_name || ''}"></div>
+      <div class="form-group"><label>Last Name</label><input type="text" id="m-slast" value="${s.last_name || ''}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Email</label><input type="email" id="m-semail" value="${s.email || ''}"></div>
+      <div class="form-group"><label>Phone</label><input type="text" id="m-sphone" value="${s.phone || ''}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Position / Title</label><input type="text" id="m-sposition" value="${s.position || ''}"></div>
+      <div class="form-group"><label>Department</label><input type="text" id="m-sdept" value="${s.department || ''}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Status</label>
+        <select id="m-sstatus">
+          <option value="active" ${s.status==='active'?'selected':''}>Active</option>
+          <option value="inactive" ${s.status==='inactive'?'selected':''}>Inactive</option>
+          <option value="on_leave" ${s.status==='on_leave'?'selected':''}>On Leave</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Hire Date</label><input type="date" id="m-shire" value="${s.hire_date || ''}"></div>
+    </div>
+    <div class="form-group">
+      <label>Roles</label>
+      <div style="max-height:150px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);padding:8px">
+        ${ROLES.length ? roleCheckboxes(selectedRoleIds) : '<p style="font-size:13px;color:var(--text-muted)">No roles defined yet. <a href="#" onclick="event.preventDefault();closeModal();showRolesManager()" style="color:var(--accent)">Create roles first</a></p>'}
+      </div>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea id="m-snotes">${s.notes || ''}</textarea></div>
+  `, async () => {
+    const role_ids = [...document.querySelectorAll('.role-cb:checked')].map(cb => parseInt(cb.value));
+    const data = {
+      first_name: document.getElementById('m-sfirst').value.trim(),
+      last_name: document.getElementById('m-slast').value.trim(),
+      email: document.getElementById('m-semail').value.trim(),
+      phone: document.getElementById('m-sphone').value.trim(),
+      position: document.getElementById('m-sposition').value.trim(),
+      department: document.getElementById('m-sdept').value.trim(),
+      status: document.getElementById('m-sstatus').value,
+      hire_date: document.getElementById('m-shire').value || null,
+      notes: document.getElementById('m-snotes').value.trim(),
+      role_ids
+    };
+    if (!data.first_name) { alert('First name is required'); return; }
+    if (s.id) {
+      await api(`/staff/${s.id}`, { method: 'PUT', body: JSON.stringify(data) });
+      closeModal();
+      showStaffDetail(s.id);
+    } else {
+      await api('/staff', { method: 'POST', body: JSON.stringify(data) });
+      closeModal();
+      navigateTo('staff');
+    }
+  });
+}
+
+async function archiveStaff(id) {
+  if (!confirm('Archive this staff member?')) return;
+  await api(`/staff/${id}/archive`, { method: 'PUT' });
+  navigateTo('staff');
+}
+
+// =====================================================
+// ROLES MANAGER
+// =====================================================
+async function showRolesManager() {
+  await loadRoles();
+  const container = document.getElementById('view-container');
+  document.getElementById('page-title').textContent = 'Manage Roles & Responsibilities';
+
+  container.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div>
+        <button class="btn btn-ghost btn-sm" onclick="navigateTo('staff')">&#8592; Back to Staff</button>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="openRoleModal()">+ Add Role</button>
+    </div>
+    <p class="section-hint">Define roles and their responsibilities. Roles can then be assigned to staff members.</p>
+    <div id="roles-list"></div>
+  `;
+
+  renderRolesList();
+}
+
+function renderRolesList() {
+  document.getElementById('roles-list').innerHTML = ROLES.length > 0
+    ? ROLES.map(r => `
+      <div class="card" style="margin-bottom:16px;border-left:3px solid ${r.color}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <h3 style="font-size:16px;margin-bottom:4px;color:${r.color}">${r.name}</h3>
+            ${r.description ? `<p style="font-size:13px;color:var(--text-secondary);margin-bottom:8px">${r.description}</p>` : ''}
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">${r.staff?.length || 0} staff member(s)</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost btn-sm" onclick="openRoleModal(${JSON.stringify(r).replace(/"/g,'&quot;')})">Edit</button>
+            <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteRole(${r.id},'${r.name.replace(/'/g,"\\'")}')">Delete</button>
+          </div>
+        </div>
+        <div style="margin-top:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <strong style="font-size:13px;color:var(--text-secondary)">Responsibilities</strong>
+            <button class="btn btn-ghost btn-sm" onclick="openResponsibilityModal(${r.id})">+ Add</button>
+          </div>
+          ${r.responsibilities?.length ? r.responsibilities.map(resp => `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-radius:var(--radius);background:var(--bg-hover);margin-bottom:4px">
+              <div>
+                <span style="font-size:13px">${resp.name}</span>
+                ${resp.description ? `<span style="font-size:11px;color:var(--text-muted)"> — ${resp.description}</span>` : ''}
+                ${resp.category ? `<span class="tag" style="margin-left:4px">${resp.category}</span>` : ''}
+              </div>
+              <div style="display:flex;gap:4px">
+                <button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:11px" onclick="openResponsibilityModal(${r.id},${JSON.stringify(resp).replace(/"/g,'&quot;')})">Edit</button>
+                <button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:11px;color:var(--danger)" onclick="deleteResponsibility(${resp.id},${r.id})">&#10005;</button>
+              </div>
+            </div>
+          `).join('') : '<p style="font-size:12px;color:var(--text-muted);font-style:italic;padding:4px 8px">No responsibilities defined yet</p>'}
+        </div>
+      </div>
+    `).join('')
+    : '<div class="empty-state"><div class="empty-icon">&#128119;</div><h3>No roles defined yet</h3><p>Create roles to organize your team\'s responsibilities.</p><button class="get-started-btn" onclick="openRoleModal()">&#128119; Create Your First Role</button></div>';
+}
+
+function openRoleModal(existing) {
+  const r = existing || {};
+  openModal(r.id ? 'Edit Role' : 'New Role', `
+    <div class="form-group"><label>Role Name *</label><input type="text" id="m-rname" value="${r.name || ''}"></div>
+    <div class="form-group"><label>Description</label><textarea id="m-rdesc">${r.description || ''}</textarea></div>
+    <div class="form-group"><label>Color</label><input type="color" id="m-rcolor" value="${r.color || '#2563eb'}" style="height:40px;width:100%"></div>
+  `, async () => {
+    const data = {
+      name: document.getElementById('m-rname').value.trim(),
+      description: document.getElementById('m-rdesc').value.trim(),
+      color: document.getElementById('m-rcolor').value
+    };
+    if (!data.name) { alert('Role name is required'); return; }
+    if (r.id) {
+      await api(`/staff/roles/${r.id}`, { method: 'PUT', body: JSON.stringify(data) });
+    } else {
+      await api('/staff/roles', { method: 'POST', body: JSON.stringify(data) });
+    }
+    closeModal();
+    await loadRoles();
+    renderRolesList();
+  });
+}
+
+async function deleteRole(id, name) {
+  if (!confirm(`Delete role "${name}"? Staff members will be unlinked from this role.`)) return;
+  await api(`/staff/roles/${id}`, { method: 'DELETE' });
+  await loadRoles();
+  renderRolesList();
+}
+
+function openResponsibilityModal(roleId, existing) {
+  const r = existing || {};
+  openModal(r.id ? 'Edit Responsibility' : 'Add Responsibility', `
+    <div class="form-group"><label>Name *</label><input type="text" id="m-respname" value="${r.name || ''}"></div>
+    <div class="form-group"><label>Description</label><textarea id="m-respdesc">${r.description || ''}</textarea></div>
+    <div class="form-group"><label>Category</label><input type="text" id="m-respcat" value="${r.category || ''}" placeholder="e.g. Operations, Finance, HR"></div>
+  `, async () => {
+    const data = {
+      name: document.getElementById('m-respname').value.trim(),
+      description: document.getElementById('m-respdesc').value.trim(),
+      category: document.getElementById('m-respcat').value.trim(),
+      role_id: roleId
+    };
+    if (!data.name) { alert('Name is required'); return; }
+    if (r.id) {
+      await api(`/staff/responsibilities/${r.id}`, { method: 'PUT', body: JSON.stringify(data) });
+    } else {
+      await api('/staff/responsibilities', { method: 'POST', body: JSON.stringify(data) });
+    }
+    closeModal();
+    await loadRoles();
+    renderRolesList();
+  });
+}
+
+async function deleteResponsibility(id, roleId) {
+  if (!confirm('Remove this responsibility?')) return;
+  await api(`/staff/responsibilities/${id}`, { method: 'DELETE' });
+  await loadRoles();
+  renderRolesList();
 }
 
 // =====================================================
