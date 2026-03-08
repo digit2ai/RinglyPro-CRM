@@ -35,7 +35,7 @@ app.get('/health', (req, res) => {
 });
 
 // TEMPORARY: Test token generator (remove after testing)
-app.get('/test-token', (req, res) => {
+app.get('/api/test-token', (req, res) => {
   const jwt = require('jsonwebtoken');
   const token = jwt.sign(
     { userId: 22, email: 'info@digit2ai.com', isAdmin: true },
