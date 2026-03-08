@@ -227,9 +227,9 @@ async function renderOverview(container) {
     ? d.stalled_projects.map(p => `<div class="timeline-item" style="cursor:pointer" onclick="showProjectDetail(${p.id})"><div class="timeline-dot" style="background:var(--warning)"></div><div class="timeline-content"><strong>${p.name}</strong><br><span class="timeline-time">Last update: ${fmtDate(p.updated_at)}</span></div></div>`).join('')
     : '<p style="color:var(--text-muted);font-size:13px;padding:12px">No stalled projects</p>';
 
-  // Upcoming events
+  // Upcoming events - clickable
   document.getElementById('upcoming-list').innerHTML = d.upcoming_events.length > 0
-    ? d.upcoming_events.map(e => `<div class="timeline-item"><div class="timeline-dot" style="background:var(--info)"></div><div class="timeline-content"><strong>${e.title}</strong><br><span class="timeline-time">${fmtDateTime(e.start_time)}</span></div></div>`).join('')
+    ? d.upcoming_events.map(e => `<div class="timeline-item" style="cursor:pointer" onclick="showEventDetail(${e.id})"><div class="timeline-dot" style="background:var(--info)"></div><div class="timeline-content"><strong>${e.title}</strong><br><span class="timeline-time">${fmtDateTime(e.start_time)}</span>${e.event_type ? ' <span class="status-badge status-planning">'+e.event_type+'</span>' : ''}</div></div>`).join('')
     : '<p style="color:var(--text-muted);font-size:13px;padding:12px">No upcoming events</p>';
 
   // Activity
@@ -571,7 +571,7 @@ async function renderCalendar(container) {
     const isToday = dateStr === todayStr;
     const dayEvents = eventsByDate[dateStr] || [];
     const typeColors = { meeting: '#6366f1', deadline: '#ef4444', followup: '#f59e0b', milestone: '#10b981', event: '#3b82f6' };
-    grid.innerHTML += `<div class="calendar-cell${isToday ? ' today' : ''}"><div class="calendar-day">${d}</div>${dayEvents.slice(0,3).map(e => `<div class="calendar-event-dot" style="background:${typeColors[e.event_type]||'#6366f1'};color:white">${e.title}</div>`).join('')}${dayEvents.length > 3 ? `<div style="font-size:10px;color:var(--text-muted)">+${dayEvents.length-3} more</div>` : ''}</div>`;
+    grid.innerHTML += `<div class="calendar-cell${isToday ? ' today' : ''}"><div class="calendar-day">${d}</div>${dayEvents.slice(0,3).map(e => `<div class="calendar-event-dot" style="background:${typeColors[e.event_type]||'#6366f1'};color:white;cursor:pointer" onclick="showEventDetail(${e.id})">${e.title}</div>`).join('')}${dayEvents.length > 3 ? `<div style="font-size:10px;color:var(--text-muted)">+${dayEvents.length-3} more</div>` : ''}</div>`;
   }
 
   // Next month fill
@@ -582,6 +582,109 @@ async function renderCalendar(container) {
       grid.innerHTML += `<div class="calendar-cell other-month"><div class="calendar-day">${d}</div></div>`;
     }
   }
+}
+
+// =====================================================
+// CALENDAR EVENT DETAIL
+// =====================================================
+async function showEventDetail(id) {
+  const container = document.getElementById('view-container');
+  container.innerHTML = '<div class="spinner"></div>';
+  const res = await api(`/calendar/${id}`);
+  if (!res.success) { container.innerHTML = '<div class="empty-state"><h3>Event not found</h3><button class="btn btn-ghost" onclick="navigateTo(\'calendar\')">Back</button></div>'; return; }
+  const e = res.data;
+  const isPast = e.start_time && new Date(e.start_time) < new Date();
+  const typeColors = { meeting: '#6366f1', deadline: '#ef4444', followup: '#f59e0b', milestone: '#10b981', event: '#3b82f6' };
+
+  container.innerHTML = `
+    <div class="detail-panel">
+      <div class="detail-header">
+        <div>
+          <button class="btn btn-ghost btn-sm" onclick="navigateTo('calendar')" style="margin-bottom:8px">&#8592; Back to Calendar</button>
+          <h2>${e.title}</h2>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="openEventEditModal(${e.id})">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteEvent(${e.id})">Delete</button>
+        </div>
+      </div>
+      <div class="detail-meta">
+        <span class="status-badge" style="background:${typeColors[e.event_type] || '#6366f1'}20;color:${typeColors[e.event_type] || '#6366f1'}">${e.event_type || 'event'}</span>
+        ${isPast ? '<span class="status-badge status-completed">Past</span>' : '<span class="status-badge status-active">Upcoming</span>'}
+        ${e.all_day ? '<span class="status-badge status-planning">All Day</span>' : ''}
+      </div>
+
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;margin-top:24px">
+        <div>
+          ${e.description ? `<div class="detail-section"><h4>Description</h4><p style="font-size:14px;color:var(--text-secondary);white-space:pre-wrap">${e.description}</p></div>` : '<div class="detail-section"><h4>Description</h4><p style="font-size:14px;color:var(--text-muted);font-style:italic">No description</p></div>'}
+
+          ${e.project ? `<div class="detail-section"><h4>Linked Project</h4><div class="timeline-item" style="cursor:pointer" onclick="showProjectDetail(${e.project.id})"><div class="timeline-dot" style="background:var(--accent)"></div><div class="timeline-content"><strong>${e.project.name}</strong><br><span style="font-size:12px;color:var(--text-muted)">${e.project.status || ''}</span></div></div></div>` : ''}
+
+          ${e.contact ? `<div class="detail-section"><h4>Linked Contact</h4><div class="timeline-item" style="cursor:pointer" onclick="showContactDetail(${e.contact.id})"><div class="timeline-dot" style="background:var(--success)"></div><div class="timeline-content"><strong>${e.contact.first_name} ${e.contact.last_name || ''}</strong>${e.contact.email ? '<br><span style="font-size:12px;color:var(--text-muted)">'+e.contact.email+'</span>' : ''}</div></div></div>` : ''}
+        </div>
+
+        <div>
+          <div class="detail-section">
+            <h4>Schedule</h4>
+            <div style="font-size:14px;display:flex;flex-direction:column;gap:8px">
+              <div><span style="color:var(--text-muted)">Start:</span> <strong>${fmtDateTime(e.start_time)}</strong></div>
+              ${e.end_time ? `<div><span style="color:var(--text-muted)">End:</span> <strong>${fmtDateTime(e.end_time)}</strong></div>` : ''}
+              ${e.location ? `<div><span style="color:var(--text-muted)">Location:</span> ${e.location}</div>` : ''}
+              <div><span style="color:var(--text-muted)">Type:</span> ${e.event_type || 'event'}</div>
+              <div><span style="color:var(--text-muted)">Created:</span> ${fmtDateTime(e.created_at)}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function openEventEditModal(id) {
+  const res = await api(`/calendar/${id}`);
+  if (!res.success) return;
+  const e = res.data;
+
+  openModal('Edit Event', `
+    <div class="form-group"><label>Title *</label><input type="text" id="m-etitle" value="${e.title || ''}"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Type</label>
+        <select id="m-etype">
+          <option value="meeting" ${e.event_type==='meeting'?'selected':''}>Meeting</option>
+          <option value="deadline" ${e.event_type==='deadline'?'selected':''}>Deadline</option>
+          <option value="followup" ${e.event_type==='followup'?'selected':''}>Follow-up</option>
+          <option value="milestone" ${e.event_type==='milestone'?'selected':''}>Milestone</option>
+          <option value="event" ${e.event_type==='event'?'selected':''}>Event</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Location</label><input type="text" id="m-elocation" value="${e.location || ''}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Start *</label><input type="datetime-local" id="m-estart" value="${e.start_time ? e.start_time.substring(0,16) : ''}"></div>
+      <div class="form-group"><label>End</label><input type="datetime-local" id="m-eend" value="${e.end_time ? e.end_time.substring(0,16) : ''}"></div>
+    </div>
+    <div class="form-group"><label>Description</label><textarea id="m-edesc">${e.description || ''}</textarea></div>
+  `, async () => {
+    const data = {
+      title: document.getElementById('m-etitle').value.trim(),
+      event_type: document.getElementById('m-etype').value,
+      location: document.getElementById('m-elocation').value.trim(),
+      start_time: document.getElementById('m-estart').value || null,
+      end_time: document.getElementById('m-eend').value || null,
+      description: document.getElementById('m-edesc').value.trim()
+    };
+    if (!data.title) { alert('Title is required'); return; }
+    if (!data.start_time) { alert('Start time is required'); return; }
+    await api(`/calendar/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+    closeModal();
+    showEventDetail(id);
+  });
+}
+
+async function deleteEvent(id) {
+  if (!confirm('Delete this event permanently?')) return;
+  await api(`/calendar/${id}`, { method: 'DELETE' });
+  navigateTo('calendar');
 }
 
 // =====================================================
@@ -981,9 +1084,10 @@ async function showContactDetail(id) {
 async function showProjectDetail(id) {
   const container = document.getElementById('view-container');
   container.innerHTML = '<div class="spinner"></div>';
-  const res = await api(`/projects/${id}`);
+  const [res, tasksRes] = await Promise.all([api(`/projects/${id}`), api(`/tasks?project_id=${id}`)]);
   if (!res.success) return;
   const p = res.data;
+  const projectTasks = tasksRes.success ? tasksRes.data : [];
   const isOverdue = p.due_date && new Date(p.due_date) < new Date() && !['completed','cancelled'].includes(p.status);
 
   const pBackAction = _lastDrilldown ? `drillDown('${_lastDrilldown.metric}'${_lastDrilldown.filterValue ? ",'" + _lastDrilldown.filterValue + "'" : ''})` : "navigateTo('projects')";
@@ -1032,6 +1136,23 @@ async function showProjectDetail(id) {
           </div>
 
           <div class="detail-section">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <h4 style="margin:0">Tasks</h4>
+              <button class="btn btn-ghost btn-sm" onclick="openTaskModalForProject(${p.id})">+ Add Task</button>
+            </div>
+            ${projectTasks.length ? projectTasks.map(t => {
+              const tOverdue = t.due_date && new Date(t.due_date) < new Date() && t.status === 'pending';
+              return `<div class="timeline-item" style="cursor:pointer;border-left:3px solid ${t.status === 'completed' ? 'var(--success)' : tOverdue ? 'var(--danger)' : 'var(--accent)'}" onclick="showTaskDetail(${t.id})">
+                <div class="timeline-content">
+                  <strong>${t.title}</strong> <span class="status-badge status-${t.status === 'completed' ? 'completed' : tOverdue ? 'overdue' : 'pending'}">${t.status === 'completed' ? 'done' : tOverdue ? 'overdue' : t.status}</span>
+                  <span class="priority-badge priority-${t.priority}" style="margin-left:4px">${t.priority}</span>
+                  ${t.due_date ? '<br><span class="timeline-time">Due: '+fmtDate(t.due_date)+'</span>' : ''}
+                </div>
+              </div>`;
+            }).join('') : '<p style="font-size:13px;color:var(--text-muted)">No tasks for this project</p>'}
+          </div>
+
+          <div class="detail-section">
             <h4>Updates</h4>
             <div style="margin-bottom:12px;display:flex;gap:8px">
               <input type="text" id="update-input" placeholder="Add an update..." style="flex:1;padding:8px 12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:13px">
@@ -1072,6 +1193,35 @@ async function archiveProject(id) { if (confirm('Archive this project?')) { awai
 async function completeMilestone(projectId, milestoneId) {
   await api(`/projects/${projectId}/milestones/${milestoneId}`, { method: 'PUT', body: JSON.stringify({ status: 'completed' }) });
   showProjectDetail(projectId);
+}
+
+function openTaskModalForProject(projectId) {
+  openModal('New Task for Project', `
+    <div class="form-group"><label>Title *</label><input type="text" id="m-ttitle"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Type</label>
+        <select id="m-ttype"><option value="task">Task</option><option value="reminder">Reminder</option><option value="followup">Follow-up</option></select>
+      </div>
+      <div class="form-group"><label>Priority</label>
+        <select id="m-tpriority"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option><option value="critical">Critical</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Due Date</label><input type="datetime-local" id="m-tdue"></div>
+    <div class="form-group"><label>Description</label><textarea id="m-tdesc"></textarea></div>
+  `, async () => {
+    const data = {
+      title: document.getElementById('m-ttitle').value.trim(),
+      task_type: document.getElementById('m-ttype').value,
+      priority: document.getElementById('m-tpriority').value,
+      due_date: document.getElementById('m-tdue').value || null,
+      description: document.getElementById('m-tdesc').value.trim(),
+      project_id: projectId
+    };
+    if (!data.title) { alert('Title is required'); return; }
+    await api('/tasks', { method: 'POST', body: JSON.stringify(data) });
+    closeModal();
+    showProjectDetail(projectId);
+  });
 }
 
 async function addProjectUpdate(projectId) {
