@@ -218,6 +218,46 @@ body {
 .card-accent-red { border-left: 3px solid var(--danger); }
 .card-accent-blue { border-left: 3px solid var(--info); }
 
+/* Clickable KPI cards */
+.card-clickable {
+  cursor: pointer;
+  transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
+}
+.card-clickable:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+  box-shadow: 0 8px 16px -4px rgba(99,102,241,0.2);
+}
+.card-clickable:active {
+  transform: translateY(0);
+}
+
+/* Clickable bar chart rows */
+.bar-row-clickable {
+  cursor: pointer;
+  transition: background var(--transition);
+  padding: 4px 8px;
+  border-radius: var(--radius);
+}
+.bar-row-clickable:hover {
+  background: var(--bg-hover);
+}
+
+/* Drill-down view */
+.drill-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.drill-header .btn {
+  flex-shrink: 0;
+}
+.drill-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
 /* =====================================================
    TABLES
    ===================================================== */

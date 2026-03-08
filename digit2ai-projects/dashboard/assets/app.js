@@ -148,32 +148,32 @@ async function renderOverview(container) {
 
   container.innerHTML = `
     <div class="card-grid" style="margin-bottom:24px">
-      <div class="card card-stat card-accent-purple">
+      <div class="card card-stat card-accent-purple card-clickable" onclick="drillDown('active_projects')">
         <div class="stat-label">Active Projects</div>
         <div class="stat-value">${s.active_projects}</div>
         <div class="stat-change stat-neutral">${s.total_projects} total</div>
       </div>
-      <div class="card card-stat card-accent-red">
+      <div class="card card-stat card-accent-red card-clickable" onclick="drillDown('overdue_projects')">
         <div class="stat-label">Overdue Projects</div>
         <div class="stat-value">${s.overdue_projects}</div>
         <div class="stat-change ${s.overdue_projects > 0 ? 'stat-down' : 'stat-up'}">${s.overdue_projects > 0 ? 'Needs attention' : 'All on track'}</div>
       </div>
-      <div class="card card-stat card-accent-yellow">
+      <div class="card card-stat card-accent-yellow card-clickable" onclick="drillDown('due_this_week')">
         <div class="stat-label">Due This Week</div>
         <div class="stat-value">${s.projects_due_this_week}</div>
         <div class="stat-change stat-neutral">upcoming</div>
       </div>
-      <div class="card card-stat card-accent-green">
+      <div class="card card-stat card-accent-green card-clickable" onclick="drillDown('contacts')">
         <div class="stat-label">Total Contacts</div>
         <div class="stat-value">${s.total_contacts}</div>
         <div class="stat-change ${s.contacts_need_followup > 0 ? 'stat-down' : 'stat-up'}">${s.contacts_need_followup} need follow-up</div>
       </div>
-      <div class="card card-stat card-accent-blue">
+      <div class="card card-stat card-accent-blue card-clickable" onclick="drillDown('pending_tasks')">
         <div class="stat-label">Pending Tasks</div>
         <div class="stat-value">${s.pending_tasks}</div>
         <div class="stat-change ${s.overdue_tasks > 0 ? 'stat-down' : 'stat-up'}">${s.overdue_tasks} overdue</div>
       </div>
-      <div class="card card-stat card-accent-purple">
+      <div class="card card-stat card-accent-purple card-clickable" onclick="drillDown('notifications')">
         <div class="stat-label">Notifications</div>
         <div class="stat-value">${s.unread_notifications}</div>
         <div class="stat-change stat-neutral">unread</div>
@@ -208,17 +208,17 @@ async function renderOverview(container) {
     </div>
   `;
 
-  // Status chart
+  // Status chart - clickable bars
   const statusColors = { planning: '#6366f1', active: '#10b981', in_progress: '#3b82f6', on_hold: '#f59e0b', completed: '#64748b', cancelled: '#475569' };
   const maxStatus = Math.max(...d.projects_by_status.map(s => parseInt(s.count)), 1);
   document.getElementById('status-chart').innerHTML = d.projects_by_status.map(s =>
-    `<div class="bar-row"><div class="bar-label">${s.status}</div><div class="bar-track"><div class="bar-fill" style="width:${(s.count/maxStatus)*100}%;background:${statusColors[s.status]||'#6366f1'}">${s.count}</div></div></div>`
+    `<div class="bar-row card-clickable" onclick="drillDown('projects_by_status','${s.status}')"><div class="bar-label">${s.status}</div><div class="bar-track"><div class="bar-fill" style="width:${(s.count/maxStatus)*100}%;background:${statusColors[s.status]||'#6366f1'}">${s.count}</div></div></div>`
   ).join('') || '<p style="color:var(--text-muted);font-size:13px">No projects yet</p>';
 
-  // Vertical chart
+  // Vertical chart - clickable bars
   const maxV = Math.max(...d.vertical_distribution.map(v => parseInt(v.project_count)), 1);
   document.getElementById('vertical-chart').innerHTML = d.vertical_distribution.map(v =>
-    `<div class="bar-row"><div class="bar-label">${v.name}</div><div class="bar-track"><div class="bar-fill" style="width:${(v.project_count/maxV)*100}%;background:${v.color}">${v.project_count}</div></div></div>`
+    `<div class="bar-row card-clickable" onclick="drillDown('projects_by_vertical','${v.name}')"><div class="bar-label">${v.name}</div><div class="bar-track"><div class="bar-fill" style="width:${(v.project_count/maxV)*100}%;background:${v.color}">${v.project_count}</div></div></div>`
   ).join('');
 
   // Stalled
@@ -235,6 +235,143 @@ async function renderOverview(container) {
   document.getElementById('activity-timeline').innerHTML = d.recent_activity.length > 0
     ? d.recent_activity.map(a => `<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-content">${a.user_email || 'System'} <strong>${a.action}</strong> ${a.entity_type} "${a.entity_name || ''}"<br><span class="timeline-time">${fmtDateTime(a.created_at)}</span></div></div>`).join('')
     : '<p style="color:var(--text-muted);font-size:13px">No activity yet</p>';
+}
+
+// =====================================================
+// DRILL-DOWN: Click a KPI card to see the underlying data
+// =====================================================
+async function drillDown(metric, filterValue) {
+  const container = document.getElementById('view-container');
+  container.innerHTML = '<div class="spinner"></div>';
+
+  try {
+    switch (metric) {
+      case 'active_projects': {
+        const res = await api('/projects?status=active');
+        const res2 = await api('/projects?status=in_progress');
+        const all = [...(res.data || []), ...(res2.data || [])];
+        renderDrillTable(container, 'Active Projects', all, 'project');
+        break;
+      }
+      case 'overdue_projects': {
+        const res = await api('/projects/overdue');
+        renderDrillTable(container, 'Overdue Projects', res.data || [], 'project');
+        break;
+      }
+      case 'due_this_week': {
+        const res = await api('/projects');
+        const now = new Date();
+        const weekEnd = new Date(now.getTime() + 7 * 86400000);
+        const filtered = (res.data || []).filter(p =>
+          p.due_date && new Date(p.due_date) >= now && new Date(p.due_date) <= weekEnd
+          && !['completed','cancelled'].includes(p.status)
+        );
+        renderDrillTable(container, 'Projects Due This Week', filtered, 'project');
+        break;
+      }
+      case 'contacts': {
+        navigateTo('contacts');
+        return;
+      }
+      case 'contacts_followup': {
+        const res = await api('/contacts/followups');
+        renderDrillTable(container, 'Contacts Needing Follow-up', res.data || [], 'contact');
+        break;
+      }
+      case 'pending_tasks': {
+        const res = await api('/tasks?status=pending');
+        renderDrillTable(container, 'Pending Tasks', res.data || [], 'task');
+        break;
+      }
+      case 'overdue_tasks': {
+        const res = await api('/tasks/overdue');
+        renderDrillTable(container, 'Overdue Tasks', res.data || [], 'task');
+        break;
+      }
+      case 'notifications': {
+        navigateTo('notifications');
+        return;
+      }
+      case 'projects_by_status': {
+        const res = await api(`/projects?status=${filterValue}`);
+        renderDrillTable(container, `Projects: ${filterValue}`, res.data || [], 'project');
+        break;
+      }
+      case 'projects_by_vertical': {
+        const vertical = VERTICALS.find(v => v.name === filterValue);
+        if (vertical) {
+          const res = await api(`/projects?vertical_id=${vertical.id}`);
+          renderDrillTable(container, `Projects: ${filterValue}`, res.data || [], 'project');
+        }
+        break;
+      }
+      case 'stalled_projects': {
+        const res = await api('/projects/stalled');
+        renderDrillTable(container, 'Stalled Projects (no update in 14 days)', res.data || [], 'project');
+        break;
+      }
+      default:
+        navigateTo('overview');
+    }
+  } catch (err) {
+    container.innerHTML = `<div class="empty-state"><h3>Error</h3><p>${err.message}</p><button class="btn btn-ghost" onclick="navigateTo('overview')">Back to Overview</button></div>`;
+  }
+}
+
+function renderDrillTable(container, title, items, type) {
+  let tableHtml = '';
+
+  if (type === 'project') {
+    tableHtml = `<table class="data-table"><thead><tr><th>Project</th><th>Vertical</th><th>Status</th><th>Priority</th><th>Due Date</th><th>Progress</th></tr></thead><tbody>` +
+      (items.length > 0 ? items.map(p => {
+        const isOverdue = p.due_date && new Date(p.due_date) < new Date() && !['completed','cancelled'].includes(p.status);
+        return `<tr class="clickable" onclick="showProjectDetail(${p.id})">
+          <td><strong>${p.name}</strong>${p.code ? '<br><span style="font-size:11px;color:var(--text-muted)">'+p.code+'</span>' : ''}</td>
+          <td>${p.vertical ? '<span class="vertical-dot" style="background:'+p.vertical.color+'"></span>'+p.vertical.name : '-'}</td>
+          <td><span class="status-badge status-${isOverdue ? 'overdue' : p.status}">${isOverdue ? 'OVERDUE' : p.status}</span></td>
+          <td><span class="priority-badge priority-${p.priority}">${p.priority}</span></td>
+          <td>${p.due_date ? fmtDate(p.due_date) : '-'}</td>
+          <td><div class="progress-bar" style="width:80px"><div class="progress-fill" style="width:${p.progress}%"></div></div> <span style="font-size:11px;color:var(--text-muted)">${p.progress}%</span></td>
+        </tr>`;
+      }).join('') : '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted)">No items found</td></tr>') +
+      '</tbody></table>';
+  } else if (type === 'contact') {
+    tableHtml = `<table class="data-table"><thead><tr><th>Name</th><th>Email</th><th>Company</th><th>Status</th><th>Follow-up</th></tr></thead><tbody>` +
+      (items.length > 0 ? items.map(c => `<tr class="clickable" onclick="showContactDetail(${c.id})">
+        <td><strong>${c.first_name} ${c.last_name || ''}</strong>${c.title ? '<br><span style="font-size:12px;color:var(--text-muted)">'+c.title+'</span>' : ''}</td>
+        <td>${c.email || '-'}</td>
+        <td>${c.company?.name || '-'}</td>
+        <td><span class="status-badge status-${c.status}">${c.status}</span></td>
+        <td>${c.next_followup_date ? fmtDate(c.next_followup_date) : '-'}</td>
+      </tr>`).join('') : '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text-muted)">No items found</td></tr>') +
+      '</tbody></table>';
+  } else if (type === 'task') {
+    const now = new Date();
+    tableHtml = `<table class="data-table"><thead><tr><th>Task</th><th>Type</th><th>Priority</th><th>Project</th><th>Due</th><th>Actions</th></tr></thead><tbody>` +
+      (items.length > 0 ? items.map(t => {
+        const isOverdue = t.due_date && new Date(t.due_date) < now && t.status === 'pending';
+        return `<tr>
+          <td><strong>${t.title}</strong>${t.description ? '<br><span style="font-size:12px;color:var(--text-muted)">'+t.description.substring(0,60)+'</span>' : ''}</td>
+          <td><span class="status-badge status-${t.task_type === 'reminder' ? 'on_hold' : 'planning'}">${t.task_type}</span></td>
+          <td><span class="priority-badge priority-${t.priority}">${t.priority}</span></td>
+          <td>${t.project?.name || '-'}</td>
+          <td><span style="color:${isOverdue ? 'var(--danger)' : 'var(--text-secondary)'}">${t.due_date ? fmtDate(t.due_date) : '-'}${isOverdue ? ' (overdue)' : ''}</span></td>
+          <td>${t.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="completeTask(${t.id})">Done</button>` : '<span class="status-badge status-completed">done</span>'}</td>
+        </tr>`;
+      }).join('') : '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted)">No items found</td></tr>') +
+      '</tbody></table>';
+  }
+
+  container.innerHTML = `
+    <div class="section-header" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="btn btn-ghost btn-sm" onclick="navigateTo('overview')">&#8592; Overview</button>
+        <h3>${title}</h3>
+        <span class="status-badge status-planning">${items.length} items</span>
+      </div>
+    </div>
+    ${tableHtml}
+  `;
 }
 
 // =====================================================
