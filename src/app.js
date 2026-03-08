@@ -768,6 +768,33 @@ app.get('/debug/pinaxis-error', (req, res) => {
   });
 });
 
+// =====================================================
+// DIGIT2AI CONTACTS & PROJECTS HUB
+// =====================================================
+
+let d2aiProjectsApp = null;
+let d2aiProjectsError = null;
+try {
+  d2aiProjectsApp = require('../digit2ai-projects/src/index');
+  app.use('/projects', d2aiProjectsApp);
+  console.log('⚡ Digit2AI Contacts & Projects Hub mounted at /projects');
+  console.log('   - Dashboard UI: /projects/');
+  console.log('   - Health Check: /projects/health');
+  console.log('   - API: /projects/api/v1/*');
+  console.log('   - NLP: /projects/api/v1/nlp/command');
+} catch (error) {
+  d2aiProjectsError = error;
+  console.log('⚠️ Digit2AI Projects Hub not available:', error.message);
+}
+
+app.get('/debug/d2ai-projects-error', (req, res) => {
+  res.json({
+    service: 'Digit2AI Contacts & Projects Hub',
+    available: !d2aiProjectsError,
+    error: d2aiProjectsError ? { message: d2aiProjectsError.message, stack: d2aiProjectsError.stack } : null
+  });
+});
+
 // Conditional forwarding webhook (for business phone forwarding)
 app.use('/webhook', conditionalForwardRoutes);
 

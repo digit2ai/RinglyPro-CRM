@@ -1,0 +1,1102 @@
+/* =====================================================
+   Digit2AI Projects Hub - Frontend Application
+   ===================================================== */
+'use strict';
+
+const BASE = '/projects';
+const API = `${BASE}/api/v1`;
+let TOKEN = localStorage.getItem('d2ai_token') || '';
+let USER = JSON.parse(localStorage.getItem('d2ai_user') || 'null');
+let VERTICALS = [];
+let currentView = 'overview';
+
+// =====================================================
+// API HELPER
+// =====================================================
+async function api(path, opts = {}) {
+  const url = `${API}${path}`;
+  const headers = { 'Content-Type': 'application/json' };
+  if (TOKEN) headers['Authorization'] = `Bearer ${TOKEN}`;
+  const res = await fetch(url, { ...opts, headers });
+  if (res.status === 401) { logout(); throw new Error('Unauthorized'); }
+  return res.json();
+}
+
+// =====================================================
+// AUTH
+// =====================================================
+function checkAuth() {
+  if (TOKEN && USER) {
+    showApp();
+  } else {
+    showLogin();
+  }
+}
+
+function showLogin() {
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('main-app').classList.add('hidden');
+}
+
+function showApp() {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('main-app').classList.remove('hidden');
+  document.getElementById('user-info').textContent = USER?.email || '';
+  loadVerticals();
+  navigateTo('overview');
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = '';
+
+  if (!email || !password) { errEl.textContent = 'Enter email and password'; return; }
+
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (data.success && data.token) {
+      TOKEN = data.token;
+      USER = { email: data.user?.email || email, name: data.user?.businessName || email };
+      localStorage.setItem('d2ai_token', TOKEN);
+      localStorage.setItem('d2ai_user', JSON.stringify(USER));
+      showApp();
+    } else {
+      errEl.textContent = data.error || data.message || 'Login failed';
+    }
+  } catch (err) {
+    errEl.textContent = 'Connection error';
+  }
+}
+
+function logout() {
+  TOKEN = '';
+  USER = null;
+  localStorage.removeItem('d2ai_token');
+  localStorage.removeItem('d2ai_user');
+  showLogin();
+}
+
+// =====================================================
+// NAVIGATION
+// =====================================================
+function navigateTo(view) {
+  currentView = view;
+  document.querySelectorAll('.sidebar-nav li').forEach(li => {
+    li.classList.toggle('active', li.dataset.view === view);
+  });
+  const titles = {
+    overview: 'Overview', contacts: 'Contacts', projects: 'Projects',
+    calendar: 'Calendar', tasks: 'Tasks & Reminders', notifications: 'Notifications',
+    ai: 'AI Workspace', activity: 'Activity Log', settings: 'Settings'
+  };
+  document.getElementById('page-title').textContent = titles[view] || view;
+  renderView(view);
+}
+
+async function renderView(view) {
+  const container = document.getElementById('view-container');
+  container.innerHTML = '<div class="spinner"></div>';
+  try {
+    switch (view) {
+      case 'overview': await renderOverview(container); break;
+      case 'contacts': await renderContacts(container); break;
+      case 'projects': await renderProjects(container); break;
+      case 'calendar': await renderCalendar(container); break;
+      case 'tasks': await renderTasks(container); break;
+      case 'notifications': await renderNotifications(container); break;
+      case 'ai': renderAIWorkspace(container); break;
+      case 'activity': await renderActivity(container); break;
+      case 'settings': renderSettings(container); break;
+      case 'contact-detail': await renderContactDetail(container, view._id); break;
+      case 'project-detail': await renderProjectDetail(container, view._id); break;
+    }
+  } catch (err) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">&#9888;</div><h3>Error</h3><p>${err.message}</p></div>`;
+  }
+}
+
+// =====================================================
+// VERTICALS
+// =====================================================
+async function loadVerticals() {
+  try {
+    const res = await api('/verticals');
+    if (res.success) VERTICALS = res.data;
+  } catch (e) { console.log('Verticals load error'); }
+}
+
+function verticalOptions(selectedId) {
+  return `<option value="">-- Select Vertical --</option>` +
+    VERTICALS.map(v => `<option value="${v.id}" ${v.id == selectedId ? 'selected' : ''}>${v.name}</option>`).join('');
+}
+
+// =====================================================
+// OVERVIEW / DASHBOARD
+// =====================================================
+async function renderOverview(container) {
+  const res = await api('/dashboard');
+  if (!res.success) { container.innerHTML = '<p>Failed to load dashboard</p>'; return; }
+  const d = res.data;
+  const s = d.summary;
+
+  container.innerHTML = `
+    <div class="card-grid" style="margin-bottom:24px">
+      <div class="card card-stat card-accent-purple">
+        <div class="stat-label">Active Projects</div>
+        <div class="stat-value">${s.active_projects}</div>
+        <div class="stat-change stat-neutral">${s.total_projects} total</div>
+      </div>
+      <div class="card card-stat card-accent-red">
+        <div class="stat-label">Overdue Projects</div>
+        <div class="stat-value">${s.overdue_projects}</div>
+        <div class="stat-change ${s.overdue_projects > 0 ? 'stat-down' : 'stat-up'}">${s.overdue_projects > 0 ? 'Needs attention' : 'All on track'}</div>
+      </div>
+      <div class="card card-stat card-accent-yellow">
+        <div class="stat-label">Due This Week</div>
+        <div class="stat-value">${s.projects_due_this_week}</div>
+        <div class="stat-change stat-neutral">upcoming</div>
+      </div>
+      <div class="card card-stat card-accent-green">
+        <div class="stat-label">Total Contacts</div>
+        <div class="stat-value">${s.total_contacts}</div>
+        <div class="stat-change ${s.contacts_need_followup > 0 ? 'stat-down' : 'stat-up'}">${s.contacts_need_followup} need follow-up</div>
+      </div>
+      <div class="card card-stat card-accent-blue">
+        <div class="stat-label">Pending Tasks</div>
+        <div class="stat-value">${s.pending_tasks}</div>
+        <div class="stat-change ${s.overdue_tasks > 0 ? 'stat-down' : 'stat-up'}">${s.overdue_tasks} overdue</div>
+      </div>
+      <div class="card card-stat card-accent-purple">
+        <div class="stat-label">Notifications</div>
+        <div class="stat-value">${s.unread_notifications}</div>
+        <div class="stat-change stat-neutral">unread</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+      <div class="card">
+        <div class="section-header"><h3>Projects by Status</h3></div>
+        <div class="bar-chart" id="status-chart"></div>
+      </div>
+      <div class="card">
+        <div class="section-header"><h3>Vertical Distribution</h3></div>
+        <div class="bar-chart" id="vertical-chart"></div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+      <div class="card">
+        <div class="section-header"><h3>Stalled Projects</h3></div>
+        <div id="stalled-list"></div>
+      </div>
+      <div class="card">
+        <div class="section-header"><h3>Upcoming Events</h3></div>
+        <div id="upcoming-list"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-header"><h3>Recent Activity</h3></div>
+      <div class="timeline" id="activity-timeline"></div>
+    </div>
+  `;
+
+  // Status chart
+  const statusColors = { planning: '#6366f1', active: '#10b981', in_progress: '#3b82f6', on_hold: '#f59e0b', completed: '#64748b', cancelled: '#475569' };
+  const maxStatus = Math.max(...d.projects_by_status.map(s => parseInt(s.count)), 1);
+  document.getElementById('status-chart').innerHTML = d.projects_by_status.map(s =>
+    `<div class="bar-row"><div class="bar-label">${s.status}</div><div class="bar-track"><div class="bar-fill" style="width:${(s.count/maxStatus)*100}%;background:${statusColors[s.status]||'#6366f1'}">${s.count}</div></div></div>`
+  ).join('') || '<p style="color:var(--text-muted);font-size:13px">No projects yet</p>';
+
+  // Vertical chart
+  const maxV = Math.max(...d.vertical_distribution.map(v => parseInt(v.project_count)), 1);
+  document.getElementById('vertical-chart').innerHTML = d.vertical_distribution.map(v =>
+    `<div class="bar-row"><div class="bar-label">${v.name}</div><div class="bar-track"><div class="bar-fill" style="width:${(v.project_count/maxV)*100}%;background:${v.color}">${v.project_count}</div></div></div>`
+  ).join('');
+
+  // Stalled
+  document.getElementById('stalled-list').innerHTML = d.stalled_projects.length > 0
+    ? d.stalled_projects.map(p => `<div class="timeline-item" style="cursor:pointer" onclick="showProjectDetail(${p.id})"><div class="timeline-dot" style="background:var(--warning)"></div><div class="timeline-content"><strong>${p.name}</strong><br><span class="timeline-time">Last update: ${fmtDate(p.updated_at)}</span></div></div>`).join('')
+    : '<p style="color:var(--text-muted);font-size:13px;padding:12px">No stalled projects</p>';
+
+  // Upcoming events
+  document.getElementById('upcoming-list').innerHTML = d.upcoming_events.length > 0
+    ? d.upcoming_events.map(e => `<div class="timeline-item"><div class="timeline-dot" style="background:var(--info)"></div><div class="timeline-content"><strong>${e.title}</strong><br><span class="timeline-time">${fmtDateTime(e.start_time)}</span></div></div>`).join('')
+    : '<p style="color:var(--text-muted);font-size:13px;padding:12px">No upcoming events</p>';
+
+  // Activity
+  document.getElementById('activity-timeline').innerHTML = d.recent_activity.length > 0
+    ? d.recent_activity.map(a => `<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-content">${a.user_email || 'System'} <strong>${a.action}</strong> ${a.entity_type} "${a.entity_name || ''}"<br><span class="timeline-time">${fmtDateTime(a.created_at)}</span></div></div>`).join('')
+    : '<p style="color:var(--text-muted);font-size:13px">No activity yet</p>';
+}
+
+// =====================================================
+// CONTACTS
+// =====================================================
+let contactsPage = 1;
+async function renderContacts(container, page = 1) {
+  contactsPage = page;
+  const params = new URLSearchParams({ page, limit: 30 });
+  const searchVal = document.getElementById('global-search')?.value;
+  if (searchVal) params.set('search', searchVal);
+
+  const res = await api(`/contacts?${params}`);
+  if (!res.success) return;
+
+  container.innerHTML = `
+    <div class="section-header">
+      <div class="filter-bar">
+        <input type="text" placeholder="Search contacts..." id="contact-search" value="${searchVal || ''}" style="width:250px">
+        <select id="contact-status-filter">
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="lead">Lead</option>
+          <option value="prospect">Prospect</option>
+          <option value="client">Client</option>
+          <option value="partner">Partner</option>
+        </select>
+        <select id="contact-vertical-filter">
+          ${verticalOptions('')}
+        </select>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="openContactModal()">+ New Contact</button>
+    </div>
+    <table class="data-table">
+      <thead><tr>
+        <th>Name</th><th>Email</th><th>Company</th><th>Vertical</th><th>Status</th><th>Follow-up</th>
+      </tr></thead>
+      <tbody id="contacts-tbody"></tbody>
+    </table>
+    <div style="display:flex;justify-content:space-between;margin-top:16px;font-size:13px;color:var(--text-secondary)">
+      <span>${res.total} contacts (page ${res.page}/${res.pages})</span>
+      <div style="display:flex;gap:8px">
+        ${res.page > 1 ? `<button class="btn btn-ghost btn-sm" onclick="renderContacts(document.getElementById('view-container'),${res.page-1})">Prev</button>` : ''}
+        ${res.page < res.pages ? `<button class="btn btn-ghost btn-sm" onclick="renderContacts(document.getElementById('view-container'),${res.page+1})">Next</button>` : ''}
+      </div>
+    </div>
+  `;
+
+  document.getElementById('contacts-tbody').innerHTML = res.data.length > 0
+    ? res.data.map(c => `<tr class="clickable" onclick="showContactDetail(${c.id})">
+        <td><strong>${c.first_name} ${c.last_name || ''}</strong>${c.title ? '<br><span style="font-size:12px;color:var(--text-muted)">'+c.title+'</span>' : ''}</td>
+        <td>${c.email || '-'}</td>
+        <td>${c.company?.name || '-'}</td>
+        <td>${c.vertical ? '<span class="vertical-dot" style="background:'+c.vertical.color+'"></span>'+c.vertical.name : '-'}</td>
+        <td><span class="status-badge status-${c.status}">${c.status}</span></td>
+        <td>${c.next_followup_date ? fmtDate(c.next_followup_date) : '-'}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted)">No contacts yet. Click "+ New Contact" to add one.</td></tr>';
+
+  // Search handler
+  const searchInput = document.getElementById('contact-search');
+  let searchTimeout;
+  searchInput?.addEventListener('input', () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      const s = searchInput.value;
+      const url = new URLSearchParams({ page: 1, limit: 30, search: s });
+      api(`/contacts?${url}`).then(r => {
+        if (r.success) {
+          document.getElementById('contacts-tbody').innerHTML = r.data.map(c => `<tr class="clickable" onclick="showContactDetail(${c.id})">
+            <td><strong>${c.first_name} ${c.last_name || ''}</strong></td>
+            <td>${c.email || '-'}</td>
+            <td>${c.company?.name || '-'}</td>
+            <td>${c.vertical ? '<span class="vertical-dot" style="background:'+c.vertical.color+'"></span>'+c.vertical.name : '-'}</td>
+            <td><span class="status-badge status-${c.status}">${c.status}</span></td>
+            <td>${c.next_followup_date ? fmtDate(c.next_followup_date) : '-'}</td>
+          </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted)">No results</td></tr>';
+        }
+      });
+    }, 300);
+  });
+}
+
+// =====================================================
+// PROJECTS
+// =====================================================
+async function renderProjects(container) {
+  const res = await api('/projects');
+  if (!res.success) return;
+
+  container.innerHTML = `
+    <div class="section-header">
+      <div class="filter-bar">
+        <input type="text" placeholder="Search projects..." id="project-search" style="width:250px">
+        <select id="project-status-filter">
+          <option value="">All Status</option>
+          <option value="planning">Planning</option>
+          <option value="active">Active</option>
+          <option value="in_progress">In Progress</option>
+          <option value="on_hold">On Hold</option>
+          <option value="completed">Completed</option>
+        </select>
+        <select id="project-priority-filter">
+          <option value="">All Priority</option>
+          <option value="critical">Critical</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="openProjectModal()">+ New Project</button>
+    </div>
+    <table class="data-table">
+      <thead><tr>
+        <th>Project</th><th>Vertical</th><th>Status</th><th>Priority</th><th>Due Date</th><th>Progress</th>
+      </tr></thead>
+      <tbody id="projects-tbody"></tbody>
+    </table>
+  `;
+
+  document.getElementById('projects-tbody').innerHTML = res.data.length > 0
+    ? res.data.map(p => {
+        const isOverdue = p.due_date && new Date(p.due_date) < new Date() && !['completed','cancelled'].includes(p.status);
+        return `<tr class="clickable" onclick="showProjectDetail(${p.id})">
+          <td><strong>${p.name}</strong>${p.code ? '<br><span style="font-size:11px;color:var(--text-muted)">'+p.code+'</span>' : ''}</td>
+          <td>${p.vertical ? '<span class="vertical-dot" style="background:'+p.vertical.color+'"></span>'+p.vertical.name : '-'}</td>
+          <td><span class="status-badge status-${isOverdue ? 'overdue' : p.status}">${isOverdue ? 'OVERDUE' : p.status}</span></td>
+          <td><span class="priority-badge priority-${p.priority}">${p.priority}</span></td>
+          <td>${p.due_date ? fmtDate(p.due_date) : '-'}</td>
+          <td><div class="progress-bar" style="width:100px"><div class="progress-fill" style="width:${p.progress}%"></div></div><span style="font-size:11px;color:var(--text-muted);margin-left:8px">${p.progress}%</span></td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted)">No projects yet. Click "+ New Project" to add one.</td></tr>';
+}
+
+// =====================================================
+// CALENDAR
+// =====================================================
+let calYear, calMonth;
+async function renderCalendar(container) {
+  const now = new Date();
+  if (!calYear) { calYear = now.getFullYear(); calMonth = now.getMonth(); }
+
+  const monthStart = new Date(calYear, calMonth, 1);
+  const monthEnd = new Date(calYear, calMonth + 1, 0);
+  const startParam = new Date(calYear, calMonth, 1 - monthStart.getDay()).toISOString();
+  const endParam = new Date(calYear, calMonth + 1, 6 - monthEnd.getDay()).toISOString();
+
+  const res = await api(`/calendar?start=${startParam}&end=${endParam}`);
+  const events = res.success ? res.data : [];
+
+  // Group events by date
+  const eventsByDate = {};
+  events.forEach(e => {
+    const d = e.start_time.split('T')[0];
+    if (!eventsByDate[d]) eventsByDate[d] = [];
+    eventsByDate[d].push(e);
+  });
+
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  container.innerHTML = `
+    <div class="section-header">
+      <div style="display:flex;align-items:center;gap:16px">
+        <button class="btn btn-ghost btn-sm" onclick="calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar(document.getElementById('view-container'))">&#9664;</button>
+        <h3>${monthNames[calMonth]} ${calYear}</h3>
+        <button class="btn btn-ghost btn-sm" onclick="calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar(document.getElementById('view-container'))">&#9654;</button>
+        <button class="btn btn-ghost btn-sm" onclick="calYear=${now.getFullYear()};calMonth=${now.getMonth()};renderCalendar(document.getElementById('view-container'))">Today</button>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="openEventModal()">+ New Event</button>
+    </div>
+    <div class="calendar-grid" id="cal-grid"></div>
+  `;
+
+  const grid = document.getElementById('cal-grid');
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  grid.innerHTML = days.map(d => `<div class="calendar-header-cell">${d}</div>`).join('');
+
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const todayStr = now.toISOString().split('T')[0];
+
+  // Prev month fill
+  const prevMonthDays = new Date(calYear, calMonth, 0).getDate();
+  for (let i = firstDay - 1; i >= 0; i--) {
+    const day = prevMonthDays - i;
+    grid.innerHTML += `<div class="calendar-cell other-month"><div class="calendar-day">${day}</div></div>`;
+  }
+
+  // Current month
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = dateStr === todayStr;
+    const dayEvents = eventsByDate[dateStr] || [];
+    const typeColors = { meeting: '#6366f1', deadline: '#ef4444', followup: '#f59e0b', milestone: '#10b981', event: '#3b82f6' };
+    grid.innerHTML += `<div class="calendar-cell${isToday ? ' today' : ''}"><div class="calendar-day">${d}</div>${dayEvents.slice(0,3).map(e => `<div class="calendar-event-dot" style="background:${typeColors[e.event_type]||'#6366f1'};color:white">${e.title}</div>`).join('')}${dayEvents.length > 3 ? `<div style="font-size:10px;color:var(--text-muted)">+${dayEvents.length-3} more</div>` : ''}</div>`;
+  }
+
+  // Next month fill
+  const totalCells = firstDay + daysInMonth;
+  const remaining = 7 - (totalCells % 7);
+  if (remaining < 7) {
+    for (let d = 1; d <= remaining; d++) {
+      grid.innerHTML += `<div class="calendar-cell other-month"><div class="calendar-day">${d}</div></div>`;
+    }
+  }
+}
+
+// =====================================================
+// TASKS
+// =====================================================
+async function renderTasks(container) {
+  const res = await api('/tasks');
+  if (!res.success) return;
+
+  container.innerHTML = `
+    <div class="section-header">
+      <div class="filter-bar">
+        <select id="task-status-filter" onchange="filterTasks()">
+          <option value="">All</option>
+          <option value="pending" selected>Pending</option>
+          <option value="completed">Completed</option>
+        </select>
+        <select id="task-type-filter" onchange="filterTasks()">
+          <option value="">All Types</option>
+          <option value="task">Task</option>
+          <option value="reminder">Reminder</option>
+          <option value="followup">Follow-up</option>
+        </select>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ New Task</button>
+    </div>
+    <div id="tasks-list"></div>
+  `;
+
+  renderTasksList(res.data);
+}
+
+function renderTasksList(tasks) {
+  const now = new Date();
+  document.getElementById('tasks-list').innerHTML = tasks.length > 0
+    ? `<table class="data-table"><thead><tr><th>Task</th><th>Type</th><th>Priority</th><th>Project</th><th>Due</th><th>Actions</th></tr></thead><tbody>` +
+      tasks.map(t => {
+        const isOverdue = t.due_date && new Date(t.due_date) < now && t.status === 'pending';
+        return `<tr>
+          <td><strong>${t.title}</strong>${t.description ? '<br><span style="font-size:12px;color:var(--text-muted)">'+t.description.substring(0,60)+'</span>' : ''}</td>
+          <td><span class="status-badge status-${t.task_type === 'reminder' ? 'on_hold' : 'planning'}">${t.task_type}</span></td>
+          <td><span class="priority-badge priority-${t.priority}">${t.priority}</span></td>
+          <td>${t.project?.name || '-'}</td>
+          <td><span style="color:${isOverdue ? 'var(--danger)' : 'var(--text-secondary)'}">${t.due_date ? fmtDate(t.due_date) : '-'}${isOverdue ? ' (overdue)' : ''}</span></td>
+          <td>${t.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="completeTask(${t.id})">Done</button>` : '<span class="status-badge status-completed">completed</span>'}</td>
+        </tr>`;
+      }).join('') + '</tbody></table>'
+    : '<div class="empty-state"><div class="empty-icon">&#9745;</div><h3>No tasks</h3><p>Create a task or use the AI command to add one.</p></div>';
+}
+
+async function completeTask(id) {
+  await api(`/tasks/${id}`, { method: 'PUT', body: JSON.stringify({ status: 'completed' }) });
+  renderView('tasks');
+}
+
+// =====================================================
+// NOTIFICATIONS
+// =====================================================
+async function renderNotifications(container) {
+  const res = await api('/notifications');
+  if (!res.success) return;
+
+  container.innerHTML = `
+    <div class="section-header">
+      <h3>${res.data.length} Notifications</h3>
+      <button class="btn btn-ghost btn-sm" onclick="markAllRead()">Mark All Read</button>
+    </div>
+    <div class="timeline" id="notif-list"></div>
+  `;
+
+  document.getElementById('notif-list').innerHTML = res.data.length > 0
+    ? res.data.map(n => `<div class="timeline-item" style="${n.read ? 'opacity:0.6' : ''}" onclick="markRead(${n.id})">
+        <div class="timeline-dot" style="background:${n.read ? 'var(--text-muted)' : 'var(--accent)'}"></div>
+        <div class="timeline-content"><strong>${n.title || n.type}</strong><br>${n.message || ''}<br><span class="timeline-time">${fmtDateTime(n.created_at)}</span></div>
+      </div>`).join('')
+    : '<div class="empty-state"><div class="empty-icon">&#128276;</div><h3>No notifications</h3></div>';
+}
+
+async function markRead(id) {
+  await api(`/notifications/${id}/read`, { method: 'PUT' });
+  renderView('notifications');
+}
+async function markAllRead() {
+  await api('/notifications/read-all', { method: 'PUT' });
+  renderView('notifications');
+}
+
+// =====================================================
+// AI WORKSPACE
+// =====================================================
+function renderAIWorkspace(container) {
+  container.innerHTML = `
+    <div class="card" style="max-width:800px">
+      <h3 style="margin-bottom:16px">AI Command Center</h3>
+      <p style="color:var(--text-secondary);margin-bottom:20px">Use natural language to manage contacts, projects, tasks, and more. Type a command below or use the floating AI button.</p>
+      <div id="ai-messages" class="nlp-messages" style="max-height:400px;min-height:200px">
+        <div class="nlp-msg system">Welcome to the AI Workspace! Try commands like:\n\n- "Create a new project for healthcare outreach"\n- "Show overdue projects"\n- "Add contact Maria Lopez for partnerships"\n- "Create a reminder to follow up next Tuesday"\n- "Summarize high-priority projects"\n\nType "help" for all available commands.</div>
+      </div>
+      <div class="nlp-input-area" style="border-top:1px solid var(--border);padding-top:12px">
+        <input type="text" id="ai-input" placeholder='Type a command...' autocomplete="off">
+        <button class="btn btn-primary" onclick="sendAICommand('ai')">Send</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('ai-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') sendAICommand('ai');
+  });
+}
+
+// =====================================================
+// ACTIVITY
+// =====================================================
+async function renderActivity(container) {
+  const res = await api('/activity?limit=50');
+  if (!res.success) return;
+
+  container.innerHTML = `
+    <div class="section-header"><h3>Activity Log</h3></div>
+    <div class="timeline" id="full-activity"></div>
+  `;
+
+  document.getElementById('full-activity').innerHTML = res.data.length > 0
+    ? res.data.map(a => `<div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">${a.user_email || 'System'} <strong>${a.action}</strong> ${a.entity_type} "${a.entity_name || ''}"${a.details?.via ? ' <span class="tag">via '+a.details.via+'</span>' : ''}<br><span class="timeline-time">${fmtDateTime(a.created_at)}</span></div>
+      </div>`).join('')
+    : '<div class="empty-state"><div class="empty-icon">&#128336;</div><h3>No activity yet</h3><p>Actions you take will appear here.</p></div>';
+}
+
+// =====================================================
+// SETTINGS
+// =====================================================
+function renderSettings(container) {
+  container.innerHTML = `
+    <div class="card" style="max-width:600px">
+      <h3 style="margin-bottom:20px">Settings</h3>
+      <div class="detail-section">
+        <h4>Account</h4>
+        <p style="color:var(--text-secondary);font-size:14px">Logged in as: <strong>${USER?.email || '-'}</strong></p>
+      </div>
+      <div class="detail-section">
+        <h4>Verticals</h4>
+        <div id="verticals-list" style="margin-bottom:16px"></div>
+        <div class="form-row">
+          <div class="form-group"><input type="text" id="new-vertical-name" placeholder="New vertical name"></div>
+          <div class="form-group"><button class="btn btn-primary" onclick="addVertical()">Add Vertical</button></div>
+        </div>
+      </div>
+      <div class="detail-section">
+        <h4>About</h4>
+        <p style="color:var(--text-secondary);font-size:13px">Digit2AI Contacts & Projects Hub v1.0<br>Part of the RinglyPro ecosystem.</p>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('verticals-list').innerHTML = VERTICALS.map(v =>
+    `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span class="vertical-dot" style="background:${v.color}"></span>
+      <span>${v.name}</span>
+      <span style="color:var(--text-muted);font-size:12px;margin-left:auto">${v.slug}</span>
+    </div>`
+  ).join('');
+}
+
+async function addVertical() {
+  const name = document.getElementById('new-vertical-name').value.trim();
+  if (!name) return;
+  await api('/verticals', { method: 'POST', body: JSON.stringify({ name }) });
+  await loadVerticals();
+  renderSettings(document.getElementById('view-container'));
+}
+
+// =====================================================
+// DETAIL VIEWS
+// =====================================================
+async function showContactDetail(id) {
+  const container = document.getElementById('view-container');
+  container.innerHTML = '<div class="spinner"></div>';
+  const res = await api(`/contacts/${id}`);
+  if (!res.success) return;
+  const c = res.data;
+
+  container.innerHTML = `
+    <div class="detail-panel">
+      <div class="detail-header">
+        <div>
+          <button class="btn btn-ghost btn-sm" onclick="navigateTo('contacts')" style="margin-bottom:8px">&#8592; Back</button>
+          <h2>${c.first_name} ${c.last_name || ''}</h2>
+          ${c.title ? `<p style="color:var(--text-secondary)">${c.title}${c.company ? ' at ' + c.company.name : ''}</p>` : ''}
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="openContactModal(${JSON.stringify(c).replace(/"/g,'&quot;')})">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="archiveContact(${c.id})">Archive</button>
+        </div>
+      </div>
+      <div class="detail-meta">
+        <div class="detail-meta-item"><span class="status-badge status-${c.status}">${c.status}</span></div>
+        ${c.vertical ? `<div class="detail-meta-item"><span class="vertical-dot" style="background:${c.vertical.color}"></span>${c.vertical.name}</div>` : ''}
+        ${c.contact_type ? `<div class="detail-meta-item">${c.contact_type}</div>` : ''}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+        <div>
+          <div class="detail-section">
+            <h4>Contact Info</h4>
+            <div style="display:flex;flex-direction:column;gap:8px;font-size:14px">
+              ${c.email ? `<div><span style="color:var(--text-muted)">Email:</span> ${c.email}</div>` : ''}
+              ${c.phone ? `<div><span style="color:var(--text-muted)">Phone:</span> ${c.phone}</div>` : ''}
+              ${c.whatsapp ? `<div><span style="color:var(--text-muted)">WhatsApp:</span> ${c.whatsapp}</div>` : ''}
+              ${c.website ? `<div><span style="color:var(--text-muted)">Website:</span> ${c.website}</div>` : ''}
+              ${c.source ? `<div><span style="color:var(--text-muted)">Source:</span> ${c.source}</div>` : ''}
+            </div>
+          </div>
+          ${c.notes ? `<div class="detail-section"><h4>Notes</h4><p style="font-size:14px;color:var(--text-secondary);white-space:pre-wrap">${c.notes}</p></div>` : ''}
+          ${c.tags?.length ? `<div class="detail-section"><h4>Tags</h4>${c.tags.map(t => `<span class="tag">${t}</span>`).join(' ')}</div>` : ''}
+        </div>
+        <div>
+          <div class="detail-section">
+            <h4>Dates</h4>
+            <div style="font-size:14px">
+              ${c.next_followup_date ? `<div style="margin-bottom:4px"><span style="color:var(--text-muted)">Next Follow-up:</span> <strong>${fmtDate(c.next_followup_date)}</strong></div>` : ''}
+              ${c.last_interaction_date ? `<div style="margin-bottom:4px"><span style="color:var(--text-muted)">Last Interaction:</span> ${fmtDate(c.last_interaction_date)}</div>` : ''}
+              <div><span style="color:var(--text-muted)">Created:</span> ${fmtDate(c.created_at)}</div>
+            </div>
+          </div>
+          ${c.projects?.length ? `<div class="detail-section"><h4>Linked Projects</h4>${c.projects.map(p => `<div class="timeline-item" style="cursor:pointer" onclick="showProjectDetail(${p.id})"><div class="timeline-dot" style="background:var(--accent)"></div><div class="timeline-content"><strong>${p.name}</strong><br><span style="font-size:12px;color:var(--text-muted)">${p.status}</span></div></div>`).join('')}</div>` : ''}
+          <div class="detail-section">
+            <h4>Activity</h4>
+            <div class="timeline">${c.activity?.length ? c.activity.map(a => `<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-content">${a.action} <br><span class="timeline-time">${fmtDateTime(a.created_at)}</span></div></div>`).join('') : '<p style="font-size:13px;color:var(--text-muted)">No activity</p>'}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function showProjectDetail(id) {
+  const container = document.getElementById('view-container');
+  container.innerHTML = '<div class="spinner"></div>';
+  const res = await api(`/projects/${id}`);
+  if (!res.success) return;
+  const p = res.data;
+  const isOverdue = p.due_date && new Date(p.due_date) < new Date() && !['completed','cancelled'].includes(p.status);
+
+  container.innerHTML = `
+    <div class="detail-panel">
+      <div class="detail-header">
+        <div>
+          <button class="btn btn-ghost btn-sm" onclick="navigateTo('projects')" style="margin-bottom:8px">&#8592; Back</button>
+          <h2>${p.name}</h2>
+          ${p.code ? `<p style="color:var(--text-muted);font-size:13px">${p.code}</p>` : ''}
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick='openProjectModal(${JSON.stringify(p).replace(/"/g,"&quot;")})'>Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="archiveProject(${p.id})">Archive</button>
+        </div>
+      </div>
+      <div class="detail-meta">
+        <span class="status-badge status-${isOverdue ? 'overdue' : p.status}">${isOverdue ? 'OVERDUE' : p.status}</span>
+        <span class="priority-badge priority-${p.priority}">${p.priority}</span>
+        ${p.vertical ? `<div class="detail-meta-item"><span class="vertical-dot" style="background:${p.vertical.color}"></span>${p.vertical.name}</div>` : ''}
+        ${p.company ? `<div class="detail-meta-item">${p.company.name}</div>` : ''}
+      </div>
+      <div class="progress-bar" style="margin-bottom:24px"><div class="progress-fill" style="width:${p.progress}%"></div></div>
+      <p style="font-size:12px;color:var(--text-muted);margin-top:-16px;margin-bottom:24px">Progress: ${p.progress}%</p>
+
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px">
+        <div>
+          ${p.description ? `<div class="detail-section"><h4>Description</h4><p style="font-size:14px;color:var(--text-secondary);white-space:pre-wrap">${p.description}</p></div>` : ''}
+          ${p.blockers ? `<div class="detail-section"><h4>Blockers</h4><p style="font-size:14px;color:var(--danger)">${p.blockers}</p></div>` : ''}
+          ${p.next_step ? `<div class="detail-section"><h4>Next Step</h4><p style="font-size:14px;color:var(--success)">${p.next_step}</p></div>` : ''}
+
+          <div class="detail-section">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <h4 style="margin:0">Milestones</h4>
+              <button class="btn btn-ghost btn-sm" onclick="openMilestoneModal(${p.id})">+ Add</button>
+            </div>
+            ${p.milestones?.length ? p.milestones.map(m => `<div class="timeline-item" style="border-left:3px solid ${m.status === 'completed' ? 'var(--success)' : m.due_date && new Date(m.due_date) < new Date() ? 'var(--danger)' : 'var(--accent)'}">
+              <div class="timeline-content">
+                <strong>${m.title}</strong> <span class="status-badge status-${m.status}">${m.status}</span>
+                ${m.due_date ? `<br><span class="timeline-time">Due: ${fmtDate(m.due_date)}</span>` : ''}
+                ${m.status !== 'completed' ? `<br><button class="btn btn-success btn-sm" style="margin-top:4px" onclick="completeMilestone(${p.id},${m.id})">Complete</button>` : ''}
+              </div>
+            </div>`).join('') : '<p style="font-size:13px;color:var(--text-muted)">No milestones</p>'}
+          </div>
+
+          <div class="detail-section">
+            <h4>Updates</h4>
+            <div style="margin-bottom:12px;display:flex;gap:8px">
+              <input type="text" id="update-input" placeholder="Add an update..." style="flex:1;padding:8px 12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:13px">
+              <button class="btn btn-primary btn-sm" onclick="addProjectUpdate(${p.id})">Post</button>
+            </div>
+            ${p.updates?.length ? p.updates.map(u => `<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-content">${u.content}<br><span class="timeline-time">${u.user_email || ''} - ${fmtDateTime(u.created_at)}</span></div></div>`).join('') : '<p style="font-size:13px;color:var(--text-muted)">No updates</p>'}
+          </div>
+        </div>
+
+        <div>
+          <div class="detail-section">
+            <h4>Details</h4>
+            <div style="font-size:14px;display:flex;flex-direction:column;gap:6px">
+              ${p.start_date ? `<div><span style="color:var(--text-muted)">Start:</span> ${fmtDate(p.start_date)}</div>` : ''}
+              ${p.due_date ? `<div><span style="color:var(--text-muted)">Due:</span> <strong style="color:${isOverdue ? 'var(--danger)' : 'var(--text-primary)'}">${fmtDate(p.due_date)}</strong></div>` : ''}
+              ${p.stage ? `<div><span style="color:var(--text-muted)">Stage:</span> ${p.stage}</div>` : ''}
+              ${p.category ? `<div><span style="color:var(--text-muted)">Category:</span> ${p.category}</div>` : ''}
+              <div><span style="color:var(--text-muted)">Created:</span> ${fmtDate(p.created_at)}</div>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <h4>Linked Contacts</h4>
+            ${p.contacts?.length ? p.contacts.map(c => `<div class="timeline-item" style="cursor:pointer" onclick="showContactDetail(${c.id})"><div class="timeline-dot" style="background:var(--success)"></div><div class="timeline-content"><strong>${c.first_name} ${c.last_name || ''}</strong>${c.ProjectContact?.role ? '<br><span style="font-size:12px;color:var(--text-muted)">'+c.ProjectContact.role+'</span>' : ''}</div></div>`).join('') : '<p style="font-size:13px;color:var(--text-muted)">No contacts linked</p>'}
+          </div>
+
+          ${p.notes ? `<div class="detail-section"><h4>Notes</h4><p style="font-size:14px;color:var(--text-secondary);white-space:pre-wrap">${p.notes}</p></div>` : ''}
+          ${p.tags?.length ? `<div class="detail-section"><h4>Tags</h4>${p.tags.map(t => `<span class="tag">${t}</span>`).join(' ')}</div>` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function archiveContact(id) { if (confirm('Archive this contact?')) { await api(`/contacts/${id}/archive`, { method: 'PUT' }); navigateTo('contacts'); } }
+async function archiveProject(id) { if (confirm('Archive this project?')) { await api(`/projects/${id}/archive`, { method: 'PUT' }); navigateTo('projects'); } }
+
+async function completeMilestone(projectId, milestoneId) {
+  await api(`/projects/${projectId}/milestones/${milestoneId}`, { method: 'PUT', body: JSON.stringify({ status: 'completed' }) });
+  showProjectDetail(projectId);
+}
+
+async function addProjectUpdate(projectId) {
+  const input = document.getElementById('update-input');
+  const content = input.value.trim();
+  if (!content) return;
+  await api(`/projects/${projectId}/updates`, { method: 'POST', body: JSON.stringify({ content }) });
+  showProjectDetail(projectId);
+}
+
+// =====================================================
+// MODALS
+// =====================================================
+let modalSaveHandler = null;
+
+function openModal(title, bodyHtml, onSave) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = bodyHtml;
+  document.getElementById('modal-overlay').classList.remove('hidden');
+  modalSaveHandler = onSave;
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.add('hidden');
+  modalSaveHandler = null;
+}
+
+function openContactModal(existing) {
+  const c = existing || {};
+  openModal(c.id ? 'Edit Contact' : 'New Contact', `
+    <div class="form-row">
+      <div class="form-group"><label>First Name *</label><input type="text" id="m-first-name" value="${c.first_name || ''}"></div>
+      <div class="form-group"><label>Last Name</label><input type="text" id="m-last-name" value="${c.last_name || ''}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Email</label><input type="email" id="m-email" value="${c.email || ''}"></div>
+      <div class="form-group"><label>Phone</label><input type="text" id="m-phone" value="${c.phone || ''}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Title / Role</label><input type="text" id="m-title" value="${c.title || ''}"></div>
+      <div class="form-group"><label>Company</label><input type="text" id="m-company" value="${c.company?.name || ''}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Vertical</label><select id="m-vertical">${verticalOptions(c.vertical_id)}</select></div>
+      <div class="form-group"><label>Status</label>
+        <select id="m-status">
+          <option value="active" ${c.status==='active'?'selected':''}>Active</option>
+          <option value="lead" ${c.status==='lead'?'selected':''}>Lead</option>
+          <option value="prospect" ${c.status==='prospect'?'selected':''}>Prospect</option>
+          <option value="client" ${c.status==='client'?'selected':''}>Client</option>
+          <option value="partner" ${c.status==='partner'?'selected':''}>Partner</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Contact Type</label>
+        <select id="m-contact-type">
+          <option value="general" ${c.contact_type==='general'?'selected':''}>General</option>
+          <option value="decision_maker" ${c.contact_type==='decision_maker'?'selected':''}>Decision Maker</option>
+          <option value="technical" ${c.contact_type==='technical'?'selected':''}>Technical</option>
+          <option value="vendor" ${c.contact_type==='vendor'?'selected':''}>Vendor</option>
+          <option value="investor" ${c.contact_type==='investor'?'selected':''}>Investor</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Source</label><input type="text" id="m-source" value="${c.source || ''}"></div>
+    </div>
+    <div class="form-group"><label>Next Follow-up Date</label><input type="date" id="m-followup" value="${c.next_followup_date || ''}"></div>
+    <div class="form-group"><label>Notes</label><textarea id="m-notes">${c.notes || ''}</textarea></div>
+  `, async () => {
+    const data = {
+      first_name: document.getElementById('m-first-name').value.trim(),
+      last_name: document.getElementById('m-last-name').value.trim(),
+      email: document.getElementById('m-email').value.trim(),
+      phone: document.getElementById('m-phone').value.trim(),
+      title: document.getElementById('m-title').value.trim(),
+      vertical_id: document.getElementById('m-vertical').value || null,
+      status: document.getElementById('m-status').value,
+      contact_type: document.getElementById('m-contact-type').value,
+      source: document.getElementById('m-source').value.trim(),
+      next_followup_date: document.getElementById('m-followup').value || null,
+      notes: document.getElementById('m-notes').value.trim()
+    };
+    if (!data.first_name) { alert('First name is required'); return; }
+    if (c.id) {
+      await api(`/contacts/${c.id}`, { method: 'PUT', body: JSON.stringify(data) });
+      showContactDetail(c.id);
+    } else {
+      await api('/contacts', { method: 'POST', body: JSON.stringify(data) });
+      navigateTo('contacts');
+    }
+    closeModal();
+  });
+}
+
+function openProjectModal(existing) {
+  const p = existing || {};
+  openModal(p.id ? 'Edit Project' : 'New Project', `
+    <div class="form-group"><label>Project Name *</label><input type="text" id="m-pname" value="${p.name || ''}"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Vertical</label><select id="m-pvertical">${verticalOptions(p.vertical_id)}</select></div>
+      <div class="form-group"><label>Category</label><input type="text" id="m-pcategory" value="${p.category || ''}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Status</label>
+        <select id="m-pstatus">
+          <option value="planning" ${p.status==='planning'?'selected':''}>Planning</option>
+          <option value="active" ${p.status==='active'?'selected':''}>Active</option>
+          <option value="in_progress" ${p.status==='in_progress'?'selected':''}>In Progress</option>
+          <option value="on_hold" ${p.status==='on_hold'?'selected':''}>On Hold</option>
+          <option value="review" ${p.status==='review'?'selected':''}>Review</option>
+          <option value="completed" ${p.status==='completed'?'selected':''}>Completed</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Priority</label>
+        <select id="m-ppriority">
+          <option value="low" ${p.priority==='low'?'selected':''}>Low</option>
+          <option value="medium" ${p.priority==='medium'?'selected':''}>Medium</option>
+          <option value="high" ${p.priority==='high'?'selected':''}>High</option>
+          <option value="critical" ${p.priority==='critical'?'selected':''}>Critical</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Start Date</label><input type="date" id="m-pstart" value="${p.start_date || ''}"></div>
+      <div class="form-group"><label>Due Date</label><input type="date" id="m-pdue" value="${p.due_date || ''}"></div>
+    </div>
+    <div class="form-group"><label>Progress (%)</label><input type="number" id="m-pprogress" min="0" max="100" value="${p.progress || 0}"></div>
+    <div class="form-group"><label>Description</label><textarea id="m-pdesc">${p.description || ''}</textarea></div>
+    <div class="form-group"><label>Next Step</label><input type="text" id="m-pnext" value="${p.next_step || ''}"></div>
+    <div class="form-group"><label>Blockers</label><input type="text" id="m-pblockers" value="${p.blockers || ''}"></div>
+    <div class="form-group"><label>Notes</label><textarea id="m-pnotes">${p.notes || ''}</textarea></div>
+  `, async () => {
+    const data = {
+      name: document.getElementById('m-pname').value.trim(),
+      vertical_id: document.getElementById('m-pvertical').value || null,
+      category: document.getElementById('m-pcategory').value.trim(),
+      status: document.getElementById('m-pstatus').value,
+      priority: document.getElementById('m-ppriority').value,
+      start_date: document.getElementById('m-pstart').value || null,
+      due_date: document.getElementById('m-pdue').value || null,
+      progress: parseInt(document.getElementById('m-pprogress').value) || 0,
+      description: document.getElementById('m-pdesc').value.trim(),
+      next_step: document.getElementById('m-pnext').value.trim(),
+      blockers: document.getElementById('m-pblockers').value.trim(),
+      notes: document.getElementById('m-pnotes').value.trim()
+    };
+    if (!data.name) { alert('Project name is required'); return; }
+    if (p.id) {
+      await api(`/projects/${p.id}`, { method: 'PUT', body: JSON.stringify(data) });
+      showProjectDetail(p.id);
+    } else {
+      await api('/projects', { method: 'POST', body: JSON.stringify(data) });
+      navigateTo('projects');
+    }
+    closeModal();
+  });
+}
+
+function openTaskModal() {
+  openModal('New Task', `
+    <div class="form-group"><label>Title *</label><input type="text" id="m-ttitle"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Type</label>
+        <select id="m-ttype"><option value="task">Task</option><option value="reminder">Reminder</option><option value="followup">Follow-up</option></select>
+      </div>
+      <div class="form-group"><label>Priority</label>
+        <select id="m-tpriority"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option><option value="critical">Critical</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Due Date</label><input type="datetime-local" id="m-tdue"></div>
+    <div class="form-group"><label>Description</label><textarea id="m-tdesc"></textarea></div>
+  `, async () => {
+    const data = {
+      title: document.getElementById('m-ttitle').value.trim(),
+      task_type: document.getElementById('m-ttype').value,
+      priority: document.getElementById('m-tpriority').value,
+      due_date: document.getElementById('m-tdue').value || null,
+      description: document.getElementById('m-tdesc').value.trim()
+    };
+    if (!data.title) { alert('Title is required'); return; }
+    await api('/tasks', { method: 'POST', body: JSON.stringify(data) });
+    closeModal();
+    navigateTo('tasks');
+  });
+}
+
+function openEventModal() {
+  openModal('New Calendar Event', `
+    <div class="form-group"><label>Title *</label><input type="text" id="m-etitle"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Type</label>
+        <select id="m-etype"><option value="meeting">Meeting</option><option value="deadline">Deadline</option><option value="followup">Follow-up</option><option value="milestone">Milestone</option><option value="event">Event</option></select>
+      </div>
+      <div class="form-group"><label>Location</label><input type="text" id="m-elocation"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Start *</label><input type="datetime-local" id="m-estart"></div>
+      <div class="form-group"><label>End</label><input type="datetime-local" id="m-eend"></div>
+    </div>
+    <div class="form-group"><label>Description</label><textarea id="m-edesc"></textarea></div>
+  `, async () => {
+    const data = {
+      title: document.getElementById('m-etitle').value.trim(),
+      event_type: document.getElementById('m-etype').value,
+      location: document.getElementById('m-elocation').value.trim(),
+      start_time: document.getElementById('m-estart').value,
+      end_time: document.getElementById('m-eend').value || null,
+      description: document.getElementById('m-edesc').value.trim()
+    };
+    if (!data.title || !data.start_time) { alert('Title and start time required'); return; }
+    await api('/calendar', { method: 'POST', body: JSON.stringify(data) });
+    closeModal();
+    navigateTo('calendar');
+  });
+}
+
+function openMilestoneModal(projectId) {
+  openModal('Add Milestone', `
+    <div class="form-group"><label>Title *</label><input type="text" id="m-mtitle"></div>
+    <div class="form-group"><label>Due Date</label><input type="date" id="m-mdue"></div>
+    <div class="form-group"><label>Description</label><textarea id="m-mdesc"></textarea></div>
+  `, async () => {
+    const data = {
+      title: document.getElementById('m-mtitle').value.trim(),
+      due_date: document.getElementById('m-mdue').value || null,
+      description: document.getElementById('m-mdesc').value.trim()
+    };
+    if (!data.title) { alert('Title required'); return; }
+    await api(`/projects/${projectId}/milestones`, { method: 'POST', body: JSON.stringify(data) });
+    closeModal();
+    showProjectDetail(projectId);
+  });
+}
+
+// Quick Add menu
+function showQuickAdd() {
+  openModal('Quick Add', `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <button class="btn btn-ghost" onclick="closeModal();openContactModal()" style="padding:20px;font-size:16px">&#128100; New Contact</button>
+      <button class="btn btn-ghost" onclick="closeModal();openProjectModal()" style="padding:20px;font-size:16px">&#128196; New Project</button>
+      <button class="btn btn-ghost" onclick="closeModal();openTaskModal()" style="padding:20px;font-size:16px">&#9745; New Task</button>
+      <button class="btn btn-ghost" onclick="closeModal();openEventModal()" style="padding:20px;font-size:16px">&#128197; New Event</button>
+    </div>
+  `, null);
+  document.querySelector('.modal-footer').classList.add('hidden');
+}
+
+// =====================================================
+// NLP WIDGET
+// =====================================================
+async function sendAICommand(target) {
+  const inputId = target === 'ai' ? 'ai-input' : 'nlp-input';
+  const msgContainerId = target === 'ai' ? 'ai-messages' : 'nlp-messages';
+  const input = document.getElementById(inputId);
+  const text = input.value.trim();
+  if (!text) return;
+
+  const msgContainer = document.getElementById(msgContainerId);
+  msgContainer.innerHTML += `<div class="nlp-msg user">${escHtml(text)}</div>`;
+  input.value = '';
+
+  try {
+    const res = await api('/nlp/command', { method: 'POST', body: JSON.stringify({ text }) });
+    const response = res.success ? (res.data?.response || 'Done.') : (res.error || 'Error');
+    msgContainer.innerHTML += `<div class="nlp-msg system">${escHtml(response)}</div>`;
+  } catch (err) {
+    msgContainer.innerHTML += `<div class="nlp-msg system" style="color:var(--danger)">Error: ${err.message}</div>`;
+  }
+  msgContainer.scrollTop = msgContainer.scrollHeight;
+}
+
+// =====================================================
+// UTILITIES
+// =====================================================
+function fmtDate(d) {
+  if (!d) return '-';
+  return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+function fmtDateTime(d) {
+  if (!d) return '-';
+  return new Date(d).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+}
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\n/g,'<br>');
+}
+
+// =====================================================
+// EVENT LISTENERS
+// =====================================================
+document.addEventListener('DOMContentLoaded', () => {
+  // Auth
+  document.getElementById('login-btn').addEventListener('click', doLogin);
+  document.getElementById('login-password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+  document.getElementById('logout-btn').addEventListener('click', logout);
+
+  // Navigation
+  document.querySelectorAll('.sidebar-nav li').forEach(li => {
+    li.addEventListener('click', () => navigateTo(li.dataset.view));
+  });
+
+  // Sidebar toggle
+  document.getElementById('sidebar-toggle').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('collapsed');
+  });
+
+  // Modal
+  document.getElementById('modal-close').addEventListener('click', closeModal);
+  document.getElementById('modal-cancel').addEventListener('click', closeModal);
+  document.getElementById('modal-save').addEventListener('click', () => { if (modalSaveHandler) modalSaveHandler(); });
+  document.getElementById('modal-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+
+  // NLP Widget
+  document.getElementById('nlp-toggle').addEventListener('click', () => {
+    document.getElementById('nlp-panel').classList.toggle('hidden');
+  });
+  document.getElementById('nlp-close').addEventListener('click', () => {
+    document.getElementById('nlp-panel').classList.add('hidden');
+  });
+  document.getElementById('nlp-send').addEventListener('click', () => sendAICommand('nlp'));
+  document.getElementById('nlp-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') sendAICommand('nlp');
+  });
+
+  // Quick Add
+  document.getElementById('quick-add-btn').addEventListener('click', showQuickAdd);
+
+  // Notification button
+  document.getElementById('notif-btn').addEventListener('click', () => navigateTo('notifications'));
+
+  // Check auth state
+  checkAuth();
+});

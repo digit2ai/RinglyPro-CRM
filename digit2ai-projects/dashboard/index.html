@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Digit2AI Projects Hub</title>
+  <link rel="stylesheet" href="/projects/assets/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9889;</text></svg>">
+</head>
+<body>
+  <div id="app">
+    <!-- Login Screen -->
+    <div id="login-screen" class="login-screen">
+      <div class="login-card">
+        <div class="login-logo">D2</div>
+        <h1>Digit2AI Projects Hub</h1>
+        <p class="login-subtitle">Contacts & Projects Management</p>
+        <div class="login-form">
+          <input type="email" id="login-email" placeholder="Email" autocomplete="email">
+          <input type="password" id="login-password" placeholder="Password" autocomplete="current-password">
+          <button id="login-btn" class="btn btn-primary btn-lg">Sign In</button>
+          <p id="login-error" class="login-error"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="main-app" class="main-app hidden">
+      <!-- Sidebar -->
+      <nav id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-logo">D2</div>
+          <span class="sidebar-title">Digit2AI</span>
+          <button id="sidebar-toggle" class="sidebar-toggle">&#9776;</button>
+        </div>
+        <ul class="sidebar-nav">
+          <li data-view="overview" class="active"><span class="nav-icon">&#9632;</span><span class="nav-text">Overview</span></li>
+          <li data-view="contacts"><span class="nav-icon">&#128100;</span><span class="nav-text">Contacts</span></li>
+          <li data-view="projects"><span class="nav-icon">&#128196;</span><span class="nav-text">Projects</span></li>
+          <li data-view="calendar"><span class="nav-icon">&#128197;</span><span class="nav-text">Calendar</span></li>
+          <li data-view="tasks"><span class="nav-icon">&#9745;</span><span class="nav-text">Tasks</span></li>
+          <li data-view="notifications"><span class="nav-icon">&#128276;</span><span class="nav-text">Notifications</span><span id="notif-badge" class="badge hidden">0</span></li>
+          <li data-view="ai"><span class="nav-icon">&#129302;</span><span class="nav-text">AI Workspace</span></li>
+          <li data-view="activity"><span class="nav-icon">&#128336;</span><span class="nav-text">Activity</span></li>
+          <li data-view="settings"><span class="nav-icon">&#9881;</span><span class="nav-text">Settings</span></li>
+        </ul>
+        <div class="sidebar-footer">
+          <div id="user-info" class="user-info"></div>
+          <button id="logout-btn" class="btn btn-sm btn-ghost">Logout</button>
+        </div>
+      </nav>
+
+      <!-- Content -->
+      <main id="content" class="content">
+        <!-- Top Bar -->
+        <header class="topbar">
+          <div class="topbar-left">
+            <h2 id="page-title">Overview</h2>
+          </div>
+          <div class="topbar-right">
+            <div class="search-box">
+              <input type="text" id="global-search" placeholder="Search...">
+            </div>
+            <button id="notif-btn" class="icon-btn" title="Notifications">&#128276;</button>
+            <button id="quick-add-btn" class="btn btn-primary btn-sm">+ New</button>
+          </div>
+        </header>
+
+        <!-- View Container -->
+        <div id="view-container" class="view-container">
+          <!-- Views rendered dynamically by JS -->
+        </div>
+      </main>
+
+      <!-- NLP Widget -->
+      <div id="nlp-widget" class="nlp-widget">
+        <button id="nlp-toggle" class="nlp-toggle" title="AI Command">&#129302;</button>
+        <div id="nlp-panel" class="nlp-panel hidden">
+          <div class="nlp-header">
+            <h3>AI Command Center</h3>
+            <button id="nlp-close" class="nlp-close">&times;</button>
+          </div>
+          <div id="nlp-messages" class="nlp-messages">
+            <div class="nlp-msg system">Hello! I'm your AI assistant. Type a command or "help" to see what I can do.</div>
+          </div>
+          <div class="nlp-input-area">
+            <input type="text" id="nlp-input" placeholder='Try: "Show overdue projects"' autocomplete="off">
+            <button id="nlp-send" class="btn btn-primary btn-sm">Send</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Add Modal -->
+      <div id="modal-overlay" class="modal-overlay hidden">
+        <div id="modal" class="modal">
+          <div class="modal-header">
+            <h3 id="modal-title">Create</h3>
+            <button id="modal-close" class="modal-close">&times;</button>
+          </div>
+          <div id="modal-body" class="modal-body"></div>
+          <div class="modal-footer">
+            <button id="modal-cancel" class="btn btn-ghost">Cancel</button>
+            <button id="modal-save" class="btn btn-primary">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="/projects/assets/app.js"></script>
+</body>
+</html>
