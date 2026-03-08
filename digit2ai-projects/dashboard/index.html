@@ -34,14 +34,14 @@
           <button id="sidebar-toggle" class="sidebar-toggle">&#9776;</button>
         </div>
         <ul class="sidebar-nav">
-          <li data-view="overview" class="active"><span class="nav-icon">&#9632;</span><span class="nav-text">Overview</span></li>
-          <li data-view="contacts"><span class="nav-icon">&#128100;</span><span class="nav-text">Contacts</span></li>
-          <li data-view="projects"><span class="nav-icon">&#128196;</span><span class="nav-text">Projects</span></li>
+          <li data-view="overview" class="active"><span class="nav-icon">&#127968;</span><span class="nav-text">Home</span></li>
+          <li data-view="contacts"><span class="nav-icon">&#128101;</span><span class="nav-text">People</span></li>
+          <li data-view="projects"><span class="nav-icon">&#128203;</span><span class="nav-text">Projects</span></li>
           <li data-view="calendar"><span class="nav-icon">&#128197;</span><span class="nav-text">Calendar</span></li>
-          <li data-view="tasks"><span class="nav-icon">&#9745;</span><span class="nav-text">Tasks</span></li>
-          <li data-view="notifications"><span class="nav-icon">&#128276;</span><span class="nav-text">Notifications</span><span id="notif-badge" class="badge hidden">0</span></li>
-          <li data-view="ai"><span class="nav-icon">&#129302;</span><span class="nav-text">AI Workspace</span></li>
-          <li data-view="activity"><span class="nav-icon">&#128336;</span><span class="nav-text">Activity</span></li>
+          <li data-view="tasks"><span class="nav-icon">&#9989;</span><span class="nav-text">To-Do List</span></li>
+          <li data-view="notifications"><span class="nav-icon">&#128276;</span><span class="nav-text">Alerts</span><span id="notif-badge" class="badge hidden">0</span></li>
+          <li data-view="ai"><span class="nav-icon">&#10024;</span><span class="nav-text">Ask AI</span></li>
+          <li data-view="activity"><span class="nav-icon">&#128336;</span><span class="nav-text">History</span></li>
           <li data-view="settings"><span class="nav-icon">&#9881;</span><span class="nav-text">Settings</span></li>
         </ul>
         <div class="sidebar-footer">
@@ -61,8 +61,8 @@
             <div class="search-box">
               <input type="text" id="global-search" placeholder="Search...">
             </div>
-            <button id="notif-btn" class="icon-btn" title="Notifications">&#128276;</button>
-            <button id="quick-add-btn" class="btn btn-primary btn-sm">+ New</button>
+            <button id="notif-btn" class="icon-btn" title="Check your alerts">&#128276;</button>
+            <button id="quick-add-btn" class="btn btn-primary btn-sm" title="Create something new">+ Create</button>
           </div>
         </header>
 
@@ -74,17 +74,23 @@
 
       <!-- NLP Widget -->
       <div id="nlp-widget" class="nlp-widget">
-        <button id="nlp-toggle" class="nlp-toggle" title="AI Command">&#129302;</button>
+        <button id="nlp-toggle" class="nlp-toggle" title="Need help? Ask the AI assistant!">&#10024;</button>
         <div id="nlp-panel" class="nlp-panel hidden">
           <div class="nlp-header">
             <h3>AI Command Center</h3>
             <button id="nlp-close" class="nlp-close">&times;</button>
           </div>
           <div id="nlp-messages" class="nlp-messages">
-            <div class="nlp-msg system">Hello! I'm your AI assistant. Type a command or "help" to see what I can do.</div>
+            <div class="nlp-msg system">Hi there! I'm your AI assistant. Just tell me what you need in plain words. Try clicking one of the suggestions below, or type your own!</div>
+          </div>
+          <div class="nlp-suggestions" id="nlp-suggestions">
+            <button class="nlp-chip" onclick="nlpChip('What do I need to do today?')">What do I need to do?</button>
+            <button class="nlp-chip" onclick="nlpChip('Show my projects')">Show my projects</button>
+            <button class="nlp-chip" onclick="nlpChip('Anything overdue?')">Anything overdue?</button>
+            <button class="nlp-chip" onclick="nlpChip('help')">Show all commands</button>
           </div>
           <div class="nlp-input-area">
-            <input type="text" id="nlp-input" placeholder='Try: "Show overdue projects"' autocomplete="off">
+            <input type="text" id="nlp-input" placeholder='Ask me anything, e.g. "What&#39;s coming up?"' autocomplete="off">
             <button id="nlp-send" class="btn btn-primary btn-sm">Send</button>
           </div>
         </div>

@@ -93,9 +93,9 @@ function navigateTo(view) {
     li.classList.toggle('active', li.dataset.view === view);
   });
   const titles = {
-    overview: 'Overview', contacts: 'Contacts', projects: 'Projects',
-    calendar: 'Calendar', tasks: 'Tasks & Reminders', notifications: 'Notifications',
-    ai: 'AI Workspace', activity: 'Activity Log', settings: 'Settings'
+    overview: 'Home', contacts: 'People & Contacts', projects: 'My Projects',
+    calendar: 'Calendar', tasks: 'My To-Do List', notifications: 'Alerts & Updates',
+    ai: 'Ask AI', activity: 'Recent History', settings: 'Settings'
   };
   document.getElementById('page-title').textContent = titles[view] || view;
   renderView(view);
@@ -147,47 +147,81 @@ async function renderOverview(container) {
   const d = res.data;
   const s = d.summary;
 
+  // Welcome banner (dismissible, stored in localStorage)
+  const showWelcome = !localStorage.getItem('d2ai_welcome_dismissed');
+  const welcomeHtml = showWelcome ? `
+    <div class="welcome-banner" id="welcome-banner">
+      <div class="welcome-icon">&#128075;</div>
+      <div>
+        <h2>Welcome to your Projects Hub!</h2>
+        <p>This is your control center. Click on any card below to see details, use the <strong>+ Create</strong> button to add new items, or click the <strong>&#10024; AI button</strong> in the bottom-right corner to ask questions in plain English.</p>
+      </div>
+      <button class="welcome-dismiss" onclick="dismissWelcome()" title="Hide this message">&times;</button>
+    </div>` : '';
+
+  // Quick actions bar
+  const quickActionsHtml = `
+    <div class="quick-actions">
+      <button class="quick-action-btn" onclick="openContactModal()"><span class="qa-icon">&#128100;</span><span class="qa-label">Add Person</span></button>
+      <button class="quick-action-btn" onclick="openProjectModal()"><span class="qa-icon">&#128203;</span><span class="qa-label">New Project</span></button>
+      <button class="quick-action-btn" onclick="openTaskModal()"><span class="qa-icon">&#9989;</span><span class="qa-label">Add To-Do</span></button>
+      <button class="quick-action-btn" onclick="openEventModal()"><span class="qa-icon">&#128197;</span><span class="qa-label">Schedule Event</span></button>
+      <button class="quick-action-btn" onclick="document.getElementById('nlp-panel').classList.remove('hidden')"><span class="qa-icon">&#10024;</span><span class="qa-label">Ask AI</span></button>
+    </div>`;
+
   container.innerHTML = `
+    ${welcomeHtml}
+    ${quickActionsHtml}
+
     <div class="card-grid" style="margin-bottom:24px">
-      <div class="card card-stat card-accent-purple card-clickable" onclick="drillDown('active_projects')">
-        <div class="stat-label">Active Projects</div>
+      <div class="card card-stat card-accent-purple card-clickable" onclick="drillDown('active_projects')" data-tooltip="Click to see all active projects">
+        <div class="kpi-icon">&#128203;</div>
+        <div class="stat-label">Your Active Projects</div>
         <div class="stat-value">${s.active_projects}</div>
-        <div class="stat-change stat-neutral">${s.total_projects} total</div>
+        <div class="stat-change stat-neutral">${s.total_projects} total projects</div>
+        <div class="kpi-hint">Click to view details</div>
       </div>
-      <div class="card card-stat card-accent-red card-clickable" onclick="drillDown('overdue_projects')">
-        <div class="stat-label">Overdue Projects</div>
+      <div class="card card-stat card-accent-red card-clickable ${s.overdue_projects > 0 ? 'card-needs-attention' : ''}" onclick="drillDown('overdue_projects')" data-tooltip="${s.overdue_projects > 0 ? 'You have projects past their due date!' : 'Great! Nothing overdue'}">
+        <div class="kpi-icon">${s.overdue_projects > 0 ? '&#9888;' : '&#9989;'}</div>
+        <div class="stat-label">${s.overdue_projects > 0 ? 'Overdue - Needs Attention' : 'All Projects On Track'}</div>
         <div class="stat-value">${s.overdue_projects}</div>
-        <div class="stat-change ${s.overdue_projects > 0 ? 'stat-down' : 'stat-up'}">${s.overdue_projects > 0 ? 'Needs attention' : 'All on track'}</div>
+        <div class="stat-change ${s.overdue_projects > 0 ? 'stat-down' : 'stat-up'}">${s.overdue_projects > 0 ? 'Past due date' : 'Everything looks good!'}</div>
       </div>
-      <div class="card card-stat card-accent-yellow card-clickable" onclick="drillDown('due_this_week')">
+      <div class="card card-stat card-accent-yellow card-clickable" onclick="drillDown('due_this_week')" data-tooltip="Projects that need to be finished this week">
+        <div class="kpi-icon">&#128197;</div>
         <div class="stat-label">Due This Week</div>
         <div class="stat-value">${s.projects_due_this_week}</div>
-        <div class="stat-change stat-neutral">upcoming</div>
+        <div class="stat-change stat-neutral">${s.projects_due_this_week > 0 ? 'Coming up soon' : 'Nothing urgent'}</div>
       </div>
-      <div class="card card-stat card-accent-green card-clickable" onclick="drillDown('contacts')">
-        <div class="stat-label">Total Contacts</div>
+      <div class="card card-stat card-accent-green card-clickable" onclick="drillDown('contacts')" data-tooltip="Your contacts and people">
+        <div class="kpi-icon">&#128101;</div>
+        <div class="stat-label">Your People</div>
         <div class="stat-value">${s.total_contacts}</div>
-        <div class="stat-change ${s.contacts_need_followup > 0 ? 'stat-down' : 'stat-up'}">${s.contacts_need_followup} need follow-up</div>
+        <div class="stat-change ${s.contacts_need_followup > 0 ? 'stat-down' : 'stat-up'}">${s.contacts_need_followup > 0 ? s.contacts_need_followup + ' need a follow-up' : 'All caught up!'}</div>
       </div>
-      <div class="card card-stat card-accent-blue card-clickable" onclick="drillDown('pending_tasks')">
-        <div class="stat-label">Pending Tasks</div>
+      <div class="card card-stat card-accent-blue card-clickable ${s.overdue_tasks > 0 ? 'card-needs-attention' : ''}" onclick="drillDown('pending_tasks')" data-tooltip="Things you still need to do">
+        <div class="kpi-icon">&#9989;</div>
+        <div class="stat-label">Your To-Do Items</div>
         <div class="stat-value">${s.pending_tasks}</div>
-        <div class="stat-change ${s.overdue_tasks > 0 ? 'stat-down' : 'stat-up'}">${s.overdue_tasks} overdue</div>
+        <div class="stat-change ${s.overdue_tasks > 0 ? 'stat-down' : 'stat-up'}">${s.overdue_tasks > 0 ? s.overdue_tasks + ' are overdue!' : 'On schedule'}</div>
       </div>
-      <div class="card card-stat card-accent-purple card-clickable" onclick="drillDown('notifications')">
-        <div class="stat-label">Notifications</div>
+      <div class="card card-stat card-accent-purple card-clickable" onclick="drillDown('notifications')" data-tooltip="Messages and alerts for you">
+        <div class="kpi-icon">&#128276;</div>
+        <div class="stat-label">Unread Alerts</div>
         <div class="stat-value">${s.unread_notifications}</div>
-        <div class="stat-change stat-neutral">unread</div>
+        <div class="stat-change stat-neutral">${s.unread_notifications > 0 ? 'Tap to read' : 'All caught up!'}</div>
       </div>
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
       <div class="card">
         <div class="section-header"><h3>Projects by Status</h3></div>
+        <p class="section-hint">Click any bar to see projects in that status</p>
         <div class="bar-chart" id="status-chart"></div>
       </div>
       <div class="card">
-        <div class="section-header"><h3>Vertical Distribution</h3></div>
+        <div class="section-header"><h3>Projects by Category</h3></div>
+        <p class="section-hint">See how your projects are distributed</p>
         <div class="bar-chart" id="vertical-chart"></div>
       </div>
     </div>
@@ -195,16 +229,19 @@ async function renderOverview(container) {
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
       <div class="card">
         <div class="section-header"><h3>Stalled Projects</h3></div>
+        <p class="section-hint">Projects with no updates in the last 2 weeks</p>
         <div id="stalled-list"></div>
       </div>
       <div class="card">
-        <div class="section-header"><h3>Upcoming Events</h3></div>
+        <div class="section-header"><h3>Coming Up Next</h3></div>
+        <p class="section-hint">Your upcoming meetings and events</p>
         <div id="upcoming-list"></div>
       </div>
     </div>
 
     <div class="card">
-      <div class="section-header"><h3>Recent Activity</h3></div>
+      <div class="section-header"><h3>What's Been Happening</h3></div>
+      <p class="section-hint">A log of recent actions taken in the system</p>
       <div class="timeline" id="activity-timeline"></div>
     </div>
   `;
@@ -214,7 +251,7 @@ async function renderOverview(container) {
   const maxStatus = Math.max(...d.projects_by_status.map(s => parseInt(s.count)), 1);
   document.getElementById('status-chart').innerHTML = d.projects_by_status.map(s =>
     `<div class="bar-row card-clickable" onclick="drillDown('projects_by_status','${s.status}')"><div class="bar-label">${s.status}</div><div class="bar-track"><div class="bar-fill" style="width:${(s.count/maxStatus)*100}%;background:${statusColors[s.status]||'#6366f1'}">${s.count}</div></div></div>`
-  ).join('') || '<p style="color:var(--text-muted);font-size:13px">No projects yet</p>';
+  ).join('') || '<p style="color:var(--text-muted);font-size:13px">No projects yet. <a href="#" onclick="event.preventDefault();openProjectModal()" style="color:var(--accent)">Create your first one!</a></p>';
 
   // Vertical chart - clickable bars
   const maxV = Math.max(...d.vertical_distribution.map(v => parseInt(v.project_count)), 1);
@@ -225,17 +262,17 @@ async function renderOverview(container) {
   // Stalled
   document.getElementById('stalled-list').innerHTML = d.stalled_projects.length > 0
     ? d.stalled_projects.map(p => `<div class="timeline-item" style="cursor:pointer" onclick="showProjectDetail(${p.id})"><div class="timeline-dot" style="background:var(--warning)"></div><div class="timeline-content"><strong>${p.name}</strong><br><span class="timeline-time">Last update: ${fmtDate(p.updated_at)}</span></div></div>`).join('')
-    : '<p style="color:var(--text-muted);font-size:13px;padding:12px">No stalled projects</p>';
+    : '<p style="color:var(--text-muted);font-size:13px;padding:12px">&#9989; Great! All projects are progressing well.</p>';
 
   // Upcoming events - clickable
   document.getElementById('upcoming-list').innerHTML = d.upcoming_events.length > 0
     ? d.upcoming_events.map(e => `<div class="timeline-item" style="cursor:pointer" onclick="showEventDetail(${e.id})"><div class="timeline-dot" style="background:var(--info)"></div><div class="timeline-content"><strong>${e.title}</strong><br><span class="timeline-time">${fmtDateTime(e.start_time)}</span>${e.event_type ? ' <span class="status-badge status-planning">'+e.event_type+'</span>' : ''}</div></div>`).join('')
-    : '<p style="color:var(--text-muted);font-size:13px;padding:12px">No upcoming events</p>';
+    : '<p style="color:var(--text-muted);font-size:13px;padding:12px">No events scheduled. <a href="#" onclick="event.preventDefault();openEventModal()" style="color:var(--accent)">Schedule one now</a></p>';
 
   // Activity
   document.getElementById('activity-timeline').innerHTML = d.recent_activity.length > 0
     ? d.recent_activity.map(a => `<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-content">${a.user_email || 'System'} <strong>${a.action}</strong> ${a.entity_type} "${a.entity_name || ''}"<br><span class="timeline-time">${fmtDateTime(a.created_at)}</span></div></div>`).join('')
-    : '<p style="color:var(--text-muted);font-size:13px">No activity yet</p>';
+    : '<p style="color:var(--text-muted);font-size:13px">No activity yet. Start by adding a project or contact!</p>';
 }
 
 // =====================================================
@@ -366,15 +403,16 @@ function renderDrillTable(container, title, items, type) {
       '</tbody></table>';
   }
 
+  const itemWord = items.length === 1 ? 'item' : 'items';
   container.innerHTML = `
     <div class="section-header" style="margin-bottom:16px">
       <div style="display:flex;align-items:center;gap:12px">
-        <button class="btn btn-ghost btn-sm" onclick="navigateTo('overview')">&#8592; Overview</button>
+        <button class="btn btn-ghost btn-sm" onclick="navigateTo('overview')">&#8592; Back to Home</button>
         <h3>${title}</h3>
-        <span class="status-badge status-planning">${items.length} items</span>
+        <span class="status-badge status-planning">${items.length} ${itemWord}</span>
       </div>
     </div>
-    ${tableHtml}
+    ${items.length === 0 ? '<div class="empty-state"><div class="empty-icon">&#128269;</div><h3>Nothing here</h3><p>No items match this view right now.</p><button class="btn btn-ghost" onclick="navigateTo(\'overview\')">Go Back Home</button></div>' : tableHtml}
   `;
 }
 
@@ -407,7 +445,7 @@ async function renderContacts(container, page = 1) {
           ${verticalOptions('')}
         </select>
       </div>
-      <button class="btn btn-primary btn-sm" onclick="openContactModal()">+ New Contact</button>
+      <button class="btn btn-primary btn-sm" onclick="openContactModal()">+ Add Person</button>
     </div>
     <table class="data-table">
       <thead><tr>
@@ -433,7 +471,7 @@ async function renderContacts(container, page = 1) {
         <td><span class="status-badge status-${c.status}">${c.status}</span></td>
         <td>${c.next_followup_date ? fmtDate(c.next_followup_date) : '-'}</td>
       </tr>`).join('')
-    : '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted)">No contacts yet. Click "+ New Contact" to add one.</td></tr>';
+    : '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted)">No people added yet.<br><br><button class="btn btn-primary" onclick="openContactModal()">&#128100; Add Your First Person</button><br><span style="font-size:12px;margin-top:8px;display:block">or use the AI: "Add contact John Smith"</span></td></tr>';
 
   // Search handler
   const searchInput = document.getElementById('contact-search');
@@ -508,7 +546,7 @@ async function renderProjects(container) {
           <td><div class="progress-bar" style="width:100px"><div class="progress-fill" style="width:${p.progress}%"></div></div><span style="font-size:11px;color:var(--text-muted);margin-left:8px">${p.progress}%</span></td>
         </tr>`;
       }).join('')
-    : '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted)">No projects yet. Click "+ New Project" to add one.</td></tr>';
+    : '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted)">No projects yet.<br><br><button class="btn btn-primary" onclick="openProjectModal()">&#128203; Create Your First Project</button><br><span style="font-size:12px;margin-top:8px;display:block">or use the AI: "Start a new project called Website Redesign"</span></td></tr>';
 }
 
 // =====================================================
@@ -698,18 +736,18 @@ async function renderTasks(container) {
     <div class="section-header">
       <div class="filter-bar">
         <select id="task-status-filter" onchange="filterTasks()">
-          <option value="">All</option>
-          <option value="pending" selected>Pending</option>
-          <option value="completed">Completed</option>
+          <option value="">Show All</option>
+          <option value="pending" selected>Still To Do</option>
+          <option value="completed">Already Done</option>
         </select>
         <select id="task-type-filter" onchange="filterTasks()">
           <option value="">All Types</option>
-          <option value="task">Task</option>
-          <option value="reminder">Reminder</option>
-          <option value="followup">Follow-up</option>
+          <option value="task">Tasks</option>
+          <option value="reminder">Reminders</option>
+          <option value="followup">Follow-ups</option>
         </select>
       </div>
-      <button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ New Task</button>
+      <button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ Add To-Do</button>
     </div>
     <div id="tasks-list"></div>
   `;
@@ -732,7 +770,7 @@ function renderTasksList(tasks) {
           <td>${t.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="event.stopPropagation();completeTask(${t.id})">Done</button>` : '<span class="status-badge status-completed">completed</span>'}</td>
         </tr>`;
       }).join('') + '</tbody></table>'
-    : '<div class="empty-state"><div class="empty-icon">&#9745;</div><h3>No tasks</h3><p>Create a task or use the AI command to add one.</p></div>';
+    : '<div class="empty-state"><div class="empty-icon">&#9989;</div><h3>Your to-do list is empty!</h3><p>Nothing on your plate right now.</p><button class="get-started-btn" onclick="openTaskModal()">&#9989; Add Your First To-Do</button><p class="empty-action-hint">Tip: You can also say "Remind me to call John tomorrow" to the AI assistant</p></div>';
 }
 
 async function completeTask(id) {
@@ -878,7 +916,7 @@ async function renderNotifications(container) {
         <div class="timeline-dot" style="background:${n.read ? 'var(--text-muted)' : 'var(--accent)'}"></div>
         <div class="timeline-content"><strong>${n.title || n.type}</strong><br>${n.message || ''}<br><span class="timeline-time">${fmtDateTime(n.created_at)}</span></div>
       </div>`).join('')
-    : '<div class="empty-state"><div class="empty-icon">&#128276;</div><h3>No notifications</h3></div>';
+    : '<div class="empty-state"><div class="empty-icon">&#128276;</div><h3>No alerts right now</h3><p>You\'re all caught up! Alerts will appear here when something needs your attention.</p></div>';
 }
 
 async function markRead(id) {
@@ -896,13 +934,39 @@ async function markAllRead() {
 function renderAIWorkspace(container) {
   container.innerHTML = `
     <div class="card" style="max-width:800px">
-      <h3 style="margin-bottom:16px">AI Command Center</h3>
-      <p style="color:var(--text-secondary);margin-bottom:20px">Use natural language to manage contacts, projects, tasks, and more. Type a command below or use the floating AI button.</p>
-      <div id="ai-messages" class="nlp-messages" style="max-height:400px;min-height:200px">
-        <div class="nlp-msg system">Welcome to the AI Workspace! Try commands like:\n\n- "Create a new project for healthcare outreach"\n- "Show overdue projects"\n- "Add contact Maria Lopez for partnerships"\n- "Create a reminder to follow up next Tuesday"\n- "Summarize high-priority projects"\n\nType "help" for all available commands.</div>
+      <h3 style="margin-bottom:8px">&#10024; Ask AI - Your Smart Assistant</h3>
+      <p style="color:var(--text-secondary);margin-bottom:20px">Just type what you need in plain English. No special commands needed! Here are some things you can try:</p>
+      <div class="ai-suggestion-grid" style="margin-bottom:20px">
+        <div class="ai-suggestion-card" onclick="document.getElementById('ai-input').value='What do I need to do today?';sendAICommand('ai')">
+          <div class="ai-sug-label">&#9989; What do I need to do?</div>
+          <div class="ai-sug-hint">See your pending tasks and reminders</div>
+        </div>
+        <div class="ai-suggestion-card" onclick="document.getElementById('ai-input').value='How are my projects going?';sendAICommand('ai')">
+          <div class="ai-sug-label">&#128203; How are my projects going?</div>
+          <div class="ai-sug-hint">Get a summary of all your projects</div>
+        </div>
+        <div class="ai-suggestion-card" onclick="document.getElementById('ai-input').value='Anything overdue?';sendAICommand('ai')">
+          <div class="ai-sug-label">&#9888; Anything overdue?</div>
+          <div class="ai-sug-hint">Check if anything needs urgent attention</div>
+        </div>
+        <div class="ai-suggestion-card" onclick="document.getElementById('ai-input').value='What\\'s coming up this week?';sendAICommand('ai')">
+          <div class="ai-sug-label">&#128197; What's coming up?</div>
+          <div class="ai-sug-hint">See your upcoming events and deadlines</div>
+        </div>
+        <div class="ai-suggestion-card" onclick="document.getElementById('ai-input').value='Create a new project called Marketing Campaign';sendAICommand('ai')">
+          <div class="ai-sug-label">&#128640; Create a project</div>
+          <div class="ai-sug-hint">Just describe what you want to create</div>
+        </div>
+        <div class="ai-suggestion-card" onclick="document.getElementById('ai-input').value='help';sendAICommand('ai')">
+          <div class="ai-sug-label">&#128218; Show all commands</div>
+          <div class="ai-sug-hint">See everything the AI can do for you</div>
+        </div>
+      </div>
+      <div id="ai-messages" class="nlp-messages" style="max-height:400px;min-height:150px">
+        <div class="nlp-msg system">Hi! I'm your AI assistant. Just tell me what you need in plain words. Click any suggestion above, or type your own question below.</div>
       </div>
       <div class="nlp-input-area" style="border-top:1px solid var(--border);padding-top:12px">
-        <input type="text" id="ai-input" placeholder='Type a command...' autocomplete="off">
+        <input type="text" id="ai-input" placeholder='Ask me anything, e.g. "Show my overdue tasks"' autocomplete="off">
         <button class="btn btn-primary" onclick="sendAICommand('ai')">Send</button>
       </div>
     </div>
@@ -930,7 +994,7 @@ async function renderActivity(container) {
         <div class="timeline-dot"></div>
         <div class="timeline-content">${a.user_email || 'System'} <strong>${a.action}</strong> ${a.entity_type} "${a.entity_name || ''}"${a.details?.via ? ' <span class="tag">via '+a.details.via+'</span>' : ''}<br><span class="timeline-time">${fmtDateTime(a.created_at)}</span></div>
       </div>`).join('')
-    : '<div class="empty-state"><div class="empty-icon">&#128336;</div><h3>No activity yet</h3><p>Actions you take will appear here.</p></div>';
+    : '<div class="empty-state"><div class="empty-icon">&#128336;</div><h3>No history yet</h3><p>As you create projects, add contacts, and complete tasks, a record of everything will show up here.</p></div>';
 }
 
 // =====================================================
@@ -956,6 +1020,10 @@ function renderSettings(container) {
             <div class="form-group" style="margin:0"><button class="btn btn-primary" onclick="addVertical()">Add</button></div>
           </div>
         </div>
+      </div>
+      <div class="detail-section">
+        <h4>Need Help?</h4>
+        <p style="color:var(--text-secondary);font-size:13px;margin-bottom:12px">Click the &#10024; button in the bottom-right corner to ask the AI assistant for help. You can say things like "help" or "what can you do?"</p>
       </div>
       <div class="detail-section">
         <h4>About</h4>
@@ -1458,12 +1526,29 @@ function openMilestoneModal(projectId) {
 
 // Quick Add menu
 function showQuickAdd() {
-  openModal('Quick Add', `
+  openModal('What would you like to create?', `
+    <p style="color:var(--text-secondary);font-size:14px;margin-bottom:16px">Choose what you'd like to add:</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <button class="btn btn-ghost" onclick="closeModal();openContactModal()" style="padding:20px;font-size:16px">&#128100; New Contact</button>
-      <button class="btn btn-ghost" onclick="closeModal();openProjectModal()" style="padding:20px;font-size:16px">&#128196; New Project</button>
-      <button class="btn btn-ghost" onclick="closeModal();openTaskModal()" style="padding:20px;font-size:16px">&#9745; New Task</button>
-      <button class="btn btn-ghost" onclick="closeModal();openEventModal()" style="padding:20px;font-size:16px">&#128197; New Event</button>
+      <button class="btn btn-ghost" onclick="closeModal();openContactModal()" style="padding:20px;font-size:15px;flex-direction:column;gap:4px">
+        <span style="font-size:24px">&#128100;</span>
+        <strong>Add a Person</strong>
+        <span style="font-size:11px;color:var(--text-muted)">Contact, client, partner</span>
+      </button>
+      <button class="btn btn-ghost" onclick="closeModal();openProjectModal()" style="padding:20px;font-size:15px;flex-direction:column;gap:4px">
+        <span style="font-size:24px">&#128203;</span>
+        <strong>Start a Project</strong>
+        <span style="font-size:11px;color:var(--text-muted)">Track work from start to finish</span>
+      </button>
+      <button class="btn btn-ghost" onclick="closeModal();openTaskModal()" style="padding:20px;font-size:15px;flex-direction:column;gap:4px">
+        <span style="font-size:24px">&#9989;</span>
+        <strong>Add a To-Do</strong>
+        <span style="font-size:11px;color:var(--text-muted)">Task, reminder, follow-up</span>
+      </button>
+      <button class="btn btn-ghost" onclick="closeModal();openEventModal()" style="padding:20px;font-size:15px;flex-direction:column;gap:4px">
+        <span style="font-size:24px">&#128197;</span>
+        <strong>Schedule Event</strong>
+        <span style="font-size:11px;color:var(--text-muted)">Meeting, deadline, milestone</span>
+      </button>
     </div>
   `, null);
   document.querySelector('.modal-footer').classList.add('hidden');
@@ -1491,6 +1576,23 @@ async function sendAICommand(target) {
     msgContainer.innerHTML += `<div class="nlp-msg system" style="color:var(--danger)">Error: ${err.message}</div>`;
   }
   msgContainer.scrollTop = msgContainer.scrollHeight;
+}
+
+// =====================================================
+// UX HELPERS (user-friendly features)
+// =====================================================
+function dismissWelcome() {
+  localStorage.setItem('d2ai_welcome_dismissed', '1');
+  const banner = document.getElementById('welcome-banner');
+  if (banner) banner.style.display = 'none';
+}
+
+function nlpChip(text) {
+  const input = document.getElementById('nlp-input');
+  if (input) {
+    input.value = text;
+    sendAICommand('nlp');
+  }
 }
 
 // =====================================================

@@ -4,46 +4,80 @@ const { Op } = require('sequelize');
 const { Contact, Project, Task, CalendarEvent, Vertical, ProjectContact, ProjectMilestone, Notification } = require('../models');
 const { logActivity, createNotification } = require('./activityService');
 
-// Intent patterns for NLP parsing
+// Intent patterns for NLP parsing - ordered by specificity (most specific first)
+// Designed for non-technical users: supports casual, conversational language
 const INTENT_PATTERNS = [
   // Contact intents
-  { pattern: /^(create|add|new)\s+(a\s+)?contact/i, intent: 'create_contact' },
-  { pattern: /^(show|list|get|find)\s+(all\s+)?contacts/i, intent: 'list_contacts' },
+  { pattern: /^(create|add|new|register)\s+(a\s+)?contact/i, intent: 'create_contact' },
+  { pattern: /^(show|list|get|find|see|view|open)\s+(all\s+|my\s+)?contacts/i, intent: 'list_contacts' },
   { pattern: /^(show|list|get|find)\s+contacts?\s+(linked|assigned|for|in|under)\s+(.+)/i, intent: 'filter_contacts' },
-  { pattern: /^(search|find)\s+(for\s+)?contact/i, intent: 'search_contacts' },
+  { pattern: /^(search|find|look\s*up|look\s+for)\s+(for\s+)?contact/i, intent: 'search_contacts' },
+  { pattern: /^(who|people|contacts)/i, intent: 'list_contacts' },
+  { pattern: /^how many contacts/i, intent: 'list_contacts' },
 
-  // Project intents
-  { pattern: /^(create|add|new|start)\s+(a\s+)?project/i, intent: 'create_project' },
-  { pattern: /^(show|list|get|find)\s+(all\s+)?projects/i, intent: 'list_projects' },
-  { pattern: /^(show|list|get|find)\s+(all\s+)?overdue\s+projects/i, intent: 'overdue_projects' },
-  { pattern: /^(show|list|get|find)\s+(all\s+)?stalled\s+projects/i, intent: 'stalled_projects' },
-  { pattern: /^(show|list)\s+high[\s-]?priority\s+projects/i, intent: 'high_priority_projects' },
+  // Project intents — specific patterns first
+  { pattern: /^(show|list|get|find|see|view)\s+(all\s+|my\s+)?overdue\s+projects/i, intent: 'overdue_projects' },
+  { pattern: /^(show|list|get|find|see|view)\s+(all\s+|my\s+)?stalled\s+projects/i, intent: 'stalled_projects' },
+  { pattern: /^(show|list|see|view)\s+high[\s-]?priority\s+projects/i, intent: 'high_priority_projects' },
+  { pattern: /^(show|list|see|view)\s+(all\s+|my\s+)?urgent\s+projects/i, intent: 'high_priority_projects' },
+  { pattern: /^(show|list|see|view)\s+(all\s+|my\s+)?critical\s+projects/i, intent: 'high_priority_projects' },
+  { pattern: /^(create|add|new|start|begin|launch)\s+(a\s+)?project/i, intent: 'create_project' },
+  { pattern: /^(show|list|get|find|see|view|open)\s+(all\s+|my\s+)?projects/i, intent: 'list_projects' },
   { pattern: /^(move|change|update|set)\s+(project\s+)?(.+?)\s+to\s+(.+)/i, intent: 'update_project_status' },
   { pattern: /^(summarize|summary|overview)\s+(of\s+)?(high[\s-]?priority\s+)?projects/i, intent: 'summarize_projects' },
+  { pattern: /^what\s+projects?\s+(are\s+)?overdue/i, intent: 'overdue_projects' },
+  { pattern: /^any(thing)?\s+overdue/i, intent: 'overdue_projects' },
+  { pattern: /^what.*behind\s+schedule/i, intent: 'overdue_projects' },
+  { pattern: /^what.*stuck|what.*stalled/i, intent: 'stalled_projects' },
+  { pattern: /^how many projects/i, intent: 'list_projects' },
 
-  // Task intents
-  { pattern: /^(create|add|new)\s+(a\s+)?(task|reminder|follow[\s-]?up)/i, intent: 'create_task' },
-  { pattern: /^(show|list|get)\s+(all\s+)?(pending\s+)?tasks/i, intent: 'list_tasks' },
-  { pattern: /^(show|list|get)\s+(all\s+)?overdue\s+tasks/i, intent: 'overdue_tasks' },
+  // Task intents — specific first
+  { pattern: /^(show|list|get|see|view)\s+(all\s+|my\s+)?overdue\s+tasks/i, intent: 'overdue_tasks' },
+  { pattern: /^(create|add|new|make)\s+(a\s+)?(task|todo|to[\s-]?do|reminder|follow[\s-]?up)/i, intent: 'create_task' },
+  { pattern: /^(show|list|get|see|view|open)\s+(all\s+|my\s+)?(pending\s+)?tasks/i, intent: 'list_tasks' },
+  { pattern: /^(show|list|get|see|view)\s+(all\s+|my\s+)?to[\s-]?do/i, intent: 'list_tasks' },
+  { pattern: /^what\s+(do\s+i\s+)?need\s+to\s+do/i, intent: 'list_tasks' },
+  { pattern: /^what.*my\s+tasks/i, intent: 'list_tasks' },
+  { pattern: /^what.*pending/i, intent: 'list_tasks' },
+  { pattern: /^how many tasks/i, intent: 'list_tasks' },
+  { pattern: /^any\s+overdue\s+tasks/i, intent: 'overdue_tasks' },
 
   // Calendar intents
-  { pattern: /^(create|add|schedule|new)\s+(a\s+)?(meeting|event|appointment|calendar)/i, intent: 'create_event' },
-  { pattern: /^(show|list|get|what)\s+(are\s+)?(upcoming|this week|today|calendar)/i, intent: 'upcoming_events' },
+  { pattern: /^(create|add|schedule|new|book|set\s+up)\s+(a\s+)?(meeting|event|appointment|calendar|call)/i, intent: 'create_event' },
+  { pattern: /^(show|list|get|what|see|view)\s+(are\s+)?(my\s+)?(upcoming|this week|today|next|calendar|schedule|events)/i, intent: 'upcoming_events' },
+  { pattern: /^what.*coming\s+up/i, intent: 'upcoming_events' },
+  { pattern: /^what.*my\s+(schedule|calendar|agenda)/i, intent: 'upcoming_events' },
+  { pattern: /^when.*next\s+(meeting|event|appointment)/i, intent: 'upcoming_events' },
 
   // Link intents
   { pattern: /^link\s+(this\s+)?contact/i, intent: 'link_contact_project' },
   { pattern: /^link\s+(.+?)\s+to\s+(project\s+)?(.+)/i, intent: 'link_contact_project' },
+  { pattern: /^(connect|associate|assign)\s+(.+?)\s+to\s+(.+)/i, intent: 'link_contact_project' },
 
-  // Dashboard intents
-  { pattern: /^(show|get)\s+(me\s+)?(the\s+)?dashboard/i, intent: 'dashboard' },
-  { pattern: /^(what|how)\s+(is|are)\s+(the\s+)?(status|stats|metrics)/i, intent: 'dashboard' },
+  // Dashboard / summary intents
+  { pattern: /^(show|get|see|view|open)\s+(me\s+)?(the\s+)?(dashboard|overview|home)/i, intent: 'dashboard' },
+  { pattern: /^(what|how)\s+(is|are)\s+(the\s+)?(status|stats|metrics|numbers)/i, intent: 'dashboard' },
+  { pattern: /^(give\s+me\s+|show\s+me\s+)?(a\s+)?(summary|overview|report|status\s*update|brief|snapshot|recap)/i, intent: 'summarize_projects' },
+  { pattern: /^(how|what).*going/i, intent: 'summarize_projects' },
+  { pattern: /^status$/i, intent: 'summarize_projects' },
+  { pattern: /^summary$/i, intent: 'summarize_projects' },
+  { pattern: /^overview$/i, intent: 'summarize_projects' },
+  { pattern: /^report$/i, intent: 'summarize_projects' },
+  { pattern: /^recap$/i, intent: 'summarize_projects' },
 
   // Reminder intents
-  { pattern: /^(remind|email)\s+(me|us)\s+(about\s+)?(.+)/i, intent: 'create_reminder' },
-  { pattern: /^(show|list|get)\s+(all\s+)?reminders/i, intent: 'list_reminders' },
+  { pattern: /^(remind|email|alert|notify)\s+(me|us)\s+(about\s+|to\s+)?(.+)/i, intent: 'create_reminder' },
+  { pattern: /^(show|list|get|see|view)\s+(all\s+|my\s+)?reminders/i, intent: 'list_reminders' },
+  { pattern: /^don'?t\s+let\s+me\s+forget/i, intent: 'create_reminder' },
+  { pattern: /^i\s+need\s+to\s+remember/i, intent: 'create_reminder' },
 
-  // Help
-  { pattern: /^(help|what can you|commands|how to)/i, intent: 'help' }
+  // Greeting / small talk
+  { pattern: /^(hi|hello|hey|good\s+morning|good\s+afternoon|good\s+evening|hola|buenas)/i, intent: 'greeting' },
+  { pattern: /^(thanks|thank\s+you|gracias)/i, intent: 'thanks' },
+
+  // Help — catch-all for confused users
+  { pattern: /^(help|what can you|commands|how to|how does|what do|what should|i don'?t know)/i, intent: 'help' },
+  { pattern: /^\?+$/i, intent: 'help' }
 ];
 
 // Extract entities from text
@@ -66,7 +100,8 @@ function extractEntities(text) {
   const dateMap = {
     'today': 0, 'tomorrow': 1, 'next monday': null, 'next tuesday': null,
     'next wednesday': null, 'next thursday': null, 'next friday': null,
-    'next week': 7, 'in 3 days': 3, 'in a week': 7
+    'next week': 7, 'in 3 days': 3, 'in a week': 7, 'in two days': 2,
+    'in 2 days': 2, 'end of week': null, 'this friday': null
   };
 
   for (const [phrase, days] of Object.entries(dateMap)) {
@@ -76,8 +111,8 @@ function extractEntities(text) {
         date.setDate(date.getDate() + days);
         entities.date = date.toISOString().split('T')[0];
       } else {
-        // Handle "next [weekday]"
-        const weekday = phrase.replace('next ', '');
+        // Handle "next [weekday]" or "this [weekday]" or "end of week"
+        let weekday = phrase.replace(/^(next|this)\s+/, '').replace('end of week', 'friday');
         const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
         const targetDay = dayNames.indexOf(weekday);
         if (targetDay >= 0) {
@@ -94,12 +129,20 @@ function extractEntities(text) {
   }
 
   // Extract status
-  const statusMatch = text.match(/to\s+(planning|active|in[\s_]?progress|on[\s_]?hold|completed|cancelled|review)/i);
-  if (statusMatch) entities.status = statusMatch[1].toLowerCase().replace(/\s+/g, '_');
+  const statusMatch = text.match(/to\s+(planning|active|in[\s_]?progress|on[\s_]?hold|completed|cancelled|review|done|finished)/i);
+  if (statusMatch) {
+    let s = statusMatch[1].toLowerCase().replace(/\s+/g, '_');
+    if (s === 'done' || s === 'finished') s = 'completed';
+    entities.status = s;
+  }
 
   // Extract priority
-  const priorityMatch = text.match(/(high|medium|low|critical|urgent)\s*priority/i);
-  if (priorityMatch) entities.priority = priorityMatch[1].toLowerCase();
+  const priorityMatch = text.match(/(high|medium|low|critical|urgent)\s*(?:priority)?/i);
+  if (priorityMatch) {
+    let p = priorityMatch[1].toLowerCase();
+    if (p === 'urgent') p = 'critical';
+    entities.priority = p;
+  }
 
   // Extract days for stalled
   const daysMatch = text.match(/(\d+)\s+days/);
@@ -131,13 +174,33 @@ async function executeCommand(inputText, userEmail) {
   const entities = extractEntities(inputText);
 
   let response = '';
+  let data = null;
   let actionTaken = intent;
   let success = true;
 
   try {
     switch (intent) {
+      case 'greeting': {
+        const hour = new Date().getHours();
+        const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+        response = `${greeting}! I'm your AI assistant. Here's what I can help with:\n\n` +
+          `Try saying things like:\n` +
+          `  "What do I need to do?"\n` +
+          `  "Show my projects"\n` +
+          `  "Any overdue tasks?"\n` +
+          `  "Schedule a meeting for tomorrow"\n` +
+          `  "Give me a summary"\n\n` +
+          `Or type "help" to see all available commands.`;
+        break;
+      }
+
+      case 'thanks': {
+        response = "You're welcome! Let me know if you need anything else.";
+        break;
+      }
+
       case 'create_contact': {
-        const parts = inputText.match(/(?:add|create|new)\s+(?:a\s+)?contact\s+(.+)/i);
+        const parts = inputText.match(/(?:add|create|new|register)\s+(?:a\s+)?contact\s+(.+)/i);
         let firstName = entities.name || 'New Contact';
         let lastName = '';
         if (!entities.name && parts) {
@@ -155,7 +218,8 @@ async function executeCommand(inputText, userEmail) {
           source: 'nlp'
         });
         await logActivity(userEmail, 'created', 'contact', contact.id, `${firstName} ${lastName}`, { via: 'nlp' });
-        response = `Created contact: ${firstName} ${lastName} (ID: ${contact.id})`;
+        data = contact;
+        response = `Done! Created contact "${firstName} ${lastName}". You can find them in the Contacts section.`;
         break;
       }
 
@@ -166,9 +230,10 @@ async function executeCommand(inputText, userEmail) {
           order: [['updated_at', 'DESC']],
           limit: 10
         });
+        data = contacts;
         response = contacts.length > 0
-          ? `Found ${contacts.length} contacts:\n` + contacts.map(c => `- ${c.first_name} ${c.last_name || ''} (${c.email || 'no email'}) [${c.status}]`).join('\n')
-          : 'No contacts found.';
+          ? `You have ${contacts.length} contact${contacts.length > 1 ? 's' : ''}:\n` + contacts.map(c => `  - ${c.first_name} ${c.last_name || ''} (${c.email || 'no email'}) [${c.status}]`).join('\n')
+          : 'You don\'t have any contacts yet. Try: "Add a contact named John Doe"';
         break;
       }
 
@@ -183,11 +248,12 @@ async function executeCommand(inputText, userEmail) {
               where: { workspace_id: 1, vertical_id: vertical.id, archived_at: null },
               limit: 20
             });
+            data = contacts;
             response = contacts.length > 0
-              ? `${contacts.length} contacts in ${vertical.name}:\n` + contacts.map(c => `- ${c.first_name} ${c.last_name || ''}`).join('\n')
-              : `No contacts in ${vertical.name} vertical.`;
+              ? `${contacts.length} contact${contacts.length > 1 ? 's' : ''} in ${vertical.name}:\n` + contacts.map(c => `  - ${c.first_name} ${c.last_name || ''}`).join('\n')
+              : `No contacts in the ${vertical.name} category yet.`;
           } else {
-            response = `Vertical "${verticalName}" not found.`;
+            response = `I couldn't find a category called "${verticalName}". Check Settings to see your categories.`;
           }
         }
         break;
@@ -211,7 +277,8 @@ async function executeCommand(inputText, userEmail) {
           code: projectName.replace(/[^a-zA-Z0-9]/g, '').substring(0, 6).toUpperCase() + '-' + Date.now().toString(36).slice(-4).toUpperCase()
         });
         await logActivity(userEmail, 'created', 'project', project.id, projectName, { via: 'nlp' });
-        response = `Created project: "${projectName}" (${project.code}) - Status: planning`;
+        data = project;
+        response = `Project created! "${projectName}" is now in the Planning stage. Click on Projects in the sidebar to see it.`;
         break;
       }
 
@@ -222,9 +289,10 @@ async function executeCommand(inputText, userEmail) {
           order: [['updated_at', 'DESC']],
           limit: 10
         });
+        data = projects;
         response = projects.length > 0
-          ? `Found ${projects.length} projects:\n` + projects.map(p => `- ${p.name} [${p.status}] ${p.priority} priority ${p.vertical ? '(' + p.vertical.name + ')' : ''}`).join('\n')
-          : 'No projects found.';
+          ? `You have ${projects.length} project${projects.length > 1 ? 's' : ''}:\n` + projects.map(p => `  - ${p.name} [${p.status}] ${p.priority} priority ${p.vertical ? '(' + p.vertical.name + ')' : ''}`).join('\n')
+          : 'No projects yet. Try: "Start a new project called Website Redesign"';
         break;
       }
 
@@ -234,9 +302,10 @@ async function executeCommand(inputText, userEmail) {
           where: { workspace_id: 1, archived_at: null, due_date: { [Op.lt]: today }, status: { [Op.notIn]: ['completed', 'cancelled'] } },
           order: [['due_date', 'ASC']]
         });
+        data = projects;
         response = projects.length > 0
-          ? `${projects.length} overdue projects:\n` + projects.map(p => `- ${p.name} (due: ${p.due_date}) [${p.status}]`).join('\n')
-          : 'No overdue projects. Everything is on track!';
+          ? `Heads up! ${projects.length} project${projects.length > 1 ? 's are' : ' is'} overdue:\n` + projects.map(p => `  - ${p.name} (was due: ${p.due_date}) [${p.status}]`).join('\n') + '\n\nClick on any project to update its status.'
+          : 'Great news! No overdue projects. Everything is on track.';
         break;
       }
 
@@ -247,9 +316,10 @@ async function executeCommand(inputText, userEmail) {
           where: { workspace_id: 1, archived_at: null, status: { [Op.notIn]: ['completed', 'cancelled'] }, updated_at: { [Op.lt]: cutoff } },
           order: [['updated_at', 'ASC']]
         });
+        data = projects;
         response = projects.length > 0
-          ? `${projects.length} stalled projects (no update in ${days} days):\n` + projects.map(p => `- ${p.name} (last update: ${p.updated_at.toISOString().split('T')[0]}) [${p.status}]`).join('\n')
-          : `No stalled projects in the last ${days} days.`;
+          ? `${projects.length} project${projects.length > 1 ? 's have' : ' has'} had no updates in ${days} days:\n` + projects.map(p => `  - ${p.name} (last activity: ${p.updated_at.toISOString().split('T')[0]}) [${p.status}]`).join('\n') + '\n\nConsider adding an update or changing their status.'
+          : `All projects have had activity in the last ${days} days. Looking good!`;
         break;
       }
 
@@ -259,9 +329,10 @@ async function executeCommand(inputText, userEmail) {
           include: [{ model: Vertical, as: 'vertical', attributes: ['name'] }],
           order: [['priority', 'ASC'], ['due_date', 'ASC NULLS LAST']]
         });
+        data = projects;
         response = projects.length > 0
-          ? `${projects.length} high-priority projects:\n` + projects.map(p => `- ${p.name} [${p.priority}] ${p.status} ${p.due_date ? '(due: ' + p.due_date + ')' : ''}`).join('\n')
-          : 'No high-priority projects found.';
+          ? `${projects.length} high-priority project${projects.length > 1 ? 's' : ''}:\n` + projects.map(p => `  - ${p.name} [${p.priority}] ${p.status} ${p.due_date ? '(due: ' + p.due_date + ')' : ''}`).join('\n')
+          : 'No high-priority projects right now.';
         break;
       }
 
@@ -274,35 +345,44 @@ async function executeCommand(inputText, userEmail) {
             const oldStatus = project.status;
             await project.update({ status: newStatus });
             await logActivity(userEmail, 'status_changed', 'project', project.id, project.name, { from: oldStatus, to: newStatus, via: 'nlp' });
-            response = `Updated "${project.name}" from ${oldStatus} to ${newStatus}`;
+            data = project;
+            response = `Done! "${project.name}" has been moved from "${oldStatus}" to "${newStatus}".`;
           } else {
-            response = `Project matching "${targetName}" not found.`;
+            response = `I couldn't find a project matching "${targetName}". Try "show projects" to see your project names.`;
           }
         } else {
-          response = 'Could not parse project name or status. Try: "Move Project X to in_progress"';
+          response = 'I need to know which project and what status. Try something like:\n  "Move Website Redesign to in progress"\n  "Set KanchoAI to completed"';
         }
         break;
       }
 
       case 'summarize_projects': {
         const projects = await Project.findAll({ where: { workspace_id: 1, archived_at: null } });
+        const tasks = await Task.findAll({ where: { workspace_id: 1, status: 'pending' } });
+        const contacts = await Contact.findAll({ where: { workspace_id: 1, archived_at: null } });
+        const overdueTasks = tasks.filter(t => t.due_date && new Date(t.due_date) < new Date());
+
         const byStatus = {};
         const byPriority = {};
         projects.forEach(p => {
           byStatus[p.status] = (byStatus[p.status] || 0) + 1;
           byPriority[p.priority] = (byPriority[p.priority] || 0) + 1;
         });
-        response = `Project Summary (${projects.length} total):\n\nBy Status:\n` +
-          Object.entries(byStatus).map(([k, v]) => `  ${k}: ${v}`).join('\n') +
-          `\n\nBy Priority:\n` +
-          Object.entries(byPriority).map(([k, v]) => `  ${k}: ${v}`).join('\n');
+
+        response = `Here's your workspace snapshot:\n\n` +
+          `  Projects: ${projects.length} total\n` +
+          (Object.keys(byStatus).length ? Object.entries(byStatus).map(([k, v]) => `    - ${v} ${k}`).join('\n') + '\n' : '') +
+          `\n  Tasks: ${tasks.length} pending` +
+          (overdueTasks.length ? ` (${overdueTasks.length} overdue!)` : ' (none overdue)') +
+          `\n  Contacts: ${contacts.length} in your network\n\n` +
+          (overdueTasks.length ? `You have ${overdueTasks.length} overdue task${overdueTasks.length > 1 ? 's' : ''} that need attention.` : 'Everything looks good! No urgent items.');
         break;
       }
 
       case 'create_task':
       case 'create_reminder': {
         const titleMatch = inputText.match(/(?:to|about|for)\s+(.+?)(?:\s+(?:on|by|next|tomorrow|today)|$)/i);
-        const title = titleMatch ? titleMatch[1].trim() : inputText.replace(/^(create|add|remind|new)\s+(a\s+)?(task|reminder|follow[\s-]?up|me|us)\s*/i, '').trim() || 'Follow-up';
+        const title = titleMatch ? titleMatch[1].trim() : inputText.replace(/^(create|add|remind|new|make|don'?t\s+let\s+me\s+forget|i\s+need\s+to\s+remember)\s+(a\s+)?(task|todo|to[\s-]?do|reminder|follow[\s-]?up|me|us)\s*/i, '').trim() || 'Follow-up';
         const task = await Task.create({
           workspace_id: 1, user_email: userEmail, title,
           task_type: intent === 'create_reminder' ? 'reminder' : 'task',
@@ -310,19 +390,35 @@ async function executeCommand(inputText, userEmail) {
           priority: entities.priority || 'medium'
         });
         await logActivity(userEmail, 'created', 'task', task.id, title, { via: 'nlp' });
-        response = `Created ${task.task_type}: "${title}"${entities.date ? ' (due: ' + entities.date + ')' : ''}`;
+        data = task;
+        response = `Got it! Created ${task.task_type}: "${title}"` +
+          (entities.date ? ` (due: ${entities.date})` : '') +
+          `. You can find it in the Tasks section.`;
         break;
       }
 
       case 'list_tasks': {
         const tasks = await Task.findAll({
           where: { workspace_id: 1, status: 'pending' },
+          include: [{ model: Project, as: 'project', attributes: ['name'] }],
           order: [['due_date', 'ASC NULLS LAST']],
           limit: 10
         });
-        response = tasks.length > 0
-          ? `${tasks.length} pending tasks:\n` + tasks.map(t => `- ${t.title} [${t.priority}] ${t.due_date ? '(due: ' + t.due_date.toISOString().split('T')[0] + ')' : ''}`).join('\n')
-          : 'No pending tasks.';
+        data = tasks;
+        if (tasks.length > 0) {
+          const overdue = tasks.filter(t => t.due_date && new Date(t.due_date) < new Date());
+          response = `You have ${tasks.length} pending task${tasks.length > 1 ? 's' : ''}` +
+            (overdue.length ? ` (${overdue.length} overdue!)` : '') + `:\n` +
+            tasks.map(t => {
+              const isOverdue = t.due_date && new Date(t.due_date) < new Date();
+              return `  ${isOverdue ? '!' : '-'} ${t.title} [${t.priority}]` +
+                (t.due_date ? ` (due: ${t.due_date.toISOString().split('T')[0]}${isOverdue ? ' - OVERDUE' : ''})` : '') +
+                (t.project ? ` [${t.project.name}]` : '');
+            }).join('\n') +
+            `\n\nClick on Tasks in the sidebar to manage them.`;
+        } else {
+          response = 'You\'re all caught up! No pending tasks. To add one, try:\n  "Add a task to review the proposal"';
+        }
         break;
       }
 
@@ -331,14 +427,15 @@ async function executeCommand(inputText, userEmail) {
           where: { workspace_id: 1, status: 'pending', due_date: { [Op.lt]: new Date() } },
           order: [['due_date', 'ASC']]
         });
+        data = tasks;
         response = tasks.length > 0
-          ? `${tasks.length} overdue tasks:\n` + tasks.map(t => `- ${t.title} (due: ${t.due_date.toISOString().split('T')[0]})`).join('\n')
-          : 'No overdue tasks!';
+          ? `Attention! ${tasks.length} overdue task${tasks.length > 1 ? 's' : ''}:\n` + tasks.map(t => `  ! ${t.title} (was due: ${t.due_date.toISOString().split('T')[0]})`).join('\n') + '\n\nClick Tasks to mark them as done or reschedule.'
+          : 'No overdue tasks. You\'re on top of everything!';
         break;
       }
 
       case 'create_event': {
-        const titleMatch = inputText.match(/(?:meeting|event|appointment|calendar)\s+(?:with\s+|for\s+|about\s+)?(.+?)(?:\s+(?:on|at|next|tomorrow)|$)/i);
+        const titleMatch = inputText.match(/(?:meeting|event|appointment|calendar|call)\s+(?:with\s+|for\s+|about\s+)?(.+?)(?:\s+(?:on|at|next|tomorrow)|$)/i);
         const title = titleMatch ? titleMatch[1].trim() : 'New Event';
         const startDate = entities.date ? new Date(entities.date + 'T10:00:00') : new Date(Date.now() + 86400000);
         const event = await CalendarEvent.create({
@@ -347,7 +444,8 @@ async function executeCommand(inputText, userEmail) {
           event_type: 'meeting'
         });
         await logActivity(userEmail, 'created', 'calendar_event', event.id, title, { via: 'nlp' });
-        response = `Scheduled: "${title}" on ${startDate.toISOString().split('T')[0]}`;
+        data = event;
+        response = `Scheduled! "${title}" on ${startDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}. Check your Calendar to see it.`;
         break;
       }
 
@@ -359,16 +457,15 @@ async function executeCommand(inputText, userEmail) {
           order: [['start_time', 'ASC']],
           limit: 10
         });
+        data = events;
         response = events.length > 0
-          ? `${events.length} upcoming events:\n` + events.map(e => `- ${e.title} (${e.start_time.toISOString().split('T')[0]}) [${e.event_type}]`).join('\n')
-          : 'No upcoming events this week.';
+          ? `You have ${events.length} event${events.length > 1 ? 's' : ''} coming up this week:\n` + events.map(e => `  - ${e.title} (${new Date(e.start_time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}) [${e.event_type}]`).join('\n')
+          : 'Your week is clear! No upcoming events. To add one, try:\n  "Schedule a meeting with the team for tomorrow"';
         break;
       }
 
       case 'link_contact_project': {
-        response = 'To link a contact to a project, use the project detail view and click "Add Contact", or provide: "Link [contact name] to project [project name]"';
-        // Try to parse and link
-        const linkMatch = inputText.match(/link\s+(.+?)\s+to\s+(?:project\s+)?(.+)/i);
+        const linkMatch = inputText.match(/(?:link|connect|associate|assign)\s+(.+?)\s+to\s+(?:project\s+)?(.+)/i);
         if (linkMatch) {
           const contactName = linkMatch[1].trim();
           const projectName = linkMatch[2].trim();
@@ -377,10 +474,12 @@ async function executeCommand(inputText, userEmail) {
           if (contact && project) {
             await ProjectContact.findOrCreate({ where: { project_id: project.id, contact_id: contact.id }, defaults: { project_id: project.id, contact_id: contact.id } });
             await logActivity(userEmail, 'linked_contact', 'project', project.id, project.name, { contact_id: contact.id, via: 'nlp' });
-            response = `Linked "${contact.first_name} ${contact.last_name || ''}" to project "${project.name}"`;
+            response = `Done! Linked "${contact.first_name} ${contact.last_name || ''}" to project "${project.name}".`;
           } else {
-            response = `Could not find ${!contact ? 'contact "' + contactName + '"' : 'project "' + projectName + '"'}`;
+            response = `I couldn't find ${!contact ? 'a contact matching "' + contactName + '"' : 'a project matching "' + projectName + '"'}. Check your Contacts and Projects lists.`;
           }
+        } else {
+          response = 'To link a contact to a project, try:\n  "Link John to project Website Redesign"\n  "Connect Maria to KanchoAI"';
         }
         break;
       }
@@ -391,41 +490,59 @@ async function executeCommand(inputText, userEmail) {
           order: [['due_date', 'ASC NULLS LAST']],
           limit: 10
         });
+        data = reminders;
         response = reminders.length > 0
-          ? `${reminders.length} pending reminders:\n` + reminders.map(r => `- ${r.title} ${r.due_date ? '(due: ' + r.due_date.toISOString().split('T')[0] + ')' : ''}`).join('\n')
-          : 'No pending reminders.';
+          ? `${reminders.length} pending reminder${reminders.length > 1 ? 's' : ''}:\n` + reminders.map(r => `  - ${r.title} ${r.due_date ? '(due: ' + r.due_date.toISOString().split('T')[0] + ')' : ''}`).join('\n')
+          : 'No pending reminders. To add one, try:\n  "Remind me to call the vendor next Tuesday"';
+        break;
+      }
+
+      case 'dashboard': {
+        response = 'Taking you to the dashboard now...';
+        data = { navigate: 'overview' };
         break;
       }
 
       case 'help': {
-        response = `Available commands:\n
-- "Create a new contact named John Doe"
-- "Add a project for healthcare outreach under Healthcare"
-- "Show overdue projects"
-- "Show stalled projects with no update in 14 days"
-- "List contacts linked to the motorsport vertical"
-- "Move Project Aurora to in_progress"
-- "Create a reminder to follow up with John next Tuesday"
-- "Show high-priority projects"
-- "Summarize projects"
-- "Schedule a meeting with client tomorrow"
-- "Show upcoming events"
-- "Link Maria to project Titan"
-- "Show all pending tasks"`;
+        response = `Here are some things you can ask me:\n\n` +
+          `TASKS & TO-DOS\n` +
+          `  "What do I need to do?"\n` +
+          `  "Any overdue tasks?"\n` +
+          `  "Add a task to call the supplier"\n` +
+          `  "Remind me to follow up tomorrow"\n\n` +
+          `PROJECTS\n` +
+          `  "Show my projects"\n` +
+          `  "Any projects overdue?"\n` +
+          `  "Start a new project called Website Redesign"\n` +
+          `  "Move KanchoAI to in progress"\n` +
+          `  "Give me a summary"\n\n` +
+          `CONTACTS\n` +
+          `  "Show all contacts"\n` +
+          `  "Add a contact named John Doe"\n` +
+          `  "Link John to project KanchoAI"\n\n` +
+          `CALENDAR\n` +
+          `  "What's coming up this week?"\n` +
+          `  "Schedule a meeting for tomorrow"\n\n` +
+          `Just type naturally — I understand plain language!`;
         break;
       }
 
       default:
-        response = `I didn't understand that command. Type "help" to see available commands.\n\nYou said: "${inputText}"`;
+        response = `I'm not sure what you mean. Here are some things you can try:\n\n` +
+          `  "What do I need to do?" — see your pending tasks\n` +
+          `  "Show my projects" — list all projects\n` +
+          `  "Give me a summary" — get a quick overview\n` +
+          `  "Help" — see all available commands\n\n` +
+          `Just type naturally, like you would talk to an assistant!`;
         success = false;
     }
   } catch (err) {
     console.error('[D2AI NLP] Execution error:', err);
-    response = `Error executing command: ${err.message}`;
+    response = `Oops, something went wrong: ${err.message}. Please try again.`;
     success = false;
   }
 
-  return { intent, entities, actionTaken, response, success };
+  return { intent, entities, actionTaken, response, data, success };
 }
 
 module.exports = { executeCommand, detectIntent, extractEntities };
