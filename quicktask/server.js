@@ -195,6 +195,29 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'quicktask' });
 });
 
+// Debug: test d2Pool connection and sync
+app.get('/api/debug-sync', async (req, res) => {
+  const results = { qtPool: 'unknown', d2Pool: 'unknown', d2Tables: [], d2DbUrl: process.env.PROJECTS_DATABASE_URL ? 'PROJECTS_DB' : (process.env.CRM_DATABASE_URL ? 'CRM_DB' : 'DATABASE_URL') };
+  try {
+    const r1 = await pool.query('SELECT COUNT(*) as cnt FROM follow_up_items');
+    results.qtPool = `ok (${r1.rows[0].cnt} items)`;
+  } catch (e) { results.qtPool = 'error: ' + e.message.substring(0, 80); }
+  try {
+    const r2 = await d2Pool.query("SELECT tablename FROM pg_tables WHERE tablename LIKE 'd2_%' ORDER BY tablename");
+    results.d2Tables = r2.rows.map(r => r.tablename);
+    results.d2Pool = 'ok';
+  } catch (e) { results.d2Pool = 'error: ' + e.message.substring(0, 80); }
+  try {
+    const r3 = await d2Pool.query('SELECT COUNT(*) as cnt FROM d2_tasks');
+    results.d2TaskCount = parseInt(r3.rows[0].cnt);
+  } catch (e) { results.d2TaskAccess = 'error: ' + e.message.substring(0, 80); }
+  try {
+    const r4 = await d2Pool.query('SELECT COUNT(*) as cnt FROM d2_staff_members');
+    results.d2StaffCount = parseInt(r4.rows[0].cnt);
+  } catch (e) { results.d2StaffAccess = 'error: ' + e.message.substring(0, 80); }
+  res.json(results);
+});
+
 // GET /api/tasks — Fetch all tasks with custom ordering
 app.get('/api/tasks', async (req, res) => {
   try {
