@@ -29,7 +29,7 @@ router.get('/', async (req, res) => {
       include: [
         { model: Vertical, as: 'vertical', attributes: ['id', 'name', 'color'] },
         { model: Company, as: 'company', attributes: ['id', 'name'] },
-        { model: StaffMember, as: 'lead', attributes: ['id', 'first_name', 'last_name'] }
+        { model: StaffMember, as: 'lead', attributes: ['id', 'first_name', 'last_name'], required: false }
       ],
       order: [['updated_at', 'DESC']],
       limit: parseInt(limit),
@@ -92,7 +92,7 @@ router.get('/:id', async (req, res) => {
       include: [
         { model: Vertical, as: 'vertical' },
         { model: Company, as: 'company' },
-        { model: StaffMember, as: 'lead', attributes: ['id', 'first_name', 'last_name', 'position'] },
+        { model: StaffMember, as: 'lead', attributes: ['id', 'first_name', 'last_name', 'position'], required: false },
         { model: Contact, as: 'contacts', through: { attributes: ['role'] } },
         { model: ProjectMilestone, as: 'milestones', order: [['sort_order', 'ASC']] },
         { model: ProjectUpdate, as: 'updates', order: [['created_at', 'DESC']], limit: 20 }

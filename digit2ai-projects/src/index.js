@@ -110,6 +110,61 @@ app.get('*', (req, res) => {
       }
     }
 
+    // Staff module migration — create tables & columns if missing
+    const staffMigrations = [
+      `CREATE TABLE IF NOT EXISTS d2_staff_members (
+        id SERIAL PRIMARY KEY,
+        workspace_id INTEGER NOT NULL DEFAULT 1,
+        first_name VARCHAR(255) NOT NULL,
+        last_name VARCHAR(255),
+        email VARCHAR(255),
+        phone VARCHAR(50),
+        avatar_url VARCHAR(500),
+        department VARCHAR(100),
+        position VARCHAR(255),
+        status VARCHAR(50) DEFAULT 'active',
+        hire_date DATE,
+        notes TEXT,
+        archived_at TIMESTAMPTZ,
+        "createdAt" TIMESTAMPTZ DEFAULT NOW(),
+        "updatedAt" TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      `CREATE TABLE IF NOT EXISTS d2_roles (
+        id SERIAL PRIMARY KEY,
+        workspace_id INTEGER NOT NULL DEFAULT 1,
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        color VARCHAR(20) DEFAULT '#2563eb',
+        sort_order INTEGER DEFAULT 0,
+        "createdAt" TIMESTAMPTZ DEFAULT NOW(),
+        "updatedAt" TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      `CREATE TABLE IF NOT EXISTS d2_staff_roles (
+        id SERIAL PRIMARY KEY,
+        staff_id INTEGER NOT NULL,
+        role_id INTEGER NOT NULL,
+        "createdAt" TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      `CREATE TABLE IF NOT EXISTS d2_responsibilities (
+        id SERIAL PRIMARY KEY,
+        workspace_id INTEGER NOT NULL DEFAULT 1,
+        role_id INTEGER,
+        name VARCHAR(500) NOT NULL,
+        description TEXT,
+        category VARCHAR(100),
+        "createdAt" TIMESTAMPTZ DEFAULT NOW(),
+        "updatedAt" TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      `ALTER TABLE d2_tasks ADD COLUMN IF NOT EXISTS assigned_staff_id INTEGER`,
+      `ALTER TABLE d2_projects ADD COLUMN IF NOT EXISTS lead_staff_id INTEGER`
+    ];
+    for (const sql of staffMigrations) {
+      try { await sequelize.query(sql); } catch (e) {
+        if (!e.message.includes('already exists')) console.log('[D2AI-Projects] Staff migration notice:', e.message.substring(0, 100));
+      }
+    }
+    console.log('[D2AI-Projects] Staff tables ready');
+
     // Sync models (safe - won't drop existing)
     await sequelize.sync({ alter: false });
     console.log('[D2AI-Projects] Models synced');

@@ -179,7 +179,6 @@ async function renderOverview(container) {
   const showWelcome = !localStorage.getItem('d2ai_welcome_dismissed');
   const welcomeHtml = showWelcome ? `
     <div class="welcome-banner" id="welcome-banner">
-      <div class="welcome-icon">&#128075;</div>
       <div>
         <h2>Welcome to your Projects Hub!</h2>
         <p>This is your control center. Click on any card below to see details, use the <strong>+ Create</strong> button to add new items, or click the <strong>&#10024; AI button</strong> in the bottom-right corner to ask questions in plain English.</p>

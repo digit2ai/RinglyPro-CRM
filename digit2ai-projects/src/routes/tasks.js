@@ -22,7 +22,7 @@ router.get('/', async (req, res) => {
       include: [
         { model: Project, as: 'project', attributes: ['id', 'name'] },
         { model: Contact, as: 'contact', attributes: ['id', 'first_name', 'last_name'] },
-        { model: StaffMember, as: 'assignee', attributes: ['id', 'first_name', 'last_name'] }
+        { model: StaffMember, as: 'assignee', attributes: ['id', 'first_name', 'last_name'], required: false }
       ],
       order: [['due_date', 'ASC NULLS LAST'], ['priority', 'ASC']]
     });
@@ -40,7 +40,7 @@ router.get('/overdue', async (req, res) => {
       include: [
         { model: Project, as: 'project', attributes: ['id', 'name'] },
         { model: Contact, as: 'contact', attributes: ['id', 'first_name', 'last_name'] },
-        { model: StaffMember, as: 'assignee', attributes: ['id', 'first_name', 'last_name'] }
+        { model: StaffMember, as: 'assignee', attributes: ['id', 'first_name', 'last_name'], required: false }
       ],
       order: [['due_date', 'ASC']]
     });
@@ -58,7 +58,7 @@ router.get('/:id', async (req, res) => {
       include: [
         { model: Project, as: 'project', attributes: ['id', 'name', 'status'] },
         { model: Contact, as: 'contact', attributes: ['id', 'first_name', 'last_name', 'email'] },
-        { model: StaffMember, as: 'assignee', attributes: ['id', 'first_name', 'last_name', 'email', 'position'] }
+        { model: StaffMember, as: 'assignee', attributes: ['id', 'first_name', 'last_name', 'email', 'position'], required: false }
       ]
     });
     if (!task) return res.status(404).json({ success: false, error: 'Task not found' });

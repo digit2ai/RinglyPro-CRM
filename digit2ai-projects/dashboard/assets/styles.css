@@ -116,9 +116,9 @@ body {
   border: 1px solid var(--border); box-shadow: var(--shadow);
 }
 .login-logo-img {
-  width: 180px; height: auto; max-height: 80px;
+  width: 280px; height: auto; max-height: 120px;
   object-fit: contain;
-  margin: 0 auto 16px; display: block;
+  margin: 0 auto 24px; display: block;
 }
 /* Theme-based logo visibility: dark shows logo-dark, light shows logo-light */
 [data-theme="dark"] .logo-light, :root .logo-light { display: none !important; }
