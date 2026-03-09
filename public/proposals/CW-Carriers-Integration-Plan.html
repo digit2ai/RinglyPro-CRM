@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RinglyPro × CW Carriers — Integration Plan</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0D1117;
+    --paper: #F8F6F1;
+    --accent: #1A4FA8;
+    --gold: #C8962A;
+    --rust: #B84C2E;
+    --mint: #1B7A5E;
+    --mid: #6B7280;
+    --line: #D9D3C8;
+    --card: #FFFFFF;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.65;
+  }
+
+  /* ── TOP BAR ── */
+  .top-bar {
+    background: var(--ink);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .top-bar-logo {
+    height: 36px;
+    width: auto;
+  }
+  .top-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .top-bar-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+  }
+  .login-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 24px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s;
+    letter-spacing: 0.3px;
+  }
+  .login-btn:hover {
+    background: #2563EB;
+  }
+  .login-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+  }
+
+  /* ── COVER ── */
+  .cover {
+    background: var(--ink);
+    color: white;
+    padding: 80px 64px 60px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 420px; height: 420px;
+    border-radius: 50%;
+    background: rgba(26,79,168,0.25);
+  }
+  .cover::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; left: 40%;
+    width: 260px; height: 260px;
+    border-radius: 50%;
+    background: rgba(200,150,42,0.15);
+  }
+  .cover-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 20px;
+  }
+  .cover h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 72px;
+    line-height: 0.95;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    position: relative; z-index: 1;
+  }
+  .cover h1 span { color: var(--gold); }
+  .cover-sub {
+    font-size: 18px;
+    font-weight: 300;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 40px;
+    position: relative; z-index: 1;
+  }
+  .cover-meta {
+    display: flex; gap: 40px; flex-wrap: wrap;
+    position: relative; z-index: 1;
+    padding-top: 32px;
+    border-top: 1px solid rgba(255,255,255,0.12);
+  }
+  .cover-meta div { font-size: 13px; }
+  .cover-meta strong { display: block; color: rgba(255,255,255,0.5); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+
+  /* ── LAYOUT ── */
+  .page { max-width: 960px; margin: 0 auto; padding: 64px 40px; }
+  .section { margin-bottom: 72px; }
+
+  /* ── SECTION HEADERS ── */
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 42px;
+    letter-spacing: 0.5px;
+    line-height: 1;
+    margin-bottom: 16px;
+    color: var(--ink);
+  }
+  h3 {
+    font-size: 17px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--ink);
+  }
+  p { color: #374151; margin-bottom: 14px; }
+
+  /* ── DIVIDER ── */
+  .rule { border: none; border-top: 1px solid var(--line); margin: 0 0 56px; }
+
+  /* ── ARCHITECTURE DIAGRAM ── */
+  .arch {
+    background: var(--ink);
+    border-radius: 12px;
+    padding: 40px;
+    margin: 32px 0;
+    color: white;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    overflow-x: auto;
+  }
+  .arch-title { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 32px; }
+  .arch-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+    align-items: stretch;
+  }
+  .arch-box {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 14px 16px;
+    flex: 1;
+    text-align: center;
+  }
+  .arch-box.accent { border-color: var(--accent); background: rgba(26,79,168,0.2); }
+  .arch-box.gold { border-color: var(--gold); background: rgba(200,150,42,0.15); }
+  .arch-box.mint { border-color: var(--mint); background: rgba(27,122,94,0.15); }
+  .arch-box.rust { border-color: var(--rust); background: rgba(184,76,46,0.15); }
+  .arch-box strong { display: block; font-size: 11px; letter-spacing: 1px; margin-bottom: 4px; }
+  .arch-box small { font-size: 10px; color: rgba(255,255,255,0.45); }
+  .arch-arrow {
+    text-align: center;
+    color: rgba(255,255,255,0.25);
+    font-size: 18px;
+    margin: 4px 0;
+    letter-spacing: 8px;
+  }
+  .arch-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+    margin-bottom: 10px;
+    margin-top: 20px;
+  }
+
+  /* ── INTEGRATION CARDS ── */
+  .integration-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 28px 0;
+  }
+  .int-card {
+    background: white;
+    border-radius: 10px;
+    padding: 24px;
+    border: 1px solid var(--line);
+    position: relative;
+    overflow: hidden;
+  }
+  .int-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .int-card.blue::before { background: var(--accent); }
+  .int-card.gold::before { background: var(--gold); }
+  .int-card.mint::before { background: var(--mint); }
+  .int-card.rust::before { background: var(--rust); }
+  .int-card.purple::before { background: #7C3AED; }
+  .int-card .tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+  .int-card.blue .tag { color: var(--accent); }
+  .int-card.gold .tag { color: var(--gold); }
+  .int-card.mint .tag { color: var(--mint); }
+  .int-card.rust .tag { color: var(--rust); }
+  .int-card.purple .tag { color: #7C3AED; }
+  .int-card h3 { margin-bottom: 8px; }
+  .int-card p { font-size: 13.5px; margin-bottom: 12px; }
+  .flow-list { list-style: none; }
+  .flow-list li {
+    font-size: 13px;
+    color: #4B5563;
+    padding: 5px 0 5px 18px;
+    position: relative;
+    border-bottom: 1px solid #F3F4F6;
+  }
+  .flow-list li:last-child { border-bottom: none; }
+  .flow-list li::before {
+    content: '\2192';
+    position: absolute; left: 0;
+    color: var(--mid);
+    font-size: 11px;
+  }
+
+  /* ── PHASE TIMELINE ── */
+  .phases { margin: 28px 0; }
+  .phase {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 28px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--line);
+  }
+  .phase:last-child { border-bottom: none; }
+  .phase-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 52px;
+    line-height: 1;
+    color: var(--line);
+    min-width: 56px;
+  }
+  .phase-content { flex: 1; }
+  .phase-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .phase-title { font-size: 17px; font-weight: 600; }
+  .phase-timeline {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: white;
+    background: var(--accent);
+    padding: 2px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+  .phase-content p { font-size: 14px; margin-bottom: 10px; }
+  .deliverables {
+    display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .badge {
+    font-size: 11px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 3px 10px;
+    color: #374151;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ── DATA FLOW TABLE ── */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 24px 0;
+    font-size: 13.5px;
+  }
+  .data-table th {
+    text-align: left;
+    padding: 10px 14px;
+    background: var(--ink);
+    color: white;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .data-table th:first-child { border-radius: 6px 0 0 0; }
+  .data-table th:last-child { border-radius: 0 6px 0 0; }
+  .data-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #F3F4F6;
+    vertical-align: top;
+  }
+  .data-table tr:nth-child(even) td { background: #FAFAFA; }
+  .data-table .source { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--accent); }
+  .data-table .target { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--mint); }
+
+  /* ── PRICING SUMMARY ── */
+  .pricing-block {
+    background: var(--ink);
+    color: white;
+    border-radius: 12px;
+    padding: 40px;
+    margin: 28px 0;
+  }
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 24px;
+    margin-top: 28px;
+  }
+  .price-item {
+    border-left: 3px solid rgba(255,255,255,0.15);
+    padding-left: 16px;
+  }
+  .price-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 6px; font-family: 'DM Mono', monospace; }
+  .price-value { font-family: 'Bebas Neue', sans-serif; font-size: 36px; color: var(--gold); line-height: 1; }
+  .price-sub { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 4px; }
+
+  /* ── ROI CALLOUT ── */
+  .roi-strip {
+    background: #EFF6FF;
+    border: 1px solid #BFDBFE;
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin: 24px 0;
+  }
+  .roi-strip strong { color: var(--accent); }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--ink);
+    color: rgba(255,255,255,0.4);
+    text-align: center;
+    padding: 32px;
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 1px;
+  }
+  footer a { color: var(--gold); text-decoration: none; }
+
+  @media (max-width: 640px) {
+    .top-bar { padding: 12px 20px; }
+    .top-bar-logo { height: 28px; }
+    .top-bar-label { display: none; }
+    .login-btn { padding: 8px 16px; font-size: 13px; }
+    .cover { padding: 48px 24px 40px; }
+    .cover h1 { font-size: 48px; }
+    .page { padding: 40px 20px; }
+    .integration-grid { grid-template-columns: 1fr; }
+    .pricing-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR WITH RINGLYPRO LOGO + LOGIN BUTTON -->
+<div class="top-bar">
+  <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6884f40a6d2fd3fed0b84613.png" alt="RinglyPro" class="top-bar-logo">
+  <div class="top-bar-right">
+    <span class="top-bar-label">CW Carriers CRM Portal</span>
+    <a href="https://aiagent.ringlypro.com/cw_carriers/login" class="login-btn">
+      <svg viewBox="0 0 20 20"><path d="M10 0C4.48 0 0 4.48 0 10s4.48 10 10 10 10-4.48 10-10S15.52 0 10 0zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+      Login to CRM
+    </a>
+  </div>
+</div>
+
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-label">Confidential Integration Proposal — March 2026</div>
+  <h1>RinglyPro <span>&times;</span><br>CW Carriers</h1>
+  <div class="cover-sub">Full-Stack AI + HubSpot Integration Plan</div>
+  <div class="cover-meta">
+    <div><strong>Prepared For</strong>CW Carriers USA, Inc. — Lila Trkulja, CEO</div>
+    <div><strong>Prepared By</strong>Digit2AI LLC / RinglyPro</div>
+    <div><strong>Scope</strong>Voice AI &middot; MCP Layer &middot; HubSpot Sync &middot; Analytics</div>
+    <div><strong>Delivery</strong>2-Phase Sprint &middot; Full Deployment in 14 Days</div>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- SECTION 1: ARCHITECTURE -->
+  <div class="section">
+    <div class="section-label">Section 01</div>
+    <h2>System Architecture</h2>
+    <p>RinglyPro's MCP (Model Context Protocol) layer sits between CW Carriers' existing HubSpot CRM and every operational touchpoint — Rachel AI voice, carrier outreach, inbound calls, load status updates, and freight analytics. HubSpot remains the single source of truth. RinglyPro enriches it automatically.</p>
+
+    <div class="arch">
+      <div class="arch-title">CW Carriers USA — RinglyPro Integration Architecture</div>
+
+      <div class="arch-label">Inbound Channels</div>
+      <div class="arch-row">
+        <div class="arch-box"><strong>PHONE CALLS</strong><small>Inbound shipper<br>inquiries 24/7</small></div>
+        <div class="arch-box"><strong>WEB FORM LEADS</strong><small>cwcarriersusa.com<br>contact form</small></div>
+        <div class="arch-box"><strong>EMAIL INQUIRIES</strong><small>clientsales@<br>cwcarriersinc.com</small></div>
+        <div class="arch-box"><strong>CARRIER CALLS</strong><small>Load availability<br>&amp; rate quotes</small></div>
+      </div>
+
+      <div class="arch-arrow">&darr; &darr; &darr; &darr;</div>
+
+      <div class="arch-label">RinglyPro AI Layer — aiagent.ringlypro.com</div>
+      <div class="arch-row">
+        <div class="arch-box accent"><strong>RACHEL AI VOICE</strong><small>ElevenLabs TTS/STT<br>Twilio telephony</small></div>
+        <div class="arch-box accent"><strong>MCP SERVER</strong><small>Node.js / Express<br>Webhook engine</small></div>
+        <div class="arch-box accent"><strong>AI COPILOT</strong><small>NLP CRM ops<br>Natural language</small></div>
+        <div class="arch-box accent"><strong>OUTBOUND DIALER</strong><small>Carrier campaigns<br>Auto-scheduling</small></div>
+      </div>
+
+      <div class="arch-arrow">&darr; &darr; &darr; &darr;</div>
+
+      <div class="arch-label">HubSpot CRM — Bi-directional Sync</div>
+      <div class="arch-row">
+        <div class="arch-box gold"><strong>CONTACTS</strong><small>Shippers, carriers<br>decision makers</small></div>
+        <div class="arch-box gold"><strong>DEALS / PIPELINE</strong><small>Load opportunities<br>&amp; sales stages</small></div>
+        <div class="arch-box gold"><strong>CALL LOGS</strong><small>Rachel call records<br>&amp; transcripts</small></div>
+        <div class="arch-box gold"><strong>AUTOMATION</strong><small>Sequences &amp; tasks<br>triggered by AI</small></div>
+      </div>
+
+      <div class="arch-arrow">&darr; &darr; &darr; &darr;</div>
+
+      <div class="arch-label">Freight Operations Layer</div>
+      <div class="arch-row">
+        <div class="arch-box mint"><strong>McLeod TMS</strong><small>Load data sync<br>Phase 2 integration</small></div>
+        <div class="arch-box mint"><strong>ANALYTICS DASH</strong><small>Freight KPIs<br>PINAXIS-inspired</small></div>
+        <div class="arch-box mint"><strong>REPORTING</strong><small>Auto PDF reports<br>Carrier performance</small></div>
+        <div class="arch-box mint"><strong>ALERTS ENGINE</strong><small>Load status webhooks<br>Escalation logic</small></div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="rule">
+
+  <!-- SECTION 2: INTEGRATION MODULES -->
+  <div class="section">
+    <div class="section-label">Section 02</div>
+    <h2>Integration Modules</h2>
+    <p>Six core modules, each targeting a specific CW Carriers operational pain point — all syncing back to HubSpot as the central record of truth.</p>
+
+    <div class="integration-grid">
+
+      <div class="int-card blue">
+        <div class="tag">Module 01 — Rachel AI Voice &times; HubSpot</div>
+        <h3>24/7 Inbound Call Handling</h3>
+        <p>Every inbound call to CW Carriers is answered by Rachel. She qualifies callers, captures data, and creates or updates HubSpot contacts and deals automatically — with full call transcripts logged.</p>
+        <ul class="flow-list">
+          <li>Call received &rarr; Rachel answers in &lt;1 ring</li>
+          <li>Caller type identified (shipper vs. carrier vs. driver)</li>
+          <li>Data captured: company, freight type, lane, volume, urgency</li>
+          <li>HubSpot contact created/matched via API</li>
+          <li>Deal record created with captured specs</li>
+          <li>Call transcript + summary posted to HubSpot activity</li>
+          <li>Hot leads: immediate SMS/email alert to sales rep</li>
+          <li>Routine calls: added to HubSpot sequence for follow-up</li>
+        </ul>
+      </div>
+
+      <div class="int-card gold">
+        <div class="tag">Module 02 — Carrier Outreach Dialer &times; HubSpot</div>
+        <h3>Automated Load Coverage Calls</h3>
+        <p>Rachel dials carrier contacts from HubSpot lists for open load coverage — recording rate quotes and availability, updating deal stages, and surfacing hot carrier matches to brokers instantly.</p>
+        <ul class="flow-list">
+          <li>Open load posted in McLeod &rarr; webhook fires to RinglyPro</li>
+          <li>MCP engine selects matching carriers from HubSpot lists</li>
+          <li>Rachel auto-dials carrier list (priority order)</li>
+          <li>Load details presented: lane, weight, date, rate</li>
+          <li>Carrier response recorded (accept / counter / decline)</li>
+          <li>HubSpot deal updated with carrier response data</li>
+          <li>First acceptance: immediate escalation to broker</li>
+          <li>Coverage report auto-generated per load</li>
+        </ul>
+      </div>
+
+      <div class="int-card mint">
+        <div class="tag">Module 03 — Proactive Status Calls &times; HubSpot</div>
+        <h3>Automated Client Check-Ins</h3>
+        <p>Rachel proactively calls shipper contacts at key load milestones — pickup, in-transit, delivery — freeing brokers from repetitive status calls while keeping enterprise clients like PepsiCo informed.</p>
+        <ul class="flow-list">
+          <li>McLeod TMS load status change &rarr; MCP webhook trigger</li>
+          <li>Rachel calls shipper contact from HubSpot record</li>
+          <li>Delivers milestone update in natural language</li>
+          <li>Captures any shipper feedback or special instructions</li>
+          <li>HubSpot contact activity log updated with call record</li>
+          <li>Exceptions (delays, issues) escalated to live broker</li>
+        </ul>
+      </div>
+
+      <div class="int-card rust">
+        <div class="tag">Module 04 — Shipper Lead Engine &times; HubSpot</div>
+        <h3>B2B Prospect Acquisition</h3>
+        <p>RinglyPro's Business Collector finds shippers matching CW's target profile — Food &amp; Beverage, CPG, Automotive — enriches them, and feeds them into HubSpot pipelines for Rachel to call.</p>
+        <ul class="flow-list">
+          <li>Business Collector scrapes target vertical companies</li>
+          <li>AI scores leads by freight profile fit (lanes, volume)</li>
+          <li>Prospect records auto-created in HubSpot</li>
+          <li>Rachel calls prospects with personalized CW intro</li>
+          <li>Qualified leads: HubSpot deal created + rep assigned</li>
+          <li>Unqualified: enter HubSpot nurture sequence</li>
+          <li>Win/loss data feeds scoring model refinement</li>
+        </ul>
+      </div>
+
+      <div class="int-card purple">
+        <div class="tag">Module 05 — AI CRM Copilot &times; HubSpot</div>
+        <h3>Natural Language CRM Operations</h3>
+        <p>Brokers and reps interact with HubSpot via natural language through RinglyPro's AI Copilot — no clicks, no searches. Voice or text commands update deals, pull reports, and manage tasks.</p>
+        <ul class="flow-list">
+          <li>"Show all open loads on the Dallas to Chicago lane"</li>
+          <li>"Add a note to PepsiCo's account — confirmed Q2 volume"</li>
+          <li>"Which carriers haven't been called this week?"</li>
+          <li>"Create a follow-up task for the Agri-Dairy contact"</li>
+          <li>AI executes HubSpot API calls from natural language</li>
+          <li>Mobile CRM dashboard for brokers on the go</li>
+        </ul>
+      </div>
+
+      <div class="int-card blue">
+        <div class="tag">Module 06 — Freight Analytics Dashboard</div>
+        <h3>PINAXIS-Inspired Data Intelligence</h3>
+        <p>Adapted from RinglyPro's PINAXIS warehouse analytics engine, this module runs freight-specific analytics — lane profitability, carrier performance, load coverage rates — with auto-generated PDF reports.</p>
+        <ul class="flow-list">
+          <li>HubSpot + McLeod data pulled into analytics engine</li>
+          <li>Lane profitability analysis (revenue vs. cost per lane)</li>
+          <li>Carrier performance scoring (on-time %, rate competitiveness)</li>
+          <li>Load coverage rate tracking by broker and region</li>
+          <li>Client revenue trend analysis (MoM, QoQ)</li>
+          <li>Auto-generated PDF QBR reports for enterprise clients</li>
+          <li>Dashboard: 10+ charts, KPIs, exportable data</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <hr class="rule">
+
+  <!-- SECTION 3: HUBSPOT DATA FLOWS -->
+  <div class="section">
+    <div class="section-label">Section 03</div>
+    <h2>HubSpot Data Flow Map</h2>
+    <p>Every RinglyPro action writes back to HubSpot in real time. HubSpot stays clean, enriched, and fully auditable — no shadow systems, no data silos.</p>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>RinglyPro Action</th>
+          <th>HubSpot Object Written</th>
+          <th>Fields Updated</th>
+          <th>Trigger</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Rachel answers inbound call</td>
+          <td><span class="target">Contact + Activity</span></td>
+          <td>Name, company, phone, freight type, call transcript, summary</td>
+          <td>Call received</td>
+        </tr>
+        <tr>
+          <td>New shipper inquiry qualified</td>
+          <td><span class="target">Deal (New Business)</span></td>
+          <td>Lane, freight type, volume estimate, urgency, deal stage = "Qualified"</td>
+          <td>Rachel qualification complete</td>
+        </tr>
+        <tr>
+          <td>Carrier outreach call completed</td>
+          <td><span class="target">Contact + Note</span></td>
+          <td>Carrier response (accept/counter/decline), rate quoted, availability date</td>
+          <td>Carrier call end</td>
+        </tr>
+        <tr>
+          <td>Load covered by carrier</td>
+          <td><span class="target">Deal (update)</span></td>
+          <td>Carrier assigned, rate confirmed, deal stage = "Booked"</td>
+          <td>Carrier acceptance recorded</td>
+        </tr>
+        <tr>
+          <td>Proactive status call made</td>
+          <td><span class="target">Activity Log</span></td>
+          <td>Call time, shipper response, any special instructions captured</td>
+          <td>McLeod status webhook</td>
+        </tr>
+        <tr>
+          <td>Lead prospect enriched</td>
+          <td><span class="target">Contact (new)</span></td>
+          <td>Company, industry, estimated freight volume, decision-maker name, LinkedIn</td>
+          <td>Business Collector run</td>
+        </tr>
+        <tr>
+          <td>QBR report generated</td>
+          <td><span class="target">Company + Attachment</span></td>
+          <td>PDF report attached, last QBR date updated, next review scheduled</td>
+          <td>Monthly/quarterly trigger</td>
+        </tr>
+        <tr>
+          <td>Escalation triggered</td>
+          <td><span class="target">Task (assigned to rep)</span></td>
+          <td>Task title, urgency level, context note, due date = today</td>
+          <td>Rachel escalation logic</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr class="rule">
+
+  <!-- SECTION 4: PHASES -->
+  <div class="section">
+    <div class="section-label">Section 04</div>
+    <h2>Implementation Roadmap</h2>
+    <p>A two-phase sprint delivering all six modules in 14 days — parallel workstreams running simultaneously to maximize speed without sacrificing quality.</p>
+
+    <div class="phases">
+
+      <div class="phase">
+        <div class="phase-num">01</div>
+        <div class="phase-content">
+          <div class="phase-header">
+            <div class="phase-title">Rachel AI &middot; HubSpot Core &middot; Carrier Dialer &middot; Lead Engine</div>
+            <div class="phase-timeline">Days 1–7</div>
+          </div>
+          <p>Week one is full-stack foundation. Rachel goes live on CW's inbound line with a freight-specific persona while the HubSpot API backbone is established in parallel. By day 4, outbound carrier dialing and the Business Collector shipper lead engine are configured and running. All call data flows into HubSpot from day one.</p>
+          <div class="deliverables">
+            <span class="badge">Rachel freight persona live</span>
+            <span class="badge">HubSpot API integration</span>
+            <span class="badge">Inbound call handling active</span>
+            <span class="badge">Contact auto-create/match</span>
+            <span class="badge">Call transcripts to HubSpot</span>
+            <span class="badge">Hot lead SMS alerts</span>
+            <span class="badge">Carrier outreach dialer</span>
+            <span class="badge">Load coverage scripts</span>
+            <span class="badge">Business Collector active</span>
+            <span class="badge">Shipper lead scoring</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-num">02</div>
+        <div class="phase-content">
+          <div class="phase-header">
+            <div class="phase-title">McLeod TMS Bridge &middot; Analytics Dashboard &middot; AI Copilot &middot; Go-Live</div>
+            <div class="phase-timeline">Days 8–14</div>
+          </div>
+          <p>Week two completes the stack. The McLeod webhook bridge is built and tested — load status changes now trigger Rachel proactive client calls automatically. The freight analytics dashboard and AI CRM Copilot are deployed alongside. Day 14 is full system QA, rep walkthrough, and go-live sign-off.</p>
+          <div class="deliverables">
+            <span class="badge">McLeod API/webhook bridge</span>
+            <span class="badge">Load status &rarr; Rachel trigger</span>
+            <span class="badge">Proactive client calls</span>
+            <span class="badge">HubSpot deal stage sync</span>
+            <span class="badge">Escalation logic</span>
+            <span class="badge">Freight analytics dashboard</span>
+            <span class="badge">Carrier performance scoring</span>
+            <span class="badge">AI Copilot for brokers</span>
+            <span class="badge">Auto PDF QBR reports</span>
+            <span class="badge">Full QA + team training</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <hr class="rule">
+
+  <!-- SECTION 5: ROI -->
+  <div class="section">
+    <div class="section-label">Section 05</div>
+    <h2>ROI Framework</h2>
+
+    <div class="roi-strip">
+      <strong>Key ROI Anchor:</strong> CW Carriers' 24/7 brand promise currently requires expensive overnight staffing and Belgrade office coordination. A single US overnight dispatcher costs $38K–$45K/year ($3,167–$3,750/month). Rachel at $3,500/month replaces that cost entirely while adding outbound dialing, lead qualification, and client status calls that a dispatcher cannot do.
+    </div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Module</th>
+          <th>Current Cost / Effort</th>
+          <th>With RinglyPro</th>
+          <th>Estimated Monthly Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>24/7 inbound coverage</td>
+          <td>Overnight dispatcher or Belgrade office overhead</td>
+          <td>Rachel handles 100% — zero staffing gap</td>
+          <td><strong>$3,200–$4,500 saved</strong></td>
+        </tr>
+        <tr>
+          <td>Carrier load coverage calls</td>
+          <td>Brokers spend 2–4 hrs/day on repetitive dialing</td>
+          <td>Rachel dials autonomously; reps review results</td>
+          <td><strong>~20 hrs/broker/month freed</strong></td>
+        </tr>
+        <tr>
+          <td>Client status check calls</td>
+          <td>~30 min/broker/day on outbound status calls</td>
+          <td>Fully automated at load milestones</td>
+          <td><strong>~10 hrs/broker/month freed</strong></td>
+        </tr>
+        <tr>
+          <td>Shipper lead prospecting</td>
+          <td>Reps manually research and cold-call prospects</td>
+          <td>Business Collector sources + Rachel qualifies</td>
+          <td><strong>3–5x more prospects touched</strong></td>
+        </tr>
+        <tr>
+          <td>HubSpot data hygiene</td>
+          <td>Manual CRM entry after every call (often skipped)</td>
+          <td>100% auto-logged — zero data entry</td>
+          <td><strong>~5 hrs/rep/month freed</strong></td>
+        </tr>
+        <tr>
+          <td>Enterprise QBR reports</td>
+          <td>Account manager builds manually (4–6 hrs each)</td>
+          <td>Auto-generated PDF in minutes</td>
+          <td><strong>~20 hrs/quarter saved</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+
+</div>
+
+<footer>
+  DIGIT2AI LLC / RINGLYPRO &middot; CONFIDENTIAL &nbsp;|&nbsp;
+  <a href="https://ringlypro.com">ringlypro.com</a> &nbsp;|&nbsp;
+  <a href="https://aiagent.ringlypro.com">aiagent.ringlypro.com</a> &nbsp;|&nbsp;
+  MARCH 2026
+</footer>
+
+</body>
+</html>
