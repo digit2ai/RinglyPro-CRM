@@ -665,7 +665,7 @@ body {
   .topbar-left h2 { font-size: 16px; }
   .topbar-right { gap: 6px; }
   .search-box { display: none; }
-  #quick-add-btn .btn-text { display: none; }
+  #quick-add-btn { display: none; }
 
   /* Content */
   .view-container { padding: 12px; }
