@@ -1771,7 +1771,7 @@ app.get('/api/dashboard', async (req, res) => {
 app.use((err, req, res, next) => {
   console.error('Server Error:', err.stack);
   // Show details for tunjoracing routes to help with debugging
-  const showDetails = process.env.NODE_ENV === 'development' || req.path.startsWith('/tunjoracing') || req.path.startsWith('/kanchoai');
+  const showDetails = process.env.NODE_ENV === 'development' || req.path.startsWith('/tunjoracing') || req.path.startsWith('/kanchoai') || req.path.startsWith('/cw_carriers');
   res.status(500).json({
     success: false,
     error: showDetails ? err.message : 'Something went wrong!',
