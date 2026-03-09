@@ -755,9 +755,12 @@ async function deleteEvent(id) {
 // =====================================================
 // TASKS
 // =====================================================
+let _allTasksCache = [];
+
 async function renderTasks(container) {
   const res = await api('/tasks');
   if (!res.success) return;
+  _allTasksCache = res.data;
 
   container.innerHTML = `
     <div class="section-header">
@@ -779,27 +782,86 @@ async function renderTasks(container) {
     <div id="tasks-list"></div>
   `;
 
-  renderTasksList(res.data);
+  filterTasks();
+}
+
+function filterTasks() {
+  const statusEl = document.getElementById('task-status-filter');
+  const typeEl = document.getElementById('task-type-filter');
+  const statusVal = statusEl ? statusEl.value : 'pending';
+  const typeVal = typeEl ? typeEl.value : '';
+  let filtered = _allTasksCache;
+  if (statusVal) filtered = filtered.filter(t => t.status === statusVal);
+  if (typeVal) filtered = filtered.filter(t => t.task_type === typeVal);
+  renderTasksList(filtered);
 }
 
 function renderTasksList(tasks) {
+  const container = document.getElementById('tasks-list');
+  if (!container) return;
   const now = new Date();
-  document.getElementById('tasks-list').innerHTML = tasks.length > 0
-    ? `<table class="data-table"><thead><tr><th>Task</th><th>Type</th><th>Priority</th><th>Assigned To</th><th>Project</th><th>Due</th><th>Actions</th></tr></thead><tbody>` +
-      tasks.map(t => {
-        const isOverdue = t.due_date && new Date(t.due_date) < now && t.status === 'pending';
-        const assigneeName = t.assignee ? `${t.assignee.first_name} ${t.assignee.last_name || ''}`.trim() : '';
-        return `<tr class="clickable" onclick="showTaskDetail(${t.id})">
-          <td><strong>${t.title}</strong>${t.description ? '<br><span style="font-size:12px;color:var(--text-muted)">'+t.description.substring(0,60)+'</span>' : ''}</td>
-          <td><span class="status-badge status-${t.task_type === 'reminder' ? 'on_hold' : 'planning'}">${t.task_type}</span></td>
-          <td><span class="priority-badge priority-${t.priority}">${t.priority}</span></td>
-          <td>${assigneeName ? `<span style="font-size:13px">&#128100; ${assigneeName}</span>` : '<span style="color:var(--text-muted);font-size:12px">Unassigned</span>'}</td>
-          <td>${t.project?.name || '-'}</td>
-          <td><span style="color:${isOverdue ? 'var(--danger)' : 'var(--text-secondary)'}">${t.due_date ? fmtDate(t.due_date) : '-'}${isOverdue ? ' (overdue)' : ''}</span></td>
-          <td>${t.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="event.stopPropagation();completeTask(${t.id})">Done</button>` : '<span class="status-badge status-completed">completed</span>'}</td>
-        </tr>`;
-      }).join('') + '</tbody></table>'
-    : '<div class="empty-state"><div class="empty-icon">&#9989;</div><h3>Your to-do list is empty!</h3><p>Nothing on your plate right now.</p><button class="get-started-btn" onclick="openTaskModal()">&#9989; Add Your First To-Do</button><p class="empty-action-hint">Tip: You can also say "Remind me to call John tomorrow" to the AI assistant</p></div>';
+
+  if (tasks.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">&#9989;</div><h3>Your to-do list is empty!</h3><p>Nothing on your plate right now.</p><button class="get-started-btn" onclick="openTaskModal()">&#9989; Add Your First To-Do</button><p class="empty-action-hint">Tip: You can also say "Remind me to call John tomorrow" to the AI assistant</p></div>';
+    return;
+  }
+
+  // Group by assignee
+  const groups = {};
+  tasks.forEach(t => {
+    const name = t.assignee ? `${t.assignee.first_name} ${t.assignee.last_name || ''}`.trim() : 'Unassigned';
+    if (!groups[name]) groups[name] = [];
+    groups[name].push(t);
+  });
+
+  // Sort group names: assigned first (alphabetical), Unassigned last
+  const sortedNames = Object.keys(groups).sort((a, b) => {
+    if (a === 'Unassigned') return 1;
+    if (b === 'Unassigned') return -1;
+    return a.localeCompare(b);
+  });
+
+  let html = '';
+  sortedNames.forEach(name => {
+    const items = groups[name];
+    const groupId = 'tg-' + name.replace(/\s+/g, '-').toLowerCase();
+    html += `
+      <div class="task-group">
+        <div class="task-group-header collapsed" onclick="toggleTaskGroup('${groupId}')">
+          <span class="task-group-chevron" id="chev-${groupId}">&#9654;</span>
+          <span class="task-group-name">&#128100; ${name}</span>
+          <span class="task-group-badge">${items.length}</span>
+        </div>
+        <div class="task-group-body" id="${groupId}" style="display:none">
+          <table class="data-table"><thead><tr><th>Task</th><th>Type</th><th>Priority</th><th>Project</th><th>Due</th><th>Actions</th></tr></thead><tbody>` +
+          items.map(t => {
+            const isOverdue = t.due_date && new Date(t.due_date) < now && t.status === 'pending';
+            return `<tr class="clickable" onclick="showTaskDetail(${t.id})">
+              <td><strong>${t.title}</strong>${t.description ? '<br><span style="font-size:12px;color:var(--text-muted)">'+t.description.substring(0,60)+'</span>' : ''}</td>
+              <td><span class="status-badge status-${t.task_type === 'reminder' ? 'on_hold' : 'planning'}">${t.task_type}</span></td>
+              <td><span class="priority-badge priority-${t.priority}">${t.priority}</span></td>
+              <td>${t.project?.name || '-'}</td>
+              <td><span style="color:${isOverdue ? 'var(--danger)' : 'var(--text-secondary)'}">${t.due_date ? fmtDate(t.due_date) : '-'}${isOverdue ? ' (overdue)' : ''}</span></td>
+              <td>${t.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="event.stopPropagation();completeTask(${t.id})">Done</button>` : '<span class="status-badge status-completed">completed</span>'}</td>
+            </tr>`;
+          }).join('') +
+          `</tbody></table>
+        </div>
+      </div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+function toggleTaskGroup(groupId) {
+  const body = document.getElementById(groupId);
+  const chev = document.getElementById('chev-' + groupId);
+  const header = body?.previousElementSibling;
+  if (!body) return;
+  const isHidden = body.style.display === 'none';
+  body.style.display = isHidden ? 'block' : 'none';
+  if (chev) chev.innerHTML = isHidden ? '&#9660;' : '&#9654;';
+  if (header) header.classList.toggle('collapsed', !isHidden);
 }
 
 async function completeTask(id) {
