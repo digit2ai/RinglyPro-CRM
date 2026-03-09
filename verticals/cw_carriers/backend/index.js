@@ -99,6 +99,27 @@ async function initialize() {
       );
       console.log('  ✅ CW Carriers admin user created');
     }
+    // Seed second user: mstagg
+    const email2 = 'mstagg@ringlypro.com';
+    const password2 = 'Palindrome@7';
+    const hash2 = await bcrypt.hash(password2, 12);
+    const [existing2] = await sequelize.query(
+      `SELECT id FROM cw_users WHERE email = $1`, { bind: [email2] }
+    );
+    if (existing2 && existing2.length > 0) {
+      await sequelize.query(
+        `UPDATE cw_users SET password_hash = $1, updated_at = NOW() WHERE email = $2`,
+        { bind: [hash2, email2] }
+      );
+      console.log('  ✅ CW Carriers mstagg user password updated');
+    } else {
+      await sequelize.query(
+        `INSERT INTO cw_users (email, password_hash, tenant_id, role, full_name, status, created_at, updated_at)
+         VALUES ($1, $2, 'cw_carriers', 'admin', 'Manuel Stagg', 'active', NOW(), NOW())`,
+        { bind: [email2, hash2] }
+      );
+      console.log('  ✅ CW Carriers mstagg user created');
+    }
   } catch (err) {
     console.error('  ⚠️ CW Carriers init error:', err.message);
   }
