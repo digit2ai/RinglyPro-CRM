@@ -1,6 +1,6 @@
 {
-  "name": "Digit2AI Projects Hub",
-  "short_name": "Projects",
+  "name": "HLT Team",
+  "short_name": "HLT Team",
   "description": "Contacts & Projects Management",
   "start_url": "/projects/",
   "scope": "/projects/",
@@ -10,16 +10,10 @@
   "orientation": "any",
   "icons": [
     {
-      "src": "/projects/assets/icon-192.svg",
-      "sizes": "192x192",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "/projects/assets/icon-512.svg",
+      "src": "https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69ae37946be28ae4c2048606.jpg",
       "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "any"
+      "type": "image/jpeg",
+      "purpose": "any maskable"
     }
   ]
 }
