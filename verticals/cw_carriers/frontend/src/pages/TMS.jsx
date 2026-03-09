@@ -47,7 +47,7 @@ export default function TMS() {
   };
 
   const statusColors = { processed: '#238636', error: '#F85149', pending: '#C8962A' };
-  const eventIcons = { load_status_change: '\u{1F504}', new_load: '\u{1F4E6}', load_update: '\u270F\uFE0F', carrier_assignment: '\u{1F69A}', eta_update: '\u23F0' };
+  const eventIcons = { load_status_change: '', new_load: '', load_update: '', carrier_assignment: '', eta_update: '' };
 
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#8B949E' }}>Loading TMS...</div>;
 
@@ -144,7 +144,7 @@ export default function TMS() {
                 <tr><td colSpan={5} style={s.empty}>No TMS events yet</td></tr>
               ) : events.map(ev => (
                 <tr key={ev.id}>
-                  <td style={s.td}>{eventIcons[ev.event_type] || '\u{1F4CB}'}</td>
+                  <td style={s.td}>{ev.event_type}</td>
                   <td style={s.td}><span style={s.badge}>{ev.event_type}</span></td>
                   <td style={s.td}>
                     <span style={{ ...s.badge, background: statusColors[ev.status] || '#21262D', color: '#fff' }}>{ev.status}</span>

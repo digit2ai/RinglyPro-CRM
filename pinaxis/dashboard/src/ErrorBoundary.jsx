@@ -11,14 +11,14 @@ export default class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('PINAXIS Error:', error, errorInfo)
+    console.error('Warehouse Dashboard Error:', error, errorInfo)
   }
 
   render() {
     if (this.state.hasError) {
       return (
         <div style={{ padding: 40, color: '#f87171', fontFamily: 'monospace', background: '#0f172a', minHeight: '100vh' }}>
-          <h1 style={{ fontSize: 24, marginBottom: 16 }}>PINAXIS Dashboard Error</h1>
+          <h1 style={{ fontSize: 24, marginBottom: 16 }}>Warehouse Dashboard Error</h1>
           <pre style={{ whiteSpace: 'pre-wrap', color: '#fbbf24', fontSize: 14 }}>
             {this.state.error?.message || 'Unknown error'}
           </pre>

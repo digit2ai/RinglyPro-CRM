@@ -20,7 +20,7 @@ const steps = [
   { path: '/api-integration', label: 'API Integration', icon: PlugIcon },
   { path: '/oee-dashboard', label: 'OEE Dashboard', icon: GaugeIcon, noProject: true },
   { path: '/user-guide', label: 'User Guide', icon: BookIcon, noProject: true },
-  { path: '/proposals/PINAXIS-System-Architecture-Document.html', label: 'MCP Architecture', icon: ArchitectureIcon, external: true }
+  { path: '/proposals/PINAXIS-System-Architecture-Document.html', label: 'System Architecture', icon: ArchitectureIcon, external: true }
 ]
 
 function UploadIcon({ className }) {
@@ -162,11 +162,11 @@ export default function App({ onLogout, userEmail }) {
         <div className="p-6 border-b border-slate-700">
           <div className="flex items-center gap-3">
             <div className="w-14 h-14 rounded-lg flex items-center justify-center overflow-hidden">
-              <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="PINAXIS" className="w-full h-full object-contain" />
+              <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro Warehouse" className="w-full h-full object-contain" />
             </div>
             <div className="flex-1">
-              <h1 className="text-lg font-bold text-white tracking-tight">PINAXIS</h1>
-              <p className="text-xs text-slate-400">Warehouse Analytics</p>
+              <h1 className="text-lg font-bold text-white tracking-tight">WAREHOUSE</h1>
+              <p className="text-xs text-slate-400">Analytics Platform</p>
             </div>
             <button
               onClick={closeSidebar}
@@ -243,7 +243,7 @@ export default function App({ onLogout, userEmail }) {
           )}
           <div className="text-xs text-slate-500 text-center">
             <p>Powered by RinglyPro</p>
-            <p className="mt-1">PINAXIS Analytics v1.0</p>
+            <p className="mt-1">Warehouse Analytics v1.0</p>
           </div>
         </div>
       </aside>
@@ -265,7 +265,7 @@ export default function App({ onLogout, userEmail }) {
             </div>
             {/* Mobile: show current step name */}
             <span className="sm:hidden text-sm font-medium text-white">
-              {steps[getCurrentStep()]?.label || 'PINAXIS'}
+              {steps[getCurrentStep()]?.label || 'Warehouse'}
             </span>
           </div>
         </header>

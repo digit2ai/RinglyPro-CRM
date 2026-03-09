@@ -29,15 +29,15 @@ export default function Landing() {
         {/* Divider */}
         <div style={s.divider} />
 
-        {/* CW Carriers Logo + Branding */}
+        {/* Carriers Logo + Branding */}
         <div style={s.cwSection}>
           <img
             src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png"
-            alt="CW Carriers"
+            alt="RinglyPro Logistics"
             style={s.cwLogo}
           />
-          <h1 style={s.title}>CW CARRIERS</h1>
-          <p style={s.subtitle}>USA, Inc. — Logistics CRM</p>
+          <h1 style={s.title}>CARRIERS</h1>
+          <p style={s.subtitle}>Logistics CRM</p>
           <p style={s.desc}>
             Full-Stack AI + HubSpot Integration Platform
           </p>
@@ -48,7 +48,7 @@ export default function Landing() {
           onClick={() => navigate(`${BASE}/login`)}
           style={s.loginBtn}
         >
-          Login to CRM Dashboard
+          Login to Dashboard
         </button>
 
         {/* Footer */}

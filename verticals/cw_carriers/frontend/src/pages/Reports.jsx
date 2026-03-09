@@ -34,21 +34,18 @@ export default function Reports() {
       id: 'qbr',
       title: 'Quarterly Business Review',
       desc: 'Full QBR with KPIs, lane profitability, carrier performance, and recent loads. Perfect for enterprise client meetings.',
-      icon: '\u{1F4CB}',
       color: '#1A4FA8'
     },
     {
       id: 'lanes',
       title: 'Lane Profitability Report',
       desc: 'Revenue and rate analysis by lane — total loads, delivered, average rate, min/max, and total revenue.',
-      icon: '\u{1F6E3}\uFE0F',
       color: '#C8962A'
     },
     {
       id: 'carriers',
       title: 'Carrier Performance Report',
       desc: 'Carrier scoring by delivery rate, load volume, average rate, and total revenue. Identify your best carriers.',
-      icon: '\u{1F69A}',
       color: '#238636'
     }
   ];
@@ -62,7 +59,6 @@ export default function Reports() {
         {reports.map(r => (
           <div key={r.id} style={s.card}>
             <div style={{ ...s.cardHeader, borderBottomColor: r.color }}>
-              <span style={{ fontSize: 28 }}>{r.icon}</span>
               <h3 style={{ ...s.cardTitle, color: r.color }}>{r.title}</h3>
             </div>
             <p style={s.cardDesc}>{r.desc}</p>

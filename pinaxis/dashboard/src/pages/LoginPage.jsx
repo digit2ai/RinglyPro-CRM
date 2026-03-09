@@ -31,10 +31,10 @@ export default function LoginPage({ onLogin }) {
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="w-28 h-28 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-pinaxis-600/20 overflow-hidden">
-            <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="PINAXIS" className="w-full h-full object-contain" />
+            <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro Warehouse" className="w-full h-full object-contain" />
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">PINAXIS</h1>
-          <p className="text-slate-400 text-sm mt-1">Warehouse Data Analytics Platform</p>
+          <h1 className="text-2xl font-bold text-white tracking-tight">WAREHOUSE</h1>
+          <p className="text-slate-400 text-sm mt-1">Data Analytics Platform</p>
         </div>
 
         {/* Login Card */}
@@ -97,7 +97,7 @@ export default function LoginPage({ onLogin }) {
 
           <div className="mt-6 pt-4 border-t border-slate-700">
             <p className="text-xs text-slate-500 text-center">
-              Powered by GEBHARDT Intralogistics
+              Powered by RinglyPro
             </p>
           </div>
         </form>

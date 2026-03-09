@@ -88,7 +88,7 @@ export default function UserGuidePage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white mb-2">User Guide</h1>
         <p className="text-slate-400">
-          Learn how to run test demos with PINAXIS. Choose a scenario below to get started.
+          Learn how to run test demos with the Warehouse Analytics platform. Choose a scenario below to get started.
         </p>
       </div>
 
@@ -115,7 +115,7 @@ export default function UserGuidePage() {
             }`}>Overview</span>
           </div>
           <h3 className="text-lg font-semibold text-white mb-1">How a Warehouse Works</h3>
-          <p className="text-sm text-slate-400">Learn the fundamentals of warehouse logistics and how PINAXIS analyzes operations.</p>
+          <p className="text-sm text-slate-400">Learn the fundamentals of warehouse logistics and how The platform analyzes operations.</p>
         </button>
 
         <button
@@ -238,8 +238,8 @@ export default function UserGuidePage() {
                   </ul>
                 </div>
                 <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
-                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">PINAXIS Mapping</p>
-                  <p className="text-sm text-slate-300">This data maps to the <strong className="text-pinaxis-300">Goods In</strong> file. PINAXIS uses it to analyze inbound throughput patterns and supplier delivery frequency.</p>
+                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Data Mapping</p>
+                  <p className="text-sm text-slate-300">This data maps to the <strong className="text-pinaxis-300">Goods In</strong> file. The platform uses it to analyze inbound throughput patterns and supplier delivery frequency.</p>
                 </div>
               </div>
             </div>
@@ -270,8 +270,8 @@ export default function UserGuidePage() {
                 </div>
               </div>
               <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
-                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">PINAXIS Mapping</p>
-                <p className="text-sm text-slate-300">The <strong className="text-pinaxis-300">Item Master</strong> file provides SKU dimensions and weights to determine bin-capability. The <strong className="text-pinaxis-300">Inventory</strong> snapshot shows current stock levels and storage locations. PINAXIS calculates what percentage of items fit in standard bins — a key metric for automation feasibility.</p>
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Data Mapping</p>
+                <p className="text-sm text-slate-300">The <strong className="text-pinaxis-300">Item Master</strong> file provides SKU dimensions and weights to determine bin-capability. The <strong className="text-pinaxis-300">Inventory</strong> snapshot shows current stock levels and storage locations. The platform calculates what percentage of items fit in standard bins — a key metric for automation feasibility.</p>
               </div>
             </div>
           </StepCard>
@@ -348,8 +348,8 @@ export default function UserGuidePage() {
               </div>
 
               <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
-                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">PINAXIS Mapping</p>
-                <p className="text-sm text-slate-300">The <strong className="text-pinaxis-300">Goods Out</strong> file is the most critical dataset. PINAXIS analyzes order structure (single vs multi-line split), throughput patterns (monthly, weekday, hourly peaks), and <strong className="text-white">ABC classification</strong> to identify which items drive 80% of activity (A-items) vs slow movers (C-items). Peak CPH requirements are derived from the busiest hours in your data.</p>
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Data Mapping</p>
+                <p className="text-sm text-slate-300">The <strong className="text-pinaxis-300">Goods Out</strong> file is the most critical dataset. The platform analyzes order structure (single vs multi-line split), throughput patterns (monthly, weekday, hourly peaks), and <strong className="text-white">ABC classification</strong> to identify which items drive 80% of activity (A-items) vs slow movers (C-items). Peak CPH requirements are derived from the busiest hours in your data.</p>
               </div>
             </div>
           </StepCard>
@@ -442,7 +442,7 @@ export default function UserGuidePage() {
 
               <div className="p-3 rounded-lg bg-pinaxis-900/20 border border-pinaxis-500/30">
                 <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Why It Matters for Automation</p>
-                <p className="text-sm text-slate-300">Automated storage and retrieval systems rely entirely on <strong className="text-white">machine-readable labels</strong>. Every bin, tote, and item in a shuttle system must be accurately labeled for the system to function. PINAXIS analyzes SKU profiles to determine the right labeling strategy as part of the automation design.</p>
+                <p className="text-sm text-slate-300">Automated storage and retrieval systems rely entirely on <strong className="text-white">machine-readable labels</strong>. Every bin, tote, and item in a shuttle system must be accurately labeled for the system to function. The platform analyzes SKU profiles to determine the right labeling strategy as part of the automation design.</p>
               </div>
             </div>
           </StepCard>
@@ -459,7 +459,7 @@ export default function UserGuidePage() {
               </p>
               <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
                 <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Why Throughput Patterns Matter</p>
-                <p className="text-sm text-slate-300">Peak shipping days (often Monday-Wednesday) create bottlenecks. PINAXIS identifies weekday and seasonal patterns so automation systems can be sized for actual peak demand, not just averages.</p>
+                <p className="text-sm text-slate-300">Peak shipping days (often Monday-Wednesday) create bottlenecks. The platform identifies weekday and seasonal patterns so automation systems can be sized for actual peak demand, not just averages.</p>
               </div>
             </div>
           </StepCard>
@@ -489,8 +489,8 @@ export default function UserGuidePage() {
                 </div>
               </div>
               <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
-                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">PINAXIS Insight</p>
-                <p className="text-sm text-slate-300">PINAXIS computes ABC classification by both <strong className="text-white">order frequency</strong> (how often an item is ordered) and <strong className="text-white">shipping volume</strong> (total units shipped). This dual classification reveals which items benefit most from automation investment.</p>
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Analytics Insight</p>
+                <p className="text-sm text-slate-300">The platform computes ABC classification by both <strong className="text-white">order frequency</strong> (how often an item is ordered) and <strong className="text-white">shipping volume</strong> (total units shipped). This dual classification reveals which items benefit most from automation investment.</p>
               </div>
             </div>
           </StepCard>
@@ -524,8 +524,8 @@ export default function UserGuidePage() {
                 </div>
               </div>
               <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
-                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">PINAXIS Product Matching</p>
-                <p className="text-sm text-slate-300">PINAXIS analyzes your warehouse data and scores each GEBHARDT product with a <strong className="text-white">fit score (0-100)</strong> based on your item dimensions, order structure, throughput requirements, and ABC distribution. This data-driven approach replaces subjective guesswork with quantifiable recommendations.</p>
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Product Matching</p>
+                <p className="text-sm text-slate-300">The platform analyzes your warehouse data and scores each GEBHARDT product with a <strong className="text-white">fit score (0-100)</strong> based on your item dimensions, order structure, throughput requirements, and ABC distribution. This data-driven approach replaces subjective guesswork with quantifiable recommendations.</p>
               </div>
             </div>
           </StepCard>
@@ -538,7 +538,7 @@ export default function UserGuidePage() {
           >
             <div className="ml-14 space-y-3">
               <p className="text-sm text-slate-300">
-                Automation investment decisions require a clear financial justification. PINAXIS projects ROI across multiple benefit categories:
+                Automation investment decisions require a clear financial justification. The platform projects ROI across multiple benefit categories:
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
@@ -559,7 +559,7 @@ export default function UserGuidePage() {
                 </div>
               </div>
               <div className="p-3 rounded-lg bg-pinaxis-900/20 border border-pinaxis-500/30">
-                <p className="text-sm text-slate-300">PINAXIS calculates <strong className="text-white">total annual savings</strong>, <strong className="text-white">payback period</strong>, and <strong className="text-white">5-year ROI</strong> based on your actual operational data — giving you the numbers to build a boardroom-ready business case.</p>
+                <p className="text-sm text-slate-300">The platform calculates <strong className="text-white">total annual savings</strong>, <strong className="text-white">payback period</strong>, and <strong className="text-white">5-year ROI</strong> based on your actual operational data — giving you the numbers to build a boardroom-ready business case.</p>
               </div>
             </div>
           </StepCard>
@@ -703,13 +703,13 @@ export default function UserGuidePage() {
                 </div>
                 <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
                   <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Integration Challenge</p>
-                  <p className="text-sm text-slate-300">The biggest risk in DC automation is poor software integration between layers. <strong className="text-white">PINAXIS analyzes</strong> your operational profile to recommend which combination of WMS/WES/WCS platforms best fits your throughput, complexity, and existing IT landscape.</p>
+                  <p className="text-sm text-slate-300">The biggest risk in DC automation is poor software integration between layers. <strong className="text-white">The platform analyzes</strong> your operational profile to recommend which combination of WMS/WES/WCS platforms best fits your throughput, complexity, and existing IT landscape.</p>
                 </div>
               </div>
 
               <div className="p-3 rounded-lg bg-pinaxis-900/20 border border-pinaxis-500/30">
-                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">PINAXIS System Architecture Readiness</p>
-                <p className="text-sm text-slate-300">PINAXIS evaluates your warehouse data to determine which <strong className="text-white">software stack tier</strong> your operation needs — from standalone WCS for simple automation, to full WMS+WES+WCS integration for complex multi-zone DCs. This assessment is part of the analysis pipeline and feeds into the product recommendation scoring.</p>
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">System Architecture Readiness</p>
+                <p className="text-sm text-slate-300">The platform evaluates your warehouse data to determine which <strong className="text-white">software stack tier</strong> your operation needs — from standalone WCS for simple automation, to full WMS+WES+WCS integration for complex multi-zone DCs. This assessment is part of the analysis pipeline and feeds into the product recommendation scoring.</p>
               </div>
             </div>
           </StepCard>
@@ -806,8 +806,8 @@ export default function UserGuidePage() {
               </div>
 
               <div className="p-3 rounded-lg bg-pinaxis-900/20 border border-pinaxis-500/30">
-                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">PINAXIS Observability</p>
-                <p className="text-sm text-slate-300">In production mode, PINAXIS can ingest live equipment telemetry and operational events via the Production API, providing a <strong className="text-white">real-time observability dashboard</strong> with system health gauges, throughput heatmaps, and anomaly alerts. The voice agent can also speak about current operational status on demand.</p>
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Observability</p>
+                <p className="text-sm text-slate-300">In production mode, The platform can ingest live equipment telemetry and operational events via the Production API, providing a <strong className="text-white">real-time observability dashboard</strong> with system health gauges, throughput heatmaps, and anomaly alerts. The voice agent can also speak about current operational status on demand.</p>
               </div>
             </div>
           </StepCard>
@@ -827,7 +827,7 @@ export default function UserGuidePage() {
               <div>
                 <h3 className="text-white font-semibold mb-1">What is the Synthetic Demo?</h3>
                 <p className="text-sm text-slate-300">
-                  PINAXIS generates a complete demo project with realistic warehouse data for a fictional company
+                  The platform generates a complete demo project with realistic warehouse data for a fictional company
                   ("Demo Warehouse GmbH"). It creates ~500 SKUs with item dimensions, inventory snapshots,
                   goods-in receipts, and goods-out shipments spanning 12 months. The analysis runs automatically,
                   so you can explore every page of the platform instantly.
@@ -1015,7 +1015,7 @@ export default function UserGuidePage() {
             onClick={() => setActiveStep2(activeStep2 === 1 ? 0 : 1)}
           >
             <p className="text-sm text-slate-300 ml-14 mb-3">
-              You need up to 4 data files. Column names are flexible — PINAXIS auto-maps common aliases
+              You need up to 4 data files. Column names are flexible — The platform auto-maps common aliases
               (e.g., "article" → "sku", "qty" → "quantity", "Artikelnummer" → "sku").
             </p>
 

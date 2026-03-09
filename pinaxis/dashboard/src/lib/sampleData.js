@@ -1,5 +1,5 @@
 /**
- * Sample CSV data for PINAXIS test demos.
+ * Sample CSV data for Warehouse Analytics test demos.
  *
  * 30 SKUs, ~200 goods-out lines over 3 months, 30 inventory rows, 40 goods-in rows.
  * Data is designed to produce meaningful analysis:

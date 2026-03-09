@@ -40,21 +40,21 @@ function Sidebar({ open, onClose }) {
   const user = getUser();
   const isMobile = useIsMobile();
   const nav = [
-    { path: `${BASE}/dashboard`, label: 'Dashboard', icon: '\u{1F4CA}' },
-    { path: `${BASE}/loads`, label: 'Loads', icon: '\u{1F69A}' },
-    { path: `${BASE}/offers`, label: 'Carrier Offers', icon: '\u{1F4B0}' },
-    { path: `${BASE}/contacts`, label: 'Contacts', icon: '\u{1F465}' },
-    { path: `${BASE}/calls`, label: 'Calls', icon: '\u{1F4DE}' },
-    { path: `${BASE}/tracking`, label: 'Check Calls', icon: '\u{1F4CD}' },
-    { path: `${BASE}/billing`, label: 'Billing', icon: '\u{1F4B5}' },
-    { path: `${BASE}/nlp`, label: 'NLP Assistant', icon: '\u{1F916}' },
-    { path: `${BASE}/analytics`, label: 'Analytics', icon: '\u{1F4C8}' },
-    { path: `${BASE}/warehouse`, label: 'Warehouse', icon: '\u{1F3ED}' },
-    { path: `${BASE}/tms`, label: 'TMS Bridge', icon: '\u{1F310}' },
-    { path: `${BASE}/reports`, label: 'Reports', icon: '\u{1F4C4}' },
-    { path: `${BASE}/hubspot`, label: 'HubSpot Sync', icon: '\u{1F504}' },
-    { path: `${BASE}/settings`, label: 'Settings', icon: '\u2699\uFE0F' },
-    { path: `${BASE}/demo`, label: 'Demo Data', icon: '\u{1F4E6}' },
+    { path: `${BASE}/dashboard`, label: 'Dashboard' },
+    { path: `${BASE}/loads`, label: 'Loads' },
+    { path: `${BASE}/offers`, label: 'Carrier Offers' },
+    { path: `${BASE}/contacts`, label: 'Contacts' },
+    { path: `${BASE}/calls`, label: 'Calls' },
+    { path: `${BASE}/tracking`, label: 'Check Calls' },
+    { path: `${BASE}/billing`, label: 'Billing' },
+    { path: `${BASE}/nlp`, label: 'NLP Assistant' },
+    { path: `${BASE}/analytics`, label: 'Analytics' },
+    { path: `${BASE}/warehouse`, label: 'Warehouse' },
+    { path: `${BASE}/tms`, label: 'TMS Bridge' },
+    { path: `${BASE}/reports`, label: 'Reports' },
+    { path: `${BASE}/hubspot`, label: 'HubSpot Sync' },
+    { path: `${BASE}/settings`, label: 'Settings' },
+    { path: `${BASE}/demo`, label: 'Demo Data' },
   ];
 
   // On mobile, sidebar slides in/out
@@ -76,9 +76,9 @@ function Sidebar({ open, onClose }) {
           <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6884f40a6d2fd3fed0b84613.png" alt="RinglyPro" style={styles.ringlyProLogo} />
         </div>
         <div style={styles.logo}>
-          <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="CW Carriers" style={styles.logoImg} />
-          <div style={styles.logoText}>CW CARRIERS</div>
-          <div style={styles.logoSub}>USA, Inc.</div>
+          <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro Logistics" style={styles.logoImg} />
+          <div style={styles.logoText}>CARRIERS</div>
+          <div style={styles.logoSub}>Logistics CRM</div>
         </div>
         <a href={`${BASE}/hubspot`} style={styles.hubspotLoginBtn}>
           HubSpot Portal Login
@@ -94,7 +94,6 @@ function Sidebar({ open, onClose }) {
                 ...(location.pathname === item.path ? styles.navItemActive : {})
               }}
             >
-              <span style={styles.navIcon}>{item.icon}</span>
               {item.label}
             </Link>
           ))}
@@ -118,8 +117,8 @@ function MobileHeader({ onOpenMenu }) {
         <span style={styles.hamburgerLine} />
         <span style={styles.hamburgerLine} />
       </button>
-      <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="CW Carriers" style={styles.mobileLogoImg} />
-      <span style={styles.mobileTitle}>CW CARRIERS</span>
+      <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro Logistics" style={styles.mobileLogoImg} />
+      <span style={styles.mobileTitle}>CARRIERS</span>
     </div>
   );
 }

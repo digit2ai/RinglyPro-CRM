@@ -62,7 +62,7 @@ export default function AnalysisPage() {
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `PINAXIS-Report-${projectId}.pdf`
+      a.download = `Warehouse-Report-${projectId}.pdf`
       document.body.appendChild(a)
       a.click()
       a.remove()

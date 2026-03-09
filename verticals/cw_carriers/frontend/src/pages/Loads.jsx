@@ -143,10 +143,10 @@ export default function Loads() {
                 <td style={s.td}>{l.carrier_name || '—'}</td>
                 <td style={s.td}>
                   <div style={s.actions}>
-                    {l.status === 'open' && <button onClick={() => launchCoverage(l.id)} style={s.actionBtn} title="Find Carriers">🔍</button>}
-                    {l.status === 'open' && <button onClick={() => updateStatus(l.id, 'covered')} style={s.actionBtn} title="Mark Covered">✅</button>}
-                    {l.status === 'covered' && <button onClick={() => updateStatus(l.id, 'in_transit')} style={s.actionBtn} title="In Transit">🚚</button>}
-                    {l.status === 'in_transit' && <button onClick={() => updateStatus(l.id, 'delivered')} style={s.actionBtn} title="Delivered">📦</button>}
+                    {l.status === 'open' && <button onClick={() => launchCoverage(l.id)} style={s.actionBtn} title="Find Carriers">Find</button>}
+                    {l.status === 'open' && <button onClick={() => updateStatus(l.id, 'covered')} style={s.actionBtn} title="Mark Covered">Cover</button>}
+                    {l.status === 'covered' && <button onClick={() => updateStatus(l.id, 'in_transit')} style={s.actionBtn} title="In Transit">Transit</button>}
+                    {l.status === 'in_transit' && <button onClick={() => updateStatus(l.id, 'delivered')} style={s.actionBtn} title="Delivered">Deliver</button>}
                   </div>
                 </td>
               </tr>

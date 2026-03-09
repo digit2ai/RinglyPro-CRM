@@ -126,8 +126,8 @@ export default function Contacts() {
                 <td style={s.td}>{c.hubspot_id ? <span style={s.syncedBadge}>Synced</span> : <span style={s.unsyncedBadge}>Not synced</span>}</td>
                 <td style={s.td}>
                   <div style={s.actions}>
-                    {c.phone && <button onClick={() => callContact(c.id)} style={s.actionBtn} title="Call Now">📞</button>}
-                    {!c.hubspot_id && <button onClick={() => syncToHubSpot(c.id)} style={s.actionBtn} title="Sync to HubSpot">🔄</button>}
+                    {c.phone && <button onClick={() => callContact(c.id)} style={s.actionBtn} title="Call Now">Call</button>}
+                    {!c.hubspot_id && <button onClick={() => syncToHubSpot(c.id)} style={s.actionBtn} title="Sync to HubSpot">Sync</button>}
                   </div>
                 </td>
               </tr>

@@ -31,15 +31,15 @@ function Sidebar({ open, onClose, tierInfo }) {
   const mob = useIsMobile();
   const role = user?.role || 'admin';
   const allNav = [
-    { path: `${BASE}/dashboard`, label: 'Command Center', icon: '\u{1F3AF}', roles: ['admin','dispatcher'] },
-    { path: `${BASE}/shipper`, label: 'Shipper Portal', icon: '\u{1F4E6}', roles: ['admin','dispatcher','shipper'] },
-    { path: `${BASE}/carrier`, label: 'Carrier Portal', icon: '\u{1F69A}', roles: ['admin','dispatcher','carrier'] },
-    { path: `${BASE}/documents`, label: 'Document Vault', icon: '\u{1F4C1}', roles: ['admin','dispatcher','shipper','carrier'] },
-    { path: `${BASE}/compliance`, label: 'FMCSA Compliance', icon: '\u{1F6E1}\uFE0F', roles: ['admin','dispatcher'] },
-    { path: `${BASE}/matching`, label: 'Freight Matching', icon: '\u{1F916}', roles: ['admin','dispatcher'] },
-    { path: `${BASE}/tools`, label: 'MCP Tools', icon: '\u{1F527}', roles: ['admin'] },
-    { path: '/cw_carriers/dashboard', label: 'CW Carriers', icon: '\u{1F310}', roles: ['admin','dispatcher'], ext: true },
-    { path: '/pinaxis/', label: 'Warehouse OPS', icon: '\u{1F3ED}', roles: ['admin','dispatcher'], ext: true },
+    { path: `${BASE}/dashboard`, label: 'Command Center', roles: ['admin','dispatcher'] },
+    { path: `${BASE}/shipper`, label: 'Shipper Portal', roles: ['admin','dispatcher','shipper'] },
+    { path: `${BASE}/carrier`, label: 'Carrier Portal', roles: ['admin','dispatcher','carrier'] },
+    { path: `${BASE}/documents`, label: 'Document Vault', roles: ['admin','dispatcher','shipper','carrier'] },
+    { path: `${BASE}/compliance`, label: 'FMCSA Compliance', roles: ['admin','dispatcher'] },
+    { path: `${BASE}/matching`, label: 'Freight Matching', roles: ['admin','dispatcher'] },
+    { path: `${BASE}/tools`, label: 'MCP Tools', roles: ['admin'] },
+    { path: '/cw_carriers/dashboard', label: 'Carriers CRM', roles: ['admin','dispatcher'], ext: true },
+    { path: '/pinaxis/', label: 'Warehouse OPS', roles: ['admin','dispatcher'], ext: true },
   ];
   const nav = allNav.filter(n => n.roles.includes(role));
   const ss = mob ? { ...S.sidebar, ...S.sidebarMob, transform: open ? 'translateX(0)' : 'translateX(-100%)' } : S.sidebar;
@@ -49,15 +49,14 @@ function Sidebar({ open, onClose, tierInfo }) {
       <div style={ss}>
         {mob && <button onClick={onClose} style={S.closeBtn}>&times;</button>}
         <div style={S.logoArea}>
-          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6884f40a6d2fd3fed0b84613.png" alt="RinglyPro" style={S.logoImg} />
-          <div style={S.logoText}>LOGISTICS</div>
+          <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro Logistics" style={S.logoImg} />
           <div style={S.tierBadge}>{tierInfo?.tier_name || 'Full Suite'}</div>
         </div>
         <nav style={S.nav}>
           {nav.map(item => item.ext ? (
-            <a key={item.path} href={item.path} style={S.navItem}><span style={S.navIcon}>{item.icon}</span>{item.label}<span style={S.extBadge}>EXT</span></a>
+            <a key={item.path} href={item.path} style={S.navItem}>{item.label}<span style={S.extBadge}>EXT</span></a>
           ) : (
-            <Link key={item.path} to={item.path} onClick={mob ? onClose : undefined} style={{...S.navItem, ...(loc.pathname === item.path ? S.navActive : {})}}><span style={S.navIcon}>{item.icon}</span>{item.label}</Link>
+            <Link key={item.path} to={item.path} onClick={mob ? onClose : undefined} style={{...S.navItem, ...(loc.pathname === item.path ? S.navActive : {})}}>{item.label}</Link>
           ))}
         </nav>
         <div style={S.footer}>
@@ -114,13 +113,11 @@ const S = {
   hLine:{display:'block',width:22,height:2,background:'#E6EDF3',borderRadius:1},
   mobTitle:{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,color:'#0EA5E9',letterSpacing:2},
   logoArea:{padding:20,borderBottom:'1px solid #21262D',textAlign:'center'},
-  logoImg:{height:30,width:'auto',marginBottom:8},
-  logoText:{fontFamily:"'Bebas Neue',sans-serif",fontSize:32,color:'#0EA5E9',letterSpacing:3},
+  logoImg:{width:'100%',maxWidth:180,height:'auto',marginBottom:8},
   tierBadge:{display:'inline-block',marginTop:6,padding:'3px 10px',background:'#0EA5E922',color:'#0EA5E9',borderRadius:12,fontSize:10,fontWeight:600,letterSpacing:1,textTransform:'uppercase'},
   nav:{flex:1,padding:'12px 0',overflowY:'auto'},
   navItem:{display:'flex',alignItems:'center',gap:10,padding:'11px 20px',fontSize:14,color:'#8B949E',cursor:'pointer',transition:'all 0.2s',borderLeft:'3px solid transparent'},
   navActive:{color:'#fff',background:'#0EA5E922',borderLeftColor:'#0EA5E9'},
-  navIcon:{fontSize:16},
   extBadge:{marginLeft:'auto',padding:'1px 5px',background:'#30363D',color:'#8B949E',borderRadius:4,fontSize:9,fontWeight:600},
   footer:{padding:'16px 20px',borderTop:'1px solid #21262D'},
   userRole:{fontSize:10,color:'#0EA5E9',fontWeight:600,letterSpacing:1,marginBottom:4},

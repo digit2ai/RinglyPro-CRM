@@ -30,9 +30,9 @@ export default function Login() {
     <div style={styles.container}>
       <div style={styles.card}>
         <div style={styles.logoSection}>
-          <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="CW Carriers" style={styles.logoImg} />
-          <h1 style={styles.logoText}>CW CARRIERS</h1>
-          <p style={styles.logoSub}>USA, Inc. — Logistics CRM</p>
+          <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro Logistics" style={styles.logoImg} />
+          <h1 style={styles.logoText}>CARRIERS</h1>
+          <p style={styles.logoSub}>Logistics CRM</p>
         </div>
         <form onSubmit={handleSubmit} style={styles.form}>
           {error && <div style={styles.error}>{error}</div>}

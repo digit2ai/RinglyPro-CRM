@@ -45,7 +45,7 @@ export default function ReportPage() {
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `PINAXIS-Report-${project?.company_name || projectId}.pdf`
+      a.download = `Warehouse-Report-${project?.company_name || projectId}.pdf`
       document.body.appendChild(a)
       a.click()
       a.remove()
@@ -158,7 +158,7 @@ export default function ReportPage() {
         <div>
           <h1 className="text-3xl font-bold text-white mb-1">Analysis Report</h1>
           <p className="text-slate-400">
-            {project?.company_name || 'Project'} &mdash; PINAXIS Warehouse Analytics Report
+            {project?.company_name || 'Project'} &mdash; Warehouse Analytics Report
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -188,7 +188,7 @@ export default function ReportPage() {
           {/* Report Info */}
           <div className="flex-1">
             <h3 className="text-xl font-semibold text-white mb-1">
-              PINAXIS Warehouse Analytics Report
+              Warehouse Analytics Report
             </h3>
             <p className="text-slate-400 text-sm mb-4">
               Comprehensive analysis for {project?.company_name || 'your warehouse'} including KPIs,

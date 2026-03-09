@@ -20,14 +20,14 @@ export default function Dashboard() {
         <div style={s.sec}>
           <h2 style={s.secT}>QUICK ACTIONS</h2>
           <div style={s.aGrid}>
-            {[{l:'Request Quote',h:'/logistics/shipper',i:'\u{1F4B0}'},{l:'Find Loads',h:'/logistics/carrier',i:'\u{1F69A}'},{l:'Upload Document',h:'/logistics/documents',i:'\u{1F4C4}'},{l:'Verify Carrier',h:'/logistics/compliance',i:'\u{1F6E1}\uFE0F'},{l:'Match Freight',h:'/logistics/matching',i:'\u{1F916}'},{l:'MCP Tools',h:'/logistics/tools',i:'\u{1F527}'}].map((a,i)=>(
-              <a key={i} href={a.h} style={s.aCard}><span style={{fontSize:18}}>{a.i}</span><span>{a.l}</span></a>
+            {[{l:'Request Quote',h:'/logistics/shipper'},{l:'Find Loads',h:'/logistics/carrier'},{l:'Upload Document',h:'/logistics/documents'},{l:'Verify Carrier',h:'/logistics/compliance'},{l:'Match Freight',h:'/logistics/matching'},{l:'MCP Tools',h:'/logistics/tools'}].map((a,i)=>(
+              <a key={i} href={a.h} style={s.aCard}><span>{a.l}</span></a>
             ))}
           </div>
         </div>
         <div style={s.sec}>
           <h2 style={s.secT}>PLATFORM MODULES</h2>
-          {[{n:'Shipper Portal',d:'Quote requests, shipment tracking, claims',t:'Professional',c:'#0EA5E9'},{n:'Carrier Portal',d:'Available loads, bidding, payments',t:'Professional',c:'#0EA5E9'},{n:'Document Vault',d:'BOLs, PODs, insurance, contracts',t:'Professional',c:'#0EA5E9'},{n:'FMCSA Compliance',d:'Authority, safety scores, insurance',t:'Enterprise',c:'#10B981'},{n:'Freight Matching',d:'AI-powered carrier matching',t:'Enterprise',c:'#10B981'},{n:'CW Carriers',d:'15-module freight brokerage CRM',t:'Starter',c:'#8B949E'},{n:'Warehouse OPS',d:'PinAxis inventory + OEE',t:'Add-on',c:'#F59E0B'}].map((m,i)=>(
+          {[{n:'Shipper Portal',d:'Quote requests, shipment tracking, claims',t:'Professional',c:'#0EA5E9'},{n:'Carrier Portal',d:'Available loads, bidding, payments',t:'Professional',c:'#0EA5E9'},{n:'Document Vault',d:'BOLs, PODs, insurance, contracts',t:'Professional',c:'#0EA5E9'},{n:'FMCSA Compliance',d:'Authority, safety scores, insurance',t:'Enterprise',c:'#10B981'},{n:'Freight Matching',d:'AI-powered carrier matching',t:'Enterprise',c:'#10B981'},{n:'Carriers CRM',d:'15-module freight brokerage CRM',t:'Starter',c:'#8B949E'},{n:'Warehouse OPS',d:'Inventory + OEE monitoring',t:'Add-on',c:'#F59E0B'}].map((m,i)=>(
             <div key={i} style={s.mod}><div style={s.modN}>{m.n}</div><div style={s.modD}>{m.d}</div><span style={{...s.modT,color:m.c,borderColor:m.c}}>{m.t}</span></div>
           ))}
         </div>
