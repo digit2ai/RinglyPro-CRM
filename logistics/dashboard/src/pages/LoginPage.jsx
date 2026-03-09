@@ -13,11 +13,14 @@ export default function LoginPage({ onLogin }) {
 
     // Simple credential check
     setTimeout(() => {
-      if (
-        email.toLowerCase() === 'logistics@ringlypro.com' &&
-        password === 'RinglyPro Logistics@7'
-      ) {
-        onLogin({ email })
+      const validUsers = [
+        { email: 'logistics@ringlypro.com', password: 'RinglyPro Logistics@7' },
+        { email: 'mstagg@digit2ai.com', password: 'Palindrome@7' },
+        { email: 'mstagg@ringlypro.com', password: 'Palindrome@7' },
+      ];
+      const match = validUsers.find(u => u.email === email.toLowerCase() && u.password === password);
+      if (match) {
+        onLogin({ email: match.email })
       } else {
         setError('Invalid email or password')
       }

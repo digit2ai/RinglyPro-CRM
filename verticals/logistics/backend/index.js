@@ -59,6 +59,7 @@ async function initialize() {
     const users = [
       { email: 'admin@ringlypro.com', password: 'RinglyProLogistics2026!', role: 'admin', full_name: 'RinglyPro Admin' },
       { email: 'mstagg@ringlypro.com', password: 'Palindrome@7', role: 'admin', full_name: 'Manuel Stagg' },
+      { email: 'mstagg@digit2ai.com', password: 'Palindrome@7', role: 'admin', full_name: 'Manuel Stagg', company_name: 'Digit2AI' },
       { email: 'shipper@demo.com', password: 'ShipperDemo2026!', role: 'shipper', full_name: 'Demo Shipper', company_name: 'Acme Shipping Co' },
       { email: 'carrier@demo.com', password: 'CarrierDemo2026!', role: 'carrier', full_name: 'Demo Carrier', company_name: 'FastHaul Transport LLC' },
     ];
