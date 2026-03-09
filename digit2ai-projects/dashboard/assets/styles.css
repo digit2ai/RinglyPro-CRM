@@ -203,6 +203,7 @@ body {
 }
 .sidebar-nav li:hover { background: var(--bg-hover); color: var(--text-primary); }
 .sidebar-nav li.active { background: var(--accent-muted); color: var(--accent); font-weight: 500; }
+.sidebar-nav li.nav-divider { height: 1px; background: var(--border); padding: 0; margin: 8px 12px; cursor: default; pointer-events: none; }
 .nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
 .nav-text { font-size: 14px; }
 .badge {
