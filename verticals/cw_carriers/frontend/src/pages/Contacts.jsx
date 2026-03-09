@@ -135,15 +135,15 @@ export default function Contacts() {
 }
 
 const s = {
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 },
   title: { fontSize: 28, color: '#C8962A' },
   tabBar: { display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center', flexWrap: 'wrap' },
   tab: { padding: '6px 14px', background: '#21262D', border: 'none', borderRadius: 6, color: '#8B949E', fontSize: 13, cursor: 'pointer' },
   tabActive: { background: '#1A4FA8', color: '#fff' },
-  searchInput: { marginLeft: 'auto', padding: '6px 12px', background: '#0D1117', border: '1px solid #30363D', borderRadius: 6, color: '#E6EDF3', fontSize: 13, width: 200 },
+  searchInput: { marginLeft: 'auto', padding: '6px 12px', background: '#0D1117', border: '1px solid #30363D', borderRadius: 6, color: '#E6EDF3', fontSize: 13, width: '100%', maxWidth: 220, minWidth: 140 },
   createBtn: { padding: '8px 16px', background: '#1A4FA8', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' },
   cancelBtn: { padding: '8px 16px', background: '#21262D', color: '#8B949E', border: 'none', borderRadius: 6, fontSize: 13, cursor: 'pointer' },
-  tableWrap: { background: '#161B22', border: '1px solid #21262D', borderRadius: 10, overflow: 'hidden' },
+  tableWrap: { background: '#161B22', border: '1px solid #21262D', borderRadius: 10, overflow: 'auto', WebkitOverflowScrolling: 'touch' },
   table: { width: '100%', borderCollapse: 'collapse' },
   th: { textAlign: 'left', padding: '10px 12px', fontSize: 11, color: '#8B949E', borderBottom: '1px solid #21262D', textTransform: 'uppercase', background: '#0D1117' },
   td: { padding: '10px 12px', fontSize: 13, color: '#E6EDF3', borderBottom: '1px solid #21262D' },
@@ -159,5 +159,5 @@ const s = {
   form: { display: 'flex', flexDirection: 'column', gap: 12 },
   select: { padding: '8px 12px', background: '#0D1117', border: '1px solid #30363D', borderRadius: 6, color: '#E6EDF3', fontSize: 13 },
   input: { padding: '8px 12px', background: '#0D1117', border: '1px solid #30363D', borderRadius: 6, color: '#E6EDF3', fontSize: 13 },
-  row: { display: 'flex', gap: 12 }
+  row: { display: 'flex', gap: 12, flexWrap: 'wrap' }
 };

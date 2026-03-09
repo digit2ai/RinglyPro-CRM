@@ -73,7 +73,7 @@ const s = {
     background: '#161B22',
     border: '1px solid #21262D',
     borderRadius: 16,
-    padding: '48px 48px 36px',
+    padding: '36px 24px 28px',
     width: 480,
     maxWidth: '92vw',
     textAlign: 'center',

@@ -108,12 +108,12 @@ function outcomeColor(outcome) {
 
 const s = {
   title: { fontSize: 28, color: '#C8962A', marginBottom: 20 },
-  kpiGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16, marginBottom: 24 },
-  kpiCard: { background: '#161B22', border: '1px solid #21262D', borderRadius: 10, padding: '20px 16px', textAlign: 'center' },
-  kpiValue: { fontSize: 32, fontWeight: 700, fontFamily: "'Bebas Neue', sans-serif" },
-  kpiLabel: { fontSize: 12, color: '#8B949E', marginTop: 4, textTransform: 'uppercase' },
-  grid2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 },
-  section: { background: '#161B22', border: '1px solid #21262D', borderRadius: 10, padding: 20 },
+  kpiGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 12, marginBottom: 24 },
+  kpiCard: { background: '#161B22', border: '1px solid #21262D', borderRadius: 10, padding: '16px 12px', textAlign: 'center' },
+  kpiValue: { fontSize: 28, fontWeight: 700, fontFamily: "'Bebas Neue', sans-serif" },
+  kpiLabel: { fontSize: 11, color: '#8B949E', marginTop: 4, textTransform: 'uppercase' },
+  grid2: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 },
+  section: { background: '#161B22', border: '1px solid #21262D', borderRadius: 10, padding: 16, overflow: 'auto' },
   sectionTitle: { fontSize: 18, color: '#E6EDF3', marginBottom: 12 },
   table: { width: '100%', borderCollapse: 'collapse' },
   th: { textAlign: 'left', padding: '8px 10px', fontSize: 11, color: '#8B949E', borderBottom: '1px solid #21262D', textTransform: 'uppercase' },

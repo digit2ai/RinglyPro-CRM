@@ -129,9 +129,9 @@ export default function HubSpot() {
 
 const s = {
   title: { fontSize: 28, color: '#C8962A', marginBottom: 16 },
-  statusRow: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 },
+  statusRow: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 12, marginBottom: 20 },
   statusCard: { background: '#161B22', border: '1px solid #21262D', borderRadius: 8, padding: '14px 16px', textAlign: 'center' },
-  actionRow: { display: 'flex', gap: 12, marginBottom: 20 },
+  actionRow: { display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' },
   syncBtn: { padding: '10px 20px', background: '#1A4FA8', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' },
   section: { background: '#161B22', border: '1px solid #21262D', borderRadius: 10, padding: 20 },
   sectionTitle: { fontSize: 18, color: '#E6EDF3', marginBottom: 12 },
