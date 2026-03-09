@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RinglyPro MCP + PINAXIS Integration Architecture</title>
+    <title>RinglyPro MCP + LOGISTICS Integration Architecture</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
@@ -164,10 +164,10 @@
         .layer-prospect .layer-content { background: rgba(251, 146, 60, 0.04); border: 1px solid rgba(251, 146, 60, 0.12); }
         .layer-prospect .layer-content::before { background: linear-gradient(90deg, #fb923c, transparent); }
 
-        .layer-pinaxis .layer-number { background: rgba(14, 165, 233, 0.2); color: #0ea5e9; }
-        .layer-pinaxis .layer-label { color: #0ea5e9; }
-        .layer-pinaxis .layer-content { background: rgba(14, 165, 233, 0.04); border: 1px solid rgba(14, 165, 233, 0.12); }
-        .layer-pinaxis .layer-content::before { background: linear-gradient(90deg, #0ea5e9, transparent); }
+        .layer-logistics .layer-number { background: rgba(14, 165, 233, 0.2); color: #0ea5e9; }
+        .layer-logistics .layer-label { color: #0ea5e9; }
+        .layer-logistics .layer-content { background: rgba(14, 165, 233, 0.04); border: 1px solid rgba(14, 165, 233, 0.12); }
+        .layer-logistics .layer-content::before { background: linear-gradient(90deg, #0ea5e9, transparent); }
 
         .layer-mcp .layer-number { background: rgba(139, 92, 246, 0.2); color: #8b5cf6; }
         .layer-mcp .layer-label { color: #8b5cf6; }
@@ -560,7 +560,7 @@
     <div class="header-left">
         <div class="logo-badge">MCP<br>AI</div>
         <div class="header-title">
-            <h1>RinglyPro MCP Server + PINAXIS Integration</h1>
+            <h1>RinglyPro MCP Server + LOGISTICS Integration</h1>
             <p>AI Orchestration Layer for Warehouse Data Analytics & Product Matching</p>
         </div>
     </div>
@@ -631,17 +631,17 @@
         <span class="arrow-label-right">HMAC-SHA256 verified</span>
     </div>
 
-    <!-- Layer 2: PINAXIS Data Ingestion Layer (on RinglyPro) -->
-    <div class="layer layer-pinaxis">
+    <!-- Layer 2: LOGISTICS Data Ingestion Layer (on RinglyPro) -->
+    <div class="layer layer-logistics">
         <div class="layer-header">
             <div class="layer-number">2</div>
-            <div class="layer-label">RinglyPro MCP Server — PINAXIS Proxy & Data Ingestion</div>
+            <div class="layer-label">RinglyPro MCP Server — LOGISTICS Proxy & Data Ingestion</div>
         </div>
         <div class="layer-content">
             <div class="node-grid">
                 <div class="node">
                     <div class="node-icon">🔌</div>
-                    <div class="node-title">PINAXIS MCP Proxy</div>
+                    <div class="node-title">LOGISTICS MCP Proxy</div>
                     <div class="node-subtitle">New proxy class following existing CRM proxy pattern</div>
                     <span class="node-tag tag-new">NEW MODULE</span>
                 </div>
@@ -801,7 +801,7 @@
                 <div class="node">
                     <div class="node-icon">📄</div>
                     <div class="node-title">PDF Proposal Generator</div>
-                    <div class="node-subtitle">Branded PINAXIS report with product recommendations & ROI</div>
+                    <div class="node-subtitle">Branded LOGISTICS report with product recommendations & ROI</div>
                     <span class="node-tag tag-new">NEW MODULE</span>
                 </div>
                 <div class="node">
@@ -837,11 +837,11 @@
         <span class="arrow-label-right">Feedback Loop</span>
     </div>
 
-    <!-- Layer 6: GEBHARDT/PINAXIS -->
+    <!-- Layer 6: GEBHARDT/LOGISTICS -->
     <div class="layer layer-gebhardt">
         <div class="layer-header">
             <div class="layer-number">6</div>
-            <div class="layer-label">GEBHARDT / PINAXIS Operations — Sales Team & Customer</div>
+            <div class="layer-label">GEBHARDT / LOGISTICS Operations — Sales Team & Customer</div>
         </div>
         <div class="layer-content">
             <div class="node-grid">
@@ -882,7 +882,7 @@
         <div class="flow-step step-1">
             <div class="step-circle" data-step="1">📂</div>
             <div class="step-title">Ingest</div>
-            <div class="step-desc">Prospect uploads CSV/XLSX via PINAXIS portal. RinglyPro MCP server receives, validates schema, runs plausibility checks.</div>
+            <div class="step-desc">Prospect uploads CSV/XLSX via LOGISTICS portal. RinglyPro MCP server receives, validates schema, runs plausibility checks.</div>
         </div>
         <div class="flow-step step-2">
             <div class="step-circle" data-step="2">🔄</div>
@@ -915,10 +915,10 @@
 
 <div class="spec-grid">
     <div class="spec-card">
-        <h3><span>🔌</span> New: PINAXIS MCP Proxy</h3>
+        <h3><span>🔌</span> New: LOGISTICS MCP Proxy</h3>
         <div class="spec-item">
             <span class="spec-label">Class Name</span>
-            <span class="spec-value">PINAXISMCPProxy</span>
+            <span class="spec-value">LOGISTICSMCPProxy</span>
         </div>
         <div class="spec-item">
             <span class="spec-label">Location</span>
@@ -930,23 +930,23 @@
         </div>
         <div class="spec-item">
             <span class="spec-label">Connect Endpoint</span>
-            <span class="spec-value">/api/mcp/pinaxis/connect</span>
+            <span class="spec-value">/api/mcp/logistics/connect</span>
         </div>
         <div class="spec-item">
             <span class="spec-label">Upload Endpoint</span>
-            <span class="spec-value">/api/mcp/pinaxis/upload</span>
+            <span class="spec-value">/api/mcp/logistics/upload</span>
         </div>
         <div class="spec-item">
             <span class="spec-label">Analysis Endpoint</span>
-            <span class="spec-value">/api/mcp/pinaxis/analyze</span>
+            <span class="spec-value">/api/mcp/logistics/analyze</span>
         </div>
         <div class="spec-item">
             <span class="spec-label">Match Endpoint</span>
-            <span class="spec-value">/api/mcp/pinaxis/match</span>
+            <span class="spec-value">/api/mcp/logistics/match</span>
         </div>
         <div class="spec-item">
             <span class="spec-label">Report Endpoint</span>
-            <span class="spec-value">/api/mcp/pinaxis/report</span>
+            <span class="spec-value">/api/mcp/logistics/report</span>
         </div>
     </div>
 
@@ -1115,10 +1115,10 @@
             <div class="phase-week">Week 1</div>
             <div class="phase-title">Data Ingestion + Models</div>
             <ul class="phase-items">
-                <li>Build PINAXIS MCP Proxy class</li>
+                <li>Build LOGISTICS MCP Proxy class</li>
                 <li>CSV/XLSX parser with schema validation</li>
                 <li>PostgreSQL models for all 6 datasets</li>
-                <li>Generate synthetic sample data per PINAXIS spec</li>
+                <li>Generate synthetic sample data per LOGISTICS spec</li>
                 <li>Upload portal UI (basic)</li>
             </ul>
         </div>
@@ -1140,7 +1140,7 @@
                 <li>GEBHARDT product scoring algorithm</li>
                 <li>Multi-criteria decision matrix</li>
                 <li>Analytics dashboard with interactive charts</li>
-                <li>PDF report generator (PINAXIS-branded)</li>
+                <li>PDF report generator (LOGISTICS-branded)</li>
                 <li>AI Copilot trained on warehouse domain</li>
             </ul>
         </div>
@@ -1148,11 +1148,11 @@
             <div class="phase-week">Week 4</div>
             <div class="phase-title">Integration + Demo</div>
             <ul class="phase-items">
-                <li>Voice AI (Ana) knowledge update for PINAXIS</li>
+                <li>Voice AI (Ana) knowledge update for LOGISTICS</li>
                 <li>Email automation: auto-send reports</li>
                 <li>CRM sync: push results to SAP / GHL</li>
                 <li>End-to-end demo with synthetic data</li>
-                <li>Handoff to Sven + PINAXIS team</li>
+                <li>Handoff to Sven + LOGISTICS team</li>
             </ul>
         </div>
     </div>
@@ -1160,7 +1160,7 @@
 
 <!-- Footer -->
 <div class="footer">
-    <p>RinglyPro MCP Server &mdash; AI Orchestration for PINAXIS / GEBHARDT Intralogistics</p>
+    <p>RinglyPro MCP Server &mdash; AI Orchestration for LOGISTICS / GEBHARDT Intralogistics</p>
     <p style="margin-top: 6px;">Built by <a href="https://digit2ai.com">Digit2ai LLC</a> &middot; <a href="https://ringlypro.com">ringlypro.com</a> &middot; Contact: Manuel Stagg &middot; 656-600-1400</p>
     <p style="margin-top: 10px; color: #334155;">March 2026</p>
 </div>

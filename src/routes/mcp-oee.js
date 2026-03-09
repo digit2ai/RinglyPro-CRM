@@ -1,13 +1,13 @@
 // src/routes/mcp-oee.js — MCP OEE (Overall Equipment Effectiveness) Tool Handlers
-// Rewired to PINAXIS models (project_id scoping, machine_name text refs)
+// Rewired to LOGISTICS models (project_id scoping, machine_name text refs)
 'use strict';
 
 const express = require('express');
 const router = express.Router();
 const { calculateOEE } = require('../utils/oee');
 
-// Import PINAXIS models (auto-loaded from pinaxis/models/)
-const models = require('../../pinaxis/models');
+// Import LOGISTICS models (auto-loaded from logistics/models/)
+const models = require('../../logistics/models');
 const sequelize = models.sequelize;
 const OEEMachine = models.PinaxisOEEMachine;
 const OEEMachineEvent = models.PinaxisOEEMachineEvent;
@@ -25,7 +25,7 @@ const OEE_TOOLS = [
       type: 'object',
       properties: {
         machine_name: { type: 'string', description: 'Optional. If omitted, returns all machines.' },
-        project_id: { type: 'integer', description: 'Required for PINAXIS project scoping.' }
+        project_id: { type: 'integer', description: 'Required for LOGISTICS project scoping.' }
       },
       required: ['project_id']
     }
@@ -679,7 +679,7 @@ router.post('/demo-seed', async (req, res) => {
 router.get('/health', (req, res) => {
   res.json({
     status: 'ok',
-    module: 'OEE Tracking (PINAXIS)',
+    module: 'OEE Tracking (LOGISTICS)',
     tools: OEE_TOOLS.length,
     timestamp: new Date().toISOString()
   });

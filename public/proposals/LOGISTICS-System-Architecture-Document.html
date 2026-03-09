@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PINAXIS — System Architecture Document</title>
+<title>LOGISTICS — System Architecture Document</title>
 <style>
   :root {
     --bg: #0f172a;
@@ -122,7 +122,7 @@
   .doc-footer { padding: 48px 0; text-align: center; color: var(--muted); font-size: 12px; border-top: 1px solid var(--line); }
   .doc-footer .logos { display: flex; gap: 32px; justify-content: center; align-items: center; margin-bottom: 16px; }
   .doc-footer .logo { font-weight: 800; font-size: 18px; }
-  .doc-footer .logo-pinaxis { color: var(--accent); }
+  .doc-footer .logo-logistics { color: var(--accent); }
   .doc-footer .logo-gebhardt { color: var(--green); }
   .doc-footer .logo-ringly { color: var(--accent2); }
 
@@ -205,11 +205,11 @@
 <!-- ================================================================ -->
 <div class="doc-header">
   <div class="badge">Technical Architecture Document v1.0</div>
-  <h1><span>PINAXIS</span> System Architecture</h1>
+  <h1><span>LOGISTICS</span> System Architecture</h1>
   <p class="subtitle">Warehouse Data Analytics Platform with MCP Integration Layer, GEBHARDT Product Matching, and SAP EWM/MFS Bridge</p>
   <div class="meta">
     <span>Author: Digit2ai / RinglyPro</span>
-    <span>Client: PINAXIS LLC / GEBHARDT Group</span>
+    <span>Client: LOGISTICS LLC / GEBHARDT Group</span>
     <span>Date: March 2026</span>
     <span>Status: Production (v1.0)</span>
   </div>
@@ -243,13 +243,13 @@
 <!-- ================================================================ -->
 <div class="section" id="overview">
   <h2 class="section-title"><span class="num">1</span> System Overview & Purpose</h2>
-  <p class="section-sub">What PINAXIS does and why it exists</p>
+  <p class="section-sub">What LOGISTICS does and why it exists</p>
 
-  <p>PINAXIS is a <span class="hl">warehouse data analytics platform</span> that enables GEBHARDT Intralogistics Group's consulting arm (PINAXIS LLC) to:</p>
+  <p>LOGISTICS is a <span class="hl">warehouse data analytics platform</span> that enables GEBHARDT Intralogistics Group's consulting arm (LOGISTICS LLC) to:</p>
 
   <ol>
     <li><strong>Accept warehouse data uploads</strong> (CSV/XLSX) from prospect customers — item master, inventory, goods-in, and goods-out datasets</li>
-    <li><strong>Automatically run 8 standardized analytics</strong> that PINAXIS currently performs manually — order structure, throughput, ABC classification, fit analysis</li>
+    <li><strong>Automatically run 8 standardized analytics</strong> that LOGISTICS currently performs manually — order structure, throughput, ABC classification, fit analysis</li>
     <li><strong>Auto-match analysis results</strong> to the GEBHARDT product portfolio using a weighted multi-criteria scoring engine</li>
     <li><strong>Generate branded PDF reports</strong> with charts, KPIs, and product recommendations</li>
     <li><strong>Bridge into GEBHARDT's SAP EWM/MFS</strong> ecosystem via the RinglyPro MCP (Model Context Protocol) layer for CRM sync and downstream automation</li>
@@ -302,7 +302,7 @@
   <p class="section-sub">End-to-end system design from data input to operational output</p>
 
   <div class="arch-diagram">
-    <div class="diagram-title">PINAXIS System Architecture — 6-Layer Model</div>
+    <div class="diagram-title">LOGISTICS System Architecture — 6-Layer Model</div>
 <pre>
  ┌─────────────────────────────────────────────────────────────────────────────────┐
  │  LAYER 1: PROSPECT DATA INPUT                                                   │
@@ -329,7 +329,7 @@
  │          │                                                                      │
  │          ▼                                                                      │
  │  ┌──────────────────────────────────────────────────────────────────────────┐   │
- │  │  PostgreSQL — 8 tables (pinaxis_ prefix)                                 │   │
+ │  │  PostgreSQL — 8 tables (logistics_ prefix)                                 │   │
  │  │  ┌─────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────┐   │   │
  │  │  │Projects │ │ Uploaded │ │ Item     │ │Inventory │ │  Goods In    │   │   │
  │  │  │         │ │ Files    │ │ Master   │ │ Data     │ │  Data        │   │   │
@@ -388,7 +388,7 @@
                                                                │
                                                                ▼
  ┌─────────────────────────────────────────────────────────────────────────────────┐
- │  LAYER 6: GEBHARDT / PINAXIS OPERATIONS                                         │
+ │  LAYER 6: GEBHARDT / LOGISTICS OPERATIONS                                         │
  │                                                                                 │
  │  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐          │
  │  │ SAP EWM/MFS  │ │ Sales        │ │  Solution    │ │  Prospect    │          │
@@ -433,17 +433,17 @@
 <!-- ================================================================ -->
 <div class="section" id="mcp">
   <h2 class="section-title"><span class="num">3</span> MCP Integration Layer</h2>
-  <p class="section-sub">How PINAXIS connects to the RinglyPro Model Context Protocol ecosystem</p>
+  <p class="section-sub">How LOGISTICS connects to the RinglyPro Model Context Protocol ecosystem</p>
 
-  <p>PINAXIS operates as a <span class="hl">self-contained MCP module</span> within the RinglyPro platform. It follows the established pattern used by Store Health AI, TunjoRacing, and other modules — mounted as an Express sub-application at <span class="mono">/pinaxis</span>.</p>
+  <p>LOGISTICS operates as a <span class="hl">self-contained MCP module</span> within the RinglyPro platform. It follows the established pattern used by Store Health AI, TunjoRacing, and other modules — mounted as an Express sub-application at <span class="mono">/logistics</span>.</p>
 
   <h3>MCP Server Components</h3>
 
   <div class="card-grid">
     <div class="card">
-      <div class="tag tag-blue">PINAXIS MCP Proxy</div>
+      <div class="tag tag-blue">LOGISTICS MCP Proxy</div>
       <h4>Data Analytics Proxy</h4>
-      <p>Handles warehouse data upload, parsing, analytics orchestration, and product matching. Exposes RESTful endpoints under <span class="mono">/pinaxis/api/v1/*</span>.</p>
+      <p>Handles warehouse data upload, parsing, analytics orchestration, and product matching. Exposes RESTful endpoints under <span class="mono">/logistics/api/v1/*</span>.</p>
     </div>
     <div class="card">
       <div class="tag tag-purple">Webhook Manager</div>
@@ -463,7 +463,7 @@
     <div class="card">
       <div class="tag tag-cyan">CRM Proxy</div>
       <h4>Zero Vendor Lock-in</h4>
-      <p>Pattern-based proxy supporting SAP Sales Cloud, GoHighLevel, HubSpot, Zoho. PINAXIS results push to any connected CRM without code changes.</p>
+      <p>Pattern-based proxy supporting SAP Sales Cloud, GoHighLevel, HubSpot, Zoho. LOGISTICS results push to any connected CRM without code changes.</p>
     </div>
     <div class="card">
       <div class="tag tag-purple">Workflow Engine</div>
@@ -477,7 +477,7 @@
   <div class="arch-diagram">
     <div class="diagram-title">MCP Pipeline: Upload → Analyze → Match → Deliver</div>
 <pre>
-  Prospect          PINAXIS MCP         Analytics        Product          Delivery
+  Prospect          LOGISTICS MCP         Analytics        Product          Delivery
   Customer          Server              Engine           Matcher          Layer
      │                  │                  │                │                │
      │  Upload CSV      │                  │                │                │
@@ -510,13 +510,13 @@
 <!-- ================================================================ -->
 <div class="section" id="data">
   <h2 class="section-title"><span class="num">4</span> Data Model & Database Schema</h2>
-  <p class="section-sub">8 PostgreSQL tables with pinaxis_ prefix, Sequelize ORM</p>
+  <p class="section-sub">8 PostgreSQL tables with logistics_ prefix, Sequelize ORM</p>
 
   <div class="arch-diagram">
     <div class="diagram-title">Entity Relationship Diagram</div>
 <pre>
   ┌─────────────────────┐
-  │  pinaxis_projects    │ ◄─── Central entity: one per prospect analysis
+  │  logistics_projects    │ ◄─── Central entity: one per prospect analysis
   │─────────────────────│
   │  id (PK)            │
   │  project_code (UQ)  │──┐
@@ -556,49 +556,49 @@
     </thead>
     <tbody>
       <tr>
-        <td class="mono">pinaxis_projects</td>
+        <td class="mono">logistics_projects</td>
         <td>Project metadata per prospect</td>
         <td>project_code (unique), company_name, status, business_info (JSONB)</td>
         <td>[status], [project_code]</td>
       </tr>
       <tr>
-        <td class="mono">pinaxis_uploaded_files</td>
+        <td class="mono">logistics_uploaded_files</td>
         <td>File upload tracking</td>
         <td>file_type, parse_status, parse_errors (JSONB), plausibility_warnings (JSONB)</td>
         <td>[project_id], [project_id, file_type]</td>
       </tr>
       <tr>
-        <td class="mono">pinaxis_item_master</td>
+        <td class="mono">logistics_item_master</td>
         <td>SKU catalog with dimensions</td>
         <td>sku, length/width/height_mm, weight_kg, bin_capable (computed), batch_tracked</td>
         <td>[project_id], [project_id, sku]</td>
       </tr>
       <tr>
-        <td class="mono">pinaxis_inventory_data</td>
+        <td class="mono">logistics_inventory_data</td>
         <td>Stock levels by location</td>
         <td>sku, stock, location, storage_space, snapshot_date</td>
         <td>[project_id], [project_id, sku]</td>
       </tr>
       <tr>
-        <td class="mono">pinaxis_goods_in_data</td>
+        <td class="mono">logistics_goods_in_data</td>
         <td>Inbound deliveries</td>
         <td>receipt_id, sku, quantity, receipt_date/time, supplier</td>
         <td>[project_id], [project_id, receipt_date]</td>
       </tr>
       <tr>
-        <td class="mono">pinaxis_goods_out_data</td>
+        <td class="mono">logistics_goods_out_data</td>
         <td>Sales orders & shipments</td>
         <td>order_id, sku, quantity, ship_date/time, customer_id, shipping_method</td>
         <td>[project_id, ship_date], [project_id, order_id], [project_id, sku]</td>
       </tr>
       <tr>
-        <td class="mono">pinaxis_analysis_results</td>
+        <td class="mono">logistics_analysis_results</td>
         <td>Computed analytics output</td>
         <td>analysis_type (8 enum values), result_data (JSONB), computed_at</td>
         <td>[project_id], [project_id, analysis_type] (unique)</td>
       </tr>
       <tr>
-        <td class="mono">pinaxis_product_recommendations</td>
+        <td class="mono">logistics_product_recommendations</td>
         <td>GEBHARDT product scores</td>
         <td>product_name, fit_score (0-100), reasoning (JSONB), highlighted (boolean)</td>
         <td>[project_id], [project_id, fit_score]</td>
@@ -616,7 +616,7 @@
 
   <div class="card" style="border-left: 4px solid var(--amber); margin-bottom: 24px;">
     <div class="tag tag-amber" style="background: rgba(245,158,11,.15); color: var(--amber);">POC Phase — File Upload</div>
-    <p style="margin: 12px 0 8px;">For the initial <strong>Proof of Concept</strong> and sales analysis workflow, data is ingested via <strong>CSV/XLSX file uploads</strong>. The prospect customer exports data from their WMS/ERP system and uploads 4 files (Item Master, Inventory, Goods-In, Goods-Out) through the PINAXIS dashboard.</p>
+    <p style="margin: 12px 0 8px;">For the initial <strong>Proof of Concept</strong> and sales analysis workflow, data is ingested via <strong>CSV/XLSX file uploads</strong>. The prospect customer exports data from their WMS/ERP system and uploads 4 files (Item Master, Inventory, Goods-In, Goods-Out) through the LOGISTICS dashboard.</p>
     <ul>
       <li><strong>CSV</strong> — auto-detects delimiter (<span class="mono">;</span> or <span class="mono">,</span>), UTF-8</li>
       <li><strong>XLSX</strong> — reads first sheet, supports cell dates</li>
@@ -653,7 +653,7 @@
   </div>
 
   <h3>Column Name Normalization</h3>
-  <p>The parser supports <span class="hl">German and English column aliases</span>, allowing PINAXIS customers to use their native column headers:</p>
+  <p>The parser supports <span class="hl">German and English column aliases</span>, allowing LOGISTICS customers to use their native column headers:</p>
 
   <table>
     <thead>
@@ -688,7 +688,7 @@
 <!-- ================================================================ -->
 <div class="section" id="analytics">
   <h2 class="section-title"><span class="num">6</span> Analytics Engine (8 Computation Types)</h2>
-  <p class="section-sub">SQL-based analytics matching PINAXIS's manual consulting process</p>
+  <p class="section-sub">SQL-based analytics matching LOGISTICS's manual consulting process</p>
 
   <div class="card-grid">
     <div class="card">
@@ -738,7 +738,7 @@
   <div class="code-block">
 <code><span class="comment">// 1. Query SKU picks sorted ascending (small contributors first)</span>
 <span class="keyword">SELECT</span> sku, <span class="keyword">SUM</span>(quantity) <span class="keyword">as</span> total_picks
-<span class="keyword">FROM</span> pinaxis_goods_out_data
+<span class="keyword">FROM</span> logistics_goods_out_data
 <span class="keyword">WHERE</span> project_id = :projectId
 <span class="keyword">GROUP BY</span> sku
 <span class="keyword">ORDER BY</span> total_picks <span class="keyword">ASC</span>
@@ -861,7 +861,7 @@ fit_score = sum(criterion_score * weight) / sum(weights)
 <!-- ================================================================ -->
 <div class="section" id="sap">
   <h2 class="section-title"><span class="num">8</span> SAP EWM/MFS Integration Bridge</h2>
-  <p class="section-sub">How PINAXIS analysis results flow into GEBHARDT's SAP ecosystem</p>
+  <p class="section-sub">How LOGISTICS analysis results flow into GEBHARDT's SAP ecosystem</p>
 
   <h3>Integration Architecture</h3>
 
@@ -882,7 +882,7 @@ fit_score = sum(criterion_score * weight) / sum(weights)
                                 ┌──────────────────────────────────────────────┐
                                 │         RinglyPro MCP Server                 │
                                 │  ┌────────────────┐  ┌──────────────────┐   │
-                                │  │ PINAXIS Module  │  │  Webhook Manager │   │
+                                │  │ LOGISTICS Module  │  │  Webhook Manager │   │
                                 │  │ (Analytics +    │  │  (Event Pipeline │   │
                                 │  │  Product Match) │  │   Deduplication) │   │
                                 │  └────────────────┘  └──────────────────┘   │
@@ -966,14 +966,14 @@ fit_score = sum(criterion_score * weight) / sum(weights)
 <!-- ================================================================ -->
 <div class="section" id="api">
   <h2 class="section-title"><span class="num">9</span> API Reference</h2>
-  <p class="section-sub">All endpoints under <span class="mono">/pinaxis/api/v1/</span></p>
+  <p class="section-sub">All endpoints under <span class="mono">/logistics/api/v1/</span></p>
 
   <table>
     <thead>
       <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
     </thead>
     <tbody>
-      <tr><td><span class="tag tag-green" style="margin:0">GET</span></td><td class="mono">/pinaxis/health</td><td>Health check with DB status</td></tr>
+      <tr><td><span class="tag tag-green" style="margin:0">GET</span></td><td class="mono">/logistics/health</td><td>Health check with DB status</td></tr>
       <tr><td colspan="3" style="background:var(--panel); font-weight:600; color:var(--accent)">Projects</td></tr>
       <tr><td><span class="tag tag-blue" style="margin:0">POST</span></td><td class="mono">/api/v1/projects</td><td>Create new analysis project</td></tr>
       <tr><td><span class="tag tag-green" style="margin:0">GET</span></td><td class="mono">/api/v1/projects</td><td>List all projects</td></tr>
@@ -1022,7 +1022,7 @@ fit_score = sum(criterion_score * weight) / sum(weights)
       <tr><td>Charts</td><td>Recharts</td><td>2.15.0</td></tr>
       <tr><td>Routing</td><td>React Router</td><td>6.28.0</td></tr>
       <tr><td>Upload</td><td>react-dropzone</td><td>14.3.5</td></tr>
-      <tr><td>Base Path</td><td colspan="2" class="mono">/pinaxis/</td></tr>
+      <tr><td>Base Path</td><td colspan="2" class="mono">/logistics/</td></tr>
     </tbody>
   </table>
 
@@ -1066,7 +1066,7 @@ fit_score = sum(criterion_score * weight) / sum(weights)
 
   <h3>Report Sections</h3>
   <ol>
-    <li><strong>Cover Page</strong> — PINAXIS branding, company name, project code, generation date, "Powered by GEBHARDT"</li>
+    <li><strong>Cover Page</strong> — LOGISTICS branding, company name, project code, generation date, "Powered by GEBHARDT"</li>
     <li><strong>Overview KPIs</strong> — 4-column metric table (SKUs, orders, units, date range)</li>
     <li><strong>Order Structure</strong> — Histogram table with line count bins and cumulative %</li>
     <li><strong>Throughput Analysis</strong> — Monthly and weekday tables with orders/orderlines/units</li>
@@ -1095,7 +1095,7 @@ fit_score = sum(criterion_score * weight) / sum(weights)
     <div class="card">
       <div class="tag tag-green">Access Control</div>
       <h4>Project-Code Authentication</h4>
-      <p>POC uses simple project-code access (e.g., <span class="mono">PINAXIS-2026-001</span>). URL pattern: <span class="mono">/pinaxis/?project=CODE</span>. Path to production: JWT token per project.</p>
+      <p>POC uses simple project-code access (e.g., <span class="mono">LOGISTICS-2026-001</span>). URL pattern: <span class="mono">/logistics/?project=CODE</span>. Path to production: JWT token per project.</p>
     </div>
     <div class="card">
       <div class="tag tag-blue">Webhook Security</div>
@@ -1132,10 +1132,10 @@ fit_score = sum(criterion_score * weight) / sum(weights)
       <tr><td><strong>Database</strong></td><td>PostgreSQL on Render (shared with RinglyPro CRM)</td></tr>
       <tr><td><strong>Deploy Time</strong></td><td>~2 minutes after git push</td></tr>
       <tr><td><strong>Build Script</strong></td><td><span class="mono">build.sh</span> — installs deps, seeds DB, builds 4 dashboards</td></tr>
-      <tr><td><strong>Dashboard URL</strong></td><td><span class="mono">https://aiagent.ringlypro.com/pinaxis/</span></td></tr>
-      <tr><td><strong>Health Check</strong></td><td><span class="mono">https://aiagent.ringlypro.com/pinaxis/health</span></td></tr>
-      <tr><td><strong>API Base</strong></td><td><span class="mono">https://aiagent.ringlypro.com/pinaxis/api/v1/</span></td></tr>
-      <tr><td><strong>Debug Endpoint</strong></td><td><span class="mono">https://aiagent.ringlypro.com/debug/pinaxis-error</span></td></tr>
+      <tr><td><strong>Dashboard URL</strong></td><td><span class="mono">https://aiagent.ringlypro.com/logistics/</span></td></tr>
+      <tr><td><strong>Health Check</strong></td><td><span class="mono">https://aiagent.ringlypro.com/logistics/health</span></td></tr>
+      <tr><td><strong>API Base</strong></td><td><span class="mono">https://aiagent.ringlypro.com/logistics/api/v1/</span></td></tr>
+      <tr><td><strong>Debug Endpoint</strong></td><td><span class="mono">https://aiagent.ringlypro.com/debug/logistics-error</span></td></tr>
     </tbody>
   </table>
 
@@ -1196,7 +1196,7 @@ fit_score = sum(criterion_score * weight) / sum(weights)
     <tbody>
       <tr>
         <td><strong>Phase 2 (Wk 5-8)</strong></td>
-        <td>SAP Event Mesh webhook integration, Galileo IoT bridge, predictive maintenance dispatch, Voice AI (Ana) knowledge update for PINAXIS</td>
+        <td>SAP Event Mesh webhook integration, Galileo IoT bridge, predictive maintenance dispatch, Voice AI (Ana) knowledge update for LOGISTICS</td>
       </tr>
       <tr>
         <td><strong>Phase 3 (Wk 9-12)</strong></td>
@@ -1215,14 +1215,14 @@ fit_score = sum(criterion_score * weight) / sum(weights)
 <!-- ================================================================ -->
 <div class="doc-footer">
   <div class="logos">
-    <span class="logo logo-pinaxis">PINAXIS</span>
+    <span class="logo logo-logistics">LOGISTICS</span>
     <span style="color:var(--line)">|</span>
     <span class="logo logo-gebhardt">GEBHARDT</span>
     <span style="color:var(--line)">|</span>
     <span class="logo logo-ringly">RinglyPro</span>
   </div>
   <p>System Architecture Document v1.0 — March 2026</p>
-  <p>Generated by Digit2ai for PINAXIS LLC / GEBHARDT Intralogistics Group</p>
+  <p>Generated by Digit2ai for LOGISTICS LLC / GEBHARDT Intralogistics Group</p>
   <p style="margin-top: 8px; color: #64748b;">Confidential. For internal technical review only.</p>
 </div>
 
