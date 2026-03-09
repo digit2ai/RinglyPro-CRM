@@ -187,11 +187,41 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-secondary);
-  padding-bottom: 8px;
+  padding: 10px 0 10px 0;
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.section-header.collapsible {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.section-header.collapsible:active {
+  opacity: 0.7;
+}
+
+.section-chevron {
+  display: inline-block;
+  font-size: 14px;
+  transition: transform 0.2s ease;
+}
+
+.section-header:not(.collapsed) .section-chevron {
+  transform: rotate(90deg);
+}
+
+.section-items {
+  overflow: hidden;
+  transition: max-height 0.25s ease;
+  max-height: 2000px;
+}
+
+.section-items.collapsed {
+  max-height: 0;
 }
 
 .section-header .count {

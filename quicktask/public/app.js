@@ -157,12 +157,16 @@ function renderTasks() {
 }
 
 function renderSection(title, items, count) {
+  const groupId = 'group-' + title.toLowerCase().replace(/\s+/g, '-');
   return `
     <div class="section">
-      <div class="section-header">
+      <div class="section-header collapsible collapsed" onclick="toggleGroup('${groupId}', this)">
+        <span class="section-chevron">&#9656;</span>
         ${title} <span class="count">${count}</span>
       </div>
-      ${items.map(t => renderTaskItem(t, false)).join('')}
+      <div class="section-items collapsed" id="${groupId}">
+        ${items.map(t => renderTaskItem(t, false)).join('')}
+      </div>
     </div>
   `;
 }
@@ -170,12 +174,23 @@ function renderSection(title, items, count) {
 function renderCompletedSection(items) {
   return `
     <div class="section">
-      <div class="section-header completed-header">
+      <div class="section-header completed-header collapsible collapsed" onclick="toggleGroup('group-completed', this)">
+        <span class="section-chevron">&#9656;</span>
         Completadas <span class="count">${items.length}</span>
       </div>
-      ${items.map(t => renderTaskItem(t, true)).join('')}
+      <div class="section-items collapsed" id="group-completed">
+        ${items.map(t => renderTaskItem(t, true)).join('')}
+      </div>
     </div>
   `;
+}
+
+function toggleGroup(groupId, headerEl) {
+  const body = document.getElementById(groupId);
+  if (!body) return;
+  const isCollapsed = body.classList.contains('collapsed');
+  body.classList.toggle('collapsed');
+  headerEl.classList.toggle('collapsed');
 }
 
 function renderTaskItem(task, isCompleted) {
