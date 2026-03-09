@@ -156,6 +156,7 @@ app.get('*', (req, res) => {
         "updatedAt" TIMESTAMPTZ DEFAULT NOW()
       )`,
       `ALTER TABLE d2_tasks ADD COLUMN IF NOT EXISTS assigned_staff_id INTEGER`,
+      `ALTER TABLE d2_tasks ADD COLUMN IF NOT EXISTS quicktask_id INTEGER`,
       `ALTER TABLE d2_projects ADD COLUMN IF NOT EXISTS lead_staff_id INTEGER`
     ];
     for (const sql of staffMigrations) {

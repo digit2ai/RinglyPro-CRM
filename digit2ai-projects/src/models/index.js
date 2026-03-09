@@ -167,7 +167,8 @@ const Task = sequelize.define('Task', {
   due_date: DataTypes.DATE,
   reminder_date: DataTypes.DATE,
   reminder_sent: { type: DataTypes.BOOLEAN, defaultValue: false },
-  completed_at: DataTypes.DATE
+  completed_at: DataTypes.DATE,
+  quicktask_id: DataTypes.INTEGER
 }, { tableName: 'd2_tasks' });
 
 // =====================================================

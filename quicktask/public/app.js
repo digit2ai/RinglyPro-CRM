@@ -20,18 +20,9 @@ let speechLang = localStorage.getItem('speechLang') || 'es-US';
 let defaultAssignee = 'manuel';
 let micTimeout = null;
 
-// Detect country via IP geolocation
-async function detectCountry() {
-  try {
-    const res = await fetch('https://ipapi.co/country_code/', { signal: AbortSignal.timeout(3000) });
-    const code = (await res.text()).trim();
-    defaultAssignee = code === 'US' ? 'manuel' : 'gonzalo';
-  } catch (e) {
-    // Fallback: use timezone — US timezones start with "America/" and are in US zones
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
-    const usZones = ['America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles', 'America/Anchorage', 'America/Adak', 'Pacific/Honolulu', 'America/Phoenix', 'America/Boise', 'America/Detroit', 'America/Indiana', 'America/Kentucky'];
-    defaultAssignee = usZones.some(z => tz.startsWith(z)) ? 'manuel' : 'gonzalo';
-  }
+// Default assignee — always manuel (team: manuel, unai, carlos, ting)
+function detectCountry() {
+  defaultAssignee = 'manuel';
 }
 
 // === API Calls ===
@@ -126,14 +117,21 @@ function renderTasks() {
   const pending = tasks.filter(t => t.status === 'pending');
   const completed = tasks.filter(t => t.status === 'completed');
 
-  const manuel = pending.filter(t => t.assigned_to === 'manuel' || !t.assigned_to);
-  const gonzalo = pending.filter(t => t.assigned_to === 'gonzalo');
+  const staff = ['manuel', 'unai', 'carlos', 'ting'];
+  const grouped = {};
+  staff.forEach(s => { grouped[s] = []; });
+  grouped['other'] = [];
+  pending.forEach(t => {
+    const key = staff.includes(t.assigned_to) ? t.assigned_to : (t.assigned_to || 'manuel');
+    if (grouped[key]) grouped[key].push(t);
+    else grouped['other'].push(t);
+  });
 
   if (tasks.length === 0) {
     taskList.innerHTML = `
       <div class="empty-state">
-        <div class="emoji">&#127937;</div>
-        <p>No hay tareas.<br>Escribe o habla para agregar una!</p>
+        <div class="emoji">&#9889;</div>
+        <p>No tasks yet.<br>Type or speak to add one!</p>
       </div>
     `;
     return;
@@ -141,12 +139,13 @@ function renderTasks() {
 
   let html = '';
 
-  if (gonzalo.length > 0) {
-    html += renderSection('Gonzalo', gonzalo, gonzalo.length);
-  }
-
-  if (manuel.length > 0) {
-    html += renderSection('Manuel', manuel, manuel.length);
+  staff.forEach(name => {
+    if (grouped[name].length > 0) {
+      html += renderSection(capitalize(name), grouped[name], grouped[name].length);
+    }
+  });
+  if (grouped['other'].length > 0) {
+    html += renderSection('Other', grouped['other'], grouped['other'].length);
   }
 
   if (completed.length > 0) {
