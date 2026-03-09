@@ -2036,7 +2036,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Navigation
   document.querySelectorAll('.sidebar-nav li').forEach(li => {
-    li.addEventListener('click', () => navigateTo(li.dataset.view));
+    li.addEventListener('click', () => {
+      if (li.dataset.view) navigateTo(li.dataset.view);
+      // Close sidebar on mobile after selection
+      if (window.innerWidth <= 768) {
+        document.getElementById('sidebar').classList.remove('mobile-open');
+        document.getElementById('sidebar-overlay').classList.add('hidden');
+      }
+    });
   });
 
   // Sidebar toggle
