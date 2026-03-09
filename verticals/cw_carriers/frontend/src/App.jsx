@@ -17,6 +17,7 @@ import Reports from './pages/Reports';
 import Offers from './pages/Offers';
 import CheckCalls from './pages/CheckCalls';
 import Billing from './pages/Billing';
+import Warehouse from './pages/Warehouse';
 
 const BASE = '/cw_carriers';
 
@@ -48,6 +49,7 @@ function Sidebar({ open, onClose }) {
     { path: `${BASE}/billing`, label: 'Billing', icon: '\u{1F4B5}' },
     { path: `${BASE}/nlp`, label: 'NLP Assistant', icon: '\u{1F916}' },
     { path: `${BASE}/analytics`, label: 'Analytics', icon: '\u{1F4C8}' },
+    { path: `${BASE}/warehouse`, label: 'Warehouse', icon: '\u{1F3ED}' },
     { path: `${BASE}/tms`, label: 'TMS Bridge', icon: '\u{1F310}' },
     { path: `${BASE}/reports`, label: 'Reports', icon: '\u{1F4C4}' },
     { path: `${BASE}/hubspot`, label: 'HubSpot Sync', icon: '\u{1F504}' },
@@ -156,6 +158,7 @@ export default function App() {
         <Route path={`${BASE}/offers`} element={<ProtectedRoute><Layout><Offers /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/tracking`} element={<ProtectedRoute><Layout><CheckCalls /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/billing`} element={<ProtectedRoute><Layout><Billing /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/warehouse`} element={<ProtectedRoute><Layout><Warehouse /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/hubspot`} element={<ProtectedRoute><Layout><HubSpot /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/settings`} element={<ProtectedRoute><Layout><Settings /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/demo`} element={<ProtectedRoute><Layout><Demo /></Layout></ProtectedRoute>} />
