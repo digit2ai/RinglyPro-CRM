@@ -19,6 +19,9 @@ const activityRoutes = require('./routes/activity');
 const verticalsRoutes = require('./routes/verticals');
 const nlpRoutes = require('./routes/nlp');
 const staffRoutes = require('./routes/staff');
+const pipelineRoutes = require('./routes/pipeline');
+const campaignRoutes = require('./routes/campaigns');
+const workflowRoutes = require('./routes/workflows');
 
 const app = express();
 
@@ -62,6 +65,16 @@ app.use('/api/v1/activity', authenticateToken, activityRoutes);
 app.use('/api/v1/verticals', authenticateToken, verticalsRoutes);
 app.use('/api/v1/nlp', authenticateToken, nlpRoutes);
 app.use('/api/v1/staff', authenticateToken, staffRoutes);
+app.use('/api/v1/pipeline', authenticateToken, pipelineRoutes);
+app.use('/api/v1/campaigns', authenticateToken, campaignRoutes);
+app.use('/api/v1/workflows', authenticateToken, workflowRoutes);
+
+// SendGrid webhook (unauthenticated — called by SendGrid)
+app.post('/api/v1/webhooks/sendgrid', express.json({ limit: '5mb' }), (req, res, next) => {
+  const campaignRoute = require('./routes/campaigns');
+  req.url = '/webhook/sendgrid';
+  campaignRoute.handle(req, res, next);
+});
 
 // SPA catch-all: serve dashboard for all non-API routes
 app.get('*', (req, res) => {
@@ -176,6 +189,95 @@ app.get('*', (req, res) => {
       }
     }
     console.log('[D2AI-Projects] Staff tables ready');
+
+    // Pipeline & Workflow migrations
+    const pipelineMigrations = [
+      `ALTER TABLE d2_contacts ADD COLUMN IF NOT EXISTS pipeline_stage VARCHAR(50) DEFAULT 'prospect'`,
+      `ALTER TABLE d2_contacts ADD COLUMN IF NOT EXISTS last_email_event VARCHAR(50)`,
+      `ALTER TABLE d2_contacts ADD COLUMN IF NOT EXISTS last_email_event_at TIMESTAMPTZ`,
+      `ALTER TABLE d2_contacts ADD COLUMN IF NOT EXISTS workflow_id INTEGER`,
+      `CREATE TABLE IF NOT EXISTS d2_pipeline_history (
+        id SERIAL PRIMARY KEY,
+        workspace_id INTEGER NOT NULL DEFAULT 1,
+        contact_id INTEGER NOT NULL,
+        from_stage VARCHAR(50),
+        to_stage VARCHAR(50) NOT NULL,
+        trigger_type VARCHAR(50) DEFAULT 'manual',
+        trigger_detail TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      `CREATE TABLE IF NOT EXISTS d2_email_campaigns (
+        id SERIAL PRIMARY KEY,
+        workspace_id INTEGER NOT NULL DEFAULT 1,
+        name VARCHAR(500) NOT NULL,
+        subject VARCHAR(500) NOT NULL,
+        body_html TEXT NOT NULL,
+        from_name VARCHAR(255),
+        from_email VARCHAR(255),
+        target_stage VARCHAR(50),
+        target_vertical_id INTEGER,
+        status VARCHAR(50) DEFAULT 'draft',
+        sent_count INTEGER DEFAULT 0,
+        open_count INTEGER DEFAULT 0,
+        click_count INTEGER DEFAULT 0,
+        reply_count INTEGER DEFAULT 0,
+        bounce_count INTEGER DEFAULT 0,
+        sent_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      `CREATE TABLE IF NOT EXISTS d2_email_sends (
+        id SERIAL PRIMARY KEY,
+        campaign_id INTEGER NOT NULL,
+        contact_id INTEGER NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        status VARCHAR(50) DEFAULT 'queued',
+        sg_message_id VARCHAR(255),
+        opened_at TIMESTAMPTZ,
+        clicked_at TIMESTAMPTZ,
+        replied_at TIMESTAMPTZ,
+        bounced_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      `CREATE TABLE IF NOT EXISTS d2_workflows (
+        id SERIAL PRIMARY KEY,
+        workspace_id INTEGER NOT NULL DEFAULT 1,
+        name VARCHAR(500) NOT NULL,
+        description TEXT,
+        trigger_type VARCHAR(50) DEFAULT 'manual',
+        active BOOLEAN DEFAULT true,
+        steps JSONB DEFAULT '[]',
+        settings JSONB DEFAULT '{}',
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      `CREATE TABLE IF NOT EXISTS d2_workflow_runs (
+        id SERIAL PRIMARY KEY,
+        workflow_id INTEGER NOT NULL,
+        contact_id INTEGER NOT NULL,
+        current_step INTEGER DEFAULT 0,
+        status VARCHAR(50) DEFAULT 'active',
+        next_action_at TIMESTAMPTZ,
+        completed_at TIMESTAMPTZ,
+        step_data JSONB DEFAULT '{}',
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_d2_contacts_pipeline ON d2_contacts(pipeline_stage)`,
+      `CREATE INDEX IF NOT EXISTS idx_d2_email_sends_campaign ON d2_email_sends(campaign_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_d2_email_sends_contact ON d2_email_sends(contact_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_d2_email_sends_msg ON d2_email_sends(sg_message_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_d2_pipeline_history_contact ON d2_pipeline_history(contact_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_d2_workflow_runs_contact ON d2_workflow_runs(contact_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_d2_workflow_runs_next ON d2_workflow_runs(next_action_at) WHERE status = 'active'`
+    ];
+    for (const sql of pipelineMigrations) {
+      try { await sequelize.query(sql); } catch (e) {
+        if (!e.message.includes('already exists')) console.log('[D2AI-Projects] Pipeline migration notice:', e.message.substring(0, 100));
+      }
+    }
+    console.log('[D2AI-Projects] Pipeline & workflow tables ready');
 
     // Sync models (safe - won't drop existing)
     await sequelize.sync({ alter: false });

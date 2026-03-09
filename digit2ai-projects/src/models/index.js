@@ -82,7 +82,11 @@ const Contact = sequelize.define('Contact', {
   next_followup_date: DataTypes.DATEONLY,
   last_interaction_date: DataTypes.DATE,
   avatar_url: DataTypes.STRING(500),
-  archived_at: DataTypes.DATE
+  archived_at: DataTypes.DATE,
+  pipeline_stage: { type: DataTypes.STRING(50), defaultValue: 'prospect' },
+  last_email_event: DataTypes.STRING(50),
+  last_email_event_at: DataTypes.DATE,
+  workflow_id: DataTypes.INTEGER
 }, { tableName: 'd2_contacts' });
 
 // =====================================================
@@ -289,6 +293,85 @@ const Responsibility = sequelize.define('Responsibility', {
 }, { tableName: 'd2_responsibilities' });
 
 // =====================================================
+// PIPELINE HISTORY
+// =====================================================
+const PipelineHistory = sequelize.define('PipelineHistory', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  workspace_id: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
+  contact_id: { type: DataTypes.INTEGER, allowNull: false },
+  from_stage: DataTypes.STRING(50),
+  to_stage: { type: DataTypes.STRING(50), allowNull: false },
+  trigger_type: { type: DataTypes.STRING(50), defaultValue: 'manual' },
+  trigger_detail: DataTypes.TEXT
+}, { tableName: 'd2_pipeline_history', updatedAt: false });
+
+// =====================================================
+// EMAIL CAMPAIGN
+// =====================================================
+const EmailCampaign = sequelize.define('EmailCampaign', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  workspace_id: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
+  name: { type: DataTypes.STRING(500), allowNull: false },
+  subject: { type: DataTypes.STRING(500), allowNull: false },
+  body_html: { type: DataTypes.TEXT, allowNull: false },
+  from_name: DataTypes.STRING(255),
+  from_email: DataTypes.STRING(255),
+  target_stage: DataTypes.STRING(50),
+  target_vertical_id: DataTypes.INTEGER,
+  status: { type: DataTypes.STRING(50), defaultValue: 'draft' },
+  sent_count: { type: DataTypes.INTEGER, defaultValue: 0 },
+  open_count: { type: DataTypes.INTEGER, defaultValue: 0 },
+  click_count: { type: DataTypes.INTEGER, defaultValue: 0 },
+  reply_count: { type: DataTypes.INTEGER, defaultValue: 0 },
+  bounce_count: { type: DataTypes.INTEGER, defaultValue: 0 },
+  sent_at: DataTypes.DATE
+}, { tableName: 'd2_email_campaigns' });
+
+// =====================================================
+// EMAIL SEND (individual send per contact)
+// =====================================================
+const EmailSend = sequelize.define('EmailSend', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  campaign_id: { type: DataTypes.INTEGER, allowNull: false },
+  contact_id: { type: DataTypes.INTEGER, allowNull: false },
+  email: { type: DataTypes.STRING(255), allowNull: false },
+  status: { type: DataTypes.STRING(50), defaultValue: 'queued' },
+  sg_message_id: DataTypes.STRING(255),
+  opened_at: DataTypes.DATE,
+  clicked_at: DataTypes.DATE,
+  replied_at: DataTypes.DATE,
+  bounced_at: DataTypes.DATE
+}, { tableName: 'd2_email_sends' });
+
+// =====================================================
+// WORKFLOW
+// =====================================================
+const Workflow = sequelize.define('Workflow', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  workspace_id: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
+  name: { type: DataTypes.STRING(500), allowNull: false },
+  description: DataTypes.TEXT,
+  trigger_type: { type: DataTypes.STRING(50), defaultValue: 'manual' },
+  active: { type: DataTypes.BOOLEAN, defaultValue: true },
+  steps: { type: DataTypes.JSONB, defaultValue: [] },
+  settings: { type: DataTypes.JSONB, defaultValue: {} }
+}, { tableName: 'd2_workflows' });
+
+// =====================================================
+// WORKFLOW RUN (execution state per contact)
+// =====================================================
+const WorkflowRun = sequelize.define('WorkflowRun', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  workflow_id: { type: DataTypes.INTEGER, allowNull: false },
+  contact_id: { type: DataTypes.INTEGER, allowNull: false },
+  current_step: { type: DataTypes.INTEGER, defaultValue: 0 },
+  status: { type: DataTypes.STRING(50), defaultValue: 'active' },
+  next_action_at: DataTypes.DATE,
+  completed_at: DataTypes.DATE,
+  step_data: { type: DataTypes.JSONB, defaultValue: {} }
+}, { tableName: 'd2_workflow_runs' });
+
+// =====================================================
 // ASSOCIATIONS
 // =====================================================
 
@@ -352,6 +435,26 @@ Task.belongsTo(StaffMember, { foreignKey: 'assigned_staff_id', as: 'assignee' })
 StaffMember.hasMany(Project, { foreignKey: 'lead_staff_id', as: 'led_projects' });
 Project.belongsTo(StaffMember, { foreignKey: 'lead_staff_id', as: 'lead' });
 
+// Contact <-> Pipeline History
+Contact.hasMany(PipelineHistory, { foreignKey: 'contact_id', as: 'pipeline_history' });
+PipelineHistory.belongsTo(Contact, { foreignKey: 'contact_id', as: 'contact' });
+
+// Campaign <-> Email Sends
+EmailCampaign.hasMany(EmailSend, { foreignKey: 'campaign_id', as: 'sends' });
+EmailSend.belongsTo(EmailCampaign, { foreignKey: 'campaign_id', as: 'campaign' });
+
+// Contact <-> Email Sends
+Contact.hasMany(EmailSend, { foreignKey: 'contact_id', as: 'email_sends' });
+EmailSend.belongsTo(Contact, { foreignKey: 'contact_id', as: 'contact' });
+
+// Workflow <-> Workflow Runs
+Workflow.hasMany(WorkflowRun, { foreignKey: 'workflow_id', as: 'runs' });
+WorkflowRun.belongsTo(Workflow, { foreignKey: 'workflow_id', as: 'workflow' });
+
+// Contact <-> Workflow Runs
+Contact.hasMany(WorkflowRun, { foreignKey: 'contact_id', as: 'workflow_runs' });
+WorkflowRun.belongsTo(Contact, { foreignKey: 'contact_id', as: 'contact' });
+
 module.exports = {
   sequelize,
   Workspace,
@@ -371,5 +474,10 @@ module.exports = {
   StaffMember,
   Role,
   StaffRole,
-  Responsibility
+  Responsibility,
+  PipelineHistory,
+  EmailCampaign,
+  EmailSend,
+  Workflow,
+  WorkflowRun
 };

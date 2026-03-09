@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0B3D91">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Lactotec">
+    <meta name="description" content="Plataforma integral para la gestion de recepcion, calidad, nomina e inteligencia artificial en plantas lecheras.">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+    <title>Lactotec | Soluciones en Tecnologia Lactea</title>
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #0B3D91;
+            --primary-light: #1565C0;
+            --accent: #00A86B;
+            --accent-light: #00C77B;
+            --dark: #0D1B2A;
+            --gray-900: #1B2838;
+            --gray-700: #374151;
+            --gray-400: #9CA3AF;
+            --gray-200: #E5E7EB;
+            --gray-100: #F3F4F6;
+            --white: #FFFFFF;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            color: var(--gray-700);
+            line-height: 1.6;
+            background: var(--white);
+        }
+
+        /* NAV */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            background: rgba(255,255,255,0.97);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--gray-200);
+            transition: box-shadow 0.3s;
+        }
+        nav.scrolled { box-shadow: 0 2px 20px rgba(0,0,0,0.08); }
+        .nav-inner {
+            max-width: 1200px; margin: 0 auto;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 24px; height: 72px;
+        }
+        .logo {
+            text-decoration: none; display: flex; align-items: center;
+        }
+        .logo-img { height: 72px; width: auto; }
+        .nav-brand { display: flex; align-items: center; gap: 14px; }
+        .nav-powered {
+            display: flex; align-items: center; gap: 6px;
+            text-decoration: none; color: var(--gray-500);
+            font-size: 0.7rem; font-weight: 500;
+            border-left: 1.5px solid var(--gray-200);
+            padding-left: 14px;
+            transition: color 0.2s;
+        }
+        .nav-powered:hover { color: var(--primary); }
+        .nav-powered img { height: 20px; width: auto; }
+        .nav-powered .nav-rp-text { font-weight: 700; color: var(--accent); font-size: 0.75rem; }
+        .nav-links { display: flex; gap: 32px; list-style: none; align-items: center; }
+        .nav-links a {
+            text-decoration: none; color: var(--gray-700);
+            font-size: 0.95rem; font-weight: 500;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--primary); }
+        .nav-cta {
+            background: var(--primary); color: var(--white) !important;
+            padding: 10px 24px; border-radius: 8px;
+            font-weight: 600 !important;
+            transition: background 0.2s, transform 0.2s;
+        }
+        .nav-cta:hover { background: var(--primary-light); transform: translateY(-1px); }
+
+        /* LANG SWITCHER */
+        .lang-switch {
+            display: flex; align-items: center; gap: 4px;
+            background: var(--gray-100); border-radius: 8px;
+            padding: 3px; border: 1px solid var(--gray-200);
+        }
+        .lang-btn {
+            padding: 6px 12px; border: none; border-radius: 6px;
+            font-size: 0.8rem; font-weight: 700; cursor: pointer;
+            background: transparent; color: var(--gray-400);
+            transition: all 0.2s; text-transform: uppercase;
+        }
+        .lang-btn.active {
+            background: var(--white); color: var(--primary);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        }
+
+        .mobile-toggle { display: none; background: none; border: none; cursor: pointer; padding: 8px; }
+        .mobile-toggle span {
+            display: block; width: 24px; height: 2px;
+            background: var(--gray-700); margin: 5px 0; border-radius: 2px;
+            transition: 0.3s;
+        }
+
+        /* HERO */
+        .hero {
+            min-height: 100vh; display: flex; align-items: center;
+            background: linear-gradient(135deg, var(--dark) 0%, var(--primary) 100%);
+            position: relative; overflow: hidden;
+            padding: 120px 24px 80px;
+        }
+        .hero::before {
+            content: ''; position: absolute; inset: 0;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(0,168,107,0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(21,101,192,0.2) 0%, transparent 40%);
+        }
+        .hero-grid {
+            max-width: 1200px; margin: 0 auto; width: 100%;
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 60px; align-items: center; position: relative; z-index: 1;
+        }
+        .hero h1 {
+            font-size: clamp(2.5rem, 5vw, 3.8rem);
+            color: var(--white); font-weight: 800;
+            line-height: 1.1; margin-bottom: 20px;
+            letter-spacing: -1px;
+        }
+        .hero h1 .highlight { color: var(--accent-light); }
+        .hero p {
+            font-size: 1.15rem; color: rgba(255,255,255,0.8);
+            margin-bottom: 36px; max-width: 520px;
+        }
+        .hero-buttons { display: flex; gap: 16px; flex-wrap: wrap; }
+        .btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 14px 32px; border-radius: 10px;
+            font-size: 1rem; font-weight: 600;
+            text-decoration: none; cursor: pointer; border: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn:hover { transform: translateY(-2px); }
+        .btn-primary {
+            background: var(--accent); color: var(--white);
+            box-shadow: 0 4px 20px rgba(0,168,107,0.4);
+        }
+        .btn-primary:hover { box-shadow: 0 6px 30px rgba(0,168,107,0.5); }
+        .btn-outline {
+            background: transparent; color: var(--white);
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+        .btn-outline:hover { border-color: var(--white); }
+        .hero-visual {
+            display: flex; justify-content: center; align-items: center;
+        }
+        .hero-image-wrap {
+            width: 100%; max-width: 520px; position: relative;
+            border-radius: 20px; overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            border: 2px solid rgba(255,255,255,0.12);
+        }
+        .hero-image-wrap img {
+            width: 100%; height: auto; display: block;
+        }
+        .hero-image-wrap::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(180deg, transparent 60%, rgba(13,27,42,0.5) 100%);
+            pointer-events: none;
+        }
+        .hero-stats-row {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            z-index: 2; padding: 16px 20px;
+            background: rgba(0,0,0,0.45); backdrop-filter: blur(8px);
+            border-top: 1px solid rgba(255,255,255,0.08);
+        }
+        .hero-stats-row .mini-stat { text-align: center; }
+        .hero-stats-row .number {
+            font-size: 1.3rem; font-weight: 800; color: var(--accent-light);
+            display: block; line-height: 1.2;
+        }
+        .hero-stats-row .label {
+            font-size: 0.65rem; color: rgba(255,255,255,0.55);
+            margin-top: 2px; display: block;
+        }
+
+        /* TRUST BAR */
+        .trust-bar {
+            background: var(--gray-100); padding: 40px 24px;
+            text-align: center;
+        }
+        .trust-bar p {
+            font-size: 0.85rem; color: var(--gray-400);
+            text-transform: uppercase; letter-spacing: 2px;
+            font-weight: 600; margin-bottom: 24px;
+        }
+        .trust-logos {
+            display: flex; align-items: center; justify-content: center;
+            gap: 48px; flex-wrap: wrap; opacity: 0.5;
+            font-size: 1.2rem; font-weight: 700; color: var(--gray-700);
+        }
+
+        /* SECTIONS */
+        section { padding: 100px 24px; }
+        .section-header {
+            text-align: center; max-width: 640px;
+            margin: 0 auto 64px;
+        }
+        .section-label {
+            font-size: 0.8rem; text-transform: uppercase;
+            letter-spacing: 3px; font-weight: 700;
+            color: var(--accent); margin-bottom: 12px;
+        }
+        .section-header h2 {
+            font-size: clamp(2rem, 4vw, 2.8rem);
+            color: var(--dark); font-weight: 800;
+            line-height: 1.15; margin-bottom: 16px;
+        }
+        .section-header p { font-size: 1.1rem; color: var(--gray-400); }
+
+        /* SERVICES */
+        .services-grid {
+            max-width: 1200px; margin: 0 auto;
+            display: grid; grid-template-columns: repeat(2, 1fr);
+            gap: 32px;
+        }
+        .service-card {
+            background: var(--white); padding: 40px 32px;
+            border-radius: 16px; border: 1px solid var(--gray-200);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .service-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+        }
+        .service-icon {
+            width: 56px; height: 56px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.6rem; margin-bottom: 20px;
+        }
+        .icon-blue { background: rgba(11,61,145,0.1); }
+        .icon-green { background: rgba(0,168,107,0.1); }
+        .icon-purple { background: rgba(124,58,237,0.1); }
+        .icon-orange { background: rgba(234,88,12,0.1); }
+        .service-card h3 {
+            font-size: 1.25rem; color: var(--dark);
+            font-weight: 700; margin-bottom: 12px;
+        }
+        .service-card p { color: var(--gray-400); font-size: 0.95rem; }
+
+        /* ABOUT */
+        .about { background: var(--gray-100); }
+        .about-grid {
+            max-width: 1200px; margin: 0 auto;
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 80px; align-items: center;
+        }
+        .about-image {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            border-radius: 20px; aspect-ratio: 4/3;
+            display: flex; align-items: center; justify-content: center;
+            position: relative; overflow: hidden;
+        }
+        .about-image::after {
+            content: ''; position: absolute; inset: 0;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='80' fill='none' stroke='rgba(255,255,255,0.1)' stroke-width='1'/%3E%3Ccircle cx='100' cy='100' r='60' fill='none' stroke='rgba(255,255,255,0.08)' stroke-width='1'/%3E%3Ccircle cx='100' cy='100' r='40' fill='none' stroke='rgba(255,255,255,0.06)' stroke-width='1'/%3E%3C/svg%3E") center/cover;
+        }
+        .about-image-text {
+            position: relative; z-index: 1;
+            color: var(--white); text-align: center; padding: 40px;
+        }
+        .about-image-text .big { font-size: 4rem; font-weight: 800; display: block; }
+        .about-image-text .sub { font-size: 1.1rem; opacity: 0.8; }
+        .about-content h2 {
+            font-size: 2.4rem; color: var(--dark);
+            font-weight: 800; margin-bottom: 20px; line-height: 1.15;
+        }
+        .about-content > p {
+            color: var(--gray-400); font-size: 1.05rem;
+            margin-bottom: 32px;
+        }
+        .about-list { list-style: none; display: flex; flex-direction: column; gap: 16px; }
+        .about-list li {
+            display: flex; align-items: flex-start; gap: 12px;
+            font-size: 1rem; color: var(--gray-700);
+        }
+        .check {
+            width: 24px; height: 24px; border-radius: 50%;
+            background: rgba(0,168,107,0.12); color: var(--accent);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; font-size: 0.8rem; font-weight: 700; padding-top: 2px;
+        }
+
+        /* SHOWCASE */
+        .showcase-section {
+            padding: 60px 24px; background: var(--white);
+        }
+        .showcase-wrap {
+            max-width: 1200px; margin: 0 auto;
+            border-radius: 20px; overflow: hidden;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+            border: 1px solid var(--gray-200);
+        }
+        .showcase-wrap img {
+            width: 100%; height: auto; display: block;
+        }
+
+        /* PRODUCTS */
+        .products-grid {
+            max-width: 1200px; margin: 0 auto;
+            display: grid; grid-template-columns: repeat(2, 1fr);
+            gap: 32px;
+        }
+        .product-card {
+            background: var(--white); border-radius: 16px;
+            border: 1px solid var(--gray-200); overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+        }
+        .product-top {
+            height: 200px; display: flex; align-items: center; justify-content: center;
+            font-size: 4rem; font-weight: 800; color: rgba(0,0,0,0.12);
+            letter-spacing: -2px; position: relative;
+        }
+        .product-top.bg-1 { background: linear-gradient(135deg, #E3F2FD, #BBDEFB); }
+        .product-top.bg-2 { background: linear-gradient(135deg, #E8F5E9, #C8E6C9); }
+        .product-top.bg-3 { background: linear-gradient(135deg, #FFF3E0, #FFE0B2); }
+        .product-top.bg-4 { background: linear-gradient(135deg, #F3E5F5, #E1BEE7); }
+        .product-body { padding: 28px 32px; }
+        .product-body h3 {
+            font-size: 1.2rem; color: var(--dark);
+            font-weight: 700; margin-bottom: 8px;
+        }
+        .product-body p { color: var(--gray-400); font-size: 0.92rem; }
+
+        /* STATS */
+        .stats {
+            background: linear-gradient(135deg, var(--dark) 0%, var(--primary) 100%);
+            padding: 80px 24px;
+        }
+        .stats-grid {
+            max-width: 1000px; margin: 0 auto;
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 32px; text-align: center;
+        }
+        .stats-grid .number {
+            font-size: 2.8rem; font-weight: 800;
+            color: var(--accent-light); display: block;
+        }
+        .stats-grid .label {
+            font-size: 0.9rem; color: rgba(255,255,255,0.6);
+            margin-top: 4px;
+        }
+
+        /* CTA */
+        .cta-section {
+            background: var(--gray-100); text-align: center;
+        }
+        .cta-box {
+            max-width: 720px; margin: 0 auto;
+            background: var(--white);
+            border-radius: 24px; padding: 64px 48px;
+            border: 1px solid var(--gray-200);
+            box-shadow: 0 8px 40px rgba(0,0,0,0.06);
+        }
+        .cta-box h2 {
+            font-size: 2.2rem; color: var(--dark);
+            font-weight: 800; margin-bottom: 16px;
+        }
+        .cta-box p {
+            color: var(--gray-400); margin-bottom: 32px;
+            font-size: 1.05rem;
+        }
+        .cta-box .btn-primary {
+            background: var(--primary);
+            box-shadow: 0 4px 20px rgba(11,61,145,0.3);
+        }
+        .cta-box .btn-primary:hover {
+            box-shadow: 0 6px 30px rgba(11,61,145,0.4);
+        }
+
+        /* FOOTER */
+        footer {
+            background: var(--dark); color: rgba(255,255,255,0.5);
+            padding: 64px 24px 32px;
+        }
+        .footer-grid {
+            max-width: 1200px; margin: 0 auto;
+            display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 48px; margin-bottom: 48px;
+        }
+        .footer-brand .logo { font-size: 1.4rem; }
+        .footer-brand p { margin-top: 16px; font-size: 0.9rem; line-height: 1.7; }
+        footer h4 {
+            color: var(--white); font-size: 0.9rem;
+            font-weight: 600; margin-bottom: 16px;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        footer ul { list-style: none; }
+        footer ul li { margin-bottom: 10px; }
+        footer ul a {
+            color: rgba(255,255,255,0.5); text-decoration: none;
+            font-size: 0.9rem; transition: color 0.2s;
+        }
+        footer ul a:hover { color: var(--accent-light); }
+        .footer-bottom {
+            max-width: 1200px; margin: 0 auto;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            padding-top: 24px;
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.85rem;
+        }
+        .powered-by {
+            display: flex; align-items: center; gap: 10px;
+            text-decoration: none; color: rgba(255,255,255,0.7);
+            font-size: 0.85rem; font-weight: 500;
+            transition: all 0.2s;
+            background: rgba(255,255,255,0.06);
+            padding: 8px 16px; border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .powered-by:hover {
+            color: var(--white);
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.2);
+        }
+        .powered-logo {
+            height: 28px; width: auto;
+            transition: opacity 0.2s;
+        }
+        .powered-by .rp-text {
+            font-weight: 700; color: var(--accent-light);
+        }
+
+        /* MARA CONTAINER */
+        .mara-container {
+            position: fixed;
+            top: 84px;
+            left: 24px;
+            z-index: 200;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 14px;
+        }
+
+        /* MARA ORB */
+        #orb {
+            width: 70px;
+            height: 70px;
+            flex-shrink: 0;
+            background: radial-gradient(circle, #38bdf8 0%, #0369a1 100%);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 50px #38bdf8;
+            transition: all 0.4s ease;
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #orb.listening {
+            background: radial-gradient(circle, #f43f5e 0%, #9f1239 100%) !important;
+            box-shadow: 0 0 70px #f43f5e !important;
+            animation: orb-pulse 1.2s infinite;
+        }
+        #orb.speaking {
+            background: radial-gradient(circle, #22c55e 0%, #15803d 100%) !important;
+            box-shadow: 0 0 70px #22c55e !important;
+            animation: orb-pulse 1.5s infinite;
+        }
+        @keyframes orb-pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .mara-glass {
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(12px);
+            padding: 16px 20px;
+            border-radius: 12px;
+            text-align: left;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            max-width: 380px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        #mara-status {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #38bdf8;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        #mara-log {
+            font-size: 0.9rem;
+            color: #e2e8f0;
+            line-height: 1.4;
+        }
+        @media (max-width: 600px) {
+            .mara-container { left: 12px; top: 80px; gap: 10px; }
+            #orb { width: 55px; height: 55px; flex-shrink: 0; }
+            #orb svg { width: 24px; height: 24px; }
+            .mara-glass { max-width: calc(100vw - 100px); }
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 900px) {
+            .hero-grid { grid-template-columns: 1fr; text-align: center; }
+            .hero p { margin-left: auto; margin-right: auto; }
+            .hero-buttons { justify-content: center; }
+            .hero-visual { display: none; }
+            .services-grid { grid-template-columns: 1fr; }
+            .about-grid { grid-template-columns: 1fr; gap: 40px; }
+            .products-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .footer-grid { grid-template-columns: 1fr 1fr; }
+            .nav-links { display: none; }
+            .mobile-toggle { display: block; }
+            .nav-powered { display: none; }
+            .nav-links.open {
+                display: flex; flex-direction: column;
+                position: absolute; top: 72px; left: 0; right: 0;
+                background: var(--white); padding: 24px;
+                border-bottom: 1px solid var(--gray-200);
+                box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            }
+        }
+        @media (max-width: 600px) {
+            .stats-grid { grid-template-columns: 1fr 1fr; gap: 24px; }
+            .footer-grid { grid-template-columns: 1fr; }
+            .footer-bottom { flex-direction: column; gap: 8px; text-align: center; }
+            .cta-box { padding: 40px 24px; }
+        }
+
+        /* WHATSAPP WIDGET */
+        .whatsapp-float {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 300;
+            width: 60px;
+            height: 60px;
+            background: #25D366;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 20px rgba(37,211,102,0.4);
+            transition: transform 0.3s, box-shadow 0.3s;
+            text-decoration: none;
+        }
+        .whatsapp-float:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 30px rgba(37,211,102,0.5);
+        }
+        .whatsapp-float svg {
+            width: 32px;
+            height: 32px;
+            fill: white;
+        }
+        .whatsapp-tooltip {
+            position: absolute;
+            right: 72px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--white);
+            color: var(--gray-700);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .whatsapp-float:hover .whatsapp-tooltip {
+            opacity: 1;
+        }
+        @media (max-width: 600px) {
+            .whatsapp-float { width: 52px; height: 52px; bottom: 16px; right: 16px; }
+            .whatsapp-float svg { width: 28px; height: 28px; }
+            .whatsapp-tooltip { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="navbar">
+    <div class="nav-inner">
+        <div class="nav-brand">
+            <a href="#" class="logo"><img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/69922e086bac24102e9f8c11.png" alt="Lactotec" class="logo-img"></a>
+            <a href="https://ringlypro.com" target="_blank" rel="noopener" class="nav-powered">
+                <span>Powered by</span>
+                <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro">
+                <span class="nav-rp-text">RinglyPro</span>
+            </a>
+        </div>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="#services" data-i18n="nav_services">Servicios</a></li>
+            <li><a href="#about" data-i18n="nav_about">Nosotros</a></li>
+            <li><a href="#products" data-i18n="nav_solutions">Soluciones</a></li>
+            <li><a href="#contact" class="nav-cta" data-i18n="nav_cta">Contactenos</a></li>
+            <li>
+                <div class="lang-switch">
+                    <button class="lang-btn active" id="btnEs" onclick="setLang('es')">ES</button>
+                    <button class="lang-btn" id="btnEn" onclick="setLang('en')">EN</button>
+                </div>
+            </li>
+        </ul>
+        <button class="mobile-toggle" id="mobileToggle" aria-label="Menu">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-grid">
+        <div>
+            <h1 data-i18n="hero_title" data-i18n-html="true">Control Inteligente de <span class="highlight">Recepcion Lactea</span> de Principio a Fin</h1>
+            <p data-i18n="hero_sub">Plataforma integral para identificacion de productores, control de calidad en tiempo real, liquidacion automatizada e inteligencia artificial operativa. Confianza de plantas lecheras en las Americas.</p>
+            <div class="hero-buttons">
+                <a href="#services" class="btn btn-primary" data-i18n="hero_btn1">Explorar Soluciones &rarr;</a>
+                <a href="#about" class="btn btn-outline" data-i18n="hero_btn2">Conocer Mas</a>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="hero-image-wrap">
+                <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6992017f6bac245de89830d0.png" alt="Lactotec - Dairy Technology">
+                <div class="hero-stats-row">
+                    <div class="mini-stat">
+                        <span class="number">100%</span>
+                        <span class="label" data-i18n="stat_yield">Trazabilidad</span>
+                    </div>
+                    <div class="mini-stat">
+                        <span class="number">24/7</span>
+                        <span class="label" data-i18n="stat_monitoring">Monitoreo IA</span>
+                    </div>
+                    <div class="mini-stat">
+                        <span class="number">0%</span>
+                        <span class="label" data-i18n="stat_plants">Fraude</span>
+                    </div>
+                    <div class="mini-stat">
+                        <span class="number">NTP</span>
+                        <span class="label" data-i18n="stat_years">Sincronizado</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- SERVICES -->
+<section id="services">
+    <div class="section-header">
+        <div class="section-label" data-i18n="svc_label">Modulos del Sistema</div>
+        <h2 data-i18n="svc_title">Plataforma Integral de Recepcion Lactea</h2>
+        <p data-i18n="svc_sub">Desde la identificacion del productor hasta la liquidacion automatizada, controlamos cada variable critica de su operacion.</p>
+    </div>
+    <div class="services-grid">
+        <div class="service-card">
+            <div class="service-icon icon-blue">&#9881;</div>
+            <h3 data-i18n="svc1_title">Identificacion y Registro</h3>
+            <p data-i18n="svc1_desc">Registro centralizado de productores con codigo unico, asiento automatico de fecha/hora via NTP y balance de volumen en tiempo real con caudalimetros y celdas de carga.</p>
+        </div>
+        <div class="service-card">
+            <div class="service-icon icon-green">&#9879;</div>
+            <h3 data-i18n="svc2_title">Control de Calidad y Conformidad</h3>
+            <p data-i18n="svc2_desc">Captura automatica de parametros fisicoquimicos desde analizadores, evaluacion organoleptica y Smart Gatekeeper con bloqueo automatico de bomba ante valores fuera de norma.</p>
+        </div>
+        <div class="service-card">
+            <div class="service-icon icon-purple">&#9878;</div>
+            <h3 data-i18n="svc3_title">Nomina y Liquidacion</h3>
+            <p data-i18n="svc3_desc">Calculo automatico de pago por litros netos, descuentos por agua segun punto crioscopico, penalizaciones por baja calidad y bonificaciones por altos solidos grasos y proteina.</p>
+        </div>
+        <div class="service-card">
+            <div class="service-icon icon-orange">&#9733;</div>
+            <h3 data-i18n="svc4_title">Inteligencia Artificial Operativa</h3>
+            <p data-i18n="svc4_desc">Agente cognitivo con acceso directo a la base de datos, interfaz de voz en tiempo real para operarios y analisis predictivo de tendencias de calidad por zona o productor.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ABOUT -->
+<section class="about" id="about">
+    <div class="about-grid">
+        <div class="about-image">
+            <div class="about-image-text">
+                <span class="big">100%</span>
+                <span class="sub" data-i18n="about_badge">Control Total de Recepcion</span>
+            </div>
+        </div>
+        <div class="about-content">
+            <h2 data-i18n="about_title">Tecnologia que Protege Cada Litro</h2>
+            <p data-i18n="about_desc">Lactotec nacio para resolver el desafio mas critico de la industria lactea: garantizar trazabilidad total, calidad verificable y liquidacion justa desde el momento en que la leche llega a la planta. Combinamos automatizacion industrial con inteligencia artificial para entregar control absoluto.</p>
+            <ul class="about-list">
+                <li>
+                    <span class="check">&#10003;</span>
+                    <span data-i18n="about_check1">Bloqueo automatico de bomba ante parametros fuera de norma</span>
+                </li>
+                <li>
+                    <span class="check">&#10003;</span>
+                    <span data-i18n="about_check2">Desbloqueo restringido a supervisores via App Inteligente</span>
+                </li>
+                <li>
+                    <span class="check">&#10003;</span>
+                    <span data-i18n="about_check3">Integracion directa con analizadores de leche y caudalimetros</span>
+                </li>
+                <li>
+                    <span class="check">&#10003;</span>
+                    <span data-i18n="about_check4">Agente de IA con interfaz de voz para consultas en tiempo real</span>
+                </li>
+                <li>
+                    <span class="check">&#10003;</span>
+                    <span data-i18n="about_check5">Liquidacion automatica con ajustes por calidad, agua y bonificaciones</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- SHOWCASE IMAGE -->
+<section class="showcase-section">
+    <div class="showcase-wrap">
+        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6992054b1d5e048b072176c7.png" alt="Lactotec Showcase">
+    </div>
+</section>
+
+<!-- PRODUCTS -->
+<section id="products">
+    <div class="section-header">
+        <div class="section-label" data-i18n="prod_label">Funcionalidades Clave</div>
+        <h2 data-i18n="prod_title">Detalle de Cada Modulo</h2>
+        <p data-i18n="prod_sub">Cada componente del sistema esta disenado para operar de forma autonoma o integrada con los demas modulos.</p>
+    </div>
+    <div class="products-grid">
+        <div class="product-card">
+            <div class="product-top bg-1">01</div>
+            <div class="product-body">
+                <h3 data-i18n="prod1_title">Gestion de Productores</h3>
+                <p data-i18n="prod1_desc">Registro centralizado con nombre y codigo unico. Trazabilidad temporal con servidor NTP sincronizado. Interfaz con caudalimetros y celdas de carga para balance de volumen en tiempo real.</p>
+            </div>
+        </div>
+        <div class="product-card">
+            <div class="product-top bg-2">02</div>
+            <div class="product-body">
+                <h3 data-i18n="prod2_title">Smart Gatekeeper</h3>
+                <p data-i18n="prod2_desc">Captura automatica de Grasa, Proteina, Solidos, Crioscopia y pH desde analizadores. Evaluacion organoleptica y enclavamiento fisico de bomba ante incumplimiento. Desbloqueo exclusivo por supervisor autorizado.</p>
+            </div>
+        </div>
+        <div class="product-card">
+            <div class="product-top bg-3">03</div>
+            <div class="product-body">
+                <h3 data-i18n="prod3_title">Liquidacion Inteligente</h3>
+                <p data-i18n="prod3_desc">Computo de pago automatico por litros netos. Descuento por agua segun punto crioscopico, penalizacion por acidez o densidad fuera de rango, y bonificaciones por altos niveles de grasa y proteina.</p>
+            </div>
+        </div>
+        <div class="product-card">
+            <div class="product-top bg-4">04</div>
+            <div class="product-body">
+                <h3 data-i18n="prod4_title">Agente de IA Cognitivo</h3>
+                <p data-i18n="prod4_desc">Interaccion directa con la base de datos para consultas complejas. Interfaz de voz en tiempo real para analistas y operarios. Analisis predictivo de tendencias de calidad y proyecciones por zona o productor.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- STATS -->
+<section class="stats">
+    <div class="stats-grid">
+        <div>
+            <span class="number">100%</span>
+            <span class="label" data-i18n="big_stat1">Trazabilidad de Recepcion</span>
+        </div>
+        <div>
+            <span class="number">6+</span>
+            <span class="label" data-i18n="big_stat2">Parametros Fisicoquimicos</span>
+        </div>
+        <div>
+            <span class="number">0</span>
+            <span class="label" data-i18n="big_stat3">Recepciones sin Control</span>
+        </div>
+        <div>
+            <span class="number">IA</span>
+            <span class="label" data-i18n="big_stat4">Analisis Predictivo Integrado</span>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="contact">
+    <div class="cta-box">
+        <h2 data-i18n="cta_title">Listo para Automatizar su Recepcion Lactea?</h2>
+        <p data-i18n="cta_desc">Hable con nuestro equipo sobre como implementar control total de recepcion, calidad y liquidacion en su planta. Disenaremos la solucion a su medida.</p>
+        <a href="mailto:info@lactotec.com" class="btn btn-primary" data-i18n="cta_btn">Solicitar Demo &rarr;</a>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+    <div class="footer-grid">
+        <div class="footer-brand">
+            <a href="#" class="logo"><img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/69922e086bac24102e9f8c11.png" alt="Lactotec" class="logo-img"></a>
+            <p data-i18n="footer_desc">Plataforma integral de recepcion lactea. Control de calidad, trazabilidad e inteligencia artificial para plantas lecheras.</p>
+        </div>
+        <div>
+            <h4 data-i18n="footer_h_solutions">Soluciones</h4>
+            <ul>
+                <li><a href="#services" data-i18n="svc1_title">Identificacion y Registro</a></li>
+                <li><a href="#services" data-i18n="svc2_title">Control de Calidad y Conformidad</a></li>
+                <li><a href="#services" data-i18n="svc3_title">Nomina y Liquidacion</a></li>
+                <li><a href="#services" data-i18n="svc4_title">IA Operativa</a></li>
+            </ul>
+        </div>
+        <div>
+            <h4 data-i18n="footer_h_company">Empresa</h4>
+            <ul>
+                <li><a href="#about" data-i18n="footer_about">Nosotros</a></li>
+                <li><a href="#" data-i18n="footer_careers">Carreras</a></li>
+                <li><a href="#" data-i18n="footer_cases">Casos de Exito</a></li>
+                <li><a href="#" data-i18n="footer_news">Noticias</a></li>
+            </ul>
+        </div>
+        <div>
+            <h4 data-i18n="footer_h_contact">Contacto</h4>
+            <ul>
+                <li><a href="mailto:info@lactotec.com">info@lactotec.com</a></li>
+                <li><a href="#">+1 (888) 522-8683</a></li>
+                <li><a href="#">Miami, FL</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <span data-i18n="footer_copy">&copy; 2026 Lactotec. Todos los derechos reservados.</span>
+        <a href="https://ringlypro.com" target="_blank" rel="noopener" class="powered-by">
+            <span data-i18n="powered_by">Powered by</span>
+            <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro" class="powered-logo">
+            <span class="rp-text">RinglyPro</span>
+        </a>
+        <span data-i18n="footer_legal">Politica de Privacidad &middot; Terminos de Servicio</span>
+    </div>
+</footer>
+
+<!-- MARA PANEL + ORB -->
+<div class="mara-container">
+    <div class="mara-glass">
+        <div id="mara-status">SISTEMA MARA CONECTADO</div>
+        <div id="mara-log">Lista para Upaca. Haz clic en el orbe para hablar.</div>
+    </div>
+    <div id="orb" onclick="iniciarVoz()">
+        <svg viewBox="0 0 24 24" id="mic-icon" style="width: 38px; height: 38px; fill: white; filter: drop-shadow(0 0 5px rgba(255,255,255,0.5));">
+            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+        </svg>
+    </div>
+</div>
+
+<!-- I18N + NAV + GEO DETECTION -->
+<script>
+    const translations = {
+        es: {
+            page_title: "Lactotec | Control Inteligente de Recepcion Lactea",
+            nav_services: "Modulos",
+            nav_about: "Nosotros",
+            nav_solutions: "Funcionalidades",
+            nav_cta: "Contactenos",
+            hero_title: 'Control Inteligente de <span class="highlight">Recepcion Lactea</span> de Principio a Fin',
+            hero_sub: "Plataforma integral para identificacion de productores, control de calidad en tiempo real, liquidacion automatizada e inteligencia artificial operativa. Confianza de plantas lecheras en las Americas.",
+            hero_btn1: "Ver Modulos &rarr;",
+            hero_btn2: "Conocer Mas",
+            stat_yield: "Trazabilidad",
+            stat_monitoring: "Monitoreo IA",
+            stat_plants: "Fraude",
+            stat_years: "Sincronizado",
+            trust_label: "Confianza de plantas lecheras lideres",
+            svc_label: "Modulos del Sistema",
+            svc_title: "Plataforma Integral de Recepcion Lactea",
+            svc_sub: "Desde la identificacion del productor hasta la liquidacion automatizada, controlamos cada variable critica de su operacion.",
+            svc1_title: "Identificacion y Registro",
+            svc1_desc: "Registro centralizado de productores con codigo unico, asiento automatico de fecha/hora via NTP y balance de volumen en tiempo real con caudalimetros y celdas de carga.",
+            svc2_title: "Control de Calidad y Conformidad",
+            svc2_desc: "Captura automatica de parametros fisicoquimicos desde analizadores, evaluacion organoleptica y Smart Gatekeeper con bloqueo automatico de bomba ante valores fuera de norma.",
+            svc3_title: "Nomina y Liquidacion",
+            svc3_desc: "Calculo automatico de pago por litros netos, descuentos por agua segun punto crioscopico, penalizaciones por baja calidad y bonificaciones por altos solidos grasos y proteina.",
+            svc4_title: "Inteligencia Artificial Operativa",
+            svc4_desc: "Agente cognitivo con acceso directo a la base de datos, interfaz de voz en tiempo real para operarios y analisis predictivo de tendencias de calidad por zona o productor.",
+            about_badge: "Control Total de Recepcion",
+            about_title: "Tecnologia que Protege Cada Litro",
+            about_desc: "Lactotec nacio para resolver el desafio mas critico de la industria lactea: garantizar trazabilidad total, calidad verificable y liquidacion justa desde el momento en que la leche llega a la planta. Combinamos automatizacion industrial con inteligencia artificial para entregar control absoluto.",
+            about_check1: "Bloqueo automatico de bomba ante parametros fuera de norma",
+            about_check2: "Desbloqueo restringido a supervisores via App Inteligente",
+            about_check3: "Integracion directa con analizadores de leche y caudalimetros",
+            about_check4: "Agente de IA con interfaz de voz para consultas en tiempo real",
+            about_check5: "Liquidacion automatica con ajustes por calidad, agua y bonificaciones",
+            prod_label: "Funcionalidades Clave",
+            prod_title: "Detalle de Cada Modulo",
+            prod_sub: "Cada componente del sistema esta disenado para operar de forma autonoma o integrada con los demas modulos.",
+            prod1_title: "Gestion de Productores",
+            prod1_desc: "Registro centralizado con nombre y codigo unico. Trazabilidad temporal con servidor NTP sincronizado. Interfaz con caudalimetros y celdas de carga para balance de volumen en tiempo real.",
+            prod2_title: "Smart Gatekeeper",
+            prod2_desc: "Captura automatica de Grasa, Proteina, Solidos, Crioscopia y pH desde analizadores. Evaluacion organoleptica y enclavamiento fisico de bomba ante incumplimiento. Desbloqueo exclusivo por supervisor autorizado.",
+            prod3_title: "Liquidacion Inteligente",
+            prod3_desc: "Computo de pago automatico por litros netos. Descuento por agua segun punto crioscopico, penalizacion por acidez o densidad fuera de rango, y bonificaciones por altos niveles de grasa y proteina.",
+            prod4_title: "Agente de IA Cognitivo",
+            prod4_desc: "Interaccion directa con la base de datos para consultas complejas. Interfaz de voz en tiempo real para analistas y operarios. Analisis predictivo de tendencias de calidad y proyecciones por zona o productor.",
+            big_stat1: "Trazabilidad de Recepcion",
+            big_stat2: "Parametros Fisicoquimicos",
+            big_stat3: "Recepciones sin Control",
+            big_stat4: "Analisis Predictivo Integrado",
+            cta_title: "Listo para Automatizar su Recepcion Lactea?",
+            cta_desc: "Hable con nuestro equipo sobre como implementar control total de recepcion, calidad y liquidacion en su planta. Disenaremos la solucion a su medida.",
+            cta_btn: "Solicitar Demo &rarr;",
+            footer_desc: "Plataforma integral de recepcion lactea. Control de calidad, trazabilidad e inteligencia artificial para plantas lecheras.",
+            footer_h_solutions: "Modulos",
+            footer_h_company: "Empresa",
+            footer_h_contact: "Contacto",
+            footer_about: "Nosotros",
+            footer_careers: "Carreras",
+            footer_cases: "Casos de Exito",
+            footer_news: "Noticias",
+            footer_copy: "&copy; 2026 Lactotec. Todos los derechos reservados.",
+            footer_legal: "Politica de Privacidad &middot; Terminos de Servicio",
+            powered_by: "Powered by"
+        },
+        en: {
+            page_title: "Lactotec | Intelligent Dairy Reception Control",
+            nav_services: "Modules",
+            nav_about: "About",
+            nav_solutions: "Features",
+            nav_cta: "Get in Touch",
+            hero_title: 'Intelligent <span class="highlight">Dairy Reception</span> Control End to End',
+            hero_sub: "Comprehensive platform for producer identification, real-time quality control, automated settlement, and operational AI. Trusted by dairy plants across the Americas.",
+            hero_btn1: "View Modules &rarr;",
+            hero_btn2: "Learn More",
+            stat_yield: "Traceability",
+            stat_monitoring: "AI Monitoring",
+            stat_plants: "Fraud",
+            stat_years: "Synced",
+            trust_label: "Trusted by leading dairy plants",
+            svc_label: "System Modules",
+            svc_title: "Comprehensive Dairy Reception Platform",
+            svc_sub: "From producer identification to automated settlement, we control every critical variable of your operation.",
+            svc1_title: "Identification & Registration",
+            svc1_desc: "Centralized producer registry with unique codes, automatic date/time logging via NTP, and real-time volume balance with flow meters and load cells.",
+            svc2_title: "Quality Control & Compliance",
+            svc2_desc: "Automatic capture of physicochemical parameters from analyzers, organoleptic evaluation, and Smart Gatekeeper with automatic pump lockout for out-of-spec values.",
+            svc3_title: "Payroll & Settlement",
+            svc3_desc: "Automatic payment calculation by net liters, water deductions by cryoscopic point, low-quality penalties, and bonuses for high fat and protein solids.",
+            svc4_title: "Operational AI",
+            svc4_desc: "Cognitive agent with direct database access, real-time voice interface for operators, and predictive analysis of quality trends by zone or producer.",
+            about_badge: "Total Reception Control",
+            about_title: "Technology That Protects Every Liter",
+            about_desc: "Lactotec was born to solve the most critical challenge in the dairy industry: ensuring total traceability, verifiable quality, and fair settlement from the moment milk arrives at the plant. We combine industrial automation with artificial intelligence to deliver absolute control.",
+            about_check1: "Automatic pump lockout for out-of-spec parameters",
+            about_check2: "Unlock restricted to supervisors via Smart App",
+            about_check3: "Direct integration with milk analyzers and flow meters",
+            about_check4: "AI agent with voice interface for real-time queries",
+            about_check5: "Automatic settlement with quality adjustments, water deductions, and bonuses",
+            prod_label: "Key Features",
+            prod_title: "Module Details",
+            prod_sub: "Each system component is designed to operate standalone or fully integrated with the other modules.",
+            prod1_title: "Producer Management",
+            prod1_desc: "Centralized registry with name and unique code. Temporal traceability with NTP-synced server. Interface with flow meters and load cells for real-time volume balance.",
+            prod2_title: "Smart Gatekeeper",
+            prod2_desc: "Automatic capture of Fat, Protein, Solids, Cryoscopy, and pH from analyzers. Organoleptic evaluation and physical pump interlock on non-compliance. Unlock exclusive to authorized supervisors.",
+            prod3_title: "Intelligent Settlement",
+            prod3_desc: "Automatic payment computation by net liters. Water deduction by cryoscopic point, penalties for acidity or density out of range, and bonuses for high fat and protein levels.",
+            prod4_title: "Cognitive AI Agent",
+            prod4_desc: "Direct database interaction for complex queries. Real-time voice interface for analysts and operators. Predictive analysis of quality trends and projections by zone or producer.",
+            big_stat1: "Reception Traceability",
+            big_stat2: "Physicochemical Parameters",
+            big_stat3: "Uncontrolled Receptions",
+            big_stat4: "Integrated Predictive Analysis",
+            cta_title: "Ready to Automate Your Dairy Reception?",
+            cta_desc: "Talk to our team about implementing total reception control, quality assurance, and automated settlement at your plant. We'll design the solution to fit your needs.",
+            cta_btn: "Request Demo &rarr;",
+            footer_desc: "Comprehensive dairy reception platform. Quality control, traceability, and artificial intelligence for dairy plants.",
+            footer_h_solutions: "Modules",
+            footer_h_company: "Company",
+            footer_h_contact: "Contact",
+            footer_about: "About Us",
+            footer_careers: "Careers",
+            footer_cases: "Case Studies",
+            footer_news: "News",
+            footer_copy: "&copy; 2026 Lactotec. All rights reserved.",
+            footer_legal: "Privacy Policy &middot; Terms of Service",
+            powered_by: "Powered by"
+        }
+    };
+
+    let currentLang = 'es';
+
+    function applyLang(lang) {
+        currentLang = lang;
+        const t = translations[lang];
+        document.documentElement.lang = lang;
+        document.title = t.page_title;
+
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (t[key]) {
+                if (el.getAttribute('data-i18n-html') === 'true') {
+                    el.innerHTML = t[key];
+                } else {
+                    el.innerHTML = t[key];
+                }
+            }
+        });
+
+        document.getElementById('btnEs').classList.toggle('active', lang === 'es');
+        document.getElementById('btnEn').classList.toggle('active', lang === 'en');
+    }
+
+    function setLang(lang) {
+        applyLang(lang);
+        try { localStorage.setItem('lactotec_lang', lang); } catch(e) {}
+    }
+
+    // Geo-detection: Spanish-speaking countries default to ES, others to EN
+    // Spanish is always the fallback default
+    (async function detectLang() {
+        // 1. Check localStorage first
+        try {
+            const saved = localStorage.getItem('lactotec_lang');
+            if (saved && translations[saved]) { applyLang(saved); return; }
+        } catch(e) {}
+
+        // 2. Try IP geolocation
+        const spanishCountries = [
+            'VE','CO','MX','AR','PE','CL','EC','GT','CU','BO',
+            'DO','HN','PY','SV','NI','CR','PA','UY','PR','ES','GQ'
+        ];
+        try {
+            const res = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(3000) });
+            const geo = await res.json();
+            if (geo && geo.country_code) {
+                const cc = geo.country_code.toUpperCase();
+                const lang = spanishCountries.includes(cc) ? 'es' : 'en';
+                applyLang(lang);
+                return;
+            }
+        } catch(e) {}
+
+        // 3. Fallback: check browser language
+        const browserLang = (navigator.language || navigator.userLanguage || 'es').toLowerCase();
+        if (browserLang.startsWith('en')) {
+            applyLang('en');
+        } else {
+            applyLang('es'); // Spanish default
+        }
+    })();
+
+    // Navbar scroll shadow
+    window.addEventListener('scroll', () => {
+        document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 10);
+    });
+
+    // Mobile menu toggle
+    document.getElementById('mobileToggle').addEventListener('click', () => {
+        document.getElementById('navLinks').classList.toggle('open');
+    });
+
+    // Smooth scroll for nav links
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+        a.addEventListener('click', e => {
+            const target = document.querySelector(a.getAttribute('href'));
+            if (target) {
+                e.preventDefault();
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                document.getElementById('navLinks').classList.remove('open');
+            }
+        });
+    });
+</script>
+
+<!-- MARA VOICE AI ENGINE (Gemini + ElevenLabs TTS) -->
+<script type="module">
+    import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+
+    const API_KEY = "AIzaSyBEW4hHqtZ-H2jwtece4OJbPHEu9q93jJw";
+    const genAI = new GoogleGenerativeAI(API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = 'es-VE';
+
+    // ElevenLabs TTS via server proxy
+    async function speakWithElevenLabs(text) {
+        const orb = document.getElementById('orb');
+        orb.classList.add('speaking');
+        document.getElementById('mara-status').innerText = "MARA RESPONDIENDO...";
+        document.getElementById('mara-log').innerText = text;
+
+        try {
+            const res = await fetch('/tts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text })
+            });
+
+            if (!res.ok) throw new Error('TTS error');
+
+            const audioBlob = await res.blob();
+            const audioUrl = URL.createObjectURL(audioBlob);
+            const audio = new Audio(audioUrl);
+
+            audio.onended = () => {
+                orb.classList.remove('speaking');
+                document.getElementById('mara-status').innerText = "SISTEMA LISTO";
+                URL.revokeObjectURL(audioUrl);
+            };
+
+            audio.onerror = () => {
+                orb.classList.remove('speaking');
+                document.getElementById('mara-status').innerText = "SISTEMA LISTO";
+            };
+
+            await audio.play();
+        } catch (err) {
+            console.error('ElevenLabs TTS failed:', err);
+            orb.classList.remove('speaking');
+            document.getElementById('mara-status').innerText = "SISTEMA LISTO";
+        }
+    }
+
+    window.iniciarVoz = () => {
+        try {
+            recognition.start();
+            const orb = document.getElementById('orb');
+            orb.classList.add('listening');
+            orb.classList.remove('speaking');
+            document.getElementById('mara-status').innerText = "Escuchando...";
+        } catch (e) { console.log("Error micro"); }
+    };
+
+    recognition.onresult = async (event) => {
+        const orb = document.getElementById('orb');
+        orb.classList.remove('listening');
+
+        const userText = event.results[0][0].transcript;
+        document.getElementById('mara-log').innerText = "Consulta: " + userText;
+        document.getElementById('mara-status').innerText = "Analizando en Upaca...";
+
+        try {
+            const res = await fetch('/datos');
+            const raw = await res.json();
+            const registros = raw.nomina;
+
+            const prompt = `Eres MARA, analista de la planta Upaca en Venezuela.
+            REGLA DE ORO: Solo puedes usar las fechas que aparecen en los DATOS DE UPACADET. Si una fecha no esta alli, di que no tienes registro de ese dia. No inventes.
+            IMPORTANTE SOBRE LAS FECHAS:
+            - El formato en la base de datos es MES/DIA/ANO (MM/DD/AA).
+            - Si ves "01/27/26", significa 27 de Enero de 2026.
+            - Por favor, al responder, convierte la fecha al formato normal venezolano (Dia/Mes/Ano).
+            INSTRUCCIONES DE PERSONALIDAD Y VOZ:
+            1. Habla con un tono profesional pero con calidez venezolana.
+            2. Di "Upaca" como una palabra normal.
+            3. No uses asteriscos ni lenguaje de computadora.
+            4. Usa un lenguaje claro. Si un valor es bajo, puedes decir "Oye, este valor esta un poco bajo".
+            5. Responde con precision: "El productor [Nombre] entrego [Litros] el dia [Fecha]".
+            6. Si te preguntan por un rango de fechas, suma los litros solo de esos dias exactos.
+            7. Busca en el listado el "cod" o el "prod" que coincida con la pregunta.
+            8. Si el usuario pregunta por un codigo, verifica el campo "cod" en los datos.
+            10. Los datos estan ordenados de mas ANTIGUOS a mas RECIENTES.
+            11. Para el "ultimo registro", busca el que este al FINAL de la lista.
+            12. Si te piden un reporte de un productor (ej. INACA), analiza todas sus entradas en la lista.
+            13. NUNCA inventes datos. Si no ves algo en la lista, di "No hay registro historico".
+            14. Cruza siempre el COD (Codigo) con la FECHA para asegurar que el registro sea el correcto.
+
+            DATOS DE UPACADET:
+            ${JSON.stringify(registros)}
+
+            Pregunta del usuario: ${userText}`;
+
+            const result = await model.generateContent(prompt);
+            const responseText = result.response.text().replace(/\*/g, '');
+
+            await speakWithElevenLabs(responseText);
+
+        } catch (err) {
+            orb.classList.remove('listening');
+            orb.classList.remove('speaking');
+            document.getElementById('mara-status').innerText = "ERROR";
+            document.getElementById('mara-log').innerText = err.message;
+        }
+    };
+
+    recognition.onerror = () => {
+        document.getElementById('orb').classList.remove('listening');
+        document.getElementById('mara-status').innerText = "REINTENTA";
+    };
+
+    // Initial greeting on page load
+    setTimeout(() => {
+        speakWithElevenLabs("Hola, mi nombre es Mara, asistente virtual de Lactotec. En que te puedo ayudar hoy?");
+    }, 2000);
+</script>
+
+<!-- WHATSAPP WIDGET -->
+<a href="https://wa.me/584147597526?text=Hola%2C%20me%20interesa%20conocer%20mas%20sobre%20Lactotec" target="_blank" rel="noopener" class="whatsapp-float" aria-label="Chat por WhatsApp">
+    <span class="whatsapp-tooltip" data-i18n="wa_tooltip">Escríbenos por WhatsApp</span>
+    <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+</a>
+
+<!-- SERVICE WORKER REGISTRATION -->
+<script>
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('SW registered:', reg.scope))
+            .catch(err => console.log('SW registration failed:', err));
+    });
+}
+</script>
+
+</body>
+</html>

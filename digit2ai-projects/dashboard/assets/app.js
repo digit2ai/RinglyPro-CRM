@@ -120,7 +120,7 @@ function navigateTo(view) {
     li.classList.toggle('active', li.dataset.view === view);
   });
   const titles = {
-    overview: 'Home', contacts: 'People & Contacts', projects: 'My Projects',
+    overview: 'Home', contacts: 'People & Pipeline', projects: 'My Projects',
     calendar: 'Calendar', tasks: 'My To-Do List', staff: 'Staff & Roles',
     notifications: 'Alerts & Updates', ai: 'Ask AI', activity: 'Recent History', settings: 'Settings'
   };
@@ -444,11 +444,36 @@ function renderDrillTable(container, title, items, type) {
 }
 
 // =====================================================
-// CONTACTS
+// CONTACTS — Tabbed view: Table | Pipeline | Campaigns | Workflows
 // =====================================================
 let contactsPage = 1;
+let contactsTab = 'table';
+
+const PIPELINE_STAGES = ['prospect', 'lead', 'cold_lead', 'warm_lead', 'hot_lead', 'client'];
+const STAGE_LABELS = { prospect: 'Prospect', lead: 'Lead', cold_lead: 'Cold Lead', warm_lead: 'Warm Lead', hot_lead: 'Hot Lead', client: 'Client' };
+const STAGE_COLORS = { prospect: '#64748b', lead: '#2563eb', cold_lead: '#06b6d4', warm_lead: '#f59e0b', hot_lead: '#ef4444', client: '#10b981' };
+
 async function renderContacts(container, page = 1) {
   contactsPage = page;
+  container.innerHTML = `
+    <div class="contacts-tabs" style="display:flex;gap:2px;margin-bottom:16px;border-bottom:2px solid var(--border);padding-bottom:0">
+      <button class="contacts-tab ${contactsTab==='table'?'active':''}" onclick="contactsTab='table';renderContacts(document.getElementById('view-container'))" style="padding:10px 20px;border:none;background:none;color:${contactsTab==='table'?'var(--accent)':'var(--text-secondary)'};font-weight:${contactsTab==='table'?'600':'400'};border-bottom:2px solid ${contactsTab==='table'?'var(--accent)':'transparent'};cursor:pointer;margin-bottom:-2px">&#128101; Contacts</button>
+      <button class="contacts-tab ${contactsTab==='pipeline'?'active':''}" onclick="contactsTab='pipeline';renderContacts(document.getElementById('view-container'))" style="padding:10px 20px;border:none;background:none;color:${contactsTab==='pipeline'?'var(--accent)':'var(--text-secondary)'};font-weight:${contactsTab==='pipeline'?'600':'400'};border-bottom:2px solid ${contactsTab==='pipeline'?'var(--accent)':'transparent'};cursor:pointer;margin-bottom:-2px">&#128200; Pipeline</button>
+      <button class="contacts-tab ${contactsTab==='campaigns'?'active':''}" onclick="contactsTab='campaigns';renderContacts(document.getElementById('view-container'))" style="padding:10px 20px;border:none;background:none;color:${contactsTab==='campaigns'?'var(--accent)':'var(--text-secondary)'};font-weight:${contactsTab==='campaigns'?'600':'400'};border-bottom:2px solid ${contactsTab==='campaigns'?'var(--accent)':'transparent'};cursor:pointer;margin-bottom:-2px">&#9993; Campaigns</button>
+      <button class="contacts-tab ${contactsTab==='workflows'?'active':''}" onclick="contactsTab='workflows';renderContacts(document.getElementById('view-container'))" style="padding:10px 20px;border:none;background:none;color:${contactsTab==='workflows'?'var(--accent)':'var(--text-secondary)'};font-weight:${contactsTab==='workflows'?'600':'400'};border-bottom:2px solid ${contactsTab==='workflows'?'var(--accent)':'transparent'};cursor:pointer;margin-bottom:-2px">&#9881; Workflows</button>
+    </div>
+    <div id="contacts-tab-content"></div>
+  `;
+  const tabContainer = document.getElementById('contacts-tab-content');
+  switch (contactsTab) {
+    case 'table': await renderContactsTable(tabContainer, page); break;
+    case 'pipeline': await renderPipelineBoard(tabContainer); break;
+    case 'campaigns': await renderCampaigns(tabContainer); break;
+    case 'workflows': await renderWorkflows(tabContainer); break;
+  }
+}
+
+async function renderContactsTable(container, page = 1) {
   const params = new URLSearchParams({ page, limit: 30 });
   const searchVal = document.getElementById('global-search')?.value;
   if (searchVal) params.set('search', searchVal);
@@ -472,35 +497,40 @@ async function renderContacts(container, page = 1) {
           ${verticalOptions('')}
         </select>
       </div>
-      <button class="btn btn-primary btn-sm" onclick="openContactModal()">+ Add Person</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="openCsvImportModal()">&#128228; Import CSV</button>
+        <button class="btn btn-primary btn-sm" onclick="openContactModal()">+ Add Person</button>
+      </div>
     </div>
     <table class="data-table">
       <thead><tr>
-        <th>Name</th><th>Email</th><th>Company</th><th>Vertical</th><th>Status</th><th>Follow-up</th>
+        <th>Name</th><th>Email</th><th>Company</th><th>Vertical</th><th>Stage</th><th>Follow-up</th>
       </tr></thead>
       <tbody id="contacts-tbody"></tbody>
     </table>
     <div style="display:flex;justify-content:space-between;margin-top:16px;font-size:13px;color:var(--text-secondary)">
       <span>${res.total} contacts (page ${res.page}/${res.pages})</span>
       <div style="display:flex;gap:8px">
-        ${res.page > 1 ? `<button class="btn btn-ghost btn-sm" onclick="renderContacts(document.getElementById('view-container'),${res.page-1})">Prev</button>` : ''}
-        ${res.page < res.pages ? `<button class="btn btn-ghost btn-sm" onclick="renderContacts(document.getElementById('view-container'),${res.page+1})">Next</button>` : ''}
+        ${res.page > 1 ? `<button class="btn btn-ghost btn-sm" onclick="renderContactsTable(document.getElementById('contacts-tab-content'),${res.page-1})">Prev</button>` : ''}
+        ${res.page < res.pages ? `<button class="btn btn-ghost btn-sm" onclick="renderContactsTable(document.getElementById('contacts-tab-content'),${res.page+1})">Next</button>` : ''}
       </div>
     </div>
   `;
 
   document.getElementById('contacts-tbody').innerHTML = res.data.length > 0
-    ? res.data.map(c => `<tr class="clickable" onclick="showContactDetail(${c.id})">
+    ? res.data.map(c => {
+        const stage = c.pipeline_stage || 'prospect';
+        return `<tr class="clickable" onclick="showContactDetail(${c.id})">
         <td><strong>${c.first_name} ${c.last_name || ''}</strong>${c.title ? '<br><span style="font-size:12px;color:var(--text-muted)">'+c.title+'</span>' : ''}</td>
         <td>${c.email || '-'}</td>
         <td>${c.company?.name || '-'}</td>
         <td>${c.vertical ? '<span class="vertical-dot" style="background:'+c.vertical.color+'"></span>'+c.vertical.name : '-'}</td>
-        <td><span class="status-badge status-${c.status}">${c.status}</span></td>
+        <td><span class="status-badge" style="background:${STAGE_COLORS[stage]}20;color:${STAGE_COLORS[stage]}">${STAGE_LABELS[stage] || stage}</span></td>
         <td>${c.next_followup_date ? fmtDate(c.next_followup_date) : '-'}</td>
-      </tr>`).join('')
+      </tr>`;
+      }).join('')
     : '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted)">No people added yet.<br><br><button class="btn btn-primary" onclick="openContactModal()">&#128100; Add Your First Person</button><br><span style="font-size:12px;margin-top:8px;display:block">or use the AI: "Add contact John Smith"</span></td></tr>';
 
-  // Search handler
   const searchInput = document.getElementById('contact-search');
   let searchTimeout;
   searchInput?.addEventListener('input', () => {
@@ -510,18 +540,471 @@ async function renderContacts(container, page = 1) {
       const url = new URLSearchParams({ page: 1, limit: 30, search: s });
       api(`/contacts?${url}`).then(r => {
         if (r.success) {
-          document.getElementById('contacts-tbody').innerHTML = r.data.map(c => `<tr class="clickable" onclick="showContactDetail(${c.id})">
+          document.getElementById('contacts-tbody').innerHTML = r.data.map(c => {
+            const stage = c.pipeline_stage || 'prospect';
+            return `<tr class="clickable" onclick="showContactDetail(${c.id})">
             <td><strong>${c.first_name} ${c.last_name || ''}</strong></td>
             <td>${c.email || '-'}</td>
             <td>${c.company?.name || '-'}</td>
             <td>${c.vertical ? '<span class="vertical-dot" style="background:'+c.vertical.color+'"></span>'+c.vertical.name : '-'}</td>
-            <td><span class="status-badge status-${c.status}">${c.status}</span></td>
+            <td><span class="status-badge" style="background:${STAGE_COLORS[stage]}20;color:${STAGE_COLORS[stage]}">${STAGE_LABELS[stage] || stage}</span></td>
             <td>${c.next_followup_date ? fmtDate(c.next_followup_date) : '-'}</td>
-          </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted)">No results</td></tr>';
+          </tr>`;
+          }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted)">No results</td></tr>';
         }
       });
     }, 300);
   });
+}
+
+// =====================================================
+// PIPELINE BOARD (Kanban)
+// =====================================================
+async function renderPipelineBoard(container) {
+  const res = await api('/pipeline');
+  if (!res.success) { container.innerHTML = '<p style="color:var(--danger)">Failed to load pipeline</p>'; return; }
+
+  const pipeline = res.data;
+  container.innerHTML = `
+    <div class="section-header">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:14px;color:var(--text-secondary)">${res.total} total contacts in pipeline</span>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="openCsvImportModal()">&#128228; Import CSV</button>
+        <button class="btn btn-primary btn-sm" onclick="openContactModal()">+ Add Person</button>
+      </div>
+    </div>
+    <div class="pipeline-board" style="display:flex;gap:12px;overflow-x:auto;padding-bottom:16px;min-height:400px">
+      ${PIPELINE_STAGES.map(stage => {
+        const data = pipeline[stage] || { label: STAGE_LABELS[stage], count: 0, contacts: [] };
+        return `<div class="pipeline-column" style="min-width:220px;flex:1;background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border)">
+          <div style="padding:12px 16px;border-bottom:2px solid ${STAGE_COLORS[stage]};display:flex;justify-content:space-between;align-items:center">
+            <strong style="font-size:13px;color:${STAGE_COLORS[stage]}">${data.label}</strong>
+            <span style="background:${STAGE_COLORS[stage]}20;color:${STAGE_COLORS[stage]};padding:2px 8px;border-radius:12px;font-size:12px;font-weight:600">${data.count}</span>
+          </div>
+          <div class="pipeline-cards" style="padding:8px;max-height:500px;overflow-y:auto;display:flex;flex-direction:column;gap:6px"
+               ondragover="event.preventDefault();this.style.background='var(--bg-hover)'"
+               ondragleave="this.style.background=''"
+               ondrop="handlePipelineDrop(event,'${stage}');this.style.background=''">
+            ${data.contacts.length > 0 ? data.contacts.slice(0, 20).map(c => `
+              <div class="pipeline-card" draggable="true" ondragstart="event.dataTransfer.setData('text/plain','${c.id}')"
+                   onclick="showContactDetail(${c.id})"
+                   style="padding:10px 12px;background:var(--bg-secondary);border-radius:var(--radius);cursor:pointer;border:1px solid var(--border);font-size:13px">
+                <strong>${c.first_name} ${c.last_name || ''}</strong>
+                ${c.email ? '<br><span style="font-size:11px;color:var(--text-muted)">'+c.email+'</span>' : ''}
+                ${c.company?.name ? '<br><span style="font-size:11px;color:var(--text-secondary)">'+c.company.name+'</span>' : ''}
+                ${c.vertical ? '<br><span class="tag" style="font-size:10px;margin-top:4px;display:inline-block;background:'+c.vertical.color+'20;color:'+c.vertical.color+'">'+c.vertical.name+'</span>' : ''}
+              </div>
+            `).join('') : '<p style="font-size:12px;color:var(--text-muted);text-align:center;padding:20px 8px">No contacts</p>'}
+            ${data.count > 20 ? `<p style="font-size:11px;color:var(--text-muted);text-align:center">+${data.count - 20} more</p>` : ''}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+}
+
+async function handlePipelineDrop(event, newStage) {
+  event.preventDefault();
+  const contactId = event.dataTransfer.getData('text/plain');
+  if (!contactId) return;
+  await api(`/pipeline/${contactId}/stage`, { method: 'PUT', body: JSON.stringify({ stage: newStage, trigger_type: 'manual' }) });
+  renderPipelineBoard(document.getElementById('contacts-tab-content'));
+}
+
+// =====================================================
+// CSV IMPORT MODAL
+// =====================================================
+function openCsvImportModal() {
+  openModal('Import Contacts from CSV', `
+    <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px">Upload a CSV or tab-delimited file. Must have a header row with columns like: first_name, last_name, email, phone, company, title, notes</p>
+    <div class="form-row">
+      <div class="form-group"><label>Vertical</label><select id="m-import-vertical">${verticalOptions('')}</select></div>
+      <div class="form-group"><label>Pipeline Stage</label>
+        <select id="m-import-stage">
+          ${PIPELINE_STAGES.map(s => `<option value="${s}" ${s==='prospect'?'selected':''}>${STAGE_LABELS[s]}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label>Delimiter</label>
+      <select id="m-import-delimiter">
+        <option value=",">Comma (,)</option>
+        <option value="tab">Tab</option>
+        <option value=";">Semicolon (;)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>CSV File</label>
+      <input type="file" id="m-import-file" accept=".csv,.txt,.tsv" style="padding:8px">
+    </div>
+    <div class="form-group">
+      <label>Or Paste CSV Text</label>
+      <textarea id="m-import-text" rows="6" placeholder="first_name,last_name,email,phone&#10;John,Smith,john@example.com,555-0100"></textarea>
+    </div>
+    <div id="import-result" style="display:none;margin-top:12px;padding:12px;border-radius:var(--radius);font-size:13px"></div>
+  `, async () => {
+    const vertical_id = document.getElementById('m-import-vertical').value;
+    const stage = document.getElementById('m-import-stage').value;
+    const delimiter = document.getElementById('m-import-delimiter').value;
+    const file = document.getElementById('m-import-file').files?.[0];
+    const pastedText = document.getElementById('m-import-text').value.trim();
+    const resultEl = document.getElementById('import-result');
+
+    let csvText = pastedText;
+    if (file) {
+      csvText = await file.text();
+    }
+    if (!csvText) { alert('Please upload a file or paste CSV text'); return; }
+
+    resultEl.style.display = 'block';
+    resultEl.style.background = 'var(--bg-hover)';
+    resultEl.innerHTML = '<span style="color:var(--accent)">Importing...</span>';
+
+    try {
+      const params = new URLSearchParams({ pipeline_stage: stage, delimiter });
+      if (vertical_id) params.set('vertical_id', vertical_id);
+      const res = await fetch(`${API}/pipeline/import?${params}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'text/plain' },
+        body: csvText
+      });
+      const data = await res.json();
+      if (data.success) {
+        resultEl.style.background = '#10b98120';
+        resultEl.innerHTML = `<strong style="color:var(--success)">Import Complete</strong><br>
+          Imported: <strong>${data.imported}</strong> | Duplicates: ${data.duplicates} | Skipped: ${data.skipped} | Total Rows: ${data.total_rows}
+          ${data.errors?.length ? '<br><br><strong>Errors:</strong><br>' + data.errors.join('<br>') : ''}`;
+      } else {
+        resultEl.style.background = '#ef444420';
+        resultEl.innerHTML = `<strong style="color:var(--danger)">Error</strong>: ${data.error}${data.detected_headers ? '<br>Detected headers: ' + data.detected_headers.join(', ') : ''}`;
+      }
+    } catch (err) {
+      resultEl.style.background = '#ef444420';
+      resultEl.innerHTML = `<strong style="color:var(--danger)">Error</strong>: ${err.message}`;
+    }
+  });
+}
+
+// =====================================================
+// CAMPAIGNS
+// =====================================================
+async function renderCampaigns(container) {
+  const res = await api('/campaigns');
+  if (!res.success) { container.innerHTML = '<p style="color:var(--danger)">Failed to load campaigns</p>'; return; }
+
+  container.innerHTML = `
+    <div class="section-header">
+      <span style="font-size:14px;color:var(--text-secondary)">${res.data.length} campaign(s)</span>
+      <button class="btn btn-primary btn-sm" onclick="openCampaignModal()">+ New Campaign</button>
+    </div>
+    ${res.data.length > 0 ? `<table class="data-table">
+      <thead><tr><th>Campaign</th><th>Subject</th><th>Target Stage</th><th>Status</th><th>Sent</th><th>Opens</th><th>Clicks</th><th>Actions</th></tr></thead>
+      <tbody>
+        ${res.data.map(c => `<tr>
+          <td><strong>${c.name}</strong></td>
+          <td>${c.subject}</td>
+          <td>${c.target_stage ? `<span class="status-badge" style="background:${STAGE_COLORS[c.target_stage]||'#64748b'}20;color:${STAGE_COLORS[c.target_stage]||'#64748b'}">${STAGE_LABELS[c.target_stage]||c.target_stage}</span>` : 'All'}</td>
+          <td><span class="status-badge status-${c.status === 'sent' ? 'completed' : c.status === 'sending' ? 'active' : 'planning'}">${c.status}</span></td>
+          <td>${c.sent_count || 0}</td>
+          <td>${c.open_count || 0}</td>
+          <td>${c.click_count || 0}</td>
+          <td style="display:flex;gap:4px">
+            ${c.status === 'draft' ? `<button class="btn btn-primary btn-sm" onclick="sendCampaign(${c.id})">Send</button>` : ''}
+            <button class="btn btn-ghost btn-sm" onclick="openCampaignModal(${JSON.stringify(c).replace(/"/g,'&quot;')})">Edit</button>
+            <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteCampaign(${c.id})">Delete</button>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>` : '<div class="empty-state"><div class="empty-icon">&#9993;</div><h3>No campaigns yet</h3><p>Create an email campaign to reach your contacts via SendGrid.</p><button class="get-started-btn" onclick="openCampaignModal()">&#9993; Create Your First Campaign</button></div>'}
+  `;
+}
+
+function openCampaignModal(existing) {
+  const c = existing || {};
+  openModal(c.id ? 'Edit Campaign' : 'New Campaign', `
+    <div class="form-group"><label>Campaign Name *</label><input type="text" id="m-cname" value="${c.name || ''}"></div>
+    <div class="form-group"><label>Email Subject *</label><input type="text" id="m-csubject" value="${c.subject || ''}"></div>
+    <div class="form-row">
+      <div class="form-group"><label>From Name</label><input type="text" id="m-cfrom-name" value="${c.from_name || ''}"></div>
+      <div class="form-group"><label>From Email</label><input type="email" id="m-cfrom-email" value="${c.from_email || ''}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Target Stage</label>
+        <select id="m-ctarget-stage">
+          <option value="">All Contacts</option>
+          ${PIPELINE_STAGES.map(s => `<option value="${s}" ${c.target_stage===s?'selected':''}>${STAGE_LABELS[s]}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label>Target Vertical</label><select id="m-ctarget-vertical">${verticalOptions(c.target_vertical_id)}</select></div>
+    </div>
+    <div class="form-group">
+      <label>Email Body (HTML) *</label>
+      <p style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Use {{first_name}}, {{last_name}}, {{email}}, {{company}} for personalization</p>
+      <textarea id="m-cbody" rows="10" style="font-family:monospace;font-size:12px">${c.body_html || '<p>Hi {{first_name}},</p>\\n<p>Your message here...</p>\\n<p>Best regards</p>'}</textarea>
+    </div>
+  `, async () => {
+    const data = {
+      name: document.getElementById('m-cname').value.trim(),
+      subject: document.getElementById('m-csubject').value.trim(),
+      from_name: document.getElementById('m-cfrom-name').value.trim(),
+      from_email: document.getElementById('m-cfrom-email').value.trim(),
+      target_stage: document.getElementById('m-ctarget-stage').value || null,
+      target_vertical_id: document.getElementById('m-ctarget-vertical').value || null,
+      body_html: document.getElementById('m-cbody').value.trim()
+    };
+    if (!data.name || !data.subject || !data.body_html) { alert('Name, subject, and body are required'); return; }
+    if (c.id) {
+      await api(`/campaigns/${c.id}`, { method: 'PUT', body: JSON.stringify(data) });
+    } else {
+      await api('/campaigns', { method: 'POST', body: JSON.stringify(data) });
+    }
+    closeModal();
+    renderCampaigns(document.getElementById('contacts-tab-content'));
+  });
+}
+
+async function sendCampaign(id) {
+  if (!confirm('Send this campaign now? Emails will be sent to all matching contacts via SendGrid.')) return;
+  const res = await api(`/campaigns/${id}/send`, { method: 'POST' });
+  if (res.success) {
+    alert(`Campaign sent to ${res.data?.sent_count || 0} contacts!`);
+  } else {
+    alert('Error: ' + (res.error || 'Failed to send'));
+  }
+  renderCampaigns(document.getElementById('contacts-tab-content'));
+}
+
+async function deleteCampaign(id) {
+  if (!confirm('Delete this campaign permanently?')) return;
+  await api(`/campaigns/${id}`, { method: 'DELETE' });
+  renderCampaigns(document.getElementById('contacts-tab-content'));
+}
+
+// =====================================================
+// WORKFLOWS
+// =====================================================
+async function renderWorkflows(container) {
+  const res = await api('/workflows');
+  if (!res.success) { container.innerHTML = '<p style="color:var(--danger)">Failed to load workflows</p>'; return; }
+
+  container.innerHTML = `
+    <div class="section-header">
+      <span style="font-size:14px;color:var(--text-secondary)">${res.data.length} workflow(s)</span>
+      <div style="display:flex;gap:8px">
+        ${res.data.length === 0 ? `<button class="btn btn-ghost btn-sm" onclick="seedDefaultWorkflow()">&#9889; Create Default Workflow</button>` : ''}
+        <button class="btn btn-primary btn-sm" onclick="openWorkflowModal()">+ New Workflow</button>
+      </div>
+    </div>
+    ${res.data.length > 0 ? res.data.map(w => `
+      <div class="card" style="margin-bottom:16px;border-left:3px solid ${w.active ? 'var(--success)' : 'var(--text-muted)'}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <h3 style="font-size:16px;margin-bottom:4px">${w.name}</h3>
+            ${w.description ? `<p style="font-size:13px;color:var(--text-secondary);margin-bottom:8px">${w.description}</p>` : ''}
+            <div style="display:flex;gap:8px;align-items:center;font-size:12px">
+              <span class="status-badge status-${w.active ? 'active' : 'on_hold'}">${w.active ? 'Active' : 'Inactive'}</span>
+              <span style="color:var(--text-muted)">Trigger: ${w.trigger_type}</span>
+              <span style="color:var(--text-muted)">${(w.steps || []).length} steps</span>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost btn-sm" onclick="showWorkflowDetail(${w.id})">View</button>
+            <button class="btn btn-ghost btn-sm" onclick="openWorkflowModal(${JSON.stringify(w).replace(/"/g,'&quot;')})">Edit</button>
+            <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteWorkflow(${w.id})">Delete</button>
+          </div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          ${(w.steps || []).map((step, i) => {
+            const typeIcons = { change_stage: '&#128200;', send_email: '&#9993;', wait: '&#9203;', condition: '&#10067;', tag: '&#127991;', notify: '&#128276;' };
+            return `<div style="display:flex;align-items:center;gap:4px;font-size:11px;padding:4px 8px;background:var(--bg-hover);border-radius:var(--radius)">
+              <span>${typeIcons[step.type] || '&#9679;'}</span>
+              <span>${step.name || step.type}</span>
+              ${i < (w.steps||[]).length - 1 ? '<span style="color:var(--text-muted)">&#8594;</span>' : ''}
+            </div>`;
+          }).join('')}
+        </div>
+        <div style="margin-top:12px">
+          <button class="btn btn-primary btn-sm" onclick="openEnrollModal(${w.id})">Enroll Contacts</button>
+        </div>
+      </div>
+    `).join('') : '<div class="empty-state"><div class="empty-icon">&#9881;</div><h3>No workflows yet</h3><p>Workflows automate your pipeline — move contacts through stages, send emails, and tag based on engagement.</p><button class="get-started-btn" onclick="seedDefaultWorkflow()">&#9889; Create Default Prospecting Workflow</button></div>'}
+  `;
+}
+
+async function seedDefaultWorkflow() {
+  const res = await api('/workflows/seed-default', { method: 'POST' });
+  if (res.success) {
+    alert('Default prospecting workflow created!');
+  } else {
+    alert('Error: ' + (res.error || 'Failed'));
+  }
+  renderWorkflows(document.getElementById('contacts-tab-content'));
+}
+
+function openWorkflowModal(existing) {
+  const w = existing || {};
+  const stepsJson = JSON.stringify(w.steps || [], null, 2);
+  openModal(w.id ? 'Edit Workflow' : 'New Workflow', `
+    <div class="form-group"><label>Workflow Name *</label><input type="text" id="m-wname" value="${w.name || ''}"></div>
+    <div class="form-group"><label>Description</label><textarea id="m-wdesc">${w.description || ''}</textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>Trigger Type</label>
+        <select id="m-wtrigger">
+          <option value="manual" ${w.trigger_type==='manual'?'selected':''}>Manual</option>
+          <option value="stage_change" ${w.trigger_type==='stage_change'?'selected':''}>Stage Change</option>
+          <option value="email_event" ${w.trigger_type==='email_event'?'selected':''}>Email Event</option>
+          <option value="import" ${w.trigger_type==='import'?'selected':''}>Contact Import</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Active</label>
+        <select id="m-wactive">
+          <option value="true" ${w.active !== false ? 'selected' : ''}>Active</option>
+          <option value="false" ${w.active === false ? 'selected' : ''}>Inactive</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Steps (JSON)</label>
+      <p style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Each step: { "type": "change_stage|send_email|wait|condition|tag|notify", "name": "...", "config": {...} }</p>
+      <textarea id="m-wsteps" rows="10" style="font-family:monospace;font-size:12px">${stepsJson}</textarea>
+    </div>
+  `, async () => {
+    let steps;
+    try {
+      steps = JSON.parse(document.getElementById('m-wsteps').value.trim() || '[]');
+    } catch (e) { alert('Invalid JSON in steps field'); return; }
+    const data = {
+      name: document.getElementById('m-wname').value.trim(),
+      description: document.getElementById('m-wdesc').value.trim(),
+      trigger_type: document.getElementById('m-wtrigger').value,
+      active: document.getElementById('m-wactive').value === 'true',
+      steps
+    };
+    if (!data.name) { alert('Workflow name is required'); return; }
+    if (w.id) {
+      await api(`/workflows/${w.id}`, { method: 'PUT', body: JSON.stringify(data) });
+    } else {
+      await api('/workflows', { method: 'POST', body: JSON.stringify(data) });
+    }
+    closeModal();
+    renderWorkflows(document.getElementById('contacts-tab-content'));
+  });
+}
+
+async function showWorkflowDetail(id) {
+  const res = await api(`/workflows/${id}`);
+  if (!res.success) return;
+  const w = res.data;
+  const typeIcons = { change_stage: '&#128200;', send_email: '&#9993;', wait: '&#9203;', condition: '&#10067;', tag: '&#127991;', notify: '&#128276;' };
+
+  const container = document.getElementById('contacts-tab-content');
+  container.innerHTML = `
+    <div class="detail-panel">
+      <div class="detail-header">
+        <div>
+          <button class="btn btn-ghost btn-sm" onclick="contactsTab='workflows';renderContacts(document.getElementById('view-container'))" style="margin-bottom:8px">&#8592; Back to Workflows</button>
+          <h2>${w.name}</h2>
+          ${w.description ? `<p style="color:var(--text-secondary)">${w.description}</p>` : ''}
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary btn-sm" onclick="openEnrollModal(${w.id})">Enroll Contacts</button>
+          <button class="btn btn-ghost btn-sm" onclick="openWorkflowModal(${JSON.stringify(w).replace(/"/g,'&quot;')})">Edit</button>
+        </div>
+      </div>
+      <div class="detail-meta">
+        <span class="status-badge status-${w.active ? 'active' : 'on_hold'}">${w.active ? 'Active' : 'Inactive'}</span>
+        <span style="color:var(--text-muted);font-size:13px">Trigger: ${w.trigger_type}</span>
+      </div>
+      <div style="margin-top:24px">
+        <h4 style="margin-bottom:16px">Workflow Steps</h4>
+        <div class="workflow-steps" style="display:flex;flex-direction:column;gap:8px">
+          ${(w.steps || []).map((step, i) => `
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius)">
+              <div style="min-width:32px;height:32px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600">${i + 1}</div>
+              <div style="flex:1">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                  <span style="font-size:16px">${typeIcons[step.type] || '&#9679;'}</span>
+                  <strong style="font-size:14px">${step.name || step.type}</strong>
+                  <span class="tag">${step.type}</span>
+                </div>
+                ${step.config ? `<div style="font-size:12px;color:var(--text-secondary)">
+                  ${step.type === 'change_stage' && step.config.to_stage ? 'Move to: <strong>' + (STAGE_LABELS[step.config.to_stage] || step.config.to_stage) + '</strong>' : ''}
+                  ${step.type === 'wait' && step.config.days ? 'Wait <strong>' + step.config.days + ' day(s)</strong>' : ''}
+                  ${step.type === 'send_email' && step.config.subject ? 'Subject: <strong>' + step.config.subject + '</strong>' : ''}
+                  ${step.type === 'condition' && step.config.field ? 'If ' + step.config.field + ' ' + (step.config.operator||'') + ' ' + (step.config.value||'') : ''}
+                  ${step.type === 'tag' && step.config.tag ? 'Add tag: <strong>' + step.config.tag + '</strong>' : ''}
+                  ${step.type === 'notify' && step.config.message ? step.config.message : ''}
+                </div>` : ''}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function openEnrollModal(workflowId) {
+  openModal('Enroll Contacts into Workflow', `
+    <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px">Select which contacts to enroll in this workflow by stage and/or vertical.</p>
+    <div class="form-row">
+      <div class="form-group"><label>Pipeline Stage</label>
+        <select id="m-enroll-stage">
+          <option value="">All Stages</option>
+          ${PIPELINE_STAGES.map(s => `<option value="${s}">${STAGE_LABELS[s]}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label>Vertical</label><select id="m-enroll-vertical">${verticalOptions('')}</select></div>
+    </div>
+    <div class="form-group">
+      <label>Or enter specific Contact IDs (comma-separated)</label>
+      <input type="text" id="m-enroll-ids" placeholder="e.g. 1, 5, 12">
+    </div>
+    <div id="enroll-result" style="display:none;margin-top:12px;padding:12px;border-radius:var(--radius);font-size:13px"></div>
+  `, async () => {
+    const stage = document.getElementById('m-enroll-stage').value;
+    const verticalId = document.getElementById('m-enroll-vertical').value;
+    const idsText = document.getElementById('m-enroll-ids').value.trim();
+    const resultEl = document.getElementById('enroll-result');
+
+    let contact_ids = [];
+    if (idsText) {
+      contact_ids = idsText.split(',').map(s => parseInt(s.trim())).filter(n => n > 0);
+    } else {
+      // Fetch contacts matching criteria
+      const params = new URLSearchParams({ limit: 500 });
+      if (stage) params.set('pipeline_stage', stage);
+      const contactsRes = await api(`/contacts?${params}`);
+      if (contactsRes.success) {
+        let filtered = contactsRes.data;
+        if (verticalId) filtered = filtered.filter(c => c.vertical_id == verticalId);
+        if (stage) filtered = filtered.filter(c => (c.pipeline_stage || 'prospect') === stage);
+        contact_ids = filtered.map(c => c.id);
+      }
+    }
+
+    if (contact_ids.length === 0) { alert('No contacts match the criteria'); return; }
+
+    resultEl.style.display = 'block';
+    resultEl.style.background = 'var(--bg-hover)';
+    resultEl.innerHTML = `<span style="color:var(--accent)">Enrolling ${contact_ids.length} contacts...</span>`;
+
+    const res = await api(`/workflows/${workflowId}/enroll`, { method: 'POST', body: JSON.stringify({ contact_ids }) });
+    if (res.success) {
+      resultEl.style.background = '#10b98120';
+      resultEl.innerHTML = `<strong style="color:var(--success)">Enrolled ${res.enrolled || contact_ids.length} contacts</strong>`;
+    } else {
+      resultEl.style.background = '#ef444420';
+      resultEl.innerHTML = `<strong style="color:var(--danger)">Error</strong>: ${res.error}`;
+    }
+  });
+}
+
+async function deleteWorkflow(id) {
+  if (!confirm('Delete this workflow permanently?')) return;
+  await api(`/workflows/${id}`, { method: 'DELETE' });
+  renderWorkflows(document.getElementById('contacts-tab-content'));
 }
 
 // =====================================================
@@ -1192,9 +1675,11 @@ async function deleteVertical(id, name) {
 async function showContactDetail(id) {
   const container = document.getElementById('view-container');
   container.innerHTML = '<div class="spinner"></div>';
-  const res = await api(`/contacts/${id}`);
+  const [res, histRes] = await Promise.all([api(`/contacts/${id}`), api(`/pipeline/${id}/history`).catch(() => ({ success: false, data: [] }))]);
   if (!res.success) return;
   const c = res.data;
+  const pipelineHistory = histRes.success ? histRes.data : [];
+  const stage = c.pipeline_stage || 'prospect';
 
   const cBackAction = _lastDrilldown ? `drillDown('${_lastDrilldown.metric}'${_lastDrilldown.filterValue ? ",'" + _lastDrilldown.filterValue + "'" : ''})` : "navigateTo('contacts')";
   const cBackLabel = _lastDrilldown ? '&#8592; Back to List' : '&#8592; Back to Contacts';
@@ -1213,10 +1698,20 @@ async function showContactDetail(id) {
         </div>
       </div>
       <div class="detail-meta">
-        <div class="detail-meta-item"><span class="status-badge status-${c.status}">${c.status}</span></div>
+        <div class="detail-meta-item"><span class="status-badge" style="background:${STAGE_COLORS[stage]}20;color:${STAGE_COLORS[stage]};font-weight:600">${STAGE_LABELS[stage] || stage}</span></div>
         ${c.vertical ? `<div class="detail-meta-item"><span class="vertical-dot" style="background:${c.vertical.color}"></span>${c.vertical.name}</div>` : ''}
         ${c.contact_type ? `<div class="detail-meta-item">${c.contact_type}</div>` : ''}
+        ${c.last_email_event ? `<div class="detail-meta-item" style="font-size:12px;color:var(--text-muted)">Last email: ${c.last_email_event}${c.last_email_event_at ? ' (' + fmtDate(c.last_email_event_at) + ')' : ''}</div>` : ''}
       </div>
+
+      <!-- Pipeline Stage Selector -->
+      <div style="margin:16px 0;padding:12px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius)">
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:600">PIPELINE STAGE</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
+          ${PIPELINE_STAGES.map(s => `<button class="btn btn-sm" style="background:${s===stage ? STAGE_COLORS[s] : 'transparent'};color:${s===stage ? 'white' : STAGE_COLORS[s]};border:1px solid ${STAGE_COLORS[s]}40;font-size:12px;padding:4px 12px" onclick="changeContactStage(${c.id},'${s}')">${STAGE_LABELS[s]}</button>`).join('')}
+        </div>
+      </div>
+
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
         <div>
           <div class="detail-section">
@@ -1231,6 +1726,22 @@ async function showContactDetail(id) {
           </div>
           ${c.notes ? `<div class="detail-section"><h4>Notes</h4><p style="font-size:14px;color:var(--text-secondary);white-space:pre-wrap">${c.notes}</p></div>` : ''}
           ${c.tags?.length ? `<div class="detail-section"><h4>Tags</h4>${c.tags.map(t => `<span class="tag">${t}</span>`).join(' ')}</div>` : ''}
+
+          <div class="detail-section">
+            <h4>Pipeline History</h4>
+            <div class="timeline">
+              ${pipelineHistory.length > 0 ? pipelineHistory.map(h => `<div class="timeline-item">
+                <div class="timeline-dot" style="background:${STAGE_COLORS[h.to_stage] || 'var(--accent)'}"></div>
+                <div class="timeline-content">
+                  <span class="status-badge" style="background:${STAGE_COLORS[h.from_stage]||'#64748b'}20;color:${STAGE_COLORS[h.from_stage]||'#64748b'};font-size:11px">${STAGE_LABELS[h.from_stage]||h.from_stage||'?'}</span>
+                  <span style="color:var(--text-muted)">&#8594;</span>
+                  <span class="status-badge" style="background:${STAGE_COLORS[h.to_stage]||'#64748b'}20;color:${STAGE_COLORS[h.to_stage]||'#64748b'};font-size:11px">${STAGE_LABELS[h.to_stage]||h.to_stage}</span>
+                  <br><span class="timeline-time">${h.trigger_type || ''} — ${fmtDateTime(h.created_at)}</span>
+                  ${h.trigger_detail ? `<br><span style="font-size:11px;color:var(--text-muted)">${h.trigger_detail}</span>` : ''}
+                </div>
+              </div>`).join('') : '<p style="font-size:13px;color:var(--text-muted)">No stage changes yet</p>'}
+            </div>
+          </div>
         </div>
         <div>
           <div class="detail-section">
@@ -1250,6 +1761,11 @@ async function showContactDetail(id) {
       </div>
     </div>
   `;
+}
+
+async function changeContactStage(contactId, newStage) {
+  await api(`/pipeline/${contactId}/stage`, { method: 'PUT', body: JSON.stringify({ stage: newStage, trigger_type: 'manual' }) });
+  showContactDetail(contactId);
 }
 
 async function showProjectDetail(id) {
@@ -1452,6 +1968,11 @@ function openContactModal(existing) {
       </div>
     </div>
     <div class="form-row">
+      <div class="form-group"><label>Pipeline Stage</label>
+        <select id="m-pipeline-stage">
+          ${PIPELINE_STAGES.map(s => `<option value="${s}" ${(c.pipeline_stage||'prospect')===s?'selected':''}>${STAGE_LABELS[s]}</option>`).join('')}
+        </select>
+      </div>
       <div class="form-group"><label>Contact Type</label>
         <select id="m-contact-type">
           <option value="general" ${c.contact_type==='general'?'selected':''}>General</option>
@@ -1461,8 +1982,8 @@ function openContactModal(existing) {
           <option value="investor" ${c.contact_type==='investor'?'selected':''}>Investor</option>
         </select>
       </div>
-      <div class="form-group"><label>Source</label><input type="text" id="m-source" value="${c.source || ''}"></div>
     </div>
+    <div class="form-group"><label>Source</label><input type="text" id="m-source" value="${c.source || ''}"></div>
     <div class="form-group"><label>Next Follow-up Date</label><input type="date" id="m-followup" value="${c.next_followup_date || ''}"></div>
     <div class="form-group"><label>Notes</label><textarea id="m-notes">${c.notes || ''}</textarea></div>
   `, async () => {
@@ -1474,6 +1995,7 @@ function openContactModal(existing) {
       title: document.getElementById('m-title').value.trim(),
       vertical_id: document.getElementById('m-vertical').value || null,
       status: document.getElementById('m-status').value,
+      pipeline_stage: document.getElementById('m-pipeline-stage').value,
       contact_type: document.getElementById('m-contact-type').value,
       source: document.getElementById('m-source').value.trim(),
       next_followup_date: document.getElementById('m-followup').value || null,
