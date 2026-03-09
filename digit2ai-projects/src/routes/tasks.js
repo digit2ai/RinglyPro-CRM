@@ -190,4 +190,7 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// Export sync function for test endpoint
+router._syncToQuickTask = syncToQuickTask;
+
 module.exports = router;
