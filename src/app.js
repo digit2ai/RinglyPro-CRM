@@ -1545,9 +1545,13 @@ app.get('/auth-check', (req, res) => {
 // =====================================================
 
 // Health check endpoint
+app.get('/deploy-check', (req, res) => {
+  res.json({ deployed_at: '2026-03-09T23:40:00Z', commit: '38c6c35', build: 'v2' });
+});
+
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     client: CLIENT_NAME,
     clientId: CLIENT_ID,
     timestamp: new Date().toISOString(),
