@@ -830,6 +830,40 @@ app.get('/debug/cw-carriers-error', (req, res) => {
   });
 });
 
+// ==========================================
+// RinglyPro Logistics Platform
+// ==========================================
+let logisticsApp = null;
+let logisticsError = null;
+try {
+  logisticsApp = require('../verticals/logistics/backend/index');
+  app.get('/logistics', (req, res, next) => {
+    if (!req.originalUrl.endsWith('/')) return res.redirect('/logistics/');
+    next();
+  });
+  app.use('/logistics', logisticsApp);
+  console.log('🏭 RinglyPro Logistics mounted at /logistics');
+  console.log('   - Dashboard UI: /logistics/');
+  console.log('   - Health Check: /logistics/health');
+  console.log('   - API: /logistics/api/*');
+  console.log('   - MCP Tools: /logistics/api/tools/call');
+} catch (error) {
+  logisticsError = error;
+  console.log('⚠️ Logistics not available:', error.message);
+}
+
+app.get('/debug/logistics-error', (req, res) => {
+  res.json({
+    service: 'RinglyPro Logistics',
+    available: !logisticsError,
+    error: logisticsError ? { message: logisticsError.message, stack: logisticsError.stack } : null,
+    env: {
+      NODE_ENV: process.env.NODE_ENV,
+      hasDbUrl: !!process.env.DATABASE_URL
+    }
+  });
+});
+
 // Conditional forwarding webhook (for business phone forwarding)
 app.use('/webhook', conditionalForwardRoutes);
 
