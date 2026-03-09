@@ -103,6 +103,112 @@ CREATE TABLE IF NOT EXISTS cw_analytics (
   created_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Contact fields extension (MC number, title/role, insurance)
+DO $$ BEGIN
+  ALTER TABLE cw_contacts ADD COLUMN mc_number VARCHAR(32);
+  EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+DO $$ BEGIN
+  ALTER TABLE cw_contacts ADD COLUMN dot_number VARCHAR(32);
+  EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+DO $$ BEGIN
+  ALTER TABLE cw_contacts ADD COLUMN title VARCHAR(128);
+  EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+DO $$ BEGIN
+  ALTER TABLE cw_contacts ADD COLUMN insurance_expiry DATE;
+  EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+DO $$ BEGIN
+  ALTER TABLE cw_contacts ADD COLUMN safety_rating VARCHAR(16);
+  EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+
+-- Loads extension: shipper_rate (what shipper pays) vs carrier_rate (what carrier gets paid)
+DO $$ BEGIN
+  ALTER TABLE cw_loads ADD COLUMN shipper_rate NUMERIC(10,2);
+  EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+DO $$ BEGIN
+  ALTER TABLE cw_loads ADD COLUMN commodity VARCHAR(255);
+  EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+DO $$ BEGIN
+  ALTER TABLE cw_loads ADD COLUMN equipment_type VARCHAR(64);
+  EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+DO $$ BEGIN
+  ALTER TABLE cw_loads ADD COLUMN dimensions VARCHAR(128);
+  EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+DO $$ BEGIN
+  ALTER TABLE cw_loads ADD COLUMN posted_to_board BOOLEAN DEFAULT FALSE;
+  EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+
+-- Carrier Offers / Bids per load
+CREATE TABLE IF NOT EXISTS cw_carrier_offers (
+  id              SERIAL PRIMARY KEY,
+  load_id         INTEGER NOT NULL REFERENCES cw_loads(id),
+  carrier_id      INTEGER REFERENCES cw_contacts(id),
+  carrier_name    VARCHAR(255),
+  mc_number       VARCHAR(32),
+  phone           VARCHAR(32),
+  rate_offered    NUMERIC(10,2),
+  status          VARCHAR(20) DEFAULT 'pending'
+                  CHECK (status IN ('pending','accepted','declined','counter','expired')),
+  notes           TEXT,
+  offered_at      TIMESTAMPTZ DEFAULT NOW(),
+  responded_at    TIMESTAMPTZ,
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_cw_carrier_offers_load ON cw_carrier_offers(load_id);
+CREATE INDEX IF NOT EXISTS idx_cw_carrier_offers_status ON cw_carrier_offers(status);
+
+-- Check Calls / Transit Tracking
+CREATE TABLE IF NOT EXISTS cw_check_calls (
+  id              SERIAL PRIMARY KEY,
+  load_id         INTEGER NOT NULL REFERENCES cw_loads(id),
+  contact_id      INTEGER REFERENCES cw_contacts(id),
+  call_type       VARCHAR(32) DEFAULT 'check_call'
+                  CHECK (call_type IN ('check_call','pickup_confirm','delivery_confirm','eta_update','exception')),
+  location        VARCHAR(255),
+  eta             TIMESTAMPTZ,
+  status_reported VARCHAR(64),
+  notes           TEXT,
+  called_by       VARCHAR(64) DEFAULT 'rachel_ai',
+  call_sid        VARCHAR(64),
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_cw_check_calls_load ON cw_check_calls(load_id);
+
+-- Invoices / Billing (dual-sided: shipper invoice + carrier payment)
+CREATE TABLE IF NOT EXISTS cw_invoices (
+  id              SERIAL PRIMARY KEY,
+  load_id         INTEGER REFERENCES cw_loads(id),
+  invoice_type    VARCHAR(16) NOT NULL CHECK (invoice_type IN ('shipper','carrier')),
+  invoice_number  VARCHAR(64),
+  contact_id      INTEGER REFERENCES cw_contacts(id),
+  amount          NUMERIC(10,2) NOT NULL,
+  status          VARCHAR(20) DEFAULT 'draft'
+                  CHECK (status IN ('draft','sent','paid','overdue','disputed','void')),
+  due_date        DATE,
+  paid_date       DATE,
+  payment_method  VARCHAR(32),
+  pod_received    BOOLEAN DEFAULT FALSE,
+  pod_notes       TEXT,
+  notes           TEXT,
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_cw_invoices_load ON cw_invoices(load_id);
+CREATE INDEX IF NOT EXISTS idx_cw_invoices_type ON cw_invoices(invoice_type);
+CREATE INDEX IF NOT EXISTS idx_cw_invoices_status ON cw_invoices(status);
+
 -- Alert Log
 CREATE TABLE IF NOT EXISTS cw_alert_log (
   id              SERIAL PRIMARY KEY,

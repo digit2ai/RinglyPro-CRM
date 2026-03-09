@@ -6,7 +6,7 @@ export default function Contacts() {
   const [tab, setTab] = useState('');
   const [search, setSearch] = useState('');
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState({ contact_type: 'shipper', company_name: '', full_name: '', email: '', phone: '' });
+  const [form, setForm] = useState({ contact_type: 'shipper', company_name: '', full_name: '', email: '', phone: '', mc_number: '', dot_number: '', title: '' });
   const [loading, setLoading] = useState(true);
 
   const fetchContacts = () => {
@@ -23,7 +23,7 @@ export default function Contacts() {
     try {
       await api.post('/contacts', form);
       setShowCreate(false);
-      setForm({ contact_type: 'shipper', company_name: '', full_name: '', email: '', phone: '' });
+      setForm({ contact_type: 'shipper', company_name: '', full_name: '', email: '', phone: '', mc_number: '', dot_number: '', title: '' });
       fetchContacts();
     } catch (err) {
       alert(err.response?.data?.error || 'Error');
@@ -86,6 +86,11 @@ export default function Contacts() {
               <input placeholder="Full Name" value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} style={s.input} />
               <input placeholder="Email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} style={s.input} />
               <input placeholder="Phone" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} style={s.input} />
+              <input placeholder="Title / Role" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} style={s.input} />
+              <div style={s.row}>
+                <input placeholder="MC Number" value={form.mc_number} onChange={e => setForm({ ...form, mc_number: e.target.value })} style={s.input} />
+                <input placeholder="DOT Number" value={form.dot_number} onChange={e => setForm({ ...form, dot_number: e.target.value })} style={s.input} />
+              </div>
               <div style={s.row}>
                 <button type="submit" style={s.createBtn}>Create</button>
                 <button type="button" onClick={() => setShowCreate(false)} style={s.cancelBtn}>Cancel</button>
@@ -102,7 +107,7 @@ export default function Contacts() {
               <th style={s.th}>Company</th>
               <th style={s.th}>Name</th>
               <th style={s.th}>Type</th>
-              <th style={s.th}>Email</th>
+              <th style={s.th}>MC#</th>
               <th style={s.th}>Phone</th>
               <th style={s.th}>HubSpot</th>
               <th style={s.th}>Actions</th>
@@ -110,13 +115,13 @@ export default function Contacts() {
           </thead>
           <tbody>
             {loading ? <tr><td colSpan={7} style={s.empty}>Loading...</td></tr> :
-             contacts.length === 0 ? <tr><td colSpan={7} style={s.empty}>No contacts found</td></tr> :
+             contacts.length === 0 ? <tr><td colSpan={7} style={s.empty}>No contacts</td></tr> :
              contacts.map(c => (
               <tr key={c.id}>
                 <td style={s.td}>{c.company_name || '—'}</td>
                 <td style={s.td}>{c.full_name || '—'}</td>
                 <td style={s.td}><span style={s.typeBadge}>{c.contact_type}</span></td>
-                <td style={s.td}>{c.email || '—'}</td>
+                <td style={s.td}>{c.mc_number || '—'}</td>
                 <td style={s.td}>{c.phone || '—'}</td>
                 <td style={s.td}>{c.hubspot_id ? <span style={s.syncedBadge}>Synced</span> : <span style={s.unsyncedBadge}>Not synced</span>}</td>
                 <td style={s.td}>

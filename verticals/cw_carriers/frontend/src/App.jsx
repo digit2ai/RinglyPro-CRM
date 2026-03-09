@@ -14,6 +14,9 @@ import Demo from './pages/Demo';
 import Landing from './pages/Landing';
 import TMS from './pages/TMS';
 import Reports from './pages/Reports';
+import Offers from './pages/Offers';
+import CheckCalls from './pages/CheckCalls';
+import Billing from './pages/Billing';
 
 const BASE = '/cw_carriers';
 
@@ -38,8 +41,11 @@ function Sidebar({ open, onClose }) {
   const nav = [
     { path: `${BASE}/dashboard`, label: 'Dashboard', icon: '\u{1F4CA}' },
     { path: `${BASE}/loads`, label: 'Loads', icon: '\u{1F69A}' },
+    { path: `${BASE}/offers`, label: 'Carrier Offers', icon: '\u{1F4B0}' },
     { path: `${BASE}/contacts`, label: 'Contacts', icon: '\u{1F465}' },
     { path: `${BASE}/calls`, label: 'Calls', icon: '\u{1F4DE}' },
+    { path: `${BASE}/tracking`, label: 'Check Calls', icon: '\u{1F4CD}' },
+    { path: `${BASE}/billing`, label: 'Billing', icon: '\u{1F4B5}' },
     { path: `${BASE}/nlp`, label: 'NLP Assistant', icon: '\u{1F916}' },
     { path: `${BASE}/analytics`, label: 'Analytics', icon: '\u{1F4C8}' },
     { path: `${BASE}/tms`, label: 'TMS Bridge', icon: '\u{1F310}' },
@@ -147,6 +153,9 @@ export default function App() {
         <Route path={`${BASE}/analytics`} element={<ProtectedRoute><Layout><Analytics /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/tms`} element={<ProtectedRoute><Layout><TMS /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/reports`} element={<ProtectedRoute><Layout><Reports /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/offers`} element={<ProtectedRoute><Layout><Offers /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/tracking`} element={<ProtectedRoute><Layout><CheckCalls /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/billing`} element={<ProtectedRoute><Layout><Billing /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/hubspot`} element={<ProtectedRoute><Layout><HubSpot /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/settings`} element={<ProtectedRoute><Layout><Settings /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/demo`} element={<ProtectedRoute><Layout><Demo /></Layout></ProtectedRoute>} />

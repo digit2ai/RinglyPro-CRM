@@ -5,7 +5,7 @@ export default function Loads() {
   const [loads, setLoads] = useState([]);
   const [filter, setFilter] = useState({ status: '', freight_type: '', origin: '' });
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState({ load_ref: '', origin: '', destination: '', freight_type: 'dry_van', weight_lbs: '', pickup_date: '', delivery_date: '', rate_usd: '', broker_notes: '' });
+  const [form, setForm] = useState({ load_ref: '', origin: '', destination: '', freight_type: 'dry_van', weight_lbs: '', pickup_date: '', delivery_date: '', rate_usd: '', shipper_rate: '', commodity: '', equipment_type: '', broker_notes: '' });
   const [loading, setLoading] = useState(true);
 
   const fetchLoads = () => {
@@ -21,9 +21,9 @@ export default function Loads() {
   const createLoad = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/loads', { ...form, weight_lbs: form.weight_lbs ? parseInt(form.weight_lbs) : null, rate_usd: form.rate_usd ? parseFloat(form.rate_usd) : null });
+      await api.post('/loads', { ...form, weight_lbs: form.weight_lbs ? parseInt(form.weight_lbs) : null, rate_usd: form.rate_usd ? parseFloat(form.rate_usd) : null, shipper_rate: form.shipper_rate ? parseFloat(form.shipper_rate) : null });
       setShowCreate(false);
-      setForm({ load_ref: '', origin: '', destination: '', freight_type: 'dry_van', weight_lbs: '', pickup_date: '', delivery_date: '', rate_usd: '', broker_notes: '' });
+      setForm({ load_ref: '', origin: '', destination: '', freight_type: 'dry_van', weight_lbs: '', pickup_date: '', delivery_date: '', rate_usd: '', shipper_rate: '', commodity: '', equipment_type: '', broker_notes: '' });
       fetchLoads();
     } catch (err) {
       alert(err.response?.data?.error || 'Error creating load');
@@ -95,7 +95,14 @@ export default function Loads() {
                 <input type="date" placeholder="Pickup" value={form.pickup_date} onChange={e => setForm({ ...form, pickup_date: e.target.value })} style={s.input} />
                 <input type="date" placeholder="Delivery" value={form.delivery_date} onChange={e => setForm({ ...form, delivery_date: e.target.value })} style={s.input} />
               </div>
-              <input placeholder="Rate (USD)" type="number" step="0.01" value={form.rate_usd} onChange={e => setForm({ ...form, rate_usd: e.target.value })} style={s.input} />
+              <div style={s.row}>
+                <input placeholder="Carrier Rate ($)" type="number" step="0.01" value={form.rate_usd} onChange={e => setForm({ ...form, rate_usd: e.target.value })} style={s.input} />
+                <input placeholder="Shipper Rate ($)" type="number" step="0.01" value={form.shipper_rate} onChange={e => setForm({ ...form, shipper_rate: e.target.value })} style={s.input} />
+              </div>
+              <div style={s.row}>
+                <input placeholder="Commodity" value={form.commodity} onChange={e => setForm({ ...form, commodity: e.target.value })} style={s.input} />
+                <input placeholder="Equipment Type" value={form.equipment_type} onChange={e => setForm({ ...form, equipment_type: e.target.value })} style={s.input} />
+              </div>
               <textarea placeholder="Broker Notes" value={form.broker_notes} onChange={e => setForm({ ...form, broker_notes: e.target.value })} style={{ ...s.input, minHeight: 60 }} />
               <div style={s.row}>
                 <button type="submit" style={s.createBtn}>Create Load</button>

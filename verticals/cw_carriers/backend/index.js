@@ -19,6 +19,9 @@ const tmsRoutes = require('./routes/tms');
 const reportsRoutes = require('./routes/reports');
 const alertsRoutes = require('./routes/alerts');
 const collectorRoutes = require('./routes/collector');
+const offersRoutes = require('./routes/offers');
+const checkCallsRoutes = require('./routes/checkcalls');
+const billingRoutes = require('./routes/billing');
 
 // Mount API routes
 router.use('/api/auth', authRoutes);
@@ -35,6 +38,9 @@ router.use('/api/tms', tmsRoutes);
 router.use('/api/reports', reportsRoutes);
 router.use('/api/alerts', alertsRoutes);
 router.use('/api/collector', collectorRoutes);
+router.use('/api/offers', offersRoutes);
+router.use('/api/checkcalls', checkCallsRoutes);
+router.use('/api/billing', billingRoutes);
 
 // Health check
 router.get('/health', (req, res) => {
