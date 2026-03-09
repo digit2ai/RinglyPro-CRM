@@ -39,11 +39,30 @@ body {
 .header {
   padding: 0;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
 
 .header-logo {
   max-width: 280px;
   height: auto;
+}
+
+.header-link {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  padding: 8px;
+  border-radius: 8px;
+  transition: color 0.2s, background 0.2s;
+}
+.header-link:hover {
+  color: var(--accent);
+  background: rgba(37, 99, 235, 0.1);
 }
 
 /* === Input Row === */
