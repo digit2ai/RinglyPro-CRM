@@ -15,11 +15,12 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Email and password required' });
     }
 
-    const [[user]] = await sequelize.query(
+    const [rows] = await sequelize.query(
       `SELECT * FROM cw_users WHERE email = $1 AND status = 'active'`,
       { bind: [email.toLowerCase()] }
     );
 
+    const user = rows && rows[0];
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -35,14 +36,14 @@ router.post('/login', async (req, res) => {
       { expiresIn: '24h' }
     );
 
-    res.json({
+    return res.json({
       success: true,
       token,
       user: { id: user.id, email: user.email, full_name: user.full_name, role: user.role }
     });
   } catch (err) {
-    console.error('CW auth login error:', err.message);
-    res.status(500).json({ error: 'Login failed' });
+    console.error('CW auth login error:', err.message, err.stack);
+    return res.status(500).json({ error: 'Login failed: ' + err.message });
   }
 });
 
@@ -54,14 +55,25 @@ router.post('/logout', (req, res) => {
 // GET /me
 router.get('/me', require('../middleware/auth.cw'), async (req, res) => {
   try {
-    const [[user]] = await sequelize.query(
+    const [rows] = await sequelize.query(
       `SELECT id, email, full_name, role, tenant_id, status FROM cw_users WHERE id = $1`,
       { bind: [req.user.userId] }
     );
+    const user = rows && rows[0];
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.json({ success: true, user });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /debug - temp: check if admin user exists
+router.get('/debug', async (req, res) => {
+  try {
+    const [rows] = await sequelize.query(`SELECT id, email, role, status, length(password_hash) as hash_len FROM cw_users LIMIT 5`);
+    res.json({ users: rows });
+  } catch (err) {
+    res.json({ error: err.message });
   }
 });
 

@@ -58,14 +58,22 @@ async function initialize() {
       console.log('  ✅ CW Carriers schema initialized');
     }
 
-    // Seed admin user if not exists
+    // Seed admin user — always upsert to ensure password is current
     const email = process.env.CW_USER_EMAIL || 'cwcarriers@ringlypro.com';
     const password = process.env.CW_USER_PASSWORD || 'CWCarriers2026!';
-    const [[existing]] = await sequelize.query(
+    const hash = await bcrypt.hash(password, 12);
+
+    const [existingRows] = await sequelize.query(
       `SELECT id FROM cw_users WHERE email = $1`, { bind: [email] }
     );
-    if (!existing) {
-      const hash = await bcrypt.hash(password, 12);
+    if (existingRows && existingRows.length > 0) {
+      // Update password hash in case env var changed
+      await sequelize.query(
+        `UPDATE cw_users SET password_hash = $1, updated_at = NOW() WHERE email = $2`,
+        { bind: [hash, email] }
+      );
+      console.log('  ✅ CW Carriers admin user password updated');
+    } else {
       await sequelize.query(
         `INSERT INTO cw_users (email, password_hash, tenant_id, role, full_name, status, created_at, updated_at)
          VALUES ($1, $2, 'cw_carriers', 'admin', 'CW Carriers Admin', 'active', NOW(), NOW())`,

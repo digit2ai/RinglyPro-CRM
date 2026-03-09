@@ -30,6 +30,7 @@ export default function Login() {
     <div style={styles.container}>
       <div style={styles.card}>
         <div style={styles.logoSection}>
+          <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="CW Carriers" style={styles.logoImg} />
           <h1 style={styles.logoText}>CW CARRIERS</h1>
           <p style={styles.logoSub}>USA, Inc. — Logistics CRM</p>
         </div>
@@ -57,6 +58,7 @@ const styles = {
   container: { display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#0D1117' },
   card: { background: '#161B22', border: '1px solid #21262D', borderRadius: 12, padding: 40, width: 400, maxWidth: '90vw' },
   logoSection: { textAlign: 'center', marginBottom: 32 },
+  logoImg: { width: 120, height: 'auto', marginBottom: 16, borderRadius: 8 },
   logoText: { fontFamily: "'Bebas Neue', sans-serif", fontSize: 36, color: '#C8962A', letterSpacing: 3 },
   logoSub: { fontSize: 14, color: '#8B949E', marginTop: 4 },
   form: { display: 'flex', flexDirection: 'column', gap: 16 },

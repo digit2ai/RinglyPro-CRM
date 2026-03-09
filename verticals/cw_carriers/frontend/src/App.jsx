@@ -32,6 +32,7 @@ function Sidebar() {
   return (
     <div style={styles.sidebar}>
       <div style={styles.logo}>
+        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="CW Carriers" style={styles.logoImg} />
         <div style={styles.logoText}>CW CARRIERS</div>
         <div style={styles.logoSub}>USA, Inc.</div>
       </div>
@@ -104,7 +105,8 @@ const globalCSS = `
 const styles = {
   layout: { display: 'flex', minHeight: '100vh' },
   sidebar: { width: 240, background: '#161B22', borderRight: '1px solid #21262D', display: 'flex', flexDirection: 'column', position: 'fixed', height: '100vh', zIndex: 10 },
-  logo: { padding: '24px 20px', borderBottom: '1px solid #21262D' },
+  logo: { padding: '24px 20px', borderBottom: '1px solid #21262D', textAlign: 'center' },
+  logoImg: { width: 80, height: 'auto', marginBottom: 8, borderRadius: 6 },
   logoText: { fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, color: '#C8962A', letterSpacing: 2 },
   logoSub: { fontSize: 12, color: '#8B949E', marginTop: 2 },
   nav: { flex: 1, padding: '12px 0', overflowY: 'auto' },
