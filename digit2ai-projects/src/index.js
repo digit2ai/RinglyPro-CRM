@@ -51,31 +51,6 @@ app.get('/sw.js', (req, res) => {
   res.sendFile(path.join(dashboardPath, 'sw.js'));
 });
 
-// Temporary sync test endpoint (no auth) — remove after testing
-app.post('/api/v1/test-sync-create', async (req, res) => {
-  try {
-    const { Task } = require('./models');
-    const task = await Task.create({
-      workspace_id: 1,
-      title: req.body.title || 'Sync test task',
-      description: req.body.description || 'Test',
-      task_type: 'task',
-      status: 'pending',
-      priority: 'medium',
-      due_date: req.body.due_date || null,
-      assigned_staff_id: req.body.assigned_staff_id || null
-    });
-    // Import sync function from tasks route
-    const tasksModule = require('./routes/tasks');
-    if (tasksModule._syncToQuickTask) {
-      await tasksModule._syncToQuickTask(task.toJSON());
-    }
-    res.json({ success: true, data: task });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
 // API routes (authenticated)
 app.use('/api/v1/dashboard', authenticateToken, dashboardRoutes);
 app.use('/api/v1/contacts', authenticateToken, contactsRoutes);

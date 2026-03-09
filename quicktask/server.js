@@ -195,46 +195,6 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'quicktask' });
 });
 
-// Debug: test d2Pool connection and sync
-app.get('/api/debug-sync', async (req, res) => {
-  const results = { qtPool: 'unknown', d2Pool: 'unknown', d2Tables: [], d2DbUrl: process.env.PROJECTS_DATABASE_URL ? 'PROJECTS_DB' : (process.env.CRM_DATABASE_URL ? 'CRM_DB' : 'DATABASE_URL') };
-  try {
-    const r1 = await pool.query('SELECT COUNT(*) as cnt FROM follow_up_items');
-    results.qtPool = `ok (${r1.rows[0].cnt} items)`;
-  } catch (e) { results.qtPool = 'error: ' + e.message.substring(0, 80); }
-  try {
-    const r2 = await d2Pool.query("SELECT tablename FROM pg_tables WHERE tablename LIKE 'd2_%' ORDER BY tablename");
-    results.d2Tables = r2.rows.map(r => r.tablename);
-    results.d2Pool = 'ok';
-  } catch (e) { results.d2Pool = 'error: ' + e.message.substring(0, 80); }
-  try {
-    const r3 = await d2Pool.query('SELECT COUNT(*) as cnt FROM d2_tasks');
-    results.d2TaskCount = parseInt(r3.rows[0].cnt);
-  } catch (e) { results.d2TaskAccess = 'error: ' + e.message.substring(0, 80); }
-  try {
-    const r4 = await d2Pool.query('SELECT COUNT(*) as cnt FROM d2_staff_members');
-    results.d2StaffCount = parseInt(r4.rows[0].cnt);
-  } catch (e) { results.d2StaffAccess = 'error: ' + e.message.substring(0, 80); }
-  // Check d2_tasks columns
-  try {
-    const r5 = await d2Pool.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'd2_tasks' ORDER BY ordinal_position");
-    results.d2TaskColumns = r5.rows.map(r => r.column_name);
-  } catch (e) { results.d2TaskColumns = 'error: ' + e.message.substring(0, 80); }
-  // Try a test insert and report error
-  if (req.query.test_insert === '1') {
-    try {
-      const r6 = await d2Pool.query(
-        `INSERT INTO d2_tasks (workspace_id, title, description, task_type, status, priority, due_date, assigned_staff_id, quicktask_id, created_at, updated_at)
-         VALUES (1, 'SYNC TEST', 'test', 'task', 'pending', 'medium', NULL, NULL, -1, NOW(), NOW()) RETURNING id`
-      );
-      results.testInsert = 'ok, id=' + r6.rows[0].id;
-      // Clean up
-      await d2Pool.query('DELETE FROM d2_tasks WHERE quicktask_id = -1');
-    } catch (e) { results.testInsert = 'error: ' + e.message; }
-  }
-  res.json(results);
-});
-
 // GET /api/tasks — Fetch all tasks with custom ordering
 app.get('/api/tasks', async (req, res) => {
   try {
