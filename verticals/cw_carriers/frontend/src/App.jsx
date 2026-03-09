@@ -11,6 +11,7 @@ import Analytics from './pages/Analytics';
 import HubSpot from './pages/HubSpot';
 import Settings from './pages/Settings';
 import Demo from './pages/Demo';
+import Landing from './pages/Landing';
 
 const BASE = '/cw_carriers';
 
@@ -95,9 +96,9 @@ export default function App() {
         <Route path={`${BASE}/hubspot`} element={<ProtectedRoute><Layout><HubSpot /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/settings`} element={<ProtectedRoute><Layout><Settings /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/demo`} element={<ProtectedRoute><Layout><Demo /></Layout></ProtectedRoute>} />
-        <Route path={`${BASE}`} element={<Navigate to={`${BASE}/login`} replace />} />
-        <Route path={`${BASE}/`} element={<Navigate to={`${BASE}/login`} replace />} />
-        <Route path="*" element={<Navigate to={`${BASE}/login`} replace />} />
+        <Route path={`${BASE}`} element={<Landing />} />
+        <Route path={`${BASE}/`} element={<Landing />} />
+        <Route path="*" element={<Navigate to={`${BASE}/`} replace />} />
       </Routes>
     </BrowserRouter>
   );
