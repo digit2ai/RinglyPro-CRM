@@ -184,7 +184,7 @@ body {
   border-bottom: 1px solid var(--border);
 }
 .sidebar-logo-img {
-  width: 140px; height: auto; max-height: 48px;
+  width: 140px; height: auto;
   object-fit: contain; flex-shrink: 0;
 }
 .sidebar-toggle {
