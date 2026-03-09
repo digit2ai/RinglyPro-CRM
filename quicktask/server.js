@@ -151,7 +151,7 @@ async function syncToD2Tasks(item) {
   try {
     const staffId = await getStaffId(item.assigned_to);
     const r = await d2Pool.query(
-      `INSERT INTO d2_tasks (workspace_id, title, description, task_type, status, priority, due_date, assigned_staff_id, quicktask_id, "createdAt", "updatedAt")
+      `INSERT INTO d2_tasks (workspace_id, title, description, task_type, status, priority, due_date, assigned_staff_id, quicktask_id, created_at, updated_at)
        VALUES (1, $1, $2, 'task', 'pending', 'medium', $3, $4, $5, NOW(), NOW()) RETURNING id`,
       [
         item.event_title || item.message.substring(0, 500),
@@ -176,7 +176,7 @@ async function syncStatusToD2(itemId, status) {
   try {
     const completedAt = status === 'completed' ? 'NOW()' : 'NULL';
     await d2Pool.query(
-      `UPDATE d2_tasks SET status = $1, completed_at = ${completedAt}, "updatedAt" = NOW()
+      `UPDATE d2_tasks SET status = $1, completed_at = ${completedAt}, updated_at = NOW()
        WHERE quicktask_id = $2`,
       [status, itemId]
     );
@@ -224,7 +224,7 @@ app.get('/api/debug-sync', async (req, res) => {
   if (req.query.test_insert === '1') {
     try {
       const r6 = await d2Pool.query(
-        `INSERT INTO d2_tasks (workspace_id, title, description, task_type, status, priority, due_date, assigned_staff_id, quicktask_id, "createdAt", "updatedAt")
+        `INSERT INTO d2_tasks (workspace_id, title, description, task_type, status, priority, due_date, assigned_staff_id, quicktask_id, created_at, updated_at)
          VALUES (1, 'SYNC TEST', 'test', 'task', 'pending', 'medium', NULL, NULL, -1, NOW(), NOW()) RETURNING id`
       );
       results.testInsert = 'ok, id=' + r6.rows[0].id;
