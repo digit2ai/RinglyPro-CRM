@@ -183,10 +183,20 @@ router.post('/generate', asyncHandler(async (req, res) => {
 }));
 
 // DELETE /clear — clear all demo data
-// Order: calls first (references contacts), then loads, then contacts (FK constraints)
+// Must handle FK constraints: call_logs.contact_id -> contacts
 router.delete('/clear', asyncHandler(async (req, res) => {
   const { type } = req.query;
   let deleted = {};
+
+  // When clearing contacts (or all), first remove call logs that reference demo contacts
+  if (type === 'contacts' || type === 'all') {
+    // Delete call logs referencing demo contacts (FK constraint)
+    await sequelize.query(`
+      DELETE FROM cw_call_logs WHERE contact_id IN (
+        SELECT id FROM cw_contacts WHERE full_name LIKE 'Demo%' OR email LIKE 'demo%'
+      )
+    `);
+  }
 
   if (type === 'calls' || type === 'all') {
     const [, meta] = await sequelize.query(`DELETE FROM cw_call_logs WHERE call_sid LIKE 'DEMO%'`);
