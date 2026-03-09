@@ -7,11 +7,19 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3700;
 
-// PostgreSQL connection pool
+// PostgreSQL connection pool (QuickTask's own DB — follow_up_items)
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
+
+// D2AI database pool (d2_tasks, d2_staff_members live here)
+const d2DbUrl = process.env.PROJECTS_DATABASE_URL || process.env.CRM_DATABASE_URL || process.env.DATABASE_URL;
+const d2Pool = new Pool({
+  connectionString: d2DbUrl,
+  ssl: { rejectUnauthorized: false }
+});
+console.log('[QuickTask] D2AI sync DB:', process.env.PROJECTS_DATABASE_URL ? 'PROJECTS_DATABASE_URL' : (process.env.CRM_DATABASE_URL ? 'CRM_DATABASE_URL' : 'DATABASE_URL (same)'));
 
 // Middleware
 app.use(express.json());
@@ -53,9 +61,12 @@ async function initDB() {
       CREATE INDEX IF NOT EXISTS idx_follow_up_event_date
       ON follow_up_items (event_date) WHERE event_date IS NOT NULL
     `);
-    // Add quicktask_id to d2_tasks for bidirectional sync
+    // Add quicktask_id to d2_tasks on D2AI database (separate DB)
     try {
-      await client.query(`ALTER TABLE d2_tasks ADD COLUMN IF NOT EXISTS quicktask_id INTEGER`);
+      const d2Client = await d2Pool.connect();
+      try {
+        await d2Client.query(`ALTER TABLE d2_tasks ADD COLUMN IF NOT EXISTS quicktask_id INTEGER`);
+      } finally { d2Client.release(); }
     } catch (e) { /* d2_tasks may not exist yet */ }
     console.log('✅ follow_up_items table ready (with calendar + sync columns)');
   } catch (err) {
@@ -123,7 +134,7 @@ async function getStaffId(name) {
   if (!name) return null;
   if (staffIdCache[name]) return staffIdCache[name];
   try {
-    const r = await pool.query(
+    const r = await d2Pool.query(
       `SELECT id FROM d2_staff_members WHERE LOWER(first_name) = $1 AND workspace_id = 1 LIMIT 1`,
       [name.toLowerCase()]
     );
@@ -139,7 +150,7 @@ async function getStaffId(name) {
 async function syncToD2Tasks(item) {
   try {
     const staffId = await getStaffId(item.assigned_to);
-    const r = await pool.query(
+    const r = await d2Pool.query(
       `INSERT INTO d2_tasks (workspace_id, title, description, task_type, status, priority, due_date, assigned_staff_id, quicktask_id, "createdAt", "updatedAt")
        VALUES (1, $1, $2, 'task', 'pending', 'medium', $3, $4, $5, NOW(), NOW()) RETURNING id`,
       [
@@ -151,18 +162,20 @@ async function syncToD2Tasks(item) {
       ]
     );
     if (r.rows.length > 0) {
+      // Update follow_up_items on QuickTask's own DB
       await pool.query(`UPDATE follow_up_items SET d2_task_id = $1 WHERE id = $2`, [r.rows[0].id, item.id]);
+      console.log(`[QuickTask] Synced qt#${item.id} → d2#${r.rows[0].id}`);
     }
   } catch (e) {
     console.log('[QuickTask] D2AI sync error (create):', e.message.substring(0, 100));
   }
 }
 
-// Sync status change to d2_tasks
+// Sync status change to d2_tasks (on D2AI database)
 async function syncStatusToD2(itemId, status) {
   try {
     const completedAt = status === 'completed' ? 'NOW()' : 'NULL';
-    await pool.query(
+    await d2Pool.query(
       `UPDATE d2_tasks SET status = $1, completed_at = ${completedAt}, "updatedAt" = NOW()
        WHERE quicktask_id = $2`,
       [status, itemId]
@@ -170,10 +183,10 @@ async function syncStatusToD2(itemId, status) {
   } catch (e) { /* ignore if d2_tasks doesn't exist */ }
 }
 
-// Delete corresponding d2_task
+// Delete corresponding d2_task (on D2AI database)
 async function syncDeleteToD2(itemId) {
   try {
-    await pool.query(`DELETE FROM d2_tasks WHERE quicktask_id = $1`, [itemId]);
+    await d2Pool.query(`DELETE FROM d2_tasks WHERE quicktask_id = $1`, [itemId]);
   } catch (e) { /* ignore */ }
 }
 
