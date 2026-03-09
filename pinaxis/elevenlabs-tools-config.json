@@ -1,0 +1,104 @@
+{
+  "agent_id": "agent_1801kjx55tabedbvx4y7x4eptbz4",
+  "tools": [
+    {
+      "type": "webhook",
+      "name": "list_projects",
+      "description": "Get a list of all completed PINAXIS warehouse analysis projects. Use this when the user asks 'What projects do you have?', 'Show me the available analyses', 'Which companies have been analyzed?', or when you need to discover available project IDs. Returns project IDs, company names, and status.",
+      "api_schema": {
+        "url": "https://aiagent.ringlypro.com/pinaxis/api/v1/voice/projects/list",
+        "method": "GET"
+      }
+    },
+    {
+      "type": "webhook",
+      "name": "get_full_report",
+      "description": "Get the COMPLETE warehouse analysis report as a spoken narrative for a specific project. This is the PRIMARY tool — use it when the user says 'Give me the full report', 'Tell me about the analysis', 'Present the report', 'What did the analysis find?', or 'Brief me on the warehouse data'. Returns a pre-built spoken briefing covering: overview KPIs, order structure, ABC classification, throughput patterns, fit analysis, product recommendations, and ROI projections.",
+      "api_schema": {
+        "url": "https://aiagent.ringlypro.com/pinaxis/api/v1/voice/{project_id}/full-briefing",
+        "method": "GET",
+        "path_params_schema": {
+          "project_id": {
+            "type": "string",
+            "description": "The numeric project ID from the list_projects tool"
+          }
+        }
+      }
+    },
+    {
+      "type": "webhook",
+      "name": "get_project_overview",
+      "description": "Get a quick overview of a project including company name, industry, KPIs (total SKUs, orders, order lines), and status. Use when the user asks 'What company is this?', 'Give me a quick summary', 'How many SKUs?', or 'What are the key numbers?'.",
+      "api_schema": {
+        "url": "https://aiagent.ringlypro.com/pinaxis/api/v1/voice/{project_id}/overview",
+        "method": "GET",
+        "path_params_schema": {
+          "project_id": {
+            "type": "string",
+            "description": "The numeric project ID"
+          }
+        }
+      }
+    },
+    {
+      "type": "webhook",
+      "name": "get_order_analysis",
+      "description": "Get detailed order structure analysis including single-line vs multi-line order split, monthly throughput trends, and weekday distribution. Use when the user asks 'How are the orders structured?', 'What's the order pattern?', 'Which days are busiest?', 'Show me monthly trends', or 'Tell me about order volumes'.",
+      "api_schema": {
+        "url": "https://aiagent.ringlypro.com/pinaxis/api/v1/voice/{project_id}/order-analysis",
+        "method": "GET",
+        "path_params_schema": {
+          "project_id": {
+            "type": "string",
+            "description": "The numeric project ID"
+          }
+        }
+      }
+    },
+    {
+      "type": "webhook",
+      "name": "get_product_recommendations",
+      "description": "Get GEBHARDT product recommendations with fit scores and rationale. Use when the user asks 'What products do you recommend?', 'Which GEBHARDT systems fit?', 'What automation solutions?', 'Tell me about the product matching', or 'What equipment should we consider?'. Also includes the fit analysis (bin-capable percentage, automation readiness score).",
+      "api_schema": {
+        "url": "https://aiagent.ringlypro.com/pinaxis/api/v1/voice/{project_id}/product-recommendations",
+        "method": "GET",
+        "path_params_schema": {
+          "project_id": {
+            "type": "string",
+            "description": "The numeric project ID"
+          }
+        }
+      }
+    },
+    {
+      "type": "webhook",
+      "name": "get_roi_projections",
+      "description": "Get ROI and benefit projections including total annual savings, payback period, 5-year ROI, and savings by category. Use when the user asks 'What's the ROI?', 'How much can we save?', 'What's the payback period?', 'Tell me about the financial projections', 'Is automation worth it?', or 'Show me the cost-benefit analysis'.",
+      "api_schema": {
+        "url": "https://aiagent.ringlypro.com/pinaxis/api/v1/voice/{project_id}/roi",
+        "method": "GET",
+        "path_params_schema": {
+          "project_id": {
+            "type": "string",
+            "description": "The numeric project ID"
+          }
+        }
+      }
+    },
+    {
+      "type": "webhook",
+      "name": "get_abc_classification",
+      "description": "Get ABC classification details showing how SKUs are distributed across A, B, and C categories by both order frequency and shipping volume. Use when the user asks 'What about the ABC analysis?', 'How are the SKUs classified?', 'Which are the A-items?', 'Tell me about fast movers vs slow movers', or 'What's the Pareto distribution?'.",
+      "api_schema": {
+        "url": "https://aiagent.ringlypro.com/pinaxis/api/v1/voice/{project_id}/abc",
+        "method": "GET",
+        "path_params_schema": {
+          "project_id": {
+            "type": "string",
+            "description": "The numeric project ID"
+          }
+        }
+      }
+    }
+  ]
+}
