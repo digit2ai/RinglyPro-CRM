@@ -9,6 +9,8 @@ import Calls from './pages/Calls';
 import NLP from './pages/NLP';
 import Analytics from './pages/Analytics';
 import HubSpot from './pages/HubSpot';
+import Settings from './pages/Settings';
+import Demo from './pages/Demo';
 
 const BASE = '/cw_carriers';
 
@@ -27,6 +29,8 @@ function Sidebar() {
     { path: `${BASE}/nlp`, label: 'NLP Assistant', icon: '🤖' },
     { path: `${BASE}/analytics`, label: 'Analytics', icon: '📈' },
     { path: `${BASE}/hubspot`, label: 'HubSpot Sync', icon: '🔄' },
+    { path: `${BASE}/settings`, label: 'Settings', icon: '⚙️' },
+    { path: `${BASE}/demo`, label: 'Demo Data', icon: '📦' },
   ];
 
   return (
@@ -83,6 +87,8 @@ export default function App() {
         <Route path={`${BASE}/nlp`} element={<ProtectedRoute><Layout><NLP /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/analytics`} element={<ProtectedRoute><Layout><Analytics /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/hubspot`} element={<ProtectedRoute><Layout><HubSpot /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/settings`} element={<ProtectedRoute><Layout><Settings /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/demo`} element={<ProtectedRoute><Layout><Demo /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}`} element={<Navigate to={`${BASE}/login`} replace />} />
         <Route path={`${BASE}/`} element={<Navigate to={`${BASE}/login`} replace />} />
         <Route path="*" element={<Navigate to={`${BASE}/login`} replace />} />

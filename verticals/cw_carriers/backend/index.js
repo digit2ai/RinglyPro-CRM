@@ -13,6 +13,8 @@ const hubspotRoutes = require('./routes/hubspot');
 const nlpRoutes = require('./routes/nlp');
 const analyticsRoutes = require('./routes/analytics');
 const voiceRoutes = require('./routes/voice');
+const settingsRoutes = require('./routes/settings');
+const demoRoutes = require('./routes/demo');
 
 // Mount API routes
 router.use('/api/auth', authRoutes);
@@ -23,6 +25,8 @@ router.use('/api/hubspot', hubspotRoutes);
 router.use('/api/nlp', nlpRoutes);
 router.use('/api/analytics', analyticsRoutes);
 router.use('/api/voice', voiceRoutes);
+router.use('/api/settings', settingsRoutes);
+router.use('/api/demo', demoRoutes);
 
 // Health check
 router.get('/health', (req, res) => {
