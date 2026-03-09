@@ -9,9 +9,9 @@ const { calculateOEE } = require('../utils/oee');
 // Import LOGISTICS models (auto-loaded from logistics/models/)
 const models = require('../../logistics/models');
 const sequelize = models.sequelize;
-const OEEMachine = models.PinaxisOEEMachine;
-const OEEMachineEvent = models.PinaxisOEEMachineEvent;
-const OEEProductionRun = models.PinaxisOEEProductionRun;
+const OEEMachine = models.LogisticsOEEMachine;
+const OEEMachineEvent = models.LogisticsOEEMachineEvent;
+const OEEProductionRun = models.LogisticsOEEProductionRun;
 
 // ============================================================================
 // MCP TOOL DEFINITIONS
@@ -142,10 +142,10 @@ async function handleGetMachineStatus({ project_id, machine_name }) {
   let query = `
     SELECT m.id, m.name, m.line, m.is_active,
            me.status, me.reason, me.recorded_at
-    FROM pinaxis_oee_machines m
+    FROM logistics_oee_machines m
     LEFT JOIN LATERAL (
       SELECT status, reason, recorded_at
-      FROM pinaxis_oee_machine_events
+      FROM logistics_oee_machine_events
       WHERE machine_name = m.name AND project_id = m.project_id
       ORDER BY recorded_at DESC
       LIMIT 1
@@ -192,7 +192,7 @@ async function handleGetOEEReport({ project_id, machine_name, shift_date }) {
 
   // Get production run for this date
   const [runs] = await sequelize.query(`
-    SELECT * FROM pinaxis_oee_production_runs
+    SELECT * FROM logistics_oee_production_runs
     WHERE project_id = :project_id
       AND machine_name = :machine_name
       AND shift_start::date = :date
@@ -216,7 +216,7 @@ async function handleGetOEEReport({ project_id, machine_name, shift_date }) {
     WITH events_ordered AS (
       SELECT status, recorded_at,
              LEAD(recorded_at) OVER (ORDER BY recorded_at) AS next_at
-      FROM pinaxis_oee_machine_events
+      FROM logistics_oee_machine_events
       WHERE project_id = :project_id
         AND machine_name = :machine_name
         AND recorded_at >= :shift_start
@@ -272,7 +272,7 @@ async function handleGetDowntimeSummary({ project_id, machine_name, from, to }) 
     WITH events_ordered AS (
       SELECT me.machine_name, me.status, me.reason, me.recorded_at,
              LEAD(me.recorded_at) OVER (PARTITION BY me.machine_name ORDER BY me.recorded_at) AS next_at
-      FROM pinaxis_oee_machine_events me
+      FROM logistics_oee_machine_events me
       WHERE me.project_id = :project_id
         AND me.recorded_at >= :from_date
         AND me.recorded_at <= :to_date
@@ -358,8 +358,8 @@ async function handleGetFloorSummary({ project_id }) {
   const [statusCounts] = await sequelize.query(`
     WITH latest_events AS (
       SELECT DISTINCT ON (m.name) m.name, me.status
-      FROM pinaxis_oee_machines m
-      LEFT JOIN pinaxis_oee_machine_events me
+      FROM logistics_oee_machines m
+      LEFT JOIN logistics_oee_machine_events me
         ON me.machine_name = m.name AND me.project_id = m.project_id
       WHERE m.project_id = :project_id AND m.is_active = true
       ORDER BY m.name, me.recorded_at DESC
@@ -387,8 +387,8 @@ async function handleGetFloorSummary({ project_id }) {
       pr.planned_production_time_min,
       pr.total_parts,
       pr.good_parts
-    FROM pinaxis_oee_production_runs pr
-    JOIN pinaxis_oee_machines m
+    FROM logistics_oee_production_runs pr
+    JOIN logistics_oee_machines m
       ON m.name = pr.machine_name AND m.project_id = pr.project_id
     WHERE m.project_id = :project_id
       AND m.is_active = true
@@ -548,9 +548,9 @@ router.post('/demo-seed', async (req, res) => {
 
     // Clear existing demo data for this project
     await sequelize.query(`
-      DELETE FROM pinaxis_oee_machine_events WHERE project_id = :project_id;
-      DELETE FROM pinaxis_oee_production_runs WHERE project_id = :project_id;
-      DELETE FROM pinaxis_oee_machines WHERE project_id = :project_id;
+      DELETE FROM logistics_oee_machine_events WHERE project_id = :project_id;
+      DELETE FROM logistics_oee_production_runs WHERE project_id = :project_id;
+      DELETE FROM logistics_oee_machines WHERE project_id = :project_id;
     `, { replacements: { project_id } });
 
     // Create 6 realistic machines
