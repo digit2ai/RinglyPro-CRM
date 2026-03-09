@@ -15,6 +15,10 @@ const analyticsRoutes = require('./routes/analytics');
 const voiceRoutes = require('./routes/voice');
 const settingsRoutes = require('./routes/settings');
 const demoRoutes = require('./routes/demo');
+const tmsRoutes = require('./routes/tms');
+const reportsRoutes = require('./routes/reports');
+const alertsRoutes = require('./routes/alerts');
+const collectorRoutes = require('./routes/collector');
 
 // Mount API routes
 router.use('/api/auth', authRoutes);
@@ -27,6 +31,10 @@ router.use('/api/analytics', analyticsRoutes);
 router.use('/api/voice', voiceRoutes);
 router.use('/api/settings', settingsRoutes);
 router.use('/api/demo', demoRoutes);
+router.use('/api/tms', tmsRoutes);
+router.use('/api/reports', reportsRoutes);
+router.use('/api/alerts', alertsRoutes);
+router.use('/api/collector', collectorRoutes);
 
 // Health check
 router.get('/health', (req, res) => {

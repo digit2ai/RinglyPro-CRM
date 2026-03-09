@@ -12,6 +12,8 @@ import HubSpot from './pages/HubSpot';
 import Settings from './pages/Settings';
 import Demo from './pages/Demo';
 import Landing from './pages/Landing';
+import TMS from './pages/TMS';
+import Reports from './pages/Reports';
 
 const BASE = '/cw_carriers';
 
@@ -40,6 +42,8 @@ function Sidebar({ open, onClose }) {
     { path: `${BASE}/calls`, label: 'Calls', icon: '\u{1F4DE}' },
     { path: `${BASE}/nlp`, label: 'NLP Assistant', icon: '\u{1F916}' },
     { path: `${BASE}/analytics`, label: 'Analytics', icon: '\u{1F4C8}' },
+    { path: `${BASE}/tms`, label: 'TMS Bridge', icon: '\u{1F310}' },
+    { path: `${BASE}/reports`, label: 'Reports', icon: '\u{1F4C4}' },
     { path: `${BASE}/hubspot`, label: 'HubSpot Sync', icon: '\u{1F504}' },
     { path: `${BASE}/settings`, label: 'Settings', icon: '\u2699\uFE0F' },
     { path: `${BASE}/demo`, label: 'Demo Data', icon: '\u{1F4E6}' },
@@ -141,6 +145,8 @@ export default function App() {
         <Route path={`${BASE}/calls`} element={<ProtectedRoute><Layout><Calls /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/nlp`} element={<ProtectedRoute><Layout><NLP /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/analytics`} element={<ProtectedRoute><Layout><Analytics /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/tms`} element={<ProtectedRoute><Layout><TMS /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/reports`} element={<ProtectedRoute><Layout><Reports /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/hubspot`} element={<ProtectedRoute><Layout><HubSpot /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/settings`} element={<ProtectedRoute><Layout><Settings /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/demo`} element={<ProtectedRoute><Layout><Demo /></Layout></ProtectedRoute>} />

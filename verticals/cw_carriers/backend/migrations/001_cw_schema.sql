@@ -103,6 +103,20 @@ CREATE TABLE IF NOT EXISTS cw_analytics (
   created_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Alert Log
+CREATE TABLE IF NOT EXISTS cw_alert_log (
+  id              SERIAL PRIMARY KEY,
+  channel         VARCHAR(16) NOT NULL,
+  recipient       VARCHAR(255),
+  message         TEXT,
+  status          VARCHAR(16) DEFAULT 'sent',
+  external_id     VARCHAR(128),
+  error_msg       TEXT,
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_cw_alert_log_created ON cw_alert_log(created_at);
+
 -- CW Users table for auth
 CREATE TABLE IF NOT EXISTS cw_users (
   id              SERIAL PRIMARY KEY,

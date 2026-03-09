@@ -26,60 +26,6 @@
     line-height: 1.65;
   }
 
-  /* ── TOP BAR ── */
-  .top-bar {
-    background: var(--ink);
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 14px 64px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  .top-bar-logo {
-    height: 36px;
-    width: auto;
-  }
-  .top-bar-right {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
-  .top-bar-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 1px;
-    color: rgba(255,255,255,0.4);
-    text-transform: uppercase;
-  }
-  .login-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 24px;
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    text-decoration: none;
-    transition: background 0.2s;
-    letter-spacing: 0.3px;
-  }
-  .login-btn:hover {
-    background: #2563EB;
-  }
-  .login-btn svg {
-    width: 16px;
-    height: 16px;
-    fill: currentColor;
-  }
-
   /* ── COVER ── */
   .cover {
     background: var(--ink);
@@ -268,7 +214,7 @@
   }
   .flow-list li:last-child { border-bottom: none; }
   .flow-list li::before {
-    content: '\2192';
+    content: '→';
     position: absolute; left: 0;
     color: var(--mid);
     font-size: 11px;
@@ -384,6 +330,19 @@
   }
   .roi-strip strong { color: var(--accent); }
 
+  /* ── ROI SAVINGS HIGHLIGHT ── */
+  .roi-savings-strip {
+    background: linear-gradient(135deg, #0D1117 0%, #1A2332 100%);
+    border: 1px solid rgba(200,150,42,0.3);
+    border-left: 4px solid var(--gold);
+    border-radius: 8px;
+    padding: 24px 28px;
+    margin: 28px 0;
+    color: white;
+  }
+  .roi-savings-strip strong { color: var(--gold); }
+  .roi-savings-strip p { color: rgba(255,255,255,0.7); margin-bottom: 0; }
+
   /* ── FOOTER ── */
   footer {
     background: var(--ink);
@@ -397,39 +356,40 @@
   footer a { color: var(--gold); text-decoration: none; }
 
   @media (max-width: 640px) {
-    .top-bar { padding: 12px 20px; }
-    .top-bar-logo { height: 28px; }
-    .top-bar-label { display: none; }
-    .login-btn { padding: 8px 16px; font-size: 13px; }
     .cover { padding: 48px 24px 40px; }
     .cover h1 { font-size: 48px; }
     .page { padding: 40px 20px; }
     .integration-grid { grid-template-columns: 1fr; }
     .pricing-grid { grid-template-columns: 1fr; }
+    nav { padding: 12px 16px !important; }
+    nav img { height: 50px !important; }
+    nav > div { gap: 12px !important; }
+    nav a[href^="tel"] { display: none; }
   }
 </style>
 </head>
 <body>
 
-<!-- TOP BAR WITH RINGLYPRO LOGO + LOGIN BUTTON -->
-<div class="top-bar">
-  <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6884f40a6d2fd3fed0b84613.png" alt="RinglyPro" class="top-bar-logo">
-  <div class="top-bar-right">
-    <span class="top-bar-label">CW Carriers CRM Portal</span>
-    <a href="https://aiagent.ringlypro.com/cw_carriers/login" class="login-btn">
-      <svg viewBox="0 0 20 20"><path d="M10 0C4.48 0 0 4.48 0 10s4.48 10 10 10 10-4.48 10-10S15.52 0 10 0zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
-      Login to CRM
+<!-- TOP NAV -->
+<nav style="background:#0D1117; padding:16px 48px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.08); position:sticky; top:0; z-index:100;">
+  <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro" style="height:80px; object-fit:contain;">
+  <div style="display:flex; align-items:center; gap:28px;">
+    <a href="tel:+12232949185" style="color:rgba(255,255,255,0.6); text-decoration:none; font-family:'DM Mono',monospace; font-size:13px; letter-spacing:0.5px; display:flex; align-items:center; gap:7px;">
+      <span style="color:#C8962A; font-size:14px;">&#9742;</span> (223) 294-9185
+    </a>
+    <a href="https://aiagent.ringlypro.com/cw_carriers/login" target="_blank" style="background:#1A4FA8; color:white; text-decoration:none; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; padding:8px 20px; border-radius:6px; letter-spacing:0.3px; transition:background 0.2s;" onmouseover="this.style.background='#1644a0'" onmouseout="this.style.background='#1A4FA8'">
+      Client Login &rarr;
     </a>
   </div>
-</div>
+</nav>
 
 <!-- COVER -->
 <div class="cover">
-  <div class="cover-label">Confidential Integration Proposal — March 2026</div>
+  <div class="cover-label">Confidential Integration Proposal &mdash; March 2026</div>
   <h1>RinglyPro <span>&times;</span><br>CW Carriers</h1>
   <div class="cover-sub">Full-Stack AI + HubSpot Integration Plan</div>
   <div class="cover-meta">
-    <div><strong>Prepared For</strong>CW Carriers USA, Inc. — Lila Trkulja, CEO</div>
+    <div><strong>Prepared For</strong>CW Carriers USA, Inc. &mdash; Lila Trkulja, CEO</div>
     <div><strong>Prepared By</strong>Digit2AI LLC / RinglyPro</div>
     <div><strong>Scope</strong>Voice AI &middot; MCP Layer &middot; HubSpot Sync &middot; Analytics</div>
     <div><strong>Delivery</strong>2-Phase Sprint &middot; Full Deployment in 14 Days</div>
@@ -442,10 +402,10 @@
   <div class="section">
     <div class="section-label">Section 01</div>
     <h2>System Architecture</h2>
-    <p>RinglyPro's MCP (Model Context Protocol) layer sits between CW Carriers' existing HubSpot CRM and every operational touchpoint — Rachel AI voice, carrier outreach, inbound calls, load status updates, and freight analytics. HubSpot remains the single source of truth. RinglyPro enriches it automatically.</p>
+    <p>RinglyPro's MCP (Model Context Protocol) layer sits between CW Carriers' existing HubSpot CRM and every operational touchpoint &mdash; Rachel AI voice, carrier outreach, inbound calls, load status updates, and freight analytics. HubSpot remains the single source of truth. RinglyPro enriches it automatically.</p>
 
     <div class="arch">
-      <div class="arch-title">CW Carriers USA — RinglyPro Integration Architecture</div>
+      <div class="arch-title">CW Carriers USA &mdash; RinglyPro Integration Architecture</div>
 
       <div class="arch-label">Inbound Channels</div>
       <div class="arch-row">
@@ -457,7 +417,7 @@
 
       <div class="arch-arrow">&darr; &darr; &darr; &darr;</div>
 
-      <div class="arch-label">RinglyPro AI Layer — aiagent.ringlypro.com</div>
+      <div class="arch-label">RinglyPro AI Layer &mdash; aiagent.ringlypro.com</div>
       <div class="arch-row">
         <div class="arch-box accent"><strong>RACHEL AI VOICE</strong><small>ElevenLabs TTS/STT<br>Twilio telephony</small></div>
         <div class="arch-box accent"><strong>MCP SERVER</strong><small>Node.js / Express<br>Webhook engine</small></div>
@@ -467,7 +427,7 @@
 
       <div class="arch-arrow">&darr; &darr; &darr; &darr;</div>
 
-      <div class="arch-label">HubSpot CRM — Bi-directional Sync</div>
+      <div class="arch-label">HubSpot CRM &mdash; Bi-directional Sync</div>
       <div class="arch-row">
         <div class="arch-box gold"><strong>CONTACTS</strong><small>Shippers, carriers<br>decision makers</small></div>
         <div class="arch-box gold"><strong>DEALS / PIPELINE</strong><small>Load opportunities<br>&amp; sales stages</small></div>
@@ -493,14 +453,14 @@
   <div class="section">
     <div class="section-label">Section 02</div>
     <h2>Integration Modules</h2>
-    <p>Six core modules, each targeting a specific CW Carriers operational pain point — all syncing back to HubSpot as the central record of truth.</p>
+    <p>Six core modules, each targeting a specific CW Carriers operational pain point &mdash; all syncing back to HubSpot as the central record of truth.</p>
 
     <div class="integration-grid">
 
       <div class="int-card blue">
-        <div class="tag">Module 01 — Rachel AI Voice &times; HubSpot</div>
+        <div class="tag">Module 01 &mdash; Rachel AI Voice &times; HubSpot</div>
         <h3>24/7 Inbound Call Handling</h3>
-        <p>Every inbound call to CW Carriers is answered by Rachel. She qualifies callers, captures data, and creates or updates HubSpot contacts and deals automatically — with full call transcripts logged.</p>
+        <p>Every inbound call to CW Carriers is answered by Rachel. She qualifies callers, captures data, and creates or updates HubSpot contacts and deals automatically &mdash; with full call transcripts logged.</p>
         <ul class="flow-list">
           <li>Call received &rarr; Rachel answers in &lt;1 ring</li>
           <li>Caller type identified (shipper vs. carrier vs. driver)</li>
@@ -514,9 +474,9 @@
       </div>
 
       <div class="int-card gold">
-        <div class="tag">Module 02 — Carrier Outreach Dialer &times; HubSpot</div>
+        <div class="tag">Module 02 &mdash; Carrier Outreach Dialer &times; HubSpot</div>
         <h3>Automated Load Coverage Calls</h3>
-        <p>Rachel dials carrier contacts from HubSpot lists for open load coverage — recording rate quotes and availability, updating deal stages, and surfacing hot carrier matches to brokers instantly.</p>
+        <p>Rachel dials carrier contacts from HubSpot lists for open load coverage &mdash; recording rate quotes and availability, updating deal stages, and surfacing hot carrier matches to brokers instantly.</p>
         <ul class="flow-list">
           <li>Open load posted in McLeod &rarr; webhook fires to RinglyPro</li>
           <li>MCP engine selects matching carriers from HubSpot lists</li>
@@ -530,9 +490,9 @@
       </div>
 
       <div class="int-card mint">
-        <div class="tag">Module 03 — Proactive Status Calls &times; HubSpot</div>
+        <div class="tag">Module 03 &mdash; Proactive Status Calls &times; HubSpot</div>
         <h3>Automated Client Check-Ins</h3>
-        <p>Rachel proactively calls shipper contacts at key load milestones — pickup, in-transit, delivery — freeing brokers from repetitive status calls while keeping enterprise clients like PepsiCo informed.</p>
+        <p>Rachel proactively calls shipper contacts at key load milestones &mdash; pickup, in-transit, delivery &mdash; freeing brokers from repetitive status calls while keeping enterprise clients like PepsiCo informed.</p>
         <ul class="flow-list">
           <li>McLeod TMS load status change &rarr; MCP webhook trigger</li>
           <li>Rachel calls shipper contact from HubSpot record</li>
@@ -544,9 +504,9 @@
       </div>
 
       <div class="int-card rust">
-        <div class="tag">Module 04 — Shipper Lead Engine &times; HubSpot</div>
+        <div class="tag">Module 04 &mdash; Shipper Lead Engine &times; HubSpot</div>
         <h3>B2B Prospect Acquisition</h3>
-        <p>RinglyPro's Business Collector finds shippers matching CW's target profile — Food &amp; Beverage, CPG, Automotive — enriches them, and feeds them into HubSpot pipelines for Rachel to call.</p>
+        <p>RinglyPro's Business Collector finds shippers matching CW's target profile &mdash; Food &amp; Beverage, CPG, Automotive &mdash; enriches them, and feeds them into HubSpot pipelines for Rachel to call.</p>
         <ul class="flow-list">
           <li>Business Collector scrapes target vertical companies</li>
           <li>AI scores leads by freight profile fit (lanes, volume)</li>
@@ -559,23 +519,23 @@
       </div>
 
       <div class="int-card purple">
-        <div class="tag">Module 05 — AI CRM Copilot &times; HubSpot</div>
+        <div class="tag">Module 05 &mdash; AI CRM Copilot &times; HubSpot</div>
         <h3>Natural Language CRM Operations</h3>
-        <p>Brokers and reps interact with HubSpot via natural language through RinglyPro's AI Copilot — no clicks, no searches. Voice or text commands update deals, pull reports, and manage tasks.</p>
+        <p>Brokers and reps interact with HubSpot via natural language through RinglyPro's AI Copilot &mdash; no clicks, no searches. Voice or text commands update deals, pull reports, and manage tasks.</p>
         <ul class="flow-list">
-          <li>"Show all open loads on the Dallas to Chicago lane"</li>
-          <li>"Add a note to PepsiCo's account — confirmed Q2 volume"</li>
-          <li>"Which carriers haven't been called this week?"</li>
-          <li>"Create a follow-up task for the Agri-Dairy contact"</li>
+          <li>&quot;Show all open loads on the Dallas to Chicago lane&quot;</li>
+          <li>&quot;Add a note to PepsiCo's account &mdash; confirmed Q2 volume&quot;</li>
+          <li>&quot;Which carriers haven't been called this week?&quot;</li>
+          <li>&quot;Create a follow-up task for the Agri-Dairy contact&quot;</li>
           <li>AI executes HubSpot API calls from natural language</li>
           <li>Mobile CRM dashboard for brokers on the go</li>
         </ul>
       </div>
 
       <div class="int-card blue">
-        <div class="tag">Module 06 — Freight Analytics Dashboard</div>
+        <div class="tag">Module 06 &mdash; Freight Analytics Dashboard</div>
         <h3>PINAXIS-Inspired Data Intelligence</h3>
-        <p>Adapted from RinglyPro's PINAXIS warehouse analytics engine, this module runs freight-specific analytics — lane profitability, carrier performance, load coverage rates — with auto-generated PDF reports.</p>
+        <p>Adapted from RinglyPro's PINAXIS warehouse analytics engine, this module runs freight-specific analytics &mdash; lane profitability, carrier performance, load coverage rates &mdash; with auto-generated PDF reports.</p>
         <ul class="flow-list">
           <li>HubSpot + McLeod data pulled into analytics engine</li>
           <li>Lane profitability analysis (revenue vs. cost per lane)</li>
@@ -596,7 +556,7 @@
   <div class="section">
     <div class="section-label">Section 03</div>
     <h2>HubSpot Data Flow Map</h2>
-    <p>Every RinglyPro action writes back to HubSpot in real time. HubSpot stays clean, enriched, and fully auditable — no shadow systems, no data silos.</p>
+    <p>Every RinglyPro action writes back to HubSpot in real time. HubSpot stays clean, enriched, and fully auditable &mdash; no shadow systems, no data silos.</p>
 
     <table class="data-table">
       <thead>
@@ -617,7 +577,7 @@
         <tr>
           <td>New shipper inquiry qualified</td>
           <td><span class="target">Deal (New Business)</span></td>
-          <td>Lane, freight type, volume estimate, urgency, deal stage = "Qualified"</td>
+          <td>Lane, freight type, volume estimate, urgency, deal stage = &quot;Qualified&quot;</td>
           <td>Rachel qualification complete</td>
         </tr>
         <tr>
@@ -629,7 +589,7 @@
         <tr>
           <td>Load covered by carrier</td>
           <td><span class="target">Deal (update)</span></td>
-          <td>Carrier assigned, rate confirmed, deal stage = "Booked"</td>
+          <td>Carrier assigned, rate confirmed, deal stage = &quot;Booked&quot;</td>
           <td>Carrier acceptance recorded</td>
         </tr>
         <tr>
@@ -666,7 +626,7 @@
   <div class="section">
     <div class="section-label">Section 04</div>
     <h2>Implementation Roadmap</h2>
-    <p>A two-phase sprint delivering all six modules in 14 days — parallel workstreams running simultaneously to maximize speed without sacrificing quality.</p>
+    <p>A two-phase sprint delivering all six modules in 14 days &mdash; parallel workstreams running simultaneously to maximize speed without sacrificing quality.</p>
 
     <div class="phases">
 
@@ -675,7 +635,7 @@
         <div class="phase-content">
           <div class="phase-header">
             <div class="phase-title">Rachel AI &middot; HubSpot Core &middot; Carrier Dialer &middot; Lead Engine</div>
-            <div class="phase-timeline">Days 1–7</div>
+            <div class="phase-timeline">Days 1&ndash;7</div>
           </div>
           <p>Week one is full-stack foundation. Rachel goes live on CW's inbound line with a freight-specific persona while the HubSpot API backbone is established in parallel. By day 4, outbound carrier dialing and the Business Collector shipper lead engine are configured and running. All call data flows into HubSpot from day one.</p>
           <div class="deliverables">
@@ -698,9 +658,9 @@
         <div class="phase-content">
           <div class="phase-header">
             <div class="phase-title">McLeod TMS Bridge &middot; Analytics Dashboard &middot; AI Copilot &middot; Go-Live</div>
-            <div class="phase-timeline">Days 8–14</div>
+            <div class="phase-timeline">Days 8&ndash;14</div>
           </div>
-          <p>Week two completes the stack. The McLeod webhook bridge is built and tested — load status changes now trigger Rachel proactive client calls automatically. The freight analytics dashboard and AI CRM Copilot are deployed alongside. Day 14 is full system QA, rep walkthrough, and go-live sign-off.</p>
+          <p>Week two completes the stack. The McLeod webhook bridge is built and tested &mdash; load status changes now trigger Rachel proactive client calls automatically. The freight analytics dashboard and AI CRM Copilot are deployed alongside. Day 14 is full system QA, rep walkthrough, and go-live sign-off.</p>
           <div class="deliverables">
             <span class="badge">McLeod API/webhook bridge</span>
             <span class="badge">Load status &rarr; Rachel trigger</span>
@@ -721,14 +681,105 @@
 
   <hr class="rule">
 
-  <!-- SECTION 5: ROI -->
-  <div class="section">
+  <!-- SECTION 5: ROI — FULL EMPLOYEE COST REDUCTION ANALYSIS -->
+  <div class="section" id="roi">
     <div class="section-label">Section 05</div>
-    <h2>ROI Framework</h2>
+    <h2>Rachel AI &mdash; Full Employee Cost Reduction Analysis</h2>
 
     <div class="roi-strip">
-      <strong>Key ROI Anchor:</strong> CW Carriers' 24/7 brand promise currently requires expensive overnight staffing and Belgrade office coordination. A single US overnight dispatcher costs $38K–$45K/year ($3,167–$3,750/month). Rachel at $3,500/month replaces that cost entirely while adding outbound dialing, lead qualification, and client status calls that a dispatcher cannot do.
+      <strong>Rachel AI Replaces 9 Full-Time Roles</strong> &mdash; CW Carriers' 24/7 brand promise currently requires expensive overnight staffing, Belgrade office coordination, and multiple specialized hires across sales, operations, and CRM management. Rachel handles all of it &mdash; inbound calls, outbound dialing, lead qualification, load status coordination, KPI reporting, warehouse scheduling, CRM administration, escalation management, and full HubSpot integration &mdash; as a single AI platform running 24/7/365 with zero downtime.
     </div>
+
+    <h3>Complete Workforce Automation for CW Carriers USA</h3>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Role Replaced</th>
+          <th>Avg. Annual Salary</th>
+          <th>Rachel AI Capability</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Inbound Call Handler</strong></td>
+          <td>$28,000 &ndash; $35,000</td>
+          <td>24/7 call answering, intelligent routing, carrier qualification, load matching &mdash; answers in &lt;1 ring, never misses a call</td>
+        </tr>
+        <tr>
+          <td><strong>Outbound Dialer / SDR</strong></td>
+          <td>$32,000 &ndash; $40,000</td>
+          <td>Automated outbound campaigns to carrier lists, lead qualification calls, scheduled follow-ups &mdash; 500+ dials/day capacity</td>
+        </tr>
+        <tr>
+          <td><strong>Sales Development Rep</strong></td>
+          <td>$35,000 &ndash; $45,000</td>
+          <td>Full pipeline management, deal stage progression, prospect nurturing, HubSpot CRM updates after every interaction</td>
+        </tr>
+        <tr>
+          <td><strong>Load Status Coordinator</strong></td>
+          <td>$30,000 &ndash; $38,000</td>
+          <td>Real-time tracking updates via McLeod webhooks, proactive carrier check calls, shipper milestone notifications, exception alerts</td>
+        </tr>
+        <tr>
+          <td><strong>KPI / Reporting Analyst</strong></td>
+          <td>$40,000 &ndash; $50,000</td>
+          <td>Live freight analytics dashboard, automated trend detection, carrier performance scoring, auto-generated PDF QBR reports</td>
+        </tr>
+        <tr>
+          <td><strong>Warehouse Coordinator</strong></td>
+          <td>$28,000 &ndash; $35,000</td>
+          <td>Appointment scheduling, dock coordination calls, carrier arrival confirmation, delivery window management</td>
+        </tr>
+        <tr>
+          <td><strong>CRM Administrator</strong></td>
+          <td>$35,000 &ndash; $42,000</td>
+          <td>Full HubSpot sync, contact data hygiene, duplicate merging, contact enrichment, workflow automation &mdash; zero manual data entry</td>
+        </tr>
+        <tr>
+          <td><strong>Escalation Manager</strong></td>
+          <td>$32,000 &ndash; $38,000</td>
+          <td>Intelligent priority routing, SLA monitoring, hot lead instant alerts, exception detection, automatic broker escalation</td>
+        </tr>
+        <tr>
+          <td><strong>HubSpot Admin / Integrator</strong></td>
+          <td>$38,000 &ndash; $48,000</td>
+          <td>Full bidirectional HubSpot sync, deal pipeline automation, custom property management, sequence triggers, activity logging</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- PRICING SUMMARY -->
+    <div class="pricing-block">
+      <div style="font-family:'DM Mono',monospace; font-size:10px; letter-spacing:3px; text-transform:uppercase; color:rgba(255,255,255,0.4); margin-bottom:8px;">Annual Cost Comparison</div>
+      <div style="font-size:20px; font-weight:600; color:white; margin-bottom:4px;">9 Full-Time Employees vs. Rachel AI Platform</div>
+      <div style="font-size:14px; color:rgba(255,255,255,0.5);">Combined salary replacement across all operational, sales, and CRM functions</div>
+      <div class="pricing-grid">
+        <div class="price-item">
+          <div class="price-label">Total Replaced</div>
+          <div class="price-value">$252K&ndash;$333K</div>
+          <div class="price-sub">9 FTEs &middot; Annual salary cost</div>
+        </div>
+        <div class="price-item">
+          <div class="price-label">Rachel AI Cost</div>
+          <div class="price-value" style="color:#238636;">~$59K</div>
+          <div class="price-sub">Platform + voice minutes &middot; /year</div>
+        </div>
+        <div class="price-item">
+          <div class="price-label">Net Savings</div>
+          <div class="price-value">$193K&ndash;$274K</div>
+          <div class="price-sub">77&ndash;82% cost reduction &middot; /year</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="roi-savings-strip">
+      <strong>Force Multiplier:</strong>
+      <p style="margin-top:8px;">Rachel works 24/7/365 &mdash; no PTO, no sick days, no training ramp, no turnover. She handles 500+ calls/day with consistent quality, instant HubSpot sync, and zero human error. Unlike 9 separate employees with different schedules, skill gaps, and management overhead, Rachel is a single unified AI platform that scales instantly with CW Carriers' growth &mdash; no additional hiring needed.</p>
+    </div>
+
+    <!-- ORIGINAL MODULE ROI BREAKDOWN -->
+    <h3 style="margin-top:40px;">Module-Level ROI Breakdown</h3>
 
     <table class="data-table">
       <thead>
@@ -743,12 +794,12 @@
         <tr>
           <td>24/7 inbound coverage</td>
           <td>Overnight dispatcher or Belgrade office overhead</td>
-          <td>Rachel handles 100% — zero staffing gap</td>
-          <td><strong>$3,200–$4,500 saved</strong></td>
+          <td>Rachel handles 100% &mdash; zero staffing gap</td>
+          <td><strong>$3,200&ndash;$4,500 saved</strong></td>
         </tr>
         <tr>
           <td>Carrier load coverage calls</td>
-          <td>Brokers spend 2–4 hrs/day on repetitive dialing</td>
+          <td>Brokers spend 2&ndash;4 hrs/day on repetitive dialing</td>
           <td>Rachel dials autonomously; reps review results</td>
           <td><strong>~20 hrs/broker/month freed</strong></td>
         </tr>
@@ -762,17 +813,17 @@
           <td>Shipper lead prospecting</td>
           <td>Reps manually research and cold-call prospects</td>
           <td>Business Collector sources + Rachel qualifies</td>
-          <td><strong>3–5x more prospects touched</strong></td>
+          <td><strong>3&ndash;5x more prospects touched</strong></td>
         </tr>
         <tr>
           <td>HubSpot data hygiene</td>
           <td>Manual CRM entry after every call (often skipped)</td>
-          <td>100% auto-logged — zero data entry</td>
+          <td>100% auto-logged &mdash; zero data entry</td>
           <td><strong>~5 hrs/rep/month freed</strong></td>
         </tr>
         <tr>
           <td>Enterprise QBR reports</td>
-          <td>Account manager builds manually (4–6 hrs each)</td>
+          <td>Account manager builds manually (4&ndash;6 hrs each)</td>
           <td>Auto-generated PDF in minutes</td>
           <td><strong>~20 hrs/quarter saved</strong></td>
         </tr>

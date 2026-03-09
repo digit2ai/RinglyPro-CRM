@@ -1,5 +1,6 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const sequelize = require('./db.cw');
+const reports = require('./reports.cw');
 
 const anthropic = new Anthropic();
 
@@ -301,7 +302,21 @@ async function executeIntent(parsed, helpers) {
         break;
       }
       case 'generate_report': {
-        result = { success: true, message: 'PDF report generation not yet implemented. Coming soon!' };
+        const reportType = entities.report_type || entities.type || 'qbr';
+        let reportUrl = '';
+        if (reportType === 'lanes' || reportType === 'lane') {
+          reportUrl = '/cw_carriers/api/reports/lanes';
+        } else if (reportType === 'carriers' || reportType === 'carrier') {
+          reportUrl = '/cw_carriers/api/reports/carriers';
+        } else {
+          reportUrl = '/cw_carriers/api/reports/qbr';
+          if (entities.shipper_name) reportUrl += `?shipper_name=${encodeURIComponent(entities.shipper_name)}`;
+        }
+        result = {
+          success: true,
+          message: `PDF report ready! Download it from the Reports page or use this link: ${reportUrl}`,
+          data: { report_type: reportType, download_url: reportUrl }
+        };
         break;
       }
       case 'help':

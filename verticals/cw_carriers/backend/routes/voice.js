@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const rachel = require('../services/rachel.cw');
 const sequelize = require('../services/db.cw');
+const alerts = require('../services/alerts.cw');
 
 // POST /inbound - Twilio webhook handler for inbound calls (no auth - Twilio calls this)
 router.post('/inbound', async (req, res) => {
@@ -19,6 +20,10 @@ router.post('/inbound', async (req, res) => {
         transcript: SpeechResult,
         outcome: 'completed'
       });
+
+      // Alert on potential hot lead (inbound caller with speech content)
+      alerts.alertHotLead({ company_name: 'Inbound Caller', phone: From }, SpeechResult.substring(0, 100))
+        .catch(e => console.error('CW hot lead alert error:', e.message));
 
       // Provide a response
       res.type('text/xml');

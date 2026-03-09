@@ -25,3 +25,7 @@ export function getUser() {
 export function isAuthenticated() {
   return !!sessionStorage.getItem('cw_token');
 }
+
+export function getToken() {
+  return sessionStorage.getItem('cw_token');
+}
