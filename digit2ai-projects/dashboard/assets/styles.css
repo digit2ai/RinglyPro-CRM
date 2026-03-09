@@ -702,10 +702,27 @@ body {
   .welcome-banner h2 { font-size: 17px; }
   .welcome-banner p { font-size: 13px; }
 
-  /* Quick actions */
-  .quick-actions { gap: 8px; }
-  .quick-action-btn { padding: 8px 12px; font-size: 13px; flex: 1; min-width: 0; justify-content: center; }
-  .quick-action-btn .qa-label { font-size: 12px; }
+  /* Quick actions — compact 3-column grid on mobile */
+  .quick-actions { display: grid !important; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .quick-action-btn { padding: 10px 6px; font-size: 12px; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 4px; }
+  .quick-action-btn .qa-icon { font-size: 22px; }
+  .quick-action-btn .qa-label { font-size: 11px; }
+
+  /* Hide tooltips on mobile — not useful on touch */
+  [data-tooltip]::after { display: none !important; }
+  .kpi-hint { display: none; }
+
+  /* Cards — centered 2-col grid */
+  .card-grid { grid-template-columns: 1fr 1fr; gap: 10px; justify-items: center; }
+  .card { padding: 14px; width: 100%; }
+  .card-stat { text-align: center; }
+  .card-stat .kpi-icon { font-size: 28px; }
+  .card-stat .stat-value { font-size: 28px; }
+  .card-stat .stat-label { font-size: 12px; }
+
+  /* Two-col grids → single column */
+  [style*="grid-template-columns:1fr 1fr"], [style*="grid-template-columns: 1fr 1fr"] { display: block !important; }
+  [style*="grid-template-columns:1fr 1fr"] > *, [style*="grid-template-columns: 1fr 1fr"] > * { margin-bottom: 12px; }
 
   /* Detail panels */
   .detail-panel { padding: 16px; }
@@ -751,9 +768,10 @@ body {
 
 /* Small phone (≤400px) */
 @media (max-width: 400px) {
-  .card-grid { grid-template-columns: 1fr; }
-  .quick-actions { flex-direction: column; }
-  .quick-action-btn { width: 100%; }
+  .card-grid { grid-template-columns: 1fr 1fr; }
+  .quick-actions { grid-template-columns: repeat(3, 1fr) !important; }
+  .quick-action-btn { padding: 8px 4px; }
+  .quick-action-btn .qa-label { font-size: 10px; }
   .topbar-right { gap: 4px; }
   .btn-sm { padding: 5px 8px; font-size: 12px; }
   .nlp-panel { max-height: 55vh; }

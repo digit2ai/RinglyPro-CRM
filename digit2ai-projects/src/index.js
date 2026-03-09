@@ -40,6 +40,17 @@ app.get('/health', (req, res) => {
 const dashboardPath = path.join(__dirname, '..', 'dashboard');
 app.use('/assets', express.static(path.join(dashboardPath, 'assets')));
 
+// PWA files — no-cache for freshness
+app.get('/manifest.json', (req, res) => {
+  res.set('Cache-Control', 'no-cache');
+  res.sendFile(path.join(dashboardPath, 'manifest.json'));
+});
+app.get('/sw.js', (req, res) => {
+  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.set('Content-Type', 'application/javascript');
+  res.sendFile(path.join(dashboardPath, 'sw.js'));
+});
+
 // API routes (authenticated)
 app.use('/api/v1/dashboard', authenticateToken, dashboardRoutes);
 app.use('/api/v1/contacts', authenticateToken, contactsRoutes);

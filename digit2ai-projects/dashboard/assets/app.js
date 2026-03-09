@@ -2139,4 +2139,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Check auth state
   checkAuth();
+
+  // PWA Service Worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/projects/sw.js').catch(() => {});
+  }
 });
