@@ -795,6 +795,41 @@ app.get('/debug/d2ai-projects-error', (req, res) => {
   });
 });
 
+// =====================================================
+// CW CARRIERS USA - Freight Logistics CRM
+// =====================================================
+
+let cwCarriersApp = null;
+let cwCarriersError = null;
+try {
+  cwCarriersApp = require('../verticals/cw_carriers/backend/index');
+  app.get('/cw_carriers', (req, res, next) => {
+    if (!req.originalUrl.endsWith('/')) return res.redirect('/cw_carriers/');
+    next();
+  });
+  app.use('/cw_carriers', cwCarriersApp);
+  console.log('🚚 CW Carriers USA mounted at /cw_carriers');
+  console.log('   - Dashboard UI: /cw_carriers/');
+  console.log('   - Health Check: /cw_carriers/health');
+  console.log('   - API: /cw_carriers/api/*');
+  console.log('   - NLP: /cw_carriers/api/nlp/command');
+} catch (error) {
+  cwCarriersError = error;
+  console.log('⚠️ CW Carriers not available:', error.message);
+}
+
+app.get('/debug/cw-carriers-error', (req, res) => {
+  res.json({
+    service: 'CW Carriers USA',
+    available: !cwCarriersError,
+    error: cwCarriersError ? { message: cwCarriersError.message, stack: cwCarriersError.stack } : null,
+    env: {
+      NODE_ENV: process.env.NODE_ENV,
+      hasDbUrl: !!process.env.DATABASE_URL
+    }
+  });
+});
+
 // Conditional forwarding webhook (for business phone forwarding)
 app.use('/webhook', conditionalForwardRoutes);
 

@@ -259,9 +259,51 @@ fi
 
 echo ""
 echo "================================================"
+echo "Building CW Carriers Dashboard"
+echo "================================================"
+
+if [ -d "verticals/cw_carriers/frontend" ]; then
+    cd verticals/cw_carriers/frontend
+    echo "CW Carriers Dashboard directory: $(pwd)"
+
+    if [ -d "dist" ] && [ -f "dist/index.html" ]; then
+        echo "✅ CW Carriers dist folder already exists (pre-built), skipping build"
+        ls -lh dist/
+        cd ../../..
+    else
+        echo "📦 Installing CW Carriers dashboard dependencies..."
+        NODE_ENV=development npm ci --include=dev || NODE_ENV=development npm install --include=dev
+
+        echo ""
+        echo "🔨 Building CW Carriers dashboard with Vite..."
+        set +e
+        NODE_ENV=production npm run build 2>&1
+        BUILD_EXIT_CODE=$?
+        set -e
+
+        if [ $BUILD_EXIT_CODE -ne 0 ]; then
+          echo "⚠️ CW Carriers build failed with exit code $BUILD_EXIT_CODE"
+        fi
+
+        if [ -d "dist" ]; then
+            echo "✅ CW Carriers dist folder created!"
+            ls -lh dist/
+        else
+            echo "⚠️ CW Carriers dist folder not created"
+        fi
+
+        cd ../../..
+    fi
+else
+    echo "⚠️ CW Carriers dashboard directory not found, skipping..."
+fi
+
+echo ""
+echo "================================================"
 echo "✅ Build completed successfully!"
 echo "✅ Store Health AI Dashboard built at: ./store-health-ai-dashboard-dist"
 echo "✅ TunjoRacing Dashboard built at: ./tunjoracing/dashboard/dist"
 echo "✅ Web Call Center Dashboard built at: ./web-call-center/dashboard/dist"
 echo "✅ PINAXIS Dashboard built at: ./pinaxis/dashboard/dist"
+echo "✅ CW Carriers Dashboard built at: ./verticals/cw_carriers/frontend/dist"
 echo "================================================"
