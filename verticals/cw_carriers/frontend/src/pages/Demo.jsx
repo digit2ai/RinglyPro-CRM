@@ -86,13 +86,22 @@ export default function Demo() {
 
   const handleGenerate = async (type) => {
     setGenResult(null);
-    const res = await api.post('/demo/generate', { type, count: genCount });
-    setGenResult(res.data);
+    try {
+      const res = await api.post('/demo/generate', { type, count: genCount });
+      setGenResult(res.data);
+    } catch (err) {
+      setGenResult({ message: `Error: ${err.response?.data?.error || err.message}`, error: true });
+    }
   };
 
   const handleClear = async (type) => {
-    const res = await api.delete(`/demo/clear?type=${type}`);
-    setGenResult({ message: `Cleared demo data: ${JSON.stringify(res.data.deleted)}` });
+    setGenResult(null);
+    try {
+      const res = await api.delete(`/demo/clear?type=${type}`);
+      setGenResult({ message: `Cleared demo data: ${JSON.stringify(res.data.deleted)}` });
+    } catch (err) {
+      setGenResult({ message: `Error clearing: ${err.response?.data?.error || err.message}`, error: true });
+    }
   };
 
   const handleFileUpload = (e) => {
@@ -135,7 +144,7 @@ export default function Demo() {
           <button onClick={() => handleClear('calls')} style={s.clearBtn}>Clear Demo Calls</button>
           <button onClick={() => handleClear('all')} style={{ ...s.clearBtn, borderColor: '#F85149', color: '#F85149' }}>Clear All Demo Data</button>
         </div>
-        {genResult && <div style={s.resultBox}>{genResult.message}</div>}
+        {genResult && <div style={genResult.error ? s.errorBox : s.resultBox}>{genResult.message}</div>}
       </div>
 
       {/* Upload Section */}

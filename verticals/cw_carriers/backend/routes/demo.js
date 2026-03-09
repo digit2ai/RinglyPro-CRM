@@ -183,21 +183,22 @@ router.post('/generate', asyncHandler(async (req, res) => {
 }));
 
 // DELETE /clear — clear all demo data
+// Order: calls first (references contacts), then loads, then contacts (FK constraints)
 router.delete('/clear', asyncHandler(async (req, res) => {
   const { type } = req.query;
   let deleted = {};
 
-  if (type === 'contacts' || type === 'all') {
-    const [, meta] = await sequelize.query(`DELETE FROM cw_contacts WHERE full_name LIKE 'Demo%' OR email LIKE 'demo%'`);
-    deleted.contacts = meta?.rowCount || 0;
+  if (type === 'calls' || type === 'all') {
+    const [, meta] = await sequelize.query(`DELETE FROM cw_call_logs WHERE call_sid LIKE 'DEMO%'`);
+    deleted.calls = meta?.rowCount || 0;
   }
   if (type === 'loads' || type === 'all') {
     const [, meta] = await sequelize.query(`DELETE FROM cw_loads WHERE load_ref LIKE 'DEMO%' OR broker_notes LIKE 'Demo%'`);
     deleted.loads = meta?.rowCount || 0;
   }
-  if (type === 'calls' || type === 'all') {
-    const [, meta] = await sequelize.query(`DELETE FROM cw_call_logs WHERE call_sid LIKE 'DEMO%'`);
-    deleted.calls = meta?.rowCount || 0;
+  if (type === 'contacts' || type === 'all') {
+    const [, meta] = await sequelize.query(`DELETE FROM cw_contacts WHERE full_name LIKE 'Demo%' OR email LIKE 'demo%'`);
+    deleted.contacts = meta?.rowCount || 0;
   }
 
   res.json({ success: true, deleted });
