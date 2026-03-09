@@ -98,14 +98,15 @@ router.post('/retry/:id', async (req, res) => {
   }
 });
 
-// POST /sync-all/contacts - sync all contacts to HubSpot
+// POST /sync-all/contacts - sync all contacts to HubSpot (batched, no limit)
 router.post('/sync-all/contacts', async (req, res) => {
   try {
     const [contacts] = await sequelize.query(
-      `SELECT * FROM cw_contacts WHERE hubspot_id IS NULL LIMIT 50`
+      `SELECT * FROM cw_contacts WHERE hubspot_id IS NULL ORDER BY id`
     );
-    let synced = 0;
-    for (const contact of contacts) {
+    let synced = 0, errors = 0;
+    for (let i = 0; i < contacts.length; i++) {
+      const contact = contacts[i];
       const result = await hubspot.createContact(contact);
       if (result.success && result.data?.id) {
         await sequelize.query(
@@ -113,22 +114,27 @@ router.post('/sync-all/contacts', async (req, res) => {
           { bind: [result.data.id, contact.id] }
         );
         synced++;
+      } else {
+        errors++;
       }
+      // Brief pause every 10 records to avoid HubSpot rate limits
+      if ((i + 1) % 10 === 0) await new Promise(r => setTimeout(r, 200));
     }
-    res.json({ success: true, message: `Synced ${synced} of ${contacts.length} contacts` });
+    res.json({ success: true, message: `Synced ${synced} of ${contacts.length} contacts (${errors} errors)` });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// POST /sync-all/deals - sync all deals to HubSpot
+// POST /sync-all/deals - sync all deals to HubSpot (batched, no limit)
 router.post('/sync-all/deals', async (req, res) => {
   try {
     const [loads] = await sequelize.query(
-      `SELECT * FROM cw_loads WHERE hubspot_deal_id IS NULL LIMIT 50`
+      `SELECT * FROM cw_loads WHERE hubspot_deal_id IS NULL ORDER BY id`
     );
-    let synced = 0;
-    for (const load of loads) {
+    let synced = 0, errors = 0;
+    for (let i = 0; i < loads.length; i++) {
+      const load = loads[i];
       const result = await hubspot.createDeal(load);
       if (result.success && result.data?.id) {
         await sequelize.query(
@@ -136,9 +142,12 @@ router.post('/sync-all/deals', async (req, res) => {
           { bind: [result.data.id, load.id] }
         );
         synced++;
+      } else {
+        errors++;
       }
+      if ((i + 1) % 10 === 0) await new Promise(r => setTimeout(r, 200));
     }
-    res.json({ success: true, message: `Synced ${synced} of ${loads.length} deals` });
+    res.json({ success: true, message: `Synced ${synced} of ${loads.length} deals (${errors} errors)` });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
