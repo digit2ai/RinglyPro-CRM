@@ -215,6 +215,23 @@ app.get('/api/debug-sync', async (req, res) => {
     const r4 = await d2Pool.query('SELECT COUNT(*) as cnt FROM d2_staff_members');
     results.d2StaffCount = parseInt(r4.rows[0].cnt);
   } catch (e) { results.d2StaffAccess = 'error: ' + e.message.substring(0, 80); }
+  // Check d2_tasks columns
+  try {
+    const r5 = await d2Pool.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'd2_tasks' ORDER BY ordinal_position");
+    results.d2TaskColumns = r5.rows.map(r => r.column_name);
+  } catch (e) { results.d2TaskColumns = 'error: ' + e.message.substring(0, 80); }
+  // Try a test insert and report error
+  if (req.query.test_insert === '1') {
+    try {
+      const r6 = await d2Pool.query(
+        `INSERT INTO d2_tasks (workspace_id, title, description, task_type, status, priority, due_date, assigned_staff_id, quicktask_id, "createdAt", "updatedAt")
+         VALUES (1, 'SYNC TEST', 'test', 'task', 'pending', 'medium', NULL, NULL, -1, NOW(), NOW()) RETURNING id`
+      );
+      results.testInsert = 'ok, id=' + r6.rows[0].id;
+      // Clean up
+      await d2Pool.query('DELETE FROM d2_tasks WHERE quicktask_id = -1');
+    } catch (e) { results.testInsert = 'error: ' + e.message; }
+  }
   res.json(results);
 });
 
