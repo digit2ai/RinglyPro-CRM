@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { getProject, generateApiKey, getApiKeyStatus, revokeApiKey } from '../lib/api'
 
-const BASE_URL = window.location.origin + '/logistics/api/v1'
+const BASE_URL = window.location.origin + '/pinaxis/api/v1'
 
 const ENDPOINTS = [
   {

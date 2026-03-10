@@ -33,7 +33,7 @@ function Root() {
   }
 
   return (
-    <BrowserRouter basename="/logistics">
+    <BrowserRouter basename="/pinaxis">
       <App onLogout={handleLogout} userEmail={authed.email} />
     </BrowserRouter>
   )

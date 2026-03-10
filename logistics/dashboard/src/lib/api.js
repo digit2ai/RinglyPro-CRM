@@ -1,4 +1,4 @@
-const BASE = '/logistics/api/v1'
+const BASE = '/pinaxis/api/v1'
 
 async function request(path, options = {}) {
   const url = `${BASE}${path}`

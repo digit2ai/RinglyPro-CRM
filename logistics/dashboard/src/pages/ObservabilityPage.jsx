@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getTelemetryHealth, getTelemetryEvents, seedDemoTelemetry } from '../lib/api'
 
-const BASE = '/logistics/api/v1'
+const BASE = '/pinaxis/api/v1'
 
 function RefreshIcon({ className }) {
   return (

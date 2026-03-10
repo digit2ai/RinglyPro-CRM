@@ -10,7 +10,7 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/logistics/api': 'http://localhost:10000'
+      '/pinaxis/api': 'http://localhost:10000'
     }
   }
 })
