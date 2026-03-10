@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LOGISTICS — System Architecture Document</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --card: #283548;
+    --accent: #3b82f6;
+    --accent2: #8b5cf6;
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --cyan: #06b6d4;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --line: #334155;
+    --radius: 12px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+  /* Header */
+  .doc-header { padding: 80px 0 48px; text-align: center; border-bottom: 1px solid var(--line); }
+  .doc-header .badge { display: inline-block; padding: 6px 16px; border-radius: 999px; background: rgba(59,130,246,.15); color: var(--accent); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 16px; font-weight: 600; }
+  .doc-header h1 { font-size: clamp(32px, 5vw, 48px); font-weight: 800; margin-bottom: 8px; }
+  .doc-header h1 span { color: var(--accent); }
+  .doc-header .subtitle { color: var(--muted); font-size: 18px; max-width: 700px; margin: 0 auto 24px; }
+  .doc-header .meta { display: flex; gap: 32px; justify-content: center; color: var(--muted); font-size: 13px; flex-wrap: wrap; }
+  .doc-header .meta span { display: flex; align-items: center; gap: 6px; }
+
+  /* TOC */
+  .toc { margin: 48px 0; padding: 32px; background: var(--panel); border-radius: var(--radius); border: 1px solid var(--line); }
+  .toc h2 { font-size: 18px; margin-bottom: 16px; color: var(--accent); }
+  .toc ol { padding-left: 24px; }
+  .toc li { margin: 8px 0; }
+  .toc a { color: var(--text); text-decoration: none; font-size: 14px; }
+  .toc a:hover { color: var(--accent); }
+
+  /* Sections */
+  .section { padding: 48px 0; border-bottom: 1px solid var(--line); }
+  .section:last-child { border-bottom: none; }
+  .section-title { font-size: 28px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; }
+  .section-title .num { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 10px; background: var(--accent); color: #fff; font-size: 16px; font-weight: 700; flex-shrink: 0; }
+  .section-sub { color: var(--muted); margin-bottom: 32px; }
+
+  /* Cards */
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 24px 0; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; }
+  .card h4 { font-size: 16px; margin-bottom: 8px; }
+  .card p { color: var(--muted); font-size: 13px; }
+  .card .tag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; margin-bottom: 8px; }
+  .tag-blue { background: rgba(59,130,246,.2); color: var(--accent); }
+  .tag-green { background: rgba(34,197,94,.2); color: var(--green); }
+  .tag-amber { background: rgba(245,158,11,.2); color: var(--amber); }
+  .tag-purple { background: rgba(139,92,246,.2); color: var(--accent2); }
+  .tag-cyan { background: rgba(6,182,212,.2); color: var(--cyan); }
+
+  /* Diagram boxes */
+  .arch-diagram { margin: 32px 0; padding: 32px; background: var(--panel); border-radius: var(--radius); border: 1px solid var(--line); overflow-x: auto; }
+  .arch-diagram pre { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 12px; line-height: 1.5; color: var(--text); white-space: pre; }
+  .arch-diagram .diagram-title { font-size: 14px; font-weight: 600; color: var(--accent); margin-bottom: 16px; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+  th { background: var(--card); color: var(--accent); font-weight: 600; text-align: left; padding: 12px 16px; border-bottom: 2px solid var(--accent); }
+  td { padding: 10px 16px; border-bottom: 1px solid var(--line); color: var(--text); }
+  tr:hover td { background: rgba(59,130,246,.05); }
+  .mono { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 12px; color: var(--cyan); }
+
+  /* Code blocks */
+  .code-block { background: #0d1117; border: 1px solid var(--line); border-radius: 8px; padding: 16px 20px; margin: 16px 0; overflow-x: auto; }
+  .code-block code { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 12px; line-height: 1.6; color: #e6edf3; }
+  .code-block .comment { color: #7d8590; }
+  .code-block .keyword { color: #ff7b72; }
+  .code-block .string { color: #a5d6ff; }
+  .code-block .number { color: #79c0ff; }
+
+  /* Flow steps */
+  .flow-steps { display: flex; gap: 0; margin: 24px 0; overflow-x: auto; }
+  .flow-step { flex: 1; min-width: 140px; text-align: center; position: relative; }
+  .flow-step .circle { width: 48px; height: 48px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; margin: 0 auto 8px; }
+  .flow-step .label { font-size: 13px; font-weight: 600; }
+  .flow-step .desc { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .flow-step::after { content: ''; position: absolute; top: 24px; right: -50%; width: 100%; height: 2px; background: var(--line); z-index: 0; }
+  .flow-step:last-child::after { display: none; }
+  .flow-step .circle { position: relative; z-index: 1; }
+
+  /* Layer boxes */
+  .layer-stack { margin: 24px 0; }
+  .layer { padding: 20px 24px; border-left: 4px solid; margin-bottom: 2px; background: var(--card); border-radius: 0 8px 8px 0; }
+  .layer-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .layer-desc { font-size: 12px; color: var(--muted); }
+  .layer-blue { border-color: var(--accent); }
+  .layer-green { border-color: var(--green); }
+  .layer-purple { border-color: var(--accent2); }
+  .layer-amber { border-color: var(--amber); }
+  .layer-cyan { border-color: var(--cyan); }
+  .layer-red { border-color: var(--red); }
+
+  /* KPI strip */
+  .kpi-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin: 24px 0; }
+  .kpi { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; text-align: center; }
+  .kpi .value { font-size: 28px; font-weight: 800; color: var(--accent); }
+  .kpi .label { font-size: 11px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: .05em; }
+
+  /* Highlight text */
+  .hl { color: var(--accent); font-weight: 600; }
+  .hl-green { color: var(--green); }
+  .hl-amber { color: var(--amber); }
+  p { margin-bottom: 12px; }
+  h3 { font-size: 20px; margin: 32px 0 12px; }
+  h4 { margin: 16px 0 8px; }
+  ul, ol { margin: 8px 0 16px 24px; }
+  li { margin: 4px 0; font-size: 14px; }
+
+  /* Footer */
+  .doc-footer { padding: 48px 0; text-align: center; color: var(--muted); font-size: 12px; border-top: 1px solid var(--line); }
+  .doc-footer .logos { display: flex; gap: 32px; justify-content: center; align-items: center; margin-bottom: 16px; }
+  .doc-footer .logo { font-weight: 800; font-size: 18px; }
+  .doc-footer .logo-logistics { color: var(--accent); }
+  .doc-footer .logo-gebhardt { color: var(--green); }
+  .doc-footer .logo-ringly { color: var(--accent2); }
+
+  /* Tablet */
+  @media (max-width: 768px) {
+    .container { padding: 0 16px; }
+    .card-grid { grid-template-columns: 1fr; }
+    .kpi-strip { grid-template-columns: repeat(2, 1fr); }
+    .flow-steps { flex-direction: column; align-items: center; }
+    .flow-step::after { display: none; }
+    .doc-header { padding: 48px 0 32px; }
+    .doc-header h1 { font-size: 28px; }
+    .doc-header .subtitle { font-size: 15px; }
+    .doc-header .meta { gap: 16px; font-size: 12px; }
+    .section { padding: 32px 0; }
+    .section-title { font-size: 22px; gap: 8px; }
+    .section-title .num { width: 30px; height: 30px; font-size: 14px; }
+    h3 { font-size: 17px; }
+    table { font-size: 12px; }
+    th, td { padding: 8px 10px; }
+    .toc { padding: 20px; }
+    .arch-diagram { padding: 16px; }
+    .arch-diagram pre { font-size: 9px; }
+    .layer { padding: 14px 16px; }
+    .code-block { padding: 12px; }
+    .code-block code { font-size: 11px; }
+  }
+
+  /* Mobile */
+  @media (max-width: 480px) {
+    .container { padding: 0 12px; }
+    .doc-header { padding: 32px 0 24px; }
+    .doc-header .badge { font-size: 10px; padding: 4px 12px; }
+    .doc-header h1 { font-size: 22px; }
+    .doc-header .subtitle { font-size: 13px; padding: 0 8px; }
+    .doc-header .meta { flex-direction: column; gap: 4px; font-size: 11px; }
+    .toc { padding: 16px; margin: 24px 0; }
+    .toc ol { padding-left: 16px; }
+    .toc a { font-size: 13px; }
+    .section { padding: 24px 0; }
+    .section-title { font-size: 18px; flex-wrap: wrap; }
+    .section-sub { font-size: 13px; margin-bottom: 20px; }
+    h3 { font-size: 16px; margin: 24px 0 8px; }
+    p, li { font-size: 13px; }
+    ul, ol { margin-left: 16px; }
+    .card { padding: 16px; }
+    .card h4 { font-size: 14px; }
+    .card p { font-size: 12px; }
+    .kpi-strip { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .kpi { padding: 12px; }
+    .kpi .value { font-size: 22px; }
+    .kpi .label { font-size: 10px; }
+    table { font-size: 11px; display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    th, td { padding: 6px 8px; white-space: nowrap; }
+    .mono { font-size: 10px; }
+    .arch-diagram { padding: 12px; margin: 16px 0; }
+    .arch-diagram pre { font-size: 7.5px; line-height: 1.4; }
+    .layer { padding: 12px 14px; }
+    .layer-title { font-size: 13px; }
+    .layer-desc { font-size: 11px; }
+    .code-block { padding: 10px; }
+    .code-block code { font-size: 10px; }
+    .flow-step .circle { width: 36px; height: 36px; font-size: 14px; }
+    .flow-step .label { font-size: 12px; }
+    .flow-step .desc { font-size: 10px; }
+    .doc-footer { padding: 32px 0; }
+    .doc-footer .logos { gap: 16px; }
+    .doc-footer .logo { font-size: 15px; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="container">
+
+<!-- ================================================================ -->
+<!-- HEADER -->
+<!-- ================================================================ -->
+<div class="doc-header">
+  <div class="badge">Technical Architecture Document v1.0</div>
+  <h1><span>LOGISTICS</span> System Architecture</h1>
+  <p class="subtitle">Warehouse Data Analytics Platform with MCP Integration Layer, GEBHARDT Product Matching, and SAP EWM/MFS Bridge</p>
+  <div class="meta">
+    <span>Author: Digit2ai / RinglyPro</span>
+    <span>Client: LOGISTICS LLC / GEBHARDT Group</span>
+    <span>Date: March 2026</span>
+    <span>Status: Production (v1.0)</span>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- TABLE OF CONTENTS -->
+<!-- ================================================================ -->
+<div class="toc">
+  <h2>Table of Contents</h2>
+  <ol>
+    <li><a href="#overview">System Overview & Purpose</a></li>
+    <li><a href="#arch">High-Level Architecture (6-Layer Model)</a></li>
+    <li><a href="#mcp">MCP Integration Layer</a></li>
+    <li><a href="#data">Data Model & Database Schema</a></li>
+    <li><a href="#ingestion">Data Ingestion Pipeline</a></li>
+    <li><a href="#analytics">Analytics Engine (8 Computation Types)</a></li>
+    <li><a href="#matching">GEBHARDT Product Matching Engine</a></li>
+    <li><a href="#sap">SAP EWM/MFS Integration Bridge</a></li>
+    <li><a href="#api">API Reference</a></li>
+    <li><a href="#dashboard">Dashboard Architecture</a></li>
+    <li><a href="#reports">PDF Report Generator</a></li>
+    <li><a href="#security">Security & Authentication</a></li>
+    <li><a href="#deploy">Deployment & Infrastructure</a></li>
+    <li><a href="#roadmap">Implementation Roadmap</a></li>
+  </ol>
+</div>
+
+<!-- ================================================================ -->
+<!-- 1. SYSTEM OVERVIEW -->
+<!-- ================================================================ -->
+<div class="section" id="overview">
+  <h2 class="section-title"><span class="num">1</span> System Overview & Purpose</h2>
+  <p class="section-sub">What LOGISTICS does and why it exists</p>
+
+  <p>LOGISTICS is a <span class="hl">warehouse data analytics platform</span> that enables GEBHARDT Intralogistics Group's consulting arm (LOGISTICS LLC) to:</p>
+
+  <ol>
+    <li><strong>Accept warehouse data uploads</strong> (CSV/XLSX) from prospect customers — item master, inventory, goods-in, and goods-out datasets</li>
+    <li><strong>Automatically run 8 standardized analytics</strong> that LOGISTICS currently performs manually — order structure, throughput, ABC classification, fit analysis</li>
+    <li><strong>Auto-match analysis results</strong> to the GEBHARDT product portfolio using a weighted multi-criteria scoring engine</li>
+    <li><strong>Generate branded PDF reports</strong> with charts, KPIs, and product recommendations</li>
+    <li><strong>Bridge into GEBHARDT's SAP EWM/MFS</strong> ecosystem via the RinglyPro MCP (Model Context Protocol) layer for CRM sync and downstream automation</li>
+  </ol>
+
+  <div class="kpi-strip">
+    <div class="kpi"><div class="value">8</div><div class="label">Analytics Types</div></div>
+    <div class="kpi"><div class="value">6</div><div class="label">GEBHARDT Products</div></div>
+    <div class="kpi"><div class="value">4</div><div class="label">Data Sources</div></div>
+    <div class="kpi"><div class="value">8</div><div class="label">Database Tables</div></div>
+    <div class="kpi"><div class="value">15+</div><div class="label">API Endpoints</div></div>
+    <div class="kpi"><div class="value">10</div><div class="label">Dashboard Charts</div></div>
+  </div>
+
+  <h3>Workflow</h3>
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="circle">1</div>
+      <div class="label">Upload</div>
+      <div class="desc">CSV/XLSX data files</div>
+    </div>
+    <div class="flow-step">
+      <div class="circle" style="background:var(--accent2)">2</div>
+      <div class="label">Analyze</div>
+      <div class="desc">8 automated analytics</div>
+    </div>
+    <div class="flow-step">
+      <div class="circle" style="background:var(--green)">3</div>
+      <div class="label">Match</div>
+      <div class="desc">GEBHARDT products</div>
+    </div>
+    <div class="flow-step">
+      <div class="circle" style="background:var(--amber)">4</div>
+      <div class="label">Report</div>
+      <div class="desc">PDF + dashboard</div>
+    </div>
+    <div class="flow-step">
+      <div class="circle" style="background:var(--cyan)">5</div>
+      <div class="label">Sync</div>
+      <div class="desc">MCP → SAP/CRM</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- 2. HIGH-LEVEL ARCHITECTURE -->
+<!-- ================================================================ -->
+<div class="section" id="arch">
+  <h2 class="section-title"><span class="num">2</span> High-Level Architecture (6-Layer Model)</h2>
+  <p class="section-sub">End-to-end system design from data input to operational output</p>
+
+  <div class="arch-diagram">
+    <div class="diagram-title">LOGISTICS System Architecture — 6-Layer Model</div>
+<pre>
+ ┌─────────────────────────────────────────────────────────────────────────────────┐
+ │  LAYER 1: PROSPECT DATA INPUT                                                   │
+ │  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐           │
+ │  │ Item Master   │ │  Inventory   │ │  Goods-In    │ │  Goods-Out   │           │
+ │  │ CSV / XLSX    │ │  CSV / XLSX  │ │  CSV / XLSX  │ │  CSV / XLSX  │           │
+ │  │              │ │              │ │              │ │              │           │
+ │  │ SKU, dims,   │ │ stock, bin,  │ │ receipt_id,  │ │ order_id,    │           │
+ │  │ weight, UOM  │ │ location     │ │ supplier     │ │ ship_date    │           │
+ │  └──────┬───────┘ └──────┬───────┘ └──────┬───────┘ └──────┬───────┘           │
+ │         │                │                │                │                    │
+ └─────────┼────────────────┼────────────────┼────────────────┼────────────────────┘
+           │                │                │                │
+           ▼                ▼                ▼                ▼
+ ┌─────────────────────────────────────────────────────────────────────────────────┐
+ │  LAYER 2: RINGLYPRO MCP SERVER  (Node.js / Express / PostgreSQL)                │
+ │                                                                                 │
+ │  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐  ┌─────────────────┐  │
+ │  │  Data Parser   │  │  Plausibility  │  │  Schema       │  │  Column Name    │  │
+ │  │  CSV / XLSX    │──│  Validator     │──│  Normalizer   │──│  Alias Engine   │  │
+ │  │  (xlsx lib)    │  │  (date range,  │  │  (type cast,  │  │  (DE/EN maps)   │  │
+ │  │               │  │   row count)   │  │   null clean)  │  │                │  │
+ │  └───────┬───────┘  └───────────────┘  └───────────────┘  └─────────────────┘  │
+ │          │                                                                      │
+ │          ▼                                                                      │
+ │  ┌──────────────────────────────────────────────────────────────────────────┐   │
+ │  │  PostgreSQL — 8 tables (logistics_ prefix)                                 │   │
+ │  │  ┌─────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────┐   │   │
+ │  │  │Projects │ │ Uploaded │ │ Item     │ │Inventory │ │  Goods In    │   │   │
+ │  │  │         │ │ Files    │ │ Master   │ │ Data     │ │  Data        │   │   │
+ │  │  └────┬────┘ └──────────┘ └──────────┘ └──────────┘ └──────────────┘   │   │
+ │  │       │      ┌──────────┐ ┌──────────────┐ ┌──────────────────────┐    │   │
+ │  │       └──────│Goods Out │ │ Analysis     │ │ Product              │    │   │
+ │  │              │ Data     │ │ Results      │ │ Recommendations      │    │   │
+ │  │              └──────────┘ └──────────────┘ └──────────────────────┘    │   │
+ │  └──────────────────────────────────────────────────────────────────────────┘   │
+ └────────────────────────────────────────┬────────────────────────────────────────┘
+                                          │
+                                          ▼
+ ┌─────────────────────────────────────────────────────────────────────────────────┐
+ │  LAYER 3: AI ANALYTICS ENGINE                                                   │
+ │                                                                                 │
+ │  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐                  │
+ │  │ Overview   │ │  Order     │ │ Order Time │ │ Throughput │                  │
+ │  │ KPIs       │ │ Structure  │ │ Series     │ │ Monthly    │                  │
+ │  └────────────┘ └────────────┘ └────────────┘ └────────────┘                  │
+ │  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐                  │
+ │  │ Throughput │ │ Throughput │ │    ABC     │ │ Fit / No   │                  │
+ │  │ Weekday    │ │ Hourly     │ │Classification│ │ Fit        │                  │
+ │  └────────────┘ └────────────┘ └─────┬──────┘ └────────────┘                  │
+ │                                      │ Gini coefficient                        │
+ │                                      │ Lorenz curve                            │
+ └──────────────────────────────────────┬──────────────────────────────────────────┘
+                                        │
+                                        ▼
+ ┌─────────────────────────────────────────────────────────────────────────────────┐
+ │  LAYER 4: GEBHARDT PRODUCT MATCHING ENGINE                                      │
+ │                                                                                 │
+ │  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐                           │
+ │  │ StoreBiter   │ │ StoreBiter   │ │  InstaPick   │                           │
+ │  │ MLS (Mini)   │ │ OLS (Over)   │ │  (G2P)       │                           │
+ │  │ Score: 0-100 │ │ Score: 0-100 │ │ Score: 0-100 │                           │
+ │  └──────────────┘ └──────────────┘ └──────────────┘                           │
+ │  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐                           │
+ │  │ ROTA-Sorter  │ │ Omnipallet   │ │  Versastore  │                           │
+ │  │ (Sortation)  │ │ (Pallet)     │ │  (Flex Auto) │                           │
+ │  │ Score: 0-100 │ │ Score: 0-100 │ │ Score: 0-100 │                           │
+ │  └──────────────┘ └──────────────┘ └──────────────┘                           │
+ │                                                                                 │
+ │  Scoring: Multi-criteria weighted algorithm (5-6 factors per product)           │
+ └──────────────────────────────────────┬──────────────────────────────────────────┘
+                                        │
+                                        ▼
+ ┌─────────────────────────────────────────────────────────────────────────────────┐
+ │  LAYER 5: OUTPUT & DELIVERY                                                     │
+ │                                                                                 │
+ │  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐          │
+ │  │  React       │ │  PDF Report  │ │  REST API    │ │  MCP Sync    │          │
+ │  │  Dashboard   │ │  (pdfmake)   │ │  (JSON)      │ │  (CRM Push)  │          │
+ │  │  Recharts    │ │  40KB/report │ │  15+ routes  │ │  SAP / GHL   │          │
+ │  └──────────────┘ └──────────────┘ └──────────────┘ └──────┬───────┘          │
+ └─────────────────────────────────────────────────────────────┼──────────────────┘
+                                                               │
+                                                               ▼
+ ┌─────────────────────────────────────────────────────────────────────────────────┐
+ │  LAYER 6: GEBHARDT / LOGISTICS OPERATIONS                                         │
+ │                                                                                 │
+ │  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐          │
+ │  │ SAP EWM/MFS  │ │ Sales        │ │  Solution    │ │  Prospect    │          │
+ │  │ CRM Pipeline │ │ Engineer     │ │  Architect   │ │  Customer    │          │
+ │  │ Opportunity  │ │ Reviews      │ │  Validates   │ │  Receives    │          │
+ │  │ Tracking     │ │ Recomm.      │ │  Config      │ │  Report      │          │
+ │  └──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘          │
+ └─────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+  </div>
+
+  <div class="layer-stack">
+    <div class="layer layer-blue">
+      <div class="layer-title">Layer 1 — Prospect Data Input</div>
+      <div class="layer-desc">CSV/XLSX uploads: Item Master (SKU, dimensions, weight), Inventory (stock, locations), Goods-In (deliveries), Goods-Out (sales orders). Plus business context via web form (shifts, growth, regulations).</div>
+    </div>
+    <div class="layer layer-purple">
+      <div class="layer-title">Layer 2 — RinglyPro MCP Server</div>
+      <div class="layer-desc">Node.js/Express application with data parser (xlsx + csv-parse), schema validation, column normalization (DE/EN), PostgreSQL storage (8 tables), and MCP proxy for CRM/SAP bridge.</div>
+    </div>
+    <div class="layer layer-green">
+      <div class="layer-title">Layer 3 — AI Analytics Engine</div>
+      <div class="layer-desc">8 computation types using SQL aggregations: Overview KPIs, Order Structure, Order Time Series, Throughput (Monthly/Weekday/Hourly), ABC Classification with Gini coefficient, Fit/No-Fit bin analysis.</div>
+    </div>
+    <div class="layer layer-amber">
+      <div class="layer-title">Layer 4 — GEBHARDT Product Matching</div>
+      <div class="layer-desc">Multi-criteria weighted scoring (0-100) for 6 products: StoreBiter MLS, StoreBiter OLS, InstaPick, ROTA-Sorter, Omnipallet, Versastore. 5-6 factors per product with threshold/ideal bands.</div>
+    </div>
+    <div class="layer layer-cyan">
+      <div class="layer-title">Layer 5 — Output & Delivery</div>
+      <div class="layer-desc">React + Recharts interactive dashboard, pdfmake PDF reports, REST API (JSON), MCP sync to SAP EWM/MFS and CRM systems.</div>
+    </div>
+    <div class="layer layer-red">
+      <div class="layer-title">Layer 6 — GEBHARDT Operations</div>
+      <div class="layer-desc">Sales engineers review recommendations, solution architects validate configurations, prospects receive branded reports, opportunities tracked in SAP pipeline.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- 3. MCP INTEGRATION LAYER -->
+<!-- ================================================================ -->
+<div class="section" id="mcp">
+  <h2 class="section-title"><span class="num">3</span> MCP Integration Layer</h2>
+  <p class="section-sub">How LOGISTICS connects to the RinglyPro Model Context Protocol ecosystem</p>
+
+  <p>LOGISTICS operates as a <span class="hl">self-contained MCP module</span> within the RinglyPro platform. It follows the established pattern used by Store Health AI, TunjoRacing, and other modules — mounted as an Express sub-application at <span class="mono">/logistics</span>.</p>
+
+  <h3>MCP Server Components</h3>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="tag tag-blue">LOGISTICS MCP Proxy</div>
+      <h4>Data Analytics Proxy</h4>
+      <p>Handles warehouse data upload, parsing, analytics orchestration, and product matching. Exposes RESTful endpoints under <span class="mono">/logistics/api/v1/*</span>.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-purple">Webhook Manager</div>
+      <h4>Event Pipeline</h4>
+      <p>HMAC-SHA256 verified webhook pipeline for receiving SAP Event Mesh events. Event deduplication prevents duplicate processing. Async architecture for scale.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-green">AI Copilot</div>
+      <h4>Natural Language Interface</h4>
+      <p>Claude-powered natural language queries on analysis results. "What product fits this customer?" → retrieves analysis data and generates product recommendation.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-amber">Voice AI (Ana)</div>
+      <h4>Multilingual Agent</h4>
+      <p>ElevenLabs-powered voice agent trained on GEBHARDT product knowledge. Presents analysis findings via phone, qualifies leads, schedules follow-ups.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-cyan">CRM Proxy</div>
+      <h4>Zero Vendor Lock-in</h4>
+      <p>Pattern-based proxy supporting SAP Sales Cloud, GoHighLevel, HubSpot, Zoho. LOGISTICS results push to any connected CRM without code changes.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-purple">Workflow Engine</div>
+      <h4>Multi-step Automation</h4>
+      <p>Trigger-based execution: upload → parse → validate → analyze → match → report → sync. Context passing between steps with conditional branching.</p>
+    </div>
+  </div>
+
+  <h3>MCP Data Flow</h3>
+
+  <div class="arch-diagram">
+    <div class="diagram-title">MCP Pipeline: Upload → Analyze → Match → Deliver</div>
+<pre>
+  Prospect          LOGISTICS MCP         Analytics        Product          Delivery
+  Customer          Server              Engine           Matcher          Layer
+     │                  │                  │                │                │
+     │  Upload CSV      │                  │                │                │
+     │─────────────────>│                  │                │                │
+     │                  │  Parse + Store   │                │                │
+     │                  │─────────────────>│                │                │
+     │                  │                  │  8 Analytics   │                │
+     │                  │                  │───────────────>│                │
+     │                  │                  │                │  Score 6       │
+     │                  │                  │                │  Products      │
+     │                  │                  │                │───────────────>│
+     │                  │                  │                │                │ PDF Report
+     │                  │                  │                │                │ Dashboard
+     │                  │                  │                │                │ CRM Sync
+     │  Download PDF    │                  │                │                │ Voice AI
+     │<─────────────────────────────────────────────────────────────────────│
+     │                  │                  │                │                │
+     │                  │     SAP EWM/MFS Event Mesh       │                │
+     │                  │<─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─                │
+     │                  │  (Webhook: HMAC-SHA256 verified)  │                │
+     │                  │                  │                │                │
+     │                  │  Push to CRM ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ >│
+     │                  │  (OData API)     │                │                │
+</pre>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- 4. DATA MODEL -->
+<!-- ================================================================ -->
+<div class="section" id="data">
+  <h2 class="section-title"><span class="num">4</span> Data Model & Database Schema</h2>
+  <p class="section-sub">8 PostgreSQL tables with logistics_ prefix, Sequelize ORM</p>
+
+  <div class="arch-diagram">
+    <div class="diagram-title">Entity Relationship Diagram</div>
+<pre>
+  ┌─────────────────────┐
+  │  logistics_projects    │ ◄─── Central entity: one per prospect analysis
+  │─────────────────────│
+  │  id (PK)            │
+  │  project_code (UQ)  │──┐
+  │  company_name       │  │
+  │  contact_name/email │  │
+  │  industry / country │  │
+  │  business_info (J)  │  │  1:N relationships via project_id FK
+  │  status             │  │
+  │  analysis_started   │  │
+  │  analysis_completed │  │
+  └─────────────────────┘  │
+           │               │
+    ┌──────┼───────┬───────┼──────┬──────────┬──────────┬──────────┐
+    ▼      ▼       ▼       ▼      ▼          ▼          ▼          ▼
+  ┌──────┐┌──────┐┌──────┐┌──────┐┌────────┐┌────────┐┌──────────┐
+  │Upload││ Item ││Invent││Goods ││Goods   ││Analysis││Product   │
+  │Files ││Master││ory   ││ In   ││ Out    ││Results ││Recommend.│
+  │      ││      ││      ││      ││        ││        ││          │
+  │file_ ││sku   ││sku   ││rcpt_ ││order_id││analysis││product_  │
+  │type  ││dims  ││stock ││id    ││sku     ││_type   ││name      │
+  │parse_││weight││loc   ││qty   ││qty     ││result_ ││fit_score │
+  │status││bin_  ││snap_ ││date  ││ship_   ││data (J)││reasoning │
+  │errors││capab.││date  ││suppl.││date    ││computed││(JSONB)   │
+  │(JSON)││(bool)││      ││      ││cust_id ││_at     ││highlight │
+  └──────┘└──────┘└──────┘└──────┘└────────┘└────────┘└──────────┘
+</pre>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Table</th>
+        <th>Purpose</th>
+        <th>Key Fields</th>
+        <th>Indexes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="mono">logistics_projects</td>
+        <td>Project metadata per prospect</td>
+        <td>project_code (unique), company_name, status, business_info (JSONB)</td>
+        <td>[status], [project_code]</td>
+      </tr>
+      <tr>
+        <td class="mono">logistics_uploaded_files</td>
+        <td>File upload tracking</td>
+        <td>file_type, parse_status, parse_errors (JSONB), plausibility_warnings (JSONB)</td>
+        <td>[project_id], [project_id, file_type]</td>
+      </tr>
+      <tr>
+        <td class="mono">logistics_item_master</td>
+        <td>SKU catalog with dimensions</td>
+        <td>sku, length/width/height_mm, weight_kg, bin_capable (computed), batch_tracked</td>
+        <td>[project_id], [project_id, sku]</td>
+      </tr>
+      <tr>
+        <td class="mono">logistics_inventory_data</td>
+        <td>Stock levels by location</td>
+        <td>sku, stock, location, storage_space, snapshot_date</td>
+        <td>[project_id], [project_id, sku]</td>
+      </tr>
+      <tr>
+        <td class="mono">logistics_goods_in_data</td>
+        <td>Inbound deliveries</td>
+        <td>receipt_id, sku, quantity, receipt_date/time, supplier</td>
+        <td>[project_id], [project_id, receipt_date]</td>
+      </tr>
+      <tr>
+        <td class="mono">logistics_goods_out_data</td>
+        <td>Sales orders & shipments</td>
+        <td>order_id, sku, quantity, ship_date/time, customer_id, shipping_method</td>
+        <td>[project_id, ship_date], [project_id, order_id], [project_id, sku]</td>
+      </tr>
+      <tr>
+        <td class="mono">logistics_analysis_results</td>
+        <td>Computed analytics output</td>
+        <td>analysis_type (8 enum values), result_data (JSONB), computed_at</td>
+        <td>[project_id], [project_id, analysis_type] (unique)</td>
+      </tr>
+      <tr>
+        <td class="mono">logistics_product_recommendations</td>
+        <td>GEBHARDT product scores</td>
+        <td>product_name, fit_score (0-100), reasoning (JSONB), highlighted (boolean)</td>
+        <td>[project_id], [project_id, fit_score]</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ================================================================ -->
+<!-- 5. DATA INGESTION -->
+<!-- ================================================================ -->
+<div class="section" id="ingestion">
+  <h2 class="section-title"><span class="num">5</span> Data Ingestion Pipeline</h2>
+  <p class="section-sub">Dual-mode data ingestion: file upload for POC, live API feeds for production</p>
+
+  <div class="card" style="border-left: 4px solid var(--amber); margin-bottom: 24px;">
+    <div class="tag tag-amber" style="background: rgba(245,158,11,.15); color: var(--amber);">POC Phase — File Upload</div>
+    <p style="margin: 12px 0 8px;">For the initial <strong>Proof of Concept</strong> and sales analysis workflow, data is ingested via <strong>CSV/XLSX file uploads</strong>. The prospect customer exports data from their WMS/ERP system and uploads 4 files (Item Master, Inventory, Goods-In, Goods-Out) through the LOGISTICS dashboard.</p>
+    <ul>
+      <li><strong>CSV</strong> — auto-detects delimiter (<span class="mono">;</span> or <span class="mono">,</span>), UTF-8</li>
+      <li><strong>XLSX</strong> — reads first sheet, supports cell dates</li>
+      <li><strong>Max file size:</strong> 50 MB (multer memory storage)</li>
+    </ul>
+  </div>
+
+  <div class="card" style="border-left: 4px solid var(--green); margin-bottom: 24px;">
+    <div class="tag tag-green">Production Phase — Live API Feeds</div>
+    <p style="margin: 12px 0 8px;">For <strong>live production deployments</strong> — after the customer has adopted GEBHARDT automation systems — data ingestion transitions to real-time API-based feeds:</p>
+    <table style="margin-top: 12px;">
+      <thead>
+        <tr><th>Data Source</th><th>Protocol</th><th>Data Scope</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>SAP EWM OData APIs</strong></td>
+          <td>REST / OData v4</td>
+          <td>Goods-in movements, goods-out shipments, inventory snapshots, material master data</td>
+        </tr>
+        <tr>
+          <td><strong>SAP Event Mesh</strong></td>
+          <td>Webhooks (HMAC-SHA256)</td>
+          <td>Real-time warehouse events — inbound deliveries, pick confirmations, shipping notifications, stock changes</td>
+        </tr>
+        <tr>
+          <td><strong>Direct WMS API</strong></td>
+          <td>REST / SOAP</td>
+          <td>For non-SAP customers — connects to any WMS exposing standard warehouse transaction endpoints</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="margin-top: 12px; color: var(--muted); font-size: 13px;">In production mode, the analytics engine runs on continuously updated data, enabling live dashboards, trend monitoring, and proactive product recommendations as warehouse patterns evolve.</p>
+  </div>
+
+  <h3>Column Name Normalization</h3>
+  <p>The parser supports <span class="hl">German and English column aliases</span>, allowing LOGISTICS customers to use their native column headers:</p>
+
+  <table>
+    <thead>
+      <tr><th>Input Aliases (DE/EN)</th><th>Canonical Field</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="mono">artikel, article, article_number, material, artikelnummer, item</td><td class="mono">sku</td></tr>
+      <tr><td class="mono">desc, bezeichnung, name</td><td class="mono">description</td></tr>
+      <tr><td class="mono">qty, menge, amount</td><td class="mono">quantity</td></tr>
+      <tr><td class="mono">laenge, breite, hoehe, gewicht</td><td class="mono">length_mm, width_mm, height_mm, weight_kg</td></tr>
+      <tr><td class="mono">uom, einheit, unit</td><td class="mono">unit_of_measure</td></tr>
+      <tr><td class="mono">auftrag, order_no</td><td class="mono">order_id</td></tr>
+      <tr><td class="mono">lieferschein, delivery_note</td><td class="mono">receipt_id</td></tr>
+      <tr><td class="mono">lagerort, lagerplatz</td><td class="mono">location, storage_space</td></tr>
+      <tr><td class="mono">lieferant, vendor</td><td class="mono">supplier</td></tr>
+      <tr><td class="mono">versandart, ship_method</td><td class="mono">shipping_method</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Validation Pipeline</h3>
+  <ol>
+    <li><strong>Column mapping</strong> — normalize headers → canonical names via alias engine</li>
+    <li><strong>Required field check</strong> — verify presence of required columns per file type</li>
+    <li><strong>Type transforms</strong> — parseFloat for dimensions, parseInt for counts, boolean parsing</li>
+    <li><strong>Plausibility checks</strong> — date range span (&gt; 30 days recommended), row count minimum (&gt; 10 rows)</li>
+    <li><strong>Computed fields</strong> — <span class="mono">bin_capable</span> auto-computed from L/W/H vs GEBHARDT standard bins</li>
+  </ol>
+</div>
+
+<!-- ================================================================ -->
+<!-- 6. ANALYTICS ENGINE -->
+<!-- ================================================================ -->
+<div class="section" id="analytics">
+  <h2 class="section-title"><span class="num">6</span> Analytics Engine (8 Computation Types)</h2>
+  <p class="section-sub">SQL-based analytics matching LOGISTICS's manual consulting process</p>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="tag tag-blue">1. Overview KPIs</div>
+      <h4>overview_kpis</h4>
+      <p>Total/active/bin-capable SKUs, total orders/orderlines/units, date range, avg lines per order, inventory locations, total stock.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-blue">2. Order Structure</div>
+      <h4>order_structure</h4>
+      <p>Orderlines-per-order histogram (1, 2, 3, 4, 5, 6-10, 11-20, 21-50, 50+) with cumulative %, single-line vs multi-line split.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-purple">3. Order Time Series</div>
+      <h4>order_time_series</h4>
+      <p>Daily orders/orderlines/units with 7-day moving average. Quartile bands (Q1, median, Q3) for demand variability.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-green">4. Throughput Monthly</div>
+      <h4>throughput_monthly</h4>
+      <p>Orders, orderlines, and units aggregated by YYYY-MM. Reveals seasonality and growth trends.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-green">5. Throughput Weekday</div>
+      <h4>throughput_weekday</h4>
+      <p>Mon-Sun distribution of orders/orderlines/units. Identifies weekday concentration and weekend activity.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-green">6. Throughput Hourly</div>
+      <h4>throughput_hourly</h4>
+      <p>0-23 hour distribution of orderlines using ship_time or picking_time. Identifies peak hours for capacity planning.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-amber">7. ABC Classification</div>
+      <h4>abc_classification</h4>
+      <p><strong>Gini coefficient</strong> (0-1) measuring demand concentration. <strong>Lorenz curve</strong> data points. <strong>ABC classes</strong>: A=80% volume, B=15%, C=5%. Top 20 SKUs.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-amber">8. Fit / No-Fit</div>
+      <h4>fit_analysis</h4>
+      <p>SKU dimensions evaluated against 3 GEBHARDT standard bin sizes: 600x400x250mm, 600x400x350mm, 600x400x450mm. Fit % per bin type.</p>
+    </div>
+  </div>
+
+  <h3>ABC Classification — Gini Coefficient Algorithm</h3>
+
+  <div class="code-block">
+<code><span class="comment">// 1. Query SKU picks sorted ascending (small contributors first)</span>
+<span class="keyword">SELECT</span> sku, <span class="keyword">SUM</span>(quantity) <span class="keyword">as</span> total_picks
+<span class="keyword">FROM</span> logistics_goods_out_data
+<span class="keyword">WHERE</span> project_id = :projectId
+<span class="keyword">GROUP BY</span> sku
+<span class="keyword">ORDER BY</span> total_picks <span class="keyword">ASC</span>
+
+<span class="comment">// 2. Build Lorenz curve (ascending sort)</span>
+lorenzCurve = [{x: 0, y: 0}]
+<span class="keyword">for</span> (i = 0; i &lt; n; i++) {
+  cumVolume += picks[i]
+  lorenzCurve.push({
+    x: ((i+1) / n) * <span class="number">100</span>,
+    y: (cumVolume / totalPicks) * <span class="number">100</span>
+  })
+}
+
+<span class="comment">// 3. Compute Gini via trapezoidal integration</span>
+area = <span class="number">0</span>
+<span class="keyword">for</span> (i = 1; i &lt; lorenzCurve.length; i++) {
+  dx = (lorenzCurve[i].x - lorenzCurve[i-1].x) / <span class="number">100</span>
+  avgY = (lorenzCurve[i].y + lorenzCurve[i-1].y) / <span class="number">2</span> / <span class="number">100</span>
+  area += dx * avgY
+}
+gini = <span class="number">1</span> - <span class="number">2</span> * area  <span class="comment">// 0 = perfect equality, 1 = total concentration</span></code>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- 7. PRODUCT MATCHING ENGINE -->
+<!-- ================================================================ -->
+<div class="section" id="matching">
+  <h2 class="section-title"><span class="num">7</span> GEBHARDT Product Matching Engine</h2>
+  <p class="section-sub">Multi-criteria weighted scoring algorithm for 6 product lines</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Category</th>
+        <th>Key Triggers</th>
+        <th>Top Criteria (weight)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>StoreBiter MLS</strong></td>
+        <td>Mini-Load System</td>
+        <td>&gt;70% bin-capable, high SKU count, concentrated ABC</td>
+        <td>bin_capable_pct (0.30), total_skus (0.20), gini (0.15)</td>
+      </tr>
+      <tr>
+        <td><strong>StoreBiter OLS</strong></td>
+        <td>Oversize Load</td>
+        <td>&gt;15% oversize items, high weight, medium throughput</td>
+        <td>oversize_pct (0.25), avg_weight_kg (0.20), bin_capable_pct (0.20)</td>
+      </tr>
+      <tr>
+        <td><strong>InstaPick</strong></td>
+        <td>Goods-to-Person</td>
+        <td>&gt;30% single-line orders, high pick rate, bin-capable</td>
+        <td>single_line_pct (0.30), orderlines_per_day (0.25), bin_capable_pct (0.20)</td>
+      </tr>
+      <tr>
+        <td><strong>ROTA-Sorter</strong></td>
+        <td>Sorting System</td>
+        <td>&gt;20K orders/month, multi-destination, weekday peaks</td>
+        <td>orders_per_month (0.25), multi_line_pct (0.20), weekday_concentration (0.15)</td>
+      </tr>
+      <tr>
+        <td><strong>Omnipallet</strong></td>
+        <td>Pallet Handling</td>
+        <td>&gt;20% non-bin-capable, heavy items, pallet volumes</td>
+        <td>non_bin_capable_pct (0.35), avg_weight_kg (0.25), units_per_day (0.15)</td>
+      </tr>
+      <tr>
+        <td><strong>Versastore</strong></td>
+        <td>Flexible Automation</td>
+        <td>High SKU diversity, batch tracking, variable demand</td>
+        <td>sku_diversity (0.20), batch_tracked_pct (0.20), daily_variability (0.20)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Scoring Formula</h3>
+
+  <div class="code-block">
+<code><span class="comment">// Per criterion scoring (0-100)</span>
+<span class="keyword">if</span> (value >= ideal) score = <span class="number">100</span>
+<span class="keyword">else if</span> (value <= <span class="number">0</span>) score = <span class="number">0</span>
+<span class="keyword">else if</span> (value <= threshold) score = (value / threshold) * <span class="number">50</span>
+<span class="keyword">else</span> score = <span class="number">50</span> + ((value - threshold) / (ideal - threshold)) * <span class="number">50</span>
+
+<span class="comment">// Final product score = weighted average of all criteria</span>
+fit_score = sum(criterion_score * weight) / sum(weights)
+
+<span class="comment">// Highlighted (top recommendation) if score >= 70</span></code>
+  </div>
+
+  <h3>Extracted Metrics (from analysis results)</h3>
+
+  <table>
+    <thead>
+      <tr><th>Metric</th><th>Source</th><th>Computation</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="mono">bin_capable_pct</td><td>fit_analysis / overview_kpis</td><td>% of SKUs fitting largest GEBHARDT bin</td></tr>
+      <tr><td class="mono">total_skus</td><td>overview_kpis</td><td>Count of item master records</td></tr>
+      <tr><td class="mono">active_sku_ratio</td><td>overview_kpis</td><td>active SKUs / total SKUs</td></tr>
+      <tr><td class="mono">gini</td><td>abc_classification</td><td>Gini coefficient from Lorenz curve</td></tr>
+      <tr><td class="mono">orderlines_per_day</td><td>overview_kpis + date_range</td><td>total_orderlines / day_count</td></tr>
+      <tr><td class="mono">single_line_pct</td><td>order_structure</td><td>% of orders with exactly 1 line</td></tr>
+      <tr><td class="mono">orders_per_month</td><td>overview_kpis + date_range</td><td>total_orders / month_count</td></tr>
+      <tr><td class="mono">hourly_peak_ratio</td><td>throughput_hourly</td><td>peak_hour_orderlines / avg_hour_orderlines</td></tr>
+      <tr><td class="mono">weekday_concentration</td><td>throughput_weekday</td><td>max_weekday_share / total_weekday_volume</td></tr>
+      <tr><td class="mono">daily_variability</td><td>order_time_series</td><td>stddev(daily_orderlines) / mean(daily_orderlines)</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ================================================================ -->
+<!-- 8. SAP EWM/MFS INTEGRATION -->
+<!-- ================================================================ -->
+<div class="section" id="sap">
+  <h2 class="section-title"><span class="num">8</span> SAP EWM/MFS Integration Bridge</h2>
+  <p class="section-sub">How LOGISTICS analysis results flow into GEBHARDT's SAP ecosystem</p>
+
+  <h3>Integration Architecture</h3>
+
+  <div class="arch-diagram">
+    <div class="diagram-title">SAP EWM/MFS ↔ RinglyPro MCP Bridge</div>
+<pre>
+  ┌──────────────────┐          ┌──────────────────┐          ┌──────────────────┐
+  │  GEBHARDT PLCs   │◄────────►│  SAP EWM/MFS     │◄────────►│  SAP Event Mesh  │
+  │  (StoreBiter,    │ TCP/IP   │  (Warehouse Mgmt │  AMQP/   │  (SAP BTP)       │
+  │   InstaPick,     │ Telegram │   Material Flow)  │  MQTT    │                  │
+  │   ROTA-Sorter)   │ Protocol │                  │          │                  │
+  └──────────────────┘          └────────┬─────────┘          └────────┬─────────┘
+                                         │                             │
+                                    OData REST API              HTTP POST Webhook
+                                    (/SCWM/ ABAP)              (HMAC-SHA256)
+                                         │                             │
+                                         ▼                             ▼
+                                ┌──────────────────────────────────────────────┐
+                                │         RinglyPro MCP Server                 │
+                                │  ┌────────────────┐  ┌──────────────────┐   │
+                                │  │ LOGISTICS Module  │  │  Webhook Manager │   │
+                                │  │ (Analytics +    │  │  (Event Pipeline │   │
+                                │  │  Product Match) │  │   Deduplication) │   │
+                                │  └────────────────┘  └──────────────────┘   │
+                                │  ┌────────────────┐  ┌──────────────────┐   │
+                                │  │  CRM Proxy     │  │  Voice AI (Ana)  │   │
+                                │  │  (SAP/GHL/     │  │  (ElevenLabs     │   │
+                                │  │   HubSpot)     │  │   multilingual)  │   │
+                                │  └────────────────┘  └──────────────────┘   │
+                                └──────────────────────────────────────────────┘
+</pre>
+  </div>
+
+  <h3>SAP Integration Points</h3>
+
+  <table>
+    <thead>
+      <tr><th>Interface</th><th>Protocol</th><th>Direction</th><th>Use Case</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>OData REST APIs</strong></td>
+        <td>HTTPS + Token Auth</td>
+        <td>Bidirectional</td>
+        <td>Create warehouse orders, read stock levels, push CRM opportunities</td>
+      </tr>
+      <tr>
+        <td><strong>SAP Event Mesh</strong></td>
+        <td>AMQP/MQTT → HTTP</td>
+        <td>SAP → MCP</td>
+        <td>Real-time events: order processed, resource malfunction, capacity threshold</td>
+      </tr>
+      <tr>
+        <td><strong>SAP Cloud Connector</strong></td>
+        <td>Encrypted tunnel</td>
+        <td>On-prem ↔ BTP</td>
+        <td>Secure bridge for on-premise S/4HANA EWM to cloud services</td>
+      </tr>
+      <tr>
+        <td><strong>CDS Views</strong></td>
+        <td>OData</td>
+        <td>SAP → MCP</td>
+        <td>I_WarehouseOrder, I_WarehouseTask — data extraction for analytics</td>
+      </tr>
+      <tr>
+        <td><strong>RFC</strong></td>
+        <td>Cloud Connector</td>
+        <td>MCP → SAP</td>
+        <td>Synchronous function module calls for real-time data sync</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>PLC Communication Protocol (TCP/IP Telegram)</h3>
+  <p>SAP EWM/MFS communicates directly with GEBHARDT PLCs via <span class="hl">TCP/IP socket connections</span> using a byte-stream telegram protocol (printable ASCII, up to 4096 bytes):</p>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="tag tag-cyan">Telegram Header</div>
+      <h4>Routing & Control</h4>
+      <p>Sender/receiver ID, sequence number, handshake field, telegram type indicator. Every data telegram requires acknowledgement.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-cyan">Telegram Body</div>
+      <h4>Application Data</h4>
+      <p>HU number, source/destination points, storage bin address, weight, error codes, resource ID. Up to 4096 bytes printable ASCII.</p>
+    </div>
+  </div>
+
+  <h3>Galileo IoT Bridge</h3>
+  <p>GEBHARDT's <span class="hl">Galileo IoT platform</span> provides digital twin telemetry from all installed systems. RinglyPro captures these signals via webhooks for:</p>
+  <ul>
+    <li><strong>Predictive maintenance</strong> — MTBF trending, shuttle health, power-cap status</li>
+    <li><strong>Capacity monitoring</strong> — utilization &gt;85% triggers expansion proposals</li>
+    <li><strong>Service automation</strong> — alert → ticket → technician assignment → customer notification</li>
+    <li><strong>Fleet dashboard</strong> — aggregate status across all customer installations</li>
+  </ul>
+</div>
+
+<!-- ================================================================ -->
+<!-- 9. API REFERENCE -->
+<!-- ================================================================ -->
+<div class="section" id="api">
+  <h2 class="section-title"><span class="num">9</span> API Reference</h2>
+  <p class="section-sub">All endpoints under <span class="mono">/logistics/api/v1/</span></p>
+
+  <table>
+    <thead>
+      <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="tag tag-green" style="margin:0">GET</span></td><td class="mono">/logistics/health</td><td>Health check with DB status</td></tr>
+      <tr><td colspan="3" style="background:var(--panel); font-weight:600; color:var(--accent)">Projects</td></tr>
+      <tr><td><span class="tag tag-blue" style="margin:0">POST</span></td><td class="mono">/api/v1/projects</td><td>Create new analysis project</td></tr>
+      <tr><td><span class="tag tag-green" style="margin:0">GET</span></td><td class="mono">/api/v1/projects</td><td>List all projects</td></tr>
+      <tr><td><span class="tag tag-green" style="margin:0">GET</span></td><td class="mono">/api/v1/projects/:id</td><td>Get project with files, results, recommendations</td></tr>
+      <tr><td><span class="tag tag-amber" style="margin:0">PATCH</span></td><td class="mono">/api/v1/projects/:id</td><td>Update project metadata</td></tr>
+      <tr><td colspan="3" style="background:var(--panel); font-weight:600; color:var(--accent)">Upload</td></tr>
+      <tr><td><span class="tag tag-blue" style="margin:0">POST</span></td><td class="mono">/api/v1/upload/:projectId/:fileType</td><td>Upload CSV/XLSX (item_master, inventory, goods_in, goods_out)</td></tr>
+      <tr><td><span class="tag tag-green" style="margin:0">GET</span></td><td class="mono">/api/v1/upload/:projectId/status</td><td>Upload status for all file types</td></tr>
+      <tr><td colspan="3" style="background:var(--panel); font-weight:600; color:var(--accent)">Analysis</td></tr>
+      <tr><td><span class="tag tag-blue" style="margin:0">POST</span></td><td class="mono">/api/v1/analysis/:projectId/run</td><td>Execute all 8 analytics</td></tr>
+      <tr><td><span class="tag tag-green" style="margin:0">GET</span></td><td class="mono">/api/v1/analysis/:projectId/all</td><td>Get all results at once</td></tr>
+      <tr><td><span class="tag tag-green" style="margin:0">GET</span></td><td class="mono">/api/v1/analysis/:projectId/overview</td><td>Overview KPIs</td></tr>
+      <tr><td><span class="tag tag-green" style="margin:0">GET</span></td><td class="mono">/api/v1/analysis/:projectId/order-structure</td><td>Order composition histogram</td></tr>
+      <tr><td><span class="tag tag-green" style="margin:0">GET</span></td><td class="mono">/api/v1/analysis/:projectId/order-time-series</td><td>Daily order trends + moving avg</td></tr>
+      <tr><td><span class="tag tag-green" style="margin:0">GET</span></td><td class="mono">/api/v1/analysis/:projectId/throughput</td><td>Monthly + weekday + hourly</td></tr>
+      <tr><td><span class="tag tag-green" style="margin:0">GET</span></td><td class="mono">/api/v1/analysis/:projectId/abc</td><td>ABC + Gini + Lorenz curve</td></tr>
+      <tr><td><span class="tag tag-green" style="margin:0">GET</span></td><td class="mono">/api/v1/analysis/:projectId/fit-analysis</td><td>Bin fit analysis (3 sizes)</td></tr>
+      <tr><td colspan="3" style="background:var(--panel); font-weight:600; color:var(--accent)">Products</td></tr>
+      <tr><td><span class="tag tag-blue" style="margin:0">POST</span></td><td class="mono">/api/v1/products/:projectId/match</td><td>Run product matching algorithm</td></tr>
+      <tr><td><span class="tag tag-green" style="margin:0">GET</span></td><td class="mono">/api/v1/products/:projectId/recommendations</td><td>Get scored product recommendations</td></tr>
+      <tr><td colspan="3" style="background:var(--panel); font-weight:600; color:var(--accent)">Reports</td></tr>
+      <tr><td><span class="tag tag-blue" style="margin:0">POST</span></td><td class="mono">/api/v1/reports/:projectId/generate</td><td>Generate PDF report</td></tr>
+      <tr><td><span class="tag tag-green" style="margin:0">GET</span></td><td class="mono">/api/v1/reports/:projectId/download</td><td>Download PDF (application/pdf)</td></tr>
+      <tr><td colspan="3" style="background:var(--panel); font-weight:600; color:var(--accent)">Demo</td></tr>
+      <tr><td><span class="tag tag-blue" style="margin:0">POST</span></td><td class="mono">/api/v1/demo/generate</td><td>Create demo project with synthetic data</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ================================================================ -->
+<!-- 10. DASHBOARD ARCHITECTURE -->
+<!-- ================================================================ -->
+<div class="section" id="dashboard">
+  <h2 class="section-title"><span class="num">10</span> Dashboard Architecture</h2>
+  <p class="section-sub">React 18 + Vite + TailwindCSS + Recharts</p>
+
+  <h3>Technology Stack</h3>
+  <table>
+    <thead>
+      <tr><th>Layer</th><th>Technology</th><th>Version</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Framework</td><td>React</td><td>18.3.1</td></tr>
+      <tr><td>Build</td><td>Vite</td><td>6.0.0</td></tr>
+      <tr><td>Styling</td><td>TailwindCSS</td><td>3.4.17</td></tr>
+      <tr><td>Charts</td><td>Recharts</td><td>2.15.0</td></tr>
+      <tr><td>Routing</td><td>React Router</td><td>6.28.0</td></tr>
+      <tr><td>Upload</td><td>react-dropzone</td><td>14.3.5</td></tr>
+      <tr><td>Base Path</td><td colspan="2" class="mono">/logistics/</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Component Architecture</h3>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="tag tag-blue">Pages</div>
+      <h4>4 Route Pages</h4>
+      <p><strong>UploadPage</strong> (/) — 3-step wizard: company info → file uploads → run analysis.<br>
+      <strong>AnalysisPage</strong> (/analysis/:id) — all 8 chart components.<br>
+      <strong>ProductsPage</strong> (/products/:id) — recommendation cards.<br>
+      <strong>ReportPage</strong> (/report/:id) — preview + PDF download.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-green">Charts</div>
+      <h4>7 Visualization Components</h4>
+      <p>KpiCards (8 metrics), OrderStructureChart (histogram + cumulative line), ThroughputChart (monthly bars with metric toggle), WeekdayChart (grouped bars Mon-Sun), HourlyChart (24h bars), ABCLorenzCurve (Gini + curve), FitAnalysisTable (bin sizes + progress bars).</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-amber">UI Components</div>
+      <h4>3 Interaction Components</h4>
+      <p>FileUploader (react-dropzone, status badges, error display), StepIndicator (4-step horizontal progress), ProductCard (score circle, category badge, expandable reasoning accordion).</p>
+    </div>
+  </div>
+
+  <h3>Build Output</h3>
+  <ul>
+    <li><span class="mono">dist/index.html</span> — 0.53 KB</li>
+    <li><span class="mono">dist/assets/index-*.js</span> — 718 KB (199 KB gzipped)</li>
+    <li><span class="mono">dist/assets/index-*.css</span> — 29 KB (5.4 KB gzipped)</li>
+  </ul>
+</div>
+
+<!-- ================================================================ -->
+<!-- 11. PDF REPORT GENERATOR -->
+<!-- ================================================================ -->
+<div class="section" id="reports">
+  <h2 class="section-title"><span class="num">11</span> PDF Report Generator</h2>
+  <p class="section-sub">Server-side PDF generation with pdfmake (~40KB per report)</p>
+
+  <h3>Report Sections</h3>
+  <ol>
+    <li><strong>Cover Page</strong> — LOGISTICS branding, company name, project code, generation date, "Powered by GEBHARDT"</li>
+    <li><strong>Overview KPIs</strong> — 4-column metric table (SKUs, orders, units, date range)</li>
+    <li><strong>Order Structure</strong> — Histogram table with line count bins and cumulative %</li>
+    <li><strong>Throughput Analysis</strong> — Monthly and weekday tables with orders/orderlines/units</li>
+    <li><strong>ABC Classification</strong> — A/B/C class summary table + Gini coefficient + top 10 SKU table</li>
+    <li><strong>Fit Analysis</strong> — 3 bin sizes with fit count/% and dimension comparison</li>
+    <li><strong>Product Recommendations</strong> — 6 GEBHARDT products with score circles (color-coded), category, description</li>
+  </ol>
+
+  <h3>Technical Implementation</h3>
+  <ul>
+    <li><strong>Library:</strong> pdfmake (pure JavaScript, no native dependencies, ~2MB)</li>
+    <li><strong>Fonts:</strong> Roboto via pdfmake's built-in VFS (virtual file system)</li>
+    <li><strong>Output:</strong> A4 portrait, 40px margins, ~40KB per report</li>
+    <li><strong>Delivery:</strong> <span class="mono">Content-Type: application/pdf</span> with <span class="mono">Content-Disposition: attachment</span></li>
+  </ul>
+</div>
+
+<!-- ================================================================ -->
+<!-- 12. SECURITY -->
+<!-- ================================================================ -->
+<div class="section" id="security">
+  <h2 class="section-title"><span class="num">12</span> Security & Authentication</h2>
+  <p class="section-sub">POC scope with path to production-grade security</p>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="tag tag-green">Access Control</div>
+      <h4>Project-Code Authentication</h4>
+      <p>POC uses simple project-code access (e.g., <span class="mono">LOGISTICS-2026-001</span>). URL pattern: <span class="mono">/logistics/?project=CODE</span>. Path to production: JWT token per project.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-blue">Webhook Security</div>
+      <h4>HMAC-SHA256 Verification</h4>
+      <p>All incoming webhooks from SAP Event Mesh verified via HMAC-SHA256 signature. Event deduplication prevents replay attacks.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-amber">Transport</div>
+      <h4>HTTPS + SSL</h4>
+      <p>All API endpoints served over HTTPS via Render. PostgreSQL connections use SSL with <span class="mono">require: true</span>. SAP Cloud Connector provides encrypted tunnel.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-purple">Data Isolation</div>
+      <h4>Project-Level Scoping</h4>
+      <p>Every query scoped by <span class="mono">project_id</span> foreign key. No cross-project data leakage. File uploads stored in memory (not disk), processed and discarded.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- 13. DEPLOYMENT -->
+<!-- ================================================================ -->
+<div class="section" id="deploy">
+  <h2 class="section-title"><span class="num">13</span> Deployment & Infrastructure</h2>
+  <p class="section-sub">Production deployment on Render with auto-deploy CI/CD</p>
+
+  <table>
+    <thead>
+      <tr><th>Component</th><th>Specification</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Platform</strong></td><td>Render (auto-deploy on push to main)</td></tr>
+      <tr><td><strong>Runtime</strong></td><td>Node.js 18+ on Render</td></tr>
+      <tr><td><strong>Database</strong></td><td>PostgreSQL on Render (shared with RinglyPro CRM)</td></tr>
+      <tr><td><strong>Deploy Time</strong></td><td>~2 minutes after git push</td></tr>
+      <tr><td><strong>Build Script</strong></td><td><span class="mono">build.sh</span> — installs deps, seeds DB, builds 4 dashboards</td></tr>
+      <tr><td><strong>Dashboard URL</strong></td><td><span class="mono">https://aiagent.ringlypro.com/logistics/</span></td></tr>
+      <tr><td><strong>Health Check</strong></td><td><span class="mono">https://aiagent.ringlypro.com/logistics/health</span></td></tr>
+      <tr><td><strong>API Base</strong></td><td><span class="mono">https://aiagent.ringlypro.com/logistics/api/v1/</span></td></tr>
+      <tr><td><strong>Debug Endpoint</strong></td><td><span class="mono">https://aiagent.ringlypro.com/debug/logistics-error</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Backend Dependencies</h3>
+  <table>
+    <thead><tr><th>Package</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">express</td><td>HTTP server framework</td></tr>
+      <tr><td class="mono">sequelize + pg</td><td>ORM + PostgreSQL driver</td></tr>
+      <tr><td class="mono">xlsx</td><td>Excel file parsing</td></tr>
+      <tr><td class="mono">csv-parse</td><td>CSV file parsing</td></tr>
+      <tr><td class="mono">pdfmake</td><td>PDF report generation</td></tr>
+      <tr><td class="mono">multer</td><td>File upload middleware (memory storage)</td></tr>
+      <tr><td class="mono">helmet + cors</td><td>Security headers + CORS</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ================================================================ -->
+<!-- 14. ROADMAP -->
+<!-- ================================================================ -->
+<div class="section" id="roadmap">
+  <h2 class="section-title"><span class="num">14</span> Implementation Roadmap</h2>
+  <p class="section-sub">4-week POC sprint + 12-week full integration</p>
+
+  <h3>POC Sprint (Weeks 1-4) — Completed</h3>
+
+  <table>
+    <thead><tr><th>Week</th><th>Deliverables</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Week 1</strong></td>
+        <td>Module scaffold, 8 Sequelize models, Express sub-app, mount in app.js, deploy</td>
+        <td><span class="hl-green">Done</span></td>
+      </tr>
+      <tr>
+        <td><strong>Week 2</strong></td>
+        <td>CSV/XLSX parser, 8 analytics (overview, orders, throughput, ABC, fit), synthetic data generator</td>
+        <td><span class="hl-green">Done</span></td>
+      </tr>
+      <tr>
+        <td><strong>Week 3</strong></td>
+        <td>GEBHARDT product matching engine, React dashboard (10 components), PDF report generator</td>
+        <td><span class="hl-green">Done</span></td>
+      </tr>
+      <tr>
+        <td><strong>Week 4</strong></td>
+        <td>Build integration, deploy, demo with synthetic data, end-to-end verification</td>
+        <td><span class="hl-green">Done</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Full Integration (Weeks 5-16) — Planned</h3>
+
+  <table>
+    <thead><tr><th>Phase</th><th>Deliverables</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Phase 2 (Wk 5-8)</strong></td>
+        <td>SAP Event Mesh webhook integration, Galileo IoT bridge, predictive maintenance dispatch, Voice AI (Ana) knowledge update for LOGISTICS</td>
+      </tr>
+      <tr>
+        <td><strong>Phase 3 (Wk 9-12)</strong></td>
+        <td>Business Collector for warehouse expansion leads, AI Copilot trained on GEBHARDT products, ROI calculator + auto-proposal generation</td>
+      </tr>
+      <tr>
+        <td><strong>Phase 4 (Wk 13-16)</strong></td>
+        <td>Full CRM sync (SAP/GHL), enterprise account orchestration, trade show pipeline, performance analytics dashboard, production hardening</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ================================================================ -->
+<!-- FOOTER -->
+<!-- ================================================================ -->
+<div class="doc-footer">
+  <div class="logos">
+    <span class="logo logo-logistics">LOGISTICS</span>
+    <span style="color:var(--line)">|</span>
+    <span class="logo logo-gebhardt">GEBHARDT</span>
+    <span style="color:var(--line)">|</span>
+    <span class="logo logo-ringly">RinglyPro</span>
+  </div>
+  <p>System Architecture Document v1.0 — March 2026</p>
+  <p>Generated by Digit2ai for LOGISTICS LLC / GEBHARDT Intralogistics Group</p>
+  <p style="margin-top: 8px; color: #64748b;">Confidential. For internal technical review only.</p>
+</div>
+
+</div><!-- /container -->
+
+</body>
+</html>
