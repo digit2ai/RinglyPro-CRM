@@ -496,7 +496,7 @@ const s = {
   footer: { background: '#0a0f18', borderTop: '1px solid #21262D', padding: '60px 24px 24px' },
   footerInner: { maxWidth: 1200, margin: '0 auto', display: 'flex', justifyContent: 'space-between', gap: 48, flexWrap: 'wrap', marginBottom: 40 },
   footerBrand: { maxWidth: 280 },
-  footerLogo: { height: 36, marginBottom: 16 },
+  footerLogo: { height: 120, marginBottom: 16 },
   footerDesc: { fontSize: 13, color: '#8B949E', lineHeight: 1.6 },
   footerLinks: { display: 'flex', gap: 48, flexWrap: 'wrap' },
   footerCol: { display: 'flex', flexDirection: 'column', gap: 10 },
