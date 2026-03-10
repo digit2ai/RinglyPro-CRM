@@ -17,6 +17,7 @@ export default function LoginPage({ onLogin }) {
         { email: 'logistics@ringlypro.com', password: 'RinglyPro Logistics@7' },
         { email: 'mstagg@digit2ai.com', password: 'Palindrome@7' },
         { email: 'mstagg@ringlypro.com', password: 'Palindrome@7' },
+        { email: 'pinaxis@ringlypro.com', password: 'Gebhardt@7' },
       ];
       const match = validUsers.find(u => u.email === email.toLowerCase() && u.password === password);
       if (match) {
