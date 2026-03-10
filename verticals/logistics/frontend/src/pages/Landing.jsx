@@ -69,7 +69,7 @@ export default function Landing() {
       <nav style={{ ...s.nav, ...(scrolled ? s.navScrolled : {}) }}>
         <div style={s.navInner}>
           <a href={`${BASE}`} style={s.navLogo}>
-            <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro Logistics" style={s.navLogoImg} />
+            <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69b02d62034886f7c9e996d9.png" alt="RinglyPro Logistics" style={s.navLogoImg} />
           </a>
           <div className="landing-nav-links" style={s.navLinks}>
             <a href="#solutions" style={s.navLink}>Solutions</a>
@@ -326,7 +326,7 @@ export default function Landing() {
       <footer style={s.footer}>
         <div style={s.footerInner}>
           <div style={s.footerBrand}>
-            <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro Logistics" style={s.footerLogo} />
+            <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69b02d62034886f7c9e996d9.png" alt="RinglyPro Logistics" style={s.footerLogo} />
             <p style={s.footerDesc}>AI-powered logistics management for freight brokers, carriers, and warehouse operators.</p>
           </div>
           <div style={s.footerLinks}>
