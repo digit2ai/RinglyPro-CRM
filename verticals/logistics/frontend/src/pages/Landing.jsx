@@ -288,8 +288,8 @@ export default function Landing() {
           </div>
           <div style={s.pricingGrid}>
             {[
-              { name: 'Freight CRM', tier: 'Starter', price: '$45', period: '/mo', features: ['Load Management', 'Contact Database', 'Basic Analytics', 'Call Logging', '500 AI Tokens'], color: '#8B949E', popular: false },
-              { name: 'Freight Pro', tier: 'Professional', price: '$180', period: '/mo', features: ['Everything in Starter', 'Shipper Portal', 'Carrier Portal', 'Document Vault', '2,000 AI Tokens', 'HubSpot Integration'], color: '#0EA5E9', popular: true },
+              { name: 'Freight CRM', tier: 'Professional', price: '$297', period: '/mo', features: ['Load Management', 'Contact Database', 'Basic Analytics', 'Call Logging', '500 AI Tokens'], color: '#8B949E', popular: false },
+              { name: 'Freight Pro', tier: 'Professional', price: '$597', period: '/mo', features: ['Everything in Starter', 'Shipper Portal', 'Carrier Portal', 'Document Vault', '2,000 AI Tokens', 'HubSpot Integration'], color: '#0EA5E9', popular: true },
               { name: 'Logistics AI', tier: 'Enterprise', price: 'Custom', period: '', features: ['Everything in Pro', 'FMCSA Compliance', 'Smart Freight Matching', 'Rachel Voice AI', 'Unlimited AI Tokens', 'Dedicated Support'], color: '#10B981', popular: false },
               { name: 'Full Suite', tier: 'Complete', price: 'Custom', period: '', features: ['Everything in Enterprise', 'Warehouse Analytics', 'OEE Monitoring', 'TMS Bridge', 'White-Label Ready', 'SLA Guarantee'], color: '#F59E0B', popular: false },
             ].map((plan, i) => (
@@ -368,7 +368,7 @@ const s = {
   navScrolled: { background: 'rgba(13,17,23,0.95)', backdropFilter: 'blur(12px)', borderBottom: '1px solid #21262D', padding: '10px 0' },
   navInner: { maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
   navLogo: { display: 'flex', alignItems: 'center', textDecoration: 'none' },
-  navLogoImg: { height: 44, width: 'auto' },
+  navLogoImg: { height: 80, width: 'auto' },
   navLinks: { display: 'flex', gap: 32, alignItems: 'center' },
   navLink: { color: '#8B949E', textDecoration: 'none', fontSize: 14, fontWeight: 500, transition: 'color 0.2s' },
   navActions: { display: 'flex', gap: 12, alignItems: 'center' },
