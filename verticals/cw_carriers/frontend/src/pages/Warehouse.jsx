@@ -4,9 +4,9 @@ export default function Warehouse() {
   const [activeTab, setActiveTab] = useState('dashboard');
 
   const tabs = [
-    { id: 'dashboard', label: 'Dashboard', url: '/logistics/' },
-    { id: 'oee', label: 'OEE Tracking', url: '/logistics/oee-dashboard' },
-    { id: 'guide', label: 'User Guide', url: '/logistics/user-guide' },
+    { id: 'dashboard', label: 'Dashboard', url: '/pinaxis/' },
+    { id: 'oee', label: 'OEE Tracking', url: '/pinaxis/oee-dashboard' },
+    { id: 'guide', label: 'User Guide', url: '/pinaxis/user-guide' },
   ];
 
   const currentTab = tabs.find(t => t.id === activeTab);
@@ -18,7 +18,7 @@ export default function Warehouse() {
           <h2 style={s.title}>WAREHOUSE ANALYTICS</h2>
           <div style={s.subtitle}>Powered by Logistics &mdash; Inventory, Orders, OEE &amp; Equipment Intelligence</div>
         </div>
-        <a href="/logistics/" target="_blank" rel="noopener noreferrer" style={s.openBtn}>
+        <a href="/pinaxis/" target="_blank" rel="noopener noreferrer" style={s.openBtn}>
           Open Full App &rarr;
         </a>
       </div>
