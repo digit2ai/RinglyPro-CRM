@@ -79,7 +79,7 @@ export default function Landing() {
           </div>
           <div className="landing-nav-actions" style={s.navActions}>
             <a href={`${BASE}/login`} style={s.navSignIn}>Sign In</a>
-            <a href={`${BASE}/login`} style={s.navCTA}>Request Demo</a>
+            <a href="https://ringlypro.com/demo" style={s.navCTA}>Request Demo</a>
           </div>
           <button className="landing-hamburger" onClick={() => setMobileMenu(!mobileMenu)} style={s.hamburger}>
             <span style={{ ...s.hamburgerLine, ...(mobileMenu ? { transform: 'rotate(45deg) translate(5px,5px)' } : {}) }} />
@@ -106,7 +106,7 @@ export default function Landing() {
           <h1 style={s.heroTitle}>The Complete Logistics<br />Management Platform</h1>
           <p style={s.heroSub}>From freight brokerage to warehouse operations — one intelligent platform that automates your entire logistics workflow with AI voice agents, smart freight matching, and real-time analytics.</p>
           <div style={s.heroCTAs}>
-            <a href={`${BASE}/login`} style={s.heroPrimary}>Get Started</a>
+            <a href="https://ringlypro.com/demo" style={s.heroPrimary}>Get Started</a>
             <a href="#solutions" style={s.heroSecondary}>Explore Solutions</a>
           </div>
         </div>
@@ -303,7 +303,7 @@ export default function Landing() {
                     <li key={j} style={s.pricingFeature}><span style={{ color: plan.color }}>&#10003;</span> {f}</li>
                   ))}
                 </ul>
-                <a href={`${BASE}/login`} style={{ ...s.pricingCTA, background: plan.popular ? plan.color : 'transparent', border: `1px solid ${plan.color}`, color: plan.popular ? '#fff' : plan.color }}>{plan.price === 'Custom' ? 'Contact Sales' : 'Start Free Trial'}</a>
+                <a href="https://ringlypro.com/demo" style={{ ...s.pricingCTA, background: plan.popular ? plan.color : 'transparent', border: `1px solid ${plan.color}`, color: plan.popular ? '#fff' : plan.color }}>{plan.price === 'Custom' ? 'Contact Sales' : 'Start Free Trial'}</a>
               </div>
             ))}
           </div>
@@ -316,7 +316,7 @@ export default function Landing() {
           <h2 style={s.ctaTitle}>Ready to Transform Your Logistics?</h2>
           <p style={s.ctaSub}>Join the next generation of freight brokers and logistics operators using AI to move more freight with fewer resources.</p>
           <div style={s.ctaActions}>
-            <a href={`${BASE}/login`} style={s.ctaPrimary}>Get Started Now</a>
+            <a href="https://ringlypro.com/demo" style={s.ctaPrimary}>Get Started Now</a>
             <a href="tel:+18886103810" style={s.ctaPhone}>(888) 610-3810</a>
           </div>
         </div>
@@ -346,7 +346,7 @@ export default function Landing() {
             <div style={s.footerCol}>
               <h4 style={s.footerColTitle}>Company</h4>
               <a href="https://ringlypro.com" style={s.footerLink}>RinglyPro.com</a>
-              <a href="mailto:sales@ringlypro.com" style={s.footerLink}>Contact Sales</a>
+              <a href="https://ringlypro.com/demo" style={s.footerLink}>Contact Sales</a>
               <a href="tel:+18886103810" style={s.footerLink}>(888) 610-3810</a>
             </div>
           </div>
