@@ -17,6 +17,13 @@ export default function Landing() {
     return () => clearInterval(timer);
   }, []);
 
+  const showcaseImages = [
+    { src: 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69af74634a2d882ebdf052d4.png', label: 'Smart Warehouse Monitoring', desc: 'Real-time HUD analytics with automated guided vehicles and inventory scoring' },
+    { src: 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69af74638d3eae2098bec258.png', label: 'Automated Fulfillment', desc: 'AI-driven robotic warehouse operations with intelligent routing' },
+    { src: 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69af74637c2702f404498b73.png', label: 'Connected Logistics', desc: 'Cloud AI platform unifying freight, voice, analytics, and global tracking' },
+    { src: 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69af74638d3eaeb7f1bec259.png', label: 'Supply Chain Intelligence', desc: 'Real-time cargo tracking and supply analytics at your fingertips' },
+  ];
+
   const solutions = [
     { title: 'Freight Brokerage CRM', desc: 'Complete load management, contact database, carrier matching, and automated coverage calls. Built for 3PLs and freight brokers who need speed and accuracy.', icon: 'T', color: '#0EA5E9', features: ['Load Board & Dispatch', 'Carrier Coverage AI', 'Rate Management', 'HubSpot Integration'] },
     { title: 'Carrier Management', desc: 'Onboard, vet, and manage carriers at scale. Automated FMCSA verification, compliance monitoring, and performance scoring.', icon: 'C', color: '#10B981', features: ['Carrier Onboarding', 'FMCSA Compliance', 'Safety Scoring', 'Document Vault'] },
@@ -103,6 +110,12 @@ export default function Landing() {
             <a href="#solutions" style={s.heroSecondary}>Explore Solutions</a>
           </div>
         </div>
+        {/* Hero Visual */}
+        <div style={s.heroVisual}>
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69af74637c2702f404498b73.png" alt="Connected Logistics Platform" style={s.heroImage} />
+          <div style={s.heroImageGlow} />
+        </div>
+
         <div style={s.heroStats}>
           {stats.map((st, i) => (
             <div key={i} style={s.heroStat}>
@@ -110,6 +123,30 @@ export default function Landing() {
               <div style={s.heroStatLabel}>{st.label}</div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* PLATFORM SHOWCASE */}
+      <section style={s.showcaseSection}>
+        <div style={s.container}>
+          <div style={s.sectionHeader}>
+            <div style={s.sectionTag}>SEE IT IN ACTION</div>
+            <h2 style={s.sectionTitle}>Powering the Future of Logistics</h2>
+            <p style={s.sectionSub}>From warehouse floor to final mile — intelligent automation across every touchpoint.</p>
+          </div>
+          <div className="landing-showcase-grid" style={s.showcaseGrid}>
+            {showcaseImages.map((img, i) => (
+              <div key={i} style={s.showcaseCard}>
+                <div style={s.showcaseImgWrap}>
+                  <img src={img.src} alt={img.label} style={s.showcaseImg} />
+                  <div style={s.showcaseOverlay}>
+                    <span style={s.showcaseLabel}>{img.label}</span>
+                  </div>
+                </div>
+                <p style={s.showcaseDesc}>{img.desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -186,6 +223,11 @@ export default function Landing() {
               <p style={s.roiDesc}>No more missed calls, delayed check-ins, or after-hours gaps. Your logistics never sleeps.</p>
             </div>
           </div>
+          {/* Visual accent */}
+          <div style={s.roiVisual}>
+            <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69af74638d3eaeb7f1bec259.png" alt="Supply Chain Analytics" style={s.roiVisualImg} />
+          </div>
+
           <div style={s.testimonialSection}>
             <div style={s.testimonialCard}>
               <div style={s.quoteIcon}>"</div>
@@ -348,7 +390,12 @@ const s = {
   heroCTAs: { display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' },
   heroPrimary: { padding: '14px 36px', background: '#0EA5E9', color: '#fff', textDecoration: 'none', borderRadius: 8, fontSize: 16, fontWeight: 600 },
   heroSecondary: { padding: '14px 36px', background: 'transparent', border: '1px solid #30363D', color: '#E6EDF3', textDecoration: 'none', borderRadius: 8, fontSize: 16, fontWeight: 500 },
-  heroStats: { position: 'relative', zIndex: 1, display: 'flex', gap: 48, marginTop: 80, flexWrap: 'wrap', justifyContent: 'center' },
+  // HERO VISUAL
+  heroVisual: { position: 'relative', zIndex: 1, marginTop: 48, maxWidth: 900, width: '100%' },
+  heroImage: { width: '100%', borderRadius: 16, border: '1px solid rgba(14,165,233,0.2)', boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(14,165,233,0.1)' },
+  heroImageGlow: { position: 'absolute', inset: -2, borderRadius: 18, background: 'linear-gradient(135deg, rgba(14,165,233,0.15), transparent, rgba(14,165,233,0.1))', zIndex: -1, filter: 'blur(1px)' },
+
+  heroStats: { position: 'relative', zIndex: 1, display: 'flex', gap: 48, marginTop: 48, flexWrap: 'wrap', justifyContent: 'center' },
   heroStat: { textAlign: 'center' },
   heroStatNum: { fontFamily: "'Bebas Neue', sans-serif", fontSize: 48, color: '#0EA5E9', letterSpacing: 2 },
   heroStatLabel: { fontSize: 12, color: '#8B949E', textTransform: 'uppercase', letterSpacing: 1 },
@@ -360,6 +407,16 @@ const s = {
   sectionTag: { display: 'inline-block', padding: '4px 12px', background: 'rgba(14,165,233,0.1)', borderRadius: 4, fontSize: 11, fontWeight: 700, color: '#0EA5E9', letterSpacing: 2, marginBottom: 16 },
   sectionTitle: { fontFamily: "'Bebas Neue', sans-serif", fontSize: 48, color: '#fff', letterSpacing: 2, marginBottom: 12 },
   sectionSub: { fontSize: 16, color: '#8B949E', maxWidth: 600, margin: '0 auto', lineHeight: 1.6 },
+
+  // SHOWCASE
+  showcaseSection: { padding: '80px 24px 100px', background: 'linear-gradient(180deg, #0D1117 0%, #0a0f18 100%)' },
+  showcaseGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 24 },
+  showcaseCard: { borderRadius: 14, overflow: 'hidden', background: '#161B22', border: '1px solid #21262D', transition: 'transform 0.3s, border-color 0.3s' },
+  showcaseImgWrap: { position: 'relative', overflow: 'hidden', aspectRatio: '16/10' },
+  showcaseImg: { width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 0.4s' },
+  showcaseOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: '32px 20px 14px', background: 'linear-gradient(transparent, rgba(0,0,0,0.8))' },
+  showcaseLabel: { fontSize: 15, fontWeight: 700, color: '#fff', letterSpacing: 0.5 },
+  showcaseDesc: { padding: '14px 20px 18px', fontSize: 13, color: '#8B949E', lineHeight: 1.5, margin: 0 },
 
   // SOLUTIONS
   solutionsGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 24 },
@@ -385,6 +442,10 @@ const s = {
   roiNumber: { fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, color: '#0EA5E9', letterSpacing: 2, lineHeight: 1 },
   roiLabel: { fontSize: 16, fontWeight: 600, color: '#E6EDF3', marginTop: 8, marginBottom: 12 },
   roiDesc: { fontSize: 14, color: '#8B949E', lineHeight: 1.6 },
+
+  // ROI VISUAL
+  roiVisual: { margin: '0 auto 48px', maxWidth: 800, borderRadius: 16, overflow: 'hidden', border: '1px solid #21262D', boxShadow: '0 12px 40px rgba(0,0,0,0.4)' },
+  roiVisualImg: { width: '100%', display: 'block' },
 
   // TESTIMONIALS
   testimonialSection: { maxWidth: 700, margin: '0 auto' },
@@ -451,6 +512,9 @@ style.textContent = `
   @media (max-width: 768px) {
     .landing-nav-links, .landing-nav-actions { display: none !important; }
     .landing-hamburger { display: flex !important; }
+  }
+  @media (max-width: 768px) {
+    .landing-showcase-grid { grid-template-columns: 1fr !important; }
   }
   @media (max-width: 640px) {
     h1 { font-size: 42px !important; }
