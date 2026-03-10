@@ -739,32 +739,32 @@ app.get('/debug/quicktask-error', (req, res) => {
 });
 
 // =====================================================
-// LOGISTICS - Warehouse Data Analytics Platform
+// WAREHOUSE ANALYTICS (served at /pinaxis/)
 // =====================================================
 
-let logisticsApp = null;
-let logisticsError = null;
+let warehouseApp = null;
+let warehouseError = null;
 try {
-  logisticsApp = require('../logistics/src/index');
-  app.get('/logistics', (req, res, next) => {
-    if (!req.originalUrl.endsWith('/')) return res.redirect('/logistics/');
+  warehouseApp = require('../logistics/src/index');
+  app.get('/pinaxis', (req, res, next) => {
+    if (!req.originalUrl.endsWith('/')) return res.redirect('/pinaxis/');
     next();
   });
-  app.use('/logistics', logisticsApp);
-  console.log('📊 LOGISTICS Analytics Platform mounted at /logistics');
-  console.log('   - Dashboard UI: /logistics/');
-  console.log('   - Health Check: /logistics/health');
-  console.log('   - API: /logistics/api/v1/*');
+  app.use('/pinaxis', warehouseApp);
+  console.log('📊 Warehouse Analytics mounted at /pinaxis');
+  console.log('   - Dashboard UI: /pinaxis/');
+  console.log('   - Health Check: /pinaxis/health');
+  console.log('   - API: /pinaxis/api/v1/*');
 } catch (error) {
-  logisticsError = error;
-  console.log('⚠️ LOGISTICS not available:', error.message);
+  warehouseError = error;
+  console.log('⚠️ Warehouse Analytics not available:', error.message);
 }
 
-app.get('/debug/logistics-error', (req, res) => {
+app.get('/debug/warehouse-error', (req, res) => {
   res.json({
-    service: 'LOGISTICS Analytics Platform',
-    available: !logisticsError,
-    error: logisticsError ? { message: logisticsError.message, stack: logisticsError.stack } : null
+    service: 'Warehouse Analytics',
+    available: !warehouseError,
+    error: warehouseError ? { message: warehouseError.message, stack: warehouseError.stack } : null
   });
 });
 
