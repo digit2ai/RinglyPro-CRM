@@ -20,7 +20,7 @@ export default function Landing() {
   const showcaseImages = [
     { src: 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69af74634a2d882ebdf052d4.png', label: 'Smart Warehouse Monitoring', desc: 'Real-time HUD analytics with automated guided vehicles and inventory scoring' },
     { src: 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69af74638d3eae2098bec258.png', label: 'Automated Fulfillment', desc: 'AI-driven robotic warehouse operations with intelligent routing' },
-    { src: 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69af74637c2702f404498b73.png', label: 'Connected Logistics', desc: 'Cloud AI platform unifying freight, voice, analytics, and global tracking' },
+    { src: 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69af74637c27022c86498b74.png', label: 'Connected Logistics', desc: 'Cloud AI platform unifying freight, voice, analytics, and global tracking' },
     { src: 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69af74638d3eaeb7f1bec259.png', label: 'Supply Chain Intelligence', desc: 'Real-time cargo tracking and supply analytics at your fingertips' },
   ];
 
@@ -112,7 +112,7 @@ export default function Landing() {
         </div>
         {/* Hero Visual */}
         <div style={s.heroVisual}>
-          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69af74637c2702f404498b73.png" alt="Connected Logistics Platform" style={s.heroImage} />
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69af74637c27022c86498b74.png" alt="Connected Logistics Platform" style={s.heroImage} />
           <div style={s.heroImageGlow} />
         </div>
 
