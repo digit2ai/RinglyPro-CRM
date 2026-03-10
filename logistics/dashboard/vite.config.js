@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/logistics/',
+  base: '/pinaxis/',
   build: {
     outDir: 'dist',
     emptyOutDir: true
