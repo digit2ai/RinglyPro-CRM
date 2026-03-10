@@ -18,6 +18,7 @@ export default function LoginPage({ onLogin }) {
         { email: 'mstagg@digit2ai.com', password: 'Palindrome@7' },
         { email: 'mstagg@ringlypro.com', password: 'Palindrome@7' },
         { email: 'pinaxis@ringlypro.com', password: 'Gebhardt@7' },
+        { email: 'sven@gebhardt.de', password: 'Gebhardt@7' },
       ];
       const match = validUsers.find(u => u.email === email.toLowerCase() && u.password === password);
       if (match) {
