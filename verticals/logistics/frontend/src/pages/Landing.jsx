@@ -368,7 +368,7 @@ const s = {
   navScrolled: { background: 'rgba(13,17,23,0.95)', backdropFilter: 'blur(12px)', borderBottom: '1px solid #21262D', padding: '10px 0' },
   navInner: { maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
   navLogo: { display: 'flex', alignItems: 'center', textDecoration: 'none' },
-  navLogoImg: { height: 80, width: 'auto' },
+  navLogoImg: { height: 120, width: 'auto' },
   navLinks: { display: 'flex', gap: 32, alignItems: 'center' },
   navLink: { color: '#8B949E', textDecoration: 'none', fontSize: 14, fontWeight: 500, transition: 'color 0.2s' },
   navActions: { display: 'flex', gap: 12, alignItems: 'center' },
