@@ -40,7 +40,7 @@ Confidential Information does not include information that:
   d) Is required to be disclosed by law or court order, provided prompt written notice is given.
 
 5. TERM
-This Agreement shall remain in effect for three (3) years from the Effective Date, or until the Confidential Information no longer qualifies as confidential, whichever occurs first.
+This Agreement shall remain in effect for one (1) year from the Effective Date, or until the Confidential Information no longer qualifies as confidential, whichever occurs first.
 
 6. RETURN OR DESTRUCTION OF INFORMATION
 Upon written request or termination of this Agreement, the Receiving Party shall promptly return or destroy all Confidential Information, including copies, notes, or summaries.
@@ -281,7 +281,7 @@ function SignerBlock({ index, signer, onChange, onRemove, canRemove }) {
           <input
             type="text"
             className="w-full rounded-lg px-3 py-2 text-sm font-medium text-black bg-white border border-slate-300 focus:outline-none focus:border-blue-500"
-            placeholder="e.g. Gebhardt Intralogistics"
+            placeholder="Company name"
             value={signer.company}
             onChange={e => onChange(index, 'company', e.target.value)}
             required
@@ -486,7 +486,7 @@ export default function NDAPage() {
           <div className="text-xs text-slate-400 leading-relaxed space-y-1">
             <p>Governs confidential exchange of information between <span className="text-slate-200 font-medium">DIGIT2AI LLC</span> and the Receiving Party.</p>
             <p className="flex flex-wrap gap-x-4 gap-y-1 pt-1">
-              <span>· 3-year term</span>
+              <span>· 1-year term</span>
               <span>· Florida law</span>
               <span>· No license granted</span>
               <span>· Equitable remedies</span>
@@ -554,7 +554,7 @@ export default function NDAPage() {
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-emerald-400" />
-          <h2 className="text-sm font-semibold text-white">Receiving Party — Gebhardt / Pinaxis</h2>
+          <h2 className="text-sm font-semibold text-white">Receiving Party</h2>
         </div>
 
         {signers.map((signer, idx) => (
