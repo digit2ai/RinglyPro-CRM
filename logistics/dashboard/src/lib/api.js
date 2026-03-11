@@ -257,3 +257,69 @@ export async function runSimulation(projectId) {
 export async function getSimulation(projectId) {
   return request(`/simulation/${projectId}`)
 }
+
+// ============================================================================
+// PRICING SNAPSHOT SERVICE
+// ============================================================================
+
+/**
+ * Get the current active (approved) pricing snapshot
+ * Backend: GET /pricing-snapshot/active
+ */
+export async function getActivePricingSnapshot() {
+  return request('/pricing-snapshot/active')
+}
+
+/**
+ * List all pricing snapshots
+ * Backend: GET /pricing-snapshot
+ */
+export async function listPricingSnapshots() {
+  return request('/pricing-snapshot')
+}
+
+/**
+ * Create a new pricing snapshot
+ * Backend: POST /pricing-snapshot
+ */
+export async function createPricingSnapshot(data) {
+  return request('/pricing-snapshot', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
+}
+
+/**
+ * Approve a pricing snapshot
+ * Backend: PATCH /pricing-snapshot/:id/approve
+ */
+export async function approvePricingSnapshot(id, approvedBy) {
+  return request(`/pricing-snapshot/${id}/approve`, {
+    method: 'PATCH',
+    body: JSON.stringify({ approved_by: approvedBy })
+  })
+}
+
+// ============================================================================
+// HUMAN REVIEW GATES / APPROVALS
+// ============================================================================
+
+/**
+ * Record an approval for a stage
+ * Backend: POST /approvals/:projectId
+ * stage: 'concept' | 'simulation' | 'pricing' | 'final'
+ */
+export async function recordApproval(projectId, stage, approvedBy, notes = '') {
+  return request(`/approvals/${projectId}`, {
+    method: 'POST',
+    body: JSON.stringify({ stage, approved_by: approvedBy, notes })
+  })
+}
+
+/**
+ * Get approval status for all gates on a project
+ * Backend: GET /approvals/:projectId/status
+ */
+export async function getApprovalStatus(projectId) {
+  return request(`/approvals/${projectId}/status`)
+}

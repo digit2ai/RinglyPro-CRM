@@ -58,6 +58,10 @@ const COUNTRIES = [
   'United States', 'Mexico', 'Brazil', 'China', 'Japan', 'Other'
 ]
 
+const BUDGET_RANGES = [
+  '< €500K', '€500K – €1M', '€1M – €2M', '€2M – €5M', '€5M – €10M', '> €10M', 'To be determined'
+]
+
 export default function UploadPage() {
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
@@ -70,7 +74,12 @@ export default function UploadPage() {
     company_name: '',
     contact_name: '',
     industry: '',
-    country: ''
+    country: '',
+    building_footprint_m2: '',
+    ceiling_height_m: '',
+    dock_doors: '',
+    budget_range: '',
+    target_go_live: ''
   })
 
   const [files, setFiles] = useState({
@@ -282,6 +291,70 @@ export default function UploadPage() {
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
+            </div>
+          </div>
+
+          {/* Site Constraints */}
+          <div className="mt-6 pt-6 border-t border-slate-700/60">
+            <h3 className="text-sm font-semibold text-slate-300 mb-1">Site Constraints <span className="text-slate-500 font-normal">(optional — used to calibrate automation concepts)</span></h3>
+            <p className="text-xs text-slate-500 mb-4">These values are used by the Simulation Agent to validate storage and throughput assumptions against your physical site.</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Building Footprint (m²)</label>
+                <input
+                  type="number"
+                  className="input-field"
+                  placeholder="e.g. 8000"
+                  min="0"
+                  value={companyInfo.building_footprint_m2}
+                  onChange={e => handleCompanyChange('building_footprint_m2', e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Clear Ceiling Height (m)</label>
+                <input
+                  type="number"
+                  className="input-field"
+                  placeholder="e.g. 10"
+                  step="0.5"
+                  min="0"
+                  value={companyInfo.ceiling_height_m}
+                  onChange={e => handleCompanyChange('ceiling_height_m', e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Dock Doors</label>
+                <input
+                  type="number"
+                  className="input-field"
+                  placeholder="e.g. 6"
+                  min="0"
+                  value={companyInfo.dock_doors}
+                  onChange={e => handleCompanyChange('dock_doors', e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Budget Range</label>
+                <select
+                  className="input-field"
+                  value={companyInfo.budget_range}
+                  onChange={e => handleCompanyChange('budget_range', e.target.value)}
+                >
+                  <option value="">Select range...</option>
+                  {BUDGET_RANGES.map(r => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Target Go-Live</label>
+                <input
+                  type="month"
+                  className="input-field"
+                  value={companyInfo.target_go_live}
+                  onChange={e => handleCompanyChange('target_go_live', e.target.value)}
+                />
+              </div>
             </div>
           </div>
 

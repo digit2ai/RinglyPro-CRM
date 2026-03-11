@@ -238,7 +238,6 @@ export default function NDAPage() {
     localStorage.removeItem(LS_SIG_AT_KEY)
     setSavedSig(null)
     setSavedSigAt(null)
-    setDraftSig(null)
   }
 
   // ── Phase 2: Receiving party ─────────────────────────────────────────────────

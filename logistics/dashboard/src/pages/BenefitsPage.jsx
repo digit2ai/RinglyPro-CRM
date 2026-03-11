@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getProject, computeBenefits, getBenefits } from '../lib/api'
+import { getProject, computeBenefits, getBenefits, getActivePricingSnapshot, recordApproval, getApprovalStatus } from '../lib/api'
 import BenefitCard from '../components/BenefitCard'
 
 export default function BenefitsPage() {
@@ -11,6 +11,9 @@ export default function BenefitsPage() {
   const [loading, setLoading] = useState(true)
   const [computing, setComputing] = useState(false)
   const [error, setError] = useState(null)
+  const [pricingSnapshot, setPricingSnapshot] = useState(null)
+  const [approvalStatus, setApprovalStatus] = useState(null)
+  const [approving, setApproving] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -33,10 +36,28 @@ export default function BenefitsPage() {
         setBenefits(data)
         setComputing(false)
       }
+      // Load pricing snapshot and approval status in parallel
+      await Promise.allSettled([
+        getActivePricingSnapshot().then(s => setPricingSnapshot(s)).catch(() => {}),
+        getApprovalStatus(projectId).then(s => setApprovalStatus(s)).catch(() => {})
+      ])
     } catch (err) {
       setError(err.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleApprove() {
+    setApproving(true)
+    try {
+      await recordApproval(projectId, 'pricing', 'Finance')
+      const status = await getApprovalStatus(projectId)
+      setApprovalStatus(status)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setApproving(false)
     }
   }
 
@@ -81,10 +102,19 @@ export default function BenefitsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white">ROI Projection</h1>
+          <h1 className="text-2xl font-bold text-white">Commercial — ROI Projection</h1>
           <p className="text-slate-400 mt-1">
             {project?.company_name} — Data-driven benefit projections
           </p>
+          {pricingSnapshot && (
+            <div className="flex items-center gap-2 mt-2">
+              <span className="inline-flex items-center gap-1.5 text-xs bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 px-2.5 py-1 rounded-full">
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                Pricing Snapshot {pricingSnapshot.version} active
+              </span>
+              <span className="text-xs text-slate-500">{pricingSnapshot.label}</span>
+            </div>
+          )}
         </div>
         <div className="flex gap-3">
           <button
@@ -178,6 +208,56 @@ export default function BenefitsPage() {
           </div>
         </div>
       )}
+
+      {/* Human Review Gate — Pricing / Commercial */}
+      <div className="card bg-slate-900/40 border border-logistics-500/20">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            <svg className="w-5 h-5 text-logistics-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <p className="text-sm font-semibold text-slate-200 mb-1">Commercial Package — Human Review Gate</p>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Review ROI projections anchored to the active pricing snapshot. Approve to release the Commercial Package to the Proposal step.
+              </p>
+              {approvalStatus?.gates?.pricing?.approved && (
+                <p className="text-xs text-emerald-400 mt-2 flex items-center gap-1">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                  Approved by {approvalStatus.gates.pricing.approved_by} · {new Date(approvalStatus.gates.pricing.approved_at).toLocaleDateString()}
+                </p>
+              )}
+            </div>
+          </div>
+          {!approvalStatus?.gates?.pricing?.approved ? (
+            <button
+              onClick={handleApprove}
+              disabled={approving}
+              className="btn-primary text-sm flex items-center gap-2 flex-shrink-0"
+            >
+              {approving ? (
+                <>
+                  <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                  Approving...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  Approve &amp; Proceed to Proposal
+                </>
+              )}
+            </button>
+          ) : (
+            <button
+              onClick={() => navigate(`/report/${projectId}`)}
+              className="btn-primary text-sm flex items-center gap-2 flex-shrink-0"
+            >
+              Open Proposal
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

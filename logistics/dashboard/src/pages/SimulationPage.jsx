@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getProject, runSimulation, getSimulation } from '../lib/api'
+import { getProject, runSimulation, getSimulation, recordApproval, getApprovalStatus } from '../lib/api'
 
 const RISK_COLOR = {
   High:   { bg: 'bg-red-500/15',    border: 'border-red-500/30',    text: 'text-red-400',    dot: 'bg-red-500' },
@@ -82,6 +82,8 @@ export default function SimulationPage() {
   const [running, setRunning] = useState(false)
   const [error, setError] = useState(null)
   const [selected, setSelected] = useState('baseline')
+  const [approvalStatus, setApprovalStatus] = useState(null)
+  const [approving, setApproving] = useState(false)
 
   useEffect(() => { loadData() }, [projectId])
 
@@ -97,10 +99,27 @@ export default function SimulationPage() {
         // Auto-run on first visit
         await handleRun()
       }
+      try {
+        const status = await getApprovalStatus(projectId)
+        setApprovalStatus(status)
+      } catch { /* optional */ }
     } catch (err) {
       setError(err.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleApprove() {
+    setApproving(true)
+    try {
+      await recordApproval(projectId, 'simulation', 'Engineer')
+      const status = await getApprovalStatus(projectId)
+      setApprovalStatus(status)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setApproving(false)
     }
   }
 
@@ -318,18 +337,50 @@ export default function SimulationPage() {
         </div>
       )}
 
-      {/* Handoff footer */}
+      {/* Handoff footer — Human Review Gate */}
       <div className="card bg-slate-900/40 border border-logistics-500/20">
-        <div className="flex items-start gap-3">
-          <svg className="w-5 h-5 text-logistics-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z" />
-          </svg>
-          <div>
-            <p className="text-sm font-semibold text-slate-200 mb-1">Simulation Package</p>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              This simulation package — covering {pkg.scenarios_run} scenarios, sensitivity ranges, and bottleneck identification — is the handoff artifact to the Commercial step. Finance/Pricing will use these validated throughput bounds when applying the pricing snapshot.
-            </p>
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            <svg className="w-5 h-5 text-logistics-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z" />
+            </svg>
+            <div>
+              <p className="text-sm font-semibold text-slate-200 mb-1">Simulation Package — Human Review Gate</p>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Review {pkg.scenarios_run} scenarios, sensitivity ranges, and bottleneck findings. Approve to release the Simulation Package to the Commercial step.
+              </p>
+              {approvalStatus?.gates?.simulation?.approved && (
+                <p className="text-xs text-emerald-400 mt-2 flex items-center gap-1">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                  Approved by {approvalStatus.gates.simulation.approved_by} · {new Date(approvalStatus.gates.simulation.approved_at).toLocaleDateString()}
+                </p>
+              )}
+            </div>
           </div>
+          {!approvalStatus?.gates?.simulation?.approved ? (
+            <button
+              onClick={handleApprove}
+              disabled={approving}
+              className="btn-primary text-sm flex items-center gap-2 flex-shrink-0"
+            >
+              {approving ? (
+                <>
+                  <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                  Approving...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  Approve &amp; Proceed
+                </>
+              )}
+            </button>
+          ) : (
+            <span className="flex items-center gap-1.5 text-sm text-emerald-400 font-medium flex-shrink-0">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              Gate Approved
+            </span>
+          )}
         </div>
       </div>
     </div>

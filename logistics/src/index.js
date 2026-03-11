@@ -140,6 +140,8 @@ try {
   const telemetryRoutes = require('./routes/telemetry');
   const ndaRoutes = require('./routes/nda');
   const simulationRoutes = require('./routes/simulation');
+  const pricingSnapshotRoutes = require('./routes/pricing-snapshot');
+  const approvalsRoutes = require('./routes/approvals');
 
   // Health check
   app.use(`${BASE_PATH}/health`, healthRoutes);
@@ -157,6 +159,8 @@ try {
   app.use(`${BASE_PATH}/api/v1/telemetry`, telemetryRoutes);
   app.use(`${BASE_PATH}/api/v1/nda`, ndaRoutes);
   app.use(`${BASE_PATH}/api/v1/simulation`, simulationRoutes);
+  app.use(`${BASE_PATH}/api/v1/pricing-snapshot`, pricingSnapshotRoutes);
+  app.use(`${BASE_PATH}/api/v1/approvals`, approvalsRoutes);
 
   routesLoaded = true;
   console.log('✅ LOGISTICS routes loaded successfully');
