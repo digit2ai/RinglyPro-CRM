@@ -186,7 +186,18 @@ function SignerBlock({ index, signer, onChange, onRemove, canRemove }) {
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label className="block text-xs font-medium text-slate-400 mb-1">Company / Organization *</label>
+          <input
+            type="text"
+            className="w-full rounded-lg px-3 py-2 text-sm font-medium text-black bg-white border border-slate-300 focus:outline-none focus:border-blue-500"
+            placeholder="e.g. Gebhardt Intralogistics"
+            value={signer.company}
+            onChange={e => onChange(index, 'company', e.target.value)}
+            required
+          />
+        </div>
         <div>
           <label className="block text-xs font-medium text-slate-400 mb-1">Full Name *</label>
           <input
@@ -232,7 +243,7 @@ export default function NDAPage() {
   const [purpose, setPurpose] = useState('')
 
   const [signers, setSigners] = useState([
-    { name: '', title: '', signature: null, signed_at: null }
+    { company: '', name: '', title: '', signature: null, signed_at: null }
   ])
 
   const [submitting, setSubmitting] = useState(false)
@@ -254,7 +265,7 @@ export default function NDAPage() {
   }
 
   const addSigner = () => {
-    setSigners(prev => [...prev, { name: '', title: '', signature: null, signed_at: null }])
+    setSigners(prev => [...prev, { company: '', name: '', title: '', signature: null, signed_at: null }])
   }
 
   const removeSigner = (idx) => {
@@ -267,6 +278,7 @@ export default function NDAPage() {
 
     // Validate
     for (let i = 0; i < signers.length; i++) {
+      if (!signers[i].company.trim()) return setError(`Signer ${i + 1}: Company is required`)
       if (!signers[i].name.trim()) return setError(`Signer ${i + 1}: Name is required`)
       if (!signers[i].title.trim()) return setError(`Signer ${i + 1}: Title is required`)
       if (!signers[i].signature) return setError(`Signer ${i + 1}: Signature is required`)
@@ -339,7 +351,7 @@ export default function NDAPage() {
           </div>
         </div>
         <button
-          onClick={() => { setSubmitted(false); setSigners([{ name: '', title: '', signature: null, signed_at: null }]); setPurpose('') }}
+          onClick={() => { setSubmitted(false); setSigners([{ company: '', name: '', title: '', signature: null, signed_at: null }]); setPurpose('') }}
           className="btn-secondary"
         >
           Create Another NDA
