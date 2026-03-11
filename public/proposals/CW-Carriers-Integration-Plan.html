@@ -16,6 +16,7 @@
     --mid: #6B7280;
     --line: #D9D3C8;
     --card: #FFFFFF;
+    --neural: #6366F1;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -145,6 +146,7 @@
   .arch-box.gold { border-color: var(--gold); background: rgba(200,150,42,0.15); }
   .arch-box.mint { border-color: var(--mint); background: rgba(27,122,94,0.15); }
   .arch-box.rust { border-color: var(--rust); background: rgba(184,76,46,0.15); }
+  .arch-box.neural { border-color: var(--neural); background: rgba(99,102,241,0.2); }
   .arch-box strong { display: block; font-size: 11px; letter-spacing: 1px; margin-bottom: 4px; }
   .arch-box small { font-size: 10px; color: rgba(255,255,255,0.45); }
   .arch-arrow {
@@ -189,6 +191,7 @@
   .int-card.mint::before { background: var(--mint); }
   .int-card.rust::before { background: var(--rust); }
   .int-card.purple::before { background: #7C3AED; }
+  .int-card.neural::before { background: linear-gradient(90deg, var(--neural), #818CF8); }
   .int-card .tag {
     font-family: 'DM Mono', monospace;
     font-size: 9px;
@@ -202,6 +205,7 @@
   .int-card.mint .tag { color: var(--mint); }
   .int-card.rust .tag { color: var(--rust); }
   .int-card.purple .tag { color: #7C3AED; }
+  .int-card.neural .tag { color: var(--neural); }
   .int-card h3 { margin-bottom: 8px; }
   .int-card p { font-size: 13.5px; margin-bottom: 12px; }
   .flow-list { list-style: none; }
@@ -391,8 +395,8 @@
   <div class="cover-meta">
     <div><strong>Prepared For</strong>CW Carriers USA, Inc. &mdash; Lila Trkulja, CEO</div>
     <div><strong>Prepared By</strong>Digit2AI LLC / RinglyPro</div>
-    <div><strong>Scope</strong>Voice AI &middot; MCP Layer &middot; HubSpot Sync &middot; Analytics</div>
-    <div><strong>Delivery</strong>2-Phase Sprint &middot; Full Deployment in 14 Days</div>
+    <div><strong>Scope</strong>Voice AI &middot; MCP Layer &middot; HubSpot Sync &middot; Analytics &middot; Neural Intelligence</div>
+    <div><strong>Delivery</strong>3-Phase Sprint &middot; Full Deployment in 21 Days</div>
   </div>
 </div>
 
@@ -444,6 +448,22 @@
         <div class="arch-box mint"><strong>REPORTING</strong><small>Auto PDF reports<br>Carrier performance</small></div>
         <div class="arch-box mint"><strong>ALERTS ENGINE</strong><small>Load status webhooks<br>Escalation logic</small></div>
       </div>
+
+      <div class="arch-arrow">&darr; &darr; &darr; &darr;</div>
+
+      <div class="arch-label">RinglyPro Neural &mdash; AI Intelligence Layer (Phase 3)</div>
+      <div class="arch-row">
+        <div class="arch-box neural"><strong>DEMAND FORECAST</strong><small>Predictive demand<br>&amp; inventory AI</small></div>
+        <div class="arch-box neural"><strong>ROUTE &amp; FLEET</strong><small>Route optimization<br>ETA prediction</small></div>
+        <div class="arch-box neural"><strong>SUPPLY CHAIN</strong><small>Visibility, risk<br>&amp; anomaly detection</small></div>
+        <div class="arch-box neural"><strong>DOC &amp; COMPLIANCE</strong><small>BOL automation<br>Customs clearance</small></div>
+      </div>
+      <div class="arch-row" style="margin-top:8px;">
+        <div class="arch-box neural"><strong>WAREHOUSE AI</strong><small>Layout optimization<br>Resource allocation</small></div>
+        <div class="arch-box neural"><strong>SUSTAINABILITY</strong><small>Carbon tracking<br>Green logistics</small></div>
+        <div class="arch-box neural"><strong>MAINT. AI</strong><small>Predictive fleet<br>maintenance</small></div>
+        <div class="arch-box neural"><strong>PROCUREMENT</strong><small>Supplier scoring<br>Auto-sourcing</small></div>
+      </div>
     </div>
   </div>
 
@@ -453,7 +473,7 @@
   <div class="section">
     <div class="section-label">Section 02</div>
     <h2>Integration Modules</h2>
-    <p>Six core modules, each targeting a specific CW Carriers operational pain point &mdash; all syncing back to HubSpot as the central record of truth.</p>
+    <p>Six core modules, each targeting a specific CW Carriers operational pain point &mdash; all syncing back to HubSpot as the central record of truth. Extended by eight RinglyPro Neural intelligence modules in Phase 3.</p>
 
     <div class="integration-grid">
 
@@ -552,9 +572,142 @@
 
   <hr class="rule">
 
+  <!-- SECTION 2B: RINGLYPRO NEURAL MODULES -->
+  <div class="section">
+    <div class="section-label">Section 02B &mdash; RinglyPro Neural</div>
+    <h2>Neural Intelligence Modules</h2>
+    <p>Eight AI-powered modules that extend CW Carriers beyond voice and CRM into predictive logistics intelligence &mdash; demand forecasting, route optimization, supply chain risk, document automation, and more. All powered by RinglyPro Neural.</p>
+
+    <div class="integration-grid">
+
+      <div class="int-card neural">
+        <div class="tag">Neural 01 &mdash; Predictive Demand &amp; Inventory</div>
+        <h3>AI Demand Forecasting Engine</h3>
+        <p>Analyzes historical load data, seasonal freight patterns, market signals, and client order history to forecast demand by lane and commodity &mdash; preventing capacity gaps and optimizing carrier pre-positioning.</p>
+        <ul class="flow-list">
+          <li>McLeod + HubSpot historical data ingested into Neural engine</li>
+          <li>Seasonal freight volume patterns identified by lane</li>
+          <li>Client-specific demand curves generated (PepsiCo, Agri-Dairy, etc.)</li>
+          <li>Inventory-level alerts for carrier capacity shortfalls</li>
+          <li>Weekly demand forecast reports pushed to broker dashboards</li>
+          <li>Proactive carrier pre-booking recommendations</li>
+          <li>Stockout risk scoring for high-priority lanes</li>
+        </ul>
+      </div>
+
+      <div class="int-card neural">
+        <div class="tag">Neural 02 &mdash; Route &amp; Fleet Optimization</div>
+        <h3>Intelligent Route Planning &amp; ETA Prediction</h3>
+        <p>Optimizes carrier routes across CW's network considering distance, traffic, weather, delivery windows, and HOS constraints &mdash; with real-time ETA predictions that adjust dynamically as conditions change.</p>
+        <ul class="flow-list">
+          <li>Multi-stop route optimization across carrier fleet</li>
+          <li>Real-time traffic + weather integration for ETA accuracy</li>
+          <li>HOS (Hours of Service) compliance built into route plans</li>
+          <li>Last-mile delivery window optimization</li>
+          <li>Fleet utilization scoring &mdash; minimize deadhead miles</li>
+          <li>Dynamic re-routing on weather/traffic disruptions</li>
+          <li>ETA predictions pushed to shipper contacts via Rachel AI</li>
+        </ul>
+      </div>
+
+      <div class="int-card neural">
+        <div class="tag">Neural 03 &mdash; Supply Chain Visibility &amp; Risk</div>
+        <h3>Real-Time Chain Intelligence &amp; Disruption Alerts</h3>
+        <p>Provides end-to-end supply chain visibility across all active loads, with AI-powered risk scoring that predicts disruptions before they impact delivery &mdash; weather events, port congestion, carrier reliability issues.</p>
+        <ul class="flow-list">
+          <li>Live supply chain map with all active shipments</li>
+          <li>Anomaly detection: loads deviating from planned routes/schedules</li>
+          <li>Weather event correlation with active lane disruptions</li>
+          <li>Carrier reliability risk scoring (historical on-time data)</li>
+          <li>Proactive disruption alerts pushed to brokers + shippers</li>
+          <li>Alternative carrier recommendations when risk detected</li>
+          <li>Supply chain health score updated hourly</li>
+        </ul>
+      </div>
+
+      <div class="int-card neural">
+        <div class="tag">Neural 04 &mdash; Document Automation &amp; Compliance</div>
+        <h3>AI-Powered Freight Documentation</h3>
+        <p>Automates generation, processing, and validation of freight documents &mdash; BOLs, rate confirmations, customs forms, PODs &mdash; while monitoring regulatory compliance across all shipments.</p>
+        <ul class="flow-list">
+          <li>Auto-generate BOLs from McLeod load data</li>
+          <li>Rate confirmation documents created on carrier acceptance</li>
+          <li>POD (Proof of Delivery) extraction and filing</li>
+          <li>Customs documentation for cross-border shipments</li>
+          <li>FMCSA compliance monitoring for carrier authority</li>
+          <li>Insurance certificate expiration alerts</li>
+          <li>Document audit trail synced to HubSpot</li>
+        </ul>
+      </div>
+
+      <div class="int-card neural">
+        <div class="tag">Neural 05 &mdash; Warehouse Intelligence</div>
+        <h3>AI Warehouse &amp; Resource Optimization</h3>
+        <p>Optimizes warehouse operations for CW's cross-dock and staging facilities &mdash; dock scheduling, storage allocation, labor planning, and order fulfillment sequencing driven by AI.</p>
+        <ul class="flow-list">
+          <li>Dock appointment scheduling optimized by load priority</li>
+          <li>Storage allocation based on commodity type + outbound schedule</li>
+          <li>Labor resource planning matched to daily volume forecast</li>
+          <li>Order fulfillment sequencing for multi-stop consolidation</li>
+          <li>Real-time yard visibility &mdash; trailer location tracking</li>
+          <li>Cross-dock throughput optimization</li>
+          <li>Warehouse KPIs pushed to analytics dashboard</li>
+        </ul>
+      </div>
+
+      <div class="int-card neural">
+        <div class="tag">Neural 06 &mdash; Sustainability &amp; Green Logistics</div>
+        <h3>Carbon Footprint &amp; Reverse Logistics AI</h3>
+        <p>Tracks and optimizes CW Carriers' environmental impact &mdash; carbon emissions per lane, empty mile reduction, fuel efficiency scoring &mdash; plus AI-driven reverse logistics for returns and damaged freight.</p>
+        <ul class="flow-list">
+          <li>Carbon emission calculation per shipment and lane</li>
+          <li>Empty mile reduction optimization across carrier network</li>
+          <li>Fuel efficiency scoring by carrier and equipment type</li>
+          <li>ESG reporting for enterprise shipper clients (PepsiCo, etc.)</li>
+          <li>Returns classification AI: resale, refurbish, or dispose</li>
+          <li>Reverse logistics cost recovery optimization</li>
+          <li>Sustainability dashboard with trend tracking</li>
+        </ul>
+      </div>
+
+      <div class="int-card neural">
+        <div class="tag">Neural 07 &mdash; Predictive Maintenance</div>
+        <h3>Fleet &amp; Equipment Health AI</h3>
+        <p>Monitors fleet health through telematics and IoT sensor data, predicting maintenance needs before breakdowns occur &mdash; reducing roadside failures, service interruptions, and emergency repair costs.</p>
+        <ul class="flow-list">
+          <li>Telematics data ingestion from carrier fleet GPS/ELD</li>
+          <li>Predictive failure models for engine, tire, brake systems</li>
+          <li>Maintenance scheduling recommendations by vehicle</li>
+          <li>Roadside breakdown risk scoring per active load</li>
+          <li>Service history analysis for carrier fleet reliability</li>
+          <li>Automated maintenance alerts to carrier contacts</li>
+          <li>Equipment health data fed into carrier performance scoring</li>
+        </ul>
+      </div>
+
+      <div class="int-card neural">
+        <div class="tag">Neural 08 &mdash; Procurement &amp; Supplier Intelligence</div>
+        <h3>AI-Driven Carrier Sourcing &amp; Rate Intelligence</h3>
+        <p>Automates carrier procurement with AI-powered rate prediction, supplier scoring, and dynamic sourcing &mdash; finding the best carrier at the best rate for every load based on historical data and real-time market conditions.</p>
+        <ul class="flow-list">
+          <li>Freight rate prediction by lane, commodity, and season</li>
+          <li>Carrier performance scoring: on-time %, claims ratio, responsiveness</li>
+          <li>Dynamic carrier sourcing based on real-time capacity data</li>
+          <li>Rate benchmarking against market averages per lane</li>
+          <li>Automated RFQ generation for contract freight</li>
+          <li>Supplier quality monitoring with trend alerts</li>
+          <li>Procurement savings reports synced to HubSpot</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <hr class="rule">
+
   <!-- SECTION 3: HUBSPOT DATA FLOWS -->
   <div class="section">
-    <div class="section-label">Section 03</div>
+    <div class="section-label">Section 03 &mdash; Data Layer</div>
     <h2>HubSpot Data Flow Map</h2>
     <p>Every RinglyPro action writes back to HubSpot in real time. HubSpot stays clean, enriched, and fully auditable &mdash; no shadow systems, no data silos.</p>
 
@@ -616,6 +769,42 @@
           <td>Task title, urgency level, context note, due date = today</td>
           <td>Rachel escalation logic</td>
         </tr>
+        <tr>
+          <td style="color:var(--neural); font-weight:600;">Neural: Demand forecast generated</td>
+          <td><span class="target">Company + Note</span></td>
+          <td>Forecasted volume by lane, seasonal trend data, capacity risk flag</td>
+          <td>Weekly Neural engine run</td>
+        </tr>
+        <tr>
+          <td style="color:var(--neural); font-weight:600;">Neural: Route optimized</td>
+          <td><span class="target">Deal (update)</span></td>
+          <td>Optimized route, estimated fuel cost, ETA prediction, HOS compliance</td>
+          <td>Load assignment trigger</td>
+        </tr>
+        <tr>
+          <td style="color:var(--neural); font-weight:600;">Neural: Disruption alert</td>
+          <td><span class="target">Task + Activity</span></td>
+          <td>Risk type (weather/delay/carrier), affected loads, recommended action</td>
+          <td>Real-time anomaly detection</td>
+        </tr>
+        <tr>
+          <td style="color:var(--neural); font-weight:600;">Neural: BOL auto-generated</td>
+          <td><span class="target">Deal + Attachment</span></td>
+          <td>BOL PDF, rate confirmation, compliance status, document audit trail</td>
+          <td>Load booking confirmed</td>
+        </tr>
+        <tr>
+          <td style="color:var(--neural); font-weight:600;">Neural: Carrier score updated</td>
+          <td><span class="target">Contact (carrier)</span></td>
+          <td>Performance score, on-time %, rate competitiveness, reliability grade</td>
+          <td>Load delivery completed</td>
+        </tr>
+        <tr>
+          <td style="color:var(--neural); font-weight:600;">Neural: Carbon report</td>
+          <td><span class="target">Company + Attachment</span></td>
+          <td>CO2 per shipment, empty mile ratio, ESG compliance data, trend chart</td>
+          <td>Monthly sustainability run</td>
+        </tr>
       </tbody>
     </table>
   </div>
@@ -626,7 +815,7 @@
   <div class="section">
     <div class="section-label">Section 04</div>
     <h2>Implementation Roadmap</h2>
-    <p>A two-phase sprint delivering all six modules in 14 days &mdash; parallel workstreams running simultaneously to maximize speed without sacrificing quality.</p>
+    <p>A three-phase sprint delivering all fourteen modules in 21 days &mdash; core voice + CRM in week one, freight operations in week two, and RinglyPro Neural intelligence in week three.</p>
 
     <div class="phases">
 
@@ -676,6 +865,31 @@
         </div>
       </div>
 
+      <div class="phase">
+        <div class="phase-num">03</div>
+        <div class="phase-content">
+          <div class="phase-header">
+            <div class="phase-title">RinglyPro Neural &middot; Predictive Intelligence &middot; Full Optimization Suite</div>
+            <div class="phase-timeline">Days 15&ndash;21</div>
+          </div>
+          <p>Week three deploys the full RinglyPro Neural intelligence layer. Demand forecasting, route optimization, and supply chain visibility go live first. Document automation, warehouse AI, predictive maintenance, sustainability tracking, and procurement intelligence follow. Day 21 is full Neural QA, dashboard walkthrough, and production sign-off.</p>
+          <div class="deliverables">
+            <span class="badge">Demand forecasting engine</span>
+            <span class="badge">Route &amp; ETA optimization</span>
+            <span class="badge">Supply chain visibility map</span>
+            <span class="badge">Disruption risk alerts</span>
+            <span class="badge">BOL &amp; document automation</span>
+            <span class="badge">Compliance monitoring</span>
+            <span class="badge">Warehouse AI optimization</span>
+            <span class="badge">Sustainability dashboard</span>
+            <span class="badge">Predictive maintenance</span>
+            <span class="badge">Carrier rate intelligence</span>
+            <span class="badge">Procurement automation</span>
+            <span class="badge">Neural QA + training</span>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -687,10 +901,10 @@
     <h2>Rachel AI &mdash; Full Employee Cost Reduction Analysis</h2>
 
     <div class="roi-strip">
-      <strong>Rachel AI Replaces 9 Full-Time Roles</strong> &mdash; CW Carriers' 24/7 brand promise currently requires expensive overnight staffing, Belgrade office coordination, and multiple specialized hires across sales, operations, and CRM management. Rachel handles all of it &mdash; inbound calls, outbound dialing, lead qualification, load status coordination, KPI reporting, warehouse scheduling, CRM administration, escalation management, and full HubSpot integration &mdash; as a single AI platform running 24/7/365 with zero downtime.
+      <strong>Rachel AI + RinglyPro Neural Replaces 13 Full-Time Roles</strong> &mdash; CW Carriers' 24/7 brand promise currently requires expensive overnight staffing, Belgrade office coordination, and multiple specialized hires across sales, operations, logistics intelligence, and CRM management. Rachel + Neural handles all of it &mdash; inbound calls, outbound dialing, lead qualification, load status coordination, KPI reporting, warehouse scheduling, CRM administration, escalation management, demand forecasting, route optimization, compliance monitoring, sustainability reporting, and full HubSpot integration &mdash; as a single AI platform running 24/7/365 with zero downtime.
     </div>
 
-    <h3>Complete Workforce Automation for CW Carriers USA</h3>
+    <h3>Complete Workforce Automation for CW Carriers USA &mdash; Rachel AI + Neural</h3>
 
     <table class="data-table">
       <thead>
@@ -746,36 +960,56 @@
           <td>$38,000 &ndash; $48,000</td>
           <td>Full bidirectional HubSpot sync, deal pipeline automation, custom property management, sequence triggers, activity logging</td>
         </tr>
+        <tr style="background:rgba(99,102,241,0.05);">
+          <td><strong>Demand Planner / Forecaster</strong><br><small style="color:var(--neural);">Neural Module</small></td>
+          <td>$50,000 &ndash; $65,000</td>
+          <td>AI demand forecasting by lane and commodity, seasonal pattern detection, capacity gap prediction, weekly forecast reports</td>
+        </tr>
+        <tr style="background:rgba(99,102,241,0.05);">
+          <td><strong>Route Planner / Fleet Analyst</strong><br><small style="color:var(--neural);">Neural Module</small></td>
+          <td>$42,000 &ndash; $55,000</td>
+          <td>Multi-stop route optimization, ETA prediction, deadhead reduction, HOS compliance routing, dynamic re-routing on disruptions</td>
+        </tr>
+        <tr style="background:rgba(99,102,241,0.05);">
+          <td><strong>Compliance &amp; Documentation Clerk</strong><br><small style="color:var(--neural);">Neural Module</small></td>
+          <td>$30,000 &ndash; $38,000</td>
+          <td>Automated BOL generation, rate confirmations, POD processing, customs documentation, FMCSA compliance monitoring, insurance tracking</td>
+        </tr>
+        <tr style="background:rgba(99,102,241,0.05);">
+          <td><strong>Supply Chain Risk Analyst</strong><br><small style="color:var(--neural);">Neural Module</small></td>
+          <td>$48,000 &ndash; $60,000</td>
+          <td>Real-time disruption prediction, weather/port correlation, anomaly detection, carrier reliability scoring, alternative sourcing recommendations</td>
+        </tr>
       </tbody>
     </table>
 
     <!-- PRICING SUMMARY -->
     <div class="pricing-block">
       <div style="font-family:'DM Mono',monospace; font-size:10px; letter-spacing:3px; text-transform:uppercase; color:rgba(255,255,255,0.4); margin-bottom:8px;">Annual Cost Comparison</div>
-      <div style="font-size:20px; font-weight:600; color:white; margin-bottom:4px;">9 Full-Time Employees vs. Rachel AI Platform</div>
-      <div style="font-size:14px; color:rgba(255,255,255,0.5);">Combined salary replacement across all operational, sales, and CRM functions</div>
+      <div style="font-size:20px; font-weight:600; color:white; margin-bottom:4px;">13 Full-Time Employees vs. Rachel AI + Neural Platform</div>
+      <div style="font-size:14px; color:rgba(255,255,255,0.5);">Combined salary replacement across operations, sales, CRM, and logistics intelligence</div>
       <div class="pricing-grid">
         <div class="price-item">
           <div class="price-label">Total Replaced</div>
-          <div class="price-value">$252K&ndash;$333K</div>
-          <div class="price-sub">9 FTEs &middot; Annual salary cost</div>
+          <div class="price-value">$422K&ndash;$551K</div>
+          <div class="price-sub">13 FTEs &middot; Annual salary cost</div>
         </div>
         <div class="price-item">
-          <div class="price-label">Rachel AI Cost</div>
-          <div class="price-value" style="color:#238636;">~$59K</div>
-          <div class="price-sub">Platform + voice minutes &middot; /year</div>
+          <div class="price-label">Rachel AI + Neural</div>
+          <div class="price-value" style="color:#238636;">~$79K</div>
+          <div class="price-sub">Full platform + Neural &middot; /year</div>
         </div>
         <div class="price-item">
           <div class="price-label">Net Savings</div>
-          <div class="price-value">$193K&ndash;$274K</div>
-          <div class="price-sub">77&ndash;82% cost reduction &middot; /year</div>
+          <div class="price-value">$343K&ndash;$472K</div>
+          <div class="price-sub">81&ndash;86% cost reduction &middot; /year</div>
         </div>
       </div>
     </div>
 
     <div class="roi-savings-strip">
       <strong>Force Multiplier:</strong>
-      <p style="margin-top:8px;">Rachel works 24/7/365 &mdash; no PTO, no sick days, no training ramp, no turnover. She handles 500+ calls/day with consistent quality, instant HubSpot sync, and zero human error. Unlike 9 separate employees with different schedules, skill gaps, and management overhead, Rachel is a single unified AI platform that scales instantly with CW Carriers' growth &mdash; no additional hiring needed.</p>
+      <p style="margin-top:8px;">Rachel + Neural works 24/7/365 &mdash; no PTO, no sick days, no training ramp, no turnover. She handles 500+ calls/day with consistent quality, instant HubSpot sync, and zero human error &mdash; while Neural runs predictive analytics, route optimization, demand forecasting, and compliance monitoring continuously in the background. Unlike 13 separate employees with different schedules, skill gaps, and management overhead, this is a single unified AI platform that scales instantly with CW Carriers' growth &mdash; no additional hiring needed.</p>
     </div>
 
     <!-- ORIGINAL MODULE ROI BREAKDOWN -->
@@ -826,6 +1060,42 @@
           <td>Account manager builds manually (4&ndash;6 hrs each)</td>
           <td>Auto-generated PDF in minutes</td>
           <td><strong>~20 hrs/quarter saved</strong></td>
+        </tr>
+        <tr style="background:rgba(99,102,241,0.05);">
+          <td style="color:var(--neural); font-weight:600;">Neural: Demand forecasting</td>
+          <td>Reactive capacity planning; last-minute spot market rates</td>
+          <td>Predictive lane demand &mdash; proactive carrier pre-positioning</td>
+          <td><strong>8&ndash;15% spot rate reduction</strong></td>
+        </tr>
+        <tr style="background:rgba(99,102,241,0.05);">
+          <td style="color:var(--neural); font-weight:600;">Neural: Route optimization</td>
+          <td>Carriers plan routes manually; high deadhead %</td>
+          <td>AI-optimized multi-stop routing with live ETA</td>
+          <td><strong>12&ndash;20% fuel cost reduction</strong></td>
+        </tr>
+        <tr style="background:rgba(99,102,241,0.05);">
+          <td style="color:var(--neural); font-weight:600;">Neural: Document automation</td>
+          <td>Manual BOL creation, rate confirmations (~15 min each)</td>
+          <td>Auto-generated in seconds from load data</td>
+          <td><strong>~30 hrs/month saved</strong></td>
+        </tr>
+        <tr style="background:rgba(99,102,241,0.05);">
+          <td style="color:var(--neural); font-weight:600;">Neural: Disruption prediction</td>
+          <td>Reactive to delays; no early warning system</td>
+          <td>AI predicts disruptions 6&ndash;24 hrs in advance</td>
+          <td><strong>40&ndash;60% fewer late deliveries</strong></td>
+        </tr>
+        <tr style="background:rgba(99,102,241,0.05);">
+          <td style="color:var(--neural); font-weight:600;">Neural: Sustainability reporting</td>
+          <td>No carbon tracking; manual ESG data if requested</td>
+          <td>Automated CO2 reports per shipment &amp; client</td>
+          <td><strong>Enterprise ESG compliance ready</strong></td>
+        </tr>
+        <tr style="background:rgba(99,102,241,0.05);">
+          <td style="color:var(--neural); font-weight:600;">Neural: Carrier rate intelligence</td>
+          <td>Manual rate negotiation; no market benchmarks</td>
+          <td>AI rate prediction + market benchmarking per lane</td>
+          <td><strong>5&ndash;10% procurement savings</strong></td>
         </tr>
       </tbody>
     </table>
