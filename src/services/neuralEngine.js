@@ -30,14 +30,14 @@ class NeuralEngine {
       `SELECT COUNT(*) AS cnt FROM calls
        WHERE client_id = :clientId
          AND call_status IN ('missed','no-answer')
-         AND direction = 'incoming'
+         AND direction IN ('incoming','inbound')
          AND created_at >= :since`,
       { replacements: { clientId, since }, type: QueryTypes.SELECT }
     );
     const [total] = await this.sequelize.query(
       `SELECT COUNT(*) AS cnt FROM calls
        WHERE client_id = :clientId
-         AND direction = 'incoming'
+         AND direction IN ('incoming','inbound')
          AND created_at >= :since`,
       { replacements: { clientId, since }, type: QueryTypes.SELECT }
     );
@@ -75,7 +75,7 @@ class NeuralEngine {
          AND a.customer_phone = c.from_number
          AND a.created_at BETWEEN c.created_at AND c.created_at + INTERVAL '24 hours'
        WHERE c.client_id = :clientId
-         AND c.direction = 'incoming'
+         AND c.direction IN ('incoming','inbound')
          AND c.call_status = 'completed'
          AND c.created_at >= :since
        GROUP BY bucket`,
@@ -201,7 +201,7 @@ class NeuralEngine {
          COUNT(*) FILTER (WHERE call_status IN ('missed','no-answer')) AS missed
        FROM calls
        WHERE client_id = :clientId
-         AND direction = 'incoming'
+         AND direction IN ('incoming','inbound')
          AND created_at >= :since`,
       { replacements: { clientId, since }, type: QueryTypes.SELECT }
     );
@@ -355,8 +355,8 @@ class NeuralEngine {
     const since = this.daysAgo(days);
     const [callData] = await this.sequelize.query(
       `SELECT
-         COUNT(*) FILTER (WHERE direction = 'incoming' AND call_status = 'completed') AS answered,
-         COUNT(*) FILTER (WHERE direction = 'incoming') AS total_incoming
+         COUNT(*) FILTER (WHERE direction IN ('incoming','inbound') AND call_status = 'completed') AS answered,
+         COUNT(*) FILTER (WHERE direction IN ('incoming','inbound')) AS total_incoming
        FROM calls
        WHERE client_id = :clientId AND created_at >= :since`,
       { replacements: { clientId, since }, type: QueryTypes.SELECT }
@@ -404,7 +404,7 @@ class NeuralEngine {
            AND call_status IN ('missed','no-answer')) AS after_hours_missed
        FROM calls
        WHERE client_id = :clientId
-         AND direction = 'incoming'
+         AND direction IN ('incoming','inbound')
          AND created_at >= :since`,
       { replacements: { clientId, since }, type: QueryTypes.SELECT }
     );
@@ -468,9 +468,9 @@ class NeuralEngine {
 
     const [current] = await this.sequelize.query(
       `SELECT
-         COUNT(*) FILTER (WHERE direction = 'incoming') AS total_calls,
-         COUNT(*) FILTER (WHERE direction = 'incoming' AND call_status IN ('missed','no-answer')) AS missed_calls,
-         COUNT(*) FILTER (WHERE direction = 'incoming' AND call_status = 'completed') AS answered_calls,
+         COUNT(*) FILTER (WHERE direction IN ('incoming','inbound')) AS total_calls,
+         COUNT(*) FILTER (WHERE direction IN ('incoming','inbound') AND call_status IN ('missed','no-answer')) AS missed_calls,
+         COUNT(*) FILTER (WHERE direction IN ('incoming','inbound') AND call_status = 'completed') AS answered_calls,
          AVG(CASE WHEN call_status = 'completed' THEN duration END) AS avg_duration,
          COUNT(*) FILTER (WHERE direction = 'outgoing') AS outbound_calls
        FROM calls
@@ -480,8 +480,8 @@ class NeuralEngine {
 
     const [previous] = await this.sequelize.query(
       `SELECT
-         COUNT(*) FILTER (WHERE direction = 'incoming') AS total_calls,
-         COUNT(*) FILTER (WHERE direction = 'incoming' AND call_status IN ('missed','no-answer')) AS missed_calls
+         COUNT(*) FILTER (WHERE direction IN ('incoming','inbound')) AS total_calls,
+         COUNT(*) FILTER (WHERE direction IN ('incoming','inbound') AND call_status IN ('missed','no-answer')) AS missed_calls
        FROM calls
        WHERE client_id = :clientId AND created_at >= :prevSince AND created_at < :since`,
       { replacements: { clientId, prevSince, since }, type: QueryTypes.SELECT }
