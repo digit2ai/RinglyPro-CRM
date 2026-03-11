@@ -3,32 +3,60 @@ import React, { useState, useRef, useEffect } from 'react'
 const DISCLOSING = {
   company: 'DIGIT2AI LLC',
   name: 'Manuel Stagg',
-  title: 'CEO'
+  title: 'CEO',
+  address: 'Florida, USA'
 }
 
 const NDA_FULL_TEXT = `NON-DISCLOSURE AGREEMENT
 
-This Non-Disclosure Agreement ("Agreement") is entered into as of the date signed below between DIGIT2AI LLC ("Disclosing Party") and the undersigned Receiving Party ("Receiving Party").
+This Non-Disclosure Agreement ("Agreement") is entered into as of the Effective Date signed below between:
 
-1. PURPOSE. The Receiving Party wishes to receive certain confidential information from the Disclosing Party for the purpose of evaluating a potential business relationship related to warehouse analytics, logistics platform, and related services.
+  Disclosing Party: DIGIT2AI LLC, Florida, USA
+  Receiving Party:  As identified and signed below
 
-2. CONFIDENTIAL INFORMATION. "Confidential Information" means any non-public information disclosed by the Disclosing Party, whether orally, in writing, or in any other form, including but not limited to: business plans, software, source code, algorithms, customer data, pricing, financial data, trade secrets, and proprietary processes.
+1. PURPOSE
+The Receiving Party wishes to receive certain confidential information from the Disclosing Party for the purpose specified herein, related to warehouse analytics, logistics platform, AI systems, and related services (the "Purpose").
 
-3. OBLIGATIONS. The Receiving Party agrees to: (a) hold all Confidential Information in strict confidence; (b) not disclose it to any third party without prior written consent; (c) use it solely for the Purpose above; (d) limit access to employees or contractors who have a need to know.
+2. DEFINITION OF CONFIDENTIAL INFORMATION
+"Confidential Information" means any non-public information disclosed by the Disclosing Party, whether orally, in writing, or in any other form, that is designated as confidential or that reasonably should be understood to be confidential. This includes, but is not limited to:
+  • Business plans, strategies, and forecasts
+  • Software, source code, algorithms, and technical specifications
+  • Customer lists, pricing, and financial data
+  • Trade secrets and proprietary processes
+  • Any information related to the RinglyPro platform, AI systems, or integrations
 
-4. EXCLUSIONS. Confidential Information does not include information that is publicly available through no fault of the Receiving Party, was already known prior to disclosure, or is independently developed without use of Confidential Information.
+3. OBLIGATIONS OF RECEIVING PARTY
+The Receiving Party agrees to:
+  a) Hold all Confidential Information in strict confidence;
+  b) Not disclose Confidential Information to any third party without prior written consent;
+  c) Use Confidential Information solely for the Purpose defined above;
+  d) Limit access to employees or contractors who have a need to know and are bound by equivalent confidentiality obligations;
+  e) Promptly notify the Disclosing Party upon discovery of any unauthorized use or disclosure.
 
-5. TERM. This Agreement shall remain in effect for three (3) years from the date of execution.
+4. EXCLUSIONS
+Confidential Information does not include information that:
+  a) Is or becomes publicly available through no fault of the Receiving Party;
+  b) Was already known to the Receiving Party prior to disclosure;
+  c) Is independently developed by the Receiving Party without use of Confidential Information;
+  d) Is required to be disclosed by law or court order, provided prompt written notice is given.
 
-6. RETURN OR DESTRUCTION. Upon written request, the Receiving Party shall promptly return or destroy all Confidential Information.
+5. TERM
+This Agreement shall remain in effect for three (3) years from the Effective Date, or until the Confidential Information no longer qualifies as confidential, whichever occurs first.
 
-7. REMEDIES. Any breach may cause irreparable harm. The Disclosing Party is entitled to seek equitable relief in addition to all other remedies available at law.
+6. RETURN OR DESTRUCTION OF INFORMATION
+Upon written request or termination of this Agreement, the Receiving Party shall promptly return or destroy all Confidential Information, including copies, notes, or summaries.
 
-8. GOVERNING LAW. This Agreement is governed by the laws of the State of Florida, USA.
+7. NO LICENSE
+Nothing in this Agreement grants the Receiving Party any rights in or to the Confidential Information except as expressly set forth herein.
 
-9. ENTIRE AGREEMENT. This Agreement constitutes the entire agreement between the parties with respect to confidentiality and supersedes all prior discussions.
+8. REMEDIES
+The Receiving Party acknowledges that any breach may cause irreparable harm to the Disclosing Party, for which monetary damages would be inadequate. The Disclosing Party shall be entitled to seek equitable relief, including injunction and specific performance, in addition to all other remedies available at law.
 
-10. NDA EXECUTION. This Agreement is executed electronically. Electronic signatures captured herein are legally binding and constitute acceptance of all terms above.`
+9. GOVERNING LAW
+This Agreement shall be governed by and construed in accordance with the laws of the State of Florida, USA, without regard to its conflict of law provisions.
+
+10. ENTIRE AGREEMENT & ELECTRONIC EXECUTION
+This Agreement constitutes the entire agreement between the parties with respect to its subject matter and supersedes all prior discussions relating to confidentiality. This Agreement is executed electronically. Electronic signatures captured herein are legally binding under the E-SIGN Act and UETA and constitute full acceptance of all terms above.`
 
 // ── Signature Pad ─────────────────────────────────────────────────────────────
 function SignaturePad({ label, locked, lockedValue, onChange }) {
@@ -186,7 +214,7 @@ function SignerBlock({ index, signer, onChange, onRemove, canRemove }) {
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-xs font-medium text-slate-400 mb-1">Company / Organization *</label>
           <input
@@ -196,6 +224,16 @@ function SignerBlock({ index, signer, onChange, onRemove, canRemove }) {
             value={signer.company}
             onChange={e => onChange(index, 'company', e.target.value)}
             required
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-slate-400 mb-1">Address</label>
+          <input
+            type="text"
+            className="w-full rounded-lg px-3 py-2 text-sm font-medium text-black bg-white border border-slate-300 focus:outline-none focus:border-blue-500"
+            placeholder="City, State / Country"
+            value={signer.address || ''}
+            onChange={e => onChange(index, 'address', e.target.value)}
           />
         </div>
         <div>
@@ -393,9 +431,16 @@ export default function NDAPage() {
             {NDA_FULL_TEXT}
           </pre>
         ) : (
-          <p className="text-xs text-slate-400 leading-relaxed">
-            This NDA governs the confidential exchange of information between DIGIT2AI LLC and the Receiving Party. Covers a 3-year term, governed by Florida law. Click "Read Full Agreement" to view all 10 sections.
-          </p>
+          <div className="text-xs text-slate-400 leading-relaxed space-y-1">
+            <p>Governs confidential exchange of information between <span className="text-slate-200 font-medium">DIGIT2AI LLC</span> and the Receiving Party.</p>
+            <p className="flex flex-wrap gap-x-4 gap-y-1 pt-1">
+              <span>· 3-year term</span>
+              <span>· Florida law</span>
+              <span>· No license granted</span>
+              <span>· Equitable remedies</span>
+              <span>· E-SIGN / UETA compliant</span>
+            </p>
+          </div>
         )}
       </div>
 
@@ -419,7 +464,7 @@ export default function NDAPage() {
           <span className="text-xs text-blue-400 ml-auto">Pre-filled — DIGIT2AI LLC</span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div>
             <label className="block text-xs font-medium text-slate-400 mb-1">Company</label>
             <div className="input-field bg-slate-700/50 text-slate-200 text-sm">{DISCLOSING.company}</div>
@@ -431,6 +476,10 @@ export default function NDAPage() {
           <div>
             <label className="block text-xs font-medium text-slate-400 mb-1">Title</label>
             <div className="input-field bg-slate-700/50 text-slate-200 text-sm">{DISCLOSING.title}</div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Address</label>
+            <div className="input-field bg-slate-700/50 text-slate-200 text-sm">{DISCLOSING.address}</div>
           </div>
         </div>
 
