@@ -73,6 +73,7 @@ export default function UploadPage() {
   const [companyInfo, setCompanyInfo] = useState({
     company_name: '',
     contact_name: '',
+    contact_email: '',
     industry: '',
     country: '',
     building_footprint_m2: '',
@@ -269,6 +270,17 @@ export default function UploadPage() {
                 placeholder="e.g. Max Mustermann"
                 value={companyInfo.contact_name}
                 onChange={e => handleCompanyChange('contact_name', e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Contact Email</label>
+              <input
+                type="email"
+                className="input-field"
+                placeholder="e.g. max@acme.com"
+                value={companyInfo.contact_email}
+                onChange={e => handleCompanyChange('contact_email', e.target.value)}
               />
             </div>
 
