@@ -60,12 +60,32 @@ This Agreement shall be governed by and construed in accordance with the laws of
 10. ENTIRE AGREEMENT & ELECTRONIC EXECUTION
 This Agreement constitutes the entire agreement between the parties with respect to its subject matter and supersedes all prior discussions relating to confidentiality. This Agreement is executed electronically. Electronic signatures captured herein are legally binding under the E-SIGN Act and UETA and constitute full acceptance of all terms above.`
 
+// ── Save signature to DB ───────────────────────────────────────────────────────
+async function saveSignatureToDB({ signerRole, company, name, title, signatureData, signedAt }) {
+  const res = await fetch('/pinaxis/api/v1/nda/signatures', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      signer_role: signerRole,
+      company, name, title,
+      signature_data: signatureData,
+      signed_at: signedAt || new Date().toISOString()
+    })
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.error || 'Save failed')
+  return json.data
+}
+
 // ── Signature Pad ─────────────────────────────────────────────────────────────
-function SignaturePad({ label, locked, lockedDataUrl, onChange }) {
+function SignaturePad({ label, locked, lockedDataUrl, onChange, onSaveToDB, saveLabel }) {
   const canvasRef = useRef(null)
   const drawing = useRef(false)
   const lastPos = useRef(null)
   const [signed, setSigned] = useState(false)
+  const [dbSaving, setDbSaving] = useState(false)
+  const [dbSaved, setDbSaved] = useState(false)
+  const currentData = useRef(null)
 
   // Paint a saved dataUrl onto the canvas (locked pre-sign)
   useEffect(() => {
@@ -102,13 +122,26 @@ function SignaturePad({ label, locked, lockedDataUrl, onChange }) {
   }
   const stopDraw = () => {
     if (!drawing.current) return; drawing.current = false; setSigned(true)
-    onChange && onChange(canvasRef.current.toDataURL())
+    const data = canvasRef.current.toDataURL()
+    currentData.current = data
+    onChange && onChange(data)
   }
   const clear = () => {
     if (locked) return
     const ctx = canvasRef.current.getContext('2d')
     ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height)
-    setSigned(false); onChange && onChange(null)
+    setSigned(false); setDbSaved(false); currentData.current = null; onChange && onChange(null)
+  }
+
+  const handleSaveToDB = async () => {
+    if (!currentData.current || !onSaveToDB) return
+    setDbSaving(true)
+    try {
+      await onSaveToDB(currentData.current)
+      setDbSaved(true)
+    } catch { /* silent */ } finally {
+      setDbSaving(false)
+    }
   }
 
   return (
@@ -129,6 +162,24 @@ function SignaturePad({ label, locked, lockedDataUrl, onChange }) {
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>Signed
             </span>}
             <button type="button" onClick={clear} className="text-xs text-slate-400 hover:text-red-400 px-2 py-1 rounded border border-slate-200 bg-white/80">Clear</button>
+          </div>
+        )}
+        {signed && onSaveToDB && !locked && (
+          <div className="absolute bottom-2 left-2">
+            {dbSaved ? (
+              <span className="text-xs text-emerald-600 font-medium bg-white/90 px-2 py-1 rounded border border-emerald-200 flex items-center gap-1">
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                Saved to database
+              </span>
+            ) : (
+              <button type="button" onClick={handleSaveToDB} disabled={dbSaving}
+                className="text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded flex items-center gap-1 disabled:opacity-60">
+                {dbSaving
+                  ? <><svg className="animate-spin w-3 h-3" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Saving...</>
+                  : <><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" /></svg>{saveLabel || 'Save My Signature'}</>
+                }
+              </button>
+            )}
           </div>
         )}
         {!signed && !locked && <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><span className="text-slate-300 text-sm italic">Sign here</span></div>}
@@ -159,7 +210,13 @@ function SignerBlock({ index, signer, onChange, onRemove, canRemove }) {
         ))}
       </div>
 
-      <SignaturePad label="Electronic Signature *" onChange={handleSig} />
+      <SignaturePad label="Electronic Signature *" onChange={handleSig}
+        onSaveToDB={(data) => saveSignatureToDB({
+          signerRole: 'receiving',
+          company: signer.company, name: signer.name, title: signer.title,
+          signatureData: data, signedAt: signer.signed_at
+        })}
+      />
 
       {signer.signed_at && (
         <p className="text-xs text-slate-500">
@@ -429,7 +486,14 @@ export default function NDAPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            <SignaturePad label="Sign here (Manuel Stagg)" onChange={setDraftSig} />
+            <SignaturePad label="Sign here (Manuel Stagg)" onChange={setDraftSig}
+              onSaveToDB={(data) => saveSignatureToDB({
+                signerRole: 'disclosing',
+                company: DISCLOSING.company, name: DISCLOSING.name, title: DISCLOSING.title,
+                signatureData: data, signedAt: new Date().toISOString()
+              })}
+              saveLabel="Save to Database"
+            />
             <button
               type="button"
               onClick={saveDisclosingSignature}

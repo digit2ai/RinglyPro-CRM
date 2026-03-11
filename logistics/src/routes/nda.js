@@ -123,6 +123,49 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// POST /api/v1/nda/signatures — Save an individual signature to the database
+router.post('/signatures', async (req, res) => {
+  try {
+    const { signer_role, company, name, title, signature_data, signed_at } = req.body;
+    if (!signature_data) return res.status(400).json({ success: false, error: 'signature_data is required' });
+
+    const { sequelize } = req.models;
+
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS logistics_nda_signatures (
+        id SERIAL PRIMARY KEY,
+        signer_role VARCHAR(50) DEFAULT 'receiving',
+        company VARCHAR(255),
+        name VARCHAR(255),
+        title VARCHAR(255),
+        signature_data TEXT NOT NULL,
+        signed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    const [result] = await sequelize.query(`
+      INSERT INTO logistics_nda_signatures (signer_role, company, name, title, signature_data, signed_at)
+      VALUES (:signer_role, :company, :name, :title, :signature_data, :signed_at)
+      RETURNING id, signer_role, company, name, title, signed_at
+    `, {
+      replacements: {
+        signer_role: signer_role || 'receiving',
+        company: company || null,
+        name: name || null,
+        title: title || null,
+        signature_data,
+        signed_at: signed_at || new Date().toISOString()
+      }
+    });
+
+    res.status(201).json({ success: true, data: result[0] });
+  } catch (error) {
+    console.error('NDA signature save error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // DELETE /api/v1/nda/:id — Delete an NDA record (e.g. test cleanup)
 router.delete('/:id', async (req, res) => {
   try {
