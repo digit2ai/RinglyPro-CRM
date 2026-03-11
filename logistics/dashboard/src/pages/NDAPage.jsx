@@ -246,6 +246,7 @@ export default function NDAPage() {
   const [ndaId, setNdaId] = useState(null)
   const [error, setError] = useState(null)
   const [showFull, setShowFull] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const updateSigner = (idx, field, value) => {
     setSigners(prev => {
@@ -307,6 +308,20 @@ export default function NDAPage() {
     setError(null)
   }
 
+  const deleteTestRecord = async () => {
+    if (!ndaId) return resetForm()
+    setDeleting(true)
+    try {
+      await fetch(`/pinaxis/api/v1/nda/${ndaId}`, { method: 'DELETE' })
+      clearDisclosingSignature()
+      resetForm()
+    } catch {
+      resetForm()
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   // ── Success Screen ───────────────────────────────────────────────────────────
   if (submitted) {
     return (
@@ -340,7 +355,21 @@ export default function NDAPage() {
             </div>
           </div>
         </div>
-        <button onClick={resetForm} className="btn-secondary">New NDA</button>
+        <div className="flex items-center justify-center gap-3 flex-wrap">
+          <button onClick={resetForm} className="btn-secondary">New NDA</button>
+          <button
+            onClick={deleteTestRecord}
+            disabled={deleting}
+            className="flex items-center gap-2 text-sm px-4 py-2 rounded-lg border border-red-500/40 text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+          >
+            {deleting ? (
+              <><svg className="animate-spin w-4 h-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Deleting...</>
+            ) : (
+              <><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>Delete test record &amp; clear signature</>
+            )}
+          </button>
+        </div>
+        <p className="text-xs text-slate-600 mt-3">Delete removes this NDA from the database and clears your saved signature — use after testing.</p>
       </div>
     )
   }

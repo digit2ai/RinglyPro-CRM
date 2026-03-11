@@ -123,4 +123,19 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// DELETE /api/v1/nda/:id — Delete an NDA record (e.g. test cleanup)
+router.delete('/:id', async (req, res) => {
+  try {
+    const { sequelize } = req.models;
+    const [rows] = await sequelize.query(
+      `DELETE FROM logistics_ndas WHERE id = :id RETURNING id`,
+      { replacements: { id: req.params.id } }
+    );
+    if (!rows.length) return res.status(404).json({ success: false, error: 'NDA not found' });
+    res.json({ success: true, deleted_id: rows[0].id });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 module.exports = router;
