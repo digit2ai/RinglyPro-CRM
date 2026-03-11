@@ -139,15 +139,24 @@ export default function ReportPage() {
       description: 'SKU dimensional analysis showing fit percentages across standard bin sizes.'
     },
     {
-      title: 'Product Recommendations',
+      title: 'Concept Recommendations',
       icon: (
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
         </svg>
       ),
       description: topProduct
-        ? `Top pick: ${topProduct.name || topProduct.product_name} (${topProduct.fit_score || topProduct.score}% match).`
+        ? `Top concept: ${topProduct.name || topProduct.product_name} (${topProduct.fit_score || topProduct.score}% match).`
         : 'RinglyPro Logistics product matching results with fit scores and reasoning.'
+    },
+    {
+      title: 'Simulation Package',
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6" />
+        </svg>
+      ),
+      description: 'Throughput stress tests (baseline, +30% growth, peak day), bottleneck analysis, and sensitivity ranges.'
     },
     {
       title: 'NDA',

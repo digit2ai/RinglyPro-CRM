@@ -3,6 +3,7 @@ import { Routes, Route, NavLink, useLocation } from 'react-router-dom'
 import UploadPage from './pages/UploadPage'
 import AnalysisPage from './pages/AnalysisPage'
 import ProductsPage from './pages/ProductsPage'
+import SimulationPage from './pages/SimulationPage'
 import BenefitsPage from './pages/BenefitsPage'
 import ReportPage from './pages/ReportPage'
 import ApiIntegrationPage from './pages/ApiIntegrationPage'
@@ -13,11 +14,12 @@ import NDAPage from './pages/NDAPage'
 import StepIndicator from './components/StepIndicator'
 
 const steps = [
-  { path: '/', label: 'Upload', icon: UploadIcon },
+  { path: '/', label: 'Data Intake', icon: UploadIcon },
   { path: '/analysis', label: 'Analysis', icon: ChartIcon },
-  { path: '/products', label: 'Products', icon: BoxIcon },
-  { path: '/benefits', label: 'ROI Projection', icon: TrendingUpIcon },
-  { path: '/report', label: 'Report', icon: FileIcon },
+  { path: '/products', label: 'Concepts', icon: BoxIcon },
+  { path: '/simulation', label: 'Simulation', icon: SimulationIcon },
+  { path: '/benefits', label: 'Commercial', icon: TrendingUpIcon },
+  { path: '/report', label: 'Proposal', icon: FileIcon },
   { path: '/api-integration', label: 'API Integration', icon: PlugIcon },
   { path: '/oee-dashboard', label: 'OEE Dashboard', icon: GaugeIcon, noProject: true },
   { path: '/user-guide', label: 'User Guide', icon: BookIcon, noProject: true },
@@ -81,6 +83,14 @@ function ArchitectureIcon({ className }) {
   )
 }
 
+function SimulationIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6" />
+    </svg>
+  )
+}
+
 function PulseIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -136,20 +146,21 @@ export default function App({ onLogout, userEmail }) {
 
   // Extract projectId from current URL for sidebar navigation
   const getProjectId = () => {
-    const match = location.pathname.match(/\/(analysis|products|benefits|report|api-integration|observability|user-guide|nda)\/(\d+)/)
+    const match = location.pathname.match(/\/(analysis|products|simulation|benefits|report|api-integration|observability|user-guide|nda)\/(\d+)/)
     return match ? match[2] : null
   }
 
   const getCurrentStep = () => {
     if (location.pathname.startsWith('/analysis')) return 1
     if (location.pathname.startsWith('/products')) return 2
-    if (location.pathname.startsWith('/benefits')) return 3
-    if (location.pathname.startsWith('/report')) return 4
-    if (location.pathname.startsWith('/api-integration')) return 5
-    if (location.pathname.startsWith('/oee-dashboard')) return 6
-    if (location.pathname.startsWith('/observability')) return 7
-    if (location.pathname.startsWith('/user-guide')) return 7
-    if (location.pathname.startsWith('/nda')) return 9
+    if (location.pathname.startsWith('/simulation')) return 3
+    if (location.pathname.startsWith('/benefits')) return 4
+    if (location.pathname.startsWith('/report')) return 5
+    if (location.pathname.startsWith('/api-integration')) return 6
+    if (location.pathname.startsWith('/oee-dashboard')) return 7
+    if (location.pathname.startsWith('/observability')) return 8
+    if (location.pathname.startsWith('/user-guide')) return 8
+    if (location.pathname.startsWith('/nda')) return 10
     return 0
   }
 
@@ -287,6 +298,7 @@ export default function App({ onLogout, userEmail }) {
             <Route path="/" element={<UploadPage />} />
             <Route path="/analysis/:projectId" element={<AnalysisPage />} />
             <Route path="/products/:projectId" element={<ProductsPage />} />
+            <Route path="/simulation/:projectId" element={<SimulationPage />} />
             <Route path="/benefits/:projectId" element={<BenefitsPage />} />
             <Route path="/report/:projectId" element={<ReportPage />} />
             <Route path="/api-integration/:projectId" element={<ApiIntegrationPage />} />

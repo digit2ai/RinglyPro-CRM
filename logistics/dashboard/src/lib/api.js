@@ -237,3 +237,23 @@ export async function getSystemArchitecture(projectId) {
   const all = await getAnalysisAll(projectId)
   return all?.system_architecture || null
 }
+
+// ============================================================================
+// SIMULATION AGENT
+// ============================================================================
+
+/**
+ * Run simulation scenarios for a project
+ * Backend: POST /simulation/:projectId/run
+ */
+export async function runSimulation(projectId) {
+  return request(`/simulation/${projectId}/run`, { method: 'POST' })
+}
+
+/**
+ * Get stored simulation package
+ * Backend: GET /simulation/:projectId
+ */
+export async function getSimulation(projectId) {
+  return request(`/simulation/${projectId}`)
+}

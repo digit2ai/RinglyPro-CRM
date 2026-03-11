@@ -161,8 +161,10 @@ export default function ABCLorenzCurve({ data = {} }) {
                   const skuCount = cls.sku_count || cls.skus || cls.count || 0
                   const skuPct = cls.sku_pct || cls.items_pct || 0
                   const volumePct = cls.volume_pct || cls.activity_pct || 0
+                  const thresholdLabel = cls.threshold_label || null
                   const barColor = className === 'A' ? '#22c55e' :
-                                   className === 'B' ? '#eab308' : '#6b7280'
+                                   className === 'B' ? '#eab308' :
+                                   className === 'D' ? '#ef4444' : '#6b7280'
 
                   return (
                     <tr key={index} className="border-b border-slate-700/50 hover:bg-slate-700/30">
@@ -170,13 +172,17 @@ export default function ABCLorenzCurve({ data = {} }) {
                         <span className={`inline-flex items-center justify-center w-7 h-7 rounded-md font-bold text-sm ${
                           className === 'A' ? 'bg-emerald-500/20 text-emerald-400' :
                           className === 'B' ? 'bg-amber-500/20 text-amber-400' :
+                          className === 'D' ? 'bg-red-500/20 text-red-400' :
                           'bg-slate-600/30 text-slate-400'
                         }`}>
                           {className}
                         </span>
                       </td>
                       <td className="py-2.5 px-3 text-right text-slate-200">{skuCount.toLocaleString()}</td>
-                      <td className="py-2.5 px-3 text-right text-slate-200">{skuPct.toFixed(1)}%</td>
+                      <td className="py-2.5 px-3 text-right">
+                        <span className="text-slate-200">{skuPct.toFixed(1)}%</span>
+                        {thresholdLabel && <p className="text-xs text-slate-500 mt-0.5">{thresholdLabel}</p>}
+                      </td>
                       <td className="py-2.5 px-3 text-right text-slate-200">{volumePct.toFixed(1)}%</td>
                       <td className="py-2.5 px-3">
                         <div className="w-full bg-slate-700 rounded-full h-2">

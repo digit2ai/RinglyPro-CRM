@@ -435,26 +435,62 @@ async function computeABCClassification(models, projectId) {
   const classB = skuData.filter(s => s.class === 'B');
   const classC = skuData.filter(s => s.class === 'C');
 
+  // D-class: SKUs in item_master with ZERO outbound activity (dead stock)
+  const [deadSkuResult] = await seq.query(`
+    SELECT COUNT(*) as count
+    FROM logistics_item_master im
+    WHERE im.project_id = :projectId
+    AND NOT EXISTS (
+      SELECT 1 FROM logistics_goods_out_data gout
+      WHERE gout.project_id = :projectId AND gout.sku = im.sku
+    )
+  `, { replacements: { projectId } });
+  const deadSkuCount = parseInt(deadSkuResult[0]?.count || 0);
+
+  // Total includes dead stock for accurate percentages
+  const totalSkusIncludingDead = n + deadSkuCount;
+
+  // Compute boundary thresholds from actual data (for customer-facing display)
+  const sortedPicksDesc = skuPicks.map(r => parseFloat(r.total_picks));
+  const aThreshold = classA.length > 0 ? sortedPicksDesc[classA.length - 1] : 0;
+  const bThreshold = classB.length > 0 ? sortedPicksDesc[classA.length + classB.length - 1] : 0;
+
   return {
     total_skus: n,
+    total_skus_including_dead: totalSkusIncludingDead,
+    dead_stock_count: deadSkuCount,
     total_picks: totalPicks,
     gini,
     lorenz_curve: lorenzCurve,
+    class_thresholds: {
+      a_min_picks: Math.round(aThreshold),
+      b_min_picks: Math.round(bThreshold),
+      c_min_picks: 1
+    },
     classes: {
       A: {
         count: classA.length,
-        pct: Math.round((classA.length / n) * 100 * 10) / 10,
-        volume_pct: 80
+        pct: Math.round((classA.length / totalSkusIncludingDead) * 100 * 10) / 10,
+        volume_pct: 80,
+        threshold_label: aThreshold > 0 ? `≥ ${Math.round(aThreshold)} orderlines` : null
       },
       B: {
         count: classB.length,
-        pct: Math.round((classB.length / n) * 100 * 10) / 10,
-        volume_pct: 15
+        pct: Math.round((classB.length / totalSkusIncludingDead) * 100 * 10) / 10,
+        volume_pct: 15,
+        threshold_label: (bThreshold > 0 && aThreshold > 0) ? `${Math.round(bThreshold)} – ${Math.round(aThreshold - 1)} orderlines` : null
       },
       C: {
         count: classC.length,
-        pct: Math.round((classC.length / n) * 100 * 10) / 10,
-        volume_pct: 5
+        pct: Math.round((classC.length / totalSkusIncludingDead) * 100 * 10) / 10,
+        volume_pct: 5,
+        threshold_label: `1 – ${Math.round(bThreshold - 1)} orderlines`
+      },
+      D: {
+        count: deadSkuCount,
+        pct: Math.round((deadSkuCount / totalSkusIncludingDead) * 100 * 10) / 10,
+        volume_pct: 0,
+        threshold_label: '0 orderlines — dead stock'
       }
     },
     top_skus: skuData.slice(0, 20)
