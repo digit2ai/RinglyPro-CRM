@@ -412,13 +412,13 @@ async function computeABCClassification(models, projectId) {
   // Build display curve (descending — most active SKUs first)
   // Produces the Pareto/ABC shape: steep rise then flattens toward 100%
   // This matches industry standard: top ~20% of SKUs → ~80% of volume
-  let cumVolumeDesc = 0;
+  let cumPareto = 0;
   const lorenzCurve = [{ x: 0, y: 0 }];
   for (let i = 0; i < n; i++) {
-    cumVolumeDesc += parseFloat(skuPicks[i].total_picks); // already sorted DESC
+    cumPareto += parseFloat(skuPicks[i].total_picks); // already sorted DESC
     lorenzCurve.push({
       x: Math.round(((i + 1) / n) * 100 * 10) / 10,
-      y: Math.round((cumVolumeDesc / totalPicks) * 100 * 10) / 10
+      y: Math.round((cumPareto / totalPicks) * 100 * 10) / 10
     });
   }
 
