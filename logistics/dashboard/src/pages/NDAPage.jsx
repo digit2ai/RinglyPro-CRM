@@ -14,7 +14,7 @@ const NDA_FULL_TEXT = `NON-DISCLOSURE AGREEMENT
 This Non-Disclosure Agreement ("Agreement") is entered into as of the Effective Date signed below between:
 
   Disclosing Party: DIGIT2AI LLC (Florida, USA)
-  Receiving Party:  As identified below; signing location geo-stamped at time of execution
+  Receiving Party:  As identified and signed below
 
 1. PURPOSE
 The Receiving Party wishes to receive certain confidential information from the Disclosing Party for the purpose specified herein, related to warehouse analytics, logistics platform, AI systems, and related services (the "Purpose").
@@ -138,46 +138,9 @@ function SignaturePad({ label, locked, lockedDataUrl, onChange }) {
   )
 }
 
-// ── Geo Capture ────────────────────────────────────────────────────────────────
-async function captureGeo() {
-  return new Promise((resolve) => {
-    if (!navigator.geolocation) return resolve(null)
-    navigator.geolocation.getCurrentPosition(
-      async ({ coords: { latitude: lat, longitude: lon } }) => {
-        try {
-          const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`, { headers: { 'Accept-Language': 'en' } })
-          const d = await r.json(); const a = d.address || {}
-          const city = a.city || a.town || a.village || a.county || ''
-          const region = a.state || a.region || ''
-          const country = a.country || ''
-          resolve({ lat, lon, label: [city, region, country].filter(Boolean).join(', ') })
-        } catch { resolve({ lat, lon, label: `${lat.toFixed(4)}, ${lon.toFixed(4)}` }) }
-      },
-      () => resolve(null),
-      { timeout: 6000 }
-    )
-  })
-}
-
-function GeoStamp({ geo, loading }) {
-  if (loading) return <span className="text-xs text-slate-400 flex items-center gap-1"><svg className="animate-spin w-3 h-3" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Detecting location...</span>
-  if (!geo) return <span className="text-xs text-slate-500 italic">Location not captured</span>
-  return <span className="text-xs text-emerald-400 flex items-center gap-1"><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>{geo.label}</span>
-}
-
 // ── Signer Block ───────────────────────────────────────────────────────────────
 function SignerBlock({ index, signer, onChange, onRemove, canRemove }) {
-  const [geoLoading, setGeoLoading] = useState(false)
-
-  const handleSig = async (data) => {
-    onChange(index, 'signature', data)
-    if (data && !signer.geo) {
-      setGeoLoading(true)
-      const geo = await captureGeo()
-      onChange(index, 'geo', geo)
-      setGeoLoading(false)
-    }
-  }
+  const handleSig = (data) => onChange(index, 'signature', data)
 
   return (
     <div className="card border border-slate-600 space-y-4">
@@ -199,10 +162,9 @@ function SignerBlock({ index, signer, onChange, onRemove, canRemove }) {
       <SignaturePad label="Electronic Signature *" onChange={handleSig} />
 
       {signer.signed_at && (
-        <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
-          <span>Signed: <span className="text-slate-300">{new Date(signer.signed_at).toLocaleString()}</span></span>
-          <GeoStamp geo={signer.geo} loading={geoLoading} />
-        </div>
+        <p className="text-xs text-slate-500">
+          Signed: <span className="text-slate-300">{new Date(signer.signed_at).toLocaleString()}</span>
+        </p>
       )}
     </div>
   )
@@ -240,7 +202,7 @@ export default function NDAPage() {
 
   // ── Phase 2: Receiving party ─────────────────────────────────────────────────
   const [purpose, setPurpose] = useState('')
-  const [signers, setSigners] = useState([{ company: '', name: '', title: '', signature: null, signed_at: null, geo: null }])
+  const [signers, setSigners] = useState([{ company: '', name: '', title: '', signature: null, signed_at: null }])
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [ndaId, setNdaId] = useState(null)
@@ -301,7 +263,7 @@ export default function NDAPage() {
   }, [allSignersReady, signers, submitting, submitted, doSubmit])
 
   const resetForm = () => {
-    setSigners([{ company: '', name: '', title: '', signature: null, signed_at: null, geo: null }])
+    setSigners([{ company: '', name: '', title: '', signature: null, signed_at: null }])
     setPurpose('')
     setSubmitted(false)
     setNdaId(null)
@@ -349,7 +311,6 @@ export default function NDAPage() {
                 <div key={i} className="mb-1">
                   <p className="text-slate-200">{s.name}</p>
                   <p className="text-xs text-slate-400">{s.title} · {s.company}</p>
-                  {s.geo && <p className="text-xs text-emerald-400">{s.geo.label}</p>}
                 </div>
               ))}
             </div>
@@ -500,7 +461,7 @@ export default function NDAPage() {
         ))}
 
         <button type="button"
-          onClick={() => setSigners(p => [...p, { company: '', name: '', title: '', signature: null, signed_at: null, geo: null }])}
+          onClick={() => setSigners(p => [...p, { company: '', name: '', title: '', signature: null, signed_at: null }])}
           className="btn-secondary flex items-center gap-2 text-sm">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
           Add Another Signer
@@ -518,7 +479,7 @@ export default function NDAPage() {
       {/* Info footer */}
       <div className="card bg-slate-900/40 border border-slate-700">
         <p className="text-xs text-slate-500 leading-relaxed">
-          Electronic signatures are legally binding under the E-SIGN Act and UETA. The NDA is recorded automatically the moment all required fields and signatures are complete — no submit button required. Signing location is geo-stamped at time of signature.
+          Electronic signatures are legally binding under the E-SIGN Act and UETA. The NDA is recorded automatically the moment all required fields and signatures are complete — no submit button required.
         </p>
       </div>
     </div>
