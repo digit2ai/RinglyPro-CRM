@@ -138,6 +138,7 @@ try {
   const ingestRoutes = require('./routes/ingest');
   const voiceAgentRoutes = require('./routes/voice-agent');
   const telemetryRoutes = require('./routes/telemetry');
+  const ndaRoutes = require('./routes/nda');
 
   // Health check
   app.use(`${BASE_PATH}/health`, healthRoutes);
@@ -153,6 +154,7 @@ try {
   app.use(`${BASE_PATH}/api/v1/ingest`, ingestRoutes);
   app.use(`${BASE_PATH}/api/v1/voice`, voiceAgentRoutes);
   app.use(`${BASE_PATH}/api/v1/telemetry`, telemetryRoutes);
+  app.use(`${BASE_PATH}/api/v1/nda`, ndaRoutes);
 
   routesLoaded = true;
   console.log('✅ LOGISTICS routes loaded successfully');
