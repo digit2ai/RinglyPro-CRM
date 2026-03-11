@@ -1,10 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 
 const DISCLOSING = {
   company: 'DIGIT2AI LLC',
   name: 'Manuel Stagg',
   title: 'CEO'
 }
+
+const LS_SIG_KEY = 'nda_disclosing_signature'
+const LS_SIG_AT_KEY = 'nda_disclosing_signed_at'
 
 const NDA_FULL_TEXT = `NON-DISCLOSURE AGREEMENT
 
@@ -58,161 +61,97 @@ This Agreement shall be governed by and construed in accordance with the laws of
 This Agreement constitutes the entire agreement between the parties with respect to its subject matter and supersedes all prior discussions relating to confidentiality. This Agreement is executed electronically. Electronic signatures captured herein are legally binding under the E-SIGN Act and UETA and constitute full acceptance of all terms above.`
 
 // ── Signature Pad ─────────────────────────────────────────────────────────────
-function SignaturePad({ label, locked, lockedValue, onChange }) {
+function SignaturePad({ label, locked, lockedDataUrl, onChange }) {
   const canvasRef = useRef(null)
   const drawing = useRef(false)
   const lastPos = useRef(null)
   const [signed, setSigned] = useState(false)
 
+  // Paint a saved dataUrl onto the canvas (locked pre-sign)
   useEffect(() => {
-    if (locked && lockedValue) {
-      const canvas = canvasRef.current
-      const img = new Image()
-      img.onload = () => {
-        const ctx = canvas.getContext('2d')
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
-        ctx.drawImage(img, 0, 0)
-      }
-      img.src = lockedValue
+    if (!lockedDataUrl) return
+    const canvas = canvasRef.current
+    const img = new Image()
+    img.onload = () => {
+      const ctx = canvas.getContext('2d')
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      ctx.drawImage(img, 0, 0)
       setSigned(true)
     }
-  }, [locked, lockedValue])
+    img.src = lockedDataUrl
+  }, [lockedDataUrl])
 
   const getPos = (e, canvas) => {
     const rect = canvas.getBoundingClientRect()
-    const scaleX = canvas.width / rect.width
-    const scaleY = canvas.height / rect.height
-    if (e.touches) {
-      return {
-        x: (e.touches[0].clientX - rect.left) * scaleX,
-        y: (e.touches[0].clientY - rect.top) * scaleY
-      }
-    }
-    return {
-      x: (e.clientX - rect.left) * scaleX,
-      y: (e.clientY - rect.top) * scaleY
-    }
+    const sx = canvas.width / rect.width
+    const sy = canvas.height / rect.height
+    const src = e.touches ? e.touches[0] : e
+    return { x: (src.clientX - rect.left) * sx, y: (src.clientY - rect.top) * sy }
   }
 
-  const startDraw = (e) => {
-    if (locked) return
-    e.preventDefault()
-    drawing.current = true
-    const canvas = canvasRef.current
-    lastPos.current = getPos(e, canvas)
-  }
-
+  const startDraw = (e) => { if (locked) return; e.preventDefault(); drawing.current = true; lastPos.current = getPos(e, canvasRef.current) }
   const draw = (e) => {
-    if (!drawing.current || locked) return
-    e.preventDefault()
+    if (!drawing.current || locked) return; e.preventDefault()
     const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')
     const pos = getPos(e, canvas)
-    ctx.beginPath()
-    ctx.moveTo(lastPos.current.x, lastPos.current.y)
-    ctx.lineTo(pos.x, pos.y)
-    ctx.strokeStyle = '#1e293b'
-    ctx.lineWidth = 2.5
-    ctx.lineCap = 'round'
-    ctx.lineJoin = 'round'
-    ctx.stroke()
+    ctx.beginPath(); ctx.moveTo(lastPos.current.x, lastPos.current.y)
+    ctx.lineTo(pos.x, pos.y); ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 2.5
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke()
     lastPos.current = pos
   }
-
-  const stopDraw = (e) => {
-    if (!drawing.current) return
-    drawing.current = false
-    setSigned(true)
-    const data = canvasRef.current.toDataURL()
-    onChange(data)
+  const stopDraw = () => {
+    if (!drawing.current) return; drawing.current = false; setSigned(true)
+    onChange && onChange(canvasRef.current.toDataURL())
   }
-
   const clear = () => {
     if (locked) return
-    const canvas = canvasRef.current
-    const ctx = canvas.getContext('2d')
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-    setSigned(false)
-    onChange(null)
+    const ctx = canvasRef.current.getContext('2d')
+    ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height)
+    setSigned(false); onChange && onChange(null)
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-1.5">
       <label className="block text-sm font-medium text-slate-300">{label}</label>
       <div className={`relative border-2 rounded-xl overflow-hidden bg-white ${
-        locked ? 'border-slate-300 opacity-80' : signed ? 'border-emerald-400' : 'border-slate-400'
+        locked ? 'border-blue-400/60' : signed ? 'border-emerald-400' : 'border-slate-400'
       }`}>
-        <canvas
-          ref={canvasRef}
-          width={520}
-          height={130}
-          className="w-full cursor-crosshair touch-none"
+        <canvas ref={canvasRef} width={520} height={130}
+          className={`w-full touch-none ${locked ? 'cursor-default' : 'cursor-crosshair'}`}
           style={{ display: 'block' }}
-          onMouseDown={startDraw}
-          onMouseMove={draw}
-          onMouseUp={stopDraw}
-          onMouseLeave={stopDraw}
-          onTouchStart={startDraw}
-          onTouchMove={draw}
-          onTouchEnd={stopDraw}
+          onMouseDown={startDraw} onMouseMove={draw} onMouseUp={stopDraw} onMouseLeave={stopDraw}
+          onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={stopDraw}
         />
         {!locked && (
           <div className="absolute bottom-2 right-2 flex items-center gap-2">
-            {signed && (
-              <span className="text-xs text-emerald-600 font-medium flex items-center gap-1">
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                </svg>
-                Signed
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={clear}
-              className="text-xs text-slate-400 hover:text-red-400 px-2 py-1 rounded border border-slate-200 bg-white/80"
-            >
-              Clear
-            </button>
+            {signed && <span className="text-xs text-emerald-600 font-medium flex items-center gap-1">
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>Signed
+            </span>}
+            <button type="button" onClick={clear} className="text-xs text-slate-400 hover:text-red-400 px-2 py-1 rounded border border-slate-200 bg-white/80">Clear</button>
           </div>
         )}
-        {!signed && !locked && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <span className="text-slate-300 text-sm italic">Sign here</span>
-          </div>
-        )}
-        {locked && (
-          <div className="absolute top-2 right-2">
-            <span className="text-xs text-emerald-600 font-medium bg-white/80 px-2 py-0.5 rounded">
-              Pre-signed
-            </span>
-          </div>
-        )}
+        {!signed && !locked && <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><span className="text-slate-300 text-sm italic">Sign here</span></div>}
+        {locked && <div className="absolute top-2 left-2"><span className="text-xs text-blue-600 font-medium bg-white/90 px-2 py-0.5 rounded border border-blue-200">Saved ✓</span></div>}
       </div>
     </div>
   )
 }
 
-// ── Geo Stamp ─────────────────────────────────────────────────────────────────
+// ── Geo Capture ────────────────────────────────────────────────────────────────
 async function captureGeo() {
   return new Promise((resolve) => {
     if (!navigator.geolocation) return resolve(null)
     navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const { latitude: lat, longitude: lon } = pos.coords
+      async ({ coords: { latitude: lat, longitude: lon } }) => {
         try {
-          const r = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
-            { headers: { 'Accept-Language': 'en' } }
-          )
-          const d = await r.json()
-          const a = d.address || {}
+          const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`, { headers: { 'Accept-Language': 'en' } })
+          const d = await r.json(); const a = d.address || {}
           const city = a.city || a.town || a.village || a.county || ''
           const region = a.state || a.region || ''
           const country = a.country || ''
           resolve({ lat, lon, label: [city, region, country].filter(Boolean).join(', ') })
-        } catch {
-          resolve({ lat, lon, label: `${lat.toFixed(4)}, ${lon.toFixed(4)}` })
-        }
+        } catch { resolve({ lat, lon, label: `${lat.toFixed(4)}, ${lon.toFixed(4)}` }) }
       },
       () => resolve(null),
       { timeout: 6000 }
@@ -220,28 +159,10 @@ async function captureGeo() {
   })
 }
 
-function GeoStampDisplay({ geo, loading }) {
-  if (loading) return (
-    <span className="text-xs text-slate-400 flex items-center gap-1">
-      <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-      </svg>
-      Detecting location...
-    </span>
-  )
-  if (!geo) return (
-    <span className="text-xs text-slate-500 italic">Location not captured</span>
-  )
-  return (
-    <span className="text-xs text-emerald-400 flex items-center gap-1">
-      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-      </svg>
-      {geo.label}
-    </span>
-  )
+function GeoStamp({ geo, loading }) {
+  if (loading) return <span className="text-xs text-slate-400 flex items-center gap-1"><svg className="animate-spin w-3 h-3" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Detecting location...</span>
+  if (!geo) return <span className="text-xs text-slate-500 italic">Location not captured</span>
+  return <span className="text-xs text-emerald-400 flex items-center gap-1"><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>{geo.label}</span>
 }
 
 // ── Signer Block ───────────────────────────────────────────────────────────────
@@ -261,65 +182,26 @@ function SignerBlock({ index, signer, onChange, onRemove, canRemove }) {
   return (
     <div className="card border border-slate-600 space-y-4">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-semibold text-white">
-          {index === 0 ? 'Primary Signer' : `Additional Signer ${index + 1}`}
-        </h4>
-        {canRemove && (
-          <button
-            type="button"
-            onClick={() => onRemove(index)}
-            className="text-xs text-red-400 hover:text-red-300"
-          >
-            Remove
-          </button>
-        )}
+        <h4 className="text-sm font-semibold text-white">{index === 0 ? 'Primary Signer' : `Additional Signer ${index + 1}`}</h4>
+        {canRemove && <button type="button" onClick={() => onRemove(index)} className="text-xs text-red-400 hover:text-red-300">Remove</button>}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div>
-          <label className="block text-xs font-medium text-slate-400 mb-1">Company / Organization *</label>
-          <input
-            type="text"
-            className="w-full rounded-lg px-3 py-2 text-sm font-medium text-black bg-white border border-slate-300 focus:outline-none focus:border-blue-500"
-            placeholder="Company name"
-            value={signer.company}
-            onChange={e => onChange(index, 'company', e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-slate-400 mb-1">Full Name *</label>
-          <input
-            type="text"
-            className="w-full rounded-lg px-3 py-2 text-sm font-medium text-black bg-white border border-slate-300 focus:outline-none focus:border-blue-500"
-            placeholder="Full name"
-            value={signer.name}
-            onChange={e => onChange(index, 'name', e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-slate-400 mb-1">Title *</label>
-          <input
-            type="text"
-            className="w-full rounded-lg px-3 py-2 text-sm font-medium text-black bg-white border border-slate-300 focus:outline-none focus:border-blue-500"
-            placeholder="e.g. CEO, Director, VP Sales"
-            value={signer.title}
-            onChange={e => onChange(index, 'title', e.target.value)}
-            required
-          />
-        </div>
+        {[['company', 'Company / Organization *', 'Company name', true], ['name', 'Full Name *', 'Full name', true], ['title', 'Title *', 'e.g. CEO, Director', true]].map(([field, lbl, ph, req]) => (
+          <div key={field}>
+            <label className="block text-xs font-medium text-slate-400 mb-1">{lbl}</label>
+            <input type="text" className="w-full rounded-lg px-3 py-2 text-sm font-medium text-black bg-white border border-slate-300 focus:outline-none focus:border-blue-500"
+              placeholder={ph} value={signer[field] || ''} onChange={e => onChange(index, field, e.target.value)} required={req} />
+          </div>
+        ))}
       </div>
 
-      <SignaturePad
-        label="Electronic Signature *"
-        onChange={handleSig}
-      />
+      <SignaturePad label="Electronic Signature *" onChange={handleSig} />
 
       {signer.signed_at && (
         <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
           <span>Signed: <span className="text-slate-300">{new Date(signer.signed_at).toLocaleString()}</span></span>
-          <GeoStampDisplay geo={signer.geo} loading={geoLoading} />
+          <GeoStamp geo={signer.geo} loading={geoLoading} />
         </div>
       )}
     </div>
@@ -328,14 +210,37 @@ function SignerBlock({ index, signer, onChange, onRemove, canRemove }) {
 
 // ── Main Page ──────────────────────────────────────────────────────────────────
 export default function NDAPage() {
-  const disclosingSigned_at = useRef(new Date().toISOString())
-  const [disclosingSignature, setDisclosingSignature] = useState(null)
+  // ── Phase 1: Disclosing pre-signature (persisted in localStorage) ────────────
+  const [savedSig, setSavedSig] = useState(() => localStorage.getItem(LS_SIG_KEY) || null)
+  const [savedSigAt, setSavedSigAt] = useState(() => localStorage.getItem(LS_SIG_AT_KEY) || null)
+  const [draftSig, setDraftSig] = useState(null)
+  const [savingDisc, setSavingDisc] = useState(false)
+  const [discSaved, setDiscSaved] = useState(false)
+
+  const saveDisclosingSignature = () => {
+    if (!draftSig) return
+    setSavingDisc(true)
+    const now = new Date().toISOString()
+    localStorage.setItem(LS_SIG_KEY, draftSig)
+    localStorage.setItem(LS_SIG_AT_KEY, now)
+    setSavedSig(draftSig)
+    setSavedSigAt(now)
+    setSavingDisc(false)
+    setDiscSaved(true)
+    setTimeout(() => setDiscSaved(false), 3000)
+  }
+
+  const clearDisclosingSignature = () => {
+    localStorage.removeItem(LS_SIG_KEY)
+    localStorage.removeItem(LS_SIG_AT_KEY)
+    setSavedSig(null)
+    setSavedSigAt(null)
+    setDraftSig(null)
+  }
+
+  // ── Phase 2: Receiving party ─────────────────────────────────────────────────
   const [purpose, setPurpose] = useState('')
-
-  const [signers, setSigners] = useState([
-    { company: '', name: '', title: '', signature: null, signed_at: null }
-  ])
-
+  const [signers, setSigners] = useState([{ company: '', name: '', title: '', signature: null, signed_at: null, geo: null }])
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [ndaId, setNdaId] = useState(null)
@@ -346,34 +251,18 @@ export default function NDAPage() {
     setSigners(prev => {
       const next = [...prev]
       next[idx] = { ...next[idx], [field]: value }
-      // Auto-stamp time when signature is added
-      if (field === 'signature' && value) {
-        next[idx].signed_at = new Date().toISOString()
-      }
+      if (field === 'signature' && value) next[idx].signed_at = new Date().toISOString()
       return next
     })
   }
 
-  const addSigner = () => {
-    setSigners(prev => [...prev, { company: '', name: '', title: '', signature: null, signed_at: null }])
-  }
+  // Auto-submit when all signers have complete data
+  const allSignersReady = signers.length > 0 && signers.every(s =>
+    s.company?.trim() && s.name?.trim() && s.title?.trim() && s.signature
+  )
 
-  const removeSigner = (idx) => {
-    setSigners(prev => prev.filter((_, i) => i !== idx))
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const doSubmit = useCallback(async (currentSigners) => {
     setError(null)
-
-    // Validate
-    for (let i = 0; i < signers.length; i++) {
-      if (!signers[i].company.trim()) return setError(`Signer ${i + 1}: Company is required`)
-      if (!signers[i].name.trim()) return setError(`Signer ${i + 1}: Name is required`)
-      if (!signers[i].title.trim()) return setError(`Signer ${i + 1}: Title is required`)
-      if (!signers[i].signature) return setError(`Signer ${i + 1}: Signature is required`)
-    }
-
     setSubmitting(true)
     try {
       const res = await fetch('/pinaxis/api/v1/nda', {
@@ -383,20 +272,15 @@ export default function NDAPage() {
           disclosing_company: DISCLOSING.company,
           disclosing_name: DISCLOSING.name,
           disclosing_title: DISCLOSING.title,
-          disclosing_signature: disclosingSignature,
-          disclosing_signed_at: disclosingSigned_at.current,
-          receiving_signers: signers.map(s => ({
-            ...s,
-            signed_at: s.signed_at || new Date().toISOString()
-          })),
+          disclosing_signature: savedSig,
+          disclosing_signed_at: savedSigAt || new Date().toISOString(),
+          receiving_signers: currentSigners.map(s => ({ ...s, signed_at: s.signed_at || new Date().toISOString() })),
           nda_text: NDA_FULL_TEXT,
           purpose: purpose || 'Warehouse analytics and logistics platform evaluation'
         })
       })
-
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || 'Failed to submit NDA')
-
       setNdaId(json.data?.id)
       setSubmitted(true)
     } catch (err) {
@@ -404,23 +288,37 @@ export default function NDAPage() {
     } finally {
       setSubmitting(false)
     }
+  }, [savedSig, savedSigAt, purpose])
+
+  // Auto-fire when last signer draws signature and all fields complete
+  useEffect(() => {
+    if (allSignersReady && !submitting && !submitted) {
+      // Small delay so geo capture can complete
+      const t = setTimeout(() => doSubmit(signers), 800)
+      return () => clearTimeout(t)
+    }
+  }, [allSignersReady, signers, submitting, submitted, doSubmit])
+
+  const resetForm = () => {
+    setSigners([{ company: '', name: '', title: '', signature: null, signed_at: null, geo: null }])
+    setPurpose('')
+    setSubmitted(false)
+    setNdaId(null)
+    setError(null)
   }
 
+  // ── Success Screen ───────────────────────────────────────────────────────────
   if (submitted) {
     return (
-      <div className="max-w-2xl mx-auto text-center py-16">
+      <div className="max-w-2xl mx-auto text-center py-16 animate-fade-in">
         <div className="w-20 h-20 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-6">
           <svg className="w-10 h-10 text-emerald-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
-        <h1 className="text-3xl font-bold text-white mb-3">NDA Signed Successfully</h1>
-        <p className="text-slate-400 mb-2">
-          The Non-Disclosure Agreement has been executed and stored securely.
-        </p>
-        {ndaId && (
-          <p className="text-xs text-slate-500 mb-8">Reference ID: <span className="font-mono text-slate-300">NDA-{String(ndaId).padStart(6, '0')}</span></p>
-        )}
+        <h1 className="text-3xl font-bold text-white mb-3">NDA Executed</h1>
+        <p className="text-slate-400 mb-2">Recorded automatically upon signature completion.</p>
+        {ndaId && <p className="text-xs text-slate-500 mb-8">Reference ID: <span className="font-mono text-slate-300">NDA-{String(ndaId).padStart(6, '0')}</span></p>}
         <div className="card text-left space-y-3 mb-8">
           <h3 className="text-sm font-semibold text-white">Summary</h3>
           <div className="grid grid-cols-2 gap-3 text-sm">
@@ -428,39 +326,50 @@ export default function NDAPage() {
               <p className="text-xs text-slate-500">Disclosing Party</p>
               <p className="text-slate-200">{DISCLOSING.company}</p>
               <p className="text-xs text-slate-400">{DISCLOSING.name}, {DISCLOSING.title}</p>
+              {savedSigAt && <p className="text-xs text-slate-500 mt-1">Signed {new Date(savedSigAt).toLocaleDateString()}</p>}
             </div>
             <div>
               <p className="text-xs text-slate-500">Receiving Party ({signers.length} signer{signers.length > 1 ? 's' : ''})</p>
               {signers.map((s, i) => (
-                <div key={i}>
+                <div key={i} className="mb-1">
                   <p className="text-slate-200">{s.name}</p>
-                  <p className="text-xs text-slate-400">{s.title}</p>
+                  <p className="text-xs text-slate-400">{s.title} · {s.company}</p>
+                  {s.geo && <p className="text-xs text-emerald-400">{s.geo.label}</p>}
                 </div>
               ))}
             </div>
           </div>
         </div>
-        <button
-          onClick={() => { setSubmitted(false); setSigners([{ company: '', name: '', title: '', signature: null, signed_at: null }]); setPurpose('') }}
-          className="btn-secondary"
-        >
-          Create Another NDA
-        </button>
+        <button onClick={resetForm} className="btn-secondary">New NDA</button>
+      </div>
+    )
+  }
+
+  // ── Auto-submitting overlay ──────────────────────────────────────────────────
+  if (submitting) {
+    return (
+      <div className="max-w-2xl mx-auto text-center py-24">
+        <svg className="animate-spin w-12 h-12 text-blue-400 mx-auto mb-4" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+        <p className="text-white font-semibold text-lg">Recording NDA...</p>
+        <p className="text-slate-400 text-sm mt-2">Signature detected — saving to database.</p>
       </div>
     )
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-8 animate-fade-in">
+    <div className="max-w-3xl mx-auto space-y-8 animate-fade-in">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-white">Non-Disclosure Agreement</h1>
         <p className="text-slate-400 mt-1 text-sm">
-          Electronic execution — legally binding upon signature by all parties.
+          NDA auto-records the moment all receiving party signatures are complete.
         </p>
       </div>
 
-      {/* NDA Text Preview */}
+      {/* Agreement Terms */}
       <div className="card bg-slate-900/60 border border-slate-600">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
@@ -469,28 +378,17 @@ export default function NDAPage() {
             </svg>
             Agreement Terms
           </h2>
-          <button
-            type="button"
-            onClick={() => setShowFull(p => !p)}
-            className="text-xs text-blue-400 hover:text-blue-300"
-          >
+          <button type="button" onClick={() => setShowFull(p => !p)} className="text-xs text-blue-400 hover:text-blue-300">
             {showFull ? 'Collapse' : 'Read Full Agreement'}
           </button>
         </div>
-
         {showFull ? (
-          <pre className="text-xs text-slate-300 whitespace-pre-wrap font-sans leading-relaxed max-h-80 overflow-y-auto pr-2">
-            {NDA_FULL_TEXT}
-          </pre>
+          <pre className="text-xs text-slate-300 whitespace-pre-wrap font-sans leading-relaxed max-h-80 overflow-y-auto pr-2">{NDA_FULL_TEXT}</pre>
         ) : (
           <div className="text-xs text-slate-400 leading-relaxed space-y-1">
             <p>Governs confidential exchange of information between <span className="text-slate-200 font-medium">DIGIT2AI LLC</span> and the Receiving Party.</p>
             <p className="flex flex-wrap gap-x-4 gap-y-1 pt-1">
-              <span>· 1-year term</span>
-              <span>· Florida law</span>
-              <span>· No license granted</span>
-              <span>· Equitable remedies</span>
-              <span>· E-SIGN / UETA compliant</span>
+              <span>· 1-year term</span><span>· Florida law</span><span>· No license granted</span><span>· Equitable remedies</span><span>· E-SIGN / UETA compliant</span>
             </p>
           </div>
         )}
@@ -499,125 +397,101 @@ export default function NDAPage() {
       {/* Purpose */}
       <div className="card space-y-3">
         <h2 className="text-sm font-semibold text-white">Purpose of Disclosure</h2>
-        <textarea
-          className="input-field w-full resize-none"
-          rows={2}
+        <textarea className="input-field w-full resize-none" rows={2}
           placeholder="Warehouse analytics evaluation, logistics platform partnership, etc."
-          value={purpose}
-          onChange={e => setPurpose(e.target.value)}
-        />
+          value={purpose} onChange={e => setPurpose(e.target.value)} />
       </div>
 
-      {/* Disclosing Party */}
+      {/* ── PHASE 1: Disclosing Party (Manuel pre-signs once) ─────────────────── */}
       <div className="card border border-blue-500/30 space-y-4">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-blue-400" />
-          <h2 className="text-sm font-semibold text-white">Disclosing Party</h2>
-          <span className="text-xs text-blue-400 ml-auto">Pre-filled — DIGIT2AI LLC</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-blue-400" />
+            <h2 className="text-sm font-semibold text-white">Disclosing Party</h2>
+          </div>
+          {savedSig
+            ? <span className="text-xs text-emerald-400 flex items-center gap-1 font-medium">
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                Signature saved
+              </span>
+            : <span className="text-xs text-amber-400">Sign once — persists across sessions</span>
+          }
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">Company</label>
-            <div className="input-field bg-slate-700/50 text-slate-200 text-sm">{DISCLOSING.company}</div>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">Name</label>
-            <div className="input-field bg-slate-700/50 text-slate-200 text-sm">{DISCLOSING.name}</div>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">Title</label>
-            <div className="input-field bg-slate-700/50 text-slate-200 text-sm">{DISCLOSING.title}</div>
-          </div>
+          {[['Company', DISCLOSING.company], ['Name', DISCLOSING.name], ['Title', DISCLOSING.title]].map(([lbl, val]) => (
+            <div key={lbl}>
+              <label className="block text-xs font-medium text-slate-400 mb-1">{lbl}</label>
+              <div className="input-field bg-slate-700/50 text-slate-200 text-sm">{val}</div>
+            </div>
+          ))}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
-          <SignaturePad
-            label="Signature (Manuel Stagg — optional pre-sign)"
-            onChange={setDisclosingSignature}
-          />
-          <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">Date &amp; Time Signed</label>
-            <div className="input-field bg-slate-700/50 text-slate-300 text-sm">
-              {new Date(disclosingSigned_at.current).toLocaleString('en-US', {
-                year: 'numeric', month: 'long', day: 'numeric',
-                hour: '2-digit', minute: '2-digit', second: '2-digit',
-                timeZoneName: 'short'
-              })}
+        {savedSig ? (
+          <div className="space-y-2">
+            <SignaturePad label="Your Saved Signature" locked lockedDataUrl={savedSig} />
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-slate-500">
+                Saved {savedSigAt ? new Date(savedSigAt).toLocaleString() : ''} · Auto-included on every NDA
+              </p>
+              <button type="button" onClick={clearDisclosingSignature} className="text-xs text-red-400 hover:text-red-300">Clear & re-sign</button>
             </div>
-            <p className="text-xs text-slate-500 mt-1">Auto-captured at page load</p>
           </div>
-        </div>
+        ) : (
+          <div className="space-y-3">
+            <SignaturePad label="Sign here (Manuel Stagg)" onChange={setDraftSig} />
+            <button
+              type="button"
+              onClick={saveDisclosingSignature}
+              disabled={!draftSig || savingDisc}
+              className="btn-primary flex items-center gap-2 text-sm px-4 py-2"
+            >
+              {discSaved
+                ? <><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>Signature Saved!</>
+                : <><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" /></svg>Save My Signature</>
+              }
+            </button>
+            <p className="text-xs text-slate-500">Saves to this browser. Every future NDA will include it automatically — no re-signing needed.</p>
+          </div>
+        )}
       </div>
 
-      {/* Receiving Party */}
+      {/* ── PHASE 2: Receiving Party (auto-submits on sign) ───────────────────── */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-emerald-400" />
           <h2 className="text-sm font-semibold text-white">Receiving Party</h2>
+          <span className="text-xs text-slate-500 ml-auto">NDA records automatically on signature</span>
         </div>
 
         {signers.map((signer, idx) => (
-          <SignerBlock
-            key={idx}
-            index={idx}
-            signer={signer}
-            onChange={updateSigner}
-            onRemove={removeSigner}
-            canRemove={signers.length > 1 && idx > 0}
-          />
+          <SignerBlock key={idx} index={idx} signer={signer}
+            onChange={updateSigner} onRemove={(i) => setSigners(p => p.filter((_, x) => x !== i))}
+            canRemove={signers.length > 1 && idx > 0} />
         ))}
 
-        <button
-          type="button"
-          onClick={addSigner}
-          className="btn-secondary flex items-center gap-2 text-sm"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
+        <button type="button"
+          onClick={() => setSigners(p => [...p, { company: '', name: '', title: '', signature: null, signed_at: null, geo: null }])}
+          className="btn-secondary flex items-center gap-2 text-sm">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
           Add Another Signer
         </button>
       </div>
 
-      {/* Error */}
+      {/* Status / Error */}
       {error && (
         <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-300 text-sm flex items-center gap-2">
-          <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-          </svg>
+          <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
           {error}
         </div>
       )}
 
-      {/* Submit */}
-      <div className="card bg-slate-900/60 border border-slate-600">
-        <p className="text-xs text-slate-400 mb-4">
-          By clicking "Execute NDA", all parties agree to be bound by the terms of this Non-Disclosure Agreement. Electronic signatures are legally binding under the E-SIGN Act and UETA.
+      {/* Info footer */}
+      <div className="card bg-slate-900/40 border border-slate-700">
+        <p className="text-xs text-slate-500 leading-relaxed">
+          Electronic signatures are legally binding under the E-SIGN Act and UETA. The NDA is recorded automatically the moment all required fields and signatures are complete — no submit button required. Signing location is geo-stamped at time of signature.
         </p>
-        <button
-          type="submit"
-          disabled={submitting}
-          className="btn-primary w-full flex items-center justify-center gap-2 py-3"
-        >
-          {submitting ? (
-            <>
-              <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
-              Saving NDA...
-            </>
-          ) : (
-            <>
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-              </svg>
-              Execute NDA — All Parties
-            </>
-          )}
-        </button>
       </div>
-    </form>
+    </div>
   )
 }
