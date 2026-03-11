@@ -3,16 +3,15 @@ import React, { useState, useRef, useEffect } from 'react'
 const DISCLOSING = {
   company: 'DIGIT2AI LLC',
   name: 'Manuel Stagg',
-  title: 'CEO',
-  address: 'Florida, USA'
+  title: 'CEO'
 }
 
 const NDA_FULL_TEXT = `NON-DISCLOSURE AGREEMENT
 
 This Non-Disclosure Agreement ("Agreement") is entered into as of the Effective Date signed below between:
 
-  Disclosing Party: DIGIT2AI LLC, Florida, USA
-  Receiving Party:  As identified and signed below
+  Disclosing Party: DIGIT2AI LLC (Florida, USA)
+  Receiving Party:  As identified below; signing location geo-stamped at time of execution
 
 1. PURPOSE
 The Receiving Party wishes to receive certain confidential information from the Disclosing Party for the purpose specified herein, related to warehouse analytics, logistics platform, AI systems, and related services (the "Purpose").
@@ -193,9 +192,71 @@ function SignaturePad({ label, locked, lockedValue, onChange }) {
   )
 }
 
+// ── Geo Stamp ─────────────────────────────────────────────────────────────────
+async function captureGeo() {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) return resolve(null)
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude: lat, longitude: lon } = pos.coords
+        try {
+          const r = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
+            { headers: { 'Accept-Language': 'en' } }
+          )
+          const d = await r.json()
+          const a = d.address || {}
+          const city = a.city || a.town || a.village || a.county || ''
+          const region = a.state || a.region || ''
+          const country = a.country || ''
+          resolve({ lat, lon, label: [city, region, country].filter(Boolean).join(', ') })
+        } catch {
+          resolve({ lat, lon, label: `${lat.toFixed(4)}, ${lon.toFixed(4)}` })
+        }
+      },
+      () => resolve(null),
+      { timeout: 6000 }
+    )
+  })
+}
+
+function GeoStampDisplay({ geo, loading }) {
+  if (loading) return (
+    <span className="text-xs text-slate-400 flex items-center gap-1">
+      <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+      </svg>
+      Detecting location...
+    </span>
+  )
+  if (!geo) return (
+    <span className="text-xs text-slate-500 italic">Location not captured</span>
+  )
+  return (
+    <span className="text-xs text-emerald-400 flex items-center gap-1">
+      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+      </svg>
+      {geo.label}
+    </span>
+  )
+}
+
 // ── Signer Block ───────────────────────────────────────────────────────────────
 function SignerBlock({ index, signer, onChange, onRemove, canRemove }) {
-  const handleSig = (data) => onChange(index, 'signature', data)
+  const [geoLoading, setGeoLoading] = useState(false)
+
+  const handleSig = async (data) => {
+    onChange(index, 'signature', data)
+    if (data && !signer.geo) {
+      setGeoLoading(true)
+      const geo = await captureGeo()
+      onChange(index, 'geo', geo)
+      setGeoLoading(false)
+    }
+  }
 
   return (
     <div className="card border border-slate-600 space-y-4">
@@ -214,7 +275,7 @@ function SignerBlock({ index, signer, onChange, onRemove, canRemove }) {
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <label className="block text-xs font-medium text-slate-400 mb-1">Company / Organization *</label>
           <input
@@ -224,16 +285,6 @@ function SignerBlock({ index, signer, onChange, onRemove, canRemove }) {
             value={signer.company}
             onChange={e => onChange(index, 'company', e.target.value)}
             required
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-slate-400 mb-1">Address</label>
-          <input
-            type="text"
-            className="w-full rounded-lg px-3 py-2 text-sm font-medium text-black bg-white border border-slate-300 focus:outline-none focus:border-blue-500"
-            placeholder="City, State / Country"
-            value={signer.address || ''}
-            onChange={e => onChange(index, 'address', e.target.value)}
           />
         </div>
         <div>
@@ -266,9 +317,10 @@ function SignerBlock({ index, signer, onChange, onRemove, canRemove }) {
       />
 
       {signer.signed_at && (
-        <p className="text-xs text-slate-500">
-          Signed at: <span className="text-slate-300">{new Date(signer.signed_at).toLocaleString()}</span>
-        </p>
+        <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
+          <span>Signed: <span className="text-slate-300">{new Date(signer.signed_at).toLocaleString()}</span></span>
+          <GeoStampDisplay geo={signer.geo} loading={geoLoading} />
+        </div>
       )}
     </div>
   )
@@ -464,7 +516,7 @@ export default function NDAPage() {
           <span className="text-xs text-blue-400 ml-auto">Pre-filled — DIGIT2AI LLC</span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label className="block text-xs font-medium text-slate-400 mb-1">Company</label>
             <div className="input-field bg-slate-700/50 text-slate-200 text-sm">{DISCLOSING.company}</div>
@@ -476,10 +528,6 @@ export default function NDAPage() {
           <div>
             <label className="block text-xs font-medium text-slate-400 mb-1">Title</label>
             <div className="input-field bg-slate-700/50 text-slate-200 text-sm">{DISCLOSING.title}</div>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">Address</label>
-            <div className="input-field bg-slate-700/50 text-slate-200 text-sm">{DISCLOSING.address}</div>
           </div>
         </div>
 
