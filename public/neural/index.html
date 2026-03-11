@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RinglyPro Neural — Intelligence Layer for AI-Powered Businesses</title>
+<meta name="description" content="RinglyPro Neural analyzes calls, leads, bookings, and CRM activity to help businesses improve conversion and increase revenue.">
+<style>
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background: #07090f;
+  color: #e2e8f0;
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+a { color: inherit; text-decoration: none; }
+ul, ol { list-style: none; }
+img { max-width: 100%; display: block; }
+button { font-family: inherit; cursor: pointer; border: none; }
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+.n-wrap { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+.n-wrap-sm { max-width: 900px; margin: 0 auto; padding: 0 24px; }
+.n-wrap-lg { max-width: 1320px; margin: 0 auto; padding: 0 24px; }
+
+/* ============================================================
+   TYPOGRAPHY
+   ============================================================ */
+.n-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 16px; border-radius: 50px;
+  background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.25);
+  font-size: 0.78rem; font-weight: 600; color: #a5b4fc; text-transform: uppercase; letter-spacing: 1.2px;
+}
+.n-badge::before {
+  content: ''; display: block; width: 6px; height: 6px; border-radius: 50%;
+  background: #818cf8; box-shadow: 0 0 8px #818cf8;
+}
+.n-section-title {
+  font-size: clamp(2rem, 4vw, 2.8rem); font-weight: 800; color: #ffffff;
+  line-height: 1.15; letter-spacing: -0.5px; margin-bottom: 16px;
+}
+.n-section-sub {
+  font-size: 1.05rem; color: #94a3b8; max-width: 680px; line-height: 1.7;
+}
+.n-section-header { text-align: center; margin-bottom: 56px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.n-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 14px 32px; border-radius: 50px; font-size: 0.95rem; font-weight: 600;
+  transition: all 0.3s ease; white-space: nowrap;
+}
+.n-btn-primary {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #ffffff; box-shadow: 0 4px 24px rgba(99, 102, 241, 0.35);
+}
+.n-btn-primary:hover {
+  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.5);
+  transform: translateY(-2px);
+}
+.n-btn-secondary {
+  background: rgba(255,255,255,0.06); color: #e2e8f0;
+  border: 1px solid rgba(255,255,255,0.12);
+}
+.n-btn-secondary:hover {
+  background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2);
+  transform: translateY(-2px);
+}
+.n-btn-lg { padding: 16px 40px; font-size: 1rem; }
+
+/* ============================================================
+   CARDS
+   ============================================================ */
+.n-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 20px; padding: 32px;
+  transition: all 0.3s ease;
+}
+.n-card:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(99, 102, 241, 0.2);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+}
+.n-card-glow:hover {
+  box-shadow: 0 12px 40px rgba(99, 102, 241, 0.12), 0 0 0 1px rgba(99, 102, 241, 0.15);
+}
+
+/* ============================================================
+   GRIDS
+   ============================================================ */
+.n-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+.n-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.n-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+@media (max-width: 1024px) {
+  .n-grid-3, .n-grid-4 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .n-grid-2, .n-grid-3, .n-grid-4 { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   1. STICKY TOP NAV
+   ============================================================ */
+.n-nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  background: rgba(7, 9, 15, 0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  transition: all 0.3s ease;
+}
+.n-nav.scrolled { background: rgba(7, 9, 15, 0.95); }
+.n-nav-inner {
+  display: flex; align-items: center; justify-content: space-between;
+  height: 72px; max-width: 1320px; margin: 0 auto; padding: 0 24px;
+}
+.n-nav-logo {
+  display: flex; align-items: center; gap: 2px; font-size: 1.25rem; font-weight: 700; color: #ffffff;
+}
+.n-nav-logo span:first-child { color: #ffffff; }
+.n-nav-logo span:nth-child(2) { color: #818cf8; font-weight: 800; }
+.n-nav-links { display: flex; align-items: center; gap: 32px; }
+.n-nav-links a {
+  font-size: 0.88rem; color: #94a3b8; font-weight: 500;
+  transition: color 0.2s;
+}
+.n-nav-links a:hover { color: #ffffff; }
+.n-nav-cta {
+  padding: 10px 24px; border-radius: 50px; font-size: 0.85rem; font-weight: 600;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff;
+  transition: all 0.3s;
+}
+.n-nav-cta:hover { box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4); transform: translateY(-1px); }
+.n-nav-mobile {
+  display: none; background: none; border: none; padding: 8px;
+  flex-direction: column; gap: 5px; cursor: pointer;
+}
+.n-nav-mobile span {
+  display: block; width: 24px; height: 2px; background: #e2e8f0; border-radius: 1px;
+  transition: all 0.3s;
+}
+.n-mobile-menu {
+  display: none; position: fixed; top: 72px; left: 0; right: 0;
+  background: rgba(7, 9, 15, 0.98); backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  padding: 24px; flex-direction: column; gap: 4px;
+}
+.n-mobile-menu.open { display: flex; }
+.n-mobile-menu a {
+  display: block; padding: 14px 16px; color: #94a3b8; font-size: 1rem; font-weight: 500;
+  border-radius: 12px; transition: all 0.2s;
+}
+.n-mobile-menu a:hover { color: #ffffff; background: rgba(255,255,255,0.04); }
+@media (max-width: 900px) {
+  .n-nav-links { display: none; }
+  .n-nav-mobile { display: flex; }
+}
+
+/* ============================================================
+   2. HERO SECTION
+   ============================================================ */
+.n-hero {
+  position: relative; padding: 160px 0 100px; overflow: hidden;
+  background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(99, 102, 241, 0.12) 0%, transparent 60%),
+              radial-gradient(ellipse 60% 40% at 80% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+              #07090f;
+}
+.n-hero-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center;
+}
+.n-hero-content { position: relative; z-index: 2; }
+.n-hero h1 {
+  font-size: clamp(2.4rem, 5vw, 3.6rem); font-weight: 800; color: #ffffff;
+  line-height: 1.08; letter-spacing: -1px; margin: 16px 0 20px;
+}
+.n-hero h1 em {
+  font-style: normal;
+  background: linear-gradient(135deg, #818cf8, #a78bfa, #c084fc);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.n-hero-sub {
+  font-size: 1.1rem; color: #94a3b8; line-height: 1.7; margin-bottom: 32px;
+  max-width: 520px;
+}
+.n-hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 40px; }
+.n-hero-trust {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 20px; border-radius: 12px;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+  font-size: 0.82rem; color: #64748b; max-width: fit-content;
+}
+.n-hero-trust .dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 8px #22c55e; flex-shrink: 0; }
+
+/* Hero Dashboard Mockup */
+.n-hero-visual { position: relative; z-index: 2; }
+.n-dashboard {
+  background: rgba(15, 18, 30, 0.9); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px; padding: 24px; position: relative;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(99,102,241,0.08);
+}
+.n-dash-bar {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 20px;
+  padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.n-dash-dot { width: 10px; height: 10px; border-radius: 50%; }
+.n-dash-dots { display: flex; gap: 6px; }
+.n-dash-title { font-size: 0.78rem; color: #64748b; margin-left: 12px; font-weight: 500; }
+.n-dash-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+.n-dash-metric {
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px; padding: 16px; text-align: center;
+}
+.n-dash-metric-val { font-size: 1.5rem; font-weight: 800; color: #ffffff; display: block; }
+.n-dash-metric-lbl { font-size: 0.7rem; color: #64748b; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+.n-dash-metric.up .n-dash-metric-val { color: #34d399; }
+.n-dash-metric.accent .n-dash-metric-val { color: #818cf8; }
+.n-dash-chart {
+  background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 12px; padding: 16px; height: 140px; position: relative; overflow: hidden;
+  margin-bottom: 12px;
+}
+.n-dash-chart-title { font-size: 0.72rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.n-chart-bars { display: flex; align-items: flex-end; gap: 6px; height: 90px; padding-top: 4px; }
+.n-chart-bar {
+  flex: 1; border-radius: 4px 4px 0 0;
+  background: linear-gradient(to top, rgba(99,102,241,0.4), rgba(139,92,246,0.7));
+  min-height: 8px; transition: all 0.3s;
+}
+.n-chart-bar:hover { background: linear-gradient(to top, rgba(99,102,241,0.6), rgba(139,92,246,0.9)); }
+.n-dash-insights { display: flex; flex-direction: column; gap: 8px; }
+.n-dash-insight {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 10px; padding: 10px 14px;
+}
+.n-dash-insight-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.n-dash-insight-text { font-size: 0.75rem; color: #94a3b8; }
+.n-dash-insight-val { margin-left: auto; font-size: 0.75rem; font-weight: 700; color: #34d399; white-space: nowrap; }
+
+@media (max-width: 900px) {
+  .n-hero { padding: 130px 0 60px; }
+  .n-hero-grid { grid-template-columns: 1fr; gap: 40px; }
+  .n-hero h1 { font-size: clamp(2rem, 6vw, 3rem); }
+  .n-dash-metrics { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 480px) {
+  .n-hero-ctas { flex-direction: column; }
+  .n-hero-ctas .n-btn { width: 100%; text-align: center; }
+}
+
+/* ============================================================
+   SECTIONS
+   ============================================================ */
+.n-section { padding: 100px 0; position: relative; }
+.n-section-dark { background: #07090f; }
+.n-section-darker {
+  background: linear-gradient(180deg, #0a0d16 0%, #07090f 100%);
+}
+.n-section-accent {
+  background: radial-gradient(ellipse 70% 50% at 50% 50%, rgba(99,102,241,0.06) 0%, transparent 70%),
+              #07090f;
+}
+
+/* ============================================================
+   3. WHAT IS NEURAL
+   ============================================================ */
+.n-what-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.n-what-card { padding: 28px; }
+.n-what-icon {
+  width: 48px; height: 48px; border-radius: 14px; margin-bottom: 16px;
+  background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15));
+  border: 1px solid rgba(99,102,241,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem;
+}
+.n-what-card h3 { font-size: 1.05rem; font-weight: 700; color: #ffffff; margin-bottom: 8px; }
+.n-what-card p { font-size: 0.88rem; color: #94a3b8; line-height: 1.6; }
+@media (max-width: 640px) { .n-what-grid { grid-template-columns: 1fr; } }
+
+/* ============================================================
+   4. HOW IT WORKS
+   ============================================================ */
+.n-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; position: relative; }
+.n-step { text-align: center; position: relative; }
+.n-step-num {
+  width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 20px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; font-weight: 800; color: #ffffff;
+  box-shadow: 0 8px 32px rgba(99,102,241,0.3);
+  position: relative; z-index: 2;
+}
+.n-step h3 { font-size: 1.1rem; font-weight: 700; color: #ffffff; margin-bottom: 8px; }
+.n-step p { font-size: 0.9rem; color: #94a3b8; line-height: 1.6; max-width: 320px; margin: 0 auto; }
+.n-steps-line {
+  position: absolute; top: 32px; left: 15%; right: 15%;
+  height: 2px; background: linear-gradient(90deg, transparent, rgba(99,102,241,0.3), transparent);
+  z-index: 1;
+}
+@media (max-width: 768px) {
+  .n-steps { grid-template-columns: 1fr; gap: 40px; }
+  .n-steps-line { display: none; }
+}
+
+/* ============================================================
+   5. KEY BENEFITS
+   ============================================================ */
+.n-benefit { padding: 24px; }
+.n-benefit-icon {
+  width: 44px; height: 44px; border-radius: 12px; margin-bottom: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem;
+}
+.n-benefit h3 { font-size: 1rem; font-weight: 700; color: #ffffff; margin-bottom: 6px; }
+.n-benefit p { font-size: 0.85rem; color: #94a3b8; line-height: 1.6; }
+.n-benefit:nth-child(1) .n-benefit-icon { background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.2); color: #34d399; }
+.n-benefit:nth-child(2) .n-benefit-icon { background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.2); color: #818cf8; }
+.n-benefit:nth-child(3) .n-benefit-icon { background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.2); color: #fbbf24; }
+.n-benefit:nth-child(4) .n-benefit-icon { background: rgba(236,72,153,0.12); border: 1px solid rgba(236,72,153,0.2); color: #f472b6; }
+.n-benefit:nth-child(5) .n-benefit-icon { background: rgba(56,189,248,0.12); border: 1px solid rgba(56,189,248,0.2); color: #38bdf8; }
+.n-benefit:nth-child(6) .n-benefit-icon { background: rgba(168,85,247,0.12); border: 1px solid rgba(168,85,247,0.2); color: #c084fc; }
+
+/* ============================================================
+   6. INSIGHT CARDS
+   ============================================================ */
+.n-insights-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.n-insight-card {
+  padding: 28px; position: relative; overflow: hidden;
+}
+.n-insight-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, #6366f1, #a78bfa); opacity: 0;
+  transition: opacity 0.3s;
+}
+.n-insight-card:hover::before { opacity: 1; }
+.n-insight-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; gap: 12px; }
+.n-insight-card h3 { font-size: 1rem; font-weight: 700; color: #ffffff; }
+.n-insight-badge {
+  flex-shrink: 0; padding: 3px 10px; border-radius: 50px;
+  font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.n-insight-badge.high { background: rgba(34,197,94,0.12); color: #34d399; border: 1px solid rgba(34,197,94,0.2); }
+.n-insight-badge.med { background: rgba(251,191,36,0.12); color: #fbbf24; border: 1px solid rgba(251,191,36,0.2); }
+.n-insight-desc { font-size: 0.85rem; color: #94a3b8; line-height: 1.6; margin-bottom: 14px; }
+.n-insight-action {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.8rem; font-weight: 600; color: #818cf8;
+  padding: 8px 14px; border-radius: 8px;
+  background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.12);
+  width: fit-content; transition: all 0.2s;
+}
+.n-insight-action:hover { background: rgba(99,102,241,0.15); }
+@media (max-width: 640px) { .n-insights-grid { grid-template-columns: 1fr; } }
+
+/* ============================================================
+   7. COMPARISON
+   ============================================================ */
+.n-compare {
+  display: grid; grid-template-columns: 1fr auto 1fr; gap: 0; align-items: stretch;
+  border: 1px solid rgba(255,255,255,0.06); border-radius: 24px; overflow: hidden;
+  background: rgba(255,255,255,0.02);
+}
+.n-compare-col { padding: 40px 36px; }
+.n-compare-col h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 24px; }
+.n-compare-standard { background: rgba(255,255,255,0.02); }
+.n-compare-standard h3 { color: #94a3b8; }
+.n-compare-neural {
+  background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.06));
+}
+.n-compare-neural h3 { color: #818cf8; }
+.n-compare-divider {
+  width: 1px; background: rgba(255,255,255,0.06);
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.n-compare-vs {
+  position: absolute; width: 40px; height: 40px; border-radius: 50%;
+  background: #0f1219; border: 1px solid rgba(255,255,255,0.1);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1px;
+}
+.n-compare-list { display: flex; flex-direction: column; gap: 14px; }
+.n-compare-item { display: flex; align-items: flex-start; gap: 10px; font-size: 0.9rem; color: #94a3b8; }
+.n-compare-item .icon { flex-shrink: 0; margin-top: 2px; }
+.n-compare-standard .icon { color: #64748b; }
+.n-compare-neural .icon { color: #34d399; }
+.n-compare-neural .n-compare-item { color: #e2e8f0; }
+@media (max-width: 768px) {
+  .n-compare { grid-template-columns: 1fr; }
+  .n-compare-divider { width: 100%; height: 1px; }
+  .n-compare-vs { position: static; margin: -20px auto; }
+  .n-compare-col { padding: 28px 24px; }
+}
+
+/* ============================================================
+   8. IDEAL FOR
+   ============================================================ */
+.n-segments { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.n-segment {
+  text-align: center; padding: 28px 16px;
+  background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px; transition: all 0.3s;
+}
+.n-segment:hover {
+  background: rgba(99,102,241,0.06); border-color: rgba(99,102,241,0.15);
+  transform: translateY(-4px);
+}
+.n-segment-icon {
+  width: 52px; height: 52px; border-radius: 14px; margin: 0 auto 14px;
+  background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.12));
+  border: 1px solid rgba(99,102,241,0.15);
+  display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
+}
+.n-segment h3 { font-size: 0.9rem; font-weight: 600; color: #ffffff; margin-bottom: 4px; }
+.n-segment p { font-size: 0.78rem; color: #64748b; }
+@media (max-width: 900px) { .n-segments { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .n-segments { grid-template-columns: 1fr; } }
+
+/* ============================================================
+   9. ECOSYSTEM
+   ============================================================ */
+.n-eco-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+.n-eco-visual {
+  background: rgba(15,18,30,0.8); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 20px; padding: 32px; position: relative;
+}
+.n-eco-hub {
+  width: 100px; height: 100px; border-radius: 50%; margin: 0 auto 28px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  display: flex; align-items: center; justify-content: center; flex-direction: column;
+  box-shadow: 0 0 60px rgba(99,102,241,0.25);
+  position: relative; z-index: 2;
+}
+.n-eco-hub-text { font-size: 0.65rem; font-weight: 800; color: #ffffff; text-transform: uppercase; letter-spacing: 1px; text-align: center; line-height: 1.2; }
+.n-eco-nodes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.n-eco-node {
+  display: flex; align-items: center; gap: 10px; padding: 12px 16px;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px; font-size: 0.8rem; color: #94a3b8;
+}
+.n-eco-node-dot { width: 8px; height: 8px; border-radius: 50%; background: #818cf8; flex-shrink: 0; }
+.n-eco-text h3 { font-size: 1.4rem; font-weight: 700; color: #ffffff; margin-bottom: 16px; }
+.n-eco-text p { font-size: 0.95rem; color: #94a3b8; line-height: 1.7; margin-bottom: 16px; }
+.n-eco-callout {
+  padding: 16px 20px; border-radius: 12px;
+  background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.15);
+  font-size: 0.9rem; color: #a5b4fc; font-weight: 500;
+}
+@media (max-width: 900px) { .n-eco-grid { grid-template-columns: 1fr; } }
+
+/* ============================================================
+   10. PRICING
+   ============================================================ */
+.n-pricing-card {
+  max-width: 560px; margin: 0 auto;
+  background: linear-gradient(135deg, rgba(99,102,241,0.06), rgba(139,92,246,0.04));
+  border: 1px solid rgba(99,102,241,0.15);
+  border-radius: 24px; padding: 48px; text-align: center;
+  position: relative; overflow: hidden;
+}
+.n-pricing-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, #6366f1, #a78bfa, #c084fc);
+}
+.n-pricing-label {
+  display: inline-block; padding: 4px 14px; border-radius: 50px;
+  background: rgba(99,102,241,0.15); color: #a5b4fc;
+  font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+  margin-bottom: 20px;
+}
+.n-pricing-card h3 { font-size: 1.6rem; font-weight: 800; color: #ffffff; margin-bottom: 12px; }
+.n-pricing-card > p { font-size: 0.95rem; color: #94a3b8; line-height: 1.6; margin-bottom: 28px; }
+.n-pricing-features { text-align: left; margin-bottom: 32px; display: flex; flex-direction: column; gap: 12px; }
+.n-pricing-feature {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 0.9rem; color: #e2e8f0;
+}
+.n-pricing-check {
+  width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
+  background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.2);
+  display: flex; align-items: center; justify-content: center;
+  color: #34d399; font-size: 0.7rem; font-weight: 800;
+}
+.n-pricing-ctas { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+/* ============================================================
+   11. FAQ
+   ============================================================ */
+.n-faq-list { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px; }
+.n-faq-item {
+  border: 1px solid rgba(255,255,255,0.06); border-radius: 16px;
+  background: rgba(255,255,255,0.02); overflow: hidden; transition: all 0.3s;
+}
+.n-faq-item:hover { border-color: rgba(99,102,241,0.15); }
+.n-faq-q {
+  width: 100%; padding: 20px 24px; background: none; border: none;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  font-size: 1rem; font-weight: 600; color: #ffffff; text-align: left;
+  cursor: pointer; transition: all 0.2s; font-family: inherit;
+}
+.n-faq-q:hover { color: #a5b4fc; }
+.n-faq-icon {
+  width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+  background: rgba(99,102,241,0.1); color: #818cf8;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; font-weight: 600; transition: transform 0.3s;
+}
+.n-faq-item.open .n-faq-icon { transform: rotate(45deg); }
+.n-faq-a {
+  max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.3s ease;
+}
+.n-faq-item.open .n-faq-a { max-height: 300px; }
+.n-faq-a-inner {
+  padding: 0 24px 20px; font-size: 0.9rem; color: #94a3b8; line-height: 1.7;
+}
+
+/* ============================================================
+   12. FINAL CTA
+   ============================================================ */
+.n-final-cta {
+  padding: 100px 0; text-align: center; position: relative;
+  background: radial-gradient(ellipse 80% 60% at 50% 100%, rgba(99,102,241,0.15) 0%, transparent 60%),
+              #07090f;
+}
+.n-final-cta h2 {
+  font-size: clamp(2rem, 4vw, 2.8rem); font-weight: 800; color: #ffffff;
+  line-height: 1.15; margin-bottom: 16px;
+}
+.n-final-cta p {
+  font-size: 1.05rem; color: #94a3b8; max-width: 580px; margin: 0 auto 32px;
+  line-height: 1.7;
+}
+.n-final-ctas { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.n-footer {
+  padding: 32px 0; text-align: center;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+.n-footer p { font-size: 0.78rem; color: #475569; }
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+.n-fade-in {
+  opacity: 0; transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.n-fade-in.visible { opacity: 1; transform: translateY(0); }
+
+/* ============================================================
+   GLOW ORB DECORATION
+   ============================================================ */
+.n-glow {
+  position: absolute; border-radius: 50%; pointer-events: none;
+  filter: blur(80px); opacity: 0.4;
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     1. STICKY TOP NAV
+     ============================================================ -->
+<nav class="n-nav" id="nav" role="navigation" aria-label="Main navigation">
+  <div class="n-nav-inner">
+    <a href="#" class="n-nav-logo" aria-label="RinglyPro Neural home">
+      <span>RinglyPro</span><span>Neural</span>
+    </a>
+    <div class="n-nav-links">
+      <a href="#what">What It Does</a>
+      <a href="#how">How It Works</a>
+      <a href="#insights">Insights</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+      <a href="#contact" class="n-nav-cta">Add Neural</a>
+    </div>
+    <button class="n-nav-mobile" id="menuBtn" aria-label="Toggle menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+  <div class="n-mobile-menu" id="mobileMenu" role="menu">
+    <a href="#what" role="menuitem">What It Does</a>
+    <a href="#how" role="menuitem">How It Works</a>
+    <a href="#insights" role="menuitem">Insights</a>
+    <a href="#pricing" role="menuitem">Pricing</a>
+    <a href="#faq" role="menuitem">FAQ</a>
+    <a href="#contact" role="menuitem" style="color:#818cf8;">Add Neural</a>
+  </div>
+</nav>
+
+<!-- ============================================================
+     2. HERO SECTION
+     ============================================================ -->
+<section class="n-hero" id="hero">
+  <div class="n-glow" style="width:400px;height:400px;background:rgba(99,102,241,0.15);top:-100px;left:-100px;"></div>
+  <div class="n-glow" style="width:300px;height:300px;background:rgba(139,92,246,0.1);bottom:0;right:5%;"></div>
+  <div class="n-wrap-lg">
+    <div class="n-hero-grid">
+      <div class="n-hero-content n-fade-in">
+        <div class="n-badge">Intelligence Layer</div>
+        <h1>Turn Every Call Into a <em>Revenue Opportunity</em></h1>
+        <p class="n-hero-sub">RinglyPro Neural analyzes calls, leads, bookings, and customer interactions to reveal exactly how your business can improve conversion and increase revenue.</p>
+        <div class="n-hero-ctas">
+          <a href="#pricing" class="n-btn n-btn-primary n-btn-lg">Add Neural to RinglyPro</a>
+          <a href="#demo" class="n-btn n-btn-secondary n-btn-lg">Book a Demo</a>
+        </div>
+        <div class="n-hero-trust">
+          <span class="dot"></span>
+          Built for businesses already using AI voice, CRM, booking, and automation workflows.
+        </div>
+      </div>
+      <div class="n-hero-visual n-fade-in" style="transition-delay: 0.2s;">
+        <div class="n-dashboard">
+          <div class="n-dash-bar">
+            <div class="n-dash-dots">
+              <div class="n-dash-dot" style="background:#ef4444;"></div>
+              <div class="n-dash-dot" style="background:#fbbf24;"></div>
+              <div class="n-dash-dot" style="background:#22c55e;"></div>
+            </div>
+            <span class="n-dash-title">Neural Intelligence Dashboard</span>
+          </div>
+          <div class="n-dash-metrics">
+            <div class="n-dash-metric up">
+              <span class="n-dash-metric-val">+23%</span>
+              <span class="n-dash-metric-lbl">Conversion</span>
+            </div>
+            <div class="n-dash-metric accent">
+              <span class="n-dash-metric-val">142</span>
+              <span class="n-dash-metric-lbl">Insights</span>
+            </div>
+            <div class="n-dash-metric">
+              <span class="n-dash-metric-val">$18.4k</span>
+              <span class="n-dash-metric-lbl">Revenue Found</span>
+            </div>
+          </div>
+          <div class="n-dash-chart">
+            <div class="n-dash-chart-title">Weekly Call Conversion</div>
+            <div class="n-chart-bars">
+              <div class="n-chart-bar" style="height:40%;"></div>
+              <div class="n-chart-bar" style="height:55%;"></div>
+              <div class="n-chart-bar" style="height:45%;"></div>
+              <div class="n-chart-bar" style="height:70%;"></div>
+              <div class="n-chart-bar" style="height:60%;"></div>
+              <div class="n-chart-bar" style="height:82%;"></div>
+              <div class="n-chart-bar" style="height:75%;"></div>
+              <div class="n-chart-bar" style="height:90%;"></div>
+              <div class="n-chart-bar" style="height:68%;"></div>
+              <div class="n-chart-bar" style="height:85%;"></div>
+              <div class="n-chart-bar" style="height:78%;"></div>
+              <div class="n-chart-bar" style="height:95%;"></div>
+            </div>
+          </div>
+          <div class="n-dash-insights">
+            <div class="n-dash-insight">
+              <div class="n-dash-insight-dot" style="background:#34d399;"></div>
+              <span class="n-dash-insight-text">Missed calls recovered this week</span>
+              <span class="n-dash-insight-val">+$4,200</span>
+            </div>
+            <div class="n-dash-insight">
+              <div class="n-dash-insight-dot" style="background:#818cf8;"></div>
+              <span class="n-dash-insight-text">Booking slots optimized</span>
+              <span class="n-dash-insight-val">+18 slots</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     3. WHAT IS RINGLYPRO NEURAL
+     ============================================================ -->
+<section class="n-section n-section-darker" id="what">
+  <div class="n-wrap">
+    <div class="n-section-header n-fade-in">
+      <div class="n-badge">Intelligence Layer</div>
+      <h2 class="n-section-title">What Is RinglyPro Neural?</h2>
+      <p class="n-section-sub">Neural is the intelligence add-on built on top of RinglyPro. It analyzes every interaction your business handles and surfaces the opportunities you are missing.</p>
+    </div>
+    <div class="n-what-grid">
+      <div class="n-card n-card-glow n-what-card n-fade-in">
+        <div class="n-what-icon">&#128222;</div>
+        <h3>Inbound &amp; Missed Calls</h3>
+        <p>Every answered and missed call is analyzed for conversion potential, response time, and revenue impact.</p>
+      </div>
+      <div class="n-card n-card-glow n-what-card n-fade-in">
+        <div class="n-what-icon">&#128196;</div>
+        <h3>Call Transcripts</h3>
+        <p>AI reads every transcript to detect objections, intent signals, missed upsells, and sentiment patterns.</p>
+      </div>
+      <div class="n-card n-card-glow n-what-card n-fade-in">
+        <div class="n-what-icon">&#128200;</div>
+        <h3>Lead Conversion</h3>
+        <p>Tracks every lead from first contact to booked appointment. Identifies where leads drop off and why.</p>
+      </div>
+      <div class="n-card n-card-glow n-what-card n-fade-in">
+        <div class="n-what-icon">&#128197;</div>
+        <h3>Appointments &amp; Scheduling</h3>
+        <p>Analyzes booking patterns, no-show rates, scheduling gaps, and optimal time slot utilization.</p>
+      </div>
+      <div class="n-card n-card-glow n-what-card n-fade-in">
+        <div class="n-what-icon">&#128231;</div>
+        <h3>Customer Communication</h3>
+        <p>Monitors SMS, email, and messaging engagement to identify follow-up opportunities and response quality.</p>
+      </div>
+      <div class="n-card n-card-glow n-what-card n-fade-in">
+        <div class="n-what-icon">&#128640;</div>
+        <h3>Outbound Campaigns</h3>
+        <p>Measures outbound call and message performance. Shows which campaigns drive bookings and which waste budget.</p>
+      </div>
+      <div class="n-card n-card-glow n-what-card n-fade-in">
+        <div class="n-what-icon">&#128736;</div>
+        <h3>CRM Activity</h3>
+        <p>Tracks pipeline movement, deal stages, and contact engagement across your entire CRM workflow.</p>
+      </div>
+      <div class="n-card n-card-glow n-what-card n-fade-in">
+        <div class="n-what-icon">&#127919;</div>
+        <h3>Lead Source Intelligence</h3>
+        <p>Identifies which channels, campaigns, and sources deliver the highest-converting leads and best ROI.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     4. HOW IT WORKS
+     ============================================================ -->
+<section class="n-section n-section-accent" id="how">
+  <div class="n-wrap">
+    <div class="n-section-header n-fade-in">
+      <div class="n-badge">Simple Process</div>
+      <h2 class="n-section-title">How Neural Works</h2>
+      <p class="n-section-sub">Three steps between raw business data and actionable revenue intelligence.</p>
+    </div>
+    <div class="n-steps n-fade-in">
+      <div class="n-steps-line"></div>
+      <div class="n-step">
+        <div class="n-step-num">1</div>
+        <h3>Capture</h3>
+        <p>Neural automatically ingests data from calls, leads, CRM activity, appointments, transcripts, and outbound campaigns. No manual setup required.</p>
+      </div>
+      <div class="n-step">
+        <div class="n-step-num">2</div>
+        <h3>Analyze</h3>
+        <p>AI intelligence processes every interaction to detect patterns, spot anomalies, and identify conversion opportunities that humans miss.</p>
+      </div>
+      <div class="n-step">
+        <div class="n-step-num">3</div>
+        <h3>Surface</h3>
+        <p>Actionable insights are delivered directly to your dashboard with clear recommendations to improve bookings, reduce missed revenue, and grow.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     5. KEY BENEFITS
+     ============================================================ -->
+<section class="n-section n-section-dark" id="benefits">
+  <div class="n-wrap">
+    <div class="n-section-header n-fade-in">
+      <div class="n-badge">Business Outcomes</div>
+      <h2 class="n-section-title">What Neural Does for Your Business</h2>
+      <p class="n-section-sub">Every insight is connected to a measurable business outcome.</p>
+    </div>
+    <div class="n-grid-3 n-fade-in">
+      <div class="n-card n-card-glow n-benefit">
+        <div class="n-benefit-icon">&#128176;</div>
+        <h3>Detect Missed Revenue</h3>
+        <p>Find out exactly how much money you lose from missed calls, slow follow-ups, and unconverted leads every week.</p>
+      </div>
+      <div class="n-card n-card-glow n-benefit">
+        <div class="n-benefit-icon">&#128200;</div>
+        <h3>Improve Call-to-Booking Conversion</h3>
+        <p>See where calls fail to convert and get specific recommendations to improve your booking rate.</p>
+      </div>
+      <div class="n-card n-card-glow n-benefit">
+        <div class="n-benefit-icon">&#128197;</div>
+        <h3>Optimize Appointment Scheduling</h3>
+        <p>Identify gaps in your schedule, reduce no-shows, and maximize utilization across your available time slots.</p>
+      </div>
+      <div class="n-card n-card-glow n-benefit">
+        <div class="n-benefit-icon">&#127919;</div>
+        <h3>Identify Best Lead Sources</h3>
+        <p>Stop guessing which channels work. Neural shows you exactly which lead sources drive the most bookings and revenue.</p>
+      </div>
+      <div class="n-card n-card-glow n-benefit">
+        <div class="n-benefit-icon">&#128172;</div>
+        <h3>Improve Voice Agent Scripts</h3>
+        <p>Neural analyzes call transcripts to find script weaknesses and recommend language that converts better.</p>
+      </div>
+      <div class="n-card n-card-glow n-benefit">
+        <div class="n-benefit-icon">&#128161;</div>
+        <h3>Spot Follow-Up Opportunities</h3>
+        <p>Automatically flag leads and customers who need follow-up before they go cold or choose a competitor.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     6. NEURAL INSIGHT CARDS
+     ============================================================ -->
+<section class="n-section n-section-darker" id="insights">
+  <div class="n-wrap">
+    <div class="n-section-header n-fade-in">
+      <div class="n-badge">Live Insights</div>
+      <h2 class="n-section-title">Neural Insight Cards</h2>
+      <p class="n-section-sub">Here is a sample of the intelligence Neural delivers. Each card includes the insight, its impact, and a recommended action.</p>
+    </div>
+    <div class="n-insights-grid">
+
+      <div class="n-card n-card-glow n-insight-card n-fade-in">
+        <div class="n-insight-header">
+          <h3>Missed Revenue Detector</h3>
+          <span class="n-insight-badge high">High Impact</span>
+        </div>
+        <p class="n-insight-desc">37 missed calls this week went unanswered after hours. Estimated lost revenue: $8,400 based on your average booking value.</p>
+        <div class="n-insight-action">&#8594; Enable after-hours voice agent routing</div>
+      </div>
+
+      <div class="n-card n-card-glow n-insight-card n-fade-in">
+        <div class="n-insight-header">
+          <h3>Call Conversion Intelligence</h3>
+          <span class="n-insight-badge high">High Impact</span>
+        </div>
+        <p class="n-insight-desc">Calls under 90 seconds convert at 12%. Calls over 3 minutes convert at 47%. Your voice agent ends conversations too early on pricing objections.</p>
+        <div class="n-insight-action">&#8594; Adjust script to handle pricing objections</div>
+      </div>
+
+      <div class="n-card n-card-glow n-insight-card n-fade-in">
+        <div class="n-insight-header">
+          <h3>Lead Response Speed Monitor</h3>
+          <span class="n-insight-badge high">High Impact</span>
+        </div>
+        <p class="n-insight-desc">Average response time to new leads is 4.2 hours. Leads contacted within 5 minutes are 9x more likely to book.</p>
+        <div class="n-insight-action">&#8594; Activate instant AI follow-up sequence</div>
+      </div>
+
+      <div class="n-card n-card-glow n-insight-card n-fade-in">
+        <div class="n-insight-header">
+          <h3>Scheduling Optimization</h3>
+          <span class="n-insight-badge med">Medium Impact</span>
+        </div>
+        <p class="n-insight-desc">Tuesday and Wednesday 2-5pm have 68% unused capacity. Your busiest request window (Monday 9-11am) is fully booked 3 weeks out.</p>
+        <div class="n-insight-action">&#8594; Offer incentives for off-peak booking</div>
+      </div>
+
+      <div class="n-card n-card-glow n-insight-card n-fade-in">
+        <div class="n-insight-header">
+          <h3>Voice Conversation Insights</h3>
+          <span class="n-insight-badge high">High Impact</span>
+        </div>
+        <p class="n-insight-desc">23% of callers mention a competitor by name. The word "expensive" appears in 31% of unconverted calls. Top objection: "I need to think about it."</p>
+        <div class="n-insight-action">&#8594; Add competitive positioning to script</div>
+      </div>
+
+      <div class="n-card n-card-glow n-insight-card n-fade-in">
+        <div class="n-insight-header">
+          <h3>Lead Source Intelligence</h3>
+          <span class="n-insight-badge med">Medium Impact</span>
+        </div>
+        <p class="n-insight-desc">Google Ads drives 45% of leads but only 18% of bookings. Referrals are 3% of leads but 22% of revenue. Your highest-ROI source is underinvested.</p>
+        <div class="n-insight-action">&#8594; Shift budget toward referral programs</div>
+      </div>
+
+      <div class="n-card n-card-glow n-insight-card n-fade-in">
+        <div class="n-insight-header">
+          <h3>Outbound Campaign Performance</h3>
+          <span class="n-insight-badge med">Medium Impact</span>
+        </div>
+        <p class="n-insight-desc">Re-engagement campaign to past customers has a 34% answer rate and 12% rebooking rate. New lead cold outreach converts at only 2.1%.</p>
+        <div class="n-insight-action">&#8594; Double down on past customer campaigns</div>
+      </div>
+
+      <div class="n-card n-card-glow n-insight-card n-fade-in">
+        <div class="n-insight-header">
+          <h3>Customer Sentiment Intelligence</h3>
+          <span class="n-insight-badge med">Medium Impact</span>
+        </div>
+        <p class="n-insight-desc">Positive sentiment on calls increased 15% after your last script update. Negative mentions of "wait time" dropped from 18% to 4% after adding AI scheduling.</p>
+        <div class="n-insight-action">&#8594; Continue optimizing hold experience</div>
+      </div>
+
+      <div class="n-card n-card-glow n-insight-card n-fade-in">
+        <div class="n-insight-header">
+          <h3>AI Script Optimization</h3>
+          <span class="n-insight-badge high">High Impact</span>
+        </div>
+        <p class="n-insight-desc">Replacing "Would you like to schedule?" with "I have a slot available Thursday at 2pm" increased booking rate from 24% to 41% in A/B testing.</p>
+        <div class="n-insight-action">&#8594; Apply winning script to all agents</div>
+      </div>
+
+      <div class="n-card n-card-glow n-insight-card n-fade-in">
+        <div class="n-insight-header">
+          <h3>Revenue Opportunity Forecast</h3>
+          <span class="n-insight-badge high">High Impact</span>
+        </div>
+        <p class="n-insight-desc">Based on current trends, implementing all recommended actions could recover an estimated $12,600/month in missed bookings and unconverted leads.</p>
+        <div class="n-insight-action">&#8594; Review full action plan in dashboard</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     7. WHY IT'S DIFFERENT (COMPARISON)
+     ============================================================ -->
+<section class="n-section n-section-accent" id="compare">
+  <div class="n-wrap">
+    <div class="n-section-header n-fade-in">
+      <div class="n-badge">The Difference</div>
+      <h2 class="n-section-title">More Than an AI Receptionist</h2>
+      <p class="n-section-sub">Standard AI answers calls. Neural tells you how to turn those calls into more revenue.</p>
+    </div>
+    <div class="n-compare n-fade-in">
+      <div class="n-compare-col n-compare-standard">
+        <h3>Standard AI Receptionist</h3>
+        <div class="n-compare-list">
+          <div class="n-compare-item"><span class="icon">&#9711;</span> Answers inbound calls</div>
+          <div class="n-compare-item"><span class="icon">&#9711;</span> Takes messages</div>
+          <div class="n-compare-item"><span class="icon">&#9711;</span> Books appointments</div>
+          <div class="n-compare-item"><span class="icon">&#9711;</span> Sends confirmations</div>
+          <div class="n-compare-item"><span class="icon">&#9711;</span> Transfers calls</div>
+          <div class="n-compare-item"><span class="icon">&#9711;</span> Basic call logs</div>
+          <div class="n-compare-item"><span class="icon">&#9711;</span> No conversion analysis</div>
+          <div class="n-compare-item"><span class="icon">&#9711;</span> No revenue insights</div>
+        </div>
+      </div>
+      <div class="n-compare-divider">
+        <div class="n-compare-vs">VS</div>
+      </div>
+      <div class="n-compare-col n-compare-neural">
+        <h3>RinglyPro + Neural</h3>
+        <div class="n-compare-list">
+          <div class="n-compare-item"><span class="icon">&#10003;</span> Everything above, plus:</div>
+          <div class="n-compare-item"><span class="icon">&#10003;</span> Missed revenue detection</div>
+          <div class="n-compare-item"><span class="icon">&#10003;</span> Call conversion analysis</div>
+          <div class="n-compare-item"><span class="icon">&#10003;</span> Lead source ROI tracking</div>
+          <div class="n-compare-item"><span class="icon">&#10003;</span> Transcript intelligence</div>
+          <div class="n-compare-item"><span class="icon">&#10003;</span> Scheduling optimization</div>
+          <div class="n-compare-item"><span class="icon">&#10003;</span> Outbound campaign insights</div>
+          <div class="n-compare-item"><span class="icon">&#10003;</span> Revenue opportunity forecasts</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     8. IDEAL FOR
+     ============================================================ -->
+<section class="n-section n-section-dark" id="segments">
+  <div class="n-wrap">
+    <div class="n-section-header n-fade-in">
+      <div class="n-badge">Built For You</div>
+      <h2 class="n-section-title">Ideal for Service Businesses</h2>
+      <p class="n-section-sub">If your business depends on calls, bookings, and customer follow-up, Neural was built for you.</p>
+    </div>
+    <div class="n-segments n-fade-in">
+      <div class="n-segment">
+        <div class="n-segment-icon">&#10052;</div>
+        <h3>HVAC</h3>
+        <p>Seasonal demand intelligence</p>
+      </div>
+      <div class="n-segment">
+        <div class="n-segment-icon">&#128295;</div>
+        <h3>Plumbing</h3>
+        <p>Emergency call optimization</p>
+      </div>
+      <div class="n-segment">
+        <div class="n-segment-icon">&#10024;</div>
+        <h3>Med Spas</h3>
+        <p>Treatment booking analytics</p>
+      </div>
+      <div class="n-segment">
+        <div class="n-segment-icon">&#129463;</div>
+        <h3>Dental Clinics</h3>
+        <p>Patient retention insights</p>
+      </div>
+      <div class="n-segment">
+        <div class="n-segment-icon">&#9878;</div>
+        <h3>Legal Intake</h3>
+        <p>Case qualification tracking</p>
+      </div>
+      <div class="n-segment">
+        <div class="n-segment-icon">&#127968;</div>
+        <h3>Home Services</h3>
+        <p>Job booking conversion</p>
+      </div>
+      <div class="n-segment">
+        <div class="n-segment-icon">&#128188;</div>
+        <h3>Agencies</h3>
+        <p>Client pipeline intelligence</p>
+      </div>
+      <div class="n-segment">
+        <div class="n-segment-icon">&#128205;</div>
+        <h3>Local Services</h3>
+        <p>Community growth insights</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     9. ECOSYSTEM
+     ============================================================ -->
+<section class="n-section n-section-darker" id="ecosystem">
+  <div class="n-wrap">
+    <div class="n-eco-grid">
+      <div class="n-eco-visual n-fade-in">
+        <div class="n-eco-hub">
+          <div class="n-eco-hub-text">RinglyPro<br>Neural</div>
+        </div>
+        <div class="n-eco-nodes">
+          <div class="n-eco-node"><div class="n-eco-node-dot"></div>AI Voice Agents</div>
+          <div class="n-eco-node"><div class="n-eco-node-dot"></div>Call Answering</div>
+          <div class="n-eco-node"><div class="n-eco-node-dot"></div>CRM Activity</div>
+          <div class="n-eco-node"><div class="n-eco-node-dot"></div>Appointments</div>
+          <div class="n-eco-node"><div class="n-eco-node-dot"></div>Transcripts</div>
+          <div class="n-eco-node"><div class="n-eco-node-dot"></div>Messaging</div>
+          <div class="n-eco-node"><div class="n-eco-node-dot"></div>Outbound Campaigns</div>
+          <div class="n-eco-node"><div class="n-eco-node-dot"></div>Analytics</div>
+        </div>
+      </div>
+      <div class="n-eco-text n-fade-in">
+        <div class="n-badge" style="margin-bottom:16px;">Ecosystem</div>
+        <h3>Neural Lives Inside RinglyPro</h3>
+        <p>This is not a separate platform. Neural is an intelligence upgrade that works inside your existing RinglyPro setup. It connects to every system you already use &mdash; voice agents, CRM, booking, transcripts, messaging, and campaigns.</p>
+        <p>No migration. No new login. No disruption. Just deeper visibility into your business performance and clear actions to improve it.</p>
+        <div class="n-eco-callout">Neural analyzes what RinglyPro already captures. You get intelligence without changing a single workflow.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     10. PRICING
+     ============================================================ -->
+<section class="n-section n-section-accent" id="pricing">
+  <div class="n-wrap">
+    <div class="n-section-header n-fade-in">
+      <div class="n-badge">Upgrade</div>
+      <h2 class="n-section-title">Add Neural Intelligence to Your Stack</h2>
+      <p class="n-section-sub">Available as a premium add-on for existing RinglyPro customers.</p>
+    </div>
+    <div class="n-pricing-card n-fade-in">
+      <div class="n-pricing-label">Premium Add-On</div>
+      <h3>RinglyPro Neural</h3>
+      <p>Built for teams that want deeper visibility into every call, lead, and booking &mdash; and clear actions to improve conversion performance.</p>
+      <div class="n-pricing-features">
+        <div class="n-pricing-feature"><div class="n-pricing-check">&#10003;</div> Full call and transcript analysis</div>
+        <div class="n-pricing-feature"><div class="n-pricing-check">&#10003;</div> Lead conversion intelligence</div>
+        <div class="n-pricing-feature"><div class="n-pricing-check">&#10003;</div> Missed revenue detection</div>
+        <div class="n-pricing-feature"><div class="n-pricing-check">&#10003;</div> Scheduling optimization</div>
+        <div class="n-pricing-feature"><div class="n-pricing-check">&#10003;</div> Lead source ROI tracking</div>
+        <div class="n-pricing-feature"><div class="n-pricing-check">&#10003;</div> Voice agent script insights</div>
+        <div class="n-pricing-feature"><div class="n-pricing-check">&#10003;</div> Outbound campaign analytics</div>
+        <div class="n-pricing-feature"><div class="n-pricing-check">&#10003;</div> Revenue opportunity forecasts</div>
+        <div class="n-pricing-feature"><div class="n-pricing-check">&#10003;</div> Customer sentiment tracking</div>
+        <div class="n-pricing-feature"><div class="n-pricing-check">&#10003;</div> Neural insight dashboard</div>
+      </div>
+      <div class="n-pricing-ctas">
+        <a href="#contact" class="n-btn n-btn-primary n-btn-lg">Add Neural to RinglyPro</a>
+        <a href="#demo" class="n-btn n-btn-secondary n-btn-lg">Contact for Pricing</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     11. FAQ
+     ============================================================ -->
+<section class="n-section n-section-dark" id="faq">
+  <div class="n-wrap">
+    <div class="n-section-header n-fade-in">
+      <div class="n-badge">Questions</div>
+      <h2 class="n-section-title">Frequently Asked Questions</h2>
+    </div>
+    <div class="n-faq-list n-fade-in">
+
+      <div class="n-faq-item">
+        <button class="n-faq-q" aria-expanded="false">
+          <span>What is RinglyPro Neural?</span>
+          <span class="n-faq-icon">+</span>
+        </button>
+        <div class="n-faq-a" role="region">
+          <div class="n-faq-a-inner">RinglyPro Neural is the intelligence layer inside RinglyPro that analyzes calls, leads, appointments, CRM activity, transcripts, messaging, and outbound performance. It surfaces actionable insights to help businesses capture more customers, improve bookings, and increase revenue.</div>
+        </div>
+      </div>
+
+      <div class="n-faq-item">
+        <button class="n-faq-q" aria-expanded="false">
+          <span>Is Neural a separate platform?</span>
+          <span class="n-faq-icon">+</span>
+        </button>
+        <div class="n-faq-a" role="region">
+          <div class="n-faq-a-inner">No. Neural is not a separate platform. It is an intelligence upgrade that works inside your existing RinglyPro setup. No migration, no new login, no disruption to your current workflow.</div>
+        </div>
+      </div>
+
+      <div class="n-faq-item">
+        <button class="n-faq-q" aria-expanded="false">
+          <span>Does it work with my existing RinglyPro setup?</span>
+          <span class="n-faq-icon">+</span>
+        </button>
+        <div class="n-faq-a" role="region">
+          <div class="n-faq-a-inner">Yes. Neural connects directly to the data your RinglyPro system already captures &mdash; calls, leads, CRM, appointments, transcripts, and campaigns. You get intelligence without changing any of your current workflows.</div>
+        </div>
+      </div>
+
+      <div class="n-faq-item">
+        <button class="n-faq-q" aria-expanded="false">
+          <span>What does Neural analyze?</span>
+          <span class="n-faq-icon">+</span>
+        </button>
+        <div class="n-faq-a" role="region">
+          <div class="n-faq-a-inner">Neural analyzes inbound and missed calls, call transcripts, lead conversion funnels, appointment scheduling patterns, CRM activity, customer messaging, outbound campaign performance, lead source ROI, and customer sentiment. Every data point is connected to a measurable business outcome.</div>
+        </div>
+      </div>
+
+      <div class="n-faq-item">
+        <button class="n-faq-q" aria-expanded="false">
+          <span>Who is it best for?</span>
+          <span class="n-faq-icon">+</span>
+        </button>
+        <div class="n-faq-a" role="region">
+          <div class="n-faq-a-inner">Neural is built for service businesses, local businesses, agencies, and teams that depend on calls, bookings, and customer follow-up. It is especially valuable for HVAC, plumbing, med spas, dental clinics, legal intake, home services, and any business using AI voice answering and CRM automation.</div>
+        </div>
+      </div>
+
+      <div class="n-faq-item">
+        <button class="n-faq-q" aria-expanded="false">
+          <span>How do I get started?</span>
+          <span class="n-faq-icon">+</span>
+        </button>
+        <div class="n-faq-a" role="region">
+          <div class="n-faq-a-inner">If you are already a RinglyPro customer, contact our team to add Neural to your existing plan. If you are new to RinglyPro, book a demo and we will show you the full platform including Neural intelligence.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     12. FINAL CTA
+     ============================================================ -->
+<section class="n-final-cta" id="contact">
+  <div class="n-glow" style="width:500px;height:500px;background:rgba(99,102,241,0.1);bottom:-200px;left:50%;transform:translateX(-50%);"></div>
+  <div class="n-wrap n-fade-in" style="position:relative;z-index:2;">
+    <div class="n-badge" style="margin-bottom:16px;">Get Started</div>
+    <h2>Your AI Receptionist Should Do More Than Answer Calls</h2>
+    <p>Add the intelligence layer that turns every interaction into an opportunity to improve conversion, optimize scheduling, and increase revenue.</p>
+    <div class="n-final-ctas">
+      <a href="#pricing" class="n-btn n-btn-primary n-btn-lg">Add Neural to RinglyPro</a>
+      <a href="#demo" class="n-btn n-btn-secondary n-btn-lg">Book a Demo</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="n-footer">
+  <div class="n-wrap">
+    <p>&copy; 2026 RinglyPro. All rights reserved. Neural is a premium add-on for the RinglyPro platform.</p>
+  </div>
+</footer>
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script>
+(function() {
+  'use strict';
+
+  /* --- Sticky Nav Scroll --- */
+  var nav = document.getElementById('nav');
+  var lastScroll = 0;
+  window.addEventListener('scroll', function() {
+    var y = window.pageYOffset;
+    if (y > 60) { nav.classList.add('scrolled'); }
+    else { nav.classList.remove('scrolled'); }
+    lastScroll = y;
+  }, { passive: true });
+
+  /* --- Mobile Menu --- */
+  var menuBtn = document.getElementById('menuBtn');
+  var mobileMenu = document.getElementById('mobileMenu');
+  menuBtn.addEventListener('click', function() {
+    var open = mobileMenu.classList.toggle('open');
+    menuBtn.setAttribute('aria-expanded', open);
+  });
+  mobileMenu.querySelectorAll('a').forEach(function(a) {
+    a.addEventListener('click', function() {
+      mobileMenu.classList.remove('open');
+      menuBtn.setAttribute('aria-expanded', 'false');
+    });
+  });
+
+  /* --- FAQ Accordion --- */
+  document.querySelectorAll('.n-faq-q').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var item = this.closest('.n-faq-item');
+      var isOpen = item.classList.contains('open');
+      document.querySelectorAll('.n-faq-item.open').forEach(function(i) { i.classList.remove('open'); i.querySelector('.n-faq-q').setAttribute('aria-expanded', 'false'); });
+      if (!isOpen) { item.classList.add('open'); this.setAttribute('aria-expanded', 'true'); }
+    });
+  });
+
+  /* --- Scroll Fade-In --- */
+  var fades = document.querySelectorAll('.n-fade-in');
+  if ('IntersectionObserver' in window) {
+    var obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    fades.forEach(function(el) { obs.observe(el); });
+  } else {
+    fades.forEach(function(el) { el.classList.add('visible'); });
+  }
+
+  /* --- Animate chart bars on load --- */
+  var bars = document.querySelectorAll('.n-chart-bar');
+  bars.forEach(function(bar, i) {
+    var h = bar.style.height;
+    bar.style.height = '0';
+    setTimeout(function() { bar.style.height = h; }, 400 + i * 80);
+  });
+
+})();
+</script>
+
+</body>
+</html>
