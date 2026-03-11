@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { getProject, getRecommendations } from '../lib/api'
+import { getProject, getRecommendations, recordApproval, getApprovalStatus } from '../lib/api'
 import ProductCard from '../components/ProductCard'
 
 export default function ProductsPage() {
@@ -11,6 +11,8 @@ export default function ProductsPage() {
   const [recommendations, setRecommendations] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [approvalStatus, setApprovalStatus] = useState(null)
+  const [approving, setApproving] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -20,13 +22,15 @@ export default function ProductsPage() {
     setLoading(true)
     setError(null)
     try {
-      const [proj, recs] = await Promise.all([
+      const [proj, recs, approvals] = await Promise.all([
         getProject(projectId),
-        getRecommendations(projectId)
+        getRecommendations(projectId),
+        getApprovalStatus(projectId).catch(() => null)
       ])
       setProject(proj)
       const recsArray = recs?.recommendations || recs || []
       setRecommendations(Array.isArray(recsArray) ? recsArray : [])
+      setApprovalStatus(approvals)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -70,6 +74,19 @@ export default function ProductsPage() {
 
   const topRecommendation = recommendations.length > 0 ? recommendations[0] : null
   const otherRecommendations = recommendations.slice(1)
+
+  const handleApprove = async () => {
+    setApproving(true)
+    try {
+      await recordApproval(projectId, 'concept', 'Applications Engineer')
+      const status = await getApprovalStatus(projectId)
+      setApprovalStatus(status)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setApproving(false)
+    }
+  }
 
   return (
     <div className="animate-fade-in">
@@ -145,6 +162,58 @@ export default function ProductsPage() {
             {otherRecommendations.map((product, index) => (
               <ProductCard key={product.id || index} product={product} />
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Concept Human Review Gate */}
+      {recommendations.length > 0 && (
+        <div className="card bg-slate-900/40 border border-logistics-500/20 mt-8">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div className="flex items-start gap-3 flex-1 min-w-0">
+              <svg className="w-5 h-5 text-logistics-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+              </svg>
+              <div>
+                <p className="text-sm font-semibold text-slate-200 mb-1">Concept Package — Human Review Gate</p>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Review the automation concept recommendations. Approve to release the Concept Package to the Simulation Agent.
+                </p>
+                {approvalStatus?.gates?.concept?.approved && (
+                  <p className="text-xs text-emerald-400 mt-2 flex items-center gap-1">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                    Approved by {approvalStatus.gates.concept.approved_by} · {new Date(approvalStatus.gates.concept.approved_at).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
+            </div>
+            {!approvalStatus?.gates?.concept?.approved ? (
+              <button
+                onClick={handleApprove}
+                disabled={approving}
+                className="btn-primary text-sm flex items-center gap-2 flex-shrink-0"
+              >
+                {approving ? (
+                  <>
+                    <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                    Approving...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    Approve &amp; Proceed to Simulation
+                  </>
+                )}
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate(`/simulation/${projectId}`)}
+                className="btn-primary text-sm flex items-center gap-2 flex-shrink-0"
+              >
+                Run Simulation
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
+              </button>
+            )}
           </div>
         </div>
       )}
