@@ -104,9 +104,12 @@ export default function BenefitsPage() {
   const installScopeItems = topRecs.map(r => {
     const productKey = (r.product_name || r.name || '').toLowerCase().replace(/[^a-z0-9]/g, '_')
     const unitPrice = snapshotPrices[productKey] || snapshotPrices[Object.keys(snapshotPrices)[0]] || null
+    // r.reasoning is a JSONB object — use description text instead
+    const reasonText = r.description || r.primary_reason ||
+      (typeof r.reasoning === 'string' ? r.reasoning : '') || ''
     return {
       product: r.product_name || r.name,
-      reason: r.primary_reason || r.reasoning || '',
+      reason: reasonText,
       fit_score: r.fit_score || r.score,
       unit_price: unitPrice,
       qty: 1

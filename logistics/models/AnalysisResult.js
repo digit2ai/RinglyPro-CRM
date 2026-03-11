@@ -25,7 +25,8 @@ module.exports = (sequelize, DataTypes) => {
           'abc_classification',
           'fit_analysis',
           'benefit_projections',
-          'system_architecture'
+          'system_architecture',
+          'simulation'
         ]]
       }
     },
