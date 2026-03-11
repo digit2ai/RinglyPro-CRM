@@ -409,24 +409,30 @@ async function computeABCClassification(models, projectId) {
     });
   }
 
-  // Build Lorenz curve (ascending sort — small contributors first)
-  const skuPicksAsc = [...skuPicks].reverse(); // reverse the DESC sort
-  let cumVolumeAsc = 0;
+  // Build display curve (descending — most active SKUs first)
+  // Produces the Pareto/ABC shape: steep rise then flattens toward 100%
+  // This matches industry standard: top ~20% of SKUs → ~80% of volume
+  let cumVolumeDesc = 0;
   const lorenzCurve = [{ x: 0, y: 0 }];
   for (let i = 0; i < n; i++) {
-    cumVolumeAsc += parseFloat(skuPicksAsc[i].total_picks);
+    cumVolumeDesc += parseFloat(skuPicks[i].total_picks); // already sorted DESC
     lorenzCurve.push({
       x: Math.round(((i + 1) / n) * 100 * 10) / 10,
-      y: Math.round((cumVolumeAsc / totalPicks) * 100 * 10) / 10
+      y: Math.round((cumVolumeDesc / totalPicks) * 100 * 10) / 10
     });
   }
 
-  // Compute Gini coefficient using trapezoidal rule
+  // Compute Gini coefficient using ascending (traditional Lorenz) separately
+  const skuPicksAsc = [...skuPicks].reverse();
+  let cumVolumeAsc = 0;
   let areaUnderLorenz = 0;
-  for (let i = 1; i < lorenzCurve.length; i++) {
-    const dx = (lorenzCurve[i].x - lorenzCurve[i - 1].x) / 100;
-    const avgY = (lorenzCurve[i].y + lorenzCurve[i - 1].y) / 2 / 100;
-    areaUnderLorenz += dx * avgY;
+  let prevX = 0, prevY = 0;
+  for (let i = 0; i < n; i++) {
+    cumVolumeAsc += parseFloat(skuPicksAsc[i].total_picks);
+    const x = (i + 1) / n;
+    const y = cumVolumeAsc / totalPicks;
+    areaUnderLorenz += (x - prevX) * (y + prevY) / 2;
+    prevX = x; prevY = y;
   }
   const gini = Math.round((1 - 2 * areaUnderLorenz) * 1000) / 1000;
 

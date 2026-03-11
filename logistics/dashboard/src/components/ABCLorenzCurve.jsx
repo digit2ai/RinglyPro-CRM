@@ -63,17 +63,7 @@ export default function ABCLorenzCurve({ data = {} }) {
     chartData.unshift({ cumulative_items_pct: 0, cumulative_volume_pct: 0, abc_class: '' })
   }
 
-  // Generate diagonal reference points
-  const diagonal = Array.from({ length: 11 }, (_, i) => ({
-    cumulative_items_pct: i * 10,
-    equality: i * 10
-  }))
-
-  // Merge diagonal into chart data for overlay
-  const mergedData = chartData.map(pt => {
-    const eqValue = pt.cumulative_items_pct
-    return { ...pt, equality: eqValue }
-  })
+  const mergedData = chartData
 
   return (
     <div>
@@ -94,7 +84,7 @@ export default function ABCLorenzCurve({ data = {} }) {
         </div>
       )}
 
-      {/* Lorenz Curve */}
+      {/* Pareto Curve */}
       <ResponsiveContainer width="100%" height={280}>
         <LineChart data={mergedData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
@@ -105,7 +95,7 @@ export default function ABCLorenzCurve({ data = {} }) {
             tickLine={{ stroke: '#475569' }}
             domain={[0, 100]}
             tickFormatter={v => `${v}%`}
-            label={{ value: '% of SKUs', position: 'insideBottom', offset: -5, fill: '#64748b', fontSize: 11 }}
+            label={{ value: '% of SKUs (most active → least active)', position: 'insideBottom', offset: -5, fill: '#64748b', fontSize: 10 }}
           />
           <YAxis
             domain={[0, 100]}
@@ -116,18 +106,15 @@ export default function ABCLorenzCurve({ data = {} }) {
             label={{ value: '% of Volume', angle: -90, position: 'insideLeft', fill: '#64748b', fontSize: 11 }}
           />
           <Tooltip content={<CustomTooltip />} />
-          {/* Diagonal line - perfect equality */}
-          <Line
-            type="linear"
-            dataKey="equality"
-            stroke="#475569"
-            strokeDasharray="5 5"
-            strokeWidth={1}
-            dot={false}
-            name="Perfect Equality"
-            legendType="none"
+          {/* 80% volume reference line — Pareto cutoff */}
+          <ReferenceLine
+            y={80}
+            stroke="#f59e0b"
+            strokeDasharray="4 4"
+            strokeWidth={1.5}
+            label={{ value: '80%', position: 'right', fill: '#f59e0b', fontSize: 10 }}
           />
-          {/* Lorenz curve */}
+          {/* ABC curve */}
           <Line
             type="monotone"
             dataKey="cumulative_volume_pct"
@@ -135,7 +122,7 @@ export default function ABCLorenzCurve({ data = {} }) {
             strokeWidth={2.5}
             dot={{ fill: '#3b82f6', r: 2 }}
             activeDot={{ r: 5, fill: '#60a5fa' }}
-            name="Lorenz Curve"
+            name="ABC Curve"
           />
         </LineChart>
       </ResponsiveContainer>
