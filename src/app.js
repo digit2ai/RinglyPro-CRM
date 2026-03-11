@@ -447,6 +447,16 @@ const callReportRoutes = require('./routes/call-report');
 app.use('/api/call-report', callReportRoutes);
 console.log('📊 Call Report routes mounted at /api/call-report');
 
+// RinglyPro Neural Intelligence routes
+let neuralRoutes = null;
+try {
+    neuralRoutes = require('./routes/neural');
+    app.use('/api/neural', neuralRoutes);
+    console.log('🧠 RinglyPro Neural routes mounted at /api/neural');
+} catch (error) {
+    console.log('⚠️ Neural routes not available:', error.message);
+}
+
 // Client Settings routes (voicemail messages, etc.)
 const clientSettingsRoutes = require('./routes/client-settings');
 app.use('/api/client-settings', clientSettingsRoutes);

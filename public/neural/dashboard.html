@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RinglyPro Neural — Intelligence Dashboard</title>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #07090f;
+  color: #e2e8f0;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+
+/* Layout */
+.wrap { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+
+/* Header */
+.header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(7,9,15,.85); backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(139,92,246,.15);
+  padding: 16px 0;
+}
+.header-inner { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.logo { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; }
+.logo-icon { width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, #8b5cf6, #06b6d4); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.logo span { background: linear-gradient(90deg, #8b5cf6, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+/* Controls */
+.controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.select-wrap {
+  position: relative;
+}
+.select-wrap select {
+  appearance: none; background: rgba(139,92,246,.1); border: 1px solid rgba(139,92,246,.25);
+  border-radius: 8px; padding: 8px 32px 8px 12px; color: #e2e8f0; font-size: 13px;
+  cursor: pointer; outline: none;
+}
+.select-wrap::after {
+  content: '▾'; position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  pointer-events: none; color: #8b5cf6; font-size: 12px;
+}
+.btn-analyze {
+  background: linear-gradient(135deg, #8b5cf6, #06b6d4); color: #fff; font-weight: 600;
+  padding: 8px 20px; border-radius: 8px; font-size: 13px;
+  transition: opacity .2s;
+}
+.btn-analyze:hover { opacity: .9; }
+.btn-analyze:disabled { opacity: .5; cursor: not-allowed; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: inline-block; }
+.status-dot.loading { background: #eab308; animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+
+/* Nav tabs */
+.nav-tabs {
+  display: flex; gap: 4px; background: rgba(139,92,246,.05); border-radius: 10px; padding: 4px;
+  margin: 20px 0; overflow-x: auto;
+}
+.nav-tab {
+  padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500;
+  white-space: nowrap; transition: all .2s; color: #94a3b8;
+}
+.nav-tab:hover { color: #e2e8f0; background: rgba(139,92,246,.1); }
+.nav-tab.active { background: rgba(139,92,246,.2); color: #c4b5fd; }
+
+/* KPI Cards */
+.kpi-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px; margin-bottom: 24px;
+}
+.kpi-card {
+  background: rgba(139,92,246,.06); border: 1px solid rgba(139,92,246,.12);
+  border-radius: 12px; padding: 20px;
+}
+.kpi-label { font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+.kpi-value { font-size: 28px; font-weight: 700; }
+.kpi-value.purple { color: #c4b5fd; }
+.kpi-value.cyan { color: #67e8f9; }
+.kpi-value.green { color: #4ade80; }
+.kpi-value.red { color: #f87171; }
+.kpi-value.yellow { color: #fbbf24; }
+.kpi-sub { font-size: 12px; color: #64748b; margin-top: 4px; }
+.kpi-trend { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 6px; border-radius: 4px; margin-left: 6px; }
+.kpi-trend.up { background: rgba(74,222,128,.15); color: #4ade80; }
+.kpi-trend.down { background: rgba(248,113,113,.15); color: #f87171; }
+
+/* Insight Cards */
+.insights-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 16px; margin-bottom: 32px;
+}
+.insight-card {
+  background: rgba(15,23,42,.6); border: 1px solid rgba(139,92,246,.12);
+  border-radius: 14px; padding: 24px; transition: border-color .2s, transform .2s;
+  position: relative; overflow: hidden;
+}
+.insight-card:hover { border-color: rgba(139,92,246,.3); transform: translateY(-2px); }
+.insight-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+}
+.insight-card.critical::before { background: linear-gradient(90deg, #ef4444, #f87171); }
+.insight-card.high::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.insight-card.medium::before { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+.insight-card.low::before { background: linear-gradient(90deg, #06b6d4, #67e8f9); }
+
+.insight-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.insight-title { font-size: 16px; font-weight: 700; line-height: 1.3; }
+.insight-badge {
+  font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 6px;
+  text-transform: uppercase; letter-spacing: .3px; white-space: nowrap; flex-shrink: 0;
+}
+.insight-badge.critical { background: rgba(239,68,68,.15); color: #f87171; }
+.insight-badge.high { background: rgba(245,158,11,.15); color: #fbbf24; }
+.insight-badge.medium { background: rgba(139,92,246,.15); color: #c4b5fd; }
+.insight-badge.low { background: rgba(6,182,212,.15); color: #67e8f9; }
+
+.insight-category {
+  font-size: 11px; color: #8b5cf6; text-transform: uppercase; letter-spacing: .5px;
+  margin-bottom: 8px; font-weight: 600;
+}
+.insight-summary { font-size: 14px; color: #cbd5e1; line-height: 1.6; margin-bottom: 12px; }
+.insight-impact {
+  font-size: 13px; padding: 8px 12px; border-radius: 8px;
+  background: rgba(139,92,246,.08); border-left: 3px solid #8b5cf6;
+  margin-bottom: 12px; color: #a5b4fc;
+}
+.insight-action {
+  font-size: 13px; color: #94a3b8; padding-top: 12px;
+  border-top: 1px solid rgba(139,92,246,.08);
+}
+.insight-action strong { color: #c4b5fd; }
+.insight-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; }
+.insight-date { font-size: 11px; color: #64748b; }
+.insight-actions { display: flex; gap: 6px; }
+.insight-btn {
+  font-size: 11px; padding: 4px 10px; border-radius: 6px;
+  border: 1px solid rgba(139,92,246,.2); color: #94a3b8;
+  transition: all .2s;
+}
+.insight-btn:hover { background: rgba(139,92,246,.15); color: #c4b5fd; border-color: rgba(139,92,246,.3); }
+
+/* Empty state */
+.empty-state {
+  text-align: center; padding: 60px 20px; color: #64748b;
+}
+.empty-state h3 { font-size: 18px; color: #94a3b8; margin-bottom: 8px; }
+.empty-state p { font-size: 14px; }
+
+/* Section title */
+.section-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.section-title .count {
+  font-size: 12px; background: rgba(139,92,246,.2); color: #c4b5fd;
+  padding: 2px 8px; border-radius: 10px; font-weight: 600;
+}
+
+/* Loading */
+.loading-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(7,9,15,.8);
+  z-index: 200; align-items: center; justify-content: center; flex-direction: column; gap: 16px;
+}
+.loading-overlay.visible { display: flex; }
+.spinner {
+  width: 40px; height: 40px; border: 3px solid rgba(139,92,246,.2);
+  border-top-color: #8b5cf6; border-radius: 50%; animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 14px; color: #94a3b8; }
+
+/* Responsive */
+@media (max-width: 640px) {
+  .insights-grid { grid-template-columns: 1fr; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .kpi-value { font-size: 22px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text">Neural Engine analyzing your data...</div>
+</div>
+
+<!-- Header -->
+<header class="header">
+  <div class="wrap header-inner">
+    <div class="logo">
+      <div class="logo-icon">N</div>
+      <span>RinglyPro Neural</span>
+    </div>
+    <div class="controls">
+      <div class="select-wrap">
+        <select id="clientSelect"><option value="">Loading clients...</option></select>
+      </div>
+      <div class="select-wrap">
+        <select id="periodSelect">
+          <option value="7">Last 7 days</option>
+          <option value="14">Last 14 days</option>
+          <option value="30" selected>Last 30 days</option>
+        </select>
+      </div>
+      <button class="btn-analyze" id="btnAnalyze" disabled>Run Analysis</button>
+      <span class="status-dot" id="statusDot" title="System status"></span>
+    </div>
+  </div>
+</header>
+
+<!-- Main Content -->
+<main class="wrap" style="padding-top: 24px; padding-bottom: 60px;">
+
+  <!-- Nav tabs -->
+  <div class="nav-tabs" id="navTabs">
+    <button class="nav-tab active" data-tab="overview">Neural Overview</button>
+    <button class="nav-tab" data-tab="calls">Call Intelligence</button>
+    <button class="nav-tab" data-tab="conversion">Conversion Intelligence</button>
+    <button class="nav-tab" data-tab="scheduling">Scheduling Intelligence</button>
+    <button class="nav-tab" data-tab="revenue">Revenue Opportunities</button>
+    <button class="nav-tab" data-tab="all">All Insights</button>
+  </div>
+
+  <!-- KPI Overview -->
+  <div id="kpiSection">
+    <div class="kpi-grid" id="kpiGrid">
+      <div class="kpi-card"><div class="kpi-label">Total Calls</div><div class="kpi-value purple" id="kpiTotalCalls">—</div><div class="kpi-sub" id="kpiCallsSub"></div></div>
+      <div class="kpi-card"><div class="kpi-label">Answer Rate</div><div class="kpi-value green" id="kpiAnswerRate">—</div><div class="kpi-sub" id="kpiAnswerSub"></div></div>
+      <div class="kpi-card"><div class="kpi-label">Missed Calls</div><div class="kpi-value red" id="kpiMissed">—</div><div class="kpi-sub" id="kpiMissedSub"></div></div>
+      <div class="kpi-card"><div class="kpi-label">Bookings</div><div class="kpi-value cyan" id="kpiBookings">—</div><div class="kpi-sub" id="kpiBookingsSub"></div></div>
+      <div class="kpi-card"><div class="kpi-label">Conversion Rate</div><div class="kpi-value yellow" id="kpiConversion">—</div><div class="kpi-sub" id="kpiConvSub"></div></div>
+      <div class="kpi-card"><div class="kpi-label">New Leads</div><div class="kpi-value purple" id="kpiLeads">—</div><div class="kpi-sub" id="kpiLeadsSub"></div></div>
+    </div>
+  </div>
+
+  <!-- Insights Section -->
+  <div id="insightsSection">
+    <div class="section-title">
+      Neural Insights <span class="count" id="insightCount">0</span>
+    </div>
+    <div class="insights-grid" id="insightsGrid">
+      <div class="empty-state" id="emptyState">
+        <h3>No insights yet</h3>
+        <p>Select a client and click "Run Analysis" to generate intelligence insights.</p>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+const API_KEY = 'ringlypro-quick-admin-2024';
+const BASE = '/api/neural';
+
+// ─── State ─────────────────────────────────────────────────────
+let currentTab = 'overview';
+let allInsights = [];
+
+// ─── Category mapping for tabs ─────────────────────────────────
+const TAB_CATEGORIES = {
+  overview: null, // show all
+  calls: ['missed_revenue', 'voice_conversation', 'script_optimization'],
+  conversion: ['call_conversion', 'lead_response', 'lead_source'],
+  scheduling: ['scheduling', 'customer_sentiment'],
+  revenue: ['revenue_forecast', 'outbound_campaign'],
+  all: null
+};
+
+const CATEGORY_LABELS = {
+  missed_revenue: 'Missed Revenue',
+  call_conversion: 'Call Conversion',
+  lead_response: 'Lead Response',
+  scheduling: 'Scheduling',
+  voice_conversation: 'Voice Insights',
+  lead_source: 'Lead Sources',
+  outbound_campaign: 'Outbound Campaigns',
+  customer_sentiment: 'Customer Sentiment',
+  script_optimization: 'Script Optimization',
+  revenue_forecast: 'Revenue Forecast'
+};
+
+// ─── Init ──────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  loadClients();
+  setupTabs();
+  document.getElementById('btnAnalyze').addEventListener('click', runAnalysis);
+  document.getElementById('clientSelect').addEventListener('change', onClientChange);
+});
+
+async function loadClients() {
+  try {
+    const res = await fetch(`${BASE}/clients?apiKey=${API_KEY}`);
+    const data = await res.json();
+    const sel = document.getElementById('clientSelect');
+    sel.innerHTML = '<option value="">Select a client...</option>';
+    if (data.clients) {
+      data.clients.forEach(c => {
+        sel.innerHTML += `<option value="${c.id}">${c.business_name || 'Client ' + c.id}</option>`;
+      });
+    }
+  } catch (e) {
+    console.error('Failed to load clients:', e);
+  }
+}
+
+function onClientChange() {
+  const clientId = document.getElementById('clientSelect').value;
+  document.getElementById('btnAnalyze').disabled = !clientId;
+  if (clientId) {
+    loadOverview(clientId);
+    loadInsights(clientId);
+  }
+}
+
+function setupTabs() {
+  document.getElementById('navTabs').addEventListener('click', (e) => {
+    if (!e.target.classList.contains('nav-tab')) return;
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    e.target.classList.add('active');
+    currentTab = e.target.dataset.tab;
+    renderInsights();
+  });
+}
+
+// ─── API Calls ─────────────────────────────────────────────────
+async function loadOverview(clientId) {
+  try {
+    const days = document.getElementById('periodSelect').value;
+    const res = await fetch(`${BASE}/overview?client_id=${clientId}&days=${days}&apiKey=${API_KEY}`);
+    const data = await res.json();
+    if (data.success) renderKPIs(data);
+  } catch (e) {
+    console.error('Overview error:', e);
+  }
+}
+
+async function loadInsights(clientId) {
+  try {
+    const res = await fetch(`${BASE}/insights?client_id=${clientId}&apiKey=${API_KEY}`);
+    const data = await res.json();
+    if (data.success) {
+      allInsights = data.insights || [];
+      renderInsights();
+    }
+  } catch (e) {
+    console.error('Insights error:', e);
+  }
+}
+
+async function runAnalysis() {
+  const clientId = document.getElementById('clientSelect').value;
+  if (!clientId) return;
+
+  const btn = document.getElementById('btnAnalyze');
+  const dot = document.getElementById('statusDot');
+  const overlay = document.getElementById('loadingOverlay');
+
+  btn.disabled = true;
+  btn.textContent = 'Analyzing...';
+  dot.classList.add('loading');
+  overlay.classList.add('visible');
+
+  try {
+    const res = await fetch(`${BASE}/analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ client_id: parseInt(clientId), apiKey: API_KEY })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      allInsights = data.insights || [];
+      renderInsights();
+      loadOverview(clientId);
+    }
+  } catch (e) {
+    console.error('Analysis error:', e);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Run Analysis';
+    dot.classList.remove('loading');
+    overlay.classList.remove('visible');
+  }
+}
+
+async function updateInsightStatus(id, status) {
+  try {
+    await fetch(`${BASE}/insights/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, apiKey: API_KEY })
+    });
+    allInsights = allInsights.filter(i => i.id !== id);
+    renderInsights();
+  } catch (e) {
+    console.error('Update error:', e);
+  }
+}
+
+// ─── Rendering ─────────────────────────────────────────────────
+function renderKPIs(data) {
+  const c = data.calls || {};
+  const b = data.bookings || {};
+  const l = data.leads || {};
+
+  document.getElementById('kpiTotalCalls').textContent = c.total || 0;
+  document.getElementById('kpiCallsSub').innerHTML = `${c.outbound || 0} outbound &middot; Avg ${c.avgDuration || 0}s`;
+
+  document.getElementById('kpiAnswerRate').textContent = (c.answerRate || 0) + '%';
+  const trend = c.answerRateTrend || 0;
+  document.getElementById('kpiAnswerSub').innerHTML = trend !== 0
+    ? `<span class="kpi-trend ${trend > 0 ? 'up' : 'down'}">${trend > 0 ? '+' : ''}${trend.toFixed(1)}%</span> vs prior period`
+    : 'vs prior period';
+
+  document.getElementById('kpiMissed').textContent = c.missed || 0;
+  document.getElementById('kpiMissedSub').textContent = c.total > 0 ? `${((c.missed / c.total) * 100).toFixed(1)}% of incoming` : '';
+
+  document.getElementById('kpiBookings').textContent = b.total || 0;
+  document.getElementById('kpiBookingsSub').textContent = `${b.completed || 0} completed · ${b.noShows || 0} no-shows`;
+
+  document.getElementById('kpiConversion').textContent = (b.conversionRate || 0) + '%';
+  document.getElementById('kpiConvSub').textContent = 'calls → bookings';
+
+  document.getElementById('kpiLeads').textContent = l.newLeads || 0;
+  document.getElementById('kpiLeadsSub').textContent = 'new contacts captured';
+}
+
+function renderInsights() {
+  const grid = document.getElementById('insightsGrid');
+  const countEl = document.getElementById('insightCount');
+
+  // Filter by tab
+  const cats = TAB_CATEGORIES[currentTab];
+  const filtered = cats ? allInsights.filter(i => cats.includes(i.category)) : allInsights;
+
+  countEl.textContent = filtered.length;
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="empty-state"><h3>No insights for this view</h3><p>${allInsights.length === 0 ? 'Run an analysis to generate insights.' : 'Switch tabs to see other insights.'}</p></div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(i => `
+    <div class="insight-card ${i.impact}">
+      <div class="insight-category">${CATEGORY_LABELS[i.category] || i.category}</div>
+      <div class="insight-header">
+        <div class="insight-title">${esc(i.title)}</div>
+        <span class="insight-badge ${i.impact}">${i.impact}</span>
+      </div>
+      <div class="insight-summary">${esc(i.summary)}</div>
+      ${i.impact_estimate || i.impactEstimate ? `<div class="insight-impact">Impact: ${esc(i.impact_estimate || i.impactEstimate)}</div>` : ''}
+      <div class="insight-action"><strong>Recommended:</strong> ${esc(i.recommended_action || i.recommendedAction)}</div>
+      <div class="insight-footer">
+        <span class="insight-date">${i.analysis_date || i.analysisDate || ''}</span>
+        ${i.id ? `<div class="insight-actions">
+          <button class="insight-btn" onclick="updateInsightStatus(${i.id}, 'acknowledged')">Acknowledge</button>
+          <button class="insight-btn" onclick="updateInsightStatus(${i.id}, 'dismissed')">Dismiss</button>
+        </div>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function esc(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+</script>
+</body>
+</html>

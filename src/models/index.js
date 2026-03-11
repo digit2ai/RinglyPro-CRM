@@ -129,6 +129,15 @@ try {
   console.log('Note: A2P model needed for 10DLC SMS verification');
 }
 
+// Import Neural Insight model
+let NeuralInsight;
+try {
+  NeuralInsight = require('./NeuralInsight');
+  console.log('NeuralInsight model imported successfully');
+} catch (error) {
+  console.log('NeuralInsight model not found:', error.message);
+}
+
 // Import OEE Tracking models
 let Machine;
 let MachineEvent;
@@ -175,6 +184,7 @@ if (Project) models.Project = Project;
 if (ProjectMilestone) models.ProjectMilestone = ProjectMilestone;
 if (ProjectMessage) models.ProjectMessage = ProjectMessage;
 if (A2P) models.A2P = A2P;
+if (NeuralInsight) models.NeuralInsight = NeuralInsight;
 if (Machine) models.Machine = Machine;
 if (MachineEvent) models.MachineEvent = MachineEvent;
 if (ProductionRun) models.ProductionRun = ProductionRun;
@@ -554,6 +564,16 @@ const syncDatabase = async (options = {}) => {
       }
     }
 
+    // Sync NeuralInsight table
+    if (NeuralInsight) {
+      try {
+        await syncWithTimeout(NeuralInsight, 'NeuralInsight');
+        console.log('NeuralInsight table synchronized - Neural Intelligence ready');
+      } catch (error) {
+        console.log('NeuralInsight table sync issues:', error.message);
+      }
+    }
+
     // Sync OEE Tracking models (Machine must come first due to FK)
     if (Machine) {
       try {
@@ -851,6 +871,9 @@ module.exports.ProjectMessage = ProjectMessage;
 
 // Export A2P model for 10DLC verification
 module.exports.A2P = A2P;
+
+// Export Neural Insight model
+module.exports.NeuralInsight = NeuralInsight;
 
 // Export AI services
 module.exports.BusinessAICustomizer = BusinessAICustomizer;
