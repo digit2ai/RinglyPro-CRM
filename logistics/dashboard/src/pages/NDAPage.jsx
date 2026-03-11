@@ -232,22 +232,6 @@ export default function NDAPage() {
   // ── Phase 1: Disclosing pre-signature (persisted in localStorage) ────────────
   const [savedSig, setSavedSig] = useState(() => localStorage.getItem(LS_SIG_KEY) || null)
   const [savedSigAt, setSavedSigAt] = useState(() => localStorage.getItem(LS_SIG_AT_KEY) || null)
-  const [draftSig, setDraftSig] = useState(null)
-  const [savingDisc, setSavingDisc] = useState(false)
-  const [discSaved, setDiscSaved] = useState(false)
-
-  const saveDisclosingSignature = () => {
-    if (!draftSig) return
-    setSavingDisc(true)
-    const now = new Date().toISOString()
-    localStorage.setItem(LS_SIG_KEY, draftSig)
-    localStorage.setItem(LS_SIG_AT_KEY, now)
-    setSavedSig(draftSig)
-    setSavedSigAt(now)
-    setSavingDisc(false)
-    setDiscSaved(true)
-    setTimeout(() => setDiscSaved(false), 3000)
-  }
 
   const clearDisclosingSignature = () => {
     localStorage.removeItem(LS_SIG_KEY)
@@ -486,26 +470,24 @@ export default function NDAPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            <SignaturePad label="Sign here (Manuel Stagg)" onChange={setDraftSig}
-              onSaveToDB={(data) => saveSignatureToDB({
-                signerRole: 'disclosing',
-                company: DISCLOSING.company, name: DISCLOSING.name, title: DISCLOSING.title,
-                signatureData: data, signedAt: new Date().toISOString()
-              })}
-              saveLabel="Save to Database"
+            <SignaturePad label="Sign here (Manuel Stagg)"
+              onSaveToDB={async (data) => {
+                // Save to DB
+                await saveSignatureToDB({
+                  signerRole: 'disclosing',
+                  company: DISCLOSING.company, name: DISCLOSING.name, title: DISCLOSING.title,
+                  signatureData: data, signedAt: new Date().toISOString()
+                })
+                // Also persist to localStorage so it auto-loads on every future NDA
+                const now = new Date().toISOString()
+                localStorage.setItem(LS_SIG_KEY, data)
+                localStorage.setItem(LS_SIG_AT_KEY, now)
+                setSavedSig(data)
+                setSavedSigAt(now)
+              }}
+              saveLabel="Save My Signature"
             />
-            <button
-              type="button"
-              onClick={saveDisclosingSignature}
-              disabled={!draftSig || savingDisc}
-              className="btn-primary flex items-center gap-2 text-sm px-4 py-2"
-            >
-              {discSaved
-                ? <><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>Signature Saved!</>
-                : <><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" /></svg>Save My Signature</>
-              }
-            </button>
-            <p className="text-xs text-slate-500">Saves to this browser. Every future NDA will include it automatically — no re-signing needed.</p>
+            <p className="text-xs text-slate-500">Saves to database and this browser. Every future NDA will include it automatically — no re-signing needed.</p>
           </div>
         )}
       </div>
