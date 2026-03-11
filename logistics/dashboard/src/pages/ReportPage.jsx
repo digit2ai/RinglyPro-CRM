@@ -14,6 +14,8 @@ export default function ReportPage() {
   const [downloadLoading, setDownloadLoading] = useState(false)
   const [approving, setApproving] = useState(false)
   const [error, setError] = useState(null)
+  const [showEmail, setShowEmail] = useState(false)
+  const [emailCopied, setEmailCopied] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -495,6 +497,154 @@ export default function ReportPage() {
           )}
         </div>
       </div>
+
+      {/* Email Proposal — visible after final approval */}
+      {approvalStatus?.gates?.final?.approved && (
+        <div className="mb-8">
+          <div className="card bg-slate-900/40 border border-logistics-500/20">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-logistics-600/20 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-logistics-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-200">Email Proposal to Client</p>
+                  <p className="text-xs text-slate-400">Send the released proposal with PDF report attached</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowEmail(v => !v)}
+                className="btn-secondary text-sm flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                </svg>
+                {showEmail ? 'Hide Template' : 'Compose Email'}
+              </button>
+            </div>
+
+            {showEmail && (() => {
+              const to = project?.contact_email || ''
+              const contactName = project?.contact_name || 'there'
+              const company = project?.company_name || 'your organisation'
+              const subject = `Warehouse Automation Proposal — ${company}`
+              const downloadUrl = `${window.location.origin}/pinaxis/api/v1/reports/${projectId}/download`
+              const body = `Dear ${contactName},
+
+Thank you for engaging with us on the warehouse automation opportunity for ${company}.
+
+We are pleased to share your tailored Warehouse Analytics & Automation Proposal, which includes:
+
+  • Warehouse KPIs and baseline performance analysis
+  • ABC / Pareto classification and dead stock insights
+  • Throughput stress testing (baseline, +30% growth, peak day)
+  • Automation concept recommendations with fit scores
+  • Commercial package: scope, CAPEX options, and ROI projections
+  • Risk register derived from simulation bottleneck analysis
+
+Please find the full PDF report attached to this email. You may also download it directly via the link below:
+
+${downloadUrl}
+
+We look forward to discussing the findings and next steps with you at your convenience.
+
+Kind regards,
+RinglyPro Logistics Team`
+
+              const mailto = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+
+              const handleCopy = () => {
+                const full = `To: ${to}\nSubject: ${subject}\n\n${body}`
+                navigator.clipboard.writeText(full).then(() => {
+                  setEmailCopied(true)
+                  setTimeout(() => setEmailCopied(false), 2500)
+                })
+              }
+
+              return (
+                <div className="border-t border-slate-700/50 pt-4 space-y-3">
+                  {/* To */}
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1 font-medium uppercase tracking-wider">To</label>
+                    <div className="bg-slate-800/60 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-slate-200">
+                      {to || <span className="text-slate-500 italic">No contact email on project</span>}
+                    </div>
+                  </div>
+                  {/* Subject */}
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1 font-medium uppercase tracking-wider">Subject</label>
+                    <div className="bg-slate-800/60 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-slate-200">
+                      {subject}
+                    </div>
+                  </div>
+                  {/* Body */}
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1 font-medium uppercase tracking-wider">Body</label>
+                    <div className="bg-slate-800/60 border border-slate-700/60 rounded-lg px-3 py-3 text-xs text-slate-300 whitespace-pre-wrap leading-relaxed font-mono max-h-64 overflow-y-auto">
+                      {body}
+                    </div>
+                  </div>
+                  {/* Attachment note */}
+                  <div className="flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                    <svg className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13" />
+                    </svg>
+                    <p className="text-xs text-amber-300">
+                      <span className="font-semibold">Attachment reminder:</span> Download the PDF report first, then manually attach it to the email before sending.
+                    </p>
+                  </div>
+                  {/* Actions */}
+                  <div className="flex items-center gap-3 pt-1 flex-wrap">
+                    <button
+                      onClick={handleDownload}
+                      disabled={downloadLoading}
+                      className="btn-secondary text-sm flex items-center gap-2"
+                    >
+                      {downloadLoading ? (
+                        <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                        </svg>
+                      )}
+                      Download PDF
+                    </button>
+                    <button
+                      onClick={handleCopy}
+                      className="btn-secondary text-sm flex items-center gap-2"
+                    >
+                      {emailCopied ? (
+                        <>
+                          <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                          <span className="text-emerald-400">Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.375" />
+                          </svg>
+                          Copy Template
+                        </>
+                      )}
+                    </button>
+                    <a
+                      href={mailto}
+                      className="btn-primary text-sm flex items-center gap-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                      </svg>
+                      Open in Email Client
+                    </a>
+                  </div>
+                </div>
+              )
+            })()}
+          </div>
+        </div>
+      )}
 
       {/* Error */}
       {error && (
