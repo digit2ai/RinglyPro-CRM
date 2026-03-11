@@ -104,7 +104,14 @@ export default function UploadPage() {
     setError(null)
     setLoading(true)
     try {
-      const result = await createProject(companyInfo)
+      const { building_footprint_m2, ceiling_height_m, dock_doors, budget_range, target_go_live, ...coreInfo } = companyInfo
+      const business_info = {}
+      if (building_footprint_m2) business_info.building_footprint_m2 = parseFloat(building_footprint_m2)
+      if (ceiling_height_m) business_info.ceiling_height_m = parseFloat(ceiling_height_m)
+      if (dock_doors) business_info.dock_doors = parseInt(dock_doors)
+      if (budget_range) business_info.budget_range = budget_range
+      if (target_go_live) business_info.target_go_live = target_go_live
+      const result = await createProject({ ...coreInfo, business_info })
       setProjectId(result.project_id || result.id)
       setStep(2)
     } catch (err) {

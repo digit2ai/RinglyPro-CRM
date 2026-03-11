@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { getProject, getAnalysisAll, getRecommendations, generateReport, downloadReport } from '../lib/api'
+import { getProject, getAnalysisAll, getRecommendations, generateReport, downloadReport, getSimulation, recordApproval, getApprovalStatus } from '../lib/api'
 
 export default function ReportPage() {
   const { projectId } = useParams()
@@ -8,8 +8,11 @@ export default function ReportPage() {
   const [project, setProject] = useState(null)
   const [analysis, setAnalysis] = useState(null)
   const [recommendations, setRecommendations] = useState([])
+  const [simulation, setSimulation] = useState(null)
+  const [approvalStatus, setApprovalStatus] = useState(null)
   const [loading, setLoading] = useState(true)
   const [downloadLoading, setDownloadLoading] = useState(false)
+  const [approving, setApproving] = useState(false)
   const [error, setError] = useState(null)
 
   useEffect(() => {
@@ -20,15 +23,19 @@ export default function ReportPage() {
     setLoading(true)
     setError(null)
     try {
-      const [proj, anal, recs] = await Promise.all([
+      const [proj, anal, recs, sim, approvals] = await Promise.all([
         getProject(projectId),
         getAnalysisAll(projectId).catch(() => null),
-        getRecommendations(projectId).catch(() => [])
+        getRecommendations(projectId).catch(() => []),
+        getSimulation(projectId).catch(() => null),
+        getApprovalStatus(projectId).catch(() => null)
       ])
       setProject(proj)
       setAnalysis(anal)
       const recsArray = recs?.recommendations || recs || []
       setRecommendations(Array.isArray(recsArray) ? recsArray : [])
+      setSimulation(sim)
+      setApprovalStatus(approvals)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -57,6 +64,19 @@ export default function ReportPage() {
     }
   }
 
+  const handleApprove = async () => {
+    setApproving(true)
+    try {
+      await recordApproval(projectId, 'final', 'Proposal Manager')
+      const status = await getApprovalStatus(projectId)
+      setApprovalStatus(status)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setApproving(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -81,6 +101,47 @@ export default function ReportPage() {
     total_units: ov.orders?.total_units,
   }
   const topProduct = recommendations.length > 0 ? recommendations[0] : null
+
+  // Derive risk register from simulation bottlenecks
+  const peakBottlenecks = simulation?.scenarios?.find(s => s.id === 'peak')?.bottlenecks || []
+  const riskRegister = peakBottlenecks
+    .filter(b => b.zone !== 'None identified')
+    .map(b => ({
+      zone: b.zone,
+      severity: b.risk,
+      description: b.reason,
+      mitigation: b.risk === 'High'
+        ? 'Include in system design scope — automation spec must address this zone'
+        : b.risk === 'Medium'
+        ? 'Monitor during implementation; flag for detailed engineering review'
+        : 'Log for awareness; no immediate action required'
+    }))
+
+  // Scope inclusions / exclusions
+  const scopeInclusions = [
+    'Warehouse data analysis and baseline documentation',
+    'ABC/D classification and dead stock identification',
+    'Throughput stress testing (3 scenarios)',
+    'RinglyPro Logistics automation concept recommendations',
+    'ROI projection and commercial package',
+    'Risk register derived from simulation bottlenecks'
+  ]
+  const scopeExclusions = [
+    'Detailed mechanical / civil engineering design',
+    'Site survey and building structural assessment',
+    'IT/ERP integration specification',
+    'Installation, commissioning, and training',
+    'Ongoing support and maintenance contracts'
+  ]
+
+  // Gate status summary
+  const gates = approvalStatus?.gates || {}
+  const gateList = [
+    { key: 'concept', label: 'Concept' },
+    { key: 'simulation', label: 'Simulation' },
+    { key: 'pricing', label: 'Commercial / Pricing' },
+    { key: 'final', label: 'Proposal Final' }
+  ]
 
   const reportSections = [
     {
@@ -181,13 +242,13 @@ export default function ReportPage() {
         </div>
         <div className="flex items-center gap-3">
           <Link
-            to={`/products/${projectId}`}
+            to={`/benefits/${projectId}`}
             className="btn-secondary flex items-center gap-2"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
             </svg>
-            Back to Products
+            Back to Commercial
           </Link>
         </div>
       </div>
@@ -286,6 +347,152 @@ export default function ReportPage() {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Approval Gate Status */}
+      <div className="mb-8">
+        <h2 className="text-lg font-semibold text-white mb-4">Review Gate Status</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {gateList.map(g => {
+            const gate = gates[g.key]
+            return (
+              <div key={g.key} className={`card py-3 px-4 text-center border ${
+                gate?.approved ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-slate-700/60'
+              }`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center mx-auto mb-2 ${
+                  gate?.approved ? 'bg-emerald-500/20' : 'bg-slate-700/50'
+                }`}>
+                  {gate?.approved
+                    ? <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                    : <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  }
+                </div>
+                <p className="text-xs font-medium text-slate-300">{g.label}</p>
+                <p className={`text-xs mt-0.5 ${gate?.approved ? 'text-emerald-400' : 'text-slate-500'}`}>
+                  {gate?.approved ? `${gate.approved_by}` : 'Pending'}
+                </p>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Scope inclusions / exclusions */}
+      <div className="mb-8">
+        <h2 className="text-lg font-semibold text-white mb-4">Proposal Scope</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="card">
+            <h3 className="text-sm font-semibold text-emerald-400 mb-3 flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+              Included in Scope
+            </h3>
+            <ul className="space-y-2">
+              {scopeInclusions.map((item, i) => (
+                <li key={i} className="flex items-start gap-2 text-xs text-slate-300">
+                  <span className="w-1 h-1 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="card">
+            <h3 className="text-sm font-semibold text-slate-400 mb-3 flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              Excluded from Scope
+            </h3>
+            <ul className="space-y-2">
+              {scopeExclusions.map((item, i) => (
+                <li key={i} className="flex items-start gap-2 text-xs text-slate-400">
+                  <span className="w-1 h-1 rounded-full bg-slate-600 mt-1.5 flex-shrink-0" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Risk Register */}
+      {riskRegister.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-white mb-4">Risk Register</h2>
+          <p className="text-sm text-slate-400 mb-4">Auto-generated from peak scenario bottleneck analysis.</p>
+          <div className="card overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-700">
+                  <th className="text-left py-2 px-3 text-slate-400 font-medium">Zone</th>
+                  <th className="text-left py-2 px-3 text-slate-400 font-medium">Severity</th>
+                  <th className="text-left py-2 px-3 text-slate-400 font-medium">Risk</th>
+                  <th className="text-left py-2 px-3 text-slate-400 font-medium">Mitigation</th>
+                </tr>
+              </thead>
+              <tbody>
+                {riskRegister.map((r, i) => (
+                  <tr key={i} className="border-b border-slate-700/50 hover:bg-slate-700/20">
+                    <td className="py-2.5 px-3 text-slate-200 font-medium text-xs">{r.zone}</td>
+                    <td className="py-2.5 px-3">
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                        r.severity === 'High' ? 'bg-red-500/20 text-red-400' :
+                        r.severity === 'Medium' ? 'bg-amber-500/20 text-amber-400' :
+                        'bg-slate-600/30 text-slate-400'
+                      }`}>{r.severity}</span>
+                    </td>
+                    <td className="py-2.5 px-3 text-xs text-slate-400 max-w-xs">{r.description}</td>
+                    <td className="py-2.5 px-3 text-xs text-slate-400 max-w-xs">{r.mitigation}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Final Approval Gate */}
+      <div className="card bg-slate-900/40 border border-logistics-500/20 mb-8">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            <svg className="w-5 h-5 text-logistics-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+            </svg>
+            <div>
+              <p className="text-sm font-semibold text-slate-200 mb-1">Proposal Package — Final Approval Gate</p>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Review scope, risk register, and all prior gate approvals. Final approval releases the Proposal Package for customer delivery.
+              </p>
+              {approvalStatus?.gates?.final?.approved && (
+                <p className="text-xs text-emerald-400 mt-2 flex items-center gap-1">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                  Final approval by {approvalStatus.gates.final.approved_by} · {new Date(approvalStatus.gates.final.approved_at).toLocaleDateString()}
+                </p>
+              )}
+            </div>
+          </div>
+          {!approvalStatus?.gates?.final?.approved ? (
+            <button
+              onClick={handleApprove}
+              disabled={approving}
+              className="btn-primary text-sm flex items-center gap-2 flex-shrink-0"
+            >
+              {approving ? (
+                <>
+                  <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                  Approving...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  Approve &amp; Release Proposal
+                </>
+              )}
+            </button>
+          ) : (
+            <span className="flex items-center gap-1.5 text-sm text-emerald-400 font-medium flex-shrink-0">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              Proposal Released
+            </span>
+          )}
         </div>
       </div>
 

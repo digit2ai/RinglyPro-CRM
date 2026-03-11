@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getProject, computeBenefits, getBenefits, getActivePricingSnapshot, recordApproval, getApprovalStatus } from '../lib/api'
+import { getProject, computeBenefits, getBenefits, getActivePricingSnapshot, recordApproval, getApprovalStatus, getSimulation, getRecommendations } from '../lib/api'
 import BenefitCard from '../components/BenefitCard'
 
 export default function BenefitsPage() {
@@ -14,6 +14,8 @@ export default function BenefitsPage() {
   const [pricingSnapshot, setPricingSnapshot] = useState(null)
   const [approvalStatus, setApprovalStatus] = useState(null)
   const [approving, setApproving] = useState(false)
+  const [simulation, setSimulation] = useState(null)
+  const [recommendations, setRecommendations] = useState([])
 
   useEffect(() => {
     loadData()
@@ -36,10 +38,12 @@ export default function BenefitsPage() {
         setBenefits(data)
         setComputing(false)
       }
-      // Load pricing snapshot and approval status in parallel
+      // Load supplementary data in parallel
       await Promise.allSettled([
         getActivePricingSnapshot().then(s => setPricingSnapshot(s)).catch(() => {}),
-        getApprovalStatus(projectId).then(s => setApprovalStatus(s)).catch(() => {})
+        getApprovalStatus(projectId).then(s => setApprovalStatus(s)).catch(() => {}),
+        getSimulation(projectId).then(s => setSimulation(s)).catch(() => {}),
+        getRecommendations(projectId).then(r => setRecommendations(r?.recommendations || r || [])).catch(() => {})
       ])
     } catch (err) {
       setError(err.message)
@@ -90,6 +94,35 @@ export default function BenefitsPage() {
   const summary = benefits?.summary || {}
   const warehouseBenefits = projections.filter(p => p.category === 'warehouse_automation')
   const platformBenefits = projections.filter(p => p.category === 'platform_ai')
+
+  // Derive commercial package from simulation + recommendations + pricing snapshot
+  const baselineMetrics = simulation?.scenarios?.find(s => s.id === 'baseline')?.metrics || {}
+  const peakMetrics = simulation?.scenarios?.find(s => s.id === 'peak')?.metrics || {}
+  const topRecs = Array.isArray(recommendations) ? recommendations.slice(0, 3) : []
+  const snapshotPrices = pricingSnapshot?.product_prices || {}
+
+  const installScopeItems = topRecs.map(r => {
+    const productKey = (r.product_name || r.name || '').toLowerCase().replace(/[^a-z0-9]/g, '_')
+    const unitPrice = snapshotPrices[productKey] || snapshotPrices[Object.keys(snapshotPrices)[0]] || null
+    return {
+      product: r.product_name || r.name,
+      reason: r.primary_reason || r.reasoning || '',
+      fit_score: r.fit_score || r.score,
+      unit_price: unitPrice,
+      qty: 1
+    }
+  })
+
+  const budgetRange = project?.business_info?.budget_range || null
+  const capexTiers = budgetRange ? [
+    { label: 'Phased Approach', pct: 0.6, description: 'Phase 1: storage & inbound automation. Phase 2: outbound & software.' },
+    { label: 'Full Scope', pct: 1.0, description: 'Complete automation stack delivered in a single project.' }
+  ] : null
+
+  const pricingRisks = []
+  if (!pricingSnapshot) pricingRisks.push({ risk: 'No approved pricing snapshot — pricing subject to change', severity: 'High' })
+  if (peakMetrics.orderlines_per_day > 3000) pricingRisks.push({ risk: 'Peak throughput >3,000 OL/day may require higher-spec equipment', severity: 'Medium' })
+  if ((summary.payback_months_low || 0) > 24) pricingRisks.push({ risk: 'Payback period exceeds 24 months — budget sensitivity review recommended', severity: 'Low' })
 
   const formatCurrency = (v) => {
     if (v >= 1000000) return `${(v / 1000000).toFixed(1)}M`
@@ -204,6 +237,101 @@ export default function BenefitsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {platformBenefits.map(b => (
               <BenefitCard key={b.id} benefit={b} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Commercial Package — Install Scope Line Items */}
+      {installScopeItems.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold text-white mb-1 flex items-center gap-2">
+            <svg className="w-5 h-5 text-logistics-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
+            </svg>
+            Commercial Package — Install Scope
+          </h2>
+          <p className="text-sm text-slate-400 mb-4">Proposed automation concepts with indicative pricing from the active snapshot.</p>
+          <div className="card overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-700">
+                  <th className="text-left py-2 px-3 text-slate-400 font-medium">Product / System</th>
+                  <th className="text-right py-2 px-3 text-slate-400 font-medium">Fit Score</th>
+                  <th className="text-left py-2 px-3 text-slate-400 font-medium">Primary Justification</th>
+                  {installScopeItems.some(i => i.unit_price) && (
+                    <th className="text-right py-2 px-3 text-slate-400 font-medium">Indicative Price</th>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {installScopeItems.map((item, i) => (
+                  <tr key={i} className="border-b border-slate-700/50 hover:bg-slate-700/20">
+                    <td className="py-3 px-3 font-medium text-slate-200">{item.product}</td>
+                    <td className="py-3 px-3 text-right">
+                      <span className={`text-sm font-bold ${item.fit_score >= 80 ? 'text-emerald-400' : item.fit_score >= 60 ? 'text-amber-400' : 'text-slate-400'}`}>
+                        {item.fit_score}%
+                      </span>
+                    </td>
+                    <td className="py-3 px-3 text-xs text-slate-400 max-w-xs">{item.reason}</td>
+                    {installScopeItems.some(i => i.unit_price) && (
+                      <td className="py-3 px-3 text-right text-slate-300">
+                        {item.unit_price ? `€${(item.unit_price / 1000).toFixed(0)}K` : '—'}
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* CAPEX Options */}
+      {capexTiers && installScopeItems.length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-sm font-semibold text-slate-300 mb-3 uppercase tracking-wider">CAPEX Options — based on {budgetRange} budget</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {capexTiers.map((tier, i) => (
+              <div key={i} className="card border border-slate-700/60 flex items-start gap-4">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-bold ${
+                  i === 0 ? 'bg-blue-500/20 text-blue-400' : 'bg-logistics-500/20 text-logistics-400'
+                }`}>
+                  {i === 0 ? 'P1' : 'F'}
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-white mb-0.5">{tier.label}</p>
+                  <p className="text-xs text-slate-400">{tier.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Pricing Risks */}
+      {pricingRisks.length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-sm font-semibold text-slate-300 mb-3 uppercase tracking-wider">Pricing Risk Flags</h3>
+          <div className="space-y-2">
+            {pricingRisks.map((r, i) => (
+              <div key={i} className={`flex items-start gap-3 p-3 rounded-lg border ${
+                r.severity === 'High' ? 'bg-red-500/10 border-red-500/30' :
+                r.severity === 'Medium' ? 'bg-amber-500/10 border-amber-500/30' :
+                'bg-slate-700/30 border-slate-600/40'
+              }`}>
+                <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
+                  r.severity === 'High' ? 'bg-red-500' : r.severity === 'Medium' ? 'bg-amber-500' : 'bg-slate-500'
+                }`} />
+                <div>
+                  <p className={`text-xs font-medium ${
+                    r.severity === 'High' ? 'text-red-300' : r.severity === 'Medium' ? 'text-amber-300' : 'text-slate-400'
+                  }`}>{r.risk}</p>
+                  <p className={`text-xs mt-0.5 ${
+                    r.severity === 'High' ? 'text-red-500' : r.severity === 'Medium' ? 'text-amber-500' : 'text-slate-500'
+                  }`}>{r.severity} risk</p>
+                </div>
+              </div>
             ))}
           </div>
         </div>
