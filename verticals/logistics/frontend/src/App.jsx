@@ -3,20 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react
 import { isAuthenticated, logout, getUser, hasRole } from './services/auth';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-import ShipperPortal from './pages/ShipperPortal';
-import CarrierPortal from './pages/CarrierPortal';
-import DocumentVault from './pages/DocumentVault';
-import Compliance from './pages/Compliance';
-import FreightMatching from './pages/FreightMatching';
-import MCPTools from './pages/MCPTools';
 import Landing from './pages/Landing';
-import RateIntelligence from './pages/RateIntelligence';
-import LoadMatching from './pages/LoadMatching';
-import DataIngestion from './pages/DataIngestion';
-import Analytics from './pages/Analytics';
-import DemoWorkspace from './pages/DemoWorkspace';
-import TokenEstimator from './pages/TokenEstimator';
-import ContractBuilder from './pages/ContractBuilder';
 
 const BASE = '/logistics';
 
@@ -39,20 +26,7 @@ function Sidebar({ open, onClose, tierInfo }) {
   const role = user?.role || 'admin';
   const allNav = [
     { path: `${BASE}/dashboard`, label: 'Command Center', roles: ['admin','dispatcher'] },
-    { path: `${BASE}/shipper`, label: 'Shipper Portal', roles: ['admin','dispatcher','shipper'] },
-    { path: `${BASE}/carrier`, label: 'Carrier Portal', roles: ['admin','dispatcher','carrier'] },
-    { path: `${BASE}/matching`, label: 'Carrier Matching', roles: ['admin','dispatcher'] },
-    { path: `${BASE}/load-matching`, label: 'Load Matching', roles: ['admin','dispatcher'], section: 'AI BROKERAGE' },
-    { path: `${BASE}/pricing`, label: 'Rate Intelligence', roles: ['admin','dispatcher'] },
-    { path: `${BASE}/analytics`, label: 'Analytics & KPIs', roles: ['admin','dispatcher'] },
-    { path: `${BASE}/ingestion`, label: 'Data Ingestion', roles: ['admin','dispatcher'], section: 'DATA' },
-    { path: `${BASE}/documents`, label: 'Document Vault', roles: ['admin','dispatcher','shipper','carrier'] },
-    { path: `${BASE}/compliance`, label: 'FMCSA Compliance', roles: ['admin','dispatcher'] },
-    { path: `${BASE}/token-estimator`, label: 'Token Estimator', roles: ['admin'], section: 'SALES TOOLS' },
-    { path: `${BASE}/contract-builder`, label: 'Contract Builder', roles: ['admin'] },
-    { path: `${BASE}/demos`, label: 'Demo Workspaces', roles: ['admin'], section: 'ADMIN' },
-    { path: `${BASE}/tools`, label: 'MCP Tools', roles: ['admin'] },
-    { path: '/cw_carriers/dashboard', label: 'Carriers CRM', roles: ['admin','dispatcher'], ext: true },
+    { path: '/cw_carriers/dashboard', label: 'Carriers CRM', roles: ['admin','dispatcher'], ext: true, section: 'EXTERNAL' },
     { path: '/pinaxis/', label: 'Warehouse OPS', roles: ['admin','dispatcher'], ext: true },
   ];
   const nav = allNav.filter(n => n.roles.includes(role));
@@ -110,19 +84,6 @@ export default function App() {
       <Routes>
         <Route path={`${BASE}/login`} element={<Login />} />
         <Route path={`${BASE}/dashboard`} element={<ProtectedRoute><Layout tierInfo={ti}><Dashboard /></Layout></ProtectedRoute>} />
-        <Route path={`${BASE}/shipper`} element={<ProtectedRoute roles={['admin','dispatcher','shipper']}><Layout tierInfo={ti}><ShipperPortal /></Layout></ProtectedRoute>} />
-        <Route path={`${BASE}/carrier`} element={<ProtectedRoute roles={['admin','dispatcher','carrier']}><Layout tierInfo={ti}><CarrierPortal /></Layout></ProtectedRoute>} />
-        <Route path={`${BASE}/documents`} element={<ProtectedRoute><Layout tierInfo={ti}><DocumentVault /></Layout></ProtectedRoute>} />
-        <Route path={`${BASE}/compliance`} element={<ProtectedRoute roles={['admin','dispatcher']}><Layout tierInfo={ti}><Compliance /></Layout></ProtectedRoute>} />
-        <Route path={`${BASE}/matching`} element={<ProtectedRoute roles={['admin','dispatcher']}><Layout tierInfo={ti}><FreightMatching /></Layout></ProtectedRoute>} />
-        <Route path={`${BASE}/tools`} element={<ProtectedRoute roles={['admin']}><Layout tierInfo={ti}><MCPTools /></Layout></ProtectedRoute>} />
-        <Route path={`${BASE}/pricing`} element={<ProtectedRoute roles={['admin','dispatcher']}><Layout tierInfo={ti}><RateIntelligence /></Layout></ProtectedRoute>} />
-        <Route path={`${BASE}/load-matching`} element={<ProtectedRoute roles={['admin','dispatcher']}><Layout tierInfo={ti}><LoadMatching /></Layout></ProtectedRoute>} />
-        <Route path={`${BASE}/ingestion`} element={<ProtectedRoute roles={['admin','dispatcher']}><Layout tierInfo={ti}><DataIngestion /></Layout></ProtectedRoute>} />
-        <Route path={`${BASE}/analytics`} element={<ProtectedRoute roles={['admin','dispatcher']}><Layout tierInfo={ti}><Analytics /></Layout></ProtectedRoute>} />
-        <Route path={`${BASE}/demos`} element={<ProtectedRoute roles={['admin']}><Layout tierInfo={ti}><DemoWorkspace /></Layout></ProtectedRoute>} />
-        <Route path={`${BASE}/token-estimator`} element={<ProtectedRoute roles={['admin']}><Layout tierInfo={ti}><TokenEstimator /></Layout></ProtectedRoute>} />
-        <Route path={`${BASE}/contract-builder`} element={<ProtectedRoute roles={['admin']}><Layout tierInfo={ti}><ContractBuilder /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}`} element={<Landing />} />
         <Route path={`${BASE}/`} element={<Landing />} />
         <Route path="*" element={<Navigate to={`${BASE}/`} replace />} />
