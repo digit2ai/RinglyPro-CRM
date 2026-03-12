@@ -49,7 +49,6 @@ export default function Login() {
             <button style={s.btn} type="submit" disabled={loading}>{loading ? 'Creating...' : 'Create Account'}</button>
           </form>
         )}
-        <div style={s.demo}><strong>Demo:</strong> Admin: mstagg@ringlypro.com / Palindrome@7 | Shipper: shipper@demo.com / ShipperDemo2026! | Carrier: carrier@demo.com / CarrierDemo2026!</div>
       </div>
     </div>
   );
