@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const analytics = require('../services/analytics.cw');
+const analytics = require('../services/brokerage-analytics.cw');
 
 // GET /api/brokerage-analytics/dashboard - Operations dashboard
 router.get('/dashboard', async (req, res) => {

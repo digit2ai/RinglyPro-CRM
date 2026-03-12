@@ -104,7 +104,7 @@ async function demo_upload_data(input) {
   if (!ws) throw new Error('Invalid or expired demo workspace');
 
   // Use the ingestion service with demo tenant isolation
-  const ingestion = require('./ingestion.lg');
+  const ingestion = require('./ingestion.cw');
   const result = await ingestion.process_upload({
     file_content, file_name, data_type,
     tenant_id: `demo_${ws.id}`,
