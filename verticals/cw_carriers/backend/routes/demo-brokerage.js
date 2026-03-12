@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const demo = require('../services/demo.cw');
 
-// POST /api/demo/workspace - Create demo workspace
+// POST /api/brokerage-demo/workspace - Create demo workspace
 router.post('/workspace', async (req, res) => {
   try {
     const result = await demo.create_workspace(req.body);
@@ -12,7 +12,7 @@ router.post('/workspace', async (req, res) => {
   }
 });
 
-// GET /api/demo/workspace/:code - Get workspace by access code
+// GET /api/brokerage-demo/workspace/:code - Get workspace by access code
 router.get('/workspace/:code', async (req, res) => {
   try {
     const result = await demo.get_workspace({ access_code: req.params.code });
@@ -22,7 +22,7 @@ router.get('/workspace/:code', async (req, res) => {
   }
 });
 
-// GET /api/demo/workspaces - List all workspaces
+// GET /api/brokerage-demo/workspaces - List all workspaces
 router.get('/workspaces', async (req, res) => {
   try {
     const result = await demo.list_workspaces(req.query);
@@ -32,7 +32,7 @@ router.get('/workspaces', async (req, res) => {
   }
 });
 
-// POST /api/demo/upload - Upload data to demo workspace
+// POST /api/brokerage-demo/upload - Upload data to demo workspace
 router.post('/upload', async (req, res) => {
   try {
     const result = await demo.demo_upload_data(req.body);
@@ -42,7 +42,7 @@ router.post('/upload', async (req, res) => {
   }
 });
 
-// POST /api/demo/generate - Generate sample data for demo
+// POST /api/brokerage-demo/generate - Generate sample data for demo
 router.post('/generate', async (req, res) => {
   try {
     const result = await demo.generate_demo_data(req.body);

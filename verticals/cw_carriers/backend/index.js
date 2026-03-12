@@ -22,6 +22,12 @@ const collectorRoutes = require('./routes/collector');
 const offersRoutes = require('./routes/offers');
 const checkCallsRoutes = require('./routes/checkcalls');
 const billingRoutes = require('./routes/billing');
+// Brokerage routes
+const pricingRoutes = require('./routes/pricing');
+const loadmatchingRoutes = require('./routes/loadmatching');
+const ingestionRoutes = require('./routes/ingestion');
+const brokerageAnalyticsRoutes = require('./routes/analytics-brokerage');
+const brokerageDemoRoutes = require('./routes/demo-brokerage');
 
 // Mount API routes
 router.use('/api/auth', authRoutes);
@@ -41,6 +47,12 @@ router.use('/api/collector', collectorRoutes);
 router.use('/api/offers', offersRoutes);
 router.use('/api/checkcalls', checkCallsRoutes);
 router.use('/api/billing', billingRoutes);
+// Brokerage API routes
+router.use('/api/pricing', pricingRoutes);
+router.use('/api/load-matching', loadmatchingRoutes);
+router.use('/api/ingestion', ingestionRoutes);
+router.use('/api/brokerage-analytics', brokerageAnalyticsRoutes);
+router.use('/api/brokerage-demo', brokerageDemoRoutes);
 
 // Health check
 router.get('/health', (req, res) => {
@@ -67,13 +79,16 @@ router.get('*', (req, res) => {
 // Initialize: run migrations and seed admin user
 async function initialize() {
   try {
-    // Run schema migration
+    // Run schema migrations
     const fs = require('fs');
-    const migrationPath = path.join(__dirname, 'migrations', '001_cw_schema.sql');
-    if (fs.existsSync(migrationPath)) {
-      const sql = fs.readFileSync(migrationPath, 'utf8');
-      await sequelize.query(sql);
-      console.log('  ✅ CW Carriers schema initialized');
+    const migrationsDir = path.join(__dirname, 'migrations');
+    if (fs.existsSync(migrationsDir)) {
+      const files = fs.readdirSync(migrationsDir).filter(f => f.endsWith('.sql')).sort();
+      for (const file of files) {
+        const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
+        await sequelize.query(sql);
+        console.log(`  ✅ CW Carriers migration: ${file}`);
+      }
     }
 
     // Seed admin user — always upsert to ensure password is current

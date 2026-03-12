@@ -18,6 +18,21 @@ import Offers from './pages/Offers';
 import CheckCalls from './pages/CheckCalls';
 import Billing from './pages/Billing';
 import Warehouse from './pages/Warehouse';
+// Brokerage modules
+import ShipperPortal from './pages/ShipperPortal';
+import CarrierPortal from './pages/CarrierPortal';
+import FreightMatching from './pages/FreightMatching';
+import LoadMatching from './pages/LoadMatching';
+import RateIntelligence from './pages/RateIntelligence';
+import BrokerageAnalytics from './pages/BrokerageAnalytics';
+import DataIngestion from './pages/DataIngestion';
+import DocumentVault from './pages/DocumentVault';
+import Compliance from './pages/Compliance';
+import BrokerageDemo from './pages/BrokerageDemo';
+// Admin modules
+import TokenEstimator from './pages/TokenEstimator';
+import ContractBuilder from './pages/ContractBuilder';
+import MCPTools from './pages/MCPTools';
 
 const BASE = '/cw_carriers';
 
@@ -39,7 +54,7 @@ function Sidebar({ open, onClose }) {
   const location = useLocation();
   const user = getUser();
   const isMobile = useIsMobile();
-  const nav = [
+  const allNav = [
     { path: `${BASE}/dashboard`, label: 'Dashboard' },
     { path: `${BASE}/loads`, label: 'Loads' },
     { path: `${BASE}/offers`, label: 'Carrier Offers' },
@@ -55,6 +70,23 @@ function Sidebar({ open, onClose }) {
     { path: `${BASE}/hubspot`, label: 'HubSpot Sync' },
     { path: `${BASE}/settings`, label: 'Settings' },
     { path: `${BASE}/demo`, label: 'Demo Data' },
+    // AI Brokerage section
+    { path: `${BASE}/shipper`, label: 'Shipper Portal', section: 'AI BROKERAGE' },
+    { path: `${BASE}/carrier-portal`, label: 'Carrier Portal' },
+    { path: `${BASE}/freight-matching`, label: 'Carrier Matching' },
+    { path: `${BASE}/load-matching`, label: 'Load Matching' },
+    { path: `${BASE}/pricing`, label: 'Rate Intelligence' },
+    { path: `${BASE}/brokerage-analytics`, label: 'Analytics & KPIs' },
+    { path: `${BASE}/ingestion`, label: 'Data Ingestion', section: 'DATA' },
+    { path: `${BASE}/documents`, label: 'Document Vault' },
+    { path: `${BASE}/compliance`, label: 'FMCSA Compliance' },
+    { path: `${BASE}/brokerage-demo`, label: 'Demo Workspaces' },
+    // Admin section
+    { path: `${BASE}/token-estimator`, label: 'Token Estimator', section: 'ADMIN' },
+    { path: `${BASE}/contract-builder`, label: 'Contract Builder' },
+    { path: `${BASE}/mcp-tools`, label: 'MCP Tools' },
+    // External links
+    { path: '/pinaxis/', label: 'Warehouse OPS', ext: true, section: 'EXTERNAL' },
   ];
 
   // On mobile, sidebar slides in/out
@@ -84,19 +116,28 @@ function Sidebar({ open, onClose }) {
           HubSpot Portal Login
         </a>
         <nav style={styles.nav}>
-          {nav.map(item => (
-            <Link
-              key={item.path}
-              to={item.path}
-              onClick={isMobile ? onClose : undefined}
-              style={{
-                ...styles.navItem,
-                ...(location.pathname === item.path ? styles.navItemActive : {})
-              }}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {allNav.map((item, i) => {
+            const showSection = item.section && (i === 0 || allNav[i-1]?.section !== item.section);
+            return (
+              <React.Fragment key={item.path}>
+                {showSection && <div style={styles.sectionLabel}>{item.section}</div>}
+                {item.ext ? (
+                  <a href={item.path} style={styles.navItem}>{item.label}<span style={styles.extBadge}>EXT</span></a>
+                ) : (
+                  <Link
+                    to={item.path}
+                    onClick={isMobile ? onClose : undefined}
+                    style={{
+                      ...styles.navItem,
+                      ...(location.pathname === item.path ? styles.navItemActive : {})
+                    }}
+                  >
+                    {item.label}
+                  </Link>
+                )}
+              </React.Fragment>
+            );
+          })}
         </nav>
         <div style={styles.sidebarFooter}>
           <div style={styles.userInfo}>{user?.email}</div>
@@ -161,6 +202,21 @@ export default function App() {
         <Route path={`${BASE}/hubspot`} element={<ProtectedRoute><Layout><HubSpot /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/settings`} element={<ProtectedRoute><Layout><Settings /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/demo`} element={<ProtectedRoute><Layout><Demo /></Layout></ProtectedRoute>} />
+        {/* Brokerage routes */}
+        <Route path={`${BASE}/shipper`} element={<ProtectedRoute><Layout><ShipperPortal /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/carrier-portal`} element={<ProtectedRoute><Layout><CarrierPortal /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/freight-matching`} element={<ProtectedRoute><Layout><FreightMatching /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/load-matching`} element={<ProtectedRoute><Layout><LoadMatching /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/pricing`} element={<ProtectedRoute><Layout><RateIntelligence /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/brokerage-analytics`} element={<ProtectedRoute><Layout><BrokerageAnalytics /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/ingestion`} element={<ProtectedRoute><Layout><DataIngestion /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/documents`} element={<ProtectedRoute><Layout><DocumentVault /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/compliance`} element={<ProtectedRoute><Layout><Compliance /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/brokerage-demo`} element={<ProtectedRoute><Layout><BrokerageDemo /></Layout></ProtectedRoute>} />
+        {/* Admin routes */}
+        <Route path={`${BASE}/token-estimator`} element={<ProtectedRoute><Layout><TokenEstimator /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/contract-builder`} element={<ProtectedRoute><Layout><ContractBuilder /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/mcp-tools`} element={<ProtectedRoute><Layout><MCPTools /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}`} element={<Landing />} />
         <Route path={`${BASE}/`} element={<Landing />} />
         <Route path="*" element={<Navigate to={`${BASE}/`} replace />} />
@@ -215,6 +271,8 @@ const styles = {
   nav: { flex: 1, padding: '12px 0', overflowY: 'auto' },
   navItem: { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 20px', fontSize: 14, color: '#8B949E', cursor: 'pointer', transition: 'all 0.2s', borderLeft: '3px solid transparent' },
   navItemActive: { color: '#fff', background: '#1A4FA822', borderLeftColor: '#1A4FA8' },
+  sectionLabel: { padding: '12px 20px 4px', fontSize: 10, color: '#C8962A', fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase' },
+  extBadge: { marginLeft: 'auto', padding: '1px 5px', background: '#30363D', color: '#8B949E', borderRadius: 4, fontSize: 9, fontWeight: 600 },
   navIcon: { fontSize: 16 },
   sidebarFooter: { padding: '16px 20px', borderTop: '1px solid #21262D' },
   userInfo: { fontSize: 12, color: '#8B949E', marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis' },
