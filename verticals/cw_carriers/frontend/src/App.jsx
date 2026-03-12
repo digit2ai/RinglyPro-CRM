@@ -41,21 +41,17 @@ function ProtectedRoute({ children }) {
 }
 
 function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  useEffect(() => {
-    const handler = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener('resize', handler);
-    return () => window.removeEventListener('resize', handler);
-  }, []);
-  return isMobile;
+  const [m, setM] = useState(window.innerWidth <= 768);
+  useEffect(() => { const h = () => setM(window.innerWidth <= 768); window.addEventListener('resize', h); return () => window.removeEventListener('resize', h); }, []);
+  return m;
 }
 
 function Sidebar({ open, onClose }) {
-  const location = useLocation();
+  const loc = useLocation();
   const user = getUser();
-  const isMobile = useIsMobile();
+  const mob = useIsMobile();
   const allNav = [
-    { path: `${BASE}/dashboard`, label: 'Dashboard' },
+    { path: `${BASE}/dashboard`, label: 'Command Center' },
     { path: `${BASE}/loads`, label: 'Loads' },
     { path: `${BASE}/offers`, label: 'Carrier Offers' },
     { path: `${BASE}/contacts`, label: 'Contacts' },
@@ -88,103 +84,55 @@ function Sidebar({ open, onClose }) {
     // External links
     { path: '/pinaxis/', label: 'Warehouse OPS', ext: true, section: 'EXTERNAL' },
   ];
-
-  // On mobile, sidebar slides in/out
-  const sidebarStyle = isMobile
-    ? { ...styles.sidebar, ...styles.sidebarMobile, transform: open ? 'translateX(0)' : 'translateX(-100%)' }
-    : styles.sidebar;
-
+  const ss = mob ? { ...S.sidebar, ...S.sidebarMob, transform: open ? 'translateX(0)' : 'translateX(-100%)' } : S.sidebar;
   return (
     <>
-      {/* Overlay for mobile */}
-      {isMobile && open && (
-        <div style={styles.overlay} onClick={onClose} />
-      )}
-      <div style={sidebarStyle}>
-        {isMobile && (
-          <button onClick={onClose} style={styles.closeBtn}>&times;</button>
-        )}
-        <div style={styles.ringlyProBanner}>
-          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6884f40a6d2fd3fed0b84613.png" alt="RinglyPro" style={styles.ringlyProLogo} />
+      {mob && open && <div style={S.overlay} onClick={onClose} />}
+      <div style={ss}>
+        {mob && <button onClick={onClose} style={S.closeBtn}>&times;</button>}
+        <div style={S.logoArea}>
+          <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro Logistics" style={S.logoImg} />
+          <div style={S.tierBadge}>Full Suite</div>
         </div>
-        <div style={styles.logo}>
-          <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro Logistics" style={styles.logoImg} />
-          <div style={styles.logoText}>CARRIERS</div>
-          <div style={styles.logoSub}>Logistics CRM</div>
-        </div>
-        <a href={`${BASE}/hubspot`} style={styles.hubspotLoginBtn}>
-          HubSpot Portal Login
-        </a>
-        <nav style={styles.nav}>
+        <nav style={S.nav}>
           {allNav.map((item, i) => {
             const showSection = item.section && (i === 0 || allNav[i-1]?.section !== item.section);
             return (
               <React.Fragment key={item.path}>
-                {showSection && <div style={styles.sectionLabel}>{item.section}</div>}
+                {showSection && <div style={S.sectionLabel}>{item.section}</div>}
                 {item.ext ? (
-                  <a href={item.path} style={styles.navItem}>{item.label}<span style={styles.extBadge}>EXT</span></a>
+                  <a href={item.path} style={S.navItem}>{item.label}<span style={S.extBadge}>EXT</span></a>
                 ) : (
-                  <Link
-                    to={item.path}
-                    onClick={isMobile ? onClose : undefined}
-                    style={{
-                      ...styles.navItem,
-                      ...(location.pathname === item.path ? styles.navItemActive : {})
-                    }}
-                  >
-                    {item.label}
-                  </Link>
+                  <Link to={item.path} onClick={mob ? onClose : undefined} style={{...S.navItem, ...(loc.pathname === item.path ? S.navActive : {})}}>{item.label}</Link>
                 )}
               </React.Fragment>
             );
           })}
         </nav>
-        <div style={styles.sidebarFooter}>
-          <div style={styles.userInfo}>{user?.email}</div>
-          <button onClick={() => { logout(); window.location.href = `${BASE}/login`; }} style={styles.logoutBtn}>
-            Logout
-          </button>
+        <div style={S.footer}>
+          <div style={S.userRole}>ADMIN</div>
+          <div style={S.userInfo}>{user?.email}</div>
+          <button onClick={() => { logout(); window.location.href = `${BASE}/login`; }} style={S.logoutBtn}>Logout</button>
         </div>
       </div>
     </>
   );
 }
 
-function MobileHeader({ onOpenMenu }) {
-  return (
-    <div style={styles.mobileHeader}>
-      <button onClick={onOpenMenu} style={styles.hamburger}>
-        <span style={styles.hamburgerLine} />
-        <span style={styles.hamburgerLine} />
-        <span style={styles.hamburgerLine} />
-      </button>
-      <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro Logistics" style={styles.mobileLogoImg} />
-      <span style={styles.mobileTitle}>CARRIERS</span>
-    </div>
-  );
+function MobileHeader({ onOpen }) {
+  return (<div style={S.mobHeader}><button onClick={onOpen} style={S.hamburger}><span style={S.hLine}/><span style={S.hLine}/><span style={S.hLine}/></button><span style={S.mobTitle}>RINGLYPRO LOGISTICS</span></div>);
 }
 
 function Layout({ children }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const isMobile = useIsMobile();
-
-  return (
-    <div style={styles.layout}>
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div style={isMobile ? styles.mainMobile : styles.main}>
-        {isMobile && <MobileHeader onOpenMenu={() => setSidebarOpen(true)} />}
-        <div style={isMobile ? styles.mainContentMobile : styles.mainContent}>
-          {children}
-        </div>
-      </div>
-    </div>
-  );
+  const [so, setSo] = useState(false);
+  const mob = useIsMobile();
+  return (<div style={S.layout}><Sidebar open={so} onClose={() => setSo(false)} /><div style={mob ? S.mainMob : S.main}>{mob && <MobileHeader onOpen={() => setSo(true)} />}<div style={mob ? S.contentMob : S.content}>{children}</div></div></div>);
 }
 
 export default function App() {
   return (
     <BrowserRouter>
-      <style>{globalCSS}</style>
+      <style>{`* { margin:0;padding:0;box-sizing:border-box; } body { font-family:'DM Sans',sans-serif;background:#0D1117;color:#E6EDF3; } h1,h2,h3,h4 { font-family:'Bebas Neue',sans-serif;letter-spacing:1px; } input,select,textarea,button { font-family:'DM Sans',sans-serif; } ::-webkit-scrollbar{width:6px} ::-webkit-scrollbar-track{background:#161B22} ::-webkit-scrollbar-thumb{background:#0EA5E9;border-radius:3px} a{text-decoration:none;color:inherit}`}</style>
       <Routes>
         <Route path={`${BASE}/login`} element={<Login />} />
         <Route path={`${BASE}/dashboard`} element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
@@ -225,64 +173,30 @@ export default function App() {
   );
 }
 
-const globalCSS = `
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'DM Sans', sans-serif; background: #0D1117; color: #E6EDF3; -webkit-text-size-adjust: 100%; }
-  h1, h2, h3, h4 { font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; }
-  input, select, textarea, button { font-family: 'DM Sans', sans-serif; }
-  ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: #161B22; }
-  ::-webkit-scrollbar-thumb { background: #1A4FA8; border-radius: 3px; }
-  a { text-decoration: none; color: inherit; }
-  table { overflow-x: auto; display: block; }
-  @media (min-width: 769px) { table { display: table; } }
-`;
-
-const styles = {
-  layout: { display: 'flex', minHeight: '100vh' },
-
-  // Desktop sidebar
-  sidebar: { width: 240, background: '#161B22', borderRight: '1px solid #21262D', display: 'flex', flexDirection: 'column', position: 'fixed', height: '100vh', zIndex: 50, transition: 'transform 0.3s ease' },
-
-  // Mobile sidebar overrides
-  sidebarMobile: { position: 'fixed', top: 0, left: 0, width: 280, height: '100vh', zIndex: 200 },
-
-  // Overlay behind mobile sidebar
-  overlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', zIndex: 199 },
-
-  // Close button inside mobile sidebar
-  closeBtn: { position: 'absolute', top: 12, right: 12, background: 'none', border: 'none', color: '#8B949E', fontSize: 28, cursor: 'pointer', zIndex: 201, lineHeight: 1, padding: 4 },
-
-  // Mobile header bar
-  mobileHeader: { display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: '#161B22', borderBottom: '1px solid #21262D', position: 'sticky', top: 0, zIndex: 40 },
-  hamburger: { display: 'flex', flexDirection: 'column', gap: 4, background: 'none', border: 'none', cursor: 'pointer', padding: 4 },
-  hamburgerLine: { display: 'block', width: 22, height: 2, background: '#E6EDF3', borderRadius: 1 },
-  mobileLogoImg: { width: 28, height: 'auto', borderRadius: 4 },
-  mobileTitle: { fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, color: '#C8962A', letterSpacing: 1 },
-
-  // Sidebar internals
-  ringlyProBanner: { padding: '12px 20px', borderBottom: '1px solid #21262D', textAlign: 'center', background: '#0D1117' },
-  ringlyProLogo: { height: 28, width: 'auto' },
-  logo: { padding: '20px 20px 16px', borderBottom: '1px solid #21262D', textAlign: 'center' },
-  logoImg: { width: 70, height: 'auto', marginBottom: 8, borderRadius: 6 },
-  hubspotLoginBtn: { display: 'block', margin: '10px 16px', padding: '8px 12px', background: '#FF7A59', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', textAlign: 'center', textDecoration: 'none' },
-  logoText: { fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, color: '#C8962A', letterSpacing: 2 },
-  logoSub: { fontSize: 12, color: '#8B949E', marginTop: 2 },
-  nav: { flex: 1, padding: '12px 0', overflowY: 'auto' },
-  navItem: { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 20px', fontSize: 14, color: '#8B949E', cursor: 'pointer', transition: 'all 0.2s', borderLeft: '3px solid transparent' },
-  navItemActive: { color: '#fff', background: '#1A4FA822', borderLeftColor: '#1A4FA8' },
-  sectionLabel: { padding: '12px 20px 4px', fontSize: 10, color: '#C8962A', fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase' },
-  extBadge: { marginLeft: 'auto', padding: '1px 5px', background: '#30363D', color: '#8B949E', borderRadius: 4, fontSize: 9, fontWeight: 600 },
-  navIcon: { fontSize: 16 },
-  sidebarFooter: { padding: '16px 20px', borderTop: '1px solid #21262D' },
-  userInfo: { fontSize: 12, color: '#8B949E', marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis' },
-  logoutBtn: { background: 'none', border: '1px solid #30363D', color: '#8B949E', padding: '6px 12px', borderRadius: 6, cursor: 'pointer', fontSize: 12, width: '100%' },
-
-  // Desktop main area
-  main: { flex: 1, marginLeft: 240, minHeight: '100vh' },
-  mainContent: { padding: 24 },
-
-  // Mobile main area
-  mainMobile: { flex: 1, marginLeft: 0, minHeight: '100vh' },
-  mainContentMobile: { padding: 16 },
+const S = {
+  layout:{display:'flex',minHeight:'100vh'},
+  sidebar:{width:260,background:'#161B22',borderRight:'1px solid #21262D',display:'flex',flexDirection:'column',position:'fixed',height:'100vh',zIndex:50,transition:'transform 0.3s ease'},
+  sidebarMob:{position:'fixed',top:0,left:0,width:280,height:'100vh',zIndex:200},
+  overlay:{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.6)',zIndex:199},
+  closeBtn:{position:'absolute',top:12,right:12,background:'none',border:'none',color:'#8B949E',fontSize:28,cursor:'pointer',zIndex:201},
+  mobHeader:{display:'flex',alignItems:'center',gap:12,padding:'12px 16px',background:'#161B22',borderBottom:'1px solid #21262D',position:'sticky',top:0,zIndex:40},
+  hamburger:{display:'flex',flexDirection:'column',gap:4,background:'none',border:'none',cursor:'pointer',padding:4},
+  hLine:{display:'block',width:22,height:2,background:'#E6EDF3',borderRadius:1},
+  mobTitle:{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,color:'#0EA5E9',letterSpacing:2},
+  logoArea:{padding:20,borderBottom:'1px solid #21262D',textAlign:'center'},
+  logoImg:{width:'100%',maxWidth:180,height:'auto',marginBottom:8},
+  tierBadge:{display:'inline-block',marginTop:6,padding:'3px 10px',background:'#0EA5E922',color:'#0EA5E9',borderRadius:12,fontSize:10,fontWeight:600,letterSpacing:1,textTransform:'uppercase'},
+  nav:{flex:1,padding:'12px 0',overflowY:'auto'},
+  navItem:{display:'flex',alignItems:'center',gap:10,padding:'11px 20px',fontSize:14,color:'#8B949E',cursor:'pointer',transition:'all 0.2s',borderLeft:'3px solid transparent'},
+  navActive:{color:'#fff',background:'#0EA5E922',borderLeftColor:'#0EA5E9'},
+  sectionLabel:{padding:'12px 20px 4px',fontSize:10,color:'#0EA5E9',fontWeight:700,letterSpacing:2,textTransform:'uppercase'},
+  extBadge:{marginLeft:'auto',padding:'1px 5px',background:'#30363D',color:'#8B949E',borderRadius:4,fontSize:9,fontWeight:600},
+  footer:{padding:'16px 20px',borderTop:'1px solid #21262D'},
+  userRole:{fontSize:10,color:'#0EA5E9',fontWeight:600,letterSpacing:1,marginBottom:4},
+  userInfo:{fontSize:12,color:'#8B949E',marginBottom:8,overflow:'hidden',textOverflow:'ellipsis'},
+  logoutBtn:{background:'none',border:'1px solid #30363D',color:'#8B949E',padding:'6px 12px',borderRadius:6,cursor:'pointer',fontSize:12,width:'100%'},
+  main:{flex:1,marginLeft:260,minHeight:'100vh'},
+  content:{padding:24},
+  mainMob:{flex:1,marginLeft:0,minHeight:'100vh'},
+  contentMob:{padding:16},
 };
