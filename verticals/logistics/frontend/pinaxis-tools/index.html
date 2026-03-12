@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PINAXIS Logistics Suite</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Space Grotesk',sans-serif;background:#0A0F1E;color:#F1F5F9;min-height:100vh;display:flex}
+.sidebar{width:260px;background:#0D1627;border-right:1px solid #1E3A5F;display:flex;flex-direction:column;padding:24px 0;position:fixed;height:100vh}
+.sidebar .logo{padding:0 24px;margin-bottom:32px}
+.sidebar .logo h1{font-size:18px;color:#38BDF8;letter-spacing:2px;font-weight:700}
+.sidebar .logo p{font-size:11px;color:#64748B;margin-top:4px;letter-spacing:1px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:14px 24px;color:#94A3B8;text-decoration:none;font-size:14px;font-weight:500;transition:all .2s;border-left:3px solid transparent}
+.nav-item:hover{background:rgba(56,189,248,.06);color:#F1F5F9;border-left-color:#38BDF8}
+.nav-item svg{width:20px;height:20px;opacity:.6}
+.nav-item:hover svg{opacity:1}
+.nav-divider{height:1px;background:#1E3A5F;margin:16px 24px}
+.sidebar-footer{margin-top:auto;padding:16px 24px;font-size:11px;color:#475569}
+.main{margin-left:260px;flex:1;padding:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh}
+.hero{text-align:center;max-width:640px}
+.hero h2{font-size:36px;font-weight:700;margin-bottom:12px;background:linear-gradient(135deg,#38BDF8,#34D399);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{font-size:16px;color:#94A3B8;line-height:1.6;margin-bottom:40px}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:24px;width:100%;max-width:640px}
+.card{background:#0D1627;border:1px solid #1E3A5F;border-radius:12px;padding:32px;text-decoration:none;color:#F1F5F9;transition:all .25s}
+.card:hover{border-color:#38BDF8;transform:translateY(-2px);box-shadow:0 8px 32px rgba(56,189,248,.12)}
+.card .icon{width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;font-size:24px}
+.card:first-child .icon{background:rgba(56,189,248,.12);color:#38BDF8}
+.card:last-child .icon{background:rgba(52,211,153,.12);color:#34D399}
+.card h3{font-size:16px;font-weight:600;margin-bottom:8px}
+.card p{font-size:13px;color:#64748B;line-height:1.5}
+@media(max-width:768px){.sidebar{display:none}.main{margin-left:0;padding:24px}.cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="logo">
+    <h1>⬡ PINAXIS</h1>
+    <p>Logistics Suite</p>
+  </div>
+  <a class="nav-item" href="/logistics/pinaxis-tools/token-estimator.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07"/></svg>
+    Token Estimator
+  </a>
+  <a class="nav-item" href="/logistics/pinaxis-tools/contract-builder.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    Contract Builder
+  </a>
+  <div class="nav-divider"></div>
+  <a class="nav-item" href="/logistics/">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+    Back to Logistics
+  </a>
+  <div class="sidebar-footer">
+    PINAXIS · Digit2AI LLC<br>Internal Tools v1.0
+  </div>
+</nav>
+
+<main class="main">
+  <div class="hero">
+    <h2>PINAXIS Logistics Suite</h2>
+    <p>Enterprise sales tools for token cost estimation and services agreement generation. Select a tool below to get started.</p>
+  </div>
+  <div class="cards">
+    <a class="card" href="/logistics/pinaxis-tools/token-estimator.html">
+      <div class="icon">⬡</div>
+      <h3>Token Cost Estimator</h3>
+      <p>Interactive ROI calculator with model selection, scenario sliders, and auto-generated billing clauses.</p>
+    </a>
+    <a class="card" href="/logistics/pinaxis-tools/contract-builder.html">
+      <div class="icon">▣</div>
+      <h3>Contract Builder</h3>
+      <p>Step-by-step wizard to generate Enterprise Services Agreements with PDF and DOCX export.</p>
+    </a>
+  </div>
+</main>
+
+</body>
+</html>

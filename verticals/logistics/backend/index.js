@@ -40,10 +40,16 @@ router.get('/api/tiers', (req, res) => {
   res.json({ success: true, current_tier: ACTIVE_TIER, tiers: Object.entries(TIERS).map(([id, tier]) => ({ id, name: tier.name, modules: tier.modules, is_active: id === ACTIVE_TIER })) });
 });
 
+// PINAXIS Logistics Suite — internal enterprise sales tools
+router.use('/api/pinaxis', require('./routes/pinaxis-tools'));
+const pinaxisToolsPath = path.join(__dirname, '../frontend/pinaxis-tools');
+router.use('/pinaxis-tools', express.static(pinaxisToolsPath));
+
 const distPath = path.join(__dirname, '../frontend/dist');
 router.use(express.static(distPath));
 router.get('*', (req, res) => {
   if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'API endpoint not found' });
+  if (req.path.startsWith('/pinaxis-tools')) return res.status(404).send('Not found');
   res.sendFile(path.join(distPath, 'index.html'));
 });
 

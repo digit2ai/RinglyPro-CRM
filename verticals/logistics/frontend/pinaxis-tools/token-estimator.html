@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PINAXIS Token Cost Estimator</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0A0F1E;--card:#0D1627;--border:#1E3A5F;--accent:#38BDF8;--green:#34D399;--gold:#FBBF24;--red:#F87171;--text:#F1F5F9;--muted:#64748B}
+body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:0}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:260px;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:24px 0;position:fixed;height:100vh}
+.sidebar .logo{padding:0 24px;margin-bottom:32px}
+.sidebar .logo h1{font-size:18px;color:var(--accent);letter-spacing:2px;font-weight:700}
+.sidebar .logo p{font-size:11px;color:var(--muted);margin-top:4px;letter-spacing:1px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:14px 24px;color:#94A3B8;text-decoration:none;font-size:14px;font-weight:500;transition:all .2s;border-left:3px solid transparent}
+.nav-item:hover,.nav-item.active{background:rgba(56,189,248,.06);color:var(--text);border-left-color:var(--accent)}
+.nav-divider{height:1px;background:var(--border);margin:16px 24px}
+.sidebar-footer{margin-top:auto;padding:16px 24px;font-size:11px;color:#475569}
+.content{margin-left:260px;flex:1;padding:32px 40px;max-width:1200px}
+h2{font-size:28px;font-weight:700;margin-bottom:4px}
+.subtitle{color:var(--muted);font-size:14px;margin-bottom:32px}
+.controls{display:flex;gap:16px;margin-bottom:28px;flex-wrap:wrap;align-items:end}
+.control-group{display:flex;flex-direction:column;gap:6px}
+.control-group label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+select,input[type="text"],input[type="number"]{background:var(--card);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:8px;font-family:'DM Mono',monospace;font-size:13px;min-width:160px}
+select:focus,input:focus{outline:none;border-color:var(--accent)}
+.markup-pills{display:flex;gap:6px}
+.pill{padding:8px 14px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:'DM Mono',monospace;font-size:13px;transition:all .2s}
+.pill.active,.pill:hover{border-color:var(--accent);color:var(--accent);background:rgba(56,189,248,.08)}
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px}
+.kpi .label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.kpi .value{font-family:'DM Mono',monospace;font-size:28px;font-weight:700}
+.kpi .value.blue{color:var(--accent)}
+.kpi .value.green{color:var(--green)}
+.kpi .value.gold{color:var(--gold)}
+.scenarios{margin-bottom:32px}
+.scenarios h3{font-size:16px;font-weight:600;margin-bottom:16px;color:var(--accent)}
+.scenario-row{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:12px;display:grid;grid-template-columns:1fr 140px 140px 140px 100px 60px;gap:16px;align-items:center}
+.scenario-row .name{font-weight:600;font-size:14px}
+.scenario-row .name small{display:block;font-weight:400;font-size:11px;color:var(--muted);margin-top:2px}
+.slider-group{display:flex;flex-direction:column;gap:4px}
+.slider-group label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.slider-group input[type="range"]{width:100%;accent-color:var(--accent)}
+.slider-group .val{font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);text-align:right}
+.scenario-cost{font-family:'DM Mono',monospace;font-size:16px;font-weight:600;color:var(--green);text-align:right}
+.toggle{width:20px;height:20px;cursor:pointer;accent-color:var(--accent)}
+.clause-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:24px;margin-bottom:24px}
+.clause-box h3{font-size:14px;color:var(--gold);margin-bottom:12px}
+.clause-box pre{font-family:'DM Mono',monospace;font-size:12px;color:#94A3B8;white-space:pre-wrap;line-height:1.6}
+.actions{display:flex;gap:12px}
+.btn{padding:12px 24px;border-radius:8px;border:none;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-primary{background:var(--accent);color:#0A0F1E}.btn-primary:hover{background:#7DD3FC}
+.btn-secondary{background:transparent;border:1px solid var(--border);color:var(--text)}.btn-secondary:hover{border-color:var(--accent)}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--green);color:#0A0F1E;padding:14px 24px;border-radius:8px;font-weight:600;display:none;z-index:100}
+@media(max-width:900px){.sidebar{display:none}.content{margin-left:0;padding:16px}.kpi-grid{grid-template-columns:1fr 1fr}.scenario-row{grid-template-columns:1fr;gap:12px}}
+</style>
+</head>
+<body>
+
+<div class="layout">
+<nav class="sidebar">
+  <div class="logo"><h1>⬡ PINAXIS</h1><p>Logistics Suite</p></div>
+  <a class="nav-item" href="/logistics/pinaxis-tools/">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+    Dashboard
+  </a>
+  <a class="nav-item active" href="/logistics/pinaxis-tools/token-estimator.html">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    Token Estimator
+  </a>
+  <a class="nav-item" href="/logistics/pinaxis-tools/contract-builder.html">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    Contract Builder
+  </a>
+  <div class="nav-divider"></div>
+  <a class="nav-item" href="/logistics/"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>Back to Logistics</a>
+  <div class="sidebar-footer">PINAXIS · Digit2AI LLC<br>Internal Tools v1.0</div>
+</nav>
+
+<main class="content">
+  <h2>Token Cost Estimator</h2>
+  <p class="subtitle">Model costs, margins, and ROI projections for PINAXIS enterprise deployments</p>
+
+  <div class="controls">
+    <div class="control-group">
+      <label>AI Model</label>
+      <select id="modelSelect">
+        <option value="sonnet" selected>Claude Sonnet 4.5 — $3 / $15</option>
+        <option value="haiku">Claude Haiku 3.5 — $0.80 / $4</option>
+        <option value="opus">Claude Opus 4 — $15 / $75</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label>Markup %</label>
+      <div class="markup-pills">
+        <button class="pill" data-markup="0.20">20%</button>
+        <button class="pill active" data-markup="0.30">30%</button>
+        <button class="pill" data-markup="0.50">50%</button>
+        <button class="pill" data-markup="0.75">75%</button>
+        <button class="pill" data-markup="1.00">100%</button>
+      </div>
+    </div>
+    <div class="control-group">
+      <label>Client Name</label>
+      <input type="text" id="clientName" placeholder="e.g. GEBHARDT Group" value="">
+    </div>
+    <div class="control-group">
+      <label>Monthly Labor Savings ($)</label>
+      <input type="number" id="laborSavings" value="390000" step="10000">
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi"><div class="label">Your Monthly API Cost</div><div class="value blue" id="kpiCost">$0.00</div></div>
+    <div class="kpi"><div class="label">You Charge Client</div><div class="value gold" id="kpiBilled">$0.00</div></div>
+    <div class="kpi"><div class="label">Your Monthly Margin</div><div class="value green" id="kpiMargin">$0.00</div></div>
+    <div class="kpi"><div class="label">ROI Ratio (Client)</div><div class="value blue" id="kpiROI">0x</div></div>
+    <div class="kpi"><div class="label">Annual Billed Total</div><div class="value gold" id="kpiAnnualBilled">$0.00</div></div>
+    <div class="kpi"><div class="label">Annual Margin</div><div class="value green" id="kpiAnnualMargin">$0.00</div></div>
+  </div>
+
+  <div class="scenarios">
+    <h3>Usage Scenarios</h3>
+    <div id="scenarioList"></div>
+  </div>
+
+  <div class="clause-box">
+    <h3>Auto-Generated Contract Clause</h3>
+    <pre id="clauseText">—</pre>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-primary" onclick="saveEstimate()">Save Estimate</button>
+    <button class="btn btn-secondary" onclick="copyClause()">Copy Clause</button>
+  </div>
+</main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API_BASE = '/logistics/api/pinaxis';
+
+const SCENARIOS = [
+  { id: 'product_match', name: 'Product-to-Service Matching', desc: 'AI matching for warehouse automation products', calls: 1200, input_tokens: 800, output_tokens: 300 },
+  { id: 'oee_analytics', name: 'OEE Analytics & Reporting', desc: 'Equipment effectiveness and anomaly reports', calls: 450, input_tokens: 1200, output_tokens: 600 },
+  { id: 'anomaly_detection', name: 'Anomaly Detection Alerts', desc: 'Real-time anomaly detection from sensor data', calls: 3200, input_tokens: 400, output_tokens: 150 },
+  { id: 'proposal_gen', name: 'Proposal & Document Generation', desc: 'Automated proposal and contract creation', calls: 180, input_tokens: 2000, output_tokens: 1500 },
+  { id: 'galileo_iot', name: 'Galileo IoT Data Interpretation', desc: 'IoT sensor data analysis and visualization', calls: 2400, input_tokens: 600, output_tokens: 250 },
+];
+
+const MODELS = {
+  sonnet: { input: 3.00, output: 15.00 },
+  haiku:  { input: 0.80, output: 4.00 },
+  opus:   { input: 15.00, output: 75.00 },
+};
+
+let state = {
+  model: 'sonnet',
+  markup: 0.30,
+  laborSavings: 390000,
+  scenarios: SCENARIOS.map(s => ({ ...s, enabled: true })),
+};
+
+function renderScenarios() {
+  const el = document.getElementById('scenarioList');
+  el.innerHTML = state.scenarios.map((s, i) => `
+    <div class="scenario-row">
+      <div class="name">${s.name}<small>${s.desc}</small></div>
+      <div class="slider-group">
+        <label>Calls/mo</label>
+        <input type="range" min="0" max="${s.calls * 5}" step="${Math.max(10, Math.round(s.calls / 20))}" value="${s.calls}" oninput="updateScenario(${i},'calls',this.value)">
+        <div class="val">${s.calls.toLocaleString()}</div>
+      </div>
+      <div class="slider-group">
+        <label>Input Tok</label>
+        <input type="range" min="50" max="${s.input_tokens * 5}" step="50" value="${s.input_tokens}" oninput="updateScenario(${i},'input_tokens',this.value)">
+        <div class="val">${s.input_tokens.toLocaleString()}</div>
+      </div>
+      <div class="slider-group">
+        <label>Output Tok</label>
+        <input type="range" min="50" max="${s.output_tokens * 5}" step="50" value="${s.output_tokens}" oninput="updateScenario(${i},'output_tokens',this.value)">
+        <div class="val">${s.output_tokens.toLocaleString()}</div>
+      </div>
+      <div class="scenario-cost" id="scenarioCost${i}">$0.00</div>
+      <input type="checkbox" class="toggle" ${s.enabled ? 'checked' : ''} onchange="updateScenario(${i},'enabled',this.checked)">
+    </div>
+  `).join('');
+}
+
+function updateScenario(i, key, val) {
+  state.scenarios[i][key] = key === 'enabled' ? val : parseInt(val);
+  renderScenarios();
+  calculate();
+}
+
+function calculate() {
+  const pricing = MODELS[state.model];
+  let totalCost = 0;
+
+  state.scenarios.forEach((s, i) => {
+    if (!s.enabled) { document.getElementById('scenarioCost' + i).textContent = '—'; return; }
+    const inputCost = (s.calls * s.input_tokens / 1e6) * pricing.input;
+    const outputCost = (s.calls * s.output_tokens / 1e6) * pricing.output;
+    const cost = inputCost + outputCost;
+    totalCost += cost;
+    const el = document.getElementById('scenarioCost' + i);
+    if (el) el.textContent = '$' + cost.toFixed(2);
+  });
+
+  const billed = totalCost * (1 + state.markup);
+  const margin = billed - totalCost;
+  const roi = billed > 0 ? state.laborSavings / billed : 0;
+
+  document.getElementById('kpiCost').textContent = '$' + totalCost.toFixed(2);
+  document.getElementById('kpiBilled').textContent = '$' + billed.toFixed(2);
+  document.getElementById('kpiMargin').textContent = '$' + margin.toFixed(2);
+  document.getElementById('kpiROI').textContent = Math.round(roi).toLocaleString() + 'x';
+  document.getElementById('kpiAnnualBilled').textContent = '$' + (billed * 12).toFixed(2);
+  document.getElementById('kpiAnnualMargin').textContent = '$' + (margin * 12).toFixed(2);
+
+  const totalTokens = state.scenarios.filter(s => s.enabled).reduce((sum, s) => sum + s.calls * (s.input_tokens + s.output_tokens), 0);
+  document.getElementById('clauseText').textContent =
+    `Token consumption is billed monthly at actual API cost + ${Math.round(state.markup * 100)}%.\nEstimated monthly consumption: ${totalTokens.toLocaleString()} tokens (~$${billed.toFixed(2)}/month).\nOverage beyond 150% of baseline billed at same rate with 5-day notice.`;
+}
+
+// Event listeners
+document.getElementById('modelSelect').addEventListener('change', e => { state.model = e.target.value; calculate(); });
+document.querySelectorAll('.pill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.markup = parseFloat(btn.dataset.markup);
+    calculate();
+  });
+});
+document.getElementById('laborSavings').addEventListener('input', e => { state.laborSavings = parseFloat(e.target.value) || 0; calculate(); });
+
+async function saveEstimate() {
+  const pricing = MODELS[state.model];
+  let totalCost = 0;
+  state.scenarios.filter(s => s.enabled).forEach(s => {
+    totalCost += (s.calls * s.input_tokens / 1e6) * pricing.input + (s.calls * s.output_tokens / 1e6) * pricing.output;
+  });
+  const billed = totalCost * (1 + state.markup);
+
+  try {
+    const resp = await fetch(API_BASE + '/save-estimate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tenant_id: 1,
+        client_name: document.getElementById('clientName').value || null,
+        model: state.model,
+        markup: state.markup,
+        scenarios: state.scenarios,
+        monthly_cost: Math.round(totalCost * 100) / 100,
+        monthly_billed: Math.round(billed * 100) / 100,
+        monthly_margin: Math.round((billed - totalCost) * 100) / 100,
+        labor_savings: state.laborSavings,
+        roi_ratio: billed > 0 ? Math.round(state.laborSavings / billed * 100) / 100 : 0,
+      }),
+    });
+    const data = await resp.json();
+    if (data.saved) showToast('Estimate saved (ID: ' + data.id + ')');
+    else showToast('Error saving estimate');
+  } catch (e) {
+    showToast('Error: ' + e.message);
+  }
+}
+
+function copyClause() {
+  const text = document.getElementById('clauseText').textContent;
+  navigator.clipboard.writeText(text).then(() => showToast('Clause copied to clipboard'));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 3000);
+}
+
+// Init
+renderScenarios();
+calculate();
+</script>
+</body>
+</html>

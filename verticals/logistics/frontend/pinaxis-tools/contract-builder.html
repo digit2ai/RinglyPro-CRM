@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PINAXIS Contract Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#F8FAFC;--card:#FFFFFF;--border:#E2E8F0;--navy:#1B2A4A;--blue:#2563EB;--text:#1E293B;--muted:#64748B;--green:#059669;--red:#DC2626}
+body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:260px;background:var(--navy);display:flex;flex-direction:column;padding:24px 0;position:fixed;height:100vh}
+.sidebar .logo{padding:0 24px;margin-bottom:32px}
+.sidebar .logo h1{font-size:18px;color:#38BDF8;letter-spacing:2px;font-weight:700}
+.sidebar .logo p{font-size:11px;color:#94A3B8;margin-top:4px;letter-spacing:1px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:14px 24px;color:#94A3B8;text-decoration:none;font-size:14px;font-weight:500;transition:all .2s;border-left:3px solid transparent}
+.nav-item:hover,.nav-item.active{color:#F1F5F9;border-left-color:#38BDF8;background:rgba(255,255,255,.05)}
+.nav-divider{height:1px;background:rgba(255,255,255,.1);margin:16px 24px}
+.sidebar-footer{margin-top:auto;padding:16px 24px;font-size:11px;color:#64748B}
+.content{margin-left:260px;flex:1;padding:32px 48px;max-width:960px}
+h2{font-size:28px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.subtitle{color:var(--muted);font-size:14px;margin-bottom:32px}
+
+/* Progress bar */
+.progress{display:flex;margin-bottom:40px;position:relative}
+.progress::before{content:'';position:absolute;top:16px;left:40px;right:40px;height:2px;background:var(--border);z-index:0}
+.step-indicator{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;z-index:1}
+.step-circle{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border:2px solid var(--border);background:var(--bg);color:var(--muted);transition:all .3s}
+.step-indicator.active .step-circle{border-color:var(--blue);background:var(--blue);color:#fff}
+.step-indicator.done .step-circle{border-color:var(--green);background:var(--green);color:#fff}
+.step-label{font-size:11px;color:var(--muted);margin-top:8px;text-align:center;font-weight:500}
+.step-indicator.active .step-label{color:var(--blue);font-weight:600}
+.step-indicator.done .step-label{color:var(--green)}
+
+/* Form */
+.form-section{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:32px;margin-bottom:24px;display:none}
+.form-section.active{display:block}
+.form-section h3{font-size:18px;color:var(--navy);margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group.full{grid-column:1/-1}
+.form-group label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.form-group input,.form-group select,.form-group textarea{padding:12px 14px;border:1px solid var(--border);border-radius:8px;font-family:'Space Grotesk',sans-serif;font-size:14px;color:var(--text);background:#fff;transition:border-color .2s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--blue)}
+.form-group textarea{resize:vertical;min-height:80px}
+.form-group .hint{font-size:11px;color:var(--muted)}
+
+/* Preview */
+.preview-frame{background:#fff;border:1px solid var(--border);border-radius:8px;padding:48px;max-height:600px;overflow-y:auto;font-family:Georgia,'Times New Roman',serif;font-size:11pt;line-height:1.6;color:#1E293B}
+.preview-frame h1{font-size:18pt;text-align:center;margin-bottom:.5em;color:#1B2A4A}
+.preview-frame h2{font-size:13pt;color:#1B2A4A;border-bottom:1px solid #CBD5E1;padding-bottom:4px;margin-top:1.5em}
+
+/* Buttons */
+.btn-row{display:flex;gap:12px;margin-top:24px;justify-content:flex-end}
+.btn{padding:12px 28px;border-radius:8px;border:none;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-primary{background:var(--blue);color:#fff}.btn-primary:hover{background:#1D4ED8}
+.btn-secondary{background:#fff;border:1px solid var(--border);color:var(--text)}.btn-secondary:hover{border-color:var(--blue)}
+.btn-green{background:var(--green);color:#fff}.btn-green:hover{background:#047857}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--green);color:#fff;padding:14px 24px;border-radius:8px;font-weight:600;display:none;z-index:100}
+
+/* Export buttons */
+.export-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:20px}
+.export-card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:all .2s}
+.export-card:hover{border-color:var(--blue);transform:translateY(-2px)}
+.export-card .icon{font-size:32px;margin-bottom:12px}
+.export-card h4{font-size:14px;margin-bottom:4px;color:var(--navy)}
+.export-card p{font-size:12px;color:var(--muted)}
+.export-card.disabled{opacity:.4;pointer-events:none}
+
+@media(max-width:768px){.sidebar{display:none}.content{margin-left:0;padding:16px}.form-grid{grid-template-columns:1fr}.export-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="layout">
+<nav class="sidebar">
+  <div class="logo"><h1>⬡ PINAXIS</h1><p>Logistics Suite</p></div>
+  <a class="nav-item" href="/logistics/pinaxis-tools/">Dashboard</a>
+  <a class="nav-item" href="/logistics/pinaxis-tools/token-estimator.html">Token Estimator</a>
+  <a class="nav-item active" href="/logistics/pinaxis-tools/contract-builder.html">Contract Builder</a>
+  <div class="nav-divider"></div>
+  <a class="nav-item" href="/logistics/">Back to Logistics</a>
+  <div class="sidebar-footer">PINAXIS · Digit2AI LLC<br>Internal Tools v1.0</div>
+</nav>
+
+<main class="content">
+  <h2>Enterprise Services Agreement</h2>
+  <p class="subtitle">Generate a professional contract with auto-filled pricing and PDF/DOCX export</p>
+
+  <!-- Progress bar -->
+  <div class="progress">
+    <div class="step-indicator active" data-step="1"><div class="step-circle">1</div><div class="step-label">Parties & Dates</div></div>
+    <div class="step-indicator" data-step="2"><div class="step-circle">2</div><div class="step-label">Pricing</div></div>
+    <div class="step-indicator" data-step="3"><div class="step-circle">3</div><div class="step-label">Preview</div></div>
+    <div class="step-indicator" data-step="4"><div class="step-circle">4</div><div class="step-label">Export</div></div>
+  </div>
+
+  <!-- Step 1: Parties & Dates -->
+  <div class="form-section active" id="step1">
+    <h3>Step 1 — Parties & Dates</h3>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Client Legal Name *</label>
+        <input type="text" id="clientName" placeholder="e.g. GEBHARDT Intralogistics Group" required>
+      </div>
+      <div class="form-group">
+        <label>Effective Date *</label>
+        <input type="date" id="effectiveDate" required>
+      </div>
+      <div class="form-group full">
+        <label>Client Address</label>
+        <textarea id="clientAddress" placeholder="Full legal address"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Initial Term</label>
+        <select id="initialTerm">
+          <option value="12">12 months</option>
+          <option value="18">18 months</option>
+          <option value="24" selected>24 months</option>
+          <option value="36">36 months</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Jurisdiction</label>
+        <input type="text" id="jurisdiction" value="Florida">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="goStep(2)">Next: Pricing →</button>
+    </div>
+  </div>
+
+  <!-- Step 2: Pricing -->
+  <div class="form-section" id="step2">
+    <h3>Step 2 — Pricing</h3>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Link to Saved Estimate</label>
+        <select id="linkedEstimate">
+          <option value="">— Enter manually —</option>
+        </select>
+        <div class="hint">Auto-fills token markup and monthly cost from a saved Token Estimator result</div>
+      </div>
+      <div class="form-group">
+        <label>Implementation Fee ($)</label>
+        <input type="number" id="implFee" value="15000" step="500">
+      </div>
+      <div class="form-group">
+        <label>Monthly Retainer ($)</label>
+        <input type="number" id="monthlyRetainer" value="9500" step="500">
+      </div>
+      <div class="form-group">
+        <label>Token Markup (%)</label>
+        <input type="number" id="tokenMarkup" value="30" min="0" max="200">
+      </div>
+      <div class="form-group">
+        <label>Onboarding Hours</label>
+        <input type="number" id="onboardingHours" value="10" min="1" max="100">
+      </div>
+      <div class="form-group">
+        <label>Implementation Timeline (weeks)</label>
+        <input type="number" id="implWeeks" value="8" min="1" max="52">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goStep(1)">← Back</button>
+      <button class="btn btn-primary" onclick="goStep(3)">Next: Preview →</button>
+    </div>
+  </div>
+
+  <!-- Step 3: Preview -->
+  <div class="form-section" id="step3">
+    <h3>Step 3 — Contract Preview</h3>
+    <div class="preview-frame" id="previewFrame"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goStep(2)">← Back</button>
+      <button class="btn btn-primary" onclick="goStep(4)">Next: Export →</button>
+    </div>
+  </div>
+
+  <!-- Step 4: Export -->
+  <div class="form-section" id="step4">
+    <h3>Step 4 — Export & Save</h3>
+    <p style="color:var(--muted);margin-bottom:16px">Generate your contract in multiple formats. Server-side generation ensures confidential templates remain secure.</p>
+    <div id="exportStatus" style="display:none;padding:16px;border-radius:8px;margin-bottom:16px;font-weight:500"></div>
+    <div class="export-grid">
+      <div class="export-card" id="btnGenerate" onclick="generateContract()">
+        <div class="icon">⚡</div>
+        <h4>Generate Contract</h4>
+        <p>Create PDF + DOCX server-side and save to your account</p>
+      </div>
+      <div class="export-card disabled" id="btnPDF" onclick="downloadFile('pdf')">
+        <div class="icon">📄</div>
+        <h4>Download PDF</h4>
+        <p>Professional PDF ready for signing</p>
+      </div>
+      <div class="export-card disabled" id="btnDOCX" onclick="downloadFile('docx')">
+        <div class="icon">📝</div>
+        <h4>Download DOCX</h4>
+        <p>Editable Word document</p>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goStep(3)">← Back</button>
+    </div>
+  </div>
+</main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API_BASE = '/logistics/api/pinaxis';
+let currentStep = 1;
+let generatedContractId = null;
+
+function goStep(n) {
+  if (n === 3) renderPreview();
+  currentStep = n;
+  document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+  document.getElementById('step' + n).classList.add('active');
+  document.querySelectorAll('.step-indicator').forEach(s => {
+    const sn = parseInt(s.dataset.step);
+    s.classList.remove('active', 'done');
+    if (sn === n) s.classList.add('active');
+    else if (sn < n) s.classList.add('done');
+  });
+}
+
+function getFormData() {
+  return {
+    client_name: document.getElementById('clientName').value,
+    client_address: document.getElementById('clientAddress').value,
+    effective_date: document.getElementById('effectiveDate').value,
+    initial_term_months: parseInt(document.getElementById('initialTerm').value),
+    implementation_fee: parseFloat(document.getElementById('implFee').value) || 0,
+    monthly_retainer: parseFloat(document.getElementById('monthlyRetainer').value) || 0,
+    token_markup: parseInt(document.getElementById('tokenMarkup').value) || 30,
+    onboarding_hours: parseInt(document.getElementById('onboardingHours').value) || 10,
+    impl_timeline_weeks: parseInt(document.getElementById('implWeeks').value) || 8,
+    jurisdiction: document.getElementById('jurisdiction').value || 'Florida',
+    linked_estimate_id: document.getElementById('linkedEstimate').value || null,
+    tenant_id: 1,
+  };
+}
+
+function renderPreview() {
+  const d = getFormData();
+  const fmt = (n) => Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+  const frame = document.getElementById('previewFrame');
+  frame.innerHTML = `
+    <h1>ENTERPRISE SERVICES AGREEMENT</h1>
+    <p style="text-align:center;color:#475569">
+      Entered into as of <strong>${d.effective_date || '___'}</strong> by and between:<br>
+      <strong>Digit2AI LLC d/b/a RinglyPro</strong> ("Provider")<br>and<br>
+      <strong>${d.client_name || '___'}</strong> ("Client")<br>
+      ${d.client_address || ''}
+    </p>
+    <h2>1. Scope of Services</h2>
+    <p>Provider shall deliver AI-powered logistics analytics via the PINAXIS platform. Implementation: <strong>${d.impl_timeline_weeks} weeks</strong>. Onboarding: <strong>${d.onboarding_hours} hours</strong>.</p>
+    <h2>2. Fees & Token Consumption</h2>
+    <ul>
+      <li>Implementation Fee: <strong>${fmt(d.implementation_fee)}</strong></li>
+      <li>Monthly Retainer: <strong>${fmt(d.monthly_retainer)}</strong></li>
+      <li>Token Markup: <strong>${d.token_markup}%</strong> over actual API cost</li>
+      <li>Overage beyond 150% billed at same rate with 5-day notice</li>
+    </ul>
+    <h2>3. Term</h2>
+    <p>Initial Term: <strong>${d.initial_term_months} months</strong>. Auto-renews for 12-month periods unless 60 days' notice given.</p>
+    <h2>4. Intellectual Property</h2>
+    <p>All platform IP remains exclusive property of Provider (Digit2AI LLC / RinglyPro).</p>
+    <h2>5. Non-Circumvention</h2>
+    <p>24-month post-term non-circumvention and anti-reverse engineering covenant.</p>
+    <h2>6. Confidentiality</h2>
+    <p>3-year confidentiality obligation survives termination.</p>
+    <h2>7. Governing Law</h2>
+    <p>State of ${d.jurisdiction}.</p>
+    <p style="margin-top:2em;color:#94A3B8;font-size:10pt;text-align:center"><em>This is a preview. Full contract sections (Definitions, Reps & Warranties, Limitation of Liability, Exhibit A) are included in the generated PDF/DOCX.</em></p>
+  `;
+}
+
+async function loadEstimates() {
+  try {
+    const resp = await fetch(API_BASE + '/get-estimates?tenant_id=1');
+    const data = await resp.json();
+    const sel = document.getElementById('linkedEstimate');
+    (data.data || []).forEach(e => {
+      const opt = document.createElement('option');
+      opt.value = e.id;
+      opt.textContent = `#${e.id} — ${e.client_name || 'Unnamed'} | ${e.model} | ${e.markup * 100}% | $${e.monthly_billed}/mo`;
+      sel.appendChild(opt);
+    });
+  } catch (e) { console.warn('Could not load estimates:', e); }
+}
+
+document.getElementById('linkedEstimate').addEventListener('change', async function() {
+  if (!this.value) return;
+  try {
+    const resp = await fetch(API_BASE + '/get-estimates?tenant_id=1');
+    const data = await resp.json();
+    const est = (data.data || []).find(e => e.id == this.value);
+    if (est) {
+      document.getElementById('tokenMarkup').value = Math.round(est.markup * 100);
+      if (est.client_name) document.getElementById('clientName').value = est.client_name;
+      showToast('Estimate #' + est.id + ' linked — markup auto-filled');
+    }
+  } catch (e) { console.warn(e); }
+});
+
+async function generateContract() {
+  const btn = document.getElementById('btnGenerate');
+  btn.style.opacity = '0.5';
+  btn.style.pointerEvents = 'none';
+  const status = document.getElementById('exportStatus');
+  status.style.display = 'block';
+  status.style.background = '#EFF6FF';
+  status.style.color = '#1E40AF';
+  status.textContent = 'Generating contract... This may take a moment.';
+
+  try {
+    const resp = await fetch(API_BASE + '/generate-contract', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(getFormData()),
+    });
+    const data = await resp.json();
+    if (data.success) {
+      generatedContractId = data.contract_id;
+      status.style.background = '#ECFDF5';
+      status.style.color = '#065F46';
+      status.textContent = `Contract #${data.contract_id} generated successfully!` +
+        (data.pdf_available ? ' PDF ready.' : ' PDF unavailable.') +
+        (data.docx_available ? ' DOCX ready.' : ' DOCX unavailable.');
+
+      if (data.pdf_available) { document.getElementById('btnPDF').classList.remove('disabled'); }
+      if (data.docx_available) { document.getElementById('btnDOCX').classList.remove('disabled'); }
+    } else {
+      throw new Error(data.error || 'Generation failed');
+    }
+  } catch (e) {
+    status.style.background = '#FEF2F2';
+    status.style.color = '#991B1B';
+    status.textContent = 'Error: ' + e.message;
+  }
+  btn.style.opacity = '1';
+  btn.style.pointerEvents = 'auto';
+}
+
+function downloadFile(type) {
+  if (!generatedContractId) return showToast('Generate the contract first');
+  window.open(API_BASE + '/download/' + type + '/' + generatedContractId, '_blank');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 3000);
+}
+
+// Set default date to today
+document.getElementById('effectiveDate').valueAsDate = new Date();
+
+// Load saved estimates for linking
+loadEstimates();
+</script>
+</body>
+</html>
