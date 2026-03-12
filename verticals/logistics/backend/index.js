@@ -6,10 +6,10 @@ const sequelize = require('./services/db.lg');
 
 const TIERS = {
   starter: { name: 'Freight CRM', modules: ['dashboard', 'auth', 'tools'] },
-  professional: { name: 'Freight Pro', modules: ['dashboard', 'auth', 'tools', 'shipper', 'carrier', 'documents'] },
-  enterprise: { name: 'Logistics AI', modules: ['dashboard', 'auth', 'tools', 'shipper', 'carrier', 'documents', 'fmcsa', 'matching'] },
+  professional: { name: 'Freight Pro', modules: ['dashboard', 'auth', 'tools', 'shipper', 'carrier', 'documents', 'ingestion'] },
+  enterprise: { name: 'Logistics AI', modules: ['dashboard', 'auth', 'tools', 'shipper', 'carrier', 'documents', 'fmcsa', 'matching', 'pricing', 'load-matching', 'ingestion', 'analytics'] },
   warehouse: { name: 'Warehouse OPS', modules: ['dashboard', 'auth', 'tools'] },
-  full: { name: 'RinglyPro Logistics', modules: ['dashboard', 'auth', 'tools', 'shipper', 'carrier', 'documents', 'fmcsa', 'matching'] }
+  full: { name: 'RinglyPro Logistics', modules: ['dashboard', 'auth', 'tools', 'shipper', 'carrier', 'documents', 'fmcsa', 'matching', 'pricing', 'load-matching', 'ingestion', 'analytics', 'demo'] }
 };
 
 const ACTIVE_TIER = process.env.LG_TIER || 'full';
@@ -24,6 +24,7 @@ function requireTier(module) {
   };
 }
 
+// --- Existing routes ---
 router.use('/api/auth', require('./routes/auth'));
 router.use('/api/tools', requireTier('tools'), require('./routes/tools'));
 router.use('/api/shipper', requireTier('shipper'), require('./routes/shipper'));
@@ -31,6 +32,13 @@ router.use('/api/carrier', requireTier('carrier'), require('./routes/carrier'));
 router.use('/api/documents', requireTier('documents'), require('./routes/documents'));
 router.use('/api/fmcsa', requireTier('fmcsa'), require('./routes/fmcsa'));
 router.use('/api/matching', requireTier('matching'), require('./routes/matching'));
+
+// --- AI Brokerage Platform routes ---
+router.use('/api/pricing', requireTier('pricing'), require('./routes/pricing'));
+router.use('/api/load-matching', requireTier('load-matching'), require('./routes/loadmatching'));
+router.use('/api/ingestion', requireTier('ingestion'), require('./routes/ingestion'));
+router.use('/api/analytics', requireTier('analytics'), require('./routes/analytics'));
+router.use('/api/demo', requireTier('demo'), require('./routes/demo'));
 
 router.get('/health', (req, res) => {
   res.json({ service: 'RinglyPro Logistics', status: 'healthy', tier: ACTIVE_TIER, tier_name: activeTierConfig.name, active_modules: activeTierConfig.modules, timestamp: new Date().toISOString() });
@@ -56,12 +64,15 @@ router.get('*', (req, res) => {
 async function initialize() {
   try {
     const fs = require('fs');
-    const migrationPath = path.join(__dirname, 'migrations', '001_lg_schema.sql');
-    if (fs.existsSync(migrationPath)) {
-      const sql = fs.readFileSync(migrationPath, 'utf8');
+    // Run all migrations in order
+    const migrationsDir = path.join(__dirname, 'migrations');
+    const migrationFiles = fs.readdirSync(migrationsDir).filter(f => f.endsWith('.sql')).sort();
+    for (const file of migrationFiles) {
+      const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
       await sequelize.query(sql);
-      console.log('  \u2705 Logistics schema initialized');
     }
+    console.log('  \u2705 Logistics schema initialized (' + migrationFiles.length + ' migrations)');
+
     const users = [
       { email: 'admin@ringlypro.com', password: 'RinglyProLogistics2026!', role: 'admin', full_name: 'RinglyPro Admin' },
       { email: 'mstagg@ringlypro.com', password: 'Palindrome@7', role: 'admin', full_name: 'Manuel Stagg' },

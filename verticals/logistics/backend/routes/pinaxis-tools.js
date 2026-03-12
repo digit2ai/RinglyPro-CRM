@@ -12,6 +12,10 @@ const path = require('path');
 const fs = require('fs');
 const sequelize = require('../services/db.lg');
 const getContractHTML = require('../templates/pinaxis-contract.template');
+const authMiddleware = require('../middleware/auth.lg');
+
+// Protect all pinaxis routes — require authenticated admin
+router.use(authMiddleware(['admin']));
 
 // ── Model pricing ────────────────────────────────────────────
 const MODEL_PRICING = {

@@ -10,6 +10,13 @@ import Compliance from './pages/Compliance';
 import FreightMatching from './pages/FreightMatching';
 import MCPTools from './pages/MCPTools';
 import Landing from './pages/Landing';
+import RateIntelligence from './pages/RateIntelligence';
+import LoadMatching from './pages/LoadMatching';
+import DataIngestion from './pages/DataIngestion';
+import Analytics from './pages/Analytics';
+import DemoWorkspace from './pages/DemoWorkspace';
+import TokenEstimator from './pages/TokenEstimator';
+import ContractBuilder from './pages/ContractBuilder';
 
 const BASE = '/logistics';
 
@@ -34,9 +41,16 @@ function Sidebar({ open, onClose, tierInfo }) {
     { path: `${BASE}/dashboard`, label: 'Command Center', roles: ['admin','dispatcher'] },
     { path: `${BASE}/shipper`, label: 'Shipper Portal', roles: ['admin','dispatcher','shipper'] },
     { path: `${BASE}/carrier`, label: 'Carrier Portal', roles: ['admin','dispatcher','carrier'] },
+    { path: `${BASE}/matching`, label: 'Carrier Matching', roles: ['admin','dispatcher'] },
+    { path: `${BASE}/load-matching`, label: 'Load Matching', roles: ['admin','dispatcher'], section: 'AI BROKERAGE' },
+    { path: `${BASE}/pricing`, label: 'Rate Intelligence', roles: ['admin','dispatcher'] },
+    { path: `${BASE}/analytics`, label: 'Analytics & KPIs', roles: ['admin','dispatcher'] },
+    { path: `${BASE}/ingestion`, label: 'Data Ingestion', roles: ['admin','dispatcher'], section: 'DATA' },
     { path: `${BASE}/documents`, label: 'Document Vault', roles: ['admin','dispatcher','shipper','carrier'] },
     { path: `${BASE}/compliance`, label: 'FMCSA Compliance', roles: ['admin','dispatcher'] },
-    { path: `${BASE}/matching`, label: 'Freight Matching', roles: ['admin','dispatcher'] },
+    { path: `${BASE}/token-estimator`, label: 'Token Estimator', roles: ['admin'], section: 'PINAXIS' },
+    { path: `${BASE}/contract-builder`, label: 'Contract Builder', roles: ['admin'] },
+    { path: `${BASE}/demos`, label: 'Demo Workspaces', roles: ['admin'], section: 'ADMIN' },
     { path: `${BASE}/tools`, label: 'MCP Tools', roles: ['admin'] },
     { path: '/cw_carriers/dashboard', label: 'Carriers CRM', roles: ['admin','dispatcher'], ext: true },
     { path: '/pinaxis/', label: 'Warehouse OPS', roles: ['admin','dispatcher'], ext: true },
@@ -53,11 +67,19 @@ function Sidebar({ open, onClose, tierInfo }) {
           <div style={S.tierBadge}>{tierInfo?.tier_name || 'Full Suite'}</div>
         </div>
         <nav style={S.nav}>
-          {nav.map(item => item.ext ? (
-            <a key={item.path} href={item.path} style={S.navItem}>{item.label}<span style={S.extBadge}>EXT</span></a>
-          ) : (
-            <Link key={item.path} to={item.path} onClick={mob ? onClose : undefined} style={{...S.navItem, ...(loc.pathname === item.path ? S.navActive : {})}}>{item.label}</Link>
-          ))}
+          {nav.map((item, i) => {
+            const showSection = item.section && (i === 0 || nav[i-1]?.section !== item.section);
+            return (
+              <React.Fragment key={item.path}>
+                {showSection && <div style={S.sectionLabel}>{item.section}</div>}
+                {item.ext ? (
+                  <a href={item.path} style={S.navItem}>{item.label}<span style={S.extBadge}>EXT</span></a>
+                ) : (
+                  <Link to={item.path} onClick={mob ? onClose : undefined} style={{...S.navItem, ...(loc.pathname === item.path ? S.navActive : {})}}>{item.label}</Link>
+                )}
+              </React.Fragment>
+            );
+          })}
         </nav>
         <div style={S.footer}>
           <div style={S.userRole}>{role.toUpperCase()}</div>
@@ -94,6 +116,13 @@ export default function App() {
         <Route path={`${BASE}/compliance`} element={<ProtectedRoute roles={['admin','dispatcher']}><Layout tierInfo={ti}><Compliance /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/matching`} element={<ProtectedRoute roles={['admin','dispatcher']}><Layout tierInfo={ti}><FreightMatching /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/tools`} element={<ProtectedRoute roles={['admin']}><Layout tierInfo={ti}><MCPTools /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/pricing`} element={<ProtectedRoute roles={['admin','dispatcher']}><Layout tierInfo={ti}><RateIntelligence /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/load-matching`} element={<ProtectedRoute roles={['admin','dispatcher']}><Layout tierInfo={ti}><LoadMatching /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/ingestion`} element={<ProtectedRoute roles={['admin','dispatcher']}><Layout tierInfo={ti}><DataIngestion /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/analytics`} element={<ProtectedRoute roles={['admin','dispatcher']}><Layout tierInfo={ti}><Analytics /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/demos`} element={<ProtectedRoute roles={['admin']}><Layout tierInfo={ti}><DemoWorkspace /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/token-estimator`} element={<ProtectedRoute roles={['admin']}><Layout tierInfo={ti}><TokenEstimator /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/contract-builder`} element={<ProtectedRoute roles={['admin']}><Layout tierInfo={ti}><ContractBuilder /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}`} element={<Landing />} />
         <Route path={`${BASE}/`} element={<Landing />} />
         <Route path="*" element={<Navigate to={`${BASE}/`} replace />} />
@@ -118,6 +147,7 @@ const S = {
   nav:{flex:1,padding:'12px 0',overflowY:'auto'},
   navItem:{display:'flex',alignItems:'center',gap:10,padding:'11px 20px',fontSize:14,color:'#8B949E',cursor:'pointer',transition:'all 0.2s',borderLeft:'3px solid transparent'},
   navActive:{color:'#fff',background:'#0EA5E922',borderLeftColor:'#0EA5E9'},
+  sectionLabel:{padding:'12px 20px 4px',fontSize:10,color:'#0EA5E9',fontWeight:700,letterSpacing:2,textTransform:'uppercase'},
   extBadge:{marginLeft:'auto',padding:'1px 5px',background:'#30363D',color:'#8B949E',borderRadius:4,fontSize:9,fontWeight:600},
   footer:{padding:'16px 20px',borderTop:'1px solid #21262D'},
   userRole:{fontSize:10,color:'#0EA5E9',fontWeight:600,letterSpacing:1,marginBottom:4},
