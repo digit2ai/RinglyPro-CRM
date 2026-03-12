@@ -251,7 +251,7 @@ async function startServer() {
         let elevenLabsWs = null;
         let streamSid = null;
 
-        twilioWs.on('message', (data) => {
+        twilioWs.on('message', async (data) => {
           try {
             const msg = JSON.parse(data);
 
@@ -259,8 +259,28 @@ async function startServer() {
               streamSid = msg.start.streamSid;
               console.log(`🎙️ Twilio stream started: ${streamSid}`);
 
-              // Connect to ElevenLabs ConvAI WebSocket
-              const elUrl = `wss://api.elevenlabs.io/v1/convai/conversation?agent_id=${agentId}`;
+              // Connect to ElevenLabs ConvAI WebSocket using signed URL (requires API key auth)
+              let elUrl;
+              try {
+                const signedUrlResp = await fetch(
+                  `https://api.elevenlabs.io/v1/convai/conversation/get-signed-url?agent_id=${encodeURIComponent(agentId)}`,
+                  { method: 'GET', headers: { 'xi-api-key': apiKey } }
+                );
+                if (signedUrlResp.ok) {
+                  const signedData = await signedUrlResp.json();
+                  elUrl = signedData.signed_url;
+                  console.log(`🔑 Got ElevenLabs signed URL for agent ${agentId}`);
+                } else {
+                  console.error(`❌ Failed to get signed URL (${signedUrlResp.status}): ${await signedUrlResp.text()}`);
+                  twilioWs.close();
+                  return;
+                }
+              } catch (signErr) {
+                console.error(`❌ Signed URL request failed: ${signErr.message}`);
+                twilioWs.close();
+                return;
+              }
+
               elevenLabsWs = new WebSocket(elUrl);
 
               // Timeout: if ElevenLabs doesn't connect within 10s, close gracefully
