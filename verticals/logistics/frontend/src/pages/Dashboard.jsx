@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import { getUser } from '../services/auth';
 
@@ -20,8 +20,26 @@ export default function Dashboard() {
   const [uploading, setUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState(null);
   const [previewMapping, setPreviewMapping] = useState(null);
+  // Demo launcher
+  const [demoVertical, setDemoVertical] = useState('warehouse');
+  const [prospectName, setProspectName] = useState('');
   const [demoLoading, setDemoLoading] = useState(false);
   const [demoResult, setDemoResult] = useState(null);
+  // Platform status
+  const [whStatus, setWhStatus] = useState(null);
+  const [cwStatus, setCwStatus] = useState(null);
+  const [uploads, setUploads] = useState([]);
+  const [demos, setDemos] = useState([]);
+
+  useEffect(() => {
+    // Fetch platform stats
+    fetch('/pinaxis/api/health').then(r => r.json()).then(d => setWhStatus(d)).catch(() => setWhStatus({ status: 'offline' }));
+    fetch('/cw_carriers/api/health').then(r => r.json()).then(d => setCwStatus(d)).catch(() => setCwStatus({ status: 'offline' }));
+    // Recent uploads
+    api.get('/ingestion/history').then(r => setUploads((r.data?.data || []).slice(0, 5))).catch(() => {});
+    // Recent demos from both verticals
+    api.get('/demo/workspaces').then(r => setDemos((r.data?.data || []).slice(0, 5))).catch(() => {});
+  }, []);
 
   const handleFileRead = (e) => {
     const file = e.target.files[0];
@@ -67,6 +85,8 @@ export default function Dashboard() {
       const mappedType = ['warehouse_inventory', 'inbound_shipments', 'outbound_orders'].includes(dataType) ? 'loads' : dataType;
       const { data } = await api.post('/ingestion/upload', { file_content: fileContent, file_name: fileName, file_type: ft, data_type: mappedType });
       setUploadResult(data.data);
+      // Refresh uploads
+      api.get('/ingestion/history').then(r => setUploads((r.data?.data || []).slice(0, 5))).catch(() => {});
     } catch (err) { setUploadResult({ error: err.response?.data?.error || err.message }); }
     setUploading(false);
   };
@@ -74,22 +94,29 @@ export default function Dashboard() {
   const generateDemo = async () => {
     setDemoLoading(true);
     setDemoResult(null);
+    const company = prospectName.trim() || (demoVertical === 'warehouse' ? 'Demo Warehouse Co' : 'Demo Carriers Co');
     try {
-      const { data } = await api.post('/demo/workspace', {
-        company_name: 'Demo Warehouse Co',
-        contact_email: user?.email || '',
-        contact_name: user?.full_name || 'Demo User',
-        lead_source: 'quick-demo',
-        notes: 'Auto-generated demo workspace'
-      });
-      const workspace = data.data;
-      await api.post('/demo/generate', { access_code: workspace.access_code, sample_size: 50 });
-      setDemoResult(workspace);
+      const base = demoVertical === 'warehouse' ? '/demo' : '/brokerage-demo';
+      const apiBase = demoVertical === 'warehouse' ? api : { post: (url, body) => fetch(`/cw_carriers/api${url}`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sessionStorage.getItem('cw_token') || sessionStorage.getItem('lg_token')}` }, body: JSON.stringify(body) }).then(r => r.json()).then(d => ({ data: d })) };
+      const wsRes = demoVertical === 'warehouse'
+        ? await api.post(`${base}/workspace`, { company_name: company, contact_email: user?.email || '', contact_name: user?.full_name || 'Demo User', lead_source: 'sales-demo', notes: `${demoVertical} demo for ${company}` })
+        : await apiBase.post('/brokerage-demo/workspace', { company_name: company, contact_email: user?.email || '', contact_name: user?.full_name || 'Demo User', lead_source: 'sales-demo', notes: `carriers demo for ${company}` });
+      const workspace = demoVertical === 'warehouse' ? wsRes.data.data : wsRes.data.data;
+      // Generate sample data
+      if (demoVertical === 'warehouse') {
+        await api.post(`${base}/generate`, { access_code: workspace.access_code, sample_size: 50 });
+      } else {
+        await apiBase.post('/brokerage-demo/generate', { access_code: workspace.access_code, sample_size: 50 });
+      }
+      setDemoResult({ ...workspace, vertical: demoVertical });
+      // Refresh demos
+      api.get('/demo/workspaces').then(r => setDemos((r.data?.data || []).slice(0, 5))).catch(() => {});
     } catch (err) { setDemoResult({ error: err.response?.data?.error || err.message }); }
     setDemoLoading(false);
   };
 
   const statusColor = { completed: '#22C55E', partial: '#F59E0B', failed: '#EF4444', processing: '#0EA5E9' };
+  const onlineColor = (s) => s && s.status !== 'offline' ? '#22C55E' : '#EF4444';
 
   return (
     <div>
@@ -97,7 +124,7 @@ export default function Dashboard() {
       <p style={S.sub}>Welcome, {user?.full_name || user?.email}</p>
 
       <div style={S.grid}>
-        {/* Warehouse Data Upload */}
+        {/* LEFT: Warehouse Data Upload */}
         <div style={S.card}>
           <div style={S.cardHeader}>
             <h2 style={S.cardTitle}>Warehouse Data Upload</h2>
@@ -171,23 +198,44 @@ export default function Dashboard() {
           {uploadResult?.error && <div style={S.error}>{uploadResult.error}</div>}
         </div>
 
-        {/* Right column */}
+        {/* RIGHT column */}
         <div style={{display:'flex',flexDirection:'column',gap:20}}>
-          {/* Quick Demo */}
+
+          {/* Sales Demo Launcher */}
           <div style={S.card}>
             <div style={S.cardHeader}>
-              <h2 style={S.cardTitle}>Quick Demo</h2>
-              <div style={{...S.cardBadge,background:'#22C55E22',color:'#22C55E'}}>DEMO</div>
+              <h2 style={S.cardTitle}>Sales Demo Launcher</h2>
+              <div style={{...S.cardBadge,background:'#A855F722',color:'#A855F7'}}>SALES</div>
             </div>
-            <p style={S.cardDesc}>Generate a demo project with synthetic warehouse data to explore the full analysis pipeline.</p>
+            <p style={S.cardDesc}>Generate a branded demo workspace for prospects. Pick a vertical, enter the prospect name, and get a shareable demo link.</p>
 
-            <button onClick={generateDemo} disabled={demoLoading} style={{...S.btn,background:'#22C55E',opacity:demoLoading?0.5:1}}>
-              {demoLoading ? 'Generating...' : 'Generate Demo'}
+            <div style={{display:'flex',gap:8,marginBottom:16}}>
+              <button onClick={() => setDemoVertical('warehouse')} style={{...S.vertBtn, ...(demoVertical === 'warehouse' ? S.vertBtnActive : {})}}>
+                <div style={{fontSize:18,marginBottom:4}}>&#127963;</div>
+                <div style={{fontSize:12,fontWeight:600}}>Warehouse</div>
+                <div style={{fontSize:10,color:'#8B949E'}}>Intralogistics</div>
+              </button>
+              <button onClick={() => setDemoVertical('carriers')} style={{...S.vertBtn, ...(demoVertical === 'carriers' ? {...S.vertBtnActive, borderColor:'#F59E0B',background:'#F59E0B11'} : {})}}>
+                <div style={{fontSize:18,marginBottom:4}}>&#128666;</div>
+                <div style={{fontSize:12,fontWeight:600}}>Carriers</div>
+                <div style={{fontSize:10,color:'#8B949E'}}>Transportation</div>
+              </button>
+            </div>
+
+            <input
+              value={prospectName} onChange={e => setProspectName(e.target.value)}
+              placeholder="Prospect company name (optional)"
+              style={S.input}
+            />
+
+            <button onClick={generateDemo} disabled={demoLoading} style={{...S.btn, background: demoVertical === 'warehouse' ? '#0EA5E9' : '#F59E0B', opacity: demoLoading ? 0.5 : 1}}>
+              {demoLoading ? 'Generating...' : `Generate ${demoVertical === 'warehouse' ? 'Warehouse' : 'Carriers'} Demo`}
             </button>
 
             {demoResult && !demoResult.error && (
               <div style={S.demoSuccess}>
                 <div style={{fontSize:14,fontWeight:600,color:'#22C55E',marginBottom:12}}>Demo Workspace Created!</div>
+                <div style={S.demoRow}><span style={S.demoLabel}>Vertical</span><span style={{textTransform:'capitalize'}}>{demoResult.vertical}</span></div>
                 <div style={S.demoRow}><span style={S.demoLabel}>Company</span><span>{demoResult.company}</span></div>
                 <div style={S.demoRow}><span style={S.demoLabel}>Access Code</span><span style={{color:'#0EA5E9',fontWeight:700,fontSize:16,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2}}>{demoResult.access_code}</span></div>
                 <div style={S.demoRow}><span style={S.demoLabel}>Expires</span><span>{new Date(demoResult.expires_at).toLocaleDateString()}</span></div>
@@ -197,48 +245,69 @@ export default function Dashboard() {
                     {demoResult.modules.map(m => <span key={m} style={S.modBadge}>{m}</span>)}
                   </div>
                 )}
-                <a href="/logistics/demos" style={S.demoLink}>View All Demo Workspaces &#8594;</a>
               </div>
             )}
             {demoResult?.error && <div style={S.error}>{demoResult.error}</div>}
           </div>
 
-          {/* Quick Navigation */}
+          {/* Platform Status */}
           <div style={S.card}>
-            <h2 style={S.cardTitle}>Quick Actions</h2>
-            <div style={S.actionGrid}>
-              {[
-                { label: 'Demo Workspaces', href: '/logistics/demos', color: '#22C55E' },
-                { label: 'Data Ingestion', href: '/logistics/ingestion', color: '#0EA5E9' },
-                { label: 'Analytics & KPIs', href: '/logistics/analytics', color: '#A855F7' },
-                { label: 'Rate Intelligence', href: '/logistics/pricing', color: '#F59E0B' },
-                { label: 'Carrier Matching', href: '/logistics/matching', color: '#0EA5E9' },
-                { label: 'Load Matching', href: '/logistics/load-matching', color: '#10B981' },
-                { label: 'Document Vault', href: '/logistics/documents', color: '#EC4899' },
-                { label: 'FMCSA Compliance', href: '/logistics/compliance', color: '#EF4444' },
-              ].map((a, i) => (
-                <a key={i} href={a.href} style={S.actionCard}>
-                  <div style={{...S.actionDot,background:a.color}} />
-                  <span>{a.label}</span>
-                </a>
+            <div style={S.cardHeader}>
+              <h2 style={S.cardTitle}>Platform Status</h2>
+              <div style={S.cardBadge}>LIVE</div>
+            </div>
+            <div style={{display:'flex',gap:12,marginBottom:0}}>
+              <a href="/pinaxis/" style={S.statusCard}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+                  <span style={{fontSize:13,fontWeight:600,color:'#E6EDF3'}}>Warehouse OPS</span>
+                  <span style={{...S.statusDot,background:onlineColor(whStatus)}} />
+                </div>
+                <div style={{fontSize:10,color:'#8B949E',textTransform:'uppercase',letterSpacing:1,marginBottom:2}}>Intralogistics</div>
+                <div style={{fontSize:11,color:'#8B949E'}}>Inventory, Pick/Pack, OEE, Storage Zones</div>
+              </a>
+              <a href="/cw_carriers/dashboard" style={S.statusCard}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+                  <span style={{fontSize:13,fontWeight:600,color:'#E6EDF3'}}>Carriers CRM</span>
+                  <span style={{...S.statusDot,background:onlineColor(cwStatus)}} />
+                </div>
+                <div style={{fontSize:10,color:'#8B949E',textTransform:'uppercase',letterSpacing:1,marginBottom:2}}>Transportation</div>
+                <div style={{fontSize:11,color:'#8B949E'}}>Loads, Matching, Rates, Compliance</div>
+              </a>
+            </div>
+          </div>
+
+          {/* Recent Activity */}
+          <div style={S.card}>
+            <div style={S.cardHeader}>
+              <h2 style={S.cardTitle}>Recent Activity</h2>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:6}}>
+              {uploads.length === 0 && demos.length === 0 && (
+                <div style={{color:'#8B949E',fontSize:13,padding:'12px 0',textAlign:'center'}}>No recent activity</div>
+              )}
+              {demos.map((d, i) => (
+                <div key={`d-${i}`} style={S.activityRow}>
+                  <div style={{...S.activityIcon,background:'#A855F722',color:'#A855F7'}}>D</div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:13,color:'#E6EDF3',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{d.company || d.company_name}</div>
+                    <div style={{fontSize:11,color:'#8B949E'}}>Demo workspace &middot; {d.access_code}</div>
+                  </div>
+                  <div style={{fontSize:10,color:'#8B949E',whiteSpace:'nowrap'}}>{d.created_at ? new Date(d.created_at).toLocaleDateString() : ''}</div>
+                </div>
+              ))}
+              {uploads.map((u, i) => (
+                <div key={`u-${i}`} style={S.activityRow}>
+                  <div style={{...S.activityIcon,background:'#0EA5E922',color:'#0EA5E9'}}>U</div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:13,color:'#E6EDF3',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{u.file_name || u.data_type}</div>
+                    <div style={{fontSize:11,color:'#8B949E'}}>{u.total_rows || 0} rows &middot; {u.status || 'completed'}</div>
+                  </div>
+                  <div style={{fontSize:10,color:'#8B949E',whiteSpace:'nowrap'}}>{u.created_at ? new Date(u.created_at).toLocaleDateString() : ''}</div>
+                </div>
               ))}
             </div>
           </div>
 
-          {/* External Links */}
-          <div style={S.card}>
-            <h2 style={S.cardTitle}>Connected Platforms</h2>
-            <div style={{display:'flex',flexDirection:'column',gap:8}}>
-              <a href="/cw_carriers/dashboard" style={S.extLink}>
-                <span>Carriers CRM</span>
-                <span style={S.extBadge}>15 modules</span>
-              </a>
-              <a href="/pinaxis/" style={S.extLink}>
-                <span>Warehouse OPS</span>
-                <span style={S.extBadge}>Inventory + OEE</span>
-              </a>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -266,6 +335,7 @@ const S = {
   mappingGrid: { display: 'flex', flexDirection: 'column', gap: 4 },
   mappingItem: { display: 'flex', gap: 8, alignItems: 'center' },
   btn: { width: '100%', padding: '12px 20px', background: '#0EA5E9', border: 'none', borderRadius: 8, color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' },
+  input: { width: '100%', padding: '10px 14px', background: '#0D1117', border: '1px solid #30363D', borderRadius: 8, color: '#E6EDF3', fontSize: 13, marginBottom: 12, outline: 'none' },
   resultBox: { marginTop: 16, background: '#0D1117', borderRadius: 8, padding: 16 },
   resultBadge: { display: 'inline-block', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700, letterSpacing: 1, marginBottom: 12 },
   resultGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 },
@@ -273,14 +343,14 @@ const S = {
   resultLabel: { fontSize: 10, color: '#8B949E', textTransform: 'uppercase', letterSpacing: 1 },
   resultValue: { fontSize: 20, fontWeight: 700, color: '#E6EDF3', fontFamily: "'Bebas Neue',sans-serif", marginTop: 4 },
   error: { background: '#EF444422', border: '1px solid #EF4444', borderRadius: 8, padding: 12, color: '#EF4444', marginTop: 12, fontSize: 13 },
+  vertBtn: { flex: 1, padding: '14px 12px', background: '#0D1117', border: '1px solid #30363D', borderRadius: 10, cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', color: '#E6EDF3' },
+  vertBtnActive: { borderColor: '#0EA5E9', background: '#0EA5E911' },
   demoSuccess: { marginTop: 16, background: '#0D1117', border: '1px solid #22C55E33', borderRadius: 8, padding: 16, fontSize: 13, color: '#E6EDF3' },
   demoRow: { display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #21262D' },
   demoLabel: { fontSize: 11, color: '#8B949E', textTransform: 'uppercase', letterSpacing: 1 },
   modBadge: { display: 'inline-block', padding: '2px 8px', background: '#0EA5E922', color: '#0EA5E9', borderRadius: 4, fontSize: 10, fontWeight: 600, margin: '0 4px', textTransform: 'uppercase' },
-  demoLink: { display: 'block', marginTop: 12, padding: '8px 0', color: '#0EA5E9', fontSize: 13, fontWeight: 600, textAlign: 'center' },
-  actionGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 },
-  actionCard: { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: '#0D1117', border: '1px solid #21262D', borderRadius: 8, color: '#E6EDF3', fontSize: 13, textDecoration: 'none', transition: 'border-color 0.2s' },
-  actionDot: { width: 8, height: 8, borderRadius: '50%', flexShrink: 0 },
-  extLink: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: '#0D1117', border: '1px solid #21262D', borderRadius: 8, color: '#E6EDF3', fontSize: 14, textDecoration: 'none' },
-  extBadge: { padding: '2px 8px', background: '#30363D', color: '#8B949E', borderRadius: 4, fontSize: 10, fontWeight: 600 },
+  statusCard: { flex: 1, padding: '14px 16px', background: '#0D1117', border: '1px solid #21262D', borderRadius: 10, textDecoration: 'none', color: 'inherit', transition: 'border-color 0.2s' },
+  statusDot: { width: 10, height: 10, borderRadius: '50%', display: 'inline-block' },
+  activityRow: { display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', background: '#0D1117', borderRadius: 8, border: '1px solid #21262D' },
+  activityIcon: { width: 28, height: 28, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 },
 };
