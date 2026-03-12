@@ -212,7 +212,7 @@ router.post('/generate-contract', async (req, res) => {
       const docChildren = [
         titlePara, partiesPara,
         makeSectionHeader('1. SCOPE OF SERVICES'),
-        makePara(`Provider shall deliver AI-powered logistics analytics via the PINAXIS platform. Implementation: ${data.impl_timeline_weeks || 8} weeks. Onboarding: ${data.onboarding_hours || 10} hours.`),
+        makePara(`Provider shall deliver AI-powered analytics and automation via the RinglyPro AI platform. Implementation: ${data.impl_timeline_weeks || 8} weeks. Onboarding: ${data.onboarding_hours || 10} hours.`),
         makeSectionHeader('2. FEES & TOKEN CONSUMPTION'),
         makePara(`Implementation Fee: ${Number(data.implementation_fee || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}`),
         makePara(`Monthly Retainer: ${Number(data.monthly_retainer || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}`),

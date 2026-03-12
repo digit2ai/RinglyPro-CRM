@@ -158,7 +158,7 @@ export default function ContractBuilder() {
               {form.client_address}
             </p>
             <h3 style={S.previewH}>1. Scope of Services</h3>
-            <p style={S.previewP}>Provider shall deliver AI-powered logistics analytics via the PINAXIS platform. Implementation: <strong>{form.impl_timeline_weeks} weeks</strong>. Onboarding: <strong>{form.onboarding_hours} hours</strong>.</p>
+            <p style={S.previewP}>Provider shall deliver AI-powered analytics and automation via the RinglyPro AI platform. Implementation: <strong>{form.impl_timeline_weeks} weeks</strong>. Onboarding: <strong>{form.onboarding_hours} hours</strong>.</p>
             <h3 style={S.previewH}>2. Fees & Token Consumption</h3>
             <ul style={{ paddingLeft: 20, color: '#334155', fontSize: 13, lineHeight: 1.8 }}>
               <li>Implementation Fee: <strong>{fmt(form.implementation_fee)}</strong></li>

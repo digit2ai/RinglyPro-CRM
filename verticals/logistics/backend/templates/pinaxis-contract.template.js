@@ -1,5 +1,6 @@
 /**
- * PINAXIS Enterprise Services Agreement Template
+ * Enterprise Services Agreement Template
+ * Used by all tenants — not PINAXIS-specific
  * All placeholders use {{PLACEHOLDER}} syntax
  * INTERNAL ONLY — never expose to frontend
  */
@@ -57,7 +58,7 @@ module.exports = function getContractHTML(data) {
 <div class="section">
   <ol>
     <li><strong>"Services"</strong> means the AI-powered logistics analytics, automation, and consulting services described in Exhibit A.</li>
-    <li><strong>"Platform"</strong> means Provider's proprietary PINAXIS logistics intelligence platform, including all MCP tools, dashboards, and integrations.</li>
+    <li><strong>"Platform"</strong> means Provider's proprietary RinglyPro AI platform, including all MCP tools, dashboards, and integrations.</li>
     <li><strong>"Token Consumption"</strong> means the aggregate usage of AI model input and output tokens consumed through the Platform on Client's behalf.</li>
     <li><strong>"Confidential Information"</strong> means all non-public information disclosed by either party, including business data, technical specifications, pricing, and trade secrets.</li>
     <li><strong>"Deliverables"</strong> means all reports, analyses, configurations, and documentation produced by Provider under this Agreement.</li>
@@ -68,11 +69,11 @@ module.exports = function getContractHTML(data) {
 <div class="section">
   <p>Provider shall deliver the Services described in Exhibit A, including but not limited to:</p>
   <ol>
-    <li>Warehouse data analysis and optimization recommendations via PINAXIS platform</li>
-    <li>AI-powered product-to-service matching and fit analysis</li>
-    <li>OEE analytics, anomaly detection, and predictive maintenance</li>
-    <li>Proposal and document generation</li>
-    <li>IoT data interpretation and Galileo integration</li>
+    <li>Data analysis and optimization recommendations via the RinglyPro AI platform</li>
+    <li>AI-powered matching, scoring, and intelligent recommendations</li>
+    <li>Real-time monitoring, analytics, and anomaly detection</li>
+    <li>Automated proposal, report, and document generation</li>
+    <li>Third-party integrations as defined in Exhibit A</li>
     <li>Ongoing platform access, maintenance, and support</li>
   </ol>
   <p>Implementation shall commence within five (5) business days of the Effective Date and shall be completed within <strong>${d.IMPL_TIMELINE_WEEKS} weeks</strong>, subject to Client's timely provision of required data and access.</p>
@@ -184,13 +185,13 @@ module.exports = function getContractHTML(data) {
   <div class="section">
     <p>The following services shall be delivered by Provider under this Agreement:</p>
     <ol>
-      <li><strong>PINAXIS Platform Access:</strong> Full access to the PINAXIS logistics intelligence platform, including all MCP tools for warehouse analytics, product matching, simulation, and reporting.</li>
-      <li><strong>Data Intake & Analysis:</strong> Ingestion and analysis of Client's warehouse operational data, including order structures, throughput patterns, SKU classifications, and storage utilization.</li>
-      <li><strong>Product-to-Service Matching:</strong> AI-powered recommendations for automation products and configurations tailored to Client's operational profile.</li>
-      <li><strong>OEE Analytics:</strong> Real-time Overall Equipment Effectiveness monitoring, anomaly detection, and predictive maintenance alerts.</li>
-      <li><strong>Simulation & Modeling:</strong> Scenario-based simulation of proposed automation solutions with throughput, cost, and ROI projections.</li>
-      <li><strong>Proposal Generation:</strong> Automated generation of comprehensive proposals including technical specifications, pricing, risk registers, and implementation timelines.</li>
-      <li><strong>Galileo IoT Integration:</strong> Interpretation and visualization of IoT sensor data for warehouse monitoring and optimization.</li>
+      <li><strong>Platform Access:</strong> Full access to the RinglyPro AI platform, including all AI tools, dashboards, analytics, and integrations.</li>
+      <li><strong>Data Intake & Analysis:</strong> Ingestion and analysis of Client's operational data, including business metrics, patterns, classifications, and utilization.</li>
+      <li><strong>AI-Powered Recommendations:</strong> Intelligent matching, scoring, and recommendations tailored to Client's operational profile.</li>
+      <li><strong>Monitoring & Alerts:</strong> Real-time monitoring, anomaly detection, and automated alert notifications.</li>
+      <li><strong>Reporting & Analytics:</strong> Scenario-based analysis with KPIs, projections, and actionable insights.</li>
+      <li><strong>Document Generation:</strong> Automated generation of proposals, reports, and documentation.</li>
+      <li><strong>Integrations:</strong> Configuration and maintenance of third-party integrations as required by the scope.</li>
       <li><strong>Onboarding & Training:</strong> ${d.ONBOARDING_HOURS} hours of onboarding support including platform training, data import assistance, and workflow configuration.</li>
       <li><strong>Ongoing Support:</strong> Business-hours support via email and platform chat, with 24-hour response SLA for critical issues.</li>
     </ol>

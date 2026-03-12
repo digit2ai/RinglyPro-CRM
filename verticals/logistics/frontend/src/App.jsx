@@ -48,7 +48,7 @@ function Sidebar({ open, onClose, tierInfo }) {
     { path: `${BASE}/ingestion`, label: 'Data Ingestion', roles: ['admin','dispatcher'], section: 'DATA' },
     { path: `${BASE}/documents`, label: 'Document Vault', roles: ['admin','dispatcher','shipper','carrier'] },
     { path: `${BASE}/compliance`, label: 'FMCSA Compliance', roles: ['admin','dispatcher'] },
-    { path: `${BASE}/token-estimator`, label: 'Token Estimator', roles: ['admin'], section: 'PINAXIS' },
+    { path: `${BASE}/token-estimator`, label: 'Token Estimator', roles: ['admin'], section: 'SALES TOOLS' },
     { path: `${BASE}/contract-builder`, label: 'Contract Builder', roles: ['admin'] },
     { path: `${BASE}/demos`, label: 'Demo Workspaces', roles: ['admin'], section: 'ADMIN' },
     { path: `${BASE}/tools`, label: 'MCP Tools', roles: ['admin'] },

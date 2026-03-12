@@ -1,11 +1,11 @@
 import React, { useState, useCallback } from 'react';
 
 const SCENARIOS_DEFAULT = [
-  { id: 'product_match', name: 'Product-to-Service Matching', desc: 'AI matching for warehouse automation products', calls: 1200, input_tokens: 800, output_tokens: 300, enabled: true },
-  { id: 'oee_analytics', name: 'OEE Analytics & Reporting', desc: 'Equipment effectiveness and anomaly reports', calls: 450, input_tokens: 1200, output_tokens: 600, enabled: true },
-  { id: 'anomaly_detection', name: 'Anomaly Detection Alerts', desc: 'Real-time anomaly detection from sensor data', calls: 3200, input_tokens: 400, output_tokens: 150, enabled: true },
-  { id: 'proposal_gen', name: 'Proposal & Document Generation', desc: 'Automated proposal and contract creation', calls: 180, input_tokens: 2000, output_tokens: 1500, enabled: true },
-  { id: 'galileo_iot', name: 'Galileo IoT Data Interpretation', desc: 'IoT sensor data analysis and visualization', calls: 2400, input_tokens: 600, output_tokens: 250, enabled: true },
+  { id: 'customer_support', name: 'Customer Support / Chat', desc: 'AI-powered customer inquiry handling', calls: 2500, input_tokens: 600, output_tokens: 400, enabled: true },
+  { id: 'data_analysis', name: 'Data Analysis & Reporting', desc: 'Automated analytics, KPIs, and report generation', calls: 450, input_tokens: 1200, output_tokens: 600, enabled: true },
+  { id: 'alert_detection', name: 'Monitoring & Alert Detection', desc: 'Real-time anomaly detection and notifications', calls: 3200, input_tokens: 400, output_tokens: 150, enabled: true },
+  { id: 'doc_generation', name: 'Document & Proposal Generation', desc: 'Automated document creation and formatting', calls: 180, input_tokens: 2000, output_tokens: 1500, enabled: true },
+  { id: 'data_processing', name: 'Data Processing & Classification', desc: 'Ingestion, parsing, and classification of data', calls: 2400, input_tokens: 600, output_tokens: 250, enabled: true },
 ];
 
 const MODELS = {
@@ -23,6 +23,7 @@ export default function TokenEstimator() {
   const [clientName, setClientName] = useState('');
   const [scenarios, setScenarios] = useState(SCENARIOS_DEFAULT.map(s => ({ ...s })));
   const [toast, setToast] = useState(null);
+  const [editing, setEditing] = useState(null);
 
   const pricing = MODELS[model];
 
@@ -47,8 +48,17 @@ export default function TokenEstimator() {
 
   const updateScenario = (i, key, val) => {
     const next = [...scenarios];
-    next[i] = { ...next[i], [key]: key === 'enabled' ? val : parseInt(val) };
+    next[i] = { ...next[i], [key]: key === 'enabled' ? val : (key === 'name' || key === 'desc') ? val : parseInt(val) };
     setScenarios(next);
+  };
+
+  const addScenario = () => {
+    const id = 'custom_' + Date.now();
+    setScenarios([...scenarios, { id, name: 'New Scenario', desc: 'Click name to edit', calls: 500, input_tokens: 500, output_tokens: 300, enabled: true }]);
+  };
+
+  const removeScenario = (i) => {
+    setScenarios(scenarios.filter((_, idx) => idx !== i));
   };
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
@@ -81,7 +91,7 @@ export default function TokenEstimator() {
   return (
     <div>
       <h1 style={S.title}>Token Cost Estimator</h1>
-      <p style={S.subtitle}>Model costs, margins, and ROI projections for PINAXIS enterprise deployments</p>
+      <p style={S.subtitle}>Model costs, margins, and ROI projections for AI-powered enterprise deployments</p>
 
       {/* Controls */}
       <div style={S.controls}>
@@ -103,7 +113,7 @@ export default function TokenEstimator() {
         </div>
         <div style={S.controlGroup}>
           <label style={S.label}>Client Name</label>
-          <input type="text" value={clientName} onChange={e => setClientName(e.target.value)} placeholder="e.g. GEBHARDT Group" style={S.input} />
+          <input type="text" value={clientName} onChange={e => setClientName(e.target.value)} placeholder="e.g. Acme Corp" style={S.input} />
         </div>
         <div style={S.controlGroup}>
           <label style={S.label}>Monthly Labor Savings ($)</label>
@@ -122,20 +132,33 @@ export default function TokenEstimator() {
       </div>
 
       {/* Scenarios */}
-      <h3 style={{ color: '#0EA5E9', marginBottom: 16, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1 }}>Usage Scenarios</h3>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <h3 style={{ color: '#0EA5E9', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1 }}>Usage Scenarios</h3>
+        <button onClick={addScenario} style={{ ...S.pill, padding: '4px 12px', fontSize: 12 }}>+ Add Scenario</button>
+      </div>
       {scenarios.map((s, i) => (
         <div key={s.id} style={S.scenarioRow}>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 600, fontSize: 14 }}>{s.name}</div>
-            <div style={{ fontSize: 11, color: '#8B949E', marginTop: 2 }}>{s.desc}</div>
+          <div style={{ flex: 1, minWidth: 180 }}>
+            {editing === i ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <input value={s.name} onChange={e => updateScenario(i, 'name', e.target.value)} onBlur={() => setEditing(null)} onKeyDown={e => e.key === 'Enter' && setEditing(null)} autoFocus style={{ ...S.input, padding: '6px 10px', fontSize: 13, fontWeight: 600, minWidth: 'auto' }} />
+                <input value={s.desc} onChange={e => updateScenario(i, 'desc', e.target.value)} style={{ ...S.input, padding: '4px 10px', fontSize: 11, minWidth: 'auto' }} />
+              </div>
+            ) : (
+              <div onClick={() => setEditing(i)} style={{ cursor: 'pointer' }} title="Click to edit">
+                <div style={{ fontWeight: 600, fontSize: 14 }}>{s.name}</div>
+                <div style={{ fontSize: 11, color: '#8B949E', marginTop: 2 }}>{s.desc}</div>
+              </div>
+            )}
           </div>
-          <SliderGroup label="Calls/mo" value={s.calls} max={s.calls * 5} step={Math.max(10, Math.round(SCENARIOS_DEFAULT[i].calls / 20))} onChange={v => updateScenario(i, 'calls', v)} />
-          <SliderGroup label="Input Tok" value={s.input_tokens} max={SCENARIOS_DEFAULT[i].input_tokens * 5} step={50} onChange={v => updateScenario(i, 'input_tokens', v)} />
-          <SliderGroup label="Output Tok" value={s.output_tokens} max={SCENARIOS_DEFAULT[i].output_tokens * 5} step={50} onChange={v => updateScenario(i, 'output_tokens', v)} />
+          <SliderGroup label="Calls/mo" value={s.calls} max={Math.max(s.calls * 3, 10000)} step={Math.max(10, Math.round(s.calls / 20))} onChange={v => updateScenario(i, 'calls', v)} />
+          <SliderGroup label="Input Tok" value={s.input_tokens} max={Math.max(s.input_tokens * 3, 5000)} step={50} onChange={v => updateScenario(i, 'input_tokens', v)} />
+          <SliderGroup label="Output Tok" value={s.output_tokens} max={Math.max(s.output_tokens * 3, 5000)} step={50} onChange={v => updateScenario(i, 'output_tokens', v)} />
           <div style={{ fontFamily: "'DM Sans',monospace", fontSize: 16, fontWeight: 600, color: '#34D399', textAlign: 'right', width: 80 }}>
-            {s.enabled ? `$${costs[i].toFixed(2)}` : '—'}
+            {s.enabled ? `$${costs[i]?.toFixed(2) || '0.00'}` : '—'}
           </div>
           <input type="checkbox" checked={s.enabled} onChange={e => updateScenario(i, 'enabled', e.target.checked)} style={{ width: 20, height: 20, accentColor: '#0EA5E9' }} />
+          <button onClick={() => removeScenario(i)} style={{ background: 'none', border: 'none', color: '#F87171', cursor: 'pointer', fontSize: 16, padding: 4 }} title="Remove">✕</button>
         </div>
       ))}
 
