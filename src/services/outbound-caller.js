@@ -191,16 +191,16 @@ class OutboundCallerService {
         );
 
         if (clientData && clientData.use_elevenlabs_outbound && clientData.elevenlabs_agent_id) {
-          logger.info(`📞 Client ${clientId} uses ElevenLabs outbound - initiating AI call with AMD`);
+          logger.info(`📞 Client ${clientId} uses ElevenLabs outbound - initiating AI call`);
           const fromNumber = clientData.ringlypro_number;
           const agentId = clientData.elevenlabs_agent_id;
 
-          // Use AMD pre-screening if Twilio is configured
+          // Use Twilio call with ElevenLabs register-call API (native integration)
           if (this.twilioClient && fromNumber) {
-            return await this.makeElevenLabsCallWithAMD(validation.normalized, agentId, fromNumber, leadData);
+            return await this.makeElevenLabsCallWithAMD(validation.normalized, agentId, fromNumber, leadData, clientId);
           }
 
-          // Fallback to direct ElevenLabs call (no AMD)
+          // Fallback to direct ElevenLabs call
           const phoneNumberId = clientData.elevenlabs_phone_number_id || clientData.ringlypro_number;
           return await this.makeElevenLabsCall(validation.normalized, agentId, phoneNumberId, leadData);
         }
@@ -385,22 +385,19 @@ class OutboundCallerService {
    * Make an ElevenLabs call with Twilio AMD pre-screening.
    * Uses Twilio to dial, AMD detects machine/human, only connects to ElevenLabs if human.
    */
-  async makeElevenLabsCallWithAMD(phoneNumber, agentId, fromNumber, leadData = {}) {
+  async makeElevenLabsCallWithAMD(phoneNumber, agentId, fromNumber, leadData = {}, clientId = null) {
     try {
       const baseUrl = process.env.BASE_URL || process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com';
-      logger.info(`🛡️ AMD+ElevenLabs call to ${phoneNumber} (agent: ${agentId})`);
+      logger.info(`📞 ElevenLabs outbound call to ${phoneNumber} (agent: ${agentId}, client: ${clientId})`);
+
+      const webhookUrl = `${baseUrl}/api/outbound-caller/voice-elevenlabs?agentId=${encodeURIComponent(agentId)}${clientId ? '&clientId=' + clientId : ''}`;
 
       const call = await this.twilioClient.calls.create({
         to: phoneNumber,
         from: fromNumber,
-        url: `${baseUrl}/api/outbound-caller/voice-elevenlabs?agentId=${encodeURIComponent(agentId)}`,
+        url: webhookUrl,
         statusCallback: `${baseUrl}/api/outbound-caller/call-status`,
         statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
-        machineDetection: 'Enable',
-        machineDetectionTimeout: 5000,
-        asyncAmd: 'true',
-        asyncAmdStatusCallback: `${baseUrl}/api/outbound-caller/amd-status`,
-        asyncAmdStatusCallbackMethod: 'POST',
         record: false
       });
 

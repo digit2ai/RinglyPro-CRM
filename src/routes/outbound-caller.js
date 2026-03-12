@@ -326,41 +326,72 @@ router.post('/voice', async (req, res) => {
 
 /**
  * POST /api/outbound-caller/voice-elevenlabs
- * Twilio voice webhook for ElevenLabs calls (with asyncAmd enabled).
- * With asyncAmd=true, this webhook fires IMMEDIATELY when call connects —
- * AnsweredBy is NOT available here. AMD results arrive separately at /amd-status.
- * So we always connect to ElevenLabs right away (no hangup risk).
+ * Twilio voice webhook for ElevenLabs calls.
+ * Uses ElevenLabs' native Twilio register-call API (same as working inbound calls)
+ * instead of a custom WebSocket relay. ElevenLabs returns ready-made TwiML.
  */
-router.post('/voice-elevenlabs', (req, res) => {
+router.post('/voice-elevenlabs', async (req, res) => {
+  const twilio = require('twilio');
+
   try {
     const agentId = req.query.agentId;
-    const baseUrl = process.env.BASE_URL || process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com';
-    const wsUrl = baseUrl.replace('https://', 'wss://').replace('http://', 'ws://');
+    const clientId = req.query.clientId;
+    const { CallSid, From, To } = req.body;
+    const apiKey = process.env.ELEVENLABS_API_KEY;
 
-    logger.info(`🛡️ Voice-ElevenLabs webhook: connecting to agent ${agentId} (asyncAmd - always connect)`);
+    logger.info(`🛡️ Voice-ElevenLabs webhook: agentId=${agentId}, CallSid=${CallSid}, From=${From}, To=${To}`);
 
-    const twilio = require('twilio');
-    const twiml = new twilio.twiml.VoiceResponse();
+    if (!agentId || !apiKey) {
+      logger.error('❌ Missing agentId or ELEVENLABS_API_KEY');
+      const twiml = new twilio.twiml.VoiceResponse();
+      twiml.say('Configuration error. Goodbye.');
+      twiml.hangup();
+      return res.type('text/xml').send(twiml.toString());
+    }
 
-    // Brief pause to stabilize audio before streaming
-    twiml.pause({ length: 1 });
-
-    // Always connect to ElevenLabs — AMD runs async and will hang up via /amd-status if machine
-    const connect = twiml.connect();
-    connect.stream({
-      url: `${wsUrl}/media-stream?agentId=${encodeURIComponent(agentId)}`
+    // Use ElevenLabs native Twilio integration (same proven approach as inbound calls)
+    const registerResponse = await fetch('https://api.elevenlabs.io/v1/convai/twilio/register-call', {
+      method: 'POST',
+      headers: {
+        'xi-api-key': apiKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        agent_id: agentId,
+        from_number: From || '',
+        to_number: To || '',
+        direction: 'outbound',
+        conversation_initiation_client_data: {
+          dynamic_variables: {
+            caller_number: From || '',
+            called_number: To || '',
+            client_id: clientId || '',
+            direction: 'outbound'
+          }
+        }
+      })
     });
 
-    res.type('text/xml');
-    res.send(twiml.toString());
+    if (!registerResponse.ok) {
+      const errorText = await registerResponse.text();
+      logger.error(`❌ ElevenLabs register-call failed (${registerResponse.status}): ${errorText}`);
+      const twiml = new twilio.twiml.VoiceResponse();
+      twiml.say('We are experiencing technical difficulties. Please try again later.');
+      twiml.hangup();
+      return res.type('text/xml').send(twiml.toString());
+    }
+
+    // ElevenLabs returns TwiML with their own Stream configuration — just pass it through
+    const elevenLabsTwiml = await registerResponse.text();
+    logger.info(`✅ ElevenLabs register-call success for outbound call ${CallSid}`);
+
+    return res.type('text/xml').send(elevenLabsTwiml);
 
   } catch (error) {
     logger.error('Error in voice-elevenlabs webhook:', error);
-    const twilio = require('twilio');
     const twiml = new twilio.twiml.VoiceResponse();
     twiml.hangup();
-    res.type('text/xml');
-    res.send(twiml.toString());
+    res.type('text/xml').send(twiml.toString());
   }
 });
 
