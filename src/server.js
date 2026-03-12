@@ -263,7 +263,19 @@ async function startServer() {
               const elUrl = `wss://api.elevenlabs.io/v1/convai/conversation?agent_id=${agentId}`;
               elevenLabsWs = new WebSocket(elUrl);
 
+              // Timeout: if ElevenLabs doesn't connect within 10s, close gracefully
+              const elConnectTimeout = setTimeout(() => {
+                if (elevenLabsWs && elevenLabsWs.readyState !== WebSocket.OPEN) {
+                  console.error(`⏱️ ElevenLabs connection timeout for agent ${agentId}`);
+                  elevenLabsWs.terminate();
+                  if (twilioWs.readyState === WebSocket.OPEN) {
+                    twilioWs.close();
+                  }
+                }
+              }, 10000);
+
               elevenLabsWs.on('open', () => {
+                clearTimeout(elConnectTimeout);
                 console.log(`✅ Connected to ElevenLabs agent ${agentId}`);
                 // Send initialization with audio config for Twilio's mulaw 8kHz
                 elevenLabsWs.send(JSON.stringify({
@@ -289,21 +301,28 @@ async function startServer() {
                         media: { payload: elMsg.audio.chunk }
                       }));
                     }
+                  } else if (elMsg.type === 'ping') {
+                    // Respond to ElevenLabs keepalive pings
+                    if (elevenLabsWs.readyState === WebSocket.OPEN) {
+                      elevenLabsWs.send(JSON.stringify({ type: 'pong' }));
+                    }
                   }
                 } catch (e) {
                   // Non-JSON or non-audio message, ignore
                 }
               });
 
-              elevenLabsWs.on('close', () => {
-                console.log(`🔌 ElevenLabs WS closed for ${agentId}`);
+              elevenLabsWs.on('close', (code, reason) => {
+                clearTimeout(elConnectTimeout);
+                console.log(`🔌 ElevenLabs WS closed for ${agentId} (code=${code}, reason=${reason || 'none'})`);
                 if (twilioWs.readyState === WebSocket.OPEN) {
                   twilioWs.close();
                 }
               });
 
               elevenLabsWs.on('error', (err) => {
-                console.error(`❌ ElevenLabs WS error: ${err.message}`);
+                clearTimeout(elConnectTimeout);
+                console.error(`❌ ElevenLabs WS error for ${agentId}: ${err.message}`);
                 if (twilioWs.readyState === WebSocket.OPEN) {
                   twilioWs.close();
                 }

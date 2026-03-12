@@ -326,34 +326,30 @@ router.post('/voice', async (req, res) => {
 
 /**
  * POST /api/outbound-caller/voice-elevenlabs
- * Twilio voice webhook for AMD + ElevenLabs calls.
- * If human answered, connects via WebSocket stream to ElevenLabs.
- * If machine, hangs up immediately.
+ * Twilio voice webhook for ElevenLabs calls (with asyncAmd enabled).
+ * With asyncAmd=true, this webhook fires IMMEDIATELY when call connects —
+ * AnsweredBy is NOT available here. AMD results arrive separately at /amd-status.
+ * So we always connect to ElevenLabs right away (no hangup risk).
  */
 router.post('/voice-elevenlabs', (req, res) => {
   try {
-    const { AnsweredBy } = req.body;
     const agentId = req.query.agentId;
     const baseUrl = process.env.BASE_URL || process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com';
     const wsUrl = baseUrl.replace('https://', 'wss://').replace('http://', 'ws://');
 
-    logger.info(`🛡️ Voice-ElevenLabs webhook: AnsweredBy=${AnsweredBy || 'unknown'}, agentId=${agentId}`);
+    logger.info(`🛡️ Voice-ElevenLabs webhook: connecting to agent ${agentId} (asyncAmd - always connect)`);
 
     const twilio = require('twilio');
     const twiml = new twilio.twiml.VoiceResponse();
 
-    if (AnsweredBy && AnsweredBy !== 'human') {
-      // Machine detected - hang up immediately, save ElevenLabs minutes
-      logger.info(`🤖 Machine detected (${AnsweredBy}) - hanging up`);
-      twiml.hangup();
-    } else {
-      // Human detected or unknown - connect to ElevenLabs via WebSocket stream
-      logger.info(`👤 Human detected - connecting to ElevenLabs agent ${agentId}`);
-      const connect = twiml.connect();
-      connect.stream({
-        url: `${wsUrl}/media-stream?agentId=${encodeURIComponent(agentId)}`
-      });
-    }
+    // Brief pause to stabilize audio before streaming
+    twiml.pause({ length: 1 });
+
+    // Always connect to ElevenLabs — AMD runs async and will hang up via /amd-status if machine
+    const connect = twiml.connect();
+    connect.stream({
+      url: `${wsUrl}/media-stream?agentId=${encodeURIComponent(agentId)}`
+    });
 
     res.type('text/xml');
     res.send(twiml.toString());
@@ -365,6 +361,40 @@ router.post('/voice-elevenlabs', (req, res) => {
     twiml.hangup();
     res.type('text/xml');
     res.send(twiml.toString());
+  }
+});
+
+/**
+ * POST /api/outbound-caller/amd-status
+ * Async AMD callback — Twilio sends machine detection results here AFTER the call is already connected.
+ * If confirmed voicemail/machine, we hang up the call via Twilio REST API to save ElevenLabs minutes.
+ */
+router.post('/amd-status', async (req, res) => {
+  try {
+    const { CallSid, AnsweredBy, MachineDetectionDuration } = req.body;
+    logger.info(`🛡️ Async AMD result: CallSid=${CallSid}, AnsweredBy=${AnsweredBy}, duration=${MachineDetectionDuration}ms`);
+
+    // Only hang up on confirmed voicemail (after beep or long silence)
+    // machine_start is unreliable and often fires on humans with brief pauses
+    const confirmedMachine = ['machine_end_beep', 'machine_end_silence'].includes(AnsweredBy);
+
+    if (confirmedMachine) {
+      logger.info(`🤖 Confirmed voicemail (${AnsweredBy}) — ending call ${CallSid} to save ElevenLabs minutes`);
+      try {
+        const twilioClient = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+        await twilioClient.calls(CallSid).update({ status: 'completed' });
+        logger.info(`✅ Call ${CallSid} ended (was voicemail)`);
+      } catch (hangupErr) {
+        logger.error(`❌ Failed to hang up machine call ${CallSid}: ${hangupErr.message}`);
+      }
+    } else {
+      logger.info(`👤 AMD confirmed human or uncertain (${AnsweredBy}) — keeping call alive`);
+    }
+
+    res.sendStatus(200);
+  } catch (error) {
+    logger.error('Error in amd-status webhook:', error);
+    res.sendStatus(200);
   }
 });
 

@@ -398,6 +398,9 @@ class OutboundCallerService {
         statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
         machineDetection: 'Enable',
         machineDetectionTimeout: 5000,
+        asyncAmd: 'true',
+        asyncAmdStatusCallback: `${baseUrl}/api/outbound-caller/amd-status`,
+        asyncAmdStatusCallbackMethod: 'POST',
         record: false
       });
 
