@@ -4,6 +4,9 @@ import { isAuthenticated, logout, getUser, hasRole } from './services/auth';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Landing from './pages/Landing';
+import TokenEstimator from './pages/TokenEstimator';
+import ContractBuilder from './pages/ContractBuilder';
+import MCPTools from './pages/MCPTools';
 
 const BASE = '/logistics';
 
@@ -26,6 +29,9 @@ function Sidebar({ open, onClose, tierInfo }) {
   const role = user?.role || 'admin';
   const allNav = [
     { path: `${BASE}/dashboard`, label: 'Command Center', roles: ['admin','dispatcher'] },
+    { path: `${BASE}/token-estimator`, label: 'Token Estimator', roles: ['admin'], section: 'ADMIN' },
+    { path: `${BASE}/contract-builder`, label: 'Contract Builder', roles: ['admin'] },
+    { path: `${BASE}/tools`, label: 'MCP Tools', roles: ['admin'] },
     { path: '/cw_carriers/dashboard', label: 'Carriers CRM', roles: ['admin','dispatcher'], ext: true, section: 'EXTERNAL' },
     { path: '/pinaxis/', label: 'Warehouse OPS', roles: ['admin','dispatcher'], ext: true },
   ];
@@ -84,6 +90,9 @@ export default function App() {
       <Routes>
         <Route path={`${BASE}/login`} element={<Login />} />
         <Route path={`${BASE}/dashboard`} element={<ProtectedRoute><Layout tierInfo={ti}><Dashboard /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/token-estimator`} element={<ProtectedRoute roles={['admin']}><Layout tierInfo={ti}><TokenEstimator /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/contract-builder`} element={<ProtectedRoute roles={['admin']}><Layout tierInfo={ti}><ContractBuilder /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/tools`} element={<ProtectedRoute roles={['admin']}><Layout tierInfo={ti}><MCPTools /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}`} element={<Landing />} />
         <Route path={`${BASE}/`} element={<Landing />} />
         <Route path="*" element={<Navigate to={`${BASE}/`} replace />} />
