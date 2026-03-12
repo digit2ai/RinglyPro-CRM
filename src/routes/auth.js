@@ -653,7 +653,7 @@ router.post('/complete-setup', async (req, res) => {
 
                 if (elResult.success) {
                     await sequelize.query(
-                        `UPDATE clients SET elevenlabs_agent_id = :agentId, elevenlabs_phone_number_id = :phoneNumberId WHERE id = :clientId`,
+                        `UPDATE clients SET elevenlabs_agent_id = :agentId, elevenlabs_phone_number_id = :phoneNumberId, voice_provider = 'elevenlabs', use_elevenlabs_outbound = true WHERE id = :clientId`,
                         {
                             replacements: {
                                 agentId: elResult.agentId,
@@ -663,7 +663,7 @@ router.post('/complete-setup', async (req, res) => {
                         }
                     );
                     elevenlabsProvisioned = true;
-                    console.log(`✅ ElevenLabs voice agent provisioned: agent=${elResult.agentId}, phone=${elResult.phoneNumberId}`);
+                    console.log(`✅ ElevenLabs voice agent provisioned: agent=${elResult.agentId}, phone=${elResult.phoneNumberId}, outbound=enabled`);
                 } else {
                     console.error(`⚠️ ElevenLabs provisioning failed (non-critical): ${elResult.error}`);
                 }
@@ -1241,7 +1241,7 @@ router.post('/wcc-complete-setup', async (req, res) => {
 
                 if (elResult.success) {
                     await sequelize.query(
-                        `UPDATE clients SET elevenlabs_agent_id = :agentId WHERE id = :clientId`,
+                        `UPDATE clients SET elevenlabs_agent_id = :agentId, voice_provider = 'elevenlabs' WHERE id = :clientId`,
                         { replacements: { agentId: elResult.agentId, clientId: client.id } }
                     );
                     elevenlabsProvisioned = true;
