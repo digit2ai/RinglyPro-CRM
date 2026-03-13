@@ -874,6 +874,35 @@ app.get('/debug/logistics-error', (req, res) => {
   });
 });
 
+// ==========================================
+// TORNA IDIOMA — Spanish Language Platform
+// ==========================================
+let tornaIdiomaApp = null;
+let tornaIdiomaError = null;
+try {
+  tornaIdiomaApp = require('../verticals/torna_idioma/backend/index');
+  app.get('/torna-idioma', (req, res, next) => {
+    if (!req.originalUrl.endsWith('/')) return res.redirect('/torna-idioma/');
+    next();
+  });
+  app.use('/torna-idioma', tornaIdiomaApp);
+  console.log('🇪🇸 Torna Idioma mounted at /torna-idioma');
+  console.log('   - Dashboard UI: /torna-idioma/');
+  console.log('   - Health Check: /torna-idioma/health');
+  console.log('   - API: /torna-idioma/api/*');
+} catch (error) {
+  tornaIdiomaError = error;
+  console.log('⚠️ Torna Idioma not available:', error.message);
+}
+
+app.get('/debug/torna-idioma-error', (req, res) => {
+  res.json({
+    service: 'Torna Idioma',
+    available: !tornaIdiomaError,
+    error: tornaIdiomaError ? { message: tornaIdiomaError.message, stack: tornaIdiomaError.stack } : null,
+  });
+});
+
 // Conditional forwarding webhook (for business phone forwarding)
 app.use('/webhook', conditionalForwardRoutes);
 
