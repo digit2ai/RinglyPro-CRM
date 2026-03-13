@@ -51,31 +51,32 @@ function Sidebar({ open, onClose }) {
   const user = getUser();
   const mob = useIsMobile();
   const allNav = [
-    // Operations
-    { path: `${BASE}/dashboard`, label: 'Command Center' },
+    // Dispatch & Operations
+    { path: `${BASE}/dashboard`, label: 'Command Center', section: 'DISPATCH' },
     { path: `${BASE}/loads`, label: 'Loads' },
     { path: `${BASE}/offers`, label: 'Carrier Offers' },
     { path: `${BASE}/tracking`, label: 'Check Calls' },
     { path: `${BASE}/billing`, label: 'Billing' },
-    // CRM
+    // AI Tools
+    { path: `${BASE}/freight-matching`, label: 'Carrier Matching', section: 'AI TOOLS' },
+    { path: `${BASE}/load-matching`, label: 'Load Matching' },
+    { path: `${BASE}/pricing`, label: 'Rate Intelligence' },
+    { path: `${BASE}/nlp`, label: 'NLP Assistant' },
+    // Portals
+    { path: `${BASE}/shipper`, label: 'Shipper Portal', section: 'PORTALS' },
+    { path: `${BASE}/carrier-portal`, label: 'Carrier Portal' },
+    // CRM & Contacts
     { path: `${BASE}/contacts`, label: 'Contacts', section: 'CRM' },
     { path: `${BASE}/calls`, label: 'Calls' },
     { path: `${BASE}/hubspot`, label: 'HubSpot Sync' },
-    { path: `${BASE}/nlp`, label: 'NLP Assistant' },
-    // AI Brokerage
-    { path: `${BASE}/freight-matching`, label: 'Carrier Matching', section: 'AI BROKERAGE' },
-    { path: `${BASE}/load-matching`, label: 'Load Matching' },
-    { path: `${BASE}/pricing`, label: 'Rate Intelligence' },
-    { path: `${BASE}/shipper`, label: 'Shipper Portal' },
-    { path: `${BASE}/carrier-portal`, label: 'Carrier Portal' },
-    { path: `${BASE}/brokerage-analytics`, label: 'Analytics & KPIs' },
-    // Data & Compliance
-    { path: `${BASE}/ingestion`, label: 'Data Ingestion', section: 'DATA & COMPLIANCE' },
+    // Compliance & Data
+    { path: `${BASE}/compliance`, label: 'FMCSA Compliance', section: 'COMPLIANCE' },
+    { path: `${BASE}/ingestion`, label: 'Data Ingestion' },
     { path: `${BASE}/documents`, label: 'Document Vault' },
-    { path: `${BASE}/compliance`, label: 'FMCSA Compliance' },
     { path: `${BASE}/tms`, label: 'TMS Bridge' },
     // Analytics & Reports
     { path: `${BASE}/analytics`, label: 'Analytics', section: 'REPORTING' },
+    { path: `${BASE}/brokerage-analytics`, label: 'Brokerage KPIs' },
     { path: `${BASE}/reports`, label: 'Reports' },
     // Admin
     { path: `${BASE}/settings`, label: 'Settings', section: 'ADMIN' },
@@ -85,7 +86,7 @@ function Sidebar({ open, onClose }) {
     { path: `${BASE}/demo`, label: 'Demo Data' },
     { path: `${BASE}/brokerage-demo`, label: 'Demo Workspaces' },
     // Docs
-    { path: '/proposals/RinglyPro-Platform-User-Guide.html', label: 'Platform User Guide', ext: true, section: 'DOCS' },
+    { path: '/proposals/RinglyPro-Platform-User-Guide.html', label: 'User Guide', ext: true, section: 'DOCS' },
     { path: '/proposals/CW-CARRIERS-System-Architecture-Document.html', label: 'System Architecture', ext: true },
   ];
   const ss = mob ? { ...S.sidebar, ...S.sidebarMob, transform: open ? 'translateX(0)' : 'translateX(-100%)' } : S.sidebar;
