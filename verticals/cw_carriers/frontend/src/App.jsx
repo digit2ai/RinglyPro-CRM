@@ -96,7 +96,7 @@ function Sidebar({ open, onClose }) {
       <div style={ss}>
         {mob && <button onClick={onClose} style={S.closeBtn}>&times;</button>}
         <div style={S.logoArea}>
-          <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro Logistics" style={S.logoImg} />
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69b02d62034886f7c9e996d9.png" alt="CW Carriers" style={S.logoImg} />
           <div style={S.tierBadge}>Full Suite</div>
         </div>
         <nav style={S.nav}>
@@ -189,7 +189,7 @@ const S = {
   hLine:{display:'block',width:22,height:2,background:'#E6EDF3',borderRadius:1},
   mobTitle:{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,color:'#0EA5E9',letterSpacing:2},
   logoArea:{padding:20,borderBottom:'1px solid #21262D',textAlign:'center'},
-  logoImg:{width:'100%',maxWidth:180,height:'auto',marginBottom:8},
+  logoImg:{width:'100%',maxWidth:220,height:'auto',marginBottom:8},
   tierBadge:{display:'inline-block',marginTop:6,padding:'3px 10px',background:'#0EA5E922',color:'#0EA5E9',borderRadius:12,fontSize:10,fontWeight:600,letterSpacing:1,textTransform:'uppercase'},
   nav:{flex:1,padding:'12px 0',overflowY:'auto'},
   navItem:{display:'flex',alignItems:'center',gap:10,padding:'11px 20px',fontSize:14,color:'#8B949E',cursor:'pointer',transition:'all 0.2s',borderLeft:'3px solid transparent'},

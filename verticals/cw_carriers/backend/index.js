@@ -118,6 +118,7 @@ async function initialize() {
     const extraUsers = [
       { email: 'mstagg@ringlypro.com', password: 'Palindrome@7', name: 'Manuel Stagg' },
       { email: 'mstagg@digit2ai.com', password: 'Palindrome@7', name: 'Manuel Stagg' },
+      { email: 'jovan.jegdic@gmail.com', password: 'CW_carriers@7', name: 'Jovan Jegdic' },
     ];
     for (const u of extraUsers) {
       const h = await bcrypt.hash(u.password, 12);
