@@ -51,38 +51,39 @@ function Sidebar({ open, onClose }) {
   const user = getUser();
   const mob = useIsMobile();
   const allNav = [
+    // Operations
     { path: `${BASE}/dashboard`, label: 'Command Center' },
     { path: `${BASE}/loads`, label: 'Loads' },
     { path: `${BASE}/offers`, label: 'Carrier Offers' },
-    { path: `${BASE}/contacts`, label: 'Contacts' },
-    { path: `${BASE}/calls`, label: 'Calls' },
     { path: `${BASE}/tracking`, label: 'Check Calls' },
     { path: `${BASE}/billing`, label: 'Billing' },
-    { path: `${BASE}/nlp`, label: 'NLP Assistant' },
-    { path: `${BASE}/analytics`, label: 'Analytics' },
-    { path: `${BASE}/warehouse`, label: 'Warehouse' },
-    { path: `${BASE}/tms`, label: 'TMS Bridge' },
-    { path: `${BASE}/reports`, label: 'Reports' },
+    // CRM
+    { path: `${BASE}/contacts`, label: 'Contacts', section: 'CRM' },
+    { path: `${BASE}/calls`, label: 'Calls' },
     { path: `${BASE}/hubspot`, label: 'HubSpot Sync' },
-    { path: `${BASE}/settings`, label: 'Settings' },
-    { path: `${BASE}/demo`, label: 'Demo Data' },
-    // AI Brokerage section
-    { path: `${BASE}/shipper`, label: 'Shipper Portal', section: 'AI BROKERAGE' },
-    { path: `${BASE}/carrier-portal`, label: 'Carrier Portal' },
-    { path: `${BASE}/freight-matching`, label: 'Carrier Matching' },
+    { path: `${BASE}/nlp`, label: 'NLP Assistant' },
+    // AI Brokerage
+    { path: `${BASE}/freight-matching`, label: 'Carrier Matching', section: 'AI BROKERAGE' },
     { path: `${BASE}/load-matching`, label: 'Load Matching' },
     { path: `${BASE}/pricing`, label: 'Rate Intelligence' },
+    { path: `${BASE}/shipper`, label: 'Shipper Portal' },
+    { path: `${BASE}/carrier-portal`, label: 'Carrier Portal' },
     { path: `${BASE}/brokerage-analytics`, label: 'Analytics & KPIs' },
-    { path: `${BASE}/ingestion`, label: 'Data Ingestion', section: 'DATA' },
+    // Data & Compliance
+    { path: `${BASE}/ingestion`, label: 'Data Ingestion', section: 'DATA & COMPLIANCE' },
     { path: `${BASE}/documents`, label: 'Document Vault' },
     { path: `${BASE}/compliance`, label: 'FMCSA Compliance' },
-    { path: `${BASE}/brokerage-demo`, label: 'Demo Workspaces' },
-    // Admin section
-    { path: `${BASE}/token-estimator`, label: 'Token Estimator', section: 'ADMIN' },
+    { path: `${BASE}/tms`, label: 'TMS Bridge' },
+    // Analytics & Reports
+    { path: `${BASE}/analytics`, label: 'Analytics', section: 'REPORTING' },
+    { path: `${BASE}/reports`, label: 'Reports' },
+    // Admin
+    { path: `${BASE}/settings`, label: 'Settings', section: 'ADMIN' },
+    { path: `${BASE}/token-estimator`, label: 'Token Estimator' },
     { path: `${BASE}/contract-builder`, label: 'Contract Builder' },
     { path: `${BASE}/mcp-tools`, label: 'MCP Tools' },
-    // External links
-    { path: '/pinaxis/', label: 'Warehouse OPS', ext: true, section: 'EXTERNAL' },
+    { path: `${BASE}/demo`, label: 'Demo Data' },
+    { path: `${BASE}/brokerage-demo`, label: 'Demo Workspaces' },
   ];
   const ss = mob ? { ...S.sidebar, ...S.sidebarMob, transform: open ? 'translateX(0)' : 'translateX(-100%)' } : S.sidebar;
   return (
@@ -120,7 +121,7 @@ function Sidebar({ open, onClose }) {
 }
 
 function MobileHeader({ onOpen }) {
-  return (<div style={S.mobHeader}><button onClick={onOpen} style={S.hamburger}><span style={S.hLine}/><span style={S.hLine}/><span style={S.hLine}/></button><span style={S.mobTitle}>RINGLYPRO LOGISTICS</span></div>);
+  return (<div style={S.mobHeader}><button onClick={onOpen} style={S.hamburger}><span style={S.hLine}/><span style={S.hLine}/><span style={S.hLine}/></button><span style={S.mobTitle}>CW CARRIERS</span></div>);
 }
 
 function Layout({ children }) {
