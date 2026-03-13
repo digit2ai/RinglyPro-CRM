@@ -53,6 +53,7 @@ router.use('/api/load-matching', loadmatchingRoutes);
 router.use('/api/ingestion', ingestionRoutes);
 router.use('/api/brokerage-analytics', brokerageAnalyticsRoutes);
 router.use('/api/brokerage-demo', brokerageDemoRoutes);
+router.use('/api/nda', require('./routes/nda'));
 
 // Health check
 router.get('/health', (req, res) => {

@@ -33,6 +33,7 @@ import BrokerageDemo from './pages/BrokerageDemo';
 import TokenEstimator from './pages/TokenEstimator';
 import ContractBuilder from './pages/ContractBuilder';
 import MCPTools from './pages/MCPTools';
+import NDA from './pages/NDA';
 
 const BASE = '/cw_carriers';
 
@@ -85,6 +86,8 @@ function Sidebar({ open, onClose }) {
     { path: `${BASE}/mcp-tools`, label: 'MCP Tools' },
     { path: `${BASE}/demo`, label: 'Demo Data' },
     { path: `${BASE}/brokerage-demo`, label: 'Demo Workspaces' },
+    // Legal
+    { path: `${BASE}/nda`, label: 'NDA Signing', section: 'LEGAL' },
     // Docs
     { path: '/proposals/RinglyPro-Platform-User-Guide.html', label: 'User Guide', ext: true, section: 'DOCS' },
     { path: '/proposals/CW-CARRIERS-System-Architecture-Document.html', label: 'System Architecture', ext: true },
@@ -170,6 +173,7 @@ export default function App() {
         <Route path={`${BASE}/token-estimator`} element={<ProtectedRoute><Layout><TokenEstimator /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/contract-builder`} element={<ProtectedRoute><Layout><ContractBuilder /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/mcp-tools`} element={<ProtectedRoute><Layout><MCPTools /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/nda`} element={<ProtectedRoute><Layout><NDA /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}`} element={<Landing />} />
         <Route path={`${BASE}/`} element={<Landing />} />
         <Route path="*" element={<Navigate to={`${BASE}/`} replace />} />
