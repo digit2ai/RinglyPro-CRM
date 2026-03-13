@@ -9,6 +9,7 @@ router.use('/api/auth', require('./routes/auth'));
 router.use('/api/courses', require('./routes/courses'));
 router.use('/api/analytics', require('./routes/analytics'));
 router.use('/api/advocacy', require('./routes/advocacy'));
+router.use('/api/bpo', require('./routes/bpo'));
 
 router.get('/health', (req, res) => {
   res.json({ service: 'Torna Idioma', status: 'healthy', tagline: 'Vida · Cultura · Legado', timestamp: new Date().toISOString() });
@@ -119,6 +120,50 @@ async function initialize() {
         );
       }
       console.log('  ✅ Torna Idioma demo partners seeded');
+    }
+
+    // Seed demo BPO companies and jobs
+    const [[bpoExists]] = await sequelize.query(`SELECT id FROM ti_bpo_companies LIMIT 1`);
+    if (!bpoExists) {
+      const bpoCompanies = [
+        { name: 'Teleperformance Philippines', industry: 'BPO / Contact Center', positions: 45, salary: 32, status: 'hiring' },
+        { name: 'Concentrix Makati', industry: 'BPO / Customer Experience', positions: 30, salary: 28, status: 'hiring' },
+        { name: 'TTEC Manila', industry: 'BPO / Tech Support', positions: 20, salary: 35, status: 'active' },
+        { name: 'Sitel Group', industry: 'BPO / Sales', positions: 15, salary: 25, status: 'hiring' },
+        { name: 'Alorica BGC', industry: 'BPO / Healthcare', positions: 25, salary: 30, status: 'active' },
+      ];
+      for (const c of bpoCompanies) {
+        await sequelize.query(
+          `INSERT INTO ti_bpo_companies (name, industry, spanish_positions, avg_salary_increase, partnership_status, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,NOW(),NOW())`,
+          { bind: [c.name, c.industry, c.positions, c.salary, c.status] }
+        );
+      }
+      console.log('  ✅ Torna Idioma BPO companies seeded');
+
+      // Seed demo jobs
+      const [[tp]] = await sequelize.query(`SELECT id FROM ti_bpo_companies WHERE name LIKE 'Teleperformance%' LIMIT 1`);
+      const [[cx]] = await sequelize.query(`SELECT id FROM ti_bpo_companies WHERE name LIKE 'Concentrix%' LIMIT 1`);
+      const [[ttec]] = await sequelize.query(`SELECT id FROM ti_bpo_companies WHERE name LIKE 'TTEC%' LIMIT 1`);
+      const [[sitel]] = await sequelize.query(`SELECT id FROM ti_bpo_companies WHERE name LIKE 'Sitel%' LIMIT 1`);
+      const [[alorica]] = await sequelize.query(`SELECT id FROM ti_bpo_companies WHERE name LIKE 'Alorica%' LIMIT 1`);
+      const demoJobs = [
+        { cid: tp?.id, title: 'Spanish-Speaking Customer Service Rep', desc: 'Handle inbound customer inquiries in Spanish for LATAM clients. Training provided.', salary: '₱28,000 - ₱35,000', level: 'B1', type: 'full_time', slots: 10 },
+        { cid: tp?.id, title: 'Bilingual Team Lead (Spanish/English)', desc: 'Lead a team of 15 agents serving Spanish-speaking accounts. Must have B2+ proficiency.', salary: '₱45,000 - ₱55,000', level: 'B2', type: 'full_time', slots: 3 },
+        { cid: cx?.id, title: 'Spanish Technical Support Analyst', desc: 'Provide technical support in Spanish for a major tech company. IT background preferred.', salary: '₱32,000 - ₱40,000', level: 'B1', type: 'full_time', slots: 8 },
+        { cid: cx?.id, title: 'Quality Analyst — Spanish Accounts', desc: 'Monitor and evaluate calls for Spanish-speaking accounts. Ensure service quality standards.', salary: '₱35,000 - ₱42,000', level: 'B2', type: 'full_time', slots: 2 },
+        { cid: ttec?.id, title: 'Spanish Chat Support Specialist', desc: 'Handle chat and email support in Spanish for e-commerce clients. Work from home option available.', salary: '₱25,000 - ₱30,000', level: 'A2', type: 'full_time', slots: 12 },
+        { cid: sitel?.id, title: 'Spanish Sales Representative', desc: 'Outbound sales calls to Spanish-speaking markets in Latin America. Commission-based bonuses.', salary: '₱22,000 - ₱28,000 + commission', level: 'B1', type: 'full_time', slots: 15 },
+        { cid: alorica?.id, title: 'Bilingual Healthcare Coordinator', desc: 'Coordinate healthcare appointments and insurance claims for Spanish-speaking patients in the US.', salary: '₱30,000 - ₱38,000', level: 'B2', type: 'full_time', slots: 5 },
+        { cid: alorica?.id, title: 'Spanish Interpreter (Part-Time)', desc: 'Provide real-time interpretation services between Spanish and English. Flexible hours.', salary: '₱18,000 - ₱22,000', level: 'C1', type: 'part_time', slots: 8 },
+      ];
+      for (const j of demoJobs) {
+        if (!j.cid) continue;
+        await sequelize.query(
+          `INSERT INTO ti_bpo_jobs (company_id, title, description_en, location, job_type, salary_range, spanish_level_required, slots, status, posted_at, created_at, updated_at) VALUES ($1,$2,$3,'Makati City',$4,$5,$6,$7,'open',NOW(),NOW(),NOW())`,
+          { bind: [j.cid, j.title, j.desc, j.type, j.salary, j.level, j.slots] }
+        );
+      }
+      console.log('  ✅ Torna Idioma BPO jobs seeded');
     }
   } catch (err) {
     console.error('  ⚠️ Torna Idioma init error:', err.message);
