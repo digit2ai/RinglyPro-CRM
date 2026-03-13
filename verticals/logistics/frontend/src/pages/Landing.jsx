@@ -180,8 +180,84 @@ export default function Landing() {
       </section>
 
       {/* NEURAL INTELLIGENCE */}
-      <section id="neural" style={{ ...s.section, background: 'linear-gradient(180deg, #0D1117 0%, #0a0f18 50%, #0D1117 100%)' }}>
+      <section id="neural" style={{ ...s.section, background: 'linear-gradient(180deg, #07090f 0%, #0a0f18 50%, #0D1117 100%)', position: 'relative', overflow: 'hidden' }}>
+        {/* Glow effects */}
+        <div style={{ position: 'absolute', width: 400, height: 400, background: 'rgba(99,102,241,0.15)', borderRadius: '50%', filter: 'blur(120px)', top: -100, left: -100, pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', width: 300, height: 300, background: 'rgba(139,92,246,0.1)', borderRadius: '50%', filter: 'blur(100px)', bottom: 0, right: '5%', pointerEvents: 'none' }} />
+
         <div style={s.container}>
+          {/* Neural Hero — exact replica from ringlypro.com/neural */}
+          <div className="neural-hero-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center', marginBottom: 80 }}>
+            {/* Left Content */}
+            <div>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 18px', background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: 24, marginBottom: 28 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#6366f1', boxShadow: '0 0 8px #6366f1' }} />
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#a5b4fc', textTransform: 'uppercase', letterSpacing: 2 }}>Intelligence Layer</span>
+              </div>
+              <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 56, color: '#fff', letterSpacing: 2, lineHeight: 1.05, marginBottom: 20 }}>Turn Every Call Into a <span style={{ color: '#8b5cf6' }}>Revenue Opportunity</span></h2>
+              <p style={{ fontSize: 17, color: '#94a3b8', lineHeight: 1.7, maxWidth: 520, marginBottom: 32 }}>RinglyPro Neural analyzes calls, leads, bookings, and customer interactions to reveal exactly how your business can improve conversion and increase revenue.</p>
+              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 28 }}>
+                <a href={`${BASE}/neural`} style={{ display: 'inline-block', padding: '14px 32px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: '#fff', textDecoration: 'none', borderRadius: 28, fontSize: 15, fontWeight: 600 }}>Add Neural to RinglyPro</a>
+                <a href="https://ringlypro.com/demo" style={{ display: 'inline-block', padding: '14px 32px', background: 'transparent', border: '1px solid #334155', color: '#e2e8f0', textDecoration: 'none', borderRadius: 28, fontSize: 15, fontWeight: 500 }}>Book a Demo</a>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '14px 18px', background: 'rgba(15,18,30,0.6)', border: '1px solid #1e293b', borderRadius: 10 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#34d399', marginTop: 5, flexShrink: 0 }} />
+                <span style={{ fontSize: 13, color: '#94a3b8', lineHeight: 1.5 }}>Built for businesses already using AI voice, CRM, booking, and automation workflows.</span>
+              </div>
+            </div>
+
+            {/* Right — Dashboard Mockup */}
+            <div style={{ background: 'rgba(15,18,30,0.9)', border: '1px solid #1e293b', borderRadius: 16, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(99,102,241,0.08)' }}>
+              {/* Title bar */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 20px', borderBottom: '1px solid #1e293b' }}>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#ef4444' }} />
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#fbbf24' }} />
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#22c55e' }} />
+                </div>
+                <span style={{ fontSize: 13, color: '#94a3b8', fontWeight: 500 }}>Neural Intelligence Dashboard</span>
+              </div>
+              {/* Metrics row */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, padding: '20px 20px 0' }}>
+                {[
+                  { val: '+23%', label: 'CONVERSION', color: '#34d399' },
+                  { val: '142', label: 'INSIGHTS', color: '#e2e8f0' },
+                  { val: '$18.4k', label: 'REVENUE FOUND', color: '#8b5cf6' },
+                ].map((m, i) => (
+                  <div key={i} style={{ background: 'rgba(30,41,59,0.4)', border: '1px solid #1e293b', borderRadius: 10, padding: '16px 14px', textAlign: 'center' }}>
+                    <div style={{ fontSize: 26, fontWeight: 700, color: m.color, letterSpacing: 0.5 }}>{m.val}</div>
+                    <div style={{ fontSize: 10, color: '#64748b', textTransform: 'uppercase', letterSpacing: 1.5, marginTop: 4 }}>{m.label}</div>
+                  </div>
+                ))}
+              </div>
+              {/* Chart */}
+              <div style={{ padding: '20px 20px 0' }}>
+                <div style={{ background: 'rgba(30,41,59,0.3)', border: '1px solid #1e293b', borderRadius: 10, padding: '16px 16px 12px' }}>
+                  <div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 14 }}>Weekly Call Conversion</div>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 100 }}>
+                    {[40,55,45,70,60,82,75,90,68,85,78,95].map((h, i) => (
+                      <div key={i} style={{ flex: 1, height: `${h}%`, background: 'linear-gradient(180deg, #8b5cf6, #6366f1)', borderRadius: '4px 4px 0 0', opacity: 0.85 + (i * 0.012) }} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+              {/* Insights */}
+              <div style={{ padding: '12px 20px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {[
+                  { dot: '#34d399', text: 'Missed calls recovered this week', val: '+$4,200', valColor: '#34d399' },
+                  { dot: '#818cf8', text: 'Booking slots optimized', val: '+18 slots', valColor: '#818cf8' },
+                ].map((ins, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'rgba(30,41,59,0.3)', border: '1px solid #1e293b', borderRadius: 8 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: ins.dot, flexShrink: 0 }} />
+                    <span style={{ fontSize: 13, color: '#94a3b8', flex: 1 }}>{ins.text}</span>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: ins.valColor }}>{ins.val}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Section sub-header */}
           <div style={s.sectionHeader}>
             <div style={{ ...s.sectionTag, background: 'rgba(168,85,247,0.12)', color: '#A855F7' }}>NEURAL INTELLIGENCE</div>
             <h2 style={s.sectionTitle}>AI That Reads Between the Lines</h2>
@@ -591,6 +667,9 @@ style.textContent = `
   }
   @media (max-width: 768px) {
     .landing-showcase-grid { grid-template-columns: 1fr !important; }
+  }
+  @media (max-width: 900px) {
+    .neural-hero-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
   }
   @media (max-width: 640px) {
     h1 { font-size: 42px !important; }
