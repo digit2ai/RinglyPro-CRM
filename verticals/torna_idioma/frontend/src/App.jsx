@@ -12,6 +12,10 @@ import BPOProgram from './pages/BPOProgram';
 import JobBoard from './pages/JobBoard';
 import Events from './pages/Events';
 import Supporters from './pages/Supporters';
+import ProgramMetrics from './pages/ProgramMetrics';
+import Schools from './pages/Schools';
+import EconomicImpact from './pages/EconomicImpact';
+import PartnerNetwork from './pages/PartnerNetwork';
 
 const BASE = '/torna-idioma';
 
@@ -146,10 +150,10 @@ export default function App() {
         <Route path={`${BASE}/job-board`} element={<ProtectedRoute><Layout><JobBoard /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/events`} element={<ProtectedRoute><Layout><Events /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/supporters`} element={<ProtectedRoute><Layout><Supporters /></Layout></ProtectedRoute>} />
-        <Route path={`${BASE}/program-metrics`} element={<ProtectedRoute roles={['admin','official']}><Layout><ComingSoon title="Program Metrics" /></Layout></ProtectedRoute>} />
-        <Route path={`${BASE}/schools`} element={<ProtectedRoute roles={['admin','official']}><Layout><ComingSoon title="School Management" /></Layout></ProtectedRoute>} />
-        <Route path={`${BASE}/economic-impact`} element={<ProtectedRoute roles={['admin','official']}><Layout><ComingSoon title="Economic Impact" /></Layout></ProtectedRoute>} />
-        <Route path={`${BASE}/partner-network`} element={<ProtectedRoute roles={['admin','official','partner']}><Layout><ComingSoon title="Partner Network" /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/program-metrics`} element={<ProtectedRoute roles={['admin','official']}><Layout><ProgramMetrics /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/schools`} element={<ProtectedRoute roles={['admin','official']}><Layout><Schools /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/economic-impact`} element={<ProtectedRoute roles={['admin','official']}><Layout><EconomicImpact /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/partner-network`} element={<ProtectedRoute roles={['admin','official','partner']}><Layout><PartnerNetwork /></Layout></ProtectedRoute>} />
         <Route path="*" element={<Navigate to={`${BASE}/`} replace />} />
       </Routes>
     </BrowserRouter>
