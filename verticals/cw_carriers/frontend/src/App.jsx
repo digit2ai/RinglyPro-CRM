@@ -84,6 +84,9 @@ function Sidebar({ open, onClose }) {
     { path: `${BASE}/mcp-tools`, label: 'MCP Tools' },
     { path: `${BASE}/demo`, label: 'Demo Data' },
     { path: `${BASE}/brokerage-demo`, label: 'Demo Workspaces' },
+    // Docs
+    { path: '/proposals/RinglyPro-Platform-User-Guide.html', label: 'Platform User Guide', ext: true, section: 'DOCS' },
+    { path: '/proposals/CW-CARRIERS-System-Architecture-Document.html', label: 'System Architecture', ext: true },
   ];
   const ss = mob ? { ...S.sidebar, ...S.sidebarMob, transform: open ? 'translateX(0)' : 'translateX(-100%)' } : S.sidebar;
   return (
