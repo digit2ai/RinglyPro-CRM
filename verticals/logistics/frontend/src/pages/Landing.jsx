@@ -104,7 +104,7 @@ export default function Landing() {
       <section style={s.hero}>
         <div style={s.heroOverlay} />
         <div style={s.heroContent}>
-          <div style={s.heroBadge}>AI-Powered Transportation Management</div>
+          <div style={{ ...s.heroBadge, visibility: 'hidden' }}>AI-Powered Transportation Management</div>
           <h1 style={s.heroTitle}>The Complete Logistics<br />Management Platform</h1>
           <p style={s.heroSub}>From freight brokerage to warehouse operations — one intelligent platform that automates your entire logistics workflow with AI voice agents, smart freight matching, and real-time analytics.</p>
           <div style={s.heroCTAs}>
