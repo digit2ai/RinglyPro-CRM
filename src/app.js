@@ -1849,7 +1849,7 @@ app.use((err, req, res, next) => {
   console.error('Server Error:', err.stack);
   // Show details for tunjoracing routes to help with debugging
   const fullPath = req.originalUrl || req.path;
-  const showDetails = process.env.NODE_ENV === 'development' || fullPath.startsWith('/tunjoracing') || fullPath.startsWith('/kanchoai') || fullPath.startsWith('/cw_carriers');
+  const showDetails = process.env.NODE_ENV === 'development' || fullPath.startsWith('/tunjoracing') || fullPath.startsWith('/kanchoai') || fullPath.startsWith('/cw_carriers') || fullPath.startsWith('/torna-idioma');
   res.status(500).json({
     success: false,
     error: showDetails ? err.message : 'Something went wrong!',
