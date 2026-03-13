@@ -907,6 +907,8 @@ export default function UserGuidePage() {
                 { step: 'ROI Projection', desc: 'Cost-benefit analysis and payback period' },
                 { step: 'Report', desc: 'Generate and download a full PDF report with charts' },
                 { step: 'API Integration', desc: 'Generate API keys for production data feeds' },
+                { step: 'Observability', desc: 'Live equipment telemetry, health monitoring, fault alerts, and throughput tracking' },
+                { step: 'OEE Dashboard', desc: 'Overall Equipment Effectiveness — availability, performance, and quality metrics' },
               ].map(item => (
                 <div key={item.step} className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
                   <p className="text-sm font-medium text-white">{item.step}</p>
@@ -928,6 +930,95 @@ export default function UserGuidePage() {
               <strong className="text-pinaxis-400"> "Download PDF"</strong> to get a comprehensive report
               with charts, tables, and product recommendations.
             </p>
+          </StepCard>
+
+          <StepCard
+            number={5}
+            title="Explore Observability"
+            isActive={activeStep1 === 5}
+            onClick={() => setActiveStep1(activeStep1 === 5 ? 0 : 5)}
+          >
+            <p className="text-sm text-slate-300 ml-14">
+              Navigate to the <strong className="text-white">Observability</strong> page from the sidebar.
+              This page provides live monitoring of equipment telemetry and operational health.
+            </p>
+            <div className="ml-14 p-4 rounded-lg bg-slate-900/50 border border-slate-700 mt-2">
+              <p className="text-xs text-slate-500 mb-2">Key features:</p>
+              <ul className="text-sm text-slate-400 space-y-1">
+                <li className="flex items-start gap-2">
+                  <CheckCircleIcon className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                  Overall system health status (Healthy / Warning / Degraded / Critical)
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircleIcon className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                  Equipment status cards for shuttles, conveyors, lifts, and scanners
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircleIcon className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                  Active fault alerts with severity and source details
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircleIcon className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                  Throughput snapshots and event log with auto-refresh (30s interval)
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircleIcon className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                  <strong className="text-pinaxis-400">"Generate Demo Telemetry"</strong> button to preview with simulated GEBHARDT equipment data
+                </li>
+              </ul>
+            </div>
+          </StepCard>
+
+          <StepCard
+            number={6}
+            title="View OEE Dashboard"
+            isActive={activeStep1 === 6}
+            onClick={() => setActiveStep1(activeStep1 === 6 ? 0 : 6)}
+          >
+            <p className="text-sm text-slate-300 ml-14">
+              Navigate to the <strong className="text-white">OEE Dashboard</strong> page to view Overall Equipment Effectiveness metrics.
+              OEE combines three factors — <strong className="text-white">Availability</strong>, <strong className="text-white">Performance</strong>, and <strong className="text-white">Quality</strong> — into a single score that measures how effectively your shop floor machines are being utilized.
+            </p>
+            <div className="ml-14 p-4 rounded-lg bg-slate-900/50 border border-slate-700 mt-2">
+              <p className="text-xs text-slate-500 mb-2">OEE breakdown:</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="p-3 rounded-lg bg-green-900/20 border border-green-500/30">
+                  <p className="text-sm font-bold text-green-400">Availability</p>
+                  <p className="text-xs text-slate-300 mt-1">Run Time / Planned Production Time. Accounts for unplanned stops, changeovers, and breakdowns.</p>
+                </div>
+                <div className="p-3 rounded-lg bg-blue-900/20 border border-blue-500/30">
+                  <p className="text-sm font-bold text-blue-400">Performance</p>
+                  <p className="text-xs text-slate-300 mt-1">Actual Throughput / Design Speed. Captures slow cycles, minor stops, and speed losses.</p>
+                </div>
+                <div className="p-3 rounded-lg bg-violet-900/20 border border-violet-500/30">
+                  <p className="text-sm font-bold text-violet-400">Quality</p>
+                  <p className="text-xs text-slate-300 mt-1">Good Units / Total Units. Measures first-pass yield and rejects.</p>
+                </div>
+              </div>
+            </div>
+          </StepCard>
+
+          <StepCard
+            number={7}
+            title="Talk to the Voice Agent"
+            isActive={activeStep1 === 7}
+            onClick={() => setActiveStep1(activeStep1 === 7 ? 0 : 7)}
+          >
+            <p className="text-sm text-slate-300 ml-14">
+              Notice the <strong className="text-white">voice agent widget</strong> in the bottom-right corner of every page.
+              Click it to start a conversation with the AI assistant powered by ElevenLabs. You can ask questions about
+              warehouse logistics, your analysis results, automation recommendations, or current operational status.
+            </p>
+            <div className="ml-14 p-4 rounded-lg bg-pinaxis-900/20 border border-pinaxis-500/30 mt-2">
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Example questions to ask</p>
+              <ul className="text-sm text-slate-300 space-y-1">
+                <li>- "What does my ABC analysis show?"</li>
+                <li>- "Which GEBHARDT products are recommended for my warehouse?"</li>
+                <li>- "What is the projected ROI for automation?"</li>
+                <li>- "Explain the order structure chart"</li>
+                <li>- "What is the current equipment health status?"</li>
+              </ul>
+            </div>
           </StepCard>
         </div>
       )}
@@ -1327,6 +1418,8 @@ SKU-003;2024-01-14;500;REC-503;Supplier Alpha`}</CodeBlock>
                 { num: '4', name: 'ROI Projection', desc: 'Review cost-benefit analysis, projected savings, and payback period estimates.' },
                 { num: '5', name: 'Report', desc: 'Generate and download a comprehensive PDF report with all analysis, charts, and recommendations.' },
                 { num: '6', name: 'API Integration', desc: 'Set up production API keys for live WMS/ERP data feeds.' },
+                { num: '7', name: 'Observability', desc: 'Monitor live equipment telemetry, health status, active faults, and throughput snapshots in real time.' },
+                { num: '8', name: 'OEE Dashboard', desc: 'Track Overall Equipment Effectiveness — availability, performance, and quality metrics for shop floor machines.' },
               ].map(item => (
                 <div key={item.num} className="flex items-start gap-3 p-3 rounded-lg bg-slate-900/30">
                   <div className="w-7 h-7 rounded flex items-center justify-center bg-slate-700 text-slate-300 text-xs font-bold flex-shrink-0">
@@ -1367,6 +1460,23 @@ SKU-003;2024-01-14;500;REC-503;Supplier Alpha`}</CodeBlock>
           </p>
         </div>
       )}
+
+      {/* Voice Agent Tip — shown for all scenarios */}
+      <div className="mt-8 card bg-gradient-to-r from-violet-900/20 to-slate-800 border-violet-700/30">
+        <div className="flex items-start gap-3">
+          <svg className="w-6 h-6 text-violet-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
+          </svg>
+          <div>
+            <h3 className="text-white font-semibold mb-1">Voice Agent</h3>
+            <p className="text-sm text-slate-300">
+              Look for the <strong className="text-white">voice widget</strong> in the bottom-right corner of every page.
+              Click it to talk with the AI assistant — ask about your analysis results, automation recommendations,
+              warehouse concepts, or current operational status. The agent is powered by ElevenLabs and available on every page.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
