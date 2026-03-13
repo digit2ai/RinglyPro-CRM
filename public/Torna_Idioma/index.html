@@ -27,6 +27,8 @@
     .nav-links { display:flex; gap:28px; list-style:none; align-items:center; }
     .nav-links a { color:rgba(255,255,255,.8); text-decoration:none; font-size:.85rem; font-weight:500; letter-spacing:.5px; transition:color .3s; }
     .nav-links a:hover { color:var(--gold); }
+    .nav-login { padding:6px 20px !important; background:linear-gradient(135deg,var(--gold),var(--gold-dark)); color:var(--navy-deep) !important; border-radius:4px; font-weight:700 !important; letter-spacing:1px; transition:all .3s !important; }
+    .nav-login:hover { transform:translateY(-1px); box-shadow:0 4px 15px rgba(201,168,76,.4); color:var(--navy-deep) !important; }
     .nav-toggle { display:none; flex-direction:column; gap:5px; cursor:pointer; background:none; border:none; padding:8px; }
     .nav-toggle span { width:24px; height:2px; background:var(--gold); transition:.3s; }
 
@@ -243,6 +245,7 @@
       <li><a href="#partners" data-lang-en>Partners</a><a href="#partners" data-lang-es style="display:none">Socios</a><a href="#partners" data-lang-fil style="display:none">Mga Kasosyo</a></li>
       <li><a href="#heritage" data-lang-en>Heritage</a><a href="#heritage" data-lang-es style="display:none">Herencia</a><a href="#heritage" data-lang-fil style="display:none">Pamana</a></li>
       <li><a href="#policy" data-lang-en>Policy</a><a href="#policy" data-lang-es style="display:none">Pol&iacute;tica</a><a href="#policy" data-lang-fil style="display:none">Patakaran</a></li>
+      <li><a href="/torna-idioma/login" class="nav-login" data-lang-en>Login</a><a href="/torna-idioma/login" class="nav-login" data-lang-es style="display:none">Iniciar Sesi&oacute;n</a><a href="/torna-idioma/login" class="nav-login" data-lang-fil style="display:none">Mag-login</a></li>
       <li>
         <div class="lang-switcher">
           <button class="lang-btn active" data-set-lang="en">EN</button>
