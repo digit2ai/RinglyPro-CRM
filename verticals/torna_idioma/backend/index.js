@@ -40,6 +40,8 @@ async function initialize() {
       { email: 'teacher@tornaidioma.ph', password: 'TeacherDemo2026!', role: 'teacher', full_name: 'María García', organization: 'Instituto Cervantes' },
       { email: 'student@tornaidioma.ph', password: 'StudentDemo2026!', role: 'student', full_name: 'Juan dela Cruz' },
       { email: 'official@makati.gov.ph', password: 'MakatiOfficial2026!', role: 'official', full_name: 'City Official', organization: 'Makati City Government' },
+      { email: 'bpo@tornaidioma.ph', password: 'BPODemo2026!', role: 'bpo_worker', full_name: 'Ana Santos', organization: 'Teleperformance Philippines' },
+      { email: 'partner@tornaidioma.ph', password: 'PartnerDemo2026!', role: 'partner', full_name: 'Carlos Méndez', organization: 'Instituto Cervantes Manila' },
     ];
     for (const u of users) {
       const hash = await bcrypt.hash(u.password, 12);
@@ -184,6 +186,28 @@ async function initialize() {
         );
       }
       console.log('  ✅ Torna Idioma demo events seeded');
+    }
+
+    // Seed demo schools
+    const [[schoolExists]] = await sequelize.query(`SELECT id FROM ti_schools LIMIT 1`);
+    if (!schoolExists) {
+      const demoSchools = [
+        { name: 'University of Makati', type: 'public', barangay: 'West Rembo', principal: 'Dr. Tomas Reyes', email: 'admin@umak.edu.ph', total: 12500, enrolled: 450, status: 'active' },
+        { name: 'Makati Science High School', type: 'public', barangay: 'Guadalupe Nuevo', principal: 'Maria Lourdes Santos', email: 'mshs@makati.gov.ph', total: 2800, enrolled: 320, status: 'active' },
+        { name: 'Makati High School', type: 'public', barangay: 'Poblacion', principal: 'Roberto Cruz', email: 'mhs@makati.gov.ph', total: 3500, enrolled: 180, status: 'pilot' },
+        { name: 'Don Bosco Technical College', type: 'private', barangay: 'San Antonio', principal: 'Fr. Antonio Reyes', email: 'info@donbosco-makati.edu.ph', total: 1800, enrolled: 95, status: 'pilot' },
+        { name: 'Assumption College Makati', type: 'private', barangay: 'San Lorenzo', principal: 'Sr. Carmen Villanueva', email: 'admin@assumption.edu.ph', total: 2200, enrolled: 150, status: 'expanding' },
+        { name: 'Makati Elementary School Central', type: 'public', barangay: 'Poblacion', principal: 'Elena Mendoza', email: 'mesc@makati.gov.ph', total: 1500, enrolled: 0, status: 'pilot' },
+        { name: 'Ospital ng Makati School of Nursing', type: 'public', barangay: 'Pembo', principal: 'Dr. Patricia Reyes', email: 'nursing@makati.gov.ph', total: 600, enrolled: 45, status: 'pilot' },
+      ];
+      for (const sch of demoSchools) {
+        await sequelize.query(
+          `INSERT INTO ti_schools (name, school_type, barangay, principal_name, contact_email, total_students, enrolled_students, program_status, joined_at, created_at, updated_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW(),NOW(),NOW())`,
+          { bind: [sch.name, sch.type, sch.barangay, sch.principal, sch.email, sch.total, sch.enrolled, sch.status] }
+        );
+      }
+      console.log('  ✅ Torna Idioma demo schools seeded');
     }
   } catch (err) {
     console.error('  ⚠️ Torna Idioma init error:', err.message);

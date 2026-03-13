@@ -87,6 +87,8 @@ export default function Login() {
             <div style={s.demoItem}><strong>Teacher:</strong> teacher@tornaidioma.ph / TeacherDemo2026!</div>
             <div style={s.demoItem}><strong>Student:</strong> student@tornaidioma.ph / StudentDemo2026!</div>
             <div style={s.demoItem}><strong>Official:</strong> official@makati.gov.ph / MakatiOfficial2026!</div>
+            <div style={s.demoItem}><strong>BPO Worker:</strong> bpo@tornaidioma.ph / BPODemo2026!</div>
+            <div style={s.demoItem}><strong>Partner:</strong> partner@tornaidioma.ph / PartnerDemo2026!</div>
           </div>
           <a href={`${BASE}/`} style={s.backLink}>&larr; Back to Landing Page</a>
         </div>
