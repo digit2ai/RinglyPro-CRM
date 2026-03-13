@@ -4,6 +4,10 @@ import { isAuthenticated, logout, getUser, hasRole, getLang, setLang } from './s
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Landing from './pages/Landing';
+import CourseCatalog from './pages/CourseCatalog';
+import Classroom from './pages/Classroom';
+import Progress from './pages/Progress';
+import Certifications from './pages/Certifications';
 
 const BASE = '/torna-idioma';
 
@@ -129,9 +133,11 @@ export default function App() {
         <Route path={`${BASE}/`} element={<Landing />} />
         <Route path={`${BASE}/login`} element={<Login />} />
         <Route path={`${BASE}/dashboard`} element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
-        <Route path={`${BASE}/courses`} element={<ProtectedRoute><Layout><ComingSoon title="Course Catalog" /></Layout></ProtectedRoute>} />
-        <Route path={`${BASE}/progress`} element={<ProtectedRoute><Layout><ComingSoon title="My Progress" /></Layout></ProtectedRoute>} />
-        <Route path={`${BASE}/certifications`} element={<ProtectedRoute><Layout><ComingSoon title="Certifications" /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/courses`} element={<ProtectedRoute><Layout><CourseCatalog /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/classroom/:courseId/:lessonId`} element={<ProtectedRoute><Layout><Classroom /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/classroom/:courseId`} element={<ProtectedRoute><Layout><Classroom /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/progress`} element={<ProtectedRoute><Layout><Progress /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/certifications`} element={<ProtectedRoute><Layout><Certifications /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/bpo-program`} element={<ProtectedRoute><Layout><ComingSoon title="BPO Training Program" /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/job-board`} element={<ProtectedRoute><Layout><ComingSoon title="Job Board" /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/events`} element={<ProtectedRoute><Layout><ComingSoon title="Cultural Events" /></Layout></ProtectedRoute>} />

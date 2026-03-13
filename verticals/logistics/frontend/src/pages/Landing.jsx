@@ -440,8 +440,8 @@ export default function Landing() {
           </div>
           <div style={s.pricingGrid}>
             {[
-              { name: 'Freight CRM', tier: 'Professional', price: '$297', period: '/mo', features: ['Load Management', 'Contact Database', 'Basic Analytics', 'Call Logging', '500 AI Tokens'], color: '#8B949E', popular: false },
-              { name: 'Freight Pro', tier: 'Professional', price: '$597', period: '/mo', features: ['Everything in Starter', 'Shipper Portal', 'Carrier Portal', 'Document Vault', '2,000 AI Tokens', 'HubSpot Integration'], color: '#0EA5E9', popular: true },
+              { name: 'Freight CRM', tier: 'Professional', price: '$497', period: '/mo', features: ['Load Management', 'Contact Database', 'Basic Analytics', 'Call Logging', '500 AI Tokens'], color: '#8B949E', popular: false },
+              { name: 'Freight Pro', tier: 'Professional', price: '$997', period: '/mo', features: ['Everything in Starter', 'Shipper Portal', 'Carrier Portal', 'Document Vault', '2,000 AI Tokens', 'HubSpot Integration'], color: '#0EA5E9', popular: true },
               { name: 'Logistics AI', tier: 'Enterprise', price: 'Custom', period: '', features: ['Everything in Pro', 'FMCSA Compliance', 'Smart Freight Matching', 'Rachel Voice AI', 'Unlimited AI Tokens', 'Dedicated Support'], color: '#10B981', popular: false },
               { name: 'Full Suite', tier: 'Complete', price: 'Custom', period: '', features: ['Everything in Enterprise', 'Warehouse Analytics', 'OEE Monitoring', 'TMS Bridge', 'White-Label Ready', 'SLA Guarantee'], color: '#F59E0B', popular: false },
             ].map((plan, i) => (

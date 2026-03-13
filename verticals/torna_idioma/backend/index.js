@@ -69,6 +69,36 @@ async function initialize() {
         );
       }
       console.log('  ✅ Torna Idioma demo courses seeded');
+
+      // Seed demo lessons for Spanish Fundamentals (course 1)
+      const [[c1]] = await sequelize.query(`SELECT id FROM ti_courses WHERE title_en = 'Spanish Fundamentals' LIMIT 1`);
+      if (c1) {
+        const lessons = [
+          { title_en: 'Greetings & Introductions', title_es: 'Saludos y Presentaciones', title_fil: 'Mga Pagbati at Pagpapakilala', type: 'reading', mins: 20,
+            content_en: '# Greetings & Introductions\n\nSpanish greetings are the foundation of every conversation. In the Philippines, many of these words already exist in our daily language!\n\n## Basic Greetings\n- **Hola** — Hello\n- **Buenos días** — Good morning\n- **Buenas tardes** — Good afternoon\n- **Buenas noches** — Good evening/night\n\n## Introductions\n- **Me llamo...** — My name is...\n- **¿Cómo te llamas?** — What is your name?\n- **Mucho gusto** — Nice to meet you\n- **¿Cómo estás?** — How are you?\n- **Estoy bien, gracias** — I am fine, thank you\n\n## Filipino Connection\nDid you know? The Filipino word "kumusta" comes from the Spanish "¿Cómo está?" — a direct heritage connection that has survived over 100 years!',
+            exercises: JSON.stringify([{type:'multiple_choice',q:'How do you say "Good morning" in Spanish?',options:['Buenas noches','Buenos días','Buenas tardes','Hola'],answer:1},{type:'multiple_choice',q:'What Filipino word comes from "¿Cómo está?"',options:['Salamat','Kumusta','Maganda','Paalam'],answer:1},{type:'fill_blank',q:'Me _____ Juan. (My name is Juan)',answer:'llamo'}]) },
+          { title_en: 'Numbers & Counting', title_es: 'Números y Contar', title_fil: 'Mga Numero at Pagbibilang', type: 'reading', mins: 25,
+            content_en: '# Numbers & Counting\n\nNumbers are essential for everyday communication — shopping, telling time, and exchanging phone numbers.\n\n## 1-10\n1. **Uno** 2. **Dos** 3. **Tres** 4. **Cuatro** 5. **Cinco**\n6. **Seis** 7. **Siete** 8. **Ocho** 9. **Nueve** 10. **Diez**\n\n## 11-20\n11. Once 12. Doce 13. Trece 14. Catorce 15. Quince\n16. Dieciséis 17. Diecisiete 18. Dieciocho 19. Diecinueve 20. Veinte\n\n## Filipino Connection\nFilipinos already count in Spanish! "Uno, dos, tres" is used daily across the Philippines — from markets to basketball courts.',
+            exercises: JSON.stringify([{type:'multiple_choice',q:'What is "siete" in English?',options:['Six','Seven','Eight','Five'],answer:1},{type:'fill_blank',q:'The number after "nueve" is ____',answer:'diez'}]) },
+          { title_en: 'Common Phrases for Daily Life', title_es: 'Frases Comunes para la Vida Diaria', title_fil: 'Mga Karaniwang Parirala para sa Araw-araw', type: 'reading', mins: 20,
+            content_en: '# Common Phrases for Daily Life\n\n## Polite Expressions\n- **Por favor** — Please\n- **Gracias** — Thank you\n- **De nada** — You\'re welcome\n- **Perdón / Disculpe** — Excuse me / Sorry\n\n## Useful Phrases\n- **¿Cuánto cuesta?** — How much does it cost?\n- **¿Dónde está...?** — Where is...?\n- **No entiendo** — I don\'t understand\n- **¿Puede repetir?** — Can you repeat?\n- **Sí / No** — Yes / No\n\n## Filipino Heritage Words from Spanish\nMany everyday Filipino words are Spanish: mesa (table), silya (chair), kutsara (cuchara/spoon), tinidor (tenedor/fork), bintana (ventana/window), kuwarto (cuarto/room).',
+            exercises: JSON.stringify([{type:'multiple_choice',q:'How do you say "Thank you" in Spanish?',options:['Por favor','De nada','Gracias','Perdón'],answer:2},{type:'multiple_choice',q:'The Filipino word "bintana" comes from which Spanish word?',options:['Ventana','Ventaja','Binta','Banana'],answer:0}]) },
+          { title_en: 'The Alphabet & Pronunciation', title_es: 'El Alfabeto y la Pronunciación', title_fil: 'Ang Alpabeto at Pagbigkas', type: 'reading', mins: 30,
+            content_en: '# The Spanish Alphabet & Pronunciation\n\nGreat news: Spanish pronunciation is very phonetic — words are pronounced as they are spelled. And since Filipino uses many of the same sounds, you already have a head start!\n\n## Key Pronunciation Rules\n- **Vowels** are always consistent: A (ah), E (eh), I (ee), O (oh), U (oo)\n- **H** is always silent: "hola" = "ola"\n- **J** sounds like English H: "José" = "Ho-SEH"\n- **Ñ** sounds like "ny": "español" = "es-pa-NYOL"\n- **LL** sounds like "y": "calle" = "KA-yeh"\n- **RR** is rolled/trilled: "perro" = "PEH-rro"\n\n## Practice Words\nTry saying these aloud:\n- Buenas noches (BWEH-nas NO-ches)\n- Gracias (GRA-syas)\n- Universidad (oo-nee-ver-see-DAD)',
+            exercises: JSON.stringify([{type:'multiple_choice',q:'How is the letter H pronounced in Spanish?',options:['Like English H','It is silent','Like CH','Like J'],answer:1},{type:'multiple_choice',q:'What sound does Ñ make?',options:['N','NY','NG','NH'],answer:1}]) },
+          { title_en: 'Days, Months & Time', title_es: 'Días, Meses y Hora', title_fil: 'Mga Araw, Buwan at Oras', type: 'reading', mins: 20,
+            content_en: '# Days, Months & Time\n\n## Days of the Week\n- Lunes (Monday), Martes (Tuesday), Miércoles (Wednesday)\n- Jueves (Thursday), Viernes (Friday)\n- Sábado (Saturday), Domingo (Sunday)\n\n## Months\nEnero, Febrero, Marzo, Abril, Mayo, Junio, Julio, Agosto, Septiembre, Octubre, Noviembre, Diciembre\n\n## Filipino Connection\nAll Filipino names for days and months come directly from Spanish! Lunes, Martes, Miyerkules, Huwebes, Biyernes, Sabado, Linggo — and Enero, Pebrero, Marso, etc.\n\n## Telling Time\n- **¿Qué hora es?** — What time is it?\n- **Es la una** — It\'s one o\'clock\n- **Son las dos** — It\'s two o\'clock\n- **Son las tres y media** — It\'s 3:30',
+            exercises: JSON.stringify([{type:'multiple_choice',q:'What is "Jueves" in English?',options:['Tuesday','Wednesday','Thursday','Friday'],answer:2},{type:'fill_blank',q:'¿Qué _____ es? (What time is it?)',answer:'hora'}]) },
+        ];
+        for (let i = 0; i < lessons.length; i++) {
+          const l = lessons[i];
+          await sequelize.query(
+            `INSERT INTO ti_lessons (course_id, title_en, title_es, title_fil, content_en, lesson_type, sort_order, duration_minutes, exercises, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW(),NOW())`,
+            { bind: [c1.id, l.title_en, l.title_es, l.title_fil, l.content_en, l.type, i+1, l.mins, l.exercises] }
+          );
+        }
+        console.log('  ✅ Torna Idioma demo lessons seeded');
+      }
     }
 
     // Seed demo partners
