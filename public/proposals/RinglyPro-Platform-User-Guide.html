@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RINGLYPRO — Platform User Guide</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --card: #283548;
+    --accent: #0ea5e9;
+    --accent2: #8b5cf6;
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --cyan: #06b6d4;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --line: #334155;
+    --radius: 12px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+  .doc-header { padding: 80px 0 48px; text-align: center; border-bottom: 1px solid var(--line); }
+  .doc-header .badge { display: inline-block; padding: 6px 16px; border-radius: 999px; background: rgba(14,165,233,.15); color: var(--accent); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 16px; font-weight: 600; }
+  .doc-header h1 { font-size: clamp(32px, 5vw, 48px); font-weight: 800; margin-bottom: 8px; }
+  .doc-header h1 span { color: var(--accent); }
+  .doc-header .subtitle { color: var(--muted); font-size: 18px; max-width: 700px; margin: 0 auto 24px; }
+  .doc-header .meta { display: flex; gap: 32px; justify-content: center; color: var(--muted); font-size: 13px; flex-wrap: wrap; }
+
+  .toc { margin: 48px 0; padding: 32px; background: var(--panel); border-radius: var(--radius); border: 1px solid var(--line); }
+  .toc h2 { font-size: 18px; margin-bottom: 16px; color: var(--accent); }
+  .toc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
+  .toc-section { }
+  .toc-section h3 { font-size: 13px; color: var(--amber); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 8px; font-weight: 700; }
+  .toc-section ol { padding-left: 20px; }
+  .toc-section li { margin: 5px 0; }
+  .toc-section a { color: var(--text); text-decoration: none; font-size: 13px; }
+  .toc-section a:hover { color: var(--accent); }
+
+  .section { padding: 48px 0; border-bottom: 1px solid var(--line); }
+  .section:last-child { border-bottom: none; }
+  .section-title { font-size: 28px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; }
+  .section-title .num { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 10px; background: var(--accent); color: #fff; font-size: 16px; font-weight: 700; flex-shrink: 0; }
+  .section-sub { color: var(--muted); margin-bottom: 32px; }
+
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 24px 0; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; }
+  .card h4 { font-size: 16px; margin-bottom: 8px; }
+  .card p { color: var(--muted); font-size: 13px; }
+  .card .tag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; margin-bottom: 8px; }
+  .tag-blue { background: rgba(14,165,233,.2); color: var(--accent); }
+  .tag-green { background: rgba(34,197,94,.2); color: var(--green); }
+  .tag-amber { background: rgba(245,158,11,.2); color: var(--amber); }
+  .tag-purple { background: rgba(139,92,246,.2); color: var(--accent2); }
+  .tag-cyan { background: rgba(6,182,212,.2); color: var(--cyan); }
+  .tag-red { background: rgba(239,68,68,.2); color: var(--red); }
+
+  .step-list { counter-reset: step; margin: 24px 0; }
+  .step { display: flex; gap: 16px; margin-bottom: 16px; padding: 16px 20px; background: var(--card); border-radius: var(--radius); border: 1px solid var(--line); }
+  .step::before { counter-increment: step; content: counter(step); display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; min-width: 32px; border-radius: 50%; background: var(--accent); color: #fff; font-weight: 700; font-size: 14px; }
+  .step-content h4 { font-size: 14px; margin-bottom: 4px; }
+  .step-content p { font-size: 13px; color: var(--muted); }
+
+  .workflow-box { margin: 24px 0; padding: 24px; background: var(--panel); border-radius: var(--radius); border: 1px solid var(--line); }
+  .workflow-box h3 { font-size: 16px; margin-bottom: 16px; color: var(--accent); }
+
+  .flow-steps { display: flex; gap: 0; margin: 24px 0; overflow-x: auto; }
+  .flow-step { flex: 1; min-width: 120px; text-align: center; position: relative; }
+  .flow-step .circle { width: 44px; height: 44px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; margin: 0 auto 8px; }
+  .flow-step .label { font-size: 12px; font-weight: 600; }
+  .flow-step .desc { font-size: 10px; color: var(--muted); margin-top: 4px; }
+  .flow-step::after { content: ''; position: absolute; top: 22px; right: -50%; width: 100%; height: 2px; background: var(--line); z-index: 0; }
+  .flow-step:last-child::after { display: none; }
+  .flow-step .circle { position: relative; z-index: 1; }
+
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+  th { background: var(--card); color: var(--accent); font-weight: 600; text-align: left; padding: 12px 16px; border-bottom: 2px solid var(--accent); }
+  td { padding: 10px 16px; border-bottom: 1px solid var(--line); color: var(--text); }
+  tr:hover td { background: rgba(14,165,233,.05); }
+  .mono { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 12px; color: var(--cyan); }
+
+  .tip-box { margin: 16px 0; padding: 16px 20px; background: rgba(14,165,233,.08); border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0; }
+  .tip-box .tip-label { font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 4px; }
+  .tip-box p { font-size: 13px; color: var(--muted); }
+
+  .warn-box { margin: 16px 0; padding: 16px 20px; background: rgba(245,158,11,.08); border-left: 4px solid var(--amber); border-radius: 0 8px 8px 0; }
+  .warn-box .tip-label { font-size: 11px; font-weight: 700; color: var(--amber); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 4px; }
+  .warn-box p { font-size: 13px; color: var(--muted); }
+
+  .kpi-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin: 24px 0; }
+  .kpi { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; text-align: center; }
+  .kpi .value { font-size: 28px; font-weight: 800; color: var(--accent); }
+  .kpi .label { font-size: 11px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: .05em; }
+
+  .hl { color: var(--accent); font-weight: 600; }
+  .hl-green { color: var(--green); }
+  .hl-amber { color: var(--amber); }
+  p { margin-bottom: 12px; }
+  h3 { font-size: 20px; margin: 32px 0 12px; }
+  h4 { margin: 16px 0 8px; }
+  ul, ol { margin: 8px 0 16px 24px; }
+  li { margin: 4px 0; font-size: 14px; }
+
+  .platform-badge { display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; letter-spacing: .05em; margin-bottom: 12px; }
+  .badge-cw { background: rgba(245,158,11,.15); color: var(--amber); }
+  .badge-lg { background: rgba(14,165,233,.15); color: var(--accent); }
+  .badge-px { background: rgba(34,197,94,.15); color: var(--green); }
+  .badge-all { background: rgba(139,92,246,.15); color: var(--accent2); }
+
+  .doc-footer { padding: 48px 0; text-align: center; color: var(--muted); font-size: 12px; border-top: 1px solid var(--line); }
+  .doc-footer .logos { display: flex; gap: 32px; justify-content: center; align-items: center; margin-bottom: 16px; }
+  .doc-footer .logo { font-weight: 800; font-size: 18px; }
+
+  .shortcut-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px; margin: 16px 0; }
+  .shortcut { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--card); border-radius: 8px; border: 1px solid var(--line); }
+  .shortcut .action { font-size: 13px; }
+  .shortcut .keys { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--cyan); background: var(--bg); padding: 3px 8px; border-radius: 4px; }
+
+  @media (max-width: 768px) {
+    .container { padding: 0 16px; }
+    .card-grid { grid-template-columns: 1fr; }
+    .kpi-strip { grid-template-columns: repeat(2, 1fr); }
+    .flow-steps { flex-direction: column; align-items: center; }
+    .flow-step::after { display: none; }
+    .doc-header { padding: 48px 0 32px; }
+    .doc-header h1 { font-size: 28px; }
+    .section { padding: 32px 0; }
+    .section-title { font-size: 22px; }
+    .toc-grid { grid-template-columns: 1fr; }
+    table { font-size: 12px; display: block; overflow-x: auto; }
+    th, td { padding: 8px 10px; white-space: nowrap; }
+    .shortcut-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 480px) {
+    .container { padding: 0 12px; }
+    .doc-header { padding: 32px 0 24px; }
+    .doc-header h1 { font-size: 22px; }
+    .section { padding: 24px 0; }
+    .section-title { font-size: 18px; flex-wrap: wrap; }
+    .step { flex-direction: column; gap: 8px; }
+    .step::before { width: 28px; height: 28px; min-width: 28px; font-size: 12px; }
+    p, li { font-size: 13px; }
+    .card { padding: 16px; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="container">
+
+<!-- HEADER -->
+<div class="doc-header">
+  <div class="badge">User Guide v1.0</div>
+  <h1><span>RINGLYPRO</span> Platform User Guide</h1>
+  <p class="subtitle">Complete guide to CW Carriers, Logistics Command Center, and PINAXIS Warehouse OPS</p>
+  <div class="meta">
+    <span>Author: Digit2ai / RinglyPro</span>
+    <span>Date: March 2026</span>
+    <span>Status: Current</span>
+  </div>
+</div>
+
+<!-- TOC -->
+<div class="toc">
+  <h2>Table of Contents</h2>
+  <div class="toc-grid">
+    <div class="toc-section">
+      <h3>Getting Started</h3>
+      <ol>
+        <li><a href="#overview">Platform Overview</a></li>
+        <li><a href="#login">Login &amp; Navigation</a></li>
+        <li><a href="#quickstart">Quick Start (5-Minute Setup)</a></li>
+      </ol>
+    </div>
+    <div class="toc-section">
+      <h3>CW Carriers</h3>
+      <ol start="4">
+        <li><a href="#loads">Managing Loads</a></li>
+        <li><a href="#contacts">Contacts &amp; CRM</a></li>
+        <li><a href="#rachel">Voice AI (Rachel)</a></li>
+        <li><a href="#offers">Carrier Offers &amp; Negotiation</a></li>
+        <li><a href="#checkcalls">Check Calls &amp; Tracking</a></li>
+        <li><a href="#billing">Billing &amp; Invoicing</a></li>
+        <li><a href="#matching">AI Carrier &amp; Load Matching</a></li>
+        <li><a href="#pricing">Rate Intelligence</a></li>
+        <li><a href="#nlp">NLP Assistant</a></li>
+        <li><a href="#analytics">Analytics &amp; Reporting</a></li>
+        <li><a href="#hubspot">HubSpot Integration</a></li>
+      </ol>
+    </div>
+    <div class="toc-section">
+      <h3>Logistics &amp; Warehouse</h3>
+      <ol start="15">
+        <li><a href="#command">Logistics Command Center</a></li>
+        <li><a href="#pinaxis">PINAXIS Warehouse OPS</a></li>
+        <li><a href="#admin">Admin Tools</a></li>
+      </ol>
+    </div>
+    <div class="toc-section">
+      <h3>Workflows &amp; Tips</h3>
+      <ol start="18">
+        <li><a href="#workflow-load">Workflow: Load to Delivery</a></li>
+        <li><a href="#workflow-wh">Workflow: Warehouse Analysis</a></li>
+        <li><a href="#tips">Tips &amp; Best Practices</a></li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<!-- 1. OVERVIEW -->
+<div class="section" id="overview">
+  <h2 class="section-title"><span class="num">1</span> Platform Overview</h2>
+  <p class="section-sub">Three integrated platforms, one unified ecosystem</p>
+
+  <p>RinglyPro is a <span class="hl">multi-vertical operations platform</span> with three main applications:</p>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="platform-badge badge-cw">CW CARRIERS</div>
+      <h4>AI Freight Brokerage</h4>
+      <p>Full-cycle freight management: loads, carrier matching, voice AI (Rachel), rate intelligence, check calls, billing, HubSpot CRM sync, NLP assistant. <strong>22 API modules, 23 database tables.</strong></p>
+      <p style="margin-top:8px"><span class="mono">/cw_carriers/</span></p>
+    </div>
+    <div class="card">
+      <div class="platform-badge badge-lg">LOGISTICS</div>
+      <h4>Command Center</h4>
+      <p>Instant-value tools: lane rate lookup, FMCSA carrier verification, inventory health calculator, warehouse efficiency scoring. Admin tools: Token Estimator, Contract Builder, MCP Tools.</p>
+      <p style="margin-top:8px"><span class="mono">/logistics/</span></p>
+    </div>
+    <div class="card">
+      <div class="platform-badge badge-px">PINAXIS</div>
+      <h4>Warehouse OPS</h4>
+      <p>Warehouse data analytics: upload CSV/Excel data, run automated analysis (ABC, throughput, fit), OEE equipment monitoring, PDF report generation, product matching.</p>
+      <p style="margin-top:8px"><span class="mono">/pinaxis/</span></p>
+    </div>
+  </div>
+
+  <div class="kpi-strip">
+    <div class="kpi"><div class="value">3</div><div class="label">Platforms</div></div>
+    <div class="kpi"><div class="value">22</div><div class="label">CW API Modules</div></div>
+    <div class="kpi"><div class="value">1</div><div class="label">Voice AI Agent</div></div>
+    <div class="kpi"><div class="value">6</div><div class="label">Integrations</div></div>
+  </div>
+</div>
+
+<!-- 2. LOGIN -->
+<div class="section" id="login">
+  <h2 class="section-title"><span class="num">2</span> Login &amp; Navigation</h2>
+  <p class="section-sub">Accessing the platform and finding your way around</p>
+
+  <h3>Logging In</h3>
+  <p>Each platform has its own login page. Navigate to the platform URL and enter your email and password:</p>
+
+  <table>
+    <tr><th>Platform</th><th>Login URL</th><th>Session Key</th></tr>
+    <tr><td>CW Carriers</td><td class="mono">/cw_carriers/login</td><td class="mono">cw_token</td></tr>
+    <tr><td>Logistics</td><td class="mono">/logistics/login</td><td class="mono">lg_token</td></tr>
+    <tr><td>PINAXIS</td><td class="mono">/pinaxis/login</td><td class="mono">pinaxis_token</td></tr>
+  </table>
+
+  <div class="tip-box">
+    <div class="tip-label">Tip</div>
+    <p>Sessions are stored per browser tab (sessionStorage). Opening a new tab requires a fresh login. This is by design for security.</p>
+  </div>
+
+  <h3>Sidebar Navigation</h3>
+  <p>Once logged in, the <span class="hl">left sidebar</span> provides navigation to all modules. On mobile, tap the hamburger menu (three lines) to open the sidebar. The sidebar shows your current role and email at the bottom, with a logout button.</p>
+
+  <h3>Cross-Platform Links</h3>
+  <p>The Logistics sidebar includes links to CW Carriers and PINAXIS under the <strong>EXTERNAL</strong> section. Clicking these opens the other platform (separate login may be required).</p>
+</div>
+
+<!-- 3. QUICK START -->
+<div class="section" id="quickstart">
+  <h2 class="section-title"><span class="num">3</span> Quick Start (5-Minute Setup)</h2>
+  <p class="section-sub">Get up and running immediately</p>
+
+  <div class="step-list">
+    <div class="step">
+      <div class="step-content">
+        <h4>Log in to CW Carriers</h4>
+        <p>Navigate to <span class="mono">/cw_carriers/login</span>. Enter your admin email and password. You'll land on the Dashboard showing today's open loads, active carriers, and recent calls.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-content">
+        <h4>Create your first load</h4>
+        <p>Go to <strong>Loads</strong> in the sidebar. Click <strong>"+ New Load"</strong>. Enter origin, destination, freight type, pickup date, and rates. Click Create. Your load appears on the load board as "Open".</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-content">
+        <h4>Find carriers with AI matching</h4>
+        <p>Click the <strong>"Find"</strong> button on your open load, or navigate to <strong>Carrier Matching</strong>. Enter the Load ID and click "Find Best Carriers". The AI scores and ranks the best carrier matches.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-content">
+        <h4>Launch a coverage campaign</h4>
+        <p>Click <strong>"Launch Campaign"</strong> to send the load to your top matched carriers simultaneously. Rachel (voice AI) can automatically call carriers to secure coverage.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-content">
+        <h4>Track &amp; deliver</h4>
+        <p>Once a carrier accepts, the load moves to "Covered". Use <strong>Check Calls</strong> to monitor transit. Mark as "Delivered" when complete. Use <strong>Billing</strong> to auto-generate invoices.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="tip-box">
+    <div class="tip-label">Demo Data</div>
+    <p>Need sample data to explore? Go to <strong>Demo Data</strong> in the CW Carriers sidebar to generate sample loads, carriers, and calls instantly.</p>
+  </div>
+</div>
+
+<!-- 4. LOADS -->
+<div class="section" id="loads">
+  <h2 class="section-title"><span class="num">4</span> Managing Loads</h2>
+  <p class="section-sub"><span class="platform-badge badge-cw">CW CARRIERS</span> Full freight lifecycle management</p>
+
+  <h3>Load Status Workflow</h3>
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="circle" style="background:var(--amber)">1</div>
+      <div class="label">Open</div>
+      <div class="desc">New load posted</div>
+    </div>
+    <div class="flow-step">
+      <div class="circle" style="background:var(--accent2)">2</div>
+      <div class="label">Covered</div>
+      <div class="desc">Carrier assigned</div>
+    </div>
+    <div class="flow-step">
+      <div class="circle" style="background:var(--accent)">3</div>
+      <div class="label">In Transit</div>
+      <div class="desc">Picked up, moving</div>
+    </div>
+    <div class="flow-step">
+      <div class="circle" style="background:var(--green)">4</div>
+      <div class="label">Delivered</div>
+      <div class="desc">Freight received</div>
+    </div>
+    <div class="flow-step">
+      <div class="circle" style="background:var(--cyan)">5</div>
+      <div class="label">Invoiced</div>
+      <div class="desc">Billing complete</div>
+    </div>
+  </div>
+
+  <h3>Creating a Load</h3>
+  <p>Click <strong>"+ New Load"</strong> on the Loads page. Required fields:</p>
+  <table>
+    <tr><th>Field</th><th>Description</th><th>Required</th></tr>
+    <tr><td>Origin</td><td>Pickup city (e.g., "Dallas, TX")</td><td>Yes</td></tr>
+    <tr><td>Destination</td><td>Delivery city (e.g., "Chicago, IL")</td><td>Yes</td></tr>
+    <tr><td>Freight Type</td><td>Dry Van, Reefer, Flatbed, or LTL</td><td>Yes</td></tr>
+    <tr><td>Rate (Carrier)</td><td>What you pay the carrier</td><td>No</td></tr>
+    <tr><td>Shipper Rate</td><td>What the shipper pays you (your sell rate)</td><td>No</td></tr>
+    <tr><td>Pickup Date</td><td>Expected pickup date</td><td>No</td></tr>
+    <tr><td>Weight</td><td>Load weight in lbs</td><td>No</td></tr>
+    <tr><td>Equipment Type</td><td>Specific trailer requirements</td><td>No</td></tr>
+    <tr><td>Commodity</td><td>What's being shipped</td><td>No</td></tr>
+    <tr><td>Broker Notes</td><td>Internal notes for dispatchers</td><td>No</td></tr>
+  </table>
+
+  <h3>Filtering &amp; Searching</h3>
+  <p>Use the filter bar above the load table to narrow results:</p>
+  <ul>
+    <li><strong>Status</strong> &mdash; Open, Covered, In Transit, Delivered, Cancelled</li>
+    <li><strong>Freight Type</strong> &mdash; Dry Van, Reefer, Flatbed, LTL</li>
+    <li><strong>Origin</strong> &mdash; Filter by pickup city</li>
+  </ul>
+
+  <h3>Load Actions</h3>
+  <table>
+    <tr><th>Action</th><th>Available When</th><th>What It Does</th></tr>
+    <tr><td><strong>Find Carriers</strong></td><td>Open</td><td>Opens AI carrier matching for this load</td></tr>
+    <tr><td><strong>Mark Covered</strong></td><td>Open</td><td>Moves load to Covered status</td></tr>
+    <tr><td><strong>In Transit</strong></td><td>Covered</td><td>Marks load as picked up and moving</td></tr>
+    <tr><td><strong>Delivered</strong></td><td>In Transit</td><td>Confirms delivery completed</td></tr>
+  </table>
+</div>
+
+<!-- 5. CONTACTS -->
+<div class="section" id="contacts">
+  <h2 class="section-title"><span class="num">5</span> Contacts &amp; CRM</h2>
+  <p class="section-sub"><span class="platform-badge badge-cw">CW CARRIERS</span> Manage shippers, carriers, prospects, and drivers</p>
+
+  <h3>Contact Types</h3>
+  <div class="card-grid">
+    <div class="card">
+      <div class="tag tag-amber">Shipper</div>
+      <h4>Your Customers</h4>
+      <p>Companies that ship freight. Track company name, contact info, freight types, preferred lanes, and volume estimates.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-green">Carrier</div>
+      <h4>Your Haulers</h4>
+      <p>Trucking companies that move your freight. Track MC/DOT numbers, equipment types, safety rating, insurance expiry.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-blue">Prospect</div>
+      <h4>Potential Customers</h4>
+      <p>Leads not yet converted. Track initial contact info and sync to HubSpot for pipeline management.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-purple">Driver</div>
+      <h4>Individual Drivers</h4>
+      <p>Owner-operators or company drivers. Track phone numbers for direct check calls and transit updates.</p>
+    </div>
+  </div>
+
+  <h3>Key Actions</h3>
+  <ul>
+    <li><strong>Call</strong> &mdash; Initiate an outbound call to the contact (Rachel or manual)</li>
+    <li><strong>Sync to HubSpot</strong> &mdash; Push the contact to your HubSpot CRM (green "Synced" badge appears when complete)</li>
+    <li><strong>Search</strong> &mdash; Use the search bar to find contacts by company name or person name</li>
+    <li><strong>Filter by Type</strong> &mdash; Use the tab bar (All, Shippers, Carriers, Prospects, Drivers) to focus</li>
+  </ul>
+</div>
+
+<!-- 6. RACHEL VOICE AI -->
+<div class="section" id="rachel">
+  <h2 class="section-title"><span class="num">6</span> Voice AI (Rachel)</h2>
+  <p class="section-sub"><span class="platform-badge badge-cw">CW CARRIERS</span> Your AI-powered dispatcher assistant</p>
+
+  <p>Rachel is an <span class="hl">ElevenLabs-powered voice AI agent</span> that handles calls on your behalf. She speaks naturally, understands freight terminology, and logs everything automatically.</p>
+
+  <h3>What Rachel Can Do</h3>
+  <table>
+    <tr><th>Task</th><th>How to Trigger</th><th>What Happens</th></tr>
+    <tr><td><strong>Carrier Coverage</strong></td><td>Click "Find" on an open load, then "Launch Campaign"</td><td>Rachel calls matched carriers, negotiates rates, books the load</td></tr>
+    <tr><td><strong>Check Calls</strong></td><td>Click "Rachel Auto-Call Driver" on Check Calls page</td><td>Rachel calls the driver, gets location/ETA, logs the update</td></tr>
+    <tr><td><strong>Pickup Confirmation</strong></td><td>Automated on pickup date morning</td><td>Rachel confirms the driver is on schedule for pickup</td></tr>
+    <tr><td><strong>Delivery Confirmation</strong></td><td>Automated in delivery window</td><td>Rachel confirms delivery and captures POD status</td></tr>
+    <tr><td><strong>Inbound Carrier Calls</strong></td><td>Carrier calls your number</td><td>Rachel qualifies the carrier (MC/DOT, equipment, lanes)</td></tr>
+    <tr><td><strong>Inbound Shipper Calls</strong></td><td>Shipper calls for a quote</td><td>Rachel captures load details and provides instant pricing</td></tr>
+    <tr><td><strong>Escalation</strong></td><td>Complex or sensitive scenarios</td><td>Rachel transfers to a live dispatcher with full context</td></tr>
+  </table>
+
+  <h3>Reviewing Call Results</h3>
+  <p>All Rachel calls appear on the <strong>Calls</strong> page. Click the expand arrow on any call to see:</p>
+  <ul>
+    <li><strong>AI Summary</strong> &mdash; Claude-generated summary of the conversation</li>
+    <li><strong>Full Transcript</strong> &mdash; Complete call transcript</li>
+    <li><strong>Outcome</strong> &mdash; Qualified, Booked, Declined, Escalated, Voicemail</li>
+    <li><strong>HubSpot Status</strong> &mdash; Whether the call was synced to CRM</li>
+  </ul>
+
+  <div class="tip-box">
+    <div class="tip-label">Tip</div>
+    <p>Filter calls by "Direction: Outbound" and "Outcome: Booked" to see all successful carrier coverage calls Rachel completed for you.</p>
+  </div>
+</div>
+
+<!-- 7. OFFERS -->
+<div class="section" id="offers">
+  <h2 class="section-title"><span class="num">7</span> Carrier Offers &amp; Negotiation</h2>
+  <p class="section-sub"><span class="platform-badge badge-cw">CW CARRIERS</span> Track bids, counter offers, and accepted rates</p>
+
+  <h3>Offer Workflow</h3>
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="circle" style="background:var(--amber)">1</div>
+      <div class="label">Log Offer</div>
+      <div class="desc">Carrier submits rate</div>
+    </div>
+    <div class="flow-step">
+      <div class="circle" style="background:var(--accent)">2</div>
+      <div class="label">Review</div>
+      <div class="desc">Compare to target</div>
+    </div>
+    <div class="flow-step">
+      <div class="circle" style="background:var(--accent2)">3</div>
+      <div class="label">Counter</div>
+      <div class="desc">Or accept/decline</div>
+    </div>
+    <div class="flow-step">
+      <div class="circle" style="background:var(--green)">4</div>
+      <div class="label">Accept</div>
+      <div class="desc">Load covered</div>
+    </div>
+  </div>
+
+  <p>To <strong>log an offer</strong>, click "+ Log Offer" and enter the Load ID, carrier info, and rate. Use the <strong>Counter</strong> button to send back your counter-rate. Use <strong>Accept</strong> to book the carrier.</p>
+
+  <h3>Status Colors</h3>
+  <table>
+    <tr><th>Status</th><th>Color</th><th>Meaning</th></tr>
+    <tr><td>Pending</td><td style="color:var(--amber)">Gold</td><td>Awaiting your response</td></tr>
+    <tr><td>Accepted</td><td style="color:var(--green)">Green</td><td>Carrier booked</td></tr>
+    <tr><td>Declined</td><td style="color:var(--red)">Red</td><td>Offer rejected</td></tr>
+    <tr><td>Countered</td><td style="color:var(--accent)">Blue</td><td>Counter-offer sent</td></tr>
+    <tr><td>Expired</td><td style="color:var(--muted)">Gray</td><td>Offer timed out</td></tr>
+  </table>
+</div>
+
+<!-- 8. CHECK CALLS -->
+<div class="section" id="checkcalls">
+  <h2 class="section-title"><span class="num">8</span> Check Calls &amp; Tracking</h2>
+  <p class="section-sub"><span class="platform-badge badge-cw">CW CARRIERS</span> Monitor loads in transit</p>
+
+  <p>The Check Calls page has two tabs:</p>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="tag tag-red">Due Now</div>
+      <h4>Action Required</h4>
+      <p>Loads that need a status check right now. Shows load ref, lane, carrier, pickup/delivery dates, and last check time. Three action buttons per load:</p>
+      <ul style="margin-top:8px">
+        <li><strong>Rachel Auto-Call</strong> &mdash; AI calls the driver automatically</li>
+        <li><strong>Manual Log</strong> &mdash; Record a check call yourself (location, ETA, status)</li>
+        <li><strong>Notify Shipper</strong> &mdash; Send the shipper a status update</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="tag tag-green">History</div>
+      <h4>Completed Check Calls</h4>
+      <p>All logged check calls with location, ETA, status (On Time, Delayed, At Pickup, At Delivery, Issue), who called (rachel_ai or human), notes, and timestamps.</p>
+    </div>
+  </div>
+
+  <div class="warn-box">
+    <div class="tip-label">Important</div>
+    <p>Consistent check calls are critical for shipper satisfaction. Use Rachel Auto-Call to ensure no load goes unchecked. The "Due Now" tab highlights loads that haven't been checked recently.</p>
+  </div>
+</div>
+
+<!-- 9. BILLING -->
+<div class="section" id="billing">
+  <h2 class="section-title"><span class="num">9</span> Billing &amp; Invoicing</h2>
+  <p class="section-sub"><span class="platform-badge badge-cw">CW CARRIERS</span> Dual-sided invoicing with POD tracking</p>
+
+  <h3>Understanding AR vs AP</h3>
+  <div class="card-grid">
+    <div class="card">
+      <div class="tag tag-green">Accounts Receivable (AR)</div>
+      <h4>Shipper Invoices</h4>
+      <p>What the <strong>shipper owes you</strong>. Created at the sell rate. Track: Draft &rarr; Sent &rarr; Paid (or Overdue).</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-red">Accounts Payable (AP)</div>
+      <h4>Carrier Payments</h4>
+      <p>What <strong>you owe the carrier</strong>. Created at the buy rate. Track: Draft &rarr; Sent &rarr; Paid (or Overdue).</p>
+    </div>
+  </div>
+
+  <h3>Auto-Generate Invoices</h3>
+  <p>The fastest way to create invoices: enter a <strong>delivered Load ID</strong> in the Auto-Generate field. The system creates both the shipper invoice (AR) and carrier payment (AP) automatically with the correct amounts from the load record.</p>
+
+  <h3>Invoice Lifecycle</h3>
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="circle" style="background:var(--muted)">1</div>
+      <div class="label">Draft</div>
+      <div class="desc">Created, not sent</div>
+    </div>
+    <div class="flow-step">
+      <div class="circle" style="background:var(--accent)">2</div>
+      <div class="label">Sent</div>
+      <div class="desc">Invoice delivered</div>
+    </div>
+    <div class="flow-step">
+      <div class="circle" style="background:var(--green)">3</div>
+      <div class="label">Paid</div>
+      <div class="desc">Payment received</div>
+    </div>
+  </div>
+  <p>If a sent invoice passes its due date without payment, it automatically shows as <strong style="color:var(--red)">Overdue</strong>.</p>
+</div>
+
+<!-- 10. AI MATCHING -->
+<div class="section" id="matching">
+  <h2 class="section-title"><span class="num">10</span> AI Carrier &amp; Load Matching</h2>
+  <p class="section-sub"><span class="platform-badge badge-cw">CW CARRIERS</span> Intelligent scoring to find the best carrier for every load</p>
+
+  <h3>Carrier Matching</h3>
+  <p>Navigate to <strong>Carrier Matching</strong> (under AI Brokerage). Enter a Load ID and click "Find Best Carriers". The AI scores carriers on six factors:</p>
+
+  <table>
+    <tr><th>Factor</th><th>Weight</th><th>What It Measures</th></tr>
+    <tr><td>Lane History</td><td>25%</td><td>Has this carrier hauled this lane before?</td></tr>
+    <tr><td>Equipment Match</td><td>20%</td><td>Does the carrier have the right trailer type?</td></tr>
+    <tr><td>Reliability</td><td>20%</td><td>On-time %, acceptance rate, claims history</td></tr>
+    <tr><td>Rate Fit</td><td>15%</td><td>Is the carrier's rate within your budget?</td></tr>
+    <tr><td>Proximity</td><td>10%</td><td>How close is the carrier to the pickup?</td></tr>
+    <tr><td>Recency</td><td>10%</td><td>How recently has the carrier hauled for you?</td></tr>
+  </table>
+
+  <p>Scores range from 0-100. <span class="hl-green">70+</span> = excellent match, <span class="hl-amber">40-69</span> = good match, <span style="color:var(--red)">&lt;40</span> = needs review.</p>
+
+  <h3>Load-to-Load Matching</h3>
+  <p>Navigate to <strong>Load Matching</strong>. Enter an anchor Load ID to find combinable loads:</p>
+  <ul>
+    <li><strong>Backhaul</strong> &mdash; Return trip that eliminates empty miles</li>
+    <li><strong>Chain</strong> &mdash; Sequential loads forming a continuous route</li>
+    <li><strong>Round Trip</strong> &mdash; Both legs of the circuit covered with freight</li>
+    <li><strong>Relay</strong> &mdash; Long haul split into segments for regional carriers</li>
+  </ul>
+
+  <div class="tip-box">
+    <div class="tip-label">Tip</div>
+    <p>Backhaul matches are the quickest wins. A carrier who just delivered in Dallas and needs to get back to Houston is likely to accept a lower rate, improving your margin.</p>
+  </div>
+</div>
+
+<!-- 11. RATE INTELLIGENCE -->
+<div class="section" id="pricing">
+  <h2 class="section-title"><span class="num">11</span> Rate Intelligence</h2>
+  <p class="section-sub"><span class="platform-badge badge-cw">CW CARRIERS</span> AI-powered pricing with confidence scoring</p>
+
+  <h3>Get a Rate Quote</h3>
+  <p>Navigate to <strong>Rate Intelligence</strong>. Enter origin, destination, equipment type, and optionally pickup date and miles. Click "Get Rate Recommendation".</p>
+
+  <p>The response includes:</p>
+  <ul>
+    <li><strong>Suggested Buy Rate</strong> &mdash; what to offer the carrier</li>
+    <li><strong>Suggested Sell Rate</strong> &mdash; what to charge the shipper</li>
+    <li><strong>Rate Per Mile</strong> &mdash; RPM for the lane</li>
+    <li><strong>Margin %</strong> &mdash; recommended profit margin</li>
+    <li><strong>Confidence Band</strong> &mdash; low/high range for buy and sell rates</li>
+    <li><strong>Pricing Method</strong> &mdash; how the rate was calculated (see below)</li>
+    <li><strong>Rationale</strong> &mdash; explanation of the data behind the recommendation</li>
+  </ul>
+
+  <h3>Pricing Methods (Tiered Fallback)</h3>
+  <table>
+    <tr><th>Method</th><th>Confidence</th><th>When Used</th></tr>
+    <tr><td>Exact Lane History</td><td style="color:var(--green)">Very High</td><td>You've hauled this exact city-to-city lane in the last 90 days</td></tr>
+    <tr><td>State Corridor</td><td style="color:var(--amber)">High</td><td>No exact city match, but state-to-state data available</td></tr>
+    <tr><td>Benchmark Data</td><td style="color:var(--amber)">High</td><td>DAT/TruckStop/GreenScreens market rates available</td></tr>
+    <tr><td>Legacy Data</td><td style="color:var(--accent)">Medium</td><td>Older historical data from CW Carriers load history</td></tr>
+    <tr><td>National Average</td><td style="color:var(--red)">Low</td><td>No lane-specific data; uses national avg RPM &times; estimated miles</td></tr>
+  </table>
+
+  <h3>Lane Analysis</h3>
+  <p>Use the <strong>Lane Analysis</strong> tab to study a lane's historical performance over the last 90 days (or custom period). See volume, average rate, min/max, competitor benchmarks, and trend direction.</p>
+</div>
+
+<!-- 12. NLP ASSISTANT -->
+<div class="section" id="nlp">
+  <h2 class="section-title"><span class="num">12</span> NLP Assistant</h2>
+  <p class="section-sub"><span class="platform-badge badge-cw">CW CARRIERS</span> Command the platform with natural language</p>
+
+  <p>The NLP Assistant (Rachel) lets you <span class="hl">type or speak commands</span> instead of navigating menus. Click the microphone icon for voice input.</p>
+
+  <h3>Example Commands</h3>
+  <div class="shortcut-grid">
+    <div class="shortcut"><span class="action">Show all open loads</span><span class="keys">Query</span></div>
+    <div class="shortcut"><span class="action">Call carriers for load #1</span><span class="keys">Action</span></div>
+    <div class="shortcut"><span class="action">Who are our top 5 carriers?</span><span class="keys">Query</span></div>
+    <div class="shortcut"><span class="action">Add a note to Acme &mdash; called, no answer</span><span class="keys">Action</span></div>
+    <div class="shortcut"><span class="action">Show loads delivered late this week</span><span class="keys">Query</span></div>
+    <div class="shortcut"><span class="action">Send status update to Global Foods</span><span class="keys">Action</span></div>
+    <div class="shortcut"><span class="action">Show call history</span><span class="keys">Query</span></div>
+    <div class="shortcut"><span class="action">What's our coverage rate today?</span><span class="keys">Query</span></div>
+  </div>
+
+  <p>Each command shows the <strong>detected intent</strong>, <strong>confidence score</strong>, and <strong>results</strong>. Pre-built suggested commands are available as click-chips below the input.</p>
+</div>
+
+<!-- 13. ANALYTICS -->
+<div class="section" id="analytics">
+  <h2 class="section-title"><span class="num">13</span> Analytics &amp; Reporting</h2>
+  <p class="section-sub"><span class="platform-badge badge-cw">CW CARRIERS</span> Operational intelligence and performance dashboards</p>
+
+  <h3>CRM Analytics Dashboard</h3>
+  <p>The main <strong>Analytics</strong> page shows:</p>
+  <ul>
+    <li><strong>Load Coverage Funnel</strong> &mdash; Total Loads &rarr; Calls Made &rarr; Interested &rarr; Booked &rarr; Coverage Rate %. Identifies where carrier outreach drops off.</li>
+    <li><strong>Lane Profitability</strong> &mdash; Table sorted by revenue showing lane, load count, avg rate, total revenue.</li>
+    <li><strong>Carrier Performance</strong> &mdash; Scorecard with loads, deliveries, avg rate, reliability %. Color-coded: <span style="color:var(--green)">Green</span> &ge;90%, <span style="color:var(--amber)">Gold</span> 70-89%, <span style="color:var(--red)">Red</span> &lt;70%.</li>
+    <li><strong>Call Breakdown</strong> &mdash; Volume by outcome and by type.</li>
+  </ul>
+
+  <h3>Brokerage Analytics</h3>
+  <p>Under AI Brokerage &rarr; <strong>Analytics &amp; KPIs</strong>, find deeper metrics:</p>
+  <ul>
+    <li>Revenue and margin trends</li>
+    <li>RPM distribution by equipment type</li>
+    <li>Carrier utilization and acceptance rates</li>
+    <li>On-time delivery percentage</li>
+    <li>Exception and penalty tracking</li>
+  </ul>
+
+  <h3>Reports</h3>
+  <p>Go to <strong>Reports</strong> to generate and download PDF/CSV reports for operational summaries, carrier scorecards, and financial reconciliation.</p>
+</div>
+
+<!-- 14. HUBSPOT -->
+<div class="section" id="hubspot">
+  <h2 class="section-title"><span class="num">14</span> HubSpot Integration</h2>
+  <p class="section-sub"><span class="platform-badge badge-cw">CW CARRIERS</span> Bi-directional CRM sync</p>
+
+  <h3>Setup (One-Time)</h3>
+  <div class="step-list">
+    <div class="step">
+      <div class="step-content">
+        <h4>Get your HubSpot Private App token</h4>
+        <p>In HubSpot: Settings &rarr; Integrations &rarr; Private Apps &rarr; Create. Grant scopes for contacts, deals, and activities. Copy the access token.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-content">
+        <h4>Configure in CW Carriers Settings</h4>
+        <p>Go to <strong>Settings</strong> &rarr; <strong>HubSpot API</strong> tab. Paste your access token, enter Portal ID and Deal Pipeline ID.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-content">
+        <h4>Map deal stages</h4>
+        <p>Configure which HubSpot pipeline stages correspond to load statuses: Open &rarr; Appointment Scheduled, Covered &rarr; Qualified to Buy, Delivered &rarr; Closed Won.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-content">
+        <h4>Enable auto-sync</h4>
+        <p>Toggle on: Auto-sync Contacts, Auto-sync Deals, Auto-sync Call Activities. Click "Test Connection" to verify, then "Save Settings".</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>What Syncs</h3>
+  <table>
+    <tr><th>Data</th><th>Direction</th><th>Trigger</th></tr>
+    <tr><td>Contacts</td><td>CW &rarr; HubSpot</td><td>Click "Sync" on contact, or auto-sync if enabled</td></tr>
+    <tr><td>Contacts</td><td>HubSpot &rarr; CW</td><td>Webhook on contact create/update in HubSpot</td></tr>
+    <tr><td>Deals (Loads)</td><td>CW &rarr; HubSpot</td><td>Load status changes trigger deal stage updates</td></tr>
+    <tr><td>Call Activities</td><td>CW &rarr; HubSpot</td><td>Rachel call completed &rarr; logged as HubSpot activity</td></tr>
+  </table>
+
+  <p>All sync events are logged in <span class="mono">cw_hubspot_sync</span> for audit trail. Check the <strong>HubSpot Sync</strong> page to review sync status and troubleshoot failures.</p>
+</div>
+
+<!-- 15. COMMAND CENTER -->
+<div class="section" id="command">
+  <h2 class="section-title"><span class="num">15</span> Logistics Command Center</h2>
+  <p class="section-sub"><span class="platform-badge badge-lg">LOGISTICS</span> Instant-value tools for carriers and warehouse clients</p>
+
+  <p>The Logistics Dashboard at <span class="mono">/logistics/dashboard</span> provides four instant-use tools organized by vertical:</p>
+
+  <h3>Transportation Tools</h3>
+  <div class="card-grid">
+    <div class="card">
+      <div class="tag tag-amber">Lane Rate Lookup</div>
+      <h4>Instant Market Rates</h4>
+      <p><strong>How to use:</strong> Select an origin city, destination city, and equipment type (Dry Van, Reefer, Flatbed, Step Deck). Click "Get Rate Estimate". The system queries historical load data and returns buy rate, sell rate, RPM, margin, and confidence band with rationale.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-red">FMCSA Quick Check</div>
+      <h4>Carrier Compliance</h4>
+      <p><strong>How to use:</strong> Enter an MC Number or DOT Number (or both). Click "Verify Carrier". Instantly see operating status, entity type, power units, drivers, safety rating, risk level, and insurance status (BIPD + Cargo). Green/red indicators for active/inactive.</p>
+    </div>
+  </div>
+
+  <h3>Intralogistics Tools</h3>
+  <div class="card-grid">
+    <div class="card">
+      <div class="tag tag-green">Inventory Health Calculator</div>
+      <h4>CSV Upload Analysis</h4>
+      <p><strong>How to use:</strong> Click the upload zone and select a CSV, JSON, or TSV file with inventory data. The system auto-detects quantity and date columns, then shows: total SKUs, total units, dead stock % (items with no movement &gt;90 days), estimated turnover rate, and ABC classification (A/B/C bar chart).</p>
+      <p style="margin-top:8px"><strong>Required columns:</strong> A quantity column (qty, stock, on_hand, etc.) and optionally a date column (last_movement, last_moved, etc.)</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-purple">Warehouse Efficiency Score</div>
+      <h4>Benchmark Assessment</h4>
+      <p><strong>How to use:</strong> Fill in your warehouse metrics: Active SKUs, Picks/Day, Error Rate %, Dock Doors, Avg Dwell Time (hours), Space Utilization %. Click "Calculate Score". Get a 0-100 score with letter grade (A-F), compared against industry benchmarks (avg: 62, top 25%: 78, best: 90), with specific notes on strengths and improvement areas.</p>
+    </div>
+  </div>
+
+  <h3>Platform Status</h3>
+  <p>At the bottom, two cards show live health status of CW Carriers and PINAXIS with green/red indicators. Click either card to navigate to that platform.</p>
+</div>
+
+<!-- 16. PINAXIS -->
+<div class="section" id="pinaxis">
+  <h2 class="section-title"><span class="num">16</span> PINAXIS Warehouse OPS</h2>
+  <p class="section-sub"><span class="platform-badge badge-px">PINAXIS</span> Warehouse data analytics, OEE monitoring, and optimization</p>
+
+  <h3>Getting Started with PINAXIS</h3>
+  <div class="step-list">
+    <div class="step">
+      <div class="step-content">
+        <h4>Create a project</h4>
+        <p>Go to <strong>Upload</strong>. Enter company name, contact name, industry (Automotive, E-Commerce, Fashion, etc.), and country. Click Next.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-content">
+        <h4>Upload warehouse data</h4>
+        <p>Upload up to 7 data files (CSV or Excel):<br>
+        <strong>Core files:</strong> Item Master (SKU catalog), Inventory Snapshot (current stock), Goods In (receiving records), Goods Out (shipment records).<br>
+        <strong>Optional:</strong> OEE Machines, OEE Machine Events, OEE Production Runs.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-content">
+        <h4>Review automated analysis</h4>
+        <p>Navigate to <strong>Analysis</strong>. The system runs automated analytics: KPI dashboard (Total SKUs, Active SKUs, Orders, Days-to-Ship, Accuracy, Turnover), Order Structure chart, Throughput charts (monthly, weekday, hourly), ABC Lorenz Curve, and Fit Analysis.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-content">
+        <h4>Download report</h4>
+        <p>Go to <strong>Report</strong>. Generate and download a comprehensive PDF with executive summary, KPIs, AI-generated recommendations, and detailed analysis charts.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>Key Pages</h3>
+  <div class="card-grid">
+    <div class="card">
+      <div class="tag tag-green">Analysis</div>
+      <h4>Automated Analytics</h4>
+      <p>KPI cards, order structure distribution, throughput over time, weekday/hourly patterns, ABC classification with Lorenz curve, product-to-bin fit analysis.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-amber">OEE Dashboard</div>
+      <h4>Equipment Monitoring</h4>
+      <p>Overall Equipment Effectiveness = Availability &times; Performance &times; Quality. Monitor machine status (running/stopped/idle/fault), track downtime reasons, production efficiency.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-blue">Observability</div>
+      <h4>Real-Time Health</h4>
+      <p>System telemetry status (Healthy/Warning/Degraded/Critical), recent events log with severity filtering, equipment alerts and anomaly detection.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-purple">Products</div>
+      <h4>SKU Management</h4>
+      <p>Browse SKU master data, view bin assignments, turnover rates, and reorder points. AI-assisted product matching for optimal storage locations.</p>
+    </div>
+  </div>
+
+  <div class="tip-box">
+    <div class="tip-label">Demo Data</div>
+    <p>Don't have warehouse data ready? Use the "Generate Demo Data" button on the Upload page to create a sample dataset for exploration.</p>
+  </div>
+</div>
+
+<!-- 17. ADMIN TOOLS -->
+<div class="section" id="admin">
+  <h2 class="section-title"><span class="num">17</span> Admin Tools</h2>
+  <p class="section-sub"><span class="platform-badge badge-lg">LOGISTICS</span> Token estimation, contract generation, and MCP tools</p>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="tag tag-amber">Token Estimator</div>
+      <h4>AI Cost Modeling</h4>
+      <p><strong>How to use:</strong> Select a Claude model (Sonnet/Haiku/Opus), set markup %, enter labor savings. Add scenarios (Customer Support, Data Analysis, Alert Detection, etc.) with estimated call volumes. See monthly API cost, billed amount, margin, and ROI. Use this to price AI services for customer contracts.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-green">Contract Builder</div>
+      <h4>ESA Generator</h4>
+      <p><strong>How to use:</strong> Enter client name, address, effective date, term, fees (implementation + monthly retainer), token markup %, and timeline. Optionally link a Token Estimator result to auto-populate pricing. Click "Generate Contract" to create a full Enterprise Services Agreement. Download as PDF or DOCX.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-blue">MCP Tools</div>
+      <h4>Tool Registry</h4>
+      <p>View all available Model Context Protocol tools in the ecosystem. Shows tool names, descriptions, and parameter schemas for integration with Claude AI agents.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 18. WORKFLOW: LOAD TO DELIVERY -->
+<div class="section" id="workflow-load">
+  <h2 class="section-title"><span class="num">18</span> Workflow: Load to Delivery</h2>
+  <p class="section-sub"><span class="platform-badge badge-cw">CW CARRIERS</span> End-to-end freight management in 8 steps</p>
+
+  <div class="workflow-box">
+    <h3>Complete Load Lifecycle</h3>
+    <div class="step-list">
+      <div class="step">
+        <div class="step-content">
+          <h4>Create the load</h4>
+          <p><strong>Loads</strong> &rarr; "+ New Load" &rarr; enter origin, destination, freight type, rates, pickup date &rarr; Create.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-content">
+          <h4>Get a rate recommendation</h4>
+          <p><strong>Rate Intelligence</strong> &rarr; enter the lane &rarr; "Get Rate Recommendation" &rarr; use suggested buy/sell rates to set your margin.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-content">
+          <h4>Find carriers</h4>
+          <p>Click "Find" on the load &rarr; <strong>Carrier Matching</strong> scores and ranks the best carriers &rarr; review top matches (aim for 70+ score).</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-content">
+          <h4>Launch coverage campaign</h4>
+          <p>Click "Launch Campaign" &rarr; Rachel calls top carriers simultaneously &rarr; negotiates rates &rarr; logs all outcomes to the Calls page.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-content">
+          <h4>Accept offer &amp; cover load</h4>
+          <p><strong>Carrier Offers</strong> &rarr; review incoming offers &rarr; Counter or Accept &rarr; load status moves to "Covered".</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-content">
+          <h4>Track in transit</h4>
+          <p>Mark load as "In Transit" on pickup &rarr; <strong>Check Calls</strong> &rarr; use "Rachel Auto-Call" for automated driver status updates &rarr; "Notify Shipper" as needed.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-content">
+          <h4>Confirm delivery</h4>
+          <p>Mark load as "Delivered" when freight arrives &rarr; Rachel confirms POD status automatically.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-content">
+          <h4>Invoice</h4>
+          <p><strong>Billing</strong> &rarr; "Auto-Generate" with the delivered Load ID &rarr; system creates shipper invoice (AR) + carrier payment (AP) &rarr; track to Paid.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 19. WORKFLOW: WAREHOUSE -->
+<div class="section" id="workflow-wh">
+  <h2 class="section-title"><span class="num">19</span> Workflow: Warehouse Analysis</h2>
+  <p class="section-sub"><span class="platform-badge badge-px">PINAXIS</span> From raw data to actionable insights</p>
+
+  <div class="workflow-box">
+    <h3>Warehouse Optimization Workflow</h3>
+    <div class="step-list">
+      <div class="step">
+        <div class="step-content">
+          <h4>Create a project in PINAXIS</h4>
+          <p><strong>Upload</strong> &rarr; enter company name, industry, country &rarr; Next.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-content">
+          <h4>Upload core data files</h4>
+          <p>Upload Item Master, Inventory Snapshot, Goods In, and Goods Out as CSV or Excel. Optionally add OEE machine data.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-content">
+          <h4>Review automated analysis</h4>
+          <p><strong>Analysis</strong> page &rarr; review KPIs (SKUs, orders, days-to-ship, turnover) &rarr; study throughput patterns &rarr; examine ABC classification.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-content">
+          <h4>Run quick health check on Logistics dashboard</h4>
+          <p>For a second opinion: <strong>Logistics Command Center</strong> &rarr; upload the same inventory CSV to the <strong>Inventory Health Calculator</strong> &rarr; compare dead stock % and ABC results.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-content">
+          <h4>Calculate efficiency score</h4>
+          <p>On the Logistics Command Center: fill in the <strong>Warehouse Efficiency Score</strong> form with operational metrics &rarr; get a 0-100 grade with industry benchmarks.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-content">
+          <h4>Generate &amp; share report</h4>
+          <p>Back in PINAXIS: <strong>Report</strong> &rarr; download comprehensive PDF with executive summary, KPIs, and AI recommendations &rarr; share with stakeholders.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-content">
+          <h4>Monitor ongoing performance</h4>
+          <p>Use <strong>OEE Dashboard</strong> for equipment effectiveness and <strong>Observability</strong> for system health alerts. Track improvements over time.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 20. TIPS -->
+<div class="section" id="tips">
+  <h2 class="section-title"><span class="num">20</span> Tips &amp; Best Practices</h2>
+  <p class="section-sub">Get the most out of the platform</p>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="tag tag-amber">Efficiency</div>
+      <h4>Use the NLP Assistant</h4>
+      <p>Instead of clicking through menus, type commands like "Show all open loads" or "Who are our top carriers this month?" in the NLP Assistant. Faster than navigating.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-green">Automation</div>
+      <h4>Let Rachel Handle Check Calls</h4>
+      <p>Use "Rachel Auto-Call Driver" for every check call. She captures location, ETA, and status automatically. This ensures consistent shipper communication.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-blue">Revenue</div>
+      <h4>Always Check Rate Intelligence</h4>
+      <p>Before quoting a shipper, run the lane through Rate Intelligence. You might be leaving money on the table. Use the confidence band to set competitive but profitable rates.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-purple">Utilization</div>
+      <h4>Run Load Matching Daily</h4>
+      <p>Check Load Matching for backhaul opportunities on every anchor load. Even a 50% match score backhaul beats an empty return. This directly improves carrier margins.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-red">Compliance</div>
+      <h4>FMCSA Check Before Booking</h4>
+      <p>Always verify carrier authority before booking. Use the FMCSA Quick Check on the Logistics dashboard or the FMCSA Compliance page in CW Carriers. Catch expired insurance before it's a problem.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-cyan">CRM</div>
+      <h4>Enable HubSpot Auto-Sync</h4>
+      <p>Set up the HubSpot integration in Settings. Once enabled, contacts, deals, and call activities sync automatically. No more manual CRM data entry.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-green">Billing</div>
+      <h4>Auto-Generate Invoices on Delivery</h4>
+      <p>As soon as a load is marked Delivered, use Billing &rarr; Auto-Generate. Creates both AR and AP invoices instantly. Faster billing = faster payment.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-amber">Analytics</div>
+      <h4>Review Analytics Weekly</h4>
+      <p>Check the Coverage Funnel and Carrier Performance weekly. Declining coverage rates or carrier reliability scores are early warning signs that need attention.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-purple">Warehouse</div>
+      <h4>Use Both Inventory Tools</h4>
+      <p>Upload inventory data to both the Logistics Inventory Health Calculator (quick check) and PINAXIS (deep analysis). The quick tool gives instant results; PINAXIS provides detailed recommendations.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-blue">Data</div>
+      <h4>Bulk Import via Data Ingestion</h4>
+      <p>Don't enter loads one-by-one. Export from your TMS as CSV and upload via Data Ingestion. The system auto-maps columns and imports in bulk. Works for loads, carriers, customers, and rates.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-red">Webhooks</div>
+      <h4>Connect Your WMS</h4>
+      <p>In Settings &rarr; Inbound Webhook, configure your warehouse system to push new loads and status updates directly to CW Carriers. Eliminates manual load entry from warehouse operations.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-cyan">Sales</div>
+      <h4>Token Estimator + Contract Builder</h4>
+      <p>When selling AI services to clients: model costs in Token Estimator, then link the estimate to Contract Builder for instant ESA generation with accurate pricing. Complete the sales cycle in minutes.</p>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="doc-footer">
+  <div class="logos">
+    <span class="logo" style="color:var(--accent)">RINGLYPRO</span>
+    <span style="color:var(--line)">|</span>
+    <span class="logo" style="color:var(--amber)">CW CARRIERS</span>
+    <span style="color:var(--line)">|</span>
+    <span class="logo" style="color:var(--green)">PINAXIS</span>
+  </div>
+  <p>RinglyPro Platform User Guide &mdash; v1.0 &mdash; March 2026</p>
+  <p>Built by Digit2ai &middot; Powered by Claude AI, ElevenLabs, Twilio, HubSpot</p>
+  <p style="margin-top:16px;color:var(--line)">Confidential &mdash; Digit2ai / RinglyPro</p>
+</div>
+
+</div><!-- /container -->
+</body>
+</html>

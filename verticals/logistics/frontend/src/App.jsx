@@ -34,7 +34,8 @@ function Sidebar({ open, onClose, tierInfo }) {
     { path: `${BASE}/tools`, label: 'MCP Tools', roles: ['admin'] },
     { path: '/cw_carriers/dashboard', label: 'Carriers CRM', roles: ['admin','dispatcher'], ext: true, section: 'EXTERNAL' },
     { path: '/pinaxis/', label: 'Warehouse OPS', roles: ['admin','dispatcher'], ext: true },
-    { path: '/proposals/CW-CARRIERS-System-Architecture-Document.html', label: 'CW Carriers Architecture', roles: ['admin'], ext: true, section: 'DOCS' },
+    { path: '/proposals/RinglyPro-Platform-User-Guide.html', label: 'Platform User Guide', roles: ['admin','dispatcher'], ext: true, section: 'DOCS' },
+    { path: '/proposals/CW-CARRIERS-System-Architecture-Document.html', label: 'CW Carriers Architecture', roles: ['admin'], ext: true },
     { path: '/proposals/LOGISTICS-System-Architecture-Document.html', label: 'Logistics Architecture', roles: ['admin'], ext: true },
   ];
   const nav = allNav.filter(n => n.roles.includes(role));
