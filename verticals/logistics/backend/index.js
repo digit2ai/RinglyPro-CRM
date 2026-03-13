@@ -40,6 +40,7 @@ router.use('/api/ingestion', requireTier('ingestion'), require('./routes/ingesti
 router.use('/api/analytics', requireTier('analytics'), require('./routes/analytics'));
 router.use('/api/demo', requireTier('demo'), require('./routes/demo'));
 router.use('/api/neural', require('./routes/neural'));
+router.use('/api/nda', require('./routes/nda-signing'));
 
 router.get('/health', (req, res) => {
   res.json({ service: 'RinglyPro Logistics', status: 'healthy', tier: ACTIVE_TIER, tier_name: activeTierConfig.name, active_modules: activeTierConfig.modules, timestamp: new Date().toISOString() });

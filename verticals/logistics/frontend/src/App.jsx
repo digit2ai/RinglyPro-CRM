@@ -8,6 +8,7 @@ import TokenEstimator from './pages/TokenEstimator';
 import ContractBuilder from './pages/ContractBuilder';
 import MCPTools from './pages/MCPTools';
 import Neural from './pages/Neural';
+import NDA from './pages/NDA';
 
 const BASE = '/logistics';
 
@@ -31,6 +32,7 @@ function Sidebar({ open, onClose, tierInfo }) {
   const allNav = [
     { path: `${BASE}/dashboard`, label: 'Command Center', roles: ['admin','dispatcher'] },
     { path: `${BASE}/neural`, label: 'Neural Intelligence', roles: ['admin','dispatcher'], section: 'AI INTELLIGENCE' },
+    { path: `${BASE}/nda`, label: 'NDA Signing', roles: ['admin'], section: 'LEGAL' },
     { path: `${BASE}/token-estimator`, label: 'Token Estimator', roles: ['admin'], section: 'ADMIN' },
     { path: `${BASE}/contract-builder`, label: 'Contract Builder', roles: ['admin'] },
     { path: `${BASE}/tools`, label: 'MCP Tools', roles: ['admin'] },
@@ -99,6 +101,7 @@ export default function App() {
         <Route path={`${BASE}/contract-builder`} element={<ProtectedRoute roles={['admin']}><Layout tierInfo={ti}><ContractBuilder /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/tools`} element={<ProtectedRoute roles={['admin']}><Layout tierInfo={ti}><MCPTools /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/neural`} element={<ProtectedRoute><Layout tierInfo={ti}><Neural /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/nda`} element={<ProtectedRoute roles={['admin']}><Layout tierInfo={ti}><NDA /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}`} element={<Landing />} />
         <Route path={`${BASE}/`} element={<Landing />} />
         <Route path="*" element={<Navigate to={`${BASE}/`} replace />} />
