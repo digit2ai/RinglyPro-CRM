@@ -36,8 +36,10 @@
     .lang-btn.active { background:var(--gold); color:var(--navy-deep); border-color:var(--gold); }
     .lang-btn:hover:not(.active) { border-color:var(--gold); color:var(--gold); }
 
-    /* Hide non-active languages */
-    [data-lang-es], [data-lang-fil] { display:none; }
+    /* Language visibility via body class */
+    body.lang-en [data-lang-es], body.lang-en [data-lang-fil] { display:none !important; }
+    body.lang-es [data-lang-en], body.lang-es [data-lang-fil] { display:none !important; }
+    body.lang-fil [data-lang-en], body.lang-fil [data-lang-es] { display:none !important; }
 
     /* Hero */
     .hero { min-height:100vh; display:flex; align-items:center; justify-content:center; position:relative; background:linear-gradient(135deg,var(--navy-deep) 0%,var(--navy) 40%,var(--navy-light) 100%); overflow:hidden; }
@@ -222,7 +224,7 @@
     }
   </style>
 </head>
-<body>
+<body class="lang-en">
 
 <!-- Navigation -->
 <nav id="navbar">
@@ -989,14 +991,8 @@
 <script>
   // Language switcher
   function setLang(lang) {
-    document.querySelectorAll('[data-lang-en],[data-lang-es],[data-lang-fil]').forEach(el => {
-      if (el.hasAttribute('data-lang-' + lang)) {
-        el.style.display = '';
-      } else {
-        el.style.display = 'none';
-      }
-    });
-    // Elements without any data-lang (shared across all languages) stay visible
+    document.body.classList.remove('lang-en', 'lang-es', 'lang-fil');
+    document.body.classList.add('lang-' + lang);
     document.querySelectorAll('.lang-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.setLang === lang);
     });
