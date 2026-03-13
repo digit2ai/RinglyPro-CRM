@@ -165,6 +165,26 @@ async function initialize() {
       }
       console.log('  ✅ Torna Idioma BPO jobs seeded');
     }
+
+    // Seed demo events
+    const [[eventExists]] = await sequelize.query(`SELECT id FROM ti_events LIMIT 1`);
+    if (!eventExists) {
+      const demoEvents = [
+        { title_en: 'Día de la Hispanidad Festival', title_es: 'Festival del Día de la Hispanidad', title_fil: 'Pista ng Día de la Hispanidad', desc_en: 'Celebrate the shared heritage between the Philippines and the Hispanic world with music, dance, food, and cultural exhibitions in Ayala Triangle Gardens.', type: 'cultural', location: 'Ayala Triangle Gardens, Makati', date: '2026-04-12 10:00:00', capacity: 500 },
+        { title_en: 'Spanish for BPO — Free Workshop', title_es: 'Español para BPO — Taller Gratuito', title_fil: 'Espanyol para sa BPO — Libreng Workshop', desc_en: 'Free introductory workshop on Spanish for BPO professionals. Learn essential phrases, customer service vocabulary, and career opportunities.', type: 'workshop', location: 'University of Makati, Main Hall', date: '2026-04-05 14:00:00', capacity: 100 },
+        { title_en: 'Tertulias Literarias — Book Club', title_es: 'Tertulias Literarias — Club de Lectura', title_fil: 'Tertulias Literarias — Book Club', desc_en: 'Monthly Spanish book club meeting. This month: "Noli Me Tangere" by José Rizal — reading selected chapters in the original Spanish.', type: 'cultural', location: 'Filipinas Heritage Library, Makati', date: '2026-04-19 18:00:00', capacity: 30 },
+        { title_en: 'DELE Exam Information Session', title_es: 'Sesión Informativa DELE', title_fil: 'DELE Exam Info Session', desc_en: 'Learn about the DELE certification exams, requirements, preparation strategies, and registration. Presented by Instituto Cervantes Manila.', type: 'info_session', location: 'Instituto Cervantes Manila', date: '2026-04-26 10:00:00', capacity: 50 },
+        { title_en: 'Filipino-Spanish Heritage Walk', title_es: 'Caminata del Patrimonio Filipino-Español', title_fil: 'Filipino-Spanish Heritage Walk', desc_en: 'Guided walking tour of Spanish colonial heritage sites in Intramuros and Makati. Discover the architectural and cultural legacy of 333 years of shared history.', type: 'cultural', location: 'Intramuros, Manila', date: '2026-05-03 08:00:00', capacity: 40 },
+        { title_en: 'Paella & Conversation Night', title_es: 'Noche de Paella y Conversación', title_fil: 'Paella & Conversation Night', desc_en: 'Practice your Spanish in a relaxed social setting over authentic paella. All levels welcome!', type: 'social', location: 'La Tienda, Greenbelt 5, Makati', date: '2026-05-10 19:00:00', capacity: 60 },
+      ];
+      for (const e of demoEvents) {
+        await sequelize.query(
+          `INSERT INTO ti_events (title_en, title_es, title_fil, description_en, event_type, location, event_date, capacity, is_published, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,true,NOW(),NOW())`,
+          { bind: [e.title_en, e.title_es, e.title_fil, e.desc_en, e.type, e.location, e.date, e.capacity] }
+        );
+      }
+      console.log('  ✅ Torna Idioma demo events seeded');
+    }
   } catch (err) {
     console.error('  ⚠️ Torna Idioma init error:', err.message);
   }

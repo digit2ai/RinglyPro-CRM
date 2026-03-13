@@ -10,6 +10,8 @@ import Progress from './pages/Progress';
 import Certifications from './pages/Certifications';
 import BPOProgram from './pages/BPOProgram';
 import JobBoard from './pages/JobBoard';
+import Events from './pages/Events';
+import Supporters from './pages/Supporters';
 
 const BASE = '/torna-idioma';
 
@@ -142,8 +144,8 @@ export default function App() {
         <Route path={`${BASE}/certifications`} element={<ProtectedRoute><Layout><Certifications /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/bpo-program`} element={<ProtectedRoute><Layout><BPOProgram /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/job-board`} element={<ProtectedRoute><Layout><JobBoard /></Layout></ProtectedRoute>} />
-        <Route path={`${BASE}/events`} element={<ProtectedRoute><Layout><ComingSoon title="Cultural Events" /></Layout></ProtectedRoute>} />
-        <Route path={`${BASE}/supporters`} element={<ProtectedRoute><Layout><ComingSoon title="Supporters" /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/events`} element={<ProtectedRoute><Layout><Events /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/supporters`} element={<ProtectedRoute><Layout><Supporters /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/program-metrics`} element={<ProtectedRoute roles={['admin','official']}><Layout><ComingSoon title="Program Metrics" /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/schools`} element={<ProtectedRoute roles={['admin','official']}><Layout><ComingSoon title="School Management" /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/economic-impact`} element={<ProtectedRoute roles={['admin','official']}><Layout><ComingSoon title="Economic Impact" /></Layout></ProtectedRoute>} />

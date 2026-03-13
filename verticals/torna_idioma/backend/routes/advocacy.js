@@ -35,11 +35,14 @@ router.get('/supporters', auth.admin, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Public: List upcoming events
+// Public: List events (upcoming + optionally past)
 router.get('/events', async (req, res) => {
   try {
+    const includePast = req.query.include_past === 'true';
     const [events] = await sequelize.query(
-      `SELECT * FROM ti_events WHERE is_published = true AND event_date >= NOW() ORDER BY event_date ASC`
+      `SELECT e.*, u.full_name as creator_name FROM ti_events e LEFT JOIN ti_users u ON e.created_by = u.id
+       WHERE e.is_published = true ${includePast ? '' : 'AND e.event_date >= NOW()'}
+       ORDER BY e.event_date ${includePast ? 'DESC' : 'ASC'}`
     );
     res.json({ success: true, events });
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -74,6 +77,44 @@ router.post('/events', auth.official, async (req, res) => {
       { bind: [title_en, title_es||null, title_fil||null, description_en||null, description_es||null, description_fil||null, event_type||'cultural', location||null, event_date, end_date||null, capacity||null, req.user.id] }
     );
     res.status(201).json({ success: true, event });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// All events (admin, including past)
+router.get('/events/all', auth.admin, async (req, res) => {
+  try {
+    const [events] = await sequelize.query(
+      `SELECT e.*, u.full_name as creator_name FROM ti_events e LEFT JOIN ti_users u ON e.created_by = u.id ORDER BY e.event_date DESC`
+    );
+    res.json({ success: true, events });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// My event registrations
+router.get('/events/my', auth.any, async (req, res) => {
+  try {
+    const [regs] = await sequelize.query(
+      `SELECT r.*, e.title_en, e.title_es, e.title_fil, e.event_date, e.location, e.event_type
+       FROM ti_event_registrations r JOIN ti_events e ON r.event_id = e.id
+       WHERE r.user_id = $1 ORDER BY e.event_date DESC`,
+      { bind: [req.user.id] }
+    );
+    res.json({ success: true, registrations: regs });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Advocacy stats
+router.get('/stats', async (req, res) => {
+  try {
+    const [[stats]] = await sequelize.query(`
+      SELECT
+        (SELECT COUNT(*) FROM ti_supporters) as total_supporters,
+        (SELECT COUNT(*) FROM ti_events WHERE is_published = true) as total_events,
+        (SELECT COUNT(*) FROM ti_events WHERE is_published = true AND event_date >= NOW()) as upcoming_events,
+        (SELECT COALESCE(SUM(registered_count),0) FROM ti_events) as total_registrations,
+        (SELECT COALESCE(SUM(amount),0) FROM ti_donations WHERE status = 'received') as total_donations
+    `);
+    res.json({ success: true, stats });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
