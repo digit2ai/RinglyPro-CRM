@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CW CARRIERS — System Architecture Document</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --card: #283548;
+    --accent: #f59e0b;
+    --accent2: #8b5cf6;
+    --green: #22c55e;
+    --blue: #3b82f6;
+    --red: #ef4444;
+    --cyan: #06b6d4;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --line: #334155;
+    --radius: 12px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+  /* Header */
+  .doc-header { padding: 80px 0 48px; text-align: center; border-bottom: 1px solid var(--line); }
+  .doc-header .badge { display: inline-block; padding: 6px 16px; border-radius: 999px; background: rgba(245,158,11,.15); color: var(--accent); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 16px; font-weight: 600; }
+  .doc-header h1 { font-size: clamp(32px, 5vw, 48px); font-weight: 800; margin-bottom: 8px; }
+  .doc-header h1 span { color: var(--accent); }
+  .doc-header .subtitle { color: var(--muted); font-size: 18px; max-width: 700px; margin: 0 auto 24px; }
+  .doc-header .meta { display: flex; gap: 32px; justify-content: center; color: var(--muted); font-size: 13px; flex-wrap: wrap; }
+  .doc-header .meta span { display: flex; align-items: center; gap: 6px; }
+
+  /* TOC */
+  .toc { margin: 48px 0; padding: 32px; background: var(--panel); border-radius: var(--radius); border: 1px solid var(--line); }
+  .toc h2 { font-size: 18px; margin-bottom: 16px; color: var(--accent); }
+  .toc ol { padding-left: 24px; }
+  .toc li { margin: 8px 0; }
+  .toc a { color: var(--text); text-decoration: none; font-size: 14px; }
+  .toc a:hover { color: var(--accent); }
+
+  /* Sections */
+  .section { padding: 48px 0; border-bottom: 1px solid var(--line); }
+  .section:last-child { border-bottom: none; }
+  .section-title { font-size: 28px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; }
+  .section-title .num { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 10px; background: var(--accent); color: #fff; font-size: 16px; font-weight: 700; flex-shrink: 0; }
+  .section-sub { color: var(--muted); margin-bottom: 32px; }
+
+  /* Cards */
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 24px 0; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; }
+  .card h4 { font-size: 16px; margin-bottom: 8px; }
+  .card p { color: var(--muted); font-size: 13px; }
+  .card .tag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; margin-bottom: 8px; }
+  .tag-amber { background: rgba(245,158,11,.2); color: var(--accent); }
+  .tag-green { background: rgba(34,197,94,.2); color: var(--green); }
+  .tag-blue { background: rgba(59,130,246,.2); color: var(--blue); }
+  .tag-purple { background: rgba(139,92,246,.2); color: var(--accent2); }
+  .tag-cyan { background: rgba(6,182,212,.2); color: var(--cyan); }
+  .tag-red { background: rgba(239,68,68,.2); color: var(--red); }
+
+  /* Diagram boxes */
+  .arch-diagram { margin: 32px 0; padding: 32px; background: var(--panel); border-radius: var(--radius); border: 1px solid var(--line); overflow-x: auto; }
+  .arch-diagram pre { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 12px; line-height: 1.5; color: var(--text); white-space: pre; }
+  .arch-diagram .diagram-title { font-size: 14px; font-weight: 600; color: var(--accent); margin-bottom: 16px; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+  th { background: var(--card); color: var(--accent); font-weight: 600; text-align: left; padding: 12px 16px; border-bottom: 2px solid var(--accent); }
+  td { padding: 10px 16px; border-bottom: 1px solid var(--line); color: var(--text); }
+  tr:hover td { background: rgba(245,158,11,.05); }
+  .mono { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 12px; color: var(--cyan); }
+
+  /* Code blocks */
+  .code-block { background: #0d1117; border: 1px solid var(--line); border-radius: 8px; padding: 16px 20px; margin: 16px 0; overflow-x: auto; }
+  .code-block code { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 12px; line-height: 1.6; color: #e6edf3; }
+  .code-block .comment { color: #7d8590; }
+  .code-block .keyword { color: #ff7b72; }
+  .code-block .string { color: #a5d6ff; }
+  .code-block .number { color: #79c0ff; }
+
+  /* Flow steps */
+  .flow-steps { display: flex; gap: 0; margin: 24px 0; overflow-x: auto; }
+  .flow-step { flex: 1; min-width: 140px; text-align: center; position: relative; }
+  .flow-step .circle { width: 48px; height: 48px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; margin: 0 auto 8px; }
+  .flow-step .label { font-size: 13px; font-weight: 600; }
+  .flow-step .desc { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .flow-step::after { content: ''; position: absolute; top: 24px; right: -50%; width: 100%; height: 2px; background: var(--line); z-index: 0; }
+  .flow-step:last-child::after { display: none; }
+  .flow-step .circle { position: relative; z-index: 1; }
+
+  /* Layer boxes */
+  .layer-stack { margin: 24px 0; }
+  .layer { padding: 20px 24px; border-left: 4px solid; margin-bottom: 2px; background: var(--card); border-radius: 0 8px 8px 0; }
+  .layer-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .layer-desc { font-size: 12px; color: var(--muted); }
+  .layer-amber { border-color: var(--accent); }
+  .layer-green { border-color: var(--green); }
+  .layer-purple { border-color: var(--accent2); }
+  .layer-blue { border-color: var(--blue); }
+  .layer-cyan { border-color: var(--cyan); }
+  .layer-red { border-color: var(--red); }
+
+  /* KPI strip */
+  .kpi-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin: 24px 0; }
+  .kpi { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; text-align: center; }
+  .kpi .value { font-size: 28px; font-weight: 800; color: var(--accent); }
+  .kpi .label { font-size: 11px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: .05em; }
+
+  /* Highlight text */
+  .hl { color: var(--accent); font-weight: 600; }
+  .hl-green { color: var(--green); }
+  .hl-blue { color: var(--blue); }
+  p { margin-bottom: 12px; }
+  h3 { font-size: 20px; margin: 32px 0 12px; }
+  h4 { margin: 16px 0 8px; }
+  ul, ol { margin: 8px 0 16px 24px; }
+  li { margin: 4px 0; font-size: 14px; }
+
+  /* Footer */
+  .doc-footer { padding: 48px 0; text-align: center; color: var(--muted); font-size: 12px; border-top: 1px solid var(--line); }
+  .doc-footer .logos { display: flex; gap: 32px; justify-content: center; align-items: center; margin-bottom: 16px; }
+  .doc-footer .logo { font-weight: 800; font-size: 18px; }
+  .doc-footer .logo-cw { color: var(--accent); }
+  .doc-footer .logo-ringly { color: var(--accent2); }
+  .doc-footer .logo-digit2 { color: var(--green); }
+
+  /* Tablet */
+  @media (max-width: 768px) {
+    .container { padding: 0 16px; }
+    .card-grid { grid-template-columns: 1fr; }
+    .kpi-strip { grid-template-columns: repeat(2, 1fr); }
+    .flow-steps { flex-direction: column; align-items: center; }
+    .flow-step::after { display: none; }
+    .doc-header { padding: 48px 0 32px; }
+    .doc-header h1 { font-size: 28px; }
+    .doc-header .subtitle { font-size: 15px; }
+    .doc-header .meta { gap: 16px; font-size: 12px; }
+    .section { padding: 32px 0; }
+    .section-title { font-size: 22px; gap: 8px; }
+    .section-title .num { width: 30px; height: 30px; font-size: 14px; }
+    h3 { font-size: 17px; }
+    table { font-size: 12px; }
+    th, td { padding: 8px 10px; }
+    .toc { padding: 20px; }
+    .arch-diagram { padding: 16px; }
+    .arch-diagram pre { font-size: 9px; }
+    .layer { padding: 14px 16px; }
+    .code-block { padding: 12px; }
+    .code-block code { font-size: 11px; }
+  }
+
+  /* Mobile */
+  @media (max-width: 480px) {
+    .container { padding: 0 12px; }
+    .doc-header { padding: 32px 0 24px; }
+    .doc-header .badge { font-size: 10px; padding: 4px 12px; }
+    .doc-header h1 { font-size: 22px; }
+    .doc-header .subtitle { font-size: 13px; padding: 0 8px; }
+    .doc-header .meta { flex-direction: column; gap: 4px; font-size: 11px; }
+    .toc { padding: 16px; margin: 24px 0; }
+    .toc ol { padding-left: 16px; }
+    .toc a { font-size: 13px; }
+    .section { padding: 24px 0; }
+    .section-title { font-size: 18px; flex-wrap: wrap; }
+    .section-sub { font-size: 13px; margin-bottom: 20px; }
+    h3 { font-size: 16px; margin: 24px 0 8px; }
+    p, li { font-size: 13px; }
+    ul, ol { margin-left: 16px; }
+    .card { padding: 16px; }
+    .card h4 { font-size: 14px; }
+    .card p { font-size: 12px; }
+    .kpi-strip { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .kpi { padding: 12px; }
+    .kpi .value { font-size: 22px; }
+    .kpi .label { font-size: 10px; }
+    table { font-size: 11px; display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    th, td { padding: 6px 8px; white-space: nowrap; }
+    .mono { font-size: 10px; }
+    .arch-diagram { padding: 12px; margin: 16px 0; }
+    .arch-diagram pre { font-size: 7.5px; line-height: 1.4; }
+    .layer { padding: 12px 14px; }
+    .layer-title { font-size: 13px; }
+    .layer-desc { font-size: 11px; }
+    .code-block { padding: 10px; }
+    .code-block code { font-size: 10px; }
+    .flow-step .circle { width: 36px; height: 36px; font-size: 14px; }
+    .flow-step .label { font-size: 12px; }
+    .flow-step .desc { font-size: 10px; }
+    .doc-footer { padding: 32px 0; }
+    .doc-footer .logos { gap: 16px; }
+    .doc-footer .logo { font-size: 15px; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="container">
+
+<!-- ================================================================ -->
+<!-- HEADER -->
+<!-- ================================================================ -->
+<div class="doc-header">
+  <div class="badge">Technical Architecture Document v1.0</div>
+  <h1><span>CW CARRIERS</span> System Architecture</h1>
+  <p class="subtitle">AI-Powered Freight Brokerage Platform with Voice AI, Rate Intelligence, Load Matching, and Multi-CRM Integration</p>
+  <div class="meta">
+    <span>Author: Digit2ai / RinglyPro</span>
+    <span>Client: CW Carriers USA</span>
+    <span>Date: March 2026</span>
+    <span>Status: Production (v1.0)</span>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- TABLE OF CONTENTS -->
+<!-- ================================================================ -->
+<div class="toc">
+  <h2>Table of Contents</h2>
+  <ol>
+    <li><a href="#overview">System Overview &amp; Purpose</a></li>
+    <li><a href="#arch">High-Level Architecture (6-Layer Model)</a></li>
+    <li><a href="#mcp">MCP Integration Layer</a></li>
+    <li><a href="#data">Data Model &amp; Database Schema</a></li>
+    <li><a href="#voice">Voice AI Engine (Rachel)</a></li>
+    <li><a href="#pricing">Rate Intelligence &amp; Pricing Engine</a></li>
+    <li><a href="#matching">AI Load &amp; Carrier Matching</a></li>
+    <li><a href="#integrations">External Integrations</a></li>
+    <li><a href="#api">API Reference (22 Route Modules)</a></li>
+    <li><a href="#dashboard">Dashboard &amp; Frontend Architecture</a></li>
+    <li><a href="#analytics">Analytics &amp; Reporting Engine</a></li>
+    <li><a href="#security">Security &amp; Authentication</a></li>
+    <li><a href="#deploy">Deployment &amp; Infrastructure</a></li>
+    <li><a href="#roadmap">Implementation Roadmap</a></li>
+  </ol>
+</div>
+
+<!-- ================================================================ -->
+<!-- 1. SYSTEM OVERVIEW -->
+<!-- ================================================================ -->
+<div class="section" id="overview">
+  <h2 class="section-title"><span class="num">1</span> System Overview &amp; Purpose</h2>
+  <p class="section-sub">What CW Carriers does and why it exists</p>
+
+  <p>CW Carriers is a <span class="hl">full-stack AI freight brokerage platform</span> that enables CW Carriers USA to:</p>
+
+  <ol>
+    <li><strong>Manage the complete freight lifecycle</strong> &mdash; from shipper quotes to carrier dispatch, check calls, delivery confirmation, and dual-sided billing</li>
+    <li><strong>Automate carrier outreach via Voice AI</strong> &mdash; Rachel, an ElevenLabs-powered AI agent, handles inbound/outbound calls for load coverage, check calls, and carrier qualification</li>
+    <li><strong>Price loads with AI-powered rate intelligence</strong> &mdash; historical data, corridor analysis, and market benchmarks (DAT/TruckStop/GreenScreens) drive confident quoting</li>
+    <li><strong>Match loads to carriers automatically</strong> &mdash; multi-factor scoring engine considers lane history, equipment, capacity, reliability, and deadhead optimization</li>
+    <li><strong>Sync bidirectionally with HubSpot CRM</strong> &mdash; contacts, deals, and call logs flow between platforms with full audit trail</li>
+    <li><strong>Provide natural language command interface</strong> &mdash; Claude AI-powered NLP lets dispatchers manage operations via conversational queries</li>
+  </ol>
+
+  <div class="kpi-strip">
+    <div class="kpi"><div class="value">22</div><div class="label">API Route Modules</div></div>
+    <div class="kpi"><div class="value">23</div><div class="label">Database Tables</div></div>
+    <div class="kpi"><div class="value">14</div><div class="label">Backend Services</div></div>
+    <div class="kpi"><div class="value">6</div><div class="label">External Integrations</div></div>
+    <div class="kpi"><div class="value">1</div><div class="label">Voice AI Agent</div></div>
+    <div class="kpi"><div class="value">5</div><div class="label">Analytics Engines</div></div>
+  </div>
+
+  <h3>Core Workflow</h3>
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="circle">1</div>
+      <div class="label">Ingest</div>
+      <div class="desc">Loads from shipper, CSV, TMS, or API</div>
+    </div>
+    <div class="flow-step">
+      <div class="circle" style="background:var(--accent2)">2</div>
+      <div class="label">Price</div>
+      <div class="desc">AI rate intelligence + margin calc</div>
+    </div>
+    <div class="flow-step">
+      <div class="circle" style="background:var(--green)">3</div>
+      <div class="label">Match</div>
+      <div class="desc">Carrier scoring + auto-dispatch</div>
+    </div>
+    <div class="flow-step">
+      <div class="circle" style="background:var(--blue)">4</div>
+      <div class="label">Track</div>
+      <div class="desc">Check calls + transit updates</div>
+    </div>
+    <div class="flow-step">
+      <div class="circle" style="background:var(--red)">5</div>
+      <div class="label">Bill</div>
+      <div class="desc">Dual-sided invoicing + POD</div>
+    </div>
+    <div class="flow-step">
+      <div class="circle" style="background:var(--cyan)">6</div>
+      <div class="label">Analyze</div>
+      <div class="desc">KPIs, margins, performance</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- 2. HIGH-LEVEL ARCHITECTURE -->
+<!-- ================================================================ -->
+<div class="section" id="arch">
+  <h2 class="section-title"><span class="num">2</span> High-Level Architecture (6-Layer Model)</h2>
+  <p class="section-sub">End-to-end system design from data input to operational output</p>
+
+  <div class="arch-diagram">
+    <div class="diagram-title">CW Carriers System Architecture &mdash; 6-Layer Model</div>
+<pre>
+ ┌─────────────────────────────────────────────────────────────────────────────────┐
+ │  LAYER 1: DATA INPUT &amp; INGESTION                                               │
+ │  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐          │
+ │  │ Shipper      │ │  CSV/Excel   │ │  McLeod TMS  │ │  HubSpot     │          │
+ │  │ Portal       │ │  Bulk Upload │ │  Integration  │ │  Webhook     │          │
+ │  │              │ │              │ │              │ │              │          │
+ │  │ Web forms,   │ │ Loads, rates │ │ 2-way sync   │ │ Contact &amp;    │          │
+ │  │ quotes, RFP  │ │ carriers     │ │ orders/loads │ │ deal events  │          │
+ │  └──────┬───────┘ └──────┬───────┘ └──────┬───────┘ └──────┬───────┘          │
+ │         │                │                │                │                   │
+ └─────────┼────────────────┼────────────────┼────────────────┼───────────────────┘
+           │                │                │                │
+           ▼                ▼                ▼                ▼
+ ┌─────────────────────────────────────────────────────────────────────────────────┐
+ │  LAYER 2: RINGLYPRO MCP SERVER  (Node.js / Express / PostgreSQL)               │
+ │                                                                                │
+ │  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐  ┌────────────────┐  │
+ │  │  Data Parser   │  │  NLP Engine   │  │  Auth Layer   │  │  Event Router  │  │
+ │  │  CSV / Excel   │──│  Claude AI    │──│  JWT + RBAC   │──│  Webhook Mgr   │  │
+ │  │  JSON / API    │  │  Intent Parse │  │  Session Mgmt │  │  HubSpot Sync  │  │
+ │  └───────┬───────┘  └───────────────┘  └───────────────┘  └────────────────┘  │
+ │          │                                                                     │
+ │          ▼                                                                     │
+ │  ┌──────────────────────────────────────────────────────────────────────────┐  │
+ │  │  PostgreSQL — 23 tables (cw_ + lg_ prefix)                               │  │
+ │  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────────┐    │  │
+ │  │  │Contacts  │ │  Loads   │ │ Call Logs│ │ Carriers │ │  Customers │    │  │
+ │  │  │(CRM)     │ │(Freight) │ │(Voice AI)│ │(Network) │ │ (Shippers) │    │  │
+ │  │  └──────────┘ └──────────┘ └──────────┘ └──────────┘ └────────────┘    │  │
+ │  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────────┐    │  │
+ │  │  │Offers    │ │ Check    │ │ Invoices │ │Benchmarks│ │  Analytics  │    │  │
+ │  │  │(Bids)    │ │ Calls    │ │(Billing) │ │ (Rates)  │ │ (Snapshots) │    │  │
+ │  │  └──────────┘ └──────────┘ └──────────┘ └──────────┘ └────────────┘    │  │
+ │  └──────────────────────────────────────────────────────────────────────────┘  │
+ └────────────────────────────────────────┬──────────────────────────────────────┘
+                                          │
+                                          ▼
+ ┌─────────────────────────────────────────────────────────────────────────────────┐
+ │  LAYER 3: AI INTELLIGENCE ENGINE                                                │
+ │                                                                                │
+ │  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐                 │
+ │  │ Rate       │ │  Carrier   │ │ Load-to-   │ │ Brokerage  │                 │
+ │  │ Intelligence│ │  Matching  │ │ Load Pair  │ │ Analytics  │                 │
+ │  │ Engine     │ │  Scoring   │ │ Optimizer  │ │ Engine     │                 │
+ │  └────────────┘ └────────────┘ └────────────┘ └────────────┘                 │
+ │  ┌────────────┐ ┌────────────┐ ┌────────────┐                                │
+ │  │ FMCSA      │ │  NLP       │ │ Alert      │                                │
+ │  │ Compliance │ │  Command   │ │ Engine     │                                │
+ │  │ Checker    │ │  Processor │ │ (SMS/Email)│                                │
+ │  └────────────┘ └────────────┘ └────────────┘                                │
+ └──────────────────────────────────────┬────────────────────────────────────────┘
+                                        │
+                                        ▼
+ ┌─────────────────────────────────────────────────────────────────────────────────┐
+ │  LAYER 4: VOICE AI ENGINE (RACHEL)                                              │
+ │                                                                                │
+ │  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐         │
+ │  │ ElevenLabs   │ │  Twilio      │ │  Call Flow   │ │  Transcript  │         │
+ │  │ WebRTC       │ │  SIP/PSTN    │ │  Manager     │ │  Processor   │         │
+ │  │ Real-time    │ │  Inbound &amp;   │ │  State       │ │  AI Summary  │         │
+ │  │ Voice Synth  │ │  Outbound    │ │  Machine     │ │  HubSpot Log │         │
+ │  └──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘         │
+ │                                                                                │
+ │  Capabilities: Check calls, carrier coverage, load quoting, appointment        │
+ │  scheduling, carrier qualification, escalation to live dispatch                │
+ └──────────────────────────────────────┬────────────────────────────────────────┘
+                                        │
+                                        ▼
+ ┌─────────────────────────────────────────────────────────────────────────────────┐
+ │  LAYER 5: OUTPUT &amp; DELIVERY                                                    │
+ │                                                                                │
+ │  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐         │
+ │  │  React SPA   │ │  REST API    │ │  Report      │ │  CRM Sync    │         │
+ │  │  Dashboard   │ │  (JSON)      │ │  Generator   │ │  HubSpot     │         │
+ │  │  Vite Build  │ │  22 modules  │ │  PDF / CSV   │ │  2-way Push  │         │
+ │  └──────────────┘ └──────────────┘ └──────────────┘ └──────┬───────┘         │
+ └─────────────────────────────────────────────────────────────┼─────────────────┘
+                                                               │
+                                                               ▼
+ ┌─────────────────────────────────────────────────────────────────────────────────┐
+ │  LAYER 6: EXTERNAL SYSTEMS                                                      │
+ │                                                                                │
+ │  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐         │
+ │  │ HubSpot CRM  │ │ McLeod TMS   │ │  FMCSA       │ │  DAT /       │         │
+ │  │ Contacts     │ │ Order Sync   │ │  SAFER API   │ │  TruckStop   │         │
+ │  │ Deals        │ │ Status Push  │ │  Authority   │ │  GreenScreens│         │
+ │  │ Activities   │ │ Rate Import  │ │  Insurance   │ │  Rate Data   │         │
+ │  └──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘         │
+ │  ┌──────────────┐ ┌──────────────┐                                            │
+ │  │ Twilio       │ │ ElevenLabs   │                                            │
+ │  │ Voice/SMS    │ │ Voice AI     │                                            │
+ │  │ Alerts       │ │ WebRTC       │                                            │
+ │  └──────────────┘ └──────────────┘                                            │
+ └─────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+  </div>
+
+  <div class="layer-stack">
+    <div class="layer layer-amber">
+      <div class="layer-title">Layer 1 &mdash; Data Input &amp; Ingestion</div>
+      <div class="layer-desc">Multi-channel data ingestion: web forms, CSV/Excel bulk upload (loads, carriers, rates), McLeod TMS bi-directional sync, HubSpot webhook events. Auto-column mapping with alias engine for CSV flexibility.</div>
+    </div>
+    <div class="layer layer-purple">
+      <div class="layer-title">Layer 2 &mdash; RinglyPro MCP Server</div>
+      <div class="layer-desc">Node.js/Express application with 22 route modules, JWT + RBAC authentication, NLP command processor (Claude AI), event router, and PostgreSQL storage (23 tables across cw_* and lg_* prefixes).</div>
+    </div>
+    <div class="layer layer-green">
+      <div class="layer-title">Layer 3 &mdash; AI Intelligence Engine</div>
+      <div class="layer-desc">Rate Intelligence (historical + benchmark + corridor analysis), Carrier Matching (multi-factor scoring), Load-to-Load Pairing (backhaul/chain optimization), FMCSA Compliance Checker, Brokerage Analytics, NLP Command Processing, Alert Engine.</div>
+    </div>
+    <div class="layer layer-red">
+      <div class="layer-title">Layer 4 &mdash; Voice AI Engine (Rachel)</div>
+      <div class="layer-desc">ElevenLabs WebRTC voice synthesis + Twilio SIP/PSTN for inbound/outbound calls. Rachel handles check calls, carrier coverage, load quoting, carrier qualification. Transcripts auto-summarized and logged to HubSpot.</div>
+    </div>
+    <div class="layer layer-cyan">
+      <div class="layer-title">Layer 5 &mdash; Output &amp; Delivery</div>
+      <div class="layer-desc">React + Vite SPA dashboard, 22-module REST API (JSON), PDF/CSV report generation, HubSpot bi-directional CRM sync with full audit trail.</div>
+    </div>
+    <div class="layer layer-blue">
+      <div class="layer-title">Layer 6 &mdash; External Systems</div>
+      <div class="layer-desc">HubSpot CRM (contacts, deals, activities), McLeod TMS (order/status sync), FMCSA SAFER API (authority/insurance), DAT/TruckStop/GreenScreens (market rates), Twilio (voice/SMS), ElevenLabs (AI voice).</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- 3. MCP INTEGRATION LAYER -->
+<!-- ================================================================ -->
+<div class="section" id="mcp">
+  <h2 class="section-title"><span class="num">3</span> MCP Integration Layer</h2>
+  <p class="section-sub">How CW Carriers connects to the RinglyPro Model Context Protocol ecosystem</p>
+
+  <p>CW Carriers operates as a <span class="hl">self-contained MCP module</span> within the RinglyPro platform. Mounted as an Express sub-application at <span class="mono">/cw_carriers</span>, it follows the same pattern as the Logistics, PINAXIS, and Store Health AI modules.</p>
+
+  <h3>MCP Server Components</h3>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="tag tag-amber">Freight MCP Proxy</div>
+      <h4>Brokerage Operations</h4>
+      <p>Handles load management, carrier dispatch, rate quoting, check calls, and billing. Exposes 22 RESTful route modules under <span class="mono">/cw_carriers/api/*</span>.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-purple">NLP Command Engine</div>
+      <h4>Natural Language Interface</h4>
+      <p>Claude AI-powered intent parsing: "Find me a reefer carrier in Dallas for Friday" &rarr; parsed intent + entity extraction &rarr; carrier search + availability check.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-green">Voice AI (Rachel)</div>
+      <h4>Conversational Agent</h4>
+      <p>ElevenLabs + Twilio voice agent trained on freight brokerage operations. Handles check calls, carrier outreach, load quoting, and escalation to live dispatch.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-blue">HubSpot Bridge</div>
+      <h4>CRM Bi-Directional Sync</h4>
+      <p>Contacts, deals, and call activities sync between CW Carriers and HubSpot CRM. Webhook-driven inbound events + API push for outbound updates.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-cyan">TMS Bridge</div>
+      <h4>McLeod Integration</h4>
+      <p>Bi-directional order/status sync with McLeod LoadMaster TMS. Load creation, status updates, rate confirmations, and carrier assignment flow between systems.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-red">Alert Engine</div>
+      <h4>Multi-Channel Notifications</h4>
+      <p>SMS + email alerts via Twilio for critical events: load exceptions, late pickups, insurance expiry, payment overdue. Configurable escalation rules.</p>
+    </div>
+  </div>
+
+  <h3>MCP Data Flow</h3>
+
+  <div class="arch-diagram">
+    <div class="diagram-title">MCP Pipeline: Shipper Request &rarr; Price &rarr; Match &rarr; Dispatch &rarr; Track &rarr; Bill</div>
+<pre>
+  Shipper          CW Carriers MCP       AI Engine        Rachel          External
+  Customer         Server               Intelligence     Voice AI        Systems
+     │                  │                  │                │                │
+     │  Request Quote   │                  │                │                │
+     │─────────────────>│                  │                │                │
+     │                  │  Rate Lookup     │                │                │
+     │                  │─────────────────>│                │                │
+     │                  │                  │  Historical +  │                │
+     │                  │                  │  Benchmark     │                │
+     │  Quote Returned  │  Rate + Margin   │  Analysis      │                │
+     │<─────────────────│<─────────────────│                │                │
+     │                  │                  │                │                │
+     │  Accept Load     │                  │                │                │
+     │─────────────────>│                  │                │                │
+     │                  │  Find Carriers   │                │                │
+     │                  │─────────────────>│                │                │
+     │                  │                  │  Multi-factor  │                │
+     │                  │  Top Matches     │  Scoring       │                │
+     │                  │<─────────────────│                │                │
+     │                  │                  │                │                │
+     │                  │  Call Carriers   │                │                │
+     │                  │─────────────────────────────────>│                │
+     │                  │                  │                │  Outbound Call │
+     │                  │                  │                │───────────────>│ Twilio
+     │                  │                  │                │  ElevenLabs    │
+     │                  │                  │                │  Voice Synth   │
+     │                  │  Carrier Booked  │                │                │
+     │                  │<─────────────────────────────────│                │
+     │                  │                  │                │                │
+     │                  │  Sync to CRM     │                │                │
+     │                  │─────────────────────────────────────────────────>│ HubSpot
+     │                  │                  │                │                │
+     │                  │  Check Call      │                │                │
+     │                  │─────────────────────────────────>│                │
+     │                  │                  │                │  Driver Call   │
+     │                  │  Status Update   │                │───────────────>│ Twilio
+     │                  │<─────────────────────────────────│                │
+     │                  │                  │                │                │
+     │  POD + Invoice   │                  │                │                │
+     │<─────────────────│  Generate Billing│                │                │
+     │                  │  Shipper + Carrier Invoices       │                │
+</pre>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- 4. DATA MODEL -->
+<!-- ================================================================ -->
+<div class="section" id="data">
+  <h2 class="section-title"><span class="num">4</span> Data Model &amp; Database Schema</h2>
+  <p class="section-sub">23 PostgreSQL tables across two prefixes: CW (CRM) and LG (Brokerage)</p>
+
+  <h3>CW Tables (CRM &amp; Operations) &mdash; 11 Tables</h3>
+
+  <table>
+    <tr><th>Table</th><th>Purpose</th><th>Key Fields</th><th>Indexes</th></tr>
+    <tr>
+      <td class="mono">cw_contacts</td>
+      <td>Shippers, carriers, drivers, prospects</td>
+      <td>contact_type, company_name, mc_number, dot_number, freight_types[], lanes[], hubspot_id</td>
+      <td>type, email</td>
+    </tr>
+    <tr>
+      <td class="mono">cw_loads</td>
+      <td>Freight loads / deals</td>
+      <td>load_ref, origin, destination, freight_type, weight, rate_usd, shipper_rate, equipment_type, status</td>
+      <td>status, pickup_date</td>
+    </tr>
+    <tr>
+      <td class="mono">cw_call_logs</td>
+      <td>AI &amp; human call records</td>
+      <td>call_sid, direction, transcript, ai_summary, outcome, hubspot_logged</td>
+      <td>contact_id, load_id</td>
+    </tr>
+    <tr>
+      <td class="mono">cw_carrier_offers</td>
+      <td>Carrier bids per load</td>
+      <td>load_id, carrier_id, rate_offered, status (pending/accepted/declined/counter/expired)</td>
+      <td>load_id, status</td>
+    </tr>
+    <tr>
+      <td class="mono">cw_check_calls</td>
+      <td>Transit tracking events</td>
+      <td>load_id, call_type, location, eta, status_reported, called_by (rachel_ai/human)</td>
+      <td>load_id</td>
+    </tr>
+    <tr>
+      <td class="mono">cw_invoices</td>
+      <td>Dual-sided billing</td>
+      <td>invoice_type (shipper/carrier), amount, status, due_date, pod_received</td>
+      <td>load_id, type, status</td>
+    </tr>
+    <tr>
+      <td class="mono">cw_hubspot_sync</td>
+      <td>CRM sync audit log</td>
+      <td>object_type, object_id, action, payload (JSONB), status</td>
+      <td>status</td>
+    </tr>
+    <tr>
+      <td class="mono">cw_nlp_commands</td>
+      <td>NLP command audit trail</td>
+      <td>user_input, parsed_intent, parsed_entities (JSONB), action_taken, success</td>
+      <td>&mdash;</td>
+    </tr>
+    <tr>
+      <td class="mono">cw_analytics</td>
+      <td>Pre-computed KPI snapshots</td>
+      <td>metric_type, metric_date, value_json (JSONB)</td>
+      <td>&mdash;</td>
+    </tr>
+    <tr>
+      <td class="mono">cw_alert_log</td>
+      <td>SMS/email notification log</td>
+      <td>channel, recipient, message, status, external_id</td>
+      <td>created_at</td>
+    </tr>
+    <tr>
+      <td class="mono">cw_users</td>
+      <td>Authentication &amp; RBAC</td>
+      <td>email, password_hash, tenant_id, role, status</td>
+      <td>email (unique)</td>
+    </tr>
+  </table>
+
+  <h3>LG Tables (Brokerage Platform) &mdash; 12 Tables</h3>
+
+  <table>
+    <tr><th>Table</th><th>Purpose</th><th>Key Fields</th><th>Indexes</th></tr>
+    <tr>
+      <td class="mono">lg_loads</td>
+      <td>Extended load data with full routing</td>
+      <td>tenant_id, origin/dest (city/state/zip), equipment_type, buy_rate, sell_rate, margin, margin_pct, rate_per_mile, priority, hazmat, tags (JSONB)</td>
+      <td>tenant, status, origin, dest, pickup, carrier</td>
+    </tr>
+    <tr>
+      <td class="mono">lg_carriers</td>
+      <td>Carrier network with scoring</td>
+      <td>mc/dot_number, equipment_types[], service_lanes (JSONB), acceptance_rate, on_time_delivery_pct, reliability_score, operating_status</td>
+      <td>tenant, mc, dot, state</td>
+    </tr>
+    <tr>
+      <td class="mono">lg_customers</td>
+      <td>Shipper accounts &amp; margin analysis</td>
+      <td>payment_terms, credit_limit, total_loads, total_revenue, avg_margin_pct, top_lanes (JSONB)</td>
+      <td>tenant</td>
+    </tr>
+    <tr>
+      <td class="mono">lg_rate_benchmarks</td>
+      <td>Market rate intelligence</td>
+      <td>origin/dest (state/city), equipment_type, benchmark_source (internal/dat/truckstop/greenscreens), rate percentiles, confidence</td>
+      <td>lane, date</td>
+    </tr>
+    <tr>
+      <td class="mono">lg_shipment_events</td>
+      <td>Track &amp; trace timeline</td>
+      <td>event_type, location, lat/lng, eta, actor, source (manual/driver/carrier/tracking/voice/api)</td>
+      <td>load_id, event_type</td>
+    </tr>
+    <tr>
+      <td class="mono">lg_call_interactions</td>
+      <td>Voice automation audit trail</td>
+      <td>direction, intent, outcome, duration, transcript_summary, structured_data (JSONB), agent_name, recording_url</td>
+      <td>load_id, carrier_id, direction</td>
+    </tr>
+    <tr>
+      <td class="mono">lg_billing_documents</td>
+      <td>Advanced billing with validation</td>
+      <td>doc_type (invoice/pod/bol/rate_confirmation/credit_memo), validation_status, flagged_issues (JSONB), pod_verified, payment_status</td>
+      <td>load_id, status</td>
+    </tr>
+    <tr>
+      <td class="mono">lg_load_pairs</td>
+      <td>Load-to-load matching results</td>
+      <td>pair_type (backhaul/chain/round_trip/relay), match_score, route_score, timing_score, deadhead_miles, combined_rpm</td>
+      <td>score, loads</td>
+    </tr>
+    <tr>
+      <td class="mono">lg_data_uploads</td>
+      <td>File ingestion tracking</td>
+      <td>file_type, data_type, total_rows, imported_rows, column_mapping (JSONB), status</td>
+      <td>tenant, status</td>
+    </tr>
+    <tr>
+      <td class="mono">lg_analytics_snapshots</td>
+      <td>Pre-computed KPI snapshots</td>
+      <td>snapshot_date, period (daily/weekly/monthly), metrics (JSONB)</td>
+      <td>date + period</td>
+    </tr>
+    <tr>
+      <td class="mono">lg_demo_workspaces</td>
+      <td>Prospect demo environments</td>
+      <td>access_code, company_name, tier, modules_enabled[], expires_at, lead_source</td>
+      <td>access_code, status</td>
+    </tr>
+    <tr>
+      <td class="mono">lg_user_feedback</td>
+      <td>Recommendation acceptance tracking</td>
+      <td>feedback_type (match/quote/pair accepted/rejected), reference_type, original_value, new_value (JSONB)</td>
+      <td>feedback_type</td>
+    </tr>
+  </table>
+
+  <h3>Entity Relationship Overview</h3>
+  <div class="arch-diagram">
+    <div class="diagram-title">Key Relationships Across Tables</div>
+<pre>
+  cw_contacts ──┬──< cw_loads (shipper_id, carrier_id)
+                ├──< cw_call_logs (contact_id)
+                ├──< cw_carrier_offers (carrier_id)
+                ├──< cw_check_calls (contact_id)
+                └──< cw_invoices (contact_id)
+
+  cw_loads ─────┬──< cw_carrier_offers (load_id)
+                ├──< cw_check_calls (load_id)
+                ├──< cw_call_logs (load_id)
+                └──< cw_invoices (load_id)
+
+  lg_loads ─────┬──< lg_shipment_events (load_id)
+                ├──< lg_call_interactions (load_id)
+                ├──< lg_billing_documents (load_id)
+                └──< lg_load_pairs (load_a_id, load_b_id)
+
+  lg_carriers ──┬──< lg_loads (assigned_carrier_id)
+                └──< lg_call_interactions (carrier_id)
+
+  lg_customers ─┬──< lg_loads (customer_id)
+                └──< lg_billing_documents (customer_id)
+</pre>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- 5. VOICE AI ENGINE -->
+<!-- ================================================================ -->
+<div class="section" id="voice">
+  <h2 class="section-title"><span class="num">5</span> Voice AI Engine (Rachel)</h2>
+  <p class="section-sub">ElevenLabs-powered conversational AI agent for freight brokerage operations</p>
+
+  <p>Rachel is a <span class="hl">production voice AI agent</span> purpose-built for freight brokerage. She handles both inbound and outbound calls using ElevenLabs WebRTC for real-time voice synthesis and Twilio for telephony infrastructure.</p>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="tag tag-amber">Outbound Carrier Coverage</div>
+      <h4>Automated Dispatch</h4>
+      <p>Rachel calls carriers from the matched carrier list to secure load coverage. Negotiates rates, confirms equipment availability, and books carriers with rate confirmations.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-green">Check Calls</div>
+      <h4>Transit Monitoring</h4>
+      <p>Automated check calls to drivers and carriers during transit. Captures location, ETA updates, and exceptions. Logs all results to cw_check_calls with GPS data.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-blue">Inbound Handling</div>
+      <h4>Call Routing &amp; Qualification</h4>
+      <p>Handles inbound carrier and shipper calls. Qualifies new carriers (MC/DOT, equipment, lanes), takes load inquiries, and escalates to live dispatch when needed.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-purple">Transcript Processing</div>
+      <h4>AI Summary &amp; CRM Sync</h4>
+      <p>Every call is transcribed, summarized by Claude AI, and automatically logged to HubSpot as a call activity. Structured data extracted for load/carrier records.</p>
+    </div>
+  </div>
+
+  <h3>Voice Architecture</h3>
+  <div class="arch-diagram">
+    <div class="diagram-title">Rachel Voice AI — Call Flow Architecture</div>
+<pre>
+  ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+  │   Twilio     │     │  ElevenLabs  │     │  CW Carriers │
+  │   SIP/PSTN   │────>│  WebRTC      │────>│  MCP Server  │
+  │              │     │  Voice Synth │     │              │
+  │  Inbound  ─┐ │     │  Real-time   │     │  Call Flow   │
+  │  Outbound ─┘ │     │  Streaming   │     │  State Mgmt  │
+  └──────────────┘     └──────────────┘     └──────┬───────┘
+                                                    │
+                              ┌──────────────────────┤
+                              │                      │
+                              ▼                      ▼
+                    ┌──────────────┐      ┌──────────────┐
+                    │  Claude AI   │      │  PostgreSQL  │
+                    │  Transcript  │      │  cw_call_logs│
+                    │  Summarizer  │      │  cw_check_   │
+                    │              │      │  calls       │
+                    └──────┬───────┘      └──────────────┘
+                           │
+                           ▼
+                    ┌──────────────┐
+                    │  HubSpot     │
+                    │  Activity    │
+                    │  Log         │
+                    └──────────────┘
+</pre>
+  </div>
+
+  <h3>Rachel Capabilities Matrix</h3>
+  <table>
+    <tr><th>Capability</th><th>Direction</th><th>Trigger</th><th>Data Captured</th></tr>
+    <tr><td>Carrier Coverage</td><td>Outbound</td><td>New load posted</td><td>Rate, equipment, availability, ETA</td></tr>
+    <tr><td>Check Calls</td><td>Outbound</td><td>Scheduled / on-demand</td><td>Location, ETA, status, exceptions</td></tr>
+    <tr><td>Pickup Confirmation</td><td>Outbound</td><td>Pickup date morning</td><td>Confirmed/delayed, new ETA</td></tr>
+    <tr><td>Delivery Confirmation</td><td>Outbound</td><td>Delivery window</td><td>Delivered time, POD status</td></tr>
+    <tr><td>Carrier Qualification</td><td>Inbound</td><td>Carrier calls in</td><td>MC/DOT, equipment, lanes, rates</td></tr>
+    <tr><td>Load Inquiry</td><td>Inbound</td><td>Shipper calls in</td><td>Origin/dest, commodity, dates, quote</td></tr>
+    <tr><td>Escalation</td><td>Both</td><td>Complex scenario</td><td>Transfer to live dispatcher</td></tr>
+  </table>
+</div>
+
+<!-- ================================================================ -->
+<!-- 6. RATE INTELLIGENCE -->
+<!-- ================================================================ -->
+<div class="section" id="pricing">
+  <h2 class="section-title"><span class="num">6</span> Rate Intelligence &amp; Pricing Engine</h2>
+  <p class="section-sub">AI-powered rate recommendations with confidence scoring</p>
+
+  <p>The pricing engine provides <span class="hl">instant rate recommendations</span> for any lane by analyzing multiple data sources with a tiered fallback strategy:</p>
+
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="circle">1</div>
+      <div class="label">Historical</div>
+      <div class="desc">lg_loads data (last 90 days)</div>
+    </div>
+    <div class="flow-step">
+      <div class="circle" style="background:var(--accent2)">2</div>
+      <div class="label">Corridor</div>
+      <div class="desc">State-to-state patterns</div>
+    </div>
+    <div class="flow-step">
+      <div class="circle" style="background:var(--green)">3</div>
+      <div class="label">Benchmark</div>
+      <div class="desc">DAT/TruckStop data</div>
+    </div>
+    <div class="flow-step">
+      <div class="circle" style="background:var(--blue)">4</div>
+      <div class="label">Legacy</div>
+      <div class="desc">cw_loads history</div>
+    </div>
+    <div class="flow-step">
+      <div class="circle" style="background:var(--red)">5</div>
+      <div class="label">Fallback</div>
+      <div class="desc">National avg RPM</div>
+    </div>
+  </div>
+
+  <h3>Pricing Methods</h3>
+  <table>
+    <tr><th>Method</th><th>Data Source</th><th>Confidence</th><th>Description</th></tr>
+    <tr><td>exact_lane_history</td><td>lg_loads (city-to-city)</td><td><span class="hl-green">Very High</span></td><td>Same origin/dest city pair in last 90 days. Weighted average with recency bias.</td></tr>
+    <tr><td>state_corridor</td><td>lg_loads (state-to-state)</td><td><span class="hl">High</span></td><td>State corridor patterns when exact city match unavailable. Regional rate adjustment.</td></tr>
+    <tr><td>benchmark_data</td><td>lg_rate_benchmarks</td><td><span class="hl">High</span></td><td>External benchmark data from DAT, TruckStop, GreenScreens with percentile bands.</td></tr>
+    <tr><td>legacy_data</td><td>cw_loads</td><td><span class="hl-blue">Medium</span></td><td>Historical CW Carriers load data. May include older pricing patterns.</td></tr>
+    <tr><td>national_average</td><td>Calculated</td><td style="color:var(--red)">Low</td><td>National average RPM × estimated miles. Last resort with wide confidence band.</td></tr>
+  </table>
+
+  <h3>Rate Response Structure</h3>
+  <div class="code-block"><code>{
+  <span class="string">"lane"</span>: { <span class="string">"origin"</span>: <span class="string">"Dallas, TX"</span>, <span class="string">"destination"</span>: <span class="string">"Chicago, IL"</span>, <span class="string">"estimated_miles"</span>: <span class="number">920</span> },
+  <span class="string">"recommendation"</span>: {
+    <span class="string">"suggested_buy_rate"</span>: <span class="number">2484</span>,
+    <span class="string">"suggested_sell_rate"</span>: <span class="number">2856</span>,
+    <span class="string">"rate_per_mile"</span>: <span class="number">2.70</span>,
+    <span class="string">"margin_pct"</span>: <span class="number">15.0</span>,
+    <span class="string">"estimated_margin"</span>: <span class="number">372</span>
+  },
+  <span class="string">"confidence_band"</span>: {
+    <span class="string">"buy_rate_low"</span>: <span class="number">2208</span>, <span class="string">"buy_rate_high"</span>: <span class="number">2760</span>,
+    <span class="string">"sell_rate_low"</span>: <span class="number">2576</span>, <span class="string">"sell_rate_high"</span>: <span class="number">3128</span>
+  },
+  <span class="string">"pricing_method"</span>: <span class="string">"exact_lane_history"</span>,
+  <span class="string">"rationale"</span>: [<span class="string">"Based on 12 loads in last 90 days"</span>, <span class="string">"Avg RPM $2.70 (range $2.40-$3.00)"</span>]
+}</code></div>
+</div>
+
+<!-- ================================================================ -->
+<!-- 7. AI LOAD & CARRIER MATCHING -->
+<!-- ================================================================ -->
+<div class="section" id="matching">
+  <h2 class="section-title"><span class="num">7</span> AI Load &amp; Carrier Matching</h2>
+  <p class="section-sub">Multi-factor scoring engine for optimal carrier-to-load and load-to-load pairing</p>
+
+  <h3>Carrier-to-Load Matching</h3>
+  <p>When a load is posted, the matching engine scores all eligible carriers using a <span class="hl">weighted multi-factor algorithm</span>:</p>
+
+  <table>
+    <tr><th>Factor</th><th>Weight</th><th>Scoring Logic</th></tr>
+    <tr><td>Lane History</td><td>25%</td><td>Past loads on same or nearby lanes. Exact city match = 100, same state = 60, adjacent state = 30.</td></tr>
+    <tr><td>Equipment Match</td><td>20%</td><td>Carrier's registered equipment types vs. load requirement. Exact = 100, compatible = 70.</td></tr>
+    <tr><td>Reliability Score</td><td>20%</td><td>Composite of on-time %, acceptance rate, and claims history. Range 0-100.</td></tr>
+    <tr><td>Rate Fit</td><td>15%</td><td>Carrier's preferred rate vs. target buy rate. Within 5% = 100, within 15% = 70, &gt;15% = 30.</td></tr>
+    <tr><td>Proximity</td><td>10%</td><td>Deadhead miles from carrier's current/home location to pickup. &lt;50mi = 100, &lt;150mi = 70, &lt;300mi = 40.</td></tr>
+    <tr><td>Recency</td><td>10%</td><td>Days since last completed load. Active carriers scored higher. &lt;7 days = 100, &lt;30 = 70, &lt;90 = 40.</td></tr>
+  </table>
+
+  <h3>Load-to-Load Pairing</h3>
+  <p>The pairing engine finds profitable multi-load combinations for carriers:</p>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="tag tag-amber">Backhaul</div>
+      <h4>Return Trip Match</h4>
+      <p>Load B's origin near Load A's destination. Minimizes empty miles on return. Scored by route alignment, timing window, and equipment compatibility.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-green">Chain</div>
+      <h4>Multi-Stop Sequence</h4>
+      <p>Sequential loads forming a continuous route. Optimized for total RPM across the chain with minimal deadhead between stops.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-blue">Round Trip</div>
+      <h4>Full Circuit</h4>
+      <p>Origin &rarr; Destination &rarr; Origin. Both legs covered with freight. Highest utilization score when timing aligns.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-purple">Relay</div>
+      <h4>Split Long Haul</h4>
+      <p>Long-haul loads split into segments with carrier handoff at relay points. Enables regional carriers on long lanes.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- 8. EXTERNAL INTEGRATIONS -->
+<!-- ================================================================ -->
+<div class="section" id="integrations">
+  <h2 class="section-title"><span class="num">8</span> External Integrations</h2>
+  <p class="section-sub">Six external system integrations powering the CW Carriers platform</p>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="tag tag-amber">HubSpot CRM</div>
+      <h4>Bi-Directional Sync</h4>
+      <p><strong>Outbound:</strong> Contacts, deals, call activities pushed via HubSpot API. <strong>Inbound:</strong> Webhook events for contact/deal updates. Full sync audit log in cw_hubspot_sync.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-blue">McLeod TMS</div>
+      <h4>LoadMaster Integration</h4>
+      <p>Order creation, load status updates, rate confirmations, and carrier assignments synchronized between CW Carriers and McLeod LoadMaster. API-driven with retry logic.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-red">FMCSA SAFER</div>
+      <h4>Carrier Compliance</h4>
+      <p>Real-time authority verification by MC/DOT number. Operating status, insurance on file, safety rating, power units, drivers. Risk scoring with automated alerts on lapses.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-green">DAT / TruckStop / GreenScreens</div>
+      <h4>Market Rate Data</h4>
+      <p>Rate benchmark imports for lane-level pricing intelligence. Percentile bands (P25/P50/P75), sample sizes, and confidence scores stored in lg_rate_benchmarks.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-purple">Twilio</div>
+      <h4>Voice &amp; SMS</h4>
+      <p>SIP trunking for Rachel voice calls (inbound/outbound). Programmable SMS for load alerts, pickup confirmations, and payment reminders. Call recording with transcript URLs.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-cyan">ElevenLabs</div>
+      <h4>AI Voice Synthesis</h4>
+      <p>WebRTC real-time voice streaming for Rachel. Low-latency conversational AI with natural speech patterns. Custom voice model trained for freight brokerage terminology.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- 9. API REFERENCE -->
+<!-- ================================================================ -->
+<div class="section" id="api">
+  <h2 class="section-title"><span class="num">9</span> API Reference (22 Route Modules)</h2>
+  <p class="section-sub">Complete REST API surface under <span class="mono">/cw_carriers/api/*</span></p>
+
+  <h3>CRM &amp; Operations Routes</h3>
+  <table>
+    <tr><th>Route</th><th>Module</th><th>Key Endpoints</th><th>Description</th></tr>
+    <tr><td class="mono">/api/auth</td><td>auth</td><td>POST login, POST register, GET me</td><td>JWT authentication with bcrypt password hashing</td></tr>
+    <tr><td class="mono">/api/contacts</td><td>contacts</td><td>CRUD, GET search, POST import</td><td>Shipper, carrier, driver, prospect management</td></tr>
+    <tr><td class="mono">/api/loads</td><td>loads</td><td>CRUD, GET board, POST dispatch</td><td>Load lifecycle management with status tracking</td></tr>
+    <tr><td class="mono">/api/calls</td><td>calls</td><td>GET logs, POST log, GET stats</td><td>Call log management and analytics</td></tr>
+    <tr><td class="mono">/api/voice</td><td>voice</td><td>POST initiate, POST webhook, GET status</td><td>Rachel voice AI call management</td></tr>
+    <tr><td class="mono">/api/hubspot</td><td>hubspot</td><td>POST sync, POST webhook, GET status</td><td>HubSpot CRM bi-directional sync</td></tr>
+    <tr><td class="mono">/api/nlp</td><td>nlp</td><td>POST command, GET history</td><td>Natural language command processing</td></tr>
+    <tr><td class="mono">/api/analytics</td><td>analytics</td><td>GET dashboard, GET kpis, GET trends</td><td>CRM analytics and KPI dashboard</td></tr>
+    <tr><td class="mono">/api/settings</td><td>settings</td><td>GET config, PUT update</td><td>User and system configuration</td></tr>
+    <tr><td class="mono">/api/demo</td><td>demo</td><td>POST create, GET workspace, POST seed</td><td>Demo workspace management</td></tr>
+    <tr><td class="mono">/api/tms</td><td>tms</td><td>POST sync, GET status, POST import</td><td>McLeod TMS integration</td></tr>
+    <tr><td class="mono">/api/reports</td><td>reports</td><td>GET generate, GET list, GET download</td><td>Report generation (PDF/CSV)</td></tr>
+    <tr><td class="mono">/api/alerts</td><td>alerts</td><td>POST send, GET log, PUT config</td><td>Multi-channel alert management</td></tr>
+    <tr><td class="mono">/api/collector</td><td>collector</td><td>POST collect, GET status</td><td>Data collection and aggregation</td></tr>
+    <tr><td class="mono">/api/offers</td><td>offers</td><td>CRUD, POST accept, POST counter</td><td>Carrier bid/offer management</td></tr>
+    <tr><td class="mono">/api/checkcalls</td><td>checkcalls</td><td>CRUD, POST schedule, GET timeline</td><td>Transit check call tracking</td></tr>
+    <tr><td class="mono">/api/billing</td><td>billing</td><td>CRUD, POST validate, GET aging</td><td>Dual-sided invoicing with POD</td></tr>
+  </table>
+
+  <h3>Brokerage Intelligence Routes</h3>
+  <table>
+    <tr><th>Route</th><th>Module</th><th>Key Endpoints</th><th>Description</th></tr>
+    <tr><td class="mono">/api/pricing</td><td>pricing</td><td>GET quote, POST benchmark, GET lane</td><td>AI rate intelligence engine</td></tr>
+    <tr><td class="mono">/api/load-matching</td><td>loadmatching</td><td>GET match, POST score, GET pairs</td><td>Carrier &amp; load-to-load matching</td></tr>
+    <tr><td class="mono">/api/ingestion</td><td>ingestion</td><td>POST upload, GET status, GET mapping</td><td>CSV/Excel data ingestion pipeline</td></tr>
+    <tr><td class="mono">/api/brokerage-analytics</td><td>analytics-brokerage</td><td>GET dashboard, GET margins, GET lanes</td><td>Brokerage-specific analytics</td></tr>
+    <tr><td class="mono">/api/brokerage-demo</td><td>demo-brokerage</td><td>POST create, POST seed, GET workspace</td><td>Brokerage demo environment</td></tr>
+  </table>
+
+  <h3>Infrastructure</h3>
+  <table>
+    <tr><th>Endpoint</th><th>Method</th><th>Description</th></tr>
+    <tr><td class="mono">/health</td><td>GET</td><td>Service health check &mdash; returns status, tenant_id, timestamp</td></tr>
+  </table>
+</div>
+
+<!-- ================================================================ -->
+<!-- 10. DASHBOARD ARCHITECTURE -->
+<!-- ================================================================ -->
+<div class="section" id="dashboard">
+  <h2 class="section-title"><span class="num">10</span> Dashboard &amp; Frontend Architecture</h2>
+  <p class="section-sub">React + Vite single-page application with real-time operational views</p>
+
+  <p>The CW Carriers frontend is a <span class="hl">React SPA built with Vite</span>, served at <span class="mono">/cw_carriers/</span>. It features a dark-themed operational dashboard designed for fast brokerage decision-making.</p>
+
+  <h3>Technology Stack</h3>
+  <div class="card-grid">
+    <div class="card">
+      <div class="tag tag-amber">React 18</div>
+      <h4>Component Framework</h4>
+      <p>Functional components with hooks (useState, useEffect, useRef). No external state management &mdash; prop drilling with service-layer API calls.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-blue">Vite</div>
+      <h4>Build Tool</h4>
+      <p>Fast HMR development server + optimized production builds. Base path configured to <span class="mono">/cw_carriers/</span> for sub-app mounting.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-green">Axios</div>
+      <h4>HTTP Client</h4>
+      <p>API service layer with baseURL <span class="mono">/cw_carriers/api</span>. JWT token injection via request interceptor. Error handling with auto-logout on 401.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-purple">Dark Theme</div>
+      <h4>Design System</h4>
+      <p>Consistent dark palette: #0D1117 (bg), #161B22 (panels), #0EA5E9 (accent), #E6EDF3 (text). 'Bebas Neue' headings, 'DM Sans' body. Fully responsive.</p>
+    </div>
+  </div>
+
+  <h3>Authentication Flow</h3>
+  <div class="arch-diagram">
+    <div class="diagram-title">JWT Session Management</div>
+<pre>
+  Login Page          API Server          SessionStorage
+     │                    │                    │
+     │  POST /api/auth    │                    │
+     │  {email, password} │                    │
+     │───────────────────>│                    │
+     │                    │  bcrypt.compare    │
+     │                    │  jwt.sign(payload) │
+     │  {token, user}     │                    │
+     │<───────────────────│                    │
+     │                    │                    │
+     │  Store cw_token ───────────────────────>│
+     │  Store cw_user  ───────────────────────>│
+     │                    │                    │
+     │  Navigate to /dashboard                 │
+     │                    │                    │
+     │  API Request + Authorization: Bearer    │
+     │───────────────────>│<───────────────────│  Read cw_token
+     │                    │  jwt.verify        │
+     │  200 + Data        │                    │
+     │<───────────────────│                    │
+</pre>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- 11. ANALYTICS ENGINE -->
+<!-- ================================================================ -->
+<div class="section" id="analytics">
+  <h2 class="section-title"><span class="num">11</span> Analytics &amp; Reporting Engine</h2>
+  <p class="section-sub">Five analytics computation types with pre-computed snapshots</p>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="tag tag-amber">CRM Analytics</div>
+      <h4>Contact &amp; Deal KPIs</h4>
+      <p>Total contacts by type, deal pipeline, conversion rates, call volume trends, HubSpot sync health. Stored in cw_analytics with daily snapshots.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-green">Brokerage Analytics</div>
+      <h4>Operational Metrics</h4>
+      <p>Revenue, margin %, lane profitability, load volume, carrier utilization, on-time %, exception rates. Monthly/weekly/daily aggregations in lg_analytics_snapshots.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-blue">Rate Analytics</div>
+      <h4>Pricing Intelligence</h4>
+      <p>Rate trends by lane, RPM distribution, buy/sell spread analysis, benchmark comparison. Identifies under-priced lanes and margin opportunities.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-purple">Carrier Performance</div>
+      <h4>Network Health</h4>
+      <p>Carrier scorecards: acceptance rate, on-time %, claims, avg RPM, load count. Reliability trend analysis. Identifies top and at-risk carriers.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-red">Feedback Loop</div>
+      <h4>AI Model Improvement</h4>
+      <p>Tracks acceptance/rejection of AI recommendations (carrier matches, rate quotes, load pairs). Stored in lg_user_feedback for model tuning and accuracy reporting.</p>
+    </div>
+  </div>
+
+  <h3>Pre-Computed Metrics (lg_analytics_snapshots)</h3>
+  <div class="code-block"><code><span class="comment">// Metrics stored in JSONB column by period (daily/weekly/monthly)</span>
+{
+  <span class="string">"total_loads"</span>: <span class="number">142</span>,
+  <span class="string">"open_loads"</span>: <span class="number">23</span>,
+  <span class="string">"covered_loads"</span>: <span class="number">18</span>,
+  <span class="string">"delivered_loads"</span>: <span class="number">89</span>,
+  <span class="string">"total_revenue"</span>: <span class="number">412580.00</span>,
+  <span class="string">"total_cost"</span>: <span class="number">349200.00</span>,
+  <span class="string">"total_margin"</span>: <span class="number">63380.00</span>,
+  <span class="string">"avg_margin_pct"</span>: <span class="number">15.4</span>,
+  <span class="string">"avg_rate_per_mile"</span>: <span class="number">2.85</span>,
+  <span class="string">"carrier_count"</span>: <span class="number">67</span>,
+  <span class="string">"active_carriers"</span>: <span class="number">34</span>,
+  <span class="string">"on_time_pct"</span>: <span class="number">94.2</span>,
+  <span class="string">"call_count"</span>: <span class="number">312</span>,
+  <span class="string">"top_lanes"</span>: [<span class="string">"DAL-CHI"</span>, <span class="string">"HOU-ATL"</span>, <span class="string">"MIA-NYC"</span>]
+}</code></div>
+</div>
+
+<!-- ================================================================ -->
+<!-- 12. SECURITY -->
+<!-- ================================================================ -->
+<div class="section" id="security">
+  <h2 class="section-title"><span class="num">12</span> Security &amp; Authentication</h2>
+  <p class="section-sub">JWT authentication, bcrypt password hashing, and tenant isolation</p>
+
+  <table>
+    <tr><th>Layer</th><th>Implementation</th><th>Details</th></tr>
+    <tr><td>Password Storage</td><td>bcrypt (12 rounds)</td><td>Salted hashes via bcryptjs. Passwords never stored in plaintext.</td></tr>
+    <tr><td>Session Tokens</td><td>JWT (jsonwebtoken)</td><td>Signed tokens with user ID, email, role, tenant_id. Stored in sessionStorage (cw_token).</td></tr>
+    <tr><td>API Auth</td><td>Bearer Token</td><td>Authorization header required for all /api/* routes except /api/auth and /health.</td></tr>
+    <tr><td>Tenant Isolation</td><td>tenant_id = 'cw_carriers'</td><td>All queries scoped to tenant. CW and LG table prefixes provide namespace isolation.</td></tr>
+    <tr><td>Role-Based Access</td><td>RBAC middleware</td><td>Roles: admin, dispatcher, shipper, carrier. Route-level access control.</td></tr>
+    <tr><td>HubSpot Webhooks</td><td>Signature verification</td><td>Inbound HubSpot webhook payloads verified against app secret.</td></tr>
+    <tr><td>Database</td><td>SSL required</td><td>PostgreSQL connection via SSL with rejectUnauthorized: false for managed hosting.</td></tr>
+    <tr><td>Frontend</td><td>SPA isolation</td><td>React app served from /cw_carriers/. Auth state in sessionStorage clears on tab close.</td></tr>
+  </table>
+</div>
+
+<!-- ================================================================ -->
+<!-- 13. DEPLOYMENT -->
+<!-- ================================================================ -->
+<div class="section" id="deploy">
+  <h2 class="section-title"><span class="num">13</span> Deployment &amp; Infrastructure</h2>
+  <p class="section-sub">Production deployment on Render with auto-deploy on push</p>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="tag tag-green">Render</div>
+      <h4>Hosting Platform</h4>
+      <p>Auto-deploy on push to main branch. Build script runs Vite for all frontend SPAs. ~90 second deploy cycle.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-blue">PostgreSQL</div>
+      <h4>Database</h4>
+      <p>Render-managed PostgreSQL instance (ringlypro_crm_database). Shared across all verticals with table prefix isolation.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-purple">Express Sub-App</div>
+      <h4>Mounting Architecture</h4>
+      <p>CW Carriers mounted at <span class="mono">/cw_carriers</span> in the main Express app (src/app.js). Fully independent routing, middleware, and static file serving.</p>
+    </div>
+    <div class="card">
+      <div class="tag tag-amber">Migrations</div>
+      <h4>Schema Management</h4>
+      <p>SQL migration files in <span class="mono">/migrations/</span> directory. Run automatically on server start via initialize(). CREATE TABLE IF NOT EXISTS for idempotency.</p>
+    </div>
+  </div>
+
+  <h3>Deployment Pipeline</h3>
+  <div class="arch-diagram">
+    <div class="diagram-title">Git Push &rarr; Render Auto-Deploy &rarr; Production</div>
+<pre>
+  Developer          GitHub              Render              Production
+     │                  │                  │                    │
+     │  git push main   │                  │                    │
+     │─────────────────>│                  │                    │
+     │                  │  Webhook trigger │                    │
+     │                  │─────────────────>│                    │
+     │                  │                  │  npm install       │
+     │                  │                  │  build.sh          │
+     │                  │                  │  ├─ Vite build     │
+     │                  │                  │  │  (CW Carriers)  │
+     │                  │                  │  │  (Logistics)    │
+     │                  │                  │  │  (PINAXIS)      │
+     │                  │                  │  └─ Static copy    │
+     │                  │                  │                    │
+     │                  │                  │  node src/app.js   │
+     │                  │                  │─────────────────-->│
+     │                  │                  │                    │  initialize()
+     │                  │                  │                    │  ├─ Run migrations
+     │                  │                  │                    │  ├─ Seed users
+     │                  │                  │                    │  └─ Mount routes
+     │                  │                  │                    │
+     │                  │                  │  Health check OK   │
+     │                  │                  │<────────────────────│
+     │                  │                  │                    │
+     │  Deploy complete │                  │                    │
+     │<─────────────────────────────────────                   │
+</pre>
+  </div>
+
+  <h3>Environment Variables</h3>
+  <table>
+    <tr><th>Variable</th><th>Purpose</th></tr>
+    <tr><td class="mono">DATABASE_URL</td><td>PostgreSQL connection string (primary database)</td></tr>
+    <tr><td class="mono">CRM_DATABASE_URL</td><td>CRM-specific database connection (if separate)</td></tr>
+    <tr><td class="mono">JWT_SECRET</td><td>JWT signing secret for auth tokens</td></tr>
+    <tr><td class="mono">HUBSPOT_API_KEY</td><td>HubSpot private app access token</td></tr>
+    <tr><td class="mono">TWILIO_ACCOUNT_SID</td><td>Twilio account identifier</td></tr>
+    <tr><td class="mono">TWILIO_AUTH_TOKEN</td><td>Twilio API authentication</td></tr>
+    <tr><td class="mono">ELEVENLABS_API_KEY</td><td>ElevenLabs voice AI API key</td></tr>
+    <tr><td class="mono">FMCSA_API_KEY</td><td>FMCSA SAFER system API key</td></tr>
+    <tr><td class="mono">ANTHROPIC_API_KEY</td><td>Claude AI for NLP command processing</td></tr>
+    <tr><td class="mono">CW_USER_EMAIL</td><td>Default admin user email</td></tr>
+    <tr><td class="mono">CW_USER_PASSWORD</td><td>Default admin user password</td></tr>
+  </table>
+</div>
+
+<!-- ================================================================ -->
+<!-- 14. ROADMAP -->
+<!-- ================================================================ -->
+<div class="section" id="roadmap">
+  <h2 class="section-title"><span class="num">14</span> Implementation Roadmap</h2>
+  <p class="section-sub">Phased delivery from MVP to full enterprise platform</p>
+
+  <div class="layer-stack">
+    <div class="layer layer-green">
+      <div class="layer-title">Phase 1 &mdash; Core CRM (Delivered)</div>
+      <div class="layer-desc">Contact management, load board, call logging, basic analytics, HubSpot sync, JWT auth, React dashboard. 11 CW tables, 7 API route modules.</div>
+    </div>
+    <div class="layer layer-amber">
+      <div class="layer-title">Phase 2 &mdash; AI Brokerage Platform (Delivered)</div>
+      <div class="layer-desc">Rate intelligence engine, carrier matching, load-to-load pairing, FMCSA compliance, data ingestion pipeline, brokerage analytics. 12 LG tables, 5 additional route modules.</div>
+    </div>
+    <div class="layer layer-purple">
+      <div class="layer-title">Phase 3 &mdash; Voice AI &amp; Automation (Delivered)</div>
+      <div class="layer-desc">Rachel voice agent (ElevenLabs + Twilio), check call automation, carrier coverage calls, NLP command interface, alert engine, transcript processing.</div>
+    </div>
+    <div class="layer layer-blue">
+      <div class="layer-title">Phase 4 &mdash; Advanced Operations (In Progress)</div>
+      <div class="layer-desc">McLeod TMS deep integration, advanced billing with POD validation, carrier scorecard dashboard, route optimization, predictive rate modeling.</div>
+    </div>
+    <div class="layer layer-cyan">
+      <div class="layer-title">Phase 5 &mdash; Enterprise Scale (Planned)</div>
+      <div class="layer-desc">Multi-tenant architecture, white-label deployment, mobile app (React Native), real-time load tracking (GPS), document OCR (BOL/POD scanning), automated collections.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- FOOTER -->
+<!-- ================================================================ -->
+<div class="doc-footer">
+  <div class="logos">
+    <span class="logo logo-cw">CW CARRIERS</span>
+    <span style="color:var(--line)">|</span>
+    <span class="logo logo-ringly">RINGLYPRO</span>
+    <span style="color:var(--line)">|</span>
+    <span class="logo logo-digit2">DIGIT2AI</span>
+  </div>
+  <p>CW Carriers System Architecture Document &mdash; v1.0 &mdash; March 2026</p>
+  <p>Built with RinglyPro MCP Architecture &middot; Powered by Claude AI, ElevenLabs, Twilio, HubSpot</p>
+  <p style="margin-top:16px;color:var(--line)">Confidential &mdash; CW Carriers USA / Digit2ai</p>
+</div>
+
+</div><!-- /container -->
+</body>
+</html>
