@@ -106,6 +106,9 @@ async function initialize() {
         { name: 'Pontificia Universidad Católica de Chile', country: 'Chile', flag: '🇨🇱', type: 'university' },
         { name: 'Universidad de Buenos Aires', country: 'Argentina', flag: '🇦🇷', type: 'university' },
         { name: 'University of Makati', country: 'Philippines', flag: '🇵🇭', type: 'university' },
+        { name: 'Universidad de Medellín', country: 'Colombia', flag: '🇨🇴', type: 'university' },
+        { name: 'Colegio de San Juan de Letrán', country: 'Philippines', flag: '🇵🇭', type: 'university' },
+        { name: 'Polytechnic University of the Philippines', country: 'Philippines', flag: '🇵🇭', type: 'university' },
       ];
       for (const p of demoPartners) {
         await sequelize.query(
@@ -141,20 +144,20 @@ async function initialize() {
       const [[sitel]] = await sequelize.query(`SELECT id FROM ti_bpo_companies WHERE name LIKE 'Sitel%' LIMIT 1`);
       const [[alorica]] = await sequelize.query(`SELECT id FROM ti_bpo_companies WHERE name LIKE 'Alorica%' LIMIT 1`);
       const demoJobs = [
-        { cid: tp?.id, title: 'Spanish-Speaking Customer Service Rep', desc: 'Handle inbound customer inquiries in Spanish for LATAM clients. Training provided.', salary: '₱28,000 - ₱35,000', level: 'B1', type: 'full_time', slots: 10 },
-        { cid: tp?.id, title: 'Bilingual Team Lead (Spanish/English)', desc: 'Lead a team of 15 agents serving Spanish-speaking accounts. Must have B2+ proficiency.', salary: '₱45,000 - ₱55,000', level: 'B2', type: 'full_time', slots: 3 },
-        { cid: cx?.id, title: 'Spanish Technical Support Analyst', desc: 'Provide technical support in Spanish for a major tech company. IT background preferred.', salary: '₱32,000 - ₱40,000', level: 'B1', type: 'full_time', slots: 8 },
-        { cid: cx?.id, title: 'Quality Analyst — Spanish Accounts', desc: 'Monitor and evaluate calls for Spanish-speaking accounts. Ensure service quality standards.', salary: '₱35,000 - ₱42,000', level: 'B2', type: 'full_time', slots: 2 },
-        { cid: ttec?.id, title: 'Spanish Chat Support Specialist', desc: 'Handle chat and email support in Spanish for e-commerce clients. Work from home option available.', salary: '₱25,000 - ₱30,000', level: 'A2', type: 'full_time', slots: 12 },
-        { cid: sitel?.id, title: 'Spanish Sales Representative', desc: 'Outbound sales calls to Spanish-speaking markets in Latin America. Commission-based bonuses.', salary: '₱22,000 - ₱28,000 + commission', level: 'B1', type: 'full_time', slots: 15 },
-        { cid: alorica?.id, title: 'Bilingual Healthcare Coordinator', desc: 'Coordinate healthcare appointments and insurance claims for Spanish-speaking patients in the US.', salary: '₱30,000 - ₱38,000', level: 'B2', type: 'full_time', slots: 5 },
-        { cid: alorica?.id, title: 'Spanish Interpreter (Part-Time)', desc: 'Provide real-time interpretation services between Spanish and English. Flexible hours.', salary: '₱18,000 - ₱22,000', level: 'C1', type: 'part_time', slots: 8 },
+        { cid: tp?.id, title: 'Spanish-Speaking Customer Service Rep', desc: 'Handle inbound customer inquiries in Spanish for LATAM clients. Training provided.', salary: '₱28,000 - ₱35,000', level: 'B1', type: 'full_time', slots: 10, loc: 'Makati City' },
+        { cid: tp?.id, title: 'Bilingual Team Lead (Spanish/English)', desc: 'Lead a team of 15 agents serving Spanish-speaking accounts. Must have B2+ proficiency.', salary: '₱45,000 - ₱55,000', level: 'B2', type: 'full_time', slots: 3, loc: 'Makati City' },
+        { cid: cx?.id, title: 'Spanish Technical Support Analyst', desc: 'Provide technical support in Spanish for a major tech company. IT background preferred.', salary: '₱32,000 - ₱40,000', level: 'B1', type: 'full_time', slots: 8, loc: 'Cavite' },
+        { cid: cx?.id, title: 'Quality Analyst — Spanish Accounts', desc: 'Monitor and evaluate calls for Spanish-speaking accounts. Ensure service quality standards.', salary: '₱35,000 - ₱42,000', level: 'B2', type: 'full_time', slots: 2, loc: 'Makati City' },
+        { cid: ttec?.id, title: 'Spanish Chat Support Specialist', desc: 'Handle chat and email support in Spanish for e-commerce clients. Work from home option available.', salary: '₱25,000 - ₱30,000', level: 'A2', type: 'full_time', slots: 12, loc: 'Zamboanga City' },
+        { cid: sitel?.id, title: 'Spanish Sales Representative', desc: 'Outbound sales calls to Spanish-speaking markets in Latin America. Commission-based bonuses.', salary: '₱22,000 - ₱28,000 + commission', level: 'B1', type: 'full_time', slots: 15, loc: 'Zamboanga City' },
+        { cid: alorica?.id, title: 'Bilingual Healthcare Coordinator', desc: 'Coordinate healthcare appointments and insurance claims for Spanish-speaking patients in the US.', salary: '₱30,000 - ₱38,000', level: 'B2', type: 'full_time', slots: 5, loc: 'Cavite' },
+        { cid: alorica?.id, title: 'Spanish Interpreter (Part-Time)', desc: 'Provide real-time interpretation services between Spanish and English. Flexible hours.', salary: '₱18,000 - ₱22,000', level: 'C1', type: 'part_time', slots: 8, loc: 'Makati City' },
       ];
       for (const j of demoJobs) {
         if (!j.cid) continue;
         await sequelize.query(
-          `INSERT INTO ti_bpo_jobs (company_id, title, description_en, location, job_type, salary_range, spanish_level_required, slots, status, posted_at, created_at, updated_at) VALUES ($1,$2,$3,'Makati City',$4,$5,$6,$7,'open',NOW(),NOW(),NOW())`,
-          { bind: [j.cid, j.title, j.desc, j.type, j.salary, j.level, j.slots] }
+          `INSERT INTO ti_bpo_jobs (company_id, title, description_en, location, job_type, salary_range, spanish_level_required, slots, status, posted_at, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'open',NOW(),NOW(),NOW())`,
+          { bind: [j.cid, j.title, j.desc, j.loc, j.type, j.salary, j.level, j.slots] }
         );
       }
       console.log('  ✅ Torna Idioma BPO jobs seeded');
@@ -191,6 +194,10 @@ async function initialize() {
         { name: 'Assumption College Makati', type: 'private', barangay: 'San Lorenzo', principal: 'Sr. Carmen Villanueva', email: 'admin@assumption.edu.ph', total: 2200, enrolled: 150, status: 'expanding' },
         { name: 'Makati Elementary School Central', type: 'public', barangay: 'Poblacion', principal: 'Elena Mendoza', email: 'mesc@makati.gov.ph', total: 1500, enrolled: 0, status: 'pilot' },
         { name: 'Ospital ng Makati School of Nursing', type: 'public', barangay: 'Pembo', principal: 'Dr. Patricia Reyes', email: 'nursing@makati.gov.ph', total: 600, enrolled: 45, status: 'pilot' },
+        { name: 'Western Mindanao State University', type: 'public', barangay: 'Baliwasan, Zamboanga City', principal: 'Dr. Maria Teresa Payot', email: 'admin@wmsu.edu.ph', total: 18000, enrolled: 0, status: 'pilot' },
+        { name: 'Ateneo de Zamboanga University', type: 'private', barangay: 'La Purisima, Zamboanga City', principal: 'Fr. Karel San Juan', email: 'info@adzu.edu.ph', total: 8500, enrolled: 0, status: 'pilot' },
+        { name: 'Cavite State University', type: 'public', barangay: 'Indang, Cavite', principal: 'Dr. Hernando Robles', email: 'admin@cvsu.edu.ph', total: 25000, enrolled: 0, status: 'pilot' },
+        { name: 'De La Salle University - Dasmariñas', type: 'private', barangay: 'Dasmariñas, Cavite', principal: 'Br. Gus Boquer', email: 'info@dlsud.edu.ph', total: 12000, enrolled: 0, status: 'pilot' },
       ];
       for (const sch of demoSchools) {
         await sequelize.query(

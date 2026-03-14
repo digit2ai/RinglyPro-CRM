@@ -17,6 +17,7 @@ import Schools from './pages/Schools';
 import EconomicImpact from './pages/EconomicImpact';
 import PartnerNetwork from './pages/PartnerNetwork';
 import AITutor from './pages/AITutor';
+import InternationalCollaboration from './pages/InternationalCollaboration';
 
 const BASE = '/torna-idioma';
 
@@ -68,6 +69,7 @@ function Sidebar({ open, onClose }) {
     { path: `${BASE}/schools`, label: 'Schools', roles: ['admin','official'] },
     { path: `${BASE}/economic-impact`, label: 'Economic Impact', roles: ['admin','official'] },
     { path: `${BASE}/partner-network`, label: 'Partner Network', roles: ['admin','official','partner'] },
+    { path: `${BASE}/collaboration`, label: 'Int\'l Collaboration', roles: ['admin','official','partner'] },
     { section: 'EXTERNAL' },
     { path: '/Torna_Idioma/', label: 'Public Website', roles: ['admin','official'], ext: true },
   ];
@@ -157,6 +159,7 @@ export default function App() {
         <Route path={`${BASE}/economic-impact`} element={<ProtectedRoute roles={['admin','official']}><Layout><EconomicImpact /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/ai-tutor`} element={<ProtectedRoute><Layout><AITutor /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/partner-network`} element={<ProtectedRoute roles={['admin','official','partner']}><Layout><PartnerNetwork /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/collaboration`} element={<ProtectedRoute roles={['admin','official','partner']}><Layout><InternationalCollaboration /></Layout></ProtectedRoute>} />
         <Route path="*" element={<Navigate to={`${BASE}/`} replace />} />
       </Routes>
     </BrowserRouter>
