@@ -112,15 +112,20 @@ router.post('/lessons/:id/progress', auth.any, async (req, res) => {
       `SELECT * FROM ti_lesson_progress WHERE user_id = $1 AND lesson_id = $2`,
       { bind: [req.user.id, lessonId] }
     );
+    const safeStatus = status || 'in_progress';
+    const safeScore = score != null ? parseFloat(score) : null;
+    const safeTime = parseInt(time_spent_sec) || 0;
+    const completedAt = safeStatus === 'completed' ? new Date() : null;
+
     if (existing) {
       await sequelize.query(
-        `UPDATE ti_lesson_progress SET status = COALESCE($1, status), score = COALESCE($2, score), time_spent_sec = time_spent_sec + COALESCE($3, 0), completed_at = CASE WHEN $1 = 'completed' THEN NOW() ELSE completed_at END WHERE user_id = $4 AND lesson_id = $5`,
-        { bind: [status || null, score != null ? score : null, time_spent_sec || 0, req.user.id, lessonId] }
+        `UPDATE ti_lesson_progress SET status = $1::varchar, score = COALESCE($2::numeric, score), time_spent_sec = time_spent_sec + $3::integer, completed_at = CASE WHEN $1::varchar = 'completed' THEN NOW() ELSE completed_at END WHERE user_id = $4 AND lesson_id = $5`,
+        { bind: [safeStatus, safeScore, safeTime, req.user.id, lessonId] }
       );
     } else {
       await sequelize.query(
-        `INSERT INTO ti_lesson_progress (user_id, lesson_id, status, score, time_spent_sec, completed_at, created_at) VALUES ($1,$2,$3,$4,$5,$6,NOW())`,
-        { bind: [req.user.id, lessonId, status || 'in_progress', score != null ? score : null, time_spent_sec || 0, status === 'completed' ? new Date() : null] }
+        `INSERT INTO ti_lesson_progress (user_id, lesson_id, status, score, time_spent_sec, completed_at, created_at) VALUES ($1,$2,$3::varchar,$4::numeric,$5::integer,$6,NOW())`,
+        { bind: [req.user.id, lessonId, safeStatus, safeScore, safeTime, completedAt] }
       );
     }
     // Recalculate enrollment progress
@@ -133,7 +138,7 @@ router.post('/lessons/:id/progress', auth.any, async (req, res) => {
       );
       const pct = stats.total > 0 ? Math.round((stats.done / stats.total) * 100) : 0;
       await sequelize.query(
-        `UPDATE ti_enrollments SET progress_pct = $1, completed_at = CASE WHEN $1 = 100 THEN NOW() ELSE completed_at END, status = CASE WHEN $1 = 100 THEN 'completed' ELSE status END WHERE user_id = $2 AND course_id = $3`,
+        `UPDATE ti_enrollments SET progress_pct = $1::numeric, completed_at = CASE WHEN $1::numeric = 100 THEN NOW() ELSE completed_at END, status = CASE WHEN $1::numeric = 100 THEN 'completed' ELSE status END WHERE user_id = $2 AND course_id = $3`,
         { bind: [pct, req.user.id, lesson.course_id] }
       );
     }
