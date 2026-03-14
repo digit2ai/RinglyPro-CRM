@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getLang, getUser } from '../services/auth';
 import api from '../services/api';
 
-const BASE = '/torna-idioma';
+const BASE = '/Torna_Idioma';
 
 const T = {
   en: { title: 'My Progress', sub: 'Track your Spanish learning journey — courses, lessons, and achievements.', totalCourses: 'Enrolled Courses', completedCourses: 'Completed', lessonsCompleted: 'Lessons Done', totalTime: 'Total Study Time', certifications: 'Certifications', avgScore: 'Avg Score', inProgress: 'In Progress', completed: 'Completed', notStarted: 'Not Started', continueBtn: 'Continue', progressLabel: 'Progress', hours: 'h', mins: 'm', lessons: 'lessons', noEnrollments: 'You haven\'t enrolled in any courses yet. Visit the Course Catalog to get started!' },

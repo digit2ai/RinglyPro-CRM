@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  base: '/torna-idioma/',
+  base: '/Torna_Idioma/',
   build: { outDir: 'dist', emptyOutDir: true },
-  server: { proxy: { '/torna-idioma/api': 'http://localhost:10000' } }
+  server: { proxy: { '/Torna_Idioma/api': 'http://localhost:10000' } }
 });

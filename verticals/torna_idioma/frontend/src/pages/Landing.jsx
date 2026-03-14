@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const BASE = '/torna-idioma';
+const BASE = '/Torna_Idioma';
 
 const T = {
   en: {

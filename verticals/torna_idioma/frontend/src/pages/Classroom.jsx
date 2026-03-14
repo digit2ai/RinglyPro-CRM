@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getLang } from '../services/auth';
 import api from '../services/api';
 
-const BASE = '/torna-idioma';
+const BASE = '/Torna_Idioma';
 
 export default function Classroom() {
   const { courseId, lessonId } = useParams();

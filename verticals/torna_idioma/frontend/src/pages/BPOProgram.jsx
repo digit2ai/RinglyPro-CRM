@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getLang } from '../services/auth';
 import api from '../services/api';
 
-const BASE = '/torna-idioma';
+const BASE = '/Torna_Idioma';
 
 const T = {
   en: { title: 'BPO Training Program', sub: 'Spanish-enabled careers in the Philippines\' BPO industry — higher salaries, better opportunities.', statsTitle: 'Program Impact', companies: 'Partner Companies', positions: 'Spanish Positions', placements: 'Active Placements', avgIncrease: 'Avg Salary Increase', openJobs: 'Open Positions', partnersTitle: 'BPO Partner Companies', hiring: 'Hiring', active: 'Active', viewJobs: 'View Open Jobs', noCompanies: 'BPO partner companies coming soon.', positionsLabel: 'positions', salaryIncrease: 'avg salary increase', whyTitle: 'Why Spanish in BPO?', why1Title: 'Higher Salaries', why1: 'Spanish-speaking BPO agents earn 25-40% more than English-only agents in the Philippines.', why2Title: 'Growing Demand', why2: 'Latin American markets are expanding — demand for Spanish-speaking agents grows 15% yearly.', why3Title: 'Career Growth', why3: 'Bilingual agents advance to team lead and QA roles faster, with clearer promotion paths.', why4Title: 'Global Opportunities', why4: 'Spanish opens doors to nearshore centers serving Spain, Mexico, Colombia, Argentina, and more.' },

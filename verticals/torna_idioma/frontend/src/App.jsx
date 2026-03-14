@@ -19,7 +19,7 @@ import PartnerNetwork from './pages/PartnerNetwork';
 import AITutor from './pages/AITutor';
 import InternationalCollaboration from './pages/InternationalCollaboration';
 
-const BASE = '/torna-idioma';
+const BASE = '/Torna_Idioma';
 
 function ProtectedRoute({ children, roles }) {
   if (!isAuthenticated()) return <Navigate to={`${BASE}/login`} replace />;

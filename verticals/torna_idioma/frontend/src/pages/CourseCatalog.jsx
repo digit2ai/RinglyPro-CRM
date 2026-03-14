@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getLang } from '../services/auth';
 import api from '../services/api';
 
-const BASE = '/torna-idioma';
+const BASE = '/Torna_Idioma';
 
 const T = {
   en: { title: 'Course Catalog', sub: 'Explore Spanish courses designed for Filipino learners — from heritage to BPO careers.', all: 'All', beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced', general: 'General', bpo: 'BPO', cultural: 'Cultural', business: 'Business', certification: 'Certification', enroll: 'Enroll Now', enrolled: 'Continue', lessons: 'lessons', hours: 'hours', students: 'students', filterLevel: 'Level', filterCategory: 'Category', noResults: 'No courses match your filters.' },

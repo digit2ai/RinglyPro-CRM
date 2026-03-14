@@ -881,15 +881,12 @@ let tornaIdiomaApp = null;
 let tornaIdiomaError = null;
 try {
   tornaIdiomaApp = require('../verticals/torna_idioma/backend/index');
-  app.get('/torna-idioma', (req, res, next) => {
-    if (!req.originalUrl.endsWith('/')) return res.redirect('/torna-idioma/');
-    next();
-  });
-  app.use('/torna-idioma', tornaIdiomaApp);
-  console.log('🇪🇸 Torna Idioma mounted at /torna-idioma');
-  console.log('   - Dashboard UI: /torna-idioma/');
-  console.log('   - Health Check: /torna-idioma/health');
-  console.log('   - API: /torna-idioma/api/*');
+  app.use('/Torna_Idioma', tornaIdiomaApp);
+  console.log('🇪🇸 Torna Idioma mounted at /Torna_Idioma');
+  console.log('   - Landing: /Torna_Idioma/ (static)');
+  console.log('   - Dashboard UI: /Torna_Idioma/login');
+  console.log('   - Health Check: /Torna_Idioma/health');
+  console.log('   - API: /Torna_Idioma/api/*');
 } catch (error) {
   tornaIdiomaError = error;
   console.log('⚠️ Torna Idioma not available:', error.message);
@@ -1849,7 +1846,7 @@ app.use((err, req, res, next) => {
   console.error('Server Error:', err.stack);
   // Show details for tunjoracing routes to help with debugging
   const fullPath = req.originalUrl || req.path;
-  const showDetails = process.env.NODE_ENV === 'development' || fullPath.startsWith('/tunjoracing') || fullPath.startsWith('/kanchoai') || fullPath.startsWith('/cw_carriers') || fullPath.startsWith('/torna-idioma');
+  const showDetails = process.env.NODE_ENV === 'development' || fullPath.startsWith('/tunjoracing') || fullPath.startsWith('/kanchoai') || fullPath.startsWith('/cw_carriers') || fullPath.startsWith('/Torna_Idioma');
   res.status(500).json({
     success: false,
     error: showDetails ? err.message : 'Something went wrong!',

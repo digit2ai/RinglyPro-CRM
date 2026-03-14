@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const api = axios.create({ baseURL: '/torna-idioma/api' });
+const api = axios.create({ baseURL: '/Torna_Idioma/api' });
 
 api.interceptors.request.use(config => {
   const token = sessionStorage.getItem('ti_token');
@@ -14,7 +14,7 @@ api.interceptors.response.use(
     if (err.response?.status === 401) {
       sessionStorage.removeItem('ti_token');
       sessionStorage.removeItem('ti_user');
-      window.location.href = '/torna-idioma/login';
+      window.location.href = '/Torna_Idioma/login';
     }
     return Promise.reject(err);
   }

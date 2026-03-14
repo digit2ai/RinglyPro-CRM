@@ -61,10 +61,10 @@ export default function Dashboard() {
   }, []);
 
   const quickActions = [
-    { label: L.actionCourses, path: '/torna-idioma/courses', icon: '📚', color: '#C9A84C' },
-    { label: L.actionProgress, path: '/torna-idioma/progress', icon: '📊', color: '#2A3F6A' },
-    { label: L.actionEvents, path: '/torna-idioma/events', icon: '🎭', color: '#C41E3A' },
-    ...(isAdmin ? [{ label: L.actionMetrics, path: '/torna-idioma/program-metrics', icon: '📈', color: '#8B6914' }] : []),
+    { label: L.actionCourses, path: '/Torna_Idioma/courses', icon: '📚', color: '#C9A84C' },
+    { label: L.actionProgress, path: '/Torna_Idioma/progress', icon: '📊', color: '#2A3F6A' },
+    { label: L.actionEvents, path: '/Torna_Idioma/events', icon: '🎭', color: '#C41E3A' },
+    ...(isAdmin ? [{ label: L.actionMetrics, path: '/Torna_Idioma/program-metrics', icon: '📈', color: '#8B6914' }] : []),
   ];
 
   return (
