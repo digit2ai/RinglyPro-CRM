@@ -107,23 +107,24 @@ router.get('/lessons/:id', auth.any, async (req, res) => {
 router.post('/lessons/:id/progress', auth.any, async (req, res) => {
   try {
     const { status, score, time_spent_sec } = req.body;
+    const lessonId = parseInt(req.params.id);
     const [[existing]] = await sequelize.query(
       `SELECT * FROM ti_lesson_progress WHERE user_id = $1 AND lesson_id = $2`,
-      { bind: [req.user.id, req.params.id] }
+      { bind: [req.user.id, lessonId] }
     );
     if (existing) {
       await sequelize.query(
         `UPDATE ti_lesson_progress SET status = COALESCE($1, status), score = COALESCE($2, score), time_spent_sec = time_spent_sec + COALESCE($3, 0), completed_at = CASE WHEN $1 = 'completed' THEN NOW() ELSE completed_at END WHERE user_id = $4 AND lesson_id = $5`,
-        { bind: [status || null, score || null, time_spent_sec || 0, req.user.id, req.params.id] }
+        { bind: [status || null, score != null ? score : null, time_spent_sec || 0, req.user.id, lessonId] }
       );
     } else {
       await sequelize.query(
         `INSERT INTO ti_lesson_progress (user_id, lesson_id, status, score, time_spent_sec, completed_at, created_at) VALUES ($1,$2,$3,$4,$5,$6,NOW())`,
-        { bind: [req.user.id, req.params.id, status || 'in_progress', score || null, time_spent_sec || 0, status === 'completed' ? new Date() : null] }
+        { bind: [req.user.id, lessonId, status || 'in_progress', score != null ? score : null, time_spent_sec || 0, status === 'completed' ? new Date() : null] }
       );
     }
     // Recalculate enrollment progress
-    const [[lesson]] = await sequelize.query(`SELECT course_id FROM ti_lessons WHERE id = $1`, { bind: [req.params.id] });
+    const [[lesson]] = await sequelize.query(`SELECT course_id FROM ti_lessons WHERE id = $1`, { bind: [lessonId] });
     if (lesson) {
       const [[stats]] = await sequelize.query(
         `SELECT (SELECT COUNT(*) FROM ti_lessons WHERE course_id = $1) as total,
