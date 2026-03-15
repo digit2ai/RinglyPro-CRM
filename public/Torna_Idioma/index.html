@@ -161,12 +161,18 @@
     .heritage-quote { text-align:center; margin-top:56px; padding:40px; border-top:1px solid rgba(201,168,76,.2); border-bottom:1px solid rgba(201,168,76,.2); }
     .heritage-quote blockquote { font-family:'Playfair Display',serif; font-size:1.4rem; font-style:italic; color:var(--gold-light); max-width:700px; margin:0 auto; line-height:1.6; }
 
-    /* Makati */
+    /* Cities */
     .makati-section { background:var(--cream); }
-    .makati-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:24px; margin-top:40px; }
-    .makati-stat { text-align:center; padding:32px 16px; background:var(--white); border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,.04); }
-    .makati-stat .val { font-family:'Playfair Display',serif; font-size:2rem; font-weight:800; color:var(--navy); }
-    .makati-stat .label { font-size:.82rem; color:var(--text-light); margin-top:4px; }
+    .cities-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:32px; margin-top:40px; }
+    .city-card { background:var(--white); border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.06); overflow:hidden; }
+    .city-card-header { padding:20px 24px; background:var(--navy); color:var(--gold); text-align:center; }
+    .city-card-header h4 { font-family:'Playfair Display',serif; font-size:1.3rem; margin:0; }
+    .city-card-header .city-tagline { font-size:.78rem; color:rgba(255,248,231,.6); margin-top:4px; letter-spacing:.5px; }
+    .city-stats-list { padding:20px 24px; }
+    .city-stat-item { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #f0f0f0; }
+    .city-stat-item:last-child { border-bottom:none; }
+    .city-stat-item .val { font-family:'Playfair Display',serif; font-size:1.3rem; font-weight:800; color:var(--navy); }
+    .city-stat-item .label { font-size:.82rem; color:var(--text-light); max-width:55%; }
 
     /* Policy */
     .policy-section { background:var(--white); }
@@ -464,30 +470,51 @@
     <div class="section-subtitle" data-lang-es>Tres ciudades con profundas ra&iacute;ces espa&ntilde;olas &mdash; Makati la capital financiera, Zamboanga la &uacute;ltima ciudad que habla chabacano, y Cavite la cuna de la independencia filipina.</div>
     <div class="section-subtitle" data-lang-fil>Tatlong lungsod na may malalim na ugat na Espanyol &mdash; Makati ang kabiserang pinansyal, Zamboanga ang huling lungsod na nagsasalita ng Chabacano, at Cavite ang lunan ng kalayaan ng Pilipinas.</div>
 
-    <div class="makati-stats">
-      <div class="makati-stat">
-        <div class="val">&#8369;1.18T</div>
-        <div class="label" data-lang-en>GDP &mdash; Highest Per-Capita in the Philippines</div>
-        <div class="label" data-lang-es>PIB &mdash; El M&aacute;s Alto Per C&aacute;pita en Filipinas</div>
-        <div class="label" data-lang-fil>GDP &mdash; Pinakamataas na Per-Capita sa Pilipinas</div>
+    <div class="cities-grid">
+      <!-- Makati -->
+      <div class="city-card">
+        <div class="city-card-header">
+          <h4>Makati</h4>
+          <div class="city-tagline" data-lang-en>Financial Capital</div>
+          <div class="city-tagline" data-lang-es style="display:none">Capital Financiera</div>
+          <div class="city-tagline" data-lang-fil style="display:none">Kabiserang Pinansyal</div>
+        </div>
+        <div class="city-stats-list">
+          <div class="city-stat-item"><span class="val">&#8369;1.18T</span><span class="label" data-lang-en>GDP</span><span class="label" data-lang-es style="display:none">PIB</span><span class="label" data-lang-fil style="display:none">GDP</span></div>
+          <div class="city-stat-item"><span class="val">80,000+</span><span class="label" data-lang-en>Businesses &amp; MNCs</span><span class="label" data-lang-es style="display:none">Negocios y Multinacionales</span><span class="label" data-lang-fil style="display:none">Mga Negosyo at MNC</span></div>
+          <div class="city-stat-item"><span class="val">120+</span><span class="label" data-lang-en>BPO Companies</span><span class="label" data-lang-es style="display:none">Empresas de BPO</span><span class="label" data-lang-fil style="display:none">Mga BPO</span></div>
+          <div class="city-stat-item"><span class="val">&#8369;1.7M</span><span class="label" data-lang-en>Per-Capita GDP</span><span class="label" data-lang-es style="display:none">PIB Per C&aacute;pita</span><span class="label" data-lang-fil style="display:none">Per-Capita GDP</span></div>
+        </div>
       </div>
-      <div class="makati-stat">
-        <div class="val">80,000+</div>
-        <div class="label" data-lang-en>Businesses &amp; Multinational Headquarters</div>
-        <div class="label" data-lang-es>Negocios y Sedes Multinacionales</div>
-        <div class="label" data-lang-fil>Mga Negosyo at Multinasyonal na Punong-tanggapan</div>
+      <!-- Zamboanga -->
+      <div class="city-card">
+        <div class="city-card-header">
+          <h4>Zamboanga</h4>
+          <div class="city-tagline" data-lang-en>Chabacano Heritage City</div>
+          <div class="city-tagline" data-lang-es style="display:none">Ciudad del Chabacano</div>
+          <div class="city-tagline" data-lang-fil style="display:none">Lungsod ng Chabacano</div>
+        </div>
+        <div class="city-stats-list">
+          <div class="city-stat-item"><span class="val">900K+</span><span class="label" data-lang-en>Population</span><span class="label" data-lang-es style="display:none">Poblaci&oacute;n</span><span class="label" data-lang-fil style="display:none">Populasyon</span></div>
+          <div class="city-stat-item"><span class="val">70%</span><span class="label" data-lang-en>Chabacano Speakers</span><span class="label" data-lang-es style="display:none">Hablantes de Chabacano</span><span class="label" data-lang-fil style="display:none">Nagsasalita ng Chabacano</span></div>
+          <div class="city-stat-item"><span class="val">400+</span><span class="label" data-lang-en>Years of Spanish Heritage</span><span class="label" data-lang-es style="display:none">A&ntilde;os de Herencia Espa&ntilde;ola</span><span class="label" data-lang-fil style="display:none">Taon ng Pamanang Espanyol</span></div>
+          <div class="city-stat-item"><span class="val">#1</span><span class="label" data-lang-en>Last Spanish Creole City in Asia</span><span class="label" data-lang-es style="display:none">&Uacute;ltima Ciudad Criolla Espa&ntilde;ola en Asia</span><span class="label" data-lang-fil style="display:none">Huling Creole Espanyol sa Asya</span></div>
+        </div>
       </div>
-      <div class="makati-stat">
-        <div class="val">120+</div>
-        <div class="label" data-lang-en>BPO Companies in the City</div>
-        <div class="label" data-lang-es>Empresas de BPO en la Ciudad</div>
-        <div class="label" data-lang-fil>Mga Kumpanya ng BPO sa Lungsod</div>
-      </div>
-      <div class="makati-stat">
-        <div class="val">&#8369;1.7M</div>
-        <div class="label" data-lang-en>Per-Capita GDP &mdash; Highest in the Nation</div>
-        <div class="label" data-lang-es>PIB Per C&aacute;pita &mdash; El M&aacute;s Alto de la Naci&oacute;n</div>
-        <div class="label" data-lang-fil>Per-Capita GDP &mdash; Pinakamataas sa Bansa</div>
+      <!-- Cavite -->
+      <div class="city-card">
+        <div class="city-card-header">
+          <h4>Cavite</h4>
+          <div class="city-tagline" data-lang-en>Birthplace of Independence</div>
+          <div class="city-tagline" data-lang-es style="display:none">Cuna de la Independencia</div>
+          <div class="city-tagline" data-lang-fil style="display:none">Lunan ng Kalayaan</div>
+        </div>
+        <div class="city-stats-list">
+          <div class="city-stat-item"><span class="val">4.3M+</span><span class="label" data-lang-en>Province Population</span><span class="label" data-lang-es style="display:none">Poblaci&oacute;n Provincial</span><span class="label" data-lang-fil style="display:none">Populasyon ng Lalawigan</span></div>
+          <div class="city-stat-item"><span class="val">CALABARZON</span><span class="label" data-lang-en>Industrial Growth Hub</span><span class="label" data-lang-es style="display:none">Centro de Crecimiento Industrial</span><span class="label" data-lang-fil style="display:none">Sentro ng Paglago Industrial</span></div>
+          <div class="city-stat-item"><span class="val">1898</span><span class="label" data-lang-en>Revolution &amp; Independence</span><span class="label" data-lang-es style="display:none">Revoluci&oacute;n e Independencia</span><span class="label" data-lang-fil style="display:none">Rebolusyon at Kalayaan</span></div>
+          <div class="city-stat-item"><span class="val">50+</span><span class="label" data-lang-en>BPO &amp; Export Companies</span><span class="label" data-lang-es style="display:none">Empresas BPO y Exportaci&oacute;n</span><span class="label" data-lang-fil style="display:none">Mga BPO at Pag-export</span></div>
+        </div>
       </div>
     </div>
   </div>
