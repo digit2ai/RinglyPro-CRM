@@ -109,6 +109,7 @@ async function initialize() {
         { name: 'Universidad de Medellín', country: 'Colombia', flag: '🇨🇴', type: 'university' },
         { name: 'Colegio de San Juan de Letrán', country: 'Philippines', flag: '🇵🇭', type: 'university' },
         { name: 'Polytechnic University of the Philippines', country: 'Philippines', flag: '🇵🇭', type: 'university' },
+        { name: 'Universidad Virtual del Estado de Guanajuato (UVEG)', country: 'Mexico', flag: '🇲🇽', type: 'university' },
       ];
       for (const p of demoPartners) {
         await sequelize.query(

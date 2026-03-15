@@ -77,6 +77,16 @@ const T = {
     met2: 'Level advancement ≥ 70%',
     met3: 'Attendance ≥ 80%',
     met4: 'Satisfaction ≥ 4.5/5',
+    uvegTitle: 'Universidad Virtual del Estado de Guanajuato (UVEG)',
+    uvegText: 'Public state university of Mexico, supported by the Government of Guanajuato. UVEG provides the Spanish as a Foreign Language (SFL) program — a CEFR-aligned, 12-level curriculum delivered through a 100% digital model. As the academic supplier for the University of Makati, UVEG brings certified teaching staff, robust digital infrastructure, experience managing thousands of international learners, and a strategic commitment to cultural and educational cooperation with the Philippines.',
+    uvegStrengths: 'Key Strengths',
+    uvegS1: 'CEFR-aligned international standards',
+    uvegS2: 'Public institutional backing (Gov. of Guanajuato)',
+    uvegS3: 'Highly scalable 100% digital model',
+    uvegS4: '12-level methodology with topics per level',
+    uvegS5: 'Experience in international cohorts',
+    uvegS6: 'Cost-efficient, non-profit public education',
+    uvegSkills: '4 Core Skills: Speaking, Listening, Reading, Writing',
     letranTitle: 'Colegio de San Juan de Letrán',
     letranText: 'Founded in 1620, Colegio de San Juan de Letrán (now a University) is one of the oldest and most prestigious educational institutions in the Philippines. Its Hispanic legacy, commitment to academic excellence, and openness to international cooperation make it an ideal partner for the Torna Idioma Program.',
     pupTitle: 'Polytechnic University of the Philippines (PUP)',
@@ -175,6 +185,16 @@ const T = {
     met2: 'Avance de nivel ≥ 70%',
     met3: 'Asistencia ≥ 80%',
     met4: 'Satisfacción ≥ 4.5/5',
+    uvegTitle: 'Universidad Virtual del Estado de Guanajuato (UVEG)',
+    uvegText: 'Universidad pública estatal de México, respaldada por el Gobierno de Guanajuato. UVEG proporciona el programa de Español como Lengua Extranjera (ELE) — un currículo alineado al MCER de 12 niveles a través de un modelo 100% digital. Como proveedor académico de la Universidad de Makati, UVEG aporta docentes certificados, infraestructura digital robusta, experiencia gestionando miles de estudiantes internacionales y un compromiso estratégico con la cooperación cultural y educativa con Filipinas.',
+    uvegStrengths: 'Fortalezas Clave',
+    uvegS1: 'Estándares internacionales alineados al MCER',
+    uvegS2: 'Respaldo institucional público (Gob. de Guanajuato)',
+    uvegS3: 'Modelo 100% digital altamente escalable',
+    uvegS4: 'Metodología de 12 niveles con temas por nivel',
+    uvegS5: 'Experiencia en cohortes internacionales',
+    uvegS6: 'Educación pública eficiente y sin fines de lucro',
+    uvegSkills: '4 Competencias: Hablar, Escuchar, Leer, Escribir',
     letranTitle: 'Colegio de San Juan de Letrán',
     letranText: 'Fundado en 1620, el Colegio de San Juan de Letrán (ahora Universidad) es una de las instituciones educativas más antiguas y prestigiosas de Filipinas. Su legado hispánico, su compromiso con la excelencia académica y su apertura a la cooperación internacional lo convierten en un socio ideal para el Programa Torna Idioma.',
     pupTitle: 'Universidad Politécnica de Filipinas (PUP)',
@@ -273,6 +293,16 @@ const T = {
     met2: 'Level advancement ≥ 70%',
     met3: 'Attendance ≥ 80%',
     met4: 'Satisfaction ≥ 4.5/5',
+    uvegTitle: 'Universidad Virtual del Estado de Guanajuato (UVEG)',
+    uvegText: 'Pampublikong unibersidad ng estado ng Mexico, sinusuportahan ng Gobyerno ng Guanajuato. Nagbibigay ng programa ng Espanyol bilang Dayuhang Wika — CEFR-aligned, 12-antas na kurikulum sa pamamagitan ng 100% digital na modelo. Bilang academic supplier para sa University of Makati.',
+    uvegStrengths: 'Mga Pangunahing Lakas',
+    uvegS1: 'CEFR-aligned international standards',
+    uvegS2: 'Public institutional backing (Gov. of Guanajuato)',
+    uvegS3: '100% digital na modelo, highly scalable',
+    uvegS4: '12-antas na metodolohiya na may mga paksa bawat antas',
+    uvegS5: 'Karanasan sa international cohorts',
+    uvegS6: 'Cost-efficient, non-profit na pampublikong edukasyon',
+    uvegSkills: '4 Core Skills: Speaking, Listening, Reading, Writing',
     letranTitle: 'Colegio de San Juan de Letrán',
     letranText: 'Itinatag noong 1620, ang Colegio de San Juan de Letrán ay isa sa mga pinakamatanda at pinakaprestigiyosong institusyong pang-edukasyon sa Pilipinas.',
     pupTitle: 'Polytechnic University of the Philippines (PUP)',
@@ -299,7 +329,8 @@ const T = {
 };
 
 const partners = [
-  { name: 'Universidad de Medellín', country: 'Colombia', flag: '🇨🇴', type: 'Lead Academic Partner', role: 'Academic design, teacher training, curriculum development, technology infrastructure', year: 'Est. 1950' },
+  { name: 'Universidad Virtual del Estado de Guanajuato (UVEG)', country: 'Mexico', flag: '🇲🇽', type: 'Academic Supplier — SFL Program', role: 'CEFR-aligned Spanish as a Foreign Language, 12-level methodology, 100% digital, certified teaching staff, scalable to thousands', year: 'Public University' },
+  { name: 'Universidad de Medellín', country: 'Colombia', flag: '🇨🇴', type: 'Academic Collaboration', role: 'Academic design, teacher training, curriculum development, technology infrastructure', year: 'Est. 1950' },
   { name: 'Colegio de San Juan de Letrán', country: 'Philippines', flag: '🇵🇭', type: 'Private University Partner', role: 'Pilot implementation, student recruitment (private sector), historical Hispanic legacy', year: 'Est. 1620' },
   { name: 'Polytechnic University of the Philippines (PUP)', country: 'Philippines', flag: '🇵🇭', type: 'Public University Partner', role: 'Scale & accessibility, diverse student body (100,000+), public sector reach', year: 'Est. 1904' },
 ];
@@ -419,6 +450,26 @@ export default function InternationalCollaboration() {
                   <p style={s.partnerRole}>{p.role}</p>
                 </div>
               ))}
+            </div>
+
+            {/* UVEG */}
+            <div style={s.institutionSection}>
+              <h2 style={s.sectionTitle}>{L.uvegTitle}</h2>
+              <div style={{ ...s.institutionCard, borderLeft: '4px solid #006341', flexDirection: 'column', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                  <div style={{ ...s.instYear, background: '#006341', color: '#fff', fontSize: 11, width: 72, height: 72, lineHeight: 1.2, textAlign: 'center' }}>UVEG<br/>SFL</div>
+                  <p style={s.instText}>{L.uvegText}</p>
+                </div>
+                <div style={{ marginTop: 8 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#006341', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 }}>{L.uvegStrengths}</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 6 }}>
+                    {[L.uvegS1, L.uvegS2, L.uvegS3, L.uvegS4, L.uvegS5, L.uvegS6].map((s2, i) => (
+                      <div key={i} style={{ fontSize: 12, color: '#4A4A4A', padding: '4px 0', borderBottom: '1px solid #F5E6C8' }}>{s2}</div>
+                    ))}
+                  </div>
+                  <div style={{ marginTop: 10, background: '#006341', color: '#fff', padding: '8px 14px', borderRadius: 4, fontSize: 12, fontWeight: 600, display: 'inline-block' }}>{L.uvegSkills}</div>
+                </div>
+              </div>
             </div>
 
             {/* Letrán */}

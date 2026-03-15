@@ -144,6 +144,17 @@
     .partner-flag:hover { border-color:var(--gold); transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,.08); }
     .partner-flag .flag { font-size:2.5rem; margin-bottom:8px; }
     .partner-flag .country { font-size:.85rem; font-weight:600; color:var(--navy); }
+    .featured-partners { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:24px; margin-bottom:48px; }
+    .featured-partner { background:var(--white); border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.06); overflow:hidden; border:1px solid rgba(201,168,76,.15); transition:all .3s; }
+    .featured-partner:hover { border-color:var(--gold); transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,.1); }
+    .featured-partner-header { background:var(--navy); padding:16px 20px; display:flex; align-items:center; gap:12px; }
+    .featured-partner-header .fp-flag { font-size:1.8rem; }
+    .featured-partner-header h5 { color:var(--gold); font-size:.95rem; margin:0; line-height:1.3; }
+    .featured-partner-header .fp-type { font-size:.72rem; color:rgba(255,248,231,.5); letter-spacing:.5px; text-transform:uppercase; }
+    .featured-partner-body { padding:16px 20px; }
+    .featured-partner-body p { font-size:.83rem; color:var(--text-light); line-height:1.6; margin:0; }
+    .featured-partner-body .fp-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+    .featured-partner-body .fp-tag { font-size:.7rem; padding:3px 8px; background:rgba(201,168,76,.1); color:var(--navy); border-radius:3px; font-weight:600; }
     .partners-provide { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
     .provide-item { background:var(--white); padding:24px; border-radius:8px; border-left:3px solid var(--gold); }
     .provide-item h5 { font-size:.95rem; color:var(--navy); margin-bottom:4px; }
@@ -731,6 +742,73 @@
       <div class="partner-flag"><div class="flag">&#x1F1E9;&#x1F1F4;</div><div class="country" data-lang-en>Dominican Republic</div><div class="country" data-lang-es>Rep&uacute;blica Dominicana</div><div class="country" data-lang-fil>Dominican Republic</div></div>
       <div class="partner-flag"><div class="flag">&#x1F1F5;&#x1F1F7;</div><div class="country">Puerto Rico</div></div>
       <div class="partner-flag"><div class="flag">&#x1F1F5;&#x1F1ED;</div><div class="country" data-lang-en>Philippines</div><div class="country" data-lang-es>Filipinas</div><div class="country" data-lang-fil>Pilipinas</div></div>
+    </div>
+
+    <div class="section-subtitle" style="margin-bottom:24px" data-lang-en>Key Academic Partners</div>
+    <div class="section-subtitle" style="margin-bottom:24px;display:none" data-lang-es>Socios Acad&eacute;micos Clave</div>
+    <div class="section-subtitle" style="margin-bottom:24px;display:none" data-lang-fil>Mga Pangunahing Kasosyong Akademiko</div>
+
+    <div class="featured-partners">
+      <div class="featured-partner">
+        <div class="featured-partner-header">
+          <span class="fp-flag">&#x1F1F2;&#x1F1FD;</span>
+          <div><h5>Universidad Virtual del Estado de Guanajuato (UVEG)</h5><div class="fp-type" data-lang-en>Academic Supplier &mdash; SFL Program</div><div class="fp-type" data-lang-es style="display:none">Proveedor Acad&eacute;mico &mdash; Programa ELE</div><div class="fp-type" data-lang-fil style="display:none">Academic Supplier &mdash; SFL Program</div></div>
+        </div>
+        <div class="featured-partner-body">
+          <p data-lang-en>Public state university of Mexico, supported by the Government of Guanajuato. 100% digital model, CEFR-aligned Spanish as a Foreign Language program with 12 levels. Scalable to thousands of learners.</p>
+          <p data-lang-es style="display:none">Universidad p&uacute;blica estatal de M&eacute;xico, apoyada por el Gobierno de Guanajuato. Modelo 100% digital, programa de Espa&ntilde;ol como Lengua Extranjera alineado al MCER con 12 niveles. Escalable a miles de estudiantes.</p>
+          <p data-lang-fil style="display:none">Pampublikong unibersidad ng estado ng Mexico, sinusuportahan ng Gobyerno ng Guanajuato. 100% digital na modelo, CEFR-aligned na programa ng Espanyol na may 12 antas. Scalable sa libu-libong mag-aaral.</p>
+          <div class="fp-tags"><span class="fp-tag">CEFR</span><span class="fp-tag">12 Levels</span><span class="fp-tag">100% Digital</span><span class="fp-tag">Public University</span></div>
+        </div>
+      </div>
+      <div class="featured-partner">
+        <div class="featured-partner-header">
+          <span class="fp-flag">&#x1F1E8;&#x1F1F4;</span>
+          <div><h5>Universidad de Medell&iacute;n</h5><div class="fp-type" data-lang-en>Academic Collaboration</div><div class="fp-type" data-lang-es style="display:none">Colaboraci&oacute;n Acad&eacute;mica</div><div class="fp-type" data-lang-fil style="display:none">Pakikipagtulungang Akademiko</div></div>
+        </div>
+        <div class="featured-partner-body">
+          <p data-lang-en>Trilateral partnership with University of Makati and Colegio de San Juan de Letr&aacute;n. Teacher training, virtual cohorts, and cultural exchange programs.</p>
+          <p data-lang-es style="display:none">Alianza trilateral con la Universidad de Makati y el Colegio de San Juan de Letr&aacute;n. Formaci&oacute;n docente, cohortes virtuales y programas de intercambio cultural.</p>
+          <p data-lang-fil style="display:none">Trilateral na pakikipagsosyo sa University of Makati at Colegio de San Juan de Letr&aacute;n. Pagsasanay ng guro, virtual cohorts, at mga programang palitang kultural.</p>
+          <div class="fp-tags"><span class="fp-tag">Teacher Training</span><span class="fp-tag">Virtual Cohorts</span><span class="fp-tag">Cultural Exchange</span></div>
+        </div>
+      </div>
+      <div class="featured-partner">
+        <div class="featured-partner-header">
+          <span class="fp-flag">&#x1F1F5;&#x1F1ED;</span>
+          <div><h5>University of Makati</h5><div class="fp-type" data-lang-en>Host University</div><div class="fp-type" data-lang-es style="display:none">Universidad Anfitriona</div><div class="fp-type" data-lang-fil style="display:none">Host na Unibersidad</div></div>
+        </div>
+        <div class="featured-partner-body">
+          <p data-lang-en>Primary implementing university in Makati City. Led by University President Maestro Elyxzur C. Ramos, Letran alumnus building academic bridges with Hispanic nations.</p>
+          <p data-lang-es style="display:none">Universidad implementadora principal en la Ciudad de Makati. Liderada por el Presidente Universitario Maestro Elyxzur C. Ramos, alumno de Letran construyendo puentes acad&eacute;micos con naciones hispanas.</p>
+          <p data-lang-fil style="display:none">Pangunahing unibersidad na nag-iimplementa sa Makati City. Pinamumunuan ni University President Maestro Elyxzur C. Ramos, alumnus ng Letran.</p>
+          <div class="fp-tags"><span class="fp-tag">Host University</span><span class="fp-tag">Makati City</span><span class="fp-tag">Implementation</span></div>
+        </div>
+      </div>
+      <div class="featured-partner">
+        <div class="featured-partner-header">
+          <span class="fp-flag">&#x1F1F5;&#x1F1ED;</span>
+          <div><h5>Colegio de San Juan de Letr&aacute;n</h5><div class="fp-type" data-lang-en>Heritage Partner &mdash; Est. 1620</div><div class="fp-type" data-lang-es style="display:none">Socio de Herencia &mdash; Est. 1620</div><div class="fp-type" data-lang-fil style="display:none">Heritage Partner &mdash; Est. 1620</div></div>
+        </div>
+        <div class="featured-partner-body">
+          <p data-lang-en>One of the oldest educational institutions in Asia, founded in 1620. Deep Spanish-era roots and alumni network that bridges heritage with modern education.</p>
+          <p data-lang-es style="display:none">Una de las instituciones educativas m&aacute;s antiguas de Asia, fundada en 1620. Profundas ra&iacute;ces de la era espa&ntilde;ola y red de alumni que conecta herencia con educaci&oacute;n moderna.</p>
+          <p data-lang-fil style="display:none">Isa sa mga pinakalumang institusyong pang-edukasyon sa Asya, itinatag noong 1620. Malalim na ugat ng panahon ng Espanyol.</p>
+          <div class="fp-tags"><span class="fp-tag">Est. 1620</span><span class="fp-tag">Heritage</span><span class="fp-tag">Alumni Network</span></div>
+        </div>
+      </div>
+      <div class="featured-partner">
+        <div class="featured-partner-header">
+          <span class="fp-flag">&#x1F1F5;&#x1F1ED;</span>
+          <div><h5>Polytechnic University of the Philippines</h5><div class="fp-type" data-lang-en>Scale Partner &mdash; 100K+ Students</div><div class="fp-type" data-lang-es style="display:none">Socio de Escala &mdash; 100K+ Estudiantes</div><div class="fp-type" data-lang-fil style="display:none">Scale Partner &mdash; 100K+ Estudyante</div></div>
+        </div>
+        <div class="featured-partner-body">
+          <p data-lang-en>The Philippines' largest state university with over 100,000 students. A key partner for scaling Spanish education to the broadest possible Filipino audience.</p>
+          <p data-lang-es style="display:none">La universidad estatal m&aacute;s grande de Filipinas con m&aacute;s de 100,000 estudiantes. Socio clave para escalar la educaci&oacute;n del espa&ntilde;ol a la mayor audiencia filipina posible.</p>
+          <p data-lang-fil style="display:none">Ang pinakamalaking pampublikong unibersidad ng Pilipinas na may higit sa 100,000 estudyante. Pangunahing kasosyo para sa pag-scale ng edukasyong Espanyol.</p>
+          <div class="fp-tags"><span class="fp-tag">100K+ Students</span><span class="fp-tag">State University</span><span class="fp-tag">Scale</span></div>
+        </div>
+      </div>
     </div>
 
     <div class="partners-provide">
