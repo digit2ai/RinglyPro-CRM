@@ -63,6 +63,7 @@ function Sidebar({ open, onClose }) {
     { path: `${BASE}/load-matching`, label: 'Load Matching' },
     { path: `${BASE}/pricing`, label: 'Rate Intelligence' },
     { path: `${BASE}/nlp`, label: 'NLP Assistant' },
+    { path: `${BASE}/neural.html`, label: 'Neural Intelligence', ext: true },
     // Portals
     { path: `${BASE}/shipper`, label: 'Shipper Portal', section: 'PORTALS' },
     { path: `${BASE}/carrier-portal`, label: 'Carrier Portal' },
