@@ -2574,11 +2574,10 @@
             .lead-progress-bar { width: 40px; }
         }
 
-        /* ─── Three-Pane Layout: Sidebar | Content | Neural ─── */
+        /* ─── Two-Pane Layout: Sidebar | Content ─── */
         .dashboard-grid {
             display: grid;
-            grid-template-columns: 250px 1fr 1fr;
-            gap: 0;
+            grid-template-columns: 250px 1fr;
             min-height: calc(100vh - 140px);
         }
 
@@ -2588,8 +2587,12 @@
             border-right: 1px solid #21262D;
             display: flex;
             flex-direction: column;
+            height: calc(100vh - 140px);
+            position: sticky;
+            top: 140px;
             overflow-y: auto;
-            max-height: calc(100vh - 140px);
+            transition: transform 0.3s ease, width 0.3s ease;
+            z-index: 50;
         }
         .sidebar-logo-area {
             padding: 20px;
@@ -2636,11 +2639,14 @@
             cursor: pointer;
             transition: all 0.2s;
             border-left: 3px solid transparent;
-            border: none;
+            border-top: none;
+            border-right: none;
+            border-bottom: none;
             background: none;
             width: 100%;
             text-align: left;
             font-family: inherit;
+            text-decoration: none;
         }
         .sidebar-nav-item:hover {
             color: #E6EDF3;
@@ -2701,85 +2707,77 @@
             color: #f87171;
         }
 
-        /* ─── Main Content (Center) ─── */
-        .dashboard-center {
+        /* ─── Main Content (Right Pane) ─── */
+        .dashboard-main {
             overflow-y: auto;
             max-height: calc(100vh - 140px);
             background: #f3f4f6;
         }
-
-        /* ─── Neural Pane (Right) ─── */
-        .dashboard-right {
-            border-left: 1px solid #21262D;
-            background: #07090f;
-            position: relative;
-        }
-        .dashboard-right iframe {
+        /* Neural iframe view in main pane */
+        .neural-view {
             width: 100%;
-            height: 100%;
-            min-height: calc(100vh - 140px);
+            height: calc(100vh - 140px);
             border: none;
             display: block;
+            background: #07090f;
         }
-        .neural-pane-header {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px 16px;
-            background: rgba(7,9,15,.9);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(139,92,246,.15);
-        }
-        .neural-pane-title {
-            font-size: 13px;
-            font-weight: 700;
-            color: #c4b5fd;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .neural-pane-title .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #22c55e;
-        }
-        .neural-pane-link {
-            font-size: 12px;
-            color: #8b5cf6;
-            font-weight: 600;
-            text-decoration: none;
-        }
-        .neural-pane-link:hover { text-decoration: underline; }
 
-        @media (max-width: 1100px) {
-            .dashboard-grid {
-                grid-template-columns: 250px 1fr;
-            }
-            .dashboard-right {
-                display: none;
-            }
+        /* ─── Mobile hamburger ─── */
+        .mobile-sidebar-toggle {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 60;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #0EA5E9, #8b5cf6);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(14,165,233,.4);
+            font-size: 22px;
+            align-items: center;
+            justify-content: center;
         }
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.6);
+            z-index: 49;
+        }
+
+        /* ─── Responsive ─── */
         @media (max-width: 768px) {
             .dashboard-grid {
                 grid-template-columns: 1fr;
             }
             .dashboard-sidebar {
-                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 280px;
+                height: 100vh;
+                transform: translateX(-100%);
+                z-index: 200;
             }
-            .dashboard-center {
+            .dashboard-sidebar.open {
+                transform: translateX(0);
+            }
+            .sidebar-overlay.open {
+                display: block;
+            }
+            .mobile-sidebar-toggle {
+                display: flex;
+            }
+            .dashboard-main {
                 max-height: none;
             }
-            /* Show quick actions on mobile as fallback */
-            .quick-actions { display: block !important; }
-            .nav-tabs { display: flex !important; }
+            .neural-view {
+                height: calc(100vh - 60px);
+            }
         }
     </style>
 </head>
@@ -2843,18 +2841,22 @@
         </div>
     </div>
 
-    <!-- Three-Pane Layout: Sidebar | Content | Neural -->
+    <!-- Two-Pane Layout: Sidebar | Content -->
     <div class="dashboard-grid">
 
+    <!-- Mobile sidebar overlay + toggle -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+    <button class="mobile-sidebar-toggle" id="mobileSidebarBtn" onclick="toggleSidebar()">☰</button>
+
     <!-- SIDEBAR (Left Pane) -->
-    <div class="dashboard-sidebar">
+    <div class="dashboard-sidebar" id="dashboardSidebar">
         <div class="sidebar-logo-area">
             <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68e1ceaedd63a48d8059af0a.png" alt="RinglyPro">
             <div><span class="sidebar-tier-badge" id="sidebarTierBadge">AI Receptionist</span></div>
         </div>
         <nav class="sidebar-nav">
             <div class="sidebar-section-label">DASHBOARD</div>
-            <button class="sidebar-nav-item active" onclick="sidebarNav('today', this)">
+            <button class="sidebar-nav-item" onclick="sidebarNav('today', this)">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                 Calendar
             </button>
@@ -2870,10 +2872,6 @@
                 Business Copilot
                 <span class="sidebar-nav-badge" style="background:rgba(96,165,250,.2);color:#60a5fa;">AI</span>
             </button>
-            <a class="sidebar-nav-item" href="/neural/dashboard.html" target="_blank" style="text-decoration:none;">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                Neural Intelligence
-            </a>
 
             <div class="sidebar-section-label">CRM</div>
             <button class="sidebar-nav-item" onclick="openContactsModal()">
@@ -2886,10 +2884,10 @@
                 Share &amp; Referral
             </button>
 
-            <div class="sidebar-section-label">ANALYTICS</div>
-            <button class="sidebar-nav-item" onclick="openAnalyticsModal()">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                Analytics
+            <div class="sidebar-section-label">INTELLIGENCE</div>
+            <button class="sidebar-nav-item active" onclick="sidebarNav('neural', this)">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                Neural Intelligence
             </button>
             <button class="sidebar-nav-item" onclick="showCreditsInfo()">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -2910,8 +2908,14 @@
         </div>
     </div>
 
-    <!-- CENTER CONTENT PANE -->
-    <div class="dashboard-center">
+    <!-- MAIN CONTENT (Right Pane) -->
+    <div class="dashboard-main" id="dashboardMain">
+
+    <!-- Neural Intelligence View (DEFAULT - shown on load) -->
+    <iframe class="neural-view" id="neuralView" src="/cw_carriers/neural.html" title="Neural Intelligence"></iframe>
+
+    <!-- CRM Content Views (hidden by default, shown when sidebar nav clicked) -->
+    <div id="crmContentArea" style="display:none;">
 
     <!-- Lead Tracker -->
     <div class="lead-tracker" id="leadTracker" style="display:none;">
@@ -3228,16 +3232,9 @@
         </div> -->
     </div>
 
-    </div><!-- end .dashboard-center -->
+    </div><!-- end #crmContentArea -->
 
-    <!-- Neural Intelligence Right Pane -->
-    <div class="dashboard-right">
-        <div class="neural-pane-header">
-            <div class="neural-pane-title"><span class="dot"></span> Neural Intelligence</div>
-            <a href="/neural/dashboard.html" class="neural-pane-link" target="_blank">Open Full View →</a>
-        </div>
-        <iframe src="/cw_carriers/neural.html" title="Neural Intelligence" style="padding-top: 38px;"></iframe>
-    </div>
+    </div><!-- end .dashboard-main -->
 
     </div><!-- end .dashboard-grid -->
 
@@ -4277,14 +4274,40 @@
             // Update active state
             document.querySelectorAll('.sidebar-nav-item').forEach(b => b.classList.remove('active'));
             if (el) el.classList.add('active');
-            // Switch content sections (reuse existing tab logic)
-            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
-            if (tab === 'today') {
-                document.getElementById('todaySection').classList.add('active');
-            } else if (tab === 'messages') {
-                document.getElementById('messagesSection').classList.add('active');
+
+            const neuralView = document.getElementById('neuralView');
+            const crmArea = document.getElementById('crmContentArea');
+
+            if (tab === 'neural') {
+                // Show Neural iframe, hide CRM content
+                neuralView.style.display = 'block';
+                crmArea.style.display = 'none';
+            } else {
+                // Show CRM content, hide Neural iframe
+                neuralView.style.display = 'none';
+                crmArea.style.display = 'block';
+                // Switch content sections
+                document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+                if (tab === 'today') {
+                    document.getElementById('todaySection').classList.add('active');
+                } else if (tab === 'messages') {
+                    document.getElementById('messagesSection').classList.add('active');
+                }
             }
+            // Auto-close sidebar on mobile
+            closeSidebar();
         }
+
+        // ─── Mobile Sidebar Toggle ───────────────────────────
+        function toggleSidebar() {
+            document.getElementById('dashboardSidebar').classList.toggle('open');
+            document.getElementById('sidebarOverlay').classList.toggle('open');
+        }
+        function closeSidebar() {
+            document.getElementById('dashboardSidebar').classList.remove('open');
+            document.getElementById('sidebarOverlay').classList.remove('open');
+        }
+
         // Populate sidebar user email
         try {
             const tkn = localStorage.getItem('token');
