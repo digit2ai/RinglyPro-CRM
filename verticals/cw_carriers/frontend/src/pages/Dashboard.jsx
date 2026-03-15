@@ -44,58 +44,17 @@ export default function Dashboard() {
         ))}
       </div>
 
-      <div style={s.grid2}>
-        <div style={s.section}>
-          <h3 style={s.sectionTitle}>RECENT CALLS</h3>
-          <table style={s.table}>
-            <thead>
-              <tr>
-                <th style={s.th}>Contact</th>
-                <th style={s.th}>Type</th>
-                <th style={s.th}>Outcome</th>
-                <th style={s.th}>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentCalls.length === 0 ? (
-                <tr><td colSpan={4} style={s.empty}>No calls yet</td></tr>
-              ) : recentCalls.map(c => (
-                <tr key={c.id}>
-                  <td style={s.td}>{c.company_name || c.contact_name || c.from_number || '—'}</td>
-                  <td style={s.td}><span style={s.badge}>{c.call_type || '—'}</span></td>
-                  <td style={s.td}><span style={{ ...s.badge, ...outcomeColor(c.outcome) }}>{c.outcome || '—'}</span></td>
-                  <td style={s.td}>{c.created_at ? new Date(c.created_at).toLocaleDateString() : '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div style={s.neuralSection}>
+        <div style={s.neuralHeader}>
+          <h3 style={s.sectionTitle}>NEURAL INTELLIGENCE</h3>
+          <a href="/cw_carriers/neural.html" style={s.neuralLink}>Open Full Dashboard →</a>
         </div>
-
-        <div style={s.section}>
-          <h3 style={s.sectionTitle}>OPEN LOADS</h3>
-          <table style={s.table}>
-            <thead>
-              <tr>
-                <th style={s.th}>Ref</th>
-                <th style={s.th}>Lane</th>
-                <th style={s.th}>Type</th>
-                <th style={s.th}>Rate</th>
-              </tr>
-            </thead>
-            <tbody>
-              {openLoads.length === 0 ? (
-                <tr><td colSpan={4} style={s.empty}>No open loads</td></tr>
-              ) : openLoads.map(l => (
-                <tr key={l.id}>
-                  <td style={s.td}>{l.load_ref || `#${l.id}`}</td>
-                  <td style={s.td}>{l.origin} → {l.destination}</td>
-                  <td style={s.td}>{l.freight_type || '—'}</td>
-                  <td style={s.td}>{l.rate_usd ? `$${parseFloat(l.rate_usd).toLocaleString()}` : '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <iframe
+          src="/cw_carriers/neural.html"
+          style={s.neuralFrame}
+          title="Neural Intelligence Dashboard"
+          frameBorder="0"
+        />
       </div>
     </div>
   );
@@ -112,12 +71,9 @@ const s = {
   kpiCard: { background: '#161B22', border: '1px solid #21262D', borderRadius: 10, padding: '16px 12px', textAlign: 'center' },
   kpiValue: { fontSize: 28, fontWeight: 700, fontFamily: "'Bebas Neue', sans-serif" },
   kpiLabel: { fontSize: 11, color: '#8B949E', marginTop: 4, textTransform: 'uppercase' },
-  grid2: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 },
-  section: { background: '#161B22', border: '1px solid #21262D', borderRadius: 10, padding: 16, overflow: 'auto' },
-  sectionTitle: { fontSize: 18, color: '#E6EDF3', marginBottom: 12 },
-  table: { width: '100%', borderCollapse: 'collapse' },
-  th: { textAlign: 'left', padding: '8px 10px', fontSize: 11, color: '#8B949E', borderBottom: '1px solid #21262D', textTransform: 'uppercase' },
-  td: { padding: '8px 10px', fontSize: 13, color: '#E6EDF3', borderBottom: '1px solid #21262D' },
-  badge: { display: 'inline-block', padding: '2px 8px', borderRadius: 4, fontSize: 11, background: '#21262D', color: '#8B949E' },
-  empty: { padding: 20, textAlign: 'center', color: '#484F58' }
+  neuralSection: { background: '#0D1117', border: '1px solid #21262D', borderRadius: 12, overflow: 'hidden' },
+  neuralHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid #21262D' },
+  sectionTitle: { fontSize: 18, color: '#E6EDF3', marginBottom: 0 },
+  neuralLink: { fontSize: 13, color: '#8b5cf6', fontWeight: 600, textDecoration: 'none' },
+  neuralFrame: { width: '100%', height: 'calc(100vh - 200px)', minHeight: 700, border: 'none', display: 'block' }
 };
