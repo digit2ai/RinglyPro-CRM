@@ -2574,19 +2574,143 @@
             .lead-progress-bar { width: 40px; }
         }
 
-        /* ─── Neural Intelligence Two-Pane Layout ─── */
+        /* ─── Three-Pane Layout: Sidebar | Content | Neural ─── */
         .dashboard-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 250px 1fr 1fr;
             gap: 0;
             min-height: calc(100vh - 140px);
         }
-        .dashboard-left {
+
+        /* ─── Sidebar (Left Pane) ─── */
+        .dashboard-sidebar {
+            background: #161B22;
+            border-right: 1px solid #21262D;
+            display: flex;
+            flex-direction: column;
             overflow-y: auto;
             max-height: calc(100vh - 140px);
         }
+        .sidebar-logo-area {
+            padding: 20px;
+            border-bottom: 1px solid #21262D;
+            text-align: center;
+        }
+        .sidebar-logo-area img {
+            width: 100%;
+            max-width: 180px;
+            height: auto;
+            margin-bottom: 4px;
+        }
+        .sidebar-tier-badge {
+            display: inline-block;
+            margin-top: 6px;
+            padding: 3px 10px;
+            background: rgba(139,92,246,.15);
+            color: #8b5cf6;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .sidebar-nav {
+            flex: 1;
+            padding: 12px 0;
+        }
+        .sidebar-section-label {
+            padding: 14px 20px 6px;
+            font-size: 10px;
+            color: #0EA5E9;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .sidebar-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 20px;
+            font-size: 14px;
+            color: #8B949E;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-family: inherit;
+        }
+        .sidebar-nav-item:hover {
+            color: #E6EDF3;
+            background: rgba(14,165,233,.08);
+        }
+        .sidebar-nav-item.active {
+            color: #fff;
+            background: rgba(14,165,233,.13);
+            border-left-color: #0EA5E9;
+        }
+        .sidebar-nav-item svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+        .sidebar-nav-badge {
+            margin-left: auto;
+            padding: 1px 7px;
+            background: rgba(139,92,246,.2);
+            color: #c4b5fd;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .sidebar-footer {
+            padding: 16px 20px;
+            border-top: 1px solid #21262D;
+        }
+        .sidebar-user-role {
+            font-size: 10px;
+            color: #0EA5E9;
+            font-weight: 600;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+        .sidebar-user-email {
+            font-size: 12px;
+            color: #8B949E;
+            margin-bottom: 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .sidebar-logout-btn {
+            background: none;
+            border: 1px solid #30363D;
+            color: #8B949E;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            width: 100%;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        .sidebar-logout-btn:hover {
+            background: rgba(239,68,68,.1);
+            border-color: #ef4444;
+            color: #f87171;
+        }
+
+        /* ─── Main Content (Center) ─── */
+        .dashboard-center {
+            overflow-y: auto;
+            max-height: calc(100vh - 140px);
+            background: #f3f4f6;
+        }
+
+        /* ─── Neural Pane (Right) ─── */
         .dashboard-right {
-            border-left: 1px solid #e5e7eb;
+            border-left: 1px solid #21262D;
             background: #07090f;
             position: relative;
         }
@@ -2634,18 +2758,28 @@
             text-decoration: none;
         }
         .neural-pane-link:hover { text-decoration: underline; }
-        @media (max-width: 900px) {
+
+        @media (max-width: 1100px) {
+            .dashboard-grid {
+                grid-template-columns: 250px 1fr;
+            }
+            .dashboard-right {
+                display: none;
+            }
+        }
+        @media (max-width: 768px) {
             .dashboard-grid {
                 grid-template-columns: 1fr;
             }
-            .dashboard-right {
-                border-left: none;
-                border-top: 1px solid #e5e7eb;
-                min-height: 600px;
+            .dashboard-sidebar {
+                display: none;
             }
-            .dashboard-left {
+            .dashboard-center {
                 max-height: none;
             }
+            /* Show quick actions on mobile as fallback */
+            .quick-actions { display: block !important; }
+            .nav-tabs { display: flex !important; }
         }
     </style>
 </head>
@@ -2709,9 +2843,75 @@
         </div>
     </div>
 
-    <!-- Two-Pane Layout: Functions Left, Neural Right -->
+    <!-- Three-Pane Layout: Sidebar | Content | Neural -->
     <div class="dashboard-grid">
-    <div class="dashboard-left">
+
+    <!-- SIDEBAR (Left Pane) -->
+    <div class="dashboard-sidebar">
+        <div class="sidebar-logo-area">
+            <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68e1ceaedd63a48d8059af0a.png" alt="RinglyPro">
+            <div><span class="sidebar-tier-badge" id="sidebarTierBadge">AI Receptionist</span></div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="sidebar-section-label">DASHBOARD</div>
+            <button class="sidebar-nav-item active" onclick="sidebarNav('today', this)">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                Calendar
+            </button>
+            <button class="sidebar-nav-item" onclick="sidebarNav('messages', this)">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+                Messages
+                <span class="sidebar-nav-badge" id="sidebarMsgBadge" style="display:none;">0</span>
+            </button>
+
+            <div class="sidebar-section-label">AI TOOLS</div>
+            <button class="sidebar-nav-item" onclick="openMCPCopilot()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                Business Copilot
+                <span class="sidebar-nav-badge" style="background:rgba(96,165,250,.2);color:#60a5fa;">AI</span>
+            </button>
+            <a class="sidebar-nav-item" href="/neural/dashboard.html" target="_blank" style="text-decoration:none;">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                Neural Intelligence
+            </a>
+
+            <div class="sidebar-section-label">CRM</div>
+            <button class="sidebar-nav-item" onclick="openContactsModal()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                Contacts
+                <span class="sidebar-nav-badge" id="sidebarContactCount">0</span>
+            </button>
+            <button class="sidebar-nav-item" onclick="shareReferralLink()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                Share &amp; Referral
+            </button>
+
+            <div class="sidebar-section-label">ANALYTICS</div>
+            <button class="sidebar-nav-item" onclick="openAnalyticsModal()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                Analytics
+            </button>
+            <button class="sidebar-nav-item" onclick="showCreditsInfo()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Tokens
+                <span class="sidebar-nav-badge" id="sidebarTokenCount" style="background:rgba(16,185,129,.2);color:#10b981;">0</span>
+            </button>
+
+            <div class="sidebar-section-label">ADMIN</div>
+            <button class="sidebar-nav-item" onclick="openSettings()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                Settings
+            </button>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="sidebar-user-role">ACCOUNT</div>
+            <div class="sidebar-user-email" id="sidebarUserEmail"></div>
+            <button class="sidebar-logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <!-- CENTER CONTENT PANE -->
+    <div class="dashboard-center">
 
     <!-- Lead Tracker -->
     <div class="lead-tracker" id="leadTracker" style="display:none;">
@@ -2726,8 +2926,8 @@
         </div>
     </div>
 
-    <!-- Quick Actions -->
-    <div class="quick-actions">
+    <!-- Quick Actions (hidden on desktop, shown on mobile fallback) -->
+    <div class="quick-actions" style="display:none;">
         <div class="action-grid">
             <button class="action-btn btn-copilot" onclick="openMCPCopilot()">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2736,7 +2936,6 @@
                 Business Copilot
                 <div class="credit-amount" style="background: #60a5fa;">AI</div>
             </button>
-<!-- SMS/Dial button removed - functionality moved to Contacts card -->
             <button class="action-btn" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);" onclick="openContactsModal()">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
@@ -2758,7 +2957,6 @@
                 Share
                 <div class="credit-amount" id="referralCount" style="background: #10b981;">0</div>
             </button>
-            <!-- IVR, Projects, User Guide buttons removed for Client 15 -->
             <button class="action-btn" onclick="showCreditsInfo()" style="background: linear-gradient(135deg, #10b981, #059669);">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -2775,8 +2973,8 @@
         </div>
     </div>
 
-    <!-- Navigation Tabs -->
-    <div class="nav-tabs">
+    <!-- Navigation Tabs (hidden on desktop, shown on mobile fallback) -->
+    <div class="nav-tabs" style="display:none;">
         <button class="nav-tab active" data-tab="today">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -3030,7 +3228,7 @@
         </div> -->
     </div>
 
-    </div><!-- end .dashboard-left -->
+    </div><!-- end .dashboard-center -->
 
     <!-- Neural Intelligence Right Pane -->
     <div class="dashboard-right">
@@ -4073,6 +4271,32 @@
                 }
             }
         });
+
+        // ─── Sidebar Navigation ─────────────────────────────
+        function sidebarNav(tab, el) {
+            // Update active state
+            document.querySelectorAll('.sidebar-nav-item').forEach(b => b.classList.remove('active'));
+            if (el) el.classList.add('active');
+            // Switch content sections (reuse existing tab logic)
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+            if (tab === 'today') {
+                document.getElementById('todaySection').classList.add('active');
+            } else if (tab === 'messages') {
+                document.getElementById('messagesSection').classList.add('active');
+            }
+        }
+        // Populate sidebar user email
+        try {
+            const tkn = localStorage.getItem('token');
+            if (tkn) {
+                const payload = JSON.parse(atob(tkn.split('.')[1]));
+                const emailEl = document.getElementById('sidebarUserEmail');
+                if (emailEl && payload.email) emailEl.textContent = payload.email;
+                if (emailEl && payload.business_name) {
+                    document.getElementById('sidebarTierBadge').textContent = payload.business_name;
+                }
+            }
+        } catch(e) {}
 
         // Logout function
         function logout() {
@@ -9790,6 +10014,8 @@
                     if (countEl) {
                         countEl.textContent = data.data.total;
                     }
+                    const sidebarCount = document.getElementById('sidebarContactCount');
+                    if (sidebarCount) sidebarCount.textContent = data.data.total;
                 }
             } catch (error) {
                 console.error('Error loading contacts count:', error);
