@@ -55,31 +55,25 @@ async function initialize() {
     }
     console.log('  ✅ Torna Idioma users initialized');
 
-    // Seed demo courses
-    const [[courseExists]] = await sequelize.query(`SELECT id FROM ti_courses LIMIT 1`);
-    if (!courseExists) {
-      const demoCourses = [
-        { title_en: 'Spanish Fundamentals', title_es: 'Fundamentos del Español', title_fil: 'Mga Batayan ng Espanyol', desc_en: 'Essential Spanish vocabulary, grammar, and conversational skills for absolute beginners.', level: 'beginner', category: 'general', hours: 40 },
-        { title_en: 'BPO Spanish Communication', title_es: 'Comunicación en Español para BPO', title_fil: 'Komunikasyon sa Espanyol para sa BPO', desc_en: 'Professional Spanish for call center and BPO environments. Customer service, technical support, and sales terminology.', level: 'intermediate', category: 'bpo', hours: 60 },
-        { title_en: 'Filipino-Spanish Heritage', title_es: 'Herencia Filipino-Española', title_fil: 'Pamana ng Pilipino-Espanyol', desc_en: 'Explore the deep connections between Filipino and Spanish languages, history, and culture through the lens of 333 years of shared heritage.', level: 'beginner', category: 'cultural', hours: 20 },
-        { title_en: 'Advanced Business Spanish', title_es: 'Español de Negocios Avanzado', title_fil: 'Advanced na Espanyol para sa Negosyo', desc_en: 'High-level business communication, negotiation, and presentation skills in Spanish for professionals and executives.', level: 'advanced', category: 'business', hours: 80 },
-        { title_en: 'DELE Exam Preparation', title_es: 'Preparación para el Examen DELE', title_fil: 'Paghahanda para sa DELE Exam', desc_en: 'Comprehensive preparation for the Diplomas de Español como Lengua Extranjera (DELE) certification exams.', level: 'intermediate', category: 'certification', hours: 100 },
-      ];
-      for (let i = 0; i < demoCourses.length; i++) {
-        const c = demoCourses[i];
+    // Seed UVEG SFL courses (12 modules × 6 lessons = 72 lessons)
+    // If old demo courses exist but UVEG Module 1 doesn't, migrate to UVEG curriculum
+    const [[uvegExists]] = await sequelize.query(`SELECT id FROM ti_courses WHERE title_en = 'Module 1: Introducción al Español' LIMIT 1`);
+    if (!uvegExists) {
+      // Clear old demo courses and lessons
+      await sequelize.query(`DELETE FROM ti_lessons`);
+      await sequelize.query(`DELETE FROM ti_courses`);
+      const uvegCourses = require('./seeds/uveg-courses');
+      for (let i = 0; i < uvegCourses.length; i++) {
+        const c = uvegCourses[i];
         await sequelize.query(
-          `INSERT INTO ti_courses (title_en, title_es, title_fil, description_en, level, category, duration_hours, total_lessons, is_published, sort_order, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,true,$9,NOW(),NOW())`,
-          { bind: [c.title_en, c.title_es, c.title_fil, c.desc_en, c.level, c.category, c.hours, Math.ceil(c.hours/2), i+1] }
+          `INSERT INTO ti_courses (title_en, title_es, title_fil, description_en, level, category, duration_hours, total_lessons, is_published, sort_order, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,6,true,$8,NOW(),NOW())`,
+          { bind: [c.title_en, c.title_es, c.title_fil, c.desc_en, c.level, c.category, c.hours, i+1] }
         );
       }
-      console.log('  ✅ Torna Idioma demo courses seeded');
+      console.log('  ✅ Torna Idioma UVEG SFL courses seeded (12 modules)');
 
-    }
-
-    // Seed lessons independently — checks for lessons regardless of whether courses existed before
-    const [[lessonExists]] = await sequelize.query(`SELECT id FROM ti_lessons LIMIT 1`);
-    if (!lessonExists) {
-      const lessonSeedData = require('./seeds/lessons');
+      // Seed all 72 lessons
+      const lessonSeedData = require('./seeds/uveg-lessons');
       for (const [courseTitle, lessons] of Object.entries(lessonSeedData)) {
         const [[course]] = await sequelize.query(`SELECT id FROM ti_courses WHERE title_en = $1 LIMIT 1`, { bind: [courseTitle] });
         if (!course) continue;
@@ -90,10 +84,8 @@ async function initialize() {
             { bind: [course.id, l.title_en, l.title_es, l.title_fil, l.content_en, l.type, i+1, l.mins, l.exercises] }
           );
         }
-        // Update total_lessons to actual count
-        await sequelize.query(`UPDATE ti_courses SET total_lessons = $1 WHERE id = $2`, { bind: [lessons.length, course.id] });
       }
-      console.log('  ✅ Torna Idioma lessons seeded (25 lessons across 5 courses)');
+      console.log('  ✅ Torna Idioma UVEG lessons seeded (72 lessons across 12 modules)');
     }
 
     // Seed demo partners
