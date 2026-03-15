@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Torna Idioma — Platform Documentation</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Inter:wght@300;400;500;600;700&display=swap');
+    :root {
+      --gold: #C9A84C; --gold-light: #E8D48B; --gold-dark: #8B6914;
+      --navy: #1B2A4A; --navy-deep: #0F1A2E; --navy-light: #2A3F6A;
+      --red: #C41E3A; --red-dark: #8B1428;
+      --cream: #FFF8E7; --cream-dark: #F5E6C8;
+      --white: #FFFFFF; --text: #2C2C2C; --text-light: #6B6B6B;
+      --green: #006341; --blue: #0066CC;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { font-family:'Inter',sans-serif; color:var(--text); background:var(--white); line-height:1.7; }
+
+    /* Nav — matches landing page */
+    nav { position:fixed; top:0; left:0; right:0; z-index:1000; background:rgba(15,26,46,0.98); backdrop-filter:blur(20px); border-bottom:1px solid rgba(201,168,76,0.3); box-shadow:0 4px 30px rgba(0,0,0,.3); }
+    .nav-container { max-width:1200px; margin:0 auto; padding:0 24px; display:flex; align-items:center; justify-content:space-between; height:70px; }
+    .nav-brand { display:flex; align-items:center; gap:12px; text-decoration:none; }
+    .nav-brand-text { font-family:'Playfair Display',serif; font-size:1.3rem; font-weight:700; color:var(--gold); letter-spacing:2px; }
+    .nav-brand-sub { font-size:.65rem; color:var(--gold-light); letter-spacing:3px; text-transform:uppercase; opacity:.8; }
+    .nav-links { display:flex; gap:28px; list-style:none; align-items:center; }
+    .nav-links a { color:rgba(255,255,255,.8); text-decoration:none; font-size:.85rem; font-weight:500; letter-spacing:.5px; transition:color .3s; }
+    .nav-links a:hover { color:var(--gold); }
+    .nav-links a.active-link { color:var(--gold); border-bottom:2px solid var(--gold); padding-bottom:2px; }
+    .nav-login { padding:6px 20px !important; background:linear-gradient(135deg,var(--gold),var(--gold-dark)); color:var(--navy-deep) !important; border-radius:4px; font-weight:700 !important; letter-spacing:1px; transition:all .3s !important; }
+    .nav-login:hover { transform:translateY(-1px); box-shadow:0 4px 15px rgba(201,168,76,.4); color:var(--navy-deep) !important; }
+
+    /* Hero */
+    .doc-hero { padding:140px 24px 80px; background:linear-gradient(135deg,var(--navy-deep),var(--navy),var(--navy-light)); text-align:center; position:relative; overflow:hidden; }
+    .doc-hero::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 30% 50%,rgba(201,168,76,.08),transparent 60%),radial-gradient(ellipse at 70% 30%,rgba(196,30,58,.05),transparent 50%); }
+    .doc-hero-content { position:relative; z-index:2; max-width:800px; margin:0 auto; }
+    .doc-badge { display:inline-block; padding:6px 20px; background:rgba(201,168,76,.15); border:1px solid rgba(201,168,76,.4); border-radius:30px; font-size:.75rem; letter-spacing:3px; text-transform:uppercase; color:var(--gold); margin-bottom:24px; font-weight:600; }
+    .doc-hero h1 { font-family:'Playfair Display',serif; font-size:clamp(2rem,5vw,3.5rem); font-weight:800; color:var(--white); margin-bottom:12px; line-height:1.15; }
+    .doc-hero h1 .accent { color:var(--gold); }
+    .doc-hero-sub { font-size:1.1rem; color:rgba(255,255,255,.65); max-width:600px; margin:0 auto 32px; font-weight:300; }
+    .doc-meta { display:flex; gap:32px; justify-content:center; flex-wrap:wrap; }
+    .doc-meta-item { text-align:center; }
+    .doc-meta-label { font-size:.65rem; letter-spacing:3px; text-transform:uppercase; color:rgba(255,255,255,.4); }
+    .doc-meta-value { font-family:'Playfair Display',serif; font-size:1rem; color:var(--gold); font-weight:600; }
+
+    /* TOC */
+    .toc-section { background:var(--cream); padding:60px 24px; }
+    .toc-container { max-width:900px; margin:0 auto; }
+    .toc-title { font-family:'Playfair Display',serif; font-size:1.5rem; color:var(--navy); margin-bottom:24px; text-align:center; }
+    .toc-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px; }
+    .toc-card { background:var(--white); padding:20px 24px; border-radius:8px; border-left:4px solid var(--gold); text-decoration:none; color:var(--navy); font-weight:600; font-size:.9rem; transition:all .3s; box-shadow:0 2px 8px rgba(0,0,0,.04); display:flex; align-items:center; gap:12px; }
+    .toc-card:hover { transform:translateX(4px); box-shadow:0 4px 16px rgba(0,0,0,.08); color:var(--gold-dark); }
+    .toc-num { font-family:'Playfair Display',serif; font-size:1.4rem; color:var(--gold); font-weight:700; min-width:32px; }
+
+    /* Content Sections */
+    .doc-section { padding:80px 24px; }
+    .doc-section:nth-child(odd) { background:var(--white); }
+    .doc-section:nth-child(even) { background:var(--cream); }
+    .doc-container { max-width:900px; margin:0 auto; }
+    .doc-section-overline { font-size:.7rem; letter-spacing:5px; text-transform:uppercase; color:var(--gold-dark); margin-bottom:8px; font-weight:600; }
+    .doc-section-title { font-family:'Playfair Display',serif; font-size:clamp(1.6rem,3vw,2.4rem); color:var(--navy); margin-bottom:24px; line-height:1.2; }
+    .doc-section-title .num { color:var(--gold); }
+    .doc-text { color:var(--text); line-height:1.9; margin-bottom:20px; font-size:.95rem; }
+    .doc-text strong { color:var(--navy); }
+
+    /* Cards */
+    .doc-card-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:20px; margin:24px 0; }
+    .doc-card { background:var(--white); padding:28px; border-radius:8px; box-shadow:0 2px 12px rgba(0,0,0,.06); border-top:3px solid var(--gold); }
+    .doc-card.navy { border-top-color:var(--navy); }
+    .doc-card.red { border-top-color:var(--red); }
+    .doc-card.green { border-top-color:var(--green); }
+    .doc-card h4 { font-family:'Playfair Display',serif; font-size:1.1rem; color:var(--navy); margin-bottom:8px; }
+    .doc-card p { font-size:.88rem; color:var(--text-light); line-height:1.7; }
+    .doc-card .emoji { font-size:1.8rem; margin-bottom:12px; display:block; }
+
+    /* Two Column */
+    .two-col { display:grid; grid-template-columns:1fr 1fr; gap:32px; margin:24px 0; }
+
+    /* Table */
+    .doc-table-wrap { overflow-x:auto; margin:20px 0; border-radius:8px; box-shadow:0 2px 12px rgba(0,0,0,.06); }
+    table { width:100%; border-collapse:collapse; font-size:.88rem; }
+    thead { background:var(--navy); color:var(--white); }
+    th { padding:14px 16px; text-align:left; font-weight:600; letter-spacing:.5px; font-size:.8rem; text-transform:uppercase; }
+    td { padding:12px 16px; border-bottom:1px solid #eee; }
+    tr:hover { background:rgba(201,168,76,.04); }
+    td code { background:#f0f0f0; padding:2px 6px; border-radius:3px; font-size:.82rem; font-family:'Courier New',monospace; color:var(--navy); }
+
+    /* Code block */
+    .code-block { background:var(--navy-deep); color:#e0e0e0; padding:20px 24px; border-radius:8px; font-family:'Courier New',monospace; font-size:.82rem; line-height:1.6; overflow-x:auto; margin:16px 0; position:relative; }
+    .code-block .comment { color:#6a9955; }
+    .code-block .keyword { color:#569CD6; }
+    .code-block .string { color:#CE9178; }
+    .code-label { position:absolute; top:8px; right:12px; background:rgba(201,168,76,.2); color:var(--gold); padding:2px 10px; border-radius:3px; font-size:.7rem; letter-spacing:1px; }
+
+    /* Architecture diagrams */
+    .arch-box { background:var(--white); border:2px solid var(--navy); border-radius:12px; padding:32px; margin:24px 0; }
+    .arch-title { font-family:'Playfair Display',serif; font-size:1.2rem; color:var(--navy); margin-bottom:20px; text-align:center; border-bottom:2px solid var(--gold); padding-bottom:12px; }
+    .arch-flow { display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap; margin:16px 0; }
+    .arch-node { padding:14px 20px; border-radius:8px; font-size:.82rem; font-weight:600; text-align:center; min-width:130px; }
+    .arch-node.user { background:#E3F2FD; color:#1565C0; border:2px solid #1565C0; }
+    .arch-node.static { background:#FFF3E0; color:#E65100; border:2px solid #E65100; }
+    .arch-node.react { background:#E8F5E9; color:#2E7D32; border:2px solid #2E7D32; }
+    .arch-node.api { background:#F3E5F5; color:#6A1B9A; border:2px solid #6A1B9A; }
+    .arch-node.db { background:#FCE4EC; color:#C62828; border:2px solid #C62828; }
+    .arch-node.ai { background:#E0F7FA; color:#00695C; border:2px solid #00695C; }
+    .arch-node.ext { background:#FFFDE7; color:#F57F17; border:2px solid #F57F17; }
+    .arch-arrow { font-size:1.4rem; color:var(--gold); font-weight:700; }
+
+    /* Layers */
+    .layer-stack { display:flex; flex-direction:column; gap:0; margin:24px 0; }
+    .layer { padding:20px 24px; text-align:center; font-weight:600; font-size:.9rem; letter-spacing:.5px; }
+    .layer:first-child { border-radius:12px 12px 0 0; }
+    .layer:last-child { border-radius:0 0 12px 12px; }
+    .layer.l1 { background:var(--navy); color:var(--white); }
+    .layer.l2 { background:var(--navy-light); color:var(--white); }
+    .layer.l3 { background:var(--gold); color:var(--navy-deep); }
+    .layer.l4 { background:var(--cream-dark); color:var(--navy); }
+    .layer.l5 { background:var(--red); color:var(--white); }
+    .layer small { display:block; font-weight:400; font-size:.78rem; margin-top:4px; opacity:.8; }
+
+    /* Stats row */
+    .stats-row { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:16px; margin:24px 0; }
+    .stat-box { background:var(--navy); color:var(--white); padding:20px; border-radius:8px; text-align:center; }
+    .stat-num { font-family:'Playfair Display',serif; font-size:1.8rem; color:var(--gold); font-weight:700; }
+    .stat-label { font-size:.72rem; letter-spacing:2px; text-transform:uppercase; opacity:.7; margin-top:4px; }
+
+    /* Tags */
+    .tag-row { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; }
+    .tag { padding:4px 14px; border-radius:20px; font-size:.75rem; font-weight:600; letter-spacing:.5px; }
+    .tag.gold { background:rgba(201,168,76,.15); color:var(--gold-dark); }
+    .tag.navy { background:rgba(27,42,74,.1); color:var(--navy); }
+    .tag.red { background:rgba(196,30,58,.1); color:var(--red); }
+    .tag.green { background:rgba(0,99,65,.1); color:var(--green); }
+
+    /* List */
+    .doc-list { list-style:none; margin:16px 0; }
+    .doc-list li { padding:8px 0 8px 24px; position:relative; font-size:.9rem; color:var(--text); }
+    .doc-list li::before { content:''; position:absolute; left:0; top:16px; width:8px; height:8px; background:var(--gold); border-radius:50%; }
+
+    /* Separator */
+    .doc-divider { width:80px; height:2px; background:linear-gradient(90deg,transparent,var(--gold),transparent); margin:32px auto; }
+
+    /* Footer */
+    .doc-footer { background:var(--navy-deep); padding:48px 24px; text-align:center; color:rgba(255,255,255,.5); }
+    .doc-footer a { color:var(--gold); text-decoration:none; }
+    .doc-footer-brand { font-family:'Playfair Display',serif; font-size:1.5rem; color:var(--gold); margin-bottom:8px; letter-spacing:3px; }
+    .doc-footer-tagline { font-size:.8rem; color:rgba(255,255,255,.3); letter-spacing:2px; margin-bottom:20px; }
+    .doc-footer p { font-size:.82rem; }
+
+    /* Responsive */
+    @media(max-width:768px) {
+      .nav-links { display:none; }
+      .two-col { grid-template-columns:1fr; }
+      .doc-card-grid { grid-template-columns:1fr; }
+      .arch-flow { flex-direction:column; }
+      .stats-row { grid-template-columns:repeat(2,1fr); }
+      .doc-meta { flex-direction:column; gap:12px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav>
+  <div class="nav-container">
+    <a href="/Torna_Idioma/" class="nav-brand">
+      <div>
+        <div class="nav-brand-text">TORNA IDIOMA</div>
+        <div class="nav-brand-sub">Vida &bull; Cultura &bull; Legado</div>
+      </div>
+    </a>
+    <ul class="nav-links">
+      <li><a href="/Torna_Idioma/">Home</a></li>
+      <li><a href="/Torna_Idioma/#mission">Mission</a></li>
+      <li><a href="/Torna_Idioma/#partners">Partners</a></li>
+      <li><a href="/Torna_Idioma/documentation.html" class="active-link">Documentation</a></li>
+      <li><a href="/Torna_Idioma/login" class="nav-login">Login</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="doc-hero">
+  <div class="doc-hero-content">
+    <div class="doc-badge">Technical &amp; Functional Documentation</div>
+    <h1>Torna Idioma<br><span class="accent">Platform Architecture</span></h1>
+    <p class="doc-hero-sub">A comprehensive guide to the vision, architecture, and technical implementation of the Torna Idioma Spanish language revitalization platform.</p>
+    <div class="doc-meta">
+      <div class="doc-meta-item"><div class="doc-meta-label">Version</div><div class="doc-meta-value">1.0</div></div>
+      <div class="doc-meta-item"><div class="doc-meta-label">Date</div><div class="doc-meta-value">March 2026</div></div>
+      <div class="doc-meta-item"><div class="doc-meta-label">Status</div><div class="doc-meta-value">Production</div></div>
+      <div class="doc-meta-item"><div class="doc-meta-label">Operator</div><div class="doc-meta-value">Digit2AI / Multi Travel Connection Inc</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- Table of Contents -->
+<section class="toc-section">
+  <div class="toc-container">
+    <div class="toc-title">Table of Contents</div>
+    <div class="toc-grid">
+      <a href="#what" class="toc-card"><span class="toc-num">1</span> What is Torna Idioma</a>
+      <a href="#target" class="toc-card"><span class="toc-num">2</span> Target Audience</a>
+      <a href="#why" class="toc-card"><span class="toc-num">3</span> Why We Built It</a>
+      <a href="#how" class="toc-card"><span class="toc-num">4</span> How We Built It</a>
+      <a href="#functional" class="toc-card"><span class="toc-num">5</span> Functional Architecture</a>
+      <a href="#system" class="toc-card"><span class="toc-num">6</span> System Architecture</a>
+      <a href="#database" class="toc-card"><span class="toc-num">7</span> Database Schema</a>
+      <a href="#api" class="toc-card"><span class="toc-num">8</span> API Reference</a>
+      <a href="#curriculum" class="toc-card"><span class="toc-num">9</span> UVEG Curriculum</a>
+      <a href="#security" class="toc-card"><span class="toc-num">10</span> Security &amp; Auth</a>
+      <a href="#deployment" class="toc-card"><span class="toc-num">11</span> Deployment</a>
+      <a href="#roadmap-doc" class="toc-card"><span class="toc-num">12</span> Future Roadmap</a>
+    </div>
+  </div>
+</section>
+
+<!-- Section 1: What is Torna Idioma -->
+<section class="doc-section" id="what">
+  <div class="doc-container">
+    <div class="doc-section-overline">Section One</div>
+    <h2 class="doc-section-title"><span class="num">1.</span> What is Torna Idioma</h2>
+    <p class="doc-text"><strong>Torna Idioma</strong> (The Return of the Language) is a comprehensive digital platform for revitalizing the Spanish language in the Philippines. It serves as the operational backbone for a government-endorsed initiative to reintroduce Spanish as a functional language for economic opportunity, cultural reconnection, and international collaboration.</p>
+    <p class="doc-text">The platform is operated by <strong>Multi Travel Connection, Inc.</strong> (DBA Torna Idioma), a Florida-incorporated company (EIN 59-2938390), and powered by <strong>Digit2AI</strong>'s technology infrastructure. The academic content is supplied through a signed Memorandum of Understanding (MOU) with the <strong>Universidad Virtual del Estado de Guanajuato (UVEG)</strong>, a public Mexican university.</p>
+
+    <div class="stats-row">
+      <div class="stat-box"><div class="stat-num">12</div><div class="stat-label">Modules</div></div>
+      <div class="stat-box"><div class="stat-num">72</div><div class="stat-label">Lessons</div></div>
+      <div class="stat-box"><div class="stat-num">360</div><div class="stat-label">Teaching Hours</div></div>
+      <div class="stat-box"><div class="stat-num">3</div><div class="stat-label">Cities</div></div>
+      <div class="stat-box"><div class="stat-num">11</div><div class="stat-label">Partner Schools</div></div>
+      <div class="stat-box"><div class="stat-num">10+</div><div class="stat-label">Universities</div></div>
+    </div>
+
+    <p class="doc-text">The name embodies the philosophy: <strong>"Torna"</strong> means "to return" — reflecting the return of the Spanish language to a nation where it was spoken for 333 years. The tagline <em>"Vida &middot; Cultura &middot; Legado"</em> (Life &middot; Culture &middot; Legacy) captures the three dimensions of the initiative.</p>
+
+    <div class="doc-card-grid">
+      <div class="doc-card">
+        <span class="emoji">&#x1F393;</span>
+        <h4>Education Platform</h4>
+        <p>12-module UVEG-certified SFL (Spanish as a Foreign Language) curriculum with interactive lessons, exercises, progress tracking, and certifications.</p>
+      </div>
+      <div class="doc-card navy">
+        <span class="emoji">&#x1F4BC;</span>
+        <h4>BPO Workforce Pipeline</h4>
+        <p>Direct integration with BPO companies (Teleperformance, Concentrix, TTEC) offering Spanish-speaking jobs with 25-35% salary premiums.</p>
+      </div>
+      <div class="doc-card red">
+        <span class="emoji">&#x1F30E;</span>
+        <h4>International Collaboration</h4>
+        <p>Partnerships with universities across Mexico, Colombia, Chile, Argentina, Spain, and the Philippines for academic exchange and research.</p>
+      </div>
+      <div class="doc-card green">
+        <span class="emoji">&#x1F916;</span>
+        <h4>AI-Powered Learning</h4>
+        <p>Profesora Isabel, an AI tutor using the Don Quijote Immersion Method, provides personalized conversation practice adapted to each student's level.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Section 2: Target Audience -->
+<section class="doc-section" id="target">
+  <div class="doc-container">
+    <div class="doc-section-overline">Section Two</div>
+    <h2 class="doc-section-title"><span class="num">2.</span> Target Audience</h2>
+    <p class="doc-text">The platform serves six distinct user roles, each with tailored experiences, dashboards, and access levels:</p>
+
+    <div class="doc-card-grid">
+      <div class="doc-card">
+        <span class="emoji">&#x1F468;&#x200D;&#x1F393;</span>
+        <h4>Students</h4>
+        <p>Filipino learners — university students, young professionals, and self-learners in Makati, Zamboanga, and Cavite seeking to learn Spanish for career advancement or cultural reconnection.</p>
+        <div class="tag-row"><span class="tag gold">Primary Users</span><span class="tag navy">A1&rarr;B1+</span></div>
+      </div>
+      <div class="doc-card navy">
+        <span class="emoji">&#x1F469;&#x200D;&#x1F3EB;</span>
+        <h4>Teachers</h4>
+        <p>UVEG-certified Spanish instructors and local Filipino educators trained to facilitate the SFL program. They manage classes, track student progress, and provide virtual instruction.</p>
+        <div class="tag-row"><span class="tag navy">Content Managers</span><span class="tag green">UVEG-trained</span></div>
+      </div>
+      <div class="doc-card red">
+        <span class="emoji">&#x1F3E2;</span>
+        <h4>BPO Workers</h4>
+        <p>Call center professionals and BPO aspirants looking to add Spanish to their skillset for higher-paying positions serving Latin American accounts.</p>
+        <div class="tag-row"><span class="tag red">Job Board Access</span><span class="tag gold">+25-35% salary</span></div>
+      </div>
+      <div class="doc-card green">
+        <span class="emoji">&#x1F3DB;&#xFE0F;</span>
+        <h4>Government Officials</h4>
+        <p>City officials from Makati, Zamboanga, and Cavite who oversee program implementation, monitor KPIs, review economic impact, and manage school partnerships.</p>
+        <div class="tag-row"><span class="tag green">Full Analytics</span><span class="tag navy">Policy Dashboard</span></div>
+      </div>
+      <div class="doc-card">
+        <span class="emoji">&#x1F91D;</span>
+        <h4>University Partners</h4>
+        <p>Academic institutions across 6+ countries participating in curriculum development, faculty exchange, research collaboration, and student mobility programs.</p>
+        <div class="tag-row"><span class="tag gold">10+ Universities</span><span class="tag green">MOU-based</span></div>
+      </div>
+      <div class="doc-card navy">
+        <span class="emoji">&#x1F4E3;</span>
+        <h4>Advocates &amp; Supporters</h4>
+        <p>Individuals and corporations supporting the Spanish revitalization movement through donations, event participation, and community advocacy.</p>
+        <div class="tag-row"><span class="tag navy">Community</span><span class="tag red">Events</span></div>
+      </div>
+    </div>
+
+    <div class="doc-divider"></div>
+    <h3 style="font-family:'Playfair Display',serif;color:var(--navy);margin-bottom:16px;">Geographic Focus: Three Pilot Cities</h3>
+    <div class="two-col">
+      <div>
+        <ul class="doc-list">
+          <li><strong>Makati City</strong> — Metro Manila's financial capital. Home to the BPO corridor and University of Makati. First city to pilot the program with the highest concentration of BPO demand for Spanish speakers.</li>
+          <li><strong>Zamboanga City</strong> — Known as "Asia's Latin City." The only Philippine city with a living Spanish creole language (Chavacano), spoken by 600,000+ people.</li>
+          <li><strong>Cavite</strong> — Historical province with deep Spanish colonial heritage. Home to Cavite State University and strong community ties to Spanish-era traditions.</li>
+        </ul>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="stat-box"><div class="stat-num">Makati</div><div class="stat-label">Financial &amp; BPO Hub</div></div>
+        <div class="stat-box"><div class="stat-num">Zamboanga</div><div class="stat-label">Asia's Latin City</div></div>
+        <div class="stat-box" style="background:var(--red);"><div class="stat-num" style="color:var(--white);">Cavite</div><div class="stat-label">Heritage Province</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Section 3: Why We Built It -->
+<section class="doc-section" id="why">
+  <div class="doc-container">
+    <div class="doc-section-overline">Section Three</div>
+    <h2 class="doc-section-title"><span class="num">3.</span> Why We Built It</h2>
+    <p class="doc-text">Torna Idioma exists at the intersection of three forces: <strong>economic opportunity</strong>, <strong>cultural heritage</strong>, and <strong>international diplomacy</strong>.</p>
+
+    <div class="doc-card-grid">
+      <div class="doc-card">
+        <h4>&#x1F4B0; The Economic Case</h4>
+        <p>The Philippine BPO industry generates $32.5B annually. Spanish-speaking agents earn <strong>25-35% more</strong> than English-only peers. With 650M+ Spanish speakers globally and growing US Hispanic population, demand far exceeds supply. Torna Idioma creates a direct pipeline from classroom to career.</p>
+      </div>
+      <div class="doc-card navy">
+        <h4>&#x1F3F0; The Heritage Case</h4>
+        <p>For 333 years (1565-1898), Spanish was the language of government, education, and culture in the Philippines. Today, <strong>20-33% of Filipino vocabulary</strong> is Spanish-derived. Over 4,000 Filipino words come from Spanish. "Kumusta," "salamat," family words (tito, tita, lolo, lola), and most Filipino surnames are Spanish. This isn't a foreign language — it's a returning heritage.</p>
+      </div>
+      <div class="doc-card red">
+        <h4>&#x1F310; The Diplomatic Case</h4>
+        <p>Spanish proficiency opens doors to 20 Spanish-speaking nations. The Philippines' unique position — culturally Hispanic yet geographically Asian — makes it a natural bridge between ASEAN and Latin America. The initiative is endorsed by local governments and supported by international academic partnerships.</p>
+      </div>
+    </div>
+
+    <div class="arch-box">
+      <div class="arch-title">The Three Pillars: Dignidad &middot; Orgullo &middot; Premio</div>
+      <div class="two-col" style="margin:0;">
+        <div>
+          <h4 style="color:var(--navy);margin-bottom:8px;">Dignidad (Dignity)</h4>
+          <p style="font-size:.88rem;color:var(--text-light);">Every Filipino deserves access to their linguistic heritage. Spanish is not a colonial imposition — it's a shared cultural inheritance that empowers identity and self-worth.</p>
+        </div>
+        <div>
+          <h4 style="color:var(--navy);margin-bottom:8px;">Orgullo (Pride)</h4>
+          <p style="font-size:.88rem;color:var(--text-light);">Speaking Spanish connects Filipinos to a global community of 580M speakers and to the literary works of Rizal, written in Spanish. It's a source of cultural pride.</p>
+        </div>
+      </div>
+      <div style="margin-top:20px;">
+        <h4 style="color:var(--navy);margin-bottom:8px;">Premio (Prize)</h4>
+        <p style="font-size:.88rem;color:var(--text-light);">Tangible economic rewards: higher salaries, better career opportunities, international mobility, and access to the $7.7T GDP of the Spanish-speaking world.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Section 4: How We Built It -->
+<section class="doc-section" id="how">
+  <div class="doc-container">
+    <div class="doc-section-overline">Section Four</div>
+    <h2 class="doc-section-title"><span class="num">4.</span> How We Built It</h2>
+    <p class="doc-text">Torna Idioma is built as a <strong>vertical module</strong> within the RinglyPro CRM ecosystem — a multi-tenant platform that powers multiple AI-driven business verticals. This architecture allows rapid development while sharing core infrastructure.</p>
+
+    <h3 style="font-family:'Playfair Display',serif;color:var(--navy);margin:24px 0 16px;">Technology Stack</h3>
+    <div class="doc-table-wrap">
+      <table>
+        <thead><tr><th>Layer</th><th>Technology</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Backend</strong></td><td>Node.js + Express.js</td><td>RESTful API server, route handling, middleware</td></tr>
+          <tr><td><strong>Frontend (SPA)</strong></td><td>React 18 + Vite</td><td>Interactive dashboard, classroom, progress tracking</td></tr>
+          <tr><td><strong>Frontend (Landing)</strong></td><td>Static HTML + CSS</td><td>Public-facing landing page, no build step</td></tr>
+          <tr><td><strong>Database</strong></td><td>PostgreSQL</td><td>Relational data store (Render managed)</td></tr>
+          <tr><td><strong>Authentication</strong></td><td>JWT + bcrypt</td><td>Stateless auth with role-based access control</td></tr>
+          <tr><td><strong>AI Tutor</strong></td><td>OpenAI GPT-4o-mini</td><td>Conversational Spanish teacher ("Profesora Isabel")</td></tr>
+          <tr><td><strong>HTTP Client</strong></td><td>Axios</td><td>API communication with auto-auth interceptors</td></tr>
+          <tr><td><strong>Deployment</strong></td><td>Render</td><td>Auto-deploy on git push to main (~90 seconds)</td></tr>
+          <tr><td><strong>Languages</strong></td><td>EN / ES / FIL</td><td>Trilingual UI (English, Spanish, Filipino)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-family:'Playfair Display',serif;color:var(--navy);margin:32px 0 16px;">Key Partnerships</h3>
+    <div class="two-col">
+      <div class="doc-card green">
+        <h4>&#x1F1F2;&#x1F1FD; UVEG — Academic Supplier</h4>
+        <p><strong>Universidad Virtual del Estado de Guanajuato</strong>, a public university supported by the Government of Guanajuato, Mexico. Provides the 12-module SFL curriculum, certified teachers, and digital platform methodology.</p>
+        <p style="margin-top:8px;"><strong>MOU Status:</strong> Signed (Indefinite term, 60-day termination notice)</p>
+        <p><strong>Pricing:</strong> $530 MXN/module (~$0.78 USD/hr/student)</p>
+      </div>
+      <div class="doc-card">
+        <h4>&#x1F1F5;&#x1F1ED; Philippine Partners</h4>
+        <p><strong>University of Makati</strong> — Primary pilot institution<br>
+        <strong>Colegio de San Juan de Letr&aacute;n</strong> — Heritage university<br>
+        <strong>PUP</strong> — Polytechnic University of the Philippines<br>
+        <strong>Universidad de Medell&iacute;n</strong> — Colombia (exchange)<br>
+        <strong>Instituto Cervantes Manila</strong> — Cultural partner</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Section 5: Functional Architecture -->
+<section class="doc-section" id="functional">
+  <div class="doc-container">
+    <div class="doc-section-overline">Section Five</div>
+    <h2 class="doc-section-title"><span class="num">5.</span> Functional Architecture</h2>
+    <p class="doc-text">The platform is organized into six functional modules, each serving a specific operational domain:</p>
+
+    <div class="layer-stack">
+      <div class="layer l1">&#x1F310; Public Layer<small>Landing page, program information, supporter registration, event calendar</small></div>
+      <div class="layer l2">&#x1F512; Education Module<small>12 UVEG SFL modules, 72 lessons, exercises, progress tracking, certifications</small></div>
+      <div class="layer l3">&#x1F4BC; BPO Workforce Module<small>Company partnerships, job board, applications, placement tracking, salary analytics</small></div>
+      <div class="layer l4">&#x1F916; AI Tutoring Module<small>Profesora Isabel (GPT-4o-mini), Don Quijote Immersion Method, level-adaptive conversations</small></div>
+      <div class="layer l5">&#x1F4CA; Analytics &amp; Impact Module<small>KPI dashboards, economic impact reports, school enrollment, partner metrics</small></div>
+    </div>
+
+    <h3 style="font-family:'Playfair Display',serif;color:var(--navy);margin:32px 0 16px;">Module Details</h3>
+
+    <div class="arch-box">
+      <div class="arch-title">Education Module — Learning Flow</div>
+      <div class="arch-flow">
+        <div class="arch-node user">Student<br><small>enrolls</small></div>
+        <div class="arch-arrow">&rarr;</div>
+        <div class="arch-node react">Course Catalog<br><small>12 UVEG modules</small></div>
+        <div class="arch-arrow">&rarr;</div>
+        <div class="arch-node api">Classroom<br><small>lesson content</small></div>
+        <div class="arch-arrow">&rarr;</div>
+        <div class="arch-node ext">Exercises<br><small>MC + Fill Blank</small></div>
+        <div class="arch-arrow">&rarr;</div>
+        <div class="arch-node db">Progress<br><small>score &amp; time</small></div>
+        <div class="arch-arrow">&rarr;</div>
+        <div class="arch-node ai">Certification<br><small>&ge; 80% pass</small></div>
+      </div>
+    </div>
+
+    <div class="arch-box">
+      <div class="arch-title">BPO Pipeline — Student to Employment</div>
+      <div class="arch-flow">
+        <div class="arch-node user">Student<br><small>completes B1</small></div>
+        <div class="arch-arrow">&rarr;</div>
+        <div class="arch-node react">Job Board<br><small>browse openings</small></div>
+        <div class="arch-arrow">&rarr;</div>
+        <div class="arch-node api">Application<br><small>submit + track</small></div>
+        <div class="arch-arrow">&rarr;</div>
+        <div class="arch-node ext">Interview<br><small>BPO company</small></div>
+        <div class="arch-arrow">&rarr;</div>
+        <div class="arch-node db">Placement<br><small>salary tracked</small></div>
+      </div>
+    </div>
+
+    <h3 style="font-family:'Playfair Display',serif;color:var(--navy);margin:32px 0 16px;">User Role Matrix</h3>
+    <div class="doc-table-wrap">
+      <table>
+        <thead><tr><th>Feature</th><th>Student</th><th>Teacher</th><th>BPO Worker</th><th>Official</th><th>Partner</th><th>Admin</th></tr></thead>
+        <tbody>
+          <tr><td>Dashboard</td><td>&#x2705;</td><td>&#x2705;</td><td>&#x2705;</td><td>&#x2705;</td><td>&#x2705;</td><td>&#x2705;</td></tr>
+          <tr><td>Course Catalog</td><td>&#x2705;</td><td>&#x2705;</td><td>&#x2705;</td><td>&#x2705;</td><td>&#x2705;</td><td>&#x2705;</td></tr>
+          <tr><td>Classroom &amp; Exercises</td><td>&#x2705;</td><td>&#x2705;</td><td>&#x2705;</td><td>&#x2705;</td><td>&#x2705;</td><td>&#x2705;</td></tr>
+          <tr><td>Progress Tracking</td><td>&#x2705;</td><td>&#x2705;</td><td>&#x2705;</td><td>&#x2705;</td><td>&#x2705;</td><td>&#x2705;</td></tr>
+          <tr><td>AI Tutor</td><td>&#x2705;</td><td>&#x2705;</td><td>&#x2705;</td><td>&#x2705;</td><td>&#x2705;</td><td>&#x2705;</td></tr>
+          <tr><td>Job Board</td><td>&mdash;</td><td>&mdash;</td><td>&#x2705;</td><td>&mdash;</td><td>&mdash;</td><td>&#x2705;</td></tr>
+          <tr><td>Create Courses</td><td>&mdash;</td><td>&#x2705;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&#x2705;</td></tr>
+          <tr><td>Program Metrics</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&#x2705;</td><td>&mdash;</td><td>&#x2705;</td></tr>
+          <tr><td>Economic Impact</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&#x2705;</td><td>&mdash;</td><td>&#x2705;</td></tr>
+          <tr><td>School Management</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&#x2705;</td><td>&mdash;</td><td>&#x2705;</td></tr>
+          <tr><td>Partner Network</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&#x2705;</td><td>&#x2705;</td><td>&#x2705;</td></tr>
+          <tr><td>Supporter Management</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&#x2705;</td><td>&mdash;</td><td>&#x2705;</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Section 6: System Architecture -->
+<section class="doc-section" id="system">
+  <div class="doc-container">
+    <div class="doc-section-overline">Section Six</div>
+    <h2 class="doc-section-title"><span class="num">6.</span> System Architecture</h2>
+
+    <div class="arch-box">
+      <div class="arch-title">High-Level System Architecture</div>
+      <div class="arch-flow">
+        <div class="arch-node user">Browser<br><small>User</small></div>
+        <div class="arch-arrow">&rarr;</div>
+        <div class="arch-node static">Static HTML<br><small>/Torna_Idioma/</small></div>
+      </div>
+      <div class="arch-flow">
+        <div class="arch-node user">Browser<br><small>Auth'd User</small></div>
+        <div class="arch-arrow">&rarr;</div>
+        <div class="arch-node react">React SPA<br><small>/Torna_Idioma/*</small></div>
+        <div class="arch-arrow">&rarr;</div>
+        <div class="arch-node api">Express API<br><small>/Torna_Idioma/api/*</small></div>
+        <div class="arch-arrow">&rarr;</div>
+        <div class="arch-node db">PostgreSQL<br><small>Render</small></div>
+      </div>
+      <div class="arch-flow" style="margin-top:16px;">
+        <div class="arch-node api">Express API</div>
+        <div class="arch-arrow">&rarr;</div>
+        <div class="arch-node ai">OpenAI API<br><small>GPT-4o-mini</small></div>
+      </div>
+    </div>
+
+    <h3 style="font-family:'Playfair Display',serif;color:var(--navy);margin:32px 0 16px;">Dual-Layer Frontend Architecture</h3>
+    <p class="doc-text">The platform uses a unique <strong>dual-layer frontend</strong> that serves both a static HTML landing page and a React SPA from the same URL path:</p>
+
+    <div class="two-col">
+      <div class="doc-card">
+        <h4>Layer 1: Static Landing Page</h4>
+        <p><code>public/Torna_Idioma/index.html</code></p>
+        <ul class="doc-list">
+          <li>Served directly by Express static middleware</li>
+          <li>No build step required</li>
+          <li>Trilingual via CSS class toggling</li>
+          <li>Handles root URL <code>/Torna_Idioma/</code></li>
+          <li>Contains mission, partners, roadmap, heritage</li>
+        </ul>
+      </div>
+      <div class="doc-card navy">
+        <h4>Layer 2: React SPA</h4>
+        <p><code>verticals/torna_idioma/frontend/dist/</code></p>
+        <ul class="doc-list">
+          <li>Built with Vite, served by Express</li>
+          <li>Handles all sub-routes (/login, /dashboard, etc.)</li>
+          <li>React Router v6 with base <code>/Torna_Idioma</code></li>
+          <li>JWT-authenticated, role-based routing</li>
+          <li>Catch-all fallback to <code>index.html</code></li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 style="font-family:'Playfair Display',serif;color:var(--navy);margin:32px 0 16px;">Request Flow</h3>
+    <div class="code-block">
+      <span class="code-label">Request Routing</span>
+<span class="comment">// 1. Static middleware (runs first in Express)</span>
+GET /Torna_Idioma/         <span class="keyword">&rarr;</span> <span class="string">public/Torna_Idioma/index.html</span> (landing page)
+GET /Torna_Idioma/docs     <span class="keyword">&rarr;</span> <span class="string">public/Torna_Idioma/documentation.html</span>
+
+<span class="comment">// 2. API routes (Express router)</span>
+POST /Torna_Idioma/api/auth/login  <span class="keyword">&rarr;</span> <span class="string">auth.js route handler</span>
+GET  /Torna_Idioma/api/courses     <span class="keyword">&rarr;</span> <span class="string">courses.js route handler</span>
+
+<span class="comment">// 3. React SPA catch-all (fallback)</span>
+GET /Torna_Idioma/dashboard  <span class="keyword">&rarr;</span> <span class="string">dist/index.html</span> (React Router handles it)
+GET /Torna_Idioma/courses    <span class="keyword">&rarr;</span> <span class="string">dist/index.html</span> (React Router handles it)
+    </div>
+
+    <h3 style="font-family:'Playfair Display',serif;color:var(--navy);margin:32px 0 16px;">Backend Module Structure</h3>
+    <div class="code-block">
+      <span class="code-label">File Tree</span>
+verticals/torna_idioma/
+&#x251C;&#x2500;&#x2500; backend/
+&#x2502;   &#x251C;&#x2500;&#x2500; index.js              <span class="comment"># Express router + seeding logic</span>
+&#x2502;   &#x251C;&#x2500;&#x2500; services/
+&#x2502;   &#x2502;   &#x2514;&#x2500;&#x2500; db.ti.js          <span class="comment"># PostgreSQL connection (Sequelize)</span>
+&#x2502;   &#x251C;&#x2500;&#x2500; middleware/
+&#x2502;   &#x2502;   &#x2514;&#x2500;&#x2500; auth.ti.js        <span class="comment"># JWT verification + role-based access</span>
+&#x2502;   &#x251C;&#x2500;&#x2500; routes/
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; auth.js           <span class="comment"># Login, register, profile</span>
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; courses.js        <span class="comment"># CRUD, enrollments, lessons, progress</span>
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; analytics.js      <span class="comment"># KPIs, economic impact, schools</span>
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; bpo.js            <span class="comment"># Companies, jobs, applications</span>
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; advocacy.js       <span class="comment"># Supporters, events, registrations</span>
+&#x2502;   &#x2502;   &#x2514;&#x2500;&#x2500; tutor.js          <span class="comment"># AI chat (OpenAI GPT-4o-mini)</span>
+&#x2502;   &#x251C;&#x2500;&#x2500; migrations/           <span class="comment"># 6 SQL schema files (001-006)</span>
+&#x2502;   &#x2514;&#x2500;&#x2500; seeds/
+&#x2502;       &#x251C;&#x2500;&#x2500; uveg-courses.js   <span class="comment"># 12 UVEG SFL module definitions</span>
+&#x2502;       &#x251C;&#x2500;&#x2500; uveg-lessons.js   <span class="comment"># 72 lessons with content &amp; exercises</span>
+&#x2502;       &#x2514;&#x2500;&#x2500; lessons.js        <span class="comment"># Legacy demo lessons (deprecated)</span>
+&#x251C;&#x2500;&#x2500; frontend/
+&#x2502;   &#x251C;&#x2500;&#x2500; src/
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; App.jsx           <span class="comment"># React Router, layout, sidebar</span>
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; pages/            <span class="comment"># 17 page components</span>
+&#x2502;   &#x2502;   &#x2514;&#x2500;&#x2500; services/
+&#x2502;   &#x2502;       &#x251C;&#x2500;&#x2500; api.js        <span class="comment"># Axios + auth interceptors</span>
+&#x2502;   &#x2502;       &#x2514;&#x2500;&#x2500; auth.js       <span class="comment"># JWT + session management</span>
+&#x2502;   &#x251C;&#x2500;&#x2500; vite.config.js        <span class="comment"># Base: /Torna_Idioma/</span>
+&#x2502;   &#x2514;&#x2500;&#x2500; dist/                 <span class="comment"># Production build output</span>
+    </div>
+  </div>
+</section>
+
+<!-- Section 7: Database Schema -->
+<section class="doc-section" id="database">
+  <div class="doc-container">
+    <div class="doc-section-overline">Section Seven</div>
+    <h2 class="doc-section-title"><span class="num">7.</span> Database Schema</h2>
+    <p class="doc-text">The database uses 15 tables across 6 migration files. All tables use the <code>ti_</code> prefix to namespace within the shared RinglyPro CRM database.</p>
+
+    <div class="doc-table-wrap">
+      <table>
+        <thead><tr><th>Table</th><th>Migration</th><th>Purpose</th><th>Key Fields</th></tr></thead>
+        <tbody>
+          <tr><td><code>ti_users</code></td><td>001</td><td>User accounts</td><td>email, password_hash, role, tenant_id, language_pref</td></tr>
+          <tr><td><code>ti_courses</code></td><td>002</td><td>UVEG SFL modules</td><td>title_en/es/fil, level, category, duration_hours, total_lessons</td></tr>
+          <tr><td><code>ti_lessons</code></td><td>002</td><td>Lesson content</td><td>course_id, content_en/es/fil, lesson_type, exercises (JSONB)</td></tr>
+          <tr><td><code>ti_enrollments</code></td><td>002</td><td>Student-course enrollment</td><td>user_id, course_id, status, progress_pct</td></tr>
+          <tr><td><code>ti_lesson_progress</code></td><td>002</td><td>Lesson completion</td><td>user_id, lesson_id, score, time_spent_sec, status</td></tr>
+          <tr><td><code>ti_certifications</code></td><td>002</td><td>Issued certificates</td><td>user_id, course_id, cert_level, score, issued_at</td></tr>
+          <tr><td><code>ti_schools</code></td><td>003</td><td>Partner schools</td><td>name, school_type, enrolled_students, program_status</td></tr>
+          <tr><td><code>ti_bpo_companies</code></td><td>003</td><td>BPO employers</td><td>name, industry, spanish_positions, avg_salary_increase</td></tr>
+          <tr><td><code>ti_bpo_placements</code></td><td>003</td><td>Job placements</td><td>user_id, company_id, salary_before, salary_after</td></tr>
+          <tr><td><code>ti_partners</code></td><td>003</td><td>Academic partners</td><td>name, country, partner_type, partnership_status</td></tr>
+          <tr><td><code>ti_events</code></td><td>003</td><td>Cultural events</td><td>title_en/es/fil, event_type, location, capacity</td></tr>
+          <tr><td><code>ti_event_registrations</code></td><td>003</td><td>Event sign-ups</td><td>event_id, user_id, status</td></tr>
+          <tr><td><code>ti_supporters</code></td><td>003</td><td>Advocates/donors</td><td>full_name, email, supporter_type, organization</td></tr>
+          <tr><td><code>ti_donations</code></td><td>003</td><td>Financial contributions</td><td>supporter_id, amount, donation_type, purpose</td></tr>
+          <tr><td><code>ti_bpo_jobs</code></td><td>005</td><td>Job listings</td><td>company_id, title, salary_range, spanish_level_required, slots</td></tr>
+          <tr><td><code>ti_bpo_applications</code></td><td>005</td><td>Job applications</td><td>user_id, job_id, cover_note, status</td></tr>
+          <tr><td><code>ti_kpi_snapshots</code></td><td>004</td><td>KPI tracking</td><td>snapshot_date, period, metrics (JSONB)</td></tr>
+          <tr><td><code>ti_economic_impact</code></td><td>004</td><td>Impact reports</td><td>total_bpo_placed, avg_salary_increase, tax_revenue</td></tr>
+          <tr><td><code>ti_tutor_sessions</code></td><td>006</td><td>AI tutor sessions</td><td>user_id, message_count, level, last_active</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Section 8: API Reference -->
+<section class="doc-section" id="api">
+  <div class="doc-container">
+    <div class="doc-section-overline">Section Eight</div>
+    <h2 class="doc-section-title"><span class="num">8.</span> API Reference</h2>
+    <p class="doc-text">All API endpoints are prefixed with <code>/Torna_Idioma/api</code>. JWT authentication is required where indicated.</p>
+
+    <h3 style="font-family:'Playfair Display',serif;color:var(--navy);margin:24px 0 12px;">Authentication</h3>
+    <div class="doc-table-wrap">
+      <table>
+        <thead><tr><th>Method</th><th>Endpoint</th><th>Auth</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><span class="tag green">POST</span></td><td><code>/api/auth/login</code></td><td>&mdash;</td><td>Email/password login, returns JWT token (24h)</td></tr>
+          <tr><td><span class="tag green">POST</span></td><td><code>/api/auth/register</code></td><td>&mdash;</td><td>New user registration (student, bpo_worker, teacher, partner)</td></tr>
+          <tr><td><span class="tag navy">GET</span></td><td><code>/api/auth/me</code></td><td>JWT</td><td>Current authenticated user profile</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-family:'Playfair Display',serif;color:var(--navy);margin:24px 0 12px;">Courses &amp; Learning</h3>
+    <div class="doc-table-wrap">
+      <table>
+        <thead><tr><th>Method</th><th>Endpoint</th><th>Auth</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><span class="tag navy">GET</span></td><td><code>/api/courses</code></td><td>&mdash;</td><td>List all published courses (12 UVEG modules)</td></tr>
+          <tr><td><span class="tag navy">GET</span></td><td><code>/api/courses/:id</code></td><td>&mdash;</td><td>Course detail with lesson list</td></tr>
+          <tr><td><span class="tag green">POST</span></td><td><code>/api/courses/:id/enroll</code></td><td>JWT</td><td>Enroll current user in a course</td></tr>
+          <tr><td><span class="tag navy">GET</span></td><td><code>/api/courses/my/enrollments</code></td><td>JWT</td><td>User's enrolled courses with progress</td></tr>
+          <tr><td><span class="tag navy">GET</span></td><td><code>/api/courses/lessons/:id</code></td><td>JWT</td><td>Full lesson content + user progress</td></tr>
+          <tr><td><span class="tag green">POST</span></td><td><code>/api/courses/lessons/:id/progress</code></td><td>JWT</td><td>Submit lesson score (status, score, time_spent_sec)</td></tr>
+          <tr><td><span class="tag navy">GET</span></td><td><code>/api/courses/my/progress</code></td><td>JWT</td><td>Full progress summary (all enrollments, lessons, certs)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-family:'Playfair Display',serif;color:var(--navy);margin:24px 0 12px;">BPO Program</h3>
+    <div class="doc-table-wrap">
+      <table>
+        <thead><tr><th>Method</th><th>Endpoint</th><th>Auth</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><span class="tag navy">GET</span></td><td><code>/api/bpo/companies</code></td><td>&mdash;</td><td>List active BPO partner companies</td></tr>
+          <tr><td><span class="tag navy">GET</span></td><td><code>/api/bpo/jobs</code></td><td>&mdash;</td><td>List open Spanish-speaking job postings</td></tr>
+          <tr><td><span class="tag green">POST</span></td><td><code>/api/bpo/jobs/:id/apply</code></td><td>JWT</td><td>Apply for a job (cover note)</td></tr>
+          <tr><td><span class="tag navy">GET</span></td><td><code>/api/bpo/my/applications</code></td><td>JWT</td><td>User's job applications + status</td></tr>
+          <tr><td><span class="tag navy">GET</span></td><td><code>/api/bpo/stats</code></td><td>&mdash;</td><td>BPO program stats (companies, positions, placements)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-family:'Playfair Display',serif;color:var(--navy);margin:24px 0 12px;">Analytics &amp; Advocacy</h3>
+    <div class="doc-table-wrap">
+      <table>
+        <thead><tr><th>Method</th><th>Endpoint</th><th>Auth</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><span class="tag navy">GET</span></td><td><code>/api/analytics/overview</code></td><td>Official</td><td>Program-wide KPIs</td></tr>
+          <tr><td><span class="tag navy">GET</span></td><td><code>/api/analytics/economic-impact</code></td><td>Official</td><td>Monthly economic impact data</td></tr>
+          <tr><td><span class="tag navy">GET</span></td><td><code>/api/analytics/schools</code></td><td>Official</td><td>Participating schools list</td></tr>
+          <tr><td><span class="tag navy">GET</span></td><td><code>/api/analytics/partners</code></td><td>&mdash;</td><td>Active university partners</td></tr>
+          <tr><td><span class="tag navy">GET</span></td><td><code>/api/advocacy/events</code></td><td>&mdash;</td><td>Upcoming cultural events</td></tr>
+          <tr><td><span class="tag green">POST</span></td><td><code>/api/advocacy/supporters</code></td><td>&mdash;</td><td>Register as a supporter</td></tr>
+          <tr><td><span class="tag green">POST</span></td><td><code>/api/tutor/chat</code></td><td>JWT</td><td>Chat with AI Profesora Isabel</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Section 9: UVEG Curriculum -->
+<section class="doc-section" id="curriculum">
+  <div class="doc-container">
+    <div class="doc-section-overline">Section Nine</div>
+    <h2 class="doc-section-title"><span class="num">9.</span> UVEG SFL Curriculum</h2>
+    <p class="doc-text">The curriculum is provided by the <strong>Universidad Virtual del Estado de Guanajuato (UVEG)</strong> under signed MOU. It follows the <strong>Common European Framework of Reference (CEFR)</strong> and progresses from absolute beginner (A1) to intermediate (B1+).</p>
+
+    <div class="stats-row">
+      <div class="stat-box"><div class="stat-num">12</div><div class="stat-label">Modules</div></div>
+      <div class="stat-box"><div class="stat-num">6</div><div class="stat-label">Lessons / Module</div></div>
+      <div class="stat-box"><div class="stat-num">72</div><div class="stat-label">Total Lessons</div></div>
+      <div class="stat-box"><div class="stat-num">30h</div><div class="stat-label">Per Module</div></div>
+      <div class="stat-box"><div class="stat-num">360h</div><div class="stat-label">Total Program</div></div>
+      <div class="stat-box"><div class="stat-num">&ge;80</div><div class="stat-label">Pass Mark</div></div>
+    </div>
+
+    <div class="doc-table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Module</th><th>CEFR</th><th>Topics</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td><strong>Introducci&oacute;n al Espa&ntilde;ol</strong></td><td>A1</td><td>Greetings, alphabet, nationalities, family, descriptions, courtesy</td></tr>
+          <tr><td>2</td><td><strong>Un D&iacute;a en la Vida</strong></td><td>A1</td><td>Routines, schedules, days/months, actions, frequency, future plans</td></tr>
+          <tr><td>3</td><td><strong>Somos lo que Consumimos</strong></td><td>A1-A2</td><td>Home, shopping, clothing, food, quantities, questions</td></tr>
+          <tr><td>4</td><td><strong>Lugares y Transporte</strong></td><td>A2</td><td>Directions, transport, airport, city, locations, travel</td></tr>
+          <tr><td>5</td><td><strong>Tus H&aacute;bitos Hablan por Ti</strong></td><td>A2</td><td>Free time, cinema/music, sports, events, opinions, invitations</td></tr>
+          <tr><td>6</td><td><strong>Tu Cuerpo es tu Templo</strong></td><td>A2-B1</td><td>Health, doctor, habits, exercise, symptoms, recommendations</td></tr>
+          <tr><td>7</td><td><strong>A Qu&eacute; te Dedicas</strong></td><td>B1</td><td>Professions, skills, interviews, work environment, preterite tense</td></tr>
+          <tr><td>8</td><td><strong>Cultura y Tradiciones</strong></td><td>B1</td><td>Festivities, art, literature, gastronomy, customs, folklore</td></tr>
+          <tr><td>9</td><td><strong>Medios de Comunicaci&oacute;n y Tecnolog&iacute;a</strong></td><td>B1</td><td>Media, social media, tech, influence, advertising, digital</td></tr>
+          <tr><td>10</td><td><strong>Viajes y Turismo</strong></td><td>B1</td><td>Planning, accommodation, activities, culture, emergencies</td></tr>
+          <tr><td>11</td><td><strong>Ambiente y Sustentabilidad</strong></td><td>B1+</td><td>Environment, problems, recycling, energy, ecotourism</td></tr>
+          <tr><td>12</td><td><strong>Cultura y Sociedad Contempor&aacute;nea</strong></td><td>B1+</td><td>Contemporary art, music, film, fashion, gastronomy, celebrations</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-family:'Playfair Display',serif;color:var(--navy);margin:24px 0 12px;">Lesson Structure</h3>
+    <p class="doc-text">Each of the 72 lessons follows a consistent structure designed for self-paced MOOC-style learning:</p>
+    <ul class="doc-list">
+      <li><strong>Content</strong> — 200-400 words of markdown with headers, vocabulary lists, grammar tables, and example dialogues</li>
+      <li><strong>Filipino Connection</strong> — Heritage bridge showing Spanish-origin Filipino words (e.g., "kumusta" from "&iquest;C&oacute;mo est&aacute;?")</li>
+      <li><strong>Cultural Capsule</strong> — Every 6th lesson includes a deep dive into Mexican/Latin American culture</li>
+      <li><strong>Exercises</strong> — 2-3 interactive exercises per lesson (multiple choice + fill-in-the-blank), stored as JSONB</li>
+      <li><strong>Duration</strong> — 30 minutes per lesson, 5 hours per module</li>
+      <li><strong>Assessment</strong> — Pass mark &ge; 80% to receive module certificate</li>
+    </ul>
+  </div>
+</section>
+
+<!-- Section 10: Security & Auth -->
+<section class="doc-section" id="security">
+  <div class="doc-container">
+    <div class="doc-section-overline">Section Ten</div>
+    <h2 class="doc-section-title"><span class="num">10.</span> Security &amp; Authentication</h2>
+
+    <div class="two-col">
+      <div class="doc-card">
+        <h4>Authentication Flow</h4>
+        <ul class="doc-list">
+          <li>User submits email + password to <code>POST /api/auth/login</code></li>
+          <li>Backend verifies against bcrypt-hashed password (12 salt rounds)</li>
+          <li>JWT token issued with 24-hour expiration</li>
+          <li>Token stored in <code>sessionStorage</code> (cleared on tab close)</li>
+          <li>Every API request includes <code>Authorization: Bearer {token}</code></li>
+          <li>401 responses auto-clear session and redirect to login</li>
+        </ul>
+      </div>
+      <div class="doc-card navy">
+        <h4>Role-Based Access Control</h4>
+        <ul class="doc-list">
+          <li><strong>admin</strong> — Full access to all features and data</li>
+          <li><strong>official</strong> — Analytics, schools, economic impact, partners</li>
+          <li><strong>teacher</strong> — Course creation, student progress</li>
+          <li><strong>student</strong> — Courses, classroom, progress, AI tutor</li>
+          <li><strong>bpo_worker</strong> — Job board, applications, courses</li>
+          <li><strong>partner</strong> — Partner network, collaboration tools</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 style="font-family:'Playfair Display',serif;color:var(--navy);margin:24px 0 12px;">Security Measures</h3>
+    <ul class="doc-list">
+      <li><strong>Password hashing:</strong> bcrypt with 12 salt rounds (industry standard)</li>
+      <li><strong>JWT tokens:</strong> Signed with server-side secret, 24-hour expiration</li>
+      <li><strong>SSL/TLS:</strong> All database connections require SSL</li>
+      <li><strong>Input validation:</strong> Parameterized queries prevent SQL injection</li>
+      <li><strong>CORS:</strong> Managed at the Express application level</li>
+      <li><strong>Session isolation:</strong> sessionStorage clears on browser/tab close</li>
+      <li><strong>Tenant isolation:</strong> All data scoped to <code>tenant_id = 'torna_idioma'</code></li>
+    </ul>
+  </div>
+</section>
+
+<!-- Section 11: Deployment -->
+<section class="doc-section" id="deployment">
+  <div class="doc-container">
+    <div class="doc-section-overline">Section Eleven</div>
+    <h2 class="doc-section-title"><span class="num">11.</span> Deployment &amp; Infrastructure</h2>
+
+    <div class="arch-box">
+      <div class="arch-title">CI/CD Pipeline</div>
+      <div class="arch-flow">
+        <div class="arch-node user">Developer<br><small>git push main</small></div>
+        <div class="arch-arrow">&rarr;</div>
+        <div class="arch-node static">GitHub<br><small>main branch</small></div>
+        <div class="arch-arrow">&rarr;</div>
+        <div class="arch-node react">Render<br><small>auto-build</small></div>
+        <div class="arch-arrow">&rarr;</div>
+        <div class="arch-node api">Deploy<br><small>~90 seconds</small></div>
+        <div class="arch-arrow">&rarr;</div>
+        <div class="arch-node ai">Live<br><small>aiagent.ringlypro.com</small></div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="doc-card">
+        <h4>Infrastructure</h4>
+        <ul class="doc-list">
+          <li><strong>Hosting:</strong> Render (Web Service)</li>
+          <li><strong>Database:</strong> Render PostgreSQL (managed)</li>
+          <li><strong>Domain:</strong> aiagent.ringlypro.com</li>
+          <li><strong>Port:</strong> 10000 (production)</li>
+          <li><strong>SSL:</strong> Automatic via Render</li>
+          <li><strong>Auto-deploy:</strong> On push to <code>main</code> branch</li>
+        </ul>
+      </div>
+      <div class="doc-card navy">
+        <h4>Build Process</h4>
+        <ul class="doc-list">
+          <li><strong>Backend:</strong> No build step (Node.js runs directly)</li>
+          <li><strong>React SPA:</strong> <code>vite build</code> &rarr; <code>dist/</code></li>
+          <li><strong>Landing Page:</strong> No build (static HTML)</li>
+          <li><strong>Migrations:</strong> Run automatically on startup</li>
+          <li><strong>Seeding:</strong> Idempotent (checks before insert)</li>
+          <li><strong>Health check:</strong> <code>GET /Torna_Idioma/health</code></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Section 12: Future Roadmap -->
+<section class="doc-section" id="roadmap-doc">
+  <div class="doc-container">
+    <div class="doc-section-overline">Section Twelve</div>
+    <h2 class="doc-section-title"><span class="num">12.</span> Future Roadmap</h2>
+
+    <div class="doc-card-grid">
+      <div class="doc-card">
+        <h4>Phase 2: Live Instruction</h4>
+        <p>Integration with UVEG virtual instructors — 2 hours/week of live conversation practice per group of 35 students, as specified in the MOU.</p>
+        <div class="tag-row"><span class="tag gold">Q3 2026</span></div>
+      </div>
+      <div class="doc-card navy">
+        <h4>Phase 3: DELE Preparation</h4>
+        <p>Partnership with Instituto Cervantes Manila for official DELE exam preparation tracks (A2, B1, B2) with practice tests and certification.</p>
+        <div class="tag-row"><span class="tag navy">Q4 2026</span></div>
+      </div>
+      <div class="doc-card red">
+        <h4>Phase 4: City Expansion</h4>
+        <p>Expand from 3 pilot cities to 10+ municipalities across the Philippines, including Iloilo, Cebu, and Manila.</p>
+        <div class="tag-row"><span class="tag red">2027</span></div>
+      </div>
+      <div class="doc-card green">
+        <h4>Phase 5: Mobile App</h4>
+        <p>Native mobile application (iOS/Android) with offline lesson access, push notifications, and speech recognition for pronunciation practice.</p>
+        <div class="tag-row"><span class="tag green">2027</span></div>
+      </div>
+      <div class="doc-card">
+        <h4>Phase 6: Student Exchange</h4>
+        <p>Bilateral student exchange program between Philippine universities and UVEG/UdeM for immersive semester-abroad experiences in Mexico and Colombia.</p>
+        <div class="tag-row"><span class="tag gold">2027-2028</span></div>
+      </div>
+      <div class="doc-card navy">
+        <h4>Phase 7: Voice AI Tutor</h4>
+        <p>ElevenLabs-powered voice AI that allows students to practice spoken Spanish with real-time pronunciation feedback and conversation flow.</p>
+        <div class="tag-row"><span class="tag navy">2028</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="doc-footer">
+  <div class="doc-footer-brand">TORNA IDIOMA</div>
+  <div class="doc-footer-tagline">Vida &middot; Cultura &middot; Legado</div>
+  <p>&copy; 2026 Multi Travel Connection, Inc. (DBA Torna Idioma) &mdash; Powered by <a href="https://digit2ai.com">Digit2AI</a></p>
+  <p style="margin-top:8px;">Academic Partner: Universidad Virtual del Estado de Guanajuato (UVEG)</p>
+  <p style="margin-top:16px;"><a href="/Torna_Idioma/">Back to Home</a> &middot; <a href="/Torna_Idioma/login">Login</a></p>
+</footer>
+
+</body>
+</html>
