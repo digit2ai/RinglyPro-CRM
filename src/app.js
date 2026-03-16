@@ -476,6 +476,13 @@ try {
     console.log('📋 Activities routes mounted at /api/activities');
 } catch (error) { console.log('⚠️ Activities routes not available:', error.message); }
 
+// CRM NLP Agent
+try {
+    const crmAgentRoutes = require('./routes/crm-agent');
+    app.use('/api/crm-agent', crmAgentRoutes);
+    console.log('🤖 CRM NLP Agent routes mounted at /api/crm-agent');
+} catch (error) { console.log('⚠️ CRM Agent routes not available:', error.message); }
+
 // P2: SMS Templates
 try {
     const smsTemplatesRoutes = require('./routes/sms-templates');

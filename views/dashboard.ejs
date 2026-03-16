@@ -2895,22 +2895,22 @@
                 Contacts
                 <span class="sidebar-nav-badge" id="sidebarContactCount">0</span>
             </button>
-            <!-- CRM links — shown/hidden by JS based on client's API settings -->
-            <a class="sidebar-nav-item" id="sidebarGhlLink" href="/settings/ghl" target="_blank" style="display:none;text-decoration:none;">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            <!-- CRM Agent links — open NLP chat for each CRM -->
+            <button class="sidebar-nav-item" id="sidebarGhlLink" onclick="sidebarNav('crm-agent-ghl', this)" style="display:none;">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
                 GoHighLevel
-                <span class="sidebar-nav-badge" style="background:rgba(234,88,12,.15);color:#fb923c;font-size:9px;">EXT</span>
-            </a>
-            <a class="sidebar-nav-item" id="sidebarHubspotLink" href="/settings/hubspot" target="_blank" style="display:none;text-decoration:none;">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                <span class="sidebar-nav-badge" style="background:rgba(234,88,12,.15);color:#fb923c;font-size:9px;">AI</span>
+            </button>
+            <button class="sidebar-nav-item" id="sidebarHubspotLink" onclick="sidebarNav('crm-agent-hubspot', this)" style="display:none;">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
                 HubSpot
-                <span class="sidebar-nav-badge" style="background:rgba(255,122,89,.15);color:#ff7a59;font-size:9px;">EXT</span>
-            </a>
-            <a class="sidebar-nav-item" id="sidebarZohoLink" href="/settings/zoho" target="_blank" style="display:none;text-decoration:none;">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                <span class="sidebar-nav-badge" style="background:rgba(255,122,89,.15);color:#ff7a59;font-size:9px;">AI</span>
+            </button>
+            <button class="sidebar-nav-item" id="sidebarZohoLink" onclick="sidebarNav('crm-agent-zoho', this)" style="display:none;">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
                 Zoho CRM
-                <span class="sidebar-nav-badge" style="background:rgba(220,38,38,.15);color:#f87171;font-size:9px;">EXT</span>
-            </a>
+                <span class="sidebar-nav-badge" style="background:rgba(220,38,38,.15);color:#f87171;font-size:9px;">AI</span>
+            </button>
 
             <div class="sidebar-section-label">ADMIN</div>
             <button class="sidebar-nav-item" onclick="openSettings()">
@@ -4254,7 +4254,13 @@
 
             const followupView = document.getElementById('followupView');
 
-            const iframeViews = { pipeline: '/crm/pipeline.html', tasks: '/crm/tasks.html' };
+            const iframeViews = {
+                pipeline: '/crm/pipeline.html',
+                tasks: '/crm/tasks.html',
+                'crm-agent-ghl': '/crm/agent.html?crm=ghl',
+                'crm-agent-hubspot': '/crm/agent.html?crm=hubspot',
+                'crm-agent-zoho': '/crm/agent.html?crm=zoho'
+            };
             if (tab === 'neural') {
                 neuralView.style.display = 'block';
                 neuralView.src = '/neural/intelligence.html';
