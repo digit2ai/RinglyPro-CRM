@@ -2849,6 +2849,10 @@
                 Messages
                 <span class="sidebar-nav-badge" id="sidebarMsgBadge" style="display:none;">0</span>
             </button>
+            <button class="sidebar-nav-item" onclick="sidebarNav('followups', this)">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                Follow-ups
+            </button>
 
             <div class="sidebar-section-label">AI TOOLS</div>
             <button class="sidebar-nav-item" onclick="openMCPCopilot()">
@@ -2863,15 +2867,21 @@
                 Contacts
                 <span class="sidebar-nav-badge" id="sidebarContactCount">0</span>
             </button>
-            <button class="sidebar-nav-item" onclick="shareReferralLink()">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
-                Share &amp; Referral
-            </button>
+            <!-- Dynamic CRM link — populated by JS based on client's API settings -->
+            <a class="sidebar-nav-item" id="sidebarCrmLink" href="#" target="_blank" style="display:none;text-decoration:none;">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                <span id="sidebarCrmLabel">CRM</span>
+                <span class="sidebar-nav-badge" style="background:rgba(139,92,246,.15);color:#c4b5fd;font-size:9px;">EXT</span>
+            </a>
 
             <div class="sidebar-section-label">ADMIN</div>
             <button class="sidebar-nav-item" onclick="openSettings()">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                 Settings
+            </button>
+            <button class="sidebar-nav-item" onclick="shareReferralLink()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                Share &amp; Referral
             </button>
             <button class="sidebar-nav-item" onclick="openA2PVerification(event)">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
@@ -2891,6 +2901,22 @@
 
     <!-- Neural Intelligence View (DEFAULT - shown on load) -->
     <iframe class="neural-view" id="neuralView" src="/neural/intelligence.html" title="Neural Intelligence"></iframe>
+
+    <!-- Follow-up View (shown when Follow-ups clicked in sidebar) -->
+    <div id="followupView" style="display:none; padding: 16px; height: 100%; overflow-y: auto; background: #f3f4f6;">
+        <div style="max-width: 1200px; margin: 0 auto;">
+            <h2 style="font-size: 1.25rem; font-weight: 700; color: #111827; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="22" height="22" style="color: #4F46E5;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                Pending Follow-ups
+            </h2>
+            <div id="followupContent">
+                <div class="lead-loading" style="padding:40px;text-align:center;color:#6b7280;">
+                    <div class="spinner" style="width:24px;height:24px;border:3px solid #e5e7eb;border-top-color:#4F46E5;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 8px;"></div>
+                    Loading follow-ups...
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- CRM Content Views (hidden by default, shown when sidebar nav clicked) -->
     <div id="crmContentArea" style="display:none;">
@@ -4187,15 +4213,22 @@
             const neuralView = document.getElementById('neuralView');
             const crmArea = document.getElementById('crmContentArea');
 
+            const followupView = document.getElementById('followupView');
+
             if (tab === 'neural') {
-                // Show Neural iframe, hide CRM content
                 neuralView.style.display = 'block';
                 crmArea.style.display = 'none';
+                if (followupView) followupView.style.display = 'none';
+            } else if (tab === 'followups') {
+                neuralView.style.display = 'none';
+                crmArea.style.display = 'none';
+                if (followupView) { followupView.style.display = 'block'; }
+                // Trigger lead tracker load
+                if (typeof loadLeadTracker === 'function') loadLeadTracker();
             } else {
-                // Show CRM content, hide Neural iframe
                 neuralView.style.display = 'none';
                 crmArea.style.display = 'block';
-                // Switch content sections
+                if (followupView) followupView.style.display = 'none';
                 document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
                 if (tab === 'today') {
                     document.getElementById('todaySection').classList.add('active');
@@ -4217,7 +4250,7 @@
             document.getElementById('sidebarOverlay').classList.remove('open');
         }
 
-        // Populate sidebar user email
+        // Populate sidebar user email + detect CRM
         try {
             const tkn = localStorage.getItem('token');
             if (tkn) {
@@ -4227,8 +4260,52 @@
                 if (emailEl && payload.business_name) {
                     document.getElementById('sidebarTierBadge').textContent = payload.business_name;
                 }
+                // Detect connected CRM and show link in sidebar
+                if (payload.clientId || payload.client_id) {
+                    detectClientCrm(payload.clientId || payload.client_id, tkn);
+                }
             }
         } catch(e) {}
+
+        async function detectClientCrm(clientId, token) {
+            try {
+                // Try GHL first
+                const ghlRes = await fetch('/api/client-settings/ghl', { headers: { 'Authorization': 'Bearer ' + token } });
+                const ghlData = await ghlRes.json();
+                if (ghlData.success && ghlData.ghl && ghlData.ghl.enabled && (ghlData.ghl.apiKey || ghlData.ghl.apiKeySet)) {
+                    showCrmLink('GoHighLevel', '/settings/ghl');
+                    return;
+                }
+            } catch(e) {}
+            try {
+                // Try HubSpot
+                const hsRes = await fetch('/api/client-settings/hubspot', { headers: { 'Authorization': 'Bearer ' + token } });
+                const hsData = await hsRes.json();
+                if (hsData.success && hsData.hubspot && hsData.hubspot.enabled && (hsData.hubspot.apiKeyMasked || hsData.hubspot.accessToken)) {
+                    showCrmLink('HubSpot', '/settings/hubspot');
+                    return;
+                }
+            } catch(e) {}
+            try {
+                // Try Zoho
+                const zoRes = await fetch('/api/client-settings/zoho', { headers: { 'Authorization': 'Bearer ' + token } });
+                const zoData = await zoRes.json();
+                if (zoData.success && zoData.zoho && zoData.zoho.enabled) {
+                    showCrmLink('Zoho CRM', '/settings/zoho');
+                    return;
+                }
+            } catch(e) {}
+        }
+
+        function showCrmLink(name, href) {
+            const link = document.getElementById('sidebarCrmLink');
+            const label = document.getElementById('sidebarCrmLabel');
+            if (link && label) {
+                label.textContent = name;
+                link.href = href;
+                link.style.display = 'flex';
+            }
+        }
 
         // Logout function
         function logout() {
