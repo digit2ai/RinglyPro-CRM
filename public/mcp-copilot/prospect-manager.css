@@ -7,9 +7,11 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #07090f;
+    color: #e2e8f0;
     min-height: 100vh;
     padding: 2rem;
+    -webkit-font-smoothing: antialiased;
 }
 
 .prospect-manager-container {
@@ -19,10 +21,11 @@ body {
 
 /* Header */
 .header {
-    background: white;
+    background: rgba(7,9,15,.85);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(139,92,246,.15);
     padding: 1.5rem 2rem;
     border-radius: 1rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -43,42 +46,43 @@ body {
 
 .header h1 {
     font-size: 1.75rem;
-    color: #1f2937;
+    color: #e2e8f0;
     font-weight: 700;
 }
 
 .back-link {
-    color: #667eea;
+    color: #c4b5fd;
     text-decoration: none;
     font-weight: 500;
     padding: 0.5rem 1rem;
     border-radius: 0.5rem;
     transition: all 0.2s;
+    border: 1px solid rgba(139,92,246,.2);
 }
 
 .back-link:hover {
-    background: #f3f4f6;
+    background: rgba(139,92,246,.1);
 }
 
 /* Scheduler Panel */
 .scheduler-panel {
-    background: white;
+    background: rgba(15,23,42,.6);
+    border: 1px solid rgba(139,92,246,.12);
     padding: 2rem;
     border-radius: 1rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     margin-bottom: 2rem;
 }
 
 .scheduler-panel h2 {
     font-size: 1.5rem;
-    color: #1f2937;
+    color: #e2e8f0;
     margin-bottom: 1.5rem;
 }
 
 /* Status Card */
 .status-card {
-    background: #f9fafb;
-    border: 2px solid #e5e7eb;
+    background: rgba(139,92,246,.06);
+    border: 2px solid rgba(139,92,246,.12);
     border-radius: 0.75rem;
     padding: 1.5rem;
     margin-bottom: 1.5rem;
@@ -86,17 +90,17 @@ body {
 }
 
 .status-card.status-running {
-    background: #ecfdf5;
+    background: rgba(16,185,129,.1);
     border-color: #10b981;
 }
 
 .status-card.status-paused {
-    background: #fef3c7;
+    background: rgba(245,158,11,.1);
     border-color: #f59e0b;
 }
 
 .status-card.status-stopped {
-    background: #fee2e2;
+    background: rgba(239,68,68,.1);
     border-color: #ef4444;
 }
 
@@ -140,17 +144,17 @@ body {
 .status-text {
     font-size: 1.25rem;
     font-weight: 700;
-    color: #1f2937;
+    color: #e2e8f0;
 }
 
 .status-info p {
-    color: #4b5563;
+    color: #94a3b8;
     margin: 0.25rem 0;
 }
 
 .status-detail {
     font-size: 0.875rem;
-    color: #6b7280;
+    color: #64748b;
 }
 
 /* Progress Section */
@@ -163,21 +167,21 @@ body {
     justify-content: space-between;
     margin-bottom: 0.5rem;
     font-size: 0.875rem;
-    color: #6b7280;
+    color: #94a3b8;
     font-weight: 500;
 }
 
 .progress-bar {
     width: 100%;
     height: 24px;
-    background: #e5e7eb;
+    background: rgba(139,92,246,.12);
     border-radius: 12px;
     overflow: hidden;
 }
 
 .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(90deg, #8b5cf6 0%, #06b6d4 100%);
     transition: width 0.5s ease;
 }
 
@@ -190,8 +194,9 @@ body {
 }
 
 .stat-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: rgba(139,92,246,.06);
+    border: 1px solid rgba(139,92,246,.12);
+    color: #e2e8f0;
     padding: 1.5rem;
     border-radius: 0.75rem;
     text-align: center;
@@ -229,22 +234,24 @@ body {
 .filter-group label {
     font-size: 0.875rem;
     font-weight: 600;
-    color: #4b5563;
+    color: #94a3b8;
 }
 
 .filter-group input,
 .filter-group select {
     padding: 0.625rem;
-    border: 2px solid #e5e7eb;
+    border: 1px solid rgba(139,92,246,.25);
     border-radius: 0.5rem;
     font-size: 0.875rem;
     transition: border-color 0.2s;
+    background: rgba(139,92,246,.1);
+    color: #e2e8f0;
 }
 
 .filter-group input:focus,
 .filter-group select:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: #8b5cf6;
 }
 
 .buttons-row {
@@ -327,22 +334,22 @@ body {
 /* Config Section */
 .config-section {
     margin-top: 1.5rem;
-    border: 2px solid #e5e7eb;
+    border: 1px solid rgba(139,92,246,.12);
     border-radius: 0.75rem;
     overflow: hidden;
 }
 
 .config-section summary {
     padding: 1rem 1.5rem;
-    background: #f9fafb;
+    background: rgba(139,92,246,.06);
     cursor: pointer;
     font-weight: 600;
-    color: #1f2937;
+    color: #e2e8f0;
     user-select: none;
 }
 
 .config-section summary:hover {
-    background: #f3f4f6;
+    background: rgba(139,92,246,.1);
 }
 
 .config-content {
@@ -351,25 +358,25 @@ body {
 
 .config-info {
     line-height: 1.8;
-    color: #4b5563;
+    color: #94a3b8;
     margin-bottom: 1rem;
 }
 
 .config-note {
-    background: #eff6ff;
-    border-left: 4px solid #3b82f6;
+    background: rgba(139,92,246,.08);
+    border-left: 4px solid #8b5cf6;
     padding: 1rem;
     border-radius: 0.5rem;
-    color: #1e40af;
+    color: #a5b4fc;
     font-size: 0.875rem;
 }
 
 /* Prospect List Panel */
 .prospect-list-panel {
-    background: white;
+    background: rgba(15,23,42,.6);
+    border: 1px solid rgba(139,92,246,.12);
     padding: 2rem;
     border-radius: 1rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .panel-header {
@@ -381,7 +388,7 @@ body {
 
 .panel-header h2 {
     font-size: 1.5rem;
-    color: #1f2937;
+    color: #e2e8f0;
 }
 
 /* List Filters */
@@ -396,7 +403,7 @@ body {
 .table-container {
     overflow-x: auto;
     border-radius: 0.75rem;
-    border: 2px solid #e5e7eb;
+    border: 1px solid rgba(139,92,246,.12);
     margin-bottom: 1rem;
 }
 
@@ -407,26 +414,26 @@ body {
 }
 
 .prospect-table th {
-    background: #f9fafb;
+    background: rgba(139,92,246,.06);
     padding: 1rem;
     text-align: left;
     font-weight: 600;
-    color: #374151;
+    color: #94a3b8;
     font-size: 0.875rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    border-bottom: 2px solid #e5e7eb;
+    border-bottom: 1px solid rgba(139,92,246,.12);
 }
 
 .prospect-table td {
     padding: 1rem;
-    border-bottom: 1px solid #f3f4f6;
-    color: #4b5563;
+    border-bottom: 1px solid rgba(139,92,246,.06);
+    color: #cbd5e1;
     font-size: 0.875rem;
 }
 
 .prospect-table tbody tr:hover {
-    background: #f9fafb;
+    background: rgba(139,92,246,.06);
 }
 
 .prospect-table tbody tr:last-child td {
@@ -472,30 +479,30 @@ body {
 }
 
 #pageInfo {
-    color: #6b7280;
+    color: #94a3b8;
     font-weight: 500;
 }
 
 /* Upload Panel */
 .upload-panel {
-    background: white;
+    background: rgba(15,23,42,.6);
+    border: 1px solid rgba(139,92,246,.12);
     padding: 2rem;
     border-radius: 1rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     margin-bottom: 2rem;
 }
 
 .upload-panel h2 {
     font-size: 1.5rem;
-    color: #1f2937;
+    color: #e2e8f0;
     margin-bottom: 1.5rem;
 }
 
 .upload-section {
-    border: 2px dashed #e5e7eb;
+    border: 2px dashed rgba(139,92,246,.25);
     border-radius: 0.75rem;
     padding: 1.5rem;
-    background: #f9fafb;
+    background: rgba(139,92,246,.06);
 }
 
 .upload-instructions {
@@ -503,18 +510,18 @@ body {
 }
 
 .upload-instructions p {
-    color: #4b5563;
+    color: #94a3b8;
     font-size: 0.875rem;
     margin-bottom: 0.5rem;
 }
 
 .upload-note {
-    color: #6b7280 !important;
+    color: #64748b !important;
     font-style: italic;
 }
 
 .sample-link {
-    color: #667eea;
+    color: #c4b5fd;
     text-decoration: none;
     font-weight: 500;
 }
@@ -531,17 +538,17 @@ body {
 }
 
 .btn-upload {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #8b5cf6, #06b6d4);
     color: white;
 }
 
 .btn-upload:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 12px rgba(139,92,246,0.3);
 }
 
 .file-name {
-    color: #6b7280;
+    color: #94a3b8;
     font-size: 0.875rem;
     font-weight: 500;
 }
@@ -549,10 +556,10 @@ body {
 /* Upload Preview */
 .upload-preview {
     margin-top: 1.5rem;
-    border: 2px solid #e5e7eb;
+    border: 1px solid rgba(139,92,246,.12);
     border-radius: 0.75rem;
     overflow: hidden;
-    background: white;
+    background: rgba(15,23,42,.6);
 }
 
 .preview-header {
@@ -560,13 +567,13 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 1rem;
-    background: #f9fafb;
-    border-bottom: 1px solid #e5e7eb;
+    background: rgba(139,92,246,.06);
+    border-bottom: 1px solid rgba(139,92,246,.12);
 }
 
 .preview-header span {
     font-weight: 600;
-    color: #1f2937;
+    color: #e2e8f0;
 }
 
 .btn-cancel {
@@ -589,34 +596,34 @@ body {
 }
 
 .preview-table th {
-    background: #f3f4f6;
+    background: rgba(139,92,246,.06);
     padding: 0.75rem;
     text-align: left;
     font-weight: 600;
-    color: #374151;
+    color: #94a3b8;
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid rgba(139,92,246,.12);
     position: sticky;
     top: 0;
 }
 
 .preview-table td {
     padding: 0.75rem;
-    border-bottom: 1px solid #f3f4f6;
-    color: #4b5563;
+    border-bottom: 1px solid rgba(139,92,246,.06);
+    color: #cbd5e1;
     font-size: 0.8rem;
 }
 
 .preview-table tbody tr:hover {
-    background: #f9fafb;
+    background: rgba(139,92,246,.06);
 }
 
 .upload-actions {
     padding: 1rem;
-    background: #f9fafb;
-    border-top: 1px solid #e5e7eb;
+    background: rgba(139,92,246,.06);
+    border-top: 1px solid rgba(139,92,246,.12);
     display: flex;
     justify-content: flex-end;
 }
@@ -632,7 +639,7 @@ body {
 }
 
 #uploadProgressText {
-    color: #6b7280;
+    color: #94a3b8;
     font-size: 0.875rem;
 }
 
