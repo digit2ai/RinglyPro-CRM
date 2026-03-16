@@ -5,283 +5,94 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HubSpot Integration - RinglyPro</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: #f5f5f7;
-            min-height: 100vh;
-            padding: 2rem;
+            background: #f5f5f7; min-height: 100vh; padding: 2rem;
         }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
+        .container { max-width: 800px; margin: 0 auto; }
         .header {
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin-bottom: 2rem;
+            background: white; padding: 2rem; border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 2rem;
         }
-
         .header h1 {
-            font-size: 2rem;
-            color: #1d1d1f;
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
+            font-size: 2rem; color: #1d1d1f; margin-bottom: 0.5rem;
+            display: flex; align-items: center; gap: 0.75rem;
         }
-
-        .header p {
-            color: #6e6e73;
-            font-size: 1rem;
-        }
-
+        .header p { color: #6e6e73; font-size: 1rem; }
         .card {
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin-bottom: 1.5rem;
+            background: white; padding: 2rem; border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 1.5rem;
         }
-
         .card-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid #e5e5e7;
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #e5e5e7;
         }
-
-        .card-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #1d1d1f;
-        }
-
-        .toggle {
-            position: relative;
-            display: inline-block;
-            width: 51px;
-            height: 31px;
-        }
-
-        .toggle input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
+        .card-title { font-size: 1.25rem; font-weight: 600; color: #1d1d1f; }
+        .toggle { position: relative; display: inline-block; width: 51px; height: 31px; }
+        .toggle input { opacity: 0; width: 0; height: 0; }
         .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 31px;
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc; transition: .4s; border-radius: 31px;
         }
-
         .slider:before {
-            position: absolute;
-            content: "";
-            height: 23px;
-            width: 23px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
+            position: absolute; content: ""; height: 23px; width: 23px;
+            left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%;
         }
-
-        input:checked + .slider {
-            background-color: #ff7a59;
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(20px);
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-label {
-            display: block;
-            font-weight: 600;
-            color: #1d1d1f;
-            margin-bottom: 0.5rem;
-            font-size: 0.95rem;
-        }
-
+        input:checked + .slider { background-color: #34c759; }
+        input:checked + .slider:before { transform: translateX(20px); }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-label { display: block; font-weight: 600; color: #1d1d1f; margin-bottom: 0.5rem; font-size: 0.95rem; }
         .form-input {
-            width: 100%;
-            padding: 0.875rem 1rem;
-            font-size: 1rem;
-            border: 1px solid #d2d2d7;
-            border-radius: 8px;
-            transition: border-color 0.2s;
+            width: 100%; padding: 0.875rem 1rem; font-size: 1rem;
+            border: 1px solid #d2d2d7; border-radius: 8px; transition: border-color 0.2s;
         }
-
-        .form-input:focus {
-            outline: none;
-            border-color: #ff7a59;
-        }
-
-        .form-hint {
-            color: #6e6e73;
-            font-size: 0.875rem;
-            margin-top: 0.5rem;
-        }
-
+        .form-input:focus { outline: none; border-color: #ff7a59; }
+        .form-hint { color: #6e6e73; font-size: 0.875rem; margin-top: 0.5rem; }
         .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            font-size: 0.875rem;
-            font-weight: 600;
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.875rem; font-weight: 600;
         }
-
-        .status-connected {
-            background: #d1fae5;
-            color: #065f46;
-        }
-
-        .status-disconnected {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
+        .status-connected { background: #d1fae5; color: #065f46; }
+        .status-disconnected { background: #fee2e2; color: #991b1b; }
         .btn {
-            display: inline-block;
-            padding: 0.875rem 1.5rem;
-            font-size: 1rem;
-            font-weight: 600;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
+            display: inline-block; padding: 0.875rem 1.5rem; font-size: 1rem;
+            font-weight: 600; border-radius: 8px; border: none; cursor: pointer; transition: all 0.2s;
         }
-
-        .btn-primary {
-            background: #ff7a59;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #e6694d;
-        }
-
-        .btn-secondary {
-            background: #f5f5f7;
-            color: #1d1d1f;
-        }
-
-        .btn-secondary:hover {
-            background: #e8e8ed;
-        }
-
-        .alert {
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1.5rem;
-        }
-
-        .alert-success {
-            background: #d1fae5;
-            color: #065f46;
-            border: 1px solid #6ee7b7;
-        }
-
-        .alert-error {
-            background: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #fca5a5;
-        }
-
-        .alert-info {
-            background: #fff5f0;
-            color: #c4320a;
-            border: 1px solid #fed7aa;
-        }
-
-        .feature-list {
-            list-style: none;
-            padding: 0;
-        }
-
+        .btn-primary { background: #ff7a59; color: white; }
+        .btn-primary:hover { background: #e5603d; }
+        .btn-secondary { background: #f5f5f7; color: #1d1d1f; }
+        .btn-secondary:hover { background: #e8e8ed; }
+        .alert { padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; }
+        .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+        .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+        .alert-info { background: #fff1f2; color: #9a3412; border: 1px solid #fecaca; }
+        .feature-list { list-style: none; padding: 0; }
         .feature-list li {
-            padding: 0.75rem 0;
-            border-bottom: 1px solid #f5f5f7;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
+            padding: 0.75rem 0; border-bottom: 1px solid #f5f5f7;
+            display: flex; align-items: center; gap: 0.75rem;
         }
-
-        .feature-list li:last-child {
-            border-bottom: none;
-        }
-
-        .setup-steps {
-            background: #fff5f0;
-            padding: 1.5rem;
-            border-radius: 8px;
-            margin-top: 1.5rem;
-        }
-
-        .setup-steps ol {
-            padding-left: 1.5rem;
-        }
-
-        .setup-steps li {
-            margin-bottom: 0.75rem;
-            color: #1d1d1f;
-        }
-
+        .feature-list li:last-child { border-bottom: none; }
+        .setup-steps { background: #fff1f2; padding: 1.5rem; border-radius: 8px; margin-top: 1.5rem; }
+        .setup-steps ol { padding-left: 1.5rem; }
+        .setup-steps li { margin-bottom: 0.75rem; color: #1d1d1f; }
         .back-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: #ff7a59;
-            text-decoration: none;
-            margin-bottom: 1.5rem;
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            color: #ff7a59; text-decoration: none; margin-bottom: 1.5rem;
         }
-
-        .back-link:hover {
-            text-decoration: underline;
-        }
-
-        #alert-container .alert {
-            display: block;
-        }
-
-        .hubspot-logo {
-            color: #ff7a59;
-        }
+        .back-link:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
     <div class="container">
-        <a href="/" class="back-link">
-            ← Back to Dashboard
-        </a>
+        <a href="/" class="back-link">← Back to Dashboard</a>
 
         <div class="header">
-            <h1><span class="hubspot-logo">🧡</span> HubSpot Integration</h1>
-            <p>Connect your HubSpot CRM to sync contacts and book appointments via WhatsApp</p>
+            <h1>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="4" fill="#ff7a59"/><path d="M15.5 9.5V7.8c.6-.3 1-1 1-1.8 0-1.1-.9-2-2-2s-2 .9-2 2c0 .8.4 1.5 1 1.8v1.7c-1.1.2-2.1.8-2.8 1.5L6.3 8.1c.1-.2.2-.5.2-.8 0-1.1-.9-2-2-2s-2 .9-2 2 .9 2 2 2c.3 0 .5-.1.7-.2l4.5 2.9c-.2.5-.2 1-.2 1.5 0 2.5 2 4.5 4.5 4.5s4.5-2 4.5-4.5-2-4.5-4.5-4.5c-.5 0-1.1.1-1.5.2z" fill="white"/></svg>
+                HubSpot Integration
+            </h1>
+            <p>Connect your HubSpot CRM to sync contacts, pipeline deals, and meeting availability</p>
         </div>
 
         <div id="alert-container"></div>
@@ -291,28 +102,14 @@
             <div class="card-header">
                 <div class="card-title">Integration Status</div>
                 <div id="status-badge" class="status-badge status-disconnected">
-                    <span>●</span>
-                    <span>Not configured</span>
+                    <span>●</span><span>Not configured</span>
                 </div>
             </div>
-
             <ul class="feature-list">
-                <li>
-                    <span>📅</span>
-                    <span>Meeting scheduling - Book appointments directly via WhatsApp</span>
-                </li>
-                <li>
-                    <span>👥</span>
-                    <span>Contact sync - Auto-create contacts from WhatsApp leads</span>
-                </li>
-                <li>
-                    <span>📊</span>
-                    <span>Dashboard sync - View HubSpot appointments in RinglyPro</span>
-                </li>
-                <li>
-                    <span>🔔</span>
-                    <span>Confirmation - Automatic booking confirmations via WhatsApp</span>
-                </li>
+                <li><span>📅</span><span>Meeting links — Book appointments via HubSpot scheduling pages</span></li>
+                <li><span>👥</span><span>Contact sync — Auto-create contacts from voice AI conversations</span></li>
+                <li><span>📊</span><span>Pipeline tracking — Monitor deal stages and revenue forecasts</span></li>
+                <li><span>🧠</span><span>Neural Intelligence — Feed pipeline data to your health dashboard</span></li>
             </ul>
         </div>
 
@@ -328,23 +125,17 @@
 
             <form id="hubspotForm" onsubmit="handleSaveSettings(event)">
                 <div class="form-group">
-                    <label class="form-label" for="apiKey">HubSpot Private App Access Token</label>
-                    <input type="password"
-                           id="apiKey"
-                           class="form-input"
-                           placeholder="pat-na1-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                           autocomplete="off">
-                    <p class="form-hint">Your HubSpot Private App Access Token (starts with "pat-")</p>
+                    <label class="form-label" for="accessToken">HubSpot Private App Access Token</label>
+                    <input type="password" id="accessToken" class="form-input"
+                           placeholder="pat-na1-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" autocomplete="off">
+                    <p class="form-hint">Your HubSpot Private App access token (starts with pat-)</p>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="meetingSlug">Default Meeting Link (Optional)</label>
-                    <input type="text"
-                           id="meetingSlug"
-                           class="form-input"
-                           placeholder="https://meetings.hubspot.com/your-slug or just your-slug"
-                           autocomplete="off">
-                    <p class="form-hint">Paste your full HubSpot meeting URL or just the slug (e.g., <strong>ringlypro</strong>)</p>
+                    <label class="form-label" for="meetingSlug">Default Meeting Link Slug (Optional)</label>
+                    <input type="text" id="meetingSlug" class="form-input"
+                           placeholder="john-smith" autocomplete="off">
+                    <p class="form-hint">The slug from your HubSpot meeting link (e.g., meetings.hubspot.com/<strong>john-smith</strong>)</p>
                 </div>
 
                 <div class="form-group">
@@ -354,12 +145,11 @@
                         <option value="America/Chicago">Central Time (CT)</option>
                         <option value="America/Denver">Mountain Time (MT)</option>
                         <option value="America/Los_Angeles">Pacific Time (PT)</option>
-                        <option value="America/Phoenix">Arizona (MST)</option>
-                        <option value="America/Anchorage">Alaska Time</option>
-                        <option value="Pacific/Honolulu">Hawaii Time</option>
+                        <option value="America/Anchorage">Alaska Time (AKT)</option>
+                        <option value="Pacific/Honolulu">Hawaii Time (HT)</option>
                         <option value="UTC">UTC</option>
                     </select>
-                    <p class="form-hint">Timezone for appointment scheduling</p>
+                    <p class="form-hint">Timezone for availability checking</p>
                 </div>
 
                 <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
@@ -369,155 +159,96 @@
             </form>
 
             <div class="setup-steps">
-                <strong>How to get your HubSpot Access Token:</strong>
+                <strong>How to get your HubSpot access token:</strong>
                 <ol>
-                    <li>Go to <a href="https://app.hubspot.com/settings" target="_blank" style="color: #ff7a59;">HubSpot Settings</a> → Integrations → Private Apps</li>
-                    <li>Click <strong>"Create a private app"</strong></li>
-                    <li>Name it "RinglyPro Integration"</li>
-                    <li>Under <strong>Scopes</strong>, add these permissions:
-                        <ul style="margin-top: 0.5rem; margin-left: 1rem;">
-                            <li><code>crm.objects.contacts.read</code></li>
-                            <li><code>crm.objects.contacts.write</code></li>
-                            <li><code>sales-email-read</code></li>
-                            <li><code>scheduler.read.meetings</code> (for meetings)</li>
-                        </ul>
-                    </li>
-                    <li>Click <strong>"Create app"</strong> and copy the Access Token</li>
+                    <li>Go to <strong>HubSpot Settings → Integrations → Private Apps</strong></li>
+                    <li>Click <strong>Create a private app</strong></li>
+                    <li>Name it "RinglyPro" and add scopes: <code>crm.objects.contacts.read</code>, <code>crm.objects.contacts.write</code>, <code>crm.objects.deals.read</code>, <code>crm.objects.deals.write</code></li>
+                    <li>Click <strong>Create app</strong> and copy the <strong>Access Token</strong></li>
+                    <li>For meeting slug, go to <strong>Sales → Meetings</strong> and copy the slug from your link URL</li>
                 </ol>
             </div>
         </div>
 
-        <!-- Booking Options Card -->
+        <!-- Sync Options Card -->
         <div class="card">
             <div class="card-header">
-                <div class="card-title">Booking Options</div>
+                <div class="card-title">Sync Options</div>
             </div>
-
             <div class="form-group">
                 <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
                     <input type="checkbox" id="syncContacts" checked style="width: 18px; height: 18px;">
-                    <span><strong>Sync Contacts</strong> - Create contacts in HubSpot from WhatsApp leads</span>
+                    <span><strong>Sync Contacts</strong> — Create HubSpot contacts from voice AI leads</span>
                 </label>
             </div>
-
             <div class="form-group">
                 <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
                     <input type="checkbox" id="syncCalendar" checked style="width: 18px; height: 18px;">
-                    <span><strong>Book Appointments</strong> - Schedule meetings via HubSpot from WhatsApp</span>
+                    <span><strong>Sync Calendar</strong> — Use HubSpot meeting links for appointment booking</span>
                 </label>
             </div>
-
             <div class="form-group">
                 <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
                     <input type="checkbox" id="saveLocal" checked style="width: 18px; height: 18px;">
-                    <span><strong>Save to Dashboard</strong> - Also save appointments to RinglyPro dashboard</span>
+                    <span><strong>Save Locally</strong> — Also save appointments in RinglyPro calendar</span>
                 </label>
             </div>
-
-            <button type="button" class="btn btn-primary" onclick="saveBookingOptions()">Save Booking Options</button>
+            <button type="button" class="btn btn-primary" onclick="saveSyncOptions()">Save Sync Options</button>
         </div>
     </div>
 
     <script>
-        // Get auth token (stored as 'token' from login)
         const token = localStorage.getItem('token');
-        if (!token) {
-            window.location.href = '/login';
-        }
-
+        if (!token) { window.location.href = '/login'; }
         let currentSettings = {};
 
         async function loadSettings() {
             try {
-                const response = await fetch('/api/client-settings/hubspot', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                const data = await response.json();
+                const res = await fetch('/api/client-settings/hubspot', { headers: { 'Authorization': 'Bearer ' + token } });
+                const data = await res.json();
                 if (data.success && data.hubspot) {
                     currentSettings = data.hubspot;
-
                     document.getElementById('enableToggle').checked = data.hubspot.enabled || false;
-                    document.getElementById('apiKey').value = data.hubspot.apiKey ? '••••••••••••' : '';
+                    document.getElementById('accessToken').value = data.hubspot.apiKeyMasked ? '••••••••••••' : '';
                     document.getElementById('meetingSlug').value = data.hubspot.meetingSlug || '';
                     document.getElementById('timezone').value = data.hubspot.timezone || 'America/New_York';
-
                     document.getElementById('syncContacts').checked = data.hubspot.syncContacts !== false;
                     document.getElementById('syncCalendar').checked = data.hubspot.syncCalendar !== false;
                     document.getElementById('saveLocal').checked = data.hubspot.saveLocal !== false;
-
                     updateStatus(data.hubspot);
                     handleToggleChange();
                 }
-            } catch (error) {
-                console.error('Failed to load settings:', error);
+            } catch (e) {
+                console.error('Load error:', e);
                 showAlert('Failed to load settings', 'error');
             }
         }
 
         function handleToggleChange() {
             const enabled = document.getElementById('enableToggle').checked;
-            const inputs = document.querySelectorAll('#hubspotForm .form-input');
-            inputs.forEach(input => {
-                input.disabled = !enabled;
-            });
-        }
-
-        // Extract meeting slug from URL or return as-is if already a slug
-        function extractMeetingSlug(input) {
-            if (!input) return null;
-            input = input.trim();
-
-            // If it's a full URL, extract the slug
-            // Handles: https://meetings.hubspot.com/john-smith
-            //          https://meetings-na2.hubspot.com/ringlypro
-            //          meetings.hubspot.com/john-smith
-            const urlPattern = /(?:https?:\/\/)?meetings(?:-[a-z0-9]+)?\.hubspot\.com\/([^\/\?\s]+)/i;
-            const match = input.match(urlPattern);
-            if (match) {
-                return match[1];
-            }
-
-            // Otherwise, assume it's already just the slug
-            return input;
+            document.querySelectorAll('#hubspotForm .form-input').forEach(el => { el.disabled = !enabled; });
         }
 
         async function handleSaveSettings(event) {
             event.preventDefault();
-
-            const apiKeyValue = document.getElementById('apiKey').value;
-            const meetingSlugInput = document.getElementById('meetingSlug').value;
-
-            // Only send apiKey if it's a new value (not masked bullets)
-            // If masked, don't send apiKey at all - backend will preserve existing key
+            const tokenVal = document.getElementById('accessToken').value;
             const settings = {
                 enabled: document.getElementById('enableToggle').checked,
-                meetingSlug: extractMeetingSlug(meetingSlugInput),
+                meetingSlug: document.getElementById('meetingSlug').value,
                 timezone: document.getElementById('timezone').value,
                 syncContacts: document.getElementById('syncContacts').checked,
                 syncCalendar: document.getElementById('syncCalendar').checked,
                 saveLocal: document.getElementById('saveLocal').checked
             };
-
-            // Only include apiKey if user entered a new value (not masked)
-            if (apiKeyValue && !apiKeyValue.includes('••••')) {
-                settings.apiKey = apiKeyValue;
-            }
+            if (tokenVal && !tokenVal.includes('••••')) settings.accessToken = tokenVal;
 
             try {
-                const response = await fetch('/api/client-settings/hubspot', {
+                const res = await fetch('/api/client-settings/hubspot', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                     body: JSON.stringify(settings)
                 });
-
-                const data = await response.json();
-
+                const data = await res.json();
                 if (data.success) {
                     currentSettings = { ...currentSettings, ...settings };
                     showAlert('HubSpot settings saved successfully!', 'success');
@@ -525,15 +256,12 @@
                 } else {
                     showAlert(data.error || 'Failed to save settings', 'error');
                 }
-            } catch (error) {
-                console.error('Save error:', error);
+            } catch (e) {
                 showAlert('Failed to save settings', 'error');
             }
         }
 
-        async function saveBookingOptions() {
-            // Don't spread currentSettings as it contains apiKey as boolean
-            // Instead, only send the specific fields we want to update
+        async function saveSyncOptions() {
             const settings = {
                 enabled: document.getElementById('enableToggle').checked,
                 meetingSlug: currentSettings.meetingSlug || null,
@@ -542,63 +270,40 @@
                 syncCalendar: document.getElementById('syncCalendar').checked,
                 saveLocal: document.getElementById('saveLocal').checked
             };
-            // Don't include apiKey - backend will preserve existing key
-
             try {
-                const response = await fetch('/api/client-settings/hubspot', {
+                const res = await fetch('/api/client-settings/hubspot', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                     body: JSON.stringify(settings)
                 });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    showAlert('Booking options saved!', 'success');
-                } else {
-                    showAlert(data.error || 'Failed to save', 'error');
-                }
-            } catch (error) {
-                showAlert('Failed to save booking options', 'error');
+                const data = await res.json();
+                showAlert(data.success ? 'Sync options saved!' : (data.error || 'Failed to save'), data.success ? 'success' : 'error');
+            } catch (e) {
+                showAlert('Failed to save sync options', 'error');
             }
         }
 
         async function testConnection() {
             showAlert('Testing connection...', 'info');
-
             try {
-                const response = await fetch('/api/client-settings/hubspot/test', {
+                const res = await fetch('/api/integrations/hubspot/test', {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                    headers: { 'Authorization': 'Bearer ' + token }
                 });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    showAlert('Connection successful! HubSpot is connected.', 'success');
-                } else {
-                    showAlert(data.error || 'Connection failed. Please check your credentials.', 'error');
-                }
-            } catch (error) {
+                const data = await res.json();
+                showAlert(data.success ? 'Connection successful! HubSpot is connected.' : (data.error || 'Connection failed.'), data.success ? 'success' : 'error');
+            } catch (e) {
                 showAlert('Connection test failed', 'error');
             }
         }
 
-        function updateStatus(settings) {
+        function updateStatus(s) {
             const badge = document.getElementById('status-badge');
-            // Check if enabled AND has API key (apiKey or apiKeySet indicates key exists)
-            const hasApiKey = settings.apiKey || settings.apiKeySet;
-            const isEnabled = settings.enabled;
-
-            if (isEnabled && hasApiKey) {
+            const hasKey = s.apiKeyMasked || s.accessToken;
+            if (s.enabled && hasKey) {
                 badge.className = 'status-badge status-connected';
                 badge.innerHTML = '<span>●</span><span>Connected</span>';
-            } else if (hasApiKey && !isEnabled) {
+            } else if (hasKey && !s.enabled) {
                 badge.className = 'status-badge status-disconnected';
                 badge.innerHTML = '<span>●</span><span>Disabled</span>';
             } else {
@@ -607,12 +312,10 @@
             }
         }
 
-        function showAlert(message, type) {
-            const container = document.getElementById('alert-container');
-            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
-            setTimeout(() => {
-                container.innerHTML = '';
-            }, 5000);
+        function showAlert(msg, type) {
+            const c = document.getElementById('alert-container');
+            c.innerHTML = '<div class="alert alert-' + type + '">' + msg + '</div>';
+            setTimeout(() => { c.innerHTML = ''; }, 5000);
         }
 
         loadSettings();
