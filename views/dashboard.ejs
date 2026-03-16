@@ -912,8 +912,16 @@
         }
 
         .calendar-event.ghl-sync {
-            background: #d1fae5;
-            border-left-color: #10b981;
+            background: #fef9c3;
+            border-left-color: #eab308;
+        }
+        .calendar-event.zoho-sync {
+            background: #dbeafe;
+            border-left-color: #2563eb;
+        }
+        .calendar-event.hubspot-sync {
+            background: #fee2e2;
+            border-left-color: #dc2626;
         }
 
         /* Calendar-specific colors for GHL busy slots */
@@ -1004,11 +1012,22 @@
         }
 
         .calendar-event.ghl-sync .event-title {
-            color: #065f46;
+            color: #854d0e;
         }
-
         .calendar-event.ghl-sync .event-time {
-            color: #10b981;
+            color: #a16207;
+        }
+        .calendar-event.zoho-sync .event-title {
+            color: #1e40af;
+        }
+        .calendar-event.zoho-sync .event-time {
+            color: #2563eb;
+        }
+        .calendar-event.hubspot-sync .event-title {
+            color: #991b1b;
+        }
+        .calendar-event.hubspot-sync .event-time {
+            color: #dc2626;
         }
 
         /* Hyperbaric busy slot text colors (Orange) */
@@ -2909,6 +2928,18 @@
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="22" height="22" style="color: #4F46E5;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
                 Pending Follow-ups
             </h2>
+            <!-- Lead Tracker (moved here from Calendar/Messages area) -->
+            <div class="lead-tracker" id="leadTracker" style="display:none;">
+                <div id="leadTrackerContent">
+                    <div class="lead-loading">
+                        <div class="spinner"></div>
+                        <div>Loading today's leads...</div>
+                    </div>
+                </div>
+                <div class="lead-tracker-footer" id="leadTrackerFooter" style="display:none;">
+                    <a id="leadReportLink" href="#" target="_blank">View Full Report &rarr;</a>
+                </div>
+            </div>
             <div id="followupContent">
                 <div class="lead-loading" style="padding:40px;text-align:center;color:#6b7280;">
                     <div class="spinner" style="width:24px;height:24px;border:3px solid #e5e7eb;border-top-color:#4F46E5;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 8px;"></div>
@@ -2920,19 +2951,6 @@
 
     <!-- CRM Content Views (hidden by default, shown when sidebar nav clicked) -->
     <div id="crmContentArea" style="display:none;">
-
-    <!-- Lead Tracker -->
-    <div class="lead-tracker" id="leadTracker" style="display:none;">
-        <div id="leadTrackerContent">
-            <div class="lead-loading">
-                <div class="spinner"></div>
-                <div>Loading today's leads...</div>
-            </div>
-        </div>
-        <div class="lead-tracker-footer" id="leadTrackerFooter" style="display:none;">
-            <a id="leadReportLink" href="#" target="_blank">View Full Report &rarr;</a>
-        </div>
-    </div>
 
     <!-- Quick Actions (hidden on desktop, shown on mobile fallback) -->
     <div class="quick-actions" style="display:none;">
@@ -3076,6 +3094,14 @@
                             <option value="lqwsBWMJip0wx6NGLeaG">Hyperbaric Oxygen Therapy</option>
                             <option value="mV3NGEcqoXayzHtIEE97">Localized Cryotherapy</option>
                         </select>
+                    </div>
+                    <!-- Calendar Color Legend -->
+                    <div style="display:flex;gap:16px;padding:8px 12px;font-size:11px;color:#6b7280;flex-wrap:wrap;border-bottom:1px solid #e5e7eb;">
+                        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#dbeafe;border-left:3px solid #3b82f6;"></span> Voice AI</span>
+                        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#fef9c3;border-left:3px solid #eab308;"></span> GHL</span>
+                        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#dbeafe;border-left:3px solid #2563eb;"></span> Zoho</span>
+                        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#fee2e2;border-left:3px solid #dc2626;"></span> HubSpot</span>
+                        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#ede9fe;border-left:3px solid #7c3aed;"></span> Google Cal</span>
                     </div>
                     <div class="calendar-header" id="calendarHeader">
                         <!-- Will be populated by JavaScript -->
@@ -6012,8 +6038,15 @@
                             eventClass += ' hyperbaric-busy';
                         }
                     } else if (source === 'ghl_sync') {
+                        // GHL appointments = YELLOW
                         eventClass += ' ghl-sync';
-                    } else if (source === 'voice_booking' || source === 'rachel_voice_ai') {
+                    } else if (source === 'hubspot_sync' || source === 'whatsapp_hubspot') {
+                        // HubSpot appointments = RED
+                        eventClass += ' hubspot-sync';
+                    } else if (apt.zoho_event_id || source === 'zoho_sync') {
+                        // Zoho appointments = BLUE
+                        eventClass += ' zoho-sync';
+                    } else if (source === 'voice_booking' || source === 'voice_booking_spanish' || source === 'rachel_voice_ai') {
                         // AI Voice Booking - Always BLUE
                         eventClass += ' voice-booking';
                     } else {
