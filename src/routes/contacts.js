@@ -139,6 +139,49 @@ router.post('/', async (req, res) => {
   }
 });
 
+// ─── Export (must be before /:id) ─────────────────────────────
+router.get('/export', async (req, res) => {
+  try {
+    const clientId = parseInt(req.query.client_id);
+    if (!clientId) return res.status(400).json({ success: false, error: 'client_id required' });
+    const contacts = await sequelize.query(
+      'SELECT first_name, last_name, phone, email, status, source, lifecycle_stage, lead_score, company, notes, tags, created_at FROM contacts WHERE client_id = :clientId ORDER BY created_at DESC',
+      { replacements: { clientId }, type: QueryTypes.SELECT }
+    );
+    const headers = 'first_name,last_name,phone,email,status,source,lifecycle_stage,lead_score,company,notes,tags,created_at';
+    const rows = contacts.map(c =>
+      [c.first_name, c.last_name, c.phone, c.email, c.status, c.source, c.lifecycle_stage, c.lead_score, c.company, (c.notes||'').replace(/,/g, ';'), JSON.stringify(c.tags||[]), c.created_at].map(v => `"${(v||'').toString().replace(/"/g, '""')}"`).join(',')
+    );
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename=contacts_${clientId}_${new Date().toISOString().split('T')[0]}.csv`);
+    res.send(headers + '\n' + rows.join('\n'));
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── Import (must be before /:id) ────────────────────────────
+router.post('/import', async (req, res) => {
+  try {
+    const { client_id, contacts: importRows } = req.body;
+    if (!client_id || !importRows || !Array.isArray(importRows)) return res.status(400).json({ success: false, error: 'client_id and contacts array required' });
+    let created = 0, skipped = 0, errors = 0;
+    for (const row of importRows) {
+      try {
+        const phone = (row.phone || '').replace(/[^\d+]/g, '');
+        if (!phone) { skipped++; continue; }
+        const [existing] = await sequelize.query('SELECT id FROM contacts WHERE client_id = :cid AND phone = :phone LIMIT 1', { replacements: { cid: client_id, phone }, type: QueryTypes.SELECT });
+        if (existing) { skipped++; continue; }
+        await sequelize.query(
+          `INSERT INTO contacts (client_id, first_name, last_name, phone, email, source, status, tags, lifecycle_stage, company, notes, created_at, updated_at)
+           VALUES (:cid, :fn, :ln, :phone, :email, :src, 'active', :tags, 'lead', :company, :notes, NOW(), NOW())`,
+          { replacements: { cid: client_id, fn: row.first_name||'', ln: row.last_name||'', phone, email: row.email||null, src: row.source||'import', tags: JSON.stringify(row.tags||[]), company: row.company||null, notes: row.notes||null } }
+        );
+        created++;
+      } catch (e) { errors++; }
+    }
+    res.json({ success: true, created, skipped, errors, total: importRows.length });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 // Get contact by ID
 router.get('/:id', async (req, res) => {
   try {
@@ -461,9 +504,8 @@ router.post('/:id/recalculate-score', async (req, res) => {
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
-// ─── Export Contacts (CSV) ───────────────────────────────────
-router.get('/export', async (req, res) => {
-  try {
+module.exports = router;
+/* END OF FILE — export/import routes defined above /:id */
     const clientId = parseInt(req.query.client_id);
     if (!clientId) return res.status(400).json({ success: false, error: 'client_id required' });
     const contacts = await sequelize.query(
