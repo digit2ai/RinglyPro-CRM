@@ -373,6 +373,12 @@ async function startServer() {
             created_at TIMESTAMP DEFAULT NOW()
           )`, 'scheduled_actions migration');
           await queryWithTimeout('CREATE INDEX IF NOT EXISTS idx_scheduled_pending ON scheduled_actions(scheduled_for, status)', 'scheduled idx');
+          await queryWithTimeout("ALTER TABLE scheduled_actions ADD COLUMN IF NOT EXISTS scheduled_at TIMESTAMPTZ", 'scheduled_at col');
+          await queryWithTimeout("ALTER TABLE scheduled_actions ADD COLUMN IF NOT EXISTS recipient_phone VARCHAR(30)", 'recipient_phone col');
+          await queryWithTimeout("ALTER TABLE scheduled_actions ADD COLUMN IF NOT EXISTS recipient_name VARCHAR(255)", 'recipient_name col');
+          await queryWithTimeout("ALTER TABLE scheduled_actions ADD COLUMN IF NOT EXISTS template_id INTEGER", 'template_id col');
+          await queryWithTimeout("ALTER TABLE scheduled_actions ADD COLUMN IF NOT EXISTS twilio_sid VARCHAR(255)", 'twilio_sid col');
+          await queryWithTimeout("ALTER TABLE scheduled_actions ADD COLUMN IF NOT EXISTS error_message TEXT", 'error_message col');
           console.log('✅ scheduled_actions table ready');
         } catch (e) { console.log('⚠️ scheduled_actions migration skipped:', e.message); }
 

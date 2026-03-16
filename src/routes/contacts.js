@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 
 // Import Contact model from models
-const { Contact } = require('../models');
+const { Contact, sequelize } = require('../models');
+const { QueryTypes } = require('sequelize');
 const { normalizePhoneFromSpeech } = require('../utils/phoneNormalizer');
 
 // Get all contacts
