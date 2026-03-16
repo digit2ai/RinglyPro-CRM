@@ -27,9 +27,11 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: #f3f4f6;
+            background: #0D1117;
             color: #111827;
             line-height: 1.5;
+            overflow: hidden;
+            height: 100vh;
         }
 
         /* Low Balance Alert Banner */
@@ -2578,7 +2580,8 @@
         .dashboard-grid {
             display: grid;
             grid-template-columns: 250px 1fr;
-            min-height: 100vh;
+            height: 100vh;
+            overflow: hidden;
         }
 
         /* ─── Sidebar (Left Pane) ─── */
@@ -2588,8 +2591,6 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
-            position: sticky;
-            top: 0;
             overflow-y: auto;
             transition: transform 0.3s ease, width 0.3s ease;
             z-index: 50;
@@ -2710,13 +2711,13 @@
         /* ─── Main Content (Right Pane) ─── */
         .dashboard-main {
             overflow-y: auto;
-            max-height: 100vh;
+            height: 100vh;
             background: #f3f4f6;
         }
         /* Neural iframe view in main pane */
         .neural-view {
             width: 100%;
-            height: 100vh;
+            height: 100%;
             border: none;
             display: block;
             background: #07090f;
@@ -7959,7 +7960,6 @@
         // Main Settings Modal Functions
         async function openSettings() {
             document.getElementById('calendarModal').classList.add('active');
-            await loadCRMSettings();
         }
 
         function closeSettings() {
