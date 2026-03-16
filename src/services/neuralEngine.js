@@ -427,6 +427,68 @@ class NeuralEngine {
     };
   }
 
+  // ─── 11. PIPELINE HEALTH ANALYZER ──────────────────────────
+  async analyzePipelineHealth(clientId) {
+    const [stats] = await this.sequelize.query(
+      `SELECT
+         COUNT(*) FILTER (WHERE stage NOT IN ('closed_won','closed_lost')) AS open_deals,
+         COALESCE(SUM(amount) FILTER (WHERE stage NOT IN ('closed_won','closed_lost')), 0) AS pipeline_value,
+         COUNT(*) FILTER (WHERE stage NOT IN ('closed_won','closed_lost') AND updated_at < NOW() - INTERVAL '7 days') AS stale_deals,
+         COUNT(*) FILTER (WHERE stage = 'closed_won') AS won,
+         COUNT(*) FILTER (WHERE stage = 'closed_lost') AS lost,
+         COALESCE(SUM(amount) FILTER (WHERE stage = 'closed_won'), 0) AS won_revenue
+       FROM deals WHERE client_id = :clientId`,
+      { replacements: { clientId }, type: QueryTypes.SELECT }
+    );
+
+    const open = parseInt(stats.open_deals) || 0;
+    const stale = parseInt(stats.stale_deals) || 0;
+    const won = parseInt(stats.won) || 0;
+    const lost = parseInt(stats.lost) || 0;
+
+    if (open + won + lost < 2) return null;
+
+    if (stale > 0) {
+      return {
+        category: 'revenue_forecast',
+        title: `${stale} Deals Stale for 7+ Days`,
+        summary: `${stale} open deals haven't had a stage change in over a week. Stale deals are ${lost > 0 ? Math.round(lost / (won + lost) * 100) : 50}% more likely to be lost. Total pipeline at risk: $${Number(stats.pipeline_value).toLocaleString()}.`,
+        evidence: { openDeals: open, staleDealCount: stale, pipelineValue: parseFloat(stats.pipeline_value), wonDeals: won, lostDeals: lost },
+        impact: stale > 3 ? 'critical' : stale > 1 ? 'high' : 'medium',
+        impactEstimate: `${stale} stale deals — $${Number(stats.pipeline_value).toLocaleString()} pipeline`,
+        recommendedAction: 'Review stale deals and either advance them with a follow-up action or close them as lost to keep your pipeline accurate.'
+      };
+    }
+
+    return null;
+  }
+
+  // ─── 12. TASK COMPLETION ANALYZER ─────────────────────────
+  async analyzeTaskCompletion(clientId) {
+    const [stats] = await this.sequelize.query(
+      `SELECT
+         COUNT(*) AS total,
+         COUNT(*) FILTER (WHERE status = 'completed') AS completed,
+         COUNT(*) FILTER (WHERE status IN ('pending','in_progress') AND due_date < CURRENT_DATE) AS overdue
+       FROM tasks WHERE client_id = :clientId AND created_at > NOW() - INTERVAL '30 days'`,
+      { replacements: { clientId }, type: QueryTypes.SELECT }
+    );
+
+    const total = parseInt(stats.total) || 0;
+    const overdue = parseInt(stats.overdue) || 0;
+    if (total < 3 || overdue === 0) return null;
+
+    return {
+      category: 'lead_response',
+      title: `${overdue} Overdue Tasks Need Attention`,
+      summary: `You have ${overdue} tasks past their due date. Overdue follow-ups reduce conversion rates and signal lost opportunities.`,
+      evidence: { totalTasks: total, completedTasks: parseInt(stats.completed), overdueTasks: overdue },
+      impact: overdue > 5 ? 'critical' : overdue > 2 ? 'high' : 'medium',
+      impactEstimate: `${overdue} overdue tasks`,
+      recommendedAction: 'Complete or reschedule overdue tasks immediately. Focus on tasks linked to open deals first.'
+    };
+  }
+
   // ─── FULL ANALYSIS PIPELINE ─────────────────────────────────
   async runFullAnalysis(clientId) {
     const analysisDate = this.today();
@@ -440,7 +502,9 @@ class NeuralEngine {
       () => this.analyzeOutboundCampaigns(clientId),
       () => this.analyzeNoShows(clientId),
       () => this.analyzeRevenueForecast(clientId),
-      () => this.analyzeAfterHoursCalls(clientId)
+      () => this.analyzeAfterHoursCalls(clientId),
+      () => this.analyzePipelineHealth(clientId),
+      () => this.analyzeTaskCompletion(clientId)
     ];
 
     const results = await Promise.allSettled(analyzers.map(fn => fn()));

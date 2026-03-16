@@ -457,6 +457,25 @@ try {
     console.log('⚠️ Neural routes not available:', error.message);
 }
 
+// CRM Expansion routes
+try {
+    const dealsRoutes = require('./routes/deals');
+    app.use('/api/deals', dealsRoutes);
+    console.log('📊 Deals/Pipeline routes mounted at /api/deals');
+} catch (error) { console.log('⚠️ Deals routes not available:', error.message); }
+
+try {
+    const tasksRoutes = require('./routes/tasks');
+    app.use('/api/tasks', tasksRoutes);
+    console.log('✅ Tasks routes mounted at /api/tasks');
+} catch (error) { console.log('⚠️ Tasks routes not available:', error.message); }
+
+try {
+    const activitiesRoutes = require('./routes/activities');
+    app.use('/api/activities', activitiesRoutes);
+    console.log('📋 Activities routes mounted at /api/activities');
+} catch (error) { console.log('⚠️ Activities routes not available:', error.message); }
+
 // Client Settings routes (voicemail messages, etc.)
 const clientSettingsRoutes = require('./routes/client-settings');
 app.use('/api/client-settings', clientSettingsRoutes);

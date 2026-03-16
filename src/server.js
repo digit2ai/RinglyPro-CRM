@@ -249,6 +249,188 @@ async function startServer() {
           console.log('⚠️ treatment_execution_log migration skipped:', error.message);
         }
 
+        // ═══ CRM EXPANSION MIGRATIONS ═══
+
+        // DEALS TABLE
+        console.log('🔄 Running CRM deals migration...');
+        try {
+          await queryWithTimeout(`CREATE TABLE IF NOT EXISTS deals (
+            id SERIAL PRIMARY KEY,
+            client_id INTEGER NOT NULL,
+            contact_id INTEGER,
+            title VARCHAR(255) NOT NULL,
+            stage VARCHAR(50) NOT NULL DEFAULT 'new_lead',
+            amount DECIMAL(12,2) DEFAULT 0,
+            currency VARCHAR(3) DEFAULT 'USD',
+            probability INTEGER DEFAULT 0,
+            expected_close_date DATE,
+            actual_close_date DATE,
+            lost_reason VARCHAR(255),
+            source VARCHAR(50),
+            notes TEXT,
+            assigned_to VARCHAR(255),
+            tags JSONB DEFAULT '[]',
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+          )`, 'deals migration');
+          await queryWithTimeout('CREATE INDEX IF NOT EXISTS idx_deals_client ON deals(client_id)', 'deals idx1');
+          await queryWithTimeout('CREATE INDEX IF NOT EXISTS idx_deals_stage ON deals(client_id, stage)', 'deals idx2');
+          await queryWithTimeout('CREATE INDEX IF NOT EXISTS idx_deals_contact ON deals(contact_id)', 'deals idx3');
+          console.log('✅ deals table ready');
+        } catch (e) { console.log('⚠️ deals migration skipped:', e.message); }
+
+        // TASKS TABLE
+        try {
+          await queryWithTimeout(`CREATE TABLE IF NOT EXISTS tasks (
+            id SERIAL PRIMARY KEY,
+            client_id INTEGER NOT NULL,
+            contact_id INTEGER,
+            deal_id INTEGER,
+            title VARCHAR(255) NOT NULL,
+            description TEXT,
+            task_type VARCHAR(30) DEFAULT 'follow_up',
+            priority VARCHAR(10) DEFAULT 'medium',
+            status VARCHAR(20) DEFAULT 'pending',
+            due_date DATE,
+            due_time TIME,
+            completed_at TIMESTAMP,
+            reminder_at TIMESTAMP,
+            source VARCHAR(30) DEFAULT 'manual',
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+          )`, 'tasks migration');
+          await queryWithTimeout('CREATE INDEX IF NOT EXISTS idx_tasks_client ON tasks(client_id)', 'tasks idx1');
+          await queryWithTimeout('CREATE INDEX IF NOT EXISTS idx_tasks_due ON tasks(client_id, due_date, status)', 'tasks idx2');
+          await queryWithTimeout('CREATE INDEX IF NOT EXISTS idx_tasks_contact ON tasks(contact_id)', 'tasks idx3');
+          console.log('✅ tasks table ready');
+        } catch (e) { console.log('⚠️ tasks migration skipped:', e.message); }
+
+        // ACTIVITIES TABLE
+        try {
+          await queryWithTimeout(`CREATE TABLE IF NOT EXISTS activities (
+            id SERIAL PRIMARY KEY,
+            client_id INTEGER NOT NULL,
+            contact_id INTEGER,
+            deal_id INTEGER,
+            activity_type VARCHAR(30) NOT NULL,
+            title VARCHAR(255),
+            description TEXT,
+            metadata JSONB DEFAULT '{}',
+            created_at TIMESTAMP DEFAULT NOW()
+          )`, 'activities migration');
+          await queryWithTimeout('CREATE INDEX IF NOT EXISTS idx_activities_client ON activities(client_id)', 'activities idx1');
+          await queryWithTimeout('CREATE INDEX IF NOT EXISTS idx_activities_contact ON activities(contact_id, created_at DESC)', 'activities idx2');
+          await queryWithTimeout('CREATE INDEX IF NOT EXISTS idx_activities_deal ON activities(deal_id, created_at DESC)', 'activities idx3');
+          console.log('✅ activities table ready');
+        } catch (e) { console.log('⚠️ activities migration skipped:', e.message); }
+
+        // CONTACT NOTES TABLE
+        try {
+          await queryWithTimeout(`CREATE TABLE IF NOT EXISTS contact_notes (
+            id SERIAL PRIMARY KEY,
+            client_id INTEGER NOT NULL,
+            contact_id INTEGER NOT NULL,
+            note TEXT NOT NULL,
+            note_type VARCHAR(20) DEFAULT 'general',
+            pinned BOOLEAN DEFAULT false,
+            created_at TIMESTAMP DEFAULT NOW()
+          )`, 'contact_notes migration');
+          await queryWithTimeout('CREATE INDEX IF NOT EXISTS idx_notes_contact ON contact_notes(contact_id, created_at DESC)', 'notes idx');
+          console.log('✅ contact_notes table ready');
+        } catch (e) { console.log('⚠️ contact_notes migration skipped:', e.message); }
+
+        // SMS TEMPLATES TABLE (P2)
+        try {
+          await queryWithTimeout(`CREATE TABLE IF NOT EXISTS sms_templates (
+            id SERIAL PRIMARY KEY,
+            client_id INTEGER NOT NULL,
+            name VARCHAR(100) NOT NULL,
+            body TEXT NOT NULL,
+            category VARCHAR(30) DEFAULT 'general',
+            variables JSONB DEFAULT '[]',
+            is_default BOOLEAN DEFAULT false,
+            use_count INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT NOW()
+          )`, 'sms_templates migration');
+          console.log('✅ sms_templates table ready');
+        } catch (e) { console.log('⚠️ sms_templates migration skipped:', e.message); }
+
+        // SCHEDULED ACTIONS TABLE (P2)
+        try {
+          await queryWithTimeout(`CREATE TABLE IF NOT EXISTS scheduled_actions (
+            id SERIAL PRIMARY KEY,
+            client_id INTEGER NOT NULL,
+            action_type VARCHAR(30) NOT NULL,
+            target_phone VARCHAR(30),
+            target_email VARCHAR(255),
+            message_body TEXT,
+            scheduled_for TIMESTAMP NOT NULL,
+            reference_type VARCHAR(30),
+            reference_id INTEGER,
+            status VARCHAR(20) DEFAULT 'pending',
+            sent_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT NOW()
+          )`, 'scheduled_actions migration');
+          await queryWithTimeout('CREATE INDEX IF NOT EXISTS idx_scheduled_pending ON scheduled_actions(scheduled_for, status)', 'scheduled idx');
+          console.log('✅ scheduled_actions table ready');
+        } catch (e) { console.log('⚠️ scheduled_actions migration skipped:', e.message); }
+
+        // CUSTOM FIELDS TABLES (P2)
+        try {
+          await queryWithTimeout(`CREATE TABLE IF NOT EXISTS custom_fields (
+            id SERIAL PRIMARY KEY,
+            client_id INTEGER NOT NULL,
+            field_name VARCHAR(100) NOT NULL,
+            field_type VARCHAR(20) NOT NULL,
+            options JSONB,
+            required BOOLEAN DEFAULT false,
+            display_order INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE(client_id, field_name)
+          )`, 'custom_fields migration');
+          await queryWithTimeout(`CREATE TABLE IF NOT EXISTS custom_field_values (
+            id SERIAL PRIMARY KEY,
+            custom_field_id INTEGER,
+            contact_id INTEGER NOT NULL,
+            value TEXT,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE(custom_field_id, contact_id)
+          )`, 'custom_field_values migration');
+          console.log('✅ custom_fields tables ready');
+        } catch (e) { console.log('⚠️ custom_fields migration skipped:', e.message); }
+
+        // EMAIL EVENTS TABLE (P2)
+        try {
+          await queryWithTimeout(`CREATE TABLE IF NOT EXISTS email_events (
+            id SERIAL PRIMARY KEY,
+            client_id INTEGER,
+            message_id VARCHAR(255),
+            event_type VARCHAR(30),
+            email VARCHAR(255),
+            timestamp TIMESTAMP,
+            metadata JSONB DEFAULT '{}',
+            created_at TIMESTAMP DEFAULT NOW()
+          )`, 'email_events migration');
+          console.log('✅ email_events table ready');
+        } catch (e) { console.log('⚠️ email_events migration skipped:', e.message); }
+
+        // CONTACTS TABLE EXTENSIONS
+        try {
+          await queryWithTimeout("ALTER TABLE contacts ADD COLUMN IF NOT EXISTS tags JSONB DEFAULT '[]'", 'contacts tags');
+          await queryWithTimeout("ALTER TABLE contacts ADD COLUMN IF NOT EXISTS lifecycle_stage VARCHAR(30) DEFAULT 'lead'", 'contacts lifecycle');
+          await queryWithTimeout("ALTER TABLE contacts ADD COLUMN IF NOT EXISTS lead_score INTEGER DEFAULT 0", 'contacts score');
+          await queryWithTimeout("ALTER TABLE contacts ADD COLUMN IF NOT EXISTS company VARCHAR(255)", 'contacts company');
+          await queryWithTimeout("ALTER TABLE contacts ADD COLUMN IF NOT EXISTS job_title VARCHAR(255)", 'contacts title');
+          console.log('✅ contacts extensions ready');
+        } catch (e) { console.log('⚠️ contacts extensions skipped:', e.message); }
+
+        // APPOINTMENTS EXTENSIONS (P3 - recurring)
+        try {
+          await queryWithTimeout("ALTER TABLE appointments ADD COLUMN IF NOT EXISTS recurrence_rule JSONB", 'appointments recurrence');
+          console.log('✅ appointments extensions ready');
+        } catch (e) { console.log('⚠️ appointments extensions skipped:', e.message); }
+
         console.log('✅ All migrations complete, ready to start server');
       } else {
         console.log('⚠️ No DATABASE_URL provided, running without database');

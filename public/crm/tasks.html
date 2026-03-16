@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tasks — RinglyPro CRM</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#07090f;color:#e2e8f0;line-height:1.6;-webkit-font-smoothing:antialiased}
+.header{position:sticky;top:0;z-index:100;background:rgba(7,9,15,.85);backdrop-filter:blur(16px);border-bottom:1px solid rgba(139,92,246,.15);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.header h1{font-size:18px;font-weight:700}
+.header h1 span{background:linear-gradient(90deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stats-bar{display:flex;gap:16px;flex-wrap:wrap}
+.stat{text-align:center;padding:4px 12px;border-radius:8px;background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.12)}
+.stat-val{font-size:18px;font-weight:700;color:#c4b5fd}
+.stat-val.overdue{color:#f87171}
+.stat-lbl{font-size:10px;color:#64748b;text-transform:uppercase}
+.btn{padding:8px 16px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-primary{background:linear-gradient(135deg,#8b5cf6,#06b6d4);color:#fff}
+.btn-primary:hover{opacity:.9}
+.tabs{display:flex;gap:4px;padding:12px 24px;background:rgba(139,92,246,.05)}
+.tab{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;color:#94a3b8;cursor:pointer;border:none;background:none;font-family:inherit;transition:all .2s}
+.tab:hover{color:#e2e8f0;background:rgba(139,92,246,.1)}
+.tab.active{background:rgba(139,92,246,.2);color:#c4b5fd}
+.content{padding:16px 24px}
+.task-list{display:flex;flex-direction:column;gap:8px}
+.task-card{background:rgba(15,23,42,.6);border:1px solid rgba(139,92,246,.12);border-radius:10px;padding:14px 16px;display:flex;align-items:flex-start;gap:12px;transition:all .2s}
+.task-card:hover{border-color:rgba(139,92,246,.3)}
+.task-card.completed{opacity:.5}
+.task-card.overdue{border-left:3px solid #f87171}
+.task-check{width:20px;height:20px;border:2px solid rgba(139,92,246,.3);border-radius:6px;cursor:pointer;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.task-check:hover{border-color:#8b5cf6;background:rgba(139,92,246,.1)}
+.task-check.done{background:#8b5cf6;border-color:#8b5cf6;color:#fff;font-size:12px}
+.task-body{flex:1;min-width:0}
+.task-title{font-size:14px;font-weight:600;color:#e2e8f0}
+.task-meta{font-size:11px;color:#64748b;margin-top:4px;display:flex;gap:8px;flex-wrap:wrap}
+.priority-badge{font-size:10px;padding:1px 6px;border-radius:4px;font-weight:600;text-transform:uppercase}
+.priority-badge.urgent{background:rgba(239,68,68,.15);color:#f87171}
+.priority-badge.high{background:rgba(251,191,36,.15);color:#fbbf24}
+.priority-badge.medium{background:rgba(139,92,246,.15);color:#c4b5fd}
+.priority-badge.low{background:rgba(100,116,139,.15);color:#94a3b8}
+.type-badge{font-size:10px;padding:1px 6px;border-radius:4px;background:rgba(6,182,212,.1);color:#67e8f9}
+.task-due{font-size:11px;color:#64748b}
+.task-due.overdue{color:#f87171;font-weight:600}
+.empty{text-align:center;padding:60px 20px;color:#64748b}
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(7,9,15,.85);z-index:200;align-items:center;justify-content:center;padding:24px}
+.modal-overlay.visible{display:flex}
+.modal{background:#0f1729;border:1px solid rgba(139,92,246,.2);border-radius:16px;max-width:480px;width:100%;padding:24px}
+.modal h2{font-size:18px;font-weight:700;margin-bottom:16px;color:#c4b5fd}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:12px;color:#94a3b8;font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.3px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 12px;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.25);border-radius:8px;color:#e2e8f0;font-size:14px;font-family:inherit}
+.form-group input:focus,.form-group select:focus{outline:none;border-color:#8b5cf6}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1><span>Tasks</span></h1>
+  <div class="stats-bar" id="statsBar"></div>
+  <button class="btn btn-primary" onclick="openAddTask()">+ New Task</button>
+</div>
+<div class="tabs" id="tabs">
+  <button class="tab active" data-tab="today" onclick="switchTab('today',this)">Today</button>
+  <button class="tab" data-tab="upcoming" onclick="switchTab('upcoming',this)">Upcoming</button>
+  <button class="tab" data-tab="overdue" onclick="switchTab('overdue',this)">Overdue</button>
+  <button class="tab" data-tab="completed" onclick="switchTab('completed',this)">Completed</button>
+  <button class="tab" data-tab="all" onclick="switchTab('all',this)">All</button>
+</div>
+<div class="content">
+  <div class="task-list" id="taskList"></div>
+</div>
+
+<!-- Add Task Modal -->
+<div class="modal-overlay" id="taskModal">
+  <div class="modal">
+    <h2>New Task</h2>
+    <form id="taskForm" onsubmit="saveTask(event)">
+      <div class="form-group">
+        <label>Title</label>
+        <input type="text" id="taskTitle" required placeholder="e.g., Follow up with John">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Type</label>
+          <select id="taskType">
+            <option value="follow_up">Follow Up</option>
+            <option value="call_back">Call Back</option>
+            <option value="send_proposal">Send Proposal</option>
+            <option value="send_email">Send Email</option>
+            <option value="check_in">Check In</option>
+            <option value="meeting">Meeting</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Priority</label>
+          <select id="taskPriority">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+            <option value="urgent">Urgent</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Due Date</label>
+          <input type="date" id="taskDueDate">
+        </div>
+        <div class="form-group">
+          <label>Due Time</label>
+          <input type="time" id="taskDueTime">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea id="taskDesc" rows="2" placeholder="Optional..."></textarea>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button type="submit" class="btn btn-primary" style="flex:1">Save Task</button>
+        <button type="button" class="btn" style="flex:1;background:rgba(139,92,246,.15);color:#c4b5fd" onclick="closeModal()">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+let allTasks = [];
+let currentTab = 'today';
+
+function getClientId() {
+  try { const t=localStorage.getItem('token'); if(t){const p=JSON.parse(atob(t.split('.')[1]));return p.clientId||p.client_id;} } catch(e){}
+  return new URLSearchParams(window.location.search).get('client_id');
+}
+function getAuth() {
+  const t=localStorage.getItem('token');
+  return t ? {'Authorization':'Bearer '+t} : {'x-api-key':'ringlypro-quick-admin-2024'};
+}
+
+async function loadTasks() {
+  const cid = getClientId(); if(!cid) return;
+  try {
+    const [tasksRes, statsRes] = await Promise.all([
+      fetch(`/api/tasks?client_id=${cid}&limit=200`, {headers:getAuth()}),
+      fetch(`/api/tasks/stats?client_id=${cid}`, {headers:getAuth()})
+    ]);
+    const td = await tasksRes.json();
+    const sd = await statsRes.json();
+    allTasks = td.tasks || [];
+    renderStats(sd.stats || {});
+    renderTasks();
+  } catch(e) { console.error(e); }
+}
+
+function renderStats(s) {
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat"><div class="stat-val">${s.pending||0}</div><div class="stat-lbl">Pending</div></div>
+    <div class="stat"><div class="stat-val overdue">${s.overdue||0}</div><div class="stat-lbl">Overdue</div></div>
+    <div class="stat"><div class="stat-val">${s.due_today||0}</div><div class="stat-lbl">Due Today</div></div>
+    <div class="stat"><div class="stat-val">${s.completed||0}</div><div class="stat-lbl">Done</div></div>
+  `;
+}
+
+function switchTab(tab, el) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  if(el) el.classList.add('active');
+  renderTasks();
+}
+
+function renderTasks() {
+  const today = new Date().toISOString().split('T')[0];
+  let filtered = allTasks;
+  if (currentTab === 'today') filtered = allTasks.filter(t => t.status !== 'completed' && t.status !== 'cancelled' && (!t.due_date || t.due_date <= today));
+  else if (currentTab === 'upcoming') filtered = allTasks.filter(t => t.status !== 'completed' && t.status !== 'cancelled' && t.due_date > today);
+  else if (currentTab === 'overdue') filtered = allTasks.filter(t => t.status !== 'completed' && t.status !== 'cancelled' && t.due_date && t.due_date < today);
+  else if (currentTab === 'completed') filtered = allTasks.filter(t => t.status === 'completed');
+
+  const list = document.getElementById('taskList');
+  if (filtered.length === 0) { list.innerHTML = '<div class="empty">No tasks in this view</div>'; return; }
+
+  list.innerHTML = filtered.map(t => {
+    const isOverdue = t.due_date && t.due_date < today && t.status !== 'completed';
+    const isDone = t.status === 'completed';
+    const contactName = t.first_name ? `${t.first_name} ${t.last_name||''}` : '';
+    return `
+      <div class="task-card ${isDone?'completed':''} ${isOverdue?'overdue':''}">
+        <div class="task-check ${isDone?'done':''}" onclick="toggleComplete(${t.id},'${t.status}')">${isDone?'✓':''}</div>
+        <div class="task-body">
+          <div class="task-title">${esc(t.title)}</div>
+          <div class="task-meta">
+            <span class="priority-badge ${t.priority}">${t.priority}</span>
+            <span class="type-badge">${t.task_type.replace('_',' ')}</span>
+            ${contactName ? `<span>${esc(contactName)}</span>` : ''}
+            ${t.due_date ? `<span class="task-due ${isOverdue?'overdue':''}">${t.due_date}${t.due_time?' '+t.due_time.substring(0,5):''}</span>` : ''}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function toggleComplete(id, currentStatus) {
+  try {
+    if (currentStatus === 'completed') {
+      await fetch(`/api/tasks/${id}`, { method:'PUT', headers:{'Content-Type':'application/json',...getAuth()}, body:JSON.stringify({status:'pending'}) });
+    } else {
+      await fetch(`/api/tasks/${id}/complete`, { method:'PUT', headers:getAuth() });
+    }
+    loadTasks();
+  } catch(e) { console.error(e); }
+}
+
+function openAddTask() { document.getElementById('taskForm').reset(); document.getElementById('taskModal').classList.add('visible'); }
+function closeModal() { document.getElementById('taskModal').classList.remove('visible'); }
+
+async function saveTask(e) {
+  e.preventDefault();
+  const body = {
+    client_id: getClientId(),
+    title: document.getElementById('taskTitle').value,
+    task_type: document.getElementById('taskType').value,
+    priority: document.getElementById('taskPriority').value,
+    due_date: document.getElementById('taskDueDate').value || null,
+    due_time: document.getElementById('taskDueTime').value || null,
+    description: document.getElementById('taskDesc').value || null
+  };
+  try {
+    await fetch('/api/tasks', { method:'POST', headers:{'Content-Type':'application/json',...getAuth()}, body:JSON.stringify(body) });
+    closeModal();
+    loadTasks();
+  } catch(e) { alert('Error'); }
+}
+
+function esc(s){if(!s)return '';const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+document.getElementById('taskModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+loadTasks();
+</script>
+</body>
+</html>
