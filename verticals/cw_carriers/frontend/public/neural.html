@@ -342,7 +342,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 
   <!-- 1. BUSINESS HEALTH SCORE -->
   <section class="hero animate-in" id="heroSection">
-    <div class="hero-company">CW Carriers USA</div>
+    <div class="hero-company">Loading...</div>
     <div class="score-ring-wrap">
       <svg class="score-ring-svg" viewBox="0 0 180 180">
         <circle class="score-ring-bg" cx="90" cy="90" r="76"/>
@@ -380,133 +380,10 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 
 <script>
 // ═══════════════════════════════════════════════════════════════════════
-// NEURAL_DATA — Hardcoded mock data for CW Carriers USA
-// Replace the contents of this object with a fetch() call to
-// /api/neural/cw_carriers when the backend is ready.
+// NEURAL_DATA — Loaded from /api/neural/dashboard/:client_id
+// Falls back to a welcome state for new clients with no data yet
 // ═══════════════════════════════════════════════════════════════════════
-const NEURAL_DATA = {
-  healthScore: 58,
-  scoreLabel: 'Needs Attention',
-  revenueAtRisk: 47200,
-  recoveryPotential: 34800,
-  trend: { direction: 'down', points: 4, period: '30 days' },
-
-  panels: [
-    {
-      name: 'Call Health',
-      score: 72,
-      topFinding: 'Answer rate drops below 55% during peak Monday window',
-      trend: { direction: 'down', points: 3 },
-      source: 'Rachel / RinglyPro'
-    },
-    {
-      name: 'Pipeline Health',
-      score: 41,
-      topFinding: '17 quotes stalled 8+ days with zero follow-up',
-      trend: { direction: 'down', points: 8 },
-      source: 'HubSpot'
-    },
-    {
-      name: 'Lead Capture Rate',
-      score: 53,
-      topFinding: '34 freight inquiries never entered CRM',
-      trend: { direction: 'down', points: 5 },
-      source: 'Rachel + HubSpot'
-    },
-    {
-      name: 'Customer Retention',
-      score: 64,
-      topFinding: 'Top 3 accounts (71% revenue) inactive 6 weeks',
-      trend: { direction: 'down', points: 6 },
-      source: 'HubSpot Accounts'
-    },
-    {
-      name: 'Automation Coverage',
-      score: 38,
-      topFinding: 'Only 2 of 9 recommended workflows active',
-      trend: { direction: 'up', points: 2 },
-      source: 'System'
-    }
-  ],
-
-  findings: [
-    {
-      id: 'f1',
-      severity: 'CRITICAL',
-      title: '34 freight inquiries have no HubSpot record',
-      explanation: 'Callers who inquired about capacity were never captured as contacts. Revenue exposure estimated at $28,400/month based on average load value.',
-      dollarImpact: '$28,400/mo',
-      source: 'Rachel + HubSpot',
-      treatment: {
-        workflow: [
-          { type: 'trigger', text: 'When Rachel logs a new inbound call tagged "freight inquiry"' },
-          { type: 'condition', text: 'If no matching contact exists in HubSpot (match by phone number)' },
-          { type: 'action', text: 'Auto-create HubSpot contact with call details, assign to dispatcher on duty, create follow-up task due in 2 hours' }
-        ],
-        projection: 'Recovering even 40% of missed leads = ~$11,360/mo additional pipeline',
-        active: false
-      }
-    },
-    {
-      id: 'f2',
-      severity: 'CRITICAL',
-      title: '17 open quotes stalled with no follow-up activity',
-      explanation: 'Deals sitting at Quote Sent stage for 8+ days with no logged call, email, or task. Historical close rate drops 67% after 72 hours without contact.',
-      dollarImpact: '$19,800',
-      source: 'HubSpot Pipeline',
-      treatment: {
-        workflow: [
-          { type: 'trigger', text: 'When a deal reaches "Quote Sent" stage' },
-          { type: 'condition', text: 'If no activity logged within 48 hours of quote delivery' },
-          { type: 'action', text: 'Auto-create follow-up task for deal owner, send reminder email sequence, escalate to manager at 72 hours' }
-        ],
-        projection: 'Reducing stall rate by 50% could recover ~$9,900 in pipeline value',
-        active: false
-      }
-    },
-    {
-      id: 'f3',
-      severity: 'WARNING',
-      title: '62% of driver recruitment leads received only one outreach attempt',
-      explanation: 'Industry benchmark is 5-7 touches. Single-touch leads convert at 11% vs 34% for multi-touch sequences.',
-      dollarImpact: '$8,200/mo',
-      source: 'HubSpot + Rachel',
-      treatment: null
-    },
-    {
-      id: 'f4',
-      severity: 'WARNING',
-      title: 'Answer rate drops to 54% Monday before 9am — peak inquiry window',
-      explanation: 'Freight inquiry volume is highest Monday 7-9am. Over half of those callers reach voicemail and do not call back.',
-      dollarImpact: '$6,400/mo',
-      source: 'Rachel Call Logs',
-      treatment: null
-    },
-    {
-      id: 'f5',
-      severity: 'WARNING',
-      title: 'Top 3 accounts (71% of revenue) show no activity in 6 weeks',
-      explanation: 'No logged calls, emails, or tasks for your highest-value accounts. Churn risk elevated.',
-      dollarImpact: '$142,000 at risk',
-      source: 'HubSpot Accounts',
-      treatment: null
-    },
-    {
-      id: 'f6',
-      severity: 'OPPORTUNITY',
-      title: '11 closed-lost deals are re-engageable based on capacity timing',
-      explanation: 'These deals were lost due to capacity availability, not price. Current capacity profile makes them worth contacting this week.',
-      dollarImpact: '$31,200 potential',
-      source: 'HubSpot + Rachel',
-      treatment: null
-    }
-  ],
-
-  connections: [
-    { name: 'RinglyPro Rachel', status: 'connected', lastSync: '2 min ago' },
-    { name: 'HubSpot', status: 'connected', lastSync: '14 min ago' }
-  ]
-};
+let NEURAL_DATA = null;
 
 // ═══════════════════════════════════════════════════════════════════════
 // STATE
@@ -515,15 +392,119 @@ let currentFilter = 'all';
 let dismissedIds = new Set();
 
 // ═══════════════════════════════════════════════════════════════════════
-// INIT
+// API LOADER — Fetch live data for the logged-in client
 // ═══════════════════════════════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', () => {
+function getClientId() {
+  // 1. Try URL param
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('client_id')) return params.get('client_id');
+
+  // 2. Try JWT token from localStorage (main dashboard stores it)
+  const token = localStorage.getItem('token');
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (payload.clientId) return payload.clientId;
+      if (payload.client_id) return payload.client_id;
+    } catch (e) {}
+  }
+
+  // 3. Try sessionStorage (CW Carriers stores it there)
+  const cwToken = sessionStorage.getItem('cw_token');
+  if (cwToken) {
+    try {
+      const payload = JSON.parse(atob(cwToken.split('.')[1]));
+      if (payload.clientId) return payload.clientId;
+    } catch (e) {}
+  }
+
+  return null;
+}
+
+function getAuthHeader() {
+  const token = localStorage.getItem('token') || sessionStorage.getItem('cw_token');
+  if (token) return { 'Authorization': 'Bearer ' + token };
+  return { 'x-api-key': 'ringlypro-quick-admin-2024' };
+}
+
+async function loadNeuralData() {
+  const clientId = getClientId();
+
+  if (!clientId) {
+    // No client — show welcome state
+    NEURAL_DATA = getWelcomeData();
+    initDashboard();
+    return;
+  }
+
+  const dot = document.getElementById('statusDot');
+  dot.classList.add('syncing');
+
+  try {
+    const res = await fetch(`/api/neural/dashboard/${clientId}`, {
+      headers: getAuthHeader()
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      NEURAL_DATA = data;
+      // Update company name in hero
+      if (data.businessName) {
+        document.querySelector('.hero-company').textContent = data.businessName;
+      }
+    } else {
+      console.error('Neural API error:', data.error);
+      NEURAL_DATA = getWelcomeData();
+    }
+  } catch (e) {
+    console.error('Neural fetch error:', e);
+    NEURAL_DATA = getWelcomeData();
+  }
+
+  dot.classList.remove('syncing');
+  initDashboard();
+}
+
+function getWelcomeData() {
+  return {
+    healthScore: 50,
+    scoreLabel: 'Getting Started',
+    revenueAtRisk: 0,
+    recoveryPotential: 0,
+    trend: { direction: 'up', points: 0, period: '30 days' },
+    businessName: 'Your Business',
+    panels: [
+      { name: 'Call Health', score: 50, topFinding: 'Waiting for call data...', trend: { direction: 'flat', points: 0 }, source: 'Rachel / RinglyPro' },
+      { name: 'Pipeline Health', score: 50, topFinding: 'Connect a CRM to track pipeline', trend: { direction: 'flat', points: 0 }, source: 'CRM' },
+      { name: 'Lead Capture Rate', score: 50, topFinding: 'Score updates as leads come in', trend: { direction: 'flat', points: 0 }, source: 'Rachel + CRM' },
+      { name: 'Customer Retention', score: 60, topFinding: 'No appointment history yet', trend: { direction: 'flat', points: 0 }, source: 'Appointments' },
+      { name: 'Automation Coverage', score: 17, topFinding: 'Connect integrations to improve', trend: { direction: 'up', points: 0 }, source: 'System' }
+    ],
+    findings: [
+      { id: 'welcome', severity: 'OPPORTUNITY', title: 'Neural Intelligence is analyzing your business', explanation: 'As your call data and CRM activity grows, Neural will automatically surface findings, revenue opportunities, and recommended actions. Keep using RinglyPro and check back here.', dollarImpact: '', source: 'System', treatment: null }
+    ],
+    connections: [
+      { name: 'RinglyPro Rachel', status: 'disconnected', lastSync: null },
+      { name: 'CRM', status: 'disconnected', lastSync: null }
+    ]
+  };
+}
+
+function initDashboard() {
   renderHero();
   renderPanels();
   renderSidebar();
   renderFindings();
   renderConnections();
   animateScoreRing();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  // Load live data from API
+  loadNeuralData();
 
   // Close modal on overlay click
   document.getElementById('modalOverlay').addEventListener('click', (e) => {
@@ -557,7 +538,9 @@ function esc(s) {
 // ═══════════════════════════════════════════════════════════════════════
 function renderHero() {
   const d = NEURAL_DATA;
+  if (!d) return;
   const cls = scoreClass(d.healthScore);
+  document.querySelector('.hero-company').textContent = d.businessName || 'Your Business';
 
   document.getElementById('scoreValue').textContent = '0';
   document.getElementById('scoreLabel').innerHTML =
@@ -830,21 +813,19 @@ function renderConnections() {
 // SYNC HANDLER
 // ═══════════════════════════════════════════════════════════════════════
 function handleSync() {
-  const dot = document.getElementById('statusDot');
   const btn = document.getElementById('btnSync');
-  dot.classList.add('syncing');
   btn.textContent = 'Syncing...';
   btn.disabled = true;
 
-  // Simulate sync
-  setTimeout(() => {
-    dot.classList.remove('syncing');
+  // Re-fetch live data from API
+  loadNeuralData().then(() => {
     btn.textContent = 'Sync Now';
     btn.disabled = false;
-    // Update last sync times
-    NEURAL_DATA.connections.forEach(c => { if (c.status === 'connected') c.lastSync = 'Just now'; });
-    renderConnections();
-  }, 2000);
+    if (NEURAL_DATA && NEURAL_DATA.connections) {
+      NEURAL_DATA.connections.forEach(c => { if (c.status === 'connected') c.lastSync = 'Just now'; });
+      renderConnections();
+    }
+  });
 }
 </script>
 </body>
