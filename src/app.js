@@ -476,6 +476,20 @@ try {
     console.log('📋 Activities routes mounted at /api/activities');
 } catch (error) { console.log('⚠️ Activities routes not available:', error.message); }
 
+// P2: SMS Templates
+try {
+    const smsTemplatesRoutes = require('./routes/sms-templates');
+    app.use('/api/sms-templates', smsTemplatesRoutes);
+    console.log('📝 SMS Templates routes mounted at /api/sms-templates');
+} catch (error) { console.log('⚠️ SMS Templates routes not available:', error.message); }
+
+// P2: Scheduled Actions (appointment reminders)
+try {
+    const scheduledRoutes = require('./routes/scheduled-actions');
+    app.use('/api/scheduled-actions', scheduledRoutes);
+    console.log('⏰ Scheduled Actions routes mounted at /api/scheduled-actions');
+} catch (error) { console.log('⚠️ Scheduled Actions routes not available:', error.message); }
+
 // Client Settings routes (voicemail messages, etc.)
 const clientSettingsRoutes = require('./routes/client-settings');
 app.use('/api/client-settings', clientSettingsRoutes);

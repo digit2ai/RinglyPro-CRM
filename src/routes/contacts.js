@@ -333,4 +333,182 @@ router.patch('/:id/contact', async (req, res) => {
   }
 });
 
+// ─── Tags Management ─────────────────────────────────────────
+router.put('/:id/tags', async (req, res) => {
+  try {
+    const { tags } = req.body; // array of strings
+    if (!Array.isArray(tags)) return res.status(400).json({ success: false, error: 'tags must be array' });
+    await sequelize.query('UPDATE contacts SET tags = :tags WHERE id = :id', { replacements: { tags: JSON.stringify(tags), id: parseInt(req.params.id) } });
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── Lifecycle Stage ─────────────────────────────────────────
+router.put('/:id/lifecycle', async (req, res) => {
+  try {
+    const { lifecycle_stage } = req.body;
+    const valid = ['subscriber', 'lead', 'opportunity', 'customer', 'churned'];
+    if (!valid.includes(lifecycle_stage)) return res.status(400).json({ success: false, error: 'Invalid stage' });
+    await sequelize.query('UPDATE contacts SET lifecycle_stage = :stage WHERE id = :id', { replacements: { stage: lifecycle_stage, id: parseInt(req.params.id) } });
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── All Tags Used ───────────────────────────────────────────
+router.get('/tags/all', async (req, res) => {
+  try {
+    const clientId = parseInt(req.query.client_id);
+    if (!clientId) return res.status(400).json({ success: false, error: 'client_id required' });
+    const rows = await sequelize.query(
+      "SELECT DISTINCT jsonb_array_elements_text(tags) as tag FROM contacts WHERE client_id = :clientId AND tags != '[]'::jsonb ORDER BY tag",
+      { replacements: { clientId }, type: QueryTypes.SELECT }
+    );
+    res.json({ success: true, tags: rows.map(r => r.tag) });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── Contact Notes ───────────────────────────────────────────
+router.get('/:id/notes', async (req, res) => {
+  try {
+    const notes = await sequelize.query(
+      'SELECT * FROM contact_notes WHERE contact_id = :id ORDER BY pinned DESC, created_at DESC',
+      { replacements: { id: parseInt(req.params.id) }, type: QueryTypes.SELECT }
+    );
+    res.json({ success: true, notes });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+router.post('/:id/notes', async (req, res) => {
+  try {
+    const { note, note_type = 'general', client_id } = req.body;
+    if (!note) return res.status(400).json({ success: false, error: 'note required' });
+    const [created] = await sequelize.query(
+      `INSERT INTO contact_notes (client_id, contact_id, note, note_type, created_at)
+       VALUES (:clientId, :contactId, :note, :type, NOW()) RETURNING *`,
+      { replacements: { clientId: client_id || 0, contactId: parseInt(req.params.id), note, type: note_type }, type: QueryTypes.SELECT }
+    );
+    res.status(201).json({ success: true, note: created });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+router.put('/notes/:id/pin', async (req, res) => {
+  try {
+    await sequelize.query('UPDATE contact_notes SET pinned = NOT pinned WHERE id = :id', { replacements: { id: parseInt(req.params.id) } });
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+router.delete('/notes/:id', async (req, res) => {
+  try {
+    await sequelize.query('DELETE FROM contact_notes WHERE id = :id', { replacements: { id: parseInt(req.params.id) } });
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── Lead Score Recalculation ─────────────────────────────────
+router.post('/:id/recalculate-score', async (req, res) => {
+  try {
+    const contactId = parseInt(req.params.id);
+    const [contact] = await sequelize.query('SELECT * FROM contacts WHERE id = :id', { replacements: { id: contactId }, type: QueryTypes.SELECT });
+    if (!contact) return res.status(404).json({ success: false, error: 'Contact not found' });
+
+    let score = 0;
+    // +10 per answered inbound call >30s
+    const [calls] = await sequelize.query(
+      "SELECT COUNT(*) as cnt FROM calls WHERE contact_id = :id AND direction IN ('incoming','inbound') AND call_status = 'completed' AND duration > 30",
+      { replacements: { id: contactId }, type: QueryTypes.SELECT }
+    );
+    score += parseInt(calls.cnt) * 10;
+
+    // +5 per SMS received from contact
+    const [sms] = await sequelize.query(
+      "SELECT COUNT(*) as cnt FROM messages WHERE contact_id = :id AND direction = 'incoming'",
+      { replacements: { id: contactId }, type: QueryTypes.SELECT }
+    );
+    score += parseInt(sms.cnt) * 5;
+
+    // +15 per appointment booked
+    const [appts] = await sequelize.query(
+      "SELECT COUNT(*) as cnt FROM appointments WHERE contact_id = :id AND status NOT IN ('cancelled')",
+      { replacements: { id: contactId }, type: QueryTypes.SELECT }
+    );
+    score += parseInt(appts.cnt) * 15;
+
+    // -10 per no-show
+    const [noShows] = await sequelize.query(
+      "SELECT COUNT(*) as cnt FROM appointments WHERE contact_id = :id AND status = 'no-show'",
+      { replacements: { id: contactId }, type: QueryTypes.SELECT }
+    );
+    score -= parseInt(noShows.cnt) * 10;
+
+    // +20 per deal
+    const [deals] = await sequelize.query(
+      'SELECT COUNT(*) as cnt FROM deals WHERE contact_id = :id',
+      { replacements: { id: contactId }, type: QueryTypes.SELECT }
+    );
+    score += parseInt(deals.cnt) * 20;
+
+    // Inactivity penalty
+    if (contact.last_contacted_at) {
+      const daysSince = Math.floor((Date.now() - new Date(contact.last_contacted_at).getTime()) / 86400000);
+      if (daysSince > 30) score -= 15;
+      else if (daysSince > 14) score -= 5;
+    }
+
+    score = Math.max(0, Math.min(100, score));
+    await sequelize.query('UPDATE contacts SET lead_score = :score WHERE id = :id', { replacements: { score, id: contactId } });
+    res.json({ success: true, lead_score: score });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── Export Contacts (CSV) ───────────────────────────────────
+router.get('/export', async (req, res) => {
+  try {
+    const clientId = parseInt(req.query.client_id);
+    if (!clientId) return res.status(400).json({ success: false, error: 'client_id required' });
+    const contacts = await sequelize.query(
+      'SELECT first_name, last_name, phone, email, status, source, lifecycle_stage, lead_score, company, notes, tags, created_at FROM contacts WHERE client_id = :clientId ORDER BY created_at DESC',
+      { replacements: { clientId }, type: QueryTypes.SELECT }
+    );
+    // Build CSV
+    const headers = 'first_name,last_name,phone,email,status,source,lifecycle_stage,lead_score,company,notes,tags,created_at';
+    const rows = contacts.map(c =>
+      [c.first_name, c.last_name, c.phone, c.email, c.status, c.source, c.lifecycle_stage, c.lead_score, c.company, (c.notes||'').replace(/,/g, ';'), JSON.stringify(c.tags||[]), c.created_at].map(v => `"${(v||'').toString().replace(/"/g, '""')}"`).join(',')
+    );
+    const csv = headers + '\n' + rows.join('\n');
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename=contacts_${clientId}_${new Date().toISOString().split('T')[0]}.csv`);
+    res.send(csv);
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── Import Contacts (CSV) ──────────────────────────────────
+router.post('/import', async (req, res) => {
+  try {
+    const { client_id, contacts: rows } = req.body;
+    if (!client_id || !rows || !Array.isArray(rows)) return res.status(400).json({ success: false, error: 'client_id and contacts array required' });
+
+    let created = 0, skipped = 0, errors = 0;
+    for (const row of rows) {
+      try {
+        const phone = (row.phone || '').replace(/[^\d+]/g, '');
+        if (!phone) { skipped++; continue; }
+        // Check duplicate
+        const [existing] = await sequelize.query(
+          'SELECT id FROM contacts WHERE client_id = :clientId AND phone = :phone LIMIT 1',
+          { replacements: { clientId: client_id, phone }, type: QueryTypes.SELECT }
+        );
+        if (existing) { skipped++; continue; }
+        await sequelize.query(
+          `INSERT INTO contacts (client_id, first_name, last_name, phone, email, source, status, tags, lifecycle_stage, company, notes, created_at, updated_at)
+           VALUES (:cid, :fn, :ln, :phone, :email, :src, 'active', :tags, 'lead', :company, :notes, NOW(), NOW())`,
+          { replacements: { cid: client_id, fn: row.first_name || '', ln: row.last_name || '', phone, email: row.email || null, src: row.source || 'import', tags: JSON.stringify(row.tags || []), company: row.company || null, notes: row.notes || null } }
+        );
+        created++;
+      } catch (e) { errors++; }
+    }
+    res.json({ success: true, created, skipped, errors, total: rows.length });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 module.exports = router;
