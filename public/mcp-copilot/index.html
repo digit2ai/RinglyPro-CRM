@@ -24,613 +24,400 @@
     <link rel="stylesheet" href="business-collector-form.css">
 
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: #f3f4f6;
-            color: #111827;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0D1117;
+            color: #E6EDF3;
             line-height: 1.5;
+            overflow: hidden;
         }
 
-        /* Header */
-        .header {
-            background: white;
-            border-bottom: 1px solid #e5e7eb;
-            position: sticky;
-            top: 0;
-            z-index: 40;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-        }
-
-        .header-content {
-            padding: 1rem;
-        }
-
-        .header-top {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 0.5rem;
-        }
-
-        .header-top h1 {
-            font-size: 1.25rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .header-logo {
-            width: 4rem;
-            height: 4rem;
-            border-radius: 0.5rem;
-        }
-
-        .back-btn {
-            background: #ef4444;
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background 0.2s;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .back-btn:hover {
-            background: #dc2626;
-        }
-
-        /* Quick Actions */
-        .quick-actions {
-            padding: 1rem;
-            background: white;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .quick-actions h2 {
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: #1f2937;
-        }
-
-        .action-grid {
+        /* ─── Two-Pane Layout ─── */
+        .app-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.75rem;
+            grid-template-columns: 250px 1fr;
+            height: 100vh;
         }
 
-        .action-btn {
+        /* ─── Sidebar ─── */
+        .sidebar {
+            background: #161B22;
+            border-right: 1px solid #21262D;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            padding: 1rem;
-            border: none;
-            border-radius: 0.75rem;
-            font-size: 0.875rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            color: white;
+            height: 100vh;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            z-index: 50;
+        }
+        .sidebar-logo {
+            padding: 20px;
+            border-bottom: 1px solid #21262D;
             text-align: center;
         }
-
-        .action-btn:active {
-            transform: scale(0.95);
+        .sidebar-logo img {
+            width: 100%;
+            max-width: 180px;
+            height: auto;
         }
-
-        .action-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .action-icon {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .btn-copilot {
-            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
-            grid-column: span 2;
-        }
-
-        .btn-social {
-            background: linear-gradient(135deg, #f857a6 0%, #ff5858 100%);
-        }
-
-        .btn-email {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        .btn-business {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-        }
-
-        .btn-call {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }
-
-        .btn-prospects {
-            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-            grid-column: span 2;
-        }
-
-        .btn-webcallcenter {
-            background: linear-gradient(135deg, #0b1e3e 0%, #1e3a5f 100%);
-            grid-column: span 2;
-        }
-
-        .btn-press {
-            background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
-            grid-column: span 2;
-        }
-
-        .btn-admin {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            grid-column: span 2;
-        }
-
-        /* Disabled button state */
-        .action-btn:disabled,
-        .action-btn.disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            background: #d1d5db !important;
-            pointer-events: none;
-            position: relative;
-            filter: grayscale(100%);
-        }
-
-        .action-btn:disabled > div,
-        .action-btn.disabled > div {
-            text-decoration: line-through;
-            text-decoration-thickness: 2px;
-        }
-
-        .action-btn:disabled::after,
-        .action-btn.disabled::after {
-            content: "🔒";
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            font-size: 1rem;
-        }
-
-        .action-btn:disabled:hover,
-        .action-btn.disabled:hover {
-            transform: none;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Chat Container */
-        .chat-section {
-            padding: 1rem;
-            background: white;
-            display: flex;
-            flex-direction: column;
-            max-height: calc(100vh - 450px);
-            min-height: 400px;
-        }
-
-        .chat-section h2 {
-            font-size: 1rem;
+        .sidebar-logo .badge {
+            display: inline-block;
+            margin-top: 6px;
+            padding: 3px 10px;
+            background: rgba(139,92,246,.15);
+            color: #8b5cf6;
+            border-radius: 12px;
+            font-size: 10px;
             font-weight: 600;
-            margin-bottom: 1rem;
-            color: #1f2937;
-            flex-shrink: 0;
+            letter-spacing: 1px;
+            text-transform: uppercase;
         }
-
-        .chat-messages {
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.75rem;
-            padding: 1rem;
+        .sidebar-nav {
             flex: 1;
-            overflow-y: auto;
-            margin-bottom: 1rem;
-            min-height: 300px;
+            padding: 12px 0;
         }
-
-        .message {
-            margin-bottom: 1rem;
-            padding: 0.75rem;
-            border-radius: 0.5rem;
-            line-height: 1.5;
+        .nav-section {
+            padding: 14px 20px 6px;
+            font-size: 10px;
+            color: #0EA5E9;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
         }
-
-        .message.user {
-            background: #3b82f6;
-            color: white;
-            margin-left: 20%;
-            text-align: right;
-        }
-
-        .message.assistant {
-            background: white;
-            border: 1px solid #e5e7eb;
-            color: #111827;
-            margin-right: 20%;
-        }
-
-        .message.system {
-            background: #fffbeb;
-            border: 1px solid #fbbf24;
-            color: #92400e;
-            font-size: 0.875rem;
-        }
-
-        .chat-input-container {
+        .nav-item {
             display: flex;
-            gap: 0.5rem;
-            flex-shrink: 0;
-            background: white;
-            padding: 0.5rem;
-            border-top: 2px solid #e5e7eb;
-            position: sticky;
-            bottom: 0;
-            z-index: 10;
-        }
-
-        .chat-input-container input {
-            flex: 1;
-            padding: 0.75rem 1rem;
-            border: 2px solid #3b82f6;
-            border-radius: 0.75rem;
-            font-size: 1rem;
-            outline: none;
-            transition: all 0.2s;
-            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
-        }
-
-        .chat-input-container input:focus {
-            border-color: #2563eb;
-            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.2);
-            transform: scale(1.01);
-        }
-
-        .chat-input-container input::placeholder {
-            color: #9ca3af;
-            font-weight: 500;
-        }
-
-        .chat-input-container button {
-            background: #3b82f6;
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.75rem;
-            font-size: 1rem;
-            font-weight: 600;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 20px;
+            font-size: 14px;
+            color: #8B949E;
             cursor: pointer;
             transition: all 0.2s;
-            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+            border: none;
+            border-left: 3px solid transparent;
+            border-top: none; border-right: none; border-bottom: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-family: inherit;
+            text-decoration: none;
+        }
+        .nav-item:hover { color: #E6EDF3; background: rgba(14,165,233,.08); }
+        .nav-item.active { color: #fff; background: rgba(14,165,233,.13); border-left-color: #0EA5E9; }
+        .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+        .nav-badge {
+            margin-left: auto;
+            padding: 1px 7px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .sidebar-footer {
+            padding: 16px 20px;
+            border-top: 1px solid #21262D;
+        }
+        .sidebar-back {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 8px 12px;
+            background: none;
+            border: 1px solid #30363D;
+            color: #8B949E;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-family: inherit;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .sidebar-back:hover { background: rgba(14,165,233,.1); border-color: #0EA5E9; color: #E6EDF3; }
+
+        /* ─── Main Content ─── */
+        .main-pane {
+            height: 100vh;
+            overflow: hidden;
+            background: #f3f4f6;
+        }
+        .main-pane iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+        /* For non-iframe content (chat, tools loaded inline) */
+        .main-pane .inline-content {
+            display: none;
+            height: 100%;
+            overflow-y: auto;
+            background: #f3f4f6;
+        }
+        .main-pane .inline-content.active {
+            display: block;
         }
 
-        .chat-input-container button:hover {
-            background: #2563eb;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+        /* ─── Mobile ─── */
+        .mobile-toggle {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 60;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #0EA5E9, #8b5cf6);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(14,165,233,.4);
+            font-size: 22px;
+            align-items: center;
+            justify-content: center;
+        }
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.6);
+            z-index: 49;
+        }
+        @media (max-width: 768px) {
+            .app-grid { grid-template-columns: 1fr; }
+            .sidebar {
+                position: fixed;
+                top: 0; left: 0;
+                width: 280px;
+                height: 100vh;
+                transform: translateX(-100%);
+                z-index: 200;
+            }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-overlay.open { display: block; }
+            .mobile-toggle { display: flex; }
         }
 
-        .chat-input-container button:active {
-            transform: scale(0.95);
-        }
-
-        /* Mobile Popup Modal */
+        /* ─── Mobile Popup Modal (for tools that open inline) ─── */
         .mobile-popup-modal {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             background: white;
             z-index: 1000;
             flex-direction: column;
         }
-
-        .mobile-popup-modal.active {
-            display: flex;
-        }
-
+        .mobile-popup-modal.active { display: flex; }
         .mobile-popup-header {
-            background: linear-gradient(135deg, #4F46E5 0%, #3b82f6 100%);
+            background: linear-gradient(135deg, #4F46E5, #3b82f6);
             color: white;
             padding: 1rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-
-        .mobile-popup-header h3 {
-            margin: 0;
-            font-size: 1.125rem;
-            font-weight: 600;
-        }
-
+        .mobile-popup-header h3 { margin: 0; font-size: 1.125rem; font-weight: 600; }
         .mobile-popup-close {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 2rem;
-            cursor: pointer;
-            padding: 0;
-            width: 2.5rem;
-            height: 2.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 1;
+            background: none; border: none; color: white;
+            font-size: 2rem; cursor: pointer; padding: 0;
+            width: 2.5rem; height: 2.5rem;
+            display: flex; align-items: center; justify-content: center;
         }
-
-        .mobile-popup-content {
-            flex: 1;
-            overflow: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            .header-top h1 {
-                font-size: 1rem;
-            }
-
-            .action-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .btn-copilot,
-            .btn-prospects,
-            .btn-webcallcenter {
-                grid-column: span 1;
-            }
-
-            .action-btn {
-                padding: 0.875rem;
-            }
-
-            /* Mobile chat - ensure input stays visible when iOS keyboard appears */
-            .chat-section {
-                min-height: 400px;
-                max-height: calc(100vh - 200px);
-                display: flex;
-                flex-direction: column;
-                position: relative;
-                padding-bottom: 70px; /* Space for fixed input */
-            }
-
-            .chat-messages {
-                flex: 1;
-                overflow-y: auto;
-                min-height: 250px;
-                margin-bottom: 0; /* Remove margin since input is fixed */
-            }
-
-            .chat-input-container {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                background: white;
-                padding: 0.75rem;
-                border-top: 2px solid #e5e7eb;
-                z-index: 1000;
-                flex-shrink: 0;
-                box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-            }
-
-            .chat-input-container input {
-                font-size: 16px; /* Prevents iOS zoom on focus */
-                border: 2px solid #3b82f6;
-                background: white;
-                width: 100%;
-            }
-
-            .chat-input-container button {
-                padding: 0.75rem 1rem;
-                font-size: 16px;
-                white-space: nowrap;
-            }
-        }
+        .mobile-popup-content { flex: 1; overflow: auto; -webkit-overflow-scrolling: touch; }
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <div class="header">
-        <div class="header-content">
-            <div class="header-top">
-                <h1>
-                    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68e1ceaedd63a48d8059af0a.png" alt="RinglyPro" class="header-logo">
-                    AI Lead Collector
-                </h1>
-                <a href="https://aiagent.ringlypro.com/" class="back-btn">← Back to Dashboard</a>
-            </div>
 
+<div class="app-grid">
+
+    <!-- Mobile overlay + toggle -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+    <button class="mobile-toggle" id="mobileToggle" onclick="toggleSidebar()">☰</button>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69b02d62034886f7c9e996d9.png" alt="RinglyPro">
+            <div><span class="badge">Business Copilot</span></div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section">CALL CENTER</div>
+            <button class="nav-item active" onclick="navTo('webcallcenter', this)">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+                Dashboard
+            </button>
+            <button class="nav-item" onclick="navTo('webcallcenter-calls', this)">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                Calls
+            </button>
+            <button class="nav-item" onclick="navTo('webcallcenter-widget', this)">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                Widget
+            </button>
+            <button class="nav-item" onclick="navTo('webcallcenter-kb', this)">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg>
+                Knowledge Base
+            </button>
+            <button class="nav-item" onclick="navTo('webcallcenter-usage', this)">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                Usage
+            </button>
+
+            <div class="nav-section">AI TOOLS</div>
+            <button class="nav-item" onclick="openBusinessCollectorForm()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                AI Lead Collector
+            </button>
+            <button class="nav-item" onclick="openAdHocCall()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                Outbound Call
+            </button>
+            <button class="nav-item" onclick="openProspectManager()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                Prospect Manager
+            </button>
+
+            <!-- Press Release Manager - TunjoRacing only -->
+            <button class="nav-item" id="pressReleaseBtn" onclick="openPressReleaseManager()" style="display:none;">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg>
+                Press Release Manager
+            </button>
+
+            <!-- Client Manager - admin only -->
+            <button class="nav-item" id="clientManagerBtn" onclick="window.open('/admin/client-manager', '_blank')" style="display:none;">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                Client Manager
+            </button>
+
+            <div class="nav-section">INTELLIGENCE</div>
+            <button class="nav-item" onclick="navTo('neural', this)">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                Neural Intelligence
+            </button>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="/" class="sidebar-back">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                Back to Dashboard
+            </a>
         </div>
     </div>
 
-    <!-- Quick Actions -->
-    <div class="quick-actions">
-        <h2>🚀 Quick Actions</h2>
-        <div class="action-grid">
-            <button class="action-btn btn-business" onclick="openBusinessCollectorForm()">
-                <div class="action-icon">🔍</div>
-                <div>AI Lead Collector</div>
-            </button>
-
-            <button class="action-btn btn-call" onclick="openAdHocCall()">
-                <div class="action-icon">📞</div>
-                <div>Outbound Call</div>
-            </button>
-
-            <button class="action-btn btn-prospects" onclick="openProspectManager()">
-                <div class="action-icon">📊</div>
-                <div>Prospect Manager</div>
-            </button>
-
-            <!-- Web Call Center -->
-            <button class="action-btn btn-webcallcenter" onclick="window.location.href='/webcallcenter/'">
-                <div class="action-icon">🎧</div>
-                <div>Web Call Center</div>
-            </button>
-
-            <!-- Press Release Manager - ONLY for clients 15 & 40 (TunjoRacing) -->
-            <button class="action-btn btn-press" id="pressReleaseBtn" onclick="openPressReleaseManager()" style="display: none;">
-                <div class="action-icon">📰</div>
-                <div>Press Release Manager</div>
-            </button>
-
-            <!-- Client Manager - Admin only (client 15) -->
-            <button class="action-btn btn-admin" id="clientManagerBtn" onclick="window.open('/admin/client-manager', '_blank')" style="display: none;">
-                <div class="action-icon">⚙️</div>
-                <div>Client Manager</div>
-            </button>
-        </div>
+    <!-- MAIN CONTENT -->
+    <div class="main-pane" id="mainPane">
+        <iframe id="contentFrame" src="/webcallcenter/"></iframe>
     </div>
 
-    <!-- Mobile Popup Modal -->
-    <div id="mobilePopupModal" class="mobile-popup-modal">
-        <div class="mobile-popup-header">
-            <h3 id="mobilePopupTitle">Tool</h3>
-            <button class="mobile-popup-close" onclick="closeMobilePopup()">&times;</button>
-        </div>
-        <div id="mobilePopupContent" class="mobile-popup-content"></div>
+</div>
+
+<!-- Mobile Popup Modal -->
+<div id="mobilePopupModal" class="mobile-popup-modal">
+    <div class="mobile-popup-header">
+        <h3 id="mobilePopupTitle">Tool</h3>
+        <button class="mobile-popup-close" onclick="closeMobilePopup()">&times;</button>
     </div>
+    <div id="mobilePopupContent" class="mobile-popup-content"></div>
+</div>
 
-    <!-- Global Configuration (must load first) -->
-    <script>
-        // Define API_BASE globally for all scripts
-        const API_BASE = window.location.origin + '/api/mcp';
-    </script>
+<!-- Global Configuration -->
+<script>
+    const API_BASE = window.location.origin + '/api/mcp';
 
-    <!-- Scripts -->
-    <script src="command-templates.js?v=112"></script>
-    <script src="command-form.js?v=112"></script>
-    <script src="business-collector-form.js?v=114"></script>
-    <script src="adhoc-call.js?v=112"></script>
-    <script src="copilot.js?v=125"></script>
+    // ─── Navigation ───────────────────────────
+    const ROUTES = {
+        'webcallcenter': '/webcallcenter/',
+        'webcallcenter-calls': '/webcallcenter/calls',
+        'webcallcenter-widget': '/webcallcenter/widget',
+        'webcallcenter-kb': '/webcallcenter/knowledge-base',
+        'webcallcenter-usage': '/webcallcenter/usage',
+        'neural': '/cw_carriers/neural.html'
+    };
 
-    <script>
-        // Handle enter key in chat input
-        function handleKeyPress(event) {
-            if (event.key === 'Enter') {
-                sendMessage();
-            }
+    function navTo(view, el) {
+        // Update active state
+        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+        if (el) el.classList.add('active');
+
+        // Load in iframe
+        const url = ROUTES[view];
+        if (url) {
+            document.getElementById('contentFrame').src = url;
         }
-    </script>
 
-    <!-- PWA Service Worker Registration -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', async () => {
-                // FORCE UNREGISTER ALL OLD SERVICE WORKERS
-                const registrations = await navigator.serviceWorker.getRegistrations();
-                console.log(`🔄 Found ${registrations.length} service worker(s)`);
+        closeSidebar();
+    }
 
-                for (let registration of registrations) {
-                    console.log('🗑️ Unregistering old service worker:', registration.scope);
-                    await registration.unregister();
-                }
+    // ─── Mobile Sidebar ───────────────────────
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('sidebarOverlay').classList.toggle('open');
+    }
+    function closeSidebar() {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('sidebarOverlay').classList.remove('open');
+    }
+</script>
 
-                // CLEAR ALL CACHES
-                const cacheNames = await caches.keys();
-                console.log(`🗑️ Found ${cacheNames.length} cache(s):`, cacheNames);
+<!-- Scripts -->
+<script src="command-templates.js?v=112"></script>
+<script src="command-form.js?v=112"></script>
+<script src="business-collector-form.js?v=114"></script>
+<script src="adhoc-call.js?v=112"></script>
+<script src="copilot.js?v=125"></script>
 
-                for (let cacheName of cacheNames) {
-                    console.log('🗑️ Deleting cache:', cacheName);
-                    await caches.delete(cacheName);
-                }
+<script>
+    function handleKeyPress(event) {
+        if (event.key === 'Enter') { sendMessage(); }
+    }
+</script>
 
-                console.log('✅ All old service workers and caches cleared!');
+<!-- PWA Service Worker -->
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', async () => {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (let r of registrations) { await r.unregister(); }
+            const cacheNames = await caches.keys();
+            for (let c of cacheNames) { await caches.delete(c); }
+            navigator.serviceWorker.register('/mcp-copilot/sw.js?v=125')
+                .then(r => { console.log('SW v125 registered:', r.scope); })
+                .catch(e => { console.log('SW failed:', e); });
+        });
+    }
+</script>
 
-                // NOW register the NEW service worker
-                navigator.serviceWorker.register('/mcp-copilot/sw.js?v=125')
-                    .then((registration) => {
-                        console.log('✅ NEW Service Worker v125 registered successfully:', registration.scope);
-
-                        // DON'T auto-reload - causes blinking on Safari
-                        // Users can manually refresh if needed
-                        registration.addEventListener('updatefound', () => {
-                            const newWorker = registration.installing;
-                            newWorker.addEventListener('statechange', () => {
-                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    console.log('✅ New service worker installed (refresh page to use new version)');
-                                    // DON'T reload automatically - causes Safari blinking
-                                    // window.location.reload();
-                                }
-                            });
-                        });
-                    })
-                    .catch((error) => {
-                        console.log('❌ Service Worker registration failed:', error);
-                    });
-            });
+<!-- Press Release Manager & Client Manager visibility -->
+<script>
+    (function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const clientId = parseInt(urlParams.get('client_id'));
+        if (clientId === 15 || clientId === 40) {
+            const btn = document.getElementById('pressReleaseBtn');
+            if (btn) btn.style.display = 'flex';
         }
-    </script>
-
-    <!-- Press Release Manager - Clients 15 & 43 Only -->
-    <script>
-        // Show Press Release Manager button ONLY for clients 15 and 40 (TunjoRacing)
-        (function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const clientId = parseInt(urlParams.get('client_id'));
-
-            // Only show for clients 15 and 40 (TunjoRacing)
-            if (clientId === 15 || clientId === 40) {
-                const pressBtn = document.getElementById('pressReleaseBtn');
-                if (pressBtn) {
-                    pressBtn.style.display = 'flex';
-                    console.log('✅ Press Release Manager enabled for client', clientId);
-                }
-            }
-
-            // Client Manager - admin only (client 15)
-            if (clientId === 15) {
-                const cmBtn = document.getElementById('clientManagerBtn');
-                if (cmBtn) {
-                    cmBtn.style.display = 'flex';
-                    console.log('✅ Client Manager enabled for admin client', clientId);
-                }
-            }
-        })();
-
-        // Open Press Release Manager page
-        function openPressReleaseManager() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const clientId = urlParams.get('client_id');
-
-            if (!clientId) {
-                alert('Error: Missing client_id parameter');
-                return;
-            }
-
-            // Open in new tab/window
-            window.open(`press-release-manager.html?client_id=${clientId}`, '_blank');
+        if (clientId === 15) {
+            const btn = document.getElementById('clientManagerBtn');
+            if (btn) btn.style.display = 'flex';
         }
-    </script>
+    })();
 
-    <!-- Load GHL Upgrade Prompt -->
-    <script>
-        // Load the GHL upgrade prompt HTML dynamically
-        fetch('ghl-upgrade-prompt.html')
-            .then(response => response.text())
-            .then(html => {
-                const div = document.createElement('div');
-                div.innerHTML = html;
-                document.body.appendChild(div);
-            })
-            .catch(error => console.error('Error loading GHL upgrade prompt:', error));
-    </script>
+    function openPressReleaseManager() {
+        const clientId = new URLSearchParams(window.location.search).get('client_id');
+        if (!clientId) { alert('Error: Missing client_id'); return; }
+        window.open(`press-release-manager.html?client_id=${clientId}`, '_blank');
+    }
+</script>
+
+<!-- GHL Upgrade Prompt -->
+<script>
+    fetch('ghl-upgrade-prompt.html')
+        .then(r => r.text())
+        .then(html => { const d = document.createElement('div'); d.innerHTML = html; document.body.appendChild(d); })
+        .catch(e => console.error('GHL prompt error:', e));
+</script>
 </body>
 </html>
