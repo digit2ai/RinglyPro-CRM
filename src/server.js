@@ -189,6 +189,66 @@ async function startServer() {
           console.log('⚠️ lead_tracker migration skipped:', error.message);
         }
 
+        // AUTO-MIGRATE NEURAL TREATMENTS TABLE
+        console.log('🔄 Running neural treatments migration...');
+        try {
+          await queryWithTimeout(
+            `CREATE TABLE IF NOT EXISTS neural_treatments (
+              id SERIAL PRIMARY KEY,
+              client_id INTEGER NOT NULL,
+              treatment_type VARCHAR(50) NOT NULL,
+              trigger_event VARCHAR(100) NOT NULL,
+              actions JSONB NOT NULL DEFAULT '[]',
+              crm_target VARCHAR(20) DEFAULT 'auto',
+              is_active BOOLEAN DEFAULT false,
+              activated_at TIMESTAMP,
+              deactivated_at TIMESTAMP,
+              execution_count INTEGER DEFAULT 0,
+              last_executed_at TIMESTAMP,
+              created_at TIMESTAMP DEFAULT NOW(),
+              updated_at TIMESTAMP DEFAULT NOW()
+            )`,
+            'neural_treatments migration'
+          );
+          await queryWithTimeout(
+            `CREATE UNIQUE INDEX IF NOT EXISTS idx_treatments_type ON neural_treatments(client_id, treatment_type)`,
+            'neural_treatments unique index'
+          );
+          await queryWithTimeout(
+            `CREATE INDEX IF NOT EXISTS idx_treatments_active ON neural_treatments(client_id, is_active)`,
+            'neural_treatments active index'
+          );
+          console.log('✅ neural_treatments table ready');
+        } catch (error) {
+          console.log('⚠️ neural_treatments migration skipped:', error.message);
+        }
+
+        // AUTO-MIGRATE TREATMENT EXECUTION LOG TABLE
+        try {
+          await queryWithTimeout(
+            `CREATE TABLE IF NOT EXISTS treatment_execution_log (
+              id SERIAL PRIMARY KEY,
+              client_id INTEGER NOT NULL,
+              treatment_id INTEGER,
+              treatment_type VARCHAR(50) NOT NULL,
+              trigger_event VARCHAR(100) NOT NULL,
+              contact_phone VARCHAR(30),
+              actions_executed JSONB DEFAULT '[]',
+              status VARCHAR(20) DEFAULT 'completed',
+              error_message TEXT,
+              created_at TIMESTAMP DEFAULT NOW()
+            )`,
+            'treatment_execution_log migration'
+          );
+          await queryWithTimeout(
+            `CREATE INDEX IF NOT EXISTS idx_exec_log_client ON treatment_execution_log(client_id, created_at DESC)`,
+            'treatment_execution_log index'
+          );
+          console.log('✅ treatment_execution_log table ready');
+        } catch (error) {
+          console.log('⚠️ treatment_execution_log migration skipped:', error.message);
+        }
+
         console.log('✅ All migrations complete, ready to start server');
       } else {
         console.log('⚠️ No DATABASE_URL provided, running without database');

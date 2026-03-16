@@ -1206,6 +1206,20 @@ router.patch('/:id/status', async (req, res) => {
 
     console.log(`✅ Appointment ${id} status updated to: ${status}`);
 
+    // ─── Neural Treatment Trigger: no-show ──────────
+    if (status === 'no_show') {
+      try {
+        const TreatmentExecutor = require('../services/treatmentExecutor');
+        const { sequelize } = require('../models');
+        const executor = new TreatmentExecutor(sequelize);
+        executor.trigger(clientId, 'appointment.no_show', {
+          phone: appointment.customerPhone,
+          customer_name: appointment.customerName,
+          appointment_id: appointment.id
+        }).catch(e => console.error('[Treatment] no_show trigger error:', e.message));
+      } catch (e) { /* non-critical */ }
+    }
+
     res.json({
       success: true,
       appointment: {

@@ -497,6 +497,11 @@ function initDashboard() {
   renderFindings();
   renderConnections();
   animateScoreRing();
+  // Load persisted treatment activation states
+  loadTreatmentStates().then(() => {
+    // Re-render findings to show correct toggle states
+    renderFindings();
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -754,29 +759,109 @@ function closeModal() {
   document.getElementById('modalOverlay').classList.remove('visible');
 }
 
-function toggleTreatment(id) {
+async function toggleTreatment(id) {
   const finding = NEURAL_DATA.findings.find(f => f.id === id);
-  if (finding && finding.treatment) {
-    finding.treatment.active = !finding.treatment.active;
-    const btn = document.getElementById('btnActivate');
-    if (finding.treatment.active) {
-      btn.textContent = '✓ Treatment Active';
-      btn.classList.add('activated');
+  if (!finding || !finding.treatment) return;
+
+  const newState = !finding.treatment.active;
+  const treatmentType = finding.treatment.treatment_type;
+  if (!treatmentType) { console.log('No treatment_type for finding', id); return; }
+
+  const clientId = getClientId();
+  if (!clientId) return;
+
+  const btn = document.getElementById('btnActivate');
+  btn.textContent = 'Saving...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(`/api/neural/treatments/${clientId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+      body: JSON.stringify({ treatment_type: treatmentType, is_active: newState })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      finding.treatment.active = newState;
+      if (newState) {
+        btn.textContent = '✓ Treatment Active';
+        btn.classList.add('activated');
+      } else {
+        btn.textContent = 'Activate Treatment';
+        btn.classList.remove('activated');
+      }
     } else {
-      btn.textContent = 'Activate Treatment';
-      btn.classList.remove('activated');
+      console.error('Treatment toggle failed:', data.error);
+      // Revert checkbox
+      document.getElementById('treatmentToggle').checked = finding.treatment.active;
     }
+  } catch (e) {
+    console.error('Treatment toggle error:', e);
+    document.getElementById('treatmentToggle').checked = finding.treatment.active;
   }
+
+  btn.disabled = false;
 }
 
-function activateTreatment(id) {
+async function activateTreatment(id) {
   const finding = NEURAL_DATA.findings.find(f => f.id === id);
-  if (finding && finding.treatment && !finding.treatment.active) {
-    finding.treatment.active = true;
-    document.getElementById('treatmentToggle').checked = true;
-    const btn = document.getElementById('btnActivate');
-    btn.textContent = '✓ Treatment Active';
-    btn.classList.add('activated');
+  if (!finding || !finding.treatment || finding.treatment.active) return;
+
+  const treatmentType = finding.treatment.treatment_type;
+  if (!treatmentType) return;
+
+  const clientId = getClientId();
+  if (!clientId) return;
+
+  const btn = document.getElementById('btnActivate');
+  btn.textContent = 'Activating...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(`/api/neural/treatments/${clientId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+      body: JSON.stringify({ treatment_type: treatmentType, is_active: true })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      finding.treatment.active = true;
+      document.getElementById('treatmentToggle').checked = true;
+      btn.textContent = '✓ Treatment Active';
+      btn.classList.add('activated');
+    }
+  } catch (e) {
+    console.error('Treatment activate error:', e);
+  }
+
+  btn.disabled = false;
+}
+
+// Load active treatment states on init
+async function loadTreatmentStates() {
+  const clientId = getClientId();
+  if (!clientId || !NEURAL_DATA) return;
+
+  try {
+    const res = await fetch(`/api/neural/treatments/${clientId}`, { headers: getAuthHeader() });
+    const data = await res.json();
+    if (data.success && data.treatments) {
+      // Map treatment_type → active state + execution count
+      const stateMap = {};
+      data.treatments.forEach(t => { stateMap[t.treatment_type] = t; });
+
+      // Apply to findings
+      NEURAL_DATA.findings.forEach(f => {
+        if (f.treatment && f.treatment.treatment_type && stateMap[f.treatment.treatment_type]) {
+          f.treatment.active = stateMap[f.treatment.treatment_type].is_active;
+          f.treatment.execution_count = stateMap[f.treatment.treatment_type].execution_count || 0;
+        }
+      });
+    }
+  } catch (e) {
+    console.log('Could not load treatment states:', e.message);
   }
 }
 

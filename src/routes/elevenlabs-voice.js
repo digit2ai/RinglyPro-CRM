@@ -272,6 +272,33 @@ router.post('/post-call-webhook', async (req, res) => {
       });
     }
 
+    // ─── Neural Treatment Triggers (fire-and-forget) ──────────
+    try {
+      const TreatmentExecutor = require('../services/treatmentExecutor');
+      const executor = new TreatmentExecutor(sequelize);
+      const triggerData = { phone: phoneNumber, conversation_id: conversationId, duration, call_type: callType };
+
+      if (callType !== 'outbound') {
+        // Check if call was short/missed (duration < 10s or no duration = likely missed)
+        if (!duration || duration < 10) {
+          executor.trigger(clientId, 'call.missed', triggerData).catch(e =>
+            logger.error(`[Treatment] call.missed trigger error:`, e.message));
+        } else {
+          // Call completed — check if booking was made (within last 5 min)
+          const [booking] = await sequelize.query(
+            `SELECT id FROM appointments WHERE client_id = :clientId AND created_at > NOW() - INTERVAL '5 minutes' LIMIT 1`,
+            { replacements: { clientId }, type: QueryTypes.SELECT }
+          );
+          if (!booking) {
+            executor.trigger(clientId, 'call.completed_no_booking', triggerData).catch(e =>
+              logger.error(`[Treatment] call.completed_no_booking trigger error:`, e.message));
+          }
+        }
+      }
+    } catch (treatmentErr) {
+      logger.error(`[Treatment] Hook error in post-call-webhook:`, treatmentErr.message);
+    }
+
     res.status(200).json({
       success: true,
       message: 'Call saved',

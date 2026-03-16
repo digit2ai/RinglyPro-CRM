@@ -15,8 +15,10 @@ const router = express.Router();
 const { sequelize } = require('../models');
 const { QueryTypes } = require('sequelize');
 const NeuralEngine = require('../services/neuralEngine');
+const TreatmentExecutor = require('../services/treatmentExecutor');
 
 const engine = new NeuralEngine(sequelize);
+const treatmentExecutor = new TreatmentExecutor(sequelize);
 
 // ─── Auth: API key or JWT ──────────────────────────────────────
 function requireAuth(req, res, next) {
@@ -457,7 +459,16 @@ function buildTreatment(insight) {
   const t = treatments[insight.category];
   if (!t) return null;
 
-  return { ...t, active: false };
+  // Map insight category to treatment_type for API activation
+  const categoryToTreatment = {
+    missed_revenue: 'missed_call_recovery',
+    call_conversion: 'call_conversion_followup',
+    lead_response: 'lead_speed_response',
+    customer_sentiment: 'no_show_prevention',
+    revenue_forecast: 'call_conversion_followup'
+  };
+
+  return { ...t, active: false, treatment_type: categoryToTreatment[insight.category] || insight.category };
 }
 
 // ─── Helper: Build connections status ────────────────────────
@@ -496,6 +507,95 @@ function buildConnections(client) {
 
   return connections;
 }
+
+// ─── Get Treatments for Client ────────────────────────────────
+router.get('/treatments/:client_id', async (req, res) => {
+  try {
+    const clientId = parseInt(req.params.client_id);
+    if (!clientId) return res.status(400).json({ success: false, error: 'client_id required' });
+
+    const treatments = await sequelize.query(
+      `SELECT * FROM neural_treatments WHERE client_id = :clientId ORDER BY treatment_type`,
+      { replacements: { clientId }, type: QueryTypes.SELECT }
+    );
+
+    res.json({ success: true, treatments });
+  } catch (error) {
+    console.error('Neural treatments GET error:', error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ─── Activate / Deactivate Treatment ─────────────────────────
+router.post('/treatments/:client_id', async (req, res) => {
+  try {
+    const clientId = parseInt(req.params.client_id);
+    const { treatment_type, is_active } = req.body;
+
+    if (!clientId || !treatment_type) {
+      return res.status(400).json({ success: false, error: 'client_id and treatment_type required' });
+    }
+
+    const template = TreatmentExecutor.getTemplate(treatment_type);
+    if (!template) {
+      return res.status(400).json({ success: false, error: `Unknown treatment type: ${treatment_type}` });
+    }
+
+    // Upsert treatment
+    await sequelize.query(
+      `INSERT INTO neural_treatments (client_id, treatment_type, trigger_event, actions, crm_target, is_active, activated_at, created_at, updated_at)
+       VALUES (:clientId, :type, :trigger, :actions, 'auto', :active, ${is_active ? 'NOW()' : 'NULL'}, NOW(), NOW())
+       ON CONFLICT (client_id, treatment_type)
+       DO UPDATE SET is_active = :active,
+         activated_at = CASE WHEN :active THEN NOW() ELSE neural_treatments.activated_at END,
+         deactivated_at = CASE WHEN NOT :active THEN NOW() ELSE neural_treatments.deactivated_at END,
+         updated_at = NOW()`,
+      {
+        replacements: {
+          clientId,
+          type: treatment_type,
+          trigger: template.trigger_event,
+          actions: JSON.stringify(template.actions),
+          active: !!is_active
+        }
+      }
+    );
+
+    // Fetch updated treatment
+    const [treatment] = await sequelize.query(
+      `SELECT * FROM neural_treatments WHERE client_id = :clientId AND treatment_type = :type`,
+      { replacements: { clientId, type: treatment_type }, type: QueryTypes.SELECT }
+    );
+
+    res.json({ success: true, treatment });
+  } catch (error) {
+    console.error('Neural treatment POST error:', error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ─── Treatment Execution Log ─────────────────────────────────
+router.get('/treatments/:client_id/log', async (req, res) => {
+  try {
+    const clientId = parseInt(req.params.client_id);
+    if (!clientId) return res.status(400).json({ success: false, error: 'client_id required' });
+
+    const logs = await sequelize.query(
+      `SELECT * FROM treatment_execution_log
+       WHERE client_id = :clientId
+       ORDER BY created_at DESC LIMIT 50`,
+      { replacements: { clientId }, type: QueryTypes.SELECT }
+    );
+
+    res.json({ success: true, count: logs.length, logs });
+  } catch (error) {
+    console.error('Neural treatment log error:', error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ─── Export treatmentExecutor for use by other routes ─────────
+router.treatmentExecutor = treatmentExecutor;
 
 // ─── Clients with Neural Data ──────────────────────────────────
 router.get('/clients', async (req, res) => {
