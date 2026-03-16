@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neural Intelligence — CW Carriers USA</title>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #07090f;
+  color: #e2e8f0;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+
+/* Layout */
+.wrap { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+
+/* Header */
+.header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(7,9,15,.85); backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(139,92,246,.15);
+  padding: 16px 0;
+}
+.header-inner { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.logo { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; }
+.logo-icon { width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, #8b5cf6, #06b6d4); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.logo span { background: linear-gradient(90deg, #8b5cf6, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.header-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.back-link {
+  font-size: 13px; color: #94a3b8; padding: 8px 16px; border-radius: 8px;
+  border: 1px solid rgba(139,92,246,.2); transition: all .2s;
+}
+.back-link:hover { background: rgba(139,92,246,.1); color: #c4b5fd; border-color: rgba(139,92,246,.3); }
+.sync-btn {
+  background: linear-gradient(135deg, #8b5cf6, #06b6d4); color: #fff; font-weight: 600;
+  padding: 8px 20px; border-radius: 8px; font-size: 13px; transition: opacity .2s;
+}
+.sync-btn:hover { opacity: .9; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: inline-block; }
+.status-dot.syncing { background: #eab308; animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+
+/* ─── Hero: Business Health Score ─── */
+.hero {
+  text-align: center; padding: 48px 0 32px;
+}
+.hero-company { font-size: 14px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; font-weight: 600; }
+.score-ring-wrap { position: relative; width: 180px; height: 180px; margin: 0 auto 16px; }
+.score-ring-svg { width: 180px; height: 180px; transform: rotate(-90deg); }
+.score-ring-bg { fill: none; stroke: rgba(139,92,246,.12); stroke-width: 10; }
+.score-ring-fg { fill: none; stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 1.5s ease-out; }
+.score-ring-fg.excellent { stroke: url(#scoreGradGreen); }
+.score-ring-fg.good { stroke: url(#scoreGradCyan); }
+.score-ring-fg.attention { stroke: url(#scoreGradYellow); }
+.score-ring-fg.critical { stroke: url(#scoreGradRed); }
+.score-value {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  font-size: 48px; font-weight: 800; letter-spacing: -1px;
+}
+.score-label {
+  font-size: 14px; font-weight: 600; padding: 4px 14px; border-radius: 20px; display: inline-block; margin-bottom: 16px;
+}
+.score-label.excellent { background: rgba(34,197,94,.15); color: #4ade80; }
+.score-label.good { background: rgba(6,182,212,.15); color: #67e8f9; }
+.score-label.attention { background: rgba(251,191,36,.15); color: #fbbf24; }
+.score-label.critical { background: rgba(239,68,68,.15); color: #f87171; }
+.hero-metrics { display: flex; justify-content: center; gap: 32px; flex-wrap: wrap; margin-bottom: 12px; }
+.hero-metric { font-size: 15px; font-weight: 600; }
+.hero-metric .label { font-size: 12px; color: #94a3b8; display: block; margin-bottom: 2px; }
+.hero-metric .value.red { color: #f87171; }
+.hero-metric .value.green { color: #4ade80; }
+.hero-trend { font-size: 13px; color: #94a3b8; }
+.hero-trend .arrow { font-weight: 700; padding: 2px 6px; border-radius: 4px; font-size: 12px; margin-right: 4px; }
+.hero-trend .arrow.up { background: rgba(74,222,128,.15); color: #4ade80; }
+.hero-trend .arrow.down { background: rgba(248,113,113,.15); color: #f87171; }
+
+/* ─── Health Panels Row ─── */
+.panels-row {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 32px;
+}
+.panel-card {
+  background: rgba(139,92,246,.06); border: 1px solid rgba(139,92,246,.12);
+  border-radius: 12px; padding: 20px; transition: border-color .2s, transform .2s;
+}
+.panel-card:hover { border-color: rgba(139,92,246,.3); transform: translateY(-2px); }
+.panel-name { font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; font-weight: 600; }
+.panel-score-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+.panel-score { font-size: 28px; font-weight: 700; }
+.panel-score.excellent { color: #4ade80; }
+.panel-score.good { color: #67e8f9; }
+.panel-score.attention { color: #fbbf24; }
+.panel-score.critical { color: #f87171; }
+.panel-badge {
+  font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 6px;
+  text-transform: uppercase; letter-spacing: .3px;
+}
+.panel-badge.excellent { background: rgba(34,197,94,.15); color: #4ade80; }
+.panel-badge.good { background: rgba(6,182,212,.15); color: #67e8f9; }
+.panel-badge.attention { background: rgba(251,191,36,.15); color: #fbbf24; }
+.panel-badge.critical { background: rgba(239,68,68,.15); color: #f87171; }
+.panel-finding { font-size: 12px; color: #cbd5e1; margin-bottom: 8px; line-height: 1.4; }
+.panel-trend { font-size: 11px; font-weight: 600; }
+.panel-trend.up { color: #4ade80; }
+.panel-trend.down { color: #f87171; }
+.panel-trend.flat { color: #94a3b8; }
+
+/* ─── Findings Feed ─── */
+.findings-section { display: flex; gap: 24px; margin-bottom: 32px; }
+.findings-sidebar { flex-shrink: 0; width: 180px; }
+.filter-tab {
+  display: block; width: 100%; text-align: left; padding: 10px 16px; border-radius: 8px;
+  font-size: 13px; font-weight: 500; color: #94a3b8; margin-bottom: 4px; transition: all .2s;
+}
+.filter-tab:hover { color: #e2e8f0; background: rgba(139,92,246,.1); }
+.filter-tab.active { background: rgba(139,92,246,.2); color: #c4b5fd; }
+.filter-count {
+  float: right; background: rgba(139,92,246,.15); color: #c4b5fd;
+  padding: 1px 7px; border-radius: 10px; font-size: 11px; font-weight: 600;
+}
+.findings-main { flex: 1; min-width: 0; }
+.findings-header { font-size: 18px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.findings-header .count {
+  font-size: 12px; background: rgba(139,92,246,.2); color: #c4b5fd;
+  padding: 2px 8px; border-radius: 10px; font-weight: 600;
+}
+.findings-grid { display: flex; flex-direction: column; gap: 16px; }
+
+/* Finding Card */
+.finding-card {
+  background: rgba(15,23,42,.6); border: 1px solid rgba(139,92,246,.12);
+  border-radius: 14px; padding: 24px; transition: border-color .2s, transform .2s;
+  position: relative; overflow: hidden;
+}
+.finding-card:hover { border-color: rgba(139,92,246,.3); transform: translateY(-2px); }
+.finding-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+}
+.finding-card.CRITICAL::before { background: linear-gradient(90deg, #FF4444, #f87171); }
+.finding-card.WARNING::before { background: linear-gradient(90deg, #FFB800, #fbbf24); }
+.finding-card.OPPORTUNITY::before { background: linear-gradient(90deg, #00C851, #4ade80); }
+
+.finding-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.severity-badge {
+  font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 6px;
+  text-transform: uppercase; letter-spacing: .3px; white-space: nowrap; flex-shrink: 0;
+}
+.severity-badge.CRITICAL { background: rgba(255,68,68,.15); color: #FF4444; }
+.severity-badge.WARNING { background: rgba(255,184,0,.15); color: #FFB800; }
+.severity-badge.OPPORTUNITY { background: rgba(0,200,81,.15); color: #00C851; }
+.finding-title { font-size: 16px; font-weight: 700; line-height: 1.3; flex: 1; }
+.finding-explanation { font-size: 14px; color: #cbd5e1; line-height: 1.6; margin-bottom: 12px; }
+.finding-meta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.finding-impact {
+  font-size: 13px; padding: 6px 12px; border-radius: 8px;
+  background: rgba(139,92,246,.08); border-left: 3px solid #8b5cf6; color: #a5b4fc;
+}
+.finding-source {
+  font-size: 11px; padding: 4px 10px; border-radius: 6px;
+  background: rgba(6,182,212,.1); color: #67e8f9; font-weight: 600;
+}
+.finding-actions { display: flex; gap: 8px; align-items: center; }
+.btn-fix {
+  background: linear-gradient(135deg, #8b5cf6, #06b6d4); color: #fff; font-weight: 600;
+  padding: 8px 20px; border-radius: 8px; font-size: 13px; transition: opacity .2s;
+}
+.btn-fix:hover { opacity: .9; }
+.btn-dismiss {
+  font-size: 12px; padding: 8px 14px; border-radius: 8px;
+  border: 1px solid rgba(139,92,246,.2); color: #94a3b8; transition: all .2s;
+}
+.btn-dismiss:hover { background: rgba(139,92,246,.1); color: #c4b5fd; }
+
+/* ─── Treatment Plan Modal ─── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(7,9,15,.85);
+  z-index: 200; align-items: center; justify-content: center; padding: 24px;
+}
+.modal-overlay.visible { display: flex; }
+.modal {
+  background: #0f1729; border: 1px solid rgba(139,92,246,.2); border-radius: 16px;
+  max-width: 640px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 32px;
+  position: relative;
+}
+.modal-close {
+  position: absolute; top: 16px; right: 16px; font-size: 20px; color: #94a3b8;
+  width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center;
+  justify-content: center; transition: all .2s;
+}
+.modal-close:hover { background: rgba(139,92,246,.15); color: #e2e8f0; }
+.modal-severity {
+  font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 6px;
+  text-transform: uppercase; letter-spacing: .3px; display: inline-block; margin-bottom: 12px;
+}
+.modal-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+.modal-explanation { font-size: 14px; color: #cbd5e1; margin-bottom: 24px; line-height: 1.6; }
+.modal-section-label {
+  font-size: 12px; color: #8b5cf6; text-transform: uppercase; letter-spacing: .5px;
+  font-weight: 600; margin-bottom: 12px;
+}
+.workflow-steps { margin-bottom: 24px; }
+.workflow-step {
+  display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px;
+  background: rgba(139,92,246,.06); border: 1px solid rgba(139,92,246,.1);
+  border-radius: 10px; margin-bottom: 8px;
+}
+.workflow-step-icon {
+  width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center;
+  justify-content: center; font-size: 14px; flex-shrink: 0; font-weight: 700;
+}
+.workflow-step-icon.trigger { background: rgba(6,182,212,.15); color: #67e8f9; }
+.workflow-step-icon.condition { background: rgba(251,191,36,.15); color: #fbbf24; }
+.workflow-step-icon.action { background: rgba(139,92,246,.15); color: #c4b5fd; }
+.workflow-step-content { flex: 1; }
+.workflow-step-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: .3px; font-weight: 600; }
+.workflow-step-text { font-size: 14px; color: #e2e8f0; margin-top: 2px; }
+.toggle-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px; background: rgba(139,92,246,.06); border-radius: 10px; margin-bottom: 16px;
+}
+.toggle-label { font-size: 14px; font-weight: 600; }
+.toggle-switch { position: relative; width: 48px; height: 26px; cursor: pointer; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-track {
+  position: absolute; inset: 0; background: rgba(139,92,246,.2);
+  border-radius: 13px; transition: background .3s;
+}
+.toggle-switch input:checked + .toggle-track { background: #8b5cf6; }
+.toggle-knob {
+  position: absolute; top: 3px; left: 3px; width: 20px; height: 20px;
+  background: #e2e8f0; border-radius: 50%; transition: transform .3s;
+}
+.toggle-switch input:checked ~ .toggle-knob { transform: translateX(22px); }
+.modal-projection {
+  padding: 14px 16px; background: rgba(74,222,128,.08); border: 1px solid rgba(74,222,128,.15);
+  border-radius: 10px; margin-bottom: 24px;
+}
+.modal-projection-label { font-size: 12px; color: #4ade80; font-weight: 600; text-transform: uppercase; letter-spacing: .3px; margin-bottom: 4px; }
+.modal-projection-value { font-size: 16px; font-weight: 700; color: #4ade80; }
+.btn-activate {
+  width: 100%; background: linear-gradient(135deg, #8b5cf6, #06b6d4); color: #fff;
+  font-weight: 700; padding: 14px; border-radius: 10px; font-size: 15px; transition: opacity .2s;
+}
+.btn-activate:hover { opacity: .9; }
+.btn-activate.activated { background: rgba(74,222,128,.15); color: #4ade80; cursor: default; }
+
+/* ─── Connections Status Bar ─── */
+.connections-bar {
+  background: rgba(139,92,246,.06); border: 1px solid rgba(139,92,246,.12);
+  border-radius: 12px; padding: 20px 24px; margin-bottom: 48px;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
+}
+.connections-list { display: flex; gap: 24px; flex-wrap: wrap; }
+.connection-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.conn-dot { width: 8px; height: 8px; border-radius: 50%; }
+.conn-dot.connected { background: #22c55e; }
+.conn-dot.disconnected { background: #64748b; }
+.conn-name { font-weight: 600; color: #e2e8f0; }
+.conn-status { color: #94a3b8; font-size: 12px; }
+.conn-status.connected { color: #4ade80; }
+.btn-connect {
+  font-size: 11px; padding: 4px 12px; border-radius: 6px;
+  background: rgba(139,92,246,.15); color: #c4b5fd; font-weight: 600; transition: all .2s;
+}
+.btn-connect:hover { background: rgba(139,92,246,.25); }
+.connections-right { display: flex; align-items: center; gap: 16px; }
+.last-sync { font-size: 12px; color: #64748b; }
+.btn-sync-now {
+  font-size: 12px; padding: 6px 14px; border-radius: 8px;
+  border: 1px solid rgba(139,92,246,.25); color: #c4b5fd; font-weight: 600; transition: all .2s;
+}
+.btn-sync-now:hover { background: rgba(139,92,246,.15); border-color: rgba(139,92,246,.4); }
+
+/* ─── Animations ─── */
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.animate-in { animation: fadeInUp .5s ease-out forwards; opacity: 0; }
+.delay-1 { animation-delay: .1s; }
+.delay-2 { animation-delay: .2s; }
+.delay-3 { animation-delay: .3s; }
+.delay-4 { animation-delay: .4s; }
+.delay-5 { animation-delay: .5s; }
+
+/* ─── Responsive ─── */
+@media (max-width: 1024px) {
+  .panels-row { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 768px) {
+  .panels-row { grid-template-columns: repeat(2, 1fr); }
+  .findings-section { flex-direction: column; }
+  .findings-sidebar { width: 100%; display: flex; gap: 4px; overflow-x: auto; }
+  .filter-tab { white-space: nowrap; flex-shrink: 0; }
+  .hero-metrics { flex-direction: column; gap: 8px; }
+}
+@media (max-width: 480px) {
+  .panels-row { grid-template-columns: 1fr; }
+  .connections-bar { flex-direction: column; align-items: flex-start; }
+  .header-inner { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<!-- SVG Gradients (referenced by score ring) -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="scoreGradGreen" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#22c55e"/><stop offset="100%" stop-color="#4ade80"/>
+    </linearGradient>
+    <linearGradient id="scoreGradCyan" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#06b6d4"/><stop offset="100%" stop-color="#67e8f9"/>
+    </linearGradient>
+    <linearGradient id="scoreGradYellow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#eab308"/><stop offset="100%" stop-color="#fbbf24"/>
+    </linearGradient>
+    <linearGradient id="scoreGradRed" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ef4444"/><stop offset="100%" stop-color="#f87171"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<!-- Header -->
+<header class="header">
+  <div class="wrap header-inner">
+    <div class="logo">
+      <div class="logo-icon">N</div>
+      <span>Neural Intelligence</span>
+    </div>
+    <div class="header-right">
+      <button class="sync-btn" id="btnSync" onclick="handleSync()">Sync Now</button>
+      <span class="status-dot" id="statusDot" title="System status"></span>
+    </div>
+  </div>
+</header>
+
+<!-- Main Content -->
+<main class="wrap" style="padding-top:8px;padding-bottom:60px;">
+
+  <!-- 1. BUSINESS HEALTH SCORE -->
+  <section class="hero animate-in" id="heroSection">
+    <div class="hero-company">Loading...</div>
+    <div class="score-ring-wrap">
+      <svg class="score-ring-svg" viewBox="0 0 180 180">
+        <circle class="score-ring-bg" cx="90" cy="90" r="76"/>
+        <circle class="score-ring-fg" id="scoreRing" cx="90" cy="90" r="76"
+          stroke-dasharray="477.5" stroke-dashoffset="477.5"/>
+      </svg>
+      <div class="score-value" id="scoreValue">0</div>
+    </div>
+    <div id="scoreLabel"></div>
+    <div class="hero-metrics" id="heroMetrics"></div>
+    <div class="hero-trend" id="heroTrend"></div>
+  </section>
+
+  <!-- 2. HEALTH PANELS ROW -->
+  <section class="panels-row" id="panelsRow"></section>
+
+  <!-- 3. FINDINGS FEED -->
+  <section class="findings-section">
+    <aside class="findings-sidebar" id="findingsSidebar"></aside>
+    <div class="findings-main">
+      <div class="findings-header">Neural Findings <span class="count" id="findingsCount">0</span></div>
+      <div class="findings-grid" id="findingsGrid"></div>
+    </div>
+  </section>
+
+  <!-- 5. CONNECTIONS STATUS BAR -->
+  <section class="connections-bar animate-in" id="connectionsBar"></section>
+
+</main>
+
+<!-- 4. TREATMENT PLAN MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════
+// NEURAL_DATA — Loaded from /api/neural/dashboard/:client_id
+// Falls back to a welcome state for new clients with no data yet
+// ═══════════════════════════════════════════════════════════════════════
+let NEURAL_DATA = null;
+
+// ═══════════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════════
+let currentFilter = 'all';
+let dismissedIds = new Set();
+
+// ═══════════════════════════════════════════════════════════════════════
+// API LOADER — Fetch live data for the logged-in client
+// ═══════════════════════════════════════════════════════════════════════
+function getClientId() {
+  // 1. Try URL param
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('client_id')) return params.get('client_id');
+
+  // 2. Try JWT token from localStorage (main dashboard stores it)
+  const token = localStorage.getItem('token');
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (payload.clientId) return payload.clientId;
+      if (payload.client_id) return payload.client_id;
+    } catch (e) {}
+  }
+
+  // 3. Try sessionStorage (CW Carriers stores it there)
+  const cwToken = sessionStorage.getItem('cw_token');
+  if (cwToken) {
+    try {
+      const payload = JSON.parse(atob(cwToken.split('.')[1]));
+      if (payload.clientId) return payload.clientId;
+    } catch (e) {}
+  }
+
+  return null;
+}
+
+function getAuthHeader() {
+  const token = localStorage.getItem('token') || sessionStorage.getItem('cw_token');
+  if (token) return { 'Authorization': 'Bearer ' + token };
+  return { 'x-api-key': 'ringlypro-quick-admin-2024' };
+}
+
+async function loadNeuralData() {
+  const clientId = getClientId();
+
+  if (!clientId) {
+    // No client — show welcome state
+    NEURAL_DATA = getWelcomeData();
+    initDashboard();
+    return;
+  }
+
+  const dot = document.getElementById('statusDot');
+  dot.classList.add('syncing');
+
+  try {
+    const res = await fetch(`/api/neural/dashboard/${clientId}`, {
+      headers: getAuthHeader()
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      NEURAL_DATA = data;
+      // Update company name in hero
+      if (data.businessName) {
+        document.querySelector('.hero-company').textContent = data.businessName;
+      }
+    } else {
+      console.error('Neural API error:', data.error);
+      NEURAL_DATA = getWelcomeData();
+    }
+  } catch (e) {
+    console.error('Neural fetch error:', e);
+    NEURAL_DATA = getWelcomeData();
+  }
+
+  dot.classList.remove('syncing');
+  initDashboard();
+}
+
+function getWelcomeData() {
+  return {
+    healthScore: 50,
+    scoreLabel: 'Getting Started',
+    revenueAtRisk: 0,
+    recoveryPotential: 0,
+    trend: { direction: 'up', points: 0, period: '30 days' },
+    businessName: 'Your Business',
+    panels: [
+      { name: 'Call Health', score: 50, topFinding: 'Waiting for call data...', trend: { direction: 'flat', points: 0 }, source: 'Rachel / RinglyPro' },
+      { name: 'Pipeline Health', score: 50, topFinding: 'Connect a CRM to track pipeline', trend: { direction: 'flat', points: 0 }, source: 'CRM' },
+      { name: 'Lead Capture Rate', score: 50, topFinding: 'Score updates as leads come in', trend: { direction: 'flat', points: 0 }, source: 'Rachel + CRM' },
+      { name: 'Customer Retention', score: 60, topFinding: 'No appointment history yet', trend: { direction: 'flat', points: 0 }, source: 'Appointments' },
+      { name: 'Automation Coverage', score: 17, topFinding: 'Connect integrations to improve', trend: { direction: 'up', points: 0 }, source: 'System' }
+    ],
+    findings: [
+      { id: 'welcome', severity: 'OPPORTUNITY', title: 'Neural Intelligence is analyzing your business', explanation: 'As your call data and CRM activity grows, Neural will automatically surface findings, revenue opportunities, and recommended actions. Keep using RinglyPro and check back here.', dollarImpact: '', source: 'System', treatment: null }
+    ],
+    connections: [
+      { name: 'RinglyPro Rachel', status: 'disconnected', lastSync: null },
+      { name: 'CRM', status: 'disconnected', lastSync: null }
+    ]
+  };
+}
+
+function initDashboard() {
+  renderHero();
+  renderPanels();
+  renderSidebar();
+  renderFindings();
+  renderConnections();
+  animateScoreRing();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  // Load live data from API
+  loadNeuralData();
+
+  // Close modal on overlay click
+  document.getElementById('modalOverlay').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) closeModal();
+  });
+  // Close modal on Escape
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+});
+
+// ═══════════════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════════════
+function fmt(n) { return '$' + n.toLocaleString('en-US'); }
+
+function scoreClass(s) {
+  if (s >= 80) return 'excellent';
+  if (s >= 65) return 'good';
+  if (s >= 45) return 'attention';
+  return 'critical';
+}
+
+function esc(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// RENDER: Hero Section
+// ═══════════════════════════════════════════════════════════════════════
+function renderHero() {
+  const d = NEURAL_DATA;
+  if (!d) return;
+  const cls = scoreClass(d.healthScore);
+  document.querySelector('.hero-company').textContent = d.businessName || 'Your Business';
+
+  document.getElementById('scoreValue').textContent = '0';
+  document.getElementById('scoreLabel').innerHTML =
+    `<span class="score-label ${cls}">${esc(d.scoreLabel)}</span>`;
+
+  document.getElementById('heroMetrics').innerHTML = `
+    <div class="hero-metric"><span class="label">Revenue at Risk</span><span class="value red">${fmt(d.revenueAtRisk)}</span></div>
+    <div class="hero-metric"><span class="label">Recovery Potential</span><span class="value green">${fmt(d.recoveryPotential)}</span></div>
+  `;
+
+  const arrow = d.trend.direction === 'up' ? '↑' : '↓';
+  const arrowCls = d.trend.direction === 'up' ? 'up' : 'down';
+  document.getElementById('heroTrend').innerHTML =
+    `<span class="arrow ${arrowCls}">${arrow} ${d.trend.points} pts</span> vs last ${d.trend.period}`;
+}
+
+function animateScoreRing() {
+  const target = NEURAL_DATA.healthScore;
+  const cls = scoreClass(target);
+  const ring = document.getElementById('scoreRing');
+  const circumference = 2 * Math.PI * 76; // ~477.5
+  const offset = circumference - (target / 100) * circumference;
+
+  ring.classList.add(cls);
+  // Trigger animation after brief delay
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      ring.style.strokeDashoffset = offset;
+    });
+  });
+
+  // Animate number count
+  const valueEl = document.getElementById('scoreValue');
+  let current = 0;
+  const step = Math.ceil(target / 60);
+  const interval = setInterval(() => {
+    current += step;
+    if (current >= target) { current = target; clearInterval(interval); }
+    valueEl.textContent = current;
+  }, 25);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// RENDER: Health Panels
+// ═══════════════════════════════════════════════════════════════════════
+function renderPanels() {
+  const container = document.getElementById('panelsRow');
+  container.innerHTML = NEURAL_DATA.panels.map((p, i) => {
+    const cls = scoreClass(p.score);
+    const trendIcon = p.trend.direction === 'up' ? '↑' : p.trend.direction === 'down' ? '↓' : '→';
+    const trendCls = p.trend.direction === 'up' ? 'up' : p.trend.direction === 'down' ? 'down' : 'flat';
+    return `
+      <div class="panel-card animate-in delay-${i + 1}">
+        <div class="panel-name">${esc(p.name)}</div>
+        <div class="panel-score-row">
+          <span class="panel-score ${cls}">${p.score}</span>
+          <span class="panel-badge ${cls}">${cls}</span>
+        </div>
+        <div class="panel-finding">${esc(p.topFinding)}</div>
+        <div class="panel-trend ${trendCls}">${trendIcon} ${p.trend.points} pts</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// RENDER: Findings Sidebar
+// ═══════════════════════════════════════════════════════════════════════
+function renderSidebar() {
+  const findings = NEURAL_DATA.findings.filter(f => !dismissedIds.has(f.id));
+  const counts = {
+    all: findings.length,
+    CRITICAL: findings.filter(f => f.severity === 'CRITICAL').length,
+    WARNING: findings.filter(f => f.severity === 'WARNING').length,
+    OPPORTUNITY: findings.filter(f => f.severity === 'OPPORTUNITY').length
+  };
+
+  const tabs = [
+    { key: 'all', label: 'All' },
+    { key: 'CRITICAL', label: 'Critical' },
+    { key: 'WARNING', label: 'Warnings' },
+    { key: 'OPPORTUNITY', label: 'Opportunities' }
+  ];
+
+  document.getElementById('findingsSidebar').innerHTML = tabs.map(t =>
+    `<button class="filter-tab${currentFilter === t.key ? ' active' : ''}"
+       onclick="setFilter('${t.key}')">${t.label}<span class="filter-count">${counts[t.key]}</span></button>`
+  ).join('');
+}
+
+function setFilter(f) {
+  currentFilter = f;
+  renderSidebar();
+  renderFindings();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// RENDER: Findings Grid
+// ═══════════════════════════════════════════════════════════════════════
+function renderFindings() {
+  let findings = NEURAL_DATA.findings.filter(f => !dismissedIds.has(f.id));
+  if (currentFilter !== 'all') {
+    findings = findings.filter(f => f.severity === currentFilter);
+  }
+
+  document.getElementById('findingsCount').textContent = findings.length;
+
+  if (findings.length === 0) {
+    document.getElementById('findingsGrid').innerHTML =
+      '<div style="text-align:center;padding:40px;color:#64748b">No findings in this category.</div>';
+    return;
+  }
+
+  document.getElementById('findingsGrid').innerHTML = findings.map(f => `
+    <div class="finding-card ${f.severity} animate-in">
+      <div class="finding-top">
+        <span class="finding-title">${esc(f.title)}</span>
+        <span class="severity-badge ${f.severity}">${f.severity}</span>
+      </div>
+      <div class="finding-explanation">${esc(f.explanation)}</div>
+      <div class="finding-meta">
+        <span class="finding-impact">💰 ${esc(f.dollarImpact)}</span>
+        <span class="finding-source">${esc(f.source)}</span>
+      </div>
+      <div class="finding-actions">
+        <button class="btn-fix" onclick="openTreatment('${f.id}')">Fix This</button>
+        <button class="btn-dismiss" onclick="dismissFinding('${f.id}')">Dismiss</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function dismissFinding(id) {
+  dismissedIds.add(id);
+  renderSidebar();
+  renderFindings();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// TREATMENT PLAN MODAL
+// ═══════════════════════════════════════════════════════════════════════
+function openTreatment(id) {
+  const finding = NEURAL_DATA.findings.find(f => f.id === id);
+  if (!finding) return;
+
+  const modal = document.getElementById('modalContent');
+  const severityBadgeCls = `severity-badge ${finding.severity}`;
+
+  if (!finding.treatment) {
+    // Placeholder modal for findings without a built treatment
+    modal.innerHTML = `
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+      <span class="${severityBadgeCls}">${finding.severity}</span>
+      <div class="modal-title">${esc(finding.title)}</div>
+      <div class="modal-explanation">${esc(finding.explanation)}</div>
+      <div class="modal-section-label">Treatment Plan</div>
+      <div style="padding:32px;text-align:center;color:#94a3b8;background:rgba(139,92,246,.06);border-radius:10px;">
+        <div style="font-size:24px;margin-bottom:8px;">🔬</div>
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Treatment Under Development</div>
+        <div style="font-size:13px;">Our Neural engine is designing an automated workflow for this finding. Check back soon.</div>
+      </div>
+    `;
+  } else {
+    const t = finding.treatment;
+    const stepIcons = { trigger: '⚡', condition: '🔍', action: '🎯' };
+    const stepLabels = { trigger: 'Trigger', condition: 'Condition', action: 'Action' };
+
+    modal.innerHTML = `
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+      <span class="${severityBadgeCls}">${finding.severity}</span>
+      <div class="modal-title">${esc(finding.title)}</div>
+      <div class="modal-explanation">${esc(finding.explanation)}</div>
+      <div class="modal-section-label">Recommended Workflow</div>
+      <div class="workflow-steps">
+        ${t.workflow.map(w => `
+          <div class="workflow-step">
+            <div class="workflow-step-icon ${w.type}">${stepIcons[w.type]}</div>
+            <div class="workflow-step-content">
+              <div class="workflow-step-label">${stepLabels[w.type]}</div>
+              <div class="workflow-step-text">${esc(w.text)}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-label">Activate Workflow</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="treatmentToggle" ${t.active ? 'checked' : ''} onchange="toggleTreatment('${id}')">
+          <span class="toggle-track"></span>
+          <span class="toggle-knob"></span>
+        </label>
+      </div>
+      <div class="modal-projection">
+        <div class="modal-projection-label">Estimated Improvement</div>
+        <div class="modal-projection-value">${esc(t.projection)}</div>
+      </div>
+      <button class="btn-activate" id="btnActivate" onclick="activateTreatment('${id}')">
+        ${t.active ? '✓ Treatment Active' : 'Activate Treatment'}
+      </button>
+    `;
+
+    if (t.active) {
+      document.getElementById('btnActivate').classList.add('activated');
+    }
+  }
+
+  document.getElementById('modalOverlay').classList.add('visible');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('visible');
+}
+
+function toggleTreatment(id) {
+  const finding = NEURAL_DATA.findings.find(f => f.id === id);
+  if (finding && finding.treatment) {
+    finding.treatment.active = !finding.treatment.active;
+    const btn = document.getElementById('btnActivate');
+    if (finding.treatment.active) {
+      btn.textContent = '✓ Treatment Active';
+      btn.classList.add('activated');
+    } else {
+      btn.textContent = 'Activate Treatment';
+      btn.classList.remove('activated');
+    }
+  }
+}
+
+function activateTreatment(id) {
+  const finding = NEURAL_DATA.findings.find(f => f.id === id);
+  if (finding && finding.treatment && !finding.treatment.active) {
+    finding.treatment.active = true;
+    document.getElementById('treatmentToggle').checked = true;
+    const btn = document.getElementById('btnActivate');
+    btn.textContent = '✓ Treatment Active';
+    btn.classList.add('activated');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// RENDER: Connections Status Bar
+// ═══════════════════════════════════════════════════════════════════════
+function renderConnections() {
+  const conns = NEURAL_DATA.connections;
+  const listHTML = conns.map(c => {
+    const isConnected = c.status === 'connected';
+    return `
+      <div class="connection-item">
+        <span class="conn-dot ${isConnected ? 'connected' : 'disconnected'}"></span>
+        <span class="conn-name">${esc(c.name)}</span>
+        ${isConnected
+          ? `<span class="conn-status connected">Connected</span>`
+          : `<button class="btn-connect" onclick="alert('OAuth flow coming soon')">Connect</button>`}
+      </div>
+    `;
+  }).join('');
+
+  const latestSync = conns.filter(c => c.lastSync).map(c => c.lastSync)[0] || 'Never';
+
+  document.getElementById('connectionsBar').innerHTML = `
+    <div class="connections-list">${listHTML}</div>
+    <div class="connections-right">
+      <span class="last-sync">Last sync: ${esc(latestSync)}</span>
+      <button class="btn-sync-now" onclick="handleSync()">↻ Sync Now</button>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// SYNC HANDLER
+// ═══════════════════════════════════════════════════════════════════════
+function handleSync() {
+  const btn = document.getElementById('btnSync');
+  btn.textContent = 'Syncing...';
+  btn.disabled = true;
+
+  // Re-fetch live data from API
+  loadNeuralData().then(() => {
+    btn.textContent = 'Sync Now';
+    btn.disabled = false;
+    if (NEURAL_DATA && NEURAL_DATA.connections) {
+      NEURAL_DATA.connections.forEach(c => { if (c.status === 'connected') c.lastSync = 'Just now'; });
+      renderConnections();
+    }
+  });
+}
+</script>
+</body>
+</html>
