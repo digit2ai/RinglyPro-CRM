@@ -470,7 +470,7 @@ class NeuralEngine {
          COUNT(*) AS total,
          COUNT(*) FILTER (WHERE status = 'completed') AS completed,
          COUNT(*) FILTER (WHERE status IN ('pending','in_progress') AND due_date < CURRENT_DATE) AS overdue
-       FROM tasks WHERE client_id = :clientId AND created_at > NOW() - INTERVAL '30 days'`,
+       FROM crm_tasks WHERE client_id = :clientId AND created_at > NOW() - INTERVAL '30 days'`,
       { replacements: { clientId }, type: QueryTypes.SELECT }
     );
 

@@ -28,7 +28,7 @@ router.get('/', async (req, res) => {
     const tasks = await sequelize.query(
       `SELECT t.*, c.first_name, c.last_name, c.phone as contact_phone,
               d.title as deal_title
-       FROM tasks t
+       FROM crm_tasks t
        LEFT JOIN contacts c ON t.contact_id = c.id
        LEFT JOIN deals d ON t.deal_id = d.id
        ${where} ORDER BY
@@ -52,7 +52,7 @@ router.get('/today', async (req, res) => {
     const tasks = await sequelize.query(
       `SELECT t.*, c.first_name, c.last_name, c.phone as contact_phone,
               CASE WHEN t.due_date < CURRENT_DATE THEN true ELSE false END as is_overdue
-       FROM tasks t LEFT JOIN contacts c ON t.contact_id = c.id
+       FROM crm_tasks t LEFT JOIN contacts c ON t.contact_id = c.id
        WHERE t.client_id = :clientId AND t.status IN ('pending','in_progress')
          AND (t.due_date <= CURRENT_DATE OR t.due_date IS NULL)
        ORDER BY t.due_date ASC NULLS LAST, t.priority ASC`,
@@ -77,7 +77,7 @@ router.get('/stats', async (req, res) => {
          COUNT(*) FILTER (WHERE status = 'completed') as completed,
          COUNT(*) FILTER (WHERE status IN ('pending','in_progress') AND due_date < CURRENT_DATE) as overdue,
          COUNT(*) FILTER (WHERE status IN ('pending','in_progress') AND due_date = CURRENT_DATE) as due_today
-       FROM tasks WHERE client_id = :clientId`,
+       FROM crm_tasks WHERE client_id = :clientId`,
       { replacements: { clientId }, type: QueryTypes.SELECT }
     );
     res.json({ success: true, stats });
@@ -93,7 +93,7 @@ router.post('/', async (req, res) => {
     if (!client_id || !title) return res.status(400).json({ success: false, error: 'client_id and title required' });
 
     const [task] = await sequelize.query(
-      `INSERT INTO tasks (client_id, contact_id, deal_id, title, description, task_type, priority, status, due_date, due_time, source, created_at, updated_at)
+      `INSERT INTO crm_tasks (client_id, contact_id, deal_id, title, description, task_type, priority, status, due_date, due_time, source, created_at, updated_at)
        VALUES (:clientId, :contactId, :dealId, :title, :desc, :type, :priority, 'pending', :dueDate, :dueTime, :source, NOW(), NOW())
        RETURNING *`,
       { replacements: { clientId: client_id, contactId: contact_id || null, dealId: deal_id || null, title, desc: description || null, type: task_type, priority, dueDate: due_date || null, dueTime: due_time || null, source }, type: QueryTypes.SELECT }
@@ -128,8 +128,8 @@ router.put('/:id', async (req, res) => {
     }
     if (setClauses.length === 0) return res.status(400).json({ success: false, error: 'No fields' });
     setClauses.push('updated_at = NOW()');
-    await sequelize.query(`UPDATE tasks SET ${setClauses.join(', ')} WHERE id = :id`, { replacements });
-    const [task] = await sequelize.query('SELECT * FROM tasks WHERE id = :id', { replacements: { id }, type: QueryTypes.SELECT });
+    await sequelize.query(`UPDATE crm_tasks SET ${setClauses.join(', ')} WHERE id = :id`, { replacements });
+    const [task] = await sequelize.query('SELECT * FROM crm_tasks WHERE id = :id', { replacements: { id }, type: QueryTypes.SELECT });
     res.json({ success: true, task });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -140,8 +140,8 @@ router.put('/:id', async (req, res) => {
 router.put('/:id/complete', async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    await sequelize.query("UPDATE tasks SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = :id", { replacements: { id } });
-    const [task] = await sequelize.query('SELECT * FROM tasks WHERE id = :id', { replacements: { id }, type: QueryTypes.SELECT });
+    await sequelize.query("UPDATE crm_tasks SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = :id", { replacements: { id } });
+    const [task] = await sequelize.query('SELECT * FROM crm_tasks WHERE id = :id', { replacements: { id }, type: QueryTypes.SELECT });
 
     // Log activity
     if (task) {
@@ -163,7 +163,7 @@ router.put('/:id/complete', async (req, res) => {
 // DELETE /api/tasks/:id
 router.delete('/:id', async (req, res) => {
   try {
-    await sequelize.query('DELETE FROM tasks WHERE id = :id', { replacements: { id: parseInt(req.params.id) } });
+    await sequelize.query('DELETE FROM crm_tasks WHERE id = :id', { replacements: { id: parseInt(req.params.id) } });
     res.json({ success: true });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });

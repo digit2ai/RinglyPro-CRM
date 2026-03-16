@@ -279,9 +279,9 @@ async function startServer() {
           console.log('✅ deals table ready');
         } catch (e) { console.log('⚠️ deals migration skipped:', e.message); }
 
-        // TASKS TABLE
+        // CRM TASKS TABLE (separate from store-health-ai tasks)
         try {
-          await queryWithTimeout(`CREATE TABLE IF NOT EXISTS tasks (
+          await queryWithTimeout(`CREATE TABLE IF NOT EXISTS crm_tasks (
             id SERIAL PRIMARY KEY,
             client_id INTEGER NOT NULL,
             contact_id INTEGER,
@@ -298,12 +298,12 @@ async function startServer() {
             source VARCHAR(30) DEFAULT 'manual',
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
-          )`, 'tasks migration');
-          await queryWithTimeout('CREATE INDEX IF NOT EXISTS idx_tasks_client ON tasks(client_id)', 'tasks idx1');
-          await queryWithTimeout('CREATE INDEX IF NOT EXISTS idx_tasks_due ON tasks(client_id, due_date, status)', 'tasks idx2');
-          await queryWithTimeout('CREATE INDEX IF NOT EXISTS idx_tasks_contact ON tasks(contact_id)', 'tasks idx3');
-          console.log('✅ tasks table ready');
-        } catch (e) { console.log('⚠️ tasks migration skipped:', e.message); }
+          )`, 'crm_tasks migration');
+          await queryWithTimeout('CREATE INDEX IF NOT EXISTS idx_crm_tasks_client ON crm_tasks(client_id)', 'crm_tasks idx1');
+          await queryWithTimeout('CREATE INDEX IF NOT EXISTS idx_crm_tasks_due ON crm_tasks(client_id, due_date, status)', 'crm_tasks idx2');
+          await queryWithTimeout('CREATE INDEX IF NOT EXISTS idx_crm_tasks_contact ON crm_tasks(contact_id)', 'crm_tasks idx3');
+          console.log('✅ crm_tasks table ready');
+        } catch (e) { console.log('⚠️ crm_tasks migration skipped:', e.message); }
 
         // ACTIVITIES TABLE
         try {
@@ -352,6 +352,7 @@ async function startServer() {
             use_count INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT NOW()
           )`, 'sms_templates migration');
+          await queryWithTimeout("ALTER TABLE sms_templates ADD COLUMN IF NOT EXISTS description VARCHAR(255)", 'sms_templates desc col');
           console.log('✅ sms_templates table ready');
         } catch (e) { console.log('⚠️ sms_templates migration skipped:', e.message); }
 
