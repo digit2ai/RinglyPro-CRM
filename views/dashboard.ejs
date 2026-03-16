@@ -2578,7 +2578,7 @@
         .dashboard-grid {
             display: grid;
             grid-template-columns: 250px 1fr;
-            min-height: calc(100vh - 140px);
+            min-height: 100vh;
         }
 
         /* ─── Sidebar (Left Pane) ─── */
@@ -2587,9 +2587,9 @@
             border-right: 1px solid #21262D;
             display: flex;
             flex-direction: column;
-            height: calc(100vh - 140px);
+            height: 100vh;
             position: sticky;
-            top: 140px;
+            top: 0;
             overflow-y: auto;
             transition: transform 0.3s ease, width 0.3s ease;
             z-index: 50;
@@ -2710,13 +2710,13 @@
         /* ─── Main Content (Right Pane) ─── */
         .dashboard-main {
             overflow-y: auto;
-            max-height: calc(100vh - 140px);
+            max-height: 100vh;
             background: #f3f4f6;
         }
         /* Neural iframe view in main pane */
         .neural-view {
             width: 100%;
-            height: calc(100vh - 140px);
+            height: 100vh;
             border: none;
             display: block;
             background: #07090f;
@@ -2782,7 +2782,7 @@
     </style>
 </head>
 <body>
-    <!-- Low Balance Alert Banner -->
+    <!-- Low Balance Alert (hidden, shown via JS) -->
     <div class="low-balance-alert" id="lowBalanceAlert">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
@@ -2794,54 +2794,7 @@
         <button onclick="showCreditsInfo()">Recharge</button>
     </div>
 
-    <!-- Header with Rachel Toggle -->
-    <div class="header">
-        <div class="header-content">
-            <div class="header-top">
-                <div></div>
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <a href="#" id="a2pVerifyBtn" class="a2p-verify-btn" onclick="openA2PVerification(event)">
-                        <svg style="width: 1rem; height: 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                        </svg>
-                        A2P Verify
-                        <span id="a2pStatusBadge" class="a2p-status-badge a2p-status-not-started">Loading...</span>
-                    </a>
-                    <a href="https://api.leadconnectorhq.com/widget/bookings/missed-call-text-back-bde9451d-56fc-4189-bf4e-beb0f6661258-7e52ccdb-45c2-4ce8-99f6-a7bf13669fc4-3cc62e97-695d-4cf4-85ba-9f47ac4af26f" target="_blank" class="training-btn">
-                        <svg style="width: 1rem; height: 1rem; display: inline; vertical-align: middle; margin-right: 0.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                        </svg>
-                        Book Free Training
-                    </a>
-                    <button class="logout-btn" onclick="logout()">
-                        <svg style="width: 1rem; height: 1rem; display: inline; vertical-align: middle; margin-right: 0.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                        </svg>
-                        Logout
-                    </button>
-                </div>
-            </div>
-            
-            <!-- AI Assistant Toggle Card with Logo and Business Name -->
-            <div class="rachel-card">
-                <div class="rachel-toggle-row">
-                    <div class="rachel-info">
-                        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68e1ceaedd63a48d8059af0a.png" alt="RinglyPro" style="height: 40px; width: 40px; border-radius: 8px; margin-right: 10px;">
-                        <div class="rachel-text">
-                            <h3 style="display: flex; align-items: center; gap: 6px;"><span id="businessNameDisplay">RinglyPro</span></h3>
-                            <p style="display: flex; align-items: center; gap: 4px;"><span class="status-dot active" id="rachelStatusDot" style="width: 8px; height: 8px;"></span> <span id="rachelStatusText">Checking status...</span></p>
-                        </div>
-                    </div>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="rachelToggle">
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Two-Pane Layout: Sidebar | Content -->
+    <!-- Full-Screen Two-Pane Layout: Sidebar | Content -->
     <div class="dashboard-grid">
 
     <!-- Mobile sidebar overlay + toggle -->
@@ -2854,7 +2807,37 @@
             <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69b02d62034886f7c9e996d9.png" alt="RinglyPro">
             <div><span class="sidebar-tier-badge" id="sidebarTierBadge">AI Receptionist</span></div>
         </div>
+
+        <!-- Rachel AI Toggle (moved from header) -->
+        <div style="padding: 12px 16px; border-bottom: 1px solid #21262D;">
+            <div class="rachel-card" style="margin:0; border:none; background: rgba(14,165,233,.06); border-radius: 10px; padding: 10px 12px;">
+                <div class="rachel-toggle-row" style="gap:8px;">
+                    <div class="rachel-info" style="gap:8px;">
+                        <div class="rachel-text">
+                            <h3 style="display:flex;align-items:center;gap:6px;font-size:13px;color:#E6EDF3;"><span id="businessNameDisplay">RinglyPro</span></h3>
+                            <p style="display:flex;align-items:center;gap:4px;font-size:11px;color:#8B949E;margin:0;"><span class="status-dot active" id="rachelStatusDot" style="width:7px;height:7px;"></span> <span id="rachelStatusText">Checking...</span></p>
+                        </div>
+                    </div>
+                    <label class="toggle-switch" style="transform:scale(0.85);">
+                        <input type="checkbox" id="rachelToggle">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
         <nav class="sidebar-nav">
+            <div class="sidebar-section-label">INTELLIGENCE</div>
+            <button class="sidebar-nav-item active" onclick="sidebarNav('neural', this)">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                Neural Intelligence
+            </button>
+            <button class="sidebar-nav-item" onclick="showCreditsInfo()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Tokens
+                <span class="sidebar-nav-badge" id="sidebarTokenCount" style="background:rgba(16,185,129,.2);color:#10b981;">0</span>
+            </button>
+
             <div class="sidebar-section-label">DASHBOARD</div>
             <button class="sidebar-nav-item" onclick="sidebarNav('today', this)">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
@@ -2884,21 +2867,15 @@
                 Share &amp; Referral
             </button>
 
-            <div class="sidebar-section-label">INTELLIGENCE</div>
-            <button class="sidebar-nav-item active" onclick="sidebarNav('neural', this)">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                Neural Intelligence
-            </button>
-            <button class="sidebar-nav-item" onclick="showCreditsInfo()">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                Tokens
-                <span class="sidebar-nav-badge" id="sidebarTokenCount" style="background:rgba(16,185,129,.2);color:#10b981;">0</span>
-            </button>
-
             <div class="sidebar-section-label">ADMIN</div>
             <button class="sidebar-nav-item" onclick="openSettings()">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                 Settings
+            </button>
+            <button class="sidebar-nav-item" onclick="openA2PVerification(event)">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                A2P Verify
+                <span class="sidebar-nav-badge" id="a2pStatusBadge" style="background:rgba(139,92,246,.2);color:#c4b5fd;font-size:9px;">...</span>
             </button>
         </nav>
         <div class="sidebar-footer">
