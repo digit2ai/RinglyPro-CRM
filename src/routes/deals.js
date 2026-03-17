@@ -213,4 +213,218 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// ═══════════════════════════════════════════════════════════════
+// DEAL SYNC — Pull deals from connected CRMs into local DB
+// ═══════════════════════════════════════════════════════════════
+
+const GHL_BASE = 'https://services.leadconnectorhq.com';
+const HS_BASE = 'https://api.hubapi.com';
+
+// GHL stage → local stage mapping
+const GHL_STAGE_MAP = {
+  'new lead': 'new_lead', 'contacted': 'contacted', 'qualified': 'qualified',
+  'proposal sent': 'proposal_sent', 'negotiation': 'negotiation',
+  'closed': 'closed_won', 'won': 'closed_won', 'lost': 'closed_lost'
+};
+
+// HubSpot stage → local stage mapping
+const HS_STAGE_MAP = {
+  'appointmentscheduled': 'new_lead', 'qualifiedtobuy': 'qualified',
+  'presentationscheduled': 'proposal_sent', 'decisionmakerboughtin': 'negotiation',
+  'contractsent': 'negotiation', 'closedwon': 'closed_won', 'closedlost': 'closed_lost'
+};
+
+// Zoho stage → local stage mapping
+const ZOHO_STAGE_MAP = {
+  'qualification': 'new_lead', 'needs analysis': 'contacted',
+  'value proposition': 'qualified', 'proposal/price quote': 'proposal_sent',
+  'negotiation/review': 'negotiation', 'closed won': 'closed_won',
+  'closed-won': 'closed_won', 'closed lost': 'closed_lost', 'closed-lost': 'closed_lost'
+};
+
+// GET /api/deals/sync — Sync deals from CRMs + return merged pipeline
+router.get('/sync', async (req, res) => {
+  try {
+    const clientId = getClientId(req);
+    if (!clientId) return res.status(400).json({ success: false, error: 'client_id required' });
+
+    // Get client CRM config
+    const [client] = await sequelize.query(
+      `SELECT id, ghl_api_key, ghl_location_id, hubspot_api_key, settings
+       FROM clients WHERE id = :clientId`,
+      { replacements: { clientId }, type: QueryTypes.SELECT }
+    );
+    if (!client) return res.status(404).json({ success: false, error: 'Client not found' });
+
+    const synced = { ghl: 0, hubspot: 0, zoho: 0 };
+
+    // ─── Sync GHL Opportunities ───────────────────────────
+    if (client.ghl_api_key && client.ghl_location_id) {
+      try {
+        // Get GHL pipelines first
+        const pipRes = await fetch(`${GHL_BASE}/opportunities/pipelines?locationId=${client.ghl_location_id}`, {
+          headers: { 'Authorization': `Bearer ${client.ghl_api_key}`, 'Version': '2021-07-28' }
+        });
+        const pipData = await pipRes.json();
+        const stageNames = {};
+        if (pipData.pipelines) {
+          pipData.pipelines.forEach(p => p.stages.forEach(s => { stageNames[s.id] = s.name.toLowerCase(); }));
+        }
+
+        // Get GHL opportunities
+        const oppRes = await fetch(`${GHL_BASE}/opportunities/search?locationId=${client.ghl_location_id}&limit=100`, {
+          method: 'GET',
+          headers: { 'Authorization': `Bearer ${client.ghl_api_key}`, 'Version': '2021-07-28' }
+        });
+        const oppData = await oppRes.json();
+
+        if (oppData.opportunities) {
+          for (const opp of oppData.opportunities) {
+            const stageName = stageNames[opp.pipelineStageId] || 'new_lead';
+            const localStage = GHL_STAGE_MAP[stageName] || 'new_lead';
+            const amount = parseFloat(opp.monetaryValue) || 0;
+            const title = opp.name || 'GHL Deal';
+
+            // Upsert: check if we already have this GHL deal
+            const [existing] = await sequelize.query(
+              `SELECT id FROM deals WHERE client_id = :clientId AND source = 'ghl_sync' AND notes LIKE :ghlId`,
+              { replacements: { clientId, ghlId: `%ghl_id:${opp.id}%` }, type: QueryTypes.SELECT }
+            );
+
+            if (existing) {
+              await sequelize.query(
+                `UPDATE deals SET stage = :stage, amount = :amount, probability = :prob, title = :title, updated_at = NOW() WHERE id = :id`,
+                { replacements: { id: existing.id, stage: localStage, amount, prob: STAGE_PROBABILITY[localStage] || 0, title } }
+              );
+            } else {
+              await sequelize.query(
+                `INSERT INTO deals (client_id, title, stage, amount, probability, source, notes, created_at, updated_at)
+                 VALUES (:clientId, :title, :stage, :amount, :prob, 'ghl_sync', :notes, NOW(), NOW())`,
+                { replacements: { clientId, title, stage: localStage, amount, prob: STAGE_PROBABILITY[localStage] || 0, notes: `ghl_id:${opp.id}` } }
+              );
+              synced.ghl++;
+            }
+          }
+        }
+      } catch (e) { console.error('[Deal Sync] GHL error:', e.message); }
+    }
+
+    // ─── Sync HubSpot Deals ──────────────────────────────
+    const hsToken = client.hubspot_api_key || client.settings?.integration?.hubspot?.accessToken;
+    if (hsToken) {
+      try {
+        const hsRes = await fetch(`${HS_BASE}/crm/v3/objects/deals?limit=100&properties=dealname,amount,dealstage,pipeline`, {
+          headers: { 'Authorization': `Bearer ${hsToken}` }
+        });
+        const hsData = await hsRes.json();
+
+        if (hsData.results) {
+          for (const deal of hsData.results) {
+            const stageName = deal.properties.dealstage || '';
+            const localStage = HS_STAGE_MAP[stageName] || 'new_lead';
+            const amount = parseFloat(deal.properties.amount) || 0;
+            const title = deal.properties.dealname || 'HubSpot Deal';
+
+            const [existing] = await sequelize.query(
+              `SELECT id FROM deals WHERE client_id = :clientId AND source = 'hubspot_sync' AND notes LIKE :hsId`,
+              { replacements: { clientId, hsId: `%hs_id:${deal.id}%` }, type: QueryTypes.SELECT }
+            );
+
+            if (existing) {
+              await sequelize.query(
+                `UPDATE deals SET stage = :stage, amount = :amount, probability = :prob, title = :title, updated_at = NOW() WHERE id = :id`,
+                { replacements: { id: existing.id, stage: localStage, amount, prob: STAGE_PROBABILITY[localStage] || 0, title } }
+              );
+            } else {
+              await sequelize.query(
+                `INSERT INTO deals (client_id, title, stage, amount, probability, source, notes, created_at, updated_at)
+                 VALUES (:clientId, :title, :stage, :amount, :prob, 'hubspot_sync', :notes, NOW(), NOW())`,
+                { replacements: { clientId, title, stage: localStage, amount, prob: STAGE_PROBABILITY[localStage] || 0, notes: `hs_id:${deal.id}` } }
+              );
+              synced.hubspot++;
+            }
+          }
+        }
+      } catch (e) { console.error('[Deal Sync] HubSpot error:', e.message); }
+    }
+
+    // ─── Sync Zoho Deals ─────────────────────────────────
+    const zoho = client.settings?.integration?.zoho;
+    if (zoho?.enabled && zoho?.refreshToken) {
+      try {
+        // Get Zoho access token
+        const tokenRes = await fetch(`https://accounts.zoho.${zoho.region || 'com'}/oauth/v2/token`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: `grant_type=refresh_token&client_id=${zoho.clientId}&client_secret=${zoho.clientSecret}&refresh_token=${zoho.refreshToken}`
+        });
+        const tokenData = await tokenRes.json();
+        const zohoToken = tokenData.access_token;
+
+        if (zohoToken) {
+          const zoRes = await fetch(`https://www.zohoapis.${zoho.region || 'com'}/crm/v2/Deals?per_page=100`, {
+            headers: { 'Authorization': `Zoho-oauthtoken ${zohoToken}` }
+          });
+          const zoData = await zoRes.json();
+
+          if (zoData.data) {
+            for (const deal of zoData.data) {
+              const stageName = (deal.Stage || '').toLowerCase();
+              const localStage = ZOHO_STAGE_MAP[stageName] || 'new_lead';
+              const amount = parseFloat(deal.Amount) || 0;
+              const title = deal.Deal_Name || 'Zoho Deal';
+
+              const [existing] = await sequelize.query(
+                `SELECT id FROM deals WHERE client_id = :clientId AND source = 'zoho_sync' AND notes LIKE :zoId`,
+                { replacements: { clientId, zoId: `%zoho_id:${deal.id}%` }, type: QueryTypes.SELECT }
+              );
+
+              if (existing) {
+                await sequelize.query(
+                  `UPDATE deals SET stage = :stage, amount = :amount, probability = :prob, title = :title, updated_at = NOW() WHERE id = :id`,
+                  { replacements: { id: existing.id, stage: localStage, amount, prob: STAGE_PROBABILITY[localStage] || 0, title } }
+                );
+              } else {
+                await sequelize.query(
+                  `INSERT INTO deals (client_id, title, stage, amount, probability, source, notes, created_at, updated_at)
+                   VALUES (:clientId, :title, :stage, :amount, :prob, 'zoho_sync', :notes, NOW(), NOW())`,
+                  { replacements: { clientId, title, stage: localStage, amount, prob: STAGE_PROBABILITY[localStage] || 0, notes: `zoho_id:${deal.id}` } }
+                );
+                synced.zoho++;
+              }
+            }
+          }
+        }
+      } catch (e) { console.error('[Deal Sync] Zoho error:', e.message); }
+    }
+
+    // Return merged pipeline
+    const deals = await sequelize.query(
+      `SELECT d.*, c.first_name, c.last_name, c.phone as contact_phone,
+              EXTRACT(DAY FROM NOW() - d.updated_at) as days_in_stage
+       FROM deals d LEFT JOIN contacts c ON d.contact_id = c.id
+       WHERE d.client_id = :clientId ORDER BY d.updated_at DESC`,
+      { replacements: { clientId }, type: QueryTypes.SELECT }
+    );
+
+    const [forecast] = await sequelize.query(
+      `SELECT COALESCE(SUM(amount * probability / 100.0), 0) as weighted_forecast,
+              COUNT(*) as open_deals, COALESCE(SUM(amount), 0) as total_pipeline
+       FROM deals WHERE client_id = :clientId AND stage NOT IN ('closed_won','closed_lost')`,
+      { replacements: { clientId }, type: QueryTypes.SELECT }
+    );
+
+    res.json({
+      success: true,
+      synced,
+      deals,
+      forecast,
+      total: deals.length
+    });
+  } catch (e) {
+    console.error('[Deal Sync] Error:', e.message);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 module.exports = router;

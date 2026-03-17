@@ -147,15 +147,32 @@ async function loadPipeline() {
   const clientId = getClientId();
   if (!clientId) return;
   try {
-    const [dealsRes, forecastRes] = await Promise.all([
-      fetch(`/api/deals?client_id=${clientId}&limit=200`, { headers: getAuth() }),
-      fetch(`/api/deals/forecast?client_id=${clientId}`, { headers: getAuth() })
-    ]);
-    const dealsData = await dealsRes.json();
-    const forecastData = await forecastRes.json();
-    allDeals = dealsData.deals || [];
-    renderSummary(forecastData);
-    renderPipeline();
+    // Sync deals from connected CRMs (GHL, HubSpot, Zoho) + load local
+    const syncRes = await fetch(`/api/deals/sync?client_id=${clientId}`, { headers: getAuth() });
+    const syncData = await syncRes.json();
+    if (syncData.success) {
+      allDeals = syncData.deals || [];
+      renderSummary(syncData.forecast || {});
+      renderPipeline();
+      // Show sync badge if new deals imported
+      const total = (syncData.synced?.ghl||0) + (syncData.synced?.hubspot||0) + (syncData.synced?.zoho||0);
+      if (total > 0) {
+        const badge = document.createElement('div');
+        badge.style.cssText = 'position:fixed;top:60px;right:24px;background:rgba(74,222,128,.15);color:#4ade80;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;z-index:100;';
+        badge.textContent = `Synced ${total} new deals from CRMs`;
+        document.body.appendChild(badge);
+        setTimeout(() => badge.remove(), 4000);
+      }
+    } else {
+      // Fallback to local only
+      const dealsRes = await fetch(`/api/deals?client_id=${clientId}&limit=200`, { headers: getAuth() });
+      const dealsData = await dealsRes.json();
+      allDeals = dealsData.deals || [];
+      const forecastRes = await fetch(`/api/deals/forecast?client_id=${clientId}`, { headers: getAuth() });
+      const forecastData = await forecastRes.json();
+      renderSummary(forecastData);
+      renderPipeline();
+    }
   } catch(e) { console.error('Load error:', e); }
 }
 
@@ -198,6 +215,10 @@ function renderDealCard(d) {
   const days = Math.floor(parseFloat(d.days_in_stage) || 0);
   const isStale = days > 7 && !['closed_won','closed_lost'].includes(d.stage);
   const contact = d.first_name ? `${d.first_name} ${d.last_name || ''}` : '';
+  const srcBadge = d.source === 'ghl_sync' ? '<span class="deal-tag" style="background:rgba(234,88,12,.15);color:#fb923c;">GHL</span>'
+    : d.source === 'hubspot_sync' ? '<span class="deal-tag" style="background:rgba(255,122,89,.15);color:#ff7a59;">HubSpot</span>'
+    : d.source === 'zoho_sync' ? '<span class="deal-tag" style="background:rgba(220,38,38,.15);color:#f87171;">Zoho</span>'
+    : '';
   return `
     <div class="deal-card ${isStale ? 'stale' : ''}" draggable="true"
       ondragstart="dragStart(event,${d.id})" ondragend="dragEnd(event)"
@@ -208,6 +229,7 @@ function renderDealCard(d) {
         <span class="deal-amount">$${Number(d.amount||0).toLocaleString()}</span>
         <span class="deal-days ${isStale?'stale':''}">${days}d</span>
       </div>
+      ${srcBadge ? `<div class="deal-tags">${srcBadge}</div>` : ''}
     </div>`;
 }
 
