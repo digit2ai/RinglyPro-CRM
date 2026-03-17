@@ -281,30 +281,32 @@ router.get('/sync', async (req, res) => {
 
         if (oppData.opportunities) {
           for (const opp of oppData.opportunities) {
-            const stageName = stageNames[opp.pipelineStageId] || 'new_lead';
-            const localStage = GHL_STAGE_MAP[stageName] || 'new_lead';
-            const amount = Number(opp.monetaryValue) || 0;
-            const title = opp.name || 'GHL Deal';
+            try {
+              const stageName = stageNames[opp.pipelineStageId] || 'new_lead';
+              const localStage = GHL_STAGE_MAP[stageName] || 'new_lead';
+              const amt = isNaN(Number(opp.monetaryValue)) ? 0 : Number(opp.monetaryValue);
+              const prb = STAGE_PROBABILITY[localStage] !== undefined ? STAGE_PROBABILITY[localStage] : 0;
+              const title = String(opp.name || 'GHL Deal');
 
-            // Upsert: check if we already have this GHL deal
-            const [existing] = await sequelize.query(
-              `SELECT id FROM deals WHERE client_id = :clientId AND source = 'ghl_sync' AND notes LIKE :ghlId`,
-              { replacements: { clientId, ghlId: `%ghl_id:${opp.id}%` }, type: QueryTypes.SELECT }
-            );
+              const [existing] = await sequelize.query(
+                `SELECT id FROM deals WHERE client_id = $1 AND source = 'ghl_sync' AND notes LIKE $2`,
+                { bind: [clientId, `%ghl_id:${opp.id}%`], type: QueryTypes.SELECT }
+              );
 
-            if (existing) {
-              await sequelize.query(
-                `UPDATE deals SET stage = :stage, amount = :amount, probability = :prob, title = :title, updated_at = NOW() WHERE id = :id`,
-                { replacements: { id: existing.id, stage: localStage, amount, prob: Number(STAGE_PROBABILITY[localStage]) || 0, title } }
-              );
-            } else {
-              await sequelize.query(
-                `INSERT INTO deals (client_id, title, stage, amount, probability, source, notes, created_at, updated_at)
-                 VALUES (:clientId, :title, :stage, :amount, :prob, 'ghl_sync', :notes, NOW(), NOW())`,
-                { replacements: { clientId, title, stage: localStage, amount, prob: Number(STAGE_PROBABILITY[localStage]) || 0, notes: `ghl_id:${opp.id}` } }
-              );
-              synced.ghl++;
-            }
+              if (existing) {
+                await sequelize.query(
+                  `UPDATE deals SET stage = $1, amount = $2, probability = $3, title = $4, updated_at = NOW() WHERE id = $5`,
+                  { bind: [localStage, amt, prb, title, existing.id] }
+                );
+              } else {
+                await sequelize.query(
+                  `INSERT INTO deals (client_id, title, stage, amount, probability, source, notes, created_at, updated_at)
+                   VALUES ($1, $2, $3, $4, $5, 'ghl_sync', $6, NOW(), NOW())`,
+                  { bind: [clientId, title, localStage, amt, prb, `ghl_id:${opp.id}`] }
+                );
+                synced.ghl++;
+              }
+            } catch (oe) { console.error('[Deal Sync] GHL opp error:', oe.message); }
           }
         }
       } catch (e) { console.error('[Deal Sync] GHL error:', e.message); }
@@ -321,29 +323,32 @@ router.get('/sync', async (req, res) => {
 
         if (hsData.results) {
           for (const deal of hsData.results) {
-            const stageName = deal.properties.dealstage || '';
-            const localStage = HS_STAGE_MAP[stageName] || 'new_lead';
-            const amount = Number(deal.properties.amount) || 0;
-            const title = deal.properties.dealname || 'HubSpot Deal';
+            try {
+              const stageName = deal.properties.dealstage || '';
+              const localStage = HS_STAGE_MAP[stageName] || 'new_lead';
+              const amt = isNaN(Number(deal.properties.amount)) ? 0 : Number(deal.properties.amount);
+              const prb = STAGE_PROBABILITY[localStage] !== undefined ? STAGE_PROBABILITY[localStage] : 0;
+              const title = String(deal.properties.dealname || 'HubSpot Deal');
 
-            const [existing] = await sequelize.query(
-              `SELECT id FROM deals WHERE client_id = :clientId AND source = 'hubspot_sync' AND notes LIKE :hsId`,
-              { replacements: { clientId, hsId: `%hs_id:${deal.id}%` }, type: QueryTypes.SELECT }
-            );
+              const [existing] = await sequelize.query(
+                `SELECT id FROM deals WHERE client_id = $1 AND source = 'hubspot_sync' AND notes LIKE $2`,
+                { bind: [clientId, `%hs_id:${deal.id}%`], type: QueryTypes.SELECT }
+              );
 
-            if (existing) {
-              await sequelize.query(
-                `UPDATE deals SET stage = :stage, amount = :amount, probability = :prob, title = :title, updated_at = NOW() WHERE id = :id`,
-                { replacements: { id: existing.id, stage: localStage, amount, prob: Number(STAGE_PROBABILITY[localStage]) || 0, title } }
-              );
-            } else {
-              await sequelize.query(
-                `INSERT INTO deals (client_id, title, stage, amount, probability, source, notes, created_at, updated_at)
-                 VALUES (:clientId, :title, :stage, :amount, :prob, 'hubspot_sync', :notes, NOW(), NOW())`,
-                { replacements: { clientId, title, stage: localStage, amount, prob: Number(STAGE_PROBABILITY[localStage]) || 0, notes: `hs_id:${deal.id}` } }
-              );
-              synced.hubspot++;
-            }
+              if (existing) {
+                await sequelize.query(
+                  `UPDATE deals SET stage = $1, amount = $2, probability = $3, title = $4, updated_at = NOW() WHERE id = $5`,
+                  { bind: [localStage, amt, prb, title, existing.id] }
+                );
+              } else {
+                await sequelize.query(
+                  `INSERT INTO deals (client_id, title, stage, amount, probability, source, notes, created_at, updated_at)
+                   VALUES ($1, $2, $3, $4, $5, 'hubspot_sync', $6, NOW(), NOW())`,
+                  { bind: [clientId, title, localStage, amt, prb, `hs_id:${deal.id}`] }
+                );
+                synced.hubspot++;
+              }
+            } catch (he) { console.error('[Deal Sync] HubSpot deal error:', he.message); }
           }
         }
       } catch (e) { console.error('[Deal Sync] HubSpot error:', e.message); }
@@ -370,29 +375,32 @@ router.get('/sync', async (req, res) => {
 
           if (zoData.data) {
             for (const deal of zoData.data) {
-              const stageName = (deal.Stage || '').toLowerCase();
-              const localStage = ZOHO_STAGE_MAP[stageName] || 'new_lead';
-              const amount = Number(deal.Amount) || 0;
-              const title = deal.Deal_Name || 'Zoho Deal';
+              try {
+                const stageName = (deal.Stage || '').toLowerCase();
+                const localStage = ZOHO_STAGE_MAP[stageName] || 'new_lead';
+                const amt = isNaN(Number(deal.Amount)) ? 0 : Number(deal.Amount);
+                const prb = STAGE_PROBABILITY[localStage] !== undefined ? STAGE_PROBABILITY[localStage] : 0;
+                const title = String(deal.Deal_Name || 'Zoho Deal');
 
-              const [existing] = await sequelize.query(
-                `SELECT id FROM deals WHERE client_id = :clientId AND source = 'zoho_sync' AND notes LIKE :zoId`,
-                { replacements: { clientId, zoId: `%zoho_id:${deal.id}%` }, type: QueryTypes.SELECT }
-              );
+                const [existing] = await sequelize.query(
+                  `SELECT id FROM deals WHERE client_id = $1 AND source = 'zoho_sync' AND notes LIKE $2`,
+                  { bind: [clientId, `%zoho_id:${deal.id}%`], type: QueryTypes.SELECT }
+                );
 
-              if (existing) {
-                await sequelize.query(
-                  `UPDATE deals SET stage = :stage, amount = :amount, probability = :prob, title = :title, updated_at = NOW() WHERE id = :id`,
-                  { replacements: { id: existing.id, stage: localStage, amount, prob: Number(STAGE_PROBABILITY[localStage]) || 0, title } }
-                );
-              } else {
-                await sequelize.query(
-                  `INSERT INTO deals (client_id, title, stage, amount, probability, source, notes, created_at, updated_at)
-                   VALUES (:clientId, :title, :stage, :amount, :prob, 'zoho_sync', :notes, NOW(), NOW())`,
-                  { replacements: { clientId, title, stage: localStage, amount, prob: Number(STAGE_PROBABILITY[localStage]) || 0, notes: `zoho_id:${deal.id}` } }
-                );
-                synced.zoho++;
-              }
+                if (existing) {
+                  await sequelize.query(
+                    `UPDATE deals SET stage = $1, amount = $2, probability = $3, title = $4, updated_at = NOW() WHERE id = $5`,
+                    { bind: [localStage, amt, prb, title, existing.id] }
+                  );
+                } else {
+                  await sequelize.query(
+                    `INSERT INTO deals (client_id, title, stage, amount, probability, source, notes, created_at, updated_at)
+                     VALUES ($1, $2, $3, $4, $5, 'zoho_sync', $6, NOW(), NOW())`,
+                    { bind: [clientId, title, localStage, amt, prb, `zoho_id:${deal.id}`] }
+                  );
+                  synced.zoho++;
+                }
+              } catch (ze) { console.error('[Deal Sync] Zoho deal error:', ze.message); }
             }
           }
         }
@@ -404,15 +412,15 @@ router.get('/sync', async (req, res) => {
       `SELECT d.*, c.first_name, c.last_name, c.phone as contact_phone,
               EXTRACT(DAY FROM NOW() - d.updated_at) as days_in_stage
        FROM deals d LEFT JOIN contacts c ON d.contact_id = c.id
-       WHERE d.client_id = :clientId ORDER BY d.updated_at DESC`,
-      { replacements: { clientId }, type: QueryTypes.SELECT }
+       WHERE d.client_id = $1 ORDER BY d.updated_at DESC`,
+      { bind: [clientId], type: QueryTypes.SELECT }
     );
 
     const [forecast] = await sequelize.query(
       `SELECT COALESCE(SUM(amount * probability / 100.0), 0) as weighted_forecast,
               COUNT(*) as open_deals, COALESCE(SUM(amount), 0) as total_pipeline
-       FROM deals WHERE client_id = :clientId AND stage NOT IN ('closed_won','closed_lost')`,
-      { replacements: { clientId }, type: QueryTypes.SELECT }
+       FROM deals WHERE client_id = $1 AND stage NOT IN ('closed_won','closed_lost')`,
+      { bind: [clientId], type: QueryTypes.SELECT }
     );
 
     res.json({
