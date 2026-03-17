@@ -428,7 +428,8 @@ router.get('/sync', async (req, res) => {
       synced,
       deals,
       forecast,
-      total: deals.length
+      total: deals.length,
+      _version: 'bind-params-v3'
     });
   } catch (e) {
     console.error('[Deal Sync] Error:', e.message);
