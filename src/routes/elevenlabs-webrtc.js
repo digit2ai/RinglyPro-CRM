@@ -472,103 +472,110 @@ router.post('/scrape-website', async (req, res) => {
 function extractBusinessInfo(html, hostname) {
   const info = [];
 
-  // Remove script and style tags
+  // Remove script, style, noscript, comments, nav, footer, header tags
   let cleanHtml = html
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
     .replace(/<noscript[^>]*>[\s\S]*?<\/noscript>/gi, '')
-    .replace(/<!--[\s\S]*?-->/g, '');
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/<svg[^>]*>[\s\S]*?<\/svg>/gi, '')
+    .replace(/<iframe[^>]*>[\s\S]*?<\/iframe>/gi, '');
 
-  // Extract meta description
-  const metaDescMatch = cleanHtml.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i) ||
-                        cleanHtml.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']description["']/i);
-  if (metaDescMatch && metaDescMatch[1]) {
-    info.push(`Description: ${metaDescMatch[1].trim()}`);
-  }
-
-  // Extract OG description as fallback
-  const ogDescMatch = cleanHtml.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["']/i);
-  if (ogDescMatch && ogDescMatch[1] && !metaDescMatch) {
-    info.push(`Description: ${ogDescMatch[1].trim()}`);
-  }
-
-  // Extract OG site_name as business name fallback
-  const ogSiteNameMatch = cleanHtml.match(/<meta[^>]*property=["']og:site_name["'][^>]*content=["']([^"']+)["']/i);
-  if (ogSiteNameMatch && ogSiteNameMatch[1]) {
-    info.push(`Business: ${ogSiteNameMatch[1].trim()}`);
-  }
-
-  // Extract title
-  const titleMatch = cleanHtml.match(/<title[^>]*>([^<]+)<\/title>/i);
-  if (titleMatch && titleMatch[1]) {
-    const title = titleMatch[1].trim();
-    if (title && !title.toLowerCase().includes('home') && title.length > 5) {
-      info.push(`Business: ${title}`);
-    }
-  }
-
-  // Extract headings (h1, h2) for services/features - including nested content
-  const headings = [];
-
-  // Standard h1/h2 with direct text
-  const h1Matches = cleanHtml.matchAll(/<h1[^>]*>([^<]+)<\/h1>/gi);
-  for (const match of h1Matches) {
-    const text = match[1].trim().replace(/\s+/g, ' ');
-    if (text && text.length > 3 && text.length < 200) {
-      headings.push(text);
-    }
-  }
-  const h2Matches = cleanHtml.matchAll(/<h2[^>]*>([^<]+)<\/h2>/gi);
-  for (const match of h2Matches) {
-    const text = match[1].trim().replace(/\s+/g, ' ');
-    if (text && text.length > 3 && text.length < 200) {
-      headings.push(text);
-    }
-  }
-
-  // Extract content from DraftJS/edit.site templates (data-text="true" spans)
-  // These are commonly used by modern website builders
-  const dataTextMatches = cleanHtml.matchAll(/<span[^>]*data-text=["']true["'][^>]*>([^<]+)<\/span>/gi);
-  const dataTextContent = [];
-  for (const match of dataTextMatches) {
-    let text = match[1]
+  // Helper: decode HTML entities
+  function decodeEntities(text) {
+    return text
       .replace(/&nbsp;/g, ' ')
       .replace(/&amp;/g, '&')
       .replace(/&quot;/g, '"')
       .replace(/&#39;/g, "'")
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
-      .trim()
-      .replace(/\s+/g, ' ');
-    // Only keep meaningful text (not single words or very short)
-    if (text && text.length > 10 && text.length < 500) {
-      dataTextContent.push(text);
-    } else if (text && text.length > 3 && text.length <= 10) {
-      // Short items might be menu items or features - collect as headings
+      .replace(/&#\d+;/g, ' ')
+      .replace(/&\w+;/g, ' ');
+  }
+
+  // Helper: strip all HTML tags and normalize whitespace
+  function stripTags(text) {
+    return decodeEntities(text.replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
+  }
+
+  // Helper: check if text is junk (nav items, legal, etc.)
+  function isJunk(text) {
+    const lower = text.toLowerCase();
+    const junkWords = ['cookie', 'privacy policy', 'terms of service', 'copyright',
+      'all rights reserved', 'sign in', 'log in', 'sign up', 'subscribe',
+      'powered by', 'built with', 'accept cookies', 'gdpr', 'consent',
+      'toggle navigation', 'skip to content', 'menu', 'close menu'];
+    return junkWords.some(w => lower.includes(w)) || lower.length < 5;
+  }
+
+  // --- META DATA ---
+  const metaDescMatch = cleanHtml.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i) ||
+                        cleanHtml.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']description["']/i);
+  if (metaDescMatch && metaDescMatch[1]) {
+    info.push(`Description: ${metaDescMatch[1].trim()}`);
+  }
+
+  const ogDescMatch = cleanHtml.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["']/i);
+  if (ogDescMatch && ogDescMatch[1] && !metaDescMatch) {
+    info.push(`Description: ${ogDescMatch[1].trim()}`);
+  }
+
+  const titleMatch = cleanHtml.match(/<title[^>]*>([^<]+)<\/title>/i);
+  if (titleMatch && titleMatch[1]) {
+    const title = titleMatch[1].trim();
+    if (title && title.length > 3) {
+      info.push(`Business: ${title}`);
+    }
+  }
+
+  // --- HEADINGS (h1 through h6, with nested content) ---
+  const headings = [];
+  const headingMatches = cleanHtml.matchAll(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/gi);
+  for (const match of headingMatches) {
+    const text = stripTags(match[1]);
+    if (text && text.length > 3 && text.length < 300 && !isJunk(text)) {
       headings.push(text);
     }
   }
-
-  // Add extracted data-text content as features/about
-  if (dataTextContent.length > 0) {
-    // First longer text item is likely the main description
-    const mainDesc = dataTextContent.find(t => t.length > 30);
-    if (mainDesc && !info.some(i => i.includes('Description'))) {
-      info.push(`Description: ${mainDesc}`);
-    }
-    // Add remaining as about/features
-    const features = dataTextContent.filter(t => t !== mainDesc).slice(0, 5);
-    if (features.length > 0) {
-      info.push(`About: ${features.join(' | ')}`);
-    }
-  }
-
   if (headings.length > 0) {
-    info.push(`Key Services/Features: ${headings.slice(0, 8).join(', ')}`);
+    info.push(`Key Services/Features: ${[...new Set(headings)].slice(0, 15).join(' | ')}`);
   }
 
-  // Extract phone numbers (look for tel: links or formatted phone numbers)
-  // More strict pattern to avoid matching timestamps or other numbers
+  // --- FULL BODY TEXT EXTRACTION ---
+  // Strip all tags, get the visible text content of the entire page
+  let bodyHtml = cleanHtml;
+  const bodyMatch = cleanHtml.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+  if (bodyMatch) bodyHtml = bodyMatch[1];
+
+  // Remove nav and footer sections to reduce noise
+  bodyHtml = bodyHtml
+    .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '')
+    .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, '');
+
+  const fullText = stripTags(bodyHtml);
+
+  // Split into sentences/segments and filter meaningful ones
+  const segments = fullText.split(/[.\n|]+/).map(s => s.trim()).filter(s => {
+    return s.length > 20 && s.length < 600 && !isJunk(s);
+  });
+
+  // Deduplicate and collect unique content
+  const seen = new Set();
+  const uniqueSegments = [];
+  for (const seg of segments) {
+    const key = seg.substring(0, 40).toLowerCase();
+    if (!seen.has(key)) {
+      seen.add(key);
+      uniqueSegments.push(seg);
+    }
+  }
+
+  if (uniqueSegments.length > 0) {
+    info.push(`Website Content:\n${uniqueSegments.slice(0, 20).join('. ')}`);
+  }
+
+  // --- PHONE ---
   const phonePatterns = [
     /tel:[\+]?1?[-.\s]?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}/gi,
     /\(?[0-9]{3}\)?[-.\s][0-9]{3}[-.\s][0-9]{4}/g,
@@ -579,7 +586,6 @@ function extractBusinessInfo(html, hostname) {
     if (phoneMatches) {
       const phone = phoneMatches[0].replace(/tel:/gi, '').trim();
       const digits = phone.replace(/\D/g, '');
-      // Only accept 10 or 11 digit phone numbers (US format)
       if (digits.length === 10 || digits.length === 11) {
         info.push(`Phone: ${phone}`);
         break;
@@ -587,34 +593,22 @@ function extractBusinessInfo(html, hostname) {
     }
   }
 
-  // Extract email addresses (exclude image files and common non-email patterns)
+  // --- EMAIL ---
   const emailMatches = cleanHtml.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}/g);
   if (emailMatches) {
     const emails = [...new Set(emailMatches)].filter(e => {
       const lower = e.toLowerCase();
-      // Exclude image files, example emails, and other non-email patterns
-      return !lower.includes('example') &&
-             !lower.includes('test') &&
-             !lower.includes('your') &&
-             !lower.includes('.png') &&
-             !lower.includes('.jpg') &&
-             !lower.includes('.jpeg') &&
-             !lower.includes('.gif') &&
-             !lower.includes('.webp') &&
-             !lower.includes('.svg') &&
-             !lower.includes('2x') &&
-             !lower.includes('3x') &&
-             !lower.endsWith('.js') &&
-             !lower.endsWith('.css') &&
-             lower.includes('@') &&
-             lower.split('@')[1].includes('.');
+      return !lower.includes('example') && !lower.includes('test') &&
+             !lower.includes('.png') && !lower.includes('.jpg') &&
+             !lower.includes('.svg') && !lower.endsWith('.js') &&
+             !lower.endsWith('.css') && lower.split('@')[1].includes('.');
     });
     if (emails.length > 0) {
       info.push(`Email: ${emails[0]}`);
     }
   }
 
-  // Extract address (look for common patterns)
+  // --- ADDRESS ---
   const addressPatterns = [
     /\d+\s+[\w\s]+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Way|Court|Ct)[,.\s]+[\w\s]+,?\s*[A-Z]{2}\s*\d{5}/gi,
     /\d+\s+[\w\s]+,\s*[\w\s]+,\s*[A-Z]{2}\s*\d{5}/gi
@@ -627,56 +621,42 @@ function extractBusinessInfo(html, hostname) {
     }
   }
 
-  // Extract hours of operation
+  // --- HOURS ---
   const hoursPatterns = [
-    /(?:hours?|open|schedule)[:\s]*([^<]{10,100}(?:am|pm|AM|PM)[^<]{0,50})/gi,
-    /(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)[:\s-]*\d{1,2}[:\d]*\s*(?:am|pm)[^<]{0,100}/gi
+    /(?:hours?|open|schedule)[:\s]*([^<]{10,200}(?:am|pm|AM|PM)[^<]{0,100})/gi,
+    /(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)[:\s-]*\d{1,2}[:\d]*\s*(?:am|pm)[^<]{0,200}/gi
   ];
   for (const pattern of hoursPatterns) {
     const hoursMatch = cleanHtml.match(pattern);
     if (hoursMatch) {
-      const hours = hoursMatch[0].replace(/<[^>]+>/g, '').trim();
-      if (hours.length > 10 && hours.length < 200) {
+      const hours = stripTags(hoursMatch[0]);
+      if (hours.length > 10 && hours.length < 300) {
         info.push(`Hours: ${hours}`);
         break;
       }
     }
   }
 
-  // Extract main paragraph content (first meaningful paragraphs)
-  const paragraphs = [];
-  const pMatches = cleanHtml.matchAll(/<p[^>]*>([^<]+(?:<[^>]+>[^<]*)*)<\/p>/gi);
-  for (const match of pMatches) {
-    let text = match[1]
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/\s+/g, ' ')
-      .trim();
-
-    // Only keep meaningful paragraphs
-    if (text && text.length > 50 && text.length < 500 &&
-        !text.toLowerCase().includes('cookie') &&
-        !text.toLowerCase().includes('privacy') &&
-        !text.toLowerCase().includes('copyright') &&
-        !text.toLowerCase().includes('all rights reserved')) {
-      paragraphs.push(text);
+  // --- LIST ITEMS (services, features often in <li>) ---
+  const listItems = [];
+  const liMatches = cleanHtml.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi);
+  for (const match of liMatches) {
+    const text = stripTags(match[1]);
+    if (text && text.length > 5 && text.length < 200 && !isJunk(text)) {
+      listItems.push(text);
     }
   }
-  if (paragraphs.length > 0) {
-    info.push(`About: ${paragraphs.slice(0, 3).join(' ')}`);
+  if (listItems.length > 0) {
+    const uniqueItems = [...new Set(listItems)].slice(0, 15);
+    info.push(`Services/Details: ${uniqueItems.join(' | ')}`);
   }
 
   // Combine and limit output
   let result = info.join('\n\n');
 
-  // Limit to ~2000 chars to keep prompt reasonable
-  if (result.length > 2000) {
-    result = result.substring(0, 2000) + '...';
+  // Limit to ~3000 chars to keep prompt reasonable
+  if (result.length > 3000) {
+    result = result.substring(0, 3000) + '...';
   }
 
   return result || `Website: ${hostname} (Could not extract detailed information)`;
