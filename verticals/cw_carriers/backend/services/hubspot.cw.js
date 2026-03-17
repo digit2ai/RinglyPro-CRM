@@ -193,7 +193,106 @@ async function retrySyncItem(syncId) {
   }
 }
 
+// ─── Delete Contact ─────────────────────────────────────────
+async function deleteContact(hubspotId) {
+  await logSync('contact', hubspotId, 'delete', {}, 'pending');
+  const result = await hubspotRequest('DELETE', `/crm/v3/objects/contacts/${hubspotId}`);
+  const status = result.success ? 'success' : 'error';
+  await logSync('contact', hubspotId, 'delete', {}, status, result.error);
+  return result;
+}
+
+// ─── Delete Deal ────────────────────────────────────────────
+async function deleteDeal(hubspotDealId) {
+  await logSync('deal', hubspotDealId, 'delete', {}, 'pending');
+  const result = await hubspotRequest('DELETE', `/crm/v3/objects/deals/${hubspotDealId}`);
+  const status = result.success ? 'success' : 'error';
+  await logSync('deal', hubspotDealId, 'delete', {}, status, result.error);
+  return result;
+}
+
+// ─── Get Pipelines ──────────────────────────────────────────
+async function getPipelines() {
+  return hubspotRequest('GET', '/crm/v3/pipelines/deals');
+}
+
+// ─── Get Pipeline Stages ────────────────────────────────────
+async function getPipelineStages(pipelineId) {
+  return hubspotRequest('GET', `/crm/v3/pipelines/deals/${pipelineId}/stages`);
+}
+
+// ─── Search Deals ───────────────────────────────────────────
+async function searchDeals(query) {
+  return hubspotRequest('POST', '/crm/v3/objects/deals/search', {
+    filterGroups: [{
+      filters: [{
+        propertyName: 'dealname',
+        operator: 'CONTAINS_TOKEN',
+        value: query
+      }]
+    }],
+    properties: ['dealname', 'amount', 'dealstage', 'pipeline', 'closedate', 'hs_lastmodifieddate'],
+    limit: 50
+  });
+}
+
+// ─── Get Deals with Pipeline/Stage info ─────────────────────
+async function getDealsWithStages(pipelineId) {
+  const filters = [{
+    propertyName: 'pipeline',
+    operator: 'EQ',
+    value: pipelineId || 'default'
+  }];
+  return hubspotRequest('POST', '/crm/v3/objects/deals/search', {
+    filterGroups: [{ filters }],
+    properties: ['dealname', 'amount', 'dealstage', 'pipeline', 'closedate', 'hs_lastmodifieddate', 'hs_object_id'],
+    sorts: [{ propertyName: 'hs_lastmodifieddate', direction: 'DESCENDING' }],
+    limit: 100
+  });
+}
+
+// ─── Update Deal Stage ──────────────────────────────────────
+async function updateDealStage(hubspotDealId, stageId) {
+  return updateDeal(hubspotDealId, { dealstage: stageId });
+}
+
+// ─── Get Contact by ID ──────────────────────────────────────
+async function getContact(hubspotId) {
+  return hubspotRequest('GET', `/crm/v3/objects/contacts/${hubspotId}?properties=email,firstname,lastname,company,phone,hs_lead_status,lifecyclestage`);
+}
+
+// ─── Get Deal by ID ─────────────────────────────────────────
+async function getDeal(hubspotDealId) {
+  return hubspotRequest('GET', `/crm/v3/objects/deals/${hubspotDealId}?properties=dealname,amount,dealstage,pipeline,closedate,description`);
+}
+
+// ─── Get Deal Count & Pipeline Value ────────────────────────
+async function getPipelineMetrics() {
+  const dealsResult = await hubspotRequest('POST', '/crm/v3/objects/deals/search', {
+    filterGroups: [],
+    properties: ['amount', 'dealstage'],
+    limit: 100
+  });
+  if (!dealsResult.success) return dealsResult;
+  const deals = dealsResult.data?.results || [];
+  const totalPipeline = deals.reduce((sum, d) => sum + parseFloat(d.properties?.amount || 0), 0);
+  const openDeals = deals.filter(d => !['closedwon', 'closedlost'].includes(d.properties?.dealstage));
+  const wonDeals = deals.filter(d => d.properties?.dealstage === 'closedwon');
+  const wonRevenue = wonDeals.reduce((sum, d) => sum + parseFloat(d.properties?.amount || 0), 0);
+  return {
+    success: true,
+    data: {
+      total_deals: deals.length,
+      open_deals: openDeals.length,
+      won_deals: wonDeals.length,
+      total_pipeline: totalPipeline,
+      won_revenue: wonRevenue
+    }
+  };
+}
+
 module.exports = {
+  hubspotRequest,
   createContact,
   updateContact,
   createDeal,
@@ -202,8 +301,18 @@ module.exports = {
   createTask,
   associateObjects,
   searchContacts,
+  searchDeals,
   getDeals,
+  getDealsWithStages,
   getContacts,
+  getContact,
+  getDeal,
   getSyncQueue,
-  retrySyncItem
+  retrySyncItem,
+  deleteContact,
+  deleteDeal,
+  getPipelines,
+  getPipelineStages,
+  updateDealStage,
+  getPipelineMetrics
 };

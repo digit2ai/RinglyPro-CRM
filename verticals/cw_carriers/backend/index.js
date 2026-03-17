@@ -28,6 +28,9 @@ const loadmatchingRoutes = require('./routes/loadmatching');
 const ingestionRoutes = require('./routes/ingestion');
 const brokerageAnalyticsRoutes = require('./routes/analytics-brokerage');
 const brokerageDemoRoutes = require('./routes/demo-brokerage');
+const neuralCwRoutes = require('./routes/neural-cw');
+const crmAgentRoutes = require('./routes/crm-agent');
+const pipelineRoutes = require('./routes/pipeline');
 
 // Mount API routes
 router.use('/api/auth', authRoutes);
@@ -54,6 +57,9 @@ router.use('/api/ingestion', ingestionRoutes);
 router.use('/api/brokerage-analytics', brokerageAnalyticsRoutes);
 router.use('/api/brokerage-demo', brokerageDemoRoutes);
 router.use('/api/nda', require('./routes/nda'));
+router.use('/api/neural', neuralCwRoutes);
+router.use('/api/crm-agent', crmAgentRoutes);
+router.use('/api/pipeline', pipelineRoutes);
 
 // Health check
 router.get('/health', (req, res) => {

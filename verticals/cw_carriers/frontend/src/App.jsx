@@ -34,6 +34,9 @@ import TokenEstimator from './pages/TokenEstimator';
 import ContractBuilder from './pages/ContractBuilder';
 import MCPTools from './pages/MCPTools';
 import NDA from './pages/NDA';
+import NeuralIntelligence from './pages/NeuralIntelligence';
+import CRMAgent from './pages/CRMAgent';
+import HubSpotPipeline from './pages/HubSpotPipeline';
 
 const BASE = '/cw_carriers';
 
@@ -58,12 +61,15 @@ function Sidebar({ open, onClose }) {
     { path: `${BASE}/offers`, label: 'Carrier Offers' },
     { path: `${BASE}/tracking`, label: 'Check Calls' },
     { path: `${BASE}/billing`, label: 'Billing' },
+    // Intelligence
+    { path: `${BASE}/neural`, label: 'Neural Intelligence', section: 'INTELLIGENCE' },
+    { path: `${BASE}/crm-agent`, label: 'HubSpot CRM Agent' },
+    { path: `${BASE}/pipeline`, label: 'HubSpot Pipeline' },
     // AI Tools
     { path: `${BASE}/freight-matching`, label: 'Carrier Matching', section: 'AI TOOLS' },
     { path: `${BASE}/load-matching`, label: 'Load Matching' },
     { path: `${BASE}/pricing`, label: 'Rate Intelligence' },
     { path: `${BASE}/nlp`, label: 'NLP Assistant' },
-    { path: `${BASE}/neural.html`, label: 'Neural Intelligence', ext: true },
     // Portals
     { path: `${BASE}/shipper`, label: 'Shipper Portal', section: 'PORTALS' },
     { path: `${BASE}/carrier-portal`, label: 'Carrier Portal' },
@@ -175,6 +181,10 @@ export default function App() {
         <Route path={`${BASE}/contract-builder`} element={<ProtectedRoute><Layout><ContractBuilder /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/mcp-tools`} element={<ProtectedRoute><Layout><MCPTools /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/nda`} element={<ProtectedRoute><Layout><NDA /></Layout></ProtectedRoute>} />
+        {/* Intelligence routes */}
+        <Route path={`${BASE}/neural`} element={<ProtectedRoute><Layout><NeuralIntelligence /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/crm-agent`} element={<ProtectedRoute><Layout><CRMAgent /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/pipeline`} element={<ProtectedRoute><Layout><HubSpotPipeline /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}`} element={<Landing />} />
         <Route path={`${BASE}/`} element={<Landing />} />
         <Route path="*" element={<Navigate to={`${BASE}/`} replace />} />
