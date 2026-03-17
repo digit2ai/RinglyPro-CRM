@@ -1,0 +1,31 @@
+First Name,Last Name,Email Address,Phone Number,Company,Lifecycle Stage,Lead Status,Deal Name,Deal Stage,Deal Amount,Pipeline,Create Date,Last Activity Date,Original Source,Number of Times Contacted,Days to Close,Last Contact Date,Associated Calls,Call Outcome,Call Duration,Meeting Date,Meeting Outcome,Owner
+Maria,Santos,maria.santos@company.com,+1-555-1001,Santos Design LLC,customer,Connected,Santos Design Package,Closed Won,3200,Sales Pipeline,2026-01-15,2026-02-20,Organic Search,5,36,2026-02-20,3,Connected,185,2026-02-18,Completed,Sarah Miller
+James,Wilson,james.wilson@corp.com,+1-555-1002,Wilson & Co,lead,Open,Wilson Consulting,Qualified,1800,Sales Pipeline,2026-01-20,2026-01-22,Paid Search,2,0,2026-01-22,1,No Answer,,,,Sarah Miller
+Linda,Park,linda.park@startup.io,+1-555-1003,ParkTech,lead,Attempted,ParkTech Onboarding,Discovery,4500,Sales Pipeline,2026-01-25,2026-01-25,Direct Traffic,1,0,2026-01-25,1,Left Voicemail,30,,,Sarah Miller
+Robert,Chen,robert.chen@email.com,+1-555-1004,,subscriber,New,,,,Sales Pipeline,2026-02-01,2026-02-01,Organic Search,0,0,,0,,,,
+Sofia,Reyes,sofia.reyes@bizmail.com,+1-555-1005,Reyes Catering,opportunity,In Progress,Reyes Full Package,Proposal,2800,Sales Pipeline,2026-02-03,2026-02-10,Referral,4,0,2026-02-10,2,Connected,210,2026-02-14,Completed,Sarah Miller
+David,Kim,david.kim@techfirm.com,+1-555-1006,KimTech,lead,Open,KimTech Setup,Discovery,1500,Sales Pipeline,2026-02-05,2026-02-05,Paid Search,1,0,2026-02-05,1,No Answer,,,,Mike Torres
+Aisha,Johnson,aisha.johnson@mail.com,+1-555-1007,,subscriber,New,,,,Sales Pipeline,2026-02-06,2026-02-06,Social Media,0,0,,0,,,,
+Tom,Bradley,tom.bradley@office.com,+1-555-1008,Bradley Plumbing,lead,Attempted,Bradley Service Plan,Qualified,1200,Sales Pipeline,2026-02-07,2026-02-08,Organic Search,2,0,2026-02-08,1,Connected,42,,,Mike Torres
+Nina,Patel,nina.patel@enterprise.com,+1-555-1009,Patel Industries,customer,Connected,Patel Premium,Closed Won,5500,Sales Pipeline,2026-02-08,2026-02-20,Referral,6,12,2026-02-20,3,Connected,195,2026-02-15,Completed,Sarah Miller
+Carlos,Mendez,carlos.mendez@gmail.com,+1-555-1010,,subscriber,New,,,,Sales Pipeline,2026-02-10,2026-02-10,Paid Search,0,0,,0,,,,
+Emily,Zhang,emily.zhang@biz.com,+1-555-1011,Zhang Marketing,opportunity,In Progress,Zhang Campaign,Proposal,3200,Sales Pipeline,2026-02-11,2026-02-18,Organic Search,3,0,2026-02-18,2,Connected,165,2026-02-22,No Show,Sarah Miller
+Frank,Moore,frank.moore@local.com,+1-555-1012,Moore Auto,lead,Open,Moore Repair Shop,Discovery,800,Sales Pipeline,2026-02-12,2026-02-12,Direct Traffic,1,0,2026-02-12,1,Connected,55,,,Mike Torres
+Grace,Lee,grace.lee@firm.com,+1-555-1013,Lee Consulting,customer,Connected,Lee Annual,Closed Won,4100,Sales Pipeline,2026-02-13,2026-02-25,Referral,5,12,2026-02-25,3,Connected,200,2026-02-20,Completed,Sarah Miller
+Hassan,Ali,hassan.ali@web.com,+1-555-1014,,lead,Unqualified,,,,Sales Pipeline,2026-02-14,2026-02-14,Cold Call,3,0,2026-02-14,3,No Answer,,,,Mike Torres
+Isabella,Torres,isabella.torres@shop.com,+1-555-1015,Torres Boutique,lead,Open,Torres Retail,Discovery,1600,Sales Pipeline,2026-02-15,2026-02-15,Social Media,1,0,2026-02-15,1,Left Voicemail,20,,,Sarah Miller
+Jake,Thompson,jake.thompson@biz.com,+1-555-1016,Thompson Legal,lead,Attempted,Thompson Office,Qualified,2100,Sales Pipeline,2026-02-16,2026-02-16,Organic Search,1,0,2026-02-16,1,No Answer,,,,Mike Torres
+Karen,White,karen.white@pro.com,+1-555-1017,White Dental,customer,Connected,White Premium,Closed Won,6200,Sales Pipeline,2026-02-17,2026-03-01,Referral,7,12,2026-03-01,4,Connected,240,2026-02-22,Completed,Sarah Miller
+Leo,Nguyen,leo.nguyen@mail.com,+1-555-1018,,subscriber,New,,,,Sales Pipeline,2026-02-18,2026-02-18,Paid Search,0,0,,0,,,,
+Michelle,Davis,michelle.davis@co.com,+1-555-1019,Davis Fitness,opportunity,In Progress,Davis Package,Proposal,1400,Sales Pipeline,2026-02-19,2026-02-22,Social Media,3,0,2026-02-22,2,Connected,130,2026-02-25,No Show,Mike Torres
+Oscar,Ruiz,oscar.ruiz@studio.com,+1-555-1020,Ruiz Photo,lead,Open,Ruiz Studio,Discovery,2300,Sales Pipeline,2026-02-20,2026-02-20,Organic Search,1,0,2026-02-20,1,No Answer,,,,Sarah Miller
+Priya,Sharma,priya.sharma@tech.com,+1-555-1021,Sharma Tech,customer,Connected,Sharma Enterprise,Closed Won,3800,Sales Pipeline,2026-02-21,2026-03-05,Organic Search,5,12,2026-03-05,3,Connected,200,2026-02-28,Completed,Sarah Miller
+Quinn,Roberts,quinn.roberts@mail.com,+1-555-1022,,lead,Unqualified,,,,Sales Pipeline,2026-02-22,2026-02-22,Cold Call,2,0,2026-02-22,2,No Answer,,,,Mike Torres
+Rachel,Adams,rachel.adams@agency.com,+1-555-1023,Adams Agency,opportunity,In Progress,Adams Campaign,Proposal,3500,Sales Pipeline,2026-02-23,2026-02-28,Referral,4,0,2026-02-28,2,Connected,155,2026-03-02,Completed,Sarah Miller
+Steve,Martin,steve.martin@web.com,+1-555-1024,,subscriber,New,,,,Sales Pipeline,2026-02-24,2026-02-24,Social Media,0,0,,0,,,,
+Tanya,Lopez,tanya.lopez@biz.com,+1-555-1025,Lopez Catering,opportunity,In Progress,Lopez Events,Proposal,2900,Sales Pipeline,2026-02-25,2026-03-01,Paid Search,3,0,2026-03-01,2,Connected,180,2026-03-05,No Show,Sarah Miller
+Uma,Patel,uma.patel@shop.com,+1-555-1026,Uma Wellness,lead,Open,Uma Spa Package,Qualified,1500,Sales Pipeline,2026-02-26,2026-02-27,Direct Traffic,2,0,2026-02-27,1,Connected,70,,,Mike Torres
+Victor,Chang,victor.chang@org.com,+1-555-1027,Chang Foundation,lead,Attempted,Chang Nonprofit,Discovery,2400,Sales Pipeline,2026-02-27,2026-02-27,Organic Search,1,0,2026-02-27,1,No Answer,,,,Sarah Miller
+Wendy,Black,wendy.black@corp.com,+1-555-1028,Black Accounting,customer,Connected,Black Annual,Closed Won,3600,Sales Pipeline,2026-02-28,2026-03-10,Referral,6,10,2026-03-10,3,Connected,225,2026-03-08,Completed,Sarah Miller
+Xavier,Fox,xavier.fox@email.com,+1-555-1029,,lead,Attempted,,,,Sales Pipeline,2026-03-01,2026-03-01,Paid Search,1,0,2026-03-01,1,Left Voicemail,15,,,Mike Torres
+Yuki,Tanaka,yuki.tanaka@design.com,+1-555-1030,Tanaka Design,opportunity,In Progress,Tanaka Rebrand,Proposal,4200,Sales Pipeline,2026-03-02,2026-03-08,Referral,4,0,2026-03-08,2,Connected,190,2026-03-10,Completed,Sarah Miller

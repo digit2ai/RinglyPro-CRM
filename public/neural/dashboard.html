@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RinglyPro Neural — Intelligence Dashboard</title>
+<title>RinglyPro Neural — Instant CRM Intelligence Demo</title>
 <style>
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 html { scroll-behavior: smooth; }
@@ -17,175 +17,248 @@ body {
 a { color: inherit; text-decoration: none; }
 button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
 
-/* Layout */
-.wrap { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+.wrap { max-width: 1320px; margin: 0 auto; padding: 0 24px; }
 
 /* Header */
 .header {
   position: sticky; top: 0; z-index: 100;
-  background: rgba(7,9,15,.85); backdrop-filter: blur(16px);
+  background: rgba(7,9,15,.88); backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(139,92,246,.15);
-  padding: 16px 0;
+  padding: 14px 0;
 }
 .header-inner { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .logo { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; }
-.logo-icon { width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, #8b5cf6, #06b6d4); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.logo-icon { width: 34px; height: 34px; border-radius: 8px; background: linear-gradient(135deg, #8b5cf6, #06b6d4); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; color: #fff; }
 .logo span { background: linear-gradient(90deg, #8b5cf6, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.header-right { display: flex; align-items: center; gap: 12px; }
+.badge-demo { font-size: 11px; font-weight: 700; background: rgba(139,92,246,.2); color: #c4b5fd; padding: 4px 12px; border-radius: 20px; letter-spacing: .5px; text-transform: uppercase; }
+.btn-cta {
+  background: linear-gradient(135deg, #8b5cf6, #06b6d4); color: #fff; font-weight: 600;
+  padding: 8px 20px; border-radius: 8px; font-size: 13px; transition: opacity .2s; text-decoration: none;
+}
+.btn-cta:hover { opacity: .88; }
 
-/* Controls */
-.controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.select-wrap {
+/* Upload Zone */
+.upload-section { padding: 60px 0 40px; text-align: center; }
+.upload-title { font-size: clamp(28px, 4vw, 42px); font-weight: 800; margin-bottom: 12px; line-height: 1.15; }
+.upload-title em { font-style: normal; background: linear-gradient(90deg, #8b5cf6, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.upload-sub { color: #94a3b8; font-size: 16px; max-width: 600px; margin: 0 auto 32px; }
+.crm-logos { display: flex; justify-content: center; gap: 24px; margin-bottom: 32px; flex-wrap: wrap; }
+.crm-logo {
+  display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px;
+  background: rgba(139,92,246,.06); border: 1px solid rgba(139,92,246,.12);
+  font-size: 13px; font-weight: 600; color: #94a3b8; transition: all .25s;
+}
+.crm-logo:hover { border-color: rgba(139,92,246,.3); color: #c4b5fd; }
+.crm-logo .dot { width: 10px; height: 10px; border-radius: 50%; }
+.crm-logo .dot.ghl { background: #22c55e; }
+.crm-logo .dot.hs { background: #f97316; }
+.crm-logo .dot.zoho { background: #ef4444; }
+.crm-logo .dot.rp { background: #8b5cf6; }
+
+.drop-zone {
+  max-width: 680px; margin: 0 auto; padding: 48px 32px; border: 2px dashed rgba(139,92,246,.3);
+  border-radius: 16px; background: rgba(139,92,246,.04); transition: all .3s; cursor: pointer;
   position: relative;
 }
-.select-wrap select {
-  appearance: none; background: rgba(139,92,246,.1); border: 1px solid rgba(139,92,246,.25);
-  border-radius: 8px; padding: 8px 32px 8px 12px; color: #e2e8f0; font-size: 13px;
-  cursor: pointer; outline: none;
+.drop-zone:hover, .drop-zone.drag-over { border-color: #8b5cf6; background: rgba(139,92,246,.08); }
+.drop-zone.drag-over { transform: scale(1.01); }
+.drop-icon { font-size: 42px; margin-bottom: 12px; opacity: .7; }
+.drop-text { font-size: 16px; font-weight: 600; color: #c4b5fd; margin-bottom: 6px; }
+.drop-hint { font-size: 13px; color: #64748b; }
+.drop-or { color: #475569; margin: 16px 0; font-size: 13px; }
+.btn-browse {
+  display: inline-block; padding: 10px 28px; background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: #fff; font-weight: 600; border-radius: 8px; font-size: 14px; transition: all .2s;
 }
-.select-wrap::after {
-  content: '▾'; position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-  pointer-events: none; color: #8b5cf6; font-size: 12px;
-}
-.btn-analyze {
-  background: linear-gradient(135deg, #8b5cf6, #06b6d4); color: #fff; font-weight: 600;
-  padding: 8px 20px; border-radius: 8px; font-size: 13px;
-  transition: opacity .2s;
-}
-.btn-analyze:hover { opacity: .9; }
-.btn-analyze:disabled { opacity: .5; cursor: not-allowed; }
-.status-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: inline-block; }
-.status-dot.loading { background: #eab308; animation: pulse 1s infinite; }
-@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+.btn-browse:hover { box-shadow: 0 4px 20px rgba(139,92,246,.4); transform: translateY(-1px); }
+input[type="file"] { display: none; }
 
-/* Nav tabs */
-.nav-tabs {
-  display: flex; gap: 4px; background: rgba(139,92,246,.05); border-radius: 10px; padding: 4px;
-  margin: 20px 0; overflow-x: auto;
+/* Sample download row */
+.samples-row { display: flex; justify-content: center; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+.sample-link {
+  font-size: 12px; color: #64748b; padding: 6px 14px; border: 1px solid rgba(100,116,139,.25);
+  border-radius: 6px; transition: all .2s; text-decoration: none;
 }
-.nav-tab {
-  padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500;
-  white-space: nowrap; transition: all .2s; color: #94a3b8;
-}
-.nav-tab:hover { color: #e2e8f0; background: rgba(139,92,246,.1); }
-.nav-tab.active { background: rgba(139,92,246,.2); color: #c4b5fd; }
+.sample-link:hover { color: #c4b5fd; border-color: rgba(139,92,246,.4); }
 
-/* KPI Cards */
+/* Detected CRM banner */
+.detected-banner {
+  display: none; max-width: 680px; margin: 20px auto 0; padding: 14px 20px;
+  border-radius: 10px; background: rgba(34,197,94,.08); border: 1px solid rgba(34,197,94,.25);
+  font-size: 14px; color: #4ade80; text-align: left;
+}
+.detected-banner strong { color: #86efac; }
+
+/* Analysis section (hidden until file uploaded) */
+.analysis-section { display: none; padding-bottom: 80px; }
+.analysis-section.visible { display: block; animation: fadeUp .5s ease; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Health Score Hero */
+.score-hero { text-align: center; padding: 48px 0 40px; }
+.score-ring-wrap { position: relative; width: 180px; height: 180px; margin: 0 auto 20px; }
+.score-ring-wrap svg { width: 180px; height: 180px; transform: rotate(-90deg); }
+.score-ring-bg { fill: none; stroke: rgba(139,92,246,.12); stroke-width: 10; }
+.score-ring-fill { fill: none; stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 1.5s ease, stroke 1s ease; }
+.score-num { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.score-num .val { font-size: 48px; font-weight: 800; }
+.score-num .lbl { font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+.score-label { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+.score-sub { font-size: 14px; color: #94a3b8; }
+
+/* KPI Grid */
 .kpi-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px; margin-bottom: 24px;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px; margin-bottom: 32px;
 }
 .kpi-card {
   background: rgba(139,92,246,.06); border: 1px solid rgba(139,92,246,.12);
-  border-radius: 12px; padding: 20px;
+  border-radius: 12px; padding: 18px;
 }
-.kpi-label { font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
-.kpi-value { font-size: 28px; font-weight: 700; }
+.kpi-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+.kpi-value { font-size: 26px; font-weight: 700; }
 .kpi-value.purple { color: #c4b5fd; }
 .kpi-value.cyan { color: #67e8f9; }
 .kpi-value.green { color: #4ade80; }
 .kpi-value.red { color: #f87171; }
 .kpi-value.yellow { color: #fbbf24; }
-.kpi-sub { font-size: 12px; color: #64748b; margin-top: 4px; }
-.kpi-trend { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 6px; border-radius: 4px; margin-left: 6px; }
-.kpi-trend.up { background: rgba(74,222,128,.15); color: #4ade80; }
-.kpi-trend.down { background: rgba(248,113,113,.15); color: #f87171; }
+.kpi-sub { font-size: 11px; color: #64748b; margin-top: 3px; }
 
-/* Insight Cards */
-.insights-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-  gap: 16px; margin-bottom: 32px;
-}
-.insight-card {
+/* Section titles */
+.section-title { font-size: 20px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+.section-title .count { font-size: 12px; background: rgba(139,92,246,.2); color: #c4b5fd; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+
+/* Nav Tabs */
+.nav-tabs { display: flex; gap: 4px; background: rgba(139,92,246,.05); border-radius: 10px; padding: 4px; margin-bottom: 24px; overflow-x: auto; }
+.nav-tab { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; white-space: nowrap; transition: all .2s; color: #94a3b8; }
+.nav-tab:hover { color: #e2e8f0; background: rgba(139,92,246,.1); }
+.nav-tab.active { background: rgba(139,92,246,.2); color: #c4b5fd; }
+
+/* Findings Grid */
+.findings-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 16px; margin-bottom: 40px; }
+.finding-card {
   background: rgba(15,23,42,.6); border: 1px solid rgba(139,92,246,.12);
   border-radius: 14px; padding: 24px; transition: border-color .2s, transform .2s;
   position: relative; overflow: hidden;
 }
-.insight-card:hover { border-color: rgba(139,92,246,.3); transform: translateY(-2px); }
-.insight-card::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-}
-.insight-card.critical::before { background: linear-gradient(90deg, #ef4444, #f87171); }
-.insight-card.high::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
-.insight-card.medium::before { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
-.insight-card.low::before { background: linear-gradient(90deg, #06b6d4, #67e8f9); }
+.finding-card:hover { border-color: rgba(139,92,246,.3); transform: translateY(-2px); }
+.finding-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+.finding-card.critical::before { background: linear-gradient(90deg, #ef4444, #f87171); }
+.finding-card.high::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.finding-card.medium::before { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+.finding-card.low::before { background: linear-gradient(90deg, #06b6d4, #67e8f9); }
 
-.insight-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
-.insight-title { font-size: 16px; font-weight: 700; line-height: 1.3; }
-.insight-badge {
-  font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 6px;
-  text-transform: uppercase; letter-spacing: .3px; white-space: nowrap; flex-shrink: 0;
-}
-.insight-badge.critical { background: rgba(239,68,68,.15); color: #f87171; }
-.insight-badge.high { background: rgba(245,158,11,.15); color: #fbbf24; }
-.insight-badge.medium { background: rgba(139,92,246,.15); color: #c4b5fd; }
-.insight-badge.low { background: rgba(6,182,212,.15); color: #67e8f9; }
+.finding-category { font-size: 11px; color: #8b5cf6; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; font-weight: 600; }
+.finding-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.finding-title { font-size: 16px; font-weight: 700; line-height: 1.3; }
+.finding-badge { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: .3px; white-space: nowrap; flex-shrink: 0; }
+.finding-badge.critical { background: rgba(239,68,68,.15); color: #f87171; }
+.finding-badge.high { background: rgba(245,158,11,.15); color: #fbbf24; }
+.finding-badge.medium { background: rgba(139,92,246,.15); color: #c4b5fd; }
+.finding-badge.low { background: rgba(6,182,212,.15); color: #67e8f9; }
 
-.insight-category {
-  font-size: 11px; color: #8b5cf6; text-transform: uppercase; letter-spacing: .5px;
-  margin-bottom: 8px; font-weight: 600;
-}
-.insight-summary { font-size: 14px; color: #cbd5e1; line-height: 1.6; margin-bottom: 12px; }
-.insight-impact {
-  font-size: 13px; padding: 8px 12px; border-radius: 8px;
-  background: rgba(139,92,246,.08); border-left: 3px solid #8b5cf6;
-  margin-bottom: 12px; color: #a5b4fc;
-}
-.insight-action {
-  font-size: 13px; color: #94a3b8; padding-top: 12px;
-  border-top: 1px solid rgba(139,92,246,.08);
-}
-.insight-action strong { color: #c4b5fd; }
-.insight-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; }
-.insight-date { font-size: 11px; color: #64748b; }
-.insight-actions { display: flex; gap: 6px; }
-.insight-btn {
-  font-size: 11px; padding: 4px 10px; border-radius: 6px;
-  border: 1px solid rgba(139,92,246,.2); color: #94a3b8;
-  transition: all .2s;
-}
-.insight-btn:hover { background: rgba(139,92,246,.15); color: #c4b5fd; border-color: rgba(139,92,246,.3); }
+.finding-summary { font-size: 14px; color: #cbd5e1; line-height: 1.6; margin-bottom: 12px; }
+.finding-impact { font-size: 13px; padding: 10px 14px; border-radius: 8px; background: rgba(139,92,246,.08); border-left: 3px solid #8b5cf6; margin-bottom: 14px; color: #a5b4fc; }
+.finding-evidence { font-size: 12px; color: #64748b; margin-bottom: 14px; }
+.finding-evidence code { background: rgba(139,92,246,.1); padding: 2px 6px; border-radius: 4px; color: #94a3b8; font-size: 11px; }
 
-/* Empty state */
-.empty-state {
-  text-align: center; padding: 60px 20px; color: #64748b;
+/* Fix Button */
+.fix-section { border-top: 1px solid rgba(139,92,246,.1); padding-top: 14px; }
+.fix-workflow {
+  display: none; margin-bottom: 12px; padding: 14px; border-radius: 10px;
+  background: rgba(34,197,94,.05); border: 1px solid rgba(34,197,94,.15);
+  font-size: 13px; color: #94a3b8; line-height: 1.7;
 }
-.empty-state h3 { font-size: 18px; color: #94a3b8; margin-bottom: 8px; }
-.empty-state p { font-size: 14px; }
+.fix-workflow.visible { display: block; animation: fadeUp .3s ease; }
+.fix-workflow strong { color: #4ade80; }
+.fix-workflow .wf-step { display: flex; gap: 8px; align-items: flex-start; margin-top: 6px; }
+.fix-workflow .wf-num { flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; background: rgba(34,197,94,.15); color: #4ade80; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
 
-/* Section title */
-.section-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-.section-title .count {
-  font-size: 12px; background: rgba(139,92,246,.2); color: #c4b5fd;
-  padding: 2px 8px; border-radius: 10px; font-weight: 600;
+.btn-fix {
+  padding: 8px 20px; border-radius: 8px; font-size: 13px; font-weight: 600;
+  transition: all .2s; display: inline-flex; align-items: center; gap: 6px;
 }
+.btn-fix.show-fix {
+  background: rgba(139,92,246,.15); border: 1px solid rgba(139,92,246,.3); color: #c4b5fd;
+}
+.btn-fix.show-fix:hover { background: rgba(139,92,246,.25); }
+.btn-fix.activate {
+  background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; border: none;
+  margin-left: 8px;
+}
+.btn-fix.activate:hover { box-shadow: 0 4px 15px rgba(34,197,94,.3); }
+.btn-fix.activated {
+  background: rgba(34,197,94,.15); color: #4ade80; border: 1px solid rgba(34,197,94,.3);
+  cursor: default; margin-left: 8px;
+}
+.btn-fix.dismiss {
+  background: none; color: #64748b; font-size: 12px; margin-left: 8px;
+}
+.btn-fix.dismiss:hover { color: #94a3b8; }
 
-/* Loading */
+/* Activated Workflows panel */
+.workflows-panel {
+  display: none; margin-top: 40px; padding: 28px; border-radius: 14px;
+  background: rgba(34,197,94,.04); border: 1px solid rgba(34,197,94,.15);
+}
+.workflows-panel.visible { display: block; }
+.workflows-panel h3 { font-size: 18px; font-weight: 700; color: #4ade80; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.wf-item {
+  padding: 14px; margin-bottom: 10px; border-radius: 10px;
+  background: rgba(34,197,94,.06); border: 1px solid rgba(34,197,94,.1);
+  display: flex; align-items: center; gap: 12px; font-size: 13px;
+}
+.wf-item .wf-icon { width: 32px; height: 32px; border-radius: 8px; background: rgba(34,197,94,.15); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.wf-item .wf-info { flex: 1; }
+.wf-item .wf-name { font-weight: 600; color: #e2e8f0; margin-bottom: 2px; }
+.wf-item .wf-desc { color: #64748b; font-size: 12px; }
+.wf-item .wf-status { color: #4ade80; font-size: 12px; font-weight: 600; }
+
+/* Loading overlay */
 .loading-overlay {
-  display: none; position: fixed; inset: 0; background: rgba(7,9,15,.8);
-  z-index: 200; align-items: center; justify-content: center; flex-direction: column; gap: 16px;
+  display: none; position: fixed; inset: 0; background: rgba(7,9,15,.88);
+  z-index: 200; align-items: center; justify-content: center; flex-direction: column; gap: 20px;
 }
 .loading-overlay.visible { display: flex; }
-.spinner {
-  width: 40px; height: 40px; border: 3px solid rgba(139,92,246,.2);
-  border-top-color: #8b5cf6; border-radius: 50%; animation: spin .8s linear infinite;
-}
+.spinner { width: 48px; height: 48px; border: 3px solid rgba(139,92,246,.15); border-top-color: #8b5cf6; border-radius: 50%; animation: spin .7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.loading-text { font-size: 14px; color: #94a3b8; }
+.loading-text { font-size: 15px; color: #94a3b8; }
+.loading-steps { font-size: 13px; color: #64748b; max-width: 320px; text-align: center; }
+.loading-step { margin-top: 6px; transition: color .3s; }
+.loading-step.active { color: #c4b5fd; }
+.loading-step.done { color: #4ade80; }
+
+/* Empty */
+.empty-findings { text-align: center; padding: 50px; color: #64748b; }
+.empty-findings h3 { color: #94a3b8; margin-bottom: 6px; }
 
 /* Responsive */
-@media (max-width: 640px) {
-  .insights-grid { grid-template-columns: 1fr; }
+@media (max-width: 768px) {
+  .findings-grid { grid-template-columns: 1fr; }
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-  .kpi-value { font-size: 22px; }
+  .crm-logos { gap: 10px; }
+  .samples-row { gap: 8px; }
+}
+@media (max-width: 480px) {
+  .kpi-grid { grid-template-columns: 1fr; }
 }
 </style>
 </head>
 <body>
 
-<!-- Loading Overlay -->
+<!-- Loading -->
 <div class="loading-overlay" id="loadingOverlay">
   <div class="spinner"></div>
-  <div class="loading-text">Neural Engine analyzing your data...</div>
+  <div class="loading-text">Neural Engine analyzing your CRM data...</div>
+  <div class="loading-steps" id="loadingSteps">
+    <div class="loading-step" data-step="parse">Parsing CRM file...</div>
+    <div class="loading-step" data-step="detect">Detecting CRM format...</div>
+    <div class="loading-step" data-step="normalize">Normalizing records...</div>
+    <div class="loading-step" data-step="analyze">Running 10 Neural analyzers...</div>
+    <div class="loading-step" data-step="score">Calculating health score...</div>
+    <div class="loading-step" data-step="workflow">Generating fix workflows...</div>
+  </div>
 </div>
 
 <!-- Header -->
@@ -195,125 +268,782 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
       <div class="logo-icon">N</div>
       <span>RinglyPro Neural</span>
     </div>
-    <div class="controls">
-      <div class="select-wrap">
-        <select id="clientSelect"><option value="">Loading clients...</option></select>
-      </div>
-      <div class="select-wrap">
-        <select id="periodSelect">
-          <option value="7">Last 7 days</option>
-          <option value="14">Last 14 days</option>
-          <option value="30" selected>Last 30 days</option>
-        </select>
-      </div>
-      <button class="btn-analyze" id="btnAnalyze" disabled>Run Analysis</button>
-      <span class="status-dot" id="statusDot" title="System status"></span>
+    <div class="header-right">
+      <span class="badge-demo">Instant Demo</span>
+      <a href="https://ringlypro.com/demo" class="btn-cta">Book a Demo</a>
     </div>
   </div>
 </header>
 
-<!-- Main Content -->
-<main class="wrap" style="padding-top: 24px; padding-bottom: 60px;">
+<!-- Upload Section -->
+<section class="upload-section" id="uploadSection">
+  <div class="wrap">
+    <h1 class="upload-title">Upload your CRM data.<br><em>Neural diagnoses it instantly.</em></h1>
+    <p class="upload-sub">Drop any export file from GoHighLevel, HubSpot, Zoho, or RinglyPro. Neural Intelligence will parse it, find revenue leaks, and generate one-click fix workflows.</p>
 
-  <!-- Nav tabs -->
-  <div class="nav-tabs" id="navTabs">
-    <button class="nav-tab active" data-tab="overview">Neural Overview</button>
-    <button class="nav-tab" data-tab="calls">Call Intelligence</button>
-    <button class="nav-tab" data-tab="conversion">Conversion Intelligence</button>
-    <button class="nav-tab" data-tab="scheduling">Scheduling Intelligence</button>
-    <button class="nav-tab" data-tab="revenue">Revenue Opportunities</button>
-    <button class="nav-tab" data-tab="all">All Insights</button>
-  </div>
+    <div class="crm-logos">
+      <div class="crm-logo"><span class="dot ghl"></span> GoHighLevel</div>
+      <div class="crm-logo"><span class="dot hs"></span> HubSpot</div>
+      <div class="crm-logo"><span class="dot zoho"></span> Zoho CRM</div>
+      <div class="crm-logo"><span class="dot rp"></span> RinglyPro</div>
+    </div>
 
-  <!-- KPI Overview -->
-  <div id="kpiSection">
-    <div class="kpi-grid" id="kpiGrid">
-      <div class="kpi-card"><div class="kpi-label">Total Calls</div><div class="kpi-value purple" id="kpiTotalCalls">—</div><div class="kpi-sub" id="kpiCallsSub"></div></div>
-      <div class="kpi-card"><div class="kpi-label">Answer Rate</div><div class="kpi-value green" id="kpiAnswerRate">—</div><div class="kpi-sub" id="kpiAnswerSub"></div></div>
-      <div class="kpi-card"><div class="kpi-label">Missed Calls</div><div class="kpi-value red" id="kpiMissed">—</div><div class="kpi-sub" id="kpiMissedSub"></div></div>
-      <div class="kpi-card"><div class="kpi-label">Bookings</div><div class="kpi-value cyan" id="kpiBookings">—</div><div class="kpi-sub" id="kpiBookingsSub"></div></div>
-      <div class="kpi-card"><div class="kpi-label">Conversion Rate</div><div class="kpi-value yellow" id="kpiConversion">—</div><div class="kpi-sub" id="kpiConvSub"></div></div>
-      <div class="kpi-card"><div class="kpi-label">New Leads</div><div class="kpi-value purple" id="kpiLeads">—</div><div class="kpi-sub" id="kpiLeadsSub"></div></div>
+    <div class="drop-zone" id="dropZone">
+      <div class="drop-icon">&#128202;</div>
+      <div class="drop-text">Drag &amp; drop your CRM export file</div>
+      <div class="drop-hint">CSV files supported</div>
+      <div class="drop-or">— or —</div>
+      <div class="btn-browse" id="btnBrowse">Choose File</div>
+      <input type="file" id="fileInput" accept=".csv">
+    </div>
+
+    <div class="detected-banner" id="detectedBanner"></div>
+
+    <div class="samples-row">
+      <span style="font-size:12px;color:#475569;">Try a sample:</span>
+      <a href="/neural/samples/gohighlevel-export.csv" download class="sample-link">GoHighLevel</a>
+      <a href="/neural/samples/hubspot-export.csv" download class="sample-link">HubSpot</a>
+      <a href="/neural/samples/zoho-export.csv" download class="sample-link">Zoho CRM</a>
+      <a href="/neural/samples/ringlypro-export.csv" download class="sample-link">RinglyPro</a>
     </div>
   </div>
+</section>
 
-  <!-- Insights Section -->
-  <div id="insightsSection">
-    <div class="section-title">
-      Neural Insights <span class="count" id="insightCount">0</span>
-    </div>
-    <div class="insights-grid" id="insightsGrid">
-      <div class="empty-state" id="emptyState">
-        <h3>No insights yet</h3>
-        <p>Select a client and click "Run Analysis" to generate intelligence insights.</p>
+<!-- Analysis Results (hidden until file processed) -->
+<section class="analysis-section" id="analysisSection">
+  <div class="wrap">
+
+    <!-- Health Score -->
+    <div class="score-hero">
+      <div class="score-ring-wrap">
+        <svg viewBox="0 0 180 180">
+          <circle class="score-ring-bg" cx="90" cy="90" r="78"></circle>
+          <circle class="score-ring-fill" id="scoreRing" cx="90" cy="90" r="78"
+            stroke-dasharray="490" stroke-dashoffset="490"></circle>
+        </svg>
+        <div class="score-num">
+          <div class="val" id="scoreVal">0</div>
+          <div class="lbl">Health Score</div>
+        </div>
       </div>
+      <div class="score-label" id="scoreLabel">Analyzing...</div>
+      <div class="score-sub" id="scoreSub"></div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-grid" id="kpiGrid"></div>
+
+    <!-- Tabs -->
+    <div class="nav-tabs" id="navTabs">
+      <button class="nav-tab active" data-tab="all">All Findings</button>
+      <button class="nav-tab" data-tab="critical">Critical</button>
+      <button class="nav-tab" data-tab="revenue">Revenue Leaks</button>
+      <button class="nav-tab" data-tab="conversion">Conversion</button>
+      <button class="nav-tab" data-tab="engagement">Engagement</button>
+      <button class="nav-tab" data-tab="operations">Operations</button>
+    </div>
+
+    <!-- Findings -->
+    <div class="section-title">Neural Findings <span class="count" id="findingCount">0</span></div>
+    <div class="findings-grid" id="findingsGrid"></div>
+
+    <!-- Activated Workflows -->
+    <div class="workflows-panel" id="workflowsPanel">
+      <h3>&#9889; Activated Workflows <span class="count" id="wfCount">0</span></h3>
+      <div id="workflowsList"></div>
+    </div>
+
+    <!-- Upload another -->
+    <div style="text-align:center;padding:40px 0;">
+      <button class="btn-browse" onclick="resetDemo()">Upload Another File</button>
     </div>
   </div>
-
-</main>
+</section>
 
 <script>
-const API_KEY = 'ringlypro-quick-admin-2024';
-const BASE = '/api/neural';
+// ─── State ──────────────────────────────────────────────────────
+let parsedRecords = [];
+let detectedCRM = '';
+let findings = [];
+let activatedWorkflows = [];
+let currentTab = 'all';
 
-// ─── State ─────────────────────────────────────────────────────
-let currentTab = 'overview';
-let allInsights = [];
+// ─── File Upload Handling ───────────────────────────────────────
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
 
-// ─── Category mapping for tabs ─────────────────────────────────
-const TAB_CATEGORIES = {
-  overview: null, // show all
-  calls: ['missed_revenue', 'voice_conversation', 'script_optimization'],
-  conversion: ['call_conversion', 'lead_response', 'lead_source'],
-  scheduling: ['scheduling', 'customer_sentiment'],
-  revenue: ['revenue_forecast', 'outbound_campaign'],
-  all: null
-};
+document.getElementById('btnBrowse').addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', (e) => { if (e.target.files[0]) handleFile(e.target.files[0]); });
 
-const CATEGORY_LABELS = {
-  missed_revenue: 'Missed Revenue',
-  call_conversion: 'Call Conversion',
-  lead_response: 'Lead Response',
-  scheduling: 'Scheduling',
-  voice_conversation: 'Voice Insights',
-  lead_source: 'Lead Sources',
-  outbound_campaign: 'Outbound Campaigns',
-  customer_sentiment: 'Customer Sentiment',
-  script_optimization: 'Script Optimization',
-  revenue_forecast: 'Revenue Forecast'
-};
-
-// ─── Init ──────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  loadClients();
-  setupTabs();
-  document.getElementById('btnAnalyze').addEventListener('click', runAnalysis);
-  document.getElementById('clientSelect').addEventListener('change', onClientChange);
+dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
 });
 
-async function loadClients() {
-  try {
-    const res = await fetch(`${BASE}/clients?apiKey=${API_KEY}`);
-    const data = await res.json();
-    const sel = document.getElementById('clientSelect');
-    sel.innerHTML = '<option value="">Select a client...</option>';
-    if (data.clients) {
-      data.clients.forEach(c => {
-        sel.innerHTML += `<option value="${c.id}">${c.business_name || 'Client ' + c.id}</option>`;
-      });
+// ─── CSV Parser ─────────────────────────────────────────────────
+function parseCSV(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+  if (lines.length < 2) return { headers: [], rows: [] };
+  const headers = parseCSVLine(lines[0]);
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const vals = parseCSVLine(lines[i]);
+    if (vals.length === headers.length) {
+      const obj = {};
+      headers.forEach((h, idx) => obj[h.trim()] = vals[idx].trim());
+      rows.push(obj);
     }
-  } catch (e) {
-    console.error('Failed to load clients:', e);
   }
+  return { headers, rows };
 }
 
-function onClientChange() {
-  const clientId = document.getElementById('clientSelect').value;
-  document.getElementById('btnAnalyze').disabled = !clientId;
-  if (clientId) {
-    loadOverview(clientId);
-    loadInsights(clientId);
+function parseCSVLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') { inQuotes = !inQuotes; }
+    else if (ch === ',' && !inQuotes) { result.push(current); current = ''; }
+    else { current += ch; }
   }
+  result.push(current);
+  return result;
+}
+
+// ─── CRM Detection ─────────────────────────────────────────────
+function detectCRM(headers) {
+  const h = headers.map(x => x.toLowerCase());
+  if (h.includes('pipeline') && h.includes('tags') && h.includes('stage')) return 'GoHighLevel';
+  if (h.includes('lifecycle stage') && h.includes('deal stage')) return 'HubSpot';
+  if (h.includes('lead owner') && h.includes('annual revenue') && h.includes('lead source')) return 'Zoho CRM';
+  if (h.includes('agent') && h.includes('response time (min)')) return 'RinglyPro';
+  // Fuzzy fallback
+  if (h.some(x => x.includes('pipeline'))) return 'GoHighLevel';
+  if (h.some(x => x.includes('lifecycle'))) return 'HubSpot';
+  if (h.some(x => x.includes('lead owner'))) return 'Zoho CRM';
+  return 'Unknown CRM';
+}
+
+// ─── Normalize Records ─────────────────────────────────────────
+function normalize(rows, crm) {
+  return rows.map(r => {
+    switch (crm) {
+      case 'GoHighLevel': return {
+        name: r['Contact Name'] || '',
+        email: r['Email'] || '',
+        phone: r['Phone'] || '',
+        source: r['Lead Source'] || '',
+        created: r['Created Date'] || '',
+        lastActivity: r['Last Activity Date'] || '',
+        callStatus: (r['Call Status'] || '').toLowerCase(),
+        callDuration: parseInt(r['Call Duration (sec)']) || 0,
+        callDirection: (r['Call Direction'] || '').toLowerCase(),
+        appointmentDate: r['Appointment Date'] || '',
+        appointmentStatus: (r['Appointment Status'] || '').toLowerCase(),
+        dealStage: r['Stage'] || '',
+        dealValue: parseFloat(r['Deal Value']) || 0,
+        status: (r['Status'] || '').toLowerCase(),
+        assignedTo: r['Assigned To'] || '',
+        tags: r['Tags'] || '',
+        notes: r['Notes'] || '',
+        responseTime: null
+      };
+      case 'HubSpot': return {
+        name: ((r['First Name'] || '') + ' ' + (r['Last Name'] || '')).trim(),
+        email: r['Email Address'] || '',
+        phone: r['Phone Number'] || '',
+        source: r['Original Source'] || '',
+        created: r['Create Date'] || '',
+        lastActivity: r['Last Activity Date'] || '',
+        callStatus: (r['Call Outcome'] || '').toLowerCase().replace('connected', 'answered').replace('no answer', 'no-answer').replace('left voicemail', 'missed'),
+        callDuration: parseInt(r['Call Duration']) || 0,
+        callDirection: 'inbound',
+        appointmentDate: r['Meeting Date'] || '',
+        appointmentStatus: (r['Meeting Outcome'] || '').toLowerCase().replace('no show', 'no-show'),
+        dealStage: r['Deal Stage'] || r['Lifecycle Stage'] || '',
+        dealValue: parseFloat(r['Deal Amount']) || 0,
+        status: (r['Lead Status'] || '').toLowerCase(),
+        assignedTo: r['Owner'] || '',
+        tags: '',
+        notes: '',
+        responseTime: null
+      };
+      case 'Zoho CRM': return {
+        name: ((r['First Name'] || '') + ' ' + (r['Last Name'] || '')).trim(),
+        email: r['Email'] || '',
+        phone: r['Phone'] || '',
+        source: r['Lead Source'] || '',
+        created: r['Created Time'] || '',
+        lastActivity: r['Modified Time'] || '',
+        callStatus: (r['Call Result'] || '').toLowerCase().replace('call completed', 'answered').replace('no answer', 'no-answer').replace('missed call', 'missed'),
+        callDuration: (parseInt(r['Call Duration (min)']) || 0) * 60,
+        callDirection: (r['Call Type'] || '').toLowerCase(),
+        appointmentDate: r['Event Date'] || '',
+        appointmentStatus: (r['Event Status'] || '').toLowerCase().replace('held', 'completed').replace('no show', 'no-show').replace('cancelled', 'no-show'),
+        dealStage: r['Stage'] || r['Lead Status'] || '',
+        dealValue: parseFloat(r['Amount']) || 0,
+        status: (r['Lead Status'] || '').toLowerCase(),
+        assignedTo: r['Lead Owner'] || '',
+        tags: '',
+        notes: r['Description'] || '',
+        responseTime: null
+      };
+      case 'RinglyPro': return {
+        name: r['Contact Name'] || '',
+        email: r['Email'] || '',
+        phone: r['Phone'] || '',
+        source: r['Lead Source'] || '',
+        created: r['Created Date'] || '',
+        lastActivity: r['Last Activity'] || '',
+        callStatus: (r['Call Status'] || '').toLowerCase(),
+        callDuration: parseInt(r['Call Duration (sec)']) || 0,
+        callDirection: (r['Call Direction'] || '').toLowerCase(),
+        appointmentDate: r['Appointment Date'] || '',
+        appointmentStatus: (r['Appointment Status'] || '').toLowerCase(),
+        dealStage: r['Deal Stage'] || '',
+        dealValue: parseFloat(r['Deal Value']) || 0,
+        status: '',
+        assignedTo: r['Agent'] || '',
+        tags: r['Tags'] || '',
+        notes: r['Notes'] || '',
+        responseTime: parseInt(r['Response Time (min)']) || null
+      };
+      default: return {
+        name: Object.values(r)[0] || '',
+        email: r['Email'] || r['email'] || '',
+        phone: r['Phone'] || r['phone'] || '',
+        source: '', created: '', lastActivity: '', callStatus: '', callDuration: 0,
+        callDirection: '', appointmentDate: '', appointmentStatus: '', dealStage: '',
+        dealValue: 0, status: '', assignedTo: '', tags: '', notes: '', responseTime: null
+      };
+    }
+  });
+}
+
+// ─── Neural Analyzers ───────────────────────────────────────────
+function runAnalyzers(records) {
+  const results = [];
+  results.push(...analyzeMissedCalls(records));
+  results.push(...analyzeCallConversion(records));
+  results.push(...analyzeLeadResponse(records));
+  results.push(...analyzeNoShows(records));
+  results.push(...analyzeEngagementFailures(records));
+  results.push(...analyzeLeadSources(records));
+  results.push(...analyzeStaleLeads(records));
+  results.push(...analyzeAfterHours(records));
+  results.push(...analyzeRevenueLeaks(records));
+  results.push(...analyzePipelineHealth(records));
+  return results.sort((a, b) => {
+    const order = { critical: 0, high: 1, medium: 2, low: 3 };
+    return (order[a.impact] || 3) - (order[b.impact] || 3);
+  });
+}
+
+function analyzeMissedCalls(recs) {
+  const withCalls = recs.filter(r => r.callStatus);
+  if (!withCalls.length) return [];
+  const missed = withCalls.filter(r => ['missed', 'no-answer'].includes(r.callStatus));
+  const missedNoFollowUp = missed.filter(r => !r.appointmentDate && !r.assignedTo);
+  const missedRate = (missed.length / withCalls.length * 100).toFixed(1);
+  const results = [];
+  if (missed.length > 0) {
+    const estRevenue = missed.reduce((s, r) => s + (r.dealValue || 1500), 0);
+    results.push({
+      id: 'missed-calls',
+      category: 'revenue',
+      title: `${missed.length} Missed Calls — $${estRevenue.toLocaleString()} at Risk`,
+      summary: `${missedRate}% of incoming calls were missed or went unanswered. ${missedNoFollowUp.length} of these had zero follow-up — no callback, no SMS, no assignment.`,
+      impact: parseFloat(missedRate) > 30 ? 'critical' : 'high',
+      impactEstimate: `$${estRevenue.toLocaleString()} estimated pipeline at risk`,
+      evidence: missed.slice(0, 5).map(r => r.name || r.phone).join(', '),
+      workflow: {
+        name: 'Auto-Recovery for Missed Calls',
+        description: 'Automatically re-engage every missed caller within 30 seconds',
+        steps: [
+          'Trigger: Incoming call goes unanswered or to voicemail',
+          'Action: Send personalized SMS within 30 seconds: "Sorry we missed you! Reply YES to schedule a callback"',
+          'Action: Create contact in CRM with tag "missed-call-recovery"',
+          'Action: Schedule AI callback via Rachel within 15 minutes',
+          'Action: If no response in 2 hours, send follow-up email with booking link'
+        ]
+      }
+    });
+  }
+  return results;
+}
+
+function analyzeCallConversion(recs) {
+  const answered = recs.filter(r => r.callStatus === 'answered');
+  if (answered.length < 3) return [];
+  const booked = answered.filter(r => r.appointmentDate);
+  const convRate = (booked.length / answered.length * 100).toFixed(1);
+  const longCalls = answered.filter(r => r.callDuration >= 120);
+  const longBooked = longCalls.filter(r => r.appointmentDate);
+  const shortCalls = answered.filter(r => r.callDuration > 0 && r.callDuration < 60);
+  const shortBooked = shortCalls.filter(r => r.appointmentDate);
+  const results = [];
+  results.push({
+    id: 'call-conversion',
+    category: 'conversion',
+    title: `${convRate}% Call-to-Booking Conversion Rate`,
+    summary: `Out of ${answered.length} answered calls, only ${booked.length} resulted in bookings. Long calls (2+ min) convert at ${longCalls.length ? (longBooked.length / longCalls.length * 100).toFixed(0) : 0}% vs short calls at ${shortCalls.length ? (shortBooked.length / shortCalls.length * 100).toFixed(0) : 0}%.`,
+    impact: parseFloat(convRate) < 40 ? 'high' : 'medium',
+    impactEstimate: `${answered.length - booked.length} answered calls didn't convert — potential $${((answered.length - booked.length) * 1800).toLocaleString()} gap`,
+    evidence: `${longCalls.length} calls over 2 min, ${shortCalls.length} calls under 1 min`,
+    workflow: {
+      name: 'Smart Conversion Optimizer',
+      description: 'Optimize call handling to increase booking rate',
+      steps: [
+        'Trigger: Call ends without a booking being created',
+        'Action: AI sends SMS with direct booking link within 60 seconds',
+        'Action: If call was < 60s, flag as "engagement failure" and retry with different agent script',
+        'Action: Track conversion by call duration to optimize script timing',
+        'Action: Weekly report: calls that converted vs those that didn\'t, with script analysis'
+      ]
+    }
+  });
+  return results;
+}
+
+function analyzeLeadResponse(recs) {
+  const withResponse = recs.filter(r => r.responseTime !== null && r.responseTime !== undefined);
+  if (withResponse.length < 2) {
+    // Estimate from created date vs last activity
+    const noContact = recs.filter(r => r.created && !r.assignedTo && !r.callStatus);
+    if (noContact.length > 2) {
+      return [{
+        id: 'lead-response',
+        category: 'conversion',
+        title: `${noContact.length} Leads Never Contacted`,
+        summary: `${noContact.length} leads were captured but never received any outreach — no call, no assignment, no follow-up. These are wasted ad dollars.`,
+        impact: noContact.length > 5 ? 'critical' : 'high',
+        impactEstimate: `$${(noContact.length * 1200).toLocaleString()} in wasted acquisition cost`,
+        evidence: noContact.slice(0, 5).map(r => r.name || r.email).join(', '),
+        workflow: {
+          name: 'Instant Lead Response',
+          description: 'Ensure every new lead gets contacted within 5 minutes',
+          steps: [
+            'Trigger: New lead created from any source (form, ad, referral)',
+            'Action: Assign to next available agent automatically',
+            'Action: If no agent available, Rachel AI calls lead within 5 minutes',
+            'Action: Simultaneously send welcome SMS with booking link',
+            'Action: If no contact after 30 min, escalate to manager with alert'
+          ]
+        }
+      }];
+    }
+    return [];
+  }
+  const slow = withResponse.filter(r => r.responseTime > 30);
+  const avgResp = withResponse.reduce((s, r) => s + r.responseTime, 0) / withResponse.length;
+  if (slow.length < 2) return [];
+  return [{
+    id: 'lead-response',
+    category: 'conversion',
+    title: `Average Lead Response: ${avgResp.toFixed(0)} Minutes`,
+    summary: `${slow.length} of ${withResponse.length} leads waited over 30 minutes for first contact. Industry benchmark is under 5 minutes — leads contacted in <5 min are 21x more likely to convert.`,
+    impact: avgResp > 60 ? 'critical' : 'high',
+    impactEstimate: `${slow.length} slow-response leads may have gone cold`,
+    evidence: `Slowest: ${Math.max(...withResponse.map(r => r.responseTime))} min`,
+    workflow: {
+      name: 'Speed-to-Lead Automation',
+      description: 'Guarantee <5 minute response on every new lead',
+      steps: [
+        'Trigger: New lead enters CRM from any source',
+        'Action: Instant SMS: "Thanks for your interest! We\'re calling you now."',
+        'Action: Rachel AI initiates outbound call within 2 minutes',
+        'Action: If lead doesn\'t answer, schedule retry at 15 min, 1 hour, next day',
+        'Action: Alert dashboard if any lead exceeds 10-minute response threshold'
+      ]
+    }
+  }];
+}
+
+function analyzeNoShows(recs) {
+  const withAppt = recs.filter(r => r.appointmentDate);
+  if (withAppt.length < 3) return [];
+  const noShows = withAppt.filter(r => r.appointmentStatus === 'no-show');
+  const noShowRate = (noShows.length / withAppt.length * 100).toFixed(1);
+  if (noShows.length === 0) return [];
+  const lostRev = noShows.reduce((s, r) => s + (r.dealValue || 1500), 0);
+  return [{
+    id: 'no-shows',
+    category: 'operations',
+    title: `${noShowRate}% No-Show Rate — ${noShows.length} Missed Appointments`,
+    summary: `${noShows.length} out of ${withAppt.length} scheduled appointments were no-shows. That's $${lostRev.toLocaleString()} in lost revenue and ${noShows.length} wasted time slots that could have been filled.`,
+    impact: parseFloat(noShowRate) > 25 ? 'critical' : 'high',
+    impactEstimate: `$${lostRev.toLocaleString()} in lost revenue + ${noShows.length} wasted slots`,
+    evidence: noShows.slice(0, 5).map(r => r.name).join(', '),
+    workflow: {
+      name: 'No-Show Prevention & Recovery',
+      description: 'Reduce no-shows with automated reminders and instant rebooking',
+      steps: [
+        'Trigger: Appointment created',
+        'Action: Send confirmation SMS + email immediately',
+        'Action: Send reminder 24 hours before with "Confirm / Reschedule" buttons',
+        'Action: Send reminder 2 hours before appointment',
+        'Trigger: No-show detected (client doesn\'t arrive within 10 min)',
+        'Action: Rachel AI calls client to reschedule within 30 minutes',
+        'Action: Open the slot for waitlisted clients'
+      ]
+    }
+  }];
+}
+
+function analyzeEngagementFailures(recs) {
+  const answered = recs.filter(r => r.callStatus === 'answered' && r.callDuration > 0);
+  if (answered.length < 3) return [];
+  const dropoffs = answered.filter(r => r.callDuration < 30);
+  if (dropoffs.length < 2) return [];
+  const dropRate = (dropoffs.length / answered.length * 100).toFixed(1);
+  return [{
+    id: 'engagement-failures',
+    category: 'engagement',
+    title: `${dropoffs.length} Calls Ended Under 30 Seconds`,
+    summary: `${dropRate}% of answered calls lasted less than 30 seconds — callers hung up during the greeting or initial pitch. This signals a script or voice agent issue.`,
+    impact: parseFloat(dropRate) > 15 ? 'high' : 'medium',
+    impactEstimate: `${dropoffs.length} potential customers lost at first contact`,
+    evidence: dropoffs.slice(0, 5).map(r => `${r.name}: ${r.callDuration}s`).join(', '),
+    workflow: {
+      name: 'Engagement Recovery & Script Optimization',
+      description: 'Catch and re-engage callers who hang up early',
+      steps: [
+        'Trigger: Call ends in under 30 seconds',
+        'Action: Send SMS within 60s: "Looks like we got disconnected. Can I help via text?"',
+        'Action: Flag call for script review — tag "early-hangup"',
+        'Action: A/B test alternate greeting scripts for flagged lead sources',
+        'Action: Weekly report on hangup rate by time of day and lead source'
+      ]
+    }
+  }];
+}
+
+function analyzeLeadSources(recs) {
+  const sources = {};
+  recs.forEach(r => {
+    if (!r.source) return;
+    if (!sources[r.source]) sources[r.source] = { total: 0, converted: 0, revenue: 0 };
+    sources[r.source].total++;
+    if (['closed won', 'completed', 'converted'].some(s => (r.dealStage || '').toLowerCase().includes(s)) || r.appointmentStatus === 'completed') {
+      sources[r.source].converted++;
+      sources[r.source].revenue += r.dealValue || 0;
+    }
+  });
+  const entries = Object.entries(sources).filter(([, v]) => v.total >= 2);
+  if (entries.length < 2) return [];
+  entries.sort((a, b) => (b[1].converted / b[1].total) - (a[1].converted / a[1].total));
+  const best = entries[0];
+  const worst = entries[entries.length - 1];
+  const bestRate = (best[1].converted / best[1].total * 100).toFixed(0);
+  const worstRate = (worst[1].converted / worst[1].total * 100).toFixed(0);
+  return [{
+    id: 'lead-sources',
+    category: 'conversion',
+    title: `Best Source: ${best[0]} (${bestRate}%) vs Worst: ${worst[0]} (${worstRate}%)`,
+    summary: `${best[0]} converts at ${bestRate}% generating $${best[1].revenue.toLocaleString()}, while ${worst[0]} converts at only ${worstRate}%. Consider reallocating ad spend to higher-converting sources.`,
+    impact: 'medium',
+    impactEstimate: `Shifting budget from ${worst[0]} to ${best[0]} could increase conversions by ${Math.max(0, parseInt(bestRate) - parseInt(worstRate))}%`,
+    evidence: entries.map(([k, v]) => `${k}: ${v.total} leads, ${v.converted} converted`).join(' | '),
+    workflow: {
+      name: 'Smart Lead Routing by Source',
+      description: 'Route leads differently based on source performance',
+      steps: [
+        `Trigger: New lead from ${best[0]} (high-converting source)`,
+        'Action: Priority routing — assign to top closer immediately',
+        'Action: Rachel AI calls within 2 minutes (fast-track)',
+        `Trigger: New lead from ${worst[0]} (low-converting source)`,
+        'Action: Nurture sequence — SMS + email drip before call',
+        'Action: Weekly source performance report to adjust ad spend'
+      ]
+    }
+  }];
+}
+
+function analyzeStaleLeads(recs) {
+  const stale = recs.filter(r => {
+    const stage = (r.dealStage || '').toLowerCase();
+    return (stage.includes('new') || stage.includes('discovery') || stage.includes('qualification') || stage.includes('contacted')) &&
+           !['closed won', 'closed lost', 'won', 'lost', 'converted'].some(s => stage.includes(s)) &&
+           r.dealValue > 0;
+  });
+  const stuck = stale.filter(r => {
+    if (!r.created || !r.lastActivity) return true;
+    const created = new Date(r.created);
+    const last = new Date(r.lastActivity);
+    const daysSinceActivity = (new Date('2026-03-17') - last) / (1000 * 60 * 60 * 24);
+    return daysSinceActivity > 14;
+  });
+  if (stuck.length < 2) return [];
+  const stuckValue = stuck.reduce((s, r) => s + r.dealValue, 0);
+  return [{
+    id: 'stale-leads',
+    category: 'revenue',
+    title: `${stuck.length} Stale Deals Worth $${stuckValue.toLocaleString()} Going Cold`,
+    summary: `${stuck.length} deals in early pipeline stages haven't had activity in over 2 weeks. Without intervention, these will likely be lost.`,
+    impact: stuckValue > 10000 ? 'critical' : 'high',
+    impactEstimate: `$${stuckValue.toLocaleString()} at risk of going cold`,
+    evidence: stuck.slice(0, 5).map(r => `${r.name}: $${r.dealValue} (${r.dealStage})`).join(', '),
+    workflow: {
+      name: 'Stale Deal Reactivation',
+      description: 'Automatically re-engage deals that go dormant',
+      steps: [
+        'Trigger: Deal has no activity for 7 days in early pipeline stage',
+        'Action: Send "checking in" SMS from assigned agent',
+        'Trigger: Still no activity at 14 days',
+        'Action: Rachel AI calls with special offer / urgency message',
+        'Action: If no response after 21 days, tag "at-risk" and alert manager',
+        'Action: Monthly stale pipeline report to prevent future buildup'
+      ]
+    }
+  }];
+}
+
+function analyzeAfterHours(recs) {
+  const withNotes = recs.filter(r => r.notes && (r.notes.toLowerCase().includes('after hours') || r.notes.toLowerCase().includes('pm') || r.notes.toLowerCase().includes('weekend') || r.notes.toLowerCase().includes('evening')));
+  const afterHoursMissed = recs.filter(r => {
+    if (r.callStatus !== 'missed' && r.callStatus !== 'no-answer') return false;
+    const notes = (r.notes || '').toLowerCase();
+    return notes.includes('after hours') || notes.includes('pm') || notes.includes('weekend') || notes.includes('evening') || notes.includes('night');
+  });
+  const total = afterHoursMissed.length || withNotes.filter(r => r.callStatus === 'missed').length;
+  if (total < 2) return [];
+  return [{
+    id: 'after-hours',
+    category: 'revenue',
+    title: `${total} After-Hours Calls Missed — No Coverage`,
+    summary: `${total} calls came in outside business hours and went unanswered. These callers are high-intent — they're reaching out when it's convenient for THEM, not you.`,
+    impact: total > 3 ? 'high' : 'medium',
+    impactEstimate: `$${(total * 2000).toLocaleString()} in after-hours revenue at risk`,
+    evidence: `${total} calls outside 9 AM–6 PM with no answer`,
+    workflow: {
+      name: '24/7 AI Coverage',
+      description: 'Never miss another after-hours call',
+      steps: [
+        'Trigger: Incoming call outside business hours (before 9 AM or after 6 PM)',
+        'Action: Route to Rachel AI voice agent (always available)',
+        'Action: Rachel handles booking, FAQ, and basic support',
+        'Action: If escalation needed, collect info and schedule morning callback',
+        'Action: Send caller immediate SMS with booking link',
+        'Action: Morning summary of all after-hours interactions to team'
+      ]
+    }
+  }];
+}
+
+function analyzeRevenueLeaks(recs) {
+  const lost = recs.filter(r => {
+    const stage = (r.dealStage || '').toLowerCase();
+    return stage.includes('lost') || r.status === 'lost' || r.status === 'stale';
+  });
+  if (lost.length < 2) return [];
+  const lostValue = lost.reduce((s, r) => s + (r.dealValue || 0), 0);
+  return [{
+    id: 'revenue-leaks',
+    category: 'revenue',
+    title: `${lost.length} Lost Deals — $${lostValue.toLocaleString()} in Revenue Leaked`,
+    summary: `${lost.length} deals were marked as lost or went stale. Analyzing patterns: were these lost due to slow response, missed calls, or lack of follow-up?`,
+    impact: lostValue > 5000 ? 'high' : 'medium',
+    impactEstimate: `$${lostValue.toLocaleString()} in closed-lost revenue`,
+    evidence: lost.slice(0, 5).map(r => `${r.name}: $${r.dealValue}`).join(', '),
+    workflow: {
+      name: 'Win-Back Campaign',
+      description: 'Re-engage lost deals with targeted outreach',
+      steps: [
+        'Trigger: Deal marked as lost/stale',
+        'Action: Wait 30 days, then send personalized re-engagement email',
+        'Action: Offer exclusive incentive or updated proposal',
+        'Action: If email opened, Rachel AI calls within 24 hours',
+        'Action: Track win-back rate to optimize timing and messaging'
+      ]
+    }
+  }];
+}
+
+function analyzePipelineHealth(recs) {
+  const withDeals = recs.filter(r => r.dealValue > 0);
+  if (withDeals.length < 5) return [];
+  const won = withDeals.filter(r => (r.dealStage || '').toLowerCase().includes('won') || (r.dealStage || '').toLowerCase().includes('converted'));
+  const total = withDeals.length;
+  const winRate = (won.length / total * 100).toFixed(1);
+  const totalPipeline = withDeals.reduce((s, r) => s + r.dealValue, 0);
+  const wonRevenue = won.reduce((s, r) => s + r.dealValue, 0);
+  if (parseFloat(winRate) > 50) return [];
+  return [{
+    id: 'pipeline-health',
+    category: 'operations',
+    title: `Pipeline Win Rate: ${winRate}% — $${(totalPipeline - wonRevenue).toLocaleString()} Unconverted`,
+    summary: `Only ${won.length} of ${total} deals closed successfully. $${(totalPipeline - wonRevenue).toLocaleString()} sits in pipeline without conversion. Improving win rate by just 10% would add $${(totalPipeline * 0.1).toLocaleString()} in revenue.`,
+    impact: parseFloat(winRate) < 25 ? 'high' : 'medium',
+    impactEstimate: `+10% win rate = +$${(totalPipeline * 0.1).toLocaleString()} revenue`,
+    evidence: `${won.length} won / ${total} total deals`,
+    workflow: {
+      name: 'Pipeline Acceleration',
+      description: 'Move deals through stages faster with automated nudges',
+      steps: [
+        'Trigger: Deal sits in same stage for more than 5 days',
+        'Action: Automated follow-up sequence based on current stage',
+        'Action: Discovery → send case study; Proposal → send comparison guide',
+        'Action: AI-generated personalized follow-up talking points for agent',
+        'Action: If deal stalls 3x, auto-schedule manager review call'
+      ]
+    }
+  }];
+}
+
+// ─── Health Score Calculation ───────────────────────────────────
+function calculateHealthScore(recs, findings) {
+  const withCalls = recs.filter(r => r.callStatus);
+  const answered = withCalls.filter(r => r.callStatus === 'answered');
+  const withAppt = recs.filter(r => r.appointmentDate);
+  const completed = withAppt.filter(r => r.appointmentStatus === 'completed');
+  const noShows = withAppt.filter(r => r.appointmentStatus === 'no-show');
+  const withDeals = recs.filter(r => r.dealValue > 0);
+  const won = withDeals.filter(r => (r.dealStage || '').toLowerCase().includes('won') || (r.dealStage || '').toLowerCase().includes('converted'));
+
+  const answerRate = withCalls.length ? answered.length / withCalls.length : 0.5;
+  const completionRate = withAppt.length ? completed.length / withAppt.length : 0.5;
+  const noShowPenalty = withAppt.length ? noShows.length / withAppt.length : 0;
+  const winRate = withDeals.length ? won.length / withDeals.length : 0.5;
+  const criticalCount = findings.filter(f => f.impact === 'critical').length;
+  const highCount = findings.filter(f => f.impact === 'high').length;
+
+  let score = 50;
+  score += answerRate * 20;
+  score += completionRate * 15;
+  score -= noShowPenalty * 15;
+  score += winRate * 15;
+  score -= criticalCount * 8;
+  score -= highCount * 4;
+  return Math.max(5, Math.min(95, Math.round(score)));
+}
+
+// ─── Main File Handler ──────────────────────────────────────────
+async function handleFile(file) {
+  if (!file.name.endsWith('.csv')) {
+    alert('Please upload a CSV file.');
+    return;
+  }
+  showLoading();
+  const text = await file.text();
+
+  await animateStep('parse', 300);
+  const { headers, rows } = parseCSV(text);
+  if (rows.length === 0) { hideLoading(); alert('No data found in file.'); return; }
+
+  await animateStep('detect', 400);
+  detectedCRM = detectCRM(headers);
+
+  await animateStep('normalize', 400);
+  parsedRecords = normalize(rows, detectedCRM);
+
+  await animateStep('analyze', 800);
+  findings = runAnalyzers(parsedRecords);
+
+  await animateStep('score', 400);
+  const score = calculateHealthScore(parsedRecords, findings);
+
+  await animateStep('workflow', 400);
+
+  hideLoading();
+  showDetectedBanner(detectedCRM, parsedRecords.length, headers.length);
+  renderResults(score, parsedRecords, findings);
+}
+
+function showLoading() {
+  document.getElementById('loadingOverlay').classList.add('visible');
+  document.querySelectorAll('.loading-step').forEach(el => { el.classList.remove('active', 'done'); });
+}
+function hideLoading() {
+  document.getElementById('loadingOverlay').classList.remove('visible');
+}
+function animateStep(step, delay) {
+  return new Promise(resolve => {
+    const el = document.querySelector(`[data-step="${step}"]`);
+    // Mark previous as done
+    const steps = [...document.querySelectorAll('.loading-step')];
+    const idx = steps.indexOf(el);
+    steps.forEach((s, i) => { if (i < idx) { s.classList.remove('active'); s.classList.add('done'); } });
+    el.classList.add('active');
+    setTimeout(resolve, delay);
+  });
+}
+
+function showDetectedBanner(crm, records, fields) {
+  const banner = document.getElementById('detectedBanner');
+  const colors = { 'GoHighLevel': '#22c55e', 'HubSpot': '#f97316', 'Zoho CRM': '#ef4444', 'RinglyPro': '#8b5cf6' };
+  banner.style.borderColor = (colors[crm] || '#8b5cf6') + '40';
+  banner.style.background = (colors[crm] || '#8b5cf6') + '10';
+  banner.style.color = colors[crm] || '#c4b5fd';
+  banner.innerHTML = `&#10003; Detected <strong>${crm}</strong> — ${records} records, ${fields} fields parsed successfully`;
+  banner.style.display = 'block';
+}
+
+// ─── Render Results ─────────────────────────────────────────────
+function renderResults(score, recs, findings) {
+  document.getElementById('analysisSection').classList.add('visible');
+  document.getElementById('uploadSection').style.display = 'none';
+  renderScore(score);
+  renderKPIs(recs);
+  setupTabs();
+  renderFindings(findings);
+}
+
+function renderScore(score) {
+  const ring = document.getElementById('scoreRing');
+  const circumference = 490;
+  const offset = circumference - (score / 100) * circumference;
+  const color = score >= 70 ? '#4ade80' : score >= 45 ? '#fbbf24' : '#f87171';
+  ring.style.stroke = color;
+  ring.style.strokeDashoffset = offset;
+
+  const valEl = document.getElementById('scoreVal');
+  valEl.style.color = color;
+  animateNumber(valEl, 0, score, 1200);
+
+  const labels = {
+    high: ['Healthy CRM', 'Your data shows strong fundamentals with room for optimization.'],
+    mid: ['Needs Attention', 'Several revenue leaks and operational gaps detected.'],
+    low: ['Critical Issues Found', 'Significant revenue leaks require immediate action.']
+  };
+  const tier = score >= 70 ? 'high' : score >= 45 ? 'mid' : 'low';
+  document.getElementById('scoreLabel').textContent = labels[tier][0];
+  document.getElementById('scoreSub').textContent = labels[tier][1];
+}
+
+function animateNumber(el, start, end, duration) {
+  const startTime = performance.now();
+  function tick(now) {
+    const progress = Math.min((now - startTime) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.round(start + (end - start) * eased);
+    if (progress < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+function renderKPIs(recs) {
+  const withCalls = recs.filter(r => r.callStatus);
+  const answered = withCalls.filter(r => r.callStatus === 'answered');
+  const missed = withCalls.filter(r => ['missed', 'no-answer'].includes(r.callStatus));
+  const withAppt = recs.filter(r => r.appointmentDate);
+  const completed = withAppt.filter(r => r.appointmentStatus === 'completed');
+  const noShows = withAppt.filter(r => r.appointmentStatus === 'no-show');
+  const totalRevenue = recs.reduce((s, r) => s + (r.dealValue || 0), 0);
+  const wonRevenue = recs.filter(r => (r.dealStage || '').toLowerCase().includes('won')).reduce((s, r) => s + r.dealValue, 0);
+  const avgDuration = answered.length ? Math.round(answered.reduce((s, r) => s + r.callDuration, 0) / answered.length) : 0;
+
+  document.getElementById('kpiGrid').innerHTML = `
+    <div class="kpi-card"><div class="kpi-label">Total Records</div><div class="kpi-value purple">${recs.length}</div><div class="kpi-sub">${detectedCRM} export</div></div>
+    <div class="kpi-card"><div class="kpi-label">Calls Tracked</div><div class="kpi-value cyan">${withCalls.length}</div><div class="kpi-sub">${answered.length} answered · ${missed.length} missed</div></div>
+    <div class="kpi-card"><div class="kpi-label">Answer Rate</div><div class="kpi-value ${withCalls.length ? (answered.length/withCalls.length > .7 ? 'green' : 'red') : 'yellow'}">${withCalls.length ? (answered.length/withCalls.length*100).toFixed(0) : '—'}%</div><div class="kpi-sub">Avg duration: ${avgDuration}s</div></div>
+    <div class="kpi-card"><div class="kpi-label">Appointments</div><div class="kpi-value cyan">${withAppt.length}</div><div class="kpi-sub">${completed.length} completed · ${noShows.length} no-shows</div></div>
+    <div class="kpi-card"><div class="kpi-label">Pipeline Value</div><div class="kpi-value yellow">$${totalRevenue.toLocaleString()}</div><div class="kpi-sub">$${wonRevenue.toLocaleString()} closed won</div></div>
+    <div class="kpi-card"><div class="kpi-label">Findings</div><div class="kpi-value red">${findings.length}</div><div class="kpi-sub">${findings.filter(f=>f.impact==='critical').length} critical · ${findings.filter(f=>f.impact==='high').length} high</div></div>
+  `;
 }
 
 function setupTabs() {
@@ -322,147 +1052,116 @@ function setupTabs() {
     document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
     e.target.classList.add('active');
     currentTab = e.target.dataset.tab;
-    renderInsights();
+    renderFindings(findings);
   });
 }
 
-// ─── API Calls ─────────────────────────────────────────────────
-async function loadOverview(clientId) {
-  try {
-    const days = document.getElementById('periodSelect').value;
-    const res = await fetch(`${BASE}/overview?client_id=${clientId}&days=${days}&apiKey=${API_KEY}`);
-    const data = await res.json();
-    if (data.success) renderKPIs(data);
-  } catch (e) {
-    console.error('Overview error:', e);
-  }
-}
-
-async function loadInsights(clientId) {
-  try {
-    const res = await fetch(`${BASE}/insights?client_id=${clientId}&apiKey=${API_KEY}`);
-    const data = await res.json();
-    if (data.success) {
-      allInsights = data.insights || [];
-      renderInsights();
-    }
-  } catch (e) {
-    console.error('Insights error:', e);
-  }
-}
-
-async function runAnalysis() {
-  const clientId = document.getElementById('clientSelect').value;
-  if (!clientId) return;
-
-  const btn = document.getElementById('btnAnalyze');
-  const dot = document.getElementById('statusDot');
-  const overlay = document.getElementById('loadingOverlay');
-
-  btn.disabled = true;
-  btn.textContent = 'Analyzing...';
-  dot.classList.add('loading');
-  overlay.classList.add('visible');
-
-  try {
-    const res = await fetch(`${BASE}/analyze`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ client_id: parseInt(clientId), apiKey: API_KEY })
-    });
-    const data = await res.json();
-
-    if (data.success) {
-      allInsights = data.insights || [];
-      renderInsights();
-      loadOverview(clientId);
-    }
-  } catch (e) {
-    console.error('Analysis error:', e);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Run Analysis';
-    dot.classList.remove('loading');
-    overlay.classList.remove('visible');
-  }
-}
-
-async function updateInsightStatus(id, status) {
-  try {
-    await fetch(`${BASE}/insights/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status, apiKey: API_KEY })
-    });
-    allInsights = allInsights.filter(i => i.id !== id);
-    renderInsights();
-  } catch (e) {
-    console.error('Update error:', e);
-  }
-}
-
-// ─── Rendering ─────────────────────────────────────────────────
-function renderKPIs(data) {
-  const c = data.calls || {};
-  const b = data.bookings || {};
-  const l = data.leads || {};
-
-  document.getElementById('kpiTotalCalls').textContent = c.total || 0;
-  document.getElementById('kpiCallsSub').innerHTML = `${c.outbound || 0} outbound &middot; Avg ${c.avgDuration || 0}s`;
-
-  document.getElementById('kpiAnswerRate').textContent = (c.answerRate || 0) + '%';
-  const trend = c.answerRateTrend || 0;
-  document.getElementById('kpiAnswerSub').innerHTML = trend !== 0
-    ? `<span class="kpi-trend ${trend > 0 ? 'up' : 'down'}">${trend > 0 ? '+' : ''}${trend.toFixed(1)}%</span> vs prior period`
-    : 'vs prior period';
-
-  document.getElementById('kpiMissed').textContent = c.missed || 0;
-  document.getElementById('kpiMissedSub').textContent = c.total > 0 ? `${((c.missed / c.total) * 100).toFixed(1)}% of incoming` : '';
-
-  document.getElementById('kpiBookings').textContent = b.total || 0;
-  document.getElementById('kpiBookingsSub').textContent = `${b.completed || 0} completed · ${b.noShows || 0} no-shows`;
-
-  document.getElementById('kpiConversion').textContent = (b.conversionRate || 0) + '%';
-  document.getElementById('kpiConvSub').textContent = 'calls → bookings';
-
-  document.getElementById('kpiLeads').textContent = l.newLeads || 0;
-  document.getElementById('kpiLeadsSub').textContent = 'new contacts captured';
-}
-
-function renderInsights() {
-  const grid = document.getElementById('insightsGrid');
-  const countEl = document.getElementById('insightCount');
-
-  // Filter by tab
-  const cats = TAB_CATEGORIES[currentTab];
-  const filtered = cats ? allInsights.filter(i => cats.includes(i.category)) : allInsights;
-
+function renderFindings(items) {
+  const grid = document.getElementById('findingsGrid');
+  const countEl = document.getElementById('findingCount');
+  const tabMap = {
+    all: null,
+    critical: items => items.filter(f => f.impact === 'critical'),
+    revenue: items => items.filter(f => f.category === 'revenue'),
+    conversion: items => items.filter(f => f.category === 'conversion'),
+    engagement: items => items.filter(f => f.category === 'engagement'),
+    operations: items => items.filter(f => f.category === 'operations')
+  };
+  const filtered = tabMap[currentTab] ? tabMap[currentTab](items) : items;
   countEl.textContent = filtered.length;
 
   if (filtered.length === 0) {
-    grid.innerHTML = `<div class="empty-state"><h3>No insights for this view</h3><p>${allInsights.length === 0 ? 'Run an analysis to generate insights.' : 'Switch tabs to see other insights.'}</p></div>`;
+    grid.innerHTML = '<div class="empty-findings"><h3>No findings for this view</h3><p>Switch tabs to see other findings.</p></div>';
     return;
   }
 
-  grid.innerHTML = filtered.map(i => `
-    <div class="insight-card ${i.impact}">
-      <div class="insight-category">${CATEGORY_LABELS[i.category] || i.category}</div>
-      <div class="insight-header">
-        <div class="insight-title">${esc(i.title)}</div>
-        <span class="insight-badge ${i.impact}">${i.impact}</span>
+  grid.innerHTML = filtered.map((f, i) => {
+    const isActivated = activatedWorkflows.some(w => w.id === f.id);
+    return `
+    <div class="finding-card ${f.impact}">
+      <div class="finding-category">${f.category.toUpperCase()}</div>
+      <div class="finding-header">
+        <div class="finding-title">${esc(f.title)}</div>
+        <span class="finding-badge ${f.impact}">${f.impact}</span>
       </div>
-      <div class="insight-summary">${esc(i.summary)}</div>
-      ${i.impact_estimate || i.impactEstimate ? `<div class="insight-impact">Impact: ${esc(i.impact_estimate || i.impactEstimate)}</div>` : ''}
-      <div class="insight-action"><strong>Recommended:</strong> ${esc(i.recommended_action || i.recommendedAction)}</div>
-      <div class="insight-footer">
-        <span class="insight-date">${i.analysis_date || i.analysisDate || ''}</span>
-        ${i.id ? `<div class="insight-actions">
-          <button class="insight-btn" onclick="updateInsightStatus(${i.id}, 'acknowledged')">Acknowledge</button>
-          <button class="insight-btn" onclick="updateInsightStatus(${i.id}, 'dismissed')">Dismiss</button>
-        </div>` : ''}
+      <div class="finding-summary">${esc(f.summary)}</div>
+      <div class="finding-impact">&#128176; ${esc(f.impactEstimate)}</div>
+      <div class="finding-evidence">Evidence: <code>${esc(f.evidence)}</code></div>
+      <div class="fix-section">
+        <div class="fix-workflow" id="wf-${f.id}">
+          <strong>${esc(f.workflow.name)}</strong><br>
+          <span style="color:#64748b">${esc(f.workflow.description)}</span>
+          ${f.workflow.steps.map((s, j) => `<div class="wf-step"><span class="wf-num">${j+1}</span><span>${esc(s)}</span></div>`).join('')}
+        </div>
+        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-top:8px;">
+          <button class="btn-fix show-fix" onclick="toggleWorkflow('${f.id}')">&#9881; Show Fix</button>
+          ${isActivated
+            ? `<button class="btn-fix activated">&#10003; Activated</button>`
+            : `<button class="btn-fix activate" id="activate-${f.id}" onclick="activateWorkflow('${f.id}')">&#9889; Activate Fix</button>`
+          }
+        </div>
       </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleWorkflow(id) {
+  const el = document.getElementById('wf-' + id);
+  el.classList.toggle('visible');
+}
+
+function activateWorkflow(id) {
+  const finding = findings.find(f => f.id === id);
+  if (!finding) return;
+  activatedWorkflows.push({
+    id: finding.id,
+    name: finding.workflow.name,
+    description: finding.workflow.description,
+    finding: finding.title,
+    activatedAt: new Date().toLocaleTimeString()
+  });
+
+  // Update button
+  const btn = document.getElementById('activate-' + id);
+  if (btn) {
+    btn.className = 'btn-fix activated';
+    btn.innerHTML = '&#10003; Activated';
+    btn.onclick = null;
+  }
+
+  // Update workflows panel
+  renderWorkflowsPanel();
+}
+
+function renderWorkflowsPanel() {
+  const panel = document.getElementById('workflowsPanel');
+  const list = document.getElementById('workflowsList');
+  const count = document.getElementById('wfCount');
+  if (activatedWorkflows.length === 0) { panel.classList.remove('visible'); return; }
+  panel.classList.add('visible');
+  count.textContent = activatedWorkflows.length;
+  list.innerHTML = activatedWorkflows.map(w => `
+    <div class="wf-item">
+      <div class="wf-icon">&#9889;</div>
+      <div class="wf-info">
+        <div class="wf-name">${esc(w.name)}</div>
+        <div class="wf-desc">${esc(w.description)}</div>
+      </div>
+      <div class="wf-status">Active · ${w.activatedAt}</div>
     </div>
   `).join('');
+}
+
+function resetDemo() {
+  document.getElementById('analysisSection').classList.remove('visible');
+  document.getElementById('uploadSection').style.display = '';
+  document.getElementById('detectedBanner').style.display = 'none';
+  document.getElementById('fileInput').value = '';
+  parsedRecords = [];
+  findings = [];
+  activatedWorkflows = [];
+  currentTab = 'all';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function esc(s) {

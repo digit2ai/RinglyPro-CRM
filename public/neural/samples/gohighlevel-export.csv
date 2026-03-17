@@ -1,0 +1,41 @@
+Contact Name,Email,Phone,Tags,Pipeline,Stage,Lead Source,Created Date,Last Activity Date,Assigned To,Deal Value,Status,Call Status,Call Duration (sec),Call Direction,Appointment Date,Appointment Status,Notes
+Maria Santos,maria.santos@email.com,+1-555-0101,"hot-lead,google-ads",Main Pipeline,New Lead,Google Ads,2026-02-01,2026-02-01,Rachel AI,2500,active,answered,185,inbound,2026-02-08,completed,Booked during first call
+James Wilson,james.wilson@email.com,+1-555-0102,"website",Main Pipeline,Contacted,Website Form,2026-02-02,2026-02-02,Rachel AI,1800,active,answered,95,inbound,2026-02-10,no-show,Left voicemail after no-show
+Linda Park,linda.park@email.com,+1-555-0103,"referral,vip",Main Pipeline,Proposal Sent,Referral,2026-02-03,2026-02-03,,3200,active,missed,,inbound,,,No callback attempted
+Robert Chen,robert.chen@email.com,+1-555-0104,"facebook-ads",Main Pipeline,New Lead,Facebook Ads,2026-02-04,2026-02-04,,1500,active,missed,,inbound,,,
+Sofia Reyes,sofia.reyes@email.com,+1-555-0105,"google-ads,retarget",Main Pipeline,Appointment Set,Google Ads,2026-02-05,2026-02-06,Rachel AI,2200,active,answered,210,inbound,2026-02-12,completed,
+David Kim,david.kim@email.com,+1-555-0106,"cold-lead",Main Pipeline,New Lead,Cold Outreach,2026-02-05,2026-02-05,,900,active,no-answer,,outbound,,,Called at 7:45 PM no answer
+Aisha Johnson,aisha.johnson@email.com,+1-555-0107,"google-ads",Main Pipeline,New Lead,Google Ads,2026-02-06,2026-02-06,,2000,active,missed,,inbound,,,After hours call 8:30 PM
+Tom Bradley,tom.bradley@email.com,+1-555-0108,"website",Main Pipeline,Contacted,Website Form,2026-02-07,2026-02-07,Rachel AI,1200,active,answered,45,inbound,,,Call ended abruptly
+Nina Patel,nina.patel@email.com,+1-555-0109,"referral",Main Pipeline,Appointment Set,Referral,2026-02-08,2026-02-09,Rachel AI,4500,active,answered,175,inbound,2026-02-15,completed,Premium client
+Carlos Mendez,carlos.mendez@email.com,+1-555-0110,"facebook-ads",Main Pipeline,New Lead,Facebook Ads,2026-02-08,2026-02-08,,1100,active,missed,,inbound,,,
+Emily Zhang,emily.zhang@email.com,+1-555-0111,"google-ads",Main Pipeline,Proposal Sent,Google Ads,2026-02-09,2026-02-12,Rachel AI,2800,active,answered,165,inbound,2026-02-16,no-show,
+Frank Moore,frank.moore@email.com,+1-555-0112,"walk-in",Main Pipeline,Contacted,Walk-In,2026-02-10,2026-02-10,Rachel AI,800,active,answered,55,inbound,,,Requested callback Tuesday
+Grace Lee,grace.lee@email.com,+1-555-0113,"google-ads,hot-lead",Main Pipeline,Appointment Set,Google Ads,2026-02-10,2026-02-11,Rachel AI,3100,active,answered,195,inbound,2026-02-17,completed,
+Hassan Ali,hassan.ali@email.com,+1-555-0114,"cold-lead",Main Pipeline,New Lead,Cold Outreach,2026-02-11,2026-02-11,,700,stale,no-answer,,outbound,,,No response after 3 attempts
+Isabella Torres,isabella.torres@email.com,+1-555-0115,"facebook-ads",Main Pipeline,New Lead,Facebook Ads,2026-02-12,2026-02-12,,1600,active,missed,,inbound,,,Missed - lunch break
+Jake Thompson,jake.thompson@email.com,+1-555-0116,"website",Main Pipeline,New Lead,Website Form,2026-02-13,2026-02-13,,2100,active,missed,,inbound,,,After hours 9:15 PM
+Karen White,karen.white@email.com,+1-555-0117,"referral,vip",Main Pipeline,Closed Won,Referral,2026-02-14,2026-02-15,Rachel AI,5000,won,answered,240,inbound,2026-02-18,completed,Signed contract same day
+Leo Nguyen,leo.nguyen@email.com,+1-555-0118,"google-ads",Main Pipeline,New Lead,Google Ads,2026-02-15,2026-02-15,,1900,active,answered,22,inbound,,,Dropped call immediately
+Michelle Davis,michelle.davis@email.com,+1-555-0119,"facebook-ads",Main Pipeline,Contacted,Facebook Ads,2026-02-15,2026-02-16,Rachel AI,1400,active,answered,130,inbound,2026-02-20,no-show,
+Oscar Ruiz,oscar.ruiz@email.com,+1-555-0120,"website",Main Pipeline,New Lead,Website Form,2026-02-16,2026-02-16,,2300,active,missed,,inbound,,,Weekend call Saturday
+Priya Sharma,priya.sharma@email.com,+1-555-0121,"google-ads",Main Pipeline,Appointment Set,Google Ads,2026-02-17,2026-02-18,Rachel AI,2700,active,answered,200,inbound,2026-02-22,completed,
+Quinn Roberts,quinn.roberts@email.com,+1-555-0122,"cold-lead",Main Pipeline,New Lead,Cold Outreach,2026-02-18,2026-02-18,,600,stale,no-answer,,outbound,,,
+Rachel Adams,rachel.adams@email.com,+1-555-0123,"referral",Main Pipeline,Appointment Set,Referral,2026-02-19,2026-02-20,Rachel AI,3800,active,answered,155,inbound,2026-02-24,completed,
+Steve Martin,steve.martin@email.com,+1-555-0124,"facebook-ads",Main Pipeline,New Lead,Facebook Ads,2026-02-20,2026-02-20,,1300,active,missed,,inbound,,,
+Tanya Lopez,tanya.lopez@email.com,+1-555-0125,"google-ads,hot-lead",Main Pipeline,Proposal Sent,Google Ads,2026-02-21,2026-02-22,Rachel AI,3500,active,answered,180,inbound,2026-02-26,no-show,Third no-show this month
+Uma Patel,uma.patel@email.com,+1-555-0126,"walk-in",Main Pipeline,Contacted,Walk-In,2026-02-22,2026-02-22,Rachel AI,950,active,answered,70,inbound,,,Interested but needs time
+Victor Chang,victor.chang@email.com,+1-555-0127,"website",Main Pipeline,New Lead,Website Form,2026-02-23,2026-02-23,,2400,active,missed,,inbound,,,
+Wendy Black,wendy.black@email.com,+1-555-0128,"google-ads",Main Pipeline,Closed Won,Google Ads,2026-02-24,2026-02-25,Rachel AI,2900,won,answered,225,inbound,2026-02-28,completed,
+Xavier Fox,xavier.fox@email.com,+1-555-0129,"facebook-ads",Main Pipeline,New Lead,Facebook Ads,2026-02-25,2026-02-25,,1700,active,no-answer,,outbound,,,Voicemail left
+Yuki Tanaka,yuki.tanaka@email.com,+1-555-0130,"referral,hot-lead",Main Pipeline,Appointment Set,Referral,2026-02-26,2026-02-27,Rachel AI,4200,active,answered,190,inbound,2026-03-02,completed,
+Zara Hussein,zara.hussein@email.com,+1-555-0131,"google-ads",Main Pipeline,New Lead,Google Ads,2026-02-27,2026-02-27,,2100,active,missed,,inbound,,,
+Alex Cooper,alex.cooper@email.com,+1-555-0132,"cold-lead",Main Pipeline,New Lead,Cold Outreach,2026-02-28,2026-02-28,,500,stale,no-answer,,outbound,,,
+Beth Morgan,beth.morgan@email.com,+1-555-0133,"website",Main Pipeline,New Lead,Website Form,2026-03-01,2026-03-01,,1800,active,missed,,inbound,,,
+Carl Johnson,carl.johnson@email.com,+1-555-0134,"google-ads",Main Pipeline,Contacted,Google Ads,2026-03-02,2026-03-03,Rachel AI,2600,active,answered,145,inbound,2026-03-08,no-show,
+Diana Ross,diana.ross@email.com,+1-555-0135,"facebook-ads",Main Pipeline,New Lead,Facebook Ads,2026-03-03,2026-03-03,,1500,active,answered,18,inbound,,,Hung up during greeting
+Ed Sullivan,ed.sullivan@email.com,+1-555-0136,"referral",Main Pipeline,Proposal Sent,Referral,2026-03-04,2026-03-06,Rachel AI,3600,active,answered,210,inbound,2026-03-10,completed,
+Fiona Grant,fiona.grant@email.com,+1-555-0137,"google-ads",Main Pipeline,New Lead,Google Ads,2026-03-05,2026-03-05,,2000,active,missed,,inbound,,,
+George Hill,george.hill@email.com,+1-555-0138,"website",Main Pipeline,Closed Lost,Website Form,2026-03-06,2026-03-06,,0,lost,answered,35,inbound,,,Not interested
+Helen Chu,helen.chu@email.com,+1-555-0139,"google-ads,hot-lead",Main Pipeline,Appointment Set,Google Ads,2026-03-07,2026-03-08,Rachel AI,3300,active,answered,205,inbound,2026-03-12,completed,
+Ivan Petrov,ivan.petrov@email.com,+1-555-0140,"walk-in",Main Pipeline,New Lead,Walk-In,2026-03-08,2026-03-08,,1100,active,answered,85,inbound,2026-03-14,no-show,

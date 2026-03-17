@@ -1,0 +1,41 @@
+Contact Name,Email,Phone,Lead Source,Created Date,Last Activity,Call Direction,Call Status,Call Duration (sec),Agent,Appointment Date,Appointment Status,Deal Stage,Deal Value,Tags,Response Time (min),Notes
+Maria Santos,maria.santos@email.com,+1-555-3001,Google Ads,2026-02-01,2026-02-15,inbound,answered,185,Rachel,2026-02-08,completed,Closed Won,3200,"hot-lead,google-ads",2,Booked during first call - excellent conversion
+James Wilson,james.wilson@email.com,+1-555-3002,Website,2026-02-02,2026-02-03,inbound,answered,95,Rachel,2026-02-10,no-show,Contacted,1800,website,5,Left voicemail after no-show
+Linda Park,linda.park@email.com,+1-555-3003,Referral,2026-02-03,2026-02-03,inbound,missed,0,,,,New Lead,3200,"referral,vip",999,Never called back - hot referral lost
+Robert Chen,robert.chen@email.com,+1-555-3004,Facebook Ads,2026-02-04,2026-02-04,inbound,missed,0,,,,New Lead,1500,facebook-ads,999,No follow-up attempted
+Sofia Reyes,sofia.reyes@email.com,+1-555-3005,Google Ads,2026-02-05,2026-02-12,inbound,answered,210,Rachel,2026-02-12,completed,Closed Won,2200,"google-ads,retarget",3,Smooth booking flow
+David Kim,david.kim@email.com,+1-555-3006,Cold Outreach,2026-02-05,2026-02-05,outbound,no-answer,0,Rachel,,,New Lead,900,cold-lead,0,Called at 7:45 PM - after hours
+Aisha Johnson,aisha.johnson@email.com,+1-555-3007,Google Ads,2026-02-06,2026-02-06,inbound,missed,0,,,,New Lead,2000,google-ads,999,After hours call 8:30 PM - no coverage
+Tom Bradley,tom.bradley@email.com,+1-555-3008,Website,2026-02-07,2026-02-07,inbound,answered,22,Rachel,,,Contacted,1200,website,4,Call dropped after 22 seconds
+Nina Patel,nina.patel@email.com,+1-555-3009,Referral,2026-02-08,2026-02-15,inbound,answered,175,Rachel,2026-02-15,completed,Closed Won,4500,"referral,vip",1,Premium client - fast close
+Carlos Mendez,carlos.mendez@email.com,+1-555-3010,Facebook Ads,2026-02-08,2026-02-08,inbound,missed,0,,,,New Lead,1100,facebook-ads,999,Missed call no follow-up
+Emily Zhang,emily.zhang@email.com,+1-555-3011,Google Ads,2026-02-09,2026-02-16,inbound,answered,165,Rachel,2026-02-16,no-show,Proposal Sent,2800,google-ads,6,No-show on appointment
+Frank Moore,frank.moore@email.com,+1-555-3012,Walk-In,2026-02-10,2026-02-10,inbound,answered,55,Rachel,,,Contacted,800,walk-in,8,Requested callback - never called back
+Grace Lee,grace.lee@email.com,+1-555-3013,Google Ads,2026-02-10,2026-02-17,inbound,answered,195,Rachel,2026-02-17,completed,Closed Won,3100,"google-ads,hot-lead",2,Great conversion
+Hassan Ali,hassan.ali@email.com,+1-555-3014,Cold Outreach,2026-02-11,2026-02-14,outbound,no-answer,0,Rachel,,,New Lead,700,cold-lead,0,3 outbound attempts all failed
+Isabella Torres,isabella.torres@email.com,+1-555-3015,Facebook Ads,2026-02-12,2026-02-12,inbound,missed,0,,,,New Lead,1600,facebook-ads,999,Missed during lunch break
+Jake Thompson,jake.thompson@email.com,+1-555-3016,Website,2026-02-13,2026-02-13,inbound,missed,0,,,,New Lead,2100,website,999,After hours 9:15 PM
+Karen White,karen.white@email.com,+1-555-3017,Referral,2026-02-14,2026-02-18,inbound,answered,240,Rachel,2026-02-18,completed,Closed Won,5000,"referral,vip",1,Signed same day - top client
+Leo Nguyen,leo.nguyen@email.com,+1-555-3018,Google Ads,2026-02-15,2026-02-15,inbound,answered,18,Rachel,,,New Lead,1900,google-ads,3,Dropped call after 18 sec - engagement failure
+Michelle Davis,michelle.davis@email.com,+1-555-3019,Facebook Ads,2026-02-15,2026-02-20,inbound,answered,130,Rachel,2026-02-20,no-show,Contacted,1400,facebook-ads,7,No-show on appointment
+Oscar Ruiz,oscar.ruiz@email.com,+1-555-3020,Website,2026-02-16,2026-02-16,inbound,missed,0,,,,New Lead,2300,website,999,Weekend call Saturday
+Priya Sharma,priya.sharma@email.com,+1-555-3021,Google Ads,2026-02-17,2026-02-22,inbound,answered,200,Rachel,2026-02-22,completed,Closed Won,2700,google-ads,2,Solid conversion
+Quinn Roberts,quinn.roberts@email.com,+1-555-3022,Cold Outreach,2026-02-18,2026-02-20,outbound,no-answer,0,Rachel,,,New Lead,600,cold-lead,0,Dead lead
+Rachel Adams,rachel.adams@email.com,+1-555-3023,Referral,2026-02-19,2026-02-24,inbound,answered,155,Rachel,2026-02-24,completed,Closed Won,3800,referral,1,Great referral conversion
+Steve Martin,steve.martin@email.com,+1-555-3024,Facebook Ads,2026-02-20,2026-02-20,inbound,missed,0,,,,New Lead,1300,facebook-ads,999,No follow-up
+Tanya Lopez,tanya.lopez@email.com,+1-555-3025,Google Ads,2026-02-21,2026-02-26,inbound,answered,180,Rachel,2026-02-26,no-show,Proposal Sent,3500,"google-ads,hot-lead",4,Third no-show this month
+Uma Patel,uma.patel@email.com,+1-555-3026,Walk-In,2026-02-22,2026-02-22,inbound,answered,70,Rachel,,,Contacted,950,walk-in,10,Needs follow-up
+Victor Chang,victor.chang@email.com,+1-555-3027,Website,2026-02-23,2026-02-23,inbound,missed,0,,,,New Lead,2400,website,999,Missed call
+Wendy Black,wendy.black@email.com,+1-555-3028,Google Ads,2026-02-24,2026-02-28,inbound,answered,225,Rachel,2026-02-28,completed,Closed Won,2900,google-ads,2,Clean close
+Xavier Fox,xavier.fox@email.com,+1-555-3029,Facebook Ads,2026-02-25,2026-02-25,outbound,no-answer,0,Rachel,,,New Lead,1700,facebook-ads,0,Voicemail left
+Yuki Tanaka,yuki.tanaka@email.com,+1-555-3030,Referral,2026-02-26,2026-03-02,inbound,answered,190,Rachel,2026-03-02,completed,Closed Won,4200,"referral,hot-lead",1,Fast close from referral
+Zara Hussein,zara.hussein@email.com,+1-555-3031,Google Ads,2026-02-27,2026-02-27,inbound,missed,0,,,,New Lead,2100,google-ads,999,Missed call
+Alex Cooper,alex.cooper@email.com,+1-555-3032,Cold Outreach,2026-02-28,2026-03-01,outbound,no-answer,0,Rachel,,,New Lead,500,cold-lead,0,Dead lead
+Beth Morgan,beth.morgan@email.com,+1-555-3033,Website,2026-03-01,2026-03-01,inbound,missed,0,,,,New Lead,1800,website,999,Missed call
+Carl Johnson,carl.johnson@email.com,+1-555-3034,Google Ads,2026-03-02,2026-03-08,inbound,answered,145,Rachel,2026-03-08,no-show,Contacted,2600,google-ads,5,No-show
+Diana Ross,diana.ross@email.com,+1-555-3035,Facebook Ads,2026-03-03,2026-03-03,inbound,answered,15,Rachel,,,New Lead,1500,facebook-ads,4,Hung up during greeting - 15 sec
+Ed Sullivan,ed.sullivan@email.com,+1-555-3036,Referral,2026-03-04,2026-03-10,inbound,answered,210,Rachel,2026-03-10,completed,Closed Won,3600,referral,2,Converted
+Fiona Grant,fiona.grant@email.com,+1-555-3037,Google Ads,2026-03-05,2026-03-05,inbound,missed,0,,,,New Lead,2000,google-ads,999,Missed call
+George Hill,george.hill@email.com,+1-555-3038,Website,2026-03-06,2026-03-06,inbound,answered,35,Rachel,,,Closed Lost,0,website,3,Not interested - short call
+Helen Chu,helen.chu@email.com,+1-555-3039,Google Ads,2026-03-07,2026-03-12,inbound,answered,205,Rachel,2026-03-12,completed,Closed Won,3300,"google-ads,hot-lead",2,Strong conversion
+Ivan Petrov,ivan.petrov@email.com,+1-555-3040,Walk-In,2026-03-08,2026-03-14,inbound,answered,85,Rachel,2026-03-14,no-show,Contacted,1100,walk-in,12,No-show on appointment
