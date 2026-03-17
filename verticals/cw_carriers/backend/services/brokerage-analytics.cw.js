@@ -4,22 +4,46 @@
 
 const sequelize = require('./db.cw');
 
+// Safe query helper — returns empty array if table doesn't exist
+async function safeQuery(sql, bind) {
+  try {
+    const [rows] = await sequelize.query(sql, { bind });
+    return rows;
+  } catch { return []; }
+}
+
 async function get_operations_dashboard(input) {
   const { tenant_id, date_from, date_to } = input;
   const tid = tenant_id || 'logistics';
   const from = date_from || new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0];
   const to = date_to || new Date().toISOString().split('T')[0];
 
-  // Load volume & status breakdown
-  const [loadStats] = await sequelize.query(`
+  // ── Query lg_loads (brokerage platform tables) ──
+  const lgLoadStats = await safeQuery(`
     SELECT COUNT(*) as total, status,
       SUM(sell_rate) as revenue, SUM(buy_rate) as cost, SUM(margin) as margin,
       AVG(margin_pct) as avg_margin_pct, AVG(rate_per_mile) as avg_rpm, SUM(miles) as total_miles
     FROM lg_loads WHERE tenant_id = $1 AND created_at BETWEEN $2 AND ($3::DATE + 1)
     GROUP BY status
-  `, { bind: [tid, from, to] });
+  `, [tid, from, to]);
 
-  const totals = loadStats.reduce((acc, s) => {
+  // ── Query cw_loads (core CRM tables) — merge both data sources ──
+  const cwLoadStats = await safeQuery(`
+    SELECT COUNT(*) as total, status,
+      SUM(shipper_rate) as revenue, SUM(rate_usd) as cost,
+      SUM(COALESCE(shipper_rate, 0) - COALESCE(rate_usd, 0)) as margin,
+      CASE WHEN SUM(shipper_rate) > 0 THEN
+        AVG(((COALESCE(shipper_rate, 0) - COALESCE(rate_usd, 0)) / NULLIF(shipper_rate, 0)) * 100)
+      ELSE 0 END as avg_margin_pct,
+      0 as avg_rpm, 0 as total_miles
+    FROM cw_loads WHERE created_at BETWEEN $1 AND ($2::DATE + 1)
+    GROUP BY status
+  `, [from, to]);
+
+  // Merge both sources
+  const allLoadStats = [...lgLoadStats, ...cwLoadStats];
+
+  const totals = allLoadStats.reduce((acc, s) => {
     acc.total += parseInt(s.total) || 0;
     acc.revenue += parseFloat(s.revenue) || 0;
     acc.cost += parseFloat(s.cost) || 0;
@@ -29,26 +53,52 @@ async function get_operations_dashboard(input) {
   }, { total: 0, revenue: 0, cost: 0, margin: 0, miles: 0 });
 
   const statusBreakdown = {};
-  loadStats.forEach(s => { statusBreakdown[s.status] = parseInt(s.total); });
+  allLoadStats.forEach(s => {
+    statusBreakdown[s.status] = (statusBreakdown[s.status] || 0) + parseInt(s.total);
+  });
 
-  // Carrier performance
-  const [carrierStats] = await sequelize.query(`
+  // ── Carrier / contact counts (both lg_ and cw_ tables) ──
+  const lgCarrierStats = await safeQuery(`
     SELECT COUNT(DISTINCT assigned_carrier_id) as active_carriers,
       (SELECT COUNT(*) FROM lg_carriers WHERE tenant_id = $1) as total_carriers
     FROM lg_loads WHERE tenant_id = $1 AND assigned_carrier_id IS NOT NULL
       AND created_at BETWEEN $2 AND ($3::DATE + 1)
-  `, { bind: [tid, from, to] });
+  `, [tid, from, to]);
 
-  // Customer stats
-  const [customerStats] = await sequelize.query(`
+  const cwCarrierStats = await safeQuery(`
+    SELECT
+      COUNT(CASE WHEN contact_type = 'carrier' THEN 1 END) as total_carriers,
+      COUNT(DISTINCT CASE WHEN contact_type = 'carrier' AND id IN (
+        SELECT carrier_id FROM cw_loads WHERE carrier_id IS NOT NULL AND created_at BETWEEN $1 AND ($2::DATE + 1)
+      ) THEN id END) as active_carriers
+    FROM cw_contacts
+  `, [from, to]);
+
+  const totalCarriers = (parseInt(lgCarrierStats[0]?.total_carriers) || 0) + (parseInt(cwCarrierStats[0]?.total_carriers) || 0);
+  const activeCarriers = (parseInt(lgCarrierStats[0]?.active_carriers) || 0) + (parseInt(cwCarrierStats[0]?.active_carriers) || 0);
+
+  // ── Customer stats ──
+  const lgCustomerStats = await safeQuery(`
     SELECT COUNT(DISTINCT customer_id) as active_customers,
       (SELECT COUNT(*) FROM lg_customers WHERE tenant_id = $1) as total_customers
     FROM lg_loads WHERE tenant_id = $1 AND customer_id IS NOT NULL
       AND created_at BETWEEN $2 AND ($3::DATE + 1)
-  `, { bind: [tid, from, to] });
+  `, [tid, from, to]);
 
-  // Call activity
-  const [callStats] = await sequelize.query(`
+  const cwCustomerStats = await safeQuery(`
+    SELECT
+      COUNT(CASE WHEN contact_type = 'shipper' THEN 1 END) as total_customers,
+      COUNT(DISTINCT CASE WHEN contact_type = 'shipper' AND id IN (
+        SELECT shipper_id FROM cw_loads WHERE shipper_id IS NOT NULL AND created_at BETWEEN $1 AND ($2::DATE + 1)
+      ) THEN id END) as active_customers
+    FROM cw_contacts
+  `, [from, to]);
+
+  const totalCustomers = (parseInt(lgCustomerStats[0]?.total_customers) || 0) + (parseInt(cwCustomerStats[0]?.total_customers) || 0);
+  const activeCustomers = (parseInt(lgCustomerStats[0]?.active_customers) || 0) + (parseInt(cwCustomerStats[0]?.active_customers) || 0);
+
+  // ── Call activity (both lg_ and cw_ tables) ──
+  const lgCallStats = await safeQuery(`
     SELECT COUNT(*) as total_calls, direction,
       COUNT(CASE WHEN outcome = 'accepted' THEN 1 END) as accepted,
       COUNT(CASE WHEN outcome = 'booked' THEN 1 END) as booked,
@@ -56,29 +106,61 @@ async function get_operations_dashboard(input) {
     FROM lg_call_interactions WHERE tenant_id = $1
       AND created_at BETWEEN $2 AND ($3::DATE + 1)
     GROUP BY direction
-  `, { bind: [tid, from, to] });
+  `, [tid, from, to]);
 
-  // Top lanes
-  const [topLanes] = await sequelize.query(`
-    SELECT origin_state || ' → ' || destination_state as lane,
+  const cwCallStats = await safeQuery(`
+    SELECT COUNT(*) as total_calls, direction,
+      COUNT(CASE WHEN outcome = 'qualified' THEN 1 END) as accepted,
+      COUNT(CASE WHEN outcome = 'booked' THEN 1 END) as booked,
+      AVG(duration_sec) as avg_duration
+    FROM cw_call_logs
+    WHERE created_at BETWEEN $1 AND ($2::DATE + 1)
+    GROUP BY direction
+  `, [from, to]);
+
+  // Merge call stats by direction
+  const callMap = {};
+  [...lgCallStats, ...cwCallStats].forEach(c => {
+    const dir = c.direction || 'outbound';
+    if (!callMap[dir]) callMap[dir] = { direction: dir, total: 0, accepted: 0, booked: 0, dur_sum: 0, dur_count: 0 };
+    callMap[dir].total += parseInt(c.total_calls) || 0;
+    callMap[dir].accepted += parseInt(c.accepted) || 0;
+    callMap[dir].booked += parseInt(c.booked) || 0;
+    if (parseFloat(c.avg_duration)) { callMap[dir].dur_sum += parseFloat(c.avg_duration) * parseInt(c.total_calls); callMap[dir].dur_count += parseInt(c.total_calls); }
+  });
+
+  // ── Top lanes (lg_ first, fallback to cw_) ──
+  let topLanes = await safeQuery(`
+    SELECT origin_state || ' \u2192 ' || destination_state as lane,
       COUNT(*) as loads, AVG(margin_pct) as avg_margin, SUM(sell_rate) as revenue
     FROM lg_loads WHERE tenant_id = $1 AND origin_state IS NOT NULL AND destination_state IS NOT NULL
       AND created_at BETWEEN $2 AND ($3::DATE + 1)
     GROUP BY origin_state, destination_state
     ORDER BY loads DESC LIMIT 10
-  `, { bind: [tid, from, to] });
+  `, [tid, from, to]);
+
+  if (topLanes.length === 0) {
+    topLanes = await safeQuery(`
+      SELECT origin || ' \u2192 ' || destination as lane,
+        COUNT(*) as loads,
+        CASE WHEN SUM(shipper_rate) > 0 THEN AVG(((COALESCE(shipper_rate,0) - COALESCE(rate_usd,0)) / NULLIF(shipper_rate,0)) * 100) ELSE 0 END as avg_margin,
+        SUM(COALESCE(shipper_rate, rate_usd, 0)) as revenue
+      FROM cw_loads WHERE origin IS NOT NULL AND destination IS NOT NULL
+        AND created_at BETWEEN $1 AND ($2::DATE + 1)
+      GROUP BY origin, destination
+      ORDER BY loads DESC LIMIT 10
+    `, [from, to]);
+  }
 
   // Upload activity
-  const [uploadStats] = await sequelize.query(`
+  const uploadStats = await safeQuery(`
     SELECT COUNT(*) as total_uploads, SUM(imported_rows) as total_rows_imported,
       COUNT(CASE WHEN status = 'completed' THEN 1 END) as successful,
       COUNT(CASE WHEN status = 'failed' THEN 1 END) as failed
     FROM lg_data_uploads WHERE tenant_id = $1
       AND created_at BETWEEN $2 AND ($3::DATE + 1)
-  `, { bind: [tid, from, to] });
+  `, [tid, from, to]);
 
-  const carrier = carrierStats[0] || {};
-  const customer = customerStats[0] || {};
   const upload = uploadStats[0] || {};
 
   return {
@@ -94,11 +176,11 @@ async function get_operations_dashboard(input) {
       avg_rpm: totals.miles > 0 ? Math.round(totals.cost / totals.miles * 100) / 100 : 0,
     },
     load_status: statusBreakdown,
-    carriers: { total: parseInt(carrier.total_carriers) || 0, active: parseInt(carrier.active_carriers) || 0 },
-    customers: { total: parseInt(customer.total_customers) || 0, active: parseInt(customer.active_customers) || 0 },
-    calls: callStats.map(c => ({
-      direction: c.direction, total: parseInt(c.total_calls), accepted: parseInt(c.accepted) || 0,
-      booked: parseInt(c.booked) || 0, avg_duration_sec: Math.round(parseFloat(c.avg_duration) || 0),
+    carriers: { total: totalCarriers, active: activeCarriers },
+    customers: { total: totalCustomers, active: activeCustomers },
+    calls: Object.values(callMap).map(c => ({
+      direction: c.direction, total: c.total, accepted: c.accepted,
+      booked: c.booked, avg_duration_sec: c.dur_count > 0 ? Math.round(c.dur_sum / c.dur_count) : 0,
     })),
     top_lanes: topLanes.map(l => ({
       lane: l.lane, loads: parseInt(l.loads),
