@@ -54,51 +54,80 @@ function Sidebar({ open, onClose }) {
   const loc = useLocation();
   const user = getUser();
   const mob = useIsMobile();
-  const allNav = [
-    // Dispatch & Operations
-    { path: `${BASE}/dashboard`, label: 'Command Center', section: 'DISPATCH' },
-    { path: `${BASE}/loads`, label: 'Loads' },
-    { path: `${BASE}/offers`, label: 'Carrier Offers' },
-    { path: `${BASE}/tracking`, label: 'Check Calls' },
-    { path: `${BASE}/billing`, label: 'Billing' },
-    // Intelligence
-    { path: `${BASE}/neural`, label: 'Neural Intelligence', section: 'INTELLIGENCE' },
-    { path: `${BASE}/crm-agent`, label: 'HubSpot CRM Agent' },
-    { path: `${BASE}/pipeline`, label: 'HubSpot Pipeline' },
-    // AI Tools
-    { path: `${BASE}/freight-matching`, label: 'Carrier Matching', section: 'AI TOOLS' },
-    { path: `${BASE}/load-matching`, label: 'Load Matching' },
-    { path: `${BASE}/pricing`, label: 'Rate Intelligence' },
-    { path: `${BASE}/nlp`, label: 'NLP Assistant' },
-    // Portals
-    { path: `${BASE}/shipper`, label: 'Shipper Portal', section: 'PORTALS' },
-    { path: `${BASE}/carrier-portal`, label: 'Carrier Portal' },
-    // CRM & Contacts
-    { path: `${BASE}/contacts`, label: 'Contacts', section: 'CRM' },
-    { path: `${BASE}/calls`, label: 'Calls' },
-    { path: `${BASE}/hubspot`, label: 'HubSpot Sync' },
-    // Compliance & Data
-    { path: `${BASE}/compliance`, label: 'FMCSA Compliance', section: 'COMPLIANCE' },
-    { path: `${BASE}/ingestion`, label: 'Data Ingestion' },
-    { path: `${BASE}/documents`, label: 'Document Vault' },
-    { path: `${BASE}/tms`, label: 'TMS Bridge' },
-    // Analytics & Reports
-    { path: `${BASE}/analytics`, label: 'Analytics', section: 'REPORTING' },
-    { path: `${BASE}/brokerage-analytics`, label: 'Brokerage KPIs' },
-    { path: `${BASE}/reports`, label: 'Reports' },
-    // Admin
-    { path: `${BASE}/settings`, label: 'Settings', section: 'ADMIN' },
-    { path: `${BASE}/token-estimator`, label: 'Token Estimator' },
-    { path: `${BASE}/contract-builder`, label: 'Contract Builder' },
-    { path: `${BASE}/mcp-tools`, label: 'MCP Tools' },
-    { path: `${BASE}/demo`, label: 'Demo Data' },
-    { path: `${BASE}/brokerage-demo`, label: 'Demo Workspaces' },
-    // Legal
-    { path: `${BASE}/nda`, label: 'NDA Signing', section: 'LEGAL' },
-    // Docs
-    { path: '/proposals/RinglyPro-Platform-User-Guide.html', label: 'User Guide', ext: true, section: 'DOCS' },
-    { path: '/proposals/CW-CARRIERS-System-Architecture-Document.html', label: 'System Architecture', ext: true },
+  const [collapsed, setCollapsed] = useState({});
+  const toggle = (section) => setCollapsed(prev => ({ ...prev, [section]: !prev[section] }));
+
+  const sections = [
+    {
+      id: 'home', label: 'HOME', icon: '\u2302', items: [
+        { path: `${BASE}/dashboard`, label: 'Command Center', icon: '\u25A3' },
+      ]
+    },
+    {
+      id: 'hubspot', label: 'HUBSPOT CRM', icon: '\uD83D\uDD36', accent: '#ff7a59', items: [
+        { path: `${BASE}/crm-agent`, label: 'CRM Agent', icon: '\uD83E\uDD16', badge: 'AI' },
+        { path: `${BASE}/pipeline`, label: 'Pipeline', icon: '\u2B95' },
+        { path: `${BASE}/contacts`, label: 'Contacts', icon: '\uD83D\uDC64' },
+        { path: `${BASE}/calls`, label: 'Call History', icon: '\uD83D\uDCDE' },
+        { path: `${BASE}/hubspot`, label: 'Sync Manager', icon: '\u21C4' },
+      ]
+    },
+    {
+      id: 'intelligence', label: 'INTELLIGENCE', icon: '\uD83E\uDDE0', accent: '#a78bfa', items: [
+        { path: `${BASE}/neural`, label: 'Neural Intelligence', icon: '\u26A1', badge: 'AI' },
+        { path: `${BASE}/nlp`, label: 'NLP Assistant', icon: '\uD83D\uDCAC', badge: 'AI' },
+        { path: `${BASE}/analytics`, label: 'Analytics', icon: '\uD83D\uDCCA' },
+        { path: `${BASE}/brokerage-analytics`, label: 'Brokerage KPIs', icon: '\uD83C\uDFAF' },
+        { path: `${BASE}/reports`, label: 'Reports', icon: '\uD83D\uDCC4' },
+      ]
+    },
+    {
+      id: 'dispatch', label: 'DISPATCH', icon: '\uD83D\uDE9A', items: [
+        { path: `${BASE}/loads`, label: 'Loads', icon: '\uD83D\uDCE6' },
+        { path: `${BASE}/offers`, label: 'Carrier Offers', icon: '\uD83D\uDCB0' },
+        { path: `${BASE}/tracking`, label: 'Check Calls', icon: '\u2611' },
+        { path: `${BASE}/freight-matching`, label: 'Carrier Matching', icon: '\uD83D\uDD0D', badge: 'AI' },
+        { path: `${BASE}/load-matching`, label: 'Load Matching', icon: '\u2194', badge: 'AI' },
+        { path: `${BASE}/pricing`, label: 'Rate Intelligence', icon: '\uD83D\uDCB2', badge: 'AI' },
+      ]
+    },
+    {
+      id: 'portals', label: 'PORTALS', icon: '\uD83C\uDF10', items: [
+        { path: `${BASE}/shipper`, label: 'Shipper Portal', icon: '\uD83C\uDFED' },
+        { path: `${BASE}/carrier-portal`, label: 'Carrier Portal', icon: '\uD83D\uDE9B' },
+      ]
+    },
+    {
+      id: 'compliance', label: 'COMPLIANCE & DATA', icon: '\uD83D\uDEE1', items: [
+        { path: `${BASE}/compliance`, label: 'FMCSA Compliance', icon: '\u2705' },
+        { path: `${BASE}/ingestion`, label: 'Data Ingestion', icon: '\u2B07' },
+        { path: `${BASE}/documents`, label: 'Document Vault', icon: '\uD83D\uDDC4' },
+        { path: `${BASE}/tms`, label: 'TMS Bridge', icon: '\uD83D\uDD17' },
+      ]
+    },
+    {
+      id: 'admin', label: 'ADMIN', icon: '\u2699', items: [
+        { path: `${BASE}/settings`, label: 'Settings', icon: '\u2699' },
+        { path: `${BASE}/billing`, label: 'Billing', icon: '\uD83D\uDCB3' },
+        { path: `${BASE}/token-estimator`, label: 'Token Estimator', icon: '\uD83E\uDE99' },
+        { path: `${BASE}/contract-builder`, label: 'Contract Builder', icon: '\uD83D\uDCDD' },
+        { path: `${BASE}/mcp-tools`, label: 'MCP Tools', icon: '\uD83D\uDEE0' },
+        { path: `${BASE}/nda`, label: 'NDA Signing', icon: '\u270D' },
+        { path: `${BASE}/demo`, label: 'Demo Data', icon: '\uD83C\uDFB2' },
+        { path: `${BASE}/brokerage-demo`, label: 'Demo Workspaces', icon: '\uD83E\uDDEA' },
+      ]
+    },
+    {
+      id: 'docs', label: 'DOCS', icon: '\uD83D\uDCD6', items: [
+        { path: '/proposals/RinglyPro-Platform-User-Guide.html', label: 'User Guide', icon: '\uD83D\uDCD8', ext: true },
+        { path: '/proposals/CW-CARRIERS-System-Architecture-Document.html', label: 'Architecture', icon: '\uD83D\uDCD0', ext: true },
+      ]
+    },
   ];
+
+  // Check if any item in a section is active
+  const isSectionActive = (section) => section.items.some(item => loc.pathname === item.path);
+
   const ss = mob ? { ...S.sidebar, ...S.sidebarMob, transform: open ? 'translateX(0)' : 'translateX(-100%)' } : S.sidebar;
   return (
     <>
@@ -110,17 +139,45 @@ function Sidebar({ open, onClose }) {
           <div style={S.tierBadge}>Full Suite</div>
         </div>
         <nav style={S.nav}>
-          {allNav.map((item, i) => {
-            const showSection = item.section && (i === 0 || allNav[i-1]?.section !== item.section);
+          {sections.map(section => {
+            const isOpen = !collapsed[section.id];
+            const active = isSectionActive(section);
             return (
-              <React.Fragment key={item.path}>
-                {showSection && <div style={S.sectionLabel}>{item.section}</div>}
-                {item.ext ? (
-                  <a href={item.path} style={S.navItem}>{item.label}<span style={S.extBadge}>EXT</span></a>
-                ) : (
-                  <Link to={item.path} onClick={mob ? onClose : undefined} style={{...S.navItem, ...(loc.pathname === item.path ? S.navActive : {})}}>{item.label}</Link>
+              <div key={section.id}>
+                <button
+                  onClick={() => toggle(section.id)}
+                  style={{
+                    ...S.sectionHeader,
+                    ...(active && !isOpen ? { background: '#0EA5E908' } : {}),
+                    ...(section.accent ? { color: section.accent } : {})
+                  }}
+                >
+                  <span style={S.sectionIcon}>{section.icon}</span>
+                  <span style={S.sectionText}>{section.label}</span>
+                  {active && !isOpen && <span style={S.activeDot} />}
+                  <span style={{ ...S.chevron, transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}>{'\u276F'}</span>
+                </button>
+                {isOpen && (
+                  <div style={S.sectionItems}>
+                    {section.items.map(item => (
+                      item.ext ? (
+                        <a key={item.path} href={item.path} style={S.navItem} target="_blank" rel="noopener noreferrer">
+                          <span style={S.itemIcon}>{item.icon}</span>
+                          <span style={S.itemLabel}>{item.label}</span>
+                          <span style={S.extBadge}>EXT</span>
+                        </a>
+                      ) : (
+                        <Link key={item.path} to={item.path} onClick={mob ? onClose : undefined}
+                          style={{ ...S.navItem, ...(loc.pathname === item.path ? S.navActive : {}) }}>
+                          <span style={S.itemIcon}>{item.icon}</span>
+                          <span style={S.itemLabel}>{item.label}</span>
+                          {item.badge && <span style={S.aiBadge}>{item.badge}</span>}
+                        </Link>
+                      )
+                    ))}
+                  </div>
                 )}
-              </React.Fragment>
+              </div>
             );
           })}
         </nav>
@@ -203,18 +260,28 @@ const S = {
   hamburger:{display:'flex',flexDirection:'column',gap:4,background:'none',border:'none',cursor:'pointer',padding:4},
   hLine:{display:'block',width:22,height:2,background:'#E6EDF3',borderRadius:1},
   mobTitle:{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,color:'#0EA5E9',letterSpacing:2},
-  logoArea:{padding:20,borderBottom:'1px solid #21262D',textAlign:'center'},
-  logoImg:{width:'100%',maxWidth:220,height:'auto',marginBottom:8},
-  tierBadge:{display:'inline-block',marginTop:6,padding:'3px 10px',background:'#0EA5E922',color:'#0EA5E9',borderRadius:12,fontSize:10,fontWeight:600,letterSpacing:1,textTransform:'uppercase'},
-  nav:{flex:1,padding:'12px 0',overflowY:'auto'},
-  navItem:{display:'flex',alignItems:'center',gap:10,padding:'11px 20px',fontSize:14,color:'#8B949E',cursor:'pointer',transition:'all 0.2s',borderLeft:'3px solid transparent'},
-  navActive:{color:'#fff',background:'#0EA5E922',borderLeftColor:'#0EA5E9'},
-  sectionLabel:{padding:'12px 20px 4px',fontSize:10,color:'#0EA5E9',fontWeight:700,letterSpacing:2,textTransform:'uppercase'},
-  extBadge:{marginLeft:'auto',padding:'1px 5px',background:'#30363D',color:'#8B949E',borderRadius:4,fontSize:9,fontWeight:600},
-  footer:{padding:'16px 20px',borderTop:'1px solid #21262D'},
+  logoArea:{padding:16,borderBottom:'1px solid #21262D',textAlign:'center'},
+  logoImg:{width:'100%',maxWidth:200,height:'auto',marginBottom:4},
+  tierBadge:{display:'inline-block',marginTop:4,padding:'3px 10px',background:'#0EA5E922',color:'#0EA5E9',borderRadius:12,fontSize:10,fontWeight:600,letterSpacing:1,textTransform:'uppercase'},
+  nav:{flex:1,padding:'8px 0',overflowY:'auto'},
+  // Section header (collapsible)
+  sectionHeader:{display:'flex',alignItems:'center',gap:8,width:'100%',padding:'9px 16px',fontSize:10,fontWeight:700,letterSpacing:1.5,textTransform:'uppercase',color:'#0EA5E9',background:'none',border:'none',cursor:'pointer',transition:'all 0.15s',fontFamily:'inherit'},
+  sectionIcon:{fontSize:13,width:18,textAlign:'center',flexShrink:0},
+  sectionText:{flex:1,textAlign:'left'},
+  chevron:{fontSize:9,color:'#484F58',transition:'transform 0.2s',marginLeft:'auto'},
+  activeDot:{width:6,height:6,borderRadius:'50%',background:'#0EA5E9',flexShrink:0},
+  sectionItems:{paddingBottom:4},
+  // Nav items
+  navItem:{display:'flex',alignItems:'center',gap:8,padding:'8px 16px 8px 28px',fontSize:13,color:'#8B949E',cursor:'pointer',transition:'all 0.15s',borderLeft:'3px solid transparent',textDecoration:'none'},
+  navActive:{color:'#E6EDF3',background:'#0EA5E915',borderLeftColor:'#0EA5E9'},
+  itemIcon:{fontSize:14,width:18,textAlign:'center',flexShrink:0,opacity:0.7},
+  itemLabel:{flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'},
+  aiBadge:{marginLeft:'auto',padding:'1px 6px',background:'linear-gradient(135deg,#8b5cf6,#06b6d4)',color:'#fff',borderRadius:4,fontSize:8,fontWeight:700,letterSpacing:0.5,flexShrink:0},
+  extBadge:{marginLeft:'auto',padding:'1px 5px',background:'#30363D',color:'#8B949E',borderRadius:4,fontSize:9,fontWeight:600,flexShrink:0},
+  footer:{padding:'12px 16px',borderTop:'1px solid #21262D'},
   userRole:{fontSize:10,color:'#0EA5E9',fontWeight:600,letterSpacing:1,marginBottom:4},
-  userInfo:{fontSize:12,color:'#8B949E',marginBottom:8,overflow:'hidden',textOverflow:'ellipsis'},
-  logoutBtn:{background:'none',border:'1px solid #30363D',color:'#8B949E',padding:'6px 12px',borderRadius:6,cursor:'pointer',fontSize:12,width:'100%'},
+  userInfo:{fontSize:11,color:'#8B949E',marginBottom:8,overflow:'hidden',textOverflow:'ellipsis'},
+  logoutBtn:{background:'none',border:'1px solid #30363D',color:'#8B949E',padding:'6px 12px',borderRadius:6,cursor:'pointer',fontSize:12,width:'100%',fontFamily:'inherit'},
   main:{flex:1,marginLeft:260,minHeight:'100vh'},
   content:{padding:24},
   mainMob:{flex:1,marginLeft:0,minHeight:'100vh'},
