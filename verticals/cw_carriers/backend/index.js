@@ -31,6 +31,7 @@ const brokerageDemoRoutes = require('./routes/demo-brokerage');
 const neuralCwRoutes = require('./routes/neural-cw');
 const crmAgentRoutes = require('./routes/crm-agent');
 const pipelineRoutes = require('./routes/pipeline');
+const roiRoutes = require('./routes/roi');
 
 // Mount API routes
 router.use('/api/auth', authRoutes);
@@ -60,6 +61,7 @@ router.use('/api/nda', require('./routes/nda'));
 router.use('/api/neural', neuralCwRoutes);
 router.use('/api/crm-agent', crmAgentRoutes);
 router.use('/api/pipeline', pipelineRoutes);
+router.use('/api/roi', roiRoutes);
 
 // Health check
 router.get('/health', (req, res) => {

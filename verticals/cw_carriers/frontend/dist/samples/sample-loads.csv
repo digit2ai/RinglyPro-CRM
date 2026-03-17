@@ -1,0 +1,26 @@
+load_ref,origin,destination,pickup_date,delivery_date,equipment_type,weight_lbs,miles,buy_rate,sell_rate,status,customer,carrier,commodity
+LD-2026-1001,"Chicago, IL 60601","Dallas, TX 75201",2026-03-04,2026-03-06,dry_van,42000,920,2850,3400,delivered,PepsiCo Logistics,Swift Transport Inc,Beverages & Snacks
+LD-2026-1002,"Atlanta, GA 30301","Miami, FL 33101",2026-03-05,2026-03-06,reefer,38000,662,3100,3750,delivered,Sysco Foods,Werner Enterprises,Frozen Foods
+LD-2026-1003,"Los Angeles, CA 90001","Phoenix, AZ 85001",2026-03-05,2026-03-06,flatbed,44000,373,1800,2200,delivered,Home Depot Supply,JB Hunt Transport,Building Materials
+LD-2026-1004,"Houston, TX 77001","Memphis, TN 38101",2026-03-06,2026-03-07,dry_van,36000,586,2100,2650,delivered,Amazon Freight,Schneider National,General Merchandise
+LD-2026-1005,"Newark, NJ 07101","Charlotte, NC 28201",2026-03-06,2026-03-07,dry_van,40000,634,2400,2950,in_transit,Target Distribution,Old Dominion Freight,Retail Goods
+LD-2026-1006,"Seattle, WA 98101","Portland, OR 97201",2026-03-07,2026-03-07,reefer,28000,174,1100,1450,delivered,Costco Wholesale,Heartland Express,Dairy & Produce
+LD-2026-1007,"Detroit, MI 48201","Indianapolis, IN 46201",2026-03-07,2026-03-08,flatbed,48000,287,1650,2100,delivered,General Motors,XPO Logistics,Auto Parts
+LD-2026-1008,"Nashville, TN 37201","Louisville, KY 40201",2026-03-08,2026-03-08,dry_van,32000,176,950,1300,delivered,Dollar General,FedEx Freight,Consumer Goods
+LD-2026-1009,"San Francisco, CA 94101","Sacramento, CA 95801",2026-03-08,2026-03-08,reefer,35000,88,750,1100,delivered,Safeway Inc,Knight Transportation,Groceries
+LD-2026-1010,"Denver, CO 80201","Kansas City, MO 64101",2026-03-09,2026-03-10,dry_van,41000,606,2200,2800,delivered,Walmart Logistics,CRST International,Mixed Freight
+LD-2026-1011,"Philadelphia, PA 19101","Boston, MA 02101",2026-03-09,2026-03-10,reefer,30000,308,1900,2350,in_transit,US Foods,Prime Inc,Refrigerated Foods
+LD-2026-1012,"Minneapolis, MN 55401","Milwaukee, WI 53201",2026-03-10,2026-03-10,dry_van,38000,337,1400,1800,delivered,3M Company,Covenant Transport,Industrial Supplies
+LD-2026-1013,"Orlando, FL 32801","Jacksonville, FL 32201",2026-03-10,2026-03-10,flatbed,45000,141,900,1250,delivered,Lowe's Distribution,Ryder System,Lumber & Hardware
+LD-2026-1014,"Columbus, OH 43201","Pittsburgh, PA 15201",2026-03-11,2026-03-11,dry_van,34000,185,1050,1400,delivered,Kroger Supply,Saia LTL Freight,Groceries
+LD-2026-1015,"St. Louis, MO 63101","Little Rock, AR 72201",2026-03-11,2026-03-12,reefer,29000,345,1700,2150,open,Tyson Foods,Unassigned,Poultry Products
+LD-2026-1016,"Baltimore, MD 21201","Richmond, VA 23219",2026-03-12,2026-03-12,dry_van,37000,110,800,1100,open,Under Armour,Unassigned,Apparel
+LD-2026-1017,"Salt Lake City, UT 84101","Las Vegas, NV 89101",2026-03-12,2026-03-13,flatbed,43000,421,2050,2500,covered,Nucor Steel,Marten Transport,Steel Products
+LD-2026-1018,"Tampa, FL 33601","New Orleans, LA 70112",2026-03-13,2026-03-14,dry_van,39000,646,2350,2900,covered,Publix Super Markets,USA Truck,Retail Distribution
+LD-2026-1019,"San Antonio, TX 78201","El Paso, TX 79901",2026-03-13,2026-03-14,reefer,33000,551,2500,3100,open,HEB Grocery,Unassigned,Perishable Foods
+LD-2026-1020,"Cincinnati, OH 45201","Cleveland, OH 44101",2026-03-14,2026-03-14,dry_van,36000,249,1150,1550,delivered,Procter & Gamble,ABF Freight System,Consumer Products
+LD-2026-1021,"Laredo, TX 78040","San Antonio, TX 78201",2026-03-14,2026-03-14,dry_van,40000,155,1200,1650,delivered,Cross-Border Logistics MX,Celadon Group,Cross-Border Freight
+LD-2026-1022,"Savannah, GA 31401","Atlanta, GA 30301",2026-03-15,2026-03-15,container,44000,248,1500,1950,in_transit,Maersk Drayage,Estes Express Lines,Import Containers
+LD-2026-1023,"El Paso, TX 79901","Albuquerque, NM 87101",2026-03-15,2026-03-16,flatbed,46000,268,1350,1750,open,Rio Grande Steel,Unassigned,Structural Steel
+LD-2026-1024,"Raleigh, NC 27601","Washington, DC 20001",2026-03-16,2026-03-16,reefer,31000,275,1600,2050,covered,Food Lion Distribution,Marten Transport,Refrigerated Groceries
+LD-2026-1025,"Kansas City, MO 64101","Omaha, NE 68101",2026-03-16,2026-03-17,dry_van,35000,189,1050,1400,open,Smithfield Foods,Unassigned,Packaged Meats

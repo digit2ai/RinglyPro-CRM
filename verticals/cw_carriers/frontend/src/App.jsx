@@ -37,6 +37,7 @@ import NDA from './pages/NDA';
 import NeuralIntelligence from './pages/NeuralIntelligence';
 import CRMAgent from './pages/CRMAgent';
 import HubSpotPipeline from './pages/HubSpotPipeline';
+import ROIAnalytics from './pages/ROIAnalytics';
 
 const BASE = '/cw_carriers';
 
@@ -76,6 +77,7 @@ function Sidebar({ open, onClose }) {
       id: 'intelligence', label: 'INTELLIGENCE', icon: '\uD83E\uDDE0', accent: '#a78bfa', items: [
         { path: `${BASE}/neural`, label: 'Neural Intelligence', icon: '\u26A1', badge: 'AI' },
         { path: `${BASE}/nlp`, label: 'NLP Assistant', icon: '\uD83D\uDCAC', badge: 'AI' },
+        { path: `${BASE}/roi`, label: 'ROI & Predictions', icon: '\uD83D\uDCC8', badge: 'AI' },
         { path: `${BASE}/analytics`, label: 'Analytics', icon: '\uD83D\uDCCA' },
         { path: `${BASE}/brokerage-analytics`, label: 'Brokerage KPIs', icon: '\uD83C\uDFAF' },
         { path: `${BASE}/reports`, label: 'Reports', icon: '\uD83D\uDCC4' },
@@ -242,6 +244,7 @@ export default function App() {
         <Route path={`${BASE}/neural`} element={<ProtectedRoute><Layout><NeuralIntelligence /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/crm-agent`} element={<ProtectedRoute><Layout><CRMAgent /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/pipeline`} element={<ProtectedRoute><Layout><HubSpotPipeline /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/roi`} element={<ProtectedRoute><Layout><ROIAnalytics /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}`} element={<Landing />} />
         <Route path={`${BASE}/`} element={<Landing />} />
         <Route path="*" element={<Navigate to={`${BASE}/`} replace />} />
