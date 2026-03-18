@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neural Intelligence OBD — System Architecture Workflow</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'DM Sans', sans-serif; background: #07090f; color: #e2e8f0; min-height: 100vh; overflow-x: hidden; }
+h1,h2,h3 { font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px; }
+.page { max-width: 1600px; margin: 0 auto; padding: 40px 32px; }
+.title-row { text-align: center; margin-bottom: 48px; }
+.title-row h1 { font-size: 48px; color: #fff; margin-bottom: 8px; }
+.title-row h1 em { font-style: normal; color: #8b5cf6; }
+.title-row p { font-size: 15px; color: #64748b; }
+.diagram { position: relative; }
+
+/* ── Shared node styles ── */
+.node { position: absolute; border-radius: 14px; padding: 16px 18px; text-align: center; z-index: 2; }
+.node .icon { font-size: 28px; margin-bottom: 6px; }
+.node .label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
+.node .desc { font-size: 10px; color: #94a3b8; line-height: 1.4; }
+.node-sm { position: absolute; border-radius: 10px; padding: 10px 14px; text-align: center; z-index: 2; }
+.node-sm .icon { font-size: 20px; margin-bottom: 4px; }
+.node-sm .label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.node-sm .desc { font-size: 9px; color: #94a3b8; }
+
+/* SVG layer for arrows */
+.arrows { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+
+/* Legend */
+.legend { display: flex; gap: 24px; justify-content: center; margin-top: 32px; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #94a3b8; }
+.legend-dot { width: 12px; height: 12px; border-radius: 3px; }
+
+/* Print friendly */
+@media print { body { background: #fff; color: #000; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="title-row">
+    <h1>Neural Intelligence <em>OBD</em></h1>
+    <p>System Architecture &amp; Workflow Diagram</p>
+  </div>
+
+  <!-- The diagram is an SVG -->
+  <svg viewBox="0 0 1400 1100" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: auto; display: block;">
+    <defs>
+      <!-- Arrow markers -->
+      <marker id="arrowPurple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#8b5cf6"/></marker>
+      <marker id="arrowCyan" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#06b6d4"/></marker>
+      <marker id="arrowGreen" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#22c55e"/></marker>
+      <marker id="arrowAmber" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#f59e0b"/></marker>
+      <marker id="arrowGray" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#475569"/></marker>
+      <marker id="arrowRed" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ef4444"/></marker>
+      <!-- Glows -->
+      <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <linearGradient id="gradPurple" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.15"/><stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:0.08"/></linearGradient>
+      <linearGradient id="gradCyan" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#06b6d4;stop-opacity:0.12"/><stop offset="100%" style="stop-color:#0ea5e9;stop-opacity:0.06"/></linearGradient>
+      <linearGradient id="gradGreen" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#22c55e;stop-opacity:0.12"/><stop offset="100%" style="stop-color:#10b981;stop-opacity:0.06"/></linearGradient>
+    </defs>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- LAYER 1: DATA SOURCES (top row) -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <text x="700" y="32" text-anchor="middle" fill="#475569" font-size="11" font-weight="700" letter-spacing="3" font-family="'Bebas Neue',sans-serif">DATA SOURCES</text>
+
+    <!-- Voice AI -->
+    <rect x="30" y="48" width="160" height="80" rx="12" fill="#0f1724" stroke="#1e293b" stroke-width="1.5"/>
+    <text x="110" y="78" text-anchor="middle" font-size="22">&#128222;</text>
+    <text x="110" y="98" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="700">Voice AI</text>
+    <text x="110" y="114" text-anchor="middle" fill="#64748b" font-size="9">Calls, Transcripts</text>
+
+    <!-- CRM -->
+    <rect x="220" y="48" width="160" height="80" rx="12" fill="#0f1724" stroke="#1e293b" stroke-width="1.5"/>
+    <text x="300" y="78" text-anchor="middle" font-size="22">&#128279;</text>
+    <text x="300" y="98" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="700">HubSpot CRM</text>
+    <text x="300" y="114" text-anchor="middle" fill="#64748b" font-size="9">Contacts, Deals, Pipeline</text>
+
+    <!-- Dispatch -->
+    <rect x="410" y="48" width="160" height="80" rx="12" fill="#0f1724" stroke="#1e293b" stroke-width="1.5"/>
+    <text x="490" y="78" text-anchor="middle" font-size="22">&#128666;</text>
+    <text x="490" y="98" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="700">Dispatch Engine</text>
+    <text x="490" y="114" text-anchor="middle" fill="#64748b" font-size="9">Loads, Carriers, Routes</text>
+
+    <!-- Revenue -->
+    <rect x="600" y="48" width="160" height="80" rx="12" fill="#0f1724" stroke="#1e293b" stroke-width="1.5"/>
+    <text x="680" y="78" text-anchor="middle" font-size="22">&#128176;</text>
+    <text x="680" y="98" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="700">Revenue Pipeline</text>
+    <text x="680" y="114" text-anchor="middle" fill="#64748b" font-size="9">Rates, Margins, Billing</text>
+
+    <!-- Contacts -->
+    <rect x="790" y="48" width="160" height="80" rx="12" fill="#0f1724" stroke="#1e293b" stroke-width="1.5"/>
+    <text x="870" y="78" text-anchor="middle" font-size="22">&#128101;</text>
+    <text x="870" y="98" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="700">Contact Network</text>
+    <text x="870" y="114" text-anchor="middle" fill="#64748b" font-size="9">Carriers, Shippers</text>
+
+    <!-- Data Ingestion -->
+    <rect x="980" y="48" width="160" height="80" rx="12" fill="#0f1724" stroke="#1e293b" stroke-width="1.5"/>
+    <text x="1060" y="78" text-anchor="middle" font-size="22">&#128202;</text>
+    <text x="1060" y="98" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="700">Data Ingestion</text>
+    <text x="1060" y="114" text-anchor="middle" fill="#64748b" font-size="9">CSV, TMS, API Imports</text>
+
+    <!-- DAT API -->
+    <rect x="1170" y="48" width="160" height="80" rx="12" fill="#0f1724" stroke="#1e293b" stroke-width="1.5"/>
+    <text x="1250" y="78" text-anchor="middle" font-size="22">&#127760;</text>
+    <text x="1250" y="98" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="700">DAT RateView</text>
+    <text x="1250" y="114" text-anchor="middle" fill="#64748b" font-size="9">Market Rate API</text>
+
+    <!-- Arrows from sources down to scanner -->
+    <line x1="110" y1="128" x2="110" y2="200" stroke="#334155" stroke-width="1.5" marker-end="url(#arrowGray)"/>
+    <line x1="300" y1="128" x2="300" y2="200" stroke="#334155" stroke-width="1.5" marker-end="url(#arrowGray)"/>
+    <line x1="490" y1="128" x2="490" y2="200" stroke="#334155" stroke-width="1.5" marker-end="url(#arrowGray)"/>
+    <line x1="680" y1="128" x2="680" y2="200" stroke="#334155" stroke-width="1.5" marker-end="url(#arrowGray)"/>
+    <line x1="870" y1="128" x2="870" y2="200" stroke="#334155" stroke-width="1.5" marker-end="url(#arrowGray)"/>
+    <line x1="1060" y1="128" x2="1060" y2="200" stroke="#334155" stroke-width="1.5" marker-end="url(#arrowGray)"/>
+    <line x1="1250" y1="128" x2="1060" y2="200" stroke="#334155" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arrowGray)"/>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- LAYER 2: NEURAL SCANNER ENGINE (central hub) -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <rect x="50" y="200" width="1120" height="100" rx="20" fill="url(#gradPurple)" stroke="#6366f1" stroke-width="2" filter="url(#glow)"/>
+    <text x="610" y="245" text-anchor="middle" fill="#a5b4fc" font-size="14" font-weight="700" letter-spacing="4" font-family="'Bebas Neue',sans-serif">STEP 01 — ANALYZE</text>
+    <text x="610" y="272" text-anchor="middle" fill="#fff" font-size="22" font-weight="700" font-family="'Bebas Neue',sans-serif" letter-spacing="3">NEURAL SCANNER ENGINE</text>
+    <text x="610" y="290" text-anchor="middle" fill="#94a3b8" font-size="11">Continuously scans all connected subsystems — pulls metrics, detects anomalies, calculates health scores</text>
+
+    <!-- Arrow down -->
+    <line x1="610" y1="300" x2="610" y2="360" stroke="#8b5cf6" stroke-width="2.5" marker-end="url(#arrowPurple)"/>
+    <text x="625" y="340" fill="#8b5cf6" font-size="10" font-weight="600">Findings</text>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- LAYER 3: OBD DIAGNOSTICS -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <rect x="50" y="360" width="1120" height="160" rx="20" fill="url(#gradCyan)" stroke="#06b6d4" stroke-width="2"/>
+    <text x="610" y="390" text-anchor="middle" fill="#67e8f9" font-size="14" font-weight="700" letter-spacing="4" font-family="'Bebas Neue',sans-serif">STEP 02 — DIAGNOSE</text>
+    <text x="610" y="414" text-anchor="middle" fill="#fff" font-size="22" font-weight="700" font-family="'Bebas Neue',sans-serif" letter-spacing="3">OBD DIAGNOSTIC CODES</text>
+
+    <!-- 8 OBD mini cards -->
+    <g>
+      <!-- Row 1 -->
+      <rect x="80" y="430" width="120" height="50" rx="8" fill="#0f172a" stroke="#1e3a5f"/>
+      <text x="140" y="452" text-anchor="middle" fill="#22c55e" font-size="12" font-weight="800" font-family="'Bebas Neue',sans-serif" letter-spacing="2">OBD-01</text>
+      <text x="140" y="470" text-anchor="middle" fill="#94a3b8" font-size="9">Voice AI</text>
+      <circle cx="188" cy="448" r="4" fill="#22c55e"/>
+
+      <rect x="215" y="430" width="120" height="50" rx="8" fill="#0f172a" stroke="#1e3a5f"/>
+      <text x="275" y="452" text-anchor="middle" fill="#22c55e" font-size="12" font-weight="800" font-family="'Bebas Neue',sans-serif" letter-spacing="2">OBD-02</text>
+      <text x="275" y="470" text-anchor="middle" fill="#94a3b8" font-size="9">CRM Link</text>
+      <circle cx="323" cy="448" r="4" fill="#22c55e"/>
+
+      <rect x="350" y="430" width="120" height="50" rx="8" fill="#0f172a" stroke="#1e3a5f"/>
+      <text x="410" y="452" text-anchor="middle" fill="#22c55e" font-size="12" font-weight="800" font-family="'Bebas Neue',sans-serif" letter-spacing="2">OBD-03</text>
+      <text x="410" y="470" text-anchor="middle" fill="#94a3b8" font-size="9">Contact Sync</text>
+      <circle cx="458" cy="448" r="4" fill="#22c55e"/>
+
+      <rect x="485" y="430" width="120" height="50" rx="8" fill="#0f172a" stroke="#1e3a5f"/>
+      <text x="545" y="452" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="800" font-family="'Bebas Neue',sans-serif" letter-spacing="2">OBD-04</text>
+      <text x="545" y="470" text-anchor="middle" fill="#94a3b8" font-size="9">Dispatch</text>
+      <circle cx="593" cy="448" r="4" fill="#fbbf24"/>
+
+      <rect x="620" y="430" width="120" height="50" rx="8" fill="#0f172a" stroke="#1e3a5f"/>
+      <text x="680" y="452" text-anchor="middle" fill="#22c55e" font-size="12" font-weight="800" font-family="'Bebas Neue',sans-serif" letter-spacing="2">OBD-05</text>
+      <text x="680" y="470" text-anchor="middle" fill="#94a3b8" font-size="9">Revenue</text>
+      <circle cx="728" cy="448" r="4" fill="#22c55e"/>
+
+      <rect x="755" y="430" width="120" height="50" rx="8" fill="#0f172a" stroke="#1e3a5f"/>
+      <text x="815" y="452" text-anchor="middle" fill="#8b5cf6" font-size="12" font-weight="800" font-family="'Bebas Neue',sans-serif" letter-spacing="2">OBD-06</text>
+      <text x="815" y="470" text-anchor="middle" fill="#94a3b8" font-size="9">Treatments</text>
+      <circle cx="863" cy="448" r="4" fill="#8b5cf6"/>
+
+      <rect x="890" y="430" width="120" height="50" rx="8" fill="#0f172a" stroke="#1e3a5f"/>
+      <text x="950" y="452" text-anchor="middle" fill="#22c55e" font-size="12" font-weight="800" font-family="'Bebas Neue',sans-serif" letter-spacing="2">OBD-07</text>
+      <text x="950" y="470" text-anchor="middle" fill="#94a3b8" font-size="9">Network</text>
+      <circle cx="998" cy="448" r="4" fill="#22c55e"/>
+
+      <rect x="1025" y="430" width="120" height="50" rx="8" fill="#0f172a" stroke="#1e3a5f"/>
+      <text x="1085" y="452" text-anchor="middle" fill="#22c55e" font-size="12" font-weight="800" font-family="'Bebas Neue',sans-serif" letter-spacing="2">OBD-08</text>
+      <text x="1085" y="470" text-anchor="middle" fill="#94a3b8" font-size="9">Ingestion</text>
+      <circle cx="1133" cy="448" r="4" fill="#22c55e"/>
+
+      <!-- Status label -->
+      <text x="505" y="510" text-anchor="middle" fill="#64748b" font-size="10">CRITICAL</text>
+      <text x="610" y="510" text-anchor="middle" fill="#64748b" font-size="10">WARNING</text>
+      <text x="730" y="510" text-anchor="middle" fill="#64748b" font-size="10">OPPORTUNITY</text>
+      <circle cx="485" cy="507" r="4" fill="#ef4444"/>
+      <circle cx="590" cy="507" r="4" fill="#fbbf24"/>
+      <circle cx="708" cy="507" r="4" fill="#22c55e"/>
+    </g>
+
+    <!-- Arrow down to Prescribe -->
+    <line x1="610" y1="520" x2="610" y2="580" stroke="#06b6d4" stroke-width="2.5" marker-end="url(#arrowCyan)"/>
+    <text x="625" y="558" fill="#06b6d4" font-size="10" font-weight="600">Treatments</text>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- LAYER 4: PRESCRIBE — Treatment Templates -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <rect x="50" y="580" width="1120" height="130" rx="20" fill="url(#gradGreen)" stroke="#22c55e" stroke-width="2"/>
+    <text x="610" y="610" text-anchor="middle" fill="#86efac" font-size="14" font-weight="700" letter-spacing="4" font-family="'Bebas Neue',sans-serif">STEP 03 — PRESCRIBE</text>
+    <text x="610" y="634" text-anchor="middle" fill="#fff" font-size="22" font-weight="700" font-family="'Bebas Neue',sans-serif" letter-spacing="3">TREATMENT TEMPLATES</text>
+
+    <!-- 5 treatment cards -->
+    <rect x="80" y="650" width="195" height="45" rx="8" fill="#0f172a" stroke="#1e3a5f"/>
+    <text x="178" y="670" text-anchor="middle" fill="#e2e8f0" font-size="10" font-weight="600">Missed Call Recovery</text>
+    <text x="178" y="684" text-anchor="middle" fill="#64748b" font-size="8">trigger: call.missed</text>
+
+    <rect x="290" y="650" width="195" height="45" rx="8" fill="#0f172a" stroke="#1e3a5f"/>
+    <text x="388" y="670" text-anchor="middle" fill="#e2e8f0" font-size="10" font-weight="600">Load Coverage Outbound</text>
+    <text x="388" y="684" text-anchor="middle" fill="#64748b" font-size="8">trigger: load.uncovered</text>
+
+    <rect x="500" y="650" width="195" height="45" rx="8" fill="#0f172a" stroke="#1e3a5f"/>
+    <text x="598" y="670" text-anchor="middle" fill="#e2e8f0" font-size="10" font-weight="600">Contact HubSpot Sync</text>
+    <text x="598" y="684" text-anchor="middle" fill="#64748b" font-size="8">trigger: contact.created</text>
+
+    <rect x="710" y="650" width="195" height="45" rx="8" fill="#0f172a" stroke="#1e3a5f"/>
+    <text x="808" y="670" text-anchor="middle" fill="#e2e8f0" font-size="10" font-weight="600">Stale Deal Reengagement</text>
+    <text x="808" y="684" text-anchor="middle" fill="#64748b" font-size="8">trigger: deal.stale</text>
+
+    <rect x="920" y="650" width="195" height="45" rx="8" fill="#0f172a" stroke="#1e3a5f"/>
+    <text x="1018" y="670" text-anchor="middle" fill="#e2e8f0" font-size="10" font-weight="600">New Carrier Welcome</text>
+    <text x="1018" y="684" text-anchor="middle" fill="#64748b" font-size="8">trigger: carrier.created</text>
+
+    <!-- Arrow down to Remediate -->
+    <line x1="610" y1="710" x2="610" y2="770" stroke="#22c55e" stroke-width="2.5" marker-end="url(#arrowGreen)"/>
+    <text x="625" y="748" fill="#22c55e" font-size="10" font-weight="600">Execute</text>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- LAYER 5: REMEDIATE — Treatment Executor -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <rect x="50" y="770" width="1120" height="110" rx="20" fill="#0f172a" stroke="#f59e0b" stroke-width="2"/>
+    <text x="610" y="800" text-anchor="middle" fill="#fcd34d" font-size="14" font-weight="700" letter-spacing="4" font-family="'Bebas Neue',sans-serif">STEP 04 — REMEDIATE</text>
+    <text x="610" y="824" text-anchor="middle" fill="#fff" font-size="22" font-weight="700" font-family="'Bebas Neue',sans-serif" letter-spacing="3">TREATMENT EXECUTOR</text>
+
+    <!-- Action type icons -->
+    <rect x="100" y="840" width="130" height="30" rx="6" fill="#1a1a2e" stroke="#334155"/>
+    <text x="165" y="860" text-anchor="middle" fill="#e2e8f0" font-size="10" font-weight="600">&#128172; Auto-SMS</text>
+
+    <rect x="250" y="840" width="130" height="30" rx="6" fill="#1a1a2e" stroke="#334155"/>
+    <text x="315" y="860" text-anchor="middle" fill="#e2e8f0" font-size="10" font-weight="600">&#128100; CRM Write</text>
+
+    <rect x="400" y="840" width="130" height="30" rx="6" fill="#1a1a2e" stroke="#334155"/>
+    <text x="465" y="860" text-anchor="middle" fill="#e2e8f0" font-size="10" font-weight="600">&#127991; CRM Tag</text>
+
+    <rect x="550" y="840" width="130" height="30" rx="6" fill="#1a1a2e" stroke="#334155"/>
+    <text x="615" y="860" text-anchor="middle" fill="#e2e8f0" font-size="10" font-weight="600">&#128203; CRM Task</text>
+
+    <rect x="700" y="840" width="130" height="30" rx="6" fill="#1a1a2e" stroke="#334155"/>
+    <text x="765" y="860" text-anchor="middle" fill="#e2e8f0" font-size="10" font-weight="600">&#128222; Callback</text>
+
+    <rect x="850" y="840" width="130" height="30" rx="6" fill="#1a1a2e" stroke="#334155"/>
+    <text x="915" y="860" text-anchor="middle" fill="#e2e8f0" font-size="10" font-weight="600">&#128232; Email</text>
+
+    <!-- Rate limit note -->
+    <rect x="1000" y="838" width="150" height="34" rx="6" fill="rgba(239,68,68,0.08)" stroke="rgba(239,68,68,0.3)"/>
+    <text x="1075" y="854" text-anchor="middle" fill="#ef4444" font-size="9" font-weight="700">RATE LIMIT</text>
+    <text x="1075" y="866" text-anchor="middle" fill="#94a3b8" font-size="8">1 per phone / hour</text>
+
+    <!-- Arrow down to outputs -->
+    <line x1="400" y1="880" x2="400" y2="940" stroke="#f59e0b" stroke-width="2.5" marker-end="url(#arrowAmber)"/>
+    <line x1="820" y1="880" x2="820" y2="940" stroke="#f59e0b" stroke-width="2.5" marker-end="url(#arrowAmber)"/>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- LAYER 6: OUTPUTS — Execution Log + ROI Dashboard -->
+    <!-- ════════════════════════════════════════════════════════ -->
+
+    <!-- Execution Log -->
+    <rect x="150" y="940" width="500" height="100" rx="16" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
+    <text x="400" y="972" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="700" letter-spacing="2" font-family="'Bebas Neue',sans-serif">TREATMENT EXECUTION LOG</text>
+    <text x="400" y="992" text-anchor="middle" fill="#64748b" font-size="10">treatment_execution_log table</text>
+    <text x="400" y="1010" text-anchor="middle" fill="#475569" font-size="9">client_id | treatment_type | trigger_event | actions_executed | status</text>
+    <text x="400" y="1028" text-anchor="middle" fill="#475569" font-size="9">Every trigger logged | Every action tracked | Every result recorded</text>
+
+    <!-- ROI Dashboard -->
+    <rect x="700" y="940" width="500" height="100" rx="16" fill="#0f172a" stroke="#22c55e" stroke-width="2"/>
+    <text x="950" y="972" text-anchor="middle" fill="#86efac" font-size="11" font-weight="700" letter-spacing="2" font-family="'Bebas Neue',sans-serif">LIVE ROI DASHBOARD</text>
+    <text x="950" y="992" text-anchor="middle" fill="#94a3b8" font-size="10">Actuals, not projections</text>
+
+    <!-- ROI KPIs -->
+    <text x="780" y="1020" text-anchor="middle" fill="#22c55e" font-size="16" font-weight="700" font-family="'Bebas Neue',sans-serif">87%</text>
+    <text x="780" y="1032" text-anchor="middle" fill="#475569" font-size="7">COST CUT</text>
+
+    <text x="880" y="1020" text-anchor="middle" fill="#06b6d4" font-size="16" font-weight="700" font-family="'Bebas Neue',sans-serif">74%</text>
+    <text x="880" y="1032" text-anchor="middle" fill="#475569" font-size="7">FASTER</text>
+
+    <text x="980" y="1020" text-anchor="middle" fill="#8b5cf6" font-size="16" font-weight="700" font-family="'Bebas Neue',sans-serif">8.4x</text>
+    <text x="980" y="1032" text-anchor="middle" fill="#475569" font-size="7">ROI</text>
+
+    <text x="1080" y="1020" text-anchor="middle" fill="#f59e0b" font-size="16" font-weight="700" font-family="'Bebas Neue',sans-serif">11d</text>
+    <text x="1080" y="1032" text-anchor="middle" fill="#475569" font-size="7">PAYBACK</text>
+
+    <!-- Feedback loop arrow from ROI back up to Scanner -->
+    <path d="M 1200 990 Q 1340 990 1340 250 Q 1340 200 1170 250" fill="none" stroke="#475569" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arrowGray)"/>
+    <text x="1350" y="600" fill="#475569" font-size="10" font-weight="600" transform="rotate(90,1350,600)">FEEDBACK LOOP</text>
+
+    <!-- Tagline -->
+    <text x="610" y="1080" text-anchor="middle" fill="#334155" font-size="12" font-weight="500" font-style="italic">"The difference between a thermometer and a doctor."</text>
+    <text x="610" y="1098" text-anchor="middle" fill="#1e293b" font-size="10">Digit2AI LLC / RinglyPro &copy; 2026</text>
+
+  </svg>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background: #8b5cf6;"></div> Analyze</div>
+    <div class="legend-item"><div class="legend-dot" style="background: #06b6d4;"></div> Diagnose</div>
+    <div class="legend-item"><div class="legend-dot" style="background: #22c55e;"></div> Prescribe</div>
+    <div class="legend-item"><div class="legend-dot" style="background: #f59e0b;"></div> Remediate</div>
+    <div class="legend-item"><div class="legend-dot" style="background: #475569;"></div> Data Flow</div>
+    <div class="legend-item"><div class="legend-dot" style="background: #ef4444;"></div> Severity: Critical</div>
+    <div class="legend-item"><div class="legend-dot" style="background: #fbbf24;"></div> Severity: Warning</div>
+  </div>
+</div>
+</body>
+</html>
