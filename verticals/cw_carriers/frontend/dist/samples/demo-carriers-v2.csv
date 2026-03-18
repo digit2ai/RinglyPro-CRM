@@ -1,0 +1,26 @@
+carrier_name,mc_number,dot_number,contact_name,phone,email,equipment_types,home_city,home_state,safety_rating
+Roadrunner Transportation,MC-253781,734902,Alex Moreno,414-615-1500,dispatch@rrts.com,"dry_van,reefer",Deerfield,IL,Satisfactory
+Daseke Inc,MC-278432,1104537,Crystal Owens,972-248-0412,loads@daseke.com,"flatbed,step_deck,heavy_haul",Addison,TX,Satisfactory
+Heartland Transport,MC-342198,892341,Bobby Fletcher,816-765-4300,freight@heartlandtrans.com,"dry_van",Kansas City,MO,Satisfactory
+Ruan Transportation,MC-129875,267194,Sue Ann Miller,515-245-2580,dispatch@ruan.com,"dry_van,reefer,tanker",Des Moines,IA,Satisfactory
+Kenan Advantage Group,MC-301256,1182649,Victor Reyes,330-499-4555,loads@thekag.com,"tanker,dry_van",North Canton,OH,Satisfactory
+NFI Industries,MC-164301,374829,Tracy Hamilton,856-234-8970,freight@nfiindustries.com,"dry_van,reefer",Camden,NJ,Satisfactory
+Anderson Trucking,MC-189743,423615,Derek Olson,320-252-2241,dispatch@atsinc.com,"flatbed,step_deck,rgn",St. Cloud,MN,Satisfactory
+Penske Logistics,MC-159832,367408,Monica Shah,610-775-6000,loads@penske.com,"dry_van,reefer,flatbed",Reading,PA,Satisfactory
+Maverick Transportation,MC-274910,738462,Clint Barker,479-783-8000,freight@maverickusa.com,"flatbed,glass,specialized",Little Rock,AR,Satisfactory
+Midwest Motor Express,MC-087432,148295,Hans Larsen,701-232-4441,dispatch@midwestmotor.com,"ltl,dry_van",Bismarck,ND,Satisfactory
+Ward Trucking,MC-072158,119384,Jamie Curtis,814-532-5100,freight@wardtrucking.com,"ltl,dry_van",Altoona,PA,Satisfactory
+Continental Carriers,MC-321654,1021847,Rosa Delgado,312-555-8900,dispatch@continentalcarr.com,"dry_van,reefer",Chicago,IL,Satisfactory
+Pacific Coast Transport,MC-356721,1243890,Kenji Watanabe,503-555-2100,loads@pacificcoast.com,"dry_van,reefer,flatbed",Portland,OR,Satisfactory
+Lone Star Express,MC-298456,987231,Hector Salinas,210-555-6700,freight@lonestarexpress.com,"dry_van,flatbed",San Antonio,TX,Satisfactory
+Great Plains Logistics,MC-312987,1098234,Peggy Winters,402-555-3400,dispatch@greatplainslog.com,"dry_van,reefer",Omaha,NE,Satisfactory
+Gulf States Trucking,MC-287643,876543,Antoine Broussard,504-555-9100,loads@gulfstatestrk.com,"dry_van,reefer,tanker",Baton Rouge,LA,Satisfactory
+Dixie Highway Carriers,MC-265432,812345,Wayne Prescott,615-555-7800,dispatch@dixiehwy.com,"dry_van,flatbed",Nashville,TN,Satisfactory
+Mountain West Freight,MC-334521,1134567,Jake Harmon,801-555-4200,freight@mtnwestfreight.com,"dry_van,reefer",Salt Lake City,UT,Satisfactory
+Cascade Trucking,MC-348765,1187654,Ellen Cho,206-555-3300,dispatch@cascadetrk.com,"dry_van,flatbed,step_deck",Seattle,WA,Satisfactory
+Sun Belt Carriers,MC-276543,823456,Ray Thornton,602-555-8400,loads@sunbeltcarriers.com,"dry_van,reefer,flatbed",Phoenix,AZ,Satisfactory
+Colonial Freight Systems,MC-198765,456321,Brenda Hartley,865-555-2900,freight@colonialfreight.com,"ltl,dry_van",Kingsport,TN,Satisfactory
+Tri-State Motor Transit,MC-143298,312876,Daryl Knox,417-555-6100,dispatch@tsmt.com,"specialized,heavy_haul",Joplin,MO,Satisfactory
+Harbor Logistics,MC-367890,1267890,Lenny Kosta,562-555-4800,loads@harborlog.com,"dry_van,reefer",Long Beach,CA,Satisfactory
+Patriot Transport,MC-254321,743210,Kelly Brennan,904-555-7500,freight@patriottrans.com,"tanker,flatbed",Jacksonville,FL,Satisfactory
+Blue Ridge Carriers,MC-221876,654987,Earl Simmons,540-555-3100,dispatch@blueridgecarr.com,"dry_van,reefer",Roanoke,VA,Satisfactory

@@ -1,0 +1,51 @@
+load_ref,origin,origin_state,destination,destination_state,pickup_date,delivery_date,equipment_type,weight_lbs,miles,buy_rate,sell_rate,status,customer,carrier,commodity
+CW-2026-1001,Springdale,AR,Kansas City,MO,2026-01-07,2026-01-08,reefer,43000,338,1183.00,1537.90,delivered,Tyson Foods,Roadrunner Transportation,Poultry Products
+CW-2026-1002,Cincinnati,OH,Nashville,TN,2026-01-08,2026-01-09,dry_van,38000,269,780.10,1014.13,delivered,Procter & Gamble,Daseke Inc,Household Goods
+CW-2026-1003,Issaquah,WA,Portland,OR,2026-01-10,2026-01-10,dry_van,41000,176,528.00,686.40,delivered,Costco Wholesale,Pacific Coast Transport,Bulk Merchandise
+CW-2026-1004,Moline,IL,Omaha,NE,2026-01-13,2026-01-14,flatbed,52000,312,1123.20,1460.16,delivered,John Deere,Anderson Trucking,Farm Equipment
+CW-2026-1005,Boise,ID,Salt Lake City,UT,2026-01-14,2026-01-15,reefer,29000,340,1122.00,1458.60,delivered,Albertsons Companies,Mountain West Freight,Grocery
+CW-2026-1006,St. Paul,MN,Chicago,IL,2026-01-16,2026-01-17,dry_van,36000,400,1160.00,1508.00,delivered,3M Company,Heartland Transport,Industrial Supplies
+CW-2026-1007,St. Louis,MO,Dallas,TX,2026-01-19,2026-01-20,reefer,44000,640,2112.00,2745.60,delivered,Anheuser-Busch,Ruan Transportation,Beverages
+CW-2026-1008,Benton Harbor,MI,Columbus,OH,2026-01-20,2026-01-21,dry_van,48000,296,828.80,1077.44,delivered,Whirlpool Corp,Penske Logistics,Appliances
+CW-2026-1009,Charlotte,NC,Atlanta,GA,2026-01-22,2026-01-23,reefer,33000,245,808.50,1051.05,delivered,Coca-Cola Bottling,Gulf States Trucking,Beverages
+CW-2026-1010,Bentonville,AR,Memphis,TN,2026-01-23,2026-01-23,dry_van,45000,210,567.00,737.10,delivered,Walmart Logistics,Lone Star Express,Mixed Retail
+CW-2026-1011,Charlotte,NC,Birmingham,AL,2026-01-27,2026-01-28,flatbed,55000,362,1303.20,1694.16,delivered,Nucor Steel,Dixie Highway Carriers,Steel Coils
+CW-2026-1012,Irving,TX,Houston,TX,2026-01-28,2026-01-28,dry_van,34000,225,562.50,731.25,delivered,Kimberly-Clark,Lone Star Express,Paper Products
+CW-2026-1013,McLean,VA,Philadelphia,PA,2026-01-30,2026-01-31,reefer,30000,140,490.00,637.00,delivered,Mars Inc,NFI Industries,Confectionery
+CW-2026-1014,Wayzata,MN,Des Moines,IA,2026-02-03,2026-02-04,dry_van,47000,244,707.60,919.88,delivered,Cargill Inc,Ruan Transportation,Grain Products
+CW-2026-1015,Palo Alto,CA,Reno,NV,2026-02-04,2026-02-05,flatbed,40000,218,807.80,1050.14,delivered,Tesla Inc,Cascade Trucking,Battery Modules
+CW-2026-1016,Springdale,AR,Atlanta,GA,2026-02-06,2026-02-07,reefer,42000,612,2080.80,2705.04,delivered,Tyson Foods,Roadrunner Transportation,Frozen Poultry
+CW-2026-1017,Cincinnati,OH,St. Louis,MO,2026-02-10,2026-02-11,dry_van,37000,354,991.20,1288.56,delivered,Procter & Gamble,Kenan Advantage Group,Cleaning Products
+CW-2026-1018,Issaquah,WA,San Francisco,CA,2026-02-11,2026-02-13,dry_van,39000,808,2424.00,3151.20,delivered,Costco Wholesale,Pacific Coast Transport,Electronics
+CW-2026-1019,Moline,IL,Kansas City,MO,2026-02-13,2026-02-14,flatbed,53000,258,929.20,1207.96,delivered,John Deere,Anderson Trucking,Tractor Parts
+CW-2026-1020,Boise,ID,Portland,OR,2026-02-14,2026-02-15,reefer,28000,430,1462.00,1900.60,delivered,Albertsons Companies,Cascade Trucking,Dairy & Frozen
+CW-2026-1021,St. Paul,MN,Detroit,MI,2026-02-17,2026-02-18,dry_van,35000,690,1932.00,2511.60,delivered,3M Company,Midwest Motor Express,Adhesives
+CW-2026-1022,St. Louis,MO,Houston,TX,2026-02-19,2026-02-20,reefer,46000,792,2693.20,3501.16,delivered,Anheuser-Busch,Gulf States Trucking,Craft Beer
+CW-2026-1023,Benton Harbor,MI,Charlotte,NC,2026-02-20,2026-02-21,dry_van,50000,580,1624.00,2111.20,delivered,Whirlpool Corp,Ward Trucking,Washers & Dryers
+CW-2026-1024,Charlotte,NC,Miami,FL,2026-02-24,2026-02-26,reefer,32000,650,2210.00,2873.00,delivered,Coca-Cola Bottling,Sun Belt Carriers,Soft Drinks
+CW-2026-1025,Bentonville,AR,Dallas,TX,2026-02-25,2026-02-26,dry_van,44000,330,891.00,1158.30,delivered,Walmart Logistics,Lone Star Express,General Merchandise
+CW-2026-1026,Charlotte,NC,Houston,TX,2026-02-27,2026-03-01,flatbed,54000,990,3564.00,4633.20,delivered,Nucor Steel,Daseke Inc,Structural Steel
+CW-2026-1027,Irving,TX,Phoenix,AZ,2026-03-03,2026-03-05,dry_van,36000,1065,2982.00,3876.60,delivered,Kimberly-Clark,Sun Belt Carriers,Tissue Products
+CW-2026-1028,McLean,VA,Chicago,IL,2026-03-04,2026-03-06,reefer,31000,701,2383.40,3098.42,delivered,Mars Inc,Continental Carriers,Pet Food
+CW-2026-1029,Wayzata,MN,Houston,TX,2026-03-05,2026-03-07,dry_van,48000,1214,3399.20,4418.96,delivered,Cargill Inc,Great Plains Logistics,Animal Feed
+CW-2026-1030,Palo Alto,CA,Austin,TX,2026-03-06,2026-03-08,flatbed,41000,1750,6475.00,8417.50,delivered,Tesla Inc,Harbor Logistics,Megapack Units
+CW-2026-1031,Springdale,AR,Jacksonville,FL,2026-03-07,2026-03-09,reefer,43000,886,3010.40,3913.52,delivered,Tyson Foods,Colonial Freight Systems,Fresh Chicken
+CW-2026-1032,Cincinnati,OH,Dallas,TX,2026-03-10,2026-03-12,dry_van,38000,920,2576.00,3348.80,in_transit,Procter & Gamble,Heartland Transport,Beauty Products
+CW-2026-1033,Issaquah,WA,Denver,CO,2026-03-10,2026-03-12,dry_van,40000,1321,3963.00,5151.90,in_transit,Costco Wholesale,Mountain West Freight,Bulk Goods
+CW-2026-1034,Moline,IL,Memphis,TN,2026-03-11,2026-03-12,flatbed,51000,524,1886.40,2452.32,in_transit,John Deere,Anderson Trucking,Combine Harvesters
+CW-2026-1035,St. Paul,MN,Indianapolis,IN,2026-03-12,2026-03-13,dry_van,34000,572,1601.60,2082.08,in_transit,3M Company,Penske Logistics,Safety Equipment
+CW-2026-1036,St. Louis,MO,Phoenix,AZ,2026-03-12,2026-03-14,reefer,45000,1484,5045.60,6559.28,in_transit,Anheuser-Busch,Sun Belt Carriers,Premium Lager
+CW-2026-1037,Benton Harbor,MI,Atlanta,GA,2026-03-13,2026-03-15,dry_van,49000,722,2021.60,2628.08,covered,Whirlpool Corp,Dixie Highway Carriers,Refrigerators
+CW-2026-1038,Charlotte,NC,New York,NY,2026-03-14,2026-03-15,reefer,30000,634,2155.60,2802.28,covered,Coca-Cola Bottling,NFI Industries,Energy Drinks
+CW-2026-1039,Bentonville,AR,Phoenix,AZ,2026-03-15,2026-03-17,dry_van,42000,1092,3058.00,3975.40,covered,Walmart Logistics,Sun Belt Carriers,Seasonal Goods
+CW-2026-1040,Charlotte,NC,Kansas City,MO,2026-03-15,2026-03-17,flatbed,56000,946,3406.60,4428.58,covered,Nucor Steel,Tri-State Motor Transit,I-Beams
+CW-2026-1041,Irving,TX,Nashville,TN,2026-03-16,2026-03-17,dry_van,35000,660,1848.00,2402.40,open,Kimberly-Clark,,Diapers & Wipes
+CW-2026-1042,McLean,VA,Los Angeles,CA,2026-03-17,2026-03-20,reefer,29000,2660,9044.00,11757.20,open,Mars Inc,,Chocolate Products
+CW-2026-1043,Wayzata,MN,Baton Rouge,LA,2026-03-17,2026-03-19,dry_van,47000,1120,3136.00,4076.80,open,Cargill Inc,,Soybean Meal
+CW-2026-1044,Palo Alto,CA,Seattle,WA,2026-03-18,2026-03-19,flatbed,39000,807,2905.20,3776.76,open,Tesla Inc,,Powerwall Units
+CW-2026-1045,Springdale,AR,San Antonio,TX,2026-03-18,2026-03-19,reefer,44000,572,1944.80,2528.24,open,Tyson Foods,,Marinated Meats
+CW-2026-1046,Cincinnati,OH,Miami,FL,2026-03-19,2026-03-21,dry_van,36000,1060,2968.00,3858.40,open,Procter & Gamble,,Oral Care
+CW-2026-1047,Bentonville,AR,Chicago,IL,2026-03-19,2026-03-20,dry_van,43000,508,1371.60,1783.08,open,Walmart Logistics,,Home Goods
+CW-2026-1048,Charlotte,NC,Detroit,MI,2026-03-20,2026-03-22,flatbed,52000,620,2232.00,2901.60,open,Nucor Steel,,Rebar Bundles
+CW-2026-1049,St. Louis,MO,Denver,CO,2026-03-20,2026-03-22,reefer,40000,858,2917.20,3792.36,open,Anheuser-Busch,,Seasonal Ale
+CW-2026-1050,Boise,ID,Phoenix,AZ,2026-03-21,2026-03-23,reefer,27000,842,2862.80,3721.64,open,Albertsons Companies,,Organic Produce

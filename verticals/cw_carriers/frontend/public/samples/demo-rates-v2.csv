@@ -1,0 +1,31 @@
+origin_state,origin_city,destination_state,destination_city,equipment_type,avg_rate,min_rate,max_rate,rate_per_mile_avg,sample_size,confidence
+AR,Springdale,MO,Kansas City,reefer,1280.00,1020.00,1580.00,3.78,82,high
+OH,Cincinnati,TN,Nashville,dry_van,850.00,680.00,1050.00,3.16,119,very_high
+WA,Seattle,OR,Portland,dry_van,580.00,440.00,740.00,3.30,145,very_high
+IL,Moline,NE,Omaha,flatbed,1220.00,960.00,1520.00,3.91,64,high
+ID,Boise,UT,Salt Lake City,reefer,1180.00,920.00,1480.00,3.47,57,high
+MN,Minneapolis,IL,Chicago,dry_van,1250.00,1000.00,1540.00,3.13,138,very_high
+MO,St. Louis,TX,Dallas,reefer,2350.00,1900.00,2850.00,3.67,91,very_high
+MI,Detroit,OH,Columbus,dry_van,880.00,700.00,1100.00,2.97,106,very_high
+NC,Charlotte,GA,Atlanta,reefer,920.00,720.00,1160.00,3.76,87,very_high
+AR,Bentonville,TN,Memphis,dry_van,620.00,480.00,780.00,2.95,132,very_high
+NC,Charlotte,AL,Birmingham,flatbed,1420.00,1120.00,1760.00,3.92,53,high
+TX,Irving,TX,Houston,dry_van,610.00,460.00,780.00,2.71,168,very_high
+VA,McLean,PA,Philadelphia,reefer,540.00,400.00,700.00,3.86,74,high
+MN,Minneapolis,IA,Des Moines,dry_van,780.00,600.00,980.00,3.20,95,very_high
+CA,San Francisco,NV,Reno,flatbed,850.00,660.00,1080.00,3.90,62,high
+AR,Springdale,GA,Atlanta,reefer,2280.00,1840.00,2780.00,3.73,78,high
+OH,Cincinnati,MO,St. Louis,dry_van,1080.00,860.00,1340.00,3.05,112,very_high
+WA,Seattle,CA,San Francisco,dry_van,2620.00,2100.00,3200.00,3.24,89,very_high
+IL,Moline,MO,Kansas City,flatbed,1020.00,800.00,1280.00,3.95,58,high
+ID,Boise,OR,Portland,reefer,1580.00,1260.00,1940.00,3.67,49,high
+MN,Minneapolis,MI,Detroit,dry_van,2080.00,1680.00,2540.00,3.01,101,very_high
+MO,St. Louis,TX,Houston,reefer,2880.00,2320.00,3500.00,3.64,73,high
+MI,Detroit,NC,Charlotte,dry_van,1720.00,1380.00,2120.00,2.97,84,high
+NC,Charlotte,FL,Miami,reefer,2380.00,1920.00,2900.00,3.66,69,high
+AR,Bentonville,TX,Dallas,dry_van,960.00,760.00,1200.00,2.91,117,very_high
+NC,Charlotte,TX,Houston,flatbed,3840.00,3100.00,4640.00,3.88,45,high
+TX,Irving,AZ,Phoenix,dry_van,3180.00,2560.00,3860.00,2.99,67,high
+VA,McLean,IL,Chicago,reefer,2580.00,2080.00,3140.00,3.68,61,high
+MN,Minneapolis,TX,Houston,dry_van,3680.00,2960.00,4460.00,3.03,56,high
+CA,San Francisco,TX,Austin,flatbed,6820.00,5500.00,8300.00,3.90,38,medium

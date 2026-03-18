@@ -1,0 +1,16 @@
+customer_name,contact_name,phone,email,payment_terms,billing_address,credit_limit,service_level
+Tyson Foods,Greg Hamilton,479-290-4000,freight@tysonfoods.com,net_30,"2200 W Don Tyson Pkwy, Springdale, AR 72762",650000,premium
+Procter & Gamble,Samantha Reed,513-983-1100,logistics@pg.com,net_45,"1 Procter & Gamble Plaza, Cincinnati, OH 45202",900000,premium
+Costco Wholesale,Derek Tanaka,425-313-8100,transport@costco.com,net_30,"999 Lake Dr, Issaquah, WA 98027",800000,premium
+John Deere,Michelle Braun,309-765-8000,supply-chain@deere.com,net_45,"One John Deere Pl, Moline, IL 61265",700000,premium
+Albertsons Companies,Ryan O'Brien,208-395-6200,distribution@albertsons.com,net_30,"250 E Parkcenter Blvd, Boise, ID 83706",500000,standard
+3M Company,Lisa Johansson,651-733-1110,logistics@3m.com,net_45,"3M Center, St. Paul, MN 55144",550000,premium
+Anheuser-Busch,Marcus Green,314-577-2000,freight@ab-inbev.com,net_30,"One Busch Pl, St. Louis, MO 63118",600000,premium
+Whirlpool Corp,Karen Patel,269-923-5000,transport@whirlpool.com,net_45,"2000 N M-63, Benton Harbor, MI 49022",450000,standard
+Coca-Cola Bottling,James Rivera,704-557-4400,logistics@ccbcc.com,net_30,"4100 Coca-Cola Plaza, Charlotte, NC 28211",700000,premium
+Walmart Logistics,Tanya Brooks,479-273-4000,carrier-ops@walmart.com,net_15,"702 SW 8th St, Bentonville, AR 72716",1200000,premium
+Nucor Steel,Frank Dominguez,704-366-7000,freight@nucor.com,net_45,"1915 Rexford Rd, Charlotte, NC 28211",400000,standard
+Kimberly-Clark,Sharon Wu,972-281-1200,supply-chain@kcc.com,net_30,"351 Phelps Dr, Irving, TX 75038",500000,standard
+Mars Inc,Alan Crawford,703-821-4900,logistics@mars.com,net_30,"6885 Elm St, McLean, VA 22101",550000,premium
+Cargill Inc,Natasha Petrov,952-742-7575,freight@cargill.com,net_30,"15407 McGinty Rd W, Wayzata, MN 55391",850000,premium
+Tesla Inc,Jordan Nakamura,510-602-3500,supply-chain@tesla.com,net_45,"3500 Deer Creek Rd, Palo Alto, CA 94304",750000,premium
