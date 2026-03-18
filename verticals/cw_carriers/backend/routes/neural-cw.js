@@ -216,7 +216,15 @@ router.get('/dashboard', async (req, res) => {
         explanation: `You have ${hsDeals} deals in pipeline but none marked as won. Update deal stages as loads are delivered to track win rate.`,
         dollarImpact: '',
         source: 'HubSpot Pipeline',
-        treatment: null
+        treatment: {
+          treatment_type: 'cw_deal_stage_sync',
+          workflow: [
+            { type: 'trigger', text: 'When a load status changes to "delivered" in CW system' },
+            { type: 'condition', text: 'If a matching HubSpot deal exists for the load' },
+            { type: 'action', text: 'Auto-update HubSpot deal stage to "closedwon" and log delivery date' }
+          ],
+          projection: `Track win rate and revenue attribution across ${hsDeals} deals`
+        }
       });
     }
 
@@ -300,6 +308,13 @@ const CW_TREATMENT_TEMPLATES = {
       { type: 'sms', template: 'Welcome to the CW Carriers network! We match carriers like you with quality loads daily. Reply LANES to share your preferred lanes.', delay_minutes: 0 },
       { type: 'crm_contact', crm: 'hubspot' }
     ]
+  },
+  cw_deal_stage_sync: {
+    trigger_event: 'load.delivered',
+    actions: [
+      { type: 'crm_update', crm: 'hubspot', update: 'deal_stage', value: 'closedwon' },
+      { type: 'crm_tag', tag: 'cw-delivered', crm: 'hubspot' }
+    ]
   }
 };
 
@@ -369,6 +384,131 @@ router.get('/treatments/log', async (req, res) => {
     );
     res.json({ success: true, logs });
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Fix Now — Immediate one-click bulk action ──────────────────────
+router.post('/treatments/fix-now', async (req, res) => {
+  try {
+    const { treatment_type } = req.body;
+    if (!treatment_type) return res.status(400).json({ error: 'treatment_type required' });
+
+    const results = { treatment_type, actions: [], total: 0, success: 0, errors: 0 };
+
+    if (treatment_type === 'cw_contact_hubspot_sync') {
+      // Bulk sync all un-synced contacts to HubSpot
+      const [unsynced] = await sequelize.query(
+        `SELECT id, first_name, last_name, email, phone, company, contact_type
+         FROM cw_contacts WHERE hubspot_id IS NULL LIMIT 100`
+      );
+      results.total = unsynced.length;
+
+      for (const contact of unsynced) {
+        try {
+          const hsResult = await hubspot.createContact({
+            firstname: contact.first_name || '',
+            lastname: contact.last_name || '',
+            email: contact.email || `${contact.id}@cw-placeholder.com`,
+            phone: contact.phone || '',
+            company: contact.company || 'CW Carriers Contact',
+            cw_contact_type: contact.contact_type || 'unknown'
+          });
+          if (hsResult.success && hsResult.data?.id) {
+            await sequelize.query(
+              `UPDATE cw_contacts SET hubspot_id = $1, updated_at = NOW() WHERE id = $2`,
+              { bind: [hsResult.data.id, contact.id] }
+            );
+            await sequelize.query(
+              `INSERT INTO cw_hubspot_sync (entity_type, entity_id, hubspot_id, action, status, created_at)
+               VALUES ('contact', $1, $2, 'create', 'success', NOW())`,
+              { bind: [contact.id, hsResult.data.id] }
+            );
+            results.success++;
+          } else {
+            results.errors++;
+          }
+        } catch (e) {
+          results.errors++;
+        }
+      }
+      results.actions.push(`Synced ${results.success} contacts to HubSpot`);
+
+    } else if (treatment_type === 'cw_deal_stage_sync') {
+      // Find delivered loads and update matching HubSpot deals to closedwon
+      const [delivered] = await sequelize.query(
+        `SELECT l.load_ref, l.sell_rate, l.customer_id, c.customer_name
+         FROM lg_loads l
+         LEFT JOIN lg_customers c ON l.customer_id = c.id
+         WHERE l.status = 'delivered' AND l.tenant_id = 'logistics'
+         LIMIT 50`
+      );
+      results.total = delivered.length;
+
+      for (const load of delivered) {
+        try {
+          // Search for matching deal in HubSpot
+          const searchResult = await hubspot.searchDeals(load.customer_name || load.load_ref);
+          if (searchResult.success && searchResult.data?.results?.length > 0) {
+            const deal = searchResult.data.results[0];
+            const currentStage = deal.properties?.dealstage;
+            if (currentStage !== 'closedwon') {
+              const updateResult = await hubspot.updateDealStage(deal.id, 'closedwon');
+              if (updateResult.success) {
+                results.success++;
+                results.actions.push(`Updated "${deal.properties?.dealname}" to Closed Won`);
+              } else { results.errors++; }
+            } else {
+              results.success++; // Already won
+            }
+          }
+        } catch (e) { results.errors++; }
+      }
+      if (results.success === 0) results.actions.push('No matching HubSpot deals found for delivered loads');
+
+    } else if (treatment_type === 'cw_load_coverage_outbound') {
+      // Get open loads and prepare outbound campaign data
+      const [openLoads] = await sequelize.query(
+        `SELECT load_ref, origin_city, origin_state, destination_city, destination_state,
+                equipment_type, sell_rate, pickup_date
+         FROM lg_loads WHERE status = 'open' AND tenant_id = 'logistics'
+         ORDER BY pickup_date ASC LIMIT 20`
+      );
+      results.total = openLoads.length;
+
+      // Get matching carriers for each load
+      for (const load of openLoads) {
+        const [carriers] = await sequelize.query(
+          `SELECT carrier_name, phone, email FROM lg_carriers
+           WHERE tenant_id = 'logistics'
+           AND ($1 = ANY(equipment_types) OR equipment_types IS NULL)
+           AND (home_state = $2 OR home_state IS NULL)
+           LIMIT 3`,
+          { bind: [load.equipment_type, load.origin_state] }
+        );
+        if (carriers.length > 0) {
+          results.success++;
+          results.actions.push(`${load.load_ref}: ${load.origin_city}→${load.destination_city} — ${carriers.length} carrier matches ready`);
+        }
+      }
+      if (results.total > 0) results.actions.push(`Carrier matching complete: ${results.success} loads with available carriers`);
+
+    } else {
+      return res.status(400).json({ error: `No immediate fix available for: ${treatment_type}` });
+    }
+
+    // Log execution
+    try {
+      await sequelize.query(
+        `INSERT INTO treatment_execution_log (client_id, treatment_type, trigger_event, actions_taken, result, created_at)
+         VALUES (0, $1, 'manual_fix_now', $2, $3, NOW())`,
+        { bind: [treatment_type, JSON.stringify(results.actions), results.errors === 0 ? 'success' : 'partial'] }
+      );
+    } catch (logErr) { console.error('Treatment log error:', logErr.message); }
+
+    res.json({ success: true, results });
+  } catch (err) {
+    console.error('Fix Now error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });

@@ -10,6 +10,8 @@ export default function NeuralIntelligence() {
   const [expandedTreatment, setExpandedTreatment] = useState(null);
   const [activatedTreatments, setActivatedTreatments] = useState({});
   const [activating, setActivating] = useState(null);
+  const [fixingNow, setFixingNow] = useState(null);
+  const [fixResult, setFixResult] = useState(null);
 
   // Load active treatments on mount
   useEffect(() => {
@@ -33,6 +35,18 @@ export default function NeuralIntelligence() {
       console.error('Treatment activation error:', err);
     }
     setActivating(null);
+  };
+
+  const fixNow = async (treatmentType) => {
+    setFixingNow(treatmentType);
+    setFixResult(null);
+    try {
+      const res = await api.post('/neural/treatments/fix-now', { treatment_type: treatmentType });
+      setFixResult({ type: treatmentType, ...res.data.results });
+    } catch (err) {
+      setFixResult({ type: treatmentType, error: err.response?.data?.error || err.message });
+    }
+    setFixingNow(null);
   };
 
   useEffect(() => {
@@ -173,17 +187,44 @@ export default function NeuralIntelligence() {
                       <div style={s.projection}>Expected: {finding.treatment.projection}</div>
                     )}
                     {finding.treatment.treatment_type && (
-                      <button
-                        onClick={() => activateTreatment(finding.treatment.treatment_type)}
-                        disabled={activating === finding.treatment.treatment_type}
-                        style={{
-                          ...s.activateBtn,
-                          ...(activatedTreatments[finding.treatment.treatment_type] ? s.activeBtnActive : {})
-                        }}>
-                        {activating === finding.treatment.treatment_type ? 'Processing...'
-                          : activatedTreatments[finding.treatment.treatment_type] ? '\u2713 Workflow Active — Click to Deactivate'
-                          : '\u26A1 Activate Workflow'}
-                      </button>
+                      <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+                        <button
+                          onClick={() => activateTreatment(finding.treatment.treatment_type)}
+                          disabled={activating === finding.treatment.treatment_type}
+                          style={{
+                            ...s.activateBtn,
+                            flex: '1 1 200px',
+                            ...(activatedTreatments[finding.treatment.treatment_type] ? s.activeBtnActive : {})
+                          }}>
+                          {activating === finding.treatment.treatment_type ? 'Processing...'
+                            : activatedTreatments[finding.treatment.treatment_type] ? '\u2713 Workflow Active — Click to Deactivate'
+                            : '\u26A1 Activate Workflow'}
+                        </button>
+                        <button
+                          onClick={() => fixNow(finding.treatment.treatment_type)}
+                          disabled={fixingNow === finding.treatment.treatment_type}
+                          style={{ ...s.fixNowBtn, flex: '0 0 auto' }}>
+                          {fixingNow === finding.treatment.treatment_type ? 'Running...' : '\u26A0 Fix Now'}
+                        </button>
+                      </div>
+                    )}
+                    {fixResult && fixResult.type === finding.treatment?.treatment_type && (
+                      <div style={s.fixResultCard}>
+                        {fixResult.error ? (
+                          <div style={{ color: '#F85149' }}>Error: {fixResult.error}</div>
+                        ) : (
+                          <>
+                            <div style={{ display: 'flex', gap: 16, marginBottom: 8 }}>
+                              <span style={{ color: '#8B949E', fontSize: 12 }}>Processed: <strong style={{ color: '#E6EDF3' }}>{fixResult.total}</strong></span>
+                              <span style={{ color: '#8B949E', fontSize: 12 }}>Success: <strong style={{ color: '#238636' }}>{fixResult.success}</strong></span>
+                              {fixResult.errors > 0 && <span style={{ color: '#8B949E', fontSize: 12 }}>Errors: <strong style={{ color: '#F85149' }}>{fixResult.errors}</strong></span>}
+                            </div>
+                            {fixResult.actions?.map((a, ai) => (
+                              <div key={ai} style={{ fontSize: 12, color: '#E6EDF3', padding: '3px 0', borderBottom: '1px solid #21262D' }}>{a}</div>
+                            ))}
+                          </>
+                        )}
+                      </div>
                     )}
                   </div>
                 )}
@@ -242,6 +283,8 @@ const s = {
   stepBadge: { padding: '2px 8px', borderRadius: 4, fontSize: 9, fontWeight: 700, flexShrink: 0, marginTop: 2 },
   stepText: { fontSize: 13, color: '#E6EDF3', lineHeight: 1.4 },
   projection: { fontSize: 12, color: '#238636', fontWeight: 600, marginTop: 8, padding: '6px 10px', background: '#23863622', borderRadius: 6 },
-  activateBtn: { marginTop: 12, width: '100%', padding: '10px 16px', background: 'linear-gradient(135deg, #8b5cf6, #06b6d4)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', letterSpacing: 0.3, transition: 'all 0.2s' },
+  activateBtn: { padding: '10px 16px', background: 'linear-gradient(135deg, #8b5cf6, #06b6d4)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', letterSpacing: 0.3, transition: 'all 0.2s' },
   activeBtnActive: { background: '#238636', color: '#fff' },
+  fixNowBtn: { padding: '10px 20px', background: '#C8962A', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', letterSpacing: 0.3, transition: 'all 0.2s' },
+  fixResultCard: { marginTop: 10, padding: 12, background: '#0D1117', border: '1px solid #30363D', borderRadius: 8 },
 };
