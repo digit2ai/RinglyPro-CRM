@@ -10,6 +10,11 @@ export default function RateIntelligence() {
   const [laneResult, setLaneResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState('quote');
+  const [datStatus, setDatStatus] = useState(null);
+
+  useState(() => {
+    api.get('/pricing/dat/status').then(r => setDatStatus(r.data.dat)).catch(() => {});
+  }, []);
 
   const getQuote = async () => {
     setLoading(true);
@@ -35,6 +40,21 @@ export default function RateIntelligence() {
     <div>
       <h2 style={S.title}>RATE INTELLIGENCE</h2>
       <p style={S.subtitle}>AI-powered pricing with historical data, market benchmarks, and margin optimization</p>
+
+      {/* Data source badges */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+        <span style={{ ...S.srcBadge, borderColor: '#23863644' }}><span style={{ ...S.srcDot, background: '#238636' }} /> Internal Data</span>
+        <span style={{ ...S.srcBadge, borderColor: '#0EA5E944' }}><span style={{ ...S.srcDot, background: '#0EA5E9' }} /> Rate Benchmarks</span>
+        <span style={{
+          ...S.srcBadge,
+          borderColor: datStatus?.configured ? '#23863644' : '#484F5844',
+          opacity: datStatus?.configured ? 1 : 0.5,
+        }}>
+          <span style={{ ...S.srcDot, background: datStatus?.configured ? '#238636' : '#484F58' }} />
+          DAT RateView {datStatus?.configured ? '' : '(not connected)'}
+        </span>
+        <span style={{ ...S.srcBadge, borderColor: '#C8962A44' }}><span style={{ ...S.srcDot, background: '#C8962A' }} /> Market Estimate</span>
+      </div>
 
       <div style={S.tabs}>
         {['quote','lane'].map(t => (
@@ -116,14 +136,26 @@ export default function RateIntelligence() {
                 </div>
               )}
               <div style={S.section}>
-                <div style={S.sectionTitle}>Data Quality</div>
+                <div style={S.sectionTitle}>Data Sources</div>
                 <div style={S.dataQuality}>
-                  <span>Lane samples: {result.data_quality.internal_lane_samples}</span>
-                  <span>Corridor samples: {result.data_quality.state_corridor_samples}</span>
-                  <span>Legacy samples: {result.data_quality.legacy_samples}</span>
+                  {result.data_quality.dat_available && <span style={{ color: '#238636', fontWeight: 600 }}>DAT: {result.dat?.sample_size} reports</span>}
+                  {!result.data_quality.dat_available && <span style={{ color: '#484F58' }}>DAT: {result.data_quality.dat_configured ? 'No data for lane' : 'Not connected'}</span>}
+                  <span>Internal: {result.data_quality.internal_lane_samples} loads</span>
+                  <span>Corridor: {result.data_quality.state_corridor_samples}</span>
                   <span>Benchmark: {result.data_quality.benchmark_available ? 'Yes' : 'No'}</span>
                 </div>
               </div>
+              {result.dat && (
+                <div style={S.section}>
+                  <div style={S.sectionTitle}>DAT Market Rate</div>
+                  <div style={S.rateGrid}>
+                    <div style={S.rateBox}><div style={S.rateLabel}>DAT Avg</div><div style={{ ...S.rateValue, color: '#238636' }}>${result.dat.avg_rate?.toLocaleString()}</div></div>
+                    <div style={S.rateBox}><div style={S.rateLabel}>DAT Low</div><div style={S.rateValue}>${result.dat.min_rate?.toLocaleString()}</div></div>
+                    <div style={S.rateBox}><div style={S.rateLabel}>DAT High</div><div style={S.rateValue}>${result.dat.max_rate?.toLocaleString()}</div></div>
+                    <div style={S.rateBox}><div style={S.rateLabel}>DAT RPM</div><div style={S.rateValue}>${result.dat.rate_per_mile?.toFixed(2)}</div></div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
           {result?.error && <div style={S.error}>{result.error}</div>}
@@ -212,4 +244,6 @@ const S = {
   table: { width: '100%', borderCollapse: 'collapse' },
   th: { textAlign: 'left', padding: '8px 12px', borderBottom: '1px solid #21262D', fontSize: 11, color: '#8B949E', textTransform: 'uppercase' },
   td: { padding: '8px 12px', borderBottom: '1px solid #21262D', fontSize: 13, color: '#E6EDF3' },
+  srcBadge: { display: 'flex', alignItems: 'center', gap: 6, padding: '4px 12px', border: '1px solid', borderRadius: 20, fontSize: 11, color: '#8B949E' },
+  srcDot: { width: 7, height: 7, borderRadius: '50%', flexShrink: 0 },
 };

@@ -4,6 +4,76 @@
 
 const sequelize = require('./db.cw');
 
+// ── DAT API Integration ──────────────────────────────────────────
+// DAT RateView / DAT iQ API for real-time market rates
+// Requires: DAT_API_CLIENT_ID, DAT_API_CLIENT_SECRET env vars
+// Docs: https://developers.dat.com/
+const DAT_AUTH_URL = 'https://identity.dat.com/access/token';
+const DAT_API_BASE = 'https://freight.dat.com/api/v2';
+let datTokenCache = { token: null, expires: 0 };
+
+async function datAuthenticate() {
+  if (!process.env.DAT_API_CLIENT_ID || !process.env.DAT_API_CLIENT_SECRET) return null;
+  if (datTokenCache.token && Date.now() < datTokenCache.expires) return datTokenCache.token;
+
+  try {
+    const resp = await fetch(DAT_AUTH_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `grant_type=client_credentials&client_id=${encodeURIComponent(process.env.DAT_API_CLIENT_ID)}&client_secret=${encodeURIComponent(process.env.DAT_API_CLIENT_SECRET)}`
+    });
+    if (!resp.ok) throw new Error(`DAT auth failed: ${resp.status}`);
+    const data = await resp.json();
+    datTokenCache = { token: data.access_token, expires: Date.now() + (data.expires_in - 60) * 1000 };
+    return datTokenCache.token;
+  } catch (e) {
+    console.error('[DAT] Auth error:', e.message);
+    return null;
+  }
+}
+
+async function datGetRate(originState, destState, equipmentType) {
+  const token = await datAuthenticate();
+  if (!token) return null;
+
+  const equipMap = { dry_van: 'Van', reefer: 'Reefer', flatbed: 'Flatbed', step_deck: 'Flatbed', ltl: 'Van' };
+  const datEquip = equipMap[equipmentType] || 'Van';
+
+  try {
+    const resp = await fetch(`${DAT_API_BASE}/rates/lane`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        origin: { state: originState },
+        destination: { state: destState },
+        equipmentType: datEquip,
+        period: 30
+      })
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    const rate = data.rate || data;
+    return {
+      source: 'dat',
+      avg_rate: rate.averageRate || rate.average || null,
+      min_rate: rate.lowRate || rate.low || null,
+      max_rate: rate.highRate || rate.high || null,
+      rate_per_mile: rate.ratePerMile || rate.averageRPM || null,
+      fuel_surcharge: rate.fuelSurcharge || null,
+      sample_size: rate.reportCount || rate.count || 0,
+      confidence: (rate.reportCount || 0) >= 50 ? 'very_high' : (rate.reportCount || 0) >= 20 ? 'high' : 'medium',
+      raw: rate,
+    };
+  } catch (e) {
+    console.error('[DAT] Rate fetch error:', e.message);
+    return null;
+  }
+}
+
+function isDatConfigured() {
+  return !!(process.env.DAT_API_CLIENT_ID && process.env.DAT_API_CLIENT_SECRET);
+}
+
 // Configurable margin rules
 const MARGIN_RULES = {
   default_margin_pct: 15,
@@ -69,6 +139,9 @@ async function get_rate_recommendation(input) {
     ORDER BY rate_date DESC LIMIT 5
   `, { bind: [originState, destState, equip] });
 
+  // 5. DAT API (real-time market rates — highest priority when available)
+  const datRate = await datGetRate(originState, destState, equip);
+
   // Determine data quality and pricing method
   const internal = internalHistory[0] || {};
   const state = stateHistory[0] || {};
@@ -81,7 +154,22 @@ async function get_rate_recommendation(input) {
   let estimatedMiles = parseFloat(miles) || parseFloat(internal.avg_miles) || parseFloat(state.avg_miles) || 800;
   let baseBuyRate, baseSellRate, pricingMethod, confidence, rationale = [];
 
-  if (internalSample >= 5) {
+  if (datRate && datRate.avg_rate) {
+    // DAT market rate — highest confidence source
+    baseBuyRate = datRate.avg_rate;
+    baseSellRate = baseBuyRate * (1 + MARGIN_RULES.default_margin_pct / 100);
+    pricingMethod = 'dat_market';
+    confidence = datRate.confidence || 'very_high';
+    rationale.push(`DAT market rate: $${datRate.avg_rate.toLocaleString()} avg (${datRate.sample_size} reports)`);
+    if (datRate.min_rate && datRate.max_rate) rationale.push(`DAT range: $${datRate.min_rate.toLocaleString()} - $${datRate.max_rate.toLocaleString()}`);
+    if (datRate.fuel_surcharge) rationale.push(`Fuel surcharge: $${datRate.fuel_surcharge}`);
+    // Cross-reference with internal data
+    if (internalSample >= 3) {
+      const internalAvg = parseFloat(internal.avg_buy);
+      const variance = Math.abs((datRate.avg_rate - internalAvg) / datRate.avg_rate * 100);
+      rationale.push(`Internal data (${internalSample} loads): $${internalAvg.toFixed(0)} avg — ${variance.toFixed(0)}% variance from DAT`);
+    }
+  } else if (internalSample >= 5) {
     // High-confidence: strong internal lane data
     baseBuyRate = parseFloat(internal.avg_buy);
     baseSellRate = parseFloat(internal.avg_sell) || baseBuyRate * (1 + MARGIN_RULES.default_margin_pct / 100);
@@ -179,7 +267,18 @@ async function get_rate_recommendation(input) {
       state_corridor_samples: stateSample,
       legacy_samples: cwSample,
       benchmark_available: !!bench.avg_rate,
+      dat_available: !!datRate,
+      dat_configured: isDatConfigured(),
     },
+    dat: datRate ? {
+      avg_rate: datRate.avg_rate,
+      min_rate: datRate.min_rate,
+      max_rate: datRate.max_rate,
+      rate_per_mile: datRate.rate_per_mile,
+      sample_size: datRate.sample_size,
+      confidence: datRate.confidence,
+      fuel_surcharge: datRate.fuel_surcharge,
+    } : null,
   };
 }
 

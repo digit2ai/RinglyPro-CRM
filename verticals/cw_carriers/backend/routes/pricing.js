@@ -42,4 +42,20 @@ router.get('/lane-analysis', async (req, res) => {
   }
 });
 
+// GET /api/pricing/dat/status — Check DAT API connection status
+router.get('/dat/status', (req, res) => {
+  const configured = !!(process.env.DAT_API_CLIENT_ID && process.env.DAT_API_CLIENT_SECRET);
+  res.json({
+    success: true,
+    dat: {
+      configured,
+      client_id_set: !!process.env.DAT_API_CLIENT_ID,
+      client_secret_set: !!process.env.DAT_API_CLIENT_SECRET,
+      status: configured ? 'ready' : 'not_configured',
+      instructions: configured ? 'DAT API credentials are configured. Rates will auto-pull from DAT RateView.' : 'Set DAT_API_CLIENT_ID and DAT_API_CLIENT_SECRET environment variables in Render to enable DAT market rates.',
+      docs: 'https://developers.dat.com/',
+    }
+  });
+});
+
 module.exports = router;
