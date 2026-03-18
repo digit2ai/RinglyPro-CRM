@@ -44,7 +44,7 @@ export default function Register({ onLogin }) {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-5 mb-6">
-            <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="MSK Intelligence" className="w-20 h-20 rounded-xl shadow-2xl object-contain" />
+            <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="MSK Intelligence" className="w-28 h-28 rounded-xl shadow-2xl object-contain" />
             <div className="text-left ml-1">
               <h1 className="text-2xl font-bold text-white">MSK Intelligence</h1>
               <p className="text-sm text-msk-400">Diagnostics Platform</p>

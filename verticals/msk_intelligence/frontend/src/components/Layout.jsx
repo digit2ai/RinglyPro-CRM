@@ -47,7 +47,7 @@ export default function Layout({ children, user, onLogout }) {
         {/* Logo */}
         <div className="p-4 border-b border-dark-700">
           <Link to="/dashboard" className="flex items-center gap-4">
-            <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="MSK Intelligence" className="w-14 h-14 rounded-lg shadow-lg object-contain" />
+            <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="MSK Intelligence" className="w-20 h-20 rounded-lg shadow-lg object-contain" />
             {sidebarOpen && (
               <div className="ml-1">
                 <h1 className="text-lg font-bold text-white leading-tight">MSK Intel</h1>
