@@ -32,6 +32,16 @@ router.post('/preview-mapping', async (req, res) => {
   }
 });
 
+// POST /api/ingestion/preview - Preview parsed data before importing
+router.post('/preview', async (req, res) => {
+  try {
+    const result = await ingestion.preview_data(req.body);
+    res.json({ success: true, data: result });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 // GET /api/ingestion/presets - Get column mapping presets
 router.get('/presets', (req, res) => {
   const presets = {};

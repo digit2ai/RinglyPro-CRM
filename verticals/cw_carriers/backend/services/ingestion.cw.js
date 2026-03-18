@@ -203,7 +203,7 @@ async function process_upload(input) {
     INSERT INTO lg_data_uploads (tenant_id, filename, original_name, file_type, data_type, total_rows,
       column_mapping, status, uploaded_by, processing_started_at, created_at)
     VALUES ($1, $2, $3, $4, $5, $6, $7, 'processing', $8, NOW(), NOW()) RETURNING *
-  `, { bind: [tid, file_name || `upload_${Date.now()}.${ft}`, file_name, ft, data_type, parsed.rows.length, JSON.stringify(mapping), user_id] });
+  `, { bind: [tid, file_name || `upload_${Date.now()}.${ft}`, file_name || null, ft, data_type, parsed.rows.length, JSON.stringify(mapping), user_id || null] });
 
   let imported = 0, skipped = 0, errorCount = 0;
   const validationErrors = [];
@@ -320,4 +320,43 @@ async function get_column_mapping_preview(input) {
   return { mapping, unmapped_fields: unmapped, mapped_count: Object.keys(mapping).length, total_columns: headers.length };
 }
 
-module.exports = { process_upload, get_upload_history, get_column_mapping_preview, COLUMN_PRESETS };
+async function preview_data(input) {
+  const { file_content, file_name, file_type, data_type } = input;
+  if (!file_content) throw new Error('file_content required');
+  if (!data_type) throw new Error('data_type required');
+
+  const ft = file_type || (file_name?.endsWith('.json') ? 'json' : 'csv');
+  const parsed = ft === 'json' ? parseJSON(file_content) : parseCSV(file_content);
+  if (parsed.rows.length === 0) throw new Error('No data rows found');
+
+  const mapping = autoMapColumns(parsed.headers, data_type);
+  const preset = COLUMN_PRESETS[data_type];
+  const unmapped = preset ? preset.expected.filter(f => !Object.values(mapping).includes(f)) : [];
+
+  // Preview first 5 rows mapped
+  const previewRows = parsed.rows.slice(0, 5).map((row, i) => {
+    const { mapped, errors } = validateRow(row, mapping, data_type);
+    return { row_num: i + 2, mapped, errors, valid: errors.length === 0 };
+  });
+
+  // Quick validation stats across all rows
+  let validCount = 0, errorCount = 0;
+  for (const row of parsed.rows) {
+    const { errors } = validateRow(row, mapping, data_type);
+    if (errors.length === 0) validCount++;
+    else errorCount++;
+  }
+
+  return {
+    total_rows: parsed.rows.length,
+    headers: parsed.headers,
+    mapping,
+    unmapped_fields: unmapped,
+    mapped_count: Object.keys(mapping).length,
+    total_columns: parsed.headers.length,
+    preview_rows: previewRows,
+    validation: { valid: validCount, errors: errorCount, pct: Math.round((validCount / parsed.rows.length) * 100) },
+  };
+}
+
+module.exports = { process_upload, get_upload_history, get_column_mapping_preview, preview_data, COLUMN_PRESETS };
