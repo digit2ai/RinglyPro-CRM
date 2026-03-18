@@ -1,0 +1,16 @@
+customer_name,contact_name,phone,email,payment_terms,billing_address,credit_limit,service_level
+PepsiCo Beverages,Richard Torres,914-253-2000,logistics@pepsico.com,net_30,"700 Anderson Hill Rd, Purchase, NY 10577",500000,premium
+Sysco Foods,Katherine Walsh,281-584-1390,freight@sysco.com,net_30,"1390 Enclave Pkwy, Houston, TX 77077",750000,premium
+Home Depot Supply,Brian Patterson,770-433-8211,transport@homedepot.com,net_45,"2455 Paces Ferry Rd, Atlanta, GA 30339",600000,premium
+Amazon Logistics,Jessica Huang,206-266-1000,carrier-ops@amazon.com,net_15,"410 Terry Ave N, Seattle, WA 98109",1000000,premium
+FedEx Supply Chain,Thomas Brooks,901-818-7500,scm-freight@fedex.com,net_30,"942 S Shady Grove Rd, Memphis, TN 38120",800000,premium
+Publix Super Markets,Maria Fernandez,863-688-1188,distribution@publix.com,net_30,"3300 Publix Corporate Pkwy, Lakeland, FL 33811",450000,standard
+General Motors,David Kim,313-667-1500,supply-chain@gm.com,net_45,"300 Renaissance Center, Detroit, MI 48265",700000,premium
+Caterpillar Inc,Robert Phillips,309-675-1000,logistics@cat.com,net_45,"501 SW Jefferson Ave, Peoria, IL 61602",550000,premium
+Dollar General,Amanda Stevens,615-855-4000,transport@dollargeneral.com,net_30,"100 Mission Ridge, Goodlettsville, TN 37072",350000,standard
+HEB Grocery,Carlos Mendoza,210-938-8000,freight@heb.com,net_30,"646 S Main Ave, San Antonio, TX 78204",400000,standard
+Target Distribution,Sarah Johnson,612-304-6073,logistics@target.com,net_30,"1000 Nicollet Mall, Minneapolis, MN 55403",600000,premium
+Kroger Co,Nancy Bell,513-762-4000,supply-chain@kroger.com,net_30,"1014 Vine St, Cincinnati, OH 45202",500000,standard
+Lowe's Companies,Michael Chang,704-758-1000,transport@lowes.com,net_45,"1000 Lowes Blvd, Mooresville, NC 28117",550000,premium
+Georgia-Pacific,Linda Williams,404-652-4000,freight@gp.com,net_45,"133 Peachtree St NE, Atlanta, GA 30303",300000,standard
+General Mills,Paul Anderson,763-764-7600,logistics@generalmills.com,net_30,"One General Mills Blvd, Minneapolis, MN 55426",400000,standard

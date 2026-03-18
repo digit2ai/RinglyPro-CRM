@@ -1,0 +1,31 @@
+origin_state,origin_city,destination_state,destination_city,equipment_type,avg_rate,min_rate,max_rate,rate_per_mile_avg,sample_size,confidence
+TX,Dallas,IL,Chicago,dry_van,2890.00,2450.00,3350.00,3.14,148,very_high
+TX,Houston,GA,Atlanta,reefer,2820.00,2380.00,3280.00,3.57,112,very_high
+CA,Los Angeles,AZ,Phoenix,flatbed,1650.00,1320.00,2100.00,4.46,86,high
+FL,Miami,NC,Charlotte,dry_van,2150.00,1780.00,2550.00,3.31,97,very_high
+TN,Memphis,IN,Indianapolis,dry_van,1380.00,1100.00,1680.00,2.96,72,high
+GA,Atlanta,FL,Jacksonville,reefer,1450.00,1150.00,1780.00,4.19,65,high
+IL,Chicago,MI,Detroit,dry_van,980.00,780.00,1200.00,3.47,134,very_high
+CO,Denver,MO,Kansas City,flatbed,2350.00,1900.00,2850.00,3.89,58,high
+TX,Dallas,TX,San Antonio,reefer,920.00,720.00,1150.00,3.36,89,very_high
+AZ,Phoenix,NV,Las Vegas,dry_van,1050.00,820.00,1300.00,3.50,74,high
+NC,Charlotte,DC,Washington,dry_van,1550.00,1250.00,1880.00,3.97,91,very_high
+FL,Jacksonville,GA,Savannah,flatbed,680.00,520.00,860.00,4.86,43,medium
+TX,Houston,LA,New Orleans,reefer,1320.00,1050.00,1620.00,3.79,67,high
+CA,Los Angeles,CA,San Francisco,dry_van,1350.00,1080.00,1650.00,3.53,156,very_high
+IL,Chicago,MN,Minneapolis,reefer,1580.00,1280.00,1920.00,3.87,83,high
+GA,Atlanta,TN,Nashville,dry_van,870.00,680.00,1080.00,3.51,95,very_high
+TX,Dallas,OK,Oklahoma City,flatbed,850.00,660.00,1060.00,4.13,51,high
+TN,Memphis,MO,St. Louis,dry_van,960.00,760.00,1180.00,3.38,78,high
+FL,Miami,FL,Tampa,reefer,1080.00,850.00,1340.00,3.86,62,high
+CO,Denver,UT,Salt Lake City,dry_van,1780.00,1420.00,2180.00,3.40,54,high
+CA,Los Angeles,WA,Seattle,reefer,4580.00,3800.00,5400.00,4.04,71,high
+TX,Dallas,TN,Memphis,dry_van,1520.00,1220.00,1850.00,3.36,104,very_high
+FL,Jacksonville,GA,Atlanta,dry_van,1120.00,880.00,1380.00,3.24,88,very_high
+TX,Houston,AZ,Phoenix,flatbed,4450.00,3600.00,5350.00,3.78,47,high
+IL,Chicago,MO,Kansas City,dry_van,1650.00,1320.00,2020.00,3.24,92,very_high
+FL,Miami,TX,Houston,reefer,4780.00,3900.00,5700.00,4.03,56,high
+CO,Denver,CA,Los Angeles,reefer,3680.00,3000.00,4400.00,3.61,63,high
+NC,Charlotte,NY,New York,dry_van,2280.00,1850.00,2750.00,3.60,108,very_high
+GA,Atlanta,TX,Dallas,flatbed,3120.00,2500.00,3780.00,4.00,52,high
+IL,Chicago,OH,Columbus,reefer,1380.00,1100.00,1680.00,3.88,77,high

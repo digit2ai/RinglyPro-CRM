@@ -1,0 +1,51 @@
+load_ref,origin,origin_state,destination,destination_state,pickup_date,delivery_date,equipment_type,weight_lbs,miles,buy_rate,sell_rate,status,customer,carrier,commodity
+CW-2026-0001,Dallas,TX,Chicago,IL,2026-01-06,2026-01-08,dry_van,42000,920,2576.00,3220.00,delivered,PepsiCo Beverages,Werner Enterprises,Beverages
+CW-2026-0002,Houston,TX,Atlanta,GA,2026-01-08,2026-01-10,reefer,38500,790,2607.00,3258.75,delivered,Sysco Foods,Prime Inc,Frozen Foods
+CW-2026-0003,Los Angeles,CA,Phoenix,AZ,2026-01-09,2026-01-10,flatbed,52000,370,1480.00,1924.00,delivered,Home Depot Supply,Heartland Express,Lumber & Materials
+CW-2026-0004,Miami,FL,Charlotte,NC,2026-01-12,2026-01-14,dry_van,36000,650,1820.00,2366.00,delivered,Amazon Logistics,JB Hunt Transport,Consumer Electronics
+CW-2026-0005,Memphis,TN,Indianapolis,IN,2026-01-14,2026-01-15,dry_van,44000,466,1258.20,1635.66,delivered,FedEx Supply Chain,Schneider National,Mixed Freight
+CW-2026-0006,Atlanta,GA,Jacksonville,FL,2026-01-15,2026-01-16,reefer,28000,346,1211.00,1574.30,delivered,Publix Super Markets,US Xpress,Dairy Products
+CW-2026-0007,Chicago,IL,Detroit,MI,2026-01-17,2026-01-18,dry_van,40000,282,846.00,1099.80,delivered,General Motors,XPO Logistics,Auto Parts
+CW-2026-0008,Denver,CO,Kansas City,MO,2026-01-20,2026-01-21,flatbed,48000,604,2114.00,2748.20,delivered,Caterpillar Inc,Mercer Transportation,Heavy Equipment
+CW-2026-0009,Nashville,TN,Louisville,KY,2026-01-22,2026-01-22,dry_van,32000,176,528.00,686.40,delivered,Dollar General,Werner Enterprises,Retail Goods
+CW-2026-0010,Dallas,TX,San Antonio,TX,2026-01-23,2026-01-23,reefer,35000,274,876.80,1139.84,delivered,HEB Grocery,Prime Inc,Produce
+CW-2026-0011,Phoenix,AZ,Las Vegas,NV,2026-01-27,2026-01-28,dry_van,41000,300,900.00,1215.00,delivered,Amazon Logistics,Heartland Express,Consumer Goods
+CW-2026-0012,Charlotte,NC,Washington,DC,2026-01-28,2026-01-29,dry_van,38000,390,1092.00,1419.60,delivered,Lowe's Companies,JB Hunt Transport,Building Materials
+CW-2026-0013,Jacksonville,FL,Savannah,GA,2026-01-30,2026-01-30,flatbed,55000,140,560.00,728.00,delivered,Georgia-Pacific,US Xpress,Paper Products
+CW-2026-0014,Houston,TX,New Orleans,LA,2026-02-03,2026-02-04,reefer,33000,348,1148.40,1492.92,delivered,Sysco Foods,Schneider National,Frozen Seafood
+CW-2026-0015,Los Angeles,CA,San Francisco,CA,2026-02-05,2026-02-06,dry_van,39000,382,1146.00,1489.80,delivered,Target Distribution,XPO Logistics,Apparel
+CW-2026-0016,Chicago,IL,Minneapolis,MN,2026-02-06,2026-02-07,reefer,30000,408,1346.40,1750.32,delivered,General Mills,Werner Enterprises,Cereal & Grains
+CW-2026-0017,Atlanta,GA,Nashville,TN,2026-02-10,2026-02-11,dry_van,43000,248,744.00,967.20,delivered,Dollar General,Prime Inc,Retail Merchandise
+CW-2026-0018,Dallas,TX,Oklahoma City,OK,2026-02-11,2026-02-12,flatbed,50000,206,720.00,936.00,delivered,Caterpillar Inc,Mercer Transportation,Industrial Parts
+CW-2026-0019,Memphis,TN,St. Louis,MO,2026-02-13,2026-02-14,dry_van,37000,284,852.00,1107.60,delivered,FedEx Supply Chain,Heartland Express,Parcel Freight
+CW-2026-0020,Miami,FL,Tampa,FL,2026-02-14,2026-02-14,reefer,26000,280,924.00,1201.20,delivered,Publix Super Markets,JB Hunt Transport,Fresh Produce
+CW-2026-0021,Denver,CO,Salt Lake City,UT,2026-02-17,2026-02-18,dry_van,42000,524,1572.00,2043.60,delivered,Amazon Logistics,Schneider National,Consumer Electronics
+CW-2026-0022,Houston,TX,Dallas,TX,2026-02-19,2026-02-19,dry_van,35000,240,600.00,780.00,delivered,Home Depot Supply,US Xpress,Plumbing Supplies
+CW-2026-0023,Phoenix,AZ,Albuquerque,NM,2026-02-20,2026-02-21,flatbed,47000,422,1477.00,1920.10,delivered,Caterpillar Inc,XPO Logistics,Steel Beams
+CW-2026-0024,Chicago,IL,Columbus,OH,2026-02-24,2026-02-25,reefer,31000,356,1175.80,1528.54,delivered,Kroger Co,Werner Enterprises,Dairy & Deli
+CW-2026-0025,Atlanta,GA,Raleigh,NC,2026-02-25,2026-02-26,dry_van,40000,412,1236.00,1606.80,delivered,Lowe's Companies,Prime Inc,Hardware
+CW-2026-0026,Los Angeles,CA,Seattle,WA,2026-02-27,2026-03-01,reefer,34000,1135,3973.50,5165.55,delivered,Sysco Foods,Schneider National,Frozen Foods
+CW-2026-0027,Dallas,TX,Memphis,TN,2026-03-03,2026-03-04,dry_van,38000,452,1356.00,1762.80,delivered,FedEx Supply Chain,Heartland Express,Parcel Consolidation
+CW-2026-0028,Jacksonville,FL,Atlanta,GA,2026-03-04,2026-03-05,dry_van,41000,346,969.00,1259.70,delivered,PepsiCo Beverages,JB Hunt Transport,Beverages
+CW-2026-0029,Houston,TX,Phoenix,AZ,2026-03-05,2026-03-07,flatbed,53000,1178,4121.00,5357.30,delivered,Home Depot Supply,Mercer Transportation,Lumber
+CW-2026-0030,Chicago,IL,Kansas City,MO,2026-03-06,2026-03-07,dry_van,36000,510,1428.00,1856.40,delivered,General Motors,Werner Enterprises,Auto Components
+CW-2026-0031,Miami,FL,Houston,TX,2026-03-07,2026-03-09,reefer,29000,1187,4154.50,5400.85,delivered,Sysco Foods,Prime Inc,Seafood
+CW-2026-0032,Nashville,TN,Chicago,IL,2026-03-10,2026-03-11,dry_van,43000,474,1327.20,1725.36,in_transit,Dollar General,Schneider National,Retail Goods
+CW-2026-0033,Denver,CO,Dallas,TX,2026-03-10,2026-03-12,flatbed,49000,781,2734.00,3554.20,in_transit,Caterpillar Inc,XPO Logistics,Heavy Machinery
+CW-2026-0034,Atlanta,GA,Miami,FL,2026-03-11,2026-03-12,reefer,33000,662,2186.00,2841.80,in_transit,Publix Super Markets,US Xpress,Produce
+CW-2026-0035,Los Angeles,CA,Denver,CO,2026-03-12,2026-03-14,dry_van,40000,1019,3057.00,3974.10,in_transit,Amazon Logistics,Heartland Express,Consumer Goods
+CW-2026-0036,Charlotte,NC,New York,NY,2026-03-12,2026-03-13,dry_van,37000,634,1902.00,2472.60,in_transit,Target Distribution,JB Hunt Transport,Retail
+CW-2026-0037,Houston,TX,Jacksonville,FL,2026-03-13,2026-03-15,reefer,31000,862,2845.00,3698.50,covered,Sysco Foods,Werner Enterprises,Frozen Meals
+CW-2026-0038,Dallas,TX,Nashville,TN,2026-03-14,2026-03-15,dry_van,39000,664,1860.00,2418.00,covered,FedEx Supply Chain,Prime Inc,Express Freight
+CW-2026-0039,Phoenix,AZ,Houston,TX,2026-03-15,2026-03-17,flatbed,51000,1176,4116.00,5350.80,covered,Home Depot Supply,Mercer Transportation,Construction Steel
+CW-2026-0040,Chicago,IL,Atlanta,GA,2026-03-15,2026-03-17,reefer,28000,718,2370.00,3081.00,covered,Kroger Co,Schneider National,Refrigerated Goods
+CW-2026-0041,Memphis,TN,Dallas,TX,2026-03-16,2026-03-17,dry_van,42000,452,1265.00,1644.50,open,PepsiCo Beverages,,Beverages
+CW-2026-0042,Los Angeles,CA,Portland,OR,2026-03-17,2026-03-19,dry_van,38000,963,2889.00,3755.70,open,Amazon Logistics,,Consumer Electronics
+CW-2026-0043,Atlanta,GA,Dallas,TX,2026-03-17,2026-03-19,flatbed,54000,782,2737.00,3558.10,open,Caterpillar Inc,,Industrial Equipment
+CW-2026-0044,Miami,FL,Nashville,TN,2026-03-18,2026-03-20,reefer,30000,892,2944.00,3827.20,open,Publix Super Markets,,Fresh Produce
+CW-2026-0045,Houston,TX,Chicago,IL,2026-03-18,2026-03-20,dry_van,44000,1092,3058.00,3975.40,open,General Motors,,Auto Parts
+CW-2026-0046,Denver,CO,Los Angeles,CA,2026-03-19,2026-03-21,reefer,27000,1019,3362.70,4371.51,open,Sysco Foods,,Frozen Desserts
+CW-2026-0047,Charlotte,NC,Jacksonville,FL,2026-03-19,2026-03-20,dry_van,35000,390,1092.00,1419.60,open,Lowe's Companies,,Flooring
+CW-2026-0048,Dallas,TX,Atlanta,GA,2026-03-20,2026-03-22,dry_van,41000,780,2184.00,2839.20,open,FedEx Supply Chain,,Sorted Packages
+CW-2026-0049,Chicago,IL,Houston,TX,2026-03-20,2026-03-22,flatbed,48000,1092,3822.00,4968.60,open,Home Depot Supply,,Steel Rebar
+CW-2026-0050,Phoenix,AZ,Dallas,TX,2026-03-21,2026-03-23,dry_van,37000,1064,2979.00,3872.70,open,Target Distribution,,Seasonal Merchandise

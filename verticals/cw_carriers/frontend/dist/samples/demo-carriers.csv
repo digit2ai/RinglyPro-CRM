@@ -1,0 +1,26 @@
+carrier_name,mc_number,dot_number,contact_name,phone,email,equipment_types,home_city,home_state,safety_rating
+Werner Enterprises,MC-177078,525285,Mike Torres,402-895-6640,dispatch@werner.com,"dry_van,reefer",Omaha,NE,Satisfactory
+Prime Inc,MC-481855,481855,Sarah Mitchell,417-866-9090,loads@primeinc.com,"dry_van,reefer,flatbed",Springfield,MO,Satisfactory
+Heartland Express,MC-215073,382217,Carlos Ruiz,319-626-3600,freight@heartlandexpress.com,"dry_van",North Liberty,IA,Satisfactory
+JB Hunt Transport,MC-117630,513726,Lisa Chen,479-820-0000,capacity@jbhunt.com,"dry_van,reefer",Lowell,AR,Satisfactory
+Schneider National,MC-133655,439099,David Kowalski,920-592-2000,dispatch@schneider.com,"dry_van,reefer,flatbed",Green Bay,WI,Satisfactory
+US Xpress,MC-217571,834942,James Brown,423-510-3000,loads@usxpress.com,"dry_van,reefer",Chattanooga,TN,Satisfactory
+XPO Logistics,MC-524631,2237482,Angela Foster,855-976-7878,freight@xpo.com,"dry_van,flatbed,ltl",Greenwich,CT,Satisfactory
+Mercer Transportation,MC-205605,469307,Robert Hayes,502-584-2675,dispatch@mercertrans.com,"flatbed,step_deck",Louisville,KY,Satisfactory
+Saia Inc,MC-192637,723810,Patricia Nguyen,770-232-5067,ltl@saia.com,"ltl,dry_van",Johns Creek,GA,Satisfactory
+Old Dominion Freight,MC-025920,71557,Mark Sullivan,757-989-5555,dispatch@odfl.com,"ltl,dry_van",Thomasville,NC,Satisfactory
+Swift Transportation,MC-184742,559348,Maria Gonzalez,602-269-9700,freight@swifttrans.com,"dry_van,reefer",Phoenix,AZ,Satisfactory
+Knight-Swift,MC-128210,399256,Tommy Williams,602-606-6340,dispatch@knight-swift.com,"dry_van,reefer,flatbed",Phoenix,AZ,Satisfactory
+KLLM Transport,MC-204705,182815,Jennifer Adams,601-936-5556,reefer@kllm.com,"reefer",Richland,MS,Satisfactory
+Covenant Logistics,MC-209963,598717,Brian Taylor,423-463-3200,loads@covenantlogistics.com,"dry_van,reefer",Chattanooga,TN,Satisfactory
+Estes Express Lines,MC-043437,73429,Diana Park,804-353-1900,dispatch@estes-express.com,"ltl,dry_van",Richmond,VA,Satisfactory
+Southeastern Freight,MC-084998,158542,Kevin Anderson,864-578-2641,freight@sefl.com,"ltl,dry_van",Lexington,SC,Satisfactory
+Marten Transport,MC-185580,402458,Rachel Martinez,715-247-3165,dispatch@marten.com,"reefer",Mondovi,WI,Satisfactory
+PAM Transport,MC-177669,510031,Tony Garcia,479-361-9111,loads@pamtransport.com,"dry_van,reefer",Tontitown,AR,Satisfactory
+Crete Carrier Corp,MC-154527,299878,Amanda Wilson,402-479-2000,dispatch@cretecarrier.com,"dry_van,flatbed",Lincoln,NE,Satisfactory
+Ryder System,MC-161143,214908,Steven Lee,305-500-3726,freight@ryder.com,"dry_van,reefer,flatbed",Miami,FL,Satisfactory
+Landstar System,MC-143005,429656,Chris Thompson,904-398-9400,agents@landstar.com,"dry_van,flatbed,step_deck",Jacksonville,FL,Satisfactory
+USA Truck,MC-205240,174850,Kelly Robinson,479-471-2500,dispatch@usa-truck.com,"dry_van",Van Buren,AR,Satisfactory
+Averitt Express,MC-101903,126819,Nathan Clark,931-526-3306,dispatch@averittexpress.com,"ltl,dry_van",Cookeville,TN,Satisfactory
+Central Transport,MC-296041,1042598,Laura White,586-467-1900,freight@centraltransport.com,"ltl,dry_van",Warren,MI,Satisfactory
+Celadon Trucking,MC-183020,547846,Daniel Jackson,317-972-7000,loads@celadontrucking.com,"dry_van,reefer",Indianapolis,IN,Satisfactory

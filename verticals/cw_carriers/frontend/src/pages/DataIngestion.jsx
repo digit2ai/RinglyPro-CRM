@@ -130,6 +130,25 @@ export default function DataIngestion() {
             <button onClick={processUpload} disabled={loading || !fileContent} style={S.btn}>
               {loading ? 'Processing...' : 'Upload & Import'}
             </button>
+
+            <div style={{...S.samplesSection, borderColor: '#238636'}}>
+              <div style={{...S.samplesLabel, color: '#238636'}}>Demo data (realistic presentation-ready):</div>
+              <div style={S.samplesGrid}>
+                <a href="/cw_carriers/samples/demo-loads.csv" download style={{...S.sampleLink, borderColor: '#23863644'}}>&#128230; Loads (50 shipments)</a>
+                <a href="/cw_carriers/samples/demo-carriers.csv" download style={{...S.sampleLink, borderColor: '#23863644'}}>&#128666; Carriers (25 fleets)</a>
+                <a href="/cw_carriers/samples/demo-customers.csv" download style={{...S.sampleLink, borderColor: '#23863644'}}>&#127970; Customers (15 shippers)</a>
+                <a href="/cw_carriers/samples/demo-rates.csv" download style={{...S.sampleLink, borderColor: '#23863644'}}>&#128178; Rates (30 lanes)</a>
+              </div>
+            </div>
+            <div style={S.samplesSection}>
+              <div style={S.samplesLabel}>Basic sample files:</div>
+              <div style={S.samplesGrid}>
+                <a href="/cw_carriers/samples/sample-loads.csv" download style={S.sampleLink}>&#128230; Loads (25 rows)</a>
+                <a href="/cw_carriers/samples/sample-carriers.csv" download style={S.sampleLink}>&#128666; Carriers (20 rows)</a>
+                <a href="/cw_carriers/samples/sample-customers.csv" download style={S.sampleLink}>&#127970; Customers (15 rows)</a>
+                <a href="/cw_carriers/samples/sample-rates.csv" download style={S.sampleLink}>&#128178; Rates (25 lanes)</a>
+              </div>
+            </div>
           </div>
 
           <div style={S.card}>
@@ -237,4 +256,8 @@ const S = {
   th: { textAlign: 'left', padding: '8px 10px', borderBottom: '1px solid #21262D', fontSize: 10, color: '#8B949E', textTransform: 'uppercase' },
   td: { padding: '8px 10px', borderBottom: '1px solid #21262D', fontSize: 13, color: '#E6EDF3' },
   typeBadge2: { padding: '2px 8px', background: '#0EA5E922', color: '#0EA5E9', borderRadius: 4, fontSize: 10, fontWeight: 600, textTransform: 'uppercase' },
+  samplesSection: { marginTop: 20, padding: '16px 0', borderTop: '1px solid #21262D' },
+  samplesLabel: { fontSize: 11, color: '#8B949E', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 },
+  samplesGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 },
+  sampleLink: { display: 'block', padding: '8px 12px', background: '#0D1117', border: '1px solid #21262D', borderRadius: 6, color: '#0EA5E9', fontSize: 12, textDecoration: 'none', textAlign: 'center', transition: 'all 0.15s' },
 };
