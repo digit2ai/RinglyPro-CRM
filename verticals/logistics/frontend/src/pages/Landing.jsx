@@ -186,145 +186,111 @@ export default function Landing() {
         <div style={{ position: 'absolute', width: 300, height: 300, background: 'rgba(139,92,246,0.1)', borderRadius: '50%', filter: 'blur(100px)', bottom: 0, right: '5%', pointerEvents: 'none' }} />
 
         <div style={s.container}>
-          {/* Neural Hero — exact replica from ringlypro.com/neural */}
+          {/* Neural OBD Hero */}
           <div className="neural-hero-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center', marginBottom: 80 }}>
-            {/* Left Content */}
+            {/* Left — Elevator Pitch */}
             <div>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 18px', background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: 24, marginBottom: 28 }}>
                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#6366f1', boxShadow: '0 0 8px #6366f1' }} />
-                <span style={{ fontSize: 12, fontWeight: 700, color: '#a5b4fc', textTransform: 'uppercase', letterSpacing: 2 }}>Intelligence Layer</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#a5b4fc', textTransform: 'uppercase', letterSpacing: 2 }}>On-Board Diagnostics</span>
               </div>
-              <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 56, color: '#fff', letterSpacing: 2, lineHeight: 1.05, marginBottom: 20 }}>Turn Every Call Into a <span style={{ color: '#8b5cf6' }}>Revenue Opportunity</span></h2>
-              <p style={{ fontSize: 17, color: '#94a3b8', lineHeight: 1.7, maxWidth: 520, marginBottom: 32 }}>RinglyPro Neural analyzes calls, leads, bookings, and customer interactions to reveal exactly how your business can improve conversion and increase revenue.</p>
+              <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 52, color: '#fff', letterSpacing: 2, lineHeight: 1.05, marginBottom: 20 }}>Not a Dashboard. <span style={{ color: '#8b5cf6' }}>A Doctor.</span></h2>
+              <p style={{ fontSize: 17, color: '#94a3b8', lineHeight: 1.8, maxWidth: 540, marginBottom: 24 }}>Most of today's companies run on platforms that give you charts, numbers, and KPIs. You still have to figure out what's wrong, decide what to do, and do it yourself.</p>
+              <p style={{ fontSize: 15, color: '#cbd5e1', lineHeight: 1.7, maxWidth: 540, marginBottom: 32 }}>Neural Intelligence is different. It <strong style={{ color: '#8b5cf6' }}>diagnoses</strong> your operation, <strong style={{ color: '#06b6d4' }}>prescribes</strong> the fix, <strong style={{ color: '#22c55e' }}>executes</strong> it autonomously, and <strong style={{ color: '#f59e0b' }}>proves</strong> the ROI — all in one system.</p>
               <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 28 }}>
-                <a href={`${BASE}/neural`} style={{ display: 'inline-block', padding: '14px 32px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: '#fff', textDecoration: 'none', borderRadius: 28, fontSize: 15, fontWeight: 600 }}>Add Neural to RinglyPro</a>
+                <a href={`${BASE}/neural`} style={{ display: 'inline-block', padding: '14px 32px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: '#fff', textDecoration: 'none', borderRadius: 28, fontSize: 15, fontWeight: 600 }}>See Neural in Action</a>
                 <a href="https://ringlypro.com/demo" style={{ display: 'inline-block', padding: '14px 32px', background: 'transparent', border: '1px solid #334155', color: '#e2e8f0', textDecoration: 'none', borderRadius: 28, fontSize: 15, fontWeight: 500 }}>Book a Demo</a>
               </div>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '14px 18px', background: 'rgba(15,18,30,0.6)', border: '1px solid #1e293b', borderRadius: 10 }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#34d399', marginTop: 5, flexShrink: 0 }} />
-                <span style={{ fontSize: 13, color: '#94a3b8', lineHeight: 1.5 }}>Built for businesses already using AI voice, CRM, booking, and automation workflows.</span>
-              </div>
             </div>
 
-            {/* Right — Dashboard Mockup */}
+            {/* Right — OBD Visual */}
             <div style={{ background: 'rgba(15,18,30,0.9)', border: '1px solid #1e293b', borderRadius: 16, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(99,102,241,0.08)' }}>
-              {/* Title bar */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 20px', borderBottom: '1px solid #1e293b' }}>
                 <div style={{ display: 'flex', gap: 6 }}>
-                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#ef4444' }} />
-                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#fbbf24' }} />
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#22c55e' }} />
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#22c55e' }} />
                   <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#22c55e' }} />
                 </div>
-                <span style={{ fontSize: 13, color: '#94a3b8', fontWeight: 500 }}>Neural Intelligence Dashboard</span>
+                <span style={{ fontSize: 13, color: '#94a3b8', fontWeight: 500 }}>Neural OBD — All Systems Monitored</span>
               </div>
-              {/* Metrics row */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, padding: '20px 20px 0' }}>
+              <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {[
-                  { val: '+23%', label: 'CONVERSION', color: '#34d399' },
-                  { val: '142', label: 'INSIGHTS', color: '#e2e8f0' },
-                  { val: '$18.4k', label: 'REVENUE FOUND', color: '#8b5cf6' },
-                ].map((m, i) => (
-                  <div key={i} style={{ background: 'rgba(30,41,59,0.4)', border: '1px solid #1e293b', borderRadius: 10, padding: '16px 14px', textAlign: 'center' }}>
-                    <div style={{ fontSize: 26, fontWeight: 700, color: m.color, letterSpacing: 0.5 }}>{m.val}</div>
-                    <div style={{ fontSize: 10, color: '#64748b', textTransform: 'uppercase', letterSpacing: 1.5, marginTop: 4 }}>{m.label}</div>
+                  { code: 'OBD-01', system: 'Voice AI Engine', status: 'OK', color: '#22c55e', reading: '87% answer rate' },
+                  { code: 'OBD-02', system: 'CRM Sync Pipeline', status: 'OK', color: '#22c55e', reading: '100% synced' },
+                  { code: 'OBD-03', system: 'Revenue Pipeline', status: 'OK', color: '#22c55e', reading: '$64K active' },
+                  { code: 'OBD-04', system: 'Dispatch Engine', status: 'CHECK', color: '#fbbf24', reading: '3 loads uncovered' },
+                  { code: 'OBD-05', system: 'Carrier Network', status: 'OK', color: '#22c55e', reading: '25 active carriers' },
+                  { code: 'OBD-06', system: 'Treatment Automation', status: 'ACTIVE', color: '#8b5cf6', reading: '4 workflows firing' },
+                ].map((d, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'rgba(30,41,59,0.3)', border: '1px solid #1e293b', borderLeft: `3px solid ${d.color}`, borderRadius: 8 }}>
+                    <span style={{ fontSize: 11, fontWeight: 800, color: d.color, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.5, width: 55, flexShrink: 0 }}>{d.code}</span>
+                    <span style={{ fontSize: 13, color: '#e2e8f0', flex: 1 }}>{d.system}</span>
+                    <span style={{ fontSize: 10, padding: '2px 8px', background: `${d.color}22`, color: d.color, borderRadius: 4, fontWeight: 700 }}>{d.status}</span>
+                    <span style={{ fontSize: 11, color: '#64748b', width: 110, textAlign: 'right' }}>{d.reading}</span>
                   </div>
                 ))}
               </div>
-              {/* Chart */}
-              <div style={{ padding: '20px 20px 0' }}>
-                <div style={{ background: 'rgba(30,41,59,0.3)', border: '1px solid #1e293b', borderRadius: 10, padding: '16px 16px 12px' }}>
-                  <div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 14 }}>Weekly Call Conversion</div>
-                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 100 }}>
-                    {[40,55,45,70,60,82,75,90,68,85,78,95].map((h, i) => (
-                      <div key={i} style={{ flex: 1, height: `${h}%`, background: 'linear-gradient(180deg, #8b5cf6, #6366f1)', borderRadius: '4px 4px 0 0', opacity: 0.85 + (i * 0.012) }} />
-                    ))}
-                  </div>
-                </div>
-              </div>
-              {/* Insights */}
-              <div style={{ padding: '12px 20px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {[
-                  { dot: '#34d399', text: 'Missed calls recovered this week', val: '+$4,200', valColor: '#34d399' },
-                  { dot: '#818cf8', text: 'Booking slots optimized', val: '+18 slots', valColor: '#818cf8' },
-                ].map((ins, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'rgba(30,41,59,0.3)', border: '1px solid #1e293b', borderRadius: 8 }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: ins.dot, flexShrink: 0 }} />
-                    <span style={{ fontSize: 13, color: '#94a3b8', flex: 1 }}>{ins.text}</span>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: ins.valColor }}>{ins.val}</span>
-                  </div>
-                ))}
+              <div style={{ padding: '0 20px 20px', textAlign: 'center' }}>
+                <div style={{ padding: '10px 16px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 8, fontSize: 12, color: '#22c55e', fontWeight: 600, letterSpacing: 1 }}>ALL SYSTEMS GO — 6/6 SUBSYSTEMS MONITORED</div>
               </div>
             </div>
           </div>
 
-          {/* Section sub-header */}
+          {/* The 4-Step OBD Process */}
           <div style={s.sectionHeader}>
-            <div style={{ ...s.sectionTag, background: 'rgba(168,85,247,0.12)', color: '#A855F7' }}>NEURAL INTELLIGENCE</div>
-            <h2 style={s.sectionTitle}>AI That Reads Between the Lines</h2>
-            <p style={s.sectionSub}>Neural analyzes every call, transcript, lead, and campaign to surface hidden revenue opportunities and optimize your entire logistics pipeline.</p>
+            <div style={{ ...s.sectionTag, background: 'rgba(168,85,247,0.12)', color: '#A855F7' }}>NEURAL OBD</div>
+            <h2 style={s.sectionTitle}>Analyze. Diagnose. Prescribe. Remediate.</h2>
+            <p style={s.sectionSub}>Behind the scenes, your operation runs on disconnected policies, procedures, and systems. Your sales tools don't talk to your CRM, your call logs don't feed your operations, your customer data lives in spreadsheets. That disarray is where revenue dies. Neural replaces the silos.</p>
           </div>
 
-          {/* Core Analysis Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20, marginBottom: 48 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20, marginBottom: 64 }}>
             {[
-              { icon: '\u{1F4DE}', title: 'Inbound & Missed Calls', desc: 'Every answered and missed call is analyzed for conversion potential, response time, and revenue impact.' },
-              { icon: '\u{1F4DD}', title: 'Call Transcript AI', desc: 'AI reads every transcript to detect objections, intent signals, missed upsells, and sentiment patterns.' },
-              { icon: '\u{1F4C8}', title: 'Lead Conversion Tracking', desc: 'Monitors progression from initial contact through booking, identifying where prospects abandon the process.' },
-              { icon: '\u{1F4C5}', title: 'Appointments & Scheduling', desc: 'Examines booking patterns, no-show frequencies, schedule gaps, and optimal time slot utilization rates.' },
-              { icon: '\u{1F4E8}', title: 'Customer Communication', desc: 'Monitors SMS, email, and messaging engagement to spot follow-up opportunities and assess response quality.' },
-              { icon: '\u{1F4E3}', title: 'Outbound Campaigns', desc: 'Measures outbound call and message performance — shows which campaigns drive bookings and which waste budget.' },
-              { icon: '\u{1F4CA}', title: 'CRM Activity Monitoring', desc: 'Tracks pipeline movement, deal progression stages, and contact engagement throughout CRM workflows.' },
-              { icon: '\u{1F50D}', title: 'Lead Source Intelligence', desc: 'Identifies which channels, campaigns, and sources deliver the highest-converting leads and best ROI.' },
-            ].map((f, i) => (
-              <div key={i} style={{ background: '#161B22', border: '1px solid #21262D', borderRadius: 12, padding: 24, transition: 'border-color 0.2s' }}>
-                <div style={{ fontSize: 28, marginBottom: 12 }}>{f.icon}</div>
-                <h4 style={{ fontSize: 16, fontWeight: 600, color: '#E6EDF3', marginBottom: 8 }}>{f.title}</h4>
-                <p style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.6, margin: 0 }}>{f.desc}</p>
+              { step: '01', title: 'ANALYZE', icon: '\u{1F50D}', color: '#8b5cf6', desc: 'Continuously scans every subsystem — voice AI, CRM, dispatch, pipeline, carrier network, data ingestion — in real time.' },
+              { step: '02', title: 'DIAGNOSE', icon: '\u{2699}', color: '#06b6d4', desc: '8 diagnostic codes identify exactly what\'s broken: missed calls, sync failures, stale deals, uncovered loads, thin carrier networks.' },
+              { step: '03', title: 'PRESCRIBE', icon: '\u{1F4CB}', color: '#22c55e', desc: 'Each finding comes with a Treatment — a real automation workflow with triggers, conditions, and actions ready to activate.' },
+              { step: '04', title: 'REMEDIATE', icon: '\u{26A1}', color: '#f59e0b', desc: 'One click activates the fix. Missed call? Auto-SMS, CRM contact, callback in 30 minutes. No human touched it. No ball dropped.' },
+            ].map((s2, i) => (
+              <div key={i} style={{ background: '#161B22', border: '1px solid #21262D', borderTop: `3px solid ${s2.color}`, borderRadius: 12, padding: 28, textAlign: 'center' }}>
+                <div style={{ fontSize: 36, marginBottom: 8 }}>{s2.icon}</div>
+                <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 14, color: s2.color, letterSpacing: 3, marginBottom: 4 }}>STEP {s2.step}</div>
+                <h4 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#fff', letterSpacing: 2, marginBottom: 12 }}>{s2.title}</h4>
+                <p style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.6, margin: 0 }}>{s2.desc}</p>
               </div>
             ))}
           </div>
 
-          {/* Business Outcomes */}
-          <div style={{ textAlign: 'center', marginBottom: 40 }}>
-            <div style={{ ...s.sectionTag, background: 'rgba(16,185,129,0.12)', color: '#10B981' }}>BUSINESS OUTCOMES</div>
-            <h3 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 36, color: '#fff', letterSpacing: 2, marginTop: 12 }}>Turn Data Into Revenue</h3>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20, marginBottom: 48 }}>
-            {[
-              { title: 'Missed Revenue Detection', desc: 'Calculates lost revenue from unanswered calls, delayed follow-ups, and unconverted prospects.', color: '#EF4444' },
-              { title: 'Call-to-Booking Conversion', desc: 'Pinpoints where conversations fail to convert and recommends improvement strategies.', color: '#0EA5E9' },
-              { title: 'Scheduling Optimization', desc: 'Identifies unused capacity periods and booking bottlenecks to maximize appointment utilization.', color: '#F59E0B' },
-              { title: 'Lead Source ROI Tracking', desc: 'Reveals which acquisition channels produce bookings versus which waste marketing spend.', color: '#10B981' },
-              { title: 'Voice Agent Script Intelligence', desc: 'Analyzes call transcripts to find script weaknesses and recommend language that converts better.', color: '#A855F7' },
-              { title: 'Follow-Up Opportunity Detection', desc: 'Automatically flags prospects needing outreach before becoming inactive or selecting competitors.', color: '#F97316' },
-            ].map((f, i) => (
-              <div key={i} style={{ background: '#161B22', border: '1px solid #21262D', borderRadius: 12, padding: 24, borderLeft: `3px solid ${f.color}` }}>
-                <h4 style={{ fontSize: 16, fontWeight: 600, color: '#E6EDF3', marginBottom: 8 }}>{f.title}</h4>
-                <p style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.6, margin: 0 }}>{f.desc}</p>
-              </div>
-            ))}
+          {/* The Difference */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 64 }}>
+            <div style={{ background: '#161B22', border: '1px solid #21262D', borderRadius: 16, padding: 36, borderTop: '3px solid #ef4444' }}>
+              <div style={{ fontSize: 40, marginBottom: 16 }}>{'\u{1F321}'}</div>
+              <h3 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#ef4444', letterSpacing: 2, marginBottom: 12 }}>A Thermometer</h3>
+              <p style={{ fontSize: 15, color: '#94a3b8', lineHeight: 1.7, margin: 0 }}>Traditional platforms show you numbers. Revenue is down. Calls are being missed. Deals are stalling. You see the fever, but you're left to diagnose, prescribe, and treat it yourself — across disconnected systems, departments, and spreadsheets.</p>
+            </div>
+            <div style={{ background: '#161B22', border: '1px solid #21262D', borderRadius: 16, padding: 36, borderTop: '3px solid #22c55e' }}>
+              <div style={{ fontSize: 40, marginBottom: 16 }}>{'\u{1FA7A}'}</div>
+              <h3 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#22c55e', letterSpacing: 2, marginBottom: 12 }}>A Doctor</h3>
+              <p style={{ fontSize: 15, color: '#94a3b8', lineHeight: 1.7, margin: 0 }}>Neural Intelligence sees the symptoms, runs the tests, identifies the root cause, prescribes the treatment, administers it automatically, and tracks the recovery. Every action is logged, every dollar saved is measured, every improvement is proven.</p>
+            </div>
           </div>
 
-          {/* Intelligence Delivery */}
+          {/* ROI Proof */}
           <div style={{ background: 'linear-gradient(135deg, #161B22, #1a1f2e)', border: '1px solid #21262D', borderRadius: 16, padding: 40, textAlign: 'center' }}>
-            <h3 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, color: '#fff', letterSpacing: 2, marginBottom: 8 }}>Neural Insight Dashboard</h3>
-            <p style={{ fontSize: 15, color: '#8B949E', maxWidth: 600, margin: '0 auto 32px', lineHeight: 1.6 }}>Central hub displaying actionable insights with impact levels and recommended actions — powered by sentiment analysis, competitive intelligence, and script A/B testing.</p>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 32, flexWrap: 'wrap' }}>
+            <h3 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, color: '#fff', letterSpacing: 2, marginBottom: 8 }}>Proven ROI — Not Projections. Actuals.</h3>
+            <p style={{ fontSize: 15, color: '#8B949E', maxWidth: 640, margin: '0 auto 36px', lineHeight: 1.7 }}>Every action Neural takes is tracked on a live ROI dashboard. Show your board exactly how much the platform saved this quarter — in dollars, in hours, in margin points.</p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 32, flexWrap: 'wrap', marginBottom: 36 }}>
               {[
-                { num: '$12,600', label: 'Monthly Revenue Recovery', color: '#10B981' },
-                { num: '360°', label: 'Sentiment Analysis', color: '#A855F7' },
-                { num: 'Real-Time', label: 'Competitive Intelligence', color: '#0EA5E9' },
-                { num: 'A/B', label: 'Script Testing Insights', color: '#F59E0B' },
+                { num: '87%', label: 'Cost Reduction per Call', color: '#22c55e' },
+                { num: '74%', label: 'Faster Response Time', color: '#06b6d4' },
+                { num: '8.4x', label: 'ROI Multiple', color: '#8b5cf6' },
+                { num: '11 days', label: 'Payback Period', color: '#f59e0b' },
               ].map((kpi, i) => (
                 <div key={i} style={{ textAlign: 'center' }}>
-                  <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 36, color: kpi.color, letterSpacing: 1 }}>{kpi.num}</div>
+                  <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 40, color: kpi.color, letterSpacing: 1 }}>{kpi.num}</div>
                   <div style={{ fontSize: 11, color: '#8B949E', textTransform: 'uppercase', letterSpacing: 1 }}>{kpi.label}</div>
                 </div>
               ))}
             </div>
-            <div style={{ marginTop: 32 }}>
-              <a href={`${BASE}/neural`} style={{ display: 'inline-block', padding: '12px 32px', background: '#A855F7', color: '#fff', textDecoration: 'none', borderRadius: 8, fontSize: 15, fontWeight: 600 }}>Launch Neural Dashboard →</a>
-            </div>
+            <a href={`${BASE}/neural`} style={{ display: 'inline-block', padding: '14px 36px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: '#fff', textDecoration: 'none', borderRadius: 28, fontSize: 15, fontWeight: 600 }}>Launch Neural Dashboard &rarr;</a>
           </div>
         </div>
       </section>
