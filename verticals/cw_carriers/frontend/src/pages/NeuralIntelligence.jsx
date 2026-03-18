@@ -8,6 +8,32 @@ export default function NeuralIntelligence() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [expandedTreatment, setExpandedTreatment] = useState(null);
+  const [activatedTreatments, setActivatedTreatments] = useState({});
+  const [activating, setActivating] = useState(null);
+
+  // Load active treatments on mount
+  useEffect(() => {
+    api.get('/neural/treatments').then(r => {
+      const map = {};
+      (r.data.treatments || []).forEach(t => { map[t.treatment_type] = t.is_active; });
+      setActivatedTreatments(map);
+    }).catch(() => {});
+  }, []);
+
+  const activateTreatment = async (treatmentType) => {
+    const isCurrentlyActive = activatedTreatments[treatmentType];
+    setActivating(treatmentType);
+    try {
+      await api.post('/neural/treatments/activate', {
+        treatment_type: treatmentType,
+        is_active: !isCurrentlyActive
+      });
+      setActivatedTreatments(prev => ({ ...prev, [treatmentType]: !isCurrentlyActive }));
+    } catch (err) {
+      console.error('Treatment activation error:', err);
+    }
+    setActivating(null);
+  };
 
   useEffect(() => {
     api.get('/neural/dashboard')
@@ -146,6 +172,19 @@ export default function NeuralIntelligence() {
                     {finding.treatment.projection && (
                       <div style={s.projection}>Expected: {finding.treatment.projection}</div>
                     )}
+                    {finding.treatment.treatment_type && (
+                      <button
+                        onClick={() => activateTreatment(finding.treatment.treatment_type)}
+                        disabled={activating === finding.treatment.treatment_type}
+                        style={{
+                          ...s.activateBtn,
+                          ...(activatedTreatments[finding.treatment.treatment_type] ? s.activeBtnActive : {})
+                        }}>
+                        {activating === finding.treatment.treatment_type ? 'Processing...'
+                          : activatedTreatments[finding.treatment.treatment_type] ? '\u2713 Workflow Active — Click to Deactivate'
+                          : '\u26A1 Activate Workflow'}
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -202,5 +241,7 @@ const s = {
   workflowStep: { display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 10 },
   stepBadge: { padding: '2px 8px', borderRadius: 4, fontSize: 9, fontWeight: 700, flexShrink: 0, marginTop: 2 },
   stepText: { fontSize: 13, color: '#E6EDF3', lineHeight: 1.4 },
-  projection: { fontSize: 12, color: '#238636', fontWeight: 600, marginTop: 8, padding: '6px 10px', background: '#23863622', borderRadius: 6 }
+  projection: { fontSize: 12, color: '#238636', fontWeight: 600, marginTop: 8, padding: '6px 10px', background: '#23863622', borderRadius: 6 },
+  activateBtn: { marginTop: 12, width: '100%', padding: '10px 16px', background: 'linear-gradient(135deg, #8b5cf6, #06b6d4)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', letterSpacing: 0.3, transition: 'all 0.2s' },
+  activeBtnActive: { background: '#238636', color: '#fff' },
 };

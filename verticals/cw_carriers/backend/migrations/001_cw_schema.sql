@@ -223,6 +223,42 @@ CREATE TABLE IF NOT EXISTS cw_alert_log (
 
 CREATE INDEX IF NOT EXISTS idx_cw_alert_log_created ON cw_alert_log(created_at);
 
+-- Neural Treatments (workflow automations activated from Neural Intelligence)
+CREATE TABLE IF NOT EXISTS neural_treatments (
+  id              SERIAL PRIMARY KEY,
+  client_id       INTEGER NOT NULL DEFAULT 0,
+  treatment_type  VARCHAR(50) NOT NULL,
+  trigger_event   VARCHAR(100) NOT NULL,
+  actions         JSONB NOT NULL DEFAULT '[]',
+  crm_target      VARCHAR(20) DEFAULT 'auto',
+  is_active       BOOLEAN DEFAULT FALSE,
+  activated_at    TIMESTAMPTZ,
+  deactivated_at  TIMESTAMPTZ,
+  execution_count INTEGER DEFAULT 0,
+  last_executed_at TIMESTAMPTZ,
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_neural_treatments_unique ON neural_treatments(client_id, treatment_type);
+CREATE INDEX IF NOT EXISTS idx_neural_treatments_active ON neural_treatments(client_id, is_active);
+
+-- Treatment Execution Log
+CREATE TABLE IF NOT EXISTS treatment_execution_log (
+  id              SERIAL PRIMARY KEY,
+  client_id       INTEGER NOT NULL DEFAULT 0,
+  treatment_id    INTEGER,
+  treatment_type  VARCHAR(50) NOT NULL,
+  trigger_event   VARCHAR(100) NOT NULL,
+  contact_phone   VARCHAR(30),
+  actions_executed JSONB DEFAULT '[]',
+  status          VARCHAR(20) DEFAULT 'completed',
+  error_message   TEXT,
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_treatment_log_client ON treatment_execution_log(client_id, created_at DESC);
+
 -- CW Users table for auth
 CREATE TABLE IF NOT EXISTS cw_users (
   id              SERIAL PRIMARY KEY,

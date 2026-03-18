@@ -53,6 +53,21 @@ router.post('/', async (req, res) => {
       console.error('CW HubSpot contact sync error:', e.message)
     );
 
+    // Fire treatment triggers (non-blocking)
+    try {
+      const TreatmentExecutor = require('../../../../src/services/treatmentExecutor');
+      const mainDb = require('../../../../src/config/database');
+      const executor = new TreatmentExecutor(mainDb);
+      const triggerEvent = contact_type === 'carrier' ? 'carrier.created' : 'cw_contact.created';
+      executor.trigger(0, triggerEvent, {
+        phone: phone || null,
+        customer_name: full_name || company_name || 'New Contact',
+        contact_id: contact.id,
+        contact_type,
+        source: 'cw_manual'
+      }).catch(e => console.error('[Treatment] CW contact trigger error:', e.message));
+    } catch (e) { /* treatment system not critical */ }
+
     res.status(201).json({ success: true, data: contact });
   } catch (err) {
     res.status(500).json({ error: err.message });

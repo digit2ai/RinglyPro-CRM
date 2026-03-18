@@ -160,6 +160,7 @@ router.get('/dashboard', async (req, res) => {
         dollarImpact: `$${revenueAtRisk.toLocaleString()} at risk`,
         source: 'Rachel Call Logs',
         treatment: {
+          treatment_type: 'cw_missed_call_recovery',
           workflow: [
             { type: 'trigger', text: 'When an incoming call is missed or goes to voicemail' },
             { type: 'condition', text: 'If caller is a carrier not yet in contacts' },
@@ -178,6 +179,7 @@ router.get('/dashboard', async (req, res) => {
         dollarImpact: `$${(parseInt(loadStats.open_loads) * avgRate).toLocaleString()} pipeline`,
         source: 'CW Loads',
         treatment: {
+          treatment_type: 'cw_load_coverage_outbound',
           workflow: [
             { type: 'trigger', text: 'When load stays uncovered for >4 hours' },
             { type: 'condition', text: 'If matching carriers exist in contacts' },
@@ -196,6 +198,7 @@ router.get('/dashboard', async (req, res) => {
         dollarImpact: '',
         source: 'HubSpot Sync',
         treatment: {
+          treatment_type: 'cw_contact_hubspot_sync',
           workflow: [
             { type: 'trigger', text: 'When a new contact is created in CW system' },
             { type: 'condition', text: 'If contact has no HubSpot ID' },
@@ -258,6 +261,125 @@ router.get('/dashboard', async (req, res) => {
     console.error('CW Neural dashboard error:', error.message);
     res.status(500).json({ success: false, error: error.message });
   }
+});
+
+// ─── CW-specific Treatment Templates ────────────────────────────
+const CW_TREATMENT_TEMPLATES = {
+  cw_missed_call_recovery: {
+    trigger_event: 'call.missed',
+    actions: [
+      { type: 'sms', template: 'Hi, we missed your call at CW Carriers. Reply with your MC# and we\'ll match you to an open load right away.', delay_minutes: 0 },
+      { type: 'crm_contact', crm: 'hubspot' },
+      { type: 'callback', delay_minutes: 30 }
+    ]
+  },
+  cw_load_coverage_outbound: {
+    trigger_event: 'load.uncovered',
+    actions: [
+      { type: 'sms', template: 'CW Carriers has a new {equipment_type} load: {origin} to {destination}, {pickup_date}. Interested? Reply YES or call us.', delay_minutes: 0 },
+      { type: 'crm_task', task: 'Follow up on uncovered load', crm: 'hubspot' }
+    ]
+  },
+  cw_contact_hubspot_sync: {
+    trigger_event: 'cw_contact.created',
+    actions: [
+      { type: 'crm_contact', crm: 'hubspot' },
+      { type: 'crm_tag', tag: 'cw-auto-synced', crm: 'hubspot' }
+    ]
+  },
+  cw_stale_deal: {
+    trigger_event: 'deal.stale',
+    actions: [
+      { type: 'sms', template: 'Hi {customer_name}, CW Carriers here. We noticed your shipment inquiry is still open. Ready to move forward? Call us anytime.', delay_minutes: 0 },
+      { type: 'crm_tag', tag: 'reengagement', crm: 'hubspot' }
+    ]
+  },
+  cw_new_carrier_welcome: {
+    trigger_event: 'carrier.created',
+    actions: [
+      { type: 'sms', template: 'Welcome to the CW Carriers network! We match carriers like you with quality loads daily. Reply LANES to share your preferred lanes.', delay_minutes: 0 },
+      { type: 'crm_contact', crm: 'hubspot' }
+    ]
+  }
+};
+
+// ─── Treatment Activation ────────────────────────────────────────
+router.post('/treatments/activate', async (req, res) => {
+  try {
+    const { finding_id, treatment_type, is_active } = req.body;
+    if (!treatment_type) return res.status(400).json({ error: 'treatment_type required' });
+
+    const template = CW_TREATMENT_TEMPLATES[treatment_type];
+    if (!template) return res.status(400).json({ error: `Unknown treatment: ${treatment_type}` });
+
+    const active = is_active !== false;
+
+    // Upsert into neural_treatments (use client_id=0 for CW Carriers tenant)
+    const clientId = 0;
+    const [existing] = await sequelize.query(
+      `SELECT id FROM neural_treatments WHERE client_id = $1 AND treatment_type = $2`,
+      { bind: [clientId, treatment_type] }
+    );
+
+    if (existing.length > 0) {
+      await sequelize.query(
+        `UPDATE neural_treatments SET is_active = $1, actions = $2, trigger_event = $3,
+         ${active ? 'activated_at = NOW(),' : 'deactivated_at = NOW(),'} updated_at = NOW()
+         WHERE client_id = $4 AND treatment_type = $5`,
+        { bind: [active, JSON.stringify(template.actions), template.trigger_event, clientId, treatment_type] }
+      );
+    } else {
+      await sequelize.query(
+        `INSERT INTO neural_treatments (client_id, treatment_type, trigger_event, actions, is_active, activated_at, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, NOW(), NOW(), NOW())`,
+        { bind: [clientId, treatment_type, template.trigger_event, JSON.stringify(template.actions), active] }
+      );
+    }
+
+    // Fetch updated record
+    const [[treatment]] = await sequelize.query(
+      `SELECT * FROM neural_treatments WHERE client_id = $1 AND treatment_type = $2`,
+      { bind: [clientId, treatment_type] }
+    );
+
+    res.json({ success: true, treatment, message: `Treatment ${active ? 'activated' : 'deactivated'}: ${treatment_type}` });
+  } catch (err) {
+    console.error('Treatment activation error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Get Active Treatments ────────────────────────────────────────
+router.get('/treatments', async (req, res) => {
+  try {
+    const [treatments] = await sequelize.query(
+      `SELECT * FROM neural_treatments WHERE client_id = 0 ORDER BY created_at DESC`
+    );
+    res.json({ success: true, treatments });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Treatment Execution Log ──────────────────────────────────────
+router.get('/treatments/log', async (req, res) => {
+  try {
+    const [logs] = await sequelize.query(
+      `SELECT * FROM treatment_execution_log WHERE client_id = 0 ORDER BY created_at DESC LIMIT 50`
+    );
+    res.json({ success: true, logs });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Available Treatment Templates ────────────────────────────────
+router.get('/treatments/templates', (req, res) => {
+  const templates = {};
+  for (const [key, val] of Object.entries(CW_TREATMENT_TEMPLATES)) {
+    templates[key] = { trigger_event: val.trigger_event, actions: val.actions.length, action_types: val.actions.map(a => a.type) };
+  }
+  res.json({ success: true, templates });
 });
 
 module.exports = router;
