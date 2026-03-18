@@ -11,9 +11,7 @@ export default function Landing() {
 
         <nav className="relative z-10 max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-msk-500 to-msk-700 flex items-center justify-center text-white font-bold text-xl shadow-2xl">
-              M
-            </div>
+            <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="MSK Intelligence" className="w-12 h-12 rounded-xl shadow-2xl object-cover" />
             <div>
               <h1 className="text-xl font-bold text-white">MSK Intelligence</h1>
               <p className="text-xs text-msk-400">Musculoskeletal Diagnostics</p>
@@ -215,9 +213,7 @@ export default function Landing() {
       <footer className="border-t border-dark-800 py-12">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-msk-500 to-msk-700 flex items-center justify-center text-white font-bold text-sm">
-              M
-            </div>
+            <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="MSK Intelligence" className="w-8 h-8 rounded-lg object-cover" />
             <span className="text-dark-400 text-sm">MSK Intelligence by RinglyPro</span>
           </div>
           <p className="text-dark-500 text-sm">
