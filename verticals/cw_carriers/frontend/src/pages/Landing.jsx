@@ -16,25 +16,12 @@ export default function Landing() {
   return (
     <div style={s.container}>
       <div style={s.card}>
-        {/* RinglyPro Logo */}
-        <div style={s.ringlyProSection}>
-          <img
-            src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6884f40a6d2fd3fed0b84613.png"
-            alt="RinglyPro"
-            style={s.ringlyProLogo}
-          />
-          <div style={s.poweredBy}>Powered by RinglyPro AI</div>
-        </div>
-
-        {/* Divider */}
-        <div style={s.divider} />
-
-        {/* Carriers Logo + Branding */}
+        {/* Main Logo */}
         <div style={s.cwSection}>
           <img
-            src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png"
-            alt="RinglyPro Logistics"
-            style={s.cwLogo}
+            src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69b02d62034886f7c9e996d9.png"
+            alt="CW Carriers"
+            style={s.mainLogo}
           />
           <h1 style={s.title}>CARRIERS</h1>
           <p style={s.subtitle}>Logistics CRM</p>
@@ -78,33 +65,14 @@ const s = {
     maxWidth: '92vw',
     textAlign: 'center',
   },
-  ringlyProSection: {
-    marginBottom: 24,
-  },
-  ringlyProLogo: {
-    height: 48,
-    width: 'auto',
-    marginBottom: 8,
-  },
-  poweredBy: {
-    fontSize: 12,
-    color: '#8B949E',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-  },
-  divider: {
-    height: 1,
-    background: 'linear-gradient(90deg, transparent, #30363D, transparent)',
-    margin: '20px 0',
-  },
   cwSection: {
     marginBottom: 32,
   },
-  cwLogo: {
-    width: 120,
+  mainLogo: {
+    width: '100%',
+    maxWidth: 340,
     height: 'auto',
-    marginBottom: 12,
-    borderRadius: 8,
+    marginBottom: 16,
   },
   title: {
     fontFamily: "'Bebas Neue', sans-serif",
