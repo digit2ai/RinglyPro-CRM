@@ -225,7 +225,7 @@ export default function VoiceIntake() {
       <nav className="border-b border-dark-800 bg-dark-900/80 backdrop-blur-sm">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3">
-            <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="MSK Intelligence" className="w-10 h-10 rounded-lg object-cover" />
+            <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="MSK Intelligence" className="w-16 h-16 rounded-lg object-cover" />
             <div>
               <h1 className="text-lg font-bold text-white">MSK Intelligence</h1>
               <p className="text-xs text-msk-400">AI Voice Intake</p>
