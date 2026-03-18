@@ -12,6 +12,9 @@ import CaseDetail from './pages/CaseDetail';
 import NewCase from './pages/NewCase';
 import Reports from './pages/Reports';
 import AdminDashboard from './pages/AdminDashboard';
+import VoiceIntake from './pages/VoiceIntake';
+import VideoRoom from './pages/VideoRoom';
+import Consultations from './pages/Consultations';
 import Layout from './components/Layout';
 
 function ProtectedRoute({ children, allowedRoles }) {
@@ -38,6 +41,12 @@ export default function App() {
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login onLogin={handleLogin} />} />
       <Route path="/register" element={<Register onLogin={handleLogin} />} />
+      <Route path="/voice" element={<VoiceIntake />} />
+      <Route path="/video/:meetingId" element={
+        <ProtectedRoute>
+          <VideoRoom />
+        </ProtectedRoute>
+      } />
 
       <Route path="/*" element={
         <ProtectedRoute>
@@ -48,6 +57,7 @@ export default function App() {
               <Route path="/cases/new" element={<NewCase />} />
               <Route path="/cases/:id" element={<CaseDetail />} />
               <Route path="/reports" element={<Reports />} />
+              <Route path="/consultations" element={<Consultations />} />
               <Route path="/admin" element={
                 <ProtectedRoute allowedRoles={['admin', 'radiologist']}>
                   <AdminDashboard />

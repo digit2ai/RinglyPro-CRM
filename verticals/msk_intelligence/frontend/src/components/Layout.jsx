@@ -6,11 +6,13 @@ const NAV_ITEMS = {
     { path: '/dashboard', label: 'Dashboard', icon: '📊' },
     { path: '/cases', label: 'My Cases', icon: '📋' },
     { path: '/cases/new', label: 'New Case', icon: '➕' },
+    { path: '/consultations', label: 'Video Consults', icon: '📹' },
     { path: '/reports', label: 'Reports', icon: '📄' },
   ],
   radiologist: [
     { path: '/dashboard', label: 'Dashboard', icon: '📊' },
     { path: '/cases', label: 'Case Queue', icon: '📋' },
+    { path: '/consultations', label: 'Video Consults', icon: '📹' },
     { path: '/reports', label: 'Reports', icon: '📄' },
     { path: '/admin', label: 'Analytics', icon: '📈' },
   ],
@@ -18,6 +20,7 @@ const NAV_ITEMS = {
     { path: '/dashboard', label: 'Dashboard', icon: '📊' },
     { path: '/cases', label: 'All Cases', icon: '📋' },
     { path: '/cases/new', label: 'New Case', icon: '➕' },
+    { path: '/consultations', label: 'Video Consults', icon: '📹' },
     { path: '/reports', label: 'Reports', icon: '📄' },
     { path: '/admin', label: 'Admin', icon: '⚙️' },
   ],
@@ -25,6 +28,7 @@ const NAV_ITEMS = {
     { path: '/dashboard', label: 'Dashboard', icon: '📊' },
     { path: '/cases', label: 'Cases', icon: '📋' },
     { path: '/cases/new', label: 'New Case', icon: '➕' },
+    { path: '/consultations', label: 'Video Consults', icon: '📹' },
     { path: '/reports', label: 'Reports', icon: '📄' },
   ]
 };

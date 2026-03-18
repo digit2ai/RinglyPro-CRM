@@ -116,6 +116,16 @@ router.get('/:id', async (req, res) => {
       ORDER BY r.created_at DESC
     `, { bind: [req.params.id] });
 
+    // Get active consultation
+    const [consultations] = await sequelize.query(`
+      SELECT co.*, ru.first_name AS radiologist_first_name, ru.last_name AS radiologist_last_name
+      FROM msk_consultations co
+      LEFT JOIN msk_users ru ON co.radiologist_id = ru.id
+      WHERE co.case_id = $1
+      ORDER BY co.created_at DESC
+      LIMIT 1
+    `, { bind: [req.params.id] });
+
     logAudit(req.user.userId, 'view_case', 'case', caseData.id, req);
 
     res.json({
@@ -124,7 +134,8 @@ router.get('/:id', async (req, res) => {
         ...caseData,
         timeline,
         imaging,
-        reports
+        reports,
+        consultation: consultations[0] || null
       }
     });
   } catch (err) {

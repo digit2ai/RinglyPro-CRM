@@ -32,6 +32,7 @@ const adminRoutes = require('./routes/admin');
 const mcpRoutes = require('./routes/mcp');
 const voiceRoutes = require('./routes/voice');
 const messageRoutes = require('./routes/messages');
+const videoRoutes = require('./routes/video');
 
 router.use('/api/v1/auth', authRoutes);
 router.use('/api/v1/cases', authenticate, caseRoutes);
@@ -44,6 +45,7 @@ router.use('/api/v1/billing', authenticate, billingRoutes);
 router.use('/api/v1/admin', authenticate, authorize('admin', 'radiologist'), adminRoutes);
 router.use('/api/v1/mcp', mcpRoutes);
 router.use('/api/v1/voice', voiceRoutes);
+router.use('/api/v1/video', videoRoutes);
 router.use('/api/v1/messages', authenticate, messageRoutes);
 
 // ── Health Check ─────────────────────────────────────────────────────
