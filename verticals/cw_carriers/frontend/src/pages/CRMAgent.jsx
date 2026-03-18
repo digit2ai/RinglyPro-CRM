@@ -155,17 +155,116 @@ function renderData(data) {
       </table>
     );
   }
+  // Pipeline visual renderer
+  if (typeof data === 'object' && data !== null && data.stages) {
+    return renderPipeline(data);
+  }
+  // Metrics renderer
+  if (typeof data === 'object' && data !== null && (data.total_deals !== undefined || data.total_contacts !== undefined)) {
+    return renderMetrics(data);
+  }
   if (typeof data === 'object' && data !== null) {
     return <pre style={ds.json}>{JSON.stringify(data, null, 2)}</pre>;
   }
   return String(data);
 }
 
+const STAGE_LABELS = {
+  appointmentscheduled: 'Appointment Scheduled',
+  qualifiedtobuy: 'Qualified to Buy',
+  presentationscheduled: 'Presentation Scheduled',
+  decisionmakerboughtin: 'Decision Maker Bought In',
+  contractsent: 'Contract Sent',
+  closedwon: 'Closed Won',
+  closedlost: 'Closed Lost',
+  unknown: 'Unknown'
+};
+
+const STAGE_COLORS = {
+  appointmentscheduled: '#0EA5E9',
+  qualifiedtobuy: '#8B5CF6',
+  presentationscheduled: '#F59E0B',
+  decisionmakerboughtin: '#EC4899',
+  contractsent: '#C8962A',
+  closedwon: '#238636',
+  closedlost: '#F85149',
+  unknown: '#484F58'
+};
+
+function renderPipeline(data) {
+  const stages = data.stages || {};
+  const entries = Object.entries(stages);
+  const totalValue = entries.reduce((s, [, v]) => s + (v.value || 0), 0);
+  const maxCount = Math.max(...entries.map(([, v]) => v.count), 1);
+
+  return (
+    <div>
+      {/* Summary header */}
+      <div style={{ display: 'flex', gap: 16, marginBottom: 16, flexWrap: 'wrap' }}>
+        <div style={ds.summaryCard}>
+          <div style={{ fontSize: 10, color: '#8B949E', textTransform: 'uppercase', letterSpacing: 1 }}>Total Deals</div>
+          <div style={{ fontSize: 28, color: '#C8962A', fontWeight: 700 }}>{data.total || 0}</div>
+        </div>
+        <div style={ds.summaryCard}>
+          <div style={{ fontSize: 10, color: '#8B949E', textTransform: 'uppercase', letterSpacing: 1 }}>Pipeline Value</div>
+          <div style={{ fontSize: 28, color: '#238636', fontWeight: 700 }}>${totalValue.toLocaleString()}</div>
+        </div>
+        <div style={ds.summaryCard}>
+          <div style={{ fontSize: 10, color: '#8B949E', textTransform: 'uppercase', letterSpacing: 1 }}>Stages</div>
+          <div style={{ fontSize: 28, color: '#0EA5E9', fontWeight: 700 }}>{entries.length}</div>
+        </div>
+      </div>
+
+      {/* Pipeline stages */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {entries.map(([stage, info]) => {
+          const color = STAGE_COLORS[stage] || '#484F58';
+          const label = STAGE_LABELS[stage] || stage.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/_/g, ' ');
+          const pct = Math.round((info.count / maxCount) * 100);
+          return (
+            <div key={stage} style={ds.stageRow}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: color, flexShrink: 0 }} />
+                  <span style={{ color: '#E6EDF3', fontSize: 13, fontWeight: 500 }}>{label}</span>
+                </div>
+                <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                  <span style={{ color: '#8B949E', fontSize: 12 }}>{info.count} deal{info.count !== 1 ? 's' : ''}</span>
+                  <span style={{ color, fontSize: 13, fontWeight: 600, minWidth: 80, textAlign: 'right' }}>${(info.value || 0).toLocaleString()}</span>
+                </div>
+              </div>
+              <div style={{ height: 6, background: '#21262D', borderRadius: 3, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${pct}%`, background: `linear-gradient(90deg, ${color}88, ${color})`, borderRadius: 3, transition: 'width 0.5s ease' }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function renderMetrics(data) {
+  const entries = Object.entries(data).filter(([k]) => !k.startsWith('_'));
+  return (
+    <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+      {entries.map(([key, val]) => (
+        <div key={key} style={ds.summaryCard}>
+          <div style={{ fontSize: 10, color: '#8B949E', textTransform: 'uppercase', letterSpacing: 1 }}>{key.replace(/_/g, ' ')}</div>
+          <div style={{ fontSize: 22, color: '#E6EDF3', fontWeight: 600 }}>{typeof val === 'number' && key.includes('value') ? `$${val.toLocaleString()}` : String(val)}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 const ds = {
   table: { width: '100%', borderCollapse: 'collapse', fontSize: 12 },
   th: { textAlign: 'left', padding: '6px 8px', background: '#0D1117', color: '#8B949E', fontSize: 10, textTransform: 'uppercase', borderBottom: '1px solid #21262D' },
   td: { padding: '6px 8px', color: '#E6EDF3', borderBottom: '1px solid #21262D' },
-  json: { fontSize: 11, color: '#8B949E', background: '#0D1117', padding: 10, borderRadius: 6, overflow: 'auto', margin: 0 }
+  json: { fontSize: 11, color: '#8B949E', background: '#0D1117', padding: 10, borderRadius: 6, overflow: 'auto', margin: 0 },
+  summaryCard: { flex: '1 1 100px', padding: '12px 16px', background: '#161B22', border: '1px solid #21262D', borderRadius: 8, textAlign: 'center', minWidth: 100 },
+  stageRow: { padding: '10px 12px', background: '#161B22', border: '1px solid #21262D', borderRadius: 8 }
 };
 
 const s = {
