@@ -159,11 +159,11 @@ function renderData(data) {
   if (typeof data === 'object' && data !== null && data.stages) {
     return renderPipeline(data);
   }
-  // Metrics renderer
-  if (typeof data === 'object' && data !== null && (data.total_deals !== undefined || data.total_contacts !== undefined)) {
-    return renderMetrics(data);
-  }
+  // Any flat key-value object → render as KPI cards
   if (typeof data === 'object' && data !== null) {
+    const vals = Object.values(data);
+    const isFlat = vals.every(v => typeof v !== 'object' || v === null);
+    if (isFlat) return renderMetrics(data);
     return <pre style={ds.json}>{JSON.stringify(data, null, 2)}</pre>;
   }
   return String(data);
@@ -246,12 +246,27 @@ function renderPipeline(data) {
 
 function renderMetrics(data) {
   const entries = Object.entries(data).filter(([k]) => !k.startsWith('_'));
+  const formatVal = (key, val) => {
+    if (val === null || val === undefined) return '—';
+    if (typeof val === 'number') {
+      if (key.includes('rate') || key.includes('revenue') || key.includes('value') || key.includes('cost') || key.includes('margin'))
+        return val >= 1000 ? `$${val.toLocaleString()}` : `$${val}`;
+      return val.toLocaleString();
+    }
+    return String(val);
+  };
+  const colorForKey = (key) => {
+    if (key.includes('error') || key.includes('missed') || key.includes('risk')) return '#F85149';
+    if (key.includes('success') || key.includes('won') || key.includes('delivered') || key.includes('covered')) return '#238636';
+    if (key.includes('pending') || key.includes('open')) return '#C8962A';
+    return '#E6EDF3';
+  };
   return (
-    <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 10 }}>
       {entries.map(([key, val]) => (
         <div key={key} style={ds.summaryCard}>
-          <div style={{ fontSize: 10, color: '#8B949E', textTransform: 'uppercase', letterSpacing: 1 }}>{key.replace(/_/g, ' ')}</div>
-          <div style={{ fontSize: 22, color: '#E6EDF3', fontWeight: 600 }}>{typeof val === 'number' && key.includes('value') ? `$${val.toLocaleString()}` : String(val)}</div>
+          <div style={{ fontSize: 10, color: '#8B949E', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 }}>{key.replace(/_/g, ' ')}</div>
+          <div style={{ fontSize: 24, fontWeight: 700, color: colorForKey(key) }}>{formatVal(key, val)}</div>
         </div>
       ))}
     </div>
