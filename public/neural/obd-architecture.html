@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neural Intelligence OBD — Technical Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'DM Sans', sans-serif; background: #07090f; color: #e2e8f0; min-height: 100vh; }
+h1,h2,h3,h4 { font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px; }
+
+.page { max-width: 1400px; margin: 0 auto; padding: 40px 24px; }
+
+/* Header */
+.header { text-align: center; margin-bottom: 60px; }
+.header-badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 20px; background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.25); border-radius: 24px; margin-bottom: 20px; }
+.header-badge .dot { width: 8px; height: 8px; border-radius: 50%; background: #6366f1; box-shadow: 0 0 8px #6366f1; }
+.header-badge span { font-size: 12px; font-weight: 700; color: #a5b4fc; text-transform: uppercase; letter-spacing: 2px; }
+.header h1 { font-size: 56px; color: #fff; margin-bottom: 12px; }
+.header h1 em { font-style: normal; color: #8b5cf6; }
+.header p { font-size: 16px; color: #94a3b8; max-width: 700px; margin: 0 auto; line-height: 1.7; }
+
+/* Main Architecture Diagram */
+.arch-container { position: relative; }
+
+/* Flow: Sources → Scanner → Diagnostics → Treatment → Actions → ROI */
+.flow-row { display: flex; gap: 16px; align-items: stretch; margin-bottom: 32px; }
+.flow-col { flex: 1; display: flex; flex-direction: column; }
+
+/* Connectors */
+.connector { display: flex; align-items: center; justify-content: center; width: 48px; flex-shrink: 0; }
+.connector svg { width: 32px; height: 32px; }
+.arrow-right { color: #8b5cf6; font-size: 28px; font-weight: 700; }
+
+/* Cards */
+.layer-card { background: rgba(15,18,30,0.8); border: 1px solid #1e293b; border-radius: 16px; padding: 24px; flex: 1; }
+.layer-card.highlight { border-color: rgba(99,102,241,0.4); box-shadow: 0 0 30px rgba(99,102,241,0.08); }
+.layer-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.layer-num { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+.layer-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; }
+.layer-desc { font-size: 12px; color: #64748b; line-height: 1.5; margin-bottom: 16px; }
+
+/* Items inside cards */
+.item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: rgba(30,41,59,0.3); border: 1px solid #1e293b; border-left: 3px solid; border-radius: 6px; margin-bottom: 6px; font-size: 12px; }
+.item .icon { font-size: 16px; flex-shrink: 0; }
+.item .name { flex: 1; color: #cbd5e1; font-weight: 500; }
+.item .meta { font-size: 10px; color: #64748b; }
+
+/* Central Scanner */
+.scanner-section { margin-bottom: 48px; }
+.scanner-card { background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.08)); border: 2px solid rgba(99,102,241,0.3); border-radius: 20px; padding: 32px; text-align: center; position: relative; overflow: hidden; }
+.scanner-card::before { content: ''; position: absolute; width: 200px; height: 200px; background: rgba(99,102,241,0.1); border-radius: 50%; filter: blur(80px); top: -50px; right: -50px; pointer-events: none; }
+.scanner-title { font-size: 36px; color: #fff; margin-bottom: 8px; }
+.scanner-sub { font-size: 14px; color: #94a3b8; margin-bottom: 24px; }
+.scanner-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.scan-item { background: rgba(15,18,30,0.6); border: 1px solid #1e293b; border-radius: 10px; padding: 16px; text-align: center; }
+.scan-icon { font-size: 24px; margin-bottom: 6px; }
+.scan-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+
+/* OBD Codes Section */
+.obd-section { margin-bottom: 48px; }
+.obd-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.obd-title { font-size: 28px; color: #fff; }
+.obd-status-badge { padding: 6px 16px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 1px; }
+.obd-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.obd-card { background: rgba(15,18,30,0.8); border: 1px solid #1e293b; border-left: 3px solid; border-radius: 10px; padding: 16px; }
+.obd-code { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px; margin-bottom: 4px; }
+.obd-system { font-size: 13px; font-weight: 600; color: #e2e8f0; margin-bottom: 4px; }
+.obd-reading { font-size: 11px; color: #64748b; line-height: 1.4; margin-bottom: 8px; }
+.obd-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: 700; letter-spacing: 0.5px; }
+
+/* Treatment Pipeline */
+.treatment-section { margin-bottom: 48px; }
+.treatment-flow { display: flex; align-items: center; gap: 0; }
+.treatment-step { flex: 1; text-align: center; padding: 24px 16px; background: rgba(15,18,30,0.8); border: 1px solid #1e293b; position: relative; }
+.treatment-step:first-child { border-radius: 12px 0 0 12px; }
+.treatment-step:last-child { border-radius: 0 12px 12px 0; }
+.treatment-step .step-num { font-family: 'Bebas Neue', sans-serif; font-size: 32px; margin-bottom: 4px; }
+.treatment-step .step-name { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; }
+.treatment-step .step-desc { font-size: 11px; color: #64748b; line-height: 1.4; }
+.flow-arrow { width: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 22px; color: #334155; }
+
+/* Action Types */
+.actions-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 48px; }
+.action-card { background: rgba(15,18,30,0.8); border: 1px solid #1e293b; border-radius: 10px; padding: 16px; text-align: center; }
+.action-icon { font-size: 24px; margin-bottom: 8px; }
+.action-name { font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 4px; }
+.action-desc { font-size: 10px; color: #64748b; line-height: 1.4; }
+
+/* ROI Dashboard */
+.roi-section { background: linear-gradient(135deg, rgba(34,197,94,0.06), rgba(6,182,212,0.06)); border: 2px solid rgba(34,197,94,0.2); border-radius: 20px; padding: 36px; text-align: center; margin-bottom: 48px; }
+.roi-title { font-size: 32px; color: #fff; margin-bottom: 8px; }
+.roi-sub { font-size: 14px; color: #94a3b8; margin-bottom: 28px; }
+.roi-kpis { display: flex; justify-content: center; gap: 48px; flex-wrap: wrap; }
+.roi-kpi .val { font-family: 'Bebas Neue', sans-serif; font-size: 44px; letter-spacing: 1px; }
+.roi-kpi .label { font-size: 11px; color: #8B949E; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+/* Data Flow Diagram */
+.dataflow { margin-bottom: 48px; }
+.dataflow-title { font-size: 28px; color: #fff; text-align: center; margin-bottom: 24px; }
+.dataflow-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding: 14px 20px; background: rgba(15,18,30,0.6); border: 1px solid #1e293b; border-radius: 10px; }
+.df-source { width: 160px; font-size: 13px; font-weight: 600; color: #e2e8f0; flex-shrink: 0; }
+.df-arrow { color: #334155; font-size: 18px; flex-shrink: 0; }
+.df-process { flex: 1; font-size: 12px; color: #94a3b8; }
+.df-dest { width: 160px; font-size: 12px; font-weight: 600; text-align: right; flex-shrink: 0; }
+
+/* Footer */
+.footer { text-align: center; padding: 40px 0; border-top: 1px solid #1e293b; }
+.footer p { font-size: 12px; color: #475569; }
+
+@media (max-width: 1024px) {
+  .obd-grid { grid-template-columns: repeat(2, 1fr); }
+  .scanner-grid { grid-template-columns: repeat(2, 1fr); }
+  .actions-grid { grid-template-columns: repeat(3, 1fr); }
+  .treatment-flow { flex-direction: column; }
+  .treatment-step { border-radius: 10px !important; }
+  .flow-arrow { transform: rotate(90deg); }
+}
+@media (max-width: 640px) {
+  .obd-grid, .scanner-grid { grid-template-columns: 1fr; }
+  .actions-grid { grid-template-columns: repeat(2, 1fr); }
+  .header h1 { font-size: 36px; }
+  .roi-kpis { gap: 24px; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-badge"><span class="dot"></span><span>Technical Architecture</span></div>
+    <h1>Neural Intelligence <em>OBD</em></h1>
+    <p>On-Board Diagnostic system for business operations. Continuously scans, diagnoses, prescribes, and remediates — then proves the ROI.</p>
+  </div>
+
+  <!-- Central Scanner -->
+  <div class="scanner-section">
+    <div class="scanner-card">
+      <h2 class="scanner-title">NEURAL SCANNER ENGINE</h2>
+      <p class="scanner-sub">Continuously monitors 8 subsystems across your entire operation</p>
+      <div class="scanner-grid">
+        <div class="scan-item"><div class="scan-icon">&#128222;</div><div class="scan-label">Voice AI</div></div>
+        <div class="scan-item"><div class="scan-icon">&#128279;</div><div class="scan-label">CRM Sync</div></div>
+        <div class="scan-item"><div class="scan-icon">&#128666;</div><div class="scan-label">Dispatch</div></div>
+        <div class="scan-item"><div class="scan-icon">&#128176;</div><div class="scan-label">Revenue Pipeline</div></div>
+        <div class="scan-item"><div class="scan-icon">&#128101;</div><div class="scan-label">Contact Network</div></div>
+        <div class="scan-item"><div class="scan-icon">&#9889;</div><div class="scan-label">Automation</div></div>
+        <div class="scan-item"><div class="scan-icon">&#128202;</div><div class="scan-label">Data Ingestion</div></div>
+        <div class="scan-item"><div class="scan-icon">&#129656;</div><div class="scan-label">Treatments</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OBD Diagnostic Codes -->
+  <div class="obd-section">
+    <div class="obd-title-row">
+      <h2 class="obd-title">DIAGNOSTIC CODES</h2>
+      <span class="obd-status-badge" style="background: rgba(34,197,94,0.12); color: #22c55e;">ALL SYSTEMS GO</span>
+    </div>
+    <div class="obd-grid">
+      <div class="obd-card" style="border-left-color: #22c55e;">
+        <div class="obd-code" style="color: #22c55e;">OBD-01</div>
+        <div class="obd-system">Voice AI Engine</div>
+        <div class="obd-reading">Call volume, answer rate, avg duration, missed call detection</div>
+        <span class="obd-badge" style="background: rgba(34,197,94,0.15); color: #22c55e;">OK</span>
+      </div>
+      <div class="obd-card" style="border-left-color: #22c55e;">
+        <div class="obd-code" style="color: #22c55e;">OBD-02</div>
+        <div class="obd-system">CRM Link</div>
+        <div class="obd-reading">HubSpot connection, contacts, deals, pipeline value sync</div>
+        <span class="obd-badge" style="background: rgba(34,197,94,0.15); color: #22c55e;">OK</span>
+      </div>
+      <div class="obd-card" style="border-left-color: #22c55e;">
+        <div class="obd-code" style="color: #22c55e;">OBD-03</div>
+        <div class="obd-system">Contact Sync</div>
+        <div class="obd-reading">Sync rate %, error detection, coverage gap monitoring</div>
+        <span class="obd-badge" style="background: rgba(34,197,94,0.15); color: #22c55e;">OK</span>
+      </div>
+      <div class="obd-card" style="border-left-color: #fbbf24;">
+        <div class="obd-code" style="color: #fbbf24;">OBD-04</div>
+        <div class="obd-system">Dispatch Engine</div>
+        <div class="obd-reading">Open/covered/delivered loads, delivery rate, queue depth</div>
+        <span class="obd-badge" style="background: rgba(251,191,36,0.15); color: #fbbf24;">CHECK</span>
+      </div>
+      <div class="obd-card" style="border-left-color: #22c55e;">
+        <div class="obd-code" style="color: #22c55e;">OBD-05</div>
+        <div class="obd-system">Revenue Pipeline</div>
+        <div class="obd-reading">Delivered revenue, pipeline value, won revenue tracking</div>
+        <span class="obd-badge" style="background: rgba(34,197,94,0.15); color: #22c55e;">OK</span>
+      </div>
+      <div class="obd-card" style="border-left-color: #8b5cf6;">
+        <div class="obd-code" style="color: #8b5cf6;">OBD-06</div>
+        <div class="obd-system">Treatment Automation</div>
+        <div class="obd-reading">Active workflow count, execution log, trigger health</div>
+        <span class="obd-badge" style="background: rgba(139,92,246,0.15); color: #8b5cf6;">ACTIVE</span>
+      </div>
+      <div class="obd-card" style="border-left-color: #22c55e;">
+        <div class="obd-code" style="color: #22c55e;">OBD-07</div>
+        <div class="obd-system">Network Health</div>
+        <div class="obd-reading">Carrier/shipper/prospect counts, network density</div>
+        <span class="obd-badge" style="background: rgba(34,197,94,0.15); color: #22c55e;">OK</span>
+      </div>
+      <div class="obd-card" style="border-left-color: #22c55e;">
+        <div class="obd-code" style="color: #22c55e;">OBD-08</div>
+        <div class="obd-system">Data Ingestion</div>
+        <div class="obd-reading">Upload count, rows imported, validation pass rate</div>
+        <span class="obd-badge" style="background: rgba(34,197,94,0.15); color: #22c55e;">OK</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Treatment Pipeline: Analyze → Diagnose → Prescribe → Remediate -->
+  <div class="treatment-section">
+    <h2 style="font-size: 28px; color: #fff; text-align: center; margin-bottom: 24px;">TREATMENT PIPELINE</h2>
+    <div class="treatment-flow">
+      <div class="treatment-step" style="border-top: 3px solid #8b5cf6;">
+        <div class="step-num" style="color: #8b5cf6;">01</div>
+        <div class="step-name" style="color: #8b5cf6;">Analyze</div>
+        <div class="step-desc">Scan all connected subsystems. Pull metrics from Voice AI, CRM, dispatch, pipeline, contacts, ingestion.</div>
+      </div>
+      <div class="flow-arrow">&#10132;</div>
+      <div class="treatment-step" style="border-top: 3px solid #06b6d4;">
+        <div class="step-num" style="color: #06b6d4;">02</div>
+        <div class="step-name" style="color: #06b6d4;">Diagnose</div>
+        <div class="step-desc">Generate findings with severity (CRITICAL / WARNING / OPPORTUNITY), dollar impact, and root cause analysis.</div>
+      </div>
+      <div class="flow-arrow">&#10132;</div>
+      <div class="treatment-step" style="border-top: 3px solid #22c55e;">
+        <div class="step-num" style="color: #22c55e;">03</div>
+        <div class="step-name" style="color: #22c55e;">Prescribe</div>
+        <div class="step-desc">Attach a Treatment workflow: trigger event, conditions, and automated actions. Ready to activate with one click.</div>
+      </div>
+      <div class="flow-arrow">&#10132;</div>
+      <div class="treatment-step" style="border-top: 3px solid #f59e0b;">
+        <div class="step-num" style="color: #f59e0b;">04</div>
+        <div class="step-name" style="color: #f59e0b;">Remediate</div>
+        <div class="step-desc">Execute: SMS, CRM writes, callbacks, deal updates, contact syncs. Log every action to treatment_execution_log.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Types -->
+  <h2 style="font-size: 28px; color: #fff; text-align: center; margin-bottom: 24px;">TREATMENT ACTION TYPES</h2>
+  <div class="actions-grid">
+    <div class="action-card">
+      <div class="action-icon">&#128172;</div>
+      <div class="action-name">SMS</div>
+      <div class="action-desc">Twilio-powered auto-SMS with template variables</div>
+    </div>
+    <div class="action-card">
+      <div class="action-icon">&#128100;</div>
+      <div class="action-name">CRM Contact</div>
+      <div class="action-desc">Auto-create contact in HubSpot / GHL / Zoho</div>
+    </div>
+    <div class="action-card">
+      <div class="action-icon">&#127991;</div>
+      <div class="action-name">CRM Tag</div>
+      <div class="action-desc">Auto-tag contacts for segmentation & workflows</div>
+    </div>
+    <div class="action-card">
+      <div class="action-icon">&#128203;</div>
+      <div class="action-name">CRM Task</div>
+      <div class="action-desc">Create follow-up tasks assigned to reps</div>
+    </div>
+    <div class="action-card">
+      <div class="action-icon">&#128222;</div>
+      <div class="action-name">Callback</div>
+      <div class="action-desc">Schedule AI or human callback with delay</div>
+    </div>
+    <div class="action-card">
+      <div class="action-icon">&#128232;</div>
+      <div class="action-name">Email</div>
+      <div class="action-desc">SendGrid-powered auto-email dispatch</div>
+    </div>
+  </div>
+
+  <!-- Data Flow -->
+  <div class="dataflow">
+    <h2 class="dataflow-title">EVENT-DRIVEN DATA FLOW</h2>
+    <div class="dataflow-row">
+      <div class="df-source">&#128222; Incoming Call</div>
+      <div class="df-arrow">&#10132;</div>
+      <div class="df-process">Voice AI processes call &#8594; Call ends &#8594; Check if missed or no booking</div>
+      <div class="df-arrow">&#10132;</div>
+      <div class="df-dest" style="color: #8b5cf6;">trigger('call.missed')</div>
+    </div>
+    <div class="dataflow-row">
+      <div class="df-source">&#128100; New Contact</div>
+      <div class="df-arrow">&#10132;</div>
+      <div class="df-process">Contact saved to DB &#8594; Check if carrier or shipper &#8594; Fire event</div>
+      <div class="df-arrow">&#10132;</div>
+      <div class="df-dest" style="color: #06b6d4;">trigger('contact.created')</div>
+    </div>
+    <div class="dataflow-row">
+      <div class="df-source">&#128666; Load Uncovered</div>
+      <div class="df-arrow">&#10132;</div>
+      <div class="df-process">Load open &gt;4 hours &#8594; Match carriers by lane &amp; equipment &#8594; Fire event</div>
+      <div class="df-arrow">&#10132;</div>
+      <div class="df-dest" style="color: #22c55e;">trigger('load.uncovered')</div>
+    </div>
+    <div class="dataflow-row">
+      <div class="df-source">&#128176; Deal Stale</div>
+      <div class="df-arrow">&#10132;</div>
+      <div class="df-process">Deal unchanged &gt;7 days &#8594; Periodic scan detects stale pipeline &#8594; Fire event</div>
+      <div class="df-arrow">&#10132;</div>
+      <div class="df-dest" style="color: #f59e0b;">trigger('deal.stale')</div>
+    </div>
+    <div class="dataflow-row">
+      <div class="df-source">&#128230; Load Delivered</div>
+      <div class="df-arrow">&#10132;</div>
+      <div class="df-process">Load status → delivered &#8594; Find matching HubSpot deal &#8594; Update stage</div>
+      <div class="df-arrow">&#10132;</div>
+      <div class="df-dest" style="color: #ef4444;">trigger('load.delivered')</div>
+    </div>
+  </div>
+
+  <!-- Treatment Executor Architecture -->
+  <div style="background: rgba(15,18,30,0.8); border: 1px solid #1e293b; border-radius: 16px; padding: 32px; margin-bottom: 48px;">
+    <h2 style="font-size: 28px; color: #fff; text-align: center; margin-bottom: 24px;">TREATMENT EXECUTOR — INTERNAL ARCHITECTURE</h2>
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+      <div style="background: rgba(30,41,59,0.3); border: 1px solid #1e293b; border-radius: 12px; padding: 20px;">
+        <h4 style="color: #8b5cf6; font-size: 16px; margin-bottom: 10px; letter-spacing: 1px;">TRIGGER LAYER</h4>
+        <p style="font-size: 12px; color: #94a3b8; line-height: 1.6; margin-bottom: 12px;">executor.trigger(clientId, event, data)</p>
+        <div style="font-size: 11px; color: #64748b; line-height: 1.6;">
+          1. Look up active treatments matching event<br>
+          2. Rate limit: 1 execution per phone per hour<br>
+          3. Fetch client config (API keys, phones)<br>
+          4. Pass to execution layer
+        </div>
+      </div>
+      <div style="background: rgba(30,41,59,0.3); border: 1px solid #1e293b; border-radius: 12px; padding: 20px;">
+        <h4 style="color: #06b6d4; font-size: 16px; margin-bottom: 10px; letter-spacing: 1px;">EXECUTION LAYER</h4>
+        <p style="font-size: 12px; color: #94a3b8; line-height: 1.6; margin-bottom: 12px;">_executeTreatment(treatment, data, config)</p>
+        <div style="font-size: 11px; color: #64748b; line-height: 1.6;">
+          1. Loop through actions array<br>
+          2. Handle delays (immediate / scheduled / pending)<br>
+          3. Template variable substitution<br>
+          4. Execute via action handler
+        </div>
+      </div>
+      <div style="background: rgba(30,41,59,0.3); border: 1px solid #1e293b; border-radius: 12px; padding: 20px;">
+        <h4 style="color: #22c55e; font-size: 16px; margin-bottom: 10px; letter-spacing: 1px;">LOGGING LAYER</h4>
+        <p style="font-size: 12px; color: #94a3b8; line-height: 1.6; margin-bottom: 12px;">treatment_execution_log table</p>
+        <div style="font-size: 11px; color: #64748b; line-height: 1.6;">
+          1. Log every trigger attempt<br>
+          2. Record actions executed + results<br>
+          3. Track status (completed / partial / failed)<br>
+          4. Feed ROI dashboard calculations
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Database Schema -->
+  <div style="background: rgba(15,18,30,0.8); border: 1px solid #1e293b; border-radius: 16px; padding: 32px; margin-bottom: 48px;">
+    <h2 style="font-size: 28px; color: #fff; text-align: center; margin-bottom: 24px;">DATABASE SCHEMA</h2>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+      <div style="background: rgba(30,41,59,0.3); border: 1px solid #1e293b; border-radius: 12px; padding: 20px;">
+        <h4 style="color: #8b5cf6; font-size: 14px; margin-bottom: 12px; letter-spacing: 1px;">neural_treatments</h4>
+        <div style="font-family: monospace; font-size: 11px; color: #94a3b8; line-height: 1.8;">
+          id &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SERIAL PRIMARY KEY<br>
+          client_id &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; INTEGER NOT NULL<br>
+          treatment_type &nbsp;VARCHAR(50)<br>
+          trigger_event &nbsp;&nbsp;VARCHAR(100)<br>
+          actions &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; JSONB<br>
+          is_active &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; BOOLEAN<br>
+          activated_at &nbsp;&nbsp;&nbsp;TIMESTAMP<br>
+          execution_count INTEGER<br>
+          last_executed &nbsp;&nbsp;TIMESTAMP
+        </div>
+      </div>
+      <div style="background: rgba(30,41,59,0.3); border: 1px solid #1e293b; border-radius: 12px; padding: 20px;">
+        <h4 style="color: #06b6d4; font-size: 14px; margin-bottom: 12px; letter-spacing: 1px;">treatment_execution_log</h4>
+        <div style="font-family: monospace; font-size: 11px; color: #94a3b8; line-height: 1.8;">
+          id &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SERIAL PRIMARY KEY<br>
+          client_id &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; INTEGER NOT NULL<br>
+          treatment_id &nbsp;&nbsp;&nbsp;INTEGER FK<br>
+          treatment_type &nbsp;VARCHAR(50)<br>
+          trigger_event &nbsp;&nbsp;VARCHAR(100)<br>
+          contact_phone &nbsp;&nbsp;VARCHAR(30)<br>
+          actions_executed JSONB<br>
+          status &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; VARCHAR(20)<br>
+          error_message &nbsp;&nbsp;TEXT
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROI Dashboard -->
+  <div class="roi-section">
+    <h2 class="roi-title">LIVE ROI DASHBOARD</h2>
+    <p class="roi-sub">Every action Neural takes is measured. Not projections — actuals.</p>
+    <div class="roi-kpis">
+      <div class="roi-kpi">
+        <div class="val" style="color: #22c55e;">87%</div>
+        <div class="label">Cost Reduction per Interaction</div>
+      </div>
+      <div class="roi-kpi">
+        <div class="val" style="color: #06b6d4;">74%</div>
+        <div class="label">Faster Response Time</div>
+      </div>
+      <div class="roi-kpi">
+        <div class="val" style="color: #8b5cf6;">8.4x</div>
+        <div class="label">ROI Multiple</div>
+      </div>
+      <div class="roi-kpi">
+        <div class="val" style="color: #f59e0b;">11 days</div>
+        <div class="label">Payback Period</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <p>Neural Intelligence OBD — Digit2AI LLC / RinglyPro &copy; 2026</p>
+    <p style="margin-top: 8px; color: #334155;">The difference between a thermometer and a doctor.</p>
+  </div>
+
+</div>
+</body>
+</html>
