@@ -141,6 +141,58 @@ export default function NeuralIntelligence() {
         ))}
       </div>
 
+      {/* OBD — On-Board Diagnostics */}
+      {data.obd && (
+        <div style={s.obdSection}>
+          <div style={s.obdHeader}>
+            <div style={s.obdTitleRow}>
+              <span style={s.obdIcon}>{'\u2699'}</span>
+              <h3 style={s.obdTitle}>ON-BOARD DIAGNOSTICS</h3>
+              <span style={{
+                ...s.obdOverall,
+                background: data.obd.overall_status === 'ALL SYSTEMS GO' ? '#23863622' : data.obd.overall_status === 'CHECK' ? '#C8962A22' : '#F8514922',
+                color: data.obd.overall_status === 'ALL SYSTEMS GO' ? '#238636' : data.obd.overall_status === 'CHECK' ? '#C8962A' : '#F85149',
+              }}>{data.obd.overall_status}</span>
+            </div>
+            <div style={s.obdSummary}>
+              <span style={{ color: '#238636' }}>{'\u25CF'} {data.obd.summary.ok} OK</span>
+              {data.obd.summary.warning > 0 && <span style={{ color: '#C8962A' }}>{'\u25CF'} {data.obd.summary.warning} WARN</span>}
+              {data.obd.summary.critical > 0 && <span style={{ color: '#F85149' }}>{'\u25CF'} {data.obd.summary.critical} FAULT</span>}
+            </div>
+          </div>
+          <div style={s.obdGrid}>
+            {data.obd.diagnostics.map((diag, i) => {
+              const severityColor = diag.severity === 'ok' ? '#238636' : diag.severity === 'warning' ? '#C8962A' : diag.severity === 'critical' ? '#F85149' : '#484F58';
+              return (
+                <div key={i} style={{ ...s.obdCard, borderLeftColor: severityColor }}>
+                  <div style={s.obdCardHeader}>
+                    <span style={{ ...s.obdCode, color: severityColor }}>{diag.code}</span>
+                    <span style={{
+                      ...s.obdStatus,
+                      background: `${severityColor}22`,
+                      color: severityColor,
+                    }}>{diag.status}</span>
+                  </div>
+                  <div style={s.obdSystem}>{diag.system}</div>
+                  <div style={s.obdReading}>{diag.reading}</div>
+                  <div style={s.obdFooter}>
+                    <div style={s.obdMetric}>
+                      <span style={{ ...s.obdMetricValue, color: severityColor }}>
+                        {typeof diag.metric === 'number' && diag.metric_label?.includes('Rate') ? `${diag.metric}%`
+                          : typeof diag.metric === 'number' && diag.metric_label?.includes('Value') ? `$${diag.metric.toLocaleString()}`
+                          : diag.metric}
+                      </span>
+                      <span style={s.obdMetricLabel}>{diag.metric_label}</span>
+                    </div>
+                    <span style={s.obdActivity}>{diag.last_activity}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Findings */}
       <div style={s.findingsSection}>
         <div style={s.findingsHeader}>
@@ -287,4 +339,24 @@ const s = {
   activeBtnActive: { background: '#238636', color: '#fff' },
   fixNowBtn: { padding: '10px 20px', background: '#C8962A', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', letterSpacing: 0.3, transition: 'all 0.2s' },
   fixResultCard: { marginTop: 10, padding: 12, background: '#0D1117', border: '1px solid #30363D', borderRadius: 8 },
+  // OBD styles
+  obdSection: { background: '#161B22', border: '1px solid #21262D', borderRadius: 12, padding: 20, marginBottom: 24 },
+  obdHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 },
+  obdTitleRow: { display: 'flex', alignItems: 'center', gap: 10 },
+  obdIcon: { fontSize: 20, color: '#0EA5E9' },
+  obdTitle: { fontSize: 16, color: '#E6EDF3', margin: 0, letterSpacing: 2 },
+  obdOverall: { padding: '4px 12px', borderRadius: 20, fontSize: 10, fontWeight: 700, letterSpacing: 1 },
+  obdSummary: { display: 'flex', gap: 14, fontSize: 11, fontWeight: 600 },
+  obdGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10 },
+  obdCard: { background: '#0D1117', border: '1px solid #21262D', borderLeft: '3px solid', borderRadius: 8, padding: 14 },
+  obdCardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  obdCode: { fontSize: 11, fontWeight: 800, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.5 },
+  obdStatus: { padding: '2px 8px', borderRadius: 4, fontSize: 9, fontWeight: 700, letterSpacing: 0.5 },
+  obdSystem: { fontSize: 13, fontWeight: 600, color: '#E6EDF3', marginBottom: 6 },
+  obdReading: { fontSize: 11, color: '#8B949E', lineHeight: 1.5, marginBottom: 10 },
+  obdFooter: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' },
+  obdMetric: { display: 'flex', flexDirection: 'column' },
+  obdMetricValue: { fontSize: 18, fontWeight: 700, fontFamily: "'Bebas Neue',sans-serif" },
+  obdMetricLabel: { fontSize: 9, color: '#484F58', textTransform: 'uppercase', letterSpacing: 1 },
+  obdActivity: { fontSize: 10, color: '#484F58', textAlign: 'right' },
 };

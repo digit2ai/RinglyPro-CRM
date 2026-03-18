@@ -246,6 +246,137 @@ router.get('/dashboard', async (req, res) => {
       { name: 'CW Dispatch', status: 'connected', lastSync: 'Active' }
     ];
 
+    // ── OBD (On-Board Diagnostics) ──────────────────────────────
+    // Real-time system health codes like a vehicle's OBD-II
+    const obd = [];
+
+    // OBD-01: Voice AI System
+    const voiceStatus = totalCalls > 0 ? 'OK' : 'INACTIVE';
+    obd.push({
+      code: 'OBD-01', system: 'Voice AI Engine',
+      status: voiceStatus,
+      severity: voiceStatus === 'OK' ? 'ok' : 'warning',
+      reading: totalCalls > 0 ? `${totalCalls} calls processed | ${answerRate}% answer rate | ${Math.round(parseFloat(callStats.avg_duration) || 0)}s avg duration` : 'No calls recorded — Rachel is idle',
+      metric: answerRate,
+      metric_label: 'Answer Rate',
+      last_activity: totalCalls > 0 ? 'Last 30 days' : 'Never',
+    });
+
+    // OBD-02: HubSpot CRM Link
+    const hsStatus = process.env.HUBSPOT_ACCESS_TOKEN ? (hsDeals > 0 ? 'OK' : 'CONNECTED') : 'DISCONNECTED';
+    obd.push({
+      code: 'OBD-02', system: 'HubSpot CRM Link',
+      status: hsStatus,
+      severity: hsStatus === 'OK' ? 'ok' : hsStatus === 'CONNECTED' ? 'warning' : 'critical',
+      reading: process.env.HUBSPOT_ACCESS_TOKEN
+        ? `${hsContacts} contacts | ${hsDeals} deals | $${Number(pipelineMetrics.total_pipeline || 0).toLocaleString()} pipeline`
+        : 'HubSpot API token not configured',
+      metric: hsDeals,
+      metric_label: 'Active Deals',
+      last_activity: process.env.HUBSPOT_ACCESS_TOKEN ? 'Connected' : 'Not configured',
+    });
+
+    // OBD-03: Contact Sync
+    const syncStatus = syncRate >= 80 ? 'OK' : syncRate >= 30 ? 'DEGRADED' : totalContacts === 0 ? 'NO_DATA' : 'FAULT';
+    obd.push({
+      code: 'OBD-03', system: 'Contact Sync Pipeline',
+      status: syncStatus,
+      severity: syncStatus === 'OK' ? 'ok' : syncStatus === 'DEGRADED' ? 'warning' : 'critical',
+      reading: totalContacts > 0
+        ? `${syncedContacts}/${totalContacts} synced (${syncRate}%) | ${parseInt(syncStats.errors) || 0} sync errors this week`
+        : 'No contacts in system',
+      metric: syncRate,
+      metric_label: 'Sync Rate',
+      last_activity: parseInt(syncStats.successful) > 0 ? `${syncStats.successful} syncs this week` : 'No recent syncs',
+    });
+
+    // OBD-04: Dispatch & Load Engine
+    const openLoads = parseInt(loadStats.open_loads) || 0;
+    const coveredLoads = parseInt(loadStats.covered_loads) || 0;
+    const dispatchStatus = totalLoads === 0 ? 'NO_DATA' : openLoads > 10 ? 'OVERLOADED' : coverageRate >= 50 ? 'OK' : 'DEGRADED';
+    obd.push({
+      code: 'OBD-04', system: 'Dispatch Engine',
+      status: dispatchStatus,
+      severity: dispatchStatus === 'OK' ? 'ok' : dispatchStatus === 'OVERLOADED' ? 'critical' : dispatchStatus === 'DEGRADED' ? 'warning' : 'info',
+      reading: totalLoads > 0
+        ? `${openLoads} open | ${coveredLoads} covered | ${deliveredLoads} delivered | ${coverageRate}% delivery rate`
+        : 'No loads in system — import or create loads to begin',
+      metric: coverageRate,
+      metric_label: 'Delivery Rate',
+      last_activity: totalLoads > 0 ? `${totalLoads} loads (30 days)` : 'No activity',
+    });
+
+    // OBD-05: Revenue Pipeline
+    const deliveredRevenue = parseFloat(loadStats.delivered_revenue) || 0;
+    const pipelineValue = Number(pipelineMetrics.total_pipeline || 0);
+    const revenueStatus = (deliveredRevenue + pipelineValue) > 0 ? 'OK' : 'NO_REVENUE';
+    obd.push({
+      code: 'OBD-05', system: 'Revenue Pipeline',
+      status: revenueStatus,
+      severity: revenueStatus === 'OK' ? 'ok' : 'warning',
+      reading: `$${deliveredRevenue.toLocaleString()} delivered | $${pipelineValue.toLocaleString()} in pipeline | $${Number(pipelineMetrics.won_revenue || 0).toLocaleString()} won`,
+      metric: Math.round(deliveredRevenue + pipelineValue),
+      metric_label: 'Total Value',
+      last_activity: deliveredRevenue > 0 ? 'Active' : 'No delivered revenue',
+    });
+
+    // OBD-06: Treatment Automation
+    let activeTreatments = 0;
+    try {
+      const [tRows] = await sequelize.query(`SELECT COUNT(*) as cnt FROM neural_treatments WHERE client_id = 0 AND is_active = true`);
+      activeTreatments = parseInt(tRows[0]?.cnt) || 0;
+    } catch (e) { /* table may not exist yet */ }
+    const treatmentStatus = activeTreatments >= 3 ? 'OK' : activeTreatments > 0 ? 'PARTIAL' : 'INACTIVE';
+    obd.push({
+      code: 'OBD-06', system: 'Treatment Automation',
+      status: treatmentStatus,
+      severity: treatmentStatus === 'OK' ? 'ok' : treatmentStatus === 'PARTIAL' ? 'warning' : 'info',
+      reading: activeTreatments > 0
+        ? `${activeTreatments} active workflow${activeTreatments > 1 ? 's' : ''} | ${6 - activeTreatments} available to activate`
+        : '0 workflows active — activate treatments from Findings to automate recovery',
+      metric: activeTreatments,
+      metric_label: 'Active Workflows',
+      last_activity: activeTreatments > 0 ? `${activeTreatments}/6 active` : 'None active',
+    });
+
+    // OBD-07: Carrier Network
+    const totalCarriers = parseInt(contactStats.carriers) || 0;
+    const carrierStatus = totalCarriers >= 10 ? 'OK' : totalCarriers > 0 ? 'LOW' : 'EMPTY';
+    obd.push({
+      code: 'OBD-07', system: 'Carrier Network',
+      status: carrierStatus,
+      severity: carrierStatus === 'OK' ? 'ok' : carrierStatus === 'LOW' ? 'warning' : 'critical',
+      reading: `${totalCarriers} carriers | ${parseInt(contactStats.shippers) || 0} shippers | ${parseInt(contactStats.prospects) || 0} prospects`,
+      metric: totalCarriers,
+      metric_label: 'Carriers',
+      last_activity: totalCarriers > 0 ? 'Active' : 'No carriers registered',
+    });
+
+    // OBD-08: Data Ingestion
+    let uploadCount = 0, uploadRows = 0;
+    try {
+      const [uRows] = await sequelize.query(`SELECT COUNT(*) as cnt, COALESCE(SUM(imported_rows), 0) as rows FROM lg_data_uploads WHERE tenant_id = 'logistics'`);
+      uploadCount = parseInt(uRows[0]?.cnt) || 0;
+      uploadRows = parseInt(uRows[0]?.rows) || 0;
+    } catch (e) { /* ok */ }
+    const ingestionStatus = uploadRows > 100 ? 'OK' : uploadRows > 0 ? 'PARTIAL' : 'NO_DATA';
+    obd.push({
+      code: 'OBD-08', system: 'Data Ingestion',
+      status: ingestionStatus,
+      severity: ingestionStatus === 'OK' ? 'ok' : ingestionStatus === 'PARTIAL' ? 'warning' : 'info',
+      reading: uploadCount > 0
+        ? `${uploadCount} uploads | ${uploadRows.toLocaleString()} rows imported`
+        : 'No data imported — use Data Ingestion to upload CSV/JSON',
+      metric: uploadRows,
+      metric_label: 'Rows Imported',
+      last_activity: uploadCount > 0 ? `${uploadCount} uploads` : 'No uploads',
+    });
+
+    // OBD summary
+    const obdOkCount = obd.filter(d => d.severity === 'ok').length;
+    const obdWarningCount = obd.filter(d => d.severity === 'warning').length;
+    const obdCriticalCount = obd.filter(d => d.severity === 'critical').length;
+
     res.json({
       success: true,
       healthScore: overallScore,
@@ -263,6 +394,11 @@ router.get('/dashboard', async (req, res) => {
         pipelines: pipelines.length,
         pipeline_value: pipelineMetrics.total_pipeline || 0,
         won_revenue: pipelineMetrics.won_revenue || 0
+      },
+      obd: {
+        diagnostics: obd,
+        summary: { total: obd.length, ok: obdOkCount, warning: obdWarningCount, critical: obdCriticalCount },
+        overall_status: obdCriticalCount > 0 ? 'FAULT' : obdWarningCount > 2 ? 'CHECK' : 'ALL SYSTEMS GO',
       }
     });
   } catch (error) {
