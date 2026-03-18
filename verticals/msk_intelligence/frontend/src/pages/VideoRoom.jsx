@@ -264,7 +264,7 @@ export default function VideoRoom() {
         <div className="w-full max-w-lg">
           <div className="card bg-dark-900 p-8">
             <div className="text-center mb-8">
-              <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="MSK Intelligence" className="w-24 h-24 rounded-2xl shadow-2xl object-cover mx-auto mb-4" />
+              <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="MSK Intelligence" className="w-24 h-24 rounded-2xl shadow-2xl object-contain mx-auto mb-4" />
               <h1 className="text-2xl font-bold text-white">Video Consultation</h1>
               <p className="text-dark-400 text-sm mt-2">MSK Intelligence Secure Video</p>
             </div>
@@ -345,8 +345,8 @@ export default function VideoRoom() {
     <div className="h-screen bg-black flex flex-col">
       {/* Header bar */}
       <div className="bg-dark-900/90 backdrop-blur-sm border-b border-dark-800 px-4 py-2 flex items-center justify-between z-10">
-        <div className="flex items-center gap-3">
-          <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="MSK Intelligence" className="w-12 h-12 rounded-lg object-cover" />
+        <div className="flex items-center gap-4">
+          <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="MSK Intelligence" className="w-12 h-12 rounded-lg object-contain" />
           <div>
             <p className="text-white text-sm font-medium">
               {meetingInfo?.case_number || 'Video Consultation'}

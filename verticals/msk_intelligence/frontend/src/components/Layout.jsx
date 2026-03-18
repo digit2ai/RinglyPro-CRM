@@ -46,10 +46,10 @@ export default function Layout({ children, user, onLogout }) {
       <aside className={`${sidebarOpen ? 'w-64' : 'w-16'} bg-dark-900 border-r border-dark-700 flex flex-col transition-all duration-300`}>
         {/* Logo */}
         <div className="p-4 border-b border-dark-700">
-          <Link to="/dashboard" className="flex items-center gap-3">
-            <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="MSK Intelligence" className="w-14 h-14 rounded-lg shadow-lg object-cover" />
+          <Link to="/dashboard" className="flex items-center gap-4">
+            <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="MSK Intelligence" className="w-14 h-14 rounded-lg shadow-lg object-contain" />
             {sidebarOpen && (
-              <div>
+              <div className="ml-1">
                 <h1 className="text-lg font-bold text-white leading-tight">MSK Intel</h1>
                 <p className="text-xs text-dark-400">Diagnostics Platform</p>
               </div>

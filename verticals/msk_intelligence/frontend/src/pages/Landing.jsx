@@ -10,11 +10,11 @@ export default function Landing() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-msk-600/10 via-transparent to-transparent" />
 
         <nav className="relative z-10 max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="MSK Intelligence" className="w-20 h-20 rounded-xl shadow-2xl object-cover" />
-            <div>
-              <h1 className="text-xl font-bold text-white">MSK Intelligence</h1>
-              <p className="text-xs text-msk-400">Musculoskeletal Diagnostics</p>
+          <div className="flex items-center gap-5">
+            <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="MSK Intelligence" className="w-20 h-20 rounded-xl shadow-2xl object-contain" />
+            <div className="ml-1">
+              <h1 className="text-2xl font-bold text-white">MSK Intelligence</h1>
+              <p className="text-sm text-msk-400">Musculoskeletal Diagnostics</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
