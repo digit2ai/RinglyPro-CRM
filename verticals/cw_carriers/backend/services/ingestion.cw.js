@@ -236,6 +236,14 @@ async function process_upload(input) {
             buy_rate, sell_rate, margin, margin_pct, rate_per_mile,
             shipper_name, commodity, status, source, upload_batch_id, created_at, updated_at)
           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,'upload',$24,NOW(),NOW())
+          ON CONFLICT (load_ref) DO UPDATE SET
+            origin_city = EXCLUDED.origin_city, origin_state = EXCLUDED.origin_state, origin_zip = EXCLUDED.origin_zip, origin_full = EXCLUDED.origin_full,
+            destination_city = EXCLUDED.destination_city, destination_state = EXCLUDED.destination_state, destination_zip = EXCLUDED.destination_zip, destination_full = EXCLUDED.destination_full,
+            pickup_date = EXCLUDED.pickup_date, delivery_date = EXCLUDED.delivery_date,
+            equipment_type = EXCLUDED.equipment_type, weight_lbs = EXCLUDED.weight_lbs, miles = EXCLUDED.miles,
+            buy_rate = EXCLUDED.buy_rate, sell_rate = EXCLUDED.sell_rate, margin = EXCLUDED.margin, margin_pct = EXCLUDED.margin_pct, rate_per_mile = EXCLUDED.rate_per_mile,
+            shipper_name = EXCLUDED.shipper_name, commodity = EXCLUDED.commodity, status = EXCLUDED.status,
+            source = EXCLUDED.source, upload_batch_id = EXCLUDED.upload_batch_id, updated_at = NOW()
         `, { bind: [tid, mapped.load_ref || `UP-${upload.id}-${i}`,
           mapped.origin_city || orig.city, mapped.origin_state || orig.state, mapped.origin_zip || orig.zip, mapped.origin,
           mapped.destination_city || dest.city, mapped.destination_state || dest.state, mapped.destination_zip || dest.zip, mapped.destination,
@@ -251,7 +259,16 @@ async function process_upload(input) {
           INSERT INTO lg_carriers (tenant_id, carrier_name, mc_number, dot_number, contact_name, phone, email,
             equipment_types, home_city, home_state, source, upload_batch_id, created_at, updated_at)
           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'upload',$11,NOW(),NOW())
-          ON CONFLICT DO NOTHING
+          ON CONFLICT (carrier_name, tenant_id) DO UPDATE SET
+            mc_number = COALESCE(EXCLUDED.mc_number, lg_carriers.mc_number),
+            dot_number = COALESCE(EXCLUDED.dot_number, lg_carriers.dot_number),
+            contact_name = COALESCE(EXCLUDED.contact_name, lg_carriers.contact_name),
+            phone = COALESCE(EXCLUDED.phone, lg_carriers.phone),
+            email = COALESCE(EXCLUDED.email, lg_carriers.email),
+            equipment_types = EXCLUDED.equipment_types,
+            home_city = COALESCE(EXCLUDED.home_city, lg_carriers.home_city),
+            home_state = COALESCE(EXCLUDED.home_state, lg_carriers.home_state),
+            upload_batch_id = EXCLUDED.upload_batch_id, updated_at = NOW()
         `, { bind: [tid, mapped.carrier_name, mapped.mc_number, mapped.dot_number, mapped.contact_name,
           mapped.phone, mapped.email, equipArray, mapped.home_city, mapped.home_state, upload.id] });
         imported++;
@@ -260,6 +277,13 @@ async function process_upload(input) {
           INSERT INTO lg_customers (tenant_id, customer_name, contact_name, phone, email, payment_terms,
             billing_address, source, upload_batch_id, created_at, updated_at)
           VALUES ($1,$2,$3,$4,$5,$6,$7,'upload',$8,NOW(),NOW())
+          ON CONFLICT (customer_name, tenant_id) DO UPDATE SET
+            contact_name = COALESCE(EXCLUDED.contact_name, lg_customers.contact_name),
+            phone = COALESCE(EXCLUDED.phone, lg_customers.phone),
+            email = COALESCE(EXCLUDED.email, lg_customers.email),
+            payment_terms = COALESCE(EXCLUDED.payment_terms, lg_customers.payment_terms),
+            billing_address = COALESCE(EXCLUDED.billing_address, lg_customers.billing_address),
+            upload_batch_id = EXCLUDED.upload_batch_id, updated_at = NOW()
         `, { bind: [tid, mapped.customer_name, mapped.contact_name, mapped.phone, mapped.email,
           mapped.payment_terms || 'net_30', mapped.billing_address, upload.id] });
         imported++;
