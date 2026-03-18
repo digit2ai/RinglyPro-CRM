@@ -153,30 +153,24 @@ router.post('/sync-all/deals', async (req, res) => {
   }
 });
 
-// DELETE /contacts/bulk - delete contacts from HubSpot in batches
-router.delete('/contacts/bulk', async (req, res) => {
+// POST /cleanup/contacts - delete contacts from HubSpot in batches
+router.post('/cleanup/contacts', async (req, res) => {
   try {
-    const limit = Math.min(parseInt(req.query.limit) || 100, 500);
+    const limit = Math.min(parseInt(req.body.limit || req.query.limit) || 100, 500);
     let deleted = 0;
-    let hasMore = true;
+    let passes = 0;
 
-    while (hasMore && deleted < limit) {
-      // Fetch a page of contacts
+    while (deleted < limit && passes < 10) {
+      passes++;
       const listResult = await hubspot.hubspotRequest('GET', '/crm/v3/objects/contacts?limit=100&properties=email,createdate');
-      if (!listResult.success || !listResult.data?.results?.length) {
-        hasMore = false;
-        break;
-      }
+      if (!listResult.success || !listResult.data?.results?.length) break;
 
       const ids = listResult.data.results.map(c => c.id);
-      // Delete in batch of 10
       for (let i = 0; i < ids.length && deleted < limit; i++) {
         const delResult = await hubspot.hubspotRequest('DELETE', `/crm/v3/objects/contacts/${ids[i]}`);
         if (delResult.success || delResult.error?.includes('not found')) deleted++;
         if ((i + 1) % 10 === 0) await new Promise(r => setTimeout(r, 300));
       }
-
-      if (!listResult.data.paging?.next) hasMore = false;
     }
 
     res.json({ success: true, deleted, message: `Deleted ${deleted} contacts from HubSpot` });
