@@ -940,6 +940,31 @@ app.get('/debug/torna-idioma-error', (req, res) => {
   });
 });
 
+// ── MSK Intelligence — Musculoskeletal Diagnostics Platform ──
+let mskIntelApp = null;
+let mskIntelError = null;
+try {
+  mskIntelApp = require('../verticals/msk_intelligence/backend/index');
+  app.use('/msk', mskIntelApp);
+  console.log('🦴 MSK Intelligence mounted at /msk');
+  console.log('   - Dashboard: /msk/');
+  console.log('   - API: /msk/api/v1/*');
+  console.log('   - Health: /msk/health');
+  console.log('   - MCP Tools: /msk/api/v1/mcp/tools/list');
+  console.log('   - Voice Intake: /msk/api/v1/voice/intake');
+} catch (error) {
+  mskIntelError = error;
+  console.log('⚠️ MSK Intelligence not available:', error.message);
+}
+
+app.get('/debug/msk-intelligence-error', (req, res) => {
+  res.json({
+    service: 'MSK Intelligence',
+    available: !mskIntelError,
+    error: mskIntelError ? { message: mskIntelError.message, stack: mskIntelError.stack } : null,
+  });
+});
+
 // Conditional forwarding webhook (for business phone forwarding)
 app.use('/webhook', conditionalForwardRoutes);
 
