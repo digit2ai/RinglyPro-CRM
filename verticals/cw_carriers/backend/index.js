@@ -77,6 +77,18 @@ router.get('/health', (req, res) => {
 const distPath = path.join(__dirname, '../frontend/dist');
 router.use(express.static(distPath));
 
+// Serve sample CSV files directly (before SPA fallback)
+router.get('/samples/:file', (req, res) => {
+  const filePath = path.join(distPath, 'samples', req.params.file);
+  const fs = require('fs');
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${req.params.file}"`);
+    return res.sendFile(filePath);
+  }
+  res.status(404).json({ error: 'File not found' });
+});
+
 // SPA fallback - serve index.html for all non-API routes
 router.get('*', (req, res) => {
   if (req.path.startsWith('/api/')) {
