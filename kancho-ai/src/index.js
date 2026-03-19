@@ -3404,6 +3404,71 @@ app.get('/es', (req, res) => {
     </div>
   </main>
 
+  <!-- ====== MODAL COMPRA DE TOKENS / UPGRADE ====== -->
+  <div id="tokenModal" class="fixed inset-0 z-[200] hidden items-center justify-center" style="background:rgba(0,0,0,.75);backdrop-filter:blur(6px);">
+    <div class="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl w-[520px] max-w-[95vw] max-h-[90vh] overflow-y-auto p-8 relative" style="animation:modalIn .25s ease;">
+      <button onclick="closeTokenModal()" class="absolute top-3 right-4 text-gray-400 hover:text-white text-xl">&times;</button>
+      <div class="text-center mb-6">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/20 flex items-center justify-center">
+          <i class="fas fa-coins text-red-400 text-2xl"></i>
+        </div>
+        <h2 class="text-xl font-bold text-white">Sin Minutos de Voz</h2>
+        <p class="text-gray-400 text-sm mt-2">Tu saldo de tokens es <strong id="tokenModalBalance" class="text-red-400">0</strong>. Necesitas tokens para hacer llamadas con IA de voz.</p>
+        <p class="text-gray-500 text-xs mt-1">Plan actual: <strong id="tokenModalPlan" class="text-white">--</strong></p>
+      </div>
+      <div class="mb-6">
+        <h3 class="text-sm font-bold text-gray-300 uppercase tracking-wider mb-3"><i class="fas fa-shopping-cart mr-2 text-green-400"></i>Comprar Más Tokens</h3>
+        <div class="grid grid-cols-2 gap-3">
+          <button onclick="buyTokens('small')" class="p-3 bg-white/5 border border-[#2a2a2a] rounded-xl hover:border-green-500 transition text-left">
+            <div class="text-white font-bold">100 tokens</div>
+            <div class="text-gray-400 text-xs">20 minutos</div>
+            <div class="text-green-400 font-bold mt-1">$9</div>
+          </button>
+          <button onclick="buyTokens('medium')" class="p-3 bg-white/5 border border-[#2a2a2a] rounded-xl hover:border-green-500 transition text-left">
+            <div class="text-white font-bold">250 tokens</div>
+            <div class="text-gray-400 text-xs">50 minutos</div>
+            <div class="text-green-400 font-bold mt-1">$23</div>
+          </button>
+          <button onclick="buyTokens('large')" class="p-3 bg-white/5 border border-[#2a2a2a] rounded-xl hover:border-green-500 transition text-left relative">
+            <span class="absolute -top-2 -right-2 bg-kancho-coral text-white text-[10px] font-bold px-2 py-0.5 rounded-full">POPULAR</span>
+            <div class="text-white font-bold">600 tokens</div>
+            <div class="text-gray-400 text-xs">120 minutos</div>
+            <div class="text-green-400 font-bold mt-1">$54</div>
+          </button>
+          <button onclick="buyTokens('xl')" class="p-3 bg-white/5 border border-[#2a2a2a] rounded-xl hover:border-green-500 transition text-left">
+            <div class="text-white font-bold">1,300 tokens</div>
+            <div class="text-gray-400 text-xs">260 minutos</div>
+            <div class="text-green-400 font-bold mt-1">$117</div>
+          </button>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 mb-6">
+        <div class="flex-1 h-px bg-[#2a2a2a]"></div>
+        <span class="text-gray-500 text-xs uppercase tracking-wider">o ahorra con un plan</span>
+        <div class="flex-1 h-px bg-[#2a2a2a]"></div>
+      </div>
+      <div>
+        <h3 class="text-sm font-bold text-gray-300 uppercase tracking-wider mb-3"><i class="fas fa-arrow-up mr-2 text-amber-400"></i>Mejora Tu Plan</h3>
+        <div class="space-y-3">
+          <button onclick="upgradePlan('starter')" id="upgPlanStarter" class="w-full p-4 bg-white/5 border border-[#2a2a2a] rounded-xl hover:border-amber-500 transition text-left flex items-center justify-between">
+            <div><div class="text-white font-bold">Starter</div><div class="text-gray-400 text-xs">500 tokens/mes (100 min) + rollover</div></div>
+            <div class="text-amber-400 font-bold">$97/mes</div>
+          </button>
+          <button onclick="upgradePlan('growth')" id="upgPlanGrowth" class="w-full p-4 bg-white/5 border border-[#2a2a2a] rounded-xl hover:border-amber-500 transition text-left flex items-center justify-between relative">
+            <span class="absolute -top-2 left-4 bg-kancho-coral text-white text-[10px] font-bold px-2 py-0.5 rounded-full">MEJOR VALOR</span>
+            <div><div class="text-white font-bold">Growth</div><div class="text-gray-400 text-xs">2,000 tokens/mes (400 min) + rollover</div></div>
+            <div class="text-amber-400 font-bold">$180/mes</div>
+          </button>
+          <button onclick="upgradePlan('professional')" id="upgPlanPro" class="w-full p-4 bg-white/5 border border-[#2a2a2a] rounded-xl hover:border-amber-500 transition text-left flex items-center justify-between">
+            <div><div class="text-white font-bold">Professional</div><div class="text-gray-400 text-xs">7,500 tokens/mes (1,500 min) + rollover</div></div>
+            <div class="text-amber-400 font-bold">$675/mes</div>
+          </button>
+        </div>
+      </div>
+      <p class="text-center text-gray-500 text-xs mt-5">5 tokens = 1 minuto de voz IA. Tokens no usados se acumulan en planes pagados.</p>
+    </div>
+  </div>
+
   <!-- Footer -->
   <footer class="border-t border-kancho-dark-border bg-kancho-dark/95 mt-12 md:mt-20">
     <div class="max-w-7xl mx-auto px-4 md:px-6 py-10 md:py-16">
@@ -3588,7 +3653,9 @@ app.get('/es', (req, res) => {
             btn.className = btn.className.replace('bg-green-500/20 text-green-400', 'bg-red-500/20 text-red-400');
           }, 3000);
         } else {
-          alert('Error: ' + (data.error || 'No se pudo iniciar la llamada'));
+          if (!handleCallError(data)) {
+            alert('Error: ' + (data.error || 'No se pudo iniciar la llamada'));
+          }
           btn.textContent = originalText;
           btn.disabled = false;
         }
@@ -3636,7 +3703,9 @@ app.get('/es', (req, res) => {
             btn.className = btn.className.replace('bg-blue-500/20 text-blue-400', 'bg-green-500/20 text-green-400');
           }, 3000);
         } else {
-          alert('Error: ' + (data.error || 'No se pudo iniciar la llamada'));
+          if (!handleCallError(data)) {
+            alert('Error: ' + (data.error || 'No se pudo iniciar la llamada'));
+          }
           btn.textContent = originalText;
           btn.disabled = false;
         }
@@ -3646,6 +3715,53 @@ app.get('/es', (req, res) => {
         btn.textContent = originalText;
         btn.disabled = false;
       }
+    }
+
+    // ==================== MODAL DE TOKENS ====================
+    function showTokenModal(balance, plan) {
+      const modal = document.getElementById('tokenModal');
+      document.getElementById('tokenModalBalance').textContent = balance || 0;
+      document.getElementById('tokenModalPlan').textContent = (plan || 'free').charAt(0).toUpperCase() + (plan || 'free').slice(1);
+      const plans = ['starter', 'growth', 'professional'];
+      const currentIdx = plans.indexOf(plan || 'free');
+      document.getElementById('upgPlanStarter').style.display = currentIdx >= 0 ? 'none' : '';
+      document.getElementById('upgPlanGrowth').style.display = currentIdx >= 1 ? 'none' : '';
+      document.getElementById('upgPlanPro').style.display = currentIdx >= 2 ? 'none' : '';
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+    function closeTokenModal() {
+      const modal = document.getElementById('tokenModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+    async function buyTokens(pkg) {
+      try {
+        const res = await fetch('/kanchoai/api/v1/bridge/billing/purchase-tokens', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('kancho_bridge_token') || '') },
+          body: JSON.stringify({ package: pkg })
+        });
+        const data = await res.json();
+        if (data.success && data.data?.checkoutUrl) { window.location.href = data.data.checkoutUrl; }
+        else { alert(data.error || 'Error al crear sesión de pago'); }
+      } catch (e) { alert('Error al conectar con el sistema de pagos'); }
+    }
+    async function upgradePlan(plan) {
+      try {
+        const res = await fetch('/kanchoai/api/v1/bridge/billing/upgrade', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('kancho_bridge_token') || '') },
+          body: JSON.stringify({ plan, billing: 'monthly' })
+        });
+        const data = await res.json();
+        if (data.success && data.data?.checkoutUrl) { window.location.href = data.data.checkoutUrl; }
+        else { alert(data.error || 'Error al crear sesión de upgrade'); }
+      } catch (e) { alert('Error al conectar con el sistema de pagos'); }
+    }
+    function handleCallError(data) {
+      if (data.error === 'insufficient_tokens') { showTokenModal(data.balance, data.plan); return true; }
+      return false;
     }
 
     // ==================== LLAMAR A TODOS ====================
@@ -3665,11 +3781,18 @@ app.get('/es', (req, res) => {
 
       for (const s of withPhone) {
         try {
-          await fetch('/kanchoai/api/v1/outbound/call-member', {
+          const res = await fetch('/kanchoai/api/v1/outbound/call-member', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ student_id: s.id, school_id: currentSchoolId, phone: s.phone })
           });
+          const data = await res.json();
+          if (!data.success && data.error === 'insufficient_tokens') {
+            showTokenModal(data.balance, data.plan);
+            btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Detenido - Sin Tokens';
+            setTimeout(() => { btn.innerHTML = originalHtml; btn.disabled = false; }, 3000);
+            return;
+          }
         } catch (e) { console.error('Error al llamar miembro', s.id, e); }
         completed++;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Llamando ' + completed + '/' + withPhone.length;
@@ -3697,11 +3820,18 @@ app.get('/es', (req, res) => {
 
       for (const l of withPhone) {
         try {
-          await fetch('/kanchoai/api/v1/outbound/call-lead', {
+          const res = await fetch('/kanchoai/api/v1/outbound/call-lead', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ lead_id: l.id, school_id: currentSchoolId, phone: l.phone })
           });
+          const data = await res.json();
+          if (!data.success && data.error === 'insufficient_tokens') {
+            showTokenModal(data.balance, data.plan);
+            btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Detenido - Sin Tokens';
+            setTimeout(() => { btn.innerHTML = originalHtml; btn.disabled = false; }, 3000);
+            return;
+          }
         } catch (e) { console.error('Error al llamar prospecto', l.id, e); }
         completed++;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Llamando ' + completed + '/' + withPhone.length;
@@ -8386,6 +8516,71 @@ app.get('*', (req, res) => {
 
   </main>
 
+  <!-- ====== TOKEN PURCHASE / UPGRADE MODAL ====== -->
+  <div id="tokenModal" class="fixed inset-0 z-[200] hidden items-center justify-center" style="background:rgba(0,0,0,.75);backdrop-filter:blur(6px);">
+    <div class="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl w-[520px] max-w-[95vw] max-h-[90vh] overflow-y-auto p-8 relative" style="animation:modalIn .25s ease;">
+      <button onclick="closeTokenModal()" class="absolute top-3 right-4 text-gray-400 hover:text-white text-xl">&times;</button>
+      <div class="text-center mb-6">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/20 flex items-center justify-center">
+          <i class="fas fa-coins text-red-400 text-2xl"></i>
+        </div>
+        <h2 class="text-xl font-bold text-white">Out of Voice Minutes</h2>
+        <p class="text-gray-400 text-sm mt-2">Your token balance is <strong id="tokenModalBalance" class="text-red-400">0</strong>. You need tokens to make AI voice calls.</p>
+        <p class="text-gray-500 text-xs mt-1">Current plan: <strong id="tokenModalPlan" class="text-white">--</strong></p>
+      </div>
+      <div class="mb-6">
+        <h3 class="text-sm font-bold text-gray-300 uppercase tracking-wider mb-3"><i class="fas fa-shopping-cart mr-2 text-green-400"></i>Buy More Tokens</h3>
+        <div class="grid grid-cols-2 gap-3">
+          <button onclick="buyTokens('small')" class="p-3 bg-white/5 border border-[#2a2a2a] rounded-xl hover:border-green-500 transition text-left">
+            <div class="text-white font-bold">100 tokens</div>
+            <div class="text-gray-400 text-xs">20 minutes</div>
+            <div class="text-green-400 font-bold mt-1">$9</div>
+          </button>
+          <button onclick="buyTokens('medium')" class="p-3 bg-white/5 border border-[#2a2a2a] rounded-xl hover:border-green-500 transition text-left">
+            <div class="text-white font-bold">250 tokens</div>
+            <div class="text-gray-400 text-xs">50 minutes</div>
+            <div class="text-green-400 font-bold mt-1">$23</div>
+          </button>
+          <button onclick="buyTokens('large')" class="p-3 bg-white/5 border border-[#2a2a2a] rounded-xl hover:border-green-500 transition text-left relative">
+            <span class="absolute -top-2 -right-2 bg-kancho-coral text-white text-[10px] font-bold px-2 py-0.5 rounded-full">POPULAR</span>
+            <div class="text-white font-bold">600 tokens</div>
+            <div class="text-gray-400 text-xs">120 minutes</div>
+            <div class="text-green-400 font-bold mt-1">$54</div>
+          </button>
+          <button onclick="buyTokens('xl')" class="p-3 bg-white/5 border border-[#2a2a2a] rounded-xl hover:border-green-500 transition text-left">
+            <div class="text-white font-bold">1,300 tokens</div>
+            <div class="text-gray-400 text-xs">260 minutes</div>
+            <div class="text-green-400 font-bold mt-1">$117</div>
+          </button>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 mb-6">
+        <div class="flex-1 h-px bg-[#2a2a2a]"></div>
+        <span class="text-gray-500 text-xs uppercase tracking-wider">or save with a plan</span>
+        <div class="flex-1 h-px bg-[#2a2a2a]"></div>
+      </div>
+      <div>
+        <h3 class="text-sm font-bold text-gray-300 uppercase tracking-wider mb-3"><i class="fas fa-arrow-up mr-2 text-amber-400"></i>Upgrade Your Plan</h3>
+        <div class="space-y-3">
+          <button onclick="upgradePlan('starter')" id="upgPlanStarter" class="w-full p-4 bg-white/5 border border-[#2a2a2a] rounded-xl hover:border-amber-500 transition text-left flex items-center justify-between">
+            <div><div class="text-white font-bold">Starter</div><div class="text-gray-400 text-xs">500 tokens/mo (100 min) + rollover</div></div>
+            <div class="text-amber-400 font-bold">$97/mo</div>
+          </button>
+          <button onclick="upgradePlan('growth')" id="upgPlanGrowth" class="w-full p-4 bg-white/5 border border-[#2a2a2a] rounded-xl hover:border-amber-500 transition text-left flex items-center justify-between relative">
+            <span class="absolute -top-2 left-4 bg-kancho-coral text-white text-[10px] font-bold px-2 py-0.5 rounded-full">BEST VALUE</span>
+            <div><div class="text-white font-bold">Growth</div><div class="text-gray-400 text-xs">2,000 tokens/mo (400 min) + rollover</div></div>
+            <div class="text-amber-400 font-bold">$180/mo</div>
+          </button>
+          <button onclick="upgradePlan('professional')" id="upgPlanPro" class="w-full p-4 bg-white/5 border border-[#2a2a2a] rounded-xl hover:border-amber-500 transition text-left flex items-center justify-between">
+            <div><div class="text-white font-bold">Professional</div><div class="text-gray-400 text-xs">7,500 tokens/mo (1,500 min) + rollover</div></div>
+            <div class="text-amber-400 font-bold">$675/mo</div>
+          </button>
+        </div>
+      </div>
+      <p class="text-center text-gray-500 text-xs mt-5">5 tokens = 1 minute of AI voice. Unused tokens roll over on paid plans.</p>
+    </div>
+  </div>
+
   <!-- Footer -->
   <footer class="border-t border-kancho-dark-border bg-kancho-dark/95 mt-12 md:mt-20">
     <div class="max-w-7xl mx-auto px-4 md:px-6 py-10 md:py-16">
@@ -8959,7 +9154,9 @@ app.get('*', (req, res) => {
             btn.className = btn.className.replace('bg-green-500/20 text-green-400', 'bg-red-500/20 text-red-400');
           }, 3000);
         } else {
-          alert('Error: ' + (data.error || 'Failed to initiate call'));
+          if (!handleCallError(data)) {
+            alert('Error: ' + (data.error || 'Failed to initiate call'));
+          }
           btn.textContent = originalText;
           btn.disabled = false;
         }
@@ -9007,7 +9204,9 @@ app.get('*', (req, res) => {
             btn.className = btn.className.replace('bg-blue-500/20 text-blue-400', 'bg-green-500/20 text-green-400');
           }, 3000);
         } else {
-          alert('Error: ' + (data.error || 'Failed to initiate call'));
+          if (!handleCallError(data)) {
+            alert('Error: ' + (data.error || 'Failed to initiate call'));
+          }
           btn.textContent = originalText;
           btn.disabled = false;
         }
@@ -9017,6 +9216,75 @@ app.get('*', (req, res) => {
         btn.textContent = originalText;
         btn.disabled = false;
       }
+    }
+
+    // ==================== TOKEN MODAL FUNCTIONS ====================
+    function showTokenModal(balance, plan) {
+      const modal = document.getElementById('tokenModal');
+      document.getElementById('tokenModalBalance').textContent = balance || 0;
+      document.getElementById('tokenModalPlan').textContent = (plan || 'free').charAt(0).toUpperCase() + (plan || 'free').slice(1);
+
+      // Hide current plan from upgrade options
+      const plans = ['starter', 'growth', 'professional'];
+      const currentIdx = plans.indexOf(plan || 'free');
+      document.getElementById('upgPlanStarter').style.display = currentIdx >= 0 ? 'none' : '';
+      document.getElementById('upgPlanGrowth').style.display = currentIdx >= 1 ? 'none' : '';
+      document.getElementById('upgPlanPro').style.display = currentIdx >= 2 ? 'none' : '';
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeTokenModal() {
+      const modal = document.getElementById('tokenModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    async function buyTokens(pkg) {
+      try {
+        const res = await fetch('/kanchoai/api/v1/bridge/billing/purchase-tokens', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('kancho_bridge_token') || '') },
+          body: JSON.stringify({ package: pkg })
+        });
+        const data = await res.json();
+        if (data.success && data.data?.checkoutUrl) {
+          window.location.href = data.data.checkoutUrl;
+        } else {
+          alert(data.error || 'Failed to create checkout session');
+        }
+      } catch (e) {
+        console.error('buyTokens error:', e);
+        alert('Failed to connect to payment system');
+      }
+    }
+
+    async function upgradePlan(plan) {
+      try {
+        const res = await fetch('/kanchoai/api/v1/bridge/billing/upgrade', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('kancho_bridge_token') || '') },
+          body: JSON.stringify({ plan, billing: 'monthly' })
+        });
+        const data = await res.json();
+        if (data.success && data.data?.checkoutUrl) {
+          window.location.href = data.data.checkoutUrl;
+        } else {
+          alert(data.error || 'Failed to create upgrade session');
+        }
+      } catch (e) {
+        console.error('upgradePlan error:', e);
+        alert('Failed to connect to payment system');
+      }
+    }
+
+    function handleCallError(data) {
+      if (data.error === 'insufficient_tokens') {
+        showTokenModal(data.balance, data.plan);
+        return true;
+      }
+      return false;
     }
 
     // ==================== CALL ALL FUNCTIONS ====================
@@ -9036,11 +9304,18 @@ app.get('*', (req, res) => {
 
       for (const s of withPhone) {
         try {
-          await fetch('/kanchoai/api/v1/outbound/call-member', {
+          const res = await fetch('/kanchoai/api/v1/outbound/call-member', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ student_id: s.id, school_id: currentSchoolId, phone: s.phone })
           });
+          const data = await res.json();
+          if (!data.success && data.error === 'insufficient_tokens') {
+            showTokenModal(data.balance, data.plan);
+            btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Stopped - No Tokens';
+            setTimeout(() => { btn.innerHTML = originalHtml; btn.disabled = false; }, 3000);
+            return;
+          }
         } catch (e) { console.error('Failed to call member', s.id, e); }
         completed++;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Calling ' + completed + '/' + withPhone.length;
@@ -9068,11 +9343,18 @@ app.get('*', (req, res) => {
 
       for (const l of withPhone) {
         try {
-          await fetch('/kanchoai/api/v1/outbound/call-lead', {
+          const res = await fetch('/kanchoai/api/v1/outbound/call-lead', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ lead_id: l.id, school_id: currentSchoolId, phone: l.phone })
           });
+          const data = await res.json();
+          if (!data.success && data.error === 'insufficient_tokens') {
+            showTokenModal(data.balance, data.plan);
+            btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Stopped - No Tokens';
+            setTimeout(() => { btn.innerHTML = originalHtml; btn.disabled = false; }, 3000);
+            return;
+          }
         } catch (e) { console.error('Failed to call lead', l.id, e); }
         completed++;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Calling ' + completed + '/' + withPhone.length;

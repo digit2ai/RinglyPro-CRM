@@ -11,7 +11,7 @@ try { crmBridge = require('../../config/crm-bridge'); } catch (e) { console.log(
 
 const SUBSCRIPTION_PLANS = {
   free: { name: 'Free', price: 0, tokens: 100, minutes: 20, features: ['Basic dashboard', '20 AI voice minutes/month', 'Health score monitoring'] },
-  starter: { name: 'Starter', price: 45, tokens: 500, minutes: 100, features: ['100 AI voice minutes/month', 'CRM + contacts', 'Lead management', 'Token rollover'] },
+  starter: { name: 'Starter', price: 97, tokens: 500, minutes: 100, features: ['100 AI voice minutes/month', 'CRM + contacts', 'Lead management', 'Token rollover'] },
   growth: { name: 'Growth', price: 180, tokens: 2000, minutes: 400, features: ['400 AI voice minutes/month', 'AI churn detection', 'Automated retention campaigns', 'Email marketing', 'Token rollover'] },
   professional: { name: 'Professional', price: 675, tokens: 7500, minutes: 1500, features: ['1,500 AI voice minutes/month', 'Outbound AI dialer', 'Priority support', 'Custom integrations', 'Token rollover'] }
 };
@@ -150,6 +150,80 @@ router.post('/upgrade', async (req, res) => {
     console.error('KanchoAI Bridge Upgrade error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
+});
+
+// POST /purchase-tokens - One-time token top-up via Stripe
+const TOKEN_PACKAGES = {
+  small:  { tokens: 100,  price: 9,   minutes: 20,  label: '100 tokens (20 min)' },
+  medium: { tokens: 250,  price: 23,  minutes: 50,  label: '250 tokens (50 min)' },
+  large:  { tokens: 600,  price: 54,  minutes: 120, label: '600 tokens (120 min)' },
+  xl:     { tokens: 1300, price: 117, minutes: 260, label: '1,300 tokens (260 min)' }
+};
+
+router.post('/purchase-tokens', async (req, res) => {
+  if (!crmBridge?.ready) return res.status(503).json({ success: false, error: 'CRM bridge not available' });
+
+  try {
+    const { package: pkg } = req.body;
+
+    if (!pkg || !TOKEN_PACKAGES[pkg]) {
+      return res.status(400).json({ success: false, error: 'Invalid package. Choose: small, medium, large, or xl', packages: TOKEN_PACKAGES });
+    }
+
+    const user = await crmBridge.User.findByPk(req.userId);
+    if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return res.status(503).json({ success: false, error: 'Payment system not configured' });
+    }
+
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    const pkgDetails = TOKEN_PACKAGES[pkg];
+    const webhookBaseUrl = process.env.WEBHOOK_BASE_URL || 'https://aiagent.ringlypro.com';
+
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      payment_method_types: ['card'],
+      customer_email: user.email,
+      line_items: [{
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: `KanchoAI Token Top-Up: ${pkgDetails.label}`,
+            description: `${pkgDetails.tokens} tokens = ${pkgDetails.minutes} minutes of AI voice`
+          },
+          unit_amount: pkgDetails.price * 100
+        },
+        quantity: 1
+      }],
+      metadata: {
+        userId: user.id.toString(),
+        schoolId: req.schoolId?.toString() || '',
+        tokens: pkgDetails.tokens.toString(),
+        package: pkg,
+        source: 'kanchoai_topup'
+      },
+      success_url: `${webhookBaseUrl}/kanchoai/?topup=success&tokens=${pkgDetails.tokens}`,
+      cancel_url: `${webhookBaseUrl}/kanchoai/?topup=cancelled`
+    });
+
+    res.json({
+      success: true,
+      data: {
+        checkoutUrl: session.url,
+        sessionId: session.id,
+        package: pkgDetails
+      }
+    });
+  } catch (error) {
+    console.error('KanchoAI Token Purchase error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// GET /packages - Available token top-up packages
+router.get('/packages', (req, res) => {
+  res.json({ success: true, data: TOKEN_PACKAGES });
 });
 
 module.exports = router;

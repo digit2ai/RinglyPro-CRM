@@ -5,9 +5,50 @@ const express = require('express');
 const router = express.Router();
 
 // ElevenLabs Agent Configuration
-// Using the same agent for now - can be changed to a dedicated outbound agent later
 const KANCHO_AGENT_ID = process.env.KANCHO_ELEVENLABS_AGENT_ID || 'agent_01jk1bzp62e1p4gs4n68p67fs8';
 const KANCHO_PHONE_NUMBER_ID = process.env.KANCHO_ELEVENLABS_PHONE_NUMBER_ID;
+
+// CRM Bridge for token balance checks
+let crmBridge;
+try { crmBridge = require('../../config/crm-bridge'); } catch (e) { console.log('CRM Bridge not loaded for outbound:', e.message); }
+
+const TOKENS_PER_CALL = 5; // 5 tokens = ~1 minute of voice
+
+async function checkAndDeductTokens(school) {
+  if (!crmBridge?.ready) return { ok: true }; // Skip if bridge not available
+
+  try {
+    // Find the RinglyPro user linked to this school
+    const userId = school.ringlypro_user_id;
+    if (!userId) return { ok: true }; // No linked user, allow call
+
+    const user = await crmBridge.User.findByPk(userId);
+    if (!user) return { ok: true };
+
+    const balance = user.tokens_balance || 0;
+    if (balance < TOKENS_PER_CALL) {
+      return {
+        ok: false,
+        error: 'insufficient_tokens',
+        balance,
+        needed: TOKENS_PER_CALL,
+        plan: user.subscription_plan || 'free',
+        message: `Insufficient tokens. Balance: ${balance}, need ${TOKENS_PER_CALL}. Please purchase more tokens or upgrade your plan.`
+      };
+    }
+
+    // Deduct tokens
+    await user.update({
+      tokens_balance: user.tokens_balance - TOKENS_PER_CALL,
+      tokens_used_this_month: (user.tokens_used_this_month || 0) + TOKENS_PER_CALL
+    });
+
+    return { ok: true, newBalance: user.tokens_balance - TOKENS_PER_CALL };
+  } catch (e) {
+    console.error('Token check error (allowing call):', e.message);
+    return { ok: true }; // On error, allow call to not block service
+  }
+}
 
 module.exports = (models) => {
   const { KanchoSchool, KanchoStudent, KanchoLead, KanchoAiCall } = models;
@@ -72,6 +113,19 @@ module.exports = (models) => {
         return res.status(400).json({
           success: false,
           error: 'Calls can only be made between 8AM-8PM EST (TCPA compliance)'
+        });
+      }
+
+      // Check token balance before making the call
+      const tokenCheck = await checkAndDeductTokens(school);
+      if (!tokenCheck.ok) {
+        return res.status(402).json({
+          success: false,
+          error: tokenCheck.error,
+          balance: tokenCheck.balance,
+          needed: tokenCheck.needed,
+          plan: tokenCheck.plan,
+          message: tokenCheck.message
         });
       }
 
@@ -217,6 +271,19 @@ module.exports = (models) => {
         return res.status(400).json({
           success: false,
           error: 'Calls can only be made between 8AM-8PM EST (TCPA compliance)'
+        });
+      }
+
+      // Check token balance before making the call
+      const tokenCheck = await checkAndDeductTokens(school);
+      if (!tokenCheck.ok) {
+        return res.status(402).json({
+          success: false,
+          error: tokenCheck.error,
+          balance: tokenCheck.balance,
+          needed: tokenCheck.needed,
+          plan: tokenCheck.plan,
+          message: tokenCheck.message
         });
       }
 
