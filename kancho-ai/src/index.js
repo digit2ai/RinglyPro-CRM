@@ -2682,7 +2682,7 @@ app.get('/es', (req, res) => {
           <p class="text-gray-400 max-w-3xl mx-auto text-base md:text-lg">KanchoAI es la plataforma oficial de IA de Ronin Brotherhood LLC — una federación de más de 1,000 cinturones negros de 28 países, unidos por cinco organizaciones y siete virtudes fundamentales.</p>
         </div>
 
-        <div class="rounded-2xl overflow-hidden mb-12 max-w-5xl mx-auto">
+        <div class="mb-12">
           <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69988b7cdf9bdf9e185fd2e7.jpg" alt="Ronin Brotherhood" class="w-full" style="display:block;">
         </div>
 
@@ -2743,7 +2743,7 @@ app.get('/es', (req, res) => {
           </div>
         </div>
 
-        <div class="rounded-2xl overflow-hidden mb-12 max-w-5xl mx-auto relative">
+        <div class="mb-12 relative">
           <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69988baf3a2afd1f8d5b1110.jpg" alt="Entrenamiento Táctico RPDTA" class="w-full" style="display:block;">
           <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30 flex items-end p-8">
             <div>
@@ -2788,15 +2788,14 @@ app.get('/es', (req, res) => {
         </div>
       </div>
 
-      <div class="mt-16 rounded-2xl overflow-hidden max-w-5xl mx-auto relative">
-        <div class="absolute inset-0 z-10">
+      <div class="mt-16 relative">
+        <div class="absolute inset-0 z-10 pointer-events-none">
           <span class="absolute top-3 left-3 w-6 h-6 border-t-2 border-l-2 border-kancho-coral"></span>
           <span class="absolute top-3 right-3 w-6 h-6 border-t-2 border-r-2 border-kancho-coral"></span>
           <span class="absolute bottom-3 left-3 w-6 h-6 border-b-2 border-l-2 border-kancho-coral"></span>
           <span class="absolute bottom-3 right-3 w-6 h-6 border-b-2 border-r-2 border-kancho-coral"></span>
         </div>
         <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699789283873afd1a0b1898d.jpg" alt="Ronin Brotherhood" class="w-full" style="display:block;">
-        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
       </div>
 
       <!-- Trial Class Booking Section -->
@@ -6285,7 +6284,7 @@ app.get('*', (req, res) => {
         </div>
 
         <!-- Partnership Banner Image -->
-        <div class="rounded-2xl overflow-hidden mb-12 max-w-5xl mx-auto">
+        <div class="mb-12">
           <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69988b7cdf9bdf9e185fd2e7.jpg" alt="Ronin Brotherhood" class="w-full" style="display:block;">
         </div>
 
