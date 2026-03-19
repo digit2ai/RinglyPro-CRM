@@ -2886,7 +2886,7 @@ app.get('/es', (req, res) => {
               <h3 class="text-xl font-bold mb-2">Llamadas Entrantes IA</h3>
               <p class="text-gray-400 text-sm mb-4">Para Pequeños Negocios</p>
               <div class="flex items-baseline justify-center gap-1">
-                <span class="text-4xl font-bold text-kancho">$45</span>
+                <span class="text-4xl font-bold text-kancho">$97</span>
                 <span class="text-gray-400">/mes</span>
               </div>
               <p class="text-gray-500 text-xs mt-1">500 tokens/mes &bull; 100 minutos de voz</p>
@@ -6169,7 +6169,7 @@ app.get('*', (req, res) => {
               <h3 class="text-xl font-bold mb-2">Inbound Call Handling</h3>
               <p class="text-gray-400 text-sm mb-4">For Small Businesses</p>
               <div class="flex items-baseline justify-center gap-1">
-                <span class="text-4xl font-bold text-kancho">$45</span>
+                <span class="text-4xl font-bold text-kancho">$97</span>
                 <span class="text-gray-400">/month</span>
               </div>
               <p class="text-gray-500 text-xs mt-1">500 tokens/month &bull; 100 minutes of voice</p>
