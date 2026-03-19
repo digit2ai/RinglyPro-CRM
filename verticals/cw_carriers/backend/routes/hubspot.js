@@ -6,6 +6,14 @@ const auth = require('../middleware/auth.cw');
 
 router.use(auth);
 
+// DELETE /contacts/:id - delete a HubSpot contact
+router.delete('/contacts/:id', async (req, res) => {
+  try {
+    const result = await hubspot.deleteContact(req.params.id);
+    res.json(result);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // POST /sync/contact - push contact to HubSpot
 router.post('/sync/contact', async (req, res) => {
   try {
