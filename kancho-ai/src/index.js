@@ -2706,7 +2706,7 @@ app.get('/es', (req, res) => {
         </div>
 
         <div class="rounded-2xl overflow-hidden mb-12 max-w-5xl mx-auto">
-          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69988b7cdf9bdf9e185fd2e7.jpg" alt="Ronin Brotherhood" class="w-full object-cover" style="max-height:400px;">
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69988b7cdf9bdf9e185fd2e7.jpg" alt="Ronin Brotherhood" class="w-full" style="display:block;">
         </div>
 
         <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-12 max-w-4xl mx-auto">
@@ -6309,7 +6309,7 @@ app.get('*', (req, res) => {
 
         <!-- Partnership Banner Image -->
         <div class="rounded-2xl overflow-hidden mb-12 max-w-5xl mx-auto">
-          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69988b7cdf9bdf9e185fd2e7.jpg" alt="Ronin Brotherhood" class="w-full object-cover" style="max-height:400px;">
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69988b7cdf9bdf9e185fd2e7.jpg" alt="Ronin Brotherhood" class="w-full" style="display:block;">
         </div>
 
         <!-- Stats Bar -->
