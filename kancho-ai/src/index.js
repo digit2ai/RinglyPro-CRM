@@ -2695,11 +2695,93 @@ app.get('/es', (req, res) => {
         </div>
       </div>
 
+      <!-- ====== ALIANZA RONIN BROTHERHOOD ====== -->
+      <div class="mt-16 pt-16 border-t border-kancho-dark-border">
+        <div class="text-center mb-12">
+          <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-kancho-coral/30 bg-kancho-coral/10 text-kancho text-sm font-semibold mb-6 tracking-wider uppercase">
+            <i class="fas fa-handshake"></i> Alianza Oficial
+          </div>
+          <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 mobile-title">Respaldado por la <span class="text-kancho">Ronin Brotherhood</span></h2>
+          <p class="text-gray-400 max-w-3xl mx-auto text-base md:text-lg">KanchoAI es la plataforma oficial de IA de Ronin Brotherhood LLC — una federación de más de 1,000 cinturones negros de 28 países, unidos por cinco organizaciones y siete virtudes fundamentales.</p>
+        </div>
+
+        <div class="rounded-2xl overflow-hidden mb-12 max-w-5xl mx-auto">
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69988b7cdf9bdf9e185fd2e7.jpg" alt="Ronin Brotherhood" class="w-full object-cover" style="max-height:400px;">
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-12 max-w-4xl mx-auto">
+          <div class="text-center p-4"><p class="text-2xl md:text-3xl font-bold text-kancho">1,000+</p><p class="text-gray-400 text-xs uppercase tracking-wider mt-1">Cinturones Negros</p></div>
+          <div class="text-center p-4"><p class="text-2xl md:text-3xl font-bold text-kancho">28</p><p class="text-gray-400 text-xs uppercase tracking-wider mt-1">Países</p></div>
+          <div class="text-center p-4"><p class="text-2xl md:text-3xl font-bold text-kancho">5</p><p class="text-gray-400 text-xs uppercase tracking-wider mt-1">Organizaciones</p></div>
+          <div class="text-center p-4"><p class="text-2xl md:text-3xl font-bold text-kancho">392</p><p class="text-gray-400 text-xs uppercase tracking-wider mt-1">Podios en Torneos</p></div>
+          <div class="text-center p-4 col-span-2 md:col-span-1"><p class="text-2xl md:text-3xl font-bold text-kancho">5x</p><p class="text-gray-400 text-xs uppercase tracking-wider mt-1">Campeón Mundial</p></div>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-center gap-6 md:gap-10 mb-12">
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b39598d2686ce37d70.png" alt="RGRK" class="h-16 md:h-24 object-contain opacity-80 hover:opacity-100 transition">
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b3d0716b0a0f318067.png" alt="IRMAF" class="h-16 md:h-24 object-contain opacity-80 hover:opacity-100 transition">
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b3590acbe25cb7ea01.png" alt="RPDTA" class="h-16 md:h-24 object-contain opacity-80 hover:opacity-100 transition">
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b33eba040ffb3bdda3.png" alt="Red Belt Society" class="h-16 md:h-24 object-contain opacity-80 hover:opacity-100 transition">
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c6731a083025db8a56531.png" alt="Ronin MMA" class="h-16 md:h-24 object-contain opacity-80 hover:opacity-100 transition">
+        </div>
+
+        <h3 class="text-2xl font-bold text-center mb-8">Nuestras <span class="text-kancho">Organizaciones</span></h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-12 max-w-6xl mx-auto">
+          <div class="bg-white/5 border border-[#2a2a2a] rounded-xl p-6 hover:border-kancho-coral transition">
+            <p class="text-kancho text-xs font-bold tracking-wider mb-1">RGRK</p>
+            <h4 class="font-bold text-lg mb-2">Ronin Goju Ryu Kai</h4>
+            <p class="text-gray-400 text-sm">Sistema académico de autodefensa basado en las tradiciones del karate de Okinawa y Japón.</p>
+            <div class="flex gap-4 mt-3 text-xs text-gray-500"><span>16 países</span><span>600+ miembros</span><span>Fundada en 2000</span></div>
+          </div>
+          <div class="bg-white/5 border border-[#2a2a2a] rounded-xl p-6 hover:border-kancho-coral transition">
+            <p class="text-kancho text-xs font-bold tracking-wider mb-1">IRMAF</p>
+            <h4 class="font-bold text-lg mb-2">Federación Internacional Ronin de Artes Marciales</h4>
+            <p class="text-gray-400 text-sm">Federación general de artes marciales que da la bienvenida a practicantes de todas las disciplinas.</p>
+            <div class="flex gap-4 mt-3 text-xs text-gray-500"><span>28 países</span><span>1,000+ miembros</span></div>
+          </div>
+          <div class="bg-white/5 border border-[#2a2a2a] rounded-xl p-6 hover:border-kancho-coral transition">
+            <p class="text-kancho text-xs font-bold tracking-wider mb-1">RPDTA</p>
+            <h4 class="font-bold text-lg mb-2">Tácticas Defensivas Policiales Ronin</h4>
+            <p class="text-gray-400 text-sm">Entrenamiento táctico de élite para fuerzas del orden, militares y profesionales de inteligencia. Solo por invitación.</p>
+            <div class="flex gap-4 mt-3 text-xs text-gray-500"><span>8 países</span><span>150+ miembros</span><span>Requiere Autorización</span></div>
+          </div>
+          <div class="bg-white/5 border border-[#2a2a2a] rounded-xl p-6 hover:border-kancho-coral transition">
+            <p class="text-kancho text-xs font-bold tracking-wider mb-1">RBS</p>
+            <h4 class="font-bold text-lg mb-2">Sociedad Red Belt</h4>
+            <p class="text-gray-400 text-sm">Sociedad exclusiva para maestros con 4to Dan de Cinturón Negro (Yondan) o superior.</p>
+            <div class="flex gap-4 mt-3 text-xs text-gray-500"><span>20 países</span><span>100+ maestros</span></div>
+            <a href="https://aiagent.ringlypro.com/ronin/red-belt-society" target="_blank" class="inline-flex items-center gap-1 mt-3 text-kancho text-xs font-semibold hover:underline"><i class="fas fa-external-link-alt"></i> Más Información</a>
+          </div>
+          <div class="bg-white/5 border border-[#2a2a2a] rounded-xl p-6 hover:border-kancho-coral transition">
+            <p class="text-kancho text-xs font-bold tracking-wider mb-1">MMA</p>
+            <h4 class="font-bold text-lg mb-2">Ronin Artes Marciales Mixtas Internacional</h4>
+            <p class="text-gray-400 text-sm">Conectando las artes marciales tradicionales con la competencia moderna de MMA.</p>
+            <div class="flex gap-4 mt-3 text-xs text-gray-500"><span>12 países</span><span>200+ peleadores</span></div>
+          </div>
+          <div class="bg-white/5 border border-kancho-coral/40 rounded-xl p-6 hover:border-kancho-coral transition">
+            <p class="text-xs font-bold tracking-wider mb-1" style="color:#E85A4F;">AI</p>
+            <h4 class="font-bold text-lg mb-2">KanchoAI</h4>
+            <p class="text-gray-400 text-sm">Plataforma de gestión de dojos con IA. Automatiza horarios, seguimiento de estudiantes, progresión de cinturones y servicio al cliente con voz IA.</p>
+            <div class="flex gap-4 mt-3 text-xs text-gray-500"><span>Gestión de Dojos</span><span>Agentes de Voz IA</span><span>Analítica</span></div>
+          </div>
+        </div>
+
+        <div class="rounded-2xl overflow-hidden mb-12 max-w-5xl mx-auto relative">
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69988baf3a2afd1f8d5b1110.jpg" alt="Entrenamiento Táctico RPDTA" class="w-full object-cover" style="max-height:350px;">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30 flex items-end p-8">
+            <div>
+              <h3 class="text-2xl font-bold text-white">Entrenamiento Táctico RPDTA</h3>
+              <p class="text-gray-300 text-sm mt-1">Programas profesionales para fuerzas del orden y militares</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Nuestros Programas -->
       <div class="mt-16 pt-16 border-t border-kancho-dark-border">
         <div class="text-center mb-12">
           <h2 class="text-2xl sm:text-3xl font-bold mb-3 md:mb-4 mobile-title">Explora Nuestros <span class="text-kancho">Programas</span></h2>
-          <p class="text-gray-400 max-w-2xl mx-auto">Entrenamiento de artes marciales de clase mundial para todas las edades y niveles.</p>
+          <p class="text-gray-400 max-w-2xl mx-auto">Programas de entrenamiento ofrecidos a través de la Federación Ronin Brotherhood.</p>
         </div>
         <div id="classesGridEs" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5 max-w-7xl mx-auto mobile-value-props">
           <div class="text-center col-span-full py-8">
@@ -2707,6 +2789,37 @@ app.get('/es', (req, res) => {
             <p class="text-gray-400">Cargando clases...</p>
           </div>
         </div>
+      </div>
+
+      <!-- Fundador -->
+      <div class="mt-16 pt-16 border-t border-kancho-dark-border">
+        <div class="max-w-4xl mx-auto">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+            <div class="relative">
+              <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699787bc8523c56965e1b789.jpg" alt="Carlos Montalvo - Fundador" class="rounded-xl w-full shadow-2xl shadow-kancho-coral/10">
+            </div>
+            <div>
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/30 text-amber-400 text-xs font-semibold mb-4 tracking-wider uppercase">5x Campeón Mundial</div>
+              <h3 class="text-3xl font-bold mb-2">Carlos Montalvo</h3>
+              <p class="text-kancho font-semibold text-sm mb-1">Fundador de Ronin Brotherhood</p>
+              <p class="text-gray-500 text-xs mb-4">Gran Maestro &bull; San Sebastián, Puerto Rico</p>
+              <p class="text-gray-400 text-sm leading-relaxed mb-3">Carlos comenzó su carrera en las Artes Marciales durante sus primeros años de escuela intermedia en la Ciudad de San Sebastián, Puerto Rico, donde su padre fue el ex Jefe de Policía de la Ciudad.</p>
+              <p class="text-gray-400 text-sm leading-relaxed">Practicó primero Karate y Tae Kwon Do (1969) por un corto período en el Club 4-H cerca de su casa. Luego practicó el estilo chino de Shaolin Tsu Kempo.</p>
+              <a href="https://aiagent.ringlypro.com/ronin/es" target="_blank" class="inline-flex items-center gap-2 mt-5 text-kancho font-semibold text-sm hover:underline"><i class="fas fa-external-link-alt"></i> Visitar Ronin Brotherhood</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-16 rounded-2xl overflow-hidden max-w-5xl mx-auto relative">
+        <div class="absolute inset-0 z-10">
+          <span class="absolute top-3 left-3 w-6 h-6 border-t-2 border-l-2 border-kancho-coral"></span>
+          <span class="absolute top-3 right-3 w-6 h-6 border-t-2 border-r-2 border-kancho-coral"></span>
+          <span class="absolute bottom-3 left-3 w-6 h-6 border-b-2 border-l-2 border-kancho-coral"></span>
+          <span class="absolute bottom-3 right-3 w-6 h-6 border-b-2 border-r-2 border-kancho-coral"></span>
+        </div>
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699789283873afd1a0b1898d.jpg" alt="Ronin Brotherhood" class="w-full object-cover" style="max-height:350px;">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
       </div>
 
       <!-- Onboarding Section -->
@@ -6183,11 +6296,99 @@ app.get('*', (req, res) => {
         </div>
       </div>
 
-      <!-- Our Programs Section -->
+      <!-- ====== RONIN BROTHERHOOD PARTNERSHIP ====== -->
+      <div class="mt-16 pt-16 border-t border-kancho-dark-border">
+        <!-- Partnership Announcement -->
+        <div class="text-center mb-12">
+          <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-kancho-coral/30 bg-kancho-coral/10 text-kancho text-sm font-semibold mb-6 tracking-wider uppercase">
+            <i class="fas fa-handshake"></i> Official Partnership
+          </div>
+          <h2 class="text-3xl md:text-4xl font-bold mb-4">Powered by the <span class="text-kancho">Ronin Brotherhood</span></h2>
+          <p class="text-gray-400 max-w-3xl mx-auto text-lg">KanchoAI is the official AI platform of Ronin Brotherhood LLC — a federation of over 1,000 black belts from 28 countries, united by five distinct organizations and seven core virtues.</p>
+        </div>
+
+        <!-- Partnership Banner Image -->
+        <div class="rounded-2xl overflow-hidden mb-12 max-w-5xl mx-auto">
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69988b7cdf9bdf9e185fd2e7.jpg" alt="Ronin Brotherhood" class="w-full object-cover" style="max-height:400px;">
+        </div>
+
+        <!-- Stats Bar -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-12 max-w-4xl mx-auto">
+          <div class="text-center p-4"><p class="text-2xl md:text-3xl font-bold text-kancho">1,000+</p><p class="text-gray-400 text-xs uppercase tracking-wider mt-1">Black Belts</p></div>
+          <div class="text-center p-4"><p class="text-2xl md:text-3xl font-bold text-kancho">28</p><p class="text-gray-400 text-xs uppercase tracking-wider mt-1">Countries</p></div>
+          <div class="text-center p-4"><p class="text-2xl md:text-3xl font-bold text-kancho">5</p><p class="text-gray-400 text-xs uppercase tracking-wider mt-1">Organizations</p></div>
+          <div class="text-center p-4"><p class="text-2xl md:text-3xl font-bold text-kancho">392</p><p class="text-gray-400 text-xs uppercase tracking-wider mt-1">Tournament Placements</p></div>
+          <div class="text-center p-4 col-span-2 md:col-span-1"><p class="text-2xl md:text-3xl font-bold text-kancho">5x</p><p class="text-gray-400 text-xs uppercase tracking-wider mt-1">World Champion</p></div>
+        </div>
+
+        <!-- Organization Logos Strip -->
+        <div class="flex flex-wrap items-center justify-center gap-6 md:gap-10 mb-12">
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b39598d2686ce37d70.png" alt="RGRK" class="h-16 md:h-24 object-contain opacity-80 hover:opacity-100 transition">
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b3d0716b0a0f318067.png" alt="IRMAF" class="h-16 md:h-24 object-contain opacity-80 hover:opacity-100 transition">
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b3590acbe25cb7ea01.png" alt="RPDTA" class="h-16 md:h-24 object-contain opacity-80 hover:opacity-100 transition">
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c63b33eba040ffb3bdda3.png" alt="Red Belt Society" class="h-16 md:h-24 object-contain opacity-80 hover:opacity-100 transition">
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699c6731a083025db8a56531.png" alt="Ronin MMA" class="h-16 md:h-24 object-contain opacity-80 hover:opacity-100 transition">
+        </div>
+
+        <!-- Organizations Grid -->
+        <h3 class="text-2xl font-bold text-center mb-8">Our <span class="text-kancho">Organizations</span></h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-12 max-w-6xl mx-auto">
+          <div class="bg-white/5 border border-[#2a2a2a] rounded-xl p-6 hover:border-kancho-coral transition">
+            <p class="text-kancho text-xs font-bold tracking-wider mb-1">RGRK</p>
+            <h4 class="font-bold text-lg mb-2">Ronin Goju Ryu Kai</h4>
+            <p class="text-gray-400 text-sm">Empty hand based academic system of self-defense focused on Okinawan and Japanese karate traditions.</p>
+            <div class="flex gap-4 mt-3 text-xs text-gray-500"><span>16 countries</span><span>600+ members</span><span>Founded 2000</span></div>
+          </div>
+          <div class="bg-white/5 border border-[#2a2a2a] rounded-xl p-6 hover:border-kancho-coral transition">
+            <p class="text-kancho text-xs font-bold tracking-wider mb-1">IRMAF</p>
+            <h4 class="font-bold text-lg mb-2">International Ronin Martial Arts Federation</h4>
+            <p class="text-gray-400 text-sm">General martial arts federation welcoming practitioners from all traditional and modern disciplines.</p>
+            <div class="flex gap-4 mt-3 text-xs text-gray-500"><span>28 countries</span><span>1,000+ members</span></div>
+          </div>
+          <div class="bg-white/5 border border-[#2a2a2a] rounded-xl p-6 hover:border-kancho-coral transition">
+            <p class="text-kancho text-xs font-bold tracking-wider mb-1">RPDTA</p>
+            <h4 class="font-bold text-lg mb-2">Ronin Police Defensive Tactics</h4>
+            <p class="text-gray-400 text-sm">Elite tactical training for law enforcement, military, and intelligence professionals. Invitation only.</p>
+            <div class="flex gap-4 mt-3 text-xs text-gray-500"><span>8 countries</span><span>150+ members</span><span>Clearance Required</span></div>
+          </div>
+          <div class="bg-white/5 border border-[#2a2a2a] rounded-xl p-6 hover:border-kancho-coral transition">
+            <p class="text-kancho text-xs font-bold tracking-wider mb-1">RBS</p>
+            <h4 class="font-bold text-lg mb-2">Red Belt Society</h4>
+            <p class="text-gray-400 text-sm">Exclusive society for masters holding 4th Degree Black Belt (Yondan) and above.</p>
+            <div class="flex gap-4 mt-3 text-xs text-gray-500"><span>20 countries</span><span>100+ masters</span></div>
+            <a href="https://aiagent.ringlypro.com/ronin/red-belt-society" target="_blank" class="inline-flex items-center gap-1 mt-3 text-kancho text-xs font-semibold hover:underline"><i class="fas fa-external-link-alt"></i> Learn More</a>
+          </div>
+          <div class="bg-white/5 border border-[#2a2a2a] rounded-xl p-6 hover:border-kancho-coral transition">
+            <p class="text-kancho text-xs font-bold tracking-wider mb-1">MMA</p>
+            <h4 class="font-bold text-lg mb-2">Ronin Mixed Martial Arts International</h4>
+            <p class="text-gray-400 text-sm">Bridging traditional martial arts with modern MMA competition.</p>
+            <div class="flex gap-4 mt-3 text-xs text-gray-500"><span>12 countries</span><span>200+ fighters</span></div>
+          </div>
+          <div class="bg-white/5 border border-kancho-coral/40 rounded-xl p-6 hover:border-kancho-coral transition">
+            <p class="text-xs font-bold tracking-wider mb-1" style="color:#E85A4F;">AI</p>
+            <h4 class="font-bold text-lg mb-2">KanchoAI</h4>
+            <p class="text-gray-400 text-sm">AI-powered dojo management platform. Automate scheduling, student tracking, belt progressions, and voice-powered customer service.</p>
+            <div class="flex gap-4 mt-3 text-xs text-gray-500"><span>Dojo Management</span><span>AI Voice Agents</span><span>Analytics</span></div>
+          </div>
+        </div>
+
+        <!-- RPDTA Training Banner -->
+        <div class="rounded-2xl overflow-hidden mb-12 max-w-5xl mx-auto relative">
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69988baf3a2afd1f8d5b1110.jpg" alt="RPDTA Tactical Training" class="w-full object-cover" style="max-height:350px;">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30 flex items-end p-8">
+            <div>
+              <h3 class="text-2xl font-bold text-white">RPDTA Tactical Training</h3>
+              <p class="text-gray-300 text-sm mt-1">Professional law enforcement and military training programs</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Our Programs Section (Ronin Training) -->
       <div class="mt-16 pt-16 border-t border-kancho-dark-border">
         <div class="text-center mb-12">
           <h2 class="text-3xl font-bold mb-4">Explore Our <span class="text-kancho">Programs</span></h2>
-          <p class="text-gray-400 max-w-2xl mx-auto">World-class martial arts training for all ages and skill levels.</p>
+          <p class="text-gray-400 max-w-2xl mx-auto">Training programs offered through the Ronin Brotherhood Federation.</p>
         </div>
         <div id="classesGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5 max-w-7xl mx-auto">
           <div class="text-center col-span-full py-8">
@@ -6195,6 +6396,38 @@ app.get('*', (req, res) => {
             <p class="text-gray-400">Loading classes...</p>
           </div>
         </div>
+      </div>
+
+      <!-- Founder Section -->
+      <div class="mt-16 pt-16 border-t border-kancho-dark-border">
+        <div class="max-w-4xl mx-auto">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+            <div class="relative">
+              <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699787bc8523c56965e1b789.jpg" alt="Carlos Montalvo - Founder" class="rounded-xl w-full shadow-2xl shadow-kancho-coral/10">
+            </div>
+            <div>
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/30 text-amber-400 text-xs font-semibold mb-4 tracking-wider uppercase">5x World Champion</div>
+              <h3 class="text-3xl font-bold mb-2">Carlos Montalvo</h3>
+              <p class="text-kancho font-semibold text-sm mb-1">Founder of Ronin Brotherhood</p>
+              <p class="text-gray-500 text-xs mb-4">Grandmaster &bull; San Sebastian, Puerto Rico</p>
+              <p class="text-gray-400 text-sm leading-relaxed mb-3">Carlos began his career in the Martial Arts during his early middle school years in the City of San Sebastian, Puerto Rico where his father was the former City Police Chief.</p>
+              <p class="text-gray-400 text-sm leading-relaxed">He practiced first Karate and Tae Kwon Do (1969) for a short period of time at the 4-H Club near his house. Later he practiced the Chinese style of Shaolin Tsu Kempo.</p>
+              <a href="https://aiagent.ringlypro.com/ronin/" target="_blank" class="inline-flex items-center gap-2 mt-5 text-kancho font-semibold text-sm hover:underline"><i class="fas fa-external-link-alt"></i> Visit Ronin Brotherhood</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Ronin Banner -->
+      <div class="mt-16 rounded-2xl overflow-hidden max-w-5xl mx-auto relative">
+        <div class="absolute inset-0 z-10">
+          <span class="absolute top-3 left-3 w-6 h-6 border-t-2 border-l-2 border-kancho-coral"></span>
+          <span class="absolute top-3 right-3 w-6 h-6 border-t-2 border-r-2 border-kancho-coral"></span>
+          <span class="absolute bottom-3 left-3 w-6 h-6 border-b-2 border-l-2 border-kancho-coral"></span>
+          <span class="absolute bottom-3 right-3 w-6 h-6 border-b-2 border-r-2 border-kancho-coral"></span>
+        </div>
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699789283873afd1a0b1898d.jpg" alt="Ronin Brotherhood" class="w-full object-cover" style="max-height:350px;">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
       </div>
 
       <!-- Onboarding Section -->
