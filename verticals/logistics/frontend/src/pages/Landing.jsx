@@ -283,7 +283,7 @@ export default function Landing() {
               <p style={{ fontSize: 14, color: '#64748b', maxWidth: 600, margin: '0 auto' }}>From data sources through diagnostics, treatment, and ROI — the complete Neural OBD pipeline.</p>
             </div>
             <div style={{ overflowX: 'auto' }}>
-              <svg viewBox="0 0 1400 1100" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: 'auto', display: 'block', minWidth: 800 }}>
+              <svg viewBox="0 0 1400 1200" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: 'auto', display: 'block', minWidth: 900 }}>
                 <defs>
                   <marker id="aPu" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#8b5cf6"/></marker>
                   <marker id="aCy" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#06b6d4"/></marker>
@@ -297,7 +297,7 @@ export default function Landing() {
                 </defs>
 
                 {/* Layer 1: Data Sources */}
-                <text x="700" y="32" textAnchor="middle" fill="#475569" fontSize="11" fontWeight="700" letterSpacing="3" fontFamily="'Bebas Neue',sans-serif">DATA SOURCES</text>
+                <text x="700" y="32" textAnchor="middle" fill="#64748b" fontSize="16" fontWeight="700" letterSpacing="4" fontFamily="'Bebas Neue',sans-serif">DATA SOURCES</text>
                 {[
                   {x:30,icon:'\u{1F4DE}',name:'Voice AI',sub:'Calls, Transcripts'},
                   {x:220,icon:'\u{1F517}',name:'HubSpot CRM',sub:'Contacts, Deals'},
@@ -308,27 +308,27 @@ export default function Landing() {
                   {x:1170,icon:'\u{1F310}',name:'DAT API',sub:'Market Rates'},
                 ].map((s3,i) => (
                   <g key={i}>
-                    <rect x={s3.x} y="48" width="160" height="80" rx="12" fill="#0f1724" stroke="#1e293b" strokeWidth="1.5"/>
-                    <text x={s3.x+80} y="78" textAnchor="middle" fontSize="22">{s3.icon}</text>
-                    <text x={s3.x+80} y="98" textAnchor="middle" fill="#e2e8f0" fontSize="11" fontWeight="700">{s3.name}</text>
-                    <text x={s3.x+80} y="114" textAnchor="middle" fill="#64748b" fontSize="9">{s3.sub}</text>
-                    {i < 6 && <line x1={s3.x+80} y1="128" x2={s3.x+80} y2="200" stroke="#334155" strokeWidth="1.5" markerEnd="url(#aGy)"/>}
+                    <rect x={s3.x} y="48" width="160" height="85" rx="12" fill="#0f1724" stroke="#1e293b" strokeWidth="1.5"/>
+                    <text x={s3.x+80} y="80" textAnchor="middle" fontSize="26">{s3.icon}</text>
+                    <text x={s3.x+80} y="102" textAnchor="middle" fill="#e2e8f0" fontSize="14" fontWeight="700">{s3.name}</text>
+                    <text x={s3.x+80} y="120" textAnchor="middle" fill="#94a3b8" fontSize="12">{s3.sub}</text>
+                    {i < 6 && <line x1={s3.x+80} y1="133" x2={s3.x+80} y2="210" stroke="#334155" strokeWidth="1.5" markerEnd="url(#aGy)"/>}
                   </g>
                 ))}
-                <line x1="1250" y1="128" x2="1060" y2="200" stroke="#334155" strokeWidth="1.5" strokeDasharray="6,4" markerEnd="url(#aGy)"/>
+                <line x1="1250" y1="133" x2="1060" y2="210" stroke="#334155" strokeWidth="1.5" strokeDasharray="6,4" markerEnd="url(#aGy)"/>
 
                 {/* Layer 2: Analyze */}
-                <rect x="50" y="200" width="1120" height="100" rx="20" fill="url(#gP)" stroke="#6366f1" strokeWidth="2" filter="url(#gl)"/>
-                <text x="610" y="245" textAnchor="middle" fill="#a5b4fc" fontSize="14" fontWeight="700" letterSpacing="4" fontFamily="'Bebas Neue',sans-serif">STEP 01 — ANALYZE</text>
-                <text x="610" y="272" textAnchor="middle" fill="#fff" fontSize="22" fontWeight="700" fontFamily="'Bebas Neue',sans-serif" letterSpacing="3">NEURAL SCANNER ENGINE</text>
-                <text x="610" y="290" textAnchor="middle" fill="#94a3b8" fontSize="11">Continuously scans all subsystems — pulls metrics, detects anomalies, calculates health scores</text>
-                <line x1="610" y1="300" x2="610" y2="360" stroke="#8b5cf6" strokeWidth="2.5" markerEnd="url(#aPu)"/>
-                <text x="625" y="340" fill="#8b5cf6" fontSize="10" fontWeight="600">Findings</text>
+                <rect x="50" y="210" width="1120" height="110" rx="20" fill="url(#gP)" stroke="#6366f1" strokeWidth="2" filter="url(#gl)"/>
+                <text x="610" y="252" textAnchor="middle" fill="#a5b4fc" fontSize="18" fontWeight="700" letterSpacing="4" fontFamily="'Bebas Neue',sans-serif">STEP 01 — ANALYZE</text>
+                <text x="610" y="282" textAnchor="middle" fill="#fff" fontSize="28" fontWeight="700" fontFamily="'Bebas Neue',sans-serif" letterSpacing="3">NEURAL SCANNER ENGINE</text>
+                <text x="610" y="305" textAnchor="middle" fill="#94a3b8" fontSize="14">Continuously scans all subsystems — pulls metrics, detects anomalies, calculates health scores</text>
+                <line x1="610" y1="320" x2="610" y2="380" stroke="#8b5cf6" strokeWidth="2.5" markerEnd="url(#aPu)"/>
+                <text x="630" y="358" fill="#8b5cf6" fontSize="14" fontWeight="600">Findings</text>
 
                 {/* Layer 3: Diagnose — OBD Codes */}
-                <rect x="50" y="360" width="1120" height="160" rx="20" fill="url(#gC)" stroke="#06b6d4" strokeWidth="2"/>
-                <text x="610" y="390" textAnchor="middle" fill="#67e8f9" fontSize="14" fontWeight="700" letterSpacing="4" fontFamily="'Bebas Neue',sans-serif">STEP 02 — DIAGNOSE</text>
-                <text x="610" y="414" textAnchor="middle" fill="#fff" fontSize="22" fontWeight="700" fontFamily="'Bebas Neue',sans-serif" letterSpacing="3">OBD DIAGNOSTIC CODES</text>
+                <rect x="50" y="380" width="1120" height="170" rx="20" fill="url(#gC)" stroke="#06b6d4" strokeWidth="2"/>
+                <text x="610" y="412" textAnchor="middle" fill="#67e8f9" fontSize="18" fontWeight="700" letterSpacing="4" fontFamily="'Bebas Neue',sans-serif">STEP 02 — DIAGNOSE</text>
+                <text x="610" y="440" textAnchor="middle" fill="#fff" fontSize="28" fontWeight="700" fontFamily="'Bebas Neue',sans-serif" letterSpacing="3">OBD DIAGNOSTIC CODES</text>
                 {[
                   {x:80,code:'OBD-01',name:'Voice AI',c:'#22c55e'},
                   {x:215,code:'OBD-02',name:'CRM Link',c:'#22c55e'},
@@ -340,23 +340,23 @@ export default function Landing() {
                   {x:1025,code:'OBD-08',name:'Ingestion',c:'#22c55e'},
                 ].map((d,i) => (
                   <g key={i}>
-                    <rect x={d.x} y="430" width="120" height="50" rx="8" fill="#0f172a" stroke="#1e3a5f"/>
-                    <text x={d.x+60} y="452" textAnchor="middle" fill={d.c} fontSize="12" fontWeight="800" fontFamily="'Bebas Neue',sans-serif" letterSpacing="2">{d.code}</text>
-                    <text x={d.x+60} y="470" textAnchor="middle" fill="#94a3b8" fontSize="9">{d.name}</text>
-                    <circle cx={d.x+108} cy="448" r="4" fill={d.c}/>
+                    <rect x={d.x} y="456" width="120" height="55" rx="8" fill="#0f172a" stroke="#1e3a5f"/>
+                    <text x={d.x+60} y="480" textAnchor="middle" fill={d.c} fontSize="16" fontWeight="800" fontFamily="'Bebas Neue',sans-serif" letterSpacing="2">{d.code}</text>
+                    <text x={d.x+60} y="500" textAnchor="middle" fill="#cbd5e1" fontSize="12" fontWeight="500">{d.name}</text>
+                    <circle cx={d.x+108} cy="475" r="5" fill={d.c}/>
                   </g>
                 ))}
-                <circle cx="485" cy="507" r="4" fill="#ef4444"/><text x="505" y="510" textAnchor="middle" fill="#64748b" fontSize="10">CRITICAL</text>
-                <circle cx="590" cy="507" r="4" fill="#fbbf24"/><text x="610" y="510" textAnchor="middle" fill="#64748b" fontSize="10">WARNING</text>
-                <circle cx="708" cy="507" r="4" fill="#22c55e"/><text x="730" y="510" textAnchor="middle" fill="#64748b" fontSize="10">OPPORTUNITY</text>
+                <circle cx="475" cy="530" r="5" fill="#ef4444"/><text x="500" y="534" textAnchor="middle" fill="#94a3b8" fontSize="13" fontWeight="600">CRITICAL</text>
+                <circle cx="585" cy="530" r="5" fill="#fbbf24"/><text x="612" y="534" textAnchor="middle" fill="#94a3b8" fontSize="13" fontWeight="600">WARNING</text>
+                <circle cx="710" cy="530" r="5" fill="#22c55e"/><text x="742" y="534" textAnchor="middle" fill="#94a3b8" fontSize="13" fontWeight="600">OPPORTUNITY</text>
 
-                <line x1="610" y1="520" x2="610" y2="580" stroke="#06b6d4" strokeWidth="2.5" markerEnd="url(#aCy)"/>
-                <text x="625" y="558" fill="#06b6d4" fontSize="10" fontWeight="600">Treatments</text>
+                <line x1="610" y1="550" x2="610" y2="610" stroke="#06b6d4" strokeWidth="2.5" markerEnd="url(#aCy)"/>
+                <text x="630" y="588" fill="#06b6d4" fontSize="14" fontWeight="600">Treatments</text>
 
                 {/* Layer 4: Prescribe */}
-                <rect x="50" y="580" width="1120" height="130" rx="20" fill="url(#gG)" stroke="#22c55e" strokeWidth="2"/>
-                <text x="610" y="610" textAnchor="middle" fill="#86efac" fontSize="14" fontWeight="700" letterSpacing="4" fontFamily="'Bebas Neue',sans-serif">STEP 03 — PRESCRIBE</text>
-                <text x="610" y="634" textAnchor="middle" fill="#fff" fontSize="22" fontWeight="700" fontFamily="'Bebas Neue',sans-serif" letterSpacing="3">TREATMENT TEMPLATES</text>
+                <rect x="50" y="610" width="1120" height="140" rx="20" fill="url(#gG)" stroke="#22c55e" strokeWidth="2"/>
+                <text x="610" y="642" textAnchor="middle" fill="#86efac" fontSize="18" fontWeight="700" letterSpacing="4" fontFamily="'Bebas Neue',sans-serif">STEP 03 — PRESCRIBE</text>
+                <text x="610" y="670" textAnchor="middle" fill="#fff" fontSize="28" fontWeight="700" fontFamily="'Bebas Neue',sans-serif" letterSpacing="3">TREATMENT TEMPLATES</text>
                 {[
                   {x:80,name:'Missed Call Recovery',trigger:'call.missed'},
                   {x:290,name:'Load Coverage Outbound',trigger:'load.uncovered'},
@@ -365,58 +365,58 @@ export default function Landing() {
                   {x:920,name:'New Carrier Welcome',trigger:'carrier.created'},
                 ].map((t,i) => (
                   <g key={i}>
-                    <rect x={t.x} y="650" width="195" height="45" rx="8" fill="#0f172a" stroke="#1e3a5f"/>
-                    <text x={t.x+98} y="670" textAnchor="middle" fill="#e2e8f0" fontSize="10" fontWeight="600">{t.name}</text>
-                    <text x={t.x+98} y="684" textAnchor="middle" fill="#64748b" fontSize="8">trigger: {t.trigger}</text>
+                    <rect x={t.x} y="688" width="195" height="50" rx="8" fill="#0f172a" stroke="#1e3a5f"/>
+                    <text x={t.x+98} y="710" textAnchor="middle" fill="#e2e8f0" fontSize="13" fontWeight="600">{t.name}</text>
+                    <text x={t.x+98} y="728" textAnchor="middle" fill="#94a3b8" fontSize="11">trigger: {t.trigger}</text>
                   </g>
                 ))}
-                <line x1="610" y1="710" x2="610" y2="770" stroke="#22c55e" strokeWidth="2.5" markerEnd="url(#aGr)"/>
-                <text x="625" y="748" fill="#22c55e" fontSize="10" fontWeight="600">Execute</text>
+                <line x1="610" y1="750" x2="610" y2="810" stroke="#22c55e" strokeWidth="2.5" markerEnd="url(#aGr)"/>
+                <text x="630" y="788" fill="#22c55e" fontSize="14" fontWeight="600">Execute</text>
 
                 {/* Layer 5: Remediate */}
-                <rect x="50" y="770" width="1120" height="110" rx="20" fill="#0f172a" stroke="#f59e0b" strokeWidth="2"/>
-                <text x="610" y="800" textAnchor="middle" fill="#fcd34d" fontSize="14" fontWeight="700" letterSpacing="4" fontFamily="'Bebas Neue',sans-serif">STEP 04 — REMEDIATE</text>
-                <text x="610" y="824" textAnchor="middle" fill="#fff" fontSize="22" fontWeight="700" fontFamily="'Bebas Neue',sans-serif" letterSpacing="3">TREATMENT EXECUTOR</text>
+                <rect x="50" y="810" width="1120" height="120" rx="20" fill="#0f172a" stroke="#f59e0b" strokeWidth="2"/>
+                <text x="610" y="842" textAnchor="middle" fill="#fcd34d" fontSize="18" fontWeight="700" letterSpacing="4" fontFamily="'Bebas Neue',sans-serif">STEP 04 — REMEDIATE</text>
+                <text x="610" y="870" textAnchor="middle" fill="#fff" fontSize="28" fontWeight="700" fontFamily="'Bebas Neue',sans-serif" letterSpacing="3">TREATMENT EXECUTOR</text>
                 {[
                   {x:100,label:'\u{1F4AC} Auto-SMS'},{x:250,label:'\u{1F464} CRM Write'},{x:400,label:'\u{1F3F7} CRM Tag'},
                   {x:550,label:'\u{1F4CB} CRM Task'},{x:700,label:'\u{1F4DE} Callback'},{x:850,label:'\u{1F4E8} Email'},
                 ].map((a,i) => (
                   <g key={i}>
-                    <rect x={a.x} y="840" width="130" height="30" rx="6" fill="#1a1a2e" stroke="#334155"/>
-                    <text x={a.x+65} y="860" textAnchor="middle" fill="#e2e8f0" fontSize="10" fontWeight="600">{a.label}</text>
+                    <rect x={a.x} y="886" width="130" height="34" rx="6" fill="#1a1a2e" stroke="#334155"/>
+                    <text x={a.x+65} y="908" textAnchor="middle" fill="#e2e8f0" fontSize="13" fontWeight="600">{a.label}</text>
                   </g>
                 ))}
-                <rect x="1000" y="838" width="150" height="34" rx="6" fill="rgba(239,68,68,0.08)" stroke="rgba(239,68,68,0.3)"/>
-                <text x="1075" y="854" textAnchor="middle" fill="#ef4444" fontSize="9" fontWeight="700">RATE LIMIT</text>
-                <text x="1075" y="866" textAnchor="middle" fill="#94a3b8" fontSize="8">1 per phone / hour</text>
+                <rect x="1000" y="884" width="150" height="38" rx="6" fill="rgba(239,68,68,0.08)" stroke="rgba(239,68,68,0.3)"/>
+                <text x="1075" y="902" textAnchor="middle" fill="#ef4444" fontSize="12" fontWeight="700">RATE LIMIT</text>
+                <text x="1075" y="916" textAnchor="middle" fill="#94a3b8" fontSize="11">1 per phone / hour</text>
 
-                <line x1="400" y1="880" x2="400" y2="940" stroke="#f59e0b" strokeWidth="2.5" markerEnd="url(#aAm)"/>
-                <line x1="820" y1="880" x2="820" y2="940" stroke="#f59e0b" strokeWidth="2.5" markerEnd="url(#aAm)"/>
+                <line x1="400" y1="930" x2="400" y2="990" stroke="#f59e0b" strokeWidth="2.5" markerEnd="url(#aAm)"/>
+                <line x1="820" y1="930" x2="820" y2="990" stroke="#f59e0b" strokeWidth="2.5" markerEnd="url(#aAm)"/>
 
                 {/* Layer 6: Outputs */}
-                <rect x="150" y="940" width="500" height="100" rx="16" fill="#0f172a" stroke="#475569" strokeWidth="1.5"/>
-                <text x="400" y="972" textAnchor="middle" fill="#94a3b8" fontSize="11" fontWeight="700" letterSpacing="2" fontFamily="'Bebas Neue',sans-serif">TREATMENT EXECUTION LOG</text>
-                <text x="400" y="992" textAnchor="middle" fill="#64748b" fontSize="10">Every trigger logged | Every action tracked</text>
-                <text x="400" y="1012" textAnchor="middle" fill="#475569" fontSize="9">client_id | treatment_type | trigger_event | actions_executed | status</text>
+                <rect x="150" y="990" width="500" height="110" rx="16" fill="#0f172a" stroke="#475569" strokeWidth="1.5"/>
+                <text x="400" y="1024" textAnchor="middle" fill="#94a3b8" fontSize="16" fontWeight="700" letterSpacing="2" fontFamily="'Bebas Neue',sans-serif">TREATMENT EXECUTION LOG</text>
+                <text x="400" y="1048" textAnchor="middle" fill="#94a3b8" fontSize="13">Every trigger logged | Every action tracked</text>
+                <text x="400" y="1070" textAnchor="middle" fill="#64748b" fontSize="11">client_id | treatment_type | trigger_event | actions | status</text>
 
-                <rect x="700" y="940" width="500" height="100" rx="16" fill="#0f172a" stroke="#22c55e" strokeWidth="2"/>
-                <text x="950" y="972" textAnchor="middle" fill="#86efac" fontSize="11" fontWeight="700" letterSpacing="2" fontFamily="'Bebas Neue',sans-serif">LIVE ROI DASHBOARD</text>
-                <text x="950" y="992" textAnchor="middle" fill="#94a3b8" fontSize="10">Actuals, not projections</text>
+                <rect x="700" y="990" width="500" height="110" rx="16" fill="#0f172a" stroke="#22c55e" strokeWidth="2"/>
+                <text x="950" y="1024" textAnchor="middle" fill="#86efac" fontSize="16" fontWeight="700" letterSpacing="2" fontFamily="'Bebas Neue',sans-serif">LIVE ROI DASHBOARD</text>
+                <text x="950" y="1048" textAnchor="middle" fill="#94a3b8" fontSize="13">Actuals, not projections</text>
                 {[
                   {x:780,v:'87%',l:'COST CUT',c:'#22c55e'},{x:880,v:'74%',l:'FASTER',c:'#06b6d4'},
                   {x:980,v:'8.4x',l:'ROI',c:'#8b5cf6'},{x:1080,v:'11d',l:'PAYBACK',c:'#f59e0b'},
                 ].map((k,i) => (
                   <g key={i}>
-                    <text x={k.x} y="1020" textAnchor="middle" fill={k.c} fontSize="16" fontWeight="700" fontFamily="'Bebas Neue',sans-serif">{k.v}</text>
-                    <text x={k.x} y="1032" textAnchor="middle" fill="#475569" fontSize="7">{k.l}</text>
+                    <text x={k.x} y="1078" textAnchor="middle" fill={k.c} fontSize="22" fontWeight="700" fontFamily="'Bebas Neue',sans-serif">{k.v}</text>
+                    <text x={k.x} y="1094" textAnchor="middle" fill="#64748b" fontSize="10" fontWeight="600">{k.l}</text>
                   </g>
                 ))}
 
                 {/* Feedback loop */}
-                <path d="M 1200 990 Q 1340 990 1340 250 Q 1340 200 1170 250" fill="none" stroke="#475569" strokeWidth="1.5" strokeDasharray="6,4" markerEnd="url(#aGy)"/>
-                <text x="1350" y="600" fill="#475569" fontSize="10" fontWeight="600" transform="rotate(90,1350,600)">FEEDBACK LOOP</text>
+                <path d="M 1200 1045 Q 1350 1045 1350 260 Q 1350 210 1170 260" fill="none" stroke="#475569" strokeWidth="1.5" strokeDasharray="6,4" markerEnd="url(#aGy)"/>
+                <text x="1360" y="630" fill="#64748b" fontSize="13" fontWeight="600" transform="rotate(90,1360,630)">FEEDBACK LOOP</text>
 
-                <text x="610" y="1080" textAnchor="middle" fill="#334155" fontSize="12" fontWeight="500" fontStyle="italic">"The difference between a thermometer and a doctor."</text>
+                <text x="610" y="1160" textAnchor="middle" fill="#475569" fontSize="16" fontWeight="500" fontStyle="italic">"The difference between a thermometer and a doctor."</text>
               </svg>
             </div>
             {/* Legend */}
