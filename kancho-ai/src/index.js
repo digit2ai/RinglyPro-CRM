@@ -3376,18 +3376,28 @@ app.get('/es', (req, res) => {
       <!-- Action Lists -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="card rounded-2xl p-6">
-          <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-            <i class="fas fa-user-minus text-red-400"></i>
-            Miembros en Riesgo
-          </h3>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold flex items-center gap-2">
+              <i class="fas fa-user-minus text-red-400"></i>
+              Miembros en Riesgo
+            </h3>
+            <button id="btnCallAllAtRisk" onclick="callAllAtRisk(this)" class="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg text-sm font-semibold hover:bg-red-500/40 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" title="Llamar a todos los miembros en riesgo con IA de voz">
+              <i class="fas fa-phone-volume"></i> Llamar a Todos
+            </button>
+          </div>
           <div id="atRiskList" class="space-y-3"></div>
         </div>
 
         <div class="card rounded-2xl p-6">
-          <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-            <i class="fas fa-fire text-green-400"></i>
-            Prospectos Calientes
-          </h3>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold flex items-center gap-2">
+              <i class="fas fa-fire text-green-400"></i>
+              Prospectos Calientes
+            </h3>
+            <button id="btnCallAllHotLeads" onclick="callAllHotLeads(this)" class="px-4 py-2 bg-green-500/20 text-green-400 rounded-lg text-sm font-semibold hover:bg-green-500/40 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" title="Llamar a todos los prospectos calientes con IA de voz">
+              <i class="fas fa-phone-volume"></i> Llamar a Todos
+            </button>
+          </div>
           <div id="hotLeadsList" class="space-y-3"></div>
         </div>
       </div>
@@ -3636,6 +3646,71 @@ app.get('/es', (req, res) => {
         btn.textContent = originalText;
         btn.disabled = false;
       }
+    }
+
+    // ==================== LLAMAR A TODOS ====================
+    async function callAllAtRisk(btn) {
+      if (!currentSchoolId) { alert('Por favor selecciona una escuela primero'); return; }
+      const list = currentSchoolData?.lists?.at_risk_students;
+      if (!list || list.length === 0) { alert('No hay miembros en riesgo para llamar'); return; }
+      const withPhone = list.filter(s => s.phone);
+      if (withPhone.length === 0) { alert('Ningún miembro en riesgo tiene número de teléfono registrado'); return; }
+
+      if (!confirm('Esto iniciará llamadas de IA de voz a ' + withPhone.length + ' miembro' + (withPhone.length > 1 ? 's' : '') + ' en riesgo para retención. ¿Continuar?')) return;
+
+      const originalHtml = btn.innerHTML;
+      btn.disabled = true;
+      let completed = 0;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Llamando 0/' + withPhone.length;
+
+      for (const s of withPhone) {
+        try {
+          await fetch('/kanchoai/api/v1/outbound/call-member', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ student_id: s.id, school_id: currentSchoolId, phone: s.phone })
+          });
+        } catch (e) { console.error('Error al llamar miembro', s.id, e); }
+        completed++;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Llamando ' + completed + '/' + withPhone.length;
+        if (completed < withPhone.length) await new Promise(r => setTimeout(r, 2000));
+      }
+
+      btn.innerHTML = '<i class="fas fa-check"></i> ' + completed + ' Llamadas Iniciadas';
+      btn.className = btn.className.replace('bg-red-500/20 text-red-400', 'bg-green-500/20 text-green-400').replace('hover:bg-red-500/40', 'hover:bg-green-500/40');
+      setTimeout(() => { btn.innerHTML = originalHtml; btn.disabled = false; btn.className = btn.className.replace('bg-green-500/20 text-green-400', 'bg-red-500/20 text-red-400').replace('hover:bg-green-500/40', 'hover:bg-red-500/40'); }, 5000);
+    }
+
+    async function callAllHotLeads(btn) {
+      if (!currentSchoolId) { alert('Por favor selecciona una escuela primero'); return; }
+      const list = currentSchoolData?.lists?.hot_leads;
+      if (!list || list.length === 0) { alert('No hay prospectos calientes para llamar'); return; }
+      const withPhone = list.filter(l => l.phone);
+      if (withPhone.length === 0) { alert('Ningún prospecto caliente tiene número de teléfono registrado'); return; }
+
+      if (!confirm('Esto iniciará llamadas de IA de voz a ' + withPhone.length + ' prospecto' + (withPhone.length > 1 ? 's' : '') + ' caliente' + (withPhone.length > 1 ? 's' : '') + ' para conversión. ¿Continuar?')) return;
+
+      const originalHtml = btn.innerHTML;
+      btn.disabled = true;
+      let completed = 0;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Llamando 0/' + withPhone.length;
+
+      for (const l of withPhone) {
+        try {
+          await fetch('/kanchoai/api/v1/outbound/call-lead', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lead_id: l.id, school_id: currentSchoolId, phone: l.phone })
+          });
+        } catch (e) { console.error('Error al llamar prospecto', l.id, e); }
+        completed++;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Llamando ' + completed + '/' + withPhone.length;
+        if (completed < withPhone.length) await new Promise(r => setTimeout(r, 2000));
+      }
+
+      btn.innerHTML = '<i class="fas fa-check"></i> ' + completed + ' Llamadas Iniciadas';
+      btn.className = btn.className.replace('bg-green-500/20 text-green-400', 'bg-blue-500/20 text-blue-400').replace('hover:bg-green-500/40', 'hover:bg-blue-500/40');
+      setTimeout(() => { btn.innerHTML = originalHtml; btn.disabled = false; btn.className = btn.className.replace('bg-blue-500/20 text-blue-400', 'bg-green-500/20 text-green-400').replace('hover:bg-blue-500/40', 'hover:bg-green-500/40'); }, 5000);
     }
 
     document.getElementById('schoolSelect').addEventListener('change', async (e) => {
@@ -6706,18 +6781,28 @@ app.get('*', (req, res) => {
       <!-- Action Lists -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="card rounded-2xl p-6">
-          <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-            <i class="fas fa-user-minus text-red-400"></i>
-            At-Risk Members
-          </h3>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold flex items-center gap-2">
+              <i class="fas fa-user-minus text-red-400"></i>
+              At-Risk Members
+            </h3>
+            <button id="btnCallAllAtRisk" onclick="callAllAtRisk(this)" class="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg text-sm font-semibold hover:bg-red-500/40 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" title="Call all at-risk members with Voice AI">
+              <i class="fas fa-phone-volume"></i> Call All
+            </button>
+          </div>
           <div id="atRiskList" class="space-y-3"></div>
         </div>
 
         <div class="card rounded-2xl p-6">
-          <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-            <i class="fas fa-fire text-green-400"></i>
-            Hot Leads
-          </h3>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold flex items-center gap-2">
+              <i class="fas fa-fire text-green-400"></i>
+              Hot Leads
+            </h3>
+            <button id="btnCallAllHotLeads" onclick="callAllHotLeads(this)" class="px-4 py-2 bg-green-500/20 text-green-400 rounded-lg text-sm font-semibold hover:bg-green-500/40 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" title="Call all hot leads with Voice AI">
+              <i class="fas fa-phone-volume"></i> Call All
+            </button>
+          </div>
           <div id="hotLeadsList" class="space-y-3"></div>
         </div>
       </div>
@@ -8932,6 +9017,71 @@ app.get('*', (req, res) => {
         btn.textContent = originalText;
         btn.disabled = false;
       }
+    }
+
+    // ==================== CALL ALL FUNCTIONS ====================
+    async function callAllAtRisk(btn) {
+      if (!currentSchoolId) { alert('Please select a school first'); return; }
+      const list = currentSchoolData?.lists?.at_risk_students;
+      if (!list || list.length === 0) { alert('No at-risk members to call'); return; }
+      const withPhone = list.filter(s => s.phone);
+      if (withPhone.length === 0) { alert('No at-risk members have phone numbers on file'); return; }
+
+      if (!confirm('This will initiate AI Voice calls to ' + withPhone.length + ' at-risk member' + (withPhone.length > 1 ? 's' : '') + ' for retention outreach. Proceed?')) return;
+
+      const originalHtml = btn.innerHTML;
+      btn.disabled = true;
+      let completed = 0;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Calling 0/' + withPhone.length;
+
+      for (const s of withPhone) {
+        try {
+          await fetch('/kanchoai/api/v1/outbound/call-member', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ student_id: s.id, school_id: currentSchoolId, phone: s.phone })
+          });
+        } catch (e) { console.error('Failed to call member', s.id, e); }
+        completed++;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Calling ' + completed + '/' + withPhone.length;
+        if (completed < withPhone.length) await new Promise(r => setTimeout(r, 2000));
+      }
+
+      btn.innerHTML = '<i class="fas fa-check"></i> ' + completed + ' Calls Initiated';
+      btn.className = btn.className.replace('bg-red-500/20 text-red-400', 'bg-green-500/20 text-green-400').replace('hover:bg-red-500/40', 'hover:bg-green-500/40');
+      setTimeout(() => { btn.innerHTML = originalHtml; btn.disabled = false; btn.className = btn.className.replace('bg-green-500/20 text-green-400', 'bg-red-500/20 text-red-400').replace('hover:bg-green-500/40', 'hover:bg-red-500/40'); }, 5000);
+    }
+
+    async function callAllHotLeads(btn) {
+      if (!currentSchoolId) { alert('Please select a school first'); return; }
+      const list = currentSchoolData?.lists?.hot_leads;
+      if (!list || list.length === 0) { alert('No hot leads to call'); return; }
+      const withPhone = list.filter(l => l.phone);
+      if (withPhone.length === 0) { alert('No hot leads have phone numbers on file'); return; }
+
+      if (!confirm('This will initiate AI Voice calls to ' + withPhone.length + ' hot lead' + (withPhone.length > 1 ? 's' : '') + ' for conversion outreach. Proceed?')) return;
+
+      const originalHtml = btn.innerHTML;
+      btn.disabled = true;
+      let completed = 0;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Calling 0/' + withPhone.length;
+
+      for (const l of withPhone) {
+        try {
+          await fetch('/kanchoai/api/v1/outbound/call-lead', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lead_id: l.id, school_id: currentSchoolId, phone: l.phone })
+          });
+        } catch (e) { console.error('Failed to call lead', l.id, e); }
+        completed++;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Calling ' + completed + '/' + withPhone.length;
+        if (completed < withPhone.length) await new Promise(r => setTimeout(r, 2000));
+      }
+
+      btn.innerHTML = '<i class="fas fa-check"></i> ' + completed + ' Calls Initiated';
+      btn.className = btn.className.replace('bg-green-500/20 text-green-400', 'bg-blue-500/20 text-blue-400').replace('hover:bg-green-500/40', 'hover:bg-blue-500/40');
+      setTimeout(() => { btn.innerHTML = originalHtml; btn.disabled = false; btn.className = btn.className.replace('bg-blue-500/20 text-blue-400', 'bg-green-500/20 text-green-400').replace('hover:bg-blue-500/40', 'hover:bg-green-500/40'); }, 5000);
     }
 
     document.getElementById('schoolSelect').addEventListener('change', async (e) => {
