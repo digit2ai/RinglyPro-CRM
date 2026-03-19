@@ -6350,7 +6350,7 @@ app.get('*', (req, res) => {
         </div>
 
         <!-- RPDTA Training Banner -->
-        <div class="rounded-2xl overflow-hidden mb-12 max-w-5xl mx-auto relative">
+        <div class="mb-12 relative">
           <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69988baf3a2afd1f8d5b1110.jpg" alt="RPDTA Tactical Training" class="w-full" style="display:block;">
           <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30 flex items-end p-8">
             <div>
@@ -6396,15 +6396,14 @@ app.get('*', (req, res) => {
       </div>
 
       <!-- Bottom Ronin Banner -->
-      <div class="mt-16 rounded-2xl overflow-hidden max-w-5xl mx-auto relative">
-        <div class="absolute inset-0 z-10">
+      <div class="mt-16 relative">
+        <div class="absolute inset-0 z-10 pointer-events-none">
           <span class="absolute top-3 left-3 w-6 h-6 border-t-2 border-l-2 border-kancho-coral"></span>
           <span class="absolute top-3 right-3 w-6 h-6 border-t-2 border-r-2 border-kancho-coral"></span>
           <span class="absolute bottom-3 left-3 w-6 h-6 border-b-2 border-l-2 border-kancho-coral"></span>
           <span class="absolute bottom-3 right-3 w-6 h-6 border-b-2 border-r-2 border-kancho-coral"></span>
         </div>
         <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699789283873afd1a0b1898d.jpg" alt="Ronin Brotherhood" class="w-full" style="display:block;">
-        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
       </div>
 
       <!-- Trial Class Booking Section -->
