@@ -63,6 +63,21 @@ router.use('/api/crm-agent', crmAgentRoutes);
 router.use('/api/pipeline', pipelineRoutes);
 router.use('/api/roi', roiRoutes);
 
+// Bridge API — CW ↔ LG sync
+const bridge = require('./services/bridge.cw');
+router.get('/api/bridge/status', async (req, res) => {
+  try {
+    const status = await bridge.getStatus();
+    res.json({ success: true, data: status });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+router.post('/api/bridge/sync', async (req, res) => {
+  try {
+    const results = await bridge.bulkSync();
+    res.json({ success: true, data: results });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // Health check
 router.get('/health', (req, res) => {
   res.json({

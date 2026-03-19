@@ -53,6 +53,14 @@ router.post('/', async (req, res) => {
       console.error('CW HubSpot contact sync error:', e.message)
     );
 
+    // Bridge sync: create/link lg_carrier or lg_customer (non-blocking)
+    try {
+      const bridge = require('../services/bridge.cw');
+      bridge.syncContactToLG(contact.id).catch(e =>
+        console.error('[Bridge] contact sync error:', e.message)
+      );
+    } catch (e) { /* bridge not critical */ }
+
     // Fire treatment triggers (non-blocking)
     try {
       const TreatmentExecutor = require('../../../../src/services/treatmentExecutor');

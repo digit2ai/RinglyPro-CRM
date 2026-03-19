@@ -303,6 +303,14 @@ async function process_upload(input) {
     }
   }
 
+  // Bridge sync: link imported lg_ records to cw_ counterparts (non-blocking)
+  if (imported > 0 && (data_type === 'carriers' || data_type === 'customers' || data_type === 'loads')) {
+    try {
+      const bridge = require('./bridge.cw');
+      bridge.bulkSync().catch(e => console.error('[Bridge] post-ingestion sync error:', e.message));
+    } catch (e) { /* bridge not critical */ }
+  }
+
   // Update upload record
   const finalStatus = errorCount === parsed.rows.length ? 'failed' : errorCount > 0 ? 'partial' : 'completed';
   await sequelize.query(`
