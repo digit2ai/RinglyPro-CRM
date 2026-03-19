@@ -273,6 +273,24 @@ export default function Landing() {
             </div>
           </div>
 
+          {/* System Architecture Workflow */}
+          <div style={{ marginBottom: 64 }}>
+            <div style={{ textAlign: 'center', marginBottom: 20 }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: 20, marginBottom: 12 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: '#a5b4fc', textTransform: 'uppercase', letterSpacing: 2 }}>System Architecture</span>
+              </div>
+              <h3 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, color: '#fff', letterSpacing: 2, marginBottom: 8 }}>Full Workflow Diagram</h3>
+              <p style={{ fontSize: 14, color: '#64748b', maxWidth: 600, margin: '0 auto' }}>From data sources through diagnostics, treatment, and ROI — the complete Neural OBD pipeline.</p>
+            </div>
+            <div style={{ background: '#07090f', border: '1px solid #1e293b', borderRadius: 16, overflow: 'hidden', boxShadow: '0 8px 40px rgba(0,0,0,0.4)' }}>
+              <iframe
+                src="/neural/obd-workflow-diagram.html"
+                title="Neural OBD System Architecture"
+                style={{ width: '100%', height: 900, border: 'none', display: 'block' }}
+              />
+            </div>
+          </div>
+
           {/* ROI Proof */}
           <div style={{ background: 'linear-gradient(135deg, #161B22, #1a1f2e)', border: '1px solid #21262D', borderRadius: 16, padding: 40, textAlign: 'center' }}>
             <h3 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, color: '#fff', letterSpacing: 2, marginBottom: 8 }}>Proven ROI — Not Projections. Actuals.</h3>
