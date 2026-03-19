@@ -4245,25 +4245,25 @@ app.get('/es', (req, res) => {
 
     // Carga de Clases
     const martialArtIcons = {
-      'Karate': 'fa-hand-paper', 'Taekwondo': 'fa-running', 'BJJ': 'fa-hand-rock',
-      'Muay Thai': 'fa-fire', 'MMA': 'fa-fist-raised', 'Kickboxing': 'fa-fire-alt',
-      'Judo': 'fa-user-ninja', 'Krav Maga': 'fa-shield-alt', 'Boxing': 'fa-mitten',
-      'Kung Fu': 'fa-yin-yang', 'Aikido': 'fa-circle-notch', 'Capoeira': 'fa-music',
-      'Wrestling': 'fa-people-arrows', 'Hapkido': 'fa-bolt', 'Jeet Kune Do': 'fa-dragon'
+      'Karate': 'fa-hand-paper', 'Taekwondo': 'fa-running', 'Goju Ryu': 'fa-fist-raised',
+      'Okinawa Kempo': 'fa-hand-rock', 'MMA': 'fa-fist-raised', 'Kickboxing': 'fa-fire-alt',
+      'Judo': 'fa-user-ninja', 'Defensive Tactics': 'fa-shield-alt', 'Shaolin Kempo': 'fa-yin-yang',
+      'Kung Fu': 'fa-yin-yang', 'Kobudo': 'fa-staff-snake', 'Kata': 'fa-om',
+      'Kumite': 'fa-bolt', 'Hapkido': 'fa-bolt', 'Jeet Kune Do': 'fa-dragon'
     };
     const martialArtColors = {
-      'Karate': '#3B82F6', 'Taekwondo': '#10B981', 'BJJ': '#8B5CF6',
-      'Muay Thai': '#F59E0B', 'MMA': '#EF4444', 'Kickboxing': '#F97316',
-      'Judo': '#6366F1', 'Krav Maga': '#64748B', 'Boxing': '#DC2626',
-      'Kung Fu': '#E11D48', 'Aikido': '#0EA5E9', 'Capoeira': '#22C55E',
-      'Wrestling': '#A855F7', 'Hapkido': '#14B8A6', 'Jeet Kune Do': '#FBBF24'
+      'Karate': '#3B82F6', 'Taekwondo': '#10B981', 'Goju Ryu': '#D10404',
+      'Okinawa Kempo': '#C4A35A', 'MMA': '#EF4444', 'Kickboxing': '#F97316',
+      'Judo': '#6366F1', 'Defensive Tactics': '#64748B', 'Shaolin Kempo': '#E11D48',
+      'Kung Fu': '#E11D48', 'Kobudo': '#8B5CF6', 'Kata': '#0EA5E9',
+      'Kumite': '#F59E0B', 'Hapkido': '#14B8A6', 'Jeet Kune Do': '#FBBF24'
     };
     const classNamesEs = {
-      'Karate': 'Karate', 'Taekwondo': 'Taekwondo', 'Brazilian Jiu-Jitsu': 'Jiu-Jitsu Brasileño',
-      'Muay Thai': 'Muay Thai', 'Mixed Martial Arts': 'Artes Marciales Mixtas', 'Kickboxing': 'Kickboxing',
-      'Judo': 'Judo', 'Krav Maga': 'Krav Maga', 'Boxing': 'Boxeo',
-      'Kung Fu': 'Kung Fu', 'Aikido': 'Aikido', 'Capoeira': 'Capoeira',
-      'Wrestling': 'Lucha Libre', 'Hapkido': 'Hapkido', 'Jeet Kune Do': 'Jeet Kune Do'
+      'Karate': 'Karate', 'Taekwondo': 'Taekwondo', 'Goju Ryu': 'Goju Ryu',
+      'Okinawa Kempo': 'Okinawa Kempo', 'Mixed Martial Arts': 'Artes Marciales Mixtas', 'Kickboxing': 'Kickboxing',
+      'Judo': 'Judo', 'RPDTA Defensive Tactics': 'Tácticas Defensivas RPDTA', 'Shaolin Tsu Kempo': 'Shaolin Tsu Kempo',
+      'Kung Fu': 'Kung Fu', 'Kobudo (Weapons)': 'Kobudo (Armas)', 'Kata & Forms': 'Kata y Formas',
+      'Kumite (Sparring)': 'Kumite (Combate)', 'Hapkido': 'Hapkido', 'Jeet Kune Do': 'Jeet Kune Do'
     };
 
     async function loadClassesEs() {
@@ -8719,13 +8719,17 @@ app.get('*', (req, res) => {
           <input type="text" id="signupSchoolName" class="login-input" placeholder="Your Academy Name" required>
           <label>Martial Art Type</label>
           <select id="signupMartialArt" class="login-input" style="appearance:auto;">
-            <option value="BJJ">BJJ</option>
+            <option value="Goju Ryu">Goju Ryu</option>
             <option value="Karate">Karate</option>
+            <option value="Okinawa Kempo">Okinawa Kempo</option>
             <option value="Taekwondo">Taekwondo</option>
             <option value="MMA">MMA</option>
             <option value="Judo">Judo</option>
-            <option value="Muay Thai">Muay Thai</option>
             <option value="Kung Fu">Kung Fu</option>
+            <option value="Shaolin Kempo">Shaolin Kempo</option>
+            <option value="Kickboxing">Kickboxing</option>
+            <option value="Hapkido">Hapkido</option>
+            <option value="Jeet Kune Do">Jeet Kune Do</option>
             <option value="Other">Other</option>
           </select>
           <div class="signup-row" style="margin-top:16px;">
@@ -9937,18 +9941,18 @@ app.get('*', (req, res) => {
 
     // Class Schedule Loading
     const martialArtIcons = {
-      'Karate': 'fa-hand-paper', 'Taekwondo': 'fa-running', 'BJJ': 'fa-hand-rock',
-      'Muay Thai': 'fa-fire', 'MMA': 'fa-fist-raised', 'Kickboxing': 'fa-fire-alt',
-      'Judo': 'fa-user-ninja', 'Krav Maga': 'fa-shield-alt', 'Boxing': 'fa-mitten',
-      'Kung Fu': 'fa-yin-yang', 'Aikido': 'fa-circle-notch', 'Capoeira': 'fa-music',
-      'Wrestling': 'fa-people-arrows', 'Hapkido': 'fa-bolt', 'Jeet Kune Do': 'fa-dragon'
+      'Karate': 'fa-hand-paper', 'Taekwondo': 'fa-running', 'Goju Ryu': 'fa-fist-raised',
+      'Okinawa Kempo': 'fa-hand-rock', 'MMA': 'fa-fist-raised', 'Kickboxing': 'fa-fire-alt',
+      'Judo': 'fa-user-ninja', 'Defensive Tactics': 'fa-shield-alt', 'Shaolin Kempo': 'fa-yin-yang',
+      'Kung Fu': 'fa-yin-yang', 'Kobudo': 'fa-staff-snake', 'Kata': 'fa-om',
+      'Kumite': 'fa-bolt', 'Hapkido': 'fa-bolt', 'Jeet Kune Do': 'fa-dragon'
     };
     const martialArtColors = {
-      'Karate': '#3B82F6', 'Taekwondo': '#10B981', 'BJJ': '#8B5CF6',
-      'Muay Thai': '#F59E0B', 'MMA': '#EF4444', 'Kickboxing': '#F97316',
-      'Judo': '#6366F1', 'Krav Maga': '#64748B', 'Boxing': '#DC2626',
-      'Kung Fu': '#E11D48', 'Aikido': '#0EA5E9', 'Capoeira': '#22C55E',
-      'Wrestling': '#A855F7', 'Hapkido': '#14B8A6', 'Jeet Kune Do': '#FBBF24'
+      'Karate': '#3B82F6', 'Taekwondo': '#10B981', 'Goju Ryu': '#D10404',
+      'Okinawa Kempo': '#C4A35A', 'MMA': '#EF4444', 'Kickboxing': '#F97316',
+      'Judo': '#6366F1', 'Defensive Tactics': '#64748B', 'Shaolin Kempo': '#E11D48',
+      'Kung Fu': '#E11D48', 'Kobudo': '#8B5CF6', 'Kata': '#0EA5E9',
+      'Kumite': '#F59E0B', 'Hapkido': '#14B8A6', 'Jeet Kune Do': '#FBBF24'
     };
 
     async function loadClasses() {

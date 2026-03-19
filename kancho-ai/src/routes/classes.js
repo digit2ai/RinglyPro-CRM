@@ -132,18 +132,18 @@ function getSampleClasses() {
     },
     {
       id: 'demo-3',
-      name: 'Brazilian Jiu-Jitsu',
-      martial_art: 'BJJ',
+      name: 'Goju Ryu',
+      martial_art: 'Goju Ryu',
       level: 'All Levels',
-      description: 'Ground-based grappling art where technique overcomes size. Master takedowns, positional control, and submissions.',
+      description: 'Okinawan karate style combining hard striking and soft circular techniques. The core art of Ronin Goju Ryu Kai (RGRK) with roots in Naha, Okinawa.',
       popularity_score: 95
     },
     {
       id: 'demo-4',
-      name: 'Muay Thai',
-      martial_art: 'Muay Thai',
+      name: 'Okinawa Kempo',
+      martial_art: 'Okinawa Kempo',
       level: 'All Levels',
-      description: 'The "Art of Eight Limbs" using punches, kicks, elbows, and knees. Elite striking and clinch work from Thailand.',
+      description: 'Traditional Okinawan fighting system emphasizing practical self-defense, pressure points, and full-contact sparring. Rooted in Toshimitsu Kina lineage.',
       popularity_score: 94
     },
     {
@@ -172,18 +172,18 @@ function getSampleClasses() {
     },
     {
       id: 'demo-8',
-      name: 'Krav Maga',
-      martial_art: 'Krav Maga',
-      level: 'All Levels',
-      description: 'Reality-based self-defense system from the Israeli military. Practical techniques for real-world threat scenarios.',
+      name: 'RPDTA Defensive Tactics',
+      martial_art: 'Defensive Tactics',
+      level: 'Advanced',
+      description: 'Elite tactical training from the Ronin Police Defensive Tactics Association. Designed for law enforcement, military, and intelligence professionals.',
       popularity_score: 90
     },
     {
       id: 'demo-9',
-      name: 'Boxing',
-      martial_art: 'Boxing',
+      name: 'Shaolin Tsu Kempo',
+      martial_art: 'Shaolin Kempo',
       level: 'All Levels',
-      description: 'The sweet science of punching. Develop hand speed, head movement, footwork, and knockout power in the ring.',
+      description: 'Chinese-influenced striking and self-defense system blending Shaolin techniques with practical combat applications. Part of the Ronin lineage.',
       popularity_score: 89
     },
     {
@@ -196,26 +196,26 @@ function getSampleClasses() {
     },
     {
       id: 'demo-11',
-      name: 'Aikido',
-      martial_art: 'Aikido',
-      level: 'All Levels',
-      description: 'Harmonious martial art that redirects an attacker\'s energy through joint locks and throws. Defense without aggression.',
+      name: 'Kobudo (Weapons)',
+      martial_art: 'Kobudo',
+      level: 'Intermediate',
+      description: 'Traditional Okinawan weapons training including bo staff, sai, nunchaku, and tonfa. Preserves ancient warrior weapon forms.',
       popularity_score: 87
     },
     {
       id: 'demo-12',
-      name: 'Capoeira',
-      martial_art: 'Capoeira',
+      name: 'Kata & Forms',
+      martial_art: 'Kata',
       level: 'All Levels',
-      description: 'Brazilian art blending acrobatic kicks, sweeps, and music. Equal parts martial art, dance, and cultural expression.',
+      description: 'Structured patterns of movement encoding fighting techniques passed down through generations. The soul of traditional martial arts.',
       popularity_score: 86
     },
     {
       id: 'demo-13',
-      name: 'Wrestling',
-      martial_art: 'Wrestling',
-      level: 'All Levels',
-      description: 'Foundational grappling art focused on takedowns, pins, and control. The base of every great MMA fighter.',
+      name: 'Kumite (Sparring)',
+      martial_art: 'Kumite',
+      level: 'Intermediate',
+      description: 'Controlled full-contact and point sparring to develop timing, distance, and fighting spirit. Competition preparation for all levels.',
       popularity_score: 85
     },
     {
