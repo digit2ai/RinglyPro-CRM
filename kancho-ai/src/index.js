@@ -2672,29 +2672,6 @@ app.get('/es', (req, res) => {
       </div>
 
       <!-- Sección de Reserva de Clase de Prueba -->
-      <div class="mt-16 pt-16 border-t border-kancho-dark-border">
-        <div class="text-center mb-12">
-          <h2 class="text-2xl sm:text-3xl font-bold mb-3 md:mb-4 mobile-title">¿Listo Para Comenzar Tu <span class="text-kancho">Viaje en Artes Marciales?</span></h2>
-          <p class="text-gray-400 max-w-2xl mx-auto">Reserva tu clase de prueba gratuita hoy. No se requiere experiencia. Sin compromiso.</p>
-        </div>
-        <div class="max-w-4xl mx-auto">
-          <div class="card rounded-2xl p-8 text-center border-kancho-coral/30" style="border-color: rgba(232, 90, 79, 0.3);">
-            <div class="w-20 h-20 bg-kancho-coral/20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <i class="fas fa-calendar-check text-kancho text-3xl"></i>
-            </div>
-            <h3 class="text-2xl font-bold mb-4">Reserva Tu Prueba Gratis</h3>
-            <p class="text-gray-400 mb-6">Conoce a nuestro Especialista KanchoAI. Descubre si somos la opción ideal para ti.</p>
-            <ul class="text-left max-w-md mx-auto space-y-3 mb-8">
-              <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check-circle text-green-400"></i> No se requiere experiencia</li>
-              <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check-circle text-green-400"></i> Cero compromiso o presión</li>
-            </ul>
-            <button onclick="openTrialBookingModal()" class="kancho-btn px-8 py-4 rounded-xl font-medium transition shadow-lg text-lg">
-              <i class="fas fa-calendar-plus mr-2"></i>Reservar Prueba Gratis
-            </button>
-          </div>
-        </div>
-      </div>
-
       <!-- ====== ALIANZA RONIN BROTHERHOOD ====== -->
       <div class="mt-16 pt-16 border-t border-kancho-dark-border">
         <div class="text-center mb-12">
@@ -2767,7 +2744,7 @@ app.get('/es', (req, res) => {
         </div>
 
         <div class="rounded-2xl overflow-hidden mb-12 max-w-5xl mx-auto relative">
-          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69988baf3a2afd1f8d5b1110.jpg" alt="Entrenamiento Táctico RPDTA" class="w-full object-cover" style="max-height:350px;">
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69988baf3a2afd1f8d5b1110.jpg" alt="Entrenamiento Táctico RPDTA" class="w-full" style="display:block;">
           <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30 flex items-end p-8">
             <div>
               <h3 class="text-2xl font-bold text-white">Entrenamiento Táctico RPDTA</h3>
@@ -2818,8 +2795,32 @@ app.get('/es', (req, res) => {
           <span class="absolute bottom-3 left-3 w-6 h-6 border-b-2 border-l-2 border-kancho-coral"></span>
           <span class="absolute bottom-3 right-3 w-6 h-6 border-b-2 border-r-2 border-kancho-coral"></span>
         </div>
-        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699789283873afd1a0b1898d.jpg" alt="Ronin Brotherhood" class="w-full object-cover" style="max-height:350px;">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699789283873afd1a0b1898d.jpg" alt="Ronin Brotherhood" class="w-full" style="display:block;">
         <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+      </div>
+
+      <!-- Trial Class Booking Section -->
+      <div class="mt-16 pt-16 border-t border-kancho-dark-border">
+        <div class="text-center mb-12">
+          <h2 class="text-2xl sm:text-3xl font-bold mb-3 md:mb-4 mobile-title">¿Listo Para Comenzar Tu <span class="text-kancho">Viaje en Artes Marciales?</span></h2>
+          <p class="text-gray-400 max-w-2xl mx-auto">Reserva tu clase de prueba gratuita hoy. No se requiere experiencia. Sin compromiso.</p>
+        </div>
+        <div class="max-w-4xl mx-auto">
+          <div class="card rounded-2xl p-8 text-center border-kancho-coral/30" style="border-color: rgba(232, 90, 79, 0.3);">
+            <div class="w-20 h-20 bg-kancho-coral/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <i class="fas fa-calendar-check text-kancho text-3xl"></i>
+            </div>
+            <h3 class="text-2xl font-bold mb-4">Reserva Tu Prueba Gratis</h3>
+            <p class="text-gray-400 mb-6">Conoce a nuestro Especialista KanchoAI. Descubre si somos la opción ideal para ti.</p>
+            <ul class="text-left max-w-md mx-auto space-y-3 mb-8">
+              <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check-circle text-green-400"></i> No se requiere experiencia</li>
+              <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check-circle text-green-400"></i> Cero compromiso o presión</li>
+            </ul>
+            <button onclick="openTrialBookingModal()" class="kancho-btn px-8 py-4 rounded-xl font-medium transition shadow-lg text-lg">
+              <i class="fas fa-calendar-plus mr-2"></i>Reservar Prueba Gratis
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Onboarding Section -->
@@ -6272,30 +6273,6 @@ app.get('*', (req, res) => {
         </div>
       </div>
 
-      <!-- Trial Class Booking Section -->
-      <div class="mt-16 pt-16 border-t border-kancho-dark-border">
-        <div class="text-center mb-12">
-          <h2 class="text-3xl font-bold mb-4">Ready to Start Your <span class="text-kancho">Martial Arts Journey?</span></h2>
-          <p class="text-gray-400 max-w-2xl mx-auto">Book your free trial class today. No experience necessary. No commitment required.</p>
-        </div>
-        <div class="max-w-4xl mx-auto">
-          <div class="card rounded-2xl p-8 text-center border-kancho-coral/30" style="border-color: rgba(232, 90, 79, 0.3);">
-            <div class="w-20 h-20 bg-kancho-coral/20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <i class="fas fa-calendar-check text-kancho text-3xl"></i>
-            </div>
-            <h3 class="text-2xl font-bold mb-4">Book Your Free Trial</h3>
-            <p class="text-gray-400 mb-6">Meet our KanchoAI Specialist. See if we're the right fit for you.</p>
-            <ul class="text-left max-w-md mx-auto space-y-3 mb-8">
-              <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check-circle text-green-400"></i> No experience required</li>
-              <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check-circle text-green-400"></i> Zero commitment or pressure</li>
-            </ul>
-            <button onclick="openTrialBookingModal()" class="kancho-btn px-8 py-4 rounded-xl font-medium transition shadow-lg text-lg">
-              <i class="fas fa-calendar-plus mr-2"></i>Book Free Trial Now
-            </button>
-          </div>
-        </div>
-      </div>
-
       <!-- ====== RONIN BROTHERHOOD PARTNERSHIP ====== -->
       <div class="mt-16 pt-16 border-t border-kancho-dark-border">
         <!-- Partnership Announcement -->
@@ -6374,7 +6351,7 @@ app.get('*', (req, res) => {
 
         <!-- RPDTA Training Banner -->
         <div class="rounded-2xl overflow-hidden mb-12 max-w-5xl mx-auto relative">
-          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69988baf3a2afd1f8d5b1110.jpg" alt="RPDTA Tactical Training" class="w-full object-cover" style="max-height:350px;">
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69988baf3a2afd1f8d5b1110.jpg" alt="RPDTA Tactical Training" class="w-full" style="display:block;">
           <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30 flex items-end p-8">
             <div>
               <h3 class="text-2xl font-bold text-white">RPDTA Tactical Training</h3>
@@ -6426,8 +6403,32 @@ app.get('*', (req, res) => {
           <span class="absolute bottom-3 left-3 w-6 h-6 border-b-2 border-l-2 border-kancho-coral"></span>
           <span class="absolute bottom-3 right-3 w-6 h-6 border-b-2 border-r-2 border-kancho-coral"></span>
         </div>
-        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699789283873afd1a0b1898d.jpg" alt="Ronin Brotherhood" class="w-full object-cover" style="max-height:350px;">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699789283873afd1a0b1898d.jpg" alt="Ronin Brotherhood" class="w-full" style="display:block;">
         <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+      </div>
+
+      <!-- Trial Class Booking Section -->
+      <div class="mt-16 pt-16 border-t border-kancho-dark-border">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl font-bold mb-4">Ready to Start Your <span class="text-kancho">Martial Arts Journey?</span></h2>
+          <p class="text-gray-400 max-w-2xl mx-auto">Book your free trial class today. No experience necessary. No commitment required.</p>
+        </div>
+        <div class="max-w-4xl mx-auto">
+          <div class="card rounded-2xl p-8 text-center border-kancho-coral/30" style="border-color: rgba(232, 90, 79, 0.3);">
+            <div class="w-20 h-20 bg-kancho-coral/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <i class="fas fa-calendar-check text-kancho text-3xl"></i>
+            </div>
+            <h3 class="text-2xl font-bold mb-4">Book Your Free Trial</h3>
+            <p class="text-gray-400 mb-6">Meet our KanchoAI Specialist. See if we're the right fit for you.</p>
+            <ul class="text-left max-w-md mx-auto space-y-3 mb-8">
+              <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check-circle text-green-400"></i> No experience required</li>
+              <li class="flex items-center gap-3 text-gray-300"><i class="fas fa-check-circle text-green-400"></i> Zero commitment or pressure</li>
+            </ul>
+            <button onclick="openTrialBookingModal()" class="kancho-btn px-8 py-4 rounded-xl font-medium transition shadow-lg text-lg">
+              <i class="fas fa-calendar-plus mr-2"></i>Book Free Trial Now
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Onboarding Section -->
