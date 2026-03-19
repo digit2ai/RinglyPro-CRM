@@ -2603,6 +2603,10 @@ app.get('/es', (req, res) => {
           <h1 class="text-lg md:text-2xl font-bold text-white tracking-tight">KANCHO AI</h1>
           <p class="text-xs text-gray-500 hidden sm:block">Inteligencia de Negocio con IA</p>
         </div>
+        <a href="/kanchoai/es/pricing" class="hidden md:flex items-center gap-2 ml-2 px-3 py-1.5 rounded-lg bg-white/5 border border-kancho-dark-border hover:border-kancho-coral hover:bg-kancho-coral/10 transition text-sm text-gray-300 hover:text-white">
+          <i class="fas fa-tag text-kancho text-xs"></i>
+          Precios
+        </a>
       </div>
       <div class="flex items-center gap-2 md:gap-4 header-actions">
         <span class="text-gray-400 text-sm font-medium demo-label hidden md:inline">LIVE DEMO</span>
@@ -6038,6 +6042,10 @@ app.get('*', (req, res) => {
           <i class="fas fa-phone text-kancho text-xs"></i>
           <span class="hidden sm:inline">(619) 745-1640</span>
           <span class="sm:hidden text-xs">Call</span>
+        </a>
+        <a href="/kanchoai/pricing" class="hidden md:flex items-center gap-2 ml-2 px-3 py-1.5 rounded-lg bg-white/5 border border-kancho-dark-border hover:border-kancho-coral hover:bg-kancho-coral/10 transition text-sm text-gray-300 hover:text-white">
+          <i class="fas fa-tag text-kancho text-xs"></i>
+          Pricing
         </a>
       </div>
       <div class="flex items-center gap-2 md:gap-4 header-actions">
