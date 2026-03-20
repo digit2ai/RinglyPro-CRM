@@ -92,4 +92,11 @@ router.get('/agents', asyncHandler(async (req, res) => {
   res.json({ success: true, agents: enriched });
 }));
 
+// POST /reseed — Force reseed demo data
+router.post('/reseed', asyncHandler(async (req, res) => {
+  const { seed } = require('../services/seed.iq');
+  await seed();
+  res.json({ success: true, message: 'Demo data reseeded' });
+}));
+
 module.exports = router;

@@ -37,9 +37,9 @@ function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 async function seed() {
   try {
-    // Check if data already exists
-    const [existing] = await sequelize.query(`SELECT COUNT(*) as cnt FROM iq_customers WHERE tenant_id = $1`, { bind: [TENANT] });
-    if (parseInt(existing[0]?.cnt) >= 10) {
+    // Check if FULL data already exists (customers + quotes + orders)
+    const [existingQ] = await sequelize.query(`SELECT COUNT(*) as cnt FROM iq_quotes WHERE tenant_id = $1`, { bind: [TENANT] });
+    if (parseInt(existingQ[0]?.cnt) >= 20) {
       console.log('  ✅ ImprintIQ demo data already seeded');
       return;
     }
