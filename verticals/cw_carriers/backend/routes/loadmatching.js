@@ -5,7 +5,7 @@ const loadmatching = require('../services/loadmatching.cw');
 // POST /api/load-matching/pairs/:loadId - Find load pairs
 router.post('/pairs/:loadId', async (req, res) => {
   try {
-    const result = await loadmatching.find_load_pairs({ load_id: parseInt(req.params.loadId), ...req.body });
+    const result = await loadmatching.find_load_pairs({ load_id: req.params.loadId, ...req.body });
     res.json({ success: true, data: result });
   } catch (err) {
     res.status(400).json({ error: err.message });

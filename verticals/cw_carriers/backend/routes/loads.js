@@ -99,17 +99,47 @@ router.post('/', async (req, res) => {
   }
 });
 
-// GET /:id
+// GET /:id — search both cw_loads and lg_loads by ID or load_ref
 router.get('/:id', async (req, res) => {
   try {
-    const [[load]] = await sequelize.query(
-      `SELECT l.*, sc.company_name as shipper_name, cc.company_name as carrier_name
+    const idOrRef = req.params.id;
+    // Try cw_loads first
+    let load;
+    const [[cwById]] = await sequelize.query(
+      `SELECT l.*, sc.company_name as shipper_name, cc.company_name as carrier_name, 'cw' as source
        FROM cw_loads l
        LEFT JOIN cw_contacts sc ON l.shipper_id = sc.id
        LEFT JOIN cw_contacts cc ON l.carrier_id = cc.id
-       WHERE l.id = $1`,
-      { bind: [req.params.id] }
-    );
+       WHERE l.id = $1`, { bind: [idOrRef] });
+    if (cwById) { load = cwById; }
+    else {
+      // Try cw_loads by load_ref
+      const [[cwByRef]] = await sequelize.query(
+        `SELECT l.*, sc.company_name as shipper_name, cc.company_name as carrier_name, 'cw' as source
+         FROM cw_loads l LEFT JOIN cw_contacts sc ON l.shipper_id = sc.id LEFT JOIN cw_contacts cc ON l.carrier_id = cc.id
+         WHERE l.load_ref = $1`, { bind: [String(idOrRef)] });
+      if (cwByRef) { load = cwByRef; }
+      else {
+        // Try lg_loads by id
+        const [[lgById]] = await sequelize.query(
+          `SELECT l.*, l.shipper_name, NULL as carrier_name,
+                  COALESCE(l.origin_city || ', ' || l.origin_state, l.origin_full) as origin,
+                  COALESCE(l.destination_city || ', ' || l.destination_state, l.destination_full) as destination,
+                  l.equipment_type as freight_type, l.buy_rate as rate_usd, l.sell_rate as shipper_rate, 'lg' as source
+           FROM lg_loads l WHERE l.id = $1`, { bind: [idOrRef] });
+        if (lgById) { load = lgById; }
+        else {
+          // Try lg_loads by load_ref
+          const [[lgByRef]] = await sequelize.query(
+            `SELECT l.*, l.shipper_name, NULL as carrier_name,
+                    COALESCE(l.origin_city || ', ' || l.origin_state, l.origin_full) as origin,
+                    COALESCE(l.destination_city || ', ' || l.destination_state, l.destination_full) as destination,
+                    l.equipment_type as freight_type, l.buy_rate as rate_usd, l.sell_rate as shipper_rate, 'lg' as source
+             FROM lg_loads l WHERE l.load_ref = $1`, { bind: [String(idOrRef)] });
+          load = lgByRef;
+        }
+      }
+    }
     if (!load) return res.status(404).json({ error: 'Load not found' });
 
     // Get call history for this load

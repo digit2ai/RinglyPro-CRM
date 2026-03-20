@@ -41,7 +41,7 @@ async function find_load_pairs(input) {
       AND pickup_date BETWEEN ($4::DATE - INTERVAL '3 days') AND ($4::DATE + INTERVAL '7 days')
     ORDER BY pickup_date ASC
     LIMIT 200
-  `, { bind: [tid, load_id, anchor.equipment_type, anchor.pickup_date || new Date().toISOString().split('T')[0]] });
+  `, { bind: [tid, anchor.id, anchor.equipment_type, anchor.pickup_date || new Date().toISOString().split('T')[0]] });
 
   const pairs = [];
 
