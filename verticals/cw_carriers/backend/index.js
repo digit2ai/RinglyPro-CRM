@@ -32,6 +32,11 @@ const neuralCwRoutes = require('./routes/neural-cw');
 const crmAgentRoutes = require('./routes/crm-agent');
 const pipelineRoutes = require('./routes/pipeline');
 const roiRoutes = require('./routes/roi');
+// FreightMind AI routes
+const agentsRoutes = require('./routes/agents');
+const trucksRoutes = require('./routes/trucks');
+const driversRoutes = require('./routes/drivers');
+const dispatchesRoutes = require('./routes/dispatches');
 
 // Mount API routes
 router.use('/api/auth', authRoutes);
@@ -64,6 +69,11 @@ router.use('/api/pipeline', pipelineRoutes);
 router.use('/api/roi', roiRoutes);
 router.use('/api/fmcsa', require('./routes/fmcsa'));
 router.use('/api/matching', require('./routes/carrier-matching'));
+// FreightMind AI API routes
+router.use('/api/agents', agentsRoutes);
+router.use('/api/trucks', trucksRoutes);
+router.use('/api/drivers', driversRoutes);
+router.use('/api/dispatches', dispatchesRoutes);
 
 // Bridge API — CW ↔ LG sync
 const bridge = require('./services/bridge.cw');
@@ -82,10 +92,17 @@ router.post('/api/bridge/sync', async (req, res) => {
 
 // Health check
 router.get('/health', (req, res) => {
+  const { getAllAgents } = require('./services/agent-framework.cw');
+  const agents = getAllAgents();
   res.json({
-    service: 'CW Carriers USA',
+    service: 'FreightMind AI — CW Carriers',
     status: 'healthy',
     tenant_id: 'cw_carriers',
+    freightmind: {
+      agents: agents.length,
+      agent_names: agents.map(a => a.name),
+      pillars: ['AI Agent Mesh', 'Neural Intelligence', 'Voice AI', 'Command Center']
+    },
     timestamp: new Date().toISOString()
   });
 });
@@ -168,6 +185,17 @@ async function initialize() {
       }
     }
     console.log('  ✅ CW Carriers admin users initialized');
+
+    // Initialize FreightMind AI Agents
+    try {
+      require('./services/agents/rate-engine.agent');
+      require('./services/agents/freight-finder.agent');
+      const { getAllAgents } = require('./services/agent-framework.cw');
+      const agents = getAllAgents();
+      console.log(`  🧠 FreightMind AI: ${agents.length} agents initialized (${agents.map(a => a.name).join(', ')})`);
+    } catch (agentErr) {
+      console.error('  ⚠️ FreightMind AI agent init error:', agentErr.message);
+    }
   } catch (err) {
     console.error('  ⚠️ CW Carriers init error:', err.message);
   }
