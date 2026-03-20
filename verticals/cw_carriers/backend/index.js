@@ -63,6 +63,7 @@ router.use('/api/crm-agent', crmAgentRoutes);
 router.use('/api/pipeline', pipelineRoutes);
 router.use('/api/roi', roiRoutes);
 router.use('/api/fmcsa', require('./routes/fmcsa'));
+router.use('/api/matching', require('./routes/carrier-matching'));
 
 // Bridge API — CW ↔ LG sync
 const bridge = require('./services/bridge.cw');
