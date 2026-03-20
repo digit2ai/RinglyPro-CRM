@@ -306,8 +306,8 @@ async function process_upload(input) {
             shipper_name = EXCLUDED.shipper_name, commodity = EXCLUDED.commodity, status = EXCLUDED.status,
             source = EXCLUDED.source, upload_batch_id = EXCLUDED.upload_batch_id, updated_at = NOW()
         `, { bind: [tid, mapped.load_ref || `UP-${upload.id}-${i}`,
-          mapped.origin_city || orig.city, mapped.origin_state || orig.state, mapped.origin_zip || orig.zip, mapped.origin,
-          mapped.destination_city || dest.city, mapped.destination_state || dest.state, mapped.destination_zip || dest.zip, mapped.destination,
+          mapped.origin_city || orig.city || null, mapped.origin_state || orig.state || null, mapped.origin_zip || orig.zip || null, mapped.origin || null,
+          mapped.destination_city || dest.city || null, mapped.destination_state || dest.state || null, mapped.destination_zip || dest.zip || null, mapped.destination || null,
           mapped.pickup_date || null, mapped.delivery_date || null,
           mapped.equipment_type || 'dry_van', parseFloat(mapped.weight) || null, miles,
           buyRate, sellRate, margin, marginPct, rpm,
