@@ -37,12 +37,16 @@ function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 async function seed() {
   try {
-    // Check if FULL data already exists (customers + quotes + orders)
+    // Check if FULL data already exists (customers + quotes + orders + calls)
     const [existingQ] = await sequelize.query(`SELECT COUNT(*) as cnt FROM iq_quotes WHERE tenant_id = $1`, { bind: [TENANT] });
-    if (parseInt(existingQ[0]?.cnt) >= 20) {
+    const [existingC] = await sequelize.query(`SELECT COUNT(*) as cnt FROM iq_calls WHERE tenant_id = $1`, { bind: [TENANT] });
+    if (parseInt(existingQ[0]?.cnt) >= 20 && parseInt(existingC[0]?.cnt) >= 20) {
       console.log('  ✅ ImprintIQ demo data already seeded');
       return;
     }
+
+    // Use timestamp to make IDs unique across runs
+    const ts = Date.now().toString().slice(-6);
 
     console.log('  🌱 Seeding ImprintIQ demo data...');
 
@@ -91,7 +95,7 @@ async function seed() {
         INSERT INTO iq_quotes (tenant_id, quote_number, customer_id, title, total_amount, margin_pct, stage, source, created_at, updated_at)
         VALUES ($1, $2, (SELECT id FROM iq_customers WHERE tenant_id = $1 ORDER BY RANDOM() LIMIT 1), $3, $4, $5, $6, $7, NOW() - INTERVAL '${daysAgo} days', NOW() - INTERVAL '${Math.max(0, daysAgo - rand(0, 5))} days')
         ON CONFLICT DO NOTHING
-      `, { bind: [TENANT, `QT-${2024000 + i}`, `${pick(['Q4 Trade Show','Employee Gifts','Conference Swag','Client Appreciation','Product Launch','Holiday Campaign','Onboarding Kits','Fundraiser'])} - ${pick(COMPANIES)}`, total, margin, stage, pick(['website','phone','email','referral','trade_show'])] });
+      `, { bind: [TENANT, `QT-${ts}${i}`, `${pick(['Q4 Trade Show','Employee Gifts','Conference Swag','Client Appreciation','Product Launch','Holiday Campaign','Onboarding Kits','Fundraiser'])} - ${pick(COMPANIES)}`, total, margin, stage, pick(['website','phone','email','referral','trade_show'])] });
     }
 
     // Seed Orders
@@ -103,7 +107,7 @@ async function seed() {
         INSERT INTO iq_orders (tenant_id, order_number, customer_id, title, total_amount, cost_total, margin_pct, stage, payment_status, created_at)
         VALUES ($1, $2, (SELECT id FROM iq_customers WHERE tenant_id = $1 ORDER BY RANDOM() LIMIT 1), $3, $4, $5, $6, $7, $8, NOW() - INTERVAL '${rand(1, 45)} days')
         ON CONFLICT DO NOTHING
-      `, { bind: [TENANT, `ORD-${3024000 + i}`, `Order for ${pick(COMPANIES)}`, total, costTotal, rand(25, 42), stage, pick(['unpaid','paid','partial','overdue'])] });
+      `, { bind: [TENANT, `ORD-${ts}${i}`, `Order for ${pick(COMPANIES)}`, total, costTotal, rand(25, 42), stage, pick(['unpaid','paid','partial','overdue'])] });
     }
 
     // Seed Artwork
@@ -161,7 +165,7 @@ async function seed() {
         INSERT INTO iq_invoices (tenant_id, invoice_number, customer_id, amount, tax_amount, total_amount, paid_amount, status, due_date, created_at)
         VALUES ($1, $2, (SELECT id FROM iq_customers WHERE tenant_id = $1 ORDER BY RANDOM() LIMIT 1), $3, $4, $5, $6, $7, $8, NOW() - INTERVAL '${rand(5, 60)} days')
         ON CONFLICT DO NOTHING
-      `, { bind: [TENANT, `INV-${4024000 + i}`, total, tax, grandTotal, paidAmt, status, new Date(Date.now() - rand(0, 45) * 86400000).toISOString().split('T')[0]] });
+      `, { bind: [TENANT, `INV-${ts}${i}`, total, tax, grandTotal, paidAmt, status, new Date(Date.now() - rand(0, 45) * 86400000).toISOString().split('T')[0]] });
     }
 
     // Seed Reorder Predictions
