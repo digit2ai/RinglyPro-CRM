@@ -6,28 +6,69 @@ const auth = require('../middleware/auth.cw');
 
 router.use(auth);
 
-// GET / - list loads
+// GET / - list loads (queries both cw_loads and lg_loads)
 router.get('/', async (req, res) => {
   try {
     const { status, freight_type, origin, destination, limit = 50 } = req.query;
-    let where = 'WHERE 1=1';
-    const binds = [];
+    let cwWhere = 'WHERE 1=1';
+    let lgWhere = 'WHERE 1=1';
+    const cwBinds = [];
+    const lgBinds = [];
 
-    if (status) { binds.push(status); where += ` AND l.status = $${binds.length}`; }
-    if (freight_type) { binds.push(freight_type); where += ` AND l.freight_type = $${binds.length}`; }
-    if (origin) { binds.push(`%${origin}%`); where += ` AND l.origin ILIKE $${binds.length}`; }
-    if (destination) { binds.push(`%${destination}%`); where += ` AND l.destination ILIKE $${binds.length}`; }
-    binds.push(parseInt(limit));
+    if (status) {
+      cwBinds.push(status); cwWhere += ` AND l.status = $${cwBinds.length}`;
+      lgBinds.push(status); lgWhere += ` AND l.status = $${lgBinds.length}`;
+    }
+    if (freight_type) {
+      cwBinds.push(freight_type); cwWhere += ` AND l.freight_type = $${cwBinds.length}`;
+      lgBinds.push(freight_type); lgWhere += ` AND l.equipment_type = $${lgBinds.length}`;
+    }
+    if (origin) {
+      cwBinds.push(`%${origin}%`); cwWhere += ` AND l.origin ILIKE $${cwBinds.length}`;
+      lgBinds.push(`%${origin}%`); lgWhere += ` AND (l.origin_city ILIKE $${lgBinds.length} OR l.origin_state ILIKE $${lgBinds.length})`;
+    }
+    if (destination) {
+      cwBinds.push(`%${destination}%`); cwWhere += ` AND l.destination ILIKE $${cwBinds.length}`;
+      lgBinds.push(`%${destination}%`); lgWhere += ` AND (l.destination_city ILIKE $${lgBinds.length} OR l.destination_state ILIKE $${lgBinds.length})`;
+    }
 
-    const [rows] = await sequelize.query(
-      `SELECT l.*, sc.company_name as shipper_name, cc.company_name as carrier_name
+    const lim = parseInt(limit) || 50;
+
+    // Query both tables
+    const [cwRows] = await sequelize.query(
+      `SELECT l.id, l.load_ref, l.origin, l.destination, l.freight_type, l.rate_usd,
+              l.shipper_rate, l.pickup_date::TEXT as pickup_date, l.status, l.equipment_type, l.commodity,
+              l.created_at, l.updated_at, 'cw' as source,
+              sc.company_name as shipper_name, cc.company_name as carrier_name
        FROM cw_loads l
        LEFT JOIN cw_contacts sc ON l.shipper_id = sc.id
        LEFT JOIN cw_contacts cc ON l.carrier_id = cc.id
-       ${where} ORDER BY l.created_at DESC LIMIT $${binds.length}`,
-      { bind: binds }
+       ${cwWhere} ORDER BY l.created_at DESC LIMIT ${lim}`,
+      { bind: cwBinds }
     );
-    res.json({ success: true, data: rows });
+
+    const [lgRows] = await sequelize.query(
+      `SELECT l.id, l.load_ref,
+              COALESCE(l.origin_city || ', ' || l.origin_state, l.origin_full) as origin,
+              COALESCE(l.destination_city || ', ' || l.destination_state, l.destination_full) as destination,
+              l.equipment_type as freight_type, l.buy_rate as rate_usd,
+              l.sell_rate as shipper_rate, l.pickup_date::TEXT as pickup_date, l.status,
+              l.equipment_type, l.commodity,
+              l.created_at, l.updated_at, 'lg' as source,
+              l.shipper_name, NULL as carrier_name
+       FROM lg_loads l
+       ${lgWhere} ORDER BY l.created_at DESC LIMIT ${lim}`,
+      { bind: lgBinds }
+    );
+
+    // Merge and sort by created_at desc, deduplicate by load_ref
+    const seen = new Set();
+    const merged = [...cwRows, ...lgRows]
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .filter(r => { if (r.load_ref && seen.has(r.load_ref)) return false; if (r.load_ref) seen.add(r.load_ref); return true; })
+      .slice(0, lim);
+
+    res.json({ success: true, data: merged });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
