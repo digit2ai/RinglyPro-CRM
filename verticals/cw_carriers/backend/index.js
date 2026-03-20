@@ -37,6 +37,7 @@ const agentsRoutes = require('./routes/agents');
 const trucksRoutes = require('./routes/trucks');
 const driversRoutes = require('./routes/drivers');
 const dispatchesRoutes = require('./routes/dispatches');
+const mcpRoutes = require('./routes/mcp');
 
 // Mount API routes
 router.use('/api/auth', authRoutes);
@@ -74,6 +75,8 @@ router.use('/api/agents', agentsRoutes);
 router.use('/api/trucks', trucksRoutes);
 router.use('/api/drivers', driversRoutes);
 router.use('/api/dispatches', dispatchesRoutes);
+// MCP Server — The Orchestrator (central entry point for all AI operations)
+router.use('/mcp', mcpRoutes);
 
 // Bridge API — CW ↔ LG sync
 const bridge = require('./services/bridge.cw');

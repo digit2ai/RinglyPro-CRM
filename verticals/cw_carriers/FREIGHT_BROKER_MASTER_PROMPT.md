@@ -1586,60 +1586,516 @@ The system is 99% automated. Humans intervene only for:
 
 ---
 
-## 14. ARCHITECTURE PARADIGM — AI-NATIVE, NOT TRADITIONAL APP
+## 14. ARCHITECTURE PARADIGM — TIERED, MCP-ORCHESTRATED, MODULAR
 
-### CRITICAL: This is NOT a conventional application
+### CRITICAL: This is NOT a monolithic application
 
-This platform is **NOT** a traditional TMS with AI bolted on. It is an **AI-native operating system** where:
+FreightMind is a **modular, tiered AI ecosystem** where:
 
-- **AI agents ARE the application** — there are no CRUD screens for humans to operate. Agents do the work.
-- **The UI is a monitoring dashboard** — humans observe, review, and handle exceptions. They don't operate the system.
-- **Conversational interface first** — users talk to the system in natural language, agents execute.
-- **Event-driven, not click-driven** — everything triggers automatically from real-world events (GPS, emails, webhooks, timers).
-- **Self-learning** — agents improve from historical decisions and outcomes.
+- **Each tier is a standalone product** — sellable independently to brokers
+- **Tiers interconnect via MCP Server** — the orchestrator is the nervous system
+- **Clients buy 1 tier, 2 tiers, or the full package** — each combination works
+- **MCP Server is the orchestrator** — routes requests between tiers, enforces access, manages state
+- **AI agents ARE the application** — no CRUD screens, agents do the work
+- **Neural Intelligence observes ALL tiers** — cross-tier diagnostics and prescriptions
 
-### The 3 Layers
+### THE 5 TIERS + MCP ORCHESTRATOR
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│  LAYER 1: AI AGENT MESH (the workers)                          │
-│                                                                 │
-│  7 specialized agents + 1 orchestrator                          │
-│  Each agent has MCP tools, memory, and decision-making          │
-│  Agents talk to each other, not to humans                       │
-│  Agents operate 24/7 autonomously                               │
-│                                                                 │
-│  This layer IS the application. It replaces:                    │
-│  - Dispatchers clicking buttons                                 │
-│  - Brokers searching load boards                                │
-│  - Accountants generating invoices                              │
-│  - Compliance officers checking documents                       │
-├─────────────────────────────────────────────────────────────────┤
-│  LAYER 2: NEURAL INTELLIGENCE (the brain)                      │
-│                                                                 │
-│  Observes everything the agents do                              │
-│  Generates Findings with severity scoring                       │
-│  Three tiers:                                                   │
-│    ✅ DIAGNOSTIC  — "What happened? What's wrong?"              │
-│    ✅ PRESCRIPTION — "Here's what you should do about it"       │
-│    🔒 TREATMENT   — "Automated fix execution"                  │
-│       (LOCKED — separate consulting/dev fee or license)         │
-│                                                                 │
-│  Neural scans agent activity, financial data, compliance        │
-│  status, fleet utilization, market conditions, and              │
-│  generates actionable intelligence                              │
-├─────────────────────────────────────────────────────────────────┤
-│  LAYER 3: HUMAN INTERFACE (the window)                         │
-│                                                                 │
-│  Command Center dashboard — observe, don't operate              │
-│  Natural language chat with agents                              │
-│  Exception queue — items agents escalated                       │
-│  Neural findings feed — diagnostics + prescriptions             │
-│  Real-time fleet map                                            │
-│  Financial health at a glance                                   │
-│                                                                 │
-│  Humans are SUPERVISORS, not OPERATORS                          │
-└─────────────────────────────────────────────────────────────────┘
+╔══════════════════════════════════════════════════════════════════════════╗
+║                    MCP SERVER — THE ORCHESTRATOR                        ║
+║                                                                         ║
+║  Central nervous system connecting all tiers                            ║
+║  • Routes tool calls between agents across tiers                        ║
+║  • Enforces tier access per tenant (which tiers are licensed)           ║
+║  • Manages inter-tier events and data flow                              ║
+║  • Exposes unified MCP protocol for all 34+ tools                       ║
+║  • Handles authentication, rate limiting, audit logging                 ║
+║  • Clients connect via MCP protocol — any MCP-compatible client works   ║
+║                                                                         ║
+║  POST /mcp/tools/list    — List available tools (filtered by tier)      ║
+║  POST /mcp/tools/call    — Execute any tool (routed to correct agent)   ║
+║  POST /mcp/events        — Emit cross-tier events                       ║
+║  GET  /mcp/status         — Orchestrator health + tier activation        ║
+╚════════════════════════════╤═════════════════════════════════════════════╝
+                             │
+      ┌──────────┬───────────┼───────────┬──────────┬──────────┐
+      │          │           │           │          │          │
+      ▼          ▼           ▼           ▼          ▼          ▼
+ ┌─────────┐┌─────────┐┌─────────┐┌─────────┐┌─────────┐┌─────────┐
+ │ TIER 1  ││ TIER 2  ││ TIER 3  ││ TIER 4  ││ TIER 5  ││ ADD-ONS │
+ │ LOAD    ││ FLEET   ││FINANCIAL││COMPLIANC││ NEURAL  ││         │
+ │ OPS     ││ OPS     ││ OPS     ││E & SAFE ││ INTELL  ││ Voice   │
+ │         ││         ││         ││         ││         ││ Treatmt │
+ │$149/mo  ││$149/mo  ││$149/mo  ││$99/mo   ││$149/mo  ││ Custom  │
+ └─────────┘└─────────┘└─────────┘└─────────┘└─────────┘└─────────┘
+```
+
+### TIER 1: LOAD OPERATIONS — "Find & Price Freight"
+**Standalone value**: A broker can use ONLY this tier and get massive value
+**Price**: $149/truck/month
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│  TIER 1: LOAD OPERATIONS                                         │
+│                                                                   │
+│  AGENTS:                                                          │
+│  ├── Freight Finder Agent (17 tools)                             │
+│  │   • Scan load boards (DAT, Truckstop)                        │
+│  │   • Load-to-load matching (CHAIN, BACKHAUL)                  │
+│  │   • Carrier onboarding (FMCSA + insurance + Highway)         │
+│  │   • Carrier scoring & monitoring                              │
+│  │   • Multi-channel capacity sourcing                           │
+│  │   • Email-to-order conversion                                 │
+│  │   • Shipper relationship intelligence                         │
+│  │   • Shipper churn detection                                   │
+│  │                                                                │
+│  └── Rate Engine Agent (17 tools)                                │
+│      • Market rate lookup (DAT iQ live data)                     │
+│      • AI rate quoting with margin targets                       │
+│      • Spot market win/loss analytics                            │
+│      • RFP import, auto-pricing, bid management                  │
+│      • Rate trend prediction                                     │
+│      • Lane profitability analysis                               │
+│      • Auto-negotiation with counter-offers                      │
+│                                                                   │
+│  DATABASE TABLES:                                                 │
+│  lg_loads, lg_carriers, lg_rate_benchmarks, lg_load_pairs,       │
+│  lg_quotes, lg_rfps, lg_rfp_lanes, lg_shippers, lg_customers    │
+│                                                                   │
+│  WORKS STANDALONE: YES — broker loads freight without fleet mgmt  │
+│                                                                   │
+│  INTERCONNECTS WITH:                                              │
+│  → Tier 2: Load assigned? Auto-dispatch to best driver           │
+│  → Tier 3: Load delivered? Auto-generate invoice                  │
+│  → Tier 4: Carrier booked? Auto-verify compliance                │
+│  → Tier 5: Neural scans load ops for inefficiencies               │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+### TIER 2: FLEET OPERATIONS — "Move & Track"
+**Standalone value**: A carrier with its own freight can manage fleet without Tier 1
+**Price**: $149/truck/month
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│  TIER 2: FLEET OPERATIONS                                        │
+│                                                                   │
+│  AGENTS:                                                          │
+│  ├── Dispatch AI Agent                                           │
+│  │   • Auto-assign drivers to loads (7-factor scoring)           │
+│  │   • Route optimization with ETA                               │
+│  │   • HOS feasibility checking                                  │
+│  │   • Multi-load trip chaining                                  │
+│  │   • Fleet rebalancing recommendations                         │
+│  │   • Dock appointment scheduling                               │
+│  │   • Driver preference learning                                │
+│  │                                                                │
+│  └── Tracking & Visibility Agent                                 │
+│      • Real-time GPS/ELD position tracking                       │
+│      • Geofence auto-detection (arrival/departure)               │
+│      • Dynamic ETA recalculation                                 │
+│      • Delay detection & customer auto-alerts                    │
+│      • Detention clock management                                │
+│      • Auto check calls (GPS-based, no phone needed)             │
+│      • Fleet map with live positions                             │
+│                                                                   │
+│  DATABASE TABLES:                                                 │
+│  lg_trucks, lg_drivers, lg_dispatches, lg_tracking_events        │
+│                                                                   │
+│  WORKS STANDALONE: YES — carrier manages own fleet/dispatch       │
+│                                                                   │
+│  INTERCONNECTS WITH:                                              │
+│  → Tier 1: Load booked? Dispatch AI auto-assigns driver          │
+│  → Tier 3: POD captured? Billing agent auto-invoices             │
+│  → Tier 4: HOS limit? Compliance agent alerted                  │
+│  → Tier 5: Neural scans fleet utilization + deadhead             │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+### TIER 3: FINANCIAL OPERATIONS — "Bill & Collect"
+**Standalone value**: A broker can use this for automated back-office
+**Price**: $149/truck/month
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│  TIER 3: FINANCIAL OPERATIONS                                    │
+│                                                                   │
+│  AGENTS:                                                          │
+│  └── Billing & Settlement Agent                                  │
+│      • Auto-invoice generation on POD receipt                    │
+│      • Invoice factoring integration                              │
+│      • Payment tracking & AR aging                               │
+│      • Driver settlement calculation                              │
+│      • Fuel card reconciliation                                  │
+│      • Auto-collections (past-due follow-up)                     │
+│      • Invoice audit (catch overcharges, duplicates)             │
+│      • Dispute generation with supporting docs                   │
+│      • IFTA fuel tax calculation from GPS                        │
+│      • Multi-currency support                                    │
+│                                                                   │
+│  DATABASE TABLES:                                                 │
+│  lg_invoices, lg_settlements, lg_billing_documents               │
+│                                                                   │
+│  WORKS STANDALONE: YES — plug into any TMS for billing           │
+│                                                                   │
+│  INTERCONNECTS WITH:                                              │
+│  → Tier 1: Rate confirmed? Invoice amount pre-calculated         │
+│  → Tier 2: POD captured? Invoice auto-triggered                  │
+│  → Tier 4: Insurance lapsed? Block future payments               │
+│  → Tier 5: Neural scans cash flow, margins, AR aging             │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+### TIER 4: COMPLIANCE & SAFETY — "Stay Legal"
+**Standalone value**: Any carrier needs compliance monitoring
+**Price**: $99/truck/month (lower entry point)
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│  TIER 4: COMPLIANCE & SAFETY                                     │
+│                                                                   │
+│  AGENTS:                                                          │
+│  ├── Compliance & Safety Agent                                   │
+│  │   • Real-time HOS monitoring & pre-violation alerts           │
+│  │   • CDL/insurance/authority expiry tracking                   │
+│  │   • FMCSA carrier authority verification                      │
+│  │   • Drug test scheduling (random + pre-employment)            │
+│  │   • ELD log auditing                                          │
+│  │   • CSA score monitoring                                      │
+│  │   • Pre-dispatch compliance gate                              │
+│  │                                                                │
+│  └── Maintenance & Fleet Agent                                   │
+│      • Preventive maintenance scheduling                         │
+│      • Truck health monitoring (telematics)                      │
+│      • Breakdown prediction (pattern matching)                   │
+│      • DOT inspection tracking                                   │
+│      • Fuel efficiency monitoring                                │
+│      • Cost-per-mile tracking                                    │
+│      • Nearest shop finder                                       │
+│                                                                   │
+│  DATABASE TABLES:                                                 │
+│  lg_compliance, lg_maintenance                                    │
+│                                                                   │
+│  WORKS STANDALONE: YES — compliance SaaS for any carrier          │
+│                                                                   │
+│  INTERCONNECTS WITH:                                              │
+│  → Tier 1: Carrier onboarded? Auto-verify compliance             │
+│  → Tier 2: Driver assigned? Pre-dispatch compliance gate         │
+│  → Tier 3: Maintenance cost? Feeds into truck cost/mile          │
+│  → Tier 5: Neural scans safety scores + violation patterns       │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+### TIER 5: NEURAL INTELLIGENCE — "The Brain"
+**Standalone value**: Plug into any TMS and get AI diagnostics
+**Price**: $149/truck/month
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│  TIER 5: NEURAL INTELLIGENCE                                     │
+│                                                                   │
+│  SCANS (adapts to which tiers are active):                       │
+│                                                                   │
+│  If Tier 1 active → Operations Neural + Market Intelligence      │
+│  If Tier 2 active → Fleet Neural (deadhead, utilization)         │
+│  If Tier 3 active → Financial Neural (margins, AR, cash flow)    │
+│  If Tier 4 active → Compliance Neural (violations, expiries)     │
+│  If ALL active    → Cross-tier correlations + full diagnostics   │
+│                                                                   │
+│  + Spot Market Win/Loss Neural                                   │
+│  + Shipper Relationship Neural                                   │
+│  + Voice Call Analytics Neural                                   │
+│                                                                   │
+│  OUTPUT: Findings (Diagnostic + Prescription)                    │
+│                                                                   │
+│  WORKS STANDALONE: YES — reads data, generates findings           │
+│                                                                   │
+│  MORE TIERS = SMARTER NEURAL                                     │
+│  1 tier:  Scans that tier only                                   │
+│  2 tiers: Cross-tier correlations emerge                         │
+│  3 tiers: Deep interconnected insights                           │
+│  All 5:   Full 360° business intelligence                        │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+### ADD-ONS (sold separately with any tier combination)
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│  VOICE AI — $0.15/min or minute packs                           │
+│  Rachel/Ana/Lina handle inbound + outbound calls                │
+│  Connects to whichever tiers are active:                         │
+│  • Tier 1: Book loads, quote rates, source carriers by phone    │
+│  • Tier 2: Driver check-ins, delay notifications, HOS alerts    │
+│  • Tier 3: Collections calls, payment status inquiries           │
+│  • Tier 4: Compliance reminders, insurance renewal calls         │
+│                                                                   │
+│  TREATMENT MODULE — $99/truck/month                              │
+│  Auto-execution of Neural prescriptions                          │
+│  Requires: Tier 5 + at least 1 operational tier                  │
+│                                                                   │
+│  CUSTOM CONSULTING — $250/hour                                   │
+│  Custom agents, ML training, on-prem, integrations               │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+### MCP SERVER — THE ORCHESTRATOR
+
+The MCP Server is NOT an agent — it is the **infrastructure layer** that connects all tiers:
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                     MCP SERVER ARCHITECTURE                       │
+│                                                                   │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │  TENANT REGISTRY                                           │  │
+│  │                                                            │  │
+│  │  tenant_id: "cw_carriers"                                 │  │
+│  │  tiers_active: [1, 2, 3, 4, 5]          ← full package   │  │
+│  │  addons: ["voice", "treatment"]                            │  │
+│  │  tools_available: [all 80+ tools]                          │  │
+│  │                                                            │  │
+│  │  tenant_id: "small_broker_xyz"                            │  │
+│  │  tiers_active: [1]                       ← load ops only  │  │
+│  │  addons: ["voice"]                                         │  │
+│  │  tools_available: [34 tools from Tier 1 + voice]          │  │
+│  │                                                            │  │
+│  │  tenant_id: "fleet_company_abc"                           │  │
+│  │  tiers_active: [2, 4]                    ← fleet + compl  │  │
+│  │  addons: []                                                │  │
+│  │  tools_available: [tools from Tier 2 + Tier 4]            │  │
+│  └────────────────────────────────────────────────────────────┘  │
+│                                                                   │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │  TOOL ROUTER                                               │  │
+│  │                                                            │  │
+│  │  Client calls: POST /mcp/tools/call                       │  │
+│  │  Body: { tool: "get_market_rate", input: {...} }          │  │
+│  │                                                            │  │
+│  │  1. Authenticate tenant                                    │  │
+│  │  2. Check if tool belongs to a licensed tier               │  │
+│  │  3. Route to correct agent                                 │  │
+│  │  4. Execute tool                                           │  │
+│  │  5. Log to audit trail                                     │  │
+│  │  6. Emit cross-tier event if applicable                    │  │
+│  │  7. Return result                                          │  │
+│  └────────────────────────────────────────────────────────────┘  │
+│                                                                   │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │  EVENT BUS (cross-tier communication)                      │  │
+│  │                                                            │  │
+│  │  Events flow ONLY between licensed tiers:                  │  │
+│  │                                                            │  │
+│  │  Tier 1 → "load_booked"                                   │  │
+│  │    → if Tier 2 active: Dispatch AI receives, auto-assigns │  │
+│  │    → if Tier 2 NOT active: Event stored, no action         │  │
+│  │                                                            │  │
+│  │  Tier 2 → "load_delivered"                                 │  │
+│  │    → if Tier 3 active: Billing Agent auto-invoices         │  │
+│  │    → if Tier 3 NOT active: Event stored, no action         │  │
+│  │                                                            │  │
+│  │  Tier 2 → "hos_warning"                                    │  │
+│  │    → if Tier 4 active: Compliance Agent takes action       │  │
+│  │    → if Tier 4 NOT active: Event stored, no action         │  │
+│  │                                                            │  │
+│  │  ANY TIER → all events                                     │  │
+│  │    → if Tier 5 active: Neural scans and generates findings │  │
+│  │    → if Tier 5 NOT active: No intelligence layer           │  │
+│  └────────────────────────────────────────────────────────────┘  │
+│                                                                   │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │  TOOL REGISTRY (which tools belong to which tier)          │  │
+│  │                                                            │  │
+│  │  TIER 1 TOOLS:                                             │  │
+│  │  scan_load_boards, filter_by_equipment, qualify_load,      │  │
+│  │  match_freight_to_truck, score_load, find_load_pairs,      │  │
+│  │  post_to_load_board, search_available_trucks,              │  │
+│  │  onboard_carrier, score_carrier, monitor_carrier_insurance,│  │
+│  │  score_shipper_relationship, predict_shipper_demand,       │  │
+│  │  identify_upsell_lanes, detect_shipper_churn,              │  │
+│  │  get_shipper_360, check_shipper_reputation,                │  │
+│  │  get_market_rate, calc_lane_rate, compare_spot_vs_contract,│  │
+│  │  predict_rate_trend, set_min_rate, negotiate_rate,         │  │
+│  │  calc_trip_profitability, get_rate_benchmarks,             │  │
+│  │  track_quote_outcome, analyze_win_loss_by_lane,            │  │
+│  │  optimize_spot_pricing, get_spot_market_dashboard,         │  │
+│  │  import_rfp, auto_price_rfp, analyze_rfp_profitability,   │  │
+│  │  generate_bid_response, track_rfp_awards                   │  │
+│  │                                                            │  │
+│  │  TIER 2 TOOLS:                                             │  │
+│  │  get_driver_location, check_hos, assign_load,              │  │
+│  │  optimize_route, send_dispatch, chain_loads,               │  │
+│  │  rebalance_fleet, find_best_driver, estimate_detention,    │  │
+│  │  book_dock_appointment, get_truck_position, calc_eta,      │  │
+│  │  detect_delay, alert_customer, update_load_status,         │  │
+│  │  log_detention, geofence_trigger, get_fleet_map,           │  │
+│  │  check_weather_route, log_check_call                       │  │
+│  │                                                            │  │
+│  │  TIER 3 TOOLS:                                             │  │
+│  │  generate_invoice, calc_driver_pay, submit_to_factoring,   │  │
+│  │  track_payment, reconcile_fuel, aging_report,              │  │
+│  │  settle_driver, calc_load_profit, send_collections_notice, │  │
+│  │  audit_carrier_invoice, flag_billing_discrepancy,          │  │
+│  │  generate_dispute, track_dispute_resolution                │  │
+│  │                                                            │  │
+│  │  TIER 4 TOOLS:                                             │  │
+│  │  check_hos_violation, verify_cdl, check_insurance,         │  │
+│  │  log_inspection, flag_violation, schedule_drug_test,        │  │
+│  │  audit_eld_logs, check_carrier_authority,                   │  │
+│  │  generate_compliance_report, track_expiring_docs,          │  │
+│  │  check_truck_health, schedule_pm, log_repair,              │  │
+│  │  track_fuel_mpg, predict_failure, find_nearest_shop,       │  │
+│  │  calc_truck_cost_per_mile, get_fleet_utilization           │  │
+│  │                                                            │  │
+│  │  TIER 5 TOOLS:                                             │  │
+│  │  run_neural_scan, get_findings, get_finding_detail,        │  │
+│  │  acknowledge_finding, get_scan_schedule,                    │  │
+│  │  configure_scan_thresholds, get_neural_dashboard            │  │
+│  └────────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+### CROSS-TIER EVENT FLOWS
+
+These flows only activate when both tiers are licensed:
+
+```
+TIER 1 + TIER 2 (Load Ops + Fleet Ops):
+────────────────────────────────────────
+load_booked ──→ Dispatch AI auto-assigns best driver
+load_covered ──→ Tracking Agent starts monitoring
+carrier_rate_accepted ──→ Dispatch sends confirmation to driver
+
+TIER 2 + TIER 3 (Fleet Ops + Financial):
+─────────────────────────────────────────
+pod_captured ──→ Billing Agent generates invoice instantly
+load_delivered ──→ Settlement Agent adds to driver pay period
+detention_logged ──→ Billing Agent adds detention charges
+
+TIER 1 + TIER 4 (Load Ops + Compliance):
+─────────────────────────────────────────
+carrier_onboarded ──→ Compliance verifies authority + insurance
+carrier_assigned ──→ Compliance runs pre-dispatch gate
+carrier_insurance_expiring ──→ Freight Finder blocks from dispatch
+
+TIER 2 + TIER 4 (Fleet Ops + Compliance):
+─────────────────────────────────────────
+driver_assigned ──→ Compliance checks CDL + HOS + drug test
+hos_approaching_limit ──→ Dispatch AI plans rest stop
+truck_pm_overdue ──→ Dispatch AI avoids assigning truck
+
+TIER 3 + TIER 4 (Financial + Compliance):
+─────────────────────────────────────────
+insurance_lapsed ──→ Billing blocks future carrier payments
+maintenance_cost_logged ──→ Financial adds to truck cost/mile
+
+ALL TIERS + TIER 5 (Any + Neural):
+───────────────────────────────────
+Every event from every tier ──→ Neural observes, correlates, generates findings
+Neural finding generated ──→ Displayed in Command Center dashboard
+Neural prescription ──→ Suggests action to operator (or auto-executes with Treatment add-on)
+```
+
+### TIER PACKAGING FOR SALES
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                                                                   │
+│  PACKAGE: BROKER STARTER                                         │
+│  Tiers: 1 only                                                   │
+│  Price: $149/truck/month                                         │
+│  For: Small broker who needs load matching + rate intelligence    │
+│                                                                   │
+│  PACKAGE: CARRIER ESSENTIALS                                     │
+│  Tiers: 2 + 4                                                    │
+│  Price: $248/truck/month (bundle discount)                       │
+│  For: Carrier who manages own fleet + needs compliance            │
+│                                                                   │
+│  PACKAGE: BROKER PRO                                             │
+│  Tiers: 1 + 3                                                    │
+│  Price: $279/truck/month (bundle discount)                       │
+│  For: Broker who needs load ops + automated billing               │
+│                                                                   │
+│  PACKAGE: FULL OPERATIONS                                        │
+│  Tiers: 1 + 2 + 3 + 4                                           │
+│  Price: $449/truck/month (bundle discount)                       │
+│  For: Carrier-broker who runs everything                          │
+│                                                                   │
+│  PACKAGE: FREIGHTMIND COMPLETE                                   │
+│  Tiers: 1 + 2 + 3 + 4 + 5 + Voice + Treatment                  │
+│  Price: $699/truck/month                                         │
+│  For: Enterprise carrier wanting full AI automation               │
+│                                                                   │
+│  ANY TIER: Add Voice AI — $0.15/min or packs                    │
+│  ANY TIER: Add Neural (Tier 5) — $149/truck/month               │
+│  TIER 5 ONLY: Add Treatment — $99/truck/month                   │
+│                                                                   │
+│  REVENUE EXAMPLES:                                                │
+│  50-truck broker on Broker Pro          = $13,950/month          │
+│  50-truck carrier on Full Operations    = $22,450/month          │
+│  100-truck enterprise on Complete       = $69,900/month          │
+│  20 mixed clients avg $15K/month        = $300K/month = $3.6M ARR│
+│                                                                   │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+### TENANT CONFIGURATION TABLE
+
+```sql
+-- Tenant tier configuration — controls which tools/agents are active
+CREATE TABLE IF NOT EXISTS lg_tenant_config (
+  id SERIAL PRIMARY KEY,
+  tenant_id VARCHAR(50) UNIQUE NOT NULL,
+  company_name VARCHAR(255),
+  tier_1_load_ops BOOLEAN DEFAULT false,
+  tier_2_fleet_ops BOOLEAN DEFAULT false,
+  tier_3_financial BOOLEAN DEFAULT false,
+  tier_4_compliance BOOLEAN DEFAULT false,
+  tier_5_neural BOOLEAN DEFAULT false,
+  addon_voice BOOLEAN DEFAULT false,
+  addon_treatment BOOLEAN DEFAULT false,
+  voice_minutes_included INTEGER DEFAULT 0,
+  truck_count INTEGER DEFAULT 0,
+  package_name VARCHAR(50),
+  monthly_rate NUMERIC(10,2),
+  billing_start_date DATE,
+  status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active','trial','suspended','cancelled')),
+  api_key VARCHAR(100) UNIQUE,
+  metadata JSONB DEFAULT '{}',
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+### MCP SERVER IMPLEMENTATION
+
+```
+The MCP Server exposes a standard MCP protocol endpoint:
+
+POST /mcp/tools/list
+  → Returns only tools from licensed tiers for this tenant
+  → Tenant identified via API key or JWT
+
+POST /mcp/tools/call
+  → Validates tenant has access to the requested tool's tier
+  → Routes to correct agent
+  → Executes tool
+  → Emits cross-tier events (only to active tiers)
+  → Logs to audit trail
+  → Returns result
+
+POST /mcp/events
+  → Receives external events (webhooks from ELD, load boards, etc.)
+  → Routes to correct agent based on event type
+  → Only processes if relevant tier is active
+
+GET /mcp/status
+  → Returns orchestrator health, active tiers, agent count, tool count
+
+The MCP Server is the ONLY entry point for all AI operations.
+All tool calls go through it. All events go through it.
+It is the single source of truth for "what is this tenant allowed to do?"
 ```
 
 ---

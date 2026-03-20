@@ -1,7 +1,39 @@
 -- FreightMind AI — Phase 1-5 Foundation Tables
 -- Migration 005: Trucks, Drivers, Dispatches, Tracking, Invoices, Settlements,
--- Maintenance, Compliance, Quotes, RFPs, Shippers, Agent Log, Calls, Voice Usage, Audit Trail
+-- Maintenance, Compliance, Quotes, RFPs, Shippers, Agent Log, Calls, Voice Usage, Audit Trail,
+-- Tenant Config (MCP Orchestrator tier gating)
 -- Created: 2026-03-20
+
+-- ============================================================================
+-- TENANT CONFIG — MCP Orchestrator tier gating (which tiers each client has)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS lg_tenant_config (
+  id SERIAL PRIMARY KEY,
+  tenant_id VARCHAR(50) UNIQUE NOT NULL,
+  company_name VARCHAR(255),
+  tier_1_load_ops BOOLEAN DEFAULT false,
+  tier_2_fleet_ops BOOLEAN DEFAULT false,
+  tier_3_financial BOOLEAN DEFAULT false,
+  tier_4_compliance BOOLEAN DEFAULT false,
+  tier_5_neural BOOLEAN DEFAULT false,
+  addon_voice BOOLEAN DEFAULT false,
+  addon_treatment BOOLEAN DEFAULT false,
+  voice_minutes_included INTEGER DEFAULT 0,
+  truck_count INTEGER DEFAULT 0,
+  package_name VARCHAR(50),
+  monthly_rate NUMERIC(10,2),
+  billing_start_date DATE,
+  status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active','trial','suspended','cancelled')),
+  api_key VARCHAR(100) UNIQUE,
+  metadata JSONB DEFAULT '{}',
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Seed default tenant with all tiers (CW Carriers = full package)
+INSERT INTO lg_tenant_config (tenant_id, company_name, tier_1_load_ops, tier_2_fleet_ops, tier_3_financial, tier_4_compliance, tier_5_neural, addon_voice, addon_treatment, package_name, status)
+VALUES ('logistics', 'CW Carriers USA', true, true, true, true, true, true, true, 'FreightMind Complete', 'active')
+ON CONFLICT (tenant_id) DO NOTHING;
 
 -- ============================================================================
 -- 1. lg_trucks — Fleet truck inventory
