@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Load-to-Load Matching Algorithm — Technical Brief</title>
+<style>
+@page { size: letter; margin: 0.75in; }
+@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .no-print { display: none; } }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', -apple-system, sans-serif; color: #1e293b; line-height: 1.6; background: #fff; }
+.page { max-width: 800px; margin: 0 auto; padding: 40px; }
+.no-print { text-align: center; margin-bottom: 20px; }
+.no-print button { padding: 12px 32px; background: #1a4fa8; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; }
+
+/* Header */
+.header { border-bottom: 3px solid #1a4fa8; padding-bottom: 20px; margin-bottom: 32px; }
+.header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+.header h1 { font-size: 26px; color: #0f172a; line-height: 1.2; }
+.header h1 span { color: #1a4fa8; }
+.header-meta { font-size: 12px; color: #64748b; text-align: right; }
+.header-sub { font-size: 14px; color: #475569; margin-top: 8px; }
+.badge { display: inline-block; padding: 4px 12px; background: #1a4fa8; color: #fff; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; }
+
+/* Sections */
+h2 { font-size: 18px; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; margin: 28px 0 14px; }
+h3 { font-size: 15px; color: #1a4fa8; margin: 20px 0 10px; }
+p { font-size: 13px; color: #334155; margin-bottom: 10px; }
+ul, ol { font-size: 13px; color: #334155; padding-left: 24px; margin-bottom: 12px; }
+li { margin-bottom: 4px; }
+strong { color: #0f172a; }
+
+/* Tables */
+table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 12px; }
+th { background: #f1f5f9; color: #0f172a; font-weight: 600; text-align: left; padding: 10px 12px; border: 1px solid #e2e8f0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+td { padding: 8px 12px; border: 1px solid #e2e8f0; color: #334155; }
+tr:nth-child(even) td { background: #f8fafc; }
+
+/* Diagram */
+.diagram { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; margin: 16px 0 20px; }
+.flow { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
+.flow-box { background: #fff; border: 2px solid #1a4fa8; border-radius: 8px; padding: 12px 16px; text-align: center; min-width: 120px; }
+.flow-box .label { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
+.flow-box .value { font-size: 15px; font-weight: 700; color: #0f172a; margin-top: 2px; }
+.flow-arrow { font-size: 20px; color: #94a3b8; }
+
+/* Callouts */
+.callout { padding: 14px 18px; border-radius: 6px; margin: 14px 0; font-size: 13px; }
+.callout-blue { background: #eff6ff; border-left: 4px solid #1a4fa8; }
+.callout-amber { background: #fffbeb; border-left: 4px solid #f59e0b; }
+.callout-green { background: #f0fdf4; border-left: 4px solid #22c55e; }
+.callout-red { background: #fef2f2; border-left: 4px solid #ef4444; }
+
+/* Score gauge */
+.gauge-row { display: flex; gap: 16px; margin: 12px 0 20px; }
+.gauge { flex: 1; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; text-align: center; }
+.gauge .num { font-size: 28px; font-weight: 800; }
+.gauge .lbl { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+/* Footer */
+.footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="no-print">
+    <button onclick="window.print()">Download as PDF</button>
+  </div>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <span class="badge">TECHNICAL BRIEF</span>
+        <h1 style="margin-top: 12px;">Load-to-Load Matching<br><span>Algorithm Specification</span></h1>
+      </div>
+      <div class="header-meta">
+        <strong>RinglyPro Logistics</strong><br>
+        Digit2AI LLC<br>
+        March 2026<br>
+        <span style="color: #1a4fa8; font-weight: 600;">CONFIDENTIAL</span>
+      </div>
+    </div>
+    <p class="header-sub">AI-powered load pairing engine that identifies combinable or sequence-compatible shipments to improve truck utilization, reduce deadhead miles, and increase revenue per mile.</p>
+  </div>
+
+  <!-- Overview -->
+  <h2>1. Overview</h2>
+  <p>The Load-to-Load Matching Engine automatically scans the active load board to find pairs of shipments that can be combined into a single truck movement. This reduces empty miles, increases carrier utilization, and improves margin per load.</p>
+
+  <div class="diagram">
+    <div class="flow">
+      <div class="flow-box"><div class="label">Anchor Load</div><div class="value">TX &rarr; OK</div></div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-box" style="border-color: #8b5cf6;"><div class="label">Algorithm</div><div class="value">Score &amp; Rank</div></div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-box" style="border-color: #22c55e;"><div class="label">Best Pair</div><div class="value">OK &rarr; TX</div></div>
+      <div class="flow-arrow">=</div>
+      <div class="flow-box" style="border-color: #f59e0b;"><div class="label">Result</div><div class="value">Round Trip</div></div>
+    </div>
+  </div>
+
+  <!-- Pair Types -->
+  <h2>2. Pair Types</h2>
+  <table>
+    <thead>
+      <tr><th>Pair Type</th><th>Description</th><th>Example</th><th>Benefit</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Backhaul</strong></td>
+        <td>Load B returns the truck to Load A's origin area</td>
+        <td>A: Dallas, TX &rarr; OKC, OK<br>B: OKC, OK &rarr; Houston, TX</td>
+        <td>Eliminates empty return miles</td>
+      </tr>
+      <tr>
+        <td><strong>Chain</strong></td>
+        <td>Load B picks up near where Load A delivers</td>
+        <td>A: Dallas, TX &rarr; OKC, OK<br>B: OKC, OK &rarr; KC, MO</td>
+        <td>Keeps truck loaded continuously</td>
+      </tr>
+      <tr>
+        <td><strong>Round Trip</strong></td>
+        <td>Load B reverses Load A's lane exactly</td>
+        <td>A: Dallas, TX &rarr; OKC, OK<br>B: OKC, OK &rarr; Dallas, TX</td>
+        <td>Perfect utilization, zero deadhead</td>
+      </tr>
+      <tr>
+        <td><strong>Relay</strong></td>
+        <td>Multiple loads chained across regions</td>
+        <td>A: TX &rarr; OK, B: OK &rarr; KS, C: KS &rarr; TX</td>
+        <td>Multi-stop optimization</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Scoring -->
+  <h2>3. Scoring Model</h2>
+  <p>Each candidate pair is scored across four dimensions. The weighted composite score determines pair viability and ranking.</p>
+
+  <div class="gauge-row">
+    <div class="gauge"><div class="num" style="color: #1a4fa8;">35%</div><div class="lbl">Route</div></div>
+    <div class="gauge"><div class="num" style="color: #8b5cf6;">30%</div><div class="lbl">Timing</div></div>
+    <div class="gauge"><div class="num" style="color: #22c55e;">20%</div><div class="lbl">Equipment</div></div>
+    <div class="gauge"><div class="num" style="color: #f59e0b;">15%</div><div class="lbl">Revenue</div></div>
+  </div>
+
+  <h3>3.1 Route Score (35% weight)</h3>
+  <p>Measures geographic compatibility between the anchor load's destination and the candidate load's origin.</p>
+  <table>
+    <thead><tr><th>Condition</th><th>Score</th><th>Classification</th></tr></thead>
+    <tbody>
+      <tr><td>Exact city + state match (destination A = origin B)</td><td><strong>95 &ndash; 100</strong></td><td>Perfect chain/backhaul</td></tr>
+      <tr><td>Same state match (destination state A = origin state B)</td><td><strong>60 &ndash; 80</strong></td><td>Regional match</td></tr>
+      <tr><td>Adjacent state (within ~200 miles)</td><td><strong>40 &ndash; 60</strong></td><td>Viable with deadhead</td></tr>
+      <tr><td>No geographic relationship</td><td><strong>0</strong></td><td>Not viable</td></tr>
+    </tbody>
+  </table>
+
+  <h3>3.2 Timing Score (30% weight)</h3>
+  <p>Evaluates whether the truck can complete Load A's delivery and reach Load B's pickup within the time window.</p>
+  <table>
+    <thead><tr><th>Gap Between Loads</th><th>Score</th><th>Feasibility</th></tr></thead>
+    <tbody>
+      <tr><td>0 &ndash; 6 hours</td><td><strong>100</strong></td><td>Ideal &mdash; immediate continuation</td></tr>
+      <tr><td>6 &ndash; 12 hours</td><td><strong>75</strong></td><td>Same-day turnaround</td></tr>
+      <tr><td>12 &ndash; 24 hours</td><td><strong>50</strong></td><td>Next-day pickup viable</td></tr>
+      <tr><td>24 &ndash; 48 hours</td><td><strong>25</strong></td><td>Marginal &mdash; driver may wait</td></tr>
+      <tr><td>&gt; 48 hours</td><td><strong>0</strong></td><td>Not viable &mdash; pair rejected</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-amber">
+    <strong>Note on Date-Only Data:</strong> When load data contains only dates (no timestamps), the algorithm assumes a 12-hour delivery window. A 1-day gap between loads computes as ~24 hours. For optimal matching, pickup/delivery windows with time-of-day produce significantly better results.
+  </div>
+
+  <h3>3.3 Equipment Score (20% weight)</h3>
+  <table>
+    <thead><tr><th>Condition</th><th>Score</th></tr></thead>
+    <tbody>
+      <tr><td>Exact equipment match (e.g., both dry_van)</td><td><strong>100</strong></td></tr>
+      <tr><td>Compatible equipment (e.g., van can haul flatbed freight with tarps)</td><td><strong>50</strong></td></tr>
+      <tr><td>Incompatible equipment</td><td><strong>0</strong> &mdash; pair rejected</td></tr>
+    </tbody>
+  </table>
+
+  <h3>3.4 Revenue Score (15% weight)</h3>
+  <p>Evaluates whether the combined rate per mile improves over running each load independently.</p>
+  <table>
+    <thead><tr><th>Combined RPM vs. Individual</th><th>Score</th></tr></thead>
+    <tbody>
+      <tr><td>&gt; 15% improvement</td><td><strong>100</strong></td></tr>
+      <tr><td>5 &ndash; 15% improvement</td><td><strong>70</strong></td></tr>
+      <tr><td>0 &ndash; 5% improvement</td><td><strong>40</strong></td></tr>
+      <tr><td>No improvement or worse</td><td><strong>10</strong></td></tr>
+    </tbody>
+  </table>
+
+  <!-- Thresholds -->
+  <h2>4. Hard Filters &amp; Thresholds</h2>
+  <p>Before scoring, the algorithm applies hard filters to eliminate non-viable candidates:</p>
+
+  <table>
+    <thead><tr><th>Filter</th><th>Current Setting</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td>Equipment Match</td><td><strong>Exact match required</strong></td><td>Reefer won't pair with dry van</td></tr>
+      <tr><td>Date Window</td><td><strong>-3 to +7 days</strong> from anchor pickup</td><td>Loads must be schedulable together</td></tr>
+      <tr><td>Status Filter</td><td><strong>open, quoted</strong> only</td><td>Don't pair with delivered/cancelled loads</td></tr>
+      <tr><td>Max Candidates</td><td><strong>200</strong> per search</td><td>Performance limit</td></tr>
+      <tr><td>Max Deadhead</td><td><strong>150 miles</strong></td><td>Maximum empty miles between loads</td></tr>
+      <tr><td>Max Time Gap</td><td><strong>48 hours</strong></td><td>Maximum wait between delivery and next pickup</td></tr>
+      <tr><td>Minimum Score</td><td><strong>30</strong> (composite)</td><td>Pairs below this are not returned</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-blue">
+    <strong>Composite Score Formula:</strong><br>
+    <code>Score = (Route &times; 0.35) + (Timing &times; 0.30) + (Equipment &times; 0.20) + (Revenue &times; 0.15)</code><br><br>
+    A pair must score <strong>&ge; 30</strong> to be returned in results. Pairs scoring <strong>&ge; 70</strong> are flagged as high-confidence matches.
+  </div>
+
+  <!-- Data Flow -->
+  <h2>5. Data Flow</h2>
+  <ol>
+    <li><strong>User enters Load ID</strong> (load reference number from TMS)</li>
+    <li><strong>System finds anchor load</strong> in the database (by ID or reference number)</li>
+    <li><strong>Hard filters applied</strong> &mdash; select up to 200 candidates matching equipment, date window, and status</li>
+    <li><strong>Each candidate scored</strong> across 4 dimensions</li>
+    <li><strong>Results ranked</strong> by composite score, top 20 returned</li>
+    <li><strong>User accepts or rejects</strong> pairs &mdash; feedback stored for algorithm improvement</li>
+    <li><strong>Accepted pairs</strong> saved to <code>lg_load_pairs</code> table for dispatch</li>
+  </ol>
+
+  <!-- Performance -->
+  <h2>6. Expected Impact</h2>
+
+  <div class="gauge-row">
+    <div class="gauge"><div class="num" style="color: #22c55e;">15-25%</div><div class="lbl">Deadhead Reduction</div></div>
+    <div class="gauge"><div class="num" style="color: #1a4fa8;">10-20%</div><div class="lbl">RPM Improvement</div></div>
+    <div class="gauge"><div class="num" style="color: #f59e0b;">30-40%</div><div class="lbl">Faster Coverage</div></div>
+  </div>
+
+  <table>
+    <thead><tr><th>Metric</th><th>Without Matching</th><th>With Matching</th><th>Improvement</th></tr></thead>
+    <tbody>
+      <tr><td>Avg. Deadhead Miles per Load</td><td>~180 miles</td><td>~85 miles</td><td><strong>-53%</strong></td></tr>
+      <tr><td>Truck Utilization (loaded %)</td><td>~65%</td><td>~82%</td><td><strong>+17 pts</strong></td></tr>
+      <tr><td>Avg. Rate per Mile (combined)</td><td>$2.65</td><td>$3.10</td><td><strong>+17%</strong></td></tr>
+      <tr><td>Time to Cover Open Loads</td><td>4.2 hours</td><td>2.5 hours</td><td><strong>-40%</strong></td></tr>
+    </tbody>
+  </table>
+
+  <!-- Recommendations -->
+  <h2>7. Recommendations for Optimal Results</h2>
+
+  <div class="callout callout-green">
+    <strong>Data Quality Drives Match Quality.</strong> The algorithm performs best when load data includes:
+  </div>
+
+  <ol>
+    <li><strong>Pickup/delivery time windows</strong> (not just dates) &mdash; enables precise timing scores</li>
+    <li><strong>Mileage data</strong> per load &mdash; enables accurate RPM and deadhead calculations</li>
+    <li><strong>Sell rates</strong> alongside buy rates &mdash; enables margin optimization scoring</li>
+    <li><strong>Structured city + state</strong> (separate columns) &mdash; enables precise geographic matching</li>
+    <li><strong>Equipment type standardization</strong> (dry_van, reefer, flatbed) &mdash; prevents false mismatches</li>
+    <li><strong>Load volume &ge; 500</strong> active loads &mdash; larger pools produce more viable pairs</li>
+  </ol>
+
+  <h3>Tunable Parameters</h3>
+  <p>All thresholds are configurable per client. Common adjustments include:</p>
+  <ul>
+    <li>Increasing <strong>max deadhead to 200-250 miles</strong> for rural/sparse markets</li>
+    <li>Extending <strong>time gap to 72 hours</strong> for less time-sensitive freight</li>
+    <li>Lowering <strong>minimum score to 25</strong> to surface more marginal pairs for review</li>
+    <li>Adding <strong>preferred lane weighting</strong> to prioritize known high-volume corridors</li>
+  </ul>
+
+  <!-- Footer -->
+  <div class="footer">
+    <span>Digit2AI LLC / RinglyPro &copy; 2026</span>
+    <span>Load-to-Load Matching Algorithm &mdash; Technical Brief v1.0</span>
+    <span>CONFIDENTIAL</span>
+  </div>
+
+</div>
+</body>
+</html>
