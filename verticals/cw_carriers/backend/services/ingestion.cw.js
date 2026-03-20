@@ -146,6 +146,52 @@ function parseJSON(content) {
   return { headers, rows };
 }
 
+// Convert Excel serial date number to ISO date string
+function excelSerialToDate(serial) {
+  if (!serial) return null;
+  const num = parseInt(serial);
+  if (isNaN(num) || num < 1000 || num > 100000) return null; // Not an Excel serial
+  // Excel epoch: Jan 0, 1900 (with the Lotus 1-2-3 bug for dates after Feb 28, 1900)
+  const excelEpoch = new Date(1899, 11, 30); // Dec 30, 1899
+  const date = new Date(excelEpoch.getTime() + num * 86400000);
+  return date.toISOString().split('T')[0];
+}
+
+// Parse date — handles ISO strings, MM/DD/YYYY, and Excel serial numbers
+function parseDate(val) {
+  if (!val) return null;
+  const str = String(val).trim();
+  // Try Excel serial first (pure number between 1000-100000)
+  if (/^\d{4,6}$/.test(str)) {
+    const converted = excelSerialToDate(str);
+    if (converted) return converted;
+  }
+  // Try standard date parse
+  const d = new Date(str);
+  if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+  return null;
+}
+
+// Map equipment type codes to standard values
+const EQUIPMENT_CODE_MAP = {
+  'V': 'dry_van', 'VAN': 'dry_van', 'DV': 'dry_van', 'DRY_VAN': 'dry_van', 'DRY VAN': 'dry_van',
+  'R': 'reefer', 'REEFER': 'reefer', 'RF': 'reefer', 'REFER': 'reefer',
+  'F': 'flatbed', 'FB': 'flatbed', 'FLATBED': 'flatbed', 'FT': 'flatbed', 'FLAT': 'flatbed',
+  'FH': 'flatbed', 'FN': 'flatbed',
+  'SD': 'step_deck', 'STEP_DECK': 'step_deck', 'STEP DECK': 'step_deck',
+  'VR': 'dry_van', 'VZ': 'dry_van', 'VRM': 'dry_van', 'VRZ': 'dry_van', 'VM': 'dry_van',
+  'RM': 'reefer', 'SBR': 'reefer', 'SB': 'dry_van',
+  'TEV': 'dry_van', 'TER': 'dry_van', 'TEVR': 'dry_van', 'TVZ': 'dry_van',
+  'PO': 'power_only', 'POWER_ONLY': 'power_only',
+  'LTL': 'ltl', 'CN': 'dry_van',
+};
+
+function normalizeEquipment(code) {
+  if (!code) return 'dry_van';
+  const upper = String(code).trim().toUpperCase();
+  return EQUIPMENT_CODE_MAP[upper] || 'dry_van';
+}
+
 function validateRow(row, mapping, dataType) {
   const errors = [];
   const mapped = {};
@@ -154,11 +200,26 @@ function validateRow(row, mapping, dataType) {
   }
 
   if (dataType === 'loads') {
-    if (!mapped.origin && !mapped.origin_state) errors.push('Missing origin');
-    if (!mapped.destination && !mapped.destination_state) errors.push('Missing destination');
+    // Normalize origin: if origin_city has "CITY, ST" format, split it
+    if (mapped.origin_city && !mapped.origin_state && mapped.origin_city.includes(',')) {
+      const parts = mapped.origin_city.split(',').map(s => s.trim());
+      mapped.origin_city = parts[0];
+      mapped.origin_state = parts[1]?.substring(0, 2).toUpperCase();
+    }
+    if (mapped.destination_city && !mapped.destination_state && mapped.destination_city.includes(',')) {
+      const parts = mapped.destination_city.split(',').map(s => s.trim());
+      mapped.destination_city = parts[0];
+      mapped.destination_state = parts[1]?.substring(0, 2).toUpperCase();
+    }
+    if (!mapped.origin && !mapped.origin_state && !mapped.origin_city) errors.push('Missing origin');
+    if (!mapped.destination && !mapped.destination_state && !mapped.destination_city) errors.push('Missing destination');
     if (mapped.buy_rate && isNaN(parseFloat(mapped.buy_rate))) errors.push('Invalid buy_rate');
     if (mapped.sell_rate && isNaN(parseFloat(mapped.sell_rate))) errors.push('Invalid sell_rate');
-    if (mapped.pickup_date && isNaN(Date.parse(mapped.pickup_date))) errors.push('Invalid pickup_date');
+    // Convert dates (handle Excel serial numbers)
+    if (mapped.pickup_date) mapped.pickup_date = parseDate(mapped.pickup_date);
+    if (mapped.delivery_date) mapped.delivery_date = parseDate(mapped.delivery_date);
+    // Normalize equipment type codes
+    if (mapped.equipment_type) mapped.equipment_type = normalizeEquipment(mapped.equipment_type);
   } else if (dataType === 'carriers') {
     if (!mapped.carrier_name) errors.push('Missing carrier_name');
   } else if (dataType === 'customers') {
