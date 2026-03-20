@@ -12,12 +12,12 @@ const COLUMN_PRESETS = {
     expected: ['load_ref','origin','destination','pickup_date','delivery_date','equipment_type','weight','miles','buy_rate','sell_rate','status','customer','carrier','commodity'],
     aliases: {
       load_ref: ['load_id','load_number','load_no','ref','reference','load#','pro_number','order_number'],
-      origin: ['origin_city','pickup_city','shipper_city','from','ship_from','origin_location'],
-      origin_state: ['origin_st','pickup_state','from_state','ship_from_state'],
-      origin_zip: ['origin_postal','pickup_zip','from_zip'],
-      destination: ['dest_city','delivery_city','consignee_city','to','ship_to','destination_location','dest'],
-      destination_state: ['dest_state','dest_st','delivery_state','to_state','ship_to_state'],
-      destination_zip: ['dest_postal','delivery_zip','to_zip'],
+      origin: ['origin_city','pickup_city','shipper_city','from','ship_from','origin_location','orig_city'],
+      origin_state: ['origin_st','pickup_state','from_state','ship_from_state','orig_state'],
+      origin_zip: ['origin_postal','pickup_zip','from_zip','orig_zip'],
+      destination: ['destination_city','dest_city','delivery_city','consignee_city','to','ship_to','destination_location','dest','drop_city'],
+      destination_state: ['dest_state','dest_st','delivery_state','to_state','ship_to_state','drop_state'],
+      destination_zip: ['dest_postal','delivery_zip','to_zip','drop_zip'],
       pickup_date: ['pick_date','pickup','pu_date','ship_date','pickup_appt'],
       delivery_date: ['del_date','delivery','deliver_date','delivery_appt','drop_date'],
       equipment_type: ['equipment','trailer_type','trailer','equip','mode'],
@@ -379,6 +379,60 @@ async function process_upload(input) {
       validation_errors = $4, status = $5, processing_completed_at = NOW() WHERE id = $6
   `, { bind: [imported, skipped, errorCount, JSON.stringify(validationErrors.slice(0, 50)), finalStatus, upload.id] });
 
+  // ==================== DATA QUALITY CONTROL ====================
+  // Post-ingestion audit: verify critical fields were populated
+  const dataQuality = { warnings: [], critical: [] };
+  if (data_type === 'loads' && imported > 0) {
+    try {
+      const [[dq]] = await sequelize.query(`
+        SELECT
+          count(*) as total,
+          count(CASE WHEN origin_city IS NULL OR origin_city = '' THEN 1 END) as missing_origin_city,
+          count(CASE WHEN origin_state IS NULL OR origin_state = '' THEN 1 END) as missing_origin_state,
+          count(CASE WHEN destination_city IS NULL OR destination_city = '' THEN 1 END) as missing_dest_city,
+          count(CASE WHEN destination_state IS NULL OR destination_state = '' THEN 1 END) as missing_dest_state,
+          count(CASE WHEN pickup_date IS NULL THEN 1 END) as missing_pickup,
+          count(CASE WHEN equipment_type IS NULL OR equipment_type = '' THEN 1 END) as missing_equipment,
+          count(CASE WHEN load_ref IS NULL OR load_ref = '' THEN 1 END) as missing_load_ref
+        FROM lg_loads WHERE upload_batch_id = $1
+      `, { bind: [upload.id] });
+
+      const total = parseInt(dq.total);
+      const checks = [
+        { field: 'origin_city', missing: parseInt(dq.missing_origin_city), level: 'warning' },
+        { field: 'origin_state', missing: parseInt(dq.missing_origin_state), level: 'critical' },
+        { field: 'destination_city', missing: parseInt(dq.missing_dest_city), level: 'critical' },
+        { field: 'destination_state', missing: parseInt(dq.missing_dest_state), level: 'critical' },
+        { field: 'pickup_date', missing: parseInt(dq.missing_pickup), level: 'warning' },
+        { field: 'equipment_type', missing: parseInt(dq.missing_equipment), level: 'warning' },
+      ];
+
+      for (const check of checks) {
+        if (check.missing > 0) {
+          const pct = ((check.missing / total) * 100).toFixed(1);
+          const msg = `${check.field}: ${check.missing}/${total} rows missing (${pct}%)`;
+          if (check.level === 'critical') dataQuality.critical.push(msg);
+          else dataQuality.warnings.push(msg);
+        }
+      }
+
+      // Log unmapped columns for diagnostics
+      const unmappedCols = parsed.headers.filter(h => !mapping[h]);
+      if (unmappedCols.length > 0) {
+        dataQuality.warnings.push(`Unmapped columns (data may be lost): ${unmappedCols.join(', ')}`);
+      }
+
+      if (dataQuality.critical.length > 0) {
+        console.error(`[INGESTION DQ] Upload ${upload.id} — CRITICAL issues:`, dataQuality.critical);
+      }
+      if (dataQuality.warnings.length > 0) {
+        console.warn(`[INGESTION DQ] Upload ${upload.id} — Warnings:`, dataQuality.warnings);
+      }
+    } catch (e) {
+      console.error('[INGESTION DQ] Quality check failed:', e.message);
+    }
+  }
+
   return {
     upload_id: upload.id,
     status: finalStatus,
@@ -389,7 +443,9 @@ async function process_upload(input) {
     column_mapping: mapping,
     columns_detected: parsed.headers,
     validation_errors: validationErrors.slice(0, 20),
-    message: `Processed ${parsed.rows.length} rows: ${imported} imported, ${errorCount} errors`,
+    data_quality: dataQuality,
+    message: `Processed ${parsed.rows.length} rows: ${imported} imported, ${errorCount} errors` +
+      (dataQuality.critical.length > 0 ? ` | ⚠️ ${dataQuality.critical.length} CRITICAL data quality issues detected` : ''),
   };
 }
 
