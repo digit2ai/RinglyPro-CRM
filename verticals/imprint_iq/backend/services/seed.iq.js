@@ -84,6 +84,15 @@ async function seed() {
       `, { bind: [TENANT, company, `Contact at ${company}`, `info@${company.toLowerCase().replace(/\s+/g, '')}.com`, pick(['Healthcare','Technology','Finance','Construction','Education','Manufacturing','Events','Legal','Energy','Sports']), pick(['standard','premium','enterprise']), ltv] });
     }
 
+    // Pre-fetch customer IDs to avoid subquery type inference issues
+    const [customerRows] = await sequelize.query(`SELECT id FROM iq_customers WHERE tenant_id = $1`, { bind: [TENANT] });
+    const customerIds = customerRows.map(r => r.id);
+    if (customerIds.length === 0) {
+      console.log('  ⚠️ No customers found, skipping dependent data');
+      return;
+    }
+    const pickCust = () => pick(customerIds);
+
     // Seed Quotes (mix of stages)
     const stages = ['draft', 'sent', 'sent', 'sent', 'won', 'won', 'won', 'converted', 'lost', 'lost', 'expired'];
     for (let i = 0; i < 40; i++) {
@@ -93,9 +102,9 @@ async function seed() {
       const daysAgo = rand(1, 60);
       await sequelize.query(`
         INSERT INTO iq_quotes (tenant_id, quote_number, customer_id, title, total_amount, margin_pct, stage, source, created_at, updated_at)
-        VALUES ($1, $2, (SELECT id FROM iq_customers WHERE tenant_id = $1 ORDER BY RANDOM() LIMIT 1), $3, $4, $5, $6, $7, NOW() - INTERVAL '${daysAgo} days', NOW() - INTERVAL '${Math.max(0, daysAgo - rand(0, 5))} days')
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW() - INTERVAL '${daysAgo} days', NOW() - INTERVAL '${Math.max(0, daysAgo - rand(0, 5))} days')
         ON CONFLICT DO NOTHING
-      `, { bind: [TENANT, `QT-${ts}${i}`, `${pick(['Q4 Trade Show','Employee Gifts','Conference Swag','Client Appreciation','Product Launch','Holiday Campaign','Onboarding Kits','Fundraiser'])} - ${pick(COMPANIES)}`, total, margin, stage, pick(['website','phone','email','referral','trade_show'])] });
+      `, { bind: [TENANT, `QT-${ts}${i}`, pickCust(), `${pick(['Q4 Trade Show','Employee Gifts','Conference Swag','Client Appreciation','Product Launch','Holiday Campaign','Onboarding Kits','Fundraiser'])} - ${pick(COMPANIES)}`, total, margin, stage, pick(['website','phone','email','referral','trade_show'])] });
     }
 
     // Seed Orders
@@ -105,9 +114,9 @@ async function seed() {
       const costTotal = Math.round(total * (1 - rand(25, 40) / 100));
       await sequelize.query(`
         INSERT INTO iq_orders (tenant_id, order_number, customer_id, title, total_amount, cost_total, margin_pct, stage, payment_status, created_at)
-        VALUES ($1, $2, (SELECT id FROM iq_customers WHERE tenant_id = $1 ORDER BY RANDOM() LIMIT 1), $3, $4, $5, $6, $7, $8, NOW() - INTERVAL '${rand(1, 45)} days')
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW() - INTERVAL '${rand(1, 45)} days')
         ON CONFLICT DO NOTHING
-      `, { bind: [TENANT, `ORD-${ts}${i}`, `Order for ${pick(COMPANIES)}`, total, costTotal, rand(25, 42), stage, pick(['unpaid','paid','partial','overdue'])] });
+      `, { bind: [TENANT, `ORD-${ts}${i}`, pickCust(), `Order for ${pick(COMPANIES)}`, total, costTotal, rand(25, 42), stage, pick(['unpaid','paid','partial','overdue'])] });
     }
 
     // Seed Artwork
@@ -116,8 +125,8 @@ async function seed() {
       const status = pick(proofStatuses);
       await sequelize.query(`
         INSERT INTO iq_artwork (tenant_id, customer_id, file_name, file_type, dpi, is_vector, proof_status, revision_count, created_at)
-        VALUES ($1, (SELECT id FROM iq_customers WHERE tenant_id = $1 ORDER BY RANDOM() LIMIT 1), $2, $3, $4, $5, $6, $7, NOW() - INTERVAL '${rand(1, 30)} days')
-      `, { bind: [TENANT, `logo_${pick(COMPANIES).toLowerCase().replace(/\s+/g, '_')}.${pick(['ai','eps','pdf','png','jpg'])}`, pick(['ai','eps','pdf','png','jpg']), pick([72, 150, 300, 600, 1200]), Math.random() > 0.4, status, status === 'approved' ? rand(0, 1) : rand(1, 5)] });
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW() - INTERVAL '${rand(1, 30)} days')
+      `, { bind: [TENANT, pickCust(), `logo_${pick(COMPANIES).toLowerCase().replace(/\s+/g, '_')}.${pick(['ai','eps','pdf','png','jpg'])}`, pick(['ai','eps','pdf','png','jpg']), pick([72, 150, 300, 600, 1200]), Math.random() > 0.4, status, status === 'approved' ? rand(0, 1) : rand(1, 5)] });
     }
 
     // Seed Production Jobs
@@ -125,11 +134,11 @@ async function seed() {
     for (let i = 0; i < 30; i++) {
       const qty = rand(100, 5000);
       const defects = Math.random() > 0.8 ? rand(1, Math.ceil(qty * 0.05)) : 0;
-      const stage = pick(prodStages);
+      const stg = pick(prodStages);
       await sequelize.query(`
         INSERT INTO iq_production_jobs (tenant_id, decoration_method, machine_line, quantity_target, quantity_good, quantity_defect, run_time_min, color_count, priority, stage, created_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW() - INTERVAL '${rand(1, 21)} days')
-      `, { bind: [TENANT, pick(DECORATIONS), `Line ${rand(1, 6)}`, qty, stage === 'completed' ? qty - defects : 0, defects, rand(30, 480), rand(1, 6), pick(['normal','normal','normal','rush','rush']), stage] });
+      `, { bind: [TENANT, pick(DECORATIONS), `Line ${rand(1, 6)}`, qty, stg === 'completed' ? qty - defects : 0, defects, rand(30, 480), rand(1, 6), pick(['normal','normal','normal','rush','rush']), stg] });
     }
 
     // Seed Inventory
@@ -150,8 +159,8 @@ async function seed() {
     for (let i = 0; i < 50; i++) {
       await sequelize.query(`
         INSERT INTO iq_calls (tenant_id, customer_id, direction, agent_name, duration_sec, outcome, intent, sentiment, quote_generated, created_at)
-        VALUES ($1, (SELECT id FROM iq_customers WHERE tenant_id = $1 ORDER BY RANDOM() LIMIT 1), $2, $3, $4, $5, $6, $7, $8, NOW() - INTERVAL '${rand(0, 14)} days')
-      `, { bind: [TENANT, pick(['inbound','inbound','inbound','outbound']), pick(['Rachel','Ana','Lina']), rand(0, 600), pick(outcomes), pick(intents), pick(['positive','neutral','neutral','negative']), Math.random() > 0.7] });
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW() - INTERVAL '${rand(0, 14)} days')
+      `, { bind: [TENANT, pickCust(), pick(['inbound','inbound','inbound','outbound']), pick(['Rachel','Ana','Lina']), rand(0, 600), pick(outcomes), pick(intents), pick(['positive','neutral','neutral','negative']), Math.random() > 0.7] });
     }
 
     // Seed Invoices
@@ -159,21 +168,22 @@ async function seed() {
       const total = rand(1000, 30000);
       const tax = Math.round(total * 0.075);
       const grandTotal = total + tax;
-      const status = pick(['paid','paid','paid','pending','pending','overdue','overdue']);
-      const paidAmt = status === 'paid' ? grandTotal : status === 'pending' ? 0 : rand(0, Math.round(grandTotal * 0.5));
+      const invStatus = pick(['paid','paid','paid','pending','pending','overdue','overdue']);
+      const paidAmt = invStatus === 'paid' ? grandTotal : invStatus === 'pending' ? 0 : rand(0, Math.round(grandTotal * 0.5));
       await sequelize.query(`
         INSERT INTO iq_invoices (tenant_id, invoice_number, customer_id, amount, tax_amount, total_amount, paid_amount, status, due_date, created_at)
-        VALUES ($1, $2, (SELECT id FROM iq_customers WHERE tenant_id = $1 ORDER BY RANDOM() LIMIT 1), $3, $4, $5, $6, $7, $8, NOW() - INTERVAL '${rand(5, 60)} days')
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW() - INTERVAL '${rand(5, 60)} days')
         ON CONFLICT DO NOTHING
-      `, { bind: [TENANT, `INV-${ts}${i}`, total, tax, grandTotal, paidAmt, status, new Date(Date.now() - rand(0, 45) * 86400000).toISOString().split('T')[0]] });
+      `, { bind: [TENANT, `INV-${ts}${i}`, pickCust(), total, tax, grandTotal, paidAmt, invStatus, new Date(Date.now() - rand(0, 45) * 86400000).toISOString().split('T')[0]] });
     }
 
     // Seed Reorder Predictions
+    const productIds = products.map(p => p.id);
     for (let i = 0; i < 12; i++) {
       await sequelize.query(`
         INSERT INTO iq_reorder_predictions (tenant_id, customer_id, product_id, predicted_date, confidence, predicted_qty, order_frequency_days)
-        VALUES ($1, (SELECT id FROM iq_customers WHERE tenant_id = $1 ORDER BY RANDOM() LIMIT 1), (SELECT id FROM iq_products WHERE tenant_id = $1 ORDER BY RANDOM() LIMIT 1), $2, $3, $4, $5)
-      `, { bind: [TENANT, new Date(Date.now() + rand(7, 60) * 86400000).toISOString().split('T')[0], rand(60, 95), rand(100, 3000), rand(60, 365)] });
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `, { bind: [TENANT, pickCust(), productIds.length > 0 ? pick(productIds) : null, new Date(Date.now() + rand(7, 60) * 86400000).toISOString().split('T')[0], rand(60, 95), rand(100, 3000), rand(60, 365)] });
     }
 
     console.log('  ✅ ImprintIQ demo data seeded successfully');
