@@ -965,6 +965,34 @@ app.get('/debug/msk-intelligence-error', (req, res) => {
   });
 });
 
+// ── ImprintIQ — Promotional Products AI Ecosystem ──
+let imprintIqApp = null;
+let imprintIqError = null;
+try {
+  imprintIqApp = require('../verticals/imprint_iq/backend/index');
+  app.get('/imprint_iq', (req, res, next) => {
+    if (!req.originalUrl.endsWith('/')) return res.redirect('/imprint_iq/');
+    next();
+  });
+  app.use('/imprint_iq', imprintIqApp);
+  console.log('🖨️ ImprintIQ mounted at /imprint_iq');
+  console.log('   - Dashboard: /imprint_iq/dashboard');
+  console.log('   - Neural Intelligence: /imprint_iq/neural');
+  console.log('   - Health: /imprint_iq/health');
+  console.log('   - API: /imprint_iq/api/*');
+} catch (error) {
+  imprintIqError = error;
+  console.log('⚠️ ImprintIQ not available:', error.message);
+}
+
+app.get('/debug/imprint-iq-error', (req, res) => {
+  res.json({
+    service: 'ImprintIQ',
+    available: !imprintIqError,
+    error: imprintIqError ? { message: imprintIqError.message, stack: imprintIqError.stack } : null,
+  });
+});
+
 // Conditional forwarding webhook (for business phone forwarding)
 app.use('/webhook', conditionalForwardRoutes);
 
