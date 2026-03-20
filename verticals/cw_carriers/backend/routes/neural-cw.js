@@ -31,8 +31,8 @@ router.get('/dashboard', async (req, res) => {
     const pipelines = pipelinesRes.success ? (pipelinesRes.data?.results || []) : [];
     const pipelineMetrics = metricsRes.success ? metricsRes.data : {};
 
-    // Load CW-specific metrics from DB
-    const [[loadStats]] = await sequelize.query(
+    // Load metrics from BOTH cw_loads AND lg_loads
+    const [[cwLoadStats]] = await sequelize.query(
       `SELECT
         COUNT(*) FILTER (WHERE status = 'open') as open_loads,
         COUNT(*) FILTER (WHERE status = 'covered') as covered_loads,
@@ -42,6 +42,30 @@ router.get('/dashboard', async (req, res) => {
         COALESCE(AVG(rate_usd), 0) as avg_rate
        FROM cw_loads WHERE created_at >= NOW() - INTERVAL '30 days'`
     );
+    let lgLoadStats = { open_loads: 0, covered_loads: 0, delivered_loads: 0, total_loads: 0, delivered_revenue: 0, avg_rate: 0 };
+    try {
+      const [[lg]] = await sequelize.query(
+        `SELECT
+          COUNT(*) FILTER (WHERE status = 'open') as open_loads,
+          COUNT(*) FILTER (WHERE status IN ('covered','dispatched')) as covered_loads,
+          COUNT(*) FILTER (WHERE status = 'delivered') as delivered_loads,
+          COUNT(*) as total_loads,
+          COALESCE(SUM(sell_rate) FILTER (WHERE status = 'delivered'), 0) as delivered_revenue,
+          COALESCE(AVG(buy_rate), 0) as avg_rate
+         FROM lg_loads WHERE created_at >= NOW() - INTERVAL '30 days'`
+      );
+      lgLoadStats = lg;
+    } catch (e) { /* lg_loads may not exist */ }
+
+    // Merge load stats
+    const loadStats = {
+      open_loads: parseInt(cwLoadStats.open_loads || 0) + parseInt(lgLoadStats.open_loads || 0),
+      covered_loads: parseInt(cwLoadStats.covered_loads || 0) + parseInt(lgLoadStats.covered_loads || 0),
+      delivered_loads: parseInt(cwLoadStats.delivered_loads || 0) + parseInt(lgLoadStats.delivered_loads || 0),
+      total_loads: parseInt(cwLoadStats.total_loads || 0) + parseInt(lgLoadStats.total_loads || 0),
+      delivered_revenue: parseFloat(cwLoadStats.delivered_revenue || 0) + parseFloat(lgLoadStats.delivered_revenue || 0),
+      avg_rate: parseFloat(cwLoadStats.avg_rate || 0) || parseFloat(lgLoadStats.avg_rate || 0) || 2500,
+    };
 
     const [[callStats]] = await sequelize.query(
       `SELECT
@@ -52,7 +76,8 @@ router.get('/dashboard', async (req, res) => {
        FROM cw_call_logs WHERE created_at >= NOW() - INTERVAL '30 days'`
     );
 
-    const [[contactStats]] = await sequelize.query(
+    // Contacts from BOTH cw_contacts AND lg_carriers/lg_customers
+    const [[cwContactStats]] = await sequelize.query(
       `SELECT
         COUNT(*) as total_contacts,
         COUNT(*) FILTER (WHERE hubspot_id IS NOT NULL) as synced_to_hubspot,
@@ -61,6 +86,21 @@ router.get('/dashboard', async (req, res) => {
         COUNT(*) FILTER (WHERE contact_type = 'prospect') as prospects
        FROM cw_contacts`
     );
+    let lgCarrierCount = 0, lgCustomerCount = 0;
+    try {
+      const [[lc]] = await sequelize.query(`SELECT COUNT(*) as cnt FROM lg_carriers`);
+      const [[lcu]] = await sequelize.query(`SELECT COUNT(*) as cnt FROM lg_customers`);
+      lgCarrierCount = parseInt(lc.cnt || 0);
+      lgCustomerCount = parseInt(lcu.cnt || 0);
+    } catch (e) { /* ok */ }
+
+    const contactStats = {
+      total_contacts: parseInt(cwContactStats.total_contacts || 0) + lgCarrierCount + lgCustomerCount,
+      synced_to_hubspot: parseInt(cwContactStats.synced_to_hubspot || 0),
+      carriers: parseInt(cwContactStats.carriers || 0) + lgCarrierCount,
+      shippers: parseInt(cwContactStats.shippers || 0) + lgCustomerCount,
+      prospects: parseInt(cwContactStats.prospects || 0),
+    };
 
     const [[syncStats]] = await sequelize.query(
       `SELECT

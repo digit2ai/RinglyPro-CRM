@@ -6,28 +6,68 @@ const auth = require('../middleware/auth.cw');
 
 router.use(auth);
 
-// GET / - list contacts
+// GET / - list contacts (queries both cw_contacts and lg_carriers/lg_customers)
 router.get('/', async (req, res) => {
   try {
     const { type, search, limit = 50 } = req.query;
-    let where = 'WHERE 1=1';
-    const binds = [];
+    const lim = parseInt(limit) || 50;
 
-    if (type) {
-      binds.push(type);
-      where += ` AND contact_type = $${binds.length}`;
-    }
-    if (search) {
-      binds.push(`%${search}%`);
-      where += ` AND (company_name ILIKE $${binds.length} OR full_name ILIKE $${binds.length} OR email ILIKE $${binds.length})`;
-    }
-    binds.push(parseInt(limit));
+    // CW contacts
+    let cwWhere = 'WHERE 1=1';
+    const cwBinds = [];
+    if (type) { cwBinds.push(type); cwWhere += ` AND contact_type = $${cwBinds.length}`; }
+    if (search) { cwBinds.push(`%${search}%`); cwWhere += ` AND (company_name ILIKE $${cwBinds.length} OR full_name ILIKE $${cwBinds.length} OR email ILIKE $${cwBinds.length})`; }
 
-    const [rows] = await sequelize.query(
-      `SELECT * FROM cw_contacts ${where} ORDER BY company_name ASC LIMIT $${binds.length}`,
-      { bind: binds }
+    const [cwRows] = await sequelize.query(
+      `SELECT id, contact_type, company_name, full_name, email, phone, mc_number, dot_number,
+              freight_types, lanes, hubspot_id, created_at, 'cw' as source
+       FROM cw_contacts ${cwWhere} ORDER BY company_name ASC LIMIT ${lim}`,
+      { bind: cwBinds }
     );
-    res.json({ success: true, data: rows });
+
+    // LG carriers (if not filtering by shipper type)
+    let lgCarriers = [];
+    if (!type || type === 'carrier') {
+      let lgWhere = 'WHERE 1=1';
+      const lgBinds = [];
+      if (search) { lgBinds.push(`%${search}%`); lgWhere += ` AND (carrier_name ILIKE $${lgBinds.length} OR contact_name ILIKE $${lgBinds.length} OR email ILIKE $${lgBinds.length})`; }
+      [lgCarriers] = await sequelize.query(
+        `SELECT id, 'carrier' as contact_type, carrier_name as company_name, contact_name as full_name,
+                email, phone, mc_number, dot_number, equipment_types as freight_types, NULL as lanes,
+                NULL as hubspot_id, created_at, 'lg' as source
+         FROM lg_carriers ${lgWhere} ORDER BY carrier_name ASC LIMIT ${lim}`,
+        { bind: lgBinds }
+      );
+    }
+
+    // LG customers (if not filtering by carrier type)
+    let lgCustomers = [];
+    if (!type || type === 'shipper') {
+      let lgWhere = 'WHERE 1=1';
+      const lgBinds = [];
+      if (search) { lgBinds.push(`%${search}%`); lgWhere += ` AND (customer_name ILIKE $${lgBinds.length} OR contact_name ILIKE $${lgBinds.length} OR email ILIKE $${lgBinds.length})`; }
+      [lgCustomers] = await sequelize.query(
+        `SELECT id, 'shipper' as contact_type, customer_name as company_name, contact_name as full_name,
+                email, phone, NULL as mc_number, NULL as dot_number, NULL as freight_types, NULL as lanes,
+                NULL as hubspot_id, created_at, 'lg' as source
+         FROM lg_customers ${lgWhere} ORDER BY customer_name ASC LIMIT ${lim}`,
+        { bind: lgBinds }
+      );
+    }
+
+    // Merge, deduplicate by company_name, sort
+    const seen = new Set();
+    const merged = [...cwRows, ...lgCarriers, ...lgCustomers]
+      .sort((a, b) => (a.company_name || '').localeCompare(b.company_name || ''))
+      .filter(r => {
+        const key = (r.company_name || '').toLowerCase().trim();
+        if (key && seen.has(key)) return false;
+        if (key) seen.add(key);
+        return true;
+      })
+      .slice(0, lim);
+
+    res.json({ success: true, data: merged });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
