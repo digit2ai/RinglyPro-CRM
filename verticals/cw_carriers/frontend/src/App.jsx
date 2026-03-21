@@ -123,6 +123,10 @@ function Sidebar({ open, onClose }) {
       id: 'docs', label: 'DOCS', icon: '\uD83D\uDCD6', items: [
         { path: '/proposals/RinglyPro-Platform-User-Guide.html', label: 'User Guide', icon: '\uD83D\uDCD8', ext: true },
         { path: '/proposals/CW-CARRIERS-System-Architecture-Document.html', label: 'Architecture', icon: '\uD83D\uDCD0', ext: true },
+        { path: '/neural/cw-ecosystem-diagram.html', label: 'Ecosystem Diagram', icon: '\uD83D\uDDFA', ext: true },
+        { path: '/neural/obd-workflow-diagram.html', label: 'OBD Workflow', icon: '\u2699', ext: true },
+        { path: '/neural/obd-architecture.html', label: 'OBD Architecture', icon: '\u26A1', ext: true },
+        { path: '/proposals/Load-Matching-Algorithm-Technical-Brief.html', label: 'Load Matching Brief', icon: '\uD83D\uDCCB', ext: true },
       ]
     },
   ];
