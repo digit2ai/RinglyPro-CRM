@@ -8,6 +8,7 @@ import NeuralIntelligence from './pages/NeuralIntelligence';
 import ProcessModel from './pages/ProcessModel';
 import Ingestion from './pages/Ingestion';
 import Architecture from './pages/Architecture';
+import SalesPitch from './pages/SalesPitch';
 
 const BASE = '/imprint_iq';
 
@@ -25,7 +26,8 @@ function Layout({ children }) {
     { path: `${BASE}/neural`, label: 'Neural Intelligence' },
     { path: `${BASE}/process`, label: 'Process & ROI' },
     { path: `${BASE}/ingest`, label: 'Data Ingestion' },
-    { path: `${BASE}/architecture`, label: 'Architecture' }
+    { path: `${BASE}/architecture`, label: 'Architecture' },
+    { path: `${BASE}/pitch`, label: 'Sales Pitch' }
   ];
 
   const isActive = (p) => location.pathname === p;
@@ -91,6 +93,7 @@ export default function App() {
         <Route path={`${BASE}/process`} element={<ProtectedRoute><Layout><ProcessModel /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/ingest`} element={<ProtectedRoute><Layout><Ingestion /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/architecture`} element={<ProtectedRoute><Layout><Architecture /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/pitch`} element={<ProtectedRoute><Layout><SalesPitch /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/`} element={<Landing />} />
         <Route path={`${BASE}`} element={<Landing />} />
         <Route path="*" element={<Navigate to={`${BASE}/`} replace />} />
