@@ -14,6 +14,7 @@ export default function SalesPitch() {
   const [linaClient, setLinaClient] = useState(null);
   const transcriptRef = useRef(null);
   const [transcript, setTranscript] = useState([]);
+  const [walkthrough, setWalkthrough] = useState(false);
 
   const scrollToSection = (id) => {
     setActive(id);
@@ -97,6 +98,13 @@ export default function SalesPitch() {
         <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="ImprintIQ" style={{ width:56, height:56, borderRadius:12, marginBottom:12 }} />
         <h1 style={{ fontFamily:'Bebas Neue', color:'#E6EDF3', fontSize:32, margin:'0', letterSpacing:3 }}>IMPRINT<span style={{ color:GOLD }}>IQ</span></h1>
         <p style={{ color:'#8B949E', fontSize:12, letterSpacing:2, textTransform:'uppercase', marginTop:4 }}>Intelligence for Every Impression</p>
+
+        {/* Walk Me Through CTA */}
+        <button onClick={() => { setLinaOpen(true); setTimeout(() => { if (linaStatus === 'idle') connectLina(); }, 300); setWalkthrough(true); }}
+          style={{ marginTop:20, padding:'14px 32px', background:`linear-gradient(135deg,${GOLD},#A67A1E)`, color:'#fff', border:'none', borderRadius:30, fontSize:14, fontWeight:700, cursor:'pointer', letterSpacing:1, boxShadow:'0 4px 20px rgba(200,150,42,0.3)' }}>
+          Walk Me Through This Presentation
+        </button>
+        <p style={{ color:'#484F58', fontSize:11, marginTop:8 }}>Lina, our AI presenter, will walk you through the entire pitch using live data</p>
       </div>
 
       {/* Hit Promo Context Card */}
@@ -443,41 +451,67 @@ export default function SalesPitch() {
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
           </button>
         ) : (
-          <div style={{ width:320, maxWidth:'90vw', background:CARD, borderRadius:16, border:`1px solid ${BORDER}`, boxShadow:'0 8px 40px rgba(0,0,0,0.5)', overflow:'hidden' }}>
+          <div style={{ width:340, maxWidth:'92vw', background:CARD, borderRadius:16, border:`1px solid ${BORDER}`, boxShadow:'0 8px 40px rgba(0,0,0,0.5)', overflow:'hidden' }}>
             <div style={{ padding:'12px 16px', background:'#21262D', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
               <div>
-                <div style={{ color:'#E6EDF3', fontSize:14, fontWeight:700 }}>Ask Lina</div>
-                <div style={{ color:'#8B949E', fontSize:11 }}>ImprintIQ Sales Presenter</div>
+                <div style={{ color:'#E6EDF3', fontSize:14, fontWeight:700 }}>Lina — AI Presenter</div>
+                <div style={{ color:'#8B949E', fontSize:11 }}>Ask anything or tap a topic below</div>
               </div>
-              <button onClick={() => { disconnectLina(); setLinaOpen(false); }}
+              <button onClick={() => { disconnectLina(); setLinaOpen(false); setWalkthrough(false); }}
                 style={{ background:'none', border:'none', color:'#8B949E', fontSize:18, cursor:'pointer', padding:4 }}>x</button>
             </div>
-            <div ref={transcriptRef} style={{ height:200, overflowY:'auto', padding:12, background:'#0D1117' }}>
+            <div ref={transcriptRef} style={{ height:180, overflowY:'auto', padding:12, background:'#0D1117' }}>
               {transcript.length === 0 && (
-                <div style={{ color:'#484F58', fontSize:12, textAlign:'center', marginTop:60 }}>
-                  Press Start to talk with Lina.
-                  <br />She knows everything about ImprintIQ.
+                <div style={{ color:'#484F58', fontSize:12, textAlign:'center', marginTop:40 }}>
+                  {walkthrough
+                    ? 'Starting the full walkthrough...'
+                    : 'Tap Start, then ask a question or tap a topic.'}
                 </div>
               )}
               {transcript.map((msg, i) => (
                 <div key={i} style={{ marginBottom:8, textAlign: msg.role === 'You' ? 'right' : 'left' }}>
-                  <div style={{ display:'inline-block', maxWidth:'80%', padding:'8px 12px', borderRadius:10, background: msg.role === 'You' ? GOLD+'22' : '#21262D', color: msg.role === 'You' ? GOLD : '#C9D1D9', fontSize:12 }}>
+                  <div style={{ display:'inline-block', maxWidth:'85%', padding:'8px 12px', borderRadius:10, background: msg.role === 'You' ? GOLD+'22' : '#21262D', color: msg.role === 'You' ? GOLD : '#C9D1D9', fontSize:12, lineHeight:1.5 }}>
                     <div style={{ fontSize:10, color:'#8B949E', marginBottom:2 }}>{msg.role}</div>
                     {msg.text}
                   </div>
                 </div>
               ))}
             </div>
-            <div style={{ padding:12, borderTop:'1px solid #21262D', display:'flex', gap:8, justifyContent:'center' }}>
+
+            {/* Quick Topics — visible when connected */}
+            {linaStatus === 'connected' && (
+              <div style={{ padding:'8px 10px', borderTop:'1px solid #21262D', background:'#0D1117' }}>
+                <div style={{ color:'#484F58', fontSize:10, marginBottom:6, textAlign:'center' }}>TAP A TOPIC TO ASK LINA</div>
+                <div style={{ display:'flex', flexWrap:'wrap', gap:4, justifyContent:'center' }}>
+                  {[
+                    'Walk me through the full presentation',
+                    'Show me the live dashboard',
+                    'What does Neural Intelligence show?',
+                    'How do operations change?',
+                    'What is the ROI for Hit?',
+                    'What problems did you find?',
+                    'Explain the architecture',
+                    'What systems do you connect to?',
+                  ].map((q, i) => (
+                    <button key={i} onClick={() => setTranscript(prev => [...prev, { role: 'You', text: q }])}
+                      style={{ padding:'5px 10px', background:'#21262D', border:`1px solid ${BORDER}`, borderRadius:14, color:'#C9D1D9', fontSize:10, cursor:'pointer', lineHeight:1.3 }}>
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div style={{ padding:10, borderTop:'1px solid #21262D', display:'flex', gap:8, justifyContent:'center' }}>
               {linaStatus === 'idle' || linaStatus === 'error' ? (
                 <button onClick={connectLina}
                   style={{ flex:1, padding:'10px', background:`linear-gradient(135deg,${GOLD},#A67A1E)`, color:'#fff', border:'none', borderRadius:8, fontSize:13, fontWeight:600, cursor:'pointer' }}>
-                  Start Conversation
+                  {walkthrough ? 'Start Walkthrough' : 'Start Conversation'}
                 </button>
               ) : linaStatus === 'connecting' ? (
                 <div style={{ color:'#8B949E', fontSize:12, padding:10 }}>Connecting to Lina...</div>
               ) : (
-                <button onClick={disconnectLina}
+                <button onClick={() => { disconnectLina(); setWalkthrough(false); }}
                   style={{ flex:1, padding:'10px', background:RED+'33', color:RED, border:`1px solid ${RED}44`, borderRadius:8, fontSize:13, fontWeight:600, cursor:'pointer' }}>
                   End Conversation
                 </button>
