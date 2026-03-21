@@ -67,6 +67,9 @@ function Sidebar({ open, onClose }) {
         { path: `${BASE}/dashboard`, label: 'Unified Dashboard' },
         { path: `${BASE}/neural`, label: 'Neural OBD', badge: 'AI' },
         { path: `${BASE}/roi`, label: 'ROI & Predictions', badge: 'AI' },
+        { path: `${BASE}/pricing`, label: 'Rate Intelligence', badge: 'AI' },
+        { path: `${BASE}/freight-matching`, label: 'Carrier Matching', badge: 'AI' },
+        { path: `${BASE}/load-matching`, label: 'Load Matching', badge: 'AI' },
         { path: `${BASE}/nlp`, label: 'NLP Assistant', badge: 'AI' },
         { path: `${BASE}/crm-agent`, label: 'CRM Agent', badge: 'AI' },
         { path: `${BASE}/mcp-tools`, label: 'MCP Tools', badge: 'AI' },
@@ -83,9 +86,6 @@ function Sidebar({ open, onClose }) {
     {
       id: 'operations', label: 'OPERATIONS', accent: '#0EA5E9', items: [
         { path: `${BASE}/loads`, label: 'Load Board' },
-        { path: `${BASE}/pricing`, label: 'Rate Intelligence', badge: 'AI' },
-        { path: `${BASE}/freight-matching`, label: 'Carrier Matching', badge: 'AI' },
-        { path: `${BASE}/load-matching`, label: 'Load Matching', badge: 'AI' },
         { path: `${BASE}/offers`, label: 'Carrier Offers' },
         { path: `${BASE}/tracking`, label: 'Check Calls' },
         { path: `${BASE}/analytics`, label: 'Performance Analytics' },
