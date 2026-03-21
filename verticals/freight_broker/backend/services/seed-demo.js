@@ -4,7 +4,8 @@
  * Uses the CW Carriers DB connection (all lg_* tables live there).
  */
 
-const sequelize = require('../../cw_carriers/backend/services/db.cw');
+const path = require('path');
+const sequelize = require(path.join(__dirname, '../../../cw_carriers/backend/services/db.cw'));
 
 async function seedDemoData(tenant_id = 'logistics') {
   const counts = {};

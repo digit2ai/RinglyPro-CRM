@@ -14,7 +14,8 @@ router.post('/seed', async (req, res) => {
 });
 
 router.get('/status', async (req, res) => {
-  const sequelize = require('../../cw_carriers/backend/services/db.cw');
+  const path = require('path');
+  const sequelize = require(path.join(__dirname, '../../../cw_carriers/backend/services/db.cw'));
   const tables = ['lg_carriers','lg_trucks','lg_drivers','lg_shippers','lg_loads','lg_quotes','lg_dispatches','lg_rate_benchmarks','lg_compliance'];
   const counts = {};
   for (const t of tables) {
