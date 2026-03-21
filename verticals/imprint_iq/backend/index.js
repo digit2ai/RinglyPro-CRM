@@ -8,11 +8,13 @@ const sequelize = require('./services/db.iq');
 const authRoutes = require('./routes/auth');
 const neuralRoutes = require('./routes/neural');
 const dashboardRoutes = require('./routes/dashboard');
+const ingestionRoutes = require('./routes/ingestion');
 
 // Mount API routes
 router.use('/api/auth', authRoutes);
 router.use('/api/neural', neuralRoutes);
 router.use('/api/dashboard', dashboardRoutes);
+router.use('/api/ingestion', ingestionRoutes);
 
 // Health check
 router.get('/health', (req, res) => {
