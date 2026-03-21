@@ -477,6 +477,129 @@ export default function SalesPitch() {
         </div>
       </div>
 
+      {/* ══════════════ SYSTEM ARCHITECTURE DIAGRAM ══════════════ */}
+      <div style={{ padding:'32px 0 40px' }}>
+        <h2 style={h2}>HOW IT ALL CONNECTS</h2>
+        <p style={p}>End-to-end data flow — from your existing systems through ImprintIQ to actionable intelligence.</p>
+
+        <div style={{ background:CARD, borderRadius:16, padding:20, border:`1px solid ${BORDER}`, overflowX:'auto' }}>
+          <svg width="100%" viewBox="0 0 760 620" style={{ maxWidth:760, margin:'0 auto', display:'block' }}>
+            <defs>
+              <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#484F58"/></marker>
+              <marker id="arrG" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill={GOLD}/></marker>
+            </defs>
+
+            {/* ── YOUR SYSTEMS (Top) ── */}
+            <text x={380} y={18} fill="#484F58" fontSize={10} textAnchor="middle" fontFamily="Bebas Neue" letterSpacing={2}>HIT PROMOTIONAL PRODUCTS — EXISTING SYSTEMS</text>
+            {[
+              { x:10, label:'Profill Portal', sub:'Custom ERP' },
+              { x:135, label:'QuickBooks', sub:'Accounting' },
+              { x:260, label:'Phone System', sub:'Calls' },
+              { x:385, label:'Email / Chat', sub:'Communications' },
+              { x:510, label:'ASI / SAGE', sub:'Product Data' },
+              { x:635, label:'Shop Floor', sub:'Production' },
+            ].map((s, i) => (
+              <g key={i}>
+                <rect x={s.x} y={28} width={115} height={42} rx={6} fill="#21262D" stroke="#30363D" strokeWidth={1}/>
+                <text x={s.x+58} y={46} fill="#C9D1D9" fontSize={10} textAnchor="middle" fontWeight="600" fontFamily="DM Sans">{s.label}</text>
+                <text x={s.x+58} y={60} fill="#484F58" fontSize={8} textAnchor="middle" fontFamily="DM Sans">{s.sub}</text>
+              </g>
+            ))}
+
+            {/* Arrows down from systems */}
+            {[67, 192, 317, 442, 567, 692].map((x, i) => (
+              <line key={i} x1={x} y1={70} x2={x} y2={95} stroke="#484F58" strokeWidth={1} markerEnd="url(#arr)"/>
+            ))}
+
+            {/* ── DATA INGESTION ── */}
+            <rect x={120} y={100} width={520} height={36} rx={8} fill={`${BLUE}15`} stroke={BLUE} strokeWidth={1.5}/>
+            <text x={380} y={123} fill={BLUE} fontSize={11} textAnchor="middle" fontWeight="700" fontFamily="Bebas Neue" letterSpacing={1}>DATA INGESTION — CSV UPLOAD / API / WEBHOOKS</text>
+
+            {/* Arrow down */}
+            <line x1={380} y1={136} x2={380} y2={160} stroke={BLUE} strokeWidth={1.5} markerEnd="url(#arr)"/>
+
+            {/* ── 5 DATA LAYERS ── */}
+            <rect x={40} y={165} width={680} height={210} rx={12} fill="#0D1117" stroke="#21262D" strokeWidth={1}/>
+            <text x={380} y={185} fill="#484F58" fontSize={9} textAnchor="middle" fontFamily="Bebas Neue" letterSpacing={2}>5 DATA LAYERS</text>
+
+            {[
+              { y:192, label:'L1  ERP / OPERATIONAL', sub:'Customers, Quotes, Orders, Invoices, Inventory, Shipments', color:BLUE, status:'BUILT' },
+              { y:222, label:'L2  COMMUNICATIONS', sub:'Calls, Transcripts, Emails, Chat, SMS, Meeting Notes', color:GREEN, status:'PLANNED' },
+              { y:252, label:'L3  MARKET & INDUSTRY', sub:'ASI/SAGE Catalogs, Supplier Stock, Pricing, Trade Shows', color:GOLD, status:'PLANNED' },
+              { y:282, label:'L4  PRODUCTION & SENSORS', sub:'Machine OEE, QC Vision, Barcode Tracking, Shipping', color:RED, status:'PLANNED' },
+              { y:312, label:'L5  BEHAVIORAL', sub:'Website Activity, Email Engagement, Search, Churn Prediction', color:'#A371F7', status:'PLANNED' },
+            ].map((l, i) => (
+              <g key={i}>
+                <rect x={55} y={l.y} width={650} height={26} rx={5} fill={l.color+'10'} stroke={l.color+'44'} strokeWidth={1}/>
+                <text x={70} y={l.y+17} fill={l.color} fontSize={9} fontWeight="700" fontFamily="Bebas Neue" letterSpacing={1}>{l.label}</text>
+                <text x={300} y={l.y+17} fill="#8B949E" fontSize={8} fontFamily="DM Sans">{l.sub}</text>
+                <text x={690} y={l.y+17} fill={l.status === 'BUILT' ? GREEN : '#484F58'} fontSize={7} textAnchor="end" fontFamily="DM Sans" fontWeight="600">{l.status}</text>
+              </g>
+            ))}
+
+            {/* Arrow down from layers to Neural */}
+            <line x1={380} y1={375} x2={380} y2={400} stroke={GOLD} strokeWidth={2} markerEnd="url(#arrG)"/>
+            <text x={380} y={393} fill="#484F58" fontSize={8} textAnchor="middle" fontFamily="DM Sans">ALL LAYERS FEED</text>
+
+            {/* ── NEURAL INTELLIGENCE ── */}
+            <rect x={180} y={405} width={400} height={55} rx={12} fill={GOLD+'18'} stroke={GOLD} strokeWidth={2}/>
+            <text x={380} y={428} fill={GOLD} fontSize={14} textAnchor="middle" fontWeight="700" fontFamily="Bebas Neue" letterSpacing={2}>NEURAL INTELLIGENCE</text>
+            <text x={380} y={446} fill="#C9D1D9" fontSize={9} textAnchor="middle" fontFamily="DM Sans">6 Health Panels  /  15+ Diagnostic Analyzers  /  Prescriptive Findings</text>
+
+            {/* Arrow down to agents */}
+            <line x1={380} y1={460} x2={380} y2={485} stroke={GOLD} strokeWidth={2} markerEnd="url(#arrG)"/>
+
+            {/* ── 11 AI AGENTS ── */}
+            <rect x={60} y={490} width={440} height={75} rx={12} fill={GREEN+'12'} stroke={GREEN} strokeWidth={1.5}/>
+            <text x={280} y={510} fill={GREEN} fontSize={12} textAnchor="middle" fontWeight="700" fontFamily="Bebas Neue" letterSpacing={2}>11 AI AGENTS</text>
+            {[
+              { x:72, y:518, name:'Catalog' },
+              { x:140, y:518, name:'Quote' },
+              { x:200, y:518, name:'Art' },
+              { x:254, y:518, name:'Production' },
+              { x:326, y:518, name:'Supply' },
+              { x:390, y:518, name:'QC' },
+              { x:436, y:518, name:'Fulfill' },
+              { x:72, y:543, name:'Voice AI' },
+              { x:140, y:543, name:'Sales' },
+              { x:200, y:543, name:'Finance' },
+              { x:270, y:543, name:'Compliance' },
+            ].map((a, i) => (
+              <g key={i}>
+                <rect x={a.x} y={a.y} width={58} height={20} rx={4} fill="#21262D" stroke="#30363D" strokeWidth={1}/>
+                <text x={a.x+29} y={a.y+14} fill="#8B949E" fontSize={7} textAnchor="middle" fontFamily="DM Sans">{a.name}</text>
+              </g>
+            ))}
+
+            {/* ── TREATMENT PAYWALL ── */}
+            <rect x={530} y={490} width={190} height={75} rx={12} fill={RED+'10'} stroke={RED} strokeWidth={1.5} strokeDasharray="5,3"/>
+            <text x={625} y={512} fill={RED} fontSize={10} textAnchor="middle" fontWeight="700" fontFamily="Bebas Neue" letterSpacing={1}>TREATMENT LAYER</text>
+            <text x={625} y={528} fill="#8B949E" fontSize={8} textAnchor="middle" fontFamily="DM Sans">Automation Workflows</text>
+            <text x={625} y={540} fill="#8B949E" fontSize={8} textAnchor="middle" fontFamily="DM Sans">SMS / CRM / Voice / Email</text>
+            <text x={625} y={556} fill={RED} fontSize={9} textAnchor="middle" fontWeight="700" fontFamily="DM Sans">Activated After POC</text>
+
+            {/* Arrow from agents to treatment */}
+            <line x1={500} y1={530} x2={530} y2={530} stroke={RED} strokeWidth={1} strokeDasharray="4,3" markerEnd="url(#arr)"/>
+
+            {/* ── OUTCOMES (Bottom) ── */}
+            <text x={380} y={595} fill="#484F58" fontSize={9} textAnchor="middle" fontFamily="Bebas Neue" letterSpacing={2}>OUTCOMES</text>
+            {[
+              { x:30, label:'30-sec Quotes' },
+              { x:155, label:'5-min Proofs' },
+              { x:280, label:'0% Missed Calls' },
+              { x:405, label:'Auto Reorders' },
+              { x:530, label:'Real-time OEE' },
+              { x:655, label:'12-day DSO Cut' },
+            ].map((o, i) => (
+              <g key={i}>
+                <rect x={o.x} y={603} width={100} height={16} rx={8} fill={GREEN+'22'} stroke={GREEN+'44'} strokeWidth={1}/>
+                <text x={o.x+50} y={614} fill={GREEN} fontSize={8} textAnchor="middle" fontFamily="DM Sans" fontWeight="600">{o.label}</text>
+              </g>
+            ))}
+          </svg>
+        </div>
+      </div>
+
       {/* Lina Voice Assistant (Floating Button) */}
       <div style={{ position:'fixed', bottom:20, right:20, zIndex:100 }}>
         {!linaOpen ? (
