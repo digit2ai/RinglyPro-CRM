@@ -169,9 +169,9 @@ export default function Architecture() {
             <p style={{ color:'#8B949E', fontSize:13, marginTop:4 }}>ImprintIQ — 5-Layer AI Ecosystem for Promotional Products</p>
           </div>
           <div style={{ display:'flex', gap:8 }}>
-            {['overview','diagram','layers','agents','data','build'].map(v => (
-              <button key={v} onClick={() => setView(v)} style={{ padding:'8px 16px', borderRadius:6, border:`1px solid ${view === v ? GOLD : BORDER}`, background: view === v ? GOLD+'22' : 'transparent', color: view === v ? GOLD : '#8B949E', fontSize:12, cursor:'pointer', textTransform:'capitalize' }}>
-                {v === 'diagram' ? 'Visual Diagram' : v}
+            {['overview','diagram','layers','agents','data','architect'].map(v => (
+              <button key={v} onClick={() => setView(v)} style={{ padding:'8px 16px', borderRadius:6, border:`1px solid ${view === v ? GOLD : BORDER}`, background: view === v ? GOLD+'22' : 'transparent', color: view === v ? GOLD : '#8B949E', fontSize:12, cursor:'pointer' }}>
+                {{ overview:'Overview', diagram:'Visual Diagram', layers:'Layers', agents:'Agents', data:'Data Model', architect:'RinglyPro-Architect' }[v]}
               </button>
             ))}
           </div>
@@ -624,85 +624,134 @@ export default function Architecture() {
         </div>
       )}
 
-      {/* ═══════════ BUILD COMMANDS ═══════════ */}
-      {view === 'build' && (
+      {/* ═══════════ RINGLYPRO-ARCHITECT ═══════════ */}
+      {view === 'architect' && (
         <div>
-          <div style={{ background:CARD, borderRadius:12, padding:20, border:`1px solid ${BORDER}`, marginBottom:20 }}>
-            <h3 style={{ fontFamily:'Bebas Neue', color:'#E6EDF3', fontSize:20, marginBottom:8 }}>BUILD COMMANDS</h3>
-            <p style={{ color:'#8B949E', fontSize:13, lineHeight:1.6 }}>
-              Use the <code style={{ color:GOLD, background:'#21262D', padding:'2px 6px', borderRadius:4 }}>/imprintiq</code> command with the RinglyPro Architect agent to build any layer or feature.
+          {/* Hero */}
+          <div style={{ background:`linear-gradient(135deg, ${GOLD}15, ${GREEN}10)`, borderRadius:16, padding:28, border:`1px solid ${GOLD}33`, marginBottom:24 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:16, marginBottom:16 }}>
+              <div style={{ width:56, height:56, borderRadius:12, background:GOLD+'22', display:'flex', alignItems:'center', justifyContent:'center', fontSize:28 }}>🏗️</div>
+              <div>
+                <h3 style={{ fontFamily:'Bebas Neue', color:GOLD, fontSize:28, margin:0, letterSpacing:2 }}>RINGLYPRO-ARCHITECT</h3>
+                <p style={{ color:'#C9D1D9', fontSize:14, margin:0 }}>AI Build Agent for the ImprintIQ Ecosystem</p>
+              </div>
+            </div>
+            <p style={{ color:'#8B949E', fontSize:13, lineHeight:1.7 }}>
+              The <code style={{ color:GOLD, background:'#21262D', padding:'2px 8px', borderRadius:4, fontSize:13 }}>/imprintiq</code> command instructs the RinglyPro-Architect agent to autonomously build any layer, feature, or the entire ecosystem.
+              It reads the current state, determines what's already built, and only creates what's missing. Full SQL schemas, backend services, frontend pages, Neural analyzers — all generated and deployed automatically.
             </p>
           </div>
 
-          {/* Command Table */}
-          <div style={{ background:CARD, borderRadius:12, padding:20, border:`1px solid ${BORDER}`, marginBottom:20 }}>
-            <h4 style={{ fontFamily:'Bebas Neue', color:GOLD, fontSize:16, marginBottom:12 }}>COMMANDS</h4>
-            {COMMANDS.map((c, i) => (
-              <div key={i} style={{ display:'grid', gridTemplateColumns:'280px 1fr', padding:'8px 0', borderBottom: i < COMMANDS.length - 1 ? '1px solid #21262D' : 'none' }}>
-                <code style={{ color:GREEN, fontSize:13, fontFamily:'monospace' }}>{c.cmd}</code>
-                <span style={{ color:'#C9D1D9', fontSize:13 }}>{c.desc}</span>
+          {/* Usage / Command Table */}
+          <div style={{ background:CARD, borderRadius:12, padding:24, border:`1px solid ${BORDER}`, marginBottom:20 }}>
+            <h4 style={{ fontFamily:'Bebas Neue', color:'#E6EDF3', fontSize:20, marginBottom:4 }}>USAGE</h4>
+            <p style={{ color:'#8B949E', fontSize:12, marginBottom:16 }}>Run any command with the RinglyPro-Architect agent. Each builds and deploys autonomously.</p>
+            <div style={{ background:'#0D1117', borderRadius:10, border:'1px solid #21262D', overflow:'hidden' }}>
+              <div style={{ display:'grid', gridTemplateColumns:'300px 1fr', padding:'10px 16px', background:'#21262D' }}>
+                <span style={{ color:GOLD, fontSize:11, fontWeight:700, letterSpacing:1 }}>COMMAND</span>
+                <span style={{ color:GOLD, fontSize:11, fontWeight:700, letterSpacing:1 }}>WHAT IT BUILDS</span>
               </div>
-            ))}
+              {COMMANDS.map((c, i) => (
+                <div key={i} style={{ display:'grid', gridTemplateColumns:'300px 1fr', padding:'10px 16px', borderBottom: i < COMMANDS.length - 1 ? '1px solid #21262D' : 'none', alignItems:'center' }}>
+                  <code style={{ color:GREEN, fontSize:13, fontFamily:'monospace', fontWeight:600 }}>{c.cmd}</code>
+                  <span style={{ color:'#C9D1D9', fontSize:13 }}>{c.desc}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* What the prompt includes */}
-          <div style={{ background:CARD, borderRadius:12, padding:20, border:`1px solid ${BORDER}`, marginBottom:20 }}>
-            <h4 style={{ fontFamily:'Bebas Neue', color:GOLD, fontSize:16, marginBottom:12 }}>PROMPT INCLUDES</h4>
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(250px,1fr))', gap:10 }}>
+          {/* What The Prompt Includes */}
+          <div style={{ background:CARD, borderRadius:12, padding:24, border:`1px solid ${BORDER}`, marginBottom:20 }}>
+            <h4 style={{ fontFamily:'Bebas Neue', color:'#E6EDF3', fontSize:20, marginBottom:16 }}>THE PROMPT INCLUDES</h4>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(300px,1fr))', gap:12 }}>
               {[
-                { icon: '🗄️', text: 'Full SQL schemas for every table in all 5 layers' },
-                { icon: '⚙️', text: 'Backend service + route specifications' },
-                { icon: '🧠', text: 'Neural analyzer requirements per layer' },
-                { icon: '🖥️', text: 'Frontend page specifications' },
-                { icon: '🚀', text: 'Build & deploy instructions' },
-                { icon: '✅', text: 'Tracks what\'s built — no duplicate work' },
+                { icon: '🗄️', title: 'Full SQL Schemas', desc: 'Complete CREATE TABLE statements for every table in all 5 data layers — ready to execute' },
+                { icon: '⚙️', title: 'Backend Specifications', desc: 'Express routes, service logic, webhook endpoints, data processing pipelines' },
+                { icon: '🧠', title: 'Neural Analyzers', desc: 'Diagnostic analyzer definitions per layer — what to measure, how to score, what findings to generate' },
+                { icon: '🖥️', title: 'Frontend Pages', desc: 'React component specs with layout, data fetching, interactions, and dark theme styling' },
+                { icon: '🚀', title: 'Build & Deploy', desc: 'Vite build commands, git commit/push, Render auto-deploy, health check verification' },
+                { icon: '✅', title: 'State Tracking', desc: 'Documents everything already built so the agent never rebuilds existing work or duplicates code' },
               ].map((item, i) => (
-                <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:10, background:'#0D1117', borderRadius:8, border:'1px solid #21262D' }}>
-                  <span style={{ fontSize:18 }}>{item.icon}</span>
-                  <span style={{ color:'#C9D1D9', fontSize:12 }}>{item.text}</span>
+                <div key={i} style={{ padding:16, background:'#0D1117', borderRadius:10, border:'1px solid #21262D' }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:8 }}>
+                    <span style={{ fontSize:22 }}>{item.icon}</span>
+                    <span style={{ color:'#E6EDF3', fontSize:14, fontWeight:700 }}>{item.title}</span>
+                  </div>
+                  <p style={{ color:'#8B949E', fontSize:12, lineHeight:1.5, margin:0 }}>{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Build Pipeline */}
+          <div style={{ background:CARD, borderRadius:12, padding:24, border:`1px solid ${BORDER}`, marginBottom:20 }}>
+            <h4 style={{ fontFamily:'Bebas Neue', color:'#E6EDF3', fontSize:20, marginBottom:16 }}>BUILD PIPELINE (PER LAYER)</h4>
+            <div style={{ display:'flex', gap:0, flexWrap:'wrap' }}>
+              {[
+                { step: '1', label: 'Create Migration SQL', color: BLUE },
+                { step: '2', label: 'Build Backend Services', color: GREEN },
+                { step: '3', label: 'Create API Routes', color: GOLD },
+                { step: '4', label: 'Add Neural Analyzers', color: PURPLE },
+                { step: '5', label: 'Update Ingestion', color: CYAN },
+                { step: '6', label: 'Build Frontend Pages', color: RED },
+                { step: '7', label: 'Wire App Router', color: '#8B949E' },
+                { step: '8', label: 'Vite Build', color: '#8B949E' },
+                { step: '9', label: 'Git Push → Deploy', color: GREEN },
+                { step: '10', label: 'Verify Production', color: GREEN },
+              ].map((s, i) => (
+                <div key={i} style={{ display:'flex', alignItems:'center' }}>
+                  <div style={{ background:s.color+'22', border:`1px solid ${s.color}44`, borderRadius:8, padding:'10px 14px', textAlign:'center', minWidth:100 }}>
+                    <div style={{ color:s.color, fontSize:18, fontFamily:'Bebas Neue' }}>{s.step}</div>
+                    <div style={{ color:'#C9D1D9', fontSize:10, marginTop:2 }}>{s.label}</div>
+                  </div>
+                  {i < 9 && <span style={{ color:'#30363D', fontSize:16, margin:'0 4px' }}>→</span>}
                 </div>
               ))}
             </div>
           </div>
 
           {/* Tech Stack */}
-          <div style={{ background:CARD, borderRadius:12, padding:20, border:`1px solid ${BORDER}`, marginBottom:20 }}>
-            <h4 style={{ fontFamily:'Bebas Neue', color:GOLD, fontSize:16, marginBottom:12 }}>TECH STACK</h4>
+          <div style={{ background:CARD, borderRadius:12, padding:24, border:`1px solid ${BORDER}`, marginBottom:20 }}>
+            <h4 style={{ fontFamily:'Bebas Neue', color:'#E6EDF3', fontSize:20, marginBottom:16 }}>TECH STACK</h4>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))', gap:10 }}>
               {[
-                { cat: 'Backend', items: 'Node.js, Express.js, Raw SQL' },
-                { cat: 'Database', items: 'PostgreSQL on Render' },
-                { cat: 'Frontend', items: 'React 18, Vite 5, React Router' },
-                { cat: 'Auth', items: 'JWT (bcryptjs + jsonwebtoken)' },
-                { cat: 'Voice AI', items: 'ElevenLabs WebRTC (Rachel/Ana/Lina)' },
-                { cat: 'Deploy', items: 'Render auto-deploy on git push' },
-                { cat: 'Design', items: 'Inline React styles, dark theme' },
-                { cat: 'Fonts', items: 'Bebas Neue (headings) + DM Sans (body)' },
+                { cat: 'Backend', items: 'Node.js, Express.js, Raw SQL', icon: '⚙️' },
+                { cat: 'Database', items: 'PostgreSQL on Render', icon: '🗄️' },
+                { cat: 'Frontend', items: 'React 18, Vite 5, React Router', icon: '🖥️' },
+                { cat: 'Auth', items: 'JWT (bcryptjs + jsonwebtoken)', icon: '🔐' },
+                { cat: 'Voice AI', items: 'ElevenLabs WebRTC (Rachel/Ana/Lina)', icon: '🎙️' },
+                { cat: 'Deploy', items: 'Render auto-deploy on git push', icon: '🚀' },
+                { cat: 'Design', items: 'Inline React styles, dark theme', icon: '🎨' },
+                { cat: 'Fonts', items: 'Bebas Neue + DM Sans', icon: '🔤' },
               ].map((t, i) => (
-                <div key={i} style={{ padding:10, background:'#0D1117', borderRadius:8, border:'1px solid #21262D' }}>
-                  <div style={{ color:GOLD, fontSize:11, fontWeight:700, marginBottom:4 }}>{t.cat}</div>
-                  <div style={{ color:'#C9D1D9', fontSize:12 }}>{t.items}</div>
+                <div key={i} style={{ padding:12, background:'#0D1117', borderRadius:8, border:'1px solid #21262D', display:'flex', alignItems:'center', gap:10 }}>
+                  <span style={{ fontSize:18 }}>{t.icon}</span>
+                  <div>
+                    <div style={{ color:GOLD, fontSize:11, fontWeight:700 }}>{t.cat}</div>
+                    <div style={{ color:'#C9D1D9', fontSize:12 }}>{t.items}</div>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* URLs */}
-          <div style={{ background:CARD, borderRadius:12, padding:20, border:`1px solid ${BORDER}` }}>
-            <h4 style={{ fontFamily:'Bebas Neue', color:GOLD, fontSize:16, marginBottom:12 }}>PRODUCTION URLS</h4>
+          {/* Production URLs */}
+          <div style={{ background:CARD, borderRadius:12, padding:24, border:`1px solid ${BORDER}` }}>
+            <h4 style={{ fontFamily:'Bebas Neue', color:'#E6EDF3', fontSize:20, marginBottom:16 }}>PRODUCTION URLS</h4>
             {[
-              { label: 'Landing', url: 'https://aiagent.ringlypro.com/imprint_iq/' },
-              { label: 'Dashboard', url: 'https://aiagent.ringlypro.com/imprint_iq/dashboard' },
-              { label: 'Neural Intelligence', url: 'https://aiagent.ringlypro.com/imprint_iq/neural' },
-              { label: 'Process & ROI', url: 'https://aiagent.ringlypro.com/imprint_iq/process' },
-              { label: 'Data Ingestion', url: 'https://aiagent.ringlypro.com/imprint_iq/ingest' },
-              { label: 'Architecture (this page)', url: 'https://aiagent.ringlypro.com/imprint_iq/architecture' },
-              { label: 'Health API', url: 'https://aiagent.ringlypro.com/imprint_iq/health' },
-              { label: 'Neural API', url: 'https://aiagent.ringlypro.com/imprint_iq/api/neural/dashboard' },
+              { label: 'Landing', url: 'https://aiagent.ringlypro.com/imprint_iq/', status: 'live' },
+              { label: 'Dashboard', url: 'https://aiagent.ringlypro.com/imprint_iq/dashboard', status: 'live' },
+              { label: 'Neural Intelligence', url: 'https://aiagent.ringlypro.com/imprint_iq/neural', status: 'live' },
+              { label: 'Process & ROI', url: 'https://aiagent.ringlypro.com/imprint_iq/process', status: 'live' },
+              { label: 'Data Ingestion', url: 'https://aiagent.ringlypro.com/imprint_iq/ingest', status: 'live' },
+              { label: 'Architecture', url: 'https://aiagent.ringlypro.com/imprint_iq/architecture', status: 'live' },
+              { label: 'Health API', url: 'https://aiagent.ringlypro.com/imprint_iq/health', status: 'live' },
+              { label: 'Neural API', url: 'https://aiagent.ringlypro.com/imprint_iq/api/neural/dashboard', status: 'live' },
             ].map((u, i) => (
-              <div key={i} style={{ display:'grid', gridTemplateColumns:'180px 1fr', padding:'6px 0', borderBottom: i < 7 ? '1px solid #21262D' : 'none' }}>
+              <div key={i} style={{ display:'grid', gridTemplateColumns:'180px 1fr 50px', padding:'8px 0', borderBottom: i < 7 ? '1px solid #21262D' : 'none', alignItems:'center' }}>
                 <span style={{ color:'#8B949E', fontSize:12 }}>{u.label}</span>
                 <a href={u.url} target="_blank" rel="noopener noreferrer" style={{ color:BLUE, fontSize:12, textDecoration:'none' }}>{u.url}</a>
+                <span style={{ color:GREEN, fontSize:10, textAlign:'right' }}>{u.status === 'live' ? '● LIVE' : '○'}</span>
               </div>
             ))}
           </div>
