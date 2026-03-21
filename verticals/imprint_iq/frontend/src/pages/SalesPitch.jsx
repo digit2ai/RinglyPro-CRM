@@ -95,7 +95,7 @@ export default function SalesPitch() {
 
       {/* Hero */}
       <div style={{ textAlign:'center', padding:'40px 16px 16px' }}>
-        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="ImprintIQ" style={{ width:56, height:56, borderRadius:12, marginBottom:12 }} />
+        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="ImprintIQ" style={{ width:160, height:160, borderRadius:24, marginBottom:16 }} />
         <h1 style={{ fontFamily:'Bebas Neue', color:'#E6EDF3', fontSize:32, margin:'0', letterSpacing:3 }}>IMPRINT<span style={{ color:GOLD }}>IQ</span></h1>
         <p style={{ color:'#8B949E', fontSize:12, letterSpacing:2, textTransform:'uppercase', marginTop:4 }}>Intelligence for Every Impression</p>
 
