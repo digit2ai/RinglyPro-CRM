@@ -62,32 +62,49 @@ async function executeIntent(parsed, helpers) {
   try {
     switch (intent) {
       case 'show_open_loads': {
-        const [rows] = await sequelize.query(
-          `SELECT l.*, sc.company_name as shipper_name, cc.company_name as carrier_name
-           FROM cw_loads l
-           LEFT JOIN cw_contacts sc ON l.shipper_id = sc.id
-           LEFT JOIN cw_contacts cc ON l.carrier_id = cc.id
-           WHERE l.status = 'open' ORDER BY l.pickup_date ASC`
+        // Query both cw_loads and lg_loads
+        const [cwRows] = await sequelize.query(
+          `SELECT l.load_ref, l.origin, l.destination, l.rate_usd, l.pickup_date, l.status, l.freight_type,
+                  sc.company_name as shipper_name, cc.company_name as carrier_name, 'cw' as source
+           FROM cw_loads l LEFT JOIN cw_contacts sc ON l.shipper_id = sc.id LEFT JOIN cw_contacts cc ON l.carrier_id = cc.id
+           WHERE l.status = 'open' ORDER BY l.pickup_date ASC LIMIT 25`
         );
-        result = { success: true, data: rows, message: `Found ${rows.length} open loads` };
+        const [lgRows] = await sequelize.query(
+          `SELECT load_ref, origin_city || ', ' || origin_state as origin, destination_city || ', ' || destination_state as destination,
+                  buy_rate as rate_usd, pickup_date, status, equipment_type as freight_type,
+                  shipper_name, NULL as carrier_name, 'lg' as source
+           FROM lg_loads WHERE status = 'open' ORDER BY pickup_date ASC LIMIT 25`
+        );
+        const allRows = [...cwRows, ...lgRows].slice(0, 50);
+        // Also get total count
+        const [[cwCnt]] = await sequelize.query(`SELECT COUNT(*) as c FROM cw_loads WHERE status = 'open'`);
+        const [[lgCnt]] = await sequelize.query(`SELECT COUNT(*) as c FROM lg_loads WHERE status = 'open'`);
+        const totalOpen = parseInt(cwCnt.c || 0) + parseInt(lgCnt.c || 0);
+        result = { success: true, data: allRows, message: `Found ${totalOpen} open loads (showing first ${allRows.length})` };
         break;
       }
       case 'show_loads': {
-        let where = 'WHERE 1=1';
-        const binds = [];
+        let cwWhere = 'WHERE 1=1';
+        let lgWhere = 'WHERE 1=1';
+        const cwBinds = [];
+        const lgBinds = [];
         if (entities.status) {
-          binds.push(entities.status);
-          where += ` AND l.status = $${binds.length}`;
+          cwBinds.push(entities.status); cwWhere += ` AND l.status = $${cwBinds.length}`;
+          lgBinds.push(entities.status); lgWhere += ` AND status = $${lgBinds.length}`;
         }
-        const [rows] = await sequelize.query(
-          `SELECT l.*, sc.company_name as shipper_name, cc.company_name as carrier_name
-           FROM cw_loads l
-           LEFT JOIN cw_contacts sc ON l.shipper_id = sc.id
-           LEFT JOIN cw_contacts cc ON l.carrier_id = cc.id
-           ${where} ORDER BY l.created_at DESC LIMIT 50`,
-          { bind: binds }
+        const [cwRows] = await sequelize.query(
+          `SELECT l.load_ref, l.origin, l.destination, l.rate_usd, l.pickup_date, l.status,
+                  sc.company_name as shipper_name, cc.company_name as carrier_name, 'cw' as source
+           FROM cw_loads l LEFT JOIN cw_contacts sc ON l.shipper_id = sc.id LEFT JOIN cw_contacts cc ON l.carrier_id = cc.id
+           ${cwWhere} ORDER BY l.created_at DESC LIMIT 25`, { bind: cwBinds }
         );
-        result = { success: true, data: rows, message: `Found ${rows.length} loads` };
+        const [lgRows] = await sequelize.query(
+          `SELECT load_ref, origin_city || ', ' || origin_state as origin, destination_city || ', ' || destination_state as destination,
+                  buy_rate as rate_usd, pickup_date, status, shipper_name, NULL as carrier_name, 'lg' as source
+           FROM lg_loads ${lgWhere} ORDER BY created_at DESC LIMIT 25`, { bind: lgBinds }
+        );
+        const allRows = [...cwRows, ...lgRows].slice(0, 50);
+        result = { success: true, data: allRows, message: `Found ${allRows.length} loads` };
         break;
       }
       case 'show_contacts': {
@@ -204,23 +221,27 @@ async function executeIntent(parsed, helpers) {
         break;
       }
       case 'show_dashboard': {
-        const [[openLoads]] = await sequelize.query(`SELECT COUNT(*) as count FROM cw_loads WHERE status = 'open'`);
-        const [[coveredToday]] = await sequelize.query(`SELECT COUNT(*) as count FROM cw_loads WHERE status = 'covered' AND updated_at::date = CURRENT_DATE`);
-        const [[activeCarriers]] = await sequelize.query(`SELECT COUNT(*) as count FROM cw_contacts WHERE contact_type = 'carrier'`);
+        const [[cwOpen]] = await sequelize.query(`SELECT COUNT(*) as count FROM cw_loads WHERE status = 'open'`);
+        const [[lgOpen]] = await sequelize.query(`SELECT COUNT(*) as count FROM lg_loads WHERE status = 'open'`);
+        const [[cwCov]] = await sequelize.query(`SELECT COUNT(*) as count FROM cw_loads WHERE status = 'covered' AND updated_at::date = CURRENT_DATE`);
+        const [[cwCarr]] = await sequelize.query(`SELECT COUNT(*) as count FROM cw_contacts WHERE contact_type = 'carrier'`);
+        const [[lgCarr]] = await sequelize.query(`SELECT COUNT(*) as count FROM lg_carriers`);
         const [[callsToday]] = await sequelize.query(`SELECT COUNT(*) as count FROM cw_call_logs WHERE created_at::date = CURRENT_DATE`);
-        const [[hsContacts]] = await sequelize.query(`SELECT COUNT(*) as count FROM cw_contacts WHERE hubspot_id IS NOT NULL`);
-        const [[pendingSync]] = await sequelize.query(`SELECT COUNT(*) as count FROM cw_hubspot_sync WHERE status = 'pending'`);
+        const [[cwTotal]] = await sequelize.query(`SELECT COUNT(*) as count FROM cw_loads`);
+        const [[lgTotal]] = await sequelize.query(`SELECT COUNT(*) as count FROM lg_loads`);
+        const totalLoads = parseInt(cwTotal.count || 0) + parseInt(lgTotal.count || 0);
+        const openLoads = parseInt(cwOpen.count || 0) + parseInt(lgOpen.count || 0);
         result = {
           success: true,
           data: {
-            open_loads: parseInt(openLoads.count),
-            covered_today: parseInt(coveredToday.count),
-            active_carriers: parseInt(activeCarriers.count),
-            calls_today: parseInt(callsToday.count),
-            hubspot_contacts: parseInt(hsContacts.count),
-            pending_sync: parseInt(pendingSync.count)
+            total_loads: totalLoads,
+            open_loads: openLoads,
+            coverage_rate: totalLoads > 0 ? Math.round(((totalLoads - openLoads) / totalLoads) * 100) + '%' : '0%',
+            active_carriers: parseInt(cwCarr.count || 0) + parseInt(lgCarr.count || 0),
+            covered_today: parseInt(cwCov.count || 0),
+            calls_today: parseInt(callsToday.count || 0),
           },
-          message: 'Dashboard KPIs loaded'
+          message: `Dashboard: ${totalLoads.toLocaleString()} total loads, ${openLoads.toLocaleString()} open`
         };
         break;
       }
