@@ -11,14 +11,14 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => { if (isAuthenticated()) nav(`${BASE}/dashboard`); }, []);
+  useEffect(() => { if (isAuthenticated()) nav(`${BASE}/pitch`); }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(''); setLoading(true);
     try {
       await login(email, password);
-      nav(`${BASE}/dashboard`);
+      nav(`${BASE}/pitch`);
     } catch (err) {
       setError(err.response?.data?.error || 'Login failed');
     }

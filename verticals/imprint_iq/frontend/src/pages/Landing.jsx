@@ -6,7 +6,7 @@ const BASE = '/imprint_iq';
 
 export default function Landing() {
   const nav = useNavigate();
-  useEffect(() => { if (isAuthenticated()) nav(`${BASE}/dashboard`); }, []);
+  useEffect(() => { if (isAuthenticated()) nav(`${BASE}/pitch`); }, []);
 
   return (
     <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'linear-gradient(135deg, #0D1117 0%, #161B22 50%, #1A1F2B 100%)' }}>
