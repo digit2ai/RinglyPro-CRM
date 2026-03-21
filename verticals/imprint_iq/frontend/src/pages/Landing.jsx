@@ -11,7 +11,7 @@ export default function Landing() {
   return (
     <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'linear-gradient(135deg, #0D1117 0%, #161B22 50%, #1A1F2B 100%)' }}>
       <div style={{ textAlign:'center', maxWidth:520, padding:40 }}>
-        <div style={{ fontSize:64, marginBottom:16 }}>🖨️</div>
+        <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="ImprintIQ" style={{ width:80, height:80, marginBottom:16, borderRadius:12 }} />
         <h1 style={{ fontFamily:'Bebas Neue', fontSize:56, color:'#E6EDF3', letterSpacing:3, margin:0 }}>IMPRINT<span style={{ color:'#C8962A' }}>IQ</span></h1>
         <p style={{ color:'#8B949E', fontSize:14, marginTop:4, letterSpacing:2, textTransform:'uppercase' }}>Intelligence for Every Impression</p>
         <div style={{ margin:'32px 0', padding:24, background:'#161B22', borderRadius:12, border:'1px solid #30363D' }}>

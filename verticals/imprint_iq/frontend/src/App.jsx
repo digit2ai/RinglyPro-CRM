@@ -31,7 +31,7 @@ function Layout({ children }) {
       {/* Sidebar */}
       <div style={{ width: sideOpen ? 220 : 60, background:'#161B22', borderRight:'1px solid #21262D', transition:'width 0.3s', overflow:'hidden', flexShrink:0 }}>
         <div style={{ padding:'16px 14px', display:'flex', alignItems:'center', gap:10, borderBottom:'1px solid #21262D', cursor:'pointer' }} onClick={() => setSideOpen(!sideOpen)}>
-          <span style={{ fontSize:24 }}>🖨️</span>
+          <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="IQ" style={{ width:28, height:28, borderRadius:4 }} />
           {sideOpen && <span style={{ fontFamily:'Bebas Neue', fontSize:20, color:'#E6EDF3', letterSpacing:2 }}>IMPRINT<span style={{ color:'#C8962A' }}>IQ</span></span>}
         </div>
         <div style={{ padding:'12px 8px' }}>

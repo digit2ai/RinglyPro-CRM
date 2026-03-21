@@ -31,7 +31,7 @@ export default function Login() {
     <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'#0D1117' }}>
       <form onSubmit={handleSubmit} style={{ width:380, padding:40, background:'#161B22', borderRadius:16, border:'1px solid #30363D' }}>
         <div style={{ textAlign:'center', marginBottom:24 }}>
-          <div style={{ fontSize:40 }}>🖨️</div>
+          <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="ImprintIQ" style={{ width:48, height:48, borderRadius:8 }} />
           <h1 style={{ fontFamily:'Bebas Neue', fontSize:32, color:'#E6EDF3', margin:'8px 0 0' }}>IMPRINT<span style={{ color:'#C8962A' }}>IQ</span></h1>
         </div>
         {error && <div style={{ background:'#F8514922', color:'#F85149', padding:'10px 14px', borderRadius:8, marginBottom:16, fontSize:13 }}>{error}</div>}
