@@ -36,6 +36,22 @@ router.use('/api/drivers', driversRoutes);
 router.use('/api/dispatches', dispatchesRoutes);
 
 // ============================================================================
+// DEMO & SEEDING
+// ============================================================================
+const demoRoutes = require('./routes/demo');
+router.use('/api/demo', demoRoutes);
+
+// ============================================================================
+// CROSS-TIER EVENT HANDLERS (the nervous system)
+// ============================================================================
+try {
+  const { registerEventHandlers } = require('./services/event-handlers');
+  registerEventHandlers();
+} catch (e) {
+  console.error('⚠️ FreightMind event handlers init error:', e.message);
+}
+
+// ============================================================================
 // TENANT MANAGEMENT API
 // ============================================================================
 router.get('/api/tenants', async (req, res) => {
