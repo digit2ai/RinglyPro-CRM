@@ -81,6 +81,7 @@ export default function SalesPitch() {
         {[
           { id:'why', label:'WHY IMPRINTIQ' },
           { id:'how', label:'HOW IT WORKS' },
+          { id:'timeline', label:'IMPLEMENTATION' },
           { id:'benefit', label:'YOUR BENEFIT' },
           { id:'roi', label:'ROI' },
         ].map(s => (
@@ -190,6 +191,75 @@ export default function SalesPitch() {
         </div>
       </div>
 
+      {/* ══════════════ IMPLEMENTATION TIMELINE ══════════════ */}
+      <div id="section-timeline" style={sec}>
+        <h2 style={h2}>IMPLEMENTATION TIMELINE</h2>
+        <p style={p}>
+          Getting started requires no system changes, no IT projects, and no disruption to your current operations.
+          Here is how we bring ImprintIQ online for Hit:
+        </p>
+
+        <div style={{ display:'flex', flexDirection:'column', gap:0 }}>
+          {[
+            {
+              phase:'WEEK 1', title:'CONNECT YOUR DATA',
+              desc:'We connect to your existing systems — Profill Portal exports, QuickBooks data, call logs, order history. A simple CSV export or API connection. No software installation required.',
+              outcome:'Neural Intelligence begins analyzing your operations within hours of data connection.',
+              color:BLUE
+            },
+            {
+              phase:'WEEK 2', title:'REVIEW YOUR OPERATIONAL HEALTH REPORT',
+              desc:'Neural Intelligence delivers your complete operational health assessment — 6 health panels scored 0-100, specific findings with dollar impact, and recommended actions for each issue identified.',
+              outcome:'You see exactly where operational inefficiencies exist and how much each one costs annually.',
+              color:GOLD
+            },
+            {
+              phase:'WEEK 3-4', title:'ACTIVATE YOUR FIRST AI AGENTS',
+              desc:'Based on the health report, we activate the agents that address your highest-impact areas first. Typically this starts with the Quote Engine (instant quoting), Customer Voice (24/7 call handling), and Art Director (proof automation).',
+              outcome:'Your team experiences the impact immediately — quotes in seconds, every call answered, proofs validated automatically.',
+              color:GREEN
+            },
+            {
+              phase:'MONTH 2-3', title:'EXPAND ACROSS OPERATIONS',
+              desc:'As your team sees results from the initial agents, we expand into production scheduling, inventory management, automated invoicing, and supplier intelligence. Each agent is activated independently based on your priorities.',
+              outcome:'Manual processes are replaced one by one. Your operations team focuses on exceptions, not routine work.',
+              color:GREEN
+            },
+            {
+              phase:'MONTH 4+', title:'CONTINUOUS OPTIMIZATION',
+              desc:'Neural Intelligence monitors all connected systems in real-time. New findings surface automatically as your business evolves. Additional data layers — market intelligence, production sensors, behavioral analytics — are added over time.',
+              outcome:'Your operational efficiency improves continuously without additional effort. ImprintIQ gets smarter as more data flows through it.',
+              color:GOLD
+            },
+          ].map((item, i) => (
+            <div key={i} style={{ display:'flex', gap:16, padding:'0 0 20px' }}>
+              <div style={{ display:'flex', flexDirection:'column', alignItems:'center', minWidth:48 }}>
+                <div style={{ width:14, height:14, borderRadius:'50%', background:item.color, border:`3px solid ${item.color}44`, flexShrink:0 }} />
+                {i < 4 && <div style={{ width:2, flex:1, background:'#21262D', marginTop:4 }} />}
+              </div>
+              <div style={{ flex:1 }}>
+                <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:6 }}>
+                  {pill(item.phase, item.color)}
+                  <span style={{ color:'#E6EDF3', fontSize:14, fontWeight:700 }}>{item.title}</span>
+                </div>
+                <p style={{ color:'#8B949E', fontSize:13, lineHeight:1.6, margin:'0 0 8px' }}>{item.desc}</p>
+                <div style={{ padding:10, background:item.color+'11', borderRadius:6, border:`1px solid ${item.color}22` }}>
+                  <span style={{ color:item.color, fontSize:12, fontWeight:600 }}>Outcome: </span>
+                  <span style={{ color:'#C9D1D9', fontSize:12 }}>{item.outcome}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ background:CARD, borderRadius:10, padding:16, border:`1px solid ${BORDER}`, textAlign:'center' }}>
+          <div style={{ color:'#C9D1D9', fontSize:13 }}>
+            <strong style={{ color:GOLD }}>No disruption to current operations.</strong> ImprintIQ runs alongside your existing systems from day one.
+            Your team continues working as normal while AI agents gradually take over manual processes.
+          </div>
+        </div>
+      </div>
+
       {/* ══════════════ YOUR BENEFIT ══════════════ */}
       <div id="section-benefit" style={sec}>
         <h2 style={h2}>YOUR BENEFIT</h2>
@@ -260,52 +330,90 @@ export default function SalesPitch() {
 
       {/* ══════════════ ROI ══════════════ */}
       <div id="section-roi" style={{ ...sec, borderBottom:'none' }}>
-        <h2 style={h2}>ROI FOR HIT PROMOTIONAL PRODUCTS</h2>
+        <h2 style={h2}>PROJECTED RETURN ON INVESTMENT</h2>
         <p style={p}>
-          Based on $655M revenue and current operational structure:
+          Based on Hit Promotional Products' $655M revenue and current operational structure,
+          here is the projected financial impact of ImprintIQ:
         </p>
 
-        <div style={{ background:CARD, borderRadius:12, padding:20, border:`1px solid ${GOLD}33`, marginBottom:20 }}>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
-            <div>
-              <div style={{ color:'#8B949E', fontSize:11, marginBottom:4 }}>ImprintIQ Investment</div>
-              <div style={{ color:BLUE, fontSize:28, fontFamily:'Bebas Neue' }}>$120K/mo</div>
-              <div style={{ color:'#484F58', fontSize:11 }}>$1.44M annually</div>
+        {/* Savings Breakdown */}
+        <div style={{ background:CARD, borderRadius:12, padding:20, border:`1px solid ${BORDER}`, marginBottom:16 }}>
+          <div style={{ fontFamily:'Bebas Neue', color:GREEN, fontSize:16, marginBottom:12 }}>ANNUAL OPERATIONAL SAVINGS</div>
+          {[
+            { area:'Quoting Automation', saving:'$180K', detail:'AI-generated quotes replace manual price lookups and Excel proposals' },
+            { area:'Artwork and Proof Automation', saving:'$250K', detail:'AI preflight validation and virtual proof generation reduce art department workload' },
+            { area:'Call Recovery and Voice AI', saving:'$835K', detail:'24/7 AI call handling eliminates missed calls plus recovers $780K in lost orders' },
+            { area:'Reorder Intelligence', saving:'$200K', detail:'Proactive outreach reactivates dormant accounts before they leave' },
+            { area:'Production Scheduling', saving:'$350K', detail:'AI job routing and bottleneck prediction across all decoration lines' },
+            { area:'Invoice and Collections Automation', saving:'$140K', detail:'Instant invoicing on shipment, automated collections reduce DSO by 12 days' },
+          ].map((item, i) => (
+            <div key={i} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 0', borderBottom: i < 5 ? '1px solid #21262D' : 'none' }}>
+              <div style={{ flex:1 }}>
+                <div style={{ color:'#E6EDF3', fontSize:13, fontWeight:600 }}>{item.area}</div>
+                <div style={{ color:'#8B949E', fontSize:11, marginTop:2 }}>{item.detail}</div>
+              </div>
+              <div style={{ color:GREEN, fontSize:16, fontFamily:'Bebas Neue', minWidth:80, textAlign:'right' }}>{item.saving}</div>
             </div>
-            <div>
-              <div style={{ color:'#8B949E', fontSize:11, marginBottom:4 }}>Operational Savings Generated</div>
-              <div style={{ color:GREEN, fontSize:28, fontFamily:'Bebas Neue' }}>$5.1M/yr</div>
-              <div style={{ color:'#484F58', fontSize:11 }}>72% reduction in manual ops cost</div>
-            </div>
-          </div>
-          <div style={{ borderTop:'1px solid #21262D', marginTop:16, paddingTop:16, display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12 }}>
-            <div style={{ textAlign:'center' }}>
-              <div style={{ color:GOLD, fontSize:24, fontFamily:'Bebas Neue' }}>3.5x</div>
-              <div style={{ color:'#8B949E', fontSize:11 }}>Return on Investment</div>
-            </div>
-            <div style={{ textAlign:'center' }}>
-              <div style={{ color:GOLD, fontSize:24, fontFamily:'Bebas Neue' }}>3 MONTHS</div>
-              <div style={{ color:'#8B949E', fontSize:11 }}>Payback Period</div>
-            </div>
-            <div style={{ textAlign:'center' }}>
-              <div style={{ color:GOLD, fontSize:24, fontFamily:'Bebas Neue' }}>$3.66M</div>
-              <div style={{ color:'#8B949E', fontSize:11 }}>Net Annual Savings</div>
-            </div>
+          ))}
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'14px 0 0', marginTop:8, borderTop:`2px solid ${GREEN}` }}>
+            <span style={{ color:'#E6EDF3', fontSize:15, fontWeight:700 }}>TOTAL PROJECTED ANNUAL SAVINGS</span>
+            <span style={{ color:GREEN, fontSize:24, fontFamily:'Bebas Neue' }}>$1.955M</span>
           </div>
         </div>
 
-        <div style={{ fontFamily:'Bebas Neue', color:'#E6EDF3', fontSize:14, marginBottom:10 }}>DOES NOT INCLUDE REVENUE GAINS FROM</div>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:20 }}>
-          {[
-            'Recovered missed calls ($780K+ potential)',
-            'Proactive reorder outreach',
-            'Faster quoting (wins more deals)',
-            'Reduced customer churn',
-            'Competitive pricing intelligence',
-            'New 800K sq ft facility OEE optimization'
-          ].map((item, i) => (
-            <div key={i} style={{ padding:'8px 12px', background:'#0D1117', borderRadius:6, border:'1px solid #21262D', color:'#8B949E', fontSize:12 }}>+ {item}</div>
-          ))}
+        {/* Investment vs Return */}
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:16 }}>
+          <div style={{ background:CARD, borderRadius:12, padding:20, border:`1px solid ${BORDER}`, borderTop:`3px solid ${BLUE}` }}>
+            <div style={{ color:'#8B949E', fontSize:11, marginBottom:6 }}>ImprintIQ Investment</div>
+            <div style={{ color:BLUE, fontSize:32, fontFamily:'Bebas Neue' }}>$120K/mo</div>
+            <div style={{ color:'#484F58', fontSize:12, marginTop:4 }}>$1.44M annually</div>
+            <div style={{ color:'#8B949E', fontSize:11, marginTop:8 }}>Includes all 11 AI agents, Neural Intelligence, integrations, and managed AI operations</div>
+          </div>
+          <div style={{ background:CARD, borderRadius:12, padding:20, border:`1px solid ${BORDER}`, borderTop:`3px solid ${GREEN}` }}>
+            <div style={{ color:'#8B949E', fontSize:11, marginBottom:6 }}>Projected Annual Savings</div>
+            <div style={{ color:GREEN, fontSize:32, fontFamily:'Bebas Neue' }}>$1.955M/yr</div>
+            <div style={{ color:'#484F58', fontSize:12, marginTop:4 }}>Conservative estimate — operational savings only</div>
+            <div style={{ color:'#8B949E', fontSize:11, marginTop:8 }}>Does not include revenue gains from recovered calls, proactive reorders, or faster quoting</div>
+          </div>
+        </div>
+
+        {/* Key Metrics */}
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:20 }}>
+          <div style={{ background:CARD, borderRadius:12, padding:16, border:`1px solid ${BORDER}`, textAlign:'center', borderTop:`3px solid ${GOLD}` }}>
+            <div style={{ color:GOLD, fontSize:28, fontFamily:'Bebas Neue' }}>$515K</div>
+            <div style={{ color:'#E6EDF3', fontSize:12, fontWeight:600, marginTop:4 }}>Net Annual Benefit</div>
+            <div style={{ color:'#8B949E', fontSize:11, marginTop:2 }}>Savings minus investment</div>
+          </div>
+          <div style={{ background:CARD, borderRadius:12, padding:16, border:`1px solid ${BORDER}`, textAlign:'center', borderTop:`3px solid ${GOLD}` }}>
+            <div style={{ color:GOLD, fontSize:28, fontFamily:'Bebas Neue' }}>1.36x</div>
+            <div style={{ color:'#E6EDF3', fontSize:12, fontWeight:600, marginTop:4 }}>Return on Investment</div>
+            <div style={{ color:'#8B949E', fontSize:11, marginTop:2 }}>On operational savings alone</div>
+          </div>
+          <div style={{ background:CARD, borderRadius:12, padding:16, border:`1px solid ${BORDER}`, textAlign:'center', borderTop:`3px solid ${GOLD}` }}>
+            <div style={{ color:GOLD, fontSize:28, fontFamily:'Bebas Neue' }}>9 MONTHS</div>
+            <div style={{ color:'#E6EDF3', fontSize:12, fontWeight:600, marginTop:4 }}>Payback Period</div>
+            <div style={{ color:'#8B949E', fontSize:11, marginTop:2 }}>Full investment recovered</div>
+          </div>
+        </div>
+
+        {/* Additional Upside */}
+        <div style={{ background:CARD, borderRadius:12, padding:16, border:`1px solid ${BORDER}`, marginBottom:20 }}>
+          <div style={{ fontFamily:'Bebas Neue', color:'#E6EDF3', fontSize:14, marginBottom:10 }}>ADDITIONAL REVENUE UPSIDE (NOT INCLUDED IN SAVINGS ABOVE)</div>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
+            {[
+              { item:'Recovered missed call revenue', value:'$780K+/yr potential' },
+              { item:'Proactive reorder capture', value:'20-30% dormant reactivation' },
+              { item:'Faster quoting wins more deals', value:'2x proposal volume' },
+              { item:'Reduced customer churn', value:'Higher lifetime value per account' },
+              { item:'Market pricing intelligence', value:'Competitive rate optimization' },
+              { item:'New facility OEE optimization', value:'800K sq ft production efficiency' },
+            ].map((item, i) => (
+              <div key={i} style={{ padding:'8px 12px', background:'#0D1117', borderRadius:6, border:'1px solid #21262D' }}>
+                <div style={{ color:'#C9D1D9', fontSize:12 }}>{item.item}</div>
+                <div style={{ color:GOLD, fontSize:11, marginTop:2 }}>{item.value}</div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Next Steps */}
