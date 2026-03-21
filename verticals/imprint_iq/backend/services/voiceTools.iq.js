@@ -104,7 +104,7 @@ Invoice and collections automation saves $140,000 per year by generating invoice
 
 Now regarding pricing — ImprintIQ pricing is based on actual data consumption, not seats or licenses. You pay for what the AI actually does — the volume of quotes processed, calls handled, production jobs routed, and inventory managed. The cost per transaction is orders of magnitude lower than human labor. An AI agent processing a quote costs a fraction of a cent. A human rep spending 4 hours on the same quote costs $120 in labor.
 
-The exact pricing is determined after a Proof of Concept. During the POC, we connect to your real data, measure actual data consumption across all active agents, and generate a predictive forecast. Final pricing is tailored to your specific operational volume. But I can tell you this — compared to $1.955 million in annual cost reduction, the platform cost based on data consumption is insignificant.
+The exact pricing is determined after a Proof of Concept. During the POC, we connect to your real data, measure actual data consumption across all active agents, and generate a predictive forecast. Final pricing is tailored to your specific operational volume. But I can tell you this — the platform pays for itself in weeks, not even a month. Compared to nearly 2 million dollars in annual cost reduction, the data consumption cost is a fraction of what you spend on human labor for the same tasks.
 
 On top of the operational savings, there is additional revenue upside not included in these numbers: recovered missed call revenue of $780,000 or more per year, proactive reorder capture, faster quoting that wins more deals, reduced customer churn, and OEE optimization for the new 800,000 square foot facility.`;
 }
