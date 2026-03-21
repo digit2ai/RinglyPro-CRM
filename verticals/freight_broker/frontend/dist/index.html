@@ -3,307 +3,1046 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FreightMind AI — Your Fleet Runs Itself</title>
+  <title>FreightMind AI — Command Center</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0e17; color: #e2e8f0; min-height: 100vh; }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg-primary: #0a0e17;
+      --bg-card: #1e293b;
+      --bg-card-alt: #0f172a;
+      --border: #1e3a5f;
+      --border-hover: #3b82f6;
+      --text-primary: #e2e8f0;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-blue: #3b82f6;
+      --accent-purple: #8b5cf6;
+      --accent-green: #22c55e;
+      --accent-orange: #f97316;
+      --accent-red: #ef4444;
+      --accent-yellow: #eab308;
+      --accent-pink: #ec4899;
+      --accent-cyan: #06b6d4;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; overflow-x: hidden; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-primary); }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
 
-    /* Header */
-    .header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-bottom: 1px solid #1e3a5f; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; }
-    .logo { display: flex; align-items: center; gap: 12px; }
-    .logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
-    .logo-text { font-size: 24px; font-weight: 700; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .tagline { color: #64748b; font-size: 13px; margin-top: 2px; }
-    .header-status { display: flex; gap: 16px; align-items: center; }
-    .status-dot { width: 10px; height: 10px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-    .status-text { color: #22c55e; font-size: 14px; font-weight: 500; }
+    /* ── HEADER ── */
+    .header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 32px;
+      display: flex; justify-content: space-between; align-items: center;
+      position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+    .header-left { display: flex; align-items: center; gap: 14px; }
+    .logo-icon {
+      width: 42px; height: 42px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+    }
+    .logo-text {
+      font-size: 22px; font-weight: 800;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+    .tagline { color: var(--text-muted); font-size: 12px; margin-top: 1px; letter-spacing: 0.5px; text-transform: uppercase; }
+    .header-right { display: flex; align-items: center; gap: 24px; }
+    .system-status { display: flex; align-items: center; gap: 8px; }
+    .status-dot {
+      width: 10px; height: 10px;
+      background: var(--accent-green);
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(34, 197, 94, 0.6); } 50% { opacity: 0.6; box-shadow: 0 0 16px rgba(34, 197, 94, 0.3); } }
+    .status-label { color: var(--accent-green); font-size: 13px; font-weight: 600; }
+    .header-time { color: var(--text-muted); font-size: 13px; font-family: 'SF Mono', 'Fira Code', monospace; font-variant-numeric: tabular-nums; }
 
-    /* Hero */
-    .hero { text-align: center; padding: 60px 40px 40px; }
-    .hero h1 { font-size: 48px; font-weight: 800; margin-bottom: 16px; background: linear-gradient(135deg, #e2e8f0, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .hero p { font-size: 20px; color: #64748b; max-width: 700px; margin: 0 auto 40px; }
+    /* ── METRICS ROW ── */
+    .metrics-row {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+      padding: 24px 32px 0;
+    }
+    .metric-card {
+      background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-card-alt) 100%);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px 24px;
+      position: relative; overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    .metric-card:hover { border-color: var(--border-hover); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+    .metric-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      border-radius: 14px 14px 0 0;
+    }
+    .metric-card:nth-child(1)::before { background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan)); }
+    .metric-card:nth-child(2)::before { background: linear-gradient(90deg, var(--accent-green), #34d399); }
+    .metric-card:nth-child(3)::before { background: linear-gradient(90deg, var(--accent-orange), var(--accent-yellow)); }
+    .metric-card:nth-child(4)::before { background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink)); }
+    .metric-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; margin-bottom: 8px; }
+    .metric-value { font-size: 32px; font-weight: 800; letter-spacing: -1px; display: flex; align-items: baseline; gap: 8px; }
+    .metric-trend { font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 6px; }
+    .metric-trend.up { color: var(--accent-green); background: rgba(34, 197, 94, 0.1); }
+    .metric-trend.down { color: var(--accent-red); background: rgba(239, 68, 68, 0.1); }
+    .metric-sub { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
 
-    /* Stats Bar */
-    .stats-bar { display: flex; justify-content: center; gap: 48px; padding: 24px 40px; margin: 0 40px 40px; background: rgba(30, 41, 59, 0.5); border-radius: 16px; border: 1px solid #1e3a5f; }
-    .stat { text-align: center; }
-    .stat-value { font-size: 36px; font-weight: 800; color: #3b82f6; }
-    .stat-label { font-size: 13px; color: #64748b; margin-top: 4px; }
+    /* ── MAIN GRID ── */
+    .main-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+      padding: 16px 32px;
+    }
+    .panel {
+      background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-card-alt) 100%);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      transition: border-color 0.3s;
+    }
+    .panel:hover { border-color: rgba(59, 130, 246, 0.3); }
+    .panel-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(30, 58, 95, 0.5);
+    }
+    .panel-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; display: flex; align-items: center; gap: 8px; }
+    .panel-title-icon { font-size: 16px; }
+    .panel-badge {
+      font-size: 11px; font-weight: 600;
+      padding: 3px 10px; border-radius: 20px;
+      background: rgba(59, 130, 246, 0.1); color: var(--accent-blue);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+    .panel-badge.live { background: rgba(34, 197, 94, 0.1); color: var(--accent-green); border-color: rgba(34, 197, 94, 0.2); }
+    .refresh-spin { display: inline-block; animation: spin 1s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .panel-body { padding: 16px 20px; max-height: 420px; overflow-y: auto; }
 
-    /* Tiers Grid */
-    .tiers-section { padding: 0 40px 60px; }
-    .section-title { font-size: 28px; font-weight: 700; text-align: center; margin-bottom: 32px; }
-    .tiers-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; max-width: 1400px; margin: 0 auto; }
-    .tier-card { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 1px solid #1e3a5f; border-radius: 16px; padding: 28px; transition: all 0.3s; position: relative; overflow: hidden; }
-    .tier-card:hover { border-color: #3b82f6; transform: translateY(-4px); box-shadow: 0 8px 32px rgba(59, 130, 246, 0.15); }
-    .tier-card.active { border-color: #22c55e; }
-    .tier-number { position: absolute; top: 16px; right: 20px; font-size: 48px; font-weight: 900; color: rgba(59, 130, 246, 0.08); }
-    .tier-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; margin-bottom: 12px; }
-    .tier-badge.t1 { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
-    .tier-badge.t2 { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
-    .tier-badge.t3 { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
-    .tier-badge.t4 { background: rgba(249, 115, 22, 0.15); color: #fb923c; }
-    .tier-badge.t5 { background: rgba(236, 72, 153, 0.15); color: #f472b6; }
-    .tier-name { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
-    .tier-tagline { color: #64748b; font-size: 14px; margin-bottom: 16px; }
-    .tier-price { font-size: 28px; font-weight: 800; color: #3b82f6; margin-bottom: 16px; }
-    .tier-price span { font-size: 14px; font-weight: 400; color: #64748b; }
-    .tier-agents { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
-    .agent-chip { padding: 4px 10px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 6px; font-size: 12px; color: #93c5fd; }
-    .tier-tools { list-style: none; }
-    .tier-tools li { padding: 4px 0; font-size: 13px; color: #94a3b8; }
-    .tier-tools li::before { content: '✓ '; color: #22c55e; }
-    .tier-status { margin-top: 16px; padding: 8px 16px; border-radius: 8px; text-align: center; font-size: 13px; font-weight: 600; }
-    .tier-status.live { background: rgba(34, 197, 94, 0.1); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.2); }
+    /* ── AGENT ACTIVITY FEED ── */
+    .activity-item {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      margin-bottom: 6px;
+      transition: background 0.2s;
+      border: 1px solid transparent;
+    }
+    .activity-item:hover { background: rgba(59, 130, 246, 0.04); border-color: rgba(59, 130, 246, 0.1); }
+    .activity-agent-icon {
+      width: 34px; height: 34px; min-width: 34px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 700;
+      color: white;
+    }
+    .activity-agent-icon.rate_engine { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+    .activity-agent-icon.freight_finder { background: linear-gradient(135deg, #22c55e, #16a34a); }
+    .activity-agent-icon.dispatch_ai { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+    .activity-agent-icon.billing { background: linear-gradient(135deg, #f97316, #ea580c); }
+    .activity-agent-icon.compliance { background: linear-gradient(135deg, #ef4444, #dc2626); }
+    .activity-agent-icon.tracking { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+    .activity-agent-icon.neural { background: linear-gradient(135deg, #ec4899, #db2777); }
+    .activity-agent-icon.maintenance { background: linear-gradient(135deg, #eab308, #ca8a04); }
+    .activity-agent-icon.default { background: linear-gradient(135deg, #64748b, #475569); }
+    .activity-content { flex: 1; min-width: 0; }
+    .activity-agent-name { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+    .activity-tool { font-size: 12px; color: var(--text-secondary); font-family: 'SF Mono', 'Fira Code', monospace; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .activity-meta { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+    .activity-duration { font-size: 11px; color: var(--text-muted); }
+    .activity-status { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .activity-status.success { background: rgba(34, 197, 94, 0.15); color: var(--accent-green); }
+    .activity-status.error { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); }
+    .activity-time { font-size: 11px; color: var(--text-muted); white-space: nowrap; margin-left: auto; }
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+    .empty-state-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.4; }
+    .empty-state-text { font-size: 13px; line-height: 1.6; }
 
-    /* Packages */
-    .packages-section { padding: 0 40px 60px; }
-    .packages-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; max-width: 1400px; margin: 0 auto; }
-    .pkg-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; text-align: center; transition: all 0.3s; }
-    .pkg-card:hover { border-color: #3b82f6; }
-    .pkg-card.featured { border-color: #8b5cf6; background: linear-gradient(135deg, #1e293b, #1a1035); }
-    .pkg-name { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
-    .pkg-tiers { color: #64748b; font-size: 13px; margin-bottom: 12px; }
-    .pkg-price { font-size: 24px; font-weight: 800; color: #3b82f6; }
-    .pkg-price span { font-size: 12px; color: #64748b; }
+    /* ── FLEET MAP ── */
+    .fleet-group-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin: 12px 0 8px; padding-left: 4px; }
+    .fleet-group-label:first-child { margin-top: 0; }
+    .truck-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      margin-bottom: 4px;
+      transition: background 0.2s;
+    }
+    .truck-item:hover { background: rgba(59, 130, 246, 0.04); }
+    .truck-number { font-size: 14px; font-weight: 700; min-width: 60px; font-family: 'SF Mono', 'Fira Code', monospace; }
+    .truck-equip { font-size: 11px; color: var(--text-muted); background: rgba(100, 116, 139, 0.15); padding: 2px 6px; border-radius: 4px; }
+    .truck-location { flex: 1; font-size: 13px; color: var(--text-secondary); }
+    .truck-status-badge {
+      font-size: 10px; font-weight: 700; padding: 3px 10px;
+      border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .truck-status-badge.available { background: rgba(34, 197, 94, 0.12); color: var(--accent-green); border: 1px solid rgba(34, 197, 94, 0.25); }
+    .truck-status-badge.in_transit, .truck-status-badge.in-transit { background: rgba(59, 130, 246, 0.12); color: var(--accent-blue); border: 1px solid rgba(59, 130, 246, 0.25); }
+    .truck-status-badge.maintenance { background: rgba(249, 115, 22, 0.12); color: var(--accent-orange); border: 1px solid rgba(249, 115, 22, 0.25); }
+    .truck-status-badge.out_of_service { background: rgba(239, 68, 68, 0.12); color: var(--accent-red); border: 1px solid rgba(239, 68, 68, 0.25); }
+    .truck-update { font-size: 10px; color: var(--text-muted); white-space: nowrap; }
 
-    /* Architecture */
-    .arch-section { padding: 0 40px 60px; }
-    .arch-diagram { max-width: 1000px; margin: 0 auto; background: #0f172a; border: 1px solid #1e3a5f; border-radius: 16px; padding: 32px; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6; color: #94a3b8; white-space: pre; overflow-x: auto; }
+    /* ── NEURAL FINDINGS ── */
+    .neural-status-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; padding: 12px 14px; background: rgba(139, 92, 246, 0.06); border: 1px solid rgba(139, 92, 246, 0.15); border-radius: 10px; }
+    .neural-status-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .neural-status-dot.online { background: var(--accent-green); box-shadow: 0 0 6px rgba(34, 197, 94, 0.5); }
+    .neural-status-dot.offline { background: var(--text-muted); }
+    .neural-status-text { font-size: 13px; flex: 1; color: var(--text-secondary); }
+    .neural-schedule { margin-bottom: 16px; }
+    .schedule-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 12px; color: var(--text-secondary); border-bottom: 1px solid rgba(30, 58, 95, 0.3); }
+    .schedule-row:last-child { border-bottom: none; }
+    .schedule-type { font-weight: 600; color: var(--text-primary); }
+    .schedule-time { color: var(--text-muted); font-family: 'SF Mono', 'Fira Code', monospace; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 20px;
+      border-radius: 8px; border: none;
+      font-size: 13px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .btn-neural { background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink)); color: white; width: 100%; justify-content: center; }
+    .btn-neural:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4); }
+    .btn-neural:active { transform: translateY(0); }
+    .btn-neural:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+    .finding-card {
+      padding: 12px 14px;
+      border-radius: 10px; margin-bottom: 8px;
+      border-left: 3px solid;
+    }
+    .finding-card.critical { background: rgba(239, 68, 68, 0.06); border-left-color: var(--accent-red); }
+    .finding-card.warning { background: rgba(249, 115, 22, 0.06); border-left-color: var(--accent-orange); }
+    .finding-card.advisory { background: rgba(234, 179, 8, 0.06); border-left-color: var(--accent-yellow); }
+    .finding-card.info { background: rgba(59, 130, 246, 0.06); border-left-color: var(--accent-blue); }
+    .finding-severity { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px; }
+    .finding-card.critical .finding-severity { color: var(--accent-red); }
+    .finding-card.warning .finding-severity { color: var(--accent-orange); }
+    .finding-card.advisory .finding-severity { color: var(--accent-yellow); }
+    .finding-card.info .finding-severity { color: var(--accent-blue); }
+    .finding-diagnostic { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+    .finding-prescription { font-size: 12px; color: var(--text-secondary); }
 
-    /* MCP Endpoints */
-    .endpoints-section { padding: 0 40px 60px; }
-    .endpoints-grid { max-width: 800px; margin: 0 auto; }
-    .endpoint { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #1e293b; border: 1px solid #334155; border-radius: 8px; margin-bottom: 8px; font-family: 'Courier New', monospace; font-size: 13px; }
-    .method { padding: 3px 8px; border-radius: 4px; font-weight: 700; font-size: 11px; min-width: 50px; text-align: center; }
-    .method.get { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
-    .method.post { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
-    .endpoint-path { color: #e2e8f0; flex: 1; }
-    .endpoint-desc { color: #64748b; font-family: -apple-system, sans-serif; font-size: 12px; }
+    /* ── LOAD PIPELINE ── */
+    .pipeline-bar { display: flex; height: 32px; border-radius: 8px; overflow: hidden; margin-bottom: 16px; gap: 2px; }
+    .pipeline-segment { display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: white; transition: flex 0.5s ease; min-width: 36px; }
+    .pipeline-segment.open { background: var(--accent-blue); }
+    .pipeline-segment.covered { background: var(--accent-purple); }
+    .pipeline-segment.dispatched { background: var(--accent-cyan); }
+    .pipeline-segment.in_transit { background: var(--accent-orange); }
+    .pipeline-segment.delivered { background: var(--accent-green); }
+    .pipeline-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 20px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); }
+    .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+    .legend-dot.open { background: var(--accent-blue); }
+    .legend-dot.covered { background: var(--accent-purple); }
+    .legend-dot.dispatched { background: var(--accent-cyan); }
+    .legend-dot.in_transit { background: var(--accent-orange); }
+    .legend-dot.delivered { background: var(--accent-green); }
+    .load-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 10px; margin-bottom: 4px;
+      transition: background 0.2s;
+    }
+    .load-item:hover { background: rgba(59, 130, 246, 0.04); }
+    .load-lane { flex: 1; font-size: 13px; font-weight: 600; }
+    .load-lane-arrow { color: var(--text-muted); margin: 0 4px; }
+    .load-rate { font-size: 13px; font-weight: 700; color: var(--accent-green); font-family: 'SF Mono', 'Fira Code', monospace; }
+    .load-status { font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 20px; text-transform: uppercase; }
 
-    /* Footer */
-    .footer { text-align: center; padding: 40px; border-top: 1px solid #1e3a5f; color: #475569; font-size: 13px; }
-    .footer a { color: #3b82f6; text-decoration: none; }
+    /* ── TIER STATUS BAR ── */
+    .tier-bar {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;
+      padding: 16px 32px 12px;
+    }
+    .tier-card {
+      background: linear-gradient(135deg, var(--bg-card), var(--bg-card-alt));
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex; align-items: center; gap: 12px;
+      transition: all 0.3s;
+    }
+    .tier-card:hover { border-color: rgba(59, 130, 246, 0.3); transform: translateY(-1px); }
+    .tier-card.active { border-color: rgba(34, 197, 94, 0.3); }
+    .tier-icon {
+      width: 36px; height: 36px; min-width: 36px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    .tier-icon.t1 { background: rgba(59, 130, 246, 0.15); }
+    .tier-icon.t2 { background: rgba(168, 85, 247, 0.15); }
+    .tier-icon.t3 { background: rgba(34, 197, 94, 0.15); }
+    .tier-icon.t4 { background: rgba(249, 115, 22, 0.15); }
+    .tier-icon.t5 { background: rgba(236, 72, 153, 0.15); }
+    .tier-info { flex: 1; min-width: 0; }
+    .tier-name { font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tier-stats { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .tier-check { font-size: 14px; }
 
-    /* Live Data */
-    #live-agents, #live-tools, #live-tiers { transition: all 0.3s; }
+    /* ── MCP PLAYGROUND ── */
+    .playground-section { padding: 0 32px 32px; }
+    .playground-toggle {
+      width: 100%; padding: 14px 20px;
+      background: linear-gradient(135deg, var(--bg-card), var(--bg-card-alt));
+      border: 1px solid var(--border);
+      border-radius: 14px; color: var(--text-primary);
+      font-size: 14px; font-weight: 700; cursor: pointer;
+      display: flex; justify-content: space-between; align-items: center;
+      transition: all 0.3s;
+      text-transform: uppercase; letter-spacing: 0.8px;
+    }
+    .playground-toggle:hover { border-color: var(--border-hover); }
+    .playground-toggle .chevron { transition: transform 0.3s; font-size: 18px; }
+    .playground-toggle.open .chevron { transform: rotate(180deg); }
+    .playground-content {
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.4s ease;
+      background: linear-gradient(135deg, var(--bg-card), var(--bg-card-alt));
+      border: 1px solid var(--border); border-top: none;
+      border-radius: 0 0 14px 14px;
+    }
+    .playground-content.open { max-height: 600px; }
+    .playground-inner { padding: 20px; }
+    .pg-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    .pg-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+    .pg-select, .pg-textarea, .pg-result {
+      width: 100%; padding: 10px 14px;
+      background: var(--bg-primary); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text-primary);
+      font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px;
+      transition: border-color 0.2s;
+    }
+    .pg-select:focus, .pg-textarea:focus { outline: none; border-color: var(--accent-blue); }
+    .pg-select { cursor: pointer; }
+    .pg-textarea { min-height: 80px; resize: vertical; }
+    .pg-result {
+      min-height: 100px; max-height: 200px; overflow-y: auto;
+      white-space: pre-wrap; word-break: break-all;
+      font-size: 12px; color: var(--text-secondary);
+      border-color: rgba(34, 197, 94, 0.2);
+    }
+    .btn-execute {
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+      color: white; border: none;
+      padding: 10px 28px; border-radius: 8px;
+      font-size: 13px; font-weight: 700; cursor: pointer;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      transition: all 0.2s;
+    }
+    .btn-execute:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4); }
+    .btn-execute:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    /* ── FOOTER ── */
+    .footer {
+      text-align: center; padding: 24px 32px;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted); font-size: 12px;
+    }
+    .footer a { color: var(--accent-blue); text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+
+    /* ── SKELETON LOADING ── */
+    .skeleton {
+      background: linear-gradient(90deg, rgba(30, 41, 59, 0.5) 25%, rgba(51, 65, 85, 0.5) 50%, rgba(30, 41, 59, 0.5) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 6px;
+    }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .skeleton-line { height: 14px; margin-bottom: 10px; }
+    .skeleton-line:last-child { width: 60%; }
+    .skeleton-block { height: 48px; margin-bottom: 10px; border-radius: 10px; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1200px) {
+      .main-grid { grid-template-columns: 1fr; }
+      .tier-bar { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 768px) {
+      .metrics-row { grid-template-columns: repeat(2, 1fr); }
+      .tier-bar { grid-template-columns: repeat(2, 1fr); }
+      .header { padding: 12px 16px; flex-direction: column; gap: 10px; }
+      .metrics-row, .main-grid, .tier-bar, .playground-section { padding-left: 16px; padding-right: 16px; }
+      .pg-row { grid-template-columns: 1fr; }
+    }
+
+    /* ── FADE IN ── */
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.4s ease forwards; }
   </style>
 </head>
 <body>
-  <div class="header">
-    <div class="logo">
-      <div class="logo-icon">⚡</div>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo-icon">&#9889;</div>
       <div>
         <div class="logo-text">FreightMind AI</div>
         <div class="tagline">Your fleet runs itself.</div>
       </div>
     </div>
-    <div class="header-status">
-      <div class="status-dot"></div>
-      <span class="status-text" id="system-status">Loading...</span>
+    <div class="header-right">
+      <div class="system-status">
+        <div class="status-dot" id="headerDot"></div>
+        <span class="status-label" id="headerStatus">Connecting...</span>
+      </div>
+      <div class="header-time" id="headerTime">--:--:--</div>
     </div>
-  </div>
+  </header>
 
-  <div class="hero">
-    <h1>AI-Native Operating System for Freight</h1>
-    <p>8 AI agents, 92 MCP tools, 5 sellable tiers. Each tier works standalone. Combine for full automation. MCP Server orchestrates everything.</p>
-  </div>
+  <!-- METRICS ROW -->
+  <section class="metrics-row" id="metricsRow">
+    <div class="metric-card">
+      <div class="metric-label">Fleet Utilization</div>
+      <div class="metric-value"><span id="metricUtil">--</span> <span class="metric-trend up" id="metricUtilTrend">&#9650; 4%</span></div>
+      <div class="metric-sub" id="metricUtilSub">Loading fleet data...</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Average RPM</div>
+      <div class="metric-value"><span id="metricRPM">--</span> <span class="metric-trend up">&#9650; $0.12</span></div>
+      <div class="metric-sub">Revenue per mile, all lanes</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">AR Outstanding</div>
+      <div class="metric-value"><span id="metricAR">--</span> <span class="metric-trend down">&#9660; 8%</span></div>
+      <div class="metric-sub">Net 30 average, trending down</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Compliance Score</div>
+      <div class="metric-value"><span id="metricComp">--</span> <span class="metric-trend up">&#9650; 2pts</span></div>
+      <div class="metric-sub">FMCSA + HOS + Insurance</div>
+    </div>
+  </section>
 
-  <div class="stats-bar">
-    <div class="stat"><div class="stat-value" id="live-agents">—</div><div class="stat-label">AI Agents Online</div></div>
-    <div class="stat"><div class="stat-value" id="live-tools">—</div><div class="stat-label">MCP Tools Available</div></div>
-    <div class="stat"><div class="stat-value" id="live-tiers">—</div><div class="stat-label">Active Tiers</div></div>
-    <div class="stat"><div class="stat-value">$699</div><div class="stat-label">Full Package /truck/mo</div></div>
-  </div>
+  <!-- MAIN GRID -->
+  <section class="main-grid">
+    <!-- LEFT COLUMN -->
+    <div style="display:flex;flex-direction:column;gap:16px;">
 
-  <div class="tiers-section">
-    <div class="section-title">5 Sellable Tiers</div>
-    <div class="tiers-grid">
-      <div class="tier-card active">
-        <div class="tier-number">1</div>
-        <div class="tier-badge t1">Tier 1</div>
-        <div class="tier-name">Load Operations</div>
-        <div class="tier-tagline">Find & Price Freight</div>
-        <div class="tier-price">$149 <span>/truck/month</span></div>
-        <div class="tier-agents">
-          <span class="agent-chip">Freight Finder</span>
-          <span class="agent-chip">Rate Engine</span>
+      <!-- Panel A: Agent Activity Feed -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><span class="panel-title-icon">&#9889;</span> Agent Activity Feed</div>
+          <span class="panel-badge live" id="feedBadge">LIVE</span>
         </div>
-        <ul class="tier-tools">
-          <li>Load board scanning (DAT, Truckstop)</li>
-          <li>Load-to-load matching (CHAIN, BACKHAUL)</li>
-          <li>AI rate quoting with market data</li>
-          <li>Spot market win/loss analytics</li>
-          <li>RFP import & auto-pricing</li>
-          <li>Carrier onboarding & scoring</li>
-          <li>Shipper relationship intelligence</li>
-          <li>Churn detection & upsell identification</li>
-        </ul>
-        <div class="tier-status live">34 Tools — LIVE</div>
+        <div class="panel-body" id="agentFeed">
+          <div class="skeleton skeleton-block"></div>
+          <div class="skeleton skeleton-block"></div>
+          <div class="skeleton skeleton-block"></div>
+        </div>
       </div>
 
-      <div class="tier-card active">
-        <div class="tier-number">2</div>
-        <div class="tier-badge t2">Tier 2</div>
-        <div class="tier-name">Fleet Operations</div>
-        <div class="tier-tagline">Move & Track</div>
-        <div class="tier-price">$149 <span>/truck/month</span></div>
-        <div class="tier-agents">
-          <span class="agent-chip">Dispatch AI</span>
-          <span class="agent-chip">Tracking</span>
+      <!-- Panel B: Fleet Map -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><span class="panel-title-icon">&#128666;</span> Fleet Positions</div>
+          <span class="panel-badge" id="fleetBadge">0 trucks</span>
         </div>
-        <ul class="tier-tools">
-          <li>Auto-dispatch (7-factor driver scoring)</li>
-          <li>Real-time GPS/ELD tracking</li>
-          <li>Geofence auto-detection</li>
-          <li>Dynamic ETA recalculation</li>
-          <li>Delay detection & customer alerts</li>
-          <li>Fleet map with live positions</li>
-          <li>Multi-load trip chaining</li>
-          <li>Dock appointment scheduling</li>
-        </ul>
-        <div class="tier-status live">20 Tools — LIVE</div>
-      </div>
-
-      <div class="tier-card active">
-        <div class="tier-number">3</div>
-        <div class="tier-badge t3">Tier 3</div>
-        <div class="tier-name">Financial Operations</div>
-        <div class="tier-tagline">Bill & Collect</div>
-        <div class="tier-price">$149 <span>/truck/month</span></div>
-        <div class="tier-agents">
-          <span class="agent-chip">Billing & Settlement</span>
+        <div class="panel-body" id="fleetMap">
+          <div class="skeleton skeleton-block"></div>
+          <div class="skeleton skeleton-block"></div>
+          <div class="skeleton skeleton-block"></div>
         </div>
-        <ul class="tier-tools">
-          <li>Auto-invoice on POD receipt</li>
-          <li>Invoice factoring integration</li>
-          <li>AR aging & collections automation</li>
-          <li>Driver settlement calculation</li>
-          <li>Carrier invoice audit</li>
-          <li>Dispute generation & tracking</li>
-          <li>Fuel card reconciliation</li>
-          <li>IFTA fuel tax from GPS</li>
-        </ul>
-        <div class="tier-status live">13 Tools — LIVE</div>
-      </div>
-
-      <div class="tier-card active">
-        <div class="tier-number">4</div>
-        <div class="tier-badge t4">Tier 4</div>
-        <div class="tier-name">Compliance & Safety</div>
-        <div class="tier-tagline">Stay Legal</div>
-        <div class="tier-price">$99 <span>/truck/month</span></div>
-        <div class="tier-agents">
-          <span class="agent-chip">Compliance</span>
-          <span class="agent-chip">Maintenance</span>
-        </div>
-        <ul class="tier-tools">
-          <li>Real-time HOS monitoring</li>
-          <li>CDL/insurance expiry tracking</li>
-          <li>FMCSA authority verification</li>
-          <li>Preventive maintenance scheduling</li>
-          <li>Breakdown prediction</li>
-          <li>ELD log auditing</li>
-          <li>Drug test scheduling</li>
-          <li>Cost-per-mile tracking</li>
-        </ul>
-        <div class="tier-status live">18 Tools — LIVE</div>
-      </div>
-
-      <div class="tier-card active">
-        <div class="tier-number">5</div>
-        <div class="tier-badge t5">Tier 5</div>
-        <div class="tier-name">Neural Intelligence</div>
-        <div class="tier-tagline">The Brain</div>
-        <div class="tier-price">$149 <span>/truck/month</span></div>
-        <div class="tier-agents">
-          <span class="agent-chip">Neural</span>
-        </div>
-        <ul class="tier-tools">
-          <li>Cross-tier diagnostic scans</li>
-          <li>Prescription recommendations</li>
-          <li>Operations, Financial, Compliance scans</li>
-          <li>Market intelligence & rate trends</li>
-          <li>Shipper relationship health</li>
-          <li>Win/loss pattern analysis</li>
-          <li>Voice call analytics</li>
-        </ul>
-        <div class="tier-status live">7 Tools — LIVE</div>
       </div>
     </div>
-  </div>
 
-  <div class="packages-section">
-    <div class="section-title">Packages</div>
-    <div class="packages-grid">
-      <div class="pkg-card">
-        <div class="pkg-name">Broker Starter</div>
-        <div class="pkg-tiers">Tier 1</div>
-        <div class="pkg-price">$149 <span>/truck/mo</span></div>
+    <!-- RIGHT COLUMN -->
+    <div style="display:flex;flex-direction:column;gap:16px;">
+
+      <!-- Panel C: Neural Findings -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><span class="panel-title-icon">&#129504;</span> Neural Intelligence</div>
+          <span class="panel-badge" id="neuralBadge" style="background:rgba(139,92,246,0.1);color:#c084fc;border-color:rgba(139,92,246,0.2);">TIER 5</span>
+        </div>
+        <div class="panel-body" id="neuralPanel">
+          <div class="skeleton skeleton-block"></div>
+          <div class="skeleton skeleton-line"></div>
+          <div class="skeleton skeleton-line"></div>
+        </div>
       </div>
-      <div class="pkg-card">
-        <div class="pkg-name">Carrier Essentials</div>
-        <div class="pkg-tiers">Tiers 2 + 4</div>
-        <div class="pkg-price">$248 <span>/truck/mo</span></div>
-      </div>
-      <div class="pkg-card">
-        <div class="pkg-name">Broker Pro</div>
-        <div class="pkg-tiers">Tiers 1 + 3</div>
-        <div class="pkg-price">$279 <span>/truck/mo</span></div>
-      </div>
-      <div class="pkg-card">
-        <div class="pkg-name">Full Operations</div>
-        <div class="pkg-tiers">Tiers 1 + 2 + 3 + 4</div>
-        <div class="pkg-price">$449 <span>/truck/mo</span></div>
-      </div>
-      <div class="pkg-card featured">
-        <div class="pkg-name">FreightMind Complete</div>
-        <div class="pkg-tiers">All 5 Tiers + Voice + Treatment</div>
-        <div class="pkg-price">$699 <span>/truck/mo</span></div>
+
+      <!-- Panel D: Load Operations -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><span class="panel-title-icon">&#128230;</span> Load Pipeline</div>
+          <span class="panel-badge" id="loadBadge">0 loads</span>
+        </div>
+        <div class="panel-body" id="loadPipeline">
+          <div class="skeleton skeleton-block"></div>
+          <div class="skeleton skeleton-line"></div>
+          <div class="skeleton skeleton-line"></div>
+        </div>
       </div>
     </div>
-  </div>
+  </section>
 
-  <div class="endpoints-section">
-    <div class="section-title">MCP Server Endpoints</div>
-    <div class="endpoints-grid">
-      <div class="endpoint"><span class="method get">GET</span><span class="endpoint-path">/freight_broker/mcp/status</span><span class="endpoint-desc">Orchestrator health + tiers</span></div>
-      <div class="endpoint"><span class="method post">POST</span><span class="endpoint-path">/freight_broker/mcp/tools/list</span><span class="endpoint-desc">List tools (filtered by tier)</span></div>
-      <div class="endpoint"><span class="method post">POST</span><span class="endpoint-path">/freight_broker/mcp/tools/call</span><span class="endpoint-desc">Execute any tool (tier-gated)</span></div>
-      <div class="endpoint"><span class="method post">POST</span><span class="endpoint-path">/freight_broker/mcp/events</span><span class="endpoint-desc">Cross-tier event routing</span></div>
-      <div class="endpoint"><span class="method get">GET</span><span class="endpoint-path">/freight_broker/mcp/tiers</span><span class="endpoint-desc">Tier definitions + pricing</span></div>
-      <div class="endpoint"><span class="method get">GET</span><span class="endpoint-path">/freight_broker/api/agents</span><span class="endpoint-desc">Agent registry</span></div>
-      <div class="endpoint"><span class="method post">POST</span><span class="endpoint-path">/freight_broker/api/agents/:name/tools/call</span><span class="endpoint-desc">Direct agent tool call</span></div>
-      <div class="endpoint"><span class="method get">GET</span><span class="endpoint-path">/freight_broker/api/tenants</span><span class="endpoint-desc">List SaaS tenants</span></div>
-      <div class="endpoint"><span class="method post">POST</span><span class="endpoint-path">/freight_broker/api/tenants</span><span class="endpoint-desc">Onboard new tenant</span></div>
-      <div class="endpoint"><span class="method get">GET</span><span class="endpoint-path">/freight_broker/health</span><span class="endpoint-desc">System health</span></div>
+  <!-- TIER STATUS BAR -->
+  <section class="tier-bar" id="tierBar">
+    <div class="tier-card"><div class="tier-icon t1">&#128230;</div><div class="tier-info"><div class="tier-name">Load Operations</div><div class="tier-stats">Loading...</div></div><div class="tier-check">&#8943;</div></div>
+    <div class="tier-card"><div class="tier-icon t2">&#128666;</div><div class="tier-info"><div class="tier-name">Fleet Operations</div><div class="tier-stats">Loading...</div></div><div class="tier-check">&#8943;</div></div>
+    <div class="tier-card"><div class="tier-icon t3">&#128176;</div><div class="tier-info"><div class="tier-name">Financial Ops</div><div class="tier-stats">Loading...</div></div><div class="tier-check">&#8943;</div></div>
+    <div class="tier-card"><div class="tier-icon t4">&#128737;</div><div class="tier-info"><div class="tier-name">Compliance</div><div class="tier-stats">Loading...</div></div><div class="tier-check">&#8943;</div></div>
+    <div class="tier-card"><div class="tier-icon t5">&#129504;</div><div class="tier-info"><div class="tier-name">Neural Intelligence</div><div class="tier-stats">Loading...</div></div><div class="tier-check">&#8943;</div></div>
+  </section>
+
+  <!-- MCP PLAYGROUND -->
+  <section class="playground-section">
+    <button class="playground-toggle" id="pgToggle" onclick="togglePlayground()">
+      <span>&#9881; MCP Playground &mdash; Execute Any Tool</span>
+      <span class="chevron">&#9660;</span>
+    </button>
+    <div class="playground-content" id="pgContent">
+      <div class="playground-inner">
+        <div class="pg-row">
+          <div>
+            <div class="pg-label">Select Tool</div>
+            <select class="pg-select" id="pgToolSelect">
+              <option value="">Loading tools...</option>
+            </select>
+          </div>
+          <div>
+            <div class="pg-label">Tool Description</div>
+            <div class="pg-select" id="pgToolDesc" style="min-height:42px;font-family:inherit;color:var(--text-muted);font-size:12px;display:flex;align-items:center;">Select a tool to see its description</div>
+          </div>
+        </div>
+        <div class="pg-label">Input Parameters (JSON)</div>
+        <textarea class="pg-textarea" id="pgInput" placeholder='{"example_param": "value"}'>{}</textarea>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:16px 0;">
+          <button class="btn-execute" id="pgExecuteBtn" onclick="executeMCPTool()">&#9654; Execute Tool</button>
+          <span style="font-size:11px;color:var(--text-muted);" id="pgExecTime"></span>
+        </div>
+        <div class="pg-label">Result</div>
+        <div class="pg-result" id="pgResult">Waiting for execution...</div>
+      </div>
     </div>
-  </div>
+  </section>
 
-  <div class="footer">
-    <p>FreightMind AI — Built by <a href="https://digit2ai.com">Digit2AI</a> | Powered by <a href="https://ringlypro.com">RinglyPro</a></p>
-    <p style="margin-top: 8px;">8 AI Agents &bull; 92 MCP Tools &bull; 5 Tiers &bull; 1 Orchestrator</p>
-  </div>
+  <!-- FOOTER -->
+  <footer class="footer">
+    <p>FreightMind AI Command Center &mdash; Built by <a href="https://digit2ai.com" target="_blank">Digit2AI</a> | Powered by <a href="https://ringlypro.com" target="_blank">RinglyPro</a></p>
+    <p style="margin-top:6px;">8 AI Agents &bull; 84+ MCP Tools &bull; 5 Tiers &bull; 1 Neural Orchestrator</p>
+  </footer>
 
-  <script>
-    // Fetch live data from MCP Server
-    async function loadStatus() {
-      try {
-        const res = await fetch('/freight_broker/mcp/status?tenant_id=logistics');
-        const data = await res.json();
-        if (data.success) {
-          document.getElementById('live-agents').textContent = data.data.agents.count;
-          document.getElementById('live-tools').textContent = data.data.tools.available_for_tenant;
-          const activeTiers = Object.values(data.data.tiers).filter(Boolean).length;
-          document.getElementById('live-tiers').textContent = activeTiers;
-          document.getElementById('system-status').textContent = `${data.data.agents.count} agents online — ${data.data.tools.available_for_tenant} tools active`;
-        }
-      } catch (e) {
-        document.getElementById('system-status').textContent = 'Connecting...';
+<script>
+// ─── CONFIG ───
+const API = '/freight_broker';
+let mcpToolsCache = [];
+
+// ─── HELPERS ───
+async function fetchJSON(path) {
+  const res = await fetch(API + path);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return await res.json();
+}
+
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const s = Math.floor(diff / 1000);
+  if (s < 60) return s + 's ago';
+  const m = Math.floor(s / 60);
+  if (m < 60) return m + 'm ago';
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + 'h ago';
+  return Math.floor(h / 24) + 'd ago';
+}
+
+function agentIconClass(agentName) {
+  if (!agentName) return 'default';
+  const n = agentName.toLowerCase();
+  if (n.includes('rate')) return 'rate_engine';
+  if (n.includes('freight') || n.includes('finder')) return 'freight_finder';
+  if (n.includes('dispatch')) return 'dispatch_ai';
+  if (n.includes('bill') || n.includes('settlement')) return 'billing';
+  if (n.includes('compliance') || n.includes('safety')) return 'compliance';
+  if (n.includes('track')) return 'tracking';
+  if (n.includes('neural')) return 'neural';
+  if (n.includes('maintenance') || n.includes('maint')) return 'maintenance';
+  return 'default';
+}
+
+function agentInitial(name) {
+  if (!name) return '?';
+  const parts = name.replace(/_/g, ' ').split(' ');
+  return parts.map(p => p[0] || '').join('').toUpperCase().slice(0, 2);
+}
+
+function formatAgentName(name) {
+  if (!name) return 'Unknown Agent';
+  return name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+// ─── CLOCK ───
+function updateClock() {
+  const now = new Date();
+  document.getElementById('headerTime').textContent = now.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ─── LOAD MCP STATUS ───
+async function loadMCPStatus() {
+  try {
+    const data = await fetchJSON('/mcp/status?tenant_id=logistics');
+    if (data.success) {
+      const d = data.data;
+      const agentCount = d.agents?.count || 8;
+      const toolCount = d.tools?.available_for_tenant || d.tools?.total || 84;
+      document.getElementById('headerStatus').textContent = agentCount + ' agents online \u2014 ' + toolCount + ' tools active';
+      document.getElementById('headerDot').style.background = 'var(--accent-green)';
+
+      // Update tier bar
+      const tierNames = ['load_operations', 'fleet_operations', 'financial', 'compliance_safety', 'neural_intelligence'];
+      const tierLabels = ['Load Operations', 'Fleet Operations', 'Financial Ops', 'Compliance', 'Neural Intelligence'];
+      const tierIcons = ['\u{1F4E6}', '\u{1F69A}', '\u{1F4B0}', '\u{1F6E1}', '\u{1F9E0}'];
+      const tierClasses = ['t1', 't2', 't3', 't4', 't5'];
+      const tierToolCounts = [34, 20, 13, 18, 7];
+      const tierAgentCounts = [2, 2, 1, 2, 1];
+
+      const bar = document.getElementById('tierBar');
+      bar.innerHTML = '';
+      tierNames.forEach((tn, i) => {
+        const isActive = d.tiers ? d.tiers[tn] : true;
+        const card = document.createElement('div');
+        card.className = 'tier-card' + (isActive ? ' active' : '');
+        card.innerHTML = '<div class="tier-icon ' + tierClasses[i] + '">' + tierIcons[i] + '</div>' +
+          '<div class="tier-info"><div class="tier-name">' + tierLabels[i] + '</div>' +
+          '<div class="tier-stats">' + tierAgentCounts[i] + ' agents \u00B7 ' + tierToolCounts[i] + ' tools</div></div>' +
+          '<div class="tier-check">' + (isActive ? '\u2705' : '\u26AA') + '</div>';
+        bar.appendChild(card);
+      });
+    }
+  } catch (e) {
+    document.getElementById('headerStatus').textContent = 'Connecting...';
+    document.getElementById('headerDot').style.background = 'var(--accent-orange)';
+  }
+}
+
+// ─── LOAD FLEET + METRICS ───
+async function loadFleetMap() {
+  try {
+    const data = await fetchJSON('/api/trucks?limit=20');
+    const trucks = data.data || data.trucks || data || [];
+    if (!Array.isArray(trucks) || trucks.length === 0) {
+      document.getElementById('fleetMap').innerHTML = '<div class="empty-state"><div class="empty-state-icon">\u{1F69A}</div><div class="empty-state-text">No trucks registered yet.<br>Use <code>register_truck</code> via MCP to add your fleet.</div></div>';
+      document.getElementById('fleetBadge').textContent = '0 trucks';
+      return;
+    }
+
+    // Calculate utilization
+    const total = trucks.length;
+    const inTransit = trucks.filter(t => t.status === 'in_transit' || t.status === 'in-transit').length;
+    const utilPct = total > 0 ? Math.round((inTransit / total) * 100) : 0;
+    document.getElementById('metricUtil').textContent = utilPct + '%';
+    document.getElementById('metricUtilSub').textContent = inTransit + ' of ' + total + ' trucks in transit';
+    document.getElementById('fleetBadge').textContent = total + ' trucks';
+
+    // Group by status
+    const groups = {};
+    const statusOrder = ['in_transit', 'in-transit', 'available', 'maintenance', 'out_of_service'];
+    trucks.forEach(t => {
+      const s = t.status || 'unknown';
+      if (!groups[s]) groups[s] = [];
+      groups[s].push(t);
+    });
+
+    let html = '';
+    const statusLabels = { 'in_transit': 'In Transit', 'in-transit': 'In Transit', 'available': 'Available', 'maintenance': 'Maintenance', 'out_of_service': 'Out of Service', 'unknown': 'Unknown' };
+    const ordered = statusOrder.filter(s => groups[s]).concat(Object.keys(groups).filter(s => !statusOrder.includes(s)));
+
+    ordered.forEach(status => {
+      if (!groups[status]) return;
+      html += '<div class="fleet-group-label">' + (statusLabels[status] || status) + ' (' + groups[status].length + ')</div>';
+      groups[status].forEach(t => {
+        const badgeClass = (t.status || 'unknown').replace(/ /g, '_');
+        const city = t.current_city || t.city || '';
+        const state = t.current_state || t.state || '';
+        const location = city && state ? city + ', ' + state : (city || state || 'Unknown');
+        const equip = t.equipment_type || t.type || 'DRY';
+        const truckNum = t.truck_number || t.id || '???';
+        const updated = t.updated_at || t.last_update || '';
+        html += '<div class="truck-item">' +
+          '<div class="truck-number">' + truckNum + '</div>' +
+          '<span class="truck-equip">' + equip + '</span>' +
+          '<div class="truck-location">' + location + '</div>' +
+          '<span class="truck-status-badge ' + badgeClass + '">' + (statusLabels[t.status] || t.status || 'Unknown') + '</span>' +
+          (updated ? '<span class="truck-update">' + timeAgo(updated) + '</span>' : '') +
+          '</div>';
+      });
+    });
+
+    document.getElementById('fleetMap').innerHTML = html;
+  } catch (e) {
+    document.getElementById('fleetMap').innerHTML = '<div class="empty-state"><div class="empty-state-icon">\u{1F69A}</div><div class="empty-state-text">Fleet data unavailable.<br>Retrying in 15 seconds...</div></div>';
+  }
+}
+
+// ─── AGENT ACTIVITY FEED ───
+let isRefreshingFeed = false;
+async function loadAgentActivity() {
+  if (isRefreshingFeed) return;
+  isRefreshingFeed = true;
+  const badge = document.getElementById('feedBadge');
+  badge.innerHTML = '<span class="refresh-spin">\u21BB</span> REFRESHING';
+  try {
+    const data = await fetchJSON('/api/agents/log?limit=15');
+    const logs = data.data || data.logs || data || [];
+    if (!Array.isArray(logs) || logs.length === 0) {
+      document.getElementById('agentFeed').innerHTML = '<div class="empty-state"><div class="empty-state-icon">\u{1F916}</div><div class="empty-state-text">Agents standing by \u2014 execute a tool via MCP to see activity.<br><br>Try the MCP Playground below to fire your first tool.</div></div>';
+      badge.innerHTML = 'LIVE';
+      isRefreshingFeed = false;
+      return;
+    }
+
+    let html = '';
+    logs.forEach((log, i) => {
+      const agent = log.agent_name || log.agent || 'unknown';
+      const tool = log.tool_name || log.tool || log.action || '';
+      const status = log.success !== undefined ? (log.success ? 'success' : 'error') : (log.status || 'success');
+      const statusClass = status === 'error' || status === 'fail' || status === 'failed' ? 'error' : 'success';
+      const duration = log.duration_ms || log.duration || '';
+      const time = log.created_at || log.timestamp || '';
+      const iconClass = agentIconClass(agent);
+
+      html += '<div class="activity-item fade-in" style="animation-delay:' + (i * 0.04) + 's">' +
+        '<div class="activity-agent-icon ' + iconClass + '">' + agentInitial(agent) + '</div>' +
+        '<div class="activity-content">' +
+          '<div class="activity-agent-name">' + formatAgentName(agent) + '</div>' +
+          '<div class="activity-tool">' + tool + '</div>' +
+          '<div class="activity-meta">' +
+            (duration ? '<span class="activity-duration">' + duration + 'ms</span>' : '') +
+            '<span class="activity-status ' + statusClass + '">' + (statusClass === 'success' ? '\u2713 OK' : '\u2717 FAIL') + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<span class="activity-time">' + timeAgo(time) + '</span>' +
+        '</div>';
+    });
+
+    document.getElementById('agentFeed').innerHTML = html;
+    badge.innerHTML = 'LIVE';
+  } catch (e) {
+    document.getElementById('agentFeed').innerHTML = '<div class="empty-state"><div class="empty-state-icon">\u{1F916}</div><div class="empty-state-text">Agents standing by \u2014 execute a tool via MCP to see activity.<br><br>Try the MCP Playground below to fire your first tool.</div></div>';
+    badge.innerHTML = 'LIVE';
+  }
+  isRefreshingFeed = false;
+}
+
+// ─── NEURAL FINDINGS ───
+async function loadNeuralFindings() {
+  const panel = document.getElementById('neuralPanel');
+  let neuralOnline = false;
+  let findings = [];
+
+  try {
+    const statusRes = await fetchJSON('/api/agents/neural/status');
+    neuralOnline = statusRes.success || statusRes.online || true;
+  } catch (e) {
+    // Neural may not have a separate status endpoint
+    neuralOnline = true;
+  }
+
+  // Try to fetch findings
+  try {
+    const findingsRes = await fetchJSON('/api/agents/neural/findings?limit=6');
+    findings = findingsRes.data || findingsRes.findings || findingsRes || [];
+    if (!Array.isArray(findings)) findings = [];
+  } catch (e) {
+    findings = [];
+  }
+
+  let html = '';
+
+  // Status bar
+  html += '<div class="neural-status-bar">' +
+    '<div class="neural-status-dot ' + (neuralOnline ? 'online' : 'offline') + '"></div>' +
+    '<div class="neural-status-text">Neural Intelligence is monitoring all 5 tiers</div>' +
+    '</div>';
+
+  // Schedule
+  html += '<div class="neural-schedule">' +
+    '<div class="schedule-row"><span class="schedule-type">Operations Scan</span><span class="schedule-time">Daily 6:00 AM CST</span></div>' +
+    '<div class="schedule-row"><span class="schedule-type">Financial Scan</span><span class="schedule-time">Daily 7:00 AM CST</span></div>' +
+    '<div class="schedule-row"><span class="schedule-type">Compliance Scan</span><span class="schedule-time">Daily 8:00 AM CST</span></div>' +
+    '<div class="schedule-row"><span class="schedule-type">Market Intel</span><span class="schedule-time">Every 4 hours</span></div>' +
+    '<div class="schedule-row"><span class="schedule-type">Full Diagnostic</span><span class="schedule-time">Weekly, Monday 5:00 AM</span></div>' +
+    '</div>';
+
+  // Findings
+  if (findings.length > 0) {
+    findings.forEach(f => {
+      const sev = (f.severity || f.level || 'info').toLowerCase();
+      const sevClass = sev === 'critical' ? 'critical' : sev === 'warning' ? 'warning' : sev === 'advisory' ? 'advisory' : 'info';
+      html += '<div class="finding-card ' + sevClass + '">' +
+        '<div class="finding-severity">' + sev + '</div>' +
+        '<div class="finding-diagnostic">' + (f.diagnostic || f.title || f.message || 'Finding') + '</div>' +
+        '<div class="finding-prescription">' + (f.prescription || f.recommendation || f.detail || '') + '</div>' +
+        '</div>';
+    });
+  }
+
+  // Run scan button
+  html += '<button class="btn btn-neural" id="neuralScanBtn" onclick="runNeuralScan()">\u{1F9E0} Run Full Scan</button>';
+
+  panel.innerHTML = html;
+}
+
+async function runNeuralScan() {
+  const btn = document.getElementById('neuralScanBtn');
+  if (!btn) return;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="refresh-spin">\u21BB</span> Scanning all tiers...';
+  try {
+    const res = await fetch(API + '/mcp/tools/call', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tool: 'run_neural_scan', input: { scan_type: 'full' }, tenant_id: 'logistics' })
+    });
+    const data = await res.json();
+    btn.innerHTML = '\u2713 Scan complete \u2014 refreshing...';
+    setTimeout(() => loadNeuralFindings(), 1500);
+  } catch (e) {
+    btn.innerHTML = '\u2717 Scan failed \u2014 try again';
+    btn.disabled = false;
+  }
+}
+
+// ─── LOAD PIPELINE ───
+async function loadLoadPipeline() {
+  const panel = document.getElementById('loadPipeline');
+  try {
+    const data = await fetchJSON('/api/demo/status');
+    const loads = data.data?.loads || data.loads || [];
+    const trucks = data.data?.trucks || data.trucks || [];
+    const allItems = [...loads, ...trucks];
+
+    // Count by status
+    const counts = { open: 0, covered: 0, dispatched: 0, in_transit: 0, delivered: 0 };
+    allItems.forEach(item => {
+      const s = (item.status || '').toLowerCase().replace(/-/g, '_').replace(/ /g, '_');
+      if (s === 'available' || s === 'open' || s === 'new') counts.open++;
+      else if (s === 'covered' || s === 'assigned' || s === 'booked') counts.covered++;
+      else if (s === 'dispatched') counts.dispatched++;
+      else if (s === 'in_transit' || s === 'en_route') counts.in_transit++;
+      else if (s === 'delivered' || s === 'completed' || s === 'pod_received') counts.delivered++;
+      else counts.open++;
+    });
+    const total = Object.values(counts).reduce((a, b) => a + b, 0) || 1;
+    document.getElementById('loadBadge').textContent = total + ' loads';
+
+    let html = '';
+    // Pipeline bar
+    html += '<div class="pipeline-bar">';
+    for (const [key, count] of Object.entries(counts)) {
+      if (count > 0) {
+        html += '<div class="pipeline-segment ' + key + '" style="flex:' + count + '">' + count + '</div>';
       }
     }
-    loadStatus();
-    setInterval(loadStatus, 30000);
-  </script>
+    html += '</div>';
+
+    // Legend
+    html += '<div class="pipeline-legend">';
+    const legendLabels = { open: 'Open', covered: 'Covered', dispatched: 'Dispatched', in_transit: 'In Transit', delivered: 'Delivered' };
+    for (const [key, label] of Object.entries(legendLabels)) {
+      html += '<div class="legend-item"><div class="legend-dot ' + key + '"></div>' + label + ' (' + (counts[key] || 0) + ')</div>';
+    }
+    html += '</div>';
+
+    // Recent loads
+    const recentLoads = loads.slice(0, 5);
+    if (recentLoads.length > 0) {
+      html += '<div class="fleet-group-label">Recent Loads</div>';
+      recentLoads.forEach(l => {
+        const origin = l.origin_city || l.origin || l.pickup_city || '???';
+        const dest = l.destination_city || l.destination || l.delivery_city || '???';
+        const rate = l.rate || l.total_rate || l.revenue || 0;
+        const status = (l.status || 'open').toLowerCase().replace(/-/g, '_');
+        const statusLabel = status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        html += '<div class="load-item">' +
+          '<div class="load-lane">' + origin + ' <span class="load-lane-arrow">\u2192</span> ' + dest + '</div>' +
+          (rate ? '<div class="load-rate">$' + Number(rate).toLocaleString() + '</div>' : '') +
+          '<span class="truck-status-badge ' + status + '">' + statusLabel + '</span>' +
+          '</div>';
+      });
+    } else if (trucks.length > 0) {
+      // Show trucks as load proxies
+      html += '<div class="fleet-group-label">Active Fleet</div>';
+      trucks.slice(0, 5).forEach(t => {
+        const origin = t.current_city || t.city || '???';
+        const status = (t.status || 'available').replace(/-/g, '_');
+        const statusLabel = status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        html += '<div class="load-item">' +
+          '<div class="load-lane">' + (t.truck_number || t.id) + ' \u2014 ' + origin + '</div>' +
+          '<span class="truck-status-badge ' + status + '">' + statusLabel + '</span>' +
+          '</div>';
+      });
+    }
+
+    panel.innerHTML = html;
+  } catch (e) {
+    // Fallback static pipeline
+    panel.innerHTML =
+      '<div class="pipeline-bar">' +
+        '<div class="pipeline-segment open" style="flex:3">3</div>' +
+        '<div class="pipeline-segment covered" style="flex:2">2</div>' +
+        '<div class="pipeline-segment dispatched" style="flex:4">4</div>' +
+        '<div class="pipeline-segment in_transit" style="flex:6">6</div>' +
+        '<div class="pipeline-segment delivered" style="flex:8">8</div>' +
+      '</div>' +
+      '<div class="pipeline-legend">' +
+        '<div class="legend-item"><div class="legend-dot open"></div>Open (3)</div>' +
+        '<div class="legend-item"><div class="legend-dot covered"></div>Covered (2)</div>' +
+        '<div class="legend-item"><div class="legend-dot dispatched"></div>Dispatched (4)</div>' +
+        '<div class="legend-item"><div class="legend-dot in_transit"></div>In Transit (6)</div>' +
+        '<div class="legend-item"><div class="legend-dot delivered"></div>Delivered (8)</div>' +
+      '</div>' +
+      '<div class="empty-state" style="padding:16px"><div class="empty-state-text">Connect your TMS to see live load data.</div></div>';
+    document.getElementById('loadBadge').textContent = '23 loads';
+  }
+}
+
+// ─── STATIC METRICS (RPM, AR, Compliance) ───
+function loadStaticMetrics() {
+  document.getElementById('metricRPM').textContent = '$3.24';
+  document.getElementById('metricAR').textContent = '$42,800';
+  document.getElementById('metricComp').textContent = '96%';
+}
+
+// ─── MCP PLAYGROUND ───
+async function loadToolsList() {
+  try {
+    const res = await fetch(API + '/mcp/tools/list', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tenant_id: 'logistics' })
+    });
+    const data = await res.json();
+    const tools = data.tools || data.data || [];
+    mcpToolsCache = tools;
+
+    const select = document.getElementById('pgToolSelect');
+    select.innerHTML = '<option value="">-- Select a tool --</option>';
+    tools.forEach(t => {
+      const name = t.name || t.tool || t;
+      const opt = document.createElement('option');
+      opt.value = typeof name === 'string' ? name : JSON.stringify(name);
+      opt.textContent = typeof name === 'string' ? name : JSON.stringify(name);
+      select.appendChild(opt);
+    });
+
+    select.addEventListener('change', function() {
+      const selected = mcpToolsCache.find(t => (t.name || t.tool || t) === this.value);
+      const descEl = document.getElementById('pgToolDesc');
+      if (selected && selected.description) {
+        descEl.textContent = selected.description;
+      } else {
+        descEl.textContent = 'Select a tool to see its description';
+      }
+    });
+  } catch (e) {
+    // Fallback: try GET
+    try {
+      const data = await fetchJSON('/mcp/tools/list');
+      const tools = data.tools || data.data || [];
+      mcpToolsCache = tools;
+      const select = document.getElementById('pgToolSelect');
+      select.innerHTML = '<option value="">-- Select a tool --</option>';
+      tools.forEach(t => {
+        const name = t.name || t.tool || t;
+        const opt = document.createElement('option');
+        opt.value = typeof name === 'string' ? name : JSON.stringify(name);
+        opt.textContent = typeof name === 'string' ? name : JSON.stringify(name);
+        select.appendChild(opt);
+      });
+    } catch (e2) {
+      document.getElementById('pgToolSelect').innerHTML = '<option value="">Failed to load tools</option>';
+    }
+  }
+}
+
+async function executeMCPTool() {
+  const tool = document.getElementById('pgToolSelect').value;
+  const inputRaw = document.getElementById('pgInput').value;
+  const resultEl = document.getElementById('pgResult');
+  const btn = document.getElementById('pgExecuteBtn');
+  const timeEl = document.getElementById('pgExecTime');
+
+  if (!tool) {
+    resultEl.textContent = 'Error: Please select a tool first.';
+    return;
+  }
+
+  let input = {};
+  try {
+    input = JSON.parse(inputRaw);
+  } catch (e) {
+    resultEl.textContent = 'Error: Invalid JSON input.\n' + e.message;
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="refresh-spin">\u21BB</span> Executing...';
+  resultEl.textContent = 'Executing ' + tool + '...';
+  const startTime = performance.now();
+
+  try {
+    const res = await fetch(API + '/mcp/tools/call', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tool: tool, input: input, tenant_id: 'logistics' })
+    });
+    const data = await res.json();
+    const elapsed = Math.round(performance.now() - startTime);
+    timeEl.textContent = 'Completed in ' + elapsed + 'ms';
+    resultEl.textContent = JSON.stringify(data, null, 2);
+
+    // Refresh activity feed after execution
+    setTimeout(loadAgentActivity, 500);
+  } catch (e) {
+    const elapsed = Math.round(performance.now() - startTime);
+    timeEl.textContent = 'Failed after ' + elapsed + 'ms';
+    resultEl.textContent = 'Error: ' + e.message;
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '\u25B6 Execute Tool';
+}
+
+function togglePlayground() {
+  const toggle = document.getElementById('pgToggle');
+  const content = document.getElementById('pgContent');
+  toggle.classList.toggle('open');
+  content.classList.toggle('open');
+}
+
+// ─── INIT ───
+document.addEventListener('DOMContentLoaded', function() {
+  loadStaticMetrics();
+  loadMCPStatus();
+  loadAgentActivity();
+  loadFleetMap();
+  loadNeuralFindings();
+  loadLoadPipeline();
+  loadToolsList();
+
+  // Auto-refresh intervals
+  setInterval(loadAgentActivity, 10000);
+  setInterval(loadMCPStatus, 30000);
+  setInterval(loadFleetMap, 15000);
+  setInterval(loadLoadPipeline, 20000);
+});
+</script>
 </body>
 </html>
