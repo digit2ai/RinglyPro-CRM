@@ -27,7 +27,7 @@ function Layout({ children }) {
     { path: `${BASE}/process`, label: 'Process & ROI' },
     { path: `${BASE}/ingest`, label: 'Data Ingestion' },
     { path: `${BASE}/architecture`, label: 'Architecture' },
-    { path: `${BASE}/pitch`, label: 'Sales Pitch' }
+    { path: `${BASE}/pitch`, label: 'Presentation' }
   ];
 
   const isActive = (p) => location.pathname === p;

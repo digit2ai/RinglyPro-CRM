@@ -9,12 +9,14 @@ const authRoutes = require('./routes/auth');
 const neuralRoutes = require('./routes/neural');
 const dashboardRoutes = require('./routes/dashboard');
 const ingestionRoutes = require('./routes/ingestion');
+const voiceRoutes = require('./routes/voice');
 
 // Mount API routes
 router.use('/api/auth', authRoutes);
 router.use('/api/neural', neuralRoutes);
 router.use('/api/dashboard', dashboardRoutes);
 router.use('/api/ingestion', ingestionRoutes);
+router.use('/api/voice', voiceRoutes);
 
 // Health check
 router.get('/health', (req, res) => {
