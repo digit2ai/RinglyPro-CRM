@@ -60,8 +60,8 @@ function Sidebar({ open, onClose }) {
 
   const sections = [
     {
-      id: 'home', label: 'HOME', icon: '\u2302', items: [
-        { path: `${BASE}/dashboard`, label: 'Command Center', icon: '\u25A3' },
+      id: 'home', label: 'COMMAND', icon: '\u2302', items: [
+        { path: `${BASE}/dashboard`, label: 'Unified Dashboard', icon: '\u25A3' },
         { path: `${BASE}/roi`, label: 'ROI & Predictions', icon: '\uD83D\uDCC8', badge: 'AI' },
       ]
     },
@@ -75,22 +75,22 @@ function Sidebar({ open, onClose }) {
       ]
     },
     {
-      id: 'intelligence', label: 'INTELLIGENCE', icon: '\uD83E\uDDE0', accent: '#a78bfa', items: [
-        { path: `${BASE}/neural`, label: 'Neural Intelligence', icon: '\u26A1', badge: 'AI' },
+      id: 'intelligence', label: 'EXECUTIVE VISIBILITY', icon: '\uD83E\uDDE0', accent: '#a78bfa', items: [
+        { path: `${BASE}/neural`, label: 'Neural OBD', icon: '\u26A1', badge: 'AI' },
         { path: `${BASE}/nlp`, label: 'NLP Assistant', icon: '\uD83D\uDCAC', badge: 'AI' },
-        { path: `${BASE}/analytics`, label: 'Analytics', icon: '\uD83D\uDCCA' },
-        { path: `${BASE}/brokerage-analytics`, label: 'Brokerage KPIs', icon: '\uD83C\uDFAF' },
+        { path: `${BASE}/analytics`, label: 'Performance Analytics', icon: '\uD83D\uDCCA' },
+        { path: `${BASE}/brokerage-analytics`, label: 'Profit Intelligence', icon: '\uD83C\uDFAF' },
         { path: `${BASE}/reports`, label: 'Reports', icon: '\uD83D\uDCC4' },
       ]
     },
     {
-      id: 'dispatch', label: 'DISPATCH', icon: '\uD83D\uDE9A', items: [
-        { path: `${BASE}/loads`, label: 'Loads', icon: '\uD83D\uDCE6' },
-        { path: `${BASE}/offers`, label: 'Carrier Offers', icon: '\uD83D\uDCB0' },
-        { path: `${BASE}/tracking`, label: 'Check Calls', icon: '\u2611' },
+      id: 'dispatch', label: 'RATE & MATCHING', icon: '\uD83D\uDE9A', accent: '#0EA5E9', items: [
+        { path: `${BASE}/loads`, label: 'Load Board', icon: '\uD83D\uDCE6' },
+        { path: `${BASE}/pricing`, label: 'Rate Intelligence', icon: '\uD83D\uDCB2', badge: 'AI' },
         { path: `${BASE}/freight-matching`, label: 'Carrier Matching', icon: '\uD83D\uDD0D', badge: 'AI' },
         { path: `${BASE}/load-matching`, label: 'Load Matching', icon: '\u2194', badge: 'AI' },
-        { path: `${BASE}/pricing`, label: 'Rate Intelligence', icon: '\uD83D\uDCB2', badge: 'AI' },
+        { path: `${BASE}/offers`, label: 'Carrier Offers', icon: '\uD83D\uDCB0' },
+        { path: `${BASE}/tracking`, label: 'Check Calls', icon: '\u2611' },
       ]
     },
     {
@@ -100,8 +100,8 @@ function Sidebar({ open, onClose }) {
       ]
     },
     {
-      id: 'compliance', label: 'COMPLIANCE & DATA', icon: '\uD83D\uDEE1', items: [
-        { path: `${BASE}/compliance`, label: 'FMCSA Compliance', icon: '\u2705' },
+      id: 'compliance', label: 'COMPLIANCE & SAFETY', icon: '\uD83D\uDEE1', accent: '#ef4444', items: [
+        { path: `${BASE}/compliance`, label: 'FMCSA Verification', icon: '\u2705' },
         { path: `${BASE}/ingestion`, label: 'Data Ingestion', icon: '\u2B07' },
         { path: `${BASE}/documents`, label: 'Document Vault', icon: '\uD83D\uDDC4' },
         { path: `${BASE}/tms`, label: 'TMS Bridge', icon: '\uD83D\uDD17' },

@@ -3,29 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CW Carriers Ecosystem — Architecture Diagram</title>
+<title>FreightMind AI — Ecosystem Architecture</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: 'DM Sans', sans-serif; background: #07090f; color: #e2e8f0; min-height: 100vh; }
 h1,h2,h3 { font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px; }
 .page { max-width: 1600px; margin: 0 auto; padding: 40px 24px; }
-.header { text-align: center; margin-bottom: 48px; }
-.header h1 { font-size: 48px; color: #fff; }
-.header h1 em { font-style: normal; color: #0EA5E9; }
-.header p { font-size: 15px; color: #64748b; margin-top: 8px; }
-.badge { display: inline-block; padding: 4px 14px; background: rgba(14,165,233,0.12); border: 1px solid rgba(14,165,233,0.3); border-radius: 20px; font-size: 11px; font-weight: 700; color: #0EA5E9; letter-spacing: 2px; margin-bottom: 16px; }
+.header { text-align: center; margin-bottom: 40px; }
+.header h1 { font-size: 44px; color: #fff; margin-bottom: 8px; }
+.header h1 em { font-style: normal; color: #f59e0b; }
+.header .tagline { font-size: 18px; color: #94a3b8; max-width: 800px; margin: 0 auto 16px; line-height: 1.6; }
+.header .tagline strong { color: #e2e8f0; }
+.badge { display: inline-block; padding: 4px 14px; background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3); border-radius: 20px; font-size: 11px; font-weight: 700; color: #f59e0b; letter-spacing: 2px; margin-bottom: 16px; }
 </style>
 </head>
 <body>
 <div class="page">
   <div class="header">
-    <div class="badge">SYSTEM ARCHITECTURE</div>
-    <h1>CW Carriers <em>Ecosystem</em></h1>
-    <p>Full-stack AI logistics platform with FreightMind AI agent mesh integration</p>
+    <div class="badge">ECOSYSTEM ARCHITECTURE</div>
+    <h1>FreightMind <em>AI</em></h1>
+    <p class="tagline">A central AI-enabled operating layer that <strong>connects your existing tools</strong> — TMS, CRM, communications — <strong>reduces manual work</strong>, and gives leadership a <strong>single operational view</strong>.</p>
+    <p style="font-size: 13px; color: #64748b;">Not a replacement. A unifier. Connects rather than disrupts.</p>
   </div>
 
-  <svg viewBox="0 0 1500 1900" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">
+  <svg viewBox="0 0 1500 1850" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">
     <defs>
       <marker id="a1" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#334155"/></marker>
       <marker id="a2" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#0EA5E9"/></marker>
@@ -36,279 +38,314 @@ h1,h2,h3 { font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px; }
       <linearGradient id="gPurple" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:0.08"/><stop offset="100%" style="stop-color:#6366f1;stop-opacity:0.03"/></linearGradient>
       <linearGradient id="gGreen" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#22c55e;stop-opacity:0.08"/><stop offset="100%" style="stop-color:#10b981;stop-opacity:0.03"/></linearGradient>
       <linearGradient id="gAmber" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#f59e0b;stop-opacity:0.08"/><stop offset="100%" style="stop-color:#eab308;stop-opacity:0.03"/></linearGradient>
-      <linearGradient id="gRed" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#ef4444;stop-opacity:0.08"/><stop offset="100%" style="stop-color:#f87171;stop-opacity:0.03"/></linearGradient>
     </defs>
 
     <!-- ══════════════════════════════════════════════════ -->
-    <!-- LAYER 1: EXTERNAL INTEGRATIONS (top) -->
+    <!-- LAYER 1: YOUR EXISTING TOOLS (what the client already has) -->
     <!-- ══════════════════════════════════════════════════ -->
-    <text x="750" y="30" text-anchor="middle" fill="#475569" font-size="14" font-weight="700" letter-spacing="4" font-family="'Bebas Neue',sans-serif">EXTERNAL INTEGRATIONS</text>
+    <text x="750" y="30" text-anchor="middle" fill="#64748b" font-size="16" font-weight="700" letter-spacing="4" font-family="'Bebas Neue',sans-serif">YOUR EXISTING TOOLS — WE CONNECT TO THEM</text>
 
-    <rect x="30" y="50" width="200" height="70" rx="12" fill="#0f172a" stroke="#ff7a59" stroke-width="2"/>
-    <text x="130" y="80" text-anchor="middle" fill="#ff7a59" font-size="14" font-weight="700">HubSpot CRM</text>
-    <text x="130" y="100" text-anchor="middle" fill="#94a3b8" font-size="11">Contacts · Deals · Pipeline</text>
+    <!-- CRM -->
+    <rect x="30" y="55" width="220" height="75" rx="12" fill="#0f172a" stroke="#ff7a59" stroke-width="2"/>
+    <text x="140" y="82" text-anchor="middle" fill="#ff7a59" font-size="15" font-weight="700">HubSpot CRM</text>
+    <text x="140" y="102" text-anchor="middle" fill="#94a3b8" font-size="12">Contacts · Deals · Pipeline</text>
+    <text x="140" y="120" text-anchor="middle" fill="#64748b" font-size="10">Bi-directional sync</text>
 
-    <rect x="260" y="50" width="200" height="70" rx="12" fill="#0f172a" stroke="#22c55e" stroke-width="2"/>
-    <text x="360" y="80" text-anchor="middle" fill="#22c55e" font-size="14" font-weight="700">FMCSA / DOT</text>
-    <text x="360" y="100" text-anchor="middle" fill="#94a3b8" font-size="11">Census · SMS · SAFER</text>
+    <!-- TMS -->
+    <rect x="270" y="55" width="220" height="75" rx="12" fill="#0f172a" stroke="#ef4444" stroke-width="2"/>
+    <text x="380" y="82" text-anchor="middle" fill="#ef4444" font-size="15" font-weight="700">TMS / ERP</text>
+    <text x="380" y="102" text-anchor="middle" fill="#94a3b8" font-size="12">McLeod · TMW · CSV Import</text>
+    <text x="380" y="120" text-anchor="middle" fill="#64748b" font-size="10">Data ingestion pipeline</text>
 
-    <rect x="490" y="50" width="200" height="70" rx="12" fill="#0f172a" stroke="#0EA5E9" stroke-width="2"/>
-    <text x="590" y="80" text-anchor="middle" fill="#0EA5E9" font-size="14" font-weight="700">DAT RateView</text>
-    <text x="590" y="100" text-anchor="middle" fill="#94a3b8" font-size="11">Market Rates API</text>
+    <!-- Communications -->
+    <rect x="510" y="55" width="280" height="75" rx="12" fill="#0f172a" stroke="#8b5cf6" stroke-width="2"/>
+    <text x="650" y="82" text-anchor="middle" fill="#8b5cf6" font-size="15" font-weight="700">Communications Stack</text>
+    <text x="650" y="102" text-anchor="middle" fill="#94a3b8" font-size="12">RingCentral · WhatsApp · Email</text>
+    <text x="650" y="120" text-anchor="middle" fill="#64748b" font-size="10">Call routing · IVR · Team coordination</text>
 
-    <rect x="720" y="50" width="200" height="70" rx="12" fill="#0f172a" stroke="#8b5cf6" stroke-width="2"/>
-    <text x="820" y="80" text-anchor="middle" fill="#8b5cf6" font-size="14" font-weight="700">Twilio / Rachel AI</text>
-    <text x="820" y="100" text-anchor="middle" fill="#94a3b8" font-size="11">Voice · SMS · Callbacks</text>
+    <!-- Voice AI -->
+    <rect x="810" y="55" width="220" height="75" rx="12" fill="#0f172a" stroke="#06b6d4" stroke-width="2"/>
+    <text x="920" y="82" text-anchor="middle" fill="#06b6d4" font-size="15" font-weight="700">Voice AI Layer</text>
+    <text x="920" y="102" text-anchor="middle" fill="#94a3b8" font-size="12">ElevenLabs · Twilio · Retell</text>
+    <text x="920" y="120" text-anchor="middle" fill="#64748b" font-size="10">Inbound/outbound automation</text>
 
-    <rect x="950" y="50" width="200" height="70" rx="12" fill="#0f172a" stroke="#f59e0b" stroke-width="2"/>
-    <text x="1050" y="80" text-anchor="middle" fill="#f59e0b" font-size="14" font-weight="700">ElevenLabs</text>
-    <text x="1050" y="100" text-anchor="middle" fill="#94a3b8" font-size="11">Voice AI Engine</text>
+    <!-- Market Data -->
+    <rect x="1050" y="55" width="180" height="75" rx="12" fill="#0f172a" stroke="#22c55e" stroke-width="2"/>
+    <text x="1140" y="82" text-anchor="middle" fill="#22c55e" font-size="15" font-weight="700">Market Data</text>
+    <text x="1140" y="102" text-anchor="middle" fill="#94a3b8" font-size="12">DAT · FMCSA / DOT</text>
+    <text x="1140" y="120" text-anchor="middle" fill="#64748b" font-size="10">Rates · Carrier verification</text>
 
-    <rect x="1180" y="50" width="200" height="70" rx="12" fill="#0f172a" stroke="#ef4444" stroke-width="2"/>
-    <text x="1280" y="80" text-anchor="middle" fill="#ef4444" font-size="14" font-weight="700">TMS / CSV Import</text>
-    <text x="1280" y="100" text-anchor="middle" fill="#94a3b8" font-size="11">Data Ingestion</text>
+    <!-- Gov Data -->
+    <rect x="1250" y="55" width="200" height="75" rx="12" fill="#0f172a" stroke="#475569" stroke-width="2"/>
+    <text x="1350" y="82" text-anchor="middle" fill="#8B949E" font-size="15" font-weight="700">Load Boards</text>
+    <text x="1350" y="102" text-anchor="middle" fill="#94a3b8" font-size="12">DAT · Truckstop · Direct</text>
+    <text x="1350" y="120" text-anchor="middle" fill="#64748b" font-size="10">Freight sourcing</text>
 
-    <!-- Arrows down -->
-    <line x1="130" y1="120" x2="130" y2="180" stroke="#334155" stroke-width="1.5" marker-end="url(#a1)"/>
-    <line x1="360" y1="120" x2="360" y2="180" stroke="#334155" stroke-width="1.5" marker-end="url(#a1)"/>
-    <line x1="590" y1="120" x2="590" y2="180" stroke="#334155" stroke-width="1.5" marker-end="url(#a1)"/>
-    <line x1="820" y1="120" x2="820" y2="180" stroke="#334155" stroke-width="1.5" marker-end="url(#a1)"/>
-    <line x1="1050" y1="120" x2="1050" y2="180" stroke="#334155" stroke-width="1.5" marker-end="url(#a1)"/>
-    <line x1="1280" y1="120" x2="1280" y2="180" stroke="#334155" stroke-width="1.5" marker-end="url(#a1)"/>
-
-    <!-- ══════════════════════════════════════════════════ -->
-    <!-- LAYER 2: API LAYER (Express Backend) -->
-    <!-- ══════════════════════════════════════════════════ -->
-    <rect x="30" y="180" width="1350" height="100" rx="16" fill="url(#gBlue)" stroke="#0EA5E9" stroke-width="2"/>
-    <text x="750" y="215" text-anchor="middle" fill="#67e8f9" font-size="16" font-weight="700" letter-spacing="4" font-family="'Bebas Neue',sans-serif">EXPRESS.JS API LAYER — 28 ROUTE FILES</text>
-    <text x="750" y="240" text-anchor="middle" fill="#0EA5E9" font-size="28" font-weight="700" font-family="'Bebas Neue',sans-serif" letter-spacing="3">CW CARRIERS BACKEND</text>
-    <text x="750" y="265" text-anchor="middle" fill="#94a3b8" font-size="12">Node.js · Sequelize ORM · PostgreSQL · JWT Auth · Multi-tenant</text>
-
-    <!-- Arrow down to modules -->
-    <line x1="750" y1="280" x2="750" y2="330" stroke="#0EA5E9" stroke-width="2" marker-end="url(#a2)"/>
-
-    <!-- ══════════════════════════════════════════════════ -->
-    <!-- LAYER 3: FUNCTIONAL MODULES (6 sections) -->
-    <!-- ══════════════════════════════════════════════════ -->
-    <text x="750" y="325" text-anchor="middle" fill="#475569" font-size="14" font-weight="700" letter-spacing="4" font-family="'Bebas Neue',sans-serif">FUNCTIONAL MODULES — 32 PAGES</text>
-
-    <!-- Section 1: HOME -->
-    <rect x="30" y="345" width="220" height="140" rx="12" fill="#0f172a" stroke="#C8962A" stroke-width="1.5"/>
-    <text x="140" y="372" text-anchor="middle" fill="#C8962A" font-size="13" font-weight="700" letter-spacing="2" font-family="'Bebas Neue',sans-serif">HOME</text>
-    <text x="50" y="398" fill="#e2e8f0" font-size="12">&#9632; Command Center</text>
-    <text x="50" y="418" fill="#e2e8f0" font-size="12">&#9632; ROI &amp; Predictions</text>
-    <text x="50" y="448" fill="#64748b" font-size="10">KPIs · Neural OBD · Trends</text>
-    <text x="50" y="468" fill="#64748b" font-size="10">Cost savings · Projections</text>
-
-    <!-- Section 2: HUBSPOT CRM -->
-    <rect x="270" y="345" width="220" height="140" rx="12" fill="#0f172a" stroke="#ff7a59" stroke-width="1.5"/>
-    <text x="380" y="372" text-anchor="middle" fill="#ff7a59" font-size="13" font-weight="700" letter-spacing="2" font-family="'Bebas Neue',sans-serif">HUBSPOT CRM</text>
-    <text x="290" y="398" fill="#e2e8f0" font-size="12">&#9632; CRM Agent (AI Chat)</text>
-    <text x="290" y="418" fill="#e2e8f0" font-size="12">&#9632; Pipeline (Kanban)</text>
-    <text x="290" y="438" fill="#e2e8f0" font-size="12">&#9632; Contacts · Calls · Sync</text>
-    <text x="290" y="468" fill="#64748b" font-size="10">Bi-directional HubSpot sync</text>
-
-    <!-- Section 3: INTELLIGENCE -->
-    <rect x="510" y="345" width="220" height="140" rx="12" fill="#0f172a" stroke="#8b5cf6" stroke-width="1.5"/>
-    <text x="620" y="372" text-anchor="middle" fill="#8b5cf6" font-size="13" font-weight="700" letter-spacing="2" font-family="'Bebas Neue',sans-serif">INTELLIGENCE</text>
-    <text x="530" y="398" fill="#e2e8f0" font-size="12">&#9632; Neural OBD (8 codes)</text>
-    <text x="530" y="418" fill="#e2e8f0" font-size="12">&#9632; NLP Assistant</text>
-    <text x="530" y="438" fill="#e2e8f0" font-size="12">&#9632; Analytics · KPIs · Reports</text>
-    <text x="530" y="468" fill="#64748b" font-size="10">Health scoring · Treatments</text>
-
-    <!-- Section 4: DISPATCH -->
-    <rect x="750" y="345" width="220" height="140" rx="12" fill="#0f172a" stroke="#0EA5E9" stroke-width="1.5"/>
-    <text x="860" y="372" text-anchor="middle" fill="#0EA5E9" font-size="13" font-weight="700" letter-spacing="2" font-family="'Bebas Neue',sans-serif">DISPATCH</text>
-    <text x="770" y="398" fill="#e2e8f0" font-size="12">&#9632; Loads (10,199+)</text>
-    <text x="770" y="418" fill="#e2e8f0" font-size="12">&#9632; Carrier/Load Matching</text>
-    <text x="770" y="438" fill="#e2e8f0" font-size="12">&#9632; Rate Intelligence</text>
-    <text x="770" y="468" fill="#64748b" font-size="10">Offers · Check Calls · DAT</text>
-
-    <!-- Section 5: COMPLIANCE -->
-    <rect x="990" y="345" width="220" height="140" rx="12" fill="#0f172a" stroke="#22c55e" stroke-width="1.5"/>
-    <text x="1100" y="372" text-anchor="middle" fill="#22c55e" font-size="13" font-weight="700" letter-spacing="2" font-family="'Bebas Neue',sans-serif">COMPLIANCE &amp; DATA</text>
-    <text x="1010" y="398" fill="#e2e8f0" font-size="12">&#9632; FMCSA (3 layers)</text>
-    <text x="1010" y="418" fill="#e2e8f0" font-size="12">&#9632; Data Ingestion</text>
-    <text x="1010" y="438" fill="#e2e8f0" font-size="12">&#9632; Document Vault · TMS</text>
-    <text x="1010" y="468" fill="#64748b" font-size="10">Search · Lookup · Audit</text>
-
-    <!-- Section 6: ADMIN -->
-    <rect x="1230" y="345" width="150" height="140" rx="12" fill="#0f172a" stroke="#484F58" stroke-width="1.5"/>
-    <text x="1305" y="372" text-anchor="middle" fill="#8B949E" font-size="13" font-weight="700" letter-spacing="2" font-family="'Bebas Neue',sans-serif">ADMIN</text>
-    <text x="1250" y="398" fill="#e2e8f0" font-size="11">Settings</text>
-    <text x="1250" y="416" fill="#e2e8f0" font-size="11">Billing</text>
-    <text x="1250" y="434" fill="#e2e8f0" font-size="11">Contract Builder</text>
-    <text x="1250" y="452" fill="#e2e8f0" font-size="11">NDA Signing</text>
-    <text x="1250" y="470" fill="#e2e8f0" font-size="11">Token Estimator</text>
+    <!-- Connection arrows -->
+    <line x1="140" y1="130" x2="140" y2="190" stroke="#334155" stroke-width="1.5" marker-end="url(#a1)"/>
+    <line x1="380" y1="130" x2="380" y2="190" stroke="#334155" stroke-width="1.5" marker-end="url(#a1)"/>
+    <line x1="650" y1="130" x2="650" y2="190" stroke="#334155" stroke-width="1.5" marker-end="url(#a1)"/>
+    <line x1="920" y1="130" x2="920" y2="190" stroke="#334155" stroke-width="1.5" marker-end="url(#a1)"/>
+    <line x1="1140" y1="130" x2="1140" y2="190" stroke="#334155" stroke-width="1.5" marker-end="url(#a1)"/>
+    <line x1="1350" y1="130" x2="1350" y2="190" stroke="#334155" stroke-width="1.5" marker-end="url(#a1)"/>
 
     <!-- ══════════════════════════════════════════════════ -->
-    <!-- LAYER 4: DATABASE (Dual Table System + Bridge) -->
+    <!-- LAYER 2: FREIGHTMIND AI PLATFORM -->
     <!-- ══════════════════════════════════════════════════ -->
-    <line x1="750" y1="485" x2="750" y2="540" stroke="#334155" stroke-width="1.5" marker-end="url(#a1)"/>
+    <rect x="30" y="190" width="1420" height="80" rx="16" fill="url(#gAmber)" stroke="#f59e0b" stroke-width="2"/>
+    <text x="750" y="225" text-anchor="middle" fill="#fcd34d" font-size="18" font-weight="700" letter-spacing="4" font-family="'Bebas Neue',sans-serif">FREIGHTMIND AI — CENTRAL OPERATING LAYER</text>
+    <text x="750" y="255" text-anchor="middle" fill="#94a3b8" font-size="14">Connects your existing tools · Adds AI orchestration · Centralizes operations · Reduces manual work</text>
 
-    <rect x="30" y="540" width="1350" height="200" rx="16" fill="url(#gGreen)" stroke="#22c55e" stroke-width="2"/>
-    <text x="750" y="572" text-anchor="middle" fill="#86efac" font-size="16" font-weight="700" letter-spacing="4" font-family="'Bebas Neue',sans-serif">POSTGRESQL DATABASE — DUAL TABLE SYSTEM</text>
+    <line x1="750" y1="270" x2="750" y2="320" stroke="#f59e0b" stroke-width="2" marker-end="url(#a5)"/>
 
-    <!-- CW Tables -->
-    <rect x="60" y="590" width="580" height="130" rx="10" fill="#0f172a" stroke="#0EA5E9" stroke-width="1.5"/>
-    <text x="350" y="615" text-anchor="middle" fill="#0EA5E9" font-size="14" font-weight="700" letter-spacing="2" font-family="'Bebas Neue',sans-serif">CW TABLES (CRM &amp; Operations) — 13 Tables</text>
-    <text x="80" y="640" fill="#94a3b8" font-size="11">cw_contacts · cw_loads · cw_call_logs · cw_hubspot_sync</text>
-    <text x="80" y="658" fill="#94a3b8" font-size="11">cw_carrier_offers · cw_check_calls · cw_invoices · cw_analytics</text>
-    <text x="80" y="676" fill="#94a3b8" font-size="11">cw_nlp_commands · cw_alert_log · cw_users</text>
-    <text x="80" y="694" fill="#94a3b8" font-size="11">neural_treatments · treatment_execution_log</text>
+    <!-- ══════════════════════════════════════════════════ -->
+    <!-- LAYER 3: 5 TIERS (reframed for commercial clarity) -->
+    <!-- ══════════════════════════════════════════════════ -->
+    <text x="750" y="315" text-anchor="middle" fill="#64748b" font-size="16" font-weight="700" letter-spacing="4" font-family="'Bebas Neue',sans-serif">5 MODULAR TIERS — ADOPT ONLY WHAT YOU NEED</text>
 
-    <!-- Bridge -->
-    <rect x="660" y="600" width="100" height="110" rx="8" fill="#C8962A" stroke="#C8962A" stroke-width="2"/>
-    <text x="710" y="640" text-anchor="middle" fill="#0f172a" font-size="11" font-weight="800" letter-spacing="1">BRIDGE</text>
-    <text x="710" y="658" text-anchor="middle" fill="#0f172a" font-size="9" font-weight="600">cw_contact_id</text>
-    <text x="710" y="672" text-anchor="middle" fill="#0f172a" font-size="9" font-weight="600">lg_carrier_id</text>
-    <text x="710" y="686" text-anchor="middle" fill="#0f172a" font-size="9" font-weight="600">cw_load_id</text>
-    <text x="710" y="700" text-anchor="middle" fill="#0f172a" font-size="9" font-weight="600">lg_load_id</text>
+    <!-- TIER 1: Rate Intelligence & Freight Matching -->
+    <rect x="30" y="340" width="270" height="180" rx="12" fill="#0f172a" stroke="#0EA5E9" stroke-width="2"/>
+    <rect x="30" y="340" width="270" height="35" rx="12" fill="#0EA5E915"/>
+    <text x="165" y="364" text-anchor="middle" fill="#0EA5E9" font-size="14" font-weight="700" letter-spacing="2" font-family="'Bebas Neue',sans-serif">TIER 1 — RATE &amp; MATCHING</text>
+    <text x="50" y="398" fill="#e2e8f0" font-size="13" font-weight="600">Rate Intelligence Engine</text>
+    <text x="50" y="416" fill="#94a3b8" font-size="11">AI-powered pricing with DAT + internal data</text>
+    <text x="50" y="438" fill="#e2e8f0" font-size="13" font-weight="600">Load-to-Load Matching</text>
+    <text x="50" y="456" fill="#94a3b8" font-size="11">Backhauls, chains, round trips</text>
+    <text x="50" y="478" fill="#e2e8f0" font-size="13" font-weight="600">Load-to-Carrier Matching</text>
+    <text x="50" y="496" fill="#94a3b8" font-size="11">5-factor scoring, ranked results</text>
+    <text x="165" y="515" text-anchor="middle" fill="#0EA5E9" font-size="10" font-weight="700" letter-spacing="1">FIRST PROOF POINT — DEMO ANCHOR</text>
 
-    <!-- Arrows between bridge and tables -->
-    <line x1="640" y1="655" x2="660" y2="655" stroke="#C8962A" stroke-width="2"/>
-    <line x1="760" y1="655" x2="780" y2="655" stroke="#C8962A" stroke-width="2"/>
+    <!-- TIER 2: Dispatch & Tracking -->
+    <rect x="320" y="340" width="270" height="180" rx="12" fill="#0f172a" stroke="#22c55e" stroke-width="2"/>
+    <rect x="320" y="340" width="270" height="35" rx="12" fill="#22c55e15"/>
+    <text x="455" y="364" text-anchor="middle" fill="#22c55e" font-size="14" font-weight="700" letter-spacing="2" font-family="'Bebas Neue',sans-serif">TIER 2 — DISPATCH &amp; TRACKING</text>
+    <text x="340" y="398" fill="#e2e8f0" font-size="13" font-weight="600">AI Dispatch Automation</text>
+    <text x="340" y="416" fill="#94a3b8" font-size="11">Workflow automation, load assignment</text>
+    <text x="340" y="438" fill="#e2e8f0" font-size="13" font-weight="600">Track &amp; Trace</text>
+    <text x="340" y="456" fill="#94a3b8" font-size="11">Check calls, ETA updates, exceptions</text>
+    <text x="340" y="478" fill="#e2e8f0" font-size="13" font-weight="600">Carrier Offers &amp; Coverage</text>
+    <text x="340" y="496" fill="#94a3b8" font-size="11">Bid management, outbound campaigns</text>
 
-    <!-- LG Tables -->
-    <rect x="780" y="590" width="580" height="130" rx="10" fill="#0f172a" stroke="#22c55e" stroke-width="1.5"/>
-    <text x="1070" y="615" text-anchor="middle" fill="#22c55e" font-size="14" font-weight="700" letter-spacing="2" font-family="'Bebas Neue',sans-serif">LG TABLES (Brokerage Platform) — 12 Tables</text>
-    <text x="800" y="640" fill="#94a3b8" font-size="11">lg_loads · lg_carriers · lg_customers · lg_rate_benchmarks</text>
-    <text x="800" y="658" fill="#94a3b8" font-size="11">lg_shipment_events · lg_call_interactions · lg_billing_documents</text>
-    <text x="800" y="676" fill="#94a3b8" font-size="11">lg_load_pairs · lg_data_uploads · lg_analytics_snapshots</text>
-    <text x="800" y="694" fill="#94a3b8" font-size="11">lg_demo_workspaces · lg_user_feedback</text>
+    <!-- TIER 3: Finance & Billing -->
+    <rect x="610" y="340" width="270" height="180" rx="12" fill="#0f172a" stroke="#f59e0b" stroke-width="2"/>
+    <rect x="610" y="340" width="270" height="35" rx="12" fill="#f59e0b15"/>
+    <text x="745" y="364" text-anchor="middle" fill="#f59e0b" font-size="14" font-weight="700" letter-spacing="2" font-family="'Bebas Neue',sans-serif">TIER 3 — FINANCE &amp; BILLING</text>
+    <text x="630" y="398" fill="#e2e8f0" font-size="13" font-weight="600">Invoice Automation</text>
+    <text x="630" y="416" fill="#94a3b8" font-size="11">Dual-sided billing (shipper + carrier)</text>
+    <text x="630" y="438" fill="#e2e8f0" font-size="13" font-weight="600">Document Review</text>
+    <text x="630" y="456" fill="#94a3b8" font-size="11">POD, BOL, rate confirmation</text>
+    <text x="630" y="478" fill="#e2e8f0" font-size="13" font-weight="600">Charge Validation</text>
+    <text x="630" y="496" fill="#94a3b8" font-size="11">AR/AP aging, collections workflow</text>
+
+    <!-- TIER 4: Compliance & Safety -->
+    <rect x="900" y="340" width="270" height="180" rx="12" fill="#0f172a" stroke="#ef4444" stroke-width="2"/>
+    <rect x="900" y="340" width="270" height="35" rx="12" fill="#ef444415"/>
+    <text x="1035" y="364" text-anchor="middle" fill="#ef4444" font-size="14" font-weight="700" letter-spacing="2" font-family="'Bebas Neue',sans-serif">TIER 4 — COMPLIANCE &amp; SAFETY</text>
+    <text x="920" y="398" fill="#e2e8f0" font-size="13" font-weight="600">FMCSA Verification</text>
+    <text x="920" y="416" fill="#94a3b8" font-size="11">Live DOT/MC lookup, authority check</text>
+    <text x="920" y="438" fill="#e2e8f0" font-size="13" font-weight="600">Insurance Verification</text>
+    <text x="920" y="456" fill="#94a3b8" font-size="11">Coverage validation, expiry alerts</text>
+    <text x="920" y="478" fill="#e2e8f0" font-size="13" font-weight="600">Carrier Onboarding</text>
+    <text x="920" y="496" fill="#94a3b8" font-size="11">Safety scoring, compliance audit</text>
+
+    <!-- TIER 5: Neural Intelligence -->
+    <rect x="1190" y="340" width="260" height="180" rx="12" fill="#0f172a" stroke="#8b5cf6" stroke-width="2"/>
+    <rect x="1190" y="340" width="260" height="35" rx="12" fill="#8b5cf615"/>
+    <text x="1320" y="364" text-anchor="middle" fill="#8b5cf6" font-size="14" font-weight="700" letter-spacing="2" font-family="'Bebas Neue',sans-serif">TIER 5 — EXECUTIVE VISIBILITY</text>
+    <text x="1210" y="398" fill="#e2e8f0" font-size="13" font-weight="600">Profit Intelligence</text>
+    <text x="1210" y="416" fill="#94a3b8" font-size="11">Margin by lane, cost per load trends</text>
+    <text x="1210" y="438" fill="#e2e8f0" font-size="13" font-weight="600">Coverage Visibility</text>
+    <text x="1210" y="456" fill="#94a3b8" font-size="11">Hours to cover, carrier utilization</text>
+    <text x="1210" y="478" fill="#e2e8f0" font-size="13" font-weight="600">Recommendation Engine</text>
+    <text x="1210" y="496" fill="#94a3b8" font-size="11">OBD diagnostics + auto-treatments</text>
+
+    <!-- ══════════════════════════════════════════════════ -->
+    <!-- LAYER 4: UNIFIED COMMAND DASHBOARD (merged) -->
+    <!-- ══════════════════════════════════════════════════ -->
+    <line x1="750" y1="520" x2="750" y2="580" stroke="#8b5cf6" stroke-width="2" marker-end="url(#a3)"/>
+
+    <rect x="30" y="580" width="1420" height="200" rx="16" fill="url(#gPurple)" stroke="#8b5cf6" stroke-width="2"/>
+    <text x="750" y="612" text-anchor="middle" fill="#c4b5fd" font-size="18" font-weight="700" letter-spacing="4" font-family="'Bebas Neue',sans-serif">UNIFIED COMMAND DASHBOARD</text>
+    <text x="750" y="640" text-anchor="middle" fill="#fff" font-size="26" font-weight="700" font-family="'Bebas Neue',sans-serif" letter-spacing="3">ONE VIEW — EVERYTHING THAT MATTERS</text>
+    <text x="750" y="662" text-anchor="middle" fill="#94a3b8" font-size="13">Single operational dashboard for dispatchers, managers, and leadership</text>
+
+    <!-- Commercial metrics -->
+    <rect x="60" y="680" width="175" height="80" rx="8" fill="#0f172a" stroke="#22c55e" stroke-width="1"/>
+    <text x="148" y="705" text-anchor="middle" fill="#22c55e" font-size="22" font-weight="700" font-family="'Bebas Neue',sans-serif">$2.85</text>
+    <text x="148" y="723" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="600">AVG COST PER LOAD</text>
+    <text x="148" y="748" text-anchor="middle" fill="#64748b" font-size="10">vs $3.42 industry avg</text>
+
+    <rect x="250" y="680" width="175" height="80" rx="8" fill="#0f172a" stroke="#0EA5E9" stroke-width="1"/>
+    <text x="338" y="705" text-anchor="middle" fill="#0EA5E9" font-size="22" font-weight="700" font-family="'Bebas Neue',sans-serif">18.4%</text>
+    <text x="338" y="723" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="600">AVG MARGIN</text>
+    <text x="338" y="748" text-anchor="middle" fill="#64748b" font-size="10">+3.2% vs last quarter</text>
+
+    <rect x="440" y="680" width="175" height="80" rx="8" fill="#0f172a" stroke="#f59e0b" stroke-width="1"/>
+    <text x="528" y="705" text-anchor="middle" fill="#f59e0b" font-size="22" font-weight="700" font-family="'Bebas Neue',sans-serif">1.8 HRS</text>
+    <text x="528" y="723" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="600">AVG COVERAGE TIME</text>
+    <text x="528" y="748" text-anchor="middle" fill="#64748b" font-size="10">down from 4.2 hrs</text>
+
+    <rect x="630" y="680" width="175" height="80" rx="8" fill="#0f172a" stroke="#ef4444" stroke-width="1"/>
+    <text x="718" y="705" text-anchor="middle" fill="#ef4444" font-size="22" font-weight="700" font-family="'Bebas Neue',sans-serif">$42K</text>
+    <text x="718" y="723" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="600">REVENUE AT RISK</text>
+    <text x="718" y="748" text-anchor="middle" fill="#64748b" font-size="10">3 uncovered loads</text>
+
+    <rect x="820" y="680" width="175" height="80" rx="8" fill="#0f172a" stroke="#8b5cf6" stroke-width="1"/>
+    <text x="908" y="705" text-anchor="middle" fill="#8b5cf6" font-size="22" font-weight="700" font-family="'Bebas Neue',sans-serif">87%</text>
+    <text x="908" y="723" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="600">CARRIER UTILIZATION</text>
+    <text x="908" y="748" text-anchor="middle" fill="#64748b" font-size="10">loaded vs empty miles</text>
+
+    <rect x="1010" y="680" width="175" height="80" rx="8" fill="#0f172a" stroke="#22c55e" stroke-width="1"/>
+    <text x="1098" y="705" text-anchor="middle" fill="#22c55e" font-size="22" font-weight="700" font-family="'Bebas Neue',sans-serif">$118K</text>
+    <text x="1098" y="723" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="600">SAVINGS THIS MONTH</text>
+    <text x="1098" y="748" text-anchor="middle" fill="#64748b" font-size="10">AI calls + automation</text>
+
+    <rect x="1200" y="680" width="175" height="80" rx="8" fill="#0f172a" stroke="#f59e0b" stroke-width="1"/>
+    <text x="1288" y="705" text-anchor="middle" fill="#f59e0b" font-size="22" font-weight="700" font-family="'Bebas Neue',sans-serif">8.4x</text>
+    <text x="1288" y="723" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="600">ROI MULTIPLE</text>
+    <text x="1288" y="748" text-anchor="middle" fill="#64748b" font-size="10">platform pays for itself</text>
 
     <!-- ══════════════════════════════════════════════════ -->
     <!-- LAYER 5: NEURAL OBD -->
     <!-- ══════════════════════════════════════════════════ -->
-    <line x1="750" y1="740" x2="750" y2="800" stroke="#8b5cf6" stroke-width="2" marker-end="url(#a3)"/>
+    <line x1="750" y1="780" x2="750" y2="830" stroke="#8b5cf6" stroke-width="2" marker-end="url(#a3)"/>
 
-    <rect x="30" y="800" width="1350" height="200" rx="16" fill="url(#gPurple)" stroke="#8b5cf6" stroke-width="2"/>
-    <text x="750" y="832" text-anchor="middle" fill="#c4b5fd" font-size="16" font-weight="700" letter-spacing="4" font-family="'Bebas Neue',sans-serif">NEURAL INTELLIGENCE — ON-BOARD DIAGNOSTICS</text>
-    <text x="750" y="858" text-anchor="middle" fill="#fff" font-size="24" font-weight="700" font-family="'Bebas Neue',sans-serif" letter-spacing="3">ANALYZE · DIAGNOSE · PRESCRIBE · REMEDIATE</text>
+    <rect x="30" y="830" width="1420" height="170" rx="16" fill="url(#gPurple)" stroke="#6366f1" stroke-width="1.5"/>
+    <text x="750" y="862" text-anchor="middle" fill="#a5b4fc" font-size="16" font-weight="700" letter-spacing="4" font-family="'Bebas Neue',sans-serif">NEURAL INTELLIGENCE — ON-BOARD DIAGNOSTICS (OBD)</text>
+    <text x="750" y="886" text-anchor="middle" fill="#e2e8f0" font-size="20" font-weight="700" font-family="'Bebas Neue',sans-serif" letter-spacing="2">ANALYZE · DIAGNOSE · PRESCRIBE · REMEDIATE</text>
 
-    <!-- 8 OBD codes -->
-    <rect x="55" y="878" width="145" height="50" rx="6" fill="#0f172a" stroke="#22c55e" stroke-width="1"/>
-    <text x="128" y="900" text-anchor="middle" fill="#22c55e" font-size="13" font-weight="800" font-family="'Bebas Neue',sans-serif" letter-spacing="2">OBD-01</text>
-    <text x="128" y="918" text-anchor="middle" fill="#94a3b8" font-size="10">Voice AI</text>
+    <!-- OBD codes compact -->
+    <rect x="55" y="905" width="155" height="40" rx="6" fill="#0f172a" stroke="#22c55e80"/>
+    <text x="133" y="922" text-anchor="middle" fill="#22c55e" font-size="12" font-weight="700" font-family="'Bebas Neue',sans-serif" letter-spacing="1.5">OBD-01</text>
+    <text x="133" y="938" text-anchor="middle" fill="#94a3b8" font-size="10">Voice AI</text>
 
-    <rect x="215" y="878" width="145" height="50" rx="6" fill="#0f172a" stroke="#22c55e" stroke-width="1"/>
-    <text x="288" y="900" text-anchor="middle" fill="#22c55e" font-size="13" font-weight="800" font-family="'Bebas Neue',sans-serif" letter-spacing="2">OBD-02</text>
-    <text x="288" y="918" text-anchor="middle" fill="#94a3b8" font-size="10">CRM Link</text>
+    <rect x="220" y="905" width="155" height="40" rx="6" fill="#0f172a" stroke="#22c55e80"/>
+    <text x="298" y="922" text-anchor="middle" fill="#22c55e" font-size="12" font-weight="700" font-family="'Bebas Neue',sans-serif" letter-spacing="1.5">OBD-02</text>
+    <text x="298" y="938" text-anchor="middle" fill="#94a3b8" font-size="10">CRM Sync</text>
 
-    <rect x="375" y="878" width="145" height="50" rx="6" fill="#0f172a" stroke="#22c55e" stroke-width="1"/>
-    <text x="448" y="900" text-anchor="middle" fill="#22c55e" font-size="13" font-weight="800" font-family="'Bebas Neue',sans-serif" letter-spacing="2">OBD-03</text>
-    <text x="448" y="918" text-anchor="middle" fill="#94a3b8" font-size="10">Sync</text>
+    <rect x="385" y="905" width="155" height="40" rx="6" fill="#0f172a" stroke="#22c55e80"/>
+    <text x="463" y="922" text-anchor="middle" fill="#22c55e" font-size="12" font-weight="700" font-family="'Bebas Neue',sans-serif" letter-spacing="1.5">OBD-03</text>
+    <text x="463" y="938" text-anchor="middle" fill="#94a3b8" font-size="10">Dispatch</text>
 
-    <rect x="535" y="878" width="145" height="50" rx="6" fill="#0f172a" stroke="#fbbf24" stroke-width="1"/>
-    <text x="608" y="900" text-anchor="middle" fill="#fbbf24" font-size="13" font-weight="800" font-family="'Bebas Neue',sans-serif" letter-spacing="2">OBD-04</text>
-    <text x="608" y="918" text-anchor="middle" fill="#94a3b8" font-size="10">Dispatch</text>
+    <rect x="550" y="905" width="155" height="40" rx="6" fill="#0f172a" stroke="#22c55e80"/>
+    <text x="628" y="922" text-anchor="middle" fill="#22c55e" font-size="12" font-weight="700" font-family="'Bebas Neue',sans-serif" letter-spacing="1.5">OBD-04</text>
+    <text x="628" y="938" text-anchor="middle" fill="#94a3b8" font-size="10">Revenue</text>
 
-    <rect x="695" y="878" width="145" height="50" rx="6" fill="#0f172a" stroke="#22c55e" stroke-width="1"/>
-    <text x="768" y="900" text-anchor="middle" fill="#22c55e" font-size="13" font-weight="800" font-family="'Bebas Neue',sans-serif" letter-spacing="2">OBD-05</text>
-    <text x="768" y="918" text-anchor="middle" fill="#94a3b8" font-size="10">Revenue</text>
+    <rect x="715" y="905" width="155" height="40" rx="6" fill="#0f172a" stroke="#8b5cf680"/>
+    <text x="793" y="922" text-anchor="middle" fill="#8b5cf6" font-size="12" font-weight="700" font-family="'Bebas Neue',sans-serif" letter-spacing="1.5">OBD-05</text>
+    <text x="793" y="938" text-anchor="middle" fill="#94a3b8" font-size="10">Treatments</text>
 
-    <rect x="855" y="878" width="145" height="50" rx="6" fill="#0f172a" stroke="#8b5cf6" stroke-width="1"/>
-    <text x="928" y="900" text-anchor="middle" fill="#8b5cf6" font-size="13" font-weight="800" font-family="'Bebas Neue',sans-serif" letter-spacing="2">OBD-06</text>
-    <text x="928" y="918" text-anchor="middle" fill="#94a3b8" font-size="10">Treatments</text>
+    <rect x="880" y="905" width="155" height="40" rx="6" fill="#0f172a" stroke="#22c55e80"/>
+    <text x="958" y="922" text-anchor="middle" fill="#22c55e" font-size="12" font-weight="700" font-family="'Bebas Neue',sans-serif" letter-spacing="1.5">OBD-06</text>
+    <text x="958" y="938" text-anchor="middle" fill="#94a3b8" font-size="10">Compliance</text>
 
-    <rect x="1015" y="878" width="145" height="50" rx="6" fill="#0f172a" stroke="#22c55e" stroke-width="1"/>
-    <text x="1088" y="900" text-anchor="middle" fill="#22c55e" font-size="13" font-weight="800" font-family="'Bebas Neue',sans-serif" letter-spacing="2">OBD-07</text>
-    <text x="1088" y="918" text-anchor="middle" fill="#94a3b8" font-size="10">Network</text>
+    <rect x="1045" y="905" width="155" height="40" rx="6" fill="#0f172a" stroke="#22c55e80"/>
+    <text x="1123" y="922" text-anchor="middle" fill="#22c55e" font-size="12" font-weight="700" font-family="'Bebas Neue',sans-serif" letter-spacing="1.5">OBD-07</text>
+    <text x="1123" y="938" text-anchor="middle" fill="#94a3b8" font-size="10">Network</text>
 
-    <rect x="1175" y="878" width="145" height="50" rx="6" fill="#0f172a" stroke="#22c55e" stroke-width="1"/>
-    <text x="1248" y="900" text-anchor="middle" fill="#22c55e" font-size="13" font-weight="800" font-family="'Bebas Neue',sans-serif" letter-spacing="2">OBD-08</text>
-    <text x="1248" y="918" text-anchor="middle" fill="#94a3b8" font-size="10">Ingestion</text>
+    <rect x="1210" y="905" width="155" height="40" rx="6" fill="#0f172a" stroke="#22c55e80"/>
+    <text x="1288" y="922" text-anchor="middle" fill="#22c55e" font-size="12" font-weight="700" font-family="'Bebas Neue',sans-serif" letter-spacing="1.5">OBD-08</text>
+    <text x="1288" y="938" text-anchor="middle" fill="#94a3b8" font-size="10">Ingestion</text>
 
-    <!-- Treatment pipeline -->
-    <text x="750" y="960" text-anchor="middle" fill="#94a3b8" font-size="12">Treatment Pipeline: 6 templates · SMS · CRM Write · Callbacks · Tags · Tasks · Email</text>
-    <text x="750" y="985" text-anchor="middle" fill="#64748b" font-size="11">Execution logged to treatment_execution_log · ROI tracked in real-time</text>
+    <text x="750" y="978" text-anchor="middle" fill="#94a3b8" font-size="12">6 Treatment Templates · Auto-SMS · CRM Write · Callbacks · Tags · Tasks · Email</text>
+    <text x="750" y="993" text-anchor="middle" fill="#64748b" font-size="11">"The difference between a thermometer and a doctor."</text>
 
     <!-- ══════════════════════════════════════════════════ -->
-    <!-- LAYER 6: FREIGHTMIND AI -->
+    <!-- LAYER 6: AI AGENT MESH -->
     <!-- ══════════════════════════════════════════════════ -->
-    <line x1="750" y1="1000" x2="750" y2="1060" stroke="#f59e0b" stroke-width="2" marker-end="url(#a5)"/>
+    <line x1="750" y1="1000" x2="750" y2="1050" stroke="#f59e0b" stroke-width="2" marker-end="url(#a5)"/>
 
-    <rect x="30" y="1060" width="1350" height="360" rx="16" fill="url(#gAmber)" stroke="#f59e0b" stroke-width="2"/>
-    <text x="750" y="1092" text-anchor="middle" fill="#fcd34d" font-size="16" font-weight="700" letter-spacing="4" font-family="'Bebas Neue',sans-serif">FREIGHTMIND AI — AUTONOMOUS AGENT MESH</text>
-    <text x="750" y="1118" text-anchor="middle" fill="#fff" font-size="24" font-weight="700" font-family="'Bebas Neue',sans-serif" letter-spacing="3">8 AI AGENTS ACROSS 5 TIERS</text>
+    <rect x="30" y="1050" width="1420" height="250" rx="16" fill="url(#gAmber)" stroke="#f59e0b" stroke-width="2"/>
+    <text x="750" y="1082" text-anchor="middle" fill="#fcd34d" font-size="18" font-weight="700" letter-spacing="4" font-family="'Bebas Neue',sans-serif">AI AGENT MESH — 8 AUTONOMOUS AGENTS</text>
+    <text x="750" y="1106" text-anchor="middle" fill="#e2e8f0" font-size="14">Each agent has specialized tools. The MCP Orchestrator routes requests to the right agent.</text>
 
-    <!-- Tier 1 -->
-    <rect x="60" y="1140" width="300" height="110" rx="10" fill="#0f172a" stroke="#0EA5E9" stroke-width="1.5"/>
-    <text x="210" y="1165" text-anchor="middle" fill="#0EA5E9" font-size="13" font-weight="700" letter-spacing="2" font-family="'Bebas Neue',sans-serif">TIER 1 — LOAD OPERATIONS</text>
-    <rect x="80" y="1178" width="120" height="30" rx="6" fill="#0EA5E922" stroke="#0EA5E9" stroke-width="1"/>
-    <text x="140" y="1198" text-anchor="middle" fill="#0EA5E9" font-size="11" font-weight="600">Rate Engine</text>
-    <rect x="215" y="1178" width="125" height="30" rx="6" fill="#0EA5E922" stroke="#0EA5E9" stroke-width="1"/>
-    <text x="278" y="1198" text-anchor="middle" fill="#0EA5E9" font-size="11" font-weight="600">Freight Finder</text>
-    <text x="210" y="1235" text-anchor="middle" fill="#64748b" font-size="10">Rate quotes · Load search · Lane analysis</text>
+    <!-- Agent cards -->
+    <rect x="55" y="1125" width="155" height="70" rx="8" fill="#0f172a" stroke="#0EA5E9" stroke-width="1"/>
+    <text x="133" y="1150" text-anchor="middle" fill="#0EA5E9" font-size="12" font-weight="700">Rate Engine</text>
+    <text x="133" y="1168" text-anchor="middle" fill="#94a3b8" font-size="10">Pricing · Quotes</text>
+    <text x="133" y="1184" text-anchor="middle" fill="#64748b" font-size="9">T1</text>
 
-    <!-- Tier 2 -->
-    <rect x="380" y="1140" width="300" height="110" rx="10" fill="#0f172a" stroke="#22c55e" stroke-width="1.5"/>
-    <text x="530" y="1165" text-anchor="middle" fill="#22c55e" font-size="13" font-weight="700" letter-spacing="2" font-family="'Bebas Neue',sans-serif">TIER 2 — FLEET OPERATIONS</text>
-    <rect x="400" y="1178" width="120" height="30" rx="6" fill="#22c55e22" stroke="#22c55e" stroke-width="1"/>
-    <text x="460" y="1198" text-anchor="middle" fill="#22c55e" font-size="11" font-weight="600">Dispatch AI</text>
-    <rect x="535" y="1178" width="125" height="30" rx="6" fill="#22c55e22" stroke="#22c55e" stroke-width="1"/>
-    <text x="598" y="1198" text-anchor="middle" fill="#22c55e" font-size="11" font-weight="600">Tracking</text>
-    <text x="530" y="1235" text-anchor="middle" fill="#64748b" font-size="10">Dispatch · GPS · ETA · Drivers · Trucks</text>
+    <rect x="225" y="1125" width="155" height="70" rx="8" fill="#0f172a" stroke="#0EA5E9" stroke-width="1"/>
+    <text x="303" y="1150" text-anchor="middle" fill="#0EA5E9" font-size="12" font-weight="700">Freight Finder</text>
+    <text x="303" y="1168" text-anchor="middle" fill="#94a3b8" font-size="10">Load search · Lanes</text>
+    <text x="303" y="1184" text-anchor="middle" fill="#64748b" font-size="9">T1</text>
 
-    <!-- Tier 3 -->
-    <rect x="700" y="1140" width="200" height="110" rx="10" fill="#0f172a" stroke="#f59e0b" stroke-width="1.5"/>
-    <text x="800" y="1165" text-anchor="middle" fill="#f59e0b" font-size="13" font-weight="700" letter-spacing="2" font-family="'Bebas Neue',sans-serif">TIER 3 — FINANCIAL</text>
-    <rect x="720" y="1178" width="160" height="30" rx="6" fill="#f59e0b22" stroke="#f59e0b" stroke-width="1"/>
-    <text x="800" y="1198" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="600">Billing Agent</text>
-    <text x="800" y="1235" text-anchor="middle" fill="#64748b" font-size="10">Invoicing · AR/AP · Collections</text>
+    <rect x="395" y="1125" width="155" height="70" rx="8" fill="#0f172a" stroke="#22c55e" stroke-width="1"/>
+    <text x="473" y="1150" text-anchor="middle" fill="#22c55e" font-size="12" font-weight="700">Dispatch AI</text>
+    <text x="473" y="1168" text-anchor="middle" fill="#94a3b8" font-size="10">Assignments · Routes</text>
+    <text x="473" y="1184" text-anchor="middle" fill="#64748b" font-size="9">T2</text>
 
-    <!-- Tier 4 -->
-    <rect x="920" y="1140" width="220" height="110" rx="10" fill="#0f172a" stroke="#ef4444" stroke-width="1.5"/>
-    <text x="1030" y="1165" text-anchor="middle" fill="#ef4444" font-size="13" font-weight="700" letter-spacing="2" font-family="'Bebas Neue',sans-serif">TIER 4 — COMPLIANCE</text>
-    <rect x="935" y="1178" width="90" height="30" rx="6" fill="#ef444422" stroke="#ef4444" stroke-width="1"/>
-    <text x="980" y="1198" text-anchor="middle" fill="#ef4444" font-size="10" font-weight="600">Compliance</text>
-    <rect x="1035" y="1178" width="90" height="30" rx="6" fill="#ef444422" stroke="#ef4444" stroke-width="1"/>
-    <text x="1080" y="1198" text-anchor="middle" fill="#ef4444" font-size="10" font-weight="600">Maintenance</text>
-    <text x="1030" y="1235" text-anchor="middle" fill="#64748b" font-size="10">FMCSA · Safety · Equipment</text>
+    <rect x="565" y="1125" width="155" height="70" rx="8" fill="#0f172a" stroke="#22c55e" stroke-width="1"/>
+    <text x="643" y="1150" text-anchor="middle" fill="#22c55e" font-size="12" font-weight="700">Tracking</text>
+    <text x="643" y="1168" text-anchor="middle" fill="#94a3b8" font-size="10">GPS · ETA · Alerts</text>
+    <text x="643" y="1184" text-anchor="middle" fill="#64748b" font-size="9">T2</text>
 
-    <!-- Tier 5 -->
-    <rect x="1160" y="1140" width="200" height="110" rx="10" fill="#0f172a" stroke="#8b5cf6" stroke-width="1.5"/>
-    <text x="1260" y="1165" text-anchor="middle" fill="#8b5cf6" font-size="13" font-weight="700" letter-spacing="2" font-family="'Bebas Neue',sans-serif">TIER 5 — NEURAL</text>
-    <rect x="1180" y="1178" width="160" height="30" rx="6" fill="#8b5cf622" stroke="#8b5cf6" stroke-width="1"/>
-    <text x="1260" y="1198" text-anchor="middle" fill="#8b5cf6" font-size="11" font-weight="600">Neural Agent</text>
-    <text x="1260" y="1235" text-anchor="middle" fill="#64748b" font-size="10">Health scoring · Diagnostics</text>
+    <rect x="735" y="1125" width="155" height="70" rx="8" fill="#0f172a" stroke="#f59e0b" stroke-width="1"/>
+    <text x="813" y="1150" text-anchor="middle" fill="#f59e0b" font-size="12" font-weight="700">Billing</text>
+    <text x="813" y="1168" text-anchor="middle" fill="#94a3b8" font-size="10">Invoices · AR/AP</text>
+    <text x="813" y="1184" text-anchor="middle" fill="#64748b" font-size="9">T3</text>
+
+    <rect x="905" y="1125" width="155" height="70" rx="8" fill="#0f172a" stroke="#ef4444" stroke-width="1"/>
+    <text x="983" y="1150" text-anchor="middle" fill="#ef4444" font-size="12" font-weight="700">Safety / Compliance</text>
+    <text x="983" y="1168" text-anchor="middle" fill="#94a3b8" font-size="10">FMCSA · Authority</text>
+    <text x="983" y="1184" text-anchor="middle" fill="#64748b" font-size="9">T4</text>
+
+    <rect x="1075" y="1125" width="155" height="70" rx="8" fill="#0f172a" stroke="#ef4444" stroke-width="1"/>
+    <text x="1153" y="1150" text-anchor="middle" fill="#ef4444" font-size="12" font-weight="700">Safety Monitoring</text>
+    <text x="1153" y="1168" text-anchor="middle" fill="#94a3b8" font-size="10">Carrier scoring</text>
+    <text x="1153" y="1184" text-anchor="middle" fill="#64748b" font-size="9">T4</text>
+
+    <rect x="1245" y="1125" width="155" height="70" rx="8" fill="#0f172a" stroke="#8b5cf6" stroke-width="1"/>
+    <text x="1323" y="1150" text-anchor="middle" fill="#8b5cf6" font-size="12" font-weight="700">Neural Agent</text>
+    <text x="1323" y="1168" text-anchor="middle" fill="#94a3b8" font-size="10">Health · Diagnostics</text>
+    <text x="1323" y="1184" text-anchor="middle" fill="#64748b" font-size="9">T5</text>
 
     <!-- MCP Orchestrator -->
-    <rect x="200" y="1280" width="1000" height="60" rx="10" fill="#0f172a" stroke="#f59e0b" stroke-width="2"/>
-    <text x="700" y="1310" text-anchor="middle" fill="#f59e0b" font-size="16" font-weight="700" letter-spacing="3" font-family="'Bebas Neue',sans-serif">MCP SERVER — THE ORCHESTRATOR</text>
-    <text x="700" y="1330" text-anchor="middle" fill="#94a3b8" font-size="12">Central entry point · Routes tool calls to correct agent · Tier-gated access · Event bus</text>
+    <rect x="200" y="1215" width="1050" height="55" rx="10" fill="#0f172a" stroke="#f59e0b" stroke-width="2"/>
+    <text x="725" y="1242" text-anchor="middle" fill="#f59e0b" font-size="16" font-weight="700" letter-spacing="3" font-family="'Bebas Neue',sans-serif">MCP ORCHESTRATOR</text>
+    <text x="725" y="1260" text-anchor="middle" fill="#94a3b8" font-size="12">Central entry point · Routes tool calls to correct agent · Tier-gated access · Cross-tier event bus</text>
 
-    <!-- API endpoints row -->
-    <text x="750" y="1375" text-anchor="middle" fill="#64748b" font-size="12" font-weight="600">API Endpoints: /api/agents · /api/trucks · /api/drivers · /api/dispatches · /mcp</text>
-    <text x="750" y="1395" text-anchor="middle" fill="#475569" font-size="11">POST /mcp/tools/call → routes to any agent's tool · POST /mcp/events → cross-tier communication</text>
+    <text x="750" y="1292" text-anchor="middle" fill="#64748b" font-size="12">POST /mcp/tools/call → any agent · POST /mcp/events → cross-tier communication</text>
 
     <!-- ══════════════════════════════════════════════════ -->
-    <!-- LAYER 7: FRONTEND (React SPA) -->
+    <!-- LAYER 7: DATABASE -->
     <!-- ══════════════════════════════════════════════════ -->
-    <line x1="750" y1="1420" x2="750" y2="1480" stroke="#334155" stroke-width="1.5" marker-end="url(#a1)"/>
+    <line x1="750" y1="1300" x2="750" y2="1350" stroke="#334155" stroke-width="1.5" marker-end="url(#a1)"/>
 
-    <rect x="30" y="1480" width="1350" height="110" rx="16" fill="url(#gBlue)" stroke="#06b6d4" stroke-width="2"/>
-    <text x="750" y="1512" text-anchor="middle" fill="#67e8f9" font-size="16" font-weight="700" letter-spacing="4" font-family="'Bebas Neue',sans-serif">REACT SPA FRONTEND</text>
-    <text x="750" y="1538" text-anchor="middle" fill="#fff" font-size="20" font-weight="700" font-family="'Bebas Neue',sans-serif" letter-spacing="3">34 PAGES · VITE 5 · REACT ROUTER 6 · AXIOS</text>
-    <text x="750" y="1560" text-anchor="middle" fill="#94a3b8" font-size="12">Dark theme · DM Sans + Bebas Neue · Responsive · Inline SVG charts · No chart libraries</text>
-    <text x="750" y="1578" text-anchor="middle" fill="#64748b" font-size="11">Served at /cw_carriers/ · JWT auth · Mobile hamburger menu · Collapsible sidebar sections</text>
+    <rect x="30" y="1350" width="1420" height="140" rx="16" fill="url(#gGreen)" stroke="#22c55e" stroke-width="1.5"/>
+    <text x="750" y="1382" text-anchor="middle" fill="#86efac" font-size="16" font-weight="700" letter-spacing="4" font-family="'Bebas Neue',sans-serif">POSTGRESQL — UNIFIED DATA LAYER</text>
+
+    <rect x="60" y="1400" width="580" height="70" rx="8" fill="#0f172a" stroke="#0EA5E950"/>
+    <text x="350" y="1425" text-anchor="middle" fill="#0EA5E9" font-size="13" font-weight="700" letter-spacing="1" font-family="'Bebas Neue',sans-serif">CRM TABLES (13)</text>
+    <text x="350" y="1445" text-anchor="middle" fill="#94a3b8" font-size="11">cw_contacts · cw_loads · cw_call_logs · cw_invoices · cw_hubspot_sync</text>
+    <text x="350" y="1460" text-anchor="middle" fill="#64748b" font-size="10">HubSpot integration, call history, billing, treatments</text>
+
+    <rect x="660" y="1410" width="100" height="50" rx="6" fill="#C8962A" stroke="#C8962A"/>
+    <text x="710" y="1435" text-anchor="middle" fill="#0f172a" font-size="12" font-weight="800">BRIDGE</text>
+    <text x="710" y="1452" text-anchor="middle" fill="#0f172a" font-size="9">Auto-sync</text>
+
+    <rect x="780" y="1400" width="580" height="70" rx="8" fill="#0f172a" stroke="#22c55e50"/>
+    <text x="1070" y="1425" text-anchor="middle" fill="#22c55e" font-size="13" font-weight="700" letter-spacing="1" font-family="'Bebas Neue',sans-serif">BROKERAGE TABLES (12)</text>
+    <text x="1070" y="1445" text-anchor="middle" fill="#94a3b8" font-size="11">lg_loads · lg_carriers · lg_customers · lg_rate_benchmarks · lg_load_pairs</text>
+    <text x="1070" y="1460" text-anchor="middle" fill="#64748b" font-size="10">TMS ingestion, matching, rate intelligence, analytics</text>
 
     <!-- ══════════════════════════════════════════════════ -->
     <!-- LAYER 8: DEPLOYMENT -->
     <!-- ══════════════════════════════════════════════════ -->
-    <line x1="750" y1="1590" x2="750" y2="1640" stroke="#334155" stroke-width="1.5" marker-end="url(#a1)"/>
+    <line x1="750" y1="1490" x2="750" y2="1530" stroke="#334155" stroke-width="1.5" marker-end="url(#a1)"/>
 
-    <rect x="200" y="1640" width="1000" height="70" rx="12" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-    <text x="700" y="1672" text-anchor="middle" fill="#94a3b8" font-size="14" font-weight="700" letter-spacing="3" font-family="'Bebas Neue',sans-serif">DEPLOYMENT — RENDER</text>
-    <text x="700" y="1696" text-anchor="middle" fill="#64748b" font-size="12">Auto-deploy on git push to main · ~90s build · PostgreSQL managed DB · HTTPS · Node.js 20</text>
-
-    <!-- Stats footer -->
-    <text x="750" y="1760" text-anchor="middle" fill="#334155" font-size="14" font-weight="600">28 route files · 16 services · 34 pages · 25 tables · 8 AI agents · 5 tiers · 6 external integrations</text>
-    <text x="750" y="1790" text-anchor="middle" fill="#1e293b" font-size="12">Digit2AI LLC / RinglyPro · FreightMind AI · CW Carriers USA &copy; 2026</text>
+    <rect x="200" y="1530" width="1050" height="60" rx="12" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
+    <text x="725" y="1558" text-anchor="middle" fill="#8B949E" font-size="14" font-weight="700" letter-spacing="3" font-family="'Bebas Neue',sans-serif">DEPLOYMENT — RENDER</text>
+    <text x="725" y="1578" text-anchor="middle" fill="#64748b" font-size="12">Auto-deploy on push · React 18 SPA · Node.js · PostgreSQL · HTTPS · ~90s builds</text>
 
     <!-- Feedback loop -->
-    <path d="M 1380 950 Q 1480 950 1480 600 Q 1480 280 1380 280" fill="none" stroke="#475569" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#a1)"/>
-    <text x="1490" y="620" fill="#475569" font-size="12" font-weight="600" transform="rotate(90,1490,620)">FEEDBACK LOOP</text>
+    <path d="M 1450 950 Q 1490 950 1490 600 Q 1490 270 1450 270" fill="none" stroke="#475569" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#a1)"/>
+    <text x="1500" y="620" fill="#475569" font-size="12" font-weight="600" transform="rotate(90,1500,620)">CONTINUOUS FEEDBACK</text>
+
+    <!-- Stats -->
+    <text x="750" y="1640" text-anchor="middle" fill="#475569" font-size="14" font-weight="600">8 AI agents · 5 tiers · 34 pages · 25 tables · 6 external integrations · 10,199+ loads</text>
+    <text x="750" y="1670" text-anchor="middle" fill="#334155" font-size="13" font-style="italic">"Not a replacement. A central AI-enabled operating layer that connects your existing tools."</text>
+    <text x="750" y="1700" text-anchor="middle" fill="#1e293b" font-size="11">Digit2AI LLC / RinglyPro · FreightMind AI &copy; 2026 · CONFIDENTIAL</text>
 
   </svg>
 </div>

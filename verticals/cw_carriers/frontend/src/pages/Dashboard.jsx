@@ -26,13 +26,17 @@ export default function Dashboard() {
     });
   }, []);
 
+  // Commercially relevant KPIs — business outcomes, not system counts
+  const loadTotal = kpis.total_loads || 0;
+  const loadOpen = kpis.open_loads || 0;
+  const covRate = loadTotal > 0 ? Math.round(((loadTotal - loadOpen) / loadTotal) * 100) : 0;
   const kpiCards = [
-    { label: 'Open Loads', value: kpis.open_loads || 0, color: '#1A4FA8' },
+    { label: 'Total Loads', value: (loadTotal).toLocaleString(), color: '#0EA5E9' },
+    { label: 'Open / Uncovered', value: loadOpen.toLocaleString(), color: loadOpen > 50 ? '#EF4444' : '#F59E0B' },
+    { label: 'Coverage Rate', value: `${covRate}%`, color: covRate >= 80 ? '#238636' : covRate >= 50 ? '#C8962A' : '#EF4444' },
+    { label: 'Active Carriers', value: (kpis.active_carriers || 0).toLocaleString(), color: '#8957E5' },
     { label: 'Covered Today', value: kpis.covered_today || 0, color: '#238636' },
-    { label: 'Active Carriers', value: kpis.active_carriers || 0, color: '#C8962A' },
-    { label: 'Calls Today', value: kpis.calls_today || 0, color: '#8957E5' },
-    { label: 'HubSpot Contacts', value: kpis.hubspot_contacts || 0, color: '#F97316' },
-    { label: 'Pending Sync', value: kpis.pending_sync || 0, color: '#EF4444' },
+    { label: 'HubSpot Pipeline', value: neural?.hubspot?.pipeline_value ? `$${Number(neural.hubspot.pipeline_value).toLocaleString()}` : '$0', color: '#ff7a59' },
   ];
 
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#8B949E' }}>Loading dashboard...</div>;
@@ -41,7 +45,7 @@ export default function Dashboard() {
 
   return (
     <div>
-      <h2 style={s.title}>COMMAND CENTER</h2>
+      <h2 style={s.title}>UNIFIED COMMAND DASHBOARD</h2>
 
       {/* KPI Row */}
       <div style={s.kpiGrid}>
