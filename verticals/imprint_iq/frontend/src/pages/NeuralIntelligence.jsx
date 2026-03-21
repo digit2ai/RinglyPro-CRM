@@ -80,7 +80,7 @@ export default function NeuralIntelligence() {
           <div style={{ display:'flex', gap:10 }}>
             {data.connections?.map((c, i) => (
               <div key={i} style={{ background:'#161B22', borderRadius:8, padding:'8px 14px', border:'1px solid #30363D', display:'flex', alignItems:'center', gap:8, fontSize:12 }}>
-                <span>{c.icon}</span>
+                {/* icon removed */}
                 <span style={{ color:'#E6EDF3' }}>{c.name}</span>
                 <div style={{ width:8, height:8, borderRadius:'50%', background: c.status === 'connected' ? '#238636' : '#C8962A' }} />
               </div>

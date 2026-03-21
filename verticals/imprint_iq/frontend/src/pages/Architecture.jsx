@@ -13,7 +13,7 @@ const LAYERS = [
   {
     id: 'layer1', num: 1, name: 'ERP / Operational', color: BLUE, status: 'BUILT',
     tagline: 'What Already Happened',
-    icon: '🗄️',
+    icon: '',
     description: 'Structured records from the back office — the foundation of all intelligence.',
     dataSources: ['QuickBooks', 'Antera Advance', 'commonsku', 'Facilisgroup', 'SAGE', 'CSV Export'],
     tables: [
@@ -41,7 +41,7 @@ const LAYERS = [
   {
     id: 'layer2', num: 2, name: 'Communications', color: GREEN, status: 'PLANNED',
     tagline: 'What People Said',
-    icon: '💬',
+    icon: '',
     description: 'Every conversation is intelligence. 60% of the real value lives here — intent, sentiment, objections, competitor mentions.',
     dataSources: ['RingCentral / 8x8 / Twilio', 'Gmail / Outlook / Exchange', 'Website Chat', 'Twilio SMS', 'Zoom / Teams'],
     tables: [
@@ -61,7 +61,7 @@ const LAYERS = [
   {
     id: 'layer3', num: 3, name: 'Market & Industry', color: GOLD, status: 'PLANNED',
     tagline: 'What\'s Happening Outside',
-    icon: '🌐',
+    icon: '',
     description: 'External signals — product trends, supplier stock, market pricing, trade shows, competitor activity.',
     dataSources: ['ASI / ESP', 'SAGE', 'PromoStandards API', 'PPAI Event Calendar', 'Web Monitoring'],
     tables: [
@@ -81,7 +81,7 @@ const LAYERS = [
   {
     id: 'layer4', num: 4, name: 'Production & Sensors', color: RED, status: 'PLANNED',
     tagline: 'What Machines Are Doing',
-    icon: '🏭',
+    icon: '',
     description: 'Real-time shop floor — machine status, OEE, QC vision, barcode tracking, shipping events.',
     dataSources: ['PLC / IoT Sensors', 'QC Station Cameras', 'Barcode Scanners', 'UPS / FedEx / USPS API', 'n8n Webhooks'],
     tables: [
@@ -101,7 +101,7 @@ const LAYERS = [
   {
     id: 'layer5', num: 5, name: 'Behavioral & Engagement', color: PURPLE, status: 'PLANNED',
     tagline: 'What They Will Do Next',
-    icon: '🔮',
+    icon: '',
     description: 'Digital behavior signals that predict future actions — browsing, email engagement, search, social, churn risk.',
     dataSources: ['Website / Portal Analytics', 'SendGrid / Mailchimp', 'Search Logs', 'LinkedIn / Social', 'NPS / Reviews'],
     tables: [
@@ -121,17 +121,17 @@ const LAYERS = [
 ];
 
 const AGENTS = [
-  { name: 'Catalog Intelligence', icon: '📚', layers: [1,3,5], desc: 'SKU tagging, trend prediction, catalog curation, gap analysis' },
-  { name: 'Quote Engine', icon: '💰', layers: [1,2,3], desc: 'NL→quote, pricing, volume breaks, multi-option proposals' },
-  { name: 'Art Director', icon: '🎨', layers: [1,4], desc: 'Preflight validation, virtual proofs, color matching, revision automation' },
-  { name: 'Production Orchestrator', icon: '🏭', layers: [1,4], desc: 'Job routing, scheduling, bottleneck detection, OEE optimization' },
-  { name: 'Supply Chain', icon: '🚚', layers: [1,3], desc: 'Auto-reorder, supplier scoring, overseas pipeline, MOQ optimization' },
-  { name: 'QC Vision', icon: '🔍', layers: [1,4], desc: 'AI visual inspection, color delta, defect detection, pass/fail automation' },
-  { name: 'Fulfillment', icon: '📬', layers: [1,4], desc: 'Carrier selection, label generation, split shipments, delivery tracking' },
-  { name: 'Customer Voice', icon: '🎙️', layers: [1,2], desc: 'Rachel/Ana/Lina — inbound/outbound calls, reorders, status checks' },
-  { name: 'Sales Intelligence', icon: '📊', layers: [1,2,5], desc: 'Lead scoring, pipeline management, win/loss analysis, rep performance' },
-  { name: 'Finance & Billing', icon: '🧾', layers: [1], desc: 'Auto-invoice, collections automation, margin analysis, tax compliance' },
-  { name: 'Compliance', icon: '🛡️', layers: [1,3], desc: 'CPSIA, Prop 65, import compliance, recall monitoring, ESG reporting' },
+  { name: 'Catalog Intelligence', layers: [1,3,5], desc: 'SKU tagging, trend prediction, catalog curation, gap analysis' },
+  { name: 'Quote Engine', layers: [1,2,3], desc: 'NL→quote, pricing, volume breaks, multi-option proposals' },
+  { name: 'Art Director', layers: [1,4], desc: 'Preflight validation, virtual proofs, color matching, revision automation' },
+  { name: 'Production Orchestrator', layers: [1,4], desc: 'Job routing, scheduling, bottleneck detection, OEE optimization' },
+  { name: 'Supply Chain', layers: [1,3], desc: 'Auto-reorder, supplier scoring, overseas pipeline, MOQ optimization' },
+  { name: 'QC Vision', layers: [1,4], desc: 'AI visual inspection, color delta, defect detection, pass/fail automation' },
+  { name: 'Fulfillment', layers: [1,4], desc: 'Carrier selection, label generation, split shipments, delivery tracking' },
+  { name: 'Customer Voice', layers: [1,2], desc: 'Rachel/Ana/Lina — inbound/outbound calls, reorders, status checks' },
+  { name: 'Sales Intelligence', layers: [1,2,5], desc: 'Lead scoring, pipeline management, win/loss analysis, rep performance' },
+  { name: 'Finance & Billing', layers: [1], desc: 'Auto-invoice, collections automation, margin analysis, tax compliance' },
+  { name: 'Compliance', layers: [1,3], desc: 'CPSIA, Prop 65, import compliance, recall monitoring, ESG reporting' },
 ];
 
 const COMMANDS = [
@@ -190,7 +190,7 @@ export default function Architecture() {
                   style={{ display:'grid', gridTemplateColumns:'40px 1fr 200px 100px', alignItems:'center', padding:'14px 16px', borderRadius:10, cursor:'pointer', border:`1px solid ${layer.color}33`, background:`${layer.color}08`, transition:'all 0.2s' }}
                   onMouseEnter={e => e.currentTarget.style.background = `${layer.color}18`}
                   onMouseLeave={e => e.currentTarget.style.background = `${layer.color}08`}>
-                  <span style={{ fontSize:22 }}>{layer.icon}</span>
+                  <span style={{ fontSize:14, color:layer.color, fontWeight:700 }}>L{layer.num}</span>
                   <div>
                     <span style={{ color:layer.color, fontSize:14, fontWeight:700 }}>LAYER {layer.num}: {layer.name.toUpperCase()}</span>
                     <span style={{ color:'#8B949E', fontSize:12, marginLeft:12 }}>{layer.tagline}</span>
@@ -210,12 +210,12 @@ export default function Architecture() {
             </div>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
               <div style={{ background:`${GOLD}11`, borderRadius:12, padding:16, border:`1px solid ${GOLD}33`, textAlign:'center' }}>
-                <div style={{ fontSize:28 }}>🧠</div>
+                <div style={{ fontSize:16, color:GOLD, fontWeight:700 }}>NI</div>
                 <div style={{ fontFamily:'Bebas Neue', color:GOLD, fontSize:18, marginTop:4 }}>NEURAL INTELLIGENCE</div>
                 <div style={{ color:'#8B949E', fontSize:11, marginTop:4 }}>6 Health Panels &bull; 15+ Analyzers &bull; Diagnostic + Prescriptive</div>
               </div>
               <div style={{ background:`${GREEN}11`, borderRadius:12, padding:16, border:`1px solid ${GREEN}33`, textAlign:'center' }}>
-                <div style={{ fontSize:28 }}>🤖</div>
+                <div style={{ fontSize:16, color:GREEN, fontWeight:700 }}>AI</div>
                 <div style={{ fontFamily:'Bebas Neue', color:GREEN, fontSize:18, marginTop:4 }}>11 AI AGENTS</div>
                 <div style={{ color:'#8B949E', fontSize:11, marginTop:4 }}>Autonomous operations &bull; Treatment execution &bull; 24/7</div>
               </div>
@@ -291,14 +291,14 @@ export default function Architecture() {
 
                 {/* ─── EXTERNAL SOURCES (Top) ─── */}
                 <text x={550} y={20} fill="#484F58" fontSize={10} textAnchor="middle" fontFamily="Bebas Neue" letterSpacing={2}>EXTERNAL DATA SOURCES</text>
-                {box(10,30,120,48,BLUE,'QuickBooks','ERP / Accounting','🗄️')}
-                {box(140,30,120,48,BLUE,'Antera / commonsku','Promo ERP','📦')}
-                {box(270,30,120,48,GREEN,'Phone System','RingCentral / Twilio','📞')}
-                {box(400,30,120,48,GREEN,'Email / Chat','Gmail / Outlook','💬')}
-                {box(530,30,120,48,GOLD,'ASI / SAGE','Product Feeds','📚')}
-                {box(660,30,120,48,GOLD,'PromoStandards','Inventory API','🔗')}
-                {box(790,30,120,48,RED,'PLC / Sensors','Shop Floor IoT','🏭')}
-                {box(920,30,120,48,PURPLE,'Website / Portal','Analytics','🌐')}
+                {box(10,30,120,48,BLUE,'QuickBooks','ERP / Accounting')}
+                {box(140,30,120,48,BLUE,'Antera / commonsku','Promo ERP')}
+                {box(270,30,120,48,GREEN,'Phone System','RingCentral / Twilio')}
+                {box(400,30,120,48,GREEN,'Email / Chat','Gmail / Outlook')}
+                {box(530,30,120,48,GOLD,'ASI / SAGE','Product Feeds')}
+                {box(660,30,120,48,GOLD,'PromoStandards','Inventory API')}
+                {box(790,30,120,48,RED,'PLC / Sensors','Shop Floor IoT')}
+                {box(920,30,120,48,PURPLE,'Website / Portal','Analytics')}
 
                 {/* Arrows down from sources to layers */}
                 {arrow(70,78,70,120,BLUE)}
@@ -321,7 +321,7 @@ export default function Architecture() {
                 <rect x={270} y={124} width={6} height={6} rx={3} fill={GREEN}/><text x={282} y={131} fill="#8B949E" fontSize={9}>Products</text>
                 <rect x={340} y={124} width={6} height={6} rx={3} fill={GREEN}/><text x={352} y={131} fill="#8B949E" fontSize={9}>Inventory</text>
                 <rect x={410} y={124} width={6} height={6} rx={3} fill={GREEN}/><text x={422} y={131} fill="#8B949E" fontSize={9}>Shipments</text>
-                <text x={30} y={155} fill={GREEN} fontSize={9} fontFamily="DM Sans">✅ BUILT — CSV upload + smart column mapping</text>
+                <text x={30} y={155} fill={GREEN} fontSize={9} fontFamily="DM Sans">BUILT — CSV upload + smart column mapping</text>
 
                 {/* ─── LAYER 2: COMMS ─── */}
                 <rect x={20} y={175} width={500} height={55} rx={10} fill={GREEN+'10'} stroke={GREEN} strokeWidth={2} />
@@ -364,7 +364,7 @@ export default function Architecture() {
                 <text x={720} y={506} fill="#C9D1D9" fontSize={10} textAnchor="middle" fontFamily="DM Sans">6 Health Panels</text>
                 <text x={720} y={520} fill="#C9D1D9" fontSize={10} textAnchor="middle" fontFamily="DM Sans">15+ Diagnostic Analyzers</text>
                 <text x={720} y={536} fill="#8B949E" fontSize={9} textAnchor="middle" fontFamily="DM Sans">Diagnostic + Prescriptive (Treatment = $$$)</text>
-                <text x={720} y={552} fill={GREEN} fontSize={9} textAnchor="middle" fontFamily="DM Sans">✅ BUILT</text>
+                <text x={720} y={552} fill={GREEN} fontSize={9} textAnchor="middle" fontFamily="DM Sans">BUILT</text>
 
                 {/* ─── Arrow: Neural → Agents ─── */}
                 <line x1={720} y1={560} x2={720} y2={590} stroke={GOLD} strokeWidth={2} markerEnd="url(#arrowGold)"/>
@@ -373,24 +373,23 @@ export default function Architecture() {
                 <rect x={545} y={595} width={350} height={110} rx={14} fill={GREEN+'12'} stroke={GREEN} strokeWidth={2} />
                 <text x={720} y={618} fill={GREEN} fontSize={13} fontWeight="700" textAnchor="middle" fontFamily="Bebas Neue" letterSpacing={2}>11 AI AGENTS</text>
                 {[
-                  { x:555, y:628, icon:'📚', name:'Catalog' },
-                  { x:625, y:628, icon:'💰', name:'Quote' },
-                  { x:695, y:628, icon:'🎨', name:'Art' },
-                  { x:765, y:628, icon:'🏭', name:'Production' },
-                  { x:835, y:628, icon:'🚚', name:'Supply' },
-                  { x:555, y:665, icon:'🔍', name:'QC' },
-                  { x:625, y:665, icon:'📬', name:'Fulfill' },
-                  { x:695, y:665, icon:'🎙️', name:'Voice' },
-                  { x:765, y:665, icon:'📊', name:'Sales' },
-                  { x:835, y:665, icon:'🧾', name:'Finance' },
+                  { x:555, y:628, name:'Catalog' },
+                  { x:625, y:628, name:'Quote' },
+                  { x:695, y:628, name:'Art' },
+                  { x:765, y:628, name:'Production' },
+                  { x:835, y:628, name:'Supply' },
+                  { x:555, y:665, name:'QC' },
+                  { x:625, y:665, name:'Fulfill' },
+                  { x:695, y:665, name:'Voice' },
+                  { x:765, y:665, name:'Sales' },
+                  { x:835, y:665, name:'Finance' },
                 ].map((a,i) => (
                   <g key={i}>
                     <rect x={a.x} y={a.y} width={60} height={28} rx={6} fill="#21262D" stroke="#30363D" strokeWidth={1}/>
-                    <text x={a.x+8} y={a.y+18} fontSize={11}>{a.icon}</text>
-                    <text x={a.x+24} y={a.y+18} fill="#8B949E" fontSize={8} fontFamily="DM Sans">{a.name}</text>
+                    <text x={a.x+8} y={a.y+18} fill="#8B949E" fontSize={8} fontFamily="DM Sans">{a.name}</text>
                   </g>
                 ))}
-                <text x={720} y={712} fill={GREEN} fontSize={9} textAnchor="middle" fontFamily="DM Sans">✅ REGISTERED — Standby Mode (activate per consulting license)</text>
+                <text x={720} y={712} fill={GREEN} fontSize={9} textAnchor="middle" fontFamily="DM Sans">REGISTERED — Standby Mode (activate per consulting license)</text>
 
                 {/* ─── TREATMENT PAYWALL ─── */}
                 <rect x={900} y={595} width={180} height={110} rx={14} fill={RED+'12'} stroke={RED} strokeWidth={2} strokeDasharray="6,3"/>
@@ -412,7 +411,7 @@ export default function Architecture() {
                 <text x={660} y={166} fill="#8B949E" fontSize={9} textAnchor="middle" fontFamily="DM Sans">Smart Column Mapping</text>
                 <text x={660} y={180} fill="#8B949E" fontSize={9} textAnchor="middle" fontFamily="DM Sans">API Connectors (planned)</text>
                 <text x={660} y={198} fill="#484F58" fontSize={8} textAnchor="middle" fontFamily="DM Sans">6 types active &bull; 8 more planned</text>
-                <text x={660} y={212} fill={GREEN} fontSize={9} textAnchor="middle" fontFamily="DM Sans">✅ BUILT</text>
+                <text x={660} y={212} fill={GREEN} fontSize={9} textAnchor="middle" fontFamily="DM Sans">BUILT</text>
                 {dashedArrow(560,160,520,140,CYAN)}
 
                 {/* ─── CLIENT PORTAL (Right side top) ─── */}
@@ -421,7 +420,7 @@ export default function Architecture() {
                 <text x={890} y={138} fill="#8B949E" fontSize={9} textAnchor="middle" fontFamily="DM Sans">Neural Health Score</text>
                 <text x={890} y={152} fill="#8B949E" fontSize={9} textAnchor="middle" fontFamily="DM Sans">KPIs + Findings</text>
                 <text x={890} y={166} fill="#8B949E" fontSize={9} textAnchor="middle" fontFamily="DM Sans">Process & ROI</text>
-                <text x={890} y={180} fill={GREEN} fontSize={9} textAnchor="middle" fontFamily="DM Sans">✅ BUILT</text>
+                <text x={890} y={180} fill={GREEN} fontSize={9} textAnchor="middle" fontFamily="DM Sans">BUILT</text>
                 {dashedArrow(890,190,780,460,'#30363D')}
 
               </svg>
@@ -463,7 +462,7 @@ export default function Architecture() {
             {LAYERS.map(l => (
               <button key={l.id} onClick={() => setActiveLayer(activeLayer === l.id ? null : l.id)}
                 style={{ padding:'8px 14px', borderRadius:6, border:`1px solid ${activeLayer === l.id ? l.color : BORDER}`, background: activeLayer === l.id ? l.color+'22' : 'transparent', color: activeLayer === l.id ? l.color : '#8B949E', fontSize:12, cursor:'pointer' }}>
-                {l.icon} Layer {l.num}
+                Layer {l.num}
               </button>
             ))}
           </div>
@@ -474,7 +473,7 @@ export default function Architecture() {
               {/* Header */}
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
                 <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-                  <span style={{ fontSize:28 }}>{layer.icon}</span>
+                  <span style={{ fontSize:16, color:layer.color, fontWeight:700 }}>L{layer.num}</span>
                   <div>
                     <h3 style={{ fontFamily:'Bebas Neue', color:layer.color, fontSize:22, margin:0 }}>LAYER {layer.num}: {layer.name.toUpperCase()}</h3>
                     <p style={{ color:'#8B949E', fontSize:12, margin:0 }}>{layer.tagline}</p>
@@ -545,7 +544,6 @@ export default function Architecture() {
               <div key={i} style={{ background:CARD, borderRadius:12, padding:18, border:`1px solid ${BORDER}` }}>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
                   <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                    <span style={{ fontSize:26 }}>{agent.icon}</span>
                     <span style={{ color:'#E6EDF3', fontSize:15, fontWeight:700 }}>{agent.name}</span>
                   </div>
                 </div>
@@ -554,7 +552,7 @@ export default function Architecture() {
                   <span style={{ color:'#484F58', fontSize:10 }}>Feeds from:</span>
                   {agent.layers.map(l => {
                     const layer = LAYERS[l-1];
-                    return <span key={l} style={{ fontSize:10, padding:'2px 8px', borderRadius:4, background:layer.color+'22', color:layer.color }}>{layer.icon} L{l}</span>;
+                    return <span key={l} style={{ fontSize:10, padding:'2px 8px', borderRadius:4, background:layer.color+'22', color:layer.color }}>L{l}</span>;
                   })}
                 </div>
               </div>
@@ -575,7 +573,7 @@ export default function Architecture() {
           {LAYERS.map(layer => (
             <div key={layer.id} style={{ marginBottom:16 }}>
               <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
-                <span style={{ fontSize:18 }}>{layer.icon}</span>
+                <span style={{ fontSize:14, color:layer.color, fontWeight:700 }}>L{layer.num}</span>
                 <span style={{ fontFamily:'Bebas Neue', color:layer.color, fontSize:16 }}>LAYER {layer.num}: {layer.name.toUpperCase()}</span>
                 {statusBadge(layer.status)}
               </div>
@@ -594,7 +592,7 @@ export default function Architecture() {
           {/* Core infrastructure tables */}
           <div style={{ marginBottom:16 }}>
             <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
-              <span style={{ fontSize:18 }}>⚙️</span>
+              <span style={{ fontSize:14, color:'#8B949E', fontWeight:700 }}>CORE</span>
               <span style={{ fontFamily:'Bebas Neue', color:'#8B949E', fontSize:16 }}>CORE INFRASTRUCTURE</span>
               {statusBadge('BUILT')}
             </div>
@@ -630,7 +628,7 @@ export default function Architecture() {
           {/* Hero */}
           <div style={{ background:`linear-gradient(135deg, ${GOLD}15, ${GREEN}10)`, borderRadius:16, padding:28, border:`1px solid ${GOLD}33`, marginBottom:24 }}>
             <div style={{ display:'flex', alignItems:'center', gap:16, marginBottom:16 }}>
-              <div style={{ width:56, height:56, borderRadius:12, background:GOLD+'22', display:'flex', alignItems:'center', justifyContent:'center', fontSize:28 }}>🏗️</div>
+              <div style={{ width:56, height:56, borderRadius:12, background:GOLD+'22', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, color:GOLD, fontWeight:700 }}>ARC</div>
               <div>
                 <h3 style={{ fontFamily:'Bebas Neue', color:GOLD, fontSize:28, margin:0, letterSpacing:2 }}>RINGLYPRO-ARCHITECT</h3>
                 <p style={{ color:'#C9D1D9', fontSize:14, margin:0 }}>AI Build Agent for the ImprintIQ Ecosystem</p>
@@ -665,16 +663,15 @@ export default function Architecture() {
             <h4 style={{ fontFamily:'Bebas Neue', color:'#E6EDF3', fontSize:20, marginBottom:16 }}>THE PROMPT INCLUDES</h4>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(300px,1fr))', gap:12 }}>
               {[
-                { icon: '🗄️', title: 'Full SQL Schemas', desc: 'Complete CREATE TABLE statements for every table in all 5 data layers — ready to execute' },
-                { icon: '⚙️', title: 'Backend Specifications', desc: 'Express routes, service logic, webhook endpoints, data processing pipelines' },
-                { icon: '🧠', title: 'Neural Analyzers', desc: 'Diagnostic analyzer definitions per layer — what to measure, how to score, what findings to generate' },
-                { icon: '🖥️', title: 'Frontend Pages', desc: 'React component specs with layout, data fetching, interactions, and dark theme styling' },
-                { icon: '🚀', title: 'Build & Deploy', desc: 'Vite build commands, git commit/push, Render auto-deploy, health check verification' },
-                { icon: '✅', title: 'State Tracking', desc: 'Documents everything already built so the agent never rebuilds existing work or duplicates code' },
+                { title: 'Full SQL Schemas', desc: 'Complete CREATE TABLE statements for every table in all 5 data layers — ready to execute' },
+                { title: 'Backend Specifications', desc: 'Express routes, service logic, webhook endpoints, data processing pipelines' },
+                { title: 'Neural Analyzers', desc: 'Diagnostic analyzer definitions per layer — what to measure, how to score, what findings to generate' },
+                { title: 'Frontend Pages', desc: 'React component specs with layout, data fetching, interactions, and dark theme styling' },
+                { title: 'Build & Deploy', desc: 'Vite build commands, git commit/push, Render auto-deploy, health check verification' },
+                { title: 'State Tracking', desc: 'Documents everything already built so the agent never rebuilds existing work or duplicates code' },
               ].map((item, i) => (
                 <div key={i} style={{ padding:16, background:'#0D1117', borderRadius:10, border:'1px solid #21262D' }}>
                   <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:8 }}>
-                    <span style={{ fontSize:22 }}>{item.icon}</span>
                     <span style={{ color:'#E6EDF3', fontSize:14, fontWeight:700 }}>{item.title}</span>
                   </div>
                   <p style={{ color:'#8B949E', fontSize:12, lineHeight:1.5, margin:0 }}>{item.desc}</p>
@@ -715,17 +712,16 @@ export default function Architecture() {
             <h4 style={{ fontFamily:'Bebas Neue', color:'#E6EDF3', fontSize:20, marginBottom:16 }}>TECH STACK</h4>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))', gap:10 }}>
               {[
-                { cat: 'Backend', items: 'Node.js, Express.js, Raw SQL', icon: '⚙️' },
-                { cat: 'Database', items: 'PostgreSQL on Render', icon: '🗄️' },
-                { cat: 'Frontend', items: 'React 18, Vite 5, React Router', icon: '🖥️' },
-                { cat: 'Auth', items: 'JWT (bcryptjs + jsonwebtoken)', icon: '🔐' },
-                { cat: 'Voice AI', items: 'ElevenLabs WebRTC (Rachel/Ana/Lina)', icon: '🎙️' },
-                { cat: 'Deploy', items: 'Render auto-deploy on git push', icon: '🚀' },
-                { cat: 'Design', items: 'Inline React styles, dark theme', icon: '🎨' },
-                { cat: 'Fonts', items: 'Bebas Neue + DM Sans', icon: '🔤' },
+                { cat: 'Backend', items: 'Node.js, Express.js, Raw SQL' },
+                { cat: 'Database', items: 'PostgreSQL on Render' },
+                { cat: 'Frontend', items: 'React 18, Vite 5, React Router' },
+                { cat: 'Auth', items: 'JWT (bcryptjs + jsonwebtoken)' },
+                { cat: 'Voice AI', items: 'ElevenLabs WebRTC (Rachel/Ana/Lina)' },
+                { cat: 'Deploy', items: 'Render auto-deploy on git push' },
+                { cat: 'Design', items: 'Inline React styles, dark theme' },
+                { cat: 'Fonts', items: 'Bebas Neue + DM Sans' },
               ].map((t, i) => (
                 <div key={i} style={{ padding:12, background:'#0D1117', borderRadius:8, border:'1px solid #21262D', display:'flex', alignItems:'center', gap:10 }}>
-                  <span style={{ fontSize:18 }}>{t.icon}</span>
                   <div>
                     <div style={{ color:GOLD, fontSize:11, fontWeight:700 }}>{t.cat}</div>
                     <div style={{ color:'#C9D1D9', fontSize:12 }}>{t.items}</div>

@@ -10,29 +10,29 @@ const BORDER = '#30363D';
 const BG = '#0D1117';
 
 const CURRENT_STEPS = [
-  { area: 'Lead Capture', icon: '📞', people: 'Receptionist + Sales Rep', tools: 'Phone, Email, Spreadsheet', time: '2-4 hours', pain: 'Missed calls go nowhere. Leads lost in email. No follow-up tracking.', cost: 55000 },
-  { area: 'Quoting', icon: '📋', people: 'Inside Sales Rep', tools: 'Excel, Email, PDF templates', time: '4-24 hours', pain: 'Manual price lookups. Copy-paste errors. No margin visibility until later.', cost: 180000 },
-  { area: 'Artwork & Proofing', icon: '🎨', people: 'Art Department (3-5 people)', tools: 'Email, Illustrator, manual review', time: '2-5 days', pain: '#1 bottleneck. Bad art delays everything. 3+ revision cycles average.', cost: 250000 },
-  { area: 'Order Entry', icon: '📝', people: 'Order Processing Team', tools: 'ERP, manual data entry', time: '1-2 hours per order', pain: 'Re-keying data from quote to order. Errors cause production mistakes.', cost: 120000 },
-  { area: 'Production', icon: '🏭', people: 'Production Manager + Operators', tools: 'Whiteboard, paper tickets, tribal knowledge', time: 'Varies', pain: 'No real-time visibility. Bottlenecks discovered too late. Manual scheduling.', cost: 350000 },
-  { area: 'Quality Control', icon: '🔍', people: 'QC Inspector (1-2 people)', tools: 'Eyes, ruler, Pantone book', time: '15-30 min per job', pain: 'Subjective. Defects caught late. Reprints cost time and materials.', cost: 95000 },
-  { area: 'Shipping', icon: '📦', people: 'Shipping Clerk', tools: 'Carrier websites, manual labels', time: '30-60 min per order', pain: 'No carrier optimization. Manual tracking updates. Split shipments chaos.', cost: 85000 },
-  { area: 'Invoicing', icon: '🧾', people: 'Accounting (2-3 people)', tools: 'QuickBooks / ERP', time: '1-3 days after ship', pain: 'Invoice delays = payment delays. Manual collections. 45+ day DSO.', cost: 140000 },
-  { area: 'Customer Follow-Up', icon: '🔄', people: 'Sales Rep (if they remember)', tools: 'Memory, maybe CRM', time: 'Often never', pain: 'No reorder detection. Customers leave without anyone noticing.', cost: 200000 },
-  { area: 'Reporting', icon: '📊', people: 'Controller / Ops Manager', tools: 'Excel, ERP exports, manual compilation', time: '1-2 days per month', pain: 'Backward-looking. No real-time visibility. Data in 10 different places.', cost: 75000 },
+  { area: 'Lead Capture', people: 'Receptionist + Sales Rep', tools: 'Phone, Email, Spreadsheet', time: '2-4 hours', pain: 'Missed calls go nowhere. Leads lost in email. No follow-up tracking.', cost: 55000 },
+  { area: 'Quoting', people: 'Inside Sales Rep', tools: 'Excel, Email, PDF templates', time: '4-24 hours', pain: 'Manual price lookups. Copy-paste errors. No margin visibility until later.', cost: 180000 },
+  { area: 'Artwork & Proofing', people: 'Art Department (3-5 people)', tools: 'Email, Illustrator, manual review', time: '2-5 days', pain: '#1 bottleneck. Bad art delays everything. 3+ revision cycles average.', cost: 250000 },
+  { area: 'Order Entry', people: 'Order Processing Team', tools: 'ERP, manual data entry', time: '1-2 hours per order', pain: 'Re-keying data from quote to order. Errors cause production mistakes.', cost: 120000 },
+  { area: 'Production', people: 'Production Manager + Operators', tools: 'Whiteboard, paper tickets, tribal knowledge', time: 'Varies', pain: 'No real-time visibility. Bottlenecks discovered too late. Manual scheduling.', cost: 350000 },
+  { area: 'Quality Control', people: 'QC Inspector (1-2 people)', tools: 'Eyes, ruler, Pantone book', time: '15-30 min per job', pain: 'Subjective. Defects caught late. Reprints cost time and materials.', cost: 95000 },
+  { area: 'Shipping', people: 'Shipping Clerk', tools: 'Carrier websites, manual labels', time: '30-60 min per order', pain: 'No carrier optimization. Manual tracking updates. Split shipments chaos.', cost: 85000 },
+  { area: 'Invoicing', people: 'Accounting (2-3 people)', tools: 'QuickBooks / ERP', time: '1-3 days after ship', pain: 'Invoice delays = payment delays. Manual collections. 45+ day DSO.', cost: 140000 },
+  { area: 'Customer Follow-Up', people: 'Sales Rep (if they remember)', tools: 'Memory, maybe CRM', time: 'Often never', pain: 'No reorder detection. Customers leave without anyone noticing.', cost: 200000 },
+  { area: 'Reporting', people: 'Controller / Ops Manager', tools: 'Excel, ERP exports, manual compilation', time: '1-2 days per month', pain: 'Backward-looking. No real-time visibility. Data in 10 different places.', cost: 75000 },
 ];
 
 const TARGET_STEPS = [
-  { area: 'Lead Capture', icon: '🎙️', agent: 'Customer Voice Agent', how: 'Rachel/Ana answers every call 24/7. Auto-creates customer record, captures intent, generates quote if requested.', time: 'Instant', savings: '95%' },
-  { area: 'Quoting', icon: '💰', agent: 'Quote Engine Agent', how: '"500 pens under $3 for a trade show" → instant 3-tier quote with pricing, decoration, volume breaks, margin analysis.', time: '< 30 seconds', savings: '90%' },
-  { area: 'Artwork & Proofing', icon: '🎨', agent: 'Art Director Agent', how: 'Upload → AI validates DPI, vectors, colors in 2 sec. Auto-generates virtual mockup. Customer approves with 1 click.', time: '< 5 minutes', savings: '85%' },
-  { area: 'Order Entry', icon: '⚡', agent: 'Quote Engine + Production', how: 'Quote approved → order auto-created. Zero re-keying. All specs flow from quote to production ticket.', time: 'Instant', savings: '100%' },
-  { area: 'Production', icon: '🏭', agent: 'Production Orchestrator', how: 'AI routes jobs to optimal line. Real-time Kanban board. Bottleneck prediction before it happens.', time: 'Auto-scheduled', savings: '60%' },
-  { area: 'Quality Control', icon: '🔍', agent: 'QC Vision Agent', how: 'Camera compares finished product to approved proof. Color delta measurement. Automatic pass/fail.', time: '< 3 seconds', savings: '80%' },
-  { area: 'Shipping', icon: '📬', agent: 'Fulfillment Agent', how: 'AI selects cheapest carrier for delivery date. Auto-generates labels. Customer gets tracking instantly.', time: '< 1 minute', savings: '75%' },
-  { area: 'Invoicing', icon: '🧾', agent: 'Finance Agent', how: 'Ship confirmed → invoice auto-generated → auto-sent. Overdue? AI calls their AP department.', time: 'Instant on ship', savings: '90%' },
-  { area: 'Customer Follow-Up', icon: '🔄', agent: 'Sales Intel + Catalog Agent', how: 'AI detects reorder patterns. Voice agent calls 30 days before predicted need. "Ready to lock in pricing?"', time: 'Proactive', savings: '95%' },
-  { area: 'Reporting', icon: '🧠', agent: 'Neural Intelligence', how: '6 health panels updating in real-time. 15 analyzers running continuously. Findings with dollar impact. Zero manual work.', time: 'Real-time', savings: '100%' },
+  { area: 'Lead Capture', agent: 'Customer Voice Agent', how: 'Rachel/Ana answers every call 24/7. Auto-creates customer record, captures intent, generates quote if requested.', time: 'Instant', savings: '95%' },
+  { area: 'Quoting', agent: 'Quote Engine Agent', how: '"500 pens under $3 for a trade show" → instant 3-tier quote with pricing, decoration, volume breaks, margin analysis.', time: '< 30 seconds', savings: '90%' },
+  { area: 'Artwork & Proofing', agent: 'Art Director Agent', how: 'Upload → AI validates DPI, vectors, colors in 2 sec. Auto-generates virtual mockup. Customer approves with 1 click.', time: '< 5 minutes', savings: '85%' },
+  { area: 'Order Entry', agent: 'Quote Engine + Production', how: 'Quote approved → order auto-created. Zero re-keying. All specs flow from quote to production ticket.', time: 'Instant', savings: '100%' },
+  { area: 'Production', agent: 'Production Orchestrator', how: 'AI routes jobs to optimal line. Real-time Kanban board. Bottleneck prediction before it happens.', time: 'Auto-scheduled', savings: '60%' },
+  { area: 'Quality Control', agent: 'QC Vision Agent', how: 'Camera compares finished product to approved proof. Color delta measurement. Automatic pass/fail.', time: '< 3 seconds', savings: '80%' },
+  { area: 'Shipping', agent: 'Fulfillment Agent', how: 'AI selects cheapest carrier for delivery date. Auto-generates labels. Customer gets tracking instantly.', time: '< 1 minute', savings: '75%' },
+  { area: 'Invoicing', agent: 'Finance Agent', how: 'Ship confirmed → invoice auto-generated → auto-sent. Overdue? AI calls their AP department.', time: 'Instant on ship', savings: '90%' },
+  { area: 'Customer Follow-Up', agent: 'Sales Intel + Catalog Agent', how: 'AI detects reorder patterns. Voice agent calls 30 days before predicted need. "Ready to lock in pricing?"', time: 'Proactive', savings: '95%' },
+  { area: 'Reporting', agent: 'Neural Intelligence', how: '6 health panels updating in real-time. 15 analyzers running continuously. Findings with dollar impact. Zero manual work.', time: 'Real-time', savings: '100%' },
 ];
 
 export default function ProcessModel() {
@@ -102,7 +102,6 @@ export default function ProcessModel() {
                   <div style={{ background:CARD, borderRadius:'12px 0 0 12px', padding:16, border:`1px solid ${BORDER}`, borderRight:'none', borderLeft:`4px solid ${RED}` }}>
                     <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
                       <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                        <span style={{ fontSize:20 }}>{curr.icon}</span>
                         <span style={{ color:'#E6EDF3', fontSize:14, fontWeight:600 }}>{curr.area}</span>
                       </div>
                       {pill(curr.time, RED)}
@@ -121,7 +120,6 @@ export default function ProcessModel() {
                   <div style={{ background:CARD, borderRadius:'0 12px 12px 0', padding:16, border:`1px solid ${BORDER}`, borderLeft:'none', borderRight:`4px solid ${GREEN}` }}>
                     <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
                       <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                        <span style={{ fontSize:20 }}>{tgt.icon}</span>
                         <span style={{ color:'#E6EDF3', fontSize:14, fontWeight:600 }}>{tgt.agent}</span>
                       </div>
                       {pill(tgt.time, GREEN)}
@@ -164,7 +162,6 @@ export default function ProcessModel() {
               <div key={i} style={{ background:CARD, borderRadius:12, padding:16, border:`1px solid ${BORDER}`, borderLeft:`4px solid ${RED}` }}>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
                   <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                    <span style={{ fontSize:22 }}>{s.icon}</span>
                     <span style={{ color:'#E6EDF3', fontSize:14, fontWeight:600 }}>{s.area}</span>
                   </div>
                   {pill(s.time, RED)}
@@ -202,7 +199,6 @@ export default function ProcessModel() {
               <div key={i} style={{ background:CARD, borderRadius:12, padding:16, border:`1px solid ${BORDER}`, borderLeft:`4px solid ${GREEN}` }}>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
                   <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                    <span style={{ fontSize:22 }}>{s.icon}</span>
                     <span style={{ color:'#E6EDF3', fontSize:14, fontWeight:600 }}>{s.agent}</span>
                   </div>
                   {pill(s.time, GREEN)}
@@ -240,7 +236,7 @@ export default function ProcessModel() {
               <h3 style={{ fontFamily:'Bebas Neue', color:RED, fontSize:18, marginBottom:16 }}>CURRENT OPERATIONAL COST</h3>
               {CURRENT_STEPS.map((s, i) => (
                 <div key={i} style={{ display:'flex', justifyContent:'space-between', padding:'6px 0', borderBottom:`1px solid #21262D` }}>
-                  <span style={{ color:'#8B949E', fontSize:12 }}>{s.icon} {s.area}</span>
+                  <span style={{ color:'#8B949E', fontSize:12 }}>{s.area}</span>
                   <span style={{ color:RED, fontSize:12, fontFamily:'monospace' }}>${Math.round(s.cost * sizeMultiplier).toLocaleString()}/yr</span>
                 </div>
               ))}
@@ -302,7 +298,7 @@ export default function ProcessModel() {
               return (
                 <div key={i} style={{ marginBottom:16 }}>
                   <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
-                    <span style={{ color:'#C9D1D9', fontSize:12 }}>{s.icon} {s.area}</span>
+                    <span style={{ color:'#C9D1D9', fontSize:12 }}>{s.area}</span>
                     <span style={{ color:GREEN, fontSize:12 }}>-${savedAmt.toLocaleString()}/yr ({savedPct}%)</span>
                   </div>
                   <div style={{ display:'flex', height:20, borderRadius:4, overflow:'hidden', background:'#21262D' }}>

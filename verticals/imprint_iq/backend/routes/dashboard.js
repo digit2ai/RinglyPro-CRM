@@ -24,12 +24,12 @@ router.get('/kpis', asyncHandler(async (req, res) => {
   res.json({
     success: true,
     kpis: [
-      { label: 'Open Quotes', value: parseInt(quotes.cnt), detail: `$${Math.round(parseFloat(quotes.total)).toLocaleString()} pipeline`, icon: '📋' },
-      { label: 'Active Orders', value: parseInt(orders.cnt), detail: `$${Math.round(parseFloat(orders.total)).toLocaleString()} in production`, icon: '📦' },
-      { label: 'Production Jobs', value: parseInt(production.cnt), detail: 'In progress', icon: '🏭' },
-      { label: 'Active Customers', value: parseInt(customers.cnt), detail: 'Account base', icon: '👥' },
-      { label: 'Calls Today', value: parseInt(calls.cnt), detail: 'Voice AI activity', icon: '📞' },
-      { label: 'Low Stock Alerts', value: parseInt(inventory.low_stock || 0), detail: 'Below reorder point', icon: '⚠️' }
+      { label: 'Open Quotes', value: parseInt(quotes.cnt), detail: `$${Math.round(parseFloat(quotes.total)).toLocaleString()} pipeline`, icon: '' },
+      { label: 'Active Orders', value: parseInt(orders.cnt), detail: `$${Math.round(parseFloat(orders.total)).toLocaleString()} in production`, icon: '' },
+      { label: 'Production Jobs', value: parseInt(production.cnt), detail: 'In progress', icon: '' },
+      { label: 'Active Customers', value: parseInt(customers.cnt), detail: 'Account base', icon: '' },
+      { label: 'Calls Today', value: parseInt(calls.cnt), detail: 'Voice AI activity', icon: '' },
+      { label: 'Low Stock Alerts', value: parseInt(inventory.low_stock || 0), detail: 'Below reorder point', icon: '' }
     ]
   });
 }));
@@ -66,17 +66,17 @@ router.get('/agents', asyncHandler(async (req, res) => {
   `, { bind: [tenantId] });
 
   const agents = [
-    { id: 'catalog', name: 'Catalog Intelligence', icon: '📚', description: 'Product tagging, trend prediction, catalog curation' },
-    { id: 'quote_engine', name: 'Quote Engine', icon: '💰', description: 'NL quote generation, pricing, volume breaks' },
-    { id: 'art_director', name: 'Art Director', icon: '🎨', description: 'Artwork preflight, virtual proofs, color matching' },
-    { id: 'production', name: 'Production Orchestrator', icon: '🏭', description: 'Job routing, scheduling, bottleneck detection' },
-    { id: 'supply_chain', name: 'Supply Chain', icon: '🚚', description: 'Inventory, auto-reorder, supplier scoring' },
-    { id: 'qc', name: 'QC Vision', icon: '🔍', description: 'Visual inspection, defect detection, color delta' },
-    { id: 'fulfillment', name: 'Fulfillment', icon: '📬', description: 'Carrier selection, tracking, kitting' },
-    { id: 'customer_voice', name: 'Customer Voice', icon: '🎙️', description: 'Rachel/Ana/Lina — inbound/outbound calls' },
-    { id: 'sales_intel', name: 'Sales Intelligence', icon: '📊', description: 'Lead scoring, pipeline, win/loss analysis' },
-    { id: 'finance', name: 'Finance & Billing', icon: '🧾', description: 'Invoicing, collections, margin analysis' },
-    { id: 'compliance', name: 'Compliance', icon: '🛡️', description: 'CPSIA, Prop 65, import compliance, recalls' }
+    { id: 'catalog', name: 'Catalog Intelligence', icon: '', description: 'Product tagging, trend prediction, catalog curation' },
+    { id: 'quote_engine', name: 'Quote Engine', icon: '', description: 'NL quote generation, pricing, volume breaks' },
+    { id: 'art_director', name: 'Art Director', icon: '', description: 'Artwork preflight, virtual proofs, color matching' },
+    { id: 'production', name: 'Production Orchestrator', icon: '', description: 'Job routing, scheduling, bottleneck detection' },
+    { id: 'supply_chain', name: 'Supply Chain', icon: '', description: 'Inventory, auto-reorder, supplier scoring' },
+    { id: 'qc', name: 'QC Vision', icon: '', description: 'Visual inspection, defect detection, color delta' },
+    { id: 'fulfillment', name: 'Fulfillment', icon: '', description: 'Carrier selection, tracking, kitting' },
+    { id: 'customer_voice', name: 'Customer Voice', icon: '', description: 'Rachel/Ana/Lina — inbound/outbound calls' },
+    { id: 'sales_intel', name: 'Sales Intelligence', icon: '', description: 'Lead scoring, pipeline, win/loss analysis' },
+    { id: 'finance', name: 'Finance & Billing', icon: '', description: 'Invoicing, collections, margin analysis' },
+    { id: 'compliance', name: 'Compliance', icon: '', description: 'CPSIA, Prop 65, import compliance, recalls' }
   ];
 
   const sessionMap = {};

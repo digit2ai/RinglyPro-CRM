@@ -33,7 +33,7 @@ export default function Dashboard() {
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))', gap:12, marginBottom:24 }}>
         {kpis.map((k, i) => (
           <div key={i} style={{ background:'#161B22', borderRadius:12, padding:16, border:'1px solid #30363D' }}>
-            <div style={{ fontSize:24, marginBottom:4 }}>{k.icon}</div>
+            {/* icon removed */}
             <div style={{ color:'#E6EDF3', fontSize:28, fontFamily:'Bebas Neue', letterSpacing:1 }}>{k.value}</div>
             <div style={{ color:'#8B949E', fontSize:12, marginTop:2 }}>{k.label}</div>
             <div style={{ color:'#484F58', fontSize:11, marginTop:4 }}>{k.detail}</div>
@@ -94,7 +94,7 @@ export default function Dashboard() {
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))', gap:10, marginBottom:24 }}>
         {agents.map((a, i) => (
           <div key={i} style={{ background:'#161B22', borderRadius:10, padding:14, border:'1px solid #30363D', display:'flex', alignItems:'center', gap:12 }}>
-            <div style={{ fontSize:28 }}>{a.icon}</div>
+            {/* icon removed */}
             <div style={{ flex:1 }}>
               <div style={{ color:'#E6EDF3', fontSize:13, fontWeight:600 }}>{a.name}</div>
               <div style={{ color:'#8B949E', fontSize:10, marginTop:2 }}>{a.description?.substring(0, 40)}...</div>

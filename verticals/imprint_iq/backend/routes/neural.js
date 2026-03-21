@@ -50,9 +50,9 @@ router.get('/dashboard', asyncHandler(async (req, res) => {
 
   // Connections status
   const connections = [
-    { name: 'ImprintIQ Platform', status: 'connected', icon: '🖨️' },
-    { name: 'Voice AI (Rachel)', status: 'connected', icon: '🎙️' },
-    { name: 'Production Floor', status: dashboard.panels[1]?.score > 0 ? 'connected' : 'standby', icon: '🏭' }
+    { name: 'ImprintIQ Platform', status: 'connected', icon: '' },
+    { name: 'Voice AI (Rachel)', status: 'connected', icon: '' },
+    { name: 'Production Floor', status: dashboard.panels[1]?.score > 0 ? 'connected' : 'standby', icon: '' }
   ];
 
   res.json({

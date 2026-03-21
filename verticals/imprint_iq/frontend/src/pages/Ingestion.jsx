@@ -15,12 +15,12 @@ const YELLOW = '#D29922';
 const RED = '#DA3633';
 
 const DATA_TYPES = [
-  { key: 'customers', label: 'Customers', icon: '\uD83D\uDC65', desc: 'B2B client accounts' },
-  { key: 'quotes', label: 'Quotes', icon: '\uD83D\uDCCB', desc: 'Proposals & estimates' },
-  { key: 'orders', label: 'Orders', icon: '\uD83D\uDCE6', desc: 'Purchase orders' },
-  { key: 'calls', label: 'Calls', icon: '\uD83D\uDCDE', desc: 'Voice AI call logs' },
-  { key: 'invoices', label: 'Invoices', icon: '\uD83E\uDDFE', desc: 'Billing records' },
-  { key: 'products', label: 'Products', icon: '\uD83C\uDFF7\uFE0F', desc: 'Catalog items' },
+  { key: 'customers', label: 'Customers', desc: 'B2B client accounts' },
+  { key: 'quotes', label: 'Quotes', desc: 'Proposals & estimates' },
+  { key: 'orders', label: 'Orders', desc: 'Purchase orders' },
+  { key: 'calls', label: 'Calls', desc: 'Voice AI call logs' },
+  { key: 'invoices', label: 'Invoices', desc: 'Billing records' },
+  { key: 'products', label: 'Products', desc: 'Catalog items' },
 ];
 
 const SYSTEMS = [
@@ -271,7 +271,7 @@ export default function Ingestion() {
                   transition: 'all 0.2s'
                 }}
               >
-                <span>{dt.icon}</span> {dt.label}
+                {dt.label}
               </button>
             ))}
           </div>
@@ -332,7 +332,7 @@ export default function Ingestion() {
               style={{ display: 'none' }}
               onChange={(e) => handleFile(e.target.files?.[0])}
             />
-            <div style={{ fontSize: 40, marginBottom: 8 }}>{'\uD83D\uDCC1'}</div>
+            <div style={{ fontSize: 18, marginBottom: 8, color: '#8B949E' }}>CSV</div>
             {fileName ? (
               <div>
                 <div style={{ color: GREEN, fontSize: 14, fontWeight: 600 }}>{fileName}</div>

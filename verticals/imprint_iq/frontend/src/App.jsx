@@ -21,11 +21,11 @@ function Layout({ children }) {
   const [sideOpen, setSideOpen] = useState(true);
 
   const navItems = [
-    { path: `${BASE}/dashboard`, label: 'Dashboard', icon: '📊' },
-    { path: `${BASE}/neural`, label: 'Neural Intelligence', icon: '🧠' },
-    { path: `${BASE}/process`, label: 'Process & ROI', icon: '🔄' },
-    { path: `${BASE}/ingest`, label: 'Data Ingestion', icon: '📥' },
-    { path: `${BASE}/architecture`, label: 'Architecture', icon: '🏗️' }
+    { path: `${BASE}/dashboard`, label: 'Dashboard' },
+    { path: `${BASE}/neural`, label: 'Neural Intelligence' },
+    { path: `${BASE}/process`, label: 'Process & ROI' },
+    { path: `${BASE}/ingest`, label: 'Data Ingestion' },
+    { path: `${BASE}/architecture`, label: 'Architecture' }
   ];
 
   const isActive = (p) => location.pathname === p;
@@ -41,7 +41,6 @@ function Layout({ children }) {
         <div style={{ padding:'12px 8px' }}>
           {navItems.map(n => (
             <Link key={n.path} to={n.path} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 10px', borderRadius:8, marginBottom:4, textDecoration:'none', background: isActive(n.path) ? '#C8962A22' : 'transparent', color: isActive(n.path) ? '#C8962A' : '#8B949E' }}>
-              <span style={{ fontSize:18 }}>{n.icon}</span>
               {sideOpen && <span style={{ fontSize:13, fontWeight: isActive(n.path) ? 600 : 400 }}>{n.label}</span>}
             </Link>
           ))}
