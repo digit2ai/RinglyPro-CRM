@@ -107,6 +107,42 @@ export default function SalesPitch() {
         <p style={{ color:'#484F58', fontSize:11, marginTop:8 }}>Lina, our AI presenter, will walk you through the entire pitch using live data</p>
       </div>
 
+      {/* Ask Lina — Quick Questions */}
+      <div style={{ background:CARD, borderRadius:12, padding:20, border:`1px solid ${BORDER}`, margin:'0 0 16px' }}>
+        <div style={{ fontFamily:'Bebas Neue', color:GOLD, fontSize:16, marginBottom:12, textAlign:'center', letterSpacing:1 }}>ASK LINA</div>
+        <div style={{ display:'flex', flexWrap:'wrap', gap:6, justifyContent:'center' }}>
+          {[
+            'Walk me through the full presentation',
+            'Show me the live dashboard numbers',
+            'What does Neural Intelligence show?',
+            'How do operations change with ImprintIQ?',
+            'What is the ROI for Hit Promotional Products?',
+            'What problems did you find in the data?',
+            'Explain the architecture and the 11 AI agents',
+            'What systems does ImprintIQ connect to?',
+            'How does the quoting process change?',
+            'What happens with missed calls?',
+            'How does artwork proofing get faster?',
+            'What is the implementation timeline?',
+            'How does production scheduling work?',
+            'What does the invoice automation do?',
+            'How do you detect reorder opportunities?',
+            'What is the health score right now?',
+            'How much does Hit lose on dormant accounts?',
+            'What competitors does Hit lose deals to?',
+          ].map((q, i) => (
+            <button key={i} onClick={() => {
+              setLinaOpen(true);
+              setTranscript(prev => [...prev, { role: 'You', text: q }]);
+              if (linaStatus === 'idle') { setTimeout(connectLina, 300); }
+            }}
+              style={{ padding:'6px 14px', background:'#0D1117', border:`1px solid ${BORDER}`, borderRadius:20, cursor:'pointer', color:'#C9D1D9', fontSize:11 }}>
+              {q}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Hit Promo Context Card */}
       <div style={{ background:CARD, borderRadius:12, padding:20, border:`1px solid ${GOLD}33`, margin:'0 0 24px', textAlign:'center' }}>
         <div style={{ fontFamily:'Bebas Neue', color:GOLD, fontSize:18, letterSpacing:1 }}>PREPARED FOR HIT PROMOTIONAL PRODUCTS</div>
