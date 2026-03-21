@@ -107,44 +107,32 @@ export default function SalesPitch() {
 
       {/* ══════════════ WHY IMPRINTIQ ══════════════ */}
       <div id="section-why" style={sec}>
-        <h2 style={h2}>WHY IMPRINTIQ?</h2>
+        <h2 style={h2}>WHY IMPRINTIQ FOR HIT?</h2>
         <p style={p}>
           Hit Promotional Products has grown 100% in 8 years under CJ Schmidt — from $319M to $655M.
-          But growth has been powered by people, not systems. The next 100% will require a different approach.
+          You are building an 800,000 sq ft facility in Fairfield, OH. You are investing in robotics and AI.
+          But your day-to-day operations still run on manual processes that cannot scale to $1 billion.
         </p>
 
-        <div style={{ fontFamily:'Bebas Neue', color:GOLD, fontSize:16, marginBottom:12 }}>THE OPERATIONAL REALITY TODAY</div>
+        <div style={{ fontFamily:'Bebas Neue', color:GOLD, fontSize:16, marginBottom:12 }}>HIT'S OPERATIONAL CHALLENGES TODAY</div>
 
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:20 }}>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr', gap:10, marginBottom:20 }}>
           {[
-            { problem:'Quoting takes 4-24 hours', detail:'Sales reps manually look up prices, build Excel quotes, email PDFs. Every quote is a custom project.' },
-            { problem:'Artwork proofs take 3-5 days', detail:'Art department drowning in email revisions. Bad files delay everything. Average 3+ revision cycles.' },
-            { problem:'30-40% of calls are missed', detail:'After hours, lunch breaks, busy periods — every missed call is a $500 to $5,000 order walking to a competitor.' },
-            { problem:'No reorder detection', detail:'Repeat customers go silent. Nobody notices until they have already ordered from someone else.' },
-            { problem:'Production managed by whiteboard', detail:'No real-time visibility. Bottlenecks discovered when it is too late. Manual scheduling across 6+ decoration lines.' },
-            { problem:'Reporting takes days', detail:'Data scattered across 8-10 systems. Monthly reports require manual compilation. No real-time view.' },
+            { stat:'4-24 HOURS', label:'per quote', problem:'Your sales reps manually look up prices in ESP, build Excel quotes, and email PDFs. At $655M in revenue, that is thousands of quotes per month — each one a manual project.', color:RED },
+            { stat:'3-5 DAYS', label:'per proof cycle', problem:'Your art department processes artwork via email — bad files, wrong DPI, missing font outlines. Average 3+ revision cycles before production can even start. This is your single biggest bottleneck.', color:RED },
+            { stat:'30-40%', label:'calls missed', problem:'After hours, lunch breaks, trade show weeks — every missed call is a $500 to $5,000 order walking to 4imprint or HALO. With $655M in revenue, even 1% in missed calls is $6.5M at risk.', color:RED },
+            { stat:'ZERO', label:'reorder detection', problem:'Your customers buy promotional products for the same events every year — trade shows, employee onboarding, holiday gifts. But nobody at Hit is tracking those patterns. Customers reorder elsewhere because nobody called them first.', color:RED },
+            { stat:'WHITEBOARD', label:'production scheduling', problem:'Your new 800,000 sq ft facility will have dozens of production lines — screen print, embroidery, laser, ColorBrite, digital, heat press. Without AI scheduling, you are guessing which line to route each job to.', color:RED },
+            { stat:'8-10 SYSTEMS', label:'data scattered', problem:'Profill Portal, QuickBooks, PromoStandards, email, phone system, spreadsheets — your data lives in 8-10 disconnected places. Your monthly reporting takes days of manual compilation. No one has a real-time view.', color:RED },
           ].map((item, i) => (
-            <div key={i} style={{ background:CARD, borderRadius:10, padding:14, border:`1px solid ${BORDER}`, borderLeft:`3px solid ${RED}` }}>
-              <div style={{ color:'#E6EDF3', fontSize:13, fontWeight:700, marginBottom:4 }}>{item.problem}</div>
-              <div style={{ color:'#8B949E', fontSize:12, lineHeight:1.5 }}>{item.detail}</div>
+            <div key={i} style={{ background:CARD, borderRadius:12, padding:16, border:`1px solid ${BORDER}`, borderLeft:`4px solid ${item.color}` }}>
+              <div style={{ display:'flex', alignItems:'baseline', gap:10, marginBottom:6 }}>
+                <span style={{ color:item.color, fontSize:22, fontFamily:'Bebas Neue' }}>{item.stat}</span>
+                <span style={{ color:'#8B949E', fontSize:12 }}>{item.label}</span>
+              </div>
+              <div style={{ color:'#C9D1D9', fontSize:13, lineHeight:1.6 }}>{item.problem}</div>
             </div>
           ))}
-        </div>
-
-        <div style={{ background:'#0D1117', borderRadius:10, padding:16, border:`1px solid ${BORDER}` }}>
-          <div style={{ fontFamily:'Bebas Neue', color:'#E6EDF3', fontSize:14, marginBottom:8 }}>THE INDUSTRY CONTEXT</div>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10 }}>
-            {[
-              { value:'$26.6B', label:'US promo industry', color:GOLD },
-              { value:'0', label:'AI-native platforms', color:RED },
-              { value:'6,500+', label:'Companies in the industry', color:BLUE },
-            ].map((s, i) => (
-              <div key={i} style={{ textAlign:'center' }}>
-                <div style={{ color:s.color, fontSize:24, fontFamily:'Bebas Neue' }}>{s.value}</div>
-                <div style={{ color:'#8B949E', fontSize:11 }}>{s.label}</div>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
 
