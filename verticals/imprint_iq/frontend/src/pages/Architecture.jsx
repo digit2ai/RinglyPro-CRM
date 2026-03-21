@@ -169,9 +169,9 @@ export default function Architecture() {
             <p style={{ color:'#8B949E', fontSize:13, marginTop:4 }}>ImprintIQ — 5-Layer AI Ecosystem for Promotional Products</p>
           </div>
           <div style={{ display:'flex', gap:8 }}>
-            {['overview','layers','agents','data','build'].map(v => (
+            {['overview','diagram','layers','agents','data','build'].map(v => (
               <button key={v} onClick={() => setView(v)} style={{ padding:'8px 16px', borderRadius:6, border:`1px solid ${view === v ? GOLD : BORDER}`, background: view === v ? GOLD+'22' : 'transparent', color: view === v ? GOLD : '#8B949E', fontSize:12, cursor:'pointer', textTransform:'capitalize' }}>
-                {v}
+                {v === 'diagram' ? 'Visual Diagram' : v}
               </button>
             ))}
           </div>
@@ -258,6 +258,202 @@ export default function Architecture() {
           </div>
         </div>
       )}
+
+      {/* ═══════════ VISUAL DIAGRAM ═══════════ */}
+      {view === 'diagram' && (() => {
+        const W = '100%';
+        const box = (x, y, w, h, color, label, sub, icon) => (
+          <g key={label}>
+            <rect x={x} y={y} width={w} height={h} rx={8} fill={color+'15'} stroke={color} strokeWidth={1.5} />
+            {icon && <text x={x+12} y={y+22} fontSize={16}>{icon}</text>}
+            <text x={x + (icon ? 32 : w/2)} y={y+22} fill={color} fontSize={12} fontWeight="700" textAnchor={icon ? 'start' : 'middle'} fontFamily="DM Sans">{label}</text>
+            {sub && <text x={x + (icon ? 32 : w/2)} y={y+38} fill="#8B949E" fontSize={9} textAnchor={icon ? 'start' : 'middle'} fontFamily="DM Sans">{sub}</text>}
+          </g>
+        );
+        const arrow = (x1,y1,x2,y2,color) => (
+          <line key={`${x1}${y1}${x2}${y2}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke={color||'#30363D'} strokeWidth={1.5} markerEnd="url(#arrowhead)" />
+        );
+        const dashedArrow = (x1,y1,x2,y2,color) => (
+          <line key={`d${x1}${y1}${x2}${y2}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke={color||'#30363D'} strokeWidth={1} strokeDasharray="4,3" markerEnd="url(#arrowhead)" />
+        );
+
+        return (
+          <div>
+            {/* Full System Flow */}
+            <div style={{ background:CARD, borderRadius:16, padding:24, border:`1px solid ${BORDER}`, marginBottom:20, overflowX:'auto' }}>
+              <h3 style={{ fontFamily:'Bebas Neue', color:'#E6EDF3', fontSize:20, marginBottom:4, textAlign:'center', letterSpacing:2 }}>IMPRINTIQ SYSTEM ARCHITECTURE</h3>
+              <p style={{ color:'#484F58', fontSize:11, textAlign:'center', marginBottom:16 }}>End-to-end data flow from external sources through 5 layers to AI agents + Neural Intelligence</p>
+              <svg width="100%" viewBox="0 0 1100 720" style={{ maxWidth:1100, margin:'0 auto', display:'block' }}>
+                <defs>
+                  <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#8B949E"/></marker>
+                  <marker id="arrowGold" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill={GOLD}/></marker>
+                </defs>
+
+                {/* ─── EXTERNAL SOURCES (Top) ─── */}
+                <text x={550} y={20} fill="#484F58" fontSize={10} textAnchor="middle" fontFamily="Bebas Neue" letterSpacing={2}>EXTERNAL DATA SOURCES</text>
+                {box(10,30,120,48,BLUE,'QuickBooks','ERP / Accounting','🗄️')}
+                {box(140,30,120,48,BLUE,'Antera / commonsku','Promo ERP','📦')}
+                {box(270,30,120,48,GREEN,'Phone System','RingCentral / Twilio','📞')}
+                {box(400,30,120,48,GREEN,'Email / Chat','Gmail / Outlook','💬')}
+                {box(530,30,120,48,GOLD,'ASI / SAGE','Product Feeds','📚')}
+                {box(660,30,120,48,GOLD,'PromoStandards','Inventory API','🔗')}
+                {box(790,30,120,48,RED,'PLC / Sensors','Shop Floor IoT','🏭')}
+                {box(920,30,120,48,PURPLE,'Website / Portal','Analytics','🌐')}
+
+                {/* Arrows down from sources to layers */}
+                {arrow(70,78,70,120,BLUE)}
+                {arrow(200,78,200,120,BLUE)}
+                {arrow(330,78,330,180,GREEN)}
+                {arrow(460,78,460,180,GREEN)}
+                {arrow(590,78,590,250,GOLD)}
+                {arrow(720,78,720,250,GOLD)}
+                {arrow(850,78,850,320,RED)}
+                {arrow(980,78,980,390,PURPLE)}
+
+                {/* ─── LAYER 1: ERP ─── */}
+                <rect x={20} y={100} width={500} height={65} rx={10} fill={BLUE+'10'} stroke={BLUE} strokeWidth={2} />
+                <text x={30} y={118} fill={BLUE} fontSize={11} fontWeight="700" fontFamily="Bebas Neue" letterSpacing={1}>LAYER 1: ERP / OPERATIONAL</text>
+                <text x={530} y={118} fill={BLUE} fontSize={9} textAnchor="end" fontFamily="DM Sans">WHAT ALREADY HAPPENED</text>
+                <rect x={30} y={124} width={6} height={6} rx={3} fill={GREEN}/><text x={42} y={131} fill="#8B949E" fontSize={9} fontFamily="DM Sans">Customers</text>
+                <rect x={100} y={124} width={6} height={6} rx={3} fill={GREEN}/><text x={112} y={131} fill="#8B949E" fontSize={9}>Quotes</text>
+                <rect x={155} y={124} width={6} height={6} rx={3} fill={GREEN}/><text x={167} y={131} fill="#8B949E" fontSize={9}>Orders</text>
+                <rect x={210} y={124} width={6} height={6} rx={3} fill={GREEN}/><text x={222} y={131} fill="#8B949E" fontSize={9}>Invoices</text>
+                <rect x={270} y={124} width={6} height={6} rx={3} fill={GREEN}/><text x={282} y={131} fill="#8B949E" fontSize={9}>Products</text>
+                <rect x={340} y={124} width={6} height={6} rx={3} fill={GREEN}/><text x={352} y={131} fill="#8B949E" fontSize={9}>Inventory</text>
+                <rect x={410} y={124} width={6} height={6} rx={3} fill={GREEN}/><text x={422} y={131} fill="#8B949E" fontSize={9}>Shipments</text>
+                <text x={30} y={155} fill={GREEN} fontSize={9} fontFamily="DM Sans">✅ BUILT — CSV upload + smart column mapping</text>
+
+                {/* ─── LAYER 2: COMMS ─── */}
+                <rect x={20} y={175} width={500} height={55} rx={10} fill={GREEN+'10'} stroke={GREEN} strokeWidth={2} />
+                <text x={30} y={193} fill={GREEN} fontSize={11} fontWeight="700" fontFamily="Bebas Neue" letterSpacing={1}>LAYER 2: COMMUNICATIONS</text>
+                <text x={530} y={193} fill={GREEN} fontSize={9} textAnchor="end" fontFamily="DM Sans">WHAT PEOPLE SAID</text>
+                <text x={30} y={210} fill="#8B949E" fontSize={9} fontFamily="DM Sans">Calls + Transcripts &bull; Emails &bull; Chat &bull; SMS &bull; Meeting Notes</text>
+                <text x={30} y={222} fill="#484F58" fontSize={9} fontFamily="DM Sans">PLANNED — Voice AI auto-generates data from every call</text>
+
+                {/* ─── LAYER 3: MARKET ─── */}
+                <rect x={20} y={245} width={500} height={55} rx={10} fill={GOLD+'10'} stroke={GOLD} strokeWidth={2} />
+                <text x={30} y={263} fill={GOLD} fontSize={11} fontWeight="700" fontFamily="Bebas Neue" letterSpacing={1}>LAYER 3: MARKET & INDUSTRY</text>
+                <text x={530} y={263} fill={GOLD} fontSize={9} textAnchor="end" fontFamily="DM Sans">WHAT'S HAPPENING OUTSIDE</text>
+                <text x={30} y={280} fill="#8B949E" fontSize={9} fontFamily="DM Sans">100K SKU Catalog &bull; Supplier Stock &bull; Rate Benchmarks &bull; Trade Shows &bull; Competitors</text>
+                <text x={30} y={292} fill="#484F58" fontSize={9} fontFamily="DM Sans">PLANNED — ASI/SAGE sync + PromoStandards API</text>
+
+                {/* ─── LAYER 4: PRODUCTION ─── */}
+                <rect x={20} y={315} width={500} height={55} rx={10} fill={RED+'10'} stroke={RED} strokeWidth={2} />
+                <text x={30} y={333} fill={RED} fontSize={11} fontWeight="700" fontFamily="Bebas Neue" letterSpacing={1}>LAYER 4: PRODUCTION & SENSORS</text>
+                <text x={530} y={333} fill={RED} fontSize={9} textAnchor="end" fontFamily="DM Sans">WHAT MACHINES ARE DOING</text>
+                <text x={30} y={350} fill="#8B949E" fontSize={9} fontFamily="DM Sans">Machine OEE &bull; QC Vision &bull; Barcode Scans &bull; Shipping Events</text>
+                <text x={30} y={362} fill="#484F58" fontSize={9} fontFamily="DM Sans">PLANNED — PLC webhook + QC camera + carrier API</text>
+
+                {/* ─── LAYER 5: BEHAVIORAL ─── */}
+                <rect x={20} y={385} width={500} height={55} rx={10} fill={PURPLE+'10'} stroke={PURPLE} strokeWidth={2} />
+                <text x={30} y={403} fill={PURPLE} fontSize={11} fontWeight="700" fontFamily="Bebas Neue" letterSpacing={1}>LAYER 5: BEHAVIORAL & ENGAGEMENT</text>
+                <text x={530} y={403} fill={PURPLE} fontSize={9} textAnchor="end" fontFamily="DM Sans">WHAT THEY WILL DO NEXT</text>
+                <text x={30} y={420} fill="#8B949E" fontSize={9} fontFamily="DM Sans">Page Views &bull; Email Engagement &bull; Search Queries &bull; Engagement Scores &bull; Social Signals</text>
+                <text x={30} y={432} fill="#484F58" fontSize={9} fontFamily="DM Sans">PLANNED — Tracking pixel + email webhook + portal analytics</text>
+
+                {/* ─── CONVERGENCE ARROWS ─── */}
+                {arrow(270,165,660,480,'#30363D')}
+                {arrow(270,230,660,485,'#30363D')}
+                {arrow(270,300,660,490,'#30363D')}
+                {arrow(270,370,660,495,'#30363D')}
+                {arrow(270,440,660,500,'#30363D')}
+
+                {/* ─── NEURAL INTELLIGENCE (Center-Right) ─── */}
+                <rect x={600} y={460} width={240} height={100} rx={14} fill={GOLD+'18'} stroke={GOLD} strokeWidth={2.5} />
+                <text x={720} y={488} fill={GOLD} fontSize={14} fontWeight="700" textAnchor="middle" fontFamily="Bebas Neue" letterSpacing={2}>NEURAL INTELLIGENCE</text>
+                <text x={720} y={506} fill="#C9D1D9" fontSize={10} textAnchor="middle" fontFamily="DM Sans">6 Health Panels</text>
+                <text x={720} y={520} fill="#C9D1D9" fontSize={10} textAnchor="middle" fontFamily="DM Sans">15+ Diagnostic Analyzers</text>
+                <text x={720} y={536} fill="#8B949E" fontSize={9} textAnchor="middle" fontFamily="DM Sans">Diagnostic + Prescriptive (Treatment = $$$)</text>
+                <text x={720} y={552} fill={GREEN} fontSize={9} textAnchor="middle" fontFamily="DM Sans">✅ BUILT</text>
+
+                {/* ─── Arrow: Neural → Agents ─── */}
+                <line x1={720} y1={560} x2={720} y2={590} stroke={GOLD} strokeWidth={2} markerEnd="url(#arrowGold)"/>
+
+                {/* ─── 11 AI AGENTS (Bottom) ─── */}
+                <rect x={545} y={595} width={350} height={110} rx={14} fill={GREEN+'12'} stroke={GREEN} strokeWidth={2} />
+                <text x={720} y={618} fill={GREEN} fontSize={13} fontWeight="700" textAnchor="middle" fontFamily="Bebas Neue" letterSpacing={2}>11 AI AGENTS</text>
+                {[
+                  { x:555, y:628, icon:'📚', name:'Catalog' },
+                  { x:625, y:628, icon:'💰', name:'Quote' },
+                  { x:695, y:628, icon:'🎨', name:'Art' },
+                  { x:765, y:628, icon:'🏭', name:'Production' },
+                  { x:835, y:628, icon:'🚚', name:'Supply' },
+                  { x:555, y:665, icon:'🔍', name:'QC' },
+                  { x:625, y:665, icon:'📬', name:'Fulfill' },
+                  { x:695, y:665, icon:'🎙️', name:'Voice' },
+                  { x:765, y:665, icon:'📊', name:'Sales' },
+                  { x:835, y:665, icon:'🧾', name:'Finance' },
+                ].map((a,i) => (
+                  <g key={i}>
+                    <rect x={a.x} y={a.y} width={60} height={28} rx={6} fill="#21262D" stroke="#30363D" strokeWidth={1}/>
+                    <text x={a.x+8} y={a.y+18} fontSize={11}>{a.icon}</text>
+                    <text x={a.x+24} y={a.y+18} fill="#8B949E" fontSize={8} fontFamily="DM Sans">{a.name}</text>
+                  </g>
+                ))}
+                <text x={720} y={712} fill={GREEN} fontSize={9} textAnchor="middle" fontFamily="DM Sans">✅ REGISTERED — Standby Mode (activate per consulting license)</text>
+
+                {/* ─── TREATMENT PAYWALL ─── */}
+                <rect x={900} y={595} width={180} height={110} rx={14} fill={RED+'12'} stroke={RED} strokeWidth={2} strokeDasharray="6,3"/>
+                <text x={990} y={618} fill={RED} fontSize={11} fontWeight="700" textAnchor="middle" fontFamily="Bebas Neue" letterSpacing={1}>TREATMENT LAYER</text>
+                <text x={990} y={636} fill="#8B949E" fontSize={9} textAnchor="middle" fontFamily="DM Sans">10 Automation Workflows</text>
+                <text x={990} y={652} fill="#8B949E" fontSize={9} textAnchor="middle" fontFamily="DM Sans">SMS + CRM + Callbacks</text>
+                <text x={990} y={668} fill="#8B949E" fontSize={9} textAnchor="middle" fontFamily="DM Sans">Voice Agent Execution</text>
+                <text x={990} y={690} fill={RED} fontSize={10} fontWeight="700" textAnchor="middle" fontFamily="DM Sans">LOCKED</text>
+                <text x={990} y={703} fill="#484F58" fontSize={8} textAnchor="middle" fontFamily="DM Sans">Consulting / License Fee</text>
+
+                {/* Arrow: Agents → Treatment */}
+                {dashedArrow(895,650,900,650,RED)}
+
+                {/* ─── INGESTION MODULE (Left side) ─── */}
+                <rect x={560} y={100} width={200} height={120} rx={10} fill={CYAN+'10'} stroke={CYAN} strokeWidth={1.5} />
+                <text x={660} y={120} fill={CYAN} fontSize={11} fontWeight="700" textAnchor="middle" fontFamily="Bebas Neue" letterSpacing={1}>DATA INGESTION</text>
+                <text x={660} y={138} fill="#8B949E" fontSize={9} textAnchor="middle" fontFamily="DM Sans">CSV Upload</text>
+                <text x={660} y={152} fill="#8B949E" fontSize={9} textAnchor="middle" fontFamily="DM Sans">Paste from Spreadsheet</text>
+                <text x={660} y={166} fill="#8B949E" fontSize={9} textAnchor="middle" fontFamily="DM Sans">Smart Column Mapping</text>
+                <text x={660} y={180} fill="#8B949E" fontSize={9} textAnchor="middle" fontFamily="DM Sans">API Connectors (planned)</text>
+                <text x={660} y={198} fill="#484F58" fontSize={8} textAnchor="middle" fontFamily="DM Sans">6 types active &bull; 8 more planned</text>
+                <text x={660} y={212} fill={GREEN} fontSize={9} textAnchor="middle" fontFamily="DM Sans">✅ BUILT</text>
+                {dashedArrow(560,160,520,140,CYAN)}
+
+                {/* ─── CLIENT PORTAL (Right side top) ─── */}
+                <rect x={800} y={100} width={180} height={90} rx={10} fill="#21262D" stroke="#30363D" strokeWidth={1.5} />
+                <text x={890} y={120} fill="#E6EDF3" fontSize={11} fontWeight="700" textAnchor="middle" fontFamily="Bebas Neue" letterSpacing={1}>CLIENT DASHBOARD</text>
+                <text x={890} y={138} fill="#8B949E" fontSize={9} textAnchor="middle" fontFamily="DM Sans">Neural Health Score</text>
+                <text x={890} y={152} fill="#8B949E" fontSize={9} textAnchor="middle" fontFamily="DM Sans">KPIs + Findings</text>
+                <text x={890} y={166} fill="#8B949E" fontSize={9} textAnchor="middle" fontFamily="DM Sans">Process & ROI</text>
+                <text x={890} y={180} fill={GREEN} fontSize={9} textAnchor="middle" fontFamily="DM Sans">✅ BUILT</text>
+                {dashedArrow(890,190,780,460,'#30363D')}
+
+              </svg>
+            </div>
+
+            {/* Legend */}
+            <div style={{ display:'flex', gap:16, flexWrap:'wrap', justifyContent:'center' }}>
+              {[
+                { color: BLUE, label: 'Layer 1: ERP' },
+                { color: GREEN, label: 'Layer 2: Comms' },
+                { color: GOLD, label: 'Layer 3: Market' },
+                { color: RED, label: 'Layer 4: Production' },
+                { color: PURPLE, label: 'Layer 5: Behavioral' },
+                { color: CYAN, label: 'Ingestion Module' },
+              ].map((l, i) => (
+                <div key={i} style={{ display:'flex', alignItems:'center', gap:6 }}>
+                  <div style={{ width:12, height:12, borderRadius:3, background:l.color }} />
+                  <span style={{ color:'#8B949E', fontSize:11 }}>{l.label}</span>
+                </div>
+              ))}
+              <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                <div style={{ width:12, height:3, background:'#8B949E' }} />
+                <span style={{ color:'#8B949E', fontSize:11 }}>Data Flow</span>
+              </div>
+              <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                <div style={{ width:12, height:3, background:RED, borderTop:'1px dashed' }} />
+                <span style={{ color:'#8B949E', fontSize:11 }}>Paywall (Treatment)</span>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ═══════════ LAYERS DETAIL ═══════════ */}
       {view === 'layers' && (
