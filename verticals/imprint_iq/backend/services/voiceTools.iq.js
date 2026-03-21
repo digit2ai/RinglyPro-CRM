@@ -90,24 +90,23 @@ The system includes 11 AI agents: Catalog Intelligence, Quote Engine, Art Direct
 
 // Tool: Get ROI Summary for Hit Promo
 async function getROISummary() {
-  return `Here is the projected return on investment for Hit Promotional Products based on their $655 million annual revenue.
+  return `Let me walk you through the cost reduction and value for Hit Promotional Products.
 
-The ImprintIQ investment is $120,000 per month, which is $1.44 million annually. This includes all 11 AI agents, Neural Intelligence with 6 health panels and 15 diagnostic analyzers, system integrations, and managed AI operations.
+The real question is not what ImprintIQ costs — it is what your current operations cost without it. Here is where the value lives:
 
-The projected annual operational savings break down as follows:
-Quoting automation saves $180,000 per year.
-Artwork and proof automation saves $250,000 per year.
-Call recovery and voice AI saves $835,000 per year, including $780,000 in recovered order revenue.
-Reorder intelligence saves $200,000 per year.
-Production scheduling optimization saves $350,000 per year.
-Invoice and collections automation saves $140,000 per year.
-The total projected annual savings is $1.955 million.
+The projected annual cost reduction across 6 operational areas totals $1.955 million:
+Quoting automation saves $180,000 per year by replacing manual price lookups and Excel proposals with instant AI-generated quotes.
+Artwork and proof automation saves $250,000 per year by reducing the art department workload with AI preflight validation and virtual proof generation.
+Call recovery and voice AI saves $835,000 per year — that includes eliminating missed calls plus recovering approximately $780,000 in orders that would otherwise walk to competitors.
+Reorder intelligence saves $200,000 per year by proactively reactivating dormant accounts before they leave.
+Production scheduling saves $350,000 per year through AI job routing and bottleneck prediction across all decoration lines.
+Invoice and collections automation saves $140,000 per year by generating invoices instantly on shipment and reducing DSO by 12 days.
 
-This gives a net annual benefit of $515,000, a return on investment of 1.36 times, and a payback period of approximately 9 months. These are conservative numbers based on operational savings only.
+Now regarding pricing — ImprintIQ pricing is based on actual data consumption, not seats or licenses. You pay for what the AI actually does — the volume of quotes processed, calls handled, production jobs routed, and inventory managed. The cost per transaction is orders of magnitude lower than human labor. An AI agent processing a quote costs a fraction of a cent. A human rep spending 4 hours on the same quote costs $120 in labor.
 
-Additional revenue upside not included in these numbers: recovered missed call revenue of $780,000 or more per year, proactive reorder capture reactivating 20 to 30 percent of dormant accounts, faster quoting that doubles proposal volume, reduced customer churn, competitive pricing intelligence, and OEE optimization for the new 800,000 square foot facility in Fairfield, Ohio.
+The exact pricing is determined after a Proof of Concept. During the POC, we connect to your real data, measure actual data consumption across all active agents, and generate a predictive forecast. Final pricing is tailored to your specific operational volume. But I can tell you this — compared to $1.955 million in annual cost reduction, the platform cost based on data consumption is insignificant.
 
-When you include the revenue upside, the total impact could exceed $3 to $4 million annually.`;
+On top of the operational savings, there is additional revenue upside not included in these numbers: recovered missed call revenue of $780,000 or more per year, proactive reorder capture, faster quoting that wins more deals, reduced customer churn, and OEE optimization for the new 800,000 square foot facility.`;
 }
 
 // Tool: Get specific finding details

@@ -374,15 +374,15 @@ export default function SalesPitch() {
 
       {/* ══════════════ ROI ══════════════ */}
       <div id="section-roi" style={{ ...sec, borderBottom:'none' }}>
-        <h2 style={h2}>PROJECTED RETURN ON INVESTMENT</h2>
+        <h2 style={h2}>COST REDUCTION AND VALUE</h2>
         <p style={p}>
-          Based on Hit Promotional Products' $655M revenue and current operational structure,
-          here is the projected financial impact of ImprintIQ:
+          The question is not what ImprintIQ costs — it is what your current operations cost
+          without it. Here is where the value lives:
         </p>
 
         {/* Savings Breakdown */}
         <div style={{ background:CARD, borderRadius:12, padding:20, border:`1px solid ${BORDER}`, marginBottom:16 }}>
-          <div style={{ fontFamily:'Bebas Neue', color:GREEN, fontSize:16, marginBottom:12 }}>ANNUAL OPERATIONAL SAVINGS</div>
+          <div style={{ fontFamily:'Bebas Neue', color:GREEN, fontSize:16, marginBottom:12 }}>PROJECTED ANNUAL COST REDUCTION</div>
           {[
             { area:'Quoting Automation', saving:'$180K', detail:'AI-generated quotes replace manual price lookups and Excel proposals' },
             { area:'Artwork and Proof Automation', saving:'$250K', detail:'AI preflight validation and virtual proof generation reduce art department workload' },
@@ -400,49 +400,47 @@ export default function SalesPitch() {
             </div>
           ))}
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'14px 0 0', marginTop:8, borderTop:`2px solid ${GREEN}` }}>
-            <span style={{ color:'#E6EDF3', fontSize:15, fontWeight:700 }}>TOTAL PROJECTED ANNUAL SAVINGS</span>
+            <span style={{ color:'#E6EDF3', fontSize:15, fontWeight:700 }}>TOTAL PROJECTED ANNUAL COST REDUCTION</span>
             <span style={{ color:GREEN, fontSize:24, fontFamily:'Bebas Neue' }}>$1.955M</span>
           </div>
         </div>
 
-        {/* Investment vs Return */}
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:16 }}>
-          <div style={{ background:CARD, borderRadius:12, padding:20, border:`1px solid ${BORDER}`, borderTop:`3px solid ${BLUE}` }}>
-            <div style={{ color:'#8B949E', fontSize:11, marginBottom:6 }}>ImprintIQ Investment</div>
-            <div style={{ color:BLUE, fontSize:32, fontFamily:'Bebas Neue' }}>$120K/mo</div>
-            <div style={{ color:'#484F58', fontSize:12, marginTop:4 }}>$1.44M annually</div>
-            <div style={{ color:'#8B949E', fontSize:11, marginTop:8 }}>Includes all 11 AI agents, Neural Intelligence, integrations, and managed AI operations</div>
-          </div>
-          <div style={{ background:CARD, borderRadius:12, padding:20, border:`1px solid ${BORDER}`, borderTop:`3px solid ${GREEN}` }}>
-            <div style={{ color:'#8B949E', fontSize:11, marginBottom:6 }}>Projected Annual Savings</div>
-            <div style={{ color:GREEN, fontSize:32, fontFamily:'Bebas Neue' }}>$1.955M/yr</div>
-            <div style={{ color:'#484F58', fontSize:12, marginTop:4 }}>Conservative estimate — operational savings only</div>
-            <div style={{ color:'#8B949E', fontSize:11, marginTop:8 }}>Does not include revenue gains from recovered calls, proactive reorders, or faster quoting</div>
+        {/* Pricing Approach */}
+        <div style={{ background:CARD, borderRadius:12, padding:24, border:`1px solid ${GOLD}33`, marginBottom:16 }}>
+          <div style={{ fontFamily:'Bebas Neue', color:GOLD, fontSize:18, marginBottom:12 }}>HOW PRICING WORKS</div>
+          <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+            <div style={{ borderLeft:`3px solid ${BLUE}`, paddingLeft:16 }}>
+              <div style={{ color:'#E6EDF3', fontSize:14, fontWeight:700, marginBottom:4 }}>Based on actual data consumption</div>
+              <div style={{ color:'#8B949E', fontSize:13, lineHeight:1.6 }}>ImprintIQ pricing is based on actual data consumption — the volume of quotes processed, calls handled, production jobs routed, and inventory managed. You pay for what the AI actually does, not for seats or licenses.</div>
+            </div>
+            <div style={{ borderLeft:`3px solid ${GREEN}`, paddingLeft:16 }}>
+              <div style={{ color:'#E6EDF3', fontSize:14, fontWeight:700, marginBottom:4 }}>Significantly lower than human labor</div>
+              <div style={{ color:'#8B949E', fontSize:13, lineHeight:1.6 }}>An AI agent processing a quote costs a fraction of a cent. A human rep spending 4 hours on the same quote costs $120 in labor. The cost per transaction is orders of magnitude lower than your current manual operations.</div>
+            </div>
+            <div style={{ borderLeft:`3px solid ${GOLD}`, paddingLeft:16 }}>
+              <div style={{ color:'#E6EDF3', fontSize:14, fontWeight:700, marginBottom:4 }}>Determined after Proof of Concept</div>
+              <div style={{ color:'#8B949E', fontSize:13, lineHeight:1.6 }}>We start with a POC using your real data. During the POC, we measure actual data consumption across all active agents and generate a predictive forecast. Final pricing is tailored to your specific operational volume — no generic packages.</div>
+            </div>
           </div>
         </div>
 
-        {/* Key Metrics */}
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:20 }}>
-          <div style={{ background:CARD, borderRadius:12, padding:16, border:`1px solid ${BORDER}`, textAlign:'center', borderTop:`3px solid ${GOLD}` }}>
-            <div style={{ color:GOLD, fontSize:28, fontFamily:'Bebas Neue' }}>$515K</div>
-            <div style={{ color:'#E6EDF3', fontSize:12, fontWeight:600, marginTop:4 }}>Net Annual Benefit</div>
-            <div style={{ color:'#8B949E', fontSize:11, marginTop:2 }}>Savings minus investment</div>
+        {/* Key Point */}
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:20 }}>
+          <div style={{ background:CARD, borderRadius:12, padding:20, border:`1px solid ${BORDER}`, borderTop:`3px solid ${GREEN}`, textAlign:'center' }}>
+            <div style={{ color:GREEN, fontSize:28, fontFamily:'Bebas Neue' }}>$1.955M/yr</div>
+            <div style={{ color:'#E6EDF3', fontSize:13, fontWeight:600, marginTop:4 }}>Projected Cost Reduction</div>
+            <div style={{ color:'#8B949E', fontSize:11, marginTop:4 }}>Across 6 operational areas</div>
           </div>
-          <div style={{ background:CARD, borderRadius:12, padding:16, border:`1px solid ${BORDER}`, textAlign:'center', borderTop:`3px solid ${GOLD}` }}>
-            <div style={{ color:GOLD, fontSize:28, fontFamily:'Bebas Neue' }}>1.36x</div>
-            <div style={{ color:'#E6EDF3', fontSize:12, fontWeight:600, marginTop:4 }}>Return on Investment</div>
-            <div style={{ color:'#8B949E', fontSize:11, marginTop:2 }}>On operational savings alone</div>
-          </div>
-          <div style={{ background:CARD, borderRadius:12, padding:16, border:`1px solid ${BORDER}`, textAlign:'center', borderTop:`3px solid ${GOLD}` }}>
-            <div style={{ color:GOLD, fontSize:28, fontFamily:'Bebas Neue' }}>9 MONTHS</div>
-            <div style={{ color:'#E6EDF3', fontSize:12, fontWeight:600, marginTop:4 }}>Payback Period</div>
-            <div style={{ color:'#8B949E', fontSize:11, marginTop:2 }}>Full investment recovered</div>
+          <div style={{ background:CARD, borderRadius:12, padding:20, border:`1px solid ${BORDER}`, borderTop:`3px solid ${GOLD}`, textAlign:'center' }}>
+            <div style={{ color:GOLD, fontSize:28, fontFamily:'Bebas Neue' }}>INSIGNIFICANT</div>
+            <div style={{ color:'#E6EDF3', fontSize:13, fontWeight:600, marginTop:4 }}>Platform Cost vs Savings</div>
+            <div style={{ color:'#8B949E', fontSize:11, marginTop:4 }}>Data consumption cost is a fraction of human labor</div>
           </div>
         </div>
 
         {/* Additional Upside */}
         <div style={{ background:CARD, borderRadius:12, padding:16, border:`1px solid ${BORDER}`, marginBottom:20 }}>
-          <div style={{ fontFamily:'Bebas Neue', color:'#E6EDF3', fontSize:14, marginBottom:10 }}>ADDITIONAL REVENUE UPSIDE (NOT INCLUDED IN SAVINGS ABOVE)</div>
+          <div style={{ fontFamily:'Bebas Neue', color:'#E6EDF3', fontSize:14, marginBottom:10 }}>ADDITIONAL REVENUE UPSIDE (NOT INCLUDED ABOVE)</div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
             {[
               { item:'Recovered missed call revenue', value:'$780K+/yr potential' },
