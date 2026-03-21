@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FreightMind AI — Your Fleet Runs Itself</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0e17; color: #e2e8f0; min-height: 100vh; }
+
+    /* Header */
+    .header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-bottom: 1px solid #1e3a5f; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; }
+    .logo { display: flex; align-items: center; gap: 12px; }
+    .logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .logo-text { font-size: 24px; font-weight: 700; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .tagline { color: #64748b; font-size: 13px; margin-top: 2px; }
+    .header-status { display: flex; gap: 16px; align-items: center; }
+    .status-dot { width: 10px; height: 10px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .status-text { color: #22c55e; font-size: 14px; font-weight: 500; }
+
+    /* Hero */
+    .hero { text-align: center; padding: 60px 40px 40px; }
+    .hero h1 { font-size: 48px; font-weight: 800; margin-bottom: 16px; background: linear-gradient(135deg, #e2e8f0, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero p { font-size: 20px; color: #64748b; max-width: 700px; margin: 0 auto 40px; }
+
+    /* Stats Bar */
+    .stats-bar { display: flex; justify-content: center; gap: 48px; padding: 24px 40px; margin: 0 40px 40px; background: rgba(30, 41, 59, 0.5); border-radius: 16px; border: 1px solid #1e3a5f; }
+    .stat { text-align: center; }
+    .stat-value { font-size: 36px; font-weight: 800; color: #3b82f6; }
+    .stat-label { font-size: 13px; color: #64748b; margin-top: 4px; }
+
+    /* Tiers Grid */
+    .tiers-section { padding: 0 40px 60px; }
+    .section-title { font-size: 28px; font-weight: 700; text-align: center; margin-bottom: 32px; }
+    .tiers-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; max-width: 1400px; margin: 0 auto; }
+    .tier-card { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 1px solid #1e3a5f; border-radius: 16px; padding: 28px; transition: all 0.3s; position: relative; overflow: hidden; }
+    .tier-card:hover { border-color: #3b82f6; transform: translateY(-4px); box-shadow: 0 8px 32px rgba(59, 130, 246, 0.15); }
+    .tier-card.active { border-color: #22c55e; }
+    .tier-number { position: absolute; top: 16px; right: 20px; font-size: 48px; font-weight: 900; color: rgba(59, 130, 246, 0.08); }
+    .tier-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; margin-bottom: 12px; }
+    .tier-badge.t1 { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+    .tier-badge.t2 { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
+    .tier-badge.t3 { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+    .tier-badge.t4 { background: rgba(249, 115, 22, 0.15); color: #fb923c; }
+    .tier-badge.t5 { background: rgba(236, 72, 153, 0.15); color: #f472b6; }
+    .tier-name { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+    .tier-tagline { color: #64748b; font-size: 14px; margin-bottom: 16px; }
+    .tier-price { font-size: 28px; font-weight: 800; color: #3b82f6; margin-bottom: 16px; }
+    .tier-price span { font-size: 14px; font-weight: 400; color: #64748b; }
+    .tier-agents { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+    .agent-chip { padding: 4px 10px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 6px; font-size: 12px; color: #93c5fd; }
+    .tier-tools { list-style: none; }
+    .tier-tools li { padding: 4px 0; font-size: 13px; color: #94a3b8; }
+    .tier-tools li::before { content: '✓ '; color: #22c55e; }
+    .tier-status { margin-top: 16px; padding: 8px 16px; border-radius: 8px; text-align: center; font-size: 13px; font-weight: 600; }
+    .tier-status.live { background: rgba(34, 197, 94, 0.1); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.2); }
+
+    /* Packages */
+    .packages-section { padding: 0 40px 60px; }
+    .packages-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; max-width: 1400px; margin: 0 auto; }
+    .pkg-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; text-align: center; transition: all 0.3s; }
+    .pkg-card:hover { border-color: #3b82f6; }
+    .pkg-card.featured { border-color: #8b5cf6; background: linear-gradient(135deg, #1e293b, #1a1035); }
+    .pkg-name { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .pkg-tiers { color: #64748b; font-size: 13px; margin-bottom: 12px; }
+    .pkg-price { font-size: 24px; font-weight: 800; color: #3b82f6; }
+    .pkg-price span { font-size: 12px; color: #64748b; }
+
+    /* Architecture */
+    .arch-section { padding: 0 40px 60px; }
+    .arch-diagram { max-width: 1000px; margin: 0 auto; background: #0f172a; border: 1px solid #1e3a5f; border-radius: 16px; padding: 32px; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6; color: #94a3b8; white-space: pre; overflow-x: auto; }
+
+    /* MCP Endpoints */
+    .endpoints-section { padding: 0 40px 60px; }
+    .endpoints-grid { max-width: 800px; margin: 0 auto; }
+    .endpoint { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #1e293b; border: 1px solid #334155; border-radius: 8px; margin-bottom: 8px; font-family: 'Courier New', monospace; font-size: 13px; }
+    .method { padding: 3px 8px; border-radius: 4px; font-weight: 700; font-size: 11px; min-width: 50px; text-align: center; }
+    .method.get { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+    .method.post { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+    .endpoint-path { color: #e2e8f0; flex: 1; }
+    .endpoint-desc { color: #64748b; font-family: -apple-system, sans-serif; font-size: 12px; }
+
+    /* Footer */
+    .footer { text-align: center; padding: 40px; border-top: 1px solid #1e3a5f; color: #475569; font-size: 13px; }
+    .footer a { color: #3b82f6; text-decoration: none; }
+
+    /* Live Data */
+    #live-agents, #live-tools, #live-tiers { transition: all 0.3s; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">⚡</div>
+      <div>
+        <div class="logo-text">FreightMind AI</div>
+        <div class="tagline">Your fleet runs itself.</div>
+      </div>
+    </div>
+    <div class="header-status">
+      <div class="status-dot"></div>
+      <span class="status-text" id="system-status">Loading...</span>
+    </div>
+  </div>
+
+  <div class="hero">
+    <h1>AI-Native Operating System for Freight</h1>
+    <p>8 AI agents, 92 MCP tools, 5 sellable tiers. Each tier works standalone. Combine for full automation. MCP Server orchestrates everything.</p>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat"><div class="stat-value" id="live-agents">—</div><div class="stat-label">AI Agents Online</div></div>
+    <div class="stat"><div class="stat-value" id="live-tools">—</div><div class="stat-label">MCP Tools Available</div></div>
+    <div class="stat"><div class="stat-value" id="live-tiers">—</div><div class="stat-label">Active Tiers</div></div>
+    <div class="stat"><div class="stat-value">$699</div><div class="stat-label">Full Package /truck/mo</div></div>
+  </div>
+
+  <div class="tiers-section">
+    <div class="section-title">5 Sellable Tiers</div>
+    <div class="tiers-grid">
+      <div class="tier-card active">
+        <div class="tier-number">1</div>
+        <div class="tier-badge t1">Tier 1</div>
+        <div class="tier-name">Load Operations</div>
+        <div class="tier-tagline">Find & Price Freight</div>
+        <div class="tier-price">$149 <span>/truck/month</span></div>
+        <div class="tier-agents">
+          <span class="agent-chip">Freight Finder</span>
+          <span class="agent-chip">Rate Engine</span>
+        </div>
+        <ul class="tier-tools">
+          <li>Load board scanning (DAT, Truckstop)</li>
+          <li>Load-to-load matching (CHAIN, BACKHAUL)</li>
+          <li>AI rate quoting with market data</li>
+          <li>Spot market win/loss analytics</li>
+          <li>RFP import & auto-pricing</li>
+          <li>Carrier onboarding & scoring</li>
+          <li>Shipper relationship intelligence</li>
+          <li>Churn detection & upsell identification</li>
+        </ul>
+        <div class="tier-status live">34 Tools — LIVE</div>
+      </div>
+
+      <div class="tier-card active">
+        <div class="tier-number">2</div>
+        <div class="tier-badge t2">Tier 2</div>
+        <div class="tier-name">Fleet Operations</div>
+        <div class="tier-tagline">Move & Track</div>
+        <div class="tier-price">$149 <span>/truck/month</span></div>
+        <div class="tier-agents">
+          <span class="agent-chip">Dispatch AI</span>
+          <span class="agent-chip">Tracking</span>
+        </div>
+        <ul class="tier-tools">
+          <li>Auto-dispatch (7-factor driver scoring)</li>
+          <li>Real-time GPS/ELD tracking</li>
+          <li>Geofence auto-detection</li>
+          <li>Dynamic ETA recalculation</li>
+          <li>Delay detection & customer alerts</li>
+          <li>Fleet map with live positions</li>
+          <li>Multi-load trip chaining</li>
+          <li>Dock appointment scheduling</li>
+        </ul>
+        <div class="tier-status live">20 Tools — LIVE</div>
+      </div>
+
+      <div class="tier-card active">
+        <div class="tier-number">3</div>
+        <div class="tier-badge t3">Tier 3</div>
+        <div class="tier-name">Financial Operations</div>
+        <div class="tier-tagline">Bill & Collect</div>
+        <div class="tier-price">$149 <span>/truck/month</span></div>
+        <div class="tier-agents">
+          <span class="agent-chip">Billing & Settlement</span>
+        </div>
+        <ul class="tier-tools">
+          <li>Auto-invoice on POD receipt</li>
+          <li>Invoice factoring integration</li>
+          <li>AR aging & collections automation</li>
+          <li>Driver settlement calculation</li>
+          <li>Carrier invoice audit</li>
+          <li>Dispute generation & tracking</li>
+          <li>Fuel card reconciliation</li>
+          <li>IFTA fuel tax from GPS</li>
+        </ul>
+        <div class="tier-status live">13 Tools — LIVE</div>
+      </div>
+
+      <div class="tier-card active">
+        <div class="tier-number">4</div>
+        <div class="tier-badge t4">Tier 4</div>
+        <div class="tier-name">Compliance & Safety</div>
+        <div class="tier-tagline">Stay Legal</div>
+        <div class="tier-price">$99 <span>/truck/month</span></div>
+        <div class="tier-agents">
+          <span class="agent-chip">Compliance</span>
+          <span class="agent-chip">Maintenance</span>
+        </div>
+        <ul class="tier-tools">
+          <li>Real-time HOS monitoring</li>
+          <li>CDL/insurance expiry tracking</li>
+          <li>FMCSA authority verification</li>
+          <li>Preventive maintenance scheduling</li>
+          <li>Breakdown prediction</li>
+          <li>ELD log auditing</li>
+          <li>Drug test scheduling</li>
+          <li>Cost-per-mile tracking</li>
+        </ul>
+        <div class="tier-status live">18 Tools — LIVE</div>
+      </div>
+
+      <div class="tier-card active">
+        <div class="tier-number">5</div>
+        <div class="tier-badge t5">Tier 5</div>
+        <div class="tier-name">Neural Intelligence</div>
+        <div class="tier-tagline">The Brain</div>
+        <div class="tier-price">$149 <span>/truck/month</span></div>
+        <div class="tier-agents">
+          <span class="agent-chip">Neural</span>
+        </div>
+        <ul class="tier-tools">
+          <li>Cross-tier diagnostic scans</li>
+          <li>Prescription recommendations</li>
+          <li>Operations, Financial, Compliance scans</li>
+          <li>Market intelligence & rate trends</li>
+          <li>Shipper relationship health</li>
+          <li>Win/loss pattern analysis</li>
+          <li>Voice call analytics</li>
+        </ul>
+        <div class="tier-status live">7 Tools — LIVE</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="packages-section">
+    <div class="section-title">Packages</div>
+    <div class="packages-grid">
+      <div class="pkg-card">
+        <div class="pkg-name">Broker Starter</div>
+        <div class="pkg-tiers">Tier 1</div>
+        <div class="pkg-price">$149 <span>/truck/mo</span></div>
+      </div>
+      <div class="pkg-card">
+        <div class="pkg-name">Carrier Essentials</div>
+        <div class="pkg-tiers">Tiers 2 + 4</div>
+        <div class="pkg-price">$248 <span>/truck/mo</span></div>
+      </div>
+      <div class="pkg-card">
+        <div class="pkg-name">Broker Pro</div>
+        <div class="pkg-tiers">Tiers 1 + 3</div>
+        <div class="pkg-price">$279 <span>/truck/mo</span></div>
+      </div>
+      <div class="pkg-card">
+        <div class="pkg-name">Full Operations</div>
+        <div class="pkg-tiers">Tiers 1 + 2 + 3 + 4</div>
+        <div class="pkg-price">$449 <span>/truck/mo</span></div>
+      </div>
+      <div class="pkg-card featured">
+        <div class="pkg-name">FreightMind Complete</div>
+        <div class="pkg-tiers">All 5 Tiers + Voice + Treatment</div>
+        <div class="pkg-price">$699 <span>/truck/mo</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="endpoints-section">
+    <div class="section-title">MCP Server Endpoints</div>
+    <div class="endpoints-grid">
+      <div class="endpoint"><span class="method get">GET</span><span class="endpoint-path">/freight_broker/mcp/status</span><span class="endpoint-desc">Orchestrator health + tiers</span></div>
+      <div class="endpoint"><span class="method post">POST</span><span class="endpoint-path">/freight_broker/mcp/tools/list</span><span class="endpoint-desc">List tools (filtered by tier)</span></div>
+      <div class="endpoint"><span class="method post">POST</span><span class="endpoint-path">/freight_broker/mcp/tools/call</span><span class="endpoint-desc">Execute any tool (tier-gated)</span></div>
+      <div class="endpoint"><span class="method post">POST</span><span class="endpoint-path">/freight_broker/mcp/events</span><span class="endpoint-desc">Cross-tier event routing</span></div>
+      <div class="endpoint"><span class="method get">GET</span><span class="endpoint-path">/freight_broker/mcp/tiers</span><span class="endpoint-desc">Tier definitions + pricing</span></div>
+      <div class="endpoint"><span class="method get">GET</span><span class="endpoint-path">/freight_broker/api/agents</span><span class="endpoint-desc">Agent registry</span></div>
+      <div class="endpoint"><span class="method post">POST</span><span class="endpoint-path">/freight_broker/api/agents/:name/tools/call</span><span class="endpoint-desc">Direct agent tool call</span></div>
+      <div class="endpoint"><span class="method get">GET</span><span class="endpoint-path">/freight_broker/api/tenants</span><span class="endpoint-desc">List SaaS tenants</span></div>
+      <div class="endpoint"><span class="method post">POST</span><span class="endpoint-path">/freight_broker/api/tenants</span><span class="endpoint-desc">Onboard new tenant</span></div>
+      <div class="endpoint"><span class="method get">GET</span><span class="endpoint-path">/freight_broker/health</span><span class="endpoint-desc">System health</span></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>FreightMind AI — Built by <a href="https://digit2ai.com">Digit2AI</a> | Powered by <a href="https://ringlypro.com">RinglyPro</a></p>
+    <p style="margin-top: 8px;">8 AI Agents &bull; 92 MCP Tools &bull; 5 Tiers &bull; 1 Orchestrator</p>
+  </div>
+
+  <script>
+    // Fetch live data from MCP Server
+    async function loadStatus() {
+      try {
+        const res = await fetch('/freight_broker/mcp/status?tenant_id=logistics');
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('live-agents').textContent = data.data.agents.count;
+          document.getElementById('live-tools').textContent = data.data.tools.available_for_tenant;
+          const activeTiers = Object.values(data.data.tiers).filter(Boolean).length;
+          document.getElementById('live-tiers').textContent = activeTiers;
+          document.getElementById('system-status').textContent = `${data.data.agents.count} agents online — ${data.data.tools.available_for_tenant} tools active`;
+        }
+      } catch (e) {
+        document.getElementById('system-status').textContent = 'Connecting...';
+      }
+    }
+    loadStatus();
+    setInterval(loadStatus, 30000);
+  </script>
+</body>
+</html>

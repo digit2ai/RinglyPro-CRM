@@ -993,6 +993,36 @@ app.get('/debug/imprint-iq-error', (req, res) => {
   });
 });
 
+// ============================================================================
+// FreightMind AI — E2E Freight Broker SaaS Platform
+// ============================================================================
+let freightBrokerApp = null;
+let freightBrokerError = null;
+try {
+  freightBrokerApp = require('../verticals/freight_broker/backend/index');
+  app.get('/freight_broker', (req, res, next) => {
+    if (!req.originalUrl.endsWith('/')) return res.redirect('/freight_broker/');
+    next();
+  });
+  app.use('/freight_broker', freightBrokerApp);
+  console.log('⚡ FreightMind AI mounted at /freight_broker');
+  console.log('   - Command Center: /freight_broker/');
+  console.log('   - MCP Server: /freight_broker/mcp/*');
+  console.log('   - Health: /freight_broker/health');
+  console.log('   - API: /freight_broker/api/*');
+} catch (error) {
+  freightBrokerError = error;
+  console.log('⚠️ FreightMind AI not available:', error.message);
+}
+
+app.get('/debug/freightmind-error', (req, res) => {
+  res.json({
+    service: 'FreightMind AI',
+    available: !freightBrokerError,
+    error: freightBrokerError ? { message: freightBrokerError.message, stack: freightBrokerError.stack } : null,
+  });
+});
+
 // Conditional forwarding webhook (for business phone forwarding)
 app.use('/webhook', conditionalForwardRoutes);
 
