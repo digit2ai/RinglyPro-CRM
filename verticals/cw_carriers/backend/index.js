@@ -189,13 +189,31 @@ async function initialize() {
     }
     console.log('  ✅ CW Carriers admin users initialized');
 
-    // Initialize FreightMind AI Agents
+    // Initialize FreightMind AI Agents (all 8 agents across 5 tiers)
     try {
+      // Tier 1: Load Operations
       require('./services/agents/rate-engine.agent');
       require('./services/agents/freight-finder.agent');
+      // Tier 2: Fleet Operations
+      require('./services/agents/dispatch-ai.agent');
+      require('./services/agents/tracking.agent');
+      // Tier 3: Financial Operations
+      require('./services/agents/billing.agent');
+      // Tier 4: Compliance & Safety
+      require('./services/agents/compliance.agent');
+      require('./services/agents/maintenance.agent');
+      // Tier 5: Neural Intelligence
+      require('./services/agents/neural.agent');
+
       const { getAllAgents } = require('./services/agent-framework.cw');
       const agents = getAllAgents();
-      console.log(`  🧠 FreightMind AI: ${agents.length} agents initialized (${agents.map(a => a.name).join(', ')})`);
+      console.log(`  🧠 FreightMind AI: ${agents.length} agents initialized across 5 tiers`);
+      console.log(`     Tier 1 (Load Ops): rate_engine, freight_finder`);
+      console.log(`     Tier 2 (Fleet Ops): dispatch_ai, tracking`);
+      console.log(`     Tier 3 (Financial): billing`);
+      console.log(`     Tier 4 (Compliance): compliance, maintenance`);
+      console.log(`     Tier 5 (Neural): neural`);
+      console.log(`     Total tools: ${agents.reduce((sum, a) => sum + a.toolCount, 0)}`);
     } catch (agentErr) {
       console.error('  ⚠️ FreightMind AI agent init error:', agentErr.message);
     }
