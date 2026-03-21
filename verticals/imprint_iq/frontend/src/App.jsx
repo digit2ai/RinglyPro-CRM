@@ -5,6 +5,7 @@ import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import NeuralIntelligence from './pages/NeuralIntelligence';
+import ProcessModel from './pages/ProcessModel';
 
 const BASE = '/imprint_iq';
 
@@ -19,7 +20,8 @@ function Layout({ children }) {
 
   const navItems = [
     { path: `${BASE}/dashboard`, label: 'Dashboard', icon: '📊' },
-    { path: `${BASE}/neural`, label: 'Neural Intelligence', icon: '🧠' }
+    { path: `${BASE}/neural`, label: 'Neural Intelligence', icon: '🧠' },
+    { path: `${BASE}/process`, label: 'Process & ROI', icon: '🔄' }
   ];
 
   const isActive = (p) => location.pathname === p;
@@ -83,6 +85,7 @@ export default function App() {
         <Route path={`${BASE}/login`} element={<Login />} />
         <Route path={`${BASE}/dashboard`} element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/neural`} element={<ProtectedRoute><Layout><NeuralIntelligence /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/process`} element={<ProtectedRoute><Layout><ProcessModel /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/`} element={<Landing />} />
         <Route path={`${BASE}`} element={<Landing />} />
         <Route path="*" element={<Navigate to={`${BASE}/`} replace />} />
