@@ -37,7 +37,7 @@ export default function Login() {
         {error && <div style={{ background:'#F8514922', color:'#F85149', padding:'10px 14px', borderRadius:8, marginBottom:16, fontSize:13 }}>{error}</div>}
         <div style={{ marginBottom:16 }}>
           <label style={{ color:'#8B949E', fontSize:12, marginBottom:6, display:'block' }}>Email</label>
-          <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="admin@imprintiq.com" style={input} required />
+          <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Enter your email" style={input} required />
         </div>
         <div style={{ marginBottom:24 }}>
           <label style={{ color:'#8B949E', fontSize:12, marginBottom:6, display:'block' }}>Password</label>
@@ -46,7 +46,7 @@ export default function Login() {
         <button type="submit" disabled={loading} style={{ width:'100%', padding:'14px', background: loading ? '#484F58' : 'linear-gradient(135deg,#C8962A,#A67A1E)', color:'#fff', border:'none', borderRadius:8, fontSize:15, fontWeight:600, cursor: loading ? 'wait' : 'pointer' }}>
           {loading ? 'Signing in...' : 'Sign In'}
         </button>
-        <p style={{ color:'#484F58', fontSize:11, textAlign:'center', marginTop:20 }}>Default: admin@imprintiq.com / ImprintIQ2026!</p>
+        {/* credentials hint removed for client-facing */}
       </form>
     </div>
   );
