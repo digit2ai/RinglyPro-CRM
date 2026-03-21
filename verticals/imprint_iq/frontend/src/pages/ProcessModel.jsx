@@ -40,13 +40,26 @@ export default function ProcessModel() {
   const [revenue, setRevenue] = useState(655);
   const [expanded, setExpanded] = useState(null);
 
-  const totalCurrentCost = CURRENT_STEPS.reduce((s, st) => s + st.cost, 0);
-  const platformCost = revenue > 200 ? 2170000 : revenue > 50 ? 850000 : 350000;
+  // Scale ops cost with company size (bigger company = more people doing this manually)
+  const sizeMultiplier = Math.max(0.5, Math.min(5, revenue / 100));
+  const totalCurrentCost = Math.round(CURRENT_STEPS.reduce((s, st) => s + st.cost, 0) * sizeMultiplier);
+
+  // ImprintIQ pricing — scales smoothly with revenue
+  const pricing = {
+    platform:    Math.round(1500 + revenue * 30),        // $1,500 base + $30/M rev → $3K at $50M, $21K at $655M
+    agents:      Math.round(3000 + revenue * 80),        // $3,000 base + $80/M rev → $7K at $50M, $55K at $655M
+    treatments:  Math.round(1500 + revenue * 25),        // $1,500 base + $25/M rev → $2.7K at $50M, $18K at $655M
+    integrations:Math.round(1000 + revenue * 15),        // $1,000 base + $15/M rev → $1.7K at $50M, $11K at $655M
+    managed:     Math.round(2000 + revenue * 20),        // $2,000 base + $20/M rev → $3K at $50M, $15K at $655M
+  };
+  const monthlyTotal = pricing.platform + pricing.agents + pricing.treatments + pricing.integrations + pricing.managed;
+  const platformCost = monthlyTotal * 12;
+
   const savingsRate = 0.72;
   const annualSavings = Math.round(totalCurrentCost * savingsRate);
   const netROI = annualSavings - platformCost;
   const roiPct = Math.round((netROI / platformCost) * 100);
-  const paybackMonths = Math.round((platformCost / annualSavings) * 12);
+  const paybackMonths = Math.max(1, Math.round((platformCost / annualSavings) * 12));
 
   const pill = (text, color) => (
     <span style={{ fontSize:10, padding:'3px 10px', borderRadius:10, background:color+'22', color, fontWeight:600, whiteSpace:'nowrap' }}>{text}</span>
@@ -228,40 +241,35 @@ export default function ProcessModel() {
               {CURRENT_STEPS.map((s, i) => (
                 <div key={i} style={{ display:'flex', justifyContent:'space-between', padding:'6px 0', borderBottom:`1px solid #21262D` }}>
                   <span style={{ color:'#8B949E', fontSize:12 }}>{s.icon} {s.area}</span>
-                  <span style={{ color:RED, fontSize:12, fontFamily:'monospace' }}>${s.cost.toLocaleString()}</span>
+                  <span style={{ color:RED, fontSize:12, fontFamily:'monospace' }}>${Math.round(s.cost * sizeMultiplier).toLocaleString()}/yr</span>
                 </div>
               ))}
               <div style={{ display:'flex', justifyContent:'space-between', padding:'12px 0 0', marginTop:8, borderTop:`2px solid ${RED}` }}>
                 <span style={{ color:'#E6EDF3', fontSize:14, fontWeight:700 }}>TOTAL ANNUAL COST</span>
-                <span style={{ color:RED, fontSize:18, fontFamily:'Bebas Neue' }}>${totalCurrentCost.toLocaleString()}</span>
+                <span style={{ color:RED, fontSize:18, fontFamily:'Bebas Neue' }}>${totalCurrentCost.toLocaleString()}/yr</span>
               </div>
             </div>
 
             <div style={{ background:CARD, borderRadius:12, padding:24, border:`1px solid ${BORDER}`, borderTop:`4px solid ${GREEN}` }}>
               <h3 style={{ fontFamily:'Bebas Neue', color:GREEN, fontSize:18, marginBottom:16 }}>IMPRINTIQ INVESTMENT</h3>
-              <div style={{ display:'flex', justifyContent:'space-between', padding:'6px 0', borderBottom:'1px solid #21262D' }}>
-                <span style={{ color:'#8B949E', fontSize:12 }}>Platform License</span>
-                <span style={{ color:GREEN, fontSize:12, fontFamily:'monospace' }}>${(revenue > 200 ? 185000 : revenue > 50 ? 120000 : 75000).toLocaleString()}/yr</span>
-              </div>
-              <div style={{ display:'flex', justifyContent:'space-between', padding:'6px 0', borderBottom:'1px solid #21262D' }}>
-                <span style={{ color:'#8B949E', fontSize:12 }}>Agent Activations (11)</span>
-                <span style={{ color:GREEN, fontSize:12, fontFamily:'monospace' }}>${(revenue > 200 ? 1280000 : revenue > 50 ? 500000 : 180000).toLocaleString()}/yr</span>
-              </div>
-              <div style={{ display:'flex', justifyContent:'space-between', padding:'6px 0', borderBottom:'1px solid #21262D' }}>
-                <span style={{ color:'#8B949E', fontSize:12 }}>Treatment Activations</span>
-                <span style={{ color:GREEN, fontSize:12, fontFamily:'monospace' }}>${(revenue > 200 ? 450000 : revenue > 50 ? 150000 : 60000).toLocaleString()}/yr</span>
-              </div>
-              <div style={{ display:'flex', justifyContent:'space-between', padding:'6px 0', borderBottom:'1px solid #21262D' }}>
-                <span style={{ color:'#8B949E', fontSize:12 }}>Integrations (ERP, ASI)</span>
-                <span style={{ color:GREEN, fontSize:12, fontFamily:'monospace' }}>${(revenue > 200 ? 246000 : revenue > 50 ? 100000 : 35000).toLocaleString()}/yr</span>
-              </div>
-              <div style={{ display:'flex', justifyContent:'space-between', padding:'6px 0', borderBottom:'1px solid #21262D' }}>
-                <span style={{ color:'#8B949E', fontSize:12 }}>Managed AI Operations</span>
-                <span style={{ color:GREEN, fontSize:12, fontFamily:'monospace' }}>${(revenue > 200 ? 240000 : revenue > 50 ? 120000 : 48000).toLocaleString()}/yr</span>
-              </div>
-              <div style={{ display:'flex', justifyContent:'space-between', padding:'12px 0 0', marginTop:8, borderTop:`2px solid ${GREEN}` }}>
-                <span style={{ color:'#E6EDF3', fontSize:14, fontWeight:700 }}>TOTAL ANNUAL INVESTMENT</span>
-                <span style={{ color:GREEN, fontSize:18, fontFamily:'Bebas Neue' }}>${platformCost.toLocaleString()}</span>
+              {[
+                { label: 'Platform + Neural Intelligence', monthly: pricing.platform },
+                { label: 'AI Agent Suite (11 agents)', monthly: pricing.agents },
+                { label: 'Treatment Activations', monthly: pricing.treatments },
+                { label: 'Integrations (ERP, ASI, CRM)', monthly: pricing.integrations },
+                { label: 'Managed AI Operations', monthly: pricing.managed },
+              ].map((item, idx) => (
+                <div key={idx} style={{ display:'flex', justifyContent:'space-between', padding:'6px 0', borderBottom:'1px solid #21262D' }}>
+                  <span style={{ color:'#8B949E', fontSize:12 }}>{item.label}</span>
+                  <span style={{ color:GREEN, fontSize:12, fontFamily:'monospace' }}>${item.monthly.toLocaleString()}/mo</span>
+                </div>
+              ))}
+              <div style={{ display:'flex', justifyContent:'space-between', padding:'10px 0 0', marginTop:8, borderTop:`2px solid ${GREEN}` }}>
+                <div>
+                  <div style={{ color:'#E6EDF3', fontSize:14, fontWeight:700 }}>TOTAL MONTHLY</div>
+                  <div style={{ color:'#8B949E', fontSize:11, marginTop:2 }}>${platformCost.toLocaleString()}/yr</div>
+                </div>
+                <span style={{ color:GREEN, fontSize:22, fontFamily:'Bebas Neue' }}>${monthlyTotal.toLocaleString()}/mo</span>
               </div>
             </div>
           </div>
@@ -288,8 +296,9 @@ export default function ProcessModel() {
             {CURRENT_STEPS.map((s, i) => {
               const tgt = TARGET_STEPS[i];
               const savedPct = parseInt(tgt.savings);
-              const savedAmt = Math.round(s.cost * savedPct / 100);
-              const remaining = s.cost - savedAmt;
+              const scaledCost = Math.round(s.cost * sizeMultiplier);
+              const savedAmt = Math.round(scaledCost * savedPct / 100);
+              const remaining = scaledCost - savedAmt;
               return (
                 <div key={i} style={{ marginBottom:16 }}>
                   <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
