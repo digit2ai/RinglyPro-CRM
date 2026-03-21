@@ -62,12 +62,12 @@ async function find_load_pairs(input) {
 
   const anchorPickup = anchor.pickup_date || new Date().toISOString().split('T')[0];
 
-  // Find candidates — wider window, any matching or compatible equipment
+  // Find candidates — wide window to maximize matches across the full load board
   const [candidates] = await sequelize.query(`
     SELECT * FROM lg_loads
     WHERE tenant_id = $1 AND id != $2 AND status IN ('open','quoted','covered')
-      AND pickup_date BETWEEN ($3::DATE - INTERVAL '5 days') AND ($3::DATE + INTERVAL '14 days')
-    ORDER BY pickup_date ASC
+      AND pickup_date BETWEEN ($3::DATE - INTERVAL '30 days') AND ($3::DATE + INTERVAL '30 days')
+    ORDER BY ABS(EXTRACT(EPOCH FROM (pickup_date::timestamp - $3::timestamp))) ASC
     LIMIT 500
   `, { bind: [tid, anchor.id, anchorPickup] });
 
@@ -138,25 +138,25 @@ async function find_load_pairs(input) {
     if (pair_types && pair_types.length > 0 && !pair_types.includes(pairType)) continue;
     if (deadheadMiles > MAX_DEADHEAD) continue;
 
-    // ── Timing score — tuned for date-only data ──
+    // ── Timing score — tuned for planning-ahead scenarios ──
     let timingScore = 0;
     if (anchor.delivery_date && cand.pickup_date) {
-      const gapHours = (new Date(cand.pickup_date) - new Date(anchor.delivery_date)) / 3600000;
-      if (gapHours >= 0 && gapHours <= 12) {
-        timingScore = 100;
-      } else if (gapHours > 12 && gapHours <= 24) {
-        timingScore = 85;    // Same-day or next-morning
-      } else if (gapHours > 24 && gapHours <= 48) {
-        timingScore = 65;    // Next day — very common for date-only data
-      } else if (gapHours > 48 && gapHours <= MAX_GAP_HOURS) {
-        timingScore = 40;    // 2-3 day gap — still viable
-      } else if (gapHours < 0 && gapHours >= -24) {
-        timingScore = 70;    // Pickup before delivery (overlap — can work with driver swap)
-      } else if (gapHours < -24 && gapHours >= -48) {
-        timingScore = 45;    // Larger overlap
+      const gapDays = Math.abs((new Date(cand.pickup_date) - new Date(anchor.delivery_date)) / 86400000);
+      if (gapDays <= 1) {
+        timingScore = 100;     // Same day or next day
+      } else if (gapDays <= 3) {
+        timingScore = 85;      // Within 3 days
+      } else if (gapDays <= 7) {
+        timingScore = 65;      // Within a week
+      } else if (gapDays <= 14) {
+        timingScore = 45;      // Within 2 weeks
+      } else if (gapDays <= 30) {
+        timingScore = 30;      // Within a month — still plannable
+      } else {
+        timingScore = 15;      // Farther out — marginal
       }
     } else {
-      timingScore = 50;      // No date info — neutral
+      timingScore = 50;        // No date info — neutral
     }
     if (timingScore <= 0) continue;
 
