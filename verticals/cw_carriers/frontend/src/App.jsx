@@ -55,78 +55,77 @@ function Sidebar({ open, onClose }) {
   const loc = useLocation();
   const user = getUser();
   const mob = useIsMobile();
-  const [collapsed, setCollapsed] = useState({});
+  // All sections collapsed by default — only active section opens
+  const [collapsed, setCollapsed] = useState({
+    command: true, hubspot: true, operations: true, compliance: true, portals: true, admin: true, docs: true
+  });
   const toggle = (section) => setCollapsed(prev => ({ ...prev, [section]: !prev[section] }));
 
   const sections = [
     {
-      id: 'home', label: 'COMMAND', icon: '\u2302', items: [
-        { path: `${BASE}/dashboard`, label: 'Unified Dashboard', icon: '\u25A3' },
-        { path: `${BASE}/roi`, label: 'ROI & Predictions', icon: '\uD83D\uDCC8', badge: 'AI' },
+      id: 'command', label: 'COMMAND', items: [
+        { path: `${BASE}/dashboard`, label: 'Unified Dashboard' },
+        { path: `${BASE}/neural`, label: 'Neural OBD', badge: 'AI' },
+        { path: `${BASE}/roi`, label: 'ROI & Predictions', badge: 'AI' },
+        { path: `${BASE}/nlp`, label: 'NLP Assistant', badge: 'AI' },
+        { path: `${BASE}/crm-agent`, label: 'CRM Agent', badge: 'AI' },
+        { path: `${BASE}/mcp-tools`, label: 'MCP Tools', badge: 'AI' },
       ]
     },
     {
-      id: 'hubspot', label: 'HUBSPOT CRM', icon: '\uD83D\uDD36', accent: '#ff7a59', items: [
-        { path: `${BASE}/crm-agent`, label: 'CRM Agent', icon: '\uD83E\uDD16', badge: 'AI' },
-        { path: `${BASE}/pipeline`, label: 'Pipeline', icon: '\u2B95' },
-        { path: `${BASE}/contacts`, label: 'Contacts', icon: '\uD83D\uDC64' },
-        { path: `${BASE}/calls`, label: 'Call History', icon: '\uD83D\uDCDE' },
-        { path: `${BASE}/hubspot`, label: 'Sync Manager', icon: '\u21C4' },
+      id: 'hubspot', label: 'HUBSPOT CRM', accent: '#ff7a59', items: [
+        { path: `${BASE}/pipeline`, label: 'Deal Stages' },
+        { path: `${BASE}/contacts`, label: 'Contacts' },
+        { path: `${BASE}/calls`, label: 'Call History' },
+        { path: `${BASE}/hubspot`, label: 'Sync Manager' },
       ]
     },
     {
-      id: 'intelligence', label: 'EXECUTIVE VISIBILITY', icon: '\uD83E\uDDE0', accent: '#a78bfa', items: [
-        { path: `${BASE}/neural`, label: 'Neural OBD', icon: '\u26A1', badge: 'AI' },
-        { path: `${BASE}/nlp`, label: 'NLP Assistant', icon: '\uD83D\uDCAC', badge: 'AI' },
-        { path: `${BASE}/analytics`, label: 'Performance Analytics', icon: '\uD83D\uDCCA' },
-        { path: `${BASE}/brokerage-analytics`, label: 'Profit Intelligence', icon: '\uD83C\uDFAF' },
-        { path: `${BASE}/reports`, label: 'Reports', icon: '\uD83D\uDCC4' },
+      id: 'operations', label: 'OPERATIONS', accent: '#0EA5E9', items: [
+        { path: `${BASE}/loads`, label: 'Load Board' },
+        { path: `${BASE}/pricing`, label: 'Rate Intelligence', badge: 'AI' },
+        { path: `${BASE}/freight-matching`, label: 'Carrier Matching', badge: 'AI' },
+        { path: `${BASE}/load-matching`, label: 'Load Matching', badge: 'AI' },
+        { path: `${BASE}/offers`, label: 'Carrier Offers' },
+        { path: `${BASE}/tracking`, label: 'Check Calls' },
+        { path: `${BASE}/analytics`, label: 'Performance Analytics' },
+        { path: `${BASE}/brokerage-analytics`, label: 'Profit Intelligence' },
+        { path: `${BASE}/reports`, label: 'Reports' },
+        { path: `${BASE}/billing`, label: 'Billing' },
       ]
     },
     {
-      id: 'dispatch', label: 'RATE & MATCHING', icon: '\uD83D\uDE9A', accent: '#0EA5E9', items: [
-        { path: `${BASE}/loads`, label: 'Load Board', icon: '\uD83D\uDCE6' },
-        { path: `${BASE}/pricing`, label: 'Rate Intelligence', icon: '\uD83D\uDCB2', badge: 'AI' },
-        { path: `${BASE}/freight-matching`, label: 'Carrier Matching', icon: '\uD83D\uDD0D', badge: 'AI' },
-        { path: `${BASE}/load-matching`, label: 'Load Matching', icon: '\u2194', badge: 'AI' },
-        { path: `${BASE}/offers`, label: 'Carrier Offers', icon: '\uD83D\uDCB0' },
-        { path: `${BASE}/tracking`, label: 'Check Calls', icon: '\u2611' },
+      id: 'compliance', label: 'COMPLIANCE & SAFETY', accent: '#ef4444', items: [
+        { path: `${BASE}/compliance`, label: 'FMCSA Verification' },
+        { path: `${BASE}/ingestion`, label: 'Data Ingestion' },
+        { path: `${BASE}/documents`, label: 'Document Vault' },
+        { path: `${BASE}/tms`, label: 'TMS Bridge' },
       ]
     },
     {
-      id: 'portals', label: 'PORTALS', icon: '\uD83C\uDF10', items: [
-        { path: `${BASE}/shipper`, label: 'Shipper Portal', icon: '\uD83C\uDFED' },
-        { path: `${BASE}/carrier-portal`, label: 'Carrier Portal', icon: '\uD83D\uDE9B' },
+      id: 'portals', label: 'PORTALS', items: [
+        { path: `${BASE}/shipper`, label: 'Shipper Portal' },
+        { path: `${BASE}/carrier-portal`, label: 'Carrier Portal' },
       ]
     },
     {
-      id: 'compliance', label: 'COMPLIANCE & SAFETY', icon: '\uD83D\uDEE1', accent: '#ef4444', items: [
-        { path: `${BASE}/compliance`, label: 'FMCSA Verification', icon: '\u2705' },
-        { path: `${BASE}/ingestion`, label: 'Data Ingestion', icon: '\u2B07' },
-        { path: `${BASE}/documents`, label: 'Document Vault', icon: '\uD83D\uDDC4' },
-        { path: `${BASE}/tms`, label: 'TMS Bridge', icon: '\uD83D\uDD17' },
+      id: 'admin', label: 'ADMIN', items: [
+        { path: `${BASE}/settings`, label: 'Settings' },
+        { path: `${BASE}/token-estimator`, label: 'Token Estimator' },
+        { path: `${BASE}/contract-builder`, label: 'Contract Builder' },
+        { path: `${BASE}/nda`, label: 'NDA Signing' },
+        { path: `${BASE}/demo`, label: 'Demo Data' },
+        { path: `${BASE}/brokerage-demo`, label: 'Demo Workspaces' },
       ]
     },
     {
-      id: 'admin', label: 'ADMIN', icon: '\u2699', items: [
-        { path: `${BASE}/settings`, label: 'Settings', icon: '\u2699' },
-        { path: `${BASE}/billing`, label: 'Billing', icon: '\uD83D\uDCB3' },
-        { path: `${BASE}/token-estimator`, label: 'Token Estimator', icon: '\uD83E\uDE99' },
-        { path: `${BASE}/contract-builder`, label: 'Contract Builder', icon: '\uD83D\uDCDD' },
-        { path: `${BASE}/mcp-tools`, label: 'MCP Tools', icon: '\uD83D\uDEE0' },
-        { path: `${BASE}/nda`, label: 'NDA Signing', icon: '\u270D' },
-        { path: `${BASE}/demo`, label: 'Demo Data', icon: '\uD83C\uDFB2' },
-        { path: `${BASE}/brokerage-demo`, label: 'Demo Workspaces', icon: '\uD83E\uDDEA' },
-      ]
-    },
-    {
-      id: 'docs', label: 'DOCS', icon: '\uD83D\uDCD6', items: [
-        { path: '/proposals/RinglyPro-Platform-User-Guide.html', label: 'User Guide', icon: '\uD83D\uDCD8', ext: true },
-        { path: '/proposals/CW-CARRIERS-System-Architecture-Document.html', label: 'Architecture', icon: '\uD83D\uDCD0', ext: true },
-        { path: '/neural/cw-ecosystem-diagram.html', label: 'Ecosystem Diagram', icon: '\uD83D\uDDFA', ext: true },
-        { path: '/neural/obd-workflow-diagram.html', label: 'OBD Workflow', icon: '\u2699', ext: true },
-        { path: '/neural/obd-architecture.html', label: 'OBD Architecture', icon: '\u26A1', ext: true },
-        { path: '/proposals/Load-Matching-Algorithm-Technical-Brief.html', label: 'Load Matching Brief', icon: '\uD83D\uDCCB', ext: true },
+      id: 'docs', label: 'DOCS', items: [
+        { path: '/proposals/RinglyPro-Platform-User-Guide.html', label: 'User Guide', ext: true },
+        { path: '/proposals/CW-CARRIERS-System-Architecture-Document.html', label: 'Architecture', ext: true },
+        { path: '/neural/cw-ecosystem-diagram.html', label: 'Ecosystem Diagram', ext: true },
+        { path: '/neural/obd-workflow-diagram.html', label: 'OBD Workflow', ext: true },
+        { path: '/neural/obd-architecture.html', label: 'OBD Architecture', ext: true },
+        { path: '/proposals/Load-Matching-Algorithm-Technical-Brief.html', label: 'Load Matching Brief', ext: true },
       ]
     },
   ];
@@ -158,7 +157,6 @@ function Sidebar({ open, onClose }) {
                     ...(section.accent ? { color: section.accent } : {})
                   }}
                 >
-                  <span style={S.sectionIcon}>{section.icon}</span>
                   <span style={S.sectionText}>{section.label}</span>
                   {active && !isOpen && <span style={S.activeDot} />}
                   <span style={{ ...S.chevron, transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}>{'\u276F'}</span>
@@ -168,14 +166,12 @@ function Sidebar({ open, onClose }) {
                     {section.items.map(item => (
                       item.ext ? (
                         <a key={item.path} href={item.path} style={S.navItem} target="_blank" rel="noopener noreferrer">
-                          <span style={S.itemIcon}>{item.icon}</span>
                           <span style={S.itemLabel}>{item.label}</span>
                           <span style={S.extBadge}>EXT</span>
                         </a>
                       ) : (
                         <Link key={item.path} to={item.path} onClick={mob ? onClose : undefined}
                           style={{ ...S.navItem, ...(loc.pathname === item.path ? S.navActive : {}) }}>
-                          <span style={S.itemIcon}>{item.icon}</span>
                           <span style={S.itemLabel}>{item.label}</span>
                           {item.badge && <span style={S.aiBadge}>{item.badge}</span>}
                         </Link>
