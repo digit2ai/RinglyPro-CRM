@@ -10,36 +10,19 @@ export default function ContractBuilderPage() {
     effective_date: new Date().toISOString().split('T')[0],
     initial_term_months: 24,
     jurisdiction: 'Florida',
-    // Outcome-based SaaS pricing
-    platform_access_fee: 14000,
+    // Outcome-based pricing: implementation + usage (client pays) + % of cost reduction
     implementation_fee: 14000,
     ai_consumption_rate: 0.012,
-    outcome_fee_pct: 5,
+    outcome_fee_pct: 2.5,
     outcome_categories: ['labor_cost_reduction', 'throughput_improvement', 'error_reduction', 'leakage_reduction'],
     baseline_period_days: 90,
     onboarding_hours: 10,
     impl_timeline_weeks: 8,
-    renewal_uplift_pct: 3,
-    usage_tier: 'growth',
   })
 
   const fmt = (n) => Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD' })
   const update = (key, val) => setForm(f => ({ ...f, [key]: val }))
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3000) }
-
-  const TIERS = {
-    starter: { label: 'Starter', platform: 8000, desc: 'Single workflow + hypercare' },
-    growth:  { label: 'Growth',  platform: 14000, desc: 'Multi-workflow + hypercare + analytics' },
-    enterprise: { label: 'Enterprise', platform: 25000, desc: 'Full platform + dedicated hypercare' },
-  }
-
-  const selectTier = (tier) => {
-    const t = TIERS[tier]
-    update('usage_tier', tier)
-    update('platform_access_fee', t.platform)
-  }
-
-  const totalAnnual = () => form.platform_access_fee * 12
 
   const goStep = (n) => setStep(n)
 
@@ -79,7 +62,7 @@ export default function ContractBuilderPage() {
   return (
     <div className="max-w-4xl mx-auto animate-fade-in">
       <h1 className="text-2xl font-bold text-white mb-1">Enterprise Services Agreement</h1>
-      <p className="text-slate-400 text-sm mb-8">Outcome-based contract — platform + hypercare + AI usage at actuals + % of documented cost reduction</p>
+      <p className="text-slate-400 text-sm mb-8">Outcome-based contract — implementation + AI usage (paid by client) + 2.5% of documented cost reduction</p>
 
       {/* Progress */}
       <div className="flex mb-8 gap-2">
@@ -125,31 +108,12 @@ export default function ContractBuilderPage() {
         <div className="card space-y-6">
           <h3 className="text-lg font-semibold text-white border-b border-slate-700 pb-3">Step 2 — Pricing & Outcome-Based Fees</h3>
 
-          {/* Platform Tier */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Platform + Hypercare Tier</label>
-            <div className="grid grid-cols-3 gap-3">
-              {Object.entries(TIERS).map(([key, t]) => (
-                <button key={key} onClick={() => selectTier(key)}
-                  className={`p-4 rounded-lg border text-left transition-all ${
-                    form.usage_tier === key ? 'border-emerald-500 bg-emerald-500/10' : 'border-slate-600 hover:border-slate-500'
-                  }`}>
-                  <div className={`text-sm font-bold mb-1 ${form.usage_tier === key ? 'text-emerald-400' : 'text-white'}`}>{t.label}</div>
-                  <div className="text-xs text-slate-400 mb-2">{t.desc}</div>
-                  <div className="text-xs text-slate-300">{fmt(t.platform)}/mo</div>
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Base Pricing Fields */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Field label="One-Time Implementation Fee ($)" type="number" value={form.implementation_fee} onChange={v => update('implementation_fee', parseFloat(v) || 0)} />
-            <Field label="Monthly Platform + Hypercare Fee ($)" type="number" value={form.platform_access_fee} onChange={v => update('platform_access_fee', parseFloat(v) || 0)} />
-            <Field label="AI Consumption Rate ($/unit)" type="number" value={form.ai_consumption_rate} onChange={v => update('ai_consumption_rate', parseFloat(v) || 0)} step="0.001" />
+            <Field label="AI Consumption Rate ($/unit) — paid by Client" type="number" value={form.ai_consumption_rate} onChange={v => update('ai_consumption_rate', parseFloat(v) || 0)} step="0.001" />
             <Field label="Onboarding Hours" type="number" value={form.onboarding_hours} onChange={v => update('onboarding_hours', parseInt(v) || 0)} />
             <Field label="Implementation Timeline (weeks)" type="number" value={form.impl_timeline_weeks} onChange={v => update('impl_timeline_weeks', parseInt(v) || 0)} />
-            <Field label="Annual Renewal Uplift (%)" type="number" value={form.renewal_uplift_pct} onChange={v => update('renewal_uplift_pct', parseFloat(v) || 0)} />
           </div>
 
           {/* Outcome Fee Section */}
@@ -212,24 +176,16 @@ export default function ContractBuilderPage() {
                 <span className="font-bold text-amber-400">{fmt(form.implementation_fee)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Platform + Hypercare /mo</span>
-                <span className="font-bold text-blue-400">{fmt(form.platform_access_fee)}</span>
-              </div>
-              <div className="flex justify-between">
                 <span className="text-slate-400">AI Usage</span>
-                <span className="font-medium text-slate-300">Billed at actuals (${form.ai_consumption_rate}/unit)</span>
+                <span className="font-medium text-slate-300">Paid by Client at actuals (${form.ai_consumption_rate}/unit)</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Outcome Fee</span>
                 <span className="font-medium text-emerald-400">{form.outcome_fee_pct}% of documented cost reduction</span>
               </div>
               <div className="border-t border-slate-600 pt-2 mt-2 flex justify-between">
-                <span className="text-slate-300">Annual Guaranteed (platform only)</span>
-                <span className="font-bold text-white">{fmt(totalAnnual())}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-300">Annual with $500K/mo savings example</span>
-                <span className="font-bold text-emerald-400">{fmt(totalAnnual() + (500000 * form.outcome_fee_pct / 100 * 12))}</span>
+                <span className="text-slate-300">At $500K/mo savings → Outcome Fee</span>
+                <span className="font-bold text-emerald-400">{fmt(500000 * form.outcome_fee_pct / 100)}/mo ({fmt(500000 * form.outcome_fee_pct / 100 * 12)}/yr)</span>
               </div>
             </div>
           </div>
@@ -327,7 +283,7 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS }) {
       <p>Implementation: <strong>{form.impl_timeline_weeks} weeks</strong>. Onboarding: <strong>{form.onboarding_hours} hours</strong>.</p>
 
       <H2>3. FEES & PRICING STRUCTURE</H2>
-      <p>This Agreement employs an outcome-aligned pricing model comprising fixed platform fees, usage-based AI consumption billing, and an outcome fee tied to documented cost reduction.</p>
+      <p>This Agreement employs an outcome-aligned pricing model. Provider's compensation is tied directly to the measurable cost reduction and value delivered to Client, with AI usage costs borne by Client as a pass-through.</p>
       <table style={{ width: '100%', borderCollapse: 'collapse', margin: '1em 0' }}>
         <thead>
           <tr style={{ background: '#F1F5F9' }}>
@@ -343,14 +299,9 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS }) {
             <td style={tdStyle}>One-time, due upon execution</td>
           </tr>
           <tr>
-            <td style={tdStyle}>Platform Access + Hypercare Fee</td>
-            <td style={tdStyle}><strong>{fmt(form.platform_access_fee)}</strong></td>
-            <td style={tdStyle}>Monthly</td>
-          </tr>
-          <tr>
             <td style={tdStyle}>AI Consumption — Usage Rate (per unit)</td>
             <td style={tdStyle}><strong>${form.ai_consumption_rate.toFixed(4)}</strong></td>
-            <td style={tdStyle}>Monthly, metered at actuals</td>
+            <td style={tdStyle}>Monthly, metered at actuals — paid by Client</td>
           </tr>
           <tr style={{ background: '#F0FDF4' }}>
             <td style={tdStyle}><strong>Outcome Fee — Cost Reduction Value Capture</strong></td>
@@ -360,9 +311,9 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS }) {
         </tbody>
       </table>
 
-      <H2>4. AI USAGE & CONSUMPTION BILLING</H2>
+      <H2>4. AI USAGE — CLIENT-PAID CONSUMPTION</H2>
       <ol style={{ paddingLeft: '1.2em' }}>
-        <li><strong>Usage-Based Billing:</strong> All AI consumption (model tokens, API calls, workflow executions, and compute resources) is billed monthly at the Consumption Rate based on actual metered usage. There are no included or bundled units — Client pays for all usage consumed.</li>
+        <li><strong>Client-Paid Usage:</strong> All AI consumption (model tokens, API calls, workflow executions, and compute resources) is billed monthly to Client at the Consumption Rate based on actual metered usage. Client bears the full cost of AI usage as a pass-through — there are no included or bundled units.</li>
         <li><strong>Automated Usage Metering:</strong> Provider shall maintain automated metering of all Consumption Units. Client shall have access to a real-time consumption dashboard showing current usage, historical trends, and projected billing.</li>
         <li><strong>Usage Reports:</strong> Provider shall deliver a monthly consumption report detailing usage by category, AI model, workflow, and cost center.</li>
         <li><strong>Payment Terms:</strong> All invoices are due within thirty (30) days of issuance. Late payments accrue interest at 1.5% per month or the maximum rate permitted by law, whichever is less.</li>
@@ -387,7 +338,7 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS }) {
       <H2>6. TERM & RENEWAL</H2>
       <ol style={{ paddingLeft: '1.2em' }}>
         <li><strong>Initial Term:</strong> {form.initial_term_months} months from the Effective Date.</li>
-        <li><strong>Auto-Renewal:</strong> Renews for successive twelve (12) month periods unless sixty (60) days' written notice given. The Platform Access + Hypercare Fee is subject to a {form.renewal_uplift_pct}% annual uplift upon renewal. The Outcome Fee percentage remains fixed for the duration of the Agreement including renewals.</li>
+        <li><strong>Auto-Renewal:</strong> Renews for successive twelve (12) month periods unless sixty (60) days' written notice given. The Outcome Fee percentage remains fixed for the duration of the Agreement including renewals.</li>
         <li><strong>Termination for Cause:</strong> Either party may terminate upon thirty (30) days' written notice for uncured material breach.</li>
         <li><strong>Effect of Termination:</strong> Client pays all fees accrued through the termination date, including any pro-rated quarterly Outcome Fee. Provider delivers completed Deliverables and provides thirty (30) days' transition assistance.</li>
       </ol>
@@ -458,23 +409,8 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS }) {
           <li>Business-hours support via email and platform chat, 24-hour SLA for critical issues.</li>
         </ol>
 
-        <p style={{ marginTop: '1.5em' }}><strong>A2. Platform + Hypercare Tiers:</strong></p>
-        <table style={{ width: '100%', borderCollapse: 'collapse', margin: '1em 0' }}>
-          <thead>
-            <tr style={{ background: '#F1F5F9' }}>
-              <th style={thStyle}>Tier</th>
-              <th style={thStyle}>Platform + Hypercare /Mo</th>
-              <th style={thStyle}>AI Usage</th>
-              <th style={thStyle}>Best For</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td style={tdStyle}>Starter</td><td style={tdStyle}>$8,000</td><td style={tdStyle}>Billed at actuals</td><td style={tdStyle}>Single workflow + hypercare</td></tr>
-            <tr><td style={tdStyle}>Growth</td><td style={tdStyle}>$14,000</td><td style={tdStyle}>Billed at actuals</td><td style={tdStyle}>Multi-workflow + hypercare + analytics</td></tr>
-            <tr><td style={tdStyle}>Enterprise</td><td style={tdStyle}>$25,000</td><td style={tdStyle}>Billed at actuals</td><td style={tdStyle}>Full platform + dedicated hypercare</td></tr>
-          </tbody>
-        </table>
-        <p style={{ fontSize: '10pt', color: '#475569' }}>All AI usage is billed monthly at the agreed Consumption Rate based on actual metered consumption. The Outcome Fee ({form.outcome_fee_pct}% of Documented Savings) is billed quarterly in addition to the above.</p>
+        <p style={{ marginTop: '1.5em' }}><strong>A2. Pricing Model:</strong></p>
+        <p style={{ fontSize: '10pt', color: '#475569' }}>Provider receives a one-time Implementation Fee of {fmt(form.implementation_fee)}. All AI usage is paid by Client monthly at the agreed Consumption Rate based on actual metered consumption. Provider's ongoing compensation is the Outcome Fee — {form.outcome_fee_pct}% of Documented Savings, reconciled quarterly against the pre-implementation Baseline.</p>
       </div>
 
       {/* Exhibit B */}
