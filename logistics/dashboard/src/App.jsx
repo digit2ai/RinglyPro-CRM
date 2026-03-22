@@ -11,6 +11,7 @@ import ObservabilityPage from './pages/ObservabilityPage'
 import UserGuidePage from './pages/UserGuidePage'
 import OEEDashboardPage from './pages/OEEDashboardPage'
 import NDAPage from './pages/NDAPage'
+import ContractBuilderPage from './pages/ContractBuilderPage'
 import StepIndicator from './components/StepIndicator'
 
 const steps = [
@@ -24,7 +25,8 @@ const steps = [
   { path: '/oee-dashboard', label: 'OEE Dashboard', icon: GaugeIcon, noProject: true },
   { path: '/user-guide', label: 'User Guide', icon: BookIcon, noProject: true },
   { path: '/proposals/LOGISTICS-System-Architecture-Document.html', label: 'MCP Architecture', icon: ArchitectureIcon, external: true },
-  { path: '/nda', label: 'NDA', icon: NDAIcon, noProject: true }
+  { path: '/nda', label: 'NDA', icon: NDAIcon, noProject: true },
+  { path: '/contract-builder', label: 'Services Agreement', icon: ContractIcon, noProject: true }
 ]
 
 function UploadIcon({ className }) {
@@ -124,6 +126,14 @@ function NDAIcon({ className }) {
   )
 }
 
+function ContractIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+    </svg>
+  )
+}
+
 function MenuIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -161,6 +171,7 @@ export default function App({ onLogout, userEmail }) {
     if (location.pathname.startsWith('/observability')) return 8
     if (location.pathname.startsWith('/user-guide')) return 8
     if (location.pathname.startsWith('/nda')) return 10
+    if (location.pathname.startsWith('/contract-builder')) return 11
     return 0
   }
 
@@ -307,6 +318,7 @@ export default function App({ onLogout, userEmail }) {
             <Route path="/observability" element={<ObservabilityPage />} />
             <Route path="/user-guide" element={<UserGuidePage />} />
             <Route path="/nda" element={<NDAPage />} />
+            <Route path="/contract-builder" element={<ContractBuilderPage />} />
           </Routes>
         </div>
       </main>
