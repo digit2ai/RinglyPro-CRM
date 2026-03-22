@@ -10,16 +10,15 @@ export default function ContractBuilderPage() {
     effective_date: new Date().toISOString().split('T')[0],
     initial_term_months: 24,
     jurisdiction: 'Florida',
-    // Consumption-based SaaS pricing
+    // Outcome-based SaaS pricing
     platform_access_fee: 14000,
     implementation_fee: 14000,
     ai_consumption_rate: 0.012,
-    included_units: 0,
-    overage_rate: 0.012,
     outcome_fee_pct: 5,
+    outcome_categories: ['labor_cost_reduction', 'throughput_improvement', 'error_reduction', 'leakage_reduction'],
+    baseline_period_days: 90,
     onboarding_hours: 10,
     impl_timeline_weeks: 8,
-    billing_model: 'hybrid',
     renewal_uplift_pct: 3,
     usage_tier: 'growth',
   })
@@ -29,23 +28,18 @@ export default function ContractBuilderPage() {
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3000) }
 
   const TIERS = {
-    starter: { label: 'Starter', units: 0, platform: 8000, desc: 'Single workflow + hypercare' },
-    growth:  { label: 'Growth',  units: 0, platform: 14000, desc: 'Multi-workflow + hypercare + analytics' },
-    enterprise: { label: 'Enterprise', units: 0, platform: 25000, desc: 'Full platform + dedicated hypercare' },
+    starter: { label: 'Starter', platform: 8000, desc: 'Single workflow + hypercare' },
+    growth:  { label: 'Growth',  platform: 14000, desc: 'Multi-workflow + hypercare + analytics' },
+    enterprise: { label: 'Enterprise', platform: 25000, desc: 'Full platform + dedicated hypercare' },
   }
 
   const selectTier = (tier) => {
     const t = TIERS[tier]
     update('usage_tier', tier)
-    update('included_units', t.units)
     update('platform_access_fee', t.platform)
   }
 
-  const totalMonthly = () => {
-    return form.platform_access_fee + (form.included_units * form.ai_consumption_rate)
-  }
-
-  const totalAnnual = () => totalMonthly() * 12
+  const totalAnnual = () => form.platform_access_fee * 12
 
   const goStep = (n) => setStep(n)
 
@@ -64,14 +58,32 @@ export default function ContractBuilderPage() {
     w.print()
   }
 
+  const OUTCOME_OPTIONS = [
+    { key: 'labor_cost_reduction', label: 'Labor Cost Reduction' },
+    { key: 'throughput_improvement', label: 'Throughput Improvement' },
+    { key: 'error_reduction', label: 'Error / Quality Improvement' },
+    { key: 'leakage_reduction', label: 'Revenue Leakage Reduction' },
+    { key: 'space_optimization', label: 'Space / Capacity Optimization' },
+    { key: 'inventory_accuracy', label: 'Inventory Accuracy Gains' },
+  ]
+
+  const toggleOutcome = (key) => {
+    setForm(f => {
+      const cats = f.outcome_categories.includes(key)
+        ? f.outcome_categories.filter(c => c !== key)
+        : [...f.outcome_categories, key]
+      return { ...f, outcome_categories: cats }
+    })
+  }
+
   return (
     <div className="max-w-4xl mx-auto animate-fade-in">
       <h1 className="text-2xl font-bold text-white mb-1">Enterprise Services Agreement</h1>
-      <p className="text-slate-400 text-sm mb-8">Consumption-based SaaS contract with usage metering, outcome fees, and automated billing</p>
+      <p className="text-slate-400 text-sm mb-8">Outcome-based contract — platform + hypercare + AI usage at actuals + % of documented cost reduction</p>
 
       {/* Progress */}
       <div className="flex mb-8 gap-2">
-        {['Parties & Dates', 'Pricing Model', 'Preview', 'Export'].map((label, i) => {
+        {['Parties & Dates', 'Pricing & Outcomes', 'Preview', 'Export'].map((label, i) => {
           const n = i + 1
           const isDone = n < step
           const isActive = n === step
@@ -103,39 +115,19 @@ export default function ContractBuilderPage() {
             <Field label="Jurisdiction" value={form.jurisdiction} onChange={v => update('jurisdiction', v)} />
           </div>
           <div className="flex justify-end pt-2">
-            <button className="btn-primary" onClick={() => goStep(2)}>Next: Pricing Model →</button>
+            <button className="btn-primary" onClick={() => goStep(2)}>Next: Pricing & Outcomes →</button>
           </div>
         </div>
       )}
 
-      {/* Step 2: Consumption-Based Pricing */}
+      {/* Step 2: Pricing & Outcome Model */}
       {step === 2 && (
         <div className="card space-y-6">
-          <h3 className="text-lg font-semibold text-white border-b border-slate-700 pb-3">Step 2 — Consumption-Based Pricing Model</h3>
+          <h3 className="text-lg font-semibold text-white border-b border-slate-700 pb-3">Step 2 — Pricing & Outcome-Based Fees</h3>
 
-          {/* Billing Model Selector */}
+          {/* Platform Tier */}
           <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Revenue Model</label>
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { key: 'hybrid', label: 'Hybrid ARR + Consumption', desc: 'Platform fee + usage-based AI billing' },
-                { key: 'consumption', label: 'Pure Consumption', desc: 'Pay only for what you use' },
-                { key: 'outcome', label: 'Outcome-Based', desc: 'Fees tied to measurable value delivered' },
-              ].map(m => (
-                <button key={m.key} onClick={() => update('billing_model', m.key)}
-                  className={`p-4 rounded-lg border text-left transition-all ${
-                    form.billing_model === m.key ? 'border-blue-500 bg-blue-500/10' : 'border-slate-600 hover:border-slate-500'
-                  }`}>
-                  <div className={`text-sm font-semibold mb-1 ${form.billing_model === m.key ? 'text-blue-400' : 'text-white'}`}>{m.label}</div>
-                  <div className="text-xs text-slate-400">{m.desc}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Usage Tiers */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Usage Tier</label>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Platform + Hypercare Tier</label>
             <div className="grid grid-cols-3 gap-3">
               {Object.entries(TIERS).map(([key, t]) => (
                 <button key={key} onClick={() => selectTier(key)}
@@ -144,45 +136,101 @@ export default function ContractBuilderPage() {
                   }`}>
                   <div className={`text-sm font-bold mb-1 ${form.usage_tier === key ? 'text-emerald-400' : 'text-white'}`}>{t.label}</div>
                   <div className="text-xs text-slate-400 mb-2">{t.desc}</div>
-                  <div className="text-xs text-slate-300">{t.units.toLocaleString()} units/mo · {fmt(t.platform)}/mo</div>
+                  <div className="text-xs text-slate-300">{fmt(t.platform)}/mo</div>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Pricing Fields */}
+          {/* Base Pricing Fields */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Field label="One-Time Implementation Fee ($)" type="number" value={form.implementation_fee} onChange={v => update('implementation_fee', parseFloat(v) || 0)} />
             <Field label="Monthly Platform + Hypercare Fee ($)" type="number" value={form.platform_access_fee} onChange={v => update('platform_access_fee', parseFloat(v) || 0)} />
             <Field label="AI Consumption Rate ($/unit)" type="number" value={form.ai_consumption_rate} onChange={v => update('ai_consumption_rate', parseFloat(v) || 0)} step="0.001" />
-            {form.billing_model === 'outcome' && (
-              <Field label="Outcome Fee (% of measured value)" type="number" value={form.outcome_fee_pct} onChange={v => update('outcome_fee_pct', parseFloat(v) || 0)} />
-            )}
             <Field label="Onboarding Hours" type="number" value={form.onboarding_hours} onChange={v => update('onboarding_hours', parseInt(v) || 0)} />
             <Field label="Implementation Timeline (weeks)" type="number" value={form.impl_timeline_weeks} onChange={v => update('impl_timeline_weeks', parseInt(v) || 0)} />
             <Field label="Annual Renewal Uplift (%)" type="number" value={form.renewal_uplift_pct} onChange={v => update('renewal_uplift_pct', parseFloat(v) || 0)} />
           </div>
 
-          {/* Monthly Summary Card */}
+          {/* Outcome Fee Section */}
+          <div className="bg-slate-700/30 border border-blue-500/30 rounded-lg p-5 space-y-4">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-2 h-2 rounded-full bg-blue-400" />
+              <h4 className="text-sm font-semibold text-white">Outcome-Based Fee — Value Capture Layer</h4>
+            </div>
+            <p className="text-xs text-slate-400">Charged as a percentage of documented, measurable cost reduction and value delivered by the platform. Reconciled quarterly against an agreed pre-implementation baseline.</p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <Field label="Outcome Fee (% of documented savings)" type="number" value={form.outcome_fee_pct} onChange={v => update('outcome_fee_pct', parseFloat(v) || 0)} />
+              <Field label="Baseline Measurement Period (days)" type="number" value={form.baseline_period_days} onChange={v => update('baseline_period_days', parseInt(v) || 90)} />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Measurable Outcome Categories</label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {OUTCOME_OPTIONS.map(o => (
+                  <button key={o.key} onClick={() => toggleOutcome(o.key)}
+                    className={`px-3 py-2 rounded-lg border text-xs font-medium transition-all ${
+                      form.outcome_categories.includes(o.key)
+                        ? 'border-blue-500 bg-blue-500/15 text-blue-300'
+                        : 'border-slate-600 text-slate-400 hover:border-slate-500'
+                    }`}>
+                    {form.outcome_categories.includes(o.key) ? '✓ ' : ''}{o.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Example calculation */}
+            <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-600">
+              <p className="text-xs text-slate-400 mb-2">Example at $500K/month documented savings:</p>
+              <div className="flex items-center gap-4">
+                <div className="text-center">
+                  <div className="text-lg font-bold text-blue-400">{form.outcome_fee_pct}%</div>
+                  <div className="text-xs text-slate-500">Fee rate</div>
+                </div>
+                <div className="text-slate-500">×</div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-slate-300">$500K</div>
+                  <div className="text-xs text-slate-500">Monthly savings</div>
+                </div>
+                <div className="text-slate-500">=</div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-emerald-400">{fmt(500000 * form.outcome_fee_pct / 100)}/mo</div>
+                  <div className="text-xs text-slate-500">Outcome fee</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Revenue Summary */}
           <div className="bg-slate-700/30 border border-slate-600 rounded-lg p-5">
-            <h4 className="text-sm font-semibold text-white mb-3">Pricing Summary</h4>
-            <div className="grid grid-cols-2 gap-4 text-center">
-              <div>
-                <div className="text-lg font-bold text-amber-400">{fmt(form.implementation_fee)}</div>
-                <div className="text-xs text-slate-400">Implementation (one-time)</div>
+            <h4 className="text-sm font-semibold text-white mb-3">Revenue Summary</h4>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-slate-400">Implementation (one-time)</span>
+                <span className="font-bold text-amber-400">{fmt(form.implementation_fee)}</span>
               </div>
-              <div>
-                <div className="text-lg font-bold text-blue-400">{fmt(form.platform_access_fee)}</div>
-                <div className="text-xs text-slate-400">Platform + Hypercare /mo</div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Platform + Hypercare /mo</span>
+                <span className="font-bold text-blue-400">{fmt(form.platform_access_fee)}</span>
               </div>
-            </div>
-            <div className="mt-3 pt-3 border-t border-slate-600 text-center">
-              <span className="text-sm text-slate-300">Annual Platform + Hypercare: </span>
-              <span className="text-sm font-bold text-white">{fmt(totalAnnual())}</span>
-              <span className="text-xs text-slate-500 ml-2">+ usage billed at actuals</span>
-            </div>
-            <div className="mt-2 text-center">
-              <span className="text-xs text-emerald-400 font-medium">AI usage is billed monthly at ${form.ai_consumption_rate}/unit — 100% pass-through, no included units</span>
+              <div className="flex justify-between">
+                <span className="text-slate-400">AI Usage</span>
+                <span className="font-medium text-slate-300">Billed at actuals (${form.ai_consumption_rate}/unit)</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Outcome Fee</span>
+                <span className="font-medium text-emerald-400">{form.outcome_fee_pct}% of documented cost reduction</span>
+              </div>
+              <div className="border-t border-slate-600 pt-2 mt-2 flex justify-between">
+                <span className="text-slate-300">Annual Guaranteed (platform only)</span>
+                <span className="font-bold text-white">{fmt(totalAnnual())}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-300">Annual with $500K/mo savings example</span>
+                <span className="font-bold text-emerald-400">{fmt(totalAnnual() + (500000 * form.outcome_fee_pct / 100 * 12))}</span>
+              </div>
             </div>
           </div>
 
@@ -198,7 +246,7 @@ export default function ContractBuilderPage() {
         <div className="card space-y-4">
           <h3 className="text-lg font-semibold text-white border-b border-slate-700 pb-3">Step 3 — Contract Preview</h3>
           <div id="contractPreview" className="bg-white rounded-lg p-8 max-h-[600px] overflow-y-auto" style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: '11pt', lineHeight: 1.6, color: '#1E293B' }}>
-            <ContractPreview form={form} fmt={fmt} totalMonthly={totalMonthly} />
+            <ContractPreview form={form} fmt={fmt} OUTCOME_OPTIONS={OUTCOME_OPTIONS} />
           </div>
           <div className="flex justify-between pt-2">
             <button className="btn-secondary" onClick={() => goStep(2)}>← Back</button>
@@ -241,12 +289,8 @@ export default function ContractBuilderPage() {
   )
 }
 
-function ContractPreview({ form, fmt, totalMonthly }) {
-  const billingLabel = {
-    hybrid: 'Hybrid ARR + Consumption',
-    consumption: 'Pure Consumption',
-    outcome: 'Outcome-Based',
-  }[form.billing_model]
+function ContractPreview({ form, fmt, OUTCOME_OPTIONS }) {
+  const selectedOutcomes = OUTCOME_OPTIONS.filter(o => form.outcome_categories.includes(o.key))
 
   return (
     <>
@@ -265,7 +309,8 @@ function ContractPreview({ form, fmt, totalMonthly }) {
         <li><strong>"Services"</strong> means the AI-powered analytics, automation, and consulting services described in Exhibit A.</li>
         <li><strong>"Platform"</strong> means Provider's proprietary RinglyPro AI platform, including all AI agents, MCP tools, dashboards, and integrations.</li>
         <li><strong>"Consumption Units"</strong> means the aggregate usage of AI model tokens, API calls, workflow executions, and compute resources consumed through the Platform on Client's behalf, as metered by Provider's automated usage tracking system.</li>
-        <li><strong>"Outcome Metrics"</strong> means the measurable business outcomes defined in Exhibit B, including but not limited to cost reduction, throughput improvement, error reduction, and revenue impact.</li>
+        <li><strong>"Documented Savings"</strong> means the measurable, verifiable cost reduction and value improvement attributable to the Platform, calculated as the difference between the pre-implementation Baseline (Section 5) and actual post-implementation performance across the Outcome Categories defined in Exhibit B.</li>
+        <li><strong>"Baseline"</strong> means the pre-implementation performance metrics measured during the first {form.baseline_period_days} days of the Agreement, establishing the reference point against which Documented Savings are calculated.</li>
         <li><strong>"Confidential Information"</strong> means all non-public information disclosed by either party.</li>
       </ol>
 
@@ -273,16 +318,16 @@ function ContractPreview({ form, fmt, totalMonthly }) {
       <p>Provider shall deliver the Services described in Exhibit A, including:</p>
       <ol style={{ paddingLeft: '1.2em' }}>
         <li>AI-powered data analysis, optimization, and intelligent recommendations via the Platform</li>
-        <li>Automated usage metering, billing validation, and consumption reporting</li>
         <li>Real-time monitoring, anomaly detection, and predictive analytics</li>
-        <li>AI agent orchestration across the Lead-to-Cash lifecycle</li>
-        <li>Dynamic packaging adjustments based on usage behavior</li>
+        <li>AI agent orchestration across the operational lifecycle</li>
+        <li>Automated usage metering and consumption reporting</li>
+        <li>Dedicated hypercare: proactive monitoring, optimization, priority support, and regular account reviews</li>
         <li>Ongoing platform access, maintenance, and support</li>
       </ol>
       <p>Implementation: <strong>{form.impl_timeline_weeks} weeks</strong>. Onboarding: <strong>{form.onboarding_hours} hours</strong>.</p>
 
-      <H2>3. REVENUE MODEL & PRICING</H2>
-      <p><strong>Billing Model:</strong> {billingLabel}</p>
+      <H2>3. FEES & PRICING STRUCTURE</H2>
+      <p>This Agreement employs an outcome-aligned pricing model comprising fixed platform fees, usage-based AI consumption billing, and an outcome fee tied to documented cost reduction.</p>
       <table style={{ width: '100%', borderCollapse: 'collapse', margin: '1em 0' }}>
         <thead>
           <tr style={{ background: '#F1F5F9' }}>
@@ -293,85 +338,86 @@ function ContractPreview({ form, fmt, totalMonthly }) {
         </thead>
         <tbody>
           <tr>
-            <td style={tdStyle}>One-Time Implementation Fee</td>
+            <td style={tdStyle}>Implementation Fee</td>
             <td style={tdStyle}><strong>{fmt(form.implementation_fee)}</strong></td>
-            <td style={tdStyle}>Due upon execution</td>
+            <td style={tdStyle}>One-time, due upon execution</td>
           </tr>
           <tr>
-            <td style={tdStyle}>Monthly Platform Access + Hypercare Fee</td>
+            <td style={tdStyle}>Platform Access + Hypercare Fee</td>
             <td style={tdStyle}><strong>{fmt(form.platform_access_fee)}</strong></td>
             <td style={tdStyle}>Monthly</td>
           </tr>
           <tr>
-            <td style={tdStyle}>AI Usage — Consumption Rate (per unit)</td>
+            <td style={tdStyle}>AI Consumption — Usage Rate (per unit)</td>
             <td style={tdStyle}><strong>${form.ai_consumption_rate.toFixed(4)}</strong></td>
-            <td style={tdStyle}>Monthly (metered at actuals)</td>
+            <td style={tdStyle}>Monthly, metered at actuals</td>
           </tr>
-          {form.billing_model === 'outcome' && (
-            <tr>
-              <td style={tdStyle}>Outcome Fee</td>
-              <td style={tdStyle}><strong>{form.outcome_fee_pct}%</strong> of measured value</td>
-              <td style={tdStyle}>Quarterly (reconciled)</td>
-            </tr>
-          )}
+          <tr style={{ background: '#F0FDF4' }}>
+            <td style={tdStyle}><strong>Outcome Fee — Cost Reduction Value Capture</strong></td>
+            <td style={tdStyle}><strong>{form.outcome_fee_pct}%</strong> of Documented Savings</td>
+            <td style={tdStyle}>Quarterly, reconciled against Baseline</td>
+          </tr>
         </tbody>
       </table>
-      <p><strong>Monthly Minimum:</strong> {fmt(form.platform_access_fee)} (platform + hypercare). AI usage is billed additionally each month based on actual consumption.</p>
 
       <H2>4. AI USAGE & CONSUMPTION BILLING</H2>
       <ol style={{ paddingLeft: '1.2em' }}>
         <li><strong>Usage-Based Billing:</strong> All AI consumption (model tokens, API calls, workflow executions, and compute resources) is billed monthly at the Consumption Rate based on actual metered usage. There are no included or bundled units — Client pays for all usage consumed.</li>
         <li><strong>Automated Usage Metering:</strong> Provider shall maintain automated metering of all Consumption Units. Client shall have access to a real-time consumption dashboard showing current usage, historical trends, and projected billing.</li>
         <li><strong>Usage Reports:</strong> Provider shall deliver a monthly consumption report detailing usage by category, AI model, workflow, and cost center.</li>
-        <li><strong>Hypercare Services:</strong> The Monthly Platform Access Fee includes dedicated hypercare support: proactive monitoring, optimization recommendations, priority issue resolution, and regular account reviews.</li>
         <li><strong>Payment Terms:</strong> All invoices are due within thirty (30) days of issuance. Late payments accrue interest at 1.5% per month or the maximum rate permitted by law, whichever is less.</li>
       </ol>
 
-      {form.billing_model === 'outcome' && (
-        <>
-          <H2>5. OUTCOME-BASED FEE RECONCILIATION</H2>
-          <ol style={{ paddingLeft: '1.2em' }}>
-            <li><strong>Measurement:</strong> Outcome Metrics shall be measured quarterly using mutually agreed baselines established during implementation.</li>
-            <li><strong>Reconciliation:</strong> At the end of each quarter, Provider and Client shall jointly review Outcome Metrics. The Outcome Fee ({form.outcome_fee_pct}%) applies to the net measurable value delivered above baseline.</li>
-            <li><strong>Audit Rights:</strong> Either party may audit Outcome Metrics with fifteen (15) days' written notice.</li>
-          </ol>
-        </>
-      )}
-
-      <H2>{form.billing_model === 'outcome' ? '6' : '5'}. TERM & RENEWAL</H2>
+      <H2>5. OUTCOME-BASED FEE — COST REDUCTION VALUE CAPTURE</H2>
       <ol style={{ paddingLeft: '1.2em' }}>
-        <li><strong>Initial Term:</strong> {form.initial_term_months} months from the Effective Date.</li>
-        <li><strong>Auto-Renewal:</strong> Renews for successive twelve (12) month periods unless sixty (60) days' written notice given. Renewal pricing subject to {form.renewal_uplift_pct}% annual uplift aligned to platform value delivery.</li>
-        <li><strong>Termination for Cause:</strong> Either party may terminate upon thirty (30) days' written notice for uncured material breach.</li>
-        <li><strong>Effect of Termination:</strong> Client pays all fees through termination date. Provider delivers completed Deliverables and provides thirty (30) days' transition assistance.</li>
+        <li><strong>Baseline Establishment:</strong> During the first {form.baseline_period_days} days following the Effective Date, Provider and Client shall jointly measure and document pre-implementation performance metrics across all Outcome Categories (Exhibit B). This Baseline shall serve as the reference point for calculating Documented Savings.</li>
+        <li><strong>Outcome Categories:</strong> The following categories shall be measured for cost reduction and value improvement:
+          <ul style={{ paddingLeft: '1.2em', marginTop: '0.5em' }}>
+            {selectedOutcomes.map(o => (
+              <li key={o.key}>{o.label}</li>
+            ))}
+          </ul>
+        </li>
+        <li><strong>Quarterly Reconciliation:</strong> At the end of each calendar quarter, Provider and Client shall jointly review actual performance against the Baseline. The Outcome Fee of <strong>{form.outcome_fee_pct}%</strong> shall be applied to the net Documented Savings — the measurable, verified cost reduction and value improvement attributable to the Platform during that quarter.</li>
+        <li><strong>Documentation & Verification:</strong> Provider shall deliver a quarterly Outcome Report showing Baseline metrics, current performance, calculated savings, and the resulting Outcome Fee. Both parties must approve the Outcome Report before the fee is invoiced.</li>
+        <li><strong>Audit Rights:</strong> Either party may audit Outcome Metrics and the underlying data with fifteen (15) days' written notice. The auditing party bears the cost of the audit unless a discrepancy exceeding 5% is found, in which case the audited party bears the cost.</li>
+        <li><strong>Dispute Resolution:</strong> If the parties cannot agree on the Documented Savings calculation, they shall engage a mutually agreed independent third party to make a binding determination within thirty (30) days.</li>
       </ol>
 
-      <H2>{form.billing_model === 'outcome' ? '7' : '6'}. INTELLECTUAL PROPERTY</H2>
+      <H2>6. TERM & RENEWAL</H2>
+      <ol style={{ paddingLeft: '1.2em' }}>
+        <li><strong>Initial Term:</strong> {form.initial_term_months} months from the Effective Date.</li>
+        <li><strong>Auto-Renewal:</strong> Renews for successive twelve (12) month periods unless sixty (60) days' written notice given. The Platform Access + Hypercare Fee is subject to a {form.renewal_uplift_pct}% annual uplift upon renewal. The Outcome Fee percentage remains fixed for the duration of the Agreement including renewals.</li>
+        <li><strong>Termination for Cause:</strong> Either party may terminate upon thirty (30) days' written notice for uncured material breach.</li>
+        <li><strong>Effect of Termination:</strong> Client pays all fees accrued through the termination date, including any pro-rated quarterly Outcome Fee. Provider delivers completed Deliverables and provides thirty (30) days' transition assistance.</li>
+      </ol>
+
+      <H2>7. INTELLECTUAL PROPERTY</H2>
       <ol style={{ paddingLeft: '1.2em' }}>
         <li><strong>Provider IP:</strong> All rights in the Platform — software, algorithms, models, prompts, configurations, and methodologies — remain exclusive property of Provider.</li>
         <li><strong>Client Data:</strong> Client retains all rights to its proprietary data. Provider receives a limited license to perform the Services.</li>
         <li><strong>Deliverables:</strong> Client receives a non-exclusive, non-transferable license for internal use. Provider retains underlying IP.</li>
       </ol>
 
-      <H2>{form.billing_model === 'outcome' ? '8' : '7'}. NON-CIRCUMVENTION & ANTI-REVERSE ENGINEERING</H2>
+      <H2>8. NON-CIRCUMVENTION & ANTI-REVERSE ENGINEERING</H2>
       <ol style={{ paddingLeft: '1.2em' }}>
         <li><strong>Non-Circumvention:</strong> During the term and for twenty-four (24) months thereafter, Client shall not directly or indirectly replicate or substitute the Services using substantially similar AI tools, prompts, workflows, or methodologies.</li>
         <li><strong>Anti-Reverse Engineering:</strong> Client shall not reverse engineer, decompile, or attempt to derive Platform source code, algorithms, prompts, or architecture.</li>
         <li><strong>Remedies:</strong> Breach entitles Provider to injunctive relief in addition to all other remedies at law or equity.</li>
       </ol>
 
-      <H2>{form.billing_model === 'outcome' ? '9' : '8'}. CONFIDENTIALITY</H2>
+      <H2>9. CONFIDENTIALITY</H2>
       <p>Each party agrees to hold in strict confidence all Confidential Information. This obligation survives termination for three (3) years.</p>
 
-      <H2>{form.billing_model === 'outcome' ? '10' : '9'}. LIMITATION OF LIABILITY</H2>
+      <H2>10. LIMITATION OF LIABILITY</H2>
       <p style={{ textTransform: 'uppercase', fontSize: '10pt' }}>
         Neither party's aggregate liability shall exceed the total fees paid in the twelve (12) months preceding the claim. Neither party shall be liable for indirect, incidental, special, consequential, or punitive damages.
       </p>
 
-      <H2>{form.billing_model === 'outcome' ? '11' : '10'}. GOVERNING LAW</H2>
+      <H2>11. GOVERNING LAW</H2>
       <p>State of {form.jurisdiction}. Disputes resolved in state or federal courts located in {form.jurisdiction}.</p>
 
-      <H2>{form.billing_model === 'outcome' ? '12' : '11'}. GENERAL PROVISIONS</H2>
+      <H2>12. GENERAL PROVISIONS</H2>
       <ol style={{ paddingLeft: '1.2em' }}>
         <li><strong>Entire Agreement:</strong> This Agreement, including all exhibits, constitutes the entire agreement and supersedes all prior negotiations.</li>
         <li><strong>Amendments:</strong> No modification effective unless in writing and signed by both parties.</li>
@@ -398,7 +444,7 @@ function ContractPreview({ form, fmt, totalMonthly }) {
 
       {/* Exhibit A */}
       <div style={{ pageBreakBefore: 'always', marginTop: '3em' }}>
-        <H2>EXHIBIT A — SCOPE OF SERVICES & CONSUMPTION TIERS</H2>
+        <H2>EXHIBIT A — SCOPE OF SERVICES</H2>
         <p><strong>A1. Platform Services:</strong></p>
         <ol style={{ paddingLeft: '1.2em' }}>
           <li>Full access to the RinglyPro AI platform, including all AI agents, dashboards, analytics, and integrations.</li>
@@ -408,6 +454,7 @@ function ContractPreview({ form, fmt, totalMonthly }) {
           <li>AI agent orchestration — pipeline scoring, pricing governance, billing control, and renewal optimization.</li>
           <li>Document generation: proposals, reports, and contracts.</li>
           <li>{form.onboarding_hours} hours onboarding support including training, data import, and workflow configuration.</li>
+          <li>Dedicated hypercare: proactive monitoring, optimization recommendations, priority issue resolution, and regular account reviews.</li>
           <li>Business-hours support via email and platform chat, 24-hour SLA for critical issues.</li>
         </ol>
 
@@ -427,40 +474,67 @@ function ContractPreview({ form, fmt, totalMonthly }) {
             <tr><td style={tdStyle}>Enterprise</td><td style={tdStyle}>$25,000</td><td style={tdStyle}>Billed at actuals</td><td style={tdStyle}>Full platform + dedicated hypercare</td></tr>
           </tbody>
         </table>
-        <p style={{ fontSize: '10pt', color: '#475569' }}>All AI usage (tokens, API calls, workflow executions) is billed monthly at the agreed Consumption Rate based on actual metered consumption, in addition to the Platform + Hypercare fee.</p>
+        <p style={{ fontSize: '10pt', color: '#475569' }}>All AI usage is billed monthly at the agreed Consumption Rate based on actual metered consumption. The Outcome Fee ({form.outcome_fee_pct}% of Documented Savings) is billed quarterly in addition to the above.</p>
+      </div>
 
-        <p style={{ marginTop: '1.5em' }}><strong>A3. Agentified Revenue Engine — Value Delivery Framework:</strong></p>
+      {/* Exhibit B */}
+      <div style={{ pageBreakBefore: 'always', marginTop: '3em' }}>
+        <H2>EXHIBIT B — OUTCOME CATEGORIES & MEASUREMENT FRAMEWORK</H2>
+        <p>The following categories shall be measured for Documented Savings. The Baseline for each category will be established during the first {form.baseline_period_days} days of the Agreement.</p>
         <table style={{ width: '100%', borderCollapse: 'collapse', margin: '1em 0' }}>
           <thead>
             <tr style={{ background: '#F1F5F9' }}>
-              <th style={thStyle}>Lifecycle Stage</th>
-              <th style={thStyle}>AI Capabilities</th>
-              <th style={thStyle}>Expected Impact</th>
+              <th style={thStyle}>Outcome Category</th>
+              <th style={thStyle}>Measurement Method</th>
+              <th style={thStyle}>Expected Impact Range</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td style={tdStyle}><strong>Pipeline & Demand Generation</strong></td>
-              <td style={tdStyle}>AI scoring, signal-driven prioritization, campaign orchestration</td>
-              <td style={tdStyle}>Higher conversion, improved pipeline quality</td>
-            </tr>
-            <tr>
-              <td style={tdStyle}><strong>Pricing & Deal Governance</strong></td>
-              <td style={tdStyle}>Guardrailed pricing, automated discount compliance, margin protection</td>
-              <td style={tdStyle}>Reduced discount sprawl, protected gross margin</td>
-            </tr>
-            <tr>
-              <td style={tdStyle}><strong>Consumption & Billing Control</strong></td>
-              <td style={tdStyle}>Automated metering, overage enforcement, under-billing detection</td>
-              <td style={tdStyle}>Reduced post-sale leakage, improved revenue capture</td>
-            </tr>
-            <tr>
-              <td style={tdStyle}><strong>Renewal & Expansion</strong></td>
-              <td style={tdStyle}>Renewal risk scoring, consumption-triggered upsell, automated repricing</td>
-              <td style={tdStyle}>Higher NRR (+2-5%), improved expansion velocity</td>
-            </tr>
+            {form.outcome_categories.includes('labor_cost_reduction') && (
+              <tr>
+                <td style={tdStyle}><strong>Labor Cost Reduction</strong></td>
+                <td style={tdStyle}>Headcount hours saved × loaded labor rate, verified against payroll/scheduling data</td>
+                <td style={tdStyle}>15-40% reduction in targeted labor categories</td>
+              </tr>
+            )}
+            {form.outcome_categories.includes('throughput_improvement') && (
+              <tr>
+                <td style={tdStyle}><strong>Throughput Improvement</strong></td>
+                <td style={tdStyle}>Units processed per hour/shift vs. Baseline, measured at system level</td>
+                <td style={tdStyle}>10-30% increase in cases/lines per hour</td>
+              </tr>
+            )}
+            {form.outcome_categories.includes('error_reduction') && (
+              <tr>
+                <td style={tdStyle}><strong>Error / Quality Improvement</strong></td>
+                <td style={tdStyle}>Error rate reduction (mispicks, mislabels, shipping errors) vs. Baseline</td>
+                <td style={tdStyle}>30-60% reduction in error rate</td>
+              </tr>
+            )}
+            {form.outcome_categories.includes('leakage_reduction') && (
+              <tr>
+                <td style={tdStyle}><strong>Revenue Leakage Reduction</strong></td>
+                <td style={tdStyle}>Under-billing detection, discount compliance, margin protection vs. Baseline</td>
+                <td style={tdStyle}>2-4% reduction in revenue leakage</td>
+              </tr>
+            )}
+            {form.outcome_categories.includes('space_optimization') && (
+              <tr>
+                <td style={tdStyle}><strong>Space / Capacity Optimization</strong></td>
+                <td style={tdStyle}>Storage utilization improvement, reduced footprint requirements vs. Baseline</td>
+                <td style={tdStyle}>15-25% improvement in space utilization</td>
+              </tr>
+            )}
+            {form.outcome_categories.includes('inventory_accuracy') && (
+              <tr>
+                <td style={tdStyle}><strong>Inventory Accuracy Gains</strong></td>
+                <td style={tdStyle}>Inventory accuracy rate improvement, shrinkage reduction vs. Baseline</td>
+                <td style={tdStyle}>95%+ accuracy target, 20-40% shrinkage reduction</td>
+              </tr>
+            )}
           </tbody>
         </table>
+        <p style={{ fontSize: '10pt', color: '#475569', marginTop: '1em' }}><strong>Reconciliation Process:</strong> At the end of each calendar quarter, Provider delivers an Outcome Report. Client has fifteen (15) business days to review and approve. Upon approval, the Outcome Fee ({form.outcome_fee_pct}% of net Documented Savings for the quarter) is invoiced with standard payment terms.</p>
       </div>
     </>
   )
