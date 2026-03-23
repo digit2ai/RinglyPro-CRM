@@ -633,7 +633,7 @@ async function scanLoadOperations(tenantId) {
     // Win rate on quotes
     const [quoteStats] = await sequelize.query(`
       SELECT COUNT(*) as total_quotes,
-             SUM(CASE WHEN status = 'won' OR status = 'accepted' OR status = 'booked' THEN 1 ELSE 0 END) as won_quotes
+             SUM(CASE WHEN outcome = 'won' THEN 1 ELSE 0 END) as won_quotes
       FROM lg_quotes WHERE tenant_id = :tid
     `, { replacements: { tid: tenantId } });
 
@@ -1012,7 +1012,7 @@ async function scanFinancialHealth(tenantId) {
       scan_module: 'financial_health', severity: 'info', category: 'scan_error',
       title: 'Financial health scan encountered an error',
       diagnostic: `Error: ${err.message}`,
-      prescription: 'Ensure lg_loads table has customer_rate and carrier_rate columns with data.',
+      prescription: 'Ensure lg_loads table has sell_rate and buy_rate columns with data.',
       recommended_agent: 'DataConnector', recommended_tools: ['verify_schema'],
       estimated_monthly_savings: null, confidence: 'low', data: { error: err.message }
     });
@@ -1181,12 +1181,12 @@ async function scanDriverRetention(tenantId) {
 
     // Endorsement coverage analysis
     const [endorsements] = await sequelize.query(`
-      SELECT endorsements, COUNT(*) as cnt FROM lg_drivers
+      SELECT endorsements::text as endorsements, COUNT(*) as cnt FROM lg_drivers
       WHERE tenant_id = :tid GROUP BY endorsements
     `, { replacements: { tid: tenantId } });
 
-    const hazmatDrivers = endorsements.filter(r => (r.endorsements || '').toLowerCase().includes('hazmat') || (r.endorsements || '').toLowerCase().includes('h')).reduce((s, r) => s + parseInt(r.cnt), 0);
-    const tankerDrivers = endorsements.filter(r => (r.endorsements || '').toLowerCase().includes('tanker') || (r.endorsements || '').toLowerCase().includes('n')).reduce((s, r) => s + parseInt(r.cnt), 0);
+    const hazmatDrivers = endorsements.filter(r => { const e = String(r.endorsements || '').toLowerCase(); return e.includes('h') && e !== '{}'; }).reduce((s, r) => s + parseInt(r.cnt), 0);
+    const tankerDrivers = endorsements.filter(r => { const e = String(r.endorsements || '').toLowerCase(); return e.includes('n'); }).reduce((s, r) => s + parseInt(r.cnt), 0);
 
     if (totalDrivers > 5 && hazmatDrivers === 0) {
       findings.push({
