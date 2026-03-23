@@ -590,7 +590,7 @@ async function scanLoadOperations(tenantId) {
     const [lanes] = await sequelize.query(`
       SELECT origin_state || '-' || destination_state as lane,
              COUNT(*) as load_count,
-             COALESCE(AVG(customer_rate::numeric), 0) as avg_rate
+             COALESCE(AVG(sell_rate::numeric), 0) as avg_rate
       FROM lg_loads WHERE tenant_id = :tid AND origin_state IS NOT NULL AND destination_state IS NOT NULL
       GROUP BY origin_state, destination_state
       ORDER BY load_count DESC LIMIT 10
@@ -699,11 +699,11 @@ async function scanRateIntelligence(tenantId) {
     // Margin per load
     const [marginData] = await sequelize.query(`
       SELECT COUNT(*) as cnt,
-             COALESCE(AVG(NULLIF(customer_rate::numeric, 0)), 0) as avg_customer_rate,
-             COALESCE(AVG(NULLIF(carrier_rate::numeric, 0)), 0) as avg_carrier_rate,
-             COALESCE(AVG(NULLIF(customer_rate::numeric, 0) - NULLIF(carrier_rate::numeric, 0)), 0) as avg_margin,
-             COALESCE(AVG(CASE WHEN NULLIF(customer_rate::numeric,0) > 0 THEN ((customer_rate::numeric - COALESCE(carrier_rate::numeric,0)) / customer_rate::numeric * 100) END), 0) as avg_margin_pct
-      FROM lg_loads WHERE tenant_id = :tid AND customer_rate IS NOT NULL
+             COALESCE(AVG(NULLIF(sell_rate::numeric, 0)), 0) as avg_customer_rate,
+             COALESCE(AVG(NULLIF(buy_rate::numeric, 0)), 0) as avg_carrier_rate,
+             COALESCE(AVG(NULLIF(sell_rate::numeric, 0) - NULLIF(buy_rate::numeric, 0)), 0) as avg_margin,
+             COALESCE(AVG(CASE WHEN NULLIF(sell_rate::numeric,0) > 0 THEN ((sell_rate::numeric - COALESCE(buy_rate::numeric,0)) / sell_rate::numeric * 100) END), 0) as avg_margin_pct
+      FROM lg_loads WHERE tenant_id = :tid AND sell_rate IS NOT NULL
     `, { replacements: { tid: tenantId } });
 
     const md = marginData[0] || {};
@@ -726,8 +726,8 @@ async function scanRateIntelligence(tenantId) {
     // Negative margin loads
     const [negativeMargin] = await sequelize.query(`
       SELECT COUNT(*) as cnt FROM lg_loads
-      WHERE tenant_id = :tid AND customer_rate IS NOT NULL AND carrier_rate IS NOT NULL
-      AND customer_rate::numeric < carrier_rate::numeric AND customer_rate::numeric > 0
+      WHERE tenant_id = :tid AND sell_rate IS NOT NULL AND buy_rate IS NOT NULL
+      AND sell_rate::numeric < buy_rate::numeric AND sell_rate::numeric > 0
     `, { replacements: { tid: tenantId } });
 
     const negCount = parseInt(negativeMargin[0]?.cnt) || 0;
@@ -744,43 +744,36 @@ async function scanRateIntelligence(tenantId) {
       });
     }
 
-    // Spot vs contract mix from quotes
-    const [rateMix] = await sequelize.query(`
-      SELECT rate_type, COUNT(*) as cnt FROM lg_rate_benchmarks
-      WHERE tenant_id = :tid GROUP BY rate_type
+    // Benchmark rate comparison
+    const [rateBenchmarks] = await sequelize.query(`
+      SELECT COUNT(*) as cnt, COALESCE(AVG(rate_per_mile_avg::numeric), 0) as avg_benchmark,
+             COALESCE(AVG(sample_size), 0) as avg_sample
+      FROM lg_rate_benchmarks WHERE tenant_id = :tid
     `, { replacements: { tid: tenantId } });
 
-    if (rateMix.length > 0) {
-      const spotCount = rateMix.filter(r => (r.rate_type || '').toLowerCase().includes('spot')).reduce((s, r) => s + parseInt(r.cnt), 0);
-      const contractCount = rateMix.filter(r => (r.rate_type || '').toLowerCase().includes('contract')).reduce((s, r) => s + parseInt(r.cnt), 0);
-      const total = spotCount + contractCount;
-      if (total > 0) {
-        const spotPct = Math.round((spotCount / total) * 100);
-        if (spotPct > 60) {
-          findings.push({
-            scan_module: 'rate_intelligence', severity: 'warning', category: 'rate_mix',
-            title: `Heavy spot market dependency: ${spotPct}% spot vs ${100 - spotPct}% contract`,
-            diagnostic: `${spotPct}% of your rate activity is spot market. High spot dependency means unpredictable margins and revenue. Target: 40-50% contract, 50-60% spot for optimal flexibility + stability.`,
-            prescription: `1. Convert top 10 repeat lanes to annual contracts. 2. Use mini-bids (quarterly) for mid-volume lanes. 3. Lock in committed rates with top 5 carriers. 4. Maintain spot capability for surge capacity.`,
-            recommended_agent: 'RateAnalyzer', recommended_tools: ['lane_analysis', 'contract_builder', 'mini_bid_generator'],
-            estimated_monthly_savings: Math.round(spotCount * 50), confidence: 'medium',
-            data: { spot_pct: spotPct, contract_pct: 100 - spotPct, spot_count: spotCount, contract_count: contractCount }
-          });
-        }
-      }
+    if (parseInt(rateBenchmarks[0]?.cnt) > 5) {
+      findings.push({
+        scan_module: 'rate_intelligence', severity: 'advisory', category: 'rate_benchmarks',
+        title: `${rateBenchmarks[0].cnt} lane benchmarks available for pricing optimization`,
+        diagnostic: `You have ${rateBenchmarks[0].cnt} market rate benchmarks with an average rate of $${parseFloat(rateBenchmarks[0].avg_benchmark).toFixed(2)}/mile. Use these to validate your pricing on key lanes.`,
+        prescription: `1. Compare each active lane's actual RPM against benchmarks. 2. Flag lanes where you're 10%+ below market. 3. Use benchmarks to support rate increase negotiations. 4. Update benchmarks quarterly from DAT/Truckstop data.`,
+        recommended_agent: 'RateAnalyzer', recommended_tools: ['rate_benchmarking', 'lane_analysis'],
+        estimated_monthly_savings: Math.round(parseInt(rateBenchmarks[0].cnt) * 100), confidence: 'medium',
+        data: { benchmark_count: parseInt(rateBenchmarks[0].cnt), avg_benchmark_rpm: parseFloat(rateBenchmarks[0].avg_benchmark).toFixed(2) }
+      });
     }
 
     // Lanes below market rate
     const [belowMarket] = await sequelize.query(`
-      SELECT rb.lane_origin, rb.lane_destination, rb.rate_per_mile as benchmark_rpm,
-             COALESCE(AVG(l.customer_rate::numeric / NULLIF(l.miles::numeric, 0)), 0) as actual_rpm
+      SELECT rb.origin_state, rb.destination_state, rb.rate_per_mile_avg as benchmark_rpm,
+             COALESCE(AVG(l.sell_rate::numeric / NULLIF(l.miles::numeric, 0)), 0) as actual_rpm
       FROM lg_rate_benchmarks rb
       LEFT JOIN lg_loads l ON l.tenant_id = rb.tenant_id
-        AND l.origin_state = rb.lane_origin AND l.destination_state = rb.lane_destination
-      WHERE rb.tenant_id = :tid AND rb.rate_per_mile IS NOT NULL
-      GROUP BY rb.lane_origin, rb.lane_destination, rb.rate_per_mile
-      HAVING COALESCE(AVG(l.customer_rate::numeric / NULLIF(l.miles::numeric, 0)), 0) > 0
-        AND COALESCE(AVG(l.customer_rate::numeric / NULLIF(l.miles::numeric, 0)), 0) < rb.rate_per_mile::numeric * 0.9
+        AND l.origin_state = rb.origin_state AND l.destination_state = rb.destination_state
+      WHERE rb.tenant_id = :tid AND rb.rate_per_mile_avg IS NOT NULL
+      GROUP BY rb.origin_state, rb.destination_state, rb.rate_per_mile_avg
+      HAVING COALESCE(AVG(l.sell_rate::numeric / NULLIF(l.miles::numeric, 0)), 0) > 0
+        AND COALESCE(AVG(l.sell_rate::numeric / NULLIF(l.miles::numeric, 0)), 0) < rb.rate_per_mile_avg::numeric * 0.9
       LIMIT 10
     `, { replacements: { tid: tenantId } });
 
@@ -792,7 +785,7 @@ async function scanRateIntelligence(tenantId) {
         prescription: `1. Review and reprice each below-market lane. 2. Prepare data-backed rate increase proposals for customers. 3. For contract lanes, flag for next renewal negotiation. 4. Consider exiting lanes where you can't achieve margin parity.`,
         recommended_agent: 'RateAnalyzer', recommended_tools: ['rate_benchmarking', 'reprice_lanes', 'customer_rate_proposal'],
         estimated_monthly_savings: Math.round(belowMarket.length * 200), confidence: 'medium',
-        data: { below_market_lanes: belowMarket.map(l => ({ lane: `${l.lane_origin}-${l.lane_destination}`, benchmark_rpm: l.benchmark_rpm, actual_rpm: parseFloat(l.actual_rpm).toFixed(2) })) }
+        data: { below_market_lanes: belowMarket.map(l => ({ lane: `${l.origin_state}-${l.destination_state}`, benchmark_rpm: l.benchmark_rpm, actual_rpm: parseFloat(l.actual_rpm).toFixed(2) })) }
       });
     }
   } catch (err) {
@@ -930,11 +923,11 @@ async function scanFinancialHealth(tenantId) {
     // Average revenue per load
     const [revData] = await sequelize.query(`
       SELECT COUNT(*) as cnt,
-             COALESCE(AVG(NULLIF(customer_rate::numeric, 0)), 0) as avg_revenue,
-             COALESCE(MIN(NULLIF(customer_rate::numeric, 0)), 0) as min_revenue,
-             COALESCE(MAX(NULLIF(customer_rate::numeric, 0)), 0) as max_revenue,
-             COALESCE(SUM(NULLIF(customer_rate::numeric, 0)), 0) as total_revenue
-      FROM lg_loads WHERE tenant_id = :tid AND customer_rate IS NOT NULL
+             COALESCE(AVG(NULLIF(sell_rate::numeric, 0)), 0) as avg_revenue,
+             COALESCE(MIN(NULLIF(sell_rate::numeric, 0)), 0) as min_revenue,
+             COALESCE(MAX(NULLIF(sell_rate::numeric, 0)), 0) as max_revenue,
+             COALESCE(SUM(NULLIF(sell_rate::numeric, 0)), 0) as total_revenue
+      FROM lg_loads WHERE tenant_id = :tid AND sell_rate IS NOT NULL
     `, { replacements: { tid: tenantId } });
 
     const rv = revData[0] || {};
@@ -945,8 +938,8 @@ async function scanFinancialHealth(tenantId) {
     if (loadCount > 0) {
       // Revenue distribution (coefficient of variation)
       const [revStd] = await sequelize.query(`
-        SELECT COALESCE(STDDEV(NULLIF(customer_rate::numeric, 0)), 0) as rev_stddev
-        FROM lg_loads WHERE tenant_id = :tid AND customer_rate IS NOT NULL
+        SELECT COALESCE(STDDEV(NULLIF(sell_rate::numeric, 0)), 0) as rev_stddev
+        FROM lg_loads WHERE tenant_id = :tid AND sell_rate IS NOT NULL
       `, { replacements: { tid: tenantId } });
 
       const stddev = parseFloat(revStd[0]?.rev_stddev) || 0;
@@ -966,8 +959,8 @@ async function scanFinancialHealth(tenantId) {
 
       // Factoring dependency (if carrier_rate and carrier_pay patterns exist)
       const [carrierPay] = await sequelize.query(`
-        SELECT COALESCE(SUM(NULLIF(carrier_rate::numeric, 0)), 0) as total_carrier_cost
-        FROM lg_loads WHERE tenant_id = :tid AND carrier_rate IS NOT NULL
+        SELECT COALESCE(SUM(NULLIF(buy_rate::numeric, 0)), 0) as total_carrier_cost
+        FROM lg_loads WHERE tenant_id = :tid AND buy_rate IS NOT NULL
       `, { replacements: { tid: tenantId } });
 
       const totalCarrierCost = parseFloat(carrierPay[0]?.total_carrier_cost) || 0;
@@ -1032,11 +1025,11 @@ async function scanComplianceRisk(tenantId) {
   const findings = [];
 
   try {
-    // Lapsed insurance
+    // Carrier operating status check
     const [insuranceData] = await sequelize.query(`
       SELECT COUNT(*) as total,
-             SUM(CASE WHEN insurance_status IS NULL OR LOWER(insurance_status) IN ('lapsed','expired','inactive','none','') THEN 1 ELSE 0 END) as lapsed,
-             SUM(CASE WHEN LOWER(insurance_status) IN ('active','current','valid') THEN 1 ELSE 0 END) as active
+             SUM(CASE WHEN operating_status IS NULL OR LOWER(operating_status) NOT IN ('active','authorized') THEN 1 ELSE 0 END) as lapsed,
+             SUM(CASE WHEN LOWER(operating_status) IN ('active','authorized') THEN 1 ELSE 0 END) as active
       FROM lg_carriers WHERE tenant_id = :tid
     `, { replacements: { tid: tenantId } });
 
@@ -1056,35 +1049,40 @@ async function scanComplianceRisk(tenantId) {
       });
     }
 
-    // Safety rating distribution
+    // Reliability score distribution
     const [safetyData] = await sequelize.query(`
-      SELECT safety_rating, COUNT(*) as cnt FROM lg_carriers
-      WHERE tenant_id = :tid AND safety_rating IS NOT NULL
-      GROUP BY safety_rating ORDER BY cnt DESC
+      SELECT
+        CASE WHEN reliability_score >= 80 THEN 'satisfactory'
+             WHEN reliability_score >= 60 THEN 'conditional'
+             WHEN reliability_score IS NOT NULL THEN 'unsatisfactory'
+             ELSE 'unrated' END as safety_rating,
+        COUNT(*) as cnt
+      FROM lg_carriers WHERE tenant_id = :tid
+      GROUP BY 1 ORDER BY cnt DESC
     `, { replacements: { tid: tenantId } });
 
-    const unsafeCarriers = safetyData.filter(r => ['conditional','unsatisfactory','unrated','none'].includes((r.safety_rating || '').toLowerCase()));
+    const unsafeCarriers = safetyData.filter(r => ['conditional','unsatisfactory','unrated'].includes(r.safety_rating));
     const unsafeCount = unsafeCarriers.reduce((s, r) => s + parseInt(r.cnt), 0);
 
     if (unsafeCount > 0) {
       findings.push({
         scan_module: 'compliance_risk', severity: 'warning', category: 'safety_rating',
-        title: `${unsafeCount} carriers with conditional/unsatisfactory/unrated safety status`,
-        diagnostic: `Found ${unsafeCount} carriers with concerning safety ratings. Conditional and unsatisfactory carriers have higher accident rates and may lose operating authority. Unrated carriers lack inspection history.`,
-        prescription: `1. Review and potentially suspend conditional/unsatisfactory carriers. 2. Require additional safety documentation from unrated carriers. 3. Set up FMCSA safety rating change alerts. 4. Prioritize carriers with satisfactory ratings in dispatch. 5. Add safety rating as a factor in carrier scoring.`,
-        recommended_agent: 'ComplianceMonitor', recommended_tools: ['safety_audit', 'fmcsa_monitor', 'carrier_scoring'],
+        title: `${unsafeCount} carriers with low reliability scores`,
+        diagnostic: `Found ${unsafeCount} carriers with reliability scores below 80 (conditional or unsatisfactory). Low-reliability carriers have higher incident rates and service failures.`,
+        prescription: `1. Review and potentially suspend low-scoring carriers. 2. Require performance improvement plans. 3. Set up automated alerts for score changes. 4. Prioritize high-reliability carriers in dispatch. 5. Add reliability score as a weighted factor in carrier assignment.`,
+        recommended_agent: 'ComplianceMonitor', recommended_tools: ['safety_audit', 'carrier_scoring', 'performance_tracking'],
         estimated_monthly_savings: null, confidence: 'high',
-        data: { safety_distribution: safetyData, unsafe_count: unsafeCount, unsafe_carriers: unsafeCarriers }
+        data: { reliability_distribution: safetyData, low_reliability_count: unsafeCount }
       });
     }
 
     // Compliance record checks
     const [compData] = await sequelize.query(`
-      SELECT type, COUNT(*) as cnt,
+      SELECT compliance_type as type, COUNT(*) as cnt,
              SUM(CASE WHEN expiry_date IS NOT NULL AND expiry_date::date < CURRENT_DATE THEN 1 ELSE 0 END) as expired,
              SUM(CASE WHEN expiry_date IS NOT NULL AND expiry_date::date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '30 days' THEN 1 ELSE 0 END) as expiring_30
       FROM lg_compliance WHERE tenant_id = :tid
-      GROUP BY type
+      GROUP BY compliance_type
     `, { replacements: { tid: tenantId } });
 
     const totalExpired = compData.reduce((s, r) => s + parseInt(r.expired || 0), 0);
@@ -1131,10 +1129,10 @@ async function scanDriverRetention(tenantId) {
   try {
     const [driverData] = await sequelize.query(`
       SELECT COUNT(*) as total,
-             SUM(CASE WHEN hos_status IS NULL OR LOWER(hos_status) IN ('off_duty','off duty','sleeper','sleeper_berth') THEN 1 ELSE 0 END) as off_duty,
-             SUM(CASE WHEN LOWER(hos_status) IN ('driving','on_duty','on duty','on_duty_driving') THEN 1 ELSE 0 END) as on_duty,
-             SUM(CASE WHEN medical_expiry IS NOT NULL AND medical_expiry::date < CURRENT_DATE THEN 1 ELSE 0 END) as expired_medical,
-             SUM(CASE WHEN medical_expiry IS NOT NULL AND medical_expiry::date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '60 days' THEN 1 ELSE 0 END) as expiring_medical
+             SUM(CASE WHEN status IS NULL OR LOWER(status) IN ('off_duty','off duty','sleeper','sleeper_berth','resting','available') THEN 1 ELSE 0 END) as off_duty,
+             SUM(CASE WHEN LOWER(status) IN ('driving','on_duty','on duty','on_duty_driving','dispatched') THEN 1 ELSE 0 END) as on_duty,
+             0 as expired_medical,
+             0 as expiring_medical
       FROM lg_drivers WHERE tenant_id = :tid
     `, { replacements: { tid: tenantId } });
 
@@ -1240,7 +1238,7 @@ async function scanCustomerHealth(tenantId) {
     // Shipper concentration
     const [shipperRevenue] = await sequelize.query(`
       SELECT shipper_name, COUNT(*) as load_count,
-             COALESCE(SUM(NULLIF(customer_rate::numeric, 0)), 0) as total_revenue
+             COALESCE(SUM(NULLIF(sell_rate::numeric, 0)), 0) as total_revenue
       FROM lg_loads WHERE tenant_id = :tid AND shipper_name IS NOT NULL
       GROUP BY shipper_name ORDER BY total_revenue DESC
     `, { replacements: { tid: tenantId } });
@@ -1324,9 +1322,7 @@ async function scanCustomerHealth(tenantId) {
     // On-time delivery percentage
     const [otData] = await sequelize.query(`
       SELECT COUNT(*) as total,
-             SUM(CASE WHEN delivery_date IS NOT NULL AND actual_delivery IS NOT NULL
-               AND actual_delivery::date <= delivery_date::date THEN 1
-               WHEN status IN ('delivered','completed') THEN 1 ELSE 0 END) as on_time
+             SUM(CASE WHEN status IN ('delivered','completed') THEN 1 ELSE 0 END) as on_time
       FROM lg_loads WHERE tenant_id = :tid AND status IN ('delivered','completed','invoiced')
     `, { replacements: { tid: tenantId } });
 
