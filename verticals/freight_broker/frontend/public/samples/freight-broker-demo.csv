@@ -1,0 +1,51 @@
+Load Number,Shipper,Origin City,Origin State,Origin Zip,Destination City,Destination State,Destination Zip,Pickup Date,Delivery Date,Equipment Type,Weight (lbs),Miles,Customer Rate,Carrier Rate,Fuel Surcharge,Margin,Margin %,Status,Commodity,Carrier Name,Driver,Broker Rep
+LB-10401,Georgia Pacific LLC,Atlanta,GA,30301,Charlotte,NC,28201,2026-03-01,2026-03-02,dry_van,42000,245,2850.00,2340.00,185.00,325.00,11.4,delivered,Paper Products,Southeast Express Inc,Mike Torres,Sarah Chen
+LB-10402,Tyson Foods Inc,Dallas,TX,75201,Oklahoma City,OK,73101,2026-03-01,2026-03-01,reefer,38000,205,3100.00,2680.00,160.00,260.00,8.4,delivered,Frozen Poultry,Heartland Reefer Transport,James Olsen,Sarah Chen
+LB-10403,Home Depot Distribution,Atlanta,GA,30302,Raleigh,NC,27601,2026-03-02,2026-03-03,flatbed,44000,410,3600.00,2950.00,280.00,370.00,10.3,delivered,Building Materials,Patriot Flatbed LLC,Carlos Vega,Tom Bradley
+LB-10404,Procter & Gamble,Chicago,IL,60601,Detroit,MI,48201,2026-03-02,2026-03-03,dry_van,36000,280,2400.00,2520.00,175.00,-295.00,-12.3,delivered,Consumer Goods,Midwest Logistics Corp,Dave Reynolds,Tom Bradley
+LB-10405,Coca-Cola Bottling,Atlanta,GA,30303,Charlotte,NC,28202,2026-03-03,2026-03-03,dry_van,40000,245,2900.00,2380.00,180.00,340.00,11.7,delivered,Beverages,Southeast Express Inc,Mike Torres,Sarah Chen
+LB-10406,Kimberly-Clark Corp,Dallas,TX,75202,Tulsa,OK,74101,2026-03-03,2026-03-04,dry_van,34000,260,2200.00,1850.00,165.00,185.00,8.4,delivered,Paper Goods,Heartland Freight Lines,Bobby Grant,Maria Lopez
+LB-10407,FedEx Supply Chain,Miami,FL,33101,Jacksonville,FL,32201,2026-03-04,2026-03-04,dry_van,28000,345,2100.00,1720.00,210.00,170.00,8.1,delivered,Mixed Freight,Sunshine State Carriers,Luis Fernandez,Sarah Chen
+LB-10408,Caterpillar Inc,Chicago,IL,60602,Detroit,MI,48202,2026-03-04,2026-03-05,flatbed,46000,280,3800.00,3150.00,175.00,475.00,12.5,delivered,Heavy Machinery,Great Lakes Hauling,Steve Nowak,Tom Bradley
+LB-10409,Pilgrim's Pride,Dallas,TX,75203,Oklahoma City,OK,73102,2026-03-05,2026-03-05,reefer,36000,205,3050.00,2600.00,160.00,290.00,9.5,delivered,Fresh Chicken,Heartland Reefer Transport,James Olsen,Sarah Chen
+LB-10410,Shaw Industries,Atlanta,GA,30304,Charlotte,NC,28203,2026-03-05,2026-03-06,dry_van,42000,245,2800.00,2300.00,185.00,315.00,11.3,delivered,Carpet Rolls,Southeast Express Inc,Tony Blake,Maria Lopez
+LB-10411,Kraft Heinz Company,Chicago,IL,60603,Indianapolis,IN,46201,2026-03-06,2026-03-06,reefer,30000,180,2600.00,2750.00,140.00,-290.00,-11.2,delivered,Refrigerated Foods,Hoosier Cold Chain,Pat Sullivan,Tom Bradley
+LB-10412,Phillips 66,Dallas,TX,75204,Oklahoma City,OK,73103,2026-03-06,2026-03-07,dry_van,38000,205,2150.00,1780.00,160.00,210.00,9.8,delivered,Industrial Lubricants,Red River Transport,Earl Morrison,Maria Lopez
+LB-10413,International Paper,Atlanta,GA,30305,Greenville,SC,29601,2026-03-07,2026-03-07,dry_van,44000,145,1800.00,1520.00,110.00,170.00,9.4,delivered,Corrugated Board,Palmetto Freight Inc,Ray Sanchez,Sarah Chen
+LB-10414,General Mills Inc,Dallas,TX,75205,San Antonio,TX,78201,2026-03-07,2026-03-07,dry_van,32000,275,2300.00,1900.00,170.00,230.00,10.0,delivered,Cereal Products,Lone Star Logistics,Hank Williams,Maria Lopez
+LB-10415,Mohawk Industries,Atlanta,GA,30306,Charlotte,NC,28204,2026-03-08,2026-03-08,flatbed,40000,245,3200.00,2700.00,185.00,315.00,9.8,delivered,Flooring Tiles,Southeast Express Inc,Carlos Vega,Tom Bradley
+LB-10416,Nucor Steel,Charlotte,NC,28205,Atlanta,GA,30307,2026-03-08,2026-03-09,flatbed,48000,245,3500.00,2850.00,185.00,465.00,13.3,delivered,Steel Coils,Patriot Flatbed LLC,Carlos Vega,Sarah Chen
+LB-10417,Mars Petcare,Dallas,TX,75206,Oklahoma City,OK,73104,2026-03-09,2026-03-09,dry_van,36000,205,2250.00,1820.00,160.00,270.00,12.0,delivered,Pet Food,Red River Transport,Earl Morrison,Maria Lopez
+LB-10418,Publix Super Markets,Miami,FL,33102,Jacksonville,FL,32202,2026-03-09,2026-03-10,reefer,34000,345,3400.00,2900.00,210.00,290.00,8.5,delivered,Dairy Products,Sunshine State Carriers,Luis Fernandez,Tom Bradley
+LB-10419,Whirlpool Corp,Chicago,IL,60604,Detroit,MI,48203,2026-03-10,2026-03-10,dry_van,38000,280,2500.00,2050.00,175.00,275.00,11.0,delivered,Appliances,Great Lakes Hauling,Steve Nowak,Sarah Chen
+LB-10420,Dean Foods,Dallas,TX,75207,Oklahoma City,OK,73105,2026-03-10,2026-03-11,reefer,30000,205,2950.00,2480.00,160.00,310.00,10.5,delivered,Milk Products,Heartland Reefer Transport,James Olsen,Maria Lopez
+LB-10421,Gerdau Ameristeel,Atlanta,GA,30308,Charlotte,NC,28206,2026-03-11,2026-03-11,flatbed,46000,245,3400.00,2800.00,185.00,415.00,12.2,delivered,Rebar Bundles,Patriot Flatbed LLC,Tony Blake,Tom Bradley
+LB-10422,Smithfield Foods,Chicago,IL,60605,Columbus,OH,43201,2026-03-11,2026-03-12,reefer,36000,355,3600.00,3750.00,220.00,-370.00,-10.3,delivered,Pork Products,Buckeye Cold Freight,Andy Marsh,Sarah Chen
+LB-10423,Georgia-Pacific,Atlanta,GA,30309,Greensboro,NC,27401,2026-03-12,2026-03-12,dry_van,40000,330,2700.00,2250.00,200.00,250.00,9.3,delivered,Tissue Products,Carolina Carriers LLC,Ray Sanchez,Maria Lopez
+LB-10424,Conagra Brands,Dallas,TX,75208,Oklahoma City,OK,73106,2026-03-12,2026-03-13,dry_van,34000,205,2100.00,1750.00,160.00,190.00,9.0,delivered,Frozen Dinners,Red River Transport,Bobby Grant,Tom Bradley
+LB-10425,Johnson Controls,Chicago,IL,60606,Detroit,MI,48204,2026-03-13,2026-03-13,dry_van,28000,280,2350.00,1950.00,175.00,225.00,9.6,delivered,HVAC Units,Midwest Logistics Corp,Dave Reynolds,Sarah Chen
+LB-10426,Vulcan Materials,Atlanta,GA,30310,Charlotte,NC,28207,2026-03-13,2026-03-14,flatbed,48000,245,3300.00,2750.00,185.00,365.00,11.1,delivered,Aggregates,Southeast Express Inc,Carlos Vega,Maria Lopez
+LB-10427,McLane Company,Dallas,TX,75209,Oklahoma City,OK,73107,2026-03-14,2026-03-14,dry_van,38000,205,2200.00,1800.00,160.00,240.00,10.9,delivered,Grocery Distribution,Heartland Freight Lines,Hank Williams,Tom Bradley
+LB-10428,Tropicana Products,Miami,FL,33103,Jacksonville,FL,32203,2026-03-14,2026-03-15,reefer,32000,345,3300.00,2800.00,210.00,290.00,8.8,delivered,Orange Juice,Sunshine State Carriers,Luis Fernandez,Sarah Chen
+LB-10429,Kellogg Company,Chicago,IL,60607,Detroit,MI,48205,2026-03-15,2026-03-15,dry_van,34000,280,2400.00,1980.00,175.00,245.00,10.2,delivered,Breakfast Cereal,Great Lakes Hauling,Steve Nowak,Maria Lopez
+LB-10430,Graphic Packaging,Atlanta,GA,30311,Charlotte,NC,28208,2026-03-15,2026-03-16,dry_van,42000,245,2850.00,2350.00,185.00,315.00,11.1,delivered,Packaging Materials,Carolina Carriers LLC,Tony Blake,Tom Bradley
+LB-10431,Dannon Company,Dallas,TX,75210,Houston,TX,77001,2026-03-16,2026-03-16,reefer,26000,240,2800.00,2950.00,150.00,-300.00,-10.7,in_transit,Yogurt Products,Lone Star Logistics,Bobby Grant,Sarah Chen
+LB-10432,Bridgestone Americas,Atlanta,GA,30312,Spartanburg,SC,29301,2026-03-16,2026-03-17,dry_van,44000,85,1400.00,1180.00,65.00,155.00,11.1,in_transit,Tires,Palmetto Freight Inc,Ray Sanchez,Maria Lopez
+LB-10433,Eastman Chemical,Dallas,TX,75211,Fort Worth,TX,76101,2026-03-17,2026-03-17,dry_van,30000,35,850.00,720.00,25.00,105.00,12.4,in_transit,Chemical Resins,Lone Star Logistics,Hank Williams,Tom Bradley
+LB-10434,Rubbermaid Commercial,Chicago,IL,60608,Gary,IN,46401,2026-03-17,2026-03-17,dry_van,28000,30,750.00,640.00,20.00,90.00,12.0,in_transit,Storage Bins,Midwest Logistics Corp,Pat Sullivan,Sarah Chen
+LB-10435,Gestamp Automocion,Atlanta,GA,30313,Greenville,SC,29602,2026-03-18,2026-03-18,flatbed,46000,145,2200.00,1850.00,110.00,240.00,10.9,in_transit,Auto Body Panels,Patriot Flatbed LLC,Carlos Vega,Maria Lopez
+LB-10436,Southern States Coop,Charlotte,NC,28209,Atlanta,GA,30314,2026-03-18,2026-03-19,dry_van,38000,245,2750.00,2280.00,185.00,285.00,10.4,in_transit,Animal Feed,Southeast Express Inc,Mike Torres,Tom Bradley
+LB-10437,Dot Foods Inc,Dallas,TX,75212,Oklahoma City,OK,73108,2026-03-19,2026-03-19,reefer,32000,205,3000.00,2550.00,160.00,290.00,9.7,in_transit,Foodservice Products,Heartland Reefer Transport,James Olsen,Sarah Chen
+LB-10438,Mohawk Industries,Atlanta,GA,30315,Chattanooga,TN,37401,2026-03-19,2026-03-19,dry_van,40000,120,1650.00,1380.00,90.00,180.00,10.9,in_transit,Carpet Rolls,Carolina Carriers LLC,Ray Sanchez,Maria Lopez
+LB-10439,BASF Corporation,Dallas,TX,75213,Arlington,TX,76001,2026-03-20,2026-03-20,dry_van,24000,22,650.00,550.00,15.00,85.00,13.1,dispatched,Chemical Coatings,Lone Star Logistics,Hank Williams,Tom Bradley
+LB-10440,Westrock Company,Atlanta,GA,30316,Kennesaw,GA,30144,2026-03-20,2026-03-20,dry_van,36000,28,700.00,590.00,20.00,90.00,12.9,dispatched,Corrugated Board,Palmetto Freight Inc,Tony Blake,Sarah Chen
+LB-10441,Frito-Lay Inc,Dallas,TX,75214,Plano,TX,75023,2026-03-21,2026-03-21,dry_van,30000,20,600.00,510.00,15.00,75.00,12.5,dispatched,Snack Foods,Red River Transport,Earl Morrison,Maria Lopez
+LB-10442,Michelin North America,Atlanta,GA,30317,Lawrenceville,GA,30043,2026-03-21,2026-03-21,dry_van,42000,35,800.00,680.00,25.00,95.00,11.9,dispatched,Tires,Southeast Express Inc,Mike Torres,Tom Bradley
+LB-10443,Sysco Corporation,Chicago,IL,60609,Joliet,IL,60431,2026-03-22,2026-03-22,reefer,34000,45,1100.00,940.00,30.00,130.00,11.8,dispatched,Restaurant Supplies,Hoosier Cold Chain,Andy Marsh,Sarah Chen
+LB-10444,Vulcan Materials,Atlanta,GA,30318,Charlotte,NC,28210,2026-03-24,2026-03-25,flatbed,48000,245,3400.00,,,,,open,Crusite Aggregate,,,,Maria Lopez
+LB-10445,Pilgrim's Pride,Dallas,TX,75215,Oklahoma City,OK,73109,2026-03-24,2026-03-24,reefer,36000,205,3100.00,,,,,open,Fresh Poultry,,,Sarah Chen
+LB-10446,Nucor Steel,Charlotte,NC,28211,Savannah,GA,31401,2026-03-25,2026-03-26,flatbed,46000,290,3600.00,,,,,open,Steel Beams,,,Tom Bradley
+LB-10447,Tropicana Products,Miami,FL,33104,Tampa,FL,33601,2026-03-25,2026-03-25,reefer,30000,280,3200.00,,,,,open,Citrus Juice,,,Maria Lopez
+LB-10448,Eastman Chemical,Dallas,TX,75216,Houston,TX,77002,2026-03-10,,,dry_van,28000,240,2400.00,2100.00,150.00,150.00,6.3,cancelled,Chemical Resins,Lone Star Logistics,,Sarah Chen
+LB-10449,Conagra Brands,Chicago,IL,60610,Milwaukee,WI,53201,2026-03-12,,,reefer,32000,90,1800.00,1550.00,70.00,180.00,10.0,cancelled,Frozen Foods,Midwest Logistics Corp,,Tom Bradley
+LB-10450,Georgia-Pacific,Atlanta,GA,30319,Augusta,GA,30901,2026-03-15,,,dry_van,38000,150,1900.00,1600.00,115.00,185.00,9.7,cancelled,Paper Products,Palmetto Freight Inc,,Maria Lopez

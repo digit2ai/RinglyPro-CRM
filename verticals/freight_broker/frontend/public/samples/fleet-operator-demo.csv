@@ -1,0 +1,21 @@
+Driver ID,Driver Name,CDL Class,CDL State,CDL Expiry,Endorsements,Medical Card Expiry,Hire Date,Home City,Home State,Assigned Truck,Status,HOS Drive Remaining,HOS Duty Remaining,HOS Cycle Remaining,Last Drug Test,Last Training,Preferred Lanes,Phone
+DRV-301,Michael Torres,A,GA,2027-08-15,"T,N",2026-10-31,2019-04-01,Atlanta,GA,TRK-101,available,11.0,14.0,62.5,2026-01-15,2025-12-01,"Atlanta-Charlotte,Atlanta-Jacksonville",678-555-0142
+DRV-302,James Olsen,A,TX,2027-05-20,"T,N",2026-09-15,2020-06-15,Dallas,TX,TRK-102,driving,6.5,9.0,48.0,2025-11-20,2025-10-15,"Dallas-OKC,Dallas-Houston",214-555-0387
+DRV-303,Luis Fernandez,A,FL,2026-11-30,"T,N,X",2026-08-20,2018-09-10,Miami,FL,TRK-103,driving,4.0,7.5,35.5,2026-02-10,2026-01-20,"Miami-Jacksonville,Miami-Tampa",305-555-0291
+DRV-304,Dave Reynolds,A,IL,2027-02-28,"T",2025-12-15,2021-01-20,Chicago,IL,TRK-104,available,11.0,14.0,60.0,2025-10-05,2025-09-10,"Chicago-Detroit,Chicago-Indianapolis",312-555-0854
+DRV-305,Carlos Vega,A,NC,2026-04-10,"T,N",2026-07-31,2017-11-05,Charlotte,NC,TRK-105,driving,2.0,4.5,28.0,2026-01-08,2025-11-15,"Charlotte-Atlanta,Charlotte-Greenville",704-555-0623
+DRV-306,Tony Blake,A,GA,2027-06-22,"T",2026-11-30,2020-03-18,Savannah,GA,TRK-106,available,11.0,14.0,58.0,2025-12-12,2025-11-01,"Atlanta-Savannah,Atlanta-Charlotte",912-555-0417
+DRV-307,Bobby Grant,A,OK,2027-09-14,"T,N",2025-11-30,2019-08-22,Oklahoma City,OK,TRK-107,off_duty,11.0,14.0,70.0,2026-02-18,2026-01-05,"OKC-Dallas,OKC-Tulsa",405-555-0739
+DRV-308,Hank Williams,A,TX,2026-12-05,"T",2026-06-15,2021-05-10,Houston,TX,TRK-108,driving,1.5,3.0,22.0,2025-09-25,2025-08-20,"Dallas-Houston,Dallas-San Antonio",713-555-0568
+DRV-309,Ray Sanchez,A,SC,2027-03-18,"T,N",2026-12-31,2018-02-14,Greenville,SC,TRK-109,available,11.0,14.0,65.0,2026-01-22,2025-12-10,"Greenville-Atlanta,Charlotte-Greenville",864-555-0892
+DRV-310,Earl Morrison,A,TX,2027-07-25,"T",2025-02-28,2020-10-30,Fort Worth,TX,TRK-111,available,11.0,14.0,56.0,2025-08-15,2025-07-20,"Dallas-Fort Worth,Dallas-OKC",817-555-0345
+DRV-311,Pat Sullivan,A,IN,2027-01-12,"T",2026-05-20,2022-01-05,Indianapolis,IN,TRK-117,off_duty,11.0,14.0,70.0,2026-02-01,2026-01-15,"Chicago-Indianapolis,Indianapolis-Columbus",317-555-0716
+DRV-312,Andy Marsh,A,OH,2026-04-02,"T,N",2026-04-15,2019-07-19,Columbus,OH,TRK-115,driving,5.5,8.0,42.0,2025-12-20,2025-11-05,"Columbus-Cincinnati,Columbus-Detroit",614-555-0483
+DRV-313,Steve Nowak,A,MI,2027-10-08,"T",2026-09-30,2021-03-25,Detroit,MI,TRK-119,sleeper,0.0,2.0,18.5,2026-01-05,2025-12-18,"Detroit-Chicago,Detroit-Cleveland",313-555-0927
+DRV-314,Maria Gonzalez,A,TX,2027-04-16,"T,N",2026-08-31,2020-09-12,San Antonio,TX,,available,11.0,14.0,70.0,2025-11-10,2025-10-22,"Dallas-San Antonio,Houston-San Antonio",210-555-0651
+DRV-315,Kevin O'Brien,A,GA,2027-11-30,"T",2025-09-15,2018-06-01,Macon,GA,,sleeper,3.0,5.5,30.0,2026-02-15,2026-01-28,"Atlanta-Macon,Atlanta-Savannah",478-555-0274
+DRV-316,Robert Chen,A,IL,2026-03-28,"T,N",2026-07-20,2022-04-15,Joliet,IL,,off_duty,11.0,14.0,70.0,2025-10-30,2025-09-15,"Chicago-Milwaukee,Chicago-St. Louis",815-555-0138
+DRV-317,Jose Rivera,A,FL,2027-08-05,"T",2026-03-10,2019-12-08,Jacksonville,FL,,available,11.0,14.0,64.0,2026-01-18,2025-12-05,"Jacksonville-Miami,Jacksonville-Atlanta",904-555-0592
+DRV-318,Billy Thompson,A,TN,2027-06-14,"T",2026-11-15,2021-08-20,Nashville,TN,,off_duty,11.0,14.0,70.0,2025-12-05,2025-11-20,"Nashville-Atlanta,Nashville-Memphis",615-555-0816
+DRV-319,Marcus Williams,A,NC,2027-02-10,"T,N",2026-06-30,2020-05-03,Raleigh,NC,,sleeper,4.5,6.0,34.0,2026-02-22,2026-01-10,"Raleigh-Charlotte,Raleigh-Atlanta",919-555-0447
+DRV-320,Tom Kowalski,A,WI,2027-09-22,"T",2026-10-15,2019-01-28,Milwaukee,WI,,available,11.0,14.0,68.0,2025-11-28,2025-10-30,"Milwaukee-Chicago,Milwaukee-Minneapolis",414-555-0963
