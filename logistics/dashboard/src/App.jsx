@@ -12,9 +12,18 @@ import UserGuidePage from './pages/UserGuidePage'
 import OEEDashboardPage from './pages/OEEDashboardPage'
 import NDAPage from './pages/NDAPage'
 import ContractBuilderPage from './pages/ContractBuilderPage'
+import WarehouseMindPage from './pages/WarehouseMindPage'
 import StepIndicator from './components/StepIndicator'
 
+const warehouseMindSubItems = [
+  { path: '/warehousemind/command-center', label: 'MCP Command Center', icon: MCPIcon },
+  { path: '/warehousemind/neural', label: 'Neural Intelligence', icon: NeuralIcon },
+  { path: '/warehousemind/events', label: 'Event Automation', icon: EventIcon },
+  { path: '/warehousemind/voice', label: 'Voice AI', icon: VoiceIcon }
+]
+
 const steps = [
+  { path: '/warehousemind', label: 'WarehouseMind AI', icon: BrainIcon, noProject: true, collapsible: true, subItems: warehouseMindSubItems },
   { path: '/', label: 'Data Intake', icon: UploadIcon },
   { path: '/analysis', label: 'Analysis', icon: ChartIcon },
   { path: '/products', label: 'Concepts', icon: BoxIcon },
@@ -134,6 +143,54 @@ function ContractIcon({ className }) {
   )
 }
 
+function BrainIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+    </svg>
+  )
+}
+
+function MCPIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.737 5.1a3.375 3.375 0 012.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 01.9 2.7m0 0a3 3 0 01-3 3m0 3h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008zm-3 6h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008z" />
+    </svg>
+  )
+}
+
+function NeuralIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 3.75H6A2.25 2.25 0 003.75 6v1.5M16.5 3.75H18A2.25 2.25 0 0120.25 6v1.5m0 9V18A2.25 2.25 0 0118 20.25h-1.5m-9 0H6A2.25 2.25 0 013.75 18v-1.5M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  )
+}
+
+function EventIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+    </svg>
+  )
+}
+
+function VoiceIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
+    </svg>
+  )
+}
+
+function ChevronIcon({ className, expanded }) {
+  return (
+    <svg className={`${className} transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+    </svg>
+  )
+}
+
 function MenuIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -153,6 +210,14 @@ function CloseIcon({ className }) {
 export default function App({ onLogout, userEmail }) {
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [wmExpanded, setWmExpanded] = useState(() => location.pathname.startsWith('/warehousemind'))
+
+  // Auto-expand WarehouseMind section when navigating to it
+  useEffect(() => {
+    if (location.pathname.startsWith('/warehousemind')) {
+      setWmExpanded(true)
+    }
+  }, [location.pathname])
 
   // Extract projectId from current URL for sidebar navigation
   const getProjectId = () => {
@@ -161,18 +226,20 @@ export default function App({ onLogout, userEmail }) {
   }
 
   const getCurrentStep = () => {
-    if (location.pathname.startsWith('/analysis')) return 1
-    if (location.pathname.startsWith('/products')) return 2
-    if (location.pathname.startsWith('/simulation')) return 3
-    if (location.pathname.startsWith('/benefits')) return 4
-    if (location.pathname.startsWith('/report')) return 5
-    if (location.pathname.startsWith('/api-integration')) return 6
-    if (location.pathname.startsWith('/oee-dashboard')) return 7
-    if (location.pathname.startsWith('/observability')) return 8
-    if (location.pathname.startsWith('/user-guide')) return 8
-    if (location.pathname.startsWith('/nda')) return 10
-    if (location.pathname.startsWith('/contract-builder')) return 11
-    return 0
+    if (location.pathname.startsWith('/warehousemind')) return 0
+    if (location.pathname === '/' || location.pathname.startsWith('/upload')) return 1
+    if (location.pathname.startsWith('/analysis')) return 2
+    if (location.pathname.startsWith('/products')) return 3
+    if (location.pathname.startsWith('/simulation')) return 4
+    if (location.pathname.startsWith('/benefits')) return 5
+    if (location.pathname.startsWith('/report')) return 6
+    if (location.pathname.startsWith('/api-integration')) return 7
+    if (location.pathname.startsWith('/oee-dashboard')) return 8
+    if (location.pathname.startsWith('/user-guide')) return 9
+    if (location.pathname.startsWith('/observability')) return 9
+    if (location.pathname.startsWith('/nda')) return 11
+    if (location.pathname.startsWith('/contract-builder')) return 12
+    return 1
   }
 
   const closeSidebar = () => setSidebarOpen(false)
@@ -215,6 +282,55 @@ export default function App({ onLogout, userEmail }) {
           {steps.map((step, index) => {
             const Icon = step.icon
             const isActive = getCurrentStep() === index
+            const isWmSubActive = step.collapsible && location.pathname.startsWith('/warehousemind')
+
+            // Collapsible WarehouseMind AI item
+            if (step.collapsible) {
+              return (
+                <div key={step.path}>
+                  <button
+                    onClick={() => setWmExpanded(!wmExpanded)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
+                      isWmSubActive
+                        ? 'bg-purple-600/20 text-purple-400 border border-purple-500/30'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+                    }`}
+                  >
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium ${
+                      isWmSubActive ? 'bg-purple-600 text-white' : 'bg-slate-700 text-slate-400 group-hover:bg-slate-600'
+                    }`}>
+                      {index + 1}
+                    </div>
+                    <span className="font-medium text-left flex-1">{step.label}</span>
+                    <ChevronIcon className="w-3.5 h-3.5 text-slate-500" expanded={wmExpanded} />
+                  </button>
+                  {/* Collapsible sub-items */}
+                  <div className={`overflow-hidden transition-all duration-200 ${wmExpanded ? 'max-h-60 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
+                    <div className="ml-6 pl-4 border-l border-slate-700 space-y-0.5">
+                      {step.subItems.map((sub) => {
+                        const SubIcon = sub.icon
+                        const subActive = location.pathname === sub.path
+                        return (
+                          <NavLink
+                            key={sub.path}
+                            to={sub.path}
+                            onClick={closeSidebar}
+                            className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs transition-all duration-200 group ${
+                              subActive
+                                ? 'bg-purple-600/15 text-purple-400'
+                                : 'text-slate-500 hover:text-slate-300 hover:bg-slate-700/30'
+                            }`}
+                          >
+                            <SubIcon className={`w-3.5 h-3.5 ${subActive ? 'text-purple-400' : 'text-slate-600'}`} />
+                            <span className="font-medium">{sub.label}</span>
+                          </NavLink>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )
+            }
 
             if (step.external) {
               return (
@@ -236,7 +352,7 @@ export default function App({ onLogout, userEmail }) {
             }
 
             const projectId = getProjectId()
-            const basePath = index === 0 ? '/' : (projectId && index > 0 && !step.noProject ? `${step.path}/${projectId}` : step.path)
+            const basePath = step.path === '/' ? '/' : (projectId && !step.noProject ? `${step.path}/${projectId}` : step.path)
 
             return (
               <NavLink
@@ -306,6 +422,8 @@ export default function App({ onLogout, userEmail }) {
         {/* Page Content */}
         <div className="p-4 sm:p-6 lg:p-8">
           <Routes>
+            <Route path="/warehousemind" element={<WarehouseMindPage />} />
+            <Route path="/warehousemind/:section" element={<WarehouseMindPage />} />
             <Route path="/" element={<UploadPage />} />
             <Route path="/analysis/:projectId" element={<AnalysisPage />} />
             <Route path="/products/:projectId" element={<ProductsPage />} />
