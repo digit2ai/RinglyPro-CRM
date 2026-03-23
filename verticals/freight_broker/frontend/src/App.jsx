@@ -229,8 +229,7 @@ function BookIcon({ className }) {
   )
 }
 
-const mainNavItems = [
-  { path: '/', label: 'Command Center', Icon: DashboardIcon },
+const commandCenterSubItems = [
   { path: '/loads', label: 'Load Board', Icon: TruckIcon },
   { path: '/rates', label: 'Rate Engine', Icon: MoneyIcon },
   { path: '/dispatch', label: 'Dispatch', Icon: RouteIcon },
@@ -260,7 +259,8 @@ function getSectionName(pathname) {
 
 function Sidebar({ mobileOpen, onClose }) {
   const location = useLocation()
-  const [obdExpanded, setObdExpanded] = useState(location.pathname.startsWith('/obd'))
+  const [obdExpanded, setObdExpanded] = useState(true)
+  const [ccExpanded, setCcExpanded] = useState(false)
 
   useEffect(() => {
     if (location.pathname.startsWith('/obd')) {
@@ -357,25 +357,53 @@ function Sidebar({ mobileOpen, onClose }) {
           {/* Divider */}
           <div className="mx-5 my-2 border-t border-slate-700/60" />
 
-          {/* Main Nav Items */}
-          {mainNavItems.map((item, idx) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              onClick={onClose}
-              className={`
-                flex items-center gap-3 px-5 py-2.5 text-sm transition-colors duration-150
-                ${isMainActive(item.path)
-                  ? 'text-freight-400 bg-freight-500/10 border-r-2 border-freight-500'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
-                }
-              `}
-            >
-              <span className="flex items-center justify-center w-5 h-5 rounded bg-slate-700/60 text-slate-500 text-[10px] font-bold">{idx + 2}</span>
-              <item.Icon className="w-4 h-4" />
-              <span>{item.label}</span>
-            </Link>
-          ))}
+          {/* Command Center — collapsible with agent modules */}
+          <div>
+            <div className="flex items-center">
+              <Link
+                to="/"
+                onClick={onClose}
+                className={`
+                  flex-1 flex items-center gap-3 px-5 py-2.5 text-sm transition-colors duration-150
+                  ${location.pathname === '/'
+                    ? 'text-freight-400 bg-freight-500/10'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                  }
+                `}
+              >
+                <span className="flex items-center justify-center w-5 h-5 rounded bg-slate-700/60 text-slate-500 text-[10px] font-bold">2</span>
+                <DashboardIcon className="w-4 h-4" />
+                <span>Command Center</span>
+              </Link>
+              <button
+                onClick={() => setCcExpanded(!ccExpanded)}
+                className="pr-4 pl-1 py-2.5 text-slate-500 hover:text-slate-300 transition-colors"
+              >
+                <ChevronIcon className="w-3.5 h-3.5" open={ccExpanded} />
+              </button>
+            </div>
+            {ccExpanded && (
+              <div className="ml-5 border-l border-slate-600/30 pl-0">
+                {commandCenterSubItems.map((sub, idx) => (
+                  <Link
+                    key={sub.path}
+                    to={sub.path}
+                    onClick={onClose}
+                    className={`
+                      flex items-center gap-2.5 pl-8 pr-5 py-2 text-sm transition-colors duration-150
+                      ${location.pathname === sub.path
+                        ? 'text-freight-400 bg-freight-500/10 border-l-2 border-freight-500 -ml-[1px]'
+                        : 'text-slate-500 hover:text-slate-300 hover:bg-slate-700/30'
+                      }
+                    `}
+                  >
+                    <sub.Icon className="w-3.5 h-3.5" />
+                    <span>{sub.label}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
         </nav>
 
         {/* Footer */}
