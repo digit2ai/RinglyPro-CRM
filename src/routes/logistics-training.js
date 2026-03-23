@@ -439,8 +439,32 @@ router.get('/lesson/:id', async (req, res) => {
       : '';
 
     const videoSection = lesson.youtube_video_id
-      ? `<div class="video-wrap"><iframe src="https://www.youtube.com/embed/${escHtml(lesson.youtube_video_id)}" allowfullscreen></iframe></div>`
-      : `<div class="card" style="text-align:center;padding:48px;margin-bottom:24px"><p style="color:var(--text2);font-size:18px">Video coming soon</p></div>`;
+      ? `<div class="video-wrap" id="videoWrap"><iframe id="videoFrame" src="https://www.youtube.com/embed/${escHtml(lesson.youtube_video_id)}" allowfullscreen></iframe></div>
+         <div style="text-align:right;margin-top:8px">
+           <button onclick="document.getElementById('videoEditor').style.display='block'" style="background:none;border:none;color:var(--text2);font-size:11px;cursor:pointer;text-decoration:underline">Change video</button>
+         </div>
+         <div id="videoEditor" style="display:none;margin-top:12px" class="card">
+           <p style="font-size:13px;color:var(--text2);margin-bottom:12px">Paste a new YouTube video ID or URL:</p>
+           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+             <input id="vidInput" placeholder="e.g. dQw4w9WgXcQ or full YouTube URL" style="flex:1;min-width:200px;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;font-family:monospace">
+             <button onclick="saveVideo()" style="padding:10px 20px;background:var(--accent);color:var(--bg);border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:14px">Save</button>
+           </div>
+           <p id="vidStatus" style="font-size:12px;color:var(--text2);margin-top:8px"></p>
+         </div>`
+      : `<div class="card" style="text-align:center;padding:40px 24px;margin-bottom:24px">
+           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#8b949e" stroke-width="1.5" style="margin:0 auto 16px"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+           <p style="color:var(--text2);font-size:16px;margin-bottom:16px">No video assigned yet</p>
+           <p style="color:var(--text2);font-size:13px;margin-bottom:20px">Search YouTube for: <strong style="color:var(--text)">${escHtml(lesson.title)}</strong></p>
+           <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:16px">
+             <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(lesson.title + ' logistics education')}" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:14px">Search on YouTube</a>
+           </div>
+           <p style="font-size:12px;color:var(--text2);margin-bottom:12px">Found a video? Paste the URL or video ID below:</p>
+           <div style="display:flex;gap:8px;align-items:center;max-width:500px;margin:0 auto;flex-wrap:wrap">
+             <input id="vidInput" placeholder="Paste YouTube URL or video ID here" style="flex:1;min-width:200px;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px">
+             <button onclick="saveVideo()" style="padding:10px 20px;background:var(--accent);color:var(--bg);border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:14px">Save</button>
+           </div>
+           <p id="vidStatus" style="font-size:12px;color:var(--text2);margin-top:8px"></p>
+         </div>`;
 
     const quizSection = questions.length ? `
       <div class="card" style="margin-top:32px">
@@ -513,6 +537,45 @@ router.get('/lesson/:id', async (req, res) => {
         <h1 style="margin-bottom:24px">${escHtml(lesson.title)}</h1>
 
         ${videoSection}
+
+        <script>
+        function extractVideoId(input) {
+          if (!input) return null;
+          input = input.trim();
+          // Full URL: youtube.com/watch?v=ID
+          let m = input.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
+          if (m) return m[1];
+          // Short URL: youtu.be/ID
+          m = input.match(/youtu\\.be\\/([a-zA-Z0-9_-]{11})/);
+          if (m) return m[1];
+          // Embed URL: youtube.com/embed/ID
+          m = input.match(/embed\\/([a-zA-Z0-9_-]{11})/);
+          if (m) return m[1];
+          // Raw ID (11 chars)
+          if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
+          return input;
+        }
+        async function saveVideo() {
+          const raw = document.getElementById('vidInput').value;
+          const vid = extractVideoId(raw);
+          const st = document.getElementById('vidStatus');
+          if (!vid) { st.textContent = 'Please paste a YouTube URL or video ID'; st.style.color = '#f85149'; return; }
+          st.textContent = 'Saving...'; st.style.color = 'var(--accent)';
+          try {
+            const res = await fetch('/logistics/training/admin/videos', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ lesson_id: ${lessonId}, youtube_video_id: vid, youtube_title: '' })
+            });
+            const data = await res.json();
+            if (data.success) {
+              st.textContent = 'Saved! Reloading...'; st.style.color = '#3fb950';
+              setTimeout(() => location.reload(), 500);
+            } else {
+              st.textContent = 'Error: ' + (data.error || 'Unknown'); st.style.color = '#f85149';
+            }
+          } catch (e) { st.textContent = 'Error: ' + e.message; st.style.color = '#f85149'; }
+        }
+        </script>
 
         ${lesson.summary ? `<p style="color:var(--text2);margin-bottom:24px">${escHtml(lesson.summary)}</p>` : ''}
 
