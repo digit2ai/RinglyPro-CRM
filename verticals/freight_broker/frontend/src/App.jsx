@@ -7,6 +7,7 @@ import FindingDetailPage from './pages/FindingDetailPage'
 import PrescriptionsPage from './pages/PrescriptionsPage'
 import CommandCenterPage from './pages/CommandCenterPage'
 import PlaceholderPage from './pages/PlaceholderPage'
+import UserGuidePage from './pages/UserGuidePage'
 
 /* ---- SVG Icon Components ---- */
 
@@ -216,7 +217,17 @@ const obdSubItems = [
   { path: '/obd/scan', label: 'Run Scan', Icon: RunScanIcon },
   { path: '/obd/findings', label: 'Findings', Icon: FindingsIcon },
   { path: '/obd/prescriptions', label: 'Prescriptions', Icon: PrescriptionIcon },
+  { path: '/obd/guide', label: 'User Guide', Icon: BookIcon },
 ]
+
+function BookIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+    </svg>
+  )
+}
 
 const mainNavItems = [
   { path: '/', label: 'Command Center', Icon: DashboardIcon },
@@ -283,9 +294,13 @@ function Sidebar({ mobileOpen, onClose }) {
         `}
       >
         {/* Logo */}
-        <div className="px-5 py-5 border-b border-slate-700">
-          <h1 className="text-lg font-bold text-white tracking-wide">FreightMind AI</h1>
-          <p className="text-xs text-purple-400 font-semibold tracking-widest uppercase mt-0.5">OBD Scanner</p>
+        <div className="px-5 py-4 border-b border-slate-700">
+          <img
+            src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69b02d62034886f7c9e996d9.png"
+            alt="FreightMind AI"
+            className="w-full max-w-[200px] mx-auto mb-2"
+          />
+          <p className="text-xs text-purple-400 font-semibold tracking-widest uppercase text-center">OBD Scanner</p>
         </div>
 
         {/* Close button (mobile) */}
@@ -411,6 +426,7 @@ export default function App() {
             <Route path="/obd/findings" element={<FindingsPage />} />
             <Route path="/obd/findings/:id" element={<FindingDetailPage />} />
             <Route path="/obd/prescriptions" element={<PrescriptionsPage />} />
+            <Route path="/obd/guide" element={<UserGuidePage />} />
             <Route path="/" element={<CommandCenterPage />} />
             <Route path="/loads" element={<PlaceholderPage title="Load Board" />} />
             <Route path="/rates" element={<PlaceholderPage title="Rate Engine" />} />
