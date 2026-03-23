@@ -36,6 +36,12 @@ router.use('/api/drivers', driversRoutes);
 router.use('/api/dispatches', dispatchesRoutes);
 
 // ============================================================================
+// OBD SCANNER — Universal Diagnostic Engine
+// ============================================================================
+const obdRoutes = require('./routes/obd');
+router.use('/api/obd', obdRoutes);
+
+// ============================================================================
 // DEMO & SEEDING
 // ============================================================================
 const demoRoutes = require('./routes/demo');
