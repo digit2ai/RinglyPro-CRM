@@ -1802,4 +1802,18 @@ router.get('/dashboard', async (req, res) => {
   }
 });
 
+// DELETE /clear — Wipe all OBD data for a tenant (for demo resets)
+router.delete('/clear', async (req, res) => {
+  try {
+    const { tenant_id } = req.query;
+    if (!tenant_id) return res.status(400).json({ error: 'tenant_id required' });
+    await sequelize.query(`DELETE FROM lg_obd_findings WHERE tenant_id = :tid`, { replacements: { tid: tenant_id } });
+    await sequelize.query(`DELETE FROM lg_obd_scans WHERE tenant_id = :tid`, { replacements: { tid: tenant_id } });
+    await sequelize.query(`DELETE FROM lg_obd_ingestion_batches WHERE tenant_id = :tid`, { replacements: { tid: tenant_id } });
+    res.json({ success: true, message: `All OBD data cleared for tenant ${tenant_id}` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

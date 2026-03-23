@@ -129,12 +129,14 @@ export default function FindingsPage() {
       if (result.data && result.data.length > 0) {
         setFindings(result.data.map(f => ({
           ...f,
-          module: f.scan_module || f.module
+          module: f.scan_module || f.module,
+          estimated_monthly_savings: parseFloat(f.estimated_monthly_savings) || 0
         })))
       } else if (result.findings && result.findings.length > 0) {
         setFindings(result.findings.map(f => ({
           ...f,
-          module: f.scan_module || f.module
+          module: f.scan_module || f.module,
+          estimated_monthly_savings: parseFloat(f.estimated_monthly_savings) || 0
         })))
       } else {
         setFindings([])

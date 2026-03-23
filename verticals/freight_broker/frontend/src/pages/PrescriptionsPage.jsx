@@ -120,6 +120,7 @@ export default function PrescriptionsPage() {
         .map(f => ({
           ...f,
           module: f.scan_module || f.module,
+          estimated_monthly_savings: parseFloat(f.estimated_monthly_savings) || 0,
           prescription: typeof f.prescription === 'string'
             ? f.prescription.split(/\d+\.\s+/).filter(Boolean)
             : f.prescription,
