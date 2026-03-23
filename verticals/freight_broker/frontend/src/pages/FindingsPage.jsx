@@ -126,13 +126,21 @@ export default function FindingsPage() {
     setLoading(true)
     try {
       const result = await getFindings()
-      if (result.findings && result.findings.length > 0) {
-        setFindings(result.findings)
+      if (result.data && result.data.length > 0) {
+        setFindings(result.data.map(f => ({
+          ...f,
+          module: f.scan_module || f.module
+        })))
+      } else if (result.findings && result.findings.length > 0) {
+        setFindings(result.findings.map(f => ({
+          ...f,
+          module: f.scan_module || f.module
+        })))
       } else {
-        setFindings(DEMO_FINDINGS)
+        setFindings([])
       }
     } catch {
-      setFindings(DEMO_FINDINGS)
+      setFindings([])
     }
     setLoading(false)
   }

@@ -83,47 +83,29 @@ export default function ScanRunnerPage() {
 
     const ids = Array.from(moduleIds)
 
-    try {
-      const result = await runScan(ids)
-      if (result.findings) {
-        // Process real results
-        const scores = {}
-        let total = 0
-        ids.forEach((id, idx) => {
-          const score = result.module_scores?.[id] || Math.floor(Math.random() * 30 + 60)
-          scores[id] = score
-          total += score
-        })
-        setModuleScores(scores)
-        setOverallScore(Math.round(total / ids.length))
-        setCompletedModules(new Set(ids))
-        setCurrentModule(null)
-        setScanComplete(true)
-        setRunning(false)
-        return
-      }
-    } catch (err) {
-      // Fall through to demo simulation
-    }
-
-    // Demo simulation: animate through modules
+    // Animate through modules for visual feedback
     for (let i = 0; i < ids.length; i++) {
       setCurrentModule(ids[i])
-      await new Promise(r => setTimeout(r, 800 + Math.random() * 400))
-      const score = Math.floor(Math.random() * 30 + 60)
-      setModuleScores(prev => ({ ...prev, [ids[i]]: score }))
-      setCompletedModules(prev => {
-        const next = new Set(prev)
-        next.add(ids[i])
-        return next
-      })
+      if (i < ids.length - 1) {
+        await new Promise(r => setTimeout(r, 200))
+        setCompletedModules(prev => { const next = new Set(prev); next.add(ids[i]); return next })
+      }
     }
 
-    setCurrentModule(null)
-    // Calculate overall
-    const allScores = ids.map(id => moduleScores[id] || Math.floor(Math.random() * 30 + 60))
-    setOverallScore(Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length))
-    setScanComplete(true)
+    try {
+      const result = await runScan(ids)
+      const data = result.data || result
+      const scores = data.module_scores || {}
+      ids.forEach(id => { if (!scores[id]) scores[id] = 100 })
+      setModuleScores(scores)
+      setOverallScore(data.overall_score || Math.round(Object.values(scores).reduce((a, b) => a + b, 0) / ids.length))
+      setCompletedModules(new Set(ids))
+      setCurrentModule(null)
+      setScanComplete(true)
+    } catch (err) {
+      setCurrentModule(null)
+      setScanComplete(true)
+    }
     setRunning(false)
   }
 

@@ -28,51 +28,40 @@ export default function CommandCenterPage() {
       if (healthRes.status === 'fulfilled' && healthRes.value) {
         setHealth(healthRes.value)
       }
-      if (findingsRes.status === 'fulfilled' && findingsRes.value?.findings) {
-        setRecentFindings(findingsRes.value.findings.slice(0, 5))
-      } else {
-        // Demo recent findings
-        setRecentFindings([
-          { id: 'f1', severity: 'critical', title: 'Dead mile ratio exceeds 35% on I-95 corridor', module: 'load_operations' },
-          { id: 'f2', severity: 'critical', title: '12 carriers operating with lapsed insurance', module: 'compliance_risk' },
-          { id: 'f3', severity: 'warning', title: 'Spot rate margin below market on DAL-HOU lane', module: 'rate_intelligence' },
-          { id: 'f5', severity: 'advisory', title: 'Fleet utilization drops 28% on Fridays', module: 'fleet_utilization' },
-          { id: 'f7', severity: 'info', title: 'Driver HOS utilization averaging 72%', module: 'driver_retention' },
-        ])
+      if (findingsRes.status === 'fulfilled') {
+        const items = findingsRes.value?.data || findingsRes.value?.findings || []
+        setRecentFindings(items.slice(0, 5).map(f => ({ ...f, module: f.scan_module || f.module })))
       }
     } catch {
-      setRecentFindings([
-        { id: 'f1', severity: 'critical', title: 'Dead mile ratio exceeds 35% on I-95 corridor', module: 'load_operations' },
-        { id: 'f2', severity: 'critical', title: '12 carriers operating with lapsed insurance', module: 'compliance_risk' },
-        { id: 'f3', severity: 'warning', title: 'Spot rate margin below market on DAL-HOU lane', module: 'rate_intelligence' },
-      ])
+      setRecentFindings([])
     }
     setLoading(false)
   }
 
+  const dashData = dashboard?.data || dashboard || {}
   const metrics = [
     {
-      label: 'Total Loads',
-      value: dashboard?.total_loads?.toLocaleString() || '1,247',
-      sub: 'Last 90 days',
+      label: 'Open Findings',
+      value: dashData.open_findings != null ? dashData.open_findings : '--',
+      sub: 'Pending review',
       color: 'text-freight-400',
     },
     {
-      label: 'Active Trucks',
-      value: dashboard?.active_trucks?.toLocaleString() || '84',
-      sub: 'In network',
+      label: 'Est. Savings',
+      value: dashData.total_estimated_monthly_savings ? `$${Math.round(dashData.total_estimated_monthly_savings).toLocaleString()}` : '--',
+      sub: 'Per month',
       color: 'text-green-400',
     },
     {
-      label: 'Drivers',
-      value: dashboard?.drivers?.toLocaleString() || '156',
-      sub: 'Active roster',
+      label: 'Modules',
+      value: dashData.module_scores ? Object.keys(dashData.module_scores).length : '--',
+      sub: 'Scan modules',
       color: 'text-yellow-400',
     },
     {
       label: 'OBD Score',
-      value: dashboard?.obd_score || '--',
-      sub: dashboard?.obd_score ? 'Last scan' : 'No scan yet',
+      value: dashData.overall_score || '--',
+      sub: dashData.overall_score ? 'Last scan' : 'No scan yet',
       color: 'text-purple-400',
     },
   ]

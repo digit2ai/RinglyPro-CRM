@@ -114,17 +114,20 @@ export default function PrescriptionsPage() {
     setLoading(true)
     try {
       const result = await getFindings({ status: 'open' })
-      if (result.findings && result.findings.length > 0) {
-        const withPrescriptions = result.findings.filter(f => f.prescription && f.estimated_monthly_savings)
-        if (withPrescriptions.length > 0) {
-          setFindings(withPrescriptions)
-          setLoading(false)
-          return
-        }
-      }
-      setFindings(DEMO_PRESCRIPTIONS)
+      const items = result.data || result.findings || []
+      const withPrescriptions = items
+        .filter(f => f.prescription && f.estimated_monthly_savings)
+        .map(f => ({
+          ...f,
+          module: f.scan_module || f.module,
+          prescription: typeof f.prescription === 'string'
+            ? f.prescription.split(/\d+\.\s+/).filter(Boolean)
+            : f.prescription,
+          savings_confidence: f.confidence
+        }))
+      setFindings(withPrescriptions)
     } catch {
-      setFindings(DEMO_PRESCRIPTIONS)
+      setFindings([])
     }
     setLoading(false)
   }
@@ -136,6 +139,17 @@ export default function PrescriptionsPage() {
     return (
       <div className="flex items-center justify-center min-h-[40vh]">
         <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  if (findings.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center bg-slate-800/60 border border-slate-700 rounded-xl p-12 max-w-md">
+          <h2 className="text-xl font-bold text-white mb-3">No Prescriptions Yet</h2>
+          <p className="text-slate-400 text-sm">Upload your data and run a scan first. Prescriptions with ROI estimates will appear here.</p>
+        </div>
       </div>
     )
   }
