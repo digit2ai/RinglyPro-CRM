@@ -251,7 +251,7 @@ function getSectionName(pathname) {
     return sub ? sub.label : 'OBD Scanner'
   }
   if (pathname === '/') return 'Command Center'
-  const item = mainNavItems.find(n => pathname.startsWith(n.path) && n.path !== '/')
+  const item = commandCenterSubItems.find(n => pathname.startsWith(n.path) && n.path !== '/')
   return item ? item.label : 'FreightMind AI'
 }
 
