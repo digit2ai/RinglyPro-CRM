@@ -791,4 +791,119 @@ router.get('/health', async (req, res) => {
   }
 });
 
+// ── Admin: Video Manager ──────────────────────────────────────
+router.get('/admin/videos', async (req, res) => {
+  try {
+    const [lessons] = await sequelize.query(`
+      SELECT l.id, l.title, l.youtube_video_id, l.youtube_title, l.position as lpos,
+             m.title as module_title, m.track, m.position as mpos
+      FROM lms_lessons l JOIN lms_modules m ON l.module_id = m.id
+      ORDER BY m.track, m.position, l.position
+    `);
+    res.send(`<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>LMS Video Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:#0d1117;color:#e6edf3;padding:24px}
+h1{font-size:24px;margin-bottom:8px}
+.sub{color:#8b949e;font-size:14px;margin-bottom:24px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:10px 12px;background:#161b22;color:#8b949e;font-weight:600;position:sticky;top:0;z-index:1}
+td{padding:8px 12px;border-bottom:1px solid #21262d;vertical-align:middle}
+tr:hover{background:#161b22}
+.track-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase}
+.warehouse{background:#8b5cf6;color:#fff}.freight{background:#3b82f6;color:#fff}
+.vid-input{background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:6px 10px;border-radius:6px;width:140px;font-size:12px;font-family:monospace}
+.vid-input:focus{border-color:#00c2a8;outline:none}
+.title-input{background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:6px 10px;border-radius:6px;width:200px;font-size:12px}
+.title-input:focus{border-color:#00c2a8;outline:none}
+.btn-save{background:#00c2a8;color:#0d1117;border:none;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer}
+.btn-save:hover{background:#00e6c3}
+.btn-save:disabled{opacity:.4;cursor:not-allowed}
+.btn-search{background:#30363d;color:#e6edf3;border:none;padding:6px 10px;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap}
+.btn-search:hover{background:#484f58}
+.status{font-size:11px;padding:2px 6px;border-radius:4px}
+.has-vid{color:#3fb950;background:#3fb95015}.no-vid{color:#f85149;background:#f8514915}
+.saved{animation:flash .5s}
+@keyframes flash{0%{background:#00c2a830}100%{background:transparent}}
+.stats{display:flex;gap:16px;margin-bottom:20px}
+.stat{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px 20px}
+.stat-num{font-size:28px;font-weight:700;color:#00c2a8}
+.stat-label{font-size:11px;color:#8b949e;margin-top:2px}
+</style></head><body>
+<h1>LMS Video Manager</h1>
+<p class="sub">Paste YouTube video IDs for each lesson. Click the search icon to open YouTube with the lesson topic pre-filled.</p>
+<div class="stats">
+  <div class="stat"><div class="stat-num" id="total">${lessons.length}</div><div class="stat-label">Total Lessons</div></div>
+  <div class="stat"><div class="stat-num" id="filled">${lessons.filter(l => l.youtube_video_id).length}</div><div class="stat-label">With Videos</div></div>
+  <div class="stat"><div class="stat-num" id="missing">${lessons.filter(l => !l.youtube_video_id).length}</div><div class="stat-label">Missing Videos</div></div>
+</div>
+<table>
+<thead><tr><th>#</th><th>Track</th><th>Module</th><th>Lesson</th><th>Video ID</th><th>Video Title</th><th>Status</th><th></th><th></th></tr></thead>
+<tbody>
+${lessons.map((l, i) => `<tr id="row-${l.id}">
+  <td>${i + 1}</td>
+  <td><span class="track-badge ${l.track}">${l.track}</span></td>
+  <td style="max-width:160px">${l.module_title}</td>
+  <td style="max-width:200px">${l.title}</td>
+  <td><input class="vid-input" id="vid-${l.id}" value="${l.youtube_video_id || ''}" placeholder="e.g. dQw4w9WgXcQ"></td>
+  <td><input class="title-input" id="title-${l.id}" value="${(l.youtube_title || '').replace(/"/g, '&quot;')}" placeholder="Video title"></td>
+  <td><span class="status ${l.youtube_video_id ? 'has-vid' : 'no-vid'}" id="status-${l.id}">${l.youtube_video_id ? 'Set' : 'Missing'}</span></td>
+  <td><button class="btn-search" onclick="window.open('https://www.youtube.com/results?search_query='+encodeURIComponent('${l.title.replace(/'/g, '')} logistics education'),'_blank')">Search</button></td>
+  <td><button class="btn-save" onclick="saveVideo(${l.id})">Save</button></td>
+</tr>`).join('')}
+</tbody></table>
+<script>
+async function saveVideo(id) {
+  const vid = document.getElementById('vid-' + id).value.trim();
+  const title = document.getElementById('title-' + id).value.trim();
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = '...';
+  try {
+    const res = await fetch('/logistics/training/admin/videos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lesson_id: id, youtube_video_id: vid || null, youtube_title: title || null })
+    });
+    const data = await res.json();
+    if (data.success) {
+      const row = document.getElementById('row-' + id);
+      row.classList.add('saved');
+      setTimeout(() => row.classList.remove('saved'), 600);
+      const st = document.getElementById('status-' + id);
+      st.className = 'status ' + (vid ? 'has-vid' : 'no-vid');
+      st.textContent = vid ? 'Set' : 'Missing';
+      updateStats();
+    }
+  } catch (e) { alert('Error: ' + e.message); }
+  btn.disabled = false; btn.textContent = 'Save';
+}
+function updateStats() {
+  const inputs = document.querySelectorAll('.vid-input');
+  let filled = 0;
+  inputs.forEach(i => { if (i.value.trim()) filled++; });
+  document.getElementById('filled').textContent = filled;
+  document.getElementById('missing').textContent = inputs.length - filled;
+}
+</script></body></html>`);
+  } catch (err) {
+    res.status(500).send('Error: ' + err.message);
+  }
+});
+
+router.post('/admin/videos', async (req, res) => {
+  try {
+    const { lesson_id, youtube_video_id, youtube_title } = req.body;
+    await sequelize.query(
+      `UPDATE lms_lessons SET youtube_video_id = :vid, youtube_title = :title WHERE id = :id`,
+      { replacements: { vid: youtube_video_id, title: youtube_title, id: lesson_id } }
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
