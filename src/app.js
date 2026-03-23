@@ -883,6 +883,15 @@ app.get('/debug/cw-carriers-error', (req, res) => {
 // ==========================================
 // RinglyPro Logistics Platform
 // ==========================================
+// Logistics Training Platform (LMS) — MUST mount before /logistics wildcard
+try {
+  const logisticsTrainingRoutes = require('./routes/logistics-training');
+  app.use('/logistics/training', logisticsTrainingRoutes);
+  console.log('📚 Logistics Training LMS mounted at /logistics/training');
+} catch (error) {
+  console.log('⚠️ Logistics Training LMS not available:', error.message);
+}
+
 let logisticsApp = null;
 let logisticsError = null;
 try {
@@ -900,15 +909,6 @@ try {
 } catch (error) {
   logisticsError = error;
   console.log('⚠️ Logistics not available:', error.message);
-}
-
-// Logistics Training Platform (LMS)
-try {
-  const logisticsTrainingRoutes = require('./routes/logistics-training');
-  app.use('/logistics/training', logisticsTrainingRoutes);
-  console.log('📚 Logistics Training LMS mounted at /logistics/training');
-} catch (error) {
-  console.log('⚠️ Logistics Training LMS not available:', error.message);
 }
 
 app.get('/debug/logistics-error', (req, res) => {
