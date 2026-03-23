@@ -381,6 +381,36 @@ export default function IngestionWizardPage() {
             </div>
           )}
 
+          {/* Demo Sample Files */}
+          <div className="mt-6 bg-slate-800/40 border border-slate-700/60 rounded-xl p-4">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Demo Sample Files</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {[
+                { name: 'Freight Broker', file: 'freight-broker-demo.csv', rows: 50 },
+                { name: 'Asset Carrier', file: 'asset-carrier-demo.csv', rows: 25 },
+                { name: '3PL', file: '3pl-demo.csv', rows: 40 },
+                { name: 'Fleet Operator', file: 'fleet-operator-demo.csv', rows: 20 },
+                { name: 'Intermodal', file: 'intermodal-demo.csv', rows: 30 },
+                { name: 'Freight Forwarder', file: 'freight-forwarder-demo.csv', rows: 25 },
+              ].map(s => (
+                <a
+                  key={s.file}
+                  href={`/freight_broker/samples/${s.file}`}
+                  download={s.file}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-700/50 border border-slate-600/50 hover:border-purple-500/40 hover:bg-slate-700 transition-all text-left"
+                >
+                  <svg className="w-4 h-4 text-purple-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  <div>
+                    <p className="text-xs font-medium text-white">{s.name}</p>
+                    <p className="text-[10px] text-slate-500">{s.rows} rows</p>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+
           <div className="mt-6 flex gap-4">
             <button disabled className="px-4 py-2 rounded-lg bg-slate-700 text-slate-500 text-sm cursor-not-allowed">
               Connect API (Coming Soon)
