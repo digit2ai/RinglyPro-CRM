@@ -1,0 +1,26 @@
+Unit Number,VIN,Make,Model,Year,Equipment Type,Status,License Plate,License State,Current City,Current State,Odometer,Last Inspection Date,Next PM Due Date,Next PM Due Miles,ELD Provider,Driver Assigned,Fuel Type,Insurance Expiry
+TRK-101,1FUJGLDR8CLBP4721,Freightliner,Cascadia,2022,dry_van,active,ABG-4821,GA,Atlanta,GA,312450,2026-01-15,2026-04-15,325000,Samsara,Mike Torres,Diesel,2026-09-30
+TRK-102,1XKYD49X1EJ394827,Kenworth,T680,2021,dry_van,active,TXP-7293,TX,Dallas,TX,287600,2026-02-10,2026-05-10,300000,Samsara,James Olsen,Diesel,2026-11-15
+TRK-103,2NPNHD7X2FC801345,Peterbilt,579,2023,reefer,active,FLR-3019,FL,Jacksonville,FL,198200,2026-01-20,2026-04-20,210000,KeepTruckin,Luis Fernandez,Diesel,2026-08-31
+TRK-104,1FUJGLDR5DLAP8903,Freightliner,Cascadia,2020,dry_van,active,ILP-5543,IL,Chicago,IL,425800,2025-12-05,2026-03-05,440000,Samsara,Dave Reynolds,Diesel,2026-07-15
+TRK-105,1XKYD49X7FJ521094,Kenworth,W990,2022,flatbed,active,NCP-8821,NC,Charlotte,NC,278900,2026-02-15,2026-05-15,290000,KeepTruckin,Carlos Vega,Diesel,2026-10-31
+TRK-106,4V4NC9EH5FN902817,Volvo,VNL 860,2021,dry_van,active,GAT-1102,GA,Macon,GA,356700,2026-01-28,2026-04-28,370000,Samsara,Tony Blake,Diesel,2026-06-30
+TRK-107,1FUJGLDR2CMBR3456,Freightliner,Cascadia,2023,reefer,active,OKS-4478,OK,Oklahoma City,OK,167300,2026-02-20,2026-05-20,180000,Samsara,Bobby Grant,Diesel,2027-01-15
+TRK-108,1XKYD49X4DJ682105,Kenworth,T680,2020,dry_van,active,TXR-9914,TX,Houston,TX,398500,2025-11-30,2026-02-28,410000,KeepTruckin,Hank Williams,Diesel,2025-12-31
+TRK-109,2NPNHD7X8GC503219,Peterbilt,389,2022,flatbed,active,SCP-2267,SC,Greenville,SC,245100,2026-01-10,2026-04-10,260000,Samsara,Ray Sanchez,Diesel,2026-09-15
+TRK-110,1FUJGLDR9ELCP6782,Freightliner,M2 112,2019,dry_van,out_of_service,GAR-7753,GA,Atlanta,GA,512300,2025-10-15,2026-01-15,520000,Samsara,,Diesel,2025-11-30
+TRK-111,1XKYD49X0FJ831456,Kenworth,T880,2023,flatbed,active,TXF-3329,TX,Fort Worth,TX,142600,2026-02-25,2026-05-25,155000,KeepTruckin,Earl Morrison,Diesel,2026-12-31
+TRK-112,4V4NC9EH2EN714503,Volvo,VNL 760,2020,dry_van,maintenance,INP-6618,IN,Indianapolis,IN,445200,2025-12-20,2026-02-15,450000,Samsara,,Diesel,2026-04-30
+TRK-113,1FUJGLDR4DMBS9012,Freightliner,Cascadia,2021,reefer,active,FLT-8841,FL,Miami,FL,334800,2026-01-05,2026-04-05,345000,Samsara,Luis Fernandez,Diesel,2026-10-15
+TRK-114,1XKYD49X6EJ450789,Kenworth,T680,2022,dry_van,out_of_service,MIP-1195,MI,Detroit,MI,289400,2025-09-20,2026-01-20,295000,KeepTruckin,,Diesel,2026-03-15
+TRK-115,3HSDJSJR5CN802346,International,LT,2021,dry_van,active,OHP-4427,OH,Columbus,OH,367200,2026-02-01,2026-05-01,380000,Samsara,Andy Marsh,Diesel,2026-08-15
+TRK-116,2NPNHD7X1FC309871,Peterbilt,567,2020,flatbed,maintenance,ALP-7738,AL,Birmingham,AL,412500,2025-11-10,2026-02-10,420000,KeepTruckin,,Diesel,2025-10-31
+TRK-117,1FUJGLDR7CLBQ2345,Freightliner,Cascadia,2023,dry_van,active,GAM-5564,GA,Savannah,GA,158900,2026-02-18,2026-05-18,170000,Samsara,Pat Sullivan,Diesel,2027-02-28
+TRK-118,1XKYD49X3FJ729018,Kenworth,W990,2021,reefer,out_of_service,TNR-8802,TN,Nashville,TN,378600,2025-08-25,2026-01-25,385000,KeepTruckin,,Diesel,2026-05-31
+TRK-119,4V4NC9EH9DN503214,Volvo,VNL 860,2022,reefer,active,WIR-3319,WI,Milwaukee,WI,234700,2026-01-22,2026-04-22,245000,Samsara,Steve Nowak,Diesel,2026-11-30
+TRK-120,3HSDJSJR8BN601987,International,LT,2019,dry_van,out_of_service,MSP-6641,MS,Jackson,MS,498300,2025-07-15,2026-01-10,505000,KeepTruckin,,Diesel,2026-01-31
+TRK-121,1FUJGLDR1EMBR7890,Freightliner,Cascadia,2022,dry_van,active,LAP-2278,LA,Baton Rouge,LA,267800,2026-02-08,2026-05-08,280000,Samsara,Mike Torres,Diesel,2026-09-30
+TRK-122,1XKYD49X9EJ583412,Kenworth,T680,2021,reefer,maintenance,ARP-9915,AR,Little Rock,AR,345100,2025-12-10,2026-03-10,355000,KeepTruckin,,Diesel,2026-06-15
+TRK-123,2NPNHD7X5GC207654,Peterbilt,579,2023,dry_van,active,MOP-4423,MO,St. Louis,MO,178400,2026-02-22,2026-05-22,190000,Samsara,Andy Marsh,Diesel,2027-03-31
+TRK-124,1FUJGLDR6DLCP1234,Freightliner,M2 112,2020,dry_van,active,KYP-7716,KY,Louisville,KY,389200,2026-01-30,2026-04-30,400000,Samsara,Pat Sullivan,Diesel,2026-08-31
+TRK-125,1XKYD49X2FJ914567,Kenworth,T880,2022,dry_van,active,VAP-5538,VA,Richmond,VA,256300,2026-02-05,2026-05-05,265000,KeepTruckin,Steve Nowak,Diesel,2026-12-15

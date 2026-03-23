@@ -1,0 +1,41 @@
+Shipment ID,Client Name,Service Type,Origin City,Origin State,Destination City,Destination State,Pickup Date,Delivery Date,Equipment,Weight,Pallets,Miles,Client Rate,Carrier Cost,Margin,On Time,Carrier,Mode,Special Instructions
+3PL-5001,Amazon Fulfillment,Warehouse to DC,Ontario,CA,Phoenix,AZ,2026-03-01,2026-03-02,dry_van,38000,24,370,3200.00,2680.00,520.00,Yes,Desert Sun Transport,TL,
+3PL-5002,Amazon Fulfillment,Warehouse to DC,Ontario,CA,Las Vegas,NV,2026-03-01,2026-03-02,dry_van,42000,26,270,2800.00,2350.00,450.00,Yes,Pacific Ridge Logistics,TL,
+3PL-5003,Walmart,Store Replenishment,Bentonville,AR,Memphis,TN,2026-03-02,2026-03-02,dry_van,40000,24,210,2100.00,1780.00,320.00,Yes,Midsouth Freight LLC,TL,
+3PL-5004,Amazon Fulfillment,Inbound to FC,Los Angeles,CA,Ontario,CA,2026-03-02,2026-03-02,dry_van,34000,20,45,950.00,780.00,170.00,Yes,Pacific Ridge Logistics,TL,
+3PL-5005,Target Corporation,DC Transfer,Minneapolis,MN,Chicago,IL,2026-03-03,2026-03-04,reefer,28000,18,410,3800.00,3250.00,550.00,Yes,Northern Star Cold Chain,TL,Maintain 34F
+3PL-5006,Walmart,Store Replenishment,Bentonville,AR,Dallas,TX,2026-03-03,2026-03-04,dry_van,44000,26,320,2600.00,2180.00,420.00,No,Heartland Freight Lines,TL,
+3PL-5007,Amazon Fulfillment,Last Mile Sort,Ontario,CA,San Diego,CA,2026-03-04,2026-03-04,dry_van,18000,12,110,1400.00,1150.00,250.00,Yes,SoCal Express Inc,TL,
+3PL-5008,Amazon Fulfillment,Warehouse to DC,Ontario,CA,Denver,CO,2026-03-04,2026-03-06,dry_van,40000,24,1020,4800.00,4200.00,600.00,No,Mountain West Carriers,TL,
+3PL-5009,Walmart,Grocery Distribution,Bentonville,AR,Little Rock,AR,2026-03-05,2026-03-05,reefer,36000,22,215,2900.00,2480.00,420.00,Yes,Ozark Reefer Transport,TL,Maintain 34F
+3PL-5010,Costco Wholesale,Import Deconsolidation,Long Beach,CA,Ontario,CA,2026-03-05,2026-03-05,dry_van,32000,20,60,1100.00,920.00,180.00,Yes,Pacific Ridge Logistics,TL,
+3PL-5011,Amazon Fulfillment,Returns Processing,Phoenix,AZ,Ontario,CA,2026-03-06,2026-03-07,dry_van,22000,14,370,2400.00,2050.00,350.00,Yes,Desert Sun Transport,TL,
+3PL-5012,Walmart,Store Replenishment,Bentonville,AR,Nashville,TN,2026-03-06,2026-03-07,dry_van,42000,26,480,3100.00,2650.00,450.00,No,Midsouth Freight LLC,TL,
+3PL-5013,Amazon Fulfillment,Warehouse to DC,Carteret,NJ,Baltimore,MD,2026-03-07,2026-03-07,dry_van,38000,24,180,2200.00,1850.00,350.00,Yes,Eastern Seaboard Freight,TL,
+3PL-5014,Kroger Co,Cold Chain,Cincinnati,OH,Louisville,KY,2026-03-07,2026-03-07,reefer,30000,18,100,1800.00,1520.00,280.00,Yes,Bluegrass Cold Logistics,TL,Frozen -10F
+3PL-5015,Amazon Fulfillment,Inbound to FC,Newark,NJ,Carteret,NJ,2026-03-08,2026-03-08,dry_van,26000,16,20,750.00,620.00,130.00,Yes,Eastern Seaboard Freight,TL,
+3PL-5016,Walmart,Store Replenishment,Bentonville,AR,Houston,TX,2026-03-08,2026-03-09,dry_van,44000,26,450,3000.00,2520.00,480.00,Yes,Lone Star Logistics,TL,
+3PL-5017,Target Corporation,Seasonal Goods,Minneapolis,MN,Kansas City,MO,2026-03-09,2026-03-10,dry_van,36000,22,440,2800.00,2400.00,400.00,No,Heartland Freight Lines,TL,
+3PL-5018,Amazon Fulfillment,Warehouse to DC,Carteret,NJ,Richmond,VA,2026-03-09,2026-03-10,dry_van,40000,24,300,2600.00,2200.00,400.00,Yes,Eastern Seaboard Freight,TL,
+3PL-5019,Walmart,Grocery Distribution,Bentonville,AR,Oklahoma City,OK,2026-03-10,2026-03-10,reefer,34000,20,190,2500.00,2100.00,400.00,Yes,Ozark Reefer Transport,TL,Maintain 34F
+3PL-5020,Amazon Fulfillment,Last Mile Sort,Carteret,NJ,Philadelphia,PA,2026-03-10,2026-03-10,dry_van,20000,12,80,1200.00,1010.00,190.00,Yes,Eastern Seaboard Freight,TL,
+3PL-5021,Walmart,Store Replenishment,Bentonville,AR,Atlanta,GA,2026-03-11,2026-03-12,dry_van,42000,26,570,3400.00,2900.00,500.00,No,Southeast Express Inc,TL,
+3PL-5022,Amazon Fulfillment,Warehouse to DC,Ontario,CA,Sacramento,CA,2026-03-11,2026-03-12,dry_van,38000,24,390,2900.00,2480.00,420.00,Yes,Pacific Ridge Logistics,TL,
+3PL-5023,Home Depot Supply Chain,Flatbed Delivery,Atlanta,GA,Charlotte,NC,2026-03-12,2026-03-12,flatbed,46000,0,245,3200.00,2750.00,450.00,Yes,Patriot Flatbed LLC,TL,Tarped load
+3PL-5024,Amazon Fulfillment,Returns Processing,Denver,CO,Ontario,CA,2026-03-12,2026-03-14,dry_van,24000,16,1020,4600.00,4100.00,500.00,No,Mountain West Carriers,TL,
+3PL-5025,Walmart,Store Replenishment,Bentonville,AR,San Antonio,TX,2026-03-13,2026-03-14,dry_van,40000,24,520,3200.00,2700.00,500.00,Yes,Lone Star Logistics,TL,
+3PL-5026,Amazon Fulfillment,Inbound to FC,Los Angeles,CA,Carteret,NJ,2026-03-13,2026-03-18,intermodal,42000,26,2800,3400.00,2800.00,600.00,Yes,BNSF Intermodal,Intermodal,
+3PL-5027,Costco Wholesale,Import Deconsolidation,Seattle,WA,Portland,OR,2026-03-14,2026-03-14,dry_van,30000,18,175,1800.00,1520.00,280.00,Yes,Cascade Carriers Inc,TL,
+3PL-5028,Target Corporation,Seasonal Goods,Minneapolis,MN,St. Louis,MO,2026-03-14,2026-03-15,dry_van,34000,20,560,3100.00,2650.00,450.00,No,Heartland Freight Lines,TL,
+3PL-5029,Walmart,Grocery Distribution,Bentonville,AR,Birmingham,AL,2026-03-15,2026-03-15,reefer,36000,22,370,3200.00,2750.00,450.00,Yes,Midsouth Freight LLC,TL,Maintain 34F
+3PL-5030,Amazon Fulfillment,Warehouse to DC,Carteret,NJ,Charlotte,NC,2026-03-15,2026-03-16,dry_van,38000,24,540,3600.00,3100.00,500.00,Yes,Southeast Express Inc,TL,
+3PL-5031,Kroger Co,Cold Chain,Cincinnati,OH,Columbus,OH,2026-03-16,2026-03-16,reefer,28000,16,108,1600.00,1350.00,250.00,Yes,Buckeye Cold Freight,TL,Frozen -10F
+3PL-5032,Walmart,Store Replenishment,Bentonville,AR,Jackson,MS,2026-03-16,2026-03-17,dry_van,44000,26,290,2400.00,2020.00,380.00,No,Midsouth Freight LLC,TL,
+3PL-5033,Amazon Fulfillment,Warehouse to DC,Ontario,CA,Portland,OR,2026-03-17,2026-03-19,intermodal,40000,24,960,3200.00,2600.00,600.00,Yes,UP Intermodal,Intermodal,
+3PL-5034,Home Depot Supply Chain,LTL Consolidation,Atlanta,GA,Miami,FL,2026-03-17,2026-03-19,dry_van,12000,8,660,1400.00,1180.00,220.00,Yes,Sunshine State Carriers,LTL,
+3PL-5035,Costco Wholesale,LTL Pool Distribution,Long Beach,CA,Multiple,CA,2026-03-18,2026-03-19,dry_van,16000,10,280,1600.00,1340.00,260.00,Yes,SoCal Express Inc,LTL,
+3PL-5036,Target Corporation,LTL Consolidation,Minneapolis,MN,Des Moines,IA,2026-03-18,2026-03-19,dry_van,14000,8,240,1300.00,1080.00,220.00,Yes,Northern Star Cold Chain,LTL,
+3PL-5037,Amazon Fulfillment,Intermodal Transfer,Ontario,CA,Chicago,IL,2026-03-19,2026-03-24,intermodal,42000,26,2020,3600.00,2950.00,650.00,Yes,BNSF Intermodal,Intermodal,
+3PL-5038,Kroger Co,LTL Pool Distribution,Cincinnati,OH,Multiple,OH,2026-03-19,2026-03-20,reefer,10000,6,180,1200.00,1000.00,200.00,Yes,Buckeye Cold Freight,LTL,Maintain 34F
+3PL-5039,Walmart,LTL Consolidation,Bentonville,AR,Multiple,AR,2026-03-20,2026-03-21,dry_van,18000,12,150,1100.00,920.00,180.00,Yes,Ozark Reefer Transport,LTL,
+3PL-5040,Amazon Fulfillment,Intermodal Transfer,Carteret,NJ,Atlanta,GA,2026-03-20,2026-03-25,intermodal,38000,24,870,3000.00,2400.00,600.00,Yes,NS Intermodal,Intermodal,
