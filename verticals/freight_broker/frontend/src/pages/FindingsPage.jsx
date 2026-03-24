@@ -26,88 +26,7 @@ const MODULE_LABELS = {
   customer_health: 'Customer Health',
 }
 
-const DEMO_FINDINGS = [
-  {
-    id: 'f1',
-    severity: 'critical',
-    title: 'Dead mile ratio exceeds 35% on I-95 corridor',
-    module: 'load_operations',
-    category: 'Dead Miles',
-    estimated_monthly_savings: 8200,
-    status: 'open',
-    created_at: '2026-03-22T14:30:00Z',
-  },
-  {
-    id: 'f2',
-    severity: 'critical',
-    title: '12 carriers operating with lapsed insurance',
-    module: 'compliance_risk',
-    category: 'Insurance Gaps',
-    estimated_monthly_savings: null,
-    status: 'open',
-    created_at: '2026-03-22T14:30:00Z',
-  },
-  {
-    id: 'f3',
-    severity: 'warning',
-    title: 'Spot rate margin below market on DAL-HOU lane',
-    module: 'rate_intelligence',
-    category: 'Margin Analysis',
-    estimated_monthly_savings: 4500,
-    status: 'open',
-    created_at: '2026-03-22T14:30:00Z',
-  },
-  {
-    id: 'f4',
-    severity: 'warning',
-    title: 'Top shipper accounts for 42% of revenue',
-    module: 'customer_health',
-    category: 'Concentration Risk',
-    estimated_monthly_savings: null,
-    status: 'acknowledged',
-    created_at: '2026-03-21T10:00:00Z',
-  },
-  {
-    id: 'f5',
-    severity: 'advisory',
-    title: 'Fleet utilization drops 28% on Fridays',
-    module: 'fleet_utilization',
-    category: 'Utilization Pattern',
-    estimated_monthly_savings: 3100,
-    status: 'open',
-    created_at: '2026-03-21T10:00:00Z',
-  },
-  {
-    id: 'f6',
-    severity: 'advisory',
-    title: 'AR aging: 18 invoices past 60 days ($47K outstanding)',
-    module: 'financial_health',
-    category: 'Accounts Receivable',
-    estimated_monthly_savings: 2300,
-    status: 'in_progress',
-    created_at: '2026-03-20T16:45:00Z',
-  },
-  {
-    id: 'f7',
-    severity: 'info',
-    title: 'Driver HOS utilization averaging 72% (industry avg 78%)',
-    module: 'driver_retention',
-    category: 'HOS Optimization',
-    estimated_monthly_savings: 1800,
-    status: 'open',
-    created_at: '2026-03-20T16:45:00Z',
-  },
-  {
-    id: 'f8',
-    severity: 'warning',
-    title: 'Win rate declined 15% month-over-month',
-    module: 'load_operations',
-    category: 'Win Rate',
-    estimated_monthly_savings: 6700,
-    status: 'open',
-    created_at: '2026-03-19T08:00:00Z',
-  },
-]
+// No demo data — all findings come from the API
 
 export default function FindingsPage() {
   const navigate = useNavigate()
@@ -130,13 +49,13 @@ export default function FindingsPage() {
         setFindings(result.data.map(f => ({
           ...f,
           module: f.scan_module || f.module,
-          estimated_monthly_savings: parseFloat(f.estimated_monthly_savings) || 0
+          estimated_monthly_savings: f.estimated_monthly_savings ? parseFloat(f.estimated_monthly_savings) : null
         })))
       } else if (result.findings && result.findings.length > 0) {
         setFindings(result.findings.map(f => ({
           ...f,
           module: f.scan_module || f.module,
-          estimated_monthly_savings: parseFloat(f.estimated_monthly_savings) || 0
+          estimated_monthly_savings: f.estimated_monthly_savings ? parseFloat(f.estimated_monthly_savings) : null
         })))
       } else {
         setFindings([])
