@@ -409,7 +409,10 @@ export default function IngestionWizardPage() {
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Demo Sample Files</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {[
-                { name: 'CW Carriers (McLeod)', file: 'cw-carriers-demo.csv', rows: 50, highlight: true },
+                { name: 'CW McLeod Loads', file: 'cw-carriers-mcleod-loads.csv', rows: 200, highlight: true },
+                { name: 'CW Macropoint Tracking', file: 'cw-carriers-macropoint-tracking.csv', rows: 150, highlight: true },
+                { name: 'CW Carrier Assure', file: 'cw-carriers-carrier-assure.csv', rows: 50, highlight: true },
+                { name: 'CW HubSpot CRM', file: 'cw-carriers-hubspot-crm.csv', rows: 80, highlight: true },
                 { name: 'Freight Broker', file: 'freight-broker-demo.csv', rows: 50 },
                 { name: 'Asset Carrier', file: 'asset-carrier-demo.csv', rows: 25 },
                 { name: '3PL', file: '3pl-demo.csv', rows: 40 },
