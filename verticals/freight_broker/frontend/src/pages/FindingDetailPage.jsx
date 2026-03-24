@@ -124,13 +124,30 @@ export default function FindingDetailPage() {
     setLoading(true)
     try {
       const result = await getFinding(id)
-      if (result && result.id) {
-        setFinding(result)
+      const f = result?.data || result
+      if (f && f.id) {
+        // Normalize API response
+        const normalized = {
+          ...f,
+          module: f.scan_module || f.module,
+          estimated_monthly_savings: f.estimated_monthly_savings ? parseFloat(f.estimated_monthly_savings) : null,
+          savings_confidence: f.confidence || f.savings_confidence,
+          prescription: typeof f.prescription === 'string'
+            ? f.prescription.split(/\d+\.\s+/).filter(Boolean)
+            : (f.prescription || []),
+          recommended_tools: typeof f.recommended_tools === 'string'
+            ? JSON.parse(f.recommended_tools)
+            : (f.recommended_tools || []),
+          supporting_data: typeof f.data === 'string'
+            ? JSON.parse(f.data)
+            : (f.data || f.supporting_data || {}),
+        }
+        setFinding(normalized)
       } else {
-        setFinding(DEMO_FINDINGS[id] || DEMO_FINDINGS.f1)
+        setFinding(null)
       }
     } catch {
-      setFinding(DEMO_FINDINGS[id] || DEMO_FINDINGS.f1)
+      setFinding(null)
     }
     setLoading(false)
   }
