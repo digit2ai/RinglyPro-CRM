@@ -11,17 +11,25 @@ export default function ContractBuilder() {
   const [toast, setToast] = useState(null);
 
   const [form, setForm] = useState({
-    client_name: '',
-    client_address: '',
+    client_name: 'CW Carriers USA Inc.',
+    client_address: '3632 Queen Palm Dr, Suite 175, Tampa, FL 33619',
     effective_date: new Date().toISOString().split('T')[0],
     initial_term_months: 24,
     jurisdiction: 'Florida',
-    implementation_fee: 15000,
-    monthly_retainer: 9500,
+    implementation_fee: 35000,
+    monthly_retainer: 12500,
     token_markup: 30,
-    onboarding_hours: 10,
-    impl_timeline_weeks: 8,
+    onboarding_hours: 20,
+    impl_timeline_weeks: 6,
     linked_estimate_id: '',
+    // FreightMind OBD Scanner fields
+    tier: 'treatment',
+    annual_savings_conservative: 1500000,
+    annual_savings_moderate: 2400000,
+    savings_share_pct: 3,
+    scanner_modules: 7,
+    year2_monthly: 15000,
+    year3_monthly: 18000,
   });
 
   const token = sessionStorage.getItem('cw_token');
@@ -120,7 +128,30 @@ export default function ContractBuilder() {
       {/* Step 2 */}
       {step === 2 && (
         <div style={S.card}>
-          <h3 style={S.cardTitle}>Step 2 — Pricing</h3>
+          <h3 style={S.cardTitle}>Step 2 — Pricing & ROI Model</h3>
+
+          {/* Tier Selector */}
+          <div style={{ marginBottom: 24 }}>
+            <label style={S.flabel}>Service Tier</label>
+            <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+              {[
+                { id: 'scanner', label: 'Scanner', price: 8500, desc: 'OBD Scanner + Diagnostics' },
+                { id: 'treatment', label: 'Scanner + Treatment', price: 12500, desc: 'AI Auto-Execution' },
+                { id: 'managed', label: 'Managed Service', price: 18000, desc: 'Full Digit2AI Operations' },
+              ].map(t => (
+                <div key={t.id} onClick={() => { update('tier', t.id); update('monthly_retainer', t.price); }}
+                  style={{ flex: 1, padding: 16, borderRadius: 10, cursor: 'pointer', textAlign: 'center', transition: 'all .2s',
+                    background: form.tier === t.id ? '#0EA5E915' : '#0D1117',
+                    border: form.tier === t.id ? '2px solid #0EA5E9' : '1px solid #30363D',
+                  }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: form.tier === t.id ? '#0EA5E9' : '#E6EDF3' }}>{t.label}</div>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: form.tier === t.id ? '#0EA5E9' : '#E6EDF3', margin: '4px 0' }}>{fmt(t.price)}<span style={{ fontSize: 12, fontWeight: 400, color: '#8B949E' }}>/mo</span></div>
+                  <div style={{ fontSize: 11, color: '#8B949E' }}>{t.desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div style={S.formGrid}>
             <div style={{ ...S.formGroup, gridColumn: '1 / -1' }}>
               <label style={S.flabel}>Link to Saved Estimate</label>
@@ -130,14 +161,50 @@ export default function ContractBuilder() {
                   <option key={e.id} value={e.id}>#{e.id} — {e.client_name || 'Unnamed'} | {e.model} | {Math.round(e.markup * 100)}% | ${e.monthly_billed}/mo</option>
                 ))}
               </select>
-              <div style={{ fontSize: 11, color: '#8B949E', marginTop: 4 }}>Auto-fills token markup from a saved Token Estimator result</div>
             </div>
             <Field label="Implementation Fee ($)" type="number" value={form.implementation_fee} onChange={v => update('implementation_fee', parseFloat(v) || 0)} />
-            <Field label="Monthly Retainer ($)" type="number" value={form.monthly_retainer} onChange={v => update('monthly_retainer', parseFloat(v) || 0)} />
+            <Field label="Monthly Platform Fee ($)" type="number" value={form.monthly_retainer} onChange={v => update('monthly_retainer', parseFloat(v) || 0)} />
+            <Field label="Savings Share (%)" type="number" value={form.savings_share_pct} onChange={v => update('savings_share_pct', parseFloat(v) || 0)} />
             <Field label="Token Markup (%)" type="number" value={form.token_markup} onChange={v => update('token_markup', parseInt(v) || 0)} />
             <Field label="Onboarding Hours" type="number" value={form.onboarding_hours} onChange={v => update('onboarding_hours', parseInt(v) || 0)} />
             <Field label="Implementation Timeline (weeks)" type="number" value={form.impl_timeline_weeks} onChange={v => update('impl_timeline_weeks', parseInt(v) || 0)} />
           </div>
+
+          {/* ROI Projection */}
+          <div style={{ marginTop: 24, padding: 20, background: '#0D1117', borderRadius: 10, border: '1px solid #30363D' }}>
+            <h4 style={{ fontSize: 14, marginBottom: 16, color: '#0EA5E9' }}>ROI Projection (Conservative)</h4>
+            <div style={S.formGrid}>
+              <Field label="Year 1 Savings Estimate ($)" type="number" value={form.annual_savings_conservative} onChange={v => update('annual_savings_conservative', parseFloat(v) || 0)} />
+              <Field label="Year 2 Savings Estimate ($)" type="number" value={form.annual_savings_moderate} onChange={v => update('annual_savings_moderate', parseFloat(v) || 0)} />
+              <Field label="Year 2 Monthly Fee ($)" type="number" value={form.year2_monthly} onChange={v => update('year2_monthly', parseFloat(v) || 0)} />
+              <Field label="Year 3 Monthly Fee ($)" type="number" value={form.year3_monthly} onChange={v => update('year3_monthly', parseFloat(v) || 0)} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginTop: 16 }}>
+              {(() => {
+                const y1_cost = form.implementation_fee + (form.monthly_retainer * 12) + (form.annual_savings_conservative * form.savings_share_pct / 100);
+                const y1_roi = form.annual_savings_conservative / y1_cost;
+                const y2_cost = form.year2_monthly * 12;
+                const y2_roi = form.annual_savings_moderate / y2_cost;
+                const y3_cost = form.year3_monthly * 12;
+                const y3_savings = form.annual_savings_moderate * 1.25;
+                const y3_roi = y3_savings / y3_cost;
+                const total_cost = y1_cost + y2_cost + y3_cost;
+                const total_savings = form.annual_savings_conservative + form.annual_savings_moderate + y3_savings;
+                return [
+                  { label: 'Year 1 ROI', value: y1_roi.toFixed(1) + ':1', color: '#34D399' },
+                  { label: 'Year 2 ROI', value: y2_roi.toFixed(1) + ':1', color: '#34D399' },
+                  { label: '3-Year Net Benefit', value: fmt(total_savings - total_cost), color: '#0EA5E9' },
+                  { label: 'Per Dollar Return', value: '$' + (total_savings / total_cost).toFixed(2), color: '#0EA5E9' },
+                ].map(m => (
+                  <div key={m.label} style={{ textAlign: 'center', padding: 12, background: '#161B22', borderRadius: 8, border: '1px solid #30363D' }}>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: m.color }}>{m.value}</div>
+                    <div style={{ fontSize: 10, color: '#8B949E', marginTop: 2, textTransform: 'uppercase', letterSpacing: 0.5 }}>{m.label}</div>
+                  </div>
+                ));
+              })()}
+            </div>
+          </div>
+
           <div style={S.btnRow}>
             <button style={S.btnSecondary} onClick={() => goStep(1)}>← Back</button>
             <button style={S.btnPrimary} onClick={() => goStep(3)}>Next: Preview →</button>
@@ -158,23 +225,47 @@ export default function ContractBuilder() {
               {form.client_address}
             </p>
             <h3 style={S.previewH}>1. Scope of Services</h3>
-            <p style={S.previewP}>Provider shall deliver AI-powered analytics and automation via the RinglyPro AI platform. Implementation: <strong>{form.impl_timeline_weeks} weeks</strong>. Onboarding: <strong>{form.onboarding_hours} hours</strong>.</p>
-            <h3 style={S.previewH}>2. Fees & Token Consumption</h3>
+            <p style={S.previewP}>Provider shall deliver the <strong>FreightMind AI OBD Scanner</strong> platform, comprising {form.scanner_modules} diagnostic modules, AI-powered prescriptions, and {form.tier === 'treatment' ? 'Treatment (AI auto-execution)' : form.tier === 'managed' ? 'fully managed operations' : 'diagnostic scanning services'}. Implementation: <strong>{form.impl_timeline_weeks} weeks</strong>. Onboarding: <strong>{form.onboarding_hours} hours</strong>.</p>
+            <p style={S.previewP}>Diagnostic Modules: Load Operations, Rate Intelligence, Fleet Utilization, Financial Health, Compliance Risk, Driver Retention, Customer Health.</p>
+            <p style={S.previewP}>Data Integration: McLeod TMS data pipeline, Macropoint tracking feed, Carrier Assure scoring, Highway freight network.</p>
+
+            <h3 style={S.previewH}>2. Fees</h3>
             <ul style={{ paddingLeft: 20, color: '#334155', fontSize: 13, lineHeight: 1.8 }}>
-              <li>Implementation Fee: <strong>{fmt(form.implementation_fee)}</strong></li>
-              <li>Monthly Retainer: <strong>{fmt(form.monthly_retainer)}</strong></li>
-              <li>Token Markup: <strong>{form.token_markup}%</strong> over actual API cost</li>
-              <li>Overage beyond 150% billed at same rate with 5-day notice</li>
+              <li>Implementation Fee: <strong>{fmt(form.implementation_fee)}</strong> (one-time)</li>
+              <li>Monthly Platform Fee: <strong>{fmt(form.monthly_retainer)}/month</strong> ({form.tier === 'scanner' ? 'Scanner' : form.tier === 'treatment' ? 'Scanner + Treatment' : 'Managed Service'} tier)</li>
+              {form.savings_share_pct > 0 && <li>Performance Fee: <strong>{form.savings_share_pct}%</strong> of documented cost savings (Treatment tier)</li>}
+              <li>Token Markup: <strong>{form.token_markup}%</strong> over actual AI API cost</li>
+              <li>Annual Total (Year 1): <strong>{fmt(form.implementation_fee + (form.monthly_retainer * 12) + (form.annual_savings_conservative * form.savings_share_pct / 100))}</strong></li>
             </ul>
-            <h3 style={S.previewH}>3. Term</h3>
-            <p style={S.previewP}>Initial Term: <strong>{form.initial_term_months} months</strong>. Auto-renews for 12-month periods unless 60 days' notice given.</p>
-            <h3 style={S.previewH}>4. Intellectual Property</h3>
-            <p style={S.previewP}>All platform IP remains exclusive property of Provider (Digit2AI LLC / RinglyPro).</p>
-            <h3 style={S.previewH}>5. Non-Circumvention</h3>
-            <p style={S.previewP}>24-month post-term non-circumvention and anti-reverse engineering covenant.</p>
-            <h3 style={S.previewH}>6. Governing Law</h3>
-            <p style={S.previewP}>State of {form.jurisdiction}.</p>
-            <p style={{ marginTop: 24, color: '#94A3B8', fontSize: 11, textAlign: 'center', fontStyle: 'italic' }}>Full contract sections (Definitions, Reps & Warranties, Limitation of Liability, Exhibit A) included in generated PDF/DOCX.</p>
+
+            <h3 style={S.previewH}>3. Cost Reduction Projections</h3>
+            <ul style={{ paddingLeft: 20, color: '#334155', fontSize: 13, lineHeight: 1.8 }}>
+              <li>Year 1 Estimated Savings (Conservative): <strong>{fmt(form.annual_savings_conservative)}</strong></li>
+              <li>Year 2 Estimated Savings: <strong>{fmt(form.annual_savings_moderate)}</strong></li>
+              <li>3-Year Cumulative Savings: <strong>{fmt(form.annual_savings_conservative + form.annual_savings_moderate + (form.annual_savings_moderate * 1.25))}</strong></li>
+              <li style={{ color: '#64748B', fontStyle: 'italic' }}>Savings estimates based on OBD Scanner diagnostic analysis and industry benchmarks. Actual results may vary.</li>
+            </ul>
+
+            <h3 style={S.previewH}>4. Multi-Year Pricing</h3>
+            <ul style={{ paddingLeft: 20, color: '#334155', fontSize: 13, lineHeight: 1.8 }}>
+              <li>Year 1: {fmt(form.monthly_retainer)}/month + implementation</li>
+              <li>Year 2: {fmt(form.year2_monthly)}/month (monitoring + AI agents + predictive intelligence)</li>
+              <li>Year 3+: {fmt(form.year3_monthly)}/month (enterprise expansion, multi-office, shipper portals)</li>
+            </ul>
+
+            <h3 style={S.previewH}>5. Term</h3>
+            <p style={S.previewP}>Initial Term: <strong>{form.initial_term_months} months</strong>. Auto-renews for 12-month periods unless 60 days' written notice given prior to renewal date.</p>
+
+            <h3 style={S.previewH}>6. Intellectual Property</h3>
+            <p style={S.previewP}>All platform IP, AI models, diagnostic algorithms, and agent configurations remain exclusive property of Provider (Digit2AI LLC / RinglyPro). Client retains ownership of their operational data.</p>
+
+            <h3 style={S.previewH}>7. Non-Circumvention</h3>
+            <p style={S.previewP}>24-month post-term non-circumvention and anti-reverse engineering covenant. Client shall not replicate, reverse-engineer, or create derivative works from the FreightMind platform.</p>
+
+            <h3 style={S.previewH}>8. Governing Law</h3>
+            <p style={S.previewP}>State of {form.jurisdiction}. Disputes resolved by binding arbitration under AAA Commercial Rules.</p>
+
+            <p style={{ marginTop: 24, color: '#94A3B8', fontSize: 11, textAlign: 'center', fontStyle: 'italic' }}>Full contract includes: Definitions, Representations & Warranties, Data Security & Privacy, Limitation of Liability, Indemnification, Exhibit A (OBD Scanner Module Specifications), Exhibit B (Implementation Timeline). Generated in PDF/DOCX.</p>
           </div>
           <div style={S.btnRow}>
             <button style={S.btnSecondary} onClick={() => goStep(2)}>← Back</button>
