@@ -1565,9 +1565,11 @@ router.post('/map-fields', async (req, res) => {
               { bind: [tid, loadRef, shipperName, mapped.origin_city || null, mapped.origin_state || null, mapped.destination_city || null, mapped.destination_state || null, mapped.pickup_date || null, mapped.delivery_date || null, mapped.equipment_type || 'dry_van', parseFloat(mapped.weight) || null, miles, buyRate, sellRate, margin, marginPct, rpm, mapped.status || 'delivered', mapped.commodity || null] });
             // Bridge to cw_loads for CW Carriers ecosystem
             try {
-              await sequelize.query(`INSERT INTO cw_loads (load_ref, customer_name, origin_city, origin_state, dest_city, dest_state, pickup_date, delivery_date, equipment, weight, miles, sell_rate, buy_rate, margin, status)
-                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) ON CONFLICT DO NOTHING`,
-                { bind: [loadRef, shipperName, mapped.origin_city || null, mapped.origin_state || null, mapped.destination_city || null, mapped.destination_state || null, mapped.pickup_date || null, mapped.delivery_date || null, mapped.equipment_type || null, parseFloat(mapped.weight) || null, miles, sellRate, buyRate, margin, mapped.status || 'delivered'] });
+              const origin = [mapped.origin_city, mapped.origin_state].filter(Boolean).join(', ');
+              const destination = [mapped.destination_city, mapped.destination_state].filter(Boolean).join(', ');
+              await sequelize.query(`INSERT INTO cw_loads (load_ref, origin, destination, freight_type, weight_lbs, pickup_date, delivery_date, rate_usd, shipper_rate, status, equipment_type, commodity)
+                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) ON CONFLICT DO NOTHING`,
+                { bind: [loadRef, origin, destination, mapped.equipment_type || 'dry_van', parseFloat(mapped.weight) || null, mapped.pickup_date || null, mapped.delivery_date || null, buyRate, sellRate, mapped.status || 'delivered', mapped.equipment_type || null, mapped.commodity || null] });
             } catch(cwErr) {}
           } else if (etype === 'carriers') {
             await sequelize.query(`INSERT INTO lg_carriers (tenant_id, carrier_name, mc_number, dot_number, operating_status, reliability_score, equipment_types, home_state, phone, email, contact_name)
