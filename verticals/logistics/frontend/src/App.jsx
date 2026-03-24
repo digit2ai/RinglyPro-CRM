@@ -41,6 +41,7 @@ function Sidebar({ open, onClose, tierInfo }) {
     { path: '/proposals/RinglyPro-Platform-User-Guide.html', label: 'Platform User Guide', roles: ['admin','dispatcher'], ext: true, section: 'DOCS' },
     { path: '/proposals/CW-CARRIERS-System-Architecture-Document.html', label: 'CW Carriers Architecture', roles: ['admin'], ext: true },
     { path: '/proposals/LOGISTICS-System-Architecture-Document.html', label: 'Logistics Architecture', roles: ['admin'], ext: true },
+    { path: '/logistics/training/', label: 'Training Academy', roles: ['admin','dispatcher'], ext: true },
   ];
   const nav = allNav.filter(n => n.roles.includes(role));
   const ss = mob ? { ...S.sidebar, ...S.sidebarMob, transform: open ? 'translateX(0)' : 'translateX(-100%)' } : S.sidebar;
