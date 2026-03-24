@@ -1407,12 +1407,12 @@ router.post('/upload', upload.single('file'), async (req, res) => {
       mappingSuggestions = fuzzyMatchFields(headers, entityType);
     }
 
-    // Create batch record
+    // Create batch record — store raw rows as JSONB so map-fields can insert them
     const batchId = genBatchId();
     await sequelize.query(`
-      INSERT INTO lg_obd_ingestion_batches (batch_id, tenant_id, source_type, file_name, file_format, profile_used, total_rows, entity_type, status)
-      VALUES (:batchId, :tenantId, 'file_upload', :fileName, :format, :profile, :totalRows, :entityType, 'mapping')
-    `, { replacements: { batchId, tenantId, fileName, format, profile: profileName, totalRows: rows.length, entityType } });
+      INSERT INTO lg_obd_ingestion_batches (batch_id, tenant_id, source_type, file_name, file_format, profile_used, total_rows, entity_type, field_mappings, status)
+      VALUES (:batchId, :tenantId, 'file_upload', :fileName, :format, :profile, :totalRows, :entityType, :rawRows, 'mapping')
+    `, { replacements: { batchId, tenantId, fileName, format, profile: profileName, totalRows: rows.length, entityType, rawRows: JSON.stringify({ rows, headers }) } });
 
     res.json({
       success: true,
@@ -1456,36 +1456,94 @@ router.post('/map-fields', async (req, res) => {
     await sequelize.query(`UPDATE lg_obd_ingestion_batches SET status = 'ingesting', field_mappings = :mappings WHERE batch_id = :batchId`,
       { replacements: { batchId: batch_id, mappings: JSON.stringify(field_mappings) } });
 
-    // field_mappings is { "Original Header": "canonical_field", ... }
-    // We need to re-parse the file — but since we don't store the file, we expect rows in the request body
-    const rows = req.body.rows || [];
+    // Read stored rows from batch record
+    const batchData = batch[0].field_mappings;
+    const storedData = typeof batchData === 'string' ? JSON.parse(batchData) : batchData;
+    const rows = storedData?.rows || req.body.rows || [];
+    const headers = storedData?.headers || [];
+
+    if (rows.length === 0) {
+      return res.status(400).json({ error: 'No rows found in batch. Please re-upload the file.' });
+    }
+
+    // field_mappings from the request: array of { header, canonical_field } or object { "Header": "field" }
+    let mappingObj = {};
+    if (Array.isArray(field_mappings)) {
+      field_mappings.forEach(m => { if (m.canonical_field && m.header) mappingObj[m.header] = m.canonical_field; });
+    } else {
+      mappingObj = field_mappings;
+    }
+
     let mappedCount = 0;
     let failedCount = 0;
     const errors = [];
 
-    for (const row of rows) {
+    for (let i = 0; i < rows.length; i++) {
       try {
-        const mapped = { tenant_id: tid };
-        for (const [origHeader, canonicalField] of Object.entries(field_mappings)) {
-          if (canonicalField && row[origHeader] !== undefined) {
-            mapped[canonicalField] = row[origHeader];
+        const row = rows[i];
+        // Map row values using header->canonical mapping
+        const mapped = {};
+        for (const [origHeader, canonicalField] of Object.entries(mappingObj)) {
+          if (canonicalField && canonicalField !== 'Skip this column') {
+            mapped[canonicalField] = row[origHeader] !== undefined ? row[origHeader] : null;
           }
         }
 
-        // Build INSERT
-        const columns = Object.keys(mapped);
-        const placeholders = columns.map((_, i) => `:v${i}`);
-        const replacements = {};
-        columns.forEach((col, i) => { replacements[`v${i}`] = mapped[col]; });
+        if (etype === 'loads') {
+          const buyRate = parseFloat(mapped.carrier_rate || mapped.buy_rate) || null;
+          const sellRate = parseFloat(mapped.customer_rate || mapped.sell_rate) || null;
+          const miles = parseFloat(mapped.miles) || null;
+          const margin = (buyRate && sellRate) ? sellRate - buyRate : null;
+          const marginPct = (sellRate && margin !== null && sellRate > 0) ? ((margin / sellRate) * 100).toFixed(2) : null;
+          const rpm = (sellRate && miles && miles > 0) ? (sellRate / miles).toFixed(2) : null;
 
-        await sequelize.query(
-          `INSERT INTO ${tableName} (${columns.join(',')}) VALUES (${placeholders.join(',')})`,
-          { replacements }
-        );
-        mappedCount++;
+          await sequelize.query(`
+            INSERT INTO lg_loads (tenant_id, load_ref, shipper_name, origin_city, origin_state, origin_zip,
+              destination_city, destination_state, destination_zip,
+              pickup_date, delivery_date, equipment_type, weight_lbs, miles,
+              buy_rate, sell_rate, margin, margin_pct, rate_per_mile, status, commodity)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
+            ON CONFLICT DO NOTHING
+          `, { bind: [tid,
+            mapped.load_number || mapped.load_id || `ING-${batchId}-${i}`,
+            mapped.shipper_name || mapped.customer_name || mapped.customer || null,
+            mapped.origin_city || null, mapped.origin_state || null, mapped.origin_zip || null,
+            mapped.destination_city || null, mapped.destination_state || null, mapped.destination_zip || null,
+            mapped.pickup_date || null, mapped.delivery_date || null,
+            mapped.equipment_type || 'dry_van',
+            parseFloat(mapped.weight) || null, miles,
+            buyRate, sellRate, margin, marginPct, rpm,
+            mapped.status || 'delivered', mapped.commodity || null
+          ] });
+          mappedCount++;
+        } else if (etype === 'carriers') {
+          await sequelize.query(`
+            INSERT INTO lg_carriers (tenant_id, carrier_name, mc_number, dot_number, contact_name, phone, email,
+              equipment_types, operating_status, reliability_score)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT DO NOTHING
+          `, { bind: [tid,
+            mapped.carrier_name || null, mapped.mc_number || null, mapped.dot_number || null,
+            mapped.contact_name || null, mapped.contact_phone || mapped.phone || null,
+            mapped.contact_email || mapped.email || null,
+            mapped.equipment_types ? `{${mapped.equipment_types}}` : '{dry_van}',
+            mapped.operating_status || mapped.authority_status || 'active',
+            parseInt(mapped.reliability_score) || 80
+          ] });
+          mappedCount++;
+        } else {
+          // Generic insert for other entity types
+          const columns = ['tenant_id', ...Object.keys(mapped)];
+          const binds = [tid, ...Object.values(mapped)];
+          const placeholders = columns.map((_, idx) => `$${idx + 1}`);
+          await sequelize.query(
+            `INSERT INTO ${tableName} (${columns.join(',')}) VALUES (${placeholders.join(',')}) ON CONFLICT DO NOTHING`,
+            { bind: binds }
+          );
+          mappedCount++;
+        }
       } catch (rowErr) {
         failedCount++;
-        if (errors.length < 50) errors.push({ row_index: mappedCount + failedCount, error: rowErr.message });
+        if (errors.length < 50) errors.push({ row_index: i, error: rowErr.message });
       }
     }
 

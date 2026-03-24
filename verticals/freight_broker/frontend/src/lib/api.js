@@ -10,10 +10,14 @@ export async function uploadFile(file, profile) {
 }
 
 export async function mapFields(batchId, mappings, entityType) {
+  // Convert array [{source,target}] to object {"Header":"canonical_field"}
+  const field_mappings = Array.isArray(mappings)
+    ? mappings.reduce((obj, m) => { if (m.source && m.target) obj[m.source] = m.target; return obj; }, {})
+    : mappings;
   const res = await fetch(`${BASE}/map-fields`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ batch_id: batchId, mappings, entity_type: entityType, tenant_id: 'demo' })
+    body: JSON.stringify({ batch_id: batchId, field_mappings, entity_type: entityType, tenant_id: 'demo' })
   })
   return res.json()
 }
