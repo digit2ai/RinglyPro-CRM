@@ -1623,7 +1623,7 @@ router.post('/map-fields', async (req, res) => {
       data: {
         batch_id,
         entity_type: etype,
-        table: tableName,
+        table: ENTITY_TABLE_MAP[etype] || etype,
         total_rows: rows.length,
         mapped_rows: mappedCount,
         failed_rows: failedCount,
