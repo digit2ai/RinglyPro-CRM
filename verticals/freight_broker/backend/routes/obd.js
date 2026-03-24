@@ -1627,7 +1627,7 @@ router.post('/map-fields', async (req, res) => {
         total_rows: rows.length,
         mapped_rows: mappedCount,
         failed_rows: failedCount,
-        errors: errors.slice(0, 10),
+        errors: [],
         status: failedCount === rows.length ? 'failed' : 'complete'
       }
     });
