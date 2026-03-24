@@ -48,6 +48,12 @@ const demoRoutes = require('./routes/demo');
 router.use('/api/demo', demoRoutes);
 
 // ============================================================================
+// VOICE AI — Rachel Sales Presenter (ElevenLabs)
+// ============================================================================
+const voiceRoutes = require('./routes/voice');
+router.use('/api/voice', voiceRoutes);
+
+// ============================================================================
 // CROSS-TIER EVENT HANDLERS (the nervous system)
 // ============================================================================
 try {

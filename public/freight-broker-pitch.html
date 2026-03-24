@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FreightMind AI OBD Scanner — Diagnose. Prescribe. Treat.</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#0a0e17;--bg-card:#111827;--bg-card-hover:#1a2332;
+  --teal:#00c2a8;--teal-dim:rgba(0,194,168,0.12);--teal-border:rgba(0,194,168,0.3);
+  --gold:#f59e0b;--gold-dim:rgba(245,158,11,0.12);--gold-border:rgba(245,158,11,0.3);
+  --red:#ef4444;--red-dim:rgba(239,68,68,0.1);
+  --orange:#f97316;--orange-dim:rgba(249,115,22,0.1);
+  --blue:#3b82f6;--blue-dim:rgba(59,130,246,0.1);
+  --text:#e2e8f0;--text-dim:#94a3b8;--text-dark:#64748b;
+  --border:#1e293b;
+}
+html{scroll-behavior:smooth;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;font-size:15px;}
+a{color:var(--teal);text-decoration:none;}
+
+/* Sticky Nav */
+.nav{position:sticky;top:0;z-index:100;background:rgba(10,14,23,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 24px;}
+.nav-inner{max-width:900px;margin:0 auto;display:flex;gap:0;overflow-x:auto;scrollbar-width:none;}
+.nav-inner::-webkit-scrollbar{display:none;}
+.nav a{display:block;padding:14px 18px;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--text-dark);white-space:nowrap;transition:color 0.2s,border-bottom 0.2s;border-bottom:2px solid transparent;}
+.nav a:hover,.nav a.active{color:var(--teal);border-bottom-color:var(--teal);}
+
+/* Main content */
+.page{max-width:820px;margin:0 auto;padding:0 24px 120px;}
+
+/* Hero */
+.hero{text-align:center;padding:60px 0 40px;}
+.hero-logo{width:120px;height:120px;border-radius:20px;margin-bottom:24px;box-shadow:0 0 60px rgba(0,194,168,0.15);}
+.hero h1{font-size:42px;font-weight:900;letter-spacing:3px;margin-bottom:8px;}
+.hero h1 span{color:var(--teal);}
+.hero .subtitle{font-size:18px;color:var(--text-dim);margin-bottom:32px;line-height:1.5;}
+.hero-cta{display:inline-flex;align-items:center;gap:10px;padding:16px 36px;border-radius:50px;font-size:16px;font-weight:700;color:#000;background:linear-gradient(135deg,var(--gold),var(--teal));cursor:pointer;border:none;transition:transform 0.2s,box-shadow 0.2s;}
+.hero-cta:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,194,168,0.3);}
+.hero-cta svg{width:20px;height:20px;}
+.hero .cta-note{display:block;margin-top:12px;font-size:12px;color:var(--text-dark);}
+
+/* Section */
+.section{padding:60px 0 0;}
+.section-badge{display:inline-block;padding:4px 14px;background:var(--teal-dim);border:1px solid var(--teal-border);border-radius:20px;font-size:10px;font-weight:700;letter-spacing:2.5px;color:var(--teal);margin-bottom:14px;}
+.section-badge.gold{background:var(--gold-dim);border-color:var(--gold-border);color:var(--gold);}
+.section h2{font-size:28px;font-weight:800;letter-spacing:1px;margin-bottom:8px;}
+.section h2 span{color:var(--teal);}
+.section .section-sub{font-size:14px;color:var(--text-dim);margin-bottom:28px;line-height:1.6;}
+
+/* Cards grid */
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:640px){.cards{grid-template-columns:1fr;}}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:22px;transition:border-color 0.2s,transform 0.2s;}
+.card:hover{border-color:var(--teal);transform:translateY(-2px);}
+.card .card-label{font-size:11px;font-weight:700;letter-spacing:2px;color:var(--teal);margin-bottom:6px;}
+.card .card-label.red{color:var(--red);}
+.card .card-label.orange{color:var(--orange);}
+.card .card-label.gold{color:var(--gold);}
+.card h3{font-size:16px;font-weight:700;margin-bottom:6px;}
+.card p{font-size:13px;color:var(--text-dim);line-height:1.6;}
+
+/* Ask Rachel pills */
+.pills{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;}
+.pill{display:inline-block;padding:10px 18px;background:var(--bg-card);border:1px solid var(--border);border-radius:50px;font-size:13px;color:var(--text);cursor:pointer;transition:all 0.2s;}
+.pill:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-dim);}
+
+/* Profile stat bar */
+.stat-bar{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px;}
+.stat{flex:1;min-width:120px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;}
+.stat .stat-val{font-size:20px;font-weight:800;color:var(--teal);}
+.stat .stat-lbl{font-size:11px;color:var(--text-dark);margin-top:2px;}
+
+/* Steps */
+.steps{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+@media(max-width:640px){.steps{grid-template-columns:1fr;}}
+.step{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:24px;text-align:center;}
+.step .step-num{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--teal),#007a68);color:#000;font-weight:800;font-size:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;}
+.step h3{font-size:16px;font-weight:700;margin-bottom:8px;}
+.step p{font-size:13px;color:var(--text-dim);line-height:1.5;}
+
+/* Two-col */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media(max-width:640px){.two-col{grid-template-columns:1fr;}}
+
+/* Findings list */
+.finding{display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid var(--border);}
+.finding:last-child{border-bottom:none;}
+.finding .sev{flex-shrink:0;padding:3px 10px;border-radius:6px;font-size:10px;font-weight:700;letter-spacing:1px;}
+.sev.critical{background:var(--red-dim);color:var(--red);}
+.sev.warning{background:var(--orange-dim);color:var(--orange);}
+.sev.advisory{background:var(--blue-dim);color:var(--blue);}
+.finding .f-text{font-size:13px;color:var(--text-dim);line-height:1.5;}
+
+/* ROI table */
+.roi-table{width:100%;border-collapse:collapse;margin-top:16px;font-size:14px;}
+.roi-table th,.roi-table td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--border);}
+.roi-table th{font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--text-dark);text-transform:uppercase;}
+.roi-table td{color:var(--text);}
+.roi-table .money{color:var(--teal);font-weight:700;}
+.roi-table .cost{color:var(--gold);}
+.roi-table tfoot td{font-weight:800;border-top:2px solid var(--teal);color:var(--teal);}
+
+/* Pricing tiers */
+.tiers{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+@media(max-width:640px){.tiers{grid-template-columns:1fr;}}
+.tier{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:28px 22px;text-align:center;position:relative;transition:border-color 0.2s,transform 0.2s;}
+.tier:hover{border-color:var(--teal);transform:translateY(-2px);}
+.tier.featured{border-color:var(--teal);box-shadow:0 0 40px rgba(0,194,168,0.1);}
+.tier .tier-badge{position:absolute;top:-10px;left:50%;transform:translateX(-50%);padding:3px 14px;background:var(--teal);color:#000;font-size:10px;font-weight:700;letter-spacing:1.5px;border-radius:20px;}
+.tier h3{font-size:14px;font-weight:700;letter-spacing:1px;margin-bottom:4px;color:var(--text-dim);}
+.tier .price{font-size:32px;font-weight:900;color:#fff;margin-bottom:4px;}
+.tier .price span{font-size:14px;font-weight:400;color:var(--text-dark);}
+.tier .price-note{font-size:12px;color:var(--text-dark);margin-bottom:16px;}
+.tier ul{list-style:none;text-align:left;font-size:13px;color:var(--text-dim);}
+.tier ul li{padding:6px 0;border-bottom:1px solid var(--border);}
+.tier ul li:last-child{border-bottom:none;}
+.tier ul li::before{content:">";color:var(--teal);font-weight:700;margin-right:8px;}
+
+/* Quote block */
+.quote{background:var(--bg-card);border-left:3px solid var(--teal);border-radius:0 14px 14px 0;padding:20px 24px;margin-top:20px;font-style:italic;font-size:14px;color:var(--text-dim);line-height:1.7;}
+
+/* Cost reduction breakdown */
+.cr-item{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);}
+.cr-item:last-child{border-bottom:none;}
+.cr-item .cr-label{font-size:14px;font-weight:500;}
+.cr-item .cr-val{font-size:16px;font-weight:800;color:var(--teal);}
+.cr-total{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-top:2px solid var(--teal);margin-top:4px;}
+.cr-total .cr-label{font-size:16px;font-weight:700;}
+.cr-total .cr-val{font-size:22px;font-weight:900;color:var(--teal);}
+
+/* ─── VOICE PANEL ─── */
+.voice-toggle{position:fixed;bottom:24px;right:24px;z-index:1000;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--teal),#007a68);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,194,168,0.4);transition:transform 0.2s;}
+.voice-toggle:hover{transform:scale(1.08);}
+.voice-toggle svg{width:24px;height:24px;fill:#000;}
+.voice-toggle.active{background:linear-gradient(135deg,var(--red),#b91c1c);}
+.voice-toggle.active svg{fill:#fff;}
+
+.voice-panel{position:fixed;bottom:92px;right:24px;z-index:999;width:380px;max-height:520px;background:var(--bg-card);border:1px solid var(--border);border-radius:16px;display:none;flex-direction:column;overflow:hidden;box-shadow:0 16px 48px rgba(0,0,0,0.5);animation:slideUp 0.3s ease;}
+.voice-panel.open{display:flex;}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+
+.vp-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.vp-header .vp-title{font-size:14px;font-weight:700;}
+.vp-header .vp-status{font-size:11px;font-weight:600;display:flex;align-items:center;gap:6px;}
+.vp-header .vp-dot{width:8px;height:8px;border-radius:50%;background:var(--text-dark);}
+.vp-header .vp-dot.idle{background:var(--text-dark);}
+.vp-header .vp-dot.connecting{background:var(--gold);animation:pulse 1s infinite;}
+.vp-header .vp-dot.connected{background:var(--teal);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+
+.vp-transcript{flex:1;overflow-y:auto;padding:16px 20px;min-height:200px;max-height:320px;font-size:13px;line-height:1.6;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+.vp-transcript::-webkit-scrollbar{width:4px;}
+.vp-transcript::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+.vp-msg{margin-bottom:12px;padding:8px 12px;border-radius:10px;max-width:90%;}
+.vp-msg.ai{background:rgba(0,194,168,0.08);border:1px solid rgba(0,194,168,0.15);color:var(--teal);}
+.vp-msg.user{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);margin-left:auto;color:var(--text);}
+.vp-msg .vp-sender{font-size:10px;font-weight:700;letter-spacing:1px;margin-bottom:2px;opacity:0.6;}
+
+.vp-controls{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:10px;}
+.vp-btn{flex:1;padding:10px;border-radius:10px;border:none;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.vp-btn.connect{background:var(--teal);color:#000;}
+.vp-btn.connect:hover{background:#00d4b8;}
+.vp-btn.disconnect{background:var(--red);color:#fff;}
+.vp-btn.disconnect:hover{background:#dc2626;}
+.vp-btn:disabled{opacity:0.4;cursor:not-allowed;}
+
+/* Responsive */
+@media(max-width:480px){
+  .voice-panel{right:12px;left:12px;width:auto;bottom:84px;}
+  .hero h1{font-size:28px;}
+  .nav a{padding:12px 12px;font-size:10px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ STICKY NAV ═══════════ -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="#why">WHY OBD SCANNER</a>
+    <a href="#how">HOW IT WORKS</a>
+    <a href="#cwcarriers">CW CARRIERS</a>
+    <a href="#findings">FINDINGS</a>
+    <a href="#roi">ROI</a>
+    <a href="#pricing">PRICING</a>
+  </div>
+</nav>
+
+<div class="page">
+
+<!-- ═══════════ HERO ═══════════ -->
+<section class="hero">
+  <img class="hero-logo" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69b02d62034886f7c9e996d9.png" alt="FreightMind AI">
+  <h1>FREIGHTMIND <span>AI</span> OBD SCANNER</h1>
+  <p class="subtitle">Diagnose. Prescribe. Treat.<br>Your freight operations, optimized by AI.</p>
+  <button class="hero-cta" onclick="toggleVoice()">
+    <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5zm6 6c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+    Walk Me Through This Presentation
+  </button>
+  <small class="cta-note">Rachel, our AI presenter, will walk you through using live data</small>
+</section>
+
+<!-- ═══════════ ASK RACHEL ═══════════ -->
+<section class="section">
+  <div class="section-badge">ASK RACHEL</div>
+  <h2>What would you like to <span>know?</span></h2>
+  <p class="section-sub">Click any question to have Rachel answer it live using your operational data.</p>
+  <div class="pills">
+    <div class="pill" onclick="askRachel('Walk me through the full presentation')">Walk me through the full presentation</div>
+    <div class="pill" onclick="askRachel('What is the OBD Scanner?')">What is the OBD Scanner?</div>
+    <div class="pill" onclick="askRachel('How does it connect to McLeod?')">How does it connect to McLeod?</div>
+    <div class="pill" onclick="askRachel('What findings did you find in CW\\'s data?')">What findings did you find in CW's data?</div>
+    <div class="pill" onclick="askRachel('What is the customer concentration risk?')">What is the customer concentration risk?</div>
+    <div class="pill" onclick="askRachel('How much can CW Carriers save?')">How much can CW Carriers save?</div>
+    <div class="pill" onclick="askRachel('Explain the 7 diagnostic modules')">Explain the 7 diagnostic modules</div>
+    <div class="pill" onclick="askRachel('What does Treatment do?')">What does Treatment do?</div>
+    <div class="pill" onclick="askRachel('How does the ingestion engine work?')">How does the ingestion engine work?</div>
+    <div class="pill" onclick="askRachel('What is the pricing model?')">What is the pricing model?</div>
+    <div class="pill" onclick="askRachel('Show me the 3-year ROI')">Show me the 3-year ROI</div>
+    <div class="pill" onclick="askRachel('What happens in Year 2?')">What happens in Year 2?</div>
+    <div class="pill" onclick="askRachel('How does this compare to other solutions?')">How does this compare to other solutions?</div>
+    <div class="pill" onclick="askRachel('What are the negative margin loads?')">What are the negative margin loads?</div>
+    <div class="pill" onclick="askRachel('Explain the PepsiCo concentration risk')">Explain the PepsiCo concentration risk</div>
+    <div class="pill" onclick="askRachel('How fast is implementation?')">How fast is implementation?</div>
+  </div>
+</section>
+
+<!-- ═══════════ PREPARED FOR CW CARRIERS ═══════════ -->
+<section class="section" id="cwcarriers">
+  <div class="section-badge gold">PREPARED FOR</div>
+  <h2>CW Carriers <span>USA</span></h2>
+  <div class="stat-bar">
+    <div class="stat"><div class="stat-val">$45-82M</div><div class="stat-lbl">Revenue</div></div>
+    <div class="stat"><div class="stat-val">MC-682070</div><div class="stat-lbl">Authority</div></div>
+    <div class="stat"><div class="stat-val">Tampa, FL</div><div class="stat-lbl">HQ</div></div>
+    <div class="stat"><div class="stat-val">20+ Years</div><div class="stat-lbl">Operating</div></div>
+    <div class="stat"><div class="stat-val">Woman-Owned</div><div class="stat-lbl">Certified</div></div>
+  </div>
+  <div class="quote">
+    "Under continuous MC operation since 2005, CW has amassed deep experience in Food &amp; Beverage, CPG, and automotive sectors. Led by CEO Ljiljana Trkulja, the company maintains a 98% on-time delivery rate across a blue-chip client portfolio."
+  </div>
+</section>
+
+<!-- ═══════════ WHY OBD SCANNER ═══════════ -->
+<section class="section" id="why">
+  <div class="section-badge">THE DIAGNOSIS</div>
+  <h2>Why <span>OBD Scanner?</span></h2>
+  <p class="section-sub">Like an automotive OBD scanner reads your engine's health codes, FreightMind OBD Scanner reads your freight operation's vital signs — and prescribes the fix.</p>
+  <div class="cards">
+    <div class="card">
+      <div class="card-label red">13% MARGINS</div>
+      <h3>Margin Compression</h3>
+      <p>Industry average broker margins have dropped below 15%. At $60M revenue, every basis point matters. Your data shows loads running at or below cost.</p>
+    </div>
+    <div class="card">
+      <div class="card-label red">4 NEGATIVE LOADS</div>
+      <h3>Direct Losses</h3>
+      <p>Your last 50 loads include 4 where carrier pay exceeds customer rate — direct losses that erode margin and signal pricing blind spots.</p>
+    </div>
+    <div class="card">
+      <div class="card-label red">48% CONCENTRATION</div>
+      <h3>Customer Concentration</h3>
+      <p>PepsiCo represents nearly half your revenue. If they switch brokers, it is an existential threat. Top 3 shippers account for 84%.</p>
+    </div>
+    <div class="card">
+      <div class="card-label orange">ZERO VISIBILITY</div>
+      <h3>No AI Layer</h3>
+      <p>McLeod has the data but no AI layer analyzing patterns, predicting risks, or prescribing actions. You are flying blind on a data goldmine.</p>
+    </div>
+    <div class="card">
+      <div class="card-label orange">MANUAL TRACKING</div>
+      <h3>Dispatcher Overload</h3>
+      <p>Check calls, status updates, carrier scoring — all manual processes that eat dispatcher time. Each dispatcher loses 2-3 hours per day.</p>
+    </div>
+    <div class="card">
+      <div class="card-label gold">NO BACKHAUL MATCHING</div>
+      <h3>Dead Miles</h3>
+      <p>Trucks return empty on the FL-GA corridor. Dead miles cost $500-1,000 per trip. There is no system matching complementary freight.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ HOW IT WORKS ═══════════ -->
+<section class="section" id="how">
+  <div class="section-badge">THE PROCESS</div>
+  <h2>How It <span>Works</span></h2>
+  <p class="section-sub">Three steps from data chaos to AI-optimized operations.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h3>CONNECT</h3>
+      <p>We plug into your McLeod TMS via our pre-built integration profile. Automated daily data ingestion. Your data stays yours. Under 48 hours to go live.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h3>SCAN</h3>
+      <p>7 diagnostic modules analyze load operations, rates, fleet utilization, financials, compliance, carrier performance, and customer health. Under 2 seconds per scan.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h3>TREAT</h3>
+      <p>Every finding has a prescription. Treatment = AI agents that auto-execute the fix: renegotiate rates, match backhauls, flag risks. You pay only on savings.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ CW CARRIERS PROFILE ═══════════ -->
+<section class="section">
+  <div class="section-badge">INFRASTRUCTURE</div>
+  <h2>Technology &amp; <span>Business Profile</span></h2>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-label">TECH STACK</div>
+      <h3>Current Integrations</h3>
+      <p style="margin-bottom:10px;">The following systems are in-scope for FreightMind connectivity:</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <span style="padding:4px 12px;background:var(--teal-dim);border:1px solid var(--teal-border);border-radius:6px;font-size:12px;font-weight:600;color:var(--teal);">McLeod TMS</span>
+        <span style="padding:4px 12px;background:var(--teal-dim);border:1px solid var(--teal-border);border-radius:6px;font-size:12px;font-weight:600;color:var(--teal);">Macropoint</span>
+        <span style="padding:4px 12px;background:var(--teal-dim);border:1px solid var(--teal-border);border-radius:6px;font-size:12px;font-weight:600;color:var(--teal);">Highway</span>
+        <span style="padding:4px 12px;background:var(--teal-dim);border:1px solid var(--teal-border);border-radius:6px;font-size:12px;font-weight:600;color:var(--teal);">Carrier Assure</span>
+        <span style="padding:4px 12px;background:var(--teal-dim);border:1px solid var(--teal-border);border-radius:6px;font-size:12px;font-weight:600;color:var(--teal);">CargoNet</span>
+        <span style="padding:4px 12px;background:var(--teal-dim);border:1px solid var(--teal-border);border-radius:6px;font-size:12px;font-weight:600;color:var(--teal);">Relay</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-label">BUSINESS PROFILE</div>
+      <h3>Operating Authority</h3>
+      <p>
+        <strong>DOT:</strong> 2271499<br>
+        <strong>MC:</strong> MC-682070<br>
+        <strong>Verticals:</strong> F&amp;B, CPG, Automotive<br>
+        <strong>Key Clients:</strong> PepsiCo, Spartan Nash, PFG, Boise Paper<br>
+        <strong>On-Time Rate:</strong> 98%<br>
+        <strong>CEO:</strong> Ljiljana Trkulja
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ OBD FINDINGS ═══════════ -->
+<section class="section" id="findings">
+  <div class="section-badge" style="background:var(--red-dim);border-color:rgba(239,68,68,0.3);color:var(--red);">DIAGNOSTIC RESULTS</div>
+  <h2>OBD <span>Findings</span></h2>
+  <p class="section-sub">9 findings identified from CW Carriers operational data. 6 critical, 2 warning, 1 advisory.</p>
+
+  <div class="finding"><span class="sev critical">CRITICAL</span><span class="f-text"><strong>PepsiCo = 39% of revenue.</strong> Single-customer dependency creates existential risk. Any contract loss wipes 4 months of operating margin.</span></div>
+  <div class="finding"><span class="sev critical">CRITICAL</span><span class="f-text"><strong>Top 3 shippers = 84% of revenue.</strong> Extreme concentration. Industry benchmark is no single customer above 15%. Diversification is urgent.</span></div>
+  <div class="finding"><span class="sev critical">CRITICAL</span><span class="f-text"><strong>3 negative margin loads (6% of book).</strong> Carrier pay exceeds customer rate on these loads. Direct losses that signal broken pricing or stale rate agreements.</span></div>
+  <div class="finding"><span class="sev critical">CRITICAL</span><span class="f-text"><strong>70% truck idle rate.</strong> Asset utilization is critically low. Trucks sit idle 70% of available hours — deadhead miles and empty returns compound the loss.</span></div>
+  <div class="finding"><span class="sev critical">CRITICAL</span><span class="f-text"><strong>Load-to-truck ratio 2.4 (benchmark 4-6).</strong> Capacity is underutilized. Each truck should cover 4-6 loads. At 2.4, revenue per asset is roughly half of benchmark.</span></div>
+  <div class="finding"><span class="sev critical">CRITICAL</span><span class="f-text"><strong>1 expired compliance item.</strong> Insurance or authority document has lapsed. This creates liability exposure and could halt operations if caught in an audit.</span></div>
+  <div class="finding"><span class="sev warning">WARNING</span><span class="f-text"><strong>2 carriers with low reliability scores.</strong> These carriers have history of late deliveries, communication failures, or claim incidents. Risk of service failures on active loads.</span></div>
+  <div class="finding"><span class="sev warning">WARNING</span><span class="f-text"><strong>Driver utilization at 20%.</strong> Drivers are active only 20% of available shifts. Scheduling optimization could double effective capacity without adding headcount.</span></div>
+  <div class="finding"><span class="sev advisory">ADVISORY</span><span class="f-text"><strong>15 lane benchmarks available.</strong> Market rate data suggests optimization opportunities on 15 active lanes. Potential to reduce cost per mile by 3-5%.</span></div>
+</section>
+
+<!-- ═══════════ ROI ═══════════ -->
+<section class="section" id="roi">
+  <div class="section-badge gold">FINANCIAL MODEL</div>
+  <h2>Cost Reduction &amp; <span>ROI</span></h2>
+  <p class="section-sub">Conservative projections based on actual findings from CW Carriers operational data.</p>
+
+  <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:24px;">
+    <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--teal);margin-bottom:16px;">YEAR 1 COST REDUCTION BREAKDOWN</div>
+    <div class="cr-item"><span class="cr-label">Margin Recovery</span><span class="cr-val">$480,000</span></div>
+    <div class="cr-item"><span class="cr-label">Lane Optimization</span><span class="cr-val">$300,000</span></div>
+    <div class="cr-item"><span class="cr-label">Carrier Rate Optimization</span><span class="cr-val">$420,000</span></div>
+    <div class="cr-item"><span class="cr-label">Operational Efficiency</span><span class="cr-val">$180,000</span></div>
+    <div class="cr-item"><span class="cr-label">Claims Reduction</span><span class="cr-val">$120,000</span></div>
+    <div class="cr-total"><span class="cr-label">Total Year 1 Savings</span><span class="cr-val">$1,500,000</span></div>
+  </div>
+
+  <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:24px;">
+    <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--gold);margin-bottom:16px;">3-YEAR PROJECTION</div>
+    <table class="roi-table">
+      <thead><tr><th></th><th>Savings</th><th>Cost</th><th>Net Benefit</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Year 1</strong></td><td class="money">$1,500,000</td><td class="cost">$185,000</td><td class="money">$1,315,000</td></tr>
+        <tr><td><strong>Year 2</strong></td><td class="money">$2,000,000</td><td class="cost">$180,000</td><td class="money">$1,820,000</td></tr>
+        <tr><td><strong>Year 3</strong></td><td class="money">$2,500,000</td><td class="cost">$350,000</td><td class="money">$2,150,000</td></tr>
+      </tbody>
+      <tfoot><tr><td><strong>3-Year Total</strong></td><td>$6,000,000</td><td>$715,000</td><td>$5,285,000</td></tr></tfoot>
+    </table>
+    <div style="margin-top:16px;padding:14px 18px;background:rgba(0,194,168,0.06);border:1px solid rgba(0,194,168,0.15);border-radius:10px;text-align:center;">
+      <span style="font-size:32px;font-weight:900;color:var(--teal);">$8.40</span>
+      <span style="display:block;font-size:12px;color:var(--text-dark);margin-top:2px;">return per dollar invested</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ PRICING ═══════════ -->
+<section class="section" id="pricing">
+  <div class="section-badge">INVESTMENT</div>
+  <h2>Pricing <span>Tiers</span></h2>
+  <p class="section-sub">Three tiers designed to match your readiness and ambition. Start with the scan, graduate to treatment.</p>
+  <div class="tiers">
+    <div class="tier">
+      <h3>SCANNER</h3>
+      <div class="price">$8,500<span>/mo</span></div>
+      <div class="price-note">Diagnose</div>
+      <ul>
+        <li>Full OBD diagnostic engine</li>
+        <li>All 7 scan modules</li>
+        <li>Universal ingestion (McLeod)</li>
+        <li>Monthly diagnostic reports</li>
+        <li>Findings dashboard</li>
+        <li>Prescription recommendations</li>
+      </ul>
+    </div>
+    <div class="tier featured">
+      <div class="tier-badge">RECOMMENDED</div>
+      <h3>TREATMENT</h3>
+      <div class="price">$12,500<span>/mo</span></div>
+      <div class="price-note">+ 2.5% of documented savings</div>
+      <ul>
+        <li>Everything in Scanner</li>
+        <li>AI agents execute prescriptions</li>
+        <li>Lane optimization automation</li>
+        <li>Carrier rate renegotiation</li>
+        <li>Backhaul matching engine</li>
+        <li>Proactive risk monitoring</li>
+        <li>Success-fee aligned incentive</li>
+      </ul>
+    </div>
+    <div class="tier">
+      <h3>MANAGED</h3>
+      <div class="price">$18,000<span>/mo</span></div>
+      <div class="price-note">Full operating layer</div>
+      <ul>
+        <li>Everything in Treatment</li>
+        <li>Dedicated AI ops management</li>
+        <li>Custom agent development</li>
+        <li>Quarterly business reviews</li>
+        <li>Priority support SLA</li>
+        <li>Executive reporting suite</li>
+      </ul>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:20px;">
+    <div style="display:inline-block;padding:12px 24px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;font-size:14px;">
+      Implementation: <strong style="color:var(--gold);">$35,000</strong> one-time
+      <span style="color:var(--text-dark);margin:0 8px;">|</span>
+      McLeod integration, data migration, agent config, staff training
+    </div>
+  </div>
+</section>
+
+</div><!-- .page -->
+
+<!-- ═══════════ VOICE TOGGLE BUTTON ═══════════ -->
+<button class="voice-toggle" id="voiceToggle" onclick="togglePanel()" title="Talk to Rachel">
+  <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5zm6 6c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+</button>
+
+<!-- ═══════════ VOICE PANEL ═══════════ -->
+<div class="voice-panel" id="voicePanel">
+  <div class="vp-header">
+    <div class="vp-title">Rachel | FreightMind AI</div>
+    <div class="vp-status">
+      <span class="vp-dot idle" id="vpDot"></span>
+      <span id="vpStatusText">Idle</span>
+    </div>
+  </div>
+  <div class="vp-transcript" id="vpTranscript">
+    <div class="vp-msg ai">
+      <div class="vp-sender">RACHEL</div>
+      Click "Connect" to start a live voice conversation. I can walk you through the entire presentation or answer any specific question.
+    </div>
+  </div>
+  <div class="vp-controls">
+    <button class="vp-btn connect" id="vpConnectBtn" onclick="connectVoice()">Connect to Rachel</button>
+    <button class="vp-btn disconnect" id="vpDisconnectBtn" onclick="disconnectVoice()" style="display:none;">Disconnect</button>
+  </div>
+</div>
+
+<!-- ═══════════ ACTIVE NAV HIGHLIGHT ═══════════ -->
+<script>
+(function(){
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav a');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(s => {
+      if (window.scrollY >= s.offsetTop - 120) current = s.id;
+    });
+    navLinks.forEach(a => {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+    });
+  });
+})();
+</script>
+
+<!-- ═══════════ VOICE ENGINE ═══════════ -->
+<script>
+let conversation = null;
+let panelOpen = false;
+
+function togglePanel() {
+  panelOpen = !panelOpen;
+  document.getElementById('voicePanel').classList.toggle('open', panelOpen);
+}
+
+function toggleVoice() {
+  if (!panelOpen) togglePanel();
+  if (!conversation) connectVoice();
+}
+
+function askRachel(question) {
+  if (!panelOpen) togglePanel();
+  addMessage('user', question);
+  if (!conversation) {
+    connectVoice();
+  }
+}
+
+function setStatus(status) {
+  const dot = document.getElementById('vpDot');
+  const text = document.getElementById('vpStatusText');
+  const toggle = document.getElementById('voiceToggle');
+  dot.className = 'vp-dot ' + status;
+  const labels = { idle: 'Idle', connecting: 'Connecting...', connected: 'Connected' };
+  text.textContent = labels[status] || status;
+  toggle.classList.toggle('active', status === 'connected');
+}
+
+function addMessage(source, text) {
+  const container = document.getElementById('vpTranscript');
+  const div = document.createElement('div');
+  div.className = 'vp-msg ' + (source === 'ai' ? 'ai' : 'user');
+  div.innerHTML = '<div class="vp-sender">' + (source === 'ai' ? 'RACHEL' : 'YOU') + '</div>' + escapeHtml(text);
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function escapeHtml(t) {
+  const d = document.createElement('div');
+  d.textContent = t;
+  return d.innerHTML;
+}
+
+async function connectVoice() {
+  const connectBtn = document.getElementById('vpConnectBtn');
+  const disconnectBtn = document.getElementById('vpDisconnectBtn');
+  connectBtn.disabled = true;
+  setStatus('connecting');
+
+  try {
+    const mod = await import('https://cdn.jsdelivr.net/npm/@11labs/client@0.2.0/+esm');
+    const Conversation = mod.Conversation;
+
+    await Conversation.requestMicrophonePermission();
+
+    const res = await fetch('/freight_broker/api/voice/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (!res.ok) throw new Error('Failed to get voice token');
+    const data = await res.json();
+
+    conversation = await Conversation.startSession({
+      signedUrl: data.signed_url,
+      onMessage: ({ message, source }) => {
+        if (message && message.trim()) {
+          addMessage(source === 'ai' ? 'ai' : 'user', message);
+        }
+      },
+      onStatusChange: ({ status }) => {
+        if (status === 'connected') {
+          setStatus('connected');
+          connectBtn.style.display = 'none';
+          disconnectBtn.style.display = 'block';
+        } else if (status === 'disconnected') {
+          setStatus('idle');
+          connectBtn.style.display = 'block';
+          disconnectBtn.style.display = 'none';
+          connectBtn.disabled = false;
+          conversation = null;
+        }
+      },
+      onError: (error) => {
+        console.error('[Voice] Error:', error);
+        addMessage('ai', 'Connection interrupted. Click Connect to try again.');
+        setStatus('idle');
+        connectBtn.style.display = 'block';
+        disconnectBtn.style.display = 'none';
+        connectBtn.disabled = false;
+        conversation = null;
+      }
+    });
+
+  } catch (err) {
+    console.error('[Voice] Connection failed:', err);
+    addMessage('ai', 'Unable to connect. Please check your microphone permissions and try again.');
+    setStatus('idle');
+    connectBtn.disabled = false;
+    conversation = null;
+  }
+}
+
+async function disconnectVoice() {
+  if (conversation) {
+    try { await conversation.endSession(); } catch(e) {}
+    conversation = null;
+  }
+  setStatus('idle');
+  document.getElementById('vpConnectBtn').style.display = 'block';
+  document.getElementById('vpConnectBtn').disabled = false;
+  document.getElementById('vpDisconnectBtn').style.display = 'none';
+}
+</script>
+
+</body>
+</html>
