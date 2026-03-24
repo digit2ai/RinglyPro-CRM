@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { uploadFile, mapFields } from '../lib/api'
+import { uploadFile, mapFields, quickIngest } from '../lib/api'
 
 const BUSINESS_TYPES = [
   { id: 'freight_broker', name: 'Freight Broker', desc: 'Non-asset brokerage matching shippers with carriers', icon: 'FB' },
@@ -44,15 +44,33 @@ export default function IngestionWizardPage() {
   const [ingesting, setIngesting] = useState(false)
   const [ingested, setIngested] = useState(false)
 
-  const onDrop = useCallback((accepted) => {
+  const [ingestResults, setIngestResults] = useState([])
+
+  const onDrop = useCallback(async (accepted) => {
     const withMeta = accepted.map(f => ({
       file: f,
       name: f.name,
       size: f.size,
-      format: detectFormat(f.name)
+      format: detectFormat(f.name),
+      status: 'uploading'
     }))
     setFiles(prev => [...prev, ...withMeta])
-  }, [])
+
+    // Auto-ingest each file immediately
+    for (const fm of withMeta) {
+      try {
+        const profile = dataSources.tms === 'McLeod' ? 'mcleod' :
+          dataSources.tms === 'TMW' ? 'tmw' :
+          dataSources.crm === 'HubSpot' ? 'hubspot' :
+          null
+        const result = await quickIngest(fm.file, profile)
+        setIngestResults(prev => [...prev, { name: fm.name, ...result.data }])
+        setFiles(prev => prev.map(f => f.name === fm.name ? { ...f, status: 'done', result: result.data } : f))
+      } catch (err) {
+        setFiles(prev => prev.map(f => f.name === fm.name ? { ...f, status: 'error', error: err.message } : f))
+      }
+    }
+  }, [dataSources])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,

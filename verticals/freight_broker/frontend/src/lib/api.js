@@ -9,6 +9,15 @@ export async function uploadFile(file, profile) {
   return res.json()
 }
 
+export async function quickIngest(file, profile) {
+  const formData = new FormData()
+  formData.append('file', file)
+  if (profile) formData.append('profile', profile)
+  formData.append('tenant_id', 'logistics')
+  const res = await fetch(`${BASE}/quick-ingest`, { method: 'POST', body: formData })
+  return res.json()
+}
+
 export async function mapFields(batchId, mappings, entityType) {
   // Convert array [{source,target}] to object {"Header":"canonical_field"}
   const field_mappings = Array.isArray(mappings)
