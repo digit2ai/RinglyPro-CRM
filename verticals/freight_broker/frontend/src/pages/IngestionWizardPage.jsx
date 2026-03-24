@@ -146,7 +146,8 @@ export default function IngestionWizardPage() {
       const payload = mappings
         .filter(m => m.target && m.target !== 'Skip this column')
         .map(m => ({ source: m.source, target: m.target }))
-      const result = await mapFields(uploadResult?.batch_id || 'demo', payload, 'loads')
+      const detectedEntity = uploadResult?.entity_type || 'loads'
+      const result = await mapFields(uploadResult?.batch_id || 'demo', payload, detectedEntity)
       setValidationResult(result)
     } catch (err) {
       // Demo validation result
@@ -170,8 +171,19 @@ export default function IngestionWizardPage() {
 
   async function handleIngest() {
     setIngesting(true)
-    // Simulate ingestion
-    await new Promise(r => setTimeout(r, 2000))
+    try {
+      // If map-fields wasn't already called with real results, call it now
+      if (!validationResult?.imported) {
+        const payload = mappings
+          .filter(m => m.target && m.target !== 'Skip this column')
+          .map(m => ({ source: m.source, target: m.target }))
+        const detectedEntity = uploadResult?.entity_type || 'loads'
+        const result = await mapFields(uploadResult?.batch_id || 'demo', payload, detectedEntity)
+        setValidationResult(result)
+      }
+    } catch (err) {
+      console.error('Ingest error:', err)
+    }
     setIngesting(false)
     setIngested(true)
   }
