@@ -66,6 +66,7 @@ function Sidebar({ open, onClose }) {
       id: 'command', label: 'COMMAND', items: [
         { path: `${BASE}/dashboard`, label: 'Unified Dashboard' },
         { path: '/freight_broker/', label: 'OBD Scanner', badge: 'AI', ext: true },
+        { path: '/freight-broker-pitch.html', label: 'Sales', badge: 'AI', ext: true },
         { path: `${BASE}/neural`, label: 'Neural OBD', badge: 'AI' },
         { path: `${BASE}/roi`, label: 'ROI & Predictions', badge: 'AI' },
         { path: `${BASE}/pricing`, label: 'Rate Intelligence', badge: 'AI' },
