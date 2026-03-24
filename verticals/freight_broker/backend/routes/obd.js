@@ -416,6 +416,30 @@ const INGESTION_PROFILES = {
     mappings: {
       invoices: { 'Invoice No.': 'invoice_number', 'Memo': 'load_number', 'Total': 'amount', 'Due Date': 'due_date', 'Status': 'payment_status', 'Days Overdue': 'aging_days', 'Vendor': 'carrier_name', 'Customer': 'shipper_name' }
     }
+  },
+  hubspot: {
+    name: 'HubSpot CRM',
+    description: 'HubSpot CRM deal/contact/company export',
+    entity_types: ['customers'],
+    mappings: {
+      customers: { 'Company': 'customer_name', 'Contact Name': 'contact_name', 'Contact Email': 'email', 'Contact Phone': 'phone', 'Amount': 'payment_terms', 'Stage': 'billing_address', 'Deal Name': 'customer_name', 'Owner': 'contact_name' }
+    }
+  },
+  carrier_assure: {
+    name: 'Carrier Assure',
+    description: 'Carrier Assure compliance and scoring export',
+    entity_types: ['carriers'],
+    mappings: {
+      carriers: { 'Carrier Name': 'carrier_name', 'MC Number': 'mc_number', 'DOT Number': 'dot_number', 'SCAC': 'scac_code', 'Authority Status': 'operating_status', 'Insurance Status': 'insurance_status', 'Safety Rating': 'safety_rating', 'CSA Score': 'csa_score', 'Power Units': 'fleet_size', 'Equipment Types': 'equipment_types', 'Home State': 'home_state', 'Payment Terms': 'payment_terms', 'Reliability Score': 'reliability_score', 'Contract Status': 'contract_status' }
+    }
+  },
+  macropoint: {
+    name: 'Macropoint',
+    description: 'Macropoint tracking/visibility event export',
+    entity_types: ['tracking'],
+    mappings: {
+      tracking: { 'Load ID': 'load_ref', 'Carrier': 'carrier_name', 'Truck Number': 'truck_number', 'Driver': 'driver_name', 'Status': 'status', 'Latitude': 'latitude', 'Longitude': 'longitude', 'City': 'city', 'State': 'state', 'Timestamp': 'timestamp', 'ETA': 'eta', 'Miles Remaining': 'miles_remaining', 'Speed MPH': 'speed', 'Temperature F': 'temperature', 'Event Type': 'event_type', 'Notes': 'notes' }
+    }
   }
 };
 
@@ -561,7 +585,10 @@ const ENTITY_TABLE_MAP = {
   trucks: 'lg_trucks',
   drivers: 'lg_drivers',
   rates: 'lg_rate_benchmarks',
-  invoices: 'lg_invoices'
+  invoices: 'lg_invoices',
+  customers: 'lg_customers',
+  compliance: 'lg_compliance',
+  tracking: 'lg_tracking_events'
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

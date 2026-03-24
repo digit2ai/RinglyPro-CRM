@@ -17,6 +17,7 @@ const ACCOUNTING_OPTIONS = ['QuickBooks', 'Sage', 'NetSuite', 'Xero', 'FreshBook
 const FUEL_OPTIONS = ['Comdata', 'WEX', 'EFS', 'TCH', 'Relay Payments', 'None']
 const LOADBOARD_OPTIONS = ['DAT', 'Truckstop', '123Loadboard', 'Highway']
 const CARRIER_TOOLS_OPTIONS = ['Carrier Assure', 'CargoNet', 'RMIS', 'MyCarrierPackets', 'None']
+const CRM_OPTIONS = ['HubSpot', 'Salesforce', 'Zoho CRM', 'Pipedrive', 'Other', 'None']
 
 const STEPS = ['Business Type', 'Data Sources', 'Upload Files', 'Field Mapping', 'Validation']
 
@@ -284,6 +285,17 @@ export default function IngestionWizardPage() {
               >
                 <option value="">Select ELD...</option>
                 {ELD_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">CRM Platform</label>
+              <select
+                value={dataSources.crm || ''}
+                onChange={e => setDataSources(p => ({ ...p, crm: e.target.value }))}
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="">Select CRM...</option>
+                {CRM_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
               </select>
             </div>
             <div>
