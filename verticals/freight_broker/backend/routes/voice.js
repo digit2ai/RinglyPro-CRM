@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const voiceTools = require('../services/voiceTools.freight');
 
-const FREIGHTMIND_AGENT_ID = 'agent_01jq91q5v3e84rash52t6pxscr';
+const FREIGHTMIND_AGENT_ID = 'agent_3701kmgm376rerdrbr62h0n62k75';
 
 function asyncHandler(fn) {
   return (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
