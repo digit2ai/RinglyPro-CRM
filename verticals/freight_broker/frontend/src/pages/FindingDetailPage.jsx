@@ -114,6 +114,7 @@ export default function FindingDetailPage() {
   const [finding, setFinding] = useState(null)
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
+  const [showTreatmentModal, setShowTreatmentModal] = useState(false)
 
   useEffect(() => {
     loadFinding()
@@ -280,9 +281,8 @@ export default function FindingDetailPage() {
         )}
         {(finding.status === 'open' || finding.status === 'acknowledged') && (
           <button
-            onClick={() => handleStatusChange('in_progress')}
-            disabled={updating}
-            className="px-5 py-2.5 rounded-lg bg-yellow-600 hover:bg-yellow-500 text-white text-sm font-medium transition-colors disabled:opacity-50"
+            onClick={() => setShowTreatmentModal(true)}
+            className="px-5 py-2.5 rounded-lg bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white text-sm font-semibold transition-all shadow-lg shadow-purple-600/20"
           >
             Start Treatment
           </button>
@@ -297,6 +297,99 @@ export default function FindingDetailPage() {
           </button>
         )}
       </div>
+
+      {/* Treatment Modal */}
+      {showTreatmentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowTreatmentModal(false)}>
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" />
+          <div className="relative bg-slate-800 border border-slate-700 rounded-2xl max-w-lg w-full p-0 overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div className="bg-gradient-to-r from-purple-600/20 to-slate-800 border-b border-purple-500/20 px-6 py-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-purple-600/30 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Activate Treatment</h3>
+                  <p className="text-xs text-purple-400">AI-Powered Auto-Execution</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-5">
+              <p className="text-sm text-slate-300 leading-relaxed mb-4">
+                Treatment converts this prescription into <strong className="text-white">automated actions</strong> executed by the <strong className="text-purple-400">{finding.recommended_agent || 'FreightMind AI'}</strong> agent.
+              </p>
+
+              <div className="bg-slate-900/60 border border-slate-700/60 rounded-xl p-4 mb-4">
+                <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2">What Treatment Does</p>
+                <div className="space-y-2">
+                  {[
+                    'AI agent executes each prescription step automatically',
+                    'Monitors results and adjusts in real-time',
+                    'Tracks improvement metrics over 30 days',
+                    'Auto-closes finding when target KPIs are met',
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-start gap-2">
+                      <svg className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg>
+                      <span className="text-sm text-slate-400">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {finding.estimated_monthly_savings > 0 && (
+                <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4 mb-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-green-400 font-medium">Projected monthly savings</span>
+                    <span className="text-xl font-bold text-green-400">${parseFloat(finding.estimated_monthly_savings).toLocaleString()}/mo</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="bg-slate-900/60 border border-slate-700/60 rounded-xl p-4 mb-5">
+                <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2">Available Plans</p>
+                <div className="space-y-2">
+                  {[
+                    { plan: 'Project-Based', price: '$250/hour', desc: 'Digit2AI implements the automation' },
+                    { plan: 'Treatment License', price: '$2,000/mo', desc: 'Self-service auto-execution enabled' },
+                    { plan: 'Managed Service', price: '$5,000/mo', desc: 'Digit2AI operates the Treatment layer' },
+                  ].map((p, i) => (
+                    <div key={i} className="flex items-center justify-between py-1.5">
+                      <div>
+                        <span className="text-sm text-white font-medium">{p.plan}</span>
+                        <span className="text-xs text-slate-500 ml-2">{p.desc}</span>
+                      </div>
+                      <span className="text-sm text-purple-400 font-semibold">{p.price}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-slate-700/60 flex items-center justify-between gap-3">
+              <button
+                onClick={() => setShowTreatmentModal(false)}
+                className="px-5 py-2.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm font-medium transition-colors"
+              >
+                Close
+              </button>
+              <a
+                href="https://ringlypro.com/demo"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white text-sm font-semibold transition-all shadow-lg shadow-purple-600/20"
+              >
+                Contact Sales
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
