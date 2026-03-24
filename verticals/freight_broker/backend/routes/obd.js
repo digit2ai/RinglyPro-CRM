@@ -1562,12 +1562,45 @@ router.post('/map-fields', async (req, res) => {
             const margin = (buyRate && sellRate) ? sellRate - buyRate : null;
             const marginPct = (sellRate && margin !== null && sellRate > 0) ? ((margin / sellRate) * 100).toFixed(2) : null;
             const rpm = (sellRate && miles && miles > 0) ? (sellRate / miles).toFixed(2) : null;
+            const loadRef = mapped.load_number || mapped.load_id || `OBD-${batch_id}-${i}`;
+            const shipperName = mapped.shipper_name || mapped.customer || null;
             await sequelize.query(`INSERT INTO lg_loads (tenant_id, load_ref, shipper_name, origin_city, origin_state, destination_city, destination_state, pickup_date, delivery_date, equipment_type, weight_lbs, miles, buy_rate, sell_rate, margin, margin_pct, rate_per_mile, status, commodity)
               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) ON CONFLICT DO NOTHING`,
-              { bind: [tid, mapped.load_number || mapped.load_id || `OBD-${batch_id}-${i}`, mapped.shipper_name || mapped.customer || null, mapped.origin_city || null, mapped.origin_state || null, mapped.destination_city || null, mapped.destination_state || null, mapped.pickup_date || null, mapped.delivery_date || null, mapped.equipment_type || 'dry_van', parseFloat(mapped.weight) || null, miles, buyRate, sellRate, margin, marginPct, rpm, mapped.status || 'delivered', mapped.commodity || null] });
+              { bind: [tid, loadRef, shipperName, mapped.origin_city || null, mapped.origin_state || null, mapped.destination_city || null, mapped.destination_state || null, mapped.pickup_date || null, mapped.delivery_date || null, mapped.equipment_type || 'dry_van', parseFloat(mapped.weight) || null, miles, buyRate, sellRate, margin, marginPct, rpm, mapped.status || 'delivered', mapped.commodity || null] });
+            // Bridge to cw_loads for CW Carriers ecosystem
+            try {
+              await sequelize.query(`INSERT INTO cw_loads (load_ref, customer_name, origin_city, origin_state, dest_city, dest_state, pickup_date, delivery_date, equipment, weight, miles, sell_rate, buy_rate, margin, status)
+                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) ON CONFLICT DO NOTHING`,
+                { bind: [loadRef, shipperName, mapped.origin_city || null, mapped.origin_state || null, mapped.destination_city || null, mapped.destination_state || null, mapped.pickup_date || null, mapped.delivery_date || null, mapped.equipment_type || null, parseFloat(mapped.weight) || null, miles, sellRate, buyRate, margin, mapped.status || 'delivered'] });
+            } catch(cwErr) {}
           } else if (etype === 'carriers') {
-            await sequelize.query(`INSERT INTO lg_carriers (tenant_id, carrier_name, mc_number, dot_number, operating_status, reliability_score) VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT DO NOTHING`,
-              { bind: [tid, mapped.carrier_name || null, mapped.mc_number || null, mapped.dot_number || null, mapped.operating_status || mapped.authority_status || 'active', parseInt(mapped.reliability_score) || 80] });
+            await sequelize.query(`INSERT INTO lg_carriers (tenant_id, carrier_name, mc_number, dot_number, operating_status, reliability_score, equipment_types, home_state, phone, email, contact_name)
+              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) ON CONFLICT DO NOTHING`,
+              { bind: [tid, mapped.carrier_name || null, mapped.mc_number || null, mapped.dot_number || null, mapped.operating_status || mapped.authority_status || 'active', parseInt(mapped.reliability_score) || 80, mapped.equipment_types || null, mapped.home_state || null, mapped.phone || null, mapped.email || null, mapped.contact_name || null] });
+          } else if (etype === 'customers') {
+            // Insert into lg_customers AND cw_contacts for full ecosystem sync
+            await sequelize.query(`INSERT INTO lg_customers (tenant_id, customer_name, contact_name, phone, email, payment_terms)
+              VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT DO NOTHING`,
+              { bind: [tid, mapped.customer_name || mapped.company || null, mapped.contact_name || null, mapped.phone || null, mapped.email || null, mapped.payment_terms || null] });
+            // Bridge to CW contacts
+            try {
+              const name = mapped.contact_name || '';
+              const parts = name.split(' ');
+              await sequelize.query(`INSERT INTO cw_contacts (first_name, last_name, email, phone, company, contact_type)
+                VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT DO NOTHING`,
+                { bind: [parts[0] || '', parts.slice(1).join(' ') || '', mapped.email || null, mapped.phone || null, mapped.customer_name || mapped.company || null, 'customer'] });
+            } catch(bridgeErr) {}
+          } else if (etype === 'compliance') {
+            await sequelize.query(`INSERT INTO lg_compliance (tenant_id, entity_type, entity_id, compliance_type, status, effective_date, expiry_date)
+              VALUES ($1,$2,$3,$4,$5,$6,$7) ON CONFLICT DO NOTHING`,
+              { bind: [tid, 'carrier', parseInt(mapped.entity_id) || 0, mapped.compliance_type || 'insurance', mapped.status || 'current', mapped.effective_date || null, mapped.expiry_date || null] });
+          } else if (etype === 'tracking') {
+            try {
+              await sequelize.query(`CREATE TABLE IF NOT EXISTS lg_tracking_events (id SERIAL PRIMARY KEY, tenant_id VARCHAR(100), load_ref VARCHAR(100), carrier_name VARCHAR(200), truck_number VARCHAR(50), driver_name VARCHAR(100), status VARCHAR(50), latitude DECIMAL, longitude DECIMAL, city VARCHAR(100), state VARCHAR(10), timestamp TIMESTAMP, eta TIMESTAMP, miles_remaining INTEGER, speed INTEGER, temperature VARCHAR(20), event_type VARCHAR(50), notes TEXT, created_at TIMESTAMP DEFAULT NOW())`);
+              await sequelize.query(`INSERT INTO lg_tracking_events (tenant_id, load_ref, carrier_name, truck_number, driver_name, status, latitude, longitude, city, state, timestamp, eta, miles_remaining, speed, temperature, event_type, notes)
+                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) ON CONFLICT DO NOTHING`,
+                { bind: [tid, mapped.load_ref || null, mapped.carrier_name || null, mapped.truck_number || null, mapped.driver_name || null, mapped.status || null, parseFloat(mapped.latitude) || null, parseFloat(mapped.longitude) || null, mapped.city || null, mapped.state || null, mapped.timestamp || null, mapped.eta || null, parseInt(mapped.miles_remaining) || null, parseInt(mapped.speed) || null, mapped.temperature || null, mapped.event_type || null, mapped.notes || null] });
+            } catch(trackErr) {}
           }
           result.imported++;
         } catch (e) {
