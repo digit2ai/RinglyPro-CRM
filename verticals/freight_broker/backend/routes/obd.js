@@ -2,8 +2,17 @@
 // Mounted at /api/obd
 const express = require('express');
 const router = express.Router();
+const path = require('path');
 const multer = require('multer');
 const sequelize = require('../services/db.freight');
+
+// Use the CW Carriers ingestion service — same tables, same pipeline
+let cwIngestion = null;
+try {
+  cwIngestion = require(path.join(__dirname, '../../../cw_carriers/backend/services/ingestion.cw'));
+} catch (e) {
+  console.warn('[OBD] CW Carriers ingestion service not available:', e.message);
+}
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
 
@@ -1437,28 +1446,26 @@ router.post('/upload', upload.single('file'), async (req, res) => {
   }
 });
 
-// POST /map-fields — Confirm mappings and ingest data
+// POST /map-fields — Confirm mappings and ingest data via CW Carriers ingestion pipeline
 router.post('/map-fields', async (req, res) => {
   try {
     const { batch_id, tenant_id, field_mappings, entity_type } = req.body;
     if (!batch_id || !field_mappings) return res.status(400).json({ error: 'batch_id and field_mappings required' });
 
-    const tid = tenant_id || 'default';
+    const tid = tenant_id || 'demo';
     const etype = entity_type || 'loads';
-    const tableName = ENTITY_TABLE_MAP[etype];
-    if (!tableName) return res.status(400).json({ error: `Unknown entity_type: ${etype}` });
 
-    // Get batch info
+    // Get batch info (contains stored rows from upload)
     const [batch] = await sequelize.query(`SELECT * FROM lg_obd_ingestion_batches WHERE batch_id = :batchId`, { replacements: { batchId: batch_id } });
     if (!batch || batch.length === 0) return res.status(404).json({ error: 'Batch not found' });
 
     // Update batch status
-    await sequelize.query(`UPDATE lg_obd_ingestion_batches SET status = 'ingesting', field_mappings = :mappings WHERE batch_id = :batchId`,
-      { replacements: { batchId: batch_id, mappings: JSON.stringify(field_mappings) } });
+    await sequelize.query(`UPDATE lg_obd_ingestion_batches SET status = 'ingesting' WHERE batch_id = :batchId`,
+      { replacements: { batchId: batch_id } });
 
     // Read stored rows from batch record
-    const batchData = batch[0].field_mappings;
-    const storedData = typeof batchData === 'string' ? JSON.parse(batchData) : batchData;
+    const batchRecord = batch[0];
+    const storedData = typeof batchRecord.field_mappings === 'string' ? JSON.parse(batchRecord.field_mappings) : batchRecord.field_mappings;
     const rows = storedData?.rows || req.body.rows || [];
     const headers = storedData?.headers || [];
 
@@ -1466,92 +1473,90 @@ router.post('/map-fields', async (req, res) => {
       return res.status(400).json({ error: 'No rows found in batch. Please re-upload the file.' });
     }
 
-    // field_mappings from the request: array of { header, canonical_field } or object { "Header": "field" }
+    // Build column mapping object: { "Original Header": "canonical_field" }
     let mappingObj = {};
     if (Array.isArray(field_mappings)) {
-      field_mappings.forEach(m => { if (m.canonical_field && m.header) mappingObj[m.header] = m.canonical_field; });
+      field_mappings.forEach(m => {
+        if (m.canonical_field && m.header) mappingObj[m.header] = m.canonical_field;
+        if (m.target && m.source) mappingObj[m.source] = m.target;
+      });
     } else {
       mappingObj = field_mappings;
     }
 
-    let mappedCount = 0;
-    let failedCount = 0;
-    const errors = [];
+    // Reconstruct CSV from rows using mapped column names for the CW ingestion pipeline
+    const canonicalHeaders = Object.values(mappingObj).filter(v => v && v !== 'Skip this column');
+    const csvLines = [canonicalHeaders.join(',')];
+    for (const row of rows) {
+      const vals = [];
+      for (const [origHeader, canonicalField] of Object.entries(mappingObj)) {
+        if (canonicalField && canonicalField !== 'Skip this column') {
+          let val = row[origHeader] !== undefined ? String(row[origHeader]) : '';
+          // Quote if contains comma
+          if (val.includes(',')) val = '"' + val + '"';
+          vals.push(val);
+        }
+      }
+      csvLines.push(vals.join(','));
+    }
+    const csvContent = csvLines.join('\n');
 
-    for (let i = 0; i < rows.length; i++) {
-      try {
-        const row = rows[i];
-        // Map row values using header->canonical mapping
-        const mapped = {};
-        for (const [origHeader, canonicalField] of Object.entries(mappingObj)) {
-          if (canonicalField && canonicalField !== 'Skip this column') {
-            mapped[canonicalField] = row[origHeader] !== undefined ? row[origHeader] : null;
+    let result;
+    if (cwIngestion) {
+      // Use the CW Carriers ingestion service — same tables, full ecosystem sync
+      console.log(`[OBD] Delegating ${rows.length} ${etype} rows to CW ingestion pipeline (tenant: ${tid})`);
+      result = await cwIngestion.process_upload({
+        file_content: csvContent,
+        file_name: batchRecord.file_name || 'obd-upload.csv',
+        file_type: 'csv',
+        data_type: etype,
+        tenant_id: tid,
+        user_id: 'obd_scanner'
+      });
+      console.log(`[OBD] CW ingestion result: ${result.imported} imported, ${result.skipped} skipped, ${result.errors} errors`);
+    } else {
+      // Fallback: direct insert if CW ingestion not available
+      console.log(`[OBD] CW ingestion not available, using direct insert for ${rows.length} rows`);
+      result = { imported: 0, skipped: 0, errors: 0 };
+      for (let i = 0; i < rows.length; i++) {
+        try {
+          const row = rows[i];
+          const mapped = {};
+          for (const [origHeader, canonicalField] of Object.entries(mappingObj)) {
+            if (canonicalField && canonicalField !== 'Skip this column') {
+              mapped[canonicalField] = row[origHeader] !== undefined ? row[origHeader] : null;
+            }
           }
-        }
 
-        if (etype === 'loads') {
-          const buyRate = parseFloat(mapped.carrier_rate || mapped.buy_rate) || null;
-          const sellRate = parseFloat(mapped.customer_rate || mapped.sell_rate) || null;
-          const miles = parseFloat(mapped.miles) || null;
-          const margin = (buyRate && sellRate) ? sellRate - buyRate : null;
-          const marginPct = (sellRate && margin !== null && sellRate > 0) ? ((margin / sellRate) * 100).toFixed(2) : null;
-          const rpm = (sellRate && miles && miles > 0) ? (sellRate / miles).toFixed(2) : null;
-
-          await sequelize.query(`
-            INSERT INTO lg_loads (tenant_id, load_ref, shipper_name, origin_city, origin_state, origin_zip,
-              destination_city, destination_state, destination_zip,
-              pickup_date, delivery_date, equipment_type, weight_lbs, miles,
-              buy_rate, sell_rate, margin, margin_pct, rate_per_mile, status, commodity)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
-            ON CONFLICT DO NOTHING
-          `, { bind: [tid,
-            mapped.load_number || mapped.load_id || `ING-${batchId}-${i}`,
-            mapped.shipper_name || mapped.customer_name || mapped.customer || null,
-            mapped.origin_city || null, mapped.origin_state || null, mapped.origin_zip || null,
-            mapped.destination_city || null, mapped.destination_state || null, mapped.destination_zip || null,
-            mapped.pickup_date || null, mapped.delivery_date || null,
-            mapped.equipment_type || 'dry_van',
-            parseFloat(mapped.weight) || null, miles,
-            buyRate, sellRate, margin, marginPct, rpm,
-            mapped.status || 'delivered', mapped.commodity || null
-          ] });
-          mappedCount++;
-        } else if (etype === 'carriers') {
-          await sequelize.query(`
-            INSERT INTO lg_carriers (tenant_id, carrier_name, mc_number, dot_number, contact_name, phone, email,
-              equipment_types, operating_status, reliability_score)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT DO NOTHING
-          `, { bind: [tid,
-            mapped.carrier_name || null, mapped.mc_number || null, mapped.dot_number || null,
-            mapped.contact_name || null, mapped.contact_phone || mapped.phone || null,
-            mapped.contact_email || mapped.email || null,
-            mapped.equipment_types ? `{${mapped.equipment_types}}` : '{dry_van}',
-            mapped.operating_status || mapped.authority_status || 'active',
-            parseInt(mapped.reliability_score) || 80
-          ] });
-          mappedCount++;
-        } else {
-          // Generic insert for other entity types
-          const columns = ['tenant_id', ...Object.keys(mapped)];
-          const binds = [tid, ...Object.values(mapped)];
-          const placeholders = columns.map((_, idx) => `$${idx + 1}`);
-          await sequelize.query(
-            `INSERT INTO ${tableName} (${columns.join(',')}) VALUES (${placeholders.join(',')}) ON CONFLICT DO NOTHING`,
-            { bind: binds }
-          );
-          mappedCount++;
+          if (etype === 'loads') {
+            const buyRate = parseFloat(mapped.carrier_rate || mapped.buy_rate) || null;
+            const sellRate = parseFloat(mapped.customer_rate || mapped.sell_rate) || null;
+            const miles = parseFloat(mapped.miles) || null;
+            const margin = (buyRate && sellRate) ? sellRate - buyRate : null;
+            const marginPct = (sellRate && margin !== null && sellRate > 0) ? ((margin / sellRate) * 100).toFixed(2) : null;
+            const rpm = (sellRate && miles && miles > 0) ? (sellRate / miles).toFixed(2) : null;
+            await sequelize.query(`INSERT INTO lg_loads (tenant_id, load_ref, shipper_name, origin_city, origin_state, destination_city, destination_state, pickup_date, delivery_date, equipment_type, weight_lbs, miles, buy_rate, sell_rate, margin, margin_pct, rate_per_mile, status, commodity)
+              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) ON CONFLICT DO NOTHING`,
+              { bind: [tid, mapped.load_number || mapped.load_id || `OBD-${batch_id}-${i}`, mapped.shipper_name || mapped.customer || null, mapped.origin_city || null, mapped.origin_state || null, mapped.destination_city || null, mapped.destination_state || null, mapped.pickup_date || null, mapped.delivery_date || null, mapped.equipment_type || 'dry_van', parseFloat(mapped.weight) || null, miles, buyRate, sellRate, margin, marginPct, rpm, mapped.status || 'delivered', mapped.commodity || null] });
+          } else if (etype === 'carriers') {
+            await sequelize.query(`INSERT INTO lg_carriers (tenant_id, carrier_name, mc_number, dot_number, operating_status, reliability_score) VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT DO NOTHING`,
+              { bind: [tid, mapped.carrier_name || null, mapped.mc_number || null, mapped.dot_number || null, mapped.operating_status || mapped.authority_status || 'active', parseInt(mapped.reliability_score) || 80] });
+          }
+          result.imported++;
+        } catch (e) {
+          result.errors++;
         }
-      } catch (rowErr) {
-        failedCount++;
-        if (errors.length < 50) errors.push({ row_index: i, error: rowErr.message });
       }
     }
 
+    const mappedCount = result.imported || 0;
+    const failedCount = result.errors || 0;
+
     // Update batch
     await sequelize.query(`
-      UPDATE lg_obd_ingestion_batches SET status = :status, mapped_rows = :mapped, failed_rows = :failed, errors = :errors, completed_at = NOW()
+      UPDATE lg_obd_ingestion_batches SET status = :status, mapped_rows = :mapped, failed_rows = :failed, completed_at = NOW()
       WHERE batch_id = :batchId
-    `, { replacements: { batchId: batch_id, status: failedCount === rows.length ? 'failed' : 'complete', mapped: mappedCount, failed: failedCount, errors: JSON.stringify(errors) } });
+    `, { replacements: { batchId: batch_id, status: failedCount === rows.length ? 'failed' : 'complete', mapped: mappedCount, failed: failedCount } });
 
     res.json({
       success: true,
