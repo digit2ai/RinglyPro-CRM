@@ -216,6 +216,76 @@ export default function ContractBuilder() {
       {step === 3 && (
         <div style={S.card}>
           <h3 style={S.cardTitle}>Step 3 — Contract Preview</h3>
+
+          {/* Executive Summary — Talk Track */}
+          {(() => {
+            const y1_total = form.implementation_fee + (form.monthly_retainer * 12) + (form.annual_savings_conservative * form.savings_share_pct / 100);
+            const y1_net = form.annual_savings_conservative - y1_total;
+            const y1_roi = (form.annual_savings_conservative / y1_total).toFixed(1);
+            const tierLabel = form.tier === 'scanner' ? 'Scanner' : form.tier === 'treatment' ? 'Scanner + Treatment' : 'Managed Service';
+            const y3_savings = form.annual_savings_conservative + form.annual_savings_moderate + (form.annual_savings_moderate * 1.25);
+            const y3_cost = y1_total + (form.year2_monthly * 12) + (form.year3_monthly * 12);
+            return (
+              <div style={{ background: '#0D1117', border: '1px solid #1E3A5F', borderRadius: 12, padding: 28, marginBottom: 24 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 8, background: '#0EA5E920', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                  </div>
+                  <h4 style={{ fontSize: 16, color: '#0EA5E9' }}>Executive Summary — What You're Signing</h4>
+                </div>
+
+                <div style={{ fontSize: 14, color: '#C9D1D9', lineHeight: 1.8, marginBottom: 20 }}>
+                  <p style={{ marginBottom: 12 }}>
+                    <strong style={{ color: '#E6EDF3' }}>{form.client_name}</strong> is engaging <strong style={{ color: '#E6EDF3' }}>Digit2AI / RinglyPro</strong> to deploy the
+                    <strong style={{ color: '#0EA5E9' }}> FreightMind AI OBD Scanner</strong> — an AI diagnostic platform that plugs into your existing McLeod TMS and scans 7 operational modules to find cost reduction opportunities.
+                  </p>
+                  <p style={{ marginBottom: 12 }}>
+                    Think of it like a mechanic's OBD scanner, but for your freight brokerage. It reads your load data, carrier data, and financial data — then surfaces findings with severity levels (critical, warning, advisory) and AI-powered prescriptions to fix each issue.
+                  </p>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, marginBottom: 20 }}>
+                  <div style={{ background: '#161B22', borderRadius: 10, padding: 16, border: '1px solid #30363D' }}>
+                    <div style={{ fontSize: 11, color: '#8B949E', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>What You Pay</div>
+                    <div style={{ fontSize: 13, color: '#C9D1D9', lineHeight: 1.8 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Implementation (one-time)</span><strong style={{ color: '#E6EDF3' }}>{fmt(form.implementation_fee)}</strong></div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Monthly platform ({tierLabel})</span><strong style={{ color: '#E6EDF3' }}>{fmt(form.monthly_retainer)}/mo</strong></div>
+                      {form.savings_share_pct > 0 && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Performance fee</span><strong style={{ color: '#E6EDF3' }}>{form.savings_share_pct}% of savings</strong></div>}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #30363D', paddingTop: 8, marginTop: 8 }}><span style={{ fontWeight: 600 }}>Year 1 Total</span><strong style={{ color: '#0EA5E9', fontSize: 16 }}>{fmt(y1_total)}</strong></div>
+                    </div>
+                  </div>
+                  <div style={{ background: '#161B22', borderRadius: 10, padding: 16, border: '1px solid #30363D' }}>
+                    <div style={{ fontSize: 11, color: '#8B949E', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>What You Get Back</div>
+                    <div style={{ fontSize: 13, color: '#C9D1D9', lineHeight: 1.8 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Year 1 savings (conservative)</span><strong style={{ color: '#34D399' }}>{fmt(form.annual_savings_conservative)}</strong></div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Year 1 net benefit</span><strong style={{ color: '#34D399' }}>{fmt(y1_net)}</strong></div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Return on investment</span><strong style={{ color: '#34D399' }}>{y1_roi}:1</strong></div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #30363D', paddingTop: 8, marginTop: 8 }}><span style={{ fontWeight: 600 }}>3-Year Net Benefit</span><strong style={{ color: '#34D399', fontSize: 16 }}>{fmt(y3_savings - y3_cost)}</strong></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ fontSize: 13, color: '#C9D1D9', lineHeight: 1.8 }}>
+                  <div style={{ fontWeight: 700, color: '#E6EDF3', marginBottom: 8 }}>Key Terms in Plain Language:</div>
+                  <div style={{ display: 'grid', gap: 6 }}>
+                    <div style={{ display: 'flex', gap: 8 }}><span style={{ color: '#0EA5E9', fontWeight: 700, minWidth: 18 }}>1.</span><span><strong style={{ color: '#E6EDF3' }}>We connect to your McLeod.</strong> Automated daily data ingestion. Your data stays yours — we read it, we don't modify it.</span></div>
+                    <div style={{ display: 'flex', gap: 8 }}><span style={{ color: '#0EA5E9', fontWeight: 700, minWidth: 18 }}>2.</span><span><strong style={{ color: '#E6EDF3' }}>7 modules scan your operations weekly.</strong> Load ops, rates, fleet, financials, compliance, drivers, customer health. Each scan takes under 2 seconds.</span></div>
+                    <div style={{ display: 'flex', gap: 8 }}><span style={{ color: '#0EA5E9', fontWeight: 700, minWidth: 18 }}>3.</span><span><strong style={{ color: '#E6EDF3' }}>Every finding has a prescription.</strong> Not just "here's the problem" — specific steps to fix it, which AI agent handles it, and estimated monthly savings.</span></div>
+                    <div style={{ display: 'flex', gap: 8 }}><span style={{ color: '#0EA5E9', fontWeight: 700, minWidth: 18 }}>4.</span><span><strong style={{ color: '#E6EDF3' }}>Treatment = we fix it for you.</strong> The AI agent auto-executes the prescription. You pay {form.savings_share_pct}% of documented savings — if we save you nothing, the performance fee is zero.</span></div>
+                    <div style={{ display: 'flex', gap: 8 }}><span style={{ color: '#0EA5E9', fontWeight: 700, minWidth: 18 }}>5.</span><span><strong style={{ color: '#E6EDF3' }}>24-month initial term.</strong> Auto-renews annually. 60-day cancellation notice. Year 2 pricing adjusts to {fmt(form.year2_monthly)}/mo as we shift from diagnostic to prevention.</span></div>
+                    <div style={{ display: 'flex', gap: 8 }}><span style={{ color: '#0EA5E9', fontWeight: 700, minWidth: 18 }}>6.</span><span><strong style={{ color: '#E6EDF3' }}>Our IP stays ours, your data stays yours.</strong> We own the platform and algorithms. You own your operational data. Standard non-circumvention clause.</span></div>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: 20, padding: 14, background: '#34D39910', border: '1px solid #34D39930', borderRadius: 8 }}>
+                  <div style={{ fontSize: 13, color: '#34D399', fontWeight: 600 }}>
+                    Bottom Line: For {fmt(form.monthly_retainer)}/month — less than one dispatcher's salary — you get an AI platform that's projected to save {fmt(form.annual_savings_conservative)} in Year 1. For every dollar you invest, you get {y1_roi} back.
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           <div style={S.previewFrame}>
             <h2 style={{ textAlign: 'center', fontSize: 20, color: '#1B2A4A', marginBottom: 8 }}>ENTERPRISE SERVICES AGREEMENT</h2>
             <p style={{ textAlign: 'center', color: '#64748B', fontSize: 13, marginBottom: 24 }}>
