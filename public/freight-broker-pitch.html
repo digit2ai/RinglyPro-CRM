@@ -541,25 +541,72 @@ function escapeHtml(t) {
   return d.innerHTML;
 }
 
+async function requestMic() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream.getTracks().forEach(t => t.stop());
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function checkMicPermission() {
+  try {
+    const result = await navigator.permissions.query({ name: 'microphone' });
+    return result.state;
+  } catch (e) {
+    return 'unknown';
+  }
+}
+
 async function connectVoice() {
   const connectBtn = document.getElementById('vpConnectBtn');
   const disconnectBtn = document.getElementById('vpDisconnectBtn');
   connectBtn.disabled = true;
   setStatus('connecting');
+  addMessage('ai', 'Connecting to Rachel...');
 
   try {
+    // Step 1: Check and request microphone
+    const micState = await checkMicPermission();
+    if (micState === 'denied') {
+      addMessage('ai', 'Microphone access was denied. Please click the lock icon in your address bar, set Microphone to Allow, then reload this page.');
+      setStatus('idle');
+      connectBtn.disabled = false;
+      return;
+    }
+
+    if (micState !== 'granted') {
+      addMessage('ai', 'Requesting microphone access...');
+      const granted = await requestMic();
+      if (!granted) {
+        addMessage('ai', 'Microphone access is required for voice conversation. Please allow microphone access and try again. On Chrome: click the lock icon next to the URL and set Microphone to Allow.');
+        setStatus('idle');
+        connectBtn.disabled = false;
+        return;
+      }
+    }
+
+    // Step 2: Load ElevenLabs SDK
+    addMessage('ai', 'Microphone ready. Loading voice engine...');
     const mod = await import('https://cdn.jsdelivr.net/npm/@11labs/client@0.2.0/+esm');
     const Conversation = mod.Conversation;
 
-    await Conversation.requestMicrophonePermission();
-
+    // Step 3: Get signed token
     const res = await fetch('/freight_broker/api/voice/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     });
-    if (!res.ok) throw new Error('Failed to get voice token');
+    if (!res.ok) throw new Error('Failed to get voice token (status ' + res.status + ')');
     const data = await res.json();
 
+    if (!data.signed_url) {
+      throw new Error(data.error || 'No signed URL returned');
+    }
+
+    // Step 4: Start conversation
+    addMessage('ai', 'Connecting to Rachel...');
     conversation = await Conversation.startSession({
       signedUrl: data.signed_url,
       onMessage: ({ message, source }) => {
@@ -593,7 +640,14 @@ async function connectVoice() {
 
   } catch (err) {
     console.error('[Voice] Connection failed:', err);
-    addMessage('ai', 'Unable to connect. Please check your microphone permissions and try again.');
+    const msg = err.message || String(err);
+    if (msg.includes('Permission') || msg.includes('permission') || msg.includes('NotAllowed')) {
+      addMessage('ai', 'Microphone permission denied. To fix: click the lock/settings icon next to the URL in your browser, find Microphone, set it to Allow, then reload this page and try again.');
+    } else if (msg.includes('token') || msg.includes('Token')) {
+      addMessage('ai', 'Voice service temporarily unavailable. The presentation content is still available on the page below.');
+    } else {
+      addMessage('ai', 'Connection failed: ' + msg + '. You can still browse the full presentation below.');
+    }
     setStatus('idle');
     connectBtn.disabled = false;
     conversation = null;
