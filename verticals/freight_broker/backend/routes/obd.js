@@ -1537,21 +1537,9 @@ router.post('/map-fields', async (req, res) => {
     const csvContent = csvLines.join('\n');
 
     let result;
-    if (cwIngestion) {
-      // Use the CW Carriers ingestion service — same tables, full ecosystem sync
-      console.log(`[OBD] Delegating ${rows.length} ${etype} rows to CW ingestion pipeline (tenant: ${tid})`);
-      result = await cwIngestion.process_upload({
-        file_content: csvContent,
-        file_name: batchRecord.file_name || 'obd-upload.csv',
-        file_type: 'csv',
-        data_type: etype,
-        tenant_id: tid,
-        user_id: 'obd_scanner'
-      });
-      console.log(`[OBD] CW ingestion result: ${result.imported} imported, ${result.skipped} skipped, ${result.errors} errors`);
-    } else {
-      // Fallback: direct insert if CW ingestion not available
-      console.log(`[OBD] CW ingestion not available, using direct insert for ${rows.length} rows`);
+    {
+      // Direct insert into lg_* tables + bridge to cw_* tables
+      console.log(`[OBD] Inserting ${rows.length} ${etype} rows into lg_* tables (tenant: ${tid})`);
       result = { imported: 0, skipped: 0, errors: 0 };
       for (let i = 0; i < rows.length; i++) {
         try {
