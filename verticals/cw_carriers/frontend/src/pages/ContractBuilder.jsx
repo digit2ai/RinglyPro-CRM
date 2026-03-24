@@ -26,7 +26,7 @@ export default function ContractBuilder() {
     tier: 'treatment',
     annual_savings_conservative: 1500000,
     annual_savings_moderate: 2400000,
-    savings_share_pct: 3,
+    savings_share_pct: 2.5,
     scanner_modules: 7,
     year2_monthly: 15000,
     year3_monthly: 18000,
@@ -304,7 +304,7 @@ export default function ContractBuilder() {
               <li>Implementation Fee: <strong>{fmt(form.implementation_fee)}</strong> (one-time)</li>
               <li>Monthly Platform Fee: <strong>{fmt(form.monthly_retainer)}/month</strong> ({form.tier === 'scanner' ? 'Scanner' : form.tier === 'treatment' ? 'Scanner + Treatment' : 'Managed Service'} tier)</li>
               {form.savings_share_pct > 0 && <li>Performance Fee: <strong>{form.savings_share_pct}%</strong> of documented cost savings (Treatment tier)</li>}
-              <li>Token Markup: <strong>{form.token_markup}%</strong> over actual AI API cost</li>
+              <li>AI API Usage (Tokens): <strong>Billed at actuals</strong> — Client is responsible for all AI API consumption costs, passed through at cost + {form.token_markup}% administrative markup</li>
               <li>Annual Total (Year 1): <strong>{fmt(form.implementation_fee + (form.monthly_retainer * 12) + (form.annual_savings_conservative * form.savings_share_pct / 100))}</strong></li>
             </ul>
 
