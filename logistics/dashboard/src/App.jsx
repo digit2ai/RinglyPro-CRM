@@ -34,6 +34,7 @@ const steps = [
   { path: '/oee-dashboard', label: 'OEE Dashboard', icon: GaugeIcon, noProject: true },
   { path: '/user-guide', label: 'User Guide', icon: BookIcon, noProject: true },
   { path: '/proposals/LOGISTICS-System-Architecture-Document.html', label: 'MCP Architecture', icon: ArchitectureIcon, external: true },
+  { path: '/logistics/training/', label: 'Training Academy', icon: BookIcon, external: true },
   { path: '/nda', label: 'NDA', icon: NDAIcon, noProject: true },
   { path: '/contract-builder', label: 'Services Agreement', icon: ContractIcon, noProject: true }
 ]
