@@ -11,11 +11,12 @@ const BUSINESS_TYPES = [
   { id: 'freight_forwarder', name: 'Freight Forwarder', desc: 'International logistics coordination and customs', icon: 'FF' },
 ]
 
-const TMS_OPTIONS = ['McLeod', 'TMW', 'MercuryGate', 'Turvo', 'Rose Rocket', 'Aljex', 'AscendTMS', 'ARK', 'DAT Broker', 'Other']
-const ELD_OPTIONS = ['Samsara', 'Motive', 'Geotab', 'Omnitracs', 'PeopleNet', 'Verizon Connect', 'Other', 'None']
-const ACCOUNTING_OPTIONS = ['QuickBooks', 'Sage', 'NetSuite', 'Xero', 'Other', 'None']
-const FUEL_OPTIONS = ['Comdata', 'WEX', 'EFS', 'TCH', 'None']
-const LOADBOARD_OPTIONS = ['DAT', 'Truckstop', '123Loadboard']
+const TMS_OPTIONS = ['McLeod', 'TMW', 'MercuryGate', 'Turvo', 'Rose Rocket', 'Aljex', 'AscendTMS', 'ARK', 'DAT Broker', 'Alvys', 'PCS Software', 'Magnus', 'Tai TMS', 'Other']
+const ELD_OPTIONS = ['Samsara', 'Motive', 'Geotab', 'Omnitracs', 'PeopleNet', 'Verizon Connect', 'Macropoint', 'FourKites', 'project44', 'Trucker Tools', 'Other', 'None']
+const ACCOUNTING_OPTIONS = ['QuickBooks', 'Sage', 'NetSuite', 'Xero', 'FreshBooks', 'Other', 'None']
+const FUEL_OPTIONS = ['Comdata', 'WEX', 'EFS', 'TCH', 'Relay Payments', 'None']
+const LOADBOARD_OPTIONS = ['DAT', 'Truckstop', '123Loadboard', 'Highway']
+const CARRIER_TOOLS_OPTIONS = ['Carrier Assure', 'CargoNet', 'RMIS', 'MyCarrierPackets', 'None']
 
 const STEPS = ['Business Type', 'Data Sources', 'Upload Files', 'Field Mapping', 'Validation']
 
@@ -307,9 +308,31 @@ export default function IngestionWizardPage() {
                 {FUEL_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
               </select>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Carrier Vetting / Compliance</label>
+              <select
+                value={dataSources.carrierTools || ''}
+                onChange={e => setDataSources(p => ({ ...p, carrierTools: e.target.value }))}
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="">Select Tool...</option>
+                {CARRIER_TOOLS_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Tracking / Visibility</label>
+              <select
+                value={dataSources.tracking || ''}
+                onChange={e => setDataSources(p => ({ ...p, tracking: e.target.value }))}
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="">Select Provider...</option>
+                {ELD_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-slate-300 mb-2">Load Boards</label>
-              <div className="flex gap-4">
+              <label className="block text-sm font-medium text-slate-300 mb-2">Load Boards / Freight Networks</label>
+              <div className="flex flex-wrap gap-4">
                 {LOADBOARD_OPTIONS.map(lb => (
                   <label key={lb} className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
                     <input
@@ -386,6 +409,7 @@ export default function IngestionWizardPage() {
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Demo Sample Files</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {[
+                { name: 'CW Carriers (McLeod)', file: 'cw-carriers-demo.csv', rows: 50, highlight: true },
                 { name: 'Freight Broker', file: 'freight-broker-demo.csv', rows: 50 },
                 { name: 'Asset Carrier', file: 'asset-carrier-demo.csv', rows: 25 },
                 { name: '3PL', file: '3pl-demo.csv', rows: 40 },
@@ -397,7 +421,11 @@ export default function IngestionWizardPage() {
                   key={s.file}
                   href={`/freight_broker/samples/${s.file}`}
                   download={s.file}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-700/50 border border-slate-600/50 hover:border-purple-500/40 hover:bg-slate-700 transition-all text-left"
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-left ${
+                    s.highlight
+                      ? 'bg-purple-600/15 border border-purple-500/40 hover:border-purple-500/70 hover:bg-purple-600/25 ring-1 ring-purple-500/20'
+                      : 'bg-slate-700/50 border border-slate-600/50 hover:border-purple-500/40 hover:bg-slate-700'
+                  }`}
                 >
                   <svg className="w-4 h-4 text-purple-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
