@@ -1,0 +1,41 @@
+Origin State,Destination State,Equipment Type,Avg Rate Per Mile,Min Rate Per Mile,Max Rate Per Mile,Avg Total Rate,Sample Size,Confidence,Rate Date,Benchmark Source
+FL,GA,Reefer,2.85,2.40,3.30,1311,4200,high,2026-03-15,DAT RateView
+FL,NC,Reefer,2.72,2.25,3.20,1550,3800,high,2026-03-15,DAT RateView
+FL,VA,Reefer,2.65,2.20,3.10,1855,3200,high,2026-03-15,DAT RateView
+FL,NJ,Reefer,2.58,2.15,3.00,2813,2900,high,2026-03-15,DAT RateView
+FL,PA,Reefer,2.60,2.18,3.05,2652,2800,high,2026-03-15,DAT RateView
+FL,OH,Reefer,2.55,2.10,2.95,2397,2400,high,2026-03-15,DAT RateView
+FL,MI,Reefer,2.50,2.05,2.90,2950,2200,medium,2026-03-15,DAT RateView
+FL,IL,Reefer,2.48,2.00,2.85,2728,1800,medium,2026-03-15,DAT RateView
+FL,TN,Reefer,2.70,2.25,3.15,1620,2600,high,2026-03-15,DAT RateView
+FL,SC,Reefer,2.80,2.35,3.25,1120,3400,high,2026-03-15,DAT RateView
+FL,FL,Reefer,3.50,2.80,4.20,280,1500,medium,2026-03-15,DAT RateView
+GA,FL,Reefer,2.78,2.30,3.20,1297,4000,high,2026-03-15,DAT RateView
+GA,NC,Reefer,2.82,2.35,3.30,705,3600,high,2026-03-15,DAT RateView
+GA,SC,Reefer,2.90,2.45,3.35,580,3200,high,2026-03-15,DAT RateView
+GA,VA,Reefer,2.68,2.20,3.10,1448,2800,high,2026-03-15,DAT RateView
+GA,OH,Reefer,2.55,2.10,2.95,1785,2200,medium,2026-03-15,DAT RateView
+GA,TN,Reefer,2.75,2.30,3.20,756,3000,high,2026-03-15,DAT RateView
+MI,OH,Reefer,2.90,2.45,3.35,725,3400,high,2026-03-15,DAT RateView
+MI,IL,Reefer,2.85,2.40,3.30,513,3200,high,2026-03-15,DAT RateView
+MI,PA,Reefer,2.70,2.25,3.15,1296,2600,medium,2026-03-15,DAT RateView
+MI,IN,Reefer,2.95,2.50,3.40,590,3000,high,2026-03-15,DAT RateView
+OH,MI,Reefer,2.88,2.42,3.32,576,3200,high,2026-03-15,DAT RateView
+OH,PA,Reefer,2.82,2.38,3.28,536,3000,high,2026-03-15,DAT RateView
+OH,IL,Reefer,2.78,2.32,3.22,835,2800,high,2026-03-15,DAT RateView
+VA,NC,Reefer,2.92,2.48,3.38,496,3400,high,2026-03-15,DAT RateView
+VA,FL,Reefer,2.60,2.15,3.00,2184,2600,high,2026-03-15,DAT RateView
+NC,SC,Reefer,3.00,2.55,3.45,600,3200,high,2026-03-15,DAT RateView
+NJ,PA,Dry Van,2.40,1.95,2.85,480,4200,high,2026-03-15,DAT RateView
+NJ,VA,Dry Van,2.35,1.90,2.80,776,3800,high,2026-03-15,DAT RateView
+NJ,FL,Dry Van,2.20,1.75,2.65,2398,2400,medium,2026-03-15,DAT RateView
+PA,NJ,Dry Van,2.45,2.00,2.90,441,4000,high,2026-03-15,DAT RateView
+PA,OH,Dry Van,2.38,1.92,2.82,855,3600,high,2026-03-15,DAT RateView
+GA,FL,Dry Van,2.42,1.98,2.88,1139,3800,high,2026-03-15,DAT RateView
+FL,GA,Dry Van,2.45,2.00,2.90,1081,3600,high,2026-03-15,DAT RateView
+NC,FL,Dry Van,2.30,1.85,2.75,1311,3000,medium,2026-03-15,DAT RateView
+ID,IL,Flatbed,2.20,1.80,2.60,3718,1200,medium,2026-03-15,DAT RateView
+ID,TX,Flatbed,2.15,1.75,2.55,3311,1000,medium,2026-03-15,DAT RateView
+ID,CA,Flatbed,2.30,1.85,2.75,1426,1400,medium,2026-03-15,DAT RateView
+ID,OH,Flatbed,2.10,1.70,2.50,4557,800,low,2026-03-15,DAT RateView
+GA,NJ,Flatbed,2.25,1.82,2.68,1710,1600,medium,2026-03-15,DAT RateView

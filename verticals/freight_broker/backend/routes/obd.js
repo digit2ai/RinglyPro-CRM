@@ -440,6 +440,14 @@ const INGESTION_PROFILES = {
     mappings: {
       tracking: { 'Load ID': 'load_ref', 'Carrier': 'carrier_name', 'Truck Number': 'truck_number', 'Driver': 'driver_name', 'Status': 'status', 'Latitude': 'latitude', 'Longitude': 'longitude', 'City': 'city', 'State': 'state', 'Timestamp': 'timestamp', 'ETA': 'eta', 'Miles Remaining': 'miles_remaining', 'Speed MPH': 'speed', 'Temperature F': 'temperature', 'Event Type': 'event_type', 'Notes': 'notes' }
     }
+  },
+  dat: {
+    name: 'DAT RateView',
+    description: 'DAT market rate benchmarks by lane and equipment type',
+    entity_types: ['rates'],
+    mappings: {
+      rates: { 'Origin State': 'origin_state', 'Destination State': 'destination_state', 'Equipment Type': 'equipment_type', 'Avg Rate Per Mile': 'rate_per_mile_avg', 'Min Rate Per Mile': 'rate_per_mile_p25', 'Max Rate Per Mile': 'rate_per_mile_p75', 'Avg Total Rate': 'avg_rate', 'Sample Size': 'sample_size', 'Confidence': 'confidence', 'Rate Date': 'rate_date', 'Benchmark Source': 'benchmark_source' }
+    }
   }
 };
 
@@ -1601,6 +1609,10 @@ router.post('/map-fields', async (req, res) => {
                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) ON CONFLICT DO NOTHING`,
                 { bind: [tid, mapped.load_ref || null, mapped.carrier_name || null, mapped.truck_number || null, mapped.driver_name || null, mapped.status || null, parseFloat(mapped.latitude) || null, parseFloat(mapped.longitude) || null, mapped.city || null, mapped.state || null, mapped.timestamp || null, mapped.eta || null, parseInt(mapped.miles_remaining) || null, parseInt(mapped.speed) || null, mapped.temperature || null, mapped.event_type || null, mapped.notes || null] });
             } catch(trackErr) {}
+          } else if (etype === 'rates') {
+            await sequelize.query(`INSERT INTO lg_rate_benchmarks (tenant_id, origin_state, destination_state, equipment_type, rate_per_mile_avg, rate_per_mile_p25, rate_per_mile_p75, avg_rate, sample_size, confidence, rate_date, benchmark_source)
+              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) ON CONFLICT DO NOTHING`,
+              { bind: [tid, mapped.origin_state || null, mapped.destination_state || null, mapped.equipment_type || null, parseFloat(mapped.rate_per_mile_avg) || null, parseFloat(mapped.rate_per_mile_p25) || null, parseFloat(mapped.rate_per_mile_p75) || null, parseFloat(mapped.avg_rate) || null, parseInt(mapped.sample_size) || null, mapped.confidence || 'medium', mapped.rate_date || null, mapped.benchmark_source || 'DAT'] });
           }
           result.imported++;
         } catch (e) {
