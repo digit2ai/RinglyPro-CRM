@@ -4,7 +4,7 @@
  */
 const path = require('path');
 const sequelize = require(path.join(__dirname, '../../../cw_carriers/backend/services/db.cw'));
-const TENANT = 'demo';
+const TENANT = 'logistics';
 
 // Tool 1: Get OBD Scanner Overview
 async function getOBDOverview() {

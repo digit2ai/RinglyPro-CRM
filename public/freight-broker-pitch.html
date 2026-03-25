@@ -332,7 +332,7 @@ a{color:var(--teal);text-decoration:none;}
         <strong>DOT:</strong> 2271499<br>
         <strong>MC:</strong> MC-682070<br>
         <strong>Verticals:</strong> F&amp;B, CPG, Automotive<br>
-        <strong>Key Clients:</strong> PepsiCo, Spartan Nash, PFG, Boise Paper<br>
+        <strong>Key Clients:</strong> PepsiCo (35%), Spartan Nash, PFG, Coca-Cola, Kroger, Target, FedEx, Boise Paper, Sysco, Publix<br>
         <strong>On-Time Rate:</strong> 98%<br>
         <strong>CEO:</strong> Ljiljana Trkulja
       </p>
@@ -344,17 +344,19 @@ a{color:var(--teal);text-decoration:none;}
 <section class="section" id="findings">
   <div class="section-badge" style="background:var(--red-dim);border-color:rgba(239,68,68,0.3);color:var(--red);">DIAGNOSTIC RESULTS</div>
   <h2>OBD <span>Findings</span></h2>
-  <p class="section-sub">9 findings identified from CW Carriers operational data. 6 critical, 2 warning, 1 advisory.</p>
+  <p class="section-sub">11 findings identified from CW Carriers operational data ($55M revenue, 1,200 loads analyzed). 7 critical, 2 warning, 2 advisory.</p>
 
-  <div class="finding"><span class="sev critical">CRITICAL</span><span class="f-text"><strong>PepsiCo = 39% of revenue.</strong> Single-customer dependency creates existential risk. Any contract loss wipes 4 months of operating margin.</span></div>
-  <div class="finding"><span class="sev critical">CRITICAL</span><span class="f-text"><strong>Top 3 shippers = 84% of revenue.</strong> Extreme concentration. Industry benchmark is no single customer above 15%. Diversification is urgent.</span></div>
-  <div class="finding"><span class="sev critical">CRITICAL</span><span class="f-text"><strong>3 negative margin loads (6% of book).</strong> Carrier pay exceeds customer rate on these loads. Direct losses that signal broken pricing or stale rate agreements.</span></div>
-  <div class="finding"><span class="sev critical">CRITICAL</span><span class="f-text"><strong>70% truck idle rate.</strong> Asset utilization is critically low. Trucks sit idle 70% of available hours — deadhead miles and empty returns compound the loss.</span></div>
-  <div class="finding"><span class="sev critical">CRITICAL</span><span class="f-text"><strong>Load-to-truck ratio 2.4 (benchmark 4-6).</strong> Capacity is underutilized. Each truck should cover 4-6 loads. At 2.4, revenue per asset is roughly half of benchmark.</span></div>
-  <div class="finding"><span class="sev critical">CRITICAL</span><span class="f-text"><strong>1 expired compliance item.</strong> Insurance or authority document has lapsed. This creates liability exposure and could halt operations if caught in an audit.</span></div>
-  <div class="finding"><span class="sev warning">WARNING</span><span class="f-text"><strong>2 carriers with low reliability scores.</strong> These carriers have history of late deliveries, communication failures, or claim incidents. Risk of service failures on active loads.</span></div>
-  <div class="finding"><span class="sev warning">WARNING</span><span class="f-text"><strong>Driver utilization at 20%.</strong> Drivers are active only 20% of available shifts. Scheduling optimization could double effective capacity without adding headcount.</span></div>
-  <div class="finding"><span class="sev advisory">ADVISORY</span><span class="f-text"><strong>15 lane benchmarks available.</strong> Market rate data suggests optimization opportunities on 15 active lanes. Potential to reduce cost per mile by 3-5%.</span></div>
+  <div class="finding"><span class="sev critical">CRITICAL</span><span class="f-text"><strong>AR aging crisis: 788 loads 30+ days, 727 loads 60+ days, 654 loads 90+ days.</strong> Over $1M/month tied up in aging receivables. Automated collections and factoring optimization could recover $12.2M/year.</span></div>
+  <div class="finding"><span class="sev critical">CRITICAL</span><span class="f-text"><strong>30% truck idle rate (12 of 40 trucks).</strong> Nearly a third of the fleet is out of service or in maintenance. $144K/year in idle asset cost. Predictive maintenance could cut downtime by 60%.</span></div>
+  <div class="finding"><span class="sev critical">CRITICAL</span><span class="f-text"><strong>12 expired compliance items across 4 categories.</strong> Insurance, authority, and DOT inspection records have lapsed. $72K/year in risk exposure plus potential operational shutdown.</span></div>
+  <div class="finding"><span class="sev critical">CRITICAL</span><span class="f-text"><strong>22 loads with negative margin (2% of book).</strong> Carrier pay exceeds customer charge on 22 loads — $39.6K in direct annual losses from broken rate agreements and spot market spikes.</span></div>
+  <div class="finding"><span class="sev critical">CRITICAL</span><span class="f-text"><strong>PepsiCo = 35% of revenue ($19.25M).</strong> Single-customer dependency. Losing this account eliminates 4.5 months of operating profit. Must diversify to below 20%.</span></div>
+  <div class="finding"><span class="sev critical">CRITICAL</span><span class="f-text"><strong>Top 3 shippers = 61% of revenue ($33.5M).</strong> Extreme concentration risk. Industry benchmark is no single customer above 15%. PepsiCo + Spartan Nash + PFG control the business.</span></div>
+  <div class="finding"><span class="sev critical">CRITICAL</span><span class="f-text"><strong>5 carriers (10%) with lapsed insurance.</strong> Operating with uninsured carriers exposes CW to catastrophic liability. Immediate suspension and re-verification required.</span></div>
+  <div class="finding"><span class="sev warning">WARNING</span><span class="f-text"><strong>22 carriers with low reliability scores.</strong> 44% of the carrier network scores below 70/100. Service failures, late deliveries, and claims incidents are concentrated in this group.</span></div>
+  <div class="finding"><span class="sev warning">WARNING</span><span class="f-text"><strong>Driver utilization at 27% (8 of 30 on-duty).</strong> $52.8K/year in underutilized labor. HOS optimization and better dispatch scheduling could double effective capacity.</span></div>
+  <div class="finding"><span class="sev advisory">ADVISORY</span><span class="f-text"><strong>40 lane benchmarks available for pricing optimization.</strong> DAT market data shows opportunities on 40 active lanes. Potential to recover $48K/year in below-market pricing.</span></div>
+  <div class="finding"><span class="sev advisory">ADVISORY</span><span class="f-text"><strong>Zero HazMat-endorsed drivers.</strong> No drivers in the roster carry HazMat endorsement. This locks CW out of chemical, fuel, and hazardous materials freight — $18K/year in missed revenue.</span></div>
 </section>
 
 <!-- ═══════════ ROI ═══════════ -->
@@ -365,12 +367,13 @@ a{color:var(--teal);text-decoration:none;}
 
   <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:24px;">
     <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--teal);margin-bottom:16px;">YEAR 1 COST REDUCTION BREAKDOWN</div>
-    <div class="cr-item"><span class="cr-label">Margin Recovery</span><span class="cr-val">$480,000</span></div>
-    <div class="cr-item"><span class="cr-label">Lane Optimization</span><span class="cr-val">$300,000</span></div>
-    <div class="cr-item"><span class="cr-label">Carrier Rate Optimization</span><span class="cr-val">$420,000</span></div>
-    <div class="cr-item"><span class="cr-label">Operational Efficiency</span><span class="cr-val">$180,000</span></div>
-    <div class="cr-item"><span class="cr-label">Claims Reduction</span><span class="cr-val">$120,000</span></div>
-    <div class="cr-total"><span class="cr-label">Total Year 1 Savings</span><span class="cr-val">$1,500,000</span></div>
+    <div class="cr-item"><span class="cr-label">AR Recovery & Collections Automation</span><span class="cr-val">$6,200,000</span></div>
+    <div class="cr-item"><span class="cr-label">Margin Recovery (negative + thin margin loads)</span><span class="cr-val">$2,400,000</span></div>
+    <div class="cr-item"><span class="cr-label">Fleet & Driver Utilization Optimization</span><span class="cr-val">$1,800,000</span></div>
+    <div class="cr-item"><span class="cr-label">Lane Rate Optimization (DAT benchmarking)</span><span class="cr-val">$1,200,000</span></div>
+    <div class="cr-item"><span class="cr-label">Compliance Risk Mitigation</span><span class="cr-val">$600,000</span></div>
+    <div class="cr-item"><span class="cr-label">Process Automation (Neural AI)</span><span class="cr-val">$400,000</span></div>
+    <div class="cr-total"><span class="cr-label">Total Year 1 Savings</span><span class="cr-val">$12,600,000</span></div>
   </div>
 
   <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:24px;">
@@ -378,15 +381,15 @@ a{color:var(--teal);text-decoration:none;}
     <table class="roi-table">
       <thead><tr><th></th><th>Savings</th><th>Cost</th><th>Net Benefit</th></tr></thead>
       <tbody>
-        <tr><td><strong>Year 1</strong></td><td class="money">$1,500,000</td><td class="cost">$185,000</td><td class="money">$1,315,000</td></tr>
-        <tr><td><strong>Year 2</strong></td><td class="money">$2,000,000</td><td class="cost">$180,000</td><td class="money">$1,820,000</td></tr>
-        <tr><td><strong>Year 3</strong></td><td class="money">$2,500,000</td><td class="cost">$350,000</td><td class="money">$2,150,000</td></tr>
+        <tr><td><strong>Year 1</strong></td><td class="money">$12,600,000</td><td class="cost">$185,000</td><td class="money">$12,415,000</td></tr>
+        <tr><td><strong>Year 2</strong></td><td class="money">$15,200,000</td><td class="cost">$180,000</td><td class="money">$15,020,000</td></tr>
+        <tr><td><strong>Year 3</strong></td><td class="money">$18,700,000</td><td class="cost">$350,000</td><td class="money">$18,350,000</td></tr>
       </tbody>
-      <tfoot><tr><td><strong>3-Year Total</strong></td><td>$6,000,000</td><td>$715,000</td><td>$5,285,000</td></tr></tfoot>
+      <tfoot><tr><td><strong>3-Year Total</strong></td><td>$46,500,000</td><td>$715,000</td><td>$45,785,000</td></tr></tfoot>
     </table>
     <div style="margin-top:16px;padding:14px 18px;background:rgba(0,194,168,0.06);border:1px solid rgba(0,194,168,0.15);border-radius:10px;text-align:center;">
-      <span style="font-size:32px;font-weight:900;color:var(--teal);">$8.40</span>
-      <span style="display:block;font-size:12px;color:var(--text-dark);margin-top:2px;">return per dollar invested</span>
+      <span style="font-size:32px;font-weight:900;color:var(--teal);">$64</span>
+      <span style="display:block;font-size:12px;color:var(--text-dark);margin-top:2px;">return per dollar invested over 3 years</span>
     </div>
   </div>
 </section>
