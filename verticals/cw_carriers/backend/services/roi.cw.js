@@ -136,9 +136,10 @@ async function getSummary(period) {
   );
   const obdAnnualizedSavings = parseFloat(obdSummaryRows[0]?.monthly || 0) * 12;
 
-  // Total cost saved = OBD findings only (no double-counting with margin)
+  // Cost saved = OBD findings + operational automation
   const totalCostSaved = obdAnnualizedSavings + callSavings + crmSavings + matchSavings + checkSavings;
-  const totalROI = totalCostSaved; // Single source of truth — don't add margin on top
+  // Total ROI = Cost Saved + projected Margin Lift ($2.475M from +4.5% on $55M)
+  const totalROI = totalCostSaved + 2475000;
 
   // Time saved in hours — include OBD process improvements
   const callTimeSaved = (totalCalls * 15) / 60;  // 15 min per manual call
