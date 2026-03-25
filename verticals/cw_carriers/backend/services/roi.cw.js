@@ -130,8 +130,14 @@ async function getSummary(period) {
   const combinedMarginPct = lgMarginPct > 0 ? lgMarginPct : avgMarginPct;
   const marginLiftSavings = lgMargin > 0 ? lgMargin : totalMargin;
 
+  // OBD Scanner findings savings
+  const obdSummaryRows = await safeQuery(
+    `SELECT COALESCE(SUM(estimated_monthly_savings::numeric), 0) AS monthly FROM lg_obd_findings WHERE status != 'resolved' AND estimated_monthly_savings IS NOT NULL`
+  );
+  const obdAnnualizedSavings = parseFloat(obdSummaryRows[0]?.monthly || 0) * 12;
+
   // Total cost saved
-  const totalCostSaved = callSavings + crmSavings + matchSavings + checkSavings;
+  const totalCostSaved = callSavings + crmSavings + matchSavings + checkSavings + obdAnnualizedSavings;
   const totalROI = totalCostSaved + marginLiftSavings;
 
   // Time saved in hours
@@ -248,7 +254,60 @@ async function getSavings(period) {
   const checkSavings = (checkCount * COST.MANUAL_CHECK_CALL_MIN / 60) * COST.HOURLY_RATE;
   const checkTimeSaved = (checkCount * COST.MANUAL_CHECK_CALL_MIN) / 60;
 
+  // 6. OBD Scanner Findings (from lg_obd_findings)
+  const obdRows = await safeQuery(
+    `SELECT COALESCE(SUM(estimated_monthly_savings::numeric), 0) AS monthly_savings,
+            COUNT(*) AS finding_count
+     FROM lg_obd_findings WHERE status != 'resolved' AND estimated_monthly_savings IS NOT NULL`
+  );
+  const obdMonthlySavings = parseFloat(obdRows[0]?.monthly_savings || 0);
+  const obdFindingCount = parseInt(obdRows[0]?.finding_count || 0);
+  const obdAnnualSavings = obdMonthlySavings * 12;
+
+  // 7. OBD AR aging (biggest single finding)
+  const arRows = await safeQuery(
+    `SELECT estimated_monthly_savings FROM lg_obd_findings WHERE title LIKE '%AR aging%' AND status != 'resolved' LIMIT 1`
+  );
+  const arMonthlySavings = parseFloat(arRows[0]?.estimated_monthly_savings || 0);
+
+  // 8. OBD Compliance risk
+  const compRows = await safeQuery(
+    `SELECT COALESCE(SUM(estimated_monthly_savings::numeric), 0) AS savings
+     FROM lg_obd_findings WHERE scan_module = 'compliance_risk' AND status != 'resolved'`
+  );
+  const compSavings = parseFloat(compRows[0]?.savings || 0) * 12;
+
   const categories = [
+    {
+      id: 'ar_recovery',
+      label: 'AR Aging Recovery (OBD Finding)',
+      description: `$${Math.round(arMonthlySavings).toLocaleString()}/mo trapped in aging receivables — automated collections + factoring optimization`,
+      cost_saved: Math.round(arMonthlySavings * 12),
+      time_saved_hours: Math.round(arMonthlySavings > 0 ? 480 : 0),
+      revenue_impact: 0,
+      count: arMonthlySavings > 0 ? 1 : 0,
+      icon: 'dollar',
+    },
+    {
+      id: 'margin_recovery',
+      label: 'Margin Recovery (OBD Finding)',
+      description: `Negative margin loads + thin margin lanes identified — rate floor alerts + contract renegotiation`,
+      cost_saved: Math.round((obdMonthlySavings - arMonthlySavings - compSavings / 12) * 12),
+      time_saved_hours: 0,
+      revenue_impact: Math.round((obdMonthlySavings - arMonthlySavings - compSavings / 12) * 12),
+      count: obdFindingCount > 1 ? obdFindingCount - 1 : 0,
+      icon: 'chart',
+    },
+    {
+      id: 'compliance_risk',
+      label: 'Compliance Risk Mitigation (OBD Finding)',
+      description: `Expired insurance, lapsed authority, DOT violations — automated monitoring + carrier suspension`,
+      cost_saved: Math.round(compSavings),
+      time_saved_hours: Math.round(compSavings > 0 ? 120 : 0),
+      revenue_impact: 0,
+      count: 1,
+      icon: 'shield',
+    },
     {
       id: 'ai_calls',
       label: 'AI Calls vs Manual Calls',
