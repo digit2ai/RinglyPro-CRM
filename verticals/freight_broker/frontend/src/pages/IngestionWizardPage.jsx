@@ -446,16 +446,12 @@ export default function IngestionWizardPage() {
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Demo Sample Files</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {[
-                { name: 'CW McLeod Loads', file: 'cw-carriers-mcleod-loads.csv', rows: 200, highlight: true },
-                { name: 'CW Macropoint Tracking', file: 'cw-carriers-macropoint-tracking.csv', rows: 150, highlight: true },
-                { name: 'CW Carrier Assure', file: 'cw-carriers-carrier-assure.csv', rows: 50, highlight: true },
-                { name: 'CW HubSpot CRM', file: 'cw-carriers-hubspot-crm.csv', rows: 80, highlight: true },
-                { name: 'Freight Broker', file: 'freight-broker-demo.csv', rows: 50 },
-                { name: 'Asset Carrier', file: 'asset-carrier-demo.csv', rows: 25 },
-                { name: '3PL', file: '3pl-demo.csv', rows: 40 },
-                { name: 'Fleet Operator', file: 'fleet-operator-demo.csv', rows: 20 },
-                { name: 'Intermodal', file: 'intermodal-demo.csv', rows: 30 },
-                { name: 'Freight Forwarder', file: 'freight-forwarder-demo.csv', rows: 25 },
+                { name: 'McLeod Loads (1 year)', file: 'cw-carriers-mcleod-loads.csv', rows: 1200, highlight: true },
+                { name: 'Carrier Assure', file: 'cw-carriers-carrier-assure.csv', rows: 50, highlight: true },
+                { name: 'DAT Rate Benchmarks', file: 'cw-carriers-dat-rates.csv', rows: 40, highlight: true },
+                { name: 'Macropoint Tracking', file: 'cw-carriers-macropoint-tracking.csv', rows: 300, highlight: true },
+                { name: 'Driver Roster', file: 'cw-carriers-drivers.csv', rows: 30, highlight: true },
+                { name: 'HubSpot CRM', file: 'cw-carriers-hubspot-crm.csv', rows: 80 },
               ].map(s => (
                 <a
                   key={s.file}
