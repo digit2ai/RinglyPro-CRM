@@ -50,11 +50,14 @@ async function find_load_pairs(input) {
   if (!load_id) throw new Error('load_id required');
   const tid = tenant_id || 'logistics';
 
-  // Get the anchor load — search by ID or load_ref
+  // Get the anchor load — try load_ref first (handles CW-XXXXX), then numeric id
   let anchor;
-  const [[byId]] = await sequelize.query(`SELECT * FROM lg_loads WHERE id = $1 AND tenant_id = $2`, { bind: [load_id, tid] });
-  if (byId) { anchor = byId; }
-  else {
+  const isNumeric = /^\d+$/.test(String(load_id));
+  if (isNumeric) {
+    const [[byId]] = await sequelize.query(`SELECT * FROM lg_loads WHERE id = $1 AND tenant_id = $2`, { bind: [load_id, tid] });
+    anchor = byId;
+  }
+  if (!anchor) {
     const [[byRef]] = await sequelize.query(`SELECT * FROM lg_loads WHERE load_ref = $1 AND tenant_id = $2`, { bind: [String(load_id), tid] });
     anchor = byRef;
   }

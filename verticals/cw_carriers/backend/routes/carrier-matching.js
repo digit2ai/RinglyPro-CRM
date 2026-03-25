@@ -17,11 +17,14 @@ router.post('/match/:loadId', async (req, res) => {
     const { max_carriers } = req.body;
     const limit = max_carriers || 20;
 
-    // Find the load — try lg_loads by id then load_ref
+    // Find the load — try load_ref first (handles CW-XXXXX), then numeric id
     let load;
-    const [[byId]] = await sequelize.query(`SELECT * FROM lg_loads WHERE id = $1`, { bind: [loadId] });
-    if (byId) { load = byId; }
-    else {
+    const isNumeric = /^\d+$/.test(String(loadId));
+    if (isNumeric) {
+      const [[byId]] = await sequelize.query(`SELECT * FROM lg_loads WHERE id = $1`, { bind: [loadId] });
+      load = byId;
+    }
+    if (!load) {
       const [[byRef]] = await sequelize.query(`SELECT * FROM lg_loads WHERE load_ref = $1`, { bind: [String(loadId)] });
       load = byRef;
     }

@@ -121,12 +121,15 @@ router.get('/:id', async (req, res) => {
       if (cwByRef) { load = cwByRef; }
       else {
         // Try lg_loads by id
-        const [[lgById]] = await sequelize.query(
-          `SELECT l.*, l.shipper_name, NULL as carrier_name,
-                  COALESCE(l.origin_city || ', ' || l.origin_state, l.origin_full) as origin,
-                  COALESCE(l.destination_city || ', ' || l.destination_state, l.destination_full) as destination,
-                  l.equipment_type as freight_type, l.buy_rate as rate_usd, l.sell_rate as shipper_rate, 'lg' as source
-           FROM lg_loads l WHERE l.id = $1`, { bind: [idOrRef] });
+        const isNum = /^\d+$/.test(String(idOrRef));
+        const [[lgById]] = isNum
+          ? await sequelize.query(
+            `SELECT l.*, l.shipper_name, NULL as carrier_name,
+                    COALESCE(l.origin_city || ', ' || l.origin_state, l.origin_full) as origin,
+                    COALESCE(l.destination_city || ', ' || l.destination_state, l.destination_full) as destination,
+                    l.equipment_type as freight_type, l.buy_rate as rate_usd, l.sell_rate as shipper_rate, 'lg' as source
+             FROM lg_loads l WHERE l.id = $1`, { bind: [idOrRef] })
+          : [null];
         if (lgById) { load = lgById; }
         else {
           // Try lg_loads by load_ref
