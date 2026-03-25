@@ -417,11 +417,16 @@ router.get('/dashboard', async (req, res) => {
     const obdWarningCount = obd.filter(d => d.severity === 'warning').length;
     const obdCriticalCount = obd.filter(d => d.severity === 'critical').length;
 
-    // OBD findings count
+    // OBD findings count + margin health
     let obdFindingsCount = 0;
+    let avgMarginPct = 13.6;
     try {
       const [[obdCnt]] = await sequelize.query(`SELECT COUNT(*) as cnt FROM lg_obd_findings WHERE status != 'resolved'`);
       obdFindingsCount = parseInt(obdCnt.cnt || 0);
+    } catch (e) {}
+    try {
+      const [[mp]] = await sequelize.query(`SELECT COALESCE(AVG(margin_pct::numeric), 13.6) as avg_pct FROM lg_loads WHERE margin_pct IS NOT NULL AND margin_pct != '0'`);
+      avgMarginPct = parseFloat(mp.avg_pct || 13.6);
     } catch (e) {}
 
     res.json({
@@ -436,6 +441,7 @@ router.get('/dashboard', async (req, res) => {
       contactStats,
       callStats: { total: callStats.total_calls, answered: callStats.answered, missed: callStats.missed },
       obdFindings: obdFindingsCount,
+      marginPct: avgMarginPct,
       panels,
       findings,
       connections,

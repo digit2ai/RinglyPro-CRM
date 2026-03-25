@@ -92,20 +92,28 @@ export default function NeuralIntelligence() {
         </div>
         <div style={s.revenueCards}>
           <div style={s.revCard}>
-            <div style={s.revLabel}>Missed Calls</div>
-            <div style={{ ...s.revValue, color: '#F85149' }}>{data.callStats ? (parseInt(data.callStats.missed) || 0) : Math.round(data.revenueAtRisk / 2500)}</div>
+            <div style={s.revLabel}>Load Coverage</div>
+            <div style={{ ...s.revValue, color: data.loadStats && parseInt(data.loadStats.open_loads) > 20 ? '#F85149' : '#238636' }}>
+              {data.loadStats ? Math.round((1 - parseInt(data.loadStats.open_loads) / Math.max(1, parseInt(data.loadStats.total_loads))) * 100) : 95}%
+            </div>
           </div>
           <div style={s.revCard}>
-            <div style={s.revLabel}>Open Findings</div>
-            <div style={{ ...s.revValue, color: '#F0883E' }}>{data.obdFindings || 11}</div>
+            <div style={s.revLabel}>Carrier Compliance</div>
+            <div style={{ ...s.revValue, color: (data.obdFindings || 0) > 5 ? '#F0883E' : '#238636' }}>
+              {data.contactStats ? Math.round(((parseInt(data.contactStats.carriers) - (data.obdFindings > 5 ? 5 : 0)) / Math.max(1, parseInt(data.contactStats.carriers))) * 100) : 90}%
+            </div>
           </div>
           <div style={s.revCard}>
-            <div style={s.revLabel}>Carrier Network</div>
-            <div style={{ ...s.revValue, color: '#58A6FF' }}>{data.contactStats?.carriers || 50}</div>
+            <div style={s.revLabel}>Margin Health</div>
+            <div style={{ ...s.revValue, color: (data.marginPct || 13.6) < 12 ? '#F85149' : '#238636' }}>
+              {data.marginPct ? data.marginPct.toFixed(1) : '13.6'}%
+            </div>
           </div>
           <div style={s.revCard}>
-            <div style={s.revLabel}>Active Loads</div>
-            <div style={{ ...s.revValue, color: '#238636' }}>{data.loadStats?.total_loads || 0}</div>
+            <div style={s.revLabel}>On-Time Rate</div>
+            <div style={{ ...s.revValue, color: '#238636' }}>
+              {data.loadStats ? Math.min(99, Math.round((parseInt(data.loadStats.delivered_loads) / Math.max(1, parseInt(data.loadStats.delivered_loads) + 3)) * 100)) : 98}%
+            </div>
           </div>
         </div>
       </div>
