@@ -19,7 +19,7 @@ const LOADBOARD_OPTIONS = ['DAT', 'Truckstop', '123Loadboard', 'Highway']
 const CARRIER_TOOLS_OPTIONS = ['Carrier Assure', 'CargoNet', 'RMIS', 'MyCarrierPackets', 'None']
 const CRM_OPTIONS = ['HubSpot', 'Salesforce', 'Zoho CRM', 'Pipedrive', 'Other', 'None']
 
-const STEPS = ['Business Type', 'Data Sources', 'Upload Files', 'Field Mapping', 'Validation']
+const STEPS = ['Business Type', 'Upload Files', 'Results']
 
 const CANONICAL_FIELDS = [
   'load_id', 'origin_city', 'origin_state', 'origin_zip', 'destination_city', 'destination_state',
@@ -214,18 +214,13 @@ export default function IngestionWizardPage() {
 
   const canNext = () => {
     if (step === 0) return businessType !== null
-    if (step === 1) return dataSources.tms !== ''
-    if (step === 2) return files.length > 0 || ediText.trim().length > 0
+    if (step === 1) return files.length > 0
     return true
   }
 
   function handleNext() {
-    if (step === 2) {
-      handleUpload()
-      return
-    }
-    if (step === 3) {
-      handleConfirmMapping()
+    if (step === 1 && files.some(f => f.status === 'done')) {
+      setStep(2) // Go to results
       return
     }
     setStep(s => Math.min(s + 1, STEPS.length - 1))
@@ -290,7 +285,7 @@ export default function IngestionWizardPage() {
       )}
 
       {/* Step 2: Data Sources */}
-      {step === 1 && (
+      {step === 99 && (
         <div>
           <h2 className="text-xl font-bold text-white mb-2">Configure Data Sources</h2>
           <p className="text-sm text-slate-400 mb-6">Tell us what systems you use so we can optimize ingestion and analysis.</p>
@@ -400,7 +395,7 @@ export default function IngestionWizardPage() {
       )}
 
       {/* Step 3: Upload Files */}
-      {step === 2 && (
+      {step === 1 && (
         <div>
           <h2 className="text-xl font-bold text-white mb-2">Upload Your Data</h2>
           <p className="text-sm text-slate-400 mb-6">Drop your TMS exports, rate sheets, or load history files. Supported: CSV, JSON, TXT, XLS, XLSX.</p>
@@ -503,7 +498,7 @@ export default function IngestionWizardPage() {
       )}
 
       {/* Step 4: Field Mapping */}
-      {step === 3 && (
+      {step === 88 && (
         <div>
           <h2 className="text-xl font-bold text-white mb-2">Field Mapping</h2>
           <p className="text-sm text-slate-400 mb-6">FreightMind auto-mapped your columns. Review and adjust as needed.</p>
@@ -562,7 +557,7 @@ export default function IngestionWizardPage() {
       )}
 
       {/* Step 5: Validation & Ingest */}
-      {step === 4 && (
+      {step === 2 && (
         <div>
           <h2 className="text-xl font-bold text-white mb-2">Validation Results</h2>
 
@@ -656,7 +651,7 @@ export default function IngestionWizardPage() {
             disabled={!canNext()}
             className="px-5 py-2.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            {step === 2 ? 'Upload & Map' : step === 3 ? 'Confirm Mapping' : 'Next'}
+            {step === 1 && files.some(f => f.status === 'done') ? 'View Results' : 'Next'}
           </button>
         )}
       </div>

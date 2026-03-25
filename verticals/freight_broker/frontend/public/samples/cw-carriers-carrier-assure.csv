@@ -1,50 +1,51 @@
 Carrier Name,MC Number,DOT Number,SCAC,Authority Status,Insurance Status,Auto Liability,Cargo Insurance,General Liability,Safety Rating,CSA Score,Out of Service Rate,Power Units,Drivers,Equipment Types,Home State,Payment Terms,Reliability Score,Risk Score,Last Verified,Insurance Expiry,Contract Status
-Swift Transport LLC,MC-284927,1234567,SWFT,Active,Active,1000000,100000,1000000,Satisfactory,42,3.2,85,110,"Reefer,Dry Van",FL,Net 30,92,Low,2026-03-15,2026-09-15,Active
-Eagle Freight Inc,MC-391054,2345678,EGFR,Active,Active,1000000,100000,1000000,Satisfactory,38,2.8,42,55,"Reefer,Dry Van",GA,Net 30,88,Low,2026-03-15,2026-11-20,Active
-Patriot Trucking Corp,MC-502187,3456789,PTRC,Active,Active,1000000,100000,1000000,Satisfactory,55,4.1,28,35,"Reefer,Dry Van,Flatbed",NC,Net 30,85,Low,2026-03-15,2026-08-30,Active
-Sunbelt Carriers LLC,MC-618342,4567890,SNBT,Active,Active,1000000,100000,1000000,Satisfactory,35,2.1,15,20,"Reefer,Dry Van",FL,Quick Pay,91,Low,2026-03-15,2026-07-10,Active
-Mountain West Transport,MC-729415,5678901,MWST,Active,Active,1000000,100000,1000000,Satisfactory,61,5.5,62,80,"Reefer,Dry Van,Flatbed",ID,Net 30,79,Medium,2026-03-15,2026-06-05,Active
-Pacific Coast Logistics,MC-834528,6789012,PCLT,Active,Active,1000000,100000,1000000,Satisfactory,48,3.9,35,45,"Reefer,Dry Van",CA,Net 30,83,Low,2026-03-15,2027-01-15,Active
-Volunteer Express Inc,MC-145672,7890123,VLEX,Active,Active,1000000,100000,1000000,Satisfactory,40,3.0,18,22,"Reefer,Dry Van",TN,Quick Pay,87,Low,2026-03-15,2026-10-22,Active
-Buckeye Freight Systems,MC-256783,8901234,BKFS,Active,Active,1000000,100000,1000000,Satisfactory,33,2.5,22,28,"Reefer,Dry Van",OH,Net 30,90,Low,2026-03-15,2026-12-01,Active
-Keystone Carriers Inc,MC-367894,9012345,KYCR,Active,Active,1000000,100000,1000000,Satisfactory,45,3.5,30,38,"Reefer,Dry Van,Flatbed",PA,Net 30,86,Low,2026-03-15,2026-09-28,Active
-Evergreen Transport LLC,MC-478905,1023456,EVGR,Active,Active,1000000,100000,1000000,Satisfactory,30,1.8,12,15,"Reefer,Dry Van",NJ,Quick Pay,93,Low,2026-03-15,2026-08-15,Active
-Palmetto Freight LLC,MC-589016,1134567,PLMF,Active,Active,1000000,100000,1000000,Satisfactory,58,5.0,8,10,"Reefer,Dry Van",SC,Factoring,76,Medium,2026-03-15,2026-04-18,Active
-Dixie Line Trucking,MC-690127,1245678,DXLN,Active,Active,750000,100000,500000,Conditional,65,6.2,5,6,Reefer,AL,Quick Pay,72,Medium,2026-03-15,2026-05-01,Active
-Great Lakes Express,MC-801238,1356789,GLEX,Active,Active,1000000,100000,1000000,Satisfactory,41,3.3,45,58,"Reefer,Dry Van",MI,Net 30,89,Low,2026-03-15,2026-11-10,Active
-Lone Star Freight,MC-912349,1467890,LSFR,Active,Active,1000000,100000,1000000,Satisfactory,50,4.0,55,70,"Reefer,Dry Van,Flatbed",TX,Net 30,84,Low,2026-03-15,2026-10-05,Active
-Blue Ridge Transport,MC-123450,1578901,BLRG,Active,Active,1000000,100000,1000000,Satisfactory,52,4.5,10,12,"Reefer,Dry Van",VA,Quick Pay,80,Low,2026-03-15,2026-07-22,Active
-Peach State Carriers,MC-234561,1689012,PCHC,Active,Lapsed,750000,100000,500000,Satisfactory,78,7.1,6,8,Reefer,GA,Factoring,68,High,2026-03-15,2026-02-28,Suspended
-Tri-State Hauling Inc,MC-345672,1790123,TRST,Active,Active,1000000,100000,1000000,Satisfactory,44,3.6,14,18,"Dry Van,Flatbed",NJ,Net 30,82,Low,2026-03-15,2026-09-01,Active
-Heartland Trucking Co,MC-456783,1801234,HRTL,Active,Active,1000000,100000,1000000,Satisfactory,39,2.9,38,48,"Reefer,Dry Van",IL,Net 30,88,Low,2026-03-15,2026-12-15,Active
-Southern Cross Freight,MC-567894,1912345,SCFR,Conditional,Active,750000,75000,500000,Conditional,82,8.3,3,4,Reefer,FL,Quick Pay,65,High,2026-03-15,2026-06-30,Probation
-Cardinal Logistics LLC,MC-678905,2023456,CRDL,Active,Active,1000000,100000,1000000,Satisfactory,36,2.4,20,25,"Reefer,Dry Van",VA,Net 30,90,Low,2026-03-15,2026-11-30,Active
-Coastal Freight Lines,MC-789016,2134567,CSFL,Active,Active,1000000,100000,1000000,Satisfactory,60,5.8,9,11,"Reefer,Dry Van",FL,Factoring,74,Medium,2026-03-15,2026-04-10,Active
-Appalachian Transport,MC-890127,2245678,APLT,Active,Expired,750000,100000,500000,Satisfactory,68,6.0,4,5,"Flatbed,Dry Van",WV,Quick Pay,70,Medium,2026-03-15,2026-01-15,Suspended
-Thunder Road Express,MC-901238,2356789,THRD,Active,Active,1000000,100000,1000000,Satisfactory,47,3.8,17,22,"Reefer,Dry Van",TX,Net 30,81,Low,2026-03-15,2026-10-18,Active
-Wolverine Freight Inc,MC-112349,2467890,WVFR,Active,Active,1000000,100000,1000000,Satisfactory,43,3.4,11,14,"Reefer,Dry Van",MI,Quick Pay,85,Low,2026-03-15,2026-08-05,Active
-Prairie Wind Trucking,MC-223450,2578901,PRWD,Active,Lapsed,750000,75000,500000,Satisfactory,76,7.5,7,9,"Dry Van,Flatbed",IL,Factoring,63,High,2026-03-15,2026-03-01,Suspended
-Gulf Coast Carriers,MC-334561,2689012,GLCC,Active,Active,1000000,100000,1000000,Satisfactory,37,2.7,25,32,"Reefer,Dry Van",FL,Net 30,87,Low,2026-03-15,2026-12-20,Active
-Magnolia Transport LLC,MC-445672,2790123,MGNT,Conditional,Expired,500000,75000,500000,Satisfactory,85,9.0,2,3,Reefer,MS,Quick Pay,60,High,2026-03-15,2025-12-31,Suspended
-Northstar Logistics,MC-556783,2801234,NSTR,Active,Active,1000000,100000,1000000,Satisfactory,34,2.2,33,42,"Reefer,Dry Van",MN,Net 30,91,Low,2026-03-15,2027-02-28,Active
-Redline Freight Corp,MC-667894,2912345,RDLN,Active,Active,1000000,100000,1000000,Satisfactory,49,4.2,16,20,"Reefer,Dry Van",OH,Net 30,83,Low,2026-03-15,2026-09-10,Active
-Tidewater Trucking,MC-778905,3023456,TDWT,Active,Lapsed,500000,75000,500000,Satisfactory,90,10.2,1,2,Reefer,VA,Factoring,55,High,2026-03-15,2026-02-15,Suspended
-Seminole Express,MC-889016,3134567,SMEX,Active,Active,1000000,100000,1000000,Satisfactory,56,4.8,3,4,Reefer,FL,Quick Pay,78,Medium,2026-03-15,2026-07-15,Active
-Panhandle Freight LLC,MC-990127,3245678,PNHF,Active,Active,750000,100000,500000,Satisfactory,72,6.8,4,5,Dry Van,FL,Factoring,66,Medium,2026-03-15,2026-04-25,Active
-Smoky Mountain Haulers,MC-101238,3356789,SMKM,Active,Active,1000000,100000,1000000,Satisfactory,62,5.3,2,3,Flatbed,TN,Quick Pay,73,Medium,2026-03-15,2026-06-18,Active
-Iron Horse Transport,MC-112350,3467890,IRNH,Active,Active,1000000,100000,1000000,Satisfactory,46,3.7,8,10,"Flatbed,Dry Van",PA,Net 30,84,Low,2026-03-15,2026-10-30,Active
-Copperhead Carriers,MC-223451,3578901,CPHD,Active,Active,1000000,100000,1000000,Satisfactory,54,4.6,5,7,Reefer,GA,Quick Pay,77,Medium,2026-03-15,2026-05-12,Active
-Delta Route Express,MC-334562,3689012,DLRT,Active,Expired,750000,100000,500000,Satisfactory,64,5.9,6,8,"Reefer,Dry Van",LA,Factoring,69,Medium,2026-03-15,2026-01-31,Suspended
-Allegheny Freight Co,MC-445673,3790123,ALGF,Active,Active,1000000,100000,1000000,Satisfactory,41,3.1,13,16,"Dry Van,Flatbed",PA,Net 30,86,Low,2026-03-15,2026-11-05,Active
-Sunshine State Hauling,MC-556784,3801234,SSTH,Active,Active,500000,75000,500000,Satisfactory,80,8.0,2,2,Reefer,FL,Quick Pay,62,High,2026-03-15,2026-04-02,Probation
-Carolina Freight Corp,MC-667895,3912345,CRFC,Active,Active,1000000,100000,1000000,Satisfactory,38,2.6,19,24,"Reefer,Dry Van",NC,Net 30,89,Low,2026-03-15,2026-12-08,Active
-Empire State Trucking,MC-778906,4023456,EMST,Active,Active,1000000,100000,1000000,Satisfactory,44,3.5,27,34,"Reefer,Dry Van",NY,Net 30,87,Low,2026-03-15,2026-10-15,Active
-Cypress Creek Freight,MC-889017,4134567,CYCF,Active,Lapsed,500000,75000,500000,Satisfactory,88,9.5,1,1,Dry Van,FL,Quick Pay,58,High,2026-03-15,2026-03-10,Suspended
-Badger Freight Inc,MC-990128,4245678,BDGF,Active,Active,1000000,100000,1000000,Satisfactory,47,3.9,10,13,"Reefer,Dry Van",WI,Net 30,82,Low,2026-03-15,2026-08-20,Active
-Razorback Logistics,MC-101239,4356789,RZBK,Active,Active,1000000,100000,1000000,Satisfactory,59,5.1,3,4,Reefer,AR,Factoring,71,Medium,2026-03-15,2026-05-25,Active
-Hoosier Express LLC,MC-112351,4467890,HOEX,Active,Active,1000000,100000,1000000,Satisfactory,42,3.2,15,19,"Reefer,Dry Van",IN,Net 30,86,Low,2026-03-15,2026-09-20,Active
-Dogwood Transport Inc,MC-223452,4578901,DGWD,Active,Active,1000000,100000,1000000,Satisfactory,57,4.9,4,5,Reefer,NC,Quick Pay,75,Medium,2026-03-15,2026-06-28,Active
-Black Bear Trucking,MC-334563,4689012,BKBR,Active,Active,750000,100000,500000,Satisfactory,70,6.5,2,3,Dry Van,ME,Factoring,64,Medium,2026-03-15,2026-04-15,Active
-Pinnacle Freight LLC,MC-445674,4790123,PNFR,Active,Active,1000000,100000,1000000,Satisfactory,40,3.0,21,26,"Reefer,Dry Van,Flatbed",CO,Net 30,88,Low,2026-03-15,2026-11-25,Active
-Okefenokee Carriers,MC-556785,4801234,OKFC,Active,Expired,500000,75000,500000,Satisfactory,92,11.0,1,2,Reefer,GA,Quick Pay,57,High,2026-03-15,2025-11-30,Suspended
-Shenandoah Freight,MC-667896,4912345,SHFR,Active,Active,1000000,100000,1000000,Satisfactory,51,4.3,7,9,"Dry Van,Flatbed",VA,Net 30,81,Low,2026-03-15,2026-07-30,Active
+Swift Transport LLC,MC-284927,3661849,SWFT,Active,Active,"$1,000,000","$100,000","$500,000",Satisfactory,23,4.4%,190,275,Dry Van,WI,Quick Pay,80,Medium,2026-01-26,2027-01-14,Pending
+Eagle Freight Inc,MC-391054,3924097,EAGL,Active,Active,"$500,000","$500,000","$500,000",Satisfactory,20,22.0%,274,334,Dry Van,WI,Net 30,84,High,2026-03-07,2026-03-25,Active
+Patriot Trucking Corp,MC-502187,3231835,PATR,Active,Active,"$1,000,000","$250,000","$2,000,000",Satisfactory,22,9.1%,302,345,Reefer,IN,Net 30,97,Low,2026-02-16,2026-08-14,Expired
+Sunbelt Carriers LLC,MC-618342,3376380,SNBT,Active,Lapsed,"$1,000,000","$250,000","$2,000,000",Conditional,60,4.5%,311,446,Dry Van,NC,Quick Pay,76,Medium,2026-03-04,2025-12-21,Active
+Mountain West Transport,MC-729415,1765922,MTWT,Active,Active,"$500,000","$100,000","$2,000,000",Satisfactory,20,17.3%,331,364,Reefer/Dry Van,VA,Net 45,92,Low,2026-03-09,2026-11-09,Active
+Pacific Coast Logistics,MC-834528,1720291,PCCL,Active,Active,"$750,000","$250,000","$2,000,000",Satisfactory,60,20.8%,346,379,Dry Van,SC,Net 30,57,High,2026-02-28,2026-07-08,Active
+Volunteer Express Inc,MC-145672,3803851,VLTR,Active,Active,"$750,000","$500,000","$2,000,000",Satisfactory,43,16.0%,101,145,Reefer,GA,Net 15,93,Low,2026-02-16,2026-10-19,Active
+Buckeye Freight Systems,MC-256783,3144372,BCKY,Active,Expired,"$750,000","$250,000","$2,000,000",None,51,2.1%,37,45,Reefer/Dry Van,SC,Net 15,76,Medium,2026-02-12,2026-01-21,Active
+Keystone Carriers Inc,MC-367894,1482250,KYST,Active,Active,"$1,000,000","$100,000","$1,000,000",None,37,11.1%,135,149,Reefer,SC,Net 30,85,Low,2026-02-23,2026-09-06,Expired
+Evergreen Transport LLC,MC-478905,3654925,EGRN,Active,Active,"$500,000","$250,000","$500,000",Satisfactory,83,24.8%,141,166,Dry Van,TX,Net 30,78,High,2026-01-24,2027-01-24,Active
+Gulf Coast Carriers,MC-334561,3496665,GLFC,Active,Active,"$750,000","$250,000","$2,000,000",Satisfactory,44,9.9%,130,190,Dry Van/Flatbed,VA,Quick Pay,71,Medium,2026-02-01,2026-10-03,Active
+Great Lakes Express,MC-801238,3735352,GRLK,Active,Active,"$1,000,000","$500,000","$500,000",None,40,14.9%,161,173,Flatbed,PA,Net 15,49,Medium,2026-02-20,2026-10-15,Active
+Lone Star Freight,MC-912349,3407038,LNST,Active,Lapsed,"$1,000,000","$250,000","$1,000,000",Conditional,46,3.7%,350,498,Reefer,VA,Net 30,96,Low,2026-01-23,2026-01-03,Active
+Blue Ridge Transport,MC-123450,2982252,BLRG,Active,Active,"$1,000,000","$100,000","$1,000,000",None,23,18.4%,324,431,Reefer/Dry Van/Flatbed,PA,Quick Pay,86,Low,2026-03-09,2026-12-17,Expired
+Carolina Freight Corp,MC-667895,1666704,CRLN,Active,Active,"$750,000","$250,000","$1,000,000",Satisfactory,49,15.0%,35,44,Reefer/Dry Van/Flatbed,MO,Net 30,82,Low,2026-03-06,2026-07-22,Active
+Heartland Trucking Co,MC-456783,3702147,HRTL,Conditional,Active,"$750,000","$100,000","$500,000",Conditional,56,24.5%,285,405,Reefer/Dry Van/Flatbed,KY,Net 15,82,Low,2026-03-10,2026-11-29,Active
+Cardinal Logistics LLC,MC-678905,3839025,CRDL,Active,Active,"$1,000,000","$250,000","$500,000",Satisfactory,90,10.4%,236,258,Reefer,NC,Quick Pay,76,High,2026-03-04,2026-07-20,Active
+Redline Freight Corp,MC-667894,2251667,RDLN,Active,Active,"$1,000,000","$500,000","$2,000,000",None,40,15.9%,211,251,Dry Van,OH,Net 15,88,Low,2026-01-25,2027-01-24,Active
+Empire State Trucking,MC-778906,1305572,EMPS,Active,Active,"$750,000","$250,000","$1,000,000",Satisfactory,64,8.5%,75,78,Flatbed,TN,Net 30,62,Low,2026-01-23,2027-03-01,Active
+Tri-State Hauling Inc,MC-345672,3971510,TRST,Active,Expired,"$750,000","$100,000","$500,000",Satisfactory,64,14.0%,164,211,Dry Van,MD,Quick Pay,91,Low,2026-02-17,2025-12-29,Expired
+Copperhead Carriers,MC-223451,3973429,CPHR,Active,Active,"$1,000,000","$250,000","$1,000,000",None,45,20.1%,151,154,Reefer/Dry Van,IL,Net 15,84,Low,2026-02-27,2026-12-07,Expired
+Seminole Express,MC-889016,3093324,SMLE,Active,Active,"$1,000,000","$100,000","$2,000,000",Satisfactory,46,10.5%,173,207,Reefer,IN,Net 30,73,Medium,2026-03-10,2026-09-11,Active
+Wolverine Freight Inc,MC-112349,3535124,WLVR,Active,Active,"$1,000,000","$250,000","$500,000",Conditional,27,3.0%,82,94,Dry Van,PA,Quick Pay,75,Medium,2026-03-12,2026-04-09,Pending
+Sunbelt Carriers LLC,MC-618342,3153715,SNBC,Active,Active,"$1,000,000","$250,000","$1,000,000",Satisfactory,60,10.4%,176,213,Dry Van,TN,Net 15,82,Low,2026-02-13,2027-02-02,Active
+Northstar Logistics,MC-556783,1140168,NRST,Active,Active,"$1,000,000","$250,000","$500,000",None,26,3.6%,94,137,Flatbed,AL,Net 30,68,High,2026-03-19,2026-09-09,Pending
+Allegheny Freight Co,MC-445673,1267893,ALGH,Active,Active,"$1,000,000","$250,000","$1,000,000",Satisfactory,40,17.5%,272,292,Dry Van/Flatbed,NJ,Net 15,88,Low,2026-03-19,2026-09-15,Active
+Badger Freight Inc,MC-990128,1078421,BDGR,Active,Active,"$750,000","$250,000","$2,000,000",None,24,6.3%,275,347,Reefer,CT,Net 30,94,Low,2026-02-04,2026-12-07,Active
+Hoosier Express LLC,MC-112351,1294117,HOSR,Active,Lapsed,"$750,000","$100,000","$500,000",Satisfactory,39,4.2%,45,53,Reefer,TX,Net 30,93,Low,2026-01-27,2025-11-30,Expired
+Pinnacle Freight LLC,MC-445674,2794762,PNCL,Active,Active,"$750,000","$250,000","$500,000",Satisfactory,91,6.2%,22,32,Dry Van/Flatbed,NJ,Net 15,85,High,2026-03-21,2026-11-22,Expired
+Shenandoah Freight,MC-667896,2669139,SHND,Active,Active,"$1,000,000","$250,000","$1,000,000",Satisfactory,44,14.3%,230,254,Flatbed,NC,Net 15,76,High,2026-03-24,2026-08-01,Active
+Dixie Freight LLC,MC-551234,1883608,DXFR,Active,Active,"$500,000","$250,000","$500,000",None,23,10.1%,285,370,Reefer/Dry Van,KY,Quick Pay,46,Medium,2026-03-15,2027-01-13,Active
+Magnolia Transport,MC-662345,1448695,MGNT,Active,Active,"$1,000,000","$500,000","$1,000,000",Satisfactory,50,21.1%,94,128,Dry Van/Flatbed,MD,Quick Pay,75,Medium,2026-02-05,2026-11-06,Pending
+Appalachian Haulers Inc,MC-773456,2459815,APLH,Active,Active,"$1,000,000","$100,000","$1,000,000",Satisfactory,27,6.2%,66,87,Reefer/Dry Van/Flatbed,ID,Net 30,98,Low,2026-01-28,2026-08-27,Active
+Chesapeake Freight Co,MC-884567,3045567,CHSK,Active,Expired,"$750,000","$100,000","$2,000,000",Satisfactory,40,19.1%,87,126,Reefer,CT,Net 15,93,Medium,2026-03-02,2026-01-24,Active
+Palmetto Express LLC,MC-995678,3702981,PLMT,Active,Active,"$1,000,000","$250,000","$500,000",Conditional,32,10.4%,273,282,Dry Van,CT,Net 15,88,Medium,2026-02-08,2026-05-28,Active
+Ozark Trucking Corp,MC-106789,1835112,OZRK,Active,Active,"$1,000,000","$500,000","$1,000,000",Satisfactory,57,23.7%,75,100,Reefer/Dry Van,OH,Net 30,63,Medium,2026-02-05,2026-10-29,Active
+Prairie Land Freight,MC-217890,2192738,PRLD,Conditional,Active,"$1,000,000","$250,000","$1,000,000",Conditional,31,15.3%,5,5,Flatbed,FL,Net 45,75,High,2026-01-31,2026-07-28,Active
+Tidewater Carriers Inc,MC-328901,2257157,TDWT,Active,Active,"$1,000,000","$500,000","$500,000",Satisfactory,47,7.2%,51,74,Dry Van/Flatbed,TN,Net 30,80,Low,2026-03-11,2026-06-13,Active
+Iron Horse Transport,MC-439012,1222303,IRNH,Active,Lapsed,"$1,000,000","$250,000","$1,000,000",Satisfactory,23,16.3%,330,355,Flatbed,CT,Net 15,78,High,2026-01-29,2025-12-02,Expired
+Delta Freight Systems,MC-540123,3525981,DLTF,Active,Active,"$750,000","$250,000","$1,000,000",Satisfactory,94,6.0%,153,214,Reefer,FL,Net 15,83,Medium,2026-02-06,2026-11-07,Active
+Cascade Logistics LLC,MC-651234,1905493,CSCD,Active,Active,"$1,000,000","$250,000","$2,000,000",None,61,4.7%,103,126,Reefer/Dry Van,MO,Net 15,87,Low,2026-03-15,2026-06-05,Pending
+Frontier Freight Inc,MC-762345,3898568,FRNT,Active,Active,"$1,000,000","$500,000","$2,000,000",None,34,5.5%,54,58,Dry Van/Flatbed,IL,Quick Pay,58,High,2026-02-21,2026-07-30,Active
+Old Dominion Express,MC-873456,3062336,OLDM,Active,Expired,"$1,000,000","$250,000","$2,000,000",Satisfactory,23,15.5%,74,100,Flatbed,OH,Net 30,83,Low,2026-03-20,2026-02-18,Active
+Razorback Hauling Co,MC-984567,2630434,RZBK,Active,Active,"$750,000","$500,000","$500,000",Conditional,49,18.0%,137,173,Reefer,VA,Net 30,88,Low,2026-02-03,2026-06-17,Active
+Granite State Transport,MC-195678,1904373,GRST,Active,Active,"$750,000","$250,000","$1,000,000",Satisfactory,83,11.8%,54,71,Dry Van,TX,Net 30,91,Low,2026-02-15,2026-12-26,Expired
+Bayou Freight LLC,MC-206789,2108252,BYOU,Active,Lapsed,"$500,000","$500,000","$1,000,000",Satisfactory,48,3.6%,213,281,Reefer/Dry Van/Flatbed,AL,Net 30,76,Medium,2026-02-27,2026-01-05,Active
+Catawba Carriers Inc,MC-317890,1093640,CTWB,Active,Active,"$500,000","$100,000","$1,000,000",Satisfactory,28,15.1%,122,180,Dry Van,ID,Net 30,82,Medium,2026-01-23,2026-10-30,Active
+Dogwood Transport Co,MC-428901,3438924,DGWD,Active,Active,"$1,000,000","$100,000","$2,000,000",Satisfactory,41,23.5%,328,369,Reefer,NJ,Quick Pay,51,Medium,2026-02-28,2026-10-31,Active
+Flint River Freight,MC-539012,3943520,FLRV,Active,Active,"$750,000","$100,000","$2,000,000",Satisfactory,32,17.7%,250,306,Dry Van/Flatbed,SC,Net 30,79,High,2026-02-02,2026-04-15,Pending
+High Plains Trucking,MC-640123,2836911,HPLT,Active,Active,"$1,000,000","$250,000","$1,000,000",Conditional,23,13.8%,57,58,Reefer/Dry Van/Flatbed,WI,Quick Pay,80,Low,2026-02-18,2026-06-13,Active
