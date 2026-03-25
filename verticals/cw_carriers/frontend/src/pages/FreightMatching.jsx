@@ -7,8 +7,9 @@ export default function FreightMatching() {
   const [loading, setLoading] = useState(false);
   useEffect(()=>{loadC();}, []);
   const loadC = async () => { const {data}=await api.get('/matching/campaigns').catch(()=>({data:{data:[]}})); setCampaigns(data?.data||[]); };
-  const run = async () => { if(!lid) return; setLoading(true); try { const {data}=await api.post(`/matching/match/${lid}`); setMatches(data.data); } catch(e){alert(e.response?.data?.error||'Failed');} setLoading(false); };
-  const launch = async () => { if(!lid) return; try { const {data}=await api.post(`/matching/campaign/${lid}`,{max_carriers:10}); alert(data.data.message); loadC(); } catch(e){alert(e.response?.data?.error||'Failed');} };
+  const normId = (id) => /^\d+$/.test(id) ? `CW-${id}` : id;
+  const run = async () => { if(!lid) return; setLoading(true); try { const {data}=await api.post(`/matching/match/${normId(lid)}`); setMatches(data.data); } catch(e){alert(e.response?.data?.error||'Failed');} setLoading(false); };
+  const launch = async () => { if(!lid) return; try { const {data}=await api.post(`/matching/campaign/${normId(lid)}`,{max_carriers:10}); alert(data.data.message); loadC(); } catch(e){alert(e.response?.data?.error||'Failed');} };
   const sc = s => s>=70?'#10B981':s>=40?'#F59E0B':'#EF4444';
   return (<div>
     <h1 style={S.title}>AI FREIGHT MATCHING</h1>

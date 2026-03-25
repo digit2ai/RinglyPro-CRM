@@ -9,7 +9,8 @@ export default function LoadMatching() {
   const findPairs = async () => {
     setLoading(true);
     try {
-      const { data } = await api.post(`/load-matching/pairs/${loadId}`, { max_results: 20 });
+      const searchId = /^\d+$/.test(loadId) ? `CW-${loadId}` : loadId;
+      const { data } = await api.post(`/load-matching/pairs/${searchId}`, { max_results: 20 });
       setResult(data.data);
     } catch (err) { setResult({ error: err.response?.data?.error || err.message }); }
     setLoading(false);
@@ -34,7 +35,7 @@ export default function LoadMatching() {
       <div style={S.card}>
         <h3 style={S.cardTitle}>Find Load Pairs</h3>
         <div style={S.row}>
-          <input style={{...S.input, flex: 1}} type="number" placeholder="Enter Load ID" value={loadId} onChange={e => setLoadId(e.target.value)} />
+          <input style={{...S.input, flex: 1}} type="text" placeholder="Enter Load ID (e.g. CW-71180)" value={loadId} onChange={e => setLoadId(e.target.value)} />
           <button onClick={findPairs} disabled={loading || !loadId} style={S.btn}>{loading ? 'Matching...' : 'Find Pairs'}</button>
         </div>
       </div>
