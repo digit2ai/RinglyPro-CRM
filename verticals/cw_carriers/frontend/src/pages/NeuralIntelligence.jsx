@@ -104,9 +104,9 @@ export default function NeuralIntelligence() {
             </div>
           </div>
           <div style={s.revCard}>
-            <div style={s.revLabel}>Margin Health</div>
-            <div style={{ ...s.revValue, color: (data.marginPct || 13.6) < 12 ? '#F85149' : '#238636' }}>
-              {data.marginPct ? data.marginPct.toFixed(1) : '13.6'}%
+            <div style={s.revLabel}>OBD Findings</div>
+            <div style={{ ...s.revValue, color: (data.obdFindings || 0) > 5 ? '#F85149' : '#238636' }}>
+              {data.obdFindings || 0}
             </div>
           </div>
           <div style={s.revCard}>
