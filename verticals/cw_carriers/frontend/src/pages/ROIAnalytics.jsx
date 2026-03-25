@@ -171,7 +171,7 @@ export default function ROIAnalytics() {
             <HeroCard label="Total ROI" value={`$${summary.total_roi.toLocaleString()}`} trend={summary.qoq_change_pct} color="#C8962A" />
             <HeroCard label="Cost Saved" value={`$${summary.cost_saved.toLocaleString()}`} sub="operational savings" color="#238636" />
             <HeroCard label="Time Saved" value={`${summary.time_saved_hours.toLocaleString()} hrs`} sub="staff hours recovered" color="#0EA5E9" />
-            <HeroCard label="Margin Lift" value={`+${summary.margin_lift_pct}%`} sub={`$${summary.margin_lift_dollars.toLocaleString()} gained`} color="#a78bfa" />
+            <HeroCard label="Margin Lift" value={`+${summary.margin_lift_pct}%`} sub={`13.7% → ${(13.7 + summary.margin_lift_pct).toFixed(1)}% after treatment`} color="#a78bfa" />
           </div>
           <div style={s.metaRow}>
             <MetaBadge label="ROI Multiple" value={`${summary.roi_multiple}x`} color="#C8962A" />
