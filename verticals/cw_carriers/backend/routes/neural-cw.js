@@ -197,7 +197,7 @@ router.get('/dashboard', async (req, res) => {
         id: 'f1', severity: missedCalls > 10 ? 'CRITICAL' : 'WARNING',
         title: `${missedCalls} missed carrier calls this month`,
         explanation: `Your team missed ${missedCalls} inbound calls in the last 30 days. Each missed call represents a potential load coverage opportunity worth ~$${avgRate.toLocaleString()} avg.`,
-        dollarImpact: `$${revenueAtRisk.toLocaleString()} at risk`,
+        dollarImpact: `${missedCalls} missed calls — ${Math.round(missedCalls / Math.max(1, totalCalls) * 100)}% miss rate`,
         source: 'Rachel Call Logs',
         treatment: {
           treatment_type: 'cw_missed_call_recovery',
@@ -216,7 +216,7 @@ router.get('/dashboard', async (req, res) => {
         id: 'f2', severity: 'WARNING',
         title: `${loadStats.open_loads} loads still uncovered`,
         explanation: `You have ${loadStats.open_loads} open loads awaiting carrier assignment. Consider running a carrier coverage campaign.`,
-        dollarImpact: `$${(parseInt(loadStats.open_loads) * avgRate).toLocaleString()} pipeline`,
+        dollarImpact: `${loadStats.open_loads} loads need carrier assignment`,
         source: 'CW Loads',
         treatment: {
           treatment_type: 'cw_load_coverage_outbound',
