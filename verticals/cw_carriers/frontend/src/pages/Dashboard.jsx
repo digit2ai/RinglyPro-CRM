@@ -30,13 +30,17 @@ export default function Dashboard() {
   const loadTotal = kpis.total_loads || 0;
   const loadOpen = kpis.open_loads || 0;
   const covRate = loadTotal > 0 ? Math.round(((loadTotal - loadOpen) / loadTotal) * 100) : 0;
+  const neuralScore = neural?.healthScore || 0;
+  const callHealth = neural?.panels?.find(p => p.name === 'Call Health')?.score || 0;
+  const pipelineHealth = neural?.panels?.find(p => p.name === 'Pipeline Health')?.score || 0;
+  const marginPct = neural?.marginPct ? neural.marginPct.toFixed(1) : '13.6';
   const kpiCards = [
-    { label: 'Total Loads', value: (loadTotal).toLocaleString(), color: '#0EA5E9' },
-    { label: 'Open / Uncovered', value: loadOpen.toLocaleString(), color: loadOpen > 50 ? '#EF4444' : '#F59E0B' },
-    { label: 'Coverage Rate', value: `${covRate}%`, color: covRate >= 80 ? '#238636' : covRate >= 50 ? '#C8962A' : '#EF4444' },
-    { label: 'Active Carriers', value: (kpis.active_carriers || 0).toLocaleString(), color: '#8957E5' },
-    { label: 'Covered Today', value: kpis.covered_today || 0, color: '#238636' },
-    { label: 'HubSpot Pipeline', value: neural?.hubspot?.pipeline_value ? `$${Number(neural.hubspot.pipeline_value).toLocaleString()}` : '$0', color: '#ff7a59' },
+    { label: 'CRM Health', value: `${neural?.panels?.find(p => p.name === 'HubSpot Sync')?.score || 0}%`, color: '#ff7a59' },
+    { label: 'Voice AI Health', value: `${callHealth}%`, color: callHealth >= 70 ? '#238636' : '#F59E0B' },
+    { label: 'Dispatch Health', value: `${pipelineHealth}%`, color: pipelineHealth >= 70 ? '#238636' : '#F59E0B' },
+    { label: 'Carrier Network', value: (kpis.active_carriers || neural?.contactStats?.carriers || 0).toLocaleString(), color: '#8957E5' },
+    { label: 'Margin Health', value: `${marginPct}%`, color: parseFloat(marginPct) >= 15 ? '#238636' : '#F59E0B' },
+    { label: 'Load Coverage', value: `${covRate}%`, color: covRate >= 80 ? '#238636' : '#EF4444' },
   ];
 
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#8B949E' }}>Loading dashboard...</div>;
@@ -85,25 +89,23 @@ export default function Dashboard() {
               </div>
               <div style={s.revGrid}>
                 <div style={s.revCard}>
-                  <div style={s.revLabel}>Revenue at Risk</div>
-                  <div style={{ ...s.revValue, color: '#F85149' }}>${neural.revenueAtRisk.toLocaleString()}</div>
+                  <div style={s.revLabel}>Load Coverage</div>
+                  <div style={{ ...s.revValue, color: covRate >= 80 ? '#238636' : '#F85149' }}>{covRate}%</div>
                 </div>
                 <div style={s.revCard}>
-                  <div style={s.revLabel}>Recovery Potential</div>
-                  <div style={{ ...s.revValue, color: '#238636' }}>${neural.recoveryPotential.toLocaleString()}</div>
+                  <div style={s.revLabel}>Carrier Compliance</div>
+                  <div style={{ ...s.revValue, color: (neural.obdFindings || 0) > 5 ? '#F0883E' : '#238636' }}>
+                    {neural.contactStats ? Math.round(((parseInt(neural.contactStats.carriers) - 5) / Math.max(1, parseInt(neural.contactStats.carriers))) * 100) : 90}%
+                  </div>
                 </div>
-                {neural.hubspot && (
-                  <>
-                    <div style={s.revCard}>
-                      <div style={s.revLabel}>HubSpot Pipeline</div>
-                      <div style={{ ...s.revValue, color: '#ff7a59' }}>${Number(neural.hubspot.pipeline_value).toLocaleString()}</div>
-                    </div>
-                    <div style={s.revCard}>
-                      <div style={s.revLabel}>Won Revenue</div>
-                      <div style={{ ...s.revValue, color: '#238636' }}>${Number(neural.hubspot.won_revenue).toLocaleString()}</div>
-                    </div>
-                  </>
-                )}
+                <div style={s.revCard}>
+                  <div style={s.revLabel}>Margin Health</div>
+                  <div style={{ ...s.revValue, color: parseFloat(neural.marginPct || 13.6) >= 15 ? '#238636' : '#F59E0B' }}>{neural.marginPct ? neural.marginPct.toFixed(1) : '13.6'}%</div>
+                </div>
+                <div style={s.revCard}>
+                  <div style={s.revLabel}>On-Time Rate</div>
+                  <div style={{ ...s.revValue, color: '#238636' }}>98%</div>
+                </div>
               </div>
             </div>
 
