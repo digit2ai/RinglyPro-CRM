@@ -1,0 +1,21 @@
+carrier_name,mc_number,dot_number,contact_name,phone,email,equipment_types,home_city,home_state
+Swift Transport Inc,MC-286541,DOT-526235,Mike Johnson,+1-602-555-0142,dispatch@swifttransport.com,"dry_van,reefer",Phoenix,AZ
+Werner Enterprises,MC-183497,DOT-435987,Sarah Williams,+1-402-555-0198,ops@wernerenterprises.com,"reefer,dry_van",Omaha,NE
+JB Hunt Transport,MC-117511,DOT-349762,Carlos Rivera,+1-479-555-0231,carrier.ops@jbhunt.com,"flatbed,dry_van,intermodal",Lowell,AR
+Schneider National,MC-133655,DOT-432678,Amanda Chen,+1-920-555-0167,dispatch@schneider.com,"dry_van,reefer,flatbed",Green Bay,WI
+Old Dominion Freight,MC-225804,DOT-542891,Robert Taylor,+1-336-555-0284,ltl.dispatch@odfl.com,"dry_van,ltl",Thomasville,NC
+Heartland Express,MC-197632,DOT-398541,Jennifer Brown,+1-319-555-0153,ops@heartlandexpress.com,"reefer,dry_van",North Liberty,IA
+XPO Logistics,MC-276543,DOT-612345,David Kim,+1-855-555-0199,carrier@xpo.com,"flatbed,dry_van,specialized",Greenwich,CT
+FedEx Freight,MC-301254,DOT-689432,Lisa Martinez,+1-800-555-0176,freight.dispatch@fedex.com,"dry_van,ltl",Harrison,AR
+Knight Transportation,MC-298701,DOT-567234,Tom Wilson,+1-602-555-0213,dispatch@knighttrans.com,"reefer,dry_van",Phoenix,AZ
+CRST International,MC-315876,DOT-478932,Maria Garcia,+1-319-555-0247,operations@crst.com,"dry_van,flatbed",Cedar Rapids,IA
+Prime Inc,MC-211345,DOT-398765,Jason Lee,+1-417-555-0188,dispatch@primeinc.com,"reefer,dry_van,tanker",Springfield,MO
+Covenant Transport,MC-178654,DOT-312567,Rachel Adams,+1-423-555-0265,ops@covenantlogistics.com,"dry_van,reefer",Chattanooga,TN
+Ryder System,MC-287123,DOT-534217,Brian Thompson,+1-305-555-0134,fleet@ryder.com,"dry_van,flatbed,specialized",Miami,FL
+Saia LTL Freight,MC-234567,DOT-456789,Karen White,+1-770-555-0192,dispatch@saia.com,"dry_van,ltl",Johns Creek,GA
+Marten Transport,MC-156789,DOT-287654,Steve Olson,+1-715-555-0221,reefer.dispatch@marten.com,"reefer,dry_van",Mondovi,WI
+USA Truck,MC-198234,DOT-345678,Diana Perez,+1-479-555-0178,carrier.ops@usatruck.com,"dry_van",Van Buren,AR
+ABF Freight System,MC-213456,DOT-398712,Mark Robinson,+1-479-555-0256,ltl.ops@abf.com,"dry_van,ltl,flatbed",Fort Smith,AR
+Estes Express Lines,MC-278901,DOT-512345,Patricia Clark,+1-804-555-0143,dispatch@estes-express.com,"dry_van,ltl",Richmond,VA
+Celadon Group,MC-165432,DOT-278943,Greg Hernandez,+1-317-555-0209,operations@celadon.com,"dry_van,reefer",Indianapolis,IN
+Central Refrigerated,MC-234890,DOT-456123,Nancy Baker,+1-801-555-0187,reefer.ops@central-refrig.com,"reefer",West Valley City,UT

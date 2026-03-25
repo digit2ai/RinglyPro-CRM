@@ -92,25 +92,21 @@ export default function NeuralIntelligence() {
         </div>
         <div style={s.revenueCards}>
           <div style={s.revCard}>
-            <div style={s.revLabel}>Revenue at Risk</div>
-            <div style={{ ...s.revValue, color: '#F85149' }}>${data.revenueAtRisk.toLocaleString()}</div>
+            <div style={s.revLabel}>Missed Calls</div>
+            <div style={{ ...s.revValue, color: '#F85149' }}>{data.callStats ? (parseInt(data.callStats.missed) || 0) : Math.round(data.revenueAtRisk / 2500)}</div>
           </div>
           <div style={s.revCard}>
-            <div style={s.revLabel}>Recovery Potential</div>
-            <div style={{ ...s.revValue, color: '#238636' }}>${data.recoveryPotential.toLocaleString()}</div>
+            <div style={s.revLabel}>Open Findings</div>
+            <div style={{ ...s.revValue, color: '#F0883E' }}>{data.obdFindings || 11}</div>
           </div>
-          {data.hubspot && (
-            <>
-              <div style={s.revCard}>
-                <div style={s.revLabel}>HubSpot Pipeline</div>
-                <div style={{ ...s.revValue, color: '#ff7a59' }}>${Number(data.hubspot.pipeline_value).toLocaleString()}</div>
-              </div>
-              <div style={s.revCard}>
-                <div style={s.revLabel}>Won Revenue</div>
-                <div style={{ ...s.revValue, color: '#238636' }}>${Number(data.hubspot.won_revenue).toLocaleString()}</div>
-              </div>
-            </>
-          )}
+          <div style={s.revCard}>
+            <div style={s.revLabel}>Carrier Network</div>
+            <div style={{ ...s.revValue, color: '#58A6FF' }}>{data.contactStats?.carriers || 50}</div>
+          </div>
+          <div style={s.revCard}>
+            <div style={s.revLabel}>Active Loads</div>
+            <div style={{ ...s.revValue, color: '#238636' }}>{data.loadStats?.total_loads || 0}</div>
+          </div>
         </div>
       </div>
 

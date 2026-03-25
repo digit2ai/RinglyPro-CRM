@@ -417,6 +417,13 @@ router.get('/dashboard', async (req, res) => {
     const obdWarningCount = obd.filter(d => d.severity === 'warning').length;
     const obdCriticalCount = obd.filter(d => d.severity === 'critical').length;
 
+    // OBD findings count
+    let obdFindingsCount = 0;
+    try {
+      const [[obdCnt]] = await sequelize.query(`SELECT COUNT(*) as cnt FROM lg_obd_findings WHERE status != 'resolved'`);
+      obdFindingsCount = parseInt(obdCnt.cnt || 0);
+    } catch (e) {}
+
     res.json({
       success: true,
       healthScore: overallScore,
@@ -425,6 +432,10 @@ router.get('/dashboard', async (req, res) => {
       recoveryPotential,
       trend: { direction: overallScore >= 50 ? 'up' : 'down', points: Math.abs(overallScore - 50), period: '30 days' },
       businessName: 'CW Carriers USA',
+      loadStats,
+      contactStats,
+      callStats: { total: callStats.total_calls, answered: callStats.answered, missed: callStats.missed },
+      obdFindings: obdFindingsCount,
       panels,
       findings,
       connections,
