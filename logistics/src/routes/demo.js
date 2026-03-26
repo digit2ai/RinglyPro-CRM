@@ -303,6 +303,11 @@ async function generateFullDemo(models, seq, pid) {
       else if (lr < 0.98) lineCount = 31 + Math.floor(Math.random() * 30);
       else lineCount = 61 + Math.floor(Math.random() * 78);
 
+      // Cap lines so we don't overshoot TARGET_LINES
+      const remainingLines = TARGET_LINES - totalLines;
+      if (remainingLines <= 0) break;
+      lineCount = Math.min(lineCount, remainingLines);
+
       for (let l = 0; l < lineCount; l++) {
         const sku = pickSku();
         const qty = 1 + Math.floor(Math.random() * 30);
@@ -332,6 +337,8 @@ async function generateFullDemo(models, seq, pid) {
         await flushGoLines();
       }
     }
+    // Stop generating if we've hit the line target
+    if (totalLines >= TARGET_LINES) break;
   }
 
   // Final flush
