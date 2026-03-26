@@ -122,6 +122,38 @@ export default function UploadPage() {
     }
   }
 
+  // Poll upload status until parsing completes
+  const pollStatus = useCallback(async (fileType, file) => {
+    const maxAttempts = 120 // 10 minutes max
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      await new Promise(r => setTimeout(r, 5000)) // poll every 5s
+      try {
+        const statusData = await getUploadStatus(projectId)
+        const ft = statusData[fileType]
+        if (ft && ft.status === 'parsed') {
+          setFiles(prev => ({
+            ...prev,
+            [fileType]: { file, status: 'success', rows: ft.rows || 0, warnings: ft.warnings || [] }
+          }))
+          return
+        } else if (ft && ft.status === 'error') {
+          setFiles(prev => ({
+            ...prev,
+            [fileType]: { ...prev[fileType], status: 'error', warnings: ft.errors ? ft.errors.map(e => e.message || e) : ['Parsing failed'] }
+          }))
+          return
+        }
+        // Still parsing — update UI with progress message
+        setFiles(prev => ({
+          ...prev,
+          [fileType]: { ...prev[fileType], status: 'uploading', warnings: [`Processing large file... (${attempt * 5}s)`] }
+        }))
+      } catch (e) {
+        // Polling failed — keep trying
+      }
+    }
+  }, [projectId])
+
   const handleFileDrop = useCallback(async (fileType, acceptedFiles) => {
     if (!acceptedFiles.length || !projectId) return
 
@@ -133,15 +165,26 @@ export default function UploadPage() {
 
     try {
       const result = await uploadFile(projectId, fileType, file)
-      setFiles(prev => ({
-        ...prev,
-        [fileType]: {
-          file,
-          status: 'success',
-          rows: result.row_count || result.rows || 0,
-          warnings: result.warnings || []
-        }
-      }))
+
+      // Check if backend returned "parsing" status (large file, async processing)
+      if (result.status === 'parsing') {
+        setFiles(prev => ({
+          ...prev,
+          [fileType]: { file, status: 'uploading', rows: 0, warnings: ['Large file — parsing in background...'] }
+        }))
+        // Start polling for completion
+        pollStatus(fileType, file)
+      } else {
+        setFiles(prev => ({
+          ...prev,
+          [fileType]: {
+            file,
+            status: 'success',
+            rows: result.row_count || result.rows_parsed || result.rows || 0,
+            warnings: result.warnings || []
+          }
+        }))
+      }
     } catch (err) {
       setFiles(prev => ({
         ...prev,
@@ -152,7 +195,7 @@ export default function UploadPage() {
         }
       }))
     }
-  }, [projectId])
+  }, [projectId, pollStatus])
 
   const handleRunAnalysis = async () => {
     setLoading(true)

@@ -9,6 +9,7 @@ const parserService = require('../services/parser');
 const VALID_FILE_TYPES = ['item_master', 'inventory', 'goods_in', 'goods_out', 'oee_machines', 'oee_machine_events', 'oee_production_runs'];
 
 // POST /api/v1/upload/:projectId/:fileType — Upload a data file
+// For large files: responds immediately with "parsing" status, processes in background
 router.post('/:projectId/:fileType', upload.single('file'), async (req, res) => {
   try {
     const { projectId, fileType } = req.params;
@@ -29,6 +30,9 @@ router.post('/:projectId/:fileType', upload.single('file'), async (req, res) => 
       return res.status(400).json({ success: false, error: 'No file uploaded' });
     }
 
+    const fileSizeMB = (req.file.size / 1024 / 1024).toFixed(1);
+    console.log(`[UPLOAD] ${fileType}: ${req.file.originalname} (${fileSizeMB}MB) for project ${projectId}`);
+
     // Create file tracking record
     const uploadedFile = await req.models.LogisticsUploadedFile.create({
       project_id: project.id,
@@ -39,77 +43,115 @@ router.post('/:projectId/:fileType', upload.single('file'), async (req, res) => 
       parse_status: 'parsing'
     });
 
-    // Parse the file
-    try {
-      const parseResult = await parserService.parseFile(req.file, fileType);
+    // For large files (>10MB), respond immediately and process in background
+    const isLargeFile = req.file.size > 10 * 1024 * 1024;
 
-      // Store parsed data in the appropriate table
-      const modelMap = {
-        item_master: 'LogisticsItemMaster',
-        inventory: 'LogisticsInventoryData',
-        goods_in: 'LogisticsGoodsInData',
-        goods_out: 'LogisticsGoodsOutData',
-        oee_machines: 'LogisticsOEEMachine',
-        oee_machine_events: 'LogisticsOEEMachineEvent',
-        oee_production_runs: 'LogisticsOEEProductionRun'
-      };
+    const processFile = async () => {
+      try {
+        const parseResult = await parserService.parseFile(req.file, fileType);
 
-      const modelName = modelMap[fileType];
-      const Model = req.models[modelName];
+        const modelMap = {
+          item_master: 'LogisticsItemMaster',
+          inventory: 'LogisticsInventoryData',
+          goods_in: 'LogisticsGoodsInData',
+          goods_out: 'LogisticsGoodsOutData',
+          oee_machines: 'LogisticsOEEMachine',
+          oee_machine_events: 'LogisticsOEEMachineEvent',
+          oee_production_runs: 'LogisticsOEEProductionRun'
+        };
 
-      // Delete existing data for this project/file type and bulk insert
-      await Model.destroy({ where: { project_id: project.id } });
+        const modelName = modelMap[fileType];
+        const Model = req.models[modelName];
 
-      const records = parseResult.rows.map(row => ({
-        ...row,
-        project_id: project.id
-      }));
+        // Delete existing data for this project/file type
+        await Model.destroy({ where: { project_id: project.id } });
 
-      if (records.length > 0) {
-        // Chunk large inserts to avoid DB connection timeouts
-        const CHUNK_SIZE = 5000;
-        for (let i = 0; i < records.length; i += CHUNK_SIZE) {
-          await Model.bulkCreate(records.slice(i, i + CHUNK_SIZE), { ignoreDuplicates: true });
+        const records = parseResult.rows.map(row => ({
+          ...row,
+          project_id: project.id
+        }));
+
+        if (records.length > 0) {
+          // Chunk inserts — 5,000 rows per batch
+          const CHUNK_SIZE = 5000;
+          const totalChunks = Math.ceil(records.length / CHUNK_SIZE);
+          console.log(`[UPLOAD] Inserting ${records.length} rows in ${totalChunks} chunks...`);
+
+          for (let i = 0; i < records.length; i += CHUNK_SIZE) {
+            await Model.bulkCreate(records.slice(i, i + CHUNK_SIZE), { ignoreDuplicates: true });
+            if ((i / CHUNK_SIZE) % 10 === 0) {
+              console.log(`[UPLOAD] Chunk ${Math.floor(i / CHUNK_SIZE) + 1}/${totalChunks}`);
+            }
+          }
         }
+
+        // Update file record
+        await uploadedFile.update({
+          row_count: parseResult.rows.length,
+          column_count: parseResult.columnCount,
+          parse_status: 'parsed',
+          parse_errors: parseResult.errors.length > 0 ? parseResult.errors : null,
+          plausibility_warnings: parseResult.warnings.length > 0 ? parseResult.warnings : null
+        });
+
+        // Update project status
+        if (project.status === 'pending') {
+          await project.update({ status: 'uploading' });
+        }
+
+        console.log(`[UPLOAD] ${fileType}: Done — ${parseResult.rows.length} rows inserted`);
+        return parseResult;
+      } catch (parseError) {
+        console.error(`[UPLOAD] ${fileType}: Parse/insert failed:`, parseError.message);
+        await uploadedFile.update({
+          parse_status: 'error',
+          parse_errors: [{ message: parseError.message }]
+        });
+        throw parseError;
       }
+    };
 
-      // Update file record
-      await uploadedFile.update({
-        row_count: parseResult.rows.length,
-        column_count: parseResult.columnCount,
-        parse_status: 'parsed',
-        parse_errors: parseResult.errors.length > 0 ? parseResult.errors : null,
-        plausibility_warnings: parseResult.warnings.length > 0 ? parseResult.warnings : null
-      });
-
-      // Update project status
-      if (project.status === 'pending') {
-        await project.update({ status: 'uploading' });
-      }
-
+    if (isLargeFile) {
+      // Respond immediately — frontend will poll status
+      console.log(`[UPLOAD] Large file (${fileSizeMB}MB) — processing in background`);
       res.json({
         success: true,
         data: {
           file_id: uploadedFile.id,
           file_type: fileType,
-          rows_parsed: parseResult.rows.length,
-          columns: parseResult.columnCount,
-          errors: parseResult.errors,
-          warnings: parseResult.warnings,
-          status: 'parsed'
+          rows_parsed: 0,
+          status: 'parsing',
+          message: `Large file (${fileSizeMB}MB) — parsing in background. Poll /upload/${projectId}/status for updates.`
         }
       });
-    } catch (parseError) {
-      await uploadedFile.update({
-        parse_status: 'error',
-        parse_errors: [{ message: parseError.message }]
-      });
 
-      res.status(422).json({
-        success: false,
-        error: 'File parsing failed',
-        details: parseError.message
+      // Process in background (don't await)
+      processFile().catch(err => {
+        console.error(`[UPLOAD] Background processing failed for ${fileType}:`, err.message);
       });
+    } else {
+      // Small file — process synchronously
+      try {
+        const parseResult = await processFile();
+        res.json({
+          success: true,
+          data: {
+            file_id: uploadedFile.id,
+            file_type: fileType,
+            rows_parsed: parseResult.rows.length,
+            columns: parseResult.columnCount,
+            errors: parseResult.errors,
+            warnings: parseResult.warnings,
+            status: 'parsed'
+          }
+        });
+      } catch (parseError) {
+        res.status(422).json({
+          success: false,
+          error: 'File parsing failed',
+          details: parseError.message
+        });
+      }
     }
   } catch (error) {
     console.error('LOGISTICS upload error:', error);
