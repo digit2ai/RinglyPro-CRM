@@ -314,4 +314,74 @@ async function parseFile(file, fileType) {
   return result;
 }
 
-module.exports = { parseFile, SCHEMAS };
+/**
+ * parseHeadersOnly — reads ONLY the first line of a CSV, normalizes column names,
+ * validates against the schema required columns, and estimates row count.
+ * Returns instantly — no full file parse.
+ *
+ * @param {Buffer} buffer
+ * @param {string} mimetype
+ * @param {string} filename
+ * @param {string} fileType
+ * @returns {{ valid: boolean, headers: string[], errors: object[], rowEstimate: number }}
+ */
+function parseHeadersOnly(buffer, mimetype, filename, fileType) {
+  const schema = SCHEMAS[fileType];
+  if (!schema) {
+    return { valid: false, headers: [], errors: [{ type: 'unknown_type', message: `Unknown file type: ${fileType}` }], rowEstimate: 0 };
+  }
+
+  let rawHeaders = [];
+
+  if (mimetype === 'text/csv' || filename.endsWith('.csv')) {
+    const text = buffer.toString('utf-8');
+    const firstNewline = text.indexOf('\n');
+    const firstLine = (firstNewline > 0 ? text.substring(0, firstNewline) : text).trim().replace(/\r$/, '');
+
+    // Detect delimiter
+    const delimiter = firstLine.includes(';') ? ';' : ',';
+    rawHeaders = firstLine.split(delimiter).map(h => h.replace(/^["']|["']$/g, '').trim());
+
+    // Estimate row count by counting newlines
+    let newlines = 0;
+    for (let i = 0; i < text.length; i++) {
+      if (text.charCodeAt(i) === 10) newlines++;
+    }
+    // rowEstimate = newlines (header line produces 1 newline, so rows ≈ newlines)
+    var rowEstimate = Math.max(0, newlines - 1);
+  } else {
+    // Excel — have to read the workbook but only grab the header row
+    const XLSX = require('xlsx');
+    const workbook = XLSX.read(buffer, { type: 'buffer', sheetRows: 2 });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(sheet, { defval: null });
+    rawHeaders = rows.length > 0 ? Object.keys(rows[0]) : [];
+    // For Excel, rough estimate (re-read without sheetRows to count would be slow)
+    var rowEstimate = 0; // unknown for Excel — will be known after full parse
+  }
+
+  // Normalize headers
+  const normalizedHeaders = rawHeaders.map(h => normalizeColumnName(h));
+
+  // Validate required columns
+  const errors = [];
+  for (const req of schema.required) {
+    if (!normalizedHeaders.includes(req)) {
+      errors.push({
+        type: 'missing_column',
+        column: req,
+        message: `Required column '${req}' not found. Available: ${rawHeaders.join(', ')}`
+      });
+    }
+  }
+
+  return {
+    valid: errors.length === 0,
+    headers: normalizedHeaders,
+    errors,
+    rowEstimate: rowEstimate || 0
+  };
+}
+
+module.exports = { parseFile, parseHeadersOnly, SCHEMAS };
