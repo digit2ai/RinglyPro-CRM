@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import FileUploader from '../components/FileUploader'
-import { createProject, uploadFile, getUploadStatus, generateDemo, runAnalysis } from '../lib/api'
+import { createProject, uploadFile, getUploadStatus, generateDemo, runAnalysis, getProject } from '../lib/api'
 
 const FILE_TYPES = [
   {
@@ -210,17 +210,45 @@ export default function UploadPage() {
     }
   }
 
+  const [demoStatus, setDemoStatus] = useState('')
+
   const handleGenerateDemo = async () => {
     setDemoLoading(true)
     setError(null)
+    setDemoStatus('Creating project...')
     try {
       const result = await generateDemo()
       const demoId = result.project_id || result.id
-      navigate(`/analysis/${demoId}`)
+
+      // Poll project status until completed
+      setDemoStatus('Generating 228K items + 637K order lines...')
+      for (let attempt = 0; attempt < 300; attempt++) { // up to 25 min
+        await new Promise(r => setTimeout(r, 5000))
+        try {
+          const proj = await getProject(demoId)
+          const status = proj?.status || proj?.data?.status
+          if (status === 'completed') {
+            setDemoStatus('Done!')
+            navigate(`/analysis/${demoId}`)
+            return
+          } else if (status === 'error') {
+            setError('Demo generation failed. Check server logs.')
+            return
+          } else if (status === 'analyzing') {
+            setDemoStatus('Running analysis + product matching...')
+          } else {
+            setDemoStatus(`Processing data... (${attempt * 5}s)`)
+          }
+        } catch (e) {
+          // Keep polling
+        }
+      }
+      setError('Demo generation timed out')
     } catch (err) {
       setError(err.message)
     } finally {
       setDemoLoading(false)
+      setDemoStatus('')
     }
   }
 
@@ -239,35 +267,46 @@ export default function UploadPage() {
 
       {/* Demo Button */}
       <div className="card mb-8 bg-gradient-to-r from-logistics-900/50 to-slate-800 border-logistics-700/50">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-white mb-1">Quick Demo</h3>
-            <p className="text-sm text-slate-400">
-              Generate a demo project with synthetic warehouse data to explore the full analysis pipeline.
-            </p>
+        <div>
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-1">Quick Demo — Full LogiVision Scale</h3>
+              <p className="text-sm text-slate-400">
+                Generate 228K items + 60K orders + 637K order lines matching the LogiVision Dashboard Playbook.
+              </p>
+            </div>
+            <button
+              onClick={handleGenerateDemo}
+              disabled={demoLoading}
+              className="btn-primary whitespace-nowrap flex items-center gap-2"
+            >
+              {demoLoading ? (
+                <>
+                  <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                  </svg>
+                  Generate Demo
+                </>
+              )}
+            </button>
           </div>
-          <button
-            onClick={handleGenerateDemo}
-            disabled={demoLoading}
-            className="btn-primary whitespace-nowrap flex items-center gap-2"
-          >
-            {demoLoading ? (
-              <>
-                <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                Generating...
-              </>
-            ) : (
-              <>
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-                </svg>
-                Generate Demo
-              </>
-            )}
-          </button>
+          {demoStatus && (
+            <div className="mt-3 p-3 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-300 text-sm flex items-center gap-2">
+              <svg className="animate-spin w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              {demoStatus}
+            </div>
+          )}
         </div>
       </div>
 
