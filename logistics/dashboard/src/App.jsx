@@ -85,7 +85,8 @@ const warehouseMindSubItems = [
   { path: '/warehousemind/command-center', label: 'MCP Command Center', icon: MCPIcon },
   { path: '/warehousemind/neural', label: 'Neural Intelligence', icon: NeuralIcon },
   { path: '/warehousemind/events', label: 'Event Automation', icon: EventIcon },
-  { path: '/warehousemind/voice', label: 'Voice AI', icon: VoiceIcon }
+  { path: '/warehousemind/voice', label: 'Voice AI', icon: VoiceIcon },
+  { path: '/oee-dashboard', label: 'OEE Dashboard', icon: GaugeIcon, noProject: true }
 ]
 
 const docsSubItems = [
@@ -104,7 +105,6 @@ const steps = [
   { path: '/simulation', label: 'Simulation', icon: SimulationIcon },
   { path: '/benefits', label: 'Commercial', icon: TrendingUpIcon },
   { path: '/report', label: 'Proposal', icon: FileIcon },
-  { path: '/oee-dashboard', label: 'OEE Dashboard', icon: GaugeIcon, noProject: true },
   { path: '/presentation', label: 'Presentation', icon: PresentationIcon },
   { path: '/docs', label: 'Docs', icon: BookIcon, noProject: true, collapsible: true, subItems: docsSubItems }
 ]
@@ -313,14 +313,14 @@ export default function App({ onLogout, userEmail }) {
     if (location.pathname.startsWith('/simulation')) return 4
     if (location.pathname.startsWith('/benefits')) return 5
     if (location.pathname.startsWith('/report')) return 6
-    if (location.pathname.startsWith('/oee-dashboard')) return 7
-    if (location.pathname.startsWith('/presentation')) return 8
+    if (location.pathname.startsWith('/presentation')) return 7
+    if (location.pathname.startsWith('/oee-dashboard')) return 0
     // Docs group items
-    if (location.pathname.startsWith('/api-integration')) return 9
-    if (location.pathname.startsWith('/user-guide')) return 9
-    if (location.pathname.startsWith('/observability')) return 9
-    if (location.pathname.startsWith('/nda')) return 9
-    if (location.pathname.startsWith('/contract-builder')) return 9
+    if (location.pathname.startsWith('/api-integration')) return 8
+    if (location.pathname.startsWith('/user-guide')) return 8
+    if (location.pathname.startsWith('/observability')) return 8
+    if (location.pathname.startsWith('/nda')) return 8
+    if (location.pathname.startsWith('/contract-builder')) return 8
     return 1
   }
 
