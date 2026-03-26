@@ -88,7 +88,7 @@ export default function PresentationPage() {
       content: (
         <div className="flex flex-col items-center justify-center h-full text-center space-y-8">
           <div className="w-32 h-32 rounded-2xl overflow-hidden shadow-lg shadow-blue-600/20">
-            <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="PINAXIS" className="w-full h-full object-contain" />
+            <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69b02d62034886f7c9e996d9.png" alt="PINAXIS" className="w-full h-full object-contain" />
           </div>
           <div>
             <h1 className="text-4xl font-bold text-white mb-3">Dashboard Playbook</h1>
