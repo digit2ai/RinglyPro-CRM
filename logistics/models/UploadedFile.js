@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(50),
       allowNull: false,
       validate: {
-        isIn: [['item_master', 'inventory', 'goods_in', 'goods_out']]
+        isIn: [['item_master', 'inventory', 'goods_in', 'goods_out', 'oee_machines', 'oee_machine_events', 'oee_production_runs']]
       }
     },
     original_filename: {
