@@ -223,16 +223,19 @@ async function generateFullDemo(models, seq, pid) {
   console.log(`${label} Goods in: ${GI_COUNT} rows (${Date.now() - startTime}ms)`);
 
   // ====================================================================
-  // GOODS OUT — 60,016 orders / 637,002 lines / 370 days
-  //   ABC: A=785 SKUs → 80% volume, B=785 → 15%, C=rest → 5%
-  //   Order types: 86.1% store replenishment, ~10% e-com, ~4% first allocation
-  //   Avg lines/order: 10.6, max 138
-  //   Pick units: case 30,578 / single 12,884 / pallet 218
+  // GOODS OUT — EXACT LogiVision numbers
+  //   60,016 orders / 637,002 lines / 370 days
+  //   Avg lines/order: 10.6 (637002/60016)
+  //   Total pick units: 89,533,743 → avg ~140.5 per line
+  //   43,680 unique moved SKUs must appear
+  //   ABC: A=785 → 80% vol, B=785 → 15%, C=rest → 5%
   // ====================================================================
   const TARGET_ORDERS = 60016;
   const TARGET_LINES = 637002;
+  const TARGET_PICK_UNITS = 89533743;
+  const AVG_QTY_PER_LINE = TARGET_PICK_UNITS / TARGET_LINES; // ~140.5
 
-  // Generate 370 operating days (exclude Sundays)
+  // Generate exactly 370 operating days
   const allDates = [];
   let dt = new Date('2020-10-01');
   while (allDates.length < 370) {
@@ -241,23 +244,39 @@ async function generateFullDemo(models, seq, pid) {
   }
 
   const orderTypes = [];
-  // 86.1% store replenishment, 10% e-com, 3.9% first allocation
   for (let i = 0; i < 861; i++) orderTypes.push('store replenishment');
   for (let i = 0; i < 100; i++) orderTypes.push('e-com');
   for (let i = 0; i < 39; i++) orderTypes.push('first allocation');
 
   const methods = ['CEP', 'CEP', 'Freight', 'Freight', 'Air Freight'];
 
+  // Ensure ALL 43,680 moved SKUs appear — pre-assign each SKU at least once
+  const skuUsed = new Set();
+  const allMovedSkus = [];
+  for (let i = 0; i < MOVED_SKUS; i++) allMovedSkus.push(String(100000 + i));
+
   function pickSku() {
+    // If we still have unused SKUs and enough lines remaining, force-use one
+    if (skuUsed.size < MOVED_SKUS && (TARGET_LINES - totalLines) > (MOVED_SKUS - skuUsed.size) * 2) {
+      // 30% chance to force an unused SKU
+      if (Math.random() < 0.3) {
+        for (let i = skuUsed.size; i < MOVED_SKUS; i++) {
+          const s = allMovedSkus[i];
+          if (!skuUsed.has(s)) { skuUsed.add(s); return s; }
+        }
+      }
+    }
+    // Normal ABC-weighted pick
     const r = Math.random();
     let idx;
-    if (r < 0.80) idx = Math.floor(Math.random() * A_COUNT);           // A items: 80% of volume
-    else if (r < 0.95) idx = A_COUNT + Math.floor(Math.random() * B_COUNT); // B: 15%
-    else idx = A_COUNT + B_COUNT + Math.floor(Math.random() * (MOVED_SKUS - A_COUNT - B_COUNT)); // C: 5%
-    return String(100000 + idx);
+    if (r < 0.80) idx = Math.floor(Math.random() * A_COUNT);
+    else if (r < 0.95) idx = A_COUNT + Math.floor(Math.random() * B_COUNT);
+    else idx = A_COUNT + B_COUNT + Math.floor(Math.random() * (MOVED_SKUS - A_COUNT - B_COUNT));
+    const sku = String(100000 + idx);
+    skuUsed.add(sku);
+    return sku;
   }
 
-  // We need to generate lines per order, insert in batches as we go
   const goColumns = [
     'order_id', 'orderline_id', 'sku', 'quantity', 'picking_unit', 'unit_of_measure',
     'order_type', 'order_date', 'picking_date', 'ship_date', 'ship_time',
@@ -266,21 +285,30 @@ async function generateFullDemo(models, seq, pid) {
 
   let totalOrders = 0;
   let totalLines = 0;
+  let totalQty = 0;
   let oid = 100001;
-  const ordersPerDay = Math.ceil(TARGET_ORDERS / 370); // ~162/day
-  const GO_FLUSH = 50000; // flush every 50K lines
+  const GO_FLUSH = 50000;
   let goBatch = [];
 
   async function flushGoLines() {
     if (goBatch.length === 0) return;
     await bulkInsert(seq, 'logistics_goods_out_data', goColumns, goBatch, opts);
-    console.log(`${label} Goods out flush: ${totalLines} lines so far (${Date.now() - startTime}ms)`);
+    console.log(`${label} Goods out flush: ${totalLines} lines, ${totalOrders} orders, qty=${totalQty} (${Date.now() - startTime}ms)`);
     goBatch = [];
   }
 
-  for (const dateStr of allDates) {
-    // Vary orders per day around the mean
-    const todayOrders = Math.max(1, ordersPerDay + Math.floor((Math.random() - 0.5) * 40));
+  // Pre-compute orders per day to spread exactly 60,016 orders across 370 days
+  const baseOrdersPerDay = Math.floor(TARGET_ORDERS / 370); // 162
+  let extraOrders = TARGET_ORDERS - baseOrdersPerDay * 370; // remainder
+  const dailyOrderCounts = allDates.map(() => {
+    const extra = extraOrders > 0 ? 1 : 0;
+    if (extra) extraOrders--;
+    return baseOrdersPerDay + extra;
+  });
+
+  for (let dayIdx = 0; dayIdx < allDates.length && totalOrders < TARGET_ORDERS; dayIdx++) {
+    const dateStr = allDates[dayIdx];
+    const todayOrders = dailyOrderCounts[dayIdx];
 
     for (let o = 0; o < todayOrders && totalOrders < TARGET_ORDERS; o++) {
       const ordId = 'SO-' + oid++;
@@ -291,54 +319,75 @@ async function generateFullDemo(models, seq, pid) {
       const hr = String(6 + Math.floor(Math.random() * 12)).padStart(2, '0');
       const shipTime = hr + ':' + String(Math.floor(Math.random() * 60)).padStart(2, '0') + ':00';
 
-      // Lines/order distribution: avg ~10.6, max 138
-      let lineCount;
-      const lr = Math.random();
-      if (lr < 0.06) lineCount = 1;
-      else if (lr < 0.15) lineCount = 2 + Math.floor(Math.random() * 2);
-      else if (lr < 0.35) lineCount = 4 + Math.floor(Math.random() * 4);
-      else if (lr < 0.60) lineCount = 8 + Math.floor(Math.random() * 5);
-      else if (lr < 0.80) lineCount = 13 + Math.floor(Math.random() * 6);
-      else if (lr < 0.93) lineCount = 19 + Math.floor(Math.random() * 12);
-      else if (lr < 0.98) lineCount = 31 + Math.floor(Math.random() * 30);
-      else lineCount = 61 + Math.floor(Math.random() * 78);
-
-      // Cap lines so we don't overshoot TARGET_LINES
+      // Lines/order: target avg 10.6 — adaptive distribution
+      const remainingOrders = TARGET_ORDERS - totalOrders;
       const remainingLines = TARGET_LINES - totalLines;
+      const neededAvg = remainingOrders > 0 ? remainingLines / remainingOrders : 10;
+
+      let lineCount;
+      if (neededAvg < 7) {
+        // Need fewer lines — skew toward small orders
+        lineCount = 1 + Math.floor(Math.random() * 6);
+      } else if (neededAvg > 14) {
+        // Need more lines — skew toward large orders
+        lineCount = 10 + Math.floor(Math.random() * 20);
+      } else {
+        // Normal distribution around 10.6
+        const lr = Math.random();
+        if (lr < 0.06) lineCount = 1;
+        else if (lr < 0.14) lineCount = 2 + Math.floor(Math.random() * 2);
+        else if (lr < 0.30) lineCount = 4 + Math.floor(Math.random() * 3);
+        else if (lr < 0.55) lineCount = 7 + Math.floor(Math.random() * 5);
+        else if (lr < 0.78) lineCount = 12 + Math.floor(Math.random() * 5);
+        else if (lr < 0.92) lineCount = 17 + Math.floor(Math.random() * 8);
+        else if (lr < 0.98) lineCount = 25 + Math.floor(Math.random() * 20);
+        else lineCount = 45 + Math.floor(Math.random() * 93);
+      }
+
+      // Hard cap
+      lineCount = Math.max(1, Math.min(lineCount, 138, remainingLines));
       if (remainingLines <= 0) break;
-      lineCount = Math.min(lineCount, remainingLines);
 
       for (let l = 0; l < lineCount; l++) {
         const sku = pickSku();
-        const qty = 1 + Math.floor(Math.random() * 30);
-        const pu = qty > 15 ? 'case' : Math.random() < 0.6 ? 'case' : 'single';
+        // Quantity: target avg ~140.5 per line to hit 89.5M total
+        const qtyRemaining = TARGET_PICK_UNITS - totalQty;
+        const linesRemaining = TARGET_LINES - totalLines;
+        const qtyNeededAvg = linesRemaining > 0 ? qtyRemaining / linesRemaining : 140;
+        // Vary around needed average
+        const qty = Math.max(1, Math.round(qtyNeededAvg * (0.3 + Math.random() * 1.4)));
+
+        const pu = qty > 96 ? 'pallet' : qty > 12 ? 'case' : 'single';
 
         goBatch.push([
-          ordId,
-          `${ordId}-${l + 1}`,
-          sku,
-          qty,
-          pu,
-          'piece',
-          otype,
-          dateStr,
-          dateStr,
-          dateStr,
-          shipTime,
-          cust,
-          method
+          ordId, `${ordId}-${l + 1}`, sku, qty, pu, pu === 'pallet' ? 'pallet' : 'piece',
+          otype, dateStr, dateStr, dateStr, shipTime, cust, method
         ]);
-
         totalLines++;
+        totalQty += qty;
       }
 
-      // Flush when batch is large enough
       if (goBatch.length >= GO_FLUSH) {
         await flushGoLines();
       }
     }
-    // Stop generating if we've hit the line target
-    if (totalLines >= TARGET_LINES) break;
+  }
+
+  // Force-insert any remaining unused SKUs
+  if (skuUsed.size < MOVED_SKUS) {
+    const lastDate = allDates[allDates.length - 1];
+    for (let i = 0; i < MOVED_SKUS; i++) {
+      const s = allMovedSkus[i];
+      if (!skuUsed.has(s)) {
+        goBatch.push([
+          'SO-' + oid++, 'SO-' + (oid - 1) + '-1', s, Math.max(1, Math.round(AVG_QTY_PER_LINE)),
+          'case', 'piece', 'store replenishment', lastDate, lastDate, lastDate, '10:00:00',
+          'CUST-0001', 'CEP'
+        ]);
+        totalLines++;
+        totalOrders++;
+      }
+    }
   }
 
   // Final flush
@@ -378,5 +427,39 @@ async function generateFullDemo(models, seq, pid) {
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   console.log(`${label} Complete in ${elapsed}s — project ${pid}: ${TOTAL_SKUS} items, ${totalOrders} orders, ${totalLines} lines`);
 }
+
+// POST /api/v1/demo/regenerate/:projectId — Wipe and regenerate a project with fresh POC data
+router.post('/regenerate/:projectId', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const seq = req.models.sequelize;
+
+    const project = await req.models.LogisticsProject.findByPk(projectId);
+    if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+
+    // Wipe all data for this project
+    console.log(`[POC] Wiping data for project ${projectId}...`);
+    await seq.query(`DELETE FROM logistics_item_master WHERE project_id = ${projectId}`);
+    await seq.query(`DELETE FROM logistics_inventory_data WHERE project_id = ${projectId}`);
+    await seq.query(`DELETE FROM logistics_goods_in_data WHERE project_id = ${projectId}`);
+    await seq.query(`DELETE FROM logistics_goods_out_data WHERE project_id = ${projectId}`);
+    await seq.query(`DELETE FROM logistics_analysis_results WHERE project_id = ${projectId}`);
+    await seq.query(`DELETE FROM logistics_product_recommendations WHERE project_id = ${projectId}`);
+    await req.models.LogisticsUploadedFile.destroy({ where: { project_id: projectId } });
+    await project.update({ status: 'uploading', analysis_started_at: null, analysis_completed_at: null });
+    console.log(`[POC] Wiped. Regenerating...`);
+
+    res.json({ success: true, data: { project_id: parseInt(projectId), status: 'regenerating' } });
+
+    // Run in background
+    generateFullDemo(req.models, seq, parseInt(projectId)).catch(err => {
+      console.error(`[POC] Regenerate failed:`, err);
+      req.models.LogisticsProject.update({ status: 'error' }, { where: { id: projectId } }).catch(() => {});
+    });
+  } catch (error) {
+    console.error('[POC] Regenerate error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 module.exports = router;
