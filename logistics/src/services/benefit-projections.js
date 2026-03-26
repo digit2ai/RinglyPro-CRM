@@ -34,7 +34,7 @@ function computeDowntimeReduction(m, topScore) {
     data_drivers: [
       { metric: 'hourly_peak_ratio', value: round1(m.hourly_peak_ratio), explanation: `Peak hour is ${round1(m.hourly_peak_ratio)}x the average — automation smooths these spikes` },
       { metric: 'daily_variability', value: round1(m.daily_variability * 100), explanation: `${round1(m.daily_variability * 100)}% daily volume variation creates stress on manual workflows` },
-      { metric: 'top_product_score', value: Math.round(topScore), explanation: `Best-fit RinglyPro Logistics system scores ${Math.round(topScore)}/100 for this profile` }
+      { metric: 'top_product_score', value: Math.round(topScore), explanation: `Best-fit Pinaxis system scores ${Math.round(topScore)}/100 for this profile` }
     ],
     reasoning: `With a peak-to-average ratio of ${round1(m.hourly_peak_ratio)}x and ${round1(m.daily_variability * 100)}% daily variation, automated systems with predictive maintenance and load balancing reduce unplanned downtime by an estimated ${round1(pct)}%.`
   };
@@ -167,7 +167,7 @@ function computeSparePartsWaste(m, numProducts) {
       { metric: 'active_sku_ratio', value: round1(m.active_sku_ratio * 100), explanation: `${round1((1 - m.active_sku_ratio) * 100)}% dormant SKUs indicate inventory complexity` },
       { metric: 'total_skus', value: m.total_skus, explanation: `${m.total_skus} SKUs across ${numProducts} product systems require coordinated spare parts planning` }
     ],
-    reasoning: `Managing ${m.total_skus} SKUs (${round1((1 - m.active_sku_ratio) * 100)}% dormant) across ${numProducts} RinglyPro Logistics systems — predictive ordering reduces spare parts waste by ~${round1(pct)}%.`
+    reasoning: `Managing ${m.total_skus} SKUs (${round1((1 - m.active_sku_ratio) * 100)}% dormant) across ${numProducts} Pinaxis systems — predictive ordering reduces spare parts waste by ~${round1(pct)}%.`
   };
 }
 
@@ -186,7 +186,7 @@ function computeSalesCycle(m) {
       { metric: 'total_orders', value: m.total_orders, explanation: `Analysis of ${m.total_orders.toLocaleString()} orders produces instant data-driven proposals` },
       { metric: 'total_skus', value: m.total_skus, explanation: `${m.total_skus} SKU profiles matched to products in minutes vs weeks of manual analysis` }
     ],
-    reasoning: `LOGISTICS automated analysis of ${m.total_orders.toLocaleString()} orders and ${m.total_skus} SKUs replaces weeks of manual data gathering with instant, data-driven RinglyPro Logistics proposals — reducing sales cycles by ~30%.`
+    reasoning: `LOGISTICS automated analysis of ${m.total_orders.toLocaleString()} orders and ${m.total_skus} SKUs replaces weeks of manual data gathering with instant, data-driven Pinaxis proposals — reducing sales cycles by ~30%.`
   };
 }
 
@@ -222,10 +222,10 @@ function computeTechnicianAccuracy(m, numProducts) {
     improvement_range: [90, 95],
     confidence: 'medium',
     data_drivers: [
-      { metric: 'products_matched', value: numProducts, explanation: `${numProducts} distinct RinglyPro Logistics systems require specialized service knowledge` },
+      { metric: 'products_matched', value: numProducts, explanation: `${numProducts} distinct Pinaxis systems require specialized service knowledge` },
       { metric: 'total_skus', value: m.total_skus, explanation: `${m.total_skus} SKU profiles enable precise fault diagnosis` }
     ],
-    reasoning: `With ${numProducts} RinglyPro Logistics product systems handling ${m.total_skus} SKUs, AI-driven diagnostics achieve 92%+ first-time resolution by matching issue patterns to the right technician expertise.`
+    reasoning: `With ${numProducts} Pinaxis product systems handling ${m.total_skus} SKUs, AI-driven diagnostics achieve 92%+ first-time resolution by matching issue patterns to the right technician expertise.`
   };
 }
 

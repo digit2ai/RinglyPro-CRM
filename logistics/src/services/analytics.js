@@ -516,13 +516,13 @@ async function computeABCClassification(models, projectId) {
 }
 
 // ============================================================================
-// 8. FIT ANALYSIS — SKU fitting into standard RinglyPro Logistics bins
+// 8. FIT ANALYSIS — SKU fitting into standard Pinaxis bins
 // ============================================================================
 
 async function computeFitAnalysis(models, projectId) {
   const seq = models.sequelize;
 
-  // RinglyPro Logistics standard bin sizes (internal dimensions in mm)
+  // Pinaxis standard bin sizes (internal dimensions in mm)
   const binSizes = [
     { name: '600x400x250', length: 600, width: 400, height: 250 },
     { name: '600x400x350', length: 600, width: 400, height: 350 },
@@ -640,7 +640,7 @@ function computeSystemArchitecture(analysisResults) {
     software_recommendations.push(
       { layer: 'WMS', recommendation: 'SAP EWM or Manhattan Active WM', reason: 'Enterprise-grade inventory and order management for high-complexity operations' },
       { layer: 'WES', recommendation: 'Korber WES or Pyramid Director', reason: 'Real-time task orchestration across multiple automated and manual zones' },
-      { layer: 'WCS', recommendation: 'RinglyPro Logistics Galileo WCS', reason: 'Native integration with RinglyPro Logistics shuttle and conveyor systems for direct equipment control' }
+      { layer: 'WCS', recommendation: 'Pinaxis Galileo WCS', reason: 'Native integration with Pinaxis shuttle and conveyor systems for direct equipment control' }
     );
   } else if (complexityScore >= 35) {
     recommended_tier = 2;
@@ -648,14 +648,14 @@ function computeSystemArchitecture(analysisResults) {
     tier_description = 'Your operation has moderate complexity with growing automation potential. A WES layer coordinating with WCS provides the right balance of orchestration and equipment control.';
     software_recommendations.push(
       { layer: 'WES/WCS', recommendation: 'Dematic iQ or Honeywell Momentum', reason: 'Combined WES+WCS platform for integrated execution and equipment control' },
-      { layer: 'WCS', recommendation: 'RinglyPro Logistics Galileo WCS', reason: 'Direct shuttle and conveyor control with built-in diagnostics' }
+      { layer: 'WCS', recommendation: 'Pinaxis Galileo WCS', reason: 'Direct shuttle and conveyor control with built-in diagnostics' }
     );
   } else {
     recommended_tier = 1;
     tier_label = 'Standalone WCS';
     tier_description = 'Your operation has straightforward automation needs. A standalone WCS controlling the automated equipment, interfacing directly with your existing WMS, is sufficient.';
     software_recommendations.push(
-      { layer: 'WCS', recommendation: 'RinglyPro Logistics Galileo WCS', reason: 'Efficient standalone equipment control with WMS interface capability' }
+      { layer: 'WCS', recommendation: 'Pinaxis Galileo WCS', reason: 'Efficient standalone equipment control with WMS interface capability' }
     );
   }
 

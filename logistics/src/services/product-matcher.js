@@ -1,9 +1,9 @@
 'use strict';
 
 /**
- * RinglyPro Logistics Product Matching Engine
+ * Pinaxis Product Matching Engine
  *
- * Scores each RinglyPro Logistics product 0-100 based on warehouse analysis KPIs.
+ * Scores each Pinaxis product 0-100 based on warehouse analysis KPIs.
  * Products: StoreBiter MLS, StoreBiter OLS, InstaPick, ROTA-Sorter, Omnipallet, Versastore
  */
 
@@ -107,7 +107,7 @@ function scoreCriterion(value, criterion) {
 }
 
 /**
- * Match analysis results against RinglyPro Logistics product portfolio
+ * Match analysis results against Pinaxis product portfolio
  */
 async function match(analysisMap) {
   const metrics = extractMetrics(analysisMap);

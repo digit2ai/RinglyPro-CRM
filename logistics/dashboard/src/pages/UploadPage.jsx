@@ -261,7 +261,7 @@ export default function UploadPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white mb-2">Warehouse Data Upload</h1>
         <p className="text-slate-400">
-          Upload your warehouse data files for comprehensive logistics analysis and RinglyPro Logistics product matching.
+          Upload your warehouse data files for comprehensive logistics analysis and Pinaxis product matching.
         </p>
       </div>
 

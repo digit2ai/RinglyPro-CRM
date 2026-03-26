@@ -416,7 +416,7 @@ async function generate(project) {
     { text: '\n', fontSize: 6 },
     {
       columns: [
-        { text: 'Powered by RinglyPro Logistics', fontSize: 9, color: COLORS.gray, italics: true },
+        { text: 'Powered by Pinaxis', fontSize: 9, color: COLORS.gray, italics: true },
         { text: 'CONFIDENTIAL', fontSize: 9, color: COLORS.gold, bold: true, alignment: 'right', characterSpacing: 2 }
       ]
     },
@@ -604,7 +604,7 @@ async function generate(project) {
     sectionHeader('Fit / No-Fit Analysis', '05'),
     { text: '\n', fontSize: 4 },
     {
-      text: 'This analysis evaluates each SKU\'s physical dimensions against standard RinglyPro Logistics bin sizes (600×400mm footprint), determining the percentage of inventory suitable for automated bin storage systems such as StoreBiter or FlatPick.',
+      text: 'This analysis evaluates each SKU\'s physical dimensions against standard Pinaxis bin sizes (600×400mm footprint), determining the percentage of inventory suitable for automated bin storage systems such as StoreBiter or FlatPick.',
       fontSize: 10, color: COLORS.grayDark, lineHeight: 1.45, margin: [0, 0, 0, 14]
     },
 
@@ -936,10 +936,10 @@ async function generate(project) {
   // ========================================================================
 
   const productSection = [
-    sectionHeader('RinglyPro Logistics Product Recommendations', '09'),
+    sectionHeader('Pinaxis Product Recommendations', '09'),
     { text: '\n', fontSize: 4 },
     {
-      text: 'Based on the complete warehouse data analysis — including order structure, throughput patterns, ABC classification, and dimensional fit — the following RinglyPro Logistics intralogistics solutions are recommended for this operation.',
+      text: 'Based on the complete warehouse data analysis — including order structure, throughput patterns, ABC classification, and dimensional fit — the following Pinaxis intralogistics solutions are recommended for this operation.',
       fontSize: 10, color: COLORS.grayDark, lineHeight: 1.45, margin: [0, 0, 0, 14]
     },
 
@@ -958,7 +958,7 @@ async function generate(project) {
     sectionHeader('Client Benefit Projections', '10'),
     { text: '\n', fontSize: 4 },
     {
-      text: 'Data-driven ROI projections based on your warehouse analytics and the RinglyPro Logistics product matching. These projections are derived from actual operational data combined with industry benchmarks for similar automation implementations.',
+      text: 'Data-driven ROI projections based on your warehouse analytics and the Pinaxis product matching. These projections are derived from actual operational data combined with industry benchmarks for similar automation implementations.',
       fontSize: 10, color: COLORS.grayDark, lineHeight: 1.45, margin: [0, 0, 0, 14]
     },
 
@@ -993,7 +993,7 @@ async function generate(project) {
     {
       ol: [
         { text: 'Review this analysis report with your operations and engineering teams.', fontSize: 11, color: COLORS.grayDark, lineHeight: 1.6 },
-        { text: 'Schedule a detailed consultation with RinglyPro Logistics to discuss the recommended solutions.', fontSize: 11, color: COLORS.grayDark, lineHeight: 1.6 },
+        { text: 'Schedule a detailed consultation with Pinaxis to discuss the recommended solutions.', fontSize: 11, color: COLORS.grayDark, lineHeight: 1.6 },
         { text: 'Define pilot scope and implementation timeline for priority systems.', fontSize: 11, color: COLORS.grayDark, lineHeight: 1.6 },
         { text: 'Request a detailed engineering proposal and site assessment.', fontSize: 11, color: COLORS.grayDark, lineHeight: 1.6 }
       ],
@@ -1004,7 +1004,7 @@ async function generate(project) {
       canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 0.5, lineColor: COLORS.grayLight }]
     },
     { text: '\n\n' },
-    { text: 'RinglyPro Logistics', fontSize: 13, bold: true, color: COLORS.navy, alignment: 'center' },
+    { text: 'Pinaxis', fontSize: 13, bold: true, color: COLORS.navy, alignment: 'center' },
     { text: 'https://ringlypro.com/demo', link: 'https://ringlypro.com/demo', fontSize: 10, color: COLORS.blue, alignment: 'center', margin: [0, 4, 0, 0] },
     { text: '\n\n' },
     {
@@ -1056,7 +1056,7 @@ async function generate(project) {
           { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 0.5, lineColor: COLORS.grayLight }] },
           {
             columns: [
-              { text: 'Confidential — Powered by RinglyPro AI Division', fontSize: 7, color: COLORS.gray, margin: [0, 6, 0, 0] },
+              { text: 'Confidential — Powered by Pinaxis AI', fontSize: 7, color: COLORS.gray, margin: [0, 6, 0, 0] },
               { text: `${currentPage} / ${pageCount}`, fontSize: 8, color: COLORS.navy, alignment: 'right', margin: [0, 5, 0, 0], bold: true }
             ]
           }
@@ -1194,7 +1194,7 @@ function keyFindingsBlock(overview, orderStructure, abc, fit, recommendations, b
     findings.push(`Gini coefficient of ${abc.gini} shows ${parseFloat(abc.gini) > 0.6 ? 'highly concentrated' : 'moderately distributed'} demand, ${parseFloat(abc.gini) > 0.6 ? 'favoring targeted A-item automation.' : 'supporting broader automation coverage.'}`);
   }
   if (recommendations.length > 0) {
-    findings.push(`${recommendations.length} RinglyPro Logistics products recommended, with ${recommendations[0].product_name} scoring highest at ${recommendations[0].fit_score}/100.`);
+    findings.push(`${recommendations.length} Pinaxis products recommended, with ${recommendations[0].product_name} scoring highest at ${recommendations[0].fit_score}/100.`);
   }
   if (benefitData.summary?.annual_savings_high) {
     findings.push(`Projected annual savings potential of up to ${fmtCurrency(benefitData.summary.annual_savings_high)} through automation.`);

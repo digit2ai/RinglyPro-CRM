@@ -497,13 +497,13 @@ export default function UserGuidePage() {
 
           <StepCard
             number={7}
-            title="Automation & RinglyPro Logistics Solutions"
+            title="Automation & Pinaxis Solutions"
             isActive={activeStep0 === 7}
             onClick={() => setActiveStep0(activeStep0 === 7 ? 0 : 7)}
           >
             <div className="ml-14 space-y-3">
               <p className="text-sm text-slate-300">
-                RinglyPro Logistics manufactures intralogistics automation systems that replace or augment manual warehouse processes. The right solution depends on item profiles, order structure, and throughput requirements.
+                Pinaxis manufactures intralogistics automation systems that replace or augment manual warehouse processes. The right solution depends on item profiles, order structure, and throughput requirements.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
@@ -525,7 +525,7 @@ export default function UserGuidePage() {
               </div>
               <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
                 <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">LOGISTICS Product Matching</p>
-                <p className="text-sm text-slate-300">LOGISTICS analyzes your warehouse data and scores each RinglyPro Logistics product with a <strong className="text-white">fit score (0-100)</strong> based on your item dimensions, order structure, throughput requirements, and ABC distribution. This data-driven approach replaces subjective guesswork with quantifiable recommendations.</p>
+                <p className="text-sm text-slate-300">LOGISTICS analyzes your warehouse data and scores each Pinaxis product with a <strong className="text-white">fit score (0-100)</strong> based on your item dimensions, order structure, throughput requirements, and ABC distribution. This data-driven approach replaces subjective guesswork with quantifiable recommendations.</p>
               </div>
             </div>
           </StepCard>
@@ -640,7 +640,7 @@ export default function UserGuidePage() {
                       <div className="p-2 rounded bg-slate-900/50 text-slate-400 text-center">Shuttle Commands</div>
                       <div className="p-2 rounded bg-slate-900/50 text-slate-400 text-center">Scanner Integration</div>
                     </div>
-                    <p className="text-xs text-slate-500 mt-2">Examples: RinglyPro Logistics Galileo WCS, Siemens WinCC, Beckhoff TwinCAT, Rockwell FactoryTalk</p>
+                    <p className="text-xs text-slate-500 mt-2">Examples: Pinaxis Galileo WCS, Siemens WinCC, Beckhoff TwinCAT, Rockwell FactoryTalk</p>
                   </div>
                 </div>
               </div>
@@ -687,9 +687,9 @@ export default function UserGuidePage() {
                       </tr>
                       <tr className="border-t border-slate-700/50">
                         <td className="py-2.5 font-medium text-white">Galileo WCS</td>
-                        <td className="py-2.5 text-xs text-slate-400">RinglyPro Logistics</td>
+                        <td className="py-2.5 text-xs text-slate-400">Pinaxis</td>
                         <td className="py-2.5"><span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-xs">WCS</span></td>
-                        <td className="py-2.5 text-xs text-slate-400 hidden sm:table-cell">Native control for RinglyPro Logistics shuttle and conveyor systems</td>
+                        <td className="py-2.5 text-xs text-slate-400 hidden sm:table-cell">Native control for Pinaxis shuttle and conveyor systems</td>
                       </tr>
                     </tbody>
                   </table>
@@ -903,7 +903,7 @@ export default function UserGuidePage() {
             <div className="ml-14 grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
               {[
                 { step: 'Analysis', desc: 'Order structure, throughput, ABC classification, seasonal patterns' },
-                { step: 'Products', desc: 'RinglyPro Logistics product recommendations with fit scores' },
+                { step: 'Products', desc: 'Pinaxis product recommendations with fit scores' },
                 { step: 'ROI Projection', desc: 'Cost-benefit analysis and payback period' },
                 { step: 'Report', desc: 'Generate and download a full PDF report with charts' },
                 { step: 'API Integration', desc: 'Generate API keys for production data feeds' },
@@ -1395,7 +1395,7 @@ SKU-003;2024-01-14;500;REC-503;Supplier Alpha`}</CodeBlock>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircleIcon className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                  RinglyPro Logistics product fit scoring and recommendations
+                  Pinaxis product fit scoring and recommendations
                 </li>
               </ul>
             </div>
@@ -1414,7 +1414,7 @@ SKU-003;2024-01-14;500;REC-503;Supplier Alpha`}</CodeBlock>
             <div className="ml-14 mt-3 space-y-2">
               {[
                 { num: '2', name: 'Analysis', desc: 'View order structure charts, throughput heatmaps, ABC curves, and seasonal trends from your data.' },
-                { num: '3', name: 'Products', desc: 'See recommended RinglyPro Logistics automation products with fit scores based on your warehouse profile.' },
+                { num: '3', name: 'Products', desc: 'See recommended Pinaxis automation products with fit scores based on your warehouse profile.' },
                 { num: '4', name: 'ROI Projection', desc: 'Review cost-benefit analysis, projected savings, and payback period estimates.' },
                 { num: '5', name: 'Report', desc: 'Generate and download a comprehensive PDF report with all analysis, charts, and recommendations.' },
                 { num: '6', name: 'API Integration', desc: 'Set up production API keys for live WMS/ERP data feeds.' },

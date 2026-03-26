@@ -95,7 +95,7 @@ export default function ProductsPage() {
         <div>
           <h1 className="text-3xl font-bold text-white mb-1">Product Recommendations</h1>
           <p className="text-slate-400">
-            RinglyPro Logistics product matching results for {project?.company_name || 'your warehouse'}
+            Pinaxis product matching results for {project?.company_name || 'your warehouse'}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -134,7 +134,7 @@ export default function ProductsPage() {
                 {recommendations.length} Product{recommendations.length !== 1 ? 's' : ''} Matched
               </h3>
               <p className="text-sm text-slate-400">
-                Based on your warehouse data analysis, we recommend the following RinglyPro Logistics intralogistics solutions.
+                Based on your warehouse data analysis, we recommend the following Pinaxis intralogistics solutions.
               </p>
             </div>
           </div>

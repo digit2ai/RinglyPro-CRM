@@ -124,7 +124,7 @@ export default function ReportPage() {
     'Warehouse data analysis and baseline documentation',
     'ABC/D classification and dead stock identification',
     'Throughput stress testing (3 scenarios)',
-    'RinglyPro Logistics automation concept recommendations',
+    'Pinaxis automation concept recommendations',
     'ROI projection and commercial package',
     'Risk register derived from simulation bottlenecks'
   ]
@@ -210,7 +210,7 @@ export default function ReportPage() {
       ),
       description: topProduct
         ? `Top concept: ${topProduct.name || topProduct.product_name} (${topProduct.fit_score || topProduct.score}% match).`
-        : 'RinglyPro Logistics product matching results with fit scores and reasoning.'
+        : 'Pinaxis product matching results with fit scores and reasoning.'
     },
     {
       title: 'Simulation Package',
@@ -273,7 +273,7 @@ export default function ReportPage() {
             </h3>
             <p className="text-slate-400 text-sm mb-4">
               Comprehensive analysis for {project?.company_name || 'your warehouse'} including KPIs,
-              throughput patterns, ABC analysis, bin fit results, and RinglyPro Logistics product recommendations.
+              throughput patterns, ABC analysis, bin fit results, and Pinaxis product recommendations.
             </p>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
@@ -551,7 +551,7 @@ ${downloadUrl}
 We look forward to discussing the findings and next steps with you at your convenience.
 
 Kind regards,
-RinglyPro Logistics Team`
+Pinaxis Team`
 
               const mailto = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
 

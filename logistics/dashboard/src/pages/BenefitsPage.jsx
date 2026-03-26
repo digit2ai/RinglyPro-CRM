@@ -234,9 +234,9 @@ export default function BenefitsPage() {
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-3 h-3 rounded-full bg-blue-500" />
-            <h2 className="text-lg font-semibold text-white">RinglyPro Logistics Platform & AI Benefits</h2>
+            <h2 className="text-lg font-semibold text-white">Pinaxis Platform & AI Benefits</h2>
           </div>
-          <p className="text-sm text-slate-400 mb-4">Based on RinglyPro Logistics ecosystem capabilities, anchored to your data profile.</p>
+          <p className="text-sm text-slate-400 mb-4">Based on Pinaxis ecosystem capabilities, anchored to your data profile.</p>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {platformBenefits.map(b => (
               <BenefitCard key={b.id} benefit={b} />

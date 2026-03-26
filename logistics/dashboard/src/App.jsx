@@ -327,18 +327,18 @@ export default function App({ onLogout, userEmail }) {
   const closeSidebar = () => setSidebarOpen(false)
 
   // Dynamically pass context to ElevenLabs widget based on current page
-  const isPresentation = location.pathname.startsWith('/presentation')
-  const presentationProjectId = location.pathname.match(/\/presentation\/(\d+)/)?.[1]
-
   useEffect(() => {
     const widget = document.querySelector('elevenlabs-convai')
     if (!widget) return
 
-    if (isPresentation && presentationProjectId) {
-      // Fetch analysis data and build dynamic context for Rachel
+    // Extract project ID from any route
+    const anyProjectId = location.pathname.match(/\/(?:analysis|products|simulation|benefits|report|api-integration|presentation|observability)\/(\d+)/)?.[1]
+
+    if (anyProjectId) {
+      // Fetch project data and set context for Rachel on ANY project page
       Promise.all([
-        fetch(`/pinaxis/api/v1/projects/${presentationProjectId}`).then(r => r.json()).catch(() => null),
-        fetch(`/pinaxis/api/v1/analysis/${presentationProjectId}/all`).then(r => r.json()).catch(() => null)
+        fetch(`/pinaxis/api/v1/projects/${anyProjectId}`).then(r => r.json()).catch(() => null),
+        fetch(`/pinaxis/api/v1/analysis/${anyProjectId}/all`).then(r => r.json()).catch(() => null)
       ]).then(([projRes, analysisRes]) => {
         const proj = projRes?.data || projRes
         const analysis = analysisRes?.data || analysisRes
@@ -346,12 +346,10 @@ export default function App({ onLogout, userEmail }) {
         const ctx = buildPresentationContext(analysis, companyName)
         widget.setAttribute('context', ctx)
       })
-    } else if (isPresentation) {
-      widget.setAttribute('context', buildPresentationContext(null, null))
     } else {
       widget.removeAttribute('context')
     }
-  }, [isPresentation, presentationProjectId])
+  }, [location.pathname])
 
   return (
     <div className="min-h-screen flex">
@@ -500,7 +498,7 @@ export default function App({ onLogout, userEmail }) {
             </div>
           )}
           <div className="text-xs text-slate-500 text-center">
-            <p>Powered by RinglyPro</p>
+            <p>Powered by Pinaxis</p>
             <p className="mt-1">PINAXIS Analytics v1.0</p>
           </div>
         </div>

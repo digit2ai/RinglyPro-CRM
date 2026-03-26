@@ -14,7 +14,7 @@ export default function LoginPage({ onLogin }) {
     // Simple credential check
     setTimeout(() => {
       const validUsers = [
-        { email: 'logistics@ringlypro.com', password: 'RinglyPro Logistics@7' },
+        { email: 'logistics@ringlypro.com', password: 'Pinaxis@7' },
         { email: 'mstagg@digit2ai.com', password: 'Palindrome@7' },
         { email: 'mstagg@ringlypro.com', password: 'Palindrome@7' },
         { email: 'pinaxis@ringlypro.com', password: 'Gebhardt@7' },
@@ -103,7 +103,7 @@ export default function LoginPage({ onLogin }) {
 
           <div className="mt-6 pt-4 border-t border-slate-700">
             <p className="text-xs text-slate-500 text-center">
-              Powered by RinglyPro Logistics
+              Powered by Pinaxis
             </p>
           </div>
         </form>
