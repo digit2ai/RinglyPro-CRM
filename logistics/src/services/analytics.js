@@ -44,6 +44,18 @@ async function runAll(models, projectId) {
   results.system_architecture = computeSystemArchitecture(results);
   await storeResult(models, projectId, 'system_architecture', results.system_architecture);
 
+  // 10. XYZ Seasonality Classification
+  results.xyz_classification = await computeXYZClassification(models, projectId);
+  await storeResult(models, projectId, 'xyz_classification', results.xyz_classification);
+
+  // 11. Daily Percentiles (Design Basis)
+  results.daily_percentiles = await computeDailyPercentiles(models, projectId);
+  await storeResult(models, projectId, 'daily_percentiles', results.daily_percentiles);
+
+  // 12. Extrapolation (5-year growth projection)
+  results.extrapolation = computeExtrapolation(results);
+  await storeResult(models, projectId, 'extrapolation', results.extrapolation);
+
   return results;
 }
 
@@ -660,6 +672,255 @@ function computeSystemArchitecture(analysisResults) {
       automation_readiness: { value: Math.round(binCapablePct * 10) / 10, label: 'Bin-Capable %', max_points: 20 },
       sku_concentration: { value: Math.round(gini * 1000) / 1000, label: 'Gini Coefficient', max_points: 15 }
     }
+  };
+}
+
+// ============================================================================
+// 10. XYZ SEASONALITY CLASSIFICATION
+// Classifies SKUs by number of active days: X (≥30), Y (≥20), Z (<20)
+// ============================================================================
+
+async function computeXYZClassification(models, projectId) {
+  const seq = models.sequelize;
+
+  // Count distinct days each SKU was active in goods-out
+  const [skuDays] = await seq.query(`
+    SELECT sku, COUNT(DISTINCT ship_date) as active_days
+    FROM logistics_goods_out_data
+    WHERE project_id = :projectId AND ship_date IS NOT NULL
+    GROUP BY sku
+    ORDER BY active_days DESC
+  `, { replacements: { projectId } });
+
+  if (skuDays.length === 0) {
+    return { total_moved_skus: 0, classes: [], design_day: {}, thresholds: { x: 30, y: 20 } };
+  }
+
+  const totalMovedSKUs = skuDays.length;
+
+  // Classify each SKU
+  const classified = skuDays.map(s => ({
+    sku: s.sku,
+    active_days: parseInt(s.active_days),
+    class: parseInt(s.active_days) >= 30 ? 'X' : parseInt(s.active_days) >= 20 ? 'Y' : 'Z'
+  }));
+
+  // Get aggregate metrics per class
+  const classAgg = {};
+  for (const cls of ['X', 'Y', 'Z']) {
+    const skusInClass = classified.filter(s => s.class === cls);
+    const skuList = skusInClass.map(s => `'${s.sku}'`).join(',');
+
+    if (skuList.length === 0) {
+      classAgg[cls] = { moved_skus: 0, pct_moved_skus: 0, order_lines: 0, pct_lines: 0, pick_units: 0, pct_picks: 0, orders: 0, pct_orders: 0, moved_volume: 0, pct_volume: 0 };
+      continue;
+    }
+
+    const [agg] = await seq.query(`
+      SELECT
+        COUNT(*) as order_lines,
+        COALESCE(SUM(quantity), 0) as pick_units,
+        COUNT(DISTINCT order_id) as orders
+      FROM logistics_goods_out_data
+      WHERE project_id = :projectId AND sku IN (${skuList})
+    `, { replacements: { projectId } });
+
+    classAgg[cls] = {
+      moved_skus: skusInClass.length,
+      order_lines: parseInt(agg[0]?.order_lines || 0),
+      pick_units: parseFloat(agg[0]?.pick_units || 0),
+      orders: parseInt(agg[0]?.orders || 0)
+    };
+  }
+
+  // Compute totals for percentage calculation
+  const totalLines = Object.values(classAgg).reduce((s, c) => s + c.order_lines, 0);
+  const totalPicks = Object.values(classAgg).reduce((s, c) => s + c.pick_units, 0);
+  const totalOrders = Object.values(classAgg).reduce((s, c) => s + c.orders, 0);
+
+  const classes = ['X', 'Y', 'Z'].map(cls => ({
+    class: cls,
+    moved_skus: classAgg[cls].moved_skus,
+    pct_moved_skus: totalMovedSKUs > 0 ? Math.round((classAgg[cls].moved_skus / totalMovedSKUs) * 100) : 0,
+    order_lines: classAgg[cls].order_lines,
+    pct_lines: totalLines > 0 ? Math.round((classAgg[cls].order_lines / totalLines) * 100) : 0,
+    pick_units: classAgg[cls].pick_units,
+    pct_picks: totalPicks > 0 ? Math.round((classAgg[cls].pick_units / totalPicks) * 100) : 0,
+    orders: classAgg[cls].orders,
+    pct_orders: totalOrders > 0 ? Math.round((classAgg[cls].orders / totalOrders) * 100) : 0
+  }));
+
+  // Design day for XYZ-filtered data (12h working)
+  const workingHours = 12;
+  const dateRangeQ = await seq.query(`
+    SELECT COUNT(DISTINCT ship_date) as days FROM logistics_goods_out_data WHERE project_id = :projectId AND ship_date IS NOT NULL
+  `, { replacements: { projectId } });
+  const totalDays = parseInt(dateRangeQ[0]?.[0]?.days || 1);
+
+  const avgDayLines = Math.round(totalLines / totalDays);
+  const avgDayPicks = Math.round(totalPicks / totalDays);
+  const avgDayOrders = Math.round(totalOrders / totalDays);
+
+  return {
+    total_moved_skus: totalMovedSKUs,
+    thresholds: { x_min_days: 30, y_min_days: 20 },
+    classes,
+    totals: { order_lines: totalLines, pick_units: totalPicks, orders: totalOrders },
+    design_day: {
+      working_hours: workingHours,
+      avg_day: {
+        order_lines: avgDayLines,
+        pick_units: avgDayPicks,
+        orders: avgDayOrders,
+        lines_per_hour: Math.round(avgDayLines / workingHours),
+        picks_per_hour: Math.round(avgDayPicks / workingHours),
+        orders_per_hour: Math.round(avgDayOrders / workingHours)
+      }
+    },
+    top_skus: classified.slice(0, 20)
+  };
+}
+
+// ============================================================================
+// 11. DAILY PERCENTILES — Design Basis for automation solution
+// Computes avg / 75th percentile / max of daily throughput
+// ============================================================================
+
+async function computeDailyPercentiles(models, projectId) {
+  const seq = models.sequelize;
+
+  // Get daily aggregates
+  const [dailyData] = await seq.query(`
+    SELECT
+      ship_date as date,
+      COUNT(DISTINCT order_id) as orders,
+      COUNT(*) as order_lines,
+      COALESCE(SUM(quantity), 0) as pick_units
+    FROM logistics_goods_out_data
+    WHERE project_id = :projectId AND ship_date IS NOT NULL
+    GROUP BY ship_date
+    ORDER BY ship_date
+  `, { replacements: { projectId } });
+
+  if (dailyData.length === 0) {
+    return { days: 0, working_hours: 12, daily_values: {}, hourly_values: {} };
+  }
+
+  const totalDays = dailyData.length;
+  const workingHours = 12;
+
+  // Extract arrays for percentile computation
+  const linesSorted = dailyData.map(d => parseInt(d.order_lines)).sort((a, b) => a - b);
+  const picksSorted = dailyData.map(d => parseFloat(d.pick_units)).sort((a, b) => a - b);
+  const ordersSorted = dailyData.map(d => parseInt(d.orders)).sort((a, b) => a - b);
+
+  const avgLines = Math.round(linesSorted.reduce((s, v) => s + v, 0) / totalDays);
+  const avgPicks = Math.round(picksSorted.reduce((s, v) => s + v, 0) / totalDays);
+  const avgOrders = Math.round(ordersSorted.reduce((s, v) => s + v, 0) / totalDays);
+
+  const p75Lines = Math.round(percentile(linesSorted, 75));
+  const p75Picks = Math.round(percentile(picksSorted, 75));
+  const p75Orders = Math.round(percentile(ordersSorted, 75));
+
+  const maxLines = linesSorted[linesSorted.length - 1];
+  const maxPicks = Math.round(picksSorted[picksSorted.length - 1]);
+  const maxOrders = ordersSorted[ordersSorted.length - 1];
+
+  return {
+    days: totalDays,
+    working_hours: workingHours,
+    daily_values: {
+      average: { order_lines: avgLines, pick_units: avgPicks, orders: avgOrders },
+      p75: { order_lines: p75Lines, pick_units: p75Picks, orders: p75Orders },
+      max: { order_lines: maxLines, pick_units: maxPicks, orders: maxOrders }
+    },
+    hourly_values: {
+      average: {
+        order_lines: Math.round(avgLines / workingHours),
+        pick_units: Math.round(avgPicks / workingHours),
+        orders: Math.round(avgOrders / workingHours)
+      },
+      p75: {
+        order_lines: Math.round(p75Lines / workingHours),
+        pick_units: Math.round(p75Picks / workingHours),
+        orders: Math.round(p75Orders / workingHours)
+      },
+      max: {
+        order_lines: Math.round(maxLines / workingHours),
+        pick_units: Math.round(maxPicks / workingHours),
+        orders: Math.round(maxOrders / workingHours)
+      }
+    },
+    series: dailyData.map(d => ({
+      date: d.date,
+      order_lines: parseInt(d.order_lines),
+      pick_units: parseFloat(d.pick_units),
+      orders: parseInt(d.orders)
+    }))
+  };
+}
+
+// ============================================================================
+// 12. EXTRAPOLATION — 5-year growth projection
+// Projects current throughput forward at configurable annual growth rate
+// ============================================================================
+
+function computeExtrapolation(analysisResults) {
+  const overview = analysisResults.overview_kpis || {};
+  const dailyPerc = analysisResults.daily_percentiles || {};
+  const abc = analysisResults.abc_classification || {};
+  const dateRange = overview.date_range || {};
+
+  const orders = overview.orders || {};
+  const dayCount = dateRange.from && dateRange.to
+    ? Math.max(1, (new Date(dateRange.to) - new Date(dateRange.from)) / (1000 * 60 * 60 * 24))
+    : 1;
+
+  // Baseline averages (from daily percentiles if available, otherwise compute)
+  const avgDay = dailyPerc.daily_values?.average || {};
+  const baseLines = avgDay.order_lines || Math.round((orders.total_orderlines || 0) / dayCount);
+  const basePicks = avgDay.pick_units || Math.round((orders.total_units || 0) / dayCount);
+  const baseOrders = avgDay.orders || Math.round((orders.total_orders || 0) / dayCount);
+  const baseSKUs = abc.total_skus || overview.skus?.active || 0;
+
+  const growthRate = 0.05; // 5% annual
+  const years = 5;
+  const workingHours = 12;
+
+  const projections = [];
+  for (let y = 0; y <= years; y++) {
+    const factor = Math.pow(1 + growthRate, y);
+    const lines = Math.round(baseLines * factor);
+    const picks = Math.round(basePicks * factor);
+    const ords = Math.round(baseOrders * factor);
+    const skus = Math.round(baseSKUs * factor);
+
+    projections.push({
+      year: y,
+      growth_factor: Math.round(factor * 1000) / 1000,
+      design_day: {
+        order_lines: lines,
+        pick_units: picks,
+        orders: ords,
+        lines_per_hour: Math.round(lines / workingHours),
+        picks_per_hour: Math.round(picks / workingHours),
+        orders_per_hour: Math.round(ords / workingHours)
+      },
+      skus
+    });
+  }
+
+  return {
+    growth_rate_pct: growthRate * 100,
+    years,
+    working_hours: workingHours,
+    baseline: {
+      order_lines: baseLines,
+      pick_units: basePicks,
+      orders: baseOrders,
+      skus: baseSKUs
+    },
+    projections
   };
 }
 

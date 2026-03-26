@@ -27,12 +27,59 @@ export default function PresentationPage() {
     })
   }, [projectId])
 
-  const kpis = analysis?.kpis || analysis?.summary || {}
-  const abc = analysis?.abc || {}
-  const fit = analysis?.fit_analysis || {}
-  const orderProfile = analysis?.order_profile || {}
+  // Extract all data sections from analysis
+  const ov = analysis?.overview_kpis || {}
+  const skus = ov.skus || {}
+  const orders = ov.orders || {}
+  const dateRange = ov.date_range || {}
+  const inv = ov.inventory || {}
+
+  const fitAnalysis = analysis?.fit_analysis || {}
+  const fitBins = fitAnalysis.bins || []
+
+  const abc = analysis?.abc_classification || {}
+  const abcClasses = abc.classes || {}
+
+  const xyz = analysis?.xyz_classification || {}
+  const xyzClasses = xyz.classes || []
+
+  const orderStructure = analysis?.order_structure || {}
+
+  const dailyPerc = analysis?.daily_percentiles || {}
+  const dailyVals = dailyPerc.daily_values || {}
+  const hourlyVals = dailyPerc.hourly_values || {}
+
+  const extrap = analysis?.extrapolation || {}
+  const projections = extrap.projections || []
+  const year5 = projections.find(p => p.year === 5) || {}
 
   const companyName = project?.company_name || 'Your Warehouse'
+
+  // Helper to format numbers with commas
+  const fmt = (n) => {
+    if (n == null || isNaN(n)) return '—'
+    return Number(n).toLocaleString()
+  }
+
+  // Compute fit percentages from bins data
+  const totalItems = fitAnalysis.total_items || 0
+  const itemsWithDims = fitAnalysis.items_with_dimensions || 0
+  const itemsWithoutDims = fitAnalysis.items_without_dimensions || 0
+  const missingPct = totalItems > 0 ? ((itemsWithoutDims / totalItems) * 100).toFixed(1) : '—'
+  const largestBin = fitBins[fitBins.length - 1] || {}
+  const fitPctTotal = largestBin.fit_pct_total || '—'
+  const fitCount = largestBin.fit_count || 0
+
+  // Daily percentiles
+  const avgDay = dailyVals.average || {}
+  const p75Day = dailyVals.p75 || {}
+  const maxDay = dailyVals.max || {}
+  const avgHr = hourlyVals.average || {}
+  const p75Hr = hourlyVals.p75 || {}
+  const maxHr = hourlyVals.max || {}
+
+  // No data state
+  const hasData = !!analysis
 
   const slides = [
     // Slide 0: Title
@@ -47,11 +94,19 @@ export default function PresentationPage() {
             <h1 className="text-4xl font-bold text-white mb-3">Dashboard Playbook</h1>
             <p className="text-xl text-slate-300">{companyName}</p>
             <p className="text-sm text-slate-500 mt-4">PINAXIS Warehouse Automation</p>
+            {dateRange.from && dateRange.to && (
+              <p className="text-xs text-slate-500 mt-2">Data range: {dateRange.from} to {dateRange.to}</p>
+            )}
           </div>
           <div className="flex items-center gap-3 mt-8">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span className="text-sm text-emerald-400">Rachel Voice AI Ready — Click the widget to begin</span>
           </div>
+          {!hasData && !loading && (
+            <div className="p-4 rounded-lg bg-yellow-900/20 border border-yellow-500/30 max-w-md">
+              <p className="text-sm text-yellow-300">{projectId ? 'Analysis not yet complete. Run the analysis first from the Analysis page.' : 'Select a project from the sidebar to load presentation data.'}</p>
+            </div>
+          )}
         </div>
       )
     },
@@ -62,22 +117,26 @@ export default function PresentationPage() {
         <div className="space-y-6">
           <p className="text-slate-300">Comprehensive overview across the full time range of your order data, broken down by pick unit, order type, and temperature zone.</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <MetricCard label="Total SKUs" value={kpis.total_skus || kpis.moved_skus || '43,680'} />
-            <MetricCard label="Total Orders" value={kpis.total_orders || '60,016'} />
-            <MetricCard label="Order Lines" value={kpis.total_order_lines || '637,002'} />
-            <MetricCard label="Pick Units" value={kpis.total_pick_units || '89,533,743'} />
+            <MetricCard label="Total SKUs" value={fmt(skus.total)} />
+            <MetricCard label="Moved SKUs" value={fmt(skus.active)} />
+            <MetricCard label="Total Orders" value={fmt(orders.total_orders)} />
+            <MetricCard label="Order Lines" value={fmt(orders.total_orderlines)} />
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            <MetricCard label="Pieces Equivalent" value={kpis.pieces_equivalent || '657,885,754'} color="blue" />
-            <MetricCard label="Cartons Equivalent" value={kpis.cartons_equivalent || '89,193,443'} color="blue" />
-            <MetricCard label="Pallets Equivalent" value={kpis.pallets_equivalent || '2,227,374'} color="blue" />
+            <MetricCard label="Total Pick Units" value={fmt(orders.total_units)} color="blue" />
+            <MetricCard label="Avg Lines/Order" value={orders.avg_lines_per_order || '—'} color="blue" />
+            <MetricCard label="Bin Capable %" value={skus.bin_capable_pct ? `${skus.bin_capable_pct}%` : '—'} color="emerald" />
           </div>
-          <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
-            <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Pick Unit Breakdown</p>
-            <div className="grid grid-cols-3 gap-4 text-sm">
-              <div><span className="text-slate-400">Case:</span> <span className="text-white font-medium">30,578 SKUs</span></div>
-              <div><span className="text-slate-400">Single:</span> <span className="text-white font-medium">12,884 SKUs</span></div>
-              <div><span className="text-slate-400">Pallet:</span> <span className="text-white font-medium">218 SKUs</span></div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Date Range</p>
+              <p className="text-sm text-white">{dateRange.from || '—'} to {dateRange.to || '—'}</p>
+              <p className="text-xs text-slate-400 mt-1">{dailyPerc.days || '—'} operating days</p>
+            </div>
+            <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Inventory</p>
+              <p className="text-sm text-white">{fmt(inv.total_locations)} locations</p>
+              <p className="text-xs text-slate-400 mt-1">{fmt(inv.total_stock)} total stock units</p>
             </div>
           </div>
         </div>
@@ -88,25 +147,32 @@ export default function PresentationPage() {
       title: 'Fit / No-Fit Analysis',
       content: (
         <div className="space-y-6">
-          <p className="text-slate-300">Analysis of whether items fit in the selected bin (600 x 400 x 200), are bulky, or have missing dimensions.</p>
+          <p className="text-slate-300">Analysis of whether items fit in standard automation bins, are bulky, or have missing dimensions.</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <MetricCard label="Fit" value={fit.fit_pct || '65.7%'} sub={fit.fit_skus || '149,969 SKUs'} color="emerald" />
-            <MetricCard label="Dimension Missing" value={fit.missing_pct || '27.7%'} sub={fit.missing_skus || '63,126 SKUs'} color="yellow" />
-            <MetricCard label="Bulky" value={fit.bulky_pct || '3.2%'} sub={fit.bulky_skus || '7,186 SKUs'} color="red" />
-            <MetricCard label="No-Fit" value={fit.nofit_pct || '3.4%'} sub={fit.nofit_skus || '7,793 SKUs'} color="orange" />
+            <MetricCard label="Fit" value={fitPctTotal !== '—' ? `${fitPctTotal}%` : '—'} sub={`${fmt(fitCount)} SKUs`} color="emerald" />
+            <MetricCard label="Dims Missing" value={missingPct !== '—' ? `${missingPct}%` : '—'} sub={`${fmt(itemsWithoutDims)} SKUs`} color="yellow" />
+            <MetricCard label="Total Items" value={fmt(totalItems)} color="blue" />
+            <MetricCard label="With Dimensions" value={fmt(itemsWithDims)} color="blue" />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {fitBins.length > 0 && (
             <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
-              <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">By SKUs</p>
-              <p className="text-sm text-slate-300">65.7% of total SKUs fit the standard bin. Moved SKU fit rate is <strong className="text-emerald-400">86.0%</strong> — the items that matter most are conveyable.</p>
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Bin Compatibility</p>
+              <div className="space-y-2">
+                {fitBins.map(bin => (
+                  <div key={bin.name} className="flex items-center justify-between text-sm">
+                    <span className="text-slate-300">{bin.name} mm</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-white font-medium">{fmt(bin.fit_count)} fit</span>
+                      <span className="text-emerald-400">{bin.fit_pct}% of dimensioned</span>
+                      <span className="text-slate-500">{bin.fit_pct_total}% of total</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
-              <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">By Lines</p>
-              <p className="text-sm text-slate-300">87.6% of order lines are fit items, covering <strong className="text-emerald-400">91.8%</strong> of pick quantity — strong automation potential.</p>
-            </div>
-          </div>
+          )}
           <div className="p-4 rounded-lg bg-emerald-900/20 border border-emerald-500/30">
-            <p className="text-sm text-emerald-300">Key Insight: The overwhelming majority of moved volume is conveyable, making this warehouse an excellent candidate for PINAXIS automation solutions.</p>
+            <p className="text-sm text-emerald-300">Key Insight: {fitPctTotal !== '—' ? `${fitPctTotal}% of items are conveyable in standard bins — strong automation potential.` : 'Run analysis to see fit results.'}</p>
           </div>
         </div>
       )
@@ -116,43 +182,33 @@ export default function PresentationPage() {
       title: 'ABC Classification',
       content: (
         <div className="space-y-6">
-          <p className="text-slate-300">Distinguish between slow, medium, and fast-moving articles. ABC classification by SKU Rank % on Order Lines.</p>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="p-5 rounded-lg bg-emerald-900/20 border border-emerald-500/30 text-center">
-              <p className="text-3xl font-bold text-emerald-400">{abc.a_skus || '785'}</p>
-              <p className="text-xs text-slate-400 mt-1">A Items (10% SKUs)</p>
-              <p className="text-sm text-emerald-300 mt-2">60% of Order Lines</p>
-              <p className="text-xs text-slate-500">59% Pick Units · 91% Orders</p>
-            </div>
-            <div className="p-5 rounded-lg bg-yellow-900/20 border border-yellow-500/30 text-center">
-              <p className="text-3xl font-bold text-yellow-400">{abc.b_skus || '785'}</p>
-              <p className="text-xs text-slate-400 mt-1">B Items (10% SKUs)</p>
-              <p className="text-sm text-yellow-300 mt-2">17% of Order Lines</p>
-              <p className="text-xs text-slate-500">17% Pick Units · 71% Orders</p>
-            </div>
-            <div className="p-5 rounded-lg bg-slate-800/50 border border-slate-700 text-center">
-              <p className="text-3xl font-bold text-slate-300">{abc.c_skus || '6,281'}</p>
-              <p className="text-xs text-slate-400 mt-1">C Items (80% SKUs)</p>
-              <p className="text-sm text-slate-300 mt-2">23% of Order Lines</p>
-              <p className="text-xs text-slate-500">23% Pick Units · 77% Orders</p>
-            </div>
+          <p className="text-slate-300">Pareto analysis — distinguish fast, medium, and slow-moving articles by order line volume.</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {['A', 'B', 'C', 'D'].map(cls => {
+              const data = abcClasses[cls]
+              if (!data) return null
+              const colors = { A: 'emerald', B: 'yellow', C: 'slate', D: 'red' }
+              const labels = { A: 'Fast Movers', B: 'Medium Movers', C: 'Slow Movers', D: 'Dead Stock' }
+              return (
+                <div key={cls} className={`p-4 rounded-lg border text-center ${cls === 'A' ? 'bg-emerald-900/20 border-emerald-500/30' : cls === 'B' ? 'bg-yellow-900/20 border-yellow-500/30' : cls === 'D' ? 'bg-red-900/20 border-red-500/30' : 'bg-slate-800/50 border-slate-700'}`}>
+                  <p className={`text-2xl font-bold ${cls === 'A' ? 'text-emerald-400' : cls === 'B' ? 'text-yellow-400' : cls === 'D' ? 'text-red-400' : 'text-white'}`}>{fmt(data.count)}</p>
+                  <p className="text-xs text-slate-400 mt-1">{cls} Items ({data.pct}%)</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{labels[cls]}</p>
+                  <p className="text-xs text-slate-500">{data.volume_pct}% of volume</p>
+                </div>
+              )
+            })}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
-              <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Design Day (75th Percentile)</p>
-              <div className="grid grid-cols-3 gap-2 text-sm">
-                <div><span className="text-slate-400">Lines:</span> <span className="text-white font-medium">16,711/hr</span></div>
-                <div><span className="text-slate-400">Picks:</span> <span className="text-white font-medium">22,870/hr</span></div>
-                <div><span className="text-slate-400">Orders:</span> <span className="text-white font-medium">1,666/hr</span></div>
-              </div>
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Gini Coefficient</p>
+              <p className="text-2xl font-bold text-white">{abc.gini || '—'}</p>
+              <p className="text-xs text-slate-400 mt-1">{abc.gini >= 0.7 ? 'Highly concentrated — strong ABC separation' : abc.gini >= 0.4 ? 'Moderate concentration' : 'Relatively even distribution'}</p>
             </div>
             <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
-              <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Working Hours: 7.5h</p>
-              <div className="grid grid-cols-3 gap-2 text-sm">
-                <div><span className="text-slate-400">Lines/day:</span> <span className="text-white font-medium">125,326</span></div>
-                <div><span className="text-slate-400">Picks/day:</span> <span className="text-white font-medium">171,521</span></div>
-                <div><span className="text-slate-400">Orders/day:</span> <span className="text-white font-medium">12,491</span></div>
-              </div>
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Total Active SKUs</p>
+              <p className="text-2xl font-bold text-white">{fmt(abc.total_skus)}</p>
+              <p className="text-xs text-slate-400 mt-1">Including {fmt(abc.dead_stock_count)} dead stock</p>
             </div>
           </div>
         </div>
@@ -163,36 +219,31 @@ export default function PresentationPage() {
       title: 'XYZ Seasonality Analysis',
       content: (
         <div className="space-y-6">
-          <p className="text-slate-300">Distinguish between seasonal and non-seasonal products. X, Y, Z limits determined by minimum days an article was touched by an order.</p>
+          <p className="text-slate-300">Distinguish seasonal vs non-seasonal products. Limits determined by minimum days an article was active.</p>
           <div className="grid grid-cols-3 gap-4">
-            <div className="p-5 rounded-lg bg-red-900/20 border border-red-500/30 text-center">
-              <p className="text-3xl font-bold text-red-400">4,994</p>
-              <p className="text-xs text-slate-400 mt-1">X Items (≥30 days)</p>
-              <p className="text-sm text-red-300 mt-2">11% of moved SKUs</p>
-              <p className="text-xs text-slate-500">44% Lines · 40% Picks · 60% Orders</p>
-            </div>
-            <div className="p-5 rounded-lg bg-yellow-900/20 border border-yellow-500/30 text-center">
-              <p className="text-3xl font-bold text-yellow-400">5,350</p>
-              <p className="text-xs text-slate-400 mt-1">Y Items (≥20 days)</p>
-              <p className="text-sm text-yellow-300 mt-2">12% of moved SKUs</p>
-              <p className="text-xs text-slate-500">21% Lines · 19% Picks · 41% Orders</p>
-            </div>
-            <div className="p-5 rounded-lg bg-slate-800/50 border border-slate-700 text-center">
-              <p className="text-3xl font-bold text-slate-300">33,336</p>
-              <p className="text-xs text-slate-400 mt-1">Z Items (&lt;20 days)</p>
-              <p className="text-sm text-slate-300 mt-2">76% of moved SKUs</p>
-              <p className="text-xs text-slate-500">36% Lines · 41% Picks · 61% Orders</p>
-            </div>
+            {xyzClasses.map(cls => {
+              const colors = { X: 'red', Y: 'yellow', Z: 'slate' }
+              const labels = { X: `≥${xyz.thresholds?.x_min_days || 30} days`, Y: `≥${xyz.thresholds?.y_min_days || 20} days`, Z: `<${xyz.thresholds?.y_min_days || 20} days` }
+              return (
+                <div key={cls.class} className={`p-5 rounded-lg border text-center ${cls.class === 'X' ? 'bg-red-900/20 border-red-500/30' : cls.class === 'Y' ? 'bg-yellow-900/20 border-yellow-500/30' : 'bg-slate-800/50 border-slate-700'}`}>
+                  <p className={`text-3xl font-bold ${cls.class === 'X' ? 'text-red-400' : cls.class === 'Y' ? 'text-yellow-400' : 'text-slate-300'}`}>{fmt(cls.moved_skus)}</p>
+                  <p className="text-xs text-slate-400 mt-1">{cls.class} Items ({labels[cls.class]})</p>
+                  <p className={`text-sm mt-2 ${cls.class === 'X' ? 'text-red-300' : cls.class === 'Y' ? 'text-yellow-300' : 'text-slate-300'}`}>{cls.pct_moved_skus}% of moved SKUs</p>
+                  <p className="text-xs text-slate-500">{cls.pct_lines}% Lines · {cls.pct_picks}% Picks · {cls.pct_orders}% Orders</p>
+                </div>
+              )
+            })}
           </div>
-          <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
-            <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Design Day (XYZ-filtered, 12h working)</p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-              <div><span className="text-slate-400">Lines:</span> <span className="text-white font-medium">2,365 (198/hr)</span></div>
-              <div><span className="text-slate-400">Pick Units:</span> <span className="text-white font-medium">338,037 (28,170/hr)</span></div>
-              <div><span className="text-slate-400">Orders:</span> <span className="text-white font-medium">227 (19/hr)</span></div>
-              <div><span className="text-slate-400">Volume:</span> <span className="text-white font-medium">4,575 m³ (382/hr)</span></div>
+          {xyz.design_day && (
+            <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Average Day ({xyz.design_day.working_hours}h working)</p>
+              <div className="grid grid-cols-3 gap-4 text-sm">
+                <div><span className="text-slate-400">Lines:</span> <span className="text-white font-medium">{fmt(xyz.design_day.avg_day?.order_lines)} ({fmt(xyz.design_day.avg_day?.lines_per_hour)}/hr)</span></div>
+                <div><span className="text-slate-400">Picks:</span> <span className="text-white font-medium">{fmt(xyz.design_day.avg_day?.pick_units)} ({fmt(xyz.design_day.avg_day?.picks_per_hour)}/hr)</span></div>
+                <div><span className="text-slate-400">Orders:</span> <span className="text-white font-medium">{fmt(xyz.design_day.avg_day?.orders)} ({fmt(xyz.design_day.avg_day?.orders_per_hour)}/hr)</span></div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )
     },
@@ -201,19 +252,29 @@ export default function PresentationPage() {
       title: 'Order Profile',
       content: (
         <div className="space-y-6">
-          <p className="text-slate-300">Insights regarding pick-units per order, lines per order, volume per order with min/max, average, and percentile values.</p>
+          <p className="text-slate-300">Insights regarding lines per order with min/max, average, and percentile values.</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <MetricCard label="Min Lines/Order" value="1.0" color="blue" />
-            <MetricCard label="Average Lines/Order" value="9.9" color="yellow" />
-            <MetricCard label="75th Percentile" value="13.0" color="emerald" />
-            <MetricCard label="Max Lines/Order" value="138.0" color="red" />
+            <MetricCard label="Total Orders" value={fmt(orderStructure.total_orders)} />
+            <MetricCard label="Single-Line" value={`${orderStructure.single_line_pct || '—'}%`} sub={fmt(orderStructure.single_line_orders)} color="blue" />
+            <MetricCard label="Multi-Line" value={`${orderStructure.multi_line_pct || '—'}%`} sub={fmt(orderStructure.multi_line_orders)} color="emerald" />
+            <MetricCard label="Avg Lines/Order" value={orders.avg_lines_per_order || '—'} color="yellow" />
           </div>
-          <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
-            <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Order Lines Distribution</p>
-            <p className="text-sm text-slate-300">Orders with 1-10 lines represent the bulk of volume. The distribution shows a right-skewed pattern typical of mixed fulfillment operations, with the most frequent order sizes between 3-8 lines.</p>
-          </div>
+          {orderStructure.histogram && (
+            <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Order Lines Distribution</p>
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                {orderStructure.histogram.map(bin => (
+                  <div key={bin.label} className="text-center p-2 rounded bg-slate-900/50">
+                    <p className="text-xs text-slate-500">{bin.label} lines</p>
+                    <p className="text-sm font-medium text-white">{fmt(bin.count)}</p>
+                    <p className="text-xs text-slate-400">{bin.pct}%</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="p-4 rounded-lg bg-blue-900/20 border border-blue-500/30">
-            <p className="text-sm text-blue-300">Key Insight: The moderate average of ~10 lines/order with a 75th percentile at 13 lines indicates well-structured orders suitable for zone-based or wave picking automation.</p>
+            <p className="text-sm text-blue-300">The order structure {orderStructure.multi_line_pct > 50 ? 'is predominantly multi-line, indicating complex fulfillment suited for zone-based or wave picking automation.' : 'shows a balanced mix suitable for flexible automation strategies.'}</p>
           </div>
         </div>
       )
@@ -227,69 +288,91 @@ export default function PresentationPage() {
           <div className="grid grid-cols-3 gap-4">
             <div className="p-5 rounded-lg bg-blue-900/20 border border-blue-500/30 text-center">
               <p className="text-xs text-slate-400 mb-1">Average</p>
-              <p className="text-3xl font-bold text-blue-400">1,722</p>
+              <p className="text-3xl font-bold text-blue-400">{fmt(avgDay.order_lines)}</p>
               <p className="text-xs text-slate-400 mt-1">Daily Order Lines</p>
-              <p className="text-sm text-blue-300 mt-2">144 / hour</p>
+              <p className="text-sm text-blue-300 mt-2">{fmt(avgHr.order_lines)} / hour</p>
             </div>
             <div className="p-5 rounded-lg bg-emerald-900/20 border border-emerald-500/30 text-center">
               <p className="text-xs text-slate-400 mb-1">75th Percentile</p>
-              <p className="text-3xl font-bold text-emerald-400">2,364</p>
+              <p className="text-3xl font-bold text-emerald-400">{fmt(p75Day.order_lines)}</p>
               <p className="text-xs text-slate-400 mt-1">Daily Order Lines</p>
-              <p className="text-sm text-emerald-300 mt-2">197 / hour</p>
+              <p className="text-sm text-emerald-300 mt-2">{fmt(p75Hr.order_lines)} / hour</p>
             </div>
             <div className="p-5 rounded-lg bg-red-900/20 border border-red-500/30 text-center">
               <p className="text-xs text-slate-400 mb-1">Maximum</p>
-              <p className="text-3xl font-bold text-red-400">3,002</p>
+              <p className="text-3xl font-bold text-red-400">{fmt(maxDay.order_lines)}</p>
               <p className="text-xs text-slate-400 mt-1">Daily Order Lines</p>
-              <p className="text-sm text-red-300 mt-2">250 / hour</p>
+              <p className="text-sm text-red-300 mt-2">{fmt(maxHr.order_lines)} / hour</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Pick Units</p>
+              <div className="grid grid-cols-3 gap-2 text-sm">
+                <div><span className="text-slate-400">Avg:</span> <span className="text-white">{fmt(avgDay.pick_units)}</span></div>
+                <div><span className="text-slate-400">P75:</span> <span className="text-white">{fmt(p75Day.pick_units)}</span></div>
+                <div><span className="text-slate-400">Max:</span> <span className="text-white">{fmt(maxDay.pick_units)}</span></div>
+              </div>
+            </div>
+            <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Orders</p>
+              <div className="grid grid-cols-3 gap-2 text-sm">
+                <div><span className="text-slate-400">Avg:</span> <span className="text-white">{fmt(avgDay.orders)}</span></div>
+                <div><span className="text-slate-400">P75:</span> <span className="text-white">{fmt(p75Day.orders)}</span></div>
+                <div><span className="text-slate-400">Max:</span> <span className="text-white">{fmt(maxDay.orders)}</span></div>
+              </div>
             </div>
           </div>
           <div className="p-4 rounded-lg bg-yellow-900/20 border border-yellow-500/30">
-            <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Working Hours: 12h</p>
-            <p className="text-sm text-yellow-300">The 75th percentile design day at 2,364 lines/day (197/hr) ensures the system handles peak demand 75% of the time without bottlenecks.</p>
+            <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Working Hours: {dailyPerc.working_hours || 12}h</p>
+            <p className="text-sm text-yellow-300">The 75th percentile design day at {fmt(p75Day.order_lines)} lines/day ({fmt(p75Hr.order_lines)}/hr) ensures the system handles peak demand 75% of the time.</p>
           </div>
         </div>
       )
     },
-    // Slide 7: Extrapolation & Growth
+    // Slide 7: Extrapolation
     {
       title: 'Data Analysis — Using Data to Your Advantage',
       content: (
         <div className="space-y-6">
-          <p className="text-slate-300">5-year extrapolation at 5% annual growth across all key metrics.</p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="p-4 rounded-lg bg-yellow-900/20 border border-yellow-500/30 text-center">
-              <p className="text-xs text-slate-400 mb-1">Order Lines/day (Y5)</p>
-              <p className="text-2xl font-bold text-yellow-400">40,754</p>
-              <p className="text-xs text-slate-400">5,434 / hour</p>
+          <p className="text-slate-300">{extrap.years || 5}-year extrapolation at {extrap.growth_rate_pct || 5}% annual growth across all key metrics.</p>
+          {year5.design_day && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="p-4 rounded-lg bg-yellow-900/20 border border-yellow-500/30 text-center">
+                <p className="text-xs text-slate-400 mb-1">Lines/day (Y5)</p>
+                <p className="text-2xl font-bold text-yellow-400">{fmt(year5.design_day.order_lines)}</p>
+                <p className="text-xs text-slate-400">{fmt(year5.design_day.lines_per_hour)} / hour</p>
+              </div>
+              <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700 text-center">
+                <p className="text-xs text-slate-400 mb-1">Picks/day (Y5)</p>
+                <p className="text-2xl font-bold text-slate-200">{fmt(year5.design_day.pick_units)}</p>
+                <p className="text-xs text-slate-400">{fmt(year5.design_day.picks_per_hour)} / hour</p>
+              </div>
+              <div className="p-4 rounded-lg bg-emerald-900/20 border border-emerald-500/30 text-center">
+                <p className="text-xs text-slate-400 mb-1">Orders/day (Y5)</p>
+                <p className="text-2xl font-bold text-emerald-400">{fmt(year5.design_day.orders)}</p>
+                <p className="text-xs text-slate-400">{fmt(year5.design_day.orders_per_hour)} / hour</p>
+              </div>
+              <div className="p-4 rounded-lg bg-blue-900/20 border border-blue-500/30 text-center">
+                <p className="text-xs text-slate-400 mb-1">SKU Growth (Y5)</p>
+                <p className="text-2xl font-bold text-blue-400">{fmt(year5.skus)}</p>
+                <p className="text-xs text-slate-400">×{year5.growth_factor} from baseline</p>
+              </div>
             </div>
-            <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700 text-center">
-              <p className="text-xs text-slate-400 mb-1">Pick Units/day (Y5)</p>
-              <p className="text-2xl font-bold text-slate-200">150,564</p>
-              <p className="text-xs text-slate-400">20,076 / hour</p>
+          )}
+          {extrap.baseline && (
+            <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Baseline (Year 0)</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                <div><span className="text-slate-400">Lines/day:</span> <span className="text-white font-medium">{fmt(extrap.baseline.order_lines)}</span></div>
+                <div><span className="text-slate-400">Picks/day:</span> <span className="text-white font-medium">{fmt(extrap.baseline.pick_units)}</span></div>
+                <div><span className="text-slate-400">Orders/day:</span> <span className="text-white font-medium">{fmt(extrap.baseline.orders)}</span></div>
+                <div><span className="text-slate-400">SKUs:</span> <span className="text-white font-medium">{fmt(extrap.baseline.skus)}</span></div>
+              </div>
             </div>
-            <div className="p-4 rounded-lg bg-emerald-900/20 border border-emerald-500/30 text-center">
-              <p className="text-xs text-slate-400 mb-1">Orders/day (Y5)</p>
-              <p className="text-2xl font-bold text-emerald-400">8,246</p>
-              <p className="text-xs text-slate-400">1,100 / hour</p>
-            </div>
-            <div className="p-4 rounded-lg bg-blue-900/20 border border-blue-500/30 text-center">
-              <p className="text-xs text-slate-400 mb-1">SKU Growth (Y5)</p>
-              <p className="text-2xl font-bold text-blue-400">18,389</p>
-              <p className="text-xs text-slate-400">+27% from baseline</p>
-            </div>
-          </div>
-          <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
-            <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Average Day (projected Year 5)</p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-              <div><span className="text-slate-400">Lines:</span> <span className="text-white font-medium">26,711</span></div>
-              <div><span className="text-slate-400">Picks:</span> <span className="text-white font-medium">100,710</span></div>
-              <div><span className="text-slate-400">Orders:</span> <span className="text-white font-medium">4,399</span></div>
-              <div><span className="text-slate-400">Volume:</span> <span className="text-white font-medium">476 m³</span></div>
-            </div>
-          </div>
+          )}
           <div className="p-4 rounded-lg bg-emerald-900/20 border border-emerald-500/30">
-            <p className="text-sm text-emerald-300">The PINAXIS solution is designed to scale with your projected 5% YoY growth, ensuring headroom for Year 5 peak throughput demands.</p>
+            <p className="text-sm text-emerald-300">The PINAXIS solution is designed to scale with projected {extrap.growth_rate_pct || 5}% YoY growth, ensuring headroom for Year 5 peak throughput demands.</p>
           </div>
         </div>
       )
@@ -302,16 +385,14 @@ export default function PresentationPage() {
           <p className="text-slate-300">Based on the data analysis, here are the recommended next steps for your warehouse automation journey with PINAXIS.</p>
           <div className="space-y-4">
             {[
-              { num: '1', title: 'Review Concept Designs', desc: 'Explore the PINAXIS product recommendations with fit scores tailored to your warehouse profile.' },
+              { num: '1', title: 'Review Concept Designs', desc: `Explore the PINAXIS product recommendations with fit scores tailored to ${companyName}'s warehouse profile.` },
               { num: '2', title: 'Simulation & Layout', desc: 'Run warehouse simulations to validate throughput targets and optimize system layout.' },
               { num: '3', title: 'Commercial Proposal', desc: 'Review ROI projections, cost-benefit analysis, and payback period estimates.' },
               { num: '4', title: 'API Integration', desc: 'Connect your WMS/ERP for live data feeds and real-time monitoring.' },
               { num: '5', title: 'Implementation', desc: 'Phased deployment with PINAXIS engineering support and OEE tracking from day one.' }
             ].map(step => (
               <div key={step.num} className="flex items-start gap-4 p-4 rounded-lg bg-slate-800/50 border border-slate-700 hover:border-slate-600 transition-colors">
-                <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold flex-shrink-0">
-                  {step.num}
-                </div>
+                <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold flex-shrink-0">{step.num}</div>
                 <div>
                   <h3 className="text-white font-semibold">{step.title}</h3>
                   <p className="text-sm text-slate-400 mt-1">{step.desc}</p>
@@ -338,81 +419,35 @@ export default function PresentationPage() {
 
   return (
     <div className="max-w-5xl mx-auto">
-      {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white mb-1">Presentation Mode</h1>
-          <p className="text-slate-400">
-            PINAXIS proposal for {companyName} — powered by Rachel Voice AI
-          </p>
+          <p className="text-slate-400">PINAXIS proposal for {companyName} — powered by Rachel Voice AI</p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-500">Slide {activeSlide + 1} / {slides.length}</span>
-        </div>
+        <span className="text-xs text-slate-500">Slide {activeSlide + 1} / {slides.length}</span>
       </div>
 
-      {/* Slide Navigation Dots */}
       <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
         {slides.map((s, i) => (
-          <button
-            key={i}
-            onClick={() => setActiveSlide(i)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-              i === activeSlide
-                ? 'bg-blue-600 text-white'
-                : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-300'
-            }`}
-          >
+          <button key={i} onClick={() => setActiveSlide(i)} className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${i === activeSlide ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>
             {i + 1}. {s.title.length > 20 ? s.title.slice(0, 20) + '...' : s.title}
           </button>
         ))}
       </div>
 
-      {/* Active Slide */}
       <div className="card min-h-[500px]">
-        <h2 className="text-2xl font-bold text-white mb-6 pb-4 border-b border-slate-700">
-          {slides[activeSlide].title}
-        </h2>
+        <h2 className="text-2xl font-bold text-white mb-6 pb-4 border-b border-slate-700">{slides[activeSlide].title}</h2>
         {slides[activeSlide].content}
       </div>
 
-      {/* Prev / Next Controls */}
       <div className="flex items-center justify-between mt-6">
-        <button
-          onClick={() => setActiveSlide(Math.max(0, activeSlide - 1))}
-          disabled={activeSlide === 0}
-          className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
-            activeSlide === 0
-              ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
-              : 'bg-slate-700 text-white hover:bg-slate-600'
-          }`}
-        >
-          Previous
-        </button>
+        <button onClick={() => setActiveSlide(Math.max(0, activeSlide - 1))} disabled={activeSlide === 0} className={`px-6 py-2.5 rounded-lg font-medium transition-all ${activeSlide === 0 ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : 'bg-slate-700 text-white hover:bg-slate-600'}`}>Previous</button>
         <div className="flex gap-1.5">
-          {slides.map((_, i) => (
-            <div
-              key={i}
-              className={`w-2 h-2 rounded-full transition-all ${
-                i === activeSlide ? 'bg-blue-500 w-6' : 'bg-slate-700'
-              }`}
-            />
-          ))}
+          {slides.map((_, i) => (<div key={i} className={`w-2 h-2 rounded-full transition-all ${i === activeSlide ? 'bg-blue-500 w-6' : 'bg-slate-700'}`} />))}
         </div>
-        <button
-          onClick={() => setActiveSlide(Math.min(slides.length - 1, activeSlide + 1))}
-          disabled={activeSlide === slides.length - 1}
-          className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
-            activeSlide === slides.length - 1
-              ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
-              : 'bg-blue-600 text-white hover:bg-blue-500'
-          }`}
-        >
-          Next
-        </button>
+        <button onClick={() => setActiveSlide(Math.min(slides.length - 1, activeSlide + 1))} disabled={activeSlide === slides.length - 1} className={`px-6 py-2.5 rounded-lg font-medium transition-all ${activeSlide === slides.length - 1 ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-500'}`}>Next</button>
       </div>
 
-      {/* Rachel Voice AI Info */}
       <div className="mt-8 p-5 rounded-lg bg-gradient-to-r from-purple-900/30 to-blue-900/30 border border-purple-500/20">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center">
@@ -425,10 +460,7 @@ export default function PresentationPage() {
             <p className="text-xs text-slate-400">Powered by ElevenLabs Conversational AI</p>
           </div>
         </div>
-        <p className="text-sm text-slate-300">
-          Click the voice widget in the bottom-right corner to have Rachel walk you through this presentation.
-          She can explain any metric, answer questions about the warehouse analysis, and discuss PINAXIS automation recommendations.
-        </p>
+        <p className="text-sm text-slate-300">Click the voice widget in the bottom-right corner to have Rachel walk you through this presentation. She knows all the metrics for {companyName}.</p>
       </div>
     </div>
   )
@@ -436,24 +468,17 @@ export default function PresentationPage() {
 
 function MetricCard({ label, value, sub, color = 'slate' }) {
   const colorMap = {
-    slate: 'bg-slate-800/50 border-slate-700',
-    emerald: 'bg-emerald-900/20 border-emerald-500/30',
-    blue: 'bg-blue-900/20 border-blue-500/30',
-    yellow: 'bg-yellow-900/20 border-yellow-500/30',
-    red: 'bg-red-900/20 border-red-500/30',
-    orange: 'bg-orange-900/20 border-orange-500/30'
+    slate: 'bg-slate-800/50 border-slate-700', emerald: 'bg-emerald-900/20 border-emerald-500/30',
+    blue: 'bg-blue-900/20 border-blue-500/30', yellow: 'bg-yellow-900/20 border-yellow-500/30',
+    red: 'bg-red-900/20 border-red-500/30', orange: 'bg-orange-900/20 border-orange-500/30'
   }
-  const textColorMap = {
-    slate: 'text-white',
-    emerald: 'text-emerald-400',
-    blue: 'text-blue-400',
-    yellow: 'text-yellow-400',
-    red: 'text-red-400',
-    orange: 'text-orange-400'
+  const textMap = {
+    slate: 'text-white', emerald: 'text-emerald-400', blue: 'text-blue-400',
+    yellow: 'text-yellow-400', red: 'text-red-400', orange: 'text-orange-400'
   }
   return (
     <div className={`p-4 rounded-lg border text-center ${colorMap[color]}`}>
-      <p className={`text-2xl font-bold ${textColorMap[color]}`}>{value}</p>
+      <p className={`text-2xl font-bold ${textMap[color]}`}>{value}</p>
       <p className="text-xs text-slate-400 mt-1">{label}</p>
       {sub && <p className="text-xs text-slate-500 mt-0.5">{sub}</p>}
     </div>

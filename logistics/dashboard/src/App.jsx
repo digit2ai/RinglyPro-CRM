@@ -16,75 +16,70 @@ import PresentationPage from './pages/PresentationPage'
 import WarehouseMindPage from './pages/WarehouseMindPage'
 import StepIndicator from './components/StepIndicator'
 
-// Full Dashboard Playbook context for Rachel Voice AI on the Presentation page
-const PRESENTATION_CONTEXT = `You are Rachel, the PINAXIS Voice AI assistant. You are currently on the Dashboard Playbook Presentation page at https://aiagent.ringlypro.com/pinaxis/presentation. Your job is to walk the listener through the PINAXIS warehouse analytics proposal. Speak confidently, professionally, and reference specific numbers. You represent PINAXIS Warehouse Automation.
+// Dynamic Rachel context builder — generates presentation context from live project data
+function buildPresentationContext(analysisData, companyName) {
+  const a = analysisData || {}
+  const ov = a.overview_kpis || {}
+  const skus = ov.skus || {}
+  const orders = ov.orders || {}
+  const dateRange = ov.date_range || {}
+  const fit = a.fit_analysis || {}
+  const abc = a.abc_classification || {}
+  const xyz = a.xyz_classification || {}
+  const dailyPerc = a.daily_percentiles || {}
+  const extrap = a.extrapolation || {}
+  const dailyVals = dailyPerc.daily_values || {}
+  const avgDay = dailyVals.average || {}
+  const p75Day = dailyVals.p75 || {}
+  const maxDay = dailyVals.max || {}
+  const y5 = (extrap.projections || []).find(p => p.year === 5) || {}
+  const fmt = n => n != null ? Number(n).toLocaleString() : '—'
+
+  return `You are Rachel, the PINAXIS Voice AI assistant. You are presenting the Dashboard Playbook for ${companyName || 'the prospect warehouse'}. Speak confidently, reference specific numbers. You represent PINAXIS Warehouse Automation.
 
 Here is the full presentation content you should be able to discuss:
 
-SLIDE 1 — TITLE: PINAXIS Dashboard Playbook. This is a comprehensive warehouse data analytics presentation prepared by PINAXIS Warehouse Automation for the prospect's warehouse.
+SLIDE 1 — TITLE: PINAXIS Dashboard Playbook for ${companyName || 'the prospect warehouse'}.
 
 SLIDE 2 — DATA ANALYSIS OVERVIEW:
-- Total SKUs: 43,680 | Total Orders: 60,016 | Order Lines: 637,002 | Pick Units: 89,533,743
-- Pieces Equivalent: 657,885,754 | Cartons Equivalent: 89,193,443 | Pallets Equivalent: 2,227,374
-- Pick Unit Breakdown: Case (30,578 SKUs), Single (12,884 SKUs), Pallet (218 SKUs)
-- Data spans 370 days across ambient, chilled, and frozen temperature zones
-- Order types: 86.1% store replenishment, with e-com and first allocation making up the rest
+- Total SKUs: ${fmt(skus.total)} | Moved SKUs: ${fmt(skus.active)} | Total Orders: ${fmt(orders.total_orders)} | Order Lines: ${fmt(orders.total_orderlines)}
+- Total Pick Units: ${fmt(orders.total_units)} | Avg Lines/Order: ${orders.avg_lines_per_order || '—'}
+- Bin Capable: ${skus.bin_capable_pct || '—'}% of SKUs
+- Data range: ${dateRange.from || '—'} to ${dateRange.to || '—'} (${dailyPerc.days || '—'} operating days)
 
-SLIDE 3 — FIT / NO-FIT ANALYSIS (600x400x200mm bin):
-- Fit: 65.7% of SKUs (149,969 items) — these fit the standard automation bin
-- Dimension/Weight Missing: 27.7% (63,126 SKUs) — data gaps that need remediation
-- Bulky: 3.2% (7,186 SKUs) — items exceeding bin dimensions (min 400mm height, 400mm width, 600mm depth, 50kg weight)
-- No-Fit: 3.4% (7,793 SKUs) — items that don't fit but aren't bulky
-- KEY INSIGHT: By order lines, 87.6% are fit items covering 91.8% of pick quantity — the vast majority of moved volume is conveyable, making this an excellent automation candidate.
-- Moved SKU fit rate is 86.0% — the items that matter most are conveyable.
+SLIDE 3 — FIT / NO-FIT ANALYSIS:
+- Total Items: ${fmt(fit.total_items)} | With Dimensions: ${fmt(fit.items_with_dimensions)} | Missing Dimensions: ${fmt(fit.items_without_dimensions)}
+${(fit.bins || []).map(b => `- Bin ${b.name}: ${fmt(b.fit_count)} fit (${b.fit_pct}% of dimensioned, ${b.fit_pct_total}% of total)`).join('\n')}
 
-SLIDE 4 — ABC CLASSIFICATION (by Order Lines, SKU Rank %):
-- A Items: 785 SKUs (10%) = 60% of Order Lines, 59% Pick Units, 91% Orders, 65% Moved Volume
-- B Items: 785 SKUs (10%) = 17% of Order Lines, 17% Pick Units, 71% Orders, 15% Moved Volume
-- C Items: 6,281 SKUs (80%) = 23% of Order Lines, 23% Pick Units, 77% Orders, 20% Moved Volume
-- Design Day (75th percentile, 7.5 working hours): 125,326 lines/day (16,711/hr), 171,521 picks/day (22,870/hr), 12,491 orders/day (1,666/hr)
-- Top SKU by order lines: ItemID 58583 with 48,724 order lines
+SLIDE 4 — ABC CLASSIFICATION:
+- Gini: ${abc.gini || '—'} | Active SKUs: ${fmt(abc.total_skus)} | Dead Stock: ${fmt(abc.dead_stock_count)}
+${Object.entries(abc.classes || {}).map(([cls, d]) => `- ${cls} Items: ${fmt(d.count)} (${d.pct}%) — ${d.volume_pct}% of volume`).join('\n')}
 
-SLIDE 5 — XYZ SEASONALITY ANALYSIS:
-- X Items (≥30 days active): 4,994 SKUs (11%) — 44% Lines, 40% Picks, 60% Orders, 53% Volume — these are the consistent movers
-- Y Items (≥20 days): 5,350 SKUs (12%) — 21% Lines, 19% Picks, 41% Orders, 15% Volume
-- Z Items (<20 days): 33,336 SKUs (76%) — 36% Lines, 41% Picks, 61% Orders, 31% Volume — seasonal/sporadic
-- Design Day (12h working): 2,365 lines (198/hr), 338,037 pick units (28,170/hr), 227 orders (19/hr), 4,575 m³ volume (382/hr)
-- Average Day: 1,722 lines (144/hr), 241,984 pick units (20,166/hr), 163 orders (14/hr)
+SLIDE 5 — XYZ SEASONALITY:
+- Total Moved SKUs: ${fmt(xyz.total_moved_skus)}
+${(xyz.classes || []).map(c => `- ${c.class} Items: ${fmt(c.moved_skus)} (${c.pct_moved_skus}%) — ${c.pct_lines}% Lines, ${c.pct_picks}% Picks, ${c.pct_orders}% Orders`).join('\n')}
 
 SLIDE 6 — ORDER PROFILE:
-- Min Lines/Order: 1.0 | Average: 9.9 | 75th Percentile: 13.0 | Max: 138.0
-- Most frequent order sizes: 3-8 lines per order
-- Distribution is right-skewed, typical of mixed fulfillment operations
-- The moderate ~10 lines/order average with 75th percentile at 13 indicates well-structured orders suitable for zone-based or wave picking automation
+- Total Orders: ${fmt((a.order_structure||{}).total_orders)} | Single-Line: ${(a.order_structure||{}).single_line_pct || '—'}% | Multi-Line: ${(a.order_structure||{}).multi_line_pct || '—'}%
 
-SLIDE 7 — PERCENTILES (Design Basis for automation solution):
-- Average Daily Order Lines: 1,722 (144/hr with 12h working)
-- 75th Percentile: 2,364 lines/day (197/hr) — THIS IS THE DESIGN DAY
-- Maximum: 3,002 lines/day (250/hr)
-- The 75th percentile ensures the system handles peak demand 75% of the time without bottlenecks
+SLIDE 7 — PERCENTILES (Design Basis, ${dailyPerc.working_hours || 12}h working):
+- Average Day: ${fmt(avgDay.order_lines)} lines, ${fmt(avgDay.pick_units)} picks, ${fmt(avgDay.orders)} orders
+- 75th Percentile: ${fmt(p75Day.order_lines)} lines, ${fmt(p75Day.pick_units)} picks, ${fmt(p75Day.orders)} orders — THIS IS THE DESIGN DAY
+- Maximum: ${fmt(maxDay.order_lines)} lines, ${fmt(maxDay.pick_units)} picks, ${fmt(maxDay.orders)} orders
 
-SLIDE 8 — 5-YEAR GROWTH EXTRAPOLATION (5% annual growth):
-- Year 5 Design Day: 40,754 lines/day (5,434/hr), 150,564 picks/day (20,076/hr), 8,246 orders/day (1,100/hr), 663 m³/day
-- Year 5 Average Day: 26,711 lines, 100,710 picks, 4,399 orders, 476 m³
-- SKU Growth to 18,389 (+27% from baseline)
-- The PINAXIS solution is designed to scale with projected 5% YoY growth
+SLIDE 8 — ${extrap.years || 5}-YEAR GROWTH EXTRAPOLATION (${extrap.growth_rate_pct || 5}% annual):
+${y5.design_day ? `- Year 5: ${fmt(y5.design_day.order_lines)} lines/day, ${fmt(y5.design_day.pick_units)} picks/day, ${fmt(y5.design_day.orders)} orders/day` : '- Run analysis for projections'}
+${extrap.baseline ? `- Baseline: ${fmt(extrap.baseline.order_lines)} lines/day, ${fmt(extrap.baseline.pick_units)} picks/day` : ''}
 
-SLIDE 9 — NEXT STEPS:
-1. Review Concept Designs — explore PINAXIS product recommendations with fit scores
-2. Simulation & Layout — validate throughput targets and optimize system layout
-3. Commercial Proposal — review ROI projections, cost-benefit analysis, payback period
-4. API Integration — connect WMS/ERP for live data feeds
-5. Implementation — phased deployment with PINAXIS engineering support and OEE tracking
+SLIDE 9 — NEXT STEPS: Review Concepts, Simulation, Commercial Proposal, API Integration, Implementation.
 
-IMPORTANT SPEAKING GUIDELINES:
-- Always say "PINAXIS" (not Gebhardt) when referring to the company and its automation solutions
-- Reference specific numbers from the slides to sound authoritative
-- When asked about automation potential, emphasize: 87.6% of order lines are fit items (91.8% of quantity), A-items are only 10% of SKUs but drive 60% of lines
-- The 75th percentile design day (2,364 lines/day, 197/hr) is the key planning metric
-- Highlight that the data covers 370 days with 43,680 SKUs — this is comprehensive analysis
-- The warehouse handles 3 temperature zones: ambient, chilled, frozen (72.8% room temp, 17.4% 34F, rest 28F)
+SPEAKING GUIDELINES:
+- Always say "PINAXIS" when referring to the company and its automation solutions
+- Reference the specific numbers above — they are from this client's actual data
+- The 75th percentile design day is the key planning metric
+- Emphasize bin-capable percentage as automation potential indicator
 `
+}
 
 const warehouseMindSubItems = [
   { path: '/warehousemind/command-center', label: 'MCP Command Center', icon: MCPIcon },
@@ -327,18 +322,30 @@ export default function App({ onLogout, userEmail }) {
 
   // Dynamically pass context to ElevenLabs widget based on current page
   const isPresentation = location.pathname.startsWith('/presentation')
+  const presentationProjectId = location.pathname.match(/\/presentation\/(\d+)/)?.[1]
 
   useEffect(() => {
     const widget = document.querySelector('elevenlabs-convai')
     if (!widget) return
 
-    if (isPresentation) {
-      // Pass the full Dashboard Playbook context so Rachel can speak about it
-      widget.setAttribute('context', PRESENTATION_CONTEXT)
+    if (isPresentation && presentationProjectId) {
+      // Fetch analysis data and build dynamic context for Rachel
+      Promise.all([
+        fetch(`/pinaxis/api/v1/projects/${presentationProjectId}`).then(r => r.json()).catch(() => null),
+        fetch(`/pinaxis/api/v1/analysis/${presentationProjectId}/all`).then(r => r.json()).catch(() => null)
+      ]).then(([projRes, analysisRes]) => {
+        const proj = projRes?.data || projRes
+        const analysis = analysisRes?.data || analysisRes
+        const companyName = proj?.company_name || 'the prospect'
+        const ctx = buildPresentationContext(analysis, companyName)
+        widget.setAttribute('context', ctx)
+      })
+    } else if (isPresentation) {
+      widget.setAttribute('context', buildPresentationContext(null, null))
     } else {
       widget.removeAttribute('context')
     }
-  }, [isPresentation])
+  }, [isPresentation, presentationProjectId])
 
   return (
     <div className="min-h-screen flex">
