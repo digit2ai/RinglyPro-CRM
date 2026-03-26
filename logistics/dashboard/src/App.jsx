@@ -88,6 +88,14 @@ const warehouseMindSubItems = [
   { path: '/warehousemind/voice', label: 'Voice AI', icon: VoiceIcon }
 ]
 
+const docsSubItems = [
+  { path: '/api-integration', label: 'API Integration', icon: PlugIcon },
+  { path: '/user-guide', label: 'User Guide', icon: BookIcon, noProject: true },
+  { path: '/proposals/LOGISTICS-System-Architecture-Document.html', label: 'MCP Architecture', icon: ArchitectureIcon, external: true },
+  { path: '/nda', label: 'NDA', icon: NDAIcon, noProject: true },
+  { path: '/contract-builder', label: 'Services Agreement', icon: ContractIcon, noProject: true }
+]
+
 const steps = [
   { path: '/warehousemind', label: 'WarehouseMind AI', icon: BrainIcon, noProject: true, collapsible: true, subItems: warehouseMindSubItems },
   { path: '/', label: 'Data Intake', icon: UploadIcon },
@@ -96,13 +104,9 @@ const steps = [
   { path: '/simulation', label: 'Simulation', icon: SimulationIcon },
   { path: '/benefits', label: 'Commercial', icon: TrendingUpIcon },
   { path: '/report', label: 'Proposal', icon: FileIcon },
-  { path: '/api-integration', label: 'API Integration', icon: PlugIcon },
   { path: '/oee-dashboard', label: 'OEE Dashboard', icon: GaugeIcon, noProject: true },
-  { path: '/user-guide', label: 'User Guide', icon: BookIcon, noProject: true },
-  { path: '/proposals/LOGISTICS-System-Architecture-Document.html', label: 'MCP Architecture', icon: ArchitectureIcon, external: true },
-  { path: '/nda', label: 'NDA', icon: NDAIcon, noProject: true },
-  { path: '/contract-builder', label: 'Services Agreement', icon: ContractIcon, noProject: true },
-  { path: '/presentation', label: 'Presentation', icon: PresentationIcon }
+  { path: '/presentation', label: 'Presentation', icon: PresentationIcon },
+  { path: '/docs', label: 'Docs', icon: BookIcon, noProject: true, collapsible: true, subItems: docsSubItems }
 ]
 
 function UploadIcon({ className }) {
@@ -286,6 +290,7 @@ export default function App({ onLogout, userEmail }) {
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [wmExpanded, setWmExpanded] = useState(() => location.pathname.startsWith('/warehousemind'))
+  const [docsExpanded, setDocsExpanded] = useState(() => ['/api-integration', '/user-guide', '/nda', '/contract-builder'].some(p => location.pathname.startsWith(p)))
 
   // Auto-expand WarehouseMind section when navigating to it
   useEffect(() => {
@@ -308,13 +313,14 @@ export default function App({ onLogout, userEmail }) {
     if (location.pathname.startsWith('/simulation')) return 4
     if (location.pathname.startsWith('/benefits')) return 5
     if (location.pathname.startsWith('/report')) return 6
-    if (location.pathname.startsWith('/api-integration')) return 7
-    if (location.pathname.startsWith('/oee-dashboard')) return 8
+    if (location.pathname.startsWith('/oee-dashboard')) return 7
+    if (location.pathname.startsWith('/presentation')) return 8
+    // Docs group items
+    if (location.pathname.startsWith('/api-integration')) return 9
     if (location.pathname.startsWith('/user-guide')) return 9
     if (location.pathname.startsWith('/observability')) return 9
-    if (location.pathname.startsWith('/nda')) return 11
-    if (location.pathname.startsWith('/contract-builder')) return 12
-    if (location.pathname.startsWith('/presentation')) return 13
+    if (location.pathname.startsWith('/nda')) return 9
+    if (location.pathname.startsWith('/contract-builder')) return 9
     return 1
   }
 
@@ -361,71 +367,85 @@ export default function App({ onLogout, userEmail }) {
       <aside className={`w-64 bg-slate-800 border-r border-slate-700 flex flex-col fixed h-full z-30 transition-transform duration-300 lg:translate-x-0 ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
-        {/* Logo + Close button on mobile */}
-        <div className="p-6 border-b border-slate-700">
-          <div className="flex items-center gap-3">
-            <div className="w-14 h-14 rounded-lg flex items-center justify-center overflow-hidden">
-              <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="LOGISTICS" className="w-full h-full object-contain" />
+        {/* Logo — bigger, with top padding for voice widget clearance */}
+        <div className="pt-8 pb-4 px-4 border-b border-slate-700">
+          <div className="flex flex-col items-center text-center gap-2">
+            <div className="w-20 h-20 rounded-xl flex items-center justify-center overflow-hidden">
+              <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="PINAXIS" className="w-full h-full object-contain" />
             </div>
-            <div className="flex-1">
-              <h1 className="text-lg font-bold text-white tracking-tight">LOGISTICS</h1>
-              <p className="text-xs text-slate-400">Warehouse Analytics</p>
+            <div>
+              <h1 className="text-base font-bold text-white tracking-tight">PINAXIS</h1>
+              <p className="text-[10px] text-slate-400">Warehouse Analytics</p>
             </div>
-            <button
-              onClick={closeSidebar}
-              className="lg:hidden p-1 text-slate-400 hover:text-white"
-            >
-              <CloseIcon className="w-5 h-5" />
-            </button>
           </div>
+          <button
+            onClick={closeSidebar}
+            className="lg:hidden absolute top-3 right-3 p-1 text-slate-400 hover:text-white"
+          >
+            <CloseIcon className="w-5 h-5" />
+          </button>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        {/* Navigation — compact, smaller fonts */}
+        <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto">
           {steps.map((step, index) => {
             const Icon = step.icon
             const isActive = getCurrentStep() === index
-            const isWmSubActive = step.collapsible && location.pathname.startsWith('/warehousemind')
+            const isWmSubActive = step.path === '/warehousemind' && location.pathname.startsWith('/warehousemind')
+            const isDocsSubActive = step.path === '/docs' && ['/api-integration', '/user-guide', '/nda', '/contract-builder'].some(p => location.pathname.startsWith(p))
 
-            // Collapsible WarehouseMind AI item
+            // Collapsible groups (WarehouseMind + Docs)
             if (step.collapsible) {
+              const isWm = step.path === '/warehousemind'
+              const isDocs = step.path === '/docs'
+              const expanded = isWm ? wmExpanded : docsExpanded
+              const toggleExpanded = isWm ? () => setWmExpanded(!wmExpanded) : () => setDocsExpanded(!docsExpanded)
+              const subActive = isWm ? isWmSubActive : isDocsSubActive
+              const accentBg = isWm ? 'bg-purple-600/20 text-purple-400 border border-purple-500/30' : 'bg-slate-700/40 text-slate-300 border border-slate-600/30'
+              const accentNum = isWm ? 'bg-purple-600 text-white' : 'bg-slate-600 text-white'
+
               return (
                 <div key={step.path}>
                   <button
-                    onClick={() => setWmExpanded(!wmExpanded)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
-                      isWmSubActive
-                        ? 'bg-purple-600/20 text-purple-400 border border-purple-500/30'
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+                    onClick={toggleExpanded}
+                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 group text-xs ${
+                      subActive ? accentBg : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
                     }`}
                   >
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium ${
-                      isWmSubActive ? 'bg-purple-600 text-white' : 'bg-slate-700 text-slate-400 group-hover:bg-slate-600'
+                    <div className={`w-6 h-6 rounded flex items-center justify-center text-[10px] font-medium ${
+                      subActive ? accentNum : 'bg-slate-700 text-slate-400 group-hover:bg-slate-600'
                     }`}>
                       {index + 1}
                     </div>
                     <span className="font-medium text-left flex-1">{step.label}</span>
-                    <ChevronIcon className="w-3.5 h-3.5 text-slate-500" expanded={wmExpanded} />
+                    <ChevronIcon className="w-3 h-3 text-slate-500" expanded={expanded} />
                   </button>
-                  {/* Collapsible sub-items */}
-                  <div className={`overflow-hidden transition-all duration-200 ${wmExpanded ? 'max-h-60 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
-                    <div className="ml-6 pl-4 border-l border-slate-700 space-y-0.5">
+                  <div className={`overflow-hidden transition-all duration-200 ${expanded ? 'max-h-80 opacity-100 mt-0.5' : 'max-h-0 opacity-0'}`}>
+                    <div className="ml-5 pl-3 border-l border-slate-700/60 space-y-0.5">
                       {step.subItems.map((sub) => {
                         const SubIcon = sub.icon
-                        const subActive = location.pathname === sub.path
+                        const subItemActive = location.pathname.startsWith(sub.path?.split('/')[1] ? '/' + sub.path.split('/')[1] : sub.path)
+
+                        if (sub.external) {
+                          return (
+                            <a key={sub.path} href={sub.path} target="_blank" rel="noopener noreferrer" onClick={closeSidebar}
+                              className="flex items-center gap-2 px-2 py-1.5 rounded text-[11px] text-slate-500 hover:text-slate-300 hover:bg-slate-700/30 transition-all">
+                              <SubIcon className="w-3 h-3 text-slate-600" />
+                              <span>{sub.label}</span>
+                            </a>
+                          )
+                        }
+
+                        const projId = getProjectId()
+                        const subPath = projId && !sub.noProject ? `${sub.path}/${projId}` : sub.path
+
                         return (
-                          <NavLink
-                            key={sub.path}
-                            to={sub.path}
-                            onClick={closeSidebar}
-                            className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs transition-all duration-200 group ${
-                              subActive
-                                ? 'bg-purple-600/15 text-purple-400'
-                                : 'text-slate-500 hover:text-slate-300 hover:bg-slate-700/30'
-                            }`}
-                          >
-                            <SubIcon className={`w-3.5 h-3.5 ${subActive ? 'text-purple-400' : 'text-slate-600'}`} />
-                            <span className="font-medium">{sub.label}</span>
+                          <NavLink key={sub.path} to={subPath} onClick={closeSidebar}
+                            className={`flex items-center gap-2 px-2 py-1.5 rounded text-[11px] transition-all ${
+                              subItemActive ? (isWm ? 'bg-purple-600/15 text-purple-400' : 'bg-logistics-600/15 text-logistics-400') : 'text-slate-500 hover:text-slate-300 hover:bg-slate-700/30'
+                            }`}>
+                            <SubIcon className={`w-3 h-3 ${subItemActive ? (isWm ? 'text-purple-400' : 'text-logistics-400') : 'text-slate-600'}`} />
+                            <span>{sub.label}</span>
                           </NavLink>
                         )
                       })}
@@ -437,19 +457,11 @@ export default function App({ onLogout, userEmail }) {
 
             if (step.external) {
               return (
-                <a
-                  key={step.path}
-                  href={step.path}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group text-slate-400 hover:text-slate-200 hover:bg-slate-700/50"
-                  onClick={closeSidebar}
-                >
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium bg-slate-700 text-slate-400 group-hover:bg-slate-600">
-                    {index + 1}
-                  </div>
+                <a key={step.path} href={step.path} target="_blank" rel="noopener noreferrer" onClick={closeSidebar}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 group text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-700/50">
+                  <div className="w-6 h-6 rounded flex items-center justify-center text-[10px] font-medium bg-slate-700 text-slate-400 group-hover:bg-slate-600">{index + 1}</div>
                   <span className="font-medium">{step.label}</span>
-                  <Icon className="w-4 h-4 ml-auto text-slate-600" />
+                  <Icon className="w-3.5 h-3.5 ml-auto text-slate-600" />
                 </a>
               )
             }
@@ -458,23 +470,17 @@ export default function App({ onLogout, userEmail }) {
             const basePath = step.path === '/' ? '/' : (projectId && !step.noProject ? `${step.path}/${projectId}` : step.path)
 
             return (
-              <NavLink
-                key={step.path}
-                to={basePath}
-                onClick={closeSidebar}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
-                  isActive
-                    ? 'bg-logistics-600/20 text-logistics-500 border border-logistics-500/30'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
-                }`}
-              >
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium ${
+              <NavLink key={step.path} to={basePath} onClick={closeSidebar}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 group text-xs ${
+                  isActive ? 'bg-logistics-600/20 text-logistics-500 border border-logistics-500/30' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+                }`}>
+                <div className={`w-6 h-6 rounded flex items-center justify-center text-[10px] font-medium ${
                   isActive ? 'bg-logistics-600 text-white' : 'bg-slate-700 text-slate-400 group-hover:bg-slate-600'
                 }`}>
                   {index + 1}
                 </div>
                 <span className="font-medium">{step.label}</span>
-                <Icon className={`w-4 h-4 ml-auto ${isActive ? 'text-logistics-400' : 'text-slate-600'}`} />
+                <Icon className={`w-3.5 h-3.5 ml-auto ${isActive ? 'text-logistics-400' : 'text-slate-600'}`} />
               </NavLink>
             )
           })}
@@ -495,7 +501,7 @@ export default function App({ onLogout, userEmail }) {
           )}
           <div className="text-xs text-slate-500 text-center">
             <p>Powered by RinglyPro</p>
-            <p className="mt-1">LOGISTICS Analytics v1.0</p>
+            <p className="mt-1">PINAXIS Analytics v1.0</p>
           </div>
         </div>
       </aside>
@@ -517,7 +523,7 @@ export default function App({ onLogout, userEmail }) {
             </div>
             {/* Mobile: show current step name */}
             <span className="sm:hidden text-sm font-medium text-white">
-              {steps[getCurrentStep()]?.label || 'LOGISTICS'}
+              {steps[getCurrentStep()]?.label || 'PINAXIS'}
             </span>
           </div>
         </header>
