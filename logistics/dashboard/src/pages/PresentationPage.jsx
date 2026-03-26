@@ -1,6 +1,20 @@
 import React, { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { getProject, getAnalysisAll, getRecommendations, getBenefits } from '../lib/api'
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend, LineChart, Line
+} from 'recharts'
+
+const COLORS = {
+  emerald: '#10b981', blue: '#3b82f6', yellow: '#eab308', red: '#ef4444',
+  orange: '#f97316', purple: '#8b5cf6', slate: '#94a3b8', gold: '#eab308'
+}
+
+const tooltipStyle = {
+  contentStyle: { background: '#1e293b', border: '1px solid #334155', borderRadius: '8px' },
+  labelStyle: { color: '#94a3b8' }
+}
 
 export default function PresentationPage() {
   const { projectId } = useParams()
@@ -81,6 +95,94 @@ export default function PresentationPage() {
   // No data state
   const hasData = !!analysis
 
+  // --- Chart data builders ---
+  const monthlyData = (analysis?.throughput_monthly?.months || []).map(m => ({
+    name: m.month || m.label,
+    orders: m.orders || 0,
+    orderlines: m.orderlines || 0
+  }))
+
+  const fitDonutData = (() => {
+    if (!totalItems) return []
+    const fitItems = fitCount || 0
+    const missingItems = itemsWithoutDims || 0
+    // bulky = items with dims that don't fit largest bin
+    const bulkyItems = Math.max(0, itemsWithDims - fitItems)
+    // noFit remainder
+    const noFitItems = Math.max(0, totalItems - fitItems - missingItems - bulkyItems)
+    return [
+      { name: 'Fit', value: fitItems, color: COLORS.emerald },
+      { name: 'Missing Dims', value: missingItems, color: COLORS.yellow },
+      { name: 'Bulky', value: bulkyItems, color: COLORS.red },
+      { name: 'No Fit', value: noFitItems, color: COLORS.orange }
+    ].filter(d => d.value > 0)
+  })()
+
+  const abcChartData = ['A', 'B', 'C', 'D'].map(cls => {
+    const data = abcClasses[cls]
+    if (!data) return null
+    return { name: cls, pct: parseFloat(data.volume_pct) || 0, count: data.count || 0 }
+  }).filter(Boolean)
+
+  const xyzChartData = xyzClasses.map(cls => ({
+    name: cls.class,
+    '% Lines': parseFloat(cls.pct_lines) || 0,
+    '% Picks': parseFloat(cls.pct_picks) || 0,
+    '% Orders': parseFloat(cls.pct_orders) || 0
+  }))
+
+  const histogramData = (orderStructure.histogram || []).map(bin => ({
+    name: bin.label,
+    count: bin.count || 0,
+    pct: bin.pct || 0
+  }))
+
+  const percentileChartData = [
+    { name: 'Order Lines', Average: avgDay.order_lines || 0, P75: p75Day.order_lines || 0, Max: maxDay.order_lines || 0 },
+    { name: 'Pick Units', Average: avgDay.pick_units || 0, P75: p75Day.pick_units || 0, Max: maxDay.pick_units || 0 },
+    { name: 'Orders', Average: avgDay.orders || 0, P75: p75Day.orders || 0, Max: maxDay.orders || 0 }
+  ]
+
+  const extrapChartData = projections.map(p => ({
+    name: `Y${p.year}`,
+    'Lines/Day': p.design_day?.order_lines || 0,
+    'Picks/Day': p.design_day?.pick_units || 0,
+    'Orders/Day': p.design_day?.orders || 0
+  }))
+
+  const recChartData = recommendations.map(r => ({
+    name: r.product_name?.length > 25 ? r.product_name.slice(0, 25) + '...' : r.product_name,
+    score: Math.round(r.fit_score || 0)
+  }))
+
+  const benefitChartData = (benefits?.projections || []).map(p => ({
+    name: p.title?.length > 30 ? p.title.slice(0, 30) + '...' : p.title,
+    improvement: parseFloat(p.improvement_pct) || 0,
+    confidence: p.confidence
+  }))
+
+  const hourlyChartData = (analysis?.throughput_hourly?.hours || []).map(h => ({
+    name: String(h.hour),
+    orderlines: h.orderlines || 0
+  }))
+
+  const topSkusChartData = (analysis?.abc_classification?.top_skus || []).slice(0, 10).map(s => ({
+    name: s.sku?.length > 20 ? s.sku.slice(0, 20) + '...' : s.sku,
+    picks: Math.round(s.picks || 0)
+  }))
+
+  const RADIAN = Math.PI / 180
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5
+    const x = cx + radius * Math.cos(-midAngle * RADIAN)
+    const y = cy + radius * Math.sin(-midAngle * RADIAN)
+    return percent > 0.03 ? (
+      <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={12} fontWeight="bold">
+        {`${(percent * 100).toFixed(1)}%`}
+      </text>
+    ) : null
+  }
+
   const slides = [
     // Slide 0: Title
     {
@@ -127,6 +229,22 @@ export default function PresentationPage() {
             <MetricCard label="Avg Lines/Order" value={orders.avg_lines_per_order || '—'} color="blue" />
             <MetricCard label="Bin Capable %" value={skus.bin_capable_pct ? `${skus.bin_capable_pct}%` : '—'} color="emerald" />
           </div>
+          {monthlyData.length > 0 && (
+            <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Monthly Throughput</p>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={monthlyData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                  <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                  <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                  <Tooltip {...tooltipStyle} />
+                  <Legend wrapperStyle={{ color: '#94a3b8', fontSize: 12 }} />
+                  <Bar dataKey="orderlines" name="Order Lines" fill={COLORS.blue} radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="orders" name="Orders" fill={COLORS.gold} radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
               <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Date Range</p>
@@ -154,6 +272,30 @@ export default function PresentationPage() {
             <MetricCard label="Total Items" value={fmt(totalItems)} color="blue" />
             <MetricCard label="With Dimensions" value={fmt(itemsWithDims)} color="blue" />
           </div>
+          {fitDonutData.length > 0 && (
+            <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Fit Distribution</p>
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={fitDonutData}
+                    cx="50%" cy="50%"
+                    innerRadius={60} outerRadius={100}
+                    paddingAngle={3}
+                    dataKey="value"
+                    labelLine={false}
+                    label={renderCustomizedLabel}
+                  >
+                    {fitDonutData.map((entry, i) => (
+                      <Cell key={i} fill={entry.color} stroke="transparent" />
+                    ))}
+                  </Pie>
+                  <Legend wrapperStyle={{ color: '#94a3b8', fontSize: 12 }} />
+                  <Tooltip {...tooltipStyle} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          )}
           {fitBins.length > 0 && (
             <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
               <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Bin Compatibility</p>
@@ -187,7 +329,6 @@ export default function PresentationPage() {
             {['A', 'B', 'C', 'D'].map(cls => {
               const data = abcClasses[cls]
               if (!data) return null
-              const colors = { A: 'emerald', B: 'yellow', C: 'slate', D: 'red' }
               const labels = { A: 'Fast Movers', B: 'Medium Movers', C: 'Slow Movers', D: 'Dead Stock' }
               return (
                 <div key={cls} className={`p-4 rounded-lg border text-center ${cls === 'A' ? 'bg-emerald-900/20 border-emerald-500/30' : cls === 'B' ? 'bg-yellow-900/20 border-yellow-500/30' : cls === 'D' ? 'bg-red-900/20 border-red-500/30' : 'bg-slate-800/50 border-slate-700'}`}>
@@ -199,6 +340,24 @@ export default function PresentationPage() {
               )
             })}
           </div>
+          {abcChartData.length > 0 && (
+            <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Volume % by Class</p>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={abcChartData} layout="vertical" margin={{ top: 5, right: 30, left: 30, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                  <XAxis type="number" tick={{ fill: '#94a3b8', fontSize: 11 }} unit="%" />
+                  <YAxis dataKey="name" type="category" tick={{ fill: '#94a3b8', fontSize: 13, fontWeight: 'bold' }} width={30} />
+                  <Tooltip {...tooltipStyle} formatter={(v) => `${v}%`} />
+                  <Bar dataKey="pct" name="Volume %" radius={[0, 6, 6, 0]}>
+                    {abcChartData.map((entry) => (
+                      <Cell key={entry.name} fill={entry.name === 'A' ? COLORS.emerald : entry.name === 'B' ? COLORS.yellow : entry.name === 'D' ? COLORS.red : COLORS.slate} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
               <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Gini Coefficient</p>
@@ -222,7 +381,6 @@ export default function PresentationPage() {
           <p className="text-slate-300">Distinguish seasonal vs non-seasonal products. Limits determined by minimum days an article was active.</p>
           <div className="grid grid-cols-3 gap-4">
             {xyzClasses.map(cls => {
-              const colors = { X: 'red', Y: 'yellow', Z: 'slate' }
               const labels = { X: `≥${xyz.thresholds?.x_min_days || 30} days`, Y: `≥${xyz.thresholds?.y_min_days || 20} days`, Z: `<${xyz.thresholds?.y_min_days || 20} days` }
               return (
                 <div key={cls.class} className={`p-5 rounded-lg border text-center ${cls.class === 'X' ? 'bg-red-900/20 border-red-500/30' : cls.class === 'Y' ? 'bg-yellow-900/20 border-yellow-500/30' : 'bg-slate-800/50 border-slate-700'}`}>
@@ -234,6 +392,23 @@ export default function PresentationPage() {
               )
             })}
           </div>
+          {xyzChartData.length > 0 && (
+            <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">XYZ Breakdown — Lines / Picks / Orders</p>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={xyzChartData} layout="vertical" margin={{ top: 5, right: 30, left: 30, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                  <XAxis type="number" tick={{ fill: '#94a3b8', fontSize: 11 }} unit="%" />
+                  <YAxis dataKey="name" type="category" tick={{ fill: '#94a3b8', fontSize: 13, fontWeight: 'bold' }} width={30} />
+                  <Tooltip {...tooltipStyle} formatter={(v) => `${v}%`} />
+                  <Legend wrapperStyle={{ color: '#94a3b8', fontSize: 12 }} />
+                  <Bar dataKey="% Lines" fill={COLORS.red} radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="% Picks" fill={COLORS.yellow} radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="% Orders" fill={COLORS.slate} radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
           {xyz.design_day && (
             <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
               <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Average Day ({xyz.design_day.working_hours}h working)</p>
@@ -259,18 +434,18 @@ export default function PresentationPage() {
             <MetricCard label="Multi-Line" value={`${orderStructure.multi_line_pct || '—'}%`} sub={fmt(orderStructure.multi_line_orders)} color="emerald" />
             <MetricCard label="Avg Lines/Order" value={orders.avg_lines_per_order || '—'} color="yellow" />
           </div>
-          {orderStructure.histogram && (
+          {histogramData.length > 0 && (
             <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
               <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Order Lines Distribution</p>
-              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                {orderStructure.histogram.map(bin => (
-                  <div key={bin.label} className="text-center p-2 rounded bg-slate-900/50">
-                    <p className="text-xs text-slate-500">{bin.label} lines</p>
-                    <p className="text-sm font-medium text-white">{fmt(bin.count)}</p>
-                    <p className="text-xs text-slate-400">{bin.pct}%</p>
-                  </div>
-                ))}
-              </div>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={histogramData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                  <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 10 }} label={{ value: 'Lines per Order', position: 'insideBottom', offset: -2, fill: '#64748b', fontSize: 11 }} />
+                  <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                  <Tooltip {...tooltipStyle} formatter={(v, name) => name === 'count' ? fmt(v) : `${v}%`} />
+                  <Bar dataKey="count" name="Orders" fill={COLORS.red} radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           )}
           <div className="p-4 rounded-lg bg-blue-900/20 border border-blue-500/30">
@@ -305,6 +480,23 @@ export default function PresentationPage() {
               <p className="text-sm text-red-300 mt-2">{fmt(maxHr.order_lines)} / hour</p>
             </div>
           </div>
+          {(avgDay.order_lines || p75Day.order_lines || maxDay.order_lines) && (
+            <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Daily Metrics Comparison</p>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={percentileChartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                  <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                  <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                  <Tooltip {...tooltipStyle} />
+                  <Legend wrapperStyle={{ color: '#94a3b8', fontSize: 12 }} />
+                  <Bar dataKey="Average" fill={COLORS.blue} radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="P75" fill={COLORS.emerald} radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Max" fill={COLORS.red} radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
               <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Pick Units</p>
@@ -356,8 +548,24 @@ export default function PresentationPage() {
               <div className="p-4 rounded-lg bg-blue-900/20 border border-blue-500/30 text-center">
                 <p className="text-xs text-slate-400 mb-1">SKU Growth (Y5)</p>
                 <p className="text-2xl font-bold text-blue-400">{fmt(year5.skus)}</p>
-                <p className="text-xs text-slate-400">×{year5.growth_factor} from baseline</p>
+                <p className="text-xs text-slate-400">x{year5.growth_factor} from baseline</p>
               </div>
+            </div>
+          )}
+          {extrapChartData.length > 0 && (
+            <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">5-Year Growth Projection</p>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={extrapChartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                  <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                  <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                  <Tooltip {...tooltipStyle} />
+                  <Legend wrapperStyle={{ color: '#94a3b8', fontSize: 12 }} />
+                  <Bar dataKey="Lines/Day" fill={COLORS.yellow} radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Orders/Day" fill={COLORS.emerald} radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           )}
           {extrap.baseline && (
@@ -384,32 +592,52 @@ export default function PresentationPage() {
         <div className="space-y-6">
           <p className="text-slate-300">Based on the complete warehouse data analysis, the following PINAXIS intralogistics solutions are recommended for this operation.</p>
           {recommendations.length > 0 ? (
-            <div className="space-y-3">
-              {recommendations.map((rec, i) => {
-                const score = rec.fit_score || 0
-                const barColor = score >= 70 ? 'bg-emerald-500' : score >= 40 ? 'bg-yellow-500' : 'bg-slate-500'
-                return (
-                  <div key={i} className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
-                    <div className="flex items-center justify-between mb-2">
-                      <div>
-                        <h3 className="text-white font-semibold">{rec.product_name}</h3>
-                        <p className="text-xs text-blue-400">{rec.product_category}</p>
+            <>
+              {recChartData.length > 0 && (
+                <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Fit Score by Product</p>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={recChartData} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                      <XAxis type="number" domain={[0, 100]} tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                      <YAxis dataKey="name" type="category" tick={{ fill: '#94a3b8', fontSize: 10 }} width={140} />
+                      <Tooltip {...tooltipStyle} formatter={(v) => `${v}/100`} />
+                      <Bar dataKey="score" name="Fit Score" radius={[0, 6, 6, 0]}>
+                        {recChartData.map((entry, i) => (
+                          <Cell key={i} fill={entry.score >= 70 ? COLORS.emerald : entry.score >= 40 ? COLORS.orange : COLORS.slate} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+              <div className="space-y-3">
+                {recommendations.map((rec, i) => {
+                  const score = rec.fit_score || 0
+                  const barColor = score >= 70 ? 'bg-emerald-500' : score >= 40 ? 'bg-yellow-500' : 'bg-slate-500'
+                  return (
+                    <div key={i} className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <h3 className="text-white font-semibold">{rec.product_name}</h3>
+                          <p className="text-xs text-blue-400">{rec.product_category}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className={`text-2xl font-bold ${score >= 70 ? 'text-emerald-400' : score >= 40 ? 'text-yellow-400' : 'text-slate-300'}`}>{Math.round(score)}</p>
+                          <p className="text-xs text-slate-500">/ 100</p>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className={`text-2xl font-bold ${score >= 70 ? 'text-emerald-400' : score >= 40 ? 'text-yellow-400' : 'text-slate-300'}`}>{Math.round(score)}</p>
-                        <p className="text-xs text-slate-500">/ 100</p>
+                      <div className="w-full bg-slate-700 rounded-full h-2 mb-2">
+                        <div className={`${barColor} h-2 rounded-full`} style={{ width: `${Math.min(score, 100)}%` }} />
                       </div>
+                      {(rec.description || rec.rationale) && (
+                        <p className="text-xs text-slate-400 mt-1">{rec.description || rec.rationale}</p>
+                      )}
                     </div>
-                    <div className="w-full bg-slate-700 rounded-full h-2 mb-2">
-                      <div className={`${barColor} h-2 rounded-full`} style={{ width: `${Math.min(score, 100)}%` }} />
-                    </div>
-                    {(rec.description || rec.rationale) && (
-                      <p className="text-xs text-slate-400 mt-1">{rec.description || rec.rationale}</p>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
+                  )
+                })}
+              </div>
+            </>
           ) : (
             <div className="p-4 rounded-lg bg-yellow-900/20 border border-yellow-500/30">
               <p className="text-sm text-yellow-300">No product recommendations available yet. Run the recommendation engine first.</p>
@@ -432,6 +660,24 @@ export default function PresentationPage() {
                 <MetricCard label="Payback Period" value={benefits.summary?.payback_months_low && benefits.summary?.payback_months_high ? `${benefits.summary.payback_months_low}–${benefits.summary.payback_months_high} mo` : '—'} color="yellow" />
                 <MetricCard label="High-Confidence" value={`${benefits.summary?.high_confidence_count || 0} of ${benefits.summary?.total_projections || 0}`} sub="benefits" color="blue" />
               </div>
+              {benefitChartData.length > 0 && (
+                <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Improvement % by Benefit Area</p>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={benefitChartData} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                      <XAxis type="number" tick={{ fill: '#94a3b8', fontSize: 11 }} unit="%" />
+                      <YAxis dataKey="name" type="category" tick={{ fill: '#94a3b8', fontSize: 10 }} width={160} />
+                      <Tooltip {...tooltipStyle} formatter={(v) => `+${v}%`} />
+                      <Bar dataKey="improvement" name="Improvement %" radius={[0, 6, 6, 0]}>
+                        {benefitChartData.map((entry, i) => (
+                          <Cell key={i} fill={entry.confidence === 'high' ? COLORS.emerald : entry.confidence === 'medium' ? COLORS.yellow : COLORS.slate} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
               {benefits.projections && benefits.projections.length > 0 && (
                 <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
                   <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Benefit Improvements</p>
@@ -463,29 +709,28 @@ export default function PresentationPage() {
     {
       title: 'Hourly Throughput',
       content: (() => {
-        const hours = analysis?.throughput_hourly?.hours || []
-        const maxLines = Math.max(...hours.map(h => h.orderlines || 0), 1)
         return (
           <div className="space-y-6">
             <p className="text-slate-300">Orderlines per hour across a 24-hour cycle, highlighting peak activity windows for system dimensioning.</p>
-            {hours.length > 0 ? (
+            {hourlyChartData.length > 0 ? (
               <>
                 <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
-                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Orderlines by Hour (0–23)</p>
-                  <div className="flex items-end gap-1" style={{ height: '200px' }}>
-                    {hours.map((h, i) => {
-                      const val = h.orderlines || 0
-                      const pct = (val / maxLines) * 100
-                      const isPeak = val >= maxLines * 0.8
-                      return (
-                        <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
-                          <span className={`text-[9px] mb-1 ${isPeak ? 'text-yellow-400 font-bold' : 'text-slate-500'}`}>{fmt(val)}</span>
-                          <div className={`w-full rounded-t ${isPeak ? 'bg-yellow-500' : 'bg-blue-600'}`} style={{ height: `${Math.max(pct, 2)}%` }} />
-                          <span className="text-[9px] text-slate-500 mt-1">{h.hour}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
+                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Orderlines by Hour (0-23)</p>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={hourlyChartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                      <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 10 }} label={{ value: 'Hour', position: 'insideBottom', offset: -2, fill: '#64748b', fontSize: 11 }} />
+                      <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                      <Tooltip {...tooltipStyle} />
+                      <Bar dataKey="orderlines" name="Order Lines" radius={[4, 4, 0, 0]}>
+                        {hourlyChartData.map((entry, i) => {
+                          const maxVal = Math.max(...hourlyChartData.map(h => h.orderlines), 1)
+                          const isPeak = entry.orderlines >= maxVal * 0.8
+                          return <Cell key={i} fill={isPeak ? COLORS.yellow : COLORS.blue} />
+                        })}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
                 <div className="p-4 rounded-lg bg-yellow-900/20 border border-yellow-500/30">
                   <p className="text-sm text-yellow-300">Peak hours (highlighted in gold) represent periods where the automation system must sustain highest throughput.</p>
@@ -509,23 +754,39 @@ export default function PresentationPage() {
           <div className="space-y-6">
             <p className="text-slate-300">The highest-frequency SKUs by pick volume — prime candidates for goods-to-person automation zones.</p>
             {topSkus.length > 0 ? (
-              <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
-                <div className="grid grid-cols-5 gap-2 mb-2 text-xs text-slate-500 uppercase tracking-wider">
-                  <span>Rank</span><span>SKU</span><span className="text-right">Picks</span><span className="text-right">% Total</span><span className="text-right">Class</span>
+              <>
+                {topSkusChartData.length > 0 && (
+                  <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+                    <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Pick Count by SKU</p>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <BarChart data={topSkusChartData} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                        <XAxis type="number" tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                        <YAxis dataKey="name" type="category" tick={{ fill: '#94a3b8', fontSize: 10 }} width={130} />
+                        <Tooltip {...tooltipStyle} />
+                        <Bar dataKey="picks" name="Picks" fill={COLORS.purple} radius={[0, 6, 6, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+                <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+                  <div className="grid grid-cols-5 gap-2 mb-2 text-xs text-slate-500 uppercase tracking-wider">
+                    <span>Rank</span><span>SKU</span><span className="text-right">Picks</span><span className="text-right">% Total</span><span className="text-right">Class</span>
+                  </div>
+                  {topSkus.slice(0, 10).map((s, i) => {
+                    const clsColor = s.class === 'A' ? 'text-emerald-400' : s.class === 'B' ? 'text-yellow-400' : 'text-slate-400'
+                    return (
+                      <div key={i} className={`grid grid-cols-5 gap-2 py-2 text-sm ${i % 2 === 0 ? 'bg-slate-900/30' : ''} rounded px-1`}>
+                        <span className="text-slate-400 font-medium">{i + 1}</span>
+                        <span className="text-white truncate">{s.sku}</span>
+                        <span className="text-white text-right">{fmt(Math.round(s.picks))}</span>
+                        <span className="text-slate-300 text-right">{s.pct}%</span>
+                        <span className={`${clsColor} font-bold text-right`}>{s.class}</span>
+                      </div>
+                    )
+                  })}
                 </div>
-                {topSkus.slice(0, 10).map((s, i) => {
-                  const clsColor = s.class === 'A' ? 'text-emerald-400' : s.class === 'B' ? 'text-yellow-400' : 'text-slate-400'
-                  return (
-                    <div key={i} className={`grid grid-cols-5 gap-2 py-2 text-sm ${i % 2 === 0 ? 'bg-slate-900/30' : ''} rounded px-1`}>
-                      <span className="text-slate-400 font-medium">{i + 1}</span>
-                      <span className="text-white truncate">{s.sku}</span>
-                      <span className="text-white text-right">{fmt(Math.round(s.picks))}</span>
-                      <span className="text-slate-300 text-right">{s.pct}%</span>
-                      <span className={`${clsColor} font-bold text-right`}>{s.class}</span>
-                    </div>
-                  )
-                })}
-              </div>
+              </>
             ) : (
               <div className="p-4 rounded-lg bg-yellow-900/20 border border-yellow-500/30">
                 <p className="text-sm text-yellow-300">No top SKU data available yet.</p>
