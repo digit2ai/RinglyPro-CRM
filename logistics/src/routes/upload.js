@@ -3,7 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 500 * 1024 * 1024 } }); // 500MB
 const parserService = require('../services/parser');
 
 const VALID_FILE_TYPES = ['item_master', 'inventory', 'goods_in', 'goods_out', 'oee_machines', 'oee_machine_events', 'oee_production_runs'];
@@ -67,7 +67,7 @@ router.post('/:projectId/:fileType', upload.single('file'), async (req, res) => 
 
       if (records.length > 0) {
         // Chunk large inserts to avoid DB connection timeouts
-        const CHUNK_SIZE = 500;
+        const CHUNK_SIZE = 5000;
         for (let i = 0; i < records.length; i += CHUNK_SIZE) {
           await Model.bulkCreate(records.slice(i, i + CHUNK_SIZE), { ignoreDuplicates: true });
         }

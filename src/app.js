@@ -36,8 +36,8 @@ const webhookRoutes = require('./routes/webhooks');
 app.use('/webhooks', webhookRoutes);
 console.log('✅ Subscription webhook mounted at /webhooks/stripe (before body parser)');
 
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '500mb' }));
+app.use(express.urlencoded({ extended: true, limit: '500mb' }));
 app.use(express.static(path.join(__dirname, '../public')));
 
 // Serve all-in-one landing page (LaunchStack)
