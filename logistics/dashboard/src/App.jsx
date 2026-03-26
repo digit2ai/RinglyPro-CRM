@@ -368,7 +368,7 @@ export default function App({ onLogout, userEmail }) {
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         {/* Logo — bigger, with top padding for voice widget clearance */}
-        <div className="pt-16 pb-4 px-4 border-b border-slate-700">
+        <div className="pt-24 pb-4 px-4 border-b border-slate-700">
           <div className="flex flex-col items-center text-center gap-2">
             <div className="w-24 h-24 rounded-xl flex items-center justify-center overflow-hidden bg-white p-2">
               <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69b02d62034886f7c9e996d9.png" alt="PINAXIS" className="w-full h-full object-contain" />
