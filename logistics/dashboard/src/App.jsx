@@ -12,6 +12,7 @@ import UserGuidePage from './pages/UserGuidePage'
 import OEEDashboardPage from './pages/OEEDashboardPage'
 import NDAPage from './pages/NDAPage'
 import ContractBuilderPage from './pages/ContractBuilderPage'
+import PresentationPage from './pages/PresentationPage'
 import WarehouseMindPage from './pages/WarehouseMindPage'
 import StepIndicator from './components/StepIndicator'
 
@@ -35,7 +36,8 @@ const steps = [
   { path: '/user-guide', label: 'User Guide', icon: BookIcon, noProject: true },
   { path: '/proposals/LOGISTICS-System-Architecture-Document.html', label: 'MCP Architecture', icon: ArchitectureIcon, external: true },
   { path: '/nda', label: 'NDA', icon: NDAIcon, noProject: true },
-  { path: '/contract-builder', label: 'Services Agreement', icon: ContractIcon, noProject: true }
+  { path: '/contract-builder', label: 'Services Agreement', icon: ContractIcon, noProject: true },
+  { path: '/presentation', label: 'Presentation', icon: PresentationIcon }
 ]
 
 function UploadIcon({ className }) {
@@ -183,6 +185,14 @@ function VoiceIcon({ className }) {
   )
 }
 
+function PresentationIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5" />
+    </svg>
+  )
+}
+
 function ChevronIcon({ className, expanded }) {
   return (
     <svg className={`${className} transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -221,7 +231,7 @@ export default function App({ onLogout, userEmail }) {
 
   // Extract projectId from current URL for sidebar navigation
   const getProjectId = () => {
-    const match = location.pathname.match(/\/(analysis|products|simulation|benefits|report|api-integration|observability|user-guide|nda)\/(\d+)/)
+    const match = location.pathname.match(/\/(analysis|products|simulation|benefits|report|api-integration|observability|user-guide|nda|presentation)\/(\d+)/)
     return match ? match[2] : null
   }
 
@@ -239,6 +249,7 @@ export default function App({ onLogout, userEmail }) {
     if (location.pathname.startsWith('/observability')) return 9
     if (location.pathname.startsWith('/nda')) return 11
     if (location.pathname.startsWith('/contract-builder')) return 12
+    if (location.pathname.startsWith('/presentation')) return 13
     return 1
   }
 
@@ -437,12 +448,14 @@ export default function App({ onLogout, userEmail }) {
             <Route path="/user-guide" element={<UserGuidePage />} />
             <Route path="/nda" element={<NDAPage />} />
             <Route path="/contract-builder" element={<ContractBuilderPage />} />
+            <Route path="/presentation/:projectId" element={<PresentationPage />} />
+            <Route path="/presentation" element={<PresentationPage />} />
           </Routes>
         </div>
       </main>
 
       {/* ElevenLabs Voice Agent Widget */}
-      <elevenlabs-convai agent-id="agent_1801kjx55tabedbvx4y7x4eptbz4"></elevenlabs-convai>
+      <elevenlabs-convai agent-id="agent_0001kjqqxr4nfcxvar5ve7prp2vm"></elevenlabs-convai>
     </div>
   )
 }
