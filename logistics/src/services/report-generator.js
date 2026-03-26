@@ -708,7 +708,7 @@ async function generate(project) {
     },
     { text: '\n\n' },
     { text: 'RinglyPro Logistics', fontSize: 13, bold: true, color: COLORS.navy, alignment: 'center' },
-    { text: 'www.ringlypro-logistics-group.com', fontSize: 10, color: COLORS.blue, alignment: 'center', margin: [0, 4, 0, 0] },
+    { text: 'https://ringlypro.com/demo', link: 'https://ringlypro.com/demo', fontSize: 10, color: COLORS.blue, alignment: 'center', margin: [0, 4, 0, 0] },
     { text: '\n\n' },
     {
       table: {
