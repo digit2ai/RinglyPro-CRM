@@ -111,13 +111,13 @@ export async function getRecommendations(projectId) {
 }
 
 /**
- * Generate a demo project with synthetic data
+ * Generate a Proof of Concept project with synthetic data
  * Backend: POST /demo/generate
  */
 export async function generateDemo(companyName) {
   return request('/demo/generate', {
     method: 'POST',
-    body: JSON.stringify({ company_name: companyName || 'Demo Warehouse GmbH' })
+    body: JSON.stringify({ company_name: companyName || 'Pinaxis POC Warehouse' })
   })
 }
 

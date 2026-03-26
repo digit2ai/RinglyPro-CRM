@@ -232,7 +232,7 @@ export default function ObservabilityPage() {
             <h3 className="text-xl font-semibold text-white mb-2">Observability Ready</h3>
             <p className="text-slate-400 max-w-lg mx-auto mb-4">
               No telemetry data has been received yet. Connect your WCS/WES systems to push
-              equipment telemetry via the Production API, or generate demo data to preview the dashboard.
+              equipment telemetry via the Production API, or generate POC data to preview the dashboard.
             </p>
             <button
               onClick={handleSeedDemo}
@@ -245,7 +245,7 @@ export default function ObservabilityPage() {
                   Generating RinglyPro Logistics equipment telemetry...
                 </span>
               ) : (
-                'Generate Demo Telemetry'
+                'Generate POC Telemetry'
               )}
             </button>
             <div className="max-w-2xl mx-auto text-left">

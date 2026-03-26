@@ -6,7 +6,7 @@ const analyticsService = require('../services/analytics');
 const productMatcher = require('../services/product-matcher');
 const { bulkInsert, bulkInsertStreaming } = require('../services/bulk-inserter');
 
-// POST /api/v1/demo/generate — Create demo project matching LogiVision Dashboard Playbook (FULL SCALE)
+// POST /api/v1/demo/generate — Create POC project matching LogiVision Dashboard Playbook (FULL SCALE)
 router.post('/generate', async (req, res) => {
   try {
     const { company_name } = req.body;
@@ -16,9 +16,9 @@ router.post('/generate', async (req, res) => {
     const crypto = require('crypto');
     const project = await req.models.LogisticsProject.create({
       project_code: `LOGISTICS-${new Date().getFullYear()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`,
-      company_name: company_name || 'Pinaxis Demo Warehouse',
-      contact_name: 'Demo User',
-      contact_email: 'demo@pinaxis.com',
+      company_name: company_name || 'Pinaxis POC Warehouse',
+      contact_name: 'POC User',
+      contact_email: 'poc@pinaxis.com',
       industry: '3PL / Logistics',
       country: 'Germany',
       business_info: {
@@ -40,7 +40,7 @@ router.post('/generate', async (req, res) => {
         project_id: pid,
         project_code: project.project_code,
         status: 'uploading',
-        message: 'Generating full-scale LogiVision data (228K items, 637K order lines). Poll /projects/' + pid + ' for status.'
+        message: 'Generating full-scale LogiVision POC data (228K items, 637K order lines). Poll /projects/' + pid + ' for status.'
       }
     });
 
@@ -48,7 +48,7 @@ router.post('/generate', async (req, res) => {
     // BACKGROUND PROCESSING — generate + insert + analyze
     // ======================================================================
     generateFullDemo(req.models, seq, pid).catch(err => {
-      console.error(`[DEMO] FATAL error for project ${pid}:`, err);
+      console.error(`[POC] FATAL error for project ${pid}:`, err);
       req.models.LogisticsProject.update(
         { status: 'error', analysis_completed_at: new Date() },
         { where: { id: pid } }
@@ -56,17 +56,17 @@ router.post('/generate', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('[DEMO] Error creating project:', error);
+    console.error('[POC] Error creating project:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
 // ========================================================================
-// Full-scale demo generation — runs in background
+// Full-scale POC generation — runs in background
 // ========================================================================
 async function generateFullDemo(models, seq, pid) {
   const startTime = Date.now();
-  const label = '[DEMO]';
+  const label = '[POC]';
   const opts = { projectId: pid, label, chunkSize: 2000 };
 
   console.log(`${label} Starting full-scale LogiVision generation for project ${pid}...`);
@@ -150,7 +150,7 @@ async function generateFullDemo(models, seq, pid) {
 
   // Track file record
   await models.LogisticsUploadedFile.create({
-    project_id: pid, file_type: 'item_master', original_filename: 'demo_item_master.csv',
+    project_id: pid, file_type: 'item_master', original_filename: 'poc_item_master.csv',
     file_size: 0, mime_type: 'text/csv', row_count: TOTAL_SKUS, column_count: 12, parse_status: 'parsed'
   });
 
@@ -189,7 +189,7 @@ async function generateFullDemo(models, seq, pid) {
   }
 
   await models.LogisticsUploadedFile.create({
-    project_id: pid, file_type: 'inventory', original_filename: 'demo_inventory.csv',
+    project_id: pid, file_type: 'inventory', original_filename: 'poc_inventory.csv',
     file_size: 0, mime_type: 'text/csv', row_count: invInserted, column_count: 5, parse_status: 'parsed'
   });
   console.log(`${label} Inventory: ${invInserted} rows (${Date.now() - startTime}ms)`);
@@ -217,7 +217,7 @@ async function generateFullDemo(models, seq, pid) {
   await bulkInsert(seq, 'logistics_goods_in_data', giColumns, giRows, opts);
 
   await models.LogisticsUploadedFile.create({
-    project_id: pid, file_type: 'goods_in', original_filename: 'demo_goods_in.csv',
+    project_id: pid, file_type: 'goods_in', original_filename: 'poc_goods_in.csv',
     file_size: 0, mime_type: 'text/csv', row_count: GI_COUNT, column_count: 7, parse_status: 'parsed'
   });
   console.log(`${label} Goods in: ${GI_COUNT} rows (${Date.now() - startTime}ms)`);
@@ -338,7 +338,7 @@ async function generateFullDemo(models, seq, pid) {
   await flushGoLines();
 
   await models.LogisticsUploadedFile.create({
-    project_id: pid, file_type: 'goods_out', original_filename: 'demo_goods_out.csv',
+    project_id: pid, file_type: 'goods_out', original_filename: 'poc_goods_out.csv',
     file_size: 0, mime_type: 'text/csv', row_count: totalLines, column_count: 13, parse_status: 'parsed'
   });
   console.log(`${label} Goods out: ${totalOrders} orders, ${totalLines} lines (${Date.now() - startTime}ms)`);

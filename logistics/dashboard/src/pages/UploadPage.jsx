@@ -232,7 +232,7 @@ export default function UploadPage() {
             navigate(`/analysis/${demoId}`)
             return
           } else if (status === 'error') {
-            setError('Demo generation failed. Check server logs.')
+            setError('POC generation failed. Check server logs.')
             return
           } else if (status === 'analyzing') {
             setDemoStatus('Running analysis + product matching...')
@@ -243,7 +243,7 @@ export default function UploadPage() {
           // Keep polling
         }
       }
-      setError('Demo generation timed out')
+      setError('POC generation timed out')
     } catch (err) {
       setError(err.message)
     } finally {
@@ -265,14 +265,14 @@ export default function UploadPage() {
         </p>
       </div>
 
-      {/* Demo Button */}
+      {/* POC Button */}
       <div className="card mb-8 bg-gradient-to-r from-logistics-900/50 to-slate-800 border-logistics-700/50">
         <div>
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-semibold text-white mb-1">Quick Demo — Full LogiVision Scale</h3>
+              <h3 className="text-lg font-semibold text-white mb-1">Proof of Concept — Full LogiVision Scale</h3>
               <p className="text-sm text-slate-400">
-                Generate 228K items + 60K orders + 637K order lines matching the LogiVision Dashboard Playbook.
+                Generate a full-scale Proof of Concept with LogiVision data (228K items, 60K orders, 637K lines).
               </p>
             </div>
             <button
@@ -293,7 +293,7 @@ export default function UploadPage() {
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
                   </svg>
-                  Generate Demo
+                  Generate POC
                 </>
               )}
             </button>

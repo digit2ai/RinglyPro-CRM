@@ -88,7 +88,7 @@ export default function UserGuidePage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white mb-2">User Guide</h1>
         <p className="text-slate-400">
-          Learn how to run test demos with LOGISTICS. Choose a scenario below to get started.
+          Learn how to run a Proof of Concept with LOGISTICS. Choose a scenario below to get started.
         </p>
       </div>
 
@@ -138,8 +138,8 @@ export default function UserGuidePage() {
               activeScenario === 1 ? 'bg-logistics-600/30 text-logistics-300' : 'bg-slate-700 text-slate-400'
             }`}>Scenario 1</span>
           </div>
-          <h3 className="text-lg font-semibold text-white mb-1">Synthetic Data Demo</h3>
-          <p className="text-sm text-slate-400">One-click demo with auto-generated warehouse data. No files needed.</p>
+          <h3 className="text-lg font-semibold text-white mb-1">Synthetic Data POC</h3>
+          <p className="text-sm text-slate-400">One-click Proof of Concept with auto-generated warehouse data. No files needed.</p>
         </button>
 
         <button
@@ -815,7 +815,7 @@ export default function UserGuidePage() {
       )}
 
       {/* ============================================================ */}
-      {/* SCENARIO 1: Synthetic Demo */}
+      {/* SCENARIO 1: Synthetic POC */}
       {/* ============================================================ */}
       {activeScenario === 1 && (
         <div className="space-y-4">
@@ -825,10 +825,10 @@ export default function UserGuidePage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
               </svg>
               <div>
-                <h3 className="text-white font-semibold mb-1">What is the Synthetic Demo?</h3>
+                <h3 className="text-white font-semibold mb-1">What is the Synthetic POC?</h3>
                 <p className="text-sm text-slate-300">
-                  LOGISTICS generates a complete demo project with realistic warehouse data for a fictional company
-                  ("Demo Warehouse GmbH"). It creates ~500 SKUs with item dimensions, inventory snapshots,
+                  LOGISTICS generates a complete Proof of Concept project with realistic warehouse data for a fictional company
+                  ("Pinaxis POC Warehouse"). It creates ~500 SKUs with item dimensions, inventory snapshots,
                   goods-in receipts, and goods-out shipments spanning 12 months. The analysis runs automatically,
                   so you can explore every page of the platform instantly.
                 </p>
@@ -855,20 +855,20 @@ export default function UserGuidePage() {
 
           <StepCard
             number={2}
-            title='Click "Generate Demo"'
+            title='Click "Generate POC"'
             isActive={activeStep1 === 2}
             onClick={() => setActiveStep1(activeStep1 === 2 ? 0 : 2)}
           >
             <p className="text-sm text-slate-300 ml-14">
-              At the top of the Upload page, you'll see a <strong className="text-white">Quick Demo</strong> card
-              with a blue <strong className="text-logistics-400">"Generate Demo"</strong> button. Click it.
+              At the top of the Upload page, you'll see a <strong className="text-white">Proof of Concept</strong> card
+              with a blue <strong className="text-logistics-400">"Generate POC"</strong> button. Click it.
             </p>
             <div className="ml-14 p-4 rounded-lg bg-slate-900/50 border border-slate-700">
               <p className="text-xs text-slate-500 mb-2">What happens behind the scenes:</p>
               <ul className="text-sm text-slate-400 space-y-1">
                 <li className="flex items-start gap-2">
                   <CheckCircleIcon className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                  Creates a new project: "Demo Warehouse GmbH"
+                  Creates a new project: "Pinaxis POC Warehouse"
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircleIcon className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
@@ -963,7 +963,7 @@ export default function UserGuidePage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircleIcon className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                  <strong className="text-logistics-400">"Generate Demo Telemetry"</strong> button to preview with simulated equipment data
+                  <strong className="text-logistics-400">"Generate POC Telemetry"</strong> button to preview with simulated equipment data
                 </li>
               </ul>
             </div>
