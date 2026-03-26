@@ -79,8 +79,9 @@ router.post('/:projectId/:fileType', upload.single('file'), async (req, res) => 
         if (parseResult.rows.length > 0) {
           // Use raw SQL multi-value INSERT — 50x faster than Sequelize bulkCreate
           const columns = Object.keys(parseResult.rows[0]);
-          const allCols = ['project_id', ...columns];
-          const CHUNK_SIZE = 2000; // rows per INSERT statement
+          const allCols = ['project_id', ...columns, 'created_at', 'updated_at'];
+          const now = new Date().toISOString();
+          const CHUNK_SIZE = 2000;
           const totalChunks = Math.ceil(parseResult.rows.length / CHUNK_SIZE);
           console.log(`[UPLOAD] Raw SQL inserting ${parseResult.rows.length} rows in ${totalChunks} chunks into ${tableName}...`);
 
@@ -92,7 +93,9 @@ router.post('/:projectId/:fileType', upload.single('file'), async (req, res) => 
               const row = chunk[r];
               const placeholders = allCols.map((col, ci) => {
                 const key = `v${c + r}_${ci}`;
-                params[key] = col === 'project_id' ? project.id : (row[col] != null ? row[col] : null);
+                if (col === 'project_id') params[key] = project.id;
+                else if (col === 'created_at' || col === 'updated_at') params[key] = now;
+                else params[key] = row[col] != null ? row[col] : null;
                 return `:${key}`;
               });
               values.push(`(${placeholders.join(',')})`);
