@@ -93,6 +93,14 @@ models.sequelize.sync({ alter: false }).then(async () => {
     console.log('⚠️ LOGISTICS table check:', e.message);
   }
 
+  // Auto-migrate: add missing columns
+  try {
+    await models.sequelize.query(`ALTER TABLE logistics_goods_out_data ADD COLUMN IF NOT EXISTS order_type VARCHAR(100)`);
+    console.log('✅ LOGISTICS: order_type column ensured');
+  } catch (e) {
+    console.log('⚠️ LOGISTICS migration:', e.message);
+  }
+
   // Unique indexes for production API upsert support
   try {
     await models.sequelize.query(`CREATE UNIQUE INDEX IF NOT EXISTS logistics_item_master_project_sku_uq ON logistics_item_master (project_id, sku)`);

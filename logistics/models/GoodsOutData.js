@@ -70,6 +70,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(100),
       allowNull: true
     },
+    order_type: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      comment: 'store replenishment, e-com, first allocation, etc.'
+    },
     metadata: {
       type: DataTypes.JSONB,
       defaultValue: {}
