@@ -297,20 +297,43 @@ async function generateFullDemo(models, seq, pid) {
     goBatch = [];
   }
 
-  // Pre-compute orders per day to spread exactly 60,016 orders across 370 days
-  const baseOrdersPerDay = Math.floor(TARGET_ORDERS / 370); // 162
-  let extraOrders = TARGET_ORDERS - baseOrdersPerDay * 370; // remainder
-  const dailyOrderCounts = allDates.map(() => {
-    const extra = extraOrders > 0 ? 1 : 0;
-    if (extra) extraOrders--;
-    return baseOrdersPerDay + extra;
-  });
+  // ================================================================
+  // KEY FIX: Pre-compute BOTH orders AND lines per day
+  // so throughput is flat across all 370 days — matching LogiVision
+  // ================================================================
+  const DAYS = allDates.length; // 370
+  const baseLinesPerDay = Math.floor(TARGET_LINES / DAYS); // ~1722
+  const baseOrdersPerDay = Math.floor(TARGET_ORDERS / DAYS); // ~162
+  const AVG_LINES_PER_ORDER = TARGET_LINES / TARGET_ORDERS; // ~10.6
 
-  for (let dayIdx = 0; dayIdx < allDates.length && totalOrders < TARGET_ORDERS; dayIdx++) {
+  // Pre-allocate exact lines + orders per day with small random variation
+  const dailyLines = [];
+  const dailyOrders = [];
+  let linesLeft = TARGET_LINES;
+  let ordersLeft = TARGET_ORDERS;
+
+  for (let d = 0; d < DAYS; d++) {
+    const daysRemaining = DAYS - d;
+    // Even distribution with ±10% random variation
+    const dayLines = d === DAYS - 1 ? linesLeft : Math.round((linesLeft / daysRemaining) * (0.9 + Math.random() * 0.2));
+    const dayOrders = d === DAYS - 1 ? ordersLeft : Math.round((ordersLeft / daysRemaining) * (0.9 + Math.random() * 0.2));
+    dailyLines.push(Math.max(1, dayLines));
+    dailyOrders.push(Math.max(1, dayOrders));
+    linesLeft -= dailyLines[d];
+    ordersLeft -= dailyOrders[d];
+  }
+
+  // Force unused SKUs into a queue to spread across all days
+  const unusedSkuQueue = [...allMovedSkus]; // all 43,680
+  let unusedIdx = 0;
+
+  for (let dayIdx = 0; dayIdx < DAYS; dayIdx++) {
     const dateStr = allDates[dayIdx];
-    const todayOrders = dailyOrderCounts[dayIdx];
+    const targetDayOrders = dailyOrders[dayIdx];
+    const targetDayLines = dailyLines[dayIdx];
+    let dayLines = 0;
 
-    for (let o = 0; o < todayOrders && totalOrders < TARGET_ORDERS; o++) {
+    for (let o = 0; o < targetDayOrders; o++) {
       const ordId = 'SO-' + oid++;
       totalOrders++;
       const otype = orderTypes[Math.floor(Math.random() * orderTypes.length)];
@@ -319,43 +342,50 @@ async function generateFullDemo(models, seq, pid) {
       const hr = String(6 + Math.floor(Math.random() * 12)).padStart(2, '0');
       const shipTime = hr + ':' + String(Math.floor(Math.random() * 60)).padStart(2, '0') + ':00';
 
-      // Lines/order: target avg 10.6 — adaptive distribution
-      const remainingOrders = TARGET_ORDERS - totalOrders;
-      const remainingLines = TARGET_LINES - totalLines;
-      const neededAvg = remainingOrders > 0 ? remainingLines / remainingOrders : 10;
+      // How many lines for this order?
+      const ordersRemaining = targetDayOrders - o;
+      const linesRemaining = targetDayLines - dayLines;
+      const avgNeeded = ordersRemaining > 0 ? linesRemaining / ordersRemaining : AVG_LINES_PER_ORDER;
 
+      // Distribute lines with natural variation around the per-order average
       let lineCount;
-      if (neededAvg < 7) {
-        // Need fewer lines — skew toward small orders
-        lineCount = 1 + Math.floor(Math.random() * 6);
-      } else if (neededAvg > 14) {
-        // Need more lines — skew toward large orders
-        lineCount = 10 + Math.floor(Math.random() * 20);
-      } else {
-        // Normal distribution around 10.6
-        const lr = Math.random();
-        if (lr < 0.06) lineCount = 1;
-        else if (lr < 0.14) lineCount = 2 + Math.floor(Math.random() * 2);
-        else if (lr < 0.30) lineCount = 4 + Math.floor(Math.random() * 3);
-        else if (lr < 0.55) lineCount = 7 + Math.floor(Math.random() * 5);
-        else if (lr < 0.78) lineCount = 12 + Math.floor(Math.random() * 5);
-        else if (lr < 0.92) lineCount = 17 + Math.floor(Math.random() * 8);
-        else if (lr < 0.98) lineCount = 25 + Math.floor(Math.random() * 20);
-        else lineCount = 45 + Math.floor(Math.random() * 93);
-      }
+      const lr = Math.random();
+      if (lr < 0.06) lineCount = 1;
+      else if (lr < 0.14) lineCount = 2 + Math.floor(Math.random() * 2);
+      else if (lr < 0.30) lineCount = 4 + Math.floor(Math.random() * 3);
+      else if (lr < 0.55) lineCount = 7 + Math.floor(Math.random() * 5);
+      else if (lr < 0.78) lineCount = 12 + Math.floor(Math.random() * 5);
+      else if (lr < 0.92) lineCount = 17 + Math.floor(Math.random() * 8);
+      else if (lr < 0.98) lineCount = 25 + Math.floor(Math.random() * 20);
+      else lineCount = 45 + Math.floor(Math.random() * 93);
 
-      // Hard cap
-      lineCount = Math.max(1, Math.min(lineCount, 138, remainingLines));
-      if (remainingLines <= 0) break;
+      // Steer toward needed average to keep daily total on track
+      if (avgNeeded < 6) lineCount = Math.min(lineCount, 1 + Math.floor(Math.random() * 5));
+      else if (avgNeeded > 16) lineCount = Math.max(lineCount, 12 + Math.floor(Math.random() * 10));
+
+      lineCount = Math.max(1, Math.min(lineCount, 138, targetDayLines - dayLines));
 
       for (let l = 0; l < lineCount; l++) {
-        const sku = pickSku();
-        // Quantity: target avg ~140.5 per line to hit 89.5M total
+        // Pick SKU — use unused queue first to ensure all 43,680 appear
+        let sku;
+        if (unusedIdx < MOVED_SKUS && Math.random() < 0.15) {
+          sku = unusedSkuQueue[unusedIdx++];
+        } else {
+          // ABC-weighted pick
+          const r = Math.random();
+          let idx;
+          if (r < 0.80) idx = Math.floor(Math.random() * A_COUNT);
+          else if (r < 0.95) idx = A_COUNT + Math.floor(Math.random() * B_COUNT);
+          else idx = A_COUNT + B_COUNT + Math.floor(Math.random() * (MOVED_SKUS - A_COUNT - B_COUNT));
+          sku = String(100000 + idx);
+        }
+        skuUsed.add(sku);
+
+        // Quantity: target avg ~140.5 to hit 89.5M total
         const qtyRemaining = TARGET_PICK_UNITS - totalQty;
-        const linesRemaining = TARGET_LINES - totalLines;
-        const qtyNeededAvg = linesRemaining > 0 ? qtyRemaining / linesRemaining : 140;
-        // Vary around needed average
-        const qty = Math.max(1, Math.round(qtyNeededAvg * (0.3 + Math.random() * 1.4)));
+        const totalLinesRemaining = TARGET_LINES - totalLines;
+        const qtyAvg = totalLinesRemaining > 0 ? qtyRemaining / totalLinesRemaining : 140;
+        const qty = Math.max(1, Math.round(qtyAvg * (0.3 + Math.random() * 1.4)));
 
         const pu = qty > 96 ? 'pallet' : qty > 12 ? 'case' : 'single';
 
@@ -365,6 +395,7 @@ async function generateFullDemo(models, seq, pid) {
         ]);
         totalLines++;
         totalQty += qty;
+        dayLines++;
       }
 
       if (goBatch.length >= GO_FLUSH) {
@@ -373,20 +404,18 @@ async function generateFullDemo(models, seq, pid) {
     }
   }
 
-  // Force-insert any remaining unused SKUs
-  if (skuUsed.size < MOVED_SKUS) {
-    const lastDate = allDates[allDates.length - 1];
-    for (let i = 0; i < MOVED_SKUS; i++) {
-      const s = allMovedSkus[i];
-      if (!skuUsed.has(s)) {
-        goBatch.push([
-          'SO-' + oid++, 'SO-' + (oid - 1) + '-1', s, Math.max(1, Math.round(AVG_QTY_PER_LINE)),
-          'case', 'piece', 'store replenishment', lastDate, lastDate, lastDate, '10:00:00',
-          'CUST-0001', 'CEP'
-        ]);
-        totalLines++;
-        totalOrders++;
-      }
+  // Insert any remaining unused SKUs spread across last few days
+  while (unusedIdx < MOVED_SKUS) {
+    const dateStr = allDates[Math.floor(Math.random() * DAYS)];
+    const s = unusedSkuQueue[unusedIdx++];
+    if (!skuUsed.has(s)) {
+      goBatch.push([
+        'SO-' + oid++, 'SO-' + (oid - 1) + '-1', s, Math.max(1, Math.round(AVG_QTY_PER_LINE)),
+        'case', 'piece', 'store replenishment', dateStr, dateStr, dateStr, '10:00:00',
+        'CUST-0001', 'CEP'
+      ]);
+      totalLines++;
+      totalOrders++;
     }
   }
 
