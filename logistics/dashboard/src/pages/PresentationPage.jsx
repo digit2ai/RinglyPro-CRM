@@ -377,7 +377,165 @@ export default function PresentationPage() {
         </div>
       )
     },
-    // Slide 8: Next Steps
+    // Slide 8: Product Recommendations
+    {
+      title: 'Product Recommendations',
+      content: (
+        <div className="space-y-6">
+          <p className="text-slate-300">Based on the complete warehouse data analysis, the following PINAXIS intralogistics solutions are recommended for this operation.</p>
+          {recommendations.length > 0 ? (
+            <div className="space-y-3">
+              {recommendations.map((rec, i) => {
+                const score = rec.fit_score || 0
+                const barColor = score >= 70 ? 'bg-emerald-500' : score >= 40 ? 'bg-yellow-500' : 'bg-slate-500'
+                return (
+                  <div key={i} className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <h3 className="text-white font-semibold">{rec.product_name}</h3>
+                        <p className="text-xs text-blue-400">{rec.product_category}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className={`text-2xl font-bold ${score >= 70 ? 'text-emerald-400' : score >= 40 ? 'text-yellow-400' : 'text-slate-300'}`}>{Math.round(score)}</p>
+                        <p className="text-xs text-slate-500">/ 100</p>
+                      </div>
+                    </div>
+                    <div className="w-full bg-slate-700 rounded-full h-2 mb-2">
+                      <div className={`${barColor} h-2 rounded-full`} style={{ width: `${Math.min(score, 100)}%` }} />
+                    </div>
+                    {(rec.description || rec.rationale) && (
+                      <p className="text-xs text-slate-400 mt-1">{rec.description || rec.rationale}</p>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="p-4 rounded-lg bg-yellow-900/20 border border-yellow-500/30">
+              <p className="text-sm text-yellow-300">No product recommendations available yet. Run the recommendation engine first.</p>
+            </div>
+          )}
+        </div>
+      )
+    },
+    // Slide 9: Client Benefit Projections
+    {
+      title: 'Client Benefit Projections',
+      content: (
+        <div className="space-y-6">
+          <p className="text-slate-300">Data-driven ROI projections based on warehouse analytics and PINAXIS product matching.</p>
+          {benefits ? (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <MetricCard label="Automation Readiness" value={`${benefits.summary?.automation_readiness_score || 0}/100`} color="blue" />
+                <MetricCard label="Est. Annual Savings" value={benefits.summary?.annual_savings_high ? `€${Math.round(benefits.summary.annual_savings_high / 1000)}K` : '—'} color="emerald" />
+                <MetricCard label="Payback Period" value={benefits.summary?.payback_months_low && benefits.summary?.payback_months_high ? `${benefits.summary.payback_months_low}–${benefits.summary.payback_months_high} mo` : '—'} color="yellow" />
+                <MetricCard label="High-Confidence" value={`${benefits.summary?.high_confidence_count || 0} of ${benefits.summary?.total_projections || 0}`} sub="benefits" color="blue" />
+              </div>
+              {benefits.projections && benefits.projections.length > 0 && (
+                <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Benefit Improvements</p>
+                  <div className="space-y-2">
+                    {benefits.projections.map((p, i) => {
+                      const confColor = p.confidence === 'high' ? 'text-emerald-400' : p.confidence === 'medium' ? 'text-yellow-400' : 'text-slate-400'
+                      return (
+                        <div key={i} className="flex items-center justify-between text-sm">
+                          <span className="text-slate-300 flex-1">{p.title}</span>
+                          <span className="text-emerald-400 font-medium w-20 text-right">+{p.improvement_pct}%</span>
+                          <span className={`${confColor} w-20 text-right text-xs`}>{p.confidence === 'high' ? 'High' : p.confidence === 'medium' ? 'Medium' : 'Benchmark'}</span>
+                          <span className="text-slate-500 flex-1 text-xs text-right">{p.data_drivers?.[0]?.explanation || ''}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="p-4 rounded-lg bg-yellow-900/20 border border-yellow-500/30">
+              <p className="text-sm text-yellow-300">No benefit projections available yet. Run the benefit analysis first.</p>
+            </div>
+          )}
+        </div>
+      )
+    },
+    // Slide 10: Hourly Throughput
+    {
+      title: 'Hourly Throughput',
+      content: (() => {
+        const hours = analysis?.throughput_hourly?.hours || []
+        const maxLines = Math.max(...hours.map(h => h.orderlines || 0), 1)
+        return (
+          <div className="space-y-6">
+            <p className="text-slate-300">Orderlines per hour across a 24-hour cycle, highlighting peak activity windows for system dimensioning.</p>
+            {hours.length > 0 ? (
+              <>
+                <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Orderlines by Hour (0–23)</p>
+                  <div className="flex items-end gap-1" style={{ height: '200px' }}>
+                    {hours.map((h, i) => {
+                      const val = h.orderlines || 0
+                      const pct = (val / maxLines) * 100
+                      const isPeak = val >= maxLines * 0.8
+                      return (
+                        <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
+                          <span className={`text-[9px] mb-1 ${isPeak ? 'text-yellow-400 font-bold' : 'text-slate-500'}`}>{fmt(val)}</span>
+                          <div className={`w-full rounded-t ${isPeak ? 'bg-yellow-500' : 'bg-blue-600'}`} style={{ height: `${Math.max(pct, 2)}%` }} />
+                          <span className="text-[9px] text-slate-500 mt-1">{h.hour}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+                <div className="p-4 rounded-lg bg-yellow-900/20 border border-yellow-500/30">
+                  <p className="text-sm text-yellow-300">Peak hours (highlighted in gold) represent periods where the automation system must sustain highest throughput.</p>
+                </div>
+              </>
+            ) : (
+              <div className="p-4 rounded-lg bg-yellow-900/20 border border-yellow-500/30">
+                <p className="text-sm text-yellow-300">No hourly throughput data available yet.</p>
+              </div>
+            )}
+          </div>
+        )
+      })()
+    },
+    // Slide 11: Top 10 SKUs
+    {
+      title: 'Top 10 SKUs',
+      content: (() => {
+        const topSkus = analysis?.abc_classification?.top_skus || []
+        return (
+          <div className="space-y-6">
+            <p className="text-slate-300">The highest-frequency SKUs by pick volume — prime candidates for goods-to-person automation zones.</p>
+            {topSkus.length > 0 ? (
+              <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+                <div className="grid grid-cols-5 gap-2 mb-2 text-xs text-slate-500 uppercase tracking-wider">
+                  <span>Rank</span><span>SKU</span><span className="text-right">Picks</span><span className="text-right">% Total</span><span className="text-right">Class</span>
+                </div>
+                {topSkus.slice(0, 10).map((s, i) => {
+                  const clsColor = s.class === 'A' ? 'text-emerald-400' : s.class === 'B' ? 'text-yellow-400' : 'text-slate-400'
+                  return (
+                    <div key={i} className={`grid grid-cols-5 gap-2 py-2 text-sm ${i % 2 === 0 ? 'bg-slate-900/30' : ''} rounded px-1`}>
+                      <span className="text-slate-400 font-medium">{i + 1}</span>
+                      <span className="text-white truncate">{s.sku}</span>
+                      <span className="text-white text-right">{fmt(Math.round(s.picks))}</span>
+                      <span className="text-slate-300 text-right">{s.pct}%</span>
+                      <span className={`${clsColor} font-bold text-right`}>{s.class}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="p-4 rounded-lg bg-yellow-900/20 border border-yellow-500/30">
+                <p className="text-sm text-yellow-300">No top SKU data available yet.</p>
+              </div>
+            )}
+          </div>
+        )
+      })()
+    },
+    // Slide 12: Next Steps
     {
       title: 'Next Steps',
       content: (

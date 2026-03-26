@@ -635,11 +635,308 @@ async function generate(project) {
   ];
 
   // ========================================================================
-  // SECTION 6: PRODUCT RECOMMENDATIONS
+  // SECTION 6: XYZ SEASONALITY CLASSIFICATION
+  // ========================================================================
+
+  const xyzData = analysisMap.xyz_classification || {};
+  const xyzClasses = xyzData.classes || [];
+  const xyzThresholds = xyzData.thresholds || {};
+
+  const xyzSection = [
+    sectionHeader('XYZ Seasonality Classification', '06'),
+    { text: '\n', fontSize: 4 },
+    {
+      text: 'The XYZ classification distinguishes seasonal versus non-seasonal products based on the minimum number of active days per SKU. This informs storage strategy — seasonal (Z) items may warrant flexible storage while year-round (X) items benefit from dedicated automation zones.',
+      fontSize: 10, color: COLORS.grayDark, lineHeight: 1.45, margin: [0, 0, 0, 14]
+    },
+
+    // Thresholds callout
+    {
+      table: {
+        widths: ['*'],
+        body: [[{
+          text: [
+            { text: 'Classification Thresholds:  ', fontSize: 10, color: COLORS.grayDark, bold: true },
+            { text: `X ≥ ${xyzThresholds.x_min_days || 30} days   |   Y ≥ ${xyzThresholds.y_min_days || 20} days   |   Z < ${xyzThresholds.y_min_days || 20} days`, fontSize: 10, color: COLORS.navy }
+          ],
+          margin: [12, 10, 12, 10]
+        }]]
+      },
+      layout: { hLineWidth: () => 1, vLineWidth: () => 1, hLineColor: () => COLORS.gold, vLineColor: () => COLORS.gold },
+      fillColor: COLORS.goldPale,
+      margin: [0, 0, 0, 14],
+      unbreakable: true
+    },
+
+    // XYZ table
+    xyzClasses.length > 0 ? {
+      table: {
+        headerRows: 1,
+        widths: [50, 'auto', 'auto', 'auto', 'auto', 'auto'],
+        body: [
+          [
+            { text: 'Class', fontSize: 9, bold: true, color: COLORS.white, fillColor: COLORS.navy, margin: [8, 6, 8, 6], alignment: 'center' },
+            { text: 'Moved SKUs', fontSize: 9, bold: true, color: COLORS.white, fillColor: COLORS.navy, margin: [8, 6, 8, 6], alignment: 'right' },
+            { text: '% Moved SKUs', fontSize: 9, bold: true, color: COLORS.white, fillColor: COLORS.navy, margin: [8, 6, 8, 6], alignment: 'right' },
+            { text: '% Lines', fontSize: 9, bold: true, color: COLORS.white, fillColor: COLORS.navy, margin: [8, 6, 8, 6], alignment: 'right' },
+            { text: '% Picks', fontSize: 9, bold: true, color: COLORS.white, fillColor: COLORS.navy, margin: [8, 6, 8, 6], alignment: 'right' },
+            { text: '% Orders', fontSize: 9, bold: true, color: COLORS.white, fillColor: COLORS.navy, margin: [8, 6, 8, 6], alignment: 'right' }
+          ],
+          ...xyzClasses.map((cls, i) => {
+            const clsColors = { X: COLORS.red, Y: COLORS.amber, Z: COLORS.gray };
+            return [
+              { text: cls.class, fontSize: 10, bold: true, color: clsColors[cls.class] || COLORS.grayDark, fillColor: i % 2 === 0 ? COLORS.offWhite : COLORS.white, margin: [8, 5, 8, 5], alignment: 'center' },
+              { text: fmtNum(cls.moved_skus), fontSize: 9, color: COLORS.grayDark, fillColor: i % 2 === 0 ? COLORS.offWhite : COLORS.white, margin: [8, 5, 8, 5], alignment: 'right' },
+              { text: `${cls.pct_moved_skus}%`, fontSize: 9, color: COLORS.grayDark, fillColor: i % 2 === 0 ? COLORS.offWhite : COLORS.white, margin: [8, 5, 8, 5], alignment: 'right' },
+              { text: `${cls.pct_lines}%`, fontSize: 9, color: COLORS.grayDark, fillColor: i % 2 === 0 ? COLORS.offWhite : COLORS.white, margin: [8, 5, 8, 5], alignment: 'right' },
+              { text: `${cls.pct_picks}%`, fontSize: 9, color: COLORS.grayDark, fillColor: i % 2 === 0 ? COLORS.offWhite : COLORS.white, margin: [8, 5, 8, 5], alignment: 'right' },
+              { text: `${cls.pct_orders}%`, fontSize: 9, color: COLORS.grayDark, fillColor: i % 2 === 0 ? COLORS.offWhite : COLORS.white, margin: [8, 5, 8, 5], alignment: 'right' }
+            ];
+          })
+        ]
+      },
+      layout: executiveTableLayout,
+      unbreakable: true
+    } : { text: 'No XYZ classification data available.', fontSize: 10, color: COLORS.gray, italics: true },
+
+    { text: '\n' },
+
+    // Design day metrics
+    xyzData.design_day ? {
+      stack: [
+        subSectionHeader(`Design Day Metrics (${xyzData.design_day.working_hours || 12}h working)`),
+        {
+          columns: [
+            metricBox('Lines/Day', fmtNum(xyzData.design_day.avg_day?.order_lines || 0)),
+            metricBox('Lines/Hour', fmtNum(xyzData.design_day.avg_day?.lines_per_hour || 0)),
+            metricBox('Picks/Day', fmtNum(xyzData.design_day.avg_day?.pick_units || 0)),
+            metricBox('Orders/Day', fmtNum(xyzData.design_day.avg_day?.orders || 0))
+          ],
+          columnGap: 10
+        }
+      ],
+      unbreakable: true
+    } : { text: '' },
+
+    { text: '', pageBreak: 'after' }
+  ];
+
+  // ========================================================================
+  // SECTION 7: DAILY PERCENTILES (DESIGN BASIS)
+  // ========================================================================
+
+  const dailyPerc = analysisMap.daily_percentiles || {};
+  const dpDaily = dailyPerc.daily_values || {};
+  const dpHourly = dailyPerc.hourly_values || {};
+  const dpAvg = dpDaily.average || {};
+  const dpP75 = dpDaily.p75 || {};
+  const dpMax = dpDaily.max || {};
+  const dpAvgH = dpHourly.average || {};
+  const dpP75H = dpHourly.p75 || {};
+  const dpMaxH = dpHourly.max || {};
+
+  const percSection = [
+    sectionHeader('Daily Percentiles — Design Basis', '07'),
+    { text: '\n', fontSize: 4 },
+    {
+      text: 'The chosen percentile determines the design day and design hour values — the planning basis for the automation solution. The 75th percentile is commonly used to size systems that handle peak demand the majority of the time.',
+      fontSize: 10, color: COLORS.grayDark, lineHeight: 1.45, margin: [0, 0, 0, 14]
+    },
+
+    // Working hours callout
+    dailyPerc.working_hours ? {
+      table: {
+        widths: ['*'],
+        body: [[{
+          text: [
+            { text: 'Working Hours: ', fontSize: 10, color: COLORS.grayDark, bold: true },
+            { text: `${dailyPerc.working_hours}h per day  |  ${dailyPerc.days || '—'} operating days in dataset`, fontSize: 10, color: COLORS.navy }
+          ],
+          margin: [12, 10, 12, 10]
+        }]]
+      },
+      layout: { hLineWidth: () => 1, vLineWidth: () => 1, hLineColor: () => COLORS.blue, vLineColor: () => COLORS.blue },
+      fillColor: COLORS.blueLight,
+      margin: [0, 0, 0, 14],
+      unbreakable: true
+    } : { text: '' },
+
+    // Percentile table
+    {
+      table: {
+        headerRows: 1,
+        widths: ['*', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'],
+        body: [
+          [
+            { text: 'Metric', fontSize: 9, bold: true, color: COLORS.white, fillColor: COLORS.navy, margin: [8, 6, 8, 6] },
+            { text: 'Avg/Day', fontSize: 9, bold: true, color: COLORS.white, fillColor: COLORS.navy, margin: [8, 6, 8, 6], alignment: 'right' },
+            { text: 'P75/Day', fontSize: 9, bold: true, color: COLORS.white, fillColor: COLORS.navy, margin: [8, 6, 8, 6], alignment: 'right' },
+            { text: 'Max/Day', fontSize: 9, bold: true, color: COLORS.white, fillColor: COLORS.navy, margin: [8, 6, 8, 6], alignment: 'right' },
+            { text: 'Avg/Hr', fontSize: 9, bold: true, color: COLORS.white, fillColor: COLORS.navy, margin: [8, 6, 8, 6], alignment: 'right' },
+            { text: 'P75/Hr', fontSize: 9, bold: true, color: COLORS.white, fillColor: COLORS.navy, margin: [8, 6, 8, 6], alignment: 'right' },
+            { text: 'Max/Hr', fontSize: 9, bold: true, color: COLORS.white, fillColor: COLORS.navy, margin: [8, 6, 8, 6], alignment: 'right' }
+          ],
+          [
+            { text: 'Order Lines', fontSize: 9, color: COLORS.grayDark, fillColor: COLORS.offWhite, margin: [8, 5, 8, 5], bold: true },
+            { text: fmtNum(dpAvg.order_lines), fontSize: 9, color: COLORS.grayDark, fillColor: COLORS.offWhite, margin: [8, 5, 8, 5], alignment: 'right' },
+            { text: fmtNum(dpP75.order_lines), fontSize: 9, color: COLORS.navy, fillColor: COLORS.offWhite, margin: [8, 5, 8, 5], alignment: 'right', bold: true },
+            { text: fmtNum(dpMax.order_lines), fontSize: 9, color: COLORS.red, fillColor: COLORS.offWhite, margin: [8, 5, 8, 5], alignment: 'right' },
+            { text: fmtNum(dpAvgH.order_lines), fontSize: 9, color: COLORS.grayDark, fillColor: COLORS.offWhite, margin: [8, 5, 8, 5], alignment: 'right' },
+            { text: fmtNum(dpP75H.order_lines), fontSize: 9, color: COLORS.navy, fillColor: COLORS.offWhite, margin: [8, 5, 8, 5], alignment: 'right', bold: true },
+            { text: fmtNum(dpMaxH.order_lines), fontSize: 9, color: COLORS.red, fillColor: COLORS.offWhite, margin: [8, 5, 8, 5], alignment: 'right' }
+          ],
+          [
+            { text: 'Pick Units', fontSize: 9, color: COLORS.grayDark, fillColor: COLORS.white, margin: [8, 5, 8, 5], bold: true },
+            { text: fmtNum(dpAvg.pick_units), fontSize: 9, color: COLORS.grayDark, fillColor: COLORS.white, margin: [8, 5, 8, 5], alignment: 'right' },
+            { text: fmtNum(dpP75.pick_units), fontSize: 9, color: COLORS.navy, fillColor: COLORS.white, margin: [8, 5, 8, 5], alignment: 'right', bold: true },
+            { text: fmtNum(dpMax.pick_units), fontSize: 9, color: COLORS.red, fillColor: COLORS.white, margin: [8, 5, 8, 5], alignment: 'right' },
+            { text: fmtNum(dpAvgH.pick_units), fontSize: 9, color: COLORS.grayDark, fillColor: COLORS.white, margin: [8, 5, 8, 5], alignment: 'right' },
+            { text: fmtNum(dpP75H.pick_units), fontSize: 9, color: COLORS.navy, fillColor: COLORS.white, margin: [8, 5, 8, 5], alignment: 'right', bold: true },
+            { text: fmtNum(dpMaxH.pick_units), fontSize: 9, color: COLORS.red, fillColor: COLORS.white, margin: [8, 5, 8, 5], alignment: 'right' }
+          ],
+          [
+            { text: 'Orders', fontSize: 9, color: COLORS.grayDark, fillColor: COLORS.offWhite, margin: [8, 5, 8, 5], bold: true },
+            { text: fmtNum(dpAvg.orders), fontSize: 9, color: COLORS.grayDark, fillColor: COLORS.offWhite, margin: [8, 5, 8, 5], alignment: 'right' },
+            { text: fmtNum(dpP75.orders), fontSize: 9, color: COLORS.navy, fillColor: COLORS.offWhite, margin: [8, 5, 8, 5], alignment: 'right', bold: true },
+            { text: fmtNum(dpMax.orders), fontSize: 9, color: COLORS.red, fillColor: COLORS.offWhite, margin: [8, 5, 8, 5], alignment: 'right' },
+            { text: fmtNum(dpAvgH.orders), fontSize: 9, color: COLORS.grayDark, fillColor: COLORS.offWhite, margin: [8, 5, 8, 5], alignment: 'right' },
+            { text: fmtNum(dpP75H.orders), fontSize: 9, color: COLORS.navy, fillColor: COLORS.offWhite, margin: [8, 5, 8, 5], alignment: 'right', bold: true },
+            { text: fmtNum(dpMaxH.orders), fontSize: 9, color: COLORS.red, fillColor: COLORS.offWhite, margin: [8, 5, 8, 5], alignment: 'right' }
+          ]
+        ]
+      },
+      layout: executiveTableLayout,
+      unbreakable: true
+    },
+
+    { text: '\n' },
+
+    // Insight callout
+    {
+      table: {
+        widths: ['*'],
+        body: [[{
+          text: `The 75th percentile design day at ${fmtNum(dpP75.order_lines)} order lines/day (${fmtNum(dpP75H.order_lines)}/hr) ensures the system handles peak demand 75% of the time while remaining cost-effective.`,
+          fontSize: 10, color: COLORS.navy, margin: [12, 10, 12, 10], lineHeight: 1.4
+        }]]
+      },
+      layout: { hLineWidth: () => 1, vLineWidth: () => 1, hLineColor: () => COLORS.green, vLineColor: () => COLORS.green },
+      fillColor: COLORS.greenLight,
+      unbreakable: true
+    },
+
+    { text: '', pageBreak: 'after' }
+  ];
+
+  // ========================================================================
+  // SECTION 8: 5-YEAR GROWTH EXTRAPOLATION
+  // ========================================================================
+
+  const extrapData = analysisMap.extrapolation || {};
+  const extrapProjections = extrapData.projections || [];
+
+  const extrapSection = [
+    sectionHeader('5-Year Growth Extrapolation', '08'),
+    { text: '\n', fontSize: 4 },
+    {
+      text: `Projected warehouse throughput growth at ${extrapData.growth_rate_pct || 5}% annually over ${extrapData.years || 5} years, ensuring the automation solution is sized to accommodate future demand.`,
+      fontSize: 10, color: COLORS.grayDark, lineHeight: 1.45, margin: [0, 0, 0, 14]
+    },
+
+    // Growth rate callout
+    {
+      table: {
+        widths: ['*'],
+        body: [[{
+          text: [
+            { text: 'Annual Growth Rate: ', fontSize: 10, color: COLORS.grayDark, bold: true },
+            { text: `${extrapData.growth_rate_pct || 5}%`, fontSize: 14, color: COLORS.navy, bold: true },
+            { text: extrapData.baseline ? `   |   Baseline Lines/Day: ${fmtNum(extrapData.baseline.order_lines)}   |   Baseline Picks/Day: ${fmtNum(extrapData.baseline.pick_units)}   |   Baseline Orders/Day: ${fmtNum(extrapData.baseline.orders)}` : '', fontSize: 9, color: COLORS.gray }
+          ],
+          margin: [12, 10, 12, 10]
+        }]]
+      },
+      layout: { hLineWidth: () => 1, vLineWidth: () => 1, hLineColor: () => COLORS.gold, vLineColor: () => COLORS.gold },
+      fillColor: COLORS.goldPale,
+      margin: [0, 0, 0, 14],
+      unbreakable: true
+    },
+
+    // Year-by-year projections table
+    extrapProjections.length > 0 ? {
+      stack: [
+        subSectionHeader('Year-by-Year Projections'),
+        {
+          table: {
+            headerRows: 1,
+            widths: [35, 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'],
+            body: [
+              [
+                { text: 'Year', fontSize: 9, bold: true, color: COLORS.white, fillColor: COLORS.navy, margin: [6, 6, 6, 6], alignment: 'center' },
+                { text: 'Lines/Day', fontSize: 9, bold: true, color: COLORS.white, fillColor: COLORS.navy, margin: [8, 6, 8, 6], alignment: 'right' },
+                { text: 'Picks/Day', fontSize: 9, bold: true, color: COLORS.white, fillColor: COLORS.navy, margin: [8, 6, 8, 6], alignment: 'right' },
+                { text: 'Orders/Day', fontSize: 9, bold: true, color: COLORS.white, fillColor: COLORS.navy, margin: [8, 6, 8, 6], alignment: 'right' },
+                { text: 'Lines/Hr', fontSize: 9, bold: true, color: COLORS.white, fillColor: COLORS.navy, margin: [8, 6, 8, 6], alignment: 'right' },
+                { text: 'Picks/Hr', fontSize: 9, bold: true, color: COLORS.white, fillColor: COLORS.navy, margin: [8, 6, 8, 6], alignment: 'right' },
+                { text: 'Orders/Hr', fontSize: 9, bold: true, color: COLORS.white, fillColor: COLORS.navy, margin: [8, 6, 8, 6], alignment: 'right' }
+              ],
+              ...extrapProjections.map((p, i) => {
+                const dd = p.design_day || {};
+                const isLast = p.year === (extrapData.years || 5);
+                return [
+                  { text: `Y${p.year}`, fontSize: 9, bold: isLast, color: isLast ? COLORS.navy : COLORS.grayDark, fillColor: i % 2 === 0 ? COLORS.offWhite : COLORS.white, margin: [6, 5, 6, 5], alignment: 'center' },
+                  { text: fmtNum(dd.order_lines), fontSize: 9, bold: isLast, color: isLast ? COLORS.navy : COLORS.grayDark, fillColor: i % 2 === 0 ? COLORS.offWhite : COLORS.white, margin: [8, 5, 8, 5], alignment: 'right' },
+                  { text: fmtNum(dd.pick_units), fontSize: 9, bold: isLast, color: isLast ? COLORS.navy : COLORS.grayDark, fillColor: i % 2 === 0 ? COLORS.offWhite : COLORS.white, margin: [8, 5, 8, 5], alignment: 'right' },
+                  { text: fmtNum(dd.orders), fontSize: 9, bold: isLast, color: isLast ? COLORS.navy : COLORS.grayDark, fillColor: i % 2 === 0 ? COLORS.offWhite : COLORS.white, margin: [8, 5, 8, 5], alignment: 'right' },
+                  { text: fmtNum(dd.lines_per_hour), fontSize: 9, bold: isLast, color: isLast ? COLORS.navy : COLORS.grayDark, fillColor: i % 2 === 0 ? COLORS.offWhite : COLORS.white, margin: [8, 5, 8, 5], alignment: 'right' },
+                  { text: fmtNum(dd.picks_per_hour), fontSize: 9, bold: isLast, color: isLast ? COLORS.navy : COLORS.grayDark, fillColor: i % 2 === 0 ? COLORS.offWhite : COLORS.white, margin: [8, 5, 8, 5], alignment: 'right' },
+                  { text: fmtNum(dd.orders_per_hour), fontSize: 9, bold: isLast, color: isLast ? COLORS.navy : COLORS.grayDark, fillColor: i % 2 === 0 ? COLORS.offWhite : COLORS.white, margin: [8, 5, 8, 5], alignment: 'right' }
+                ];
+              })
+            ]
+          },
+          layout: executiveTableLayout
+        }
+      ],
+      unbreakable: true
+    } : { text: 'No extrapolation data available.', fontSize: 10, color: COLORS.gray, italics: true },
+
+    { text: '\n' },
+
+    // Extrapolation chart
+    ...(() => {
+      if (extrapProjections.length === 0) return [];
+      const chartData = extrapProjections.map(p => ({
+        label: `Y${p.year}`,
+        value: p.design_day?.order_lines || 0
+      }));
+      const svg = buildBarChartSvg(chartData, { width: 480, height: 200, barColor: COLORS.blue });
+      return svg ? [{ svg, width: 480, alignment: 'center', unbreakable: true }] : [];
+    })(),
+
+    { text: '\n' },
+    {
+      table: {
+        widths: ['*'],
+        body: [[{
+          text: `The PINAXIS solution is designed to scale with projected ${extrapData.growth_rate_pct || 5}% YoY growth, ensuring headroom through Year ${extrapData.years || 5} peak throughput demands.`,
+          fontSize: 10, color: COLORS.navy, margin: [12, 10, 12, 10], lineHeight: 1.4
+        }]]
+      },
+      layout: { hLineWidth: () => 1, vLineWidth: () => 1, hLineColor: () => COLORS.green, vLineColor: () => COLORS.green },
+      fillColor: COLORS.greenLight,
+      unbreakable: true
+    },
+
+    { text: '', pageBreak: 'after' }
+  ];
+
+  // ========================================================================
+  // SECTION 9: PRODUCT RECOMMENDATIONS
   // ========================================================================
 
   const productSection = [
-    sectionHeader('RinglyPro Logistics Product Recommendations', '06'),
+    sectionHeader('RinglyPro Logistics Product Recommendations', '09'),
     { text: '\n', fontSize: 4 },
     {
       text: 'Based on the complete warehouse data analysis — including order structure, throughput patterns, ABC classification, and dimensional fit — the following RinglyPro Logistics intralogistics solutions are recommended for this operation.',
@@ -658,7 +955,7 @@ async function generate(project) {
 
   const benefitSection = benefitData.projections ? [
     { text: '', pageBreak: 'after' },
-    sectionHeader('Client Benefit Projections', '07'),
+    sectionHeader('Client Benefit Projections', '10'),
     { text: '\n', fontSize: 4 },
     {
       text: 'Data-driven ROI projections based on your warehouse analytics and the RinglyPro Logistics product matching. These projections are derived from actual operational data combined with industry benchmarks for similar automation implementations.',
@@ -774,6 +1071,9 @@ async function generate(project) {
       ...throughputSection,
       ...abcSection,
       ...fitSection,
+      ...xyzSection,
+      ...percSection,
+      ...extrapSection,
       ...productSection,
       ...benefitSection,
       ...closingPage
