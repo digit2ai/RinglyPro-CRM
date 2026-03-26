@@ -368,13 +368,13 @@ export default function App({ onLogout, userEmail }) {
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         {/* Logo — bigger, with top padding for voice widget clearance */}
-        <div className="pt-16 pb-4 px-4 border-b border-slate-700">
-          <div className="flex flex-col items-center text-center gap-2">
-            <div className="w-32 h-32 rounded-xl flex items-center justify-center overflow-hidden">
+        <div className="pt-20 pb-3 px-4 border-b border-slate-700">
+          <div className="flex flex-col items-center text-center gap-0">
+            <div className="w-40 h-40 flex items-center justify-center overflow-hidden">
               <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69b02d62034886f7c9e996d9.png" alt="PINAXIS" className="w-full h-full object-contain" />
             </div>
-            <div>
-              <h1 className="text-base font-bold text-white tracking-tight">PINAXIS</h1>
+            <div className="-mt-2">
+              <h1 className="text-lg font-bold text-white tracking-tight">PINAXIS</h1>
               <p className="text-[10px] text-slate-400">Warehouse Analytics</p>
             </div>
           </div>
