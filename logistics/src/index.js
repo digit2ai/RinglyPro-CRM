@@ -199,21 +199,23 @@ try {
       const audioDir = path.join(AUDIO_DIR, String(projectId));
       const slide0Audio = path.join(audioDir, 'slide_0.mp3');
       if (!fs.existsSync(slide0Audio)) {
-        // Generate in background so page loads immediately
-        (async () => {
+        const genScripts = buildNarrationScripts(analysis, companyName);
+        const genDir = audioDir;
+        const genId = projectId;
+        // Fire-and-forget background generation
+        setImmediate(async () => {
           try {
-            if (!fs.existsSync(audioDir)) fs.mkdirSync(audioDir, { recursive: true });
-            const scripts = buildNarrationScripts(analysis, companyName);
-            for (let i = 0; i < scripts.length; i++) {
-              const ap = path.join(audioDir, \`slide_\${i}.mp3\`);
+            if (!fs.existsSync(genDir)) fs.mkdirSync(genDir, { recursive: true });
+            for (let i = 0; i < genScripts.length; i++) {
+              const ap = path.join(genDir, 'slide_' + i + '.mp3');
               if (!fs.existsSync(ap)) {
-                console.log(\`[Proposal] Auto-generating audio slide \${i + 1}/\${scripts.length} for project \${projectId}\`);
-                await generateTTS(scripts[i], ap);
+                console.log('[Proposal] Auto-generating audio slide ' + (i + 1) + '/' + genScripts.length + ' for project ' + genId);
+                await generateTTS(genScripts[i], ap);
               }
             }
-            console.log(\`[Proposal] Audio ready for project \${projectId}\`);
+            console.log('[Proposal] Audio ready for project ' + genId);
           } catch (e) { console.error('[Proposal] Audio gen error:', e.message); }
-        })();
+        });
       }
 
       res.send(`<!DOCTYPE html>
