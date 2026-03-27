@@ -193,7 +193,9 @@ try {
       const companyName = project.company_name || 'Your Warehouse';
       const slides = buildSlideHTML(analysis, companyName);
       const slidesJSON = JSON.stringify(slides);
-      const audioBase = `${BASE_PATH}/api/v1/proposal/${projectId}/audio`;
+      // req.baseUrl = '/pinaxis' (set by Express when app is mounted)
+      const mountPath = req.baseUrl || BASE_PATH || '';
+      const audioBase = `${mountPath}/api/v1/proposal/${projectId}/audio`;
 
       // Auto-generate audio if not cached (background, non-blocking)
       const audioDir = path.join(AUDIO_DIR, String(projectId));
