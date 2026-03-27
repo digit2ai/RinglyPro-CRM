@@ -151,7 +151,7 @@ try {
   const pricingSnapshotRoutes = require('./routes/pricing-snapshot');
   const approvalsRoutes = require('./routes/approvals');
   const videoRoutes = require('./routes/video');
-  const { router: proposalRoutes, proposalJobs, buildSlideHTML, buildNarrationScripts, generateTTS, AUDIO_DIR } = require('./routes/proposal');
+  const { router: proposalRoutes, proposalJobs, buildSlideHTML, buildNarrationScripts, generateTTS, AUDIO_DIR, buildChartData } = require('./routes/proposal');
 
   // Health check
   app.use(`${BASE_PATH}/health`, healthRoutes);
@@ -193,9 +193,10 @@ try {
       const companyName = project.company_name || 'Your Warehouse';
       const slides = buildSlideHTML(analysis, companyName);
       const slidesJSON = JSON.stringify(slides);
-      // req.baseUrl = '/pinaxis' (set by Express when app is mounted)
       const mountPath = req.baseUrl || BASE_PATH || '';
       const audioBase = `${mountPath}/api/v1/proposal/${projectId}/audio`;
+      const chartData = buildChartData(analysis);
+      const chartDataJSON = JSON.stringify(chartData);
 
       // Auto-generate audio if not cached (background, non-blocking)
       const audioDir = path.join(AUDIO_DIR, String(projectId));
@@ -225,6 +226,7 @@ try {
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>PINAXIS Proposal — ${companyName}</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#0f172a;color:#e2e8f0;font-family:'Inter',system-ui,-apple-system,sans-serif;overflow-x:hidden;min-height:100vh}
@@ -261,6 +263,9 @@ body{background:#0f172a;color:#e2e8f0;font-family:'Inter',system-ui,-apple-syste
 .dot-nav.active{background:#3b82f6;width:20px;border-radius:4px}
 .progress-bar{height:3px;background:#1e293b;border-radius:2px;margin-top:4px;flex-shrink:0}
 .progress-fill{height:100%;background:#3b82f6;border-radius:2px;transition:width .3s}
+.chart-box{background:#0f172a;border:1px solid #334155;border-radius:10px;padding:14px;margin:12px 0}
+.charts-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:12px 0}
+.charts-row .chart-box{margin:0}
 
 /* Desktop overrides */
 @media(min-width:768px){
@@ -374,8 +379,73 @@ render();
 
 function startPresentation() {
   document.getElementById('startSplash').style.display = 'none';
-  // User clicked — audio autoplay is now allowed by browser
   playAudio();
+}
+
+// Chart.js rendering
+var CD = ${chartDataJSON};
+var activeCharts = [];
+var chartDefaults = { color: '#94a3b8', borderColor: '#334155' };
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.borderColor = '#334155';
+
+function destroyCharts() { activeCharts.forEach(function(c) { c.destroy(); }); activeCharts = []; }
+
+function pie(id, data, colors) {
+  var el = document.getElementById(id); if (!el || !data.length) return;
+  activeCharts.push(new Chart(el, { type: 'doughnut', data: {
+    labels: data.map(function(d){return d.label}), datasets: [{data: data.map(function(d){return d.value}),
+    backgroundColor: colors || ['#10b981','#3b82f6','#eab308','#ef4444','#f97316','#8b5cf6','#06b6d4'], borderWidth: 0}]
+  }, options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 8, font: { size: 11 } } } } } }));
+}
+
+function bar(id, labels, datasets) {
+  var el = document.getElementById(id); if (!el) return;
+  activeCharts.push(new Chart(el, { type: 'bar', data: { labels: labels, datasets: datasets },
+    options: { responsive: true, indexAxis: 'x', plugins: { legend: { display: datasets.length > 1, labels: { boxWidth: 12, font: { size: 11 } } } },
+    scales: { x: { grid: { color: '#1e293b' } }, y: { grid: { color: '#1e293b' }, beginAtZero: true } } } }));
+}
+
+function hbar(id, labels, datasets) {
+  var el = document.getElementById(id); if (!el) return;
+  activeCharts.push(new Chart(el, { type: 'bar', data: { labels: labels, datasets: datasets },
+    options: { responsive: true, indexAxis: 'y', plugins: { legend: { display: datasets.length > 1, labels: { boxWidth: 12, font: { size: 11 } } } },
+    scales: { x: { grid: { color: '#1e293b' }, beginAtZero: true }, y: { grid: { color: '#1e293b' } } } } }));
+}
+
+// Re-render charts after slide change
+var origRender = render;
+render = function() { origRender(); destroyCharts(); setTimeout(renderCharts, 50); };
+
+function renderCharts() {
+  // Slide 1: pie charts
+  if (CD.orderType.length) pie('chartOrderType', CD.orderType);
+  if (CD.tempZone.length) pie('chartTempZone', CD.tempZone);
+  if (CD.pickUnit.length) pie('chartPickUnit', CD.pickUnit);
+  // Slide 2: fit donut
+  if (CD.fitDonut.length) pie('chartFitDonut', CD.fitDonut, CD.fitDonut.map(function(d){return d.color}));
+  // Slide 3: ABC volume bar
+  if (CD.abc.length) hbar('chartABC', CD.abc.map(function(d){return d.label}), [{label:'Volume %',data:CD.abc.map(function(d){return d.volume}),backgroundColor:CD.abc.map(function(d){return d.color}),borderRadius:4}]);
+  // Slide 4: XYZ grouped bar
+  if (CD.xyz.length) bar('chartXYZ', CD.xyz.map(function(d){return d.label}), [
+    {label:'% Lines',data:CD.xyz.map(function(d){return d.lines}),backgroundColor:'#ef4444',borderRadius:4},
+    {label:'% Picks',data:CD.xyz.map(function(d){return d.picks}),backgroundColor:'#eab308',borderRadius:4},
+    {label:'% Orders',data:CD.xyz.map(function(d){return d.orders}),backgroundColor:'#94a3b8',borderRadius:4}]);
+  // Slide 5: histogram
+  if (CD.histogram.length) bar('chartHistogram', CD.histogram.map(function(d){return d.label}), [{label:'Orders',data:CD.histogram.map(function(d){return d.count}),backgroundColor:'#ef4444',borderRadius:4}]);
+  // Slide 6: percentiles grouped
+  if (CD.percentiles.length) bar('chartPercentiles', CD.percentiles.map(function(d){return d.label}), [
+    {label:'Average',data:CD.percentiles.map(function(d){return d.avg}),backgroundColor:'#3b82f6',borderRadius:4},
+    {label:'P75',data:CD.percentiles.map(function(d){return d.p75}),backgroundColor:'#10b981',borderRadius:4},
+    {label:'Max',data:CD.percentiles.map(function(d){return d.max}),backgroundColor:'#ef4444',borderRadius:4}]);
+  // Slide 7: growth projection
+  if (CD.growth.length) bar('chartGrowth', CD.growth.map(function(d){return d.label}), [
+    {label:'Lines/Day',data:CD.growth.map(function(d){return d.lines}),backgroundColor:'#eab308',borderRadius:4},
+    {label:'Orders/Day',data:CD.growth.map(function(d){return d.orders}),backgroundColor:'#10b981',borderRadius:4}]);
+  // Slide 10: hourly
+  if (CD.hourly.length) bar('chartHourly', CD.hourly.map(function(d){return d.label}), [{label:'Order Lines',data:CD.hourly.map(function(d){return d.value}),backgroundColor:CD.hourly.map(function(d,i){var mx=Math.max.apply(null,CD.hourly.map(function(h){return h.value}));return d.value>=mx*0.8?'#eab308':'#3b82f6'}),borderRadius:3}]);
+  // Slide 11: top SKUs
+  if (CD.topSkus.length) hbar('chartTopSKUs', CD.topSkus.map(function(d){return d.label}), [{label:'Picks',data:CD.topSkus.map(function(d){return d.value}),backgroundColor:'#8b5cf6',borderRadius:4}]);
 }
 </script>
 </body>

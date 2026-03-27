@@ -193,68 +193,73 @@ function buildSlideHTML(analysis, companyName) {
   const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
   const metric = (label, value, color = '#3b82f6') => `<div class="metric"><div class="metric-value" style="color:${color}">${esc(String(value))}</div><div class="metric-label">${esc(label)}</div></div>`;
+  const chartBox = (id, h = 220) => `<div class="chart-box"><canvas id="${id}" height="${h}"></canvas></div>`;
 
   return [
     // Slide 0: Title
     { title: 'PINAXIS Dashboard Playbook', html: `
-      <div style="text-align:center;padding:60px 0">
-        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69b02d62034886f7c9e996d9.png" alt="PINAXIS" style="width:280px;height:280px;border-radius:24px;margin-bottom:40px;box-shadow:0 8px 32px rgba(59,130,246,0.2)">
-        <h1 style="font-size:48px;margin:0;color:#f8fafc">${esc(companyName)}</h1>
-        <p style="color:#94a3b8;margin-top:12px;font-size:20px">Warehouse Data Analysis & Automation Proposal</p>
+      <div style="text-align:center;padding:40px 0">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69b02d62034886f7c9e996d9.png" alt="PINAXIS" style="width:min(280px,50vw);height:min(280px,50vw);border-radius:24px;margin-bottom:30px;box-shadow:0 8px 32px rgba(59,130,246,0.2)">
+        <h1 style="font-size:min(42px,7vw);margin:0;color:#f8fafc">${esc(companyName)}</h1>
+        <p style="color:#94a3b8;margin-top:12px;font-size:min(18px,4vw)">Warehouse Data Analysis & Automation Proposal</p>
         <p style="color:#64748b;margin-top:8px">${dateRange.from || ''} to ${dateRange.to || ''} · ${dailyPerc.days || ''} operating days</p>
-        <div style="margin-top:40px;display:inline-flex;align-items:center;gap:8px"><div style="width:8px;height:8px;border-radius:50%;background:#10b981;animation:pulse 2s infinite"></div><span style="color:#10b981;font-size:14px">Rachel Voice AI — Auto-narrating</span></div>
+        <div style="margin-top:30px;display:inline-flex;align-items:center;gap:8px"><div style="width:8px;height:8px;border-radius:50%;background:#10b981;animation:pulse 2s infinite"></div><span style="color:#10b981;font-size:14px">Rachel Voice AI — Auto-narrating</span></div>
       </div>` },
-    // Slide 1: Data Overview
+    // Slide 1: Data Overview + pie charts
     { title: 'Data Analysis — Gaining Valuable Insights', html: `
       <div class="metrics-grid">${metric('Total SKUs', fmt(skus.total))}${metric('Moved SKUs', fmt(skus.active))}${metric('Total Orders', fmt(orders.total_orders))}${metric('Order Lines', fmt(orders.total_orderlines))}</div>
       <div class="metrics-grid">${metric('Pick Units', fmt(orders.total_units), '#10b981')}${metric('Avg Lines/Order', orders.avg_lines_per_order || '—', '#10b981')}${metric('Bin Capable', (skus.bin_capable_pct || '—') + '%', '#10b981')}</div>
-      ${(ov.by_order_type || []).length ? `<div class="info-box"><strong>Order Types:</strong> ${(ov.by_order_type || []).map(d => `${d.name} ${d.pct_units}%`).join(' · ')}</div>` : ''}
-      ${(ov.by_temperature || []).length ? `<div class="info-box"><strong>Temperature:</strong> ${(ov.by_temperature || []).map(d => `${d.name} ${d.pct_units}%`).join(' · ')}</div>` : ''}` },
-    // Slide 2: Fit/No-Fit
+      <div class="charts-row">${(ov.by_order_type || []).length ? chartBox('chartOrderType', 180) : ''}${(ov.by_temperature || []).length ? chartBox('chartTempZone', 180) : ''}${(ov.by_picking_unit || []).length ? chartBox('chartPickUnit', 180) : ''}</div>` },
+    // Slide 2: Fit/No-Fit + donut
     { title: 'Fit / No-Fit Analysis', html: `
       <div class="metrics-grid">${metric('Total Items', fmt(fit.total_items))}${metric('With Dimensions', fmt(fit.items_with_dimensions))}${metric('Missing Dims', fmt(fit.items_without_dimensions), '#eab308')}${metric('Bin Capable', (fit.overall_bin_capable_pct || '—') + '%', '#10b981')}</div>
+      ${chartBox('chartFitDonut', 200)}
       ${(fit.bins || []).map(b => `<div class="info-box">Bin <strong>${b.name}</strong> mm: ${fmt(b.fit_count)} fit (${b.fit_pct_total}% of total)</div>`).join('')}` },
-    // Slide 3: ABC
+    // Slide 3: ABC + bar chart
     { title: 'ABC Classification', html: `
       <div class="metrics-grid">${Object.entries(abc.classes || {}).map(([cls, d]) => {
         const colors = { A: '#10b981', B: '#eab308', C: '#94a3b8', D: '#ef4444' };
         const labels = { A: 'Fast Movers', B: 'Medium', C: 'Slow', D: 'Dead Stock' };
-        return metric(`${cls} — ${labels[cls]}`, `${fmt(d.count)} (${d.pct}%)`, colors[cls]);
+        return metric(cls + ' — ' + labels[cls], fmt(d.count) + ' (' + d.pct + '%)', colors[cls]);
       }).join('')}</div>
+      ${chartBox('chartABC', 200)}
       <table class="data-table"><tr><th>Class</th><th>SKUs</th><th>% SKUs</th><th>% Lines</th><th>% Picks</th><th>% Orders</th></tr>
       ${Object.entries(abc.classes || {}).map(([cls, d]) => `<tr><td><strong>${cls}</strong></td><td>${fmt(d.count)}</td><td>${d.pct}%</td><td>${d.pct_lines != null ? d.pct_lines : d.volume_pct}%</td><td>${d.pct_picks != null ? d.pct_picks : d.volume_pct}%</td><td>${d.pct_orders != null ? d.pct_orders : '—'}%</td></tr>`).join('')}
       </table>
       <div class="metrics-grid">${metric('Gini', abc.gini || '—')}${metric('Active SKUs', fmt(abc.total_skus))}${metric('Dead Stock', fmt(abc.dead_stock_count), '#ef4444')}${metric('Design Day (P75)', fmt(p75Day.order_lines) + ' lines')}</div>` },
-    // Slide 4: XYZ
+    // Slide 4: XYZ + chart
     { title: 'XYZ Seasonality Analysis', html: `
       <div class="metrics-grid">${(xyz.classes || []).map(c => {
         const colors = { X: '#ef4444', Y: '#eab308', Z: '#94a3b8' };
-        return metric(`${c.class} (${c.pct_moved_skus}%)`, fmt(c.moved_skus) + ' SKUs', colors[c.class]);
+        return metric(c.class + ' (' + c.pct_moved_skus + '%)', fmt(c.moved_skus) + ' SKUs', colors[c.class]);
       }).join('')}</div>
+      ${chartBox('chartXYZ', 200)}
       <table class="data-table"><tr><th>Class</th><th>SKUs</th><th>% Lines</th><th>% Picks</th><th>% Orders</th></tr>
       ${(xyz.classes || []).map(c => `<tr><td><strong>${c.class}</strong></td><td>${fmt(c.moved_skus)}</td><td>${c.pct_lines}%</td><td>${c.pct_picks}%</td><td>${c.pct_orders}%</td></tr>`).join('')}</table>` },
-    // Slide 5: Order Profile
+    // Slide 5: Order Profile + histogram
     { title: 'Order Profile', html: `
       <div class="metrics-grid">${metric('Total Orders', fmt(orderStruct.total_orders))}${metric('Single-Line', (orderStruct.single_line_pct || '—') + '%')}${metric('Multi-Line', (orderStruct.multi_line_pct || '—') + '%', '#10b981')}${metric('Avg Lines/Order', orders.avg_lines_per_order || '—')}</div>
-      ${(orderStruct.histogram || []).length ? `<div class="info-box"><strong>Distribution:</strong> ${(orderStruct.histogram || []).map(h => `${h.label}: ${fmt(h.count)} (${h.pct}%)`).join(' · ')}</div>` : ''}` },
-    // Slide 6: Percentiles
+      ${(orderStruct.histogram || []).length ? chartBox('chartHistogram', 200) : ''}` },
+    // Slide 6: Percentiles + bar chart
     { title: 'Percentiles — Design Basis', html: `
       <div class="metrics-grid">${metric('Avg Day Lines', fmt(avgDay.order_lines))}${metric('P75 (Design Day)', fmt(p75Day.order_lines), '#10b981')}${metric('Max Day', fmt(maxDay.order_lines), '#ef4444')}</div>
-      <div class="metrics-grid">${metric('Avg Picks/Day', fmt(avgDay.pick_units))}${metric('P75 Picks/Day', fmt(p75Day.pick_units), '#10b981')}${metric('Max Picks', fmt(maxDay.pick_units), '#ef4444')}</div>
+      ${chartBox('chartPercentiles', 200)}
       <div class="info-box"><strong>Design Hour (${dailyPerc.working_hours || 12}h):</strong> ${fmt(Math.round((p75Day.order_lines || 0) / (dailyPerc.working_hours || 12)))} lines/hr · ${fmt(Math.round((p75Day.pick_units || 0) / (dailyPerc.working_hours || 12)))} picks/hr</div>` },
-    // Slide 7: Extrapolation
-    { title: `${extrap.years || 5}-Year Growth Extrapolation`, html: `
+    // Slide 7: Extrapolation + growth chart
+    { title: (extrap.years || 5) + '-Year Growth Extrapolation', html: `
       <div class="info-box"><strong>Growth Rate:</strong> ${extrap.growth_rate_pct || 5}% annual</div>
-      ${y5.design_day ? `<div class="metrics-grid">${metric('Y5 Lines/Day', fmt(y5.design_day.order_lines), '#eab308')}${metric('Y5 Picks/Day', fmt(y5.design_day.pick_units), '#eab308')}${metric('Y5 Orders/Day', fmt(y5.design_day.orders), '#eab308')}${metric('Growth Factor', 'x' + y5.growth_factor)}</div>` : ''}
-      ${extrap.baseline ? `<div class="info-box"><strong>Baseline:</strong> ${fmt(extrap.baseline.order_lines)} lines/day · ${fmt(extrap.baseline.pick_units)} picks/day · ${fmt(extrap.baseline.skus)} SKUs</div>` : ''}` },
+      ${(extrap.projections || []).length ? chartBox('chartGrowth', 200) : ''}
+      ${y5.design_day ? `<div class="metrics-grid">${metric('Y5 Lines/Day', fmt(y5.design_day.order_lines), '#eab308')}${metric('Y5 Picks/Day', fmt(y5.design_day.pick_units), '#eab308')}${metric('Y5 Orders/Day', fmt(y5.design_day.orders), '#eab308')}${metric('Growth Factor', 'x' + y5.growth_factor)}</div>` : ''}` },
     // Slide 8: Products
     { title: 'Product Recommendations', html: `<div class="info-box">Product recommendations are matched to your warehouse profile based on throughput, SKU characteristics, and order complexity. Contact your PINAXIS representative for the full product portfolio.</div>` },
     // Slide 9: Benefits
     { title: 'Client Benefit Projections', html: `<div class="info-box">Data-driven ROI projections based on warehouse analytics and PINAXIS product matching. Detailed savings estimates and payback calculations available in the full report.</div>` },
-    // Slide 10: Hourly
-    { title: 'Hourly Throughput', html: `<div class="info-box">The hourly throughput profile drives system dimensioning — the automation must sustain peak hourly rates during the busiest operational windows while maintaining efficiency in lower-volume periods.</div>` },
-    // Slide 11: Top SKUs
+    // Slide 10: Hourly + bar chart
+    { title: 'Hourly Throughput', html: `${chartBox('chartHourly', 220)}
+      <div class="info-box">Peak hours highlighted — the automation must sustain highest throughput during these operational windows.</div>` },
+    // Slide 11: Top SKUs + bar chart
     { title: 'Top 10 SKUs', html: `
+      ${(abc.top_skus || []).length ? chartBox('chartTopSKUs', 220) : ''}
       ${(abc.top_skus || []).length ? `<table class="data-table"><tr><th>#</th><th>SKU</th><th>Picks</th><th>%</th><th>Class</th></tr>
       ${(abc.top_skus || []).slice(0, 10).map((s, i) => `<tr><td>${i + 1}</td><td>${esc(s.sku)}</td><td>${fmt(Math.round(s.picks))}</td><td>${s.pct}%</td><td><strong style="color:${s.class === 'A' ? '#10b981' : '#eab308'}">${s.class}</strong></td></tr>`).join('')}</table>` : '<div class="info-box">No top SKU data available.</div>'}` },
     // Slide 12: Next Steps
@@ -356,4 +361,52 @@ router.get('/:projectId/audio/:index', (req, res) => {
   fs.createReadStream(filePath).pipe(res);
 });
 
-module.exports = { router, proposalJobs, buildSlideHTML, buildNarrationScripts, generateTTS, AUDIO_DIR };
+/**
+ * Build chart data for client-side Chart.js rendering
+ */
+function buildChartData(analysis) {
+  const a = analysis || {};
+  const ov = a.overview_kpis || {};
+  const fit = a.fit_analysis || {};
+  const abc = a.abc_classification || {};
+  const xyz = a.xyz_classification || {};
+  const dailyPerc = a.daily_percentiles || {};
+  const dailyVals = dailyPerc.daily_values || {};
+  const avgDay = dailyVals.average || {};
+  const p75Day = dailyVals.p75 || {};
+  const maxDay = dailyVals.max || {};
+  const extrap = a.extrapolation || {};
+  const orderStruct = a.order_structure || {};
+  const hourly = a.throughput_hourly || {};
+
+  return {
+    orderType: (ov.by_order_type || []).map(d => ({ label: d.name, value: d.pct_units || 0 })),
+    tempZone: (ov.by_temperature || []).map(d => ({ label: d.name, value: d.pct_units || 0 })),
+    pickUnit: (ov.by_picking_unit || []).map(d => ({ label: d.name, value: d.pct_units || 0 })),
+    fitDonut: [
+      { label: 'Fit', value: fit.bins?.[fit.bins.length - 1]?.fit_count || 0, color: '#10b981' },
+      { label: 'Missing Dims', value: fit.items_without_dimensions || 0, color: '#eab308' },
+      { label: 'No Fit', value: Math.max(0, (fit.items_with_dimensions || 0) - (fit.bins?.[fit.bins.length - 1]?.fit_count || 0)), color: '#ef4444' }
+    ].filter(d => d.value > 0),
+    abc: Object.entries(abc.classes || {}).map(([cls, d]) => ({
+      label: cls, volume: d.pct_lines || d.volume_pct || 0,
+      color: { A: '#10b981', B: '#eab308', C: '#94a3b8', D: '#ef4444' }[cls]
+    })),
+    xyz: (xyz.classes || []).map(c => ({
+      label: c.class, lines: c.pct_lines || 0, picks: c.pct_picks || 0, orders: c.pct_orders || 0
+    })),
+    histogram: (orderStruct.histogram || []).map(h => ({ label: h.label, count: h.count || 0 })),
+    percentiles: [
+      { label: 'Order Lines', avg: avgDay.order_lines || 0, p75: p75Day.order_lines || 0, max: maxDay.order_lines || 0 },
+      { label: 'Pick Units', avg: Math.round((avgDay.pick_units || 0) / 1000), p75: Math.round((p75Day.pick_units || 0) / 1000), max: Math.round((maxDay.pick_units || 0) / 1000) },
+      { label: 'Orders', avg: avgDay.orders || 0, p75: p75Day.orders || 0, max: maxDay.orders || 0 }
+    ],
+    growth: (extrap.projections || []).map(p => ({
+      label: 'Y' + p.year, lines: p.design_day?.order_lines || 0, orders: p.design_day?.orders || 0
+    })),
+    hourly: (hourly.hours || []).map(h => ({ label: String(h.hour || h.label || ''), value: h.orderlines || 0 })),
+    topSkus: (abc.top_skus || []).slice(0, 10).map(s => ({ label: s.sku, value: Math.round(s.picks || 0) }))
+  };
+}
+
+module.exports = { router, proposalJobs, buildSlideHTML, buildNarrationScripts, generateTTS, AUDIO_DIR, buildChartData };
