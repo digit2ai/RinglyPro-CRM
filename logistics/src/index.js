@@ -227,6 +227,7 @@ try {
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>PINAXIS Proposal — ${companyName}</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#0f172a;color:#e2e8f0;font-family:'Inter',system-ui,-apple-system,sans-serif;overflow-x:hidden;min-height:100vh}
@@ -386,31 +387,47 @@ function startPresentation() {
 var CD = ${chartDataJSON};
 var activeCharts = [];
 var chartDefaults = { color: '#94a3b8', borderColor: '#334155' };
+Chart.register(ChartDataLabels);
 Chart.defaults.color = '#94a3b8';
 Chart.defaults.borderColor = '#334155';
+Chart.defaults.plugins.datalabels = { display: false }; // off by default, enable per chart
 
 function destroyCharts() { activeCharts.forEach(function(c) { c.destroy(); }); activeCharts = []; }
 
+function fmtN(n) { return n >= 1000000 ? (n/1000000).toFixed(1)+'M' : n >= 1000 ? (n/1000).toFixed(0)+'K' : String(n); }
+
 function pie(id, data, colors) {
   var el = document.getElementById(id); if (!el || !data.length) return;
+  var total = data.reduce(function(s,d){return s+d.value},0);
   activeCharts.push(new Chart(el, { type: 'doughnut', data: {
     labels: data.map(function(d){return d.label}), datasets: [{data: data.map(function(d){return d.value}),
     backgroundColor: colors || ['#10b981','#3b82f6','#eab308','#ef4444','#f97316','#8b5cf6','#06b6d4'], borderWidth: 0}]
-  }, options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 8, font: { size: 11 } } } } } }));
+  }, options: { responsive: true, plugins: {
+    legend: { position: 'bottom', labels: { boxWidth: 12, padding: 8, font: { size: 11 } } },
+    datalabels: { display: true, color: '#fff', font: { weight: 'bold', size: 11 },
+      formatter: function(v) { return total > 0 ? Math.round(v/total*100)+'%' : ''; },
+      anchor: 'center', align: 'center' }
+  } } }));
 }
 
 function bar(id, labels, datasets) {
   var el = document.getElementById(id); if (!el) return;
   activeCharts.push(new Chart(el, { type: 'bar', data: { labels: labels, datasets: datasets },
-    options: { responsive: true, indexAxis: 'x', plugins: { legend: { display: datasets.length > 1, labels: { boxWidth: 12, font: { size: 11 } } } },
-    scales: { x: { grid: { color: '#1e293b' } }, y: { grid: { color: '#1e293b' }, beginAtZero: true } } } }));
+    options: { responsive: true, indexAxis: 'x', plugins: {
+      legend: { display: datasets.length > 1, labels: { boxWidth: 12, font: { size: 11 } } },
+      datalabels: { display: true, color: '#e2e8f0', font: { size: 10, weight: 'bold' }, anchor: 'end', align: 'top', offset: -2,
+        formatter: function(v) { return fmtN(v); } }
+    }, scales: { x: { grid: { color: '#1e293b' } }, y: { grid: { color: '#1e293b' }, beginAtZero: true } } } }));
 }
 
 function hbar(id, labels, datasets) {
   var el = document.getElementById(id); if (!el) return;
   activeCharts.push(new Chart(el, { type: 'bar', data: { labels: labels, datasets: datasets },
-    options: { responsive: true, indexAxis: 'y', plugins: { legend: { display: datasets.length > 1, labels: { boxWidth: 12, font: { size: 11 } } } },
-    scales: { x: { grid: { color: '#1e293b' }, beginAtZero: true }, y: { grid: { color: '#1e293b' } } } } }));
+    options: { responsive: true, indexAxis: 'y', plugins: {
+      legend: { display: datasets.length > 1, labels: { boxWidth: 12, font: { size: 11 } } },
+      datalabels: { display: true, color: '#e2e8f0', font: { size: 10, weight: 'bold' }, anchor: 'end', align: 'right', offset: 4,
+        formatter: function(v) { return typeof v === 'number' && v < 100 ? v+'%' : fmtN(v); } }
+    }, scales: { x: { grid: { color: '#1e293b' }, beginAtZero: true }, y: { grid: { color: '#1e293b' } } } } }));
 }
 
 // Re-render charts after slide change
