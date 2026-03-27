@@ -151,7 +151,7 @@ try {
   const pricingSnapshotRoutes = require('./routes/pricing-snapshot');
   const approvalsRoutes = require('./routes/approvals');
   const videoRoutes = require('./routes/video');
-  const { router: proposalRoutes, proposalJobs, buildSlideHTML } = require('./routes/proposal');
+  const { router: proposalRoutes, proposalJobs, buildSlideHTML, buildNarrationScripts, generateTTS, AUDIO_DIR } = require('./routes/proposal');
 
   // Health check
   app.use(`${BASE_PATH}/health`, healthRoutes);
@@ -194,6 +194,27 @@ try {
       const slides = buildSlideHTML(analysis, companyName);
       const slidesJSON = JSON.stringify(slides);
       const audioBase = `${BASE_PATH}/api/v1/proposal/${projectId}/audio`;
+
+      // Auto-generate audio if not cached (background, non-blocking)
+      const audioDir = path.join(AUDIO_DIR, String(projectId));
+      const slide0Audio = path.join(audioDir, 'slide_0.mp3');
+      if (!fs.existsSync(slide0Audio)) {
+        // Generate in background so page loads immediately
+        (async () => {
+          try {
+            if (!fs.existsSync(audioDir)) fs.mkdirSync(audioDir, { recursive: true });
+            const scripts = buildNarrationScripts(analysis, companyName);
+            for (let i = 0; i < scripts.length; i++) {
+              const ap = path.join(audioDir, \`slide_\${i}.mp3\`);
+              if (!fs.existsSync(ap)) {
+                console.log(\`[Proposal] Auto-generating audio slide \${i + 1}/\${scripts.length} for project \${projectId}\`);
+                await generateTTS(scripts[i], ap);
+              }
+            }
+            console.log(\`[Proposal] Audio ready for project \${projectId}\`);
+          } catch (e) { console.error('[Proposal] Audio gen error:', e.message); }
+        })();
+      }
 
       res.send(`<!DOCTYPE html>
 <html lang="en">
@@ -253,7 +274,7 @@ body{background:#0f172a;color:#e2e8f0;font-family:'Inter',system-ui,-apple-syste
   <!-- Start splash (enables audio autoplay after user click) -->
   <div id="startSplash" style="position:fixed;inset:0;z-index:100;background:#0f172a;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="startPresentation()">
     <div style="text-align:center">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69b02d62034886f7c9e996d9.png" alt="PINAXIS" style="width:100px;height:100px;border-radius:16px;margin-bottom:30px">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69b02d62034886f7c9e996d9.png" alt="PINAXIS" style="width:200px;height:200px;border-radius:20px;margin-bottom:30px;box-shadow:0 8px 32px rgba(59,130,246,0.2)">
       <h1 style="font-size:42px;color:#f8fafc;margin-bottom:12px">PINAXIS Dashboard Playbook</h1>
       <p style="color:#94a3b8;font-size:20px;margin-bottom:40px">${companyName}</p>
       <div style="display:inline-flex;align-items:center;gap:12px;background:#3b82f6;padding:16px 40px;border-radius:12px;font-size:18px;font-weight:600;color:white;transition:all .2s">
@@ -293,7 +314,18 @@ function playAudio() {
   if (!playing) return;
   document.getElementById('voiceStatus').innerHTML = '<div class="dot"></div><span>Rachel speaking...</span>';
   audio = new Audio(AUDIO_BASE + '/' + current);
-  audio.play().catch(() => {});
+  audio.play().then(() => {
+    console.log('Playing slide ' + (current + 1));
+  }).catch((e) => {
+    console.log('Audio not ready for slide ' + (current + 1) + ', retrying in 3s...', e.message);
+    document.getElementById('voiceStatus').innerHTML = '<div class="dot"></div><span>Generating audio...</span>';
+    setTimeout(() => playAudio(), 3000);
+  });
+  audio.onerror = function() {
+    console.log('Audio error for slide ' + (current + 1) + ', retrying in 3s...');
+    document.getElementById('voiceStatus').innerHTML = '<div class="dot"></div><span>Generating audio...</span>';
+    setTimeout(() => playAudio(), 3000);
+  };
   audio.onended = function() {
     document.getElementById('voiceStatus').innerHTML = '<div class="dot"></div><span>Rachel AI Ready</span>';
     if (playing && current < slides.length - 1) { current++; render(); playAudio(); }

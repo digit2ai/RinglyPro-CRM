@@ -120,7 +120,7 @@ function buildSlideHTML(analysis, companyName) {
     // Slide 0: Title
     { title: 'PINAXIS Dashboard Playbook', html: `
       <div style="text-align:center;padding:60px 0">
-        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69b02d62034886f7c9e996d9.png" alt="PINAXIS" style="width:120px;height:120px;border-radius:16px;margin-bottom:30px">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69b02d62034886f7c9e996d9.png" alt="PINAXIS" style="width:280px;height:280px;border-radius:24px;margin-bottom:40px;box-shadow:0 8px 32px rgba(59,130,246,0.2)">
         <h1 style="font-size:48px;margin:0;color:#f8fafc">${esc(companyName)}</h1>
         <p style="color:#94a3b8;margin-top:12px;font-size:20px">Warehouse Data Analysis & Automation Proposal</p>
         <p style="color:#64748b;margin-top:8px">${dateRange.from || ''} to ${dateRange.to || ''} · ${dailyPerc.days || ''} operating days</p>
@@ -278,4 +278,4 @@ router.get('/:projectId/audio/:index', (req, res) => {
   fs.createReadStream(filePath).pipe(res);
 });
 
-module.exports = { router, proposalJobs, buildSlideHTML, buildNarrationScripts };
+module.exports = { router, proposalJobs, buildSlideHTML, buildNarrationScripts, generateTTS, AUDIO_DIR };
