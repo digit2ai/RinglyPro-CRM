@@ -250,6 +250,19 @@ body{background:#0f172a;color:#e2e8f0;font-family:'Inter',system-ui,-apple-syste
       <button id="nextBtn" onclick="nextSlide()">Next &rarr;</button>
     </div>
   </div>
+  <!-- Start splash (enables audio autoplay after user click) -->
+  <div id="startSplash" style="position:fixed;inset:0;z-index:100;background:#0f172a;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="startPresentation()">
+    <div style="text-align:center">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69b02d62034886f7c9e996d9.png" alt="PINAXIS" style="width:100px;height:100px;border-radius:16px;margin-bottom:30px">
+      <h1 style="font-size:42px;color:#f8fafc;margin-bottom:12px">PINAXIS Dashboard Playbook</h1>
+      <p style="color:#94a3b8;font-size:20px;margin-bottom:40px">${companyName}</p>
+      <div style="display:inline-flex;align-items:center;gap:12px;background:#3b82f6;padding:16px 40px;border-radius:12px;font-size:18px;font-weight:600;color:white;transition:all .2s">
+        <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        Click to Start Presentation
+      </div>
+      <p style="color:#64748b;margin-top:16px;font-size:14px">Rachel Voice AI will narrate each slide</p>
+    </div>
+  </div>
   <div class="slide-area"><div class="slide" id="slideContent"></div></div>
   <div class="nav">
     <div class="dots" id="dots"></div>
@@ -300,8 +313,12 @@ function nextSlide() { if (current < slides.length - 1) { current++; render(); i
 function goSlide(i) { current = i; render(); if (playing) playAudio(); }
 
 render();
-// Auto-start after small delay
-setTimeout(() => { if (playing) playAudio(); }, 1500);
+
+function startPresentation() {
+  document.getElementById('startSplash').style.display = 'none';
+  // User clicked — audio autoplay is now allowed by browser
+  playAudio();
+}
 </script>
 </body>
 </html>`);
