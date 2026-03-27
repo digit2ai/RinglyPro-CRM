@@ -50,6 +50,9 @@ SLIDE 2 — DATA ANALYSIS OVERVIEW:
 - Total Pick Units: ${fmt(orders.total_units)} | Avg Lines/Order: ${orders.avg_lines_per_order || '—'}
 - Bin Capable: ${skus.bin_capable_pct || '—'}% of SKUs
 - Data range: ${dateRange.from || '—'} to ${dateRange.to || '—'} (${dailyPerc.days || '—'} operating days)
+- Order Type Breakdown: ${(ov.by_order_type || []).map(d => `${d.name}: ${d.pct_units}% of pick units`).join(', ') || 'N/A'}
+- Picking Unit Breakdown: ${(ov.by_picking_unit || []).map(d => `${d.name}: ${d.pct_units}% of pick units`).join(', ') || 'N/A'}
+- Temperature Zone: ${(ov.by_temperature || []).map(d => `${d.name}: ${d.pct_units}% of pick units`).join(', ') || 'N/A'}
 
 SLIDE 3 — FIT / NO-FIT ANALYSIS:
 - Total Items: ${fmt(fit.total_items)} | With Dimensions: ${fmt(fit.items_with_dimensions)} | Missing Dimensions: ${fmt(fit.items_without_dimensions)}

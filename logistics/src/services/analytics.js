@@ -117,6 +117,48 @@ async function computeOverviewKPIs(models, projectId) {
   const dates = dateRange[0] || {};
   const inv = invStats[0] || {};
 
+  // Breakdown by order_type
+  const [orderTypeBreakdown] = await seq.query(`
+    SELECT COALESCE(order_type, 'unknown') as order_type,
+      COUNT(*) as order_lines, COALESCE(SUM(quantity), 0) as pick_units,
+      COUNT(DISTINCT order_id) as orders
+    FROM logistics_goods_out_data WHERE project_id = :projectId
+    GROUP BY order_type ORDER BY order_lines DESC
+  `, { replacements: { projectId } });
+
+  // Breakdown by picking_unit
+  const [pickingUnitBreakdown] = await seq.query(`
+    SELECT COALESCE(picking_unit, 'unknown') as picking_unit,
+      COUNT(*) as order_lines, COALESCE(SUM(quantity), 0) as pick_units,
+      COUNT(DISTINCT order_id) as orders
+    FROM logistics_goods_out_data WHERE project_id = :projectId
+    GROUP BY picking_unit ORDER BY pick_units DESC
+  `, { replacements: { projectId } });
+
+  // Breakdown by temperature_range (join item_master)
+  const [tempBreakdown] = await seq.query(`
+    SELECT COALESCE(im.temperature_range, 'unknown') as temperature,
+      COUNT(*) as order_lines, COALESCE(SUM(g.quantity), 0) as pick_units,
+      COUNT(DISTINCT g.sku) as skus
+    FROM logistics_goods_out_data g
+    LEFT JOIN logistics_item_master im ON im.project_id = g.project_id AND im.sku = g.sku
+    WHERE g.project_id = :projectId
+    GROUP BY im.temperature_range ORDER BY pick_units DESC
+  `, { replacements: { projectId } });
+
+  const totalLines = parseInt(stats.total_orderlines || 0);
+  const totalUnits = parseFloat(stats.total_units || 0);
+
+  const buildBreakdown = (rows, keyField, totalL, totalU) => rows.map(r => ({
+    name: r[keyField],
+    order_lines: parseInt(r.order_lines || 0),
+    pick_units: parseFloat(r.pick_units || 0),
+    orders: parseInt(r.orders || 0),
+    skus: parseInt(r.skus || 0),
+    pct_lines: totalL > 0 ? Math.round((parseInt(r.order_lines) / totalL) * 100 * 10) / 10 : 0,
+    pct_units: totalU > 0 ? Math.round((parseFloat(r.pick_units) / totalU) * 100 * 10) / 10 : 0
+  }));
+
   return {
     skus: {
       total: totalSKUs,
@@ -126,10 +168,10 @@ async function computeOverviewKPIs(models, projectId) {
     },
     orders: {
       total_orders: parseInt(stats.total_orders || 0),
-      total_orderlines: parseInt(stats.total_orderlines || 0),
-      total_units: parseFloat(stats.total_units || 0),
+      total_orderlines: totalLines,
+      total_units: totalUnits,
       avg_lines_per_order: parseInt(stats.total_orders) > 0
-        ? Math.round((parseInt(stats.total_orderlines) / parseInt(stats.total_orders)) * 100) / 100
+        ? Math.round((totalLines / parseInt(stats.total_orders)) * 100) / 100
         : 0
     },
     date_range: {
@@ -139,7 +181,10 @@ async function computeOverviewKPIs(models, projectId) {
     inventory: {
       total_locations: parseInt(inv.locations || 0),
       total_stock: parseFloat(inv.total_stock || 0)
-    }
+    },
+    by_order_type: buildBreakdown(orderTypeBreakdown, 'order_type', totalLines, totalUnits),
+    by_picking_unit: buildBreakdown(pickingUnitBreakdown, 'picking_unit', totalLines, totalUnits),
+    by_temperature: buildBreakdown(tempBreakdown, 'temperature', totalLines, totalUnits)
   };
 }
 

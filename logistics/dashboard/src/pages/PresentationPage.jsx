@@ -48,6 +48,10 @@ export default function PresentationPage() {
   const dateRange = ov.date_range || {}
   const inv = ov.inventory || {}
 
+  const byOrderType = ov.by_order_type || []
+  const byPickingUnit = ov.by_picking_unit || []
+  const byTemperature = ov.by_temperature || []
+
   const fitAnalysis = analysis?.fit_analysis || {}
   const fitBins = fitAnalysis.bins || []
 
@@ -96,6 +100,19 @@ export default function PresentationPage() {
   const hasData = !!analysis
 
   // --- Chart data builders ---
+  const PIE_COLORS = ['#10b981', '#3b82f6', '#eab308', '#ef4444', '#f97316', '#8b5cf6', '#06b6d4', '#ec4899']
+
+  const orderTypePieData = byOrderType.map(d => ({ name: d.name, value: d.pick_units || d.order_lines }))
+  const pickingUnitPieData = byPickingUnit.map(d => ({ name: d.name, value: d.pick_units || d.order_lines }))
+  const temperaturePieData = byTemperature.map(d => ({ name: d.name, value: d.pick_units || d.order_lines }))
+
+  // Daily throughput from order_time_series (matches LogiVision daily bars)
+  const dailyData = (analysis?.order_time_series?.series || []).map(d => ({
+    name: d.date,
+    orderlines: d.orderlines || 0,
+    orders: d.orders || 0
+  }))
+
   const monthlyData = (analysis?.throughput_monthly?.months || []).map(m => ({
     name: m.month || m.label,
     orders: m.orders || 0,
@@ -240,20 +257,99 @@ export default function PresentationPage() {
             <MetricCard label="Avg Lines/Order" value={orders.avg_lines_per_order || '—'} color="blue" />
             <MetricCard label="Bin Capable %" value={skus.bin_capable_pct ? `${skus.bin_capable_pct}%` : '—'} color="emerald" />
           </div>
-          {monthlyData.length > 0 && (
+          {/* Pie charts row: Order Type, Picking Unit, Temperature Zone */}
+          {(orderTypePieData.length > 0 || pickingUnitPieData.length > 0 || temperaturePieData.length > 0) && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {[
+                { title: 'Order Type · Pick Units', data: orderTypePieData },
+                { title: 'Picking Unit · Pick Units', data: pickingUnitPieData },
+                { title: 'Temp. Zone · Pick Units', data: temperaturePieData }
+              ].map(chart => chart.data.length > 0 && (
+                <div key={chart.title} className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">{chart.title}</p>
+                  <ResponsiveContainer width="100%" height={180}>
+                    <PieChart>
+                      <Pie data={chart.data} cx="50%" cy="50%" innerRadius={35} outerRadius={65} paddingAngle={2} dataKey="value" labelLine={false} label={renderCustomizedLabel}>
+                        {chart.data.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} stroke="transparent" />)}
+                      </Pie>
+                      <Legend wrapperStyle={{ color: '#94a3b8', fontSize: 10 }} />
+                      <Tooltip {...tooltipStyle} formatter={(v) => fmt(v)} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              ))}
+            </div>
+          )}
+          {/* Daily Throughput (matches LogiVision daily bars) */}
+          {dailyData.length > 0 && (
             <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
-              <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Monthly Throughput</p>
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Daily Throughput — Pick Units & Orders</p>
               <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={monthlyData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                <BarChart data={dailyData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                  <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                  <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 9 }} interval={Math.max(0, Math.floor(dailyData.length / 15))} />
                   <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} />
                   <Tooltip {...tooltipStyle} />
                   <Legend wrapperStyle={{ color: '#94a3b8', fontSize: 12 }} />
-                  <Bar dataKey="orderlines" name="Order Lines" fill={COLORS.blue} radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="orders" name="Orders" fill={COLORS.gold} radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="orderlines" name="Order Lines" fill={COLORS.blue} radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="orders" name="Orders" fill={COLORS.gold} radius={[2, 2, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
+            </div>
+          )}
+          {/* KPI Summary Table */}
+          {(byOrderType.length > 0 || byPickingUnit.length > 0) && (
+            <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700 overflow-x-auto">
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">KPI Breakdown</p>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-xs text-slate-500 uppercase tracking-wider border-b border-slate-700">
+                    <th className="py-2 px-2 text-left">Category</th>
+                    <th className="py-2 px-2 text-right">Order Lines</th>
+                    <th className="py-2 px-2 text-right">% Lines</th>
+                    <th className="py-2 px-2 text-right">Pick Units</th>
+                    <th className="py-2 px-2 text-right">% Units</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {byOrderType.length > 0 && <>
+                    <tr className="border-b border-slate-700/50"><td colSpan={5} className="py-1 px-2 text-xs text-slate-500 font-bold uppercase">By Order Type</td></tr>
+                    {byOrderType.map((d, i) => (
+                      <tr key={`ot-${i}`} className="border-b border-slate-700/30 hover:bg-slate-700/20">
+                        <td className="py-1.5 px-2 text-slate-300">{d.name}</td>
+                        <td className="py-1.5 px-2 text-right text-white">{fmt(d.order_lines)}</td>
+                        <td className="py-1.5 px-2 text-right text-slate-400">{d.pct_lines}%</td>
+                        <td className="py-1.5 px-2 text-right text-white">{fmt(d.pick_units)}</td>
+                        <td className="py-1.5 px-2 text-right text-slate-400">{d.pct_units}%</td>
+                      </tr>
+                    ))}
+                  </>}
+                  {byPickingUnit.length > 0 && <>
+                    <tr className="border-b border-slate-700/50"><td colSpan={5} className="py-1 px-2 text-xs text-slate-500 font-bold uppercase">By Picking Unit</td></tr>
+                    {byPickingUnit.map((d, i) => (
+                      <tr key={`pu-${i}`} className="border-b border-slate-700/30 hover:bg-slate-700/20">
+                        <td className="py-1.5 px-2 text-slate-300">{d.name}</td>
+                        <td className="py-1.5 px-2 text-right text-white">{fmt(d.order_lines)}</td>
+                        <td className="py-1.5 px-2 text-right text-slate-400">{d.pct_lines}%</td>
+                        <td className="py-1.5 px-2 text-right text-white">{fmt(d.pick_units)}</td>
+                        <td className="py-1.5 px-2 text-right text-slate-400">{d.pct_units}%</td>
+                      </tr>
+                    ))}
+                  </>}
+                  {byTemperature.length > 0 && <>
+                    <tr className="border-b border-slate-700/50"><td colSpan={5} className="py-1 px-2 text-xs text-slate-500 font-bold uppercase">By Temperature Zone</td></tr>
+                    {byTemperature.map((d, i) => (
+                      <tr key={`tz-${i}`} className="border-b border-slate-700/30 hover:bg-slate-700/20">
+                        <td className="py-1.5 px-2 text-slate-300">{d.name}</td>
+                        <td className="py-1.5 px-2 text-right text-white">{fmt(d.order_lines)}</td>
+                        <td className="py-1.5 px-2 text-right text-slate-400">{d.pct_lines}%</td>
+                        <td className="py-1.5 px-2 text-right text-white">{fmt(d.pick_units)}</td>
+                        <td className="py-1.5 px-2 text-right text-slate-400">{d.pct_units}%</td>
+                      </tr>
+                    ))}
+                  </>}
+                </tbody>
+              </table>
             </div>
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
