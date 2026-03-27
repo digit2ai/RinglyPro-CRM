@@ -5,7 +5,7 @@ const path = require('path');
 const os = require('os');
 const https = require('https');
 const http = require('http');
-const { createCanvas } = require('canvas');
+const sharp = require('sharp');
 
 // ffmpeg setup
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
@@ -140,112 +140,44 @@ async function generateTTS(text, outputPath) {
 }
 
 /**
- * Generate a branded slide image using node-canvas (no Puppeteer needed)
+ * Generate a branded slide image using sharp + SVG (no native deps needed)
  */
-function generateSlideImage(slideIndex, title, bulletPoints, outputPath) {
+async function generateSlideImage(slideIndex, title, bulletPoints, outputPath) {
   const W = SCREENSHOT_WIDTH;
   const H = SCREENSHOT_HEIGHT;
-  const canvas = createCanvas(W, H);
-  const ctx = canvas.getContext('2d');
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-  // Dark gradient background (matches Pinaxis dark theme)
-  const grad = ctx.createLinearGradient(0, 0, W, H);
-  grad.addColorStop(0, '#0f172a');  // slate-900
-  grad.addColorStop(1, '#1e293b');  // slate-800
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, W, H);
-
-  // Top accent bar
-  ctx.fillStyle = '#3b82f6';  // blue-500
-  ctx.fillRect(0, 0, W, 4);
-
-  // Slide number badge
-  ctx.fillStyle = '#1e40af';  // blue-800
-  ctx.beginPath();
-  ctx.arc(100, 80, 30, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 24px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(`${slideIndex + 1}`, 100, 89);
-
-  // PINAXIS branding top-right
-  ctx.fillStyle = '#64748b';  // slate-500
-  ctx.font = '18px sans-serif';
-  ctx.textAlign = 'right';
-  ctx.fillText('PINAXIS Warehouse Automation', W - 60, 85);
-
-  // Title
-  ctx.fillStyle = '#f8fafc';  // slate-50
-  ctx.font = 'bold 44px sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText(title, 60, 170);
-
-  // Divider line
-  ctx.strokeStyle = '#334155';  // slate-700
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(60, 195);
-  ctx.lineTo(W - 60, 195);
-  ctx.stroke();
-
-  // Bullet points / content
-  ctx.font = '26px sans-serif';
-  let y = 260;
-  const lineHeight = 42;
-  const maxWidth = W - 160;
-
+  // Build bullet SVG elements
+  let bulletsSvg = '';
+  let y = 280;
+  const lineH = 48;
   for (const point of bulletPoints) {
-    if (y > H - 100) break;
-
-    // Check if it's a section header (starts with uppercase and ends with :)
-    if (point.match(/^[A-Z].*:$/)) {
-      ctx.fillStyle = '#3b82f6';
-      ctx.font = 'bold 28px sans-serif';
-      y += 10;
-      ctx.fillText(point, 80, y);
-      ctx.font = '26px sans-serif';
-      y += lineHeight;
-      continue;
-    }
-
-    // Bullet dot
-    ctx.fillStyle = '#10b981';  // emerald-500
-    ctx.beginPath();
-    ctx.arc(85, y - 8, 5, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Wrap text
-    ctx.fillStyle = '#cbd5e1';  // slate-300
-    const words = point.split(' ');
-    let line = '';
-    let subY = y;
-    for (const word of words) {
-      const test = line + word + ' ';
-      if (ctx.measureText(test).width > maxWidth && line) {
-        ctx.fillText(line.trim(), 105, subY);
-        line = word + ' ';
-        subY += lineHeight * 0.85;
-        if (subY > H - 100) break;
-      } else {
-        line = test;
-      }
-    }
-    if (subY <= H - 100) ctx.fillText(line.trim(), 105, subY);
-    y = subY + lineHeight;
+    if (y > H - 120 || !point) { y += lineH * 0.3; continue; }
+    bulletsSvg += `<circle cx="85" cy="${y - 6}" r="5" fill="#10b981"/>`;
+    bulletsSvg += `<text x="105" y="${y}" fill="#cbd5e1" font-size="26" font-family="Arial, Helvetica, sans-serif">${esc(point.substring(0, 120))}</text>`;
+    y += lineH;
   }
 
-  // Bottom bar
-  ctx.fillStyle = '#1e293b';
-  ctx.fillRect(0, H - 50, W, 50);
-  ctx.fillStyle = '#475569';
-  ctx.font = '16px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('PINAXIS Dashboard Playbook  |  Powered by Rachel Voice AI', W / 2, H - 20);
+  const svg = `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#0f172a"/>
+        <stop offset="100%" stop-color="#1e293b"/>
+      </linearGradient>
+    </defs>
+    <rect width="${W}" height="${H}" fill="url(#bg)"/>
+    <rect width="${W}" height="4" fill="#3b82f6"/>
+    <circle cx="100" cy="80" r="30" fill="#1e40af"/>
+    <text x="100" y="89" fill="white" font-size="24" font-weight="bold" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">${slideIndex + 1}</text>
+    <text x="${W - 60}" y="85" fill="#64748b" font-size="18" text-anchor="end" font-family="Arial, Helvetica, sans-serif">PINAXIS Warehouse Automation</text>
+    <text x="60" y="180" fill="#f8fafc" font-size="40" font-weight="bold" font-family="Arial, Helvetica, sans-serif">${esc(title.substring(0, 80))}</text>
+    <line x1="60" y1="205" x2="${W - 60}" y2="205" stroke="#334155" stroke-width="2"/>
+    ${bulletsSvg}
+    <rect y="${H - 50}" width="${W}" height="50" fill="#0f172a"/>
+    <text x="${W / 2}" y="${H - 18}" fill="#475569" font-size="16" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">PINAXIS Dashboard Playbook  |  Powered by Rachel Voice AI</text>
+  </svg>`;
 
-  // Save
-  const buffer = canvas.toBuffer('image/png');
-  fs.writeFileSync(outputPath, buffer);
+  await sharp(Buffer.from(svg)).png().toFile(outputPath);
   return outputPath;
 }
 
@@ -433,7 +365,7 @@ async function generateVideoProposal(projectId, models, progressCallback) {
       report('slides', `Generating slide ${i + 1}/${SLIDE_COUNT}...`);
       const imgPath = path.join(workDir, `slide_${i}.png`);
       const content = slideContents[i] || { title: `Slide ${i + 1}`, bullets: [] };
-      generateSlideImage(i, content.title, content.bullets, imgPath);
+      await generateSlideImage(i, content.title, content.bullets, imgPath);
       screenshotPaths.push(imgPath);
     }
 
