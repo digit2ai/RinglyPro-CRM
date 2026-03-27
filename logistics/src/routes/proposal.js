@@ -25,7 +25,7 @@ function generateTTS(text, outputPath) {
   const body = JSON.stringify({
     text,
     model_id: 'eleven_multilingual_v2',
-    voice_settings: { stability: 0.65, similarity_boost: 0.8, style: 0.2, use_speaker_boost: true, speed: 0.85 }
+    voice_settings: { stability: 0.78, similarity_boost: 0.75, style: 0.08, use_speaker_boost: true, speed: 0.82 }
   });
 
   return new Promise((resolve, reject) => {
@@ -53,7 +53,61 @@ function generateTTS(text, outputPath) {
 }
 
 /**
+ * Convert a number to spoken words for natural TTS
+ * e.g. 228274 → "two hundred twenty-eight thousand, two hundred seventy-four"
+ */
+function numberToWords(n) {
+  if (n == null || isNaN(n)) return 'not available';
+  n = Math.round(Number(n));
+  if (n === 0) return 'zero';
+
+  const ones = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine',
+    'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+  const tens = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+
+  function chunk(num) {
+    if (num === 0) return '';
+    if (num < 20) return ones[num];
+    if (num < 100) return tens[Math.floor(num / 10)] + (num % 10 ? '-' + ones[num % 10] : '');
+    return ones[Math.floor(num / 100)] + ' hundred' + (num % 100 ? ' ' + chunk(num % 100) : '');
+  }
+
+  if (n < 0) return 'negative ' + numberToWords(-n);
+
+  // For very large numbers (>10M), use approximate form
+  if (n >= 10000000) return Math.round(n / 1000000) + ' million';
+  if (n >= 1000000) {
+    const m = Math.floor(n / 1000000);
+    const rest = n % 1000000;
+    return chunk(m) + ' million' + (rest > 0 ? ', ' + numberToWords(rest) : '');
+  }
+  if (n >= 1000) {
+    const k = Math.floor(n / 1000);
+    const rest = n % 1000;
+    return chunk(k) + ' thousand' + (rest > 0 ? ', ' + chunk(rest) : '');
+  }
+  return chunk(n);
+}
+
+/**
+ * Speak a number naturally — spells out for TTS consistency
+ */
+function say(n) {
+  if (n == null || isNaN(n)) return 'not available';
+  return numberToWords(n);
+}
+
+/**
+ * Speak a percentage naturally
+ */
+function sayPct(n) {
+  if (n == null || isNaN(n)) return 'not available';
+  return Number(n).toFixed(1).replace('.0', '') + ' percent';
+}
+
+/**
  * Build narration scripts from analysis data
+ * Uses spelled-out numbers and natural pauses for consistent TTS delivery
  */
 function buildNarrationScripts(analysis, companyName) {
   const a = analysis || {};
@@ -72,22 +126,46 @@ function buildNarrationScripts(analysis, companyName) {
   const extrap = a.extrapolation || {};
   const y5 = (extrap.projections || []).find(p => p.year === 5) || {};
   const orderStruct = a.order_structure || {};
-  const fmt = n => n != null ? Number(n).toLocaleString() : 'not available';
 
   return [
-    `Welcome to the PINAXIS Dashboard Playbook for ${companyName}. This presentation contains a comprehensive warehouse data analysis based on your actual operational data. Let's walk through the findings together.`,
-    `Let's start with the data overview. We analyzed ${fmt(skus.total)} total SKUs, of which ${fmt(skus.active)} are actively moved. Your operation processed ${fmt(orders.total_orders)} orders containing ${fmt(orders.total_orderlines)} order lines, with an average of ${orders.avg_lines_per_order || 'about 10'} lines per order. The total pick unit volume is ${fmt(orders.total_units)} units. ${skus.bin_capable_pct || 0}% of your SKUs are bin-capable, indicating strong automation potential.`,
-    `Now let's look at the fit analysis. Out of ${fmt(fit.total_items)} items in your master data, ${fmt(fit.items_with_dimensions)} have complete dimensions. ${fit.bins?.length ? `Using the largest PINAXIS standard bin at 600 by 400 by 450 millimeters, ${fit.bins[fit.bins.length - 1]?.fit_pct_total || 0}% of all items fit. This represents strong conveyability for automation.` : ''}`,
-    `The ABC classification reveals a classic Pareto distribution with a Gini coefficient of ${abc.gini || 0}. ${abc.classes?.A ? `Your A-items represent just ${abc.classes.A.pct}% of SKUs but drive ${abc.classes.A.pct_lines || abc.classes.A.volume_pct}% of order lines.` : ''} ${abc.classes?.D ? `${fmt(abc.classes.D.count)} SKUs are dead stock with zero outbound activity.` : ''} This concentration means a small goods-to-person zone can handle the vast majority of your throughput.`,
-    `The XYZ seasonality analysis shows demand patterns. ${xyz.classes?.[0] ? `${fmt(xyz.classes[0].moved_skus)} X-class items generate ${xyz.classes[0].pct_lines}% of all order lines.` : ''} The automation system needs to be optimized for consistent X items while maintaining flexibility for seasonal Z items.`,
-    `Looking at the order profile. ${fmt(orderStruct.total_orders)} orders were analyzed. ${orderStruct.multi_line_pct || 0}% are multi-line orders. ${orderStruct.multi_line_pct > 50 ? 'This indicates complex fulfillment suited for zone-based automation.' : ''}`,
-    `The percentile analysis. The average day processes ${fmt(avgDay.order_lines)} order lines. The 75th percentile design day is ${fmt(p75Day.order_lines)} lines per day, or ${fmt(Math.round((p75Day.order_lines || 0) / (dailyPerc.working_hours || 12)))} lines per hour. The maximum day reached ${fmt(maxDay.order_lines)} lines.`,
-    `For the ${extrap.years || 5}-year growth projection at ${extrap.growth_rate_pct || 5}% annual growth. ${y5.design_day ? `By year 5, the design day increases to ${fmt(y5.design_day.order_lines)} order lines per day.` : ''} The PINAXIS solution is designed with headroom for this growth.`,
-    `Based on the analysis, our product recommendation engine matches the optimal PINAXIS solutions to your warehouse profile, considering throughput, SKU characteristics, and order complexity.`,
-    `The benefit projections quantify the ROI impact of automation for your operation, with data-driven savings estimates and payback period calculations.`,
-    `The hourly throughput profile shows activity distribution across a 24-hour cycle. The system must sustain peak hourly rates during the busiest windows.`,
-    `The top 10 SKUs by pick volume are prime candidates for goods-to-person automation zones. ${abc.top_skus?.[0] ? `The highest-frequency SKU, ${abc.top_skus[0].sku}, accounts for ${fmt(Math.round(abc.top_skus[0].picks))} picks.` : ''}`,
-    `To summarize the next steps: Review concept designs, run warehouse simulations, review the commercial proposal, connect your WMS via API integration, and proceed with phased implementation. Thank you for exploring the PINAXIS Dashboard Playbook.`
+    // Slide 0: Title — warm, welcoming
+    `Welcome to the PINAXIS Dashboard Playbook... for ${companyName}. This presentation contains a comprehensive warehouse data analysis... based on your actual operational data. Let's walk through the key findings together.`,
+
+    // Slide 1: Data Overview — deliberate pacing between metrics
+    `Let's begin with the data overview. We analyzed a total of ${say(skus.total)} SKUs in your item master. Of those... ${say(skus.active)} are actively moved in outbound operations. Your operation processed ${say(orders.total_orders)} orders... containing ${say(orders.total_orderlines)} individual order lines. That gives us an average of ${orders.avg_lines_per_order || 'about ten'} lines per order. The total pick unit volume comes to approximately ${say(orders.total_units)} units. And importantly... ${sayPct(skus.bin_capable_pct)} of your SKUs are bin-capable... which indicates strong automation potential.`,
+
+    // Slide 2: Fit/No-Fit
+    `Now let's look at the fit analysis. Out of ${say(fit.total_items)} items in your master data... ${say(fit.items_with_dimensions)} have complete dimension records. ${fit.items_without_dimensions ? `That leaves ${say(fit.items_without_dimensions)} items with missing dimensions.` : ''} ${fit.bins?.length ? `Using the largest PINAXIS standard bin... at six hundred by four hundred by four hundred fifty millimeters... ${sayPct(fit.bins[fit.bins.length - 1]?.fit_pct_total)} of all items fit inside. This represents strong conveyability for automated storage and retrieval.` : ''}`,
+
+    // Slide 3: ABC Classification
+    `The ABC classification reveals a classic Pareto distribution... with a Gini coefficient of ${abc.gini || 'zero point nine'}. ${abc.classes?.A ? `Your A-items... the fast movers... represent just ${sayPct(abc.classes.A.pct)} of all SKUs. But they drive ${sayPct(abc.classes.A.pct_lines || abc.classes.A.volume_pct)} of your order lines... and ${sayPct(abc.classes.A.pct_picks || abc.classes.A.volume_pct)} of pick volume.` : ''} ${abc.classes?.B ? `B-items account for ${sayPct(abc.classes.B.pct)} of SKUs... and ${sayPct(abc.classes.B.pct_lines || abc.classes.B.volume_pct)} of lines.` : ''} ${abc.classes?.D ? `We also identified ${say(abc.classes.D.count)} dead stock SKUs... with zero outbound activity.` : ''} This high concentration means... a focused goods-to-person automation zone can handle the vast majority of your throughput.`,
+
+    // Slide 4: XYZ Seasonality
+    `Moving to the XYZ seasonality analysis... which reveals your demand patterns over time. ${xyz.classes?.[0]?.class === 'X' ? `${say(xyz.classes[0].moved_skus)} items are classified as X... meaning non-seasonal with consistent demand. These represent just ${sayPct(xyz.classes[0].pct_moved_skus)} of moved SKUs... but generate ${sayPct(xyz.classes[0].pct_lines)} of all order lines.` : ''} ${xyz.classes?.[2]?.class === 'Z' ? `On the other hand... ${say(xyz.classes[2].moved_skus)} Z-class items are seasonal or intermittent... making up ${sayPct(xyz.classes[2].pct_moved_skus)} of SKUs but only ${sayPct(xyz.classes[2].pct_lines)} of lines.` : ''} The automation system should be optimized for the consistent X items... while maintaining flexibility for seasonal Z items.`,
+
+    // Slide 5: Order Profile
+    `Let's look at the order profile. A total of ${say(orderStruct.total_orders)} orders were analyzed. ${sayPct(orderStruct.single_line_pct)} are single-line orders... while ${sayPct(orderStruct.multi_line_pct)} are multi-line. ${orderStruct.multi_line_pct > 50 ? 'The predominantly multi-line structure indicates complex fulfillment patterns... well-suited for zone-based or wave-picking automation.' : 'This balanced mix supports flexible automation strategies.'} The average of ${orders.avg_lines_per_order || 'about ten'} lines per order... shapes the pick station and batch size design.`,
+
+    // Slide 6: Percentiles / Design Basis
+    `Now for the percentile analysis... which determines our design basis. On an average day... your operation processes ${say(avgDay.order_lines)} order lines... ${say(avgDay.pick_units)} pick units... and ${say(avgDay.orders)} orders. The seventy-fifth percentile... our recommended design day... comes to ${say(p75Day.order_lines)} lines per day. That translates to approximately ${say(Math.round((p75Day.order_lines || 0) / (dailyPerc.working_hours || 12)))} lines per hour... across a ${dailyPerc.working_hours || 'twelve'} hour shift. The absolute maximum day reached ${say(maxDay.order_lines)} lines. Designing to the seventy-fifth percentile... ensures the system handles peak demand seventy-five percent of the time... while remaining cost-effective.`,
+
+    // Slide 7: Extrapolation
+    `For the ${extrap.years || 'five'}-year growth projection... we applied ${extrap.growth_rate_pct || 'five'} percent annual growth to all key metrics. ${y5.design_day ? `By year five... the design day increases to ${say(y5.design_day.order_lines)} order lines per day... or approximately ${say(y5.design_day.lines_per_hour)} per hour. Pick units grow to ${say(y5.design_day.pick_units)} per day.` : ''} ${extrap.baseline ? `Starting from today's baseline of ${say(extrap.baseline.order_lines)} lines per day...` : ''} the PINAXIS solution is engineered with sufficient headroom... to accommodate this projected growth without requiring major system modifications.`,
+
+    // Slide 8: Product Recommendations
+    `Based on the complete data analysis... our product recommendation engine has matched the optimal PINAXIS intralogistics solutions to your warehouse profile. These recommendations consider your throughput volume... SKU characteristics... order complexity... and bin compatibility. Each product is scored on a fit scale from zero to one hundred... reflecting how well it addresses your specific operational requirements.`,
+
+    // Slide 9: Client Benefits
+    `The benefit projections quantify the return on investment for automation in your operation. Using data-driven models... we calculate estimated annual savings... payback periods... and improvement percentages across key operational areas. These projections are grounded in your actual warehouse data... not industry benchmarks... giving you reliable numbers for your business case.`,
+
+    // Slide 10: Hourly Throughput
+    `The hourly throughput profile shows how activity distributes across a twenty-four hour cycle. Understanding peak hours is critical for system dimensioning. The automation must sustain the highest throughput rates during the busiest operational windows... while maintaining efficiency during lower-volume periods. This profile directly informs the number of workstations... conveyor capacity... and buffer sizing.`,
+
+    // Slide 11: Top 10 SKUs
+    `The top ten SKUs by pick volume represent your highest-frequency items... and are prime candidates for goods-to-person automation zones. ${abc.top_skus?.[0] ? `Your highest-frequency SKU... item ${abc.top_skus[0].sku}... alone accounts for approximately ${say(Math.round(abc.top_skus[0].picks))} picks... or ${sayPct(abc.top_skus[0].pct)} of total pick volume.` : ''} Placing these fast movers in dedicated high-performance zones... dramatically reduces travel time and increases overall system efficiency.`,
+
+    // Slide 12: Next Steps — warm closing
+    `To conclude... here are the recommended next steps. First... review the concept designs with our engineering team. Second... run warehouse simulations to validate throughput targets and optimize layout. Third... review the commercial proposal with R.O.I. projections. Fourth... connect your W.M.S. or E.R.P. system for live data feeds via A.P.I. integration. And fifth... proceed with phased implementation... with full PINAXIS engineering support and O.E.E. tracking from day one. Thank you for exploring the PINAXIS Dashboard Playbook. We look forward to partnering on your warehouse automation journey.`
   ];
 }
 
