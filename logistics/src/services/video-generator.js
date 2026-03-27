@@ -265,18 +265,25 @@ async function generateVideoProposal(projectId, models, progressCallback) {
       ? JSON.parse(row.result_data) : row.result_data;
   }
 
-  // Load recommendations + benefits
-  const [recRows] = await seq.query(
-    'SELECT * FROM logistics_recommendations WHERE project_id = :projectId ORDER BY fit_score DESC',
-    { replacements: { projectId } }
-  );
-  const [benRows] = await seq.query(
-    'SELECT result_data FROM logistics_analysis_results WHERE project_id = :projectId AND analysis_type = \'benefit_projections\'',
-    { replacements: { projectId } }
-  );
-  const benefits = benRows[0]?.result_data
-    ? (typeof benRows[0].result_data === 'string' ? JSON.parse(benRows[0].result_data) : benRows[0].result_data)
-    : null;
+  // Load recommendations + benefits (tables may not exist yet — non-fatal)
+  let recRows = [];
+  let benefits = null;
+  try {
+    const [rows] = await seq.query(
+      'SELECT * FROM logistics_recommendations WHERE project_id = :projectId ORDER BY fit_score DESC',
+      { replacements: { projectId } }
+    );
+    recRows = rows;
+  } catch (e) { console.log('[VideoGen] Recommendations table not available:', e.message); }
+  try {
+    const [benRows] = await seq.query(
+      'SELECT result_data FROM logistics_analysis_results WHERE project_id = :projectId AND analysis_type = \'benefit_projections\'',
+      { replacements: { projectId } }
+    );
+    benefits = benRows[0]?.result_data
+      ? (typeof benRows[0].result_data === 'string' ? JSON.parse(benRows[0].result_data) : benRows[0].result_data)
+      : null;
+  } catch (e) { console.log('[VideoGen] Benefits data not available:', e.message); }
 
   const companyName = project.company_name || 'Your Warehouse';
 
