@@ -17,7 +17,7 @@ import WarehouseMindPage from './pages/WarehouseMindPage'
 import StepIndicator from './components/StepIndicator'
 
 // Dynamic Rachel context builder — generates presentation context from live project data
-function buildPresentationContext(analysisData, companyName) {
+function buildPresentationContext(analysisData, companyName, recommendations, benefits) {
   const a = analysisData || {}
   const ov = a.overview_kpis || {}
   const skus = ov.skus || {}
@@ -28,11 +28,15 @@ function buildPresentationContext(analysisData, companyName) {
   const xyz = a.xyz_classification || {}
   const dailyPerc = a.daily_percentiles || {}
   const extrap = a.extrapolation || {}
+  const orderStruct = a.order_structure || {}
+  const hourly = a.throughput_hourly || {}
   const dailyVals = dailyPerc.daily_values || {}
   const avgDay = dailyVals.average || {}
   const p75Day = dailyVals.p75 || {}
   const maxDay = dailyVals.max || {}
   const y5 = (extrap.projections || []).find(p => p.year === 5) || {}
+  const recs = Array.isArray(recommendations) ? recommendations : recommendations?.recommendations || []
+  const ben = benefits || {}
   const fmt = n => n != null ? Number(n).toLocaleString() : '—'
 
   return `You are Rachel, the PINAXIS Voice AI assistant. You are presenting the Dashboard Playbook for ${companyName || 'the prospect warehouse'}. Speak confidently, reference specific numbers. You represent PINAXIS Warehouse Automation.
@@ -51,33 +55,63 @@ SLIDE 3 — FIT / NO-FIT ANALYSIS:
 - Total Items: ${fmt(fit.total_items)} | With Dimensions: ${fmt(fit.items_with_dimensions)} | Missing Dimensions: ${fmt(fit.items_without_dimensions)}
 ${(fit.bins || []).map(b => `- Bin ${b.name}: ${fmt(b.fit_count)} fit (${b.fit_pct}% of dimensioned, ${b.fit_pct_total}% of total)`).join('\n')}
 
-SLIDE 4 — ABC CLASSIFICATION:
-- Gini: ${abc.gini || '—'} | Active SKUs: ${fmt(abc.total_skus)} | Dead Stock: ${fmt(abc.dead_stock_count)}
-${Object.entries(abc.classes || {}).map(([cls, d]) => `- ${cls} Items: ${fmt(d.count)} (${d.pct}%) — ${d.volume_pct}% of volume`).join('\n')}
+SLIDE 4 — ABC CLASSIFICATION (Pareto Analysis):
+- Gini Coefficient: ${abc.gini || '—'} (${abc.gini >= 0.7 ? 'highly concentrated — strong ABC separation ideal for automation' : 'moderate concentration'})
+- Total Active SKUs: ${fmt(abc.total_skus)} | Dead Stock (D items): ${fmt(abc.dead_stock_count)} | Total Including Dead: ${fmt(abc.total_skus_including_dead)}
+- Total Order Lines: ${fmt(abc.total_order_lines)} | Total Pick Units: ${fmt(abc.total_picks)} | Total Orders: ${fmt(abc.total_orders)}
+${Object.entries(abc.classes || {}).map(([cls, d]) => {
+  const labels = { A: 'Fast Movers', B: 'Medium Movers', C: 'Slow Movers', D: 'Dead Stock' };
+  return `- ${cls} (${labels[cls]}): ${fmt(d.count)} SKUs (${d.pct}% of total) — ${d.pct_lines != null ? d.pct_lines : d.volume_pct}% of Order Lines, ${d.pct_picks != null ? d.pct_picks : d.volume_pct}% of Pick Units, ${d.pct_orders != null ? d.pct_orders : '0'}% of Orders | Threshold: ${d.threshold_label || 'N/A'}`;
+}).join('\n')}
+- The ABC curve shows a steep Pareto rise: a small fraction of SKUs drives the vast majority of volume — this is the key indicator for goods-to-person automation zones
+- Design Day (P75): ${fmt(p75Day.order_lines)} order lines | Design Hour: ${fmt(Math.round((p75Day.order_lines || 0) / (dailyPerc.working_hours || 12)))} lines/hr
 
 SLIDE 5 — XYZ SEASONALITY:
 - Total Moved SKUs: ${fmt(xyz.total_moved_skus)}
 ${(xyz.classes || []).map(c => `- ${c.class} Items: ${fmt(c.moved_skus)} (${c.pct_moved_skus}%) — ${c.pct_lines}% Lines, ${c.pct_picks}% Picks, ${c.pct_orders}% Orders`).join('\n')}
 
 SLIDE 6 — ORDER PROFILE:
-- Total Orders: ${fmt((a.order_structure||{}).total_orders)} | Single-Line: ${(a.order_structure||{}).single_line_pct || '—'}% | Multi-Line: ${(a.order_structure||{}).multi_line_pct || '—'}%
+- Total Orders: ${fmt(orderStruct.total_orders)} | Single-Line: ${orderStruct.single_line_pct || '—'}% (${fmt(orderStruct.single_line_orders)}) | Multi-Line: ${orderStruct.multi_line_pct || '—'}% (${fmt(orderStruct.multi_line_orders)})
+- Avg Lines/Order: ${orders.avg_lines_per_order || '—'}
+- Histogram: ${(orderStruct.histogram || []).map(h => `${h.label} lines: ${fmt(h.count)} orders (${h.pct}%)`).join(', ')}
+- ${orderStruct.multi_line_pct > 50 ? 'Predominantly multi-line orders — complex fulfillment suited for zone-based or wave picking automation' : 'Balanced mix suitable for flexible automation'}
 
-SLIDE 7 — PERCENTILES (Design Basis, ${dailyPerc.working_hours || 12}h working):
+SLIDE 7 — PERCENTILES (Design Basis, ${dailyPerc.working_hours || 12}h working, ${dailyPerc.days || '—'} operating days):
 - Average Day: ${fmt(avgDay.order_lines)} lines, ${fmt(avgDay.pick_units)} picks, ${fmt(avgDay.orders)} orders
-- 75th Percentile: ${fmt(p75Day.order_lines)} lines, ${fmt(p75Day.pick_units)} picks, ${fmt(p75Day.orders)} orders — THIS IS THE DESIGN DAY
+- 75th Percentile (DESIGN DAY): ${fmt(p75Day.order_lines)} lines (${fmt(Math.round((p75Day.order_lines || 0) / (dailyPerc.working_hours || 12)))}/hr), ${fmt(p75Day.pick_units)} picks (${fmt(Math.round((p75Day.pick_units || 0) / (dailyPerc.working_hours || 12)))}/hr), ${fmt(p75Day.orders)} orders
 - Maximum: ${fmt(maxDay.order_lines)} lines, ${fmt(maxDay.pick_units)} picks, ${fmt(maxDay.orders)} orders
+- The 75th percentile ensures the system handles peak demand 75% of the time
 
 SLIDE 8 — ${extrap.years || 5}-YEAR GROWTH EXTRAPOLATION (${extrap.growth_rate_pct || 5}% annual):
-${y5.design_day ? `- Year 5: ${fmt(y5.design_day.order_lines)} lines/day, ${fmt(y5.design_day.pick_units)} picks/day, ${fmt(y5.design_day.orders)} orders/day` : '- Run analysis for projections'}
-${extrap.baseline ? `- Baseline: ${fmt(extrap.baseline.order_lines)} lines/day, ${fmt(extrap.baseline.pick_units)} picks/day` : ''}
+${y5.design_day ? `- Year 5: ${fmt(y5.design_day.order_lines)} lines/day (${fmt(y5.design_day.lines_per_hour)}/hr), ${fmt(y5.design_day.pick_units)} picks/day, ${fmt(y5.design_day.orders)} orders/day` : '- Run analysis for projections'}
+${extrap.baseline ? `- Baseline (Year 0): ${fmt(extrap.baseline.order_lines)} lines/day, ${fmt(extrap.baseline.pick_units)} picks/day, ${fmt(extrap.baseline.skus)} SKUs` : ''}
+- Growth factor Year 5: x${y5.growth_factor || '—'}
 
-SLIDE 9 — NEXT STEPS: Review Concepts, Simulation, Commercial Proposal, API Integration, Implementation.
+SLIDE 9 — PRODUCT RECOMMENDATIONS:
+${recs.length > 0 ? recs.map(r => `- ${r.product_name} (${r.product_category}): Fit Score ${Math.round(r.fit_score || 0)}/100 — ${r.description || r.rationale || ''}`).join('\n') : '- No product recommendations computed yet'}
+
+SLIDE 10 — CLIENT BENEFIT PROJECTIONS:
+${ben.summary ? `- Automation Readiness Score: ${ben.summary.automation_readiness_score || 0}/100
+- Est. Annual Savings: €${Math.round((ben.summary.annual_savings_high || 0) / 1000)}K
+- Payback Period: ${ben.summary.payback_months_low || '—'}–${ben.summary.payback_months_high || '—'} months` : '- No benefit projections computed yet'}
+${(ben.projections || []).map(p => `- ${p.title}: +${p.improvement_pct}% improvement (${p.confidence} confidence)`).join('\n')}
+
+SLIDE 11 — HOURLY THROUGHPUT:
+${(hourly.hours || []).filter(h => h.orderlines > 0).map(h => `- ${h.label}: ${fmt(h.orderlines)} orderlines`).join('\n') || '- No hourly data available'}
+
+SLIDE 12 — TOP 10 SKUs:
+${(abc.top_skus || []).slice(0, 10).map((s, i) => `- #${i + 1} SKU ${s.sku}: ${fmt(Math.round(s.picks))} picks (${s.pct}%, Class ${s.class})`).join('\n')}
+
+SLIDE 13 — NEXT STEPS: 1) Review Concept Designs, 2) Simulation & Layout, 3) Commercial Proposal, 4) API Integration, 5) Implementation with PINAXIS engineering support.
 
 SPEAKING GUIDELINES:
 - Always say "PINAXIS" when referring to the company and its automation solutions
-- Reference the specific numbers above — they are from this client's actual data
-- The 75th percentile design day is the key planning metric
+- Reference the specific numbers above — they are from this client's actual warehouse data
+- The 75th percentile design day is the key planning metric for automation dimensioning
 - Emphasize bin-capable percentage as automation potential indicator
+- When asked about ABC, explain the Pareto principle: a small % of SKUs drives most volume — ideal for goods-to-person zones
+- When asked about specific slides, give the detailed numbers from that section
+- You can discuss any of the 13 slides in detail using the data above
 `
 }
 
@@ -335,15 +369,19 @@ export default function App({ onLogout, userEmail }) {
     const anyProjectId = location.pathname.match(/\/(?:analysis|products|simulation|benefits|report|api-integration|presentation|observability)\/(\d+)/)?.[1]
 
     if (anyProjectId) {
-      // Fetch project data and set context for Rachel on ANY project page
+      // Fetch all project data for Rachel's full context
       Promise.all([
         fetch(`/pinaxis/api/v1/projects/${anyProjectId}`).then(r => r.json()).catch(() => null),
-        fetch(`/pinaxis/api/v1/analysis/${anyProjectId}/all`).then(r => r.json()).catch(() => null)
-      ]).then(([projRes, analysisRes]) => {
+        fetch(`/pinaxis/api/v1/analysis/${anyProjectId}/all`).then(r => r.json()).catch(() => null),
+        fetch(`/pinaxis/api/v1/recommendations/${anyProjectId}`).then(r => r.json()).catch(() => null),
+        fetch(`/pinaxis/api/v1/benefits/${anyProjectId}`).then(r => r.json()).catch(() => null)
+      ]).then(([projRes, analysisRes, recsRes, benRes]) => {
         const proj = projRes?.data || projRes
         const analysis = analysisRes?.data || analysisRes
+        const recs = recsRes?.data || recsRes?.recommendations || recsRes || []
+        const benefits = benRes?.data || benRes
         const companyName = proj?.company_name || 'the prospect'
-        const ctx = buildPresentationContext(analysis, companyName)
+        const ctx = buildPresentationContext(analysis, companyName, recs, benefits)
         widget.setAttribute('context', ctx)
       })
     } else {
