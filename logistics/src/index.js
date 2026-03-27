@@ -151,6 +151,7 @@ try {
   const pricingSnapshotRoutes = require('./routes/pricing-snapshot');
   const approvalsRoutes = require('./routes/approvals');
   const videoRoutes = require('./routes/video');
+  const { router: proposalRoutes, proposalJobs, buildSlideHTML } = require('./routes/proposal');
 
   // Health check
   app.use(`${BASE_PATH}/health`, healthRoutes);
@@ -171,6 +172,144 @@ try {
   app.use(`${BASE_PATH}/api/v1/pricing-snapshot`, pricingSnapshotRoutes);
   app.use(`${BASE_PATH}/api/v1/approvals`, approvalsRoutes);
   app.use(`${BASE_PATH}/api/v1/video`, videoRoutes);
+  app.use(`${BASE_PATH}/api/v1/proposal`, proposalRoutes);
+
+  // Standalone proposal page (NO LOGIN REQUIRED)
+  app.get(`${BASE_PATH}/proposal/:projectId`, async (req, res) => {
+    try {
+      const projectId = req.params.projectId;
+      // Load data directly
+      const seq = models.sequelize;
+      const [projRows] = await seq.query('SELECT * FROM logistics_projects WHERE id = :projectId', { replacements: { projectId } });
+      const project = projRows[0];
+      if (!project) return res.status(404).send('Project not found');
+
+      const [analysisRows] = await seq.query('SELECT analysis_type, result_data FROM logistics_analysis_results WHERE project_id = :projectId', { replacements: { projectId } });
+      const analysis = {};
+      for (const row of analysisRows) {
+        analysis[row.analysis_type] = typeof row.result_data === 'string' ? JSON.parse(row.result_data) : row.result_data;
+      }
+
+      const companyName = project.company_name || 'Your Warehouse';
+      const slides = buildSlideHTML(analysis, companyName);
+      const slidesJSON = JSON.stringify(slides);
+      const audioBase = `${BASE_PATH}/api/v1/proposal/${projectId}/audio`;
+
+      res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PINAXIS Proposal — ${companyName}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0f172a;color:#e2e8f0;font-family:'Inter',system-ui,-apple-system,sans-serif;overflow:hidden;height:100vh}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.container{max-width:1200px;margin:0 auto;height:100vh;display:flex;flex-direction:column;padding:20px 40px}
+.header{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #1e293b;flex-shrink:0}
+.header h2{font-size:18px;color:#94a3b8;font-weight:400}
+.controls{display:flex;gap:12px;align-items:center}
+.controls button{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:8px 20px;border-radius:8px;cursor:pointer;font-size:14px;transition:all .2s}
+.controls button:hover{background:#334155}
+.controls button.active{background:#3b82f6;border-color:#3b82f6}
+.controls button:disabled{opacity:.4;cursor:not-allowed}
+.slide-counter{color:#64748b;font-size:13px}
+.voice-indicator{display:flex;align-items:center;gap:6px;color:#10b981;font-size:13px}
+.voice-indicator .dot{width:8px;height:8px;border-radius:50%;background:#10b981;animation:pulse 1.5s infinite}
+.slide-area{flex:1;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:30px 0}
+.slide{background:#1e293b;border:1px solid #334155;border-radius:16px;padding:50px;width:100%;max-width:1100px;min-height:500px}
+.slide h2{font-size:36px;color:#f8fafc;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #334155}
+.metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin:20px 0}
+.metric{background:#0f172a;border:1px solid #334155;border-radius:12px;padding:20px;text-align:center}
+.metric-value{font-size:28px;font-weight:bold}
+.metric-label{font-size:13px;color:#94a3b8;margin-top:6px}
+.info-box{background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:10px;padding:16px 20px;margin:12px 0;font-size:15px;color:#cbd5e1;line-height:1.6}
+.data-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px}
+.data-table th{text-align:left;padding:10px 12px;border-bottom:2px solid #334155;color:#94a3b8;text-transform:uppercase;font-size:11px;letter-spacing:.5px}
+.data-table td{padding:10px 12px;border-bottom:1px solid #1e293b;color:#e2e8f0}
+.data-table tr:hover td{background:rgba(59,130,246,0.05)}
+.steps{display:flex;flex-direction:column;gap:14px;margin:20px 0}
+.step{display:flex;align-items:center;gap:16px;padding:18px 20px;background:#0f172a;border:1px solid #334155;border-radius:12px}
+.step-num{width:40px;height:40px;border-radius:50%;background:#3b82f6;display:flex;align-items:center;justify-content:center;font-weight:bold;flex-shrink:0}
+.nav{display:flex;justify-content:space-between;align-items:center;padding:16px 0;flex-shrink:0}
+.dots{display:flex;gap:6px}
+.dot-nav{width:8px;height:8px;border-radius:50%;background:#334155;cursor:pointer;transition:all .2s}
+.dot-nav.active{background:#3b82f6;width:24px;border-radius:4px}
+.progress-bar{height:3px;background:#1e293b;border-radius:2px;margin-top:4px;flex-shrink:0}
+.progress-fill{height:100%;background:#3b82f6;border-radius:2px;transition:width .3s}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h2>PINAXIS Proposal — ${companyName}</h2>
+    <div class="controls">
+      <div class="voice-indicator" id="voiceStatus"><div class="dot"></div><span>Rachel AI Ready</span></div>
+      <span class="slide-counter" id="slideCounter">1 / ${slides.length}</span>
+      <button id="playBtn" class="active" onclick="togglePlay()">&#9654; Auto-Play</button>
+      <button id="prevBtn" onclick="prevSlide()" disabled>&larr; Prev</button>
+      <button id="nextBtn" onclick="nextSlide()">Next &rarr;</button>
+    </div>
+  </div>
+  <div class="slide-area"><div class="slide" id="slideContent"></div></div>
+  <div class="nav">
+    <div class="dots" id="dots"></div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+</div>
+
+<script>
+const slides = ${slidesJSON};
+const AUDIO_BASE = '${audioBase}';
+let current = 0, playing = true, audio = null;
+
+function render() {
+  const s = slides[current];
+  document.getElementById('slideContent').innerHTML = '<h2>' + s.title + '</h2>' + s.html;
+  document.getElementById('slideCounter').textContent = (current + 1) + ' / ' + slides.length;
+  document.getElementById('prevBtn').disabled = current === 0;
+  document.getElementById('nextBtn').disabled = current === slides.length - 1;
+  document.getElementById('progressFill').style.width = ((current + 1) / slides.length * 100) + '%';
+  // Dots
+  let dots = '';
+  for (let i = 0; i < slides.length; i++) dots += '<div class="dot-nav' + (i === current ? ' active' : '') + '" onclick="goSlide(' + i + ')"></div>';
+  document.getElementById('dots').innerHTML = dots;
+}
+
+function playAudio() {
+  if (audio) { audio.pause(); audio = null; }
+  if (!playing) return;
+  document.getElementById('voiceStatus').innerHTML = '<div class="dot"></div><span>Rachel speaking...</span>';
+  audio = new Audio(AUDIO_BASE + '/' + current);
+  audio.play().catch(() => {});
+  audio.onended = function() {
+    document.getElementById('voiceStatus').innerHTML = '<div class="dot"></div><span>Rachel AI Ready</span>';
+    if (playing && current < slides.length - 1) { current++; render(); playAudio(); }
+  };
+}
+
+function togglePlay() {
+  playing = !playing;
+  document.getElementById('playBtn').textContent = playing ? '⏸ Pause' : '▶ Auto-Play';
+  document.getElementById('playBtn').classList.toggle('active', playing);
+  if (playing) playAudio();
+  else if (audio) { audio.pause(); }
+}
+
+function prevSlide() { if (current > 0) { current--; render(); if (playing) playAudio(); } }
+function nextSlide() { if (current < slides.length - 1) { current++; render(); if (playing) playAudio(); } }
+function goSlide(i) { current = i; render(); if (playing) playAudio(); }
+
+render();
+// Auto-start after small delay
+setTimeout(() => { if (playing) playAudio(); }, 1500);
+</script>
+</body>
+</html>`);
+    } catch (err) {
+      console.error('[Proposal Page]', err);
+      res.status(500).send('Error loading proposal: ' + err.message);
+    }
+  });
 
   routesLoaded = true;
   console.log('✅ LOGISTICS routes loaded successfully');

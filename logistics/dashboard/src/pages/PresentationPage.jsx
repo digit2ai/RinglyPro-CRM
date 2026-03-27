@@ -27,23 +27,23 @@ export default function PresentationPage() {
   const [videoStatus, setVideoStatus] = useState(null) // null | { status, step, detail, downloadUrl, ... }
   const [videoPolling, setVideoPolling] = useState(false)
 
-  const startVideoGeneration = async () => {
+  const startProposalGeneration = async () => {
     if (!projectId) return
-    setVideoStatus({ status: 'generating', step: 'init', detail: 'Starting video generation...' })
+    setVideoStatus({ status: 'generating', step: 'init', detail: 'Generating Rachel narration...' })
     try {
-      await fetch(`/pinaxis/api/v1/video/${projectId}/generate`, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+      await fetch(`/pinaxis/api/v1/proposal/${projectId}/generate`, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
       setVideoPolling(true)
     } catch (err) {
       setVideoStatus({ status: 'error', step: 'error', detail: err.message })
     }
   }
 
-  // Poll video generation status
+  // Poll proposal generation status
   useEffect(() => {
     if (!videoPolling || !projectId) return
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`/pinaxis/api/v1/video/${projectId}/status`)
+        const res = await fetch(`/pinaxis/api/v1/proposal/${projectId}/status`)
         const data = await res.json()
         if (data.success) {
           setVideoStatus(data.data)
@@ -1061,10 +1061,10 @@ export default function PresentationPage() {
         <div className="flex items-center gap-3">
           <span className="text-xs text-slate-500">Slide {activeSlide + 1} / {slides.length}</span>
           {projectId && hasData && (
-            videoStatus?.status === 'completed' && videoStatus.downloadUrl ? (
-              <a href={videoStatus.downloadUrl} download className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500 transition-all">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
-                Download MP4 ({(videoStatus.size / 1024 / 1024).toFixed(0)} MB)
+            videoStatus?.status === 'completed' && videoStatus.proposalUrl ? (
+              <a href={videoStatus.proposalUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500 transition-all">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
+                Open Proposal Link
               </a>
             ) : videoStatus?.status === 'generating' ? (
               <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm">
@@ -1072,14 +1072,14 @@ export default function PresentationPage() {
                 <span className="text-blue-400">{videoStatus.detail || 'Generating...'}</span>
               </div>
             ) : videoStatus?.status === 'error' ? (
-              <button onClick={startVideoGeneration} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-900/30 border border-red-500/30 text-red-400 text-sm hover:bg-red-900/50 transition-all" title={videoStatus.detail}>
+              <button onClick={startProposalGeneration} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-900/30 border border-red-500/30 text-red-400 text-sm hover:bg-red-900/50 transition-all" title={videoStatus.detail}>
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
-                Retry Video
+                Retry
               </button>
             ) : (
-              <button onClick={startVideoGeneration} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-medium hover:bg-purple-500 transition-all">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h1.5C5.496 19.5 6 18.996 6 18.375m-2.625 0V5.625m0 0A1.125 1.125 0 014.5 4.5h15A1.125 1.125 0 0120.625 5.625m-17.25 0h17.25m0 0v12.75m0-12.75A1.125 1.125 0 0119.5 4.5h-15a1.125 1.125 0 00-1.125 1.125" /></svg>
-                Generate Video Proposal
+              <button onClick={startProposalGeneration} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-medium hover:bg-purple-500 transition-all">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
+                Generate Proposal Link
               </button>
             )
           )}
