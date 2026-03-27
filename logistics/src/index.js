@@ -150,6 +150,7 @@ try {
   const simulationRoutes = require('./routes/simulation');
   const pricingSnapshotRoutes = require('./routes/pricing-snapshot');
   const approvalsRoutes = require('./routes/approvals');
+  const videoRoutes = require('./routes/video');
 
   // Health check
   app.use(`${BASE_PATH}/health`, healthRoutes);
@@ -169,6 +170,7 @@ try {
   app.use(`${BASE_PATH}/api/v1/simulation`, simulationRoutes);
   app.use(`${BASE_PATH}/api/v1/pricing-snapshot`, pricingSnapshotRoutes);
   app.use(`${BASE_PATH}/api/v1/approvals`, approvalsRoutes);
+  app.use(`${BASE_PATH}/api/v1/video`, videoRoutes);
 
   routesLoaded = true;
   console.log('✅ LOGISTICS routes loaded successfully');
