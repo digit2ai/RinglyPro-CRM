@@ -36,7 +36,7 @@ router.post('/:projectId/generate', async (req, res) => {
 
   // Background generation
   try {
-    const models = req.app.get('logisticsModels') || req.app.get('models');
+    const models = req.models;
     const result = await generateVideoProposal(projectId, models, (step, detail) => {
       job.step = step;
       job.detail = detail;
