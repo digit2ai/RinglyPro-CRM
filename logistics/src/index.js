@@ -227,40 +227,60 @@ try {
 <title>PINAXIS Proposal — ${companyName}</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#0f172a;color:#e2e8f0;font-family:'Inter',system-ui,-apple-system,sans-serif;overflow:hidden;height:100vh}
+body{background:#0f172a;color:#e2e8f0;font-family:'Inter',system-ui,-apple-system,sans-serif;overflow-x:hidden;min-height:100vh}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
-.container{max-width:1200px;margin:0 auto;height:100vh;display:flex;flex-direction:column;padding:20px 40px}
-.header{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #1e293b;flex-shrink:0}
-.header h2{font-size:18px;color:#94a3b8;font-weight:400}
-.controls{display:flex;gap:12px;align-items:center}
-.controls button{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:8px 20px;border-radius:8px;cursor:pointer;font-size:14px;transition:all .2s}
+.container{max-width:1200px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;padding:12px 16px}
+.header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #1e293b;flex-shrink:0;gap:8px}
+.header h2{font-size:15px;color:#94a3b8;font-weight:400;flex-shrink:1;min-width:0}
+.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.controls button{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:13px;transition:all .2s;white-space:nowrap}
 .controls button:hover{background:#334155}
 .controls button.active{background:#3b82f6;border-color:#3b82f6}
 .controls button:disabled{opacity:.4;cursor:not-allowed}
-.slide-counter{color:#64748b;font-size:13px}
-.voice-indicator{display:flex;align-items:center;gap:6px;color:#10b981;font-size:13px}
-.voice-indicator .dot{width:8px;height:8px;border-radius:50%;background:#10b981;animation:pulse 1.5s infinite}
-.slide-area{flex:1;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:30px 0}
-.slide{background:#1e293b;border:1px solid #334155;border-radius:16px;padding:50px;width:100%;max-width:1100px;min-height:500px}
-.slide h2{font-size:36px;color:#f8fafc;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #334155}
-.metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin:20px 0}
-.metric{background:#0f172a;border:1px solid #334155;border-radius:12px;padding:20px;text-align:center}
-.metric-value{font-size:28px;font-weight:bold}
-.metric-label{font-size:13px;color:#94a3b8;margin-top:6px}
-.info-box{background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:10px;padding:16px 20px;margin:12px 0;font-size:15px;color:#cbd5e1;line-height:1.6}
-.data-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px}
-.data-table th{text-align:left;padding:10px 12px;border-bottom:2px solid #334155;color:#94a3b8;text-transform:uppercase;font-size:11px;letter-spacing:.5px}
-.data-table td{padding:10px 12px;border-bottom:1px solid #1e293b;color:#e2e8f0}
+.slide-counter{color:#64748b;font-size:12px;white-space:nowrap}
+.voice-indicator{display:flex;align-items:center;gap:5px;color:#10b981;font-size:12px;white-space:nowrap}
+.voice-indicator .dot{width:7px;height:7px;border-radius:50%;background:#10b981;animation:pulse 1.5s infinite;flex-shrink:0}
+.slide-area{flex:1;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:16px 0;-webkit-overflow-scrolling:touch}
+.slide{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:24px;width:100%;max-width:1100px}
+.slide h2{font-size:22px;color:#f8fafc;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #334155}
+.metrics-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:14px 0}
+.metric{background:#0f172a;border:1px solid #334155;border-radius:10px;padding:14px 10px;text-align:center}
+.metric-value{font-size:18px;font-weight:bold;word-break:break-all}
+.metric-label{font-size:11px;color:#94a3b8;margin-top:4px}
+.info-box{background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:12px 14px;margin:10px 0;font-size:13px;color:#cbd5e1;line-height:1.5}
+.data-table{width:100%;border-collapse:collapse;margin:12px 0;font-size:12px}
+.data-table th{text-align:left;padding:8px 6px;border-bottom:2px solid #334155;color:#94a3b8;text-transform:uppercase;font-size:10px;letter-spacing:.5px}
+.data-table td{padding:8px 6px;border-bottom:1px solid #1e293b;color:#e2e8f0}
 .data-table tr:hover td{background:rgba(59,130,246,0.05)}
-.steps{display:flex;flex-direction:column;gap:14px;margin:20px 0}
-.step{display:flex;align-items:center;gap:16px;padding:18px 20px;background:#0f172a;border:1px solid #334155;border-radius:12px}
-.step-num{width:40px;height:40px;border-radius:50%;background:#3b82f6;display:flex;align-items:center;justify-content:center;font-weight:bold;flex-shrink:0}
-.nav{display:flex;justify-content:space-between;align-items:center;padding:16px 0;flex-shrink:0}
-.dots{display:flex;gap:6px}
-.dot-nav{width:8px;height:8px;border-radius:50%;background:#334155;cursor:pointer;transition:all .2s}
-.dot-nav.active{background:#3b82f6;width:24px;border-radius:4px}
+.steps{display:flex;flex-direction:column;gap:10px;margin:14px 0}
+.step{display:flex;align-items:center;gap:12px;padding:14px;background:#0f172a;border:1px solid #334155;border-radius:10px;font-size:14px}
+.step-num{width:36px;height:36px;border-radius:50%;background:#3b82f6;display:flex;align-items:center;justify-content:center;font-weight:bold;flex-shrink:0;font-size:14px}
+.nav{display:flex;justify-content:center;align-items:center;padding:10px 0;flex-shrink:0}
+.dots{display:flex;gap:5px;flex-wrap:wrap;justify-content:center}
+.dot-nav{width:7px;height:7px;border-radius:50%;background:#334155;cursor:pointer;transition:all .2s}
+.dot-nav.active{background:#3b82f6;width:20px;border-radius:4px}
 .progress-bar{height:3px;background:#1e293b;border-radius:2px;margin-top:4px;flex-shrink:0}
 .progress-fill{height:100%;background:#3b82f6;border-radius:2px;transition:width .3s}
+
+/* Desktop overrides */
+@media(min-width:768px){
+  .container{padding:20px 40px}
+  .header h2{font-size:18px}
+  .controls button{padding:8px 20px;font-size:14px}
+  .slide-counter{font-size:13px}
+  .voice-indicator{font-size:13px}
+  .slide{padding:50px;min-height:500px}
+  .slide h2{font-size:36px;margin-bottom:20px;padding-bottom:16px}
+  .metrics-grid{grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin:20px 0}
+  .metric{padding:20px}
+  .metric-value{font-size:28px}
+  .metric-label{font-size:13px}
+  .info-box{padding:16px 20px;font-size:15px}
+  .data-table{font-size:14px}
+  .data-table th{padding:10px 12px;font-size:11px}
+  .data-table td{padding:10px 12px}
+  .step{padding:18px 20px}
+}
 </style>
 </head>
 <body>
@@ -276,14 +296,14 @@ body{background:#0f172a;color:#e2e8f0;font-family:'Inter',system-ui,-apple-syste
     </div>
   </div>
   <!-- Start splash (enables audio autoplay after user click) -->
-  <div id="startSplash" style="position:fixed;inset:0;z-index:100;background:#0f172a;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="startPresentation()">
-    <div style="text-align:center">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69b02d62034886f7c9e996d9.png" alt="PINAXIS" style="width:200px;height:200px;border-radius:20px;margin-bottom:30px;box-shadow:0 8px 32px rgba(59,130,246,0.2)">
-      <h1 style="font-size:42px;color:#f8fafc;margin-bottom:12px">PINAXIS Dashboard Playbook</h1>
-      <p style="color:#94a3b8;font-size:20px;margin-bottom:40px">${companyName}</p>
-      <div style="display:inline-flex;align-items:center;gap:12px;background:#3b82f6;padding:16px 40px;border-radius:12px;font-size:18px;font-weight:600;color:white;transition:all .2s">
-        <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-        Click to Start Presentation
+  <div id="startSplash" style="position:fixed;inset:0;z-index:100;background:#0f172a;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:20px" onclick="startPresentation()">
+    <div style="text-align:center;max-width:500px">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69b02d62034886f7c9e996d9.png" alt="PINAXIS" style="width:min(200px,40vw);height:min(200px,40vw);border-radius:20px;margin-bottom:24px;box-shadow:0 8px 32px rgba(59,130,246,0.2)">
+      <h1 style="font-size:min(36px,7vw);color:#f8fafc;margin-bottom:10px">PINAXIS Dashboard Playbook</h1>
+      <p style="color:#94a3b8;font-size:min(18px,4vw);margin-bottom:32px">${companyName}</p>
+      <div style="display:inline-flex;align-items:center;gap:10px;background:#3b82f6;padding:14px 32px;border-radius:12px;font-size:min(16px,4vw);font-weight:600;color:white;transition:all .2s">
+        <svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        Tap to Start
       </div>
       <p style="color:#64748b;margin-top:16px;font-size:14px">Rachel Voice AI will narrate each slide</p>
     </div>
