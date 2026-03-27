@@ -5,6 +5,7 @@ const path = require('path');
 const os = require('os');
 const https = require('https');
 const http = require('http');
+const { createCanvas } = require('canvas');
 
 // ffmpeg setup
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
@@ -102,10 +103,11 @@ async function generateTTS(text, outputPath) {
     text,
     model_id: 'eleven_multilingual_v2',
     voice_settings: {
-      stability: 0.6,
+      stability: 0.65,
       similarity_boost: 0.8,
-      style: 0.3,
-      use_speaker_boost: true
+      style: 0.2,
+      use_speaker_boost: true,
+      speed: 0.85
     }
   });
 
@@ -138,51 +140,154 @@ async function generateTTS(text, outputPath) {
 }
 
 /**
- * Capture a slide screenshot using Puppeteer
+ * Generate a branded slide image using node-canvas (no Puppeteer needed)
  */
-async function captureSlide(browser, baseUrl, projectId, slideIndex, outputPath) {
-  const page = await browser.newPage();
-  await page.setViewport({ width: SCREENSHOT_WIDTH, height: SCREENSHOT_HEIGHT });
+function generateSlideImage(slideIndex, title, bulletPoints, outputPath) {
+  const W = SCREENSHOT_WIDTH;
+  const H = SCREENSHOT_HEIGHT;
+  const canvas = createCanvas(W, H);
+  const ctx = canvas.getContext('2d');
 
-  // First navigate to set localStorage auth (bypass login screen)
-  const url = `${baseUrl}/pinaxis/presentation/${projectId}`;
-  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+  // Dark gradient background (matches Pinaxis dark theme)
+  const grad = ctx.createLinearGradient(0, 0, W, H);
+  grad.addColorStop(0, '#0f172a');  // slate-900
+  grad.addColorStop(1, '#1e293b');  // slate-800
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
 
-  // Inject auth into localStorage so the React app sees us as logged in
-  await page.evaluate(() => {
-    localStorage.setItem('logistics_auth', JSON.stringify({
-      email: 'video-generator@pinaxis.com', name: 'Video Generator'
-    }));
-  });
+  // Top accent bar
+  ctx.fillStyle = '#3b82f6';  // blue-500
+  ctx.fillRect(0, 0, W, 4);
 
-  // Reload to pick up the auth
-  await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 });
+  // Slide number badge
+  ctx.fillStyle = '#1e40af';  // blue-800
+  ctx.beginPath();
+  ctx.arc(100, 80, 30, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 24px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${slideIndex + 1}`, 100, 89);
 
-  // Wait for React to render
-  await new Promise(r => setTimeout(r, 2000));
+  // PINAXIS branding top-right
+  ctx.fillStyle = '#64748b';  // slate-500
+  ctx.font = '18px sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText('PINAXIS Warehouse Automation', W - 60, 85);
 
-  // Click the slide button to navigate to the correct slide
-  if (slideIndex > 0) {
-    const slideButtons = await page.$$('button');
-    // Find buttons with slide numbers (1., 2., etc.)
-    for (const btn of slideButtons) {
-      const text = await page.evaluate(el => el.textContent, btn);
-      if (text && text.trim().startsWith(`${slideIndex + 1}.`)) {
-        await btn.click();
-        await new Promise(r => setTimeout(r, 1500));
-        break;
+  // Title
+  ctx.fillStyle = '#f8fafc';  // slate-50
+  ctx.font = 'bold 44px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(title, 60, 170);
+
+  // Divider line
+  ctx.strokeStyle = '#334155';  // slate-700
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(60, 195);
+  ctx.lineTo(W - 60, 195);
+  ctx.stroke();
+
+  // Bullet points / content
+  ctx.font = '26px sans-serif';
+  let y = 260;
+  const lineHeight = 42;
+  const maxWidth = W - 160;
+
+  for (const point of bulletPoints) {
+    if (y > H - 100) break;
+
+    // Check if it's a section header (starts with uppercase and ends with :)
+    if (point.match(/^[A-Z].*:$/)) {
+      ctx.fillStyle = '#3b82f6';
+      ctx.font = 'bold 28px sans-serif';
+      y += 10;
+      ctx.fillText(point, 80, y);
+      ctx.font = '26px sans-serif';
+      y += lineHeight;
+      continue;
+    }
+
+    // Bullet dot
+    ctx.fillStyle = '#10b981';  // emerald-500
+    ctx.beginPath();
+    ctx.arc(85, y - 8, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Wrap text
+    ctx.fillStyle = '#cbd5e1';  // slate-300
+    const words = point.split(' ');
+    let line = '';
+    let subY = y;
+    for (const word of words) {
+      const test = line + word + ' ';
+      if (ctx.measureText(test).width > maxWidth && line) {
+        ctx.fillText(line.trim(), 105, subY);
+        line = word + ' ';
+        subY += lineHeight * 0.85;
+        if (subY > H - 100) break;
+      } else {
+        line = test;
       }
     }
+    if (subY <= H - 100) ctx.fillText(line.trim(), 105, subY);
+    y = subY + lineHeight;
   }
 
-  // Wait for charts to render
-  await new Promise(r => setTimeout(r, 1000));
+  // Bottom bar
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(0, H - 50, W, 50);
+  ctx.fillStyle = '#475569';
+  ctx.font = '16px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('PINAXIS Dashboard Playbook  |  Powered by Rachel Voice AI', W / 2, H - 20);
 
-  // Screenshot the full page
-  await page.screenshot({ path: outputPath, type: 'png', fullPage: false });
-
-  await page.close();
+  // Save
+  const buffer = canvas.toBuffer('image/png');
+  fs.writeFileSync(outputPath, buffer);
   return outputPath;
+}
+
+/**
+ * Build slide content (title + bullet points) from analysis data for each slide
+ */
+function buildSlideContent(analysis, companyName, recommendations, benefits) {
+  const a = analysis || {};
+  const ov = a.overview_kpis || {};
+  const skus = ov.skus || {};
+  const orders = ov.orders || {};
+  const dateRange = ov.date_range || {};
+  const fit = a.fit_analysis || {};
+  const abc = a.abc_classification || {};
+  const xyz = a.xyz_classification || {};
+  const dailyPerc = a.daily_percentiles || {};
+  const dailyVals = dailyPerc.daily_values || {};
+  const avgDay = dailyVals.average || {};
+  const p75Day = dailyVals.p75 || {};
+  const maxDay = dailyVals.max || {};
+  const extrap = a.extrapolation || {};
+  const y5 = (extrap.projections || []).find(p => p.year === 5) || {};
+  const orderStruct = a.order_structure || {};
+  const recs = Array.isArray(recommendations) ? recommendations : [];
+  const ben = benefits || {};
+  const fmt = n => n != null ? Number(n).toLocaleString() : '—';
+
+  return [
+    { title: `Dashboard Playbook — ${companyName}`, bullets: ['PINAXIS Warehouse Automation', `Data range: ${dateRange.from || '—'} to ${dateRange.to || '—'}`, `${dailyPerc.days || '—'} operating days analyzed`, '', 'Comprehensive warehouse data analysis', 'with product recommendations and ROI projections'] },
+    { title: 'Data Analysis — Gaining Valuable Insights', bullets: [`Total SKUs: ${fmt(skus.total)}  |  Moved SKUs: ${fmt(skus.active)}`, `Total Orders: ${fmt(orders.total_orders)}  |  Order Lines: ${fmt(orders.total_orderlines)}`, `Total Pick Units: ${fmt(orders.total_units)}`, `Avg Lines/Order: ${orders.avg_lines_per_order || '—'}`, `Bin Capable: ${skus.bin_capable_pct || '—'}%`, ...(ov.by_order_type || []).map(d => `${d.name}: ${d.pct_units}% of pick units`)] },
+    { title: 'Fit / No-Fit Analysis', bullets: [`Total Items: ${fmt(fit.total_items)}  |  With Dimensions: ${fmt(fit.items_with_dimensions)}`, `Missing Dimensions: ${fmt(fit.items_without_dimensions)}`, ...(fit.bins || []).map(b => `Bin ${b.name}: ${fmt(b.fit_count)} fit (${b.fit_pct_total}% of total)`), `Overall Bin-Capable: ${fit.overall_bin_capable_pct || '—'}%`] },
+    { title: 'ABC Classification', bullets: [`Gini Coefficient: ${abc.gini || '—'}`, ...Object.entries(abc.classes || {}).map(([cls, d]) => `${cls}: ${fmt(d.count)} SKUs (${d.pct}%) — ${d.pct_lines || d.volume_pct}% of lines, ${d.pct_picks || d.volume_pct}% picks`), `Design Day (P75): ${fmt(p75Day.order_lines)} order lines`, `Total Active SKUs: ${fmt(abc.total_skus)}  |  Dead Stock: ${fmt(abc.dead_stock_count)}`] },
+    { title: 'XYZ Seasonality Analysis', bullets: [`Total Moved SKUs: ${fmt(xyz.total_moved_skus)}`, ...(xyz.classes || []).map(c => `${c.class}: ${fmt(c.moved_skus)} SKUs (${c.pct_moved_skus}%) — ${c.pct_lines}% Lines, ${c.pct_picks}% Picks`)] },
+    { title: 'Order Profile', bullets: [`Total Orders: ${fmt(orderStruct.total_orders)}`, `Single-Line: ${orderStruct.single_line_pct || '—'}% (${fmt(orderStruct.single_line_orders)})`, `Multi-Line: ${orderStruct.multi_line_pct || '—'}% (${fmt(orderStruct.multi_line_orders)})`, `Avg Lines/Order: ${orders.avg_lines_per_order || '—'}`] },
+    { title: 'Percentiles — Design Basis', bullets: [`Average Day: ${fmt(avgDay.order_lines)} lines, ${fmt(avgDay.pick_units)} picks, ${fmt(avgDay.orders)} orders`, `75th Percentile (Design Day): ${fmt(p75Day.order_lines)} lines, ${fmt(p75Day.pick_units)} picks`, `Maximum: ${fmt(maxDay.order_lines)} lines, ${fmt(maxDay.pick_units)} picks`, `Working Hours: ${dailyPerc.working_hours || 12}h`] },
+    { title: `${extrap.years || 5}-Year Growth Extrapolation`, bullets: [`Growth Rate: ${extrap.growth_rate_pct || 5}% annual`, y5.design_day ? `Year 5: ${fmt(y5.design_day.order_lines)} lines/day (${fmt(y5.design_day.lines_per_hour)}/hr)` : '', y5.design_day ? `Year 5 Picks: ${fmt(y5.design_day.pick_units)}/day` : '', extrap.baseline ? `Baseline: ${fmt(extrap.baseline.order_lines)} lines/day` : ''].filter(Boolean) },
+    { title: 'Product Recommendations', bullets: recs.length > 0 ? recs.slice(0, 6).map(r => `${r.product_name}: Score ${Math.round(r.fit_score || 0)}/100`) : ['No recommendations computed yet'] },
+    { title: 'Client Benefit Projections', bullets: ben.summary ? [`Automation Readiness: ${ben.summary.automation_readiness_score || 0}/100`, `Est. Annual Savings: up to €${Math.round((ben.summary.annual_savings_high || 0) / 1000)}K`, `Payback: ${ben.summary.payback_months_low || '—'}–${ben.summary.payback_months_high || '—'} months`, ...(ben.projections || []).slice(0, 4).map(p => `${p.title}: +${p.improvement_pct}%`)] : ['No benefit projections computed yet'] },
+    { title: 'Hourly Throughput', bullets: [`Peak activity during main shift hours`, `System must sustain peak hourly rates during busiest windows`] },
+    { title: 'Top 10 SKUs', bullets: (abc.top_skus || []).slice(0, 10).map((s, i) => `#${i + 1} SKU ${s.sku}: ${fmt(Math.round(s.picks))} picks (${s.pct}%, Class ${s.class})`) },
+    { title: 'Next Steps', bullets: ['1. Review Concept Designs with engineering team', '2. Run Warehouse Simulations for throughput validation', '3. Review Commercial Proposal with ROI projections', '4. API Integration — connect WMS/ERP for live data', '5. Implementation with PINAXIS engineering support'] }
+  ];
 }
 
 /**
@@ -320,24 +425,17 @@ async function generateVideoProposal(projectId, models, progressCallback) {
       audioPaths.push(audioPath);
     }
 
-    // 5. Capture slide screenshots using Puppeteer
-    report('screenshots', 'Capturing slide screenshots...');
-    const puppeteer = require('puppeteer');
-    const browser = await puppeteer.launch({
-      headless: 'new',
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-      defaultViewport: { width: SCREENSHOT_WIDTH, height: SCREENSHOT_HEIGHT }
-    });
-
-    const baseUrl = process.env.RENDER_EXTERNAL_URL || process.env.BASE_URL || 'http://localhost:10000';
+    // 5. Generate slide images using node-canvas (no Puppeteer needed)
+    report('slides', 'Generating slide images...');
+    const slideContents = buildSlideContent(analysis, companyName, recRows, benefits);
     const screenshotPaths = [];
     for (let i = 0; i < SLIDE_COUNT; i++) {
-      report('screenshots', `Capturing slide ${i + 1}/${SLIDE_COUNT}...`);
+      report('slides', `Generating slide ${i + 1}/${SLIDE_COUNT}...`);
       const imgPath = path.join(workDir, `slide_${i}.png`);
-      await captureSlide(browser, baseUrl, projectId, i, imgPath);
+      const content = slideContents[i] || { title: `Slide ${i + 1}`, bullets: [] };
+      generateSlideImage(i, content.title, content.bullets, imgPath);
       screenshotPaths.push(imgPath);
     }
-    await browser.close();
 
     // 6. Create video segments for each slide
     report('video', 'Creating video segments...');
