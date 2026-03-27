@@ -144,30 +144,42 @@ async function captureSlide(browser, baseUrl, projectId, slideIndex, outputPath)
   const page = await browser.newPage();
   await page.setViewport({ width: SCREENSHOT_WIDTH, height: SCREENSHOT_HEIGHT });
 
-  // Navigate to presentation page
+  // First navigate to set localStorage auth (bypass login screen)
   const url = `${baseUrl}/pinaxis/presentation/${projectId}`;
+  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+
+  // Inject auth into localStorage so the React app sees us as logged in
+  await page.evaluate(() => {
+    localStorage.setItem('logistics_auth', JSON.stringify({
+      email: 'video-generator@pinaxis.com', name: 'Video Generator'
+    }));
+  });
+
+  // Reload to pick up the auth
   await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 });
+
+  // Wait for React to render
+  await new Promise(r => setTimeout(r, 2000));
 
   // Click the slide button to navigate to the correct slide
   if (slideIndex > 0) {
-    // Click slide buttons to navigate
-    const slideButtons = await page.$$('.flex.items-center.gap-2 button');
-    if (slideButtons[slideIndex]) {
-      await slideButtons[slideIndex].click();
-      await page.waitForTimeout(500);
+    const slideButtons = await page.$$('button');
+    // Find buttons with slide numbers (1., 2., etc.)
+    for (const btn of slideButtons) {
+      const text = await page.evaluate(el => el.textContent, btn);
+      if (text && text.trim().startsWith(`${slideIndex + 1}.`)) {
+        await btn.click();
+        await new Promise(r => setTimeout(r, 1500));
+        break;
+      }
     }
   }
 
   // Wait for charts to render
-  await page.waitForTimeout(1000);
+  await new Promise(r => setTimeout(r, 1000));
 
-  // Screenshot the slide card area
-  const slideCard = await page.$('.card');
-  if (slideCard) {
-    await slideCard.screenshot({ path: outputPath, type: 'png' });
-  } else {
-    await page.screenshot({ path: outputPath, type: 'png', fullPage: false });
-  }
+  // Screenshot the full page
+  await page.screenshot({ path: outputPath, type: 'png', fullPage: false });
 
   await page.close();
   return outputPath;
@@ -178,24 +190,21 @@ async function captureSlide(browser, baseUrl, projectId, slideIndex, outputPath)
  */
 function createSlideVideo(imagePath, audioPath, outputPath) {
   return new Promise((resolve, reject) => {
-    // Use mpeg4 encoder (always available) with mp3 audio copy
-    // Produces .avi intermediates, final concat re-muxes to mp4
-    const isAvi = outputPath.endsWith('.avi');
-    const opts = [
-      '-c:v', 'mpeg4',
-      '-q:v', '3',
-      '-c:a', 'mp3',
-      '-b:a', '192k',
-      '-shortest'
-    ];
-    if (!isAvi) {
-      opts.push('-pix_fmt', 'yuv420p', '-movflags', '+faststart');
-    }
     ffmpeg()
       .input(imagePath)
-      .inputOptions(['-loop', '1', '-framerate', '1'])
+      .inputOptions(['-loop', '1', '-framerate', '2'])
       .input(audioPath)
-      .outputOptions(opts)
+      .outputOptions([
+        '-c:v', 'mpeg4',
+        '-q:v', '2',
+        '-r', '2',
+        '-c:a', 'aac',
+        '-b:a', '192k',
+        '-ar', '44100',
+        '-pix_fmt', 'yuv420p',
+        '-shortest',
+        '-movflags', '+faststart'
+      ])
       .output(outputPath)
       .on('end', () => resolve(outputPath))
       .on('error', (err) => reject(new Error(`FFmpeg slide error: ${err.message}`)))
