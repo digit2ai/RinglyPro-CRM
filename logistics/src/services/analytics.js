@@ -380,9 +380,12 @@ async function computeThroughputHourly(models, projectId) {
 async function computeABCClassification(models, projectId) {
   const seq = models.sequelize;
 
-  // Get total picks per SKU
+  // Get all KPIs per SKU: order lines (row count), pick units (sum qty), distinct orders
   const [skuPicks] = await seq.query(`
-    SELECT sku, COALESCE(SUM(quantity), COUNT(*)) as total_picks
+    SELECT sku,
+      COUNT(*) as order_lines,
+      COALESCE(SUM(quantity), COUNT(*)) as total_picks,
+      COUNT(DISTINCT order_id) as orders
     FROM logistics_goods_out_data
     WHERE project_id = :projectId
     GROUP BY sku
@@ -394,6 +397,8 @@ async function computeABCClassification(models, projectId) {
   }
 
   const totalPicks = skuPicks.reduce((s, r) => s + parseFloat(r.total_picks), 0);
+  const totalOrderLines = skuPicks.reduce((s, r) => s + parseInt(r.order_lines), 0);
+  const totalOrders = skuPicks.reduce((s, r) => s + parseInt(r.orders), 0);
   const n = skuPicks.length;
 
   // ABC classification (descending order — A items first)
@@ -415,6 +420,8 @@ async function computeABCClassification(models, projectId) {
     skuData.push({
       sku: skuPicks[i].sku,
       picks: parseFloat(skuPicks[i].total_picks),
+      order_lines: parseInt(skuPicks[i].order_lines),
+      orders: parseInt(skuPicks[i].orders),
       pct: Math.round((parseFloat(skuPicks[i].total_picks) / totalPicks) * 100 * 100) / 100,
       cumulative_pct: Math.round((cumVolumeDesc / totalPicks) * 100 * 10) / 10,
       class: abcClass
@@ -448,10 +455,25 @@ async function computeABCClassification(models, projectId) {
   }
   const gini = Math.round((1 - 2 * areaUnderLorenz) * 1000) / 1000;
 
-  // Class summary
+  // Class summary — compute actual KPI aggregates per class
   const classA = skuData.filter(s => s.class === 'A');
   const classB = skuData.filter(s => s.class === 'B');
   const classC = skuData.filter(s => s.class === 'C');
+
+  const classAgg = {};
+  for (const cls of [{ name: 'A', items: classA }, { name: 'B', items: classB }, { name: 'C', items: classC }]) {
+    const sumPicks = cls.items.reduce((s, r) => s + r.picks, 0);
+    const sumLines = cls.items.reduce((s, r) => s + r.order_lines, 0);
+    const sumOrders = cls.items.reduce((s, r) => s + r.orders, 0);
+    classAgg[cls.name] = {
+      picks: sumPicks,
+      order_lines: sumLines,
+      orders: sumOrders,
+      pct_picks: totalPicks > 0 ? Math.round((sumPicks / totalPicks) * 100 * 10) / 10 : 0,
+      pct_lines: totalOrderLines > 0 ? Math.round((sumLines / totalOrderLines) * 100 * 10) / 10 : 0,
+      pct_orders: totalOrders > 0 ? Math.round((sumOrders / totalOrders) * 100 * 10) / 10 : 0
+    };
+  }
 
   // D-class: SKUs in item_master with ZERO outbound activity (dead stock)
   const [deadSkuResult] = await seq.query(`
@@ -485,29 +507,55 @@ async function computeABCClassification(models, projectId) {
       b_min_picks: Math.round(bThreshold),
       c_min_picks: 1
     },
+    total_order_lines: totalOrderLines,
+    total_orders: totalOrders,
     classes: {
       A: {
         count: classA.length,
         pct: Math.round((classA.length / totalSkusIncludingDead) * 100 * 10) / 10,
-        volume_pct: 80,
+        volume_pct: classAgg.A.pct_picks,
+        pct_lines: classAgg.A.pct_lines,
+        pct_picks: classAgg.A.pct_picks,
+        pct_orders: classAgg.A.pct_orders,
+        order_lines: classAgg.A.order_lines,
+        pick_units: classAgg.A.picks,
+        orders: classAgg.A.orders,
         threshold_label: aThreshold > 0 ? `≥ ${Math.round(aThreshold)} orderlines` : null
       },
       B: {
         count: classB.length,
         pct: Math.round((classB.length / totalSkusIncludingDead) * 100 * 10) / 10,
-        volume_pct: 15,
+        volume_pct: classAgg.B.pct_picks,
+        pct_lines: classAgg.B.pct_lines,
+        pct_picks: classAgg.B.pct_picks,
+        pct_orders: classAgg.B.pct_orders,
+        order_lines: classAgg.B.order_lines,
+        pick_units: classAgg.B.picks,
+        orders: classAgg.B.orders,
         threshold_label: (bThreshold > 0 && aThreshold > 0) ? `${Math.round(bThreshold)} – ${Math.round(aThreshold - 1)} orderlines` : null
       },
       C: {
         count: classC.length,
         pct: Math.round((classC.length / totalSkusIncludingDead) * 100 * 10) / 10,
-        volume_pct: 5,
+        volume_pct: classAgg.C.pct_picks,
+        pct_lines: classAgg.C.pct_lines,
+        pct_picks: classAgg.C.pct_picks,
+        pct_orders: classAgg.C.pct_orders,
+        order_lines: classAgg.C.order_lines,
+        pick_units: classAgg.C.picks,
+        orders: classAgg.C.orders,
         threshold_label: `1 – ${Math.round(bThreshold - 1)} orderlines`
       },
       D: {
         count: deadSkuCount,
         pct: Math.round((deadSkuCount / totalSkusIncludingDead) * 100 * 10) / 10,
         volume_pct: 0,
+        pct_lines: 0,
+        pct_picks: 0,
+        pct_orders: 0,
+        order_lines: 0,
+        pick_units: 0,
+        orders: 0,
         threshold_label: '0 orderlines — dead stock'
       }
     },

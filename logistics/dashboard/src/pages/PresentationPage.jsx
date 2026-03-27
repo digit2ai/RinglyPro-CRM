@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom'
 import { getProject, getAnalysisAll, getRecommendations, getBenefits } from '../lib/api'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend, LineChart, Line
+  PieChart, Pie, Cell, Legend, LineChart, Line, AreaChart, Area
 } from 'recharts'
 
 const COLORS = {
@@ -123,6 +123,17 @@ export default function PresentationPage() {
     if (!data) return null
     return { name: cls, pct: parseFloat(data.volume_pct) || 0, count: data.count || 0 }
   }).filter(Boolean)
+
+  // Pareto curve — sample lorenz_curve to ~100 points for performance
+  const rawLorenz = abc.lorenz_curve || []
+  const paretoCurveData = (() => {
+    if (rawLorenz.length <= 100) return rawLorenz
+    const step = Math.max(1, Math.floor(rawLorenz.length / 100))
+    const sampled = []
+    for (let i = 0; i < rawLorenz.length; i += step) sampled.push(rawLorenz[i])
+    if (sampled[sampled.length - 1] !== rawLorenz[rawLorenz.length - 1]) sampled.push(rawLorenz[rawLorenz.length - 1])
+    return sampled
+  })()
 
   const xyzChartData = xyzClasses.map(cls => ({
     name: cls.class,
@@ -325,28 +336,94 @@ export default function PresentationPage() {
       content: (
         <div className="space-y-6">
           <p className="text-slate-300">Pareto analysis — distinguish fast, medium, and slow-moving articles by order line volume.</p>
+          {/* Summary cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {['A', 'B', 'C', 'D'].map(cls => {
               const data = abcClasses[cls]
               if (!data) return null
               const labels = { A: 'Fast Movers', B: 'Medium Movers', C: 'Slow Movers', D: 'Dead Stock' }
+              const volLabels = { A: `${data.volume_pct}% of volume`, B: `${data.volume_pct}% of volume`, C: `${data.volume_pct}% of volume`, D: '0% of volume' }
               return (
                 <div key={cls} className={`p-4 rounded-lg border text-center ${cls === 'A' ? 'bg-emerald-900/20 border-emerald-500/30' : cls === 'B' ? 'bg-yellow-900/20 border-yellow-500/30' : cls === 'D' ? 'bg-red-900/20 border-red-500/30' : 'bg-slate-800/50 border-slate-700'}`}>
                   <p className={`text-2xl font-bold ${cls === 'A' ? 'text-emerald-400' : cls === 'B' ? 'text-yellow-400' : cls === 'D' ? 'text-red-400' : 'text-white'}`}>{fmt(data.count)}</p>
                   <p className="text-xs text-slate-400 mt-1">{cls} Items ({data.pct}%)</p>
                   <p className="text-xs text-slate-500 mt-0.5">{labels[cls]}</p>
-                  <p className="text-xs text-slate-500">{data.volume_pct}% of volume</p>
+                  <p className="text-xs text-slate-500">{volLabels[cls]}</p>
                 </div>
               )
             })}
           </div>
+          {/* Pareto / ABC Curve */}
+          {paretoCurveData.length > 2 && (
+            <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">ABC Curve — Accumulated Order Lines by SKU Rank</p>
+              <ResponsiveContainer width="100%" height={280}>
+                <AreaChart data={paretoCurveData} margin={{ top: 5, right: 20, left: 10, bottom: 20 }}>
+                  <defs>
+                    <linearGradient id="abcGradientA" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor={COLORS.blue} stopOpacity={0.8} />
+                      <stop offset={`${(abcClasses.A?.pct || 1)}%`} stopColor={COLORS.blue} stopOpacity={0.8} />
+                      <stop offset={`${(abcClasses.A?.pct || 1) + (abcClasses.B?.pct || 1)}%`} stopColor={COLORS.emerald} stopOpacity={0.6} />
+                      <stop offset="100%" stopColor={COLORS.slate} stopOpacity={0.3} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                  <XAxis dataKey="x" tick={{ fill: '#94a3b8', fontSize: 10 }} label={{ value: 'SKU Rank %', position: 'insideBottom', offset: -10, fill: '#64748b', fontSize: 11 }} unit="%" />
+                  <YAxis tick={{ fill: '#94a3b8', fontSize: 10 }} label={{ value: 'Accumulated Volume %', angle: -90, position: 'insideLeft', offset: 10, fill: '#64748b', fontSize: 11 }} unit="%" />
+                  <Tooltip {...tooltipStyle} formatter={(v) => `${v}%`} labelFormatter={(l) => `SKU Rank: ${l}%`} />
+                  <Area type="monotone" dataKey="y" name="Cumulative Volume" stroke={COLORS.blue} fill="url(#abcGradientA)" strokeWidth={2} dot={false} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+          {/* Full KPI Table — matches LogiVision format */}
+          <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-xs text-slate-500 uppercase tracking-wider border-b border-slate-700">
+                  <th className="py-2 px-2 text-left">ABC</th>
+                  <th className="py-2 px-2 text-right">SKUs</th>
+                  <th className="py-2 px-2 text-right">% of Total SKUs</th>
+                  <th className="py-2 px-2 text-right">% of Order Lines</th>
+                  <th className="py-2 px-2 text-right">% of Pick Units</th>
+                  <th className="py-2 px-2 text-right">% of Orders</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b border-slate-700/50 font-bold text-white">
+                  <td className="py-2 px-2">Totals</td>
+                  <td className="py-2 px-2 text-right">{fmt(abc.total_skus_including_dead || (abc.total_skus + (abc.dead_stock_count || 0)))}</td>
+                  <td className="py-2 px-2 text-right">100%</td>
+                  <td className="py-2 px-2 text-right">100%</td>
+                  <td className="py-2 px-2 text-right">100%</td>
+                  <td className="py-2 px-2 text-right">100%</td>
+                </tr>
+                {['A', 'B', 'C', 'D'].map(cls => {
+                  const data = abcClasses[cls]
+                  if (!data) return null
+                  const clsColor = cls === 'A' ? 'text-emerald-400' : cls === 'B' ? 'text-yellow-400' : cls === 'D' ? 'text-red-400' : 'text-slate-300'
+                  return (
+                    <tr key={cls} className="border-b border-slate-700/30 hover:bg-slate-700/20">
+                      <td className={`py-2 px-2 font-bold ${clsColor}`}>{cls}</td>
+                      <td className="py-2 px-2 text-right text-white">{fmt(data.count)}</td>
+                      <td className="py-2 px-2 text-right text-slate-300">{data.pct}%</td>
+                      <td className="py-2 px-2 text-right text-slate-300">{data.pct_lines != null ? `${data.pct_lines}%` : `${data.volume_pct}%`}</td>
+                      <td className="py-2 px-2 text-right text-slate-300">{data.pct_picks != null ? `${data.pct_picks}%` : `${data.volume_pct}%`}</td>
+                      <td className="py-2 px-2 text-right text-slate-300">{data.pct_orders != null ? `${data.pct_orders}%` : '—'}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+          {/* Volume % bar chart */}
           {abcChartData.length > 0 && (
             <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
               <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Volume % by Class</p>
-              <ResponsiveContainer width="100%" height={250}>
+              <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={abcChartData} layout="vertical" margin={{ top: 5, right: 30, left: 30, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                  <XAxis type="number" tick={{ fill: '#94a3b8', fontSize: 11 }} unit="%" />
+                  <XAxis type="number" tick={{ fill: '#94a3b8', fontSize: 11 }} unit="%" domain={[0, 100]} />
                   <YAxis dataKey="name" type="category" tick={{ fill: '#94a3b8', fontSize: 13, fontWeight: 'bold' }} width={30} />
                   <Tooltip {...tooltipStyle} formatter={(v) => `${v}%`} />
                   <Bar dataKey="pct" name="Volume %" radius={[0, 6, 6, 0]}>
@@ -358,16 +435,27 @@ export default function PresentationPage() {
               </ResponsiveContainer>
             </div>
           )}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
-              <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Gini Coefficient</p>
-              <p className="text-2xl font-bold text-white">{abc.gini || '—'}</p>
-              <p className="text-xs text-slate-400 mt-1">{abc.gini >= 0.7 ? 'Highly concentrated — strong ABC separation' : abc.gini >= 0.4 ? 'Moderate concentration' : 'Relatively even distribution'}</p>
+          {/* Design Day / Design Hour + Gini */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700 text-center">
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Design Day</p>
+              <p className="text-lg font-bold text-white">{fmt(p75Day.order_lines)}</p>
+              <p className="text-xs text-slate-400">Order Lines</p>
             </div>
-            <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
-              <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Total Active SKUs</p>
-              <p className="text-2xl font-bold text-white">{fmt(abc.total_skus)}</p>
-              <p className="text-xs text-slate-400 mt-1">Including {fmt(abc.dead_stock_count)} dead stock</p>
+            <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700 text-center">
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Design Hour</p>
+              <p className="text-lg font-bold text-white">{fmt(p75Hr.order_lines)}</p>
+              <p className="text-xs text-slate-400">Order Lines</p>
+            </div>
+            <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700 text-center">
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Gini Coefficient</p>
+              <p className="text-lg font-bold text-white">{abc.gini || '—'}</p>
+              <p className="text-xs text-slate-400">{abc.gini >= 0.7 ? 'Strong ABC separation' : abc.gini >= 0.4 ? 'Moderate' : 'Even distribution'}</p>
+            </div>
+            <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700 text-center">
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Total Active SKUs</p>
+              <p className="text-lg font-bold text-white">{fmt(abc.total_skus)}</p>
+              <p className="text-xs text-slate-400">+ {fmt(abc.dead_stock_count)} dead stock</p>
             </div>
           </div>
         </div>
