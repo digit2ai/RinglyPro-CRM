@@ -311,23 +311,25 @@ function render() {
   document.getElementById('dots').innerHTML = dots;
 }
 
+var retryTimer = null;
 function playAudio() {
+  if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
   if (audio) { audio.pause(); audio = null; }
   if (!playing) return;
-  document.getElementById('voiceStatus').innerHTML = '<div class="dot"></div><span>Rachel speaking...</span>';
+  document.getElementById('voiceStatus').innerHTML = '<div class="dot"></div><span>Loading audio...</span>';
   audio = new Audio(AUDIO_BASE + '/' + current);
-  audio.play().then(() => {
-    console.log('Playing slide ' + (current + 1));
-  }).catch((e) => {
-    console.log('Audio not ready for slide ' + (current + 1) + ', retrying in 3s...', e.message);
-    document.getElementById('voiceStatus').innerHTML = '<div class="dot"></div><span>Generating audio...</span>';
-    setTimeout(() => playAudio(), 3000);
-  });
-  audio.onerror = function() {
-    console.log('Audio error for slide ' + (current + 1) + ', retrying in 3s...');
-    document.getElementById('voiceStatus').innerHTML = '<div class="dot"></div><span>Generating audio...</span>';
-    setTimeout(() => playAudio(), 3000);
+  var retrying = false;
+  function scheduleRetry() {
+    if (retrying) return;
+    retrying = true;
+    document.getElementById('voiceStatus').innerHTML = '<div class="dot"></div><span>Generating audio... please wait</span>';
+    retryTimer = setTimeout(function() { retrying = false; playAudio(); }, 5000);
+  }
+  audio.oncanplaythrough = function() {
+    document.getElementById('voiceStatus').innerHTML = '<div class="dot"></div><span>Rachel speaking...</span>';
   };
+  audio.play().catch(function() { scheduleRetry(); });
+  audio.onerror = function() { scheduleRetry(); };
   audio.onended = function() {
     document.getElementById('voiceStatus').innerHTML = '<div class="dot"></div><span>Rachel AI Ready</span>';
     if (playing && current < slides.length - 1) { current++; render(); playAudio(); }
