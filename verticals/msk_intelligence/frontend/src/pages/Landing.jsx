@@ -7,8 +7,15 @@ export default function Landing() {
     <div className="min-h-screen bg-dark-950">
       {/* Hero */}
       <header className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-msk-950 via-dark-950 to-dark-900" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-msk-600/10 via-transparent to-transparent" />
+        <div className="absolute inset-0">
+          <img
+            src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69c7fbd05eea8363cb559a83.jpg"
+            alt=""
+            className="w-full h-full object-cover"
+          />
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-r from-dark-950/95 via-dark-950/80 to-dark-950/40" />
+        <div className="absolute inset-0 bg-gradient-to-t from-dark-950 via-transparent to-transparent" />
 
         <nav className="relative z-10 max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
           <div className="flex items-center gap-5">
@@ -85,6 +92,24 @@ export default function Landing() {
                 <div className="text-sm text-dark-400">{stat.sub}</div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Visual Showcase */}
+      <section className="relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 py-16">
+          <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-dark-700">
+            <img
+              src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69c7fbd05eea837aca559a82.jpg"
+              alt="MSK Intelligence — Advanced Musculoskeletal Diagnostics"
+              className="w-full h-auto object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-dark-950/60 via-transparent to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-8">
+              <p className="text-white text-lg font-semibold">AI-Powered Musculoskeletal Analysis</p>
+              <p className="text-dark-300 text-sm mt-1">From imaging to recovery — precision diagnostics for peak performance</p>
+            </div>
           </div>
         </div>
       </section>
