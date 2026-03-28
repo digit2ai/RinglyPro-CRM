@@ -12,6 +12,8 @@ const NAV_ITEMS = {
     { path: '/appointments', label: 'Appointments', icon: '📅' },
     { path: '/consultations', label: 'Video Consults', icon: '📹' },
     { path: '/proms', label: 'Assessments', icon: '📝' },
+    { path: '/rehab', label: 'My Exercises', icon: '🏋️' },
+    { path: '/rpm', label: 'Monitoring', icon: '📱' },
     { path: '/reports', label: 'Reports', icon: '📄' },
   ],
   radiologist: [

@@ -38,6 +38,9 @@ const schedulingRoutes = require('./routes/scheduling');
 const promsRoutes = require('./routes/proms');
 const analyticsRoutes = require('./routes/analytics');
 const fhirRoutes = require('./routes/fhir');
+const rehabRoutes = require('./routes/rehab');
+const rpmRoutes = require('./routes/rpm');
+const workersCompRoutes = require('./routes/workerscomp');
 
 router.use('/api/v1/auth', authRoutes);
 router.use('/api/v1/cases', authenticate, caseRoutes);
@@ -57,6 +60,9 @@ router.use('/api/v1/scheduling', authenticate, schedulingRoutes);
 router.use('/api/v1/proms', authenticate, promsRoutes);
 router.use('/api/v1/analytics', authenticate, analyticsRoutes);
 router.use('/api/v1/fhir', authenticate, fhirRoutes);
+router.use('/api/v1/rehab', authenticate, rehabRoutes);
+router.use('/api/v1/rpm', authenticate, rpmRoutes);
+router.use('/api/v1/workerscomp', authenticate, workersCompRoutes);
 
 // Notifications API
 router.get('/api/v1/notifications', authenticate, async (req, res) => {
@@ -83,6 +89,31 @@ router.get('/api/v1/billing/claims', authenticate, async (req, res) => {
   try {
     const [claims] = await sequelize.query(`SELECT * FROM msk_claims ORDER BY created_at DESC LIMIT 100`);
     res.json({ success: true, data: claims });
+  } catch (err) { res.json({ success: true, data: [] }); }
+});
+
+// ROM Measurements
+router.post('/api/v1/rom/measurements', authenticate, async (req, res) => {
+  try {
+    const { caseId, consultationId, assessmentType, bodySide, angleDegrees, normalRangeMin, normalRangeMax, collectionPoint } = req.body;
+    if (!caseId || !assessmentType || angleDegrees === undefined) {
+      return res.status(400).json({ error: 'caseId, assessmentType, and angleDegrees required' });
+    }
+    const [result] = await sequelize.query(`
+      INSERT INTO msk_rom_measurements (case_id, consultation_id, patient_id, assessment_type, body_side, angle_degrees, normal_range_min, normal_range_max, collection_point)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *
+    `, { bind: [caseId, consultationId || null, req.user.userId, assessmentType, bodySide || 'right', angleDegrees, normalRangeMin || 0, normalRangeMax || 180, collectionPoint || 'follow_up'] });
+    res.status(201).json({ success: true, data: result[0] });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.get('/api/v1/rom/measurements/:caseId', authenticate, async (req, res) => {
+  try {
+    const [measurements] = await sequelize.query(
+      `SELECT * FROM msk_rom_measurements WHERE case_id = $1 ORDER BY measured_at DESC`,
+      { bind: [req.params.caseId] }
+    );
+    res.json({ success: true, data: measurements });
   } catch (err) { res.json({ success: true, data: [] }); }
 });
 
@@ -762,6 +793,180 @@ async function runMigrations() {
         ('73221', 'MRI shoulder joint without contrast', 'imaging', 286.00)
       `);
       console.log('[MSK] CPT codes seeded');
+    }
+
+    // Phase 4: ROM Measurements
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS msk_rom_measurements (
+        id SERIAL PRIMARY KEY,
+        case_id INTEGER REFERENCES msk_cases(id),
+        consultation_id INTEGER REFERENCES msk_consultations(id),
+        patient_id INTEGER REFERENCES msk_users(id),
+        tenant_id INTEGER REFERENCES msk_tenants(id),
+        assessment_type VARCHAR(50),
+        body_side VARCHAR(10),
+        angle_degrees NUMERIC(5,1),
+        normal_range_min NUMERIC(5,1),
+        normal_range_max NUMERIC(5,1),
+        snapshot_url TEXT,
+        collection_point VARCHAR(30),
+        measured_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_msk_rom_case ON msk_rom_measurements(case_id);
+    `);
+
+    // Phase 4: Exercise Library + HEP
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS msk_exercise_library (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT,
+        body_region VARCHAR(30),
+        category VARCHAR(30),
+        instructions TEXT,
+        video_url TEXT,
+        thumbnail_url TEXT,
+        sets_default INT DEFAULT 3,
+        reps_default INT DEFAULT 10,
+        hold_seconds_default INT,
+        frequency_per_week INT DEFAULT 5,
+        difficulty VARCHAR(10) DEFAULT 'moderate'
+      );
+
+      CREATE TABLE IF NOT EXISTS msk_hep_programs (
+        id SERIAL PRIMARY KEY,
+        case_id INTEGER REFERENCES msk_cases(id),
+        patient_id INTEGER REFERENCES msk_users(id),
+        provider_id INTEGER REFERENCES msk_users(id),
+        tenant_id INTEGER REFERENCES msk_tenants(id),
+        name TEXT,
+        start_date DATE,
+        end_date DATE,
+        status VARCHAR(20) DEFAULT 'active'
+          CHECK (status IN ('active','completed','paused','cancelled')),
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS msk_hep_exercises (
+        id SERIAL PRIMARY KEY,
+        program_id INTEGER REFERENCES msk_hep_programs(id) ON DELETE CASCADE,
+        exercise_id INTEGER REFERENCES msk_exercise_library(id),
+        sets INT,
+        reps INT,
+        hold_seconds INT,
+        frequency_per_week INT,
+        notes TEXT,
+        sort_order INT
+      );
+
+      CREATE TABLE IF NOT EXISTS msk_hep_sessions (
+        id SERIAL PRIMARY KEY,
+        program_id INTEGER REFERENCES msk_hep_programs(id) ON DELETE CASCADE,
+        patient_id INTEGER REFERENCES msk_users(id),
+        completed_at TIMESTAMPTZ DEFAULT NOW(),
+        exercises_completed JSONB DEFAULT '[]',
+        overall_pain_score SMALLINT,
+        duration_minutes INT
+      );
+      CREATE INDEX IF NOT EXISTS idx_msk_hep_sessions_program ON msk_hep_sessions(program_id);
+    `);
+
+    // Phase 4: Workers' Comp extensions
+    await sequelize.query(`
+      ALTER TABLE msk_cases ADD COLUMN IF NOT EXISTS employer_name TEXT;
+      ALTER TABLE msk_cases ADD COLUMN IF NOT EXISTS employer_contact_email TEXT;
+      ALTER TABLE msk_cases ADD COLUMN IF NOT EXISTS claim_number TEXT;
+      ALTER TABLE msk_cases ADD COLUMN IF NOT EXISTS injury_date DATE;
+      ALTER TABLE msk_cases ADD COLUMN IF NOT EXISTS tpa_name TEXT;
+
+      CREATE TABLE IF NOT EXISTS msk_employers (
+        id SERIAL PRIMARY KEY,
+        tenant_id INTEGER REFERENCES msk_tenants(id),
+        name TEXT NOT NULL,
+        contact_email TEXT,
+        contact_phone TEXT,
+        address TEXT,
+        tpa_name TEXT,
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS msk_ime_reports (
+        id SERIAL PRIMARY KEY,
+        case_id INTEGER REFERENCES msk_cases(id),
+        provider_id INTEGER REFERENCES msk_users(id),
+        employer_id INTEGER REFERENCES msk_employers(id),
+        work_related BOOLEAN,
+        causation_opinion TEXT,
+        max_medical_improvement_date DATE,
+        permanent_impairment_rating NUMERIC(4,1),
+        work_restrictions TEXT,
+        return_to_work_date DATE,
+        report_text TEXT,
+        pdf_url TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+
+    // Phase 4: RPM
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS msk_rpm_enrollments (
+        id SERIAL PRIMARY KEY,
+        patient_id INTEGER REFERENCES msk_users(id),
+        case_id INTEGER REFERENCES msk_cases(id),
+        provider_id INTEGER REFERENCES msk_users(id),
+        tenant_id INTEGER REFERENCES msk_tenants(id),
+        start_date DATE,
+        end_date DATE,
+        monitoring_type VARCHAR(30),
+        status VARCHAR(20) DEFAULT 'active',
+        cpt_code VARCHAR(10) DEFAULT '99454',
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS msk_rpm_readings (
+        id SERIAL PRIMARY KEY,
+        enrollment_id INTEGER REFERENCES msk_rpm_enrollments(id),
+        patient_id INTEGER REFERENCES msk_users(id),
+        reading_type VARCHAR(30),
+        value NUMERIC(10,2),
+        unit TEXT,
+        source VARCHAR(20),
+        recorded_at TIMESTAMPTZ NOT NULL,
+        synced_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_msk_rpm_readings ON msk_rpm_readings(enrollment_id, recorded_at);
+    `);
+
+    // Seed exercise library
+    const [existingExercises] = await sequelize.query(
+      `SELECT id FROM msk_exercise_library LIMIT 1`
+    );
+    if (existingExercises.length === 0) {
+      await sequelize.query(`
+        INSERT INTO msk_exercise_library (name, description, body_region, category, instructions, sets_default, reps_default, hold_seconds_default, frequency_per_week, difficulty) VALUES
+        ('Quad Sets', 'Isometric quadriceps contraction', 'knee', 'strengthening', 'Sit with leg extended. Tighten thigh muscle pressing back of knee into floor. Hold 5 seconds.', 3, 10, 5, 5, 'easy'),
+        ('Straight Leg Raise', 'Hip flexion with knee locked', 'knee', 'strengthening', 'Lie on back. Tighten thigh, raise leg 12 inches off floor with knee locked. Hold 3 seconds.', 3, 10, 3, 5, 'easy'),
+        ('Heel Slides', 'Active knee flexion in supine', 'knee', 'range_of_motion', 'Lie on back. Slide heel toward buttock bending knee as far as comfortable. Slowly return.', 3, 15, NULL, 5, 'easy'),
+        ('Wall Slides', 'Partial squat against wall', 'knee', 'strengthening', 'Lean back against wall, feet 12 inches from wall. Slide down 45 degrees. Hold 5 seconds.', 3, 10, 5, 4, 'moderate'),
+        ('Step-Ups', 'Forward step onto elevated surface', 'knee', 'strengthening', 'Step up onto a 6-inch step leading with affected leg. Step down slowly. Repeat.', 3, 10, NULL, 4, 'moderate'),
+        ('Pendulum Exercises', 'Gravity-assisted shoulder ROM', 'shoulder', 'range_of_motion', 'Bend at waist supporting yourself with unaffected arm. Let affected arm hang. Swing gently in circles.', 3, 15, NULL, 5, 'easy'),
+        ('Wall Crawl', 'Shoulder flexion using wall', 'shoulder', 'range_of_motion', 'Face wall at arms length. Walk fingers up the wall as high as possible. Hold at top 5 seconds.', 3, 10, 5, 5, 'easy'),
+        ('External Rotation with Band', 'Rotator cuff strengthening', 'shoulder', 'strengthening', 'Elbow at side bent 90 degrees. Hold resistance band. Rotate forearm outward. Slowly return.', 3, 12, NULL, 4, 'moderate'),
+        ('Shoulder Shrugs', 'Upper trapezius activation', 'shoulder', 'strengthening', 'Stand straight. Raise shoulders toward ears. Hold 3 seconds. Lower slowly.', 3, 15, 3, 5, 'easy'),
+        ('Scapular Squeezes', 'Rhomboid and mid-trap activation', 'shoulder', 'strengthening', 'Sit or stand tall. Squeeze shoulder blades together. Hold 5 seconds. Release.', 3, 12, 5, 5, 'easy'),
+        ('Cat-Cow Stretch', 'Spinal mobility exercise', 'spine', 'range_of_motion', 'On hands and knees. Arch back up (cat). Then let belly drop (cow). Alternate slowly.', 3, 10, NULL, 5, 'easy'),
+        ('Pelvic Tilts', 'Core stabilization', 'spine', 'strengthening', 'Lie on back, knees bent. Flatten lower back into floor by tightening abs. Hold 5 seconds.', 3, 15, 5, 5, 'easy'),
+        ('Bird-Dog', 'Core and balance exercise', 'spine', 'strengthening', 'On hands and knees. Extend opposite arm and leg simultaneously. Hold 5 seconds. Alternate.', 3, 10, 5, 4, 'moderate'),
+        ('Bridges', 'Glute and core activation', 'spine', 'strengthening', 'Lie on back, knees bent. Lift hips off floor squeezing glutes. Hold 5 seconds. Lower slowly.', 3, 12, 5, 5, 'easy'),
+        ('Child Pose', 'Lumbar flexion stretch', 'spine', 'stretching', 'Kneel and sit back on heels. Reach arms forward on floor. Hold and breathe deeply.', 3, 1, 30, 5, 'easy'),
+        ('Hip Flexor Stretch', 'Iliopsoas lengthening', 'hip', 'stretching', 'Kneel on affected side. Push hips forward keeping back upright. Hold 30 seconds.', 3, 3, 30, 5, 'easy'),
+        ('Clamshells', 'Hip abductor strengthening', 'hip', 'strengthening', 'Lie on side, knees bent. Keep feet together, open top knee like a clamshell. Hold 3 seconds.', 3, 15, 3, 5, 'easy'),
+        ('Single Leg Balance', 'Proprioception training', 'ankle', 'balance', 'Stand on one foot near a support. Hold balance for 30 seconds. Progress to eyes closed.', 3, 3, 30, 5, 'moderate'),
+        ('Ankle Alphabet', 'Ankle mobility exercise', 'ankle', 'range_of_motion', 'Sit with foot elevated. Trace the alphabet in the air with your big toe. Complete A-Z.', 2, 1, NULL, 5, 'easy'),
+        ('Calf Raises', 'Gastrocnemius strengthening', 'ankle', 'strengthening', 'Stand on edge of step. Rise up on toes. Hold 2 seconds. Lower slowly below step level.', 3, 15, 2, 4, 'moderate')
+      `);
+      console.log('[MSK] Exercise library seeded (20 exercises)');
     }
 
     // Seed provider availability for demo radiologist

@@ -6,7 +6,10 @@ export default defineConfig({
   base: '/msk/',
   build: {
     outDir: 'dist',
-    emptyOutDir: true
+    emptyOutDir: true,
+    rollupOptions: {
+      external: ['@mediapipe/tasks-vision']
+    }
   },
   server: {
     proxy: {

@@ -21,6 +21,9 @@ import ScheduleAppointment from './pages/ScheduleAppointment';
 import MyAppointments from './pages/MyAppointments';
 import PROMs from './pages/PROMs';
 import Billing from './pages/Billing';
+import MyRehab from './pages/MyRehab';
+import CreateHEP from './pages/CreateHEP';
+import RPMDashboard from './pages/RPMDashboard';
 import NotFound from './pages/NotFound';
 import Layout from './components/Layout';
 
@@ -70,6 +73,13 @@ export default function App() {
               <Route path="/appointments" element={<MyAppointments />} />
               <Route path="/appointments/schedule" element={<ScheduleAppointment />} />
               <Route path="/proms" element={<PROMs />} />
+              <Route path="/rehab" element={<MyRehab />} />
+              <Route path="/rehab/create" element={
+                <ProtectedRoute allowedRoles={['admin', 'radiologist', 'staff']}>
+                  <CreateHEP />
+                </ProtectedRoute>
+              } />
+              <Route path="/rpm" element={<RPMDashboard />} />
               <Route path="/settings/mfa" element={<MFASetup />} />
               <Route path="/billing" element={
                 <ProtectedRoute allowedRoles={['admin', 'radiologist', 'staff']}>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../services/api';
 import ImagingUpload from '../components/ImagingUpload';
+import ROMAssessment from '../components/ROMAssessment';
 
 export default function CaseDetail() {
   const { id } = useParams();
@@ -293,17 +294,23 @@ export default function CaseDetail() {
               <a href={`/msk/api/v1/fhir/cases/${id}/export/pdf`} target="_blank" rel="noopener noreferrer" className="btn-secondary w-full text-center text-sm block">
                 📄 Export PDF
               </a>
+              {['admin', 'radiologist', 'staff'].includes(user?.role) && (
+                <Link to={`/rehab/create?caseId=${id}&patientId=${caseData.patient_id || ''}`} className="btn-secondary w-full text-center text-sm block">
+                  🏋️ Create Exercise Program
+                </Link>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Imaging Upload Section */}
-      <div className="mt-6">
+      {/* Imaging Upload + ROM Assessment */}
+      <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="card">
           <h2 className="text-lg font-bold text-white mb-4">Upload Imaging</h2>
           <ImagingUpload caseId={id} onUploadComplete={() => loadCase()} />
         </div>
+        <ROMAssessment caseId={parseInt(id)} onMeasurementSaved={() => loadCase()} />
       </div>
     </div>
   );
