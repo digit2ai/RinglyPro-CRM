@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import api from './services/api';
 
 // Pages
@@ -16,6 +16,12 @@ import VoiceIntake from './pages/VoiceIntake';
 import VideoRoom from './pages/VideoRoom';
 import Consultations from './pages/Consultations';
 import MFASetup from './pages/MFASetup';
+import Messaging from './pages/Messaging';
+import ScheduleAppointment from './pages/ScheduleAppointment';
+import MyAppointments from './pages/MyAppointments';
+import PROMs from './pages/PROMs';
+import Billing from './pages/Billing';
+import NotFound from './pages/NotFound';
 import Layout from './components/Layout';
 
 function ProtectedRoute({ children, allowedRoles }) {
@@ -59,12 +65,23 @@ export default function App() {
               <Route path="/cases/:id" element={<CaseDetail />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/consultations" element={<Consultations />} />
+              <Route path="/messages" element={<Messaging />} />
+              <Route path="/messages/:caseId" element={<Messaging />} />
+              <Route path="/appointments" element={<MyAppointments />} />
+              <Route path="/appointments/schedule" element={<ScheduleAppointment />} />
+              <Route path="/proms" element={<PROMs />} />
               <Route path="/settings/mfa" element={<MFASetup />} />
+              <Route path="/billing" element={
+                <ProtectedRoute allowedRoles={['admin', 'radiologist', 'staff']}>
+                  <Billing />
+                </ProtectedRoute>
+              } />
               <Route path="/admin" element={
                 <ProtectedRoute allowedRoles={['admin', 'radiologist']}>
                   <AdminDashboard />
                 </ProtectedRoute>
               } />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </Layout>
         </ProtectedRoute>

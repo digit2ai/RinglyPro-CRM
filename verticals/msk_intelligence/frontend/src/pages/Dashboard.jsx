@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import { SkeletonDashboard } from '../components/Skeleton';
 
 export default function Dashboard() {
   const user = api.getUser();
@@ -108,7 +109,7 @@ export default function Dashboard() {
         </div>
 
         {loading ? (
-          <div className="text-center py-12 text-dark-400">Loading...</div>
+          <SkeletonDashboard />
         ) : cases.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-4xl mb-4">🦴</div>

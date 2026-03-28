@@ -34,6 +34,10 @@ const voiceRoutes = require('./routes/voice');
 const messageRoutes = require('./routes/messages');
 const videoRoutes = require('./routes/video');
 const mfaRoutes = require('./routes/mfa');
+const schedulingRoutes = require('./routes/scheduling');
+const promsRoutes = require('./routes/proms');
+const analyticsRoutes = require('./routes/analytics');
+const fhirRoutes = require('./routes/fhir');
 
 router.use('/api/v1/auth', authRoutes);
 router.use('/api/v1/cases', authenticate, caseRoutes);
@@ -49,6 +53,52 @@ router.use('/api/v1/voice', voiceRoutes);
 router.use('/api/v1/video', videoRoutes);
 router.use('/api/v1/messages', authenticate, messageRoutes);
 router.use('/api/v1/auth/mfa', mfaRoutes);
+router.use('/api/v1/scheduling', authenticate, schedulingRoutes);
+router.use('/api/v1/proms', authenticate, promsRoutes);
+router.use('/api/v1/analytics', authenticate, analyticsRoutes);
+router.use('/api/v1/fhir', authenticate, fhirRoutes);
+
+// Notifications API
+router.get('/api/v1/notifications', authenticate, async (req, res) => {
+  try {
+    const [notifs] = await sequelize.query(`
+      SELECT * FROM msk_notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 10
+    `, { bind: [req.user.userId] });
+    const [unread] = await sequelize.query(`
+      SELECT COUNT(*) as count FROM msk_notifications WHERE user_id = $1 AND is_read = FALSE
+    `, { bind: [req.user.userId] });
+    res.json({ success: true, data: notifs, unreadCount: parseInt(unread[0]?.count || 0) });
+  } catch (err) { res.json({ success: true, data: [], unreadCount: 0 }); }
+});
+
+router.post('/api/v1/notifications/mark-read', authenticate, async (req, res) => {
+  try {
+    await sequelize.query(`UPDATE msk_notifications SET is_read = TRUE WHERE user_id = $1`, { bind: [req.user.userId] });
+    res.json({ success: true });
+  } catch (err) { res.json({ success: true }); }
+});
+
+// Billing claims routes
+router.get('/api/v1/billing/claims', authenticate, async (req, res) => {
+  try {
+    const [claims] = await sequelize.query(`SELECT * FROM msk_claims ORDER BY created_at DESC LIMIT 100`);
+    res.json({ success: true, data: claims });
+  } catch (err) { res.json({ success: true, data: [] }); }
+});
+
+router.get('/api/v1/billing/dashboard', authenticate, async (req, res) => {
+  try {
+    const [summary] = await sequelize.query(`
+      SELECT
+        COALESCE(SUM(billed_amount), 0) AS total_billed,
+        COALESCE(SUM(paid_amount), 0) AS total_paid,
+        COALESCE(SUM(CASE WHEN status = 'denied' THEN 1 ELSE 0 END), 0) AS denied_count,
+        COUNT(*) AS total_claims
+      FROM msk_claims
+    `);
+    res.json({ success: true, data: summary[0] });
+  } catch (err) { res.json({ success: true, data: {} }); }
+});
 
 // ── Health Check ─────────────────────────────────────────────────────
 router.get('/health', async (req, res) => {
@@ -510,6 +560,229 @@ async function runMigrations() {
       ALTER TABLE msk_users ADD COLUMN IF NOT EXISTS mfa_enabled BOOLEAN DEFAULT FALSE;
       ALTER TABLE msk_users ADD COLUMN IF NOT EXISTS mfa_backup_codes TEXT[];
     `);
+
+    // Phase 1: Scheduling tables
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS msk_provider_availability (
+        id SERIAL PRIMARY KEY,
+        provider_id INTEGER REFERENCES msk_users(id),
+        day_of_week SMALLINT CHECK (day_of_week BETWEEN 0 AND 6),
+        start_time TIME,
+        end_time TIME,
+        slot_duration_minutes INT DEFAULT 30,
+        buffer_minutes INT DEFAULT 5,
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_msk_avail_provider ON msk_provider_availability(provider_id);
+
+      CREATE TABLE IF NOT EXISTS msk_appointments (
+        id SERIAL PRIMARY KEY,
+        case_id INTEGER REFERENCES msk_cases(id),
+        patient_id INTEGER REFERENCES msk_users(id),
+        provider_id INTEGER REFERENCES msk_users(id),
+        consultation_id INTEGER REFERENCES msk_consultations(id),
+        scheduled_at TIMESTAMPTZ NOT NULL,
+        duration_minutes INT DEFAULT 30,
+        status VARCHAR(20) DEFAULT 'scheduled'
+          CHECK (status IN ('scheduled','confirmed','cancelled','completed','no_show')),
+        reminder_24h_sent BOOLEAN DEFAULT FALSE,
+        reminder_1h_sent BOOLEAN DEFAULT FALSE,
+        cancel_reason TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_msk_appt_scheduled ON msk_appointments(scheduled_at);
+      CREATE INDEX IF NOT EXISTS idx_msk_appt_patient ON msk_appointments(patient_id);
+      CREATE INDEX IF NOT EXISTS idx_msk_appt_provider ON msk_appointments(provider_id);
+    `);
+
+    // Phase 1: Notifications table
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS msk_notifications (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES msk_users(id),
+        type VARCHAR(50) NOT NULL,
+        title VARCHAR(200) NOT NULL,
+        body TEXT,
+        link TEXT,
+        is_read BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_msk_notif_user ON msk_notifications(user_id, is_read);
+    `);
+
+    // Phase 2: PROM instruments + submissions
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS msk_prom_instruments (
+        id SERIAL PRIMARY KEY,
+        code VARCHAR(20) UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT,
+        questions JSONB NOT NULL DEFAULT '[]',
+        scoring_formula VARCHAR(20) DEFAULT 'average'
+      );
+
+      CREATE TABLE IF NOT EXISTS msk_prom_submissions (
+        id SERIAL PRIMARY KEY,
+        case_id INTEGER REFERENCES msk_cases(id),
+        patient_id INTEGER REFERENCES msk_users(id),
+        instrument_code VARCHAR(20),
+        answers JSONB NOT NULL DEFAULT '{}',
+        score NUMERIC(5,2),
+        collection_point VARCHAR(30),
+        submitted_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_msk_prom_sub_case ON msk_prom_submissions(case_id);
+      CREATE INDEX IF NOT EXISTS idx_msk_prom_sub_patient ON msk_prom_submissions(patient_id, submitted_at);
+    `);
+
+    // Phase 2: Tenants
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS msk_tenants (
+        id SERIAL PRIMARY KEY,
+        slug VARCHAR(60) UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        plan VARCHAR(20) DEFAULT 'starter',
+        logo_url TEXT,
+        primary_color VARCHAR(7) DEFAULT '#0E7490',
+        custom_domain TEXT,
+        is_active BOOLEAN DEFAULT TRUE,
+        settings JSONB DEFAULT '{}',
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+
+    // Add tenant_id to core tables (nullable for backward compat)
+    await sequelize.query(`
+      ALTER TABLE msk_users ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES msk_tenants(id);
+      ALTER TABLE msk_cases ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES msk_tenants(id);
+      ALTER TABLE msk_reports ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES msk_tenants(id);
+      ALTER TABLE msk_consultations ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES msk_tenants(id);
+      ALTER TABLE msk_imaging_files ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES msk_tenants(id);
+      ALTER TABLE msk_appointments ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES msk_tenants(id);
+      ALTER TABLE msk_prom_submissions ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES msk_tenants(id);
+      ALTER TABLE msk_messages ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES msk_tenants(id);
+    `);
+
+    // Phase 2: Insurance eligibility
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS msk_insurance_eligibility (
+        id SERIAL PRIMARY KEY,
+        patient_id INTEGER REFERENCES msk_users(id),
+        appointment_id INTEGER REFERENCES msk_appointments(id),
+        payer_name TEXT,
+        member_id TEXT,
+        group_number TEXT,
+        coverage_active BOOLEAN,
+        copay_amount NUMERIC(8,2),
+        deductible_remaining NUMERIC(8,2),
+        in_network BOOLEAN,
+        raw_response JSONB,
+        checked_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+
+    // Phase 3: CPT codes + claims
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS msk_cpt_codes (
+        code VARCHAR(10) PRIMARY KEY,
+        description TEXT,
+        category VARCHAR(30),
+        base_rate NUMERIC(8,2)
+      );
+
+      CREATE TABLE IF NOT EXISTS msk_claims (
+        id SERIAL PRIMARY KEY,
+        tenant_id INTEGER REFERENCES msk_tenants(id),
+        patient_id INTEGER REFERENCES msk_users(id),
+        case_id INTEGER REFERENCES msk_cases(id),
+        consultation_id INTEGER REFERENCES msk_consultations(id),
+        claim_number TEXT UNIQUE,
+        payer_name TEXT,
+        member_id TEXT,
+        cpt_codes JSONB NOT NULL DEFAULT '[]',
+        icd10_codes JSONB NOT NULL DEFAULT '[]',
+        billed_amount NUMERIC(10,2),
+        allowed_amount NUMERIC(10,2),
+        paid_amount NUMERIC(10,2),
+        patient_responsibility NUMERIC(10,2),
+        status VARCHAR(20) DEFAULT 'draft'
+          CHECK (status IN ('draft','submitted','accepted','denied','appealed','paid')),
+        submitted_at TIMESTAMPTZ,
+        paid_at TIMESTAMPTZ,
+        denial_reason TEXT,
+        raw_clearinghouse_response JSONB,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_msk_claims_tenant ON msk_claims(tenant_id, status);
+      CREATE INDEX IF NOT EXISTS idx_msk_claims_patient ON msk_claims(patient_id);
+    `);
+
+    // Seed default tenant
+    const [existingTenant] = await sequelize.query(
+      `SELECT id FROM msk_tenants WHERE slug = 'msk-intelligence' LIMIT 1`
+    );
+    if (existingTenant.length === 0) {
+      await sequelize.query(`
+        INSERT INTO msk_tenants (slug, name, plan) VALUES ('msk-intelligence', 'MSK Intelligence', 'enterprise')
+      `);
+      console.log('[MSK] Default tenant seeded');
+    }
+
+    // Seed PROM instruments
+    const [existingProm] = await sequelize.query(
+      `SELECT code FROM msk_prom_instruments WHERE code = 'VAS' LIMIT 1`
+    );
+    if (existingProm.length === 0) {
+      await sequelize.query(`
+        INSERT INTO msk_prom_instruments (code, name, description, questions, scoring_formula) VALUES
+        ('VAS', 'Visual Analog Scale', 'Pain intensity scale 0-10', '[{"id":"pain","text":"Rate your current pain level","type":"scale","min":0,"max":10}]', 'sum'),
+        ('KOOS', 'Knee Injury & Osteoarthritis Outcome Score', 'Knee-specific 42-question assessment', '[{"id":"k1","text":"How often is your knee swollen?","type":"likert","options":["Never","Rarely","Sometimes","Often","Always"]},{"id":"k2","text":"Grinding or clicking from knee?","type":"likert","options":["Never","Rarely","Sometimes","Often","Always"]},{"id":"k3","text":"Does your knee catch or lock?","type":"likert","options":["Never","Rarely","Sometimes","Often","Always"]},{"id":"k4","text":"Can you straighten your knee fully?","type":"likert","options":["Always","Often","Sometimes","Rarely","Never"]},{"id":"k5","text":"Can you bend your knee fully?","type":"likert","options":["Always","Often","Sometimes","Rarely","Never"]}]', 'average'),
+        ('DASH', 'Disabilities of Arm, Shoulder & Hand', 'Upper extremity 30-question assessment', '[{"id":"d1","text":"Open a tight or new jar","type":"likert","options":["No difficulty","Mild","Moderate","Severe","Unable"]},{"id":"d2","text":"Write","type":"likert","options":["No difficulty","Mild","Moderate","Severe","Unable"]},{"id":"d3","text":"Turn a key","type":"likert","options":["No difficulty","Mild","Moderate","Severe","Unable"]},{"id":"d4","text":"Prepare a meal","type":"likert","options":["No difficulty","Mild","Moderate","Severe","Unable"]},{"id":"d5","text":"Push open a heavy door","type":"likert","options":["No difficulty","Mild","Moderate","Severe","Unable"]}]', 'average'),
+        ('ODI', 'Oswestry Disability Index', 'Spine/back disability 10-section assessment', '[{"id":"o1","text":"Pain intensity right now","type":"scale","min":0,"max":5},{"id":"o2","text":"Personal care (washing, dressing)","type":"scale","min":0,"max":5},{"id":"o3","text":"Lifting","type":"scale","min":0,"max":5},{"id":"o4","text":"Walking","type":"scale","min":0,"max":5},{"id":"o5","text":"Sitting","type":"scale","min":0,"max":5}]', 'average'),
+        ('PROMIS_PF', 'PROMIS Physical Function', 'General physical function short form', '[{"id":"pf1","text":"Are you able to do chores such as vacuuming or yard work?","type":"likert","options":["Without any difficulty","With a little difficulty","With some difficulty","With much difficulty","Unable to do"]},{"id":"pf2","text":"Are you able to go up and down stairs at a normal pace?","type":"likert","options":["Without any difficulty","With a little difficulty","With some difficulty","With much difficulty","Unable to do"]},{"id":"pf3","text":"Are you able to run errands and shop?","type":"likert","options":["Without any difficulty","With a little difficulty","With some difficulty","With much difficulty","Unable to do"]},{"id":"pf4","text":"Are you able to walk for 15 minutes?","type":"likert","options":["Without any difficulty","With a little difficulty","With some difficulty","With much difficulty","Unable to do"]}]', 'average')
+      `);
+      console.log('[MSK] PROM instruments seeded');
+    }
+
+    // Seed CPT codes
+    const [existingCpt] = await sequelize.query(
+      `SELECT code FROM msk_cpt_codes WHERE code = '99213' LIMIT 1`
+    );
+    if (existingCpt.length === 0) {
+      await sequelize.query(`
+        INSERT INTO msk_cpt_codes (code, description, category, base_rate) VALUES
+        ('99213', 'Office/Outpatient visit, established, moderate complexity (telehealth)', 'telehealth', 115.00),
+        ('99214', 'Office/Outpatient visit, established, high complexity (telehealth)', 'telehealth', 167.00),
+        ('99453', 'Remote monitoring setup and patient education', 'rpm', 19.00),
+        ('99454', 'Remote monitoring device supply 16+ days', 'rpm', 64.00),
+        ('99457', 'Remote monitoring treatment management, first 20 min/month', 'rpm', 54.00),
+        ('99458', 'Remote monitoring treatment management, each additional 20 min', 'rpm', 41.00),
+        ('72148', 'MRI lumbar spine without contrast', 'imaging', 328.00),
+        ('73221', 'MRI shoulder joint without contrast', 'imaging', 286.00)
+      `);
+      console.log('[MSK] CPT codes seeded');
+    }
+
+    // Seed provider availability for demo radiologist
+    const [existingAvail] = await sequelize.query(
+      `SELECT id FROM msk_provider_availability LIMIT 1`
+    );
+    if (existingAvail.length === 0) {
+      const [radUsers] = await sequelize.query(
+        `SELECT id FROM msk_users WHERE role = 'radiologist' LIMIT 1`
+      );
+      if (radUsers.length > 0) {
+        const radId = radUsers[0].id;
+        for (let day = 1; day <= 5; day++) {
+          await sequelize.query(`
+            INSERT INTO msk_provider_availability (provider_id, day_of_week, start_time, end_time, slot_duration_minutes, buffer_minutes)
+            VALUES ($1, $2, '09:00', '17:00', 30, 5)
+          `, { bind: [radId, day] });
+        }
+        console.log('[MSK] Provider availability seeded');
+      }
+    }
 
     // Seed demo users
     const bcrypt = require('bcryptjs');

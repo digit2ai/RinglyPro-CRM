@@ -1,34 +1,46 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import mskLogo from '../assets/msk-logo.png';
+import NotificationBell from './NotificationBell';
 
 const NAV_ITEMS = {
   patient: [
     { path: '/dashboard', label: 'Dashboard', icon: '📊' },
     { path: '/cases', label: 'My Cases', icon: '📋' },
     { path: '/cases/new', label: 'New Case', icon: '➕' },
+    { path: '/messages', label: 'Messages', icon: '💬' },
+    { path: '/appointments', label: 'Appointments', icon: '📅' },
     { path: '/consultations', label: 'Video Consults', icon: '📹' },
+    { path: '/proms', label: 'Assessments', icon: '📝' },
     { path: '/reports', label: 'Reports', icon: '📄' },
   ],
   radiologist: [
     { path: '/dashboard', label: 'Dashboard', icon: '📊' },
     { path: '/cases', label: 'Case Queue', icon: '📋' },
+    { path: '/messages', label: 'Messages', icon: '💬' },
+    { path: '/appointments', label: 'Schedule', icon: '📅' },
     { path: '/consultations', label: 'Video Consults', icon: '📹' },
     { path: '/reports', label: 'Reports', icon: '📄' },
+    { path: '/billing', label: 'Billing', icon: '💰' },
     { path: '/admin', label: 'Analytics', icon: '📈' },
   ],
   admin: [
     { path: '/dashboard', label: 'Dashboard', icon: '📊' },
     { path: '/cases', label: 'All Cases', icon: '📋' },
     { path: '/cases/new', label: 'New Case', icon: '➕' },
+    { path: '/messages', label: 'Messages', icon: '💬' },
+    { path: '/appointments', label: 'Appointments', icon: '📅' },
     { path: '/consultations', label: 'Video Consults', icon: '📹' },
     { path: '/reports', label: 'Reports', icon: '📄' },
+    { path: '/billing', label: 'Billing', icon: '💰' },
     { path: '/admin', label: 'Admin', icon: '⚙️' },
   ],
   staff: [
     { path: '/dashboard', label: 'Dashboard', icon: '📊' },
     { path: '/cases', label: 'Cases', icon: '📋' },
     { path: '/cases/new', label: 'New Case', icon: '➕' },
+    { path: '/messages', label: 'Messages', icon: '💬' },
+    { path: '/appointments', label: 'Appointments', icon: '📅' },
     { path: '/consultations', label: 'Video Consults', icon: '📹' },
     { path: '/reports', label: 'Reports', icon: '📄' },
   ]
@@ -99,6 +111,9 @@ export default function Layout({ children, user, onLogout }) {
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto bg-dark-950">
+        <div className="flex items-center justify-end px-6 py-2 border-b border-dark-800 bg-dark-900/30">
+          <NotificationBell />
+        </div>
         <div className="p-6 max-w-7xl mx-auto">
           {children}
         </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../services/api';
+import ImagingUpload from '../components/ImagingUpload';
 
 export default function CaseDetail() {
   const { id } = useParams();
@@ -275,6 +276,33 @@ export default function CaseDetail() {
             <h3 className="text-md font-bold text-white mb-3">Service Tier</h3>
             <p className="text-msk-400 font-medium capitalize">{(caseData.pricing_tier || 'imaging_review').replace(/_/g, ' ')}</p>
           </div>
+
+          {/* Quick Actions */}
+          <div className="card">
+            <h3 className="text-md font-bold text-white mb-3">Actions</h3>
+            <div className="space-y-2">
+              <Link to={`/messages/${id}`} className="btn-secondary w-full text-center text-sm block">
+                💬 Messages
+              </Link>
+              <Link to={`/appointments/schedule?caseId=${id}`} className="btn-secondary w-full text-center text-sm block">
+                📅 Schedule Appointment
+              </Link>
+              <Link to={`/proms?caseId=${id}`} className="btn-secondary w-full text-center text-sm block">
+                📝 Assessments (PROMs)
+              </Link>
+              <a href={`/msk/api/v1/fhir/cases/${id}/export/pdf`} target="_blank" rel="noopener noreferrer" className="btn-secondary w-full text-center text-sm block">
+                📄 Export PDF
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Imaging Upload Section */}
+      <div className="mt-6">
+        <div className="card">
+          <h2 className="text-lg font-bold text-white mb-4">Upload Imaging</h2>
+          <ImagingUpload caseId={id} onUploadComplete={() => loadCase()} />
         </div>
       </div>
     </div>
