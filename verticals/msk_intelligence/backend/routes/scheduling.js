@@ -37,11 +37,10 @@ function generateSlots(startTime, endTime) {
 }
 
 /**
- * Map JS getDay() (0=Sun) to a lowercase day-of-week string.
+ * Get numeric day of week (0=Sun, 6=Sat) matching SMALLINT column.
  */
 function dayOfWeek(dateStr) {
-  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-  return days[new Date(dateStr + 'T00:00:00').getDay()];
+  return new Date(dateStr + 'T00:00:00').getDay();
 }
 
 // ---------------------------------------------------------------------------

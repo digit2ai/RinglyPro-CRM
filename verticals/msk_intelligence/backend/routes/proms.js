@@ -26,16 +26,24 @@ const INSTRUMENT_META = {
  * Calculate score based on instrument type
  */
 function calculateScore(instrumentCode, answers) {
-  if (!Array.isArray(answers) || answers.length === 0) return null;
+  // Normalize: accept both object {q1: 3, q2: 4} and array [3, 4]
+  let values;
+  if (Array.isArray(answers)) {
+    values = answers.map(v => parseFloat(v));
+  } else if (answers && typeof answers === 'object') {
+    values = Object.values(answers).map(v => parseFloat(v));
+  } else {
+    return null;
+  }
+  if (values.length === 0) return null;
 
   if (instrumentCode === 'VAS') {
-    // VAS is a direct single value
-    return parseFloat(answers[0]);
+    return values[0]; // Direct single value
   }
 
   // All other instruments: average of answers
-  const sum = answers.reduce((acc, val) => acc + parseFloat(val), 0);
-  return parseFloat((sum / answers.length).toFixed(2));
+  const sum = values.reduce((acc, val) => acc + val, 0);
+  return parseFloat((sum / values.length).toFixed(2));
 }
 
 // GET /pending/:caseId — instruments due for this case
@@ -45,7 +53,7 @@ router.get('/pending/:caseId', authenticate, async (req, res) => {
 
     // Fetch case with body region
     const [cases] = await sequelize.query(`
-      SELECT c.id, c.body_region, c.patient_id
+      SELECT c.id, c.pain_location, c.case_type, c.patient_id
       FROM msk_cases c
       WHERE c.id = $1
     `, { bind: [caseId] });
@@ -55,7 +63,16 @@ router.get('/pending/:caseId', authenticate, async (req, res) => {
     }
 
     const caseRow = cases[0];
-    const region = (caseRow.body_region || '').toLowerCase().trim();
+    // Map pain_location or case_type to a body region key
+    const loc = (caseRow.pain_location || '').toLowerCase();
+    const cType = (caseRow.case_type || '').toLowerCase();
+    let region = 'default';
+    if (loc.includes('knee')) region = 'knee';
+    else if (loc.includes('shoulder') || loc.includes('elbow') || loc.includes('wrist') || loc.includes('hand')) region = 'shoulder';
+    else if (loc.includes('spine') || loc.includes('lumbar') || loc.includes('cervical') || loc.includes('thoracic')) region = 'spine';
+    else if (loc.includes('hip')) region = 'default';
+    else if (cType === 'spine') region = 'spine';
+    else if (cType === 'joint' && loc.includes('knee')) region = 'knee';
 
     // Determine which instruments apply
     const instruments = REGION_INSTRUMENTS[region] || REGION_INSTRUMENTS.default;
@@ -70,11 +87,25 @@ router.get('/pending/:caseId', authenticate, async (req, res) => {
 
     const submittedCodes = new Set(submitted.map(s => s.instrument_code));
 
-    const pending = instruments.map(code => ({
-      instrumentCode: code,
-      ...(INSTRUMENT_META[code] || {}),
-      alreadySubmitted: submittedCodes.has(code)
-    }));
+    // Fetch full instrument data from DB
+    const placeholders = instruments.map((_, i) => `$${i + 1}`).join(',');
+    const [dbInstruments] = await sequelize.query(
+      `SELECT * FROM msk_prom_instruments WHERE code IN (${placeholders})`,
+      { bind: instruments }
+    );
+
+    const pending = instruments.map(code => {
+      const dbInst = dbInstruments.find(i => i.code === code);
+      return {
+        code,
+        instrumentCode: code,
+        name: dbInst?.name || INSTRUMENT_META[code]?.name || code,
+        description: dbInst?.description || '',
+        questions: dbInst?.questions || [],
+        ...(INSTRUMENT_META[code] || {}),
+        alreadySubmitted: submittedCodes.has(code)
+      };
+    });
 
     res.json({
       success: true,
