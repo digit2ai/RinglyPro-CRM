@@ -3,7 +3,10 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
-const { generateToken, authenticate, sequelize } = require('../middleware/auth');
+const jwt = require('jsonwebtoken');
+const { generateToken, authenticate, sequelize, JWT_SECRET } = require('../middleware/auth');
+
+const MFA_REQUIRED_ROLES = ['radiologist', 'admin', 'staff', 'b2b_manager'];
 
 // POST /api/v1/auth/login
 router.post('/login', async (req, res) => {
@@ -31,6 +34,22 @@ router.post('/login', async (req, res) => {
     // Update last login
     await sequelize.query(`UPDATE msk_users SET last_login = NOW() WHERE id = $1`, { bind: [user.id] });
 
+    // Check if MFA is enabled for this user
+    if (user.mfa_enabled && MFA_REQUIRED_ROLES.includes(user.role)) {
+      // Issue short-lived temp token for MFA challenge
+      const tempToken = jwt.sign(
+        { userId: user.id, mfaPending: true },
+        JWT_SECRET,
+        { expiresIn: '2m' }
+      );
+      return res.json({
+        success: true,
+        mfaRequired: true,
+        tempToken,
+        message: 'Enter your authenticator code to complete login.'
+      });
+    }
+
     const token = generateToken(user);
 
     // Get patient profile if patient role
@@ -55,6 +74,7 @@ router.post('/login', async (req, res) => {
         specialty: user.specialty,
         credentials: user.credentials,
         avatarUrl: user.avatar_url,
+        mfaEnabled: user.mfa_enabled || false,
         patientProfile
       }
     });

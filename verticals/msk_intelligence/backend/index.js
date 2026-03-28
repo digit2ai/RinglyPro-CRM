@@ -33,6 +33,7 @@ const mcpRoutes = require('./routes/mcp');
 const voiceRoutes = require('./routes/voice');
 const messageRoutes = require('./routes/messages');
 const videoRoutes = require('./routes/video');
+const mfaRoutes = require('./routes/mfa');
 
 router.use('/api/v1/auth', authRoutes);
 router.use('/api/v1/cases', authenticate, caseRoutes);
@@ -47,6 +48,7 @@ router.use('/api/v1/mcp', mcpRoutes);
 router.use('/api/v1/voice', voiceRoutes);
 router.use('/api/v1/video', videoRoutes);
 router.use('/api/v1/messages', authenticate, messageRoutes);
+router.use('/api/v1/auth/mfa', mfaRoutes);
 
 // ── Health Check ─────────────────────────────────────────────────────
 router.get('/health', async (req, res) => {
@@ -502,6 +504,13 @@ async function runMigrations() {
       CREATE INDEX IF NOT EXISTS idx_msk_audit_created ON msk_audit_log(created_at);
     `);
 
+    // MFA columns
+    await sequelize.query(`
+      ALTER TABLE msk_users ADD COLUMN IF NOT EXISTS mfa_secret TEXT;
+      ALTER TABLE msk_users ADD COLUMN IF NOT EXISTS mfa_enabled BOOLEAN DEFAULT FALSE;
+      ALTER TABLE msk_users ADD COLUMN IF NOT EXISTS mfa_backup_codes TEXT[];
+    `);
+
     // Seed demo users
     const bcrypt = require('bcryptjs');
     const [existingAdmin] = await sequelize.query(
@@ -512,11 +521,11 @@ async function runMigrations() {
       await sequelize.query(`
         INSERT INTO msk_users (email, password_hash, first_name, last_name, role, specialty, credentials)
         VALUES
-          ('admin@msk-intelligence.com', '${hash}', 'Admin', 'MSK', 'admin', NULL, NULL),
-          ('radiologist@msk-intelligence.com', '${hash}', 'Dr. James', 'Morrison', 'radiologist',
+          ('admin@msk-intelligence.com', $1, 'Admin', 'MSK', 'admin', NULL, NULL),
+          ('radiologist@msk-intelligence.com', $1, 'Dr. James', 'Morrison', 'radiologist',
             'Musculoskeletal Radiology', 'MD, Fellowship MSK Radiology, ABMS Board Certified'),
-          ('athlete@msk-intelligence.com', '${hash}', 'Carlos', 'Rivera', 'patient', NULL, NULL)
-      `);
+          ('athlete@msk-intelligence.com', $1, 'Carlos', 'Rivera', 'patient', NULL, NULL)
+      `, { bind: [hash] });
 
       // Create patient profile for demo athlete
       const [newUser] = await sequelize.query(
@@ -525,8 +534,8 @@ async function runMigrations() {
       if (newUser.length > 0) {
         await sequelize.query(`
           INSERT INTO msk_patients (user_id, date_of_birth, gender, sport, team, position, height_cm, weight_kg)
-          VALUES (${newUser[0].id}, '1995-03-15', 'male', 'Motorsport', 'Team Alpha Racing', 'Driver', 178, 72)
-        `);
+          VALUES ($1, '1995-03-15', 'male', 'Motorsport', 'Team Alpha Racing', 'Driver', 178, 72)
+        `, { bind: [newUser[0].id] });
       }
       console.log('[MSK] Demo users seeded');
     }

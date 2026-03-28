@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import mskLogo from '../assets/msk-logo.png';
 
 const NAV_ITEMS = {
   patient: [
@@ -47,7 +48,7 @@ export default function Layout({ children, user, onLogout }) {
         {/* Logo */}
         <div className="p-4 border-b border-dark-700">
           <Link to="/dashboard" className="flex items-center gap-4">
-            <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="MSK Intelligence" className="w-20 h-20 rounded-lg shadow-lg object-contain" />
+            <img src={mskLogo} alt="MSK Intelligence" className="w-20 h-20 rounded-lg shadow-lg object-contain" />
             {sidebarOpen && (
               <div className="ml-1">
                 <h1 className="text-lg font-bold text-white leading-tight">MSK Intel</h1>
@@ -84,6 +85,11 @@ export default function Layout({ children, user, onLogout }) {
               <p className="text-sm font-medium text-white">{user?.firstName} {user?.lastName}</p>
               <p className="text-xs text-dark-400 capitalize">{user?.role}</p>
             </div>
+          )}
+          {sidebarOpen && (
+            <Link to="/settings/mfa" className="block text-sm text-dark-400 hover:text-msk-400 transition-colors mb-2">
+              {user?.mfaEnabled ? '🔐 MFA Enabled' : '🔓 Setup MFA'}
+            </Link>
           )}
           <button onClick={onLogout} className="w-full text-left text-sm text-dark-400 hover:text-red-400 transition-colors">
             {sidebarOpen ? 'Sign Out' : '🚪'}

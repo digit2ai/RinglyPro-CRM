@@ -15,6 +15,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import VoiceIntake from './pages/VoiceIntake';
 import VideoRoom from './pages/VideoRoom';
 import Consultations from './pages/Consultations';
+import MFASetup from './pages/MFASetup';
 import Layout from './components/Layout';
 
 function ProtectedRoute({ children, allowedRoles }) {
@@ -58,6 +59,7 @@ export default function App() {
               <Route path="/cases/:id" element={<CaseDetail />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/consultations" element={<Consultations />} />
+              <Route path="/settings/mfa" element={<MFASetup />} />
               <Route path="/admin" element={
                 <ProtectedRoute allowedRoles={['admin', 'radiologist']}>
                   <AdminDashboard />

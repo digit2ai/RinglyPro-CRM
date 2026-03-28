@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import mskLogo from '../assets/msk-logo.png';
 
 const STATUS = {
   IDLE: 'idle',
@@ -225,7 +226,7 @@ export default function VoiceIntake() {
       <nav className="border-b border-dark-800 bg-dark-900/80 backdrop-blur-sm">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-5">
-            <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="MSK Intelligence" className="w-24 h-24 rounded-lg object-contain" />
+            <img src={mskLogo} alt="MSK Intelligence" className="w-24 h-24 rounded-lg object-contain" />
             <div className="ml-1">
               <h1 className="text-lg font-bold text-white">MSK Intelligence</h1>
               <p className="text-xs text-msk-400">AI Voice Intake</p>

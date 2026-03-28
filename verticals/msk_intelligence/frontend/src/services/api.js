@@ -45,11 +45,22 @@ class ApiService {
   // Auth
   async login(email, password) {
     const data = await this.post('/auth/login', { email, password });
+    if (data.mfaRequired) {
+      // Don't store token yet — MFA challenge pending
+      return data;
+    }
     if (data.token) {
       this.setToken(data.token);
       localStorage.setItem('msk_user', JSON.stringify(data.user));
     }
     return data;
+  }
+
+  completeMfaLogin(data) {
+    if (data.token) {
+      this.setToken(data.token);
+      localStorage.setItem('msk_user', JSON.stringify(data.user));
+    }
   }
 
   async register(userData) {

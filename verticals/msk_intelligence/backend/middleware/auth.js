@@ -3,7 +3,10 @@
 const jwt = require('jsonwebtoken');
 const { Sequelize } = require('sequelize');
 
-const JWT_SECRET = process.env.MSK_JWT_SECRET || process.env.JWT_SECRET || 'msk-intelligence-secret-2026';
+const JWT_SECRET = process.env.MSK_JWT_SECRET || process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.error('FATAL: MSK_JWT_SECRET is not set. MSK Intelligence auth will not function.');
+}
 
 const dbUrl = process.env.DATABASE_URL || 'postgres://localhost:5432/msk_dev';
 const sequelize = new Sequelize(dbUrl, {

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import MFAChallenge from './MFAChallenge';
+import mskLogo from '../assets/msk-logo.png';
 
 export default function Login({ onLogin }) {
   const navigate = useNavigate();
@@ -8,6 +10,7 @@ export default function Login({ onLogin }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [mfaState, setMfaState] = useState(null); // { tempToken }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -16,8 +19,12 @@ export default function Login({ onLogin }) {
 
     try {
       const data = await api.login(email, password);
-      onLogin(data.user);
-      navigate('/dashboard');
+      if (data.mfaRequired) {
+        setMfaState({ tempToken: data.tempToken });
+      } else {
+        onLogin(data.user);
+        navigate('/dashboard');
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -25,12 +32,29 @@ export default function Login({ onLogin }) {
     }
   };
 
+  const handleMfaSuccess = (data) => {
+    api.completeMfaLogin(data);
+    onLogin(data.user);
+    navigate('/dashboard');
+  };
+
+  // Show MFA challenge screen
+  if (mfaState) {
+    return (
+      <MFAChallenge
+        tempToken={mfaState.tempToken}
+        onSuccess={handleMfaSuccess}
+        onCancel={() => setMfaState(null)}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-dark-950 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-5 mb-6">
-            <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="MSK Intelligence" className="w-28 h-28 rounded-xl shadow-2xl object-contain" />
+            <img src={mskLogo} alt="MSK Intelligence" className="w-28 h-28 rounded-xl shadow-2xl object-contain" />
             <div className="text-left ml-1">
               <h1 className="text-2xl font-bold text-white">MSK Intelligence</h1>
               <p className="text-sm text-msk-400">Diagnostics Platform</p>
@@ -86,15 +110,19 @@ export default function Login({ onLogin }) {
             </p>
           </div>
 
-          <div className="mt-6 pt-6 border-t border-dark-700">
-            <p className="text-dark-500 text-xs text-center mb-3">Demo Accounts</p>
-            <div className="space-y-2 text-xs text-dark-400">
-              <p><strong className="text-dark-300">Admin:</strong> admin@msk-intelligence.com</p>
-              <p><strong className="text-dark-300">Radiologist:</strong> radiologist@msk-intelligence.com</p>
-              <p><strong className="text-dark-300">Patient:</strong> athlete@msk-intelligence.com</p>
-              <p className="text-dark-500">Password for all: MSKIntel2026!</p>
+          {import.meta.env.VITE_MSK_DEMO_MODE === 'true' && (
+            <div className="mt-6 pt-6 border-t border-dark-700">
+              <details>
+                <summary className="text-dark-500 text-xs text-center cursor-pointer hover:text-dark-300 transition-colors">Demo Access</summary>
+                <div className="space-y-2 text-xs text-dark-400 mt-3">
+                  <p><strong className="text-dark-300">Admin:</strong> {import.meta.env.VITE_MSK_DEMO_EMAIL_ADMIN || 'admin@msk-intelligence.com'}</p>
+                  <p><strong className="text-dark-300">Radiologist:</strong> {import.meta.env.VITE_MSK_DEMO_EMAIL_RAD || 'radiologist@msk-intelligence.com'}</p>
+                  <p><strong className="text-dark-300">Patient:</strong> {import.meta.env.VITE_MSK_DEMO_EMAIL_PATIENT || 'athlete@msk-intelligence.com'}</p>
+                  <p className="text-dark-500">Password: {import.meta.env.VITE_MSK_DEMO_PASSWORD || '********'}</p>
+                </div>
+              </details>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
