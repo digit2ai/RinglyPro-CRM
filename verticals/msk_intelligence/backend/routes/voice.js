@@ -174,7 +174,7 @@ Your role is to conduct a structured medical intake for patients calling about m
 router.post('/token', async (req, res) => {
   try {
     const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
-    const MSK_AGENT_ID = process.env.MSK_ELEVENLABS_AGENT_ID || 'agent_1301kfca8m4gfv09pg8pr81mvyv4';
+    const MSK_AGENT_ID = process.env.MSK_ELEVENLABS_AGENT_ID || 'agent_6601kmtefen9etcam6t3rmrhtxkg';
 
     if (!ELEVENLABS_API_KEY) {
       return res.status(500).json({ success: false, error: 'ElevenLabs API key not configured' });
