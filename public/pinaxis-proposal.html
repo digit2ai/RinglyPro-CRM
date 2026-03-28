@@ -65,9 +65,20 @@
   .footer .sig { text-align: right; }
   .footer .sig .name { font-size: 13px; color: #1a1a2e; font-weight: 600; }
 
+  .page-break { page-break-before: always; border-top: 4px solid #e2e8f0; margin-top: 48px; padding-top: 40px; }
+  .option-badge { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; padding: 4px 14px; border-radius: 20px; margin-bottom: 16px; }
+  .badge-a { background: #dbeafe; color: #2563eb; }
+  .badge-b { background: #fce7f3; color: #be185d; }
+  .comparison { margin-top: 24px; }
+  .comparison table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .comparison th { text-align: left; padding: 10px 12px; background: #f8fafc; border-bottom: 2px solid #e2e8f0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+  .comparison td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; }
+  .comparison .highlight { background: #f0fdf4; }
+
   @media print {
     body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .page { padding: 32px 40px; }
+    .page-break { page-break-before: always; }
   }
 </style>
 </head>
@@ -90,6 +101,7 @@
 
   <!-- Title -->
   <div class="title-section">
+    <span class="option-badge badge-a">Option A — Cloud SaaS</span>
     <h2>Warehouse Analytics & AI Proposal Platform</h2>
     <div class="subtitle">Enterprise SaaS License — Unlimited Projects</div>
     <div class="client">Prepared for: PINAXIS GmbH — Warehouse Automation</div>
@@ -184,6 +196,183 @@
 
   <!-- Footer -->
   <div class="footer">
+    <div>
+      Digit2AI LLC · AI-Powered Business Solutions<br>
+      This proposal is confidential and intended solely for the named recipient.
+    </div>
+    <div class="sig">
+      <div class="name">Manuel Stagg</div>
+      CEO, Digit2AI<br>
+      mstagg@digit2ai.com
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- OPTION B: ON-PREMISE / BEHIND FIREWALL                       -->
+  <!-- ============================================================ -->
+  <div class="page-break">
+
+    <!-- Title -->
+    <div class="title-section">
+      <span class="option-badge badge-b">Option B — On-Premise Installation</span>
+      <h2>Warehouse Analytics & AI Proposal Platform</h2>
+      <div class="subtitle">On-Premise Perpetual License — Deployed Inside Your Firewall</div>
+      <div class="client">Prepared for: PINAXIS GmbH — Warehouse Automation</div>
+    </div>
+
+    <!-- Problem / Solution -->
+    <div class="two-col">
+      <div class="col-box problem">
+        <h3>Why On-Premise</h3>
+        <ul>
+          <li>Warehouse data stays inside your network — zero external exposure</li>
+          <li>Full compliance with German data sovereignty regulations</li>
+          <li>No dependency on third-party cloud infrastructure</li>
+          <li>Integration with internal systems without VPN/tunneling</li>
+          <li>Complete control over uptime, updates, and scaling</li>
+        </ul>
+      </div>
+      <div class="col-box solution">
+        <h3>What You Get</h3>
+        <ul>
+          <li>Full source code deployed on your infrastructure</li>
+          <li>Runs on any Linux server (Docker or bare metal)</li>
+          <li>All analytics modules — same as cloud version</li>
+          <li>AI Voice narration via your own API keys</li>
+          <li>Digit2AI provides installation, training, and ongoing support</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Pricing -->
+    <div class="pricing">
+      <h3>Investment</h3>
+      <div class="price-row">
+        <div class="label">Perpetual License + Source Code<small>Full platform ownership · Deploy on your servers · No seat limits</small></div>
+        <div class="amount">$180,000</div>
+      </div>
+      <div class="price-row">
+        <div class="label">On-Site Installation & Configuration<small>Server setup, database migration, firewall config, SSO integration, team training (2 weeks on-site)</small></div>
+        <div class="amount">$45,000</div>
+      </div>
+      <div class="price-row">
+        <div class="label">Annual Maintenance & Support<small>Updates, bug fixes, new features, priority support, 2 on-site visits/year</small></div>
+        <div class="amount">$48,000 <small>/year</small></div>
+      </div>
+      <div class="price-highlight">
+        <div class="label">First Year Total (license + install + support)</div>
+        <div class="amount">$273,000</div>
+      </div>
+    </div>
+
+    <!-- What's Included -->
+    <div class="included">
+      <h3>What's Included</h3>
+      <div class="features">
+        <div>Full source code — perpetual ownership</div>
+        <div>Docker deployment package</div>
+        <div>All 12 analytics modules</div>
+        <div>AI voice narration (your ElevenLabs API key)</div>
+        <div>Dashboard Playbook with infographics</div>
+        <div>White-label — fully branded as Pinaxis</div>
+        <div>Product recommendation engine</div>
+        <div>Direct database access (PostgreSQL)</div>
+        <div>ROI & benefit projection calculator</div>
+        <div>Pinaxis covers AI API call costs</div>
+        <div>Unlimited users — no seat licenses</div>
+        <div>2 on-site visits/year included in support</div>
+      </div>
+    </div>
+
+    <!-- ROI -->
+    <div class="roi">
+      <h3>Return on Investment</h3>
+      <div class="roi-grid">
+        <div class="roi-metric">
+          <div class="value">100%</div>
+          <div class="label">Data stays<br>behind firewall</div>
+        </div>
+        <div class="roi-metric">
+          <div class="value">10x</div>
+          <div class="label">Increase in<br>proposal capacity</div>
+        </div>
+        <div class="roi-metric">
+          <div class="value">$1.6M</div>
+          <div class="label">Annual labor<br>savings</div>
+        </div>
+        <div class="roi-metric">
+          <div class="value">&lt;3 mo</div>
+          <div class="label">Payback<br>period</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comparison Table -->
+    <div class="comparison">
+      <h3 style="font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">Option Comparison</h3>
+      <table>
+        <tr>
+          <th>Feature</th>
+          <th>Option A — Cloud SaaS</th>
+          <th>Option B — On-Premise</th>
+        </tr>
+        <tr>
+          <td>First Year Cost</td>
+          <td><strong>$145,000</strong></td>
+          <td><strong>$273,000</strong></td>
+        </tr>
+        <tr>
+          <td>Year 2+ Cost</td>
+          <td>$120,000/year</td>
+          <td>$48,000/year</td>
+        </tr>
+        <tr>
+          <td>3-Year Total Cost</td>
+          <td><strong>$385,000</strong></td>
+          <td><strong>$369,000</strong></td>
+        </tr>
+        <tr class="highlight">
+          <td>Data Location</td>
+          <td>Digit2AI cloud (US)</td>
+          <td><strong>Your servers (Germany)</strong></td>
+        </tr>
+        <tr>
+          <td>Source Code Ownership</td>
+          <td>No — SaaS access only</td>
+          <td><strong>Yes — perpetual license</strong></td>
+        </tr>
+        <tr>
+          <td>Infrastructure Management</td>
+          <td><strong>Fully managed by Digit2AI</strong></td>
+          <td>Managed by Pinaxis IT</td>
+        </tr>
+        <tr>
+          <td>Updates & New Features</td>
+          <td><strong>Automatic — always latest</strong></td>
+          <td>Included in annual support</td>
+        </tr>
+        <tr>
+          <td>Time to Go Live</td>
+          <td><strong>1–2 weeks</strong></td>
+          <td>4–6 weeks</td>
+        </tr>
+        <tr>
+          <td>Scaling</td>
+          <td><strong>Automatic</strong></td>
+          <td>Your infrastructure</td>
+        </tr>
+        <tr class="highlight">
+          <td>German Data Sovereignty</td>
+          <td>Via EU hosting (available)</td>
+          <td><strong>Full — behind your firewall</strong></td>
+        </tr>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- Shared Footer -->
+  <div class="footer" style="margin-top:28px">
     <div>
       Digit2AI LLC · AI-Powered Business Solutions<br>
       This proposal is confidential and intended solely for the named recipient.
