@@ -151,18 +151,17 @@ router.post('/submit', authenticate, async (req, res) => {
 
     const [result] = await sequelize.query(`
       INSERT INTO msk_prom_submissions
-        (case_id, patient_id, instrument_code, answers, score, collection_point, submitted_by, created_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+        (case_id, patient_id, instrument_code, answers, score, collection_point)
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *
     `, {
       bind: [
         caseId,
-        cases[0].patient_id,
+        cases[0].patient_id || req.user.userId,
         instrumentCode,
         JSON.stringify(answers),
         score,
-        point,
-        req.user.userId
+        point
       ]
     });
 
@@ -180,11 +179,11 @@ router.get('/history/:caseId', authenticate, async (req, res) => {
 
     const [submissions] = await sequelize.query(`
       SELECT ps.*,
-        u.first_name AS submitted_by_first, u.last_name AS submitted_by_last
+        u.first_name AS patient_first, u.last_name AS patient_last
       FROM msk_prom_submissions ps
-      LEFT JOIN msk_users u ON ps.submitted_by = u.id
+      LEFT JOIN msk_users u ON ps.patient_id = u.id
       WHERE ps.case_id = $1
-      ORDER BY ps.created_at ASC
+      ORDER BY ps.submitted_at ASC
     `, { bind: [caseId] });
 
     res.json({ success: true, data: submissions, count: submissions.length });

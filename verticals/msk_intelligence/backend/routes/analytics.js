@@ -17,9 +17,7 @@ router.get('/overview', async (req, res) => {
     const [avgTurnaround] = await sequelize.query(`
       SELECT
         ROUND(AVG(EXTRACT(EPOCH FROM (
-          CASE WHEN status_updated_at IS NOT NULL AND status = 'report_ready'
-               THEN status_updated_at ELSE NOW() END
-          - created_at
+          COALESCE(updated_at, NOW()) - created_at
         )) / 3600)::numeric, 1) AS avg_turnaround_hours
       FROM msk_cases
       WHERE status = 'report_ready'
