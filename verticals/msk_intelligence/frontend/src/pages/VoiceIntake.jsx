@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { Conversation } from '@11labs/client';
 import mskLogo from '../assets/msk-logo.png';
 
 const STATUS = {
@@ -14,22 +15,20 @@ export default function VoiceIntake() {
   const [status, setStatus] = useState(STATUS.IDLE);
   const [transcript, setTranscript] = useState([]);
   const [error, setError] = useState(null);
-  const [audioLevel, setAudioLevel] = useState(0);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [caseResult, setCaseResult] = useState(null);
-  const wsRef = useRef(null);
-  const pcRef = useRef(null);
-  const analyserRef = useRef(null);
-  const animFrameRef = useRef(null);
-  const navigate = useNavigate();
+  const conversationRef = useRef(null);
 
-  const cleanup = useCallback(() => {
-    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-    if (pcRef.current) { pcRef.current.close(); pcRef.current = null; }
-    if (wsRef.current) { wsRef.current.close(); wsRef.current = null; }
-    setAudioLevel(0);
+  const cleanup = useCallback(async () => {
+    if (conversationRef.current) {
+      try { await conversationRef.current.endSession(); } catch (e) {}
+      conversationRef.current = null;
+    }
   }, []);
 
-  useEffect(() => cleanup, [cleanup]);
+  useEffect(() => {
+    return () => { cleanup(); };
+  }, [cleanup]);
 
   const startConversation = async () => {
     setStatus(STATUS.CONNECTING);
@@ -38,13 +37,11 @@ export default function VoiceIntake() {
     setCaseResult(null);
 
     try {
-      // Get signed URL from backend
+      // Get signed URL from our backend
       const tokenRes = await fetch('/msk/api/v1/voice/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          dynamicVariables: { platform: 'MSK Intelligence Web' }
-        })
+        body: JSON.stringify({ dynamicVariables: { platform: 'MSK Intelligence Web' } })
       });
 
       if (!tokenRes.ok) {
@@ -54,166 +51,54 @@ export default function VoiceIntake() {
 
       const { signed_url } = await tokenRes.json();
 
-      // Set up WebSocket to ElevenLabs
-      const ws = new WebSocket(signed_url);
-      wsRef.current = ws;
-
-      ws.onopen = () => {
-        console.log('[MSK Voice] WebSocket connected');
-      };
-
-      ws.onmessage = async (event) => {
-        const msg = JSON.parse(event.data);
-
-        switch (msg.type) {
-          case 'conversation_initiation_metadata':
-            // Connection established, set up WebRTC
-            await setupWebRTC(ws, msg);
-            setStatus(STATUS.CONNECTED);
-            break;
-
-          case 'audio':
-            // Play agent audio via WebRTC data channel (handled by peer connection)
-            break;
-
-          case 'agent_response':
-            if (msg.agent_response_event === 'agent_response') {
-              setTranscript(prev => [...prev, { role: 'agent', text: msg.agent_response }]);
-            }
-            break;
-
-          case 'user_transcript':
-            if (msg.user_transcription_event === 'user_transcript') {
-              setTranscript(prev => [...prev, { role: 'user', text: msg.user_transcript }]);
-            }
-            break;
-
-          case 'ping':
-            ws.send(JSON.stringify({ type: 'pong', event_id: msg.ping_event?.event_id }));
-            break;
-
-          case 'conversation_ended':
-            setStatus(STATUS.ENDED);
-            cleanup();
-            break;
-
-          default:
-            break;
-        }
-      };
-
-      ws.onerror = (e) => {
-        console.error('[MSK Voice] WebSocket error:', e);
-        setError('Connection error. Please try again.');
-        setStatus(STATUS.ERROR);
-        cleanup();
-      };
-
-      ws.onclose = () => {
-        if (status !== STATUS.ENDED && status !== STATUS.ERROR) {
+      // Start conversation using official ElevenLabs SDK
+      const conversation = await Conversation.startSession({
+        signedUrl: signed_url,
+        onConnect: () => {
+          console.log('[MSK Voice] Connected');
+          setStatus(STATUS.CONNECTED);
+        },
+        onDisconnect: () => {
+          console.log('[MSK Voice] Disconnected');
           setStatus(STATUS.ENDED);
+          conversationRef.current = null;
+        },
+        onError: (err) => {
+          console.error('[MSK Voice] Error:', err);
+          setError(typeof err === 'string' ? err : err.message || 'Voice connection error');
+          setStatus(STATUS.ERROR);
+        },
+        onModeChange: (mode) => {
+          // mode.mode is 'speaking' or 'listening'
+          setIsSpeaking(mode.mode === 'speaking');
+        },
+        onMessage: (msg) => {
+          // Handle transcript messages
+          if (msg.source === 'ai') {
+            setTranscript(prev => [...prev, { role: 'agent', text: msg.message }]);
+          } else if (msg.source === 'user') {
+            setTranscript(prev => [...prev, { role: 'user', text: msg.message }]);
+          }
         }
-      };
+      });
 
+      conversationRef.current = conversation;
     } catch (err) {
       console.error('[MSK Voice] Start error:', err);
       setError(err.message);
       setStatus(STATUS.ERROR);
-      cleanup();
     }
   };
 
-  const setupWebRTC = async (ws, initMsg) => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-      // Audio level visualization
-      const audioCtx = new AudioContext();
-      const source = audioCtx.createMediaStreamSource(stream);
-      const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 256;
-      source.connect(analyser);
-      analyserRef.current = analyser;
-
-      const dataArray = new Uint8Array(analyser.frequencyBinCount);
-      const updateLevel = () => {
-        analyser.getByteFrequencyData(dataArray);
-        const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
-        setAudioLevel(avg / 255);
-        animFrameRef.current = requestAnimationFrame(updateLevel);
-      };
-      updateLevel();
-
-      // Create peer connection
-      const pc = new RTCPeerConnection({
-        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-      });
-      pcRef.current = pc;
-
-      // Add mic track
-      stream.getTracks().forEach(track => pc.addTrack(track, stream));
-
-      // Handle remote audio (agent voice)
-      pc.ontrack = (event) => {
-        const audio = new Audio();
-        audio.srcObject = event.streams[0];
-        audio.play().catch(() => {});
-      };
-
-      // Send ICE candidates
-      pc.onicecandidate = (event) => {
-        if (event.candidate && ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({
-            type: 'ice_candidate',
-            candidate: event.candidate
-          }));
-        }
-      };
-
-      // Create and send offer
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-
-      ws.send(JSON.stringify({
-        type: 'session_description',
-        sdp: offer.sdp
-      }));
-
-      // Listen for answer
-      const origOnMessage = ws.onmessage;
-      ws.onmessage = async (event) => {
-        const msg = JSON.parse(event.data);
-        if (msg.type === 'session_description' && msg.sdp) {
-          await pc.setRemoteDescription({ type: 'answer', sdp: msg.sdp });
-        } else if (msg.type === 'ice_candidate' && msg.candidate) {
-          await pc.addIceCandidate(msg.candidate);
-        }
-        // Forward to original handler
-        origOnMessage(event);
-      };
-    } catch (err) {
-      console.error('[MSK Voice] WebRTC setup error:', err);
-      if (err.name === 'NotAllowedError') {
-        setError('Microphone access denied. Please allow microphone access and try again.');
-      } else {
-        setError('Failed to set up audio: ' + err.message);
-      }
-      setStatus(STATUS.ERROR);
-    }
-  };
-
-  const endConversation = () => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ type: 'end_conversation' }));
-    }
+  const endConversation = async () => {
     setStatus(STATUS.ENDED);
-    cleanup();
+    await cleanup();
   };
 
   const statusConfig = {
     [STATUS.IDLE]: { color: 'bg-dark-600', text: 'Ready to start', pulse: false },
     [STATUS.CONNECTING]: { color: 'bg-yellow-500', text: 'Connecting...', pulse: true },
-    [STATUS.CONNECTED]: { color: 'bg-green-500', text: 'Speaking with Dr. MSK', pulse: true },
+    [STATUS.CONNECTED]: { color: 'bg-green-500', text: isSpeaking ? 'Dr. MSK is speaking...' : 'Listening...', pulse: true },
     [STATUS.ERROR]: { color: 'bg-red-500', text: 'Error', pulse: false },
     [STATUS.ENDED]: { color: 'bg-msk-500', text: 'Conversation ended', pulse: false }
   };
@@ -261,18 +146,18 @@ export default function VoiceIntake() {
             {/* Microphone Visualization */}
             <div className="flex items-center justify-center mb-8">
               <div className="relative">
-                {/* Outer ring - audio level */}
+                {/* Pulse rings when agent is speaking */}
                 <div
-                  className="absolute inset-0 rounded-full bg-msk-500/20 transition-transform duration-100"
+                  className="absolute inset-0 rounded-full bg-msk-500/20 transition-transform duration-300"
                   style={{
-                    transform: `scale(${1 + audioLevel * 0.6})`,
+                    transform: `scale(${isSpeaking ? 1.4 : 1})`,
                     opacity: status === STATUS.CONNECTED ? 0.5 : 0
                   }}
                 />
                 <div
-                  className="absolute inset-0 rounded-full bg-msk-500/10 transition-transform duration-150"
+                  className="absolute inset-0 rounded-full bg-msk-500/10 transition-transform duration-500"
                   style={{
-                    transform: `scale(${1 + audioLevel * 1.2})`,
+                    transform: `scale(${isSpeaking ? 1.8 : 1})`,
                     opacity: status === STATUS.CONNECTED ? 0.3 : 0
                   }}
                 />
@@ -292,18 +177,15 @@ export default function VoiceIntake() {
                     }`}
                 >
                   {status === STATUS.CONNECTED ? (
-                    // Stop icon
                     <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24">
                       <rect x="6" y="6" width="12" height="12" rx="2" />
                     </svg>
                   ) : status === STATUS.CONNECTING ? (
-                    // Loading spinner
                     <svg className="w-12 h-12 text-white animate-spin" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
                   ) : (
-                    // Mic icon
                     <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
                       <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
