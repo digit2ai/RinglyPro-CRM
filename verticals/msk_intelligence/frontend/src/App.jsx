@@ -21,6 +21,7 @@ import ScheduleAppointment from './pages/ScheduleAppointment';
 import MyAppointments from './pages/MyAppointments';
 import PROMs from './pages/PROMs';
 import Billing from './pages/Billing';
+import EngagementDashboard from './pages/EngagementDashboard';
 import MyRehab from './pages/MyRehab';
 import CreateHEP from './pages/CreateHEP';
 import RPMDashboard from './pages/RPMDashboard';
@@ -84,6 +85,11 @@ export default function App() {
               <Route path="/billing" element={
                 <ProtectedRoute allowedRoles={['admin', 'radiologist', 'staff']}>
                   <Billing />
+                </ProtectedRoute>
+              } />
+              <Route path="/engagement" element={
+                <ProtectedRoute allowedRoles={['admin', 'radiologist']}>
+                  <EngagementDashboard />
                 </ProtectedRoute>
               } />
               <Route path="/admin" element={

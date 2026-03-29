@@ -41,6 +41,7 @@ const fhirRoutes = require('./routes/fhir');
 const rehabRoutes = require('./routes/rehab');
 const rpmRoutes = require('./routes/rpm');
 const workersCompRoutes = require('./routes/workerscomp');
+const engagementRoutes = require('./routes/engagement');
 
 router.use('/api/v1/auth', authRoutes);
 router.use('/api/v1/cases', authenticate, caseRoutes);
@@ -63,6 +64,7 @@ router.use('/api/v1/fhir', authenticate, fhirRoutes);
 router.use('/api/v1/rehab', authenticate, rehabRoutes);
 router.use('/api/v1/rpm', authenticate, rpmRoutes);
 router.use('/api/v1/workerscomp', authenticate, workersCompRoutes);
+router.use('/api/v1/engagement', authenticate, engagementRoutes);
 
 // Notifications API
 router.get('/api/v1/notifications', authenticate, async (req, res) => {
@@ -1026,6 +1028,59 @@ async function runMigrations() {
 
 // Run migrations on load
 runMigrations();
+
+// ── Automated Engagement Nudge Cron ─────────────────────────────────
+const cron = require('node-cron');
+// Run every 6 hours — check for patients needing engagement nudges
+cron.schedule('0 */6 * * *', async () => {
+  try {
+    console.log('[MSK] Running engagement nudge check...');
+
+    // 1. Exercise compliance nudges — no session in 3+ days for active programs
+    const [exerciseAlerts] = await sequelize.query(`
+      SELECT DISTINCT hp.patient_id, u.first_name, u.last_name, u.phone, hp.name AS program_name
+      FROM msk_hep_programs hp
+      JOIN msk_users u ON hp.patient_id = u.id
+      WHERE hp.status = 'active'
+      AND hp.patient_id NOT IN (
+        SELECT DISTINCT patient_id FROM msk_hep_sessions
+        WHERE completed_at > NOW() - INTERVAL '3 days'
+      )
+    `);
+
+    for (const alert of exerciseAlerts) {
+      // Create notification
+      await sequelize.query(`
+        INSERT INTO msk_notifications (user_id, type, title, body, link)
+        VALUES ($1, 'exercise_reminder', 'Time for your exercises!',
+          $2, '/rehab')
+      `, { bind: [alert.patient_id, `You haven''t logged an exercise session in 3 days. Your "${alert.program_name}" program is waiting!`] });
+    }
+
+    // 2. Appointment reminders — 24h before, not yet sent
+    const [apptAlerts] = await sequelize.query(`
+      SELECT a.id, a.patient_id, u.first_name, u.phone, a.scheduled_at
+      FROM msk_appointments a
+      JOIN msk_users u ON a.patient_id = u.id
+      WHERE a.status = 'scheduled'
+      AND a.reminder_24h_sent = FALSE
+      AND a.scheduled_at BETWEEN NOW() AND NOW() + INTERVAL '24 hours'
+    `);
+
+    for (const appt of apptAlerts) {
+      await sequelize.query(`
+        INSERT INTO msk_notifications (user_id, type, title, body, link)
+        VALUES ($1, 'appointment_reminder', 'Appointment Tomorrow',
+          $2, '/appointments')
+      `, { bind: [appt.patient_id, `Your MSK consultation is scheduled for ${new Date(appt.scheduled_at).toLocaleString()}. Don''t forget!`] });
+      await sequelize.query(`UPDATE msk_appointments SET reminder_24h_sent = TRUE WHERE id = $1`, { bind: [appt.id] });
+    }
+
+    console.log(`[MSK] Nudge check complete: ${exerciseAlerts.length} exercise, ${apptAlerts.length} appointment reminders`);
+  } catch (err) {
+    console.error('[MSK] Nudge cron error:', err.message);
+  }
+});
 
 // Export sequelize for use in routes
 router.sequelize = sequelize;

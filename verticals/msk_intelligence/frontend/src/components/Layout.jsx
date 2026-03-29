@@ -24,6 +24,7 @@ const NAV_ITEMS = {
     { path: '/consultations', label: 'Video Consults', icon: '📹' },
     { path: '/reports', label: 'Reports', icon: '📄' },
     { path: '/billing', label: 'Billing', icon: '💰' },
+    { path: '/engagement', label: 'Engagement', icon: '📊' },
     { path: '/admin', label: 'Analytics', icon: '📈' },
   ],
   admin: [
@@ -35,6 +36,7 @@ const NAV_ITEMS = {
     { path: '/consultations', label: 'Video Consults', icon: '📹' },
     { path: '/reports', label: 'Reports', icon: '📄' },
     { path: '/billing', label: 'Billing', icon: '💰' },
+    { path: '/engagement', label: 'Engagement', icon: '📊' },
     { path: '/admin', label: 'Admin', icon: '⚙️' },
   ],
   staff: [
