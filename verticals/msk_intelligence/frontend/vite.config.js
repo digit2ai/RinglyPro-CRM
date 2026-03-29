@@ -7,9 +7,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
-    rollupOptions: {
-      external: ['@mediapipe/tasks-vision']
-    }
+    chunkSizeWarningLimit: 1500
   },
   server: {
     proxy: {
