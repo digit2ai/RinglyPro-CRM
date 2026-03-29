@@ -280,6 +280,155 @@
   </div>
 </section>
 
+<!-- ════════════ 3.5 VIDEO DIAGNOSTICS ════════════ -->
+<section class="alt" id="video-diagnostics">
+  <div class="c">
+    <div class="s-label">How the Camera Diagnoses</div>
+    <h2 class="s-title">AI Video Diagnostics — Range of Motion Assessment</h2>
+    <p class="s-sub">No equipment. No specialist on-site. A tablet camera + AI measures joint mobility in real-time with clinical-grade accuracy.</p>
+
+    <!-- How it works -->
+    <div class="card" style="padding:36px;margin-bottom:32px">
+      <h3 style="font-weight:800;margin-bottom:20px;font-size:1.15rem">How It Works — The Technology</h3>
+      <p style="color:var(--muted);margin-bottom:24px">
+        <strong style="color:#fff">Google MediaPipe Pose</strong> runs entirely in the browser on the patient's device — phone or tablet camera.
+        <strong style="color:var(--green)">No cloud processing needed.</strong> No data leaves the device until the measurement is captured.
+        Works offline once loaded. Works on a $100 Android tablet.
+      </p>
+
+      <div class="grid2" style="gap:32px;align-items:start">
+        <!-- Steps -->
+        <div>
+          <h4 style="font-weight:700;margin-bottom:16px;color:var(--blue)">Step-by-Step Process</h4>
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div style="display:flex;gap:12px">
+              <div style="width:32px;height:32px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.8rem;color:#fff;flex-shrink:0">1</div>
+              <div>
+                <strong style="color:#fff">Camera captures live video</strong>
+                <p style="color:var(--muted);font-size:.9rem;margin-top:2px">Patient stands in front of the tablet and shows the affected joint. Health worker positions the camera.</p>
+              </div>
+            </div>
+            <div style="display:flex;gap:12px">
+              <div style="width:32px;height:32px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.8rem;color:#fff;flex-shrink:0">2</div>
+              <div>
+                <strong style="color:#fff">AI detects 33 body landmarks</strong>
+                <p style="color:var(--muted);font-size:.9rem;margin-top:2px">MediaPipe Pose identifies shoulders, elbows, wrists, hips, knees, and ankles — all in real-time at 30 frames per second.</p>
+              </div>
+            </div>
+            <div style="display:flex;gap:12px">
+              <div style="width:32px;height:32px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.8rem;color:#fff;flex-shrink:0">3</div>
+              <div>
+                <strong style="color:#fff">Algorithm calculates joint angles</strong>
+                <p style="color:var(--muted);font-size:.9rem;margin-top:2px">Using three connected landmarks (e.g., hip-knee-ankle for knee flexion), the system computes the precise angle between body segments using trigonometric calculation.</p>
+              </div>
+            </div>
+            <div style="display:flex;gap:12px">
+              <div style="width:32px;height:32px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.8rem;color:#fff;flex-shrink:0">4</div>
+              <div>
+                <strong style="color:#fff">Real-time overlay shows the result</strong>
+                <p style="color:var(--muted);font-size:.9rem;margin-top:2px">Angle appears on screen — <span style="color:var(--green);font-weight:600">green if within normal range</span>, <span style="color:var(--red);font-weight:600">red if restricted</span>. Both patient and health worker see it instantly.</p>
+              </div>
+            </div>
+            <div style="display:flex;gap:12px">
+              <div style="width:32px;height:32px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.8rem;color:#fff;flex-shrink:0">5</div>
+              <div>
+                <strong style="color:#fff">Capture and save</strong>
+                <p style="color:var(--muted);font-size:.9rem;margin-top:2px">One tap saves the measurement to the patient's case. Data is sent to the specialist for review alongside the full case file.</p>
+              </div>
+            </div>
+            <div style="display:flex;gap:12px">
+              <div style="width:32px;height:32px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.8rem;color:#fff;flex-shrink:0">6</div>
+              <div>
+                <strong style="color:#fff">Track recovery over time</strong>
+                <p style="color:var(--muted);font-size:.9rem;margin-top:2px">Measure again at 2 weeks, 6 weeks, 3 months. The system charts improvement — giving the specialist objective progress data without a follow-up visit.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Angle Diagram -->
+        <div>
+          <h4 style="font-weight:700;margin-bottom:16px;color:var(--cyan)">Angle Calculation — Example</h4>
+          <div style="background:#0a0e17;border:1px solid var(--border);border-radius:12px;padding:28px;font-family:'Courier New',monospace;font-size:.85rem;line-height:1.8;color:var(--muted)">
+            <p style="color:var(--blue);font-weight:700;margin-bottom:12px">Knee Flexion Measurement:</p>
+            <pre style="white-space:pre-wrap;margin:0;color:var(--text)">
+  Hip (landmark 23) ─────── A
+                             \
+                              \
+                               \  angle = knee flexion
+                                \
+  Knee (landmark 25) ────── B
+                              /
+                             /
+  Ankle (landmark 27) ──── C</pre>
+            <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+              <p><span style="color:var(--blue)">Calculation:</span> <span style="color:#fff">atan2(C-B) - atan2(A-B)</span></p>
+              <p><span style="color:var(--blue)">Measured:</span> <span style="color:var(--gold);font-weight:700">95°</span></p>
+              <p><span style="color:var(--blue)">Normal range:</span> <span style="color:var(--green)">0° — 135°</span></p>
+              <p><span style="color:var(--blue)">Result:</span> <span style="color:var(--red);font-weight:700">Limited ROM — flagged for specialist</span></p>
+            </div>
+          </div>
+
+          <div style="margin-top:20px;background:#0a0e17;border:1px solid var(--border);border-radius:12px;padding:20px">
+            <p style="font-size:.85rem;font-weight:700;margin-bottom:8px;color:var(--green)">Accuracy</p>
+            <p style="color:var(--muted);font-size:.85rem">Within <strong style="color:#fff">~5°</strong> of a physical goniometer — the standard clinical measurement tool that costs $50 and requires a trained clinician to use.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 9 Assessment Types -->
+    <h3 style="font-weight:800;margin-bottom:16px;font-size:1.1rem;text-align:center">9 Joint Assessment Types — Available Today</h3>
+    <div class="card" style="overflow-x:auto;margin-bottom:32px">
+      <table>
+        <thead>
+          <tr>
+            <th>Joint</th>
+            <th>Movement</th>
+            <th class="r">Normal Range</th>
+            <th>Clinical Use</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Knee</strong></td><td>Flexion</td><td class="r" style="color:var(--green);font-weight:600">0° — 135°</td><td style="color:var(--muted);font-size:.85rem">ACL/MCL injury, osteoarthritis, post-surgical recovery</td></tr>
+          <tr><td><strong>Knee</strong></td><td>Extension</td><td class="r" style="color:var(--green);font-weight:600">0°</td><td style="color:var(--muted);font-size:.85rem">Extension lag assessment, quad strength</td></tr>
+          <tr><td><strong>Shoulder</strong></td><td>Abduction</td><td class="r" style="color:var(--green);font-weight:600">0° — 180°</td><td style="color:var(--muted);font-size:.85rem">Rotator cuff tear, impingement, frozen shoulder</td></tr>
+          <tr><td><strong>Shoulder</strong></td><td>Flexion</td><td class="r" style="color:var(--green);font-weight:600">0° — 180°</td><td style="color:var(--muted);font-size:.85rem">Overhead mobility, surgical recovery</td></tr>
+          <tr><td><strong>Shoulder</strong></td><td>External Rotation</td><td class="r" style="color:var(--green);font-weight:600">0° — 90°</td><td style="color:var(--muted);font-size:.85rem">Rotator cuff integrity, throwing athletes</td></tr>
+          <tr><td><strong>Hip</strong></td><td>Flexion</td><td class="r" style="color:var(--green);font-weight:600">0° — 120°</td><td style="color:var(--muted);font-size:.85rem">Hip impingement, labral tears, arthritis</td></tr>
+          <tr><td><strong>Cervical</strong></td><td>Rotation</td><td class="r" style="color:var(--green);font-weight:600">0° — 80°</td><td style="color:var(--muted);font-size:.85rem">Neck stiffness, whiplash, cervical disc issues</td></tr>
+          <tr><td><strong>Elbow</strong></td><td>Flexion</td><td class="r" style="color:var(--green);font-weight:600">0° — 145°</td><td style="color:var(--muted);font-size:.85rem">Fracture recovery, tennis/golfer's elbow</td></tr>
+          <tr><td><strong>Lumbar</strong></td><td>Flexion</td><td class="r" style="color:var(--green);font-weight:600">0° — 80°</td><td style="color:var(--muted);font-size:.85rem">Low back pain, disc herniation, sciatica</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Why it matters -->
+    <h3 style="font-weight:800;margin-bottom:16px;font-size:1.1rem;text-align:center">Why This Changes Everything for Remote Healthcare</h3>
+    <div class="grid3">
+      <div class="card" style="text-align:center;border-top:3px solid var(--green)">
+        <h4 style="font-weight:700;margin-bottom:8px;font-size:1rem">No Equipment Needed</h4>
+        <p style="color:var(--muted);font-size:.88rem">Replaces the goniometer ($50 clinical tool) and the trained physiotherapist needed to operate it. Any tablet with a camera works.</p>
+      </div>
+      <div class="card" style="text-align:center;border-top:3px solid var(--blue)">
+        <h4 style="font-weight:700;margin-bottom:8px;font-size:1rem">Anyone Can Operate</h4>
+        <p style="color:var(--muted);font-size:.88rem">A community health worker holds the tablet and taps "Capture." The AI does the measurement. No medical training required to collect the data.</p>
+      </div>
+      <div class="card" style="text-align:center;border-top:3px solid var(--cyan)">
+        <h4 style="font-weight:700;margin-bottom:8px;font-size:1rem">Objective Recovery Tracking</h4>
+        <p style="color:var(--muted);font-size:.88rem">Specialists in Manila see objective improvement data over weeks — without the patient ever traveling. Exercise programs adjust based on real ROM progress.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:24px;text-align:center;padding:24px;background:linear-gradient(135deg,#111827,#1a2332)">
+      <p style="color:var(--muted);font-size:.95rem">
+        Try it now: <a href="https://aiagent.ringlypro.com/msk/login" style="color:var(--blue);font-weight:600">Log in to MSK Intelligence</a>
+        &rarr; Open any case &rarr; Scroll to <strong style="color:#fff">"ROM Assessment"</strong> &rarr; Select joint type &rarr; Click <strong style="color:var(--green)">"Start ROM Assessment"</strong>
+      </p>
+    </div>
+  </div>
+</section>
+
 <!-- ════════════ 04 TECHNOLOGY ════════════ -->
 <section class="alt" id="technology">
   <div class="c">
