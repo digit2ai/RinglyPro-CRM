@@ -50,18 +50,27 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
 
   useEffect(() => cleanup, [cleanup]);
 
+  // Once active + video element exists, attach the stream
+  useEffect(() => {
+    if (!active || !videoRef.current || !streamRef.current) return;
+    const video = videoRef.current;
+    video.srcObject = streamRef.current;
+    video.play().then(() => {
+      detectLoop();
+    }).catch(() => {
+      // autoplay may handle it
+      detectLoop();
+    });
+  }, [active]);
+
   const startAssessment = async () => {
     setError(null);
     try {
-      // Get camera
+      // Get camera stream first (before rendering the video element)
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' }
       });
       streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
 
       // Try to load MediaPipe (graceful fallback if not available)
       try {
@@ -82,13 +91,8 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
         poseLandmarkerRef.current = null;
       }
 
+      // Now render the video element — useEffect above will attach stream
       setActive(true);
-      // Wait for video to be ready before starting detection
-      videoRef.current.onloadedmetadata = () => {
-        detectLoop();
-      };
-      // Fallback if already loaded
-      if (videoRef.current.videoWidth > 0) detectLoop();
     } catch (err) {
       if (err.name === 'NotAllowedError') {
         setError('Camera access denied. Please allow camera access.');
