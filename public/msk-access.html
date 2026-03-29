@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MSK Access — Specialist Care for Every Filipino</title>
+  <meta name="description" content="Bringing specialist musculoskeletal diagnostics to remote Philippine communities via Starlink satellite connectivity + AI-powered telehealth." />
+  <meta property="og:title" content="MSK Access — Specialist Care for Every Filipino" />
+  <meta property="og:description" content="Starlink + AI telehealth = board-certified MSK diagnostics in every barangay." />
+  <meta property="og:url" content="https://aiagent.ringlypro.com/msk-access.html" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦴</text></svg>" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #0a0e17; color: #e2e8f0; line-height: 1.6; }
+
+    /* ── Tokens ── */
+    :root {
+      --blue: #0ea5e9;
+      --blue-dark: #0369a1;
+      --cyan: #06b6d4;
+      --green: #10b981;
+      --gold: #f59e0b;
+      --red: #ef4444;
+      --bg: #0a0e17;
+      --card: #111827;
+      --card-border: #1e293b;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+    }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+    /* ── Hero ── */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+    }
+    .hero-bg {
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, #0a0e17 0%, #0c1a2e 40%, #0a0e17 100%);
+    }
+    .hero-bg::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: url('https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69c7fbd05eea837aca559a82.jpg') center/cover no-repeat;
+      opacity: 0.15;
+    }
+    .hero-bg::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 70% 30%, rgba(14,165,233,0.08) 0%, transparent 60%);
+    }
+    .hero-content { position: relative; z-index: 2; padding: 120px 0 80px; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 8px 20px; border-radius: 100px;
+      background: rgba(14,165,233,0.08); border: 1px solid rgba(14,165,233,0.2);
+      color: var(--blue); font-size: 13px; font-weight: 600; margin-bottom: 32px;
+    }
+    .hero-badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--blue); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .hero h1 {
+      font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 900;
+      line-height: 1.1; margin-bottom: 24px; max-width: 700px;
+    }
+    .hero h1 .accent { color: var(--blue); }
+    .hero h1 .accent2 { color: var(--green); }
+    .hero-sub { font-size: 1.25rem; color: var(--text-muted); max-width: 560px; margin-bottom: 40px; }
+    .hero-cta { display: flex; flex-wrap: wrap; gap: 16px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 16px 32px; border-radius: 12px; font-weight: 600; font-size: 1rem;
+      text-decoration: none; transition: all 0.2s; border: none; cursor: pointer;
+    }
+    .btn-primary { background: var(--blue); color: #fff; }
+    .btn-primary:hover { background: var(--blue-dark); transform: translateY(-1px); }
+    .btn-secondary { background: rgba(255,255,255,0.06); color: var(--text); border: 1px solid var(--card-border); }
+    .btn-secondary:hover { background: rgba(255,255,255,0.1); }
+
+    /* ── Nav ── */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+      padding: 16px 0; background: rgba(10,14,23,0.85); backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(30,41,59,0.5);
+    }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; }
+    .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .nav-brand img { width: 40px; height: 40px; border-radius: 8px; }
+    .nav-brand span { font-weight: 700; font-size: 1.1rem; color: #fff; }
+    .nav-links { display: flex; gap: 8px; }
+    .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 14px; font-weight: 500; padding: 8px 16px; border-radius: 8px; transition: all 0.2s; }
+    .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.05); }
+
+    /* ── Section ── */
+    section { padding: 100px 0; }
+    .section-label {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;
+      color: var(--blue); margin-bottom: 16px;
+    }
+    .section-title { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800; margin-bottom: 16px; line-height: 1.2; }
+    .section-sub { font-size: 1.1rem; color: var(--text-muted); max-width: 600px; margin-bottom: 48px; }
+
+    /* ── Problem ── */
+    .problem { background: linear-gradient(180deg, var(--bg) 0%, #0f1729 100%); border-top: 1px solid var(--card-border); }
+    .problem-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+    .problem-card {
+      background: var(--card); border: 1px solid var(--card-border); border-radius: 16px;
+      padding: 32px; transition: all 0.3s;
+    }
+    .problem-card:hover { border-color: rgba(14,165,233,0.3); transform: translateY(-2px); }
+    .problem-icon { font-size: 2rem; margin-bottom: 16px; }
+    .problem-card h4 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+    .problem-card p { color: var(--text-muted); font-size: 0.95rem; }
+    .stat-highlight { color: var(--gold); font-weight: 700; }
+
+    /* ── Solution ── */
+    .solution { background: #0f1729; }
+    .solution-flow { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 32px; position: relative; }
+    .flow-step {
+      background: var(--card); border: 1px solid var(--card-border); border-radius: 16px;
+      padding: 32px 24px; text-align: center; position: relative;
+    }
+    .flow-step:hover { border-color: rgba(14,165,233,0.3); }
+    .flow-num {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--blue), var(--cyan));
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 1.1rem; margin: 0 auto 16px; color: #fff;
+    }
+    .flow-step h4 { font-weight: 700; margin-bottom: 8px; font-size: 1.05rem; }
+    .flow-step p { color: var(--text-muted); font-size: 0.9rem; }
+
+    /* ── Kit ── */
+    .kit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+    .kit-visual {
+      position: relative; border-radius: 20px; overflow: hidden;
+      border: 1px solid var(--card-border); aspect-ratio: 16/10;
+    }
+    .kit-visual img { width: 100%; height: 100%; object-fit: cover; }
+    .kit-visual .overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(10,14,23,0.7), transparent 50%);
+    }
+    .kit-visual .tag {
+      position: absolute; bottom: 20px; left: 20px;
+      background: rgba(14,165,233,0.9); color: #fff; padding: 8px 16px;
+      border-radius: 8px; font-weight: 600; font-size: 0.85rem;
+    }
+    .kit-list { list-style: none; }
+    .kit-list li {
+      display: flex; gap: 16px; padding: 16px 0;
+      border-bottom: 1px solid rgba(30,41,59,0.5);
+    }
+    .kit-list li:last-child { border-bottom: none; }
+    .kit-icon {
+      width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
+    }
+    .kit-icon.starlink { background: rgba(14,165,233,0.1); }
+    .kit-icon.device { background: rgba(16,185,129,0.1); }
+    .kit-icon.ai { background: rgba(168,85,247,0.1); }
+    .kit-icon.power { background: rgba(245,158,11,0.1); }
+    .kit-list h5 { font-weight: 700; font-size: 0.95rem; margin-bottom: 2px; }
+    .kit-list .desc { color: var(--text-muted); font-size: 0.85rem; }
+    .kit-list .price { color: var(--blue); font-weight: 600; font-size: 0.85rem; }
+
+    /* ── Deployment Models ── */
+    .deploy { background: #0f1729; }
+    .deploy-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .deploy-card {
+      background: var(--card); border: 1px solid var(--card-border); border-radius: 16px;
+      padding: 32px; text-align: center; transition: all 0.3s;
+    }
+    .deploy-card:hover { border-color: rgba(14,165,233,0.3); transform: translateY(-2px); }
+    .deploy-card .icon { font-size: 2.5rem; margin-bottom: 16px; }
+    .deploy-card h4 { font-weight: 700; margin-bottom: 8px; }
+    .deploy-card p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 16px; }
+    .deploy-card .tag-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+    .deploy-tag {
+      padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 600;
+      background: rgba(14,165,233,0.08); color: var(--blue); border: 1px solid rgba(14,165,233,0.15);
+    }
+
+    /* ── Patient Journey ── */
+    .journey-card {
+      background: linear-gradient(135deg, var(--card) 0%, #1a2332 100%);
+      border: 1px solid var(--card-border); border-radius: 20px;
+      padding: 48px; max-width: 800px; margin: 0 auto;
+    }
+    .journey-card .persona {
+      display: flex; align-items: center; gap: 16px; margin-bottom: 32px;
+      padding-bottom: 24px; border-bottom: 1px solid var(--card-border);
+    }
+    .persona-avatar {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--blue), var(--green));
+      display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
+    }
+    .persona-info h4 { font-weight: 700; }
+    .persona-info p { color: var(--text-muted); font-size: 0.9rem; }
+    .journey-steps { display: flex; flex-direction: column; gap: 20px; }
+    .j-step { display: flex; gap: 16px; }
+    .j-step-num {
+      width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+      background: rgba(14,165,233,0.1); border: 2px solid var(--blue);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.8rem; color: var(--blue);
+    }
+    .j-step-text { padding-top: 4px; }
+    .j-step-text strong { color: #fff; }
+    .j-step-text p { color: var(--text-muted); font-size: 0.9rem; margin-top: 2px; }
+
+    /* ── Economics ── */
+    .econ { background: #0f1729; }
+    .econ-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; }
+    .econ-card {
+      background: var(--card); border: 1px solid var(--card-border); border-radius: 16px;
+      padding: 32px; text-align: center;
+    }
+    .econ-card .value { font-size: 2.5rem; font-weight: 900; color: var(--blue); margin-bottom: 4px; }
+    .econ-card .label { font-weight: 600; margin-bottom: 4px; }
+    .econ-card .sub { color: var(--text-muted); font-size: 0.85rem; }
+
+    /* ── Partners ── */
+    .partners-grid { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 32px; }
+    .partner-tag {
+      padding: 12px 24px; border-radius: 12px;
+      background: var(--card); border: 1px solid var(--card-border);
+      font-weight: 600; font-size: 0.95rem; transition: all 0.2s;
+    }
+    .partner-tag:hover { border-color: rgba(14,165,233,0.3); background: rgba(14,165,233,0.05); }
+
+    /* ── CTA ── */
+    .cta-section {
+      padding: 100px 0;
+      background: linear-gradient(135deg, #0c1a2e 0%, #0a0e17 50%, #0f1729 100%);
+      text-align: center;
+    }
+    .cta-section h2 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 900; margin-bottom: 16px; }
+    .cta-section p { color: var(--text-muted); font-size: 1.15rem; max-width: 500px; margin: 0 auto 40px; }
+    .cta-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+
+    /* ── Footer ── */
+    footer {
+      padding: 40px 0; border-top: 1px solid var(--card-border);
+      text-align: center; color: var(--text-dim); font-size: 0.85rem;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .kit-grid { grid-template-columns: 1fr; }
+      .deploy-grid { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 2.2rem; }
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="/msk/" class="nav-brand">
+      <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="MSK" />
+      <span>MSK Access</span>
+    </a>
+    <div class="nav-links">
+      <a href="#problem">The Problem</a>
+      <a href="#solution">Solution</a>
+      <a href="#kit">The Kit</a>
+      <a href="#economics">Economics</a>
+      <a href="#contact">Contact</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<header class="hero">
+  <div class="hero-bg"></div>
+  <div class="container hero-content">
+    <div class="hero-badge">
+      <span class="dot"></span>
+      Satellite-Powered Telehealth
+    </div>
+    <h1>
+      Specialist care
+      <br /><span class="accent">for every Filipino.</span>
+      <br /><span class="accent2">Everywhere.</span>
+    </h1>
+    <p class="hero-sub">
+      Starlink connectivity + AI-powered diagnostics = board-certified musculoskeletal care in every barangay, island, and mountain village. No signal? No problem.
+    </p>
+    <div class="hero-cta">
+      <a href="#contact" class="btn btn-primary">Partner With Us</a>
+      <a href="/msk/" class="btn btn-secondary">See the Platform</a>
+    </div>
+  </div>
+</header>
+
+<!-- Problem -->
+<section class="problem" id="problem">
+  <div class="container">
+    <div class="section-label">The Problem</div>
+    <h2 class="section-title">44 million Filipinos lack access to specialist care</h2>
+    <p class="section-sub">
+      In remote provinces, a knee injury means weeks of travel, lost income, and often no diagnosis at all.
+    </p>
+    <div class="problem-grid">
+      <div class="problem-card">
+        <div class="problem-icon">🏥</div>
+        <h4>Specialist Concentration</h4>
+        <p><span class="stat-highlight">70%</span> of orthopedic specialists are in Metro Manila and Cebu. Patients in BARMM, Eastern Visayas, and CARAGA travel 8-12 hours for a consultation.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon">📡</div>
+        <h4>Connectivity Desert</h4>
+        <p><span class="stat-highlight">30%</span> of Philippine municipalities have no reliable broadband. Island and mountain communities can't access telehealth even when platforms exist.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon">⏳</div>
+        <h4>Diagnostic Delay</h4>
+        <p>Average wait for an MSK specialist in rural Philippines: <span class="stat-highlight">6-12 weeks</span>. Many injuries worsen, become chronic, or lead to permanent disability.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon">💰</div>
+        <h4>Economic Burden</h4>
+        <p>A farmer or fisherfolk loses <span class="stat-highlight">₱5,000-15,000</span> in travel + lost income per hospital visit. Many choose to live with pain rather than seek care.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Solution -->
+<section class="solution" id="solution">
+  <div class="container">
+    <div class="section-label">The Solution</div>
+    <h2 class="section-title">Starlink + AI = Specialist Diagnostics Anywhere</h2>
+    <p class="section-sub">
+      A satellite dish, a tablet, and MSK Intelligence. That's all a community needs to access world-class musculoskeletal care.
+    </p>
+    <div class="solution-flow">
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <h4>Connect</h4>
+        <p>Starlink dish provides 50-200 Mbps anywhere with sky visibility. Setup in 10 minutes. Works through typhoons.</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">2</div>
+        <h4>Talk</h4>
+        <p>Patient speaks to Dr. MSK — our AI intake specialist. Describes symptoms in English or Tagalog. No forms to fill.</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">3</div>
+        <h4>Show</h4>
+        <p>Patient shows their injury on camera. AI measures range of motion in real-time using pose detection. No equipment needed.</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">4</div>
+        <h4>Diagnose</h4>
+        <p>Board-certified radiologist reviews the case remotely within 24 hours. Full report, recovery plan, and video explanation delivered.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- The Kit -->
+<section id="kit">
+  <div class="container">
+    <div class="section-label">The Access Kit</div>
+    <h2 class="section-title">Everything needed. Under ₱50,000.</h2>
+    <p class="section-sub">Each site gets a complete telehealth station that one community health worker can operate.</p>
+
+    <div class="kit-grid">
+      <div class="kit-visual">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69c7fbd05eea8363cb559a83.jpg" alt="MSK Intelligence Diagnostics" />
+        <div class="overlay"></div>
+        <div class="tag">Complete Telehealth Station</div>
+      </div>
+      <div>
+        <ul class="kit-list">
+          <li>
+            <div class="kit-icon starlink">🛰️</div>
+            <div>
+              <h5>Starlink Mini</h5>
+              <div class="desc">Satellite internet — 50-200 Mbps, works anywhere with sky access</div>
+              <div class="price">$299 hardware + $50/mo</div>
+            </div>
+          </li>
+          <li>
+            <div class="kit-icon device">📱</div>
+            <div>
+              <h5>Android Tablet</h5>
+              <div class="desc">Any device with Chrome browser and camera — even a ₱5,000 tablet works</div>
+              <div class="price">₱5,000 - ₱15,000</div>
+            </div>
+          </li>
+          <li>
+            <div class="kit-icon ai">🤖</div>
+            <div>
+              <h5>MSK Intelligence Platform</h5>
+              <div class="desc">AI voice intake, ROM assessment, specialist review, exercise programs — all browser-based</div>
+              <div class="price">Included in service</div>
+            </div>
+          </li>
+          <li>
+            <div class="kit-icon power">🔋</div>
+            <div>
+              <h5>Solar Power Bank (Optional)</h5>
+              <div class="desc">For off-grid areas — powers Starlink + tablet for 6+ hours</div>
+              <div class="price">₱8,000 - ₱15,000</div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Deployment Models -->
+<section class="deploy">
+  <div class="container">
+    <div class="section-label">Deployment Models</div>
+    <h2 class="section-title">Three ways to reach every community</h2>
+    <p class="section-sub">Fixed, mobile, and mission-based deployments to match any geography.</p>
+
+    <div class="deploy-grid">
+      <div class="deploy-card">
+        <div class="icon">🏠</div>
+        <h4>Barangay Health Station</h4>
+        <p>Permanent installation at the barangay health center. Starlink on roof, tablet inside. Community health worker assists patients daily.</p>
+        <div class="tag-row">
+          <span class="deploy-tag">Permanent</span>
+          <span class="deploy-tag">Rural Areas</span>
+          <span class="deploy-tag">Daily Access</span>
+        </div>
+      </div>
+      <div class="deploy-card">
+        <div class="icon">🚐</div>
+        <h4>Mobile Medical Van</h4>
+        <p>Starlink mounted on vehicle roof. Drive to remote communities, set up in 10 minutes. Serve 20-30 patients per stop.</p>
+        <div class="tag-row">
+          <span class="deploy-tag">Mobile</span>
+          <span class="deploy-tag">Multi-Site</span>
+          <span class="deploy-tag">Scheduled Visits</span>
+        </div>
+      </div>
+      <div class="deploy-card">
+        <div class="icon">⛵</div>
+        <h4>Island Medical Mission</h4>
+        <p>Starlink works on boats and temporary setups. Reach island communities during medical missions. Pack up and go in minutes.</p>
+        <div class="tag-row">
+          <span class="deploy-tag">Maritime</span>
+          <span class="deploy-tag">Islands</span>
+          <span class="deploy-tag">Disaster Response</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Patient Journey -->
+<section>
+  <div class="container">
+    <div class="section-label">Real Impact</div>
+    <h2 class="section-title">How it works for a real patient</h2>
+    <p class="section-sub">A farmer in Samar with a bad knee — today vs. with MSK Access.</p>
+
+    <div class="journey-card">
+      <div class="persona">
+        <div class="persona-avatar">👨‍🌾</div>
+        <div class="persona-info">
+          <h4>Mang Pedro, 52 — Rice Farmer, Samar</h4>
+          <p>Right knee pain for 3 months. Can't kneel to plant. Nearest orthopedic specialist: Tacloban (4 hours by bus).</p>
+        </div>
+      </div>
+      <div class="journey-steps">
+        <div class="j-step">
+          <div class="j-step-num">1</div>
+          <div class="j-step-text">
+            <strong>Walks to the barangay health center</strong>
+            <p>5 minutes from his farm. The health worker opens MSK Intelligence on the tablet.</p>
+          </div>
+        </div>
+        <div class="j-step">
+          <div class="j-step-num">2</div>
+          <div class="j-step-text">
+            <strong>Talks to Dr. MSK</strong>
+            <p>"Masakit ang tuhod ko pag naglalakad" — the AI understands, asks follow-up questions, records everything.</p>
+          </div>
+        </div>
+        <div class="j-step">
+          <div class="j-step-num">3</div>
+          <div class="j-step-text">
+            <strong>Shows his knee on camera</strong>
+            <p>AI measures: 95° flexion (normal: 135°). Flags limited range. Captures measurement automatically.</p>
+          </div>
+        </div>
+        <div class="j-step">
+          <div class="j-step-num">4</div>
+          <div class="j-step-text">
+            <strong>AI triages the case</strong>
+            <p>Chronic overuse, moderate severity. Recommends MRI protocol. Routes to specialist queue.</p>
+          </div>
+        </div>
+        <div class="j-step">
+          <div class="j-step-num">5</div>
+          <div class="j-step-text">
+            <strong>Specialist reviews within 24 hours</strong>
+            <p>Board-certified radiologist in Manila reviews the case. Diagnoses early osteoarthritis. Prescribes exercise program.</p>
+          </div>
+        </div>
+        <div class="j-step">
+          <div class="j-step-num">6</div>
+          <div class="j-step-text">
+            <strong>Pedro follows his exercise program</strong>
+            <p>Opens the app on his phone. 5 exercises, 3x/week. Pain score drops from 7 to 3 in 6 weeks. Back to planting.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Economics -->
+<section class="econ" id="economics">
+  <div class="container">
+    <div class="section-label">Economics</div>
+    <h2 class="section-title">The numbers work at every scale</h2>
+    <p class="section-sub">From a single barangay to a provincial government rollout.</p>
+
+    <div class="econ-grid">
+      <div class="econ-card">
+        <div class="value">₱35K</div>
+        <div class="label">Setup Cost Per Site</div>
+        <div class="sub">Starlink + tablet + training</div>
+      </div>
+      <div class="econ-card">
+        <div class="value">₱2,800</div>
+        <div class="label">Monthly Operating Cost</div>
+        <div class="sub">Starlink service + platform</div>
+      </div>
+      <div class="econ-card">
+        <div class="value">200+</div>
+        <div class="label">Patients Per Site/Month</div>
+        <div class="sub">One health worker, one tablet</div>
+      </div>
+      <div class="econ-card">
+        <div class="value">₱14</div>
+        <div class="label">Cost Per Consultation</div>
+        <div class="sub">vs. ₱5,000-15,000 travel cost</div>
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 48px;">
+      <p style="color: var(--text-muted); font-size: 1.1rem; max-width: 600px; margin: 0 auto;">
+        <strong style="color: var(--green);">99.7% cost reduction</strong> per consultation compared to traditional specialist visits. One site pays for itself in the first month.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- Partners -->
+<section>
+  <div class="container" style="text-align: center;">
+    <div class="section-label">Partnership Opportunities</div>
+    <h2 class="section-title">Built for scale with the right partners</h2>
+    <p class="section-sub" style="margin: 0 auto 32px;">
+      We're looking for government agencies, NGOs, and healthcare organizations ready to bring specialist care to underserved communities.
+    </p>
+    <div class="partners-grid">
+      <div class="partner-tag">🏛️ PhilHealth</div>
+      <div class="partner-tag">🏥 Department of Health</div>
+      <div class="partner-tag">🌍 WHO Philippines</div>
+      <div class="partner-tag">🤝 USAID</div>
+      <div class="partner-tag">📡 Starlink / SpaceX</div>
+      <div class="partner-tag">🏢 Provincial LGUs</div>
+      <div class="partner-tag">❤️ Philippine Red Cross</div>
+      <div class="partner-tag">🎓 UP Manila / PGH</div>
+      <div class="partner-tag">⛪ Catholic Health Association</div>
+      <div class="partner-tag">🏋️ Philippine Sports Commission</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="contact">
+  <div class="container">
+    <h2>Ready to bring specialist care<br />to your community?</h2>
+    <p>Whether you're a government agency, NGO, hospital network, or community organizer — let's talk about deploying MSK Access.</p>
+    <div class="cta-buttons">
+      <a href="mailto:manuel@digit2ai.com" class="btn btn-primary">Contact Us</a>
+      <a href="/msk/" class="btn btn-secondary">Try the Platform</a>
+      <a href="/msk/voice" class="btn btn-secondary">🎙️ Talk to Dr. MSK</a>
+    </div>
+    <p style="margin-top: 24px; color: var(--text-dim); font-size: 0.85rem;">
+      MSK Access is a program by <strong>Digit2AI</strong> powered by <strong>MSK Intelligence</strong>
+    </p>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="container">
+    <p>MSK Intelligence by Digit2AI &middot; HIPAA Compliant &middot; Board-Certified Specialists &middot; Satellite-Ready</p>
+  </div>
+</footer>
+
+</body>
+</html>
