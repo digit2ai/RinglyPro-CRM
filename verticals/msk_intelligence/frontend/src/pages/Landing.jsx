@@ -228,7 +228,10 @@ export default function Landing() {
                 </span>
               ))}
             </div>
-            <a href="mailto:contact@ringlypro.com" className="btn-primary inline-block">
+            <a href="/msk-proposal.html" className="btn-primary inline-block mr-3">
+              View Full Proposal
+            </a>
+            <a href="mailto:contact@ringlypro.com" className="btn-secondary inline-block">
               Contact Sales
             </a>
           </div>
