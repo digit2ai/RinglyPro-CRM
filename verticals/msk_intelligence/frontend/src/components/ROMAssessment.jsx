@@ -83,7 +83,12 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
       }
 
       setActive(true);
-      detectLoop();
+      // Wait for video to be ready before starting detection
+      videoRef.current.onloadedmetadata = () => {
+        detectLoop();
+      };
+      // Fallback if already loaded
+      if (videoRef.current.videoWidth > 0) detectLoop();
     } catch (err) {
       if (err.name === 'NotAllowedError') {
         setError('Camera access denied. Please allow camera access.');
@@ -94,42 +99,34 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
   };
 
   const detectLoop = () => {
-    if (!videoRef.current || !canvasRef.current) return;
+    if (!videoRef.current) return;
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas ? canvas.getContext('2d') : null;
 
     const detect = () => {
       if (!streamRef.current) return;
 
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      ctx.drawImage(video, 0, 0);
+      // Sync canvas size with video for landmark overlay
+      if (ctx && video.videoWidth > 0) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
 
+      // Run MediaPipe pose detection if available
       if (poseLandmarkerRef.current && video.videoWidth > 0) {
         try {
           const result = poseLandmarkerRef.current.detectForVideo(video, performance.now());
           if (result.landmarks && result.landmarks.length > 0) {
             const lm = result.landmarks[0];
-            drawLandmarks(ctx, lm);
+            if (ctx) drawLandmarks(ctx, lm);
             const angle = calculateROMAngle(lm, assessmentType, bodySide);
             if (angle !== null) setCurrentAngle(angle);
           }
         } catch (e) {
           // Detection frame error, continue
         }
-      }
-
-      // Draw current angle overlay
-      if (currentAngle !== null) {
-        const normal = ROM_NORMALS[assessmentType];
-        const isInRange = currentAngle <= normal.max * 1.1;
-        ctx.fillStyle = isInRange ? 'rgba(16, 185, 129, 0.9)' : 'rgba(239, 68, 68, 0.9)';
-        ctx.font = 'bold 48px monospace';
-        ctx.fillText(`${currentAngle}°`, 30, 60);
-        ctx.font = '16px sans-serif';
-        ctx.fillStyle = 'rgba(255,255,255,0.8)';
-        ctx.fillText(`Normal: ${normal.min}°–${normal.max}°`, 30, 85);
       }
 
       animRef.current = requestAnimationFrame(detect);
@@ -267,12 +264,38 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
   return (
     <div className="card p-0 overflow-hidden">
       {/* Video feed with overlay */}
-      <div className="relative bg-black">
-        <video ref={videoRef} className="hidden" playsInline muted />
-        <canvas ref={canvasRef} className="w-full" style={{ maxHeight: '480px', objectFit: 'contain' }} />
+      <div className="relative bg-black" style={{ minHeight: '320px' }}>
+        {/* Live video feed — visible */}
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          className="w-full"
+          style={{ maxHeight: '480px', objectFit: 'cover', transform: 'scaleX(-1)' }}
+        />
+        {/* Canvas overlay for landmarks (positioned on top of video) */}
+        <canvas
+          ref={canvasRef}
+          className="absolute inset-0 w-full h-full pointer-events-none"
+          style={{ objectFit: 'cover' }}
+        />
+
+        {/* Angle readout overlay */}
+        {currentAngle !== null && (
+          <div className="absolute top-4 left-4 z-10">
+            <div className={`text-5xl font-black font-mono ${currentAngle <= (ROM_NORMALS[assessmentType]?.max || 180) * 1.1 ? 'text-green-400' : 'text-red-400'}`}
+              style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>
+              {currentAngle}°
+            </div>
+            <div className="text-white text-xs font-medium mt-1" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
+              Normal: {ROM_NORMALS[assessmentType]?.min || 0}° — {ROM_NORMALS[assessmentType]?.max || 180}°
+            </div>
+          </div>
+        )}
 
         {/* Controls overlay */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 z-10">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-white text-sm font-medium">{ROM_NORMALS[assessmentType]?.label} — {bodySide}</p>
