@@ -22,11 +22,11 @@ export default function EngagementDashboard() {
         api.get('/engagement/compliance-alerts').catch(() => ({ data: [] })),
         api.get('/engagement/outcome-correlation').catch(() => ({ data: {} }))
       ]);
-      setPatientData(p.data || {});
-      setProviderData(pr.data || []);
-      setSiteData(s.data || {});
-      setAlerts(a.data || []);
-      setOutcomes(o.data || {});
+      setPatientData(p.data || p || {});
+      setProviderData(pr.data?.providers || pr.providers || pr.data || []);
+      setSiteData(s.data || s || {});
+      setAlerts(a.data?.alerts || a.alerts || a.data || []);
+      setOutcomes(o.data || o || {});
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   };
@@ -75,16 +75,16 @@ export default function EngagementDashboard() {
         <div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <MetricCard label="Active Patients" value={patientData.activePatients || 0} sub="Last 30 days" color="blue" />
-            <MetricCard label="ROM Assessments/Week" value={patientData.romFrequency || '0'} sub="Per patient avg" color="cyan" />
-            <MetricCard label="Exercise Compliance" value={`${patientData.exerciseCompliance || 0}%`} sub="Sessions logged vs expected" color={parseFloat(patientData.exerciseCompliance) > 70 ? 'green' : 'yellow'} />
-            <MetricCard label="PROMs Completion" value={`${patientData.promsCompletion || 0}%`} sub="Surveys completed" color={parseFloat(patientData.promsCompletion) > 80 ? 'green' : 'yellow'} />
+            <MetricCard label="ROM Assessments/Week" value={patientData.romAssessmentFrequency || '0'} sub="Per patient avg" color="cyan" />
+            <MetricCard label="Exercise Compliance" value={`${patientData.exerciseComplianceRate || 0}%`} sub="Sessions logged vs expected" color={parseFloat(patientData.exerciseComplianceRate) > 70 ? 'green' : 'yellow'} />
+            <MetricCard label="PROMs Completion" value={`${patientData.promsCompletionRate || 0}%`} sub="Surveys completed" color={parseFloat(patientData.promsCompletionRate) > 80 ? 'green' : 'yellow'} />
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <MetricCard label="Avg Pain Score" value={patientData.avgPainScore || '—'} sub="Latest VAS (0-10)" color={parseFloat(patientData.avgPainScore) > 5 ? 'red' : 'green'} />
+            <MetricCard label="Avg Pain Score" value={patientData.painScoreTrend?.[patientData.painScoreTrend.length-1]?.avg_vas || '—'} sub="Latest VAS (0-10)" color="blue" />
             <MetricCard label="No-Show Rate" value={`${patientData.noShowRate || 0}%`} sub="Appointments missed" color={parseFloat(patientData.noShowRate) > 10 ? 'red' : 'green'} />
-            <MetricCard label="Messages/Case" value={patientData.avgMessagesPerCase || '0'} sub="Avg communication" color="blue" />
-            <MetricCard label="Repeat Patients" value={`${patientData.repeatRate || 0}%`} sub="Patients with >1 case" color="cyan" />
+            <MetricCard label="Messages/Case" value={patientData.messages?.avgPerCase || '0'} sub="Avg communication" color="blue" />
+            <MetricCard label="Total Messages" value={patientData.messages?.total || 0} sub="Last 30 days" color="cyan" />
           </div>
 
           {/* Engagement Funnel */}

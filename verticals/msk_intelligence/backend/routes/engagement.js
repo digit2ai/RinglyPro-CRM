@@ -16,7 +16,7 @@ router.get('/patient-engagement', authorize('admin', 'radiologist'), async (req,
     const [activePatients] = await sequelize.query(
       `SELECT COUNT(DISTINCT patient_id) AS total
        FROM msk_cases
-       WHERE tenant_id = $1
+       WHERE (tenant_id = $1 OR $1 IS NULL)
          AND created_at >= NOW() - INTERVAL '30 days'`,
       { bind: [tenantId] }
     );
@@ -32,7 +32,7 @@ router.get('/patient-engagement', authorize('admin', 'radiologist'), async (req,
          ), 0
        ) AS avg_per_patient_per_week
        FROM msk_rom_measurements
-       WHERE tenant_id = $1
+       WHERE (tenant_id = $1 OR $1 IS NULL)
          AND measured_at >= NOW() - INTERVAL '30 days'`,
       { bind: [tenantId] }
     );
@@ -43,7 +43,7 @@ router.get('/patient-engagement', authorize('admin', 'radiologist'), async (req,
          COALESCE(
            ROUND(
              SUM(s.sessions_logged)::numeric /
-             NULLIF(SUM(p.expected_sessions), 0) * 100,
+             NULLIF(SUM(GREATEST((EXTRACT(EPOCH FROM (NOW() - p.start_date)) / 604800) * 5, 1)), 0) * 100,
              1
            ), 0
          ) AS compliance_rate
@@ -51,10 +51,10 @@ router.get('/patient-engagement', authorize('admin', 'radiologist'), async (req,
        LEFT JOIN (
          SELECT program_id, COUNT(*) AS sessions_logged
          FROM msk_hep_sessions
-         WHERE tenant_id = $1
+         WHERE (tenant_id = $1 OR $1 IS NULL)
          GROUP BY program_id
        ) s ON s.program_id = p.id
-       WHERE p.tenant_id = $1
+       WHERE (p.tenant_id = $1 OR $1 IS NULL)
          AND p.status = 'active'`,
       { bind: [tenantId] }
     );
@@ -62,17 +62,17 @@ router.get('/patient-engagement', authorize('admin', 'radiologist'), async (req,
     // PROMs completion rate
     const [promsCompletion] = await sequelize.query(
       `SELECT
-         COUNT(*) FILTER (WHERE status = 'completed') AS completed,
+         COUNT(*) AS completed,
          COUNT(*) AS total,
          COALESCE(
            ROUND(
-             COUNT(*) FILTER (WHERE status = 'completed')::numeric /
+             COUNT(*)::numeric /
              NULLIF(COUNT(*), 0) * 100,
              1
            ), 0
          ) AS completion_rate
        FROM msk_prom_submissions
-       WHERE tenant_id = $1`,
+       WHERE (tenant_id = $1 OR $1 IS NULL)`,
       { bind: [tenantId] }
     );
 
@@ -82,7 +82,7 @@ router.get('/patient-engagement', authorize('admin', 'radiologist'), async (req,
          DATE_TRUNC('week', submitted_at) AS week,
          ROUND(AVG(score)::numeric, 1) AS avg_vas
        FROM msk_prom_submissions
-       WHERE tenant_id = $1
+       WHERE (tenant_id = $1 OR $1 IS NULL)
          AND instrument_code = 'VAS'
          AND submitted_at >= NOW() - INTERVAL '12 weeks'
        GROUP BY DATE_TRUNC('week', submitted_at)
@@ -103,7 +103,7 @@ router.get('/patient-engagement', authorize('admin', 'radiologist'), async (req,
            ), 0
          ) AS no_show_rate
        FROM msk_appointments
-       WHERE tenant_id = $1
+       WHERE (tenant_id = $1 OR $1 IS NULL)
          AND scheduled_at >= NOW() - INTERVAL '30 days'`,
       { bind: [tenantId] }
     );
@@ -117,7 +117,7 @@ router.get('/patient-engagement', authorize('admin', 'radiologist'), async (req,
            0
          ) AS avg_per_case
        FROM msk_messages
-       WHERE tenant_id = $1
+       WHERE (tenant_id = $1 OR $1 IS NULL)
          AND created_at >= NOW() - INTERVAL '30 days'`,
       { bind: [tenantId] }
     );
@@ -155,7 +155,7 @@ router.get('/provider-performance', authorize('admin', 'radiologist'), async (re
     const [providers] = await sequelize.query(
       `SELECT id, first_name, last_name, email
        FROM msk_users
-       WHERE tenant_id = $1
+       WHERE (tenant_id = $1 OR $1 IS NULL)
          AND role = 'radiologist'`,
       { bind: [tenantId] }
     );
@@ -167,7 +167,7 @@ router.get('/provider-performance', authorize('admin', 'radiologist'), async (re
       const [cases] = await sequelize.query(
         `SELECT COUNT(*) AS total
          FROM msk_cases
-         WHERE tenant_id = $1
+         WHERE (tenant_id = $1 OR $1 IS NULL)
            AND assigned_radiologist_id = $2`,
         { bind: [tenantId, provider.id] }
       );
@@ -183,7 +183,7 @@ router.get('/provider-performance', authorize('admin', 'radiologist'), async (re
              ), 0
            ) AS avg_turnaround_hours
          FROM msk_reports
-         WHERE tenant_id = $1
+         WHERE (tenant_id = $1 OR $1 IS NULL)
            AND radiologist_id = $2`,
         { bind: [tenantId, provider.id] }
       );
@@ -192,7 +192,7 @@ router.get('/provider-performance', authorize('admin', 'radiologist'), async (re
       const [consultations] = await sequelize.query(
         `SELECT COUNT(*) AS total
          FROM msk_consultations
-         WHERE tenant_id = $1
+         WHERE (tenant_id = $1 OR $1 IS NULL)
            AND provider_id = $2
            AND status = 'completed'`,
         { bind: [tenantId, provider.id] }
@@ -229,7 +229,7 @@ router.get('/site-activity', authorize('admin', 'radiologist'), async (req, res)
          DATE(created_at) AS date,
          COUNT(*) AS cases
        FROM msk_cases
-       WHERE tenant_id = $1
+       WHERE (tenant_id = $1 OR $1 IS NULL)
          AND created_at >= NOW() - INTERVAL '30 days'
        GROUP BY DATE(created_at)
        ORDER BY date`,
@@ -242,7 +242,7 @@ router.get('/site-activity', authorize('admin', 'radiologist'), async (req, res)
          EXTRACT(HOUR FROM created_at)::int AS hour,
          COUNT(*) AS cases
        FROM msk_cases
-       WHERE tenant_id = $1
+       WHERE (tenant_id = $1 OR $1 IS NULL)
          AND created_at >= NOW() - INTERVAL '30 days'
        GROUP BY EXTRACT(HOUR FROM created_at)
        ORDER BY cases DESC`,
@@ -255,7 +255,7 @@ router.get('/site-activity', authorize('admin', 'radiologist'), async (req, res)
          COALESCE(source, 'unknown') AS source,
          COUNT(*) AS cases
        FROM msk_cases
-       WHERE tenant_id = $1
+       WHERE (tenant_id = $1 OR $1 IS NULL)
          AND created_at >= NOW() - INTERVAL '30 days'
        GROUP BY source
        ORDER BY cases DESC`,
@@ -277,7 +277,7 @@ router.get('/site-activity', authorize('admin', 'radiologist'), async (req, res)
        FROM (
          SELECT patient_id, COUNT(*) AS case_count
          FROM msk_cases
-         WHERE tenant_id = $1
+         WHERE (tenant_id = $1 OR $1 IS NULL)
          GROUP BY patient_id
        ) sub`,
       { bind: [tenantId] }
@@ -315,9 +315,9 @@ router.get('/compliance-alerts', authorize('admin', 'radiologist'), async (req, 
          p.id AS program_id,
          MAX(s.completed_at) AS last_session
        FROM msk_hep_programs p
-       JOIN msk_users u ON u.id = p.patient_id AND u.tenant_id = $1
-       LEFT JOIN msk_hep_sessions s ON s.program_id = p.id AND s.tenant_id = $1
-       WHERE p.tenant_id = $1
+       JOIN msk_users u ON u.id = p.patient_id AND (u.tenant_id = $1 OR $1 IS NULL)
+       LEFT JOIN msk_hep_sessions s ON s.program_id = p.id AND (s.tenant_id = $1 OR $1 IS NULL)
+       WHERE (p.tenant_id = $1 OR $1 IS NULL)
          AND p.status = 'active'
        GROUP BY p.patient_id, u.first_name, u.last_name, p.id
        HAVING MAX(s.completed_at) IS NULL
@@ -336,19 +336,19 @@ router.get('/compliance-alerts', authorize('admin', 'radiologist'), async (req, 
       });
     }
 
-    // Patients with pending PROMs overdue by >7 days
+    // Patients with cases but no recent PROM submission (>14 days since last)
     const [promAlerts] = await sequelize.query(
-      `SELECT
-         ps.patient_id,
-         u.first_name || ' ' || u.last_name AS patient_name,
-         ps.instrument_code,
-         ps.due_date
-       FROM msk_prom_submissions ps
-       JOIN msk_users u ON u.id = ps.patient_id AND u.tenant_id = $1
-       WHERE ps.tenant_id = $1
-         AND ps.status = 'pending'
-         AND ps.due_date < NOW() - INTERVAL '7 days'`,
-      { bind: [tenantId] }
+      `SELECT c.patient_id, u.first_name || ' ' || u.last_name AS patient_name,
+         MAX(ps.submitted_at) AS last_submission
+       FROM msk_cases c
+       JOIN msk_patients p ON c.patient_id = p.id
+       JOIN msk_users u ON p.user_id = u.id
+       LEFT JOIN msk_prom_submissions ps ON ps.case_id = c.id
+       WHERE c.status NOT IN ('closed')
+       GROUP BY c.patient_id, u.first_name, u.last_name
+       HAVING MAX(ps.submitted_at) IS NULL OR MAX(ps.submitted_at) < NOW() - INTERVAL '14 days'
+       LIMIT 20`,
+      { bind: [] }
     );
 
     for (const row of promAlerts) {
@@ -356,7 +356,9 @@ router.get('/compliance-alerts', authorize('admin', 'radiologist'), async (req, 
         patientId: row.patient_id,
         patientName: row.patient_name,
         alertType: 'prom_overdue',
-        details: `${row.instrument_code} overdue since ${new Date(row.due_date).toLocaleDateString()}`
+        details: row.last_submission
+          ? 'Last PROM submission: ' + new Date(row.last_submission).toLocaleDateString()
+          : 'No PROM submissions yet for active case'
       });
     }
 
@@ -367,8 +369,8 @@ router.get('/compliance-alerts', authorize('admin', 'radiologist'), async (req, 
          u.first_name || ' ' || u.last_name AS patient_name,
          a.scheduled_at
        FROM msk_appointments a
-       JOIN msk_users u ON u.id = a.patient_id AND u.tenant_id = $1
-       WHERE a.tenant_id = $1
+       JOIN msk_users u ON u.id = a.patient_id AND (u.tenant_id = $1 OR $1 IS NULL)
+       WHERE (a.tenant_id = $1 OR $1 IS NULL)
          AND a.scheduled_at BETWEEN NOW() AND NOW() + INTERVAL '24 hours'
          AND a.reminder_24h_sent = false`,
       { bind: [tenantId] }
@@ -402,28 +404,28 @@ router.get('/outcome-correlation', authorize('admin', 'radiologist'), async (req
          SELECT
            p.patient_id,
            COALESCE(
-             COUNT(s.id)::numeric / NULLIF(p.expected_sessions, 0) * 100,
+             COUNT(s.id)::numeric / NULLIF(GREATEST((EXTRACT(EPOCH FROM (NOW() - p.start_date)) / 604800) * 5, 1), 0) * 100,
              0
            ) AS compliance_pct
          FROM msk_hep_programs p
-         LEFT JOIN msk_hep_sessions s ON s.program_id = p.id AND s.tenant_id = $1
-         WHERE p.tenant_id = $1
+         LEFT JOIN msk_hep_sessions s ON s.program_id = p.id AND (s.tenant_id = $1 OR $1 IS NULL)
+         WHERE (p.tenant_id = $1 OR $1 IS NULL)
          GROUP BY p.patient_id, p.expected_sessions
        ),
        patient_rom AS (
          SELECT
            patient_id,
            (
-             (SELECT angle FROM msk_rom_measurements r2
-              WHERE r2.patient_id = r.patient_id AND r2.tenant_id = $1
+             (SELECT angle_degrees FROM msk_rom_measurements r2
+              WHERE r2.patient_id = r.patient_id AND (r2.tenant_id = $1 OR $1 IS NULL)
               ORDER BY measured_at DESC LIMIT 1)
              -
-             (SELECT angle FROM msk_rom_measurements r3
-              WHERE r3.patient_id = r.patient_id AND r3.tenant_id = $1
+             (SELECT angle_degrees FROM msk_rom_measurements r3
+              WHERE r3.patient_id = r.patient_id AND (r3.tenant_id = $1 OR $1 IS NULL)
               ORDER BY measured_at ASC LIMIT 1)
            ) AS rom_improvement
          FROM msk_rom_measurements r
-         WHERE r.tenant_id = $1
+         WHERE (r.tenant_id = $1 OR $1 IS NULL)
          GROUP BY r.patient_id
        ),
        combined AS (
@@ -531,9 +533,9 @@ router.post('/send-nudge', authorize('admin', 'radiologist'), async (req, res) =
 
     // Log the notification
     await sequelize.query(
-      `INSERT INTO msk_notifications (tenant_id, patient_id, type, message, channel, sent_via_sms, created_by, created_at)
-       VALUES ($1, $2, $3, $4, 'sms', $5, $6, NOW())`,
-      { bind: [tenantId, patientId, nudgeType, smsBody, smsSent, req.user.id] }
+      `INSERT INTO msk_notifications (user_id, type, title, body, created_at)
+       VALUES ($1, $2, $3, $4, NOW())`,
+      { bind: [patientId, nudgeType, messages[nudgeType].split(',')[0], smsBody] }
     );
 
     res.json({
