@@ -32,6 +32,7 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
   const [measurements, setMeasurements] = useState([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [modelStatus, setModelStatus] = useState('idle'); // idle | loading | ready | failed
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
@@ -65,6 +66,7 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
 
   const startAssessment = async () => {
     setError(null);
+    setModelStatus('idle');
     try {
       // Get camera stream first (before rendering the video element)
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -72,33 +74,41 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
       });
       streamRef.current = stream;
 
-      // Try to load MediaPipe (graceful fallback if not available)
-      try {
-        const { PoseLandmarker, FilesetResolver } = await import('@mediapipe/tasks-vision');
-        const filesetResolver = await FilesetResolver.forVisionTasks(
-          'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
-        );
-        poseLandmarkerRef.current = await PoseLandmarker.createFromOptions(filesetResolver, {
-          baseOptions: {
-            modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',
-            delegate: 'GPU'
-          },
-          runningMode: 'VIDEO',
-          numPoses: 1
-        });
-      } catch (mpErr) {
-        console.warn('[MSK ROM] MediaPipe not available, using manual mode:', mpErr.message);
-        poseLandmarkerRef.current = null;
-      }
-
-      // Now render the video element — useEffect above will attach stream
+      // Show camera immediately, load AI model in background
       setActive(true);
+
+      // Load MediaPipe in background (don't block camera)
+      loadMediaPipe();
     } catch (err) {
       if (err.name === 'NotAllowedError') {
         setError('Camera access denied. Please allow camera access.');
       } else {
         setError('Failed to start assessment: ' + err.message);
       }
+    }
+  };
+
+  const loadMediaPipe = async () => {
+    setModelStatus('loading');
+    try {
+      const { PoseLandmarker, FilesetResolver } = await import('@mediapipe/tasks-vision');
+      const filesetResolver = await FilesetResolver.forVisionTasks(
+        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
+      );
+      poseLandmarkerRef.current = await PoseLandmarker.createFromOptions(filesetResolver, {
+        baseOptions: {
+          modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',
+          delegate: 'GPU'
+        },
+        runningMode: 'VIDEO',
+        numPoses: 1
+      });
+      setModelStatus('ready');
+      console.log('[MSK ROM] MediaPipe loaded successfully');
+    } catch (mpErr) {
+      console.warn('[MSK ROM] MediaPipe not available:', mpErr.message);
+      poseLandmarkerRef.current = null;
+      setModelStatus('failed');
     }
   };
 
@@ -284,6 +294,36 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
           className="absolute inset-0 w-full h-full pointer-events-none"
           style={{ objectFit: 'cover' }}
         />
+
+        {/* AI Model Status Banner */}
+        {modelStatus === 'loading' && (
+          <div className="absolute top-4 left-4 right-4 z-10">
+            <div className="bg-black/70 backdrop-blur-sm rounded-lg px-4 py-3 flex items-center gap-3">
+              <svg className="w-5 h-5 text-msk-400 animate-spin flex-shrink-0" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              <div>
+                <p className="text-white text-sm font-medium">Loading AI pose model...</p>
+                <p className="text-dark-400 text-xs">Downloading ~4MB model for joint detection. First load only.</p>
+              </div>
+            </div>
+          </div>
+        )}
+        {modelStatus === 'ready' && currentAngle === null && (
+          <div className="absolute top-4 left-4 z-10">
+            <div className="bg-green-500/20 backdrop-blur-sm border border-green-500/30 rounded-lg px-4 py-2">
+              <p className="text-green-400 text-sm font-medium">AI pose model ready — stand back so your full body is visible</p>
+            </div>
+          </div>
+        )}
+        {modelStatus === 'failed' && (
+          <div className="absolute top-4 left-4 right-4 z-10">
+            <div className="bg-yellow-500/10 backdrop-blur-sm border border-yellow-500/20 rounded-lg px-4 py-2">
+              <p className="text-yellow-400 text-sm font-medium">AI model unavailable — use Manual Entry to record measurements</p>
+            </div>
+          </div>
+        )}
 
         {/* Angle readout overlay */}
         {currentAngle !== null && (
