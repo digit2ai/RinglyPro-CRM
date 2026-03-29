@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import api from '../services/api';
 import ImagingUpload from '../components/ImagingUpload';
 import ROMAssessment from '../components/ROMAssessment';
+import DiagnosticCopilot from '../components/DiagnosticCopilot';
 
 export default function CaseDetail() {
   const { id } = useParams();
@@ -303,6 +304,13 @@ export default function CaseDetail() {
           </div>
         </div>
       </div>
+
+      {/* AI Diagnostic Copilot — radiologist/admin only */}
+      {['admin', 'radiologist'].includes(user?.role) && (
+        <div className="mt-6">
+          <DiagnosticCopilot caseId={parseInt(id)} onReportGenerated={() => loadCase()} />
+        </div>
+      )}
 
       {/* Imaging Upload + ROM Assessment */}
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">

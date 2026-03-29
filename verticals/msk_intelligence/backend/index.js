@@ -42,6 +42,7 @@ const rehabRoutes = require('./routes/rehab');
 const rpmRoutes = require('./routes/rpm');
 const workersCompRoutes = require('./routes/workerscomp');
 const engagementRoutes = require('./routes/engagement');
+const copilotRoutes = require('./routes/copilot');
 
 router.use('/api/v1/auth', authRoutes);
 router.use('/api/v1/cases', authenticate, caseRoutes);
@@ -65,6 +66,7 @@ router.use('/api/v1/rehab', authenticate, rehabRoutes);
 router.use('/api/v1/rpm', authenticate, rpmRoutes);
 router.use('/api/v1/workerscomp', authenticate, workersCompRoutes);
 router.use('/api/v1/engagement', authenticate, engagementRoutes);
+router.use('/api/v1/copilot', copilotRoutes);
 
 // Notifications API
 router.get('/api/v1/notifications', authenticate, async (req, res) => {
