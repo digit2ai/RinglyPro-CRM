@@ -2444,6 +2444,33 @@ app.get('/es', (req, res) => {
     .card-success { background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%); border-color: rgba(34, 197, 94, 0.2); }
     .glow-pulse { animation: glow-pulse 2s ease-in-out infinite; }
     @keyframes glow-pulse { 0%, 100% { box-shadow: 0 0 40px rgba(232, 90, 79, 0.3); } 50% { box-shadow: 0 0 60px rgba(232, 90, 79, 0.5); } }
+    /* Info ORB on hero logo */
+    .hero-logo-wrapper { position: relative; display: inline-block; }
+    .info-orb {
+      position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+      width: 52px; height: 52px; border-radius: 50%; cursor: pointer; z-index: 10;
+      background: linear-gradient(135deg, #E85A4F, #FF8C42);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 20px rgba(232,90,79,0.6), 0 0 40px rgba(232,90,79,0.3);
+      animation: info-orb-pulse 2s ease-in-out infinite;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .info-orb:hover { transform: translateX(-50%) scale(1.15); box-shadow: 0 0 30px rgba(232,90,79,0.8), 0 0 60px rgba(232,90,79,0.4); }
+    .info-orb i { color: #fff; font-size: 18px; }
+    .info-orb .orb-label {
+      position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%);
+      font-size: 9px; font-weight: 700; color: #E85A4F; white-space: nowrap;
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+    @keyframes info-orb-pulse {
+      0%, 100% { box-shadow: 0 0 20px rgba(232,90,79,0.6), 0 0 40px rgba(232,90,79,0.3); }
+      50% { box-shadow: 0 0 30px rgba(232,90,79,0.9), 0 0 60px rgba(232,90,79,0.5); }
+    }
+    @media (max-width: 640px) {
+      .info-orb { width: 40px; height: 40px; top: -6px; }
+      .info-orb i { font-size: 14px; }
+      .info-orb .orb-label { font-size: 8px; bottom: -18px; }
+    }
     .score-ring { stroke-dasharray: 377; stroke-dashoffset: calc(377 - (377 * var(--score)) / 100); transition: stroke-dashoffset 1.5s ease-out; }
     .fade-in { animation: fadeIn 0.5s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -2616,8 +2643,8 @@ app.get('/es', (req, res) => {
         </select>
         <button onclick="talkToKancho()" class="kancho-btn px-4 md:px-5 py-2.5 rounded-lg text-sm font-medium transition flex items-center gap-2 shadow-lg">
           <i class="fas fa-microphone"></i>
-          <span class="hidden sm:inline">Habla con Kancho</span>
-          <span class="sm:hidden">Hablar</span>
+          <span class="hidden sm:inline">Demo en Vivo</span>
+          <span class="sm:hidden">Demo</span>
         </button>
       </div>
     </div>
@@ -2628,8 +2655,14 @@ app.get('/es', (req, res) => {
     <!-- Welcome Section -->
     <div id="welcomeSection" class="py-8 md:py-16">
       <div class="text-center mb-10 md:mb-16">
-        <div class="w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 rounded-3xl flex items-center justify-center mx-auto mb-6 md:mb-8 glow-pulse overflow-hidden bg-kancho-dark-card border border-kancho-dark-border mobile-hero-logo">
-          <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-36 h-36 sm:w-48 sm:h-48 md:w-64 md:h-64 lg:w-80 lg:h-80 object-contain">
+        <div class="hero-logo-wrapper mx-auto mb-6 md:mb-8">
+          <div onclick="talkToKanchoInfo()" class="info-orb" title="Descubre cómo funciona KanchoAI">
+            <i class="fas fa-headset"></i>
+            <span class="orb-label">Descubre</span>
+          </div>
+          <div class="w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 rounded-3xl flex items-center justify-center glow-pulse overflow-hidden bg-kancho-dark-card border border-kancho-dark-border mobile-hero-logo">
+            <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-36 h-36 sm:w-48 sm:h-48 md:w-64 md:h-64 lg:w-80 lg:h-80 object-contain">
+          </div>
         </div>
         <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4 mobile-title">Conoce a <span class="text-kancho">Kancho AI</span></h2>
         <p class="text-lg md:text-xl text-gray-300 mb-2">La Primera IA de Voz y Software de Gestión Automatizada para Dojos</p>
@@ -4109,7 +4142,53 @@ app.get('/es', (req, res) => {
     }
 
     const KANCHO_VOICE_AGENT_ID = 'agent_5601kh453hqqfz59nfemkwk02vax';
+    const KANCHO_INFO_AGENT_ID = 'agent_8501kn0dnr93enbtpgfzywg21gm4';
     let widgetElement = null;
+
+    // Informational agent - explains the platform to prospective clients (ES)
+    function talkToKanchoInfo() {
+      const modal = document.getElementById('voiceModal');
+      const schoolNameEl = document.getElementById('widgetSchoolName');
+      const container = document.getElementById('voiceWidgetContainer');
+      const statusEl = document.getElementById('voiceStatus');
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      schoolNameEl.textContent = 'KanchoAI — Guía de Plataforma';
+
+      statusEl.textContent = 'Solicitando micrófono...';
+      container.innerHTML = '<div style="text-align:center;padding:40px;"><div class="voice-start-orb" style="margin:0 auto;animation:orbPulse 1s ease-in-out infinite;"><i class="fas fa-headset"></i></div><p style="color:#999;font-size:13px;margin-top:16px;">Conectando con KanchoAI...</p></div>';
+
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+        stream.getTracks().forEach(function(t) { t.stop(); });
+        statusEl.textContent = 'Conectado — ¡Pregúntame sobre KanchoAI!';
+        container.innerHTML = '';
+
+        if (widgetElement && widgetElement.parentNode) {
+          widgetElement.parentNode.removeChild(widgetElement);
+          widgetElement = null;
+        }
+
+        widgetElement = document.createElement('elevenlabs-convai');
+        widgetElement.setAttribute('agent-id', KANCHO_INFO_AGENT_ID);
+        container.appendChild(widgetElement);
+
+        let attempts = 0;
+        function waitReady() {
+          attempts++;
+          if (widgetElement?.shadowRoot?.querySelector('button')) {
+            statusEl.textContent = 'En vivo — ¡Pregunta sobre la plataforma!';
+            try { widgetElement.shadowRoot.querySelector('button').click(); } catch(e) {}
+          } else if (attempts < 30) {
+            setTimeout(waitReady, 500);
+          }
+        }
+        setTimeout(waitReady, 1000);
+      }).catch(function(err) {
+        statusEl.textContent = 'Se requiere acceso al micrófono';
+        container.innerHTML = '<div style="text-align:center;padding:40px;"><i class="fas fa-microphone-slash text-red-400 text-3xl mb-4"></i><p style="color:#ef4444;font-size:14px;">Por favor permite el acceso al micrófono para hablar con KanchoAI</p></div>';
+      });
+    }
 
     function talkToKancho() {
       if (!currentSchoolId) {
@@ -5737,6 +5816,33 @@ app.get('*', (req, res) => {
     .card-success { background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%); border-color: rgba(34, 197, 94, 0.2); }
     .glow-pulse { animation: glow-pulse 2s ease-in-out infinite; }
     @keyframes glow-pulse { 0%, 100% { box-shadow: 0 0 40px rgba(232, 90, 79, 0.3); } 50% { box-shadow: 0 0 60px rgba(232, 90, 79, 0.5); } }
+    /* Info ORB on hero logo */
+    .hero-logo-wrapper { position: relative; display: inline-block; }
+    .info-orb {
+      position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+      width: 52px; height: 52px; border-radius: 50%; cursor: pointer; z-index: 10;
+      background: linear-gradient(135deg, #E85A4F, #FF8C42);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 20px rgba(232,90,79,0.6), 0 0 40px rgba(232,90,79,0.3);
+      animation: info-orb-pulse 2s ease-in-out infinite;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .info-orb:hover { transform: translateX(-50%) scale(1.15); box-shadow: 0 0 30px rgba(232,90,79,0.8), 0 0 60px rgba(232,90,79,0.4); }
+    .info-orb i { color: #fff; font-size: 18px; }
+    .info-orb .orb-label {
+      position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%);
+      font-size: 9px; font-weight: 700; color: #E85A4F; white-space: nowrap;
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+    @keyframes info-orb-pulse {
+      0%, 100% { box-shadow: 0 0 20px rgba(232,90,79,0.6), 0 0 40px rgba(232,90,79,0.3); }
+      50% { box-shadow: 0 0 30px rgba(232,90,79,0.9), 0 0 60px rgba(232,90,79,0.5); }
+    }
+    @media (max-width: 640px) {
+      .info-orb { width: 40px; height: 40px; top: -6px; }
+      .info-orb i { font-size: 14px; }
+      .info-orb .orb-label { font-size: 8px; bottom: -18px; }
+    }
     .score-ring { stroke-dasharray: 377; stroke-dashoffset: calc(377 - (377 * var(--score)) / 100); transition: stroke-dashoffset 1.5s ease-out; }
     .fade-in { animation: fadeIn 0.5s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -6058,8 +6164,8 @@ app.get('*', (req, res) => {
           </select>
           <button onclick="talkToKancho()" class="kancho-btn px-4 md:px-5 py-2 md:py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2 shadow-lg whitespace-nowrap">
             <i class="fas fa-microphone"></i>
-            <span class="hidden sm:inline">Talk to Kancho</span>
-            <span class="sm:hidden">Talk</span>
+            <span class="hidden sm:inline">Live Demo</span>
+            <span class="sm:hidden">Demo</span>
           </button>
           <button onclick="showLoginSection()" class="px-3 md:px-4 py-2 md:py-2.5 bg-white/10 border border-kancho-dark-border rounded-lg text-sm hover:bg-kancho-coral/20 hover:border-kancho-coral transition flex items-center gap-2">
             <i class="fas fa-sign-in-alt"></i>
@@ -6077,8 +6183,8 @@ app.get('*', (req, res) => {
           </div>
           <button onclick="talkToKancho()" class="kancho-btn px-4 md:px-5 py-2 md:py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2 shadow-lg whitespace-nowrap">
             <i class="fas fa-microphone"></i>
-            <span class="hidden sm:inline">Talk to Kancho</span>
-            <span class="sm:hidden">Talk</span>
+            <span class="hidden sm:inline">Live Demo</span>
+            <span class="sm:hidden">Demo</span>
           </button>
           <button onclick="logout()" class="p-2 md:px-3 md:py-2.5 bg-white/10 border border-kancho-dark-border rounded-lg text-sm hover:bg-red-500/20 hover:border-red-500/50 transition" title="Logout">
             <i class="fas fa-sign-out-alt text-gray-400"></i>
@@ -6201,8 +6307,14 @@ app.get('*', (req, res) => {
     <!-- Welcome Section -->
     <div id="welcomeSection" class="py-8 md:py-16">
       <div class="text-center mb-10 md:mb-16">
-        <div class="w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 rounded-3xl flex items-center justify-center mx-auto mb-6 md:mb-8 glow-pulse overflow-hidden bg-kancho-dark-card border border-kancho-dark-border mobile-hero-logo">
-          <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-36 h-36 sm:w-48 sm:h-48 md:w-64 md:h-64 lg:w-80 lg:h-80 object-contain">
+        <div class="hero-logo-wrapper mx-auto mb-6 md:mb-8">
+          <div onclick="talkToKanchoInfo()" class="info-orb" title="Learn how KanchoAI works">
+            <i class="fas fa-headset"></i>
+            <span class="orb-label">Learn More</span>
+          </div>
+          <div class="w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 rounded-3xl flex items-center justify-center glow-pulse overflow-hidden bg-kancho-dark-card border border-kancho-dark-border mobile-hero-logo">
+            <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-36 h-36 sm:w-48 sm:h-48 md:w-64 md:h-64 lg:w-80 lg:h-80 object-contain">
+          </div>
         </div>
         <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4 mobile-title">Meet <span class="text-kancho">Kancho AI</span></h2>
         <p class="text-lg md:text-xl text-gray-300 mb-2">The First Next-Gen AI Voice &amp; Software Dojo Management</p>
@@ -8897,7 +9009,7 @@ app.get('*', (req, res) => {
             <img src="${KANCHO_LOGO_URL}" alt="Kancho" class="w-8 h-8 object-contain">
           </div>
           <div>
-            <h3 class="text-base font-bold">Talk to Kancho</h3>
+            <h3 class="text-base font-bold">Live Demo</h3>
             <p id="voiceStatus" class="text-xs text-gray-400">Ready - Click the orb to talk</p>
           </div>
         </div>
@@ -9804,7 +9916,56 @@ app.get('*', (req, res) => {
     // =====================================================
 
     const KANCHO_VOICE_AGENT_ID = 'agent_5601kh453hqqfz59nfemkwk02vax';
+    const KANCHO_INFO_AGENT_ID = 'agent_8501kn0dnr93enbtpgfzywg21gm4';
     let widgetElement = null;
+
+    // Informational agent - explains the platform to prospective clients
+    function talkToKanchoInfo() {
+      const modal = document.getElementById('voiceModal');
+      const schoolNameEl = document.getElementById('widgetSchoolName');
+      const container = document.getElementById('voiceWidgetContainer');
+      const statusEl = document.getElementById('voiceStatus');
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      schoolNameEl.textContent = 'KanchoAI Platform Guide';
+
+      statusEl.textContent = 'Requesting microphone...';
+      container.innerHTML = '<div style="text-align:center;padding:40px;"><div class="voice-start-orb" style="margin:0 auto;animation:orbPulse 1s ease-in-out infinite;"><i class="fas fa-headset"></i></div><p style="color:#999;font-size:13px;margin-top:16px;">Connecting to KanchoAI...</p></div>';
+
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+        stream.getTracks().forEach(function(t) { t.stop(); });
+        statusEl.textContent = 'Connected — Ask me anything about KanchoAI!';
+        container.innerHTML = '';
+
+        // Remove any existing widget
+        if (widgetElement && widgetElement.parentNode) {
+          widgetElement.parentNode.removeChild(widgetElement);
+          widgetElement = null;
+        }
+
+        widgetElement = document.createElement('elevenlabs-convai');
+        widgetElement.setAttribute('agent-id', KANCHO_INFO_AGENT_ID);
+        container.appendChild(widgetElement);
+        console.log('[KanchoInfo] Widget created with info agent');
+
+        let attempts = 0;
+        function waitReady() {
+          attempts++;
+          if (widgetElement?.shadowRoot?.querySelector('button')) {
+            statusEl.textContent = 'Live — Ask me about the platform!';
+            try { widgetElement.shadowRoot.querySelector('button').click(); } catch(e) {}
+          } else if (attempts < 30) {
+            setTimeout(waitReady, 500);
+          }
+        }
+        setTimeout(waitReady, 1000);
+      }).catch(function(err) {
+        console.error('[KanchoInfo] Mic denied:', err);
+        statusEl.textContent = 'Microphone access required';
+        container.innerHTML = '<div style="text-align:center;padding:40px;"><i class="fas fa-microphone-slash text-red-400 text-3xl mb-4"></i><p style="color:#ef4444;font-size:14px;">Please allow microphone access to talk to KanchoAI</p></div>';
+      });
+    }
 
     function talkToKancho() {
       if (isAuthenticated) {
