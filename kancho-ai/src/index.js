@@ -2445,9 +2445,9 @@ app.get('/es', (req, res) => {
     .glow-pulse { animation: glow-pulse 2s ease-in-out infinite; }
     @keyframes glow-pulse { 0%, 100% { box-shadow: 0 0 40px rgba(232, 90, 79, 0.3); } 50% { box-shadow: 0 0 60px rgba(232, 90, 79, 0.5); } }
     /* Info ORB on hero logo */
-    .hero-logo-wrapper { position: relative; display: inline-block; }
+    .hero-logo-wrapper { position: relative; display: inline-block; margin-bottom: 50px; }
     .info-orb {
-      position: absolute; top: -38px; left: 50%; transform: translateX(-50%);
+      position: absolute; bottom: -38px; left: 50%; transform: translateX(-50%);
       width: 76px; height: 76px; border-radius: 50%; cursor: pointer; z-index: 10;
       background: linear-gradient(135deg, #DC2626, #EF4444, #B91C1C);
       display: flex; align-items: center; justify-content: center;
@@ -2468,7 +2468,7 @@ app.get('/es', (req, res) => {
       50% { box-shadow: 0 0 40px rgba(220,38,38,1), 0 0 70px rgba(220,38,38,0.6), 0 0 100px rgba(220,38,38,0.3); }
     }
     @media (max-width: 640px) {
-      .info-orb { width: 60px; height: 60px; top: -46px; }
+      .info-orb { width: 60px; height: 60px; bottom: -30px; top: auto; }
       .info-orb i { font-size: 22px; }
       .info-orb .orb-label { font-size: 9px; bottom: -22px; }
     }
@@ -5818,9 +5818,9 @@ app.get('*', (req, res) => {
     .glow-pulse { animation: glow-pulse 2s ease-in-out infinite; }
     @keyframes glow-pulse { 0%, 100% { box-shadow: 0 0 40px rgba(232, 90, 79, 0.3); } 50% { box-shadow: 0 0 60px rgba(232, 90, 79, 0.5); } }
     /* Info ORB on hero logo */
-    .hero-logo-wrapper { position: relative; display: inline-block; }
+    .hero-logo-wrapper { position: relative; display: inline-block; margin-bottom: 50px; }
     .info-orb {
-      position: absolute; top: -38px; left: 50%; transform: translateX(-50%);
+      position: absolute; bottom: -38px; left: 50%; transform: translateX(-50%);
       width: 76px; height: 76px; border-radius: 50%; cursor: pointer; z-index: 10;
       background: linear-gradient(135deg, #DC2626, #EF4444, #B91C1C);
       display: flex; align-items: center; justify-content: center;
@@ -5841,7 +5841,7 @@ app.get('*', (req, res) => {
       50% { box-shadow: 0 0 40px rgba(220,38,38,1), 0 0 70px rgba(220,38,38,0.6), 0 0 100px rgba(220,38,38,0.3); }
     }
     @media (max-width: 640px) {
-      .info-orb { width: 60px; height: 60px; top: -46px; }
+      .info-orb { width: 60px; height: 60px; bottom: -30px; top: auto; }
       .info-orb i { font-size: 22px; }
       .info-orb .orb-label { font-size: 9px; bottom: -22px; }
     }
