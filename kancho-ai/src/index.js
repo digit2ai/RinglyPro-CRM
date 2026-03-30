@@ -2444,33 +2444,24 @@ app.get('/es', (req, res) => {
     .card-success { background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%); border-color: rgba(34, 197, 94, 0.2); }
     .glow-pulse { animation: glow-pulse 2s ease-in-out infinite; }
     @keyframes glow-pulse { 0%, 100% { box-shadow: 0 0 40px rgba(232, 90, 79, 0.3); } 50% { box-shadow: 0 0 60px rgba(232, 90, 79, 0.5); } }
-    /* Info ORB on hero logo */
-    .hero-logo-wrapper { position: relative; display: inline-block; margin-bottom: 50px; }
-    .info-orb {
-      position: absolute; bottom: -38px; left: 50%; transform: translateX(-50%);
-      width: 76px; height: 76px; border-radius: 50%; cursor: pointer; z-index: 10;
-      background: linear-gradient(135deg, #DC2626, #EF4444, #B91C1C);
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 0 25px rgba(220,38,38,0.7), 0 0 50px rgba(220,38,38,0.4), 0 0 80px rgba(220,38,38,0.2);
-      animation: info-orb-pulse 2s ease-in-out infinite;
-      transition: transform 0.2s, box-shadow 0.2s;
-      border: 3px solid #000;
+    /* Clickable hero logo */
+    .hero-logo-clickable { transition: transform 0.2s, box-shadow 0.2s; }
+    .hero-logo-clickable:hover { transform: scale(1.03); }
+    .hero-logo-label {
+      position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+      background: linear-gradient(135deg, #DC2626, #EF4444);
+      color: #fff; font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.5px; padding: 6px 18px; border-radius: 20px;
+      white-space: nowrap; z-index: 5;
+      box-shadow: 0 0 15px rgba(220,38,38,0.6), 0 0 30px rgba(220,38,38,0.3);
+      animation: label-pulse 2s ease-in-out infinite;
     }
-    .info-orb:hover { transform: translateX(-50%) scale(1.15); box-shadow: 0 0 35px rgba(220,38,38,0.9), 0 0 70px rgba(220,38,38,0.5), 0 0 100px rgba(220,38,38,0.3); }
-    .info-orb i { color: #fff; font-size: 28px; }
-    .info-orb .orb-label {
-      position: absolute; bottom: -26px; left: 50%; transform: translateX(-50%);
-      font-size: 11px; font-weight: 700; color: #EF4444; white-space: nowrap;
-      text-transform: uppercase; letter-spacing: 1.5px;
-    }
-    @keyframes info-orb-pulse {
-      0%, 100% { box-shadow: 0 0 25px rgba(220,38,38,0.7), 0 0 50px rgba(220,38,38,0.4), 0 0 80px rgba(220,38,38,0.2); }
-      50% { box-shadow: 0 0 40px rgba(220,38,38,1), 0 0 70px rgba(220,38,38,0.6), 0 0 100px rgba(220,38,38,0.3); }
+    @keyframes label-pulse {
+      0%, 100% { box-shadow: 0 0 15px rgba(220,38,38,0.6), 0 0 30px rgba(220,38,38,0.3); }
+      50% { box-shadow: 0 0 25px rgba(220,38,38,0.9), 0 0 45px rgba(220,38,38,0.5); }
     }
     @media (max-width: 640px) {
-      .info-orb { width: 60px; height: 60px; bottom: -30px; top: auto; }
-      .info-orb i { font-size: 22px; }
-      .info-orb .orb-label { font-size: 9px; bottom: -22px; }
+      .hero-logo-label { font-size: 9px; padding: 5px 14px; bottom: 6px; }
     }
     .score-ring { stroke-dasharray: 377; stroke-dashoffset: calc(377 - (377 * var(--score)) / 100); transition: stroke-dashoffset 1.5s ease-out; }
     .fade-in { animation: fadeIn 0.5s ease-out; }
@@ -2656,14 +2647,9 @@ app.get('/es', (req, res) => {
     <!-- Welcome Section -->
     <div id="welcomeSection" class="py-8 md:py-16">
       <div class="text-center mb-10 md:mb-16">
-        <div class="hero-logo-wrapper mx-auto mb-6 md:mb-8">
-          <div onclick="talkToKanchoInfo()" class="info-orb" title="Descubre cómo funciona KanchoAI">
-            <i class="fas fa-headset"></i>
-            <span class="orb-label">Descubre</span>
-          </div>
-          <div class="w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 rounded-3xl flex items-center justify-center glow-pulse overflow-hidden bg-kancho-dark-card border border-kancho-dark-border mobile-hero-logo">
-            <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-36 h-36 sm:w-48 sm:h-48 md:w-64 md:h-64 lg:w-80 lg:h-80 object-contain">
-          </div>
+        <div onclick="talkToKanchoInfo()" class="hero-logo-clickable w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 rounded-3xl flex flex-col items-center justify-center mx-auto mb-6 md:mb-8 glow-pulse overflow-hidden bg-kancho-dark-card border border-kancho-dark-border mobile-hero-logo cursor-pointer relative" title="Descubre cómo funciona KanchoAI">
+          <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-36 h-36 sm:w-48 sm:h-48 md:w-64 md:h-64 lg:w-80 lg:h-80 object-contain">
+          <span class="hero-logo-label">Descubre</span>
         </div>
         <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4 mobile-title">Conoce a <span class="text-kancho">Kancho AI</span></h2>
         <p class="text-lg md:text-xl text-gray-300 mb-2">La Primera IA de Voz y Software de Gestión Automatizada para Dojos</p>
@@ -5817,33 +5803,24 @@ app.get('*', (req, res) => {
     .card-success { background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%); border-color: rgba(34, 197, 94, 0.2); }
     .glow-pulse { animation: glow-pulse 2s ease-in-out infinite; }
     @keyframes glow-pulse { 0%, 100% { box-shadow: 0 0 40px rgba(232, 90, 79, 0.3); } 50% { box-shadow: 0 0 60px rgba(232, 90, 79, 0.5); } }
-    /* Info ORB on hero logo */
-    .hero-logo-wrapper { position: relative; display: inline-block; margin-bottom: 50px; }
-    .info-orb {
-      position: absolute; bottom: -38px; left: 50%; transform: translateX(-50%);
-      width: 76px; height: 76px; border-radius: 50%; cursor: pointer; z-index: 10;
-      background: linear-gradient(135deg, #DC2626, #EF4444, #B91C1C);
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 0 25px rgba(220,38,38,0.7), 0 0 50px rgba(220,38,38,0.4), 0 0 80px rgba(220,38,38,0.2);
-      animation: info-orb-pulse 2s ease-in-out infinite;
-      transition: transform 0.2s, box-shadow 0.2s;
-      border: 3px solid #000;
+    /* Clickable hero logo */
+    .hero-logo-clickable { transition: transform 0.2s, box-shadow 0.2s; }
+    .hero-logo-clickable:hover { transform: scale(1.03); }
+    .hero-logo-label {
+      position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+      background: linear-gradient(135deg, #DC2626, #EF4444);
+      color: #fff; font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.5px; padding: 6px 18px; border-radius: 20px;
+      white-space: nowrap; z-index: 5;
+      box-shadow: 0 0 15px rgba(220,38,38,0.6), 0 0 30px rgba(220,38,38,0.3);
+      animation: label-pulse 2s ease-in-out infinite;
     }
-    .info-orb:hover { transform: translateX(-50%) scale(1.15); box-shadow: 0 0 35px rgba(220,38,38,0.9), 0 0 70px rgba(220,38,38,0.5), 0 0 100px rgba(220,38,38,0.3); }
-    .info-orb i { color: #fff; font-size: 28px; }
-    .info-orb .orb-label {
-      position: absolute; bottom: -26px; left: 50%; transform: translateX(-50%);
-      font-size: 11px; font-weight: 700; color: #EF4444; white-space: nowrap;
-      text-transform: uppercase; letter-spacing: 1.5px;
-    }
-    @keyframes info-orb-pulse {
-      0%, 100% { box-shadow: 0 0 25px rgba(220,38,38,0.7), 0 0 50px rgba(220,38,38,0.4), 0 0 80px rgba(220,38,38,0.2); }
-      50% { box-shadow: 0 0 40px rgba(220,38,38,1), 0 0 70px rgba(220,38,38,0.6), 0 0 100px rgba(220,38,38,0.3); }
+    @keyframes label-pulse {
+      0%, 100% { box-shadow: 0 0 15px rgba(220,38,38,0.6), 0 0 30px rgba(220,38,38,0.3); }
+      50% { box-shadow: 0 0 25px rgba(220,38,38,0.9), 0 0 45px rgba(220,38,38,0.5); }
     }
     @media (max-width: 640px) {
-      .info-orb { width: 60px; height: 60px; bottom: -30px; top: auto; }
-      .info-orb i { font-size: 22px; }
-      .info-orb .orb-label { font-size: 9px; bottom: -22px; }
+      .hero-logo-label { font-size: 9px; padding: 5px 14px; bottom: 6px; }
     }
     .score-ring { stroke-dasharray: 377; stroke-dashoffset: calc(377 - (377 * var(--score)) / 100); transition: stroke-dashoffset 1.5s ease-out; }
     .fade-in { animation: fadeIn 0.5s ease-out; }
@@ -6309,14 +6286,9 @@ app.get('*', (req, res) => {
     <!-- Welcome Section -->
     <div id="welcomeSection" class="py-8 md:py-16">
       <div class="text-center mb-10 md:mb-16">
-        <div class="hero-logo-wrapper mx-auto mb-6 md:mb-8">
-          <div onclick="talkToKanchoInfo()" class="info-orb" title="Learn how KanchoAI works">
-            <i class="fas fa-headset"></i>
-            <span class="orb-label">Learn More</span>
-          </div>
-          <div class="w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 rounded-3xl flex items-center justify-center glow-pulse overflow-hidden bg-kancho-dark-card border border-kancho-dark-border mobile-hero-logo">
-            <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-36 h-36 sm:w-48 sm:h-48 md:w-64 md:h-64 lg:w-80 lg:h-80 object-contain">
-          </div>
+        <div onclick="talkToKanchoInfo()" class="hero-logo-clickable w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 rounded-3xl flex flex-col items-center justify-center mx-auto mb-6 md:mb-8 glow-pulse overflow-hidden bg-kancho-dark-card border border-kancho-dark-border mobile-hero-logo cursor-pointer relative" title="Learn how KanchoAI works">
+          <img src="${KANCHO_LOGO_URL}" alt="Kancho AI" class="w-36 h-36 sm:w-48 sm:h-48 md:w-64 md:h-64 lg:w-80 lg:h-80 object-contain">
+          <span class="hero-logo-label">Learn More</span>
         </div>
         <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4 mobile-title">Meet <span class="text-kancho">Kancho AI</span></h2>
         <p class="text-lg md:text-xl text-gray-300 mb-2">The First Next-Gen AI Voice &amp; Software Dojo Management</p>
