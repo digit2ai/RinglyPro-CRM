@@ -2689,10 +2689,7 @@ app.get('/es', (req, res) => {
 
       <!-- CTA -->
       <div class="text-center mb-16">
-        <p class="text-gray-400 mb-6">Selecciona un negocio arriba para ver a Kancho en acción, o:</p>
-        <button onclick="seedDemoData()" class="kancho-btn px-8 py-4 rounded-xl font-medium transition shadow-lg">
-          <i class="fas fa-rocket mr-2"></i>Cargar Datos de Demostración
-        </button>
+        <p class="text-gray-400 mb-6">Selecciona un negocio arriba para ver a Kancho en acción.</p>
       </div>
 
       <!-- Sección de Reserva de Clase de Prueba -->
@@ -6353,9 +6350,6 @@ app.get('*', (req, res) => {
       <div class="text-center mb-16">
         <p class="text-gray-400 mb-6">Select a business above to see Kancho in action, or:</p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <button onclick="seedDemoData()" class="kancho-btn px-8 py-4 rounded-xl font-medium transition shadow-lg">
-            <i class="fas fa-rocket mr-2"></i>Load Demo Data
-          </button>
           <button onclick="showLoginSection()" class="px-8 py-4 rounded-xl font-medium border-2 border-gray-600 hover:border-kancho-coral transition">
             <i class="fas fa-sign-in-alt mr-2"></i>Sign In to Your Dashboard
           </button>
