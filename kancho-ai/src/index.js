@@ -2447,29 +2447,30 @@ app.get('/es', (req, res) => {
     /* Info ORB on hero logo */
     .hero-logo-wrapper { position: relative; display: inline-block; }
     .info-orb {
-      position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
-      width: 52px; height: 52px; border-radius: 50%; cursor: pointer; z-index: 10;
-      background: linear-gradient(135deg, #E85A4F, #FF8C42);
+      position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+      width: 76px; height: 76px; border-radius: 50%; cursor: pointer; z-index: 10;
+      background: linear-gradient(135deg, #DC2626, #EF4444, #B91C1C);
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 0 20px rgba(232,90,79,0.6), 0 0 40px rgba(232,90,79,0.3);
+      box-shadow: 0 0 25px rgba(220,38,38,0.7), 0 0 50px rgba(220,38,38,0.4), 0 0 80px rgba(220,38,38,0.2);
       animation: info-orb-pulse 2s ease-in-out infinite;
       transition: transform 0.2s, box-shadow 0.2s;
+      border: 3px solid rgba(255,255,255,0.2);
     }
-    .info-orb:hover { transform: translateX(-50%) scale(1.15); box-shadow: 0 0 30px rgba(232,90,79,0.8), 0 0 60px rgba(232,90,79,0.4); }
-    .info-orb i { color: #fff; font-size: 18px; }
+    .info-orb:hover { transform: translateX(-50%) scale(1.15); box-shadow: 0 0 35px rgba(220,38,38,0.9), 0 0 70px rgba(220,38,38,0.5), 0 0 100px rgba(220,38,38,0.3); }
+    .info-orb i { color: #fff; font-size: 28px; }
     .info-orb .orb-label {
-      position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%);
-      font-size: 9px; font-weight: 700; color: #E85A4F; white-space: nowrap;
-      text-transform: uppercase; letter-spacing: 1px;
+      position: absolute; bottom: -26px; left: 50%; transform: translateX(-50%);
+      font-size: 11px; font-weight: 700; color: #EF4444; white-space: nowrap;
+      text-transform: uppercase; letter-spacing: 1.5px;
     }
     @keyframes info-orb-pulse {
-      0%, 100% { box-shadow: 0 0 20px rgba(232,90,79,0.6), 0 0 40px rgba(232,90,79,0.3); }
-      50% { box-shadow: 0 0 30px rgba(232,90,79,0.9), 0 0 60px rgba(232,90,79,0.5); }
+      0%, 100% { box-shadow: 0 0 25px rgba(220,38,38,0.7), 0 0 50px rgba(220,38,38,0.4), 0 0 80px rgba(220,38,38,0.2); }
+      50% { box-shadow: 0 0 40px rgba(220,38,38,1), 0 0 70px rgba(220,38,38,0.6), 0 0 100px rgba(220,38,38,0.3); }
     }
     @media (max-width: 640px) {
-      .info-orb { width: 40px; height: 40px; top: -6px; }
-      .info-orb i { font-size: 14px; }
-      .info-orb .orb-label { font-size: 8px; bottom: -18px; }
+      .info-orb { width: 60px; height: 60px; top: -10px; }
+      .info-orb i { font-size: 22px; }
+      .info-orb .orb-label { font-size: 9px; bottom: -22px; }
     }
     .score-ring { stroke-dasharray: 377; stroke-dashoffset: calc(377 - (377 * var(--score)) / 100); transition: stroke-dashoffset 1.5s ease-out; }
     .fade-in { animation: fadeIn 0.5s ease-out; }
@@ -5819,29 +5820,30 @@ app.get('*', (req, res) => {
     /* Info ORB on hero logo */
     .hero-logo-wrapper { position: relative; display: inline-block; }
     .info-orb {
-      position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
-      width: 52px; height: 52px; border-radius: 50%; cursor: pointer; z-index: 10;
-      background: linear-gradient(135deg, #E85A4F, #FF8C42);
+      position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+      width: 76px; height: 76px; border-radius: 50%; cursor: pointer; z-index: 10;
+      background: linear-gradient(135deg, #DC2626, #EF4444, #B91C1C);
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 0 20px rgba(232,90,79,0.6), 0 0 40px rgba(232,90,79,0.3);
+      box-shadow: 0 0 25px rgba(220,38,38,0.7), 0 0 50px rgba(220,38,38,0.4), 0 0 80px rgba(220,38,38,0.2);
       animation: info-orb-pulse 2s ease-in-out infinite;
       transition: transform 0.2s, box-shadow 0.2s;
+      border: 3px solid rgba(255,255,255,0.2);
     }
-    .info-orb:hover { transform: translateX(-50%) scale(1.15); box-shadow: 0 0 30px rgba(232,90,79,0.8), 0 0 60px rgba(232,90,79,0.4); }
-    .info-orb i { color: #fff; font-size: 18px; }
+    .info-orb:hover { transform: translateX(-50%) scale(1.15); box-shadow: 0 0 35px rgba(220,38,38,0.9), 0 0 70px rgba(220,38,38,0.5), 0 0 100px rgba(220,38,38,0.3); }
+    .info-orb i { color: #fff; font-size: 28px; }
     .info-orb .orb-label {
-      position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%);
-      font-size: 9px; font-weight: 700; color: #E85A4F; white-space: nowrap;
-      text-transform: uppercase; letter-spacing: 1px;
+      position: absolute; bottom: -26px; left: 50%; transform: translateX(-50%);
+      font-size: 11px; font-weight: 700; color: #EF4444; white-space: nowrap;
+      text-transform: uppercase; letter-spacing: 1.5px;
     }
     @keyframes info-orb-pulse {
-      0%, 100% { box-shadow: 0 0 20px rgba(232,90,79,0.6), 0 0 40px rgba(232,90,79,0.3); }
-      50% { box-shadow: 0 0 30px rgba(232,90,79,0.9), 0 0 60px rgba(232,90,79,0.5); }
+      0%, 100% { box-shadow: 0 0 25px rgba(220,38,38,0.7), 0 0 50px rgba(220,38,38,0.4), 0 0 80px rgba(220,38,38,0.2); }
+      50% { box-shadow: 0 0 40px rgba(220,38,38,1), 0 0 70px rgba(220,38,38,0.6), 0 0 100px rgba(220,38,38,0.3); }
     }
     @media (max-width: 640px) {
-      .info-orb { width: 40px; height: 40px; top: -6px; }
-      .info-orb i { font-size: 14px; }
-      .info-orb .orb-label { font-size: 8px; bottom: -18px; }
+      .info-orb { width: 60px; height: 60px; top: -10px; }
+      .info-orb i { font-size: 22px; }
+      .info-orb .orb-label { font-size: 9px; bottom: -22px; }
     }
     .score-ring { stroke-dasharray: 377; stroke-dashoffset: calc(377 - (377 * var(--score)) / 100); transition: stroke-dashoffset 1.5s ease-out; }
     .fade-in { animation: fadeIn 0.5s ease-out; }
