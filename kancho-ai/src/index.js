@@ -2468,7 +2468,7 @@ app.get('/es', (req, res) => {
       50% { box-shadow: 0 0 40px rgba(220,38,38,1), 0 0 70px rgba(220,38,38,0.6), 0 0 100px rgba(220,38,38,0.3); }
     }
     @media (max-width: 640px) {
-      .info-orb { width: 60px; height: 60px; top: -30px; }
+      .info-orb { width: 60px; height: 60px; top: -46px; }
       .info-orb i { font-size: 22px; }
       .info-orb .orb-label { font-size: 9px; bottom: -22px; }
     }
@@ -5841,7 +5841,7 @@ app.get('*', (req, res) => {
       50% { box-shadow: 0 0 40px rgba(220,38,38,1), 0 0 70px rgba(220,38,38,0.6), 0 0 100px rgba(220,38,38,0.3); }
     }
     @media (max-width: 640px) {
-      .info-orb { width: 60px; height: 60px; top: -30px; }
+      .info-orb { width: 60px; height: 60px; top: -46px; }
       .info-orb i { font-size: 22px; }
       .info-orb .orb-label { font-size: 9px; bottom: -22px; }
     }
