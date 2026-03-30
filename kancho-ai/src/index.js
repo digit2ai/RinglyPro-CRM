@@ -6914,14 +6914,14 @@ app.get('*', (req, res) => {
 
         </div>
 
-        <p class="text-center text-gray-500 text-sm mt-8">All plans include a 14-day free trial. No credit card required to start.</p>
+        <p class="text-center text-gray-500 text-sm mt-8">All plans include a 14-day free trial.</p>
 
         <!-- Final CTA -->
         <div class="text-center mt-12">
           <button onclick="selectPlan('intelligence', this)" class="kancho-btn px-10 py-4 rounded-xl font-medium text-lg transition shadow-lg">
             <i class="fas fa-rocket mr-2"></i>Start Your Free Trial
           </button>
-          <p class="text-gray-500 text-sm mt-4">No credit card required • Cancel anytime</p>
+          <p class="text-gray-500 text-sm mt-4">Cancel anytime</p>
         </div>
       </div>
 
@@ -7044,7 +7044,7 @@ app.get('*', (req, res) => {
             Schedule a Demo
           </button>
         </div>
-        <p class="text-gray-500 text-sm">Absolutely free — no credit card, no hidden fees</p>
+        <p class="text-gray-500 text-sm">Absolutely free — no hidden fees</p>
       </div>
 
       <!-- Booking Modal -->
