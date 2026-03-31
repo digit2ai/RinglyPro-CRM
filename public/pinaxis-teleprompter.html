@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teleprompter — Pinaxis POC Presentation</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0a0a; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+
+  .controls {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #0a0a0a; border-bottom: 1px solid #222;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 32px;
+  }
+  .controls .slide-label { font-size: 14px; color: #64748b; }
+  .controls .slide-label strong { color: #3b82f6; font-size: 18px; }
+  .controls .nav-btns { display: flex; gap: 10px; }
+  .controls button {
+    background: #1e293b; border: 1px solid #334155; color: #e2e8f0;
+    padding: 8px 24px; border-radius: 8px; cursor: pointer; font-size: 15px;
+    font-family: inherit; transition: all 0.2s;
+  }
+  .controls button:hover { background: #334155; }
+  .controls button.active { background: #3b82f6; border-color: #3b82f6; }
+  .controls button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .slide-container {
+    margin-top: 64px; max-width: 900px; margin-left: auto; margin-right: auto;
+    padding: 40px 48px 80px;
+  }
+
+  .card {
+    display: none; animation: fadeIn 0.3s;
+  }
+  .card.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+  .slide-num {
+    display: inline-block; background: #3b82f6; color: #fff; width: 36px; height: 36px;
+    border-radius: 50%; text-align: center; line-height: 36px; font-weight: 700;
+    font-size: 16px; margin-bottom: 16px;
+  }
+
+  .card h2 {
+    font-size: 28px; color: #f8fafc; margin-bottom: 8px; line-height: 1.3;
+  }
+  .card .context {
+    font-size: 12px; color: #3b82f6; text-transform: uppercase; letter-spacing: 1.5px;
+    margin-bottom: 20px; font-weight: 600;
+  }
+
+  .say {
+    font-size: 22px; line-height: 1.8; color: #cbd5e1; margin-bottom: 24px;
+  }
+  .say strong { color: #f8fafc; }
+  .say em { color: #10b981; font-style: normal; font-weight: 600; }
+  .say .pause { display: block; height: 16px; }
+
+  .tip {
+    background: #1e293b; border-left: 4px solid #eab308; border-radius: 0 8px 8px 0;
+    padding: 14px 18px; margin: 16px 0; font-size: 14px; color: #eab308; line-height: 1.6;
+  }
+  .tip::before { content: '💡 '; }
+
+  .action {
+    background: #1e293b; border-left: 4px solid #3b82f6; border-radius: 0 8px 8px 0;
+    padding: 14px 18px; margin: 16px 0; font-size: 14px; color: #93c5fd; line-height: 1.6;
+  }
+  .action::before { content: '👉 '; }
+
+  .dots {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 6px;
+  }
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%; background: #334155;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .dot.active { background: #3b82f6; width: 24px; border-radius: 4px; }
+
+  /* Keyboard hint */
+  .key-hint {
+    position: fixed; bottom: 16px; right: 32px; font-size: 11px; color: #475569;
+  }
+  .key-hint kbd {
+    background: #1e293b; border: 1px solid #334155; border-radius: 4px;
+    padding: 2px 6px; font-family: inherit;
+  }
+</style>
+</head>
+<body>
+
+<div class="controls">
+  <div class="slide-label">Slide <strong id="slideNum">1</strong> / 14</div>
+  <div class="nav-btns">
+    <button id="prevBtn" onclick="go(-1)" disabled>← Prev</button>
+    <button id="nextBtn" onclick="go(1)">Next →</button>
+  </div>
+</div>
+
+<div class="slide-container" id="slides">
+
+  <!-- SLIDE 0: Before You Start -->
+  <div class="card active" data-i="0">
+    <span class="slide-num">0</span>
+    <div class="context">Before the meeting</div>
+    <h2>Pre-Meeting Checklist</h2>
+    <div class="action">Open on your presenting screen: <strong>https://aiagent.ringlypro.com/pinaxis/proposal/295</strong></div>
+    <div class="action">Have the proposal PDF ready: <strong>https://aiagent.ringlypro.com/pinaxis-proposal.html</strong> (Cmd+P to print)</div>
+    <div class="action">Test that audio works — click "Tap to Start" and confirm Rachel speaks</div>
+    <div class="action">Have this teleprompter on your second monitor — they won't see it</div>
+    <div class="tip">Let Rachel speak for the first 2-3 slides before you take over. The AI voice is the wow moment — don't talk over it.</div>
+  </div>
+
+  <!-- SLIDE 1: Opening -->
+  <div class="card" data-i="1">
+    <span class="slide-num">1</span>
+    <div class="context">Opening — Set the stage</div>
+    <h2>Welcome & Context</h2>
+    <div class="say">
+      "Jurgen, Sven — thank you for making time today. Before we get into the commercial discussion, I want to <strong>show you something</strong> that I think will change how you think about your sales process."
+      <span class="pause"></span>
+      "I'm going to share a link. This is a <em>live, auto-narrated proposal</em> that was generated entirely from warehouse data. No PowerPoint. No engineer spending 50 hours. Just data in, proposal out."
+    </div>
+    <div class="action">Share screen → click "Tap to Start" on the proposal page. Let Rachel start talking. Stay quiet for 30 seconds.</div>
+    <div class="tip">Watch their faces when Rachel starts speaking. That reaction is your selling moment.</div>
+  </div>
+
+  <!-- SLIDE 2: Data Overview -->
+  <div class="card" data-i="2">
+    <span class="slide-num">2</span>
+    <div class="context">Slide 2 on proposal — Data Overview</div>
+    <h2>The Big Picture</h2>
+    <div class="say">
+      "So here's the overview. This warehouse has <strong>228,000 products</strong> in their catalog, but only <strong>43,000 actually move</strong>. They process <strong>60,000 orders</strong> with <strong>637,000 order lines</strong>."
+      <span class="pause"></span>
+      "The pie charts break it down — <em>86% is store replenishment</em>, 10% e-commerce. You can see the temperature zones and picking unit distribution."
+      <span class="pause"></span>
+      "All of this was <strong>computed automatically</strong> from the uploaded data. No manual work."
+    </div>
+    <div class="tip">Point at the pie charts. These are the same infographics that LogiVision has — but generated in minutes, not days.</div>
+  </div>
+
+  <!-- SLIDE 3: Fit Analysis -->
+  <div class="card" data-i="3">
+    <span class="slide-num">3</span>
+    <div class="context">Slide 3 on proposal — Fit / No-Fit</div>
+    <h2>Can We Automate It?</h2>
+    <div class="say">
+      "This is the fit analysis — the key question: <em>how many products physically fit inside your automation bins?</em>"
+      <span class="pause"></span>
+      "The answer: <strong>68.8% fit</strong>. Using the standard 600 by 400 by 450 millimeter bin, almost 157,000 items are conveyable. That's a very strong automation case."
+      <span class="pause"></span>
+      "The donut chart shows the split — fit, missing dimensions, and items that are too large."
+    </div>
+  </div>
+
+  <!-- SLIDE 4: ABC -->
+  <div class="card" data-i="4">
+    <span class="slide-num">4</span>
+    <div class="context">Slide 4 on proposal — ABC Classification</div>
+    <h2>The Pareto Principle — This Is the Money Slide</h2>
+    <div class="say">
+      "This is ABC analysis — the 80/20 rule applied to the warehouse."
+      <span class="pause"></span>
+      "Just <strong>1,051 products</strong> — that's <em>half a percent</em> of the catalog — drive <strong>80% of all volume</strong>. Those are your A-items, the fast movers. That's where you put your goods-to-person automation."
+      <span class="pause"></span>
+      "<strong>184,000 products are dead stock</strong> — zero movement. The Gini coefficient of 0.897 confirms this is <em>highly concentrated</em>. That's ideal for automation."
+      <span class="pause"></span>
+      "Look at the table — it shows the exact percentages for order lines, pick units, and orders per class. <strong>Every number comes from the data.</strong> Nothing is hardcoded."
+    </div>
+    <div class="tip">This is the slide Sven will relate to most — it matches what LogiVision does, but with more detail and zero manual effort.</div>
+  </div>
+
+  <!-- SLIDE 5: XYZ -->
+  <div class="card" data-i="5">
+    <span class="slide-num">5</span>
+    <div class="context">Slide 5 on proposal — XYZ Seasonality</div>
+    <h2>Steady vs Seasonal Demand</h2>
+    <div class="say">
+      "XYZ analysis tells us which products have <em>consistent demand</em> versus <em>seasonal spikes</em>."
+      <span class="pause"></span>
+      "X-items — just 4% of SKUs — generate <strong>89% of all order lines</strong>. Those are your workhorses. Z-items are sporadic — 96% of SKUs but only 11% of volume."
+      <span class="pause"></span>
+      "You design automation for the X-items and keep Z-items flexible."
+    </div>
+  </div>
+
+  <!-- SLIDE 6: Order Profile -->
+  <div class="card" data-i="6">
+    <span class="slide-num">6</span>
+    <div class="context">Slide 6 on proposal — Order Profile</div>
+    <h2>How Complex Are the Orders?</h2>
+    <div class="say">
+      "<strong>88% of orders are multi-line</strong> — meaning each order picks multiple products. Average is about <em>10 lines per order</em>."
+      <span class="pause"></span>
+      "That tells us this operation needs <em>zone-based picking or wave automation</em>, not simple single-item stations. The histogram shows the distribution."
+    </div>
+  </div>
+
+  <!-- SLIDE 7: Percentiles -->
+  <div class="card" data-i="7">
+    <span class="slide-num">7</span>
+    <div class="context">Slide 7 on proposal — Percentiles (Design Basis)</div>
+    <h2>The Design Basis — Most Important for Engineering</h2>
+    <div class="say">
+      "This is the slide your engineers care about most."
+      <span class="pause"></span>
+      "Average day: <strong>1,723 order lines</strong>. But we don't design for average. We design for the <em>75th percentile</em> — <strong>1,811 lines per day</strong>. That's about <strong>151 lines per hour</strong>."
+      <span class="pause"></span>
+      "The max day hit 1,904. Designing to the 75th percentile ensures the system handles peak demand <em>75% of the time</em> while remaining cost-effective."
+    </div>
+    <div class="tip">If Sven asks "why 75th and not 90th?" — say "90th over-engineers the system and increases cost. 75th is the industry standard for warehouse automation dimensioning."</div>
+  </div>
+
+  <!-- SLIDE 8: Growth -->
+  <div class="card" data-i="8">
+    <span class="slide-num">8</span>
+    <div class="context">Slide 8 on proposal — 5-Year Extrapolation</div>
+    <h2>Planning for Growth</h2>
+    <div class="say">
+      "We project 5 years forward at <em>5% annual growth</em>. By year 5, the design day goes from 1,723 to over <strong>2,000 order lines per day</strong>."
+      <span class="pause"></span>
+      "The automation needs headroom for this. The bar chart shows the trajectory — lines and orders growing year over year."
+    </div>
+  </div>
+
+  <!-- SLIDE 9-10: Products & Benefits -->
+  <div class="card" data-i="9">
+    <span class="slide-num">9</span>
+    <div class="context">Slides 9-10 on proposal — Recommendations & Benefits</div>
+    <h2>Product Matching & ROI</h2>
+    <div class="say">
+      "Based on all this data, the platform <em>automatically recommends</em> which Pinaxis products fit this warehouse. Each product gets a fit score from 0 to 100."
+      <span class="pause"></span>
+      "Then it calculates the ROI — <strong>estimated savings, payback period, improvement percentages</strong> — all grounded in the client's actual data, not industry benchmarks."
+    </div>
+    <div class="tip">You can skip through slides 9-10 quickly unless they ask for details.</div>
+  </div>
+
+  <!-- SLIDE 10: Hourly + Top SKUs -->
+  <div class="card" data-i="10">
+    <span class="slide-num">10</span>
+    <div class="context">Slides 11-12 on proposal — Hourly & Top SKUs</div>
+    <h2>Peak Hours & Fast Movers</h2>
+    <div class="say">
+      "The hourly profile shows <em>when during the day</em> the work happens. You size the system for the peak hours — highlighted in gold."
+      <span class="pause"></span>
+      "And the top 10 SKUs — each one does about <strong>93,000 picks</strong>. These go in the <em>fastest automation zone</em>. Goods-to-person, minimum travel time."
+    </div>
+  </div>
+
+  <!-- SLIDE 11: The Pitch -->
+  <div class="card" data-i="11">
+    <span class="slide-num">11</span>
+    <div class="context">After the demo — Transition to business value</div>
+    <h2>Now Deliver the Punch Line</h2>
+    <div class="say">
+      "So — everything you just saw? The analysis, the charts, Rachel narrating it? <strong>That took minutes to generate.</strong> Not days. Not 50 hours of engineering time."
+      <span class="pause"></span>
+      "Today, your team spends <em>2,000 hours per month</em> preparing 40 proposals. That's roughly <strong>$150,000 a month in labor</strong>."
+      <span class="pause"></span>
+      "With this platform, you can produce the <em>same quality output</em> in minutes. And you can send this link to a prospect — <strong>they click, Rachel walks them through everything, no meeting needed.</strong>"
+      <span class="pause"></span>
+      "That means instead of 40 proposals a month, you can do <em>400</em>. Same team. No additional headcount."
+    </div>
+    <div class="tip">Pause here. Let the number sink in. Don't rush to the pricing.</div>
+  </div>
+
+  <!-- SLIDE 12: Pricing -->
+  <div class="card" data-i="12">
+    <span class="slide-num">12</span>
+    <div class="context">Commercial terms</div>
+    <h2>The Ask</h2>
+    <div class="say">
+      "We have two options. <strong>Option A</strong> is cloud SaaS — $25,000 setup, $12,000 per month. Live in two weeks. We manage everything."
+      <span class="pause"></span>
+      "If data sovereignty is a priority, <strong>Option B</strong> — we deploy inside your firewall. $45,000 installation, $150,000 annual license. Your data never leaves your network."
+      <span class="pause"></span>
+      "Both options: <em>unlimited projects, all modules, white-label branding, priority support.</em>"
+    </div>
+    <div class="action">Show the proposal PDF now — have it ready on the second tab</div>
+    <div class="tip">If they react to price, say: "You spend $150K per MONTH on manual proposals. This tool costs 8% of that." Let the math do the selling.</div>
+  </div>
+
+  <!-- SLIDE 13: Partnership -->
+  <div class="card" data-i="13">
+    <span class="slide-num">13</span>
+    <div class="context">The real play — Plant the seed</div>
+    <h2>The Partnership Conversation</h2>
+    <div class="say">
+      "But here's what I'm <em>really</em> excited about."
+      <span class="pause"></span>
+      "What if your clients could access this platform directly — <strong>branded as Pinaxis</strong> — and you charge them for the analysis? You handle the relationship. We handle the technology."
+      <span class="pause"></span>
+      "Pinaxis charges the client $5,000 to $15,000 per analysis. You keep 65%. We get 35%."
+      <span class="pause"></span>
+      "With your <em>thousands of existing clients</em>, even a 10% conversion rate means <strong>$800,000 in joint revenue per year</strong>."
+      <span class="pause"></span>
+      "This isn't a vendor relationship. This is a <em>technology partnership</em>. Your 50 years of market presence. Our AI platform that <strong>no one else in intralogistics has</strong>."
+    </div>
+    <div class="say">
+      <span class="pause"></span>
+      "<strong>Closing line:</strong> This is launch partner pricing. We want to grow this together. And right now, Pinaxis would be the <em>first warehouse automation company in the world</em> to offer AI-powered, voice-narrated data analytics as part of its sales process."
+    </div>
+    <div class="tip">Stop talking after the closing line. Let Jurgen respond. The CEO will either ask about exclusivity (good sign) or timeline (even better sign).</div>
+  </div>
+
+</div>
+
+<div class="dots" id="dots"></div>
+<div class="key-hint"><kbd>←</kbd> <kbd>→</kbd> arrow keys to navigate</div>
+
+<script>
+var cards = document.querySelectorAll('.card');
+var current = 0;
+var total = cards.length;
+
+function render() {
+  cards.forEach(function(c, i) { c.classList.toggle('active', i === current); });
+  document.getElementById('slideNum').textContent = current + 1;
+  document.getElementById('prevBtn').disabled = current === 0;
+  document.getElementById('nextBtn').disabled = current === total - 1;
+  var dots = '';
+  for (var i = 0; i < total; i++) dots += '<div class="dot' + (i === current ? ' active' : '') + '" onclick="goTo(' + i + ')"></div>';
+  document.getElementById('dots').innerHTML = dots;
+  window.scrollTo(0, 0);
+}
+
+function go(dir) { current = Math.max(0, Math.min(total - 1, current + dir)); render(); }
+function goTo(i) { current = i; render(); }
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); go(1); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); go(-1); }
+});
+
+render();
+</script>
+
+</body>
+</html>
