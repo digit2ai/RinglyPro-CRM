@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pinaxis AI Platform — MCP Architecture</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: #0f172a; color: #e2e8f0; padding: 40px; display: flex; justify-content: center; }
+  .diagram { max-width: 900px; width: 100%; }
+  .diagram-title { text-align: center; margin-bottom: 32px; }
+  .diagram-title h1 { font-size: 24px; color: #f8fafc; letter-spacing: -0.5px; }
+  .diagram-title p { font-size: 13px; color: #64748b; margin-top: 4px; }
+
+  .layer { margin-bottom: 16px; }
+  .layer-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #64748b; margin-bottom: 8px; padding-left: 4px; }
+  .layer-box { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
+
+  .nodes { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .node { background: #0f172a; border: 1px solid #475569; border-radius: 8px; padding: 14px 20px; text-align: center; flex: 1; min-width: 140px; max-width: 200px; }
+  .node .icon { font-size: 24px; margin-bottom: 6px; }
+  .node .name { font-size: 13px; font-weight: 600; color: #f8fafc; }
+  .node .sub { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+
+  .connector { display: flex; justify-content: center; padding: 8px 0; }
+  .connector .line { width: 2px; height: 24px; background: #334155; }
+  .connector .arrow { width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid #3b82f6; margin-top: -1px; }
+  .connector-row { display: flex; justify-content: center; align-items: center; gap: 0; padding: 6px 0; }
+  .connector-h { height: 2px; background: #334155; flex: 1; max-width: 200px; }
+  .connector-dot { width: 8px; height: 8px; border-radius: 50%; background: #3b82f6; }
+
+  /* Agent layer special */
+  .agent-box { background: linear-gradient(135deg, #1e3a5f, #1e293b); border-color: #3b82f6; }
+  .agent-header { text-align: center; margin-bottom: 14px; }
+  .agent-header .name { font-size: 16px; font-weight: 700; color: #60a5fa; }
+  .agent-header .sub { font-size: 12px; color: #94a3b8; }
+  .agent-tools { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .agent-tool { background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 10px 14px; text-align: center; min-width: 120px; }
+  .agent-tool .icon { font-size: 18px; }
+  .agent-tool .name { font-size: 11px; font-weight: 600; color: #e2e8f0; margin-top: 4px; }
+
+  /* MCP layer */
+  .mcp-box { background: linear-gradient(135deg, #1a2e1a, #1e293b); border-color: #10b981; }
+  .mcp-header { text-align: center; margin-bottom: 14px; }
+  .mcp-header .name { font-size: 16px; font-weight: 700; color: #34d399; }
+  .mcp-header .sub { font-size: 12px; color: #94a3b8; }
+  .mcp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .mcp-col { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 14px; }
+  .mcp-col h4 { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #10b981; margin-bottom: 8px; }
+  .mcp-col ul { list-style: none; font-size: 12px; color: #cbd5e1; line-height: 1.8; }
+  .mcp-col ul li::before { content: '• '; color: #10b981; font-weight: 700; }
+
+  .engine-box { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 16px; text-align: center; }
+  .engine-box h4 { font-size: 13px; font-weight: 700; color: #f8fafc; margin-bottom: 6px; }
+  .engine-box p { font-size: 11px; color: #94a3b8; line-height: 1.6; }
+
+  /* Data layer */
+  .db-box { background: linear-gradient(135deg, #2e1a2e, #1e293b); border-color: #a855f7; }
+  .db-header { text-align: center; margin-bottom: 12px; }
+  .db-header .name { font-size: 16px; font-weight: 700; color: #c084fc; }
+  .db-tables { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .db-table { background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 8px 10px; text-align: center; }
+  .db-table .name { font-size: 11px; font-weight: 600; color: #e2e8f0; }
+  .db-table .count { font-size: 10px; color: #a855f7; margin-top: 2px; }
+
+  /* Integration layer */
+  .int-nodes { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .int-node { background: #0f172a; border: 1px solid #475569; border-radius: 8px; padding: 10px 18px; text-align: center; }
+  .int-node .name { font-size: 11px; font-weight: 600; color: #f8fafc; }
+  .int-node .sub { font-size: 10px; color: #64748b; }
+
+  .footer-note { text-align: center; margin-top: 24px; font-size: 11px; color: #475569; }
+</style>
+</head>
+<body>
+<div class="diagram">
+
+  <div class="diagram-title">
+    <h1>PINAXIS AI Platform — MCP Architecture</h1>
+    <p>Model Context Protocol Server · AI Agent · Analytics Engine</p>
+  </div>
+
+  <!-- Client Layer -->
+  <div class="layer">
+    <div class="layer-label">Client Layer</div>
+    <div class="layer-box">
+      <div class="nodes">
+        <div class="node"><div class="icon">🖥</div><div class="name">Web Dashboard</div><div class="sub">Interactive Playbook</div></div>
+        <div class="node"><div class="icon">📱</div><div class="name">Mobile Proposal</div><div class="sub">Shareable Link</div></div>
+        <div class="node"><div class="icon">🔗</div><div class="name">WMS / ERP</div><div class="sub">API Integration</div></div>
+        <div class="node"><div class="icon">📊</div><div class="name">CSV Upload</div><div class="sub">Data Intake</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="connector"><div style="display:flex;flex-direction:column;align-items:center"><div class="line"></div><div class="arrow"></div></div></div>
+
+  <!-- AI Agent Layer -->
+  <div class="layer">
+    <div class="layer-label">AI Agent Layer</div>
+    <div class="layer-box agent-box">
+      <div class="agent-header">
+        <div class="name">Rachel — Voice AI Agent</div>
+        <div class="sub">ElevenLabs Conversational AI · Real-time + Auto-narrated</div>
+      </div>
+      <div class="agent-tools">
+        <div class="agent-tool"><div class="icon">🎙</div><div class="name">Live Voice Chat</div></div>
+        <div class="agent-tool"><div class="icon">▶️</div><div class="name">Auto-Narrated Proposals</div></div>
+        <div class="agent-tool"><div class="icon">🔧</div><div class="name">7 Client Tools</div></div>
+        <div class="agent-tool"><div class="icon">🔔</div><div class="name">Webhook Triggers</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="connector"><div style="display:flex;flex-direction:column;align-items:center"><div class="line"></div><div class="arrow"></div></div></div>
+
+  <!-- MCP Server Layer -->
+  <div class="layer">
+    <div class="layer-label">MCP Server Layer — Model Context Protocol</div>
+    <div class="layer-box mcp-box">
+      <div class="mcp-header">
+        <div class="name">MCP Tool Router</div>
+        <div class="sub">POST /tools/call · GET /tools/list · JSON-RPC 2.0</div>
+      </div>
+      <div class="mcp-grid">
+        <div class="mcp-col">
+          <h4>Analysis Tools</h4>
+          <ul>
+            <li>get_abc_classification</li>
+            <li>get_xyz_seasonality</li>
+            <li>get_fit_analysis</li>
+            <li>get_percentiles</li>
+            <li>get_roi_projections</li>
+            <li>get_full_report</li>
+          </ul>
+        </div>
+        <div class="mcp-col">
+          <h4>Data Tools</h4>
+          <ul>
+            <li>list_projects</li>
+            <li>get_project_overview</li>
+            <li>get_order_analysis</li>
+            <li>get_product_recommendations</li>
+            <li>upload_data</li>
+            <li>run_analysis</li>
+          </ul>
+        </div>
+      </div>
+      <div class="engine-box">
+        <h4>Analytics Engine — 12 Modules</h4>
+        <p>ABC · XYZ · Fit/No-Fit · Order Structure · Daily Percentiles · Extrapolation<br>
+        Throughput (Monthly · Weekly · Hourly) · System Architecture · Product Match · Benefit Projections</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="connector"><div style="display:flex;flex-direction:column;align-items:center"><div class="line"></div><div class="arrow"></div></div></div>
+
+  <!-- Data Layer -->
+  <div class="layer">
+    <div class="layer-label">Data Layer</div>
+    <div class="layer-box db-box">
+      <div class="db-header">
+        <div class="name">PostgreSQL Database</div>
+      </div>
+      <div class="db-tables">
+        <div class="db-table"><div class="name">Item Master</div><div class="count">228K SKUs</div></div>
+        <div class="db-table"><div class="name">Goods Out</div><div class="count">637K Lines</div></div>
+        <div class="db-table"><div class="name">Inventory</div><div class="count">65K Locations</div></div>
+        <div class="db-table"><div class="name">Goods In</div><div class="count">6K Receipts</div></div>
+        <div class="db-table"><div class="name">Analysis Results</div><div class="count">12 Modules Cached</div></div>
+        <div class="db-table"><div class="name">Projects</div><div class="count">Multi-tenant</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="connector"><div style="display:flex;flex-direction:column;align-items:center"><div class="line"></div><div class="arrow"></div></div></div>
+
+  <!-- Integration Layer -->
+  <div class="layer">
+    <div class="layer-label">Integration Layer</div>
+    <div class="layer-box">
+      <div class="int-nodes">
+        <div class="int-node"><div class="name">ElevenLabs</div><div class="sub">TTS API</div></div>
+        <div class="int-node"><div class="name">Chart.js / Recharts</div><div class="sub">Infographics</div></div>
+        <div class="int-node"><div class="name">Render</div><div class="sub">Cloud Hosting</div></div>
+        <div class="int-node"><div class="name">WMS Webhooks</div><div class="sub">Real-time Data</div></div>
+        <div class="int-node"><div class="name">Express + Node.js</div><div class="sub">API Server</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note">DIGIT2AI · Pinaxis AI Platform · Architecture v1.0</div>
+
+</div>
+</body>
+</html>
