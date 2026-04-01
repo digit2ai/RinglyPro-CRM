@@ -282,6 +282,139 @@
     }
     .doc-footer strong { color: rgba(255,255,255,0.8); }
 
+    /* ═══ RADIAL MCP DIAGRAM ═══ */
+    .mcp-radial-section {
+      background: #050b19; color: #f4f7ff; padding: 50px 30px; margin: 30px -40px;
+      border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); position: relative; overflow: hidden;
+    }
+    .mcp-radial-section::before {
+      content: ''; position: absolute; width: 500px; height: 500px;
+      background: rgba(0,163,224,0.06); border-radius: 50%; top: -100px; right: -80px; filter: blur(100px);
+    }
+    .mcp-radial-title { font-size: 1.6rem; text-align: center; color: #fff; font-weight: 700; margin-bottom: 6px; position: relative; }
+    .mcp-radial-subtitle { text-align: center; color: #94a3b8; font-size: 14px; margin-bottom: 30px; position: relative; }
+    .mcp-radial-container {
+      position: relative; width: 100%; max-width: 800px; margin: 0 auto; min-height: 520px; padding: 30px 10px;
+    }
+    .mcp-core-hub {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+      border-radius: 50%; width: 140px; height: 140px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 10;
+      box-shadow: 0 0 40px rgba(0,163,224,0.5), 0 8px 30px rgba(0,0,0,0.4);
+      animation: hubPulse 3s ease-in-out infinite;
+    }
+    @keyframes hubPulse {
+      0%, 100% { box-shadow: 0 0 40px rgba(0,163,224,0.5), 0 8px 30px rgba(0,0,0,0.4); }
+      50% { box-shadow: 0 0 60px rgba(0,163,224,0.7), 0 12px 40px rgba(0,0,0,0.5); }
+    }
+    .core-brain-icon { width: 54px; height: 54px; margin-bottom: 6px; }
+    .core-hub-label { font-size: 14px; font-weight: 700; color: #fff; }
+    .core-hub-sub { font-size: 10px; color: rgba(255,255,255,0.8); font-weight: 500; }
+
+    .radial-layer { position: absolute; display: flex; gap: 16px; z-index: 5; }
+    .radial-top { top: 0; left: 50%; transform: translateX(-50%); width: 100%; justify-content: space-around; padding: 0 10px; }
+    .radial-bottom { bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; justify-content: space-around; padding: 0 10px; }
+    .radial-left { left: 0; top: 50%; transform: translateY(-50%); flex-direction: column; }
+    .radial-right { right: 0; top: 50%; transform: translateY(-50%); flex-direction: column; }
+
+    .radial-node {
+      background: rgba(11,30,62,0.8); backdrop-filter: blur(10px); border-radius: 10px;
+      padding: 10px 14px; border: 1.5px solid rgba(135,206,235,0.25); display: flex;
+      flex-direction: column; align-items: center; gap: 4px; min-width: 90px; transition: all 0.3s;
+    }
+    .radial-node:hover { transform: scale(1.08); box-shadow: 0 8px 25px rgba(0,0,0,0.35); }
+    .radial-icon { font-size: 1.6rem; }
+    .radial-label { font-size: 11px; font-weight: 600; color: #e0e6f7; text-align: center; line-height: 1.2; }
+
+    .node-input-src { border-color: rgba(135,206,235,0.4); }
+    .node-input-src:hover { border-color: #87ceeb; }
+    .node-ai-proc { border-color: rgba(0,163,224,0.4); }
+    .node-ai-proc:hover { border-color: var(--accent); }
+    .node-ht-sys { border-color: rgba(197,165,90,0.4); }
+    .node-ht-sys:hover { border-color: var(--gold); }
+    .node-output-act { border-color: rgba(16,185,129,0.4); }
+    .node-output-act:hover { border-color: var(--success); }
+
+    .radial-connections { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+    .conn-line { stroke: rgba(135,206,235,0.2); stroke-width: 1.5; stroke-dasharray: 5 5; animation: dashAnim 20s linear infinite; }
+    .conn-ai { stroke: rgba(0,163,224,0.25); }
+    .conn-ht { stroke: rgba(197,165,90,0.25); }
+    .conn-out { stroke: rgba(16,185,129,0.25); }
+    @keyframes dashAnim { to { stroke-dashoffset: -1000; } }
+    .mcp-radial-caption { margin-top: 20px; text-align: center; color: #94a3b8; font-size: 13px; position: relative; }
+
+    /* ═══ LAYERED ARCHITECTURE ═══ */
+    .layered-arch {
+      background: #0f172a; border-radius: 20px; padding: 40px 30px; margin-top: 40px;
+      color: #e2e8f0; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .layered-arch-title { font-size: 1.4rem; text-align: center; color: #f8fafc; letter-spacing: -0.5px; margin-bottom: 4px; }
+    .layered-arch-sub { font-size: 13px; color: #64748b; text-align: center; margin-bottom: 28px; }
+
+    .arch-lyr { margin-bottom: 0; }
+    .arch-lyr-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #64748b; margin-bottom: 6px; padding-left: 4px; }
+    .arch-lyr-box { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 18px; }
+
+    .arch-nodes { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .arch-nd { background: #0f172a; border: 1px solid #475569; border-radius: 8px; padding: 12px 16px; text-align: center; flex: 1; min-width: 120px; max-width: 180px; }
+    .arch-nd-icon { font-size: 22px; margin-bottom: 4px; }
+    .arch-nd-name { font-size: 12px; font-weight: 600; color: #f8fafc; }
+    .arch-nd-sub { font-size: 10px; color: #94a3b8; margin-top: 2px; }
+
+    .arch-connector { display: flex; justify-content: center; padding: 6px 0; }
+    .arch-conn-line { width: 2px; height: 20px; background: #334155; }
+    .arch-conn-arrow { width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid var(--accent); margin-top: -1px; }
+    .arch-connector { display: flex; flex-direction: column; align-items: center; }
+
+    .arch-lyr-agent { background: linear-gradient(135deg, #1e3a5f, #1e293b); border-color: #3b82f6; }
+    .arch-lyr-header { text-align: center; margin-bottom: 12px; }
+    .arch-lyr-header-name { font-size: 15px; font-weight: 700; color: #60a5fa; }
+    .arch-lyr-header-sub { font-size: 11px; color: #94a3b8; }
+    .arch-agent-tools { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .arch-agent-tool { background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 10px 14px; text-align: center; min-width: 110px; }
+    .arch-agent-tool-icon { font-size: 18px; }
+    .arch-agent-tool-name { font-size: 11px; font-weight: 600; color: #e2e8f0; margin-top: 4px; }
+
+    .arch-lyr-mcp { background: linear-gradient(135deg, #1a2e1a, #1e293b); border-color: #10b981; }
+    .mcp-tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .mcp-tools-col { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 14px; }
+    .mcp-tools-col h4 { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #10b981; margin-bottom: 8px; font-weight: 700; }
+    .mcp-tools-col ul { list-style: none; font-size: 12px; color: #cbd5e1; line-height: 1.8; padding: 0; }
+    .mcp-tools-col ul li::before { content: '\2022 '; color: #10b981; font-weight: 700; }
+    .mcp-engine-box { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 14px; text-align: center; }
+    .mcp-engine-box h4 { font-size: 13px; font-weight: 700; color: #f8fafc; margin-bottom: 6px; }
+    .mcp-engine-box p { font-size: 11px; color: #94a3b8; line-height: 1.6; }
+
+    .arch-lyr-data { background: linear-gradient(135deg, #2e1a2e, #1e293b); border-color: #a855f7; }
+    .db-tables-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .db-tbl { background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 8px 10px; text-align: center; }
+    .db-tbl-name { font-size: 10px; font-weight: 600; color: #e2e8f0; font-family: monospace; }
+    .db-tbl-type { font-size: 9px; color: #a855f7; margin-top: 2px; }
+
+    .arch-lyr-int { background: #1e293b; }
+    .arch-int-nodes { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .arch-int-nd { background: #0f172a; border: 1px solid #475569; border-radius: 8px; padding: 10px 18px; text-align: center; }
+    .arch-int-nd-name { font-size: 12px; font-weight: 600; color: #f8fafc; }
+    .arch-int-nd-sub { font-size: 10px; color: #64748b; }
+
+    .layered-arch-footer { text-align: center; margin-top: 20px; font-size: 11px; color: #475569; }
+
+    /* ═══ DATA FLOW ═══ */
+    .data-flow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+    .flow-step {
+      background: white; border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px;
+      flex: 1; min-width: 140px; position: relative;
+    }
+    .flow-step-num {
+      position: absolute; top: -10px; left: 12px; background: var(--gradient-accent); color: white;
+      width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center;
+      justify-content: center; font-size: 11px; font-weight: 800;
+    }
+    .flow-step-text { font-size: 12px; color: var(--text); line-height: 1.5; margin-top: 4px; }
+    .flow-step-text code { background: rgba(0,163,224,0.1); color: var(--accent); padding: 1px 6px; border-radius: 4px; font-size: 11px; }
+    .flow-arrow { color: var(--accent); font-size: 18px; font-weight: 700; flex-shrink: 0; }
+
     /* ═══ RESPONSIVE ═══ */
     @media (max-width: 768px) {
       .kpi-strip { grid-template-columns: 1fr 1fr; }
@@ -291,6 +424,21 @@
       .cover-subtitle { font-size: 18px; }
       .cover-logos { flex-direction: column; gap: 16px; }
       .content { padding: 40px 20px; }
+      .mcp-radial-section { margin: 30px -20px; padding: 30px 16px; }
+      .mcp-radial-container { min-height: 600px; }
+      .mcp-core-hub { width: 110px; height: 110px; }
+      .core-brain-icon { width: 40px; height: 40px; }
+      .radial-node { min-width: 70px; padding: 8px 10px; }
+      .radial-icon { font-size: 1.3rem; }
+      .radial-label { font-size: 9px; }
+      .layered-arch { padding: 24px 16px; margin-top: 24px; }
+      .arch-nodes { flex-direction: column; align-items: center; }
+      .arch-nd { max-width: 100%; }
+      .mcp-tools-grid { grid-template-columns: 1fr; }
+      .db-tables-grid { grid-template-columns: 1fr 1fr; }
+      .arch-int-nodes { flex-direction: column; align-items: center; }
+      .data-flow { flex-direction: column; }
+      .flow-arrow { transform: rotate(90deg); }
     }
   </style>
 </head>
@@ -453,35 +601,252 @@
       </p>
     </div>
 
-    <div class="arch-diagram">
-      <div class="arch-layer" style="border-color: rgba(197,165,90,0.4);">
-        <div class="layer-label">Layer 5 &mdash; Care Delivery</div>
-        <div class="layer-title" style="color: var(--gold-light);">1,900 Hospitals + 90,000 Non-Acute Sites + Hinge Health</div>
-        <div class="layer-desc">Existing HealthTrust care delivery network and vendor programs</div>
+    <!-- ═══ INTERACTIVE RADIAL MCP DIAGRAM ═══ -->
+    <div class="mcp-radial-section">
+      <h3 class="mcp-radial-title">MCP Server &mdash; Neural Intelligence Core</h3>
+      <p class="mcp-radial-subtitle">All clinical data, AI processing, and system integrations flow through the MCP orchestration layer</p>
+
+      <div class="mcp-radial-container">
+        <!-- Center: MCP Core -->
+        <div class="mcp-core-hub">
+          <svg class="core-brain-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="brainGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#e0e6f7;stop-opacity:1" />
+              </linearGradient>
+            </defs>
+            <path d="M 50 20 Q 35 20, 28 30 Q 22 38, 22 48 Q 22 58, 26 65 Q 30 72, 38 78 Q 45 82, 50 82 Q 55 82, 62 78 Q 70 72, 74 65 Q 78 58, 78 48 Q 78 38, 72 30 Q 65 20, 50 20 Z" fill="url(#brainGrad)" stroke="#ffffff" stroke-width="1.5"/>
+            <circle cx="35" cy="35" r="2.5" fill="#87ceeb"/>
+            <circle cx="50" cy="30" r="2.5" fill="#87ceeb"/>
+            <circle cx="65" cy="35" r="2.5" fill="#87ceeb"/>
+            <circle cx="35" cy="50" r="2.5" fill="#87ceeb"/>
+            <circle cx="50" cy="50" r="3" fill="#00A3E0"/>
+            <circle cx="65" cy="50" r="2.5" fill="#87ceeb"/>
+            <circle cx="35" cy="65" r="2.5" fill="#87ceeb"/>
+            <circle cx="50" cy="70" r="2.5" fill="#87ceeb"/>
+            <circle cx="65" cy="65" r="2.5" fill="#87ceeb"/>
+            <line x1="35" y1="35" x2="50" y2="30" stroke="#87ceeb" stroke-width="1.2" opacity="0.6"/>
+            <line x1="50" y1="30" x2="65" y2="35" stroke="#87ceeb" stroke-width="1.2" opacity="0.6"/>
+            <line x1="35" y1="35" x2="35" y2="50" stroke="#87ceeb" stroke-width="1.2" opacity="0.6"/>
+            <line x1="50" y1="30" x2="50" y2="50" stroke="#00A3E0" stroke-width="1.5" opacity="0.7"/>
+            <line x1="65" y1="35" x2="65" y2="50" stroke="#87ceeb" stroke-width="1.2" opacity="0.6"/>
+            <line x1="35" y1="50" x2="50" y2="50" stroke="#00A3E0" stroke-width="1.5" opacity="0.7"/>
+            <line x1="50" y1="50" x2="65" y2="50" stroke="#00A3E0" stroke-width="1.5" opacity="0.7"/>
+            <line x1="35" y1="50" x2="35" y2="65" stroke="#87ceeb" stroke-width="1.2" opacity="0.6"/>
+            <line x1="50" y1="50" x2="50" y2="70" stroke="#00A3E0" stroke-width="1.5" opacity="0.7"/>
+            <line x1="65" y1="50" x2="65" y2="65" stroke="#87ceeb" stroke-width="1.2" opacity="0.6"/>
+            <line x1="35" y1="65" x2="50" y2="70" stroke="#87ceeb" stroke-width="1.2" opacity="0.6"/>
+            <line x1="50" y1="70" x2="65" y2="65" stroke="#87ceeb" stroke-width="1.2" opacity="0.6"/>
+            <line x1="35" y1="35" x2="50" y2="50" stroke="#87ceeb" stroke-width="1" opacity="0.4"/>
+            <line x1="65" y1="35" x2="50" y2="50" stroke="#87ceeb" stroke-width="1" opacity="0.4"/>
+            <line x1="35" y1="65" x2="50" y2="50" stroke="#87ceeb" stroke-width="1" opacity="0.4"/>
+            <line x1="65" y1="65" x2="50" y2="50" stroke="#87ceeb" stroke-width="1" opacity="0.4"/>
+          </svg>
+          <div class="core-hub-label">MCP Server</div>
+          <div class="core-hub-sub">Neural Intelligence</div>
+        </div>
+
+        <!-- Top: Patient Input Sources -->
+        <div class="radial-layer radial-top">
+          <div class="radial-node node-input-src"><div class="radial-icon">&#128248;</div><div class="radial-label">ROM Camera</div></div>
+          <div class="radial-node node-input-src"><div class="radial-icon">&#127897;</div><div class="radial-label">Voice Intake</div></div>
+          <div class="radial-node node-input-src"><div class="radial-icon">&#128196;</div><div class="radial-label">PROMs</div></div>
+          <div class="radial-node node-input-src"><div class="radial-icon">&#128444;</div><div class="radial-label">Imaging</div></div>
+        </div>
+
+        <!-- Left: AI Processing -->
+        <div class="radial-layer radial-left">
+          <div class="radial-node node-ai-proc"><div class="radial-icon">&#129504;</div><div class="radial-label">AI Triage</div></div>
+          <div class="radial-node node-ai-proc"><div class="radial-icon">&#129302;</div><div class="radial-label">Diagnostic Copilot</div></div>
+          <div class="radial-node node-ai-proc"><div class="radial-icon">&#128200;</div><div class="radial-label">Predictive Analytics</div></div>
+        </div>
+
+        <!-- Right: HealthTrust Systems -->
+        <div class="radial-layer radial-right">
+          <div class="radial-node node-ht-sys"><div class="radial-icon">&#127973;</div><div class="radial-label">1,900 Hospitals</div></div>
+          <div class="radial-node node-ht-sys"><div class="radial-icon">&#128101;</div><div class="radial-label">Workforce Solutions</div></div>
+          <div class="radial-node node-ht-sys"><div class="radial-icon">&#128230;</div><div class="radial-label">GPO Supply Chain</div></div>
+        </div>
+
+        <!-- Bottom: Output Actions -->
+        <div class="radial-layer radial-bottom">
+          <div class="radial-node node-output-act"><div class="radial-icon">&#128203;</div><div class="radial-label">Reports</div></div>
+          <div class="radial-node node-output-act"><div class="radial-icon">&#128276;</div><div class="radial-label">Alerts</div></div>
+          <div class="radial-node node-output-act"><div class="radial-icon">&#128202;</div><div class="radial-label">Dashboards</div></div>
+          <div class="radial-node node-output-act"><div class="radial-icon">&#9889;</div><div class="radial-label">Automation</div></div>
+        </div>
+
+        <!-- Animated Connection Lines -->
+        <svg class="radial-connections" width="100%" height="100%">
+          <!-- Top to core -->
+          <line x1="18%" y1="14%" x2="50%" y2="50%" class="conn-line"/>
+          <line x1="38%" y1="14%" x2="50%" y2="50%" class="conn-line"/>
+          <line x1="62%" y1="14%" x2="50%" y2="50%" class="conn-line"/>
+          <line x1="82%" y1="14%" x2="50%" y2="50%" class="conn-line"/>
+          <!-- Left to core -->
+          <line x1="12%" y1="33%" x2="50%" y2="50%" class="conn-line conn-ai"/>
+          <line x1="12%" y1="50%" x2="50%" y2="50%" class="conn-line conn-ai"/>
+          <line x1="12%" y1="67%" x2="50%" y2="50%" class="conn-line conn-ai"/>
+          <!-- Core to right -->
+          <line x1="50%" y1="50%" x2="88%" y2="33%" class="conn-line conn-ht"/>
+          <line x1="50%" y1="50%" x2="88%" y2="50%" class="conn-line conn-ht"/>
+          <line x1="50%" y1="50%" x2="88%" y2="67%" class="conn-line conn-ht"/>
+          <!-- Core to bottom -->
+          <line x1="50%" y1="50%" x2="18%" y2="86%" class="conn-line conn-out"/>
+          <line x1="50%" y1="50%" x2="38%" y2="86%" class="conn-line conn-out"/>
+          <line x1="50%" y1="50%" x2="62%" y2="86%" class="conn-line conn-out"/>
+          <line x1="50%" y1="50%" x2="82%" y2="86%" class="conn-line conn-out"/>
+        </svg>
       </div>
-      <div class="arch-arrow">&darr; &uarr;</div>
-      <div class="arch-layer highlight">
-        <div class="layer-label">Layer 4 &mdash; AI Orchestration (NEW)</div>
-        <div class="layer-title" style="color: var(--accent);">MSK Intelligence MCP Architecture</div>
-        <div class="layer-desc">7 MCP tools &bull; AI Triage &bull; Diagnostic Copilot &bull; Voice Intake &bull; ROM Assessment</div>
+
+      <p class="mcp-radial-caption">All clinical data flows through the MCP server, which orchestrates AI processing, HealthTrust system integrations, and automated clinical actions in real-time.</p>
+    </div>
+
+    <!-- ═══ LAYERED ARCHITECTURE DIAGRAM ═══ -->
+    <div class="layered-arch">
+      <h3 class="layered-arch-title">MSK Intelligence &mdash; Full Stack Architecture</h3>
+      <p class="layered-arch-sub">Model Context Protocol Server &bull; AI Agent &bull; Clinical Decision Engine</p>
+
+      <!-- Layer 1: Patient Input -->
+      <div class="arch-lyr">
+        <div class="arch-lyr-label">Patient Input Layer</div>
+        <div class="arch-lyr-box arch-lyr-input">
+          <div class="arch-nodes">
+            <div class="arch-nd"><div class="arch-nd-icon">&#128248;</div><div class="arch-nd-name">MediaPipe ROM</div><div class="arch-nd-sub">Browser Camera</div></div>
+            <div class="arch-nd"><div class="arch-nd-icon">&#127897;</div><div class="arch-nd-name">Voice AI Intake</div><div class="arch-nd-sub">ElevenLabs ConvAI</div></div>
+            <div class="arch-nd"><div class="arch-nd-icon">&#128196;</div><div class="arch-nd-name">PROMs</div><div class="arch-nd-sub">Patient Outcomes</div></div>
+            <div class="arch-nd"><div class="arch-nd-icon">&#128225;</div><div class="arch-nd-name">RPM Devices</div><div class="arch-nd-sub">Remote Monitoring</div></div>
+          </div>
+        </div>
       </div>
-      <div class="arch-arrow">&darr; &uarr;</div>
-      <div class="arch-layer">
-        <div class="layer-label">Layer 3 &mdash; Neural Intelligence</div>
-        <div class="layer-title">Predictive Analytics + Clinical Decision Engine</div>
-        <div class="layer-desc">Patient acuity scoring &bull; Workforce demand prediction &bull; Outcomes-based procurement intelligence</div>
+
+      <div class="arch-connector"><div class="arch-conn-line"></div><div class="arch-conn-arrow"></div></div>
+
+      <!-- Layer 2: AI Agent -->
+      <div class="arch-lyr">
+        <div class="arch-lyr-label">AI Agent Layer</div>
+        <div class="arch-lyr-box arch-lyr-agent">
+          <div class="arch-lyr-header">
+            <div class="arch-lyr-header-name">Neural Intelligence Engine</div>
+            <div class="arch-lyr-header-sub">AI Triage &bull; Diagnostic Copilot &bull; Predictive Analytics &bull; Claude-Powered</div>
+          </div>
+          <div class="arch-agent-tools">
+            <div class="arch-agent-tool"><div class="arch-agent-tool-icon">&#129504;</div><div class="arch-agent-tool-name">200-pt Triage</div></div>
+            <div class="arch-agent-tool"><div class="arch-agent-tool-icon">&#129302;</div><div class="arch-agent-tool-name">Report Copilot</div></div>
+            <div class="arch-agent-tool"><div class="arch-agent-tool-icon">&#128200;</div><div class="arch-agent-tool-name">Acuity Scoring</div></div>
+            <div class="arch-agent-tool"><div class="arch-agent-tool-icon">&#128276;</div><div class="arch-agent-tool-name">Smart Routing</div></div>
+          </div>
+        </div>
       </div>
-      <div class="arch-arrow">&darr; &uarr;</div>
-      <div class="arch-layer">
-        <div class="layer-label">Layer 2 &mdash; Data Integration</div>
-        <div class="layer-title">FHIR-Compliant Health Data Exchange</div>
-        <div class="layer-desc">Interoperability with EHR systems &bull; Claims data &bull; Supply chain feeds &bull; Workforce management</div>
+
+      <div class="arch-connector"><div class="arch-conn-line"></div><div class="arch-conn-arrow"></div></div>
+
+      <!-- Layer 3: MCP Server -->
+      <div class="arch-lyr">
+        <div class="arch-lyr-label">MCP Server Layer &mdash; Model Context Protocol</div>
+        <div class="arch-lyr-box arch-lyr-mcp">
+          <div class="arch-lyr-header">
+            <div class="arch-lyr-header-name" style="color: #34d399;">MCP Tool Router</div>
+            <div class="arch-lyr-header-sub">POST /api/v1/mcp/tools/call &bull; GET /tools/list &bull; JSON-RPC 2.0</div>
+          </div>
+          <div class="mcp-tools-grid">
+            <div class="mcp-tools-col">
+              <h4>Clinical Tools</h4>
+              <ul>
+                <li>msk_create_case</li>
+                <li>msk_triage_case</li>
+                <li>msk_get_case_status</li>
+                <li>msk_submit_report</li>
+              </ul>
+            </div>
+            <div class="mcp-tools-col">
+              <h4>Operations Tools</h4>
+              <ul>
+                <li>msk_get_dashboard_stats</li>
+                <li>msk_search_imaging_centers</li>
+                <li>msk_schedule_consult</li>
+              </ul>
+            </div>
+          </div>
+          <div class="mcp-engine-box">
+            <h4>Clinical Decision Engine</h4>
+            <p>Urgency Scoring (0-200) &bull; Imaging Protocol Selection (MRI/CT/Ultrasound/X-Ray/DEXA/PET)<br>
+            Injury Classification &bull; Emergency Escalation &bull; Specialist Routing &bull; Recovery Prediction</p>
+          </div>
+        </div>
       </div>
-      <div class="arch-arrow">&darr; &uarr;</div>
-      <div class="arch-layer">
-        <div class="layer-label">Layer 1 &mdash; Clinical Data Capture</div>
-        <div class="layer-title">Patient-Generated Clinical Data</div>
-        <div class="layer-desc">MediaPipe ROM &bull; PROMs &bull; Remote Patient Monitoring &bull; Voice Intake &bull; Imaging</div>
+
+      <div class="arch-connector"><div class="arch-conn-line"></div><div class="arch-conn-arrow"></div></div>
+
+      <!-- Layer 4: Data -->
+      <div class="arch-lyr">
+        <div class="arch-lyr-label">Data Layer</div>
+        <div class="arch-lyr-box arch-lyr-data">
+          <div class="arch-lyr-header">
+            <div class="arch-lyr-header-name" style="color: #c084fc;">PostgreSQL &mdash; 19 Production Tables</div>
+          </div>
+          <div class="db-tables-grid">
+            <div class="db-tbl"><div class="db-tbl-name">msk_cases</div><div class="db-tbl-type">Case Lifecycle</div></div>
+            <div class="db-tbl"><div class="db-tbl-name">msk_patients</div><div class="db-tbl-type">Patient Profiles</div></div>
+            <div class="db-tbl"><div class="db-tbl-name">msk_rom_measurements</div><div class="db-tbl-type">ROM Data</div></div>
+            <div class="db-tbl"><div class="db-tbl-name">msk_triage_decisions</div><div class="db-tbl-type">AI Decisions</div></div>
+            <div class="db-tbl"><div class="db-tbl-name">msk_reports</div><div class="db-tbl-type">Diagnostics</div></div>
+            <div class="db-tbl"><div class="db-tbl-name">msk_prom_submissions</div><div class="db-tbl-type">Outcomes</div></div>
+            <div class="db-tbl"><div class="db-tbl-name">msk_imaging_orders</div><div class="db-tbl-type">Imaging</div></div>
+            <div class="db-tbl"><div class="db-tbl-name">msk_consultations</div><div class="db-tbl-type">Video Consults</div></div>
+            <div class="db-tbl"><div class="db-tbl-name">msk_claims</div><div class="db-tbl-type">Billing</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arch-connector"><div class="arch-conn-line"></div><div class="arch-conn-arrow"></div></div>
+
+      <!-- Layer 5: Integration -->
+      <div class="arch-lyr">
+        <div class="arch-lyr-label">Integration Layer &mdash; HealthTrust Ecosystem</div>
+        <div class="arch-lyr-box arch-lyr-int">
+          <div class="arch-int-nodes">
+            <div class="arch-int-nd"><div class="arch-int-nd-name">FHIR R4</div><div class="arch-int-nd-sub">EHR Interop</div></div>
+            <div class="arch-int-nd"><div class="arch-int-nd-name">HL7 v2</div><div class="arch-int-nd-sub">ADT/Orders</div></div>
+            <div class="arch-int-nd"><div class="arch-int-nd-name">Hinge Health</div><div class="arch-int-nd-sub">Exercise Therapy</div></div>
+            <div class="arch-int-nd"><div class="arch-int-nd-name">GPO Feed</div><div class="arch-int-nd-sub">Supply Chain</div></div>
+            <div class="arch-int-nd"><div class="arch-int-nd-name">Workforce API</div><div class="arch-int-nd-sub">Staffing Data</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="layered-arch-footer">DIGIT2AI &bull; MSK Intelligence Platform &bull; Architecture v2.0 &bull; Production Deployed</div>
+    </div>
+
+    <!-- ═══ DATA FLOW DIAGRAM ═══ -->
+    <div class="highlight-box" style="margin-top: 40px;">
+      <h3>End-to-End Data Flow</h3>
+      <div class="data-flow">
+        <div class="flow-step">
+          <div class="flow-step-num">1</div>
+          <div class="flow-step-text"><strong>Patient</strong> opens browser, starts ROM assessment or calls Voice AI</div>
+        </div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-step">
+          <div class="flow-step-num">2</div>
+          <div class="flow-step-text"><strong>MCP</strong> receives data via <code>msk_create_case</code> tool</div>
+        </div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-step">
+          <div class="flow-step-num">3</div>
+          <div class="flow-step-text"><strong>AI Triage</strong> scores urgency (0-200), selects imaging protocol</div>
+        </div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-step">
+          <div class="flow-step-num">4</div>
+          <div class="flow-step-text"><strong>Smart Router</strong> sends to Hinge Health, specialist, or emergency</div>
+        </div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-step">
+          <div class="flow-step-num">5</div>
+          <div class="flow-step-text"><strong>Outcomes</strong> feed back into procurement + workforce intelligence</div>
+        </div>
       </div>
     </div>
 
