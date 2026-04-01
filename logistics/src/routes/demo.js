@@ -6,7 +6,7 @@ const analyticsService = require('../services/analytics');
 const productMatcher = require('../services/product-matcher');
 const { bulkInsert, bulkInsertStreaming } = require('../services/bulk-inserter');
 
-// POST /api/v1/demo/generate — Create POC project matching LogiVision Dashboard Playbook (FULL SCALE)
+// POST /api/v1/demo/generate — Create POC project matching Pinaxis Dashboard Playbook (FULL SCALE)
 router.post('/generate', async (req, res) => {
   try {
     const { company_name } = req.body;
@@ -40,7 +40,7 @@ router.post('/generate', async (req, res) => {
         project_id: pid,
         project_code: project.project_code,
         status: 'uploading',
-        message: 'Generating full-scale LogiVision POC data (228K items, 637K order lines). Poll /projects/' + pid + ' for status.'
+        message: 'Generating full-scale Pinaxis POC data (228K items, 637K order lines). Poll /projects/' + pid + ' for status.'
       }
     });
 
@@ -69,7 +69,7 @@ async function generateFullDemo(models, seq, pid) {
   const label = '[POC]';
   const opts = { projectId: pid, label, chunkSize: 2000 };
 
-  console.log(`${label} Starting full-scale LogiVision generation for project ${pid}...`);
+  console.log(`${label} Starting full-scale Pinaxis generation for project ${pid}...`);
 
   // ====================================================================
   // ITEM MASTER — 228,274 SKUs
@@ -223,7 +223,7 @@ async function generateFullDemo(models, seq, pid) {
   console.log(`${label} Goods in: ${GI_COUNT} rows (${Date.now() - startTime}ms)`);
 
   // ====================================================================
-  // GOODS OUT — EXACT LogiVision numbers
+  // GOODS OUT — EXACT Pinaxis numbers
   //   60,016 orders / 637,002 lines / 370 days
   //   Avg lines/order: 10.6 (637002/60016)
   //   Total pick units: 89,533,743 → avg ~140.5 per line
@@ -299,7 +299,7 @@ async function generateFullDemo(models, seq, pid) {
 
   // ================================================================
   // KEY FIX: Pre-compute BOTH orders AND lines per day
-  // so throughput is flat across all 370 days — matching LogiVision
+  // so throughput is flat across all 370 days — matching Pinaxis
   // ================================================================
   const DAYS = allDates.length; // 370
   const baseLinesPerDay = Math.floor(TARGET_LINES / DAYS); // ~1722

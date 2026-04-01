@@ -137,7 +137,7 @@ export default function PresentationPage() {
   const pickingUnitPieData = byPickingUnit.map(d => ({ name: d.name, value: d.pick_units || d.order_lines }))
   const temperaturePieData = byTemperature.map(d => ({ name: d.name, value: d.pick_units || d.order_lines }))
 
-  // Daily throughput from order_time_series (matches LogiVision daily bars)
+  // Daily throughput from order_time_series (matches Pinaxis daily bars)
   const dailyData = (analysis?.order_time_series?.series || []).map(d => ({
     name: d.date,
     orderlines: d.orderlines || 0,
@@ -311,7 +311,7 @@ export default function PresentationPage() {
               ))}
             </div>
           )}
-          {/* Daily Throughput (matches LogiVision daily bars) */}
+          {/* Daily Throughput (matches Pinaxis daily bars) */}
           {dailyData.length > 0 && (
             <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
               <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Daily Throughput — Pick Units & Orders</p>
@@ -503,7 +503,7 @@ export default function PresentationPage() {
               </ResponsiveContainer>
             </div>
           )}
-          {/* Full KPI Table — matches LogiVision format */}
+          {/* Full KPI Table — matches Pinaxis format */}
           <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700 overflow-x-auto">
             <table className="w-full text-sm">
               <thead>

@@ -93,6 +93,11 @@ models.sequelize.sync({ alter: false }).then(async () => {
     console.log('⚠️ LOGISTICS table check:', e.message);
   }
 
+  // One-time: remove LogiVision from project names (legal)
+  try {
+    await models.sequelize.query(`UPDATE logistics_projects SET company_name = REPLACE(company_name, 'LogiVision', 'Warehouse Analytics') WHERE company_name LIKE '%LogiVision%'`);
+  } catch (e) {}
+
   // Auto-migrate: add missing columns
   try {
     await models.sequelize.query(`ALTER TABLE logistics_goods_out_data ADD COLUMN IF NOT EXISTS order_type VARCHAR(100)`);

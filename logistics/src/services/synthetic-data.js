@@ -3,7 +3,7 @@
 /**
  * Synthetic Data Generator for PINAXIS / LOGISTICS Demo
  *
- * Generates warehouse data matching the LogiVision Dashboard Playbook:
+ * Generates warehouse data matching the Pinaxis Dashboard Playbook:
  * - 43,680 moved SKUs (from a larger item master)
  * - 60,016 orders across 370 days
  * - 637,002 order lines
@@ -18,7 +18,7 @@
 
 function generate(options = {}) {
   const {
-    mode = 'full' // 'full' = LogiVision matching, 'quick' = smaller demo
+    mode = 'full' // 'full' = Pinaxis matching, 'quick' = smaller demo
   } = options;
 
   if (mode === 'quick') {
@@ -29,7 +29,7 @@ function generate(options = {}) {
 }
 
 // ============================================================================
-// FULL DEMO — Matches LogiVision Dashboard Playbook exactly
+// FULL DEMO — Matches Pinaxis Dashboard Playbook exactly
 // ============================================================================
 
 function generateFullDemo() {

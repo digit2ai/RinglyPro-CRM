@@ -270,9 +270,9 @@ export default function UploadPage() {
         <div>
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-semibold text-white mb-1">Proof of Concept — Full LogiVision Scale</h3>
+              <h3 className="text-lg font-semibold text-white mb-1">Proof of Concept — Full Pinaxis Scale</h3>
               <p className="text-sm text-slate-400">
-                Generate a full-scale Proof of Concept with LogiVision data (228K items, 60K orders, 637K lines).
+                Generate a full-scale Proof of Concept with Pinaxis data (228K items, 60K orders, 637K lines).
               </p>
             </div>
             <button
