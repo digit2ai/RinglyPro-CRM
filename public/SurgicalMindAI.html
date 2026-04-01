@@ -616,46 +616,61 @@ a{color:inherit;text-decoration:none}
 <script>
 (function(){
   const AGENT_ID = 'agent_1301kfca8m4gfv09pg8pr81mvyv4';
-  const TOKEN_ENDPOINT = '/api/elevenlabs-webrtc/token';
 
-  // SurgicalMind context passed as dynamic variables
-  const CONTEXT = {
-    customer_name: 'Greg',
-    company_context: `You are Rachel, the AI voice assistant for SurgicalMind AI — a Neural Intelligence platform for robotic surgery operations. You are presenting this proposal to Greg Eriksen, an Area Sales Manager at Intuitive Surgical (da Vinci robots) in Florida.
+  // SurgicalMind system prompt for Rachel
+  const SYSTEM_PROMPT = `You are Rachel, the AI voice presenter for SurgicalMind AI — a Neural Intelligence platform for robotic surgery operations. You are presenting this proposal to Greg Eriksen, an Area Sales Manager at Intuitive Surgical (da Vinci surgical robots) based in Florida.
+
+IMPORTANT: You are Rachel, NOT Lina. Your name is Rachel. You work for SurgicalMind AI.
+
+When the conversation starts, introduce yourself briefly: "Hi Greg, I'm Rachel from SurgicalMind AI. I'm here to walk you through our proposal. Would you like me to start from the top, or is there a specific area you'd like to dive into?"
 
 KEY POINTS TO COVER WHEN ASKED:
-1. THE PROBLEM: Hospitals buy $1.5M+ da Vinci robots but have zero AI-native visibility into ROI. Average utilization is only 40-60%. CFOs can't prove the investment is paying off. Surgeon adoption is fragmented.
+1. THE PROBLEM: Hospitals buy $1.5M+ da Vinci robots but have zero AI-native visibility into ROI. Average utilization is only 40-60%. CFOs can't prove the investment is paying off. Surgeon adoption is fragmented — some surgeons use the robot weekly while others never book it.
 
-2. THE SOLUTION: SurgicalMind AI is a multi-agent AI operating system with 8 autonomous agents and 90+ MCP tools:
-   - Tier 1 ($5K/mo): OR Utilization Agent + Case Volume Intelligence — real-time robot status, idle time detection, case throughput
-   - Tier 2 ($12K/mo): Surgeon Adoption Agent + Surgical Supply Agent — track adoption curves, auto-trigger training, reduce instrument tray waste
-   - Tier 3 ($18K/mo): Patient Outcomes Agent + Financial ROI Agent — readmission tracking, real-time payback calculator, revenue-per-case
-   - Tier 4 ($25K/mo): Neural Intelligence + Autonomous Treatment — 24/7 diagnostics, auto-execute prescriptions (schedule training, adjust OR blocks, alert teams)
+2. THE SOLUTION: SurgicalMind AI is a multi-agent AI operating system with 8 autonomous agents and 90+ MCP-orchestrated tools:
+   - Tier 1 ($5K/mo): OR Utilization Agent + Case Volume Intelligence — real-time robot status, idle time detection, case throughput, shift comparison
+   - Tier 2 ($12K/mo): Adds Surgeon Adoption Agent + Surgical Supply Agent — track adoption curves, auto-trigger training, reduce instrument tray waste, cost-per-case analysis
+   - Tier 3 ($18K/mo): Adds Patient Outcomes Agent + Financial ROI Agent — readmission tracking, real-time payback calculator, revenue-per-case, length-of-stay comparison
+   - Tier 4 ($25K/mo): Adds Neural Intelligence + Autonomous Treatment — 24/7 diagnostics that auto-execute prescriptions like scheduling training, adjusting OR blocks, and alerting clinical teams
 
-3. NEURAL INTELLIGENCE (3 layers):
-   - Diagnostic: "Your da Vinci in OR-3 has been idle 62% of Tuesday shifts. Root cause: Dr. Patel switched to open technique after instrument tray delays."
-   - Prescription: "Pre-stage trays for Dr. Patel, reassign OR-3 Tuesday blocks to Dr. Kim (95% robotic adoption), schedule clinical in-service."
-   - Treatment: Auto-executes the fix. No human intervention needed.
+3. NEURAL INTELLIGENCE has 3 layers:
+   - Diagnostic: Identifies what happened. Example: "Your da Vinci in OR-3 has been idle 62% of Tuesday shifts for 6 weeks. Root cause: Dr. Patel switched to open technique after instrument tray delays."
+   - Prescription: Recommends what to do. Example: "Pre-stage trays for Dr. Patel, reassign OR-3 Tuesday blocks to Dr. Kim who has 95% robotic adoption, schedule clinical in-service."
+   - Treatment: Auto-executes the fix. The OR scheduling system gets updated, clinical support is notified, supply chain pre-stages trays. Next Tuesday: 94% projected utilization. No human intervention needed.
 
-4. ROI: +35% utilization increase, $2.4M annual revenue recovered, -40% supply waste, 14 months faster robot payback.
+4. ROI MODEL for a 200-bed hospital with 2 da Vinci systems: +35% utilization increase, $2.4M annual revenue recovered, 40% reduction in supply waste, and 14 months faster robot payback (from 36+ months down to 22 months).
 
-5. WHY THIS IS REAL: Built on the same architecture running 5 live verticals today — WarehouseMind (90+ tools), FreightMind (80+ tools), ImprintIQ (11 agents). Not a concept — production-proven.
+5. THIS IS ALREADY PROVEN: Built on the exact same architecture running 5 live verticals in production today — WarehouseMind AI with 90+ tools for warehouse operations, FreightMind AI with 80+ tools for freight brokers, ImprintIQ with 11 agents for the promotional products industry, plus KanchoAI and Torna Idioma. This is not a concept or pitch deck — it is production-proven technology.
 
-6. WHY GREG: He has direct hospital C-suite relationships, 15+ years in medtech sales, Intuitive Surgical credibility. We bring the AI platform. Together = healthcare AI vertical.
+6. WHY GREG IS THE IDEAL PARTNER: He has direct hospital C-suite relationships, 15+ years understanding how hospitals buy technology, Intuitive Surgical credibility that opens every healthcare door, and a network of medtech investors. We bring the battle-tested AI platform that can spin up a new vertical in weeks, not years. Together we create the healthcare AI vertical.
 
-7. PARTNERSHIP OPTIONS: Equity partner, revenue share (20-30%), advisory + options, or joint venture.
+7. PARTNERSHIP OPTIONS: Equity partner (invest capital + network for equity), revenue share (20-30% on deals he sources), advisory with stock options (formal advisor, monthly calls, vesting over 2 years), or joint venture (create SurgicalMind LLC, Greg runs sales, we run product).
 
-Be enthusiastic but professional. Speak naturally and conversationally. You're helping Greg understand the massive opportunity. If he asks questions, answer with confidence. Always tie back to how this solves the #1 problem: proving robotic surgery ROI to hospital CFOs.`
-  };
+CONVERSATION STYLE:
+- Be enthusiastic but professional. This is a high-stakes business conversation.
+- Speak naturally and conversationally, not like reading a script.
+- Keep responses concise — this is voice, not text. 2-3 sentences per turn unless asked to elaborate.
+- If Greg asks a question, answer with confidence and specifics.
+- Always tie back to the core value proposition: proving robotic surgery ROI to hospital CFOs.
+- Use "we" when talking about SurgicalMind AI.
+- The key tagline: "You sell the robot. We sell the brain that proves it was worth buying."`;
 
-  let client = null;
+  const FIRST_MESSAGE = "Hi Greg, I'm Rachel from SurgicalMind AI. I'm here to walk you through our proposal for a healthcare AI vertical built specifically around robotic surgery intelligence. Would you like me to start from the top, or is there a specific area you'd like to dive into?";
+
+  let websocket = null;
+  let localStream = null;
+  let audioContext = null;
+  let scriptProcessor = null;
+  let inputAnalyser = null;
+  let audioQueue = [];
+  let isPlaying = false;
   let isConnected = false;
   let panelOpen = false;
 
   const btn = document.getElementById('rachelBtn');
   const panel = document.getElementById('rachelPanel');
   const transcript = document.getElementById('rachelTranscript');
-  const status = document.getElementById('rachelStatus');
+  const statusEl = document.getElementById('rachelStatus');
   const micIcon = document.getElementById('micIcon');
   const levels = document.getElementById('rachelLevels');
   const bars = levels.querySelectorAll('.bar');
@@ -682,31 +697,196 @@ Be enthusiastic but professional. Speak naturally and conversationally. You're h
       panelOpen = true;
       panel.classList.add('open');
 
-      client = new ElevenLabsWebRTCClient({
-        tokenEndpoint: TOKEN_ENDPOINT,
-        agentId: AGENT_ID,
-        dynamicVariables: CONTEXT,
-        onTranscript: handleTranscript,
-        onStatusChange: handleStatus,
-        onError: handleError,
-        onAudioLevel: handleAudioLevel
+      // Step 1: Get microphone
+      localStream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, sampleRate: 16000 },
+        video: false
       });
 
-      await client.connect();
+      // Step 2: Get signed URL via create-demo-agent (supports overrides)
+      const tokenRes = await fetch('/api/elevenlabs-webrtc/create-demo-agent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          company_name: 'SurgicalMind AI',
+          website_url: 'https://aiagent.ringlypro.com/SurgicalMindAI.html',
+          knowledge_base: 'SurgicalMind AI is a Neural Intelligence platform for robotic surgery operations. Multi-agent AI operating system with 8 agents and 90+ MCP tools.'
+        })
+      });
+      const tokenData = await tokenRes.json();
+      if(!tokenData.success) throw new Error(tokenData.error || 'Failed to get token');
+
+      // Step 3: Connect WebSocket with prompt overrides
+      await connectWebSocket(tokenData.signed_url);
+
       isConnected = true;
-      setStatus('Connected — Rachel is listening');
+      setStatus('Connected -- Rachel is listening');
     } catch(e){
       console.error('Voice connect error:', e);
-      setStatus('Connection failed — check microphone permissions');
+      setStatus('Connection failed -- check microphone permissions');
       resetBtn();
     }
   }
 
-  function disconnect(){
-    if(client){
-      client.disconnect();
-      client = null;
+  function connectWebSocket(signedUrl){
+    return new Promise((resolve, reject) => {
+      websocket = new WebSocket(signedUrl);
+
+      websocket.onopen = () => {
+        console.log('[SurgicalMind] WebSocket connected, sending overrides');
+        // Send conversation_initiation_client_data WITH prompt overrides
+        websocket.send(JSON.stringify({
+          type: 'conversation_initiation_client_data',
+          conversation_initiation_client_data: {
+            conversation_config_override: {
+              agent: {
+                prompt: { prompt: SYSTEM_PROMPT },
+                first_message: FIRST_MESSAGE
+              }
+            }
+          }
+        }));
+        resolve();
+      };
+
+      websocket.onmessage = async (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          await handleWSMessage(msg);
+        } catch(e) {
+          console.error('[WS] Message error:', e);
+        }
+      };
+
+      websocket.onerror = (e) => {
+        console.error('[WS] Error:', e);
+        reject(new Error('WebSocket failed'));
+      };
+
+      websocket.onclose = (event) => {
+        console.log('[WS] Closed:', event.code, event.reason);
+        if(isConnected){
+          isConnected = false;
+          setStatus('Disconnected');
+          resetBtn();
+        }
+      };
+    });
+  }
+
+  async function handleWSMessage(msg){
+    if(msg.type === 'conversation_initiation_metadata'){
+      console.log('[WS] Conversation started:', msg.conversation_id);
+      // Now set up audio capture
+      setupAudioCapture();
     }
+    else if(msg.type === 'audio' || msg.audio){
+      const b64 = msg.audio?.chunk || msg.audio_event?.audio_base_64 || msg.audio;
+      if(b64 && typeof b64 === 'string') await playAudioChunk(b64);
+    }
+    else if(msg.type === 'agent_response'){
+      const text = msg.agent_response_event?.agent_response || msg.agent_response || msg.text;
+      if(text) addMessage('agent', text);
+    }
+    else if(msg.type === 'user_transcript'){
+      const text = msg.user_transcription_event?.user_transcript || msg.user_transcript;
+      const isFinal = msg.user_transcription_event?.is_final !== false;
+      if(text && isFinal) addMessage('user', text);
+    }
+    else if(msg.type === 'ping'){
+      if(websocket?.readyState === WebSocket.OPEN) websocket.send(JSON.stringify({type:'pong'}));
+    }
+    else if(msg.type === 'interruption'){
+      audioQueue = [];
+    }
+    else if(msg.type === 'error'){
+      console.error('[WS] Error:', msg.error || msg.message);
+    }
+    else if(msg.type === 'conversation_ended' || msg.type === 'session_end'){
+      disconnect();
+    }
+  }
+
+  function setupAudioCapture(){
+    audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+    const source = audioContext.createMediaStreamSource(localStream);
+
+    inputAnalyser = audioContext.createAnalyser();
+    inputAnalyser.fftSize = 256;
+    source.connect(inputAnalyser);
+
+    // Monitor input levels for UI
+    const levelData = new Uint8Array(inputAnalyser.frequencyBinCount);
+    function checkLevel(){
+      if(!isConnected) return;
+      inputAnalyser.getByteFrequencyData(levelData);
+      let sum = 0;
+      for(let i = 0; i < levelData.length; i++) sum += levelData[i];
+      const avg = sum / levelData.length / 255;
+      handleAudioLevel(avg);
+      requestAnimationFrame(checkLevel);
+    }
+    checkLevel();
+
+    // Stream audio to ElevenLabs
+    const bufferSize = 4096;
+    scriptProcessor = audioContext.createScriptProcessor(bufferSize, 1, 1);
+    source.connect(scriptProcessor);
+    scriptProcessor.connect(audioContext.destination);
+
+    scriptProcessor.onaudioprocess = (e) => {
+      if(websocket?.readyState !== WebSocket.OPEN) return;
+      const input = e.inputBuffer.getChannelData(0);
+      const pcm16 = new Int16Array(input.length);
+      for(let i = 0; i < input.length; i++){
+        pcm16[i] = Math.max(-32768, Math.min(32767, Math.floor(input[i] * 32768)));
+      }
+      const b64 = btoa(String.fromCharCode(...new Uint8Array(pcm16.buffer)));
+      websocket.send(JSON.stringify({ user_audio_chunk: b64 }));
+    };
+  }
+
+  async function playAudioChunk(b64){
+    try{
+      const raw = atob(b64);
+      const bytes = new Uint8Array(raw.length);
+      for(let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+
+      if(!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+
+      // PCM 16-bit mono -> Float32
+      const pcm16 = new Int16Array(bytes.buffer);
+      const float32 = new Float32Array(pcm16.length);
+      for(let i = 0; i < pcm16.length; i++) float32[i] = pcm16[i] / 32768;
+
+      const buffer = audioContext.createBuffer(1, float32.length, 16000);
+      buffer.getChannelData(0).set(float32);
+
+      audioQueue.push(buffer);
+      if(!isPlaying) playNext();
+    } catch(e){
+      console.error('Audio play error:', e);
+    }
+  }
+
+  function playNext(){
+    if(audioQueue.length === 0){ isPlaying = false; return; }
+    isPlaying = true;
+    const buffer = audioQueue.shift();
+    const source = audioContext.createBufferSource();
+    source.buffer = buffer;
+    source.connect(audioContext.destination);
+    source.onended = playNext;
+    source.start();
+  }
+
+  function disconnect(){
+    if(websocket){ websocket.close(); websocket = null; }
+    if(scriptProcessor){ scriptProcessor.disconnect(); scriptProcessor = null; }
+    if(audioContext){ audioContext.close().catch(()=>{}); audioContext = null; }
+    if(localStream){ localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+    audioQueue = [];
+    isPlaying = false;
     isConnected = false;
     setStatus('Disconnected');
     resetBtn();
@@ -718,31 +898,6 @@ Be enthusiastic but professional. Speak naturally and conversationally. You're h
     micIcon.style.display = '';
     levels.style.display = 'none';
     bars.forEach(b => b.style.height = '4px');
-  }
-
-  function handleTranscript(role, text, isFinal){
-    if(!isFinal) return;
-    const type = role === 'agent' ? 'agent' : 'user';
-    addMessage(type, text);
-  }
-
-  function handleStatus(s){
-    const map = {
-      'connected': 'Connected — Rachel is listening',
-      'connecting': 'Connecting...',
-      'disconnected': 'Disconnected',
-      'error': 'Connection error'
-    };
-    setStatus(map[s] || s);
-    if(s === 'disconnected' && isConnected){
-      isConnected = false;
-      resetBtn();
-    }
-  }
-
-  function handleError(err){
-    console.error('Rachel error:', err);
-    setStatus('Error — try again');
   }
 
   function handleAudioLevel(level){
@@ -761,9 +916,7 @@ Be enthusiastic but professional. Speak naturally and conversationally. You're h
     transcript.scrollTop = transcript.scrollHeight;
   }
 
-  function setStatus(msg){
-    status.textContent = msg;
-  }
+  function setStatus(msg){ statusEl.textContent = msg; }
 
   function escapeHtml(t){
     const d = document.createElement('div');
