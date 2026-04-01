@@ -521,5 +521,250 @@ a{color:inherit;text-decoration:none}
   </div>
 </footer>
 
+<!-- ═══════════════════════════════════════════ -->
+<!-- RACHEL VOICE AI — PROPOSAL WALKTHROUGH     -->
+<!-- ═══════════════════════════════════════════ -->
+<style>
+/* Floating Voice Button */
+.rachel-fab{position:fixed;bottom:28px;right:28px;z-index:9999;display:flex;flex-direction:column;align-items:flex-end;gap:12px;pointer-events:none}
+.rachel-fab>*{pointer-events:auto}
+
+/* Transcript Panel */
+.rachel-panel{width:380px;max-height:480px;background:rgba(10,13,22,0.96);backdrop-filter:blur(20px);border:1px solid var(--line2);border-radius:20px;overflow:hidden;display:none;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.6)}
+.rachel-panel.open{display:flex}
+.rachel-panel-header{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.rachel-panel-header h4{font-size:.92rem;font-weight:700;display:flex;align-items:center;gap:8px}
+.rachel-panel-header .live-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse-dot 1.5s infinite}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.4}}
+.rachel-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.2rem;padding:4px 8px;border-radius:6px;transition:all .2s}
+.rachel-close:hover{color:var(--white);background:rgba(255,255,255,0.06)}
+
+.rachel-transcript{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:10px;max-height:340px;scroll-behavior:smooth}
+.rachel-transcript::-webkit-scrollbar{width:4px}
+.rachel-transcript::-webkit-scrollbar-thumb{background:var(--line2);border-radius:4px}
+
+.msg{max-width:88%;padding:10px 14px;border-radius:14px;font-size:.86rem;line-height:1.55;animation:msg-in .25s ease}
+@keyframes msg-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.msg.agent{align-self:flex-start;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.2);color:var(--text)}
+.msg.user{align-self:flex-end;background:rgba(255,255,255,0.06);border:1px solid var(--line);color:var(--muted)}
+.msg .role{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:3px;color:var(--accent)}
+.msg.user .role{color:var(--muted)}
+
+.rachel-status{padding:10px 20px;border-top:1px solid var(--line);font-size:.76rem;color:var(--muted);text-align:center;font-weight:500}
+
+/* Main Button */
+.rachel-btn{width:64px;height:64px;border-radius:50%;border:none;cursor:pointer;position:relative;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 32px rgba(99,102,241,0.45);transition:all .3s}
+.rachel-btn:hover{transform:scale(1.08);box-shadow:0 12px 40px rgba(99,102,241,0.6)}
+.rachel-btn.active{background:linear-gradient(135deg,var(--red),#dc2626);box-shadow:0 8px 32px rgba(239,68,68,0.45)}
+.rachel-btn.active:hover{box-shadow:0 12px 40px rgba(239,68,68,0.6)}
+.rachel-btn svg{width:28px;height:28px}
+
+/* Audio ring animation */
+.rachel-btn.active::after{content:'';position:absolute;inset:-6px;border-radius:50%;border:2px solid var(--red);animation:ring-pulse 1.2s ease-out infinite;pointer-events:none}
+@keyframes ring-pulse{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.5);opacity:0}}
+
+/* Tooltip */
+.rachel-tooltip{position:absolute;right:76px;top:50%;transform:translateY(-50%);background:rgba(10,13,22,0.95);border:1px solid var(--line2);padding:10px 16px;border-radius:12px;white-space:nowrap;font-size:.82rem;font-weight:600;pointer-events:none;opacity:0;transition:opacity .3s;box-shadow:0 8px 24px rgba(0,0,0,0.4)}
+.rachel-btn:not(.active):hover .rachel-tooltip{opacity:1}
+.rachel-tooltip::after{content:'';position:absolute;right:-6px;top:50%;transform:translateY(-50%) rotate(45deg);width:10px;height:10px;background:rgba(10,13,22,0.95);border-right:1px solid var(--line2);border-top:1px solid var(--line2)}
+
+/* Level bars */
+.rachel-levels{display:flex;gap:3px;align-items:center;height:28px}
+.rachel-levels .bar{width:3px;border-radius:2px;background:var(--accent);transition:height .08s;height:4px}
+.rachel-btn.active .rachel-levels .bar{background:#fff}
+
+@media(max-width:480px){
+  .rachel-panel{width:calc(100vw - 32px);max-height:60vh}
+  .rachel-fab{bottom:16px;right:16px}
+}
+</style>
+
+<div class="rachel-fab">
+  <div class="rachel-panel" id="rachelPanel">
+    <div class="rachel-panel-header">
+      <h4><span class="live-dot"></span> Rachel — SurgicalMind AI</h4>
+      <button class="rachel-close" onclick="togglePanel()" title="Minimize">✕</button>
+    </div>
+    <div class="rachel-transcript" id="rachelTranscript">
+      <div class="msg agent"><div class="role">Rachel</div>Click the microphone to start. I'll walk you through the entire SurgicalMind AI proposal.</div>
+    </div>
+    <div class="rachel-status" id="rachelStatus">Ready to connect</div>
+  </div>
+
+  <button class="rachel-btn" id="rachelBtn" onclick="toggleVoice()">
+    <span class="rachel-tooltip">Talk to Rachel about SurgicalMind AI</span>
+    <svg id="micIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="9" y="1" width="6" height="12" rx="3"/>
+      <path d="M19 10v1a7 7 0 01-14 0v-1"/>
+      <line x1="12" y1="18" x2="12" y2="23"/>
+      <line x1="8" y1="23" x2="16" y2="23"/>
+    </svg>
+    <div class="rachel-levels" id="rachelLevels" style="display:none">
+      <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+    </div>
+  </button>
+</div>
+
+<script src="/elevenlabs-webrtc-demo/elevenlabs-webrtc-client.js"></script>
+<script>
+(function(){
+  const AGENT_ID = 'agent_1301kfca8m4gfv09pg8pr81mvyv4';
+  const TOKEN_ENDPOINT = '/api/elevenlabs-webrtc/token';
+
+  // SurgicalMind context passed as dynamic variables
+  const CONTEXT = {
+    customer_name: 'Greg',
+    company_context: `You are Rachel, the AI voice assistant for SurgicalMind AI — a Neural Intelligence platform for robotic surgery operations. You are presenting this proposal to Greg Eriksen, an Area Sales Manager at Intuitive Surgical (da Vinci robots) in Florida.
+
+KEY POINTS TO COVER WHEN ASKED:
+1. THE PROBLEM: Hospitals buy $1.5M+ da Vinci robots but have zero AI-native visibility into ROI. Average utilization is only 40-60%. CFOs can't prove the investment is paying off. Surgeon adoption is fragmented.
+
+2. THE SOLUTION: SurgicalMind AI is a multi-agent AI operating system with 8 autonomous agents and 90+ MCP tools:
+   - Tier 1 ($5K/mo): OR Utilization Agent + Case Volume Intelligence — real-time robot status, idle time detection, case throughput
+   - Tier 2 ($12K/mo): Surgeon Adoption Agent + Surgical Supply Agent — track adoption curves, auto-trigger training, reduce instrument tray waste
+   - Tier 3 ($18K/mo): Patient Outcomes Agent + Financial ROI Agent — readmission tracking, real-time payback calculator, revenue-per-case
+   - Tier 4 ($25K/mo): Neural Intelligence + Autonomous Treatment — 24/7 diagnostics, auto-execute prescriptions (schedule training, adjust OR blocks, alert teams)
+
+3. NEURAL INTELLIGENCE (3 layers):
+   - Diagnostic: "Your da Vinci in OR-3 has been idle 62% of Tuesday shifts. Root cause: Dr. Patel switched to open technique after instrument tray delays."
+   - Prescription: "Pre-stage trays for Dr. Patel, reassign OR-3 Tuesday blocks to Dr. Kim (95% robotic adoption), schedule clinical in-service."
+   - Treatment: Auto-executes the fix. No human intervention needed.
+
+4. ROI: +35% utilization increase, $2.4M annual revenue recovered, -40% supply waste, 14 months faster robot payback.
+
+5. WHY THIS IS REAL: Built on the same architecture running 5 live verticals today — WarehouseMind (90+ tools), FreightMind (80+ tools), ImprintIQ (11 agents). Not a concept — production-proven.
+
+6. WHY GREG: He has direct hospital C-suite relationships, 15+ years in medtech sales, Intuitive Surgical credibility. We bring the AI platform. Together = healthcare AI vertical.
+
+7. PARTNERSHIP OPTIONS: Equity partner, revenue share (20-30%), advisory + options, or joint venture.
+
+Be enthusiastic but professional. Speak naturally and conversationally. You're helping Greg understand the massive opportunity. If he asks questions, answer with confidence. Always tie back to how this solves the #1 problem: proving robotic surgery ROI to hospital CFOs.`
+  };
+
+  let client = null;
+  let isConnected = false;
+  let panelOpen = false;
+
+  const btn = document.getElementById('rachelBtn');
+  const panel = document.getElementById('rachelPanel');
+  const transcript = document.getElementById('rachelTranscript');
+  const status = document.getElementById('rachelStatus');
+  const micIcon = document.getElementById('micIcon');
+  const levels = document.getElementById('rachelLevels');
+  const bars = levels.querySelectorAll('.bar');
+
+  window.togglePanel = function(){
+    panelOpen = !panelOpen;
+    panel.classList.toggle('open', panelOpen);
+  };
+
+  window.toggleVoice = async function(){
+    if(isConnected){
+      disconnect();
+    } else {
+      await connect();
+    }
+  };
+
+  async function connect(){
+    try{
+      setStatus('Connecting to Rachel...');
+      btn.classList.add('active');
+      micIcon.style.display = 'none';
+      levels.style.display = 'flex';
+      panelOpen = true;
+      panel.classList.add('open');
+
+      client = new ElevenLabsWebRTCClient({
+        tokenEndpoint: TOKEN_ENDPOINT,
+        agentId: AGENT_ID,
+        dynamicVariables: CONTEXT,
+        onTranscript: handleTranscript,
+        onStatusChange: handleStatus,
+        onError: handleError,
+        onAudioLevel: handleAudioLevel
+      });
+
+      await client.connect();
+      isConnected = true;
+      setStatus('🟢 Connected — Rachel is listening');
+    } catch(e){
+      console.error('Voice connect error:', e);
+      setStatus('Connection failed — check microphone permissions');
+      resetBtn();
+    }
+  }
+
+  function disconnect(){
+    if(client){
+      client.disconnect();
+      client = null;
+    }
+    isConnected = false;
+    setStatus('Disconnected');
+    resetBtn();
+    addMessage('agent', 'Call ended. Click the microphone anytime to continue our conversation.');
+  }
+
+  function resetBtn(){
+    btn.classList.remove('active');
+    micIcon.style.display = '';
+    levels.style.display = 'none';
+    bars.forEach(b => b.style.height = '4px');
+  }
+
+  function handleTranscript(role, text, isFinal){
+    if(!isFinal) return;
+    const type = role === 'agent' ? 'agent' : 'user';
+    addMessage(type, text);
+  }
+
+  function handleStatus(s){
+    const map = {
+      'connected': '🟢 Connected — Rachel is listening',
+      'connecting': 'Connecting...',
+      'disconnected': 'Disconnected',
+      'error': 'Connection error'
+    };
+    setStatus(map[s] || s);
+    if(s === 'disconnected' && isConnected){
+      isConnected = false;
+      resetBtn();
+    }
+  }
+
+  function handleError(err){
+    console.error('Rachel error:', err);
+    setStatus('Error — try again');
+  }
+
+  function handleAudioLevel(level){
+    const heights = [4, 8, 14, 20, 28];
+    bars.forEach((bar, i) => {
+      const h = Math.max(4, level * heights[i] * 4 + Math.random() * 4);
+      bar.style.height = Math.min(h, 28) + 'px';
+    });
+  }
+
+  function addMessage(type, text){
+    const div = document.createElement('div');
+    div.className = 'msg ' + type;
+    div.innerHTML = '<div class="role">' + (type === 'agent' ? 'Rachel' : 'You') + '</div>' + escapeHtml(text);
+    transcript.appendChild(div);
+    transcript.scrollTop = transcript.scrollHeight;
+  }
+
+  function setStatus(msg){
+    status.textContent = msg;
+  }
+
+  function escapeHtml(t){
+    const d = document.createElement('div');
+    d.textContent = t;
+    return d.innerHTML;
+  }
+})();
+</script>
+
 </body>
 </html>
