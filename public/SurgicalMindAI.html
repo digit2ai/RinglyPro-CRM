@@ -617,14 +617,9 @@ a{color:inherit;text-decoration:none}
 (function(){
   // Dedicated SurgicalMind Rachel agent (created via ElevenLabs API with full prompt baked in)
   const AGENT_ID = 'agent_5001kn4s9jsqernanpgc4ejh1a0e';
+  const TOKEN_ENDPOINT = '/api/elevenlabs-webrtc/token';
 
-  let websocket = null;
-  let localStream = null;
-  let audioContext = null;
-  let scriptProcessor = null;
-  let inputAnalyser = null;
-  let audioQueue = [];
-  let isPlaying = false;
+  let client = null;
   let isConnected = false;
   let panelOpen = false;
 
@@ -643,13 +638,13 @@ a{color:inherit;text-decoration:none}
 
   window.toggleVoice = async function(){
     if(isConnected){
-      disconnect();
+      doDisconnect();
     } else {
-      await connect();
+      await doConnect();
     }
   };
 
-  async function connect(){
+  async function doConnect(){
     try{
       setStatus('Connecting to Rachel...');
       btn.classList.add('active');
@@ -658,26 +653,45 @@ a{color:inherit;text-decoration:none}
       panelOpen = true;
       panel.classList.add('open');
 
-      // Step 1: Get microphone
-      localStream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, sampleRate: 16000 },
-        video: false
+      // Use the proven ElevenLabsWebRTCClient (same one that works on the demo page)
+      client = new ElevenLabsWebRTCClient({
+        tokenEndpoint: TOKEN_ENDPOINT,
+        agentId: AGENT_ID,
+        dynamicVariables: {},
+        onTranscript: function(role, text, isFinal){
+          if(!isFinal) return;
+          addMessage(role === 'agent' ? 'agent' : 'user', text);
+        },
+        onStatusChange: function(s){
+          var map = {
+            'connected': 'Connected -- Rachel is listening',
+            'connecting': 'Connecting...',
+            'disconnected': 'Disconnected',
+            'error': 'Connection error'
+          };
+          setStatus(map[s] || s);
+          if(s === 'connected'){
+            isConnected = true;
+          }
+          if(s === 'disconnected' && isConnected){
+            isConnected = false;
+            resetBtn();
+          }
+        },
+        onError: function(err){
+          console.error('Rachel error:', err);
+          setStatus('Error -- try again');
+        },
+        onAudioLevel: function(level){
+          var heights = [4, 8, 14, 20, 28];
+          bars.forEach(function(bar, i){
+            var h = Math.max(4, level * heights[i] * 4 + Math.random() * 4);
+            bar.style.height = Math.min(h, 28) + 'px';
+          });
+        }
       });
 
-      // Step 2: Get signed URL for the dedicated SurgicalMind agent
-      const tokenRes = await fetch('/api/elevenlabs-webrtc/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agent_id: AGENT_ID })
-      });
-      const tokenData = await tokenRes.json();
-      if(!tokenData.success) throw new Error(tokenData.error || 'Failed to get token');
-
-      // Step 3: Connect WebSocket with prompt overrides
-      await connectWebSocket(tokenData.signed_url);
-
-      isConnected = true;
-      setStatus('Connected -- Rachel is listening');
+      await client.connect();
     } catch(e){
       console.error('Voice connect error:', e);
       setStatus('Connection failed -- check microphone permissions');
@@ -685,158 +699,11 @@ a{color:inherit;text-decoration:none}
     }
   }
 
-  function connectWebSocket(signedUrl){
-    return new Promise((resolve, reject) => {
-      websocket = new WebSocket(signedUrl);
-
-      websocket.onopen = () => {
-        console.log('[SurgicalMind] WebSocket connected');
-        // Send initiation data (agent already has Rachel/SurgicalMind prompt baked in)
-        websocket.send(JSON.stringify({
-          type: 'conversation_initiation_client_data',
-          conversation_initiation_client_data: {}
-        }));
-        resolve();
-      };
-
-      websocket.onmessage = async (event) => {
-        try {
-          const msg = JSON.parse(event.data);
-          await handleWSMessage(msg);
-        } catch(e) {
-          console.error('[WS] Message error:', e);
-        }
-      };
-
-      websocket.onerror = (e) => {
-        console.error('[WS] Error:', e);
-        reject(new Error('WebSocket failed'));
-      };
-
-      websocket.onclose = (event) => {
-        console.log('[WS] Closed:', event.code, event.reason);
-        if(isConnected){
-          isConnected = false;
-          setStatus('Disconnected');
-          resetBtn();
-        }
-      };
-    });
-  }
-
-  async function handleWSMessage(msg){
-    if(msg.type === 'conversation_initiation_metadata'){
-      console.log('[WS] Conversation started:', msg.conversation_id);
-      // Now set up audio capture
-      setupAudioCapture();
+  function doDisconnect(){
+    if(client){
+      client.disconnect();
+      client = null;
     }
-    else if(msg.type === 'audio' || msg.audio){
-      const b64 = msg.audio?.chunk || msg.audio_event?.audio_base_64 || msg.audio;
-      if(b64 && typeof b64 === 'string') await playAudioChunk(b64);
-    }
-    else if(msg.type === 'agent_response'){
-      const text = msg.agent_response_event?.agent_response || msg.agent_response || msg.text;
-      if(text) addMessage('agent', text);
-    }
-    else if(msg.type === 'user_transcript'){
-      const text = msg.user_transcription_event?.user_transcript || msg.user_transcript;
-      const isFinal = msg.user_transcription_event?.is_final !== false;
-      if(text && isFinal) addMessage('user', text);
-    }
-    else if(msg.type === 'ping'){
-      if(websocket?.readyState === WebSocket.OPEN) websocket.send(JSON.stringify({type:'pong'}));
-    }
-    else if(msg.type === 'interruption'){
-      audioQueue = [];
-    }
-    else if(msg.type === 'error'){
-      console.error('[WS] Error:', msg.error || msg.message);
-    }
-    else if(msg.type === 'conversation_ended' || msg.type === 'session_end'){
-      disconnect();
-    }
-  }
-
-  function setupAudioCapture(){
-    audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
-    const source = audioContext.createMediaStreamSource(localStream);
-
-    inputAnalyser = audioContext.createAnalyser();
-    inputAnalyser.fftSize = 256;
-    source.connect(inputAnalyser);
-
-    // Monitor input levels for UI
-    const levelData = new Uint8Array(inputAnalyser.frequencyBinCount);
-    function checkLevel(){
-      if(!isConnected) return;
-      inputAnalyser.getByteFrequencyData(levelData);
-      let sum = 0;
-      for(let i = 0; i < levelData.length; i++) sum += levelData[i];
-      const avg = sum / levelData.length / 255;
-      handleAudioLevel(avg);
-      requestAnimationFrame(checkLevel);
-    }
-    checkLevel();
-
-    // Stream audio to ElevenLabs
-    const bufferSize = 4096;
-    scriptProcessor = audioContext.createScriptProcessor(bufferSize, 1, 1);
-    source.connect(scriptProcessor);
-    scriptProcessor.connect(audioContext.destination);
-
-    scriptProcessor.onaudioprocess = (e) => {
-      if(websocket?.readyState !== WebSocket.OPEN) return;
-      const input = e.inputBuffer.getChannelData(0);
-      const pcm16 = new Int16Array(input.length);
-      for(let i = 0; i < input.length; i++){
-        pcm16[i] = Math.max(-32768, Math.min(32767, Math.floor(input[i] * 32768)));
-      }
-      const b64 = btoa(String.fromCharCode(...new Uint8Array(pcm16.buffer)));
-      websocket.send(JSON.stringify({ user_audio_chunk: b64 }));
-    };
-  }
-
-  async function playAudioChunk(b64){
-    try{
-      const raw = atob(b64);
-      const bytes = new Uint8Array(raw.length);
-      for(let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
-
-      if(!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
-
-      // PCM 16-bit mono -> Float32
-      const pcm16 = new Int16Array(bytes.buffer);
-      const float32 = new Float32Array(pcm16.length);
-      for(let i = 0; i < pcm16.length; i++) float32[i] = pcm16[i] / 32768;
-
-      const buffer = audioContext.createBuffer(1, float32.length, 16000);
-      buffer.getChannelData(0).set(float32);
-
-      audioQueue.push(buffer);
-      if(!isPlaying) playNext();
-    } catch(e){
-      console.error('Audio play error:', e);
-    }
-  }
-
-  function playNext(){
-    if(audioQueue.length === 0){ isPlaying = false; return; }
-    isPlaying = true;
-    const buffer = audioQueue.shift();
-    const source = audioContext.createBufferSource();
-    source.buffer = buffer;
-    source.connect(audioContext.destination);
-    source.onended = playNext;
-    source.start();
-  }
-
-  function disconnect(){
-    if(websocket){ websocket.close(); websocket = null; }
-    if(scriptProcessor){ scriptProcessor.disconnect(); scriptProcessor = null; }
-    if(audioContext){ audioContext.close().catch(()=>{}); audioContext = null; }
-    if(localStream){ localStream.getTracks().forEach(t => t.stop()); localStream = null; }
-    audioQueue = [];
-    isPlaying = false;
     isConnected = false;
     setStatus('Disconnected');
     resetBtn();
@@ -847,19 +714,11 @@ a{color:inherit;text-decoration:none}
     btn.classList.remove('active');
     micIcon.style.display = '';
     levels.style.display = 'none';
-    bars.forEach(b => b.style.height = '4px');
-  }
-
-  function handleAudioLevel(level){
-    const heights = [4, 8, 14, 20, 28];
-    bars.forEach((bar, i) => {
-      const h = Math.max(4, level * heights[i] * 4 + Math.random() * 4);
-      bar.style.height = Math.min(h, 28) + 'px';
-    });
+    bars.forEach(function(b){ b.style.height = '4px'; });
   }
 
   function addMessage(type, text){
-    const div = document.createElement('div');
+    var div = document.createElement('div');
     div.className = 'msg ' + type;
     div.innerHTML = '<div class="role">' + (type === 'agent' ? 'Rachel' : 'You') + '</div>' + escapeHtml(text);
     transcript.appendChild(div);
@@ -869,7 +728,7 @@ a{color:inherit;text-decoration:none}
   function setStatus(msg){ statusEl.textContent = msg; }
 
   function escapeHtml(t){
-    const d = document.createElement('div');
+    var d = document.createElement('div');
     d.textContent = t;
     return d.innerHTML;
   }
