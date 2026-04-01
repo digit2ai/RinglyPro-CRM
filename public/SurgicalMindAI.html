@@ -168,7 +168,13 @@ a{color:inherit;text-decoration:none}
       SurgicalMind AI
       <span class="nav-tag">Confidential</span>
     </div>
-    <a href="#partnership" class="nav-cta">Explore Partnership</a>
+    <div style="display:flex;gap:10px;align-items:center">
+      <button onclick="toggleVoice()" class="nav-cta" style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--green),#059669);border:none;cursor:pointer;font-family:inherit">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="9" y="1" width="6" height="12" rx="3"/><path d="M19 10v1a7 7 0 01-14 0v-1"/></svg>
+        Talk to Rachel
+      </button>
+      <a href="#partnership" class="nav-cta">Explore Partnership</a>
+    </div>
   </div>
 </nav>
 
@@ -179,10 +185,11 @@ a{color:inherit;text-decoration:none}
     <h1>You sell the robot.<br><span class="grad">We sell the brain that proves it was worth buying.</span></h1>
     <p>SurgicalMind AI is a Neural Intelligence platform that gives hospitals real-time visibility into robotic surgery ROI — utilization, outcomes, and autonomous optimization across every OR.</p>
     <div class="hero-ctas">
-      <a href="#agents" class="btn-primary">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
-        See the AI Agents
-      </a>
+      <button onclick="toggleVoice()" class="btn-primary" style="background:linear-gradient(135deg,var(--green),#059669);border:none;cursor:pointer;font-family:inherit">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="9" y="1" width="6" height="12" rx="3"/><path d="M19 10v1a7 7 0 01-14 0v-1"/><line x1="12" y1="18" x2="12" y2="23"/></svg>
+        Talk to Rachel — AI Presentation
+      </button>
+      <a href="#agents" class="btn-secondary">See the AI Agents</a>
       <a href="#roi" class="btn-secondary">View ROI Model</a>
     </div>
   </div>
@@ -206,17 +213,17 @@ a{color:inherit;text-decoration:none}
     <p class="section-sub">CFOs approve capital expenditure with no AI-native system to prove the investment is paying off. Surgeons adopt unevenly. Utilization gaps go undetected for months.</p>
     <div class="problem-grid">
       <div class="problem-card">
-        <div class="problem-icon">📉</div>
+        <div class="problem-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round"><path d="M23 6l-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/></svg></div>
         <h3>Utilization Black Holes</h3>
         <p>Average da Vinci utilization is 40-60%. Hospitals don't know which ORs, shifts, or specialties are underperforming until quarterly reviews — months too late.</p>
       </div>
       <div class="problem-card">
-        <div class="problem-icon">💰</div>
+        <div class="problem-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
         <h3>ROI Justification Gap</h3>
         <p>CFOs ask "is this robot paying for itself?" and get spreadsheets 90 days later. No real-time answer exists. Purchase decisions stall.</p>
       </div>
       <div class="problem-card">
-        <div class="problem-icon">🔄</div>
+        <div class="problem-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg></div>
         <h3>Adoption Fragmentation</h3>
         <p>3 surgeons use the robot weekly while 12 others never book it. No system flags this or auto-triggers training/onboarding interventions.</p>
       </div>
@@ -479,7 +486,7 @@ a{color:inherit;text-decoration:none}
     <p class="section-sub">A partnership that combines deep hospital relationships with a battle-tested AI platform.</p>
     <div class="partner-grid">
       <div class="partner-col col-greg">
-        <h3>🏥 What Greg Brings</h3>
+        <h3>What Greg Brings</h3>
         <ul>
           <li>Direct relationships with hospital C-suite, surgeons, and procurement across Florida</li>
           <li>15+ years understanding how hospitals evaluate, purchase, and adopt technology</li>
@@ -489,7 +496,7 @@ a{color:inherit;text-decoration:none}
         </ul>
       </div>
       <div class="partner-col col-us">
-        <h3>🧠 What We Bring</h3>
+        <h3>What We Bring</h3>
         <ul>
           <li>Production-proven MCP orchestration platform with 90+ AI tools per vertical</li>
           <li>Neural Intelligence engine: diagnostic → prescriptive → autonomous treatment</li>
@@ -687,7 +694,7 @@ Be enthusiastic but professional. Speak naturally and conversationally. You're h
 
       await client.connect();
       isConnected = true;
-      setStatus('🟢 Connected — Rachel is listening');
+      setStatus('Connected — Rachel is listening');
     } catch(e){
       console.error('Voice connect error:', e);
       setStatus('Connection failed — check microphone permissions');
@@ -721,7 +728,7 @@ Be enthusiastic but professional. Speak naturally and conversationally. You're h
 
   function handleStatus(s){
     const map = {
-      'connected': '🟢 Connected — Rachel is listening',
+      'connected': 'Connected — Rachel is listening',
       'connecting': 'Connecting...',
       'disconnected': 'Disconnected',
       'error': 'Connection error'
