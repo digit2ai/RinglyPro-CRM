@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MSK Intelligence — Live AI Presentation by Rachel</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦴</text></svg>" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Inter',system-ui,sans-serif;background:#0a0e17;color:#e2e8f0;min-height:100vh;display:flex;flex-direction:column}
+    .nav{padding:16px 32px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(30,41,59,.5);background:rgba(10,14,23,.9);backdrop-filter:blur(12px)}
+    .nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:#fff}
+    .nav-brand img{width:36px;height:36px;border-radius:8px}
+    .nav-brand span{font-weight:700}
+    .nav-links a{color:#94a3b8;text-decoration:none;font-size:13px;margin-left:16px;font-weight:500}
+    .nav-links a:hover{color:#fff}
+
+    .main{flex:1;display:flex;align-items:center;justify-content:center;padding:40px}
+    .presenter-card{max-width:640px;width:100%;text-align:center}
+
+    .rachel-avatar{width:160px;height:160px;border-radius:50%;margin:0 auto 24px;position:relative}
+    .rachel-ring{position:absolute;inset:-8px;border-radius:50%;border:3px solid #0ea5e9;opacity:0;transition:all .3s}
+    .rachel-ring.active{opacity:1;animation:ring-pulse 1.5s ease-in-out infinite}
+    .rachel-ring.speaking{border-color:#10b981;animation:ring-pulse .8s ease-in-out infinite}
+    @keyframes ring-pulse{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.08);opacity:1}}
+    .rachel-img{width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:64px;position:relative;z-index:1}
+
+    .status{font-size:14px;font-weight:600;margin-bottom:8px;min-height:20px}
+    .status.idle{color:#64748b}
+    .status.connecting{color:#f59e0b}
+    .status.connected{color:#10b981}
+    .status.speaking{color:#0ea5e9}
+    .status.ended{color:#94a3b8}
+
+    h1{font-size:2rem;font-weight:900;margin-bottom:8px}
+    .subtitle{color:#94a3b8;font-size:1rem;margin-bottom:32px}
+
+    .start-btn{
+      padding:20px 48px;border-radius:16px;border:none;cursor:pointer;
+      font-family:inherit;font-size:1.1rem;font-weight:700;
+      background:linear-gradient(135deg,#0ea5e9,#06b6d4);color:#fff;
+      transition:all .3s;box-shadow:0 8px 32px rgba(14,165,233,.3)
+    }
+    .start-btn:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(14,165,233,.4)}
+    .start-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+    .start-btn.stop{background:linear-gradient(135deg,#ef4444,#dc2626);box-shadow:0 8px 32px rgba(239,68,68,.3)}
+
+    .transcript{margin-top:32px;max-height:300px;overflow-y:auto;text-align:left;padding:20px;background:#111827;border:1px solid #1e293b;border-radius:16px}
+    .transcript h3{font-size:12px;text-transform:uppercase;letter-spacing:2px;color:#64748b;margin-bottom:12px}
+    .msg{margin-bottom:12px;font-size:.9rem;line-height:1.6}
+    .msg.rachel{color:#e2e8f0}.msg.rachel::before{content:'Rachel: ';color:#0ea5e9;font-weight:700}
+    .msg.user{color:#94a3b8}.msg.user::before{content:'You: ';color:#f59e0b;font-weight:700}
+
+    .section-tracker{display:flex;gap:8px;justify-content:center;margin-top:24px;flex-wrap:wrap}
+    .section-dot{padding:6px 14px;border-radius:8px;font-size:11px;font-weight:600;background:#1e293b;color:#64748b;transition:all .3s}
+    .section-dot.active{background:rgba(14,165,233,.15);color:#0ea5e9;border:1px solid rgba(14,165,233,.3)}
+    .section-dot.done{background:rgba(16,185,129,.1);color:#10b981}
+
+    .links{margin-top:24px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+    .links a{color:#0ea5e9;font-size:13px;text-decoration:none;padding:8px 16px;border:1px solid #1e293b;border-radius:8px;transition:all .2s}
+    .links a:hover{background:rgba(14,165,233,.05);border-color:rgba(14,165,233,.3)}
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/msk/" class="nav-brand">
+    <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="MSK" />
+    <span>MSK Intelligence</span>
+  </a>
+  <div class="nav-links">
+    <a href="/msk-proposal.html">Proposal</a>
+    <a href="/msk-business-plan.html">Business Plan</a>
+    <a href="/msk/">Platform</a>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="presenter-card">
+    <!-- Rachel Avatar -->
+    <div class="rachel-avatar">
+      <div class="rachel-ring" id="ring"></div>
+      <div class="rachel-img">R</div>
+    </div>
+
+    <div class="status idle" id="status">Ready to present</div>
+    <h1>Rachel — AI Presenter</h1>
+    <p class="subtitle">Live voice presentation of the MSK Intelligence investment proposal.<br />Rachel explains each section, pauses for questions, and engages in conversation.</p>
+
+    <button class="start-btn" id="startBtn" onclick="togglePresentation()">
+      Start Presentation
+    </button>
+
+    <!-- Section Tracker -->
+    <div class="section-tracker" id="sections">
+      <div class="section-dot" data-s="1">Executive Summary</div>
+      <div class="section-dot" data-s="2">The Problem</div>
+      <div class="section-dot" data-s="3">Solution</div>
+      <div class="section-dot" data-s="4">Deployment</div>
+      <div class="section-dot" data-s="5">Economics</div>
+      <div class="section-dot" data-s="6">Patient Story</div>
+      <div class="section-dot" data-s="7">Partnerships</div>
+      <div class="section-dot" data-s="8">Closing</div>
+    </div>
+
+    <!-- Transcript -->
+    <div class="transcript" id="transcript" style="display:none">
+      <h3>Live Transcript</h3>
+      <div id="messages"></div>
+    </div>
+
+    <div class="links">
+      <a href="/msk-proposal.html">Read the Proposal</a>
+      <a href="/msk-business-plan.html">Business Plan</a>
+      <a href="/msk/voice">Talk to Dr. MSK</a>
+      <a href="/msk/">Try the Platform</a>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { Conversation } from 'https://cdn.jsdelivr.net/npm/@11labs/client@latest/+esm';
+
+  let conversation = null;
+  let isRunning = false;
+
+  const statusEl = document.getElementById('status');
+  const ringEl = document.getElementById('ring');
+  const startBtn = document.getElementById('startBtn');
+  const transcriptEl = document.getElementById('transcript');
+  const messagesEl = document.getElementById('messages');
+
+  function setStatus(state, text) {
+    statusEl.className = 'status ' + state;
+    statusEl.textContent = text;
+    ringEl.className = 'rachel-ring' + (state === 'connected' ? ' active' : state === 'speaking' ? ' speaking active' : '');
+  }
+
+  function addMessage(role, text) {
+    transcriptEl.style.display = 'block';
+    const div = document.createElement('div');
+    div.className = 'msg ' + role;
+    div.textContent = text;
+    messagesEl.appendChild(div);
+    transcriptEl.scrollTop = transcriptEl.scrollHeight;
+
+    // Track sections mentioned
+    const lower = text.toLowerCase();
+    if (lower.includes('executive summary') || lower.includes('single number')) markSection(1);
+    if (lower.includes('paint the picture') || lower.includes('seventy percent')) markSection(2);
+    if (lower.includes('three components') || lower.includes('starlink satellite')) markSection(3);
+    if (lower.includes('barangay health station') || lower.includes('mobile medical van')) markSection(4);
+    if (lower.includes('economics') || lower.includes('25 cents') || lower.includes('cost per consultation')) markSection(5);
+    if (lower.includes('mang pedro') || lower.includes('rice farmer')) markSection(6);
+    if (lower.includes('partnerships') || lower.includes('philhealth') || lower.includes('global')) markSection(7);
+    if (lower.includes('close with') || lower.includes('platform is built') || lower.includes('thank you')) markSection(8);
+  }
+
+  function markSection(num) {
+    const dot = document.querySelector(`.section-dot[data-s="${num}"]`);
+    if (dot && !dot.classList.contains('done')) {
+      document.querySelectorAll('.section-dot.active').forEach(d => d.classList.remove('active'));
+      dot.classList.add('active');
+      // Mark previous as done
+      for (let i = 1; i < num; i++) {
+        const prev = document.querySelector(`.section-dot[data-s="${i}"]`);
+        if (prev) { prev.classList.remove('active'); prev.classList.add('done'); }
+      }
+    }
+  }
+
+  window.togglePresentation = async function() {
+    if (isRunning) {
+      // Stop
+      if (conversation) {
+        await conversation.endSession();
+        conversation = null;
+      }
+      isRunning = false;
+      setStatus('ended', 'Presentation ended');
+      startBtn.textContent = 'Restart Presentation';
+      startBtn.className = 'start-btn';
+      return;
+    }
+
+    setStatus('connecting', 'Connecting to Rachel...');
+    startBtn.disabled = true;
+    startBtn.textContent = 'Connecting...';
+    messagesEl.innerHTML = '';
+
+    try {
+      // Get signed URL
+      const RACHEL_AGENT_ID = 'agent_0701kn582htmf7zvmmep2qkc43bg';
+      const tokenRes = await fetch('/msk/api/v1/voice/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agentId: RACHEL_AGENT_ID })
+      });
+      const tokenData = await tokenRes.json();
+
+      if (!tokenData.signed_url) {
+        // Try direct with the Rachel agent
+        const directRes = await fetch(`https://api.elevenlabs.io/v1/convai/conversation/get-signed-url?agent_id=${RACHEL_AGENT_ID}`, {
+          headers: { 'xi-api-key': '' } // Will use backend proxy
+        });
+      }
+
+      // Use the token endpoint but override agent ID
+      const proxyRes = await fetch('/msk/api/v1/voice/rachel-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      let signedUrl;
+      if (proxyRes.ok) {
+        const d = await proxyRes.json();
+        signedUrl = d.signed_url;
+      } else {
+        signedUrl = tokenData.signed_url; // Fallback to default
+      }
+
+      conversation = await Conversation.startSession({
+        signedUrl,
+        onConnect: () => {
+          isRunning = true;
+          setStatus('connected', 'Rachel is presenting...');
+          startBtn.disabled = false;
+          startBtn.textContent = 'Stop Presentation';
+          startBtn.className = 'start-btn stop';
+        },
+        onDisconnect: () => {
+          isRunning = false;
+          setStatus('ended', 'Presentation ended');
+          startBtn.disabled = false;
+          startBtn.textContent = 'Restart Presentation';
+          startBtn.className = 'start-btn';
+          conversation = null;
+        },
+        onError: (err) => {
+          setStatus('idle', 'Connection error — try again');
+          startBtn.disabled = false;
+          startBtn.textContent = 'Start Presentation';
+          startBtn.className = 'start-btn';
+        },
+        onModeChange: (mode) => {
+          if (mode.mode === 'speaking') {
+            setStatus('speaking', 'Rachel is speaking...');
+          } else {
+            setStatus('connected', 'Listening for questions...');
+          }
+        },
+        onMessage: (msg) => {
+          if (msg.source === 'ai') addMessage('rachel', msg.message);
+          else if (msg.source === 'user') addMessage('user', msg.message);
+        }
+      });
+
+    } catch (err) {
+      console.error('Presentation start error:', err);
+      setStatus('idle', 'Failed to connect — check console');
+      startBtn.disabled = false;
+      startBtn.textContent = 'Start Presentation';
+      startBtn.className = 'start-btn';
+    }
+  };
+</script>
+
+</body>
+</html>
