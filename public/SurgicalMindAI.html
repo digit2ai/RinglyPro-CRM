@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SurgicalMind AI — The Intelligence Layer for Robotic Surgery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#07090f;--bg2:#0a0d16;--panel:rgba(255,255,255,0.03);
+  --line:rgba(255,255,255,0.06);--line2:rgba(255,255,255,0.12);
+  --text:#e2e8f0;--muted:#94a3b8;--white:#fff;
+  --accent:#6366f1;--accent2:#8b5cf6;--green:#34d399;--red:#ef4444;
+  --teal:#2dd4bf;--gold:#f59e0b;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+
+/* NAV */
+.nav{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(7,9,15,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--line);height:64px;display:flex;align-items:center}
+.nav-inner{max-width:1200px;margin:0 auto;padding:0 24px;width:100%;display:flex;align-items:center;justify-content:space-between}
+.nav-brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.1rem}
+.nav-brand svg{width:32px;height:32px}
+.nav-tag{font-size:.7rem;padding:3px 8px;border-radius:999px;border:1px solid var(--accent);color:var(--accent);letter-spacing:.08em;text-transform:uppercase;font-weight:600}
+.nav-cta{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;padding:10px 24px;border-radius:8px;font-weight:600;font-size:.88rem;border:none;cursor:pointer;transition:all .2s}
+.nav-cta:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(99,102,241,0.4)}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:100px 24px 60px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-20%;left:50%;transform:translateX(-50%);width:140%;height:80%;background:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(99,102,241,0.10) 0%,transparent 70%);pointer-events:none}
+.hero-inner{max-width:860px;position:relative;z-index:1}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 18px;border-radius:999px;border:1px solid var(--line2);background:var(--panel);font-size:.78rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;font-weight:600;margin-bottom:28px}
+.hero-badge .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+.hero h1{font-size:clamp(2.4rem,5vw,3.8rem);font-weight:800;line-height:1.1;letter-spacing:-.5px;margin-bottom:20px}
+.hero h1 .grad{background:linear-gradient(135deg,var(--accent),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero p{font-size:clamp(1.05rem,2vw,1.25rem);color:var(--muted);max-width:640px;margin:0 auto 36px;line-height:1.7}
+.hero-ctas{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;padding:14px 36px;border-radius:10px;font-weight:700;font-size:1rem;border:none;cursor:pointer;transition:all .25s;display:inline-flex;align-items:center;gap:8px}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(99,102,241,0.45)}
+.btn-secondary{background:transparent;color:var(--text);padding:14px 36px;border-radius:10px;font-weight:600;font-size:1rem;border:1px solid var(--line2);cursor:pointer;transition:all .25s}
+.btn-secondary:hover{border-color:var(--accent);background:rgba(99,102,241,0.06);transform:translateY(-2px)}
+
+/* STATS BAR */
+.stats{padding:40px 24px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--bg2)}
+.stats-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:24px;text-align:center}
+.stat-num{font-size:clamp(1.8rem,3vw,2.6rem);font-weight:800;background:linear-gradient(135deg,var(--accent),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.stat-label{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:4px;font-weight:500}
+
+/* SECTIONS */
+.section{padding:80px 24px}
+.wrap{max-width:1100px;margin:0 auto}
+.section-label{font-size:.75rem;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:700;margin-bottom:12px}
+.section-title{font-size:clamp(1.6rem,3vw,2.4rem);font-weight:800;line-height:1.15;margin-bottom:16px;letter-spacing:-.3px}
+.section-sub{color:var(--muted);font-size:1.05rem;max-width:600px;margin-bottom:48px;line-height:1.7}
+
+/* PROBLEM */
+.problem-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+.problem-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:28px;transition:all .25s}
+.problem-card:hover{border-color:var(--red);transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,0.3)}
+.problem-icon{width:44px;height:44px;border-radius:12px;background:rgba(239,68,68,0.08);display:flex;align-items:center;justify-content:center;margin-bottom:16px;font-size:1.3rem}
+.problem-card h3{font-size:1.05rem;font-weight:700;margin-bottom:8px}
+.problem-card p{font-size:.9rem;color:var(--muted);line-height:1.65}
+
+/* AGENTS */
+.agents-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:20px}
+.agent-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:32px;transition:all .25s;position:relative;overflow:hidden}
+.agent-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--teal));opacity:0;transition:opacity .25s}
+.agent-card:hover{border-color:var(--accent);transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,0.3)}
+.agent-card:hover::before{opacity:1}
+.agent-tier{font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;font-weight:700;padding:4px 10px;border-radius:999px;display:inline-block;margin-bottom:14px}
+.tier-1{color:var(--accent);border:1px solid rgba(99,102,241,0.3);background:rgba(99,102,241,0.06)}
+.tier-2{color:var(--teal);border:1px solid rgba(45,212,191,0.3);background:rgba(45,212,191,0.06)}
+.tier-3{color:var(--gold);border:1px solid rgba(245,158,11,0.3);background:rgba(245,158,11,0.06)}
+.tier-n{color:var(--green);border:1px solid rgba(52,211,153,0.3);background:rgba(52,211,153,0.06)}
+.agent-card h3{font-size:1.1rem;font-weight:700;margin-bottom:8px}
+.agent-card p{font-size:.88rem;color:var(--muted);line-height:1.65;margin-bottom:14px}
+.agent-tools{display:flex;flex-wrap:wrap;gap:6px}
+.tool-tag{font-size:.72rem;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,0.04);border:1px solid var(--line);color:var(--muted);font-weight:500}
+
+/* ARCHITECTURE */
+.arch-flow{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;padding:40px 0}
+.arch-box{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 24px;text-align:center;min-width:160px;transition:all .25s}
+.arch-box:hover{border-color:var(--accent);transform:translateY(-2px)}
+.arch-box .label{font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:600;margin-bottom:4px}
+.arch-box .value{font-weight:700;font-size:.95rem}
+.arch-arrow{color:var(--accent);font-size:1.4rem;font-weight:700}
+
+/* NEURAL */
+.neural-section{background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.neural-layers{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.neural-layer{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:32px;text-align:center;transition:all .25s}
+.neural-layer:hover{border-color:var(--green);transform:translateY(-4px)}
+.neural-num{font-size:2.4rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+.neural-layer h3{font-size:1.05rem;font-weight:700;margin-bottom:8px}
+.neural-layer p{font-size:.88rem;color:var(--muted);line-height:1.6}
+
+/* ROI */
+.roi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px}
+.roi-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:28px;text-align:center;transition:all .25s}
+.roi-card:hover{border-color:var(--green);transform:translateY(-4px)}
+.roi-num{font-size:2rem;font-weight:800;color:var(--green);margin-bottom:4px}
+.roi-card h4{font-weight:700;margin-bottom:6px;font-size:.95rem}
+.roi-card p{font-size:.82rem;color:var(--muted)}
+
+/* PARTNERSHIP */
+.partner-section{background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%)}
+.partner-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.partner-col{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:36px}
+.partner-col h3{font-size:1.15rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.partner-col ul{list-style:none;padding:0}
+.partner-col li{padding:10px 0;border-bottom:1px solid var(--line);font-size:.92rem;color:var(--muted);display:flex;align-items:flex-start;gap:10px;line-height:1.5}
+.partner-col li:last-child{border:none}
+.partner-col li::before{content:'';width:6px;height:6px;border-radius:50%;margin-top:8px;flex-shrink:0}
+.col-greg li::before{background:var(--accent)}
+.col-us li::before{background:var(--green)}
+
+/* TIERS PRICING */
+.tiers-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.tier-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:28px;transition:all .25s;position:relative}
+.tier-card.featured{border-color:var(--accent);box-shadow:0 0 40px rgba(99,102,241,0.1)}
+.tier-card:hover{transform:translateY(-4px);border-color:var(--accent)}
+.tier-card h4{font-size:.95rem;font-weight:700;margin-bottom:6px}
+.tier-price{font-size:1.6rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:12px}
+.tier-card ul{list-style:none;padding:0}
+.tier-card li{font-size:.82rem;color:var(--muted);padding:5px 0;display:flex;align-items:center;gap:6px}
+.tier-card li::before{content:'✓';color:var(--green);font-weight:700;font-size:.75rem}
+
+/* CTA */
+.cta-section{text-align:center;padding:100px 24px;position:relative}
+.cta-section::before{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:120%;height:60%;background:radial-gradient(ellipse 50% 80% at 50% 100%,rgba(99,102,241,0.08) 0%,transparent 70%);pointer-events:none}
+.cta-inner{position:relative;z-index:1}
+.cta-section h2{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;margin-bottom:16px;line-height:1.15}
+.cta-section p{color:var(--muted);font-size:1.1rem;margin-bottom:36px;max-width:540px;margin-left:auto;margin-right:auto}
+
+/* FOOTER */
+.footer{border-top:1px solid var(--line);padding:32px 24px;text-align:center;font-size:.8rem;color:var(--muted)}
+.footer a{color:var(--accent)}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .stats-inner{grid-template-columns:repeat(2,1fr)}
+  .neural-layers{grid-template-columns:1fr}
+  .partner-grid{grid-template-columns:1fr}
+  .arch-flow{flex-direction:column}
+  .arch-arrow{transform:rotate(90deg)}
+}
+@media(max-width:480px){
+  .hero-ctas{flex-direction:column;align-items:center}
+  .btn-primary,.btn-secondary{width:100%;justify-content:center}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-inner">
+    <div class="nav-brand">
+      <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="32" height="32" rx="8" fill="url(#g1)"/>
+        <path d="M16 7L10 13h4v6h4v-6h4L16 7z" fill="#fff" opacity=".9"/>
+        <path d="M10 21h12v3H10z" fill="#fff" opacity=".6" rx="1.5"/>
+        <defs><linearGradient id="g1" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#2dd4bf"/></linearGradient></defs>
+      </svg>
+      SurgicalMind AI
+      <span class="nav-tag">Confidential</span>
+    </div>
+    <a href="#partnership" class="nav-cta">Explore Partnership</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-badge"><span class="dot"></span> Multi-Agent AI Operating System</div>
+    <h1>You sell the robot.<br><span class="grad">We sell the brain that proves it was worth buying.</span></h1>
+    <p>SurgicalMind AI is a Neural Intelligence platform that gives hospitals real-time visibility into robotic surgery ROI — utilization, outcomes, and autonomous optimization across every OR.</p>
+    <div class="hero-ctas">
+      <a href="#agents" class="btn-primary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+        See the AI Agents
+      </a>
+      <a href="#roi" class="btn-secondary">View ROI Model</a>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stats-inner">
+    <div><div class="stat-num">90+</div><div class="stat-label">MCP AI Tools</div></div>
+    <div><div class="stat-num">8</div><div class="stat-label">Autonomous Agents</div></div>
+    <div><div class="stat-num">5</div><div class="stat-label">Verticals Live Today</div></div>
+    <div><div class="stat-num">24/7</div><div class="stat-label">Neural Monitoring</div></div>
+  </div>
+</div>
+
+<!-- PROBLEM -->
+<section class="section">
+  <div class="wrap">
+    <div class="section-label">The Problem</div>
+    <h2 class="section-title">Hospitals buy $1.5M robots — then fly blind on ROI</h2>
+    <p class="section-sub">CFOs approve capital expenditure with no AI-native system to prove the investment is paying off. Surgeons adopt unevenly. Utilization gaps go undetected for months.</p>
+    <div class="problem-grid">
+      <div class="problem-card">
+        <div class="problem-icon">📉</div>
+        <h3>Utilization Black Holes</h3>
+        <p>Average da Vinci utilization is 40-60%. Hospitals don't know which ORs, shifts, or specialties are underperforming until quarterly reviews — months too late.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon">💰</div>
+        <h3>ROI Justification Gap</h3>
+        <p>CFOs ask "is this robot paying for itself?" and get spreadsheets 90 days later. No real-time answer exists. Purchase decisions stall.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon">🔄</div>
+        <h3>Adoption Fragmentation</h3>
+        <p>3 surgeons use the robot weekly while 12 others never book it. No system flags this or auto-triggers training/onboarding interventions.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AGENTS -->
+<section id="agents" class="section neural-section">
+  <div class="wrap">
+    <div class="section-label">The Solution — 8 AI Agents</div>
+    <h2 class="section-title">SurgicalMind AI: A Multi-Agent Operating System for Robotic Surgery</h2>
+    <p class="section-sub">Each agent is autonomous, MCP-orchestrated, and works 24/7. Not dashboards with AI — an AI system that happens to have dashboards.</p>
+    <div class="agents-grid">
+      <div class="agent-card">
+        <span class="agent-tier tier-1">Tier 1 — Core</span>
+        <h3>OR Utilization Agent</h3>
+        <p>Real-time robot uptime, case throughput, turnover analysis, idle-time detection per OR and shift.</p>
+        <div class="agent-tools">
+          <span class="tool-tag">get_robot_status</span>
+          <span class="tool-tag">utilization_report</span>
+          <span class="tool-tag">idle_time_analysis</span>
+          <span class="tool-tag">shift_comparison</span>
+        </div>
+      </div>
+      <div class="agent-card">
+        <span class="agent-tier tier-1">Tier 1 — Core</span>
+        <h3>Case Volume Intelligence</h3>
+        <p>Procedures per robot per week, specialty breakdown, growth trajectory, and capacity forecasting.</p>
+        <div class="agent-tools">
+          <span class="tool-tag">case_volume_trend</span>
+          <span class="tool-tag">specialty_breakdown</span>
+          <span class="tool-tag">capacity_forecast</span>
+        </div>
+      </div>
+      <div class="agent-card">
+        <span class="agent-tier tier-2">Tier 2 — Optimization</span>
+        <h3>Surgeon Adoption Agent</h3>
+        <p>Track surgeon-level adoption curves, flag underutilizers, auto-trigger clinical support and training programs.</p>
+        <div class="agent-tools">
+          <span class="tool-tag">surgeon_scorecard</span>
+          <span class="tool-tag">adoption_curve</span>
+          <span class="tool-tag">training_trigger</span>
+        </div>
+      </div>
+      <div class="agent-card">
+        <span class="agent-tier tier-2">Tier 2 — Optimization</span>
+        <h3>Surgical Supply Agent</h3>
+        <p>Instrument tray waste detection, implant tracking, par-level optimization, and cost-per-case analysis.</p>
+        <div class="agent-tools">
+          <span class="tool-tag">tray_waste_report</span>
+          <span class="tool-tag">implant_tracking</span>
+          <span class="tool-tag">cost_per_case</span>
+        </div>
+      </div>
+      <div class="agent-card">
+        <span class="agent-tier tier-3">Tier 3 — Outcomes</span>
+        <h3>Patient Outcomes Agent</h3>
+        <p>Readmission rates, complication tracking, length-of-stay comparison (robotic vs. open), infection surveillance.</p>
+        <div class="agent-tools">
+          <span class="tool-tag">outcome_comparison</span>
+          <span class="tool-tag">readmission_tracker</span>
+          <span class="tool-tag">los_analysis</span>
+        </div>
+      </div>
+      <div class="agent-card">
+        <span class="agent-tier tier-3">Tier 3 — Outcomes</span>
+        <h3>Financial ROI Agent</h3>
+        <p>Real-time payback period calculator, revenue-per-case, reimbursement optimization, break-even forecasting.</p>
+        <div class="agent-tools">
+          <span class="tool-tag">roi_calculator</span>
+          <span class="tool-tag">payback_tracker</span>
+          <span class="tool-tag">revenue_per_case</span>
+        </div>
+      </div>
+      <div class="agent-card">
+        <span class="agent-tier tier-n">Neural Intelligence</span>
+        <h3>Neural Diagnostics Engine</h3>
+        <p>24/7 autonomous analysis across all agents. Findings with severity levels. Prescriptive actions — not just "what happened" but "what to do."</p>
+        <div class="agent-tools">
+          <span class="tool-tag">run_scan</span>
+          <span class="tool-tag">get_findings</span>
+          <span class="tool-tag">prescriptions</span>
+          <span class="tool-tag">trend_analysis</span>
+        </div>
+      </div>
+      <div class="agent-card">
+        <span class="agent-tier tier-n">Treatment Layer</span>
+        <h3>Autonomous Treatment System</h3>
+        <p>Auto-executes prescriptions: schedule training, alert procurement, adjust OR blocks, notify clinical teams. The AI doesn't just advise — it acts.</p>
+        <div class="agent-tools">
+          <span class="tool-tag">activate_workflow</span>
+          <span class="tool-tag">auto_schedule</span>
+          <span class="tool-tag">alert_dispatch</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section class="section">
+  <div class="wrap">
+    <div class="section-label">How It Works</div>
+    <h2 class="section-title">MCP Orchestration — One Protocol, Unlimited Intelligence</h2>
+    <p class="section-sub">Model Context Protocol connects every agent, every tool, and every data source into a single autonomous nervous system.</p>
+    <div class="arch-flow">
+      <div class="arch-box"><div class="label">Data Sources</div><div class="value">EMR / EHR / IoT</div></div>
+      <span class="arch-arrow">→</span>
+      <div class="arch-box"><div class="label">Ingestion</div><div class="value">Webhooks + API</div></div>
+      <span class="arch-arrow">→</span>
+      <div class="arch-box" style="border-color:var(--accent)"><div class="label">MCP Orchestrator</div><div class="value">90+ AI Tools</div></div>
+      <span class="arch-arrow">→</span>
+      <div class="arch-box"><div class="label">Neural Engine</div><div class="value">Diagnose → Prescribe</div></div>
+      <span class="arch-arrow">→</span>
+      <div class="arch-box" style="border-color:var(--green)"><div class="label">Treatment</div><div class="value">Auto-Execute</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- NEURAL 3-LAYER -->
+<section class="section neural-section">
+  <div class="wrap">
+    <div class="section-label">Neural Intelligence</div>
+    <h2 class="section-title">Three layers. Zero guesswork.</h2>
+    <p class="section-sub">The same Neural Intelligence engine running in production across 5 verticals today — adapted for surgical operations.</p>
+    <div class="neural-layers">
+      <div class="neural-layer">
+        <div class="neural-num">01</div>
+        <h3>Diagnostic</h3>
+        <p>"Your da Vinci in OR-3 has been idle 62% of Tuesday shifts for the past 6 weeks. Root cause: Dr. Patel switched to open technique after instrument tray delays."</p>
+      </div>
+      <div class="neural-layer">
+        <div class="neural-num">02</div>
+        <h3>Prescription</h3>
+        <p>"Recommend: pre-stage instrument trays for Dr. Patel's cases, reassign OR-3 Tuesday blocks to Dr. Kim (95% robotic adoption), and schedule clinical in-service."</p>
+      </div>
+      <div class="neural-layer">
+        <div class="neural-num">03</div>
+        <h3>Treatment</h3>
+        <p>Auto-triggered: OR scheduling system updated. Clinical support team notified. Supply chain pre-stages trays. Next Tuesday: 94% projected utilization. No human intervention needed.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ROI -->
+<section id="roi" class="section">
+  <div class="wrap">
+    <div class="section-label">The Business Case</div>
+    <h2 class="section-title">ROI that sells itself</h2>
+    <p class="section-sub">Conservative estimates for a 200-bed hospital with 2 da Vinci systems.</p>
+    <div class="roi-grid">
+      <div class="roi-card">
+        <div class="roi-num">+35%</div>
+        <h4>Utilization Increase</h4>
+        <p>From 45% to 80% average robot utilization through intelligent scheduling and adoption tracking</p>
+      </div>
+      <div class="roi-card">
+        <div class="roi-num">$2.4M</div>
+        <h4>Annual Revenue Recovered</h4>
+        <p>Additional robotic cases captured from idle time conversion and specialty expansion</p>
+      </div>
+      <div class="roi-card">
+        <div class="roi-num">-40%</div>
+        <h4>Supply Waste Reduction</h4>
+        <p>Instrument tray optimization and predictive par-level management</p>
+      </div>
+      <div class="roi-card">
+        <div class="roi-num">14 mo</div>
+        <h4>Faster Payback</h4>
+        <p>Accelerate robot ROI from 36+ months to 22 months through optimized case volume</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TIERS / PRICING -->
+<section class="section neural-section">
+  <div class="wrap">
+    <div class="section-label">Commercial Model</div>
+    <h2 class="section-title">Tiered SaaS — hospitals buy what they need</h2>
+    <p class="section-sub">Same proven tier model running across FreightMind, WarehouseMind, and ImprintIQ today.</p>
+    <div class="tiers-grid">
+      <div class="tier-card">
+        <h4>Tier 1 — Core Visibility</h4>
+        <div class="tier-price">$5K/mo</div>
+        <ul>
+          <li>OR Utilization Agent</li>
+          <li>Case Volume Intelligence</li>
+          <li>Real-time robot status</li>
+          <li>Basic reporting</li>
+        </ul>
+      </div>
+      <div class="tier-card featured">
+        <h4>Tier 2 — Optimization</h4>
+        <div class="tier-price">$12K/mo</div>
+        <ul>
+          <li>Everything in Tier 1</li>
+          <li>Surgeon Adoption Agent</li>
+          <li>Surgical Supply Agent</li>
+          <li>Training auto-triggers</li>
+        </ul>
+      </div>
+      <div class="tier-card">
+        <h4>Tier 3 — Outcomes + ROI</h4>
+        <div class="tier-price">$18K/mo</div>
+        <ul>
+          <li>Everything in Tier 2</li>
+          <li>Patient Outcomes Agent</li>
+          <li>Financial ROI Agent</li>
+          <li>Payback forecasting</li>
+        </ul>
+      </div>
+      <div class="tier-card">
+        <h4>Tier 4 — Neural + Treatment</h4>
+        <div class="tier-price">$25K/mo</div>
+        <ul>
+          <li>Everything in Tier 3</li>
+          <li>Neural Diagnostics 24/7</li>
+          <li>Autonomous Treatment</li>
+          <li>Executive dashboards</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROVEN -->
+<section class="section">
+  <div class="wrap">
+    <div class="section-label">Already Proven</div>
+    <h2 class="section-title">This isn't a concept — it's running in production</h2>
+    <p class="section-sub">SurgicalMind AI is built on the exact same architecture powering 5 live verticals today.</p>
+    <div class="agents-grid">
+      <div class="agent-card">
+        <span class="agent-tier tier-1">Live</span>
+        <h3>WarehouseMind AI</h3>
+        <p>90+ MCP tools. 8 autonomous agents. OEE tracking, inventory optimization, labor management, Neural Intelligence — all running for warehouse operations.</p>
+      </div>
+      <div class="agent-card">
+        <span class="agent-tier tier-2">Live</span>
+        <h3>FreightMind AI</h3>
+        <p>80+ MCP tools. Rate intelligence, dispatch AI, compliance automation, financial agent. 5-tier commercial model with active clients.</p>
+      </div>
+      <div class="agent-card">
+        <span class="agent-tier tier-3">Live</span>
+        <h3>ImprintIQ</h3>
+        <p>11 AI agents targeting the $26.6B promotional products industry. From catalog management to QC Vision defect detection.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PARTNERSHIP -->
+<section id="partnership" class="section partner-section">
+  <div class="wrap">
+    <div class="section-label">The Opportunity</div>
+    <h2 class="section-title">Greg + Neural Intelligence = Healthcare AI Vertical</h2>
+    <p class="section-sub">A partnership that combines deep hospital relationships with a battle-tested AI platform.</p>
+    <div class="partner-grid">
+      <div class="partner-col col-greg">
+        <h3>🏥 What Greg Brings</h3>
+        <ul>
+          <li>Direct relationships with hospital C-suite, surgeons, and procurement across Florida</li>
+          <li>15+ years understanding how hospitals evaluate, purchase, and adopt technology</li>
+          <li>Credibility: Intuitive Surgical on the resume opens every healthcare door</li>
+          <li>Domain expertise: what data matters, what language resonates, what objections to expect</li>
+          <li>Network of medtech investors and industry leaders</li>
+        </ul>
+      </div>
+      <div class="partner-col col-us">
+        <h3>🧠 What We Bring</h3>
+        <ul>
+          <li>Production-proven MCP orchestration platform with 90+ AI tools per vertical</li>
+          <li>Neural Intelligence engine: diagnostic → prescriptive → autonomous treatment</li>
+          <li>Speed: new vertical from 0 to production in weeks, not years</li>
+          <li>5 live verticals as proof — warehousing, freight, manufacturing, martial arts, language education</li>
+          <li>Voice AI integration (Rachel/Ana) for automated clinical coordination</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-inner">
+    <h2>Ready to build the future of<br>surgical intelligence — together?</h2>
+    <p>One conversation. One demo. And you'll see exactly how 90+ AI tools can transform hospital operations.</p>
+    <a href="mailto:manuel@ringlypro.com?subject=SurgicalMind%20AI%20Partnership" class="btn-primary">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M4 4h16v16H4z"/><path d="M4 4l8 8 8-8"/></svg>
+      Schedule the Conversation
+    </a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="wrap">
+    <p>SurgicalMind AI — A <a href="https://aiagent.ringlypro.com" target="_blank">Neural Intelligence</a> Vertical &nbsp;|&nbsp; Confidential — Prepared for Greg Eriksen &nbsp;|&nbsp; April 2026</p>
+  </div>
+</footer>
+
+</body>
+</html>
