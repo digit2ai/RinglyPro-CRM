@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Torna Idioma — Business Plan 2026 | Digit2AI</title>
-  <meta name="description" content="Business plan for Torna Idioma: restoring Spanish as the Philippines' competitive advantage. AI-powered language education, BPO workforce development, and hemispheric partnerships." />
+  <meta name="description" content="Formal business plan for Torna Idioma: restoring Spanish as the Philippines' competitive advantage through AI-powered language education, BPO workforce development, and hemispheric partnerships." />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🇪🇸</text></svg>" />
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
@@ -18,10 +18,11 @@
     .nav-inner{display:flex;align-items:center;justify-content:space-between}
     .nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none}
     .nav-brand .crest{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:var(--gold);letter-spacing:2px}
-    .nav-links{display:flex;gap:4px}
-    .nav-links a{color:var(--muted);font-size:13px;font-weight:500;padding:6px 14px;border-radius:6px;transition:all .2s;text-decoration:none}
+    .nav-links{display:flex;gap:4px;align-items:center}
+    .nav-links a{color:var(--muted);font-size:12px;font-weight:500;padding:5px 10px;border-radius:6px;transition:all .2s;text-decoration:none}
     .nav-links a:hover{color:#fff;background:rgba(255,255,255,.05)}
     .nav-links a.active{color:var(--gold)}
+    .nav-sep{width:1px;height:16px;background:rgba(201,168,76,.2);margin:0 4px}
     .btn{display:inline-flex;align-items:center;gap:8px;padding:14px 28px;border-radius:8px;font-weight:600;font-size:.95rem;text-decoration:none;transition:all .2s;border:none;cursor:pointer}
     .btn-p{background:linear-gradient(135deg,var(--gold),var(--gold-d));color:var(--navy-d)}.btn-p:hover{box-shadow:0 8px 30px rgba(201,168,76,.3);text-decoration:none}
     .btn-s{background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--border)}.btn-s:hover{background:rgba(255,255,255,.1);text-decoration:none}
@@ -34,12 +35,13 @@
     .alt{background:#162035}
     .sl{font-family:'Inter',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2.5px;color:var(--gold);margin-bottom:10px}
     .st{font-family:'Playfair Display',serif;font-size:clamp(1.5rem,3vw,2.2rem);font-weight:800;margin-bottom:10px;line-height:1.2}
-    .ss{font-size:.95rem;color:var(--muted);max-width:560px;margin-bottom:36px}
+    .ss{font-size:.95rem;color:var(--muted);max-width:600px;margin-bottom:36px}
     .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px;transition:border-color .3s}
     .card:hover{border-color:rgba(201,168,76,.4)}
     .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
     .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
     .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+    .grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
 
     table{width:100%;border-collapse:collapse;font-size:.88rem}
     th{text-align:left;padding:10px 14px;background:rgba(201,168,76,.08);color:var(--gold);font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid var(--border)}
@@ -48,6 +50,7 @@
     .r{text-align:right}
     .money{font-weight:700;color:var(--green);font-variant-numeric:tabular-nums}
     .cost{font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums}
+    .neg{font-weight:700;color:var(--red);font-variant-numeric:tabular-nums}
     .total-row td{border-top:2px solid var(--gold);font-weight:800;padding-top:14px}
 
     .stat{text-align:center}.stat .v{font-family:'Playfair Display',serif;font-size:2rem;font-weight:900;line-height:1}.stat .l{font-weight:600;font-size:.88rem;margin-top:3px}.stat .d{color:var(--dim);font-size:.78rem;margin-top:2px}
@@ -57,50 +60,63 @@
     .tl-item{position:relative;margin-bottom:28px}.tl-item:last-child{margin-bottom:0}
     .tl-dot{position:absolute;left:-32px;top:6px;width:24px;height:24px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--navy-d)}
 
-    .pillar-badge{display:inline-block;padding:4px 12px;border-radius:4px;font-size:.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase}
-    .pillar-badge.dignity{background:rgba(201,168,76,.15);color:var(--gold)}
-    .pillar-badge.pride{background:rgba(196,30,58,.15);color:var(--red)}
-    .pillar-badge.prize{background:rgba(16,185,129,.15);color:var(--green)}
+    .toc{columns:2;column-gap:32px;margin-top:24px}
+    .toc a{display:block;padding:8px 0;color:var(--muted);font-size:.9rem;border-bottom:1px solid rgba(201,168,76,.08);text-decoration:none;transition:color .2s}
+    .toc a:hover{color:var(--gold)}
+    .toc a span{color:var(--gold);font-weight:700;margin-right:8px;font-size:.8rem}
+
+    .risk-row{display:flex;gap:16px;align-items:flex-start;padding:16px 0;border-bottom:1px solid rgba(201,168,76,.08)}
+    .risk-row:last-child{border-bottom:none}
+    .risk-level{flex-shrink:0;padding:4px 10px;border-radius:4px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+    .risk-level.high{background:rgba(196,30,58,.15);color:var(--red)}
+    .risk-level.med{background:rgba(245,158,11,.15);color:#f59e0b}
+    .risk-level.low{background:rgba(16,185,129,.15);color:var(--green)}
+
+    .kpi-q{text-align:center;padding:16px;border-right:1px solid rgba(201,168,76,.1)}
+    .kpi-q:last-child{border-right:none}
+    .kpi-q .qn{font-size:.72rem;font-weight:700;color:var(--gold);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+
+    .flag-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+    .flag-chip{padding:6px 14px;background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.12);border-radius:20px;font-size:.78rem;font-weight:600;color:var(--muted)}
 
     footer{padding:40px 0;border-top:1px solid var(--border);text-align:center;color:var(--dim);font-size:.8rem}
-    @media print{body{background:#fff;color:#1a1a1a}.nav,.btn{display:none}.card{border:1px solid #ddd;background:#f9f9f9}section{padding:24px 0}}
-    @media(max-width:768px){.grid2,.grid3,.grid4{grid-template-columns:1fr}.nav-links{display:none}}
+    @media print{body{background:#fff;color:#1a1a1a}.nav,.btn{display:none}.card{border:1px solid #ddd;background:#f9f9f9}section{padding:24px 0}.alt{background:#f5f5f5}}
+    @media(max-width:768px){.grid2,.grid3,.grid4,.grid5{grid-template-columns:1fr}.nav-links{display:none}.toc{columns:1}}
   </style>
 </head>
 <body>
 
 <nav class="nav">
   <div class="c nav-inner">
-    <a href="/Torna_Idioma/" class="nav-brand">
-      <span class="crest">TORNA IDIOMA</span>
-    </a>
+    <a href="/Torna_Idioma/" class="nav-brand"><span class="crest">TORNA IDIOMA</span></a>
     <div class="nav-links">
-      <a href="#opportunity">Opportunity</a>
-      <a href="#pillars">Pillars</a>
+      <a href="#executive">Summary</a>
+      <a href="#problem">Problem</a>
+      <a href="#solution">Solution</a>
       <a href="#market">Market</a>
-      <a href="#model">Model</a>
+      <a href="#roadmap">Roadmap</a>
       <a href="#financials">Financials</a>
-      <a href="#team">Team</a>
+      <a href="#roi">ROI</a>
+      <a href="#ask" class="active">Capital Ask</a>
+      <div class="nav-sep"></div>
       <a href="/torna-idioma-presentation.html">AI Presentation</a>
-      <a href="#ask" class="active">The Ask</a>
+      <a href="/Torna_Idioma/">Platform</a>
     </div>
   </div>
 </nav>
 
-<!-- COVER -->
+<!-- ====== COVER ====== -->
 <header class="cover">
   <div class="cover-bg"></div>
   <div class="c" style="position:relative;z-index:2">
     <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:2.5px;color:var(--gold);margin-bottom:20px">Business Plan — Confidential</div>
     <h1 style="font-family:'Playfair Display',serif;font-size:clamp(2.2rem,5vw,3.5rem);font-weight:900;line-height:1.12;margin-bottom:20px;max-width:750px">
       Torna Idioma
-      <br /><span style="color:var(--gold)">Business Plan 2026</span>
+      <br /><span style="color:var(--gold)">Business Plan 2026–2028</span>
     </h1>
-    <p style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--gold-l);font-style:italic;margin-bottom:8px">
-      "The Return of the Cultural Language"
-    </p>
+    <p style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--gold-l);font-style:italic;margin-bottom:8px">"The Return of the Cultural Language"</p>
     <p style="font-size:1rem;color:var(--muted);max-width:580px;margin-bottom:12px">
-      Restoring Spanish as the Philippines' competitive advantage — empowering Filipino youth through AI-powered language education, BPO workforce development, and a hemispheric alliance spanning 11 nations.
+      AI-powered Spanish language education restoring the Philippines' 400-year Hispanic heritage while generating $64M–$145M in economic impact across three cities.
     </p>
     <div style="display:flex;flex-wrap:wrap;gap:20px;margin-bottom:36px;font-size:.88rem;color:var(--dim)">
       <span>Prepared by <strong style="color:var(--text)">Digit2AI LLC</strong></span>
@@ -109,52 +125,87 @@
       <span>April 2026</span>
     </div>
     <div style="display:flex;gap:12px;flex-wrap:wrap">
-      <a href="#ask" class="btn btn-p">Sponsorship Opportunity</a>
+      <a href="#ask" class="btn btn-p">Capital Requirements</a>
       <a href="/torna-idioma-presentation.html" class="btn btn-s">AI Presentation by Rachel</a>
-      <a href="/Torna_Idioma/" class="btn btn-s">Visit Platform</a>
+      <a href="/Torna_Idioma/" class="btn btn-s">Live Platform</a>
     </div>
   </div>
 </header>
 
-<!-- 1. EXECUTIVE SUMMARY -->
+<!-- ====== TABLE OF CONTENTS ====== -->
+<section style="padding:50px 0 30px">
+  <div class="c">
+    <div class="sl">Table of Contents</div>
+    <div class="toc">
+      <a href="#executive"><span>01</span>Executive Summary</a>
+      <a href="#problem"><span>02</span>Problem Statement</a>
+      <a href="#solution"><span>03</span>Solution & Three Pillars</a>
+      <a href="#product"><span>04</span>Product — Live Platform</a>
+      <a href="#market"><span>05</span>Market Analysis & Target Cities</a>
+      <a href="#competitive"><span>06</span>Competitive Landscape</a>
+      <a href="#roadmap"><span>07</span>Go-to-Market Roadmap & Timeline</a>
+      <a href="#model"><span>08</span>Business Model & Revenue Streams</a>
+      <a href="#financials"><span>09</span>Financial Projections (3-Year P&L)</a>
+      <a href="#roi"><span>10</span>Sponsor ROI Analysis</a>
+      <a href="#ask"><span>11</span>Capital Requirements & Use of Funds</a>
+      <a href="#milestones"><span>12</span>Key Milestones & KPIs</a>
+      <a href="#partnerships"><span>13</span>Partnerships & Institutional Support</a>
+      <a href="#team"><span>14</span>Team & Leadership</a>
+      <a href="#risks"><span>15</span>Risk Analysis & Mitigations</a>
+      <a href="#appendix"><span>16</span>Appendix & Supporting Materials</a>
+    </div>
+  </div>
+</section>
+
+<!-- ====== 01. EXECUTIVE SUMMARY ====== -->
 <section id="executive">
   <div class="c">
     <div class="sl">01 — Executive Summary</div>
     <h2 class="st">The Opportunity in One Paragraph</h2>
     <div class="card" style="padding:32px;background:linear-gradient(135deg,#1B2A4A,#223350);margin-bottom:32px">
       <p style="font-size:1.05rem;line-height:1.9;color:var(--muted)">
-        <strong style="color:#fff">Torna Idioma</strong> is a fully operational, AI-powered Spanish language education platform designed to restore the Philippines' 400-year Hispanic heritage while unlocking <strong style="color:var(--green)">$64M–$145M</strong> in economic value across three target cities. The platform combines <strong style="color:var(--gold)">UVEG's 12-module CEFR-aligned curriculum</strong>, <strong style="color:var(--blue)">AI tutoring with voice interaction</strong>, <strong style="color:var(--cyan)">BPO workforce certification</strong>, and a <strong style="color:var(--green)">hemispheric partnership network spanning 11 nations</strong>. BPO workers who become Spanish-proficient earn <strong style="color:var(--gold)">20–40% higher salaries</strong> — an average increase of $140–$270 per month. The platform is <strong style="color:#fff">live in production today</strong> with 72 lessons, 12 modules, trilingual support (EN/ES/FIL), AI-powered tutoring, and academic partnerships with UVEG (Mexico), Universidad de Medellín (Colombia), and University of Makati.
+        <strong style="color:#fff">Torna Idioma</strong> is a fully operational, AI-powered Spanish language education platform designed to restore the Philippines' 400-year Hispanic heritage while unlocking <strong style="color:var(--green)">$64M–$145M</strong> in economic value across three target cities. The platform combines <strong style="color:var(--gold)">UVEG's 12-module CEFR-aligned curriculum</strong>, <strong style="color:var(--blue)">AI tutoring with voice interaction</strong>, <strong style="color:var(--cyan)">BPO workforce certification</strong>, and a <strong style="color:var(--green)">hemispheric partnership network spanning 11 nations</strong>. BPO workers who become Spanish-proficient earn <strong style="color:var(--gold)">20–40% higher salaries</strong> — an average increase of $140–$270 per month. We are seeking <strong style="color:var(--gold)">$1.4M</strong> in Year 1 sponsorship capital to deploy across Makati, Zamboanga, and Cavite, with a projected 10x–20x return measured in income generation, tax revenue, foreign investment, and tourism.
       </p>
     </div>
 
     <div class="grid4">
-      <div class="card stat"><div class="v" style="color:var(--gold)">$145M</div><div class="l">Projected Impact</div><div class="d">Over 3 years</div></div>
-      <div class="card stat"><div class="v" style="color:var(--green)">20–40%</div><div class="l">Salary Premium</div><div class="d">Spanish BPO workers</div></div>
+      <div class="card stat"><div class="v" style="color:var(--gold)">$145M</div><div class="l">3-Year Economic Impact</div><div class="d">Across 3 target cities</div></div>
+      <div class="card stat"><div class="v" style="color:var(--green)">20–40%</div><div class="l">BPO Salary Premium</div><div class="d">Spanish-proficient agents</div></div>
       <div class="card stat"><div class="v" style="color:var(--blue)">5,000</div><div class="l">Workers Certified</div><div class="d">By Year 3</div></div>
-      <div class="card stat"><div class="v" style="color:var(--cyan)">650M</div><div class="l">Global Speakers</div><div class="d">Spanish worldwide</div></div>
+      <div class="card stat"><div class="v" style="color:var(--cyan)">10x–20x</div><div class="l">Sponsor ROI</div><div class="d">On $1.4M annual investment</div></div>
     </div>
   </div>
 </section>
 
-<!-- 2. THE OPPORTUNITY -->
-<section class="alt" id="opportunity">
+<!-- ====== 02. PROBLEM STATEMENT ====== -->
+<section class="alt" id="problem">
   <div class="c">
-    <div class="sl">02 — The Opportunity</div>
-    <h2 class="st">A Heritage That Becomes a Competitive Weapon</h2>
-    <p class="ss">The Philippines was a Spanish-speaking nation for over 300 years. That heritage was systematically erased — but the demand for Spanish in the global economy has never been higher.</p>
+    <div class="sl">02 — Problem Statement</div>
+    <h2 class="st">A $32B Industry Missing a $1.8B Opportunity</h2>
+    <p class="ss">The Philippines is the BPO capital of the world. But it's leaving billions on the table by ignoring its own Hispanic heritage.</p>
 
-    <div class="grid3" style="margin-bottom:32px">
+    <div class="grid2" style="margin-bottom:32px">
       <div class="card">
-        <h4 style="color:var(--gold);font-weight:800;margin-bottom:8px">The Gap</h4>
-        <p style="color:var(--muted);font-size:.9rem">The Philippines BPO industry generates $32B+ annually — the world's call center capital. Yet only a tiny fraction speaks Spanish, while Latin American markets desperately need bilingual agents. Spanish-proficient agents command 20–40% premium salaries, but no scalable training pipeline exists.</p>
+        <h4 style="color:var(--red);font-weight:800;margin-bottom:12px">The Problem</h4>
+        <ul style="list-style:none;color:var(--muted);font-size:.9rem;line-height:2">
+          <li>-- The Philippines BPO industry generates <strong style="color:#fff">$32B+ annually</strong></li>
+          <li>-- Latin American clients need Spanish-speaking agents, but <strong style="color:#fff">less than 1%</strong> of Philippine BPO agents speak Spanish</li>
+          <li>-- Spanish was the Philippines' official language for <strong style="color:#fff">333 years</strong> — systematically erased after 1898</li>
+          <li>-- No scalable Spanish training pipeline exists for the BPO workforce</li>
+          <li>-- Filipino youth have no connection to their Hispanic heritage despite 4,000+ Spanish loanwords in Tagalog</li>
+          <li>-- Zamboanga's 700,000 Chabacano speakers — the last Spanish Creole in Asia — have no formal support</li>
+        </ul>
       </div>
       <div class="card">
-        <h4 style="color:var(--gold);font-weight:800;margin-bottom:8px">The Timing</h4>
-        <p style="color:var(--muted);font-size:.9rem">Three forces converge: AI making personalized language education affordable at scale, the BPO industry's explosive demand for Spanish speakers, and a cultural renaissance — Filipino youth are rediscovering their Hispanic roots through social media and heritage movements.</p>
-      </div>
-      <div class="card">
-        <h4 style="color:var(--gold);font-weight:800;margin-bottom:8px">The Moat</h4>
-        <p style="color:var(--muted);font-size:.9rem">No competitor combines CEFR-certified curriculum from a Mexican state university, AI-powered tutoring, BPO workforce certification, government integration, and an 11-nation hemispheric alliance. Our platform is live and MOU-signed with UVEG. Competitors don't have the partnerships.</p>
+        <h4 style="color:var(--green);font-weight:800;margin-bottom:12px">The Opportunity</h4>
+        <ul style="list-style:none;color:var(--muted);font-size:.9rem;line-height:2">
+          <li>-- Spanish is the <strong style="color:#fff">4th most spoken language globally</strong> (650M speakers)</li>
+          <li>-- Spanish-proficient BPO agents earn <strong style="color:var(--green)">20–40% higher salaries</strong></li>
+          <li>-- AI enables personalized language education at <strong style="color:var(--green)">1/100th the cost</strong> of traditional classrooms</li>
+          <li>-- Cultural renaissance: Filipino youth rediscovering Hispanic roots via social media</li>
+          <li>-- No competitor combines university-certified curriculum + AI tutoring + BPO certification + government integration</li>
+          <li>-- The Philippines is uniquely positioned as <strong style="color:var(--green)">Asia's bridge to the Hispanic world</strong></li>
+        </ul>
       </div>
     </div>
 
@@ -163,53 +214,60 @@
       <table>
         <thead><tr><th>Market</th><th>Definition</th><th class="r">Size</th></tr></thead>
         <tbody>
-          <tr><td><strong>TAM</strong></td><td>Global Spanish language education + BPO bilingual workforce</td><td class="r cost">$12.4B by 2030</td></tr>
+          <tr><td><strong>TAM</strong></td><td>Global Spanish language education + BPO bilingual workforce training</td><td class="r cost">$12.4B by 2030</td></tr>
           <tr><td><strong>SAM</strong></td><td>Philippines BPO Spanish workforce + ASEAN language education</td><td class="r cost">$1.8B</td></tr>
-          <tr><td><strong>SOM</strong></td><td>Makati + Zamboanga + Cavite (3-city model, Year 3)</td><td class="r cost">$145M</td></tr>
+          <tr><td><strong>SOM</strong></td><td>Makati + Zamboanga + Cavite — 3-city deployment (Year 3)</td><td class="r cost">$145M</td></tr>
         </tbody>
       </table>
-      <p style="color:var(--dim);font-size:.8rem;margin-top:12px">Sources: IBEF Philippines BPO Report 2025, Instituto Cervantes Yearbook 2025, PSA Philippine Statistics Authority</p>
+      <p style="color:var(--dim);font-size:.78rem;margin-top:12px">Sources: IBEF Philippines BPO Report 2025, Instituto Cervantes Yearbook 2025, PSA Philippine Statistics Authority, Grand View Research Language Learning Market 2025</p>
     </div>
   </div>
 </section>
 
-<!-- 3. THE THREE PILLARS -->
-<section id="pillars">
+<!-- ====== 03. SOLUTION & THREE PILLARS ====== -->
+<section id="solution">
   <div class="c">
-    <div class="sl">03 — The Three Pillars</div>
-    <h2 class="st">Dignity, Pride, Prize</h2>
-    <p class="ss">Torna Idioma is built on three foundational pillars — cultural reclamation, identity restoration, and economic transformation.</p>
+    <div class="sl">03 — Solution & Three Pillars</div>
+    <h2 class="st">Heritage as a Competitive Weapon</h2>
+    <p class="ss">Torna Idioma doesn't teach Spanish as a foreign language. It restores it as a Filipino language — and converts that restoration into measurable economic returns.</p>
 
-    <div class="grid3" style="margin-bottom:32px">
+    <div class="grid3" style="margin-bottom:40px">
       <div class="card" style="border-top:3px solid var(--gold);text-align:center">
         <div style="font-family:'Playfair Display',serif;font-size:3rem;font-weight:800;color:var(--gold);margin-bottom:8px">I</div>
-        <h4 style="font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Dignity</h4>
-        <p style="color:var(--muted);font-size:.92rem;line-height:1.8">Reclaiming Spanish as a Filipino language — the language of José Rizal, Andres Bonifacio, and the Malolos Constitution. Not a foreign tongue, but the voice of Philippine independence and intellectual heritage.</p>
+        <h4 style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Dignity</h4>
+        <p style="color:var(--muted);font-size:.9rem;line-height:1.8">Reclaiming Spanish as a Filipino language — the language of José Rizal, Andres Bonifacio, and the Malolos Constitution. Not a foreign tongue, but the voice of Philippine independence.</p>
       </div>
       <div class="card" style="border-top:3px solid var(--red);text-align:center">
         <div style="font-family:'Playfair Display',serif;font-size:3rem;font-weight:800;color:var(--red);margin-bottom:8px">II</div>
-        <h4 style="font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--red);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Pride</h4>
-        <p style="color:var(--muted);font-size:.92rem;line-height:1.8">Restoring identity as a Hispanic-Asian nation connected to 650 million global speakers. The Philippines is the only Asian country with deep Spanish roots — a bridge between two worlds that no other nation can claim.</p>
+        <h4 style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--red);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Pride</h4>
+        <p style="color:var(--muted);font-size:.9rem;line-height:1.8">Restoring identity as a Hispanic-Asian nation connected to 650 million global speakers — the only Asian country with deep Spanish roots.</p>
       </div>
       <div class="card" style="border-top:3px solid var(--green);text-align:center">
         <div style="font-family:'Playfair Display',serif;font-size:3rem;font-weight:800;color:var(--green);margin-bottom:8px">III</div>
-        <h4 style="font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--green);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Prize</h4>
-        <p style="color:var(--muted);font-size:.92rem;line-height:1.8">Unlocking global careers, higher salaries, and $64M–$145M in economic impact over three years. 5,000 BPO workers certified, $35M–$89M in foreign investment, and three cities becoming the Hispanic Gateway of Southeast Asia.</p>
+        <h4 style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--green);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Prize</h4>
+        <p style="color:var(--muted);font-size:.9rem;line-height:1.8">$64M–$145M in economic impact. 5,000 BPO workers certified. $35M–$89M in foreign investment. Three cities becoming the Hispanic Gateway of Southeast Asia.</p>
       </div>
+    </div>
+
+    <div class="card" style="text-align:center;border-color:var(--gold);padding:32px">
+      <p style="font-family:'Playfair Display',serif;font-size:1.2rem;font-style:italic;color:var(--gold-l);max-width:700px;margin:0 auto;line-height:1.6">
+        "El que no sabe de dónde viene, no sabe a dónde va."<br />
+        <span style="font-size:.85rem;color:var(--muted);font-style:normal">He who does not know where he comes from, does not know where he is going.</span>
+      </p>
     </div>
   </div>
 </section>
 
-<!-- 4. PRODUCT -->
+<!-- ====== 04. PRODUCT ====== -->
 <section class="alt" id="product">
   <div class="c">
-    <div class="sl">04 — Product</div>
+    <div class="sl">04 — Product — Live Platform</div>
     <h2 class="st">Built, Live, and Academically Certified</h2>
-    <p class="ss">Not a concept. A fully operational AI-powered language platform at <a href="https://aiagent.ringlypro.com/Torna_Idioma/" target="_blank">aiagent.ringlypro.com/Torna_Idioma</a></p>
+    <p class="ss">Not a concept. A fully operational platform at <a href="https://aiagent.ringlypro.com/Torna_Idioma/" target="_blank" style="color:var(--blue)">aiagent.ringlypro.com/Torna_Idioma</a></p>
 
     <div class="card" style="overflow-x:auto;margin-bottom:32px">
       <table>
-        <thead><tr><th>Feature</th><th>What It Does</th><th>Competitive Edge</th><th>Status</th></tr></thead>
+        <thead><tr><th>Feature</th><th>Description</th><th>Competitive Edge</th><th>Status</th></tr></thead>
         <tbody>
           <tr><td><strong>UVEG SFL Curriculum</strong></td><td>12 modules, 72 lessons, A1 to B1+ CEFR levels</td><td>University-certified, MOU-signed</td><td style="color:var(--green);font-weight:700">Live</td></tr>
           <tr><td><strong>AI Tutor (Voice)</strong></td><td>Conversational Spanish practice with AI instructor</td><td>24/7 availability, pronunciation feedback</td><td style="color:var(--green);font-weight:700">Live</td></tr>
@@ -217,30 +275,26 @@
           <tr><td><strong>BPO Certification Track</strong></td><td>Industry-specific Spanish for call centers</td><td>Direct salary impact, employer-recognized</td><td style="color:var(--green);font-weight:700">Live</td></tr>
           <tr><td><strong>Progress Analytics</strong></td><td>Student, teacher, and city-level dashboards</td><td>Government reporting + outcome tracking</td><td style="color:var(--green);font-weight:700">Live</td></tr>
           <tr><td><strong>Teacher Portal</strong></td><td>Classroom management, lesson planning, grading</td><td>Integrated with UVEG curriculum</td><td style="color:var(--green);font-weight:700">Live</td></tr>
-          <tr><td><strong>Economic Impact Dashboard</strong></td><td>Real-time ROI tracking for sponsors/government</td><td>Transparency = trust = more funding</td><td style="color:var(--green);font-weight:700">Live</td></tr>
-          <tr><td><strong>Course Catalog</strong></td><td>Full browsable catalog with levels, durations, descriptions</td><td>Self-service enrollment</td><td style="color:var(--green);font-weight:700">Live</td></tr>
+          <tr><td><strong>Economic Impact Dashboard</strong></td><td>Real-time ROI tracking for sponsors</td><td>Transparency = trust = continued funding</td><td style="color:var(--green);font-weight:700">Live</td></tr>
           <tr><td><strong>Job Board Integration</strong></td><td>Spanish-requirement jobs linked to certifications</td><td>Education-to-employment pipeline</td><td style="color:var(--green);font-weight:700">Live</td></tr>
-          <tr><td><strong>Multi-Tenant Architecture</strong></td><td>Deployable for any city, school district, or BPO company</td><td>One platform, unlimited deployments</td><td style="color:var(--green);font-weight:700">Live</td></tr>
+          <tr><td><strong>Multi-Tenant Architecture</strong></td><td>Deployable per city, school, or BPO company</td><td>One platform, unlimited deployments</td><td style="color:var(--green);font-weight:700">Live</td></tr>
         </tbody>
       </table>
-    </div>
-
-    <div class="card" style="text-align:center;border-color:var(--gold)">
-      <p style="font-size:1rem;color:var(--gold);font-weight:700">The platform is live and academically certified. UVEG (Mexico) provides the curriculum. The technology is deployable in any Philippine city — and any country seeking Spanish language education at scale.</p>
     </div>
   </div>
 </section>
 
-<!-- 5. THREE-CITY MODEL -->
+<!-- ====== 05. MARKET ANALYSIS ====== -->
 <section id="market">
   <div class="c">
-    <div class="sl">05 — Target Markets</div>
+    <div class="sl">05 — Market Analysis & Target Cities</div>
     <h2 class="st">Three Cities, One Vision: Hispanic Gateway of Southeast Asia</h2>
 
-    <div class="grid3" style="margin-bottom:32px">
+    <div class="grid3" style="margin-bottom:40px">
       <div class="card" style="border-top:3px solid var(--gold)">
-        <h4 style="font-weight:800;color:var(--gold);margin-bottom:6px">Makati — Financial Capital</h4>
-        <ul style="list-style:none;color:var(--muted);font-size:.88rem;line-height:2.2">
+        <h4 style="font-weight:800;color:var(--gold);margin-bottom:4px">Makati</h4>
+        <p style="color:var(--dim);font-size:.78rem;margin-bottom:12px">FINANCIAL CAPITAL</p>
+        <ul style="list-style:none;color:var(--muted);font-size:.88rem;line-height:2">
           <li>GDP: <strong style="color:#fff">$21B</strong></li>
           <li>80,000+ businesses & MNCs</li>
           <li>120+ BPO companies</li>
@@ -249,288 +303,488 @@
         </ul>
       </div>
       <div class="card" style="border-top:3px solid var(--red)">
-        <h4 style="font-weight:800;color:var(--red);margin-bottom:6px">Zamboanga — Heritage Capital</h4>
-        <ul style="list-style:none;color:var(--muted);font-size:.88rem;line-height:2.2">
+        <h4 style="font-weight:800;color:var(--red);margin-bottom:4px">Zamboanga</h4>
+        <p style="color:var(--dim);font-size:.78rem;margin-bottom:12px">HERITAGE CAPITAL</p>
+        <ul style="list-style:none;color:var(--muted);font-size:.88rem;line-height:2">
           <li>Population: <strong style="color:#fff">900,000+</strong></li>
           <li>70% Chabacano speakers</li>
           <li>400+ years Spanish heritage</li>
-          <li>Last Spanish Creole city in Asia</li>
+          <li>Last Spanish Creole in Asia</li>
           <li>Role: <strong style="color:var(--red)">Cultural anchor</strong></li>
         </ul>
       </div>
       <div class="card" style="border-top:3px solid var(--green)">
-        <h4 style="font-weight:800;color:var(--green);margin-bottom:6px">Cavite — Industrial Hub</h4>
-        <ul style="list-style:none;color:var(--muted);font-size:.88rem;line-height:2.2">
+        <h4 style="font-weight:800;color:var(--green);margin-bottom:4px">Cavite</h4>
+        <p style="color:var(--dim);font-size:.78rem;margin-bottom:12px">INDUSTRIAL HUB</p>
+        <ul style="list-style:none;color:var(--muted);font-size:.88rem;line-height:2">
           <li>Provincial population: <strong style="color:#fff">4.3M+</strong></li>
-          <li>CALABARZON industrial hub</li>
+          <li>CALABARZON industrial zone</li>
           <li>50+ BPO & export companies</li>
           <li>Birthplace of independence</li>
           <li>Role: <strong style="color:var(--green)">Scale deployment</strong></li>
         </ul>
       </div>
     </div>
-
-    <div class="sl" style="margin-top:48px">Three-Year Roadmap</div>
-    <div class="timeline" style="margin-top:24px;margin-bottom:40px">
-      <div class="tl-item">
-        <div class="tl-dot">1</div>
-        <h4 style="font-weight:700">Year 1: Foundation (2026)</h4>
-        <p style="color:var(--muted);font-size:.9rem">Pilot Spanish programs in select schools across Makati, Zamboanga, and Cavite. Launch teacher training and UVEG certification. BPO Spanish certification program begins. Government staff training initiated. Establish all hemispheric university partnerships. Target: 500 students enrolled, 200 BPO workers in training.</p>
-      </div>
-      <div class="tl-item">
-        <div class="tl-dot">2</div>
-        <h4 style="font-weight:700">Year 2: Expansion (2027)</h4>
-        <p style="color:var(--muted);font-size:.9rem">Spanish mandated in all public high schools in target cities. University of Makati Spanish programs fully operational. 2,500 BPO workers trained and certified. City-wide bilingual signage rollout in Makati. Hybrid learning model with international professors from UVEG and Medellín. Target: $17M–$32M additional income generated.</p>
-      </div>
-      <div class="tl-item">
-        <div class="tl-dot">3</div>
-        <h4 style="font-weight:700">Year 3: Full Implementation (2028)</h4>
-        <p style="color:var(--muted);font-size:.9rem">Spanish in all schools across all three cities. 5,000 BPO workers certified. All frontline government offices become bilingual. International professor exchange programs fully active. Three cities officially designated as Hispanic Gateway of Southeast Asia. Target: $64M–$145M cumulative economic impact.</p>
-      </div>
-    </div>
   </div>
 </section>
 
-<!-- 6. BUSINESS MODEL -->
-<section class="alt" id="model">
+<!-- ====== 06. COMPETITIVE LANDSCAPE ====== -->
+<section class="alt" id="competitive">
   <div class="c">
-    <div class="sl">06 — Business Model</div>
-    <h2 class="st">Five Revenue Streams + Government Sponsorship</h2>
+    <div class="sl">06 — Competitive Landscape</div>
+    <h2 class="st">No Direct Competitor Exists</h2>
+    <p class="ss">Existing players address fragments of this market. None combine heritage-driven curriculum, AI tutoring, BPO certification, and government integration.</p>
 
     <div class="card" style="overflow-x:auto;margin-bottom:32px">
       <table>
-        <thead><tr><th>Revenue Stream</th><th>Model</th><th class="r">Price Point</th><th class="r">Year 1 Target</th></tr></thead>
+        <thead><tr><th>Capability</th><th style="text-align:center">Torna Idioma</th><th style="text-align:center">Duolingo</th><th style="text-align:center">Instituto Cervantes</th><th style="text-align:center">Generic BPO Training</th></tr></thead>
         <tbody>
-          <tr><td><strong>BPO Corporate Training</strong></td><td>Per-worker certification, corporate contracts</td><td class="r">$270–$800/worker</td><td class="r money">$178K</td></tr>
-          <tr><td><strong>Government Programs</strong></td><td>City/provincial deployment contracts</td><td class="r">Per-school + per-student</td><td class="r money">$143K</td></tr>
-          <tr><td><strong>University Licensing</strong></td><td>Platform licensing to universities</td><td class="r">$3.5K–$18K/yr/school</td><td class="r money">$89K</td></tr>
-          <tr><td><strong>Individual Subscriptions</strong></td><td>Self-paced learners, professionals</td><td class="r">$9–$36/mo</td><td class="r money">$54K</td></tr>
-          <tr><td><strong>International Partnerships</strong></td><td>Exchange programs, cultural tourism, consulting</td><td class="r">Custom</td><td class="r money">$36K</td></tr>
-          <tr><td><strong>Sponsor/Grant Funding</strong></td><td>Government grants, TESDA, international sponsors</td><td class="r">Project-based</td><td class="r money">$214K</td></tr>
-          <tr class="total-row"><td colspan="3"><strong>Total Year 1 Revenue Target</strong></td><td class="r money" style="font-size:1.2rem">$714K</td></tr>
+          <tr><td>CEFR-Certified University Curriculum</td><td style="text-align:center;color:var(--green);font-weight:700">Yes (UVEG)</td><td style="text-align:center;color:var(--red)">No</td><td style="text-align:center;color:var(--green)">Yes</td><td style="text-align:center;color:var(--red)">No</td></tr>
+          <tr><td>AI Voice Tutor (24/7)</td><td style="text-align:center;color:var(--green);font-weight:700">Yes</td><td style="text-align:center;color:var(--gold)">Limited</td><td style="text-align:center;color:var(--red)">No</td><td style="text-align:center;color:var(--red)">No</td></tr>
+          <tr><td>BPO Workforce Certification</td><td style="text-align:center;color:var(--green);font-weight:700">Yes</td><td style="text-align:center;color:var(--red)">No</td><td style="text-align:center;color:var(--red)">No</td><td style="text-align:center;color:var(--gold)">Partial</td></tr>
+          <tr><td>Government/City Integration</td><td style="text-align:center;color:var(--green);font-weight:700">Yes</td><td style="text-align:center;color:var(--red)">No</td><td style="text-align:center;color:var(--red)">No</td><td style="text-align:center;color:var(--red)">No</td></tr>
+          <tr><td>Filipino Heritage Focus</td><td style="text-align:center;color:var(--green);font-weight:700">Core</td><td style="text-align:center;color:var(--red)">No</td><td style="text-align:center;color:var(--gold)">Some</td><td style="text-align:center;color:var(--red)">No</td></tr>
+          <tr><td>Hemispheric 11-Nation Alliance</td><td style="text-align:center;color:var(--green);font-weight:700">Yes</td><td style="text-align:center;color:var(--red)">No</td><td style="text-align:center;color:var(--gold)">Spain only</td><td style="text-align:center;color:var(--red)">No</td></tr>
+          <tr><td>Real-Time Economic Impact Tracking</td><td style="text-align:center;color:var(--green);font-weight:700">Yes</td><td style="text-align:center;color:var(--red)">No</td><td style="text-align:center;color:var(--red)">No</td><td style="text-align:center;color:var(--red)">No</td></tr>
+          <tr><td>Cost Per Learner</td><td style="text-align:center;color:var(--green);font-weight:700">$9–$36/mo</td><td style="text-align:center">$7–$14/mo</td><td style="text-align:center">$500+/course</td><td style="text-align:center">$1,000+/worker</td></tr>
         </tbody>
       </table>
     </div>
 
-    <h3 style="font-weight:800;font-size:1.1rem;margin-bottom:16px">Unit Economics</h3>
-    <div class="grid3">
-      <div class="card stat"><div class="v" style="color:var(--green)">$1.7K–$3.2K</div><div class="l">Annual Income Increase</div><div class="d">Per certified BPO worker</div></div>
-      <div class="card stat"><div class="v" style="color:var(--gold)">10x–20x</div><div class="l">ROI for Sponsors</div><div class="d">On $1.1M–$1.8M investment</div></div>
-      <div class="card stat"><div class="v" style="color:var(--blue)">$5.4M–$10.7M</div><div class="l">Yearly Income Generated</div><div class="d">5,000 workers @ premium</div></div>
+    <div class="card" style="border-color:var(--gold);text-align:center">
+      <p style="font-size:1rem;color:var(--gold);font-weight:700">Our moat: Signed MOU with UVEG (Mexico), active university partnerships, 11-nation hemispheric alliance, live platform, and deep cultural legitimacy through Colegio de San Juan de Letran (est. 1620). No competitor can replicate these institutional relationships.</p>
     </div>
   </div>
 </section>
 
-<!-- 7. ECONOMIC IMPACT -->
-<section id="financials">
+<!-- ====== 07. GO-TO-MARKET ROADMAP ====== -->
+<section id="roadmap">
   <div class="c">
-    <div class="sl">07 — Economic Impact Projections</div>
-    <h2 class="st">If 10% of BPO Workforce Becomes Spanish-Proficient</h2>
+    <div class="sl">07 — Go-to-Market Roadmap & Timeline</div>
+    <h2 class="st">Three-Year Phased Deployment</h2>
+
+    <div class="timeline" style="margin-bottom:48px">
+      <div class="tl-item">
+        <div class="tl-dot">1</div>
+        <h4 style="font-weight:700;margin-bottom:4px">Year 1: Foundation (2026)</h4>
+        <p style="color:var(--dim);font-size:.78rem;margin-bottom:8px">CAPITAL REQUIRED: $1.4M</p>
+        <div class="grid2" style="gap:12px">
+          <div>
+            <p style="color:var(--muted);font-size:.85rem;font-weight:600;margin-bottom:4px">Q1–Q2: Setup & Pilot</p>
+            <ul style="list-style:none;color:var(--muted);font-size:.82rem;line-height:1.9">
+              <li>-- Deploy UVEG curriculum on platform</li>
+              <li>-- Launch pilot in 5 schools per city (15 total)</li>
+              <li>-- Begin teacher training program</li>
+              <li>-- Formalize all university partnerships</li>
+              <li>-- Recruit first 200 BPO workers for certification</li>
+            </ul>
+          </div>
+          <div>
+            <p style="color:var(--muted);font-size:.85rem;font-weight:600;margin-bottom:4px">Q3–Q4: Validate & Scale</p>
+            <ul style="list-style:none;color:var(--muted);font-size:.82rem;line-height:1.9">
+              <li>-- 500+ students enrolled across 3 cities</li>
+              <li>-- First BPO certification cohort graduates</li>
+              <li>-- Government staff training initiated</li>
+              <li>-- Publish first economic impact report</li>
+              <li>-- Secure TESDA accreditation</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">2</div>
+        <h4 style="font-weight:700;margin-bottom:4px">Year 2: Expansion (2027)</h4>
+        <p style="color:var(--dim);font-size:.78rem;margin-bottom:8px">CAPITAL REQUIRED: $1.8M</p>
+        <ul style="list-style:none;color:var(--muted);font-size:.85rem;line-height:2">
+          <li>-- Spanish mandated in all public high schools in target cities</li>
+          <li>-- University of Makati Spanish programs fully operational</li>
+          <li>-- <strong style="color:#fff">2,500 BPO workers</strong> trained and certified</li>
+          <li>-- City-wide bilingual signage rollout in Makati</li>
+          <li>-- Hybrid learning with international professors (UVEG + Medellin)</li>
+          <li>-- 5,000+ students enrolled; 80 schools active</li>
+          <li>-- $17M–$32M additional income generated</li>
+        </ul>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">3</div>
+        <h4 style="font-weight:700;margin-bottom:4px">Year 3: Full Implementation (2028)</h4>
+        <p style="color:var(--dim);font-size:.78rem;margin-bottom:8px">CAPITAL REQUIRED: $2.1M | SELF-SUSTAINING TARGET</p>
+        <ul style="list-style:none;color:var(--muted);font-size:.85rem;line-height:2">
+          <li>-- Spanish in all schools across all three cities (200+ schools)</li>
+          <li>-- <strong style="color:#fff">5,000 BPO workers</strong> certified</li>
+          <li>-- All frontline government offices bilingual</li>
+          <li>-- International professor exchange programs fully active</li>
+          <li>-- 25,000+ students with Spanish proficiency</li>
+          <li>-- Three cities officially designated <strong style="color:var(--gold)">Hispanic Gateway of Southeast Asia</strong></li>
+          <li>-- <strong style="color:var(--green)">$64M–$145M cumulative economic impact achieved</strong></li>
+          <li>-- Revenue from BPO contracts + university licensing approaches self-sustainability</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====== 08. BUSINESS MODEL ====== -->
+<section class="alt" id="model">
+  <div class="c">
+    <div class="sl">08 — Business Model & Revenue Streams</div>
+    <h2 class="st">Six Revenue Streams + Government Sponsorship</h2>
+    <p class="ss">A blended model: grant/sponsor funding in Year 1, transitioning to earned revenue by Year 3.</p>
 
     <div class="card" style="overflow-x:auto;margin-bottom:32px">
       <table>
-        <thead><tr><th>Metric</th><th class="r">Year 1</th><th class="r">Year 2</th><th class="r">Year 3</th></tr></thead>
+        <thead><tr><th>Revenue Stream</th><th>Model</th><th class="r">Price Point</th><th class="r">Yr 1</th><th class="r">Yr 2</th><th class="r">Yr 3</th></tr></thead>
         <tbody>
-          <tr><td>Cities Active</td><td class="r">3 (pilot)</td><td class="r">3 (expanding)</td><td class="r">3 (full) + replication</td></tr>
-          <tr><td>Schools with Spanish Programs</td><td class="r">15</td><td class="r">80</td><td class="r">200+</td></tr>
-          <tr><td>BPO Workers Certified</td><td class="r">200</td><td class="r">2,500</td><td class="r">5,000</td></tr>
-          <tr><td>Students Enrolled</td><td class="r">500</td><td class="r">5,000</td><td class="r">25,000+</td></tr>
-          <tr style="background:rgba(16,185,129,.03)"><td><strong>Annual Income Impact</strong></td><td class="r money">$339K</td><td class="r money">$4.3M–$8M</td><td class="r money">$8.6M–$16M</td></tr>
-          <tr><td>Annual City Tax Revenue Impact</td><td class="r cost">$54K</td><td class="r cost">$1.3M–$2.7M</td><td class="r cost">$2.7M–$5.4M</td></tr>
-          <tr><td>Foreign Investment Attracted</td><td class="r cost">$893K</td><td class="r cost">$8.9M–$17.9M</td><td class="r cost">$35M–$89M</td></tr>
-          <tr><td>Annual Tourism Revenue Impact</td><td class="r cost">$179K</td><td class="r cost">$1.8M–$3.6M</td><td class="r cost">$3.6M–$7.1M</td></tr>
+          <tr><td><strong>BPO Corporate Training</strong></td><td>Per-worker certification contracts</td><td class="r">$270–$800/worker</td><td class="r money">$54K</td><td class="r money">$675K</td><td class="r money">$2M</td></tr>
+          <tr><td><strong>Government Contracts</strong></td><td>City/provincial deployment</td><td class="r">Per-school + per-student</td><td class="r money">$143K</td><td class="r money">$400K</td><td class="r money">$750K</td></tr>
+          <tr><td><strong>University Licensing</strong></td><td>Platform licenses to universities</td><td class="r">$3.5K–$18K/yr</td><td class="r money">$36K</td><td class="r money">$180K</td><td class="r money">$360K</td></tr>
+          <tr><td><strong>Individual Subscriptions</strong></td><td>Self-paced learners, professionals</td><td class="r">$9–$36/mo</td><td class="r money">$18K</td><td class="r money">$180K</td><td class="r money">$540K</td></tr>
+          <tr><td><strong>Intl Partnerships</strong></td><td>Exchange programs, consulting</td><td class="r">Custom</td><td class="r money">$25K</td><td class="r money">$100K</td><td class="r money">$250K</td></tr>
+          <tr><td><strong>Sponsor/Grant Funding</strong></td><td>Government grants, TESDA, intl sponsors</td><td class="r">Project-based</td><td class="r money">$438K</td><td class="r money">$300K</td><td class="r money">$150K</td></tr>
+          <tr class="total-row"><td colspan="3"><strong>Total Revenue</strong></td><td class="r money">$714K</td><td class="r money">$1.84M</td><td class="r money">$4.05M</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card" style="padding:24px;border-color:rgba(16,185,129,.3)">
+      <h4 style="color:var(--green);font-weight:800;margin-bottom:8px">Path to Self-Sustainability</h4>
+      <p style="color:var(--muted);font-size:.9rem">Year 1 is grant/sponsor-dependent (61% of revenue). By Year 2, earned revenue exceeds 84%. By Year 3, BPO corporate contracts alone exceed $2M — the platform becomes self-sustaining without ongoing sponsor dependency. Sponsors invest in launch; the market sustains growth.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====== 09. FINANCIAL PROJECTIONS ====== -->
+<section id="financials">
+  <div class="c">
+    <div class="sl">09 — Financial Projections (3-Year P&L)</div>
+    <h2 class="st">Path to Profitability in 24 Months</h2>
+
+    <div class="card" style="overflow-x:auto;margin-bottom:32px">
+      <table>
+        <thead><tr><th>Line Item</th><th class="r">Year 1 (2026)</th><th class="r">Year 2 (2027)</th><th class="r">Year 3 (2028)</th></tr></thead>
+        <tbody>
+          <tr style="background:rgba(16,185,129,.03)"><td><strong>Revenue</strong></td><td class="r money">$714K</td><td class="r money">$1.84M</td><td class="r money">$4.05M</td></tr>
+          <tr><td colspan="4" style="color:var(--dim);font-size:.78rem;font-weight:600;padding-top:16px">COST OF REVENUE</td></tr>
+          <tr><td>Platform infrastructure (hosting, AI APIs)</td><td class="r cost">$48K</td><td class="r cost">$96K</td><td class="r cost">$144K</td></tr>
+          <tr><td>Curriculum licensing & content</td><td class="r cost">$36K</td><td class="r cost">$60K</td><td class="r cost">$72K</td></tr>
+          <tr><td>Visiting professors (contracted)</td><td class="r cost">$60K</td><td class="r cost">$120K</td><td class="r cost">$180K</td></tr>
+          <tr style="background:rgba(201,168,76,.03)"><td><strong>Gross Profit</strong></td><td class="r money">$570K</td><td class="r money">$1.56M</td><td class="r money">$3.65M</td></tr>
+          <tr><td><em>Gross Margin</em></td><td class="r" style="font-weight:600">80%</td><td class="r" style="font-weight:600">85%</td><td class="r" style="font-weight:600">90%</td></tr>
+          <tr><td colspan="4" style="color:var(--dim);font-size:.78rem;font-weight:600;padding-top:16px">OPERATING EXPENSES</td></tr>
+          <tr><td>Teacher training & salaries</td><td class="r cost">$446K</td><td class="r cost">$600K</td><td class="r cost">$750K</td></tr>
+          <tr><td>School deployment (hardware, internet)</td><td class="r cost">$321K</td><td class="r cost">$400K</td><td class="r cost">$300K</td></tr>
+          <tr><td>BPO certification program</td><td class="r cost">$268K</td><td class="r cost">$350K</td><td class="r cost">$400K</td></tr>
+          <tr><td>Platform & AI development</td><td class="r cost">$179K</td><td class="r cost">$200K</td><td class="r cost">$220K</td></tr>
+          <tr><td>International partnerships</td><td class="r cost">$125K</td><td class="r cost">$150K</td><td class="r cost">$175K</td></tr>
+          <tr><td>Operations & administration</td><td class="r cost">$89K</td><td class="r cost">$120K</td><td class="r cost">$150K</td></tr>
+          <tr style="background:rgba(201,168,76,.03)"><td><strong>Total OpEx</strong></td><td class="r cost">$1.43M</td><td class="r cost">$1.82M</td><td class="r cost">$1.99M</td></tr>
+          <tr class="total-row"><td><strong>Net Income (Loss)</strong></td><td class="r neg">($860K)</td><td class="r neg">($260K)</td><td class="r money" style="font-size:1.1rem">$1.66M</td></tr>
+          <tr><td><strong>Cumulative Net</strong></td><td class="r neg">($860K)</td><td class="r neg">($1.12M)</td><td class="r money">$540K</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid3">
+      <div class="card stat"><div class="v" style="color:var(--green)">90%</div><div class="l">Year 3 Gross Margin</div><div class="d">Software economics</div></div>
+      <div class="card stat"><div class="v" style="color:var(--gold)">Month 24</div><div class="l">Breakeven Target</div><div class="d">Earned revenue > OpEx</div></div>
+      <div class="card stat"><div class="v" style="color:var(--blue)">$1.66M</div><div class="l">Year 3 Net Income</div><div class="d">Self-sustaining</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ====== 10. SPONSOR ROI ====== -->
+<section class="alt" id="roi">
+  <div class="c">
+    <div class="sl">10 — Sponsor ROI Analysis</div>
+    <h2 class="st">If 10% of BPO Workforce Becomes Spanish-Proficient</h2>
+    <p class="ss">Sponsor capital does not disappear — it catalyzes a self-reinforcing economic engine. Here is the measured return.</p>
+
+    <div class="card" style="overflow-x:auto;margin-bottom:32px">
+      <table>
+        <thead><tr><th>Impact Metric</th><th class="r">Year 1</th><th class="r">Year 2</th><th class="r">Year 3</th></tr></thead>
+        <tbody>
+          <tr><td>BPO Workers Certified</td><td class="r">200</td><td class="r">2,500</td><td class="r" style="font-weight:700">5,000</td></tr>
+          <tr><td>Students Enrolled</td><td class="r">500</td><td class="r">5,000</td><td class="r" style="font-weight:700">25,000+</td></tr>
+          <tr><td>Schools Active</td><td class="r">15</td><td class="r">80</td><td class="r" style="font-weight:700">200+</td></tr>
+          <tr style="background:rgba(16,185,129,.03)"><td><strong>Additional Worker Income (annual)</strong></td><td class="r money">$339K</td><td class="r money">$4.3M–$8M</td><td class="r money">$8.6M–$16M</td></tr>
+          <tr><td>City Tax Revenue Increase (annual)</td><td class="r cost">$54K</td><td class="r cost">$1.3M–$2.7M</td><td class="r cost">$2.7M–$5.4M</td></tr>
+          <tr><td>Foreign Investment Attracted (cumulative)</td><td class="r cost">$893K</td><td class="r cost">$8.9M–$17.9M</td><td class="r cost">$35M–$89M</td></tr>
+          <tr><td>Tourism Revenue Increase (annual)</td><td class="r cost">$179K</td><td class="r cost">$1.8M–$3.6M</td><td class="r cost">$3.6M–$7.1M</td></tr>
           <tr class="total-row"><td><strong>Cumulative Economic Impact</strong></td><td class="r">$1.5M</td><td class="r">$17.9M–$33.9M</td><td class="r money" style="font-size:1.1rem">$64M–$145M</td></tr>
         </tbody>
       </table>
     </div>
 
-    <div class="card" style="text-align:center;padding:36px;background:linear-gradient(135deg,rgba(201,168,76,.06),rgba(16,185,129,.04));border-color:var(--gold)">
-      <h3 style="font-family:'Playfair Display',serif;font-size:1.5rem;margin-bottom:4px">Sponsor ROI</h3>
-      <div style="font-family:'Playfair Display',serif;font-size:3rem;font-weight:800;color:var(--gold)">10x – 20x</div>
-      <p style="color:var(--muted);font-size:.9rem;margin-top:8px">On annual investment of $1.1M–$1.8M — measured in resident income, tax revenue, foreign investment, and tourism</p>
-    </div>
-  </div>
-</section>
-
-<!-- 8. PARTNERSHIPS -->
-<section class="alt" id="partnerships">
-  <div class="c">
-    <div class="sl">08 — Hemispheric Alliance</div>
-    <h2 class="st">11-Nation Partnership Network</h2>
-    <p class="ss">Torna Idioma is backed by a hemispheric alliance of Spanish-speaking nations providing curriculum, teachers, cultural exchange, and institutional credibility.</p>
-
     <div class="grid2" style="margin-bottom:32px">
-      <div class="card" style="border-left:4px solid var(--gold)">
-        <h4 style="font-weight:800;margin-bottom:4px;color:var(--gold)">UVEG — Mexico</h4>
-        <p style="color:var(--blue);font-size:.82rem;margin-bottom:8px">Universidad Virtual del Estado de Guanajuato</p>
-        <p style="color:var(--muted);font-size:.9rem">12 modules, 72 lessons, 30 teaching hours per module. 100% interactive platform. CEFR-aligned certification (A1 to B1+). MOU signed with Torna Idioma. The academic backbone of the entire initiative.</p>
+      <div class="card" style="text-align:center;padding:36px;border-color:var(--gold)">
+        <p style="color:var(--dim);font-size:.78rem;font-weight:600;letter-spacing:1px;text-transform:uppercase">3-Year Sponsor ROI</p>
+        <div style="font-family:'Playfair Display',serif;font-size:3.5rem;font-weight:900;color:var(--gold)">10x – 20x</div>
+        <p style="color:var(--muted);font-size:.85rem;margin-top:8px">On total capital deployed of $5.3M over 3 years</p>
       </div>
-      <div class="card" style="border-left:4px solid var(--red)">
-        <h4 style="font-weight:800;margin-bottom:4px;color:var(--red)">Universidad de Medellín — Colombia</h4>
-        <p style="color:var(--blue);font-size:.82rem;margin-bottom:8px">Trilateral Partnership</p>
-        <p style="color:var(--muted);font-size:.9rem">Partnership with University of Makati and Colegio de San Juan de Letrán. Teacher training programs, virtual cohorts, cultural exchange. Medellín's innovation ecosystem meets Manila's ambition.</p>
-      </div>
-      <div class="card" style="border-left:4px solid var(--green)">
-        <h4 style="font-weight:800;margin-bottom:4px;color:var(--green)">University of Makati — Philippines</h4>
-        <p style="color:var(--blue);font-size:.82rem;margin-bottom:8px">Host & Implementing University</p>
-        <p style="color:var(--muted);font-size:.9rem">Led by President Maestro Elyxzur C. Ramos (Letrán alumnus). The primary implementing institution for Makati deployment. Student enrollment, teacher certification, government coordination.</p>
-      </div>
-      <div class="card" style="border-left:4px solid var(--cyan)">
-        <h4 style="font-weight:800;margin-bottom:4px;color:var(--cyan)">Colegio de San Juan de Letrán</h4>
-        <p style="color:var(--blue);font-size:.82rem;margin-bottom:8px">Founded 1620 — Oldest in Asia</p>
-        <p style="color:var(--muted);font-size:.9rem">Deep Spanish-era roots. Alumni network bridging heritage and modern education. School hymn still sung in Spanish — unaltered since 1620. Institutional legitimacy and cultural authority.</p>
-      </div>
-    </div>
-
-    <h4 style="font-weight:800;margin-bottom:16px">Hemispheric Partner Nations</h4>
-    <div class="grid4" style="margin-bottom:20px">
-      <div class="card" style="text-align:center;padding:16px"><span style="font-size:2rem">🇪🇸</span><p style="font-size:.82rem;font-weight:600;margin-top:4px">Spain</p></div>
-      <div class="card" style="text-align:center;padding:16px"><span style="font-size:2rem">🇲🇽</span><p style="font-size:.82rem;font-weight:600;margin-top:4px">Mexico</p></div>
-      <div class="card" style="text-align:center;padding:16px"><span style="font-size:2rem">🇨🇴</span><p style="font-size:.82rem;font-weight:600;margin-top:4px">Colombia</p></div>
-      <div class="card" style="text-align:center;padding:16px"><span style="font-size:2rem">🇨🇱</span><p style="font-size:.82rem;font-weight:600;margin-top:4px">Chile</p></div>
-      <div class="card" style="text-align:center;padding:16px"><span style="font-size:2rem">🇵🇪</span><p style="font-size:.82rem;font-weight:600;margin-top:4px">Peru</p></div>
-      <div class="card" style="text-align:center;padding:16px"><span style="font-size:2rem">🇦🇷</span><p style="font-size:.82rem;font-weight:600;margin-top:4px">Argentina</p></div>
-      <div class="card" style="text-align:center;padding:16px"><span style="font-size:2rem">🇵🇦</span><p style="font-size:.82rem;font-weight:600;margin-top:4px">Panama</p></div>
-      <div class="card" style="text-align:center;padding:16px"><span style="font-size:2rem">🇨🇷</span><p style="font-size:.82rem;font-weight:600;margin-top:4px">Costa Rica</p></div>
-      <div class="card" style="text-align:center;padding:16px"><span style="font-size:2rem">🇩🇴</span><p style="font-size:.82rem;font-weight:600;margin-top:4px">Dominican Rep.</p></div>
-      <div class="card" style="text-align:center;padding:16px"><span style="font-size:2rem">🇵🇷</span><p style="font-size:.82rem;font-weight:600;margin-top:4px">Puerto Rico</p></div>
-      <div class="card" style="text-align:center;padding:16px"><span style="font-size:2rem">🇵🇭</span><p style="font-size:.82rem;font-weight:600;margin-top:4px">Philippines</p></div>
-    </div>
-  </div>
-</section>
-
-<!-- 9. HERITAGE -->
-<section id="heritage">
-  <div class="c">
-    <div class="sl">09 — Heritage Foundation</div>
-    <h2 class="st">400 Years of Shared History</h2>
-    <p class="ss">Spanish is not a foreign language in the Philippines. It is the language of Philippine independence, law, and identity.</p>
-
-    <div class="grid2" style="margin-bottom:32px">
-      <div class="card" style="display:flex;gap:16px;align-items:flex-start">
-        <div style="flex-shrink:0;width:48px;height:48px;background:rgba(201,168,76,.12);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem">&#9998;</div>
-        <div>
-          <h5 style="color:var(--gold);font-size:.95rem;margin-bottom:4px">José Rizal</h5>
-          <p style="color:var(--muted);font-size:.88rem">National hero who wrote "Noli Me Tangere" and "El Filibusterismo" in Spanish — the novels that sparked Philippine revolution and independence.</p>
-        </div>
-      </div>
-      <div class="card" style="display:flex;gap:16px;align-items:flex-start">
-        <div style="flex-shrink:0;width:48px;height:48px;background:rgba(201,168,76,.12);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem">&#128220;</div>
-        <div>
-          <h5 style="color:var(--gold);font-size:.95rem;margin-bottom:4px">Malolos Constitution (1899)</h5>
-          <p style="color:var(--muted);font-size:.88rem">First republican constitution in Asia — written entirely in Spanish. The foundation of Philippine sovereignty was articulated in the language Torna Idioma seeks to restore.</p>
-        </div>
-      </div>
-      <div class="card" style="display:flex;gap:16px;align-items:flex-start">
-        <div style="flex-shrink:0;width:48px;height:48px;background:rgba(201,168,76,.12);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem">&#9973;</div>
-        <div>
-          <h5 style="color:var(--gold);font-size:.95rem;margin-bottom:4px">Manila Galleon Trade (250+ Years)</h5>
-          <p style="color:var(--muted);font-size:.88rem">Connected Manila to Acapulco — the first globalization. The Philippines was at the epicenter of world trade for 250 years, all conducted in Spanish.</p>
-        </div>
-      </div>
-      <div class="card" style="display:flex;gap:16px;align-items:flex-start">
-        <div style="flex-shrink:0;width:48px;height:48px;background:rgba(201,168,76,.12);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem">&#127891;</div>
-        <div>
-          <h5 style="color:var(--gold);font-size:.95rem;margin-bottom:4px">Colegio de San Juan de Letrán (1620)</h5>
-          <p style="color:var(--muted);font-size:.88rem">The oldest educational institution in Asia with an unaltered school hymn still sung in Spanish. 400+ years of continuous Hispanic education tradition.</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="card" style="text-align:center;padding:32px;border-color:rgba(201,168,76,.3)">
-      <p style="font-family:'Playfair Display',serif;font-size:1.3rem;font-style:italic;color:var(--gold-l);max-width:700px;margin:0 auto;line-height:1.6">
-        "El que no sabe de dónde viene, no sabe a dónde va."<br />
-        <span style="font-size:.9rem;color:var(--muted);font-style:normal">— He who does not know where he comes from, does not know where he is going.</span>
-      </p>
-    </div>
-  </div>
-</section>
-
-<!-- 10. TEAM -->
-<section class="alt" id="team">
-  <div class="c">
-    <div class="sl">10 — Team & Leadership</div>
-    <h2 class="st">Heritage Meets Technology</h2>
-    <p class="ss">A leadership team that combines Filipino-Hispanic heritage advocacy with enterprise AI technology delivery.</p>
-
-    <div class="grid2">
-      <div class="card">
-        <h4 style="font-weight:800;margin-bottom:4px">Numeriano V. Bouffard — Founder & Principal Promoter</h4>
-        <p style="color:var(--gold);font-size:.85rem;margin-bottom:8px">Colegio de San Juan de Letrán (HS '59, BSA '64)</p>
-        <p style="color:var(--muted);font-size:.9rem">Chairman, Philippine American Chamber of Central Florida. Letrán alumnus and lifelong advocate for Filipino-Hispanic cultural restoration. The visionary who conceived Torna Idioma as a movement to restore dignity, pride, and economic opportunity through Spanish language education.</p>
-      </div>
-      <div class="card">
-        <h4 style="font-weight:800;margin-bottom:4px">Manuel Stagg — CEO & Technical Architect</h4>
-        <p style="color:var(--gold);font-size:.85rem;margin-bottom:8px">Digit2AI LLC</p>
-        <p style="color:var(--muted);font-size:.9rem">Full-stack AI engineer and entrepreneur. Built the entire Torna Idioma platform — from UVEG curriculum integration to AI tutoring to multilingual deployment. 15+ years in enterprise software, AI systems, and multi-tenant SaaS across healthcare, logistics, education, and communications verticals.</p>
-      </div>
-      <div class="card">
-        <h4 style="font-weight:800;margin-bottom:4px">Maestro Elyxzur C. Ramos — Academic Partner</h4>
-        <p style="color:var(--gold);font-size:.85rem;margin-bottom:8px">President, University of Makati</p>
-        <p style="color:var(--muted);font-size:.9rem">Letrán alumnus. Leading the implementation of Spanish programs at University of Makati. Key bridge between the academic community, local government, and the Torna Idioma platform deployment.</p>
-      </div>
-      <div class="card">
-        <h4 style="font-weight:800;margin-bottom:4px">Dr. José Antonio V. Bouffard</h4>
-        <p style="color:var(--gold);font-size:.85rem;margin-bottom:8px">Medical Professional & Movement Advocate</p>
-        <p style="color:var(--muted);font-size:.9rem">Advocate and strategic advisor for the Torna Idioma cultural restoration initiative. Brings professional credibility and cross-sector network connections to the movement.</p>
+      <div class="card" style="text-align:center;padding:36px;border-color:var(--green)">
+        <p style="color:var(--dim);font-size:.78rem;font-weight:600;letter-spacing:1px;text-transform:uppercase">Per-Dollar Impact</p>
+        <div style="font-family:'Playfair Display',serif;font-size:3.5rem;font-weight:900;color:var(--green)">$27</div>
+        <p style="color:var(--muted);font-size:.85rem;margin-top:8px">Economic value generated per $1 invested (at midpoint)</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- 11. THE ASK -->
+<!-- ====== 11. CAPITAL REQUIREMENTS ====== -->
 <section id="ask">
   <div class="c">
-    <div class="sl">11 — The Sponsorship Ask</div>
-    <h2 class="st">$1.1M–$1.8M Annual Investment</h2>
-    <p class="ss">Seeking sponsors, government partners, and institutional backers to fund the three-year citywide deployment across Makati, Zamboanga, and Cavite.</p>
+    <div class="sl">11 — Capital Requirements & Use of Funds</div>
+    <h2 class="st">$1.4M Year 1 | $5.3M Total (3-Year)</h2>
+    <p class="ss">Seeking sponsors, government partners, and institutional backers. Below is the detailed breakdown of how every dollar is deployed.</p>
 
     <div class="card" style="overflow-x:auto;margin-bottom:32px">
+      <h4 style="font-weight:700;margin-bottom:16px">Year 1 Capital Allocation</h4>
       <table>
-        <thead><tr><th>Use of Funds</th><th>Description</th><th class="r">Amount</th><th class="r">%</th></tr></thead>
+        <thead><tr><th>Category</th><th>Description</th><th class="r">Amount</th><th class="r">%</th></tr></thead>
         <tbody>
-          <tr><td><strong>Teacher Training & Salaries</strong></td><td>UVEG certification, visiting professors, local teacher development</td><td class="r cost">$446K</td><td class="r">31%</td></tr>
-          <tr><td><strong>School Deployment</strong></td><td>Technology infrastructure, tablets, internet, classroom setup</td><td class="r cost">$321K</td><td class="r">22%</td></tr>
-          <tr><td><strong>BPO Certification Program</strong></td><td>Corporate partnerships, TESDA centers, certification costs</td><td class="r cost">$268K</td><td class="r">19%</td></tr>
-          <tr><td><strong>Platform & AI Development</strong></td><td>AI tutor enhancements, content creation, mobile app</td><td class="r cost">$179K</td><td class="r">12%</td></tr>
-          <tr><td><strong>International Partnerships</strong></td><td>Professor exchange, student scholarships, cultural programs</td><td class="r cost">$125K</td><td class="r">9%</td></tr>
-          <tr><td><strong>Operations & Administration</strong></td><td>Program management, government coordination, reporting</td><td class="r cost">$89K</td><td class="r">6%</td></tr>
-          <tr class="total-row"><td colspan="2"><strong>Total Annual Investment (Year 1)</strong></td><td class="r cost" style="font-size:1.2rem">$1.4M</td><td class="r" style="font-size:1.2rem">100%</td></tr>
+          <tr><td><strong>Teacher Training & Salaries</strong></td><td>UVEG certification for 50 teachers, visiting professor stipends, local teacher development across 3 cities</td><td class="r cost">$446K</td><td class="r">31%</td></tr>
+          <tr><td><strong>School Deployment</strong></td><td>Tablets (500 units), internet infrastructure for 15 schools, classroom setup, learning materials</td><td class="r cost">$321K</td><td class="r">22%</td></tr>
+          <tr><td><strong>BPO Certification Program</strong></td><td>Corporate partnerships with 10 BPO companies, TESDA center setup, certification development, first 200 workers</td><td class="r cost">$268K</td><td class="r">19%</td></tr>
+          <tr><td><strong>Platform & AI Development</strong></td><td>AI tutor improvements, mobile app development, content creation, voice recognition enhancements</td><td class="r cost">$179K</td><td class="r">12%</td></tr>
+          <tr><td><strong>International Partnerships</strong></td><td>Professor exchange flights/housing, student scholarships (10 slots), UVEG coordination, cultural programs</td><td class="r cost">$125K</td><td class="r">9%</td></tr>
+          <tr><td><strong>Operations & Admin</strong></td><td>Program management, government coordination, impact reporting, legal, accounting</td><td class="r cost">$89K</td><td class="r">6%</td></tr>
+          <tr class="total-row"><td colspan="2"><strong>Total Year 1</strong></td><td class="r cost" style="font-size:1.2rem">$1.43M</td><td class="r" style="font-size:1.2rem">100%</td></tr>
         </tbody>
       </table>
     </div>
 
-    <h3 style="font-weight:800;font-size:1.1rem;margin-bottom:16px">What Sponsors Get</h3>
-    <div class="grid2" style="margin-bottom:32px">
-      <div class="card" style="border-color:var(--gold)">
-        <h4 style="color:var(--gold);font-weight:800;margin-bottom:12px">Year 1 Milestones</h4>
-        <ul style="list-style:none;color:var(--muted);font-size:.9rem">
-          <li style="padding:6px 0;border-bottom:1px solid rgba(201,168,76,.1)">15 schools with active Spanish programs</li>
-          <li style="padding:6px 0;border-bottom:1px solid rgba(201,168,76,.1)">500+ students enrolled across 3 cities</li>
-          <li style="padding:6px 0;border-bottom:1px solid rgba(201,168,76,.1)">200 BPO workers in certification pipeline</li>
-          <li style="padding:6px 0;border-bottom:1px solid rgba(201,168,76,.1)">UVEG curriculum fully deployed</li>
-          <li style="padding:6px 0;border-bottom:1px solid rgba(201,168,76,.1)">Teacher training program operational</li>
-          <li style="padding:6px 0">All hemispheric partnerships formalized</li>
+    <div class="card" style="overflow-x:auto;margin-bottom:32px">
+      <h4 style="font-weight:700;margin-bottom:16px">3-Year Capital Summary</h4>
+      <table>
+        <thead><tr><th>Year</th><th class="r">Capital Required</th><th class="r">Revenue Earned</th><th class="r">Net Funding Gap</th><th class="r">Cumulative Impact</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Year 1 (2026)</strong></td><td class="r cost">$1.43M</td><td class="r money">$714K</td><td class="r neg">$716K</td><td class="r">$1.5M</td></tr>
+          <tr><td><strong>Year 2 (2027)</strong></td><td class="r cost">$1.82M</td><td class="r money">$1.84M</td><td class="r money">$20K surplus</td><td class="r">$17.9M–$33.9M</td></tr>
+          <tr><td><strong>Year 3 (2028)</strong></td><td class="r cost">$1.99M</td><td class="r money">$4.05M</td><td class="r money">$2.06M surplus</td><td class="r money" style="font-weight:700">$64M–$145M</td></tr>
+          <tr class="total-row"><td><strong>Total</strong></td><td class="r cost">$5.24M</td><td class="r money">$6.60M</td><td class="r money">$1.36M surplus</td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card" style="border-color:var(--green);padding:24px">
+      <h4 style="color:var(--green);font-weight:800;margin-bottom:8px">Key Insight for Sponsors</h4>
+      <p style="color:var(--muted);font-size:.9rem">Only Year 1 requires significant net funding ($716K gap between costs and revenue). By Year 2, earned revenue nearly covers operating costs. By Year 3, the program generates a $2M+ surplus. <strong style="color:#fff">Sponsors fund the launch — the market funds the growth.</strong></p>
+    </div>
+  </div>
+</section>
+
+<!-- ====== 12. KEY MILESTONES & KPIs ====== -->
+<section class="alt" id="milestones">
+  <div class="c">
+    <div class="sl">12 — Key Milestones & KPIs</div>
+    <h2 class="st">Quarterly Performance Tracking (Year 1)</h2>
+
+    <div class="card" style="overflow-x:auto;margin-bottom:32px">
+      <table>
+        <thead><tr><th>KPI</th><th class="r">Q1 2026</th><th class="r">Q2 2026</th><th class="r">Q3 2026</th><th class="r">Q4 2026</th></tr></thead>
+        <tbody>
+          <tr><td>Schools Active</td><td class="r">5</td><td class="r">10</td><td class="r">15</td><td class="r" style="font-weight:700">15</td></tr>
+          <tr><td>Students Enrolled</td><td class="r">50</td><td class="r">150</td><td class="r">350</td><td class="r" style="font-weight:700">500+</td></tr>
+          <tr><td>BPO Workers in Training</td><td class="r">0</td><td class="r">50</td><td class="r">120</td><td class="r" style="font-weight:700">200</td></tr>
+          <tr><td>Teachers Certified (UVEG)</td><td class="r">10</td><td class="r">25</td><td class="r">40</td><td class="r" style="font-weight:700">50</td></tr>
+          <tr><td>University Partnerships Signed</td><td class="r">2</td><td class="r">3</td><td class="r">4</td><td class="r" style="font-weight:700">5</td></tr>
+          <tr><td>Revenue (cumulative)</td><td class="r money">$50K</td><td class="r money">$180K</td><td class="r money">$420K</td><td class="r money" style="font-weight:700">$714K</td></tr>
+          <tr><td>Economic Impact Report</td><td class="r" style="color:var(--dim)">--</td><td class="r" style="color:var(--dim)">--</td><td class="r" style="color:var(--gold)">Draft</td><td class="r" style="color:var(--green);font-weight:700">Published</td></tr>
+          <tr><td>TESDA Accreditation</td><td class="r" style="color:var(--dim)">--</td><td class="r" style="color:var(--gold)">Applied</td><td class="r" style="color:var(--gold)">Review</td><td class="r" style="color:var(--green);font-weight:700">Approved</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-weight:800;font-size:1rem;margin-bottom:16px">3-Year Milestone Targets</h3>
+    <div class="grid3">
+      <div class="card" style="border-top:3px solid var(--gold)">
+        <h4 style="color:var(--gold);font-weight:800;font-size:.9rem;margin-bottom:12px">Year 1 Exit Criteria</h4>
+        <ul style="list-style:none;color:var(--muted);font-size:.85rem;line-height:2">
+          <li>-- 500 students enrolled</li>
+          <li>-- 200 BPO workers in pipeline</li>
+          <li>-- 15 schools active</li>
+          <li>-- 50 teachers UVEG-certified</li>
+          <li>-- $714K revenue</li>
+          <li>-- TESDA accreditation</li>
         </ul>
       </div>
-      <div class="card" style="border-color:var(--green)">
-        <h4 style="color:var(--green);font-weight:800;margin-bottom:12px">3-Year Return on Investment</h4>
-        <ul style="list-style:none;color:var(--muted);font-size:.9rem">
-          <li style="padding:6px 0;border-bottom:1px solid rgba(201,168,76,.1)">5,000 BPO workers certified (20-40% salary boost)</li>
-          <li style="padding:6px 0;border-bottom:1px solid rgba(201,168,76,.1)">$8.6M–$16M in additional annual income</li>
-          <li style="padding:6px 0;border-bottom:1px solid rgba(201,168,76,.1)">$2.7M–$5.4M in additional annual tax revenue</li>
-          <li style="padding:6px 0;border-bottom:1px solid rgba(201,168,76,.1)">$35M–$89M in foreign investment attracted</li>
-          <li style="padding:6px 0;border-bottom:1px solid rgba(201,168,76,.1)">25,000+ students with Spanish proficiency</li>
-          <li style="padding:6px 0">3 cities designated Hispanic Gateway of SE Asia</li>
+      <div class="card" style="border-top:3px solid var(--blue)">
+        <h4 style="color:var(--blue);font-weight:800;font-size:.9rem;margin-bottom:12px">Year 2 Exit Criteria</h4>
+        <ul style="list-style:none;color:var(--muted);font-size:.85rem;line-height:2">
+          <li>-- 5,000 students enrolled</li>
+          <li>-- 2,500 BPO workers certified</li>
+          <li>-- 80 schools active</li>
+          <li>-- Revenue > OpEx</li>
+          <li>-- $1.84M revenue</li>
+          <li>-- Bilingual signage in Makati</li>
+        </ul>
+      </div>
+      <div class="card" style="border-top:3px solid var(--green)">
+        <h4 style="color:var(--green);font-weight:800;font-size:.9rem;margin-bottom:12px">Year 3 Exit Criteria</h4>
+        <ul style="list-style:none;color:var(--muted);font-size:.85rem;line-height:2">
+          <li>-- 25,000+ students</li>
+          <li>-- 5,000 BPO workers certified</li>
+          <li>-- 200+ schools</li>
+          <li>-- $4.05M revenue</li>
+          <li>-- $1.66M net income</li>
+          <li>-- Hispanic Gateway designation</li>
         </ul>
       </div>
     </div>
+  </div>
+</section>
 
-    <div class="card" style="text-align:center;padding:36px;background:linear-gradient(135deg,rgba(201,168,76,.06),rgba(16,185,129,.04));border-color:var(--gold)">
+<!-- ====== 13. PARTNERSHIPS ====== -->
+<section id="partnerships">
+  <div class="c">
+    <div class="sl">13 — Partnerships & Institutional Support</div>
+    <h2 class="st">Hemispheric Alliance — 11 Nations</h2>
+
+    <div class="grid2" style="margin-bottom:32px">
+      <div class="card" style="border-left:4px solid var(--gold)">
+        <h4 style="font-weight:800;margin-bottom:4px;color:var(--gold)">UVEG — Mexico</h4>
+        <p style="color:var(--blue);font-size:.78rem;margin-bottom:8px">Universidad Virtual del Estado de Guanajuato | MOU SIGNED</p>
+        <p style="color:var(--muted);font-size:.88rem">12 modules, 72 lessons, 30 hours/module. 100% interactive. CEFR A1-B1+. The academic backbone — providing university-certified Spanish curriculum designed specifically for Filipino learners.</p>
+      </div>
+      <div class="card" style="border-left:4px solid var(--red)">
+        <h4 style="font-weight:800;margin-bottom:4px;color:var(--red)">Universidad de Medellin — Colombia</h4>
+        <p style="color:var(--blue);font-size:.78rem;margin-bottom:8px">Trilateral Partnership</p>
+        <p style="color:var(--muted);font-size:.88rem">Joint program with University of Makati and Colegio de San Juan de Letran. Teacher training, virtual cohorts, cultural exchange. Medellin's innovation ecosystem meets Manila's ambition.</p>
+      </div>
+      <div class="card" style="border-left:4px solid var(--green)">
+        <h4 style="font-weight:800;margin-bottom:4px;color:var(--green)">University of Makati — Philippines</h4>
+        <p style="color:var(--blue);font-size:.78rem;margin-bottom:8px">Host & Implementing University</p>
+        <p style="color:var(--muted);font-size:.88rem">Led by President Maestro Elyxzur C. Ramos (Letran alumnus). Primary implementing institution — student enrollment, teacher certification, government coordination.</p>
+      </div>
+      <div class="card" style="border-left:4px solid var(--cyan)">
+        <h4 style="font-weight:800;margin-bottom:4px;color:var(--cyan)">Colegio de San Juan de Letran</h4>
+        <p style="color:var(--blue);font-size:.78rem;margin-bottom:8px">Founded 1620 — Oldest Educational Institution in Asia</p>
+        <p style="color:var(--muted);font-size:.88rem">School hymn still sung in Spanish. Alumni network bridging heritage and modern education. Institutional legitimacy and cultural authority that no competitor can replicate.</p>
+      </div>
+    </div>
+
+    <h4 style="font-weight:800;margin-bottom:12px">Partner Nations</h4>
+    <div class="flag-row">
+      <span class="flag-chip">🇪🇸 Spain</span>
+      <span class="flag-chip">🇲🇽 Mexico</span>
+      <span class="flag-chip">🇨🇴 Colombia</span>
+      <span class="flag-chip">🇨🇱 Chile</span>
+      <span class="flag-chip">🇵🇪 Peru</span>
+      <span class="flag-chip">🇦🇷 Argentina</span>
+      <span class="flag-chip">🇵🇦 Panama</span>
+      <span class="flag-chip">🇨🇷 Costa Rica</span>
+      <span class="flag-chip">🇩🇴 Dominican Republic</span>
+      <span class="flag-chip">🇵🇷 Puerto Rico</span>
+      <span class="flag-chip">🇵🇭 Philippines</span>
+    </div>
+  </div>
+</section>
+
+<!-- ====== 14. TEAM ====== -->
+<section class="alt" id="team">
+  <div class="c">
+    <div class="sl">14 — Team & Leadership</div>
+    <h2 class="st">Heritage Meets Technology</h2>
+
+    <div class="grid2">
+      <div class="card">
+        <h4 style="font-weight:800;margin-bottom:4px">Numeriano V. Bouffard</h4>
+        <p style="color:var(--gold);font-size:.82rem;margin-bottom:8px">Founder & Principal Promoter | Colegio de San Juan de Letran (HS '59, BSA '64)</p>
+        <p style="color:var(--muted);font-size:.88rem">Chairman, Philippine American Chamber of Central Florida. Lifelong advocate for Filipino-Hispanic cultural restoration. The visionary behind the movement — conceived Torna Idioma as the vehicle to restore dignity, pride, and economic opportunity.</p>
+      </div>
+      <div class="card">
+        <h4 style="font-weight:800;margin-bottom:4px">Manuel Stagg</h4>
+        <p style="color:var(--gold);font-size:.82rem;margin-bottom:8px">CEO & Technical Architect | Digit2AI LLC</p>
+        <p style="color:var(--muted);font-size:.88rem">Full-stack AI engineer. Built the entire platform — UVEG integration, AI tutoring, multilingual deployment, analytics. 15+ years in enterprise software, AI systems, and multi-tenant SaaS across healthcare, logistics, education, and communications.</p>
+      </div>
+      <div class="card">
+        <h4 style="font-weight:800;margin-bottom:4px">Maestro Elyxzur C. Ramos</h4>
+        <p style="color:var(--gold);font-size:.82rem;margin-bottom:8px">Academic Partner | President, University of Makati</p>
+        <p style="color:var(--muted);font-size:.88rem">Letran alumnus. Leading implementation of Spanish programs at University of Makati. Bridge between academic community, local government, and the platform.</p>
+      </div>
+      <div class="card">
+        <h4 style="font-weight:800;margin-bottom:4px">Dr. José Antonio V. Bouffard</h4>
+        <p style="color:var(--gold);font-size:.82rem;margin-bottom:8px">Strategic Advisor | Medical Professional</p>
+        <p style="color:var(--muted);font-size:.88rem">Movement advocate and strategic advisor. Professional credibility and cross-sector network connections supporting the initiative's institutional outreach.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====== 15. RISK ANALYSIS ====== -->
+<section id="risks">
+  <div class="c">
+    <div class="sl">15 — Risk Analysis & Mitigations</div>
+    <h2 class="st">Identified Risks and How We Address Them</h2>
+
+    <div class="card" style="padding:32px">
+      <div class="risk-row">
+        <span class="risk-level med">Medium</span>
+        <div>
+          <h4 style="font-weight:700;font-size:.95rem;margin-bottom:4px">Government Policy Change</h4>
+          <p style="color:var(--muted);font-size:.85rem"><strong>Risk:</strong> Newly elected officials may not prioritize Spanish education. <strong>Mitigation:</strong> Multi-city deployment reduces single-city dependency. BPO corporate contracts provide revenue independent of government. Bipartisan support via heritage framing (not political).</p>
+        </div>
+      </div>
+      <div class="risk-row">
+        <span class="risk-level med">Medium</span>
+        <div>
+          <h4 style="font-weight:700;font-size:.95rem;margin-bottom:4px">BPO Market Demand Shift</h4>
+          <p style="color:var(--muted);font-size:.85rem"><strong>Risk:</strong> AI automation reduces BPO agent demand. <strong>Mitigation:</strong> Spanish-speaking agents handle complex/emotional interactions least likely to be automated. Bilingual skills increase value as AI handles simple queries. Platform also serves education and government sectors.</p>
+        </div>
+      </div>
+      <div class="risk-row">
+        <span class="risk-level low">Low</span>
+        <div>
+          <h4 style="font-weight:700;font-size:.95rem;margin-bottom:4px">Teacher Supply Constraint</h4>
+          <p style="color:var(--muted);font-size:.85rem"><strong>Risk:</strong> Not enough qualified Spanish teachers locally. <strong>Mitigation:</strong> AI tutor provides 24/7 instruction. UVEG virtual professors supplement local teachers. Visiting professor exchange programs from 11 partner nations. Train-the-trainer model creates local capacity over time.</p>
+        </div>
+      </div>
+      <div class="risk-row">
+        <span class="risk-level low">Low</span>
+        <div>
+          <h4 style="font-weight:700;font-size:.95rem;margin-bottom:4px">Student Retention</h4>
+          <p style="color:var(--muted);font-size:.85rem"><strong>Risk:</strong> Students drop out before certification. <strong>Mitigation:</strong> AI-powered personalization keeps engagement high. Direct salary impact (20-40% premium) is a powerful motivator. BPO employer partnerships guarantee job placement for completers. Gamification and progress tracking in platform.</p>
+        </div>
+      </div>
+      <div class="risk-row">
+        <span class="risk-level low">Low</span>
+        <div>
+          <h4 style="font-weight:700;font-size:.95rem;margin-bottom:4px">Technology/Platform Risk</h4>
+          <p style="color:var(--muted);font-size:.85rem"><strong>Risk:</strong> Platform failures or scaling issues. <strong>Mitigation:</strong> Platform is already live in production with all features operational. Multi-tenant architecture tested. Hosted on Render with auto-scaling. Development led by 15+ year enterprise software veteran.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====== 16. APPENDIX ====== -->
+<section class="alt" id="appendix">
+  <div class="c">
+    <div class="sl">16 — Appendix & Supporting Materials</div>
+    <h2 class="st">Live Resources</h2>
+    <div class="grid3" style="margin-bottom:32px">
+      <a href="/Torna_Idioma/" class="card" style="text-align:center;text-decoration:none">
+        <p style="font-size:1.3rem;margin-bottom:8px">Platform</p>
+        <p style="color:var(--gold);font-weight:600">Live Demo</p>
+        <p style="color:var(--dim);font-size:.78rem;margin-top:4px">aiagent.ringlypro.com/Torna_Idioma</p>
+      </a>
+      <a href="/torna-idioma-presentation.html" class="card" style="text-align:center;text-decoration:none">
+        <p style="font-size:1.3rem;margin-bottom:8px">Rachel AI</p>
+        <p style="color:var(--gold);font-weight:600">Voice Presentation</p>
+        <p style="color:var(--dim);font-size:.78rem;margin-top:4px">AI-powered live pitch</p>
+      </a>
+      <a href="/Torna_Idioma/documentation.html" class="card" style="text-align:center;text-decoration:none">
+        <p style="font-size:1.3rem;margin-bottom:8px">Technical</p>
+        <p style="color:var(--gold);font-weight:600">Documentation</p>
+        <p style="color:var(--dim);font-size:.78rem;margin-top:4px">Architecture & API reference</p>
+      </a>
+    </div>
+
+    <div class="card" style="text-align:center;padding:40px;background:linear-gradient(135deg,rgba(201,168,76,.06),rgba(16,185,129,.04));border-color:var(--gold)">
       <h3 style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:900;margin-bottom:8px">The platform is built. The partnerships are signed. The heritage is calling.</h3>
       <p style="color:var(--muted);font-size:1rem;max-width:550px;margin:0 auto 24px">Every day without deployment is another day Filipino youth miss the opportunity to reconnect with their heritage and unlock their economic potential.</p>
       <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-        <a href="mailto:manuel@digit2ai.com" class="btn btn-p">Contact Manuel Stagg</a>
+        <a href="mailto:mstagg@digit2ai.com" class="btn btn-p">Contact Manuel Stagg</a>
         <a href="/Torna_Idioma/" class="btn btn-s">Visit the Platform</a>
         <a href="/torna-idioma-presentation.html" class="btn btn-s">AI Presentation by Rachel</a>
       </div>
@@ -538,35 +792,10 @@
   </div>
 </section>
 
-<!-- APPENDIX -->
-<section class="alt">
-  <div class="c">
-    <div class="sl">Appendix</div>
-    <h2 class="st">Supporting Materials</h2>
-    <div class="grid3">
-      <a href="/Torna_Idioma/" class="card" style="text-align:center;text-decoration:none">
-        <p style="font-size:1.5rem;margin-bottom:8px">Platform</p>
-        <p style="color:var(--gold);font-weight:600">Live Demo</p>
-        <p style="color:var(--dim);font-size:.8rem;margin-top:4px">aiagent.ringlypro.com/Torna_Idioma</p>
-      </a>
-      <a href="/torna-idioma-presentation.html" class="card" style="text-align:center;text-decoration:none">
-        <p style="font-size:1.5rem;margin-bottom:8px">Rachel</p>
-        <p style="color:var(--gold);font-weight:600">AI Voice Presentation</p>
-        <p style="color:var(--dim);font-size:.8rem;margin-top:4px">Live AI-powered pitch</p>
-      </a>
-      <a href="/Torna_Idioma/documentation.html" class="card" style="text-align:center;text-decoration:none">
-        <p style="font-size:1.5rem;margin-bottom:8px">Technical</p>
-        <p style="color:var(--gold);font-weight:600">Documentation</p>
-        <p style="color:var(--dim);font-size:.8rem;margin-top:4px">Architecture & API docs</p>
-      </a>
-    </div>
-  </div>
-</section>
-
 <footer>
   <div class="c">
-    <p>Confidential — Digit2AI LLC / Torna Idioma</p>
-    <p style="margin-top:8px">Contact: <a href="mailto:manuel@digit2ai.com">manuel@digit2ai.com</a> | <a href="/Torna_Idioma/">Platform</a> | <a href="/torna-idioma-presentation.html">AI Presentation</a></p>
+    <p>Confidential -- Digit2AI LLC / Torna Idioma</p>
+    <p style="margin-top:8px">Contact: <a href="mailto:mstagg@digit2ai.com">mstagg@digit2ai.com</a> | <a href="/Torna_Idioma/">Platform</a> | <a href="/torna-idioma-presentation.html">AI Presentation</a></p>
   </div>
 </footer>
 
