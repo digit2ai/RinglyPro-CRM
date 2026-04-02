@@ -24,9 +24,17 @@
     .nav-brand { display:flex; align-items:center; gap:12px; text-decoration:none; }
     .nav-brand-text { font-family:'Playfair Display',serif; font-size:1.3rem; font-weight:700; color:var(--gold); letter-spacing:2px; }
     .nav-brand-sub { font-size:.65rem; color:var(--gold-light); letter-spacing:3px; text-transform:uppercase; opacity:.8; }
-    .nav-links { display:flex; gap:28px; list-style:none; align-items:center; }
-    .nav-links a { color:rgba(255,255,255,.8); text-decoration:none; font-size:.85rem; font-weight:500; letter-spacing:.5px; transition:color .3s; }
+    .nav-links { display:flex; gap:20px; list-style:none; align-items:center; }
+    .nav-links a { color:rgba(255,255,255,.8); text-decoration:none; font-size:.82rem; font-weight:500; letter-spacing:.5px; transition:color .3s; }
     .nav-links a:hover { color:var(--gold); }
+    .nav-dropdown { position:relative; }
+    .nav-dropdown > a { cursor:pointer; }
+    .nav-dropdown > a::after { content:' \25BE'; font-size:.7rem; opacity:.6; }
+    .nav-dropdown-menu { display:none; position:absolute; top:100%; left:50%; transform:translateX(-50%); min-width:180px; background:rgba(15,26,46,.98); border:1px solid rgba(201,168,76,.25); border-radius:8px; padding:8px 0; margin-top:12px; box-shadow:0 12px 40px rgba(0,0,0,.4); z-index:100; }
+    .nav-dropdown-menu a { display:block; padding:8px 20px; font-size:.82rem; color:rgba(255,255,255,.7); white-space:nowrap; }
+    .nav-dropdown-menu a:hover { color:var(--gold); background:rgba(201,168,76,.06); }
+    .nav-dropdown:hover .nav-dropdown-menu { display:block; }
+    .nav-sep { width:1px; height:20px; background:rgba(201,168,76,.2); margin:0 4px; }
     .nav-login { padding:6px 20px !important; background:linear-gradient(135deg,var(--gold),var(--gold-dark)); color:var(--navy-deep) !important; border-radius:4px; font-weight:700 !important; letter-spacing:1px; transition:all .3s !important; }
     .nav-login:hover { transform:translateY(-1px); box-shadow:0 4px 15px rgba(201,168,76,.4); color:var(--navy-deep) !important; }
     .nav-toggle { display:none; flex-direction:column; gap:5px; cursor:pointer; background:none; border:none; padding:8px; }
@@ -255,16 +263,22 @@
       </div>
     </a>
     <ul class="nav-links" id="navLinks">
-      <li><a href="#mission" data-lang-en>Mission</a><a href="#mission" data-lang-es style="display:none">Misi&oacute;n</a><a href="#mission" data-lang-fil style="display:none">Misyon</a></li>
-      <li><a href="#pillars" data-lang-en>Pillars</a><a href="#pillars" data-lang-es style="display:none">Pilares</a><a href="#pillars" data-lang-fil style="display:none">Mga Haligi</a></li>
-      <li><a href="#economics" data-lang-en>Impact</a><a href="#economics" data-lang-es style="display:none">Impacto</a><a href="#economics" data-lang-fil style="display:none">Epekto</a></li>
-      <li><a href="#roadmap" data-lang-en>Roadmap</a><a href="#roadmap" data-lang-es style="display:none">Ruta</a><a href="#roadmap" data-lang-fil style="display:none">Plano</a></li>
-      <li><a href="#partners" data-lang-en>Partners</a><a href="#partners" data-lang-es style="display:none">Socios</a><a href="#partners" data-lang-fil style="display:none">Mga Kasosyo</a></li>
-      <li><a href="#heritage" data-lang-en>Heritage</a><a href="#heritage" data-lang-es style="display:none">Herencia</a><a href="#heritage" data-lang-fil style="display:none">Pamana</a></li>
-      <li><a href="#policy" data-lang-en>Policy</a><a href="#policy" data-lang-es style="display:none">Pol&iacute;tica</a><a href="#policy" data-lang-fil style="display:none">Patakaran</a></li>
+      <li class="nav-dropdown">
+        <a data-lang-en>Explore</a><a data-lang-es style="display:none">Explorar</a><a data-lang-fil style="display:none">Galugarin</a>
+        <div class="nav-dropdown-menu">
+          <a href="#mission" data-lang-en>Mission</a><a href="#mission" data-lang-es style="display:none">Misi&oacute;n</a><a href="#mission" data-lang-fil style="display:none">Misyon</a>
+          <a href="#pillars" data-lang-en>Three Pillars</a><a href="#pillars" data-lang-es style="display:none">Tres Pilares</a><a href="#pillars" data-lang-fil style="display:none">Tatlong Haligi</a>
+          <a href="#economics" data-lang-en>Economic Impact</a><a href="#economics" data-lang-es style="display:none">Impacto Econ&oacute;mico</a><a href="#economics" data-lang-fil style="display:none">Epektong Pang-ekonomiya</a>
+          <a href="#roadmap" data-lang-en>Roadmap</a><a href="#roadmap" data-lang-es style="display:none">Ruta</a><a href="#roadmap" data-lang-fil style="display:none">Plano</a>
+          <a href="#heritage" data-lang-en>Heritage</a><a href="#heritage" data-lang-es style="display:none">Herencia</a><a href="#heritage" data-lang-fil style="display:none">Pamana</a>
+          <a href="#partners" data-lang-en>Partners</a><a href="#partners" data-lang-es style="display:none">Socios</a><a href="#partners" data-lang-fil style="display:none">Mga Kasosyo</a>
+          <a href="#policy" data-lang-en>Policy</a><a href="#policy" data-lang-es style="display:none">Pol&iacute;tica</a><a href="#policy" data-lang-fil style="display:none">Patakaran</a>
+        </div>
+      </li>
       <li><a href="/torna-idioma-business-plan.html" data-lang-en>Business Plan</a><a href="/torna-idioma-business-plan.html" data-lang-es style="display:none">Plan de Negocio</a><a href="/torna-idioma-business-plan.html" data-lang-fil style="display:none">Plano ng Negosyo</a></li>
       <li><a href="/torna-idioma-presentation.html" data-lang-en>AI Presentation</a><a href="/torna-idioma-presentation.html" data-lang-es style="display:none">Presentaci&oacute;n IA</a><a href="/torna-idioma-presentation.html" data-lang-fil style="display:none">AI Presentasyon</a></li>
       <li><a href="/Torna_Idioma/documentation.html" data-lang-en>Docs</a><a href="/Torna_Idioma/documentation.html" data-lang-es style="display:none">Documentaci&oacute;n</a><a href="/Torna_Idioma/documentation.html" data-lang-fil style="display:none">Dokumentasyon</a></li>
+      <li><div class="nav-sep"></div></li>
       <li><a href="/Torna_Idioma/login" class="nav-login" data-lang-en>Login</a><a href="/Torna_Idioma/login" class="nav-login" data-lang-es style="display:none">Iniciar Sesi&oacute;n</a><a href="/Torna_Idioma/login" class="nav-login" data-lang-fil style="display:none">Mag-login</a></li>
       <li>
         <div class="lang-switcher">
