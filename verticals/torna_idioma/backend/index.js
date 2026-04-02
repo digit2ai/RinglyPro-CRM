@@ -11,6 +11,7 @@ router.use('/api/analytics', require('./routes/analytics'));
 router.use('/api/advocacy', require('./routes/advocacy'));
 router.use('/api/bpo', require('./routes/bpo'));
 router.use('/api/tutor', require('./routes/tutor'));
+router.use('/api/voice', require('./routes/voice'));
 
 router.get('/health', (req, res) => {
   res.json({ service: 'Torna Idioma', status: 'healthy', tagline: 'Vida · Cultura · Legado', timestamp: new Date().toISOString() });
