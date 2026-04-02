@@ -151,7 +151,7 @@
     if (lower.includes('paint the picture') || lower.includes('seventy percent')) markSection(2);
     if (lower.includes('three components') || lower.includes('starlink satellite')) markSection(3);
     if (lower.includes('barangay health station') || lower.includes('mobile medical van')) markSection(4);
-    if (lower.includes('economics') || lower.includes('25 cents') || lower.includes('cost per consultation')) markSection(5);
+    if (lower.includes('economics') || lower.includes('5 dollars') || lower.includes('cost per consultation') || lower.includes('fully loaded')) markSection(5);
     if (lower.includes('mang pedro') || lower.includes('rice farmer')) markSection(6);
     if (lower.includes('partnerships') || lower.includes('philhealth') || lower.includes('global')) markSection(7);
     if (lower.includes('close with') || lower.includes('platform is built') || lower.includes('thank you')) markSection(8);
@@ -191,7 +191,7 @@
 
     try {
       // Get signed URL
-      const RACHEL_AGENT_ID = 'agent_0701kn582htmf7zvmmep2qkc43bg';
+      const RACHEL_AGENT_ID = 'agent_2901kn7xaah7e0aazmggm9a4dvpk';
       const tokenRes = await fetch('/msk/api/v1/voice/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

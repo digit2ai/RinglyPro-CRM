@@ -208,7 +208,7 @@ router.post('/token', async (req, res) => {
 router.post('/rachel-token', async (req, res) => {
   try {
     const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
-    const RACHEL_AGENT_ID = process.env.MSK_RACHEL_AGENT_ID || 'agent_0701kn582htmf7zvmmep2qkc43bg';
+    const RACHEL_AGENT_ID = process.env.MSK_RACHEL_AGENT_ID || 'agent_2901kn7xaah7e0aazmggm9a4dvpk';
 
     if (!ELEVENLABS_API_KEY) {
       return res.status(500).json({ success: false, error: 'ElevenLabs API key not configured' });
