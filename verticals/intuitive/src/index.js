@@ -182,16 +182,14 @@ body{background:#0f172a;color:#e2e8f0;font-family:'Inter',system-ui,-apple-syste
 </head>
 <body>
 <div class="splash" id="splash">
-  <div style="width:80px;height:80px;border-radius:16px;background:linear-gradient(135deg,#0c4a6e,#0ea5e9);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 32px rgba(14,165,233,0.3)">
-    <span style="color:#fff;font-size:24px;font-weight:700">dV</span>
-  </div>
+  <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro" style="width:100px;height:100px;border-radius:20px;box-shadow:0 8px 32px rgba(14,165,233,0.3)">
   <h1>${hospitalName}</h1>
-  <p>da Vinci System Assessment</p>
+  <p>SurgicalMind AI &mdash; da Vinci System Assessment</p>
   <button onclick="startPresentation()">Tap to Start</button>
 </div>
 <div class="container" id="app" style="display:none">
   <div class="header">
-    <h2>da Vinci System Assessment — ${hospitalName}</h2>
+    <h2>SurgicalMind AI &mdash; ${hospitalName}</h2>
     <div class="controls">
       <button id="btnPrev" onclick="prevSlide()">&larr;</button>
       <span class="slide-counter" id="counter">1 / ${slides.length}</span>
