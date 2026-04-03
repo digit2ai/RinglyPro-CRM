@@ -393,13 +393,14 @@ function buildChartData(analysis) {
   const financialDeep = a.financial_deep_dive || {};
   const growthExtrap = a.growth_extrapolation || {};
 
-  const topProcs = procedurePareto.top_procedures || [];
-  const months = monthlySeason.months || [];
-  const days = weekdayDist.days || [];
-  const hours = hourlyDist.hours || [];
-  const procedures = robotCompat.procedures || [];
+  const topProcs = procedurePareto.top_procedures || procedurePareto.procedures || [];
+  const months = monthlySeason.months || monthlySeason.monthly_data || [];
+  const days = weekdayDist.days || weekdayDist.weekday_data || [];
+  const hours = hourlyDist.hours || hourlyDist.hourly_data || [];
+  const procedures = robotCompat.procedures || robotCompat.compatibility_matrix || [];
   const yearlyProj = volProj.yearly_projections || volProj.projections || [];
-  const scenarios = growthExtrap.scenarios || [];
+  const chartDataGrowth = growthExtrap.chart_data || [];
+  const percRaw = designDay.percentiles || {};
 
   // Specialty pie
   const specialties = [];
@@ -431,31 +432,32 @@ function buildChartData(analysis) {
       value: h.cases || h.volume || h.count || 0
     })),
     compatibility: procedures.slice(0, 10).map(p => ({
-      label: (p.name || p.procedure || '').substring(0, 25),
-      dV5: p.dv5_score || p.dV5 || 0,
-      Xi: p.xi_score || p.Xi || 0,
-      X: p.x_score || p.X || 0,
-      SP: p.sp_score || p.SP || 0
+      label: (p.procedure || p.name || '').substring(0, 25),
+      dV5: p.dV5_fit || p.dv5_score || 0,
+      Xi: p.Xi_fit || p.xi_score || 0,
+      X: p.X_fit || p.x_score || 0,
+      SP: p.SP_fit || p.sp_score || 0
     })),
     designDay: [
-      { label: 'P50', value: (designDay.p50 || {}).cases || 0 },
-      { label: 'P75', value: (designDay.p75 || {}).cases || 0 },
-      { label: 'P90', value: (designDay.p90 || {}).cases || 0 },
-      { label: 'P95', value: (designDay.p95 || {}).cases || 0 }
+      { label: 'P50', value: percRaw.P50 || designDay.p50 || 0 },
+      { label: 'P75', value: percRaw.P75 || designDay.design_day || 0 },
+      { label: 'P90', value: percRaw.P90 || designDay.p90 || 0 },
+      { label: 'P95', value: percRaw.P95 || designDay.p95 || 0 }
     ],
     volumeRamp: yearlyProj.map(p => ({
       label: 'Y' + (p.year || ''),
-      value: p.total_cases || p.robotic_cases || 0
+      value: p.projected_cases || p.total_cases || p.robotic_cases || 0
     })),
-    breakeven: (financialDeep.monthly_cashflow || financialDeep.cashflow || []).map((m, i) => ({
-      label: 'M' + (m.month || i + 1),
-      value: m.cumulative || m.net || 0
+    breakeven: (financialDeep.breakeven_data || financialDeep.monthly_cashflow || []).slice(0, 60).filter((_, i) => i % 3 === 0).map(m => ({
+      label: 'M' + (m.month || ''),
+      cost: Math.round((m.cumulative_cost || 0) / 1000000 * 10) / 10,
+      benefit: Math.round((m.cumulative_benefit || 0) / 1000000 * 10) / 10
     })),
-    growth: scenarios.map(s => ({
-      label: s.name || s.label || '',
-      y1: s.year1_cases || s.cases_y1 || 0,
-      y3: s.year3_cases || s.cases_y3 || 0,
-      y5: s.year5_cases || s.cases_y5 || 0
+    growth: chartDataGrowth.map(d => ({
+      label: d.year || '',
+      baseline: d.baseline || 0,
+      aggressive: d.aggressive || 0,
+      conservative: d.conservative || 0
     }))
   };
 }
