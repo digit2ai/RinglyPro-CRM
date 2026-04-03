@@ -70,11 +70,13 @@ app.use((req, res, next) => {
 
 const projectRoutes = require('./routes/projects');
 const analysisRoutes = require('./routes/analysis');
+const demoRoutes = require('./routes/demo');
 const healthRoutes = require('./routes/health');
 
 app.use(`${BASE_PATH}/health`, healthRoutes);
 app.use(`${BASE_PATH}/api/v1/projects`, projectRoutes);
 app.use(`${BASE_PATH}/api/v1/analysis`, analysisRoutes);
+app.use(`${BASE_PATH}/api/v1/demo`, demoRoutes);
 
 // ============================================================================
 // DASHBOARD (SPA)

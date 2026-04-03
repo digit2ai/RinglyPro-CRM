@@ -11,6 +11,7 @@ const STATES = ['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL'
 export default function IntakePage({ onProjectCreated, currentProject }) {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
+  const [demoLoading, setDemoLoading] = useState(false)
   const [error, setError] = useState(null)
   const [form, setForm] = useState({
     hospital_name: '', contact_name: '', contact_email: '', contact_title: '',
@@ -91,6 +92,32 @@ export default function IntakePage({ onProjectCreated, currentProject }) {
       <p className="text-slate-400 text-sm mb-8">
         Enter hospital data to match the optimal da Vinci system configuration, calculate ROI, and generate a placement recommendation.
       </p>
+
+      {/* Demo Generation Card */}
+      <div className="bg-gradient-to-r from-intuitive-900/40 to-slate-900/60 border border-intuitive-700/40 rounded-xl p-5 mb-8 flex items-center justify-between">
+        <div>
+          <h3 className="text-white font-semibold">Demo Mode -- Generate Sample Hospitals</h3>
+          <p className="text-slate-400 text-sm mt-1">Generate 5 realistic hospital profiles (academic, community, specialty, VA) with full analysis and da Vinci system matching.</p>
+        </div>
+        <button
+          type="button"
+          disabled={demoLoading}
+          onClick={async () => {
+            setDemoLoading(true); setError(null)
+            try {
+              const res = await api.generateDemo()
+              if (res.projects?.length > 0) {
+                onProjectCreated(res.projects[0].id)
+                navigate(`/analysis/${res.projects[0].id}`)
+              }
+            } catch (err) { setError(err.message) }
+            finally { setDemoLoading(false) }
+          }}
+          className="bg-intuitive-600 hover:bg-intuitive-700 text-white font-semibold py-2.5 px-6 rounded-lg text-sm transition-all whitespace-nowrap disabled:opacity-50"
+        >
+          {demoLoading ? 'Generating...' : 'Generate Demo'}
+        </button>
+      </div>
 
       {error && <div className="bg-red-900/30 border border-red-800 rounded-lg p-3 mb-6 text-red-300 text-sm">{error}</div>}
 

@@ -23,4 +23,8 @@ export const api = {
   runAnalysis: (projectId) => request(`/analysis/${projectId}/run`, { method: 'POST' }),
   getResults: (projectId) => request(`/analysis/${projectId}/all`),
   getSystems: () => request('/analysis/systems'),
+
+  // Demo
+  generateDemo: () => request('/demo/generate', { method: 'POST' }),
+  generateSingleDemo: () => request('/demo/generate-single', { method: 'POST' }),
 };
