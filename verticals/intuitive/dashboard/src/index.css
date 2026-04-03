@@ -14,11 +14,11 @@ body {
 ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #64748b; }
 
-/* Push ElevenLabs ConvAI widget to the right of sidebar */
+/* Position ElevenLabs ConvAI widget at bottom-left of main content area (right of sidebar) */
 elevenlabs-convai {
-  --elevenlabs-convai-widget-offset-x: 240px !important;
-}
-elevenlabs-convai::part(widget) {
+  position: fixed !important;
+  bottom: 20px !important;
   left: 240px !important;
   right: auto !important;
+  z-index: 40 !important;
 }
