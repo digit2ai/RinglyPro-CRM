@@ -173,7 +173,7 @@ export default function App() {
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
-      <aside className="w-56 bg-[#0a1628] border-r border-slate-800 flex flex-col fixed h-full">
+      <aside className="w-56 bg-[#0a1628] border-r border-slate-800 flex flex-col fixed h-full z-50">
         <div className="p-5 border-b border-slate-800">
           <div className="flex items-center gap-3 mb-1">
             <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro" className="w-9 h-9 rounded-lg" />
@@ -210,7 +210,7 @@ export default function App() {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-slate-800 text-[10px] text-slate-600">
+        <div className="p-4 pb-20 border-t border-slate-800 text-[10px] text-slate-600">
           Powered by RinglyPro<br />
           SurgicalMind AI v1.0
         </div>
