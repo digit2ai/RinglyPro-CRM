@@ -819,6 +819,36 @@ app.get('/debug/warehouse-error', (req, res) => {
 });
 
 // =====================================================
+// INTUITIVE SURGICAL — da Vinci System Matcher (served at /intuitive/)
+// =====================================================
+
+let intuitiveApp = null;
+let intuitiveError = null;
+try {
+  intuitiveApp = require('../verticals/intuitive/src/index');
+  app.get('/intuitive', (req, res, next) => {
+    if (!req.originalUrl.endsWith('/')) return res.redirect('/intuitive/');
+    next();
+  });
+  app.use('/intuitive', intuitiveApp);
+  console.log('🏥 Intuitive Surgical Matcher mounted at /intuitive');
+  console.log('   - Dashboard UI: /intuitive/');
+  console.log('   - Health Check: /intuitive/health');
+  console.log('   - API: /intuitive/api/v1/*');
+} catch (error) {
+  intuitiveError = error;
+  console.log('⚠️ Intuitive Surgical Matcher not available:', error.message);
+}
+
+app.get('/debug/intuitive-error', (req, res) => {
+  res.json({
+    service: 'Intuitive Surgical Matcher',
+    available: !intuitiveError,
+    error: intuitiveError ? { message: intuitiveError.message, stack: intuitiveError.stack } : null
+  });
+});
+
+// =====================================================
 // DIGIT2AI CONTACTS & PROJECTS HUB
 // =====================================================
 
