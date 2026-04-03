@@ -234,29 +234,40 @@ function buildSlideHTML(analysis, hospitalName) {
   const modelMatch = a.model_matching || {};
   const riskAssess = a.risk_assessment || {};
   const surgCap = a.surgeon_capacity || {};
+  const roiCalc = a.roi_calculation || {};
+  const utilForecast = a.utilization_forecast || {};
 
   const fmt = n => n != null ? Number(n).toLocaleString() : '--';
   const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const metric = (label, value, color = '#0ea5e9') => `<div class="metric"><div class="metric-value" style="color:${color}">${esc(String(value))}</div><div class="metric-label">${esc(label)}</div></div>`;
   const chartBox = (id, h = 220) => `<div class="chart-box"><canvas id="${id}" height="${h}"></canvas></div>`;
 
-  const topProcs = procedurePareto.top_procedures || [];
-  const abcClasses = procedurePareto.abc_classes || {};
-  const months = monthlySeason.months || [];
-  const days = weekdayDist.days || [];
-  const hours = hourlyDist.hours || [];
-  const procedures = robotCompat.procedures || [];
-  const p50 = designDay.p50 || {};
-  const p75 = designDay.p75 || {};
-  const p90 = designDay.p90 || {};
-  const p95 = designDay.p95 || {};
+  const topProcs = procedurePareto.top_procedures || procedurePareto.procedures || [];
+  const abcClasses = procedurePareto.abc_classes || procedurePareto.classes || {};
+  const months = monthlySeason.months || monthlySeason.monthly_data || [];
+  const days = weekdayDist.days || weekdayDist.weekday_data || [];
+  const hours = hourlyDist.hours || hourlyDist.hourly_data || [];
+  const procedures = robotCompat.procedures || robotCompat.compatibility_matrix || [];
+  const bestModel = robotCompat.best_overall_model || robotCompat.overall_best_model || 'not determined';
+  const percentiles = designDay.percentiles || {};
+  const p50 = designDay.p50 || percentiles.P50 || 0;
+  const p75 = designDay.p75 || percentiles.P75 || designDay.design_day || 0;
+  const p90 = designDay.p90 || percentiles.P90 || 0;
+  const p95 = designDay.p95 || percentiles.P95 || 0;
+  const perProcCost = financialDeep.per_procedure_cost || financialDeep.cost_per_case || (financialDeep.per_procedure_economics?.robotic?.cost) || 0;
   const yearlyProj = volProj.yearly_projections || volProj.projections || [];
   const tco = financialDeep.total_cost_of_ownership || financialDeep.tco || {};
-  const scenarios = growthExtrap.scenarios || [];
+  const scenariosObj = growthExtrap.scenarios || {};
+  const scenarios = Array.isArray(scenariosObj) ? scenariosObj : Object.entries(scenariosObj).map(([k, v]) => ({ key: k, ...v }));
+  const baseScenario = scenariosObj.baseline || {};
+  const optimistic = scenariosObj.aggressive || {};
+  const conservative = scenariosObj.conservative || {};
+  const chartDataGrowth = growthExtrap.chart_data || [];
   const primaryModel = modelMatch.primary_recommendation || modelMatch.recommended_model || '--';
-  const fitScore = modelMatch.fit_score || modelMatch.overall_fit || 0;
-  const rationale = modelMatch.rationale || modelMatch.reasoning || '';
-  const riskFactors = riskAssess.risk_factors || riskAssess.factors || [];
+  const primaryRec = typeof primaryModel === 'object' ? primaryModel : {};
+  const fitScore = primaryRec.score || modelMatch.fit_score || modelMatch.overall_fit || 0;
+  const rationale = primaryRec.reasons?.join('. ') || modelMatch.rationale || modelMatch.reasoning || '';
+  const riskFactors = riskAssess.risks || riskAssess.risk_factors || riskAssess.factors || [];
 
   // Specialty mix
   const specialties = [];
@@ -317,13 +328,13 @@ function buildSlideHTML(analysis, hospitalName) {
     { title: 'Robot Compatibility Matrix', html: `
       <div class="metrics-grid">${metric('Procedures Analyzed', fmt(procedures.length))}${metric('Best Model', esc(bestModel || '--'), '#10b981')}</div>
       ${procedures.length > 0 ? chartBox('chartCompatibility', 250) : ''}
-      ${procedures.length > 0 ? `<table class="data-table"><tr><th>Procedure</th><th>dV5</th><th>Xi</th><th>X</th><th>SP</th><th>Best Fit</th></tr>${procedures.slice(0, 10).map(p => `<tr><td>${esc(p.name || p.procedure || '')}</td><td>${p.dv5_score || p.dV5 || '--'}</td><td>${p.xi_score || p.Xi || '--'}</td><td>${p.x_score || p.X || '--'}</td><td>${p.sp_score || p.SP || '--'}</td><td><strong style="color:#10b981">${esc(p.best_model || p.best_fit || '')}</strong></td></tr>`).join('')}</table>` : '<div class="info-box">No compatibility matrix data available.</div>'}` },
+      ${procedures.length > 0 ? `<table class="data-table"><tr><th>Procedure</th><th>dV5</th><th>Xi</th><th>X</th><th>SP</th><th>Best Fit</th></tr>${procedures.slice(0, 10).map(p => `<tr><td>${esc(p.procedure || p.name || '')}</td><td>${p.dV5_fit || p.dv5_score || '--'}</td><td>${p.Xi_fit || p.xi_score || '--'}</td><td>${p.X_fit || p.x_score || '--'}</td><td>${p.SP_fit || p.sp_score || '--'}</td><td><strong style="color:#10b981">${esc(p.recommended_model || p.best_model || '')}</strong></td></tr>`).join('')}</table>` : '<div class="info-box">No compatibility matrix data available.</div>'}` },
 
     // Slide 7: Design Day Analysis
     { title: 'Design Day Analysis', html: `
-      <div class="metrics-grid">${metric('P50 (Typical)', fmt(p50.cases || 0) + ' cases')}${metric('P75 (Design)', fmt(p75.cases || 0) + ' cases', '#10b981')}${metric('P90', fmt(p90.cases || 0) + ' cases', '#eab308')}${metric('P95 (Peak)', fmt(p95.cases || 0) + ' cases', '#ef4444')}</div>
-      <div class="info-box" style="border-color:#10b981;background:rgba(16,185,129,0.1)"><strong>Design Day Recommendation:</strong> The 75th percentile at ${fmt(p75.cases || 0)} cases/day ensures the system handles peak demand the majority of the time while remaining cost-effective.</div>
-      ${(p50.cases || p75.cases) ? chartBox('chartDesignDay', 200) : ''}` },
+      <div class="metrics-grid">${metric('P50 (Typical)', fmt(typeof p50 === 'number' ? p50 : p50.cases || 0) + ' cases')}${metric('P75 (Design)', fmt(typeof p75 === 'number' ? p75 : p75.cases || 0) + ' cases', '#10b981')}${metric('P90', fmt(typeof p90 === 'number' ? p90 : p90.cases || 0) + ' cases', '#eab308')}${metric('P95 (Peak)', fmt(typeof p95 === 'number' ? p95 : p95.cases || 0) + ' cases', '#ef4444')}</div>
+      <div class="info-box" style="border-color:#10b981;background:rgba(16,185,129,0.1)"><strong>Design Day Recommendation:</strong> ${esc(designDay.design_day_recommendation || 'Plan system capacity for the P75 design day.')}</div>
+      ${chartBox('chartDesignDay', 200)}` },
 
     // Slide 8: Volume Projection
     { title: '5-Year Volume Projection', html: `
@@ -332,15 +343,18 @@ function buildSlideHTML(analysis, hospitalName) {
 
     // Slide 9: Financial Deep Dive
     { title: 'Financial Deep Dive', html: `
-      <div class="metrics-grid">${metric('5-Year TCO', tco.five_year ? '$' + fmt(Math.round(tco.five_year / 1000)) + 'K' : '--')}${metric('Breakeven', (financialDeep.breakeven_months || financialDeep.breakeven || '--') + ' months', '#10b981')}${metric('Cost/Procedure', perProcCost ? '$' + fmt(Math.round(perProcCost)) : '--', '#eab308')}${metric('5-Year ROI', (financialDeep.five_year_roi_pct || financialDeep.roi_pct || '--') + '%', '#10b981')}</div>
+      <div class="metrics-grid">${metric('5-Year TCO', (tco.total_5yr || tco.five_year || financialDeep.total_cost_of_ownership_5yr) ? '$' + fmt(Math.round((tco.total_5yr || tco.five_year || financialDeep.total_cost_of_ownership_5yr) / 1000000)) + 'M' : '--')}${metric('Breakeven', (financialDeep.breakeven_month || financialDeep.breakeven_months || '--') + ' months', '#10b981')}${metric('Cost/Procedure', perProcCost ? '$' + fmt(Math.round(perProcCost)) : '--', '#eab308')}${metric('5-Year ROI', (roiCalc.five_year_roi_pct || financialDeep.five_year_roi_pct || '--') + '%', '#10b981')}</div>
       ${(financialDeep.breakeven_months || financialDeep.breakeven) ? chartBox('chartBreakeven', 200) : ''}
       <div class="info-box"><strong>Investment Summary:</strong> Includes system acquisition, annual service, instruments per procedure, and facility modifications. ROI accounts for improved outcomes, shorter LOS, and reduced complications.</div>` },
 
     // Slide 10: Growth Extrapolation
-    { title: 'Growth Extrapolation', html: `
-      <div class="metrics-grid">${metric('Base Y5', fmt(baseScenario.year5_cases || baseScenario.cases_y5 || 0) + ' cases')}${metric('Optimistic Y5', fmt(optimistic.year5_cases || optimistic.cases_y5 || 0) + ' cases', '#10b981')}${metric('Conservative Y5', fmt(conservative.year5_cases || conservative.cases_y5 || 0) + ' cases', '#eab308')}</div>
-      ${scenarios.length > 0 ? chartBox('chartGrowth', 220) : '<div class="info-box">No growth scenarios available.</div>'}
-      <div class="info-box">Three scenarios model fleet expansion needs -- helping determine timing for additional system acquisition.</div>` },
+    { title: 'Growth Extrapolation', html: (() => {
+      const y5Data = chartDataGrowth.find(d => d.year === 'Year 5') || chartDataGrowth[chartDataGrowth.length - 1] || {};
+      return `
+      <div class="metrics-grid">${metric('Baseline Y5', fmt(y5Data.baseline || 0) + ' cases')}${metric('Aggressive Y5', fmt(y5Data.aggressive || 0) + ' cases', '#10b981')}${metric('Conservative Y5', fmt(y5Data.conservative || 0) + ' cases', '#eab308')}${metric('Growth Rates', '10% / 15% / 20%')}</div>
+      ${chartDataGrowth.length > 0 ? chartBox('chartGrowth', 220) : '<div class="info-box">No growth scenarios available.</div>'}
+      <div class="info-box">Three scenarios model fleet expansion needs -- helping determine timing for additional system acquisition.</div>`;
+    })() },
 
     // Slide 11: System Recommendation
     { title: 'System Recommendation', html: `
