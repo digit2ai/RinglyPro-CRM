@@ -27,4 +27,8 @@ export const api = {
   // Demo
   generateDemo: () => request('/demo/generate', { method: 'POST' }),
   generateSingleDemo: () => request('/demo/generate-single', { method: 'POST' }),
+
+  // Proposal
+  generateProposal: (projectId) => request(`/proposal/${projectId}/generate`, { method: 'POST' }),
+  getProposalStatus: (projectId) => request(`/proposal/${projectId}/status`),
 };

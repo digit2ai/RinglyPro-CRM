@@ -72,11 +72,215 @@ const projectRoutes = require('./routes/projects');
 const analysisRoutes = require('./routes/analysis');
 const demoRoutes = require('./routes/demo');
 const healthRoutes = require('./routes/health');
+const { router: proposalRoutes, proposalJobs, buildSlideHTML, buildNarrationScripts, buildChartData, AUDIO_DIR } = require('./routes/proposal');
+const voiceAgentRoutes = require('./routes/voice-agent');
 
 app.use(`${BASE_PATH}/health`, healthRoutes);
 app.use(`${BASE_PATH}/api/v1/projects`, projectRoutes);
 app.use(`${BASE_PATH}/api/v1/analysis`, analysisRoutes);
 app.use(`${BASE_PATH}/api/v1/demo`, demoRoutes);
+app.use(`${BASE_PATH}/api/v1/proposal`, proposalRoutes);
+app.use(`${BASE_PATH}/api/v1/voice`, voiceAgentRoutes);
+
+// ============================================================================
+// STANDALONE PROPOSAL PAGE (NO LOGIN REQUIRED — must be before SPA catch-all)
+// ============================================================================
+
+const { buildSlideHTML: _buildSlideHTML, buildNarrationScripts: _buildNarrationScripts, buildChartData: _buildChartData, AUDIO_DIR: _AUDIO_DIR, generateTTS: _generateTTS } = require('./routes/proposal');
+
+app.get(`${BASE_PATH}/proposal/:projectId`, async (req, res) => {
+  try {
+    const projectId = req.params.projectId;
+    const seq = models.sequelize;
+    const [projRows] = await seq.query('SELECT * FROM intuitive_projects WHERE id = :projectId', { replacements: { projectId } });
+    const project = projRows[0];
+    if (!project) return res.status(404).send('Project not found');
+
+    const [analysisRows] = await seq.query('SELECT analysis_type, result_data FROM intuitive_analysis_results WHERE project_id = :projectId', { replacements: { projectId } });
+    const analysis = { _project: project };
+    for (const row of analysisRows) {
+      analysis[row.analysis_type] = typeof row.result_data === 'string' ? JSON.parse(row.result_data) : row.result_data;
+    }
+
+    const hospitalName = project.hospital_name || 'Your Hospital';
+    const slides = _buildSlideHTML(analysis, hospitalName);
+    const slidesJSON = JSON.stringify(slides);
+    const mountPath = req.baseUrl || BASE_PATH || '';
+    const audioBase = `${mountPath}/api/v1/proposal/${projectId}/audio`;
+    const chartData = _buildChartData(analysis);
+    const chartDataJSON = JSON.stringify(chartData);
+
+    // Auto-generate audio if not cached (background, non-blocking)
+    const audioDir = path.join(_AUDIO_DIR, String(projectId));
+    const slide0Audio = path.join(audioDir, 'slide_0.mp3');
+    if (!fs.existsSync(slide0Audio)) {
+      const genScripts = _buildNarrationScripts(analysis, hospitalName);
+      setImmediate(async () => {
+        try {
+          if (!fs.existsSync(audioDir)) fs.mkdirSync(audioDir, { recursive: true });
+          for (let i = 0; i < genScripts.length; i++) {
+            const ap = path.join(audioDir, 'slide_' + i + '.mp3');
+            if (!fs.existsSync(ap)) {
+              console.log('[Intuitive Proposal] Auto-generating audio slide ' + (i + 1) + '/' + genScripts.length + ' for project ' + projectId);
+              await _generateTTS(genScripts[i], ap);
+            }
+          }
+          console.log('[Intuitive Proposal] Audio ready for project ' + projectId);
+        } catch (e) { console.error('[Intuitive Proposal] Audio gen error:', e.message); }
+      });
+    }
+
+    res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>da Vinci System Assessment — ${hospitalName}</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"><\/script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0f172a;color:#e2e8f0;font-family:'Inter',system-ui,-apple-system,sans-serif;overflow-x:hidden;min-height:100vh}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.container{max-width:1200px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;padding:12px 16px}
+.header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #1e293b;flex-shrink:0;gap:8px}
+.header h2{font-size:15px;color:#94a3b8;font-weight:400;flex-shrink:1;min-width:0}
+.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.controls button{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:13px;transition:all .2s;white-space:nowrap}
+.controls button:hover{background:#334155}
+.controls button.active{background:#0ea5e9;border-color:#0ea5e9}
+.controls button:disabled{opacity:.4;cursor:not-allowed}
+.slide-counter{color:#64748b;font-size:12px;white-space:nowrap}
+.voice-indicator{display:flex;align-items:center;gap:5px;color:#10b981;font-size:12px;white-space:nowrap}
+.voice-indicator .dot{width:7px;height:7px;border-radius:50%;background:#10b981;animation:pulse 1.5s infinite;flex-shrink:0}
+.slide-area{flex:1;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:16px 0;-webkit-overflow-scrolling:touch}
+.slide{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:24px;width:100%;max-width:1100px}
+.slide h2{font-size:22px;color:#f8fafc;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #334155}
+.metrics-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:14px 0}
+.metric{background:#0f172a;border:1px solid #334155;border-radius:10px;padding:14px 10px;text-align:center}
+.metric-value{font-size:18px;font-weight:bold;word-break:break-all}
+.metric-label{font-size:11px;color:#94a3b8;margin-top:4px}
+.info-box{background:rgba(14,165,233,0.08);border:1px solid rgba(14,165,233,0.2);border-radius:8px;padding:12px 14px;margin:10px 0;font-size:13px;color:#cbd5e1;line-height:1.5}
+.data-table{width:100%;border-collapse:collapse;margin:12px 0;font-size:12px}
+.data-table th{text-align:left;padding:8px 6px;border-bottom:2px solid #334155;color:#94a3b8;text-transform:uppercase;font-size:10px;letter-spacing:.5px}
+.data-table td{padding:8px 6px;border-bottom:1px solid #1e293b;color:#e2e8f0}
+.data-table tr:hover td{background:rgba(14,165,233,0.05)}
+.steps{display:flex;flex-direction:column;gap:10px;margin:14px 0}
+.step{display:flex;align-items:center;gap:12px;background:#0f172a;border:1px solid #334155;border-radius:10px;padding:12px 16px}
+.step-num{width:32px;height:32px;border-radius:50%;background:#0ea5e9;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:14px;flex-shrink:0}
+.chart-box{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:14px;margin:10px 0}
+.dots{display:flex;gap:6px;flex-wrap:wrap}
+.dots .dot{width:10px;height:10px;border-radius:50%;background:#334155;cursor:pointer;transition:all .2s;flex-shrink:0}
+.dots .dot.active{background:#0ea5e9;transform:scale(1.3)}
+.splash{position:fixed;top:0;left:0;right:0;bottom:0;background:#0f172a;display:flex;align-items:center;justify-content:center;z-index:1000;flex-direction:column;gap:24px;text-align:center;padding:20px}
+.splash h1{font-size:min(42px,7vw);color:#f8fafc}
+.splash p{color:#94a3b8;font-size:min(18px,4vw)}
+.splash button{background:#0ea5e9;border:none;color:#fff;padding:14px 40px;border-radius:12px;font-size:16px;cursor:pointer;transition:all .2s}
+.splash button:hover{background:#0284c7;transform:scale(1.05)}
+@media(min-width:640px){.metrics-grid{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:768px){.slide{padding:32px}.slide h2{font-size:26px}}
+</style>
+</head>
+<body>
+<div class="splash" id="splash">
+  <div style="width:80px;height:80px;border-radius:16px;background:linear-gradient(135deg,#0c4a6e,#0ea5e9);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 32px rgba(14,165,233,0.3)">
+    <span style="color:#fff;font-size:24px;font-weight:700">dV</span>
+  </div>
+  <h1>${hospitalName}</h1>
+  <p>da Vinci System Assessment</p>
+  <button onclick="startPresentation()">Tap to Start</button>
+</div>
+<div class="container" id="app" style="display:none">
+  <div class="header">
+    <h2>da Vinci System Assessment — ${hospitalName}</h2>
+    <div class="controls">
+      <button id="btnPrev" onclick="prevSlide()">&larr;</button>
+      <span class="slide-counter" id="counter">1 / ${slides.length}</span>
+      <button id="btnNext" onclick="nextSlide()">&rarr;</button>
+      <button id="btnAuto" onclick="toggleAuto()">Auto</button>
+      <div class="voice-indicator"><div class="dot"></div>Rachel</div>
+    </div>
+  </div>
+  <div class="slide-area"><div class="slide" id="slideContent"></div></div>
+  <div style="padding:8px 0;display:flex;justify-content:center"><div class="dots" id="dots"></div></div>
+</div>
+<audio id="audio" preload="none"></audio>
+<script>
+const slides=${slidesJSON};
+const audioBase="${audioBase}";
+const chartData=${chartDataJSON};
+let cur=0,auto=false,charts={};
+const audio=document.getElementById('audio');
+
+function startPresentation(){document.getElementById('splash').style.display='none';document.getElementById('app').style.display='flex';render();playAudio()}
+function render(){
+  const s=slides[cur];
+  document.getElementById('slideContent').innerHTML='<h2>'+s.title+'</h2>'+s.html;
+  document.getElementById('counter').textContent=(cur+1)+' / '+slides.length;
+  document.getElementById('btnPrev').disabled=cur===0;
+  document.getElementById('btnNext').disabled=cur===slides.length-1;
+  const dots=document.getElementById('dots');
+  dots.innerHTML='';
+  for(let i=0;i<slides.length;i++){const d=document.createElement('div');d.className='dot'+(i===cur?' active':'');d.onclick=()=>{cur=i;render();playAudio()};dots.appendChild(d)}
+  renderCharts()
+}
+function nextSlide(){if(cur<slides.length-1){cur++;render();playAudio()}}
+function prevSlide(){if(cur>0){cur--;render();playAudio()}}
+function toggleAuto(){auto=!auto;document.getElementById('btnAuto').classList.toggle('active',auto);if(auto)playAudio()}
+function playAudio(){audio.src=audioBase+'/'+cur;audio.play().catch(()=>{})}
+audio.onended=function(){if(auto&&cur<slides.length-1){cur++;render();playAudio()}}
+
+function renderCharts(){
+  Object.values(charts).forEach(c=>{if(c&&c.destroy)c.destroy()});charts={};
+  const dv5='#0ea5e9',xi='#10b981',xc='#eab308',sp='#8b5cf6',red='#ef4444';
+  const opts={responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{size:10}}},datalabels:{display:false}},scales:{x:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'#1e293b'}},y:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'#1e293b'}}}};
+  const hOpts={...opts,indexAxis:'y'};
+
+  function mk(id,cfg){const el=document.getElementById(id);if(!el)return;charts[id]=new Chart(el.getContext('2d'),cfg)}
+
+  if(cur===1&&chartData.specialtyPie&&chartData.specialtyPie.length){
+    mk('chartSpecialtyPie',{type:'doughnut',data:{labels:chartData.specialtyPie.map(d=>d.label),datasets:[{data:chartData.specialtyPie.map(d=>d.value),backgroundColor:['#0ea5e9','#10b981','#eab308','#ef4444','#f97316','#8b5cf6','#06b6d4']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{size:10}}},datalabels:{display:false}}}})
+  }
+  if(cur===2&&chartData.procedurePareto&&chartData.procedurePareto.length){
+    mk('chartProcedurePareto',{type:'bar',data:{labels:chartData.procedurePareto.map(d=>d.label),datasets:[{label:'Cases',data:chartData.procedurePareto.map(d=>d.value),backgroundColor:dv5}]},options:hOpts})
+  }
+  if(cur===3&&chartData.monthlySeason&&chartData.monthlySeason.length){
+    mk('chartMonthlySeason',{type:'bar',data:{labels:chartData.monthlySeason.map(d=>d.label),datasets:[{label:'Cases',data:chartData.monthlySeason.map(d=>d.value),backgroundColor:dv5}]},options:opts})
+  }
+  if(cur===4&&chartData.weekday&&chartData.weekday.length){
+    mk('chartWeekday',{type:'bar',data:{labels:chartData.weekday.map(d=>d.label),datasets:[{label:'Cases',data:chartData.weekday.map(d=>d.value),backgroundColor:xi}]},options:opts})
+  }
+  if(cur===5&&chartData.hourly&&chartData.hourly.length){
+    const maxH=Math.max(...chartData.hourly.map(d=>d.value),1);
+    mk('chartHourly',{type:'bar',data:{labels:chartData.hourly.map(d=>d.label),datasets:[{label:'Cases',data:chartData.hourly.map(d=>d.value),backgroundColor:chartData.hourly.map(d=>d.value>=maxH*0.8?xc:dv5)}]},options:opts})
+  }
+  if(cur===6&&chartData.compatibility&&chartData.compatibility.length){
+    mk('chartCompatibility',{type:'bar',data:{labels:chartData.compatibility.map(d=>d.label),datasets:[{label:'dV5',data:chartData.compatibility.map(d=>d.dV5),backgroundColor:dv5},{label:'Xi',data:chartData.compatibility.map(d=>d.Xi),backgroundColor:xi},{label:'X',data:chartData.compatibility.map(d=>d.X),backgroundColor:xc},{label:'SP',data:chartData.compatibility.map(d=>d.SP),backgroundColor:sp}]},options:hOpts})
+  }
+  if(cur===7&&chartData.designDay){
+    mk('chartDesignDay',{type:'bar',data:{labels:chartData.designDay.map(d=>d.label),datasets:[{label:'Cases/Day',data:chartData.designDay.map(d=>d.value),backgroundColor:['#94a3b8',xi,xc,red]}]},options:opts})
+  }
+  if(cur===8&&chartData.volumeRamp&&chartData.volumeRamp.length){
+    mk('chartVolumeRamp',{type:'bar',data:{labels:chartData.volumeRamp.map(d=>d.label),datasets:[{label:'Robotic Cases',data:chartData.volumeRamp.map(d=>d.value),backgroundColor:dv5}]},options:opts})
+  }
+  if(cur===9&&chartData.breakeven&&chartData.breakeven.length){
+    mk('chartBreakeven',{type:'line',data:{labels:chartData.breakeven.map(d=>d.label),datasets:[{label:'Cumulative',data:chartData.breakeven.map(d=>d.value),borderColor:xi,backgroundColor:'rgba(16,185,129,0.1)',fill:true,tension:0.3}]},options:opts})
+  }
+  if(cur===10&&chartData.growth&&chartData.growth.length){
+    const scenarioKeys=Object.keys(chartData.growth[0]||{}).filter(k=>k!=='label');
+    const colors=[dv5,xi,xc];
+    mk('chartGrowth',{type:'line',data:{labels:chartData.growth.map(d=>d.label),datasets:scenarioKeys.map((k,i)=>({label:k,data:chartData.growth.map(d=>d[k]),borderColor:colors[i%3],tension:0.3,fill:false}))},options:opts})
+  }
+}
+
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown')nextSlide();if(e.key==='ArrowLeft'||e.key==='ArrowUp')prevSlide()});
+<\/script>
+</body>
+</html>`);
+  } catch (error) {
+    console.error('[Intuitive Proposal page] Error:', error);
+    res.status(500).send('Error loading proposal: ' + error.message);
+  }
+});
 
 // ============================================================================
 // DASHBOARD (SPA)
@@ -87,7 +291,7 @@ if (fs.existsSync(dashboardDistPath)) {
   app.use(`${BASE_PATH}/`, express.static(dashboardDistPath));
 
   app.get(`${BASE_PATH}/*`, (req, res, next) => {
-    if (req.path.startsWith(`${BASE_PATH}/api/`) || req.path.startsWith(`${BASE_PATH}/health`)) {
+    if (req.path.startsWith(`${BASE_PATH}/api/`) || req.path.startsWith(`${BASE_PATH}/health`) || req.path.startsWith(`${BASE_PATH}/proposal/`)) {
       return next();
     }
     const indexPath = path.join(dashboardDistPath, 'index.html');
