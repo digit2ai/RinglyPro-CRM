@@ -339,7 +339,7 @@ export default function IntakePage({ onProjectCreated, currentProject }) {
           disabled={loading}
           className="w-full bg-intuitive-600 hover:bg-intuitive-700 text-white font-semibold py-3.5 px-6 rounded-xl text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? 'Analyzing Hospital Profile...' : 'Run da Vinci System Match'}
+          {loading ? 'Analyzing Hospital Profile...' : 'Run SurgicalMind AI Match'}
         </button>
       </form>
     </div>

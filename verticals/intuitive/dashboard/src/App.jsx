@@ -176,12 +176,10 @@ export default function App() {
       <aside className="w-56 bg-[#0a1628] border-r border-slate-800 flex flex-col fixed h-full">
         <div className="p-5 border-b border-slate-800">
           <div className="flex items-center gap-3 mb-1">
-            <div className="w-9 h-9 rounded-lg bg-intuitive-900 flex items-center justify-center">
-              <span className="text-intuitive-400 font-bold text-xs">dV</span>
-            </div>
+            <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro" className="w-9 h-9 rounded-lg" />
             <div>
-              <div className="text-white font-bold text-sm tracking-tight">da Vinci</div>
-              <div className="text-slate-500 text-[10px] tracking-widest uppercase">System Matcher</div>
+              <div className="text-white font-bold text-sm tracking-tight">SurgicalMind</div>
+              <div className="text-slate-500 text-[10px] tracking-widest uppercase">AI System Matcher</div>
             </div>
           </div>
         </div>
@@ -213,8 +211,8 @@ export default function App() {
         </nav>
 
         <div className="p-4 border-t border-slate-800 text-[10px] text-slate-600">
-          Powered by Digit2AI<br />
-          da Vinci System Matcher v1.0
+          Powered by RinglyPro<br />
+          SurgicalMind AI v1.0
         </div>
       </aside>
 
