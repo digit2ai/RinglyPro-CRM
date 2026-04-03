@@ -244,31 +244,57 @@ function buildSlideHTML(analysis, hospitalName) {
   const metric = (label, value, color = '#0ea5e9') => `<div class="metric"><div class="metric-value" style="color:${color}">${esc(String(value))}</div><div class="metric-label">${esc(label)}</div></div>`;
   const chartBox = (id, h = 220) => `<div class="chart-box"><canvas id="${id}" height="${h}"></canvas></div>`;
 
-  const topProcs = procedurePareto.top_procedures || procedurePareto.procedures || [];
-  const abcClasses = procedurePareto.abc_classes || procedurePareto.classes || {};
-  const months = monthlySeason.months || monthlySeason.monthly_data || [];
-  const days = weekdayDist.days || weekdayDist.weekday_data || [];
-  const hours = hourlyDist.hours || hourlyDist.hourly_data || [];
-  const procedures = robotCompat.procedures || robotCompat.compatibility_matrix || [];
-  const bestModel = robotCompat.best_overall_model || robotCompat.overall_best_model || 'not determined';
+  // Procedure Pareto
+  const allProcs = procedurePareto.procedures || [];
+  const totalCases = procedurePareto.total_cases || allProcs.reduce((s, p) => s + (p.cases || 0), 0) || 1;
+  const topProcs = allProcs.slice(0, 10).map(p => ({
+    name: p.procedure_name || p.name || p.procedure || '',
+    cases: p.cases || p.count || 0,
+    pct: totalCases > 0 ? Math.round((p.cases || 0) / totalCases * 1000) / 10 : 0,
+    abc_class: p.abc_class || ''
+  }));
+  const abcClasses = procedurePareto.classes || {};
+
+  // Monthly -- compute peak
+  const months = monthlySeason.monthly_data || monthlySeason.months || [];
+  const peakMonth = months.length > 0 ? months.reduce((max, m) => (m.cases || 0) > (max.cases || 0) ? m : max, months[0]) : {};
+
+  // Weekday
+  const days = weekdayDist.weekday_data || weekdayDist.days || [];
+  const totalDaysAnalyzed = weekdayDist.operating_days_per_week ? Math.round(weekdayDist.operating_days_per_week * 50) : days.reduce((s, d) => s + (d.cases || 0), 0);
+
+  // Hourly
+  const hours = hourlyDist.hourly_data || hourlyDist.hours || [];
+
+  // Compatibility
+  const procedures = robotCompat.compatibility_matrix || robotCompat.procedures || [];
+  const bestModel = robotCompat.overall_best_model || robotCompat.best_overall_model || 'not determined';
+
+  // Design day
   const percentiles = designDay.percentiles || {};
-  const p50 = designDay.p50 || percentiles.P50 || 0;
-  const p75 = designDay.p75 || percentiles.P75 || designDay.design_day || 0;
-  const p90 = designDay.p90 || percentiles.P90 || 0;
-  const p95 = designDay.p95 || percentiles.P95 || 0;
-  const perProcCost = financialDeep.per_procedure_cost || financialDeep.cost_per_case || (financialDeep.per_procedure_economics?.robotic?.cost) || 0;
-  const yearlyProj = volProj.yearly_projections || volProj.projections || [];
-  const tco = financialDeep.total_cost_of_ownership || financialDeep.tco || {};
-  const scenariosObj = growthExtrap.scenarios || {};
-  const scenarios = Array.isArray(scenariosObj) ? scenariosObj : Object.entries(scenariosObj).map(([k, v]) => ({ key: k, ...v }));
-  const baseScenario = scenariosObj.baseline || {};
-  const optimistic = scenariosObj.aggressive || {};
-  const conservative = scenariosObj.conservative || {};
+  const p50 = typeof percentiles.P50 === 'number' ? percentiles.P50 : (designDay.p50 || 0);
+  const p75 = typeof percentiles.P75 === 'number' ? percentiles.P75 : (designDay.design_day || 0);
+  const p90 = typeof percentiles.P90 === 'number' ? percentiles.P90 : (designDay.p90 || 0);
+  const p95 = typeof percentiles.P95 === 'number' ? percentiles.P95 : (designDay.p95 || 0);
+
+  // Financial
+  const perProcCost = financialDeep.per_procedure_economics?.robotic?.cost || financialDeep.per_procedure_cost || 0;
+  const tco = financialDeep.total_cost_of_ownership || {};
+
+  // Volume projection
+  const yearlyProj = volProj.projections || [];
+
+  // Growth
   const chartDataGrowth = growthExtrap.chart_data || [];
-  const primaryModel = modelMatch.primary_recommendation || modelMatch.recommended_model || '--';
-  const primaryRec = typeof primaryModel === 'object' ? primaryModel : {};
-  const fitScore = primaryRec.score || modelMatch.fit_score || modelMatch.overall_fit || 0;
-  const rationale = primaryRec.reasons?.join('. ') || modelMatch.rationale || modelMatch.reasoning || '';
+
+  // Model matching -- primary_recommendation is an OBJECT with .model, .score, .reasons
+  const primaryRec = typeof modelMatch.primary_recommendation === 'object' ? modelMatch.primary_recommendation : {};
+  const primaryModelName = primaryRec.system || primaryRec.model || (typeof modelMatch.primary_recommendation === 'string' ? modelMatch.primary_recommendation : '--');
+  const fitScore = primaryRec.score || 0;
+  const rationale = Array.isArray(primaryRec.reasons) ? primaryRec.reasons.join('. ') : (primaryRec.rationale || '');
+
+  // Risks
+  const riskFactors = riskAssess.risks || [];
   const riskFactors = riskAssess.risks || riskAssess.risk_factors || riskAssess.factors || [];
 
   // Specialty mix
@@ -306,16 +332,16 @@ function buildSlideHTML(analysis, hospitalName) {
     { title: 'Procedure Volume Analysis', html: `
       <div class="metrics-grid">${metric('Gini Coefficient', procedurePareto.gini_coefficient || procedurePareto.gini || '--')}${metric('Total Procedures', fmt(procedurePareto.total_procedures || procedurePareto.total || 0))}${metric('Procedure Types', fmt(topProcs.length))}${metric('ABC Separation', (procedurePareto.gini_coefficient || 0) >= 0.6 ? 'Strong' : 'Moderate')}</div>
       ${chartBox('chartProcedurePareto', 220)}
-      ${topProcs.length > 0 ? `<table class="data-table"><tr><th>#</th><th>Procedure</th><th>Cases</th><th>%</th><th>Class</th></tr>${topProcs.slice(0, 10).map((p, i) => `<tr><td>${i + 1}</td><td>${esc(p.name || p.procedure || '')}</td><td>${fmt(p.cases || p.count || 0)}</td><td>${p.pct || p.percentage || 0}%</td><td><strong>${esc(p.abc_class || p.class || '')}</strong></td></tr>`).join('')}</table>` : ''}` },
+      ${topProcs.length > 0 ? `<table class="data-table"><tr><th>#</th><th>Procedure</th><th>Cases</th><th>%</th><th>Class</th></tr>${topProcs.map((p, i) => `<tr><td>${i + 1}</td><td>${esc(p.name)}</td><td>${fmt(p.cases)}</td><td>${p.pct}%</td><td><strong style="color:${p.abc_class === 'A' ? '#10b981' : p.abc_class === 'B' ? '#eab308' : '#94a3b8'}">${esc(p.abc_class)}</strong></td></tr>`).join('')}</table>` : ''}` },
 
     // Slide 3: Monthly Seasonality
     { title: 'Monthly Surgical Volume', html: `
-      <div class="metrics-grid">${metric('CoV', monthlySeason.coefficient_of_variation || monthlySeason.cov || '--')}${metric('Peak Month', esc(monthlySeason.peak_month || '--'))}${metric('Seasonal Pattern', (monthlySeason.coefficient_of_variation || 0) >= 0.15 ? 'Notable' : 'Consistent', '#eab308')}</div>
+      <div class="metrics-grid">${metric('CoV', (monthlySeason.coefficient_of_variation || '--') + '%')}${metric('Peak Month', esc(peakMonth.month || '--'), '#10b981')}${metric('Peak Cases', fmt(peakMonth.cases || 0))}${metric('Seasonal Class', monthlySeason.seasonality_label || monthlySeason.seasonality_class || '--', '#eab308')}</div>
       ${months.length > 0 ? chartBox('chartMonthlySeason', 220) : '<div class="info-box">No monthly data available.</div>'}` },
 
     // Slide 4: Weekday Distribution
     { title: 'Weekday Surgical Distribution', html: `
-      <div class="metrics-grid">${metric('Peak Day', esc(weekdayDist.peak_day || '--'))}${metric('Total Days Analyzed', fmt(weekdayDist.total_days || 0))}</div>
+      <div class="metrics-grid">${metric('Peak Day', esc(weekdayDist.peak_day || '--'), '#10b981')}${metric('Operating Days/Week', weekdayDist.operating_days_per_week || '--')}${metric('Avg Cases/Day', fmt(Math.round(days.reduce((s, d) => s + (d.cases || 0), 0) / Math.max(days.filter(d => d.cases > 0).length, 1))))}</div>
       ${days.length > 0 ? chartBox('chartWeekday', 220) : '<div class="info-box">No weekday distribution data available.</div>'}` },
 
     // Slide 5: Hourly OR Utilization
@@ -338,7 +364,7 @@ function buildSlideHTML(analysis, hospitalName) {
 
     // Slide 8: Volume Projection
     { title: '5-Year Volume Projection', html: `
-      ${yearlyProj.length > 0 ? `<div class="metrics-grid">${metric('Y1 Cases', fmt(yearlyProj[0]?.total_cases || yearlyProj[0]?.robotic_cases || 0))}${yearlyProj.length >= 3 ? metric('Y3 Cases', fmt(yearlyProj[2]?.total_cases || yearlyProj[2]?.robotic_cases || 0), '#eab308') : ''}${yearlyProj.length >= 5 ? metric('Y5 Cases', fmt(yearlyProj[4]?.total_cases || yearlyProj[4]?.robotic_cases || 0), '#10b981') : ''}${metric('Adoption Rate', (volProj.adoption_rate || volProj.ramp_rate || '--') + '%')}</div>` : ''}
+      ${yearlyProj.length > 0 ? `<div class="metrics-grid">${metric('Y1 Cases', fmt(yearlyProj[0]?.projected_cases || 0))}${yearlyProj.length >= 3 ? metric('Y3 Cases', fmt(yearlyProj[2]?.projected_cases || 0), '#eab308') : ''}${yearlyProj.length >= 5 ? metric('Y5 Cases', fmt(yearlyProj[4]?.projected_cases || 0), '#10b981') : ''}${metric('Y1 Adoption', (yearlyProj[0]?.adoption_rate || '--') + '%')}</div>` : ''}
       ${yearlyProj.length > 0 ? chartBox('chartVolumeRamp', 220) : '<div class="info-box">No volume projection data available.</div>'}` },
 
     // Slide 9: Financial Deep Dive
@@ -361,7 +387,7 @@ function buildSlideHTML(analysis, hospitalName) {
       <div style="text-align:center;padding:20px 0">
         <div style="display:inline-block;padding:24px 40px;border-radius:16px;background:linear-gradient(135deg,#0c4a6e,#0ea5e9);box-shadow:0 8px 32px rgba(14,165,233,0.3)">
           <div style="font-size:14px;color:#94a3b8;text-transform:uppercase;letter-spacing:2px">Primary Recommendation</div>
-          <div style="font-size:36px;font-weight:800;color:#fff;margin:8px 0">da Vinci ${esc(String(primaryModel))}</div>
+          <div style="font-size:36px;font-weight:800;color:#fff;margin:8px 0">da Vinci ${esc(primaryModelName === 'dV5' ? '5' : primaryModelName)}</div>
           <div style="font-size:20px;color:#7dd3fc">Fit Score: ${Math.round(fitScore)}/100</div>
         </div>
       </div>
@@ -412,24 +438,28 @@ function buildChartData(analysis) {
   if (proj.specialty_head_neck) specialties.push({ label: 'Head & Neck', value: proj.specialty_head_neck });
   if (proj.specialty_cardiac) specialties.push({ label: 'Cardiac', value: proj.specialty_cardiac });
 
+  const totalCasesCD = procedurePareto.total_cases || (procedurePareto.procedures || []).reduce((s, p) => s + (p.cases || 0), 0) || 1;
+
   return {
     specialtyPie: specialties.filter(s => s.value > 0),
-    procedurePareto: topProcs.slice(0, 10).map(p => ({
-      label: (p.name || p.procedure || '').substring(0, 30),
-      value: p.cases || p.count || 0,
-      pct: p.pct || p.percentage || 0
+    procedurePareto: (procedurePareto.procedures || []).slice(0, 10).map(p => ({
+      label: (p.procedure_name || p.name || '').substring(0, 30),
+      value: p.cases || 0,
+      pct: Math.round((p.cases || 0) / totalCasesCD * 1000) / 10
     })),
     monthlySeason: months.map(m => ({
       label: m.month || m.label || '',
-      value: m.cases || m.volume || m.count || 0
+      value: m.cases || 0,
+      robotic: m.robotic_cases || 0
     })),
     weekday: days.map(d => ({
       label: d.day || d.label || '',
-      value: d.cases || d.volume || d.count || 0
+      value: d.cases || 0,
+      robotic: d.robotic_cases || 0
     })),
     hourly: hours.map(h => ({
       label: String(h.hour || h.label || ''),
-      value: h.cases || h.volume || h.count || 0
+      value: h.or_utilization_pct || h.cases || 0
     })),
     compatibility: procedures.slice(0, 10).map(p => ({
       label: (p.procedure || p.name || '').substring(0, 25),

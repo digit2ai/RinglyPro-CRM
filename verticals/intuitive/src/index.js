@@ -207,6 +207,10 @@ const slides=${slidesJSON};
 const audioBase="${audioBase}";
 const chartData=${chartDataJSON};
 let cur=0,auto=false,charts={};
+Chart.register(ChartDataLabels);
+Chart.defaults.color='#94a3b8';
+Chart.defaults.borderColor='#1e293b';
+Chart.defaults.plugins.datalabels={display:false};
 const audio=document.getElementById('audio');
 
 function startPresentation(){document.getElementById('splash').style.display='none';document.getElementById('app').style.display='flex';render();playAudio()}
@@ -230,43 +234,55 @@ audio.onended=function(){if(auto&&cur<slides.length-1){cur++;render();playAudio(
 function renderCharts(){
   Object.values(charts).forEach(c=>{if(c&&c.destroy)c.destroy()});charts={};
   const dv5='#0ea5e9',xi='#10b981',xc='#eab308',sp='#8b5cf6',red='#ef4444';
-  const opts={responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{size:10}}},datalabels:{display:false}},scales:{x:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'#1e293b'}},y:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'#1e293b'}}}};
-  const hOpts={...opts,indexAxis:'y'};
+  const fmtN=n=>n>=1000000?(n/1000000).toFixed(1)+'M':n>=1000?(n/1000).toFixed(0)+'K':String(Math.round(n));
+  const dlOpts={display:true,color:'#e2e8f0',font:{size:10,weight:'bold'},anchor:'end',align:'top',offset:-2,formatter:v=>fmtN(v)};
+  const dlH={display:true,color:'#e2e8f0',font:{size:10,weight:'bold'},anchor:'end',align:'right',offset:4,formatter:v=>String(Math.round(v))};
+  const dlPct={display:true,color:'#fff',font:{size:10,weight:'bold'},anchor:'center',align:'center',formatter:(v,ctx)=>{const t=ctx.chart.data.datasets[0].data.reduce((s,x)=>s+x,0);return t>0?Math.round(v/t*100)+'%':''}};
+  const opts={responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{size:10}}},datalabels:dlOpts},scales:{x:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'#1e293b'}},y:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'#1e293b'},beginAtZero:true}}};
+  const hOpts={responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{labels:{color:'#94a3b8',font:{size:10}}},datalabels:dlH},scales:{x:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'#1e293b'},beginAtZero:true},y:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'#1e293b'}}}};
 
   function mk(id,cfg){const el=document.getElementById(id);if(!el)return;charts[id]=new Chart(el.getContext('2d'),cfg)}
 
+  // Slide 1: Specialty Pie
   if(cur===1&&chartData.specialtyPie&&chartData.specialtyPie.length){
-    mk('chartSpecialtyPie',{type:'doughnut',data:{labels:chartData.specialtyPie.map(d=>d.label),datasets:[{data:chartData.specialtyPie.map(d=>d.value),backgroundColor:['#0ea5e9','#10b981','#eab308','#ef4444','#f97316','#8b5cf6','#06b6d4']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{size:10}}},datalabels:{display:false}}}})
+    mk('chartSpecialtyPie',{type:'doughnut',data:{labels:chartData.specialtyPie.map(d=>d.label),datasets:[{data:chartData.specialtyPie.map(d=>d.value),backgroundColor:['#0ea5e9','#10b981','#eab308','#ef4444','#f97316','#8b5cf6','#06b6d4']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:'#94a3b8',font:{size:10}}},datalabels:dlPct}}})
   }
+  // Slide 2: Procedure Pareto (horizontal bar with labels)
   if(cur===2&&chartData.procedurePareto&&chartData.procedurePareto.length){
-    mk('chartProcedurePareto',{type:'bar',data:{labels:chartData.procedurePareto.map(d=>d.label),datasets:[{label:'Cases',data:chartData.procedurePareto.map(d=>d.value),backgroundColor:dv5}]},options:hOpts})
+    mk('chartProcedurePareto',{type:'bar',data:{labels:chartData.procedurePareto.map(d=>d.label),datasets:[{label:'Cases',data:chartData.procedurePareto.map(d=>d.value),backgroundColor:dv5,borderRadius:3}]},options:hOpts})
   }
+  // Slide 3: Monthly (grouped bar: total + robotic)
   if(cur===3&&chartData.monthlySeason&&chartData.monthlySeason.length){
-    mk('chartMonthlySeason',{type:'bar',data:{labels:chartData.monthlySeason.map(d=>d.label),datasets:[{label:'Cases',data:chartData.monthlySeason.map(d=>d.value),backgroundColor:dv5}]},options:opts})
+    mk('chartMonthlySeason',{type:'bar',data:{labels:chartData.monthlySeason.map(d=>d.label),datasets:[{label:'Total Cases',data:chartData.monthlySeason.map(d=>d.value),backgroundColor:dv5,borderRadius:3},{label:'Robotic',data:chartData.monthlySeason.map(d=>d.robotic||0),backgroundColor:'#8b5cf6',borderRadius:3}]},options:{...opts,plugins:{...opts.plugins,datalabels:{display:false}}}})
   }
+  // Slide 4: Weekday (grouped bar)
   if(cur===4&&chartData.weekday&&chartData.weekday.length){
-    mk('chartWeekday',{type:'bar',data:{labels:chartData.weekday.map(d=>d.label),datasets:[{label:'Cases',data:chartData.weekday.map(d=>d.value),backgroundColor:xi}]},options:opts})
+    mk('chartWeekday',{type:'bar',data:{labels:chartData.weekday.map(d=>d.label),datasets:[{label:'Total Cases',data:chartData.weekday.map(d=>d.value),backgroundColor:xi,borderRadius:3},{label:'Robotic',data:chartData.weekday.map(d=>d.robotic||0),backgroundColor:'#8b5cf6',borderRadius:3}]},options:opts})
   }
+  // Slide 5: Hourly (peak-highlighted bar)
   if(cur===5&&chartData.hourly&&chartData.hourly.length){
     const maxH=Math.max(...chartData.hourly.map(d=>d.value),1);
-    mk('chartHourly',{type:'bar',data:{labels:chartData.hourly.map(d=>d.label),datasets:[{label:'Cases',data:chartData.hourly.map(d=>d.value),backgroundColor:chartData.hourly.map(d=>d.value>=maxH*0.8?xc:dv5)}]},options:opts})
+    mk('chartHourly',{type:'bar',data:{labels:chartData.hourly.map(d=>d.label),datasets:[{label:'OR Utilization %',data:chartData.hourly.map(d=>d.value),backgroundColor:chartData.hourly.map(d=>d.value>=maxH*0.8?xc:dv5),borderRadius:3}]},options:{...opts,plugins:{...opts.plugins,datalabels:{display:true,color:'#e2e8f0',font:{size:9,weight:'bold'},anchor:'end',align:'top',formatter:v=>v>=1?Math.round(v)+'%':''}}}})
   }
+  // Slide 6: Compatibility Matrix (horizontal grouped)
   if(cur===6&&chartData.compatibility&&chartData.compatibility.length){
-    mk('chartCompatibility',{type:'bar',data:{labels:chartData.compatibility.map(d=>d.label),datasets:[{label:'dV5',data:chartData.compatibility.map(d=>d.dV5),backgroundColor:dv5},{label:'Xi',data:chartData.compatibility.map(d=>d.Xi),backgroundColor:xi},{label:'X',data:chartData.compatibility.map(d=>d.X),backgroundColor:xc},{label:'SP',data:chartData.compatibility.map(d=>d.SP),backgroundColor:sp}]},options:hOpts})
+    mk('chartCompatibility',{type:'bar',data:{labels:chartData.compatibility.map(d=>d.label),datasets:[{label:'dV5',data:chartData.compatibility.map(d=>d.dV5),backgroundColor:dv5,borderRadius:2},{label:'Xi',data:chartData.compatibility.map(d=>d.Xi),backgroundColor:xi,borderRadius:2},{label:'X',data:chartData.compatibility.map(d=>d.X),backgroundColor:xc,borderRadius:2},{label:'SP',data:chartData.compatibility.map(d=>d.SP),backgroundColor:sp,borderRadius:2}]},options:{...hOpts,plugins:{...hOpts.plugins,datalabels:{display:false}}}})
   }
+  // Slide 7: Design Day (bar with labels)
   if(cur===7&&chartData.designDay){
-    mk('chartDesignDay',{type:'bar',data:{labels:chartData.designDay.map(d=>d.label),datasets:[{label:'Cases/Day',data:chartData.designDay.map(d=>d.value),backgroundColor:['#94a3b8',xi,xc,red]}]},options:opts})
+    mk('chartDesignDay',{type:'bar',data:{labels:chartData.designDay.map(d=>d.label),datasets:[{label:'Cases/Day',data:chartData.designDay.map(d=>d.value),backgroundColor:['#94a3b8',xi,xc,red],borderRadius:4}]},options:opts})
   }
+  // Slide 8: Volume Ramp (bar with labels)
   if(cur===8&&chartData.volumeRamp&&chartData.volumeRamp.length){
-    mk('chartVolumeRamp',{type:'bar',data:{labels:chartData.volumeRamp.map(d=>d.label),datasets:[{label:'Robotic Cases',data:chartData.volumeRamp.map(d=>d.value),backgroundColor:dv5}]},options:opts})
+    mk('chartVolumeRamp',{type:'bar',data:{labels:chartData.volumeRamp.map(d=>d.label),datasets:[{label:'Robotic Cases',data:chartData.volumeRamp.map(d=>d.value),backgroundColor:dv5,borderRadius:4}]},options:opts})
   }
+  // Slide 9: Breakeven (dual line: cost vs benefit in $M)
   if(cur===9&&chartData.breakeven&&chartData.breakeven.length){
-    mk('chartBreakeven',{type:'line',data:{labels:chartData.breakeven.map(d=>d.label),datasets:[{label:'Cumulative',data:chartData.breakeven.map(d=>d.value),borderColor:xi,backgroundColor:'rgba(16,185,129,0.1)',fill:true,tension:0.3}]},options:opts})
+    mk('chartBreakeven',{type:'line',data:{labels:chartData.breakeven.map(d=>d.label),datasets:[{label:'Cumulative Cost',data:chartData.breakeven.map(d=>d.cost),borderColor:red,backgroundColor:'rgba(239,68,68,0.05)',fill:true,tension:0.3,pointRadius:2},{label:'Cumulative Benefit',data:chartData.breakeven.map(d=>d.benefit),borderColor:xi,backgroundColor:'rgba(16,185,129,0.05)',fill:true,tension:0.3,pointRadius:2}]},options:{...opts,plugins:{...opts.plugins,datalabels:{display:false}},scales:{...opts.scales,y:{...opts.scales.y,ticks:{...opts.scales.y.ticks,callback:v=>'$'+v+'M'}}}}})
   }
+  // Slide 10: Growth (multi-line)
   if(cur===10&&chartData.growth&&chartData.growth.length){
-    const scenarioKeys=Object.keys(chartData.growth[0]||{}).filter(k=>k!=='label');
-    const colors=[dv5,xi,xc];
-    mk('chartGrowth',{type:'line',data:{labels:chartData.growth.map(d=>d.label),datasets:scenarioKeys.map((k,i)=>({label:k,data:chartData.growth.map(d=>d[k]),borderColor:colors[i%3],tension:0.3,fill:false}))},options:opts})
+    mk('chartGrowth',{type:'line',data:{labels:chartData.growth.map(d=>d.label),datasets:[{label:'Conservative (10%)',data:chartData.growth.map(d=>d.conservative),borderColor:'#94a3b8',borderDash:[5,5],tension:0.3,pointRadius:3},{label:'Baseline (15%)',data:chartData.growth.map(d=>d.baseline),borderColor:dv5,tension:0.3,pointRadius:4,borderWidth:3},{label:'Aggressive (20%)',data:chartData.growth.map(d=>d.aggressive),borderColor:xi,borderDash:[3,3],tension:0.3,pointRadius:3}]},options:{...opts,plugins:{...opts.plugins,datalabels:{display:true,color:'#e2e8f0',font:{size:9},anchor:'end',align:'top',formatter:v=>fmtN(v)}}}})
   }
 }
 
