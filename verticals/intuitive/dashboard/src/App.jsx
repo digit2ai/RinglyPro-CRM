@@ -227,8 +227,6 @@ export default function App() {
           <Route path="/presentation" element={<PresentationPage />} />
           <Route path="/presentation/:projectId" element={<PresentationPage />} />
         </Routes>
-        {/* ElevenLabs Voice Agent Widget - inside main so it's right of sidebar */}
-        <elevenlabs-convai agent-id="agent_1801kjx55tabedbvx4y7x4eptbz4"></elevenlabs-convai>
       </main>
     </div>
   )
