@@ -294,8 +294,7 @@ function buildSlideHTML(analysis, hospitalName) {
   const rationale = Array.isArray(primaryRec.reasons) ? primaryRec.reasons.join('. ') : (primaryRec.rationale || '');
 
   // Risks
-  const riskFactors = riskAssess.risks || [];
-  const riskFactors = riskAssess.risks || riskAssess.risk_factors || riskAssess.factors || [];
+  const riskFactors = riskAssess.risks || riskAssess.risk_factors || [];
 
   // Specialty mix
   const specialties = [];
