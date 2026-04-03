@@ -163,10 +163,12 @@ function buildNarrationScripts(analysis, hospitalName) {
   const perProcCost = financialDeep.per_procedure_cost || financialDeep.cost_per_case || 0;
 
   // Growth extrapolation
-  const scenarios = growthExtrap.scenarios || [];
-  const baseScenario = scenarios.find(s => s.name === 'base' || s.label === 'Base') || scenarios[0] || {};
-  const optimistic = scenarios.find(s => s.name === 'optimistic' || s.label === 'Optimistic') || {};
-  const conservative = scenarios.find(s => s.name === 'conservative' || s.label === 'Conservative') || {};
+  const scenariosRaw = growthExtrap.scenarios || {};
+  const chartDataGrowth = growthExtrap.chart_data || [];
+  const y5Growth = chartDataGrowth.find(d => d.year === 'Year 5') || chartDataGrowth[chartDataGrowth.length - 1] || {};
+  const baseGrowthRate = scenariosRaw.baseline?.growth_rate || 0.15;
+  const aggressiveRate = scenariosRaw.aggressive?.growth_rate || 0.20;
+  const conservativeRate = scenariosRaw.conservative?.growth_rate || 0.10;
 
   // System recommendation (from model_matching)
   const primaryModel = modelMatch.primary_recommendation || modelMatch.recommended_model || 'not determined';
@@ -203,10 +205,10 @@ function buildNarrationScripts(analysis, hospitalName) {
     `For the five-year volume projection... we modeled the robotic adoption ramp. ${adoptionRate ? `Starting with an adoption rate of ${sayPct(adoptionRate)}...` : ''} ${y5.total_cases || y5.robotic_cases ? `By year five... projected robotic cases reach ${say(y5.total_cases || y5.robotic_cases)} per year.` : ''} ${y5.specialties ? `Growth is driven by expansion across ${y5.specialties.length || 'multiple'} specialty areas.` : ''} The adoption curve follows established patterns from comparable ${hospitalType} facilities... adjusted for your specific surgeon pipeline and procedure mix.`,
 
     // Slide 9: Financial Deep Dive
-    `The financial analysis provides a comprehensive view of the investment. ${tco.five_year ? `The five-year total cost of ownership is approximately ${say(Math.round(tco.five_year / 1000))} thousand dollars.` : ''} ${breakeven ? `The breakeven point is reached at month ${say(breakeven)}.` : ''} ${perProcCost ? `The per-procedure incremental cost is approximately ${say(Math.round(perProcCost))} dollars.` : ''} These economics include system acquisition... annual service contracts... instrument costs per procedure... and facility modifications. The R.O.I. model accounts for improved patient outcomes... shorter length of stay... and reduced complication rates.`,
+    `The financial analysis provides a comprehensive view of the investment. ${(tco.total_5yr || tco.five_year) ? `The five-year total cost of ownership is approximately ${say(Math.round((tco.total_5yr || tco.five_year) / 1000000))} million dollars.` : ''} ${breakeven ? `The breakeven point is reached at month ${say(breakeven)}.` : ''} ${perProcCost ? `The per-procedure incremental cost is approximately ${say(Math.round(perProcCost))} dollars.` : ''} These economics include system acquisition... annual service contracts... instrument costs per procedure... and facility modifications. The R.O.I. model accounts for improved patient outcomes... shorter length of stay... and reduced complication rates.`,
 
     // Slide 10: Growth Extrapolation
-    `The growth extrapolation models three scenarios over the planning horizon. ${baseScenario.year5_cases || baseScenario.cases_y5 ? `In the base case... robotic volume reaches ${say(baseScenario.year5_cases || baseScenario.cases_y5)} cases by year five.` : ''} ${optimistic.year5_cases || optimistic.cases_y5 ? `The optimistic scenario projects ${say(optimistic.year5_cases || optimistic.cases_y5)} cases...` : ''} ${conservative.year5_cases || conservative.cases_y5 ? `while the conservative estimate is ${say(conservative.year5_cases || conservative.cases_y5)} cases.` : ''} These scenarios help determine whether a single system is sufficient... or when fleet expansion becomes necessary.`,
+    `The growth extrapolation models three scenarios over the planning horizon. ${y5Growth.baseline ? `In the baseline case at ${sayPct(baseGrowthRate * 100)} annual growth... robotic volume reaches ${say(y5Growth.baseline)} cases by year five.` : ''} ${y5Growth.aggressive ? `The aggressive scenario at ${sayPct(aggressiveRate * 100)} growth projects ${say(y5Growth.aggressive)} cases...` : ''} ${y5Growth.conservative ? `while the conservative estimate at ${sayPct(conservativeRate * 100)} is ${say(y5Growth.conservative)} cases.` : ''} These scenarios help determine whether a single system is sufficient... or when fleet expansion becomes necessary.`,
 
     // Slide 11: System Recommendation
     `Based on the complete analysis... our primary recommendation is the da Vinci ${primaryModel} system. ${fitScore ? `The overall fit score is ${say(Math.round(fitScore))} out of one hundred.` : ''} ${rationale ? rationale : 'This model best aligns with your procedure mix, infrastructure, and growth trajectory.'} ${riskFactors.length > 0 ? `Key risk factors to consider include ${riskFactors.slice(0, 3).map(r => r.name || r.factor || r).join('... and ')}.` : ''} The recommended configuration maximizes clinical value while staying within your stated capital parameters.`,
