@@ -666,7 +666,9 @@ function computeProcedurePareto(p, volumeProj) {
     classified.push({ ...proc, cumulative_volume_pct: cumVolPct, abc_class });
   });
 
-  // Gini coefficient (trapezoidal rule)
+  // Gini coefficient (trapezoidal rule on the Lorenz curve)
+  // Since procedures are sorted descending (largest first), the curve bows above diagonal.
+  // We compute area above the diagonal and normalize.
   let areaUnderLorenz = 0;
   const n = procedures.length;
   for (let i = 0; i < n; i++) {
@@ -676,7 +678,9 @@ function computeProcedurePareto(p, volumeProj) {
     const y1 = lorenz_curve[i].cumulative_volume_pct / 100;
     areaUnderLorenz += (x1 - x0) * (y0 + y1) / 2;
   }
-  const gini_coefficient = Math.round((1 - 2 * areaUnderLorenz) * 1000) / 1000;
+  // Area above diagonal = areaUnderLorenz - 0.5 (the diagonal has area 0.5)
+  // Gini = 2 * (areaAboveDiagonal) = 2 * (areaUnderLorenz - 0.5)
+  const gini_coefficient = Math.round(Math.abs(2 * areaUnderLorenz - 1) * 1000) / 1000;
 
   // Classes summary
   const classA = classified.filter(c => c.abc_class === 'A');
@@ -909,13 +913,13 @@ function computeFinancialDeepDive(p, modelMatch, volumeProj, roiCalc) {
     total_5yr: avgPrice * systemsNeeded + fiveYearInstruments + fiveYearService + trainingCost + renovationCost
   };
 
-  // Payer mix adjusted revenue
+  // Payer mix adjusted revenue (use actual hospital data)
   const payerMix = {
-    medicare: { pct: 35, reimbursement_factor: 0.75 },
-    medicaid: { pct: 10, reimbursement_factor: 0.55 },
-    commercial: { pct: 45, reimbursement_factor: 1.15 },
-    self_pay: { pct: 5, reimbursement_factor: 0.90 },
-    other: { pct: 5, reimbursement_factor: 0.80 }
+    medicare: { pct: p.payer_medicare_pct || 35, reimbursement_factor: 0.75 },
+    medicaid: { pct: p.payer_medicaid_pct || 10, reimbursement_factor: 0.55 },
+    commercial: { pct: p.payer_commercial_pct || 45, reimbursement_factor: 1.15 },
+    self_pay: { pct: p.payer_self_pay_pct || 5, reimbursement_factor: 0.90 },
+    other: { pct: Math.max(0, 100 - (p.payer_medicare_pct || 35) - (p.payer_medicaid_pct || 10) - (p.payer_commercial_pct || 45) - (p.payer_self_pay_pct || 5)), reimbursement_factor: 0.80 }
   };
   let weightedReimbursement = 0;
   for (const [, mix] of Object.entries(payerMix)) {
@@ -938,6 +942,7 @@ function computeFinancialDeepDive(p, modelMatch, volumeProj, roiCalc) {
   return {
     per_procedure_economics: perProcEconomics,
     total_cost_of_ownership,
+    total_cost_of_ownership_5yr: total_cost_of_ownership.total_5yr,
     payer_mix: payerMix,
     payer_adjusted_annual_revenue: payer_adjusted_revenue,
     weighted_reimbursement_factor: Math.round(weightedReimbursement * 100) / 100,
