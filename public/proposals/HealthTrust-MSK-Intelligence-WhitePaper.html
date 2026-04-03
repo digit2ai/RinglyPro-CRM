@@ -222,6 +222,7 @@
     }
     td { padding: 12px 16px; border-bottom: 1px solid var(--border); }
     tr:nth-child(even) { background: rgba(0,163,224,0.02); }
+    td code, .gap-current code, .gap-solution code { background: rgba(0,163,224,0.08); color: var(--accent-dark); padding: 1px 6px; border-radius: 4px; font-size: 12px; font-family: 'SF Mono', 'Fira Code', monospace; }
     .status-yes { color: var(--success); font-weight: 700; }
     .status-no { color: var(--danger); font-weight: 700; }
     .status-partial { color: var(--warning); font-weight: 700; }
@@ -860,11 +861,178 @@
     </div>
   </section>
 
-  <!-- ══ 4. COMPETITIVE POSITIONING ══ -->
-  <section id="competitive" class="page-break">
+  <!-- ══ 4. SYSTEMS INTELLIGENCE ══ -->
+  <section id="systems" class="page-break">
     <div class="section-header">
       <div class="section-number">4</div>
-      <span class="section-label">Competitive Intelligence</span>
+      <span class="section-label">Systems Intelligence</span>
+      <h2>HealthTrust's Confirmed Tech Stack &mdash; and Where MCP Connects</h2>
+      <p class="section-desc">
+        We mapped every confirmed technology platform across HealthTrust and parent HCA Healthcare. Below is the full ecosystem and the specific MCP integration point for each system.
+      </p>
+    </div>
+
+    <!-- Systems Map Table -->
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 18%">Domain</th>
+          <th style="width: 22%">System</th>
+          <th style="width: 14%">Vendor</th>
+          <th style="width: 46%">MCP Integration Opportunity</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>EHR</strong></td>
+          <td>MEDITECH Expanse</td>
+          <td>MEDITECH / GCP</td>
+          <td>FHIR R4 bridge &mdash; <code>msk_create_case</code> and <code>msk_submit_report</code> write directly into Expanse patient records. Live at 43 hospitals, rolling to 190.</td>
+        </tr>
+        <tr>
+          <td><strong>Enterprise BI</strong></td>
+          <td>Palantir Foundry</td>
+          <td>Palantir</td>
+          <td>MCP feeds MSK-specific clinical KPIs (ROM trends, triage volumes, outcome scores) into Foundry's analytics layer as a new data source vertical.</td>
+        </tr>
+        <tr>
+          <td><strong>Clinical Analytics</strong></td>
+          <td>Crimson AI</td>
+          <td>HealthTrust + Optum</td>
+          <td>Crimson tracks 1,000+ measures but zero MSK-specific ROM or triage data. MCP extends Crimson into musculoskeletal territory via <code>msk_get_dashboard_stats</code>.</td>
+        </tr>
+        <tr>
+          <td><strong>Ambient AI</strong></td>
+          <td>Commure (Augmedix)</td>
+          <td>Commure</td>
+          <td>Commure captures clinical documentation. MCP enriches it with structured ROM measurements and AI triage decisions &mdash; turning narrative notes into quantified data.</td>
+        </tr>
+        <tr>
+          <td><strong>Supply Chain</strong></td>
+          <td>GHX Exchange</td>
+          <td>GHX</td>
+          <td>Outcomes-based procurement loop: ROM + PROMs data from MCP correlates device performance to patient recovery, feeding evidence back into GHX purchasing decisions.</td>
+        </tr>
+        <tr>
+          <td><strong>Supply Risk</strong></td>
+          <td>Everstream Analytics</td>
+          <td>Everstream</td>
+          <td>When Everstream flags an implant shortage, MCP cross-references which patients are scheduled and auto-recommends alternatives with comparable ROM outcome data.</td>
+        </tr>
+        <tr>
+          <td><strong>Purchased Services</strong></td>
+          <td>Valify Solutions Group</td>
+          <td>HealthTrust JV</td>
+          <td>Valify benchmarks $460B in spend but lacks clinical outcome weighting. MCP adds outcome-adjusted cost metrics: cost-per-successful-ROM-improvement, not just cost-per-unit.</td>
+        </tr>
+        <tr>
+          <td><strong>Workforce Scheduling</strong></td>
+          <td>Timpani</td>
+          <td>Palantir + HCA</td>
+          <td>Timpani schedules nurses via ML but has no MSK specialization matching. MCP predicts MSK case volume by site and feeds demand signals into Timpani for orthopedic staffing.</td>
+        </tr>
+        <tr>
+          <td><strong>Credentialing</strong></td>
+          <td>VPro Verified</td>
+          <td>HT Workforce</td>
+          <td>MCP validates clinician MSK specializations against case complexity requirements before assignment &mdash; skill-to-acuity matching that VPro doesn't do.</td>
+        </tr>
+        <tr>
+          <td><strong>Revenue Cycle</strong></td>
+          <td>Parallon</td>
+          <td>HCA affiliate</td>
+          <td>Auto-generated billing claims via <code>msk_claims</code> table with CPT codes, diagnosis data, and triage documentation &mdash; reducing manual coding errors and denials.</td>
+        </tr>
+        <tr>
+          <td><strong>Member Portal</strong></td>
+          <td>Custom (Vue.js / .NET / Azure)</td>
+          <td>In-house</td>
+          <td>MSK Intelligence dashboard embeds as a white-labeled module within the existing portal &mdash; same tech stack (Vue.js frontend), zero migration friction.</td>
+        </tr>
+        <tr>
+          <td><strong>Cloud (Clinical)</strong></td>
+          <td>Google Cloud Platform</td>
+          <td>Google</td>
+          <td>MEDITECH Expanse runs on GCP. MCP deploys alongside on the same cloud infrastructure &mdash; low latency, shared compliance boundary, no new cloud vendor.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- 5 Automation Plays -->
+    <h3 style="margin-top: 40px; margin-bottom: 20px;">Five High-Impact MCP Automation Plays</h3>
+
+    <div class="gap-card" style="border-left-color: var(--accent);">
+      <div class="gap-number" style="background: var(--accent);">1</div>
+      <div class="gap-title">MEDITECH Expanse &harr; MSK Intelligence (FHIR Bridge)</div>
+      <div class="gap-current">
+        MEDITECH Expanse supports FHIR R4 natively. As HealthTrust rolls it out across 190 hospitals, every facility gets MSK intelligence on day one. MCP tools <code>msk_create_case</code>, <code>msk_triage_case</code>, and <code>msk_submit_report</code> plug directly into Expanse via FHIR &mdash; no custom integration, no middleware, no vendor negotiation.
+      </div>
+      <div class="gap-solution">
+        <div class="gap-solution-label">Automation Result</div>
+        <p>Every MSK patient encounter in MEDITECH automatically triggers AI triage, ROM assessment routing, and diagnostic copilot &mdash; embedded in the clinician's existing EHR workflow. Zero additional screens, zero training.</p>
+      </div>
+    </div>
+
+    <div class="gap-card" style="border-left-color: var(--accent);">
+      <div class="gap-number" style="background: var(--accent);">2</div>
+      <div class="gap-title">Crimson AI Gap &mdash; MSK-Specific Clinical Intelligence</div>
+      <div class="gap-current">
+        Crimson AI (launched Feb 2026 with Optum) covers 1,000+ clinical measures across 3.5M lives. But it has no MSK-specific ROM data, no computer vision assessment capability, and no triage scoring for musculoskeletal conditions. It's a horizontal platform with a vertical blind spot.
+      </div>
+      <div class="gap-solution">
+        <div class="gap-solution-label">Automation Result</div>
+        <p><code>msk_get_dashboard_stats</code> and ROM measurement data feed directly into Crimson's analytics framework as a new MSK data vertical. HealthTrust's executive team sees MSK outcomes alongside financial and clinical KPIs in the same platform they already use.</p>
+      </div>
+    </div>
+
+    <div class="gap-card" style="border-left-color: var(--accent);">
+      <div class="gap-number" style="background: var(--accent);">3</div>
+      <div class="gap-title">Timpani + MSK Workforce Intelligence</div>
+      <div class="gap-current">
+        Timpani (built on Palantir Foundry) reduced nurse scheduling from 15 hours to 3 hours per leader. But it schedules generalist nurses &mdash; it has zero MSK clinician specialization matching and zero predictive MSK demand forecasting.
+      </div>
+      <div class="gap-solution">
+        <div class="gap-solution-label">Automation Result</div>
+        <p>MCP aggregates <code>msk_get_case_status</code> across all sites, predicts MSK case volume by geography and severity, then feeds staffing demand signals into Timpani. Result: the right orthopedic specialist at the right facility before the backlog builds.</p>
+      </div>
+    </div>
+
+    <div class="gap-card" style="border-left-color: var(--accent);">
+      <div class="gap-number" style="background: var(--accent);">4</div>
+      <div class="gap-title">GHX Exchange &harr; Outcomes-Based Procurement</div>
+      <div class="gap-current">
+        GHX automates procurement for devices and implants across the HealthTrust network. But procurement decisions are based on price and contract terms alone &mdash; there is no feedback loop from patient outcomes back to purchasing decisions.
+      </div>
+      <div class="gap-solution">
+        <div class="gap-solution-label">Automation Result</div>
+        <p>ROM measurements + PROMs data from <code>msk_rom_measurements</code> and <code>msk_prom_submissions</code> flow through MCP to generate procurement intelligence: "Vendor A's knee implant produces 12% better 6-month ROM scores than Vendor B across 400 cases at $200 less per unit." Evidence-based purchasing that GHX alone cannot deliver.</p>
+      </div>
+    </div>
+
+    <div class="gap-card" style="border-left-color: var(--accent);">
+      <div class="gap-number" style="background: var(--accent);">5</div>
+      <div class="gap-title">Everstream + Clinical Supply Risk Correlation</div>
+      <div class="gap-current">
+        Everstream monitors supply chain disruption risk with AI/ML. But it's purely supply-side &mdash; it flags shortages without knowing which clinical pathways are affected or what alternative devices produce equivalent patient outcomes.
+      </div>
+      <div class="gap-solution">
+        <div class="gap-solution-label">Automation Result</div>
+        <p>When Everstream flags an implant shortage, MCP cross-references scheduled MSK patients, historical ROM outcome data for alternative devices, and auto-generates procurement recommendations with clinical evidence. Supply risk meets clinical intelligence &mdash; a capability no one in healthcare has today.</p>
+      </div>
+    </div>
+
+    <div class="highlight-box" style="margin-top: 30px;">
+      <h3>The Strategic Insight</h3>
+      <p>HealthTrust has invested heavily in AI &mdash; Palantir, Google Cloud, Optum, Commure. But every investment is <strong>horizontal</strong>: general analytics, general scheduling, general documentation. None of them deliver <strong>vertical MSK intelligence</strong>.</p>
+      <p style="margin-top: 10px; font-weight: 600; color: var(--primary);">MSK Intelligence doesn't compete with Palantir or Crimson AI. It <strong>feeds into them</strong>. It's the MSK-specific data source and decision engine that makes their horizontal platforms smarter in the musculoskeletal domain. MCP is the protocol that connects it all without replacing anything.</p>
+    </div>
+  </section>
+
+  <!-- ══ 5. COMPETITIVE POSITIONING ══ -->
+  <section id="competitive" class="page-break">
+    <div class="section-header">
+      <div class="section-number">5</div>
+      <span class="section-label">Competitive Positioning</span>
       <h2>HealthTrust's MSK Landscape: Current vs. Possible</h2>
     </div>
 
@@ -936,10 +1104,10 @@
     </table>
   </section>
 
-  <!-- ══ 5. PRODUCTION PROOF ══ -->
+  <!-- ══ 6. PRODUCTION PROOF ══ -->
   <section id="proof" class="page-break">
     <div class="section-header">
-      <div class="section-number">5</div>
+      <div class="section-number">6</div>
       <span class="section-label">Production Evidence</span>
       <h2>This Isn't a Pitch Deck. It's a Live Platform.</h2>
       <p class="section-desc">
@@ -1000,10 +1168,10 @@
     </div>
   </section>
 
-  <!-- ══ 6. ROI MODEL ══ -->
+  <!-- ══ 7. ROI MODEL ══ -->
   <section id="roi" class="page-break">
     <div class="section-header">
-      <div class="section-number">6</div>
+      <div class="section-number">7</div>
       <span class="section-label">Financial Impact</span>
       <h2>ROI Model: HealthTrust at Scale</h2>
       <p class="section-desc">
@@ -1077,10 +1245,10 @@
     </table>
   </section>
 
-  <!-- ══ 7. IMPLEMENTATION ══ -->
+  <!-- ══ 8. IMPLEMENTATION ══ -->
   <section id="implementation" class="page-break">
     <div class="section-header">
-      <div class="section-number">7</div>
+      <div class="section-number">8</div>
       <span class="section-label">Implementation Roadmap</span>
       <h2>From Pilot to Platform: 12-Month Deployment</h2>
       <p class="section-desc">
@@ -1112,10 +1280,10 @@
     </div>
   </section>
 
-  <!-- ══ 8. ENGAGEMENT MODEL ══ -->
+  <!-- ══ 9. ENGAGEMENT MODEL ══ -->
   <section id="engagement" class="page-break">
     <div class="section-header">
-      <div class="section-number">8</div>
+      <div class="section-number">9</div>
       <span class="section-label">Partnership Structure</span>
       <h2>Engagement Model</h2>
       <p class="section-desc">
@@ -1147,10 +1315,10 @@
     </div>
   </section>
 
-  <!-- ══ 9. ABOUT ══ -->
+  <!-- ══ 10. ABOUT ══ -->
   <section id="about">
     <div class="section-header">
-      <div class="section-number">9</div>
+      <div class="section-number">10</div>
       <span class="section-label">About MSK Intelligence</span>
       <h2>Built by Digit2AI LLC</h2>
     </div>
