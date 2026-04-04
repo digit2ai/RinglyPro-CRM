@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Torna Idioma — Investor Teaser</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🇪🇸</text></svg>" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+    *{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}
+    body{font-family:'Inter',system-ui,sans-serif;background:#0F1A2E;color:#e2e8f0;line-height:1.6}
+    :root{--gold:#C9A84C;--gold-l:#E8D48B;--gold-d:#8B6914;--navy:#1B2A4A;--navy-d:#0F1A2E;--red:#C41E3A;--green:#10b981;--blue:#0ea5e9;--cyan:#06b6d4;--card:#1B2A4A;--border:rgba(201,168,76,.2);--muted:#94a3b8;--dim:#64748b}
+    .c{max-width:1000px;margin:0 auto;padding:0 28px}
+
+    /* Header strip */
+    .header{padding:24px 0;border-bottom:1px solid var(--border)}
+    .header-inner{display:flex;align-items:center;justify-content:space-between}
+    .brand{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:var(--gold);letter-spacing:2px}
+    .brand-sub{font-size:.65rem;color:var(--gold-l);letter-spacing:3px;text-transform:uppercase;opacity:.7}
+    .header-right{text-align:right;font-size:.78rem;color:var(--dim)}
+    .header-right strong{color:var(--muted)}
+
+    /* Hero */
+    .hero{padding:56px 0 40px;text-align:center}
+    .hero-overline{font-size:.72rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
+    .hero h1{font-family:'Playfair Display',serif;font-size:clamp(2rem,4.5vw,3.2rem);font-weight:900;line-height:1.15;margin-bottom:16px}
+    .hero h1 .accent{color:var(--gold)}
+    .hero-sub{font-size:1.05rem;color:var(--muted);max-width:600px;margin:0 auto 32px}
+    .hero-stats{display:flex;justify-content:center;gap:40px;flex-wrap:wrap}
+    .hero-stat{text-align:center}
+    .hero-stat .v{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:900;line-height:1}
+    .hero-stat .l{font-size:.75rem;color:var(--dim);margin-top:2px;font-weight:600}
+
+    /* How It Works */
+    .section{padding:48px 0}
+    .section-alt{background:#162035}
+    .sl{font-size:.7rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+    .st{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:800;margin-bottom:20px;line-height:1.2}
+
+    .flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:0;align-items:center;margin:32px 0}
+    .flow-step{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px 20px;text-align:center;position:relative}
+    .flow-step.highlight{border-color:var(--gold);background:linear-gradient(135deg,#1B2A4A,#223350)}
+    .flow-icon{font-size:2.5rem;margin-bottom:12px}
+    .flow-pct{position:absolute;top:-12px;right:-8px;background:var(--gold);color:var(--navy-d);font-size:.7rem;font-weight:800;padding:3px 10px;border-radius:12px}
+    .flow-step h4{font-size:.95rem;font-weight:800;margin-bottom:6px}
+    .flow-step p{font-size:.78rem;color:var(--muted);line-height:1.5}
+    .flow-arrow{color:var(--gold);font-size:1.5rem;padding:0 4px;opacity:.5}
+
+    /* Split layout */
+    .split{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px}
+
+    /* Numbers row */
+    .numbers{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:32px 0}
+    .num-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center}
+    .num-card .v{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900}
+    .num-card .l{font-size:.72rem;color:var(--dim);margin-top:2px;font-weight:600}
+
+    /* CTA */
+    .cta{text-align:center;padding:48px 0 56px}
+    .cta h2{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900;margin-bottom:8px}
+    .cta p{color:var(--muted);font-size:.95rem;max-width:500px;margin:0 auto 28px}
+    .cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:14px 28px;border-radius:8px;font-weight:700;font-size:.9rem;text-decoration:none;transition:all .2s;border:none;cursor:pointer}
+    .btn-p{background:linear-gradient(135deg,var(--gold),var(--gold-d));color:var(--navy-d)}.btn-p:hover{box-shadow:0 8px 30px rgba(201,168,76,.3)}
+    .btn-s{background:rgba(255,255,255,.06);color:#e2e8f0;border:1px solid var(--border)}.btn-s:hover{background:rgba(255,255,255,.1)}
+
+    .footer{padding:20px 0;border-top:1px solid var(--border);text-align:center;font-size:.75rem;color:var(--dim)}
+    .footer a{color:var(--gold);text-decoration:none}
+
+    @media(max-width:768px){
+      .flow{grid-template-columns:1fr;gap:12px}
+      .flow-arrow{transform:rotate(90deg);text-align:center}
+      .split,.numbers{grid-template-columns:1fr}
+      .hero-stats{gap:24px}
+    }
+    @media print{body{background:#fff;color:#1a1a1a}.card,.flow-step,.num-card{border:1px solid #ddd;background:#f9f9f9}.btn{display:none}}
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="c header-inner">
+    <div>
+      <div class="brand">TORNA IDIOMA</div>
+      <div class="brand-sub">Vida -- Cultura -- Legado</div>
+    </div>
+    <div class="header-right">
+      <strong>Investor Teaser</strong> -- Confidential<br />
+      Digit2AI LLC -- April 2026
+    </div>
+  </div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="c">
+    <div class="hero-overline">The Return of the Cultural Language</div>
+    <h1>AI-Powered Spanish Education<br />for the <span class="accent">Philippines' BPO Workforce</span></h1>
+    <p class="hero-sub">
+      Restoring 400 years of Hispanic heritage while generating 20-40% salary premiums for BPO workers -- through Profesora Isabel, an AI instructor that delivers 80% of all training.
+    </p>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="v" style="color:var(--gold)">$145M</div><div class="l">3-Year Economic Impact</div></div>
+      <div class="hero-stat"><div class="v" style="color:var(--green)">20-40%</div><div class="l">BPO Salary Premium</div></div>
+      <div class="hero-stat"><div class="v" style="color:var(--blue)">5,000</div><div class="l">Workers Certified by Yr 3</div></div>
+      <div class="hero-stat"><div class="v" style="color:var(--cyan)">10x-20x</div><div class="l">Sponsor ROI</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="section section-alt">
+  <div class="c">
+    <div class="sl">How It Works</div>
+    <div class="st">The Hybrid 80/20 Model</div>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-icon">&#x1F393;</div>
+        <h4>Student Logs In</h4>
+        <p>Browser-based. Any device. Trilingual (EN/ES/FIL). UVEG university-certified curriculum. 72 lessons, A1 to B1+.</p>
+      </div>
+      <div class="flow-arrow">&#x2794;</div>
+      <div class="flow-step highlight">
+        <div class="flow-pct">80%</div>
+        <div class="flow-icon">&#x1F916;</div>
+        <h4>Profesora Isabel</h4>
+        <p>AI instructor teaches via voice. Pronunciation coaching, conversation practice, grammar drills, adaptive exercises. 24/7, infinite patience, scales to 25,000+ students.</p>
+      </div>
+      <div class="flow-arrow">&#x2794;</div>
+      <div class="flow-step">
+        <div class="flow-pct" style="background:var(--green)">20%</div>
+        <div class="flow-icon">&#x1F469;&#x200D;&#x1F3EB;</div>
+        <h4>Human Teacher</h4>
+        <p>Cultural context, advanced conversation, group activities, certification assessment. The human touch where it matters most.</p>
+      </div>
+    </div>
+
+    <div class="split">
+      <div class="card">
+        <div class="sl">Why This Works</div>
+        <ul style="list-style:none;font-size:.85rem;color:var(--muted);line-height:2.2">
+          <li>-- Isabel teaches at 1/10th the cost of a traditional classroom</li>
+          <li>-- Available 24/7 -- students practice on their own schedule</li>
+          <li>-- Pronunciation feedback that no app (Duolingo, Babbel) provides</li>
+          <li>-- Human teachers freed to do what AI cannot: cultural immersion</li>
+          <li>-- BPO-specific modules prepare workers for real client calls</li>
+          <li>-- Employer-recognized certification linked directly to salary premiums</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="sl">The Student Journey</div>
+        <ul style="list-style:none;font-size:.85rem;color:var(--muted);line-height:2.2">
+          <li><strong style="color:var(--gold)">Week 1-4:</strong> Isabel teaches basic greetings, numbers, verb conjugation</li>
+          <li><strong style="color:var(--gold)">Week 5-12:</strong> Conversational practice -- ordering food, asking directions</li>
+          <li><strong style="color:var(--gold)">Week 13-20:</strong> BPO-specific: customer service scripts, complaint handling</li>
+          <li><strong style="color:var(--gold)">Week 21-24:</strong> Human teacher cultural sessions + certification exam</li>
+          <li><strong style="color:var(--green)">Result:</strong> CEFR A2-B1 certification + BPO Spanish badge</li>
+          <li><strong style="color:var(--green)">Outcome:</strong> 20-40% salary increase (avg $140-$270/mo)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ECONOMICS -->
+<div class="section">
+  <div class="c">
+    <div class="sl">The Economics</div>
+    <div class="st">Why Sponsors Get 10x-20x Return</div>
+
+    <div class="numbers">
+      <div class="num-card"><div class="v" style="color:var(--gold)">$1.4M</div><div class="l">Year 1 Capital Ask</div></div>
+      <div class="num-card"><div class="v" style="color:var(--green)">$4.05M</div><div class="l">Year 3 Revenue</div></div>
+      <div class="num-card"><div class="v" style="color:var(--blue)">$1.92M</div><div class="l">Year 3 Net Income</div></div>
+      <div class="num-card"><div class="v" style="color:var(--cyan)">$27</div><div class="l">Impact per $1 Invested</div></div>
+    </div>
+
+    <div class="split">
+      <div class="card" style="border-top:3px solid var(--gold)">
+        <h4 style="font-weight:800;font-size:.9rem;margin-bottom:12px;color:var(--gold)">Where the Money Goes (Year 1)</h4>
+        <ul style="list-style:none;font-size:.82rem;color:var(--muted);line-height:2.2">
+          <li><strong style="color:#fff">34%</strong> -- Platform & Profesora Isabel AI ($480K)</li>
+          <li><strong style="color:#fff">21%</strong> -- School Deployment: tablets, internet ($300K)</li>
+          <li><strong style="color:#fff">18%</strong> -- BPO Certification Program ($250K)</li>
+          <li><strong style="color:#fff">14%</strong> -- Teacher Training & Salaries ($200K)</li>
+          <li><strong style="color:#fff">7%</strong> -- International Partnerships ($100K)</li>
+          <li><strong style="color:#fff">6%</strong> -- Operations & Admin ($89K)</li>
+        </ul>
+      </div>
+      <div class="card" style="border-top:3px solid var(--green)">
+        <h4 style="font-weight:800;font-size:.9rem;margin-bottom:12px;color:var(--green)">What the Economy Gets (Year 3)</h4>
+        <ul style="list-style:none;font-size:.82rem;color:var(--muted);line-height:2.2">
+          <li><strong style="color:var(--green)">$8.6M-$16M</strong> -- Additional annual worker income</li>
+          <li><strong style="color:var(--green)">$2.7M-$5.4M</strong> -- Additional annual tax revenue</li>
+          <li><strong style="color:var(--green)">$35M-$89M</strong> -- Foreign investment attracted</li>
+          <li><strong style="color:var(--green)">$3.6M-$7.1M</strong> -- Tourism revenue increase</li>
+          <li><strong style="color:var(--green)">25,000+</strong> -- Students with Spanish proficiency</li>
+          <li><strong style="color:var(--green)">5,000</strong> -- BPO workers earning premium salaries</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ALREADY BUILT -->
+<div class="section section-alt">
+  <div class="c">
+    <div class="sl">Why Now</div>
+    <div class="st">The Platform Is Already Built & Live</div>
+
+    <div class="split" style="margin-top:20px">
+      <div class="card">
+        <h4 style="font-weight:800;font-size:.9rem;margin-bottom:12px">Already Done</h4>
+        <ul style="list-style:none;font-size:.82rem;color:var(--muted);line-height:2.2">
+          <li style="color:var(--green)">-- Profesora Isabel AI instructor -- live</li>
+          <li style="color:var(--green)">-- UVEG 12-module, 72-lesson curriculum -- deployed</li>
+          <li style="color:var(--green)">-- Trilingual platform (EN/ES/FIL) -- live</li>
+          <li style="color:var(--green)">-- BPO certification track -- live</li>
+          <li style="color:var(--green)">-- Teacher portal + analytics -- live</li>
+          <li style="color:var(--green)">-- MOU with UVEG (Mexico) -- signed</li>
+          <li style="color:var(--green)">-- University of Makati partnership -- active</li>
+          <li style="color:var(--green)">-- 11-nation hemispheric alliance -- established</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4 style="font-weight:800;font-size:.9rem;margin-bottom:12px">What Capital Unlocks</h4>
+        <ul style="list-style:none;font-size:.82rem;color:var(--muted);line-height:2.2">
+          <li>-- Deploy to 15 schools across Makati, Zamboanga, Cavite</li>
+          <li>-- Scale Isabel AI to handle 500+ concurrent students</li>
+          <li>-- Launch BPO corporate training with 10 companies</li>
+          <li>-- Certify 30 teachers for the 20% in-person role</li>
+          <li>-- Achieve TESDA accreditation</li>
+          <li>-- Publish first economic impact report</li>
+          <li>-- Generate $714K Year 1 revenue</li>
+          <li>-- Prove the model for Year 2 scale ($1.84M revenue)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- THREE CITIES -->
+<div class="section">
+  <div class="c">
+    <div class="sl">Target Markets</div>
+    <div class="st" style="margin-bottom:24px">Three Cities. Three Roles. One Vision.</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+      <div class="card" style="border-top:3px solid var(--gold);text-align:center">
+        <h4 style="font-weight:800;color:var(--gold);font-size:.95rem">Makati</h4>
+        <p style="font-size:.72rem;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Financial Capital</p>
+        <p style="font-size:.82rem;color:var(--muted)">$21B GDP, 120+ BPO companies, 80,000+ businesses. The workforce hub where salary premiums translate directly to economic impact.</p>
+      </div>
+      <div class="card" style="border-top:3px solid var(--red);text-align:center">
+        <h4 style="font-weight:800;color:var(--red);font-size:.95rem">Zamboanga</h4>
+        <p style="font-size:.72rem;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Heritage Capital</p>
+        <p style="font-size:.82rem;color:var(--muted)">900K+ population, 70% Chabacano speakers. Last Spanish Creole city in Asia. The cultural anchor that gives the movement authenticity.</p>
+      </div>
+      <div class="card" style="border-top:3px solid var(--green);text-align:center">
+        <h4 style="font-weight:800;color:var(--green);font-size:.95rem">Cavite</h4>
+        <p style="font-size:.72rem;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Industrial Hub</p>
+        <p style="font-size:.82rem;color:var(--muted)">4.3M+ population, CALABARZON zone, 50+ BPO companies. Birthplace of Philippine independence. The scale deployment target.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="cta">
+  <div class="c">
+    <h2>The platform is built.<br />The partnerships are signed.<br /><span style="color:var(--gold)">We need capital to deploy.</span></h2>
+    <p>Schedule a meeting to review the full business plan, see the live platform, and discuss sponsorship tiers.</p>
+    <div class="cta-btns">
+      <a href="mailto:mstagg@digit2ai.com?subject=Torna%20Idioma%20-%20Sponsorship%20Inquiry" class="btn btn-p">Schedule a Meeting</a>
+      <a href="/torna-idioma-business-plan.html" class="btn btn-s">Full Business Plan</a>
+      <a href="/torna-idioma-presentation.html" class="btn btn-s">AI Presentation by Rachel</a>
+      <a href="/Torna_Idioma/" class="btn btn-s">Try the Live Platform</a>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <div class="c">
+    Confidential -- Digit2AI LLC / Torna Idioma -- <a href="mailto:mstagg@digit2ai.com">mstagg@digit2ai.com</a>
+  </div>
+</div>
+
+</body>
+</html>
