@@ -24,7 +24,7 @@ router.get('/health', (req, res) => {
     service: 'Torna Idioma Learner v2',
     status: 'healthy',
     version: '2.0.0-alpha',
-    phase: 'step-2-learner-profile',
+    phase: 'step-3-cognate-engine',
     timestamp: new Date().toISOString()
   });
 });
@@ -32,8 +32,10 @@ router.get('/health', (req, res) => {
 // Step 2 — Learner profile
 router.use('/learner', require('./routes/learner'));
 
+// Step 3 — Cognate engine
+router.use('/cognates', require('./routes/cognates'));
+
 // Future route mounts (added in subsequent steps):
-//   router.use('/cognates',     require('./routes/cognates'));     // Step 3
 //   router.use('/srs',          require('./routes/srs'));          // Step 4
 //   router.use('/xp',           require('./routes/xp'));           // Step 5
 //   router.use('/isabel',       require('./routes/isabel'));       // Step 6

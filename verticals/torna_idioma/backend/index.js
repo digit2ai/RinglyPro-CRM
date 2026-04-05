@@ -53,6 +53,14 @@ async function initialize() {
       }
     }
 
+    // v2 data seeding (cognates, badges, etc. — isolated in backend/v2/)
+    try {
+      const { initializeV2 } = require('./v2/init');
+      await initializeV2();
+    } catch (e) {
+      console.error('  ⚠ v2 init skipped:', e.message);
+    }
+
     const users = [
       { email: 'admin@tornaidioma.ph', password: 'TornaIdioma2026!', role: 'admin', full_name: 'Torna Idioma Admin' },
       { email: 'mstagg@digit2ai.com', password: 'Palindrome@7', role: 'admin', full_name: 'Manuel Stagg', organization: 'Digit2AI' },

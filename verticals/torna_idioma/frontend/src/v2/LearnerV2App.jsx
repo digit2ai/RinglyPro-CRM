@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LearnerHome from './pages/LearnerHome';
+import CognateExplorer from './pages/CognateExplorer';
 
 /**
  * Torna Idioma — Learner Platform v2 Router
@@ -24,6 +25,7 @@ export default function LearnerV2App() {
     <Routes>
       <Route index element={<LearnerHome />} />
       <Route path="home" element={<LearnerHome />} />
+      <Route path="cognates" element={<CognateExplorer />} />
       <Route path="*" element={<Navigate to="/Torna_Idioma/learn" replace />} />
     </Routes>
   );
