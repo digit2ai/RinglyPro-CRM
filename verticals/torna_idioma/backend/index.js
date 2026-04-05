@@ -13,6 +13,10 @@ router.use('/api/bpo', require('./routes/bpo'));
 router.use('/api/tutor', require('./routes/tutor'));
 router.use('/api/voice', require('./routes/voice'));
 
+// --- Learner Platform v2 (additive, isolated subsystem) ---
+// See backend/v2/README.md and LEARNER_V2_BUILD_PLAN.md
+router.use('/api/v2', require('./v2/index'));
+
 router.get('/health', (req, res) => {
   res.json({ service: 'Torna Idioma', status: 'healthy', tagline: 'Vida · Cultura · Legado', timestamp: new Date().toISOString() });
 });
@@ -35,6 +39,19 @@ async function initialize() {
       await sequelize.query(sql);
     }
     console.log('  ✅ Torna Idioma schema initialized (' + migrationFiles.length + ' migrations)');
+
+    // v2 migrations (additive, isolated — ti_v2_* tables only)
+    const v2MigrationsDir = path.join(__dirname, 'v2', 'migrations');
+    if (fs.existsSync(v2MigrationsDir)) {
+      const v2Files = fs.readdirSync(v2MigrationsDir).filter(f => f.endsWith('.sql')).sort();
+      for (const file of v2Files) {
+        const sql = fs.readFileSync(path.join(v2MigrationsDir, file), 'utf8');
+        await sequelize.query(sql);
+      }
+      if (v2Files.length > 0) {
+        console.log('  ✅ Torna Idioma v2 schema initialized (' + v2Files.length + ' migrations)');
+      }
+    }
 
     const users = [
       { email: 'admin@tornaidioma.ph', password: 'TornaIdioma2026!', role: 'admin', full_name: 'Torna Idioma Admin' },
