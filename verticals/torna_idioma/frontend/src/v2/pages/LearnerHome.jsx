@@ -130,6 +130,7 @@ export default function LearnerHome() {
               <a href="/Torna_Idioma/learn/cognates" style={styles.navBtn}>Cognates</a>
               <a href="/Torna_Idioma/learn/badges" style={styles.navBtn}>Badges</a>
               <a href="/Torna_Idioma/learn/leaderboard" style={styles.navBtn}>Leaderboard</a>
+              <a href="/Torna_Idioma/learn/insights" style={styles.navBtn}>Insights</a>
             </div>
 
             <div style={styles.detailsGrid}>

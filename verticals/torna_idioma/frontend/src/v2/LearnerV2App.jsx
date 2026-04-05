@@ -7,6 +7,7 @@ import Badges from './pages/Badges';
 import Leaderboard from './pages/Leaderboard';
 import IsabelChat from './pages/IsabelChat';
 import ConversationRoom from './pages/ConversationRoom';
+import Insights from './pages/Insights';
 
 /**
  * Torna Idioma — Learner Platform v2 Router
@@ -36,6 +37,7 @@ export default function LearnerV2App() {
       <Route path="leaderboard" element={<Leaderboard />} />
       <Route path="isabel" element={<IsabelChat />} />
       <Route path="voice" element={<ConversationRoom />} />
+      <Route path="insights" element={<Insights />} />
       <Route path="*" element={<Navigate to="/Torna_Idioma/learn" replace />} />
     </Routes>
   );

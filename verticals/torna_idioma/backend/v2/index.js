@@ -24,7 +24,7 @@ router.get('/health', (req, res) => {
     service: 'Torna Idioma Learner v2',
     status: 'healthy',
     version: '2.0.0-alpha',
-    phase: 'step-7-realtime-voice',
+    phase: 'step-8-behavior-analytics',
     timestamp: new Date().toISOString()
   });
 });
@@ -46,6 +46,9 @@ router.use('/isabel', require('./routes/isabel'));
 
 // Step 7 — Real-time voice conversation (Whisper STT + ElevenLabs TTS)
 router.use('/conversation', require('./routes/conversation'));
+
+// Step 8 — Behavior & engagement analytics
+router.use('/behavior', require('./routes/behavior'));
 
 // Future route mounts (added in subsequent steps):
 //   router.use('/srs',          require('./routes/srs'));          // Step 4
