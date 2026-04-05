@@ -8,6 +8,8 @@ import Leaderboard from './pages/Leaderboard';
 import IsabelChat from './pages/IsabelChat';
 import ConversationRoom from './pages/ConversationRoom';
 import Insights from './pages/Insights';
+import CoursesBrowser from './pages/CoursesBrowser';
+import LessonPlayer from './pages/LessonPlayer';
 
 /**
  * Torna Idioma — Learner Platform v2 Router
@@ -38,6 +40,8 @@ export default function LearnerV2App() {
       <Route path="isabel" element={<IsabelChat />} />
       <Route path="voice" element={<ConversationRoom />} />
       <Route path="insights" element={<Insights />} />
+      <Route path="courses" element={<CoursesBrowser />} />
+      <Route path="lesson/:id" element={<LessonPlayer />} />
       <Route path="*" element={<Navigate to="/Torna_Idioma/learn" replace />} />
     </Routes>
   );

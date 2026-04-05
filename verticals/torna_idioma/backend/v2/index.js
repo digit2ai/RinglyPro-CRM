@@ -24,7 +24,7 @@ router.get('/health', (req, res) => {
     service: 'Torna Idioma Learner v2',
     status: 'healthy',
     version: '2.0.0-alpha',
-    phase: 'step-8-behavior-analytics',
+    phase: 'step-9-lesson-player',
     timestamp: new Date().toISOString()
   });
 });
@@ -49,6 +49,9 @@ router.use('/conversation', require('./routes/conversation'));
 
 // Step 8 — Behavior & engagement analytics
 router.use('/behavior', require('./routes/behavior'));
+
+// Step 9 — Lesson player + CEFR adaptive engine (uses v1 UVEG curriculum)
+router.use('/lessons', require('./routes/lessons'));
 
 // Future route mounts (added in subsequent steps):
 //   router.use('/srs',          require('./routes/srs'));          // Step 4
