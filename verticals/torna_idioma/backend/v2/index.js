@@ -24,7 +24,7 @@ router.get('/health', (req, res) => {
     service: 'Torna Idioma Learner v2',
     status: 'healthy',
     version: '2.0.0-alpha',
-    phase: 'step-10-tutor-marketplace',
+    phase: 'step-12-proprietary-model-scaffolded',
     timestamp: new Date().toISOString()
   });
 });
@@ -55,6 +55,9 @@ router.use('/lessons', require('./routes/lessons'));
 
 // Step 10 — Human tutor marketplace (WebRTC via Jitsi + Stripe Connect)
 router.use('/tutor-market', require('./routes/tutor-market'));
+
+// Step 12 — Proprietary model training data export (admin-only)
+router.use('/training-data', require('./routes/training-data'));
 
 // Future route mounts (added in subsequent steps):
 //   router.use('/srs',          require('./routes/srs'));          // Step 4

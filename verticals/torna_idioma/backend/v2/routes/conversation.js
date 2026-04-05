@@ -151,9 +151,16 @@ router.post('/exchange', v2Auth.learner, upload.single('audio'), async (req, res
     const llmResult = await isabelLLM.chat(learnerId, transcript);
 
     // Step 3: ElevenLabs TTS on Isabel's reply
+    // Look up learner's voice_preference (Step 12 voice picker)
+    const [[learnerPref]] = await sequelize.query(
+      `SELECT voice_preference FROM ti_v2_learners WHERE id = $1`,
+      { bind: [learnerId] }
+    );
+    const voiceId = voiceStream.resolveVoiceId(learnerPref?.voice_preference || 'isabel_default');
+
     let ttsResult;
     try {
-      ttsResult = await voiceStream.synthesize(llmResult.text);
+      ttsResult = await voiceStream.synthesize(llmResult.text, voiceId);
     } catch (e) {
       if (e.code === 'TTS_NOT_CONFIGURED') {
         // Return text-only reply — still useful

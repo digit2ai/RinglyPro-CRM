@@ -40,6 +40,7 @@ router.get('/status', async (req, res) => {
   res.json({
     success: true,
     configured: isabelLLM.isConfigured(),
+    models: isabelLLM.modelConfig(),
     message: isabelLLM.isConfigured()
       ? 'Profesora Isabel is online and ready to teach.'
       : 'Isabel is running in mock mode. Set TI_V2_ANTHROPIC_KEY or TI_V2_OPENAI_KEY to enable live AI.'
@@ -58,7 +59,9 @@ router.post('/chat', v2Auth.learner, async (req, res) => {
     }
 
     const learnerId = await getLearnerId(req.user.id);
-    const result = await isabelLLM.chat(learnerId, message.trim());
+    // Optional: ?model=proprietary to use fine-tuned model first (Step 12)
+    const useProprietary = req.query.model === 'proprietary' || req.body.model === 'proprietary';
+    const result = await isabelLLM.chat(learnerId, message.trim(), { useProprietary });
 
     // Award XP for the exchange
     let gamificationResult = null;

@@ -27,6 +27,14 @@ const ANTHROPIC_KEY = process.env.TI_V2_ANTHROPIC_KEY || process.env.ANTHROPIC_A
 const OPENAI_KEY = process.env.TI_V2_OPENAI_KEY || process.env.OPENAI_API_KEY;
 const CLAUDE_MODEL = process.env.TI_V2_CLAUDE_MODEL || 'claude-opus-4-20250514';
 const OPENAI_MODEL = process.env.TI_V2_OPENAI_MODEL || 'gpt-4o';
+
+// Step 12: Proprietary fine-tuned model endpoint (optional).
+// When set, this endpoint is tried FIRST before Claude/GPT-4o.
+// Expected to be an OpenAI-compatible /v1/chat/completions endpoint
+// (vLLM, HuggingFace TGI, Ollama, together.ai, etc.).
+const PROPRIETARY_ENDPOINT = process.env.TI_V2_PROPRIETARY_MODEL_ENDPOINT;
+const PROPRIETARY_KEY = process.env.TI_V2_PROPRIETARY_MODEL_KEY;
+const PROPRIETARY_MODEL = process.env.TI_V2_PROPRIETARY_MODEL_NAME || 'torna-idioma-isabel-v1';
 const CLAUDE_TIMEOUT_MS = 15000;
 const MAX_TOKENS = 500;
 const HISTORY_LIMIT = 10; // last 10 messages loaded into context
@@ -129,6 +137,60 @@ async function callClaude(systemPrompt, messages) {
 }
 
 /**
+ * Call proprietary fine-tuned model endpoint. Same return shape as callClaude.
+ * Expects an OpenAI-compatible /v1/chat/completions endpoint.
+ *
+ * Activation: set env vars
+ *   TI_V2_PROPRIETARY_MODEL_ENDPOINT=https://your-gpu-host/v1/chat/completions
+ *   TI_V2_PROPRIETARY_MODEL_KEY=sk-...
+ *   TI_V2_PROPRIETARY_MODEL_NAME=torna-idioma-isabel-v1
+ */
+async function callProprietary(systemPrompt, messages) {
+  if (!PROPRIETARY_ENDPOINT) {
+    const err = new Error('Proprietary model not configured');
+    err.code = 'PROPRIETARY_NOT_CONFIGURED';
+    throw err;
+  }
+  const start = Date.now();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), CLAUDE_TIMEOUT_MS);
+
+  try {
+    const headers = { 'Content-Type': 'application/json' };
+    if (PROPRIETARY_KEY) headers.Authorization = `Bearer ${PROPRIETARY_KEY}`;
+
+    const res = await fetch(PROPRIETARY_ENDPOINT, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        model: PROPRIETARY_MODEL,
+        max_tokens: MAX_TOKENS,
+        messages: [{ role: 'system', content: systemPrompt }, ...messages]
+      }),
+      signal: controller.signal
+    });
+    clearTimeout(timer);
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Proprietary API ${res.status}: ${errText.slice(0, 200)}`);
+    }
+
+    const data = await res.json();
+    const text = data.choices?.[0]?.message?.content || '';
+    const tokens = data.usage?.total_tokens || 0;
+    return {
+      text,
+      tokens,
+      model: PROPRIETARY_MODEL,
+      latency_ms: Date.now() - start
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
  * Call OpenAI GPT-4o as fallback. Same return shape as callClaude.
  */
 async function callOpenAI(systemPrompt, messages) {
@@ -200,7 +262,7 @@ For now, remember: Tagalog already has thousands of Spanish words! "Mesa, silya,
  * @param {string} userMessage
  * @returns {Promise<{text,model,tokens,latency_ms,conversation_id}>}
  */
-async function chat(learnerId, userMessage) {
+async function chat(learnerId, userMessage, options = {}) {
   if (!learnerId || !userMessage) {
     throw new Error('learnerId and userMessage required');
   }
@@ -239,9 +301,23 @@ async function chat(learnerId, userMessage) {
     { bind: [learnerId, userMessage] }
   );
 
-  // Try primary model, then fallback
+  // Model waterfall: Proprietary (Step 12) → Claude → GPT-4o → Mock
+  // Each tier only runs if configured; failures fall through to the next.
   let response;
   let failureReason = null;
+
+  // Tier 1: Proprietary fine-tuned model — only when explicitly requested
+  // via options.useProprietary=true. Avoids accidental GPU $$ on every call.
+  if (options.useProprietary && PROPRIETARY_ENDPOINT) {
+    try {
+      response = await callProprietary(systemPrompt, messages);
+    } catch (e) {
+      failureReason = `proprietary_failed: ${e.message}`;
+      console.warn('[isabel] Proprietary failed, falling back to Claude:', e.message);
+    }
+  }
+
+  // Tier 2: Claude (primary default)
   if (ANTHROPIC_KEY) {
     try {
       response = await callClaude(systemPrompt, messages);
@@ -250,6 +326,8 @@ async function chat(learnerId, userMessage) {
       console.warn('[isabel] Claude failed, trying OpenAI:', e.message);
     }
   }
+
+  // Tier 3: OpenAI GPT-4o fallback
   if (!response && OPENAI_KEY) {
     try {
       response = await callOpenAI(systemPrompt, messages);
@@ -324,10 +402,24 @@ function isConfigured() {
   return !!(ANTHROPIC_KEY || OPENAI_KEY);
 }
 
+function modelConfig() {
+  return {
+    proprietary: {
+      configured: !!PROPRIETARY_ENDPOINT,
+      endpoint: PROPRIETARY_ENDPOINT ? new URL(PROPRIETARY_ENDPOINT).hostname : null,
+      model_name: PROPRIETARY_ENDPOINT ? PROPRIETARY_MODEL : null
+    },
+    claude: { configured: !!ANTHROPIC_KEY, model: ANTHROPIC_KEY ? CLAUDE_MODEL : null },
+    openai: { configured: !!OPENAI_KEY, model: OPENAI_KEY ? OPENAI_MODEL : null },
+    waterfall: ['proprietary', 'claude', 'openai', 'mock']
+  };
+}
+
 module.exports = {
   chat,
   getHistory,
   resetConversation,
   isConfigured,
+  modelConfig,
   buildSystemPrompt // exported for testing
 };

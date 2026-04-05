@@ -23,6 +23,19 @@ const ISABEL_VOICE_ID =
   process.env.TI_V2_ELEVENLABS_VOICE_ISABEL ||
   process.env.MSK_RACHEL_VOICE_ID ||
   '21m00Tcm4TlvDq8ikWAM'; // ElevenLabs "Rachel" default — works with any account
+
+// Step 12: Custom voice clones. Set these env vars after commissioning
+// Professional Voice Clones on ElevenLabs. Until then, both fall back to
+// the default Isabel voice so the system stays functional.
+const VOICE_LIBRARY = {
+  isabel_default: ISABEL_VOICE_ID,
+  ate_maria: process.env.TI_V2_ELEVENLABS_VOICE_ATE_MARIA || ISABEL_VOICE_ID,
+  kuya_diego: process.env.TI_V2_ELEVENLABS_VOICE_KUYA_DIEGO || ISABEL_VOICE_ID
+};
+
+function resolveVoiceId(preference) {
+  return VOICE_LIBRARY[preference] || ISABEL_VOICE_ID;
+}
 const WHISPER_MODEL = 'whisper-1';
 const TTS_MODEL = process.env.TI_V2_ELEVENLABS_MODEL || 'eleven_multilingual_v2';
 
@@ -162,7 +175,18 @@ function isConfigured() {
   return {
     stt: !!OPENAI_KEY,
     tts: !!ELEVENLABS_KEY,
-    voice_id: ISABEL_VOICE_ID
+    voice_id: ISABEL_VOICE_ID,
+    voice_library: {
+      isabel_default: { id: VOICE_LIBRARY.isabel_default, custom: false },
+      ate_maria: {
+        id: VOICE_LIBRARY.ate_maria,
+        custom: VOICE_LIBRARY.ate_maria !== ISABEL_VOICE_ID
+      },
+      kuya_diego: {
+        id: VOICE_LIBRARY.kuya_diego,
+        custom: VOICE_LIBRARY.kuya_diego !== ISABEL_VOICE_ID
+      }
+    }
   };
 }
 
@@ -170,7 +194,9 @@ module.exports = {
   transcribe,
   synthesize,
   isConfigured,
+  resolveVoiceId,
   ISABEL_VOICE_ID,
+  VOICE_LIBRARY,
   TTS_MODEL,
   WHISPER_MODEL
 };
