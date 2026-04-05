@@ -63,6 +63,70 @@ async function seedBadges() {
   console.log(`  ✅ Torna Idioma v2 badges seeded: ${inserted} upserted, ${finalCount} total`);
 }
 
+async function seedTutors() {
+  try {
+    const [[{ c: tutorCount }]] = await sequelize.query(
+      `SELECT COUNT(*)::int AS c FROM ti_v2_tutors`
+    );
+    if (tutorCount >= 3) return;
+
+    const tutors = require('./seeds/tutors');
+    let inserted = 0;
+    for (const t of tutors) {
+      try {
+        const [result] = await sequelize.query(
+          `INSERT INTO ti_v2_tutors
+           (display_name, headline, bio, accent, native_language, languages_spoken,
+            specialties, certifications, years_experience, hourly_rate_usd, status,
+            timezone, rating_avg, rating_count, total_sessions, total_students, photo_url,
+            approved_at, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8::jsonb, $9, $10, $11,
+                   $12, $13, $14, $15, $16, $17, NOW(), NOW(), NOW())
+           ON CONFLICT DO NOTHING
+           RETURNING id`,
+          {
+            bind: [
+              t.display_name,
+              t.headline,
+              t.bio,
+              t.accent,
+              t.native_language,
+              JSON.stringify(t.languages_spoken || []),
+              JSON.stringify(t.specialties || []),
+              JSON.stringify(t.certifications || []),
+              t.years_experience || 0,
+              t.hourly_rate_usd,
+              t.status || 'approved',
+              t.timezone || 'UTC',
+              t.rating_avg || 0,
+              t.rating_count || 0,
+              t.total_sessions || 0,
+              t.total_students || 0,
+              t.photo_url || null
+            ]
+          }
+        );
+        if (result[0]?.id) {
+          inserted++;
+          // Seed availability
+          for (const slot of (t.availability || [])) {
+            await sequelize.query(
+              `INSERT INTO ti_v2_tutor_availability (tutor_id, day_of_week, start_time, end_time, active, created_at)
+               VALUES ($1, $2, $3, $4, true, NOW())`,
+              { bind: [result[0].id, slot.day_of_week, slot.start_time, slot.end_time] }
+            );
+          }
+        }
+      } catch (e) {
+        console.warn('  ⚠ tutor skip:', t.display_name, e.message);
+      }
+    }
+    console.log(`  ✅ Torna Idioma v2 tutors seeded: ${inserted} tutors with availability`);
+  } catch (e) {
+    console.error('  ⚠ seedTutors failed:', e.message);
+  }
+}
+
 async function initializeV2() {
   try {
     // Seed cognates if table is empty (or has fewer than expected rows)
@@ -114,6 +178,9 @@ async function initializeV2() {
 
     // Seed badges (Step 5)
     await seedBadges();
+
+    // Seed demo tutors (Step 10)
+    await seedTutors();
   } catch (err) {
     console.error('  ⚠ Torna Idioma v2 init error:', err.message);
   }

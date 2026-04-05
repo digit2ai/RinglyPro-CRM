@@ -24,7 +24,7 @@ router.get('/health', (req, res) => {
     service: 'Torna Idioma Learner v2',
     status: 'healthy',
     version: '2.0.0-alpha',
-    phase: 'step-9-lesson-player',
+    phase: 'step-10-tutor-marketplace',
     timestamp: new Date().toISOString()
   });
 });
@@ -52,6 +52,9 @@ router.use('/behavior', require('./routes/behavior'));
 
 // Step 9 — Lesson player + CEFR adaptive engine (uses v1 UVEG curriculum)
 router.use('/lessons', require('./routes/lessons'));
+
+// Step 10 — Human tutor marketplace (WebRTC via Jitsi + Stripe Connect)
+router.use('/tutor-market', require('./routes/tutor-market'));
 
 // Future route mounts (added in subsequent steps):
 //   router.use('/srs',          require('./routes/srs'));          // Step 4

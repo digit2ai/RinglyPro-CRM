@@ -127,6 +127,7 @@ export default function LearnerHome() {
               <a href="/Torna_Idioma/learn/courses" style={styles.navBtnPrimary}>Courses</a>
               <a href="/Torna_Idioma/learn/isabel" style={styles.navBtnPrimary}>Chat with Isabel</a>
               <a href="/Torna_Idioma/learn/voice" style={styles.navBtnPrimary}>Voice Practice</a>
+              <a href="/Torna_Idioma/learn/tutors" style={styles.navBtnPrimary}>Human Tutors</a>
               <a href="/Torna_Idioma/learn/review" style={styles.navBtn}>SRS Review</a>
               <a href="/Torna_Idioma/learn/cognates" style={styles.navBtn}>Cognates</a>
               <a href="/Torna_Idioma/learn/badges" style={styles.navBtn}>Badges</a>

@@ -10,6 +10,11 @@ import ConversationRoom from './pages/ConversationRoom';
 import Insights from './pages/Insights';
 import CoursesBrowser from './pages/CoursesBrowser';
 import LessonPlayer from './pages/LessonPlayer';
+import TutorMarketplace from './pages/TutorMarketplace';
+import TutorProfile from './pages/TutorProfile';
+import TutorSession from './pages/TutorSession';
+import TutorApply from './pages/TutorApply';
+import MyBookings from './pages/MyBookings';
 
 /**
  * Torna Idioma — Learner Platform v2 Router
@@ -42,6 +47,11 @@ export default function LearnerV2App() {
       <Route path="insights" element={<Insights />} />
       <Route path="courses" element={<CoursesBrowser />} />
       <Route path="lesson/:id" element={<LessonPlayer />} />
+      <Route path="tutors" element={<TutorMarketplace />} />
+      <Route path="tutors/apply" element={<TutorApply />} />
+      <Route path="tutors/:id" element={<TutorProfile />} />
+      <Route path="session/:id" element={<TutorSession />} />
+      <Route path="bookings" element={<MyBookings />} />
       <Route path="*" element={<Navigate to="/Torna_Idioma/learn" replace />} />
     </Routes>
   );
