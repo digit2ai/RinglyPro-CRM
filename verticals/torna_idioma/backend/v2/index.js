@@ -24,13 +24,15 @@ router.get('/health', (req, res) => {
     service: 'Torna Idioma Learner v2',
     status: 'healthy',
     version: '2.0.0-alpha',
-    phase: 'step-1-skeleton',
+    phase: 'step-2-learner-profile',
     timestamp: new Date().toISOString()
   });
 });
 
+// Step 2 — Learner profile
+router.use('/learner', require('./routes/learner'));
+
 // Future route mounts (added in subsequent steps):
-//   router.use('/learner',      require('./routes/learner'));      // Step 2
 //   router.use('/cognates',     require('./routes/cognates'));     // Step 3
 //   router.use('/srs',          require('./routes/srs'));          // Step 4
 //   router.use('/xp',           require('./routes/xp'));           // Step 5
