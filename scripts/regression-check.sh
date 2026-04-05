@@ -12,13 +12,14 @@ set -e
 
 BASE_URL="${BASE_URL:-https://aiagent.ringlypro.com}"
 
-# Endpoints to check: path + human-readable label + expected success substring
+# Endpoints to check: path + human-readable label + expected body substring (case-insensitive)
+# (Some services return "healthy", others return "OK" — match each vertical's actual response)
 ENDPOINTS=(
   "/cw_carriers/health|cw_carriers|healthy"
-  "/msk/api/v1/health|msk_intelligence|healthy"
+  "/msk/health|msk_intelligence|healthy"
   "/logistics/health|logistics|healthy"
   "/kanchoai/health|kanchoai|healthy"
-  "/tunjoracing/health|tunjoracing|healthy"
+  "/tunjoracing/health|tunjoracing|OK"
   "/Torna_Idioma/health|Torna_Idioma v1|healthy"
   "/Torna_Idioma/api/v2/health|Torna_Idioma v2|healthy"
 )
