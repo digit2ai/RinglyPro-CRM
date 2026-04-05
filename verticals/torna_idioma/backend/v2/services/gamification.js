@@ -206,6 +206,19 @@ async function checkBadgeEligibility(learnerId) {
     // Table may not exist yet in earlier deploys — skip silently
   }
 
+  // Voice conversation activity (Step 7)
+  let voiceTurns = 0;
+  try {
+    const [[vr]] = await sequelize.query(
+      `SELECT COUNT(*)::int AS c FROM ti_v2_conversation_logs
+       WHERE learner_id = $1 AND role = 'user'`,
+      { bind: [learnerId] }
+    );
+    voiceTurns = vr?.c || 0;
+  } catch (_) {
+    // Table may not exist yet in earlier deploys — skip silently
+  }
+
   // Build list of eligible badge codes
   const eligible = [];
 
@@ -219,6 +232,7 @@ async function checkBadgeEligibility(learnerId) {
   if (reviewsToday.c >= 50) eligible.push('marathon_learner');
   if (cardStats.total_cards >= 10 && reviewStats.total_reviews >= 50) eligible.push('rizals_heir');
   if (isabelMessages >= 1) eligible.push('isabel_favorite');
+  if (voiceTurns >= 1) eligible.push('conversation_starter');
 
   if (eligible.length === 0) return [];
 

@@ -24,7 +24,7 @@ router.get('/health', (req, res) => {
     service: 'Torna Idioma Learner v2',
     status: 'healthy',
     version: '2.0.0-alpha',
-    phase: 'step-6-profesora-isabel',
+    phase: 'step-7-realtime-voice',
     timestamp: new Date().toISOString()
   });
 });
@@ -43,6 +43,9 @@ router.use('/xp', require('./routes/xp'));
 
 // Step 6 — Profesora Isabel AI tutor (text chat)
 router.use('/isabel', require('./routes/isabel'));
+
+// Step 7 — Real-time voice conversation (Whisper STT + ElevenLabs TTS)
+router.use('/conversation', require('./routes/conversation'));
 
 // Future route mounts (added in subsequent steps):
 //   router.use('/srs',          require('./routes/srs'));          // Step 4

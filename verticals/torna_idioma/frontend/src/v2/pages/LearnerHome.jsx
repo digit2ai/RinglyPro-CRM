@@ -124,7 +124,8 @@ export default function LearnerHome() {
 
             {/* Quick nav to v2 features */}
             <div style={styles.quickNav}>
-              <a href="/Torna_Idioma/learn/isabel" style={styles.navBtnPrimary}>Profesora Isabel</a>
+              <a href="/Torna_Idioma/learn/isabel" style={styles.navBtnPrimary}>Chat with Isabel</a>
+              <a href="/Torna_Idioma/learn/voice" style={styles.navBtnPrimary}>Voice Practice</a>
               <a href="/Torna_Idioma/learn/review" style={styles.navBtn}>SRS Review</a>
               <a href="/Torna_Idioma/learn/cognates" style={styles.navBtn}>Cognates</a>
               <a href="/Torna_Idioma/learn/badges" style={styles.navBtn}>Badges</a>
