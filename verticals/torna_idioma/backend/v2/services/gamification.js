@@ -193,6 +193,19 @@ async function checkBadgeEligibility(learnerId) {
     { bind: [learnerId] }
   );
 
+  // Isabel chat activity (Step 6)
+  let isabelMessages = 0;
+  try {
+    const [[ir]] = await sequelize.query(
+      `SELECT COUNT(*)::int AS c FROM ti_v2_isabel_conversations
+       WHERE learner_id = $1 AND role = 'user'`,
+      { bind: [learnerId] }
+    );
+    isabelMessages = ir?.c || 0;
+  } catch (_) {
+    // Table may not exist yet in earlier deploys — skip silently
+  }
+
   // Build list of eligible badge codes
   const eligible = [];
 
@@ -205,6 +218,7 @@ async function checkBadgeEligibility(learnerId) {
   if (longestStreak >= 30) eligible.push('streak_30');
   if (reviewsToday.c >= 50) eligible.push('marathon_learner');
   if (cardStats.total_cards >= 10 && reviewStats.total_reviews >= 50) eligible.push('rizals_heir');
+  if (isabelMessages >= 1) eligible.push('isabel_favorite');
 
   if (eligible.length === 0) return [];
 

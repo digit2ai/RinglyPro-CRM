@@ -24,7 +24,7 @@ router.get('/health', (req, res) => {
     service: 'Torna Idioma Learner v2',
     status: 'healthy',
     version: '2.0.0-alpha',
-    phase: 'step-5-gamification',
+    phase: 'step-6-profesora-isabel',
     timestamp: new Date().toISOString()
   });
 });
@@ -40,6 +40,9 @@ router.use('/srs', require('./routes/srs'));
 
 // Step 5 — Gamification (XP, streaks, badges, leaderboard)
 router.use('/xp', require('./routes/xp'));
+
+// Step 6 — Profesora Isabel AI tutor (text chat)
+router.use('/isabel', require('./routes/isabel'));
 
 // Future route mounts (added in subsequent steps):
 //   router.use('/srs',          require('./routes/srs'));          // Step 4

@@ -124,6 +124,7 @@ export default function LearnerHome() {
 
             {/* Quick nav to v2 features */}
             <div style={styles.quickNav}>
+              <a href="/Torna_Idioma/learn/isabel" style={styles.navBtnPrimary}>Profesora Isabel</a>
               <a href="/Torna_Idioma/learn/review" style={styles.navBtn}>SRS Review</a>
               <a href="/Torna_Idioma/learn/cognates" style={styles.navBtn}>Cognates</a>
               <a href="/Torna_Idioma/learn/badges" style={styles.navBtn}>Badges</a>
@@ -341,6 +342,19 @@ const styles = {
     textAlign: 'center',
     letterSpacing: 0.5,
     transition: 'all 0.2s'
+  },
+  navBtnPrimary: {
+    padding: '14px 16px',
+    background: 'linear-gradient(135deg, #C9A84C, #8B6914)',
+    border: '1px solid #C9A84C',
+    borderRadius: 10,
+    color: '#0F1A2E',
+    textDecoration: 'none',
+    fontSize: 13,
+    fontWeight: 800,
+    textAlign: 'center',
+    letterSpacing: 0.5,
+    boxShadow: '0 6px 20px rgba(201, 168, 76, 0.2)'
   },
   loading: { color: '#94a3b8', textAlign: 'center', padding: 32 },
   errorBox: {
