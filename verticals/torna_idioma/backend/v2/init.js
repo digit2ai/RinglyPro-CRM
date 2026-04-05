@@ -12,6 +12,57 @@
 
 const sequelize = require('../services/db.ti');
 
+async function seedBadges() {
+  const [[{ c: badgeCount }]] = await sequelize.query(
+    `SELECT COUNT(*)::int AS c FROM ti_v2_badges`
+  );
+  if (badgeCount >= 15) return;
+
+  const badges = require('./seeds/badges');
+  let inserted = 0;
+  for (const b of badges) {
+    try {
+      const result = await sequelize.query(
+        `INSERT INTO ti_v2_badges
+         (code, name_en, name_es, name_fil, description, icon, color, category, xp_reward, sort_order, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
+         ON CONFLICT (code) DO UPDATE SET
+           name_en = EXCLUDED.name_en,
+           name_es = EXCLUDED.name_es,
+           name_fil = EXCLUDED.name_fil,
+           description = EXCLUDED.description,
+           icon = EXCLUDED.icon,
+           color = EXCLUDED.color,
+           category = EXCLUDED.category,
+           xp_reward = EXCLUDED.xp_reward,
+           sort_order = EXCLUDED.sort_order
+         RETURNING id`,
+        {
+          bind: [
+            b.code,
+            b.name_en,
+            b.name_es || null,
+            b.name_fil || null,
+            b.description || null,
+            b.icon || null,
+            b.color || 'gold',
+            b.category || 'progress',
+            b.xp_reward || 0,
+            b.sort_order || 0
+          ]
+        }
+      );
+      if (result[0].length > 0) inserted++;
+    } catch (e) {
+      console.warn('  ⚠ badge skip:', b.code, e.message);
+    }
+  }
+  const [[{ c: finalCount }]] = await sequelize.query(
+    `SELECT COUNT(*)::int AS c FROM ti_v2_badges`
+  );
+  console.log(`  ✅ Torna Idioma v2 badges seeded: ${inserted} upserted, ${finalCount} total`);
+}
+
 async function initializeV2() {
   try {
     // Seed cognates if table is empty (or has fewer than expected rows)
@@ -60,6 +111,9 @@ async function initializeV2() {
         `  ✅ Torna Idioma v2 cognates seeded: ${inserted} inserted, ${skipped} skipped, ${finalCount} total in table`
       );
     }
+
+    // Seed badges (Step 5)
+    await seedBadges();
   } catch (err) {
     console.error('  ⚠ Torna Idioma v2 init error:', err.message);
   }

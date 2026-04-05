@@ -20,6 +20,7 @@ const router = express.Router();
 const sequelize = require('../../services/db.ti');
 const v2Auth = require('../middleware/v2-auth');
 const srsEngine = require('../services/srs-engine');
+const gamification = require('../services/gamification');
 
 // Helper — fetch or create learner record for current JWT user
 async function getLearnerId(userId) {
@@ -137,7 +138,18 @@ router.post('/cards', v2Auth.learner, async (req, res) => {
         ]
       }
     );
-    res.status(201).json({ success: true, card: result[0] });
+    // Award XP for adding a card (first time only — upserts don't re-award)
+    let gamificationResult = null;
+    try {
+      gamificationResult = await gamification.recordActivity(learnerId, 'card_added', null, {
+        word_es: word_es.trim(),
+        source: 'manual'
+      });
+    } catch (gErr) {
+      console.warn('[v2/srs] gamification side-effect failed:', gErr.message);
+    }
+
+    res.status(201).json({ success: true, card: result[0], gamification: gamificationResult });
   } catch (err) {
     console.error('[v2/srs] add card error:', err);
     res.status(500).json({ error: err.message });
@@ -178,7 +190,19 @@ router.post('/cards/from-cognate', v2Auth.learner, async (req, res) => {
         ]
       }
     );
-    res.status(201).json({ success: true, card: result[0] });
+    // Award XP for adding a card (cognate source)
+    let gamificationResult = null;
+    try {
+      gamificationResult = await gamification.recordActivity(learnerId, 'card_added', null, {
+        word_es: cognate.word_es,
+        source: 'cognate',
+        cognate_id
+      });
+    } catch (gErr) {
+      console.warn('[v2/srs] gamification side-effect failed:', gErr.message);
+    }
+
+    res.status(201).json({ success: true, card: result[0], gamification: gamificationResult });
   } catch (err) {
     console.error('[v2/srs] from-cognate error:', err);
     res.status(500).json({ error: err.message });
@@ -251,12 +275,26 @@ router.post('/review', v2Auth.learner, async (req, res) => {
       }
     );
 
+    // Award gamification XP + update streak + check badges
+    let gamificationResult = null;
+    try {
+      const eventType = q < 3 ? 'card_lapsed' : 'card_reviewed';
+      gamificationResult = await gamification.recordActivity(learnerId, eventType, null, {
+        card_id,
+        quality: q,
+        word_es: updated[0].word_es
+      });
+    } catch (gErr) {
+      console.warn('[v2/srs] gamification side-effect failed:', gErr.message);
+    }
+
     res.json({
       success: true,
       card: updated[0],
       quality: q,
       quality_label: srsEngine.qualityLabel(q),
-      is_lapse: next.is_lapse
+      is_lapse: next.is_lapse,
+      gamification: gamificationResult
     });
   } catch (err) {
     console.error('[v2/srs] review error:', err);

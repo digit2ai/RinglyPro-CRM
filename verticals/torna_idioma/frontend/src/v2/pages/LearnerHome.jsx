@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { v2Api } from '../services/v2-api';
 import { isAuthenticated } from '../../services/auth';
+import XPBar from '../components/XPBar';
+import StreakFlame from '../components/StreakFlame';
 
 /**
  * Learner Home — the main v2 landing page for authenticated learners.
@@ -8,6 +10,7 @@ import { isAuthenticated } from '../../services/auth';
  */
 export default function LearnerHome() {
   const [learner, setLearner] = useState(null);
+  const [xpData, setXpData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editing, setEditing] = useState(false);
@@ -21,16 +24,17 @@ export default function LearnerHome() {
       setLoading(false);
       return;
     }
-    v2Api.learner.me()
-      .then((r) => {
-        setLearner(r.learner);
+    Promise.all([v2Api.learner.me(), v2Api.get('/xp/total').catch(() => null)])
+      .then(([profile, xp]) => {
+        setLearner(profile.learner);
+        setXpData(xp);
         setForm({
-          cefr_level: r.learner.cefr_level,
-          daily_goal_minutes: r.learner.daily_goal_minutes,
-          target_dialect: r.learner.target_dialect,
-          native_language: r.learner.native_language,
-          voice_preference: r.learner.voice_preference,
-          cognate_highlighting: r.learner.cognate_highlighting
+          cefr_level: profile.learner.cefr_level,
+          daily_goal_minutes: profile.learner.daily_goal_minutes,
+          target_dialect: profile.learner.target_dialect,
+          native_language: profile.learner.native_language,
+          voice_preference: profile.learner.voice_preference,
+          cognate_highlighting: profile.learner.cognate_highlighting
         });
       })
       .catch((e) => setError(e.message))
@@ -88,19 +92,42 @@ export default function LearnerHome() {
 
         {!editing ? (
           <>
-            <div style={styles.statsGrid}>
-              <div style={styles.statCard}>
-                <div style={styles.statValue}>{learner?.cefr_level || 'A1'}</div>
-                <div style={styles.statLabel}>CEFR Level</div>
+            {/* XP bar */}
+            <div style={styles.xpWrapper}>
+              <XPBar totalXp={xpData?.total_xp ?? learner?.total_xp ?? 0} label="Your Progress" />
+            </div>
+
+            {/* Streak + top stats */}
+            <div style={styles.topRow}>
+              <div style={styles.topStatLeft}>
+                <StreakFlame
+                  current={xpData?.current_streak || 0}
+                  longest={xpData?.longest_streak || 0}
+                  active={!!xpData?.current_streak}
+                />
               </div>
-              <div style={styles.statCard}>
-                <div style={styles.statValue}>{learner?.total_xp ?? 0}</div>
-                <div style={styles.statLabel}>Total XP</div>
+              <div style={styles.topStatRight}>
+                <div style={styles.statCard}>
+                  <div style={styles.statValue}>{learner?.cefr_level || 'A1'}</div>
+                  <div style={styles.statLabel}>CEFR Level</div>
+                </div>
+                <div style={styles.statCard}>
+                  <div style={styles.statValue}>{xpData?.badges_earned ?? 0}</div>
+                  <div style={styles.statLabel}>Badges</div>
+                </div>
+                <div style={styles.statCard}>
+                  <div style={styles.statValue}>{learner?.daily_goal_minutes || 10}<span style={styles.statUnit}>min</span></div>
+                  <div style={styles.statLabel}>Daily Goal</div>
+                </div>
               </div>
-              <div style={styles.statCard}>
-                <div style={styles.statValue}>{learner?.daily_goal_minutes || 10}<span style={styles.statUnit}>min</span></div>
-                <div style={styles.statLabel}>Daily Goal</div>
-              </div>
+            </div>
+
+            {/* Quick nav to v2 features */}
+            <div style={styles.quickNav}>
+              <a href="/Torna_Idioma/learn/review" style={styles.navBtn}>SRS Review</a>
+              <a href="/Torna_Idioma/learn/cognates" style={styles.navBtn}>Cognates</a>
+              <a href="/Torna_Idioma/learn/badges" style={styles.navBtn}>Badges</a>
+              <a href="/Torna_Idioma/learn/leaderboard" style={styles.navBtn}>Leaderboard</a>
             </div>
 
             <div style={styles.detailsGrid}>
@@ -296,6 +323,24 @@ const styles = {
     color: '#94a3b8',
     textAlign: 'center',
     marginBottom: 28
+  },
+  xpWrapper: { marginBottom: 24 },
+  topRow: { display: 'flex', gap: 20, alignItems: 'center', marginBottom: 24, flexWrap: 'wrap' },
+  topStatLeft: { flexShrink: 0 },
+  topStatRight: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, flex: 1, minWidth: 260 },
+  quickNav: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, marginBottom: 28 },
+  navBtn: {
+    padding: '14px 16px',
+    background: 'rgba(201, 168, 76, 0.08)',
+    border: '1px solid rgba(201, 168, 76, 0.25)',
+    borderRadius: 10,
+    color: '#C9A84C',
+    textDecoration: 'none',
+    fontSize: 13,
+    fontWeight: 700,
+    textAlign: 'center',
+    letterSpacing: 0.5,
+    transition: 'all 0.2s'
   },
   loading: { color: '#94a3b8', textAlign: 'center', padding: 32 },
   errorBox: {
