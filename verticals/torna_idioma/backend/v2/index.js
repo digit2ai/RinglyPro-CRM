@@ -24,7 +24,7 @@ router.get('/health', (req, res) => {
     service: 'Torna Idioma Learner v2',
     status: 'healthy',
     version: '2.0.0-alpha',
-    phase: 'step-3-cognate-engine',
+    phase: 'step-4-srs-engine',
     timestamp: new Date().toISOString()
   });
 });
@@ -34,6 +34,9 @@ router.use('/learner', require('./routes/learner'));
 
 // Step 3 — Cognate engine
 router.use('/cognates', require('./routes/cognates'));
+
+// Step 4 — Spaced Repetition System (SM-2 algorithm)
+router.use('/srs', require('./routes/srs'));
 
 // Future route mounts (added in subsequent steps):
 //   router.use('/srs',          require('./routes/srs'));          // Step 4
