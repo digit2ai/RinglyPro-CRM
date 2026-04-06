@@ -54,7 +54,26 @@ router.get('/runs/:id', async (req, res) => {
 // POST /runs - Start new pipeline run
 router.post('/runs', async (req, res) => {
   try {
-    const { load_id, mode } = req.body;
+    let { load_id, load_ref, mode } = req.body;
+
+    // If load_ref provided instead of load_id, resolve it
+    if (!load_id && load_ref) {
+      const ref = load_ref.toString().trim();
+      // Try lg_loads first, then cw_loads
+      const [lgRows] = await sequelize.query(
+        `SELECT id FROM lg_loads WHERE load_ref = $1 LIMIT 1`, { bind: [ref] }
+      );
+      if (lgRows.length) {
+        load_id = lgRows[0].id;
+      } else {
+        const [cwRows] = await sequelize.query(
+          `SELECT id FROM cw_loads WHERE load_ref = $1 LIMIT 1`, { bind: [ref] }
+        );
+        if (cwRows.length) load_id = cwRows[0].id;
+      }
+      if (!load_id) return res.status(400).json({ error: `Load ref "${ref}" not found` });
+    }
+
     const run = await pipeline.startPipeline(
       load_id || null,
       mode || 'autopilot',

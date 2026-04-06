@@ -62,7 +62,12 @@ export default function Autopilot() {
   }
 
   async function handleStartPipeline() {
-    await handleAction(null, 'start', { load_id: startLoadId ? parseInt(startLoadId) : null, mode: startMode });
+    const val = startLoadId ? startLoadId.toString().trim() : null;
+    const isNumeric = val && /^\d+$/.test(val);
+    const body = { mode: startMode };
+    if (isNumeric) body.load_id = parseInt(val);
+    else if (val) body.load_ref = val;
+    await handleAction(null, 'start', body);
     setShowStart(false);
     setStartLoadId('');
   }
@@ -212,7 +217,7 @@ export default function Autopilot() {
                 <option key={l.id} value={l.id}>{l.load_ref || `#${l.id}`} - {l.origin} to {l.destination}</option>
               ))}
             </select>
-            <input type="number" placeholder="Or enter Load ID manually" value={startLoadId} onChange={e => setStartLoadId(e.target.value)} style={{ ...s.formInput, marginTop: 8 }} />
+            <input type="text" placeholder="Or type Load Ref (e.g. CW-71158) or numeric ID" value={startLoadId} onChange={e => setStartLoadId(e.target.value)} style={{ ...s.formInput, marginTop: 8 }} />
           </div>
           <div style={s.formGroup}>
             <label style={s.formLabel}>Mode</label>
