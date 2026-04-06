@@ -222,138 +222,163 @@
 
   <div class="divider"></div>
 
-  <!-- SECTION 2.5: WORKFLOW DIAGRAM -->
+  <!-- SECTION 2.5: WORKFLOW DIAGRAM (SVG) -->
   <div class="section">
     <div class="section-num">02b -- THE WORKFLOW</div>
     <div class="section-title">HOW <span>EVERY LOAD</span> FLOWS THROUGH THE SYSTEM</div>
     <div class="section-sub">Three players, one automated flow. Rachel sits in the middle, orchestrating everything.</div>
 
-    <div style="background: #161B22; border: 1px solid #21262D; border-radius: 12px; padding: 32px 24px;">
+    <div style="background: #161B22; border: 1px solid #21262D; border-radius: 12px; padding: 16px; overflow-x: auto;">
+      <svg viewBox="0 0 1100 520" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: auto; font-family: 'Inter', sans-serif;">
+        <defs>
+          <marker id="ah-blue" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0EA5E9"/></marker>
+          <marker id="ah-purple" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#8957E5"/></marker>
+          <marker id="ah-amber" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#F59E0B"/></marker>
+          <marker id="ah-green" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#238636"/></marker>
+          <filter id="glow-amber"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
 
-      <!-- TOP: SHIPPER -->
-      <div style="text-align: center; margin-bottom: 8px;">
-        <div style="display: inline-block; background: #8957E522; border: 2px solid #8957E5; border-radius: 12px; padding: 12px 32px;">
-          <div style="font-family: 'Bebas Neue', sans-serif; font-size: 16px; color: #8957E5; letter-spacing: 2px;">SHIPPER</div>
-          <div style="font-size: 11px; color: #C9D1D9;">Sends load tender</div>
-        </div>
-      </div>
+        <!-- ===== SHIPPER (top left) ===== -->
+        <rect x="30" y="20" width="180" height="70" rx="12" fill="#161B22" stroke="#8957E5" stroke-width="2"/>
+        <text x="120" y="48" text-anchor="middle" fill="#8957E5" font-size="14" font-weight="700" font-family="'Bebas Neue', sans-serif" letter-spacing="2">SHIPPER</text>
+        <text x="120" y="68" text-anchor="middle" fill="#C9D1D9" font-size="10">Sends load / freight request</text>
 
-      <!-- Arrow down -->
-      <div style="text-align: center; padding: 4px 0;">
-        <div style="display: inline-block; width: 2px; height: 20px; background: #8957E5;"></div>
-        <div style="font-size: 10px; color: #8957E5;">&#9660;</div>
-      </div>
+        <!-- Arrow: Shipper -> Rachel (step 1) -->
+        <line x1="210" y1="55" x2="278" y2="55" stroke="#8957E5" stroke-width="2" marker-end="url(#ah-purple)"/>
+        <text x="244" y="48" text-anchor="middle" fill="#484F58" font-size="8">LOAD IN</text>
 
-      <!-- RACHEL CENTER - The brain -->
-      <div style="background: linear-gradient(135deg, #0D1117, #111922); border: 2px solid #0EA5E9; border-radius: 16px; padding: 24px; margin: 0 auto; max-width: 900px; position: relative;">
-        <div style="text-align: center; margin-bottom: 16px;">
-          <div style="font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: #0EA5E9; letter-spacing: 3px;">RACHEL AI -- FREIGHTMIND ENGINE</div>
-          <div style="font-size: 10px; color: #484F58;">Automated -- every step runs without human intervention unless a pause rule triggers</div>
-        </div>
+        <!-- ===== RACHEL AI ENGINE (center box) ===== -->
+        <rect x="280" y="10" width="700" height="140" rx="14" fill="#0D1117" stroke="#0EA5E9" stroke-width="2"/>
+        <text x="630" y="32" text-anchor="middle" fill="#0EA5E9" font-size="13" font-weight="700" font-family="'Bebas Neue', sans-serif" letter-spacing="3">RACHEL AI -- FREIGHTMIND AUTOPILOT ENGINE</text>
 
-        <!-- Flow steps inside Rachel -->
-        <div style="display: flex; align-items: center; gap: 4px; flex-wrap: nowrap;">
-          <!-- Step 1 -->
-          <div style="flex: 1; text-align: center;">
-            <div style="width: 32px; height: 32px; border-radius: 50%; background: #0EA5E9; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; margin: 0 auto 4px;">1</div>
-            <div style="font-size: 9px; color: #E6EDF3; font-weight: 600;">INGEST</div>
-            <div style="font-size: 8px; color: #484F58; margin-top: 2px;">Load details<br>& shipper info</div>
-          </div>
-          <div style="color: #21262D; font-size: 14px;">&#8594;</div>
-          <!-- Step 2 -->
-          <div style="flex: 1; text-align: center;">
-            <div style="width: 32px; height: 32px; border-radius: 50%; background: #0EA5E9; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; margin: 0 auto 4px;">2</div>
-            <div style="font-size: 9px; color: #E6EDF3; font-weight: 600;">RATE</div>
-            <div style="font-size: 8px; color: #484F58; margin-top: 2px;">Market data<br>buy/sell price</div>
-          </div>
-          <div style="color: #21262D; font-size: 14px;">&#8594;</div>
-          <!-- Step 3 -->
-          <div style="flex: 1; text-align: center;">
-            <div style="width: 32px; height: 32px; border-radius: 50%; background: #0EA5E9; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; margin: 0 auto 4px;">3</div>
-            <div style="font-size: 9px; color: #E6EDF3; font-weight: 600;">MATCH</div>
-            <div style="font-size: 8px; color: #484F58; margin-top: 2px;">Score & rank<br>50+ carriers</div>
-          </div>
-          <div style="color: #21262D; font-size: 14px;">&#8594;</div>
-          <!-- Step 4 -->
-          <div style="flex: 1; text-align: center;">
-            <div style="width: 32px; height: 32px; border-radius: 50%; background: #238636; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; margin: 0 auto 4px;">4</div>
-            <div style="font-size: 9px; color: #E6EDF3; font-weight: 600;">OPTIMIZE</div>
-            <div style="font-size: 8px; color: #484F58; margin-top: 2px;">Find backhaul<br>& chain pairs</div>
-          </div>
-          <div style="color: #21262D; font-size: 14px;">&#8594;</div>
-          <!-- Step 5 - HIGHLIGHT -->
-          <div style="flex: 1.2; text-align: center; background: #0EA5E915; border: 1px solid #0EA5E944; border-radius: 8px; padding: 4px 2px;">
-            <div style="width: 32px; height: 32px; border-radius: 50%; background: #F59E0B; color: #000; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; margin: 0 auto 4px; box-shadow: 0 0 8px #F59E0B44;">5</div>
-            <div style="font-size: 9px; color: #F59E0B; font-weight: 700;">CALL</div>
-            <div style="font-size: 8px; color: #C9D1D9; margin-top: 2px; font-weight: 600;">Rachel CALLS<br>carriers by phone</div>
-          </div>
-          <div style="color: #21262D; font-size: 14px;">&#8594;</div>
-          <!-- Step 6 -->
-          <div style="flex: 1; text-align: center;">
-            <div style="width: 32px; height: 32px; border-radius: 50%; background: #0EA5E9; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; margin: 0 auto 4px;">6</div>
-            <div style="font-size: 9px; color: #E6EDF3; font-weight: 600;">BOOK</div>
-            <div style="font-size: 8px; color: #484F58; margin-top: 2px;">Rate con<br>load covered</div>
-          </div>
-          <div style="color: #21262D; font-size: 14px;">&#8594;</div>
-          <!-- Step 7 - HIGHLIGHT -->
-          <div style="flex: 1.2; text-align: center; background: #23863615; border: 1px solid #23863644; border-radius: 8px; padding: 4px 2px;">
-            <div style="width: 32px; height: 32px; border-radius: 50%; background: #F59E0B; color: #000; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; margin: 0 auto 4px; box-shadow: 0 0 8px #F59E0B44;">7</div>
-            <div style="font-size: 9px; color: #F59E0B; font-weight: 700;">TRACK</div>
-            <div style="font-size: 8px; color: #C9D1D9; margin-top: 2px; font-weight: 600;">Rachel CALLS<br>driver every 4hrs</div>
-          </div>
-          <div style="color: #21262D; font-size: 14px;">&#8594;</div>
-          <!-- Step 8 -->
-          <div style="flex: 1; text-align: center;">
-            <div style="width: 32px; height: 32px; border-radius: 50%; background: #238636; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; margin: 0 auto 4px;">8</div>
-            <div style="font-size: 9px; color: #E6EDF3; font-weight: 600;">BILL</div>
-            <div style="font-size: 8px; color: #484F58; margin-top: 2px;">Invoice shipper<br>pay carrier</div>
-          </div>
-        </div>
-      </div>
+        <!-- Step circles inside Rachel -->
+        <!-- 1: Ingest -->
+        <circle cx="330" cy="85" r="20" fill="#0EA5E9"/>
+        <text x="330" y="89" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">1</text>
+        <text x="330" y="118" text-anchor="middle" fill="#8B949E" font-size="8" font-weight="600">INGEST</text>
+        <text x="330" y="128" text-anchor="middle" fill="#484F58" font-size="7">Load details</text>
 
-      <!-- Two arrows going down from Rachel to Carrier and back up to Shipper -->
-      <div style="display: flex; justify-content: center; gap: 200px; padding: 4px 0;">
-        <div style="text-align: center;">
-          <div style="font-size: 10px; color: #0EA5E9;">&#9660;</div>
-          <div style="display: inline-block; width: 2px; height: 10px; background: #0EA5E9;"></div>
-        </div>
-        <div style="text-align: center;">
-          <div style="font-size: 10px; color: #238636;">&#9650;</div>
-          <div style="display: inline-block; width: 2px; height: 10px; background: #238636;"></div>
-        </div>
-      </div>
+        <line x1="350" y1="85" x2="385" y2="85" stroke="#21262D" stroke-width="1.5" marker-end="url(#ah-blue)"/>
 
-      <!-- BOTTOM: CARRIER -->
-      <div style="display: flex; justify-content: center; gap: 40px; align-items: center;">
-        <div style="display: inline-block; background: #F59E0B11; border: 2px solid #F59E0B; border-radius: 12px; padding: 12px 24px; text-align: center;">
-          <div style="font-family: 'Bebas Neue', sans-serif; font-size: 16px; color: #F59E0B; letter-spacing: 2px;">CARRIER</div>
-          <div style="font-size: 11px; color: #C9D1D9;">Accepts load, picks up, delivers</div>
-        </div>
+        <!-- 2: Rate -->
+        <circle cx="410" cy="85" r="20" fill="#0EA5E9"/>
+        <text x="410" y="89" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">2</text>
+        <text x="410" y="118" text-anchor="middle" fill="#8B949E" font-size="8" font-weight="600">RATE</text>
+        <text x="410" y="128" text-anchor="middle" fill="#484F58" font-size="7">Buy / Sell</text>
 
-        <!-- Dotted line to results -->
-        <div style="flex: 1; height: 1px; border-top: 2px dashed #21262D; max-width: 80px;"></div>
+        <line x1="430" y1="85" x2="465" y2="85" stroke="#21262D" stroke-width="1.5" marker-end="url(#ah-blue)"/>
 
-        <!-- Results -->
-        <div style="display: flex; gap: 12px;">
-          <div style="text-align: center; background: #23863622; border: 1px solid #238636; border-radius: 8px; padding: 8px 14px;">
-            <div style="font-family: 'Bebas Neue', sans-serif; font-size: 16px; color: #238636;">DELIVERED</div>
-            <div style="font-size: 8px; color: #8B949E;">POD confirmed</div>
-          </div>
-          <div style="text-align: center; background: #0EA5E911; border: 1px solid #0EA5E9; border-radius: 8px; padding: 8px 14px;">
-            <div style="font-family: 'Bebas Neue', sans-serif; font-size: 16px; color: #0EA5E9;">INVOICED</div>
-            <div style="font-size: 8px; color: #8B949E;">Auto-generated</div>
-          </div>
-          <div style="text-align: center; background: #23863622; border: 1px solid #238636; border-radius: 8px; padding: 8px 14px;">
-            <div style="font-family: 'Bebas Neue', sans-serif; font-size: 16px; color: #238636;">PROFIT</div>
-            <div style="font-size: 8px; color: #8B949E;">P&L calculated</div>
-          </div>
-        </div>
-      </div>
+        <!-- 3: Match -->
+        <circle cx="490" cy="85" r="20" fill="#0EA5E9"/>
+        <text x="490" y="89" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">3</text>
+        <text x="490" y="118" text-anchor="middle" fill="#8B949E" font-size="8" font-weight="600">MATCH</text>
+        <text x="490" y="128" text-anchor="middle" fill="#484F58" font-size="7">Rank carriers</text>
 
-      <!-- Bottom note -->
-      <div style="text-align: center; margin-top: 16px; padding-top: 12px; border-top: 1px solid #21262D;">
-        <div style="font-size: 11px; color: #8B949E;">The broker's only job: <strong style="color: #E6EDF3;">review exceptions</strong> when Rachel pauses (margin too low, no carriers, rate above market)</div>
-      </div>
+        <line x1="510" y1="85" x2="545" y2="85" stroke="#21262D" stroke-width="1.5" marker-end="url(#ah-blue)"/>
+
+        <!-- 4: Optimize -->
+        <circle cx="570" cy="85" r="20" fill="#238636"/>
+        <text x="570" y="89" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">4</text>
+        <text x="570" y="118" text-anchor="middle" fill="#8B949E" font-size="8" font-weight="600">OPTIMIZE</text>
+        <text x="570" y="128" text-anchor="middle" fill="#484F58" font-size="7">Backhaul pairs</text>
+
+        <line x1="590" y1="85" x2="625" y2="85" stroke="#21262D" stroke-width="1.5" marker-end="url(#ah-amber)"/>
+
+        <!-- 5: CALL (highlighted) -->
+        <rect x="630" y="58" width="56" height="56" rx="10" fill="#F59E0B22" stroke="#F59E0B" stroke-width="2" filter="url(#glow-amber)"/>
+        <circle cx="658" cy="85" r="18" fill="#F59E0B"/>
+        <text x="658" y="89" text-anchor="middle" fill="#000" font-size="12" font-weight="700">5</text>
+        <text x="658" y="118" text-anchor="middle" fill="#F59E0B" font-size="8" font-weight="700">CALL</text>
+        <text x="658" y="128" text-anchor="middle" fill="#F59E0B" font-size="7">Negotiate</text>
+
+        <line x1="686" y1="85" x2="715" y2="85" stroke="#21262D" stroke-width="1.5" marker-end="url(#ah-blue)"/>
+
+        <!-- 6: Book -->
+        <circle cx="740" cy="85" r="20" fill="#0EA5E9"/>
+        <text x="740" y="89" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">6</text>
+        <text x="740" y="118" text-anchor="middle" fill="#8B949E" font-size="8" font-weight="600">BOOK</text>
+        <text x="740" y="128" text-anchor="middle" fill="#484F58" font-size="7">Rate con</text>
+
+        <line x1="760" y1="85" x2="795" y2="85" stroke="#21262D" stroke-width="1.5" marker-end="url(#ah-amber)"/>
+
+        <!-- 7: Track (highlighted) -->
+        <rect x="800" y="58" width="56" height="56" rx="10" fill="#F59E0B22" stroke="#F59E0B" stroke-width="2" filter="url(#glow-amber)"/>
+        <circle cx="828" cy="85" r="18" fill="#F59E0B"/>
+        <text x="828" y="89" text-anchor="middle" fill="#000" font-size="12" font-weight="700">7</text>
+        <text x="828" y="118" text-anchor="middle" fill="#F59E0B" font-size="8" font-weight="700">TRACK</text>
+        <text x="828" y="128" text-anchor="middle" fill="#F59E0B" font-size="7">Check calls</text>
+
+        <line x1="856" y1="85" x2="890" y2="85" stroke="#21262D" stroke-width="1.5" marker-end="url(#ah-green)"/>
+
+        <!-- 8: Bill -->
+        <circle cx="915" cy="85" r="20" fill="#238636"/>
+        <text x="915" y="89" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">8</text>
+        <text x="915" y="118" text-anchor="middle" fill="#8B949E" font-size="8" font-weight="600">BILL</text>
+        <text x="915" y="128" text-anchor="middle" fill="#484F58" font-size="7">Invoice + P&L</text>
+
+        <!-- ===== ARROWS: Rachel -> Carrier ===== -->
+        <!-- Arrow down from step 5 to carrier -->
+        <line x1="658" y1="150" x2="658" y2="208" stroke="#F59E0B" stroke-width="2" stroke-dasharray="4,3" marker-end="url(#ah-amber)"/>
+        <text x="675" y="183" fill="#F59E0B" font-size="8" font-weight="600">CALLS</text>
+
+        <!-- Arrow down from step 7 to carrier -->
+        <line x1="828" y1="150" x2="828" y2="208" stroke="#F59E0B" stroke-width="2" stroke-dasharray="4,3" marker-end="url(#ah-amber)"/>
+        <text x="845" y="183" fill="#F59E0B" font-size="8" font-weight="600">CALLS</text>
+
+        <!-- ===== CARRIER (middle) ===== -->
+        <rect x="560" y="210" width="360" height="70" rx="12" fill="#161B22" stroke="#F59E0B" stroke-width="2"/>
+        <text x="740" y="238" text-anchor="middle" fill="#F59E0B" font-size="14" font-weight="700" font-family="'Bebas Neue', sans-serif" letter-spacing="2">CARRIER / DRIVER</text>
+        <text x="740" y="260" text-anchor="middle" fill="#C9D1D9" font-size="10">Answers call -- Accepts load -- Picks up -- Reports ETA -- Delivers</text>
+
+        <!-- Arrow: Carrier responds back up to Rachel -->
+        <line x1="740" y1="210" x2="740" y2="155" stroke="#238636" stroke-width="1.5" stroke-dasharray="3,3" marker-end="url(#ah-green)"/>
+        <text x="755" y="183" fill="#238636" font-size="7">status updates</text>
+
+        <!-- ===== ARROW: Rachel step 8 -> Results ===== -->
+        <line x1="935" y1="85" x2="955" y2="85" stroke="#238636" stroke-width="2"/>
+        <line x1="955" y1="85" x2="955" y2="350" stroke="#238636" stroke-width="2"/>
+        <line x1="955" y1="350" x2="935" y2="350" stroke="#238636" stroke-width="2" marker-end="url(#ah-green)"/>
+
+        <!-- ===== ARROW: Carrier -> Delivery ===== -->
+        <line x1="740" y1="280" x2="740" y2="320" stroke="#F59E0B" stroke-width="2" marker-end="url(#ah-amber)"/>
+
+        <!-- ===== RESULTS ROW ===== -->
+        <!-- Delivery -->
+        <rect x="620" y="322" width="120" height="50" rx="8" fill="#23863622" stroke="#238636" stroke-width="1.5"/>
+        <text x="680" y="345" text-anchor="middle" fill="#238636" font-size="13" font-weight="700" font-family="'Bebas Neue', sans-serif" letter-spacing="1">DELIVERED</text>
+        <text x="680" y="360" text-anchor="middle" fill="#8B949E" font-size="8">POD confirmed</text>
+
+        <line x1="740" y1="347" x2="770" y2="347" stroke="#21262D" stroke-width="1.5" marker-end="url(#ah-blue)"/>
+
+        <!-- Invoiced -->
+        <rect x="772" y="322" width="120" height="50" rx="8" fill="#0EA5E911" stroke="#0EA5E9" stroke-width="1.5"/>
+        <text x="832" y="345" text-anchor="middle" fill="#0EA5E9" font-size="13" font-weight="700" font-family="'Bebas Neue', sans-serif" letter-spacing="1">INVOICED</text>
+        <text x="832" y="360" text-anchor="middle" fill="#8B949E" font-size="8">Auto-generated</text>
+
+        <!-- Arrow to profit -->
+        <line x1="892" y1="347" x2="922" y2="347" stroke="#21262D" stroke-width="1.5" marker-end="url(#ah-green)"/>
+
+        <!-- Profit -->
+        <rect x="924" y="322" width="110" height="50" rx="8" fill="#23863622" stroke="#238636" stroke-width="2"/>
+        <text x="979" y="345" text-anchor="middle" fill="#238636" font-size="13" font-weight="700" font-family="'Bebas Neue', sans-serif" letter-spacing="1">PROFIT</text>
+        <text x="979" y="360" text-anchor="middle" fill="#8B949E" font-size="8">P&L calculated</text>
+
+        <!-- ===== SHIPPER gets notified (arrow back) ===== -->
+        <line x1="120" y1="90" x2="120" y2="347" stroke="#8957E5" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <line x1="120" y1="347" x2="618" y2="347" stroke="#8957E5" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#ah-purple)"/>
+        <text x="140" y="200" fill="#8957E5" font-size="8" transform="rotate(90, 140, 200)">Notifications: covered, ETA, delivered, invoice</text>
+
+        <!-- ===== BROKER exception note ===== -->
+        <rect x="30" y="410" width="1040" height="40" rx="8" fill="#0D1117" stroke="#21262D" stroke-width="1"/>
+        <text x="550" y="428" text-anchor="middle" fill="#8B949E" font-size="11">The broker's only job: <tspan fill="#E6EDF3" font-weight="700">review exceptions</tspan> when Rachel pauses (margin too low, no carriers available, rate above market)</text>
+
+        <!-- ===== LEGEND ===== -->
+        <circle cx="55" y="478" r="6" fill="#0EA5E9" cy="478"/><text x="68" y="481" fill="#8B949E" font-size="9">Automated step</text>
+        <rect x="170" y="472" width="12" height="12" rx="3" fill="#F59E0B22" stroke="#F59E0B" stroke-width="1"/><text x="188" y="482" fill="#8B949E" font-size="9">Rachel voice call</text>
+        <circle cx="315" cy="478" r="6" fill="#238636"/><text x="328" y="481" fill="#8B949E" font-size="9">Completion / output</text>
+        <line x1="440" y1="478" x2="470" y2="478" stroke="#8957E5" stroke-width="1.5" stroke-dasharray="4,3"/><text x="478" y="481" fill="#8B949E" font-size="9">Shipper notifications</text>
+
+      </svg>
     </div>
   </div>
 
