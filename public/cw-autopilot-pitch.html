@@ -226,88 +226,133 @@
   <div class="section">
     <div class="section-num">02b -- THE WORKFLOW</div>
     <div class="section-title">HOW <span>EVERY LOAD</span> FLOWS THROUGH THE SYSTEM</div>
-    <div class="section-sub">Four actors, one automated flow. The shipper requests, Rachel executes, the carrier delivers, the system records everything.</div>
+    <div class="section-sub">Three players, one automated flow. Rachel sits in the middle, orchestrating everything.</div>
 
-    <!-- Visual workflow diagram -->
-    <div style="background: #161B22; border: 1px solid #21262D; border-radius: 10px; padding: 24px; overflow-x: auto;">
+    <div style="background: #161B22; border: 1px solid #21262D; border-radius: 12px; padding: 32px 24px;">
 
-      <!-- Column headers -->
-      <div style="display: grid; grid-template-columns: 100px 1fr; gap: 0; margin-bottom: 4px;">
-        <div></div>
-        <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px;">
-          <div style="text-align: center; font-size: 8px; color: #484F58; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px;">Contract</div>
-          <div style="text-align: center; font-size: 8px; color: #484F58; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px;">Rate Intel</div>
-          <div style="text-align: center; font-size: 8px; color: #484F58; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px;">Carrier Match</div>
-          <div style="text-align: center; font-size: 8px; color: #484F58; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px;">Load Match</div>
-          <div style="text-align: center; font-size: 8px; color: #484F58; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px;">Outreach</div>
-          <div style="text-align: center; font-size: 8px; color: #484F58; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px;">Rate Con</div>
-          <div style="text-align: center; font-size: 8px; color: #484F58; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px;">Tracking</div>
-          <div style="text-align: center; font-size: 8px; color: #484F58; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px;">Billing</div>
+      <!-- TOP: SHIPPER -->
+      <div style="text-align: center; margin-bottom: 8px;">
+        <div style="display: inline-block; background: #8957E522; border: 2px solid #8957E5; border-radius: 12px; padding: 12px 32px;">
+          <div style="font-family: 'Bebas Neue', sans-serif; font-size: 16px; color: #8957E5; letter-spacing: 2px;">SHIPPER</div>
+          <div style="font-size: 11px; color: #C9D1D9;">Sends load tender</div>
         </div>
       </div>
 
-      <!-- SHIPPER ROW -->
-      <div style="display: grid; grid-template-columns: 100px 1fr; gap: 0; margin-bottom: 2px;">
-        <div style="background: #8957E522; border: 1px solid #8957E533; border-radius: 6px 0 0 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #8957E5; text-transform: uppercase; letter-spacing: 0.5px;">Shipper</div>
-        <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px;">
-          <div style="background: #8957E522; border: 1px solid #8957E533; padding: 10px 6px; font-size: 10px; color: #E6EDF3; text-align: center; font-weight: 600;">Sends load tender</div>
-          <div style="padding: 10px 6px;"></div>
-          <div style="padding: 10px 6px;"></div>
-          <div style="padding: 10px 6px;"></div>
-          <div style="padding: 10px 6px;"></div>
-          <div style="background: #8957E511; border: 1px solid #8957E522; padding: 10px 6px; font-size: 9px; color: #8B949E; text-align: center;">Gets "load covered" notification</div>
-          <div style="background: #8957E511; border: 1px solid #8957E522; padding: 10px 6px; font-size: 9px; color: #8B949E; text-align: center;">Receives ETA updates</div>
-          <div style="background: #8957E511; border: 1px solid #8957E522; padding: 10px 6px; font-size: 9px; color: #8B949E; text-align: center;">Gets invoice</div>
+      <!-- Arrow down -->
+      <div style="text-align: center; padding: 4px 0;">
+        <div style="display: inline-block; width: 2px; height: 20px; background: #8957E5;"></div>
+        <div style="font-size: 10px; color: #8957E5;">&#9660;</div>
+      </div>
+
+      <!-- RACHEL CENTER - The brain -->
+      <div style="background: linear-gradient(135deg, #0D1117, #111922); border: 2px solid #0EA5E9; border-radius: 16px; padding: 24px; margin: 0 auto; max-width: 900px; position: relative;">
+        <div style="text-align: center; margin-bottom: 16px;">
+          <div style="font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: #0EA5E9; letter-spacing: 3px;">RACHEL AI -- FREIGHTMIND ENGINE</div>
+          <div style="font-size: 10px; color: #484F58;">Automated -- every step runs without human intervention unless a pause rule triggers</div>
+        </div>
+
+        <!-- Flow steps inside Rachel -->
+        <div style="display: flex; align-items: center; gap: 4px; flex-wrap: nowrap;">
+          <!-- Step 1 -->
+          <div style="flex: 1; text-align: center;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: #0EA5E9; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; margin: 0 auto 4px;">1</div>
+            <div style="font-size: 9px; color: #E6EDF3; font-weight: 600;">INGEST</div>
+            <div style="font-size: 8px; color: #484F58; margin-top: 2px;">Load details<br>& shipper info</div>
+          </div>
+          <div style="color: #21262D; font-size: 14px;">&#8594;</div>
+          <!-- Step 2 -->
+          <div style="flex: 1; text-align: center;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: #0EA5E9; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; margin: 0 auto 4px;">2</div>
+            <div style="font-size: 9px; color: #E6EDF3; font-weight: 600;">RATE</div>
+            <div style="font-size: 8px; color: #484F58; margin-top: 2px;">Market data<br>buy/sell price</div>
+          </div>
+          <div style="color: #21262D; font-size: 14px;">&#8594;</div>
+          <!-- Step 3 -->
+          <div style="flex: 1; text-align: center;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: #0EA5E9; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; margin: 0 auto 4px;">3</div>
+            <div style="font-size: 9px; color: #E6EDF3; font-weight: 600;">MATCH</div>
+            <div style="font-size: 8px; color: #484F58; margin-top: 2px;">Score & rank<br>50+ carriers</div>
+          </div>
+          <div style="color: #21262D; font-size: 14px;">&#8594;</div>
+          <!-- Step 4 -->
+          <div style="flex: 1; text-align: center;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: #238636; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; margin: 0 auto 4px;">4</div>
+            <div style="font-size: 9px; color: #E6EDF3; font-weight: 600;">OPTIMIZE</div>
+            <div style="font-size: 8px; color: #484F58; margin-top: 2px;">Find backhaul<br>& chain pairs</div>
+          </div>
+          <div style="color: #21262D; font-size: 14px;">&#8594;</div>
+          <!-- Step 5 - HIGHLIGHT -->
+          <div style="flex: 1.2; text-align: center; background: #0EA5E915; border: 1px solid #0EA5E944; border-radius: 8px; padding: 4px 2px;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: #F59E0B; color: #000; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; margin: 0 auto 4px; box-shadow: 0 0 8px #F59E0B44;">5</div>
+            <div style="font-size: 9px; color: #F59E0B; font-weight: 700;">CALL</div>
+            <div style="font-size: 8px; color: #C9D1D9; margin-top: 2px; font-weight: 600;">Rachel CALLS<br>carriers by phone</div>
+          </div>
+          <div style="color: #21262D; font-size: 14px;">&#8594;</div>
+          <!-- Step 6 -->
+          <div style="flex: 1; text-align: center;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: #0EA5E9; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; margin: 0 auto 4px;">6</div>
+            <div style="font-size: 9px; color: #E6EDF3; font-weight: 600;">BOOK</div>
+            <div style="font-size: 8px; color: #484F58; margin-top: 2px;">Rate con<br>load covered</div>
+          </div>
+          <div style="color: #21262D; font-size: 14px;">&#8594;</div>
+          <!-- Step 7 - HIGHLIGHT -->
+          <div style="flex: 1.2; text-align: center; background: #23863615; border: 1px solid #23863644; border-radius: 8px; padding: 4px 2px;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: #F59E0B; color: #000; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; margin: 0 auto 4px; box-shadow: 0 0 8px #F59E0B44;">7</div>
+            <div style="font-size: 9px; color: #F59E0B; font-weight: 700;">TRACK</div>
+            <div style="font-size: 8px; color: #C9D1D9; margin-top: 2px; font-weight: 600;">Rachel CALLS<br>driver every 4hrs</div>
+          </div>
+          <div style="color: #21262D; font-size: 14px;">&#8594;</div>
+          <!-- Step 8 -->
+          <div style="flex: 1; text-align: center;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: #238636; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; margin: 0 auto 4px;">8</div>
+            <div style="font-size: 9px; color: #E6EDF3; font-weight: 600;">BILL</div>
+            <div style="font-size: 8px; color: #484F58; margin-top: 2px;">Invoice shipper<br>pay carrier</div>
+          </div>
         </div>
       </div>
 
-      <!-- RACHEL ROW -->
-      <div style="display: grid; grid-template-columns: 100px 1fr; gap: 0; margin-bottom: 2px;">
-        <div style="background: #0EA5E911; border: 1px solid #0EA5E933; border-radius: 6px 0 0 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #0EA5E9; text-transform: uppercase; letter-spacing: 0.5px;">Rachel AI</div>
-        <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px;">
-          <div style="background: #0EA5E911; border: 1px solid #0EA5E933; padding: 10px 6px; font-size: 9px; color: #C9D1D9; text-align: center;">Ingests load details</div>
-          <div style="background: #0EA5E911; border: 1px solid #0EA5E933; padding: 10px 6px; font-size: 9px; color: #C9D1D9; text-align: center;">Pulls market rates, sets buy/sell</div>
-          <div style="background: #0EA5E911; border: 1px solid #0EA5E933; padding: 10px 6px; font-size: 9px; color: #C9D1D9; text-align: center;">Scores & ranks carriers</div>
-          <div style="background: #0EA5E911; border: 1px solid #0EA5E933; padding: 10px 6px; font-size: 9px; color: #C9D1D9; text-align: center;">Finds backhaul & chain pairs</div>
-          <div style="background: #0EA5E922; border: 1px solid #0EA5E944; padding: 10px 6px; font-size: 10px; color: #E6EDF3; text-align: center; font-weight: 600;">CALLS carriers, negotiates, books</div>
-          <div style="background: #0EA5E911; border: 1px solid #0EA5E933; padding: 10px 6px; font-size: 9px; color: #C9D1D9; text-align: center;">Generates rate con, updates status</div>
-          <div style="background: #0EA5E922; border: 1px solid #0EA5E944; padding: 10px 6px; font-size: 10px; color: #E6EDF3; text-align: center; font-weight: 600;">CALLS driver for check-ins</div>
-          <div style="background: #0EA5E911; border: 1px solid #0EA5E933; padding: 10px 6px; font-size: 9px; color: #C9D1D9; text-align: center;">Creates invoices, calculates P&L</div>
+      <!-- Two arrows going down from Rachel to Carrier and back up to Shipper -->
+      <div style="display: flex; justify-content: center; gap: 200px; padding: 4px 0;">
+        <div style="text-align: center;">
+          <div style="font-size: 10px; color: #0EA5E9;">&#9660;</div>
+          <div style="display: inline-block; width: 2px; height: 10px; background: #0EA5E9;"></div>
+        </div>
+        <div style="text-align: center;">
+          <div style="font-size: 10px; color: #238636;">&#9650;</div>
+          <div style="display: inline-block; width: 2px; height: 10px; background: #238636;"></div>
         </div>
       </div>
 
-      <!-- CARRIER ROW -->
-      <div style="display: grid; grid-template-columns: 100px 1fr; gap: 0; margin-bottom: 2px;">
-        <div style="background: #F59E0B11; border: 1px solid #F59E0B33; border-radius: 6px 0 0 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #F59E0B; text-transform: uppercase; letter-spacing: 0.5px;">Carrier</div>
-        <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px;">
-          <div style="padding: 10px 6px;"></div>
-          <div style="padding: 10px 6px;"></div>
-          <div style="padding: 10px 6px;"></div>
-          <div style="padding: 10px 6px;"></div>
-          <div style="background: #F59E0B11; border: 1px solid #F59E0B22; padding: 10px 6px; font-size: 10px; color: #E6EDF3; text-align: center; font-weight: 600;">Answers call, accepts load</div>
-          <div style="background: #F59E0B11; border: 1px solid #F59E0B22; padding: 10px 6px; font-size: 9px; color: #8B949E; text-align: center;">Provides driver & truck info</div>
-          <div style="background: #F59E0B11; border: 1px solid #F59E0B22; padding: 10px 6px; font-size: 9px; color: #8B949E; text-align: center;">Reports location & ETA</div>
-          <div style="background: #F59E0B11; border: 1px solid #F59E0B22; padding: 10px 6px; font-size: 9px; color: #8B949E; text-align: center;">Confirms delivery, gets paid</div>
+      <!-- BOTTOM: CARRIER -->
+      <div style="display: flex; justify-content: center; gap: 40px; align-items: center;">
+        <div style="display: inline-block; background: #F59E0B11; border: 2px solid #F59E0B; border-radius: 12px; padding: 12px 24px; text-align: center;">
+          <div style="font-family: 'Bebas Neue', sans-serif; font-size: 16px; color: #F59E0B; letter-spacing: 2px;">CARRIER</div>
+          <div style="font-size: 11px; color: #C9D1D9;">Accepts load, picks up, delivers</div>
+        </div>
+
+        <!-- Dotted line to results -->
+        <div style="flex: 1; height: 1px; border-top: 2px dashed #21262D; max-width: 80px;"></div>
+
+        <!-- Results -->
+        <div style="display: flex; gap: 12px;">
+          <div style="text-align: center; background: #23863622; border: 1px solid #238636; border-radius: 8px; padding: 8px 14px;">
+            <div style="font-family: 'Bebas Neue', sans-serif; font-size: 16px; color: #238636;">DELIVERED</div>
+            <div style="font-size: 8px; color: #8B949E;">POD confirmed</div>
+          </div>
+          <div style="text-align: center; background: #0EA5E911; border: 1px solid #0EA5E9; border-radius: 8px; padding: 8px 14px;">
+            <div style="font-family: 'Bebas Neue', sans-serif; font-size: 16px; color: #0EA5E9;">INVOICED</div>
+            <div style="font-size: 8px; color: #8B949E;">Auto-generated</div>
+          </div>
+          <div style="text-align: center; background: #23863622; border: 1px solid #238636; border-radius: 8px; padding: 8px 14px;">
+            <div style="font-family: 'Bebas Neue', sans-serif; font-size: 16px; color: #238636;">PROFIT</div>
+            <div style="font-size: 8px; color: #8B949E;">P&L calculated</div>
+          </div>
         </div>
       </div>
 
-      <!-- SYSTEM ROW -->
-      <div style="display: grid; grid-template-columns: 100px 1fr; gap: 0;">
-        <div style="background: #23863611; border: 1px solid #23863633; border-radius: 6px 0 0 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #238636; text-transform: uppercase; letter-spacing: 0.5px;">System</div>
-        <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px;">
-          <div style="background: #23863611; border: 1px solid #23863622; padding: 10px 6px; font-size: 8px; color: #238636; text-align: center;">Logs load, starts pipeline</div>
-          <div style="background: #23863611; border: 1px solid #23863622; padding: 10px 6px; font-size: 8px; color: #238636; text-align: center;">Stores rate analysis</div>
-          <div style="background: #23863611; border: 1px solid #23863622; padding: 10px 6px; font-size: 8px; color: #238636; text-align: center;">Stores carrier scores</div>
-          <div style="background: #23863611; border: 1px solid #23863622; padding: 10px 6px; font-size: 8px; color: #238636; text-align: center;">Stores pair matches</div>
-          <div style="background: #23863611; border: 1px solid #23863622; padding: 10px 6px; font-size: 8px; color: #238636; text-align: center;">Logs call, updates CRM</div>
-          <div style="background: #23863611; border: 1px solid #23863622; padding: 10px 6px; font-size: 8px; color: #238636; text-align: center;">Status: COVERED</div>
-          <div style="background: #23863611; border: 1px solid #23863622; padding: 10px 6px; font-size: 8px; color: #238636; text-align: center;">Logs check call, notifies shipper</div>
-          <div style="background: #23863611; border: 1px solid #23863622; padding: 10px 6px; font-size: 8px; color: #238636; text-align: center;">DELIVERED, invoiced, P&L</div>
-        </div>
-      </div>
-
-      <div style="text-align: center; margin-top: 12px; font-size: 10px; color: #484F58;">
-        Human broker only intervenes when autopilot pauses: margin too low, no carriers available, or rate above market threshold.
+      <!-- Bottom note -->
+      <div style="text-align: center; margin-top: 16px; padding-top: 12px; border-top: 1px solid #21262D;">
+        <div style="font-size: 11px; color: #8B949E;">The broker's only job: <strong style="color: #E6EDF3;">review exceptions</strong> when Rachel pauses (margin too low, no carriers, rate above market)</div>
       </div>
     </div>
   </div>
