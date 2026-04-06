@@ -613,6 +613,12 @@ function PipelineReport({ run, onClose }) {
     ? ((new Date(run.completed_at) - new Date(run.started_at)) / 1000).toFixed(1)
     : '--';
 
+  // Extra data from lg_loads (shipper, commodity, dates) passed through contract
+  const shipperName = contract.shipper_name || null;
+  const commodity = contract.commodity || null;
+  const pickupDate = contract.pickup_date || null;
+  const deliveryDate = contract.delivery_date || null;
+
   const r = {
     overlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1100, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '20px', overflowY: 'auto' },
     page: { background: '#0D1117', border: '1px solid #30363D', borderRadius: 12, width: '100%', maxWidth: 960, margin: '20px auto', padding: 0 },
@@ -664,8 +670,10 @@ function PipelineReport({ run, onClose }) {
           <div style={r.headerLeft}>
             <div style={r.reportTitle}>AUTOPILOT PIPELINE REPORT</div>
             <div style={r.reportSub}>End-to-End Brokerage Execution Summary</div>
+            {shipperName && <div style={{ fontSize: 13, color: '#E6EDF3', marginTop: 6, fontWeight: 600 }}>{shipperName}</div>}
             <div style={r.statusLine}>
               Run #{run.id} | {run.mode.toUpperCase()} | {new Date(run.started_at).toLocaleString()} | Pipeline: {elapsed}s
+              {run.started_by && run.started_by !== 'system' ? ` | By: ${run.started_by}` : ''}
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
@@ -736,7 +744,7 @@ function PipelineReport({ run, onClose }) {
               </div>
             )}
 
-            <div style={r.grid3}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10, marginBottom: 16 }}>
               <div style={r.card}>
                 <div style={r.kpiLabel}>Equipment</div>
                 <div style={r.kpiValue}>{(contract.equipment || 'N/A').replace(/_/g, ' ').toUpperCase()}</div>
@@ -749,6 +757,18 @@ function PipelineReport({ run, onClose }) {
                 <div style={r.kpiLabel}>Distance</div>
                 <div style={r.kpiValue}>{miles > 0 ? miles.toLocaleString() + ' mi' : 'N/A'}</div>
               </div>
+              {commodity && <div style={r.card}>
+                <div style={r.kpiLabel}>Commodity</div>
+                <div style={r.kpiValue}>{commodity}</div>
+              </div>}
+              {pickupDate && <div style={r.card}>
+                <div style={r.kpiLabel}>Pickup Date</div>
+                <div style={r.kpiValue}>{new Date(pickupDate).toLocaleDateString()}</div>
+              </div>}
+              {deliveryDate && <div style={r.card}>
+                <div style={r.kpiLabel}>Delivery Date</div>
+                <div style={r.kpiValue}>{new Date(deliveryDate).toLocaleDateString()}</div>
+              </div>}
             </div>
           </div>
 
@@ -784,6 +804,20 @@ function PipelineReport({ run, onClose }) {
                 <span style={r.kpiLabel}>Rate Per Mile</span>
                 <span style={r.kpiValue}>{rec.rate_per_mile ? `$${rec.rate_per_mile}` : rpm}</span>
               </div>
+              {rate.data_quality && Object.keys(rate.data_quality).length > 0 && (
+                <div style={{ ...r.kpiRow, borderBottom: 'none' }}>
+                  <span style={r.kpiLabel}>Data Sources</span>
+                  <span style={{ fontSize: 11, color: '#8B949E' }}>
+                    {[
+                      rate.data_quality.dat_available && 'DAT',
+                      rate.data_quality.benchmark_available && 'Benchmarks',
+                      rate.data_quality.legacy_samples > 0 && `${rate.data_quality.legacy_samples} legacy`,
+                      rate.data_quality.internal_lane_samples > 0 && `${rate.data_quality.internal_lane_samples} internal`,
+                      rate.data_quality.state_corridor_samples > 0 && `${rate.data_quality.state_corridor_samples} corridor`,
+                    ].filter(Boolean).join(' | ') || 'None'}
+                  </span>
+                </div>
+              )}
               {rate.rationale && rate.rationale.length > 0 && (
                 <div style={{ marginTop: 8, fontSize: 11, color: '#8B949E' }}>
                   {rate.rationale.map((r, i) => <div key={i}>-- {r}</div>)}
@@ -851,7 +885,8 @@ function PipelineReport({ run, onClose }) {
                     <th style={r.th}>MC #</th>
                     <th style={r.th}>Score</th>
                     <th style={r.th}>Reliability</th>
-                    <th style={r.th}>Contact</th>
+                    <th style={r.th}>Phone</th>
+                    <th style={r.th}>Email</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -863,6 +898,7 @@ function PipelineReport({ run, onClose }) {
                       <td style={r.td}><span style={{ color: c.match_score >= 80 ? '#238636' : c.match_score >= 60 ? '#F59E0B' : '#EF4444', fontWeight: 700 }}>{c.match_score}</span></td>
                       <td style={r.td}>{c.reliability}%</td>
                       <td style={r.tdMuted}>{c.phone}</td>
+                      <td style={r.tdMuted}>{c.email || '--'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -884,25 +920,39 @@ function PipelineReport({ run, onClose }) {
               </div>
             </div>
             {pairs.length > 0 ? (
-              <table style={r.table}>
-                <thead><tr><th style={r.th}>Pair Load</th><th style={r.th}>Lane</th><th style={r.th}>Type</th><th style={r.th}>Score</th><th style={r.th}>Deadhead</th><th style={r.th}>Combined RPM</th></tr></thead>
-                <tbody>
-                  {pairs.map((p, i) => (
-                    <tr key={i}>
-                      <td style={{ ...r.td, fontWeight: 600 }}>{p.load_b_ref || p.load_ref || `#${p.load_b_id}`}</td>
-                      <td style={r.tdMuted}>{p.load_b_lane || '--'}</td>
-                      <td style={r.td}>
+              <div>
+                {pairs.map((p, i) => (
+                  <div key={i} style={{ ...r.card, marginBottom: 10, padding: '12px 16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontWeight: 700, color: '#E6EDF3', fontSize: 13 }}>{p.load_b_ref || `#${p.load_b_id}`}</span>
                         <span style={{ ...r.badge, background: p.pair_type === 'backhaul' ? '#23863622' : p.pair_type === 'round_trip' ? '#0EA5E922' : '#F59E0B22', color: p.pair_type === 'backhaul' ? '#238636' : p.pair_type === 'round_trip' ? '#0EA5E9' : '#F59E0B' }}>
-                          {(p.pair_type || 'unknown').toUpperCase()}
+                          {(p.pair_type || '').toUpperCase()}
                         </span>
-                      </td>
-                      <td style={r.td}>{p.match_score || p.score || '--'}</td>
-                      <td style={r.td}>{p.deadhead_miles != null ? `${p.deadhead_miles} mi` : '--'}</td>
-                      <td style={r.td}>{p.combined_rpm ? `$${p.combined_rpm}/mi` : '--'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        <span style={{ fontSize: 11, color: '#8B949E' }}>{p.load_b_lane || ''}</span>
+                      </div>
+                      <span style={{ fontWeight: 700, color: p.match_score >= 80 ? '#238636' : p.match_score >= 60 ? '#F59E0B' : '#EF4444', fontSize: 16, fontFamily: "'Bebas Neue',sans-serif" }}>SCORE: {p.match_score}</span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 8, fontSize: 11 }}>
+                      <div><span style={{ color: '#8B949E' }}>Deadhead: </span><span style={{ color: '#E6EDF3', fontWeight: 600 }}>{p.deadhead_miles} mi</span></div>
+                      <div><span style={{ color: '#8B949E' }}>Total Miles: </span><span style={{ color: '#E6EDF3', fontWeight: 600 }}>{p.total_miles?.toLocaleString() || '--'}</span></div>
+                      <div><span style={{ color: '#8B949E' }}>Combined RPM: </span><span style={{ color: '#E6EDF3', fontWeight: 600 }}>${p.combined_rpm || '--'}/mi</span></div>
+                      <div><span style={{ color: '#8B949E' }}>Combined Rev: </span><span style={{ color: '#0EA5E9', fontWeight: 600 }}>${p.combined_revenue?.toLocaleString() || '--'}</span></div>
+                      <div><span style={{ color: '#8B949E' }}>Utilization: </span><span style={{ color: p.utilization_improvement_pct > 5 ? '#238636' : '#E6EDF3', fontWeight: 600 }}>+{p.utilization_improvement_pct || 0}%</span></div>
+                      {p.load_b_equipment && <div><span style={{ color: '#8B949E' }}>Equipment: </span><span style={{ color: '#E6EDF3' }}>{p.load_b_equipment.replace(/_/g,' ')}</span></div>}
+                      {p.load_b_pickup && <div><span style={{ color: '#8B949E' }}>Pickup: </span><span style={{ color: '#E6EDF3' }}>{new Date(p.load_b_pickup).toLocaleDateString()}</span></div>}
+                    </div>
+                    {p.scores && (
+                      <div style={{ display: 'flex', gap: 12, marginTop: 8, paddingTop: 8, borderTop: '1px solid #21262D', fontSize: 10, color: '#484F58' }}>
+                        <span>Route: {p.scores.route}</span>
+                        <span>Timing: {p.scores.timing}</span>
+                        <span>Equipment: {p.scores.equipment}</span>
+                        <span>Revenue: {p.scores.revenue}</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             ) : (
               <div style={{ ...r.card, color: '#484F58', fontSize: 12, textAlign: 'center' }}>No compatible load pairs found for this lane. Deadhead optimization not applicable.</div>
             )}
@@ -927,13 +977,14 @@ function PipelineReport({ run, onClose }) {
             </div>
             {(outreach.carriers || []).length > 0 && (
               <table style={r.table}>
-                <thead><tr><th style={r.th}>Carrier</th><th style={r.th}>Score</th><th style={r.th}>Phone</th><th style={r.th}>Status</th></tr></thead>
+                <thead><tr><th style={r.th}>Carrier</th><th style={r.th}>Score</th><th style={r.th}>Phone</th><th style={r.th}>Email</th><th style={r.th}>Status</th></tr></thead>
                 <tbody>
                   {(outreach.carriers || []).map((c, i) => (
                     <tr key={i}>
                       <td style={r.td}>{c.carrier_name}</td>
                       <td style={r.td}>{c.match_score}</td>
                       <td style={r.tdMuted}>{c.phone}</td>
+                      <td style={r.tdMuted}>{c.email || '--'}</td>
                       <td style={r.td}>
                         <span style={{ ...r.badge, background: c.outreach_status === 'accepted' ? '#23863622' : c.outreach_status === 'pending' ? '#F59E0B22' : '#21262D', color: c.outreach_status === 'accepted' ? '#238636' : c.outreach_status === 'pending' ? '#F59E0B' : '#8B949E' }}>
                           {(c.outreach_status || 'pending').toUpperCase()}

@@ -121,12 +121,16 @@ async function exec_contract_received(run, config) {
   const result = {
     load_id: run.load_id,
     load_ref: load?.load_ref || run.load_ref || null,
-    origin: load?.origin || load?.origin_city ? `${load.origin_city}, ${load.origin_state}` : null,
-    destination: load?.destination || load?.destination_city ? `${load.destination_city}, ${load.destination_state}` : null,
+    origin: load?.origin || (load?.origin_city ? `${load.origin_city}, ${load.origin_state}` : null),
+    destination: load?.destination || (load?.destination_city ? `${load.destination_city}, ${load.destination_state}` : null),
     equipment: load?.equipment_type || 'dry_van',
     weight: load?.weight_lbs || null,
     miles: load?.miles || null,
     shipper_rate: load?.sell_rate || load?.shipper_rate || null,
+    shipper_name: load?.shipper_name || null,
+    commodity: load?.commodity || null,
+    pickup_date: load?.pickup_date || null,
+    delivery_date: load?.delivery_date || null,
     recorded_at: new Date().toISOString(),
   };
 
