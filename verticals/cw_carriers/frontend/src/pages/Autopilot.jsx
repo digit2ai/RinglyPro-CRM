@@ -660,6 +660,55 @@ function PipelineReport({ run, onClose }) {
               </div>
               <div style={r.routeNodeEnd}>{contract.destination || 'Destination'}</div>
             </div>
+
+            {/* Google Maps -- Primary Route */}
+            {contract.origin && contract.destination && (
+              <div style={{ borderRadius: 8, overflow: 'hidden', border: '1px solid #21262D', marginBottom: 16 }}>
+                <iframe
+                  title="Route Map"
+                  width="100%"
+                  height="300"
+                  frameBorder="0"
+                  style={{ border: 0, display: 'block' }}
+                  referrerPolicy="no-referrer-when-downgrade"
+                  src={`https://www.google.com/maps/embed/v1/directions?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&origin=${encodeURIComponent(contract.origin)}&destination=${encodeURIComponent(contract.destination)}&mode=driving`}
+                  loading="lazy"
+                />
+              </div>
+            )}
+
+            {/* Google Maps -- Backhaul / Multi-stop Route */}
+            {pairs.length > 0 && pairs[0].load_b_lane && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 11, color: '#8B949E', marginBottom: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  Combined Route with {pairs[0].pair_type?.toUpperCase()} Pair
+                </div>
+                <div style={{ borderRadius: 8, overflow: 'hidden', border: '1px solid #238636' }}>
+                  {(() => {
+                    const pairLane = pairs[0].load_b_lane || '';
+                    const pairParts = pairLane.split('\u2192').map(s => s.trim());
+                    const waypoint = pairParts[0] || contract.destination;
+                    const finalDest = pairParts[1] || '';
+                    return (
+                      <iframe
+                        title="Combined Route Map"
+                        width="100%"
+                        height="300"
+                        frameBorder="0"
+                        style={{ border: 0, display: 'block' }}
+                        referrerPolicy="no-referrer-when-downgrade"
+                        src={`https://www.google.com/maps/embed/v1/directions?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&origin=${encodeURIComponent(contract.origin)}&destination=${encodeURIComponent(finalDest)}&waypoints=${encodeURIComponent(contract.destination)}${waypoint !== contract.destination ? '|' + encodeURIComponent(waypoint) : ''}&mode=driving`}
+                        loading="lazy"
+                      />
+                    );
+                  })()}
+                </div>
+                <div style={{ fontSize: 10, color: '#8B949E', marginTop: 4, textAlign: 'center' }}>
+                  {contract.origin} {'->'} {contract.destination} {'->'} {pairs[0].load_b_lane?.split('\u2192')[1]?.trim() || '?'} | {pairs[0].pair_type?.toUpperCase()} | {pairs[0].deadhead_miles || 0}mi deadhead
+                </div>
+              </div>
+            )}
+
             <div style={r.grid3}>
               <div style={r.card}>
                 <div style={r.kpiLabel}>Equipment</div>
