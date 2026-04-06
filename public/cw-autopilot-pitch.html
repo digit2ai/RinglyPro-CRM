@@ -13,7 +13,7 @@
   /* Header */
   .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
   .logo-area { display: flex; align-items: center; gap: 16px; }
-  .logo-mark { width: 48px; height: 48px; background: linear-gradient(135deg, #0EA5E9, #238636); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: #fff; }
+  .logo-img { width: 52px; height: 52px; border-radius: 10px; object-fit: cover; }
   .logo-text { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 3px; color: #E6EDF3; }
   .logo-sub { font-size: 11px; color: #8B949E; letter-spacing: 1px; text-transform: uppercase; }
   .client-name { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: #0EA5E9; letter-spacing: 2px; text-align: right; }
@@ -38,7 +38,7 @@
   .kpi { background: #161B22; border: 1px solid #21262D; border-radius: 8px; padding: 16px 14px; text-align: center; }
   .kpi-value { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 1px; }
   .kpi-label { font-size: 9px; color: #8B949E; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.8px; }
-  .green { color: #238636; } .blue { color: #0EA5E9; } .amber { color: #F59E0B; } .purple { color: #8957E5; } .red { color: #EF4444; }
+  .green { color: #238636; } .blue { color: #0EA5E9; } .amber { color: #F59E0B; } .purple { color: #8957E5; }
 
   /* Cards */
   .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
@@ -52,13 +52,31 @@
   .feature-text { color: #C9D1D9; }
   .feature-text strong { color: #E6EDF3; }
 
-  /* Uber comparison table */
+  /* Comparison table */
   .compare-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 20px; }
   .compare-table th { text-align: left; padding: 10px 12px; font-size: 10px; color: #8B949E; text-transform: uppercase; letter-spacing: 0.8px; border-bottom: 2px solid #0EA5E9; font-weight: 600; }
   .compare-table td { padding: 8px 12px; border-bottom: 1px solid #21262D; color: #C9D1D9; }
   .compare-table td:first-child { color: #8B949E; font-weight: 600; }
   .compare-table td:nth-child(2) { color: #484F58; }
   .compare-table td:nth-child(3) { color: #E6EDF3; font-weight: 600; }
+
+  /* Workflow diagram */
+  .workflow { margin: 24px 0; }
+  .wf-row { display: flex; align-items: stretch; gap: 0; margin-bottom: 2px; }
+  .wf-actor { width: 100px; padding: 10px 8px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border-radius: 6px 0 0 6px; text-align: center; }
+  .wf-actor.shipper { background: #8957E522; color: #8957E5; border: 1px solid #8957E533; }
+  .wf-actor.rachel { background: #0EA5E911; color: #0EA5E9; border: 1px solid #0EA5E933; }
+  .wf-actor.carrier { background: #F59E0B11; color: #F59E0B; border: 1px solid #F59E0B33; }
+  .wf-actor.system { background: #23863611; color: #238636; border: 1px solid #23863633; }
+  .wf-steps { display: flex; flex: 1; gap: 2px; }
+  .wf-step { flex: 1; padding: 10px 8px; font-size: 10px; color: #C9D1D9; line-height: 1.4; display: flex; align-items: center; justify-content: center; text-align: center; }
+  .wf-step.active { background: #161B22; border: 1px solid #21262D; }
+  .wf-step.highlight { background: #0EA5E911; border: 1px solid #0EA5E933; color: #E6EDF3; font-weight: 600; }
+  .wf-step.empty { background: transparent; border: 1px solid #161B22; }
+  .wf-header .wf-step { font-size: 9px; color: #8B949E; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; background: transparent; border: none; padding: 6px 8px; }
+  .wf-arrow { display: flex; align-items: center; justify-content: center; padding: 4px 0; }
+  .wf-arrow-line { height: 1px; flex: 1; background: #21262D; margin: 0 100px; position: relative; }
+  .wf-arrow-label { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); font-size: 8px; color: #484F58; white-space: nowrap; background: #0D1117; padding: 0 6px; }
 
   /* Rachel conversation */
   .convo { margin: 16px 0; }
@@ -67,12 +85,10 @@
   .convo-label.rachel { color: #0EA5E9; }
   .convo-label.carrier { color: #F59E0B; }
   .convo-label.system { color: #238636; }
-  .convo-label.shipper { color: #8957E5; }
   .convo-bubble { font-size: 12px; color: #C9D1D9; line-height: 1.5; padding: 6px 12px; border-radius: 8px; max-width: 100%; }
   .convo-bubble.rachel { background: #0EA5E911; border: 1px solid #0EA5E933; }
   .convo-bubble.carrier { background: #F59E0B08; border: 1px solid #F59E0B22; }
   .convo-bubble.system { background: #23863611; border: 1px solid #23863633; font-size: 10px; color: #238636; font-style: italic; }
-  .convo-bubble.shipper { background: #8957E511; border: 1px solid #8957E533; }
 
   /* Demo box */
   .demo-box { background: linear-gradient(135deg, #161B22, #1a2332); border: 1px solid #0EA5E9; border-radius: 10px; padding: 22px 26px; margin-bottom: 24px; }
@@ -91,7 +107,6 @@
 
   /* CTA */
   .cta { text-align: center; padding: 20px 0; }
-  .cta-text { font-size: 14px; color: #8B949E; margin-bottom: 12px; }
   .cta-link { display: inline-block; background: #0EA5E9; color: #fff; padding: 12px 32px; border-radius: 8px; font-weight: 700; font-size: 14px; text-decoration: none; letter-spacing: 0.5px; }
   .cta-link:hover { background: #0284C7; }
   .cta-url { font-size: 11px; color: #484F58; margin-top: 8px; font-family: monospace; }
@@ -117,7 +132,7 @@
   <!-- HEADER -->
   <div class="header">
     <div class="logo-area">
-      <div class="logo-mark">FM</div>
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69b02d62034886f7c9e996d9.png" alt="FreightMind" class="logo-img">
       <div>
         <div class="logo-text">FREIGHTMIND AUTOPILOT</div>
         <div class="logo-sub">Powered by Digit2AI & RinglyPro</div>
@@ -132,25 +147,25 @@
   <!-- SECTION 1: THE CONCEPT -->
   <div class="section">
     <div class="section-num">01 -- THE CONCEPT</div>
-    <div class="section-title"><span>UBER FOR FREIGHT</span> BROKERAGE</div>
-    <div class="section-sub">Uber connects riders with drivers via an app. CW Carriers connects shippers with carriers -- automated by AI.</div>
+    <div class="section-title">THE <span>ON-DEMAND MARKETPLACE</span> FOR FREIGHT</div>
+    <div class="section-sub">Just like ride-sharing apps revolutionized transportation, FreightMind transforms freight brokerage into an automated, intelligent marketplace -- connecting shippers and carriers in real-time through AI.</div>
 
     <table class="compare-table">
       <thead>
-        <tr><th>Function</th><th>Uber</th><th>CW Carriers + FreightMind</th></tr>
+        <tr><th>Function</th><th>Traditional Brokerage</th><th>CW Carriers + FreightMind</th></tr>
       </thead>
       <tbody>
-        <tr><td>Request</td><td>Rider opens app</td><td>Shipper sends load tender</td></tr>
-        <tr><td>Matching</td><td>Algorithm finds nearest driver</td><td>AI scores 50+ carriers by lane, safety, reliability</td></tr>
-        <tr><td>Booking</td><td>Driver accepts in-app</td><td>Rachel CALLS carriers, negotiates rate, books</td></tr>
-        <tr><td>Pricing</td><td>Surge pricing algorithm</td><td>Rate Intelligence (market data + lane history)</td></tr>
-        <tr><td>Tracking</td><td>GPS in real-time</td><td>Rachel check calls every 4 hours</td></tr>
-        <tr><td>Payment</td><td>Auto-charge + receipt</td><td>Auto-invoice shipper + pay carrier on delivery</td></tr>
-        <tr><td>Rating</td><td>Star rating system</td><td>Carrier reliability scoring + FMCSA compliance</td></tr>
-        <tr><td>Optimization</td><td>Route pooling</td><td>Load-to-load matching (backhaul, chain)</td></tr>
+        <tr><td>Load Request</td><td>Phone calls, emails, manual entry</td><td>Shipper sends tender, system ingests automatically</td></tr>
+        <tr><td>Carrier Matching</td><td>Broker calls contacts from memory</td><td>AI scores 50+ carriers by lane, safety, reliability</td></tr>
+        <tr><td>Booking</td><td>Hours of phone tag to confirm</td><td>Rachel calls carriers, negotiates rate, books in minutes</td></tr>
+        <tr><td>Pricing</td><td>Gut feel, outdated spreadsheets</td><td>Real-time Rate Intelligence (market data + lane history)</td></tr>
+        <tr><td>Tracking</td><td>Missed check calls, angry shippers</td><td>Automated check calls every 4 hours, shipper notified</td></tr>
+        <tr><td>Payment</td><td>Manual invoicing, 3-7 day lag</td><td>Auto-invoice on delivery, same-day processing</td></tr>
+        <tr><td>Quality</td><td>No data on carrier performance</td><td>Reliability scoring + FMCSA compliance monitoring</td></tr>
+        <tr><td>Optimization</td><td>Deadhead miles ignored</td><td>Load-to-load matching (backhaul, chain, round-trip)</td></tr>
       </tbody>
     </table>
-    <div style="font-size: 12px; color: #8B949E; text-align: center; margin-top: 8px;">The difference: Uber's drivers use an app. Truckers use phones. Rachel speaks their language.</div>
+    <div style="font-size: 12px; color: #8B949E; text-align: center; margin-top: 8px;">The freight industry runs on phone calls. Rachel speaks that language -- so your brokers don't have to.</div>
   </div>
 
   <div class="divider"></div>
@@ -159,7 +174,7 @@
   <div class="section">
     <div class="section-num">02 -- THE PIPELINE</div>
     <div class="section-title">CONTRACT TO INVOICE IN <span>UNDER 1 SECOND</span></div>
-    <div class="section-sub">8-stage automated pipeline. Manual or Autopilot mode -- same APIs, broker chooses.</div>
+    <div class="section-sub">8-stage automated pipeline. Manual or Autopilot mode -- same tools, broker chooses when to intervene.</div>
 
     <div class="pipeline">
       <div class="pipe-step"><div class="pipe-num">1</div><div class="pipe-label">Contract</div></div>
@@ -201,6 +216,98 @@
         <div class="feature"><div class="feature-dot" style="background:#0EA5E9"></div><div class="feature-text"><strong>12 loads/broker/day -> 50+</strong><br>Same team handles 3-4x volume.</div></div>
         <div class="feature"><div class="feature-dot" style="background:#0EA5E9"></div><div class="feature-text"><strong>Backhaul capture: 5% -> 25%+</strong><br>$200 savings per match = $2K/day recovered.</div></div>
         <div class="feature"><div class="feature-dot" style="background:#0EA5E9"></div><div class="feature-text"><strong>$2M-3M/year additional margin</strong><br>From rate intelligence + backhaul optimization.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 2.5: WORKFLOW DIAGRAM -->
+  <div class="section">
+    <div class="section-num">02b -- THE WORKFLOW</div>
+    <div class="section-title">HOW <span>EVERY LOAD</span> FLOWS THROUGH THE SYSTEM</div>
+    <div class="section-sub">Four actors, one automated flow. The shipper requests, Rachel executes, the carrier delivers, the system records everything.</div>
+
+    <!-- Visual workflow diagram -->
+    <div style="background: #161B22; border: 1px solid #21262D; border-radius: 10px; padding: 24px; overflow-x: auto;">
+
+      <!-- Column headers -->
+      <div style="display: grid; grid-template-columns: 100px 1fr; gap: 0; margin-bottom: 4px;">
+        <div></div>
+        <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px;">
+          <div style="text-align: center; font-size: 8px; color: #484F58; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px;">Contract</div>
+          <div style="text-align: center; font-size: 8px; color: #484F58; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px;">Rate Intel</div>
+          <div style="text-align: center; font-size: 8px; color: #484F58; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px;">Carrier Match</div>
+          <div style="text-align: center; font-size: 8px; color: #484F58; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px;">Load Match</div>
+          <div style="text-align: center; font-size: 8px; color: #484F58; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px;">Outreach</div>
+          <div style="text-align: center; font-size: 8px; color: #484F58; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px;">Rate Con</div>
+          <div style="text-align: center; font-size: 8px; color: #484F58; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px;">Tracking</div>
+          <div style="text-align: center; font-size: 8px; color: #484F58; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px;">Billing</div>
+        </div>
+      </div>
+
+      <!-- SHIPPER ROW -->
+      <div style="display: grid; grid-template-columns: 100px 1fr; gap: 0; margin-bottom: 2px;">
+        <div style="background: #8957E522; border: 1px solid #8957E533; border-radius: 6px 0 0 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #8957E5; text-transform: uppercase; letter-spacing: 0.5px;">Shipper</div>
+        <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px;">
+          <div style="background: #8957E522; border: 1px solid #8957E533; padding: 10px 6px; font-size: 10px; color: #E6EDF3; text-align: center; font-weight: 600;">Sends load tender</div>
+          <div style="padding: 10px 6px;"></div>
+          <div style="padding: 10px 6px;"></div>
+          <div style="padding: 10px 6px;"></div>
+          <div style="padding: 10px 6px;"></div>
+          <div style="background: #8957E511; border: 1px solid #8957E522; padding: 10px 6px; font-size: 9px; color: #8B949E; text-align: center;">Gets "load covered" notification</div>
+          <div style="background: #8957E511; border: 1px solid #8957E522; padding: 10px 6px; font-size: 9px; color: #8B949E; text-align: center;">Receives ETA updates</div>
+          <div style="background: #8957E511; border: 1px solid #8957E522; padding: 10px 6px; font-size: 9px; color: #8B949E; text-align: center;">Gets invoice</div>
+        </div>
+      </div>
+
+      <!-- RACHEL ROW -->
+      <div style="display: grid; grid-template-columns: 100px 1fr; gap: 0; margin-bottom: 2px;">
+        <div style="background: #0EA5E911; border: 1px solid #0EA5E933; border-radius: 6px 0 0 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #0EA5E9; text-transform: uppercase; letter-spacing: 0.5px;">Rachel AI</div>
+        <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px;">
+          <div style="background: #0EA5E911; border: 1px solid #0EA5E933; padding: 10px 6px; font-size: 9px; color: #C9D1D9; text-align: center;">Ingests load details</div>
+          <div style="background: #0EA5E911; border: 1px solid #0EA5E933; padding: 10px 6px; font-size: 9px; color: #C9D1D9; text-align: center;">Pulls market rates, sets buy/sell</div>
+          <div style="background: #0EA5E911; border: 1px solid #0EA5E933; padding: 10px 6px; font-size: 9px; color: #C9D1D9; text-align: center;">Scores & ranks carriers</div>
+          <div style="background: #0EA5E911; border: 1px solid #0EA5E933; padding: 10px 6px; font-size: 9px; color: #C9D1D9; text-align: center;">Finds backhaul & chain pairs</div>
+          <div style="background: #0EA5E922; border: 1px solid #0EA5E944; padding: 10px 6px; font-size: 10px; color: #E6EDF3; text-align: center; font-weight: 600;">CALLS carriers, negotiates, books</div>
+          <div style="background: #0EA5E911; border: 1px solid #0EA5E933; padding: 10px 6px; font-size: 9px; color: #C9D1D9; text-align: center;">Generates rate con, updates status</div>
+          <div style="background: #0EA5E922; border: 1px solid #0EA5E944; padding: 10px 6px; font-size: 10px; color: #E6EDF3; text-align: center; font-weight: 600;">CALLS driver for check-ins</div>
+          <div style="background: #0EA5E911; border: 1px solid #0EA5E933; padding: 10px 6px; font-size: 9px; color: #C9D1D9; text-align: center;">Creates invoices, calculates P&L</div>
+        </div>
+      </div>
+
+      <!-- CARRIER ROW -->
+      <div style="display: grid; grid-template-columns: 100px 1fr; gap: 0; margin-bottom: 2px;">
+        <div style="background: #F59E0B11; border: 1px solid #F59E0B33; border-radius: 6px 0 0 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #F59E0B; text-transform: uppercase; letter-spacing: 0.5px;">Carrier</div>
+        <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px;">
+          <div style="padding: 10px 6px;"></div>
+          <div style="padding: 10px 6px;"></div>
+          <div style="padding: 10px 6px;"></div>
+          <div style="padding: 10px 6px;"></div>
+          <div style="background: #F59E0B11; border: 1px solid #F59E0B22; padding: 10px 6px; font-size: 10px; color: #E6EDF3; text-align: center; font-weight: 600;">Answers call, accepts load</div>
+          <div style="background: #F59E0B11; border: 1px solid #F59E0B22; padding: 10px 6px; font-size: 9px; color: #8B949E; text-align: center;">Provides driver & truck info</div>
+          <div style="background: #F59E0B11; border: 1px solid #F59E0B22; padding: 10px 6px; font-size: 9px; color: #8B949E; text-align: center;">Reports location & ETA</div>
+          <div style="background: #F59E0B11; border: 1px solid #F59E0B22; padding: 10px 6px; font-size: 9px; color: #8B949E; text-align: center;">Confirms delivery, gets paid</div>
+        </div>
+      </div>
+
+      <!-- SYSTEM ROW -->
+      <div style="display: grid; grid-template-columns: 100px 1fr; gap: 0;">
+        <div style="background: #23863611; border: 1px solid #23863633; border-radius: 6px 0 0 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #238636; text-transform: uppercase; letter-spacing: 0.5px;">System</div>
+        <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px;">
+          <div style="background: #23863611; border: 1px solid #23863622; padding: 10px 6px; font-size: 8px; color: #238636; text-align: center;">Logs load, starts pipeline</div>
+          <div style="background: #23863611; border: 1px solid #23863622; padding: 10px 6px; font-size: 8px; color: #238636; text-align: center;">Stores rate analysis</div>
+          <div style="background: #23863611; border: 1px solid #23863622; padding: 10px 6px; font-size: 8px; color: #238636; text-align: center;">Stores carrier scores</div>
+          <div style="background: #23863611; border: 1px solid #23863622; padding: 10px 6px; font-size: 8px; color: #238636; text-align: center;">Stores pair matches</div>
+          <div style="background: #23863611; border: 1px solid #23863622; padding: 10px 6px; font-size: 8px; color: #238636; text-align: center;">Logs call, updates CRM</div>
+          <div style="background: #23863611; border: 1px solid #23863622; padding: 10px 6px; font-size: 8px; color: #238636; text-align: center;">Status: COVERED</div>
+          <div style="background: #23863611; border: 1px solid #23863622; padding: 10px 6px; font-size: 8px; color: #238636; text-align: center;">Logs check call, notifies shipper</div>
+          <div style="background: #23863611; border: 1px solid #23863622; padding: 10px 6px; font-size: 8px; color: #238636; text-align: center;">DELIVERED, invoiced, P&L</div>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 12px; font-size: 10px; color: #484F58;">
+        Human broker only intervenes when autopilot pauses: margin too low, no carriers available, or rate above market threshold.
       </div>
     </div>
   </div>
@@ -256,7 +363,7 @@
       </div>
     </div>
 
-    <!-- Rachel check call example -->
+    <!-- Rachel check call + delivery examples -->
     <div class="two-col" style="margin-top: 16px;">
       <div class="card" style="border-color: #238636;">
         <div class="card-title" style="color: #238636;">RACHEL CHECK CALL -- IN TRANSIT</div>
