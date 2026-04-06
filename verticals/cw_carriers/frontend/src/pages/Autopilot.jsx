@@ -790,36 +790,61 @@ function PipelineReport({ run, onClose }) {
             <div style={r.card}>
               <div style={r.kpiRow}>
                 <span style={r.kpiLabel}>Pricing Method</span>
-                <span style={r.kpiValue}>{rate.pricing_method || 'N/A'}</span>
+                <span style={r.kpiValue}>{(rate.pricing_method || 'N/A').replace(/_/g, ' ')}</span>
               </div>
               <div style={r.kpiRow}>
                 <span style={r.kpiLabel}>Confidence</span>
                 <span style={{ ...r.kpiValue, color: rate.confidence === 'high' ? '#238636' : rate.confidence === 'medium' ? '#F59E0B' : '#EF4444' }}>{(rate.confidence || 'N/A').toUpperCase()}</span>
               </div>
               <div style={r.kpiRow}>
-                <span style={r.kpiLabel}>DAT Market Rate</span>
-                <span style={r.kpiValue}>{rate.dat ? fmt(rate.dat) : 'Not Available'}</span>
-              </div>
-              <div style={r.kpiRow}>
                 <span style={r.kpiLabel}>Rate Per Mile</span>
-                <span style={r.kpiValue}>{rec.rate_per_mile ? `$${rec.rate_per_mile}` : rpm}</span>
+                <span style={r.kpiValue}>{rec.rate_per_mile ? `$${rec.rate_per_mile}/mi` : `$${rpm}/mi`}</span>
               </div>
-              {rate.data_quality && Object.keys(rate.data_quality).length > 0 && (
+
+              {/* Market Reference -- shows DAT when available, internal data when not */}
+              {rate.dat ? (
+                <div style={r.kpiRow}>
+                  <span style={r.kpiLabel}>DAT Market Rate</span>
+                  <span style={{ ...r.kpiValue, color: '#0EA5E9' }}>{fmt(rate.dat.avg_rate || rate.dat)}</span>
+                </div>
+              ) : (
+                <>
+                  {rate.market_reference?.source && (
+                    <div style={r.kpiRow}>
+                      <span style={r.kpiLabel}>Market Reference</span>
+                      <span style={r.kpiValue}>{rate.market_reference.source} ({rate.market_reference.samples} samples)</span>
+                    </div>
+                  )}
+                  {rate.confidence_band?.buy_rate_low && (
+                    <div style={r.kpiRow}>
+                      <span style={r.kpiLabel}>Market Rate Range</span>
+                      <span style={r.kpiValue}>{fmt(rate.confidence_band.buy_rate_low)} - {fmt(rate.confidence_band.buy_rate_high)}</span>
+                    </div>
+                  )}
+                  <div style={r.kpiRow}>
+                    <span style={r.kpiLabel}>DAT RateView</span>
+                    <span style={{ fontSize: 11, color: '#484F58', fontStyle: 'italic' }}>Pending -- API integration ready, awaiting credentials</span>
+                  </div>
+                </>
+              )}
+
+              {/* Data sources */}
+              {rate.data_quality && (
                 <div style={{ ...r.kpiRow, borderBottom: 'none' }}>
                   <span style={r.kpiLabel}>Data Sources</span>
                   <span style={{ fontSize: 11, color: '#8B949E' }}>
                     {[
-                      rate.data_quality.dat_available && 'DAT',
-                      rate.data_quality.benchmark_available && 'Benchmarks',
+                      rate.data_quality.dat_available && 'DAT RateView',
+                      rate.data_quality.benchmark_available && 'Rate Benchmarks',
+                      rate.data_quality.internal_lane_samples > 0 && `${rate.data_quality.internal_lane_samples} lane match${rate.data_quality.internal_lane_samples > 1 ? 'es' : ''}`,
+                      rate.data_quality.state_corridor_samples > 0 && `${rate.data_quality.state_corridor_samples} corridor loads`,
                       rate.data_quality.legacy_samples > 0 && `${rate.data_quality.legacy_samples} legacy`,
-                      rate.data_quality.internal_lane_samples > 0 && `${rate.data_quality.internal_lane_samples} internal`,
-                      rate.data_quality.state_corridor_samples > 0 && `${rate.data_quality.state_corridor_samples} corridor`,
-                    ].filter(Boolean).join(' | ') || 'None'}
+                    ].filter(Boolean).join(' | ') || 'Contract rates only'}
                   </span>
                 </div>
               )}
               {rate.rationale && rate.rationale.length > 0 && (
-                <div style={{ marginTop: 8, fontSize: 11, color: '#8B949E' }}>
+                <div style={{ marginTop: 8, fontSize: 11, color: '#8B949E', borderTop: '1px solid #21262D', paddingTop: 8 }}>
                   {rate.rationale.map((r, i) => <div key={i}>-- {r}</div>)}
                 </div>
               )}

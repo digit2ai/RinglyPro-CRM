@@ -180,12 +180,27 @@ async function exec_rate_analysis(run, config) {
     pricing_service_buy: rec.suggested_buy_rate || null,
   } : rec;
 
+  // Build market reference from internal data when DAT is not available
+  const confBand = rateData?.confidence_band || {};
+  const dq = rateData?.data_quality || {};
+  const marketRef = {
+    source: rateData?.dat ? 'DAT RateView' : (dq.state_corridor_samples > 0 ? 'Internal Corridor Data' : (dq.legacy_samples > 0 ? 'Legacy Load History' : null)),
+    samples: (dq.internal_lane_samples || 0) + (dq.state_corridor_samples || 0) + (dq.legacy_samples || 0),
+    avg_rate: confBand.buy_rate_low && confBand.buy_rate_high ? Math.round(((confBand.buy_rate_low + confBand.buy_rate_high) / 2) * 100) / 100 : null,
+    rate_range_low: confBand.buy_rate_low || null,
+    rate_range_high: confBand.buy_rate_high || null,
+    corridor: dq.state_corridor_samples > 0 ? `${dq.state_corridor_samples} loads in corridor` : null,
+    lane: dq.internal_lane_samples > 0 ? `${dq.internal_lane_samples} exact lane matches` : null,
+  };
+
   const result = {
     recommendation: finalRec,
     confidence: loadRates ? (loadRates.buy_rate > 0 ? 'high' : 'medium') : (rateData?.confidence_band?.confidence || 'low'),
     pricing_method: loadRates ? 'load_contract_rates' : (rateData?.pricing_method || 'unknown'),
     dat: rateData?.dat || null,
-    data_quality: rateData?.data_quality || {},
+    market_reference: marketRef,
+    confidence_band: confBand,
+    data_quality: dq,
     rationale: loadRates
       ? [`Contract rates: Sell $${loadRates.sell_rate.toLocaleString()} / Buy $${loadRates.buy_rate.toLocaleString()}`, ...(rateData?.rationale || [])]
       : (rateData?.rationale || []),
