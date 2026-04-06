@@ -1,0 +1,6 @@
+company_name,contact_name,email,phone,address_city,address_state,address_zip,payment_terms,credit_limit,avg_loads_per_month,primary_equipment,primary_lanes
+Publix Super Markets,Sarah Mitchell,sarah.mitchell@publix.com,+17865551234,Miami,FL,33101,Net 30,500000,120,"dry_van,reefer","FL->GA,FL->NC,FL->TN"
+Home Depot Distribution,Mark Williams,mark.williams@homedepot.com,+14045552345,Atlanta,GA,30301,Net 30,750000,85,"dry_van,flatbed","GA->FL,GA->NC,GA->SC"
+Georgia-Pacific LLC,Jennifer Davis,jennifer.davis@gapac.com,+19125553456,Savannah,GA,31401,Net 45,300000,60,"dry_van","GA->NC,GA->VA,GA->PA"
+Sysco Foods Southeast,Robert Garcia,robert.garcia@sysco.com,+18135554567,Tampa,FL,33601,Net 30,600000,95,"reefer","FL->TN,FL->GA,FL->AL"
+Amazon Fulfillment MCO,Operations Desk,ops.mco@amazon.com,+14075555678,Orlando,FL,32801,Net 15,1000000,200,"dry_van","FL->TX,FL->CA,FL->IL"

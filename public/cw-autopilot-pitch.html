@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FreightMind Autopilot -- CW Carriers</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: #0D1117; color: #E6EDF3; overflow-x: hidden; }
+
+  .page { max-width: 1200px; margin: 0 auto; padding: 40px 48px; min-height: 100vh; }
+
+  /* Header */
+  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 36px; }
+  .logo-area { display: flex; align-items: center; gap: 16px; }
+  .logo-mark { width: 48px; height: 48px; background: linear-gradient(135deg, #0EA5E9, #238636); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: #fff; }
+  .logo-text { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 3px; color: #E6EDF3; }
+  .logo-sub { font-size: 11px; color: #8B949E; letter-spacing: 1px; text-transform: uppercase; }
+  .client-name { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: #0EA5E9; letter-spacing: 2px; text-align: right; }
+  .client-sub { font-size: 11px; color: #8B949E; text-align: right; margin-top: 2px; }
+
+  /* Title */
+  .title-section { text-align: center; margin-bottom: 40px; }
+  .main-title { font-family: 'Bebas Neue', sans-serif; font-size: 52px; letter-spacing: 4px; line-height: 1.1; }
+  .main-title span { color: #0EA5E9; }
+  .subtitle { font-size: 16px; color: #8B949E; margin-top: 8px; font-weight: 300; }
+
+  /* Pipeline visual */
+  .pipeline { display: flex; align-items: center; justify-content: center; gap: 0; margin: 32px 0; padding: 20px 0; flex-wrap: nowrap; }
+  .pipe-step { text-align: center; flex: 1; min-width: 0; }
+  .pipe-num { width: 36px; height: 36px; border-radius: 50%; background: #0EA5E9; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; margin: 0 auto 6px; }
+  .pipe-label { font-size: 10px; color: #E6EDF3; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .pipe-arrow { color: #30363D; font-size: 18px; margin: 0 -4px; flex-shrink: 0; padding-bottom: 18px; }
+
+  /* KPI grid */
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 32px; }
+  .kpi { background: #161B22; border: 1px solid #21262D; border-radius: 8px; padding: 18px 16px; text-align: center; }
+  .kpi-value { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 1px; }
+  .kpi-label { font-size: 10px; color: #8B949E; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.8px; }
+  .green { color: #238636; }
+  .blue { color: #0EA5E9; }
+  .amber { color: #F59E0B; }
+  .purple { color: #8957E5; }
+
+  /* Two columns */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px; }
+  .col-card { background: #161B22; border: 1px solid #21262D; border-radius: 10px; padding: 20px 24px; }
+  .col-title { font-family: 'Bebas Neue', sans-serif; font-size: 16px; color: #0EA5E9; letter-spacing: 1.5px; margin-bottom: 14px; }
+  .feature { display: flex; gap: 10px; margin-bottom: 10px; font-size: 13px; line-height: 1.5; }
+  .feature-dot { width: 6px; height: 6px; border-radius: 50%; background: #238636; margin-top: 6px; flex-shrink: 0; }
+  .feature-text { color: #C9D1D9; }
+  .feature-text strong { color: #E6EDF3; }
+
+  /* Demo box */
+  .demo-box { background: linear-gradient(135deg, #161B22, #1a2332); border: 1px solid #0EA5E9; border-radius: 10px; padding: 24px 28px; margin-bottom: 32px; }
+  .demo-title { font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: #0EA5E9; letter-spacing: 1.5px; margin-bottom: 12px; }
+  .demo-route { display: flex; align-items: center; gap: 0; margin-bottom: 14px; }
+  .demo-node { background: #0EA5E9; color: #fff; padding: 6px 14px; border-radius: 16px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .demo-line { flex: 1; height: 2px; background: linear-gradient(90deg, #0EA5E9, #238636); }
+  .demo-node-end { background: #238636; color: #fff; padding: 6px 14px; border-radius: 16px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .demo-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  .demo-stat { text-align: center; }
+  .demo-stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: #E6EDF3; }
+  .demo-stat-label { font-size: 9px; color: #8B949E; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+
+  /* CTA */
+  .cta { text-align: center; padding: 20px 0; }
+  .cta-text { font-size: 14px; color: #8B949E; margin-bottom: 12px; }
+  .cta-link { display: inline-block; background: #0EA5E9; color: #fff; padding: 12px 32px; border-radius: 8px; font-weight: 700; font-size: 14px; text-decoration: none; letter-spacing: 0.5px; }
+  .cta-link:hover { background: #0284C7; }
+  .cta-url { font-size: 11px; color: #484F58; margin-top: 8px; font-family: monospace; }
+
+  /* Footer */
+  .footer { display: flex; justify-content: space-between; align-items: center; padding-top: 20px; border-top: 1px solid #21262D; font-size: 11px; color: #484F58; }
+
+  @media print {
+    body { background: #fff; color: #000; }
+    .page { padding: 24px; }
+    .kpi, .col-card, .demo-box { border-color: #ccc; background: #f8f8f8; }
+    .kpi-value, .col-title, .demo-title, .main-title span, .client-name { color: #333; }
+    .kpi-label, .logo-sub, .client-sub, .subtitle, .feature-text, .cta-text { color: #666; }
+    .green { color: #006600; } .blue { color: #0066cc; } .amber { color: #cc8800; } .purple { color: #6600cc; }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo-area">
+      <div class="logo-mark">FM</div>
+      <div>
+        <div class="logo-text">FREIGHTMIND AUTOPILOT</div>
+        <div class="logo-sub">Powered by Digit2AI & RinglyPro</div>
+      </div>
+    </div>
+    <div>
+      <div class="client-name">CW CARRIERS</div>
+      <div class="client-sub">Freight Brokerage Automation Platform</div>
+    </div>
+  </div>
+
+  <!-- Title -->
+  <div class="title-section">
+    <div class="main-title">FROM CONTRACT TO INVOICE<br>IN <span>UNDER 1 SECOND</span></div>
+    <div class="subtitle">8-Stage Automated Pipeline -- Same APIs, Manual or Autopilot Mode</div>
+  </div>
+
+  <!-- Pipeline -->
+  <div class="pipeline">
+    <div class="pipe-step"><div class="pipe-num">1</div><div class="pipe-label">Contract</div></div>
+    <div class="pipe-arrow">&rarr;</div>
+    <div class="pipe-step"><div class="pipe-num">2</div><div class="pipe-label">Rate Intel</div></div>
+    <div class="pipe-arrow">&rarr;</div>
+    <div class="pipe-step"><div class="pipe-num">3</div><div class="pipe-label">Carrier Match</div></div>
+    <div class="pipe-arrow">&rarr;</div>
+    <div class="pipe-step"><div class="pipe-num">4</div><div class="pipe-label">Load Match</div></div>
+    <div class="pipe-arrow">&rarr;</div>
+    <div class="pipe-step"><div class="pipe-num">5</div><div class="pipe-label">Outreach</div></div>
+    <div class="pipe-arrow">&rarr;</div>
+    <div class="pipe-step"><div class="pipe-num">6</div><div class="pipe-label">Rate Con</div></div>
+    <div class="pipe-arrow">&rarr;</div>
+    <div class="pipe-step"><div class="pipe-num">7</div><div class="pipe-label">Tracking</div></div>
+    <div class="pipe-arrow">&rarr;</div>
+    <div class="pipe-step"><div class="pipe-num">8</div><div class="pipe-label">Billing</div></div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-value green">99%</div><div class="kpi-label">Time Reduction Per Load</div></div>
+    <div class="kpi"><div class="kpi-value blue">3-4x</div><div class="kpi-label">Broker Capacity Increase</div></div>
+    <div class="kpi"><div class="kpi-value amber">$500K+</div><div class="kpi-label">Annual Backhaul Recovery</div></div>
+    <div class="kpi"><div class="kpi-value purple">0</div><div class="kpi-label">Missed Check Calls</div></div>
+  </div>
+
+  <!-- Two columns -->
+  <div class="two-col">
+    <div class="col-card">
+      <div class="col-title">WHAT AUTOPILOT DOES</div>
+      <div class="feature"><div class="feature-dot"></div><div class="feature-text"><strong>Rate Intelligence</strong> -- Pulls contract rates, internal history, corridor benchmarks, DAT (when connected). Recommends sell/buy with confidence score.</div></div>
+      <div class="feature"><div class="feature-dot"></div><div class="feature-text"><strong>Carrier Matching</strong> -- Scores 50+ carriers by equipment, lane, safety, reliability. Top 5 ranked instantly.</div></div>
+      <div class="feature"><div class="feature-dot"></div><div class="feature-text"><strong>Load-to-Load Optimization</strong> -- Finds backhaul, chain, round-trip pairs. Eliminates deadhead. 4 pairs found on demo load.</div></div>
+      <div class="feature"><div class="feature-dot"></div><div class="feature-text"><strong>Auto-Outreach</strong> -- Contacts top carriers via email/SMS or Rachel voice AI. No broker phone time wasted.</div></div>
+      <div class="feature"><div class="feature-dot"></div><div class="feature-text"><strong>Billing</strong> -- Shipper invoice + carrier payment generated on delivery. Same-day instead of 3-7 day lag.</div></div>
+    </div>
+    <div class="col-card">
+      <div class="col-title">BUSINESS IMPACT (50 LOADS/DAY)</div>
+      <div class="feature"><div class="feature-dot" style="background:#0EA5E9"></div><div class="feature-text"><strong>45 min/load -> under 1 second</strong><br>Broker shifts from data entry to exception management</div></div>
+      <div class="feature"><div class="feature-dot" style="background:#0EA5E9"></div><div class="feature-text"><strong>12 loads/broker/day -> 50+</strong><br>Same team handles 3-4x volume or cut 3 FTEs</div></div>
+      <div class="feature"><div class="feature-dot" style="background:#0EA5E9"></div><div class="feature-text"><strong>Backhaul capture: 5% -> 25%+</strong><br>$200 savings per match x 50 loads = $2K/day recovered</div></div>
+      <div class="feature"><div class="feature-dot" style="background:#0EA5E9"></div><div class="feature-text"><strong>Margin improvement: 2-5%</strong><br>Data-driven pricing replaces gut-feel quoting</div></div>
+      <div class="feature"><div class="feature-dot" style="background:#0EA5E9"></div><div class="feature-text"><strong>$2M-3M/year additional margin</strong><br>From combined backhaul optimization + rate intelligence</div></div>
+    </div>
+  </div>
+
+  <!-- Demo box -->
+  <div class="demo-box">
+    <div class="demo-title">LIVE DEMO -- DEMO-8001</div>
+    <div class="demo-route">
+      <div class="demo-node">Miami, FL</div>
+      <div class="demo-line"></div>
+      <div class="demo-node-end">Atlanta, GA</div>
+    </div>
+    <div class="demo-stats">
+      <div class="demo-stat"><div class="demo-stat-val green">$600</div><div class="demo-stat-label">Gross Profit</div></div>
+      <div class="demo-stat"><div class="demo-stat-val green">24.49%</div><div class="demo-stat-label">Margin</div></div>
+      <div class="demo-stat"><div class="demo-stat-val blue">47</div><div class="demo-stat-label">Carriers Qualified</div></div>
+      <div class="demo-stat"><div class="demo-stat-val amber">4</div><div class="demo-stat-label">Backhaul Pairs</div></div>
+      <div class="demo-stat"><div class="demo-stat-val purple">0.3s</div><div class="demo-stat-label">Pipeline Time</div></div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta">
+    <div class="cta-text">Next step: import your real load history, carriers, and shippers to activate Autopilot on live operations.</div>
+    <a href="https://aiagent.ringlypro.com/cw_carriers/autopilot" class="cta-link" target="_blank">OPEN LIVE AUTOPILOT DASHBOARD</a>
+    <div class="cta-url">https://aiagent.ringlypro.com/cw_carriers/autopilot</div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <span>Digit2AI -- FreightMind Autopilot</span>
+    <span>Confidential -- Prepared for CW Carriers</span>
+    <span>April 2026</span>
+  </div>
+
+</div>
+</body>
+</html>

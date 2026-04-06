@@ -1,0 +1,6 @@
+carrier_name,mc_number,dot_number,contact_name,phone,email,home_state,equipment_types,safety_rating,insurance_expiry,total_trucks,reliability_score,avg_rate_per_mile
+Coastal Freight Lines,MC700020,1234567,Steven Johnson,+18884976898,steven.johnson@coastalfreightlines.com,FL,"dry_van,reefer",Satisfactory,2027-06-15,24,78,2.85
+Patriot Trucking Corp,MC700002,2345678,Jason Brown,+18177721740,jason.brown@patriottruckingcorp.com,GA,"dry_van,flatbed",Satisfactory,2027-03-20,12,60,3.10
+Black Bear Trucking,MC700045,3456789,Thomas Anderson,+16094137677,thomas.anderson@blackbeartrucking.com,SC,"dry_van,reefer,flatbed",Satisfactory,2027-09-01,36,88,2.95
+Delta Route Express,MC700035,4567890,Daniel Sanchez,+12498032705,daniel.sanchez@deltarouteexpress.com,AL,"dry_van",Satisfactory,2027-05-10,8,87,3.05
+Peach State Carriers,MC700015,5678901,Michelle Thompson,+13156134813,michelle.thompson@peachstatecarriers.com,GA,"dry_van,reefer",Satisfactory,2027-08-22,18,87,2.90

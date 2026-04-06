@@ -1,0 +1,6 @@
+load_ref,shipper_name,origin_city,origin_state,origin_zip,destination_city,destination_state,destination_zip,pickup_date,delivery_date,equipment_type,weight_lbs,pieces,commodity,miles,buy_rate,sell_rate,status,special_instructions
+CW-10001,Publix Super Markets,Miami,FL,33101,Atlanta,GA,30301,2026-04-10,2026-04-11,dry_van,42000,24,Fresh Produce,662,1850.00,2450.00,open,Temperature sensitive - maintain 35-40F
+CW-10002,Home Depot Distribution,Atlanta,GA,30301,Jacksonville,FL,32099,2026-04-11,2026-04-12,dry_van,38500,18,Building Materials,346,1200.00,1650.00,open,Dock appointment required
+CW-10003,Georgia-Pacific LLC,Savannah,GA,31401,Charlotte,NC,28201,2026-04-11,2026-04-12,dry_van,44000,22,Paper Products,256,950.00,1350.00,open,
+CW-10004,Sysco Foods,Tampa,FL,33601,Nashville,TN,37201,2026-04-12,2026-04-13,reefer,36000,20,Frozen Foods,683,2100.00,2800.00,open,Maintain -10F
+CW-10005,Amazon Fulfillment,Orlando,FL,32801,Dallas,TX,75201,2026-04-13,2026-04-15,dry_van,28000,32,General Merchandise,1092,3200.00,4100.00,open,
