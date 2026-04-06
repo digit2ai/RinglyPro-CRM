@@ -10,8 +10,7 @@ function printReport() {
   // Clone content and strip buttons
   const clone = el.cloneNode(true);
   clone.querySelectorAll('button').forEach(b => b.remove());
-  // Replace iframes with static map images (iframes don't render in print)
-  const KEY = 'AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8';
+  // Replace iframes with styled route cards for print (iframes don't render in PDF)
   clone.querySelectorAll('iframe').forEach(iframe => {
     const src = iframe.getAttribute('src') || '';
     const originMatch = src.match(/origin=([^&]+)/);
@@ -20,20 +19,22 @@ function printReport() {
     if (originMatch && destMatch) {
       const origin = decodeURIComponent(originMatch[1]);
       const dest = decodeURIComponent(destMatch[1]);
-      let path = `color:0x0EA5E9ff|weight:4|${origin}|`;
-      if (waypointsMatch) {
-        const wps = decodeURIComponent(waypointsMatch[1]).split('|');
-        path += wps.join('|') + '|';
-      }
-      path += dest;
-      const markers = `markers=color:blue|label:A|${encodeURIComponent(origin)}&markers=color:green|label:B|${encodeURIComponent(dest)}`;
-      const staticUrl = `https://maps.googleapis.com/maps/api/staticmap?size=896x300&scale=2&maptype=roadmap&path=enc:&${markers}&path=${encodeURIComponent(path)}&key=${KEY}`;
-      // Use directions-based static map via simple markers + auto-zoom
-      const simpleUrl = `https://maps.googleapis.com/maps/api/staticmap?size=896x300&scale=2&maptype=roadmap&${markers}&key=${KEY}`;
-      const img = document.createElement('img');
-      img.src = simpleUrl;
-      img.style.cssText = 'width:100%;height:300px;object-fit:cover;display:block;border-radius:8px;';
-      iframe.replaceWith(img);
+      const waypoints = waypointsMatch ? decodeURIComponent(waypointsMatch[1]).split('|').filter(Boolean) : [];
+      const allStops = [origin, ...waypoints.filter(w => w !== origin && w !== dest), dest];
+      const routeCard = document.createElement('div');
+      routeCard.style.cssText = 'background:#161B22;border:1px solid #30363D;border-radius:8px;padding:20px 24px;display:flex;align-items:center;gap:0;min-height:80px;';
+      routeCard.innerHTML = allStops.map((stop, i) => {
+        const isFirst = i === 0;
+        const isLast = i === allStops.length - 1;
+        const dotColor = isFirst ? '#0EA5E9' : isLast ? '#238636' : '#F59E0B';
+        const label = isFirst ? 'A' : isLast ? String.fromCharCode(65 + i) : String.fromCharCode(65 + i);
+        return (i > 0 ? '<div style="flex:1;height:3px;background:linear-gradient(90deg,#0EA5E9,#238636);margin:0 -4px;"></div>' : '') +
+          '<div style="text-align:center;flex-shrink:0;">' +
+          '<div style="width:28px;height:28px;border-radius:50%;background:' + dotColor + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;margin:0 auto 4px;">' + label + '</div>' +
+          '<div style="font-size:11px;color:#E6EDF3;font-weight:600;white-space:nowrap;">' + stop + '</div>' +
+          '</div>';
+      }).join('');
+      iframe.replaceWith(routeCard);
     }
   });
   // Write clean print page
