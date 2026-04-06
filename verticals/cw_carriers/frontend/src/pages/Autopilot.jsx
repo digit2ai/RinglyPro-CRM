@@ -1,6 +1,27 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 
+// Print styles for report export
+const printCSS = `@media print {
+  body > *:not(#pipeline-report-overlay) { display: none !important; }
+  #pipeline-report-overlay { position: static !important; background: #fff !important; padding: 0 !important; }
+  #pipeline-report { border: none !important; margin: 0 !important; max-width: 100% !important; background: #fff !important; color: #000 !important; }
+  #pipeline-report * { color: #000 !important; border-color: #ddd !important; background: #fff !important; }
+  #pipeline-report [style*="background: #161B22"], #pipeline-report [style*="background: #0D1117"] { background: #f8f8f8 !important; }
+  #pipeline-report [style*="background: linear-gradient"] { background: #f0f0f0 !important; border-bottom-color: #333 !important; }
+  #pipeline-report [style*="color: #238636"] { color: #006600 !important; }
+  #pipeline-report [style*="color: #0EA5E9"] { color: #0066cc !important; }
+  #pipeline-report [style*="color: #EF4444"] { color: #cc0000 !important; }
+  #pipeline-report [style*="color: #F59E0B"] { color: #cc8800 !important; }
+  button { display: none !important; }
+}`;
+if (typeof document !== 'undefined' && !document.getElementById('autopilot-print-css')) {
+  const style = document.createElement('style');
+  style.id = 'autopilot-print-css';
+  style.textContent = printCSS;
+  document.head.appendChild(style);
+}
+
 const STAGES = [
   { key: 'contract_received', label: 'Contract Received', icon: '1' },
   { key: 'rate_analysis', label: 'Rate Analysis', icon: '2' },
@@ -32,6 +53,7 @@ export default function Autopilot() {
   const [events, setEvents] = useState([]);
   const [startError, setStartError] = useState('');
   const [startSuccess, setStartSuccess] = useState(null);
+  const [reportRun, setReportRun] = useState(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -172,7 +194,7 @@ export default function Autopilot() {
             <RunCard key={run.id} run={run} onAction={handleAction} onStageClick={(stage) => {
               const resultField = `result_${stage}`;
               setStageDetail({ stage, data: run[resultField], run });
-            }} onEvents={() => { loadEvents(run.id); setSelectedRun(run); }} />
+            }} onEvents={() => { loadEvents(run.id); setSelectedRun(run); }} onReport={() => setReportRun(run)} />
           ))}
         </div>
       )}
@@ -185,7 +207,7 @@ export default function Autopilot() {
             <RunCard key={run.id} run={run} onAction={handleAction} onStageClick={(stage) => {
               const resultField = `result_${stage}`;
               setStageDetail({ stage, data: run[resultField], run });
-            }} onEvents={() => { loadEvents(run.id); setSelectedRun(run); }} />
+            }} onEvents={() => { loadEvents(run.id); setSelectedRun(run); }} onReport={() => setReportRun(run)} />
           ))}
         </div>
       )}
@@ -218,6 +240,9 @@ export default function Autopilot() {
       {showConfig && config && (
         <ConfigModal config={config} onClose={() => setShowConfig(false)} onSave={handleConfigSave} />
       )}
+
+      {/* Full Report Modal */}
+      {reportRun && <PipelineReport run={reportRun} onClose={() => setReportRun(null)} />}
 
       {/* Start Pipeline Modal */}
       {showStart && (
@@ -274,7 +299,7 @@ export default function Autopilot() {
 
 // ── Run Card Component ──────────────────────────────────────────
 
-function RunCard({ run, onAction, onStageClick, onEvents }) {
+function RunCard({ run, onAction, onStageClick, onEvents, onReport }) {
   return (
     <div style={s.runCard}>
       <div style={s.runHeader}>
@@ -336,6 +361,7 @@ function RunCard({ run, onAction, onStageClick, onEvents }) {
         <button onClick={() => onAction(run.id, 'mode', { mode: run.mode === 'autopilot' ? 'manual' : 'autopilot' })} style={s.btnSmallOutline}>
           Switch to {run.mode === 'autopilot' ? 'Manual' : 'Autopilot'}
         </button>
+        <button onClick={onReport} style={{ ...s.btnSmall, background: '#8957E5' }}>View Report</button>
         <button onClick={onEvents} style={s.btnSmallOutline}>Events</button>
         {['running', 'paused'].includes(run.status) && (
           <button onClick={() => onAction(run.id, 'cancel')} style={{ ...s.btnSmallOutline, borderColor: '#EF4444', color: '#EF4444' }}>Cancel</button>
@@ -523,6 +549,390 @@ function Modal({ children, onClose, title, wide }) {
           <button onClick={onClose} style={s.modalClose}>&times;</button>
         </div>
         <div style={s.modalBody}>{children}</div>
+      </div>
+    </div>
+  );
+}
+
+// ── Pipeline Report ─────────────────────────────────────────────
+
+function PipelineReport({ run, onClose }) {
+  const contract = run.result_contract_received || {};
+  const rate = run.result_rate_analysis || {};
+  const carrier = run.result_carrier_match || {};
+  const loadMatch = run.result_load_match || {};
+  const outreach = run.result_carrier_outreach || {};
+  const confirmation = run.result_rate_confirmation || {};
+  const tracking = run.result_transit_tracking || {};
+  const billing = run.result_delivery_billing || {};
+  const pnl = billing.final_pnl || {};
+  const rec = rate.recommendation || {};
+  const top5 = (carrier.top_matches || []).slice(0, 5);
+  const pairs = loadMatch.pairs || [];
+
+  const shipperRate = parseFloat(contract.shipper_rate) || rec.suggested_sell_rate || confirmation.sell_rate || 0;
+  const buyRate = rec.suggested_buy_rate || confirmation.buy_rate || 0;
+  const margin = confirmation.margin || (shipperRate - buyRate);
+  const marginPct = confirmation.margin_pct || (shipperRate > 0 ? ((margin / shipperRate) * 100).toFixed(2) : 0);
+  const miles = parseFloat(contract.miles) || 0;
+  const rpm = miles > 0 ? (shipperRate / miles).toFixed(2) : '--';
+  const rpmBuy = miles > 0 ? (buyRate / miles).toFixed(2) : '--';
+
+  const elapsed = run.completed_at && run.started_at
+    ? ((new Date(run.completed_at) - new Date(run.started_at)) / 1000).toFixed(1)
+    : '--';
+
+  const r = {
+    overlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1100, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '20px', overflowY: 'auto' },
+    page: { background: '#0D1117', border: '1px solid #30363D', borderRadius: 12, width: '100%', maxWidth: 960, margin: '20px auto', padding: 0 },
+    header: { background: 'linear-gradient(135deg, #161B22 0%, #1a2332 100%)', borderBottom: '2px solid #0EA5E9', padding: '28px 32px', borderRadius: '12px 12px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' },
+    headerLeft: {},
+    reportTitle: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 26, color: '#E6EDF3', letterSpacing: 2, margin: 0 },
+    reportSub: { fontSize: 12, color: '#8B949E', marginTop: 4 },
+    loadBadge: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 32, color: '#0EA5E9', letterSpacing: 2 },
+    statusLine: { fontSize: 11, color: '#8B949E', marginTop: 4 },
+    closeBtn: { background: 'none', border: '1px solid #30363D', color: '#8B949E', padding: '6px 14px', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontFamily: 'inherit' },
+    body: { padding: '24px 32px 32px' },
+    grid2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 },
+    grid3: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 20 },
+    section: { marginBottom: 24 },
+    sectionTitle: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 16, color: '#0EA5E9', letterSpacing: 1.5, marginBottom: 12, paddingBottom: 6, borderBottom: '1px solid #21262D' },
+    card: { background: '#161B22', border: '1px solid #21262D', borderRadius: 8, padding: 16 },
+    cardAccent: { background: '#161B22', border: '1px solid #238636', borderRadius: 8, padding: 16 },
+    kpiRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid #21262D' },
+    kpiLabel: { fontSize: 11, color: '#8B949E', textTransform: 'uppercase', letterSpacing: 0.5 },
+    kpiValue: { fontSize: 14, color: '#E6EDF3', fontWeight: 600 },
+    kpiValueLg: { fontSize: 22, fontWeight: 700, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1 },
+    kpiValueGreen: { fontSize: 22, fontWeight: 700, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1, color: '#238636' },
+    kpiValueBlue: { fontSize: 22, fontWeight: 700, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1, color: '#0EA5E9' },
+    table: { width: '100%', borderCollapse: 'collapse', fontSize: 11 },
+    th: { textAlign: 'left', padding: '6px 8px', color: '#8B949E', fontWeight: 600, fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: '1px solid #30363D' },
+    td: { padding: '8px 8px', color: '#E6EDF3', borderBottom: '1px solid #21262D' },
+    tdMuted: { padding: '8px 8px', color: '#8B949E', borderBottom: '1px solid #21262D', fontSize: 10 },
+    badge: { display: 'inline-block', padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700 },
+    routeBar: { display: 'flex', alignItems: 'center', gap: 0, margin: '16px 0' },
+    routeNode: { background: '#0EA5E9', color: '#fff', padding: '8px 16px', borderRadius: 20, fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap' },
+    routeLine: { flex: 1, height: 2, background: 'linear-gradient(90deg, #0EA5E9, #238636)', position: 'relative' },
+    routeNodeEnd: { background: '#238636', color: '#fff', padding: '8px 16px', borderRadius: 20, fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap' },
+    routeInfo: { textAlign: 'center', marginTop: 8, fontSize: 11, color: '#8B949E' },
+    timelineRow: { display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0', fontSize: 11 },
+    tlDot: { width: 8, height: 8, borderRadius: '50%', background: '#238636', flexShrink: 0 },
+    tlLabel: { color: '#E6EDF3', flex: 1 },
+    tlTime: { color: '#484F58', fontSize: 10 },
+    printBtn: { background: '#0EA5E9', color: '#fff', border: 'none', padding: '8px 20px', borderRadius: 6, cursor: 'pointer', fontWeight: 600, fontSize: 12, fontFamily: 'inherit', marginRight: 8 },
+    watermark: { textAlign: 'center', color: '#30363D', fontSize: 10, marginTop: 24, paddingTop: 16, borderTop: '1px solid #21262D' },
+  };
+
+  function fmt(n) { return typeof n === 'number' ? '$' + n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : n || '--'; }
+
+  return (
+    <div style={r.overlay} onClick={onClose} id="pipeline-report-overlay">
+      <div style={r.page} onClick={e => e.stopPropagation()} id="pipeline-report">
+        {/* ── HEADER ── */}
+        <div style={r.header}>
+          <div style={r.headerLeft}>
+            <div style={r.reportTitle}>AUTOPILOT PIPELINE REPORT</div>
+            <div style={r.reportSub}>End-to-End Brokerage Execution Summary</div>
+            <div style={r.statusLine}>
+              Run #{run.id} | {run.mode.toUpperCase()} | {new Date(run.started_at).toLocaleString()} | Pipeline: {elapsed}s
+            </div>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={r.loadBadge}>{run.load_ref || `LOAD #${run.load_id}`}</div>
+            <div style={{ ...r.badge, background: STATUS_COLORS[run.status] + '22', color: STATUS_COLORS[run.status], marginTop: 4 }}>{run.status.toUpperCase()}</div>
+          </div>
+        </div>
+
+        <div style={r.body}>
+          {/* ── ROUTE ── */}
+          <div style={r.section}>
+            <div style={r.sectionTitle}>ROUTE & SHIPMENT</div>
+            <div style={r.routeBar}>
+              <div style={r.routeNode}>{contract.origin || 'Origin'}</div>
+              <div style={r.routeLine}>
+                <div style={{ position: 'absolute', top: -10, left: '50%', transform: 'translateX(-50%)', fontSize: 10, color: '#8B949E', whiteSpace: 'nowrap' }}>
+                  {miles > 0 ? `${miles.toLocaleString()} mi` : ''}
+                </div>
+              </div>
+              <div style={r.routeNodeEnd}>{contract.destination || 'Destination'}</div>
+            </div>
+            <div style={r.grid3}>
+              <div style={r.card}>
+                <div style={r.kpiLabel}>Equipment</div>
+                <div style={r.kpiValue}>{(contract.equipment || 'N/A').replace(/_/g, ' ').toUpperCase()}</div>
+              </div>
+              <div style={r.card}>
+                <div style={r.kpiLabel}>Weight</div>
+                <div style={r.kpiValue}>{contract.weight ? parseFloat(contract.weight).toLocaleString() + ' lbs' : 'N/A'}</div>
+              </div>
+              <div style={r.card}>
+                <div style={r.kpiLabel}>Distance</div>
+                <div style={r.kpiValue}>{miles > 0 ? miles.toLocaleString() + ' mi' : 'N/A'}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── RATE INTELLIGENCE ── */}
+          <div style={r.section}>
+            <div style={r.sectionTitle}>RATE INTELLIGENCE</div>
+            <div style={r.grid2}>
+              <div style={r.card}>
+                <div style={r.kpiLabel}>Shipper Rate (Sell)</div>
+                <div style={r.kpiValueBlue}>{fmt(shipperRate)}</div>
+                <div style={{ fontSize: 10, color: '#484F58', marginTop: 2 }}>{rpm}/mi</div>
+              </div>
+              <div style={r.card}>
+                <div style={r.kpiLabel}>Carrier Rate (Buy)</div>
+                <div style={r.kpiValueLg}>{fmt(buyRate)}</div>
+                <div style={{ fontSize: 10, color: '#484F58', marginTop: 2 }}>{rpmBuy}/mi</div>
+              </div>
+            </div>
+            <div style={r.card}>
+              <div style={r.kpiRow}>
+                <span style={r.kpiLabel}>Pricing Method</span>
+                <span style={r.kpiValue}>{rate.pricing_method || 'N/A'}</span>
+              </div>
+              <div style={r.kpiRow}>
+                <span style={r.kpiLabel}>Confidence</span>
+                <span style={{ ...r.kpiValue, color: rate.confidence === 'high' ? '#238636' : rate.confidence === 'medium' ? '#F59E0B' : '#EF4444' }}>{(rate.confidence || 'N/A').toUpperCase()}</span>
+              </div>
+              <div style={r.kpiRow}>
+                <span style={r.kpiLabel}>DAT Market Rate</span>
+                <span style={r.kpiValue}>{rate.dat ? fmt(rate.dat) : 'Not Available'}</span>
+              </div>
+              <div style={r.kpiRow}>
+                <span style={r.kpiLabel}>Rate Per Mile</span>
+                <span style={r.kpiValue}>{rec.rate_per_mile ? `$${rec.rate_per_mile}` : rpm}</span>
+              </div>
+              {rate.rationale && rate.rationale.length > 0 && (
+                <div style={{ marginTop: 8, fontSize: 11, color: '#8B949E' }}>
+                  {rate.rationale.map((r, i) => <div key={i}>-- {r}</div>)}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ── P&L / MARGIN ── */}
+          <div style={r.section}>
+            <div style={r.sectionTitle}>PROFIT & LOSS</div>
+            <div style={r.grid3}>
+              <div style={r.cardAccent}>
+                <div style={r.kpiLabel}>Gross Profit</div>
+                <div style={r.kpiValueGreen}>{fmt(margin)}</div>
+              </div>
+              <div style={r.cardAccent}>
+                <div style={r.kpiLabel}>Margin %</div>
+                <div style={r.kpiValueGreen}>{marginPct}%</div>
+              </div>
+              <div style={r.card}>
+                <div style={r.kpiLabel}>Rate Confirmation</div>
+                <div style={r.kpiValue}>{confirmation.rate_con_number || 'N/A'}</div>
+              </div>
+            </div>
+            <div style={r.card}>
+              <div style={r.kpiRow}>
+                <span style={r.kpiLabel}>Revenue (Shipper Pays)</span>
+                <span style={{ ...r.kpiValue, color: '#0EA5E9' }}>{fmt(shipperRate)}</span>
+              </div>
+              <div style={r.kpiRow}>
+                <span style={r.kpiLabel}>Cost (Carrier Paid)</span>
+                <span style={r.kpiValue}>{fmt(buyRate)}</span>
+              </div>
+              <div style={{ ...r.kpiRow, borderBottom: 'none' }}>
+                <span style={{ ...r.kpiLabel, fontWeight: 700, color: '#238636' }}>NET MARGIN</span>
+                <span style={{ ...r.kpiValue, color: '#238636', fontSize: 16 }}>{fmt(margin)} ({marginPct}%)</span>
+              </div>
+            </div>
+          </div>
+
+          {/* ── CARRIER MATCHING ── */}
+          <div style={r.section}>
+            <div style={r.sectionTitle}>CARRIER MATCHING</div>
+            <div style={r.grid3}>
+              <div style={r.card}>
+                <div style={r.kpiLabel}>Carriers Evaluated</div>
+                <div style={r.kpiValueLg}>{carrier.total_evaluated || 0}</div>
+              </div>
+              <div style={r.card}>
+                <div style={r.kpiLabel}>Qualified</div>
+                <div style={r.kpiValueLg}>{carrier.qualifying_carriers || 0}</div>
+              </div>
+              <div style={r.card}>
+                <div style={r.kpiLabel}>Min Score Threshold</div>
+                <div style={r.kpiValueLg}>{carrier.min_score_threshold || 40}</div>
+              </div>
+            </div>
+            {top5.length > 0 && (
+              <table style={r.table}>
+                <thead>
+                  <tr>
+                    <th style={r.th}>Rank</th>
+                    <th style={r.th}>Carrier</th>
+                    <th style={r.th}>MC #</th>
+                    <th style={r.th}>Score</th>
+                    <th style={r.th}>Reliability</th>
+                    <th style={r.th}>Contact</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {top5.map((c, i) => (
+                    <tr key={i}>
+                      <td style={r.td}><span style={{ ...r.badge, background: i === 0 ? '#238636' : '#21262D', color: i === 0 ? '#fff' : '#8B949E' }}>#{i + 1}</span></td>
+                      <td style={{ ...r.td, fontWeight: i === 0 ? 700 : 400 }}>{c.carrier_name}</td>
+                      <td style={r.tdMuted}>{c.mc_number}</td>
+                      <td style={r.td}><span style={{ color: c.match_score >= 80 ? '#238636' : c.match_score >= 60 ? '#F59E0B' : '#EF4444', fontWeight: 700 }}>{c.match_score}</span></td>
+                      <td style={r.td}>{c.reliability}%</td>
+                      <td style={r.tdMuted}>{c.phone}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {/* ── LOAD-TO-LOAD MATCHING ── */}
+          <div style={r.section}>
+            <div style={r.sectionTitle}>LOAD-TO-LOAD OPTIMIZATION</div>
+            <div style={r.grid2}>
+              <div style={r.card}>
+                <div style={r.kpiLabel}>Pairs Found</div>
+                <div style={r.kpiValueLg}>{loadMatch.total_pairs_found || 0}</div>
+              </div>
+              <div style={r.card}>
+                <div style={r.kpiLabel}>Auto-Accepted</div>
+                <div style={r.kpiValueLg}>{loadMatch.auto_accepted || 0}</div>
+              </div>
+            </div>
+            {pairs.length > 0 ? (
+              <table style={r.table}>
+                <thead><tr><th style={r.th}>Pair Load</th><th style={r.th}>Type</th><th style={r.th}>Savings</th></tr></thead>
+                <tbody>
+                  {pairs.map((p, i) => (
+                    <tr key={i}><td style={r.td}>{p.load_ref || p.paired_load_id}</td><td style={r.td}>{p.pair_type}</td><td style={r.td}>{p.savings_pct}%</td></tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div style={{ ...r.card, color: '#484F58', fontSize: 12, textAlign: 'center' }}>No compatible load pairs found for this lane. Deadhead optimization not applicable.</div>
+            )}
+          </div>
+
+          {/* ── CARRIER OUTREACH ── */}
+          <div style={r.section}>
+            <div style={r.sectionTitle}>CARRIER OUTREACH & BOOKING</div>
+            <div style={r.grid3}>
+              <div style={r.card}>
+                <div style={r.kpiLabel}>Carriers Contacted</div>
+                <div style={r.kpiValueLg}>{outreach.carriers_contacted || 0}</div>
+              </div>
+              <div style={r.card}>
+                <div style={r.kpiLabel}>Method</div>
+                <div style={r.kpiValue}>{(outreach.outreach_method || 'N/A').replace(/_/g, ' ').toUpperCase()}</div>
+              </div>
+              <div style={r.card}>
+                <div style={r.kpiLabel}>Load Status</div>
+                <div style={{ ...r.kpiValue, color: '#238636' }}>{(confirmation.load_status_updated || 'N/A').toUpperCase()}</div>
+              </div>
+            </div>
+            {(outreach.carriers || []).length > 0 && (
+              <table style={r.table}>
+                <thead><tr><th style={r.th}>Carrier</th><th style={r.th}>Score</th><th style={r.th}>Phone</th><th style={r.th}>Status</th></tr></thead>
+                <tbody>
+                  {(outreach.carriers || []).map((c, i) => (
+                    <tr key={i}>
+                      <td style={r.td}>{c.carrier_name}</td>
+                      <td style={r.td}>{c.match_score}</td>
+                      <td style={r.tdMuted}>{c.phone}</td>
+                      <td style={r.td}>
+                        <span style={{ ...r.badge, background: c.outreach_status === 'accepted' ? '#23863622' : c.outreach_status === 'pending' ? '#F59E0B22' : '#21262D', color: c.outreach_status === 'accepted' ? '#238636' : c.outreach_status === 'pending' ? '#F59E0B' : '#8B949E' }}>
+                          {(c.outreach_status || 'pending').toUpperCase()}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {/* ── TRANSIT TRACKING ── */}
+          <div style={r.section}>
+            <div style={r.sectionTitle}>TRANSIT & CHECK CALLS</div>
+            <div style={r.grid2}>
+              <div style={r.card}>
+                <div style={r.kpiLabel}>Check Call Interval</div>
+                <div style={r.kpiValue}>Every {tracking.check_call_interval_hours || 4} hours</div>
+              </div>
+              <div style={r.card}>
+                <div style={r.kpiLabel}>Scheduled Calls</div>
+                <div style={r.kpiValueLg}>{(tracking.scheduled_calls || []).length}</div>
+              </div>
+            </div>
+            {(tracking.scheduled_calls || []).length > 0 && (
+              <div style={r.card}>
+                {(tracking.scheduled_calls || []).map((call, i) => (
+                  <div key={i} style={r.timelineRow}>
+                    <div style={{ ...r.tlDot, background: call.status === 'completed' ? '#238636' : call.status === 'pending' ? '#0EA5E9' : '#484F58' }} />
+                    <span style={r.tlLabel}>Check Call #{call.call_number}</span>
+                    <span style={{ ...r.badge, background: call.status === 'completed' ? '#23863622' : call.status === 'pending' ? '#0EA5E922' : '#21262D', color: call.status === 'completed' ? '#238636' : call.status === 'pending' ? '#0EA5E9' : '#8B949E' }}>{call.status.toUpperCase()}</span>
+                    <span style={r.tlTime}>{new Date(call.scheduled_at).toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* ── BILLING ── */}
+          <div style={r.section}>
+            <div style={r.sectionTitle}>BILLING & INVOICING</div>
+            <div style={r.grid2}>
+              <div style={r.card}>
+                <div style={r.kpiLabel}>Shipper Invoice</div>
+                <div style={r.kpiValue}>{billing.shipper_invoice || 'Auto-generated'}</div>
+                <div style={{ fontSize: 11, color: '#0EA5E9', marginTop: 4 }}>{fmt(pnl.revenue || shipperRate)}</div>
+              </div>
+              <div style={r.card}>
+                <div style={r.kpiLabel}>Carrier Payment</div>
+                <div style={r.kpiValue}>{billing.carrier_payment || 'Auto-generated'}</div>
+                <div style={{ fontSize: 11, color: '#E6EDF3', marginTop: 4 }}>{fmt(pnl.cost || buyRate)}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── EXECUTION TIMELINE ── */}
+          <div style={r.section}>
+            <div style={r.sectionTitle}>PIPELINE EXECUTION TIMELINE</div>
+            <div style={r.card}>
+              {STAGES.map((stage, i) => {
+                const ts = run[`ts_${stage.key}`];
+                const stStatus = getStageStatus(run, stage.key);
+                return (
+                  <div key={stage.key} style={{ ...r.timelineRow, opacity: ts ? 1 : 0.4 }}>
+                    <div style={{ ...r.tlDot, background: stStatus === 'completed' ? '#238636' : stStatus === 'paused' ? '#F59E0B' : stStatus === 'failed' ? '#EF4444' : '#30363D' }} />
+                    <span style={{ ...r.tlLabel, fontWeight: 600 }}>{stage.label}</span>
+                    <span style={{ ...r.badge, background: stStatus === 'completed' ? '#23863622' : '#21262D', color: stStatus === 'completed' ? '#238636' : '#484F58' }}>
+                      {stStatus.toUpperCase()}
+                    </span>
+                    <span style={r.tlTime}>{ts ? new Date(ts).toLocaleTimeString() : '--'}</span>
+                  </div>
+                );
+              })}
+              <div style={{ borderTop: '1px solid #21262D', marginTop: 8, paddingTop: 8, display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
+                <span style={{ color: '#8B949E' }}>Total Pipeline Time</span>
+                <span style={{ color: '#E6EDF3', fontWeight: 700 }}>{elapsed}s</span>
+              </div>
+            </div>
+          </div>
+
+          {/* ── ACTIONS ── */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <button onClick={() => window.print()} style={r.printBtn}>Print / Export PDF</button>
+              <button onClick={onClose} style={r.closeBtn}>Close Report</button>
+            </div>
+            <div style={r.watermark}>RinglyPro FreightMind Autopilot -- Powered by Digit2AI</div>
+          </div>
+        </div>
       </div>
     </div>
   );
