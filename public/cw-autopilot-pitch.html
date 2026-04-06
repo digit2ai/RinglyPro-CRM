@@ -8,11 +8,10 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Inter', sans-serif; background: #0D1117; color: #E6EDF3; overflow-x: hidden; }
-
-  .page { max-width: 1200px; margin: 0 auto; padding: 40px 48px; min-height: 100vh; }
+  .page { max-width: 1200px; margin: 0 auto; padding: 40px 48px; }
 
   /* Header */
-  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 36px; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
   .logo-area { display: flex; align-items: center; gap: 16px; }
   .logo-mark { width: 48px; height: 48px; background: linear-gradient(135deg, #0EA5E9, #238636); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: #fff; }
   .logo-text { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 3px; color: #E6EDF3; }
@@ -20,49 +19,75 @@
   .client-name { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: #0EA5E9; letter-spacing: 2px; text-align: right; }
   .client-sub { font-size: 11px; color: #8B949E; text-align: right; margin-top: 2px; }
 
-  /* Title */
-  .title-section { text-align: center; margin-bottom: 40px; }
-  .main-title { font-family: 'Bebas Neue', sans-serif; font-size: 52px; letter-spacing: 4px; line-height: 1.1; }
-  .main-title span { color: #0EA5E9; }
-  .subtitle { font-size: 16px; color: #8B949E; margin-top: 8px; font-weight: 300; }
+  /* Section dividers */
+  .section { margin-bottom: 40px; }
+  .section-num { font-family: 'Bebas Neue', sans-serif; font-size: 13px; color: #0EA5E9; letter-spacing: 2px; margin-bottom: 6px; }
+  .section-title { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 3px; line-height: 1.1; margin-bottom: 16px; }
+  .section-title span { color: #0EA5E9; }
+  .section-sub { font-size: 14px; color: #8B949E; font-weight: 300; margin-bottom: 20px; }
 
   /* Pipeline visual */
-  .pipeline { display: flex; align-items: center; justify-content: center; gap: 0; margin: 32px 0; padding: 20px 0; flex-wrap: nowrap; }
+  .pipeline { display: flex; align-items: center; justify-content: center; gap: 0; margin: 24px 0; }
   .pipe-step { text-align: center; flex: 1; min-width: 0; }
-  .pipe-num { width: 36px; height: 36px; border-radius: 50%; background: #0EA5E9; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; margin: 0 auto 6px; }
-  .pipe-label { font-size: 10px; color: #E6EDF3; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-  .pipe-arrow { color: #30363D; font-size: 18px; margin: 0 -4px; flex-shrink: 0; padding-bottom: 18px; }
+  .pipe-num { width: 34px; height: 34px; border-radius: 50%; background: #0EA5E9; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; margin: 0 auto 5px; }
+  .pipe-label { font-size: 9px; color: #E6EDF3; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .pipe-arrow { color: #30363D; font-size: 16px; margin: 0 -4px; flex-shrink: 0; padding-bottom: 16px; }
 
   /* KPI grid */
-  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 32px; }
-  .kpi { background: #161B22; border: 1px solid #21262D; border-radius: 8px; padding: 18px 16px; text-align: center; }
-  .kpi-value { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 1px; }
-  .kpi-label { font-size: 10px; color: #8B949E; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.8px; }
-  .green { color: #238636; }
-  .blue { color: #0EA5E9; }
-  .amber { color: #F59E0B; }
-  .purple { color: #8957E5; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+  .kpi { background: #161B22; border: 1px solid #21262D; border-radius: 8px; padding: 16px 14px; text-align: center; }
+  .kpi-value { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 1px; }
+  .kpi-label { font-size: 9px; color: #8B949E; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.8px; }
+  .green { color: #238636; } .blue { color: #0EA5E9; } .amber { color: #F59E0B; } .purple { color: #8957E5; } .red { color: #EF4444; }
 
-  /* Two columns */
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px; }
-  .col-card { background: #161B22; border: 1px solid #21262D; border-radius: 10px; padding: 20px 24px; }
-  .col-title { font-family: 'Bebas Neue', sans-serif; font-size: 16px; color: #0EA5E9; letter-spacing: 1.5px; margin-bottom: 14px; }
-  .feature { display: flex; gap: 10px; margin-bottom: 10px; font-size: 13px; line-height: 1.5; }
-  .feature-dot { width: 6px; height: 6px; border-radius: 50%; background: #238636; margin-top: 6px; flex-shrink: 0; }
+  /* Cards */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .card { background: #161B22; border: 1px solid #21262D; border-radius: 10px; padding: 20px 22px; }
+  .card-accent { background: #161B22; border: 1px solid #238636; border-radius: 10px; padding: 20px 22px; }
+  .card-blue { background: #161B22; border: 1px solid #0EA5E9; border-radius: 10px; padding: 20px 22px; }
+  .card-title { font-family: 'Bebas Neue', sans-serif; font-size: 15px; color: #0EA5E9; letter-spacing: 1.5px; margin-bottom: 12px; }
+  .feature { display: flex; gap: 10px; margin-bottom: 8px; font-size: 12px; line-height: 1.5; }
+  .feature-dot { width: 5px; height: 5px; border-radius: 50%; background: #238636; margin-top: 6px; flex-shrink: 0; }
   .feature-text { color: #C9D1D9; }
   .feature-text strong { color: #E6EDF3; }
 
+  /* Uber comparison table */
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 20px; }
+  .compare-table th { text-align: left; padding: 10px 12px; font-size: 10px; color: #8B949E; text-transform: uppercase; letter-spacing: 0.8px; border-bottom: 2px solid #0EA5E9; font-weight: 600; }
+  .compare-table td { padding: 8px 12px; border-bottom: 1px solid #21262D; color: #C9D1D9; }
+  .compare-table td:first-child { color: #8B949E; font-weight: 600; }
+  .compare-table td:nth-child(2) { color: #484F58; }
+  .compare-table td:nth-child(3) { color: #E6EDF3; font-weight: 600; }
+
+  /* Rachel conversation */
+  .convo { margin: 16px 0; }
+  .convo-row { display: flex; gap: 10px; margin-bottom: 6px; align-items: flex-start; }
+  .convo-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; min-width: 60px; padding-top: 3px; flex-shrink: 0; }
+  .convo-label.rachel { color: #0EA5E9; }
+  .convo-label.carrier { color: #F59E0B; }
+  .convo-label.system { color: #238636; }
+  .convo-label.shipper { color: #8957E5; }
+  .convo-bubble { font-size: 12px; color: #C9D1D9; line-height: 1.5; padding: 6px 12px; border-radius: 8px; max-width: 100%; }
+  .convo-bubble.rachel { background: #0EA5E911; border: 1px solid #0EA5E933; }
+  .convo-bubble.carrier { background: #F59E0B08; border: 1px solid #F59E0B22; }
+  .convo-bubble.system { background: #23863611; border: 1px solid #23863633; font-size: 10px; color: #238636; font-style: italic; }
+  .convo-bubble.shipper { background: #8957E511; border: 1px solid #8957E533; }
+
   /* Demo box */
-  .demo-box { background: linear-gradient(135deg, #161B22, #1a2332); border: 1px solid #0EA5E9; border-radius: 10px; padding: 24px 28px; margin-bottom: 32px; }
-  .demo-title { font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: #0EA5E9; letter-spacing: 1.5px; margin-bottom: 12px; }
-  .demo-route { display: flex; align-items: center; gap: 0; margin-bottom: 14px; }
-  .demo-node { background: #0EA5E9; color: #fff; padding: 6px 14px; border-radius: 16px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .demo-box { background: linear-gradient(135deg, #161B22, #1a2332); border: 1px solid #0EA5E9; border-radius: 10px; padding: 22px 26px; margin-bottom: 24px; }
+  .demo-title { font-family: 'Bebas Neue', sans-serif; font-size: 17px; color: #0EA5E9; letter-spacing: 1.5px; margin-bottom: 10px; }
+  .demo-route { display: flex; align-items: center; gap: 0; margin-bottom: 12px; }
+  .demo-node { background: #0EA5E9; color: #fff; padding: 5px 12px; border-radius: 14px; font-size: 11px; font-weight: 600; white-space: nowrap; }
   .demo-line { flex: 1; height: 2px; background: linear-gradient(90deg, #0EA5E9, #238636); }
-  .demo-node-end { background: #238636; color: #fff; padding: 6px 14px; border-radius: 16px; font-size: 12px; font-weight: 600; white-space: nowrap; }
-  .demo-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  .demo-node-end { background: #238636; color: #fff; padding: 5px 12px; border-radius: 14px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .demo-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
   .demo-stat { text-align: center; }
-  .demo-stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: #E6EDF3; }
-  .demo-stat-label { font-size: 9px; color: #8B949E; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+  .demo-stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: #E6EDF3; }
+  .demo-stat-label { font-size: 8px; color: #8B949E; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+
+  /* Divider */
+  .divider { height: 1px; background: linear-gradient(90deg, transparent, #21262D, #0EA5E933, #21262D, transparent); margin: 32px 0; }
 
   /* CTA */
   .cta { text-align: center; padding: 20px 0; }
@@ -72,23 +97,24 @@
   .cta-url { font-size: 11px; color: #484F58; margin-top: 8px; font-family: monospace; }
 
   /* Footer */
-  .footer { display: flex; justify-content: space-between; align-items: center; padding-top: 20px; border-top: 1px solid #21262D; font-size: 11px; color: #484F58; }
+  .footer { display: flex; justify-content: space-between; align-items: center; padding-top: 16px; border-top: 1px solid #21262D; font-size: 10px; color: #484F58; }
 
   @media print {
     body { background: #fff; color: #000; }
-    .page { padding: 24px; }
-    .kpi, .col-card, .demo-box { border-color: #ccc; background: #f8f8f8; }
-    .kpi-value, .col-title, .demo-title, .main-title span, .client-name { color: #333; }
-    .kpi-label, .logo-sub, .client-sub, .subtitle, .feature-text, .cta-text { color: #666; }
+    .page { padding: 20px; }
+    .kpi, .card, .card-accent, .card-blue, .demo-box { border-color: #ccc; background: #f8f8f8; }
+    .kpi-value, .card-title, .demo-title, .section-title span, .client-name { color: #333; }
+    .kpi-label, .logo-sub, .client-sub, .section-sub, .feature-text, .cta-text { color: #666; }
     .green { color: #006600; } .blue { color: #0066cc; } .amber { color: #cc8800; } .purple { color: #6600cc; }
     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    .divider { margin: 16px 0; }
   }
 </style>
 </head>
 <body>
 <div class="page">
 
-  <!-- Header -->
+  <!-- HEADER -->
   <div class="header">
     <div class="logo-area">
       <div class="logo-mark">FM</div>
@@ -103,79 +129,208 @@
     </div>
   </div>
 
-  <!-- Title -->
-  <div class="title-section">
-    <div class="main-title">FROM CONTRACT TO INVOICE<br>IN <span>UNDER 1 SECOND</span></div>
-    <div class="subtitle">8-Stage Automated Pipeline -- Same APIs, Manual or Autopilot Mode</div>
+  <!-- SECTION 1: THE CONCEPT -->
+  <div class="section">
+    <div class="section-num">01 -- THE CONCEPT</div>
+    <div class="section-title"><span>UBER FOR FREIGHT</span> BROKERAGE</div>
+    <div class="section-sub">Uber connects riders with drivers via an app. CW Carriers connects shippers with carriers -- automated by AI.</div>
+
+    <table class="compare-table">
+      <thead>
+        <tr><th>Function</th><th>Uber</th><th>CW Carriers + FreightMind</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Request</td><td>Rider opens app</td><td>Shipper sends load tender</td></tr>
+        <tr><td>Matching</td><td>Algorithm finds nearest driver</td><td>AI scores 50+ carriers by lane, safety, reliability</td></tr>
+        <tr><td>Booking</td><td>Driver accepts in-app</td><td>Rachel CALLS carriers, negotiates rate, books</td></tr>
+        <tr><td>Pricing</td><td>Surge pricing algorithm</td><td>Rate Intelligence (market data + lane history)</td></tr>
+        <tr><td>Tracking</td><td>GPS in real-time</td><td>Rachel check calls every 4 hours</td></tr>
+        <tr><td>Payment</td><td>Auto-charge + receipt</td><td>Auto-invoice shipper + pay carrier on delivery</td></tr>
+        <tr><td>Rating</td><td>Star rating system</td><td>Carrier reliability scoring + FMCSA compliance</td></tr>
+        <tr><td>Optimization</td><td>Route pooling</td><td>Load-to-load matching (backhaul, chain)</td></tr>
+      </tbody>
+    </table>
+    <div style="font-size: 12px; color: #8B949E; text-align: center; margin-top: 8px;">The difference: Uber's drivers use an app. Truckers use phones. Rachel speaks their language.</div>
   </div>
 
-  <!-- Pipeline -->
-  <div class="pipeline">
-    <div class="pipe-step"><div class="pipe-num">1</div><div class="pipe-label">Contract</div></div>
-    <div class="pipe-arrow">&rarr;</div>
-    <div class="pipe-step"><div class="pipe-num">2</div><div class="pipe-label">Rate Intel</div></div>
-    <div class="pipe-arrow">&rarr;</div>
-    <div class="pipe-step"><div class="pipe-num">3</div><div class="pipe-label">Carrier Match</div></div>
-    <div class="pipe-arrow">&rarr;</div>
-    <div class="pipe-step"><div class="pipe-num">4</div><div class="pipe-label">Load Match</div></div>
-    <div class="pipe-arrow">&rarr;</div>
-    <div class="pipe-step"><div class="pipe-num">5</div><div class="pipe-label">Outreach</div></div>
-    <div class="pipe-arrow">&rarr;</div>
-    <div class="pipe-step"><div class="pipe-num">6</div><div class="pipe-label">Rate Con</div></div>
-    <div class="pipe-arrow">&rarr;</div>
-    <div class="pipe-step"><div class="pipe-num">7</div><div class="pipe-label">Tracking</div></div>
-    <div class="pipe-arrow">&rarr;</div>
-    <div class="pipe-step"><div class="pipe-num">8</div><div class="pipe-label">Billing</div></div>
-  </div>
+  <div class="divider"></div>
 
-  <!-- KPIs -->
-  <div class="kpi-grid">
-    <div class="kpi"><div class="kpi-value green">99%</div><div class="kpi-label">Time Reduction Per Load</div></div>
-    <div class="kpi"><div class="kpi-value blue">3-4x</div><div class="kpi-label">Broker Capacity Increase</div></div>
-    <div class="kpi"><div class="kpi-value amber">$500K+</div><div class="kpi-label">Annual Backhaul Recovery</div></div>
-    <div class="kpi"><div class="kpi-value purple">0</div><div class="kpi-label">Missed Check Calls</div></div>
-  </div>
+  <!-- SECTION 2: THE PIPELINE -->
+  <div class="section">
+    <div class="section-num">02 -- THE PIPELINE</div>
+    <div class="section-title">CONTRACT TO INVOICE IN <span>UNDER 1 SECOND</span></div>
+    <div class="section-sub">8-stage automated pipeline. Manual or Autopilot mode -- same APIs, broker chooses.</div>
 
-  <!-- Two columns -->
-  <div class="two-col">
-    <div class="col-card">
-      <div class="col-title">WHAT AUTOPILOT DOES</div>
-      <div class="feature"><div class="feature-dot"></div><div class="feature-text"><strong>Rate Intelligence</strong> -- Pulls contract rates, internal history, corridor benchmarks, DAT (when connected). Recommends sell/buy with confidence score.</div></div>
-      <div class="feature"><div class="feature-dot"></div><div class="feature-text"><strong>Carrier Matching</strong> -- Scores 50+ carriers by equipment, lane, safety, reliability. Top 5 ranked instantly.</div></div>
-      <div class="feature"><div class="feature-dot"></div><div class="feature-text"><strong>Load-to-Load Optimization</strong> -- Finds backhaul, chain, round-trip pairs. Eliminates deadhead. 4 pairs found on demo load.</div></div>
-      <div class="feature"><div class="feature-dot"></div><div class="feature-text"><strong>Auto-Outreach</strong> -- Contacts top carriers via email/SMS or Rachel voice AI. No broker phone time wasted.</div></div>
-      <div class="feature"><div class="feature-dot"></div><div class="feature-text"><strong>Billing</strong> -- Shipper invoice + carrier payment generated on delivery. Same-day instead of 3-7 day lag.</div></div>
+    <div class="pipeline">
+      <div class="pipe-step"><div class="pipe-num">1</div><div class="pipe-label">Contract</div></div>
+      <div class="pipe-arrow">&rarr;</div>
+      <div class="pipe-step"><div class="pipe-num">2</div><div class="pipe-label">Rate Intel</div></div>
+      <div class="pipe-arrow">&rarr;</div>
+      <div class="pipe-step"><div class="pipe-num">3</div><div class="pipe-label">Carrier Match</div></div>
+      <div class="pipe-arrow">&rarr;</div>
+      <div class="pipe-step"><div class="pipe-num">4</div><div class="pipe-label">Load Match</div></div>
+      <div class="pipe-arrow">&rarr;</div>
+      <div class="pipe-step"><div class="pipe-num">5</div><div class="pipe-label">Outreach</div></div>
+      <div class="pipe-arrow">&rarr;</div>
+      <div class="pipe-step"><div class="pipe-num">6</div><div class="pipe-label">Rate Con</div></div>
+      <div class="pipe-arrow">&rarr;</div>
+      <div class="pipe-step"><div class="pipe-num">7</div><div class="pipe-label">Tracking</div></div>
+      <div class="pipe-arrow">&rarr;</div>
+      <div class="pipe-step"><div class="pipe-num">8</div><div class="pipe-label">Billing</div></div>
     </div>
-    <div class="col-card">
-      <div class="col-title">BUSINESS IMPACT (50 LOADS/DAY)</div>
-      <div class="feature"><div class="feature-dot" style="background:#0EA5E9"></div><div class="feature-text"><strong>45 min/load -> under 1 second</strong><br>Broker shifts from data entry to exception management</div></div>
-      <div class="feature"><div class="feature-dot" style="background:#0EA5E9"></div><div class="feature-text"><strong>12 loads/broker/day -> 50+</strong><br>Same team handles 3-4x volume or cut 3 FTEs</div></div>
-      <div class="feature"><div class="feature-dot" style="background:#0EA5E9"></div><div class="feature-text"><strong>Backhaul capture: 5% -> 25%+</strong><br>$200 savings per match x 50 loads = $2K/day recovered</div></div>
-      <div class="feature"><div class="feature-dot" style="background:#0EA5E9"></div><div class="feature-text"><strong>Margin improvement: 2-5%</strong><br>Data-driven pricing replaces gut-feel quoting</div></div>
-      <div class="feature"><div class="feature-dot" style="background:#0EA5E9"></div><div class="feature-text"><strong>$2M-3M/year additional margin</strong><br>From combined backhaul optimization + rate intelligence</div></div>
+
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-value green">99%</div><div class="kpi-label">Time Reduction Per Load</div></div>
+      <div class="kpi"><div class="kpi-value blue">3-4x</div><div class="kpi-label">Broker Capacity Increase</div></div>
+      <div class="kpi"><div class="kpi-value amber">$500K+</div><div class="kpi-label">Annual Backhaul Recovery</div></div>
+      <div class="kpi"><div class="kpi-value purple">0</div><div class="kpi-label">Missed Check Calls</div></div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">WHAT EACH STAGE DOES</div>
+        <div class="feature"><div class="feature-dot"></div><div class="feature-text"><strong>Rate Intelligence</strong> -- Contract rates, lane history, corridor benchmarks, DAT. Confidence-scored.</div></div>
+        <div class="feature"><div class="feature-dot"></div><div class="feature-text"><strong>Carrier Match</strong> -- 50+ carriers scored by equipment, lane, safety, reliability. Top 5 ranked.</div></div>
+        <div class="feature"><div class="feature-dot"></div><div class="feature-text"><strong>Load-to-Load</strong> -- Backhaul, chain, round-trip pairs. Eliminates deadhead miles.</div></div>
+        <div class="feature"><div class="feature-dot"></div><div class="feature-text"><strong>Auto-Outreach</strong> -- Rachel calls/emails top carriers. Negotiates. Books.</div></div>
+        <div class="feature"><div class="feature-dot"></div><div class="feature-text"><strong>Billing</strong> -- Invoice + carrier payment on delivery. P&L calculated instantly.</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">BUSINESS IMPACT (50 LOADS/DAY)</div>
+        <div class="feature"><div class="feature-dot" style="background:#0EA5E9"></div><div class="feature-text"><strong>45 min/load -> under 1 second</strong><br>Data entry eliminated. Broker manages exceptions only.</div></div>
+        <div class="feature"><div class="feature-dot" style="background:#0EA5E9"></div><div class="feature-text"><strong>12 loads/broker/day -> 50+</strong><br>Same team handles 3-4x volume.</div></div>
+        <div class="feature"><div class="feature-dot" style="background:#0EA5E9"></div><div class="feature-text"><strong>Backhaul capture: 5% -> 25%+</strong><br>$200 savings per match = $2K/day recovered.</div></div>
+        <div class="feature"><div class="feature-dot" style="background:#0EA5E9"></div><div class="feature-text"><strong>$2M-3M/year additional margin</strong><br>From rate intelligence + backhaul optimization.</div></div>
+      </div>
     </div>
   </div>
 
-  <!-- Demo box -->
-  <div class="demo-box">
-    <div class="demo-title">LIVE DEMO -- DEMO-8001</div>
-    <div class="demo-route">
-      <div class="demo-node">Miami, FL</div>
-      <div class="demo-line"></div>
-      <div class="demo-node-end">Atlanta, GA</div>
+  <div class="divider"></div>
+
+  <!-- SECTION 3: RACHEL - THE INVISIBLE EMPLOYEE -->
+  <div class="section">
+    <div class="section-num">03 -- THE INVISIBLE EMPLOYEE</div>
+    <div class="section-title">RACHEL: YOUR <span>AI FREIGHT BROKER</span></div>
+    <div class="section-sub">Rachel is not a chatbot. She's a full-time freight broker who happens to be AI. She calls carriers, negotiates rates, books loads, tracks shipments, and updates everything -- by voice.</div>
+
+    <div class="three-col">
+      <div class="card-blue">
+        <div class="card-title">OUTBOUND -- BOOK CARRIERS</div>
+        <div class="feature"><div class="feature-dot" style="background:#0EA5E9"></div><div class="feature-text">Calls top-ranked carriers for open loads</div></div>
+        <div class="feature"><div class="feature-dot" style="background:#0EA5E9"></div><div class="feature-text">Quotes rate, answers questions</div></div>
+        <div class="feature"><div class="feature-dot" style="background:#0EA5E9"></div><div class="feature-text">Handles objections with market data</div></div>
+        <div class="feature"><div class="feature-dot" style="background:#0EA5E9"></div><div class="feature-text">Collects driver name, truck #</div></div>
+        <div class="feature"><div class="feature-dot" style="background:#0EA5E9"></div><div class="feature-text">Sends rate confirmation</div></div>
+      </div>
+      <div class="card-blue">
+        <div class="card-title">TRACKING -- CHECK CALLS</div>
+        <div class="feature"><div class="feature-dot" style="background:#238636"></div><div class="feature-text">Calls driver every 4 hours</div></div>
+        <div class="feature"><div class="feature-dot" style="background:#238636"></div><div class="feature-text">Asks location, ETA, issues</div></div>
+        <div class="feature"><div class="feature-dot" style="background:#238636"></div><div class="feature-text">Logs updates to system in real-time</div></div>
+        <div class="feature"><div class="feature-dot" style="background:#238636"></div><div class="feature-text">Notifies shipper proactively</div></div>
+        <div class="feature"><div class="feature-dot" style="background:#238636"></div><div class="feature-text">Confirms delivery + POD</div></div>
+      </div>
+      <div class="card-blue">
+        <div class="card-title">INBOUND -- HANDLE CALLS</div>
+        <div class="feature"><div class="feature-dot" style="background:#F59E0B"></div><div class="feature-text">Carrier calls in about a posted load</div></div>
+        <div class="feature"><div class="feature-dot" style="background:#F59E0B"></div><div class="feature-text">Shipper calls with new freight</div></div>
+        <div class="feature"><div class="feature-dot" style="background:#F59E0B"></div><div class="feature-text">Driver calls with delay or issue</div></div>
+        <div class="feature"><div class="feature-dot" style="background:#F59E0B"></div><div class="feature-text">Escalates to human when needed</div></div>
+        <div class="feature"><div class="feature-dot" style="background:#F59E0B"></div><div class="feature-text">Logs everything to CRM + TMS</div></div>
+      </div>
     </div>
-    <div class="demo-stats">
-      <div class="demo-stat"><div class="demo-stat-val green">$600</div><div class="demo-stat-label">Gross Profit</div></div>
-      <div class="demo-stat"><div class="demo-stat-val green">24.49%</div><div class="demo-stat-label">Margin</div></div>
-      <div class="demo-stat"><div class="demo-stat-val blue">47</div><div class="demo-stat-label">Carriers Qualified</div></div>
-      <div class="demo-stat"><div class="demo-stat-val amber">4</div><div class="demo-stat-label">Backhaul Pairs</div></div>
-      <div class="demo-stat"><div class="demo-stat-val purple">0.3s</div><div class="demo-stat-label">Pipeline Time</div></div>
+
+    <!-- Rachel conversation example -->
+    <div class="card" style="border-color: #0EA5E9;">
+      <div class="card-title">LIVE EXAMPLE -- RACHEL BOOKS A CARRIER</div>
+      <div class="convo">
+        <div class="convo-row"><div class="convo-label rachel">RACHEL</div><div class="convo-bubble rachel">Hi, this is Rachel from CW Carriers. We have a load, Miami to Atlanta, dry van, 42,000 lbs, picking up Thursday. Rate is $1,850. Can you cover it?</div></div>
+        <div class="convo-row"><div class="convo-label carrier">CARRIER</div><div class="convo-bubble carrier">What's the pickup window?</div></div>
+        <div class="convo-row"><div class="convo-label rachel">RACHEL</div><div class="convo-bubble rachel">Between 8am and noon at the Publix DC in Miami. Dock appointment required.</div></div>
+        <div class="convo-row"><div class="convo-label carrier">CARRIER</div><div class="convo-bubble carrier">Rate is a little low. Can you do $2,000?</div></div>
+        <div class="convo-row"><div class="convo-label rachel">RACHEL</div><div class="convo-bubble rachel">Our market data shows this lane averaging $2.79 per mile. I can go to $1,925 -- that's my best on this one.</div></div>
+        <div class="convo-row"><div class="convo-label carrier">CARRIER</div><div class="convo-bubble carrier">OK, I'll take it.</div></div>
+        <div class="convo-row"><div class="convo-label rachel">RACHEL</div><div class="convo-bubble rachel">Great. I'm sending the rate con now. Can I get the driver name and truck number?</div></div>
+        <div class="convo-row"><div class="convo-label carrier">CARRIER</div><div class="convo-bubble carrier">Juan, truck 4521.</div></div>
+        <div class="convo-row"><div class="convo-label system">SYSTEM</div><div class="convo-bubble system">Load booked. Rate con RC-8001 sent. Driver: Juan, Truck #4521. Status: COVERED. Shipper notified.</div></div>
+      </div>
+    </div>
+
+    <!-- Rachel check call example -->
+    <div class="two-col" style="margin-top: 16px;">
+      <div class="card" style="border-color: #238636;">
+        <div class="card-title" style="color: #238636;">RACHEL CHECK CALL -- IN TRANSIT</div>
+        <div class="convo">
+          <div class="convo-row"><div class="convo-label rachel">RACHEL</div><div class="convo-bubble rachel">Hi Juan, Rachel from CW. Checking in on load CW-8001, Miami to Atlanta. Are you loaded?</div></div>
+          <div class="convo-row"><div class="convo-label carrier">DRIVER</div><div class="convo-bubble carrier">Yeah, loaded at 9am. Heading north on I-95.</div></div>
+          <div class="convo-row"><div class="convo-label rachel">RACHEL</div><div class="convo-bubble rachel">Perfect. What's your ETA to Atlanta?</div></div>
+          <div class="convo-row"><div class="convo-label carrier">DRIVER</div><div class="convo-bubble carrier">About 10 hours, should be there by 7pm.</div></div>
+          <div class="convo-row"><div class="convo-label rachel">RACHEL</div><div class="convo-bubble rachel">Got it. I'll check back in 4 hours. Drive safe.</div></div>
+          <div class="convo-row"><div class="convo-label system">SYSTEM</div><div class="convo-bubble system">Check call logged. Location: I-95 NB. ETA: 7:00 PM. Next call: 4hrs. Shipper notified.</div></div>
+        </div>
+      </div>
+      <div class="card" style="border-color: #8957E5;">
+        <div class="card-title" style="color: #8957E5;">RACHEL CONFIRMS DELIVERY</div>
+        <div class="convo">
+          <div class="convo-row"><div class="convo-label carrier">DRIVER</div><div class="convo-bubble carrier">Hey Rachel, I just delivered in Atlanta.</div></div>
+          <div class="convo-row"><div class="convo-label rachel">RACHEL</div><div class="convo-bubble rachel">Great. Any issues at the dock? Detention time?</div></div>
+          <div class="convo-row"><div class="convo-label carrier">DRIVER</div><div class="convo-bubble carrier">Nope, clean delivery. Took about 30 minutes to unload.</div></div>
+          <div class="convo-row"><div class="convo-label rachel">RACHEL</div><div class="convo-bubble rachel">Perfect. POD received. Your payment of $1,925 will process in 30 days. Thanks Juan.</div></div>
+          <div class="convo-row"><div class="convo-label system">SYSTEM</div><div class="convo-bubble system">Status: DELIVERED. Invoice INV-8001 ($2,450) sent to shipper. Carrier payment PAY-8001 ($1,925) queued. Profit: $525 (21.4%).</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 4: LIVE DEMO -->
+  <div class="section">
+    <div class="section-num">04 -- LIVE DEMO</div>
+    <div class="section-title">SEE IT <span>IN ACTION</span></div>
+
+    <div class="demo-box">
+      <div class="demo-title">AUTOPILOT RUN -- DEMO-8001</div>
+      <div class="demo-route">
+        <div class="demo-node">Miami, FL</div>
+        <div class="demo-line"></div>
+        <div class="demo-node-end">Atlanta, GA</div>
+      </div>
+      <div style="font-size: 11px; color: #8B949E; margin-bottom: 12px; text-align: center;">Publix Super Markets | Dry Van | 42,000 lbs | 662 miles | Fresh Produce</div>
+      <div class="demo-stats">
+        <div class="demo-stat"><div class="demo-stat-val green">$600</div><div class="demo-stat-label">Gross Profit</div></div>
+        <div class="demo-stat"><div class="demo-stat-val green">24.49%</div><div class="demo-stat-label">Margin</div></div>
+        <div class="demo-stat"><div class="demo-stat-val blue">47</div><div class="demo-stat-label">Carriers Matched</div></div>
+        <div class="demo-stat"><div class="demo-stat-val amber">4</div><div class="demo-stat-label">Backhaul Pairs</div></div>
+        <div class="demo-stat"><div class="demo-stat-val purple">0.3s</div><div class="demo-stat-label">Pipeline Time</div></div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card-accent">
+        <div class="card-title" style="color: #238636;">BACKHAUL FOUND AUTOMATICALLY</div>
+        <div style="font-size: 12px; color: #C9D1D9; line-height: 1.6;">
+          <strong>Primary:</strong> Miami, FL &rarr; Atlanta, GA (662 mi, $2,450)<br>
+          <strong>Backhaul:</strong> Atlanta, GA &rarr; Jacksonville, FL (346 mi, $1,650)<br>
+          <strong>Deadhead:</strong> only 10 miles<br>
+          <strong>Combined RPM:</strong> $4.03/mi<br>
+          <strong>Utilization:</strong> +8.8% improvement<br><br>
+          Without this, the carrier drives 662 miles back to Florida <strong>empty</strong>. With this, they're loaded both ways. Lower carrier rate, higher margin.
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">NEXT STEPS</div>
+        <div class="feature"><div class="feature-dot"></div><div class="feature-text"><strong>1. Send us your data</strong> -- Load history, carrier list, shipper accounts, rate benchmarks (sample CSVs provided)</div></div>
+        <div class="feature"><div class="feature-dot"></div><div class="feature-text"><strong>2. We import & configure</strong> -- Column mapping, validation, Autopilot rules tuned to your margins</div></div>
+        <div class="feature"><div class="feature-dot"></div><div class="feature-text"><strong>3. Go live</strong> -- Autopilot runs on your real loads. Rachel starts making calls.</div></div>
+        <div class="feature"><div class="feature-dot"></div><div class="feature-text"><strong>4. DAT integration</strong> -- Connect your DAT RateView account for live market rates</div></div>
+        <div class="feature"><div class="feature-dot"></div><div class="feature-text"><strong>5. Scale</strong> -- System gets smarter with every load. Rate confidence improves daily.</div></div>
+      </div>
     </div>
   </div>
 
   <!-- CTA -->
   <div class="cta">
-    <div class="cta-text">Next step: import your real load history, carriers, and shippers to activate Autopilot on live operations.</div>
     <a href="https://aiagent.ringlypro.com/cw_carriers/autopilot" class="cta-link" target="_blank">OPEN LIVE AUTOPILOT DASHBOARD</a>
     <div class="cta-url">https://aiagent.ringlypro.com/cw_carriers/autopilot</div>
   </div>
