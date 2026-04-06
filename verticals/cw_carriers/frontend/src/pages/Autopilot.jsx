@@ -10,6 +10,32 @@ function printReport() {
   // Clone content and strip buttons
   const clone = el.cloneNode(true);
   clone.querySelectorAll('button').forEach(b => b.remove());
+  // Replace iframes with static map images (iframes don't render in print)
+  const KEY = 'AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8';
+  clone.querySelectorAll('iframe').forEach(iframe => {
+    const src = iframe.getAttribute('src') || '';
+    const originMatch = src.match(/origin=([^&]+)/);
+    const destMatch = src.match(/destination=([^&]+)/);
+    const waypointsMatch = src.match(/waypoints=([^&]+)/);
+    if (originMatch && destMatch) {
+      const origin = decodeURIComponent(originMatch[1]);
+      const dest = decodeURIComponent(destMatch[1]);
+      let path = `color:0x0EA5E9ff|weight:4|${origin}|`;
+      if (waypointsMatch) {
+        const wps = decodeURIComponent(waypointsMatch[1]).split('|');
+        path += wps.join('|') + '|';
+      }
+      path += dest;
+      const markers = `markers=color:blue|label:A|${encodeURIComponent(origin)}&markers=color:green|label:B|${encodeURIComponent(dest)}`;
+      const staticUrl = `https://maps.googleapis.com/maps/api/staticmap?size=896x300&scale=2&maptype=roadmap&path=enc:&${markers}&path=${encodeURIComponent(path)}&key=${KEY}`;
+      // Use directions-based static map via simple markers + auto-zoom
+      const simpleUrl = `https://maps.googleapis.com/maps/api/staticmap?size=896x300&scale=2&maptype=roadmap&${markers}&key=${KEY}`;
+      const img = document.createElement('img');
+      img.src = simpleUrl;
+      img.style.cssText = 'width:100%;height:300px;object-fit:cover;display:block;border-radius:8px;';
+      iframe.replaceWith(img);
+    }
+  });
   // Write clean print page
   win.document.write(`<!DOCTYPE html><html><head><title>Pipeline Report</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
