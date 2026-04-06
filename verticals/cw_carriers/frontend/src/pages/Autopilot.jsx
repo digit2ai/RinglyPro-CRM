@@ -1,25 +1,29 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 
-// Print styles for report export
-const printCSS = `@media print {
-  body > *:not(#pipeline-report-overlay) { display: none !important; }
-  #pipeline-report-overlay { position: static !important; background: #fff !important; padding: 0 !important; }
-  #pipeline-report { border: none !important; margin: 0 !important; max-width: 100% !important; background: #fff !important; color: #000 !important; }
-  #pipeline-report * { color: #000 !important; border-color: #ddd !important; background: #fff !important; }
-  #pipeline-report [style*="background: #161B22"], #pipeline-report [style*="background: #0D1117"] { background: #f8f8f8 !important; }
-  #pipeline-report [style*="background: linear-gradient"] { background: #f0f0f0 !important; border-bottom-color: #333 !important; }
-  #pipeline-report [style*="color: #238636"] { color: #006600 !important; }
-  #pipeline-report [style*="color: #0EA5E9"] { color: #0066cc !important; }
-  #pipeline-report [style*="color: #EF4444"] { color: #cc0000 !important; }
-  #pipeline-report [style*="color: #F59E0B"] { color: #cc8800 !important; }
-  button { display: none !important; }
-}`;
-if (typeof document !== 'undefined' && !document.getElementById('autopilot-print-css')) {
-  const style = document.createElement('style');
-  style.id = 'autopilot-print-css';
-  style.textContent = printCSS;
-  document.head.appendChild(style);
+// Print report in a new window with clean formatting
+function printReport() {
+  const el = document.getElementById('pipeline-report');
+  if (!el) return;
+  const win = window.open('', '_blank', 'width=1000,height=800');
+  if (!win) return;
+  // Clone content and strip buttons
+  const clone = el.cloneNode(true);
+  clone.querySelectorAll('button').forEach(b => b.remove());
+  // Write clean print page
+  win.document.write(`<!DOCTYPE html><html><head><title>Pipeline Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0D1117; color: #E6EDF3; padding: 0; }
+  @media print {
+    body { background: #fff !important; }
+    #pipeline-report, #pipeline-report * { color-adjust: exact !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  }
+</style></head><body>${clone.outerHTML}</body></html>`);
+  win.document.close();
+  // Wait for fonts to load then print
+  setTimeout(() => { win.focus(); win.print(); }, 600);
 }
 
 const STAGES = [
@@ -938,7 +942,7 @@ function PipelineReport({ run, onClose }) {
           {/* ── ACTIONS ── */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <button onClick={() => window.print()} style={r.printBtn}>Print / Export PDF</button>
+              <button onClick={printReport} style={r.printBtn}>Print / Export PDF</button>
               <button onClick={onClose} style={r.closeBtn}>Close Report</button>
             </div>
             <div style={r.watermark}>RinglyPro FreightMind Autopilot -- Powered by Digit2AI</div>
