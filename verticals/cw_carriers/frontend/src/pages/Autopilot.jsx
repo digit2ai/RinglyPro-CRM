@@ -30,6 +30,8 @@ export default function Autopilot() {
   const [startMode, setStartMode] = useState('autopilot');
   const [openLoads, setOpenLoads] = useState([]);
   const [events, setEvents] = useState([]);
+  const [startError, setStartError] = useState('');
+  const [startSuccess, setStartSuccess] = useState(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -62,14 +64,25 @@ export default function Autopilot() {
   }
 
   async function handleStartPipeline() {
+    setStartError('');
+    setStartSuccess(null);
     const val = startLoadId ? startLoadId.toString().trim() : null;
-    const isNumeric = val && /^\d+$/.test(val);
+    if (!val) { setStartError('Enter a Load ID or Load Reference'); return; }
+    const isNumeric = /^\d+$/.test(val);
     const body = { mode: startMode };
     if (isNumeric) body.load_id = parseInt(val);
-    else if (val) body.load_ref = val;
-    await handleAction(null, 'start', body);
-    setShowStart(false);
-    setStartLoadId('');
+    else body.load_ref = val;
+    try {
+      const res = await api.post('/pipeline-auto/runs', body);
+      const run = res.data.data;
+      setStartSuccess(run);
+      fetchData();
+      // Auto-switch to history tab if completed instantly
+      if (run && run.status === 'completed') setTab('history');
+    } catch (e) {
+      const msg = e.response?.data?.error || e.message || 'Failed to start pipeline';
+      setStartError(msg);
+    }
   }
 
   async function handleConfigSave(newConfig) {
@@ -208,25 +221,51 @@ export default function Autopilot() {
 
       {/* Start Pipeline Modal */}
       {showStart && (
-        <Modal onClose={() => setShowStart(false)} title="Start New Pipeline">
-          <div style={s.formGroup}>
-            <label style={s.formLabel}>Load ID</label>
-            <select value={startLoadId} onChange={e => setStartLoadId(e.target.value)} style={s.formInput}>
-              <option value="">-- Select load or leave empty --</option>
-              {openLoads.map(l => (
-                <option key={l.id} value={l.id}>{l.load_ref || `#${l.id}`} - {l.origin} to {l.destination}</option>
-              ))}
-            </select>
-            <input type="text" placeholder="Or type Load Ref (e.g. CW-71158) or numeric ID" value={startLoadId} onChange={e => setStartLoadId(e.target.value)} style={{ ...s.formInput, marginTop: 8 }} />
-          </div>
-          <div style={s.formGroup}>
-            <label style={s.formLabel}>Mode</label>
-            <select value={startMode} onChange={e => setStartMode(e.target.value)} style={s.formInput}>
-              <option value="autopilot">Autopilot</option>
-              <option value="manual">Manual</option>
-            </select>
-          </div>
-          <button onClick={handleStartPipeline} style={s.btnPrimary}>Launch Pipeline</button>
+        <Modal onClose={() => { setShowStart(false); setStartError(''); setStartSuccess(null); }} title="Start New Pipeline">
+          {startSuccess ? (
+            <div>
+              <div style={{ background: '#238636', color: '#fff', padding: '12px 16px', borderRadius: 6, marginBottom: 12, fontSize: 13, fontWeight: 600 }}>
+                Pipeline Run #{startSuccess.id} launched successfully
+              </div>
+              <div style={{ background: '#161B22', border: '1px solid #21262D', borderRadius: 8, padding: 16, fontSize: 12, color: '#E6EDF3' }}>
+                <div style={{ marginBottom: 8 }}><strong>Load:</strong> {startSuccess.load_ref || `#${startSuccess.load_id}`}</div>
+                <div style={{ marginBottom: 8 }}><strong>Status:</strong> <span style={{ color: STATUS_COLORS[startSuccess.status] }}>{startSuccess.status.toUpperCase()}</span></div>
+                <div style={{ marginBottom: 8 }}><strong>Stage:</strong> {startSuccess.current_stage?.replace(/_/g, ' ')}</div>
+                {startSuccess.status === 'completed' && startSuccess.result_rate_confirmation && (
+                  <div style={{ marginBottom: 8 }}><strong>Margin:</strong> {startSuccess.result_rate_confirmation.margin_pct}% (${startSuccess.result_rate_confirmation.margin?.toLocaleString()})</div>
+                )}
+                {startSuccess.result_carrier_match?.qualifying_carriers && (
+                  <div style={{ marginBottom: 8 }}><strong>Carriers Matched:</strong> {startSuccess.result_carrier_match.qualifying_carriers} qualified</div>
+                )}
+                {startSuccess.result_carrier_match?.top_matches?.[0] && (
+                  <div><strong>Top Carrier:</strong> {startSuccess.result_carrier_match.top_matches[0].carrier_name} (score: {startSuccess.result_carrier_match.top_matches[0].match_score})</div>
+                )}
+              </div>
+              <button onClick={() => { setShowStart(false); setStartSuccess(null); setStartLoadId(''); }} style={{ ...s.btnPrimary, marginTop: 12 }}>Close</button>
+            </div>
+          ) : (
+            <>
+              {startError && <div style={{ background: '#EF444422', border: '1px solid #EF4444', color: '#EF4444', padding: '8px 12px', borderRadius: 6, marginBottom: 12, fontSize: 12 }}>{startError}</div>}
+              <div style={s.formGroup}>
+                <label style={s.formLabel}>Load ID or Reference</label>
+                <select value={startLoadId} onChange={e => { setStartLoadId(e.target.value); setStartError(''); }} style={s.formInput}>
+                  <option value="">-- Select from open loads --</option>
+                  {openLoads.map(l => (
+                    <option key={l.id} value={l.load_ref || l.id}>{l.load_ref || `#${l.id}`} - {l.origin} to {l.destination}</option>
+                  ))}
+                </select>
+                <input type="text" placeholder="Or type Load Ref (e.g. CW-71158) or numeric ID" value={startLoadId} onChange={e => { setStartLoadId(e.target.value); setStartError(''); }} style={{ ...s.formInput, marginTop: 8 }} />
+              </div>
+              <div style={s.formGroup}>
+                <label style={s.formLabel}>Mode</label>
+                <select value={startMode} onChange={e => setStartMode(e.target.value)} style={s.formInput}>
+                  <option value="autopilot">Autopilot</option>
+                  <option value="manual">Manual</option>
+                </select>
+              </div>
+              <button onClick={handleStartPipeline} style={s.btnPrimary}>Launch Pipeline</button>
+            </>
+          )}
         </Modal>
       )}
     </div>
