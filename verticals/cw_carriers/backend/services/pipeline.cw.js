@@ -151,13 +151,40 @@ async function exec_rate_analysis(run, config) {
     rateData = { error: e.message, pricing_method: 'failed' };
   }
 
+  // If the load has its own sell_rate/buy_rate from lg_loads, use those as ground truth
+  let loadRates = null;
+  if (run.load_id) {
+    const lgRows = await safeQuery('SELECT sell_rate, buy_rate, miles, rate_per_mile FROM lg_loads WHERE id = $1', [run.load_id]);
+    if (lgRows.length && lgRows[0].sell_rate) {
+      const lr = lgRows[0];
+      const sell = parseFloat(lr.sell_rate) || 0;
+      const buy = parseFloat(lr.buy_rate) || 0;
+      const mi = parseFloat(lr.miles) || parseFloat(contract.miles) || 0;
+      loadRates = { sell_rate: sell, buy_rate: buy, miles: mi, rate_per_mile: mi > 0 ? Math.round((sell / mi) * 100) / 100 : null };
+    }
+  }
+
+  // Build recommendation — prefer actual load rates when available, fall back to pricing service
+  const rec = rateData?.recommendation || {};
+  const finalRec = loadRates ? {
+    suggested_sell_rate: loadRates.sell_rate,
+    suggested_buy_rate: loadRates.buy_rate,
+    rate_per_mile: loadRates.rate_per_mile,
+    margin_pct: loadRates.sell_rate > 0 ? Math.round(((loadRates.sell_rate - loadRates.buy_rate) / loadRates.sell_rate) * 10000) / 100 : 0,
+    estimated_margin: Math.round((loadRates.sell_rate - loadRates.buy_rate) * 100) / 100,
+    pricing_service_sell: rec.suggested_sell_rate || null,
+    pricing_service_buy: rec.suggested_buy_rate || null,
+  } : rec;
+
   const result = {
-    recommendation: rateData?.recommendation || null,
-    confidence: rateData?.confidence_band?.confidence || 'low',
-    pricing_method: rateData?.pricing_method || 'unknown',
+    recommendation: finalRec,
+    confidence: loadRates ? (loadRates.buy_rate > 0 ? 'high' : 'medium') : (rateData?.confidence_band?.confidence || 'low'),
+    pricing_method: loadRates ? 'load_contract_rates' : (rateData?.pricing_method || 'unknown'),
     dat: rateData?.dat || null,
     data_quality: rateData?.data_quality || {},
-    rationale: rateData?.rationale || [],
+    rationale: loadRates
+      ? [`Contract rates: Sell $${loadRates.sell_rate.toLocaleString()} / Buy $${loadRates.buy_rate.toLocaleString()}`, ...(rateData?.rationale || [])]
+      : (rateData?.rationale || []),
     analyzed_at: new Date().toISOString(),
   };
 
@@ -322,8 +349,15 @@ async function exec_rate_confirmation(run, config) {
   const contract = run.result_contract_received || {};
   const minMargin = stageRules.pause_if_margin_below_pct || parseFloat(config.min_margin_pct) || 10;
 
-  const suggestedBuy = rateData?.recommendation?.suggested_buy_rate || 0;
+  // Determine sell rate (shipper pays us) — prefer contract, then recommendation
   const sellRate = parseFloat(contract.shipper_rate) || rateData?.recommendation?.suggested_sell_rate || 0;
+  // Determine buy rate (we pay carrier) — use recommendation, but cap at sell rate to avoid negative margin from mismatched scales
+  let suggestedBuy = rateData?.recommendation?.suggested_buy_rate || 0;
+  // If buy > sell, pricing is on a different scale — derive buy from sell using target margin
+  if (suggestedBuy > sellRate && sellRate > 0) {
+    const targetMarginPct = parseFloat(config.target_margin_pct) || 15;
+    suggestedBuy = Math.round(sellRate * (1 - targetMarginPct / 100) * 100) / 100;
+  }
   const margin = sellRate - suggestedBuy;
   const marginPct = sellRate > 0 ? (margin / sellRate) * 100 : 0;
 

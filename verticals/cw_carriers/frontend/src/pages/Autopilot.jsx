@@ -805,10 +805,21 @@ function PipelineReport({ run, onClose }) {
             </div>
             {pairs.length > 0 ? (
               <table style={r.table}>
-                <thead><tr><th style={r.th}>Pair Load</th><th style={r.th}>Type</th><th style={r.th}>Savings</th></tr></thead>
+                <thead><tr><th style={r.th}>Pair Load</th><th style={r.th}>Lane</th><th style={r.th}>Type</th><th style={r.th}>Score</th><th style={r.th}>Deadhead</th><th style={r.th}>Combined RPM</th></tr></thead>
                 <tbody>
                   {pairs.map((p, i) => (
-                    <tr key={i}><td style={r.td}>{p.load_ref || p.paired_load_id}</td><td style={r.td}>{p.pair_type}</td><td style={r.td}>{p.savings_pct}%</td></tr>
+                    <tr key={i}>
+                      <td style={{ ...r.td, fontWeight: 600 }}>{p.load_b_ref || p.load_ref || `#${p.load_b_id}`}</td>
+                      <td style={r.tdMuted}>{p.load_b_lane || '--'}</td>
+                      <td style={r.td}>
+                        <span style={{ ...r.badge, background: p.pair_type === 'backhaul' ? '#23863622' : p.pair_type === 'round_trip' ? '#0EA5E922' : '#F59E0B22', color: p.pair_type === 'backhaul' ? '#238636' : p.pair_type === 'round_trip' ? '#0EA5E9' : '#F59E0B' }}>
+                          {(p.pair_type || 'unknown').toUpperCase()}
+                        </span>
+                      </td>
+                      <td style={r.td}>{p.match_score || p.score || '--'}</td>
+                      <td style={r.td}>{p.deadhead_miles != null ? `${p.deadhead_miles} mi` : '--'}</td>
+                      <td style={r.td}>{p.combined_rpm ? `$${p.combined_rpm}/mi` : '--'}</td>
+                    </tr>
                   ))}
                 </tbody>
               </table>
