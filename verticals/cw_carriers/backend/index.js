@@ -31,6 +31,7 @@ const brokerageDemoRoutes = require('./routes/demo-brokerage');
 const neuralCwRoutes = require('./routes/neural-cw');
 const crmAgentRoutes = require('./routes/crm-agent');
 const pipelineRoutes = require('./routes/pipeline');
+const pipelineAutoRoutes = require('./routes/pipeline-auto');
 const roiRoutes = require('./routes/roi');
 // FreightMind AI routes
 const agentsRoutes = require('./routes/agents');
@@ -67,6 +68,7 @@ router.use('/api/nda', require('./routes/nda'));
 router.use('/api/neural', neuralCwRoutes);
 router.use('/api/crm-agent', crmAgentRoutes);
 router.use('/api/pipeline', pipelineRoutes);
+router.use('/api/pipeline-auto', pipelineAutoRoutes);
 router.use('/api/roi', roiRoutes);
 router.use('/api/fmcsa', require('./routes/fmcsa'));
 router.use('/api/matching', require('./routes/carrier-matching'));

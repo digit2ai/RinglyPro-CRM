@@ -1,0 +1,501 @@
+sku,description,unit_of_measure,length_mm,width_mm,height_mm,weight_kg,pieces_per_picking_unit,pieces_per_pallet,temperature_range,category
+10001,Apparel Item 10001,piece,322,325,28,19.11,1,96,ambient,Apparel
+10002,Home & Garden Item 10002,piece,435,74,177,29.21,1,96,ambient,Home & Garden
+10003,Sports Item 10003,case,501,234,41,0.58,12,96,ambient,Sports
+10004,Food & Beverage Item 10004,piece,359,121,176,23.45,1,96,34F,Food & Beverage
+10005,Health Item 10005,piece,198,224,83,10.97,1,96,34F,Health
+10006,Industrial Item 10006,case,145,89,169,15.62,12,96,28F,Industrial
+10007,Automotive Item 10007,piece,446,153,78,15.04,1,96,ambient,Automotive
+10008,Electronics Item 10008,piece,413,148,17,12.88,1,96,ambient,Electronics
+10009,Apparel Item 10009,case,477,42,108,4.58,12,96,ambient,Apparel
+10010,Home & Garden Item 10010,piece,529,123,105,14.05,1,96,ambient,Home & Garden
+10011,Sports Item 10011,piece,456,210,14,25.65,1,96,34F,Sports
+10012,Food & Beverage Item 10012,case,493,317,67,17.39,12,96,34F,Food & Beverage
+10013,Health Item 10013,piece,520,297,142,26.62,1,96,28F,Health
+10014,Industrial Item 10014,piece,238,339,168,10.56,1,96,ambient,Industrial
+10015,Automotive Item 10015,case,397,335,177,6.53,12,96,ambient,Automotive
+10016,Electronics Item 10016,piece,147,271,90,3.99,1,96,ambient,Electronics
+10017,Apparel Item 10017,piece,67,186,126,16.15,1,96,ambient,Apparel
+10018,Home & Garden Item 10018,case,351,60,189,18.65,12,96,34F,Home & Garden
+10019,Sports Item 10019,piece,458,47,102,19.90,1,96,34F,Sports
+10020,Food & Beverage Item 10020,piece,155,112,128,18.16,1,96,28F,Food & Beverage
+10021,Health Item 10021,case,471,240,136,8.79,12,96,ambient,Health
+10022,Industrial Item 10022,piece,205,57,156,29.92,1,96,ambient,Industrial
+10023,Automotive Item 10023,piece,385,312,109,9.95,1,96,ambient,Automotive
+10024,Electronics Item 10024,case,247,234,152,20.04,12,96,ambient,Electronics
+10025,Apparel Item 10025,piece,172,235,90,10.70,1,96,34F,Apparel
+10026,Home & Garden Item 10026,piece,69,164,68,21.35,1,96,34F,Home & Garden
+10027,Sports Item 10027,case,69,174,35,4.51,12,96,28F,Sports
+10028,Food & Beverage Item 10028,piece,173,320,136,29.88,1,96,ambient,Food & Beverage
+10029,Health Item 10029,piece,439,287,25,3.31,1,96,ambient,Health
+10030,Industrial Item 10030,case,170,138,178,25.33,12,96,ambient,Industrial
+10031,Automotive Item 10031,piece,145,57,58,14.38,1,96,ambient,Automotive
+10032,Electronics Item 10032,piece,519,211,181,6.69,1,96,34F,Electronics
+10033,Apparel Item 10033,case,92,274,13,3.75,12,96,34F,Apparel
+10034,Home & Garden Item 10034,piece,211,349,116,24.55,1,96,28F,Home & Garden
+10035,Sports Item 10035,piece,277,264,171,2.25,1,96,ambient,Sports
+10036,Food & Beverage Item 10036,case,141,177,194,6.89,12,96,ambient,Food & Beverage
+10037,Health Item 10037,piece,507,352,49,0.90,1,96,ambient,Health
+10038,Industrial Item 10038,piece,227,201,60,8.98,1,96,ambient,Industrial
+10039,Automotive Item 10039,case,417,147,40,22.83,12,96,34F,Automotive
+10040,Electronics Item 10040,piece,333,179,56,11.71,1,96,34F,Electronics
+10041,Apparel Item 10041,piece,451,173,37,8.87,1,96,28F,Apparel
+10042,Home & Garden Item 10042,case,360,197,20,26.09,12,96,ambient,Home & Garden
+10043,Sports Item 10043,piece,157,334,102,0.75,1,96,ambient,Sports
+10044,Food & Beverage Item 10044,piece,436,53,156,26.14,1,96,ambient,Food & Beverage
+10045,Health Item 10045,case,523,193,123,25.27,12,96,ambient,Health
+10046,Industrial Item 10046,piece,447,100,190,21.12,1,96,34F,Industrial
+10047,Automotive Item 10047,piece,442,350,92,13.75,1,96,34F,Automotive
+10048,Electronics Item 10048,case,410,278,68,11.23,12,96,28F,Electronics
+10049,Apparel Item 10049,piece,187,307,107,7.72,1,96,ambient,Apparel
+10050,Home & Garden Item 10050,piece,288,44,172,9.28,1,96,ambient,Home & Garden
+10051,Sports Item 10051,case,406,327,164,5.91,12,96,ambient,Sports
+10052,Food & Beverage Item 10052,piece,439,230,133,15.06,1,96,ambient,Food & Beverage
+10053,Health Item 10053,piece,208,132,70,8.63,1,96,34F,Health
+10054,Industrial Item 10054,case,197,310,188,28.15,12,96,34F,Industrial
+10055,Automotive Item 10055,piece,80,214,161,8.63,1,96,28F,Automotive
+10056,Electronics Item 10056,piece,63,233,35,22.02,1,96,ambient,Electronics
+10057,Apparel Item 10057,case,366,134,20,24.45,12,96,ambient,Apparel
+10058,Home & Garden Item 10058,piece,406,274,137,22.98,1,96,ambient,Home & Garden
+10059,Sports Item 10059,piece,354,300,135,14.02,1,96,ambient,Sports
+10060,Food & Beverage Item 10060,case,199,88,182,7.42,12,96,34F,Food & Beverage
+10061,Health Item 10061,piece,407,174,94,5.99,1,96,34F,Health
+10062,Industrial Item 10062,piece,151,109,55,1.56,1,96,28F,Industrial
+10063,Automotive Item 10063,case,70,221,135,11.67,12,96,ambient,Automotive
+10064,Electronics Item 10064,piece,530,196,174,2.25,1,96,ambient,Electronics
+10065,Apparel Item 10065,piece,226,72,40,7.87,1,96,ambient,Apparel
+10066,Home & Garden Item 10066,case,214,208,167,14.69,12,96,ambient,Home & Garden
+10067,Sports Item 10067,piece,410,97,163,14.60,1,96,34F,Sports
+10068,Food & Beverage Item 10068,piece,166,142,28,9.29,1,96,34F,Food & Beverage
+10069,Health Item 10069,case,403,232,142,2.23,12,96,28F,Health
+10070,Industrial Item 10070,piece,454,151,155,11.15,1,96,ambient,Industrial
+10071,Automotive Item 10071,piece,260,224,25,8.66,1,96,ambient,Automotive
+10072,Electronics Item 10072,case,192,82,135,13.52,12,96,ambient,Electronics
+10073,Apparel Item 10073,piece,521,95,30,15.70,1,96,ambient,Apparel
+10074,Home & Garden Item 10074,piece,246,173,71,1.22,1,96,34F,Home & Garden
+10075,Sports Item 10075,case,176,130,87,2.84,12,96,34F,Sports
+10076,Food & Beverage Item 10076,piece,526,324,174,29.69,1,96,28F,Food & Beverage
+10077,Health Item 10077,piece,411,186,51,4.12,1,96,ambient,Health
+10078,Industrial Item 10078,case,242,212,95,12.85,12,96,ambient,Industrial
+10079,Automotive Item 10079,piece,339,85,149,12.22,1,96,ambient,Automotive
+10080,Electronics Item 10080,piece,421,279,86,25.57,1,96,ambient,Electronics
+10081,Apparel Item 10081,case,367,261,133,25.36,12,96,34F,Apparel
+10082,Home & Garden Item 10082,piece,427,52,154,6.18,1,96,34F,Home & Garden
+10083,Sports Item 10083,piece,163,211,170,29.83,1,96,28F,Sports
+10084,Food & Beverage Item 10084,case,455,144,118,27.27,12,96,ambient,Food & Beverage
+10085,Health Item 10085,piece,117,224,128,5.14,1,96,ambient,Health
+10086,Industrial Item 10086,piece,99,63,75,28.27,1,96,ambient,Industrial
+10087,Automotive Item 10087,case,477,137,160,19.03,12,96,ambient,Automotive
+10088,Electronics Item 10088,piece,56,84,108,8.63,1,96,34F,Electronics
+10089,Apparel Item 10089,piece,536,333,116,20.10,1,96,34F,Apparel
+10090,Home & Garden Item 10090,case,61,65,47,18.77,12,96,28F,Home & Garden
+10091,Sports Item 10091,piece,122,249,50,14.50,1,96,ambient,Sports
+10092,Food & Beverage Item 10092,piece,544,203,39,20.50,1,96,ambient,Food & Beverage
+10093,Health Item 10093,case,492,190,166,23.80,12,96,ambient,Health
+10094,Industrial Item 10094,piece,547,275,84,10.56,1,96,ambient,Industrial
+10095,Automotive Item 10095,piece,371,154,93,29.87,1,96,34F,Automotive
+10096,Electronics Item 10096,case,407,78,88,14.50,12,96,34F,Electronics
+10097,Apparel Item 10097,piece,83,35,79,9.74,1,96,28F,Apparel
+10098,Home & Garden Item 10098,piece,414,210,119,25.13,1,96,ambient,Home & Garden
+10099,Sports Item 10099,case,381,40,132,13.57,12,96,ambient,Sports
+10100,Food & Beverage Item 10100,piece,214,46,141,10.10,1,96,ambient,Food & Beverage
+10101,Health Item 10101,piece,104,140,69,5.05,1,96,ambient,Health
+10102,Industrial Item 10102,case,82,305,164,12.45,12,96,34F,Industrial
+10103,Automotive Item 10103,piece,272,269,46,1.52,1,96,34F,Automotive
+10104,Electronics Item 10104,piece,463,332,134,21.41,1,96,28F,Electronics
+10105,Apparel Item 10105,case,177,82,24,10.10,12,96,ambient,Apparel
+10106,Home & Garden Item 10106,piece,119,160,96,2.79,1,96,ambient,Home & Garden
+10107,Sports Item 10107,piece,246,46,117,13.79,1,96,ambient,Sports
+10108,Food & Beverage Item 10108,case,313,191,76,29.78,12,96,ambient,Food & Beverage
+10109,Health Item 10109,piece,378,156,24,17.94,1,96,34F,Health
+10110,Industrial Item 10110,piece,156,79,45,18.79,1,96,34F,Industrial
+10111,Automotive Item 10111,case,369,194,180,3.99,12,96,28F,Automotive
+10112,Electronics Item 10112,piece,419,265,84,19.63,1,96,ambient,Electronics
+10113,Apparel Item 10113,piece,94,169,180,18.74,1,96,ambient,Apparel
+10114,Home & Garden Item 10114,case,352,307,144,3.06,12,96,ambient,Home & Garden
+10115,Sports Item 10115,piece,495,252,116,29.46,1,96,ambient,Sports
+10116,Food & Beverage Item 10116,piece,56,225,106,10.93,1,96,34F,Food & Beverage
+10117,Health Item 10117,case,101,296,78,21.05,12,96,34F,Health
+10118,Industrial Item 10118,piece,286,62,122,19.76,1,96,28F,Industrial
+10119,Automotive Item 10119,piece,60,294,47,26.29,1,96,ambient,Automotive
+10120,Electronics Item 10120,case,483,270,145,9.05,12,96,ambient,Electronics
+10121,Apparel Item 10121,piece,222,354,36,24.98,1,96,ambient,Apparel
+10122,Home & Garden Item 10122,piece,500,59,59,1.69,1,96,ambient,Home & Garden
+10123,Sports Item 10123,case,258,60,163,6.03,12,96,34F,Sports
+10124,Food & Beverage Item 10124,piece,372,281,75,0.27,1,96,34F,Food & Beverage
+10125,Health Item 10125,piece,51,81,119,11.15,1,96,28F,Health
+10126,Industrial Item 10126,case,120,300,189,26.57,12,96,ambient,Industrial
+10127,Automotive Item 10127,piece,476,237,139,24.05,1,96,ambient,Automotive
+10128,Electronics Item 10128,piece,397,349,99,25.25,1,96,ambient,Electronics
+10129,Apparel Item 10129,case,544,277,117,21.55,12,96,ambient,Apparel
+10130,Home & Garden Item 10130,piece,180,158,124,24.12,1,96,34F,Home & Garden
+10131,Sports Item 10131,piece,109,46,123,21.04,1,96,34F,Sports
+10132,Food & Beverage Item 10132,case,308,45,46,3.93,12,96,28F,Food & Beverage
+10133,Health Item 10133,piece,66,323,171,28.50,1,96,ambient,Health
+10134,Industrial Item 10134,piece,146,247,178,28.64,1,96,ambient,Industrial
+10135,Automotive Item 10135,case,334,129,111,15.61,12,96,ambient,Automotive
+10136,Electronics Item 10136,piece,237,297,194,13.57,1,96,ambient,Electronics
+10137,Apparel Item 10137,piece,388,137,109,0.97,1,96,34F,Apparel
+10138,Home & Garden Item 10138,case,210,85,32,25.83,12,96,34F,Home & Garden
+10139,Sports Item 10139,piece,152,93,151,8.66,1,96,28F,Sports
+10140,Food & Beverage Item 10140,piece,421,144,143,24.09,1,96,ambient,Food & Beverage
+10141,Health Item 10141,case,387,164,171,21.56,12,96,ambient,Health
+10142,Industrial Item 10142,piece,485,314,17,10.26,1,96,ambient,Industrial
+10143,Automotive Item 10143,piece,106,315,151,28.31,1,96,ambient,Automotive
+10144,Electronics Item 10144,case,336,42,128,17.97,12,96,34F,Electronics
+10145,Apparel Item 10145,piece,536,276,95,1.04,1,96,34F,Apparel
+10146,Home & Garden Item 10146,piece,191,302,51,13.70,1,96,28F,Home & Garden
+10147,Sports Item 10147,case,423,127,174,25.13,12,96,ambient,Sports
+10148,Food & Beverage Item 10148,piece,80,342,74,8.96,1,96,ambient,Food & Beverage
+10149,Health Item 10149,piece,423,155,154,7.33,1,96,ambient,Health
+10150,Industrial Item 10150,case,185,137,14,22.95,12,96,ambient,Industrial
+10151,Automotive Item 10151,piece,139,334,43,6.04,1,96,34F,Automotive
+10152,Electronics Item 10152,piece,71,273,110,14.69,1,96,34F,Electronics
+10153,Apparel Item 10153,case,267,31,95,14.44,12,96,28F,Apparel
+10154,Home & Garden Item 10154,piece,144,324,161,28.90,1,96,ambient,Home & Garden
+10155,Sports Item 10155,piece,167,321,100,14.12,1,96,ambient,Sports
+10156,Food & Beverage Item 10156,case,432,169,147,5.30,12,96,ambient,Food & Beverage
+10157,Health Item 10157,piece,78,90,149,12.84,1,96,ambient,Health
+10158,Industrial Item 10158,piece,300,38,68,28.18,1,96,34F,Industrial
+10159,Automotive Item 10159,case,196,264,116,4.97,12,96,34F,Automotive
+10160,Electronics Item 10160,piece,215,34,105,20.17,1,96,28F,Electronics
+10161,Apparel Item 10161,piece,132,350,149,23.64,1,96,ambient,Apparel
+10162,Home & Garden Item 10162,case,544,211,41,26.64,12,96,ambient,Home & Garden
+10163,Sports Item 10163,piece,480,43,15,12.91,1,96,ambient,Sports
+10164,Food & Beverage Item 10164,piece,137,95,134,17.40,1,96,ambient,Food & Beverage
+10165,Health Item 10165,case,518,245,26,9.11,12,96,34F,Health
+10166,Industrial Item 10166,piece,545,287,32,5.49,1,96,34F,Industrial
+10167,Automotive Item 10167,piece,521,355,190,27.89,1,96,28F,Automotive
+10168,Electronics Item 10168,case,173,250,102,4.04,12,96,ambient,Electronics
+10169,Apparel Item 10169,piece,392,223,181,27.87,1,96,ambient,Apparel
+10170,Home & Garden Item 10170,piece,172,334,192,2.65,1,96,ambient,Home & Garden
+10171,Sports Item 10171,case,232,142,37,20.64,12,96,ambient,Sports
+10172,Food & Beverage Item 10172,piece,391,344,156,9.29,1,96,34F,Food & Beverage
+10173,Health Item 10173,piece,324,258,166,1.30,1,96,34F,Health
+10174,Industrial Item 10174,case,347,258,145,27.19,12,96,28F,Industrial
+10175,Automotive Item 10175,piece,383,330,47,4.63,1,96,ambient,Automotive
+10176,Electronics Item 10176,piece,314,293,132,19.09,1,96,ambient,Electronics
+10177,Apparel Item 10177,case,379,49,35,1.48,12,96,ambient,Apparel
+10178,Home & Garden Item 10178,piece,143,190,54,3.15,1,96,ambient,Home & Garden
+10179,Sports Item 10179,piece,352,306,22,25.58,1,96,34F,Sports
+10180,Food & Beverage Item 10180,case,425,131,181,10.88,12,96,34F,Food & Beverage
+10181,Health Item 10181,piece,138,359,163,17.42,1,96,28F,Health
+10182,Industrial Item 10182,piece,534,282,170,4.08,1,96,ambient,Industrial
+10183,Automotive Item 10183,case,347,160,95,1.46,12,96,ambient,Automotive
+10184,Electronics Item 10184,piece,223,69,125,0.33,1,96,ambient,Electronics
+10185,Apparel Item 10185,piece,140,283,73,4.32,1,96,ambient,Apparel
+10186,Home & Garden Item 10186,case,521,61,32,16.15,12,96,34F,Home & Garden
+10187,Sports Item 10187,piece,146,304,46,10.71,1,96,34F,Sports
+10188,Food & Beverage Item 10188,piece,125,223,122,5.79,1,96,28F,Food & Beverage
+10189,Health Item 10189,case,508,318,10,28.03,12,96,ambient,Health
+10190,Industrial Item 10190,piece,230,179,174,1.08,1,96,ambient,Industrial
+10191,Automotive Item 10191,piece,255,43,194,5.48,1,96,ambient,Automotive
+10192,Electronics Item 10192,case,462,127,153,18.20,12,96,ambient,Electronics
+10193,Apparel Item 10193,piece,399,110,181,5.70,1,96,34F,Apparel
+10194,Home & Garden Item 10194,piece,336,136,23,20.29,1,96,34F,Home & Garden
+10195,Sports Item 10195,case,143,147,118,22.90,12,96,28F,Sports
+10196,Food & Beverage Item 10196,piece,456,182,165,14.18,1,96,ambient,Food & Beverage
+10197,Health Item 10197,piece,128,152,76,15.91,1,96,ambient,Health
+10198,Industrial Item 10198,case,61,133,146,16.54,12,96,ambient,Industrial
+10199,Automotive Item 10199,piece,309,127,142,16.17,1,96,ambient,Automotive
+10200,Electronics Item 10200,piece,338,103,21,20.48,1,96,34F,Electronics
+10201,Apparel Item 10201,case,395,131,52,21.59,12,96,34F,Apparel
+10202,Home & Garden Item 10202,piece,306,292,168,15.09,1,96,28F,Home & Garden
+10203,Sports Item 10203,piece,397,38,91,16.53,1,96,ambient,Sports
+10204,Food & Beverage Item 10204,case,530,329,98,8.68,12,96,ambient,Food & Beverage
+10205,Health Item 10205,piece,370,176,52,14.31,1,96,ambient,Health
+10206,Industrial Item 10206,piece,204,59,55,20.79,1,96,ambient,Industrial
+10207,Automotive Item 10207,case,493,139,34,20.11,12,96,34F,Automotive
+10208,Electronics Item 10208,piece,483,319,29,28.18,1,96,34F,Electronics
+10209,Apparel Item 10209,piece,549,228,188,1.54,1,96,28F,Apparel
+10210,Home & Garden Item 10210,case,422,220,62,27.74,12,96,ambient,Home & Garden
+10211,Sports Item 10211,piece,506,201,66,12.83,1,96,ambient,Sports
+10212,Food & Beverage Item 10212,piece,133,163,188,15.82,1,96,ambient,Food & Beverage
+10213,Health Item 10213,case,418,285,98,8.54,12,96,ambient,Health
+10214,Industrial Item 10214,piece,227,178,124,3.34,1,96,34F,Industrial
+10215,Automotive Item 10215,piece,184,208,47,27.78,1,96,34F,Automotive
+10216,Electronics Item 10216,case,254,109,185,7.63,12,96,28F,Electronics
+10217,Apparel Item 10217,piece,300,245,37,1.43,1,96,ambient,Apparel
+10218,Home & Garden Item 10218,piece,132,246,143,6.29,1,96,ambient,Home & Garden
+10219,Sports Item 10219,case,459,187,64,17.89,12,96,ambient,Sports
+10220,Food & Beverage Item 10220,piece,520,299,101,28.65,1,96,ambient,Food & Beverage
+10221,Health Item 10221,piece,394,117,61,20.01,1,96,34F,Health
+10222,Industrial Item 10222,case,545,201,57,0.81,12,96,34F,Industrial
+10223,Automotive Item 10223,piece,373,339,147,11.61,1,96,28F,Automotive
+10224,Electronics Item 10224,piece,258,266,125,10.42,1,96,ambient,Electronics
+10225,Apparel Item 10225,case,319,265,181,27.59,12,96,ambient,Apparel
+10226,Home & Garden Item 10226,piece,451,70,138,10.07,1,96,ambient,Home & Garden
+10227,Sports Item 10227,piece,519,136,53,16.06,1,96,ambient,Sports
+10228,Food & Beverage Item 10228,case,138,140,188,20.40,12,96,34F,Food & Beverage
+10229,Health Item 10229,piece,402,247,182,2.51,1,96,34F,Health
+10230,Industrial Item 10230,piece,102,158,68,1.24,1,96,28F,Industrial
+10231,Automotive Item 10231,case,452,39,40,23.83,12,96,ambient,Automotive
+10232,Electronics Item 10232,piece,271,61,160,15.15,1,96,ambient,Electronics
+10233,Apparel Item 10233,piece,161,255,119,17.00,1,96,ambient,Apparel
+10234,Home & Garden Item 10234,case,496,114,160,22.70,12,96,ambient,Home & Garden
+10235,Sports Item 10235,piece,509,152,111,27.12,1,96,34F,Sports
+10236,Food & Beverage Item 10236,piece,126,69,39,26.91,1,96,34F,Food & Beverage
+10237,Health Item 10237,case,117,343,191,26.30,12,96,28F,Health
+10238,Industrial Item 10238,piece,400,155,144,20.77,1,96,ambient,Industrial
+10239,Automotive Item 10239,piece,466,66,177,9.12,1,96,ambient,Automotive
+10240,Electronics Item 10240,case,504,200,100,9.26,12,96,ambient,Electronics
+10241,Apparel Item 10241,piece,355,316,82,26.46,1,96,ambient,Apparel
+10242,Home & Garden Item 10242,piece,313,222,135,19.07,1,96,34F,Home & Garden
+10243,Sports Item 10243,case,508,203,37,17.77,12,96,34F,Sports
+10244,Food & Beverage Item 10244,piece,346,202,138,29.05,1,96,28F,Food & Beverage
+10245,Health Item 10245,piece,431,54,110,3.66,1,96,ambient,Health
+10246,Industrial Item 10246,case,413,87,69,9.23,12,96,ambient,Industrial
+10247,Automotive Item 10247,piece,401,205,148,9.68,1,96,ambient,Automotive
+10248,Electronics Item 10248,piece,406,220,152,14.33,1,96,ambient,Electronics
+10249,Apparel Item 10249,case,511,308,100,23.31,12,96,34F,Apparel
+10250,Home & Garden Item 10250,piece,274,128,23,26.73,1,96,34F,Home & Garden
+10251,Sports Item 10251,piece,489,254,159,18.82,1,96,28F,Sports
+10252,Food & Beverage Item 10252,case,218,128,71,24.86,12,96,ambient,Food & Beverage
+10253,Health Item 10253,piece,284,275,79,8.71,1,96,ambient,Health
+10254,Industrial Item 10254,piece,235,193,106,28.86,1,96,ambient,Industrial
+10255,Automotive Item 10255,case,386,194,50,19.51,12,96,ambient,Automotive
+10256,Electronics Item 10256,piece,175,342,152,12.60,1,96,34F,Electronics
+10257,Apparel Item 10257,piece,209,44,54,25.66,1,96,34F,Apparel
+10258,Home & Garden Item 10258,case,173,266,137,14.57,12,96,28F,Home & Garden
+10259,Sports Item 10259,piece,61,347,184,29.40,1,96,ambient,Sports
+10260,Food & Beverage Item 10260,piece,279,335,116,29.88,1,96,ambient,Food & Beverage
+10261,Health Item 10261,case,506,223,145,29.09,12,96,ambient,Health
+10262,Industrial Item 10262,piece,465,300,187,24.92,1,96,ambient,Industrial
+10263,Automotive Item 10263,piece,422,326,57,3.79,1,96,34F,Automotive
+10264,Electronics Item 10264,case,379,30,76,22.05,12,96,34F,Electronics
+10265,Apparel Item 10265,piece,138,199,93,2.56,1,96,28F,Apparel
+10266,Home & Garden Item 10266,piece,509,34,62,8.39,1,96,ambient,Home & Garden
+10267,Sports Item 10267,case,85,122,164,11.12,12,96,ambient,Sports
+10268,Food & Beverage Item 10268,piece,98,293,128,15.03,1,96,ambient,Food & Beverage
+10269,Health Item 10269,piece,446,148,92,29.27,1,96,ambient,Health
+10270,Industrial Item 10270,case,211,55,14,23.30,12,96,34F,Industrial
+10271,Automotive Item 10271,piece,515,200,21,6.67,1,96,34F,Automotive
+10272,Electronics Item 10272,piece,125,245,153,17.35,1,96,28F,Electronics
+10273,Apparel Item 10273,case,171,325,165,1.34,12,96,ambient,Apparel
+10274,Home & Garden Item 10274,piece,431,67,16,3.78,1,96,ambient,Home & Garden
+10275,Sports Item 10275,piece,221,38,86,0.62,1,96,ambient,Sports
+10276,Food & Beverage Item 10276,case,442,155,156,14.67,12,96,ambient,Food & Beverage
+10277,Health Item 10277,piece,101,101,164,4.94,1,96,34F,Health
+10278,Industrial Item 10278,piece,199,314,72,3.10,1,96,34F,Industrial
+10279,Automotive Item 10279,case,543,55,187,13.56,12,96,28F,Automotive
+10280,Electronics Item 10280,piece,369,126,192,24.22,1,96,ambient,Electronics
+10281,Apparel Item 10281,piece,348,138,84,4.44,1,96,ambient,Apparel
+10282,Home & Garden Item 10282,case,249,87,114,14.00,12,96,ambient,Home & Garden
+10283,Sports Item 10283,piece,461,30,161,30.09,1,96,ambient,Sports
+10284,Food & Beverage Item 10284,piece,394,230,77,0.72,1,96,34F,Food & Beverage
+10285,Health Item 10285,case,350,291,50,7.55,12,96,34F,Health
+10286,Industrial Item 10286,piece,450,358,13,4.85,1,96,28F,Industrial
+10287,Automotive Item 10287,piece,187,90,194,21.59,1,96,ambient,Automotive
+10288,Electronics Item 10288,case,467,58,55,28.18,12,96,ambient,Electronics
+10289,Apparel Item 10289,piece,244,112,140,6.49,1,96,ambient,Apparel
+10290,Home & Garden Item 10290,piece,441,52,192,29.67,1,96,ambient,Home & Garden
+10291,Sports Item 10291,case,80,337,69,16.93,12,96,34F,Sports
+10292,Food & Beverage Item 10292,piece,536,307,95,26.94,1,96,34F,Food & Beverage
+10293,Health Item 10293,piece,193,78,182,10.43,1,96,28F,Health
+10294,Industrial Item 10294,case,112,260,117,9.20,12,96,ambient,Industrial
+10295,Automotive Item 10295,piece,533,210,110,8.84,1,96,ambient,Automotive
+10296,Electronics Item 10296,piece,408,177,86,27.91,1,96,ambient,Electronics
+10297,Apparel Item 10297,case,149,108,96,2.86,12,96,ambient,Apparel
+10298,Home & Garden Item 10298,piece,89,117,75,0.24,1,96,34F,Home & Garden
+10299,Sports Item 10299,piece,411,153,47,10.12,1,96,34F,Sports
+10300,Food & Beverage Item 10300,case,394,114,152,19.81,12,96,28F,Food & Beverage
+10301,Health Item 10301,piece,341,55,144,10.48,1,96,ambient,Health
+10302,Industrial Item 10302,piece,387,213,169,23.21,1,96,ambient,Industrial
+10303,Automotive Item 10303,case,442,317,100,6.04,12,96,ambient,Automotive
+10304,Electronics Item 10304,piece,319,217,14,5.03,1,96,ambient,Electronics
+10305,Apparel Item 10305,piece,320,55,106,2.59,1,96,34F,Apparel
+10306,Home & Garden Item 10306,case,444,80,192,22.43,12,96,34F,Home & Garden
+10307,Sports Item 10307,piece,152,263,138,11.71,1,96,28F,Sports
+10308,Food & Beverage Item 10308,piece,312,130,150,17.48,1,96,ambient,Food & Beverage
+10309,Health Item 10309,case,346,302,86,28.18,12,96,ambient,Health
+10310,Industrial Item 10310,piece,386,184,59,0.65,1,96,ambient,Industrial
+10311,Automotive Item 10311,piece,380,349,132,13.06,1,96,ambient,Automotive
+10312,Electronics Item 10312,case,346,92,77,12.74,12,96,34F,Electronics
+10313,Apparel Item 10313,piece,140,94,10,7.71,1,96,34F,Apparel
+10314,Home & Garden Item 10314,piece,84,85,147,15.30,1,96,28F,Home & Garden
+10315,Sports Item 10315,case,545,184,144,23.29,12,96,ambient,Sports
+10316,Food & Beverage Item 10316,piece,378,89,143,26.67,1,96,ambient,Food & Beverage
+10317,Health Item 10317,piece,202,348,119,6.67,1,96,ambient,Health
+10318,Industrial Item 10318,case,459,336,182,29.34,12,96,ambient,Industrial
+10319,Automotive Item 10319,piece,302,251,86,4.51,1,96,34F,Automotive
+10320,Electronics Item 10320,piece,312,196,42,11.20,1,96,34F,Electronics
+10321,Apparel Item 10321,case,78,149,155,13.38,12,96,28F,Apparel
+10322,Home & Garden Item 10322,piece,314,38,63,6.75,1,96,ambient,Home & Garden
+10323,Sports Item 10323,piece,271,241,172,29.73,1,96,ambient,Sports
+10324,Food & Beverage Item 10324,case,402,233,77,5.40,12,96,ambient,Food & Beverage
+10325,Health Item 10325,piece,399,163,184,29.79,1,96,ambient,Health
+10326,Industrial Item 10326,piece,,,,,1,96,34F,Industrial
+10327,Automotive Item 10327,case,,,,,12,96,34F,Automotive
+10328,Electronics Item 10328,piece,,,,,1,96,28F,Electronics
+10329,Apparel Item 10329,piece,,,,,1,96,ambient,Apparel
+10330,Home & Garden Item 10330,case,,,,,12,96,ambient,Home & Garden
+10331,Sports Item 10331,piece,,,,,1,96,ambient,Sports
+10332,Food & Beverage Item 10332,piece,,,,,1,96,ambient,Food & Beverage
+10333,Health Item 10333,case,,,,,12,96,34F,Health
+10334,Industrial Item 10334,piece,,,,,1,96,34F,Industrial
+10335,Automotive Item 10335,piece,,,,,1,96,28F,Automotive
+10336,Electronics Item 10336,case,,,,,12,96,ambient,Electronics
+10337,Apparel Item 10337,piece,,,,,1,96,ambient,Apparel
+10338,Home & Garden Item 10338,piece,,,,,1,96,ambient,Home & Garden
+10339,Sports Item 10339,case,,,,,12,96,ambient,Sports
+10340,Food & Beverage Item 10340,piece,,,,,1,96,34F,Food & Beverage
+10341,Health Item 10341,piece,,,,,1,96,34F,Health
+10342,Industrial Item 10342,case,,,,,12,96,28F,Industrial
+10343,Automotive Item 10343,piece,,,,,1,96,ambient,Automotive
+10344,Electronics Item 10344,piece,,,,,1,96,ambient,Electronics
+10345,Apparel Item 10345,case,,,,,12,96,ambient,Apparel
+10346,Home & Garden Item 10346,piece,,,,,1,96,ambient,Home & Garden
+10347,Sports Item 10347,piece,,,,,1,96,34F,Sports
+10348,Food & Beverage Item 10348,case,,,,,12,96,34F,Food & Beverage
+10349,Health Item 10349,piece,,,,,1,96,28F,Health
+10350,Industrial Item 10350,piece,,,,,1,96,ambient,Industrial
+10351,Automotive Item 10351,case,,,,,12,96,ambient,Automotive
+10352,Electronics Item 10352,piece,,,,,1,96,ambient,Electronics
+10353,Apparel Item 10353,piece,,,,,1,96,ambient,Apparel
+10354,Home & Garden Item 10354,case,,,,,12,96,34F,Home & Garden
+10355,Sports Item 10355,piece,,,,,1,96,34F,Sports
+10356,Food & Beverage Item 10356,piece,,,,,1,96,28F,Food & Beverage
+10357,Health Item 10357,case,,,,,12,96,ambient,Health
+10358,Industrial Item 10358,piece,,,,,1,96,ambient,Industrial
+10359,Automotive Item 10359,piece,,,,,1,96,ambient,Automotive
+10360,Electronics Item 10360,case,,,,,12,96,ambient,Electronics
+10361,Apparel Item 10361,piece,,,,,1,96,34F,Apparel
+10362,Home & Garden Item 10362,piece,,,,,1,96,34F,Home & Garden
+10363,Sports Item 10363,case,,,,,12,96,28F,Sports
+10364,Food & Beverage Item 10364,piece,,,,,1,96,ambient,Food & Beverage
+10365,Health Item 10365,piece,,,,,1,96,ambient,Health
+10366,Industrial Item 10366,case,,,,,12,96,ambient,Industrial
+10367,Automotive Item 10367,piece,,,,,1,96,ambient,Automotive
+10368,Electronics Item 10368,piece,,,,,1,96,34F,Electronics
+10369,Apparel Item 10369,case,,,,,12,96,34F,Apparel
+10370,Home & Garden Item 10370,piece,,,,,1,96,28F,Home & Garden
+10371,Sports Item 10371,piece,,,,,1,96,ambient,Sports
+10372,Food & Beverage Item 10372,case,,,,,12,96,ambient,Food & Beverage
+10373,Health Item 10373,piece,,,,,1,96,ambient,Health
+10374,Industrial Item 10374,piece,,,,,1,96,ambient,Industrial
+10375,Automotive Item 10375,case,,,,,12,96,34F,Automotive
+10376,Electronics Item 10376,piece,,,,,1,96,34F,Electronics
+10377,Apparel Item 10377,piece,,,,,1,96,28F,Apparel
+10378,Home & Garden Item 10378,case,,,,,12,96,ambient,Home & Garden
+10379,Sports Item 10379,piece,,,,,1,96,ambient,Sports
+10380,Food & Beverage Item 10380,piece,,,,,1,96,ambient,Food & Beverage
+10381,Health Item 10381,case,,,,,12,96,ambient,Health
+10382,Industrial Item 10382,piece,,,,,1,96,34F,Industrial
+10383,Automotive Item 10383,piece,,,,,1,96,34F,Automotive
+10384,Electronics Item 10384,case,,,,,12,96,28F,Electronics
+10385,Apparel Item 10385,piece,,,,,1,96,ambient,Apparel
+10386,Home & Garden Item 10386,piece,,,,,1,96,ambient,Home & Garden
+10387,Sports Item 10387,case,,,,,12,96,ambient,Sports
+10388,Food & Beverage Item 10388,piece,,,,,1,96,ambient,Food & Beverage
+10389,Health Item 10389,piece,,,,,1,96,34F,Health
+10390,Industrial Item 10390,case,,,,,12,96,34F,Industrial
+10391,Automotive Item 10391,piece,,,,,1,96,28F,Automotive
+10392,Electronics Item 10392,piece,,,,,1,96,ambient,Electronics
+10393,Apparel Item 10393,case,,,,,12,96,ambient,Apparel
+10394,Home & Garden Item 10394,piece,,,,,1,96,ambient,Home & Garden
+10395,Sports Item 10395,piece,,,,,1,96,ambient,Sports
+10396,Food & Beverage Item 10396,case,,,,,12,96,34F,Food & Beverage
+10397,Health Item 10397,piece,,,,,1,96,34F,Health
+10398,Industrial Item 10398,piece,,,,,1,96,28F,Industrial
+10399,Automotive Item 10399,case,,,,,12,96,ambient,Automotive
+10400,Electronics Item 10400,piece,,,,,1,96,ambient,Electronics
+10401,Apparel Item 10401,piece,,,,,1,96,ambient,Apparel
+10402,Home & Garden Item 10402,case,,,,,12,96,ambient,Home & Garden
+10403,Sports Item 10403,piece,,,,,1,96,34F,Sports
+10404,Food & Beverage Item 10404,piece,,,,,1,96,34F,Food & Beverage
+10405,Health Item 10405,case,,,,,12,96,28F,Health
+10406,Industrial Item 10406,piece,,,,,1,96,ambient,Industrial
+10407,Automotive Item 10407,piece,,,,,1,96,ambient,Automotive
+10408,Electronics Item 10408,case,,,,,12,96,ambient,Electronics
+10409,Apparel Item 10409,piece,,,,,1,96,ambient,Apparel
+10410,Home & Garden Item 10410,piece,,,,,1,96,34F,Home & Garden
+10411,Sports Item 10411,case,,,,,12,96,34F,Sports
+10412,Food & Beverage Item 10412,piece,,,,,1,96,28F,Food & Beverage
+10413,Health Item 10413,piece,,,,,1,96,ambient,Health
+10414,Industrial Item 10414,case,,,,,12,96,ambient,Industrial
+10415,Automotive Item 10415,piece,,,,,1,96,ambient,Automotive
+10416,Electronics Item 10416,piece,,,,,1,96,ambient,Electronics
+10417,Apparel Item 10417,case,,,,,12,96,34F,Apparel
+10418,Home & Garden Item 10418,piece,,,,,1,96,34F,Home & Garden
+10419,Sports Item 10419,piece,,,,,1,96,28F,Sports
+10420,Food & Beverage Item 10420,case,,,,,12,96,ambient,Food & Beverage
+10421,Health Item 10421,piece,,,,,1,96,ambient,Health
+10422,Industrial Item 10422,piece,,,,,1,96,ambient,Industrial
+10423,Automotive Item 10423,case,,,,,12,96,ambient,Automotive
+10424,Electronics Item 10424,piece,,,,,1,96,34F,Electronics
+10425,Apparel Item 10425,piece,,,,,1,96,34F,Apparel
+10426,Home & Garden Item 10426,case,,,,,12,96,28F,Home & Garden
+10427,Sports Item 10427,piece,,,,,1,96,ambient,Sports
+10428,Food & Beverage Item 10428,piece,,,,,1,96,ambient,Food & Beverage
+10429,Health Item 10429,case,,,,,12,96,ambient,Health
+10430,Industrial Item 10430,piece,,,,,1,96,ambient,Industrial
+10431,Automotive Item 10431,piece,,,,,1,96,34F,Automotive
+10432,Electronics Item 10432,case,,,,,12,96,34F,Electronics
+10433,Apparel Item 10433,piece,,,,,1,96,28F,Apparel
+10434,Home & Garden Item 10434,piece,,,,,1,96,ambient,Home & Garden
+10435,Sports Item 10435,case,,,,,12,96,ambient,Sports
+10436,Food & Beverage Item 10436,piece,,,,,1,96,ambient,Food & Beverage
+10437,Health Item 10437,piece,,,,,1,96,ambient,Health
+10438,Industrial Item 10438,case,,,,,12,96,34F,Industrial
+10439,Automotive Item 10439,piece,,,,,1,96,34F,Automotive
+10440,Electronics Item 10440,piece,,,,,1,96,28F,Electronics
+10441,Apparel Item 10441,case,,,,,12,96,ambient,Apparel
+10442,Home & Garden Item 10442,piece,,,,,1,96,ambient,Home & Garden
+10443,Sports Item 10443,piece,,,,,1,96,ambient,Sports
+10444,Food & Beverage Item 10444,case,,,,,12,96,ambient,Food & Beverage
+10445,Health Item 10445,piece,,,,,1,96,34F,Health
+10446,Industrial Item 10446,piece,,,,,1,96,34F,Industrial
+10447,Automotive Item 10447,case,,,,,12,96,28F,Automotive
+10448,Electronics Item 10448,piece,,,,,1,96,ambient,Electronics
+10449,Apparel Item 10449,piece,,,,,1,96,ambient,Apparel
+10450,Home & Garden Item 10450,case,,,,,12,96,ambient,Home & Garden
+10451,Sports Item 10451,piece,,,,,1,96,ambient,Sports
+10452,Food & Beverage Item 10452,piece,,,,,1,96,34F,Food & Beverage
+10453,Health Item 10453,case,,,,,12,96,34F,Health
+10454,Industrial Item 10454,piece,,,,,1,96,28F,Industrial
+10455,Automotive Item 10455,piece,,,,,1,96,ambient,Automotive
+10456,Electronics Item 10456,case,,,,,12,96,ambient,Electronics
+10457,Apparel Item 10457,piece,,,,,1,96,ambient,Apparel
+10458,Home & Garden Item 10458,piece,,,,,1,96,ambient,Home & Garden
+10459,Sports Item 10459,case,,,,,12,96,34F,Sports
+10460,Food & Beverage Item 10460,piece,,,,,1,96,34F,Food & Beverage
+10461,Health Item 10461,piece,,,,,1,96,28F,Health
+10462,Industrial Item 10462,case,,,,,12,96,ambient,Industrial
+10463,Automotive Item 10463,piece,,,,,1,96,ambient,Automotive
+10464,Electronics Item 10464,piece,,,,,1,96,ambient,Electronics
+10465,Apparel Item 10465,case,,,,,12,96,ambient,Apparel
+10466,Home & Garden Item 10466,piece,1344,673,749,99.05,1,96,34F,Home & Garden
+10467,Sports Item 10467,piece,762,497,547,145.34,1,96,34F,Sports
+10468,Food & Beverage Item 10468,case,1105,635,711,57.37,12,96,28F,Food & Beverage
+10469,Health Item 10469,piece,766,645,960,90.65,1,96,ambient,Health
+10470,Industrial Item 10470,piece,620,562,667,133.98,1,96,ambient,Industrial
+10471,Automotive Item 10471,case,896,867,777,89.14,12,96,ambient,Automotive
+10472,Electronics Item 10472,piece,620,453,798,71.15,1,96,ambient,Electronics
+10473,Apparel Item 10473,piece,981,432,622,133.09,1,96,34F,Apparel
+10474,Home & Garden Item 10474,case,1316,859,796,125.89,12,96,34F,Home & Garden
+10475,Sports Item 10475,piece,648,858,824,130.82,1,96,28F,Sports
+10476,Food & Beverage Item 10476,piece,1219,705,504,109.01,1,96,ambient,Food & Beverage
+10477,Health Item 10477,case,667,712,887,121.57,12,96,ambient,Health
+10478,Industrial Item 10478,piece,1374,770,925,66.27,1,96,ambient,Industrial
+10479,Automotive Item 10479,piece,1267,681,512,110.66,1,96,ambient,Automotive
+10480,Electronics Item 10480,case,708,890,586,67.64,12,96,34F,Electronics
+10481,Apparel Item 10481,pallet,818,433,971,119.14,96,96,34F,Apparel
+10482,Home & Garden Item 10482,pallet,372,279,400,24.81,96,96,28F,Home & Garden
+10483,Sports Item 10483,pallet,511,324,354,33.11,96,96,ambient,Sports
+10484,Food & Beverage Item 10484,pallet,425,315,346,32.84,96,96,ambient,Food & Beverage
+10485,Health Item 10485,pallet,537,445,395,18.29,96,96,ambient,Health
+10486,Industrial Item 10486,pallet,300,309,356,19.26,96,96,ambient,Industrial
+10487,Automotive Item 10487,pallet,274,295,438,5.84,96,96,34F,Automotive
+10488,Electronics Item 10488,pallet,282,431,388,3.84,96,96,34F,Electronics
+10489,Apparel Item 10489,pallet,348,436,364,12.64,96,96,28F,Apparel
+10490,Home & Garden Item 10490,pallet,409,378,302,23.13,96,96,ambient,Home & Garden
+10491,Sports Item 10491,pallet,370,405,307,29.17,96,96,ambient,Sports
+10492,Food & Beverage Item 10492,pallet,298,377,279,4.73,96,96,ambient,Food & Beverage
+10493,Health Item 10493,pallet,395,349,251,32.24,96,96,ambient,Health
+10494,Industrial Item 10494,pallet,281,363,415,40.82,96,96,34F,Industrial
+10495,Automotive Item 10495,pallet,331,344,268,5.82,96,96,34F,Automotive
+10496,Electronics Item 10496,pallet,393,410,367,4.64,96,96,28F,Electronics
+10497,Apparel Item 10497,pallet,474,273,264,2.65,96,96,ambient,Apparel
+10498,Home & Garden Item 10498,pallet,292,282,305,33.95,96,96,ambient,Home & Garden
+10499,Sports Item 10499,pallet,271,286,385,35.04,96,96,ambient,Sports
+10500,Food & Beverage Item 10500,pallet,532,369,275,6.64,96,96,ambient,Food & Beverage

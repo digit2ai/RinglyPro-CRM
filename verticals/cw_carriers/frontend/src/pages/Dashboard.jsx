@@ -99,8 +99,8 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div style={s.revCard}>
-                  <div style={s.revLabel}>Margin Health</div>
-                  <div style={{ ...s.revValue, color: parseFloat(neural.marginPct || 13.6) >= 15 ? '#238636' : '#F59E0B' }}>{neural.marginPct ? neural.marginPct.toFixed(1) : '13.6'}%</div>
+                  <div style={s.revLabel}>OBD Findings</div>
+                  <div style={{ ...s.revValue, color: (neural.obdFindings || 0) > 5 ? '#F85149' : '#238636' }}>{neural.obdFindings || 0}</div>
                 </div>
                 <div style={s.revCard}>
                   <div style={s.revLabel}>On-Time Rate</div>

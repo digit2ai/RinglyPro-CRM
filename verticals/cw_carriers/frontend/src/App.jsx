@@ -38,6 +38,7 @@ import NeuralIntelligence from './pages/NeuralIntelligence';
 import CRMAgent from './pages/CRMAgent';
 import HubSpotPipeline from './pages/HubSpotPipeline';
 import ROIAnalytics from './pages/ROIAnalytics';
+import Autopilot from './pages/Autopilot';
 
 const BASE = '/cw_carriers';
 
@@ -57,7 +58,7 @@ function Sidebar({ open, onClose }) {
   const mob = useIsMobile();
   // All sections collapsed by default — only active section opens
   const [collapsed, setCollapsed] = useState({
-    command: true, hubspot: true, operations: true, compliance: true, portals: true, admin: true, docs: true
+    command: true, hubspot: true, operations: true, compliance: true, portals: true, automation: true, admin: true, docs: true
   });
   const toggle = (section) => setCollapsed(prev => ({ ...prev, [section]: !prev[section] }));
 
@@ -108,6 +109,11 @@ function Sidebar({ open, onClose }) {
       id: 'portals', label: 'PORTALS', items: [
         { path: `${BASE}/shipper`, label: 'Shipper Portal' },
         { path: `${BASE}/carrier-portal`, label: 'Carrier Portal' },
+      ]
+    },
+    {
+      id: 'automation', label: 'AUTOMATION', accent: '#8957E5', items: [
+        { path: `${BASE}/autopilot`, label: 'Autopilot Mode', badge: 'AI' },
       ]
     },
     {
@@ -247,6 +253,7 @@ export default function App() {
         <Route path={`${BASE}/crm-agent`} element={<ProtectedRoute><Layout><CRMAgent /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/pipeline`} element={<ProtectedRoute><Layout><HubSpotPipeline /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/roi`} element={<ProtectedRoute><Layout><ROIAnalytics /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/autopilot`} element={<ProtectedRoute><Layout><Autopilot /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}`} element={<Landing />} />
         <Route path={`${BASE}/`} element={<Landing />} />
         <Route path="*" element={<Navigate to={`${BASE}/`} replace />} />

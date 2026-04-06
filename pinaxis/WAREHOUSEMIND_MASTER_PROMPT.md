@@ -892,9 +892,28 @@ The Command Center is the single UI where humans supervise WarehouseMind AI. Sam
 
 ---
 
-## 16. EXISTING ASSETS TO ENHANCE (NOT REBUILD)
+## 16. EXISTING PINAXIS PLATFORM — DO NOT TOUCH
 
-These already exist in the Pinaxis codebase and should be ENHANCED, not rebuilt:
+**CRITICAL**: The existing Pinaxis analytics platform is a SEPARATE, STANDALONE product that MUST remain exactly as-is. It is the core warehouse data analytics tool that calculates product recommendations for clients. WarehouseMind AI is an ADDITIONAL intelligence layer that runs ALONGSIDE Pinaxis — it does NOT replace, modify, or override any existing functionality.
+
+### Existing Routes (UNTOUCHED)
+- `/pinaxis/` — Landing page & dashboard
+- `/pinaxis/upload` — Data upload pipeline
+- `/pinaxis/analysis` — ABC, throughput, patterns, order structure
+- `/pinaxis/products` — Product matching & recommendations
+- `/pinaxis/oee` — OEE dashboard
+- `/pinaxis/observability` — Telemetry & health monitoring
+- `/pinaxis/report` — Report generation
+- `/pinaxis/benefits` — Benefit projections
+- `/pinaxis/api/v1/*` — All existing API endpoints
+
+### New Routes (WarehouseMind AI — ADDED ALONGSIDE)
+- `/pinaxis/mcp/*` — MCP Server orchestrator
+- `/pinaxis/warehousemind/` — Command Center dashboard
+- `/pinaxis/api/agents/*` — Agent APIs
+- `/pinaxis/api/neural/*` — Neural findings & scans
+
+### Existing Assets That WarehouseMind READS FROM (but does not modify):
 
 | Existing | Path | Enhancement |
 |----------|------|-------------|
