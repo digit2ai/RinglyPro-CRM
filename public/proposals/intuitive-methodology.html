@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SurgicalMind AI &mdash; Analytical Methodology</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect rx='20' width='100' height='100' fill='%230F2B46'/><text x='50' y='58' text-anchor='middle' font-size='40' font-weight='700' fill='%2300A3E0' font-family='sans-serif'>MSK</text></svg>" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+    :root {
+      --primary: #0F2B46;
+      --primary-light: #1A3D5C;
+      --accent: #00A3E0;
+      --accent-dark: #0080B3;
+      --gold: #C5A55A;
+      --gold-light: #D4B96E;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --bg: #FAFBFC;
+      --text: #2C3E50;
+      --text-light: #5D6D7E;
+      --border: #E8ECF0;
+      --white: #FFFFFF;
+      --gradient-primary: linear-gradient(135deg, #0F2B46 0%, #1A4A7A 100%);
+      --gradient-accent: linear-gradient(135deg, #00A3E0 0%, #0070A0 100%);
+      --gradient-gold: linear-gradient(135deg, #C5A55A 0%, #A08840 100%);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg); color: var(--text); line-height: 1.7; font-size: 15px;
+    }
+
+    @media print {
+      @page { size: A4; margin: 12mm 10mm; }
+      body { background: white; font-size: 9pt; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      .no-print { display: none !important; }
+      .content { max-width: 100%; padding: 0 10px; }
+      .cover-page { min-height: auto; padding: 30px 20px 40px; margin-top: 0 !important; }
+      .cover-page::before, .cover-page::after { display: none; }
+      .formula-card { page-break-inside: avoid; }
+    }
+
+    .download-bar {
+      position: fixed; top: 0; left: 0; right: 0;
+      background: var(--primary); padding: 12px 30px;
+      display: flex; justify-content: space-between; align-items: center;
+      z-index: 1000; box-shadow: 0 2px 20px rgba(0,0,0,0.15);
+    }
+    .download-bar span { color: var(--white); font-size: 13px; font-weight: 500; letter-spacing: 0.5px; }
+    .download-btn {
+      background: var(--gradient-accent); color: white; border: none;
+      padding: 10px 28px; border-radius: 6px; font-weight: 600; font-size: 14px;
+      cursor: pointer; transition: all 0.3s;
+    }
+    .download-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(0,163,224,0.4); }
+
+    .cover-page {
+      background: var(--gradient-primary);
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      padding: 60px 40px 50px; text-align: center; position: relative; overflow: hidden; margin-top: 50px;
+    }
+    .cover-page::before {
+      content: ''; position: absolute; top: -50%; right: -30%; width: 80%; height: 200%;
+      background: radial-gradient(ellipse, rgba(0,163,224,0.08) 0%, transparent 70%); pointer-events: none;
+    }
+    .cover-badge {
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+      color: var(--gold-light); padding: 8px 24px; border-radius: 30px;
+      font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 28px;
+    }
+    .cover-title {
+      color: var(--white); font-size: 36px; font-weight: 800; line-height: 1.2; margin-bottom: 12px; max-width: 800px;
+    }
+    .cover-subtitle {
+      color: var(--accent); font-size: 18px; font-weight: 500; margin-bottom: 20px; max-width: 650px;
+    }
+    .cover-desc {
+      color: rgba(255,255,255,0.7); font-size: 14px; line-height: 1.8; max-width: 700px;
+    }
+    .cover-divider {
+      width: 60px; height: 3px; background: var(--gradient-gold);
+      margin: 24px auto; border-radius: 2px;
+    }
+    .cover-meta { color: rgba(255,255,255,0.5); font-size: 13px; margin-top: 16px; }
+    .cover-meta strong { color: rgba(255,255,255,0.8); }
+
+    .content { max-width: 960px; margin: 0 auto; padding: 50px 40px; }
+
+    h2 { font-size: 28px; font-weight: 800; color: var(--primary); line-height: 1.2; margin-bottom: 8px; }
+    h3 { font-size: 20px; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
+    h4 { font-size: 16px; font-weight: 700; color: var(--primary); margin-bottom: 6px; }
+    .section-number {
+      display: inline-block; background: var(--gradient-accent); color: white;
+      width: 32px; height: 32px; border-radius: 50%; text-align: center;
+      line-height: 32px; font-weight: 700; font-size: 14px; margin-bottom: 10px;
+    }
+    .section-label {
+      display: block; color: var(--accent); font-size: 11px; font-weight: 700;
+      letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px;
+    }
+    .section-desc { color: var(--text-light); font-size: 15px; line-height: 1.7; max-width: 720px; }
+    section { margin-bottom: 44px; }
+    section + section { border-top: 1px solid var(--border); padding-top: 44px; }
+
+    .formula-card {
+      background: white; border: 1px solid var(--border); border-radius: 14px;
+      padding: 28px; margin-bottom: 20px; transition: all 0.3s;
+      border-left: 4px solid var(--accent);
+    }
+    .formula-card:hover { box-shadow: 0 4px 20px rgba(0,163,224,0.08); }
+    .formula-card h4 { margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+    .formula-card p { color: var(--text-light); font-size: 14px; line-height: 1.7; margin-bottom: 8px; }
+    .formula-card .tag {
+      display: inline-block; background: rgba(0,163,224,0.08); color: var(--accent-dark);
+      font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 5px;
+      letter-spacing: 0.5px; text-transform: uppercase;
+    }
+
+    .formula-box {
+      background: #0F2B46; color: #e2e8f0; border-radius: 10px;
+      padding: 16px 20px; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 13px; line-height: 1.8; margin: 12px 0; overflow-x: auto;
+    }
+    .formula-box .comment { color: #64748b; }
+    .formula-box .keyword { color: #7dd3fc; }
+    .formula-box .number { color: #fbbf24; }
+    .formula-box .highlight { color: #6ee7b7; font-weight: 600; }
+    .formula-box .variable { color: #c4b5fd; }
+
+    .why-box {
+      background: rgba(16,185,129,0.05); border: 1px solid rgba(16,185,129,0.15);
+      border-radius: 10px; padding: 14px 18px; margin-top: 10px;
+    }
+    .why-box .label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--success); margin-bottom: 4px; }
+    .why-box p { color: var(--text); font-size: 13px; line-height: 1.6; margin: 0; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 24px 0; }
+
+    .pipeline-strip {
+      display: flex; gap: 0; margin: 20px 0; flex-wrap: wrap;
+    }
+    .pipeline-step {
+      flex: 1; min-width: 140px; padding: 16px 14px; text-align: center;
+      background: var(--primary); color: white; position: relative;
+    }
+    .pipeline-step:first-child { border-radius: 10px 0 0 10px; }
+    .pipeline-step:last-child { border-radius: 0 10px 10px 0; }
+    .pipeline-step:not(:last-child)::after {
+      content: ''; position: absolute; right: -10px; top: 50%; transform: translateY(-50%);
+      border: 10px solid transparent; border-left: 10px solid var(--primary); z-index: 2;
+    }
+    .pipeline-step .step-num { font-size: 10px; font-weight: 700; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+    .pipeline-step .step-title { font-size: 12px; font-weight: 700; line-height: 1.3; }
+    .pipeline-step.active { background: var(--accent); }
+    .pipeline-step.active::after { border-left-color: var(--accent); }
+
+    .source-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 16px 0; }
+    .source-table th {
+      text-align: left; padding: 10px 14px; background: var(--primary); color: white;
+      font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+    }
+    .source-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+    .source-table tr:nth-child(even) { background: rgba(0,163,224,0.02); }
+
+    .highlight-box {
+      background: linear-gradient(135deg, rgba(0,163,224,0.06), rgba(197,165,90,0.06));
+      border: 1px solid rgba(0,163,224,0.15); border-radius: 14px;
+      padding: 28px; margin: 24px 0;
+    }
+    .highlight-box h3 { color: var(--accent); margin-bottom: 8px; }
+
+    @media (max-width: 768px) {
+      .grid-2 { grid-template-columns: 1fr; }
+      .content { padding: 30px 16px; }
+      .cover-title { font-size: 26px; }
+      .pipeline-strip { flex-direction: column; }
+      .pipeline-step { border-radius: 0 !important; }
+      .pipeline-step::after { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- DOWNLOAD BAR -->
+<div class="download-bar no-print">
+  <span>SurgicalMind AI &mdash; Analytical Methodology</span>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <a href="https://aiagent.ringlypro.com/proposals/intuitive.html" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:white;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:600;text-decoration:none;">Full Proposal</a>
+    <a href="https://aiagent.ringlypro.com/intuitive/" target="_blank" style="background:rgba(197,165,90,0.2);border:1px solid rgba(197,165,90,0.4);color:var(--gold-light);padding:8px 18px;border-radius:6px;font-size:13px;font-weight:600;text-decoration:none;">Live Platform</a>
+    <button class="download-btn" onclick="window.print()">Download PDF</button>
+  </div>
+</div>
+
+<!-- COVER -->
+<div class="cover-page">
+  <div class="cover-badge">Analytical White Paper</div>
+  <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro" style="width: 90px; height: 90px; border-radius: 16px; margin-bottom: 24px; box-shadow: 0 8px 32px rgba(0,163,224,0.2);" />
+  <h1 class="cover-title">How the Numbers Were Built</h1>
+  <p class="cover-subtitle">
+    Analytical Methodology Behind the SurgicalMind AI System Matching Engine
+  </p>
+  <div class="cover-divider"></div>
+  <p class="cover-desc">
+    Every recommendation SurgicalMind AI produces is backed by a deterministic, formula-driven engine &mdash; not subjective judgment. This document explains each analytical module, the formulas used, and the data sources behind every number in a hospital assessment.
+  </p>
+  <div class="cover-meta" style="margin-top:20px;">
+    <strong>Digit2AI LLC</strong> &mdash; April 2026 &mdash; Confidential
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- ════ ANALYSIS PIPELINE ════ -->
+  <section>
+    <div class="section-number">1</div>
+    <span class="section-label">Analysis Pipeline</span>
+    <h2>From Hospital Intake to System Recommendation</h2>
+    <p class="section-desc" style="margin-bottom:20px;">
+      When a hospital profile is submitted (40+ data points across 6 categories), SurgicalMind AI runs 16 sequential analytical modules. Each module feeds into the next, producing a fully deterministic output &mdash; the same inputs always yield the same recommendation.
+    </p>
+
+    <div class="pipeline-strip">
+      <div class="pipeline-step active">
+        <div class="step-num">Module 1</div>
+        <div class="step-title">Volume Projection</div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-num">Module 2</div>
+        <div class="step-title">Model Matching</div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-num">Module 3</div>
+        <div class="step-title">Utilization Forecast</div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-num">Module 4</div>
+        <div class="step-title">Surgeon Capacity</div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-num">Module 5</div>
+        <div class="step-title">Infrastructure</div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-num">Module 6</div>
+        <div class="step-title">ROI &amp; Financials</div>
+      </div>
+    </div>
+    <div class="pipeline-strip" style="margin-top:4px;">
+      <div class="pipeline-step">
+        <div class="step-num">Module 7</div>
+        <div class="step-title">Pareto / Gini</div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-num">Module 8</div>
+        <div class="step-title">Seasonality</div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-num">Module 9</div>
+        <div class="step-title">Weekday/Hourly</div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-num">Module 10</div>
+        <div class="step-title">Design Day</div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-num">Module 11</div>
+        <div class="step-title">Compatibility</div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-num">Module 12</div>
+        <div class="step-title">Growth Scenarios</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════ VOLUME PROJECTION ════ -->
+  <section>
+    <div class="section-number">2</div>
+    <span class="section-label">Volume Projection Engine</span>
+    <h2>Converting Surgical Volume into Robotic Case Forecasts</h2>
+    <p class="section-desc">
+      The foundation of every analysis. Takes total annual surgical volume and specialty mix, then projects how many cases are convertible to robotic surgery using evidence-based adoption rates.
+    </p>
+
+    <div class="formula-card">
+      <h4>Specialty-Weighted Conversion <span class="tag">Core Formula</span></h4>
+      <p>Each surgical specialty has a different robotic adoption ceiling based on clinical evidence and market data.</p>
+      <div class="formula-box">
+        <span class="comment">// Conversion rates by specialty (from clinical adoption data)</span><br>
+        <span class="variable">Urology</span> = <span class="number">85%</span> <span class="comment">&larr; Prostatectomy is near-universally robotic</span><br>
+        <span class="variable">Gynecology</span> = <span class="number">45%</span> <span class="comment">&larr; Growing but contested (JAMA 2019)</span><br>
+        <span class="variable">Colorectal</span> = <span class="number">35%</span> <span class="comment">&larr; Growing especially rectal cancer</span><br>
+        <span class="variable">Thoracic</span> = <span class="number">30%</span> <span class="comment">&larr; Lobectomy/mediastinal</span><br>
+        <span class="variable">General</span> = <span class="number">25%</span> <span class="comment">&larr; Hernia, cholecystectomy</span><br>
+        <span class="variable">Head &amp; Neck</span> = <span class="number">20%</span> <span class="comment">&larr; Transoral &mdash; niche</span><br>
+        <span class="variable">Cardiac</span> = <span class="number">15%</span> <span class="comment">&larr; Still early stage</span><br><br>
+
+        <span class="comment">// Per-specialty convertible volume</span><br>
+        <span class="highlight">Convertible[spec]</span> = TotalSurgical x (SpecialtyPct / 100) x ConversionRate[spec]<br><br>
+
+        <span class="comment">// Weighted overall conversion rate</span><br>
+        <span class="highlight">WeightedRate</span> = SUM( ConversionRate[spec] x SpecialtyPct[spec] / 100 )
+      </div>
+      <div class="why-box">
+        <div class="label">Data Sources</div>
+        <p>Conversion rates are calibrated from Intuitive Surgical's published procedure mix data (2025 annual report: 3.1M procedures), AUA/ACOG/SAGES specialty adoption reports, and Cochrane systematic reviews on robotic vs. laparoscopic outcomes by procedure type.</p>
+      </div>
+    </div>
+
+    <div class="formula-card">
+      <h4>5-Year Adoption Ramp <span class="tag">Projection</span></h4>
+      <p>Year-over-year robotic adoption follows a linear ramp starting at 40% of convertible cases in Year 1.</p>
+      <div class="formula-box">
+        <span class="comment">// Annual adoption ramp</span><br>
+        <span class="highlight">AdoptionRate[yr]</span> = min( 1.0, <span class="number">0.40</span> + (yr - 1) x <span class="number">0.15</span> )<br><br>
+
+        <span class="comment">// Gives: Y1=40%, Y2=55%, Y3=70%, Y4=85%, Y5=100%</span><br><br>
+
+        <span class="highlight">ProjectedCases[yr]</span> = ConvertibleLaparoscopic x AdoptionRate[yr]<br><br>
+
+        <span class="comment">// Design year = Year 3 (steady-state planning target)</span><br>
+        <span class="highlight">DesignYearCases</span> = ProjectedCases[3]
+      </div>
+      <div class="why-box">
+        <div class="label">Why Year 3</div>
+        <p>Year 3 represents steady-state adoption after the learning curve plateaus. Sizing for Year 1 under-provisions; sizing for Year 5 over-provisions. P75-style planning: cover most scenarios without excess capital commitment.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════ PARETO / GINI ════ -->
+  <section>
+    <div class="section-number">3</div>
+    <span class="section-label">Procedure Pareto &amp; Gini Coefficient</span>
+    <h2>Measuring Volume Concentration</h2>
+    <p class="section-desc">
+      Identifies which procedures drive the most volume and quantifies concentration using the Gini coefficient &mdash; borrowed from economics to answer: "Can we capture 80% of robotic opportunity by targeting just a few procedure types?"
+    </p>
+
+    <div class="formula-card">
+      <h4>ABC Classification <span class="tag">Pareto</span></h4>
+      <p>Procedures are sorted descending by volume. Cumulative percentage determines class assignment.</p>
+      <div class="formula-box">
+        <span class="comment">// Sort all procedures by annual case volume (descending)</span><br>
+        <span class="comment">// Compute cumulative volume percentage for each</span><br><br>
+
+        <span class="keyword">Class A</span>: cumulative volume &le; <span class="number">80%</span> <span class="comment">&larr; Automate first (highest ROI)</span><br>
+        <span class="keyword">Class B</span>: cumulative volume <span class="number">80-95%</span> <span class="comment">&larr; Automate next</span><br>
+        <span class="keyword">Class C</span>: cumulative volume &gt; <span class="number">95%</span> <span class="comment">&larr; Low volume, defer</span>
+      </div>
+    </div>
+
+    <div class="formula-card">
+      <h4>Gini Coefficient <span class="tag">Concentration Metric</span></h4>
+      <p>Computed via the trapezoidal rule on the Lorenz curve. A Gini of 0 = all procedures have equal volume. A Gini of 1 = one procedure has all volume.</p>
+      <div class="formula-box">
+        <span class="comment">// Build Lorenz curve from sorted procedure volumes</span><br>
+        <span class="comment">// x-axis: cumulative % of procedure types</span><br>
+        <span class="comment">// y-axis: cumulative % of case volume</span><br><br>
+
+        <span class="comment">// Trapezoidal integration</span><br>
+        <span class="keyword">for each</span> procedure i = 0..n:<br>
+        &nbsp;&nbsp;x0 = i / n,&nbsp;&nbsp;x1 = (i+1) / n<br>
+        &nbsp;&nbsp;y0 = LorenzCurve[i-1],&nbsp;&nbsp;y1 = LorenzCurve[i]<br>
+        &nbsp;&nbsp;<span class="variable">AreaUnderLorenz</span> += (x1 - x0) x (y0 + y1) / 2<br><br>
+
+        <span class="comment">// Gini = twice the area between the Lorenz curve and the diagonal</span><br>
+        <span class="highlight">Gini</span> = | 2 x AreaUnderLorenz - 1 |
+      </div>
+      <div class="why-box">
+        <div class="label">What it tells the sales rep</div>
+        <p><strong>Gini &ge; 0.7</strong>: Highly concentrated. A small set of procedures (e.g. prostatectomy + hysterectomy) drives most volume &mdash; ideal for targeted robotic programs. <strong>Gini &lt; 0.4</strong>: Spread volume across many types &mdash; needs multi-specialty buy-in for ROI.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════ SEASONALITY / CoV ════ -->
+  <section>
+    <div class="section-number">4</div>
+    <span class="section-label">Seasonality &amp; Demand Variability</span>
+    <h2>How Predictable Is the Surgical Calendar?</h2>
+
+    <div class="formula-card">
+      <h4>Monthly Seasonality Model <span class="tag">Demand Profiling</span></h4>
+      <p>Each month is assigned a weight reflecting real surgical scheduling patterns, then scaled to the hospital's annual volume.</p>
+      <div class="formula-box">
+        <span class="comment">// Monthly weight factors (derived from surgical scheduling data)</span><br>
+        Jan: <span class="number">1.12</span>&nbsp; Feb: <span class="number">1.08</span>&nbsp; Mar: <span class="number">1.10</span>&nbsp; Apr: <span class="number">1.02</span>&nbsp; May: <span class="number">0.98</span>&nbsp; Jun: <span class="number">0.92</span><br>
+        Jul: <span class="number">0.85</span>&nbsp; Aug: <span class="number">0.88</span>&nbsp; Sep: <span class="number">1.05</span>&nbsp; Oct: <span class="number">1.08</span>&nbsp; Nov: <span class="number">0.98</span>&nbsp; Dec: <span class="number">0.74</span><br><br>
+
+        <span class="highlight">MonthlyCases[m]</span> = (AnnualCases x MonthWeight[m]) / SUM(AllWeights)<br>
+        <span class="comment">// + pseudorandom noise (seed-based, +/- 12%) for realistic variance</span>
+      </div>
+    </div>
+
+    <div class="formula-card">
+      <h4>Coefficient of Variation (CoV) <span class="tag">Stability Metric</span></h4>
+      <p>Single number that tells the CFO whether volume is predictable (stable buy) or volatile (lease may be safer).</p>
+      <div class="formula-box">
+        <span class="variable">Mean</span> = SUM(MonthlyCases) / 12<br>
+        <span class="variable">Variance</span> = SUM( (MonthlyCases[m] - Mean)^2 ) / 12<br>
+        <span class="variable">StdDev</span> = SQRT(Variance)<br><br>
+
+        <span class="highlight">CoV</span> = (StdDev / Mean) x 100<br><br>
+
+        <span class="keyword">Class X</span>: CoV &lt; <span class="number">15%</span> = <span class="highlight">Stable</span> <span class="comment">&larr; Consistent utilization, buy with confidence</span><br>
+        <span class="keyword">Class Y</span>: CoV <span class="number">15-30%</span> = <span class="highlight">Seasonal</span> <span class="comment">&larr; Predictable peaks, plan staffing</span><br>
+        <span class="keyword">Class Z</span>: CoV &gt; <span class="number">30%</span> = <span class="highlight">Erratic</span> <span class="comment">&larr; Volume swings, consider lease model</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════ DESIGN DAY ════ -->
+  <section>
+    <div class="section-number">5</div>
+    <span class="section-label">Design Day Analysis</span>
+    <h2>How Many Cases Should the System Handle on a Busy Day?</h2>
+    <p class="section-desc">
+      Borrowed from warehouse engineering. Instead of sizing for the average day (under-provision) or the worst day (over-provision), we size for the P75 percentile &mdash; handles 75% of operating days without overflow.
+    </p>
+
+    <div class="formula-card">
+      <h4>Percentile Calculation <span class="tag">Normal Approximation</span></h4>
+      <p>Daily case volumes are modeled as a slightly overdispersed Poisson distribution, approximated with a normal distribution for percentile computation.</p>
+      <div class="formula-box">
+        <span class="variable">MeanDaily</span> = AnnualCases / <span class="number">250</span> <span class="comment">&larr; 50 weeks x 5 operating days</span><br>
+        <span class="variable">StdDev</span> = SQRT(MeanDaily) x <span class="number">1.2</span> <span class="comment">&larr; 1.2x overdispersion factor</span><br><br>
+
+        <span class="comment">// Standard normal z-scores for each percentile</span><br>
+        P50: z = <span class="number">0.000</span>&nbsp;&nbsp; P75: z = <span class="number">0.674</span>&nbsp;&nbsp; P90: z = <span class="number">1.282</span>&nbsp;&nbsp; P95: z = <span class="number">1.645</span>&nbsp;&nbsp; P99: z = <span class="number">2.326</span><br><br>
+
+        <span class="highlight">Percentile[p]</span> = max( 1, round( MeanDaily + z[p] x StdDev ) )<br><br>
+
+        <span class="comment">// System sizing recommendation</span><br>
+        <span class="highlight">DesignDay</span> = P75 <span class="comment">&larr; Covers 75% of operating days comfortably</span>
+      </div>
+      <div class="why-box">
+        <div class="label">Why P75 and not P90 or P50</div>
+        <p>P50 (median) means the system is overwhelmed every other day. P90/P95 means paying for capacity used only 10-5% of the time. P75 is the capital-efficiency sweet spot: handles 3 out of every 4 operating days; overflow days absorb into scheduling flexibility.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════ COMPATIBILITY MATRIX ════ -->
+  <section>
+    <div class="section-number">6</div>
+    <span class="section-label">Robot Compatibility Matrix</span>
+    <h2>Which da Vinci Model Fits Which Surgery?</h2>
+    <p class="section-desc">
+      A 19-procedure x 4-system scoring matrix. Each cell is a 0-100 fit score based on FDA clearances, clinical evidence, system capabilities, and surgeon ergonomics.
+    </p>
+
+    <div class="formula-card">
+      <h4>Fit Score Matrix (Excerpt) <span class="tag">Expert Calibration</span></h4>
+      <div class="formula-box" style="font-size: 12px;">
+        <span class="comment">// Procedure                   dV5   Xi    X     SP</span><br>
+        Radical Prostatectomy&nbsp;&nbsp;&nbsp;&nbsp;     <span class="number">98</span>&nbsp;&nbsp;&nbsp; <span class="number">92</span>&nbsp;&nbsp;&nbsp; <span class="number">75</span>&nbsp;&nbsp;&nbsp; <span class="number">85</span><br>
+        Partial Nephrectomy&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;     <span class="number">96</span>&nbsp;&nbsp;&nbsp; <span class="number">90</span>&nbsp;&nbsp;&nbsp; <span class="number">72</span>&nbsp;&nbsp;&nbsp; <span class="number">60</span><br>
+        Hysterectomy (Benign)&nbsp;&nbsp;&nbsp;&nbsp;     <span class="number">95</span>&nbsp;&nbsp;&nbsp; <span class="number">92</span>&nbsp;&nbsp;&nbsp; <span class="number">82</span>&nbsp;&nbsp;&nbsp; <span class="number">50</span><br>
+        Low Anterior Resection&nbsp;&nbsp;&nbsp;     <span class="number">97</span>&nbsp;&nbsp;&nbsp; <span class="number">92</span>&nbsp;&nbsp;&nbsp; <span class="number">60</span>&nbsp;&nbsp;&nbsp; <span class="number">40</span><br>
+        Lobectomy&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;     <span class="number">96</span>&nbsp;&nbsp;&nbsp; <span class="number">88</span>&nbsp;&nbsp;&nbsp; <span class="number">55</span>&nbsp;&nbsp;&nbsp; <span class="number">35</span><br>
+        TORS - Oropharyngeal&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;     <span class="number">80</span>&nbsp;&nbsp;&nbsp; <span class="number">55</span>&nbsp;&nbsp;&nbsp; <span class="number">30</span>&nbsp;&nbsp;&nbsp; <span class="highlight">95</span><br>
+        Mitral Valve Repair&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;     <span class="number">95</span>&nbsp;&nbsp;&nbsp; <span class="number">70</span>&nbsp;&nbsp;&nbsp; <span class="number">30</span>&nbsp;&nbsp;&nbsp; <span class="number">35</span><br>
+      </div>
+
+      <div class="formula-box">
+        <span class="comment">// Overall best model = highest average fit across hospital's procedure mix</span><br>
+        <span class="highlight">ModelAverage[m]</span> = SUM( FitScore[proc][m] ) / ProcedureCount<br><br>
+        <span class="highlight">RecommendedModel</span> = argmax( ModelAverage )
+      </div>
+      <div class="why-box">
+        <div class="label">Calibration basis</div>
+        <p>Fit scores are calibrated from: (1) FDA 510(k) clearance scope per system, (2) published case series and technique feasibility studies, (3) Intuitive's own specification sheets (port count, arm reach, instrument compatibility), (4) SP's unique advantage in transoral and single-incision access.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════ MODEL MATCHING ════ -->
+  <section>
+    <div class="section-number">7</div>
+    <span class="section-label">System Recommendation Scoring</span>
+    <h2>Multi-Factor Fit Score: 0-100 Points</h2>
+    <p class="section-desc">
+      The final recommendation is a composite score across five weighted dimensions. Not a black box &mdash; every point is traceable to a specific input.
+    </p>
+
+    <div class="formula-card">
+      <h4>Scoring Breakdown <span class="tag">100-Point Scale</span></h4>
+      <div class="formula-box">
+        <span class="comment">// DIMENSION 1: Volume Fit (0-30 pts)</span><br>
+        <span class="keyword">if</span> DesignCases &ge; IdealVolume[sys]: &nbsp;&nbsp;<span class="highlight">+30</span><br>
+        <span class="keyword">elif</span> DesignCases &ge; MinVolume[sys]: &nbsp;&nbsp;<span class="highlight">+15 + 15 x (Cases - Min) / (Ideal - Min)</span><br>
+        <span class="keyword">else</span>: &nbsp;&nbsp;<span class="highlight">+5</span> <span class="comment">+ warning flag</span><br><br>
+
+        <span class="comment">// DIMENSION 2: Specialty Coverage (0-25 pts)</span><br>
+        <span class="variable">CoverageRatio</span> = MatchedSpecialties / HospitalSpecialties<br>
+        <span class="highlight">SpecialtyScore</span> = CoverageRatio x <span class="number">25</span><br><br>
+
+        <span class="comment">// DIMENSION 3: Budget Fit (0-20 pts)</span><br>
+        <span class="keyword">if</span> Budget &ge; AvgSystemPrice: &nbsp;&nbsp;<span class="highlight">+20</span><br>
+        <span class="keyword">elif</span> Lease/Usage model: &nbsp;&nbsp;<span class="highlight">+15</span><br>
+        <span class="keyword">else</span>: &nbsp;&nbsp;<span class="highlight">+5</span><br><br>
+
+        <span class="comment">// DIMENSION 4: Infrastructure Fit (0-15 pts)</span><br>
+        Start at <span class="number">15</span>. Deduct <span class="number">-10</span> if OR sqft &lt; minimum. Deduct <span class="number">-5</span> if ceiling &lt; minimum.<br><br>
+
+        <span class="comment">// DIMENSION 5: Hospital Type Bonus (0-10 pts)</span><br>
+        dV5 + Academic/400+ beds: &nbsp;&nbsp;<span class="highlight">+10</span><br>
+        X + Community/Rural: &nbsp;&nbsp;<span class="highlight">+10</span><br>
+        Xi (any hospital): &nbsp;&nbsp;<span class="highlight">+7</span> <span class="comment">&larr; proven workhorse bonus</span><br>
+        Other combinations: &nbsp;&nbsp;<span class="highlight">+3</span><br><br>
+
+        <span class="comment">// Final</span><br>
+        <span class="highlight">FitScore[sys]</span> = VolumeFit + SpecialtyCoverage + BudgetFit + InfraFit + TypeBonus<br>
+        <span class="highlight">Recommendation</span> = system with highest FitScore
+      </div>
+    </div>
+  </section>
+
+  <!-- ════ FINANCIAL ENGINE ════ -->
+  <section>
+    <div class="section-number">8</div>
+    <span class="section-label">Financial Deep Dive</span>
+    <h2>ROI, Breakeven, and Total Cost of Ownership</h2>
+
+    <div class="grid-2">
+      <div class="formula-card" style="border-left-color: var(--gold);">
+        <h4>Per-Procedure Economics</h4>
+        <div class="formula-box" style="font-size: 12px;">
+          <span class="comment">// Revenue per case</span><br>
+          Robotic: <span class="number">$18,000</span><br>
+          Laparoscopic: <span class="number">$12,000</span><br><br>
+          <span class="comment">// Cost per case</span><br>
+          Robotic: <span class="number">$8,500</span><br>
+          Laparoscopic: <span class="number">$6,000</span><br><br>
+          <span class="highlight">IncrementalMargin</span><br>
+          = ($18K - $8.5K) - ($12K - $6K)<br>
+          = <span class="highlight">$3,500/case</span>
+        </div>
+      </div>
+      <div class="formula-card" style="border-left-color: var(--gold);">
+        <h4>5-Year TCO Components</h4>
+        <div class="formula-box" style="font-size: 12px;">
+          <span class="variable">SystemAcq</span> = AvgPrice x SystemsNeeded<br>
+          <span class="variable">Instruments</span> = Cases x CostPerCase x 5<br>
+          <span class="variable">Service</span> = ServiceAnnual x 5<br>
+          <span class="variable">Training</span> = NewSurgeons x $35K<br>
+          <span class="variable">Renovation</span> = (if needed)<br><br>
+          <span class="highlight">TCO</span> = SystemAcq + Instruments<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;+ Service + Training + Renovation
+        </div>
+      </div>
+    </div>
+
+    <div class="formula-card">
+      <h4>ROI &amp; Breakeven Calculation <span class="tag">CFO Metrics</span></h4>
+      <div class="formula-box">
+        <span class="comment">// Annual benefit components</span><br>
+        <span class="variable">IncrementalRevenue</span> = NewCases x $15,000<br>
+        <span class="variable">LOS_Savings</span> = DesignCases x (AvgLOS x <span class="number">0.15</span>) x $2,500/day <span class="comment">&larr; 15% reduction</span><br>
+        <span class="variable">Complication_Savings</span> = DesignCases x (CompRate x <span class="number">0.20</span>) x $25,000 <span class="comment">&larr; 20% reduction</span><br>
+        <span class="variable">Marketing_Revenue</span> = DesignCases x <span class="number">0.10</span> x $15,000 <span class="comment">&larr; 10% volume uplift</span><br><br>
+
+        <span class="highlight">TotalAnnualBenefit</span> = IncrementalRevenue + LOS + Complications + Marketing<br>
+        <span class="highlight">AnnualNetBenefit</span> = TotalAnnualBenefit - AnnualOperatingCost<br><br>
+
+        <span class="comment">// Payback period</span><br>
+        <span class="highlight">PaybackMonths</span> = (CapitalCost / AnnualNetBenefit) x 12<br><br>
+
+        <span class="comment">// 5-year ROI</span><br>
+        <span class="highlight">FiveYearROI</span> = ( (AnnualNetBenefit x 5) - CapitalCost ) / CapitalCost x 100%
+      </div>
+      <div class="why-box">
+        <div class="label">Payer mix adjustment</div>
+        <p>Revenue is adjusted for the hospital's actual payer mix: Medicare (0.75x), Medicaid (0.55x), Commercial (1.15x), Self-pay (0.90x). A hospital with 60% Medicare sees lower effective reimbursement than one with 60% commercial. The weighted reimbursement factor produces a hospital-specific revenue projection, not an industry average.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════ GROWTH SCENARIOS ════ -->
+  <section>
+    <div class="section-number">9</div>
+    <span class="section-label">Growth Extrapolation</span>
+    <h2>Three Scenarios: Conservative, Baseline, Aggressive</h2>
+
+    <div class="formula-card">
+      <h4>Scenario Modeling <span class="tag">Compound Growth</span></h4>
+      <div class="formula-box">
+        <span class="comment">// Three growth rate assumptions</span><br>
+        <span class="keyword">Conservative</span>: <span class="number">10%</span> annual growth<br>
+        <span class="keyword">Baseline</span>: <span class="number">15%</span> annual growth<br>
+        <span class="keyword">Aggressive</span>: <span class="number">20%</span> annual growth<br><br>
+
+        <span class="highlight">ProjectedCases[yr]</span> = BaseCases x (1 + GrowthRate)^yr<br><br>
+
+        <span class="comment">// Fleet expansion trigger</span><br>
+        <span class="highlight">SystemsNeeded[yr]</span> = CEIL( ProjectedCases[yr] / (MaxCapacity x <span class="number">0.80</span>) )<br><br>
+
+        <span class="comment">// Specialty-specific growth rates (not all specialties grow equally)</span><br>
+        Colorectal: <span class="number">22%</span>&nbsp; General: <span class="number">20%</span>&nbsp; Gynecology: <span class="number">18%</span>&nbsp; Thoracic: <span class="number">15%</span><br>
+        Urology: <span class="number">12%</span>&nbsp; Head/Neck: <span class="number">10%</span>&nbsp; Cardiac: <span class="number">8%</span>
+      </div>
+      <div class="why-box">
+        <div class="label">Why three scenarios matter</div>
+        <p>The CFO doesn't want to bet on a single number. By showing that even the conservative scenario delivers ROI, the purchase decision is de-risked. The aggressive scenario shows when a second system is needed &mdash; a future upsell baked into the initial analysis.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════ UTILIZATION ════ -->
+  <section>
+    <div class="section-number">10</div>
+    <span class="section-label">Utilization &amp; Capacity</span>
+    <h2>How Many Systems, and Will They Stay Busy?</h2>
+
+    <div class="formula-card">
+      <h4>System Capacity Model <span class="tag">Operations</span></h4>
+      <div class="formula-box">
+        <span class="comment">// Weighted average case duration (by specialty mix)</span><br>
+        Urology: <span class="number">2.5h</span>&nbsp; Gyn: <span class="number">1.5h</span>&nbsp; General: <span class="number">1.5h</span>&nbsp; Thoracic: <span class="number">3.0h</span>&nbsp; Colorectal: <span class="number">3.5h</span><br>
+        <span class="variable">AvgDuration</span> = SUM( Duration[spec] x Pct[spec] )<br><br>
+
+        <span class="variable">SetupTurnover</span> = <span class="number">0.75</span> hours <span class="comment">&larr; draping, docking, undocking per case</span><br>
+        <span class="variable">TotalPerCase</span> = AvgDuration + SetupTurnover<br><br>
+
+        <span class="variable">AvailableHours</span> = <span class="number">10</span> hours/day <span class="comment">&larr; standard OR block time</span><br>
+        <span class="variable">MaxCasesPerDay</span> = FLOOR( AvailableHours / TotalPerCase )<br><br>
+
+        <span class="highlight">SystemsNeeded</span> = CEIL( DesignCases / (MaxCasesPerYear x <span class="number">0.80</span>) )<br>
+        <span class="comment">// Target 80% utilization &mdash; leaves room for maintenance, emergencies</span><br><br>
+
+        <span class="highlight">UtilizationPct</span> = DesignCases / (Systems x MaxCasesPerYear) x 100
+      </div>
+    </div>
+  </section>
+
+  <!-- ════ DATA INPUTS ════ -->
+  <section>
+    <div class="section-number">11</div>
+    <span class="section-label">Data Sources</span>
+    <h2>Where the Input Numbers Come From</h2>
+
+    <table class="source-table">
+      <thead>
+        <tr>
+          <th>Data Category</th>
+          <th>Source</th>
+          <th>How It Enters the Engine</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Hospital profile</strong></td>
+          <td>Intake form (40+ fields)</td>
+          <td>Bed count, OR count, sq. footage, ceiling height, existing robots</td>
+        </tr>
+        <tr>
+          <td><strong>Surgical volume</strong></td>
+          <td>Hospital-reported annual cases</td>
+          <td>Total surgical volume + specialty breakdown percentages</td>
+        </tr>
+        <tr>
+          <td><strong>Conversion rates</strong></td>
+          <td>Clinical adoption literature</td>
+          <td>Calibrated from AUA, ACOG, SAGES adoption reports + Cochrane reviews</td>
+        </tr>
+        <tr>
+          <td><strong>System specifications</strong></td>
+          <td>Intuitive product catalog</td>
+          <td>Price ranges, capabilities, ideal volumes, OR requirements per model</td>
+        </tr>
+        <tr>
+          <td><strong>Fit scores</strong></td>
+          <td>FDA clearances + case series</td>
+          <td>19-procedure x 4-system matrix calibrated from published feasibility data</td>
+        </tr>
+        <tr>
+          <td><strong>Financial parameters</strong></td>
+          <td>Industry benchmarks</td>
+          <td>Revenue/cost per case, LOS savings, complication rates, payer mix</td>
+        </tr>
+        <tr>
+          <td><strong>Seasonality weights</strong></td>
+          <td>Surgical scheduling patterns</td>
+          <td>Monthly weights from aggregate OR utilization data</td>
+        </tr>
+        <tr>
+          <td><strong>Growth rates</strong></td>
+          <td>Market adoption trends</td>
+          <td>CAGR by specialty from IQVIA, Becker's, and Intuitive annual reports</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ════ BOTTOM LINE ════ -->
+  <div class="highlight-box">
+    <h3>The Bottom Line</h3>
+    <p style="font-size:15px;line-height:1.8;">
+      Every number in a SurgicalMind AI hospital assessment traces back to a formula, a data source, and a calibrated parameter. No AI hallucination. No subjective judgment. No hand-wavy Excel model that changes from rep to rep. The engine produces <strong>deterministic, reproducible, auditable</strong> analyses &mdash; the same inputs always yield the same recommendation. That's what gives a hospital CFO the confidence to sign a $2M purchase order.
+    </p>
+  </div>
+
+  <!-- CTA -->
+  <div style="background:var(--gradient-primary);border-radius:20px;padding:40px;text-align:center;color:white;margin-top:30px;">
+    <h2 style="color:white;margin-bottom:10px;">See the Engine in Action</h2>
+    <p style="color:rgba(255,255,255,0.7);max-width:500px;margin:0 auto 24px;font-size:14px;">
+      Run a demo hospital through the full 16-module pipeline in under 10 seconds.
+    </p>
+    <a href="https://aiagent.ringlypro.com/intuitive/" target="_blank" style="display:inline-block;background:var(--gradient-accent);color:white;padding:14px 32px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;">Launch SurgicalMind AI &rarr;</a>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<div style="background:var(--primary);color:rgba(255,255,255,0.5);text-align:center;padding:24px;font-size:12px;margin-top:30px;">
+  <strong style="color:rgba(255,255,255,0.8);">SurgicalMind AI</strong> &mdash; Analytical Methodology White Paper<br>
+  &copy; 2026 Digit2AI LLC &bull; Confidential &mdash; Not for Distribution<br>
+  <span style="opacity: 0.5;">Manuel Stagg &mdash; mstagg@digit2ai.com &mdash; April 2026</span>
+</div>
+
+</body>
+</html>
