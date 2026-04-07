@@ -572,6 +572,97 @@
       </div>
     </div>
 
+    <!-- Math breakdown (expandable) -->
+    <div style="background: #161B22; border: 1px solid #21262D; border-radius: 10px; padding: 20px 24px; margin-top: 20px;">
+      <div style="font-family: 'Bebas Neue', sans-serif; font-size: 15px; color: #0EA5E9; letter-spacing: 1.5px; margin-bottom: 16px;">HOW WE CALCULATED THESE NUMBERS</div>
+      <div style="font-size: 11px; color: #8B949E; margin-bottom: 16px;">Based on industry averages for a 50-load/day brokerage. Conservative estimates. 50 loads/day x 250 working days = <strong style="color: #E6EDF3;">12,500 loads/year</strong>.</div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+        <!-- Backhaul -->
+        <div style="border-left: 3px solid #238636; padding-left: 12px;">
+          <div style="font-size: 11px; color: #E6EDF3; font-weight: 700; margin-bottom: 4px;">Backhaul Matching -- $500K/yr</div>
+          <div style="font-size: 10px; color: #8B949E; line-height: 1.6;">
+            12,500 loads x 20% match rate = 2,500 backhaul pairs<br>
+            $200 avg savings per pair (carrier loaded both ways)<br>
+            <strong style="color: #C9D1D9;">2,500 x $200 = $500,000</strong>
+          </div>
+        </div>
+        <!-- Rate Intel -->
+        <div style="border-left: 3px solid #238636; padding-left: 12px;">
+          <div style="font-size: 11px; color: #E6EDF3; font-weight: 700; margin-bottom: 4px;">Rate Intelligence -- $800K-1.5M/yr</div>
+          <div style="font-size: 10px; color: #8B949E; line-height: 1.6;">
+            Avg load revenue: $2,000-4,000<br>
+            2-5% margin improvement (data vs gut feel)<br>
+            <strong style="color: #C9D1D9;">12,500 x $3,000 avg x 3% = $1.125M</strong>
+          </div>
+        </div>
+        <!-- Carrier errors -->
+        <div style="border-left: 3px solid #238636; padding-left: 12px;">
+          <div style="font-size: 11px; color: #E6EDF3; font-weight: 700; margin-bottom: 4px;">Reduced Carrier Errors -- $200K/yr</div>
+          <div style="font-size: 10px; color: #8B949E; line-height: 1.6;">
+            Service failures cost $500-1,000 per incident<br>
+            Reliability scoring reduces failures by 15-20%<br>
+            <strong style="color: #C9D1D9;">12,500 x 5% failure x 30% reduction x $700</strong>
+          </div>
+        </div>
+        <!-- Invoicing -->
+        <div style="border-left: 3px solid #238636; padding-left: 12px;">
+          <div style="font-size: 11px; color: #E6EDF3; font-weight: 700; margin-bottom: 4px;">Same-Day Invoicing -- $100K/yr</div>
+          <div style="font-size: 10px; color: #8B949E; line-height: 1.6;">
+            Paid 3-5 days faster on 12,500 invoices<br>
+            Fewer disputes from delayed billing<br>
+            <strong style="color: #C9D1D9;">Improved cash flow + reduced aging receivables</strong>
+          </div>
+        </div>
+        <!-- Retention -->
+        <div style="border-left: 3px solid #238636; padding-left: 12px;">
+          <div style="font-size: 11px; color: #E6EDF3; font-weight: 700; margin-bottom: 4px;">Shipper Retention -- $400K/yr</div>
+          <div style="font-size: 10px; color: #8B949E; line-height: 1.6;">
+            Losing 1 mid-size shipper = $200K-500K/yr gone<br>
+            #1 reason shippers leave: missed check calls / no updates<br>
+            <strong style="color: #C9D1D9;">Retaining 1-2 shippers that would have churned</strong>
+          </div>
+        </div>
+        <!-- Brokers -->
+        <div style="border-left: 3px solid #0EA5E9; padding-left: 12px;">
+          <div style="font-size: 11px; color: #E6EDF3; font-weight: 700; margin-bottom: 4px;">3 Fewer Brokers -- $180K-250K/yr</div>
+          <div style="font-size: 10px; color: #8B949E; line-height: 1.6;">
+            Avg broker salary: $50K-70K + benefits<br>
+            3 brokers handle 12-15 loads/day each = 36-45 loads<br>
+            <strong style="color: #C9D1D9;">Autopilot handles same volume, team handles exceptions</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Refine with real data -->
+      <div style="background: #0D1117; border: 1px solid #30363D; border-radius: 8px; padding: 16px; margin-top: 8px;">
+        <div style="font-size: 12px; color: #F59E0B; font-weight: 700; margin-bottom: 8px;">TO CALCULATE YOUR EXACT ROI, WE NEED 5 NUMBERS:</div>
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;">
+          <div style="text-align: center;">
+            <div style="font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: #E6EDF3;">?</div>
+            <div style="font-size: 9px; color: #8B949E; margin-top: 2px;">Loads per day</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: #E6EDF3;">?</div>
+            <div style="font-size: 9px; color: #8B949E; margin-top: 2px;">Avg revenue per load</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: #E6EDF3;">?</div>
+            <div style="font-size: 9px; color: #8B949E; margin-top: 2px;">Current margin %</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: #E6EDF3;">?</div>
+            <div style="font-size: 9px; color: #8B949E; margin-top: 2px;">Brokers on staff</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: #E6EDF3;">?</div>
+            <div style="font-size: 9px; color: #8B949E; margin-top: 2px;">Backhaul capture rate</div>
+          </div>
+        </div>
+        <div style="text-align: center; margin-top: 10px; font-size: 10px; color: #484F58;">Share these numbers and we'll calculate your personalized ROI projection.</div>
+      </div>
+    </div>
+
   </div>
 
   <div class="divider"></div>
