@@ -922,23 +922,46 @@ if (sessionStorage.getItem('nda_accepted')) {
       <!-- Disclosing Party (pre-signed) -->
       <div class="nda-sig-box">
         <div class="sig-label">Disclosing Party</div>
-        <div style="position:relative;height:90px;margin-bottom:8px;">
-          <svg viewBox="0 0 380 160" style="width:100%;height:100%;" preserveAspectRatio="xMidYMid meet">
-            <!-- Manuel Stagg signature -->
-            <!-- Long diagonal stroke from bottom-left up through the loops -->
-            <path d="M15,145 C40,130 80,100 130,60 C155,42 170,35 185,38" stroke="#0F2B46" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            <!-- First oval loop -->
-            <path d="M140,72 C132,52 138,30 158,25 C178,20 190,35 188,52 C186,68 172,80 155,78 C140,76 132,65 140,50" stroke="#0F2B46" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            <!-- Second oval loop (overlapping) -->
-            <path d="M155,55 C160,38 172,22 190,20 C208,18 218,32 215,50 C212,66 198,78 182,76 C168,74 160,62 165,48" stroke="#0F2B46" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            <!-- Descending stroke from loops down -->
-            <path d="M185,38 C188,55 180,80 165,105 C152,125 140,142 128,150" stroke="#0F2B46" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            <!-- Sharp angled line going up to top-right -->
-            <path d="M280,140 C300,120 320,85 350,30" stroke="#0F2B46" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            <!-- Connecting horizontal stroke at bottom -->
-            <path d="M128,150 C160,142 200,138 240,140 C260,141 275,141 280,140" stroke="#0F2B46" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+        <div id="disclosingSigArea" style="position:relative;min-height:90px;margin-bottom:8px;">
+          <!-- Signature image (loaded from localStorage or upload) -->
+          <img id="disclosingSigImg" style="max-width:100%;max-height:100px;display:none;" alt="Manuel Stagg Signature">
+          <!-- Upload prompt (shown when no signature saved) -->
+          <label id="disclosingSigUpload" for="disclosingSigInput" style="display:flex;align-items:center;justify-content:center;height:90px;border:2px dashed var(--border);border-radius:8px;cursor:pointer;background:white;transition:all 0.2s;">
+            <span style="color:#94a3b8;font-size:13px;font-weight:500;text-align:center;line-height:1.5;">Click to upload<br>signature image</span>
+          </label>
+          <input type="file" id="disclosingSigInput" accept="image/*" style="display:none;" onchange="handleDisclosingSig(this)">
+          <button id="disclosingSigClear" onclick="clearDisclosingSig()" style="position:absolute;top:4px;right:4px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:var(--danger);font-size:11px;font-weight:600;padding:3px 10px;border-radius:5px;cursor:pointer;display:none;">Change</button>
         </div>
+        <script>
+        function handleDisclosingSig(input) {
+          if (!input.files || !input.files[0]) return;
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            const dataUrl = e.target.result;
+            localStorage.setItem('nda_disclosing_sig', dataUrl);
+            showDisclosingSig(dataUrl);
+          };
+          reader.readAsDataURL(input.files[0]);
+        }
+        function showDisclosingSig(dataUrl) {
+          const img = document.getElementById('disclosingSigImg');
+          img.src = dataUrl;
+          img.style.display = 'block';
+          document.getElementById('disclosingSigUpload').style.display = 'none';
+          document.getElementById('disclosingSigClear').style.display = 'block';
+        }
+        function clearDisclosingSig() {
+          localStorage.removeItem('nda_disclosing_sig');
+          document.getElementById('disclosingSigImg').style.display = 'none';
+          document.getElementById('disclosingSigUpload').style.display = 'flex';
+          document.getElementById('disclosingSigClear').style.display = 'none';
+        }
+        // Load saved signature on page load
+        (function() {
+          const saved = localStorage.getItem('nda_disclosing_sig');
+          if (saved) showDisclosingSig(saved);
+        })();
+        </script>
         <div class="sig-name">Manuel Stagg</div>
         <div class="sig-title">CEO, Digit2AI LLC</div>
         <div class="sig-title">mstagg@digit2ai.com</div>
