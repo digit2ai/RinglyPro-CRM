@@ -533,6 +533,106 @@ For every request, produce:
 
 ---
 
+## A2P / SHAKEN/STIR Verification Runbook
+
+When the user says "a2p", "A2P verify", "SHAKEN", "STIR", or "register number" — execute this runbook to assign any RinglyPro client's Twilio number to the approved SHAKEN/STIR Trust Product for A-level voice attestation.
+
+### Why This Matters
+Carriers (AT&T ActiveArmor, T-Mobile Scam Shield, Verizon Call Filter) silently block outbound calls from numbers with B-level STIR/SHAKEN attestation. Assigning numbers to the approved SHAKEN Trust Product upgrades them to A-level, so calls ring through.
+
+### Prerequisites (Already Done — Do NOT Redo)
+- **A2P Brand**: APPROVED (DIGIT2AI LLC, TCR ID: BLPMIOF, SID: `BN6fe85d745ff6eecfb464b50fb3b9016d`)
+- **Customer Profile**: `BU879f08f408ff809866954bd28dd32a7f` (twilio-approved)
+- **SHAKEN Trust Product**: `BU7c67ff7c3c32c0b8ff3bfb32d4ff5bd0` (twilio-approved)
+
+### Execution Steps
+
+#### Step 1: Identify the number(s) to register
+```javascript
+// If user specifies a client_id, look up their number:
+require('dotenv').config();
+const { Sequelize } = require('sequelize');
+const seq = new Sequelize(process.env.CRM_DATABASE_URL || process.env.DATABASE_URL, {
+  dialect: 'postgres',
+  dialectOptions: { ssl: { require: true, rejectUnauthorized: false } },
+  logging: false
+});
+const [rows] = await seq.query(
+  "SELECT id, business_name, ringlypro_number, twilio_number_sid FROM clients WHERE id = :clientId",
+  { replacements: { clientId: TARGET_CLIENT_ID } }
+);
+// ringlypro_number = the phone, twilio_number_sid = the PN sid
+```
+
+If no `twilio_number_sid` in DB, look it up:
+```javascript
+const twilio = require('twilio');
+const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+const nums = await client.incomingPhoneNumbers.list({ phoneNumber: THE_PHONE_NUMBER });
+const phoneSid = nums[0].sid; // e.g. PNxxxxxxx
+```
+
+#### Step 2: Assign to Customer Profile
+```javascript
+const CP_SID = 'BU879f08f408ff809866954bd28dd32a7f';
+await client.trusthub.v1
+  .customerProfiles(CP_SID)
+  .customerProfilesChannelEndpointAssignment
+  .create({ channelEndpointType: 'phone-number', channelEndpointSid: phoneSid });
+```
+
+#### Step 3: Assign to SHAKEN Trust Product
+```javascript
+const SHAKEN_SID = 'BU7c67ff7c3c32c0b8ff3bfb32d4ff5bd0';
+await client.trusthub.v1
+  .trustProducts(SHAKEN_SID)
+  .trustProductsChannelEndpointAssignment
+  .create({ channelEndpointType: 'phone-number', channelEndpointSid: phoneSid });
+```
+
+#### Step 4: Verify
+```javascript
+const eps = await client.trusthub.v1
+  .trustProducts(SHAKEN_SID)
+  .trustProductsChannelEndpointAssignment
+  .list({ limit: 50 });
+// Confirm the number appears in the list
+```
+
+#### Step 5: (Optional) Add to A2P Messaging Service for SMS
+If the number also sends SMS, add it to the messaging service:
+```javascript
+const MSG_SVC_SID = 'MG0acef307d53fd609b666b77d96fd1c31'; // Low Volume Mixed A2P
+await client.messaging.v1.services(MSG_SVC_SID).phoneNumbers.create({ phoneNumberSid: phoneSid });
+```
+
+### Batch Mode
+If user says "a2p all" or "register all numbers", loop through ALL Twilio numbers:
+```javascript
+const allNumbers = await client.incomingPhoneNumbers.list({ limit: 50 });
+for (const num of allNumbers) {
+  // Step 2 + Step 3 for each, catch "already assigned" errors and skip
+}
+```
+
+### Key Constants
+| Resource | SID |
+|----------|-----|
+| Customer Profile | `BU879f08f408ff809866954bd28dd32a7f` |
+| SHAKEN Trust Product | `BU7c67ff7c3c32c0b8ff3bfb32d4ff5bd0` |
+| A2P Brand | `BN6fe85d745ff6eecfb464b50fb3b9016d` |
+| A2P Messaging Service | `MG0acef307d53fd609b666b77d96fd1c31` |
+
+### Propagation
+SHAKEN assignment takes effect within minutes on Twilio. Carriers may take **24-48 hours** to reflect the upgraded attestation. Report this to the user.
+
+### Error Handling
+- `"already assigned"` -> Skip, already done
+- `"not assigned to all required supporting Trust products"` -> Must do Step 2 (Customer Profile) before Step 3
+- `"phone number not found"` -> Wrong SID, re-lookup from Twilio API
+
+---
+
 ## Current Task
 
 $ARGUMENTS
