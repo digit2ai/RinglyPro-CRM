@@ -172,6 +172,90 @@
     }
     .highlight-box h3 { color: var(--accent); margin-bottom: 8px; }
 
+    /* NDA styles */
+    .nda-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 43, 70, 0.97); z-index: 9999;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px; overflow-y: auto;
+    }
+    .nda-overlay.hidden { display: none; }
+    .nda-modal {
+      background: white; border-radius: 20px; max-width: 720px; width: 100%;
+      padding: 48px 44px; box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+      max-height: 90vh; overflow-y: auto;
+    }
+    .nda-modal h2 { text-align: center; margin-bottom: 4px; }
+    .nda-modal .nda-sub { text-align: center; color: var(--text-light); font-size: 14px; margin-bottom: 28px; }
+    .nda-modal .nda-badge {
+      display: block; text-align: center; margin-bottom: 20px;
+      color: var(--danger); font-size: 11px; font-weight: 700;
+      letter-spacing: 2px; text-transform: uppercase;
+    }
+    .nda-body {
+      background: #f8fafc; border: 1px solid var(--border); border-radius: 12px;
+      padding: 28px; margin-bottom: 24px; font-size: 13px; line-height: 1.9;
+      color: var(--text); max-height: 340px; overflow-y: auto;
+    }
+    .nda-body h4 { font-size: 13px; font-weight: 700; color: var(--primary); margin: 16px 0 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .nda-body h4:first-child { margin-top: 0; }
+    .nda-body p { margin-bottom: 8px; }
+    .nda-body ol { padding-left: 20px; margin-bottom: 8px; }
+    .nda-body ol li { margin-bottom: 6px; }
+    .nda-accept-row {
+      display: flex; align-items: flex-start; gap: 12px;
+      margin-bottom: 20px; padding: 14px 16px;
+      background: rgba(0,163,224,0.04); border: 1px solid rgba(0,163,224,0.12); border-radius: 10px;
+    }
+    .nda-accept-row input[type="checkbox"] {
+      width: 20px; height: 20px; margin-top: 2px; flex-shrink: 0; accent-color: var(--accent);
+    }
+    .nda-accept-row label { font-size: 14px; line-height: 1.6; color: var(--text); cursor: pointer; }
+    .nda-btn {
+      display: block; width: 100%; padding: 16px; border: none; border-radius: 10px;
+      font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.3s;
+      letter-spacing: 0.3px;
+    }
+    .nda-btn.primary {
+      background: var(--gradient-accent); color: white;
+    }
+    .nda-btn.primary:disabled {
+      background: #cbd5e1; color: #94a3b8; cursor: not-allowed;
+    }
+    .nda-btn.primary:not(:disabled):hover {
+      box-shadow: 0 6px 20px rgba(0,163,224,0.4); transform: translateY(-1px);
+    }
+    .nda-btn.decline {
+      background: none; border: none; color: var(--text-light); font-size: 13px;
+      font-weight: 500; margin-top: 12px; cursor: pointer;
+    }
+    .nda-btn.decline:hover { color: var(--danger); }
+    .nda-parties { display: flex; gap: 20px; margin-top: 20px; }
+    .nda-party {
+      flex: 1; background: white; border: 1px solid var(--border); border-radius: 10px;
+      padding: 16px; font-size: 12px; line-height: 1.7;
+    }
+    .nda-party strong { display: block; font-size: 13px; margin-bottom: 4px; color: var(--primary); }
+
+    .nda-section {
+      background: white; border: 1px solid var(--border); border-radius: 16px;
+      padding: 36px; margin: 30px 0; border-top: 4px solid var(--danger);
+    }
+    .nda-section h3 { color: var(--danger); margin-bottom: 6px; }
+    .nda-inline-body { font-size: 13px; line-height: 1.9; color: var(--text); }
+    .nda-inline-body h4 { font-size: 13px; font-weight: 700; color: var(--primary); margin: 14px 0 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .nda-inline-body ol { padding-left: 20px; }
+    .nda-inline-body ol li { margin-bottom: 5px; }
+    .nda-sig-block {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 24px;
+      padding-top: 20px; border-top: 1px solid var(--border);
+    }
+    .nda-sig-box { padding: 16px; }
+    .nda-sig-box .sig-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-light); margin-bottom: 10px; }
+    .nda-sig-box .sig-line { border-bottom: 1px solid var(--text); margin-bottom: 6px; padding-bottom: 24px; }
+    .nda-sig-box .sig-name { font-size: 13px; font-weight: 600; color: var(--primary); }
+    .nda-sig-box .sig-title { font-size: 12px; color: var(--text-light); }
+
     @media (max-width: 768px) {
       .grid-2 { grid-template-columns: 1fr; }
       .content { padding: 30px 16px; }
@@ -179,10 +263,100 @@
       .pipeline-strip { flex-direction: column; }
       .pipeline-step { border-radius: 0 !important; }
       .pipeline-step::after { display: none; }
+      .nda-modal { padding: 32px 24px; }
+      .nda-parties { flex-direction: column; }
+      .nda-sig-block { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
+
+<!-- ═══ NDA GATE OVERLAY ═══ -->
+<div class="nda-overlay" id="ndaOverlay">
+  <div class="nda-modal">
+    <span class="nda-badge">Legally Binding Agreement</span>
+    <h2>Non-Disclosure Agreement</h2>
+    <p class="nda-sub">You must accept this NDA before accessing confidential analytical methodology.</p>
+
+    <div class="nda-body">
+      <h4>1. Definition of Confidential Information</h4>
+      <p>For purposes of this Agreement, "Confidential Information" means all non-public, proprietary, or trade-secret information disclosed by <strong>Digit2AI LLC</strong> ("Disclosing Party") to the Recipient, whether orally, in writing, electronically, or by inspection, including but not limited to:</p>
+      <ol type="a">
+        <li>Analytical methodologies, scoring algorithms, formulas, and mathematical models contained in the SurgicalMind AI System Matching Engine;</li>
+        <li>Software architecture, source code logic, data pipelines, and computational approaches;</li>
+        <li>Proprietary fit-score matrices, conversion rate calibrations, and financial modeling parameters;</li>
+        <li>Business strategies, pricing models, partnership structures, and go-to-market plans;</li>
+        <li>Any derivative works, summaries, analyses, or notes that incorporate or reference Confidential Information.</li>
+      </ol>
+
+      <h4>2. Obligations of the Recipient</h4>
+      <p>The Recipient agrees to:</p>
+      <ol type="a">
+        <li>Hold all Confidential Information in strict confidence using the same degree of care used to protect its own confidential information, but in no event less than reasonable care;</li>
+        <li>Not disclose, publish, reproduce, or transmit Confidential Information to any third party without prior written consent from Digit2AI LLC;</li>
+        <li>Not use Confidential Information for any purpose other than evaluating a potential business relationship with Digit2AI LLC;</li>
+        <li>Restrict access to Confidential Information to employees, agents, or advisors with a legitimate need to know, provided such persons are bound by confidentiality obligations no less restrictive than this Agreement;</li>
+        <li>Not reverse-engineer, decompile, or attempt to derive source code or underlying algorithms from any materials provided.</li>
+      </ol>
+
+      <h4>3. Exclusions</h4>
+      <p>Confidential Information does not include information that: (a) is or becomes publicly available through no fault of the Recipient; (b) was known to the Recipient prior to disclosure without obligation of confidentiality; (c) is independently developed by the Recipient without use of or reference to Confidential Information; or (d) is required to be disclosed by law, regulation, or court order, provided the Recipient gives prompt written notice to permit Digit2AI LLC to seek protective measures.</p>
+
+      <h4>4. Intellectual Property</h4>
+      <p>All Confidential Information remains the exclusive property of Digit2AI LLC. No license, ownership right, or intellectual property right is granted to the Recipient by this Agreement, except the limited right to review the materials for evaluation purposes.</p>
+
+      <h4>5. Term and Return of Materials</h4>
+      <p>This Agreement remains in effect for a period of <strong>three (3) years</strong> from the date of acceptance. Upon request or termination of discussions, the Recipient shall promptly return or destroy all Confidential Information and any copies thereof, and certify such destruction in writing.</p>
+
+      <h4>6. Remedies</h4>
+      <p>The Recipient acknowledges that unauthorized disclosure of Confidential Information may cause irreparable harm for which monetary damages would be inadequate. Digit2AI LLC shall be entitled to seek injunctive relief in addition to any other remedies available at law or in equity.</p>
+
+      <h4>7. Governing Law</h4>
+      <p>This Agreement shall be governed by and construed in accordance with the laws of the State of Florida, United States of America, without regard to conflict of law principles. Any disputes shall be resolved in the state or federal courts located in Miami-Dade County, Florida.</p>
+
+      <h4>8. Entire Agreement</h4>
+      <p>This NDA constitutes the entire agreement between the parties with respect to confidentiality of the disclosed materials and supersedes all prior negotiations, representations, or agreements relating to this subject matter.</p>
+    </div>
+
+    <div class="nda-parties">
+      <div class="nda-party">
+        <strong>Disclosing Party</strong>
+        Digit2AI LLC<br>
+        Manuel Stagg, CEO<br>
+        mstagg@digit2ai.com<br>
+        Florida, USA
+      </div>
+      <div class="nda-party">
+        <strong>Receiving Party</strong>
+        By clicking "I Accept" below, you represent that you have authority to bind yourself (and, if applicable, your organization) to the terms of this Agreement.
+      </div>
+    </div>
+
+    <div class="nda-accept-row" style="margin-top: 20px;">
+      <input type="checkbox" id="ndaCheckbox" onchange="document.getElementById('ndaAcceptBtn').disabled = !this.checked;">
+      <label for="ndaCheckbox">I have read, understand, and agree to be bound by the terms of this Non-Disclosure Agreement. I acknowledge that the analytical methodologies, formulas, and proprietary information contained in this document are trade secrets of Digit2AI LLC.</label>
+    </div>
+
+    <button class="nda-btn primary" id="ndaAcceptBtn" disabled onclick="acceptNDA()">I Accept &mdash; Proceed to Document</button>
+    <button class="nda-btn decline" onclick="declineNDA()">Decline &mdash; I do not agree to these terms</button>
+  </div>
+</div>
+
+<script>
+function acceptNDA() {
+  const ts = new Date().toISOString();
+  sessionStorage.setItem('nda_accepted', ts);
+  document.getElementById('ndaOverlay').classList.add('hidden');
+  document.getElementById('ndaTimestamp').textContent = 'Accepted: ' + new Date(ts).toLocaleString();
+}
+function declineNDA() {
+  document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#0F2B46;color:white;font-family:Inter,sans-serif;text-align:center;padding:40px;"><div><h2 style="margin-bottom:12px;">Access Denied</h2><p style="color:rgba(255,255,255,0.6);max-width:400px;line-height:1.7;">You must accept the Non-Disclosure Agreement to view this document. If you have questions, contact <a href="mailto:mstagg@digit2ai.com" style="color:#00A3E0;">mstagg@digit2ai.com</a>.</p><a href="https://aiagent.ringlypro.com/proposals/intuitive.html" style="display:inline-block;margin-top:24px;background:#00A3E0;color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;">Return to Proposal</a></div></div>';
+}
+// Auto-show if not yet accepted this session
+if (sessionStorage.getItem('nda_accepted')) {
+  document.getElementById('ndaOverlay').classList.add('hidden');
+}
+</script>
 
 <!-- DOWNLOAD BAR -->
 <div class="download-bar no-print">
@@ -701,6 +875,68 @@
     <h3>The Bottom Line</h3>
     <p style="font-size:15px;line-height:1.8;">
       Every number in a SurgicalMind AI hospital assessment traces back to a formula, a data source, and a calibrated parameter. No AI hallucination. No subjective judgment. No hand-wavy Excel model that changes from rep to rep. The engine produces <strong>deterministic, reproducible, auditable</strong> analyses &mdash; the same inputs always yield the same recommendation. That's what gives a hospital CFO the confidence to sign a $2M purchase order.
+    </p>
+  </div>
+
+  <!-- ════ NDA (INLINE / PRINTABLE) ════ -->
+  <div class="nda-section" style="margin-top:40px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <div class="section-number" style="background:linear-gradient(135deg, #ef4444, #b91c1c);flex-shrink:0;">N</div>
+      <div>
+        <span class="section-label" style="color:var(--danger);">Legal</span>
+        <h3 style="margin:0;">Non-Disclosure Agreement</h3>
+      </div>
+    </div>
+
+    <div class="nda-inline-body">
+      <p style="margin-bottom:14px;font-weight:600;color:var(--primary);">
+        This Non-Disclosure Agreement ("Agreement") is entered into by and between Digit2AI LLC ("Disclosing Party") and the individual or entity accessing this document ("Recipient"), effective as of the date of access.
+      </p>
+
+      <h4>1. Confidential Information</h4>
+      <p>"Confidential Information" includes all non-public, proprietary, or trade-secret information disclosed herein, including but not limited to: analytical methodologies, scoring algorithms, mathematical models, fit-score matrices, conversion rate calibrations, financial modeling parameters, software architecture, and business strategies contained in the SurgicalMind AI System Matching Engine.</p>
+
+      <h4>2. Obligations</h4>
+      <p>The Recipient shall: (a) hold Confidential Information in strict confidence using no less than reasonable care; (b) not disclose, publish, reproduce, or transmit to any third party without prior written consent; (c) use Confidential Information solely for evaluating a potential business relationship with Digit2AI LLC; (d) restrict access to persons with a legitimate need to know, bound by equivalent confidentiality obligations; (e) not reverse-engineer, decompile, or attempt to derive underlying algorithms.</p>
+
+      <h4>3. Exclusions</h4>
+      <p>This Agreement does not apply to information that: (a) becomes publicly available through no fault of the Recipient; (b) was known to the Recipient prior to disclosure without confidentiality obligation; (c) is independently developed without reference to Confidential Information; or (d) is required by law, provided prompt written notice is given to permit Digit2AI LLC to seek protective measures.</p>
+
+      <h4>4. Intellectual Property</h4>
+      <p>All Confidential Information remains the exclusive property of Digit2AI LLC. No license, ownership, or IP rights are granted except the limited right to review for evaluation purposes.</p>
+
+      <h4>5. Term</h4>
+      <p>This Agreement remains in effect for <strong>three (3) years</strong> from the date of acceptance. Upon request, the Recipient shall return or destroy all Confidential Information and certify destruction in writing.</p>
+
+      <h4>6. Remedies</h4>
+      <p>Unauthorized disclosure may cause irreparable harm. Digit2AI LLC shall be entitled to seek injunctive relief in addition to all other remedies available at law or in equity.</p>
+
+      <h4>7. Governing Law</h4>
+      <p>Governed by the laws of the State of Florida, USA. Disputes shall be resolved in state or federal courts in Miami-Dade County, Florida.</p>
+
+      <h4>8. Entire Agreement</h4>
+      <p>This NDA constitutes the entire agreement regarding confidentiality of the disclosed materials and supersedes all prior negotiations or agreements on this subject matter.</p>
+    </div>
+
+    <div class="nda-sig-block">
+      <div class="nda-sig-box">
+        <div class="sig-label">Disclosing Party</div>
+        <div class="sig-line"></div>
+        <div class="sig-name">Manuel Stagg</div>
+        <div class="sig-title">CEO, Digit2AI LLC</div>
+        <div class="sig-title">mstagg@digit2ai.com</div>
+      </div>
+      <div class="nda-sig-box">
+        <div class="sig-label">Receiving Party</div>
+        <div class="sig-line"></div>
+        <div class="sig-name">Name: ________________________________</div>
+        <div class="sig-title">Title: ________________________________</div>
+        <div class="sig-title">Date: ________________________________</div>
+      </div>
+    </div>
+
+    <p id="ndaTimestamp" style="text-align:center;font-size:11px;color:var(--text-light);margin-top:16px;font-style:italic;">
+      Digital acceptance recorded upon document access.
     </p>
   </div>
 
