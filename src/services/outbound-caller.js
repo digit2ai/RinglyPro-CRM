@@ -194,15 +194,25 @@ class OutboundCallerService {
           logger.info(`📞 Client ${clientId} uses ElevenLabs outbound - initiating AI call`);
           const fromNumber = clientData.ringlypro_number;
           const agentId = clientData.elevenlabs_agent_id;
+          const phoneNumberId = clientData.elevenlabs_phone_number_id;
 
-          // Use Twilio call with ElevenLabs register-call API (native integration)
+          // Primary: Use ElevenLabs direct outbound API (better carrier reputation, avoids spam filters)
+          if (phoneNumberId) {
+            logger.info(`📞 Using ElevenLabs direct outbound with phone_number_id: ${phoneNumberId}`);
+            try {
+              return await this.makeElevenLabsCall(validation.normalized, agentId, phoneNumberId, leadData);
+            } catch (directError) {
+              logger.warn(`⚠️ ElevenLabs direct call failed, falling back to Twilio+ElevenLabs: ${directError.message}`);
+            }
+          }
+
+          // Fallback: Twilio call with ElevenLabs register-call API
           if (this.twilioClient && fromNumber) {
             return await this.makeElevenLabsCallWithAMD(validation.normalized, agentId, fromNumber, leadData, clientId);
           }
 
-          // Fallback to direct ElevenLabs call
-          const phoneNumberId = clientData.elevenlabs_phone_number_id || clientData.ringlypro_number;
-          return await this.makeElevenLabsCall(validation.normalized, agentId, phoneNumberId, leadData);
+          // Last resort: direct ElevenLabs with ringlypro_number (may fail)
+          return await this.makeElevenLabsCall(validation.normalized, agentId, fromNumber, leadData);
         }
       } catch (error) {
         logger.error(`Error checking ElevenLabs config for client ${clientId}:`, error.message);
