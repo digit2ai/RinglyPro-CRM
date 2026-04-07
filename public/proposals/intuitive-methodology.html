@@ -918,26 +918,176 @@ if (sessionStorage.getItem('nda_accepted')) {
       <p>This NDA constitutes the entire agreement regarding confidentiality of the disclosed materials and supersedes all prior negotiations or agreements on this subject matter.</p>
     </div>
 
-    <div class="nda-sig-block">
+    <div class="nda-sig-block" id="sigBlock">
+      <!-- Disclosing Party (pre-signed) -->
       <div class="nda-sig-box">
         <div class="sig-label">Disclosing Party</div>
-        <div class="sig-line"></div>
+        <div style="position:relative;height:80px;margin-bottom:8px;">
+          <svg viewBox="0 0 300 80" style="width:100%;height:100%;">
+            <path d="M20,55 C30,20 50,25 70,45 C85,60 90,30 110,35 C130,40 125,55 145,50 C160,46 165,30 180,35 C195,40 200,55 220,48 C235,42 240,58 260,52" stroke="#0F2B46" stroke-width="2" fill="none" stroke-linecap="round"/>
+          </svg>
+        </div>
         <div class="sig-name">Manuel Stagg</div>
         <div class="sig-title">CEO, Digit2AI LLC</div>
         <div class="sig-title">mstagg@digit2ai.com</div>
+        <div class="sig-title" style="margin-top:4px;color:var(--accent);font-weight:600;">Signed: April 7, 2026</div>
       </div>
-      <div class="nda-sig-box">
+
+      <!-- Receiving Party (interactive) -->
+      <div class="nda-sig-box" id="sigReceiving">
         <div class="sig-label">Receiving Party</div>
-        <div class="sig-line"></div>
-        <div class="sig-name">Name: ________________________________</div>
-        <div class="sig-title">Title: ________________________________</div>
-        <div class="sig-title">Date: ________________________________</div>
+
+        <!-- Signature canvas -->
+        <div id="sigPadWrap" style="position:relative;margin-bottom:10px;">
+          <canvas id="sigCanvas" width="360" height="90" style="width:100%;height:90px;border:2px dashed var(--border);border-radius:8px;cursor:crosshair;background:white;display:block;"></canvas>
+          <span id="sigPlaceholder" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#94a3b8;font-size:13px;font-weight:500;pointer-events:none;">Sign here</span>
+          <button id="sigClearBtn" onclick="clearSig()" style="position:absolute;top:6px;right:6px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:var(--danger);font-size:11px;font-weight:600;padding:3px 10px;border-radius:5px;cursor:pointer;display:none;">Clear</button>
+        </div>
+
+        <!-- Typed fields -->
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+          <input type="text" id="sigName" placeholder="Full Name" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;color:var(--text);outline:none;transition:border 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+          <input type="text" id="sigTitle" placeholder="Title / Organization" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;color:var(--text);outline:none;transition:border 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+          <input type="email" id="sigEmail" placeholder="Email Address" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;color:var(--text);outline:none;transition:border 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
+
+        <button id="sigSubmitBtn" onclick="submitSignature()" style="width:100%;padding:14px;background:linear-gradient(135deg,#10b981,#059669);color:white;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.3s;opacity:0.4;pointer-events:none;" disabled>
+          Sign &amp; Execute NDA
+        </button>
+        <p style="text-align:center;font-size:11px;color:var(--text-light);margin-top:8px;">
+          By signing, you agree to all terms above. A confirmation will be sent to your email.
+        </p>
+      </div>
+    </div>
+
+    <!-- Locked state (shown after signing) -->
+    <div id="sigLocked" style="display:none;margin-top:20px;">
+      <div style="background:rgba(16,185,129,0.06);border:2px solid rgba(16,185,129,0.2);border-radius:14px;padding:24px;text-align:center;">
+        <div style="font-size:28px;margin-bottom:8px;">&#10003;</div>
+        <div style="font-size:16px;font-weight:700;color:var(--success);margin-bottom:4px;">NDA Executed</div>
+        <div id="sigLockedDetails" style="font-size:13px;color:var(--text-light);line-height:1.7;"></div>
       </div>
     </div>
 
     <p id="ndaTimestamp" style="text-align:center;font-size:11px;color:var(--text-light);margin-top:16px;font-style:italic;">
       Digital acceptance recorded upon document access.
     </p>
+
+    <script>
+    // ── Signature Pad ──
+    const canvas = document.getElementById('sigCanvas');
+    const ctx = canvas.getContext('2d');
+    const placeholder = document.getElementById('sigPlaceholder');
+    const clearBtn = document.getElementById('sigClearBtn');
+    const submitBtn = document.getElementById('sigSubmitBtn');
+    let drawing = false, hasSig = false, lastX = 0, lastY = 0;
+
+    function getPos(e) {
+      const r = canvas.getBoundingClientRect();
+      const t = e.touches ? e.touches[0] : e;
+      return { x: (t.clientX - r.left) * (canvas.width / r.width), y: (t.clientY - r.top) * (canvas.height / r.height) };
+    }
+
+    function startDraw(e) {
+      e.preventDefault();
+      drawing = true;
+      const p = getPos(e);
+      lastX = p.x; lastY = p.y;
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+    }
+    function draw(e) {
+      if (!drawing) return;
+      e.preventDefault();
+      const p = getPos(e);
+      ctx.strokeStyle = '#0F2B46';
+      ctx.lineWidth = 2.5;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(lastX, lastY);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+      lastX = p.x; lastY = p.y;
+      if (!hasSig) {
+        hasSig = true;
+        placeholder.style.display = 'none';
+        clearBtn.style.display = 'block';
+      }
+      checkReady();
+    }
+    function stopDraw() { drawing = false; }
+
+    canvas.addEventListener('mousedown', startDraw);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDraw);
+    canvas.addEventListener('mouseleave', stopDraw);
+    canvas.addEventListener('touchstart', startDraw, { passive: false });
+    canvas.addEventListener('touchmove', draw, { passive: false });
+    canvas.addEventListener('touchend', stopDraw);
+
+    function clearSig() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      hasSig = false;
+      placeholder.style.display = 'block';
+      clearBtn.style.display = 'none';
+      checkReady();
+    }
+
+    function checkReady() {
+      const name = document.getElementById('sigName').value.trim();
+      const email = document.getElementById('sigEmail').value.trim();
+      const ready = hasSig && name.length > 1 && email.includes('@');
+      submitBtn.disabled = !ready;
+      submitBtn.style.opacity = ready ? '1' : '0.4';
+      submitBtn.style.pointerEvents = ready ? 'auto' : 'none';
+    }
+    document.getElementById('sigName').addEventListener('input', checkReady);
+    document.getElementById('sigTitle').addEventListener('input', checkReady);
+    document.getElementById('sigEmail').addEventListener('input', checkReady);
+
+    function submitSignature() {
+      const name = document.getElementById('sigName').value.trim();
+      const title = document.getElementById('sigTitle').value.trim();
+      const email = document.getElementById('sigEmail').value.trim();
+      const sigData = canvas.toDataURL('image/png');
+      const ts = new Date().toISOString();
+
+      // Store locally
+      const record = { name, title, email, timestamp: ts, signature: sigData, document: 'SurgicalMind AI Analytical Methodology NDA' };
+      localStorage.setItem('nda_signature_methodology', JSON.stringify(record));
+
+      // Lock the UI
+      document.getElementById('sigBlock').style.display = 'none';
+      document.getElementById('sigLocked').style.display = 'block';
+      document.getElementById('sigLockedDetails').innerHTML =
+        '<strong>' + name + '</strong>' + (title ? ', ' + title : '') + '<br>' +
+        email + '<br>' +
+        'Executed: ' + new Date(ts).toLocaleString() + '<br>' +
+        '<span style="font-size:11px;opacity:0.6;">Signature and timestamp recorded locally.</span>';
+      document.getElementById('ndaTimestamp').innerHTML =
+        'NDA executed by <strong>' + name + '</strong> on ' + new Date(ts).toLocaleString();
+    }
+
+    // Restore if already signed
+    (function() {
+      const saved = localStorage.getItem('nda_signature_methodology');
+      if (saved) {
+        try {
+          const r = JSON.parse(saved);
+          document.getElementById('sigBlock').style.display = 'none';
+          document.getElementById('sigLocked').style.display = 'block';
+          document.getElementById('sigLockedDetails').innerHTML =
+            '<strong>' + r.name + '</strong>' + (r.title ? ', ' + r.title : '') + '<br>' +
+            r.email + '<br>' +
+            'Executed: ' + new Date(r.timestamp).toLocaleString() + '<br>' +
+            '<span style="font-size:11px;opacity:0.6;">Signature and timestamp recorded locally.</span>';
+          document.getElementById('ndaTimestamp').innerHTML =
+            'NDA executed by <strong>' + r.name + '</strong> on ' + new Date(r.timestamp).toLocaleString();
+        } catch(e) {}
+      }
+    })();
+    </script>
   </div>
 
   <!-- CTA -->
