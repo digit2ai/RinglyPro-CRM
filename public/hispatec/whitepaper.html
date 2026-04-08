@@ -465,53 +465,110 @@ window.MathJax = { tex: { inlineMath: [['$','$'], ['\\(','\\)']], displayMath: [
     body { font-size: 11pt; }
   }
 
+  /* Force consistent font sizing across ALL elements */
   @media (max-width: 768px) {
+    html { font-size: 14px; }
+    body { font-size: 14px; }
     .cover { padding: 40px 20px; min-height: auto; }
-    .cover h1 { font-size: 36px; letter-spacing: -1px; }
-    .cover .subtitle { font-size: 17px; }
-    .cover-badge { font-size: 11px; padding: 6px 16px; letter-spacing: 2px; }
-    .section-header { margin: 40px -20px 32px; padding: 32px 20px; }
-    .section-header h2 { font-size: 24px; }
-    .section-header .section-desc { font-size: 13px; }
-    .content { padding: 0 16px 60px; }
-    h3 { font-size: 19px; }
+    .cover h1 { font-size: 32px; letter-spacing: -1px; }
+    .cover .subtitle { font-size: 15px; }
+    .cover-badge { font-size: 10px; padding: 6px 14px; letter-spacing: 2px; }
+    .cover-meta { font-size: 12px; }
+    .section-header { margin: 40px -16px 32px; padding: 28px 16px; }
+    .section-header h2 { font-size: 22px; }
+    .section-header .section-num { font-size: 12px; }
+    .section-header .section-desc { font-size: 12px; }
+    .content { padding: 0 16px 60px; max-width: 100%; overflow-x: hidden; }
+    h3 { font-size: 18px; }
     h4 { font-size: 15px; }
-    p, li { font-size: 15px; }
-    .toc { padding: 40px 20px; }
-    .toc h2 { font-size: 22px; }
-    .toc-item { padding: 10px 0; }
-    .toc-title { font-size: 14px; }
-    .toc-sub { padding-left: 30px; }
-    .toc-sub .toc-title { font-size: 13px; }
+    p { font-size: 14px; }
+    li { font-size: 14px; }
+    strong { font-size: inherit; }
+    code { font-size: 12px; }
+    .toc { padding: 40px 16px; }
+    .toc h2 { font-size: 20px; }
+    .toc-item { padding: 8px 0; }
+    .toc-num { font-size: 13px; min-width: 36px; }
+    .toc-title { font-size: 13px; }
+    .toc-sub { padding-left: 36px; }
+    .toc-sub .toc-title { font-size: 12px; }
     .cards { grid-template-columns: 1fr; gap: 12px; }
-    .card { padding: 18px; }
+    .card { padding: 16px; }
+    .card h5 { font-size: 14px; }
+    .card p { font-size: 13px; }
+    .card-icon { width: 36px; height: 36px; font-size: 16px; border-radius: 8px; }
     .flow { flex-direction: column; align-items: center; gap: 4px; }
-    .flow-step { min-width: auto; width: 100%; }
-    .flow-arrow { transform: rotate(90deg); padding: 0; font-size: 18px; }
-    .formula-box { padding: 18px 14px; }
-    .formula-box .formula-label { font-size: 11px; }
-    .formula-box .var-table td { font-size: 13px; padding: 3px 8px 3px 0; }
-    .diagram { padding: 16px; font-size: 11px; line-height: 1.4; }
-    table { font-size: 13px; display: block; overflow-x: auto; white-space: nowrap; }
-    thead th { padding: 10px 12px; font-size: 11px; }
-    tbody td { padding: 8px 12px; }
-    .callout { padding: 16px 18px; }
-    .callout-title { font-size: 12px; }
-    .callout p, .callout li { font-size: 14px; }
-    .card-icon { width: 40px; height: 40px; font-size: 18px; border-radius: 10px; }
-    MathJax { overflow-x: auto; }
-    mjx-container { overflow-x: auto; max-width: 100%; }
+    .flow-step { min-width: auto; width: 100%; padding: 12px 16px; }
+    .flow-step .step-num { font-size: 20px; }
+    .flow-step .step-title { font-size: 12px; }
+    .flow-arrow { transform: rotate(90deg); padding: 0; font-size: 16px; }
+
+    /* DIAGRAMS: scrollable container, prevent cut-off */
+    .diagram {
+      padding: 14px;
+      font-size: 10px;
+      line-height: 1.35;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      max-width: calc(100vw - 32px);
+    }
+
+    /* TABLES: scrollable, prevent cut-off */
+    table {
+      font-size: 12px;
+      display: block;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      white-space: nowrap;
+      max-width: calc(100vw - 32px);
+    }
+    thead th { padding: 8px 10px; font-size: 10px; letter-spacing: 0.5px; }
+    tbody td { padding: 7px 10px; font-size: 12px; }
+
+    /* FORMULAS: scrollable */
+    .formula-box {
+      padding: 16px 12px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      max-width: calc(100vw - 32px);
+    }
+    .formula-box .formula-label { font-size: 10px; letter-spacing: 1.5px; }
+    .formula-box .formula-desc { font-size: 12px; }
+    .formula-box .var-table td { font-size: 12px; padding: 3px 6px 3px 0; }
+
+    /* MathJax: prevent overflow */
+    mjx-container { overflow-x: auto !important; max-width: 100% !important; display: block !important; }
+    mjx-container[jax="CHTML"] { overflow-x: auto !important; }
+
+    .callout { padding: 14px 16px; }
+    .callout-title { font-size: 11px; }
+    .callout p { font-size: 13px; }
+    .callout li { font-size: 13px; }
+
+    /* Closing banner */
+    .content > div:last-child { padding: 32px 16px !important; }
+    .content > div:last-child h2 { font-size: 20px !important; }
+    .content > div:last-child p { font-size: 13px !important; }
   }
 
-  @media (max-width: 480px) {
-    .cover h1 { font-size: 30px; }
-    .cover .subtitle { font-size: 15px; }
+  @media (max-width: 420px) {
+    html { font-size: 13px; }
+    .cover h1 { font-size: 28px; }
+    .cover .subtitle { font-size: 14px; }
+    .cover-badge { font-size: 9px; padding: 5px 12px; }
     .content { padding: 0 12px 40px; }
-    .section-header { margin: 32px -12px 24px; padding: 24px 16px; }
-    .section-header h2 { font-size: 21px; }
-    h3 { font-size: 17px; }
-    .diagram { font-size: 10px; padding: 12px; }
-    .formula-box { padding: 14px 10px; }
+    .section-header { margin: 32px -12px 24px; padding: 24px 12px; }
+    .section-header h2 { font-size: 20px; }
+    h3 { font-size: 16px; }
+    h4 { font-size: 14px; }
+    p, li { font-size: 13px; }
+    .diagram { font-size: 9px; padding: 10px; max-width: calc(100vw - 24px); }
+    table { max-width: calc(100vw - 24px); }
+    .formula-box { padding: 12px 8px; max-width: calc(100vw - 24px); }
+    .formula-box .var-table td { font-size: 11px; }
+    .card h5 { font-size: 13px; }
+    .card p { font-size: 12px; }
+    .callout p, .callout li { font-size: 12px; }
   }
 </style>
 </head>
