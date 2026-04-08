@@ -1,0 +1,1963 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HISPATEC -- Whitepaper Tecnico v1.0</title>
+<script>
+window.MathJax = { tex: { inlineMath: [['$','$'], ['\\(','\\)']], displayMath: [['$$','$$'], ['\\[','\\]']] } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --teal: #0d6e6e;
+    --teal-dark: #094d4d;
+    --teal-light: #e8f4f4;
+    --navy: #1a2332;
+    --navy-light: #2d3a4d;
+    --gold: #c8952e;
+    --gold-light: #f5e6c8;
+    --white: #ffffff;
+    --gray-50: #f8f9fa;
+    --gray-100: #f1f3f5;
+    --gray-200: #e9ecef;
+    --gray-300: #dee2e6;
+    --gray-500: #6c757d;
+    --gray-700: #495057;
+    --gray-900: #212529;
+    --red: #c0392b;
+    --blue: #2980b9;
+    --green: #27ae60;
+    --purple: #8e44ad;
+    --orange: #e67e22;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Source Serif 4', Georgia, serif;
+    color: var(--gray-900);
+    background: var(--white);
+    line-height: 1.7;
+    font-size: 16px;
+  }
+
+  /* COVER PAGE */
+  .cover {
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--navy) 0%, var(--teal-dark) 60%, var(--teal) 100%);
+    color: var(--white);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 60px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    opacity: 0.5;
+  }
+
+  .cover-content { position: relative; z-index: 1; max-width: 800px; }
+
+  .cover-badge {
+    display: inline-block;
+    background: rgba(200,149,46,0.2);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    padding: 8px 24px;
+    border-radius: 30px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 40px;
+  }
+
+  .cover h1 {
+    font-size: 64px;
+    font-weight: 900;
+    letter-spacing: -2px;
+    margin-bottom: 16px;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .cover .subtitle {
+    font-size: 22px;
+    font-weight: 300;
+    opacity: 0.9;
+    margin-bottom: 48px;
+    font-family: 'Inter', sans-serif;
+    line-height: 1.5;
+  }
+
+  .cover-meta {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    opacity: 0.6;
+    line-height: 2;
+  }
+
+  .cover-line {
+    width: 80px;
+    height: 3px;
+    background: var(--gold);
+    margin: 40px auto;
+  }
+
+  /* TABLE OF CONTENTS */
+  .toc {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 80px 40px;
+    page-break-after: always;
+  }
+
+  .toc h2 {
+    font-family: 'Inter', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--navy);
+    margin-bottom: 40px;
+    padding-bottom: 16px;
+    border-bottom: 3px solid var(--teal);
+  }
+
+  .toc-item {
+    display: flex;
+    align-items: baseline;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--gray-200);
+    text-decoration: none;
+    color: var(--gray-900);
+    transition: all 0.2s;
+  }
+
+  .toc-item:hover { color: var(--teal); }
+
+  .toc-num {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    color: var(--teal);
+    min-width: 50px;
+    font-size: 15px;
+  }
+
+  .toc-title {
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    font-size: 16px;
+    flex: 1;
+  }
+
+  .toc-page {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--gray-500);
+    margin-left: 16px;
+  }
+
+  .toc-sub {
+    padding-left: 50px;
+  }
+
+  .toc-sub .toc-title { font-weight: 400; font-size: 14px; color: var(--gray-700); }
+
+  /* MAIN CONTENT */
+  .content {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 40px 80px;
+  }
+
+  /* SECTION HEADERS */
+  .section-header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--teal-dark) 100%);
+    color: var(--white);
+    padding: 48px 40px;
+    margin: 80px -40px 48px;
+    position: relative;
+    page-break-before: always;
+  }
+
+  .section-header .section-num {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 12px;
+  }
+
+  .section-header h2 {
+    font-family: 'Inter', sans-serif;
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -1px;
+  }
+
+  .section-header .section-desc {
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 300;
+    opacity: 0.8;
+    margin-top: 12px;
+  }
+
+  h3 {
+    font-family: 'Inter', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--navy);
+    margin: 48px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--teal-light);
+  }
+
+  h4 {
+    font-family: 'Inter', sans-serif;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--teal-dark);
+    margin: 32px 0 12px;
+  }
+
+  p { margin-bottom: 16px; text-align: justify; }
+
+  ul, ol { margin: 0 0 20px 24px; }
+  li { margin-bottom: 8px; }
+
+  strong { font-weight: 700; }
+
+  /* CALLOUT BOXES */
+  .callout {
+    background: var(--teal-light);
+    border-left: 4px solid var(--teal);
+    padding: 20px 24px;
+    margin: 24px 0;
+    border-radius: 0 8px 8px 0;
+  }
+
+  .callout.gold {
+    background: var(--gold-light);
+    border-left-color: var(--gold);
+  }
+
+  .callout.navy {
+    background: #e8eaf0;
+    border-left-color: var(--navy);
+  }
+
+  .callout-title {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--teal-dark);
+    margin-bottom: 8px;
+  }
+
+  .callout.gold .callout-title { color: var(--gold); }
+  .callout.navy .callout-title { color: var(--navy); }
+
+  /* FORMULA BOXES */
+  .formula-box {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin: 24px 0;
+    text-align: center;
+  }
+
+  .formula-box .formula-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--gray-500);
+    margin-bottom: 16px;
+  }
+
+  .formula-box .formula-desc {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: var(--gray-700);
+    margin-top: 16px;
+    text-align: left;
+    line-height: 1.6;
+  }
+
+  .formula-box .var-table {
+    margin-top: 16px;
+    text-align: left;
+  }
+
+  .formula-box .var-table td {
+    padding: 4px 12px 4px 0;
+    font-size: 14px;
+    vertical-align: top;
+  }
+
+  .formula-box .var-table td:first-child {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--teal-dark);
+    white-space: nowrap;
+  }
+
+  /* TABLES */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 24px 0;
+    font-size: 14px;
+  }
+
+  thead th {
+    background: var(--navy);
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 14px 16px;
+    text-align: left;
+  }
+
+  tbody td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--gray-200);
+  }
+
+  tbody tr:nth-child(even) { background: var(--gray-50); }
+  tbody tr:hover { background: var(--teal-light); }
+
+  /* ARCHITECTURE DIAGRAMS (ASCII-style) */
+  .diagram {
+    background: var(--navy);
+    color: #a8d8a8;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    padding: 32px;
+    border-radius: 12px;
+    margin: 24px 0;
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  .diagram .comment { color: #6a9955; }
+  .diagram .highlight { color: #dcdcaa; }
+  .diagram .keyword { color: #569cd6; }
+  .diagram .string { color: #ce9178; }
+
+  /* CARDS GRID */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    margin: 24px 0;
+  }
+
+  .card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 24px;
+    transition: all 0.2s;
+  }
+
+  .card:hover { border-color: var(--teal); box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+
+  .card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-bottom: 16px;
+  }
+
+  .card-icon.teal { background: var(--teal-light); color: var(--teal); }
+  .card-icon.gold { background: var(--gold-light); color: var(--gold); }
+  .card-icon.navy { background: #e8eaf0; color: var(--navy); }
+
+  .card h5 {
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 8px;
+  }
+
+  .card p {
+    font-size: 14px;
+    color: var(--gray-700);
+    text-align: left;
+    margin-bottom: 0;
+  }
+
+  /* FLOW STEPS */
+  .flow {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 24px 0;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .flow-step {
+    background: var(--white);
+    border: 2px solid var(--teal);
+    border-radius: 12px;
+    padding: 16px 20px;
+    min-width: 140px;
+    text-align: center;
+    flex: 1;
+  }
+
+  .flow-step .step-num {
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    font-size: 24px;
+    color: var(--teal);
+  }
+
+  .flow-step .step-title {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--navy);
+    margin-top: 4px;
+  }
+
+  .flow-arrow {
+    display: flex;
+    align-items: center;
+    font-size: 24px;
+    color: var(--gold);
+    padding-top: 16px;
+  }
+
+  /* PRINT STYLES */
+  @media print {
+    .cover { min-height: 100vh; page-break-after: always; }
+    .section-header { page-break-before: always; margin: 0 -40px 48px; }
+    .formula-box, .diagram, .callout { page-break-inside: avoid; }
+    body { font-size: 11pt; }
+  }
+
+  @media (max-width: 768px) {
+    .cover h1 { font-size: 40px; }
+    .section-header h2 { font-size: 28px; }
+    .content { padding: 0 20px 60px; }
+    .section-header { margin: 60px -20px 36px; padding: 36px 20px; }
+    .flow { flex-direction: column; align-items: center; }
+    .flow-arrow { transform: rotate(90deg); padding: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- COVER PAGE -->
+<!-- ============================================================ -->
+<div class="cover">
+  <div class="cover-content">
+    <div class="cover-badge">Documento Confidencial -- Junta Directiva</div>
+    <h1>HISPATEC</h1>
+    <div class="subtitle">
+      Plataforma de Integracion Estrategica Hispana<br>
+      Whitepaper Tecnico v1.0
+    </div>
+    <div class="cover-line"></div>
+    <div class="cover-meta">
+      Ecosistema Digital para Intercambio Empresarial,<br>
+      Gestion de Proyectos Transnacionales y Desarrollo Cooperativo<br><br>
+      <strong>Orquestacion MCP | Coeficiente de Gini | Modelos Matematicos de Matching</strong><br><br>
+      Abril 2026 -- Version 1.0<br>
+      Clasificacion: Confidencial
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- TABLE OF CONTENTS -->
+<!-- ============================================================ -->
+<div class="toc">
+  <h2>Indice General</h2>
+
+  <a class="toc-item" href="#sec1">
+    <span class="toc-num">01</span>
+    <span class="toc-title">Resumen Ejecutivo</span>
+  </a>
+  <a class="toc-item" href="#sec2">
+    <span class="toc-num">02</span>
+    <span class="toc-title">Vision, Mision y Principios Rectores</span>
+  </a>
+  <a class="toc-item" href="#sec3">
+    <span class="toc-num">03</span>
+    <span class="toc-title">Analisis de Mercado y Brecha Competitiva</span>
+  </a>
+  <a class="toc-item toc-sub" href="#sec3">
+    <span class="toc-num"></span>
+    <span class="toc-title">3.1 Panorama de organizaciones existentes</span>
+  </a>
+  <a class="toc-item toc-sub" href="#sec3">
+    <span class="toc-num"></span>
+    <span class="toc-title">3.2 Brechas identificadas</span>
+  </a>
+  <a class="toc-item" href="#sec4">
+    <span class="toc-num">04</span>
+    <span class="toc-title">Arquitectura de la Plataforma -- 6 Modulos</span>
+  </a>
+  <a class="toc-item toc-sub" href="#mod1">
+    <span class="toc-num"></span>
+    <span class="toc-title">4.1 Portal e Identidad</span>
+  </a>
+  <a class="toc-item toc-sub" href="#mod2">
+    <span class="toc-num"></span>
+    <span class="toc-title">4.2 Gestion de Miembros</span>
+  </a>
+  <a class="toc-item toc-sub" href="#mod3">
+    <span class="toc-num"></span>
+    <span class="toc-title">4.3 Red Tecnica (Matching Profesional)</span>
+  </a>
+  <a class="toc-item toc-sub" href="#mod4">
+    <span class="toc-num"></span>
+    <span class="toc-title">4.4 Gestion de Proyectos Transnacionales</span>
+  </a>
+  <a class="toc-item toc-sub" href="#mod5">
+    <span class="toc-num"></span>
+    <span class="toc-title">4.5 Intercambio Comercial (Business Exchange)</span>
+  </a>
+  <a class="toc-item toc-sub" href="#mod6">
+    <span class="toc-num"></span>
+    <span class="toc-title">4.6 Pagos y Tesoreria</span>
+  </a>
+  <a class="toc-item" href="#sec5">
+    <span class="toc-num">05</span>
+    <span class="toc-title">Orquestador MCP -- Arquitectura de Inteligencia</span>
+  </a>
+  <a class="toc-item toc-sub" href="#sec5">
+    <span class="toc-num"></span>
+    <span class="toc-title">5.1 Diseno del orquestador</span>
+  </a>
+  <a class="toc-item toc-sub" href="#sec5">
+    <span class="toc-num"></span>
+    <span class="toc-title">5.2 Herramientas MCP (Tool Definitions)</span>
+  </a>
+  <a class="toc-item toc-sub" href="#sec5">
+    <span class="toc-num"></span>
+    <span class="toc-title">5.3 Flujos de orquestacion</span>
+  </a>
+  <a class="toc-item" href="#sec6">
+    <span class="toc-num">06</span>
+    <span class="toc-title">Modelos Matematicos</span>
+  </a>
+  <a class="toc-item toc-sub" href="#gini">
+    <span class="toc-num"></span>
+    <span class="toc-title">6.1 Coeficiente de Gini -- Equidad Distributiva</span>
+  </a>
+  <a class="toc-item toc-sub" href="#matching">
+    <span class="toc-num"></span>
+    <span class="toc-title">6.2 Algoritmo de Matching por Similitud Coseno</span>
+  </a>
+  <a class="toc-item toc-sub" href="#trust">
+    <span class="toc-num"></span>
+    <span class="toc-title">6.3 Indice de Confianza (TrustRank)</span>
+  </a>
+  <a class="toc-item toc-sub" href="#network">
+    <span class="toc-num"></span>
+    <span class="toc-title">6.4 Valor de Red (Metcalfe Adaptado)</span>
+  </a>
+  <a class="toc-item toc-sub" href="#risk">
+    <span class="toc-num"></span>
+    <span class="toc-title">6.5 Evaluacion de Riesgo de Proyecto (Monte Carlo)</span>
+  </a>
+  <a class="toc-item toc-sub" href="#allocation">
+    <span class="toc-num"></span>
+    <span class="toc-title">6.6 Asignacion Optima de Recursos (Programacion Lineal)</span>
+  </a>
+  <a class="toc-item toc-sub" href="#composite">
+    <span class="toc-num"></span>
+    <span class="toc-title">6.7 Indice Compuesto HISPATEC (HCI)</span>
+  </a>
+  <a class="toc-item" href="#sec7">
+    <span class="toc-num">07</span>
+    <span class="toc-title">Stack Tecnologico y Modelos de Datos</span>
+  </a>
+  <a class="toc-item" href="#sec8">
+    <span class="toc-num">08</span>
+    <span class="toc-title">Modelo de Monetizacion y Proyecciones</span>
+  </a>
+  <a class="toc-item" href="#sec9">
+    <span class="toc-num">09</span>
+    <span class="toc-title">Gobernanza y Estructura Organizacional</span>
+  </a>
+  <a class="toc-item" href="#sec10">
+    <span class="toc-num">10</span>
+    <span class="toc-title">Hoja de Ruta -- Roadmap 2026-2028</span>
+  </a>
+  <a class="toc-item" href="#sec11">
+    <span class="toc-num">11</span>
+    <span class="toc-title">Anexos Tecnicos</span>
+  </a>
+</div>
+
+<!-- ============================================================ -->
+<!-- MAIN CONTENT -->
+<!-- ============================================================ -->
+<div class="content">
+
+<!-- SECTION 1: RESUMEN EJECUTIVO -->
+<div class="section-header" id="sec1">
+  <div class="section-num">Seccion 01</div>
+  <h2>Resumen Ejecutivo</h2>
+  <div class="section-desc">Sintesis estrategica para la Junta Directiva</div>
+</div>
+
+<p>
+  HISPATEC es una plataforma de integracion estrategica hispana que transforma la herencia cultural compartida en accion tecnica mediante un ecosistema digital sofisticado. A diferencia de las camaras de comercio bilaterales, los foros ideologicos o las asociaciones culturales, HISPATEC opera como una <strong>red tecnica pragmatica</strong> enfocada exclusivamente en resultados medibles: proyectos ejecutados, empresas conectadas, y valor economico generado.
+</p>
+
+<div class="callout gold">
+  <div class="callout-title">Proposicion Central</div>
+  <p style="margin:0">
+    <strong>"Accion, no solo palabras."</strong> -- HISPATEC no es un club ni un foro ideologico. Es una plataforma tecnica con alma hispana, nacida para transformar y para unir. La tecnologia une, pero solo quien la domina define su destino.
+  </p>
+</div>
+
+<p>
+  El ecosistema se construye sobre seis modulos interconectados -- Portal, Miembros, Red Tecnica, Proyectos, Intercambio Comercial y Pagos -- orquestados por un motor de inteligencia artificial basado en el protocolo MCP (Model Context Protocol). Este orquestador emplea modelos matematicos rigurosos, incluyendo el <strong>Coeficiente de Gini</strong> para garantizar equidad distributiva, <strong>similitud coseno</strong> para matching profesional, <strong>TrustRank</strong> para verificacion de confianza, y <strong>simulacion Monte Carlo</strong> para evaluacion de riesgo en proyectos.
+</p>
+
+<p>
+  El presente whitepaper detalla la arquitectura completa, los modelos matematicos, el stack tecnologico, el modelo de monetizacion y la hoja de ruta para presentacion y aprobacion de la Junta Directiva.
+</p>
+
+<h3>Cifras Clave del Mercado</h3>
+
+<div class="cards">
+  <div class="card">
+    <div class="card-icon teal">~500M</div>
+    <h5>Hispanohablantes Nativos</h5>
+    <p>Segundo idioma del mundo por hablantes nativos, cuarto por hablantes totales.</p>
+  </div>
+  <div class="card">
+    <div class="card-icon gold">22+</div>
+    <h5>Paises Hispanicos</h5>
+    <p>Presencia en 6 regiones: America del Norte, Central, Sur, Europa, Africa, Asia-Pacifico.</p>
+  </div>
+  <div class="card">
+    <div class="card-icon navy">0</div>
+    <h5>Plataformas Unificadas</h5>
+    <p>No existe ninguna plataforma pan-hispanica de intercambio empresarial a nivel PYME.</p>
+  </div>
+</div>
+
+
+<!-- SECTION 2: VISION Y MISION -->
+<div class="section-header" id="sec2">
+  <div class="section-num">Seccion 02</div>
+  <h2>Vision, Mision y Principios Rectores</h2>
+  <div class="section-desc">Los cimientos ideologicos y operativos de HISPATEC</div>
+</div>
+
+<h3>Vision</h3>
+<p>
+  Ser la plataforma de referencia mundial para la integracion tecnica, empresarial y profesional del mundo hispano, eliminando barreras entre paises y sectores mediante tecnologia avanzada, confianza verificada y accion tangible.
+</p>
+
+<h3>Mision</h3>
+<p>
+  Conectar talento, recursos y oportunidades del mundo hispano a traves de una red tecnica estructurada que detecta oportunidades, forma equipos transnacionales, facilita el intercambio comercial y ejecuta proyectos con impacto real -- todo ello orquestado por inteligencia artificial y modelos matematicos de optimizacion.
+</p>
+
+<h3>Principios Rectores</h3>
+
+<div class="cards">
+  <div class="card">
+    <h5>Neutralidad Estrategica</h5>
+    <p>Entidad civil e independiente. No adscrita a partidos, ideologias ni gobiernos. Enfocada en resultados medibles y bienestar comun.</p>
+  </div>
+  <div class="card">
+    <h5>Accion Tecnica</h5>
+    <p>No somos asociacion cultural. Impulsamos el desarrollo economico, tecnologico y empresarial de los pueblos hispanos.</p>
+  </div>
+  <div class="card">
+    <h5>Equidad Distributiva</h5>
+    <p>El Coeficiente de Gini regula la distribucion de oportunidades. Ningun pais, sector o miembro monopoliza los beneficios.</p>
+  </div>
+  <div class="card">
+    <h5>Confianza Verificable</h5>
+    <p>Red de confianza con verificacion sistematica. Reducimos la incertidumbre al trabajar entre paises de la Hispanidad.</p>
+  </div>
+  <div class="card">
+    <h5>Soberania Tecnologica</h5>
+    <p>Plataformas propias, IA en espanol, mercado digital para reducir dependencia tecnologica externa del bloque hispano.</p>
+  </div>
+  <div class="card">
+    <h5>Contribucion, no Certificacion</h5>
+    <p>HISPATEC no autoriza ni certifica. Garantiza procesos transparentes, ordenados y de calidad. No sustituye colegios ni camaras.</p>
+  </div>
+</div>
+
+<h3>Posicionamiento Diferencial</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>HISPATEC NO ES</th>
+      <th>HISPATEC SI ES</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Una asociacion cultural centrada en el legado</td>
+      <td>Accion tecnica: desarrollo economico, tecnologico y empresarial</td>
+    </tr>
+    <tr>
+      <td>Un foro ideologico adscrito a partidos</td>
+      <td>Neutralidad estrategica con enfoque en resultados</td>
+    </tr>
+    <tr>
+      <td>Un colegio profesional que certifica</td>
+      <td>Red de conexion directa entre profesionales de distintos paises</td>
+    </tr>
+    <tr>
+      <td>Una consultora que vende servicios</td>
+      <td>Nodo de acompanamiento sin animo de lucro que crea ecosistemas</td>
+    </tr>
+    <tr>
+      <td>Una Camara de Comercio oficial</td>
+      <td>Red de confianza que reduce la incertidumbre entre paises</td>
+    </tr>
+  </tbody>
+</table>
+
+
+<!-- SECTION 3: ANALISIS DE MERCADO -->
+<div class="section-header" id="sec3">
+  <div class="section-num">Seccion 03</div>
+  <h2>Analisis de Mercado y Brecha Competitiva</h2>
+  <div class="section-desc">Por que no existe nada como HISPATEC -- y por que ahora es el momento</div>
+</div>
+
+<h3>3.1 Panorama de Organizaciones Existentes</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Organizacion</th>
+      <th>Tipo</th>
+      <th>Alcance</th>
+      <th>Limitacion para HISPATEC</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>SEGIB</strong></td>
+      <td>Intergubernamental</td>
+      <td>22 paises iberoamericanos</td>
+      <td>Top-down, no conecta PYMEs ni profesionales</td>
+    </tr>
+    <tr>
+      <td><strong>USHCC</strong></td>
+      <td>Camara nacional</td>
+      <td>EE.UU. domestico</td>
+      <td>Solo EE.UU., enfoque en advocacy, sin matching transfronterizo</td>
+    </tr>
+    <tr>
+      <td><strong>Camaras Bilaterales</strong></td>
+      <td>Bilateral</td>
+      <td>Par de paises</td>
+      <td>Fragmentadas (Espana-Colombia, EE.UU.-Mexico...), nunca unificadas</td>
+    </tr>
+    <tr>
+      <td><strong>BNI</strong></td>
+      <td>Red de referidos</td>
+      <td>77 paises, capitulos locales</td>
+      <td>Capitulos locales, no transfronterizo ni estrategico</td>
+    </tr>
+    <tr>
+      <td><strong>EO / YPO</strong></td>
+      <td>Peer groups CEO</td>
+      <td>Global</td>
+      <td>Exclusivo ($1M+ revenue), no hispanico, no PYME</td>
+    </tr>
+    <tr>
+      <td><strong>Endeavor</strong></td>
+      <td>Emprendimiento alto impacto</td>
+      <td>LatAm + global</td>
+      <td>Ultraselecto, no accesible a PYMEs o profesionales</td>
+    </tr>
+    <tr>
+      <td><strong>CEAL</strong></td>
+      <td>CEOs elite</td>
+      <td>America Latina</td>
+      <td>Solo grandes empresas, sin plataforma digital</td>
+    </tr>
+    <tr>
+      <td><strong>Alibaba B2B</strong></td>
+      <td>Marketplace</td>
+      <td>Global (Asia-centrico)</td>
+      <td>Trading de commodities, sin red profesional ni hispana</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>3.2 Brechas Identificadas</h3>
+
+<div class="callout">
+  <div class="callout-title">Brecha 1: No existe plataforma pan-hispanica de matching empresarial</div>
+  <p style="margin:0">Las camaras bilaterales estan fragmentadas. No hay una plataforma unica donde un fabricante mexicano conecte con un distribuidor colombiano y un inversor espanol simultaneamente.</p>
+</div>
+
+<div class="callout">
+  <div class="callout-title">Brecha 2: Las PYMEs no tienen herramientas de colaboracion transfronteriza</div>
+  <p style="margin:0">Las redes existentes (CEAL, EO, YPO) sirven a grandes empresas. Las PYMEs -- que representan el 99% del tejido empresarial hispano -- carecen de plataforma.</p>
+</div>
+
+<div class="callout">
+  <div class="callout-title">Brecha 3: Confianza y verificacion en negocios transfronterizos</div>
+  <p style="margin:0">Alibaba resolvio esto para China con "Trade Assurance". No existe equivalente para B2B hispano. La incertidumbre frena la expansion internacional.</p>
+</div>
+
+<div class="callout">
+  <div class="callout-title">Brecha 4: Plataforma profesional bilingue nativa (ES/EN)</div>
+  <p style="margin:0">LinkedIn es anglofono. No existe red profesional nativamente bilingue con contexto cultural hispano.</p>
+</div>
+
+<div class="callout">
+  <div class="callout-title">Brecha 5: Facilitacion de nearshoring</div>
+  <p style="margin:0">El nearshoring de EE.UU. a Latinoamerica esta en auge (post-COVID, de-risking de China). No hay plataforma que conecte empresas estadounidenses con proveedores hispanos por capacidad verificada.</p>
+</div>
+
+<div class="callout">
+  <div class="callout-title">Brecha 6: Rieles de pago integrados para mercados hispanos</div>
+  <p style="margin:0">Pagos transfronterizos entre paises hispanos siguen siendo complejos. No existe facturacion integrada multi-divisa con escrow para proyectos.</p>
+</div>
+
+
+<!-- SECTION 4: ARQUITECTURA DE PLATAFORMA -->
+<div class="section-header" id="sec4">
+  <div class="section-num">Seccion 04</div>
+  <h2>Arquitectura de la Plataforma</h2>
+  <div class="section-desc">Seis modulos interconectados que forman el ecosistema completo</div>
+</div>
+
+<div class="diagram">
+<span class="comment">-- HISPATEC: Arquitectura de Alto Nivel --</span>
+
+                    +-----------------------------+
+                    |    <span class="highlight">ORQUESTADOR MCP (IA)</span>     |
+                    |  Claude + Modelos Matem.    |
+                    |  Gini | Coseno | TrustRank  |
+                    +----+--------+--------+------+
+                         |        |        |
+         +---------------+--+  +--+--------+-----+  +--+---------------+
+         |                   |  |                  |  |                  |
+    +----v----+   +----v----+  +----v----+   +----v----+   +----v----+   +----v----+
+    |   M1    |   |   M2    |  |   M3    |   |   M4    |   |   M5    |   |   M6    |
+    | <span class="keyword">Portal</span>  |   |<span class="keyword">Miembros</span>|  |  <span class="keyword">Red</span>    |   |<span class="keyword">Proyectos</span>|   |<span class="keyword">Exchange</span>|   | <span class="keyword">Pagos</span>  |
+    | Identid.|   | Gestion |  | Tecnica |   | Transn. |   |Comercial|   |Tesoreria|
+    +---------+   +---------+  +---------+   +---------+   +---------+   +---------+
+         |             |            |              |             |             |
+    +----v-------------v------------v--------------v-------------v-------------v----+
+    |                      <span class="string">PostgreSQL -- Base de Datos Unificada</span>                    |
+    |   members | projects | transactions | matches | trust_scores | payments       |
+    +--------------------------------------------------------------------------+----+
+                                           |
+                              +------------v------------+
+                              | <span class="string">Stripe / Stripe Connect</span>  |
+                              |   Pagos Multi-divisa     |
+                              +-------------------------+
+</div>
+
+<!-- MODULE 1 -->
+<h3 id="mod1">4.1 Modulo 1 -- Portal e Identidad</h3>
+<p><strong>Ruta:</strong> <code>/hispatec/</code></p>
+<p>
+  Sitio web institucional bilingue (ES/EN) que presenta la mision, los 6 ejes estrategicos, los sectores prioritarios, los proyectos piloto y la llamada a la accion para socios fundadores. Funciona como puerta de entrada al ecosistema y como herramienta de comunicacion institucional para la Junta Directiva.
+</p>
+
+<h4>Secciones del Portal</h4>
+<ul>
+  <li>Hero con mapa mundial de las 6 sedes regionales</li>
+  <li>Posicionamiento diferencial ("No es / Si es")</li>
+  <li>6 Ejes Estrategicos con cards interactivas</li>
+  <li>4 Sectores Prioritarios</li>
+  <li>Ciclo de vida de proyecto (5 pasos)</li>
+  <li>3 Proyectos Piloto Transnacionales</li>
+  <li>Tipos de Asociados (5 categorias)</li>
+  <li>Estructura Global con mapa interactivo</li>
+  <li>Vinculacion con Fundacion Raices Hispanas</li>
+  <li>Formulario de registro de socio fundador</li>
+</ul>
+
+<!-- MODULE 2 -->
+<h3 id="mod2">4.2 Modulo 2 -- Gestion de Miembros</h3>
+<p><strong>Ruta:</strong> <code>/hispatec/miembros/</code></p>
+
+<h4>Tipos de Asociados</h4>
+<table>
+  <thead>
+    <tr><th>Tipo</th><th>Rol</th><th>Cuota Sugerida</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Fundadores</strong></td><td>Cimiento Estrategico -- fase inicial, diseno, lanzamiento</td><td>$500/ano</td></tr>
+    <tr><td><strong>Honorificos</strong></td><td>Embajadores de la Red -- conocimiento, imagen, orientacion</td><td>Invitacion</td></tr>
+    <tr><td><strong>Numerarios</strong></td><td>Motor Operativo -- profesionales activos que ejecutan proyectos</td><td>$25-50/mes</td></tr>
+    <tr><td><strong>Protectores</strong></td><td>Soporte e Inversion -- personas/instituciones que invierten recursos</td><td>$100-300/mes</td></tr>
+    <tr><td><strong>Patronos</strong></td><td>Experiencia y Valor -- figuras con alta trayectoria profesional</td><td>$200-500/mes</td></tr>
+  </tbody>
+</table>
+
+<h4>Funcionalidades del Modulo</h4>
+<ul>
+  <li>Registro y onboarding con verificacion de identidad</li>
+  <li>Perfil profesional: pais, sector, especialidad, experiencia, empresa, idiomas</li>
+  <li>Badges de verificacion (identidad, empresa, referencias)</li>
+  <li>Directorio de miembros con busqueda por pais, sector, expertise, region</li>
+  <li>Gestion de cuotas automatizada via Stripe</li>
+  <li>Dashboard de actividad del miembro (proyectos, conexiones, oportunidades)</li>
+  <li>Sistema de delegaciones regionales con roles de Presidente, Secretario, Tesorero</li>
+</ul>
+
+<!-- MODULE 3 -->
+<h3 id="mod3">4.3 Modulo 3 -- Red Tecnica (Matching Profesional)</h3>
+<p><strong>Ruta:</strong> <code>/hispatec/red/</code></p>
+<p>
+  El corazon algoritmico de HISPATEC. Utiliza similitud coseno sobre vectores de perfil profesional para encontrar los mejores colaboradores potenciales. El algoritmo pondera sector, localizacion, experiencia, idiomas, disponibilidad y Trust Score.
+</p>
+
+<h4>Funcionalidades</h4>
+<ul>
+  <li>Busqueda avanzada por multiples criterios con ranking de relevancia</li>
+  <li>Matching automatico: "Necesito un socio logistico en Espana" → resultados ranqueados por score</li>
+  <li>Formacion de equipos de proyecto con perfiles complementarios</li>
+  <li>Trust Score visible basado en historial de colaboraciones y referencias</li>
+  <li>Recomendaciones proactivas del orquestador MCP</li>
+  <li>Red de contactos con grados de separacion (1er, 2do, 3er grado)</li>
+</ul>
+
+<div class="callout navy">
+  <div class="callout-title">Algoritmo de Matching -- Vista Rapida</div>
+  <p style="margin:0">Cada miembro se representa como un vector n-dimensional. El motor calcula la similitud coseno entre el vector de busqueda y todos los miembros, ponderado por Trust Score y Gini regional. Detalle completo en Seccion 6.2.</p>
+</div>
+
+<!-- MODULE 4 -->
+<h3 id="mod4">4.4 Modulo 4 -- Gestion de Proyectos Transnacionales</h3>
+<p><strong>Ruta:</strong> <code>/hispatec/proyectos/</code></p>
+
+<h4>Ciclo de Vida del Proyecto</h4>
+<div class="flow">
+  <div class="flow-step">
+    <div class="step-num">1</div>
+    <div class="step-title">Propuesta</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">
+    <div class="step-num">2</div>
+    <div class="step-title">Analisis</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">
+    <div class="step-num">3</div>
+    <div class="step-title">Equipo</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">
+    <div class="step-num">4</div>
+    <div class="step-title">Recursos</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">
+    <div class="step-num">5</div>
+    <div class="step-title">Ejecucion</div>
+  </div>
+</div>
+
+<ol>
+  <li><strong>Propuesta de Proyecto:</strong> El socio presenta una iniciativa tecnica, cultural o empresarial para la red.</li>
+  <li><strong>Analisis de Oportunidad y Viabilidad:</strong> El orquestador MCP evalua impacto estrategico y factibilidad usando simulacion Monte Carlo.</li>
+  <li><strong>Nombramiento de Equipo:</strong> Matching algoritmico conecta expertos y tecnicos de distintos paises (similitud coseno + complementariedad).</li>
+  <li><strong>Captacion de Recursos:</strong> Gestion de financiacion, mecenazgos y alianzas. Escrow via Stripe Connect.</li>
+  <li><strong>Ejecucion del Proyecto:</strong> Seguimiento de hitos, entregables, KPIs. Distribucion de valor regulada por Coeficiente de Gini.</li>
+</ol>
+
+<h4>Tres Proyectos Piloto Transnacionales</h4>
+<div class="cards">
+  <div class="card">
+    <h5>Piloto 1: Expansion Empresarial</h5>
+    <p>Empresa quiere entrar en otro pais hispano. Necesita socio local fiable. HISPATEC conecta y facilita el arranque. Resultado: entrada a mercado + alianza real.</p>
+  </div>
+  <div class="card">
+    <h5>Piloto 2: Exportacion Agro</h5>
+    <p>Productor hispano quiere exportar a Europa via Espana. Acceso a normativa, logistica y mercado. Conexion con socio/importador en destino. Resultado: exportacion viable.</p>
+  </div>
+  <div class="card">
+    <h5>Piloto 3: Proyecto Tecnologico</h5>
+    <p>Empresas de distintos paises colaboran. Desarrollo conjunto (software/IA/ingenieria). Equipos tecnicos distribuidos. Resultado: proyecto tecnologico conjunto.</p>
+  </div>
+</div>
+
+<!-- MODULE 5 -->
+<h3 id="mod5">4.5 Modulo 5 -- Intercambio Comercial (Business Exchange)</h3>
+<p><strong>Ruta:</strong> <code>/hispatec/intercambio/</code></p>
+<p>
+  Marketplace B2B para comercio transfronterizo hispano. Opera como el "Alibaba de la Hispanidad" pero con verificacion de confianza integrada, acompanamiento tecnico y enfoque en relaciones duraderas (no transacciones puntuales).
+</p>
+
+<h4>Funcionalidades</h4>
+<ul>
+  <li><strong>Perfiles de Empresa:</strong> Capacidades, certificaciones, sectores, mercados, referencias verificadas</li>
+  <li><strong>Sistema RFQ (Request for Quote):</strong> Solicitudes de cotizacion publicadas a la red o dirigidas a miembros especificos</li>
+  <li><strong>Motor de Nearshoring:</strong> Matching de empresas estadounidenses con proveedores hispanos por capacidad verificada</li>
+  <li><strong>Referencias Cruzadas:</strong> Sistema de resenas y referencias entre miembros que han colaborado</li>
+  <li><strong>Oportunidades Internacionales:</strong> Directorio de fuentes por pais/sector, canal de difusion agil, inteligencia colectiva</li>
+  <li><strong>Escrow Comercial:</strong> Retencion de fondos hasta confirmacion de entrega via Stripe Connect</li>
+</ul>
+
+<div class="callout gold">
+  <div class="callout-title">Valor Diferencial del Exchange</div>
+  <p style="margin:0">
+    <strong>Lo que HISPATEC HACE:</strong> Identifica socios tecnicos fiables, facilita el primer contacto directo, reduce la incertidumbre operativa.<br>
+    <strong>Lo que HISPATEC NO HACE:</strong> No redacta el proyecto ni certifica, no intermedia en el contrato economico, no sustituye a colegios profesionales ni camaras.
+  </p>
+</div>
+
+<!-- MODULE 6 -->
+<h3 id="mod6">4.6 Modulo 6 -- Pagos y Tesoreria</h3>
+<p><strong>Ruta:</strong> <code>/hispatec/pagos/</code></p>
+
+<h4>Funcionalidades</h4>
+<ul>
+  <li><strong>Cuotas de Membresia:</strong> Cobro recurrente (mensual/anual) via Stripe con gestion automatica de upgrades/downgrades</li>
+  <li><strong>Escrow de Proyectos:</strong> Stripe Connect retiene fondos hasta entrega de hitos verificados</li>
+  <li><strong>Multi-divisa:</strong> Soporte nativo para USD, EUR, MXN, COP, ARS, PEN, CLP, PYG y mas</li>
+  <li><strong>Facturacion Automatizada:</strong> Generacion de facturas por cuotas, proyectos y servicios</li>
+  <li><strong>Dashboard de Tesoreria:</strong> Panel para el Tesorero General y los Tesoreros Regionales</li>
+  <li><strong>Comision por Transaccion:</strong> 2-5% sobre pagos de proyectos facilitados a traves de la plataforma</li>
+  <li><strong>Reportes Financieros:</strong> Por region, por periodo, por tipo de ingreso, con exportacion a PDF/CSV</li>
+</ul>
+
+<table>
+  <thead>
+    <tr><th>Flujo de Ingreso</th><th>Descripcion</th><th>Rango de Precio</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Membresia Individual</td><td>Perfil, directorio, networking</td><td>$15-50/mes</td></tr>
+    <tr><td>Membresia Empresarial</td><td>Perfil empresa, publicacion proyectos, 3-5 asientos</td><td>$100-300/mes</td></tr>
+    <tr><td>Premium/Institucional</td><td>API, matching dedicado, soporte prioritario</td><td>$500-2,000/mes</td></tr>
+    <tr><td>Comision transaccional</td><td>Sobre pagos de proyectos en la plataforma</td><td>2-5%</td></tr>
+    <tr><td>Eventos</td><td>Networking virtual/hibrido, misiones comerciales</td><td>$25-500/evento</td></tr>
+    <tr><td>Verificacion Empresarial</td><td>Badge de empresa verificada</td><td>$200-1,000/ano</td></tr>
+    <tr><td>Listado Destacado</td><td>Posicion premium en directorio/busqueda</td><td>$50-500/mes</td></tr>
+  </tbody>
+</table>
+
+
+<!-- SECTION 5: MCP ORCHESTRATOR -->
+<div class="section-header" id="sec5">
+  <div class="section-num">Seccion 05</div>
+  <h2>Orquestador MCP -- Arquitectura de Inteligencia</h2>
+  <div class="section-desc">El cerebro algoritmico que conecta los seis modulos</div>
+</div>
+
+<h3>5.1 Diseno del Orquestador</h3>
+
+<p>
+  El orquestador MCP (Model Context Protocol) es el componente central de inteligencia de HISPATEC. Opera como una capa de IA que consume datos de los seis modulos y toma decisiones automatizadas basadas en modelos matematicos. Utiliza el protocolo MCP para exponer herramientas (tools) que pueden ser invocadas por el modelo de lenguaje (Claude) o por la logica de negocio de la plataforma.
+</p>
+
+<div class="diagram">
+<span class="comment">-- Flujo del Orquestador MCP --</span>
+
+  +------------------+     +-------------------+     +------------------+
+  | <span class="keyword">ENTRADA</span>          |     | <span class="keyword">PROCESAMIENTO</span>     |     | <span class="keyword">SALIDA</span>           |
+  |                  |     |                   |     |                  |
+  | Solicitud de     |     | 1. Parse intent   |     | Ranking de       |
+  | matching         +---->+ 2. Select tools   +---->+ candidatos       |
+  |                  |     | 3. Execute models |     |                  |
+  | Propuesta de     |     | 4. Aggregate      |     | Analisis de      |
+  | proyecto         +---->+ 5. Apply Gini     +---->+ viabilidad       |
+  |                  |     | 6. Format output  |     |                  |
+  | Consulta de      |     |                   |     | Recomendaciones  |
+  | oportunidad      +---->+                   +---->+ de accion        |
+  +------------------+     +-------------------+     +------------------+
+                                    |
+                           +--------v--------+
+                           | <span class="string">MCP Tool Server</span>  |
+                           |                  |
+                           | - match_members  |
+                           | - evaluate_proj  |
+                           | - calc_gini      |
+                           | - calc_trust     |
+                           | - find_opps      |
+                           | - optimize_alloc |
+                           | - risk_montecarlo|
+                           | - gen_report     |
+                           +---------+--------+
+                                     |
+                           +---------v--------+
+                           |   <span class="string">PostgreSQL</span>     |
+                           |   + Stripe API   |
+                           +------------------+
+</div>
+
+<h3>5.2 Herramientas MCP (Tool Definitions)</h3>
+
+<table>
+  <thead>
+    <tr><th>Tool</th><th>Descripcion</th><th>Modelos Matematicos</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>match_members</code></td>
+      <td>Encuentra miembros optimos para una necesidad o proyecto</td>
+      <td>Similitud Coseno + Gini Regional</td>
+    </tr>
+    <tr>
+      <td><code>evaluate_project</code></td>
+      <td>Evalua viabilidad y riesgo de una propuesta de proyecto</td>
+      <td>Monte Carlo + Scoring Multivariable</td>
+    </tr>
+    <tr>
+      <td><code>calc_gini</code></td>
+      <td>Calcula el Coeficiente de Gini por region, sector o miembro</td>
+      <td>Gini + Curva de Lorenz</td>
+    </tr>
+    <tr>
+      <td><code>calc_trust</code></td>
+      <td>Calcula el Trust Score de un miembro o empresa</td>
+      <td>TrustRank (PageRank adaptado)</td>
+    </tr>
+    <tr>
+      <td><code>find_opportunities</code></td>
+      <td>Busca oportunidades internacionales relevantes para un perfil</td>
+      <td>Coseno + Filtrado Colaborativo</td>
+    </tr>
+    <tr>
+      <td><code>optimize_allocation</code></td>
+      <td>Asignacion optima de recursos humanos y financieros a proyectos</td>
+      <td>Programacion Lineal (Simplex)</td>
+    </tr>
+    <tr>
+      <td><code>risk_montecarlo</code></td>
+      <td>Simulacion de escenarios de riesgo para proyectos</td>
+      <td>Monte Carlo (10,000 iteraciones)</td>
+    </tr>
+    <tr>
+      <td><code>gen_report</code></td>
+      <td>Genera reportes de actividad, financieros o de impacto</td>
+      <td>Agregacion + HCI</td>
+    </tr>
+    <tr>
+      <td><code>network_value</code></td>
+      <td>Calcula el valor de red total y por segmento</td>
+      <td>Metcalfe Adaptado</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>5.3 Flujos de Orquestacion</h3>
+
+<h4>Flujo A: Matching de Miembros</h4>
+<div class="diagram">
+<span class="comment">-- Flujo: "Necesito un socio logistico en Espana para exportar fruta"</span>
+
+1. <span class="keyword">parse_intent</span>  → Sector: logistica | Region: Europa-Med | Tipo: socio
+2. <span class="keyword">match_members</span> → Vector query = [logistica, espana, exportacion, agro, ...]
+                   → Coseno(query, miembro_i) para cada miembro en region
+                   → Ponderar por Trust Score de cada candidato
+3. <span class="keyword">calc_gini</span>     → Verificar que la region Europa-Med no esta
+                     sobre-representada en matching reciente
+                   → Si Gini > 0.4: aplicar factor de correccion a regiones
+                     sub-representadas
+4. <span class="keyword">rank_output</span>   → Top 10 candidatos con score, Trust, pais, perfil
+                   → Sugerencia de introduccion personalizada
+</div>
+
+<h4>Flujo B: Evaluacion de Proyecto</h4>
+<div class="diagram">
+<span class="comment">-- Flujo: Evaluacion automatica de propuesta de proyecto</span>
+
+1. <span class="keyword">parse_project</span>     → Extraer: sector, paises, presupuesto, plazo, equipo
+2. <span class="keyword">evaluate_project</span>  → Scoring multivariable (0-100):
+                        - Alineacion estrategica (ejes HISPATEC)
+                        - Viabilidad tecnica
+                        - Impacto transnacional
+                        - Disponibilidad de talento en red
+3. <span class="keyword">risk_montecarlo</span>   → 10,000 simulaciones:
+                        - Variacion de costos (+/- 30%)
+                        - Variacion de plazos (+/- 40%)
+                        - Probabilidad de exito por escenario
+4. <span class="keyword">optimize_alloc</span>    → Asignacion optima de miembros al proyecto
+                        (maximizar complementariedad, minimizar costo)
+5. <span class="keyword">gen_report</span>        → Informe de viabilidad con semaforo:
+                        <span class="string">VERDE</span> (>70) | <span class="highlight">AMARILLO</span> (40-70) | <span class="keyword">ROJO</span> (<40)
+</div>
+
+
+<!-- SECTION 6: MODELOS MATEMATICOS -->
+<div class="section-header" id="sec6">
+  <div class="section-num">Seccion 06</div>
+  <h2>Modelos Matematicos</h2>
+  <div class="section-desc">Las formulas que gobiernan las decisiones de la plataforma</div>
+</div>
+
+<p>
+  HISPATEC no toma decisiones arbitrarias. Cada matching, cada evaluacion de proyecto, cada distribucion de oportunidades esta respaldada por modelos matematicos formales. Esta seccion detalla cada modelo, su formulacion, sus parametros y su aplicacion dentro del ecosistema.
+</p>
+
+<!-- 6.1 GINI -->
+<h3 id="gini">6.1 Coeficiente de Gini -- Equidad Distributiva</h3>
+
+<p>
+  El Coeficiente de Gini mide la desigualdad en la distribucion de un recurso. En HISPATEC, se aplica para asegurar que las oportunidades, proyectos y beneficios se distribuyan equitativamente entre regiones, sectores y miembros. Un valor de 0 indica igualdad perfecta; 1 indica concentracion total.
+</p>
+
+<div class="formula-box">
+  <div class="formula-label">Formula 6.1.1 -- Coeficiente de Gini</div>
+  $$G = \frac{\sum_{i=1}^{n} \sum_{j=1}^{n} |x_i - x_j|}{2n^2 \bar{x}}$$
+
+  <table class="var-table">
+    <tr><td>$G$</td><td>Coeficiente de Gini (0 = equidad perfecta, 1 = concentracion total)</td></tr>
+    <tr><td>$n$</td><td>Numero de entidades (regiones, sectores o miembros)</td></tr>
+    <tr><td>$x_i, x_j$</td><td>Cantidad de recurso asignado a la entidad $i$ y $j$ (proyectos, oportunidades, ingresos)</td></tr>
+    <tr><td>$\bar{x}$</td><td>Media aritmetica de $x$</td></tr>
+  </table>
+</div>
+
+<h4>Aplicacion en HISPATEC</h4>
+
+<div class="formula-box">
+  <div class="formula-label">Formula 6.1.2 -- Gini Regional de Oportunidades</div>
+  $$G_{regional} = \frac{\sum_{r=1}^{6} \sum_{s=1}^{6} |O_r - O_s|}{2 \cdot 6^2 \cdot \bar{O}}$$
+
+  <div class="formula-desc">
+    Donde $O_r$ es el numero de oportunidades asignadas a la region $r$ en un periodo dado. Se calcula mensualmente. Si $G_{regional} > 0.40$, el orquestador activa un <strong>factor de correccion</strong> que prioriza regiones sub-representadas en el siguiente ciclo de matching.
+  </div>
+</div>
+
+<div class="formula-box">
+  <div class="formula-label">Formula 6.1.3 -- Factor de Correccion Gini</div>
+  $$FC_r = 1 + \alpha \cdot \left(\frac{\bar{O} - O_r}{\bar{O}}\right)$$
+
+  <table class="var-table">
+    <tr><td>$FC_r$</td><td>Factor de correccion para la region $r$ (multiplicador sobre score de matching)</td></tr>
+    <tr><td>$\alpha$</td><td>Intensidad de correccion (recomendado: 0.3)</td></tr>
+    <tr><td>$\bar{O}$</td><td>Media de oportunidades por region</td></tr>
+    <tr><td>$O_r$</td><td>Oportunidades actuales de la region $r$</td></tr>
+  </table>
+</div>
+
+<div class="callout">
+  <div class="callout-title">Ejemplo Practico</div>
+  <p style="margin:0">
+    Si la region Europa-Mediterraneo tiene 45 oportunidades y la media es 25, su factor de correccion seria $FC = 1 + 0.3 \times \frac{25-45}{25} = 1 + 0.3 \times (-0.8) = 0.76$, reduciendo su prioridad. Si Africa Hispanica tiene solo 5 oportunidades: $FC = 1 + 0.3 \times \frac{25-5}{25} = 1.24$, aumentando su visibilidad en matching.
+  </p>
+</div>
+
+<!-- 6.2 COSINE SIMILARITY -->
+<h3 id="matching">6.2 Algoritmo de Matching por Similitud Coseno</h3>
+
+<p>
+  Cada miembro de HISPATEC se representa como un vector en un espacio n-dimensional. Cada dimension corresponde a un atributo del perfil (sector, habilidades, localizacion, experiencia, idiomas, etc.). El matching se realiza calculando la similitud coseno entre el vector de busqueda y los vectores de todos los miembros candidatos.
+</p>
+
+<div class="formula-box">
+  <div class="formula-label">Formula 6.2.1 -- Similitud Coseno</div>
+  $$\cos(\theta) = \frac{\vec{A} \cdot \vec{B}}{||\vec{A}|| \cdot ||\vec{B}||} = \frac{\sum_{i=1}^{n} A_i B_i}{\sqrt{\sum_{i=1}^{n} A_i^2} \cdot \sqrt{\sum_{i=1}^{n} B_i^2}}$$
+
+  <table class="var-table">
+    <tr><td>$\vec{A}$</td><td>Vector de busqueda (query) -- lo que el solicitante necesita</td></tr>
+    <tr><td>$\vec{B}$</td><td>Vector de perfil del miembro candidato</td></tr>
+    <tr><td>$n$</td><td>Numero de dimensiones (atributos del perfil)</td></tr>
+    <tr><td>$\cos(\theta)$</td><td>Score de similitud (0 = sin relacion, 1 = coincidencia perfecta)</td></tr>
+  </table>
+</div>
+
+<h4>Dimensiones del Vector de Perfil</h4>
+
+<table>
+  <thead>
+    <tr><th>Dimension</th><th>Tipo</th><th>Peso ($w$)</th><th>Codificacion</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Sector principal</td><td>Categorico</td><td>0.25</td><td>One-hot (20 sectores)</td></tr>
+    <tr><td>Sub-especialidad</td><td>Categorico</td><td>0.15</td><td>One-hot (100 sub-especialidades)</td></tr>
+    <tr><td>Region</td><td>Categorico</td><td>0.10</td><td>One-hot (6 regiones)</td></tr>
+    <tr><td>Pais</td><td>Categorico</td><td>0.05</td><td>One-hot (22+ paises)</td></tr>
+    <tr><td>Anos de experiencia</td><td>Numerico</td><td>0.10</td><td>Normalizado [0,1]</td></tr>
+    <tr><td>Idiomas</td><td>Multi-hot</td><td>0.05</td><td>Binary (ES, EN, PT, FR, ...)</td></tr>
+    <tr><td>Tipo de membresia</td><td>Ordinal</td><td>0.05</td><td>Normalizado [0,1]</td></tr>
+    <tr><td>Disponibilidad</td><td>Binario</td><td>0.10</td><td>0 = no disponible, 1 = disponible</td></tr>
+    <tr><td>Trust Score</td><td>Numerico</td><td>0.15</td><td>Normalizado [0,1]</td></tr>
+  </tbody>
+</table>
+
+<div class="formula-box">
+  <div class="formula-label">Formula 6.2.2 -- Score Final de Matching</div>
+  $$S_{match}(q, m) = \cos(\vec{q}, \vec{m}) \times T_m \times FC_{r_m}$$
+
+  <table class="var-table">
+    <tr><td>$S_{match}$</td><td>Score final del candidato $m$ para la busqueda $q$</td></tr>
+    <tr><td>$\cos(\vec{q}, \vec{m})$</td><td>Similitud coseno entre query y perfil del miembro</td></tr>
+    <tr><td>$T_m$</td><td>Trust Score del miembro $m$ (ver Seccion 6.3)</td></tr>
+    <tr><td>$FC_{r_m}$</td><td>Factor de correccion Gini de la region del miembro (ver 6.1.3)</td></tr>
+  </table>
+</div>
+
+<!-- 6.3 TRUST RANK -->
+<h3 id="trust">6.3 Indice de Confianza (TrustRank)</h3>
+
+<p>
+  El TrustRank es un algoritmo inspirado en PageRank de Google, adaptado para medir la confianza transitiva entre miembros de HISPATEC. La confianza no se otorga de forma aislada: un miembro confiable que respalda a otro transfiere parte de su confianza.
+</p>
+
+<div class="formula-box">
+  <div class="formula-label">Formula 6.3.1 -- TrustRank Iterativo</div>
+  $$T_i^{(k+1)} = (1-d) + d \sum_{j \in B_i} \frac{T_j^{(k)} \cdot w_{ji}}{L_j}$$
+
+  <table class="var-table">
+    <tr><td>$T_i^{(k)}$</td><td>Trust Score del miembro $i$ en la iteracion $k$</td></tr>
+    <tr><td>$d$</td><td>Factor de amortiguacion (0.85, igual que PageRank)</td></tr>
+    <tr><td>$B_i$</td><td>Conjunto de miembros que han respaldado/referenciado a $i$</td></tr>
+    <tr><td>$w_{ji}$</td><td>Peso de la referencia de $j$ hacia $i$ (calidad de la colaboracion: 0-1)</td></tr>
+    <tr><td>$L_j$</td><td>Numero total de referencias emitidas por $j$</td></tr>
+  </table>
+</div>
+
+<h4>Componentes del Trust Score Base</h4>
+
+<div class="formula-box">
+  <div class="formula-label">Formula 6.3.2 -- Trust Score Compuesto</div>
+  $$T_{base,i} = 0.30 \cdot V_i + 0.25 \cdot R_i + 0.20 \cdot P_i + 0.15 \cdot A_i + 0.10 \cdot M_i$$
+
+  <table class="var-table">
+    <tr><td>$V_i$</td><td>Verificacion de identidad (0 = no verificado, 0.5 = email, 1.0 = ID completo)</td></tr>
+    <tr><td>$R_i$</td><td>Promedio de referencias recibidas (normalizado 0-1)</td></tr>
+    <tr><td>$P_i$</td><td>Proyectos completados exitosamente / Proyectos totales</td></tr>
+    <tr><td>$A_i$</td><td>Antiguedad en la red (normalizada, max 5 anos = 1.0)</td></tr>
+    <tr><td>$M_i$</td><td>Nivel de membresia normalizado (Numerario=0.4, Protector=0.6, Patrono=0.8, Fundador=1.0)</td></tr>
+  </table>
+</div>
+
+<div class="callout navy">
+  <div class="callout-title">Convergencia</div>
+  <p style="margin:0">El algoritmo TrustRank converge tipicamente en 20-50 iteraciones. Se ejecuta como proceso batch nocturno (cron job) sobre toda la red. El Trust Score resultante se almacena en la tabla <code>member_trust_scores</code> y se utiliza en todos los flujos de matching y evaluacion.</p>
+</div>
+
+<!-- 6.4 NETWORK VALUE -->
+<h3 id="network">6.4 Valor de Red (Metcalfe Adaptado)</h3>
+
+<p>
+  La Ley de Metcalfe establece que el valor de una red es proporcional al cuadrado del numero de nodos conectados. En HISPATEC, adaptamos esta ley para considerar que no todas las conexiones son iguales: una conexion entre un Fundador con Trust Score alto y un Numerario activo vale mas que una conexion dormida.
+</p>
+
+<div class="formula-box">
+  <div class="formula-label">Formula 6.4.1 -- Valor de Red HISPATEC</div>
+  $$V_{red} = k \sum_{i=1}^{n} \sum_{j=i+1}^{n} T_i \cdot T_j \cdot C_{ij}$$
+
+  <table class="var-table">
+    <tr><td>$V_{red}$</td><td>Valor total de la red (unidades de valor HISPATEC)</td></tr>
+    <tr><td>$k$</td><td>Constante de escala (ajustada empiricamente, inicial = 0.001)</td></tr>
+    <tr><td>$T_i, T_j$</td><td>Trust Scores de los miembros $i$ y $j$</td></tr>
+    <tr><td>$C_{ij}$</td><td>Coeficiente de conexion entre $i$ y $j$ (0 = sin relacion, 1 = colaboracion activa)</td></tr>
+    <tr><td>$n$</td><td>Numero total de miembros activos</td></tr>
+  </table>
+</div>
+
+<div class="formula-box">
+  <div class="formula-label">Formula 6.4.2 -- Valor de Red Simplificado (Metcalfe Puro)</div>
+  $$V_{simple} = k \cdot n_{activos}^2 \cdot \bar{T}$$
+
+  <div class="formula-desc">
+    Aproximacion rapida cuando no se requiere calculo exacto. $n_{activos}$ es el numero de miembros con al menos 1 interaccion en los ultimos 90 dias y $\bar{T}$ es el Trust Score promedio de la red.
+  </div>
+</div>
+
+<!-- 6.5 MONTE CARLO -->
+<h3 id="risk">6.5 Evaluacion de Riesgo de Proyecto (Monte Carlo)</h3>
+
+<p>
+  Cada propuesta de proyecto en HISPATEC se somete a una simulacion Monte Carlo que modela la incertidumbre en costos, plazos y probabilidad de exito. El motor genera 10,000 escenarios aleatorios basados en distribuciones de probabilidad de los parametros del proyecto.
+</p>
+
+<div class="formula-box">
+  <div class="formula-label">Formula 6.5.1 -- Simulacion Monte Carlo para Costo</div>
+  $$C_{sim} \sim \text{Triangular}(C_{min}, C_{est}, C_{max})$$
+  $$P(C_{real} \leq C_{budget}) = \frac{|\{C_{sim,k} \leq C_{budget} : k = 1,...,N\}|}{N}$$
+
+  <table class="var-table">
+    <tr><td>$C_{sim}$</td><td>Costo simulado del proyecto en una iteracion</td></tr>
+    <tr><td>$C_{min}, C_{est}, C_{max}$</td><td>Costo minimo, estimado y maximo (ingresados por el proponente)</td></tr>
+    <tr><td>$C_{budget}$</td><td>Presupuesto disponible</td></tr>
+    <tr><td>$N$</td><td>Numero de simulaciones (10,000)</td></tr>
+    <tr><td>$P(C_{real} \leq C_{budget})$</td><td>Probabilidad de que el proyecto se complete dentro del presupuesto</td></tr>
+  </table>
+</div>
+
+<div class="formula-box">
+  <div class="formula-label">Formula 6.5.2 -- Score de Viabilidad del Proyecto</div>
+  $$V_{proyecto} = w_c \cdot P(C \leq C_b) + w_t \cdot P(T \leq T_d) + w_e \cdot S_{equipo} + w_a \cdot S_{alineacion}$$
+
+  <table class="var-table">
+    <tr><td>$V_{proyecto}$</td><td>Score de viabilidad (0-100)</td></tr>
+    <tr><td>$P(C \leq C_b)$</td><td>Probabilidad de cumplir presupuesto (Monte Carlo)</td></tr>
+    <tr><td>$P(T \leq T_d)$</td><td>Probabilidad de cumplir plazo (Monte Carlo)</td></tr>
+    <tr><td>$S_{equipo}$</td><td>Score de disponibilidad y calidad del equipo en la red</td></tr>
+    <tr><td>$S_{alineacion}$</td><td>Alineacion con los 6 ejes estrategicos de HISPATEC</td></tr>
+    <tr><td>$w_c, w_t, w_e, w_a$</td><td>Pesos (sugerido: 0.30, 0.25, 0.25, 0.20)</td></tr>
+  </table>
+</div>
+
+<h4>Semaforo de Decision</h4>
+<table>
+  <thead>
+    <tr><th>Score</th><th>Semaforo</th><th>Accion</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>70-100</td><td style="color:green"><strong>VERDE</strong></td><td>Aprobacion recomendada -- proceder a nombramiento de equipo</td></tr>
+    <tr><td>40-69</td><td style="color:#c8952e"><strong>AMARILLO</strong></td><td>Revision requerida -- ajustar alcance, presupuesto o plazo</td></tr>
+    <tr><td>0-39</td><td style="color:#c0392b"><strong>ROJO</strong></td><td>No recomendado -- riesgos superan beneficios proyectados</td></tr>
+  </tbody>
+</table>
+
+<!-- 6.6 LINEAR PROGRAMMING -->
+<h3 id="allocation">6.6 Asignacion Optima de Recursos (Programacion Lineal)</h3>
+
+<p>
+  Cuando un proyecto es aprobado, el orquestador debe asignar miembros al equipo de trabajo de forma optima. El problema se formula como un modelo de programacion lineal que maximiza la complementariedad del equipo sujeta a restricciones de disponibilidad, presupuesto y diversidad regional.
+</p>
+
+<div class="formula-box">
+  <div class="formula-label">Formula 6.6.1 -- Problema de Asignacion</div>
+  $$\max \sum_{i=1}^{m} \sum_{j=1}^{p} S_{ij} \cdot x_{ij} \cdot T_i$$
+
+  <div class="formula-desc">
+    Sujeto a:
+  </div>
+
+  $$\sum_{j=1}^{p} x_{ij} \leq 1 \quad \forall i \quad \text{(cada miembro asignado a maximo 1 rol)}$$
+  $$\sum_{i=1}^{m} x_{ij} = R_j \quad \forall j \quad \text{(cada rol cubierto con exactamente } R_j \text{ personas)}$$
+  $$\sum_{i=1}^{m} c_i \cdot x_{ij} \leq B \quad \text{(presupuesto total)}$$
+  $$\sum_{i \in r} x_{ij} \geq 1 \quad \text{para al menos 2 regiones distintas (diversidad)}$$
+  $$x_{ij} \in \{0, 1\}$$
+
+  <table class="var-table">
+    <tr><td>$x_{ij}$</td><td>Variable binaria: 1 si el miembro $i$ es asignado al rol $j$, 0 si no</td></tr>
+    <tr><td>$S_{ij}$</td><td>Score de idoneidad del miembro $i$ para el rol $j$ (similitud coseno)</td></tr>
+    <tr><td>$T_i$</td><td>Trust Score del miembro $i$</td></tr>
+    <tr><td>$m$</td><td>Numero de miembros candidatos</td></tr>
+    <tr><td>$p$</td><td>Numero de roles en el proyecto</td></tr>
+    <tr><td>$R_j$</td><td>Numero de personas requeridas para el rol $j$</td></tr>
+    <tr><td>$c_i$</td><td>Costo estimado del miembro $i$ (tarifa horaria/proyecto)</td></tr>
+    <tr><td>$B$</td><td>Presupuesto total del proyecto</td></tr>
+  </table>
+</div>
+
+<!-- 6.7 COMPOSITE INDEX -->
+<h3 id="composite">6.7 Indice Compuesto HISPATEC (HCI)</h3>
+
+<p>
+  El HCI es la metrica maestra que mide la salud general del ecosistema. Agrega todas las metricas de los modelos anteriores en un unico indicador para la Junta Directiva.
+</p>
+
+<div class="formula-box">
+  <div class="formula-label">Formula 6.7.1 -- HISPATEC Composite Index</div>
+  $$HCI = \beta_1 \cdot (1 - G_{regional}) + \beta_2 \cdot \bar{T} + \beta_3 \cdot \frac{V_{red}}{V_{red,max}} + \beta_4 \cdot \frac{P_{exitosos}}{P_{total}} + \beta_5 \cdot \frac{M_{activos}}{M_{total}}$$
+
+  <table class="var-table">
+    <tr><td>$HCI$</td><td>Indice Compuesto HISPATEC (0-1, donde 1 = ecosistema ideal)</td></tr>
+    <tr><td>$(1 - G_{regional})$</td><td>Factor de equidad (inverso de Gini -- mayor equidad = mejor)</td></tr>
+    <tr><td>$\bar{T}$</td><td>Trust Score promedio de la red</td></tr>
+    <tr><td>$V_{red}/V_{red,max}$</td><td>Valor de red normalizado</td></tr>
+    <tr><td>$P_{exitosos}/P_{total}$</td><td>Tasa de exito de proyectos</td></tr>
+    <tr><td>$M_{activos}/M_{total}$</td><td>Tasa de activacion de miembros</td></tr>
+    <tr><td>$\beta_{1..5}$</td><td>Pesos (sugerido: 0.20, 0.20, 0.20, 0.25, 0.15)</td></tr>
+  </table>
+</div>
+
+<div class="callout gold">
+  <div class="callout-title">Objetivo Estrategico</div>
+  <p style="margin:0">
+    El objetivo de la Junta Directiva es mantener el HCI por encima de <strong>0.65</strong> en los primeros 12 meses de operacion, con meta de alcanzar <strong>0.80</strong> al cierre del segundo ano. El HCI se reporta mensualmente al Presidente General y trimestralmente a la Asamblea.
+  </p>
+</div>
+
+
+<!-- SECTION 7: STACK TECNOLOGICO -->
+<div class="section-header" id="sec7">
+  <div class="section-num">Seccion 07</div>
+  <h2>Stack Tecnologico y Modelos de Datos</h2>
+  <div class="section-desc">Infraestructura construida sobre el ecosistema existente de RinglyPro CRM</div>
+</div>
+
+<h3>7.1 Stack de Tecnologia</h3>
+
+<table>
+  <thead>
+    <tr><th>Capa</th><th>Tecnologia</th><th>Justificacion</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Frontend</strong></td><td>React SPA + HTML/CSS/JS estatico</td><td>Portal institucional en HTML puro (SEO), dashboard de miembros en React</td></tr>
+    <tr><td><strong>Backend</strong></td><td>Node.js + Express</td><td>Mismo stack que RinglyPro CRM -- sin nueva infraestructura</td></tr>
+    <tr><td><strong>Base de datos</strong></td><td>PostgreSQL (Render)</td><td>Base existente, tablas prefijadas con <code>hispatec_</code></td></tr>
+    <tr><td><strong>Autenticacion</strong></td><td>JWT + bcrypt</td><td>Patron ya implementado en el ecosistema</td></tr>
+    <tr><td><strong>Pagos</strong></td><td>Stripe + Stripe Connect</td><td>Membresías, escrow, multi-divisa, marketplaces</td></tr>
+    <tr><td><strong>IA / MCP</strong></td><td>Claude API + MCP Server</td><td>Orquestacion inteligente, NLP, matching, reportes</td></tr>
+    <tr><td><strong>Matematicas</strong></td><td>math.js + implementacion propia</td><td>Gini, coseno, Monte Carlo, programacion lineal</td></tr>
+    <tr><td><strong>Hosting</strong></td><td>Render (auto-deploy en push a main)</td><td>Infraestructura existente, deploy en ~2 minutos</td></tr>
+    <tr><td><strong>Notificaciones</strong></td><td>Email (Nodemailer) + WhatsApp Business API</td><td>Alcance global, alta apertura en LatAm via WhatsApp</td></tr>
+  </tbody>
+</table>
+
+<h3>7.2 Modelo de Datos (PostgreSQL)</h3>
+
+<div class="diagram">
+<span class="comment">-- Tablas principales del ecosistema HISPATEC --</span>
+
+<span class="keyword">hispatec_members</span>
+  id, email, password_hash, first_name, last_name,
+  country, region_id, sector, sub_specialty,
+  years_experience, languages[], company_name,
+  membership_type, trust_score, profile_vector,
+  verified, status, stripe_customer_id,
+  created_at, updated_at
+
+<span class="keyword">hispatec_regions</span>
+  id, name, description, president_member_id,
+  secretary_member_id, treasurer_member_id,
+  gini_score, opportunity_count
+
+<span class="keyword">hispatec_projects</span>
+  id, title, description, sector, countries[],
+  status (propuesta|analisis|equipo|recursos|ejecucion|completado),
+  budget_min, budget_est, budget_max,
+  timeline_min, timeline_est, timeline_max,
+  viability_score, risk_score, monte_carlo_result,
+  proposer_member_id, created_at
+
+<span class="keyword">hispatec_project_members</span>
+  id, project_id, member_id, role,
+  assignment_score, status, joined_at
+
+<span class="keyword">hispatec_matches</span>
+  id, query_vector, query_text, requester_id,
+  results_json, gini_correction_applied,
+  created_at
+
+<span class="keyword">hispatec_trust_references</span>
+  id, from_member_id, to_member_id,
+  collaboration_quality (0-1), project_id,
+  comment, created_at
+
+<span class="keyword">hispatec_trust_scores</span>
+  id, member_id, trust_score, components_json,
+  iteration_count, calculated_at
+
+<span class="keyword">hispatec_opportunities</span>
+  id, title, description, sector, countries[],
+  source, url, posted_by_member_id,
+  expires_at, created_at
+
+<span class="keyword">hispatec_transactions</span>
+  id, type (membership|project|escrow|event),
+  from_member_id, to_member_id, project_id,
+  amount, currency, stripe_payment_id,
+  status, created_at
+
+<span class="keyword">hispatec_companies</span>
+  id, member_id, name, description,
+  sector, capabilities[], certifications[],
+  countries_served[], verified, rfq_count,
+  created_at
+
+<span class="keyword">hispatec_rfqs</span>
+  id, company_id, title, description,
+  sector, budget_range, deadline,
+  responses_count, status, created_at
+
+<span class="keyword">hispatec_events</span>
+  id, title, description, type (virtual|presencial|hibrido),
+  date, region_id, capacity, price,
+  attendees_count, created_at
+
+<span class="keyword">hispatec_network_metrics</span>
+  id, date, total_members, active_members,
+  gini_regional, avg_trust, network_value,
+  projects_active, projects_completed,
+  hci_score, created_at
+</div>
+
+<h3>7.3 Rutas API</h3>
+
+<table>
+  <thead>
+    <tr><th>Metodo</th><th>Endpoint</th><th>Descripcion</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>POST</td><td>/hispatec/api/auth/register</td><td>Registro de nuevo miembro</td></tr>
+    <tr><td>POST</td><td>/hispatec/api/auth/login</td><td>Autenticacion JWT</td></tr>
+    <tr><td>GET</td><td>/hispatec/api/members</td><td>Directorio de miembros (filtrable)</td></tr>
+    <tr><td>GET</td><td>/hispatec/api/members/:id</td><td>Perfil de miembro</td></tr>
+    <tr><td>POST</td><td>/hispatec/api/match</td><td>Matching de miembros (MCP)</td></tr>
+    <tr><td>POST</td><td>/hispatec/api/projects</td><td>Crear propuesta de proyecto</td></tr>
+    <tr><td>POST</td><td>/hispatec/api/projects/:id/evaluate</td><td>Evaluacion Monte Carlo</td></tr>
+    <tr><td>POST</td><td>/hispatec/api/projects/:id/assign</td><td>Asignacion optima de equipo</td></tr>
+    <tr><td>GET</td><td>/hispatec/api/opportunities</td><td>Oportunidades internacionales</td></tr>
+    <tr><td>POST</td><td>/hispatec/api/rfq</td><td>Publicar solicitud de cotizacion</td></tr>
+    <tr><td>GET</td><td>/hispatec/api/exchange</td><td>Marketplace de empresas</td></tr>
+    <tr><td>POST</td><td>/hispatec/api/payments/membership</td><td>Procesar pago de membresia</td></tr>
+    <tr><td>POST</td><td>/hispatec/api/payments/escrow</td><td>Crear escrow para proyecto</td></tr>
+    <tr><td>GET</td><td>/hispatec/api/metrics/gini</td><td>Coeficiente de Gini actual</td></tr>
+    <tr><td>GET</td><td>/hispatec/api/metrics/hci</td><td>Indice Compuesto HISPATEC</td></tr>
+    <tr><td>GET</td><td>/hispatec/api/metrics/network-value</td><td>Valor de red</td></tr>
+    <tr><td>POST</td><td>/hispatec/api/mcp/tools/call</td><td>Invocacion de herramientas MCP</td></tr>
+    <tr><td>GET</td><td>/hispatec/api/mcp/tools/list</td><td>Listar herramientas MCP disponibles</td></tr>
+  </tbody>
+</table>
+
+
+<!-- SECTION 8: MONETIZACION -->
+<div class="section-header" id="sec8">
+  <div class="section-num">Seccion 08</div>
+  <h2>Modelo de Monetizacion y Proyecciones</h2>
+  <div class="section-desc">Sostenibilidad financiera del ecosistema</div>
+</div>
+
+<h3>8.1 Fuentes de Ingreso</h3>
+
+<div class="cards">
+  <div class="card">
+    <div class="card-icon teal">M</div>
+    <h5>Cuotas de Membresia</h5>
+    <p>Ingresos recurrentes mensuales/anuales. Descuentos del 20% por pago anual. 5 niveles de membresia.</p>
+  </div>
+  <div class="card">
+    <div class="card-icon gold">%</div>
+    <h5>Comision Transaccional</h5>
+    <p>2-5% sobre pagos de proyectos facilitados por la plataforma. Escrow via Stripe Connect.</p>
+  </div>
+  <div class="card">
+    <div class="card-icon navy">E</div>
+    <h5>Eventos y Misiones</h5>
+    <p>Eventos de networking, misiones comerciales, conferencias regionales. Presenciales, virtuales e hibridos.</p>
+  </div>
+  <div class="card">
+    <div class="card-icon teal">V</div>
+    <h5>Verificacion Empresarial</h5>
+    <p>Badge de empresa verificada. Validacion de capacidades, certificaciones y referencias.</p>
+  </div>
+  <div class="card">
+    <div class="card-icon gold">P</div>
+    <h5>Posicionamiento Premium</h5>
+    <p>Listados destacados en directorio y resultados de busqueda. Visibilidad preferente.</p>
+  </div>
+  <div class="card">
+    <div class="card-icon navy">A</div>
+    <h5>API y Datos</h5>
+    <p>Acceso a API para integraciones corporativas. Informes sectoriales y de mercado para institucionales.</p>
+  </div>
+</div>
+
+<h3>8.2 Proyeccion Financiera (24 Meses)</h3>
+
+<table>
+  <thead>
+    <tr><th>Metrica</th><th>Mes 6</th><th>Mes 12</th><th>Mes 18</th><th>Mes 24</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Miembros totales</td><td>150</td><td>500</td><td>1,200</td><td>2,500</td></tr>
+    <tr><td>Miembros de pago</td><td>50</td><td>200</td><td>600</td><td>1,500</td></tr>
+    <tr><td>Ticket medio mensual</td><td>$75</td><td>$85</td><td>$95</td><td>$100</td></tr>
+    <tr><td>MRR (Membresias)</td><td>$3,750</td><td>$17,000</td><td>$57,000</td><td>$150,000</td></tr>
+    <tr><td>Ingresos transaccionales</td><td>$500</td><td>$5,000</td><td>$25,000</td><td>$75,000</td></tr>
+    <tr><td>Eventos + otros</td><td>$1,000</td><td>$5,000</td><td>$15,000</td><td>$30,000</td></tr>
+    <tr><td><strong>MRR Total</strong></td><td><strong>$5,250</strong></td><td><strong>$27,000</strong></td><td><strong>$97,000</strong></td><td><strong>$255,000</strong></td></tr>
+    <tr><td>Proyectos activos</td><td>3</td><td>15</td><td>40</td><td>80</td></tr>
+    <tr><td>HCI Score</td><td>0.45</td><td>0.65</td><td>0.72</td><td>0.80</td></tr>
+  </tbody>
+</table>
+
+
+<!-- SECTION 9: GOBERNANZA -->
+<div class="section-header" id="sec9">
+  <div class="section-num">Seccion 09</div>
+  <h2>Gobernanza y Estructura Organizacional</h2>
+  <div class="section-desc">Estructura global con 6 sedes regionales</div>
+</div>
+
+<h3>9.1 Sede Central (Rotatoria)</h3>
+<p>
+  La Sede Central de HISPATEC puede ser rotatoria entre las 6 regiones. Su funcion es la estrategia global, las directrices generales y la representacion institucional. La Junta Directiva Central se compone de:
+</p>
+
+<ul>
+  <li><strong>Presidente General</strong> -- El de la sede que ostente la centralidad</li>
+  <li><strong>Vicepresidente Asociado Fundador</strong></li>
+  <li><strong>6 Vicepresidentes Regionales</strong> (America del Norte, Central y Caribe, del Sur, Europa-Mediterraneo, Africa Hispanica y Atlantica, Asia-Pacifico)</li>
+  <li><strong>Secretario General</strong></li>
+  <li><strong>Tesorero General</strong></li>
+  <li><strong>Hasta 14 Vocales</strong></li>
+</ul>
+
+<h3>9.2 Delegaciones Regionales</h3>
+<p>Cada region tiene autonomia operativa con coordinacion central:</p>
+<ul>
+  <li><strong>Presidente Regional</strong></li>
+  <li><strong>Vicepresidente Regional</strong> (el Presidente General)</li>
+  <li><strong>Secretario Regional</strong></li>
+  <li><strong>Tesorero Regional</strong></li>
+  <li><strong>Hasta 20 Vocales</strong></li>
+</ul>
+
+<h3>9.3 Las 6 Regiones</h3>
+
+<table>
+  <thead>
+    <tr><th>#</th><th>Region</th><th>Paises Principales</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>1</td><td>America del Norte</td><td>Estados Unidos, Mexico, Canada (hispanos)</td></tr>
+    <tr><td>2</td><td>America Central y Caribe</td><td>Guatemala, Honduras, El Salvador, Costa Rica, Panama, Cuba, RD, PR</td></tr>
+    <tr><td>3</td><td>America del Sur</td><td>Colombia, Peru, Chile, Argentina, Ecuador, Venezuela, Bolivia, Paraguay, Uruguay</td></tr>
+    <tr><td>4</td><td>Europa-Mediterraneo</td><td>Espana, Andorra, comunidades hispanas en UE</td></tr>
+    <tr><td>5</td><td>Africa Hispanica y Atlantica</td><td>Guinea Ecuatorial, Sahara Occidental, Canarias (contexto historico)</td></tr>
+    <tr><td>6</td><td>Asia-Pacifico</td><td>Filipinas, Guam, comunidades hispanas en Asia-Pacifico</td></tr>
+  </tbody>
+</table>
+
+<h3>9.4 Relacion con Fundacion Raices Hispanas (FRH)</h3>
+<p>
+  HISPATEC opera en alianza estrategica con la Fundacion Raices Hispanas USA (FRH) / Hispanic Roots Foundation (HRF), asociacion civil apartidista sin animo de lucro presente en los cinco continentes. La FRH aporta la base cultural, historica y comunitaria, mientras HISPATEC aporta la capa tecnica, empresarial y tecnologica. Juntas forman un ecosistema completo: raices culturales + accion tecnica.
+</p>
+
+<div class="callout">
+  <div class="callout-title">Contacto FRH</div>
+  <p style="margin:0">
+    Tel: +1 225-290-4754 | info@fundacionraiceshispanas.org | info@hispanicrootsfoundation.org<br>
+    Web: fundacionraiceshispanas.org | hispanicrootsfoundation.org<br>
+    YouTube: @ACHeroesDeCavite
+  </p>
+</div>
+
+
+<!-- SECTION 10: ROADMAP -->
+<div class="section-header" id="sec10">
+  <div class="section-num">Seccion 10</div>
+  <h2>Hoja de Ruta -- Roadmap 2026-2028</h2>
+  <div class="section-desc">Fases de implementacion del ecosistema completo</div>
+</div>
+
+<h3>Fase 1: Fundacion (Meses 1-3)</h3>
+<div class="callout navy">
+  <div class="callout-title">Abril - Junio 2026</div>
+  <ul style="margin:0">
+    <li>Portal institucional bilingue en produccion (/hispatec/)</li>
+    <li>Sistema de registro de socios fundadores</li>
+    <li>Base de datos de miembros con perfiles completos</li>
+    <li>Integracion Stripe para cuotas de membresia</li>
+    <li>Directorio basico de miembros con busqueda</li>
+    <li>Estructura de delegaciones regionales en plataforma</li>
+    <li>Meta: 50 socios fundadores registrados</li>
+  </ul>
+</div>
+
+<h3>Fase 2: Red Tecnica (Meses 4-6)</h3>
+<div class="callout navy">
+  <div class="callout-title">Julio - Septiembre 2026</div>
+  <ul style="margin:0">
+    <li>Motor de matching por similitud coseno</li>
+    <li>Implementacion del TrustRank (batch nocturno)</li>
+    <li>Coeficiente de Gini regional operativo</li>
+    <li>Orquestador MCP v1 con 4 herramientas (match, trust, gini, report)</li>
+    <li>Dashboard de metricas (HCI, Gini, Trust promedio, Valor de Red)</li>
+    <li>Lanzamiento del primer proyecto piloto transnacional</li>
+    <li>Meta: 150 miembros, HCI > 0.45</li>
+  </ul>
+</div>
+
+<h3>Fase 3: Proyectos y Exchange (Meses 7-12)</h3>
+<div class="callout navy">
+  <div class="callout-title">Octubre 2026 - Marzo 2027</div>
+  <ul style="margin:0">
+    <li>Modulo completo de gestion de proyectos (5 fases)</li>
+    <li>Simulacion Monte Carlo para evaluacion de riesgo</li>
+    <li>Programacion lineal para asignacion de equipos</li>
+    <li>Business Exchange (marketplace B2B) con RFQs</li>
+    <li>Sistema de escrow via Stripe Connect</li>
+    <li>Sistema de referencias cruzadas</li>
+    <li>Perfiles de empresa verificados</li>
+    <li>MCP v2 con 9 herramientas completas</li>
+    <li>Meta: 500 miembros, 15 proyectos activos, HCI > 0.65</li>
+  </ul>
+</div>
+
+<h3>Fase 4: Escala (Meses 13-24)</h3>
+<div class="callout navy">
+  <div class="callout-title">Abril 2027 - Marzo 2028</div>
+  <ul style="margin:0">
+    <li>App movil nativa (iOS/Android)</li>
+    <li>Motor de nearshoring con matching por capacidad verificada</li>
+    <li>Integracion WhatsApp Business API para LatAm</li>
+    <li>Eventos virtuales/hibridos con sistema de registro y pago</li>
+    <li>API publica para integraciones institucionales</li>
+    <li>IA conversacional en espanol para asistencia de miembros</li>
+    <li>Expansion a los 6 centros regionales con autonomia operativa</li>
+    <li>Meta: 2,500 miembros, 80 proyectos, HCI > 0.80, MRR $255K</li>
+  </ul>
+</div>
+
+
+<!-- SECTION 11: ANEXOS -->
+<div class="section-header" id="sec11">
+  <div class="section-num">Seccion 11</div>
+  <h2>Anexos Tecnicos</h2>
+  <div class="section-desc">Detalle complementario para el equipo de implementacion</div>
+</div>
+
+<h3>Anexo A: Ejemplo de Vector de Perfil</h3>
+<div class="diagram">
+<span class="comment">-- Ejemplo: Ingeniero logistico colombiano con 12 anos de experiencia --</span>
+
+{
+  "member_id": 42,
+  "name": "Carlos Rodriguez",
+  "vector": {
+    <span class="string">"sector_logistica"</span>: 1.0,      <span class="comment">// Sector principal</span>
+    <span class="string">"sector_agro"</span>: 0.3,            <span class="comment">// Sector secundario</span>
+    <span class="string">"sector_tech"</span>: 0.1,            <span class="comment">// Conocimiento tech basico</span>
+    <span class="string">"region_america_sur"</span>: 1.0,     <span class="comment">// Region</span>
+    <span class="string">"pais_colombia"</span>: 1.0,          <span class="comment">// Pais</span>
+    <span class="string">"experiencia"</span>: 0.8,            <span class="comment">// 12/15 anos normalizado</span>
+    <span class="string">"idioma_es"</span>: 1.0,              <span class="comment">// Espanol nativo</span>
+    <span class="string">"idioma_en"</span>: 0.7,              <span class="comment">// Ingles avanzado</span>
+    <span class="string">"membresia"</span>: 0.4,              <span class="comment">// Numerario</span>
+    <span class="string">"disponibilidad"</span>: 1.0,         <span class="comment">// Disponible</span>
+    <span class="string">"trust_score"</span>: 0.72            <span class="comment">// TrustRank calculado</span>
+  }
+}
+</div>
+
+<h3>Anexo B: Ejemplo de Calculo Gini</h3>
+<div class="diagram">
+<span class="comment">-- Distribucion de oportunidades por region (mes actual) --</span>
+
+Region 1 (America Norte):     O = 30
+Region 2 (America Central):   O = 12
+Region 3 (America Sur):       O = 35
+Region 4 (Europa-Med):        O = 45
+Region 5 (Africa Hisp.):      O =  5
+Region 6 (Asia-Pac):          O =  8
+
+Media = (30+12+35+45+5+8) / 6 = 22.5
+
+<span class="keyword">Gini = Sum|xi - xj| / (2 * n^2 * mean)</span>
+
+Pares |xi-xj|:
+  |30-12|=18, |30-35|=5, |30-45|=15, |30-5|=25, |30-8|=22
+  |12-35|=23, |12-45|=33, |12-5|=7,  |12-8|=4
+  |35-45|=10, |35-5|=30,  |35-8|=27
+  |45-5|=40,  |45-8|=37
+  |5-8|=3
+
+Sum = 2*(18+5+15+25+22+23+33+7+4+10+30+27+40+37+3) = 2*299 = 598
+
+G = 598 / (2 * 36 * 22.5) = 598 / 1620 = <span class="highlight">0.369</span>
+
+<span class="comment">-- G = 0.369 < 0.40 → No se activa correccion automatica</span>
+<span class="comment">-- Pero Africa y Asia-Pac estan muy por debajo → monitorear</span>
+</div>
+
+<h3>Anexo C: Ejemplo de Simulacion Monte Carlo</h3>
+<div class="diagram">
+<span class="comment">-- Proyecto: Exportacion de aguacate de Peru a Espana --</span>
+
+Parametros de entrada:
+  Costo:  min=$15,000  est=$25,000  max=$45,000
+  Plazo:  min=3 meses  est=5 meses  max=9 meses
+  Budget disponible: $30,000
+  Deadline: 6 meses
+
+<span class="keyword">Resultados (10,000 simulaciones):</span>
+
+  P(Costo <= $30,000) = <span class="highlight">68.3%</span>
+  P(Plazo <= 6 meses) = <span class="highlight">72.1%</span>
+
+  Percentiles de costo:
+    P10 = $18,200   P25 = $21,500   P50 = $26,100
+    P75 = $32,800   P90 = $38,500   P95 = $41,200
+
+  Score equipo disponible:  0.85 (3 miembros con perfil ideal en red)
+  Score alineacion HISPATEC: 0.90 (Eje 3: Proyectos + Eje Agro)
+
+  <span class="keyword">V_proyecto</span> = 0.30*0.683 + 0.25*0.721 + 0.25*0.85 + 0.20*0.90
+             = 0.205 + 0.180 + 0.213 + 0.180
+             = <span class="highlight">0.778 (77.8/100)</span>
+
+  <span class="string">Semaforo: VERDE → Aprobacion recomendada</span>
+</div>
+
+<h3>Anexo D: Glosario de Terminos</h3>
+
+<table>
+  <thead>
+    <tr><th>Termino</th><th>Definicion</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>MCP</strong></td><td>Model Context Protocol -- protocolo de Anthropic para conectar modelos de IA con herramientas externas</td></tr>
+    <tr><td><strong>Gini</strong></td><td>Coeficiente de Gini -- medida estadistica de desigualdad distributiva (0-1)</td></tr>
+    <tr><td><strong>Similitud Coseno</strong></td><td>Medida de similitud entre dos vectores basada en el angulo entre ellos</td></tr>
+    <tr><td><strong>TrustRank</strong></td><td>Algoritmo iterativo de confianza transitiva inspirado en PageRank</td></tr>
+    <tr><td><strong>Monte Carlo</strong></td><td>Metodo de simulacion estadistica basado en muestreo aleatorio repetido</td></tr>
+    <tr><td><strong>HCI</strong></td><td>HISPATEC Composite Index -- metrica maestra de salud del ecosistema</td></tr>
+    <tr><td><strong>RFQ</strong></td><td>Request for Quote -- solicitud formal de cotizacion en el marketplace</td></tr>
+    <tr><td><strong>Escrow</strong></td><td>Retencion de fondos por tercero hasta cumplimiento de condiciones</td></tr>
+    <tr><td><strong>Stripe Connect</strong></td><td>Plataforma de pagos de Stripe para marketplaces multi-parte</td></tr>
+    <tr><td><strong>PYME</strong></td><td>Pequena y Mediana Empresa</td></tr>
+    <tr><td><strong>Nearshoring</strong></td><td>Relocalizacion de operaciones a paises cercanos con afinidad cultural</td></tr>
+  </tbody>
+</table>
+
+<!-- CLOSING -->
+<div style="margin-top:80px; padding:48px; background:linear-gradient(135deg, var(--navy) 0%, var(--teal-dark) 100%); color:var(--white); border-radius:16px; text-align:center;">
+  <h2 style="font-family:'Inter',sans-serif; font-size:28px; font-weight:800; margin-bottom:16px;">
+    "Yo estuve ahi cuando todo empezo."
+  </h2>
+  <p style="font-family:'Inter',sans-serif; font-size:16px; opacity:0.8; margin-bottom:32px; text-align:center;">
+    Porque el momento es ahora. Y la historia no espera.
+  </p>
+  <div style="width:60px; height:2px; background:var(--gold); margin:0 auto 24px;"></div>
+  <p style="font-family:'Inter',sans-serif; font-size:13px; opacity:0.5; margin:0; text-align:center;">
+    HISPATEC -- Whitepaper Tecnico v1.0 | Abril 2026 | Confidencial<br>
+    Preparado para la Junta Directiva Fundacional
+  </p>
+</div>
+
+</div><!-- /content -->
+
+</body>
+</html>
