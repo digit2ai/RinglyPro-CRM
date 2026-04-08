@@ -352,6 +352,7 @@
     border-radius: 12px;
     background: var(--primary);
     transition: border-color 0.3s;
+    cursor: pointer;
   }
 
   .pillar:hover {
@@ -372,6 +373,549 @@
   .pillar p {
     font-size: 0.8rem;
     color: var(--text-muted);
+  }
+
+  .pillar .pillar-hint {
+    font-size: 0.7rem;
+    color: var(--accent-light);
+    margin-top: 8px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .pillar:hover .pillar-hint { opacity: 1; }
+
+  /* Deep Dive Sections */
+  .deep-dive {
+    padding: 100px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .deep-dive::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+  }
+
+  .deep-dive.dd-mcp::before { background: linear-gradient(90deg, transparent, var(--accent), transparent); }
+  .deep-dive.dd-dx::before { background: linear-gradient(90deg, transparent, var(--neural), transparent); }
+  .deep-dive.dd-vx::before { background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+  .deep-dive.dd-mt::before { background: linear-gradient(90deg, transparent, var(--warehouse), transparent); }
+
+  .dd-label {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .dd-mcp .dd-label { background: rgba(37,99,235,0.15); color: var(--accent-light); }
+  .dd-dx .dd-label { background: rgba(6,182,212,0.15); color: var(--neural); }
+  .dd-vx .dd-label { background: rgba(245,158,11,0.15); color: var(--gold); }
+  .dd-mt .dd-label { background: rgba(139,92,246,0.15); color: var(--warehouse); }
+
+  .dd-title {
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+
+  .dd-subtitle {
+    color: var(--text-muted);
+    font-size: 1rem;
+    margin-bottom: 40px;
+    max-width: 600px;
+  }
+
+  /* Diagram Container */
+  .diagram {
+    background: var(--primary);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px;
+    margin-bottom: 40px;
+    position: relative;
+    overflow-x: auto;
+  }
+
+  .diagram-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 30px;
+    text-align: center;
+  }
+
+  /* MCP Diagram */
+  .mcp-flow {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .mcp-orchestrator {
+    background: linear-gradient(135deg, rgba(37,99,235,0.2), rgba(37,99,235,0.05));
+    border: 2px solid var(--accent);
+    border-radius: 12px;
+    padding: 20px 40px;
+    text-align: center;
+    width: 100%;
+    max-width: 500px;
+  }
+
+  .mcp-orchestrator h5 {
+    font-size: 1rem;
+    color: var(--accent-light);
+    margin-bottom: 4px;
+  }
+
+  .mcp-orchestrator span {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .flow-arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    color: var(--border);
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+  }
+
+  .flow-arrow .arrow-line {
+    width: 2px;
+    height: 20px;
+    background: var(--border);
+  }
+
+  .flow-arrow .arrow-head {
+    font-size: 1rem;
+    line-height: 1;
+    margin-top: -6px;
+  }
+
+  .agents-ring {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    width: 100%;
+    max-width: 700px;
+  }
+
+  @media (max-width: 600px) {
+    .agents-ring { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .agent-node {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 10px;
+    text-align: center;
+    transition: all 0.3s;
+    position: relative;
+  }
+
+  .agent-node:hover {
+    border-color: var(--accent-light);
+    transform: translateY(-2px);
+  }
+
+  .agent-node .agent-id {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--accent-light);
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+
+  .agent-node .agent-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .agent-node .agent-tools {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+  }
+
+  .tools-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    width: 100%;
+    max-width: 700px;
+  }
+
+  .tool-chip {
+    padding: 4px 10px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    font-family: monospace;
+    white-space: nowrap;
+  }
+
+  /* Dx Diagram - Three Layers */
+  .dx-layers {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .dx-layer {
+    padding: 24px 30px;
+    border: 1px solid var(--border);
+    position: relative;
+  }
+
+  .dx-layer:first-child { border-radius: 12px 12px 0 0; }
+  .dx-layer:last-child { border-radius: 0 0 12px 12px; }
+  .dx-layer + .dx-layer { border-top: none; }
+
+  .dx-layer-num {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    font-size: 2rem;
+    font-weight: 800;
+    opacity: 0.08;
+  }
+
+  .dx-layer h5 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .dx-layer p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+
+  .dx-layer .dx-example {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    background: rgba(0,0,0,0.2);
+    padding: 10px 14px;
+    border-radius: 6px;
+    border-left: 3px solid;
+    font-style: italic;
+  }
+
+  .dx-layer.layer-diag { background: rgba(6,182,212,0.06); }
+  .dx-layer.layer-diag h5 { color: var(--neural); }
+  .dx-layer.layer-diag .dx-example { border-color: var(--neural); }
+
+  .dx-layer.layer-presc { background: rgba(245,158,11,0.06); }
+  .dx-layer.layer-presc h5 { color: var(--gold); }
+  .dx-layer.layer-presc .dx-example { border-color: var(--gold); }
+
+  .dx-layer.layer-treat { background: rgba(34,197,94,0.06); }
+  .dx-layer.layer-treat h5 { color: var(--freight); }
+  .dx-layer.layer-treat .dx-example { border-color: var(--freight); }
+
+  .dx-flow-arrow {
+    text-align: center;
+    padding: 6px 0;
+    color: var(--border);
+    font-size: 1.2rem;
+  }
+
+  .dx-modules {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    max-width: 700px;
+    margin: 30px auto 0;
+  }
+
+  .dx-module {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    transition: border-color 0.3s;
+  }
+
+  .dx-module:hover { border-color: var(--neural); }
+
+  .dx-module .mod-code {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--neural);
+    letter-spacing: 1px;
+    font-family: monospace;
+  }
+
+  .dx-module .mod-name {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  /* Voice AI Diagram */
+  .vx-flow {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  @media (max-width: 700px) {
+    .vx-flow { flex-direction: column; }
+    .vx-connector { transform: rotate(90deg); padding: 10px 0 !important; }
+  }
+
+  .vx-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .vx-col-title {
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+  }
+
+  .vx-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 0.8rem;
+    transition: border-color 0.3s;
+  }
+
+  .vx-item:hover { border-color: var(--gold); }
+
+  .vx-item strong {
+    display: block;
+    font-size: 0.85rem;
+    margin-bottom: 2px;
+  }
+
+  .vx-item span {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+  }
+
+  .vx-connector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+    color: var(--border);
+    font-size: 1.4rem;
+    flex-shrink: 0;
+  }
+
+  .vx-center-box {
+    background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(245,158,11,0.03));
+    border: 2px solid var(--gold);
+    border-radius: 16px;
+    padding: 24px 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    min-width: 180px;
+    flex-shrink: 0;
+  }
+
+  .vx-center-box h5 {
+    font-size: 1.1rem;
+    color: var(--gold);
+  }
+
+  .vx-center-box .vx-names {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .vx-center-box .vx-tech {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    background: rgba(0,0,0,0.3);
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-family: monospace;
+  }
+
+  /* Multi-Tenant Diagram */
+  .mt-stack {
+    max-width: 700px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .mt-layer {
+    border: 1px solid var(--border);
+    padding: 20px 28px;
+    position: relative;
+  }
+
+  .mt-layer + .mt-layer { border-top: none; }
+  .mt-layer:first-child { border-radius: 12px 12px 0 0; }
+  .mt-layer:last-child { border-radius: 0 0 12px 12px; }
+
+  .mt-layer h5 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .mt-layer p {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .mt-layer.mt-tenants { background: rgba(139,92,246,0.08); }
+  .mt-layer.mt-tenants h5 { color: var(--warehouse); }
+  .mt-layer.mt-auth { background: rgba(37,99,235,0.06); }
+  .mt-layer.mt-auth h5 { color: var(--accent-light); }
+  .mt-layer.mt-agents { background: rgba(6,182,212,0.06); }
+  .mt-layer.mt-agents h5 { color: var(--neural); }
+  .mt-layer.mt-data { background: rgba(34,197,94,0.06); }
+  .mt-layer.mt-data h5 { color: var(--freight); }
+  .mt-layer.mt-infra { background: rgba(245,158,11,0.06); }
+  .mt-layer.mt-infra h5 { color: var(--gold); }
+
+  .mt-tenant-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+
+  .mt-tenant-chip {
+    padding: 6px 14px;
+    background: rgba(139,92,246,0.12);
+    border: 1px solid rgba(139,92,246,0.3);
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--warehouse);
+  }
+
+  .mt-tiers {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 30px;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  @media (max-width: 600px) {
+    .mt-tiers { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .mt-tier {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    text-align: center;
+    transition: border-color 0.3s;
+  }
+
+  .mt-tier:hover { border-color: var(--warehouse); }
+
+  .mt-tier .tier-num {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--warehouse);
+    letter-spacing: 1px;
+  }
+
+  .mt-tier .tier-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin: 4px 0;
+  }
+
+  .mt-tier .tier-desc {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+  }
+
+  /* Detail Grid */
+  .detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-top: 40px;
+  }
+
+  .detail-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+  }
+
+  .detail-card h5 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  .detail-card ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .detail-card ul li {
+    padding: 4px 0;
+    padding-left: 16px;
+    position: relative;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .detail-card ul li::before {
+    content: '--';
+    position: absolute;
+    left: 0;
+    color: var(--accent-light);
+    font-weight: 700;
+    font-size: 0.7rem;
   }
 
   /* Quote */
@@ -664,43 +1208,577 @@
   </div>
 </section>
 
-<!-- Architecture -->
+<!-- Architecture Overview -->
 <section class="arch-section">
   <div class="container">
     <div class="section-header">
       <h2 data-lang="en">Unified Architecture</h2>
       <h2 data-lang="es">Arquitectura Unificada</h2>
-      <p data-lang="en">Every vertical runs on the same proven foundation.</p>
-      <p data-lang="es">Cada vertical corre sobre la misma base probada.</p>
+      <p data-lang="en">Every vertical runs on the same proven foundation. Click any pillar to jump to its diagram.</p>
+      <p data-lang="es">Cada vertical corre sobre la misma base probada. Haz clic en cualquier pilar para ver su diagrama.</p>
     </div>
 
     <div class="arch-pillars">
-      <div class="pillar">
+      <a href="#mcp" style="text-decoration:none;color:inherit"><div class="pillar">
         <div class="pillar-icon">[MCP]</div>
         <h4 data-lang="en">MCP Agent Mesh</h4>
         <h4 data-lang="es">Malla de Agentes MCP</h4>
         <p data-lang="en">90+ tools orchestrated via Model Context Protocol. 8 specialized agents per vertical operating autonomously.</p>
         <p data-lang="es">90+ herramientas orquestadas via Model Context Protocol. 8 agentes especializados por vertical operando de forma autonoma.</p>
-      </div>
-      <div class="pillar">
+        <div class="pillar-hint">View diagram ↓</div>
+      </div></a>
+      <a href="#dx" style="text-decoration:none;color:inherit"><div class="pillar">
         <div class="pillar-icon">[Dx]</div>
         <h4 data-lang="en">Neural Intelligence</h4>
         <h4 data-lang="es">Inteligencia Neural</h4>
         <p data-lang="en">24/7 autonomous scanning. Three-layer approach: Diagnostic, Prescription, Treatment. The AI acts, not just advises.</p>
         <p data-lang="es">Escaneo autonomo 24/7. Enfoque de tres capas: Diagnostico, Prescripcion, Tratamiento. La IA actua, no solo aconseja.</p>
-      </div>
-      <div class="pillar">
+        <div class="pillar-hint">View diagram ↓</div>
+      </div></a>
+      <a href="#vx" style="text-decoration:none;color:inherit"><div class="pillar">
         <div class="pillar-icon">[Vx]</div>
         <h4 data-lang="en">Voice AI</h4>
         <h4 data-lang="es">Voz con IA</h4>
         <p data-lang="en">Rachel, Ana, and Lina handle all phone communication. Inbound and outbound. No humans on the line.</p>
         <p data-lang="es">Rachel, Ana y Lina manejan toda la comunicacion telefonica. Entrante y saliente. Sin humanos en la linea.</p>
-      </div>
-      <div class="pillar">
+        <div class="pillar-hint">View diagram ↓</div>
+      </div></a>
+      <a href="#mt" style="text-decoration:none;color:inherit"><div class="pillar">
         <div class="pillar-icon">[MT]</div>
         <h4>Multi-Tenant SaaS</h4>
         <p data-lang="en">Tiered pricing. Each client gets isolated data, shared infrastructure. Deploy once, serve thousands.</p>
         <p data-lang="es">Precios por niveles. Cada cliente con datos aislados, infraestructura compartida. Desplegar una vez, servir a miles.</p>
+        <div class="pillar-hint">View diagram ↓</div>
+      </div></a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- DEEP DIVE: MCP Agent Mesh                          -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section class="deep-dive dd-mcp" id="mcp">
+  <div class="container">
+    <div class="dd-label">MCP</div>
+    <div class="dd-title" data-lang="en">MCP Agent Mesh Architecture</div>
+    <div class="dd-title" data-lang="es">Arquitectura de Malla de Agentes MCP</div>
+    <p class="dd-subtitle" data-lang="en">Model Context Protocol orchestrates 8 specialized agents per vertical. Each agent owns a domain, exposes tools, and operates autonomously 24/7.</p>
+    <p class="dd-subtitle" data-lang="es">El Model Context Protocol orquesta 8 agentes especializados por vertical. Cada agente es dueno de un dominio, expone herramientas y opera de forma autonoma 24/7.</p>
+
+    <!-- Diagram: Orchestrator -> Agents -> Tools -->
+    <div class="diagram">
+      <div class="diagram-title" data-lang="en">ORCHESTRATION FLOW</div>
+      <div class="diagram-title" data-lang="es">FLUJO DE ORQUESTACION</div>
+
+      <div class="mcp-flow">
+        <!-- Orchestrator -->
+        <div class="mcp-orchestrator">
+          <h5 data-lang="en">MCP Orchestrator</h5>
+          <h5 data-lang="es">Orquestador MCP</h5>
+          <span data-lang="en">Claude Opus -- routes intent to the right agent</span>
+          <span data-lang="es">Claude Opus -- enruta la intencion al agente correcto</span>
+        </div>
+
+        <div class="flow-arrow">
+          <div class="arrow-line"></div>
+          <div class="arrow-head">v</div>
+          <span data-lang="en">tool_call / response</span>
+          <span data-lang="es">tool_call / respuesta</span>
+        </div>
+
+        <!-- Agent Ring -->
+        <div class="agents-ring">
+          <div class="agent-node">
+            <div class="agent-id">A1</div>
+            <div class="agent-name" data-lang="en">Operations</div>
+            <div class="agent-name" data-lang="es">Operaciones</div>
+            <div class="agent-tools">12 tools</div>
+          </div>
+          <div class="agent-node">
+            <div class="agent-id">A2</div>
+            <div class="agent-name">OEE / Machine</div>
+            <div class="agent-tools">10 tools</div>
+          </div>
+          <div class="agent-node">
+            <div class="agent-id">A3</div>
+            <div class="agent-name" data-lang="en">Inventory</div>
+            <div class="agent-name" data-lang="es">Inventario</div>
+            <div class="agent-tools">12 tools</div>
+          </div>
+          <div class="agent-node">
+            <div class="agent-id">A4</div>
+            <div class="agent-name" data-lang="en">Labor</div>
+            <div class="agent-name" data-lang="es">Personal</div>
+            <div class="agent-tools">10 tools</div>
+          </div>
+          <div class="agent-node">
+            <div class="agent-id">A5</div>
+            <div class="agent-name" data-lang="en">Quality</div>
+            <div class="agent-name" data-lang="es">Calidad</div>
+            <div class="agent-tools">10 tools</div>
+          </div>
+          <div class="agent-node">
+            <div class="agent-id">A6</div>
+            <div class="agent-name" data-lang="en">Financial</div>
+            <div class="agent-name" data-lang="es">Financiero</div>
+            <div class="agent-tools">10 tools</div>
+          </div>
+          <div class="agent-node">
+            <div class="agent-id">A7</div>
+            <div class="agent-name">Neural</div>
+            <div class="agent-tools">9 tools</div>
+          </div>
+          <div class="agent-node">
+            <div class="agent-id">A8</div>
+            <div class="agent-name">Dock</div>
+            <div class="agent-tools">9 tools</div>
+          </div>
+        </div>
+
+        <div class="flow-arrow">
+          <div class="arrow-line"></div>
+          <div class="arrow-head">v</div>
+          <span data-lang="en">PostgreSQL / APIs / Webhooks</span>
+          <span data-lang="es">PostgreSQL / APIs / Webhooks</span>
+        </div>
+
+        <!-- Sample Tools -->
+        <div class="tools-bar">
+          <div class="tool-chip">get_machine_status</div>
+          <div class="tool-chip">utilization_report</div>
+          <div class="tool-chip">scan_load_boards</div>
+          <div class="tool-chip">roi_calculator</div>
+          <div class="tool-chip">surgeon_scorecard</div>
+          <div class="tool-chip">run_scan</div>
+          <div class="tool-chip">capacity_forecast</div>
+          <div class="tool-chip">cost_per_case</div>
+          <div class="tool-chip">assign_load</div>
+          <div class="tool-chip">activate_workflow</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detail Cards -->
+    <div class="detail-grid">
+      <div class="detail-card">
+        <h5 data-lang="en">How It Works</h5>
+        <h5 data-lang="es">Como Funciona</h5>
+        <ul>
+          <li data-lang="en">User intent (chat, voice, webhook) hits Orchestrator</li>
+          <li data-lang="es">La intencion del usuario (chat, voz, webhook) llega al Orquestador</li>
+          <li data-lang="en">Orchestrator selects the right agent based on domain</li>
+          <li data-lang="es">El Orquestador selecciona el agente correcto segun el dominio</li>
+          <li data-lang="en">Agent calls its MCP tools to read/write data</li>
+          <li data-lang="es">El agente llama a sus herramientas MCP para leer/escribir datos</li>
+          <li data-lang="en">Results flow back through the orchestrator to the user</li>
+          <li data-lang="es">Los resultados regresan a traves del orquestador al usuario</li>
+        </ul>
+      </div>
+      <div class="detail-card">
+        <h5 data-lang="en">Why MCP</h5>
+        <h5 data-lang="es">Por Que MCP</h5>
+        <ul>
+          <li data-lang="en">Open standard -- not locked to any vendor</li>
+          <li data-lang="es">Estandar abierto -- sin dependencia de proveedor</li>
+          <li data-lang="en">Tools are composable and reusable across verticals</li>
+          <li data-lang="es">Las herramientas son componibles y reutilizables entre verticales</li>
+          <li data-lang="en">Each agent is independently deployable and testable</li>
+          <li data-lang="es">Cada agente es desplegable y testeable de forma independiente</li>
+          <li data-lang="en">Natural language in, structured action out</li>
+          <li data-lang="es">Lenguaje natural de entrada, accion estructurada de salida</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- DEEP DIVE: Neural Intelligence [Dx]                -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section class="deep-dive dd-dx" id="dx" style="background:var(--surface);">
+  <div class="container">
+    <div class="dd-label" data-lang="en">NEURAL INTELLIGENCE</div>
+    <div class="dd-label" data-lang="es">INTELIGENCIA NEURAL</div>
+    <div class="dd-title" data-lang="en">Three-Layer Autonomous Intelligence</div>
+    <div class="dd-title" data-lang="es">Inteligencia Autonoma de Tres Capas</div>
+    <p class="dd-subtitle" data-lang="en">The AI doesn't just monitor. It diagnoses root causes, prescribes specific actions, and auto-executes the fix -- without human intervention.</p>
+    <p class="dd-subtitle" data-lang="es">La IA no solo monitorea. Diagnostica causas raiz, prescribe acciones especificas y auto-ejecuta la solucion -- sin intervencion humana.</p>
+
+    <!-- Three Layer Diagram -->
+    <div class="diagram">
+      <div class="diagram-title" data-lang="en">DIAGNOSTIC -> PRESCRIPTION -> TREATMENT PIPELINE</div>
+      <div class="diagram-title" data-lang="es">FLUJO: DIAGNOSTICO -> PRESCRIPCION -> TRATAMIENTO</div>
+
+      <div class="dx-layers">
+        <div class="dx-layer layer-diag">
+          <div class="dx-layer-num">1</div>
+          <h5 data-lang="en">LAYER 1: Diagnostic</h5>
+          <h5 data-lang="es">CAPA 1: Diagnostico</h5>
+          <p data-lang="en">Scans all operational data 24/7. Detects anomalies, patterns, and root causes.</p>
+          <p data-lang="es">Escanea todos los datos operativos 24/7. Detecta anomalias, patrones y causas raiz.</p>
+          <div class="dx-example" data-lang="en">"Your da Vinci in OR-3 has been idle 62% of Tuesday shifts for the past 6 weeks. Root cause: Dr. Patel switched to open technique after instrument tray delays."</div>
+          <div class="dx-example" data-lang="es">"Su da Vinci en el quirofano 3 ha estado inactivo el 62% de los turnos de martes durante las ultimas 6 semanas. Causa raiz: El Dr. Patel cambio a tecnica abierta por retrasos en las bandejas de instrumentos."</div>
+        </div>
+
+        <div class="dx-layer layer-presc">
+          <div class="dx-layer-num">2</div>
+          <h5 data-lang="en">LAYER 2: Prescription</h5>
+          <h5 data-lang="es">CAPA 2: Prescripcion</h5>
+          <p data-lang="en">Generates specific, actionable recommendations ranked by impact and effort.</p>
+          <p data-lang="es">Genera recomendaciones especificas y accionables clasificadas por impacto y esfuerzo.</p>
+          <div class="dx-example" data-lang="en">"Recommend: pre-stage instrument trays for Dr. Patel's cases, reassign OR-3 Tuesday blocks to Dr. Kim (95% robotic adoption), and schedule clinical in-service."</div>
+          <div class="dx-example" data-lang="es">"Recomendacion: preparar bandejas de instrumentos para los casos del Dr. Patel, reasignar bloques de martes del quirofano 3 al Dr. Kim (95% adopcion robotica), y programar capacitacion clinica."</div>
+        </div>
+
+        <div class="dx-layer layer-treat">
+          <div class="dx-layer-num">3</div>
+          <h5 data-lang="en">LAYER 3: Treatment</h5>
+          <h5 data-lang="es">CAPA 3: Tratamiento</h5>
+          <p data-lang="en">Auto-executes prescriptions without human intervention. Updates systems, sends alerts, triggers workflows.</p>
+          <p data-lang="es">Auto-ejecuta prescripciones sin intervencion humana. Actualiza sistemas, envia alertas, dispara flujos de trabajo.</p>
+          <div class="dx-example" data-lang="en">"Auto-triggered: OR scheduling system updated. Clinical support team notified. Supply chain pre-stages trays. Next Tuesday: 94% projected utilization."</div>
+          <div class="dx-example" data-lang="es">"Auto-disparado: Sistema de agenda de quirofanos actualizado. Equipo de soporte clinico notificado. Cadena de suministro prepara bandejas. Proximo martes: 94% de utilizacion proyectada."</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 12 Analyzers -->
+    <div class="diagram-title" style="text-align:center;font-size:0.75rem;font-weight:600;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;" data-lang="en">12 REAL-TIME ANALYZERS</div>
+    <div class="diagram-title" style="text-align:center;font-size:0.75rem;font-weight:600;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;" data-lang="es">12 ANALIZADORES EN TIEMPO REAL</div>
+
+    <div class="dx-modules">
+      <div class="dx-module">
+        <div class="mod-code">REV</div>
+        <div class="mod-name" data-lang="en">Missed Revenue</div>
+        <div class="mod-name" data-lang="es">Ingresos Perdidos</div>
+      </div>
+      <div class="dx-module">
+        <div class="mod-code">CVR</div>
+        <div class="mod-name" data-lang="en">Call Conversion</div>
+        <div class="mod-name" data-lang="es">Conversion de Llamadas</div>
+      </div>
+      <div class="dx-module">
+        <div class="mod-code">SPD</div>
+        <div class="mod-name" data-lang="en">Lead Speed</div>
+        <div class="mod-name" data-lang="es">Velocidad de Leads</div>
+      </div>
+      <div class="dx-module">
+        <div class="mod-code">SCH</div>
+        <div class="mod-name" data-lang="en">Scheduling</div>
+        <div class="mod-name" data-lang="es">Agenda</div>
+      </div>
+      <div class="dx-module">
+        <div class="mod-code">VOX</div>
+        <div class="mod-name" data-lang="en">Voice Insights</div>
+        <div class="mod-name" data-lang="es">Insights de Voz</div>
+      </div>
+      <div class="dx-module">
+        <div class="mod-code">SRC</div>
+        <div class="mod-name" data-lang="en">Lead Source</div>
+        <div class="mod-name" data-lang="es">Fuente de Leads</div>
+      </div>
+      <div class="dx-module">
+        <div class="mod-code">OUT</div>
+        <div class="mod-name" data-lang="en">Outbound Perf</div>
+        <div class="mod-name" data-lang="es">Rendimiento Saliente</div>
+      </div>
+      <div class="dx-module">
+        <div class="mod-code">NSW</div>
+        <div class="mod-name">No-Shows</div>
+      </div>
+      <div class="dx-module">
+        <div class="mod-code">FCT</div>
+        <div class="mod-name" data-lang="en">Revenue Forecast</div>
+        <div class="mod-name" data-lang="es">Pronostico de Ingresos</div>
+      </div>
+      <div class="dx-module">
+        <div class="mod-code">AFT</div>
+        <div class="mod-name" data-lang="en">After-Hours</div>
+        <div class="mod-name" data-lang="es">Fuera de Horario</div>
+      </div>
+      <div class="dx-module">
+        <div class="mod-code">PIP</div>
+        <div class="mod-name">Pipeline Health</div>
+      </div>
+      <div class="dx-module">
+        <div class="mod-code">TSK</div>
+        <div class="mod-name" data-lang="en">Task Completion</div>
+        <div class="mod-name" data-lang="es">Tareas Completadas</div>
+      </div>
+    </div>
+
+    <!-- Detail Cards -->
+    <div class="detail-grid">
+      <div class="detail-card">
+        <h5 data-lang="en">Severity Levels</h5>
+        <h5 data-lang="es">Niveles de Severidad</h5>
+        <ul>
+          <li data-lang="en">CRITICAL -- Immediate revenue loss or safety risk</li>
+          <li data-lang="es">CRITICO -- Perdida de ingresos inmediata o riesgo de seguridad</li>
+          <li data-lang="en">WARNING -- Degrading performance trend</li>
+          <li data-lang="es">ADVERTENCIA -- Tendencia de rendimiento en declive</li>
+          <li data-lang="en">OPPORTUNITY -- Untapped revenue or efficiency gain</li>
+          <li data-lang="es">OPORTUNIDAD -- Ingresos o eficiencia sin explotar</li>
+        </ul>
+      </div>
+      <div class="detail-card">
+        <h5 data-lang="en">Treatment Triggers</h5>
+        <h5 data-lang="es">Disparadores de Tratamiento</h5>
+        <ul>
+          <li data-lang="en">Missed call recovery (SMS + callback in 30s)</li>
+          <li data-lang="es">Recuperacion de llamadas perdidas (SMS + callback en 30s)</li>
+          <li data-lang="en">Lead speed response (auto-call within 5 min)</li>
+          <li data-lang="es">Respuesta rapida a leads (auto-llamada en 5 min)</li>
+          <li data-lang="en">No-show prevention (reminders at 24h + 1h)</li>
+          <li data-lang="es">Prevencion de inasistencias (recordatorios a 24h + 1h)</li>
+          <li data-lang="en">Stale deal re-engagement (auto SMS + tag)</li>
+          <li data-lang="es">Reactivacion de tratos estancados (SMS + etiqueta auto)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- DEEP DIVE: Voice AI [Vx]                           -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section class="deep-dive dd-vx" id="vx">
+  <div class="container">
+    <div class="dd-label" data-lang="en">VOICE AI</div>
+    <div class="dd-label" data-lang="es">VOZ CON IA</div>
+    <div class="dd-title" data-lang="en">Voice AI Communication Layer</div>
+    <div class="dd-title" data-lang="es">Capa de Comunicacion de Voz con IA</div>
+    <p class="dd-subtitle" data-lang="en">Rachel, Ana, and Lina handle ALL phone communication -- inbound and outbound. No humans on the line. Callers can't tell the difference.</p>
+    <p class="dd-subtitle" data-lang="es">Rachel, Ana y Lina manejan TODA la comunicacion telefonica -- entrante y saliente. Sin humanos en la linea. Quienes llaman no notan la diferencia.</p>
+
+    <!-- Voice Flow Diagram -->
+    <div class="diagram">
+      <div class="diagram-title" data-lang="en">INBOUND / OUTBOUND VOICE FLOW</div>
+      <div class="diagram-title" data-lang="es">FLUJO DE VOZ ENTRANTE / SALIENTE</div>
+
+      <div class="vx-flow">
+        <!-- Inbound Column -->
+        <div class="vx-column">
+          <div class="vx-col-title" data-lang="en">INBOUND</div>
+          <div class="vx-col-title" data-lang="es">ENTRANTE</div>
+          <div class="vx-item">
+            <strong data-lang="en">Customer calls in</strong>
+            <strong data-lang="es">Cliente llama</strong>
+            <span data-lang="en">"I need to book an appointment" / "What's my order status?"</span>
+            <span data-lang="es">"Necesito agendar una cita" / "Cual es el estado de mi pedido?"</span>
+          </div>
+          <div class="vx-item">
+            <strong data-lang="en">Shipper calls</strong>
+            <strong data-lang="es">Embarcador llama</strong>
+            <span data-lang="en">"I have a load from Miami to Atlanta, what's your rate?"</span>
+            <span data-lang="es">"Tengo una carga de Miami a Atlanta, cual es su tarifa?"</span>
+          </div>
+          <div class="vx-item">
+            <strong data-lang="en">Patient inquiry</strong>
+            <strong data-lang="es">Consulta de paciente</strong>
+            <span data-lang="en">"When is my surgery scheduled?" / "Pre-op instructions?"</span>
+            <span data-lang="es">"Cuando esta programada mi cirugia?" / "Instrucciones preoperatorias?"</span>
+          </div>
+        </div>
+
+        <!-- Connector -->
+        <div class="vx-connector">--></div>
+
+        <!-- Center: Voice Engine -->
+        <div class="vx-center-box">
+          <h5 data-lang="en">Voice AI Engine</h5>
+          <h5 data-lang="es">Motor de Voz IA</h5>
+          <div class="vx-names">Rachel / Ana / Lina</div>
+          <div class="vx-tech">ElevenLabs TTS</div>
+          <div class="vx-tech">Twilio SIP</div>
+          <div class="vx-tech">MCP Agent Mesh</div>
+        </div>
+
+        <!-- Connector -->
+        <div class="vx-connector">--></div>
+
+        <!-- Outbound Column -->
+        <div class="vx-column">
+          <div class="vx-col-title" data-lang="en">OUTBOUND</div>
+          <div class="vx-col-title" data-lang="es">SALIENTE</div>
+          <div class="vx-item">
+            <strong data-lang="en">Missed call recovery</strong>
+            <strong data-lang="es">Recuperacion de llamadas</strong>
+            <span data-lang="en">Auto-callback within 30 seconds + SMS</span>
+            <span data-lang="es">Auto-callback en 30 segundos + SMS</span>
+          </div>
+          <div class="vx-item">
+            <strong data-lang="en">Carrier sourcing</strong>
+            <strong data-lang="es">Busqueda de transportistas</strong>
+            <span data-lang="en">Calls carriers to negotiate rates and confirm capacity</span>
+            <span data-lang="es">Llama a transportistas para negociar tarifas y confirmar capacidad</span>
+          </div>
+          <div class="vx-item">
+            <strong data-lang="en">Collections & alerts</strong>
+            <strong data-lang="es">Cobros y alertas</strong>
+            <span data-lang="en">Invoice follow-ups, machine failure alerts, appointment reminders</span>
+            <span data-lang="es">Seguimiento de facturas, alertas de fallas, recordatorios de citas</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detail Cards -->
+    <div class="detail-grid">
+      <div class="detail-card">
+        <h5 data-lang="en">Voice Personas</h5>
+        <h5 data-lang="es">Personas de Voz</h5>
+        <ul>
+          <li data-lang="en">Rachel -- Primary. Professional American English. CRM, freight, warehouse</li>
+          <li data-lang="es">Rachel -- Principal. Ingles americano profesional. CRM, carga, almacen</li>
+          <li data-lang="en">Ana -- Bilingual Spanish/English. Healthcare, service businesses</li>
+          <li data-lang="es">Ana -- Bilingue espanol/ingles. Salud, negocios de servicios</li>
+          <li data-lang="en">Lina -- Spanish-first. Latin America market, cultural nuance</li>
+          <li data-lang="es">Lina -- Espanol nativo. Mercado latinoamericano, matices culturales</li>
+        </ul>
+      </div>
+      <div class="detail-card">
+        <h5 data-lang="en">Capabilities</h5>
+        <h5 data-lang="es">Capacidades</h5>
+        <ul>
+          <li data-lang="en">Real-time speech-to-text + MCP tool calls mid-conversation</li>
+          <li data-lang="es">Voz a texto en tiempo real + llamadas MCP durante la conversacion</li>
+          <li data-lang="en">Books appointments, creates CRM contacts, logs calls automatically</li>
+          <li data-lang="es">Agenda citas, crea contactos en CRM, registra llamadas automaticamente</li>
+          <li data-lang="en">Transfers to human only when explicitly requested</li>
+          <li data-lang="es">Transfiere a humano solo cuando se solicita explicitamente</li>
+          <li data-lang="en">Handles objections, negotiates rates, answers FAQs from knowledge base</li>
+          <li data-lang="es">Maneja objeciones, negocia tarifas, responde FAQs de la base de conocimiento</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- DEEP DIVE: Multi-Tenant SaaS [MT]                  -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section class="deep-dive dd-mt" id="mt" style="background:var(--surface);">
+  <div class="container">
+    <div class="dd-label">MULTI-TENANT</div>
+    <div class="dd-title" data-lang="en">Multi-Tenant SaaS Architecture</div>
+    <div class="dd-title" data-lang="es">Arquitectura SaaS Multi-Tenant</div>
+    <p class="dd-subtitle" data-lang="en">Deploy once, serve thousands. Each tenant gets isolated data with shared infrastructure. Tiered pricing unlocks progressively more agents and capabilities.</p>
+    <p class="dd-subtitle" data-lang="es">Desplegar una vez, servir a miles. Cada tenant tiene datos aislados con infraestructura compartida. Precios por niveles desbloquean mas agentes y capacidades progresivamente.</p>
+
+    <!-- Stack Diagram -->
+    <div class="diagram">
+      <div class="diagram-title" data-lang="en">PLATFORM STACK</div>
+      <div class="diagram-title" data-lang="es">STACK DE PLATAFORMA</div>
+
+      <div class="mt-stack">
+        <div class="mt-layer mt-tenants">
+          <h5 data-lang="en">TENANT LAYER</h5>
+          <h5 data-lang="es">CAPA DE TENANTS</h5>
+          <p data-lang="en">Each client is an isolated tenant with their own data, config, and agent tier</p>
+          <p data-lang="es">Cada cliente es un tenant aislado con sus propios datos, configuracion y nivel de agentes</p>
+          <div class="mt-tenant-row">
+            <div class="mt-tenant-chip">CW Carriers</div>
+            <div class="mt-tenant-chip">GEBHARDT</div>
+            <div class="mt-tenant-chip">Hospital A</div>
+            <div class="mt-tenant-chip">Med Spa B</div>
+            <div class="mt-tenant-chip">+ N</div>
+          </div>
+        </div>
+
+        <div class="mt-layer mt-auth">
+          <h5 data-lang="en">AUTH & ROUTING</h5>
+          <h5 data-lang="es">AUTH Y ENRUTAMIENTO</h5>
+          <p data-lang="en">JWT authentication, tenant_id isolation, API key management, webhook validation</p>
+          <p data-lang="es">Autenticacion JWT, aislamiento por tenant_id, gestion de API keys, validacion de webhooks</p>
+        </div>
+
+        <div class="mt-layer mt-agents">
+          <h5 data-lang="en">AGENT MESH</h5>
+          <h5 data-lang="es">MALLA DE AGENTES</h5>
+          <p data-lang="en">8 agents per vertical -- agents activated per tenant based on their tier subscription</p>
+          <p data-lang="es">8 agentes por vertical -- agentes activados por tenant segun su suscripcion de nivel</p>
+        </div>
+
+        <div class="mt-layer mt-data">
+          <h5 data-lang="en">DATA LAYER</h5>
+          <h5 data-lang="es">CAPA DE DATOS</h5>
+          <p data-lang="en">PostgreSQL with row-level tenant isolation. Sequelize ORM. All queries scoped by tenant_id</p>
+          <p data-lang="es">PostgreSQL con aislamiento a nivel de fila. Sequelize ORM. Todas las consultas filtradas por tenant_id</p>
+        </div>
+
+        <div class="mt-layer mt-infra">
+          <h5 data-lang="en">INFRASTRUCTURE</h5>
+          <h5 data-lang="es">INFRAESTRUCTURA</h5>
+          <p data-lang="en">Render (auto-deploy on push to main) | Node.js + Express | ElevenLabs | Twilio | Claude API</p>
+          <p data-lang="es">Render (auto-deploy al push a main) | Node.js + Express | ElevenLabs | Twilio | Claude API</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tier Cards -->
+    <div class="diagram-title" style="text-align:center;font-size:0.75rem;font-weight:600;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;" data-lang="en">SUBSCRIPTION TIERS</div>
+    <div class="diagram-title" style="text-align:center;font-size:0.75rem;font-weight:600;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;" data-lang="es">NIVELES DE SUSCRIPCION</div>
+
+    <div class="mt-tiers">
+      <div class="mt-tier">
+        <div class="tier-num">TIER 1</div>
+        <div class="tier-name" data-lang="en">Core</div>
+        <div class="tier-name" data-lang="es">Base</div>
+        <div class="tier-desc" data-lang="en">Operations + OEE agents. Basic monitoring and reporting</div>
+        <div class="tier-desc" data-lang="es">Agentes de Operaciones + OEE. Monitoreo y reportes basicos</div>
+      </div>
+      <div class="mt-tier">
+        <div class="tier-num">TIER 2</div>
+        <div class="tier-name" data-lang="en">Optimization</div>
+        <div class="tier-name" data-lang="es">Optimizacion</div>
+        <div class="tier-desc" data-lang="en">+ Inventory, Labor, Dock agents. Autonomous scheduling</div>
+        <div class="tier-desc" data-lang="es">+ Agentes de Inventario, Personal, Dock. Programacion autonoma</div>
+      </div>
+      <div class="mt-tier">
+        <div class="tier-num">TIER 3</div>
+        <div class="tier-name" data-lang="en">Intelligence</div>
+        <div class="tier-name" data-lang="es">Inteligencia</div>
+        <div class="tier-desc" data-lang="en">+ Quality, Financial agents. ROI tracking and compliance</div>
+        <div class="tier-desc" data-lang="es">+ Agentes de Calidad, Financiero. Seguimiento de ROI y cumplimiento</div>
+      </div>
+      <div class="mt-tier">
+        <div class="tier-num">TIER 4</div>
+        <div class="tier-name">Neural</div>
+        <div class="tier-desc" data-lang="en">+ Neural Intelligence + Treatment. Full autonomy, unlimited voice</div>
+        <div class="tier-desc" data-lang="es">+ Inteligencia Neural + Tratamiento. Autonomia total, voz ilimitada</div>
+      </div>
+    </div>
+
+    <!-- Detail Cards -->
+    <div class="detail-grid">
+      <div class="detail-card">
+        <h5 data-lang="en">Isolation Guarantees</h5>
+        <h5 data-lang="es">Garantias de Aislamiento</h5>
+        <ul>
+          <li data-lang="en">Every DB query is scoped by tenant_id -- no data leaks</li>
+          <li data-lang="es">Cada consulta a BD esta filtrada por tenant_id -- sin fugas de datos</li>
+          <li data-lang="en">API keys and webhooks are tenant-specific</li>
+          <li data-lang="es">API keys y webhooks son especificos por tenant</li>
+          <li data-lang="en">Voice AI personas are configurable per tenant</li>
+          <li data-lang="es">Las personas de voz son configurables por tenant</li>
+          <li data-lang="en">Agent tier determines which tools are available</li>
+          <li data-lang="es">El nivel del agente determina que herramientas estan disponibles</li>
+        </ul>
+      </div>
+      <div class="detail-card">
+        <h5 data-lang="en">Deployment Model</h5>
+        <h5 data-lang="es">Modelo de Despliegue</h5>
+        <ul>
+          <li data-lang="en">Cloud SaaS (default) -- Render auto-deploy, ~90s to production</li>
+          <li data-lang="es">Cloud SaaS (predeterminado) -- Render auto-deploy, ~90s a produccion</li>
+          <li data-lang="en">On-premise option for data sovereignty (GEBHARDT/EU)</li>
+          <li data-lang="es">Opcion on-premise para soberania de datos (GEBHARDT/UE)</li>
+          <li data-lang="en">White-label reseller model available</li>
+          <li data-lang="es">Modelo de revendedor marca blanca disponible</li>
+          <li data-lang="en">CI/CD: push to main = live in production</li>
+          <li data-lang="es">CI/CD: push a main = en produccion</li>
+        </ul>
       </div>
     </div>
   </div>
