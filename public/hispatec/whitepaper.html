@@ -466,12 +466,52 @@ window.MathJax = { tex: { inlineMath: [['$','$'], ['\\(','\\)']], displayMath: [
   }
 
   @media (max-width: 768px) {
-    .cover h1 { font-size: 40px; }
-    .section-header h2 { font-size: 28px; }
-    .content { padding: 0 20px 60px; }
-    .section-header { margin: 60px -20px 36px; padding: 36px 20px; }
-    .flow { flex-direction: column; align-items: center; }
-    .flow-arrow { transform: rotate(90deg); padding: 0; }
+    .cover { padding: 40px 20px; min-height: auto; }
+    .cover h1 { font-size: 36px; letter-spacing: -1px; }
+    .cover .subtitle { font-size: 17px; }
+    .cover-badge { font-size: 11px; padding: 6px 16px; letter-spacing: 2px; }
+    .section-header { margin: 40px -20px 32px; padding: 32px 20px; }
+    .section-header h2 { font-size: 24px; }
+    .section-header .section-desc { font-size: 13px; }
+    .content { padding: 0 16px 60px; }
+    h3 { font-size: 19px; }
+    h4 { font-size: 15px; }
+    p, li { font-size: 15px; }
+    .toc { padding: 40px 20px; }
+    .toc h2 { font-size: 22px; }
+    .toc-item { padding: 10px 0; }
+    .toc-title { font-size: 14px; }
+    .toc-sub { padding-left: 30px; }
+    .toc-sub .toc-title { font-size: 13px; }
+    .cards { grid-template-columns: 1fr; gap: 12px; }
+    .card { padding: 18px; }
+    .flow { flex-direction: column; align-items: center; gap: 4px; }
+    .flow-step { min-width: auto; width: 100%; }
+    .flow-arrow { transform: rotate(90deg); padding: 0; font-size: 18px; }
+    .formula-box { padding: 18px 14px; }
+    .formula-box .formula-label { font-size: 11px; }
+    .formula-box .var-table td { font-size: 13px; padding: 3px 8px 3px 0; }
+    .diagram { padding: 16px; font-size: 11px; line-height: 1.4; }
+    table { font-size: 13px; display: block; overflow-x: auto; white-space: nowrap; }
+    thead th { padding: 10px 12px; font-size: 11px; }
+    tbody td { padding: 8px 12px; }
+    .callout { padding: 16px 18px; }
+    .callout-title { font-size: 12px; }
+    .callout p, .callout li { font-size: 14px; }
+    .card-icon { width: 40px; height: 40px; font-size: 18px; border-radius: 10px; }
+    MathJax { overflow-x: auto; }
+    mjx-container { overflow-x: auto; max-width: 100%; }
+  }
+
+  @media (max-width: 480px) {
+    .cover h1 { font-size: 30px; }
+    .cover .subtitle { font-size: 15px; }
+    .content { padding: 0 12px 40px; }
+    .section-header { margin: 32px -12px 24px; padding: 24px 16px; }
+    .section-header h2 { font-size: 21px; }
+    h3 { font-size: 17px; }
+    .diagram { font-size: 10px; padding: 12px; }
+    .formula-box { padding: 14px 10px; }
   }
 </style>
 </head>
@@ -615,7 +655,7 @@ window.MathJax = { tex: { inlineMath: [['$','$'], ['\\(','\\)']], displayMath: [
   </a>
   <a class="toc-item" href="#sec10">
     <span class="toc-num">10</span>
-    <span class="toc-title">Hoja de Ruta -- Roadmap 2026-2028</span>
+    <span class="toc-title">Hoja de Ruta -- Desarrollo en 4 Semanas</span>
   </a>
   <a class="toc-item" href="#sec11">
     <span class="toc-num">11</span>
@@ -1683,22 +1723,23 @@ window.MathJax = { tex: { inlineMath: [['$','$'], ['\\(','\\)']], displayMath: [
   </div>
 </div>
 
-<h3>8.2 Proyeccion Financiera (24 Meses)</h3>
+<h3>8.2 Proyeccion Financiera (Lanzamiento + 24 Meses)</h3>
+<p>Con la plataforma completa en produccion a las 4 semanas, las proyecciones comienzan desde el primer mes post-lanzamiento.</p>
 
 <table>
   <thead>
-    <tr><th>Metrica</th><th>Mes 6</th><th>Mes 12</th><th>Mes 18</th><th>Mes 24</th></tr>
+    <tr><th>Metrica</th><th>Mes 3</th><th>Mes 6</th><th>Mes 12</th><th>Mes 24</th></tr>
   </thead>
   <tbody>
-    <tr><td>Miembros totales</td><td>150</td><td>500</td><td>1,200</td><td>2,500</td></tr>
-    <tr><td>Miembros de pago</td><td>50</td><td>200</td><td>600</td><td>1,500</td></tr>
-    <tr><td>Ticket medio mensual</td><td>$75</td><td>$85</td><td>$95</td><td>$100</td></tr>
-    <tr><td>MRR (Membresias)</td><td>$3,750</td><td>$17,000</td><td>$57,000</td><td>$150,000</td></tr>
-    <tr><td>Ingresos transaccionales</td><td>$500</td><td>$5,000</td><td>$25,000</td><td>$75,000</td></tr>
-    <tr><td>Eventos + otros</td><td>$1,000</td><td>$5,000</td><td>$15,000</td><td>$30,000</td></tr>
-    <tr><td><strong>MRR Total</strong></td><td><strong>$5,250</strong></td><td><strong>$27,000</strong></td><td><strong>$97,000</strong></td><td><strong>$255,000</strong></td></tr>
-    <tr><td>Proyectos activos</td><td>3</td><td>15</td><td>40</td><td>80</td></tr>
-    <tr><td>HCI Score</td><td>0.45</td><td>0.65</td><td>0.72</td><td>0.80</td></tr>
+    <tr><td>Miembros totales</td><td>75</td><td>250</td><td>800</td><td>2,500</td></tr>
+    <tr><td>Miembros de pago</td><td>30</td><td>100</td><td>400</td><td>1,500</td></tr>
+    <tr><td>Ticket medio mensual</td><td>$75</td><td>$80</td><td>$90</td><td>$100</td></tr>
+    <tr><td>MRR (Membresias)</td><td>$2,250</td><td>$8,000</td><td>$36,000</td><td>$150,000</td></tr>
+    <tr><td>Ingresos transaccionales</td><td>$200</td><td>$2,000</td><td>$15,000</td><td>$75,000</td></tr>
+    <tr><td>Eventos + otros</td><td>$500</td><td>$2,500</td><td>$10,000</td><td>$30,000</td></tr>
+    <tr><td><strong>MRR Total</strong></td><td><strong>$2,950</strong></td><td><strong>$12,500</strong></td><td><strong>$61,000</strong></td><td><strong>$255,000</strong></td></tr>
+    <tr><td>Proyectos activos</td><td>2</td><td>8</td><td>25</td><td>80</td></tr>
+    <tr><td>HCI Score</td><td>0.40</td><td>0.55</td><td>0.70</td><td>0.80</td></tr>
   </tbody>
 </table>
 
@@ -1768,66 +1809,85 @@ window.MathJax = { tex: { inlineMath: [['$','$'], ['\\(','\\)']], displayMath: [
 <!-- SECTION 10: ROADMAP -->
 <div class="section-header" id="sec10">
   <div class="section-num">Seccion 10</div>
-  <h2>Hoja de Ruta -- Roadmap 2026-2028</h2>
-  <div class="section-desc">Fases de implementacion del ecosistema completo</div>
+  <h2>Hoja de Ruta -- Desarrollo en 4 Semanas</h2>
+  <div class="section-desc">Implementacion acelerada del ecosistema completo por Digit2AI</div>
 </div>
 
-<h3>Fase 1: Fundacion (Meses 1-3)</h3>
+<div class="callout gold">
+  <div class="callout-title">Compromiso de Entrega</div>
+  <p style="margin:0">
+    El ecosistema HISPATEC completo -- los 6 modulos, el orquestador MCP con todos los modelos matematicos, y la infraestructura de pagos -- se desarrolla e implementa en <strong>4 semanas</strong> desde la aprobacion de la Junta Directiva. Desarrollo y costos de infraestructura asumidos por Digit2AI como Socio Fundador Tecnologico.
+  </p>
+</div>
+
+<h3>Semana 1: Infraestructura y Portal</h3>
 <div class="callout navy">
-  <div class="callout-title">Abril - Junio 2026</div>
+  <div class="callout-title">Dias 1-7</div>
   <ul style="margin:0">
-    <li>Portal institucional bilingue en produccion (/hispatec/)</li>
-    <li>Sistema de registro de socios fundadores</li>
-    <li>Base de datos de miembros con perfiles completos</li>
-    <li>Integracion Stripe para cuotas de membresia</li>
-    <li>Directorio basico de miembros con busqueda</li>
-    <li>Estructura de delegaciones regionales en plataforma</li>
-    <li>Meta: 50 socios fundadores registrados</li>
+    <li>Portal institucional bilingue (ES/EN) en produccion (/hispatec/)</li>
+    <li>Base de datos PostgreSQL: 12 tablas del ecosistema</li>
+    <li>Sistema de autenticacion JWT y registro de miembros</li>
+    <li>Perfiles profesionales con los 5 tipos de asociados</li>
+    <li>Estructura de las 6 delegaciones regionales en plataforma</li>
+    <li>Diseno responsive (mobile-first) para todos los dispositivos</li>
+    <li><strong>Entregable:</strong> Portal publico + registro de socios fundadores operativo</li>
   </ul>
 </div>
 
-<h3>Fase 2: Red Tecnica (Meses 4-6)</h3>
+<h3>Semana 2: Red Tecnica y Modelos Matematicos</h3>
 <div class="callout navy">
-  <div class="callout-title">Julio - Septiembre 2026</div>
+  <div class="callout-title">Dias 8-14</div>
   <ul style="margin:0">
-    <li>Motor de matching por similitud coseno</li>
-    <li>Implementacion del TrustRank (batch nocturno)</li>
-    <li>Coeficiente de Gini regional operativo</li>
-    <li>Orquestador MCP v1 con 4 herramientas (match, trust, gini, report)</li>
-    <li>Dashboard de metricas (HCI, Gini, Trust promedio, Valor de Red)</li>
-    <li>Lanzamiento del primer proyecto piloto transnacional</li>
-    <li>Meta: 150 miembros, HCI > 0.45</li>
+    <li>Directorio de miembros con busqueda avanzada por pais, sector, expertise</li>
+    <li>Motor de matching por similitud coseno (vectores de perfil n-dimensionales)</li>
+    <li>Implementacion del TrustRank (algoritmo iterativo tipo PageRank)</li>
+    <li>Coeficiente de Gini regional con factor de correccion automatico</li>
+    <li>Indice Compuesto HISPATEC (HCI) operativo</li>
+    <li>Valor de Red (Metcalfe Adaptado)</li>
+    <li><strong>Entregable:</strong> Matching inteligente + dashboard de metricas en vivo</li>
   </ul>
 </div>
 
-<h3>Fase 3: Proyectos y Exchange (Meses 7-12)</h3>
+<h3>Semana 3: Proyectos, Exchange y Pagos</h3>
 <div class="callout navy">
-  <div class="callout-title">Octubre 2026 - Marzo 2027</div>
+  <div class="callout-title">Dias 15-21</div>
   <ul style="margin:0">
-    <li>Modulo completo de gestion de proyectos (5 fases)</li>
-    <li>Simulacion Monte Carlo para evaluacion de riesgo</li>
-    <li>Programacion lineal para asignacion de equipos</li>
-    <li>Business Exchange (marketplace B2B) con RFQs</li>
-    <li>Sistema de escrow via Stripe Connect</li>
-    <li>Sistema de referencias cruzadas</li>
-    <li>Perfiles de empresa verificados</li>
-    <li>MCP v2 con 9 herramientas completas</li>
-    <li>Meta: 500 miembros, 15 proyectos activos, HCI > 0.65</li>
+    <li>Modulo de gestion de proyectos con ciclo de 5 fases</li>
+    <li>Simulacion Monte Carlo para evaluacion de riesgo (10,000 iteraciones)</li>
+    <li>Programacion lineal para asignacion optima de equipos</li>
+    <li>Business Exchange -- marketplace B2B con sistema RFQ</li>
+    <li>Perfiles de empresa verificados y referencias cruzadas</li>
+    <li>Integracion Stripe + Stripe Connect: membresias, escrow, multi-divisa</li>
+    <li>Dashboard de tesoreria para Tesorero General y regionales</li>
+    <li><strong>Entregable:</strong> Proyectos + Exchange + Pagos completamente funcionales</li>
   </ul>
 </div>
 
-<h3>Fase 4: Escala (Meses 13-24)</h3>
+<h3>Semana 4: Orquestador MCP, Optimizacion y Lanzamiento</h3>
 <div class="callout navy">
-  <div class="callout-title">Abril 2027 - Marzo 2028</div>
+  <div class="callout-title">Dias 22-28</div>
+  <ul style="margin:0">
+    <li>Orquestador MCP completo con las 9 herramientas de IA</li>
+    <li>Matching automatizado con recomendaciones proactivas</li>
+    <li>Evaluacion automatica de proyectos con semaforo de decision</li>
+    <li>IA conversacional en espanol para asistencia de miembros</li>
+    <li>Pruebas integrales de todos los modulos</li>
+    <li>Optimizacion de rendimiento y seguridad</li>
+    <li>Documentacion tecnica y manual de administracion</li>
+    <li><strong>Entregable:</strong> Ecosistema completo en produccion -- listo para socios fundadores</li>
+  </ul>
+</div>
+
+<h3>Post-Lanzamiento: Iteracion Continua</h3>
+<div class="callout navy">
+  <div class="callout-title">Mes 2 en adelante</div>
   <ul style="margin:0">
     <li>App movil nativa (iOS/Android)</li>
     <li>Motor de nearshoring con matching por capacidad verificada</li>
-    <li>Integracion WhatsApp Business API para LatAm</li>
-    <li>Eventos virtuales/hibridos con sistema de registro y pago</li>
+    <li>Integracion WhatsApp Business API para engagement en LatAm</li>
+    <li>Eventos virtuales/hibridos con registro y pago</li>
     <li>API publica para integraciones institucionales</li>
-    <li>IA conversacional en espanol para asistencia de miembros</li>
-    <li>Expansion a los 6 centros regionales con autonomia operativa</li>
-    <li>Meta: 2,500 miembros, 80 proyectos, HCI > 0.80, MRR $255K</li>
+    <li>Mejoras continuas basadas en feedback de socios fundadores</li>
   </ul>
 </div>
 
