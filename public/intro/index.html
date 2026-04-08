@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digit2AI - Manuel Stagg | Introduction</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --primary: #0f172a;
+    --accent: #2563eb;
+    --accent-light: #3b82f6;
+    --gold: #f59e0b;
+    --surface: #1e293b;
+    --surface-2: #334155;
+    --text: #f1f5f9;
+    --text-muted: #94a3b8;
+    --border: #475569;
+    --surgical: #ef4444;
+    --freight: #22c55e;
+    --warehouse: #8b5cf6;
+    --neural: #06b6d4;
+    --gradient-1: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--primary);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* Language Toggle */
+  .lang-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    gap: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+
+  .lang-btn {
+    padding: 8px 18px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    letter-spacing: 0.5px;
+  }
+
+  .lang-btn.active {
+    background: var(--accent);
+    color: white;
+  }
+
+  .lang-btn:hover:not(.active) {
+    background: var(--surface-2);
+    color: var(--text);
+  }
+
+  /* Hero */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    background: var(--gradient-1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(circle, rgba(37,99,235,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -30%;
+    left: -10%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(139,92,246,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-content {
+    max-width: 900px;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-label {
+    display: inline-block;
+    padding: 6px 16px;
+    border: 1px solid var(--accent);
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--accent-light);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.2rem, 5vw, 3.8rem);
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero p {
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    color: var(--text-muted);
+    max-width: 700px;
+    margin: 0 auto 40px;
+    line-height: 1.8;
+  }
+
+  .stats-row {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+    margin-top: 40px;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat-number {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--accent-light);
+  }
+
+  .stat-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 4px;
+  }
+
+  /* Sections */
+  section {
+    padding: 80px 20px;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 60px;
+  }
+
+  .section-header h2 {
+    font-size: clamp(1.8rem, 3vw, 2.4rem);
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  .section-header p {
+    color: var(--text-muted);
+    font-size: 1.05rem;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* Vertical Cards */
+  .verticals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+    gap: 30px;
+  }
+
+  @media (max-width: 540px) {
+    .verticals-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .vertical-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 36px;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .vertical-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+  }
+
+  .vertical-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+  }
+
+  .vertical-card.surgical::before { background: var(--surgical); }
+  .vertical-card.freight::before { background: var(--freight); }
+  .vertical-card.warehouse::before { background: var(--warehouse); }
+  .vertical-card.neural::before { background: var(--neural); }
+
+  .card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    margin-bottom: 20px;
+  }
+
+  .surgical .card-icon { background: rgba(239,68,68,0.15); color: var(--surgical); }
+  .freight .card-icon { background: rgba(34,197,94,0.15); color: var(--freight); }
+  .warehouse .card-icon { background: rgba(139,92,246,0.15); color: var(--warehouse); }
+  .neural .card-icon { background: rgba(6,182,212,0.15); color: var(--neural); }
+
+  .card-tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .surgical .card-tag { background: rgba(239,68,68,0.15); color: var(--surgical); }
+  .freight .card-tag { background: rgba(34,197,94,0.15); color: var(--freight); }
+  .warehouse .card-tag { background: rgba(139,92,246,0.15); color: var(--warehouse); }
+  .neural .card-tag { background: rgba(6,182,212,0.15); color: var(--neural); }
+
+  .vertical-card h3 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .card-subtitle {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin-bottom: 20px;
+    font-style: italic;
+  }
+
+  .card-features {
+    list-style: none;
+    margin-bottom: 20px;
+  }
+
+  .card-features li {
+    padding: 6px 0;
+    padding-left: 20px;
+    position: relative;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  .card-features li::before {
+    content: '>';
+    position: absolute;
+    left: 0;
+    color: var(--accent-light);
+    font-weight: 700;
+  }
+
+  .card-metric {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: rgba(37,99,235,0.08);
+    border-radius: 8px;
+    margin-top: 16px;
+    border-left: 3px solid var(--accent);
+  }
+
+  .card-metric .metric-value {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--accent-light);
+    white-space: nowrap;
+  }
+
+  .card-metric .metric-desc {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  /* Architecture Section */
+  .arch-section {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .arch-pillars {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 24px;
+    margin-top: 40px;
+  }
+
+  .pillar {
+    text-align: center;
+    padding: 30px 20px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--primary);
+    transition: border-color 0.3s;
+  }
+
+  .pillar:hover {
+    border-color: var(--accent);
+  }
+
+  .pillar-icon {
+    font-size: 2rem;
+    margin-bottom: 12px;
+  }
+
+  .pillar h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .pillar p {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  /* Quote */
+  .quote-section {
+    text-align: center;
+    padding: 80px 20px;
+  }
+
+  .quote-block {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px;
+    border-left: 4px solid var(--accent);
+    border-right: 4px solid var(--accent);
+    border-radius: 8px;
+  }
+
+  .quote-block p {
+    font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+    font-weight: 500;
+    line-height: 1.8;
+    color: var(--text);
+  }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 40px 20px;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+  }
+
+  footer a {
+    color: var(--accent-light);
+    text-decoration: none;
+  }
+
+  footer a:hover { text-decoration: underline; }
+
+  /* Language visibility */
+  [data-lang="es"] { display: none; }
+  body.lang-es [data-lang="en"] { display: none; }
+  body.lang-es [data-lang="es"] { display: block; }
+  body.lang-es span[data-lang="es"],
+  body.lang-es em[data-lang="es"] { display: inline; }
+  body.lang-es span[data-lang="en"],
+  body.lang-es em[data-lang="en"] { display: none; }
+  span[data-lang="es"], em[data-lang="es"] { display: none; }
+  span[data-lang="en"], em[data-lang="en"] { display: inline; }
+
+  /* li visibility fix */
+  body.lang-es li[data-lang="en"] { display: none; }
+  body.lang-es li[data-lang="es"] { display: list-item; }
+  li[data-lang="es"] { display: none; }
+  li[data-lang="en"] { display: list-item; }
+
+  /* div visibility */
+  body.lang-es div[data-lang="en"] { display: none; }
+  body.lang-es div[data-lang="es"] { display: flex; }
+  div[data-lang="es"] { display: none; }
+</style>
+</head>
+<body>
+
+<!-- Language Toggle -->
+<div class="lang-toggle">
+  <button class="lang-btn active" id="btn-en" onclick="setLang('en')">EN</button>
+  <button class="lang-btn" id="btn-es" onclick="setLang('es')">ES</button>
+</div>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-content">
+    <div class="hero-label">DIGIT2AI</div>
+
+    <h1 data-lang="en">AI-Native Operating Systems<br>That Run Your Business</h1>
+    <h1 data-lang="es">Sistemas Operativos Nativos de IA<br>Que Operan Tu Negocio</h1>
+
+    <p data-lang="en">
+      I'm Manuel Stagg, founder of Digit2AI. We build autonomous AI agent systems
+      that replace manual operations across healthcare, logistics, warehousing, and
+      service businesses. Five verticals live in production -- all on the same core
+      architecture: MCP agent mesh, Neural Intelligence, and Voice AI.
+    </p>
+    <p data-lang="es">
+      Soy Manuel Stagg, fundador de Digit2AI. Construimos sistemas de agentes de IA
+      autonomos que reemplazan operaciones manuales en salud, logistica, almacenes y
+      negocios de servicios. Cinco verticales en produccion -- todos sobre la misma
+      arquitectura: malla de agentes MCP, Inteligencia Neural y Voz con IA.
+    </p>
+
+    <div class="stats-row" data-lang="en">
+      <div class="stat">
+        <div class="stat-number">90+</div>
+        <div class="stat-label">MCP Tools</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">8</div>
+        <div class="stat-label">AI Agents / Vertical</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">24/7</div>
+        <div class="stat-label">Neural Monitoring</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">5</div>
+        <div class="stat-label">Verticals Live</div>
+      </div>
+    </div>
+    <div class="stats-row" data-lang="es">
+      <div class="stat">
+        <div class="stat-number">90+</div>
+        <div class="stat-label">Herramientas MCP</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">8</div>
+        <div class="stat-label">Agentes IA / Vertical</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">24/7</div>
+        <div class="stat-label">Monitoreo Neural</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">5</div>
+        <div class="stat-label">Verticales en Vivo</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Verticals -->
+<section>
+  <div class="container">
+    <div class="section-header">
+      <h2 data-lang="en">Our Verticals</h2>
+      <h2 data-lang="es">Nuestras Verticales</h2>
+      <p data-lang="en">Same architecture, different industries. Each vertical runs 8 autonomous AI agents.</p>
+      <p data-lang="es">Misma arquitectura, diferentes industrias. Cada vertical opera 8 agentes de IA autonomos.</p>
+    </div>
+
+    <div class="verticals-grid">
+
+      <!-- SurgicalMind AI -->
+      <div class="vertical-card surgical">
+        <div class="card-icon">S</div>
+        <div class="card-tag" data-lang="en">Healthcare</div>
+        <div class="card-tag" data-lang="es">Salud</div>
+        <h3>SurgicalMind AI</h3>
+        <p class="card-subtitle" data-lang="en">"You sell the robot. We sell the brain that proves it was worth buying."</p>
+        <p class="card-subtitle" data-lang="es">"Tu vendes el robot. Nosotros vendemos el cerebro que demuestra que valio la pena comprarlo."</p>
+
+        <p data-lang="en" style="color:var(--text-muted);font-size:0.9rem;margin-bottom:16px;">
+          The intelligence layer for robotic surgery. Real-time visibility into da Vinci ROI --
+          utilization, outcomes, and autonomous optimization across every operating room.
+        </p>
+        <p data-lang="es" style="color:var(--text-muted);font-size:0.9rem;margin-bottom:16px;">
+          La capa de inteligencia para cirugia robotica. Visibilidad en tiempo real del ROI de da Vinci --
+          utilizacion, resultados y optimizacion autonoma en cada quirofano.
+        </p>
+
+        <ul class="card-features">
+          <li data-lang="en">8 agents: OR Utilization, Case Volume, Surgeon Adoption, Supply, Outcomes, ROI, Neural, Treatment</li>
+          <li data-lang="es">8 agentes: Utilizacion de Quirofano, Volumen de Casos, Adopcion de Cirujanos, Suministros, Resultados, ROI, Neural, Tratamiento</li>
+          <li data-lang="en">Three-layer intelligence: Diagnostic, Prescription, Treatment</li>
+          <li data-lang="es">Inteligencia de tres capas: Diagnostico, Prescripcion, Tratamiento</li>
+          <li data-lang="en">Auto-detects idle ORs, underutilizing surgeons, supply waste</li>
+          <li data-lang="es">Auto-detecta quirofanos inactivos, cirujanos subutilizados, desperdicio de insumos</li>
+        </ul>
+
+        <div class="card-metric">
+          <div class="metric-value">+35%</div>
+          <div>
+            <div class="metric-desc" data-lang="en">Utilization increase. $2.4M revenue recovered. 14 months faster payback.</div>
+            <div class="metric-desc" data-lang="es">Aumento de utilizacion. $2.4M en ingresos recuperados. 14 meses menos para el retorno.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FreightMind AI -->
+      <div class="vertical-card freight">
+        <div class="card-icon">F</div>
+        <div class="card-tag" data-lang="en">Logistics</div>
+        <div class="card-tag" data-lang="es">Logistica</div>
+        <h3>FreightMind AI</h3>
+        <p class="card-subtitle" data-lang="en">"Your fleet runs itself."</p>
+        <p class="card-subtitle" data-lang="es">"Tu flota se opera sola."</p>
+
+        <p data-lang="en" style="color:var(--text-muted);font-size:0.9rem;margin-bottom:16px;">
+          AI-native operating system for freight carriers and brokerages. Replaces dispatchers,
+          brokers, and accountants with 8 AI agents running 24/7.
+        </p>
+        <p data-lang="es" style="color:var(--text-muted);font-size:0.9rem;margin-bottom:16px;">
+          Sistema operativo nativo de IA para transportistas y brokers de carga. Reemplaza despachadores,
+          brokers y contadores con 8 agentes de IA operando 24/7.
+        </p>
+
+        <ul class="card-features">
+          <li data-lang="en">7 diagnostic modules: Load Ops, Rate Intel, Fleet Utilization, Financial Health, Compliance, Driver Retention, Customer Health</li>
+          <li data-lang="es">7 modulos de diagnostico: Operaciones de Carga, Tarifas, Utilizacion de Flota, Salud Financiera, Cumplimiento, Retencion de Conductores, Salud del Cliente</li>
+          <li data-lang="en">Voice AI (Rachel/Ana) handles ALL phone communication automatically</li>
+          <li data-lang="es">Voz con IA (Rachel/Ana) maneja TODA la comunicacion telefonica automaticamente</li>
+          <li data-lang="en">Agents: Dispatch, Freight Finder, Rate Engine, Billing, Tracking, Compliance, Maintenance, Neural</li>
+          <li data-lang="es">Agentes: Despacho, Buscador de Carga, Motor de Tarifas, Facturacion, Rastreo, Cumplimiento, Mantenimiento, Neural</li>
+        </ul>
+
+        <div class="card-metric">
+          <div class="metric-value">8:1</div>
+          <div>
+            <div class="metric-desc" data-lang="en">ROI in Year 1. $1.5M in savings identified with CW Carriers USA.</div>
+            <div class="metric-desc" data-lang="es">ROI en el Ano 1. $1.5M en ahorros identificados con CW Carriers USA.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WarehouseMind AI -->
+      <div class="vertical-card warehouse">
+        <div class="card-icon">W</div>
+        <div class="card-tag" data-lang="en">Warehousing</div>
+        <div class="card-tag" data-lang="es">Almacenes</div>
+        <h3>Pinaxis / WarehouseMind AI</h3>
+        <p class="card-subtitle" data-lang="en">Warehouse Intelligence Platform</p>
+        <p class="card-subtitle" data-lang="es">Plataforma de Inteligencia para Almacenes</p>
+
+        <p data-lang="en" style="color:var(--text-muted);font-size:0.9rem;margin-bottom:16px;">
+          Dual-layer platform: standalone analytics (production-ready) + WarehouseMind AI agent mesh
+          with 8 agents and 90+ MCP tools for autonomous warehouse operations.
+        </p>
+        <p data-lang="es" style="color:var(--text-muted);font-size:0.9rem;margin-bottom:16px;">
+          Plataforma de doble capa: analitica independiente (en produccion) + malla de agentes WarehouseMind AI
+          con 8 agentes y 90+ herramientas MCP para operaciones autonomas de almacen.
+        </p>
+
+        <ul class="card-features">
+          <li data-lang="en">12 analysis modules: ABC/Pareto, seasonality, fit analysis, throughput, capacity forecasting, OEE</li>
+          <li data-lang="es">12 modulos de analisis: ABC/Pareto, estacionalidad, analisis de ajuste, rendimiento, pronostico de capacidad, OEE</li>
+          <li data-lang="en">AI-narrated proposals via Rachel -- 50 hours to minutes</li>
+          <li data-lang="es">Propuestas narradas por IA via Rachel -- de 50 horas a minutos</li>
+          <li data-lang="en">Partnership with GEBHARDT (50+ years, 1,000+ clients in warehouse automation)</li>
+          <li data-lang="es">Alianza con GEBHARDT (50+ anos, 1,000+ clientes en automatizacion de almacenes)</li>
+        </ul>
+
+        <div class="card-metric">
+          <div class="metric-value">228K</div>
+          <div>
+            <div class="metric-desc" data-lang="en">SKUs analyzed in minutes. 60K orders. 637K order lines. Real data, real results.</div>
+            <div class="metric-desc" data-lang="es">SKUs analizados en minutos. 60K ordenes. 637K lineas de pedido. Datos reales, resultados reales.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Neural Intelligence -->
+      <div class="vertical-card neural">
+        <div class="card-icon">N</div>
+        <div class="card-tag" data-lang="en">Cross-Platform</div>
+        <div class="card-tag" data-lang="es">Multi-Plataforma</div>
+        <h3 data-lang="en">Neural Intelligence</h3>
+        <h3 data-lang="es">Inteligencia Neural</h3>
+        <p class="card-subtitle" data-lang="en">The Brain Inside Every Vertical</p>
+        <p class="card-subtitle" data-lang="es">El Cerebro Dentro de Cada Vertical</p>
+
+        <p data-lang="en" style="color:var(--text-muted);font-size:0.9rem;margin-bottom:16px;">
+          12 real-time analyzers that power every vertical. The AI doesn't just report --
+          it diagnoses, prescribes, and auto-executes the fix.
+        </p>
+        <p data-lang="es" style="color:var(--text-muted);font-size:0.9rem;margin-bottom:16px;">
+          12 analizadores en tiempo real que impulsan cada vertical. La IA no solo reporta --
+          diagnostica, prescribe y auto-ejecuta la solucion.
+        </p>
+
+        <ul class="card-features">
+          <li data-lang="en">Analyzers: Missed revenue, call conversion, lead speed, scheduling, no-shows, pipeline health</li>
+          <li data-lang="es">Analizadores: Ingresos perdidos, conversion de llamadas, velocidad de leads, agenda, inasistencias, salud del pipeline</li>
+          <li data-lang="en">5 automated treatment triggers with autonomous execution</li>
+          <li data-lang="es">5 disparadores de tratamiento automatizado con ejecucion autonoma</li>
+          <li data-lang="en">Health Score Dashboard: 0-100 across calls, pipeline, leads, retention, automation</li>
+          <li data-lang="es">Panel de Salud: 0-100 en llamadas, pipeline, leads, retencion, automatizacion</li>
+        </ul>
+
+        <div class="card-metric">
+          <div class="metric-value">3</div>
+          <div>
+            <div class="metric-desc" data-lang="en">Layers: Diagnostic (what happened) -> Prescription (what to do) -> Treatment (auto-execute)</div>
+            <div class="metric-desc" data-lang="es">Capas: Diagnostico (que paso) -> Prescripcion (que hacer) -> Tratamiento (auto-ejecutar)</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Architecture -->
+<section class="arch-section">
+  <div class="container">
+    <div class="section-header">
+      <h2 data-lang="en">Unified Architecture</h2>
+      <h2 data-lang="es">Arquitectura Unificada</h2>
+      <p data-lang="en">Every vertical runs on the same proven foundation.</p>
+      <p data-lang="es">Cada vertical corre sobre la misma base probada.</p>
+    </div>
+
+    <div class="arch-pillars">
+      <div class="pillar">
+        <div class="pillar-icon">[MCP]</div>
+        <h4 data-lang="en">MCP Agent Mesh</h4>
+        <h4 data-lang="es">Malla de Agentes MCP</h4>
+        <p data-lang="en">90+ tools orchestrated via Model Context Protocol. 8 specialized agents per vertical operating autonomously.</p>
+        <p data-lang="es">90+ herramientas orquestadas via Model Context Protocol. 8 agentes especializados por vertical operando de forma autonoma.</p>
+      </div>
+      <div class="pillar">
+        <div class="pillar-icon">[Dx]</div>
+        <h4 data-lang="en">Neural Intelligence</h4>
+        <h4 data-lang="es">Inteligencia Neural</h4>
+        <p data-lang="en">24/7 autonomous scanning. Three-layer approach: Diagnostic, Prescription, Treatment. The AI acts, not just advises.</p>
+        <p data-lang="es">Escaneo autonomo 24/7. Enfoque de tres capas: Diagnostico, Prescripcion, Tratamiento. La IA actua, no solo aconseja.</p>
+      </div>
+      <div class="pillar">
+        <div class="pillar-icon">[Vx]</div>
+        <h4 data-lang="en">Voice AI</h4>
+        <h4 data-lang="es">Voz con IA</h4>
+        <p data-lang="en">Rachel, Ana, and Lina handle all phone communication. Inbound and outbound. No humans on the line.</p>
+        <p data-lang="es">Rachel, Ana y Lina manejan toda la comunicacion telefonica. Entrante y saliente. Sin humanos en la linea.</p>
+      </div>
+      <div class="pillar">
+        <div class="pillar-icon">[MT]</div>
+        <h4>Multi-Tenant SaaS</h4>
+        <p data-lang="en">Tiered pricing. Each client gets isolated data, shared infrastructure. Deploy once, serve thousands.</p>
+        <p data-lang="es">Precios por niveles. Cada cliente con datos aislados, infraestructura compartida. Desplegar una vez, servir a miles.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Core Quote -->
+<section class="quote-section">
+  <div class="quote-block">
+    <p data-lang="en">
+      "We don't build dashboards that humans stare at.<br>
+      We build systems that diagnose, prescribe, and treat --<br>
+      <strong>autonomously.</strong><br>
+      The AI doesn't just advise. It acts."
+    </p>
+    <p data-lang="es">
+      "No construimos tableros para que humanos se queden mirando.<br>
+      Construimos sistemas que diagnostican, prescriben y tratan --<br>
+      <strong>de forma autonoma.</strong><br>
+      La IA no solo aconseja. Actua."
+    </p>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <p>
+    <span data-lang="en">Manuel Stagg -- Digit2AI LLC</span>
+    <span data-lang="es">Manuel Stagg -- Digit2AI LLC</span>
+    <br>
+    <a href="mailto:manuel@ringlypro.com">manuel@ringlypro.com</a>
+  </p>
+</footer>
+
+<script>
+function setLang(lang) {
+  document.body.className = lang === 'es' ? 'lang-es' : '';
+  document.getElementById('btn-en').className = 'lang-btn' + (lang === 'en' ? ' active' : '');
+  document.getElementById('btn-es').className = 'lang-btn' + (lang === 'es' ? ' active' : '');
+  localStorage.setItem('digit2ai-lang', lang);
+}
+
+// Restore preference
+const saved = localStorage.getItem('digit2ai-lang');
+if (saved) setLang(saved);
+</script>
+
+</body>
+</html>
