@@ -30,7 +30,7 @@ const MEMBERSHIP_PRICES = {
   numerario: { monthly: 25, annual: 240, name: 'Numerario - Motor Operativo' },
   protector: { monthly: 100, annual: 960, name: 'Protector - Soporte e Inversion' },
   patrono: { monthly: 200, annual: 1920, name: 'Patrono - Experiencia y Valor' },
-  fundador: { monthly: 0, annual: 500, name: 'Fundador - Cimiento Estrategico' }
+  fundador: { monthly: 0, annual: 0, name: 'Fundador - Cimiento Estrategico (por invitacion)' }
 };
 
 // POST /membership -- Create or update membership subscription
