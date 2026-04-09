@@ -70,9 +70,9 @@ router.post('/register', async (req, res) => {
           sector: sector || null,
           sub_specialty: sub_specialty || null,
           years_experience: years_experience || null,
-          languages: languages ? JSON.stringify(languages) : null,
+          languages: languages ? `{${languages.join(',')}}` : '{}',
           company_name: company_name || null,
-          membership_type: membership_type || 'free',
+          membership_type: membership_type || 'numerario',
           bio: bio || null,
           phone: phone || null,
           linkedin_url: linkedin_url || null,
@@ -210,7 +210,7 @@ router.get('/me', async (req, res) => {
       `SELECT id, email, first_name, last_name, country, region_id,
               sector, sub_specialty, years_experience, languages,
               company_name, membership_type, bio, phone, linkedin_url, website_url,
-              verification_status, created_at, updated_at
+              verification_level, created_at, updated_at
        FROM hispatec_members WHERE id = :id LIMIT 1`,
       { replacements: { id: decoded.member_id }, type: Sequelize.QueryTypes.SELECT }
     );
