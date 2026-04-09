@@ -460,6 +460,10 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
         Pagos
       </div>
+      <div class="sidebar-nav-item" data-page="admin" id="adminNavItem" style="display:none;border-top:1px solid rgba(255,255,255,0.1);margin-top:8px;padding-top:16px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        <span style="color:var(--gold);font-weight:600;">Admin</span>
+      </div>
     </nav>
     <div class="sidebar-footer">
       <div class="member-name" id="sidebarName">--</div>
@@ -515,7 +519,14 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     window.location.href = '/hispatec/#registro';
   }
 
-  async function apiFetch(path, opts = {}) {
+  async function apiFetch(path, methodOrOpts, body) {
+    var opts = {};
+    if (typeof methodOrOpts === 'string') {
+      opts = { method: methodOrOpts };
+      if (body) opts.body = JSON.stringify(body);
+    } else if (methodOrOpts) {
+      opts = methodOrOpts;
+    }
     const token = getToken();
     const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
     if (token) headers['Authorization'] = 'Bearer ' + token;
@@ -543,7 +554,14 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     }
 
     document.getElementById('sidebarName').textContent = currentMember.first_name + ' ' + currentMember.last_name;
-    document.getElementById('sidebarType').textContent = currentMember.membership_type || 'numerario';
+    var roleLabel = currentMember.governance_role && currentMember.governance_role !== 'miembro'
+      ? currentMember.governance_role.replace(/_/g, ' ') : currentMember.membership_type || 'numerario';
+    document.getElementById('sidebarType').textContent = roleLabel;
+
+    // Show admin nav if user has admin access
+    if (['superadmin', 'admin_global', 'admin_regional'].includes(currentMember.access_level)) {
+      document.getElementById('adminNavItem').style.display = 'flex';
+    }
 
     setupNav();
     setupHamburger();
@@ -570,14 +588,14 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     var titles = {
       dashboard:'Panel General', profile:'Mi Perfil', directory:'Directorio',
       matching:'Matching IA', projects:'Proyectos', exchange:'Intercambio',
-      metrics:'Metricas', payments:'Pagos'
+      metrics:'Metricas', payments:'Pagos', admin:'Administracion'
     };
     document.getElementById('pageTitle').textContent = titles[page] || page;
     document.getElementById('pageContent').innerHTML = '<div class="loading">Cargando...</div>';
     var renderers = {
       dashboard:renderDashboard, profile:renderProfile, directory:renderDirectory,
       matching:renderMatching, projects:renderProjects, exchange:renderExchange,
-      metrics:renderMetrics, payments:renderPayments
+      metrics:renderMetrics, payments:renderPayments, admin:renderAdmin
     };
     if (renderers[page]) renderers[page]();
   }
@@ -1521,6 +1539,196 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       container.innerHTML = '<div class="error-msg">Error: '+esc(e.message)+'</div>';
     }
   }
+
+  // ── ADMIN PAGE ──
+  async function renderAdmin() {
+    var c = document.getElementById('pageContent');
+    var al = currentMember.access_level;
+    if (!['superadmin','admin_global','admin_regional'].includes(al)) {
+      c.innerHTML = '<div class="error-msg">Acceso denegado. Se requiere nivel de administrador.</div>';
+      return;
+    }
+
+    var isSuperadmin = al === 'superadmin';
+    var isGlobalAdmin = ['superadmin','admin_global'].includes(al);
+
+    c.innerHTML = '<div class="admin-tabs" style="display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;"></div><div id="adminContent"></div>';
+    var tabs = [
+      { id:'members', label:'Gestion de Miembros', access:true },
+      { id:'governance', label:'Junta Directiva', access:isGlobalAdmin },
+      { id:'regions', label:'Delegaciones Regionales', access:true },
+      { id:'system', label:'Sistema', access:isSuperadmin }
+    ];
+    var tabBar = c.querySelector('.admin-tabs');
+    tabs.forEach(function(t) {
+      if (!t.access) return;
+      var btn = document.createElement('button');
+      btn.className = 'btn' + (t.id === 'members' ? ' btn-primary' : ' btn-outline');
+      btn.textContent = t.label;
+      btn.style.cssText = 'padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:2px solid var(--teal);' + (t.id === 'members' ? 'background:var(--teal);color:white;' : 'background:transparent;color:var(--teal);');
+      btn.onclick = function() {
+        tabBar.querySelectorAll('button').forEach(function(b) { b.style.background = 'transparent'; b.style.color = 'var(--teal)'; });
+        btn.style.background = 'var(--teal)'; btn.style.color = 'white';
+        loadAdminTab(t.id);
+      };
+      tabBar.appendChild(btn);
+    });
+    loadAdminTab('members');
+  }
+
+  async function loadAdminTab(tab) {
+    var ac = document.getElementById('adminContent');
+    ac.innerHTML = '<div class="loading">Cargando...</div>';
+
+    if (tab === 'members') {
+      try {
+        var res = await apiFetch('/admin/members?limit=100');
+        if (!res.success) { ac.innerHTML = '<div class="error-msg">' + esc(res.error) + '</div>'; return; }
+        var members = res.data.members || [];
+        var h = '<div style="margin-bottom:16px;"><input type="text" id="adminSearch" placeholder="Buscar miembro..." style="padding:10px 14px;border:1px solid var(--gray-300);border-radius:8px;width:300px;font-size:14px;"></div>';
+        h += '<div class="table-wrap"><table><thead><tr><th>ID</th><th>Nombre</th><th>Email</th><th>Pais</th><th>Region</th><th>Sector</th><th>Tipo</th><th>Rol</th><th>Acceso</th><th>Trust</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>';
+        members.forEach(function(m) {
+          var roleBadge = m.governance_role !== 'miembro' ? '<span class="badge badge-gold">' + esc(m.governance_role.replace(/_/g,' ')) + '</span>' : '<span class="badge badge-gray">miembro</span>';
+          var accessBadge = m.access_level === 'superadmin' ? '<span class="badge badge-red">superadmin</span>' : m.access_level === 'admin_global' ? '<span class="badge badge-gold">global</span>' : m.access_level === 'admin_regional' ? '<span class="badge badge-green">regional</span>' : '<span class="badge badge-gray">member</span>';
+          var statusBadge = m.status === 'active' ? '<span class="badge badge-green">activo</span>' : '<span class="badge badge-red">' + esc(m.status) + '</span>';
+          h += '<tr data-name="' + esc(m.first_name + ' ' + m.last_name + ' ' + m.email).toLowerCase() + '">';
+          h += '<td>' + m.id + '</td><td><strong>' + esc(m.first_name) + ' ' + esc(m.last_name) + '</strong></td><td>' + esc(m.email) + '</td>';
+          h += '<td>' + esc(m.country||'--') + '</td><td>' + esc(m.region_name||'--') + '</td><td>' + esc(m.sector||'--') + '</td>';
+          h += '<td>' + esc(m.membership_type) + '</td><td>' + roleBadge + '</td><td>' + accessBadge + '</td>';
+          h += '<td>' + Number(m.trust_score||0).toFixed(2) + '</td><td>' + statusBadge + '</td>';
+          h += '<td style="white-space:nowrap;">';
+          h += '<button class="btn-sm" onclick="adminVerify(' + m.id + ')" title="Verificar" style="padding:4px 8px;font-size:11px;background:var(--teal);color:white;border:none;border-radius:4px;cursor:pointer;margin:2px;">Verificar</button>';
+          if (currentMember.access_level === 'superadmin' || currentMember.access_level === 'admin_global') {
+            h += '<button class="btn-sm" onclick="adminRole(' + m.id + ',\'' + esc(m.first_name) + ' ' + esc(m.last_name) + '\')" title="Asignar Rol" style="padding:4px 8px;font-size:11px;background:var(--gold);color:var(--navy);border:none;border-radius:4px;cursor:pointer;margin:2px;">Rol</button>';
+          }
+          h += '<button class="btn-sm" onclick="adminToggleStatus(' + m.id + ',\'' + m.status + '\')" title="Cambiar Estado" style="padding:4px 8px;font-size:11px;background:' + (m.status==='active'?'var(--red)':'var(--green)') + ';color:white;border:none;border-radius:4px;cursor:pointer;margin:2px;">' + (m.status==='active'?'Suspender':'Activar') + '</button>';
+          h += '</td></tr>';
+        });
+        h += '</tbody></table></div>';
+        h += '<p style="margin-top:12px;color:var(--gray-500);font-size:13px;">Total: ' + members.length + ' miembros</p>';
+        ac.innerHTML = h;
+        document.getElementById('adminSearch').addEventListener('input', function() {
+          var q = this.value.toLowerCase();
+          ac.querySelectorAll('tbody tr').forEach(function(row) {
+            row.style.display = (row.dataset.name || '').includes(q) ? '' : 'none';
+          });
+        });
+      } catch(e) { ac.innerHTML = '<div class="error-msg">Error: ' + esc(e.message) + '</div>'; }
+
+    } else if (tab === 'governance') {
+      try {
+        var res = await apiFetch('/admin/roles');
+        if (!res.success) { ac.innerHTML = '<div class="error-msg">' + esc(res.error) + '</div>'; return; }
+        var board = res.data.governance_board || [];
+        var h = '<h3 style="margin-bottom:16px;font-size:18px;">Junta Directiva Actual</h3>';
+        if (board.length === 0) {
+          h += '<p class="text-muted">No hay roles de gobernanza asignados aun.</p>';
+        } else {
+          h += '<div class="table-wrap"><table><thead><tr><th>Miembro</th><th>Rol</th><th>Acceso</th><th>Region</th><th>Membresia</th><th>Accion</th></tr></thead><tbody>';
+          board.forEach(function(m) {
+            h += '<tr><td><strong>' + esc(m.first_name) + ' ' + esc(m.last_name) + '</strong><br><span style="font-size:12px;color:var(--gray-500);">' + esc(m.email) + '</span></td>';
+            h += '<td><span class="badge badge-gold">' + esc(m.governance_role.replace(/_/g,' ')) + '</span></td>';
+            h += '<td>' + esc(m.access_level) + '</td><td>' + esc(m.region_name||'Global') + '</td><td>' + esc(m.membership_type) + '</td>';
+            h += '<td><button onclick="adminRemoveRole(' + m.id + ')" style="padding:4px 10px;font-size:12px;background:var(--red);color:white;border:none;border-radius:4px;cursor:pointer;">Remover</button></td></tr>';
+          });
+          h += '</tbody></table></div>';
+        }
+        h += '<div style="margin-top:24px;padding:20px;background:var(--gray-50);border-radius:8px;">';
+        h += '<h4 style="margin-bottom:12px;">Roles disponibles:</h4>';
+        h += '<p style="font-size:13px;color:var(--gray-700);line-height:1.8;">';
+        (res.data.available_roles || []).forEach(function(r) {
+          h += '<span class="badge badge-gray" style="margin:2px;">' + r.replace(/_/g,' ') + '</span> ';
+        });
+        h += '</p></div>';
+        ac.innerHTML = h;
+      } catch(e) { ac.innerHTML = '<div class="error-msg">Error: ' + esc(e.message) + '</div>'; }
+
+    } else if (tab === 'regions') {
+      try {
+        var res = await apiFetch('/admin/regions');
+        if (!res.success) { ac.innerHTML = '<div class="error-msg">' + esc(res.error) + '</div>'; return; }
+        var regions = res.data || [];
+        var h = '<div class="stat-grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr));">';
+        regions.forEach(function(r) {
+          h += '<div class="stat-card" style="text-align:left;">';
+          h += '<h4 style="color:var(--teal);margin-bottom:12px;">' + esc(r.name) + '</h4>';
+          h += '<p style="font-size:13px;color:var(--gray-500);margin-bottom:8px;">' + esc(r.description||'') + '</p>';
+          h += '<div style="font-size:14px;line-height:2;">';
+          h += '<strong>Miembros:</strong> ' + (r.member_count||0) + '<br>';
+          h += '<strong>Presidente:</strong> ' + esc(r.president_name||'-- Vacante --') + '<br>';
+          h += '<strong>Secretario:</strong> ' + esc(r.secretary_name||'-- Vacante --') + '<br>';
+          h += '<strong>Tesorero:</strong> ' + esc(r.treasurer_name||'-- Vacante --') + '<br>';
+          h += '<strong>Gini:</strong> ' + Number(r.gini_score||0).toFixed(4) + '<br>';
+          h += '<strong>Oportunidades:</strong> ' + (r.opportunity_count||0);
+          h += '</div></div>';
+        });
+        h += '</div>';
+        ac.innerHTML = h;
+      } catch(e) { ac.innerHTML = '<div class="error-msg">Error: ' + esc(e.message) + '</div>'; }
+
+    } else if (tab === 'system') {
+      try {
+        var res = await apiFetch('/admin/system/stats');
+        if (!res.success) { ac.innerHTML = '<div class="error-msg">' + esc(res.error) + '</div>'; return; }
+        var d = res.data.overview;
+        var h = '<h3 style="margin-bottom:16px;">Estadisticas del Sistema</h3>';
+        h += '<div class="stat-grid">';
+        var items = [
+          ['Miembros Totales', d.total_members], ['Miembros Activos', d.active_members],
+          ['Roles Gobernanza', d.governance_roles_assigned], ['Proyectos', d.total_projects],
+          ['Empresas', d.total_companies], ['RFQs Abiertas', d.open_rfqs],
+          ['Transacciones', d.total_transactions], ['Ingresos Totales', '$'+Number(d.total_revenue||0).toLocaleString()],
+          ['Matchings', d.total_matches], ['Referencias Trust', d.total_references],
+          ['Oportunidades', d.active_opportunities], ['Eventos', d.total_events]
+        ];
+        items.forEach(function(i) {
+          h += '<div class="stat-card"><div class="stat-value">' + i[1] + '</div><div class="stat-label">' + i[0] + '</div></div>';
+        });
+        h += '</div>';
+        h += '<h4 style="margin-top:24px;margin-bottom:12px;">Miembros por Nivel de Acceso</h4>';
+        h += '<div class="table-wrap"><table><thead><tr><th>Nivel</th><th>Cantidad</th></tr></thead><tbody>';
+        (res.data.members_by_access||[]).forEach(function(r) {
+          h += '<tr><td>' + esc(r.access_level) + '</td><td>' + r.count + '</td></tr>';
+        });
+        h += '</tbody></table></div>';
+        h += '<h4 style="margin-top:24px;margin-bottom:12px;">Tablas de Base de Datos</h4>';
+        h += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+        (res.data.database_tables||[]).forEach(function(t) {
+          h += '<span class="badge badge-gray" style="font-family:monospace;font-size:12px;">' + t + '</span>';
+        });
+        h += '</div>';
+        ac.innerHTML = h;
+      } catch(e) { ac.innerHTML = '<div class="error-msg">Error: ' + esc(e.message) + '</div>'; }
+    }
+  }
+
+  // Admin action functions (global scope)
+  window.adminVerify = async function(id) {
+    if (!confirm('Verificar miembro #' + id + ' con nivel completo?')) return;
+    var res = await apiFetch('/admin/members/' + id + '/verify', 'PUT', { verification_level: 'id_complete' });
+    alert(res.success ? 'Miembro verificado' : 'Error: ' + (res.error||''));
+    if (res.success) loadAdminTab('members');
+  };
+  window.adminToggleStatus = async function(id, current) {
+    var newStatus = current === 'active' ? 'suspended' : 'active';
+    if (!confirm('Cambiar estado a ' + newStatus + '?')) return;
+    var res = await apiFetch('/admin/members/' + id + '/status', 'PUT', { status: newStatus });
+    alert(res.success ? 'Estado actualizado' : 'Error: ' + (res.error||''));
+    if (res.success) loadAdminTab('members');
+  };
+  window.adminRole = async function(id, name) {
+    var role = prompt('Asignar rol de gobernanza a ' + name + ':\\n\\nOpciones: presidente_general, vp_fundador, secretario_general, tesorero_general, vocal_global, presidente_regional, secretario_regional, tesorero_regional, vocal_regional, miembro');
+    if (!role) return;
+    var res = await apiFetch('/admin/roles/' + id, 'PUT', { governance_role: role });
+    alert(res.success ? 'Rol asignado: ' + role : 'Error: ' + (res.error||''));
+    if (res.success) loadAdminTab('members');
+  };
+  window.adminRemoveRole = async function(id) {
+    if (!confirm('Remover rol de gobernanza?')) return;
+    var res = await apiFetch('/admin/roles/' + id, 'DELETE');
+    alert(res.success ? 'Rol removido' : 'Error: ' + (res.error||''));
+    if (res.success) loadAdminTab('governance');
+  };
 
   // ── Boot ──
   init();

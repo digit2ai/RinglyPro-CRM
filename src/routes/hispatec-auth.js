@@ -52,13 +52,15 @@ router.post('/register', async (req, res) => {
         email, password_hash, first_name, last_name, country, region_id,
         sector, sub_specialty, years_experience, languages,
         company_name, membership_type, bio, phone, linkedin_url, website_url,
+        governance_role, access_level,
         created_at, updated_at
       ) VALUES (
         :email, :password_hash, :first_name, :last_name, :country, :region_id,
         :sector, :sub_specialty, :years_experience, :languages,
         :company_name, :membership_type, :bio, :phone, :linkedin_url, :website_url,
+        'miembro', 'member',
         NOW(), NOW()
-      ) RETURNING id, email, first_name, last_name, membership_type`,
+      ) RETURNING id, email, first_name, last_name, membership_type, governance_role, access_level`,
       {
         replacements: {
           email: email.toLowerCase().trim(),
@@ -88,6 +90,8 @@ router.post('/register', async (req, res) => {
         member_id: member.id,
         email: member.email,
         membership_type: member.membership_type,
+        governance_role: member.governance_role || 'miembro',
+        access_level: member.access_level || 'member',
         first_name: member.first_name,
         last_name: member.last_name
       },
@@ -124,7 +128,7 @@ router.post('/login', async (req, res) => {
     }
 
     const [member] = await sequelize.query(
-      `SELECT id, email, password_hash, first_name, last_name, membership_type
+      `SELECT id, email, password_hash, first_name, last_name, membership_type, governance_role, access_level
        FROM hispatec_members WHERE email = :email LIMIT 1`,
       { replacements: { email: email.toLowerCase().trim() }, type: Sequelize.QueryTypes.SELECT }
     );
@@ -146,11 +150,16 @@ router.post('/login', async (req, res) => {
       });
     }
 
+    // Update last_active_at
+    await sequelize.query('UPDATE hispatec_members SET last_active_at = NOW() WHERE id = :id', { replacements: { id: member.id } });
+
     const token = jwt.sign(
       {
         member_id: member.id,
         email: member.email,
         membership_type: member.membership_type,
+        governance_role: member.governance_role || 'miembro',
+        access_level: member.access_level || 'member',
         first_name: member.first_name,
         last_name: member.last_name
       },
@@ -167,7 +176,9 @@ router.post('/login', async (req, res) => {
           email: member.email,
           first_name: member.first_name,
           last_name: member.last_name,
-          membership_type: member.membership_type
+          membership_type: member.membership_type,
+          governance_role: member.governance_role,
+          access_level: member.access_level
         }
       },
       error: null
@@ -207,11 +218,16 @@ router.get('/me', async (req, res) => {
     }
 
     const [member] = await sequelize.query(
-      `SELECT id, email, first_name, last_name, country, region_id,
-              sector, sub_specialty, years_experience, languages,
-              company_name, membership_type, bio, phone, linkedin_url, website_url,
-              verification_level, created_at, updated_at
-       FROM hispatec_members WHERE id = :id LIMIT 1`,
+      `SELECT m.id, m.email, m.first_name, m.last_name, m.country, m.region_id,
+              r.name as region_name,
+              m.sector, m.sub_specialty, m.years_experience, m.languages,
+              m.company_name, m.membership_type, m.governance_role, m.access_level,
+              m.trust_score, m.bio, m.phone, m.linkedin_url, m.website_url,
+              m.verified, m.verification_level, m.status,
+              m.created_at, m.updated_at
+       FROM hispatec_members m
+       LEFT JOIN hispatec_regions r ON m.region_id = r.id
+       WHERE m.id = :id LIMIT 1`,
       { replacements: { id: decoded.member_id }, type: Sequelize.QueryTypes.SELECT }
     );
 

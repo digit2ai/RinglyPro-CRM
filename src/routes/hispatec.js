@@ -89,4 +89,12 @@ try {
   console.error('  [HISPATEC] MCP routes failed:', e.message);
 }
 
+try {
+  const adminRoutes = require('./hispatec-admin');
+  router.use('/admin', adminRoutes);
+  console.log('  [HISPATEC] Admin routes mounted');
+} catch (e) {
+  console.error('  [HISPATEC] Admin routes failed:', e.message);
+}
+
 module.exports = router;
