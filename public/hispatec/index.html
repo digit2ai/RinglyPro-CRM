@@ -772,6 +772,7 @@
       <li><a href="#proyectos" data-es="Proyectos" data-en="Projects">Proyectos</a></li>
       <li><a href="#asociados" data-es="Asociados" data-en="Members">Asociados</a></li>
       <li><a href="#registro" data-es="Contacto" data-en="Contact">Contacto</a></li>
+      <li><a href="#login" style="color:var(--gold);font-weight:600;" data-es="Iniciar Sesion" data-en="Log In">Iniciar Sesion</a></li>
       <li><button class="lang-toggle" id="langToggle" onclick="toggleLang()">EN</button></li>
     </ul>
   </nav>
@@ -1224,9 +1225,40 @@
           </div>
           <button type="submit" class="btn-submit" data-es="Registrarse en HISPATEC" data-en="Register at HISPATEC">Registrarse en HISPATEC</button>
           <div class="form-msg" id="formMsg"></div>
+          <p style="text-align:center;margin-top:16px;font-family:'Inter',sans-serif;font-size:14px;color:rgba(255,255,255,0.7);">
+            <span data-es="Ya tienes cuenta?" data-en="Already have an account?">Ya tienes cuenta?</span>
+            <a href="#login" style="color:var(--gold);text-decoration:underline;margin-left:4px;" data-es="Iniciar Sesion" data-en="Log In">Iniciar Sesion</a>
+          </p>
         </form>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- LOGIN SECTION -->
+<section class="section reg-section" id="login" style="background:var(--navy);padding:80px 0;">
+  <div class="section-inner" style="max-width:480px;margin:0 auto;">
+    <div style="text-align:center;margin-bottom:32px;">
+      <div class="gold-line" style="margin:0 auto 16px;"></div>
+      <h2 class="section-title" style="color:var(--white);font-size:28px;" data-es="Iniciar Sesion" data-en="Log In">Iniciar Sesion</h2>
+      <p style="color:rgba(255,255,255,0.7);font-family:'Inter',sans-serif;font-size:15px;margin-top:8px;" data-es="Accede a tu dashboard de miembro" data-en="Access your member dashboard">Accede a tu dashboard de miembro</p>
+    </div>
+    <form class="reg-form" id="loginForm" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:32px;">
+      <div class="form-group">
+        <label style="color:rgba(255,255,255,0.8);">Email</label>
+        <input type="email" name="login_email" required placeholder="tu@email.com" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:white;padding:12px 14px;border-radius:8px;font-size:15px;width:100%;box-sizing:border-box;">
+      </div>
+      <div class="form-group" style="margin-top:16px;">
+        <label style="color:rgba(255,255,255,0.8);" data-es="Contrasena" data-en="Password">Contrasena</label>
+        <input type="password" name="login_password" required placeholder="Tu contrasena" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:white;padding:12px 14px;border-radius:8px;font-size:15px;width:100%;box-sizing:border-box;">
+      </div>
+      <button type="submit" class="btn-submit" style="margin-top:24px;width:100%;padding:14px;font-size:16px;border:none;border-radius:8px;background:var(--gold);color:var(--navy);font-weight:700;cursor:pointer;" data-es="Entrar" data-en="Log In">Entrar</button>
+      <div class="form-msg" id="loginMsg"></div>
+      <p style="text-align:center;margin-top:16px;font-family:'Inter',sans-serif;font-size:14px;color:rgba(255,255,255,0.7);">
+        <span data-es="No tienes cuenta?" data-en="Don't have an account?">No tienes cuenta?</span>
+        <a href="#registro" style="color:var(--gold);text-decoration:underline;margin-left:4px;" data-es="Registrarse" data-en="Register">Registrarse</a>
+      </p>
+    </form>
   </div>
 </section>
 
@@ -1356,12 +1388,13 @@
     .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
     .then(function(res) {
       if (res.ok && res.data.token) {
-        localStorage.setItem('hispatec_jwt', res.data.token);
+        localStorage.setItem('hispatec_token', res.data.token);
         msg.className = 'form-msg success';
         msg.textContent = currentLang === 'es'
-          ? 'Registro exitoso. Bienvenido a HISPATEC.'
-          : 'Registration successful. Welcome to HISPATEC.';
+          ? 'Registro exitoso. Redirigiendo al dashboard...'
+          : 'Registration successful. Redirecting to dashboard...';
         form.reset();
+        setTimeout(function() { window.location.href = '/hispatec/dashboard/'; }, 1500);
       } else {
         msg.className = 'form-msg error';
         msg.textContent = res.data.error || res.data.message || (currentLang === 'es' ? 'Error en el registro.' : 'Registration error.');
@@ -1378,6 +1411,66 @@
       btn.textContent = currentLang === 'es' ? 'Registrarse en HISPATEC' : 'Register at HISPATEC';
     });
   };
+
+  /* ── LOGIN HANDLER ── */
+  var loginForm = document.getElementById('loginForm');
+  if (loginForm) {
+    loginForm.onsubmit = function(e) {
+      e.preventDefault();
+      var msg = document.getElementById('loginMsg');
+      var btn = loginForm.querySelector('button[type="submit"]');
+      msg.className = 'form-msg';
+      msg.textContent = '';
+      btn.disabled = true;
+      btn.textContent = currentLang === 'es' ? 'Ingresando...' : 'Logging in...';
+
+      var data = {
+        email: loginForm.login_email.value.trim(),
+        password: loginForm.login_password.value
+      };
+
+      fetch('/hispatec/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(res) {
+        if (res.success && res.data && res.data.token) {
+          localStorage.setItem('hispatec_token', res.data.token);
+          msg.className = 'form-msg success';
+          msg.textContent = currentLang === 'es'
+            ? 'Sesion iniciada. Redirigiendo al dashboard...'
+            : 'Logged in. Redirecting to dashboard...';
+          setTimeout(function() { window.location.href = '/hispatec/dashboard/'; }, 1000);
+        } else {
+          msg.className = 'form-msg error';
+          msg.textContent = res.error || (currentLang === 'es' ? 'Credenciales invalidas.' : 'Invalid credentials.');
+        }
+      })
+      .catch(function() {
+        msg.className = 'form-msg error';
+        msg.textContent = currentLang === 'es' ? 'Error de conexion.' : 'Connection error.';
+      })
+      .finally(function() {
+        btn.disabled = false;
+        btn.textContent = currentLang === 'es' ? 'Entrar' : 'Log In';
+      });
+    };
+  }
+
+  /* ── CHECK IF ALREADY LOGGED IN ── */
+  var existingToken = localStorage.getItem('hispatec_token');
+  if (existingToken) {
+    var navArea = document.querySelector('.nav-links');
+    if (navArea) {
+      var dashLink = document.createElement('a');
+      dashLink.href = '/hispatec/dashboard/';
+      dashLink.textContent = 'Mi Dashboard';
+      dashLink.style.cssText = 'background:var(--gold);color:var(--navy);padding:8px 16px;border-radius:6px;font-weight:600;text-decoration:none;font-size:14px;';
+      navArea.appendChild(dashLink);
+    }
+  }
 
   /* ── SCROLL ANIMATION (Intersection Observer) ── */
   var observer = new IntersectionObserver(function(entries) {
