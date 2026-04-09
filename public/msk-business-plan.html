@@ -59,6 +59,15 @@
     .tl-item{position:relative;margin-bottom:28px}.tl-item:last-child{margin-bottom:0}
     .tl-dot{position:absolute;left:-32px;top:6px;width:24px;height:24px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#000}
 
+    .rachel-orb{position:relative;display:inline-flex;align-items:center;gap:14px;padding:10px 24px 10px 10px;border-radius:60px;background:linear-gradient(135deg,rgba(14,165,233,.12),rgba(6,182,212,.08));border:1px solid rgba(14,165,233,.3);text-decoration:none;transition:all .35s;margin-bottom:24px;cursor:pointer}
+    .rachel-orb:hover{border-color:rgba(14,165,233,.6);background:linear-gradient(135deg,rgba(14,165,233,.2),rgba(6,182,212,.14));transform:translateY(-2px);box-shadow:0 8px 32px rgba(14,165,233,.15);text-decoration:none}
+    .rachel-orb-glow{width:48px;height:48px;border-radius:50%;background:radial-gradient(circle,#0ea5e9 0%,#06b6d4 40%,rgba(6,182,212,.3) 70%,transparent 100%);animation:orb-pulse 2.5s ease-in-out infinite;display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px rgba(14,165,233,.4)}
+    .rachel-orb-glow::after{content:'';width:20px;height:20px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.9),rgba(14,165,233,.6));box-shadow:0 0 12px rgba(255,255,255,.5)}
+    @keyframes orb-pulse{0%,100%{transform:scale(1);box-shadow:0 0 20px rgba(14,165,233,.4)}50%{transform:scale(1.1);box-shadow:0 0 32px rgba(14,165,233,.6),0 0 64px rgba(6,182,212,.2)}}
+    .rachel-orb-text{display:flex;flex-direction:column;line-height:1.2}
+    .rachel-orb-name{font-weight:800;font-size:.95rem;color:#fff;letter-spacing:.3px}
+    .rachel-orb-role{font-size:.75rem;color:var(--cyan);font-weight:600;text-transform:uppercase;letter-spacing:1px}
+
     footer{padding:40px 0;border-top:1px solid var(--border);text-align:center;color:var(--dim);font-size:.8rem}
     @media print{body{background:#fff;color:#1a1a1a}.nav,.btn{display:none}.card{border:1px solid #ddd;background:#f9f9f9}section{padding:24px 0}}
     @media(max-width:768px){.grid2,.grid3,.grid4{grid-template-columns:1fr}.nav-links{display:none}}
@@ -89,6 +98,13 @@
 <header class="cover">
   <div class="cover-bg"></div>
   <div class="c" style="position:relative;z-index:2">
+    <a href="https://aiagent.ringlypro.com/msk-presentation.html" class="rachel-orb">
+      <div class="rachel-orb-glow"></div>
+      <div class="rachel-orb-text">
+        <span class="rachel-orb-name">Rachel</span>
+        <span class="rachel-orb-role">AI Presenter</span>
+      </div>
+    </a>
     <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:2.5px;color:var(--gold);margin-bottom:20px">Business Plan — Confidential</div>
     <h1 style="font-size:clamp(2.2rem,5vw,3.5rem);font-weight:900;line-height:1.12;margin-bottom:20px;max-width:700px">
       MSK Intelligence
