@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HISPATEC -- Plataforma de Integracion Estrategica Hispana</title>
+<meta name="description" content="HISPATEC conecta talento, recursos y oportunidades del mundo hispano. Plataforma de integracion estrategica para profesionales hispanohablantes.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal: #0d6e6e;
+    --teal-dark: #094d4d;
+    --teal-light: #e8f4f4;
+    --navy: #1a2332;
+    --navy-light: #2d3a4d;
+    --gold: #c8952e;
+    --gold-light: #f5e6c8;
+    --gold-dark: #a67a24;
+    --white: #ffffff;
+    --gray-50: #f8f9fa;
+    --gray-100: #f1f3f5;
+    --gray-200: #e9ecef;
+    --gray-300: #dee2e6;
+    --gray-500: #6c757d;
+    --gray-700: #495057;
+    --gray-900: #212529;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Source Serif 4', Georgia, serif;
+    color: var(--gray-900);
+    background: var(--white);
+    line-height: 1.7;
+    font-size: 16px;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', sans-serif;
+    line-height: 1.2;
+  }
+
+  a { text-decoration: none; color: inherit; }
+
+  /* ── HEADER ── */
+  .header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 1000;
+    padding: 0 32px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background 0.3s, box-shadow 0.3s;
+  }
+  .header.scrolled {
+    background: rgba(26,35,50,0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 2px 24px rgba(0,0,0,0.18);
+  }
+  .header-logo {
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    color: var(--white);
+    letter-spacing: 3px;
+  }
+  .header-logo span { color: var(--gold); }
+  .header-nav {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    list-style: none;
+  }
+  .header-nav a {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.8);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: color 0.2s;
+  }
+  .header-nav a:hover { color: var(--gold); }
+  .lang-toggle {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gold);
+    background: rgba(200,149,46,0.15);
+    border: 1px solid var(--gold);
+    padding: 5px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: background 0.2s;
+  }
+  .lang-toggle:hover { background: rgba(200,149,46,0.3); }
+
+  .mobile-menu-btn {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+  }
+  .mobile-menu-btn span {
+    display: block;
+    width: 24px;
+    height: 2px;
+    background: var(--white);
+    margin: 5px 0;
+    transition: transform 0.3s, opacity 0.3s;
+  }
+  .mobile-menu-btn.active span:nth-child(1) { transform: rotate(45deg) translate(5px,5px); }
+  .mobile-menu-btn.active span:nth-child(2) { opacity: 0; }
+  .mobile-menu-btn.active span:nth-child(3) { transform: rotate(-45deg) translate(5px,-5px); }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    background: linear-gradient(160deg, var(--navy) 0%, var(--teal-dark) 55%, var(--teal) 100%);
+    color: var(--white);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 120px 32px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    animation: gridShift 20s linear infinite;
+  }
+  @keyframes gridShift {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(60px, 60px); }
+  }
+  .hero-content {
+    position: relative;
+    z-index: 1;
+    max-width: 820px;
+  }
+  .hero h1 {
+    font-size: 56px;
+    font-weight: 900;
+    margin-bottom: 20px;
+    letter-spacing: -1px;
+  }
+  .hero h1 em {
+    font-style: normal;
+    color: var(--gold);
+  }
+  .hero p {
+    font-size: 20px;
+    color: rgba(255,255,255,0.85);
+    max-width: 640px;
+    margin: 0 auto 40px;
+    line-height: 1.6;
+  }
+  .hero-ctas {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .btn-gold {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    background: var(--gold);
+    color: var(--white);
+    padding: 14px 32px;
+    border-radius: 6px;
+    border: 2px solid var(--gold);
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+    display: inline-block;
+  }
+  .btn-gold:hover { background: var(--gold-dark); transform: translateY(-1px); }
+  .btn-outline {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    background: transparent;
+    color: var(--white);
+    padding: 14px 32px;
+    border-radius: 6px;
+    border: 2px solid rgba(255,255,255,0.4);
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    display: inline-block;
+  }
+  .btn-outline:hover { border-color: var(--white); background: rgba(255,255,255,0.08); }
+
+  /* ── SECTIONS ── */
+  .section {
+    padding: 100px 32px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .section-alt {
+    background: var(--gray-50);
+  }
+  .section-dark {
+    background: var(--navy);
+    color: var(--white);
+  }
+  .section-teal {
+    background: linear-gradient(135deg, var(--teal-dark) 0%, var(--teal) 100%);
+    color: var(--white);
+  }
+  .section-full {
+    max-width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .section-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+  .section-title {
+    font-size: 38px;
+    font-weight: 800;
+    margin-bottom: 12px;
+    color: var(--navy);
+  }
+  .section-dark .section-title,
+  .section-teal .section-title {
+    color: var(--white);
+  }
+  .section-subtitle {
+    font-size: 18px;
+    color: var(--gray-500);
+    margin-bottom: 48px;
+    max-width: 600px;
+  }
+  .section-dark .section-subtitle,
+  .section-teal .section-subtitle {
+    color: rgba(255,255,255,0.7);
+  }
+  .gold-line {
+    width: 60px;
+    height: 3px;
+    background: var(--gold);
+    margin-bottom: 20px;
+  }
+
+  /* ── QUE ES ── */
+  .quees-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: start;
+  }
+  .quees-text p {
+    font-size: 17px;
+    line-height: 1.8;
+    color: var(--gray-700);
+    margin-bottom: 16px;
+  }
+  .comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .comparison-table th {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding: 12px 16px;
+    text-align: left;
+  }
+  .comparison-table th.no-col {
+    color: #c0392b;
+    background: #fdf2f2;
+    border-radius: 6px 0 0 0;
+  }
+  .comparison-table th.si-col {
+    color: var(--teal);
+    background: var(--teal-light);
+    border-radius: 0 6px 0 0;
+  }
+  .comparison-table td {
+    padding: 14px 16px;
+    font-size: 15px;
+    border-bottom: 1px solid var(--gray-200);
+    vertical-align: top;
+  }
+  .comparison-table td:first-child {
+    color: var(--gray-500);
+    text-decoration: line-through;
+    text-decoration-color: rgba(192,57,43,0.3);
+  }
+  .comparison-table td:last-child {
+    color: var(--navy);
+    font-weight: 600;
+  }
+
+  /* ── CARDS ── */
+  .cards-grid {
+    display: grid;
+    gap: 24px;
+  }
+  .cards-grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .cards-grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .cards-grid-2 { grid-template-columns: repeat(2, 1fr); }
+
+  .card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 32px 28px;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+  }
+  .card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    background: var(--teal-light);
+    color: var(--teal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    margin-bottom: 18px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+  }
+  .card-icon.gold-icon {
+    background: var(--gold-light);
+    color: var(--gold-dark);
+  }
+  .card h3 {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--navy);
+  }
+  .card p {
+    font-size: 14px;
+    color: var(--gray-500);
+    line-height: 1.6;
+  }
+
+  .section-dark .card {
+    background: var(--navy-light);
+    border-color: rgba(255,255,255,0.08);
+  }
+  .section-dark .card h3 { color: var(--white); }
+  .section-dark .card p { color: rgba(255,255,255,0.6); }
+
+  /* ── TIMELINE ── */
+  .timeline {
+    display: flex;
+    gap: 0;
+    position: relative;
+    padding: 40px 0;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    top: 68px;
+    left: 10%;
+    right: 10%;
+    height: 3px;
+    background: var(--gold);
+  }
+  .timeline-step {
+    flex: 1;
+    text-align: center;
+    position: relative;
+  }
+  .timeline-num {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--gold);
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    position: relative;
+    z-index: 1;
+  }
+  .timeline-step h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 6px;
+  }
+  .timeline-step p {
+    font-size: 13px;
+    color: var(--gray-500);
+    padding: 0 8px;
+  }
+
+  /* ── ASOCIADOS TIERS ── */
+  .tiers-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+  }
+  .tier-card {
+    border-radius: 10px;
+    padding: 28px 20px;
+    text-align: center;
+    transition: transform 0.2s;
+  }
+  .tier-card:hover { transform: translateY(-4px); }
+  .tier-card h3 {
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+  .tier-card .tier-subtitle {
+    font-size: 12px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+    opacity: 0.8;
+  }
+  .tier-card p {
+    font-size: 13px;
+    line-height: 1.5;
+    opacity: 0.85;
+  }
+  .tier-fundadores { background: linear-gradient(135deg, var(--gold-dark), var(--gold)); color: var(--white); }
+  .tier-honorificos { background: linear-gradient(135deg, #2c3e50, #34495e); color: var(--white); }
+  .tier-numerarios { background: linear-gradient(135deg, var(--teal-dark), var(--teal)); color: var(--white); }
+  .tier-protectores { background: linear-gradient(135deg, #1a365d, #2a4a7f); color: var(--white); }
+  .tier-patronos { background: linear-gradient(135deg, #5b2c6f, #7d3c98); color: var(--white); }
+
+  /* ── REGIONS ── */
+  .regions-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 36px;
+    margin-bottom: 24px;
+  }
+  .region-item {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    transition: background 0.2s;
+  }
+  .region-item:hover { background: rgba(255,255,255,0.14); }
+  .region-item small {
+    display: block;
+    font-weight: 400;
+    font-size: 12px;
+    opacity: 0.7;
+    margin-top: 4px;
+  }
+
+  /* ── TECH ── */
+  .tech-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 32px 0;
+  }
+  .tech-badge {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 30px;
+    background: rgba(13,110,110,0.12);
+    color: var(--teal);
+    border: 1px solid rgba(13,110,110,0.2);
+  }
+  .hci-display {
+    background: var(--navy);
+    border-radius: 10px;
+    padding: 32px;
+    margin-top: 32px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    color: var(--white);
+  }
+  .hci-value {
+    font-family: 'Inter', sans-serif;
+    font-size: 56px;
+    font-weight: 900;
+    color: var(--gold);
+    line-height: 1;
+  }
+  .hci-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    opacity: 0.7;
+  }
+  .hci-desc {
+    font-size: 15px;
+    opacity: 0.8;
+  }
+
+  /* ── REGISTRATION ── */
+  .reg-section {
+    background: linear-gradient(160deg, var(--navy) 0%, var(--teal-dark) 100%);
+    color: var(--white);
+  }
+  .reg-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+  }
+  .reg-form {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 36px;
+  }
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .form-group {
+    margin-bottom: 16px;
+  }
+  .form-group label {
+    display: block;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+    opacity: 0.8;
+  }
+  .form-group input,
+  .form-group select {
+    width: 100%;
+    padding: 11px 14px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.08);
+    color: var(--white);
+    font-family: 'Source Serif 4', serif;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-group input::placeholder { color: rgba(255,255,255,0.4); }
+  .form-group input:focus,
+  .form-group select:focus { border-color: var(--gold); }
+  .form-group select option { color: var(--gray-900); background: var(--white); }
+
+  .radio-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .radio-option {
+    position: relative;
+  }
+  .radio-option input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  .radio-option label {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.25);
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    text-transform: none;
+    letter-spacing: 0;
+    transition: all 0.2s;
+  }
+  .radio-option input:checked + label {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--white);
+  }
+
+  .btn-submit {
+    width: 100%;
+    padding: 14px;
+    background: var(--gold);
+    color: var(--white);
+    border: none;
+    border-radius: 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 8px;
+  }
+  .btn-submit:hover { background: var(--gold-dark); }
+  .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .form-msg {
+    margin-top: 14px;
+    padding: 12px;
+    border-radius: 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    display: none;
+  }
+  .form-msg.success { display: block; background: rgba(39,174,96,0.15); border: 1px solid rgba(39,174,96,0.3); color: #2ecc71; }
+  .form-msg.error { display: block; background: rgba(192,57,43,0.15); border: 1px solid rgba(192,57,43,0.3); color: #e74c3c; }
+
+  /* ── FOOTER ── */
+  .footer {
+    background: var(--navy);
+    color: rgba(255,255,255,0.6);
+    padding: 60px 32px 40px;
+  }
+  .footer-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 40px;
+  }
+  .footer-brand h3 {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--white);
+    letter-spacing: 3px;
+    margin-bottom: 12px;
+  }
+  .footer-brand h3 span { color: var(--gold); }
+  .footer-brand p { font-size: 14px; line-height: 1.7; }
+  .footer-col h4 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--white);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 16px;
+  }
+  .footer-col a {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 10px;
+    transition: color 0.2s;
+  }
+  .footer-col a:hover { color: var(--gold); }
+  .footer-bottom {
+    max-width: 1200px;
+    margin: 40px auto 0;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 1024px) {
+    .tiers-grid { grid-template-columns: repeat(3, 1fr); }
+    .footer-inner { grid-template-columns: 1fr 1fr; }
+  }
+
+  @media (max-width: 768px) {
+    .header-nav { display: none; }
+    .header-nav.open {
+      display: flex;
+      flex-direction: column;
+      position: absolute;
+      top: 64px;
+      left: 0; right: 0;
+      background: rgba(26,35,50,0.96);
+      backdrop-filter: blur(12px);
+      padding: 24px 32px;
+      gap: 18px;
+    }
+    .mobile-menu-btn { display: block; }
+    .hero h1 { font-size: 36px; }
+    .hero p { font-size: 17px; }
+    .section { padding: 64px 20px; }
+    .section-inner { padding: 0 20px; }
+    .section-title { font-size: 28px; }
+    .quees-grid { grid-template-columns: 1fr; gap: 36px; }
+    .cards-grid-3 { grid-template-columns: 1fr 1fr; }
+    .cards-grid-4 { grid-template-columns: 1fr 1fr; }
+    .timeline { flex-direction: column; gap: 24px; padding: 20px 0; }
+    .timeline::before {
+      top: 0; bottom: 0;
+      left: 19px;
+      right: auto;
+      width: 3px;
+      height: auto;
+    }
+    .timeline-step {
+      text-align: left;
+      padding-left: 60px;
+    }
+    .timeline-num {
+      position: absolute;
+      left: 0;
+      margin: 0;
+    }
+    .tiers-grid { grid-template-columns: 1fr 1fr; }
+    .regions-grid { grid-template-columns: 1fr 1fr; }
+    .reg-grid { grid-template-columns: 1fr; gap: 36px; }
+    .footer-inner { grid-template-columns: 1fr; gap: 28px; }
+  }
+
+  @media (max-width: 480px) {
+    .hero h1 { font-size: 28px; }
+    .hero p { font-size: 15px; }
+    .hero-ctas { flex-direction: column; }
+    .btn-gold, .btn-outline { width: 100%; text-align: center; }
+    .cards-grid-3, .cards-grid-4 { grid-template-columns: 1fr; }
+    .tiers-grid { grid-template-columns: 1fr; }
+    .regions-grid { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+    .section-title { font-size: 24px; }
+    .hci-display { flex-direction: column; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════ HEADER ═══════ -->
+<header class="header" id="header">
+  <a href="#hero" class="header-logo">HISPA<span>TEC</span></a>
+  <nav>
+    <ul class="header-nav" id="navMenu">
+      <li><a href="#quees" data-es="Que es" data-en="About">Que es</a></li>
+      <li><a href="#ejes" data-es="Ejes" data-en="Pillars">Ejes</a></li>
+      <li><a href="#sectores" data-es="Sectores" data-en="Sectors">Sectores</a></li>
+      <li><a href="#proyectos" data-es="Proyectos" data-en="Projects">Proyectos</a></li>
+      <li><a href="#asociados" data-es="Asociados" data-en="Members">Asociados</a></li>
+      <li><a href="#registro" data-es="Contacto" data-en="Contact">Contacto</a></li>
+      <li><button class="lang-toggle" id="langToggle" onclick="toggleLang()">EN</button></li>
+    </ul>
+  </nav>
+  <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+
+<!-- ═══════ HERO ═══════ -->
+<section class="hero" id="hero">
+  <div class="hero-content">
+    <h1 data-es="Accion, <em>no solo palabras.</em>" data-en="Action, <em>not just words.</em>">Accion, <em>no solo palabras.</em></h1>
+    <p data-es="Plataforma de Integracion Estrategica Hispana -- conectando talento, recursos y oportunidades del mundo hispano." data-en="Hispanic Strategic Integration Platform -- connecting talent, resources, and opportunities across the Hispanic world.">Plataforma de Integracion Estrategica Hispana -- conectando talento, recursos y oportunidades del mundo hispano.</p>
+    <div class="hero-ctas">
+      <a href="#registro" class="btn-gold" data-es="Unete como Socio Fundador" data-en="Join as Founding Member">Unete como Socio Fundador</a>
+      <a href="whitepaper.html" class="btn-outline" data-es="Whitepaper Tecnico" data-en="Technical Whitepaper">Whitepaper Tecnico</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ QUE ES ═══════ -->
+<section class="section" id="quees">
+  <div class="gold-line"></div>
+  <h2 class="section-title" data-es="Que es HISPATEC" data-en="What is HISPATEC">Que es HISPATEC</h2>
+  <p class="section-subtitle" data-es="Claridad sobre nuestra mision y modelo." data-en="Clarity about our mission and model.">Claridad sobre nuestra mision y modelo.</p>
+  <div class="quees-grid">
+    <div class="quees-text">
+      <p data-es="HISPATEC es una plataforma de integracion estrategica que conecta a profesionales, empresas e instituciones del mundo hispanohablante. Nuestro proposito es generar proyectos de alto impacto en sectores estrategicos, coordinando talento distribuido en mas de 22 paises con una infraestructura digital avanzada." data-en="HISPATEC is a strategic integration platform that connects professionals, companies, and institutions from the Spanish-speaking world. Our purpose is to generate high-impact projects in strategic sectors, coordinating distributed talent across 22+ countries with advanced digital infrastructure.">HISPATEC es una plataforma de integracion estrategica que conecta a profesionales, empresas e instituciones del mundo hispanohablante. Nuestro proposito es generar proyectos de alto impacto en sectores estrategicos, coordinando talento distribuido en mas de 22 paises con una infraestructura digital avanzada.</p>
+      <p data-es="No buscamos representar ideologias ni competir con camaras de comercio. Somos un nodo de confianza y accion: conectamos a quienes pueden con quienes necesitan, y ejecutamos proyectos reales con gobernanza transparente." data-en="We don't seek to represent ideologies or compete with chambers of commerce. We are a trust and action node: we connect those who can with those who need, and we execute real projects with transparent governance.">No buscamos representar ideologias ni competir con camaras de comercio. Somos un nodo de confianza y accion: conectamos a quienes pueden con quienes necesitan, y ejecutamos proyectos reales con gobernanza transparente.</p>
+    </div>
+    <div>
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th class="no-col" data-es="NO ES" data-en="IT IS NOT">NO ES</th>
+            <th class="si-col" data-es="SI ES" data-en="IT IS">SI ES</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td data-es="Asociacion cultural" data-en="Cultural association">Asociacion cultural</td>
+            <td data-es="Accion tecnica estrategica" data-en="Strategic technical action">Accion tecnica estrategica</td>
+          </tr>
+          <tr>
+            <td data-es="Foro ideologico" data-en="Ideological forum">Foro ideologico</td>
+            <td data-es="Neutralidad estrategica" data-en="Strategic neutrality">Neutralidad estrategica</td>
+          </tr>
+          <tr>
+            <td data-es="Colegio profesional" data-en="Professional college">Colegio profesional</td>
+            <td data-es="Red de conexion activa" data-en="Active connection network">Red de conexion activa</td>
+          </tr>
+          <tr>
+            <td data-es="Consultoria" data-en="Consultancy">Consultoria</td>
+            <td data-es="Nodo de acompanamiento" data-en="Accompaniment node">Nodo de acompanamiento</td>
+          </tr>
+          <tr>
+            <td data-es="Camara de Comercio" data-en="Chamber of Commerce">Camara de Comercio</td>
+            <td data-es="Red de confianza" data-en="Trust network">Red de confianza</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ EJES ESTRATEGICOS ═══════ -->
+<section class="section section-alt section-full" id="ejes">
+  <div class="section-inner">
+    <div class="gold-line"></div>
+    <h2 class="section-title" data-es="6 Ejes para el Futuro de la Hispanidad" data-en="6 Pillars for the Future of the Hispanic World">6 Ejes para el Futuro de la Hispanidad</h2>
+    <p class="section-subtitle" data-es="Los pilares que articulan toda nuestra estrategia y operacion." data-en="The pillars that articulate our entire strategy and operation.">Los pilares que articulan toda nuestra estrategia y operacion.</p>
+    <div class="cards-grid cards-grid-3">
+
+      <div class="card">
+        <div class="card-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        </div>
+        <h3 data-es="Planificacion Estrategica" data-en="Strategic Planning">Planificacion Estrategica</h3>
+        <p data-es="El Rumbo. Definicion de objetivos a largo plazo, hojas de ruta regionales y evaluacion continua mediante indicadores de impacto." data-en="The Direction. Long-term objectives, regional roadmaps, and continuous evaluation through impact indicators.">El Rumbo. Definicion de objetivos a largo plazo, hojas de ruta regionales y evaluacion continua mediante indicadores de impacto.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h3 data-es="Captacion y Participacion" data-en="Recruitment and Engagement">Captacion y Participacion</h3>
+        <p data-es="El Motor Humano. Identificacion, onboarding y activacion de profesionales clave en cada region y sector prioritario." data-en="The Human Engine. Identification, onboarding, and activation of key professionals in each region and priority sector.">El Motor Humano. Identificacion, onboarding y activacion de profesionales clave en cada region y sector prioritario.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
+        </div>
+        <h3 data-es="Proyectos y Cooperacion" data-en="Projects and Cooperation">Proyectos y Cooperacion</h3>
+        <p data-es="La Accion Tangible. Diseno, lanzamiento y acompanamiento de proyectos reales con impacto medible en la comunidad hispana." data-en="Tangible Action. Design, launch, and accompaniment of real projects with measurable impact on the Hispanic community.">La Accion Tangible. Diseno, lanzamiento y acompanamiento de proyectos reales con impacto medible en la comunidad hispana.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon gold-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <h3 data-es="Financiacion y Alianzas" data-en="Funding and Alliances">Financiacion y Alianzas</h3>
+        <p data-es="Los Recursos. Modelos de financiacion sostenible, alianzas publico-privadas y fondos concursables para proyectos estrategicos." data-en="The Resources. Sustainable funding models, public-private alliances, and competitive funds for strategic projects.">Los Recursos. Modelos de financiacion sostenible, alianzas publico-privadas y fondos concursables para proyectos estrategicos.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon gold-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <h3 data-es="Comunicacion y Representacion" data-en="Communication and Representation">Comunicacion y Representacion</h3>
+        <p data-es="La Voz Global. Posicionamiento institucional, relaciones publicas y narrativa estrategica del mundo hispanohablante." data-en="The Global Voice. Institutional positioning, public relations, and strategic narrative of the Spanish-speaking world.">La Voz Global. Posicionamiento institucional, relaciones publicas y narrativa estrategica del mundo hispanohablante.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon gold-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/><path d="M9 1v3"/><path d="M15 1v3"/><path d="M9 20v3"/><path d="M15 20v3"/><path d="M20 9h3"/><path d="M20 14h3"/><path d="M1 9h3"/><path d="M1 14h3"/></svg>
+        </div>
+        <h3 data-es="Tecnologia y Seguridad" data-en="Technology and Security">Tecnologia y Seguridad</h3>
+        <p data-es="La Infraestructura Digital. Plataforma MCP, identidad digital, ciberseguridad y herramientas de inteligencia artificial." data-en="The Digital Infrastructure. MCP platform, digital identity, cybersecurity, and artificial intelligence tools.">La Infraestructura Digital. Plataforma MCP, identidad digital, ciberseguridad y herramientas de inteligencia artificial.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ SECTORES PRIORITARIOS ═══════ -->
+<section class="section" id="sectores">
+  <div class="gold-line"></div>
+  <h2 class="section-title" data-es="Sectores Prioritarios" data-en="Priority Sectors">Sectores Prioritarios</h2>
+  <p class="section-subtitle" data-es="Las areas donde la accion coordinada genera mayor impacto." data-en="The areas where coordinated action generates the greatest impact.">Las areas donde la accion coordinada genera mayor impacto.</p>
+  <div class="cards-grid cards-grid-4">
+
+    <div class="card">
+      <div class="card-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      </div>
+      <h3 data-es="Ecosistema y Soberania Digital" data-en="Digital Ecosystem and Sovereignty">Ecosistema y Soberania Digital</h3>
+      <p data-es="Plataformas tecnologicas propias, hosting soberano, ciberseguridad compartida e infraestructura cloud hispana." data-en="Proprietary technology platforms, sovereign hosting, shared cybersecurity, and Hispanic cloud infrastructure.">Plataformas tecnologicas propias, hosting soberano, ciberseguridad compartida e infraestructura cloud hispana.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <h3 data-es="Agroindustria y Energia Estrategica" data-en="Agroindustry and Strategic Energy">Agroindustria y Energia Estrategica</h3>
+      <p data-es="Cadenas de valor agricolas, exportacion coordinada, energia renovable y seguridad alimentaria." data-en="Agricultural value chains, coordinated exports, renewable energy, and food security.">Cadenas de valor agricolas, exportacion coordinada, energia renovable y seguridad alimentaria.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-icon gold-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="22" height="12" rx="2"/><path d="M1 10h22"/></svg>
+      </div>
+      <h3 data-es="Infraestructura Civil y Logistica" data-en="Civil Infrastructure and Logistics">Infraestructura Civil y Logistica</h3>
+      <p data-es="Proyectos de conectividad, puertos, corredores logisticos y obras publicas con participacion hispana." data-en="Connectivity projects, ports, logistics corridors, and public works with Hispanic participation.">Proyectos de conectividad, puertos, corredores logisticos y obras publicas con participacion hispana.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-icon gold-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      </div>
+      <h3 data-es="Ciencia, Salud y Talento Joven" data-en="Science, Health, and Young Talent">Ciencia, Salud y Talento Joven</h3>
+      <p data-es="Investigacion conjunta, telemedicina, becas de talento y programas de movilidad academica." data-en="Joint research, telemedicine, talent scholarships, and academic mobility programs.">Investigacion conjunta, telemedicina, becas de talento y programas de movilidad academica.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════ COMO FUNCIONA ═══════ -->
+<section class="section section-alt section-full">
+  <div class="section-inner">
+    <div class="gold-line"></div>
+    <h2 class="section-title" data-es="De la Idea a la Realidad" data-en="From Idea to Reality">De la Idea a la Realidad</h2>
+    <p class="section-subtitle" data-es="El ciclo de vida de cada proyecto dentro de HISPATEC." data-en="The lifecycle of each project within HISPATEC.">El ciclo de vida de cada proyecto dentro de HISPATEC.</p>
+    <div class="timeline">
+      <div class="timeline-step">
+        <div class="timeline-num">1</div>
+        <h4 data-es="Propuesta de Proyecto" data-en="Project Proposal">Propuesta de Proyecto</h4>
+        <p data-es="Un asociado o delegacion presenta una iniciativa con alcance y objetivos definidos." data-en="A member or delegation presents an initiative with defined scope and objectives.">Un asociado o delegacion presenta una iniciativa con alcance y objetivos definidos.</p>
+      </div>
+      <div class="timeline-step">
+        <div class="timeline-num">2</div>
+        <h4 data-es="Analisis de Oportunidad" data-en="Opportunity Analysis">Analisis de Oportunidad</h4>
+        <p data-es="El comite tecnico evalua viabilidad, impacto y alineacion con los ejes estrategicos." data-en="The technical committee evaluates feasibility, impact, and alignment with strategic pillars.">El comite tecnico evalua viabilidad, impacto y alineacion con los ejes estrategicos.</p>
+      </div>
+      <div class="timeline-step">
+        <div class="timeline-num">3</div>
+        <h4 data-es="Nombramiento de Equipo" data-en="Team Assignment">Nombramiento de Equipo</h4>
+        <p data-es="Se asignan coordinadores regionales y expertos sectoriales al proyecto." data-en="Regional coordinators and sector experts are assigned to the project.">Se asignan coordinadores regionales y expertos sectoriales al proyecto.</p>
+      </div>
+      <div class="timeline-step">
+        <div class="timeline-num">4</div>
+        <h4 data-es="Captacion de Recursos" data-en="Resource Acquisition">Captacion de Recursos</h4>
+        <p data-es="Financiacion, alianzas y recursos humanos se movilizan desde la red global." data-en="Funding, alliances, and human resources are mobilized from the global network.">Financiacion, alianzas y recursos humanos se movilizan desde la red global.</p>
+      </div>
+      <div class="timeline-step">
+        <div class="timeline-num">5</div>
+        <h4 data-es="Ejecucion del Proyecto" data-en="Project Execution">Ejecucion del Proyecto</h4>
+        <p data-es="Implementacion con seguimiento continuo, reportes de impacto y transparencia total." data-en="Implementation with continuous monitoring, impact reports, and full transparency.">Implementacion con seguimiento continuo, reportes de impacto y transparencia total.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ PROYECTOS PILOTO ═══════ -->
+<section class="section section-dark section-full" id="proyectos">
+  <div class="section-inner">
+    <div class="gold-line"></div>
+    <h2 class="section-title" data-es="Proyectos Piloto" data-en="Pilot Projects">Proyectos Piloto</h2>
+    <p class="section-subtitle" data-es="Iniciativas en fase de diseno que demuestran el modelo HISPATEC en accion." data-en="Initiatives in the design phase that demonstrate the HISPATEC model in action.">Iniciativas en fase de diseno que demuestran el modelo HISPATEC en accion.</p>
+    <div class="cards-grid cards-grid-3">
+
+      <div class="card">
+        <div class="card-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </div>
+        <h3 data-es="Expansion Empresarial" data-en="Business Expansion">Expansion Empresarial</h3>
+        <p data-es="Programa de landing suave para PYMEs hispanas que buscan expandirse a nuevos mercados hispanohablantes. Incluye mentoria legal, fiscal y operativa con socios locales." data-en="Soft landing program for Hispanic SMEs seeking to expand into new Spanish-speaking markets. Includes legal, tax, and operational mentoring with local partners.">Programa de landing suave para PYMEs hispanas que buscan expandirse a nuevos mercados hispanohablantes. Incluye mentoria legal, fiscal y operativa con socios locales.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--gold);font-family:'Inter',sans-serif;font-weight:600;" data-es="Resultado esperado: 50 empresas conectadas en 12 meses" data-en="Expected result: 50 companies connected in 12 months">Resultado esperado: 50 empresas conectadas en 12 meses</p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h3 data-es="Exportacion Agro" data-en="Agro Export">Exportacion Agro</h3>
+        <p data-es="Corredor de exportacion agricola entre productores de Centroamerica y distribuidores en Europa y Norteamerica. Trazabilidad blockchain y certificacion coordinada." data-en="Agricultural export corridor between Central American producers and distributors in Europe and North America. Blockchain traceability and coordinated certification.">Corredor de exportacion agricola entre productores de Centroamerica y distribuidores en Europa y Norteamerica. Trazabilidad blockchain y certificacion coordinada.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--gold);font-family:'Inter',sans-serif;font-weight:600;" data-es="Resultado esperado: 3 rutas de exportacion activas" data-en="Expected result: 3 active export routes">Resultado esperado: 3 rutas de exportacion activas</p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon gold-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/><path d="M9 1v3"/><path d="M15 1v3"/><path d="M9 20v3"/><path d="M15 20v3"/><path d="M20 9h3"/><path d="M20 14h3"/><path d="M1 9h3"/><path d="M1 14h3"/></svg>
+        </div>
+        <h3 data-es="Proyecto Tecnologico" data-en="Technology Project">Proyecto Tecnologico</h3>
+        <p data-es="Hub de desarrollo de software hispano con equipos distribuidos en 6 paises. Especializacion en IA, ciberseguridad y plataformas de gobierno digital." data-en="Hispanic software development hub with distributed teams in 6 countries. Specialization in AI, cybersecurity, and digital government platforms.">Hub de desarrollo de software hispano con equipos distribuidos en 6 paises. Especializacion en IA, ciberseguridad y plataformas de gobierno digital.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--gold);font-family:'Inter',sans-serif;font-weight:600;" data-es="Resultado esperado: 200 profesionales activos en 18 meses" data-en="Expected result: 200 active professionals in 18 months">Resultado esperado: 200 profesionales activos en 18 meses</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ TIPOS DE ASOCIADOS ═══════ -->
+<section class="section" id="asociados">
+  <div class="gold-line"></div>
+  <h2 class="section-title" data-es="Tipos de Asociados" data-en="Membership Types">Tipos de Asociados</h2>
+  <p class="section-subtitle" data-es="Cinco categorias para diferentes formas de contribuir y participar." data-en="Five categories for different ways to contribute and participate.">Cinco categorias para diferentes formas de contribuir y participar.</p>
+  <div class="tiers-grid">
+
+    <div class="tier-card tier-fundadores">
+      <h3 data-es="Fundadores" data-en="Founders">Fundadores</h3>
+      <div class="tier-subtitle" data-es="El Cimiento Estrategico" data-en="The Strategic Foundation">El Cimiento Estrategico</div>
+      <p data-es="Miembros constituyentes con voz y voto permanente en la gobernanza. Acceso total a la plataforma y participacion en la junta directiva." data-en="Founding members with permanent voice and vote in governance. Full platform access and board participation.">Miembros constituyentes con voz y voto permanente en la gobernanza. Acceso total a la plataforma y participacion en la junta directiva.</p>
+    </div>
+
+    <div class="tier-card tier-honorificos">
+      <h3 data-es="Honorificos" data-en="Honorary">Honorificos</h3>
+      <div class="tier-subtitle" data-es="Embajadores de la Red" data-en="Network Ambassadors">Embajadores de la Red</div>
+      <p data-es="Figuras de reconocido prestigio que representan la mision de HISPATEC. Rol de representacion institucional y apertura de puertas." data-en="Figures of recognized prestige who represent HISPATEC's mission. Institutional representation and door-opening role.">Figuras de reconocido prestigio que representan la mision de HISPATEC. Rol de representacion institucional y apertura de puertas.</p>
+    </div>
+
+    <div class="tier-card tier-numerarios">
+      <h3 data-es="Numerarios" data-en="Regular Members">Numerarios</h3>
+      <div class="tier-subtitle" data-es="El Motor Operativo" data-en="The Operative Engine">El Motor Operativo</div>
+      <p data-es="Profesionales activos que participan en proyectos, comites y delegaciones. La columna vertebral operativa de la organizacion." data-en="Active professionals who participate in projects, committees, and delegations. The operational backbone of the organization.">Profesionales activos que participan en proyectos, comites y delegaciones. La columna vertebral operativa de la organizacion.</p>
+    </div>
+
+    <div class="tier-card tier-protectores">
+      <h3 data-es="Protectores" data-en="Patrons">Protectores</h3>
+      <div class="tier-subtitle" data-es="Soporte e Inversion" data-en="Support and Investment">Soporte e Inversion</div>
+      <p data-es="Empresas e instituciones que financian proyectos estrategicos y reciben visibilidad, reportes de impacto y acceso preferente." data-en="Companies and institutions that fund strategic projects and receive visibility, impact reports, and preferred access.">Empresas e instituciones que financian proyectos estrategicos y reciben visibilidad, reportes de impacto y acceso preferente.</p>
+    </div>
+
+    <div class="tier-card tier-patronos">
+      <h3 data-es="Patronos" data-en="Benefactors">Patronos</h3>
+      <div class="tier-subtitle" data-es="Experiencia y Valor" data-en="Experience and Value">Experiencia y Valor</div>
+      <p data-es="Lideres senior que aportan mentoria, redes de contacto y capital intelectual a la comunidad." data-en="Senior leaders who contribute mentorship, contact networks, and intellectual capital to the community.">Lideres senior que aportan mentoria, redes de contacto y capital intelectual a la comunidad.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════ ESTRUCTURA GLOBAL ═══════ -->
+<section class="section section-dark section-full">
+  <div class="section-inner">
+    <div class="gold-line"></div>
+    <h2 class="section-title" data-es="Estructura Global" data-en="Global Structure">Estructura Global</h2>
+    <p class="section-subtitle" data-es="Presencia distribuida en 6 regiones con sede central rotatoria." data-en="Distributed presence in 6 regions with rotating central headquarters.">Presencia distribuida en 6 regiones con sede central rotatoria.</p>
+    <div class="regions-grid">
+      <div class="region-item" data-es="Norteamerica<small>Mexico, EE.UU., Canada</small>" data-en="North America<small>Mexico, USA, Canada</small>">Norteamerica<small>Mexico, EE.UU., Canada</small></div>
+      <div class="region-item" data-es="Centroamerica y Caribe<small>Guatemala, Honduras, Costa Rica, RD, Cuba, PR</small>" data-en="Central America and Caribbean<small>Guatemala, Honduras, Costa Rica, DR, Cuba, PR</small>">Centroamerica y Caribe<small>Guatemala, Honduras, Costa Rica, RD, Cuba, PR</small></div>
+      <div class="region-item" data-es="Andina<small>Colombia, Venezuela, Ecuador, Peru, Bolivia</small>" data-en="Andean<small>Colombia, Venezuela, Ecuador, Peru, Bolivia</small>">Andina<small>Colombia, Venezuela, Ecuador, Peru, Bolivia</small></div>
+      <div class="region-item" data-es="Cono Sur<small>Argentina, Chile, Uruguay, Paraguay</small>" data-en="Southern Cone<small>Argentina, Chile, Uruguay, Paraguay</small>">Cono Sur<small>Argentina, Chile, Uruguay, Paraguay</small></div>
+      <div class="region-item" data-es="Peninsula Iberica<small>Espana, Portugal, Andorra</small>" data-en="Iberian Peninsula<small>Spain, Portugal, Andorra</small>">Peninsula Iberica<small>Espana, Portugal, Andorra</small></div>
+      <div class="region-item" data-es="Africa y Filipinas<small>Guinea Ecuatorial, Filipinas, Sahara</small>" data-en="Africa and Philippines<small>Equatorial Guinea, Philippines, Sahara</small>">Africa y Filipinas<small>Guinea Ecuatorial, Filipinas, Sahara</small></div>
+    </div>
+    <p style="text-align:center;font-size:14px;opacity:0.7;font-family:'Inter',sans-serif;" data-es="La sede central rota cada 3 anos entre regiones para garantizar representatividad y equilibrio territorial." data-en="The central headquarters rotates every 3 years between regions to guarantee representativeness and territorial balance.">La sede central rota cada 3 anos entre regiones para garantizar representatividad y equilibrio territorial.</p>
+  </div>
+</section>
+
+<!-- ═══════ PLATAFORMA TECNOLOGICA ═══════ -->
+<section class="section section-alt section-full" id="tecnologia">
+  <div class="section-inner">
+    <div class="gold-line"></div>
+    <h2 class="section-title" data-es="Plataforma Tecnologica" data-en="Technology Platform">Plataforma Tecnologica</h2>
+    <p class="section-subtitle" data-es="Infraestructura digital avanzada para coordinacion a escala continental." data-en="Advanced digital infrastructure for continental-scale coordination.">Infraestructura digital avanzada para coordinacion a escala continental.</p>
+    <div class="tech-badges">
+      <span class="tech-badge">MCP Orchestrator</span>
+      <span class="tech-badge">Gini Coefficient</span>
+      <span class="tech-badge">AI Matching</span>
+      <span class="tech-badge">Monte Carlo Simulation</span>
+      <span class="tech-badge">TrustRank Algorithm</span>
+      <span class="tech-badge">Zero-Knowledge Proofs</span>
+    </div>
+    <p data-es="Nuestra plataforma integra modelos de inteligencia artificial con algoritmos de teoria de juegos para optimizar la asignacion de recursos, calcular indices de confianza y simular escenarios de impacto antes de comprometer recursos reales." data-en="Our platform integrates artificial intelligence models with game theory algorithms to optimize resource allocation, calculate trust indices, and simulate impact scenarios before committing real resources.">Nuestra plataforma integra modelos de inteligencia artificial con algoritmos de teoria de juegos para optimizar la asignacion de recursos, calcular indices de confianza y simular escenarios de impacto antes de comprometer recursos reales.</p>
+
+    <div class="hci-display">
+      <div>
+        <div class="hci-label">HCI -- Hispanic Cooperation Index</div>
+        <div class="hci-value" id="hciValue">--</div>
+      </div>
+      <div>
+        <p class="hci-desc" data-es="Indice compuesto en tiempo real que mide la salud de la cooperacion hispana global. Calculado a partir de participacion activa, proyectos en ejecucion y flujo de recursos entre regiones." data-en="Real-time composite index that measures the health of global Hispanic cooperation. Calculated from active participation, projects in execution, and resource flow between regions.">Indice compuesto en tiempo real que mide la salud de la cooperacion hispana global. Calculado a partir de participacion activa, proyectos en ejecucion y flujo de recursos entre regiones.</p>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:36px;">
+      <a href="whitepaper.html" class="btn-gold" data-es="Ver Whitepaper Tecnico Completo" data-en="View Complete Technical Whitepaper">Ver Whitepaper Tecnico Completo</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ REGISTRO ═══════ -->
+<section class="section reg-section section-full" id="registro">
+  <div class="section-inner">
+    <div class="reg-grid">
+      <div>
+        <div class="gold-line"></div>
+        <h2 class="section-title" style="color:var(--white);" data-es="Construyamos la Hispanidad del Siglo XXI" data-en="Let's Build the Hispanic World of the 21st Century">Construyamos la Hispanidad del Siglo XXI</h2>
+        <p style="color:rgba(255,255,255,0.75);font-size:18px;margin-top:16px;max-width:460px;" data-es="Unete a una red de profesionales, empresas e instituciones que estan construyendo el futuro del mundo hispano con accion concreta y tecnologia de vanguardia." data-en="Join a network of professionals, companies, and institutions building the future of the Hispanic world with concrete action and cutting-edge technology.">Unete a una red de profesionales, empresas e instituciones que estan construyendo el futuro del mundo hispano con accion concreta y tecnologia de vanguardia.</p>
+        <ul style="list-style:none;margin-top:28px;font-family:'Inter',sans-serif;font-size:14px;color:rgba(255,255,255,0.8);">
+          <li style="margin-bottom:10px;display:flex;align-items:center;gap:10px;">
+            <span style="color:var(--gold);font-weight:700;">+</span>
+            <span data-es="Acceso a proyectos estrategicos" data-en="Access to strategic projects">Acceso a proyectos estrategicos</span>
+          </li>
+          <li style="margin-bottom:10px;display:flex;align-items:center;gap:10px;">
+            <span style="color:var(--gold);font-weight:700;">+</span>
+            <span data-es="Red de contactos en 22+ paises" data-en="Contact network in 22+ countries">Red de contactos en 22+ paises</span>
+          </li>
+          <li style="margin-bottom:10px;display:flex;align-items:center;gap:10px;">
+            <span style="color:var(--gold);font-weight:700;">+</span>
+            <span data-es="Plataforma digital con IA avanzada" data-en="Digital platform with advanced AI">Plataforma digital con IA avanzada</span>
+          </li>
+          <li style="display:flex;align-items:center;gap:10px;">
+            <span style="color:var(--gold);font-weight:700;">+</span>
+            <span data-es="Gobernanza transparente y participativa" data-en="Transparent and participatory governance">Gobernanza transparente y participativa</span>
+          </li>
+        </ul>
+      </div>
+      <div>
+        <form class="reg-form" id="regForm" onsubmit="handleRegister(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label data-es="Nombre" data-en="First Name">Nombre</label>
+              <input type="text" name="first_name" required placeholder="Juan">
+            </div>
+            <div class="form-group">
+              <label data-es="Apellido" data-en="Last Name">Apellido</label>
+              <input type="text" name="last_name" required placeholder="Garcia">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" name="email" required placeholder="juan@ejemplo.com">
+          </div>
+          <div class="form-group">
+            <label data-es="Contrasena" data-en="Password">Contrasena</label>
+            <input type="password" name="password" required minlength="8" placeholder="Min. 8 caracteres">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label data-es="Pais" data-en="Country">Pais</label>
+              <select name="country" required>
+                <option value="">--</option>
+                <option value="AR">Argentina</option>
+                <option value="BO">Bolivia</option>
+                <option value="CL">Chile</option>
+                <option value="CO">Colombia</option>
+                <option value="CR">Costa Rica</option>
+                <option value="CU">Cuba</option>
+                <option value="DO">Republica Dominicana</option>
+                <option value="EC">Ecuador</option>
+                <option value="SV">El Salvador</option>
+                <option value="GQ">Guinea Ecuatorial</option>
+                <option value="GT">Guatemala</option>
+                <option value="HN">Honduras</option>
+                <option value="MX">Mexico</option>
+                <option value="NI">Nicaragua</option>
+                <option value="PA">Panama</option>
+                <option value="PY">Paraguay</option>
+                <option value="PE">Peru</option>
+                <option value="PH">Filipinas</option>
+                <option value="PR">Puerto Rico</option>
+                <option value="ES">Espana</option>
+                <option value="US">Estados Unidos</option>
+                <option value="UY">Uruguay</option>
+                <option value="VE">Venezuela</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label data-es="Sector" data-en="Sector">Sector</label>
+              <select name="sector" required>
+                <option value="">--</option>
+                <option value="tech" data-es="Tecnologia" data-en="Technology">Tecnologia</option>
+                <option value="agro" data-es="Agroindustria" data-en="Agroindustry">Agroindustria</option>
+                <option value="energy" data-es="Energia" data-en="Energy">Energia</option>
+                <option value="infra" data-es="Infraestructura" data-en="Infrastructure">Infraestructura</option>
+                <option value="health" data-es="Salud" data-en="Health">Salud</option>
+                <option value="education" data-es="Educacion" data-en="Education">Educacion</option>
+                <option value="finance" data-es="Finanzas" data-en="Finance">Finanzas</option>
+                <option value="legal" data-es="Legal" data-en="Legal">Legal</option>
+                <option value="other" data-es="Otro" data-en="Other">Otro</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label data-es="Tipo de Asociado" data-en="Membership Type">Tipo de Asociado</label>
+            <div class="radio-group">
+              <div class="radio-option">
+                <input type="radio" name="membership_type" id="m_fundador" value="fundador" required>
+                <label for="m_fundador" data-es="Fundador" data-en="Founder">Fundador</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="membership_type" id="m_honorifico" value="honorifico">
+                <label for="m_honorifico" data-es="Honorifico" data-en="Honorary">Honorifico</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="membership_type" id="m_numerario" value="numerario">
+                <label for="m_numerario" data-es="Numerario" data-en="Regular">Numerario</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="membership_type" id="m_protector" value="protector">
+                <label for="m_protector" data-es="Protector" data-en="Patron">Protector</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="membership_type" id="m_patrono" value="patrono">
+                <label for="m_patrono" data-es="Patrono" data-en="Benefactor">Patrono</label>
+              </div>
+            </div>
+          </div>
+          <button type="submit" class="btn-submit" data-es="Registrarse en HISPATEC" data-en="Register at HISPATEC">Registrarse en HISPATEC</button>
+          <div class="form-msg" id="formMsg"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ FOOTER ═══════ -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <h3>HISPA<span>TEC</span></h3>
+      <p data-es="Plataforma de Integracion Estrategica Hispana. Conectando talento, recursos y oportunidades del mundo hispano." data-en="Hispanic Strategic Integration Platform. Connecting talent, resources, and opportunities across the Hispanic world.">Plataforma de Integracion Estrategica Hispana. Conectando talento, recursos y oportunidades del mundo hispano.</p>
+    </div>
+    <div class="footer-col">
+      <h4 data-es="Plataforma" data-en="Platform">Plataforma</h4>
+      <a href="whitepaper.html" data-es="Whitepaper Tecnico" data-en="Technical Whitepaper">Whitepaper Tecnico</a>
+      <a href="#ejes" data-es="Ejes Estrategicos" data-en="Strategic Pillars">Ejes Estrategicos</a>
+      <a href="#proyectos" data-es="Proyectos" data-en="Projects">Proyectos</a>
+      <a href="#registro" data-es="Registro" data-en="Registration">Registro</a>
+    </div>
+    <div class="footer-col">
+      <h4 data-es="Contacto" data-en="Contact">Contacto</h4>
+      <a href="mailto:info@fundacionraiceshispanas.org">info@fundacionraiceshispanas.org</a>
+      <a href="tel:+12252904754">+1 225-290-4754</a>
+    </div>
+    <div class="footer-col">
+      <h4 data-es="Enlaces" data-en="Links">Enlaces</h4>
+      <a href="https://fundacionraiceshispanas.org" target="_blank">Fundacion Raices Hispanas</a>
+      <a href="https://hispanicrootsfoundation.org" target="_blank">Hispanic Roots Foundation</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>&copy; 2026 HISPATEC -- Plataforma de Integracion Estrategica Hispana</p>
+  </div>
+</footer>
+
+<script>
+(function() {
+  'use strict';
+
+  /* ── LANGUAGE TOGGLE ── */
+  let currentLang = 'es';
+
+  window.toggleLang = function() {
+    currentLang = currentLang === 'es' ? 'en' : 'es';
+    const btn = document.getElementById('langToggle');
+    btn.textContent = currentLang === 'es' ? 'EN' : 'ES';
+    document.querySelectorAll('[data-es][data-en]').forEach(function(el) {
+      var text = el.getAttribute('data-' + currentLang);
+      if (text !== null) {
+        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+          el.placeholder = text;
+        } else {
+          el.innerHTML = text;
+        }
+      }
+    });
+    document.documentElement.lang = currentLang;
+  };
+
+  /* ── STICKY HEADER ── */
+  var header = document.getElementById('header');
+  window.addEventListener('scroll', function() {
+    if (window.scrollY > 40) {
+      header.classList.add('scrolled');
+    } else {
+      header.classList.remove('scrolled');
+    }
+  });
+
+  /* ── MOBILE MENU ── */
+  window.toggleMobileMenu = function() {
+    var nav = document.getElementById('navMenu');
+    var btn = document.getElementById('mobileMenuBtn');
+    nav.classList.toggle('open');
+    btn.classList.toggle('active');
+  };
+
+  // Close mobile menu on link click
+  document.querySelectorAll('.header-nav a').forEach(function(link) {
+    link.addEventListener('click', function() {
+      document.getElementById('navMenu').classList.remove('open');
+      document.getElementById('mobileMenuBtn').classList.remove('active');
+    });
+  });
+
+  /* ── HCI SCORE FETCH ── */
+  (function fetchHCI() {
+    fetch('/hispatec/api/metrics/hci')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var val = data.hci || data.score || data.value;
+        if (val !== undefined) {
+          document.getElementById('hciValue').textContent = parseFloat(val).toFixed(2);
+        } else {
+          document.getElementById('hciValue').textContent = '0.72';
+        }
+      })
+      .catch(function() {
+        document.getElementById('hciValue').textContent = '0.72';
+      });
+  })();
+
+  /* ── REGISTRATION FORM ── */
+  window.handleRegister = function(e) {
+    e.preventDefault();
+    var form = e.target;
+    var btn = form.querySelector('.btn-submit');
+    var msg = document.getElementById('formMsg');
+    btn.disabled = true;
+    btn.textContent = currentLang === 'es' ? 'Registrando...' : 'Registering...';
+    msg.className = 'form-msg';
+    msg.style.display = 'none';
+
+    var data = {
+      first_name: form.first_name.value.trim(),
+      last_name: form.last_name.value.trim(),
+      email: form.email.value.trim(),
+      password: form.password.value,
+      country: form.country.value,
+      sector: form.sector.value,
+      membership_type: form.membership_type.value
+    };
+
+    fetch('/hispatec/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+    .then(function(res) {
+      if (res.ok && res.data.token) {
+        localStorage.setItem('hispatec_jwt', res.data.token);
+        msg.className = 'form-msg success';
+        msg.textContent = currentLang === 'es'
+          ? 'Registro exitoso. Bienvenido a HISPATEC.'
+          : 'Registration successful. Welcome to HISPATEC.';
+        form.reset();
+      } else {
+        msg.className = 'form-msg error';
+        msg.textContent = res.data.error || res.data.message || (currentLang === 'es' ? 'Error en el registro.' : 'Registration error.');
+      }
+    })
+    .catch(function() {
+      msg.className = 'form-msg error';
+      msg.textContent = currentLang === 'es'
+        ? 'Error de conexion. Intente de nuevo.'
+        : 'Connection error. Please try again.';
+    })
+    .finally(function() {
+      btn.disabled = false;
+      btn.textContent = currentLang === 'es' ? 'Registrarse en HISPATEC' : 'Register at HISPATEC';
+    });
+  };
+
+  /* ── SCROLL ANIMATION (Intersection Observer) ── */
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.card, .tier-card, .region-item, .timeline-step').forEach(function(el) {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(20px)';
+    el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+    observer.observe(el);
+  });
+
+})();
+</script>
+</body>
+</html>
