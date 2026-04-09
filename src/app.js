@@ -395,6 +395,15 @@ try {
     console.log('⚠️ OEE Tracking routes not available:', error.message);
 }
 
+// HISPATEC Digital Ecosystem
+try {
+    const hispatecRoutes = require('./routes/hispatec');
+    app.use('/hispatec/api', hispatecRoutes);
+    console.log('HISPATEC ecosystem mounted at /hispatec/api');
+} catch (error) {
+    console.log('HISPATEC routes not available:', error.message);
+}
+
 // ElevenLabs Conversational AI tools routes
 if (elevenlabsToolsRoutes) {
     app.use('/api/elevenlabs/tools', elevenlabsToolsRoutes);
