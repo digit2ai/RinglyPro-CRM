@@ -92,7 +92,7 @@ router.get('/', async (req, res) => {
       SELECT id, email, first_name, last_name, country, region_id,
              sector, sub_specialty, years_experience, languages,
              company_name, membership_type, bio, linkedin_url, website_url,
-             verification_status, created_at
+             verification_level, created_at
       FROM hispatec_members
       ${whereClause}
       ORDER BY created_at DESC
@@ -142,7 +142,7 @@ router.get('/:id', async (req, res) => {
       `SELECT id, email, first_name, last_name, country, region_id,
               sector, sub_specialty, years_experience, languages,
               company_name, membership_type, bio, phone, linkedin_url, website_url,
-              verification_status, created_at, updated_at
+              verification_level, created_at, updated_at
        FROM hispatec_members WHERE id = :id LIMIT 1`,
       { replacements: { id: memberId }, type: Sequelize.QueryTypes.SELECT }
     );
@@ -230,7 +230,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
       RETURNING id, email, first_name, last_name, country, region_id,
                 sector, sub_specialty, years_experience, languages,
                 company_name, membership_type, bio, phone, linkedin_url, website_url,
-                verification_status, created_at, updated_at
+                verification_level, created_at, updated_at
     `;
 
     const [results] = await sequelize.query(updateQuery, { replacements });
@@ -282,9 +282,9 @@ router.post('/:id/verify', authMiddleware, async (req, res) => {
 
     const [results] = await sequelize.query(
       `UPDATE hispatec_members
-       SET verification_status = 'pending', updated_at = NOW()
+       SET verification_level = 'pending', updated_at = NOW()
        WHERE id = :id
-       RETURNING id, email, first_name, last_name, verification_status`,
+       RETURNING id, email, first_name, last_name, verification_level`,
       { replacements: { id: memberId } }
     );
 
@@ -302,7 +302,7 @@ router.post('/:id/verify', authMiddleware, async (req, res) => {
       data: {
         id: member.id,
         email: member.email,
-        verification_status: member.verification_status,
+        verification_level: member.verification_level,
         message: 'Solicitud de verificacion enviada. Sera revisada por el equipo.'
       },
       error: null
