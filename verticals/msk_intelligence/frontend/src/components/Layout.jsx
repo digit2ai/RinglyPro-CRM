@@ -64,7 +64,7 @@ export default function Layout({ children, user, onLogout }) {
         {/* Logo */}
         <div className="p-4 border-b border-dark-700">
           <Link to="/dashboard" className="flex items-center gap-4">
-            <img src={mskLogo} alt="MSK Intelligence" className="w-20 h-20 rounded-lg shadow-lg object-contain" />
+            <img src={mskLogo} alt="Digit2AI" className="h-14 w-auto object-contain drop-shadow-lg" />
             {sidebarOpen && (
               <div className="ml-1">
                 <h1 className="text-lg font-bold text-white leading-tight">MSK Intel</h1>

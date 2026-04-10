@@ -265,7 +265,7 @@ export default function VideoRoom() {
         <div className="w-full max-w-lg">
           <div className="card bg-dark-900 p-8">
             <div className="text-center mb-8">
-              <img src={mskLogo} alt="MSK Intelligence" className="w-32 h-32 rounded-2xl shadow-2xl object-contain mx-auto mb-4" />
+              <img src={mskLogo} alt="Digit2AI" className="h-28 w-auto object-contain mx-auto mb-4 drop-shadow-2xl" />
               <h1 className="text-2xl font-bold text-white">Video Consultation</h1>
               <p className="text-dark-400 text-sm mt-2">MSK Intelligence Secure Video</p>
             </div>
@@ -347,7 +347,7 @@ export default function VideoRoom() {
       {/* Header bar */}
       <div className="bg-dark-900/90 backdrop-blur-sm border-b border-dark-800 px-4 py-2 flex items-center justify-between z-10">
         <div className="flex items-center gap-4">
-          <img src={mskLogo} alt="MSK Intelligence" className="w-16 h-16 rounded-lg object-contain" />
+          <img src={mskLogo} alt="Digit2AI" className="h-14 w-auto object-contain" />
           <div>
             <p className="text-white text-sm font-medium">
               {meetingInfo?.case_number || 'Video Consultation'}
