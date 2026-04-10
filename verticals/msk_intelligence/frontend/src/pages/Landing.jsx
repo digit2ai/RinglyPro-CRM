@@ -19,7 +19,7 @@ export default function Landing() {
 
         <nav className="relative z-10 max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
           <div className="flex items-center gap-5">
-            <img src={mskLogo} alt="Digit2AI" className="h-40 lg:h-56 w-auto object-contain drop-shadow-2xl" />
+            <img src={mskLogo} alt="Digit2AI" className="h-32 lg:h-44 w-auto object-contain drop-shadow-2xl" />
             <div className="ml-1">
               <h1 className="text-2xl font-bold text-white">MSK Intelligence</h1>
               <p className="text-sm text-msk-400">Musculoskeletal Diagnostics</p>
