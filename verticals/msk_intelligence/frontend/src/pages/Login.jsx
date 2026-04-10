@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import MFAChallenge from './MFAChallenge';
-import mskLogo from '../assets/msk-logo.png';
+const mskLogo = 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png';
 
 export default function Login({ onLogin }) {
   const navigate = useNavigate();
