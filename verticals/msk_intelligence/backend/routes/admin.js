@@ -2,7 +2,27 @@
 
 const express = require('express');
 const router = express.Router();
+const bcrypt = require('bcrypt');
 const { sequelize } = require('../middleware/auth');
+
+// POST /api/v1/admin/users/:id/reset-password — admin sets a new password for any user
+router.post('/users/:id/reset-password', async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+    if (!newPassword || newPassword.length < 8) {
+      return res.status(400).json({ error: 'newPassword required (min 8 chars)' });
+    }
+    const hash = await bcrypt.hash(newPassword, 12);
+    const [result] = await sequelize.query(
+      `UPDATE msk_users SET password_hash = $1, updated_at = NOW() WHERE id = $2 RETURNING id, email, first_name, last_name, role`,
+      { bind: [hash, req.params.id] }
+    );
+    if (result.length === 0) return res.status(404).json({ error: 'User not found' });
+    res.json({ success: true, data: result[0], message: 'Password reset successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // GET /api/v1/admin/dashboard — KPI dashboard
 router.get('/dashboard', async (req, res) => {
