@@ -187,7 +187,14 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
           if (result.landmarks && result.landmarks.length > 0) {
             const lm2D = result.landmarks[0]; // 2D screen coordinates for drawing
             const lm3D = result.worldLandmarks && result.worldLandmarks[0]; // 3D world coordinates for accurate angle math
-            if (ctx) drawLandmarks(ctx, lm2D);
+
+            // Get the 3 joint indices relevant to the selected measurement
+            const jointIndices = getJointIndices(assessmentType, bodySide);
+
+            // Draw ONLY the goniometer for the selected joint (not all 33 landmarks)
+            if (ctx && jointIndices) {
+              drawGoniometer(ctx, lm2D, jointIndices, currentAngle);
+            }
 
             // Use 3D world landmarks if available — these are TRUE anatomical
             // coordinates in meters relative to the hip center, not 2D screen projections.
@@ -214,13 +221,113 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
     detect();
   };
 
-  const drawLandmarks = (ctx, landmarks) => {
-    ctx.fillStyle = '#0ea5e9';
-    for (const lm of landmarks) {
-      ctx.beginPath();
-      ctx.arc(lm.x * ctx.canvas.width, lm.y * ctx.canvas.height, 4, 0, 2 * Math.PI);
-      ctx.fill();
+  // Returns the {a, b, c} landmark indices for the selected joint measurement
+  // b is the vertex of the angle (the actual joint)
+  const getJointIndices = (type, side) => {
+    const L = {
+      LEFT_SHOULDER: 11, RIGHT_SHOULDER: 12,
+      LEFT_ELBOW: 13, RIGHT_ELBOW: 14,
+      LEFT_WRIST: 15, RIGHT_WRIST: 16,
+      LEFT_HIP: 23, RIGHT_HIP: 24,
+      LEFT_KNEE: 25, RIGHT_KNEE: 26,
+      LEFT_ANKLE: 27, RIGHT_ANKLE: 28,
+    };
+    const s = side === 'left' ? 'LEFT' : 'RIGHT';
+    switch (type) {
+      case 'knee_flexion':
+      case 'knee_extension':
+        return { a: L[`${s}_HIP`], b: L[`${s}_KNEE`], c: L[`${s}_ANKLE`], jointName: 'Knee' };
+      case 'shoulder_abduction':
+      case 'shoulder_flexion':
+        return { a: L[`${s}_HIP`], b: L[`${s}_SHOULDER`], c: L[`${s}_ELBOW`], jointName: 'Shoulder' };
+      case 'shoulder_external_rotation':
+        return { a: L[`${s}_SHOULDER`], b: L[`${s}_ELBOW`], c: L[`${s}_WRIST`], jointName: 'Shoulder Rot' };
+      case 'hip_flexion':
+        return { a: L[`${s}_SHOULDER`], b: L[`${s}_HIP`], c: L[`${s}_KNEE`], jointName: 'Hip' };
+      case 'elbow_flexion':
+        return { a: L[`${s}_SHOULDER`], b: L[`${s}_ELBOW`], c: L[`${s}_WRIST`], jointName: 'Elbow' };
+      default:
+        return null;
     }
+  };
+
+  // Draw a real goniometer overlay: 3 joints + 2 arms + angle arc at vertex
+  const drawGoniometer = (ctx, landmarks, indices, angle) => {
+    const { a, b, c, jointName } = indices;
+    const lmA = landmarks[a];
+    const lmB = landmarks[b];
+    const lmC = landmarks[c];
+    if (!lmA || !lmB || !lmC) return;
+
+    const W = ctx.canvas.width;
+    const H = ctx.canvas.height;
+    const ax = lmA.x * W, ay = lmA.y * H;
+    const bx = lmB.x * W, by = lmB.y * H;
+    const cx = lmC.x * W, cy = lmC.y * H;
+
+    // === Goniometer arms (the two lines pivoting around the joint vertex) ===
+    ctx.strokeStyle = 'rgba(14, 165, 233, 0.9)'; // bright blue
+    ctx.lineWidth = 6;
+    ctx.lineCap = 'round';
+    ctx.shadowColor = 'rgba(0,0,0,0.6)';
+    ctx.shadowBlur = 8;
+    // Arm 1: vertex (b) to point (a)
+    ctx.beginPath();
+    ctx.moveTo(bx, by);
+    ctx.lineTo(ax, ay);
+    ctx.stroke();
+    // Arm 2: vertex (b) to point (c)
+    ctx.beginPath();
+    ctx.moveTo(bx, by);
+    ctx.lineTo(cx, cy);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // === Angle arc at the vertex (the goniometer's protractor) ===
+    if (angle !== null && angle !== undefined) {
+      const angleA = Math.atan2(ay - by, ax - bx);
+      const angleC = Math.atan2(cy - by, cx - bx);
+      const radius = 50;
+      ctx.strokeStyle = 'rgba(245, 158, 11, 0.9)'; // amber/gold for the arc
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      // Draw the shorter arc between the two arms
+      let startAngle = angleA;
+      let endAngle = angleC;
+      let diff = endAngle - startAngle;
+      while (diff > Math.PI) diff -= 2 * Math.PI;
+      while (diff < -Math.PI) diff += 2 * Math.PI;
+      ctx.arc(bx, by, radius, startAngle, startAngle + diff, diff < 0);
+      ctx.stroke();
+    }
+
+    // === Endpoint joint dots (proximal and distal) ===
+    ctx.fillStyle = 'rgba(14, 165, 233, 0.95)';
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 3;
+    [{ x: ax, y: ay }, { x: cx, y: cy }].forEach(pt => {
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 8, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.stroke();
+    });
+
+    // === Vertex (the actual joint being measured) — large highlighted dot ===
+    ctx.fillStyle = '#f59e0b'; // gold to match the arc
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(bx, by, 14, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.stroke();
+
+    // === Joint name label next to the vertex ===
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 16px -apple-system, system-ui, sans-serif';
+    ctx.shadowColor = 'rgba(0,0,0,0.8)';
+    ctx.shadowBlur = 6;
+    ctx.fillText(jointName, bx + 22, by - 10);
+    ctx.shadowBlur = 0;
   };
 
   // Returns { angle, confidence } where confidence is the average visibility (0-1)
