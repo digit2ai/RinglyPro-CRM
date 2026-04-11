@@ -17,32 +17,32 @@ export default function Landing() {
         <div className="absolute inset-0 bg-gradient-to-r from-dark-950/95 via-dark-950/80 to-dark-950/40" />
         <div className="absolute inset-0 bg-gradient-to-t from-dark-950 via-transparent to-transparent" />
 
-        <nav className="relative z-10 max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
-          <div className="flex items-center gap-5">
-            <img src={mskLogo} alt="Digit2AI" className="h-32 lg:h-44 w-auto object-contain drop-shadow-2xl" />
-            <div className="ml-1">
-              <h1 className="text-2xl font-bold text-white">MSK Intelligence</h1>
-              <p className="text-sm text-msk-400">Musculoskeletal Diagnostics</p>
+        <nav className="relative z-10 max-w-7xl mx-auto px-4 lg:px-6 py-4 lg:py-6 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0 flex-shrink">
+            <img src={mskLogo} alt="Digit2AI" className="h-12 sm:h-16 lg:h-32 w-auto object-contain drop-shadow-2xl flex-shrink-0" />
+            <div className="min-w-0 hidden sm:block">
+              <h1 className="text-base sm:text-lg lg:text-2xl font-bold text-white truncate">MSK Intelligence</h1>
+              <p className="text-xs sm:text-sm text-msk-400 truncate">Musculoskeletal Diagnostics</p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <Link to="/login" className="text-dark-300 hover:text-white transition-colors font-medium">
+          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+            <Link to="/login" className="text-dark-300 hover:text-white transition-colors font-medium text-sm sm:text-base">
               Sign In
             </Link>
-            <Link to="/register" className="btn-primary text-sm">
+            <Link to="/register" className="btn-primary text-xs sm:text-sm whitespace-nowrap">
               Get Started
             </Link>
           </div>
         </nav>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-6 py-24 lg:py-36">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 lg:px-6 py-16 lg:py-36">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-msk-600/10 border border-msk-600/20 text-msk-400 text-sm font-medium mb-8">
+            <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-msk-600/10 border border-msk-600/20 text-msk-400 text-xs sm:text-sm font-medium mb-6 sm:mb-8">
               <span className="w-2 h-2 rounded-full bg-msk-500 animate-pulse" />
               Remote Musculoskeletal Intelligence
             </div>
 
-            <h2 className="text-5xl lg:text-7xl font-bold text-white leading-tight mb-6">
+            <h2 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-white leading-tight mb-6">
               Specialist-grade
               <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-msk-400 to-msk-600">
@@ -52,23 +52,23 @@ export default function Landing() {
               Anywhere.
             </h2>
 
-            <p className="text-xl text-dark-300 mb-10 max-w-xl leading-relaxed">
+            <p className="text-lg sm:text-xl text-dark-300 mb-8 sm:mb-10 max-w-xl leading-relaxed">
               In hours, not weeks. World-class musculoskeletal radiology for elite athletes,
               sports teams, and anyone who demands precision.
             </p>
 
-            <div className="flex flex-wrap gap-4">
-              <Link to="/register" className="btn-primary text-lg px-8 py-4">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-4">
+              <Link to="/register" className="btn-primary text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 text-center">
                 Start Your Case
               </Link>
-              <Link to="/voice" className="btn-secondary text-lg px-8 py-4 flex items-center gap-2">
+              <Link to="/voice" className="btn-secondary text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 flex items-center justify-center gap-2">
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
                   <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
                 </svg>
                 Talk to AI
               </Link>
-              <Link to="/login" className="btn-secondary text-lg px-8 py-4">
+              <Link to="/login" className="btn-secondary text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 text-center">
                 Sign In
               </Link>
             </div>
@@ -78,7 +78,7 @@ export default function Landing() {
 
       {/* Stats */}
       <section className="border-y border-dark-800 bg-dark-900/50">
-        <div className="max-w-7xl mx-auto px-6 py-16">
+        <div className="max-w-7xl mx-auto px-4 lg:px-6 py-12 lg:py-16">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
               { value: '24h', label: 'Average Turnaround', sub: 'Imaging review' },
@@ -98,7 +98,7 @@ export default function Landing() {
 
       {/* Visual Showcase */}
       <section className="relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 py-16">
+        <div className="max-w-7xl mx-auto px-4 lg:px-6 py-12 lg:py-16">
           <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-dark-700">
             <img
               src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69c7fbd05eea837aca559a82.jpg"
@@ -115,13 +115,13 @@ export default function Landing() {
       </section>
 
       {/* How It Works */}
-      <section className="max-w-7xl mx-auto px-6 py-24">
-        <h3 className="text-3xl font-bold text-white text-center mb-4">How It Works</h3>
-        <p className="text-dark-400 text-center mb-16 max-w-xl mx-auto">
+      <section className="max-w-7xl mx-auto px-4 lg:px-6 py-16 lg:py-24">
+        <h3 className="text-2xl sm:text-3xl font-bold text-white text-center mb-4">How It Works</h3>
+        <p className="text-dark-400 text-center mb-12 lg:mb-16 max-w-xl mx-auto px-4">
           From intake to diagnosis in a streamlined, AI-orchestrated workflow
         </p>
 
-        <div className="grid md:grid-cols-4 gap-8">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-8">
           {[
             {
               step: '01', title: 'Intake',
@@ -157,9 +157,9 @@ export default function Landing() {
 
       {/* Pricing */}
       <section className="bg-dark-900/50 border-y border-dark-800">
-        <div className="max-w-7xl mx-auto px-6 py-24">
-          <h3 className="text-3xl font-bold text-white text-center mb-4">Pricing</h3>
-          <p className="text-dark-400 text-center mb-16">Premium diagnostics for peak performance</p>
+        <div className="max-w-7xl mx-auto px-4 lg:px-6 py-16 lg:py-24">
+          <h3 className="text-2xl sm:text-3xl font-bold text-white text-center mb-4">Pricing</h3>
+          <p className="text-dark-400 text-center mb-12 lg:mb-16">Premium diagnostics for peak performance</p>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {[
