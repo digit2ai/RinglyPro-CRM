@@ -1,13 +1,33 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import api from '../services/api';
 
-// Joint angle calculation from 3 landmarks
-function calcAngle(a, b, c) {
-  const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
-  let angle = Math.abs((radians * 180) / Math.PI);
-  if (angle > 180) angle = 360 - angle;
+// 3D joint angle calculation using world coordinates (meters)
+// This is the TRUE anatomical angle, not a 2D screen projection.
+// Uses the dot product / arc cosine formula for the angle at vertex `b`
+// formed by vectors b→a and b→c.
+function calcAngle3D(a, b, c) {
+  if (!a || !b || !c) return null;
+  // Vector from b to a
+  const ba = { x: a.x - b.x, y: a.y - b.y, z: (a.z || 0) - (b.z || 0) };
+  // Vector from b to c
+  const bc = { x: c.x - b.x, y: c.y - b.y, z: (c.z || 0) - (b.z || 0) };
+  // Dot product
+  const dot = ba.x * bc.x + ba.y * bc.y + ba.z * bc.z;
+  // Magnitudes
+  const magBa = Math.sqrt(ba.x * ba.x + ba.y * ba.y + ba.z * ba.z);
+  const magBc = Math.sqrt(bc.x * bc.x + bc.y * bc.y + bc.z * bc.z);
+  if (magBa === 0 || magBc === 0) return null;
+  // Clamp to [-1, 1] to avoid NaN from floating-point errors
+  const cosAngle = Math.max(-1, Math.min(1, dot / (magBa * magBc)));
+  const angle = (Math.acos(cosAngle) * 180) / Math.PI;
   return Math.round(angle * 10) / 10;
 }
+
+// Minimum visibility score for a landmark to be trusted (0-1)
+const MIN_VISIBILITY = 0.7;
+
+// Number of samples for the moving average smoothing buffer
+const SMOOTHING_WINDOW = 8;
 
 // Normal ROM ranges by assessment type
 const ROM_NORMALS = {
@@ -29,15 +49,19 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
   const [assessmentType, setAssessmentType] = useState('knee_flexion');
   const [bodySide, setBodySide] = useState('right');
   const [currentAngle, setCurrentAngle] = useState(null);
+  const [confidence, setConfidence] = useState(0); // 0-100, average visibility of joints used
   const [measurements, setMeasurements] = useState([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [modelStatus, setModelStatus] = useState('idle'); // idle | loading | ready | failed
+  const [calibrationMode, setCalibrationMode] = useState(false);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
   const animRef = useRef(null);
   const poseLandmarkerRef = useRef(null);
+  // Smoothing buffer — moving average of last N angle samples
+  const angleBufferRef = useRef([]);
 
   const cleanup = useCallback(() => {
     if (animRef.current) cancelAnimationFrame(animRef.current);
@@ -45,9 +69,17 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
       streamRef.current.getTracks().forEach(t => t.stop());
       streamRef.current = null;
     }
+    angleBufferRef.current = [];
     setActive(false);
     setCurrentAngle(null);
+    setConfidence(0);
   }, []);
+
+  // Reset smoothing buffer when switching joint or side mid-session
+  useEffect(() => {
+    angleBufferRef.current = [];
+    setCurrentAngle(null);
+  }, [assessmentType, bodySide]);
 
   useEffect(() => cleanup, [cleanup]);
 
@@ -138,10 +170,24 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
         try {
           const result = poseLandmarkerRef.current.detectForVideo(video, performance.now());
           if (result.landmarks && result.landmarks.length > 0) {
-            const lm = result.landmarks[0];
-            if (ctx) drawLandmarks(ctx, lm);
-            const angle = calculateROMAngle(lm, assessmentType, bodySide);
-            if (angle !== null) setCurrentAngle(angle);
+            const lm2D = result.landmarks[0]; // 2D screen coordinates for drawing
+            const lm3D = result.worldLandmarks && result.worldLandmarks[0]; // 3D world coordinates for accurate angle math
+            if (ctx) drawLandmarks(ctx, lm2D);
+
+            // Use 3D world landmarks if available — these are TRUE anatomical
+            // coordinates in meters relative to the hip center, not 2D screen projections.
+            const sourceLandmarks = lm3D || lm2D;
+            const result2 = calculateROMAngleWithConfidence(sourceLandmarks, lm2D, assessmentType, bodySide);
+            if (result2.angle !== null) {
+              // Smoothing: moving average of last N samples
+              angleBufferRef.current.push(result2.angle);
+              if (angleBufferRef.current.length > SMOOTHING_WINDOW) {
+                angleBufferRef.current.shift();
+              }
+              const smoothed = angleBufferRef.current.reduce((s, v) => s + v, 0) / angleBufferRef.current.length;
+              setCurrentAngle(Math.round(smoothed * 10) / 10);
+              setConfidence(Math.round(result2.confidence * 100));
+            }
           }
         } catch (e) {
           // Detection frame error, continue
@@ -162,7 +208,10 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
     }
   };
 
-  const calculateROMAngle = (landmarks, type, side) => {
+  // Returns { angle, confidence } where confidence is the average visibility (0-1)
+  // of the 3 landmarks used. Confidence comes from the 2D landmarks because
+  // worldLandmarks don't carry visibility scores.
+  const calculateROMAngleWithConfidence = (landmarks3D, landmarks2D, type, side) => {
     // MediaPipe Pose landmark indices
     const L = {
       LEFT_SHOULDER: 11, RIGHT_SHOULDER: 12,
@@ -174,30 +223,56 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
     };
 
     const s = side === 'left' ? 'LEFT' : 'RIGHT';
+    let aIdx, bIdx, cIdx;
     try {
       switch (type) {
         case 'knee_flexion':
         case 'knee_extension':
-          return calcAngle(landmarks[L[`${s}_HIP`]], landmarks[L[`${s}_KNEE`]], landmarks[L[`${s}_ANKLE`]]);
+          aIdx = L[`${s}_HIP`]; bIdx = L[`${s}_KNEE`]; cIdx = L[`${s}_ANKLE`];
+          break;
         case 'shoulder_abduction':
         case 'shoulder_flexion':
-          return calcAngle(landmarks[L[`${s}_HIP`]], landmarks[L[`${s}_SHOULDER`]], landmarks[L[`${s}_ELBOW`]]);
+          aIdx = L[`${s}_HIP`]; bIdx = L[`${s}_SHOULDER`]; cIdx = L[`${s}_ELBOW`];
+          break;
         case 'shoulder_external_rotation':
-          return calcAngle(landmarks[L[`${s}_SHOULDER`]], landmarks[L[`${s}_ELBOW`]], landmarks[L[`${s}_WRIST`]]);
+          aIdx = L[`${s}_SHOULDER`]; bIdx = L[`${s}_ELBOW`]; cIdx = L[`${s}_WRIST`];
+          break;
         case 'hip_flexion':
-          return calcAngle(landmarks[L[`${s}_SHOULDER`]], landmarks[L[`${s}_HIP`]], landmarks[L[`${s}_KNEE`]]);
+          aIdx = L[`${s}_SHOULDER`]; bIdx = L[`${s}_HIP`]; cIdx = L[`${s}_KNEE`];
+          break;
         case 'elbow_flexion':
-          return calcAngle(landmarks[L[`${s}_SHOULDER`]], landmarks[L[`${s}_ELBOW`]], landmarks[L[`${s}_WRIST`]]);
+          aIdx = L[`${s}_SHOULDER`]; bIdx = L[`${s}_ELBOW`]; cIdx = L[`${s}_WRIST`];
+          break;
         default:
-          return null;
+          return { angle: null, confidence: 0 };
       }
+
+      // Visibility check — reject if any landmark is not clearly visible
+      const visA = landmarks2D[aIdx]?.visibility || 0;
+      const visB = landmarks2D[bIdx]?.visibility || 0;
+      const visC = landmarks2D[cIdx]?.visibility || 0;
+      const avgVisibility = (visA + visB + visC) / 3;
+
+      if (visA < MIN_VISIBILITY || visB < MIN_VISIBILITY || visC < MIN_VISIBILITY) {
+        return { angle: null, confidence: avgVisibility };
+      }
+
+      // Calculate using 3D world coordinates (in meters, hip-relative)
+      const angle = calcAngle3D(landmarks3D[aIdx], landmarks3D[bIdx], landmarks3D[cIdx]);
+      return { angle, confidence: avgVisibility };
     } catch {
-      return null;
+      return { angle: null, confidence: 0 };
     }
   };
 
   const captureMeasurement = async () => {
     if (currentAngle === null) return;
+    // Block low-confidence captures
+    if (confidence < 70) {
+      setError('Confidence too low (' + confidence + '%). Improve lighting or reposition for clearer joint visibility before capturing.');
+      setTimeout(() => setError(null), 4000);
+      return;
+    }
     setSaving(true);
     const normal = ROM_NORMALS[assessmentType];
     try {
@@ -209,12 +284,14 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
         angleDegrees: currentAngle,
         normalRangeMin: normal.min,
         normalRangeMax: normal.max,
+        confidenceScore: confidence,
         collectionPoint: 'follow_up'
       });
       setMeasurements(prev => [...prev, {
         type: assessmentType,
         side: bodySide,
         angle: currentAngle,
+        confidence,
         time: new Date().toLocaleTimeString()
       }]);
       if (onMeasurementSaved) onMeasurementSaved();
@@ -342,12 +419,38 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
         {/* Angle readout overlay */}
         {currentAngle !== null && (
           <div className="absolute top-4 left-4 z-10">
-            <div className={`text-5xl font-black font-mono ${currentAngle <= (ROM_NORMALS[assessmentType]?.max || 180) * 1.1 ? 'text-green-400' : 'text-red-400'}`}
+            <div className={`text-5xl font-black font-mono ${confidence >= 85 ? 'text-green-400' : confidence >= 70 ? 'text-yellow-400' : 'text-red-400'}`}
               style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>
               {currentAngle}°
             </div>
             <div className="text-white text-xs font-medium mt-1" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
               Normal: {ROM_NORMALS[assessmentType]?.min || 0}° — {ROM_NORMALS[assessmentType]?.max || 180}°
+            </div>
+            {/* Confidence indicator */}
+            <div className="mt-2 flex items-center gap-2 bg-black/60 backdrop-blur-sm rounded-md px-2 py-1 inline-flex">
+              <div className="w-20 h-1.5 bg-dark-700 rounded-full overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-200 ${confidence >= 85 ? 'bg-green-400' : confidence >= 70 ? 'bg-yellow-400' : 'bg-red-400'}`}
+                  style={{ width: confidence + '%' }}
+                />
+              </div>
+              <span className={`text-xs font-bold ${confidence >= 85 ? 'text-green-400' : confidence >= 70 ? 'text-yellow-400' : 'text-red-400'}`}>
+                {confidence}% confidence
+              </span>
+            </div>
+            {calibrationMode && (
+              <div className="mt-2 bg-blue-500/20 border border-blue-500/40 backdrop-blur-sm rounded-md px-2 py-1 inline-block">
+                <p className="text-blue-300 text-xs font-medium">Calibration Mode — hold a 90° reference (book corner / paper edge) to verify</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Low confidence warning when no angle yet */}
+        {currentAngle === null && modelStatus === 'ready' && confidence > 0 && confidence < 70 && (
+          <div className="absolute top-20 left-4 right-4 z-10">
+            <div className="bg-yellow-500/20 backdrop-blur-sm border border-yellow-500/30 rounded-lg px-4 py-2">
+              <p className="text-yellow-400 text-sm font-medium">Low joint visibility ({confidence}%) — improve lighting or step back so the joint is clearly visible</p>
             </div>
           </div>
         )}
@@ -361,11 +464,17 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
                 {currentAngle !== null ? `Current: ${currentAngle}°` : 'Position yourself in frame'}
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setCalibrationMode(c => !c)}
+                className={`text-xs px-3 py-1.5 rounded-lg border ${calibrationMode ? 'bg-blue-600/30 border-blue-500 text-blue-300' : 'bg-dark-800 border-dark-600 text-dark-300'}`}
+              >
+                {calibrationMode ? 'Exit Calibrate' : 'Calibrate'}
+              </button>
               <button onClick={manualCapture} className="btn-secondary text-xs px-3 py-1.5">
                 Manual Entry
               </button>
-              <button onClick={captureMeasurement} disabled={saving || currentAngle === null} className="btn-primary text-sm px-4">
+              <button onClick={captureMeasurement} disabled={saving || currentAngle === null || confidence < 70} className="btn-primary text-sm px-4 disabled:opacity-40 disabled:cursor-not-allowed">
                 {saving ? '...' : 'Capture'}
               </button>
               <button onClick={cleanup} className="bg-red-600 hover:bg-red-500 text-white text-sm px-4 py-2 rounded-lg">

@@ -99,14 +99,18 @@ router.get('/api/v1/billing/claims', authenticate, async (req, res) => {
 // ROM Measurements
 router.post('/api/v1/rom/measurements', authenticate, async (req, res) => {
   try {
-    const { caseId, consultationId, assessmentType, bodySide, angleDegrees, normalRangeMin, normalRangeMax, collectionPoint } = req.body;
+    const { caseId, consultationId, assessmentType, bodySide, angleDegrees, normalRangeMin, normalRangeMax, collectionPoint, confidenceScore } = req.body;
     if (!caseId || !assessmentType || angleDegrees === undefined) {
       return res.status(400).json({ error: 'caseId, assessmentType, and angleDegrees required' });
     }
+    // Ensure confidence_score column exists (idempotent ALTER)
+    try {
+      await sequelize.query(`ALTER TABLE msk_rom_measurements ADD COLUMN IF NOT EXISTS confidence_score INTEGER DEFAULT NULL`);
+    } catch (e) { /* ignore */ }
     const [result] = await sequelize.query(`
-      INSERT INTO msk_rom_measurements (case_id, consultation_id, patient_id, assessment_type, body_side, angle_degrees, normal_range_min, normal_range_max, collection_point)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *
-    `, { bind: [caseId, consultationId || null, req.user.userId, assessmentType, bodySide || 'right', angleDegrees, normalRangeMin || 0, normalRangeMax || 180, collectionPoint || 'follow_up'] });
+      INSERT INTO msk_rom_measurements (case_id, consultation_id, patient_id, assessment_type, body_side, angle_degrees, normal_range_min, normal_range_max, collection_point, confidence_score)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *
+    `, { bind: [caseId, consultationId || null, req.user.userId, assessmentType, bodySide || 'right', angleDegrees, normalRangeMin || 0, normalRangeMax || 180, collectionPoint || 'follow_up', confidenceScore || null] });
     res.status(201).json({ success: true, data: result[0] });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
