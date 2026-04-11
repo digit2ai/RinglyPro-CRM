@@ -24,7 +24,8 @@ function calcAngle3D(a, b, c) {
 }
 
 // Minimum visibility score for a landmark to be trusted (0-1)
-const MIN_VISIBILITY = 0.7;
+// MediaPipe's visibility scores are conservative — 0.3 is "clearly visible"
+const MIN_VISIBILITY = 0.3;
 
 // Number of samples for the moving average smoothing buffer
 const SMOOTHING_WINDOW = 8;
@@ -261,18 +262,26 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
           return { angle: null, confidence: 0 };
       }
 
-      // Visibility check — reject if any landmark is not clearly visible
+      // Visibility scoring — always return angle, just report confidence
       const visA = landmarks2D[aIdx]?.visibility || 0;
       const visB = landmarks2D[bIdx]?.visibility || 0;
       const visC = landmarks2D[cIdx]?.visibility || 0;
       const avgVisibility = (visA + visB + visC) / 3;
 
-      if (visA < MIN_VISIBILITY || visB < MIN_VISIBILITY || visC < MIN_VISIBILITY) {
+      // Only reject if landmarks are completely missing (almost zero visibility)
+      if (visA < MIN_VISIBILITY && visB < MIN_VISIBILITY && visC < MIN_VISIBILITY) {
         return { angle: null, confidence: avgVisibility };
       }
 
-      // Calculate using 3D world coordinates (in meters, hip-relative)
-      const angle = calcAngle3D(landmarks3D[aIdx], landmarks3D[bIdx], landmarks3D[cIdx]);
+      // Calculate angle: prefer 3D world landmarks, fall back to 2D if unavailable
+      let angle = null;
+      if (landmarks3D && landmarks3D[aIdx] && landmarks3D[bIdx] && landmarks3D[cIdx]) {
+        angle = calcAngle3D(landmarks3D[aIdx], landmarks3D[bIdx], landmarks3D[cIdx]);
+      }
+      // Fallback to 2D if 3D failed
+      if (angle === null) {
+        angle = calcAngle3D(landmarks2D[aIdx], landmarks2D[bIdx], landmarks2D[cIdx]);
+      }
       return { angle, confidence: avgVisibility };
     } catch {
       return { angle: null, confidence: 0 };
@@ -281,12 +290,7 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
 
   const captureMeasurement = async () => {
     if (currentAngle === null) return;
-    // Block low-confidence captures
-    if (confidence < 70) {
-      setError('Confidence too low (' + confidence + '%). Improve lighting or reposition for clearer joint visibility before capturing.');
-      setTimeout(() => setError(null), 4000);
-      return;
-    }
+    // Allow capture at any confidence — confidence is stored with the measurement
     setSaving(true);
     const normal = ROM_NORMALS[assessmentType];
     try {
@@ -516,7 +520,7 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
               <button onClick={manualCapture} className="btn-secondary text-xs px-3 py-1.5">
                 Manual Entry
               </button>
-              <button onClick={captureMeasurement} disabled={saving || currentAngle === null || confidence < 70} className="btn-primary text-sm px-4 disabled:opacity-40 disabled:cursor-not-allowed">
+              <button onClick={captureMeasurement} disabled={saving || currentAngle === null} className="btn-primary text-sm px-4 disabled:opacity-40 disabled:cursor-not-allowed">
                 {saving ? '...' : 'Capture'}
               </button>
               <button onClick={cleanup} className="bg-red-600 hover:bg-red-500 text-white text-sm px-4 py-2 rounded-lg">
