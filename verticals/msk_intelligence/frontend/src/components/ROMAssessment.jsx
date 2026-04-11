@@ -55,6 +55,7 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
   const [error, setError] = useState(null);
   const [modelStatus, setModelStatus] = useState('idle'); // idle | loading | ready | failed
   const [calibrationMode, setCalibrationMode] = useState(false);
+  const [useBackCamera, setUseBackCamera] = useState(false);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
@@ -100,15 +101,28 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
     setError(null);
     setModelStatus('idle');
     try {
-      // Get camera stream first (before rendering the video element)
-      // Request high resolution for full-body capture, let device pick natural aspect
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          width: { ideal: 1920, min: 1280 },
-          height: { ideal: 1080, min: 720 },
-          facingMode: 'user'
-        }
-      });
+      // Detect mobile — on mobile we want portrait (taller than wide) to capture full body
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
+      // Pick camera: back camera ('environment') captures wider field, ideal for full body
+      const facingMode = useBackCamera ? { exact: 'environment' } : 'user';
+
+      // Request portrait dimensions on mobile, landscape on desktop
+      const videoConstraints = isMobile
+        ? {
+            // Portrait: height > width — captures full body when phone is held vertically
+            width: { ideal: 1080, min: 720 },
+            height: { ideal: 1920, min: 1280 },
+            facingMode,
+            aspectRatio: { ideal: 9/16 }
+          }
+        : {
+            // Landscape: standard webcam orientation
+            width: { ideal: 1920, min: 1280 },
+            height: { ideal: 1080, min: 720 },
+            facingMode
+          };
+
+      const stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints });
       streamRef.current = stream;
 
       // Show camera immediately, load AI model in background
@@ -334,6 +348,31 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
           </div>
         </div>
 
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-dark-300 mb-2">Camera</label>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setUseBackCamera(false)}
+              className={`px-3 py-2 rounded-lg text-sm font-medium border transition-all ${!useBackCamera ? 'bg-msk-600/20 border-msk-500 text-msk-400' : 'bg-dark-800 border-dark-600 text-dark-300'}`}
+            >
+              Front (Selfie)
+            </button>
+            <button
+              type="button"
+              onClick={() => setUseBackCamera(true)}
+              className={`px-3 py-2 rounded-lg text-sm font-medium border transition-all ${useBackCamera ? 'bg-msk-600/20 border-msk-500 text-msk-400' : 'bg-dark-800 border-dark-600 text-dark-300'}`}
+            >
+              Back (Wider)
+            </button>
+          </div>
+          <p className="text-xs text-dark-400 mt-2">
+            {useBackCamera
+              ? 'Back camera is wider — best for full-body shots when phone is propped up.'
+              : 'Front camera lets you see yourself while moving — best when alone.'}
+          </p>
+        </div>
+
         {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
 
         <button onClick={startAssessment} className="btn-primary w-full">
@@ -357,6 +396,9 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
     );
   }
 
+  // Mirror only when using the front (selfie) camera
+  const mirrorTransform = useBackCamera ? 'none' : 'scaleX(-1)';
+
   return (
     <div className="card p-0 overflow-hidden">
       {/* Video feed with overlay — fills width, height matches video aspect */}
@@ -372,7 +414,7 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
             width: '100%',
             height: 'auto',
             maxHeight: '85vh',
-            transform: 'scaleX(-1)'
+            transform: mirrorTransform
           }}
         />
         {/* Canvas overlay for landmarks — perfectly aligned with video */}
@@ -382,7 +424,7 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
           style={{
             width: '100%',
             height: '100%',
-            transform: 'scaleX(-1)'
+            transform: mirrorTransform
           }}
         />
 
@@ -402,9 +444,9 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
           </div>
         )}
         {modelStatus === 'ready' && currentAngle === null && (
-          <div className="absolute top-4 left-4 z-10">
+          <div className="absolute top-4 left-4 right-4 z-10">
             <div className="bg-green-500/20 backdrop-blur-sm border border-green-500/30 rounded-lg px-4 py-2">
-              <p className="text-green-400 text-sm font-medium">AI pose model ready — stand back so your full body is visible</p>
+              <p className="text-green-400 text-sm font-medium">AI pose model ready — hold phone vertically and prop it up so your full body fits in frame</p>
             </div>
           </div>
         )}
