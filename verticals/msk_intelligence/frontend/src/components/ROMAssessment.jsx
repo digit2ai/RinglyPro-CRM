@@ -69,8 +69,14 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
     setModelStatus('idle');
     try {
       // Get camera stream first (before rendering the video element)
+      // Request high resolution for full-body capture
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' }
+        video: {
+          width: { ideal: 1920, min: 1280 },
+          height: { ideal: 1080, min: 720 },
+          facingMode: 'user',
+          aspectRatio: { ideal: 16/9 }
+        }
       });
       streamRef.current = stream;
 
@@ -121,10 +127,28 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
     const detect = () => {
       if (!streamRef.current) return;
 
-      // Sync canvas size with video for landmark overlay
+      // Sync canvas size with rendered video size (object-fit: contain compatible)
       if (ctx && video.videoWidth > 0) {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+        const rect = video.getBoundingClientRect();
+        // Calculate the actual displayed video dimensions inside the contained box
+        const videoAspect = video.videoWidth / video.videoHeight;
+        const containerAspect = rect.width / rect.height;
+        let displayW, displayH;
+        if (containerAspect > videoAspect) {
+          // Letterboxed on sides — height fills, width is smaller
+          displayH = rect.height;
+          displayW = rect.height * videoAspect;
+        } else {
+          // Letterboxed top/bottom — width fills, height is smaller
+          displayW = rect.width;
+          displayH = rect.width / videoAspect;
+        }
+        canvas.width = displayW;
+        canvas.height = displayH;
+        canvas.style.width = displayW + 'px';
+        canvas.style.height = displayH + 'px';
+        canvas.style.left = ((rect.width - displayW) / 2) + 'px';
+        canvas.style.top = ((rect.height - displayH) / 2) + 'px';
         ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
 
@@ -277,22 +301,22 @@ export default function ROMAssessment({ caseId, consultationId, onMeasurementSav
 
   return (
     <div className="card p-0 overflow-hidden">
-      {/* Video feed with overlay */}
-      <div className="relative bg-black" style={{ minHeight: '320px' }}>
-        {/* Live video feed — visible */}
+      {/* Video feed with overlay — sized for full-body capture */}
+      <div className="relative bg-black flex items-center justify-center" style={{ minHeight: '70vh', maxHeight: '85vh' }}>
+        {/* Live video feed — visible, full frame, no cropping */}
         <video
           ref={videoRef}
           autoPlay
           playsInline
           muted
-          className="w-full"
-          style={{ maxHeight: '480px', objectFit: 'cover', transform: 'scaleX(-1)' }}
+          className="w-full h-full"
+          style={{ objectFit: 'contain', transform: 'scaleX(-1)', maxHeight: '85vh' }}
         />
-        {/* Canvas overlay for landmarks (positioned on top of video) */}
+        {/* Canvas overlay for landmarks (positioned on top of video, mirrored to match) */}
         <canvas
           ref={canvasRef}
-          className="absolute inset-0 w-full h-full pointer-events-none"
-          style={{ objectFit: 'cover' }}
+          className="absolute pointer-events-none"
+          style={{ transform: 'scaleX(-1)' }}
         />
 
         {/* AI Model Status Banner */}
