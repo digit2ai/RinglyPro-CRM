@@ -166,6 +166,9 @@ router.post('/upload', upload.array('files', 20), async (req, res) => {
     const { caseId, imagingOrderId } = req.body;
     if (!caseId) return res.status(400).json({ error: 'caseId is required' });
 
+    // Ensure file_data column exists for persistent blob storage
+    try { await sequelize.query(`ALTER TABLE msk_imaging_files ADD COLUMN IF NOT EXISTS file_data TEXT DEFAULT NULL`); } catch(e) {}
+
     const uploaded = [];
     for (const file of req.files || []) {
       const ext = path.extname(file.originalname).toLowerCase();
@@ -175,14 +178,24 @@ router.post('/upload', upload.array('files', 20), async (req, res) => {
       else if (ext === '.png') fileType = 'png';
       else if (ext === '.pdf') fileType = 'pdf';
 
+      // Read file and store as base64 in database (survives Render redeploys)
+      let fileData = null;
+      try {
+        const fileBuffer = fs.readFileSync(file.path);
+        // Only store images < 20MB as base64 in DB (larger files stay disk-only)
+        if (fileBuffer.length < 20 * 1024 * 1024) {
+          fileData = fileBuffer.toString('base64');
+        }
+      } catch(e) { console.error('[MSK Imaging] Failed to read file for DB storage:', e.message); }
+
       const [result] = await sequelize.query(`
-        INSERT INTO msk_imaging_files (imaging_order_id, case_id, file_name, file_type, file_size_bytes, storage_path, mime_type, uploaded_by)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        RETURNING *
+        INSERT INTO msk_imaging_files (imaging_order_id, case_id, file_name, file_type, file_size_bytes, storage_path, mime_type, uploaded_by, file_data)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING id, imaging_order_id, case_id, file_name, file_type, file_size_bytes, storage_path, mime_type, uploaded_by, created_at
       `, {
         bind: [
           imagingOrderId || null, caseId, file.originalname, fileType,
-          file.size, file.path, file.mimetype, req.user.userId
+          file.size, file.path, file.mimetype, req.user.userId, fileData
         ]
       });
 
@@ -319,20 +332,33 @@ router.post('/centers', async (req, res) => {
 });
 
 // GET /api/v1/imaging/file/:fileId — serve the actual image file
+// Tries disk first, falls back to database blob (survives Render redeploys)
 router.get('/file/:fileId', async (req, res) => {
   try {
     const [files] = await sequelize.query(
-      `SELECT storage_path, mime_type, file_name FROM msk_imaging_files WHERE id = $1`,
+      `SELECT storage_path, mime_type, file_name, file_data FROM msk_imaging_files WHERE id = $1`,
       { bind: [req.params.fileId] }
     );
     if (files.length === 0) return res.status(404).json({ error: 'File not found' });
     const file = files[0];
-    if (!file.storage_path || !fs.existsSync(file.storage_path)) {
-      return res.status(404).json({ error: 'File not found on disk' });
-    }
+
     res.setHeader('Content-Type', file.mime_type || 'application/octet-stream');
     res.setHeader('Content-Disposition', `inline; filename="${file.file_name}"`);
-    fs.createReadStream(file.storage_path).pipe(res);
+    res.setHeader('Cache-Control', 'private, max-age=3600');
+
+    // Try disk first (fastest)
+    if (file.storage_path && fs.existsSync(file.storage_path)) {
+      return fs.createReadStream(file.storage_path).pipe(res);
+    }
+
+    // Fall back to database blob
+    if (file.file_data) {
+      const buffer = Buffer.from(file.file_data, 'base64');
+      res.setHeader('Content-Length', buffer.length);
+      return res.end(buffer);
+    }
+
+    res.status(404).json({ error: 'Image file lost — Render ephemeral storage wiped on redeploy. Re-upload the image.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
