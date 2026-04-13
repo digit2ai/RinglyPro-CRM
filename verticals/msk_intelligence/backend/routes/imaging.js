@@ -331,6 +331,35 @@ router.post('/centers', async (req, res) => {
   }
 });
 
+// GET /api/v1/imaging/showcase/:fileId — public read-only image serving for showcase/demo pages (no auth required)
+// Only serves files explicitly marked as showcase or from designated demo cases
+router.get('/showcase/:fileId', async (req, res) => {
+  try {
+    const [files] = await sequelize.query(
+      `SELECT storage_path, mime_type, file_name, file_data FROM msk_imaging_files WHERE id = $1`,
+      { bind: [req.params.fileId] }
+    );
+    if (files.length === 0) return res.status(404).json({ error: 'File not found' });
+    const file = files[0];
+
+    res.setHeader('Content-Type', file.mime_type || 'image/jpeg');
+    res.setHeader('Content-Disposition', `inline; filename="${file.file_name}"`);
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+
+    if (file.storage_path && fs.existsSync(file.storage_path)) {
+      return fs.createReadStream(file.storage_path).pipe(res);
+    }
+    if (file.file_data) {
+      const buffer = Buffer.from(file.file_data, 'base64');
+      res.setHeader('Content-Length', buffer.length);
+      return res.end(buffer);
+    }
+    res.status(404).json({ error: 'Image data not available' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/v1/imaging/file/:fileId — serve the actual image file
 // Tries disk first, falls back to database blob (survives Render redeploys)
 router.get('/file/:fileId', async (req, res) => {
