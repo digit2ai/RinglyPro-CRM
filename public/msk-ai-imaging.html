@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>MSK Intelligence -- AI-Powered Medical Image Analysis</title>
+  <meta name="description" content="AI-powered X-ray, CT, and MRI analysis. Instant structured diagnostic reports. Presented by Rachel, AI voice agent." />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦴</text></svg>" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    *{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}
+    body{font-family:'Inter',system-ui,sans-serif;background:#0a0e17;color:#e2e8f0;line-height:1.7}
+    :root{--blue:#0ea5e9;--cyan:#06b6d4;--green:#10b981;--gold:#f59e0b;--red:#ef4444;--bg:#0a0e17;--card:#111827;--border:#1e293b;--text:#e2e8f0;--muted:#94a3b8;--dim:#64748b}
+    .c{max-width:1100px;margin:0 auto;padding:0 20px}
+    a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
+
+    .nav{position:sticky;top:0;z-index:50;padding:10px 0;background:rgba(10,14,23,.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(30,41,59,.5)}
+    .nav-inner{display:flex;align-items:center;justify-content:space-between}
+    .nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+    .nav-brand img{height:56px;width:auto;object-fit:contain}
+    .nav-brand span{font-weight:700;color:#fff;font-size:.95rem}
+    .nav-links{display:flex;gap:4px;flex-wrap:wrap}
+    .nav-links a{color:var(--muted);font-size:13px;font-weight:500;padding:6px 12px;border-radius:6px;transition:all .2s;text-decoration:none}
+    .nav-links a:hover{color:#fff;background:rgba(255,255,255,.05)}
+
+    /* Hero */
+    .hero{position:relative;padding:80px 0 60px;overflow:hidden;text-align:center}
+    .hero-bg{position:absolute;inset:0;background:url('https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69c7fbd05eea8363cb559a83.jpg') center/cover}
+    .hero-bg::before{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,14,23,.92),rgba(10,14,23,.85),rgba(10,14,23,1))}
+    .hero .c{position:relative;z-index:2}
+    .hero h1{font-size:clamp(1.8rem,4vw,3rem);font-weight:900;margin-bottom:12px;line-height:1.15}
+    .hero h1 em{font-style:normal;color:var(--blue)}
+    .hero-sub{color:var(--muted);font-size:1.05rem;max-width:600px;margin:0 auto 32px}
+
+    /* Rachel Presenter Card */
+    .presenter{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px;max-width:560px;margin:-40px auto 48px;position:relative;z-index:3;text-align:center}
+    .rachel-orb{width:100px;height:100px;border-radius:50%;margin:0 auto 16px;position:relative}
+    .rachel-ring{position:absolute;inset:-6px;border-radius:50%;border:3px solid var(--blue);opacity:0;transition:all .3s}
+    .rachel-ring.active{opacity:1;animation:ring-pulse 1.5s ease-in-out infinite}
+    .rachel-ring.speaking{border-color:var(--green);animation:ring-pulse .8s ease-in-out infinite}
+    @keyframes ring-pulse{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.08);opacity:1}}
+    .rachel-glow{width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,var(--blue) 0%,var(--cyan) 40%,rgba(6,182,212,.3) 70%,transparent 100%);display:flex;align-items:center;justify-content:center;position:relative;z-index:1}
+    .rachel-glow::after{content:'';width:36px;height:36px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.9),rgba(14,165,233,.6))}
+    .presenter h3{font-weight:800;font-size:1.1rem;margin-bottom:4px}
+    .presenter .role{color:var(--cyan);font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+    .status{font-size:13px;font-weight:600;min-height:20px;margin-bottom:12px}
+    .status.idle{color:var(--dim)}.status.connecting{color:var(--gold)}.status.connected{color:var(--green)}.status.speaking{color:var(--blue)}.status.ended{color:var(--muted)}
+    .start-btn{padding:14px 36px;border-radius:12px;border:none;cursor:pointer;font-family:inherit;font-size:1rem;font-weight:700;background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff;transition:all .3s;box-shadow:0 6px 24px rgba(14,165,233,.3);width:100%}
+    .start-btn:hover{transform:translateY(-2px);box-shadow:0 10px 32px rgba(14,165,233,.4)}
+    .start-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+    .start-btn.stop{background:linear-gradient(135deg,var(--red),#dc2626);box-shadow:0 6px 24px rgba(239,68,68,.3)}
+    .section-tracker{display:flex;gap:6px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+    .section-dot{padding:5px 10px;border-radius:6px;font-size:10px;font-weight:600;background:#1e293b;color:var(--dim);transition:all .3s}
+    .section-dot.active{background:rgba(14,165,233,.15);color:var(--blue);border:1px solid rgba(14,165,233,.3)}
+    .section-dot.done{background:rgba(16,185,129,.1);color:var(--green)}
+    .transcript{margin-top:20px;max-height:200px;overflow-y:auto;text-align:left;padding:16px;background:var(--bg);border:1px solid var(--border);border-radius:12px;font-size:.85rem}
+    .transcript h4{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--dim);margin-bottom:8px}
+    .msg{margin-bottom:8px;line-height:1.5}
+    .msg.rachel{color:var(--text)}.msg.rachel::before{content:'Rachel: ';color:var(--blue);font-weight:700}
+    .msg.user{color:var(--muted)}.msg.user::before{content:'You: ';color:var(--gold);font-weight:700}
+
+    /* Content Sections */
+    section{padding:60px 0}
+    .alt{background:#0f1729}
+    .st{font-size:clamp(1.4rem,3vw,2rem);font-weight:800;margin-bottom:8px;line-height:1.2}
+    .ss{font-size:.92rem;color:var(--muted);max-width:560px;margin-bottom:28px}
+    .sl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2.5px;color:var(--gold);margin-bottom:8px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:16px;transition:border-color .3s}
+    .card:hover{border-color:rgba(14,165,233,.2)}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+
+    .flow-step{display:flex;gap:16px;align-items:flex-start;margin-bottom:20px}
+    .flow-num{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--blue),var(--cyan));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;color:#fff;flex-shrink:0}
+    .flow-content h4{font-weight:700;font-size:.95rem;margin-bottom:2px}
+    .flow-content p{color:var(--muted);font-size:.85rem}
+
+    .benefit{padding:20px;background:rgba(15,23,42,.5);border-radius:10px;border:1px solid rgba(30,41,59,.5)}
+    .benefit-icon{font-size:1.5rem;margin-bottom:8px}
+    .benefit h4{font-weight:700;font-size:.9rem;margin-bottom:4px}
+    .benefit p{color:var(--muted);font-size:.82rem;line-height:1.6}
+
+    .example-box{background:#0a0e17;border:1px solid var(--border);border-radius:12px;padding:20px;font-size:.85rem;line-height:1.8}
+    .example-label{display:inline-block;padding:3px 10px;border-radius:6px;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+    .label-green{background:rgba(16,185,129,.15);color:var(--green)}
+    .label-red{background:rgba(239,68,68,.15);color:var(--red)}
+    .label-blue{background:rgba(14,165,233,.15);color:var(--blue)}
+    .label-gold{background:rgba(245,158,11,.15);color:var(--gold)}
+
+    footer{padding:32px 0;border-top:1px solid var(--border);text-align:center;color:var(--dim);font-size:.78rem}
+    @media(max-width:768px){.grid2,.grid3{grid-template-columns:1fr}.nav-links{display:none}}
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="c nav-inner">
+    <a href="/msk/" class="nav-brand">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png" alt="Digit2AI" />
+      <span>MSK Intelligence</span>
+    </a>
+    <div class="nav-links">
+      <a href="/msk-proposal.html">Proposal</a>
+      <a href="/msk-business-plan.html">Business Plan</a>
+      <a href="/msk-presentation.html">Main Presentation</a>
+      <a href="/msk/">Platform</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<header class="hero">
+  <div class="hero-bg"></div>
+  <div class="c">
+    <div class="sl">Feature Deep Dive</div>
+    <h1>AI-Powered <em>Medical Image Analysis</em></h1>
+    <p class="hero-sub">Every uploaded X-ray, CT, and MRI is analyzed automatically in seconds. Structured findings. ICD-10 codes. Recovery recommendations. Instant.</p>
+  </div>
+</header>
+
+<!-- Rachel Presenter -->
+<div class="c">
+  <div class="presenter">
+    <div class="rachel-orb">
+      <div class="rachel-ring" id="ring"></div>
+      <div class="rachel-glow"></div>
+    </div>
+    <h3>Rachel</h3>
+    <div class="role">AI Presenter</div>
+    <div class="status idle" id="status">Ready to present</div>
+    <button class="start-btn" id="startBtn" onclick="togglePresentation()">Start Presentation</button>
+    <div class="section-tracker" id="sections">
+      <div class="section-dot" data-s="1">Intro</div>
+      <div class="section-dot" data-s="2">How It Works</div>
+      <div class="section-dot" data-s="3">Real Example</div>
+      <div class="section-dot" data-s="4">For Radiologists</div>
+      <div class="section-dot" data-s="5">For Patients</div>
+      <div class="section-dot" data-s="6">Health Equity</div>
+      <div class="section-dot" data-s="7">Architecture</div>
+      <div class="section-dot" data-s="8">Closing</div>
+    </div>
+    <div class="transcript" id="transcript" style="display:none">
+      <h4>Live Transcript</h4>
+      <div id="messages"></div>
+    </div>
+  </div>
+</div>
+
+<!-- How It Works -->
+<section>
+  <div class="c">
+    <div class="sl">01 -- How It Works</div>
+    <h2 class="st">Upload to Diagnosis in Seconds</h2>
+    <p class="ss">No buttons to click. No waiting. The AI reads every image automatically the moment it is uploaded.</p>
+
+    <div class="card">
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <div class="flow-content">
+          <h4>Patient Uploads Image</h4>
+          <p>Drag and drop an X-ray, CT scan, or MRI into the case. Supports JPEG, PNG, DICOM up to 500MB.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">2</div>
+        <div class="flow-content">
+          <h4>AI Analyzes Instantly</h4>
+          <p>Within 10-30 seconds, the AI identifies the modality, body region, and every visible finding. Clinical context from the case is used to improve accuracy.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">3</div>
+        <div class="flow-content">
+          <h4>Structured Report Generated</h4>
+          <p>Findings, impression, abnormalities, ICD-10 codes, follow-up recommendations, and confidence level -- all in a structured format.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">4</div>
+        <div class="flow-content">
+          <h4>Radiologist Reviews and Finalizes</h4>
+          <p>The AI draft feeds into the diagnostic copilot. The doctor reviews, edits, and signs off in 5 minutes instead of 30.</p>
+        </div>
+      </div>
+      <div class="flow-step" style="margin-bottom:0">
+        <div class="flow-num">5</div>
+        <div class="flow-content">
+          <h4>Patient Gets Answers</h4>
+          <p>Finalized report available immediately. Patient can export as PDF, talk to Rachel for a plain-language explanation, or discuss in their next appointment.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Real Example -->
+<section class="alt">
+  <div class="c">
+    <div class="sl">02 -- Real Example</div>
+    <h2 class="st">Live Case: Comminuted Finger Fracture</h2>
+    <p class="ss">A real output from an MSK Intelligence case -- a 39-year-old patient with a crush injury from a falling tree.</p>
+
+    <div class="grid2">
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+          <strong style="font-size:.9rem">Uploaded X-ray</strong>
+          <span class="example-label label-green">AI Analyzed</span>
+        </div>
+        <div style="background:#000;padding:20px;text-align:center;min-height:200px;display:flex;align-items:center;justify-content:center">
+          <p style="color:var(--dim);font-size:.85rem">[Patient X-ray image displayed here in the live platform]</p>
+        </div>
+      </div>
+      <div>
+        <div class="example-box" style="margin-bottom:12px">
+          <span class="example-label label-blue">Modality</span>
+          <p style="color:#fff;font-weight:600">CT -- Right hand, index finger</p>
+        </div>
+        <div class="example-box" style="margin-bottom:12px">
+          <span class="example-label label-gold">Impression</span>
+          <p style="color:var(--text)">Comminuted displaced fracture of the right index finger proximal phalanx secondary to crush injury. The fracture pattern and degree of comminution suggest high-energy trauma requiring orthopedic surgical evaluation for potential open reduction and internal fixation.</p>
+        </div>
+        <div class="example-box">
+          <span class="example-label label-red">Abnormalities Detected</span>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+            <span style="background:rgba(239,68,68,.12);color:var(--red);padding:4px 10px;border-radius:6px;font-size:.78rem;font-weight:600">Comminuted fracture</span>
+            <span style="background:rgba(239,68,68,.12);color:var(--red);padding:4px 10px;border-radius:6px;font-size:.78rem;font-weight:600">Bone displacement</span>
+            <span style="background:rgba(239,68,68,.12);color:var(--red);padding:4px 10px;border-radius:6px;font-size:.78rem;font-weight:600">Cortical disruption</span>
+            <span style="background:rgba(239,68,68,.12);color:var(--red);padding:4px 10px;border-radius:6px;font-size:.78rem;font-weight:600">Soft tissue swelling</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="grid2" style="gap:24px">
+        <div>
+          <span class="example-label label-blue" style="margin-bottom:8px">ICD-10 Codes</span>
+          <p style="margin-top:8px"><strong style="color:var(--blue)">S62.610A</strong> <span style="color:var(--muted);font-size:.85rem">-- Displaced fracture of proximal phalanx of right index finger</span></p>
+          <p><strong style="color:var(--blue)">W20.8XXA</strong> <span style="color:var(--muted);font-size:.85rem">-- Strike by thrown, projected or falling object</span></p>
+        </div>
+        <div>
+          <span class="example-label label-green" style="margin-bottom:8px">Follow-Up</span>
+          <p style="margin-top:8px;color:var(--muted);font-size:.88rem">Urgent orthopedic surgery consultation. Follow-up CT or MRI if surgical intervention planned. Post-operative monitoring at 2, 6, and 12 weeks with serial radiographs.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Benefits for Radiologists -->
+<section>
+  <div class="c">
+    <div class="sl">03 -- For Radiologists</div>
+    <h2 class="st">Your AI First Reader</h2>
+    <p class="ss">The AI pre-reads every image before you open the case. What used to take 30 minutes now takes 5.</p>
+
+    <div class="grid3">
+      <div class="benefit">
+        <div class="benefit-icon" style="color:var(--blue)">&#9889;</div>
+        <h4>6x Faster Turnaround</h4>
+        <p>Every image has a structured draft ready before you open it. Review and approve instead of reading and typing from scratch.</p>
+      </div>
+      <div class="benefit">
+        <div class="benefit-icon" style="color:var(--green)">&#128065;</div>
+        <h4>Never Miss a Finding</h4>
+        <p>The AI examines every pixel systematically. It does not get fatigued at 4 AM or rush through its 80th case of the day.</p>
+      </div>
+      <div class="benefit">
+        <div class="benefit-icon" style="color:var(--gold)">&#128196;</div>
+        <h4>Standardized Reports</h4>
+        <p>Every analysis follows the same structure: findings, impression, abnormalities, ICD-10, follow-up. Nothing gets omitted.</p>
+      </div>
+      <div class="benefit">
+        <div class="benefit-icon" style="color:var(--cyan)">&#128200;</div>
+        <h4>Clinical Context</h4>
+        <p>Unlike standalone tools, findings are interpreted in context -- the AI knows the complaint, mechanism, and severity before analyzing.</p>
+      </div>
+      <div class="benefit">
+        <div class="benefit-icon" style="color:var(--green)">&#128176;</div>
+        <h4>Auto ICD-10 Codes</h4>
+        <p>Billing codes are suggested automatically based on image findings. Ready for claims submission the moment you finalize.</p>
+      </div>
+      <div class="benefit">
+        <div class="benefit-icon" style="color:var(--blue)">&#128260;</div>
+        <h4>Re-Analyze on Demand</h4>
+        <p>Clinical picture changed? Hit re-analyze. The AI re-reads the same image with updated context and may surface different findings.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Benefits for Patients -->
+<section class="alt">
+  <div class="c">
+    <div class="sl">04 -- For Patients</div>
+    <h2 class="st">Answers in Minutes, Not Weeks</h2>
+    <p class="ss">No more waiting 3-14 days for results. See preliminary findings immediately. Talk to Rachel for plain-language explanations.</p>
+
+    <div class="grid2">
+      <div class="benefit">
+        <h4 style="color:var(--green)">Instant Preliminary Results</h4>
+        <p>AI analysis is available within seconds of upload. See findings while waiting for the radiologist to finalize.</p>
+      </div>
+      <div class="benefit">
+        <h4 style="color:var(--blue)">Plain-Language Explanations</h4>
+        <p>Click "Talk to Rachel" and the AI voice assistant explains your imaging findings in everyday language you can understand.</p>
+      </div>
+      <div class="benefit">
+        <h4 style="color:var(--gold)">Full Transparency</h4>
+        <p>No black box. You see exactly what the AI found -- findings, impression, abnormalities, confidence level. Arrive at your appointment prepared.</p>
+      </div>
+      <div class="benefit">
+        <h4 style="color:var(--cyan)">Faster Treatment</h4>
+        <p>When the AI flags something urgent, the case is escalated immediately. In fractures that need surgical fixation within days, this saves outcomes.</p>
+      </div>
+    </div>
+
+    <!-- Health Equity -->
+    <div class="card" style="margin-top:24px;padding:28px;background:linear-gradient(135deg,rgba(14,165,233,.06),rgba(16,185,129,.04));border-color:rgba(14,165,233,.3);position:relative;overflow:hidden">
+      <div style="position:absolute;top:0;left:0;width:5px;height:100%;background:linear-gradient(to bottom,var(--blue),var(--green))"></div>
+      <div style="padding-left:16px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--blue);margin-bottom:8px">Health Equity</div>
+        <p style="font-size:1.05rem;line-height:1.8;color:#fff;font-weight:500;font-style:italic;margin-bottom:8px">
+          &ldquo;We believe all people should be given the chance to live as healthy a life as possible, regardless of race, ethnicity, religion, or where they live.&rdquo;
+        </p>
+        <p style="font-size:.85rem;color:var(--muted)">
+          In rural areas and developing countries where MSK radiologists are scarce, the AI provides specialist-level imaging interpretation that would otherwise be unavailable. A community health worker in a remote province can upload an X-ray and get preliminary findings immediately.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Architecture -->
+<section>
+  <div class="c">
+    <div class="sl">05 -- Technical Architecture</div>
+    <h2 class="st">Designed for Reliability and Speed</h2>
+
+    <div class="grid2">
+      <div class="card">
+        <h4 style="color:var(--blue);font-weight:700;margin-bottom:8px">Non-Blocking Upload</h4>
+        <p style="color:var(--muted);font-size:.85rem">The upload returns immediately. AI analysis runs in the background. By the time you scroll down, the analysis is usually already complete.</p>
+      </div>
+      <div class="card">
+        <h4 style="color:var(--green);font-weight:700;margin-bottom:8px">Persistent Database Storage</h4>
+        <p style="color:var(--muted);font-size:.85rem">Images are stored in the PostgreSQL database, not on temporary filesystems. Images survive server restarts and infrastructure changes.</p>
+      </div>
+      <div class="card">
+        <h4 style="color:var(--gold);font-weight:700;margin-bottom:8px">Clinical Context Injection</h4>
+        <p style="color:var(--muted);font-size:.85rem">Before analysis, the system gathers the patient's clinical data. A knee image from a trauma case is interpreted differently than one from a degenerative case.</p>
+      </div>
+      <div class="card">
+        <h4 style="color:var(--cyan);font-weight:700;margin-bottom:8px">Structured JSON Output</h4>
+        <p style="color:var(--muted);font-size:.85rem">The AI returns a defined schema that feeds into the copilot, Rachel voice assistant, PDF exports, and the case timeline -- not unstructured free text.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px;text-align:center;padding:32px;background:linear-gradient(135deg,rgba(14,165,233,.04),rgba(6,182,212,.03))">
+      <p style="font-size:1.1rem;font-weight:700;color:#fff;margin-bottom:8px">Every image. Every case. Analyzed immediately.</p>
+      <p style="color:var(--muted);font-size:.88rem;max-width:480px;margin:0 auto">The AI does not replace the radiologist. It makes the radiologist faster, more thorough, and more consistent. For patients, it means faster answers and access to care regardless of where they live.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="alt" style="text-align:center;padding:60px 0">
+  <div class="c">
+    <h2 style="font-size:clamp(1.5rem,3vw,2.2rem);font-weight:900;margin-bottom:16px">See It in Action</h2>
+    <p style="color:var(--muted);font-size:1rem;max-width:500px;margin:0 auto 28px">Log in to the live platform, upload any X-ray, and watch the AI analysis appear in seconds.</p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <a href="/msk/" style="display:inline-flex;align-items:center;gap:8px;padding:14px 28px;border-radius:10px;font-weight:600;font-size:.95rem;text-decoration:none;background:var(--blue);color:#fff">Try the Live Platform</a>
+      <a href="/msk-business-plan.html" style="display:inline-flex;align-items:center;gap:8px;padding:14px 28px;border-radius:10px;font-weight:600;font-size:.95rem;text-decoration:none;background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--border)">Business Plan</a>
+      <a href="mailto:mstagg@digit2ai.com" style="display:inline-flex;align-items:center;gap:8px;padding:14px 28px;border-radius:10px;font-weight:600;font-size:.95rem;text-decoration:none;background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--border)">Contact Us</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="c">
+    <p>MSK Intelligence by <strong>Digit2AI</strong> -- AI-assisted preliminary reads must be reviewed by a qualified radiologist.</p>
+    <p style="margin-top:6px">Contact: <a href="mailto:mstagg@digit2ai.com">mstagg@digit2ai.com</a> | <a href="/msk/">Live Platform</a> | <a href="/msk-business-plan.html#ask">Investment Opportunity</a></p>
+  </div>
+</footer>
+
+<script type="module">
+  import { Conversation } from 'https://cdn.jsdelivr.net/npm/@11labs/client@latest/+esm';
+
+  let conversation = null;
+  let isRunning = false;
+
+  const statusEl = document.getElementById('status');
+  const ringEl = document.getElementById('ring');
+  const startBtn = document.getElementById('startBtn');
+  const transcriptEl = document.getElementById('transcript');
+  const messagesEl = document.getElementById('messages');
+
+  function setStatus(state, text) {
+    statusEl.className = 'status ' + state;
+    statusEl.textContent = text;
+    ringEl.className = 'rachel-ring' + (state === 'connected' ? ' active' : state === 'speaking' ? ' speaking active' : '');
+  }
+
+  function addMessage(role, text) {
+    transcriptEl.style.display = 'block';
+    const div = document.createElement('div');
+    div.className = 'msg ' + role;
+    div.textContent = text;
+    messagesEl.appendChild(div);
+    transcriptEl.scrollTop = transcriptEl.scrollHeight;
+
+    const lower = text.toLowerCase();
+    if (lower.includes('present') || lower.includes('image analysis engine')) markSection(1);
+    if (lower.includes('workflow') || lower.includes('10 to 30 seconds') || lower.includes('modality')) markSection(2);
+    if (lower.includes('real example') || lower.includes('comminuted') || lower.includes('crush injury')) markSection(3);
+    if (lower.includes('radiologist') || lower.includes('first reader') || lower.includes('fatigued')) markSection(4);
+    if (lower.includes('patient') || lower.includes('minutes instead') || lower.includes('plain language')) markSection(5);
+    if (lower.includes('health equity') || lower.includes('regardless of where')) markSection(6);
+    if (lower.includes('architecture') || lower.includes('non-blocking') || lower.includes('persistent')) markSection(7);
+    if (lower.includes('close') || lower.includes('thank you') || lower.includes('questions')) markSection(8);
+  }
+
+  function markSection(num) {
+    const dot = document.querySelector(`.section-dot[data-s="${num}"]`);
+    if (dot && !dot.classList.contains('done')) {
+      document.querySelectorAll('.section-dot.active').forEach(d => d.classList.remove('active'));
+      dot.classList.add('active');
+      for (let i = 1; i < num; i++) {
+        const prev = document.querySelector(`.section-dot[data-s="${i}"]`);
+        if (prev) { prev.classList.remove('active'); prev.classList.add('done'); }
+      }
+    }
+  }
+
+  window.togglePresentation = async function() {
+    if (isRunning) {
+      if (conversation) { await conversation.endSession(); conversation = null; }
+      isRunning = false;
+      setStatus('ended', 'Presentation ended');
+      startBtn.textContent = 'Restart Presentation';
+      startBtn.className = 'start-btn';
+      return;
+    }
+
+    setStatus('connecting', 'Connecting to Rachel...');
+    startBtn.disabled = true;
+    startBtn.textContent = 'Connecting...';
+    messagesEl.innerHTML = '';
+
+    try {
+      const proxyRes = await fetch('/msk/api/v1/voice/image-analysis-presenter-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const tokenData = await proxyRes.json();
+
+      if (!tokenData.signed_url) throw new Error('Failed to get signed URL');
+
+      conversation = await Conversation.startSession({
+        signedUrl: tokenData.signed_url,
+        onConnect: () => {
+          isRunning = true;
+          setStatus('connected', 'Rachel is presenting...');
+          startBtn.disabled = false;
+          startBtn.textContent = 'Stop Presentation';
+          startBtn.className = 'start-btn stop';
+        },
+        onDisconnect: () => {
+          isRunning = false;
+          setStatus('ended', 'Presentation ended');
+          startBtn.disabled = false;
+          startBtn.textContent = 'Restart Presentation';
+          startBtn.className = 'start-btn';
+          conversation = null;
+        },
+        onError: () => {
+          setStatus('idle', 'Connection error -- try again');
+          startBtn.disabled = false;
+          startBtn.textContent = 'Start Presentation';
+          startBtn.className = 'start-btn';
+        },
+        onModeChange: (mode) => {
+          if (mode.mode === 'speaking') {
+            setStatus('speaking', 'Rachel is speaking...');
+          } else {
+            setStatus('connected', 'Listening for questions...');
+          }
+        },
+        onMessage: (msg) => {
+          if (msg.message) addMessage(msg.source === 'user' ? 'user' : 'rachel', msg.message);
+        }
+      });
+    } catch (err) {
+      console.error('[Rachel] Start error:', err);
+      setStatus('idle', 'Connection failed -- try again');
+      startBtn.disabled = false;
+      startBtn.textContent = 'Start Presentation';
+      startBtn.className = 'start-btn';
+    }
+  };
+</script>
+
+</body>
+</html>

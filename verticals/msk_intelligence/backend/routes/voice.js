@@ -234,6 +234,38 @@ router.post('/rachel-token', async (req, res) => {
 });
 
 /**
+ * POST /api/v1/voice/image-analysis-presenter-token
+ * Generate ElevenLabs WebRTC signed URL for Rachel — AI Image Analysis Presenter
+ */
+router.post('/image-analysis-presenter-token', async (req, res) => {
+  try {
+    const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
+    const AGENT_ID = 'agent_9901kp3fdfq5echrvnvcw1xmr1ay';
+
+    if (!ELEVENLABS_API_KEY) {
+      return res.status(500).json({ success: false, error: 'ElevenLabs API key not configured' });
+    }
+
+    const response = await fetch(
+      `https://api.elevenlabs.io/v1/convai/conversation/get-signed-url?agent_id=${encodeURIComponent(AGENT_ID)}`,
+      { method: 'GET', headers: { 'xi-api-key': ELEVENLABS_API_KEY } }
+    );
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error('[MSK Voice] Image analysis presenter token error:', response.status, errText);
+      return res.status(response.status).json({ success: false, error: 'Failed to get voice token' });
+    }
+
+    const data = await response.json();
+    res.json({ success: true, signed_url: data.signed_url, agent_id: AGENT_ID });
+  } catch (err) {
+    console.error('[MSK Voice] Image analysis presenter token error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
  * POST /api/v1/voice/case-assistant-token
  * Generate ElevenLabs signed URL for Rachel Case Assistant
  * Injects full case data as dynamic variables so Rachel can discuss the case
