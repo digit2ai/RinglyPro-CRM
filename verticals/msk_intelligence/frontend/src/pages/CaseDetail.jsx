@@ -68,7 +68,7 @@ export default function CaseDetail() {
     }
   };
 
-  // ── Rachel Voice Assistant ───────────────────────────────────────
+  // ── Lina Voice Assistant ───────────────────────────────────────
   const [voiceStatus, setVoiceStatus] = useState('idle'); // idle | connecting | connected | error
   const [isSpeaking, setIsSpeaking] = useState(false);
   const conversationRef = useRef(null);
@@ -87,13 +87,13 @@ export default function CaseDetail() {
         dynamicVariables: tokenData.dynamic_variables,
         onConnect: () => { setVoiceStatus('connected'); },
         onDisconnect: () => { setVoiceStatus('idle'); conversationRef.current = null; },
-        onError: (err) => { console.error('[Rachel Voice]', err); setVoiceStatus('error'); },
+        onError: (err) => { console.error('[Lina Voice]', err); setVoiceStatus('error'); },
         onModeChange: ({ mode }) => { setIsSpeaking(mode === 'speaking'); }
       });
 
       conversationRef.current = conversation;
     } catch (err) {
-      console.error('[Rachel Voice] Start error:', err);
+      console.error('[Lina Voice] Start error:', err);
       setVoiceStatus('error');
       setTimeout(() => setVoiceStatus('idle'), 3000);
     }
@@ -535,18 +535,18 @@ export default function CaseDetail() {
             <p className="text-msk-400 font-medium capitalize">{(caseData.pricing_tier || 'imaging_review').replace(/_/g, ' ')}</p>
           </div>
 
-          {/* Rachel Voice Assistant */}
+          {/* Lina Voice Assistant */}
           <div className={`card ${voiceStatus === 'connected' ? 'border-green-500/50 ring-1 ring-green-500/20' : 'border-msk-500/30'}`}>
             <h3 className="text-md font-bold text-white mb-3 flex items-center gap-2">
               {voiceStatus === 'connected' && (
                 <span className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse" />
               )}
-              Rachel — Case Assistant
+              Lina — Case Assistant
             </h3>
             <p className="text-dark-400 text-xs mb-3">
-              {voiceStatus === 'idle' && 'Talk to Rachel about this case — she knows the full clinical picture.'}
-              {voiceStatus === 'connecting' && 'Connecting to Rachel...'}
-              {voiceStatus === 'connected' && (isSpeaking ? 'Rachel is speaking...' : 'Rachel is listening...')}
+              {voiceStatus === 'idle' && 'Talk to Lina about this case — she knows the full clinical picture.'}
+              {voiceStatus === 'connecting' && 'Connecting to Lina...'}
+              {voiceStatus === 'connected' && (isSpeaking ? 'Lina is speaking...' : 'Lina is listening...')}
               {voiceStatus === 'error' && 'Connection failed. Try again.'}
             </p>
 
@@ -569,7 +569,7 @@ export default function CaseDetail() {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                 </svg>
-                Talk to Rachel
+                Talk to Lina
               </button>
             ) : voiceStatus === 'connecting' ? (
               <button disabled className="w-full bg-dark-700 text-dark-400 py-3 rounded-lg flex items-center justify-center gap-2">

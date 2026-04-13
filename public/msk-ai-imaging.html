@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <title>MSK Intelligence -- AI-Powered Medical Image Analysis</title>
-  <meta name="description" content="AI-powered X-ray, CT, and MRI analysis. Instant structured diagnostic reports. Presented by Rachel, AI voice agent." />
+  <meta name="description" content="AI-powered X-ray, CT, and MRI analysis. Instant structured diagnostic reports. Presented by Lina, AI voice agent." />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦴</text></svg>" />
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
@@ -32,15 +32,15 @@
     .hero h1 em{font-style:normal;color:var(--blue)}
     .hero-sub{color:var(--muted);font-size:1.05rem;max-width:600px;margin:0 auto 32px}
 
-    /* Rachel Presenter Card */
+    /* Lina Presenter Card */
     .presenter{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px;max-width:560px;margin:-40px auto 48px;position:relative;z-index:3;text-align:center}
-    .rachel-orb{width:100px;height:100px;border-radius:50%;margin:0 auto 16px;position:relative}
-    .rachel-ring{position:absolute;inset:-6px;border-radius:50%;border:3px solid var(--blue);opacity:0;transition:all .3s}
-    .rachel-ring.active{opacity:1;animation:ring-pulse 1.5s ease-in-out infinite}
-    .rachel-ring.speaking{border-color:var(--green);animation:ring-pulse .8s ease-in-out infinite}
+    .lina-orb{width:100px;height:100px;border-radius:50%;margin:0 auto 16px;position:relative}
+    .lina-ring{position:absolute;inset:-6px;border-radius:50%;border:3px solid var(--blue);opacity:0;transition:all .3s}
+    .lina-ring.active{opacity:1;animation:ring-pulse 1.5s ease-in-out infinite}
+    .lina-ring.speaking{border-color:var(--green);animation:ring-pulse .8s ease-in-out infinite}
     @keyframes ring-pulse{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.08);opacity:1}}
-    .rachel-glow{width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,var(--blue) 0%,var(--cyan) 40%,rgba(6,182,212,.3) 70%,transparent 100%);display:flex;align-items:center;justify-content:center;position:relative;z-index:1}
-    .rachel-glow::after{content:'';width:36px;height:36px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.9),rgba(14,165,233,.6))}
+    .lina-glow{width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,var(--blue) 0%,var(--cyan) 40%,rgba(6,182,212,.3) 70%,transparent 100%);display:flex;align-items:center;justify-content:center;position:relative;z-index:1}
+    .lina-glow::after{content:'';width:36px;height:36px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.9),rgba(14,165,233,.6))}
     .presenter h3{font-weight:800;font-size:1.1rem;margin-bottom:4px}
     .presenter .role{color:var(--cyan);font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
     .status{font-size:13px;font-weight:600;min-height:20px;margin-bottom:12px}
@@ -56,7 +56,7 @@
     .transcript{margin-top:20px;max-height:200px;overflow-y:auto;text-align:left;padding:16px;background:var(--bg);border:1px solid var(--border);border-radius:12px;font-size:.85rem}
     .transcript h4{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--dim);margin-bottom:8px}
     .msg{margin-bottom:8px;line-height:1.5}
-    .msg.rachel{color:var(--text)}.msg.rachel::before{content:'Rachel: ';color:var(--blue);font-weight:700}
+    .msg.lina{color:var(--text)}.msg.lina::before{content:'Lina: ';color:var(--blue);font-weight:700}
     .msg.user{color:var(--muted)}.msg.user::before{content:'You: ';color:var(--gold);font-weight:700}
 
     /* Content Sections */
@@ -118,14 +118,14 @@
   </div>
 </header>
 
-<!-- Rachel Presenter -->
+<!-- Lina Presenter -->
 <div class="c">
   <div class="presenter">
-    <div class="rachel-orb">
-      <div class="rachel-ring" id="ring"></div>
-      <div class="rachel-glow"></div>
+    <div class="lina-orb">
+      <div class="lina-ring" id="ring"></div>
+      <div class="lina-glow"></div>
     </div>
-    <h3>Rachel</h3>
+    <h3>Lina</h3>
     <div class="role">AI Presenter</div>
     <div class="status idle" id="status">Ready to present</div>
     <button class="start-btn" id="startBtn" onclick="togglePresentation()">Start Presentation</button>
@@ -186,7 +186,7 @@
         <div class="flow-num">5</div>
         <div class="flow-content">
           <h4>Patient Gets Answers</h4>
-          <p>Finalized report available immediately. Patient can export as PDF, talk to Rachel for a plain-language explanation, or discuss in their next appointment.</p>
+          <p>Finalized report available immediately. Patient can export as PDF, talk to Lina for a plain-language explanation, or discuss in their next appointment.</p>
         </div>
       </div>
     </div>
@@ -487,7 +487,7 @@
   <div class="c">
     <div class="sl">04 -- For Patients</div>
     <h2 class="st">Answers in Minutes, Not Weeks</h2>
-    <p class="ss">No more waiting 3-14 days for results. See preliminary findings immediately. Talk to Rachel for plain-language explanations.</p>
+    <p class="ss">No more waiting 3-14 days for results. See preliminary findings immediately. Talk to Lina for plain-language explanations.</p>
 
     <div class="grid2">
       <div class="benefit">
@@ -496,7 +496,7 @@
       </div>
       <div class="benefit">
         <h4 style="color:var(--blue)">Plain-Language Explanations</h4>
-        <p>Click "Talk to Rachel" and the AI voice assistant explains your imaging findings in everyday language you can understand.</p>
+        <p>Click "Talk to Lina" and the AI voice assistant explains your imaging findings in everyday language you can understand.</p>
       </div>
       <div class="benefit">
         <h4 style="color:var(--gold)">Full Transparency</h4>
@@ -545,7 +545,7 @@
       </div>
       <div class="card">
         <h4 style="color:var(--cyan);font-weight:700;margin-bottom:8px">Structured JSON Output</h4>
-        <p style="color:var(--muted);font-size:.85rem">The AI returns a defined schema that feeds into the copilot, Rachel voice assistant, PDF exports, and the case timeline -- not unstructured free text.</p>
+        <p style="color:var(--muted);font-size:.85rem">The AI returns a defined schema that feeds into the copilot, Lina voice assistant, PDF exports, and the case timeline -- not unstructured free text.</p>
       </div>
     </div>
 
@@ -591,7 +591,7 @@
   function setStatus(state, text) {
     statusEl.className = 'status ' + state;
     statusEl.textContent = text;
-    ringEl.className = 'rachel-ring' + (state === 'connected' ? ' active' : state === 'speaking' ? ' speaking active' : '');
+    ringEl.className = 'lina-ring' + (state === 'connected' ? ' active' : state === 'speaking' ? ' speaking active' : '');
   }
 
   function addMessage(role, text) {
@@ -635,7 +635,7 @@
       return;
     }
 
-    setStatus('connecting', 'Connecting to Rachel...');
+    setStatus('connecting', 'Connecting to Lina...');
     startBtn.disabled = true;
     startBtn.textContent = 'Connecting...';
     messagesEl.innerHTML = '';
@@ -653,7 +653,7 @@
         signedUrl: tokenData.signed_url,
         onConnect: () => {
           isRunning = true;
-          setStatus('connected', 'Rachel is presenting...');
+          setStatus('connected', 'Lina is presenting...');
           startBtn.disabled = false;
           startBtn.textContent = 'Stop Presentation';
           startBtn.className = 'start-btn stop';
@@ -674,17 +674,17 @@
         },
         onModeChange: (mode) => {
           if (mode.mode === 'speaking') {
-            setStatus('speaking', 'Rachel is speaking...');
+            setStatus('speaking', 'Lina is speaking...');
           } else {
             setStatus('connected', 'Listening for questions...');
           }
         },
         onMessage: (msg) => {
-          if (msg.message) addMessage(msg.source === 'user' ? 'user' : 'rachel', msg.message);
+          if (msg.message) addMessage(msg.source === 'user' ? 'user' : 'lina', msg.message);
         }
       });
     } catch (err) {
-      console.error('[Rachel] Start error:', err);
+      console.error('[Lina] Start error:', err);
       setStatus('idle', 'Connection failed -- try again');
       startBtn.disabled = false;
       startBtn.textContent = 'Start Presentation';
