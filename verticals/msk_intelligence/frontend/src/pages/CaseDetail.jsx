@@ -5,6 +5,28 @@ import ImagingUpload from '../components/ImagingUpload';
 import ROMAssessment from '../components/ROMAssessment';
 import DiagnosticCopilot from '../components/DiagnosticCopilot';
 
+// Fetches an image via authenticated API and returns a blob URL for <img src>
+function AuthImage({ fileId, alt, className, style, onClick }) {
+  const [src, setSrc] = React.useState(null);
+  React.useEffect(() => {
+    let revoke = null;
+    const token = localStorage.getItem('msk_token');
+    fetch(`/msk/api/v1/imaging/file/${fileId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then(r => r.blob())
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        revoke = url;
+        setSrc(url);
+      })
+      .catch(() => {});
+    return () => { if (revoke) URL.revokeObjectURL(revoke); };
+  }, [fileId]);
+  if (!src) return <div className={className} style={{ ...style, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#111827' }}><span className="text-dark-500 text-sm">Loading...</span></div>;
+  return <img src={src} alt={alt} className={className} style={style} onClick={onClick} />;
+}
+
 export default function CaseDetail() {
   const { id } = useParams();
   const [caseData, setCaseData] = useState(null);
@@ -207,7 +229,6 @@ export default function CaseDetail() {
                   const isImage = ['jpg', 'jpeg', 'png', 'image/jpeg', 'image/png'].some(t =>
                     (file.file_type || '').includes(t) || (file.mime_type || '').includes(t)
                   );
-                  const imgUrl = `/msk/api/v1/imaging/file/${file.id}`;
                   const analysis = file.ai_analysis ? (typeof file.ai_analysis === 'string' ? JSON.parse(file.ai_analysis) : file.ai_analysis) : null;
 
                   return (
@@ -219,7 +240,7 @@ export default function CaseDetail() {
                         onClick={() => setSelectedImage(selectedImage === file.id ? null : file.id)}
                       >
                         {isImage ? (
-                          <img src={imgUrl} alt={file.file_name} className="w-full h-40 object-cover bg-dark-900" />
+                          <AuthImage fileId={file.id} alt={file.file_name} className="w-full h-40 object-cover bg-dark-900" />
                         ) : (
                           <div className="w-full h-40 bg-dark-900 flex items-center justify-center">
                             <div className="text-center">
@@ -251,7 +272,6 @@ export default function CaseDetail() {
                 const isImage = ['jpg', 'jpeg', 'png', 'image/jpeg', 'image/png'].some(t =>
                   (file.file_type || '').includes(t) || (file.mime_type || '').includes(t)
                 );
-                const imgUrl = `/msk/api/v1/imaging/file/${file.id}`;
                 const analysis = file.ai_analysis ? (typeof file.ai_analysis === 'string' ? JSON.parse(file.ai_analysis) : file.ai_analysis) : null;
 
                 return (
@@ -259,7 +279,7 @@ export default function CaseDetail() {
                     {/* Full-size image */}
                     {isImage && (
                       <div className="mb-4 bg-black rounded-lg overflow-hidden">
-                        <img src={imgUrl} alt={file.file_name} className="w-full max-h-[600px] object-contain" />
+                        <AuthImage fileId={file.id} alt={file.file_name} className="w-full object-contain" style={{ maxHeight: '600px' }} />
                       </div>
                     )}
 
