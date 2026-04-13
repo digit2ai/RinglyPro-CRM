@@ -10,9 +10,11 @@ export default function CaseDetail() {
   const [caseData, setCaseData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [triaging, setTriaging] = useState(false);
+  const [imagingFiles, setImagingFiles] = useState([]);
+  const [selectedImage, setSelectedImage] = useState(null);
   const user = api.getUser();
 
-  useEffect(() => { loadCase(); }, [id]);
+  useEffect(() => { loadCase(); loadImagingFiles(); }, [id]);
 
   const loadCase = async () => {
     try {
@@ -22,6 +24,24 @@ export default function CaseDetail() {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadImagingFiles = async () => {
+    try {
+      const data = await api.get(`/imaging/files/${id}`);
+      setImagingFiles(data.data || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const reanalyzeImage = async (fileId) => {
+    try {
+      await api.post(`/imaging/analyze/${fileId}`, {});
+      await loadImagingFiles();
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -174,6 +194,176 @@ export default function CaseDetail() {
             </div>
           )}
 
+          {/* Uploaded Images + AI Analysis */}
+          {imagingFiles.length > 0 && (
+            <div className="card">
+              <h2 className="text-lg font-bold text-white mb-4">
+                Uploaded Imaging ({imagingFiles.length} file{imagingFiles.length > 1 ? 's' : ''})
+              </h2>
+
+              {/* Image grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+                {imagingFiles.map(file => {
+                  const isImage = ['jpg', 'jpeg', 'png', 'image/jpeg', 'image/png'].some(t =>
+                    (file.file_type || '').includes(t) || (file.mime_type || '').includes(t)
+                  );
+                  const imgUrl = `/msk/api/v1/imaging/file/${file.id}`;
+                  const analysis = file.ai_analysis ? (typeof file.ai_analysis === 'string' ? JSON.parse(file.ai_analysis) : file.ai_analysis) : null;
+
+                  return (
+                    <div key={file.id} className="relative group">
+                      <div
+                        className={`rounded-lg overflow-hidden border-2 cursor-pointer transition-all ${
+                          selectedImage === file.id ? 'border-msk-500 ring-2 ring-msk-500/30' : 'border-dark-700 hover:border-dark-500'
+                        }`}
+                        onClick={() => setSelectedImage(selectedImage === file.id ? null : file.id)}
+                      >
+                        {isImage ? (
+                          <img src={imgUrl} alt={file.file_name} className="w-full h-40 object-cover bg-dark-900" />
+                        ) : (
+                          <div className="w-full h-40 bg-dark-900 flex items-center justify-center">
+                            <div className="text-center">
+                              <span className="text-3xl">
+                                {file.file_type === 'dicom' ? '🏥' : file.file_type === 'pdf' ? '📄' : '📁'}
+                              </span>
+                              <p className="text-dark-400 text-xs mt-2 uppercase">{file.file_type}</p>
+                            </div>
+                          </div>
+                        )}
+                        {/* AI analysis badge */}
+                        {analysis && (
+                          <div className="absolute top-2 right-2 bg-green-500/90 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                            AI Analyzed
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-dark-400 text-xs mt-1 truncate">{file.file_name}</p>
+                      <p className="text-dark-500 text-xs">{new Date(file.created_at).toLocaleString()}</p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Full-size image viewer + AI analysis detail */}
+              {selectedImage && (() => {
+                const file = imagingFiles.find(f => f.id === selectedImage);
+                if (!file) return null;
+                const isImage = ['jpg', 'jpeg', 'png', 'image/jpeg', 'image/png'].some(t =>
+                  (file.file_type || '').includes(t) || (file.mime_type || '').includes(t)
+                );
+                const imgUrl = `/msk/api/v1/imaging/file/${file.id}`;
+                const analysis = file.ai_analysis ? (typeof file.ai_analysis === 'string' ? JSON.parse(file.ai_analysis) : file.ai_analysis) : null;
+
+                return (
+                  <div className="border-t border-dark-700 pt-4">
+                    {/* Full-size image */}
+                    {isImage && (
+                      <div className="mb-4 bg-black rounded-lg overflow-hidden">
+                        <img src={imgUrl} alt={file.file_name} className="w-full max-h-[600px] object-contain" />
+                      </div>
+                    )}
+
+                    {/* AI Analysis Results */}
+                    {analysis ? (
+                      <div className="bg-dark-900 rounded-lg border border-dark-700 p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="text-white font-bold flex items-center gap-2">
+                            <span className="text-purple-400">AI</span> Image Analysis
+                          </h3>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                              analysis.confidenceLevel === 'High' ? 'bg-green-500/20 text-green-400' :
+                              analysis.confidenceLevel === 'Moderate' ? 'bg-yellow-500/20 text-yellow-400' :
+                              'bg-red-500/20 text-red-400'
+                            }`}>
+                              {analysis.confidenceLevel} Confidence
+                            </span>
+                            <button onClick={() => reanalyzeImage(file.id)} className="text-xs text-dark-400 hover:text-msk-400">
+                              Re-analyze
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 mb-3 text-sm">
+                          <div>
+                            <span className="text-dark-400">Modality:</span>{' '}
+                            <span className="text-white font-medium">{analysis.modality}</span>
+                          </div>
+                          <div>
+                            <span className="text-dark-400">Body Region:</span>{' '}
+                            <span className="text-white font-medium">{analysis.bodyRegion}</span>
+                          </div>
+                        </div>
+
+                        <div className="mb-3">
+                          <p className="text-dark-400 text-sm font-medium mb-1">Findings</p>
+                          <p className="text-dark-200 text-sm leading-relaxed">{analysis.findings}</p>
+                        </div>
+
+                        <div className="mb-3 bg-dark-800/50 rounded-lg p-3 border-l-4 border-msk-500">
+                          <p className="text-dark-400 text-sm font-medium mb-1">Impression</p>
+                          <p className="text-white text-sm font-medium">{analysis.impression}</p>
+                        </div>
+
+                        {analysis.abnormalitiesDetected && analysis.abnormalitiesDetected.length > 0 && (
+                          <div className="mb-3">
+                            <p className="text-dark-400 text-sm font-medium mb-1">Abnormalities Detected</p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {analysis.abnormalitiesDetected.map((a, i) => (
+                                <span key={i} className="bg-red-500/15 text-red-400 text-xs px-2 py-1 rounded-md border border-red-500/20">
+                                  {a}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {analysis.icd10Suggestions && analysis.icd10Suggestions.length > 0 && (
+                          <div className="mb-3">
+                            <p className="text-dark-400 text-sm font-medium mb-1">Suggested ICD-10 Codes</p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {analysis.icd10Suggestions.map((c, i) => (
+                                <span key={i} className="bg-blue-500/15 text-blue-400 text-xs px-2 py-1 rounded-md border border-blue-500/20">
+                                  <strong>{c.code}</strong> {c.description}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {analysis.recommendedFollowUp && (
+                          <div className="mb-3">
+                            <p className="text-dark-400 text-sm font-medium mb-1">Recommended Follow-Up</p>
+                            <p className="text-dark-200 text-sm">{analysis.recommendedFollowUp}</p>
+                          </div>
+                        )}
+
+                        {analysis.limitations && (
+                          <div className="text-dark-500 text-xs italic">
+                            Limitations: {analysis.limitations}
+                          </div>
+                        )}
+
+                        <div className="mt-3 pt-3 border-t border-dark-700">
+                          <p className="text-dark-500 text-xs">
+                            AI-assisted preliminary read -- must be reviewed and finalized by a qualified radiologist.
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-dark-900 rounded-lg border border-dark-700 p-4 text-center">
+                        <p className="text-dark-400 text-sm mb-2">No AI analysis available for this file</p>
+                        <button onClick={() => reanalyzeImage(file.id)} className="btn-primary text-sm">
+                          Run AI Analysis
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
           {/* Reports */}
           {caseData.reports && caseData.reports.length > 0 && (
             <div className="card">
@@ -316,7 +506,7 @@ export default function CaseDetail() {
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="card">
           <h2 className="text-lg font-bold text-white mb-4">Upload Imaging</h2>
-          <ImagingUpload caseId={id} onUploadComplete={() => loadCase()} />
+          <ImagingUpload caseId={id} onUploadComplete={() => { loadCase(); loadImagingFiles(); }} />
         </div>
         <ROMAssessment caseId={parseInt(id)} onMeasurementSaved={() => loadCase()} />
       </div>

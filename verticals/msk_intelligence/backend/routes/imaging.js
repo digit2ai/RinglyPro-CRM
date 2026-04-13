@@ -318,6 +318,26 @@ router.post('/centers', async (req, res) => {
   }
 });
 
+// GET /api/v1/imaging/file/:fileId — serve the actual image file
+router.get('/file/:fileId', async (req, res) => {
+  try {
+    const [files] = await sequelize.query(
+      `SELECT storage_path, mime_type, file_name FROM msk_imaging_files WHERE id = $1`,
+      { bind: [req.params.fileId] }
+    );
+    if (files.length === 0) return res.status(404).json({ error: 'File not found' });
+    const file = files[0];
+    if (!file.storage_path || !fs.existsSync(file.storage_path)) {
+      return res.status(404).json({ error: 'File not found on disk' });
+    }
+    res.setHeader('Content-Type', file.mime_type || 'application/octet-stream');
+    res.setHeader('Content-Disposition', `inline; filename="${file.file_name}"`);
+    fs.createReadStream(file.storage_path).pipe(res);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/v1/imaging/analysis/:fileId — get AI analysis for a specific file
 router.get('/analysis/:fileId', async (req, res) => {
   try {
