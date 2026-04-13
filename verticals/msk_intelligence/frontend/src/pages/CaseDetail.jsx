@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { Conversation } from '@11labs/client';
 import api from '../services/api';
 import ImagingUpload from '../components/ImagingUpload';
 import ROMAssessment from '../components/ROMAssessment';
@@ -66,6 +67,51 @@ export default function CaseDetail() {
       console.error(err);
     }
   };
+
+  // ── Rachel Voice Assistant ───────────────────────────────────────
+  const [voiceStatus, setVoiceStatus] = useState('idle'); // idle | connecting | connected | error
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const conversationRef = useRef(null);
+
+  const startVoiceCall = useCallback(async () => {
+    setVoiceStatus('connecting');
+    try {
+      // Get signed URL + dynamic case data from backend
+      const tokenData = await api.post('/voice/case-assistant-token', { caseId: parseInt(id) });
+      if (!tokenData.success || !tokenData.signed_url) {
+        throw new Error(tokenData.error || 'Failed to get voice token');
+      }
+
+      const conversation = await Conversation.startSession({
+        signedUrl: tokenData.signed_url,
+        dynamicVariables: tokenData.dynamic_variables,
+        onConnect: () => { setVoiceStatus('connected'); },
+        onDisconnect: () => { setVoiceStatus('idle'); conversationRef.current = null; },
+        onError: (err) => { console.error('[Rachel Voice]', err); setVoiceStatus('error'); },
+        onModeChange: ({ mode }) => { setIsSpeaking(mode === 'speaking'); }
+      });
+
+      conversationRef.current = conversation;
+    } catch (err) {
+      console.error('[Rachel Voice] Start error:', err);
+      setVoiceStatus('error');
+      setTimeout(() => setVoiceStatus('idle'), 3000);
+    }
+  }, [id]);
+
+  const endVoiceCall = useCallback(async () => {
+    if (conversationRef.current) {
+      await conversationRef.current.endSession();
+      conversationRef.current = null;
+    }
+    setVoiceStatus('idle');
+    setIsSpeaking(false);
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => { if (conversationRef.current) conversationRef.current.endSession().catch(() => {}); };
+  }, []);
 
   const runTriage = async () => {
     setTriaging(true);
@@ -487,6 +533,60 @@ export default function CaseDetail() {
           <div className="card">
             <h3 className="text-md font-bold text-white mb-3">Service Tier</h3>
             <p className="text-msk-400 font-medium capitalize">{(caseData.pricing_tier || 'imaging_review').replace(/_/g, ' ')}</p>
+          </div>
+
+          {/* Rachel Voice Assistant */}
+          <div className={`card ${voiceStatus === 'connected' ? 'border-green-500/50 ring-1 ring-green-500/20' : 'border-msk-500/30'}`}>
+            <h3 className="text-md font-bold text-white mb-3 flex items-center gap-2">
+              {voiceStatus === 'connected' && (
+                <span className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse" />
+              )}
+              Rachel — Case Assistant
+            </h3>
+            <p className="text-dark-400 text-xs mb-3">
+              {voiceStatus === 'idle' && 'Talk to Rachel about this case — she knows the full clinical picture.'}
+              {voiceStatus === 'connecting' && 'Connecting to Rachel...'}
+              {voiceStatus === 'connected' && (isSpeaking ? 'Rachel is speaking...' : 'Rachel is listening...')}
+              {voiceStatus === 'error' && 'Connection failed. Try again.'}
+            </p>
+
+            {voiceStatus === 'connected' && (
+              <div className="flex justify-center mb-3">
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 ${
+                  isSpeaking
+                    ? 'bg-gradient-to-br from-green-500 to-emerald-600 scale-110 shadow-lg shadow-green-500/30'
+                    : 'bg-gradient-to-br from-msk-500 to-blue-600 animate-pulse'
+                }`}>
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                  </svg>
+                </div>
+              </div>
+            )}
+
+            {voiceStatus === 'idle' || voiceStatus === 'error' ? (
+              <button onClick={startVoiceCall} className="w-full bg-gradient-to-r from-msk-500 to-blue-600 hover:from-msk-400 hover:to-blue-500 text-white font-medium py-3 rounded-lg transition-all flex items-center justify-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                </svg>
+                Talk to Rachel
+              </button>
+            ) : voiceStatus === 'connecting' ? (
+              <button disabled className="w-full bg-dark-700 text-dark-400 py-3 rounded-lg flex items-center justify-center gap-2">
+                <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Connecting...
+              </button>
+            ) : (
+              <button onClick={endVoiceCall} className="w-full bg-red-600 hover:bg-red-500 text-white font-medium py-3 rounded-lg transition-all flex items-center justify-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-3.28a1 1 0 00-.684-.948l-4.493-1.498a1 1 0 00-1.21.502l-1.13 2.257a11.042 11.042 0 01-5.516-5.516l2.257-1.13a1 1 0 00.502-1.21L8.228 3.684A1 1 0 007.28 3H5z" />
+                </svg>
+                End Call
+              </button>
+            )}
           </div>
 
           {/* Quick Actions */}

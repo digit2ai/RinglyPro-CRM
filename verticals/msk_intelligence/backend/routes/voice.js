@@ -233,4 +233,160 @@ router.post('/rachel-token', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/v1/voice/case-assistant-token
+ * Generate ElevenLabs signed URL for Rachel Case Assistant
+ * Injects full case data as dynamic variables so Rachel can discuss the case
+ */
+router.post('/case-assistant-token', async (req, res) => {
+  try {
+    const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
+    const CASE_AGENT_ID = process.env.MSK_CASE_AGENT_ID || 'agent_3301kp3d5mvqendvgjes64rk8qqw';
+
+    if (!ELEVENLABS_API_KEY) {
+      return res.status(500).json({ success: false, error: 'ElevenLabs API key not configured' });
+    }
+
+    const { caseId } = req.body;
+    if (!caseId) return res.status(400).json({ error: 'caseId required' });
+
+    // Gather ALL case data
+    const [cases] = await sequelize.query(`
+      SELECT c.*, p.sport, p.team, p.position,
+        pu.first_name AS patient_first, pu.last_name AS patient_last,
+        ru.first_name AS rad_first, ru.last_name AS rad_last, ru.credentials
+      FROM msk_cases c
+      LEFT JOIN msk_patients p ON c.patient_id = p.id
+      LEFT JOIN msk_users pu ON p.user_id = pu.id
+      LEFT JOIN msk_users ru ON c.assigned_radiologist_id = ru.id
+      WHERE c.id = $1
+    `, { bind: [caseId] });
+
+    if (cases.length === 0) return res.status(404).json({ error: 'Case not found' });
+    const c = cases[0];
+
+    // Triage
+    const [triage] = await sequelize.query(
+      `SELECT * FROM msk_triage_decisions WHERE case_id = $1 ORDER BY created_at DESC LIMIT 1`,
+      { bind: [caseId] }
+    );
+
+    // Reports
+    const [reports] = await sequelize.query(
+      `SELECT * FROM msk_reports WHERE case_id = $1 ORDER BY created_at DESC LIMIT 1`,
+      { bind: [caseId] }
+    );
+
+    // ROM
+    const [rom] = await sequelize.query(
+      `SELECT * FROM msk_rom_measurements WHERE case_id = $1 ORDER BY measured_at DESC LIMIT 10`,
+      { bind: [caseId] }
+    );
+
+    // PROMs
+    const [proms] = await sequelize.query(
+      `SELECT * FROM msk_prom_submissions WHERE case_id = $1 ORDER BY submitted_at DESC LIMIT 10`,
+      { bind: [caseId] }
+    );
+
+    // Imaging AI analyses
+    let imagingAnalysis = 'No imaging uploaded yet.';
+    try {
+      const [imgs] = await sequelize.query(
+        `SELECT file_name, ai_analysis FROM msk_imaging_files WHERE case_id = $1 AND ai_analysis IS NOT NULL`,
+        { bind: [caseId] }
+      );
+      if (imgs.length > 0) {
+        imagingAnalysis = imgs.map(img => {
+          const a = typeof img.ai_analysis === 'string' ? JSON.parse(img.ai_analysis) : img.ai_analysis;
+          return `File: ${img.file_name} | Modality: ${a.modality} | Region: ${a.bodyRegion} | Findings: ${a.findings} | Impression: ${a.impression} | Abnormalities: ${(a.abnormalitiesDetected || []).join(', ') || 'None'} | ICD-10: ${(a.icd10Suggestions || []).map(x => x.code + ' ' + x.description).join(', ') || 'N/A'}`;
+        }).join('\n');
+      }
+    } catch(e) {}
+
+    // Exercise programs
+    let exerciseProgram = 'No exercise program assigned.';
+    try {
+      const [programs] = await sequelize.query(
+        `SELECT hp.*, array_agg(e.name) AS exercise_names
+         FROM msk_hep_programs hp
+         LEFT JOIN msk_hep_program_exercises hpe ON hpe.program_id = hp.id
+         LEFT JOIN msk_exercises e ON e.id = hpe.exercise_id
+         WHERE hp.patient_id = (SELECT patient_id FROM msk_cases WHERE id = $1) AND hp.status = 'active'
+         GROUP BY hp.id LIMIT 1`,
+        { bind: [caseId] }
+      );
+      if (programs.length > 0) {
+        const p = programs[0];
+        exerciseProgram = `Program: ${p.name || 'Home Exercise Program'} | Exercises: ${(p.exercise_names || []).filter(Boolean).join(', ')} | Frequency: ${p.frequency || 'daily'} | Duration: ${p.duration_weeks || '?'} weeks`;
+      }
+    } catch(e) {}
+
+    // Build dynamic variables for the agent prompt
+    const triageSummary = triage[0]
+      ? `Decision: ${triage[0].decision_type}. Protocol: ${triage[0].imaging_protocol || 'N/A'}. Reasoning: ${triage[0].reasoning || 'N/A'}. Confidence: ${Math.round((triage[0].confidence_score || 0) * 100)}%.`
+      : 'No triage performed yet.';
+
+    const report = reports[0];
+    const reportSummary = report
+      ? `Summary: ${report.summary || 'N/A'}. Impression: ${report.impression || 'N/A'}. Severity: ${report.severity_grade || 'N/A'}. Recovery: ${report.recovery_timeline_weeks || '?'} weeks. Return to activity: ${report.return_to_play_recommendation || 'N/A'}. Sport notes: ${report.sport_specific_notes || 'N/A'}.`
+      : 'No diagnostic report generated yet.';
+
+    const romData = rom.length > 0
+      ? rom.map(r => `${r.assessment_type} (${r.body_side}): ${r.angle_degrees} degrees (normal: ${r.normal_range_min}-${r.normal_range_max})`).join('. ')
+      : 'No ROM measurements taken yet.';
+
+    const promsData = proms.length > 0
+      ? proms.map(p => `${p.instrument_code}: score ${p.score} at ${p.collection_point}`).join('. ')
+      : 'No outcome assessments completed yet.';
+
+    const recoveryPlan = report
+      ? `${report.recovery_description || 'No recovery plan documented.'}`
+      : 'No recovery plan yet - pending diagnostic report.';
+
+    const dynamicVars = {
+      case_number: c.case_number || 'Unknown',
+      patient_name: `${c.patient_first || ''} ${c.patient_last || ''}`.trim() || 'Unknown patient',
+      case_status: (c.status || '').replace(/_/g, ' '),
+      chief_complaint: c.chief_complaint || 'Not documented',
+      pain_location: c.pain_location || 'Not specified',
+      injury_mechanism: c.injury_mechanism || 'Not specified',
+      severity: String(c.severity || 'N/A'),
+      case_type: (c.case_type || '').replace(/_/g, ' ') || 'Not classified',
+      sport_context: c.sport_context || 'None',
+      functional_limitations: c.functional_limitations || 'Not documented',
+      triage_summary: triageSummary,
+      imaging_analysis: imagingAnalysis,
+      report_summary: reportSummary,
+      rom_data: romData,
+      proms_data: promsData,
+      recovery_plan: recoveryPlan,
+      exercise_program: exerciseProgram
+    };
+
+    // Get signed URL from ElevenLabs
+    const response = await fetch(
+      `https://api.elevenlabs.io/v1/convai/conversation/get-signed-url?agent_id=${encodeURIComponent(CASE_AGENT_ID)}`,
+      { method: 'GET', headers: { 'xi-api-key': ELEVENLABS_API_KEY } }
+    );
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error('[MSK Voice] Case assistant token error:', response.status, errText);
+      return res.status(response.status).json({ success: false, error: 'Failed to get voice token' });
+    }
+
+    const data = await response.json();
+    res.json({
+      success: true,
+      signed_url: data.signed_url,
+      agent_id: CASE_AGENT_ID,
+      dynamic_variables: dynamicVars
+    });
+  } catch (err) {
+    console.error('[MSK Voice] Case assistant token error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 module.exports = router;
