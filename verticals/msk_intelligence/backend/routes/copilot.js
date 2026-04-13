@@ -61,6 +61,16 @@ router.post('/generate-report', authenticate, authorize('admin', 'radiologist'),
       { bind: [caseId] }
     );
 
+    // AI Image analyses (Claude Vision results from uploaded images)
+    let imageAnalyses = [];
+    try {
+      const [analyses] = await sequelize.query(
+        `SELECT file_name, file_type, ai_analysis, ai_analyzed_at FROM msk_imaging_files WHERE case_id = $1 AND ai_analysis IS NOT NULL ORDER BY created_at`,
+        { bind: [caseId] }
+      );
+      imageAnalyses = analyses;
+    } catch(e) {}
+
     // Timeline
     const [timeline] = await sequelize.query(
       `SELECT event_type, event_title, event_description, created_at FROM msk_case_timeline WHERE case_id = $1 ORDER BY created_at`,
@@ -68,7 +78,7 @@ router.post('/generate-report', authenticate, authorize('admin', 'radiologist'),
     );
 
     // Build comprehensive clinical context
-    const context = buildClinicalContext(caseData, triage[0], rom, proms, messages, imaging, timeline);
+    const context = buildClinicalContext(caseData, triage[0], rom, proms, messages, imaging, timeline, imageAnalyses);
 
     // Try AI generation, fall back to rule-based
     let report;
@@ -187,7 +197,7 @@ router.put('/finalize-report/:reportId', authenticate, authorize('admin', 'radio
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
-function buildClinicalContext(c, triage, rom, proms, messages, imaging, timeline) {
+function buildClinicalContext(c, triage, rom, proms, messages, imaging, timeline, imageAnalyses) {
   let ctx = `PATIENT: ${c.patient_first || ''} ${c.patient_last || ''}, ${c.gender || 'unknown'}, DOB: ${c.date_of_birth || 'unknown'}`;
   ctx += `\nSport: ${c.sport || 'N/A'}, Team: ${c.team || 'N/A'}, Position: ${c.position || 'N/A'}`;
   ctx += `\nHeight: ${c.height_cm || '?'}cm, Weight: ${c.weight_kg || '?'}kg`;
@@ -232,6 +242,27 @@ function buildClinicalContext(c, triage, rom, proms, messages, imaging, timeline
     ctx += `\n\nIMAGING ORDERS:`;
     imaging.forEach(i => {
       ctx += `\n  ${i.modality} — ${i.body_region}, Status: ${i.status}, Protocol: ${i.protocol || 'standard'}`;
+    });
+  }
+
+  // AI Image Analysis results from Claude Vision
+  if (imageAnalyses && imageAnalyses.length > 0) {
+    ctx += `\n\nAI IMAGE ANALYSIS (Claude Vision):`;
+    imageAnalyses.forEach(ia => {
+      const a = typeof ia.ai_analysis === 'string' ? JSON.parse(ia.ai_analysis) : ia.ai_analysis;
+      ctx += `\n  File: ${ia.file_name} (${ia.file_type})`;
+      ctx += `\n  Modality Detected: ${a.modality || 'Unknown'}`;
+      ctx += `\n  Body Region: ${a.bodyRegion || 'Unknown'}`;
+      ctx += `\n  Findings: ${a.findings || 'N/A'}`;
+      ctx += `\n  Impression: ${a.impression || 'N/A'}`;
+      if (a.abnormalitiesDetected && a.abnormalitiesDetected.length > 0) {
+        ctx += `\n  Abnormalities: ${a.abnormalitiesDetected.join(', ')}`;
+      }
+      if (a.icd10Suggestions && a.icd10Suggestions.length > 0) {
+        ctx += `\n  Suggested ICD-10: ${a.icd10Suggestions.map(c => `${c.code} (${c.description})`).join(', ')}`;
+      }
+      ctx += `\n  Confidence: ${a.confidenceLevel || 'N/A'}`;
+      ctx += `\n  Limitations: ${a.limitations || 'None noted'}`;
     });
   }
 

@@ -7,6 +7,72 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
+// ── Claude Vision Analysis ──────────────────────────────────────────
+// Sends an uploaded image to Claude Vision for medical image analysis.
+// Returns structured findings for the copilot report workflow.
+async function analyzeImageWithClaude(filePath, mimeType, caseContext) {
+  const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || process.env.MSK_ANTHROPIC_KEY;
+  if (!ANTHROPIC_KEY) return null;
+
+  // Only analyze viewable image types
+  const supportedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+  const mappedMime = supportedTypes.includes(mimeType) ? mimeType : null;
+  if (!mappedMime) return null;
+
+  try {
+    const imageData = fs.readFileSync(filePath);
+    const base64Image = imageData.toString('base64');
+
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: ANTHROPIC_KEY });
+
+    const response = await client.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 2000,
+      system: `You are a board-certified musculoskeletal radiologist performing an initial read of a medical image.
+You MUST output ONLY valid JSON with these exact fields:
+{
+  "modality": "X-ray|MRI|CT|Ultrasound|Photo|Unknown",
+  "bodyRegion": "detected body region",
+  "findings": "Detailed radiological findings paragraph. Describe what you see: alignment, bone density, joint spaces, soft tissue, any abnormalities.",
+  "impression": "1-3 sentence clinical impression summarizing the key findings and likely diagnosis",
+  "abnormalitiesDetected": ["list of specific abnormalities found, if any"],
+  "normalFindings": ["list of normal/unremarkable findings"],
+  "recommendedFollowUp": "Any recommended additional imaging or clinical follow-up",
+  "confidenceLevel": "High|Moderate|Low",
+  "icd10Suggestions": [{"code":"M25.561","description":"Pain in right knee"}],
+  "limitations": "Any limitations in the analysis (image quality, incomplete view, etc.)"
+}
+Be specific and clinical. If the image quality is poor or the image is not a medical image, state that clearly.
+IMPORTANT: This is an AI-assisted preliminary read — it must be reviewed and finalized by a qualified radiologist.`,
+      messages: [{
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: {
+              type: 'base64',
+              media_type: mappedMime,
+              data: base64Image
+            }
+          },
+          {
+            type: 'text',
+            text: `Analyze this medical image. Clinical context: ${caseContext || 'No additional context provided.'}`
+          }
+        ]
+      }]
+    });
+
+    const text = response.content[0].text;
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    return jsonMatch ? JSON.parse(jsonMatch[0]) : { findings: text, modality: 'Unknown', impression: '', abnormalitiesDetected: [], confidenceLevel: 'Low' };
+  } catch (err) {
+    console.error('[MSK Imaging] Claude Vision analysis error:', err.message);
+    return null;
+  }
+}
+
 // File upload config
 const uploadDir = path.join(__dirname, '../../uploads/imaging');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
@@ -137,6 +203,45 @@ router.post('/upload', upload.array('files', 20), async (req, res) => {
 
     logAudit(req.user.userId, 'upload_imaging', 'imaging_file', null, req);
 
+    // ── Trigger Claude Vision analysis in background for image files ──
+    // Ensure ai_analysis column exists
+    try { await sequelize.query(`ALTER TABLE msk_imaging_files ADD COLUMN IF NOT EXISTS ai_analysis JSONB DEFAULT NULL`); } catch(e) {}
+    try { await sequelize.query(`ALTER TABLE msk_imaging_files ADD COLUMN IF NOT EXISTS ai_analyzed_at TIMESTAMPTZ DEFAULT NULL`); } catch(e) {}
+
+    // Get clinical context for the case
+    let caseContext = '';
+    try {
+      const [caseData] = await sequelize.query(`SELECT chief_complaint, pain_location, injury_mechanism, severity, sport_context FROM msk_cases WHERE id = $1`, { bind: [caseId] });
+      if (caseData[0]) {
+        const c = caseData[0];
+        caseContext = `Chief complaint: ${c.chief_complaint || 'N/A'}. Pain location: ${c.pain_location || 'N/A'}. Mechanism: ${c.injury_mechanism || 'N/A'}. Severity: ${c.severity || 'N/A'}/10. Sport context: ${c.sport_context || 'N/A'}.`;
+      }
+    } catch(e) {}
+
+    // Analyze each uploaded image (non-blocking — don't wait for response)
+    for (const file of req.files || []) {
+      const fileRecord = uploaded.find(u => u.file_name === file.originalname);
+      if (!fileRecord) continue;
+
+      // Fire and forget — analysis runs in background
+      analyzeImageWithClaude(file.path, file.mimetype, caseContext)
+        .then(async (analysis) => {
+          if (analysis) {
+            await sequelize.query(
+              `UPDATE msk_imaging_files SET ai_analysis = $1, ai_analyzed_at = NOW() WHERE id = $2`,
+              { bind: [JSON.stringify(analysis), fileRecord.id] }
+            );
+            // Add timeline entry
+            await sequelize.query(`
+              INSERT INTO msk_case_timeline (case_id, event_type, event_title, event_description)
+              VALUES ($1, 'ai_imaging_analysis', 'AI Image Analysis Complete', $2)
+            `, { bind: [caseId, `${analysis.modality || 'Image'} analyzed — ${analysis.impression || 'Analysis complete'}`] });
+            console.log(`[MSK Imaging] AI analysis complete for file ${fileRecord.id}`);
+          }
+        })
+        .catch(err => console.error('[MSK Imaging] Background analysis error:', err.message));
+    }
+
     res.status(201).json({ success: true, data: uploaded, count: uploaded.length });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -208,6 +313,101 @@ router.post('/centers', async (req, res) => {
     });
 
     res.status(201).json({ success: true, data: result[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/v1/imaging/analysis/:fileId — get AI analysis for a specific file
+router.get('/analysis/:fileId', async (req, res) => {
+  try {
+    const [files] = await sequelize.query(
+      `SELECT id, file_name, file_type, ai_analysis, ai_analyzed_at FROM msk_imaging_files WHERE id = $1`,
+      { bind: [req.params.fileId] }
+    );
+    if (files.length === 0) return res.status(404).json({ error: 'File not found' });
+    const file = files[0];
+    res.json({
+      success: true,
+      data: {
+        fileId: file.id,
+        fileName: file.file_name,
+        fileType: file.file_type,
+        analysis: file.ai_analysis || null,
+        analyzedAt: file.ai_analyzed_at || null,
+        status: file.ai_analysis ? 'complete' : file.ai_analyzed_at ? 'failed' : 'pending'
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/v1/imaging/analysis/case/:caseId — get all AI analyses for a case
+router.get('/analysis/case/:caseId', async (req, res) => {
+  try {
+    const [files] = await sequelize.query(`
+      SELECT id, file_name, file_type, mime_type, ai_analysis, ai_analyzed_at, created_at
+      FROM msk_imaging_files WHERE case_id = $1 ORDER BY created_at DESC
+    `, { bind: [req.params.caseId] });
+
+    res.json({
+      success: true,
+      data: files.map(f => ({
+        fileId: f.id,
+        fileName: f.file_name,
+        fileType: f.file_type,
+        analysis: f.ai_analysis || null,
+        analyzedAt: f.ai_analyzed_at || null,
+        status: f.ai_analysis ? 'complete' : 'pending',
+        uploadedAt: f.created_at
+      }))
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/v1/imaging/analyze/:fileId — re-trigger AI analysis for a file
+router.post('/analyze/:fileId', async (req, res) => {
+  try {
+    const [files] = await sequelize.query(
+      `SELECT f.*, c.chief_complaint, c.pain_location, c.injury_mechanism, c.severity, c.sport_context
+       FROM msk_imaging_files f LEFT JOIN msk_cases c ON f.case_id = c.id WHERE f.id = $1`,
+      { bind: [req.params.fileId] }
+    );
+    if (files.length === 0) return res.status(404).json({ error: 'File not found' });
+    const file = files[0];
+
+    if (!file.storage_path || !fs.existsSync(file.storage_path)) {
+      return res.status(400).json({ error: 'Image file not found on disk' });
+    }
+
+    const caseContext = `Chief complaint: ${file.chief_complaint || 'N/A'}. Pain location: ${file.pain_location || 'N/A'}. Mechanism: ${file.injury_mechanism || 'N/A'}. Severity: ${file.severity || 'N/A'}/10. Sport context: ${file.sport_context || 'N/A'}.`;
+
+    const analysis = await analyzeImageWithClaude(file.storage_path, file.mime_type, caseContext);
+
+    if (!analysis) {
+      return res.status(500).json({ error: 'Analysis failed — check ANTHROPIC_API_KEY is set and file is a supported image type (JPEG, PNG, WebP)' });
+    }
+
+    await sequelize.query(
+      `UPDATE msk_imaging_files SET ai_analysis = $1, ai_analyzed_at = NOW() WHERE id = $2`,
+      { bind: [JSON.stringify(analysis), file.id] }
+    );
+
+    logAudit(req.user.userId, 'ai_image_analysis', 'imaging_file', file.id, req);
+
+    res.json({
+      success: true,
+      data: {
+        fileId: file.id,
+        fileName: file.file_name,
+        analysis,
+        analyzedAt: new Date().toISOString(),
+        disclaimer: 'AI-assisted preliminary read — must be reviewed and finalized by a qualified radiologist.'
+      }
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
