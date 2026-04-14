@@ -158,31 +158,63 @@ export default function Landing() {
       {/* Pricing */}
       <section className="bg-dark-900/50 border-y border-dark-800">
         <div className="max-w-7xl mx-auto px-4 lg:px-6 py-16 lg:py-24">
-          <h3 className="text-2xl sm:text-3xl font-bold text-white text-center mb-4">Pricing</h3>
-          <p className="text-dark-400 text-center mb-12 lg:mb-16">Premium diagnostics for peak performance</p>
+          <h3 className="text-2xl sm:text-3xl font-bold text-white text-center mb-4">Subscription Plans</h3>
+          <p className="text-dark-400 text-center mb-12 lg:mb-16">AI-powered MSK diagnostics for clinics of every size</p>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {[
               {
-                name: 'Imaging Review',
-                price: '$299',
-                period: 'per case',
-                features: ['Upload existing imaging', 'Specialist report in 24-48h', 'ICD-10 diagnosis codes', 'Recovery timeline'],
-                highlight: false
-              },
-              {
-                name: 'Full Diagnostic',
-                price: '$799',
-                period: 'per case',
-                features: ['AI-guided intake', 'Imaging coordination', 'Full diagnostic report', 'Video explanation', 'Return-to-play guidance'],
-                highlight: true
-              },
-              {
-                name: 'Elite Concierge',
-                price: '$2,999',
+                name: 'Solo',
+                target: '1-2 radiologists, small clinic',
+                price: '$1,500',
                 period: '/month',
-                features: ['Unlimited consultations', 'Priority queue (<12h)', 'Direct specialist line', 'Quarterly assessments', 'Team dashboard access'],
-                highlight: false
+                features: [
+                  'Up to 200 AI-analyzed studies/mo',
+                  'Patient portal',
+                  'Secure messaging',
+                  'Appointment scheduling',
+                  'AI Copilot reports',
+                  'ROM assessment (camera)',
+                  'Lina voice assistant'
+                ],
+                highlight: false,
+                cta: 'Start Free Trial'
+              },
+              {
+                name: 'Practice',
+                target: '3-10 radiologists, mid-size group',
+                price: '$3,500',
+                period: '/month',
+                features: [
+                  'Up to 1,000 AI-analyzed studies/mo',
+                  'Everything in Solo, plus:',
+                  'RPM billing (CPT 99453/99454)',
+                  'FHIR R4 export',
+                  'Workers\' comp module',
+                  'Multi-provider dashboard',
+                  'Insurance claims engine',
+                  'Priority support'
+                ],
+                highlight: true,
+                cta: 'Start Free Trial'
+              },
+              {
+                name: 'Enterprise',
+                target: 'Hospital networks, 10+ sites',
+                price: '$8,000+',
+                period: '/month',
+                features: [
+                  'Unlimited AI-analyzed studies',
+                  'Everything in Practice, plus:',
+                  'White-label branding',
+                  'Dedicated account manager',
+                  'Custom integrations',
+                  'SLA guarantee',
+                  'HIPAA BAA included',
+                  'On-premise deployment option'
+                ],
+                highlight: false,
+                cta: 'Contact Sales'
               }
             ].map((tier, i) => (
               <div key={i} className={`card ${tier.highlight ? 'border-msk-500 ring-1 ring-msk-500/20 relative' : ''}`}>
@@ -191,21 +223,28 @@ export default function Landing() {
                     MOST POPULAR
                   </div>
                 )}
-                <h4 className="text-lg font-bold text-white mb-2">{tier.name}</h4>
+                <h4 className="text-lg font-bold text-white mb-1">{tier.name}</h4>
+                <p className="text-dark-500 text-xs mb-4">{tier.target}</p>
                 <div className="mb-6">
                   <span className="text-4xl font-bold text-white">{tier.price}</span>
                   <span className="text-dark-400 ml-1">{tier.period}</span>
                 </div>
                 <ul className="space-y-3 mb-8">
                   {tier.features.map((f, j) => (
-                    <li key={j} className="flex items-center gap-2 text-sm text-dark-300">
-                      <span className="text-msk-500">✓</span> {f}
+                    <li key={j} className={`flex items-center gap-2 text-sm ${f.startsWith('Everything') ? 'text-msk-400 font-medium' : 'text-dark-300'}`}>
+                      <span className="text-msk-500 flex-shrink-0">{f.startsWith('Everything') ? '' : '✓'}</span> {f}
                     </li>
                   ))}
                 </ul>
-                <Link to="/register" className={tier.highlight ? 'btn-primary w-full text-center block' : 'btn-secondary w-full text-center block'}>
-                  Get Started
-                </Link>
+                {tier.name === 'Enterprise' ? (
+                  <a href="mailto:mstagg@digit2ai.com" className="btn-secondary w-full text-center block">
+                    {tier.cta}
+                  </a>
+                ) : (
+                  <Link to="/register" className={tier.highlight ? 'btn-primary w-full text-center block' : 'btn-secondary w-full text-center block'}>
+                    {tier.cta}
+                  </Link>
+                )}
               </div>
             ))}
           </div>
