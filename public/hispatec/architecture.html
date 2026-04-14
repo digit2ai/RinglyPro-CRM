@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HISPATEC - Ecosystem Architecture</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --navy: #0f1923;
+    --navy-light: #1a2b3d;
+    --teal: #0d6e6e;
+    --teal-light: #14a3a3;
+    --gold: #c8952e;
+    --gold-light: #e0b45c;
+    --white: #f4f6f8;
+    --gray: #8a9bb5;
+    --green: #2ecc71;
+    --blue: #3498db;
+    --purple: #9b59b6;
+    --red: #e74c3c;
+    --orange: #e67e22;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--navy);
+    color: var(--white);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* --- HEADER --- */
+  .header {
+    text-align: center;
+    padding: 32px 24px 16px;
+    border-bottom: 1px solid rgba(200,149,46,0.2);
+  }
+  .header h1 {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: 4px;
+    color: var(--gold);
+  }
+  .header h1 span { color: var(--teal-light); }
+  .header p {
+    font-size: 13px;
+    color: var(--gray);
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+  .header .tag {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 3px 14px;
+    border: 1px solid var(--teal);
+    border-radius: 20px;
+    font-size: 11px;
+    color: var(--teal-light);
+    letter-spacing: 1px;
+  }
+
+  /* --- GRID --- */
+  .arch-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 16px;
+    padding: 20px 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  /* --- CARDS --- */
+  .card {
+    background: var(--navy-light);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .card-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title .icon {
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  /* Accent colors */
+  .card.teal::before { background: var(--teal); }
+  .card.teal .card-title { color: var(--teal-light); }
+  .card.teal .icon { background: rgba(13,110,110,0.3); color: var(--teal-light); }
+
+  .card.gold::before { background: var(--gold); }
+  .card.gold .card-title { color: var(--gold-light); }
+  .card.gold .icon { background: rgba(200,149,46,0.3); color: var(--gold-light); }
+
+  .card.blue::before { background: var(--blue); }
+  .card.blue .card-title { color: #5dade2; }
+  .card.blue .icon { background: rgba(52,152,219,0.25); color: #5dade2; }
+
+  .card.purple::before { background: var(--purple); }
+  .card.purple .card-title { color: #bb8fce; }
+  .card.purple .icon { background: rgba(155,89,182,0.25); color: #bb8fce; }
+
+  .card.green::before { background: var(--green); }
+  .card.green .card-title { color: #58d68d; }
+  .card.green .icon { background: rgba(46,204,113,0.25); color: #58d68d; }
+
+  .card.orange::before { background: var(--orange); }
+  .card.orange .card-title { color: #f0b27a; }
+  .card.orange .icon { background: rgba(230,126,34,0.25); color: #f0b27a; }
+
+  .card.red::before { background: var(--red); }
+  .card.red .card-title { color: #f1948a; }
+  .card.red .icon { background: rgba(231,76,60,0.25); color: #f1948a; }
+
+  /* --- MODULE ITEMS --- */
+  .mod-list { list-style: none; }
+  .mod-list li {
+    font-size: 12px;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .mod-list li:last-child { border-bottom: none; }
+  .mod-list .name { font-weight: 500; color: var(--white); }
+  .mod-list .detail {
+    font-size: 10px;
+    color: var(--gray);
+    font-weight: 400;
+    text-align: right;
+    max-width: 55%;
+  }
+  .badge {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 10px;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .badge.teal { background: rgba(13,110,110,0.3); color: var(--teal-light); }
+  .badge.gold { background: rgba(200,149,46,0.3); color: var(--gold-light); }
+  .badge.blue { background: rgba(52,152,219,0.25); color: #5dade2; }
+  .badge.green { background: rgba(46,204,113,0.25); color: #58d68d; }
+  .badge.purple { background: rgba(155,89,182,0.25); color: #bb8fce; }
+  .badge.red { background: rgba(231,76,60,0.25); color: #f1948a; }
+
+  /* --- CENTER: API LAYER --- */
+  .api-hub {
+    grid-column: 2;
+    grid-row: 1 / 4;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* --- FLOW CONNECTOR --- */
+  .flow-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: rgba(255,255,255,0.02);
+    border-radius: 8px;
+    font-size: 11px;
+    color: var(--gray);
+  }
+  .flow-row .arrow {
+    color: var(--teal);
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .flow-row .node {
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .flow-row .node.ext { background: rgba(200,149,46,0.2); color: var(--gold-light); }
+  .flow-row .node.api { background: rgba(13,110,110,0.3); color: var(--teal-light); }
+  .flow-row .node.db { background: rgba(52,152,219,0.2); color: #5dade2; }
+  .flow-row .node.ai { background: rgba(155,89,182,0.2); color: #bb8fce; }
+
+  /* --- STATS BAR --- */
+  .stats-bar {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .stat {
+    text-align: center;
+    padding: 6px 14px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .stat .num {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--gold);
+  }
+  .stat .lbl {
+    font-size: 9px;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+
+  /* --- TABLE GRID --- */
+  .tbl-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+  }
+  .tbl-item {
+    font-size: 10px;
+    padding: 4px 8px;
+    background: rgba(255,255,255,0.02);
+    border-radius: 4px;
+    color: var(--gray);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .tbl-item .dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* --- LIFECYCLE --- */
+  .lifecycle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 6px;
+  }
+  .lc-step {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .lc-arrow {
+    color: var(--gray);
+    font-size: 10px;
+  }
+
+  /* --- REGION MAP --- */
+  .region-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+  }
+  .region-item {
+    font-size: 10px;
+    padding: 5px 8px;
+    background: rgba(13,110,110,0.1);
+    border: 1px solid rgba(13,110,110,0.2);
+    border-radius: 6px;
+    color: var(--teal-light);
+    font-weight: 500;
+    text-align: center;
+  }
+
+  /* --- FOOTER --- */
+  .footer {
+    text-align: center;
+    padding: 16px;
+    font-size: 10px;
+    color: rgba(138,155,181,0.5);
+    letter-spacing: 1px;
+    border-top: 1px solid rgba(255,255,255,0.04);
+    margin-top: 8px;
+  }
+
+  /* --- RESPONSIVE --- */
+  @media (max-width: 1100px) {
+    .arch-grid {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto;
+    }
+    .api-hub {
+      grid-column: 1 / -1;
+      grid-row: auto;
+    }
+  }
+  @media (max-width: 700px) {
+    .arch-grid {
+      grid-template-columns: 1fr;
+    }
+    .api-hub { grid-column: 1; }
+  }
+
+  /* --- PRINT --- */
+  @media print {
+    body { background: #fff; color: #111; }
+    .card { border: 1px solid #ccc; }
+    .card::before { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <h1>HISPA<span>TEC</span></h1>
+  <p>Full-Stack Ecosystem Architecture</p>
+  <div class="tag">v1.0 &middot; 4,078 lines &middot; 14 tables &middot; 9 MCP tools &middot; 10 API modules</div>
+</div>
+
+<!-- STATS -->
+<div style="padding: 14px 24px; max-width: 1400px; margin: 0 auto;">
+  <div class="stats-bar">
+    <div class="stat"><div class="num">10</div><div class="lbl">API Modules</div></div>
+    <div class="stat"><div class="num">14</div><div class="lbl">DB Tables</div></div>
+    <div class="stat"><div class="num">9</div><div class="lbl">MCP Tools</div></div>
+    <div class="stat"><div class="num">6</div><div class="lbl">Regions</div></div>
+    <div class="stat"><div class="num">5</div><div class="lbl">Math Models</div></div>
+    <div class="stat"><div class="num">10</div><div class="lbl">Gov. Roles</div></div>
+    <div class="stat"><div class="num">4</div><div class="lbl">Membership Tiers</div></div>
+  </div>
+</div>
+
+<!-- MAIN GRID -->
+<div class="arch-grid">
+
+  <!-- LEFT COL -->
+  <!-- Clients / Frontend -->
+  <div class="card gold">
+    <div class="card-title"><div class="icon">UI</div>Frontend Layer</div>
+    <ul class="mod-list">
+      <li><span class="name">/hispatec/</span><span class="detail">Landing page + registration</span></li>
+      <li><span class="name">/hispatec/dashboard/</span><span class="detail">Member SPA (sidebar nav)</span></li>
+      <li><span class="name">/hispatec/whitepaper.html</span><span class="detail">14-section whitepaper</span></li>
+    </ul>
+    <div style="margin-top:8px; font-size:10px; color:var(--gray);">
+      Static HTML + Vanilla JS &middot; JWT in localStorage &middot; ES/EN toggle
+    </div>
+  </div>
+
+  <!-- CENTER COL: API HUB -->
+  <div class="api-hub">
+
+    <!-- API Modules -->
+    <div class="card teal">
+      <div class="card-title"><div class="icon">API</div>Express API &mdash; /hispatec/api/*</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+        <ul class="mod-list">
+          <li><span class="name">hispatec-auth</span><span class="badge teal">JWT</span></li>
+          <li><span class="name">hispatec-members</span><span class="badge teal">CRUD</span></li>
+          <li><span class="name">hispatec-matching</span><span class="badge purple">AI</span></li>
+          <li><span class="name">hispatec-projects</span><span class="badge green">Lifecycle</span></li>
+          <li><span class="name">hispatec-exchange</span><span class="badge gold">RFQ</span></li>
+        </ul>
+        <ul class="mod-list">
+          <li><span class="name">hispatec-payments</span><span class="badge gold">Stripe</span></li>
+          <li><span class="name">hispatec-metrics</span><span class="badge blue">Math</span></li>
+          <li><span class="name">hispatec-mcp</span><span class="badge purple">9 tools</span></li>
+          <li><span class="name">hispatec-admin</span><span class="badge red">RBAC</span></li>
+          <li><span class="name">hispatec (router)</span><span class="badge teal">Hub</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Data Flow -->
+    <div class="card blue">
+      <div class="card-title"><div class="icon">-></div>Data Flow Paths</div>
+      <div style="display:flex; flex-direction:column; gap:5px;">
+        <div class="flow-row">
+          <span class="node ext">Browser</span>
+          <span class="arrow">--></span>
+          <span class="node api">Express /hispatec/api</span>
+          <span class="arrow">--></span>
+          <span class="node db">PostgreSQL</span>
+        </div>
+        <div class="flow-row">
+          <span class="node ext">Claude Agent</span>
+          <span class="arrow">--></span>
+          <span class="node api">MCP /tools/call</span>
+          <span class="arrow">--></span>
+          <span class="node ai">Math Engine</span>
+          <span class="arrow">--></span>
+          <span class="node db">DB</span>
+        </div>
+        <div class="flow-row">
+          <span class="node ext">Member</span>
+          <span class="arrow">--></span>
+          <span class="node api">POST /match</span>
+          <span class="arrow">--></span>
+          <span class="node ai">Cosine Sim</span>
+          <span class="arrow">--></span>
+          <span class="node ai">Gini Fix</span>
+          <span class="arrow">--></span>
+          <span class="node api">Results</span>
+        </div>
+        <div class="flow-row">
+          <span class="node ext">Payment</span>
+          <span class="arrow">--></span>
+          <span class="node api">Stripe API</span>
+          <span class="arrow">--></span>
+          <span class="node db">Transactions</span>
+          <span class="arrow">--></span>
+          <span class="node api">Escrow / Sub</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- MCP Tools -->
+    <div class="card purple">
+      <div class="card-title"><div class="icon">AI</div>MCP Orchestrator &mdash; 9 AI Tools</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:4px;">
+        <div class="tbl-item"><div class="dot" style="background:var(--purple)"></div>match_members</div>
+        <div class="tbl-item"><div class="dot" style="background:var(--purple)"></div>evaluate_project</div>
+        <div class="tbl-item"><div class="dot" style="background:var(--purple)"></div>calc_gini</div>
+        <div class="tbl-item"><div class="dot" style="background:var(--purple)"></div>calc_trust</div>
+        <div class="tbl-item"><div class="dot" style="background:var(--purple)"></div>find_opportunities</div>
+        <div class="tbl-item"><div class="dot" style="background:var(--purple)"></div>optimize_allocation</div>
+        <div class="tbl-item"><div class="dot" style="background:var(--purple)"></div>risk_montecarlo</div>
+        <div class="tbl-item"><div class="dot" style="background:var(--purple)"></div>gen_report</div>
+        <div class="tbl-item"><div class="dot" style="background:var(--purple)"></div>network_value</div>
+      </div>
+    </div>
+
+    <!-- Math Engine -->
+    <div class="card orange">
+      <div class="card-title"><div class="icon">fx</div>Mathematical Models &mdash; hispatec-math.js (713 lines)</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:11px;">
+        <div>
+          <div style="font-weight:600; color:var(--gold-light); margin-bottom:4px;">Equity & Fairness</div>
+          <div style="color:var(--gray); font-size:10px;">Gini Coefficient &middot; Regional correction factors</div>
+        </div>
+        <div>
+          <div style="font-weight:600; color:var(--gold-light); margin-bottom:4px;">Member Matching</div>
+          <div style="color:var(--gray); font-size:10px;">9D cosine similarity &middot; Weighted profile vectors</div>
+        </div>
+        <div>
+          <div style="font-weight:600; color:var(--gold-light); margin-bottom:4px;">Trust Engine</div>
+          <div style="color:var(--gray); font-size:10px;">PageRank-style propagation &middot; d=0.85 &middot; 50 iter</div>
+        </div>
+        <div>
+          <div style="font-weight:600; color:var(--gold-light); margin-bottom:4px;">Risk Analysis</div>
+          <div style="color:var(--gray); font-size:10px;">Monte Carlo 10K sims &middot; Triangular distributions</div>
+        </div>
+        <div style="grid-column: 1/-1;">
+          <div style="font-weight:600; color:var(--gold-light); margin-bottom:4px;">HCI (HISPATEC Composite Index)</div>
+          <div style="color:var(--gray); font-size:10px;">Equity 20% + Trust 20% + Network 20% + Projects 25% + Activation 15% &middot; Target: 0.65</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT COL (stacked) -->
+  <!-- Auth & Governance -->
+  <div class="card red">
+    <div class="card-title"><div class="icon">K</div>Auth & Governance</div>
+    <div style="font-size:10px; color:var(--gray); margin-bottom:6px;">JWT (7d) &middot; bcrypt 12 rounds &middot; 4 access tiers</div>
+    <ul class="mod-list">
+      <li><span class="name">superadmin</span><span class="badge red">Full access</span></li>
+      <li><span class="name">admin_global</span><span class="badge red">5 roles</span></li>
+      <li><span class="name">admin_regional</span><span class="badge gold">4 roles</span></li>
+      <li><span class="name">member</span><span class="badge teal">Default</span></li>
+    </ul>
+  </div>
+
+  <!-- Database -->
+  <div class="card blue" style="grid-column: 1;">
+    <div class="card-title"><div class="icon">DB</div>PostgreSQL &mdash; 14 Tables</div>
+    <div class="tbl-grid">
+      <div class="tbl-item"><div class="dot" style="background:#3498db"></div>members</div>
+      <div class="tbl-item"><div class="dot" style="background:#3498db"></div>regions</div>
+      <div class="tbl-item"><div class="dot" style="background:#2ecc71"></div>projects</div>
+      <div class="tbl-item"><div class="dot" style="background:#2ecc71"></div>project_members</div>
+      <div class="tbl-item"><div class="dot" style="background:#9b59b6"></div>matches</div>
+      <div class="tbl-item"><div class="dot" style="background:#9b59b6"></div>trust_references</div>
+      <div class="tbl-item"><div class="dot" style="background:#9b59b6"></div>trust_scores</div>
+      <div class="tbl-item"><div class="dot" style="background:#e67e22"></div>transactions</div>
+      <div class="tbl-item"><div class="dot" style="background:#e67e22"></div>companies</div>
+      <div class="tbl-item"><div class="dot" style="background:#e67e22"></div>rfqs</div>
+      <div class="tbl-item"><div class="dot" style="background:#e67e22"></div>rfq_responses</div>
+      <div class="tbl-item"><div class="dot" style="background:#c8952e"></div>opportunities</div>
+      <div class="tbl-item"><div class="dot" style="background:#c8952e"></div>events</div>
+      <div class="tbl-item"><div class="dot" style="background:#c8952e"></div>network_metrics</div>
+    </div>
+    <div style="margin-top:6px; font-size:9px; color:var(--gray);">All prefixed hispatec_ &middot; Raw SQL via Sequelize &middot; SSL required</div>
+  </div>
+
+  <!-- External Services -->
+  <div class="card green" style="grid-column: 3; grid-row: 2;">
+    <div class="card-title"><div class="icon">$</div>External Services</div>
+    <ul class="mod-list">
+      <li><span class="name">Stripe</span><span class="detail">Payments, subscriptions, escrow</span></li>
+      <li><span class="name">Render</span><span class="detail">Hosting & auto-deploy</span></li>
+      <li><span class="name">Claude MCP</span><span class="detail">AI tool orchestration</span></li>
+      <li><span class="name">PostgreSQL</span><span class="detail">Managed DB (SSL)</span></li>
+    </ul>
+  </div>
+
+  <!-- Regions -->
+  <div class="card teal" style="grid-column: 3; grid-row: 3;">
+    <div class="card-title"><div class="icon">G</div>6 Global Regions</div>
+    <div class="region-grid">
+      <div class="region-item">Norteamerica</div>
+      <div class="region-item">Centroamerica y Caribe</div>
+      <div class="region-item">Andina</div>
+      <div class="region-item">Cono Sur</div>
+      <div class="region-item">Peninsula Iberica</div>
+      <div class="region-item">Africa y Filipinas</div>
+    </div>
+    <div style="margin-top:6px; font-size:9px; color:var(--gray);">Rotating HQ every 3 years &middot; Regional president/secretary/treasurer</div>
+  </div>
+
+  <!-- Project Lifecycle (full width) -->
+  <div class="card green" style="grid-column: 1 / -1;">
+    <div class="card-title"><div class="icon">P</div>Project Lifecycle &mdash; 6 Phases</div>
+    <div class="lifecycle">
+      <span class="lc-step" style="background:rgba(52,152,219,0.2); color:#5dade2;">Propuesta</span>
+      <span class="lc-arrow">--></span>
+      <span class="lc-step" style="background:rgba(155,89,182,0.2); color:#bb8fce;">Analisis</span>
+      <span class="lc-arrow">--></span>
+      <span class="lc-step" style="background:rgba(200,149,46,0.2); color:var(--gold-light);">Equipo</span>
+      <span class="lc-arrow">--></span>
+      <span class="lc-step" style="background:rgba(230,126,34,0.2); color:#f0b27a;">Recursos</span>
+      <span class="lc-arrow">--></span>
+      <span class="lc-step" style="background:rgba(46,204,113,0.2); color:#58d68d;">Ejecucion</span>
+      <span class="lc-arrow">--></span>
+      <span class="lc-step" style="background:rgba(13,110,110,0.3); color:var(--teal-light);">Completado</span>
+    </div>
+    <div style="display:flex; justify-content:space-between; margin-top:8px; font-size:9px; color:var(--gray); padding: 0 10px;">
+      <span>Draft by proposer</span>
+      <span>Monte Carlo eval</span>
+      <span>AI team matching</span>
+      <span>Stripe escrow</span>
+      <span>Active execution</span>
+      <span>Results & close</span>
+    </div>
+  </div>
+
+  <!-- Membership Tiers (full width) -->
+  <div class="card gold" style="grid-column: 1 / -1;">
+    <div class="card-title"><div class="icon">M</div>Membership Tiers & Pricing</div>
+    <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; text-align:center;">
+      <div style="padding:10px; background:rgba(200,149,46,0.1); border-radius:8px; border:1px solid rgba(200,149,46,0.3);">
+        <div style="font-weight:700; color:var(--gold-light); font-size:13px;">Fundador</div>
+        <div style="font-size:10px; color:var(--gray); margin:4px 0;">Cimiento Estrategico</div>
+        <div style="font-size:16px; font-weight:800; color:var(--gold);">Invitation Only</div>
+      </div>
+      <div style="padding:10px; background:rgba(255,255,255,0.03); border-radius:8px; border:1px solid rgba(255,255,255,0.06);">
+        <div style="font-weight:700; color:var(--white); font-size:13px;">Numerario</div>
+        <div style="font-size:10px; color:var(--gray); margin:4px 0;">Motor Operativo</div>
+        <div style="font-size:16px; font-weight:800; color:var(--teal-light);">$25<span style="font-size:10px; font-weight:400; color:var(--gray)">/mo</span></div>
+      </div>
+      <div style="padding:10px; background:rgba(255,255,255,0.03); border-radius:8px; border:1px solid rgba(255,255,255,0.06);">
+        <div style="font-weight:700; color:var(--white); font-size:13px;">Protector</div>
+        <div style="font-size:10px; color:var(--gray); margin:4px 0;">Soporte e Inversion</div>
+        <div style="font-size:16px; font-weight:800; color:var(--teal-light);">$100<span style="font-size:10px; font-weight:400; color:var(--gray)">/mo</span></div>
+      </div>
+      <div style="padding:10px; background:rgba(255,255,255,0.03); border-radius:8px; border:1px solid rgba(255,255,255,0.06);">
+        <div style="font-weight:700; color:var(--white); font-size:13px;">Patrono</div>
+        <div style="font-size:10px; color:var(--gray); margin:4px 0;">Experiencia y Valor</div>
+        <div style="font-size:16px; font-weight:800; color:var(--teal-light);">$200<span style="font-size:10px; font-weight:400; color:var(--gray)">/mo</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  HISPATEC Ecosystem Architecture &middot; Deployed on Render &middot; aiagent.ringlypro.com/hispatec/ &middot; April 2026
+</div>
+
+</body>
+</html>
