@@ -158,21 +158,14 @@
     <li><a href="#es-7">Modelo de datos</a></li>
     <li><a href="#es-8">Referencia de API</a></li>
     <li><a href="#es-9">Autenticación, roles y gobierno</a></li>
-    <li><a href="#es-10">Pagos y monetización</a></li>
-    <li><a href="#es-11">Integración MCP para agentes de IA</a></li>
-    <li><a href="#es-12">Despliegue y operación</a></li>
-    <li><a href="#es-13">Hoja de ruta</a></li>
+    <li><a href="#es-10">Integración MCP para agentes de IA</a></li>
+    <li><a href="#es-11">Despliegue y operación</a></li>
   </ol>
 </div>
 
 <h2 id="es-1">1. Resumen ejecutivo</h2>
 <p>HISPATEC es una plataforma técnica independiente diseñada para conectar a profesionales, empresas e instituciones del mundo hispano a través de proyectos tangibles. No es una asociación cultural, ni un foro ideológico, ni un colegio profesional: es una <strong>red técnica de confianza</strong> orientada a resultados medibles.</p>
 <p>Este documento describe la implementación técnica del ecosistema: nueve módulos funcionales, motor matemático propio (Gini, Trust Rank, Metcalfe adaptado, Monte Carlo, HCI), cuarenta y dos endpoints REST, nueve herramientas MCP para la integración con agentes de IA, y un modelo de datos sobre PostgreSQL con quince tablas.</p>
-
-<div class="callout">
-  <strong>Lo que HISPATEC HACE:</strong> identifica socios técnicos fiables, facilita el primer contacto directo, reduce la incertidumbre operativa.<br>
-  <strong>Lo que HISPATEC NO HACE:</strong> no redacta ni certifica proyectos, no intermedia el contrato económico, no sustituye a colegios ni cámaras.
-</div>
 
 <h2 id="es-2">2. Visión y posicionamiento estratégico</h2>
 
@@ -444,20 +437,7 @@ Stripe / clientes MCP  <-- integraciones externas</code></pre>
   <li><code>id_complete</code>: KYC completo — V = 1,0.</li>
 </ul>
 
-<h2 id="es-10">10. Pagos y monetización</h2>
-<table>
-  <thead><tr><th>Nivel</th><th>Mensual</th><th>Anual</th><th>Descripción</th></tr></thead>
-  <tbody>
-    <tr><td>Numerario</td><td>25 $</td><td>240 $ (ahorra 60 $)</td><td>Motor operativo — profesionales activos</td></tr>
-    <tr><td>Protector</td><td>100 $</td><td>960 $ (ahorra 240 $)</td><td>Soporte e inversión</td></tr>
-    <tr><td>Patrono</td><td>200 $</td><td>1.920 $ (ahorra 480 $)</td><td>Experiencia y valor — nivel premium</td></tr>
-    <tr><td>Fundador</td><td>0 $</td><td>0 $ (por invitación)</td><td>Cimiento estratégico</td></tr>
-    <tr><td>Honorífico</td><td>—</td><td>—</td><td>Embajadores de la red</td></tr>
-  </tbody>
-</table>
-<p><strong>Escrow de proyectos:</strong> fondos retenidos en <code>hispatec_transactions</code> con estado <code>held</code>, liberados por el creador una vez cumplido el entregable.</p>
-
-<h2 id="es-11">11. Integración MCP para agentes de IA</h2>
+<h2 id="es-10">10. Integración MCP para agentes de IA</h2>
 <p>Nueve herramientas expuestas en <code>/hispatec/api/mcp/tools</code>, invocables por cualquier agente compatible con el Model Context Protocol:</p>
 <ol>
   <li><code>match_members</code> — matching de miembros.</li>
@@ -472,22 +452,15 @@ Stripe / clientes MCP  <-- integraciones externas</code></pre>
 </ol>
 <p>Invocación: <code>POST /mcp/tools/call</code> con <code>{ name, parameters }</code>. Devuelve <code>{ success, data: { tool, result, execution_time_ms } }</code>.</p>
 
-<h2 id="es-12">12. Despliegue y operación</h2>
+<h2 id="es-11">11. Despliegue y operación</h2>
 <ul>
   <li><strong>Plataforma:</strong> Render (despliegue automático al hacer push a <code>main</code>).</li>
   <li><strong>Tiempo de despliegue:</strong> unos 90-120 segundos.</li>
-  <li><strong>URL de producción:</strong> <code>https://aiagent.ringlypro.com/hispatec/</code></li>
+  <li><strong>URL de desarrollo:</strong> <code>https://aiagent.ringlypro.com/hispatec/</code></li>
   <li><strong>Base de datos:</strong> PostgreSQL gestionado en Render (SSL obligatorio).</li>
   <li><strong>Variables de entorno clave:</strong> <code>DATABASE_URL</code>, <code>CRM_DATABASE_URL</code>, <code>JWT_SECRET</code>, <code>STRIPE_SECRET_KEY</code>.</li>
   <li><strong>Comprobación de salud:</strong> <code>GET /hispatec/api/health</code>.</li>
 </ul>
-
-<h2 id="es-13">13. Hoja de ruta</h2>
-<ol>
-  <li><strong>Corto plazo (2.º trimestre de 2026):</strong> webhook de Stripe para confirmar pagos, portal de verificación KYC, recuperación de contraseña y pilotos transnacionales activos.</li>
-  <li><strong>Medio plazo (3.er y 4.º trimestres de 2026):</strong> propagación iterativa de Trust Rank en producción, modelo de IA propio para matching semántico y aplicación móvil.</li>
-  <li><strong>Largo plazo (2027 en adelante):</strong> ejecución del Plan Director Tecnológico 2026-2036, corredores logísticos intrahispanos y sede central rotatoria.</li>
-</ol>
 
 </section>
 
@@ -516,21 +489,14 @@ Stripe / clientes MCP  <-- integraciones externas</code></pre>
     <li><a href="#en-7">Data Model</a></li>
     <li><a href="#en-8">API Reference</a></li>
     <li><a href="#en-9">Authentication, Roles, and Governance</a></li>
-    <li><a href="#en-10">Payments and Monetization</a></li>
-    <li><a href="#en-11">MCP Integration for AI Agents</a></li>
-    <li><a href="#en-12">Deployment and Operations</a></li>
-    <li><a href="#en-13">Roadmap</a></li>
+    <li><a href="#en-10">MCP Integration for AI Agents</a></li>
+    <li><a href="#en-11">Deployment and Operations</a></li>
   </ol>
 </div>
 
 <h2 id="en-1">1. Executive Summary</h2>
 <p>HISPATEC is an independent technical platform designed to connect professionals, companies, and institutions across the Hispanic world through tangible projects. It is not a cultural association, nor an ideological forum, nor a professional college: it is a <strong>technical trust network</strong> oriented toward measurable results.</p>
 <p>This document describes the ecosystem's technical implementation: nine functional modules, a purpose-built math engine (Gini, Trust Rank, adapted Metcalfe, Monte Carlo, HCI), forty-two REST endpoints, nine MCP tools for integration with AI agents, and a PostgreSQL data model with fifteen tables.</p>
-
-<div class="callout">
-  <strong>What HISPATEC DOES:</strong> identifies reliable technical partners, facilitates the first direct contact, reduces operational uncertainty.<br>
-  <strong>What HISPATEC DOES NOT:</strong> does not draft or certify projects, does not intermediate the economic contract, does not replace professional colleges or chambers.
-</div>
 
 <h2 id="en-2">2. Vision and Strategic Positioning</h2>
 
@@ -802,20 +768,7 @@ Stripe / MCP clients   <-- external integrations</code></pre>
   <li><code>id_complete</code>: full KYC — V = 1.0.</li>
 </ul>
 
-<h2 id="en-10">10. Payments and Monetization</h2>
-<table>
-  <thead><tr><th>Tier</th><th>Monthly</th><th>Annual</th><th>Description</th></tr></thead>
-  <tbody>
-    <tr><td>Numerario</td><td>$25</td><td>$240 (saves $60)</td><td>Operating engine — active professionals</td></tr>
-    <tr><td>Protector</td><td>$100</td><td>$960 (saves $240)</td><td>Support and investment</td></tr>
-    <tr><td>Patrono</td><td>$200</td><td>$1,920 (saves $480)</td><td>Experience and value — premium tier</td></tr>
-    <tr><td>Fundador</td><td>$0</td><td>$0 (by invitation)</td><td>Strategic cornerstone</td></tr>
-    <tr><td>Honorifico</td><td>—</td><td>—</td><td>Network ambassadors</td></tr>
-  </tbody>
-</table>
-<p><strong>Project escrow:</strong> funds held in <code>hispatec_transactions</code> with <code>held</code> status, released by the creator upon deliverable completion.</p>
-
-<h2 id="en-11">11. MCP Integration for AI Agents</h2>
+<h2 id="en-10">10. MCP Integration for AI Agents</h2>
 <p>Nine tools exposed at <code>/hispatec/api/mcp/tools</code>, callable by any Model Context Protocol compatible agent:</p>
 <ol>
   <li><code>match_members</code> — member matching.</li>
@@ -830,22 +783,15 @@ Stripe / MCP clients   <-- external integrations</code></pre>
 </ol>
 <p>Invocation: <code>POST /mcp/tools/call</code> with <code>{ name, parameters }</code>. Returns <code>{ success, data: { tool, result, execution_time_ms } }</code>.</p>
 
-<h2 id="en-12">12. Deployment and Operations</h2>
+<h2 id="en-11">11. Deployment and Operations</h2>
 <ul>
   <li><strong>Platform:</strong> Render (auto-deploy on push to <code>main</code>).</li>
   <li><strong>Deployment time:</strong> ~90-120 seconds.</li>
-  <li><strong>Production URL:</strong> <code>https://aiagent.ringlypro.com/hispatec/</code></li>
+  <li><strong>Development URL:</strong> <code>https://aiagent.ringlypro.com/hispatec/</code></li>
   <li><strong>Database:</strong> managed PostgreSQL on Render (SSL required).</li>
   <li><strong>Key env vars:</strong> <code>DATABASE_URL</code>, <code>CRM_DATABASE_URL</code>, <code>JWT_SECRET</code>, <code>STRIPE_SECRET_KEY</code>.</li>
   <li><strong>Health check:</strong> <code>GET /hispatec/api/health</code>.</li>
 </ul>
-
-<h2 id="en-13">13. Roadmap</h2>
-<ol>
-  <li><strong>Short term (Q2 2026):</strong> Stripe webhook for payment confirmation, KYC verification portal, password reset, active transnational pilots.</li>
-  <li><strong>Mid term (Q3-Q4 2026):</strong> iterative Trust Rank propagation in production, proprietary AI model for semantic matching, mobile app.</li>
-  <li><strong>Long term (2027+):</strong> execution of the 2026-2036 Technology Master Plan, intra-Hispanic logistics corridors, rotating central headquarters.</li>
-</ol>
 
 </section>
 
