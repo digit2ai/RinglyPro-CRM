@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HISPATEC — Documento Tecnico / Technical Document</title>
+<style>
+  :root{
+    --navy:#1a2332; --teal:#0d6e6e; --gold:#c8952e;
+    --paper:#fbfaf6; --ink:#1a1a1a; --muted:#5b6570;
+    --line:#e2dcc9; --code:#f3efe4;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:'Source Serif 4','Georgia',serif;
+    background:var(--paper); color:var(--ink); line-height:1.7;
+    font-size:16px;
+  }
+  header{
+    background:var(--navy); color:#fff; padding:20px 40px;
+    display:flex; justify-content:space-between; align-items:center;
+    border-bottom:4px solid var(--gold); position:sticky; top:0; z-index:100;
+  }
+  header .brand{font-family:'Inter',sans-serif; font-weight:700; letter-spacing:2px; font-size:18px}
+  header .brand span{color:var(--gold)}
+  .lang-toggle{display:flex; gap:0; border:1px solid var(--gold); border-radius:4px; overflow:hidden}
+  .lang-toggle button{
+    background:transparent; color:#fff; border:0; padding:8px 16px;
+    font-family:'Inter',sans-serif; font-size:13px; cursor:pointer; letter-spacing:1px;
+  }
+  .lang-toggle button.active{background:var(--gold); color:var(--navy); font-weight:600}
+  main{max-width:960px; margin:0 auto; padding:60px 40px 120px}
+  h1{
+    font-size:42px; color:var(--navy); margin:0 0 8px;
+    font-weight:700; letter-spacing:-0.5px;
+  }
+  h2{
+    font-size:28px; color:var(--navy); margin:60px 0 16px;
+    border-bottom:2px solid var(--gold); padding-bottom:8px;
+    font-weight:700;
+  }
+  h3{font-size:20px; color:var(--teal); margin:32px 0 12px; font-weight:700}
+  h4{font-size:16px; color:var(--navy); margin:20px 0 8px; font-weight:700; text-transform:uppercase; letter-spacing:1px; font-family:'Inter',sans-serif}
+  .subtitle{color:var(--muted); font-size:18px; font-style:italic; margin:0 0 32px}
+  .meta{
+    background:#fff; border-left:4px solid var(--gold);
+    padding:16px 24px; margin:32px 0; font-family:'Inter',sans-serif; font-size:14px;
+  }
+  .meta div{margin:4px 0}
+  .meta strong{color:var(--navy)}
+  p{margin:0 0 16px}
+  ul,ol{margin:0 0 16px; padding-left:24px}
+  li{margin:6px 0}
+  code{
+    background:var(--code); padding:2px 6px; border-radius:3px;
+    font-family:'SF Mono','Consolas',monospace; font-size:14px; color:var(--navy);
+  }
+  pre{
+    background:var(--navy); color:#e8e4d4; padding:20px 24px;
+    border-radius:4px; overflow-x:auto; border-left:4px solid var(--gold);
+    font-family:'SF Mono','Consolas',monospace; font-size:13px; line-height:1.6;
+  }
+  pre code{background:transparent; padding:0; color:inherit}
+  table{
+    width:100%; border-collapse:collapse; margin:16px 0; font-size:14px;
+    font-family:'Inter',sans-serif; background:#fff;
+  }
+  th{background:var(--navy); color:#fff; padding:10px 12px; text-align:left; font-weight:600}
+  td{padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top}
+  tr:nth-child(even) td{background:#faf7ee}
+  .axis-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:16px; margin:20px 0}
+  .axis-card{
+    background:#fff; border:1px solid var(--line); border-left:4px solid var(--teal);
+    padding:16px 20px; border-radius:4px;
+  }
+  .axis-card h4{margin-top:0; color:var(--teal); font-size:14px}
+  .axis-card p{margin:0; font-size:14px; color:var(--muted)}
+  .formula{
+    background:#fff; border:1px solid var(--line); border-radius:4px;
+    padding:16px 24px; margin:12px 0; text-align:center;
+    font-family:'SF Mono','Consolas',monospace; font-size:15px; color:var(--navy);
+  }
+  .tag{
+    display:inline-block; background:var(--gold); color:var(--navy);
+    padding:2px 8px; border-radius:3px; font-size:11px; font-weight:700;
+    letter-spacing:1px; font-family:'Inter',sans-serif; margin-right:6px;
+  }
+  .method-get{background:#2d7a2d; color:#fff}
+  .method-post{background:#c8952e; color:var(--navy)}
+  .method-put{background:#6a5acd; color:#fff}
+  .method-delete{background:#a63232; color:#fff}
+  .toc{
+    background:#fff; border:1px solid var(--line); padding:20px 32px;
+    margin:32px 0; border-radius:4px;
+  }
+  .toc ol{margin:0; padding-left:20px}
+  .toc a{color:var(--navy); text-decoration:none}
+  .toc a:hover{color:var(--gold); text-decoration:underline}
+  .callout{
+    background:#f7f2e1; border-left:4px solid var(--gold);
+    padding:16px 24px; margin:20px 0; border-radius:0 4px 4px 0;
+  }
+  .hidden{display:none !important}
+  footer{
+    text-align:center; color:var(--muted); padding:40px 20px;
+    font-family:'Inter',sans-serif; font-size:13px; border-top:1px solid var(--line);
+  }
+  @media(max-width:720px){
+    main{padding:40px 24px}
+    h1{font-size:32px}
+    h2{font-size:22px}
+    .axis-grid{grid-template-columns:1fr}
+    header{padding:16px 20px}
+  }
+  @media print{
+    header{position:static}
+    .lang-toggle{display:none}
+    .hidden{display:block !important}
+    body{font-size:12px}
+    pre{font-size:10px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">HISPA<span>TEC</span> &nbsp;|&nbsp; <span id="doc-title-es">Documento Tecnico</span><span id="doc-title-en" class="hidden">Technical Document</span></div>
+  <div class="lang-toggle" role="tablist">
+    <button id="btn-es" class="active" onclick="setLang('es')">ESPANOL</button>
+    <button id="btn-en" onclick="setLang('en')">ENGLISH</button>
+  </div>
+</header>
+
+<main>
+
+<!-- ======================== SPANISH (DEFAULT) ======================== -->
+<section id="lang-es">
+
+<h1>HISPATEC — Documento Tecnico del Ecosistema</h1>
+<p class="subtitle">Arquitectura, modulos, algoritmos y modelo operativo de la plataforma tecnica hispana.</p>
+
+<div class="meta">
+  <div><strong>Version:</strong> 1.0.0</div>
+  <div><strong>Fecha:</strong> 14 de Abril, 2026</div>
+  <div><strong>Estado:</strong> Produccion — <code>aiagent.ringlypro.com/hispatec/</code></div>
+  <div><strong>Lema:</strong> "Accion, no solo palabras"</div>
+</div>
+
+<div class="toc">
+  <strong>Tabla de Contenidos</strong>
+  <ol>
+    <li><a href="#es-1">Resumen Ejecutivo</a></li>
+    <li><a href="#es-2">Vision y Posicionamiento Estrategico</a></li>
+    <li><a href="#es-3">Arquitectura del Sistema</a></li>
+    <li><a href="#es-4">Los 6 Ejes Estrategicos y su Traduccion Tecnica</a></li>
+    <li><a href="#es-5">Modulos de la Plataforma</a></li>
+    <li><a href="#es-6">Motor Matematico e IA</a></li>
+    <li><a href="#es-7">Modelo de Datos</a></li>
+    <li><a href="#es-8">Referencia de API</a></li>
+    <li><a href="#es-9">Autenticacion, Roles y Gobierno</a></li>
+    <li><a href="#es-10">Pagos y Monetizacion</a></li>
+    <li><a href="#es-11">Integracion MCP para Agentes IA</a></li>
+    <li><a href="#es-12">Despliegue y Operacion</a></li>
+    <li><a href="#es-13">Hoja de Ruta</a></li>
+  </ol>
+</div>
+
+<h2 id="es-1">1. Resumen Ejecutivo</h2>
+<p>HISPATEC es una plataforma tecnica independiente diseNada para conectar profesionales, empresas e instituciones del mundo hispano a traves de proyectos tangibles. No es una asociacion cultural, ni un foro ideologico, ni un colegio profesional: es una <strong>red tecnica de confianza</strong> orientada a resultados medibles.</p>
+<p>Este documento describe la implementacion tecnica del ecosistema: nueve modulos funcionales, motor matematico propio (Gini, Trust Rank, Metcalfe adaptado, Monte Carlo, HCI), cuarenta y dos endpoints REST, nueve herramientas MCP para integracion con agentes de IA, y un modelo de datos sobre PostgreSQL con quince tablas.</p>
+
+<div class="callout">
+  <strong>Lo que HISPATEC HACE:</strong> identifica socios tecnicos fiables, facilita el primer contacto directo, reduce la incertidumbre operativa.<br>
+  <strong>Lo que HISPATEC NO HACE:</strong> no redacta ni certifica proyectos, no intermedia el contrato economico, no sustituye colegios ni camaras.
+</div>
+
+<h2 id="es-2">2. Vision y Posicionamiento Estrategico</h2>
+
+<h3>Proposicion de valor diferencial</h3>
+<table>
+  <thead><tr><th>NO es</th><th>SI es</th></tr></thead>
+  <tbody>
+    <tr><td>Asociacion cultural</td><td>Accion tecnica (economica, tecnologica, empresarial)</td></tr>
+    <tr><td>Foro ideologico</td><td>Neutralidad estrategica — civil, independiente, orientada a resultados</td></tr>
+    <tr><td>Colegio profesional</td><td>Red de conexion directa entre profesionales de distintos paises</td></tr>
+    <tr><td>Consultoria</td><td>Nodo de acompaNamiento sin animo de lucro que crea ecosistemas de proyectos</td></tr>
+    <tr><td>Camara de Comercio</td><td>Red de confianza que reduce la incertidumbre entre paises hispanos</td></tr>
+  </tbody>
+</table>
+
+<h3>Sectores prioritarios</h3>
+<ul>
+  <li><strong>Ecosistema y Soberania Digital</strong> — plataformas propias, modelos de IA en espaNol, reduccion de dependencia externa.</li>
+  <li><strong>Agroindustria y Energia Estrategica</strong> — exportacion con estandares comunes, gestion de recursos vitales.</li>
+  <li><strong>Infraestructura Civil y Logistica</strong> — transporte, telecomunicaciones, redes energeticas intra-hispanas.</li>
+  <li><strong>Ciencia, Salud y Talento Joven</strong> — investigacion medica, mentorias generacionales.</li>
+</ul>
+
+<h2 id="es-3">3. Arquitectura del Sistema</h2>
+
+<h3>Capas</h3>
+<pre><code>Frontend         : HTML + CSS + JavaScript vanilla (SPA)
+                   /hispatec/          landing publica
+                   /hispatec/dashboard/  panel del miembro (9 modulos)
+
+Backend          : Node.js + Express
+                   Router central       /hispatec/api
+                   10 sub-routers       auth, members, match, projects,
+                                        exchange, payments, metrics, mcp,
+                                        admin, health
+
+Motor matematico : src/utils/hispatec-math.js (714 lineas, JS puro)
+
+Base de datos    : PostgreSQL (Render)
+                   15 tablas, arrays nativos, JSONB, indices
+
+Autenticacion    : JWT (7 dias) + bcrypt (12 rondas)
+
+Pagos            : Stripe (suscripciones + escrow de proyectos)
+
+MCP              : 9 herramientas expuestas via /hispatec/api/mcp/tools
+                   para orquestacion por agentes IA (Claude, etc.)</code></pre>
+
+<h3>Flujo end-to-end</h3>
+<pre><code>Usuario (navegador)
+     |  HTTPS
+     v
+/hispatec/dashboard/   <-- SPA, fetch con Bearer JWT
+     |
+     v
+/hispatec/api/*        <-- Express, middleware authMiddleware + requireAccess
+     |
+     v
+hispatec-math.js       <-- Gini, cosine, trust rank, Monte Carlo, HCI
+     |
+     v
+PostgreSQL             <-- queries Sequelize (raw + ORM), SSL obligatorio
+     |
+     v
+Stripe / MCP clients   <-- integraciones externas</code></pre>
+
+<h2 id="es-4">4. Los 6 Ejes Estrategicos y su Traduccion Tecnica</h2>
+
+<div class="axis-grid">
+  <div class="axis-card"><h4>1. Planificacion Estrategica — El Rumbo</h4><p>Tabla <code>hispatec_projects</code> con ciclo de 6 fases y metricas HCI que miden direccion global.</p></div>
+  <div class="axis-card"><h4>2. Captacion y Participacion — El Motor Humano</h4><p>Modulo Directorio + Matching IA; <code>hispatec_members</code> con trust score y verificacion escalonada.</p></div>
+  <div class="axis-card"><h4>3. Proyectos y Cooperacion — La Accion Tangible</h4><p>Modulo Proyectos con formacion de equipos multipais (<code>hispatec_project_members</code>) y evaluacion Monte Carlo.</p></div>
+  <div class="axis-card"><h4>4. Financiacion y Alianzas — Los Recursos</h4><p>Modulo Pagos con suscripciones Stripe y sistema de escrow en <code>hispatec_transactions</code>.</p></div>
+  <div class="axis-card"><h4>5. Comunicacion y Representacion — La Voz Global</h4><p>Landing publica, portal de oportunidades (<code>hispatec_opportunities</code>), reportes automatizados via MCP.</p></div>
+  <div class="axis-card"><h4>6. Tecnologia y Seguridad — La Infraestructura Digital</h4><p>Stack soberano (PostgreSQL + Node.js), JWT + bcrypt, motor matematico propio, herramientas MCP.</p></div>
+</div>
+
+<h2 id="es-5">5. Modulos de la Plataforma</h2>
+
+<h3>5.1 Panel General</h3>
+<p>Pantalla de entrada. Muestra tarjetas agregadas (total de miembros, proyectos activos, RFQs abiertas, HCI actual), graficos de barras por region y tipo de membresia, y tabla historica de 30 dias. Consume <code>GET /metrics/dashboard</code>.</p>
+
+<h3>5.2 Mi Perfil</h3>
+<p>Formulario editable con datos personales y profesionales. Panel lateral de <strong>Trust Score</strong> con el desglose de los cinco componentes (V, R, P, A, M) y sus pesos. Datos persistidos en <code>hispatec_members</code>.</p>
+
+<h3>5.3 Directorio</h3>
+<p>Busqueda y navegacion paginada de miembros con filtros por region, sector, pais, tipo de membresia y texto libre (ILIKE sobre nombre y empresa). Cada ficha muestra nivel de verificacion y especialidades.</p>
+
+<h3>5.4 Matching IA</h3>
+<p>El corazon de la red. El usuario describe una necesidad o proyecto; el motor construye un vector de perfil pesado, aplica <strong>similitud coseno</strong> contra todos los miembros activos, corrige por <strong>Coeficiente de Gini</strong> para favorecer regiones infrarrepresentadas, multiplica por el Trust Score y devuelve el ranking final. Cada consulta se archiva en <code>hispatec_matches</code>.</p>
+
+<h3>5.5 Proyectos</h3>
+<p>Ciclo de vida de 6 fases: <code>propuesta → analisis → equipo → recursos → ejecucion → completado</code>. Incluye evaluacion Monte Carlo (10.000 iteraciones) que devuelve probabilidades de coste y plazo, percentiles p10-p95, puntuacion de viabilidad (0-100) y semaforo VERDE/AMARILLO/ROJO.</p>
+
+<h3>5.6 Intercambio</h3>
+<p>Marketplace B2B con tres sub-modulos:</p>
+<ul>
+  <li><strong>Empresas:</strong> fichas registradas por miembros (<code>hispatec_companies</code>).</li>
+  <li><strong>RFQ:</strong> solicitudes de presupuesto con respuestas, adjudicacion y cambio automatico de estados.</li>
+  <li><strong>Oportunidades:</strong> convocatorias, licitaciones y proyectos externos compartidos por la red.</li>
+</ul>
+
+<h3>5.7 Metricas</h3>
+<p>Visualiza los cuatro indicadores maestros del ecosistema: Gini (por region o sector), HCI compuesto, valor de red Metcalfe adaptado y Trust Score individual.</p>
+
+<h3>5.8 Pagos</h3>
+<p>Gestion de suscripcion (Numerario, Protector, Patrono, Fundador), historial de transacciones y administracion de escrow de proyectos. Integracion con Stripe para la creacion del cliente y el cobro.</p>
+
+<h3>5.9 Administracion</h3>
+<p>Panel restringido a roles <code>superadmin</code>, <code>admin_global</code> y <code>admin_regional</code>. Permite asignacion de cargos de gobernanza, verificacion de miembros, cambio de estado de proyectos y visualizacion de estadisticas completas del sistema.</p>
+
+<h2 id="es-6">6. Motor Matematico e IA</h2>
+<p>Todos los algoritmos viven en <code>src/utils/hispatec-math.js</code> — JavaScript puro, sin dependencias externas, auditable linea a linea.</p>
+
+<h3>6.1 Coeficiente de Gini</h3>
+<div class="formula">G = &sum;<sub>i</sub> &sum;<sub>j</sub> |x<sub>i</sub> - x<sub>j</sub>| / (2 n&sup2; &micro;)</div>
+<p>Mide desigualdad de distribucion (0 = equidad perfecta, 1 = maxima desigualdad). Se calcula sobre numero de oportunidades, proyectos o miembros por region o sector. Umbral de activacion de correccion: <strong>0.40</strong>.</p>
+
+<h3>6.2 Factor de Correccion Gini</h3>
+<div class="formula">FC = 1 + &alpha; · (&micro;<sub>opp</sub> - opp<sub>region</sub>) / &micro;<sub>opp</sub></div>
+<p>Con &alpha;=0.3 y salvaguarda clamp [0.5, 2.0]. Se multiplica al score de matching para favorecer regiones con menor exposicion.</p>
+
+<h3>6.3 Vector de Perfil (pesos dimensionales)</h3>
+<table>
+  <thead><tr><th>Dimension</th><th>Peso</th><th>Codificacion</th></tr></thead>
+  <tbody>
+    <tr><td>sector</td><td>0.25</td><td>one-hot sobre 20 sectores</td></tr>
+    <tr><td>sub-especialidad</td><td>0.15</td><td>hash normalizado</td></tr>
+    <tr><td>region</td><td>0.10</td><td>one-hot sobre 6 regiones</td></tr>
+    <tr><td>experiencia</td><td>0.10</td><td>min(aNos/30, 1)</td></tr>
+    <tr><td>idiomas</td><td>0.05</td><td>min(n/5, 1)</td></tr>
+    <tr><td>membresia</td><td>0.05</td><td>tabla tipo → [0.4-1.0]</td></tr>
+    <tr><td>disponibilidad</td><td>0.10</td><td>directo [0,1]</td></tr>
+    <tr><td>trust</td><td>0.15</td><td>Trust Score [0,1]</td></tr>
+    <tr><td>pais</td><td>0.05</td><td>one-hot</td></tr>
+  </tbody>
+</table>
+
+<h3>6.4 Similitud Coseno</h3>
+<div class="formula">sim(A,B) = (A · B) / (||A|| · ||B||)</div>
+
+<h3>6.5 Trust Rank (variante PageRank)</h3>
+<div class="formula">T<sub>base</sub> = 0.30 V + 0.25 R + 0.20 P + 0.15 A + 0.10 M</div>
+<p>V = verificacion, R = calidad promedio de referencias, P = tasa de exito de proyectos, A = antiguedad (max 5 aNos), M = nivel de membresia. Se propaga iterativamente con amortiguacion d=0.85 durante hasta 50 iteraciones.</p>
+
+<h3>6.6 Valor de Red (Metcalfe adaptado)</h3>
+<div class="formula">V = k · n<sub>activos</sub>&sup2; · T<sub>promedio</sub>,  k = 0.001</div>
+<p>Representa el valor total generado por la red, ponderado por confianza promedio. Version simplificada utilizada en el dashboard; la version completa usa suma pareada con afinidades C<sub>ij</sub>.</p>
+
+<h3>6.7 Simulacion Monte Carlo</h3>
+<p>Para riesgo de proyecto. Distribucion triangular sobre presupuesto y cronograma:</p>
+<div class="formula">F(x) = (x - min)&sup2; / ((max - min)(est - min))  en [min, est]</div>
+<p>10.000 iteraciones. Resultado: probabilidades de cumplir coste y plazo, percentiles p10-p95, semaforo.</p>
+
+<h3>6.8 Indice Compuesto HISPATEC (HCI)</h3>
+<div class="formula">HCI = 0.20(1-Gini) + 0.20·T<sub>prom</sub> + 0.20(V/V<sub>max</sub>) + 0.25·exito + 0.15·activacion</div>
+<p>Objetivo operativo: HCI ≥ 0.65. Snapshot diario en <code>hispatec_network_metrics</code>.</p>
+
+<h2 id="es-7">7. Modelo de Datos</h2>
+<p>PostgreSQL con SSL obligatorio. 15 tablas principales:</p>
+<table>
+  <thead><tr><th>Tabla</th><th>Proposito</th></tr></thead>
+  <tbody>
+    <tr><td><code>hispatec_members</code></td><td>Usuarios, credenciales, membresia, rol, trust, verificacion</td></tr>
+    <tr><td><code>hispatec_regions</code></td><td>6 regiones con presidencia, secretaria, tesoreria</td></tr>
+    <tr><td><code>hispatec_projects</code></td><td>Proyectos en cualquiera de 6 fases del ciclo</td></tr>
+    <tr><td><code>hispatec_project_members</code></td><td>Asignacion de equipo (miembro × proyecto × rol)</td></tr>
+    <tr><td><code>hispatec_matches</code></td><td>Historial de consultas de matching con vector y resultados</td></tr>
+    <tr><td><code>hispatec_companies</code></td><td>Empresas registradas por miembros para el marketplace</td></tr>
+    <tr><td><code>hispatec_rfqs</code></td><td>Solicitudes de presupuesto</td></tr>
+    <tr><td><code>hispatec_rfq_responses</code></td><td>Respuestas/propuestas a cada RFQ</td></tr>
+    <tr><td><code>hispatec_opportunities</code></td><td>Convocatorias y oportunidades externas</td></tr>
+    <tr><td><code>hispatec_transactions</code></td><td>Libro mayor: membresias, escrow, liberaciones</td></tr>
+    <tr><td><code>hispatec_trust_references</code></td><td>Referencias peer-to-peer con calidad de colaboracion</td></tr>
+    <tr><td><code>hispatec_trust_scores</code></td><td>Archivo historico de trust (computado)</td></tr>
+    <tr><td><code>hispatec_network_metrics</code></td><td>Snapshot diario: HCI, Gini, valor de red, conteos</td></tr>
+    <tr><td><code>hispatec_events</code></td><td>Log de actividad</td></tr>
+  </tbody>
+</table>
+
+<h2 id="es-8">8. Referencia de API</h2>
+<p>Base: <code>/hispatec/api</code>. Todas las rutas autenticadas requieren <code>Authorization: Bearer &lt;jwt&gt;</code>.</p>
+
+<h3>Auth</h3>
+<ul>
+  <li><span class="tag method-post">POST</span> <code>/auth/register</code> — alta, devuelve JWT (7d)</li>
+  <li><span class="tag method-post">POST</span> <code>/auth/login</code> — autenticacion</li>
+  <li><span class="tag method-get">GET</span> <code>/auth/me</code> — perfil actual</li>
+</ul>
+
+<h3>Miembros</h3>
+<ul>
+  <li><span class="tag method-get">GET</span> <code>/members</code> — directorio paginado con filtros</li>
+  <li><span class="tag method-get">GET</span> <code>/members/:id</code> — perfil publico</li>
+  <li><span class="tag method-put">PUT</span> <code>/members/:id</code> — actualizacion del propio perfil</li>
+  <li><span class="tag method-post">POST</span> <code>/members/:id/verify</code> — solicitud de verificacion</li>
+</ul>
+
+<h3>Matching</h3>
+<ul>
+  <li><span class="tag method-post">POST</span> <code>/match</code> — matching IA con correccion Gini</li>
+  <li><span class="tag method-get">GET</span> <code>/match/history</code> — historial de consultas</li>
+</ul>
+
+<h3>Proyectos</h3>
+<ul>
+  <li><span class="tag method-get">GET</span> <code>/projects</code> — listado con filtros</li>
+  <li><span class="tag method-post">POST</span> <code>/projects</code> — nueva propuesta</li>
+  <li><span class="tag method-get">GET</span> <code>/projects/:id</code> — detalle + equipo</li>
+  <li><span class="tag method-put">PUT</span> <code>/projects/:id</code> — actualizacion (autor/admin)</li>
+  <li><span class="tag method-post">POST</span> <code>/projects/:id/advance</code> — avanzar fase</li>
+  <li><span class="tag method-post">POST</span> <code>/projects/:id/join</code> — unirse al equipo</li>
+  <li><span class="tag method-post">POST</span> <code>/projects/:id/evaluate</code> — viabilidad Monte Carlo</li>
+  <li><span class="tag method-post">POST</span> <code>/projects/:id/assign</code> — sugerencia de equipo</li>
+</ul>
+
+<h3>Intercambio</h3>
+<ul>
+  <li><span class="tag method-get">GET</span>/<span class="tag method-post">POST</span>/<span class="tag method-put">PUT</span> <code>/exchange/companies[/:id]</code></li>
+  <li><span class="tag method-get">GET</span>/<span class="tag method-post">POST</span> <code>/exchange/rfqs[/:id]</code>, <code>/exchange/rfqs/:id/respond</code>, <code>/exchange/rfqs/:id/award</code></li>
+  <li><span class="tag method-get">GET</span>/<span class="tag method-post">POST</span> <code>/exchange/opportunities</code></li>
+</ul>
+
+<h3>Metricas</h3>
+<ul>
+  <li><span class="tag method-get">GET</span> <code>/metrics/gini</code>, <code>/metrics/hci</code>, <code>/metrics/network-value</code>, <code>/metrics/trust/:id</code>, <code>/metrics/dashboard</code></li>
+</ul>
+
+<h3>Pagos</h3>
+<ul>
+  <li><span class="tag method-post">POST</span> <code>/payments/membership</code>, <code>/payments/escrow</code>, <code>/payments/release</code></li>
+  <li><span class="tag method-get">GET</span> <code>/payments/history</code>, <code>/payments/pricing</code></li>
+</ul>
+
+<h3>Administracion</h3>
+<ul>
+  <li><span class="tag method-get">GET</span>/<span class="tag method-put">PUT</span>/<span class="tag method-delete">DEL</span> <code>/admin/roles[/:member_id]</code></li>
+  <li><span class="tag method-get">GET</span>/<span class="tag method-put">PUT</span> <code>/admin/members[/:id/status|verify|membership]</code></li>
+  <li><span class="tag method-put">PUT</span> <code>/admin/projects/:id/status</code></li>
+  <li><span class="tag method-get">GET</span> <code>/admin/regions</code>, <code>/admin/system/stats</code>, <code>/admin/my-access</code></li>
+</ul>
+
+<h2 id="es-9">9. Autenticacion, Roles y Gobierno</h2>
+
+<h3>Flujo de autenticacion</h3>
+<ol>
+  <li>Registro o login contra <code>/auth/*</code> → devuelve JWT firmado (HS256, 7 dias).</li>
+  <li>Cliente almacena en <code>localStorage</code> bajo <code>hispatec_token</code>.</li>
+  <li>Cada peticion lleva <code>Authorization: Bearer &lt;token&gt;</code>.</li>
+  <li>Middleware <code>authMiddleware</code> verifica y adjunta <code>req.member</code> con payload decodificado.</li>
+  <li>Middleware <code>requireAccess(...niveles)</code> comprueba que <code>access_level</code> este en la lista permitida.</li>
+</ol>
+
+<h3>Jerarquia de gobierno</h3>
+<table>
+  <thead><tr><th>Rol</th><th>access_level</th><th>Alcance</th></tr></thead>
+  <tbody>
+    <tr><td>superadmin</td><td>superadmin</td><td>Total, puede asignar cualquier rol</td></tr>
+    <tr><td>presidente_general, vp_fundador, secretario_general, tesorero_general, vocal_global</td><td>admin_global</td><td>Gestion global transregional</td></tr>
+    <tr><td>presidente_regional, secretario_regional, tesorero_regional, vocal_regional</td><td>admin_regional</td><td>Gestion limitada a la propia region</td></tr>
+    <tr><td>miembro</td><td>member</td><td>Acceso estandar</td></tr>
+  </tbody>
+</table>
+
+<h3>Verificacion escalonada</h3>
+<ul>
+  <li><code>none</code>: registro basico.</li>
+  <li><code>email</code>: email verificado — V = 0.5 en Trust Score.</li>
+  <li><code>id_complete</code>: KYC completo — V = 1.0.</li>
+</ul>
+
+<h2 id="es-10">10. Pagos y Monetizacion</h2>
+<table>
+  <thead><tr><th>Nivel</th><th>Mensual</th><th>Anual</th><th>Descripcion</th></tr></thead>
+  <tbody>
+    <tr><td>Numerario</td><td>$25</td><td>$240 (ahorra $60)</td><td>Motor operativo — profesionales activos</td></tr>
+    <tr><td>Protector</td><td>$100</td><td>$960 (ahorra $240)</td><td>Soporte e inversion</td></tr>
+    <tr><td>Patrono</td><td>$200</td><td>$1.920 (ahorra $480)</td><td>Experiencia y valor — tier premium</td></tr>
+    <tr><td>Fundador</td><td>$0</td><td>$0 (por invitacion)</td><td>Cimiento estrategico</td></tr>
+    <tr><td>Honorifico</td><td>—</td><td>—</td><td>Embajadores de la red</td></tr>
+  </tbody>
+</table>
+<p><strong>Escrow de proyectos:</strong> fondos retenidos en <code>hispatec_transactions</code> con estado <code>held</code>, liberados por el creador al entregable cumplido.</p>
+
+<h2 id="es-11">11. Integracion MCP para Agentes IA</h2>
+<p>Nueve herramientas expuestas en <code>/hispatec/api/mcp/tools</code>, invocables por cualquier agente compatible con Model Context Protocol:</p>
+<ol>
+  <li><code>match_members</code> — matching de miembros.</li>
+  <li><code>evaluate_project</code> — viabilidad Monte Carlo.</li>
+  <li><code>calc_gini</code> — coeficiente de desigualdad.</li>
+  <li><code>calc_trust</code> — trust score individual.</li>
+  <li><code>find_opportunities</code> — oportunidades relevantes para un perfil.</li>
+  <li><code>optimize_allocation</code> — asignacion optima de equipo.</li>
+  <li><code>risk_montecarlo</code> — escenarios de riesgo.</li>
+  <li><code>gen_report</code> — reportes de actividad, financieros, impacto o HCI.</li>
+  <li><code>network_value</code> — valor de red total.</li>
+</ol>
+<p>Invocacion: <code>POST /mcp/tools/call</code> con <code>{ name, parameters }</code>. Devuelve <code>{ success, data: { tool, result, execution_time_ms } }</code>.</p>
+
+<h2 id="es-12">12. Despliegue y Operacion</h2>
+<ul>
+  <li><strong>Plataforma:</strong> Render (auto-deploy al hacer push a <code>main</code>).</li>
+  <li><strong>Tiempo de despliegue:</strong> ~90-120 segundos.</li>
+  <li><strong>URL produccion:</strong> <code>https://aiagent.ringlypro.com/hispatec/</code></li>
+  <li><strong>Base de datos:</strong> PostgreSQL gestionada en Render (SSL obligatorio).</li>
+  <li><strong>Variables de entorno clave:</strong> <code>DATABASE_URL</code>, <code>CRM_DATABASE_URL</code>, <code>JWT_SECRET</code>, <code>STRIPE_SECRET_KEY</code>.</li>
+  <li><strong>Health check:</strong> <code>GET /hispatec/api/health</code>.</li>
+</ul>
+
+<h2 id="es-13">13. Hoja de Ruta</h2>
+<ol>
+  <li><strong>Corto plazo (Q2 2026):</strong> webhook Stripe para confirmar pagos, portal de verificacion KYC, recuperacion de contraseNa, pilotos transnacionales activos.</li>
+  <li><strong>Medio plazo (Q3-Q4 2026):</strong> propagacion iterativa de Trust Rank en produccion, modelo de IA propio para matching semantico, app movil.</li>
+  <li><strong>Largo plazo (2027+):</strong> ejecucion del Plan Director Tecnologico 2026-2036, corredores logisticos intra-hispanos, sede central rotatoria.</li>
+</ol>
+
+</section>
+
+<!-- ======================== ENGLISH ======================== -->
+<section id="lang-en" class="hidden">
+
+<h1>HISPATEC — Ecosystem Technical Document</h1>
+<p class="subtitle">Architecture, modules, algorithms, and operating model of the Hispanic technical platform.</p>
+
+<div class="meta">
+  <div><strong>Version:</strong> 1.0.0</div>
+  <div><strong>Date:</strong> April 14, 2026</div>
+  <div><strong>Status:</strong> Production — <code>aiagent.ringlypro.com/hispatec/</code></div>
+  <div><strong>Motto:</strong> "Action, not just words"</div>
+</div>
+
+<div class="toc">
+  <strong>Table of Contents</strong>
+  <ol>
+    <li><a href="#en-1">Executive Summary</a></li>
+    <li><a href="#en-2">Vision and Strategic Positioning</a></li>
+    <li><a href="#en-3">System Architecture</a></li>
+    <li><a href="#en-4">The 6 Strategic Axes and Their Technical Translation</a></li>
+    <li><a href="#en-5">Platform Modules</a></li>
+    <li><a href="#en-6">Math and AI Engine</a></li>
+    <li><a href="#en-7">Data Model</a></li>
+    <li><a href="#en-8">API Reference</a></li>
+    <li><a href="#en-9">Authentication, Roles, and Governance</a></li>
+    <li><a href="#en-10">Payments and Monetization</a></li>
+    <li><a href="#en-11">MCP Integration for AI Agents</a></li>
+    <li><a href="#en-12">Deployment and Operations</a></li>
+    <li><a href="#en-13">Roadmap</a></li>
+  </ol>
+</div>
+
+<h2 id="en-1">1. Executive Summary</h2>
+<p>HISPATEC is an independent technical platform designed to connect professionals, companies, and institutions across the Hispanic world through tangible projects. It is not a cultural association, nor an ideological forum, nor a professional college: it is a <strong>technical trust network</strong> oriented toward measurable results.</p>
+<p>This document describes the ecosystem's technical implementation: nine functional modules, a purpose-built math engine (Gini, Trust Rank, adapted Metcalfe, Monte Carlo, HCI), forty-two REST endpoints, nine MCP tools for integration with AI agents, and a PostgreSQL data model with fifteen tables.</p>
+
+<div class="callout">
+  <strong>What HISPATEC DOES:</strong> identifies reliable technical partners, facilitates the first direct contact, reduces operational uncertainty.<br>
+  <strong>What HISPATEC DOES NOT:</strong> does not draft or certify projects, does not intermediate the economic contract, does not replace professional colleges or chambers.
+</div>
+
+<h2 id="en-2">2. Vision and Strategic Positioning</h2>
+
+<h3>Differential value proposition</h3>
+<table>
+  <thead><tr><th>NOT</th><th>IS</th></tr></thead>
+  <tbody>
+    <tr><td>Cultural association</td><td>Technical action (economic, technological, business)</td></tr>
+    <tr><td>Ideological forum</td><td>Strategic neutrality — civil, independent, results-focused</td></tr>
+    <tr><td>Professional college</td><td>Direct connection network among professionals across countries</td></tr>
+    <tr><td>Consulting firm</td><td>Non-profit accompaniment node that creates project ecosystems</td></tr>
+    <tr><td>Chamber of Commerce</td><td>Trust network that reduces uncertainty between Hispanic countries</td></tr>
+  </tbody>
+</table>
+
+<h3>Priority sectors</h3>
+<ul>
+  <li><strong>Digital Ecosystem and Sovereignty</strong> — proprietary platforms, Spanish-language AI models, reduced external dependency.</li>
+  <li><strong>Agro-industry and Strategic Energy</strong> — exports with common standards, management of vital resources.</li>
+  <li><strong>Civil Infrastructure and Logistics</strong> — transport, telecom, and energy networks across the Hispanic bloc.</li>
+  <li><strong>Science, Health, and Young Talent</strong> — medical research, generational mentoring.</li>
+</ul>
+
+<h2 id="en-3">3. System Architecture</h2>
+
+<h3>Layers</h3>
+<pre><code>Frontend       : HTML + CSS + vanilla JavaScript (SPA)
+                 /hispatec/          public landing
+                 /hispatec/dashboard/  member panel (9 modules)
+
+Backend        : Node.js + Express
+                 Main router         /hispatec/api
+                 10 sub-routers      auth, members, match, projects,
+                                     exchange, payments, metrics, mcp,
+                                     admin, health
+
+Math engine    : src/utils/hispatec-math.js (714 lines, pure JS)
+
+Database       : PostgreSQL (Render)
+                 15 tables, native arrays, JSONB, indexes
+
+Authentication : JWT (7 days) + bcrypt (12 rounds)
+
+Payments       : Stripe (subscriptions + project escrow)
+
+MCP            : 9 tools exposed at /hispatec/api/mcp/tools
+                 for orchestration by AI agents (Claude, etc.)</code></pre>
+
+<h3>End-to-end flow</h3>
+<pre><code>User (browser)
+     |  HTTPS
+     v
+/hispatec/dashboard/   <-- SPA, fetch with Bearer JWT
+     |
+     v
+/hispatec/api/*        <-- Express, authMiddleware + requireAccess
+     |
+     v
+hispatec-math.js       <-- Gini, cosine, trust rank, Monte Carlo, HCI
+     |
+     v
+PostgreSQL             <-- Sequelize queries (raw + ORM), SSL required
+     |
+     v
+Stripe / MCP clients   <-- external integrations</code></pre>
+
+<h2 id="en-4">4. The 6 Strategic Axes and Their Technical Translation</h2>
+
+<div class="axis-grid">
+  <div class="axis-card"><h4>1. Strategic Planning — The Direction</h4><p><code>hispatec_projects</code> table with 6-phase lifecycle and HCI metrics that measure overall direction.</p></div>
+  <div class="axis-card"><h4>2. Recruitment and Participation — The Human Engine</h4><p>Directory and AI Matching modules; <code>hispatec_members</code> with trust score and tiered verification.</p></div>
+  <div class="axis-card"><h4>3. Projects and Cooperation — Tangible Action</h4><p>Projects module with multi-country team formation (<code>hispatec_project_members</code>) and Monte Carlo evaluation.</p></div>
+  <div class="axis-card"><h4>4. Funding and Alliances — The Resources</h4><p>Payments module with Stripe subscriptions and an escrow system in <code>hispatec_transactions</code>.</p></div>
+  <div class="axis-card"><h4>5. Communication and Representation — The Global Voice</h4><p>Public landing, opportunities portal (<code>hispatec_opportunities</code>), automated reports via MCP.</p></div>
+  <div class="axis-card"><h4>6. Technology and Security — Digital Infrastructure</h4><p>Sovereign stack (PostgreSQL + Node.js), JWT + bcrypt, proprietary math engine, MCP tools.</p></div>
+</div>
+
+<h2 id="en-5">5. Platform Modules</h2>
+
+<h3>5.1 General Panel</h3>
+<p>Landing screen after login. Shows aggregate cards (total members, active projects, open RFQs, current HCI), bar charts by region and membership type, and a 30-day history table. Consumes <code>GET /metrics/dashboard</code>.</p>
+
+<h3>5.2 My Profile</h3>
+<p>Editable form with personal and professional data. Side panel showing the <strong>Trust Score</strong> breakdown across its five components (V, R, P, A, M) with weights. Stored in <code>hispatec_members</code>.</p>
+
+<h3>5.3 Directory</h3>
+<p>Paginated member search with filters by region, sector, country, membership type, and free-text (ILIKE on name and company). Each card shows verification level and specialties.</p>
+
+<h3>5.4 AI Matching</h3>
+<p>The heart of the network. The user describes a need or project; the engine builds a weighted profile vector, applies <strong>cosine similarity</strong> against all active members, corrects via the <strong>Gini coefficient</strong> to favor under-represented regions, multiplies by Trust Score, and returns the final ranking. Every query is archived in <code>hispatec_matches</code>.</p>
+
+<h3>5.5 Projects</h3>
+<p>Six-phase lifecycle: <code>proposal → analysis → team → resources → execution → completed</code>. Includes Monte Carlo evaluation (10,000 iterations) that returns cost and timeline probabilities, p10-p95 percentiles, viability score (0-100), and a GREEN/YELLOW/RED semaphore.</p>
+
+<h3>5.6 Exchange</h3>
+<p>B2B marketplace with three sub-modules:</p>
+<ul>
+  <li><strong>Companies:</strong> profiles registered by members (<code>hispatec_companies</code>).</li>
+  <li><strong>RFQ:</strong> requests for quotation with responses, awarding, and automatic status transitions.</li>
+  <li><strong>Opportunities:</strong> calls, tenders, and external projects shared across the network.</li>
+</ul>
+
+<h3>5.7 Metrics</h3>
+<p>Visualizes the four master ecosystem indicators: Gini (by region or sector), composite HCI, adapted Metcalfe network value, and individual Trust Score.</p>
+
+<h3>5.8 Payments</h3>
+<p>Subscription management (Numerario, Protector, Patrono, Fundador), transaction history, and project escrow administration. Stripe integration for customer creation and charging.</p>
+
+<h3>5.9 Administration</h3>
+<p>Panel restricted to <code>superadmin</code>, <code>admin_global</code>, and <code>admin_regional</code> roles. Allows governance role assignment, member verification, project status changes, and full system statistics.</p>
+
+<h2 id="en-6">6. Math and AI Engine</h2>
+<p>All algorithms live in <code>src/utils/hispatec-math.js</code> — pure JavaScript, zero external dependencies, auditable line by line.</p>
+
+<h3>6.1 Gini Coefficient</h3>
+<div class="formula">G = &sum;<sub>i</sub> &sum;<sub>j</sub> |x<sub>i</sub> - x<sub>j</sub>| / (2 n&sup2; &micro;)</div>
+<p>Measures distribution inequality (0 = perfect equality, 1 = maximum inequality). Computed over opportunity, project, or member counts per region or sector. Correction activation threshold: <strong>0.40</strong>.</p>
+
+<h3>6.2 Gini Correction Factor</h3>
+<div class="formula">FC = 1 + &alpha; · (&micro;<sub>opp</sub> - opp<sub>region</sub>) / &micro;<sub>opp</sub></div>
+<p>With &alpha;=0.3 and safety clamp [0.5, 2.0]. Multiplied into the matching score to favor regions with lower exposure.</p>
+
+<h3>6.3 Profile Vector (dimensional weights)</h3>
+<table>
+  <thead><tr><th>Dimension</th><th>Weight</th><th>Encoding</th></tr></thead>
+  <tbody>
+    <tr><td>sector</td><td>0.25</td><td>one-hot over 20 sectors</td></tr>
+    <tr><td>sub-specialty</td><td>0.15</td><td>normalized hash</td></tr>
+    <tr><td>region</td><td>0.10</td><td>one-hot over 6 regions</td></tr>
+    <tr><td>experience</td><td>0.10</td><td>min(years/30, 1)</td></tr>
+    <tr><td>languages</td><td>0.05</td><td>min(n/5, 1)</td></tr>
+    <tr><td>membership</td><td>0.05</td><td>type table → [0.4-1.0]</td></tr>
+    <tr><td>availability</td><td>0.10</td><td>direct [0,1]</td></tr>
+    <tr><td>trust</td><td>0.15</td><td>Trust Score [0,1]</td></tr>
+    <tr><td>country</td><td>0.05</td><td>one-hot</td></tr>
+  </tbody>
+</table>
+
+<h3>6.4 Cosine Similarity</h3>
+<div class="formula">sim(A,B) = (A · B) / (||A|| · ||B||)</div>
+
+<h3>6.5 Trust Rank (PageRank variant)</h3>
+<div class="formula">T<sub>base</sub> = 0.30 V + 0.25 R + 0.20 P + 0.15 A + 0.10 M</div>
+<p>V = verification, R = average reference quality, P = project success rate, A = tenure (capped at 5 years), M = membership level. Iteratively propagated with damping d=0.85 for up to 50 iterations.</p>
+
+<h3>6.6 Network Value (adapted Metcalfe)</h3>
+<div class="formula">V = k · n<sub>active</sub>&sup2; · T<sub>avg</sub>,  k = 0.001</div>
+<p>Represents total value generated by the network, weighted by average trust. Simplified version used in the dashboard; the full version uses pairwise sums with affinity C<sub>ij</sub>.</p>
+
+<h3>6.7 Monte Carlo Simulation</h3>
+<p>For project risk. Triangular distribution over budget and schedule:</p>
+<div class="formula">F(x) = (x - min)&sup2; / ((max - min)(est - min))  in [min, est]</div>
+<p>10,000 iterations. Outputs: probabilities of meeting cost and schedule, p10-p95 percentiles, semaphore.</p>
+
+<h3>6.8 HISPATEC Composite Index (HCI)</h3>
+<div class="formula">HCI = 0.20(1-Gini) + 0.20·T<sub>avg</sub> + 0.20(V/V<sub>max</sub>) + 0.25·success + 0.15·activation</div>
+<p>Operational target: HCI ≥ 0.65. Daily snapshot stored in <code>hispatec_network_metrics</code>.</p>
+
+<h2 id="en-7">7. Data Model</h2>
+<p>PostgreSQL with mandatory SSL. 15 main tables:</p>
+<table>
+  <thead><tr><th>Table</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td><code>hispatec_members</code></td><td>Users, credentials, membership, role, trust, verification</td></tr>
+    <tr><td><code>hispatec_regions</code></td><td>6 regions with presidency, secretariat, treasury</td></tr>
+    <tr><td><code>hispatec_projects</code></td><td>Projects in any of 6 lifecycle phases</td></tr>
+    <tr><td><code>hispatec_project_members</code></td><td>Team assignments (member × project × role)</td></tr>
+    <tr><td><code>hispatec_matches</code></td><td>Matching query history with vector and results</td></tr>
+    <tr><td><code>hispatec_companies</code></td><td>Companies registered by members for the marketplace</td></tr>
+    <tr><td><code>hispatec_rfqs</code></td><td>Requests for quotation</td></tr>
+    <tr><td><code>hispatec_rfq_responses</code></td><td>Responses / bids to each RFQ</td></tr>
+    <tr><td><code>hispatec_opportunities</code></td><td>External opportunities and calls</td></tr>
+    <tr><td><code>hispatec_transactions</code></td><td>Ledger: memberships, escrow, releases</td></tr>
+    <tr><td><code>hispatec_trust_references</code></td><td>Peer-to-peer references with collaboration quality</td></tr>
+    <tr><td><code>hispatec_trust_scores</code></td><td>Historical trust archive (computed)</td></tr>
+    <tr><td><code>hispatec_network_metrics</code></td><td>Daily snapshot: HCI, Gini, network value, counts</td></tr>
+    <tr><td><code>hispatec_events</code></td><td>Activity log</td></tr>
+  </tbody>
+</table>
+
+<h2 id="en-8">8. API Reference</h2>
+<p>Base: <code>/hispatec/api</code>. All authenticated routes require <code>Authorization: Bearer &lt;jwt&gt;</code>.</p>
+
+<h3>Auth</h3>
+<ul>
+  <li><span class="tag method-post">POST</span> <code>/auth/register</code> — signup, returns JWT (7d)</li>
+  <li><span class="tag method-post">POST</span> <code>/auth/login</code> — authentication</li>
+  <li><span class="tag method-get">GET</span> <code>/auth/me</code> — current profile</li>
+</ul>
+
+<h3>Members</h3>
+<ul>
+  <li><span class="tag method-get">GET</span> <code>/members</code> — paginated directory with filters</li>
+  <li><span class="tag method-get">GET</span> <code>/members/:id</code> — public profile</li>
+  <li><span class="tag method-put">PUT</span> <code>/members/:id</code> — update own profile</li>
+  <li><span class="tag method-post">POST</span> <code>/members/:id/verify</code> — request verification</li>
+</ul>
+
+<h3>Matching</h3>
+<ul>
+  <li><span class="tag method-post">POST</span> <code>/match</code> — AI matching with Gini correction</li>
+  <li><span class="tag method-get">GET</span> <code>/match/history</code> — query history</li>
+</ul>
+
+<h3>Projects</h3>
+<ul>
+  <li><span class="tag method-get">GET</span> <code>/projects</code> — listing with filters</li>
+  <li><span class="tag method-post">POST</span> <code>/projects</code> — new proposal</li>
+  <li><span class="tag method-get">GET</span> <code>/projects/:id</code> — detail + team</li>
+  <li><span class="tag method-put">PUT</span> <code>/projects/:id</code> — update (author/admin)</li>
+  <li><span class="tag method-post">POST</span> <code>/projects/:id/advance</code> — move to next phase</li>
+  <li><span class="tag method-post">POST</span> <code>/projects/:id/join</code> — join team</li>
+  <li><span class="tag method-post">POST</span> <code>/projects/:id/evaluate</code> — Monte Carlo viability</li>
+  <li><span class="tag method-post">POST</span> <code>/projects/:id/assign</code> — team suggestion</li>
+</ul>
+
+<h3>Exchange</h3>
+<ul>
+  <li><span class="tag method-get">GET</span>/<span class="tag method-post">POST</span>/<span class="tag method-put">PUT</span> <code>/exchange/companies[/:id]</code></li>
+  <li><span class="tag method-get">GET</span>/<span class="tag method-post">POST</span> <code>/exchange/rfqs[/:id]</code>, <code>/exchange/rfqs/:id/respond</code>, <code>/exchange/rfqs/:id/award</code></li>
+  <li><span class="tag method-get">GET</span>/<span class="tag method-post">POST</span> <code>/exchange/opportunities</code></li>
+</ul>
+
+<h3>Metrics</h3>
+<ul>
+  <li><span class="tag method-get">GET</span> <code>/metrics/gini</code>, <code>/metrics/hci</code>, <code>/metrics/network-value</code>, <code>/metrics/trust/:id</code>, <code>/metrics/dashboard</code></li>
+</ul>
+
+<h3>Payments</h3>
+<ul>
+  <li><span class="tag method-post">POST</span> <code>/payments/membership</code>, <code>/payments/escrow</code>, <code>/payments/release</code></li>
+  <li><span class="tag method-get">GET</span> <code>/payments/history</code>, <code>/payments/pricing</code></li>
+</ul>
+
+<h3>Administration</h3>
+<ul>
+  <li><span class="tag method-get">GET</span>/<span class="tag method-put">PUT</span>/<span class="tag method-delete">DEL</span> <code>/admin/roles[/:member_id]</code></li>
+  <li><span class="tag method-get">GET</span>/<span class="tag method-put">PUT</span> <code>/admin/members[/:id/status|verify|membership]</code></li>
+  <li><span class="tag method-put">PUT</span> <code>/admin/projects/:id/status</code></li>
+  <li><span class="tag method-get">GET</span> <code>/admin/regions</code>, <code>/admin/system/stats</code>, <code>/admin/my-access</code></li>
+</ul>
+
+<h2 id="en-9">9. Authentication, Roles, and Governance</h2>
+
+<h3>Authentication flow</h3>
+<ol>
+  <li>Register or log in against <code>/auth/*</code> → returns a signed JWT (HS256, 7 days).</li>
+  <li>Client stores in <code>localStorage</code> under <code>hispatec_token</code>.</li>
+  <li>Each request carries <code>Authorization: Bearer &lt;token&gt;</code>.</li>
+  <li><code>authMiddleware</code> verifies and attaches <code>req.member</code> with decoded payload.</li>
+  <li><code>requireAccess(...levels)</code> checks <code>access_level</code> is in allowed list.</li>
+</ol>
+
+<h3>Governance hierarchy</h3>
+<table>
+  <thead><tr><th>Role</th><th>access_level</th><th>Scope</th></tr></thead>
+  <tbody>
+    <tr><td>superadmin</td><td>superadmin</td><td>Total, can assign any role</td></tr>
+    <tr><td>presidente_general, vp_fundador, secretario_general, tesorero_general, vocal_global</td><td>admin_global</td><td>Global cross-regional management</td></tr>
+    <tr><td>presidente_regional, secretario_regional, tesorero_regional, vocal_regional</td><td>admin_regional</td><td>Limited to own region</td></tr>
+    <tr><td>miembro</td><td>member</td><td>Standard access</td></tr>
+  </tbody>
+</table>
+
+<h3>Tiered verification</h3>
+<ul>
+  <li><code>none</code>: basic signup.</li>
+  <li><code>email</code>: email verified — V = 0.5 in Trust Score.</li>
+  <li><code>id_complete</code>: full KYC — V = 1.0.</li>
+</ul>
+
+<h2 id="en-10">10. Payments and Monetization</h2>
+<table>
+  <thead><tr><th>Tier</th><th>Monthly</th><th>Annual</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td>Numerario</td><td>$25</td><td>$240 (saves $60)</td><td>Operating engine — active professionals</td></tr>
+    <tr><td>Protector</td><td>$100</td><td>$960 (saves $240)</td><td>Support and investment</td></tr>
+    <tr><td>Patrono</td><td>$200</td><td>$1,920 (saves $480)</td><td>Experience and value — premium tier</td></tr>
+    <tr><td>Fundador</td><td>$0</td><td>$0 (by invitation)</td><td>Strategic cornerstone</td></tr>
+    <tr><td>Honorifico</td><td>—</td><td>—</td><td>Network ambassadors</td></tr>
+  </tbody>
+</table>
+<p><strong>Project escrow:</strong> funds held in <code>hispatec_transactions</code> with <code>held</code> status, released by the creator upon deliverable completion.</p>
+
+<h2 id="en-11">11. MCP Integration for AI Agents</h2>
+<p>Nine tools exposed at <code>/hispatec/api/mcp/tools</code>, callable by any Model Context Protocol compatible agent:</p>
+<ol>
+  <li><code>match_members</code> — member matching.</li>
+  <li><code>evaluate_project</code> — Monte Carlo viability.</li>
+  <li><code>calc_gini</code> — inequality coefficient.</li>
+  <li><code>calc_trust</code> — individual trust score.</li>
+  <li><code>find_opportunities</code> — relevant opportunities for a profile.</li>
+  <li><code>optimize_allocation</code> — optimal team assignment.</li>
+  <li><code>risk_montecarlo</code> — risk scenarios.</li>
+  <li><code>gen_report</code> — activity, financial, impact, or HCI reports.</li>
+  <li><code>network_value</code> — total network value.</li>
+</ol>
+<p>Invocation: <code>POST /mcp/tools/call</code> with <code>{ name, parameters }</code>. Returns <code>{ success, data: { tool, result, execution_time_ms } }</code>.</p>
+
+<h2 id="en-12">12. Deployment and Operations</h2>
+<ul>
+  <li><strong>Platform:</strong> Render (auto-deploy on push to <code>main</code>).</li>
+  <li><strong>Deployment time:</strong> ~90-120 seconds.</li>
+  <li><strong>Production URL:</strong> <code>https://aiagent.ringlypro.com/hispatec/</code></li>
+  <li><strong>Database:</strong> managed PostgreSQL on Render (SSL required).</li>
+  <li><strong>Key env vars:</strong> <code>DATABASE_URL</code>, <code>CRM_DATABASE_URL</code>, <code>JWT_SECRET</code>, <code>STRIPE_SECRET_KEY</code>.</li>
+  <li><strong>Health check:</strong> <code>GET /hispatec/api/health</code>.</li>
+</ul>
+
+<h2 id="en-13">13. Roadmap</h2>
+<ol>
+  <li><strong>Short term (Q2 2026):</strong> Stripe webhook for payment confirmation, KYC verification portal, password reset, active transnational pilots.</li>
+  <li><strong>Mid term (Q3-Q4 2026):</strong> iterative Trust Rank propagation in production, proprietary AI model for semantic matching, mobile app.</li>
+  <li><strong>Long term (2027+):</strong> execution of the 2026-2036 Technology Master Plan, intra-Hispanic logistics corridors, rotating central headquarters.</li>
+</ol>
+
+</section>
+
+<footer>
+  HISPATEC &mdash; Accion, no solo palabras &mdash; Action, not just words<br>
+  &copy; 2026 &middot; <a href="/hispatec/" style="color:var(--teal)">hispatec</a> &middot; <a href="/hispatec/architecture.html" style="color:var(--teal)">arquitectura</a> &middot; <a href="/hispatec/whitepaper.html" style="color:var(--teal)">whitepaper</a>
+</footer>
+
+</main>
+
+<script>
+function setLang(lang){
+  var es = document.getElementById('lang-es');
+  var en = document.getElementById('lang-en');
+  var btnEs = document.getElementById('btn-es');
+  var btnEn = document.getElementById('btn-en');
+  var titleEs = document.getElementById('doc-title-es');
+  var titleEn = document.getElementById('doc-title-en');
+  if(lang === 'en'){
+    es.classList.add('hidden'); en.classList.remove('hidden');
+    btnEs.classList.remove('active'); btnEn.classList.add('active');
+    titleEs.classList.add('hidden'); titleEn.classList.remove('hidden');
+    document.documentElement.lang = 'en';
+  } else {
+    es.classList.remove('hidden'); en.classList.add('hidden');
+    btnEs.classList.add('active'); btnEn.classList.remove('active');
+    titleEs.classList.remove('hidden'); titleEn.classList.add('hidden');
+    document.documentElement.lang = 'es';
+  }
+  localStorage.setItem('hispatec_doc_lang', lang);
+  window.scrollTo(0,0);
+}
+// Load saved preference (default: Spanish)
+(function(){
+  var saved = localStorage.getItem('hispatec_doc_lang');
+  if(saved === 'en') setLang('en');
+})();
+</script>
+</body>
+</html>
