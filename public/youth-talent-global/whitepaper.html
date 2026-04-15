@@ -681,6 +681,179 @@
     .vertical-grid { grid-template-columns: 1fr; }
   }
 
+  /* MILESTONE GRID */
+  .milestone-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin: 40px 0;
+  }
+
+  .milestone-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    padding: 32px 28px;
+    position: relative;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .milestone-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--coral) 0%, var(--gold) 100%);
+  }
+
+  .milestone-month {
+    display: inline-block;
+    font-family: 'Inter', sans-serif;
+    font-size: 56px;
+    font-weight: 900;
+    color: var(--navy);
+    line-height: 1;
+    letter-spacing: -2px;
+    margin-bottom: 2px;
+  }
+
+  .milestone-month-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--coral);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .milestone-date {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: var(--gray-500);
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px dashed var(--gray-200);
+  }
+
+  .milestone-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 16px;
+  }
+
+  .milestone-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .milestone-list li {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: var(--gray-700);
+    padding: 7px 0 7px 22px;
+    position: relative;
+    line-height: 1.5;
+  }
+
+  .milestone-list li::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 13px;
+    width: 8px; height: 8px;
+    background: var(--coral);
+    border-radius: 50%;
+  }
+
+  /* SPONSOR SHOWCASE */
+  .sponsor-showcase {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin: 40px 0;
+  }
+
+  .sponsor-slot {
+    background: var(--white);
+    border: 2px solid var(--gray-200);
+    padding: 32px 28px;
+    text-align: center;
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+  }
+
+  .sponsor-slot.filled {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+    color: var(--white);
+    border-color: var(--coral);
+  }
+
+  .sponsor-slot.open {
+    border-style: dashed;
+    border-color: var(--gold);
+    background: var(--gold-light);
+  }
+
+  .sponsor-tier-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    color: var(--coral);
+  }
+
+  .sponsor-slot.filled .sponsor-tier-label { color: var(--gold); }
+  .sponsor-slot.open .sponsor-tier-label { color: var(--gold-dark); }
+
+  .sponsor-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--navy);
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+  }
+
+  .sponsor-slot.filled .sponsor-name { color: var(--white); }
+
+  .sponsor-contribution {
+    font-family: 'Source Serif 4', serif;
+    font-style: italic;
+    font-size: 14px;
+    color: var(--gray-700);
+    margin-top: 12px;
+    max-width: 280px;
+    line-height: 1.5;
+  }
+
+  .sponsor-slot.filled .sponsor-contribution { color: rgba(255,255,255,0.85); }
+  .sponsor-slot.open .sponsor-contribution { color: var(--gold-dark); }
+
+  .sponsor-amount {
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--coral);
+    margin-top: 10px;
+    letter-spacing: 0.5px;
+  }
+
+  .sponsor-slot.filled .sponsor-amount { color: var(--coral); }
+
+  @media (max-width: 768px) {
+    .milestone-grid { grid-template-columns: 1fr; }
+    .milestone-month { font-size: 44px; }
+    .sponsor-showcase { grid-template-columns: 1fr; }
+  }
+
   /* TIMELINE */
   .timeline {
     position: relative;
@@ -859,7 +1032,9 @@
     <li>Outcomes Framework &amp; Impact Measurement</li>
     <li>Founding Team &amp; Governance</li>
     <li>Sponsor Model</li>
+    <li>Execution Plan &mdash; First 18 Months</li>
     <li>Roadmap &amp; Vision Through 2035</li>
+    <li>Founding Sponsors</li>
     <li>Call to Action</li>
   </ol>
 </div>
@@ -1434,6 +1609,88 @@
 <section class="chapter">
   <div class="chapter-header">
     <div class="chapter-number">11</div>
+    <h2>Execution Plan &mdash; First 18 Months</h2>
+  </div>
+
+  <p class="lead">The 2035 vision depends entirely on what happens in the next eighteen months. Below is the quarterly execution plan, with specific commitments at the 3, 6, 12, and 18-month marks from today.</p>
+
+  <div class="milestone-grid">
+    <div class="milestone-card">
+      <div class="milestone-month-label">Milestone 01</div>
+      <div class="milestone-month">3</div>
+      <div class="milestone-date">Months &middot; By July 2026</div>
+      <div class="milestone-title">Foundation &amp; Platform Ready</div>
+      <ul class="milestone-list">
+        <li>US 501(c)(3) foundation legally incorporated</li>
+        <li>Board of Directors confirmed (5&ndash;7 seats)</li>
+        <li>Visionarium brand identity, website, and application portal launched</li>
+        <li>Technology ecosystem live: fellow portal, Lina AI mentor, admissions flow, admin console</li>
+        <li>Founding Technology Sponsor contribution (Digit2ai) formalized</li>
+        <li>First 3 Founding Cash Sponsor LOIs secured</li>
+        <li>Cohort 1 applications open</li>
+      </ul>
+    </div>
+
+    <div class="milestone-card">
+      <div class="milestone-month-label">Milestone 02</div>
+      <div class="milestone-month">6</div>
+      <div class="milestone-date">Months &middot; By October 2026</div>
+      <div class="milestone-title">Cohort 1 Launched</div>
+      <ul class="milestone-list">
+        <li>Applications closed &mdash; target 600+ applicants</li>
+        <li>40 Fellows selected from across LATAM and Miami Hispanic community</li>
+        <li>Mentor network activated &mdash; 40+ human mentors onboarded</li>
+        <li>Miami orientation immersion completed</li>
+        <li>Weekly program cadence running: Tech Lab, Leadership Forum, 1:1 Mentor, Lina</li>
+        <li>First Lead and Program Sponsor commitments announced</li>
+        <li>Total committed sponsor capital: $500K+</li>
+      </ul>
+    </div>
+
+    <div class="milestone-card">
+      <div class="milestone-month-label">Milestone 03</div>
+      <div class="milestone-month">12</div>
+      <div class="milestone-date">Months &middot; By April 2027</div>
+      <div class="milestone-title">Cohort 1 Midpoint</div>
+      <ul class="milestone-list">
+        <li>Mid-program Miami summit completed (all 40 Fellows)</li>
+        <li>Capstone projects initiated with sponsor briefs</li>
+        <li>First sponsor-briefed internship placements</li>
+        <li>Interim Impact Report v0.5 published to sponsors</li>
+        <li>Cohort 2 applications open</li>
+        <li>Second operational city scouting complete (CDMX or Bogot&aacute;)</li>
+        <li>Total committed sponsor capital: $1M+</li>
+      </ul>
+    </div>
+
+    <div class="milestone-card">
+      <div class="milestone-month-label">Milestone 04</div>
+      <div class="milestone-month">18</div>
+      <div class="milestone-date">Months &middot; By October 2027</div>
+      <div class="milestone-title">Proof of Model</div>
+      <ul class="milestone-list">
+        <li>Cohort 1 Demo Day completed with press, sponsors, investors</li>
+        <li>Cohort 1 Impact Report v1.0 published publicly</li>
+        <li>Measured outcomes: placement rate, capstones shipped, bilingual fluency, NPS</li>
+        <li>Cohort 2 launched (target: 40&ndash;80 Fellows)</li>
+        <li>Digital alumni network live</li>
+        <li>Second city established and launched</li>
+        <li>Cumulative Fellows: 80+</li>
+        <li>Foundation track record sufficient for institutional grants</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout callout-coral">
+    <h4>Why 18 Months Matters</h4>
+    <p>Eighteen months is the window in which Visionarium must prove three things: that Fellows transform measurably, that sponsors see clear ROI on their contributions, and that the model is ready to scale. Everything in the 2035 vision depends on nailing these four milestones. Sponsors who join in this window fund the proof itself &mdash; and earn the permanent founding association that follows.</p>
+  </div>
+</section>
+
+<!-- ============ CHAPTER 12 ============ -->
+<section class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-number">12</div>
     <h2>Roadmap &amp; Vision Through 2035</h2>
   </div>
 
@@ -1483,10 +1740,99 @@
   </div>
 </section>
 
-<!-- ============ CHAPTER 12 ============ -->
+<!-- ============ CHAPTER 13 ============ -->
 <section class="chapter">
   <div class="chapter-header">
-    <div class="chapter-number">12</div>
+    <div class="chapter-number">13</div>
+    <h2>Founding Sponsors</h2>
+  </div>
+
+  <p class="lead">Every foundation is built by its founding sponsors. The partners who join Visionarium in its formalization year will be permanently recognized as the institution's original backers &mdash; with name attribution across all future cohorts, impact reports, and public communications.</p>
+
+  <h3>Confirmed Founding Sponsors</h3>
+
+  <div class="sponsor-showcase">
+    <div class="sponsor-slot filled">
+      <div class="sponsor-tier-label">Founding Technology Sponsor</div>
+      <div class="sponsor-name">Digit2ai</div>
+      <div class="sponsor-amount">IN-KIND &middot; $500K+ VALUED</div>
+      <div class="sponsor-contribution">Full technical ecosystem: fellow portal, Lina AI mentor layer, admissions platform, admin console, ongoing engineering.</div>
+    </div>
+
+    <div class="sponsor-slot open">
+      <div class="sponsor-tier-label">Founding Cash Sponsor &middot; Open</div>
+      <div class="sponsor-name">Your Organization</div>
+      <div class="sponsor-amount">$250,000+ / YEAR</div>
+      <div class="sponsor-contribution">Board observer seat &middot; named fellowship(s) &middot; prominent recognition &middot; first-access talent pipeline</div>
+    </div>
+
+    <div class="sponsor-slot open">
+      <div class="sponsor-tier-label">Founding Cash Sponsor &middot; Open</div>
+      <div class="sponsor-name">Your Organization</div>
+      <div class="sponsor-amount">$250,000+ / YEAR</div>
+      <div class="sponsor-contribution">Board observer seat &middot; named fellowship(s) &middot; prominent recognition &middot; first-access talent pipeline</div>
+    </div>
+
+    <div class="sponsor-slot open">
+      <div class="sponsor-tier-label">Founding Cash Sponsor &middot; Open</div>
+      <div class="sponsor-name">Your Organization</div>
+      <div class="sponsor-amount">$250,000+ / YEAR</div>
+      <div class="sponsor-contribution">Board observer seat &middot; named fellowship(s) &middot; prominent recognition &middot; first-access talent pipeline</div>
+    </div>
+  </div>
+
+  <h3>Lead Sponsor Slots</h3>
+
+  <div class="sponsor-showcase">
+    <div class="sponsor-slot open">
+      <div class="sponsor-tier-label">Lead Sponsor &middot; Open</div>
+      <div class="sponsor-name">Your Organization</div>
+      <div class="sponsor-amount">$100,000+ / YEAR</div>
+      <div class="sponsor-contribution">Named cohort track or pillar &middot; logo on all materials &middot; sponsor-briefed capstone challenge</div>
+    </div>
+
+    <div class="sponsor-slot open">
+      <div class="sponsor-tier-label">Lead Sponsor &middot; Open</div>
+      <div class="sponsor-name">Your Organization</div>
+      <div class="sponsor-amount">$100,000+ / YEAR</div>
+      <div class="sponsor-contribution">Named cohort track or pillar &middot; logo on all materials &middot; sponsor-briefed capstone challenge</div>
+    </div>
+  </div>
+
+  <h3>What Founding Sponsors Receive</h3>
+
+  <ul>
+    <li><strong>Permanent founding attribution.</strong> Your name and logo appear on every Cohort 1 communication, every press mention, and the foundation's permanent historical record.</li>
+    <li><strong>Board observer seat</strong> (Founding Cash Sponsor tier) with direct visibility into program decisions and strategy.</li>
+    <li><strong>Named fellowships.</strong> Sponsor-branded scholarships that travel with Fellows through their careers and into alumni tracking.</li>
+    <li><strong>First-access talent pipeline.</strong> Pre-Demo Day preview of Fellows, first-look hiring rights, and dedicated recruiting sessions.</li>
+    <li><strong>Sponsor-briefed capstone challenges.</strong> Pose a real problem to the cohort and watch 40 of LATAM's highest-potential young technologists compete to solve it.</li>
+    <li><strong>Custom Impact Dossier.</strong> Quarterly reporting showing the specific Fellows, outcomes, and stories your dollars made possible.</li>
+    <li><strong>Demo Day speaking slot</strong> in front of press, investors, fellow sponsors, and the extended network.</li>
+    <li><strong>ESG / CSR attribution</strong> aligned with UN SDGs 4, 8, and 10 &mdash; quantified, audited, publication-ready.</li>
+  </ul>
+
+  <h3>Target Founding Sponsor Profile</h3>
+
+  <p>We are actively engaged in conversations with organizations that match one of four profiles:</p>
+
+  <ol>
+    <li><strong>Miami Hispanic family foundations</strong> with multi-generational commitment to Latin leadership development</li>
+    <li><strong>LATAM corporates with US presence</strong> (banking, telecom, energy, consumer goods) with ESG mandates and bilingual talent needs</li>
+    <li><strong>US Fortune 500 corporates</strong> with significant Hispanic customer bases and CSR programs targeting LATAM/Hispanic youth</li>
+    <li><strong>Institutional funders</strong> focused on Americas youth economic mobility (Knight Foundation, IDB Lab, Inter-American Foundation, Ford, Kellogg)</li>
+  </ol>
+
+  <div class="callout callout-coral">
+    <h4>The Window Is Open Only Once</h4>
+    <p>Founding Sponsor status is available only during the formalization year. After Cohort 1 completes in May 2027, all subsequent sponsors join at the standard Lead, Program, or Supporter tiers. The organizations that commit between now and October 2026 &mdash; and only those &mdash; become part of Visionarium's founding story forever.</p>
+  </div>
+</section>
+
+<!-- ============ CHAPTER 14 ============ -->
+<section class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-number">14</div>
     <h2>Call to Action</h2>
   </div>
 
