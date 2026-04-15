@@ -38,6 +38,20 @@ console.log('✅ Subscription webhook mounted at /webhooks/stripe (before body p
 
 app.use(express.json({ limit: '500mb' }));
 app.use(express.urlencoded({ extended: true, limit: '500mb' }));
+
+// Custom domain: visionarium.app -> Youth Talent Global whitepaper
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase();
+  if (host === 'visionarium.app' || host === 'www.visionarium.app') {
+    if (req.path === '/' || req.path === '') {
+      req.url = '/youth-talent-global/whitepaper.html';
+    } else if (req.path === '/es' || req.path === '/es/') {
+      req.url = '/youth-talent-global/whitepaper-es.html';
+    }
+  }
+  next();
+});
+
 app.use(express.static(path.join(__dirname, '../public')));
 
 // Serve all-in-one landing page (LaunchStack)
