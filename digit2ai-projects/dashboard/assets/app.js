@@ -1118,8 +1118,11 @@ async function renderCalendar(container) {
     const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const isToday = dateStr === todayStr;
     const dayEvents = eventsByDate[dateStr] || [];
-    const typeColors = { meeting: '#2563eb', deadline: '#ef4444', followup: '#f59e0b', milestone: '#10b981', event: '#3b82f6' };
-    grid.innerHTML += `<div class="calendar-cell${isToday ? ' today' : ''}"><div class="calendar-day">${d}</div>${dayEvents.slice(0,3).map(e => `<div class="calendar-event-dot" style="background:${typeColors[e.event_type]||'#2563eb'};color:white;cursor:pointer" onclick="showEventDetail(${e.id})">${e.title}</div>`).join('')}${dayEvents.length > 3 ? `<div style="font-size:10px;color:var(--text-muted)">+${dayEvents.length-3} more</div>` : ''}</div>`;
+    const typeColors = { meeting: '#2563eb', deadline: '#ef4444', followup: '#f59e0b', milestone: '#10b981', event: '#3b82f6', task: '#8b5cf6' };
+    grid.innerHTML += `<div class="calendar-cell${isToday ? ' today' : ''}"><div class="calendar-day">${d}</div>${dayEvents.slice(0,3).map(e => {
+      const click = e.source === 'task' ? `showTaskDetail(${e.task_id})` : `showEventDetail(${e.id})`;
+      return `<div class="calendar-event-dot" style="background:${typeColors[e.event_type]||'#2563eb'};color:white;cursor:pointer" onclick="${click}">${e.source === 'task' ? '&#9989; ' : ''}${e.title}</div>`;
+    }).join('')}${dayEvents.length > 3 ? `<div style="font-size:10px;color:var(--text-muted)">+${dayEvents.length-3} more</div>` : ''}</div>`;
   }
 
   // Next month fill

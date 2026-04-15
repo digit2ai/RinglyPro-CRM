@@ -3,10 +3,57 @@
 const express = require('express');
 const router = express.Router();
 const { Op } = require('sequelize');
-const { CalendarEvent, Project, Contact } = require('../models');
+const { CalendarEvent, Project, Contact, Task, StaffMember } = require('../models');
 const { logActivity } = require('../services/activityService');
 
-// GET /api/v1/calendar - List events
+// Convert a Task row into a calendar-event-shaped object
+function taskToEvent(task) {
+  const t = task.toJSON ? task.toJSON() : task;
+  const due = t.due_date ? new Date(t.due_date) : null;
+  return {
+    id: `task-${t.id}`,
+    source: 'task',
+    task_id: t.id,
+    workspace_id: t.workspace_id,
+    user_email: t.user_email,
+    project_id: t.project_id,
+    contact_id: t.contact_id,
+    title: t.title,
+    description: t.description,
+    event_type: 'task',
+    start_time: due,
+    end_time: due,
+    all_day: true,
+    location: null,
+    task_status: t.status,
+    task_priority: t.priority,
+    assigned_staff_id: t.assigned_staff_id,
+    project: t.project || null,
+    contact: t.contact || null,
+    assignee: t.assignee || null
+  };
+}
+
+async function fetchTasksForRange(start, end) {
+  const where = { workspace_id: 1, due_date: { [Op.ne]: null } };
+  if (start && end) {
+    where.due_date = { [Op.between]: [new Date(start), new Date(end)] };
+  } else if (start) {
+    where.due_date = { [Op.gte]: new Date(start) };
+  }
+  const tasks = await Task.findAll({
+    where,
+    include: [
+      { model: Project, as: 'project', attributes: ['id', 'name'] },
+      { model: Contact, as: 'contact', attributes: ['id', 'first_name', 'last_name'] },
+      { model: StaffMember, as: 'assignee', attributes: ['id', 'first_name', 'last_name'], required: false }
+    ],
+    order: [['due_date', 'ASC']]
+  });
+  return tasks.map(taskToEvent);
+}
+
+// GET /api/v1/calendar - List events (merges tasks with due dates)
 router.get('/', async (req, res) => {
   try {
     const { start, end, event_type } = req.query;
@@ -17,7 +64,6 @@ router.get('/', async (req, res) => {
     } else if (start) {
       where.start_time = { [Op.gte]: new Date(start) };
     } else {
-      // Default: next 30 days
       where.start_time = { [Op.gte]: new Date() };
     }
     if (event_type) where.event_type = event_type;
@@ -31,13 +77,21 @@ router.get('/', async (req, res) => {
       order: [['start_time', 'ASC']],
       limit: 200
     });
-    res.json({ success: true, data: events });
+
+    let merged = events.map(e => ({ ...e.toJSON(), source: 'event' }));
+    if (!event_type || event_type === 'task') {
+      const taskEvents = await fetchTasksForRange(start, end);
+      merged = merged.concat(taskEvents);
+      merged.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+    }
+
+    res.json({ success: true, data: merged });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// GET /api/v1/calendar/upcoming - Next 7 days
+// GET /api/v1/calendar/upcoming - Next 7 days (merges tasks with due dates)
 router.get('/upcoming', async (req, res) => {
   try {
     const now = new Date();
@@ -50,7 +104,10 @@ router.get('/upcoming', async (req, res) => {
       ],
       order: [['start_time', 'ASC']]
     });
-    res.json({ success: true, data: events });
+    const taskEvents = await fetchTasksForRange(now, weekLater);
+    const merged = events.map(e => ({ ...e.toJSON(), source: 'event' })).concat(taskEvents);
+    merged.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+    res.json({ success: true, data: merged });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
