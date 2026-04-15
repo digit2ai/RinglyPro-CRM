@@ -967,6 +967,45 @@
     text-transform: uppercase;
   }
 
+  /* LANGUAGE TOGGLE */
+  .lang-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 100;
+    background: rgba(15,23,41,0.92);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--gold);
+    border-radius: 30px;
+    padding: 4px;
+    display: flex;
+    gap: 2px;
+    font-family: 'Inter', sans-serif;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+  }
+
+  .lang-toggle a {
+    padding: 8px 18px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-decoration: none;
+    color: rgba(255,255,255,0.55);
+    border-radius: 24px;
+    transition: all 0.2s;
+  }
+
+  .lang-toggle a:hover { color: var(--gold); }
+
+  .lang-toggle a.active {
+    background: var(--coral);
+    color: var(--white);
+  }
+
+  @media print {
+    .lang-toggle { display: none; }
+  }
+
   /* RESPONSIVE */
   @media (max-width: 768px) {
     .cover h1 { font-size: 56px; }
@@ -995,6 +1034,12 @@
 </style>
 </head>
 <body>
+
+<!-- ============ LANGUAGE TOGGLE ============ -->
+<div class="lang-toggle">
+  <a href="whitepaper.html" class="active">EN</a>
+  <a href="whitepaper-es.html">ES</a>
+</div>
 
 <!-- ============ COVER ============ -->
 <div class="cover">

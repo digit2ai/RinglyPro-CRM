@@ -1,0 +1,1965 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visionarium -- White Paper de la Fundaci&oacute;n v1.0</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --navy: #0f1729;
+    --navy-light: #1e293b;
+    --navy-dark: #060b18;
+    --coral: #ef6c57;
+    --coral-dark: #c94a38;
+    --coral-light: #fde4de;
+    --gold: #d4a574;
+    --gold-dark: #a07a4c;
+    --gold-light: #f5ead6;
+    --blue: #2563eb;
+    --blue-light: #dbeafe;
+    --cream: #fafaf7;
+    --white: #ffffff;
+    --gray-50: #f8f9fa;
+    --gray-100: #f1f3f5;
+    --gray-200: #e9ecef;
+    --gray-300: #dee2e6;
+    --gray-500: #6c757d;
+    --gray-700: #374151;
+    --gray-900: #111827;
+    --green: #059669;
+    --red: #dc2626;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Source Serif 4', Georgia, serif;
+    color: var(--gray-900);
+    background: var(--cream);
+    line-height: 1.7;
+    font-size: 16px;
+  }
+
+  /* COVER PAGE */
+  .cover {
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy) 55%, var(--navy-light) 100%);
+    color: var(--white);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 60px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d4a574' fill-opacity='0.04'%3E%3Ccircle cx='40' cy='40' r='1'/%3E%3Ccircle cx='10' cy='10' r='1'/%3E%3Ccircle cx='70' cy='70' r='1'/%3E%3Ccircle cx='10' cy='70' r='1'/%3E%3Ccircle cx='70' cy='10' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    opacity: 1;
+  }
+
+  .cover::after {
+    content: '';
+    position: absolute;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(239,108,87,0.15) 0%, transparent 70%);
+    top: -150px; right: -150px;
+    filter: blur(40px);
+  }
+
+  .cover-content { position: relative; z-index: 1; max-width: 860px; }
+
+  .cover-badge {
+    display: inline-block;
+    background: rgba(212,165,116,0.12);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    padding: 8px 24px;
+    border-radius: 30px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    margin-bottom: 40px;
+  }
+
+  .cover-logo {
+    max-width: 480px;
+    width: 100%;
+    height: auto;
+    margin: 0 auto 36px;
+    display: block;
+    filter: drop-shadow(0 8px 32px rgba(239,108,87,0.3));
+  }
+
+  .cover h1 {
+    font-family: 'Inter', sans-serif;
+    font-size: 72px;
+    font-weight: 900;
+    letter-spacing: -2px;
+    line-height: 1;
+    margin-bottom: 16px;
+    background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .cover .brand-tagline {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 8px;
+    text-transform: uppercase;
+    color: var(--coral);
+    margin-bottom: 48px;
+  }
+
+  .cover .lead {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 26px;
+    font-weight: 400;
+    line-height: 1.45;
+    color: rgba(255,255,255,0.9);
+    margin-bottom: 32px;
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .cover .spanish-lead {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-style: italic;
+    font-size: 19px;
+    color: var(--gold);
+    margin-bottom: 64px;
+  }
+
+  .cover-divider {
+    width: 80px; height: 2px;
+    background: var(--coral);
+    margin: 40px auto;
+  }
+
+  .cover-meta {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+    line-height: 2.2;
+  }
+
+  .cover-meta strong {
+    color: var(--white);
+    font-weight: 600;
+  }
+
+  /* CONTAINER */
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 80px 60px;
+    background: var(--cream);
+  }
+
+  /* TOC */
+  .toc {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-left: 4px solid var(--coral);
+    padding: 48px 56px;
+    margin-bottom: 80px;
+    box-shadow: 0 2px 20px rgba(15,23,41,0.04);
+  }
+
+  .toc h2 {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--coral);
+    margin-bottom: 32px;
+  }
+
+  .toc ol {
+    list-style: none;
+    counter-reset: toc;
+  }
+
+  .toc li {
+    counter-increment: toc;
+    padding: 14px 0;
+    border-bottom: 1px dashed var(--gray-200);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    color: var(--gray-700);
+    display: flex;
+    align-items: baseline;
+  }
+
+  .toc li::before {
+    content: counter(toc, decimal-leading-zero);
+    font-weight: 700;
+    color: var(--navy);
+    margin-right: 20px;
+    min-width: 32px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+  }
+
+  .toc li:last-child { border-bottom: none; }
+
+  /* CHAPTERS */
+  .chapter {
+    margin-bottom: 96px;
+    scroll-margin-top: 40px;
+  }
+
+  .chapter-header {
+    display: flex;
+    align-items: baseline;
+    gap: 24px;
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--navy);
+  }
+
+  .chapter-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--coral);
+    letter-spacing: 2px;
+  }
+
+  .chapter h2 {
+    font-family: 'Inter', sans-serif;
+    font-size: 40px;
+    font-weight: 800;
+    letter-spacing: -1.2px;
+    color: var(--navy);
+    line-height: 1.15;
+  }
+
+  .chapter h3 {
+    font-family: 'Inter', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-top: 40px;
+    margin-bottom: 16px;
+    letter-spacing: -0.3px;
+  }
+
+  .chapter h4 {
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--coral-dark);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-top: 32px;
+    margin-bottom: 12px;
+  }
+
+  .chapter p {
+    margin-bottom: 20px;
+    color: var(--gray-700);
+    font-size: 17px;
+  }
+
+  .chapter p.lead {
+    font-size: 21px;
+    line-height: 1.6;
+    color: var(--gray-900);
+    font-weight: 400;
+    margin-bottom: 32px;
+  }
+
+  .chapter ul, .chapter ol {
+    margin-bottom: 20px;
+    padding-left: 24px;
+    color: var(--gray-700);
+  }
+
+  .chapter li {
+    margin-bottom: 10px;
+    font-size: 16.5px;
+  }
+
+  .chapter strong { color: var(--navy); font-weight: 600; }
+
+  /* PULL QUOTES */
+  .pullquote {
+    background: var(--navy);
+    color: var(--white);
+    padding: 48px 56px;
+    margin: 48px 0;
+    position: relative;
+    border-left: 6px solid var(--coral);
+  }
+
+  .pullquote::before {
+    content: '"';
+    position: absolute;
+    top: 0; left: 24px;
+    font-size: 120px;
+    font-family: 'Source Serif 4', serif;
+    color: var(--coral);
+    opacity: 0.2;
+    line-height: 1;
+  }
+
+  .pullquote p {
+    font-family: 'Source Serif 4', serif;
+    font-size: 24px;
+    font-style: italic;
+    color: var(--white);
+    line-height: 1.4;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .pullquote .spanish {
+    display: block;
+    font-size: 17px;
+    color: var(--gold);
+    margin-top: 20px;
+    font-style: italic;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.15);
+  }
+
+  .pullquote cite {
+    display: block;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-style: normal;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-top: 24px;
+  }
+
+  /* STATS GRID */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin: 40px 0;
+  }
+
+  .stat-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-top: 4px solid var(--coral);
+    padding: 28px;
+    transition: transform 0.2s;
+  }
+
+  .stat-card .number {
+    font-family: 'Inter', sans-serif;
+    font-size: 44px;
+    font-weight: 800;
+    color: var(--navy);
+    letter-spacing: -1.5px;
+    line-height: 1;
+    margin-bottom: 10px;
+  }
+
+  .stat-card .label {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray-500);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .stat-card .source {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: var(--gray-500);
+    font-style: italic;
+  }
+
+  /* PILLAR BLOCKS */
+  .pillars {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 32px 0;
+  }
+
+  .pillar {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    padding: 28px 24px;
+    position: relative;
+  }
+
+  .pillar .pillar-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--coral);
+    font-weight: 600;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+  }
+
+  .pillar h4 {
+    font-family: 'Inter', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--navy);
+    margin: 0 0 12px 0;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  .pillar p {
+    font-size: 14.5px;
+    color: var(--gray-700);
+    margin: 0;
+    line-height: 1.55;
+  }
+
+  /* ARCHITECTURE DIAGRAM */
+  .layer-stack {
+    margin: 40px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .layer {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-left: 5px solid var(--coral);
+    padding: 20px 28px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .layer-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--navy);
+    min-width: 48px;
+  }
+
+  .layer-body { flex: 1; }
+
+  .layer-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 4px;
+  }
+
+  .layer-desc {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: var(--gray-700);
+    line-height: 1.5;
+  }
+
+  /* TABLES */
+  .tbl {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 32px 0;
+    font-family: 'Inter', sans-serif;
+    font-size: 14.5px;
+    background: var(--white);
+  }
+
+  .tbl thead th {
+    background: var(--navy);
+    color: var(--white);
+    text-align: left;
+    padding: 14px 18px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    font-size: 13px;
+    text-transform: uppercase;
+  }
+
+  .tbl tbody td {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--gray-200);
+    color: var(--gray-700);
+    vertical-align: top;
+  }
+
+  .tbl tbody tr:nth-child(even) { background: var(--gray-50); }
+
+  .tbl tbody tr:hover { background: var(--coral-light); }
+
+  .tbl .tier-name { font-weight: 700; color: var(--navy); }
+
+  /* CALLOUT */
+  .callout {
+    background: var(--gold-light);
+    border-left: 4px solid var(--gold);
+    padding: 24px 28px;
+    margin: 32px 0;
+  }
+
+  .callout h4 {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gold-dark);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+  }
+
+  .callout p {
+    margin: 0;
+    color: var(--gray-900);
+    font-size: 15.5px;
+  }
+
+  .callout-coral {
+    background: var(--coral-light);
+    border-left-color: var(--coral);
+  }
+
+  .callout-coral h4 { color: var(--coral-dark); }
+
+  /* FOUNDER PROFILE */
+  .founder-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    padding: 40px;
+    margin: 32px 0;
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 36px;
+    align-items: start;
+  }
+
+  .founder-photo {
+    width: 200px;
+    height: 240px;
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .founder-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .founder-photo.placeholder {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+    color: var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 72px;
+    font-weight: 800;
+    letter-spacing: -2px;
+  }
+
+  .founder-info .founder-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--navy);
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+  }
+
+  .founder-info .founder-role {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--coral);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+
+  .founder-contact {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: var(--gray-500);
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--gray-200);
+  }
+
+  .founder-contact a {
+    color: var(--navy);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .founder-info p {
+    font-size: 15.5px;
+    line-height: 1.65;
+    color: var(--gray-700);
+    margin-bottom: 14px;
+  }
+
+  .founder-info ul {
+    font-size: 14.5px;
+    padding-left: 20px;
+    margin-bottom: 14px;
+  }
+
+  .founder-info li { margin-bottom: 6px; }
+
+  .founder-tag {
+    display: inline-block;
+    background: var(--gold-light);
+    color: var(--gold-dark);
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin: 4px 4px 4px 0;
+  }
+
+  .vertical-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .vertical-item {
+    background: var(--gray-50);
+    border-left: 2px solid var(--coral);
+    padding: 10px 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: var(--gray-700);
+  }
+
+  .vertical-item strong {
+    display: block;
+    color: var(--navy);
+    font-size: 13.5px;
+    margin-bottom: 2px;
+  }
+
+  @media (max-width: 768px) {
+    .founder-card {
+      grid-template-columns: 1fr;
+      padding: 28px;
+      gap: 24px;
+    }
+    .founder-photo { width: 140px; height: 170px; margin: 0 auto; }
+    .founder-photo.placeholder { font-size: 56px; }
+    .vertical-grid { grid-template-columns: 1fr; }
+  }
+
+  /* MILESTONE GRID */
+  .milestone-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin: 40px 0;
+  }
+
+  .milestone-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    padding: 32px 28px;
+    position: relative;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .milestone-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--coral) 0%, var(--gold) 100%);
+  }
+
+  .milestone-month {
+    display: inline-block;
+    font-family: 'Inter', sans-serif;
+    font-size: 56px;
+    font-weight: 900;
+    color: var(--navy);
+    line-height: 1;
+    letter-spacing: -2px;
+    margin-bottom: 2px;
+  }
+
+  .milestone-month-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--coral);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .milestone-date {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: var(--gray-500);
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px dashed var(--gray-200);
+  }
+
+  .milestone-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 16px;
+  }
+
+  .milestone-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .milestone-list li {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: var(--gray-700);
+    padding: 7px 0 7px 22px;
+    position: relative;
+    line-height: 1.5;
+  }
+
+  .milestone-list li::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 13px;
+    width: 8px; height: 8px;
+    background: var(--coral);
+    border-radius: 50%;
+  }
+
+  /* SPONSOR SHOWCASE */
+  .sponsor-showcase {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin: 40px 0;
+  }
+
+  .sponsor-slot {
+    background: var(--white);
+    border: 2px solid var(--gray-200);
+    padding: 32px 28px;
+    text-align: center;
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+  }
+
+  .sponsor-slot.filled {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+    color: var(--white);
+    border-color: var(--coral);
+  }
+
+  .sponsor-slot.open {
+    border-style: dashed;
+    border-color: var(--gold);
+    background: var(--gold-light);
+  }
+
+  .sponsor-tier-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    color: var(--coral);
+  }
+
+  .sponsor-slot.filled .sponsor-tier-label { color: var(--gold); }
+  .sponsor-slot.open .sponsor-tier-label { color: var(--gold-dark); }
+
+  .sponsor-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--navy);
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+  }
+
+  .sponsor-slot.filled .sponsor-name { color: var(--white); }
+
+  .sponsor-contribution {
+    font-family: 'Source Serif 4', serif;
+    font-style: italic;
+    font-size: 14px;
+    color: var(--gray-700);
+    margin-top: 12px;
+    max-width: 280px;
+    line-height: 1.5;
+  }
+
+  .sponsor-slot.filled .sponsor-contribution { color: rgba(255,255,255,0.85); }
+  .sponsor-slot.open .sponsor-contribution { color: var(--gold-dark); }
+
+  .sponsor-amount {
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--coral);
+    margin-top: 10px;
+    letter-spacing: 0.5px;
+  }
+
+  .sponsor-slot.filled .sponsor-amount { color: var(--coral); }
+
+  @media (max-width: 768px) {
+    .milestone-grid { grid-template-columns: 1fr; }
+    .milestone-month { font-size: 44px; }
+    .sponsor-showcase { grid-template-columns: 1fr; }
+  }
+
+  /* TIMELINE */
+  .timeline {
+    position: relative;
+    padding-left: 32px;
+    margin: 32px 0;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: var(--coral);
+  }
+
+  .timeline-item {
+    position: relative;
+    padding-bottom: 28px;
+  }
+
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -31px;
+    top: 6px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--white);
+    border: 3px solid var(--coral);
+  }
+
+  .timeline-item .date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--coral);
+    font-weight: 600;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+
+  .timeline-item .event {
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--navy);
+    margin-bottom: 4px;
+  }
+
+  .timeline-item .detail {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: var(--gray-700);
+    line-height: 1.55;
+  }
+
+  /* FOOTER */
+  .footer {
+    background: var(--navy);
+    color: var(--white);
+    padding: 80px 60px 60px;
+    text-align: center;
+  }
+
+  .footer h2 {
+    font-family: 'Inter', sans-serif;
+    font-size: 36px;
+    font-weight: 800;
+    margin-bottom: 16px;
+    letter-spacing: -1px;
+  }
+
+  .footer p {
+    font-family: 'Source Serif 4', serif;
+    font-size: 18px;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 40px;
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+  }
+
+  .footer-cta {
+    display: inline-block;
+    background: var(--coral);
+    color: var(--white);
+    padding: 16px 40px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: 2px;
+    transition: background 0.2s;
+  }
+
+  .footer-cta:hover { background: var(--coral-dark); }
+
+  .footer-meta {
+    margin-top: 64px;
+    padding-top: 32px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+  }
+
+  /* LANGUAGE TOGGLE */
+  .lang-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 100;
+    background: rgba(15,23,41,0.92);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--gold);
+    border-radius: 30px;
+    padding: 4px;
+    display: flex;
+    gap: 2px;
+    font-family: 'Inter', sans-serif;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+  }
+
+  .lang-toggle a {
+    padding: 8px 18px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-decoration: none;
+    color: rgba(255,255,255,0.55);
+    border-radius: 24px;
+    transition: all 0.2s;
+  }
+
+  .lang-toggle a:hover { color: var(--gold); }
+
+  .lang-toggle a.active {
+    background: var(--coral);
+    color: var(--white);
+  }
+
+  @media print {
+    .lang-toggle { display: none; }
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .cover h1 { font-size: 56px; }
+    .cover .lead { font-size: 19px; }
+    .container { padding: 48px 24px; }
+    .toc { padding: 32px 28px; }
+    .chapter h2 { font-size: 28px; }
+    .chapter p.lead { font-size: 17px; }
+    .stats-grid { grid-template-columns: 1fr; }
+    .pillars { grid-template-columns: 1fr; }
+    .pullquote { padding: 32px 28px; }
+    .pullquote p { font-size: 19px; }
+    .footer { padding: 48px 24px; }
+    .footer h2 { font-size: 24px; }
+    .tbl { font-size: 13px; }
+    .tbl thead th, .tbl tbody td { padding: 10px 12px; }
+  }
+
+  @media print {
+    body { background: white; }
+    .cover { page-break-after: always; min-height: auto; padding: 100px 40px; }
+    .chapter { page-break-inside: avoid; }
+    .footer { page-break-before: always; }
+  }
+
+</style>
+</head>
+<body>
+
+<!-- ============ LANGUAGE TOGGLE ============ -->
+<div class="lang-toggle">
+  <a href="whitepaper.html">EN</a>
+  <a href="whitepaper-es.html" class="active">ES</a>
+</div>
+
+<!-- ============ COVER ============ -->
+<div class="cover">
+  <div class="cover-content">
+    <div class="cover-badge">White Paper de la Fundaci&oacute;n / v1.0</div>
+    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69df9e5eacdf45d673e13fb0.png" alt="Visionarium" class="cover-logo">
+    <div class="brand-tagline">Liderazgo &middot; Creatividad &middot; Global</div>
+    <div class="cover-divider"></div>
+    <p class="lead">Una fellowship biling&uuml;e impulsada por IA de liderazgo, creatividad y tecnolog&iacute;a que prepara a la pr&oacute;xima generaci&oacute;n de Am&eacute;rica Latina para el impacto global.</p>
+    <p class="spanish-lead">Del talento latinoamericano al liderazgo global.</p>
+    <div class="cover-meta">
+      <div><strong>Fundado por</strong> Maria Clara Garcia</div>
+      <div><strong>Operando desde</strong> 2015 &middot; Nueva York</div>
+      <div><strong>Patrocinador Tecnol&oacute;gico Fundador</strong> Digit2ai &middot; Manuel Stagg</div>
+      <div><strong>Nueva Sede</strong> Miami, Florida</div>
+      <div><strong>Primera Cohorte Formalizada</strong> Oto&ntilde;o 2026</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TOC ============ -->
+<div class="container">
+
+<div class="toc">
+  <h2>&Iacute;ndice</h2>
+  <ol>
+    <li>Resumen Ejecutivo</li>
+    <li>La Oportunidad &mdash; Por qu&eacute; la Juventud Latinoamericana, Por qu&eacute; Ahora</li>
+    <li>Visi&oacute;n, Misi&oacute;n y Valores Operativos</li>
+    <li>Panorama Competitivo &mdash; Lo que Existe, Lo que Falta</li>
+    <li>El Modelo del Ecosistema y la Fellowship</li>
+    <li>Arquitectura del Ecosistema &mdash; Las Ocho Capas</li>
+    <li>Lina Mentor &mdash; El Diferenciador de IA</li>
+    <li>Marco de Resultados y Medici&oacute;n de Impacto</li>
+    <li>Equipo Fundador y Gobernanza</li>
+    <li>Modelo de Patrocinadores</li>
+    <li>Plan de Ejecuci&oacute;n &mdash; Primeros 18 Meses</li>
+    <li>Hoja de Ruta y Visi&oacute;n hasta 2035</li>
+    <li>Patrocinadores Fundadores</li>
+    <li>Llamado a la Acci&oacute;n</li>
+  </ol>
+</div>
+
+<!-- ============ CHAPTER 1 ============ -->
+<section class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-number">01</div>
+    <h2>Resumen Ejecutivo</h2>
+  </div>
+
+  <p class="lead">Visionarium es una fundaci&oacute;n que construye un ecosistema biling&uuml;e abierto que desarrolla a la pr&oacute;xima generaci&oacute;n de l&iacute;deres latinoamericanos en inteligencia artificial, creatividad y tecnolog&iacute;a emergente &mdash; con una Fellowship selectiva insignia en el centro y acceso gratuito para cada joven que quiera crecer.</p>
+
+  <p>Fundado en 2015 por Maria Clara Garcia como una incubadora de Liderazgo y Creatividad en Nueva York para estudiantes de secundaria y universidad de Am&eacute;rica Latina, Visionarium entra ahora en su fase de formalizaci&oacute;n: estructurado como fundaci&oacute;n, expandido con sede en Miami y relanzado con una plataforma tecnol&oacute;gica nativa de IA que lleva mentor&iacute;a biling&uuml;e personalizada a cada joven que se une &mdash; ya sea que se convierta en un Fellow seleccionado o simplemente se registre como miembro de la comunidad abierta.</p>
+
+  <p>Combinamos cuatro cosas que ning&uacute;n programa existente combina: (1) un <strong>ecosistema abierto</strong> gratuito para cualquier joven de entre 16 y 22 a&ntilde;os en toda Am&eacute;rica; (2) una <strong>Fellowship selectiva</strong> en la parte superior del embudo para 40 l&iacute;deres j&oacute;venes excepcionales por cohorte, inspirada en los mejores aceleradores de startups; (3) una formaci&oacute;n biling&uuml;e en liderazgo, creatividad y habilidades blandas que prepara a los participantes para los escenarios de EE. UU. y globales; y (4) una capa nativa de mentor&iacute;a con IA que le da a cada participante un coach personal 24/7 desde el primer d&iacute;a &mdash; a escala de ecosistema, no solo a escala de fellowship.</p>
+
+  <p>El ecosistema abierto se lanza en oto&ntilde;o de 2026 sin l&iacute;mite de inscripci&oacute;n. La primera cohorte formalizada de la Fellowship se lanza en paralelo desde Miami &mdash; la puerta natural entre Am&eacute;rica Latina y Estados Unidos &mdash; con 40 Fellows seleccionados de toda la regi&oacute;n. Ambas son totalmente financiadas por patrocinadores y gratuitas para los participantes. La tecnolog&iacute;a en especie es proporcionada por Digit2ai, la empresa de plataformas fundada por Manuel Stagg detr&aacute;s del ecosistema CRM de RinglyPro y m&uacute;ltiples sistemas de voz con IA desplegados a escala.</p>
+
+  <h3>Qu&eacute; Es Visionarium</h3>
+  <ul>
+    <li><strong>Un ecosistema abierto con una fellowship insignia.</strong> Cada joven de entre 16 y 22 a&ntilde;os puede unirse gratis. Los 40 mejores por cohorte ganan la selecci&oacute;n para la experiencia completa de la Fellowship.</li>
+    <li><strong>Un programa biling&uuml;e, no uno traducido.</strong> El ingl&eacute;s y el espa&ntilde;ol son lenguas operativas iguales desde el primer d&iacute;a.</li>
+    <li><strong>Un pipeline de talento, no un cat&aacute;logo de cursos.</strong> No vendemos contenido. Construimos el camino desde la curiosidad, pasando por la habilidad, hasta el trabajo y la oportunidad reales &mdash; en cada nivel de participaci&oacute;n.</li>
+    <li><strong>Una organizaci&oacute;n nativa de IA, no una habilitada por IA.</strong> Cada participante tiene un mentor de IA biling&uuml;e personal. Cada interacci&oacute;n est&aacute; instrumentada. La escala en el nivel abierto se desbloquea con IA.</li>
+  </ul>
+
+  <h3>Por Qu&eacute; Importa Ahora</h3>
+  <p>Am&eacute;rica Latina alberga el mayor grupo de talento joven ambicioso y subutilizado del hemisferio occidental. La econom&iacute;a estadounidense est&aacute; &aacute;vida de liderazgo tecnol&oacute;gico biling&uuml;e. La inteligencia artificial ha reducido el costo de la mentor&iacute;a personalizada en un orden de magnitud. Ninguna instituci&oacute;n existente ha unido estas tres fuerzas. Visionarium es esa instituci&oacute;n.</p>
+</section>
+
+<!-- ============ CHAPTER 2 ============ -->
+<section class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-number">02</div>
+    <h2>La Oportunidad</h2>
+  </div>
+
+  <p class="lead">Tres fuerzas estructurales est&aacute;n convergiendo. Cada una, por s&iacute; sola, justificar&iacute;a una nueva instituci&oacute;n. Juntas la exigen.</p>
+
+  <h3>Una Generaci&oacute;n de Talento Subutilizado</h3>
+  <p>Am&eacute;rica Latina alberga m&aacute;s de 660 millones de personas, con una edad mediana de 31 a&ntilde;os. M&aacute;s de 160 millones son menores de 25. Una proporci&oacute;n desproporcionada de esta cohorte es ambiciosa, digitalmente fluida y busca activamente caminos m&aacute;s all&aacute; de sus mercados locales &mdash; pero carece de puentes estructurados y acreditados hacia oportunidades en EE. UU. y globales.</p>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="label">Poblaci&oacute;n LATAM Menor de 25</div>
+      <div class="number">160M+</div>
+      <div class="source">Datos de poblaci&oacute;n del Banco Mundial, 2024</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Producci&oacute;n Econ&oacute;mica Hispana en EE. UU.</div>
+      <div class="number">$3.6T</div>
+      <div class="source">Latino Donor Collaborative, 2024</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Poblaci&oacute;n de Miami con Ra&iacute;ces LATAM</div>
+      <div class="number">70%+</div>
+      <div class="source">Censo de EE. UU., Condado de Miami-Dade</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Brecha de Talento en IA (EE. UU., para 2028)</div>
+      <div class="number">1.2M</div>
+      <div class="source">Proyecciones McKinsey Global Institute</div>
+    </div>
+  </div>
+
+  <h3>La Inflexi&oacute;n de la IA</h3>
+  <p>Por primera vez en la historia humana, la mentor&iacute;a personalizada &mdash; antes disponible solo para los hijos de la &eacute;lite &mdash; puede entregarse a escala. Un mentor de IA bien dise&ntilde;ado puede darle a un joven de 17 a&ntilde;os de alto potencial en Cali, Colombia, el tipo de retroalimentaci&oacute;n diaria, pr&aacute;ctica y apoyo que antes requer&iacute;a un tutor privado en Manhattan.</p>
+
+  <p>Esta no es una tendencia del futuro. La tecnolog&iacute;a existe hoy. Lo que falta es una instituci&oacute;n que la envuelva en un programa selectivo, acreditado y con mentor&iacute;a humana. Visionarium es esa envoltura.</p>
+
+  <h3>La Brecha del Liderazgo Biling&uuml;e</h3>
+  <p>Las empresas tecnol&oacute;gicas de EE. UU. est&aacute;n cada vez m&aacute;s desesperadas por talento biling&uuml;e ingl&eacute;s/espa&ntilde;ol en liderazgo &mdash; no solo ingenieros, sino tambi&eacute;n product managers, fundadores, operadores. Mientras tanto, las mejores mentes j&oacute;venes de LATAM construyen abrumadoramente en espa&ntilde;ol, para mercados locales, a menudo sin un puente cre&iacute;ble hacia Silicon Valley, Miami, Nueva York o Austin. Visionarium construye ese puente, cohorte a cohorte.</p>
+
+  <div class="pullquote">
+    <p>El recurso m&aacute;s escaso de la econom&iacute;a tecnol&oacute;gica estadounidense en la pr&oacute;xima d&eacute;cada no ser&aacute; el capital ni el c&oacute;mputo. Ser&aacute; el liderazgo biling&uuml;e capaz de operar con fluidez en las Am&eacute;ricas.
+      <span class="spanish">The scarcest resource in the US technology economy over the next decade will not be capital or compute. It will be bilingual leaders who can operate fluently across the Americas.</span>
+    </p>
+    <cite>Declaraci&oacute;n de Tesis de Visionarium</cite>
+  </div>
+</section>
+
+<!-- ============ CHAPTER 3 ============ -->
+<section class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-number">03</div>
+    <h2>Visi&oacute;n, Misi&oacute;n y Valores Operativos</h2>
+  </div>
+
+  <h3>Visi&oacute;n</h3>
+  <p class="lead">Para 2035, Visionarium habr&aacute; desarrollado 10,000 fellows biling&uuml;es de tecnolog&iacute;a y liderazgo en toda Am&eacute;rica &mdash; una red de alumni reconocible cuyos egresados ocupen roles de liderazgo en las empresas, instituciones y emprendimientos que est&eacute;n dando forma al futuro biling&uuml;e.</p>
+
+  <h3>Misi&oacute;n</h3>
+  <p>Identificar, desarrollar y lanzar a la pr&oacute;xima generaci&oacute;n de l&iacute;deres latinoamericanos en inteligencia artificial y tecnolog&iacute;a emergente &mdash; a trav&eacute;s de una fellowship selectiva, biling&uuml;e y nativa de IA que combina maestr&iacute;a tecnol&oacute;gica, formaci&oacute;n de liderazgo y acceso directo a oportunidades globales.</p>
+
+  <h3>Valores Operativos</h3>
+  <div class="pillars">
+    <div class="pillar">
+      <div class="pillar-num">V &middot; 01</div>
+      <h4>Acceso y Excelencia Juntos</h4>
+      <p>El ecosistema est&aacute; abierto a cada joven ambicioso. La Fellowship es selectiva porque la transformaci&oacute;n se multiplica con la profundidad. La escala y la excelencia no son compensaciones &mdash; son niveles del mismo sistema.</p>
+    </div>
+    <div class="pillar">
+      <div class="pillar-num">V &middot; 02</div>
+      <h4>Ejecuci&oacute;n sobre Educaci&oacute;n</h4>
+      <p>Nadie recuerda la clase magistral. Todos recuerdan lo que construyeron. Cada fellow entrega trabajo real, no tarea.</p>
+    </div>
+    <div class="pillar">
+      <div class="pillar-num">V &middot; 03</div>
+      <h4>Biling&uuml;e desde el Primer D&iacute;a</h4>
+      <p>Ingl&eacute;s y espa&ntilde;ol son lenguas operativas iguales. No contenido traducido. No ingl&eacute;s con soporte en espa&ntilde;ol. Verdaderamente biling&uuml;e por dise&ntilde;o.</p>
+    </div>
+    <div class="pillar">
+      <div class="pillar-num">V &middot; 04</div>
+      <h4>Operaciones Nativas de IA</h4>
+      <p>Usamos la IA para hacer m&aacute;s valiosa la mentor&iacute;a humana, no para reemplazarla. Cada fellow tiene un coach personal. Cada mentor tiene un multiplicador de fuerza.</p>
+    </div>
+    <div class="pillar">
+      <div class="pillar-num">V &middot; 05</div>
+      <h4>Resultados sobre Entregables</h4>
+      <p>Medimos colocaciones, startups, becas y transformaciones &mdash; no horas impartidas o contenido producido.</p>
+    </div>
+    <div class="pillar">
+      <div class="pillar-num">V &middot; 06</div>
+      <h4>Alumni como Instituci&oacute;n</h4>
+      <p>La fellowship termina despu&eacute;s de nueve meses. La red dura toda la vida. Los egresados son el producto y la prueba.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CHAPTER 4 ============ -->
+<section class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-number">04</div>
+    <h2>Panorama Competitivo</h2>
+  </div>
+
+  <p class="lead">Una fundaci&oacute;n seria comienza diciendo la verdad sobre qui&eacute;n ya est&aacute; trabajando en el problema. La ventaja de Visionarium no es que nadie lo haya intentado. Es que nadie ha combinado nuestros tres elementos.</p>
+
+  <h3>Organizaciones que Trabajan en Espacios Adyacentes</h3>
+
+  <table class="tbl">
+    <thead>
+      <tr><th>Organizaci&oacute;n</th><th>Enfoque</th><th>Lo que Falta vs. Visionarium</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="tier-name">The Knowledge Society (TKS)</td><td>Tecnolog&iacute;a emergente para adolescentes, Norteam&eacute;rica</td><td>Solo en ingl&eacute;s. No enfocado en LATAM. Sin capa operativa biling&uuml;e.</td></tr>
+      <tr><td class="tier-name">Praxis</td><td>Pasant&iacute;a alternativa a la universidad, 18-22</td><td>Sin presencia en LATAM. Sin capa de mentor IA. Dominio en ingl&eacute;s.</td></tr>
+      <tr><td class="tier-name">Kairos Society</td><td>Red global de j&oacute;venes emprendedores, 18-25</td><td>Red sobre desarrollo. Cumbres episodicas, no formaci&oacute;n sostenida.</td></tr>
+      <tr><td class="tier-name">Laboratoria</td><td>Mujeres en tech, modelo bootcamp LATAM</td><td>Enfoque de g&eacute;nero estrecho. Sin capa de habilidades blandas o liderazgo. Sin mentor IA.</td></tr>
+      <tr><td class="tier-name">Platzi</td><td>Educaci&oacute;n tecnol&oacute;gica en espa&ntilde;ol, LATAM</td><td>Plataforma de contenido, no ecosistema. Sin mentor&iacute;a. Sin modelo de cohortes.</td></tr>
+      <tr><td class="tier-name">Endeavor</td><td>Apoyo a emprendedores scale-up, fuerte en LATAM</td><td>Para fundadores existentes, no formaci&oacute;n juvenil.</td></tr>
+      <tr><td class="tier-name">Interact / Z Fellows / Neo</td><td>Fellowships selectivas en EE. UU. para j&oacute;venes tecn&oacute;logos</td><td>Centrado en EE. UU. Sin pipeline LATAM. Sin infraestructura biling&uuml;e.</td></tr>
+      <tr><td class="tier-name">Thiel Fellowship</td><td>$100k para abandonar la universidad, menores de 22</td><td>Solo subvenciones de capital. Sin programa, sin comunidad de cohorte, sin LATAM.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>El Vac&iacute;o que Visionarium Llena</h3>
+  <p>Ninguna organizaci&oacute;n existente combina simult&aacute;neamente los siguientes cuatro:</p>
+  <ol>
+    <li><strong>Pipeline de talento LATAM-a-global</strong> con Miami como la puerta operativa</li>
+    <li><strong>Biling&uuml;e ingl&eacute;s/espa&ntilde;ol por dise&ntilde;o</strong>, no por traducci&oacute;n</li>
+    <li><strong>Capa de mentor de IA</strong> nativa en la experiencia de cada fellow</li>
+    <li><strong>Modelo de cohorte selectiva</strong> con ejecuci&oacute;n real y resultados de colocaci&oacute;n medibles</li>
+  </ol>
+
+  <div class="callout callout-coral">
+    <h4>La Ventaja</h4>
+    <p>Visionarium es la primera fundaci&oacute;n construida espec&iacute;ficamente para convertir a la juventud de mayor potencial de Am&eacute;rica Latina en los l&iacute;deres tecnol&oacute;gicos biling&uuml;es que las econom&iacute;as de EE. UU. y global est&aacute;n &aacute;vidas de encontrar &mdash; usando IA para hacer el proceso de formaci&oacute;n 10x m&aacute;s &iacute;ntimo y 10x m&aacute;s escalable que cualquier predecesor.</p>
+  </div>
+</section>
+
+<!-- ============ CHAPTER 5 ============ -->
+<section class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-number">05</div>
+    <h2>El Modelo del Ecosistema y la Fellowship</h2>
+  </div>
+
+  <p class="lead">Visionarium es un ecosistema abierto con una Fellowship insignia en su centro. Cada joven puede entrar. Lo mejor de cada cohorte se gradu&uacute;a al nivel m&aacute;s selectivo. El modelo escala el acceso sin diluir la excelencia.</p>
+
+  <h3>Los Cinco Niveles</h3>
+
+  <div class="layer-stack">
+    <div class="layer">
+      <div class="layer-number">01</div>
+      <div class="layer-body">
+        <div class="layer-name">Comunidad Abierta &mdash; Gratis, Ilimitada</div>
+        <div class="layer-desc">Cualquier joven entre 16 y 22 a&ntilde;os de Am&eacute;rica Latina o comunidades hispanas en EE. UU. puede registrarse. Acceso a biblioteca de contenido biling&uuml;e, mentor de IA Lina, foros comunitarios y grabaciones de eventos p&uacute;blicos. Sin l&iacute;mite. Sin costo. Sin aplicaci&oacute;n.</div>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="layer-number">02</div>
+      <div class="layer-body">
+        <div class="layer-name">Miembros Activos &mdash; Participaci&oacute;n Autoseleccionada</div>
+        <div class="layer-desc">Miembros de la Comunidad Abierta que participan activamente &mdash; completando desaf&iacute;os, ganando insignias, uni&eacute;ndose a grupos de estudio con pares, enviando trabajo de portafolio. Los datos que Lina recopila sobre la participaci&oacute;n se convierten en la se&ntilde;al para la selecci&oacute;n de la Fellowship.</div>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="layer-number">03</div>
+      <div class="layer-body">
+        <div class="layer-name">Aplicantes a la Fellowship &mdash; Ventana de Aplicaci&oacute;n</div>
+        <div class="layer-desc">Miembros Activos invitados (o autopostulados) a aplicar a la Fellowship selectiva. La aplicaci&oacute;n incluye visi&oacute;n escrita, entrevista y desaf&iacute;o estilo capstone. Tasa de aceptaci&oacute;n objetivo: 5&ndash;8% de los aplicantes.</div>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="layer-number">04</div>
+      <div class="layer-body">
+        <div class="layer-name">Fellows &mdash; El Nivel Selectivo Insignia</div>
+        <div class="layer-desc">40 Fellows seleccionados por cohorte. Nueve meses, totalmente financiados por patrocinadores incluyendo viaje, mentores humanos, capstone, inmersiones en Miami y Demo Day. El nivel insignia de alta intensidad donde la transformaci&oacute;n ocurre en profundidad.</div>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="layer-number">05</div>
+      <div class="layer-body">
+        <div class="layer-name">Alumni &mdash; Red Vitalicia</div>
+        <div class="layer-desc">Cada Fellow que completa el programa entra a la red vitalicia de alumni &mdash; convirti&eacute;ndose en futuros mentores, patrocinadores, seleccionadores de la Fellowship, y una prueba creciente de los resultados del modelo Visionarium.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout callout-coral">
+    <h4>Por Qu&eacute; Funciona Abierto M&aacute;s Selectivo</h4>
+    <p>El nivel abierto le da a Visionarium un alcance masivo y un pipeline que se refresca continuamente. La Fellowship selectiva le da a Visionarium historias de prueba de impacto que financian todo el sistema. Los patrocinadores obtienen ambos: escala ("alcanzamos a 25,000 j&oacute;venes este a&ntilde;o") y profundidad ("y transformamos a estos 40 en l&iacute;deres globales"). La capa de mentor IA es lo que hace econ&oacute;micamente posible la escala del nivel abierto &mdash; el mismo sistema Lina sirve a 40 Fellows y a 25,000 miembros de la Comunidad Abierta sin 625x m&aacute;s personal humano.</p>
+  </div>
+
+  <h3>Dise&ntilde;o de la Cohorte de la Fellowship</h3>
+  <ul>
+    <li><strong>Tama&ntilde;o:</strong> 40 fellows por cohorte. Peque&ntilde;a para conocerse entre s&iacute;. Grande para diversidad de perspectivas y aprendizaje entre pares.</li>
+    <li><strong>Edades:</strong> 16 a 22 al momento de aplicar. Dos tracks: Explorers (16-18, secundaria) y Builders (18-22, universidad temprana).</li>
+    <li><strong>Duraci&oacute;n:</strong> Nueve meses. De septiembre a mayo.</li>
+    <li><strong>Formato:</strong> H&iacute;brido. Cadencia virtual semanal + tres inmersiones presenciales en Miami (orientaci&oacute;n, cumbre intermedia, demo day).</li>
+    <li><strong>Selectividad:</strong> Tasa de aceptaci&oacute;n objetivo 5-8%. Selecci&oacute;n basada en ambici&oacute;n, evidencia de trabajo autodirigido, paneles de entrevista y una declaraci&oacute;n de visi&oacute;n escrita en ingl&eacute;s y espa&ntilde;ol.</li>
+    <li><strong>Costo para el fellow:</strong> Cero. Beca completa incluyendo est&iacute;pendios de viaje para inmersiones en Miami.</li>
+  </ul>
+
+  <h3>Los Tres Pilares</h3>
+  <div class="pillars">
+    <div class="pillar">
+      <div class="pillar-num">PILAR &middot; 01</div>
+      <h4>Maestr&iacute;a Tecnol&oacute;gica</h4>
+      <p>Fluidez en IA, automatizaci&oacute;n, desarrollo moderno, pensamiento de producto, apalancamiento digital. Los fellows construyen y env&iacute;an sistemas reales, no tutoriales.</p>
+    </div>
+    <div class="pillar">
+      <div class="pillar-num">PILAR &middot; 02</div>
+      <h4>Formaci&oacute;n de Liderazgo</h4>
+      <p>Comunicaci&oacute;n, oratoria, presencia ejecutiva, etiqueta, inteligencia emocional, negociaci&oacute;n, fluidez intercultural.</p>
+    </div>
+    <div class="pillar">
+      <div class="pillar-num">PILAR &middot; 03</div>
+      <h4>Ejecuci&oacute;n Real</h4>
+      <p>Proyecto capstone. Desaf&iacute;os de los patrocinadores. Demo Day con inversionistas y ejecutivos. Un portafolio que abre puertas.</p>
+    </div>
+  </div>
+
+  <h3>Cadencia Semanal</h3>
+  <table class="tbl">
+    <thead>
+      <tr><th>D&iacute;a</th><th>Actividad</th><th>Formato</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="tier-name">Lunes</td><td>Laboratorio de Tecnolog&iacute;a</td><td>Virtual, 90 min, IA/construcci&oacute;n pr&aacute;ctica</td></tr>
+      <tr><td class="tier-name">Mi&eacute;rcoles</td><td>Foro de Liderazgo</td><td>Virtual, 60 min, experto + Q&amp;A</td></tr>
+      <tr><td class="tier-name">Viernes</td><td>Mentor Humano 1:1</td><td>Virtual, 30 min, mentor asignado</td></tr>
+      <tr><td class="tier-name">Diario</td><td>Lina Mentor (Coach IA)</td><td>As&iacute;ncrono, biling&uuml;e, voz + chat, ilimitado</td></tr>
+      <tr><td class="tier-name">Mensual</td><td>Presentaci&oacute;n de Cohorte</td><td>Virtual, fellows presentan trabajo en progreso</td></tr>
+      <tr><td class="tier-name">Trimestral</td><td>Inmersi&oacute;n Miami</td><td>Presencial, 3-4 d&iacute;as, todos los fellows juntos</td></tr>
+    </tbody>
+  </table>
+
+  <h3>El Capstone</h3>
+  <p>Cada fellow entrega un proyecto capstone en los meses 7-9: una herramienta real potenciada por IA, un prototipo de startup, una contribuci&oacute;n open-source o una soluci&oacute;n del brief de un patrocinador. Los capstones se presentan en el Demo Day frente a patrocinadores, ejecutivos, inversionistas y prensa. Los mejores capstones reciben financiaci&oacute;n semilla, ofertas de pasant&iacute;a o contrataci&oacute;n directa.</p>
+</section>
+
+<!-- ============ CHAPTER 6 ============ -->
+<section class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-number">06</div>
+    <h2>Arquitectura del Ecosistema</h2>
+  </div>
+
+  <p class="lead">La plataforma de Visionarium est&aacute; construida sobre una arquitectura multi-tenant que sirve a la fundaci&oacute;n hoy y escala a una instituci&oacute;n ma&ntilde;ana. Ocho capas, un sistema, dos modos de operaci&oacute;n.</p>
+
+  <div class="layer-stack">
+    <div class="layer">
+      <div class="layer-number">01</div>
+      <div class="layer-body">
+        <div class="layer-name">Capa de Identidad &mdash; El Pasaporte Digital</div>
+        <div class="layer-desc">Un perfil port&aacute;til propiedad del fellow: biograf&iacute;a, habilidades verificadas, portafolio de proyectos, recomendaciones, insignias. Exportable. Se convierte en una credencial permanente de carrera.</div>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="layer-number">02</div>
+      <div class="layer-body">
+        <div class="layer-name">Capa de Aprendizaje &mdash; Entrega de Curr&iacute;culo</div>
+        <div class="layer-desc">Contenido biling&uuml;e a trav&eacute;s de tracks de Maestr&iacute;a Tecnol&oacute;gica y Formaci&oacute;n de Liderazgo. Modular, a ritmo propio con hitos de cohorte. Construido sobre infraestructura de plataforma probada en Torna Idioma.</div>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="layer-number">03</div>
+      <div class="layer-body">
+        <div class="layer-name">Capa de Mentor IA &mdash; Lina</div>
+        <div class="layer-desc">Coach personal biling&uuml;e de IA para cada fellow. Voz + chat, 24/7. Personalidad alineada con la misi&oacute;n, no un chatbot gen&eacute;rico. Maneja preparaci&oacute;n, pr&aacute;ctica, Q&amp;A, motivaci&oacute;n. Escala a mentores humanos.</div>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="layer-number">04</div>
+      <div class="layer-body">
+        <div class="layer-name">Capa de Conexi&oacute;n Humana</div>
+        <div class="layer-desc">Emparejamiento con mentores humanos 1:1, organizaci&oacute;n de foros con expertos, comunidad de cohorte, red de alumni. La IA maneja lo frecuente &mdash; los humanos manejan lo formativo.</div>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="layer-number">05</div>
+      <div class="layer-body">
+        <div class="layer-name">Capa de Ejecuci&oacute;n &mdash; Trabajo Real</div>
+        <div class="layer-desc">Gesti&oacute;n de proyectos, desaf&iacute;os informados por patrocinadores, hackathons, desarrollo de capstone. El portafolio se construye autom&aacute;ticamente a partir de los entregables.</div>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="layer-number">06</div>
+      <div class="layer-body">
+        <div class="layer-name">Marketplace de Oportunidades</div>
+        <div class="layer-desc">Pasant&iacute;as publicadas por patrocinadores, slots de incubaci&oacute;n de startups, leads de becas, vacantes recomendadas por mentores. Donde el talento se encuentra con la oportunidad.</div>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="layer-number">07</div>
+      <div class="layer-body">
+        <div class="layer-name">Capa de Impacto y Acreditaci&oacute;n</div>
+        <div class="layer-desc">Modo dual: dashboards de patrocinadores e informes p&uacute;blicos de impacto (modo fundaci&oacute;n), o certificados y credenciales formales (modo instituci&oacute;n). Mismos datos, dos superficies.</div>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="layer-number">08</div>
+      <div class="layer-body">
+        <div class="layer-name">Capa de Operador &mdash; Columna Administrativa</div>
+        <div class="layer-desc">Aplicaciones, admisiones, operaciones de cohorte, gesti&oacute;n de mentores, CRM de patrocinadores, anal&iacute;ticas. La sala de m&aacute;quinas.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <h4>Principio de Dise&ntilde;o Dual</h4>
+    <p>El 95% de la plataforma se comparte entre los modos fundaci&oacute;n e instituci&oacute;n. Solo cambian la capa de dinero, el flujo de admisiones y la superficie de reporte. Esto significa que el mismo stack tecnol&oacute;gico que lanza la Fellowship gratuita de Visionarium en 2026 puede impulsar un Instituto Visionarium basado en matr&iacute;cula o financiado por el gobierno en 2030 sin reconstruirse.</p>
+  </div>
+</section>
+
+<!-- ============ CHAPTER 7 ============ -->
+<section class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-number">07</div>
+    <h2>Lina Mentor &mdash; El Diferenciador de IA</h2>
+  </div>
+
+  <p class="lead">Lina es la diferencia entre Visionarium y cualquier otro programa juvenil en el mundo. No es una funcionalidad. Es un miembro del equipo fundador.</p>
+
+  <h3>Qu&eacute; Es Lina</h3>
+  <p>Lina es el mentor nativo de IA de Visionarium &mdash; un coach biling&uuml;e de voz y chat asignado a cada fellow desde el momento de su inscripci&oacute;n. Est&aacute; construida sobre la plataforma de IA de voz de producci&oacute;n de Digit2ai, la misma infraestructura detr&aacute;s de los agentes de voz del ecosistema RinglyPro que sirven a miles de usuarios diariamente.</p>
+
+  <p>Lina no es una asistente gen&eacute;rica. Est&aacute; dise&ntilde;ada con prop&oacute;sito como mentora de Visionarium: entrenada en el curr&iacute;culo de Visionarium, afinada para los tres pilares, consciente de las metas y progreso de cada fellow, y mantenida bajo una personalidad de mentor&iacute;a dise&ntilde;ada por Lala y el equipo del programa.</p>
+
+  <h3>Qu&eacute; Hace Lina por los Fellows</h3>
+  <ul>
+    <li><strong>Coaching diario.</strong> Los fellows hablan con Lina cada d&iacute;a. Ella rastrea metas, marca obst&aacute;culos, celebra victorias.</li>
+    <li><strong>Compa&ntilde;era de pr&aacute;ctica.</strong> Entrevistas simuladas, pitches simulados, ensayo de oratoria &mdash; en ingl&eacute;s y espa&ntilde;ol.</li>
+    <li><strong>Tutora 24/7.</strong> &iquest;Atorado con un concepto t&eacute;cnico a las 2 am? Lina explica, examina, se adapta.</li>
+    <li><strong>Preparaci&oacute;n para foros.</strong> Antes de cada foro con expertos, Lina informa al fellow y le ayuda a preparar preguntas reflexivas.</li>
+    <li><strong>Compa&ntilde;era de reflexi&oacute;n.</strong> Sesiones de reflexi&oacute;n semanales. Lina escucha, resume, saca a la luz patrones que el fellow puede no ver.</li>
+  </ul>
+
+  <h3>Qu&eacute; Hace Lina por el Programa</h3>
+  <ul>
+    <li><strong>Sistema de alerta temprana.</strong> Cuando un fellow muestra se&ntilde;ales de desconexi&oacute;n, Lina lo se&ntilde;ala al equipo humano antes de que el fellow abandone.</li>
+    <li><strong>Informes para mentores.</strong> Antes de cada 1:1 con un mentor humano, Lina resume en qu&eacute; est&aacute; trabajando el fellow y d&oacute;nde necesita ayuda.</li>
+    <li><strong>Insight agregado.</strong> Patrones anonimizados entre 40 fellows informan la iteraci&oacute;n del curr&iacute;culo en tiempo real.</li>
+    <li><strong>Desbloqueo de escala.</strong> Pasar de 40 fellows a 400 a 4,000 no requiere 100x m&aacute;s personal porque Lina absorbe la carga rutinaria.</li>
+  </ul>
+
+  <div class="pullquote">
+    <p>Cada fellow en Visionarium tiene algo que la mayor&iacute;a de los estudiantes de la Ivy League no tienen: un mentor biling&uuml;e, dedicado y siempre disponible que conoce sus metas, su ritmo y su nombre.
+      <span class="spanish">Every fellow at Visionarium has something most Ivy League undergraduates do not: a dedicated, bilingual, always-available mentor who knows their goals, their pace, and their name.</span>
+    </p>
+    <cite>Principio de Dise&ntilde;o de Visionarium</cite>
+  </div>
+
+  <h3>Por Qu&eacute; Esto es un Moat</h3>
+  <p>Cualquier fundaci&oacute;n puede contratar a un dise&ntilde;ador de curr&iacute;culo y alquilar Zoom. Solo una fundaci&oacute;n cuyo patrocinador tecnol&oacute;gico sea una empresa de IA de grado producci&oacute;n puede ofrecer un mentor real de IA biling&uuml;e a cada fellow desde el primer d&iacute;a &mdash; con voz, con memoria, con integraci&oacute;n en los datos operativos del programa. Visionarium no paga por esta capacidad en un modelo SaaS por asiento. Somos due&ntilde;os, a trav&eacute;s de Digit2ai, en especie, valuado como una contribuci&oacute;n fundadora en especie.</p>
+</section>
+
+<!-- ============ CHAPTER 8 ============ -->
+<section class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-number">08</div>
+    <h2>Marco de Resultados</h2>
+  </div>
+
+  <p class="lead">Las fundaciones fracasan cuando miden actividad en vez de resultados. Visionarium se compromete, desde el primer d&iacute;a, con un marco de impacto p&uacute;blico y cuantitativo que los patrocinadores puedan auditar.</p>
+
+  <h3>Qu&eacute; Medimos por Cohorte</h3>
+  <table class="tbl">
+    <thead>
+      <tr><th>M&eacute;trica</th><th>Definici&oacute;n</th><th>Objetivo Cohorte 1</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="tier-name">Tasa de Finalizaci&oacute;n</td><td>% de fellows aceptados que completan el programa de 9 meses</td><td>&ge; 85%</td></tr>
+      <tr><td class="tier-name">Colocaci&oacute;n en Pasant&iacute;as</td><td>Fellows colocados en pasant&iacute;as pagadas durante o dentro de los 6 meses del programa</td><td>&ge; 60%</td></tr>
+      <tr><td class="tier-name">Capstone Entregado</td><td>Fellows que entregan y presentan un capstone funcional en Demo Day</td><td>100%</td></tr>
+      <tr><td class="tier-name">Fluidez Biling&uuml;e</td><td>Fellows que demuestran fluidez profesional en ingl&eacute;s y espa&ntilde;ol al salir</td><td>&ge; 90%</td></tr>
+      <tr><td class="tier-name">Certificaci&oacute;n en IA</td><td>Fellows que completan certificaciones validadas en IA/tecnolog&iacute;a</td><td>&ge; 80%</td></tr>
+      <tr><td class="tier-name">Participaci&oacute;n con Patrocinador</td><td>Fellows involucrados en al menos un proyecto o entrevista con patrocinador</td><td>100%</td></tr>
+      <tr><td class="tier-name">Financiaci&oacute;n Semilla</td><td>Fellows cuyos capstones reciben financiaci&oacute;n semilla o subvenciones de seguimiento</td><td>&ge; 3 fellows</td></tr>
+      <tr><td class="tier-name">Puntaje NPS</td><td>Net Promoter Score de los fellows al salir del programa</td><td>&ge; 70</td></tr>
+    </tbody>
+  </table>
+
+  <h3>C&oacute;mo Reportamos</h3>
+  <p>Se publica un Informe de Impacto p&uacute;blico al final de cada ciclo de cohorte, incluyendo resultados anonimizados de los fellows, atribuci&oacute;n a patrocinadores, transparencia financiera y descargas de datos crudos. Cada patrocinador recibe un dossier de impacto personalizado que muestra su contribuci&oacute;n espec&iacute;fica y los fellows y resultados que sus d&oacute;lares apoyaron.</p>
+
+  <h3>Seguimiento Longitudinal</h3>
+  <p>Visionarium se compromete a rastrear el progreso profesional de cada fellow durante diez a&ntilde;os despu&eacute;s del programa, anonimizado y reportado de forma agregada. Esta es la medida verdadera: no lo que los fellows logran durante la fellowship, sino lo que logran con ella.</p>
+</section>
+
+<!-- ============ CHAPTER 9 ============ -->
+<section class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-number">09</div>
+    <h2>Equipo Fundador y Gobernanza</h2>
+  </div>
+
+  <h3>Fundadores</h3>
+
+  <div class="founder-card">
+    <div class="founder-photo">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69df82addb7c222f714d3ff1.png" alt="Maria Clara Garcia">
+    </div>
+    <div class="founder-info">
+      <div class="founder-name">Maria Clara Garcia</div>
+      <div class="founder-role">Fundadora y Directora del Programa</div>
+
+      <p><strong>Directora y Maestra Escolar, Grados K&ndash;12.</strong> Fundadora de Visionarium (2015), una incubadora de Liderazgo y Creatividad en Nueva York para estudiantes de secundaria y universidad de Am&eacute;rica Latina &mdash; el programa fundacional que este white paper formaliza y escala.</p>
+
+      <p><em>"Comprometida con fomentar la autoestima del estudiante, el respeto por los dem&aacute;s y el amor por el aprendizaje."</em></p>
+
+      <ul>
+        <li>Miembro del Consejo Directivo del Colegio Marymount de Barranquilla (2021 &ndash; Presente)</li>
+        <li>M&aacute;s de 30 a&ntilde;os de liderazgo en educaci&oacute;n a trav&eacute;s de aula K&ndash;12, administraci&oacute;n y direcci&oacute;n de programas</li>
+        <li>Fundadora y Directora de COLMUN Bogot&aacute;, Cali y Eje Cafetero (2009 &ndash; Presente) &mdash; la &uacute;nica conferencia de Modelo de las Naciones Unidas en el mundo dise&ntilde;ada para participantes de diferentes mentalidades y habilidades</li>
+        <li>L&iacute;der en UNACOLOMBIA, la Asociaci&oacute;n de las Naciones Unidas de Colombia (2008 &ndash; Presente)</li>
+        <li>Ex Directora, Maestra de Oratoria, Coordinadora Deportiva y Directora de MUN en el Colegio Marymount, Barranquilla</li>
+        <li>Ex maestra en el Colegio Nueva Granada, Bogot&aacute;</li>
+      </ul>
+
+      <h4 style="margin-top: 20px;">Competencias Clave</h4>
+      <div>
+        <span class="founder-tag">Dise&ntilde;o Curricular</span>
+        <span class="founder-tag">Instrucci&oacute;n Diferenciada</span>
+        <span class="founder-tag">Motivaci&oacute;n Estudiantil</span>
+        <span class="founder-tag">Aprendizaje Cooperativo</span>
+        <span class="founder-tag">Manejo de Aula</span>
+        <span class="founder-tag">Gesti&oacute;n de Programas</span>
+        <span class="founder-tag">Oratoria</span>
+        <span class="founder-tag">Direcci&oacute;n de Modelo ONU</span>
+        <span class="founder-tag">Relaci&oacute;n Padres y Maestros</span>
+        <span class="founder-tag">Formaci&oacute;n de Liderazgo</span>
+      </div>
+
+      <h4 style="margin-top: 20px;">Educaci&oacute;n y Credenciales</h4>
+      <ul>
+        <li>The Reading and Writing Project, Columbia University, Nueva York (2012)</li>
+        <li>Master en Educaci&oacute;n, Universidad del Norte, Barranquilla (2007)</li>
+        <li>Especializaci&oacute;n en Educaci&oacute;n Infantil, Universidad del Norte, Barranquilla (2005)</li>
+        <li>Licenciatura en Ingl&eacute;s, Universidad del Atl&aacute;ntico, Barranquilla (2001)</li>
+        <li>Gerencia Educacional, Corporaci&oacute;n Educativa Del Litoral, Barranquilla (1999)</li>
+        <li>Diplomado: Estrategias Educativas en Ciencias Sociales, Universidad Sim&oacute;n Bol&iacute;var (2009)</li>
+        <li>Semillero de Investigadores &mdash; "Escuela y Creatividad", Universidad Sim&oacute;n Bol&iacute;var (2010)</li>
+        <li>Diplomado en Gerencia Educativa, Instituto Superior Pedag&oacute;gico "Jos&eacute; De La Luz y Caballero", Holgu&iacute;n, Cuba</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="founder-card">
+    <div class="founder-photo">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69df832b80b446d0fbac3ed4.jpg" alt="Manuel Stagg">
+    </div>
+    <div class="founder-info">
+      <div class="founder-name">Manuel Stagg</div>
+      <div class="founder-role">Patrocinador Tecnol&oacute;gico Fundador</div>
+
+      <p>Manuel Stagg es el fundador y CEO de <strong>Digit2ai</strong>, una empresa de plataforma de inteligencia artificial de producci&oacute;n con sede en Tampa, Florida. Digit2ai construye y opera sistemas de IA multi-tenant a trav&eacute;s de voz, CRM, educaci&oacute;n, salud, log&iacute;stica y anal&iacute;tica industrial &mdash; sirviendo a miles de usuarios diariamente en las Am&eacute;ricas.</p>
+
+      <p>Como Patrocinador Tecnol&oacute;gico Fundador, Digit2ai contribuye toda la infraestructura t&eacute;cnica de Visionarium en especie &mdash; incluyendo la capa de mentor IA Lina, el portal de fellows, la plataforma de admisiones, el dashboard de patrocinadores y la ingenier&iacute;a continua de la plataforma. Esta contribuci&oacute;n libera cada d&oacute;lar de patrocinador para impacto directo en los fellows.</p>
+
+      <h4 style="margin-top: 20px;">Plataforma Digit2ai &mdash; Verticales de Producci&oacute;n</h4>
+      <div class="vertical-grid">
+        <div class="vertical-item"><strong>RinglyPro CRM</strong>Plataforma CRM de IA de voz multi-tenant con agentes Rachel, Ana y Lina</div>
+        <div class="vertical-item"><strong>Store Health AI</strong>Monitoreo de operaciones retail en tiempo real y dashboard de inteligencia</div>
+        <div class="vertical-item"><strong>Torna Idioma</strong>Plataforma biling&uuml;e de aprendizaje de idiomas que impulsa el programa SFL de la University of Makati</div>
+        <div class="vertical-item"><strong>MSK AI Imaging</strong>An&aacute;lisis radiol&oacute;gico musculoesquel&eacute;tico con IA para pr&aacute;cticas ortop&eacute;dicas</div>
+        <div class="vertical-item"><strong>HISPATEC</strong>Red profesional hisp&aacute;nica con orquestador MCP y modelos matem&aacute;ticos de confianza</div>
+        <div class="vertical-item"><strong>TunjoRacing</strong>Plataforma CRM y portal de prensa de deportes de motor</div>
+        <div class="vertical-item"><strong>CW Carriers</strong>Ecosistema de inteligencia de carga y log&iacute;stica</div>
+        <div class="vertical-item"><strong>Pinaxis</strong>Plataforma de anal&iacute;tica de almac&eacute;n y distribuci&oacute;n</div>
+        <div class="vertical-item"><strong>M&oacute;dulo OEE</strong>Monitoreo de planta en tiempo real para tenants de manufactura</div>
+        <div class="vertical-item"><strong>Visionarium</strong>Plataforma de fellowship juvenil de liderazgo y tecnolog&iacute;a (en desarrollo, julio 2026)</div>
+      </div>
+
+      <h4 style="margin-top: 20px;">Capacidades Tecnol&oacute;gicas Clave</h4>
+      <div>
+        <span class="founder-tag">Arquitectura SaaS Multi-Tenant</span>
+        <span class="founder-tag">Agentes de IA de Voz</span>
+        <span class="founder-tag">Orquestaci&oacute;n MCP</span>
+        <span class="founder-tag">NLP Biling&uuml;e</span>
+        <span class="founder-tag">PostgreSQL a Escala</span>
+        <span class="founder-tag">Sistemas de Producci&oacute;n Node.js</span>
+        <span class="founder-tag">Frontends React SPA</span>
+        <span class="founder-tag">Webhooks en Tiempo Real</span>
+        <span class="founder-tag">Automatizaci&oacute;n CI/CD</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Estructura de Gobernanza</h3>
+
+  <ul>
+    <li><strong>Junta Directiva</strong> &mdash; 5-7 asientos incluyendo fundadores, representantes de patrocinadores y directores independientes con experiencia en educaci&oacute;n en LATAM y EE. UU.</li>
+    <li><strong>Consejo Asesor</strong> &mdash; 10-15 asesores provenientes de empresas patrocinadoras, alumni de programas an&aacute;logos y expertos temáticos en IA, desarrollo de liderazgo y filantrop&iacute;a hisp&aacute;nica.</li>
+    <li><strong>C&iacute;rculo de Mentores</strong> &mdash; La red activa de mentores humanos. Selecci&oacute;n gestionada por la Directora del Programa con est&aacute;ndares de calidad aplicados por la Junta.</li>
+    <li><strong>Consejo de Fellows</strong> &mdash; Dos fellows por cohorte sirven como representantes electos ante la gobernanza, asegurando la voz de los fellows en la evoluci&oacute;n del programa.</li>
+  </ul>
+
+  <h3>Estructura Legal</h3>
+  <p>Visionarium operar&aacute; como una fundaci&oacute;n sin fines de lucro 501(c)(3) exenta de impuestos en EE. UU., con eventuales Fundaciones equivalentes establecidas en jurisdicciones prioritarias de LATAM para permitir recaudaci&oacute;n local directa y donaciones deducibles de impuestos.</p>
+</section>
+
+<!-- ============ CHAPTER 10 ============ -->
+<section class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-number">10</div>
+    <h2>Modelo de Patrocinadores</h2>
+  </div>
+
+  <p class="lead">Visionarium est&aacute; completamente financiado por patrocinadores. Los fellows no pagan nada. Los patrocinadores financian cohortes, programas y fellowships con nombre &mdash; y a cambio reciben presencia de marca, acceso al pipeline de talento, atribuci&oacute;n de impacto y reportes ESG/CSR.</p>
+
+  <h3>Niveles de Patrocinio</h3>
+  <table class="tbl">
+    <thead>
+      <tr><th>Nivel</th><th>Contribuci&oacute;n</th><th>Lo que Recibe</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="tier-name">Patrocinador Fundador</td>
+        <td>$250,000+ / a&ntilde;o</td>
+        <td>Asiento de observador en la junta, fellowship(s) con nombre, reconocimiento prominente en todos los materiales, dossier de impacto personalizado, acceso prioritario al pipeline de talento, espacio para hablar en Demo Day</td>
+      </tr>
+      <tr>
+        <td class="tier-name">Patrocinador L&iacute;der</td>
+        <td>$100,000+ / a&ntilde;o</td>
+        <td>Track o pilar de cohorte con nombre, logo en todos los materiales del programa, dossier de impacto personalizado, desaf&iacute;o capstone con brief del patrocinador, presencia en Demo Day</td>
+      </tr>
+      <tr>
+        <td class="tier-name">Patrocinador de Programa</td>
+        <td>$25,000+ / a&ntilde;o</td>
+        <td>Reconocimiento con logo, informe de impacto agregado, invitaciones a slots de mentor, acceso al pipeline de talento</td>
+      </tr>
+      <tr>
+        <td class="tier-name">Colaborador</td>
+        <td>$10,000+ / a&ntilde;o</td>
+        <td>Reconocimiento de nombre, informe de impacto agregado, invitaciones a slots de mentor</td>
+      </tr>
+      <tr>
+        <td class="tier-name">Socio en Especie</td>
+        <td>Servicios, tecnolog&iacute;a, mentores, viaje, espacio de trabajo</td>
+        <td>Equivalente al nivel basado en contribuci&oacute;n valuada; misma escala de reconocimiento</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Fellowships con Nombre</h3>
+  <p>Un patrocinador puede financiar completamente un fellow con nombre por $25,000, cubriendo el programa completo de un solo fellow, viajes, est&iacute;pendios y parte de la infraestructura compartida. Los fellows con nombre conservan la conexi&oacute;n del patrocinador durante el programa y el seguimiento de alumni. Para patrocinadores corporativos, esta es la forma de contribuci&oacute;n m&aacute;s resonante emocionalmente y atribuible p&uacute;blicamente.</p>
+
+  <h3>Audiencias de Patrocinadores Objetivo</h3>
+  <div class="pillars">
+    <div class="pillar">
+      <div class="pillar-num">AUDIENCIA &middot; 01</div>
+      <h4>Fundaciones Familiares Hispanas en Miami</h4>
+      <p>Riqueza multigeneracional con misi&oacute;n de elevar a la pr&oacute;xima generaci&oacute;n de liderazgo latino. Patrones naturales de Visionarium.</p>
+    </div>
+    <div class="pillar">
+      <div class="pillar-num">AUDIENCIA &middot; 02</div>
+      <h4>Corporativos LATAM con Presencia en EE. UU.</h4>
+      <p>Bancos, telecos y grupos de energ&iacute;a/consumo con mandatos ESG y necesidades de talento biling&uuml;e.</p>
+    </div>
+    <div class="pillar">
+      <div class="pillar-num">AUDIENCIA &middot; 03</div>
+      <h4>Corporativos de EE. UU. con Mercados Hispanos</h4>
+      <p>Fortune 500 con bases significativas de clientes hispanos y programas CSR formales dirigidos a comunidades LATAM/hispanas.</p>
+    </div>
+    <div class="pillar">
+      <div class="pillar-num">AUDIENCIA &middot; 04</div>
+      <h4>Fundaciones Institucionales y de Desarrollo</h4>
+      <p>Knight Foundation, IDB Lab, Inter-American Foundation y donantes alineados enfocados en juventud y movilidad econ&oacute;mica en las Am&eacute;ricas.</p>
+    </div>
+  </div>
+
+  <h3>ROI del Patrocinador &mdash; M&aacute;s All&aacute; de la Filantrop&iacute;a</h3>
+  <p>Los patrocinadores no est&aacute;n donando &mdash; est&aacute;n invirtiendo en resultados tanto a escala como en profundidad:</p>
+  <ul>
+    <li><strong>Alcance a escala:</strong> Miles de miembros registrados en la Comunidad Abierta &mdash; j&oacute;venes de LATAM y mercados hispanos en EE. UU. interactuando con programaci&oacute;n, contenido y exposici&oacute;n de marca asociada al patrocinador.</li>
+    <li><strong>Pipeline de talento en profundidad:</strong> Acceso prioritario de contrataci&oacute;n a 40 Fellows evaluados, biling&uuml;es y completamente capacitados por cohorte, seleccionados de la parte superior del pipeline abierto.</li>
+    <li><strong>Presencia de marca en dos niveles:</strong> Asociaci&oacute;n visible con un ecosistema de acceso masivo (escala) y una fellowship selectiva insignia (prestigio).</li>
+    <li><strong>Atribuci&oacute;n ESG/CSR:</strong> Impacto cuantificado por d&oacute;lar, alineado con los Objetivos de Desarrollo Sostenible 4 (Educaci&oacute;n), 8 (Crecimiento Econ&oacute;mico) y 10 (Reducci&oacute;n de Desigualdades). Reportable en amplitud (n&uacute;mero alcanzado) y profundidad (resultados transformacionales).</li>
+    <li><strong>Se&ntilde;al al mercado hisp&aacute;nico:</strong> Para corporativos de EE. UU., la inversi&oacute;n visible en talento puente LATAM-EE. UU. es oro reputacional con la demograf&iacute;a de consumidores de m&aacute;s r&aacute;pido crecimiento.</li>
+    <li><strong>Ventaja de datos:</strong> Los patrocinadores reciben insights agregados de datos de participaci&oacute;n a trav&eacute;s de miles de j&oacute;venes &mdash; la mejor se&ntilde;al sobre tendencias emergentes de talento joven LATAM en el mercado.</li>
+  </ul>
+</section>
+
+<!-- ============ CHAPTER 11 ============ -->
+<section class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-number">11</div>
+    <h2>Plan de Ejecuci&oacute;n &mdash; Primeros 18 Meses</h2>
+  </div>
+
+  <p class="lead">La visi&oacute;n 2035 depende enteramente de lo que pase en los pr&oacute;ximos dieciocho meses. A continuaci&oacute;n el plan de ejecuci&oacute;n trimestral, con compromisos espec&iacute;ficos en las marcas de 3, 6, 12 y 18 meses desde hoy.</p>
+
+  <div class="milestone-grid">
+    <div class="milestone-card">
+      <div class="milestone-month-label">Hito 01</div>
+      <div class="milestone-month">3</div>
+      <div class="milestone-date">Meses &middot; Para Julio 2026</div>
+      <div class="milestone-title">Fundaci&oacute;n y Plataforma Listas</div>
+      <ul class="milestone-list">
+        <li>Fundaci&oacute;n 501(c)(3) de EE. UU. legalmente incorporada</li>
+        <li>Junta Directiva confirmada (5&ndash;7 asientos)</li>
+        <li>Marca Visionarium, sitio web y portal del ecosistema abierto lanzados</li>
+        <li>Ecosistema tecnol&oacute;gico en vivo: Comunidad Abierta, portal de fellows, mentor IA Lina, flujo de admisiones, consola administrativa</li>
+        <li>Contribuci&oacute;n del Patrocinador Tecnol&oacute;gico Fundador (Digit2ai) formalizada</li>
+        <li>Primeras 3 cartas de intenci&oacute;n de Patrocinadores Fundadores en Efectivo aseguradas</li>
+        <li>Registros a la Comunidad Abierta disponibles para todos</li>
+        <li>Aplicaciones a la Fellowship Cohorte 1 abiertas</li>
+      </ul>
+    </div>
+
+    <div class="milestone-card">
+      <div class="milestone-month-label">Hito 02</div>
+      <div class="milestone-month">6</div>
+      <div class="milestone-date">Meses &middot; Para Octubre 2026</div>
+      <div class="milestone-title">Ecosistema y Cohorte 1 en Vivo</div>
+      <ul class="milestone-list">
+        <li>Comunidad Abierta: 5,000+ j&oacute;venes registrados en mercados LATAM e hispanos de EE. UU.</li>
+        <li>Aplicaciones a la Fellowship cerradas &mdash; objetivo 600+ aplicantes</li>
+        <li>40 Fellows seleccionados de Miembros Activos con las se&ntilde;ales de participaci&oacute;n m&aacute;s fuertes</li>
+        <li>Red de mentores activada &mdash; 40+ mentores humanos incorporados</li>
+        <li>Inmersi&oacute;n de orientaci&oacute;n en Miami completada</li>
+        <li>Cadencia semanal del programa en marcha: Lab de Tecnolog&iacute;a, Foro de Liderazgo, Mentor 1:1, Lina</li>
+        <li>Primeros compromisos de Patrocinadores L&iacute;der y de Programa anunciados</li>
+        <li>Capital total comprometido de patrocinadores: $500K+</li>
+      </ul>
+    </div>
+
+    <div class="milestone-card">
+      <div class="milestone-month-label">Hito 03</div>
+      <div class="milestone-month">12</div>
+      <div class="milestone-date">Meses &middot; Para Abril 2027</div>
+      <div class="milestone-title">Ecosistema Creciendo &middot; Cohorte 1 en Mitad</div>
+      <ul class="milestone-list">
+        <li>Comunidad Abierta: 15,000+ miembros registrados</li>
+        <li>Nivel Miembros Activos: 3,000+ ganando insignias y completando desaf&iacute;os</li>
+        <li>Cumbre intermedia de Miami completada (los 40 Fellows)</li>
+        <li>Proyectos capstone iniciados con briefs de patrocinadores</li>
+        <li>Primeras colocaciones en pasant&iacute;as con brief de patrocinador</li>
+        <li>Informe de Impacto Interino v0.5 publicado a patrocinadores</li>
+        <li>Aplicaciones a Fellowship Cohorte 2 abiertas</li>
+        <li>Scouting de segunda ciudad operacional completo (CDMX o Bogot&aacute;)</li>
+        <li>Capital total comprometido de patrocinadores: $1M+</li>
+      </ul>
+    </div>
+
+    <div class="milestone-card">
+      <div class="milestone-month-label">Hito 04</div>
+      <div class="milestone-month">18</div>
+      <div class="milestone-date">Meses &middot; Para Octubre 2027</div>
+      <div class="milestone-title">Prueba del Modelo</div>
+      <ul class="milestone-list">
+        <li>Comunidad Abierta: 30,000+ miembros registrados en las Am&eacute;ricas</li>
+        <li>Demo Day de Fellowship Cohorte 1 completado con prensa, patrocinadores, inversionistas</li>
+        <li>Informe de Impacto de Cohorte 1 v1.0 publicado p&uacute;blicamente</li>
+        <li>Resultados medidos en ambos niveles: m&eacute;tricas de participaci&oacute;n Abierta, tasa de colocaci&oacute;n de la Fellowship, capstones entregados, fluidez biling&uuml;e, NPS</li>
+        <li>Fellowship Cohorte 2 lanzada (objetivo: 40&ndash;80 Fellows)</li>
+        <li>Red digital de alumni en vivo</li>
+        <li>Segunda ciudad establecida y lanzada</li>
+        <li>Fellows acumulados: 80+ &middot; Miembros de Comunidad Abierta servidos acumulados: 30,000+</li>
+        <li>Historial de la fundaci&oacute;n suficiente para subvenciones institucionales</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout callout-coral">
+    <h4>Por Qu&eacute; Importan los 18 Meses</h4>
+    <p>Dieciocho meses es la ventana en la que Visionarium debe probar tres cosas: que los Fellows se transforman medible, que los patrocinadores ven ROI claro en sus contribuciones, y que el modelo est&aacute; listo para escalar. Todo en la visi&oacute;n 2035 depende de clavar estos cuatro hitos. Los patrocinadores que se unen en esta ventana financian la prueba misma &mdash; y ganan la asociaci&oacute;n fundadora permanente que sigue.</p>
+  </div>
+</section>
+
+<!-- ============ CHAPTER 12 ============ -->
+<section class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-number">12</div>
+    <h2>Hoja de Ruta y Visi&oacute;n hasta 2035</h2>
+  </div>
+
+  <p class="lead">Una d&eacute;cada de expansi&oacute;n deliberada, de 40 fellows en Miami a 10,000 alumni en toda Am&eacute;rica.</p>
+
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="date">Q2 2026</div>
+      <div class="event">Fundaci&oacute;n formada. Marca lanzada. Adquisici&oacute;n de patrocinadores fundadores comienza.</div>
+      <div class="detail">501(c)(3) de EE. UU. incorporada. Identidad de marca central, sitio web e infraestructura de aplicaciones en vivo. Primeras cartas de intenci&oacute;n aseguradas.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="date">Julio 2026</div>
+      <div class="event">Ecosistema tecnol&oacute;gico listo.</div>
+      <div class="detail">Plataforma Visionarium completa en vivo: portal de fellows, capa IA Lina Mentor, flujo de aplicaciones, consola administrativa y dashboard de patrocinadores. Construido sobre la infraestructura de producci&oacute;n de Digit2ai y listo para recibir a la Cohorte 1.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="date">Q3 2026</div>
+      <div class="event">Aplicaciones abiertas. Selecci&oacute;n de Cohorte 1.</div>
+      <div class="detail">Reclutamiento en M&eacute;xico, Colombia, Argentina, Chile, y secundarias y universidades hispanas con base en Miami. Objetivo: 600+ aplicantes, 40 seleccionados.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="date">Oto&ntilde;o 2026</div>
+      <div class="event">Cohorte 1 se lanza.</div>
+      <div class="detail">40 fellows inician la fellowship de 9 meses. Inmersi&oacute;n de orientaci&oacute;n en Miami. Lina Mentor activada. Cadencia semanal comienza.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="date">Q2 2027</div>
+      <div class="event">Demo Day de Cohorte 1. Informe de Impacto v1.</div>
+      <div class="detail">Presentaciones de capstone. Primer Informe de Impacto publicado. Primeros alumni entran a la red.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="date">2027 &ndash; 2028</div>
+      <div class="event">Cohortes 2 y 3. Expansi&oacute;n a 80 fellows por cohorte.</div>
+      <div class="detail">La red de mentores escala. La base de patrocinadores crece. Segunda ciudad operativa establecida &mdash; Ciudad de M&eacute;xico o Bogot&aacute;.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="date">2029 &ndash; 2030</div>
+      <div class="event">Instituto Visionarium se lanza. Plataforma de modo dual activada.</div>
+      <div class="detail">El brazo institucional acreditado comienza a aceptar estudiantes en modelos de matr&iacute;cula y subsidio gubernamental. La fellowship de la fundaci&oacute;n contin&uacute;a a escala completa en paralelo.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="date">2031 &ndash; 2035</div>
+      <div class="event">Diez ciudades. 1,000+ fellows por a&ntilde;o. Red global de alumni.</div>
+      <div class="detail">Miami, CDMX, Bogot&aacute;, S&atilde;o Paulo, Buenos Aires, Lima, Santiago, Monterrey, Panam&aacute;, Madrid. 10,000 alumni acumulados. Instituci&oacute;n reconocida que define la categor&iacute;a.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CHAPTER 13 ============ -->
+<section class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-number">13</div>
+    <h2>Patrocinadores Fundadores</h2>
+  </div>
+
+  <p class="lead">Cada fundaci&oacute;n es construida por sus patrocinadores fundadores. Los socios que se unan a Visionarium en su a&ntilde;o de formalizaci&oacute;n ser&aacute;n permanentemente reconocidos como los respaldadores originales de la instituci&oacute;n &mdash; con atribuci&oacute;n de nombre en todas las cohortes futuras, informes de impacto y comunicaciones p&uacute;blicas.</p>
+
+  <h3>Patrocinadores Fundadores Confirmados</h3>
+
+  <div class="sponsor-showcase">
+    <div class="sponsor-slot filled">
+      <div class="sponsor-tier-label">Patrocinador Tecnol&oacute;gico Fundador</div>
+      <div class="sponsor-name">Digit2ai</div>
+      <div class="sponsor-amount">EN ESPECIE &middot; VALUADO</div>
+      <div class="sponsor-contribution">Ecosistema t&eacute;cnico completo: portal de comunidad abierta, portal de fellows, capa de mentor IA Lina, plataforma de admisiones, consola administrativa, ingenier&iacute;a continua.</div>
+    </div>
+
+    <div class="sponsor-slot filled">
+      <div class="sponsor-tier-label">Patrocinadora de Programa Fundadora</div>
+      <div class="sponsor-name">Maria Clara Garcia</div>
+      <div class="sponsor-amount">EN ESPECIE &middot; VALUADO</div>
+      <div class="sponsor-contribution">Once a&ntilde;os de liderazgo de Visionarium, curr&iacute;culo del programa, red de mentores, adquisici&oacute;n de patrocinadores y Direcci&oacute;n del Programa continua.</div>
+    </div>
+
+    <div class="sponsor-slot open">
+      <div class="sponsor-tier-label">Patrocinador Fundador en Efectivo &middot; Disponible</div>
+      <div class="sponsor-name">Su Organizaci&oacute;n</div>
+      <div class="sponsor-amount">$250,000+ / A&Ntilde;O</div>
+      <div class="sponsor-contribution">Asiento de observador en la junta &middot; fellowship(s) con nombre &middot; reconocimiento prominente &middot; acceso prioritario al pipeline de talento</div>
+    </div>
+
+    <div class="sponsor-slot open">
+      <div class="sponsor-tier-label">Patrocinador Fundador en Efectivo &middot; Disponible</div>
+      <div class="sponsor-name">Su Organizaci&oacute;n</div>
+      <div class="sponsor-amount">$250,000+ / A&Ntilde;O</div>
+      <div class="sponsor-contribution">Asiento de observador en la junta &middot; fellowship(s) con nombre &middot; reconocimiento prominente &middot; acceso prioritario al pipeline de talento</div>
+    </div>
+  </div>
+
+  <h3>Slots de Patrocinador L&iacute;der</h3>
+
+  <div class="sponsor-showcase">
+    <div class="sponsor-slot open">
+      <div class="sponsor-tier-label">Patrocinador L&iacute;der &middot; Disponible</div>
+      <div class="sponsor-name">Su Organizaci&oacute;n</div>
+      <div class="sponsor-amount">$100,000+ / A&Ntilde;O</div>
+      <div class="sponsor-contribution">Track o pilar de cohorte con nombre &middot; logo en todos los materiales &middot; desaf&iacute;o capstone con brief del patrocinador</div>
+    </div>
+
+    <div class="sponsor-slot open">
+      <div class="sponsor-tier-label">Patrocinador L&iacute;der &middot; Disponible</div>
+      <div class="sponsor-name">Su Organizaci&oacute;n</div>
+      <div class="sponsor-amount">$100,000+ / A&Ntilde;O</div>
+      <div class="sponsor-contribution">Track o pilar de cohorte con nombre &middot; logo en todos los materiales &middot; desaf&iacute;o capstone con brief del patrocinador</div>
+    </div>
+  </div>
+
+  <h3>Lo que Reciben los Patrocinadores Fundadores</h3>
+
+  <ul>
+    <li><strong>Atribuci&oacute;n fundadora permanente.</strong> Su nombre y logo aparecen en cada comunicaci&oacute;n de Cohorte 1, cada menci&oacute;n de prensa y el registro hist&oacute;rico permanente de la fundaci&oacute;n.</li>
+    <li><strong>Asiento de observador en la junta</strong> (nivel Patrocinador Fundador en Efectivo) con visibilidad directa a las decisiones y estrategia del programa.</li>
+    <li><strong>Fellowships con nombre.</strong> Becas con marca del patrocinador que viajan con los Fellows a trav&eacute;s de sus carreras y el seguimiento de alumni.</li>
+    <li><strong>Acceso prioritario al pipeline de talento.</strong> Vista previa a Demo Day de los Fellows, derechos de contrataci&oacute;n prioritarios y sesiones de reclutamiento dedicadas.</li>
+    <li><strong>Desaf&iacute;os capstone con brief del patrocinador.</strong> Plantee un problema real a la cohorte y vea a 40 de los j&oacute;venes tecn&oacute;logos de mayor potencial de LATAM competir por resolverlo.</li>
+    <li><strong>Dossier de Impacto Personalizado.</strong> Reporte trimestral que muestra los Fellows espec&iacute;ficos, resultados e historias que sus d&oacute;lares hicieron posibles.</li>
+    <li><strong>Espacio para hablar en Demo Day</strong> frente a prensa, inversionistas, co-patrocinadores y la red extendida.</li>
+    <li><strong>Atribuci&oacute;n ESG / CSR</strong> alineada con los ODS de la ONU 4, 8 y 10 &mdash; cuantificada, auditada, lista para publicaci&oacute;n.</li>
+  </ul>
+
+  <h3>Perfil de Patrocinador Fundador Objetivo</h3>
+
+  <p>Estamos activamente en conversaciones con organizaciones que encajan en uno de los cuatro perfiles:</p>
+
+  <ol>
+    <li><strong>Fundaciones familiares hispanas de Miami</strong> con compromiso multigeneracional con el desarrollo de liderazgo latino</li>
+    <li><strong>Corporativos LATAM con presencia en EE. UU.</strong> (banca, telecomunicaciones, energ&iacute;a, consumo) con mandatos ESG y necesidades de talento biling&uuml;e</li>
+    <li><strong>Corporativos Fortune 500 de EE. UU.</strong> con bases significativas de clientes hispanos y programas CSR dirigidos a j&oacute;venes LATAM/hispanos</li>
+    <li><strong>Financiadores institucionales</strong> enfocados en movilidad econ&oacute;mica juvenil en las Am&eacute;ricas (Knight Foundation, IDB Lab, Inter-American Foundation, Ford, Kellogg)</li>
+  </ol>
+
+  <div class="callout callout-coral">
+    <h4>La Ventana Se Abre Solo una Vez</h4>
+    <p>El estatus de Patrocinador Fundador est&aacute; disponible solo durante el a&ntilde;o de formalizaci&oacute;n. Despu&eacute;s de que la Cohorte 1 complete en mayo de 2027, todos los patrocinadores subsiguientes se unen en los niveles est&aacute;ndar L&iacute;der, Programa o Colaborador. Las organizaciones que se comprometan entre hoy y octubre de 2026 &mdash; y solo esas &mdash; se vuelven parte de la historia fundadora de Visionarium para siempre.</p>
+  </div>
+</section>
+
+<!-- ============ CHAPTER 14 ============ -->
+<section class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-number">14</div>
+    <h2>Llamado a la Acci&oacute;n</h2>
+  </div>
+
+  <p class="lead">Visionarium tendr&aacute; &eacute;xito o fracasar&aacute; seg&uacute;n qui&eacute;n se una en su a&ntilde;o fundador. Estamos buscando activamente tres tipos de socios.</p>
+
+  <h3>Patrocinadores Fundadores</h3>
+  <p>Buscamos tres a cinco patrocinadores de nivel fundador para respaldar la Cohorte 1. Si representa una fundaci&oacute;n familiar, un programa CSR corporativo o un financiador institucional alineado con el desarrollo de liderazgo juvenil biling&uuml;e, le invitamos a una conversaci&oacute;n.</p>
+
+  <h3>Mentores</h3>
+  <p>Buscamos mentores fundadores en IA, producto, liderazgo y emprendimiento &mdash; idealmente con fluidez biling&uuml;e y experiencia vivida tendiendo puentes entre LATAM y EE. UU. Los mentores se comprometen aproximadamente dos horas al mes durante el a&ntilde;o del programa.</p>
+
+  <h3>Fellows</h3>
+  <p>Las aplicaciones para la Cohorte 1 abren en Q3 2026. Invitamos a j&oacute;venes de alto potencial de 16 a 22 a&ntilde;os de toda Am&eacute;rica Latina y comunidades hispanas en Estados Unidos. Si conoce a un joven que pertenece en la primera clase, nom&iacute;nelo.</p>
+
+  <div class="callout callout-coral">
+    <h4>Contacto</h4>
+    <p>Para participar como patrocinador, mentor, socio o fellow prospectivo, escr&iacute;banos a los canales de contacto establecidos al lanzamiento. El a&ntilde;o fundador es el a&ntilde;o m&aacute;s importante en la historia de la organizaci&oacute;n. Los socios que se unan ahora ser&aacute;n recordados por una generaci&oacute;n.</p>
+  </div>
+</section>
+
+</div><!-- /container -->
+
+<!-- ============ FOOTER ============ -->
+<div class="footer">
+  <h2>Sea Parte de la Clase Fundadora.</h2>
+  <p>Visionarium ha pasado una d&eacute;cada incubando silenciosamente liderazgo y creatividad en la juventud latinoamericana desde Nueva York. Ahora nos estamos formalizando como fundaci&oacute;n, trasladando nuestra sede a Miami y agregando la capa de tecnolog&iacute;a de IA que escalar&aacute; lo que ya funciona. Los socios que se unan este a&ntilde;o de formalizaci&oacute;n ser&aacute;n recordados por una generaci&oacute;n.</p>
+  <a href="#" class="footer-cta">Solicite una Presentaci&oacute;n</a>
+  <div class="footer-meta">
+    Fundaci&oacute;n Visionarium &middot; White Paper v1.0 &middot; Fundada 2015, Nueva York &middot; Miami, Florida &middot; 2026
+  </div>
+</div>
+
+</body>
+</html>
