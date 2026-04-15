@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Youth Talent Global -- Foundation White Paper v1.0</title>
+<title>Visionarium -- Foundation White Paper v1.0</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
 
@@ -94,9 +94,9 @@
 
   .cover h1 {
     font-family: 'Inter', sans-serif;
-    font-size: 88px;
+    font-size: 72px;
     font-weight: 900;
-    letter-spacing: -3px;
+    letter-spacing: -2px;
     line-height: 1;
     margin-bottom: 16px;
     background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%);
@@ -536,6 +536,142 @@
 
   .callout-coral h4 { color: var(--coral-dark); }
 
+  /* FOUNDER PROFILE */
+  .founder-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    padding: 40px;
+    margin: 32px 0;
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 36px;
+    align-items: start;
+  }
+
+  .founder-photo {
+    width: 200px;
+    height: 240px;
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .founder-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .founder-photo.placeholder {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+    color: var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 72px;
+    font-weight: 800;
+    letter-spacing: -2px;
+  }
+
+  .founder-info .founder-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--navy);
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+  }
+
+  .founder-info .founder-role {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--coral);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+
+  .founder-contact {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: var(--gray-500);
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--gray-200);
+  }
+
+  .founder-contact a {
+    color: var(--navy);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .founder-info p {
+    font-size: 15.5px;
+    line-height: 1.65;
+    color: var(--gray-700);
+    margin-bottom: 14px;
+  }
+
+  .founder-info ul {
+    font-size: 14.5px;
+    padding-left: 20px;
+    margin-bottom: 14px;
+  }
+
+  .founder-info li { margin-bottom: 6px; }
+
+  .founder-tag {
+    display: inline-block;
+    background: var(--gold-light);
+    color: var(--gold-dark);
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin: 4px 4px 4px 0;
+  }
+
+  .vertical-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .vertical-item {
+    background: var(--gray-50);
+    border-left: 2px solid var(--coral);
+    padding: 10px 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: var(--gray-700);
+  }
+
+  .vertical-item strong {
+    display: block;
+    color: var(--navy);
+    font-size: 13.5px;
+    margin-bottom: 2px;
+  }
+
+  @media (max-width: 768px) {
+    .founder-card {
+      grid-template-columns: 1fr;
+      padding: 28px;
+      gap: 24px;
+    }
+    .founder-photo { width: 140px; height: 170px; margin: 0 auto; }
+    .founder-photo.placeholder { font-size: 56px; }
+    .vertical-grid { grid-template-columns: 1fr; }
+  }
+
   /* TIMELINE */
   .timeline {
     position: relative;
@@ -682,16 +818,17 @@
 <div class="cover">
   <div class="cover-content">
     <div class="cover-badge">Foundation White Paper / v1.0</div>
-    <div class="brand-tagline">Youth &middot; Talent &middot; Global</div>
-    <h1>YTG</h1>
+    <div class="brand-tagline">Leadership &middot; Creativity &middot; Global</div>
+    <h1>VISIONARIUM</h1>
     <div class="cover-divider"></div>
-    <p class="lead">A bilingual AI-powered leadership and technology fellowship preparing Latin America's next generation for global impact.</p>
+    <p class="lead">A bilingual AI-powered leadership, creativity and technology fellowship preparing Latin America's next generation for global impact.</p>
     <p class="spanish-lead">Del talento latinoamericano al liderazgo global.</p>
     <div class="cover-meta">
-      <div><strong>Founded by</strong> Lala &amp; Manuel Stagg</div>
-      <div><strong>Founding Technology Sponsor</strong> Digit2ai</div>
-      <div><strong>Headquarters</strong> Miami, Florida</div>
-      <div><strong>First Cohort</strong> Fall 2026</div>
+      <div><strong>Founded by</strong> Maria Clara Garcia</div>
+      <div><strong>Operating since</strong> 2015 &middot; New York</div>
+      <div><strong>Founding Technology Sponsor</strong> Digit2ai &middot; Manuel Stagg</div>
+      <div><strong>New Headquarters</strong> Miami, Florida</div>
+      <div><strong>First Formalized Cohort</strong> Fall 2026</div>
     </div>
   </div>
 </div>
@@ -724,13 +861,15 @@
     <h2>Executive Summary</h2>
   </div>
 
-  <p class="lead">Youth Talent Global (YTG) is a foundation dedicated to identifying, developing, and launching the next generation of Latin American leaders in artificial intelligence and emerging technology.</p>
+  <p class="lead">Visionarium is a foundation dedicated to identifying, developing, and launching the next generation of Latin American leaders in artificial intelligence, creativity, and emerging technology.</p>
 
-  <p>We combine three things that no existing program combines: (1) a selective, cohort-based fellowship model inspired by the best startup accelerators; (2) a bilingual leadership and soft-skills formation that prepares fellows for the US and global arenas; and (3) a native AI mentor layer that gives every fellow a 24/7 personal coach from day one.</p>
+  <p>Founded in 2015 by Maria Clara Garcia as a Leadership and Creativity incubator in New York for high school and college students from Latin America, Visionarium now enters its formalization phase: structured as a foundation, expanded with a Miami headquarters, and re-launched with a native AI technology layer that makes personalized bilingual mentorship available to every fellow.</p>
 
-  <p>Our inaugural cohort launches in Fall 2026 from Miami &mdash; the natural gateway between Latin America and the United States &mdash; with 40 fellows selected from across the region. The program is fully sponsor-funded and free for fellows. In-kind technology is provided by Digit2ai, the platform company behind RinglyPro CRM and multiple AI voice systems deployed at scale.</p>
+  <p>We combine three things that no existing program combines: (1) a selective, cohort-based fellowship model inspired by the best startup accelerators; (2) a bilingual leadership, creativity, and soft-skills formation that prepares fellows for the US and global arenas; and (3) a native AI mentor layer that gives every fellow a 24/7 personal coach from day one.</p>
 
-  <h3>What YTG Is</h3>
+  <p>Our first formalized cohort under the foundation structure launches in Fall 2026 from Miami &mdash; the natural gateway between Latin America and the United States &mdash; with 40 fellows selected from across the region. The program is fully sponsor-funded and free for fellows. In-kind technology is provided by Digit2ai, the platform company founded by Manuel Stagg behind the RinglyPro CRM ecosystem and multiple AI voice systems deployed at scale.</p>
+
+  <h3>What Visionarium Is</h3>
   <ul>
     <li><strong>A fellowship, not a school.</strong> Nine months, 40 fellows, one city to start, application-based, deeply selective.</li>
     <li><strong>A bilingual program, not a translated one.</strong> English and Spanish are equal operating languages from day one.</li>
@@ -739,7 +878,7 @@
   </ul>
 
   <h3>Why This Matters Now</h3>
-  <p>Latin America holds the largest pool of ambitious, underleveraged young talent in the Western Hemisphere. The US economy is starved for bilingual technology leadership. Artificial intelligence has collapsed the cost of personalized mentorship by an order of magnitude. No existing institution has stitched these three forces together. YTG is that institution.</p>
+  <p>Latin America holds the largest pool of ambitious, underleveraged young talent in the Western Hemisphere. The US economy is starved for bilingual technology leadership. Artificial intelligence has collapsed the cost of personalized mentorship by an order of magnitude. No existing institution has stitched these three forces together. Visionarium is that institution.</p>
 </section>
 
 <!-- ============ CHAPTER 2 ============ -->
@@ -780,16 +919,16 @@
   <h3>The AI Inflection</h3>
   <p>For the first time in human history, personalized mentorship &mdash; once available only to the children of the elite &mdash; can be delivered at scale. A well-designed AI mentor can give a high-potential 17-year-old in Cali, Colombia, the kind of daily feedback, practice, and encouragement that previously required a private tutor in Manhattan.</p>
 
-  <p>This is not a future trend. The technology exists today. What is missing is an institution that wraps it in a selective, credentialed, human-mentored program. YTG is that wrapper.</p>
+  <p>This is not a future trend. The technology exists today. What is missing is an institution that wraps it in a selective, credentialed, human-mentored program. Visionarium is that wrapper.</p>
 
   <h3>The Bilingual Leadership Gap</h3>
-  <p>US technology companies are increasingly desperate for bilingual English/Spanish leadership talent &mdash; not just engineers, but product managers, founders, operators. Meanwhile, LATAM's best young minds overwhelmingly build in Spanish, for local markets, often without a credible bridge to Silicon Valley, Miami, New York, or Austin. YTG builds that bridge, cohort by cohort.</p>
+  <p>US technology companies are increasingly desperate for bilingual English/Spanish leadership talent &mdash; not just engineers, but product managers, founders, operators. Meanwhile, LATAM's best young minds overwhelmingly build in Spanish, for local markets, often without a credible bridge to Silicon Valley, Miami, New York, or Austin. Visionarium builds that bridge, cohort by cohort.</p>
 
   <div class="pullquote">
     <p>The scarcest resource in the US technology economy over the next decade will not be capital or compute. It will be bilingual leaders who can operate fluently across the Americas.
       <span class="spanish">El recurso mas escaso de la economia tecnologica estadounidense en la proxima decada no sera el capital ni el computo. Sera el liderazgo bilingue capaz de operar con fluidez en las Americas.</span>
     </p>
-    <cite>YTG Thesis Statement</cite>
+    <cite>Visionarium Thesis Statement</cite>
   </div>
 </section>
 
@@ -801,7 +940,7 @@
   </div>
 
   <h3>Vision</h3>
-  <p class="lead">By 2035, Youth Talent Global will have developed 10,000 bilingual technology and leadership fellows across the Americas &mdash; a recognizable alumni network whose graduates hold leadership roles in the companies, institutions, and ventures shaping the bilingual future.</p>
+  <p class="lead">By 2035, Visionarium will have developed 10,000 bilingual technology and leadership fellows across the Americas &mdash; a recognizable alumni network whose graduates hold leadership roles in the companies, institutions, and ventures shaping the bilingual future.</p>
 
   <h3>Mission</h3>
   <p>To identify, develop, and launch the next generation of Latin American leaders in artificial intelligence and emerging technology &mdash; through a selective, bilingual, AI-native fellowship that combines technology mastery, leadership formation, and direct access to global opportunities.</p>
@@ -848,13 +987,13 @@
     <h2>Competitive Landscape</h2>
   </div>
 
-  <p class="lead">A serious foundation begins by telling the truth about who is already working on the problem. YTG's wedge is not that no one has tried. It is that no one has combined our three elements.</p>
+  <p class="lead">A serious foundation begins by telling the truth about who is already working on the problem. Visionarium's wedge is not that no one has tried. It is that no one has combined our three elements.</p>
 
   <h3>Organizations Working Adjacent to This Space</h3>
 
   <table class="tbl">
     <thead>
-      <tr><th>Organization</th><th>Focus</th><th>What's Missing vs. YTG</th></tr>
+      <tr><th>Organization</th><th>Focus</th><th>What's Missing vs. Visionarium</th></tr>
     </thead>
     <tbody>
       <tr><td class="tier-name">The Knowledge Society (TKS)</td><td>Emerging tech for teens, North America</td><td>English only. Not LATAM-focused. No bilingual operating layer.</td></tr>
@@ -868,7 +1007,7 @@
     </tbody>
   </table>
 
-  <h3>The Gap YTG Fills</h3>
+  <h3>The Gap Visionarium Fills</h3>
   <p>No existing organization combines all four of the following simultaneously:</p>
   <ol>
     <li><strong>LATAM-to-global talent pipeline</strong> with Miami as the operational gateway</li>
@@ -879,7 +1018,7 @@
 
   <div class="callout callout-coral">
     <h4>The Wedge</h4>
-    <p>YTG is the first foundation built specifically to convert Latin America's highest-potential youth into the bilingual technology leaders the US and global economies are starved for &mdash; using AI to make the formation process 10x more intimate and 10x more scalable than any predecessor.</p>
+    <p>Visionarium is the first foundation built specifically to convert Latin America's highest-potential youth into the bilingual technology leaders the US and global economies are starved for &mdash; using AI to make the formation process 10x more intimate and 10x more scalable than any predecessor.</p>
   </div>
 </section>
 
@@ -890,7 +1029,7 @@
     <h2>The Fellowship Model</h2>
   </div>
 
-  <p class="lead">YTG fellows commit to a nine-month program that transforms ambition into capability, capability into execution, and execution into opportunity.</p>
+  <p class="lead">Visionarium fellows commit to a nine-month program that transforms ambition into capability, capability into execution, and execution into opportunity.</p>
 
   <h3>Cohort Design</h3>
   <ul>
@@ -947,7 +1086,7 @@
     <h2>Ecosystem Architecture</h2>
   </div>
 
-  <p class="lead">YTG's platform is built on a multi-tenant architecture that serves the foundation today and scales to an institution tomorrow. Eight layers, one system, two modes of operation.</p>
+  <p class="lead">Visionarium's platform is built on a multi-tenant architecture that serves the foundation today and scales to an institution tomorrow. Eight layers, one system, two modes of operation.</p>
 
   <div class="layer-stack">
     <div class="layer">
@@ -1010,7 +1149,7 @@
 
   <div class="callout">
     <h4>Dual-Mode Design Principle</h4>
-    <p>95% of the platform is shared between foundation and institution modes. Only the money layer, admissions flow, and reporting surface change. This means the same technology stack that launches the free YTG Fellowship in 2026 can power a tuition-based or government-funded YTG Institute in 2030 without a rebuild.</p>
+    <p>95% of the platform is shared between foundation and institution modes. Only the money layer, admissions flow, and reporting surface change. This means the same technology stack that launches the free Visionarium Fellowship in 2026 can power a tuition-based or government-funded Visionarium Institute in 2030 without a rebuild.</p>
   </div>
 </section>
 
@@ -1021,12 +1160,12 @@
     <h2>Lina Mentor &mdash; The AI Differentiator</h2>
   </div>
 
-  <p class="lead">Lina is the difference between YTG and every other youth program in the world. She is not a feature. She is a founding team member.</p>
+  <p class="lead">Lina is the difference between Visionarium and every other youth program in the world. She is not a feature. She is a founding team member.</p>
 
   <h3>What Lina Is</h3>
-  <p>Lina is YTG's native AI mentor &mdash; a voice-and-chat bilingual coach assigned to every fellow from the moment they enroll. She is built on Digit2ai's production voice AI platform, the same infrastructure behind the RinglyPro ecosystem's voice agents serving thousands of users daily.</p>
+  <p>Lina is Visionarium's native AI mentor &mdash; a voice-and-chat bilingual coach assigned to every fellow from the moment they enroll. She is built on Digit2ai's production voice AI platform, the same infrastructure behind the RinglyPro ecosystem's voice agents serving thousands of users daily.</p>
 
-  <p>Lina is not a generic assistant. She is purpose-built as a YTG mentor: trained on YTG curriculum, tuned to the three pillars, aware of each fellow's goals and progress, and held to a mentorship persona designed by Lala and the program staff.</p>
+  <p>Lina is not a generic assistant. She is purpose-built as a Visionarium mentor: trained on Visionarium curriculum, tuned to the three pillars, aware of each fellow's goals and progress, and held to a mentorship persona designed by Lala and the program staff.</p>
 
   <h3>What Lina Does for Fellows</h3>
   <ul>
@@ -1046,14 +1185,14 @@
   </ul>
 
   <div class="pullquote">
-    <p>Every fellow at Youth Talent Global has something most Ivy League undergraduates do not: a dedicated, bilingual, always-available mentor who knows their goals, their pace, and their name.
-      <span class="spanish">Cada becario de Youth Talent Global tiene algo que la mayoria de los estudiantes de la Ivy League no tiene: un mentor bilingue, dedicado y siempre disponible que conoce sus metas, su ritmo y su nombre.</span>
+    <p>Every fellow at Visionarium has something most Ivy League undergraduates do not: a dedicated, bilingual, always-available mentor who knows their goals, their pace, and their name.
+      <span class="spanish">Cada becario de Visionarium tiene algo que la mayoria de los estudiantes de la Ivy League no tiene: un mentor bilingue, dedicado y siempre disponible que conoce sus metas, su ritmo y su nombre.</span>
     </p>
-    <cite>YTG Design Principle</cite>
+    <cite>Visionarium Design Principle</cite>
   </div>
 
   <h3>Why This Is a Moat</h3>
-  <p>Any foundation can hire a curriculum designer and rent Zoom. Only a foundation whose technology sponsor is a production-grade AI company can offer a real bilingual AI mentor to every fellow from day one &mdash; with voice, with memory, with integration into the program's operational data. YTG does not pay for this capability on a per-seat SaaS basis. We own it, through Digit2ai, in-kind, valued as a founding in-kind contribution.</p>
+  <p>Any foundation can hire a curriculum designer and rent Zoom. Only a foundation whose technology sponsor is a production-grade AI company can offer a real bilingual AI mentor to every fellow from day one &mdash; with voice, with memory, with integration into the program's operational data. Visionarium does not pay for this capability on a per-seat SaaS basis. We own it, through Digit2ai, in-kind, valued as a founding in-kind contribution.</p>
 </section>
 
 <!-- ============ CHAPTER 8 ============ -->
@@ -1063,7 +1202,7 @@
     <h2>Outcomes Framework</h2>
   </div>
 
-  <p class="lead">Foundations fail when they measure activity instead of outcomes. YTG commits, from day one, to a public, quantitative impact framework that sponsors can audit.</p>
+  <p class="lead">Foundations fail when they measure activity instead of outcomes. Visionarium commits, from day one, to a public, quantitative impact framework that sponsors can audit.</p>
 
   <h3>What We Measure Per Cohort</h3>
   <table class="tbl">
@@ -1086,7 +1225,7 @@
   <p>A public Impact Report is published at the end of each cohort cycle, including anonymized fellow outcomes, sponsor attribution, financial transparency, and raw data downloads. Every sponsor receives a customized impact dossier showing their specific contribution and the fellows and outcomes their dollars supported.</p>
 
   <h3>Longitudinal Tracking</h3>
-  <p>YTG commits to tracking every fellow's career progress for ten years post-program, anonymized and aggregate-reported. This is the true measure: not what fellows achieve during the fellowship, but what they achieve with it.</p>
+  <p>Visionarium commits to tracking every fellow's career progress for ten years post-program, anonymized and aggregate-reported. This is the true measure: not what fellows achieve during the fellowship, but what they achieve with it.</p>
 </section>
 
 <!-- ============ CHAPTER 9 ============ -->
@@ -1098,11 +1237,103 @@
 
   <h3>Founders</h3>
 
-  <h4>Lala &mdash; Founder &amp; Program Director</h4>
-  <p>Lala is the founder of Youth Talent Global and the architect of its leadership formation pillar. Her vision for bilingual youth development across the Americas is the origin and driving force of the organization. [Biography to be completed for v1.1]</p>
+  <div class="founder-card">
+    <div class="founder-photo">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69df82addb7c222f714d3ff1.png" alt="Maria Clara Garcia">
+    </div>
+    <div class="founder-info">
+      <div class="founder-name">Maria Clara Garcia</div>
+      <div class="founder-role">Founder &amp; Program Director</div>
+      <div class="founder-contact">
+        <a href="tel:+16462098900">+1 (646) 209-8900</a> &middot;
+        <a href="mailto:lalag16@gmail.com">lalag16@gmail.com</a> &middot;
+        <a href="#">LinkedIn Profile</a>
+      </div>
 
-  <h4>Manuel Stagg &mdash; Founding Technology Sponsor</h4>
-  <p>Manuel Stagg is the founder of Digit2ai, a production AI platform company whose systems include the RinglyPro CRM ecosystem, multiple voice AI agents (Rachel, Ana, Lina), and multi-tenant educational platforms including Torna Idioma. As Founding Technology Sponsor, Digit2ai provides YTG's entire technical infrastructure in-kind, freeing every sponsor dollar for direct fellow impact.</p>
+      <p><strong>School Director and Teacher, Grades K&ndash;12.</strong> Founder of Visionarium (2015), a Leadership and Creativity incubator in New York for high school and college students from Latin America &mdash; the foundational program this white paper formalizes and scales.</p>
+
+      <p><em>"Committed to fostering student's self-respect, respect for others, and love of learning."</em></p>
+
+      <ul>
+        <li>Member of the Marymount School of Barranquilla Board of Trustees (2021 &ndash; Present)</li>
+        <li>Over 30 years of leadership in education across K&ndash;12 classroom, administration, and program direction</li>
+        <li>Founder and Director of COLMUN Bogot&aacute;, Cali, and Eje Cafetero (2009 &ndash; Present) &mdash; the only Model United Nations conference in the world designed for participants of different mindsets and abilities</li>
+        <li>Leader within UNACOLOMBIA, the United Nations Association of Colombia (2008 &ndash; Present)</li>
+        <li>Former Principal, Public Speaking Teacher, Sports Coordinator, and MUN Director at Colegio Marymount, Barranquilla</li>
+        <li>Former teacher at Colegio Nueva Granada, Bogot&aacute;</li>
+      </ul>
+
+      <h4 style="margin-top: 20px;">Core Competencies</h4>
+      <div>
+        <span class="founder-tag">Curriculum Design</span>
+        <span class="founder-tag">Differentiated Instruction</span>
+        <span class="founder-tag">Student Motivation</span>
+        <span class="founder-tag">Cooperative Learning</span>
+        <span class="founder-tag">Classroom Management</span>
+        <span class="founder-tag">Program Management</span>
+        <span class="founder-tag">Public Speaking</span>
+        <span class="founder-tag">Model UN Direction</span>
+        <span class="founder-tag">Parent &amp; Teacher Relationship</span>
+        <span class="founder-tag">Leadership Formation</span>
+      </div>
+
+      <h4 style="margin-top: 20px;">Education &amp; Credentials</h4>
+      <ul>
+        <li>The Reading and Writing Project, Columbia University, New York (2012)</li>
+        <li>Master in Education, Universidad del Norte, Barranquilla (2007)</li>
+        <li>Specialized in Childhood Education, Universidad del Norte, Barranquilla (2005)</li>
+        <li>Licenciatura en Ingl&eacute;s, Universidad del Atl&aacute;ntico, Barranquilla (2001)</li>
+        <li>Gerencia Educacional, Corporaci&oacute;n Educativa Del Litoral, Barranquilla (1999)</li>
+        <li>Diplomado: Estrategias Educativas en Ciencias Sociales, Universidad Sim&oacute;n Bol&iacute;var (2009)</li>
+        <li>Semillero de Investigadores &mdash; "Escuela y Creatividad", Universidad Sim&oacute;n Bol&iacute;var (2010)</li>
+        <li>Diplomado en Gerencia Educativa, Instituto Superior Pedag&oacute;gico "Jos&eacute; De La Luz y Caballero", Holgu&iacute;n, Cuba</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="founder-card">
+    <div class="founder-photo placeholder">MS</div>
+    <div class="founder-info">
+      <div class="founder-name">Manuel Stagg</div>
+      <div class="founder-role">Founding Technology Sponsor</div>
+      <div class="founder-contact">
+        <a href="https://digit2ai.com">digit2ai.com</a> &middot;
+        Tampa, Florida &middot;
+        <a href="#">LinkedIn Profile</a>
+      </div>
+
+      <p>Manuel Stagg is the founder and CEO of <strong>Digit2ai</strong>, a production artificial intelligence platform company headquartered in Tampa, Florida. Digit2ai builds and operates multi-tenant AI systems across voice, CRM, education, healthcare, logistics, and industrial analytics &mdash; serving thousands of users daily across the Americas.</p>
+
+      <p>As Founding Technology Sponsor, Digit2ai contributes Visionarium's entire technical infrastructure in-kind &mdash; including the Lina AI mentor layer, the fellow portal, the admissions platform, the sponsor dashboard, and ongoing platform engineering. This contribution frees every sponsor dollar for direct fellow impact.</p>
+
+      <h4 style="margin-top: 20px;">Digit2ai Platform &mdash; Production Verticals</h4>
+      <div class="vertical-grid">
+        <div class="vertical-item"><strong>RinglyPro CRM</strong>Multi-tenant voice AI CRM platform with Rachel, Ana, and Lina AI voice agents</div>
+        <div class="vertical-item"><strong>Store Health AI</strong>Real-time retail operations monitoring and intelligence dashboard</div>
+        <div class="vertical-item"><strong>Torna Idioma</strong>Bilingual language learning platform powering University of Makati SFL program</div>
+        <div class="vertical-item"><strong>MSK AI Imaging</strong>AI-powered musculoskeletal radiology analysis for orthopedic practices</div>
+        <div class="vertical-item"><strong>HISPATEC</strong>Hispanic professional network with MCP orchestrator and mathematical trust models</div>
+        <div class="vertical-item"><strong>TunjoRacing</strong>Motorsports CRM and press portal platform</div>
+        <div class="vertical-item"><strong>CW Carriers</strong>Freight and logistics intelligence ecosystem</div>
+        <div class="vertical-item"><strong>Pinaxis</strong>Warehouse and distribution analytics platform</div>
+        <div class="vertical-item"><strong>OEE Tracking Module</strong>Real-time shop floor monitoring for manufacturing tenants</div>
+        <div class="vertical-item"><strong>Visionarium</strong>Youth leadership and technology fellowship platform (in development, July 2026)</div>
+      </div>
+
+      <h4 style="margin-top: 20px;">Core Technology Capabilities</h4>
+      <div>
+        <span class="founder-tag">Multi-Tenant SaaS Architecture</span>
+        <span class="founder-tag">Voice AI Agents</span>
+        <span class="founder-tag">MCP Orchestration</span>
+        <span class="founder-tag">Bilingual NLP</span>
+        <span class="founder-tag">PostgreSQL at Scale</span>
+        <span class="founder-tag">Node.js Production Systems</span>
+        <span class="founder-tag">React SPA Frontends</span>
+        <span class="founder-tag">Real-Time Webhooks</span>
+        <span class="founder-tag">CI/CD Automation</span>
+      </div>
+    </div>
+  </div>
 
   <h3>Governance Structure</h3>
 
@@ -1114,7 +1345,7 @@
   </ul>
 
   <h3>Legal Structure</h3>
-  <p>YTG will operate as a US 501(c)(3) tax-exempt nonprofit foundation, with eventual Fundación equivalents established in priority LATAM jurisdictions to enable direct local fundraising and tax-deductible giving.</p>
+  <p>Visionarium will operate as a US 501(c)(3) tax-exempt nonprofit foundation, with eventual Fundación equivalents established in priority LATAM jurisdictions to enable direct local fundraising and tax-deductible giving.</p>
 </section>
 
 <!-- ============ CHAPTER 10 ============ -->
@@ -1124,7 +1355,7 @@
     <h2>Sponsor Model</h2>
   </div>
 
-  <p class="lead">YTG is fully sponsor-funded. Fellows pay nothing. Sponsors fund cohorts, programs, and named fellowships &mdash; and in return receive brand presence, talent pipeline access, impact attribution, and ESG/CSR reporting.</p>
+  <p class="lead">Visionarium is fully sponsor-funded. Fellows pay nothing. Sponsors fund cohorts, programs, and named fellowships &mdash; and in return receive brand presence, talent pipeline access, impact attribution, and ESG/CSR reporting.</p>
 
   <h3>Sponsor Tiers</h3>
   <table class="tbl">
@@ -1168,7 +1399,7 @@
     <div class="pillar">
       <div class="pillar-num">AUDIENCE &middot; 01</div>
       <h4>Miami Hispanic Family Foundations</h4>
-      <p>Multi-generational wealth with a mission to elevate the next generation of Latin leadership. Natural YTG patrons.</p>
+      <p>Multi-generational wealth with a mission to elevate the next generation of Latin leadership. Natural Visionarium patrons.</p>
     </div>
     <div class="pillar">
       <div class="pillar-num">AUDIENCE &middot; 02</div>
@@ -1215,7 +1446,7 @@
     <div class="timeline-item">
       <div class="date">July 2026</div>
       <div class="event">Technology ecosystem ready.</div>
-      <div class="detail">Full YTG platform live: fellow portal, Lina Mentor AI layer, application flow, admin console, and sponsor dashboard. Built on Digit2ai's production infrastructure and ready to receive Cohort 1.</div>
+      <div class="detail">Full Visionarium platform live: fellow portal, Lina Mentor AI layer, application flow, admin console, and sponsor dashboard. Built on Digit2ai's production infrastructure and ready to receive Cohort 1.</div>
     </div>
     <div class="timeline-item">
       <div class="date">Q3 2026</div>
@@ -1239,7 +1470,7 @@
     </div>
     <div class="timeline-item">
       <div class="date">2029 &ndash; 2030</div>
-      <div class="event">YTG Institute launches. Dual-mode platform activated.</div>
+      <div class="event">Visionarium Institute launches. Dual-mode platform activated.</div>
       <div class="detail">Credentialed institution arm begins accepting students on tuition and government-subsidized models. Foundation fellowship continues at full scale in parallel.</div>
     </div>
     <div class="timeline-item">
@@ -1257,7 +1488,7 @@
     <h2>Call to Action</h2>
   </div>
 
-  <p class="lead">Youth Talent Global will succeed or fail based on who joins in its founding year. We are actively seeking three kinds of partners.</p>
+  <p class="lead">Visionarium will succeed or fail based on who joins in its founding year. We are actively seeking three kinds of partners.</p>
 
   <h3>Founding Sponsors</h3>
   <p>We seek three to five founding-tier sponsors to underwrite Cohort 1. If you represent a family foundation, a corporate CSR program, or an institutional funder aligned with bilingual youth leadership development, we invite a conversation.</p>
@@ -1279,10 +1510,10 @@
 <!-- ============ FOOTER ============ -->
 <div class="footer">
   <h2>Be Part of the Founding Class.</h2>
-  <p>Youth Talent Global is not yet a famous institution. It is a founding idea and a small team of committed people. If that is compelling rather than disqualifying, you are the kind of partner we seek.</p>
+  <p>Visionarium has spent a decade quietly incubating leadership and creativity in Latin American youth from New York. Now we are formalizing as a foundation, relocating our headquarters to Miami, and adding the AI technology layer that will scale what already works. The partners who join this formalization year will be remembered for a generation.</p>
   <a href="#" class="footer-cta">Request an Introduction</a>
   <div class="footer-meta">
-    Youth Talent Global Foundation &middot; White Paper v1.0 &middot; Miami, Florida &middot; 2026
+    Visionarium Foundation &middot; White Paper v1.0 &middot; Est. 2015, New York &middot; Miami, Florida &middot; 2026
   </div>
 </div>
 
