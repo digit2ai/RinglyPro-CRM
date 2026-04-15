@@ -23,6 +23,8 @@ const INTENT_PATTERNS = [
   { pattern: /^(show|list|see|view)\s+(all\s+|my\s+)?critical\s+projects/i, intent: 'high_priority_projects' },
   { pattern: /^(create|add|new|start|begin|launch)\s+(a\s+)?project/i, intent: 'create_project' },
   { pattern: /^(show|list|get|find|see|view|open)\s+(all\s+|my\s+)?projects/i, intent: 'list_projects' },
+  { pattern: /^(change|update|set|move)\s+(project\s+)?(.+?)\s+(?:project\s+)?(?:due\s+date|deadline|due)\s+(?:to|=)\s+(.+)/i, intent: 'update_project_due_date' },
+  { pattern: /^(change|update|set)\s+(?:the\s+)?(?:due\s+date|deadline|due)\s+(?:of|for)\s+(?:project\s+)?(.+?)\s+(?:to|=)\s+(.+)/i, intent: 'update_project_due_date' },
   { pattern: /^(move|change|update|set)\s+(project\s+)?(.+?)\s+to\s+(.+)/i, intent: 'update_project_status' },
   { pattern: /^(summarize|summary|overview)\s+(of\s+)?(high[\s-]?priority\s+)?projects/i, intent: 'summarize_projects' },
   { pattern: /^what\s+projects?\s+(are\s+)?overdue/i, intent: 'overdue_projects' },
@@ -157,6 +159,35 @@ function extractEntities(text) {
   if (phoneMatch && phoneMatch[0].replace(/\D/g, '').length >= 7) entities.phone = phoneMatch[0];
 
   return entities;
+}
+
+// Parse a free-form date string ("July 15", "July 15 2026", "7/15", "2026-07-15") into ISO date
+function parseDateFreeform(s) {
+  if (!s) return null;
+  const cleaned = s.trim().replace(/[.,]/g, '').toLowerCase();
+  const months = { january:1,february:2,march:3,april:4,may:5,june:6,july:7,august:8,september:9,october:10,november:11,december:12,jan:1,feb:2,mar:3,apr:4,jun:6,jul:7,aug:8,sep:9,sept:9,oct:10,nov:11,dec:12 };
+  // Already ISO
+  let m = cleaned.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (m) return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
+  // M/D or M/D/YYYY
+  m = cleaned.match(/^(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?$/);
+  if (m) {
+    const yr = m[3] ? (m[3].length === 2 ? 2000 + parseInt(m[3]) : parseInt(m[3])) : new Date().getFullYear();
+    return `${yr}-${String(m[1]).padStart(2,'0')}-${String(m[2]).padStart(2,'0')}`;
+  }
+  // "Month Day Year" or "Month Day"
+  m = cleaned.match(/^([a-z]+)\s+(\d{1,2})(?:\s+(\d{2,4}))?$/);
+  if (m && months[m[1]]) {
+    const yr = m[3] ? (m[3].length === 2 ? 2000 + parseInt(m[3]) : parseInt(m[3])) : new Date().getFullYear();
+    return `${yr}-${String(months[m[1]]).padStart(2,'0')}-${String(m[2]).padStart(2,'0')}`;
+  }
+  // "Day of Month [Year]"
+  m = cleaned.match(/^(\d{1,2})\s+(?:of\s+)?([a-z]+)(?:\s+(\d{2,4}))?$/);
+  if (m && months[m[2]]) {
+    const yr = m[3] ? (m[3].length === 2 ? 2000 + parseInt(m[3]) : parseInt(m[3])) : new Date().getFullYear();
+    return `${yr}-${String(months[m[2]]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`;
+  }
+  return null;
 }
 
 // Detect intent from text
@@ -333,6 +364,30 @@ async function executeCommand(inputText, userEmail) {
         response = projects.length > 0
           ? `${projects.length} high-priority project${projects.length > 1 ? 's' : ''}:\n` + projects.map(p => `  - ${p.name} [${p.priority}] ${p.status} ${p.due_date ? '(due: ' + p.due_date + ')' : ''}`).join('\n')
           : 'No high-priority projects right now.';
+        break;
+      }
+
+      case 'update_project_due_date': {
+        // Pattern A: change [project] X due date to Y -> match[3]=name, match[4]=date
+        // Pattern B: change due date of X to Y     -> match[2]=name, match[3]=date
+        let targetName = match && (match[3] || match[2]) ? (match[4] ? match[3] : match[2]).trim() : null;
+        const dateStr = match && (match[4] || match[3]) ? (match[4] || match[3]).trim() : null;
+        if (targetName) targetName = targetName.replace(/\s+(project|due\s+date|deadline|due)\s*$/i, '').trim();
+        const isoDate = parseDateFreeform(dateStr);
+        if (!targetName || !isoDate) {
+          response = `I need a project name and a date. Try: "change Visionarium due date to July 15" or "set the deadline of KanchoAI to 2026-08-01".`;
+          break;
+        }
+        const project = await Project.findOne({ where: { workspace_id: 1, name: { [Op.iLike]: `%${targetName}%` } } });
+        if (!project) {
+          response = `I couldn't find a project matching "${targetName}". Try "show projects" to see your project names.`;
+          break;
+        }
+        const oldDue = project.due_date;
+        await project.update({ due_date: isoDate });
+        await logActivity(userEmail, 'due_date_changed', 'project', project.id, project.name, { from: oldDue, to: isoDate, via: 'nlp' });
+        data = project;
+        response = `Done! Due date for "${project.name}" is now ${isoDate}${oldDue ? ` (was ${oldDue})` : ''}.`;
         break;
       }
 

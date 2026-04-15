@@ -1792,7 +1792,7 @@ async function showProjectDetail(id) {
           ${p.code ? `<p style="color:var(--text-muted);font-size:13px">${p.code}</p>` : ''}
         </div>
         <div style="display:flex;gap:8px">
-          <button class="btn btn-ghost btn-sm" onclick='openProjectModal(${JSON.stringify(p).replace(/"/g,"&quot;")})'>Edit</button>
+          <button class="btn btn-ghost btn-sm" onclick='openProjectModal(${JSON.stringify(p).replace(/"/g,"&quot;").replace(/'/g,"&#39;")})'>Edit</button>
           <button class="btn btn-danger btn-sm" onclick="archiveProject(${p.id})">Archive</button>
         </div>
       </div>
