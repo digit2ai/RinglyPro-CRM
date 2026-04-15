@@ -43,10 +43,11 @@ app.use(express.urlencoded({ extended: true, limit: '500mb' }));
 app.use((req, res, next) => {
   const host = (req.get('host') || '').toLowerCase();
   if (host === 'visionarium.app' || host === 'www.visionarium.app') {
-    if (req.path === '/' || req.path === '') {
-      req.url = '/youth-talent-global/whitepaper.html';
-    } else if (req.path === '/es' || req.path === '/es/') {
-      req.url = '/youth-talent-global/whitepaper-es.html';
+    const p = req.path;
+    if (p === '/' || p === '' || p === '/whitepaper.html' || p === '/en' || p === '/en/') {
+      req.url = '/youth-talent-global/whitepaper.html' + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '');
+    } else if (p === '/whitepaper-es.html' || p === '/es' || p === '/es/') {
+      req.url = '/youth-talent-global/whitepaper-es.html' + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '');
     }
   }
   next();
