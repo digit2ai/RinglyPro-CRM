@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Youth Talent Global -- Foundation White Paper v1.0</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --navy: #0f1729;
+    --navy-light: #1e293b;
+    --navy-dark: #060b18;
+    --coral: #ef6c57;
+    --coral-dark: #c94a38;
+    --coral-light: #fde4de;
+    --gold: #d4a574;
+    --gold-dark: #a07a4c;
+    --gold-light: #f5ead6;
+    --blue: #2563eb;
+    --blue-light: #dbeafe;
+    --cream: #fafaf7;
+    --white: #ffffff;
+    --gray-50: #f8f9fa;
+    --gray-100: #f1f3f5;
+    --gray-200: #e9ecef;
+    --gray-300: #dee2e6;
+    --gray-500: #6c757d;
+    --gray-700: #374151;
+    --gray-900: #111827;
+    --green: #059669;
+    --red: #dc2626;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Source Serif 4', Georgia, serif;
+    color: var(--gray-900);
+    background: var(--cream);
+    line-height: 1.7;
+    font-size: 16px;
+  }
+
+  /* COVER PAGE */
+  .cover {
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy) 55%, var(--navy-light) 100%);
+    color: var(--white);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 60px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d4a574' fill-opacity='0.04'%3E%3Ccircle cx='40' cy='40' r='1'/%3E%3Ccircle cx='10' cy='10' r='1'/%3E%3Ccircle cx='70' cy='70' r='1'/%3E%3Ccircle cx='10' cy='70' r='1'/%3E%3Ccircle cx='70' cy='10' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    opacity: 1;
+  }
+
+  .cover::after {
+    content: '';
+    position: absolute;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(239,108,87,0.15) 0%, transparent 70%);
+    top: -150px; right: -150px;
+    filter: blur(40px);
+  }
+
+  .cover-content { position: relative; z-index: 1; max-width: 860px; }
+
+  .cover-badge {
+    display: inline-block;
+    background: rgba(212,165,116,0.12);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    padding: 8px 24px;
+    border-radius: 30px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    margin-bottom: 48px;
+  }
+
+  .cover h1 {
+    font-family: 'Inter', sans-serif;
+    font-size: 88px;
+    font-weight: 900;
+    letter-spacing: -3px;
+    line-height: 1;
+    margin-bottom: 16px;
+    background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .cover .brand-tagline {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 8px;
+    text-transform: uppercase;
+    color: var(--coral);
+    margin-bottom: 48px;
+  }
+
+  .cover .lead {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 26px;
+    font-weight: 400;
+    line-height: 1.45;
+    color: rgba(255,255,255,0.9);
+    margin-bottom: 32px;
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .cover .spanish-lead {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-style: italic;
+    font-size: 19px;
+    color: var(--gold);
+    margin-bottom: 64px;
+  }
+
+  .cover-divider {
+    width: 80px; height: 2px;
+    background: var(--coral);
+    margin: 40px auto;
+  }
+
+  .cover-meta {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+    line-height: 2.2;
+  }
+
+  .cover-meta strong {
+    color: var(--white);
+    font-weight: 600;
+  }
+
+  /* CONTAINER */
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 80px 60px;
+    background: var(--cream);
+  }
+
+  /* TOC */
+  .toc {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-left: 4px solid var(--coral);
+    padding: 48px 56px;
+    margin-bottom: 80px;
+    box-shadow: 0 2px 20px rgba(15,23,41,0.04);
+  }
+
+  .toc h2 {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--coral);
+    margin-bottom: 32px;
+  }
+
+  .toc ol {
+    list-style: none;
+    counter-reset: toc;
+  }
+
+  .toc li {
+    counter-increment: toc;
+    padding: 14px 0;
+    border-bottom: 1px dashed var(--gray-200);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    color: var(--gray-700);
+    display: flex;
+    align-items: baseline;
+  }
+
+  .toc li::before {
+    content: counter(toc, decimal-leading-zero);
+    font-weight: 700;
+    color: var(--navy);
+    margin-right: 20px;
+    min-width: 32px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+  }
+
+  .toc li:last-child { border-bottom: none; }
+
+  /* CHAPTERS */
+  .chapter {
+    margin-bottom: 96px;
+    scroll-margin-top: 40px;
+  }
+
+  .chapter-header {
+    display: flex;
+    align-items: baseline;
+    gap: 24px;
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--navy);
+  }
+
+  .chapter-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--coral);
+    letter-spacing: 2px;
+  }
+
+  .chapter h2 {
+    font-family: 'Inter', sans-serif;
+    font-size: 40px;
+    font-weight: 800;
+    letter-spacing: -1.2px;
+    color: var(--navy);
+    line-height: 1.15;
+  }
+
+  .chapter h3 {
+    font-family: 'Inter', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-top: 40px;
+    margin-bottom: 16px;
+    letter-spacing: -0.3px;
+  }
+
+  .chapter h4 {
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--coral-dark);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-top: 32px;
+    margin-bottom: 12px;
+  }
+
+  .chapter p {
+    margin-bottom: 20px;
+    color: var(--gray-700);
+    font-size: 17px;
+  }
+
+  .chapter p.lead {
+    font-size: 21px;
+    line-height: 1.6;
+    color: var(--gray-900);
+    font-weight: 400;
+    margin-bottom: 32px;
+  }
+
+  .chapter ul, .chapter ol {
+    margin-bottom: 20px;
+    padding-left: 24px;
+    color: var(--gray-700);
+  }
+
+  .chapter li {
+    margin-bottom: 10px;
+    font-size: 16.5px;
+  }
+
+  .chapter strong { color: var(--navy); font-weight: 600; }
+
+  /* PULL QUOTES */
+  .pullquote {
+    background: var(--navy);
+    color: var(--white);
+    padding: 48px 56px;
+    margin: 48px 0;
+    position: relative;
+    border-left: 6px solid var(--coral);
+  }
+
+  .pullquote::before {
+    content: '"';
+    position: absolute;
+    top: 0; left: 24px;
+    font-size: 120px;
+    font-family: 'Source Serif 4', serif;
+    color: var(--coral);
+    opacity: 0.2;
+    line-height: 1;
+  }
+
+  .pullquote p {
+    font-family: 'Source Serif 4', serif;
+    font-size: 24px;
+    font-style: italic;
+    color: var(--white);
+    line-height: 1.4;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .pullquote .spanish {
+    display: block;
+    font-size: 17px;
+    color: var(--gold);
+    margin-top: 20px;
+    font-style: italic;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.15);
+  }
+
+  .pullquote cite {
+    display: block;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-style: normal;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-top: 24px;
+  }
+
+  /* STATS GRID */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin: 40px 0;
+  }
+
+  .stat-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-top: 4px solid var(--coral);
+    padding: 28px;
+    transition: transform 0.2s;
+  }
+
+  .stat-card .number {
+    font-family: 'Inter', sans-serif;
+    font-size: 44px;
+    font-weight: 800;
+    color: var(--navy);
+    letter-spacing: -1.5px;
+    line-height: 1;
+    margin-bottom: 10px;
+  }
+
+  .stat-card .label {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray-500);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .stat-card .source {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: var(--gray-500);
+    font-style: italic;
+  }
+
+  /* PILLAR BLOCKS */
+  .pillars {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 32px 0;
+  }
+
+  .pillar {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    padding: 28px 24px;
+    position: relative;
+  }
+
+  .pillar .pillar-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--coral);
+    font-weight: 600;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+  }
+
+  .pillar h4 {
+    font-family: 'Inter', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--navy);
+    margin: 0 0 12px 0;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  .pillar p {
+    font-size: 14.5px;
+    color: var(--gray-700);
+    margin: 0;
+    line-height: 1.55;
+  }
+
+  /* ARCHITECTURE DIAGRAM */
+  .layer-stack {
+    margin: 40px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .layer {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-left: 5px solid var(--coral);
+    padding: 20px 28px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .layer-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--navy);
+    min-width: 48px;
+  }
+
+  .layer-body { flex: 1; }
+
+  .layer-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 4px;
+  }
+
+  .layer-desc {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: var(--gray-700);
+    line-height: 1.5;
+  }
+
+  /* TABLES */
+  .tbl {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 32px 0;
+    font-family: 'Inter', sans-serif;
+    font-size: 14.5px;
+    background: var(--white);
+  }
+
+  .tbl thead th {
+    background: var(--navy);
+    color: var(--white);
+    text-align: left;
+    padding: 14px 18px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    font-size: 13px;
+    text-transform: uppercase;
+  }
+
+  .tbl tbody td {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--gray-200);
+    color: var(--gray-700);
+    vertical-align: top;
+  }
+
+  .tbl tbody tr:nth-child(even) { background: var(--gray-50); }
+
+  .tbl tbody tr:hover { background: var(--coral-light); }
+
+  .tbl .tier-name { font-weight: 700; color: var(--navy); }
+
+  /* CALLOUT */
+  .callout {
+    background: var(--gold-light);
+    border-left: 4px solid var(--gold);
+    padding: 24px 28px;
+    margin: 32px 0;
+  }
+
+  .callout h4 {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gold-dark);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+  }
+
+  .callout p {
+    margin: 0;
+    color: var(--gray-900);
+    font-size: 15.5px;
+  }
+
+  .callout-coral {
+    background: var(--coral-light);
+    border-left-color: var(--coral);
+  }
+
+  .callout-coral h4 { color: var(--coral-dark); }
+
+  /* TIMELINE */
+  .timeline {
+    position: relative;
+    padding-left: 32px;
+    margin: 32px 0;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: var(--coral);
+  }
+
+  .timeline-item {
+    position: relative;
+    padding-bottom: 28px;
+  }
+
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -31px;
+    top: 6px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--white);
+    border: 3px solid var(--coral);
+  }
+
+  .timeline-item .date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--coral);
+    font-weight: 600;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+
+  .timeline-item .event {
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--navy);
+    margin-bottom: 4px;
+  }
+
+  .timeline-item .detail {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: var(--gray-700);
+    line-height: 1.55;
+  }
+
+  /* FOOTER */
+  .footer {
+    background: var(--navy);
+    color: var(--white);
+    padding: 80px 60px 60px;
+    text-align: center;
+  }
+
+  .footer h2 {
+    font-family: 'Inter', sans-serif;
+    font-size: 36px;
+    font-weight: 800;
+    margin-bottom: 16px;
+    letter-spacing: -1px;
+  }
+
+  .footer p {
+    font-family: 'Source Serif 4', serif;
+    font-size: 18px;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 40px;
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+  }
+
+  .footer-cta {
+    display: inline-block;
+    background: var(--coral);
+    color: var(--white);
+    padding: 16px 40px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: 2px;
+    transition: background 0.2s;
+  }
+
+  .footer-cta:hover { background: var(--coral-dark); }
+
+  .footer-meta {
+    margin-top: 64px;
+    padding-top: 32px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .cover h1 { font-size: 56px; }
+    .cover .lead { font-size: 19px; }
+    .container { padding: 48px 24px; }
+    .toc { padding: 32px 28px; }
+    .chapter h2 { font-size: 28px; }
+    .chapter p.lead { font-size: 17px; }
+    .stats-grid { grid-template-columns: 1fr; }
+    .pillars { grid-template-columns: 1fr; }
+    .pullquote { padding: 32px 28px; }
+    .pullquote p { font-size: 19px; }
+    .footer { padding: 48px 24px; }
+    .footer h2 { font-size: 24px; }
+    .tbl { font-size: 13px; }
+    .tbl thead th, .tbl tbody td { padding: 10px 12px; }
+  }
+
+  @media print {
+    body { background: white; }
+    .cover { page-break-after: always; min-height: auto; padding: 100px 40px; }
+    .chapter { page-break-inside: avoid; }
+    .footer { page-break-before: always; }
+  }
+
+</style>
+</head>
+<body>
+
+<!-- ============ COVER ============ -->
+<div class="cover">
+  <div class="cover-content">
+    <div class="cover-badge">Foundation White Paper / v1.0</div>
+    <div class="brand-tagline">Youth &middot; Talent &middot; Global</div>
+    <h1>YTG</h1>
+    <div class="cover-divider"></div>
+    <p class="lead">A bilingual AI-powered leadership and technology fellowship preparing Latin America's next generation for global impact.</p>
+    <p class="spanish-lead">Del talento latinoamericano al liderazgo global.</p>
+    <div class="cover-meta">
+      <div><strong>Founded by</strong> Lala &amp; Manuel Stagg</div>
+      <div><strong>Founding Technology Sponsor</strong> Digit2ai</div>
+      <div><strong>Headquarters</strong> Miami, Florida</div>
+      <div><strong>First Cohort</strong> Fall 2026</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TOC ============ -->
+<div class="container">
+
+<div class="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li>Executive Summary</li>
+    <li>The Opportunity &mdash; Why LATAM Youth, Why Now</li>
+    <li>Vision, Mission &amp; Operating Values</li>
+    <li>Competitive Landscape &mdash; What Exists, What's Missing</li>
+    <li>The Fellowship Model</li>
+    <li>Ecosystem Architecture &mdash; The Eight Layers</li>
+    <li>Lina Mentor &mdash; The AI Differentiator</li>
+    <li>Outcomes Framework &amp; Impact Measurement</li>
+    <li>Founding Team &amp; Governance</li>
+    <li>Sponsor Model</li>
+    <li>Roadmap &amp; Vision Through 2035</li>
+    <li>Call to Action</li>
+  </ol>
+</div>
+
+<!-- ============ CHAPTER 1 ============ -->
+<section class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-number">01</div>
+    <h2>Executive Summary</h2>
+  </div>
+
+  <p class="lead">Youth Talent Global (YTG) is a foundation dedicated to identifying, developing, and launching the next generation of Latin American leaders in artificial intelligence and emerging technology.</p>
+
+  <p>We combine three things that no existing program combines: (1) a selective, cohort-based fellowship model inspired by the best startup accelerators; (2) a bilingual leadership and soft-skills formation that prepares fellows for the US and global arenas; and (3) a native AI mentor layer that gives every fellow a 24/7 personal coach from day one.</p>
+
+  <p>Our inaugural cohort launches in Fall 2026 from Miami &mdash; the natural gateway between Latin America and the United States &mdash; with 40 fellows selected from across the region. The program is fully sponsor-funded and free for fellows. In-kind technology is provided by Digit2ai, the platform company behind RinglyPro CRM and multiple AI voice systems deployed at scale.</p>
+
+  <h3>What YTG Is</h3>
+  <ul>
+    <li><strong>A fellowship, not a school.</strong> Nine months, 40 fellows, one city to start, application-based, deeply selective.</li>
+    <li><strong>A bilingual program, not a translated one.</strong> English and Spanish are equal operating languages from day one.</li>
+    <li><strong>A talent ecosystem, not a course catalog.</strong> We don't sell content. We build the pipeline from talent, through skill, into real work and real opportunity.</li>
+    <li><strong>An AI-native organization, not an AI-enabled one.</strong> Every fellow has a personal bilingual AI mentor. Every program operation is instrumented.</li>
+  </ul>
+
+  <h3>Why This Matters Now</h3>
+  <p>Latin America holds the largest pool of ambitious, underleveraged young talent in the Western Hemisphere. The US economy is starved for bilingual technology leadership. Artificial intelligence has collapsed the cost of personalized mentorship by an order of magnitude. No existing institution has stitched these three forces together. YTG is that institution.</p>
+</section>
+
+<!-- ============ CHAPTER 2 ============ -->
+<section class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-number">02</div>
+    <h2>The Opportunity</h2>
+  </div>
+
+  <p class="lead">Three structural forces are converging. Each one, alone, would justify a new institution. Together they demand it.</p>
+
+  <h3>A Generation of Underleveraged Talent</h3>
+  <p>Latin America is home to more than 660 million people, with a median age of 31. Over 160 million are under 25. A disproportionate share of this cohort is ambitious, digitally fluent, and actively seeking pathways beyond their local markets &mdash; but they lack structured, credentialed bridges to US and global opportunities.</p>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="label">LATAM Population Under 25</div>
+      <div class="number">160M+</div>
+      <div class="source">World Bank population data, 2024</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">US Hispanic Economic Output</div>
+      <div class="number">$3.6T</div>
+      <div class="source">Latino Donor Collaborative, 2024</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Miami Population with LATAM Roots</div>
+      <div class="number">70%+</div>
+      <div class="source">US Census, Miami-Dade County</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">AI Talent Gap (US, by 2028)</div>
+      <div class="number">1.2M</div>
+      <div class="source">McKinsey Global Institute projections</div>
+    </div>
+  </div>
+
+  <h3>The AI Inflection</h3>
+  <p>For the first time in human history, personalized mentorship &mdash; once available only to the children of the elite &mdash; can be delivered at scale. A well-designed AI mentor can give a high-potential 17-year-old in Cali, Colombia, the kind of daily feedback, practice, and encouragement that previously required a private tutor in Manhattan.</p>
+
+  <p>This is not a future trend. The technology exists today. What is missing is an institution that wraps it in a selective, credentialed, human-mentored program. YTG is that wrapper.</p>
+
+  <h3>The Bilingual Leadership Gap</h3>
+  <p>US technology companies are increasingly desperate for bilingual English/Spanish leadership talent &mdash; not just engineers, but product managers, founders, operators. Meanwhile, LATAM's best young minds overwhelmingly build in Spanish, for local markets, often without a credible bridge to Silicon Valley, Miami, New York, or Austin. YTG builds that bridge, cohort by cohort.</p>
+
+  <div class="pullquote">
+    <p>The scarcest resource in the US technology economy over the next decade will not be capital or compute. It will be bilingual leaders who can operate fluently across the Americas.
+      <span class="spanish">El recurso mas escaso de la economia tecnologica estadounidense en la proxima decada no sera el capital ni el computo. Sera el liderazgo bilingue capaz de operar con fluidez en las Americas.</span>
+    </p>
+    <cite>YTG Thesis Statement</cite>
+  </div>
+</section>
+
+<!-- ============ CHAPTER 3 ============ -->
+<section class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-number">03</div>
+    <h2>Vision, Mission &amp; Operating Values</h2>
+  </div>
+
+  <h3>Vision</h3>
+  <p class="lead">By 2035, Youth Talent Global will have developed 10,000 bilingual technology and leadership fellows across the Americas &mdash; a recognizable alumni network whose graduates hold leadership roles in the companies, institutions, and ventures shaping the bilingual future.</p>
+
+  <h3>Mission</h3>
+  <p>To identify, develop, and launch the next generation of Latin American leaders in artificial intelligence and emerging technology &mdash; through a selective, bilingual, AI-native fellowship that combines technology mastery, leadership formation, and direct access to global opportunities.</p>
+
+  <h3>Operating Values</h3>
+  <div class="pillars">
+    <div class="pillar">
+      <div class="pillar-num">V &middot; 01</div>
+      <h4>Excellence over Access</h4>
+      <p>We are selective because impact compounds with quality. We serve the 1% of young people ready to lead, not the 100% we wish to help.</p>
+    </div>
+    <div class="pillar">
+      <div class="pillar-num">V &middot; 02</div>
+      <h4>Execution over Education</h4>
+      <p>Nobody remembers the lecture. Everybody remembers the thing they built. Every fellow ships real work, not homework.</p>
+    </div>
+    <div class="pillar">
+      <div class="pillar-num">V &middot; 03</div>
+      <h4>Bilingual from Day One</h4>
+      <p>English and Spanish are equal operating languages. Not translated content. Not English with Spanish support. Truly bilingual by design.</p>
+    </div>
+    <div class="pillar">
+      <div class="pillar-num">V &middot; 04</div>
+      <h4>AI-Native Operations</h4>
+      <p>We use AI to make human mentorship more valuable, not to replace it. Every fellow has a personal coach. Every mentor has a force multiplier.</p>
+    </div>
+    <div class="pillar">
+      <div class="pillar-num">V &middot; 05</div>
+      <h4>Outcomes over Outputs</h4>
+      <p>We measure placements, startups, scholarships, and transformations &mdash; not hours delivered or content produced.</p>
+    </div>
+    <div class="pillar">
+      <div class="pillar-num">V &middot; 06</div>
+      <h4>Alumni as Institution</h4>
+      <p>The fellowship ends after nine months. The network lasts a lifetime. The graduates are the product and the proof.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CHAPTER 4 ============ -->
+<section class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-number">04</div>
+    <h2>Competitive Landscape</h2>
+  </div>
+
+  <p class="lead">A serious foundation begins by telling the truth about who is already working on the problem. YTG's wedge is not that no one has tried. It is that no one has combined our three elements.</p>
+
+  <h3>Organizations Working Adjacent to This Space</h3>
+
+  <table class="tbl">
+    <thead>
+      <tr><th>Organization</th><th>Focus</th><th>What's Missing vs. YTG</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="tier-name">The Knowledge Society (TKS)</td><td>Emerging tech for teens, North America</td><td>English only. Not LATAM-focused. No bilingual operating layer.</td></tr>
+      <tr><td class="tier-name">Praxis</td><td>Alternative-to-college apprenticeship, 18-22</td><td>No LATAM footprint. No AI mentor layer. English-dominant.</td></tr>
+      <tr><td class="tier-name">Kairos Society</td><td>Global young-entrepreneur network, 18-25</td><td>Network over development. Episodic summits, not sustained formation.</td></tr>
+      <tr><td class="tier-name">Laboratoria</td><td>Women in tech, LATAM bootcamp model</td><td>Narrow gender focus. No soft-skills or leadership layer. No AI mentor.</td></tr>
+      <tr><td class="tier-name">Platzi</td><td>Spanish-language tech education, LATAM</td><td>Content platform, not ecosystem. No mentorship. No cohort model.</td></tr>
+      <tr><td class="tier-name">Endeavor</td><td>Scale-up entrepreneur support, LATAM strong</td><td>For existing founders, not youth formation.</td></tr>
+      <tr><td class="tier-name">Interact / Z Fellows / Neo</td><td>Selective US fellowships for young technologists</td><td>US-centric. No LATAM pipeline. No bilingual infrastructure.</td></tr>
+      <tr><td class="tier-name">Thiel Fellowship</td><td>$100k to skip college, under 22</td><td>Capital grants only. No program, no community-of-cohort, no LATAM.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>The Gap YTG Fills</h3>
+  <p>No existing organization combines all four of the following simultaneously:</p>
+  <ol>
+    <li><strong>LATAM-to-global talent pipeline</strong> with Miami as the operational gateway</li>
+    <li><strong>Bilingual English/Spanish by design</strong>, not by translation</li>
+    <li><strong>AI mentor layer</strong> native to every fellow's experience</li>
+    <li><strong>Selective cohort model</strong> with real execution and measurable placement outcomes</li>
+  </ol>
+
+  <div class="callout callout-coral">
+    <h4>The Wedge</h4>
+    <p>YTG is the first foundation built specifically to convert Latin America's highest-potential youth into the bilingual technology leaders the US and global economies are starved for &mdash; using AI to make the formation process 10x more intimate and 10x more scalable than any predecessor.</p>
+  </div>
+</section>
+
+<!-- ============ CHAPTER 5 ============ -->
+<section class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-number">05</div>
+    <h2>The Fellowship Model</h2>
+  </div>
+
+  <p class="lead">YTG fellows commit to a nine-month program that transforms ambition into capability, capability into execution, and execution into opportunity.</p>
+
+  <h3>Cohort Design</h3>
+  <ul>
+    <li><strong>Size:</strong> 40 fellows per cohort. Small enough to know each other. Large enough for diversity of perspective and peer learning.</li>
+    <li><strong>Ages:</strong> 16 to 22 at time of application. Two tracks: Explorers (16-18, high school) and Builders (18-22, early university).</li>
+    <li><strong>Duration:</strong> Nine months. September to May.</li>
+    <li><strong>Format:</strong> Hybrid. Weekly virtual cadence + three in-person Miami immersions (orientation, mid-program summit, demo day).</li>
+    <li><strong>Selectivity:</strong> Target acceptance rate 5-8%. Selection based on ambition, evidence of self-directed work, interview panels, and a written vision statement in both English and Spanish.</li>
+    <li><strong>Cost to fellow:</strong> Zero. Full scholarship including travel stipends for Miami immersions.</li>
+  </ul>
+
+  <h3>The Three Pillars</h3>
+  <div class="pillars">
+    <div class="pillar">
+      <div class="pillar-num">PILLAR &middot; 01</div>
+      <h4>Technology Mastery</h4>
+      <p>AI fluency, automation, modern development, product thinking, digital leverage. Fellows build and ship real systems, not tutorials.</p>
+    </div>
+    <div class="pillar">
+      <div class="pillar-num">PILLAR &middot; 02</div>
+      <h4>Leadership Formation</h4>
+      <p>Communication, public speaking, executive presence, etiquette, emotional intelligence, negotiation, cross-cultural fluency.</p>
+    </div>
+    <div class="pillar">
+      <div class="pillar-num">PILLAR &middot; 03</div>
+      <h4>Real Execution</h4>
+      <p>Capstone project. Sponsor-briefed challenges. Demo Day with investors and executives. A portfolio that opens doors.</p>
+    </div>
+  </div>
+
+  <h3>Weekly Cadence</h3>
+  <table class="tbl">
+    <thead>
+      <tr><th>Day</th><th>Activity</th><th>Format</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="tier-name">Monday</td><td>Technology Lab</td><td>Virtual, 90 min, hands-on AI/building</td></tr>
+      <tr><td class="tier-name">Wednesday</td><td>Leadership Forum</td><td>Virtual, 60 min, expert speaker + Q&amp;A</td></tr>
+      <tr><td class="tier-name">Friday</td><td>1:1 Human Mentor</td><td>Virtual, 30 min, assigned mentor</td></tr>
+      <tr><td class="tier-name">Daily</td><td>Lina Mentor (AI Coach)</td><td>Async, bilingual, voice + chat, unlimited</td></tr>
+      <tr><td class="tier-name">Monthly</td><td>Cohort Showcase</td><td>Virtual, fellows present work in progress</td></tr>
+      <tr><td class="tier-name">Quarterly</td><td>Miami Immersion</td><td>In-person, 3-4 days, all fellows together</td></tr>
+    </tbody>
+  </table>
+
+  <h3>The Capstone</h3>
+  <p>Every fellow ships a capstone project in months 7-9: a real AI-powered tool, a startup prototype, an open-source contribution, or a sponsor-briefed solution. Capstones are presented at Demo Day in front of sponsors, executives, investors, and press. The best capstones receive seed funding, internship offers, or direct hiring.</p>
+</section>
+
+<!-- ============ CHAPTER 6 ============ -->
+<section class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-number">06</div>
+    <h2>Ecosystem Architecture</h2>
+  </div>
+
+  <p class="lead">YTG's platform is built on a multi-tenant architecture that serves the foundation today and scales to an institution tomorrow. Eight layers, one system, two modes of operation.</p>
+
+  <div class="layer-stack">
+    <div class="layer">
+      <div class="layer-number">01</div>
+      <div class="layer-body">
+        <div class="layer-name">Identity Layer &mdash; The Digital Passport</div>
+        <div class="layer-desc">A portable, fellow-owned profile: bio, verified skills, project portfolio, recommendations, badges. Exportable. Becomes a permanent career credential.</div>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="layer-number">02</div>
+      <div class="layer-body">
+        <div class="layer-name">Learning Layer &mdash; Curriculum Delivery</div>
+        <div class="layer-desc">Bilingual content across Technology Mastery and Leadership Formation tracks. Modular, self-paced with cohort milestones. Built on platform infrastructure proven at Torna Idioma.</div>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="layer-number">03</div>
+      <div class="layer-body">
+        <div class="layer-name">AI Mentor Layer &mdash; Lina</div>
+        <div class="layer-desc">Every fellow's personal bilingual AI coach. Voice + chat, 24/7. Mission-aligned persona, not a generic chatbot. Handles prep, practice, Q&amp;A, motivation. Escalates to human mentors.</div>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="layer-number">04</div>
+      <div class="layer-body">
+        <div class="layer-name">Human Connection Layer</div>
+        <div class="layer-desc">1:1 human mentor matching, expert forum hosting, cohort community, alumni network. AI handles the frequent &mdash; humans handle the formative.</div>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="layer-number">05</div>
+      <div class="layer-body">
+        <div class="layer-name">Execution Layer &mdash; Real Work</div>
+        <div class="layer-desc">Project management, sponsor-briefed challenges, hackathons, capstone development. Portfolio auto-builds from outputs.</div>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="layer-number">06</div>
+      <div class="layer-body">
+        <div class="layer-name">Opportunity Marketplace</div>
+        <div class="layer-desc">Sponsor-posted internships, startup incubation slots, scholarship leads, mentor-recommended openings. Where talent meets opportunity.</div>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="layer-number">07</div>
+      <div class="layer-body">
+        <div class="layer-name">Impact &amp; Credentialing Layer</div>
+        <div class="layer-desc">Dual-mode: sponsor dashboards and public impact reports (foundation mode), or transcripts and formal credentials (institution mode). Same data, two surfaces.</div>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="layer-number">08</div>
+      <div class="layer-body">
+        <div class="layer-name">Operator Layer &mdash; Admin Backbone</div>
+        <div class="layer-desc">Applications, admissions, cohort operations, mentor management, sponsor CRM, analytics. The engine room.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <h4>Dual-Mode Design Principle</h4>
+    <p>95% of the platform is shared between foundation and institution modes. Only the money layer, admissions flow, and reporting surface change. This means the same technology stack that launches the free YTG Fellowship in 2026 can power a tuition-based or government-funded YTG Institute in 2030 without a rebuild.</p>
+  </div>
+</section>
+
+<!-- ============ CHAPTER 7 ============ -->
+<section class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-number">07</div>
+    <h2>Lina Mentor &mdash; The AI Differentiator</h2>
+  </div>
+
+  <p class="lead">Lina is the difference between YTG and every other youth program in the world. She is not a feature. She is a founding team member.</p>
+
+  <h3>What Lina Is</h3>
+  <p>Lina is YTG's native AI mentor &mdash; a voice-and-chat bilingual coach assigned to every fellow from the moment they enroll. She is built on Digit2ai's production voice AI platform, the same infrastructure behind the RinglyPro ecosystem's voice agents serving thousands of users daily.</p>
+
+  <p>Lina is not a generic assistant. She is purpose-built as a YTG mentor: trained on YTG curriculum, tuned to the three pillars, aware of each fellow's goals and progress, and held to a mentorship persona designed by Lala and the program staff.</p>
+
+  <h3>What Lina Does for Fellows</h3>
+  <ul>
+    <li><strong>Daily coaching.</strong> Fellows talk to Lina every day. She tracks goals, flags blockers, celebrates wins.</li>
+    <li><strong>Practice partner.</strong> Mock interviews, mock pitches, public speaking rehearsal &mdash; in both English and Spanish.</li>
+    <li><strong>24/7 tutor.</strong> Stuck on a technical concept at 2am? Lina explains, quizzes, adapts.</li>
+    <li><strong>Forum prep.</strong> Before each expert forum, Lina briefs the fellow and helps them prepare thoughtful questions.</li>
+    <li><strong>Reflection partner.</strong> Weekly reflection sessions. Lina listens, summarizes, surfaces patterns the fellow may not see.</li>
+  </ul>
+
+  <h3>What Lina Does for the Program</h3>
+  <ul>
+    <li><strong>Early warning system.</strong> When a fellow shows signs of disengagement, Lina flags it to human staff before the fellow drops out.</li>
+    <li><strong>Mentor briefings.</strong> Before each 1:1 with a human mentor, Lina summarizes what the fellow is working on and where they need help.</li>
+    <li><strong>Aggregate insight.</strong> Anonymized patterns across 40 fellows inform curriculum iteration in real time.</li>
+    <li><strong>Scale unlock.</strong> Going from 40 fellows to 400 to 4,000 does not require 100x more staff because Lina absorbs the routine load.</li>
+  </ul>
+
+  <div class="pullquote">
+    <p>Every fellow at Youth Talent Global has something most Ivy League undergraduates do not: a dedicated, bilingual, always-available mentor who knows their goals, their pace, and their name.
+      <span class="spanish">Cada becario de Youth Talent Global tiene algo que la mayoria de los estudiantes de la Ivy League no tiene: un mentor bilingue, dedicado y siempre disponible que conoce sus metas, su ritmo y su nombre.</span>
+    </p>
+    <cite>YTG Design Principle</cite>
+  </div>
+
+  <h3>Why This Is a Moat</h3>
+  <p>Any foundation can hire a curriculum designer and rent Zoom. Only a foundation whose technology sponsor is a production-grade AI company can offer a real bilingual AI mentor to every fellow from day one &mdash; with voice, with memory, with integration into the program's operational data. YTG does not pay for this capability on a per-seat SaaS basis. We own it, through Digit2ai, in-kind, valued as a founding in-kind contribution.</p>
+</section>
+
+<!-- ============ CHAPTER 8 ============ -->
+<section class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-number">08</div>
+    <h2>Outcomes Framework</h2>
+  </div>
+
+  <p class="lead">Foundations fail when they measure activity instead of outcomes. YTG commits, from day one, to a public, quantitative impact framework that sponsors can audit.</p>
+
+  <h3>What We Measure Per Cohort</h3>
+  <table class="tbl">
+    <thead>
+      <tr><th>Metric</th><th>Definition</th><th>Cohort 1 Target</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="tier-name">Completion Rate</td><td>% of accepted fellows who complete the 9-month program</td><td>&ge; 85%</td></tr>
+      <tr><td class="tier-name">Internship Placement</td><td>Fellows placed in paid internships during or within 6 months of program</td><td>&ge; 60%</td></tr>
+      <tr><td class="tier-name">Capstone Shipped</td><td>Fellows who ship and present a working capstone at Demo Day</td><td>100%</td></tr>
+      <tr><td class="tier-name">Bilingual Proficiency</td><td>Fellows demonstrating professional fluency in both English and Spanish at exit</td><td>&ge; 90%</td></tr>
+      <tr><td class="tier-name">AI Fluency Certification</td><td>Fellows completing validated AI/technology skill certifications</td><td>&ge; 80%</td></tr>
+      <tr><td class="tier-name">Sponsor Engagement</td><td>Fellows engaged in at least one sponsor-briefed project or interview</td><td>100%</td></tr>
+      <tr><td class="tier-name">Seed Funding</td><td>Fellows whose capstones receive follow-on seed or grant funding</td><td>&ge; 3 fellows</td></tr>
+      <tr><td class="tier-name">NPS Score</td><td>Net Promoter Score from fellows at program exit</td><td>&ge; 70</td></tr>
+    </tbody>
+  </table>
+
+  <h3>How We Report</h3>
+  <p>A public Impact Report is published at the end of each cohort cycle, including anonymized fellow outcomes, sponsor attribution, financial transparency, and raw data downloads. Every sponsor receives a customized impact dossier showing their specific contribution and the fellows and outcomes their dollars supported.</p>
+
+  <h3>Longitudinal Tracking</h3>
+  <p>YTG commits to tracking every fellow's career progress for ten years post-program, anonymized and aggregate-reported. This is the true measure: not what fellows achieve during the fellowship, but what they achieve with it.</p>
+</section>
+
+<!-- ============ CHAPTER 9 ============ -->
+<section class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-number">09</div>
+    <h2>Founding Team &amp; Governance</h2>
+  </div>
+
+  <h3>Founders</h3>
+
+  <h4>Lala &mdash; Founder &amp; Program Director</h4>
+  <p>Lala is the founder of Youth Talent Global and the architect of its leadership formation pillar. Her vision for bilingual youth development across the Americas is the origin and driving force of the organization. [Biography to be completed for v1.1]</p>
+
+  <h4>Manuel Stagg &mdash; Founding Technology Sponsor</h4>
+  <p>Manuel Stagg is the founder of Digit2ai, a production AI platform company whose systems include the RinglyPro CRM ecosystem, multiple voice AI agents (Rachel, Ana, Lina), and multi-tenant educational platforms including Torna Idioma. As Founding Technology Sponsor, Digit2ai provides YTG's entire technical infrastructure in-kind, freeing every sponsor dollar for direct fellow impact.</p>
+
+  <h3>Governance Structure</h3>
+
+  <ul>
+    <li><strong>Board of Directors</strong> &mdash; 5-7 seats including founders, sponsor representatives, and independent directors with LATAM and US education experience.</li>
+    <li><strong>Advisory Council</strong> &mdash; 10-15 advisors drawn from sponsor companies, alumni of analogous programs, and subject-matter experts across AI, leadership development, and Hispanic philanthropy.</li>
+    <li><strong>Mentor Circle</strong> &mdash; The active human mentor pool. Selection managed by Program Director with quality standards enforced by the Board.</li>
+    <li><strong>Fellow Council</strong> &mdash; Two fellows per cohort serve as elected representatives to governance, ensuring fellow voice in program evolution.</li>
+  </ul>
+
+  <h3>Legal Structure</h3>
+  <p>YTG will operate as a US 501(c)(3) tax-exempt nonprofit foundation, with eventual Fundación equivalents established in priority LATAM jurisdictions to enable direct local fundraising and tax-deductible giving.</p>
+</section>
+
+<!-- ============ CHAPTER 10 ============ -->
+<section class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-number">10</div>
+    <h2>Sponsor Model</h2>
+  </div>
+
+  <p class="lead">YTG is fully sponsor-funded. Fellows pay nothing. Sponsors fund cohorts, programs, and named fellowships &mdash; and in return receive brand presence, talent pipeline access, impact attribution, and ESG/CSR reporting.</p>
+
+  <h3>Sponsor Tiers</h3>
+  <table class="tbl">
+    <thead>
+      <tr><th>Tier</th><th>Contribution</th><th>What You Receive</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="tier-name">Founding Sponsor</td>
+        <td>$250,000+ / year</td>
+        <td>Board observer seat, named fellowship(s), prominent recognition across all materials, custom impact dossier, first-access talent pipeline, Demo Day speaking slot</td>
+      </tr>
+      <tr>
+        <td class="tier-name">Lead Sponsor</td>
+        <td>$100,000+ / year</td>
+        <td>Named cohort track or pillar, logo on all program materials, custom impact dossier, sponsor-briefed capstone challenge, Demo Day presence</td>
+      </tr>
+      <tr>
+        <td class="tier-name">Program Sponsor</td>
+        <td>$25,000+ / year</td>
+        <td>Logo recognition, aggregate impact report, mentor slot invitations, talent pipeline access</td>
+      </tr>
+      <tr>
+        <td class="tier-name">Supporter</td>
+        <td>$10,000+ / year</td>
+        <td>Name recognition, aggregate impact report, mentor slot invitations</td>
+      </tr>
+      <tr>
+        <td class="tier-name">In-Kind Partner</td>
+        <td>Services, technology, mentors, travel, workspace</td>
+        <td>Tier equivalent based on valued contribution; same recognition ladder</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Named Fellowships</h3>
+  <p>A sponsor may fully underwrite a named fellow for $25,000, covering a single fellow's full program, travel, stipends, and portion of shared infrastructure. Named fellows retain the sponsor's connection for program lifetime and alumni tracking. For corporate sponsors, this is the most emotionally resonant and publicly attributable form of contribution.</p>
+
+  <h3>Target Sponsor Audiences</h3>
+  <div class="pillars">
+    <div class="pillar">
+      <div class="pillar-num">AUDIENCE &middot; 01</div>
+      <h4>Miami Hispanic Family Foundations</h4>
+      <p>Multi-generational wealth with a mission to elevate the next generation of Latin leadership. Natural YTG patrons.</p>
+    </div>
+    <div class="pillar">
+      <div class="pillar-num">AUDIENCE &middot; 02</div>
+      <h4>LATAM Corporates with US Presence</h4>
+      <p>Banks, telecoms, and energy/consumer-goods groups with ESG mandates and bilingual talent needs.</p>
+    </div>
+    <div class="pillar">
+      <div class="pillar-num">AUDIENCE &middot; 03</div>
+      <h4>US Corporates with Hispanic Markets</h4>
+      <p>Fortune 500s with significant Hispanic customer bases and formal CSR programs targeting LATAM/Hispanic communities.</p>
+    </div>
+    <div class="pillar">
+      <div class="pillar-num">AUDIENCE &middot; 04</div>
+      <h4>Institutional &amp; Development Foundations</h4>
+      <p>Knight Foundation, IDB Lab, Inter-American Foundation, and aligned grant-makers focused on Americas youth and economic mobility.</p>
+    </div>
+  </div>
+
+  <h3>Sponsor ROI &mdash; Beyond Philanthropy</h3>
+  <p>Sponsors are not donating &mdash; they are investing in outcomes:</p>
+  <ul>
+    <li><strong>Talent pipeline:</strong> First-look hiring access to 40 vetted, bilingual, trained young leaders per cohort.</li>
+    <li><strong>Brand presence:</strong> Association with a flagship, selective, measurable youth leadership program.</li>
+    <li><strong>ESG/CSR attribution:</strong> Quantified impact per dollar, aligned with United Nations Sustainable Development Goals 4 (Education), 8 (Economic Growth), and 10 (Reduced Inequalities).</li>
+    <li><strong>Hispanic market signal:</strong> For US corporates, visible investment in LATAM-US bridge talent is reputational gold with the fastest-growing consumer demographic.</li>
+  </ul>
+</section>
+
+<!-- ============ CHAPTER 11 ============ -->
+<section class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-number">11</div>
+    <h2>Roadmap &amp; Vision Through 2035</h2>
+  </div>
+
+  <p class="lead">A decade of deliberate expansion, from 40 fellows in Miami to 10,000 alumni across the Americas.</p>
+
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="date">Q2 2026</div>
+      <div class="event">Foundation formed. Brand launched. Founding sponsor acquisition begins.</div>
+      <div class="detail">US 501(c)(3) incorporated. Core brand identity, website, and application infrastructure live. First sponsor LOIs secured.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="date">Q3 2026</div>
+      <div class="event">Applications open. Cohort 1 selection.</div>
+      <div class="detail">Recruiting across Mexico, Colombia, Argentina, Chile, and Miami-based Hispanic high schools and universities. Target: 600+ applicants, 40 selected.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="date">Fall 2026</div>
+      <div class="event">Cohort 1 launches.</div>
+      <div class="detail">40 fellows begin 9-month fellowship. Miami orientation immersion. Lina Mentor activated. Weekly cadence commences.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="date">Q2 2027</div>
+      <div class="event">Cohort 1 Demo Day. Impact Report v1.</div>
+      <div class="detail">Capstone presentations. First published Impact Report. First alumni enter the network.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="date">2027 &ndash; 2028</div>
+      <div class="event">Cohorts 2 and 3. Expansion to 80 fellows per cohort.</div>
+      <div class="detail">Mentor network scales. Sponsor base grows. Second operational city established &mdash; Mexico City or Bogotá.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="date">2029 &ndash; 2030</div>
+      <div class="event">YTG Institute launches. Dual-mode platform activated.</div>
+      <div class="detail">Credentialed institution arm begins accepting students on tuition and government-subsidized models. Foundation fellowship continues at full scale in parallel.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="date">2031 &ndash; 2035</div>
+      <div class="event">Ten cities. 1,000+ fellows per year. Global alumni network.</div>
+      <div class="detail">Miami, CDMX, Bogotá, São Paulo, Buenos Aires, Lima, Santiago, Monterrey, Panamá, Madrid. 10,000 cumulative alumni. Recognized category-defining institution.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CHAPTER 12 ============ -->
+<section class="chapter">
+  <div class="chapter-header">
+    <div class="chapter-number">12</div>
+    <h2>Call to Action</h2>
+  </div>
+
+  <p class="lead">Youth Talent Global will succeed or fail based on who joins in its founding year. We are actively seeking three kinds of partners.</p>
+
+  <h3>Founding Sponsors</h3>
+  <p>We seek three to five founding-tier sponsors to underwrite Cohort 1. If you represent a family foundation, a corporate CSR program, or an institutional funder aligned with bilingual youth leadership development, we invite a conversation.</p>
+
+  <h3>Mentors</h3>
+  <p>We seek founding mentors across AI, product, leadership, and entrepreneurship &mdash; ideally with bilingual fluency and lived experience bridging LATAM and the US. Mentors commit to approximately two hours per month during the program year.</p>
+
+  <h3>Fellows</h3>
+  <p>Applications for Cohort 1 open in Q3 2026. We invite high-potential young people ages 16-22 from across Latin America and Hispanic communities in the United States. If you know a young person who belongs in the first class, nominate them.</p>
+
+  <div class="callout callout-coral">
+    <h4>Contact</h4>
+    <p>To engage as a sponsor, mentor, partner, or prospective fellow, write to us at the contact channels established at launch. The founding year is the most important year in the organization's history. The partners who join now will be remembered for a generation.</p>
+  </div>
+</section>
+
+</div><!-- /container -->
+
+<!-- ============ FOOTER ============ -->
+<div class="footer">
+  <h2>Be Part of the Founding Class.</h2>
+  <p>Youth Talent Global is not yet a famous institution. It is a founding idea and a small team of committed people. If that is compelling rather than disqualifying, you are the kind of partner we seek.</p>
+  <a href="#" class="footer-cta">Request an Introduction</a>
+  <div class="footer-meta">
+    Youth Talent Global Foundation &middot; White Paper v1.0 &middot; Miami, Florida &middot; 2026
+  </div>
+</div>
+
+</body>
+</html>
