@@ -1030,3 +1030,38 @@ body {
   color: var(--text-muted);
   margin-top: 2px;
 }
+
+/* Timeline milestone tooltip */
+.timeline-milestone { cursor: help; }
+.timeline-milestone:hover { transform: scale(1.25); transition: transform 0.12s ease; }
+.timeline-milestone-tip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 10;
+}
+.timeline-milestone-tip.tip-left { left: -6px; }
+.timeline-milestone-tip.tip-right { right: -6px; }
+.timeline-milestone-tip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  width: 0;
+  height: 0;
+  border: 5px solid transparent;
+  border-top-color: var(--bg-card);
+}
+.timeline-milestone-tip.tip-left::after { left: 10px; }
+.timeline-milestone-tip.tip-right::after { right: 10px; }
+.timeline-milestone:hover .timeline-milestone-tip {
+  opacity: 1;
+  transform: translateY(0);
+}

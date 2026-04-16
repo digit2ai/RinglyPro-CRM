@@ -1793,7 +1793,14 @@ function renderProjectTimeline(p) {
       const md = new Date(m.due_date);
       const pct = Math.max(0, Math.min(100, ((md - start) / total) * 100));
       const color = m.status === 'completed' ? 'var(--success)' : md < now ? 'var(--danger)' : 'var(--accent)';
-      return `<div title="${m.title} (${fmtDate(m.due_date)})" style="position:absolute;left:calc(${pct}% - 6px);top:-3px;width:12px;height:12px;border-radius:50%;background:${color};border:2px solid var(--bg-card);z-index:2;cursor:help"></div>`;
+      const side = pct > 70 ? 'right' : 'left';
+      const safeTitle = (m.title || '').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+      return `<div class="timeline-milestone" style="position:absolute;left:calc(${pct}% - 6px);top:-3px;width:12px;height:12px;border-radius:50%;background:${color};border:2px solid var(--bg-card);z-index:2">
+        <span class="timeline-milestone-tip tip-${side}" style="background:var(--bg-card);border:1px solid var(--border);color:var(--text-primary)">
+          <strong>${safeTitle}</strong><br>
+          <span style="font-size:11px;color:var(--text-muted)">${m.status === 'completed' ? 'Completed' : 'Due'} &middot; ${fmtDate(m.due_date)}</span>
+        </span>
+      </div>`;
     }).join('');
 
   return `
