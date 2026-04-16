@@ -1075,10 +1075,11 @@ async function renderCalendar(container) {
   const res = await api(`/calendar?start=${startParam}&end=${endParam}`);
   const events = res.success ? res.data : [];
 
-  // Group events by date
+  // Group events by LOCAL date (not UTC)
   const eventsByDate = {};
   events.forEach(e => {
-    const d = e.start_time.split('T')[0];
+    const local = new Date(e.start_time);
+    const d = `${local.getFullYear()}-${String(local.getMonth()+1).padStart(2,'0')}-${String(local.getDate()).padStart(2,'0')}`;
     if (!eventsByDate[d]) eventsByDate[d] = [];
     eventsByDate[d].push(e);
   });
