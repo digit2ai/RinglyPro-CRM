@@ -1805,8 +1805,11 @@ function renderProjectTimeline(p) {
 
   return `
     <div class="detail-section" style="margin-bottom:24px">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
-        <h4 style="margin:0">Timeline</h4>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;gap:12px">
+        <div style="display:flex;align-items:baseline;gap:12px">
+          <h4 style="margin:0">Timeline</h4>
+          <span style="font-size:13px;font-weight:600;color:var(--accent)">${progressPct}%</span>
+        </div>
         <span style="font-size:12px;color:${isOver ? 'var(--danger)' : 'var(--text-muted)'}">
           ${isOver ? `${Math.abs(daysLeft)} day${Math.abs(daysLeft) === 1 ? '' : 's'} overdue` : daysLeft === 0 ? 'Due today' : `${daysLeft} day${daysLeft === 1 ? '' : 's'} left of ${totalDays}`}
         </span>
@@ -1857,9 +1860,6 @@ async function showProjectDetail(id) {
         ${p.vertical ? `<div class="detail-meta-item"><span class="vertical-dot" style="background:${p.vertical.color}"></span>${p.vertical.name}</div>` : ''}
         ${p.company ? `<div class="detail-meta-item">${p.company.name}</div>` : ''}
       </div>
-      <div class="progress-bar" style="margin-bottom:24px"><div class="progress-fill" style="width:${p.progress}%"></div></div>
-      <p style="font-size:12px;color:var(--text-muted);margin-top:-16px;margin-bottom:24px">Progress: ${p.progress}%</p>
-
       ${renderProjectTimeline(p)}
 
       <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px">
