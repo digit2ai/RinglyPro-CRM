@@ -576,6 +576,117 @@
     animation: pulse 2s ease-in-out infinite;
   }
 
+  /* ===== IMAGE TILES (proof grid) ===== */
+  .img-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    max-width: 1400px;
+    width: 100%;
+    margin-top: 36px;
+  }
+  .img-tile {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(61,203,202,0.35);
+    background: var(--navy-dark);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(61,203,202,0.1) inset;
+    transition: all .3s ease;
+  }
+  .img-tile:hover { transform: translateY(-4px); border-color: var(--teal-neon); box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 0 24px rgba(61,203,202,0.3); }
+  .img-tile img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    filter: saturate(1.1) contrast(1.05);
+  }
+  .img-tile::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(3,8,20,0.95) 100%);
+    z-index: 1;
+    pointer-events: none;
+  }
+  .img-tile::after {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, var(--teal-neon) 50%, transparent 100%);
+    z-index: 2;
+  }
+  .img-tile .caption {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 16px 18px;
+    z-index: 2;
+    text-align: left;
+  }
+  .img-tile .caption .cat {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 2.5px;
+    color: var(--teal-neon);
+    font-weight: 500;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .img-tile .caption .cat::before {
+    content: '';
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--teal-neon);
+    box-shadow: 0 0 6px var(--teal-neon);
+  }
+  .img-tile .caption .ttl {
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: -0.3px;
+    line-height: 1.25;
+  }
+
+  /* hero image */
+  .img-hero {
+    position: relative;
+    width: 100%;
+    max-width: 1000px;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(61,203,202,0.4);
+    margin-top: 32px;
+    box-shadow: 0 16px 60px rgba(0,0,0,0.55);
+  }
+  .img-hero img { width: 100%; height: auto; display: block; filter: saturate(1.1); }
+  .img-hero::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, var(--teal-neon) 50%, transparent 100%);
+    z-index: 2;
+  }
+  .img-hero::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 50%, rgba(3,8,20,0.5) 100%);
+    pointer-events: none;
+  }
+
+  .powered-by {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 32px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+  }
+  .powered-by img { height: 24px; width: auto; opacity: 0.85; filter: brightness(1.1); }
+
   /* ===== BIG NUMBERS ===== */
   .big-number {
     font-family: var(--mono);
@@ -791,7 +902,10 @@
   .slide.active .stack-wrap,
   .slide.active .cta-box,
   .slide.active .big-number,
-  .slide.active .cover-logo {
+  .slide.active .cover-logo,
+  .slide.active .img-hero,
+  .slide.active .img-grid,
+  .slide.active .powered-by {
     animation: riseIn 0.7s cubic-bezier(.22,.61,.36,1) both;
   }
   .slide.active .chip { animation-delay: .05s; }
@@ -803,7 +917,10 @@
   .slide.active .pillars,
   .slide.active .stack-wrap,
   .slide.active .cta-box,
-  .slide.active .big-number { animation-delay: .35s; }
+  .slide.active .big-number,
+  .slide.active .img-hero,
+  .slide.active .img-grid { animation-delay: .35s; }
+  .slide.active .powered-by { animation-delay: .5s; }
   .slide.active .attribution { animation-delay: .5s; }
 
   @keyframes riseIn {
@@ -823,6 +940,7 @@
     .stack-layer { grid-template-columns: 80px 1fr 90px; gap: 14px; padding: 14px 18px; }
     .stack-layer .lstatus { font-size: 9px; }
     .hud-top-left, .hud-top-right, .hud-bot-left, .hud-bot-right { display: none; }
+    .img-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
   }
 </style>
 </head>
@@ -834,7 +952,7 @@
   <span class="mark">Fellowship // 2026</span>
 </div>
 <div class="hint">&#8592; &#8594; navegar &middot; S notas &middot; F fullscreen</div>
-<div class="counter" id="counter">01 / 15</div>
+<div class="counter" id="counter">01 / 17</div>
 
 <div class="deck" id="deck">
 
@@ -857,6 +975,18 @@
     <div class="chip">9 de abril, 2026</div>
     <h2 class="accent-teal">Anoche, en el Santiago Bernabeu, le marque un gol al Real Madrid en los cuartos de final de la Champions League.</h2>
     <div class="attribution">&mdash; Luis "Lucho" Diaz</div>
+  </section>
+
+  <!-- 2.5 OTROS TALENTOS LATINOS -->
+  <section class="slide bg-navy" data-notes="Transicion. 'Y no es solo Lucho. No es solo el futbol. El talento latino esta ganando en todos los escenarios mas exigentes del mundo.' Muestra la foto. Un momento breve. Luego regresa al origen de Lucho.">
+    <div class="hud-top-left"><span class="hud-dot"></span> EVT.DAYTONA_24H</div>
+    <div class="hud-top-right">LATAM_TALENT // GLOBAL_STAGE <span class="hud-line"></span></div>
+    <div class="chip">No es solo Lucho</div>
+    <h2 class="accent-teal">El talento latino ya esta ganando en los escenarios mas exigentes del planeta.</h2>
+    <div class="img-hero">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/696fe6f541fb813304da1626.jpg" alt="Piloto colombiano en Rolex 24 Daytona">
+    </div>
+    <p class="lead" style="margin-top: 24px; font-size: clamp(16px, 1.4vw, 20px);">Rolex 24 at Daytona, Victory Lane. Un joven colombiano entre los mejores pilotos del mundo. La pregunta ya no es si se puede. La pregunta es quien sigue.</p>
   </section>
 
   <!-- 3. FLASHBACK -->
@@ -1006,6 +1136,45 @@
         <div class="stack-layer"><div class="lnum">LAYER_07</div><div class="lname">Credenciales<span>Reportes de impacto + certificaciones</span></div><div class="lstatus">Active</div></div>
         <div class="stack-layer"><div class="lnum">LAYER_08</div><div class="lname">Operador<span>CRM, analytics, admisiones</span></div><div class="lstatus">Active</div></div>
       </div>
+    </div>
+  </section>
+
+  <!-- 11.5 FRONTIER TECH // PROOF -->
+  <section class="slide bg-navy" data-notes="Este es el slide de credibilidad. 'Y no es teoria. Esta tecnologia ya esta corriendo en produccion, ahora mismo, en fabricas, hospitales, flotas de logistica y operaciones reales.' Senala cada tile con ritmo. No tienes que leerlas todas. El mensaje es: somos builders, no consultores.">
+    <div class="hud-top-left"><span class="hud-dot"></span> PROD.VERTICALS // LIVE</div>
+    <div class="hud-top-right">FRONTIER_AI // REAL_DEPLOYMENTS <span class="hud-line"></span></div>
+    <div class="chip">Tecnologia de frontera // en produccion</div>
+    <h2 class="accent-teal">No hablamos de IA. La construimos.</h2>
+    <p class="lead">El mismo equipo que te entrega Lina ya opera IA en manufactura, logistica, salud y voz a nivel enterprise.</p>
+    <div class="img-grid">
+      <div class="img-tile">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699f343c753f157c9bec6d0b.jpg" alt="Voice AI">
+        <div class="caption"><div class="cat">01 &middot; Voice AI</div><div class="ttl">Agentes de voz tipo humano &mdash; Rachel, Ana, Lina</div></div>
+      </div>
+      <div class="img-tile">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69a5d3b79c14995d9c3da981.jpg" alt="AI Intralogistics">
+        <div class="caption"><div class="cat">02 &middot; Intralogistica</div><div class="ttl">Automatizacion IA para nueva generacion de almacenes</div></div>
+      </div>
+      <div class="img-tile">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69af74634a2d882ebdf052d4.png" alt="Smart Warehouse">
+        <div class="caption"><div class="cat">03 &middot; Shop Floor</div><div class="ttl">OEE real-time con robots autonomos + IoT</div></div>
+      </div>
+      <div class="img-tile">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69af74637c27022c86498b74.png" alt="Fleet AI">
+        <div class="caption"><div class="cat">04 &middot; Fleet Ops</div><div class="ttl">Digital twin de flotas de camiones</div></div>
+      </div>
+      <div class="img-tile">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69af74637c2702f404498b73.png" alt="Cloud Logistics">
+        <div class="caption"><div class="cat">05 &middot; Cloud Logistics</div><div class="ttl">IA centralizada + CRM + comms para carriers</div></div>
+      </div>
+      <div class="img-tile">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69c7fbd05eea8363cb559a83.jpg" alt="Medical AI">
+        <div class="caption"><div class="cat">06 &middot; Salud</div><div class="ttl">Imagenologia + dashboards clinicos en tiempo real</div></div>
+      </div>
+    </div>
+    <div class="powered-by">
+      <span>&gt; Tech partner</span>
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png" alt="Digit2ai">
     </div>
   </section>
 
