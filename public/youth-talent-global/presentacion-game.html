@@ -2425,100 +2425,86 @@
   }
 
   // ============ LINA VOICE (ElevenLabs MP3) ============
+  // Single reusable Audio element — critical for mobile.
+  // Mobile browsers only allow audio from elements unlocked by user gesture.
+  // Creating new Audio() per slide breaks this. Reusing one element works.
+  const linaAudio = new Audio();
+  linaAudio.volume = 1.0;
   const narrationWave = document.getElementById('narrationWave');
-  let currentAudio = null;
   let autoAdvanceTimer = null;
+  let narrateOnEnd = null;
+
+  linaAudio.addEventListener('play', () => {
+    narrationWave.classList.add('active');
+  });
+
+  linaAudio.addEventListener('ended', () => {
+    narrationWave.classList.remove('active');
+    if (narrateOnEnd) {
+      const cb = narrateOnEnd;
+      narrateOnEnd = null;
+      cb();
+    }
+  });
+
+  linaAudio.addEventListener('error', () => {
+    narrationWave.classList.remove('active');
+    console.error('Audio error for', linaAudio.src);
+    if (narrateOnEnd) {
+      const cb = narrateOnEnd;
+      narrateOnEnd = null;
+      autoAdvanceTimer = setTimeout(cb, 8000);
+    }
+  });
 
   function cancelNarration() {
     if (autoAdvanceTimer) {
       clearTimeout(autoAdvanceTimer);
       autoAdvanceTimer = null;
     }
-    if (currentAudio) {
-      currentAudio.pause();
-      currentAudio.currentTime = 0;
-      currentAudio = null;
-    }
+    narrateOnEnd = null;
+    linaAudio.pause();
+    linaAudio.removeAttribute('src');
+    linaAudio.load();
     narrationWave.classList.remove('active');
-  }
-
-  function getAudioForSlide(slideIndex) {
-    const slide = slides[slideIndex];
-    // Check for explicit audio file
-    if (slide.dataset.audio) {
-      return slide.dataset.audio;
-    }
-        return null;
   }
 
   function narrateSlide(slideIndex, onEnd) {
     cancelNarration();
 
-    const audioSrc = getAudioForSlide(slideIndex);
     const slide = slides[slideIndex];
+    const audioSrc = slide.dataset.audio || null;
     const autoAdvanceMs = slide.dataset.autoAdvance ? parseInt(slide.dataset.autoAdvance) : null;
 
-    // If no audio file available
+    // No audio file for this slide
     if (!audioSrc) {
-      // If auto-advance slide (level transitions, unlocks, power100)
       if (autoAdvanceMs) {
-        autoAdvanceTimer = setTimeout(() => {
-          if (onEnd) onEnd();
-        }, autoAdvanceMs);
-        return;
+        autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, autoAdvanceMs);
+      } else {
+        if (onEnd) onEnd();
       }
-      // Slide needs audio but doesn't have it yet — wait 3 seconds then advance
-      if (slide.dataset.needsAudio === 'true') {
-        autoAdvanceTimer = setTimeout(() => {
-          if (onEnd) onEnd();
-        }, 5000);
-        return;
-      }
-      if (onEnd) onEnd();
       return;
     }
 
-    const audio = new Audio(audioSrc);
-    audio.volume = 1.0;
-    currentAudio = audio;
-
-    audio.onplay = () => {
-      narrationWave.classList.add('active');
-    };
-
-    audio.onended = () => {
-      narrationWave.classList.remove('active');
-      currentAudio = null;
-      // If also has auto-advance, wait that duration after audio
+    // Set up callback: after audio ends, optionally wait auto-advance ms
+    narrateOnEnd = () => {
       if (autoAdvanceMs) {
-        autoAdvanceTimer = setTimeout(() => {
-          if (onEnd) onEnd();
-        }, autoAdvanceMs);
+        autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, autoAdvanceMs);
       } else {
         if (onEnd) onEnd();
       }
     };
 
-    audio.onerror = () => {
-      narrationWave.classList.remove('active');
-      currentAudio = null;
-      const waitMs = autoAdvanceMs || 8000;
-      autoAdvanceTimer = setTimeout(() => {
-        if (onEnd) onEnd();
-      }, waitMs);
-    };
-
-    audio.play().then(() => {
+    linaAudio.src = audioSrc;
+    linaAudio.load();
+    linaAudio.play().then(() => {
       console.log('Playing slide', slideIndex + 1);
     }).catch((err) => {
       console.error('Audio play failed for slide', slideIndex + 1, err.message);
-      currentAudio = null;
       narrationWave.classList.remove('active');
-      // On mobile, audio may fail — don't skip, wait estimated duration
+      narrateOnEnd = null;
       const waitMs = autoAdvanceMs || 8000;
-      autoAdvanceTimer = setTimeout(() => {
-        if (onEnd) onEnd();
-      }, waitMs);
+      autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, waitMs);
     });
   }
 
@@ -2594,23 +2580,22 @@
   });
 
   // ============ PRE-PLAY OVERLAY ============
-  let audioUnlocked = false;
   preplayBtn.addEventListener('click', function handlePlay() {
     preplayOverlay.style.display = 'none';
     show(0);
 
-    // Unlock audio on mobile: play a tiny silent audio in the direct click handler
-    const firstAudio = getAudioForSlide(0);
-    if (firstAudio) {
-      const a = new Audio(firstAudio);
-      a.volume = 1.0;
-      a.play().then(() => {
-        audioUnlocked = true;
-        a.pause();
-        a.currentTime = 0;
+    // Unlock the single linaAudio element in the direct click handler.
+    // Mobile browsers require play() to be called within user gesture.
+    const firstSrc = slides[0].dataset.audio;
+    if (firstSrc) {
+      linaAudio.src = firstSrc;
+      linaAudio.load();
+      linaAudio.play().then(() => {
+        // Audio context unlocked — pause and let autoplay engine take over
+        linaAudio.pause();
+        linaAudio.currentTime = 0;
         startAutoPlay();
       }).catch(() => {
-        // Even if it fails, start autoplay (will use fallback timers)
         startAutoPlay();
       });
     } else {
