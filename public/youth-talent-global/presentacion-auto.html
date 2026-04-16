@@ -1,0 +1,1792 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visionarium // El Tamaño de tu Sueño — Auto-Narrada</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root {
+    --navy: #0b1d4a;
+    --navy-light: #17296b;
+    --navy-dark: #030814;
+    --navy-blk: #010409;
+    --teal: #3dcbca;
+    --teal-light: #8eeae8;
+    --teal-neon: #2de8e6;
+    --coral: #ef6c57;
+    --coral-neon: #ff7a63;
+    --coral-dark: #c94a38;
+    --gold: #d4a574;
+    --gold-neon: #e8c896;
+    --white: #ffffff;
+    --gray-200: #e9ecef;
+    --gray-500: #6c757d;
+    --gray-700: #374151;
+    --gray-900: #111827;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--navy-blk);
+    color: var(--white);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .deck {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 90px 7vw 80px;
+    text-align: center;
+    opacity: 0;
+    transition: opacity .45s ease;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(61,203,202,0.3) transparent;
+  }
+  .slide::-webkit-scrollbar { width: 6px; }
+  .slide::-webkit-scrollbar-track { background: transparent; }
+  .slide::-webkit-scrollbar-thumb { background: rgba(61,203,202,0.3); border-radius: 3px; }
+  .slide.active { display: flex; opacity: 1; }
+
+  /* ANIMATED GRID OVERLAY — present on all slides */
+  .slide::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(61,203,202,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(61,203,202,0.06) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse at center, black 40%, transparent 90%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 40%, transparent 90%);
+    pointer-events: none;
+    z-index: 0;
+    animation: gridDrift 40s linear infinite;
+  }
+
+  @keyframes gridDrift {
+    from { background-position: 0 0, 0 0; }
+    to { background-position: 64px 64px, 64px 64px; }
+  }
+
+  /* FLOATING MESH GLOW */
+  .slide::after {
+    content: '';
+    position: absolute;
+    width: 900px; height: 900px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(61,203,202,0.14) 0%, rgba(61,203,202,0.04) 40%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    filter: blur(60px);
+    pointer-events: none;
+    z-index: 0;
+    animation: meshDrift 18s ease-in-out infinite;
+  }
+
+  @keyframes meshDrift {
+    0%, 100% { transform: translate(-60%, -55%) scale(1); }
+    50%      { transform: translate(-40%, -45%) scale(1.2); }
+  }
+
+  .slide > * { position: relative; z-index: 1; }
+
+  /* BACKGROUND VARIANTS */
+  .bg-navy { background: radial-gradient(ellipse at top, var(--navy) 0%, var(--navy-dark) 50%, var(--navy-blk) 100%); }
+  .bg-coral { background: radial-gradient(ellipse at top, #3a1509 0%, #200a05 50%, var(--navy-blk) 100%); }
+  .bg-coral::after { background: radial-gradient(circle, rgba(239,108,87,0.2) 0%, rgba(239,108,87,0.05) 40%, transparent 70%); }
+  .bg-teal { background: radial-gradient(ellipse at top, #05282a 0%, #021416 50%, var(--navy-blk) 100%); }
+  .bg-teal::after { background: radial-gradient(circle, rgba(61,203,202,0.22) 0%, rgba(61,203,202,0.06) 40%, transparent 70%); }
+  .bg-gold { background: radial-gradient(ellipse at top, #2e1f0d 0%, #180f06 50%, var(--navy-blk) 100%); }
+  .bg-gold::after { background: radial-gradient(circle, rgba(212,165,116,0.2) 0%, rgba(212,165,116,0.05) 40%, transparent 70%); }
+  .bg-purple { background: radial-gradient(ellipse at top, #1a0d3a 0%, #0a0520 50%, var(--navy-blk) 100%); }
+  .bg-purple::after { background: radial-gradient(circle, rgba(139,92,246,0.22) 0%, rgba(139,92,246,0.06) 40%, transparent 70%); }
+
+  /* ===== TECH HUD — CORNER METADATA ===== */
+  .hud-top-left, .hud-top-right, .hud-bot-left, .hud-bot-right {
+    position: absolute;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2.5px;
+    color: rgba(61,203,202,0.55);
+    font-weight: 500;
+    text-transform: uppercase;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .hud-top-left { top: 72px; left: 28px; }
+  .hud-top-right { top: 72px; right: 28px; }
+  .hud-bot-left { bottom: 24px; left: 28px; }
+  .hud-bot-right { bottom: 24px; right: 96px; }
+
+  .hud-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--teal-neon);
+    box-shadow: 0 0 10px var(--teal-neon);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  .hud-line {
+    display: inline-block;
+    height: 1px;
+    width: 32px;
+    background: linear-gradient(90deg, var(--teal) 0%, transparent 100%);
+  }
+
+  /* ===== CHIP (tech badge) ===== */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 36px;
+    background: rgba(61,203,202,0.08);
+    border: 1px solid rgba(61,203,202,0.4);
+    color: var(--teal-light);
+    backdrop-filter: blur(8px);
+    position: relative;
+  }
+  .chip::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--teal-neon);
+    box-shadow: 0 0 8px var(--teal-neon);
+  }
+  .chip.coral { background: rgba(239,108,87,0.08); border-color: rgba(239,108,87,0.4); color: var(--coral-neon); }
+  .chip.coral::before { background: var(--coral-neon); box-shadow: 0 0 8px var(--coral-neon); }
+  .chip.gold { background: rgba(212,165,116,0.08); border-color: rgba(212,165,116,0.4); color: var(--gold-neon); }
+  .chip.gold::before { background: var(--gold-neon); box-shadow: 0 0 8px var(--gold-neon); }
+  .chip.purple { background: rgba(139,92,246,0.08); border-color: rgba(139,92,246,0.4); color: #b8a3ff; }
+  .chip.purple::before { background: #b8a3ff; box-shadow: 0 0 8px #b8a3ff; }
+
+  /* ===== TYPOGRAPHY ===== */
+  h1 {
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(52px, 8vw, 112px);
+    font-weight: 900;
+    line-height: 0.98;
+    letter-spacing: -3px;
+    margin-bottom: 28px;
+    max-width: 1200px;
+    background: linear-gradient(180deg, #ffffff 0%, #b8c4d1 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 80px rgba(61,203,202,0.2);
+  }
+
+  h1.glow-teal {
+    background: linear-gradient(180deg, #ffffff 0%, var(--teal-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  h2 {
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(40px, 5.5vw, 80px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -2px;
+    margin-bottom: 28px;
+    max-width: 1200px;
+    background: linear-gradient(180deg, #ffffff 0%, #d1d9e3 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  h2.accent-teal {
+    background: linear-gradient(135deg, var(--teal-light) 0%, var(--teal) 50%, #ffffff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  h2.accent-coral {
+    background: linear-gradient(135deg, var(--coral-neon) 0%, var(--coral) 50%, #ffffff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  h2.accent-gold {
+    background: linear-gradient(135deg, var(--gold-neon) 0%, var(--gold) 50%, #ffffff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  p.lead {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(20px, 2.2vw, 30px);
+    font-weight: 400;
+    line-height: 1.55;
+    max-width: 900px;
+    margin: 0 auto 32px;
+    color: rgba(255,255,255,0.82);
+  }
+
+  blockquote {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(28px, 3.4vw, 52px);
+    line-height: 1.3;
+    font-weight: 400;
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    padding: 0 80px;
+    color: rgba(255,255,255,0.95);
+  }
+  blockquote::before, blockquote::after {
+    position: absolute;
+    font-size: 140px;
+    font-family: 'Source Serif 4', Georgia, serif;
+    color: var(--teal);
+    opacity: .6;
+    line-height: 1;
+    text-shadow: 0 0 30px rgba(61,203,202,0.5);
+  }
+  blockquote::before { content: '\201C'; top: -30px; left: 0; }
+  blockquote::after { content: '\201D'; bottom: -80px; right: 0; }
+
+  .bg-coral blockquote::before, .bg-coral blockquote::after { color: var(--coral); text-shadow: 0 0 30px rgba(239,108,87,0.5); }
+  .bg-gold blockquote::before, .bg-gold blockquote::after { color: var(--gold); text-shadow: 0 0 30px rgba(212,165,116,0.5); }
+
+  .attribution {
+    margin-top: 44px;
+    font-family: var(--mono);
+    font-size: 14px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--teal);
+    font-weight: 500;
+  }
+  .bg-coral .attribution { color: var(--coral-neon); }
+  .bg-gold .attribution { color: var(--gold-neon); }
+
+  /* ===== PILLAR CARDS ===== */
+  .pillars {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+    max-width: 1500px;
+    width: 100%;
+    margin-top: 48px;
+  }
+  .pillar-card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+    border: 1px solid rgba(61,203,202,0.2);
+    border-radius: 12px;
+    padding: 28px 20px;
+    text-align: left;
+    backdrop-filter: blur(12px);
+    position: relative;
+    overflow: hidden;
+    transition: all .3s ease;
+  }
+  .pillar-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, var(--teal-neon) 50%, transparent 100%);
+    opacity: 0.8;
+  }
+  .pillar-card .num {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    color: var(--teal);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .pillar-card .num::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--teal-neon);
+    box-shadow: 0 0 8px var(--teal-neon);
+  }
+  .pillar-card .title {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 10px;
+    color: var(--white);
+  }
+  .pillar-card .sub {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.7);
+    font-style: italic;
+  }
+
+  /* ===== TWO COLUMN (pillar detail) ===== */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 72px;
+    max-width: 1400px;
+    width: 100%;
+    align-items: center;
+    text-align: left;
+  }
+  .two-col h2 {
+    font-size: clamp(34px, 4.5vw, 68px);
+    text-align: left;
+    margin: 0 0 24px;
+  }
+  .two-col .col-quote {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(22px, 2.4vw, 34px);
+    line-height: 1.4;
+    color: rgba(255,255,255,0.92);
+    padding: 20px 0 20px 32px;
+    border-left: 3px solid var(--teal);
+    position: relative;
+  }
+  .two-col .col-quote::before {
+    content: '';
+    position: absolute;
+    left: -3px; top: 0;
+    width: 3px; height: 40px;
+    background: var(--teal-neon);
+    box-shadow: 0 0 10px var(--teal-neon);
+  }
+  .bg-coral .two-col .col-quote { border-left-color: var(--coral); }
+  .bg-coral .two-col .col-quote::before { background: var(--coral-neon); box-shadow: 0 0 10px var(--coral-neon); }
+  .bg-gold .two-col .col-quote { border-left-color: var(--gold); }
+  .bg-gold .two-col .col-quote::before { background: var(--gold-neon); box-shadow: 0 0 10px var(--gold-neon); }
+
+  .two-col .col-body p {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(17px, 1.5vw, 21px);
+    line-height: 1.7;
+    color: rgba(255,255,255,0.9);
+    margin-bottom: 16px;
+  }
+  .two-col .col-body p strong {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    color: var(--white);
+  }
+
+  /* ===== ACTION LIST (numbered tech-style) ===== */
+  .action-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-width: 950px;
+    width: 100%;
+    margin-top: 32px;
+  }
+  .action-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 22px;
+    text-align: left;
+    padding: 20px 26px;
+    background: linear-gradient(90deg, rgba(61,203,202,0.08) 0%, rgba(255,255,255,0.02) 100%);
+    border: 1px solid rgba(61,203,202,0.25);
+    border-left: 3px solid var(--teal-neon);
+    border-radius: 8px;
+    backdrop-filter: blur(8px);
+    transition: all .3s ease;
+  }
+  .action-item:hover {
+    border-color: var(--teal);
+    box-shadow: 0 0 24px rgba(61,203,202,0.2);
+  }
+  .action-item .idx {
+    font-family: var(--mono);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--teal-neon);
+    min-width: 52px;
+    line-height: 1;
+    letter-spacing: -1px;
+  }
+  .action-item .txt {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(16px, 1.5vw, 20px);
+    line-height: 1.55;
+    color: rgba(255,255,255,0.92);
+  }
+  .action-item .txt strong {
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+  }
+
+  /* ===== TECH GRID (Tecnología slide) ===== */
+  .tech-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    max-width: 1300px;
+    width: 100%;
+    margin-top: 36px;
+  }
+  .tech-card {
+    padding: 32px 26px;
+    background: linear-gradient(180deg, rgba(61,203,202,0.08) 0%, rgba(61,203,202,0.02) 100%);
+    border: 1px solid rgba(61,203,202,0.35);
+    border-radius: 14px;
+    text-align: left;
+    backdrop-filter: blur(12px);
+    position: relative;
+    overflow: hidden;
+  }
+  .tech-card::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: -1px; right: -1px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, var(--teal-neon) 50%, transparent 100%);
+  }
+  .tech-card .ic {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    color: var(--teal-neon);
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .tech-card .ic::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--teal-neon);
+    box-shadow: 0 0 8px var(--teal-neon);
+  }
+  .tech-card .nm {
+    font-size: 26px;
+    font-weight: 800;
+    margin-bottom: 12px;
+    letter-spacing: -0.5px;
+    color: var(--white);
+  }
+  .tech-card .ds {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 15px;
+    line-height: 1.6;
+    color: rgba(255,255,255,0.82);
+  }
+
+  /* ===== STACK SLIDE (new) ===== */
+  .stack-wrap {
+    width: 100%;
+    max-width: 1300px;
+    margin-top: 24px;
+    position: relative;
+  }
+  .stack-layers {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .stack-layer {
+    display: grid;
+    grid-template-columns: 110px 1fr 150px;
+    align-items: center;
+    gap: 20px;
+    padding: 12px 22px;
+    background: linear-gradient(90deg, rgba(61,203,202,0.1) 0%, rgba(255,255,255,0.02) 100%);
+    border: 1px solid rgba(61,203,202,0.25);
+    border-radius: 8px;
+    text-align: left;
+    backdrop-filter: blur(6px);
+  }
+  .stack-layer .lnum {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--teal);
+    font-weight: 600;
+  }
+  .stack-layer .lname {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: -0.3px;
+    line-height: 1.2;
+  }
+  .stack-layer .lname span {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.55);
+    display: block;
+    margin-top: 3px;
+    letter-spacing: 0.5px;
+  }
+  .stack-layer .lstatus {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--teal-neon);
+    text-transform: uppercase;
+    font-weight: 500;
+    text-align: right;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .stack-layer .lstatus::after {
+    content: '';
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--teal-neon);
+    box-shadow: 0 0 10px var(--teal-neon);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  /* ===== IMAGE TILES (proof grid) ===== */
+  .img-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    max-width: 1400px;
+    width: 100%;
+    margin-top: 36px;
+  }
+  .img-tile {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(61,203,202,0.35);
+    background: var(--navy-dark);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(61,203,202,0.1) inset;
+    transition: all .3s ease;
+  }
+  .img-tile:hover { transform: translateY(-4px); border-color: var(--teal-neon); box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 0 24px rgba(61,203,202,0.3); }
+  .img-tile img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    filter: saturate(1.1) contrast(1.05);
+  }
+  .img-tile::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(3,8,20,0.95) 100%);
+    z-index: 1;
+    pointer-events: none;
+  }
+  .img-tile::after {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, var(--teal-neon) 50%, transparent 100%);
+    z-index: 2;
+  }
+  .img-tile .caption {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 16px 18px;
+    z-index: 2;
+    text-align: left;
+  }
+  .img-tile .caption .cat {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 2.5px;
+    color: var(--teal-neon);
+    font-weight: 500;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .img-tile .caption .cat::before {
+    content: '';
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--teal-neon);
+    box-shadow: 0 0 6px var(--teal-neon);
+  }
+  .img-tile .caption .ttl {
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: -0.3px;
+    line-height: 1.25;
+  }
+
+  /* hero image */
+  .img-hero {
+    position: relative;
+    width: 100%;
+    max-width: 860px;
+    aspect-ratio: 16 / 9;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(61,203,202,0.4);
+    margin: 24px auto 0;
+    box-shadow: 0 16px 60px rgba(0,0,0,0.55);
+  }
+  .img-hero img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    object-position: center 30%;
+    display: block;
+    filter: saturate(1.1);
+  }
+  .img-hero::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, var(--teal-neon) 50%, transparent 100%);
+    z-index: 2;
+  }
+  .img-hero::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 50%, rgba(3,8,20,0.5) 100%);
+    pointer-events: none;
+  }
+
+  .powered-by {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 32px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+  }
+  .powered-by img { height: 24px; width: auto; opacity: 0.85; filter: brightness(1.1); }
+
+  /* ===== BIG NUMBERS ===== */
+  .big-number {
+    font-family: var(--mono);
+    font-size: clamp(100px, 14vw, 220px);
+    font-weight: 700;
+    line-height: 0.9;
+    letter-spacing: -6px;
+    background: linear-gradient(180deg, var(--teal-light) 0%, var(--teal) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 28px;
+    text-shadow: 0 0 60px rgba(61,203,202,0.4);
+  }
+
+  /* ===== CTA BOX ===== */
+  .cta-box {
+    margin-top: 44px;
+    padding: 32px 44px;
+    background: linear-gradient(135deg, rgba(61,203,202,0.12) 0%, rgba(11,29,74,0.6) 100%);
+    border: 1px solid rgba(61,203,202,0.4);
+    border-radius: 12px;
+    max-width: 950px;
+    backdrop-filter: blur(12px);
+    position: relative;
+    overflow: hidden;
+  }
+  .cta-box::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, var(--teal-neon) 50%, transparent 100%);
+  }
+  .cta-box .label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--teal-neon);
+    font-weight: 500;
+    margin-bottom: 14px;
+    text-transform: uppercase;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .cta-box .label::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--teal-neon);
+    box-shadow: 0 0 8px var(--teal-neon);
+  }
+  .cta-box .msg {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(18px, 1.8vw, 24px);
+    line-height: 1.55;
+    color: rgba(255,255,255,0.92);
+  }
+  .cta-box .msg a {
+    font-family: var(--mono);
+    color: var(--teal-neon);
+    text-decoration: none;
+    font-weight: 600;
+    padding: 0 4px;
+    border-bottom: 2px solid var(--teal-neon);
+    text-shadow: 0 0 12px rgba(45,232,230,0.6);
+    transition: all .2s ease;
+  }
+  .cta-box .msg a:hover { color: var(--white); border-color: var(--white); }
+
+  /* ===== LOGO / NAV ===== */
+  .logo-tag {
+    position: fixed;
+    top: 24px; left: 28px;
+    z-index: 100;
+    opacity: 0.9;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo-tag img {
+    height: 32px;
+    width: auto;
+    display: block;
+    filter: drop-shadow(0 2px 12px rgba(61,203,202,0.4));
+  }
+  .logo-tag .mark {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: rgba(61,203,202,0.5);
+    font-weight: 500;
+    padding-left: 12px;
+    border-left: 1px solid rgba(61,203,202,0.3);
+    text-transform: uppercase;
+  }
+
+  .cover-logo {
+    max-width: 340px;
+    width: 55%;
+    height: auto;
+    margin: 0 auto 44px;
+    display: block;
+    filter: drop-shadow(0 8px 40px rgba(61,203,202,0.5));
+    animation: logoFloat 6s ease-in-out infinite;
+  }
+  @keyframes logoFloat {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-8px); }
+  }
+
+  .nav {
+    position: fixed;
+    bottom: 24px; right: 28px;
+    display: flex; gap: 10px; align-items: center;
+    z-index: 100;
+  }
+  .nav button {
+    background: rgba(61,203,202,0.08);
+    border: 1px solid rgba(61,203,202,0.35);
+    color: var(--teal-light);
+    width: 42px; height: 42px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all .2s;
+    backdrop-filter: blur(8px);
+  }
+  .nav button:hover {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: var(--navy-dark);
+    box-shadow: 0 0 16px rgba(61,203,202,0.5);
+  }
+
+  .counter {
+    position: fixed;
+    bottom: 34px; left: 28px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: rgba(61,203,202,0.6);
+    font-weight: 500;
+    z-index: 100;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .counter::before {
+    content: 'SYS';
+    color: rgba(61,203,202,0.35);
+  }
+
+  .progress {
+    position: fixed;
+    top: 0; left: 0; height: 2px;
+    background: linear-gradient(90deg, var(--teal) 0%, var(--teal-neon) 100%);
+    box-shadow: 0 0 12px var(--teal-neon);
+    transition: width .45s ease;
+    z-index: 100;
+  }
+
+  .hint {
+    position: fixed;
+    top: 28px; right: 28px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(61,203,202,0.4);
+    font-weight: 500;
+    z-index: 100;
+    text-transform: uppercase;
+  }
+
+  /* SPEAKER NOTES */
+  .notes {
+    display: none;
+    position: fixed;
+    bottom: 90px; left: 28px; right: 28px;
+    max-width: 950px;
+    margin: 0 auto;
+    padding: 22px 30px;
+    background: rgba(3,8,20,0.92);
+    border-left: 3px solid var(--coral-neon);
+    border-radius: 8px;
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--white);
+    z-index: 99;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 -12px 60px rgba(0,0,0,0.6);
+  }
+  .notes.visible { display: block; }
+  .notes .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--coral-neon);
+    font-weight: 500;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  /* SLIDE ENTRANCE ANIMATION */
+  .slide.active h1,
+  .slide.active h2,
+  .slide.active blockquote,
+  .slide.active p.lead,
+  .slide.active .chip,
+  .slide.active .attribution,
+  .slide.active .pillars,
+  .slide.active .two-col,
+  .slide.active .action-list,
+  .slide.active .tech-grid,
+  .slide.active .stack-wrap,
+  .slide.active .cta-box,
+  .slide.active .big-number,
+  .slide.active .cover-logo,
+  .slide.active .img-hero,
+  .slide.active .img-grid,
+  .slide.active .powered-by {
+    animation: riseIn 0.7s cubic-bezier(.22,.61,.36,1) both;
+  }
+  .slide.active .chip { animation-delay: .05s; }
+  .slide.active h1, .slide.active h2 { animation-delay: .15s; }
+  .slide.active p.lead, .slide.active blockquote { animation-delay: .25s; }
+  .slide.active .two-col,
+  .slide.active .action-list,
+  .slide.active .tech-grid,
+  .slide.active .pillars,
+  .slide.active .stack-wrap,
+  .slide.active .cta-box,
+  .slide.active .big-number,
+  .slide.active .img-hero,
+  .slide.active .img-grid { animation-delay: .35s; }
+  .slide.active .powered-by { animation-delay: .5s; }
+  .slide.active .attribution { animation-delay: .5s; }
+
+  @keyframes riseIn {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== AUTO-PLAY CONTROLS ===== */
+  .autoplay-controls {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    background: rgba(3,8,20,0.85);
+    border: 1px solid rgba(61,203,202,0.35);
+    border-radius: 10px;
+    backdrop-filter: blur(16px);
+    z-index: 200;
+    font-family: var(--mono);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+
+  .autoplay-controls .rec-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+    font-weight: 600;
+    min-width: 52px;
+  }
+  .autoplay-controls .rec-indicator.active {
+    color: #ff4444;
+  }
+  .autoplay-controls .rec-indicator .rec-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+  }
+  .autoplay-controls .rec-indicator.active .rec-dot {
+    background: #ff4444;
+    box-shadow: 0 0 10px #ff4444;
+    animation: recPulse 1s ease-in-out infinite;
+  }
+
+  @keyframes recPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  .autoplay-controls button {
+    background: rgba(61,203,202,0.1);
+    border: 1px solid rgba(61,203,202,0.4);
+    color: var(--teal-light);
+    width: 38px;
+    height: 38px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all .2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .autoplay-controls button:hover {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: var(--navy-dark);
+    box-shadow: 0 0 16px rgba(61,203,202,0.5);
+  }
+
+  .autoplay-controls .slide-info {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(61,203,202,0.6);
+    min-width: 60px;
+    text-align: center;
+  }
+
+  /* ===== PRE-PLAY OVERLAY ===== */
+  .preplay-overlay {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, var(--navy) 0%, var(--navy-dark) 40%, var(--navy-blk) 100%);
+    z-index: 500;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 32px;
+    transition: opacity 0.6s ease;
+  }
+  .preplay-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .preplay-overlay::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(61,203,202,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(61,203,202,0.04) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+    pointer-events: none;
+    animation: gridDrift 40s linear infinite;
+  }
+
+  .preplay-overlay img {
+    max-width: 280px;
+    width: 50%;
+    height: auto;
+    filter: drop-shadow(0 8px 40px rgba(61,203,202,0.5));
+    animation: logoFloat 6s ease-in-out infinite;
+    position: relative;
+    z-index: 1;
+  }
+
+  .preplay-overlay .preplay-title {
+    font-family: var(--mono);
+    font-size: 14px;
+    letter-spacing: 4px;
+    color: var(--teal-light);
+    text-transform: uppercase;
+    font-weight: 500;
+    position: relative;
+    z-index: 1;
+  }
+
+  .preplay-overlay .preplay-subtitle {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 18px;
+    color: rgba(255,255,255,0.5);
+    font-style: italic;
+    position: relative;
+    z-index: 1;
+  }
+
+  .preplay-overlay .preplay-btn {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: rgba(61,203,202,0.12);
+    border: 2px solid var(--teal);
+    color: var(--teal-neon);
+    font-size: 36px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 0 40px rgba(61,203,202,0.2);
+  }
+  .preplay-overlay .preplay-btn:hover {
+    background: var(--teal);
+    color: var(--navy-dark);
+    box-shadow: 0 0 60px rgba(61,203,202,0.5);
+    transform: scale(1.08);
+  }
+
+  /* Narration waveform indicator */
+  .narration-wave {
+    position: fixed;
+    top: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    height: 20px;
+    z-index: 200;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .narration-wave.active { opacity: 1; }
+  .narration-wave .bar {
+    width: 3px;
+    background: var(--teal-neon);
+    border-radius: 2px;
+    animation: waveBar 0.8s ease-in-out infinite;
+  }
+  .narration-wave .bar:nth-child(1) { height: 8px; animation-delay: 0s; }
+  .narration-wave .bar:nth-child(2) { height: 14px; animation-delay: 0.1s; }
+  .narration-wave .bar:nth-child(3) { height: 10px; animation-delay: 0.2s; }
+  .narration-wave .bar:nth-child(4) { height: 18px; animation-delay: 0.3s; }
+  .narration-wave .bar:nth-child(5) { height: 12px; animation-delay: 0.15s; }
+  .narration-wave .bar:nth-child(6) { height: 16px; animation-delay: 0.25s; }
+  .narration-wave .bar:nth-child(7) { height: 8px; animation-delay: 0.35s; }
+
+  @keyframes waveBar {
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(0.3); }
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 900px) {
+    .slide { padding: 72px 5vw 80px; }
+    .pillars { grid-template-columns: 1fr 1fr; gap: 12px; }
+    .pillar-card { padding: 20px 16px; }
+    .pillar-card .title { font-size: 17px; }
+    .pillar-card .sub { font-size: 13px; }
+    .tech-grid { grid-template-columns: 1fr; }
+    .tech-card { padding: 22px 20px; }
+    .tech-card .nm { font-size: 22px; }
+    .two-col { grid-template-columns: 1fr; gap: 28px; }
+    .two-col .col-quote { font-size: clamp(18px, 4.5vw, 26px); padding: 14px 0 14px 22px; }
+    .two-col .col-body p { font-size: clamp(15px, 4vw, 18px); }
+    blockquote { padding: 0 30px; font-size: clamp(20px, 5.5vw, 34px); }
+    blockquote::before, blockquote::after { font-size: 80px; }
+    blockquote::before { top: -14px; }
+    blockquote::after { bottom: -50px; }
+    h1 { font-size: clamp(34px, 9vw, 62px); letter-spacing: -1.5px; }
+    h2 { font-size: clamp(28px, 7vw, 52px); letter-spacing: -1px; }
+    p.lead { font-size: clamp(16px, 4vw, 22px); }
+    .chip { font-size: 10px; padding: 8px 16px; letter-spacing: 2px; margin-bottom: 24px; }
+    .attribution { font-size: 11px; letter-spacing: 2.5px; margin-top: 32px; }
+    .hint { display: none; }
+    .logo-tag { top: 16px; left: 16px; }
+    .logo-tag img { height: 24px; }
+    .logo-tag .mark { display: none; }
+    .counter { bottom: 20px; left: 16px; font-size: 10px; letter-spacing: 2px; }
+    .nav { bottom: 16px; right: 16px; gap: 8px; }
+    .nav button { width: 38px; height: 38px; font-size: 16px; }
+    .stack-layer { grid-template-columns: 72px 1fr 80px; gap: 12px; padding: 10px 14px; }
+    .stack-layer .lnum { font-size: 10px; letter-spacing: 1.5px; }
+    .stack-layer .lname { font-size: 14px; }
+    .stack-layer .lname span { font-size: 10px; margin-top: 2px; }
+    .stack-layer .lstatus { font-size: 9px; letter-spacing: 1.5px; gap: 5px; }
+    .stack-layer .lstatus::after { width: 6px; height: 6px; }
+    .hud-top-left, .hud-top-right, .hud-bot-left, .hud-bot-right { display: none; }
+    .img-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .img-tile .caption { padding: 10px 12px; }
+    .img-tile .caption .ttl { font-size: 12px; }
+    .img-tile .caption .cat { font-size: 8px; margin-bottom: 4px; }
+    .img-hero { max-width: 100%; aspect-ratio: 4 / 3; margin-top: 18px; }
+    .action-item { padding: 14px 16px; gap: 14px; }
+    .action-item .idx { font-size: 20px; min-width: 36px; }
+    .action-item .txt { font-size: clamp(14px, 3.8vw, 17px); }
+    .cta-box { padding: 22px 22px; margin-top: 28px; }
+    .cta-box .msg { font-size: clamp(16px, 4vw, 20px); word-break: break-word; }
+    .cta-box .msg a { word-break: break-all; }
+    .cover-logo { max-width: 220px; width: 65%; margin-bottom: 28px; }
+    .powered-by { font-size: 9px; letter-spacing: 2px; margin-top: 20px; }
+    .powered-by img { height: 20px; }
+    .autoplay-controls { padding: 8px 14px; gap: 8px; bottom: 16px; }
+    .autoplay-controls button { width: 34px; height: 34px; font-size: 14px; }
+    .autoplay-controls .slide-info { font-size: 9px; }
+    .autoplay-controls .rec-indicator { font-size: 9px; min-width: 44px; }
+  }
+
+  @media (max-width: 560px) {
+    .pillars { grid-template-columns: 1fr; }
+    .img-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- PRE-PLAY OVERLAY -->
+<div class="preplay-overlay" id="preplayOverlay">
+  <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69dfd39cfcac588c6b2329f9.png" alt="Visionarium">
+  <div class="preplay-title">Presentaci&oacute;n Auto-Narrada</div>
+  <div class="preplay-subtitle">Presiona PLAY para iniciar</div>
+  <button class="preplay-btn" id="preplayBtn" aria-label="Iniciar presentaci&oacute;n">&#9654;</button>
+</div>
+
+<!-- NARRATION WAVEFORM -->
+<div class="narration-wave" id="narrationWave">
+  <div class="bar"></div>
+  <div class="bar"></div>
+  <div class="bar"></div>
+  <div class="bar"></div>
+  <div class="bar"></div>
+  <div class="bar"></div>
+  <div class="bar"></div>
+</div>
+
+<div class="progress" id="progress"></div>
+<div class="logo-tag">
+  <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69dfd39cfcac588c6b2329f9.png" alt="Visionarium">
+  <span class="mark">Fellowship // 2026</span>
+</div>
+<div class="hint">&#8592; &#8594; navegar &middot; S notas &middot; F fullscreen</div>
+<div class="counter" id="counter">01 / 17</div>
+
+<div class="deck" id="deck">
+
+  <!-- 1. PORTADA -->
+  <section class="slide bg-navy active"
+    data-notes="Saludo breve. Pausa. Mirada a la sala. 'Hoy no les vengo a dar una charla motivacional. Les vengo a hacer una pregunta.' No lean el t&iacute;tulo; dejen que la sala lo lea."
+    data-narration="Bienvenidos a Visionarium. Hoy no les vengo a dar una charla motivacional. Les vengo a hacer una sola pregunta... pero antes, d&eacute;jenme contarles una historia.">
+    <div class="hud-top-left"><span class="hud-dot"></span> VSN // ONLINE</div>
+    <div class="hud-top-right">COHORT_01 // 2026-Q3 <span class="hud-line"></span></div>
+    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69dfd39cfcac588c6b2329f9.png" alt="Visionarium" class="cover-logo">
+    <div class="chip">Visionarium // Keynote v1.0</div>
+    <h1 class="glow-teal">El tama&ntilde;o de tu sue&ntilde;o</h1>
+    <p class="lead">Positivismo &middot; Imparable &middot; Mentalidad de CEO &middot; Inteligencia Emocional &middot; Tecnolog&iacute;a</p>
+    <div class="attribution">Creadores de CEOs con tecnolog&iacute;a de frontera</div>
+    <div class="hud-bot-left">SYS.READY &nbsp; <span class="hud-dot"></span></div>
+  </section>
+
+  <!-- 2. HOOK: EL BERNABEU -->
+  <section class="slide bg-navy"
+    data-notes="Empieza con la escena final, no con el origen. 'Imaginen un estadio con 80 mil personas gritando.' Pausa 3 segundos. Luego lean la frase. La sala ya est&aacute; enganchada."
+    data-narration="El nueve de abril de dos mil veintiséis. Santiago Bernabéu. Ochenta mil personas. Un colombiano de La Guajira le marca un gol al Real Madrid... en cuartos de final de la Champions League. Eso pasó. No es ficción. Es la historia de un niño que no tenía para comer.">
+    <div class="hud-top-left"><span class="hud-dot"></span> EVT.2026-04-09</div>
+    <div class="hud-top-right">BERNABEU // UCL_QF <span class="hud-line"></span></div>
+    <div class="chip">9 de abril, 2026</div>
+    <h2 class="accent-teal">Anoche, en el Santiago Bernab&eacute;u, le marqu&eacute; un gol al Real Madrid en los cuartos de final de la Champions League.</h2>
+    <div class="attribution">&mdash; Luis &ldquo;Lucho&rdquo; D&iacute;az</div>
+  </section>
+
+  <!-- 2.5 OTROS TALENTOS LATINOS -->
+  <section class="slide bg-navy"
+    data-notes="Transicion. 'Y no es solo Lucho. No es solo el f&uacute;tbol. El talento latino est&aacute; ganando en todos los escenarios m&aacute;s exigentes del mundo.' Muestra la foto."
+    data-narration="Y no es solo Lucho. Miren esta foto. Rolex veinticuatro de Daytona, Victory Lane. Un joven colombiano entre los mejores pilotos del mundo. El talento latino ya no pide permiso... llega y gana. La pregunta ya no es si se puede. La pregunta es... quién sigue.">
+    <div class="hud-top-left"><span class="hud-dot"></span> EVT.DAYTONA_24H</div>
+    <div class="hud-top-right">LATAM_TALENT // GLOBAL_STAGE <span class="hud-line"></span></div>
+    <div class="chip">No es solo Lucho</div>
+    <h2 class="accent-teal">El talento latino ya est&aacute; ganando en los escenarios m&aacute;s exigentes del planeta.</h2>
+    <div class="img-hero">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/696fe6f541fb813304da1626.jpg" alt="Piloto colombiano en Rolex 24 Daytona">
+    </div>
+    <p class="lead" style="margin-top: 24px; font-size: clamp(16px, 1.4vw, 20px);">Rolex 24 at Daytona, Victory Lane. Un joven colombiano entre los mejores pilotos del mundo. La pregunta ya no es si se puede. La pregunta es qui&eacute;n sigue.</p>
+  </section>
+
+  <!-- 3. FLASHBACK -->
+  <section class="slide bg-coral"
+    data-notes="Baja la voz aqui. Contraste total con la slide anterior. 'Pero para entender ese gol, tenemos que volver 20 a&ntilde;os atras.' Pausa larga antes de leer la cita."
+    data-narration="Pero para entender ese gol... tenemos que volver veinte años atrás. A Barrancas, La Guajira. Un pueblo donde el hambre era más real que cualquier sueño. Su madre lo veía con los ojos llenos de lágrimas... porque no sabía si habría comida al día siguiente.">
+    <div class="hud-top-left"><span class="hud-dot" style="background: var(--coral-neon); box-shadow: 0 0 10px var(--coral-neon);"></span> ORIGIN.2005</div>
+    <div class="hud-top-right">LA_GUAJIRA // CO <span class="hud-line" style="background: linear-gradient(90deg, var(--coral) 0%, transparent 100%);"></span></div>
+    <div class="chip coral">Barrancas, La Guajira</div>
+    <blockquote>
+      Mi madre me ve&iacute;a con los ojos llenos de l&aacute;grimas porque no sab&iacute;a si habr&iacute;a comida para mi al d&iacute;a siguiente.
+    </blockquote>
+    <div class="attribution">&mdash; Lucho D&iacute;az, sobre su infancia</div>
+  </section>
+
+  <!-- 4. FRASE ANCLA -->
+  <section class="slide bg-gold"
+    data-notes="Esta es la frase que van a recordar toda su vida. Dejenla en pantalla. No hablen durante 5 segundos. Luego digan: 'Esta presentaci&oacute;n se trata de esto. Nada m&aacute;s.'"
+    data-narration="El hambre no es un destino. Es una página en tu historia... no el final del libro. Recuerden esta frase. Toda esta presentación se trata de esto. Nada más.">
+    <div class="hud-top-left"><span class="hud-dot" style="background: var(--gold-neon); box-shadow: 0 0 10px var(--gold-neon);"></span> CORE.PRINCIPLE</div>
+    <blockquote>
+      El hambre no es un destino. Es una p&aacute;gina en tu historia, no el final del libro.
+    </blockquote>
+    <div class="attribution">&mdash; Luis D&iacute;az</div>
+  </section>
+
+  <!-- 5. LOS 5 PILARES -->
+  <section class="slide bg-navy"
+    data-notes="Transicion. 'Lucho no llego al Bernab&eacute;u por suerte. Llego por cinco cosas muy concretas. Y las cinco las pueden aprender ustedes.' Presenta los pilares rapido."
+    data-narration="Lucho no llegó al Bernabéu por suerte. Llegó por cinco cosas muy concretas. Y las cinco las pueden aprender ustedes. Positivismo. Imparable. Mentalidad de CEO. Inteligencia emocional. Y tecnología. Vamos a ver cada una.">
+    <div class="hud-top-left"><span class="hud-dot"></span> FORMULA.LOADED</div>
+    <div class="hud-top-right">5 MODULES // ACTIVE <span class="hud-line"></span></div>
+    <div class="chip">La f&oacute;rmula // 05 m&oacute;dulos</div>
+    <h2 class="accent-teal">Cinco cosas que Lucho desarroll&oacute;. Cinco cosas que t&uacute; puedes desarrollar.</h2>
+    <div class="pillars">
+      <div class="pillar-card"><div class="num">01 // POS</div><div class="title">Positivismo</div><div class="sub">Negarse a creer que el hambre define el futuro.</div></div>
+      <div class="pillar-card"><div class="num">02 // IMP</div><div class="title">Imparable</div><div class="sub">Botas rotas, kil&oacute;metros bajo el sol. Entrenar igual.</div></div>
+      <div class="pillar-card"><div class="num">03 // CEO</div><div class="title">Mentalidad de CEO</div><div class="sub">Pensar como due&ntilde;o de tu destino, no como v&iacute;ctima.</div></div>
+      <div class="pillar-card"><div class="num">04 // IE</div><div class="title">Inteligencia Emocional</div><div class="sub">Convertir &ldquo;flaco&rdquo; en combustible, no en herida.</div></div>
+      <div class="pillar-card"><div class="num">05 // TECH</div><div class="title">Tecnolog&iacute;a</div><div class="sub">Usar las herramientas que Lucho no tuvo, que t&uacute; s&iacute;.</div></div>
+    </div>
+  </section>
+
+  <!-- 6. POSITIVISMO -->
+  <section class="slide bg-teal"
+    data-notes="Positivismo no es sonreir todo el dia. Es elegir una interpretacion distinta de los mismos hechos."
+    data-narration="Los médicos le dijeron que nunca crecería lo suficiente para ser futbolista. Pero el fútbol no entiende de diagnósticos. Positivismo no es ignorar la realidad... es leerla con otro final. Cuando te digan no puedes, pregúntate: quién lo dice, con qué datos, y qué pasa si se equivocan.">
+    <div class="hud-top-left"><span class="hud-dot"></span> MODULE.01 // POS</div>
+    <div class="hud-top-right">READ.REALITY // REWRITE <span class="hud-line"></span></div>
+    <div class="chip">Pilar 01 // Positivismo</div>
+    <h2 class="accent-teal">Positivismo</h2>
+    <div class="two-col">
+      <div class="col-quote">
+        Los m&eacute;dicos dijeron que quiz&aacute;s nunca crecer&iacute;a lo suficiente para ser futbolista. Pero el f&uacute;tbol no entiende de diagn&oacute;sticos.
+      </div>
+      <div class="col-body">
+        <p><strong>Positivismo no es ignorar la realidad.</strong> Es leer la misma realidad con otro final.</p>
+        <p>Cuando te digan &ldquo;no puedes&rdquo;, preg&uacute;ntate: &iquest;qui&eacute;n lo dice? &iquest;con qu&eacute; datos? &iquest;y qu&eacute; pasa si se equivocan?</p>
+        <p><strong>Ejercicio:</strong> la pr&oacute;xima vez que alguien te diga &ldquo;no vas a poder&rdquo;, escr&iacute;belo. Debajo, escribe tres razones por las que s&iacute;.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. IMPARABLE -->
+  <section class="slide bg-coral"
+    data-notes="Imparable no es talento. Es constancia cuando nadie est&aacute; mirando."
+    data-narration="A los quince años caminaba kilómetros bajo el sol con botas rotas y una pelota que apenas inflaba. Ser imparable no es correr más rápido. Es no parar cuando los demás paran. Lucho entrenó durante años sin cámaras, sin patrocinadores, sin nadie aplaudiendo. Esa es la verdadera formación.">
+    <div class="hud-top-left"><span class="hud-dot" style="background: var(--coral-neon); box-shadow: 0 0 10px var(--coral-neon);"></span> MODULE.02 // IMP</div>
+    <div class="hud-top-right">PROTOCOL // DONT_STOP <span class="hud-line" style="background: linear-gradient(90deg, var(--coral) 0%, transparent 100%);"></span></div>
+    <div class="chip coral">Pilar 02 // Imparable</div>
+    <h2 class="accent-coral">Imparable</h2>
+    <div class="two-col">
+      <div class="col-quote">
+        A los 15 a&ntilde;os todav&iacute;a caminaba kil&oacute;metros bajo el sol ardiente para entrenar con botas rotas y una pelota que apenas inflaba.
+      </div>
+      <div class="col-body">
+        <p>Ser imparable no es correr m&aacute;s r&aacute;pido. Es <strong>no parar</strong> cuando los dem&aacute;s paran.</p>
+        <p>Lucho entren&oacute; durante a&ntilde;os sin camaras, sin patrocinadores, sin nadie aplaudiendo. Esa es la verdadera formaci&oacute;n.</p>
+        <p><strong>Tu pregunta:</strong> &iquest;qu&eacute; har&iacute;as cada d&iacute;a durante cinco a&ntilde;os aunque nadie te aplauda?</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. MENTALIDAD DE CEO -->
+  <section class="slide bg-navy"
+    data-notes="CEO no es tener una empresa. Es pensar como due&ntilde;o de tu vida."
+    data-narration="Mentalidad de CEO. No es tener una empresa. Es pensar como dueño de tu vida. Lucho no se preguntó quién me va a ayudar. Se preguntó: qué depende de mí. Tres reglas: piensa en activos, no en excusas. Decide con datos, no con miedo. Y asume responsabilidad total. Nadie viene a salvarte... y ese es el día que empiezas a ganar.">
+    <div class="hud-top-left"><span class="hud-dot"></span> MODULE.03 // CEO</div>
+    <div class="hud-top-right">OPERATING_SYSTEM // OWNER <span class="hud-line"></span></div>
+    <div class="chip">Pilar 03 // Mentalidad de CEO</div>
+    <h2 class="accent-teal">Mentalidad de CEO</h2>
+    <p class="lead">&ldquo;La terquedad de un ni&ntilde;o que se neg&oacute; a creer que el hambre defin&iacute;a su futuro.&rdquo;</p>
+    <div class="action-list">
+      <div class="action-item"><div class="idx">01</div><div class="txt"><strong>Piensa en activos, no en excusas.</strong> Tu tiempo, tu enfoque, tus habilidades &mdash; son tu capital. &iquest;Lo est&aacute;s invirtiendo o lo est&aacute;s gastando?</div></div>
+      <div class="action-item"><div class="idx">02</div><div class="txt"><strong>Toma decisiones con datos, no con miedo.</strong> Un CEO no pregunta &ldquo;&iquest;y si sale mal?&rdquo; &mdash; pregunta &ldquo;&iquest;cu&aacute;l es el peor escenario y puedo vivir con el?&rdquo;</div></div>
+      <div class="action-item"><div class="idx">03</div><div class="txt"><strong>Responsabilidad total.</strong> Nadie viene a salvarte. Ese es el d&iacute;a que empiezas a ganar.</div></div>
+    </div>
+  </section>
+
+  <!-- 9. INTELIGENCIA EMOCIONAL -->
+  <section class="slide bg-purple"
+    data-notes="Aqui bajen el tono. Este es el pilar mas humano."
+    data-narration="Sus compañeros le decían flaco. No era un apodo cariñoso. Era un recordatorio de lo que le faltaba. Pero Lucho no negó el dolor. Lo usó. Lo convirtió en combustible, no en identidad. Eso es inteligencia emocional. No es no sentir. Es sentirlo, entenderlo... y decidir qué hacer con eso.">
+    <div class="hud-top-left"><span class="hud-dot" style="background: #b8a3ff; box-shadow: 0 0 10px #b8a3ff;"></span> MODULE.04 // IE</div>
+    <div class="hud-top-right">EMOTION // DATA_STREAM <span class="hud-line" style="background: linear-gradient(90deg, #b8a3ff 0%, transparent 100%);"></span></div>
+    <div class="chip purple">Pilar 04 // Inteligencia Emocional</div>
+    <h2>Inteligencia Emocional</h2>
+    <div class="two-col">
+      <div class="col-quote" style="border-left-color: #8b5cf6;">
+        Mis compa&ntilde;eros me llamaban &ldquo;flaco&rdquo;. No era un apodo cari&ntilde;oso. Era un recordatorio constante de lo que me faltaba.
+      </div>
+      <div class="col-body">
+        <p><strong>Inteligencia emocional no es no sentir.</strong> Es sentirlo, entenderlo, y decidir que hacer con eso.</p>
+        <p>Lucho no neg&oacute; el dolor del apodo. Lo us&oacute;. Lo convirti&oacute; en combustible, no en identidad.</p>
+        <p><strong>Tres habilidades que desarrollar:</strong> reconocer lo que sientes, nombrar lo que sientes, y escoger como responder.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10. TECNOLOGIA -->
+  <section class="slide bg-teal"
+    data-notes="Transicion fuerte. 'Lucho tenia botas rotas. Tu tienes herramientas que en 2005 ning&uacute;n joven de La Guajira tenia.'"
+    data-narration="Lucho tenía una pelota que apenas inflaba. Tú tienes herramientas que ni los millonarios tenían hace diez años. Internet, inteligencia artificial, y Lina... tu mentora personal bilingüe, disponible veinticuatro siete. Las excusas de hoy son más difíciles de defender.">
+    <div class="hud-top-left"><span class="hud-dot"></span> MODULE.05 // TECH</div>
+    <div class="hud-top-right">LEVERAGE // UNLOCKED <span class="hud-line"></span></div>
+    <div class="chip">Pilar 05 // Tecnolog&iacute;a</div>
+    <h2 class="accent-teal">Tecnolog&iacute;a</h2>
+    <p class="lead">Lucho ten&iacute;a una pelota que apenas inflaba. Tu tienes herramientas que ni los millonarios ten&iacute;an hace 10 a&ntilde;os.</p>
+    <div class="tech-grid">
+      <div class="tech-card">
+        <div class="ic">01 &middot; ACCESO</div>
+        <div class="nm">Internet + IA</div>
+        <div class="ds">Todo lo que se sabe en el mundo, gratis, en tu bolsillo. Lo &uacute;nico que falta es la decisi&oacute;n de usarlo.</div>
+      </div>
+      <div class="tech-card">
+        <div class="ic">02 &middot; MENTOR</div>
+        <div class="nm">Lina (IA biling&uuml;e)</div>
+        <div class="ds">Mentor personal 24/7 en espa&ntilde;ol e ingl&eacute;s. Te ayuda a estudiar, a preparar entrevistas, a pensar. Esto no exist&iacute;a.</div>
+      </div>
+      <div class="tech-card">
+        <div class="ic">03 &middot; PLATAFORMA</div>
+        <div class="nm">Visionarium</div>
+        <div class="ds">Comunidad global, gratis, para j&oacute;venes de 16 a 22. Mentor&iacute;a, retos reales, acceso a patrocinadores.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11. STACK / FABRICA DE CEOs -->
+  <section class="slide bg-navy"
+    data-notes="Este es el slide que demuestra que no somos charla. Visionarium es una fabrica de CEOs con tecnolog&iacute;a real."
+    data-narration="Y esto no es una charla motivacional. Visionarium es una plataforma real. Ocho capas de tecnología diseñadas para producir líderes globales bilingües. Desde identidad digital hasta marketplace de oportunidades. Todo activo. Todo funcionando. Ahora mismo.">
+    <div class="hud-top-left"><span class="hud-dot"></span> STACK.VSN // v1.0</div>
+    <div class="hud-top-right">8 LAYERS // ALL_SYSTEMS_ACTIVE <span class="hud-line"></span></div>
+    <div class="chip">Infraestructura // F&aacute;brica de CEOs</div>
+    <h2 class="accent-teal">No somos una charla. Somos una plataforma.</h2>
+    <p class="lead">Ocho capas de tecnolog&iacute;a dise&ntilde;adas para producir l&iacute;deres globales biling&uuml;es.</p>
+    <div class="stack-wrap">
+      <div class="stack-layers">
+        <div class="stack-layer"><div class="lnum">LAYER_01</div><div class="lname">Identidad<span>Perfil digital portable del fellow</span></div><div class="lstatus">Active</div></div>
+        <div class="stack-layer"><div class="lnum">LAYER_02</div><div class="lname">Aprendizaje<span>Curr&iacute;culo biling&uuml;e entregado a escala</span></div><div class="lstatus">Active</div></div>
+        <div class="stack-layer"><div class="lnum">LAYER_03</div><div class="lname">Mentor IA &middot; Lina<span>Voz + chat 24/7 en ES/EN</span></div><div class="lstatus">Active</div></div>
+        <div class="stack-layer"><div class="lnum">LAYER_04</div><div class="lname">Conexi&oacute;n Humana<span>Mentor&iacute;a 1:1, foros, cohorte</span></div><div class="lstatus">Active</div></div>
+        <div class="stack-layer"><div class="lnum">LAYER_05</div><div class="lname">Ejecuci&oacute;n Real<span>Proyectos con briefs de patrocinadores</span></div><div class="lstatus">Active</div></div>
+        <div class="stack-layer"><div class="lnum">LAYER_06</div><div class="lname">Marketplace<span>Internships, becas, startup slots</span></div><div class="lstatus">Active</div></div>
+        <div class="stack-layer"><div class="lnum">LAYER_07</div><div class="lname">Credenciales<span>Reportes de impacto + certificaciones</span></div><div class="lstatus">Active</div></div>
+        <div class="stack-layer"><div class="lnum">LAYER_08</div><div class="lname">Operador<span>CRM, analytics, admisiones</span></div><div class="lstatus">Active</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11.5 FRONTIER TECH // PROOF -->
+  <section class="slide bg-navy"
+    data-notes="Este es el slide de credibilidad."
+    data-narration="El equipo detrás de Visionarium ya opera inteligencia artificial en producción. Voz, manufactura, logística, salud. No hablamos de IA... la construimos. Cada día. En empresas reales. Esta no es una promesa. Es un track record.">
+    <div class="hud-top-left"><span class="hud-dot"></span> PROD.VERTICALS // LIVE</div>
+    <div class="hud-top-right">FRONTIER_AI // REAL_DEPLOYMENTS <span class="hud-line"></span></div>
+    <div class="chip">Tecnolog&iacute;a de frontera // en producci&oacute;n</div>
+    <h2 class="accent-teal">No hablamos de IA. La construimos.</h2>
+    <p class="lead">El mismo equipo que te entrega Lina ya opera IA en manufactura, log&iacute;stica, salud y voz a nivel enterprise.</p>
+    <div class="img-grid">
+      <div class="img-tile">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/699f343c753f157c9bec6d0b.jpg" alt="Voice AI">
+        <div class="caption"><div class="cat">01 &middot; Voice AI</div><div class="ttl">Agentes de voz tipo humano &mdash; Rachel, Ana, Lina</div></div>
+      </div>
+      <div class="img-tile">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69a5d3b79c14995d9c3da981.jpg" alt="AI Intralogistics">
+        <div class="caption"><div class="cat">02 &middot; Intralog&iacute;stica</div><div class="ttl">Automatizaci&oacute;n IA para nueva generaci&oacute;n de almacenes</div></div>
+      </div>
+      <div class="img-tile">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69af74634a2d882ebdf052d4.png" alt="Smart Warehouse">
+        <div class="caption"><div class="cat">03 &middot; Shop Floor</div><div class="ttl">OEE real-time con robots aut&oacute;nomos + IoT</div></div>
+      </div>
+      <div class="img-tile">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69af74637c27022c86498b74.png" alt="Fleet AI">
+        <div class="caption"><div class="cat">04 &middot; Fleet Ops</div><div class="ttl">Digital twin de flotas de camiones</div></div>
+      </div>
+      <div class="img-tile">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69af74637c2702f404498b73.png" alt="Cloud Logistics">
+        <div class="caption"><div class="cat">05 &middot; Cloud Logistics</div><div class="ttl">IA centralizada + CRM + comms para carriers</div></div>
+      </div>
+      <div class="img-tile">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69c7fbd05eea8363cb559a83.jpg" alt="Medical AI">
+        <div class="caption"><div class="cat">06 &middot; Salud</div><div class="ttl">Imagenolog&iacute;a + dashboards cl&iacute;nicos en tiempo real</div></div>
+      </div>
+    </div>
+    <div class="powered-by">
+      <span>&gt; Tech partner</span>
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png" alt="Digit2ai">
+    </div>
+  </section>
+
+  <!-- 12. LA PREGUNTA -->
+  <section class="slide bg-coral"
+    data-notes="Pausa larga antes de esta slide. Mira a la sala. Lee la pregunta lento."
+    data-narration="Y ahora la pregunta... De qué tamaño es tu sueño. No el que te dijeron que era realista. El que te da miedo decir en voz alta. Piénsalo. En serio. Ahora mismo.">
+    <div class="hud-top-left"><span class="hud-dot" style="background: var(--coral-neon); box-shadow: 0 0 10px var(--coral-neon);"></span> PROMPT // USER_INPUT</div>
+    <div class="hud-top-right">AWAITING_RESPONSE <span class="hud-line" style="background: linear-gradient(90deg, var(--coral) 0%, transparent 100%);"></span></div>
+    <div class="chip coral">La pregunta</div>
+    <h1 class="glow-teal">&iquest;De qu&eacute; tama&ntilde;o es tu sue&ntilde;o?</h1>
+    <p class="lead">No el que te dijeron que era &ldquo;realista&rdquo;. El que te da miedo decir en voz alta.</p>
+  </section>
+
+  <!-- 13. LLAMADO A LA ACCION -->
+  <section class="slide bg-navy"
+    data-notes="Ahora el cierre practico. Tres pasos concretos que pueden dar ma&ntilde;ana."
+    data-narration="No salgas de aquí con ganas. Sal con un plan. Paso uno: escribe tu sueño. El grande. El que te da vergüenza. Lo que no se escribe, no existe. Paso dos: identifica tu flaco, y conviértelo en combustible. Paso tres: entra a visionarium punto app. Hoy. No mañana. Hoy.">
+    <div class="hud-top-left"><span class="hud-dot"></span> EXEC.THIS_WEEK</div>
+    <div class="hud-top-right">3 STEPS // DEPLOY <span class="hud-line"></span></div>
+    <div class="chip">Tres pasos, esta semana</div>
+    <h2 class="accent-teal">No salgas de aqu&iacute; con ganas. Sal con un plan.</h2>
+    <div class="action-list">
+      <div class="action-item"><div class="idx">01</div><div class="txt"><strong>Escribe tu sue&ntilde;o.</strong> El grande. El que te da verg&uuml;enza. Ponlo en papel hoy, antes de dormir. Lo que no se escribe, no existe.</div></div>
+      <div class="action-item"><div class="idx">02</div><div class="txt"><strong>Identifica tu &ldquo;flaco&rdquo;.</strong> &iquest;Qu&eacute; te dicen que te duele? Escr&iacute;belo. Debajo, escribe: &ldquo;esto es mi combustible, no mi identidad.&rdquo;</div></div>
+      <div class="action-item"><div class="idx">03</div><div class="txt"><strong>Aplica a Visionarium.</strong> Comunidad abierta, gratis, ahora. Fellowship con 40 becas completas en septiembre. T&uacute; decides si entras.</div></div>
+    </div>
+  </section>
+
+  <!-- 14. VISIONARIUM CTA -->
+  <section class="slide bg-navy"
+    data-notes="&Eacute;nfasis. Esto no es una ONG mas. Es una comunidad bilingue con tecnolog&iacute;a de verdad."
+    data-narration="Visionarium. Del talento latinoamericano al liderazgo global. Comunidad abierta, gratis, de dieciséis a veintidós años. Fellowship con cuarenta becas completas. Cien por ciento patrocinado. Entra a visionarium punto app y regístrate. Las aplicaciones al Fellowship abren en el tercer trimestre de dos mil veintiséis.">
+    <div class="hud-top-left"><span class="hud-dot"></span> VSN.FELLOWSHIP</div>
+    <div class="hud-top-right">APPLICATIONS_OPEN // Q3_2026 <span class="hud-line"></span></div>
+    <div class="chip">Visionarium // Cohort 01</div>
+    <h2 class="accent-teal">Del talento latinoamericano al liderazgo global.</h2>
+    <p class="lead">Comunidad abierta, gratis, de 16 a 22 a&ntilde;os. Fellowship selectivo de 9 meses, 40 becas completas al a&ntilde;o, 100% patrocinado.</p>
+    <div class="cta-box">
+      <div class="label">Pr&oacute;ximo paso</div>
+      <div class="msg">Entra a <a href="https://www.visionarium.app" target="_blank" rel="noopener">https://www.visionarium.app</a> y reg&iacute;strate en la comunidad abierta. Las aplicaciones al Fellowship abren en Q3 2026.</div>
+    </div>
+  </section>
+
+  <!-- 15. CIERRE -->
+  <section class="slide bg-gold"
+    data-notes="El cierre. No agreguen nada despues de esta frase. Dejenla. Salgan del escenario en silencio."
+    data-narration="El tamaño de tu sueño... no tiene nada que ver... con el tamaño de tu estómago."
+    data-last-slide="true">
+    <div class="hud-top-left"><span class="hud-dot" style="background: var(--gold-neon); box-shadow: 0 0 10px var(--gold-neon);"></span> END.OF.TRANSMISSION</div>
+    <blockquote>
+      El tama&ntilde;o de tu sue&ntilde;o no tiene nada que ver con el tama&ntilde;o de tu est&oacute;mago.
+    </blockquote>
+    <div class="attribution" style="margin-top: 80px;">&mdash; Luis D&iacute;az &nbsp;&middot;&nbsp; Barrancas &rarr; Bernab&eacute;u</div>
+  </section>
+
+</div>
+
+<div class="notes" id="notes">
+  <div class="label">&gt; notas_del_orador</div>
+  <div id="notes-text"></div>
+</div>
+
+<div class="nav">
+  <button id="prev" aria-label="Anterior">&larr;</button>
+  <button id="next" aria-label="Siguiente">&rarr;</button>
+</div>
+
+<!-- AUTO-PLAY CONTROLS -->
+<div class="autoplay-controls" id="autoplayControls">
+  <div class="rec-indicator" id="recIndicator">
+    <div class="rec-dot"></div>
+    <span>REC</span>
+  </div>
+  <button id="btnPlayPause" aria-label="Play / Pause" title="Play / Pause">&#9654;</button>
+  <button id="btnStop" aria-label="Detener" title="Detener">&#9632;</button>
+  <div class="slide-info" id="slideInfo">01 / 17</div>
+</div>
+
+<script>
+  // ============ SLIDE ENGINE ============
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+  const notes = document.getElementById('notes');
+  const notesText = document.getElementById('notes-text');
+  let idx = 0;
+
+  function show(n) {
+    idx = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, i) => s.classList.toggle('active', i === idx));
+    const num = String(idx + 1).padStart(2, '0');
+    const tot = String(slides.length).padStart(2, '0');
+    counter.textContent = `${num} / ${tot}`;
+    slideInfo.textContent = `${num} / ${tot}`;
+    progress.style.width = `${((idx + 1) / slides.length) * 100}%`;
+    notesText.textContent = slides[idx].dataset.notes || '';
+  }
+
+  document.getElementById('next').addEventListener('click', () => { manualNav(idx + 1); });
+  document.getElementById('prev').addEventListener('click', () => { manualNav(idx - 1); });
+
+  document.addEventListener('keydown', (e) => {
+    if (['ArrowRight', ' ', 'PageDown'].includes(e.key)) { e.preventDefault(); manualNav(idx + 1); }
+    else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); manualNav(idx - 1); }
+    else if (e.key === 'Home') manualNav(0);
+    else if (e.key === 'End') manualNav(slides.length - 1);
+    else if (e.key.toLowerCase() === 's') notes.classList.toggle('visible');
+    else if (e.key.toLowerCase() === 'f') {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+  });
+
+  // Touch swipe navigation
+  let tStartX = 0, tStartY = 0, tStartT = 0;
+  const deck = document.getElementById('deck');
+  deck.addEventListener('touchstart', (e) => {
+    const t = e.changedTouches[0];
+    tStartX = t.clientX; tStartY = t.clientY; tStartT = Date.now();
+  }, { passive: true });
+  deck.addEventListener('touchend', (e) => {
+    const t = e.changedTouches[0];
+    const dx = t.clientX - tStartX;
+    const dy = t.clientY - tStartY;
+    const dt = Date.now() - tStartT;
+    if (dt < 600 && Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      if (dx < 0) manualNav(idx + 1); else manualNav(idx - 1);
+    }
+  }, { passive: true });
+
+  show(0);
+
+  // ============ MANUAL NAV — pauses auto if active ============
+  function manualNav(n) {
+    if (autoPlaying) {
+      pauseAutoPlay();
+    }
+    cancelNarration();
+    show(n);
+  }
+
+  // ============ SPEECH SYNTHESIS / NARRATION ============
+  const synth = window.speechSynthesis;
+  const narrationWave = document.getElementById('narrationWave');
+  let currentUtterance = null;
+  let autoAdvanceTimer = null;
+
+  function getSpanishVoice() {
+    const voices = synth.getVoices();
+    // Prefer Mexican Spanish
+    let voice = voices.find(v => v.lang === 'es-MX');
+    if (!voice) voice = voices.find(v => v.lang.startsWith('es-'));
+    if (!voice) voice = voices.find(v => v.lang === 'es-ES');
+    return voice || null;
+  }
+
+  function cancelNarration() {
+    if (autoAdvanceTimer) {
+      clearTimeout(autoAdvanceTimer);
+      autoAdvanceTimer = null;
+    }
+    synth.cancel();
+    currentUtterance = null;
+    narrationWave.classList.remove('active');
+  }
+
+  function narrateSlide(slideIndex, onEnd) {
+    cancelNarration();
+    const slide = slides[slideIndex];
+    const text = slide.dataset.narration;
+    if (!text) {
+      if (onEnd) onEnd();
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    const voice = getSpanishVoice();
+    if (voice) utterance.voice = voice;
+    utterance.lang = voice ? voice.lang : 'es-MX';
+    utterance.rate = 0.95;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+
+    utterance.onstart = () => {
+      narrationWave.classList.add('active');
+    };
+
+    utterance.onend = () => {
+      narrationWave.classList.remove('active');
+      currentUtterance = null;
+      if (onEnd) onEnd();
+    };
+
+    utterance.onerror = (e) => {
+      narrationWave.classList.remove('active');
+      currentUtterance = null;
+      // Still auto-advance on error so the show continues
+      if (onEnd) onEnd();
+    };
+
+    currentUtterance = utterance;
+
+    // Chrome bug workaround: resume synth if paused
+    synth.cancel();
+    setTimeout(() => {
+      synth.speak(utterance);
+    }, 50);
+  }
+
+  // ============ AUTO-PLAY ENGINE ============
+  let autoPlaying = false;
+  const btnPlayPause = document.getElementById('btnPlayPause');
+  const btnStop = document.getElementById('btnStop');
+  const slideInfo = document.getElementById('slideInfo');
+  const recIndicator = document.getElementById('recIndicator');
+  const preplayOverlay = document.getElementById('preplayOverlay');
+  const preplayBtn = document.getElementById('preplayBtn');
+
+  function startAutoPlay() {
+    autoPlaying = true;
+    btnPlayPause.innerHTML = '&#10074;&#10074;'; // pause icon
+    recIndicator.classList.add('active');
+    autoNarrateCurrentSlide();
+  }
+
+  function pauseAutoPlay() {
+    autoPlaying = false;
+    btnPlayPause.innerHTML = '&#9654;'; // play icon
+    recIndicator.classList.remove('active');
+    cancelNarration();
+  }
+
+  function stopAutoPlay() {
+    autoPlaying = false;
+    btnPlayPause.innerHTML = '&#9654;';
+    recIndicator.classList.remove('active');
+    cancelNarration();
+    show(0);
+  }
+
+  function autoNarrateCurrentSlide() {
+    if (!autoPlaying) return;
+
+    const isLastSlide = slides[idx].hasAttribute('data-last-slide');
+
+    // Wait 1 second after slide appears, then narrate
+    setTimeout(() => {
+      if (!autoPlaying) return;
+
+      narrateSlide(idx, () => {
+        if (!autoPlaying) return;
+
+        if (isLastSlide) {
+          // Last slide: wait 5 seconds of silence, then stop
+          autoAdvanceTimer = setTimeout(() => {
+            pauseAutoPlay();
+          }, 5000);
+          return;
+        }
+
+        // Wait 2 seconds after narration ends, then advance
+        autoAdvanceTimer = setTimeout(() => {
+          if (!autoPlaying) return;
+          if (idx < slides.length - 1) {
+            show(idx + 1);
+            autoNarrateCurrentSlide();
+          } else {
+            pauseAutoPlay();
+          }
+        }, 2000);
+      });
+    }, 1000);
+  }
+
+  // ============ CONTROL EVENT LISTENERS ============
+  btnPlayPause.addEventListener('click', () => {
+    if (autoPlaying) {
+      pauseAutoPlay();
+    } else {
+      startAutoPlay();
+    }
+  });
+
+  btnStop.addEventListener('click', () => {
+    stopAutoPlay();
+  });
+
+  // ============ PRE-PLAY OVERLAY ============
+  preplayBtn.addEventListener('click', () => {
+    preplayOverlay.classList.add('hidden');
+    setTimeout(() => {
+      preplayOverlay.style.display = 'none';
+      show(0);
+      startAutoPlay();
+    }, 600);
+  });
+
+  // ============ VOICE LOADING ============
+  // Voices may load asynchronously
+  if (synth.onvoiceschanged !== undefined) {
+    synth.onvoiceschanged = () => {
+      // Voices are now loaded
+    };
+  }
+  // Trigger initial voice load
+  synth.getVoices();
+</script>
+
+</body>
+</html>
