@@ -2460,30 +2460,23 @@
     audio.onerror = () => {
       narrationWave.classList.remove('active');
       currentAudio = null;
-      // Fallback: if auto-advance, use that; otherwise wait 3s
-      if (autoAdvanceMs) {
-        autoAdvanceTimer = setTimeout(() => {
-          if (onEnd) onEnd();
-        }, autoAdvanceMs);
-      } else {
-        autoAdvanceTimer = setTimeout(() => {
-          if (onEnd) onEnd();
-        }, 3000);
-      }
+      const waitMs = autoAdvanceMs || 8000;
+      autoAdvanceTimer = setTimeout(() => {
+        if (onEnd) onEnd();
+      }, waitMs);
     };
 
     audio.play().then(() => {
       console.log('Playing slide', slideIndex + 1);
     }).catch((err) => {
-      console.error('Audio play failed:', err);
-      // Fallback
-      if (autoAdvanceMs) {
-        autoAdvanceTimer = setTimeout(() => {
-          if (onEnd) onEnd();
-        }, autoAdvanceMs);
-      } else {
+      console.error('Audio play failed for slide', slideIndex + 1, err.message);
+      currentAudio = null;
+      narrationWave.classList.remove('active');
+      // On mobile, audio may fail — don't skip, wait estimated duration
+      const waitMs = autoAdvanceMs || 8000;
+      autoAdvanceTimer = setTimeout(() => {
         if (onEnd) onEnd();
-      }
+      }, waitMs);
     });
   }
 
@@ -2559,10 +2552,28 @@
   });
 
   // ============ PRE-PLAY OVERLAY ============
+  let audioUnlocked = false;
   preplayBtn.addEventListener('click', function handlePlay() {
     preplayOverlay.style.display = 'none';
     show(0);
-    startAutoPlay();
+
+    // Unlock audio on mobile: play a tiny silent audio in the direct click handler
+    const firstAudio = getAudioForSlide(0);
+    if (firstAudio) {
+      const a = new Audio(firstAudio);
+      a.volume = 1.0;
+      a.play().then(() => {
+        audioUnlocked = true;
+        a.pause();
+        a.currentTime = 0;
+        startAutoPlay();
+      }).catch(() => {
+        // Even if it fails, start autoplay (will use fallback timers)
+        startAutoPlay();
+      });
+    } else {
+      startAutoPlay();
+    }
   });
 
   // Lina voice powered by ElevenLabs — colombian accent, young, friendly
