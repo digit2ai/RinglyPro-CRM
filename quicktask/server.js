@@ -90,12 +90,36 @@ function detectAssignee(message, defaultAssignee = 'manuel') {
 }
 
 // Parse date/time and clean title from message (English + Spanish)
-function parseEventFromMessage(message) {
-  // Try English first, then Spanish
-  let results = chrono.parse(message, new Date(), { forwardDate: true });
-  if (results.length === 0) {
-    results = chrono.es.parse(message, new Date(), { forwardDate: true });
+function parseEventFromMessage(message, tzOffset) {
+  // Build a timezone-aware reference so chrono produces local times
+  // tzOffset = minutes from UTC (e.g. -240 for EDT). Default to US-East if not sent.
+  const tz = typeof tzOffset === 'number' ? tzOffset : -240;
+  const ref = { instant: new Date(), timezone: tz };
+  const opts = { forwardDate: true };
+
+  // Try both parsers and pick the one that extracted the most date components
+  const enResults = chrono.parse(message, ref, opts);
+  const esResults = chrono.es.parse(message, ref, opts);
+
+  function richness(r) {
+    if (!r || r.length === 0) return 0;
+    const s = r[0].start;
+    let score = 0;
+    if (s.isCertain('day')) score += 10;
+    if (s.isCertain('weekday')) score += 10;
+    if (s.isCertain('month')) score += 5;
+    if (s.isCertain('hour')) score += 3;
+    if (s.isCertain('meridiem')) score += 2;
+    return score;
   }
+
+  let results;
+  if (richness(esResults) >= richness(enResults)) {
+    results = esResults.length > 0 ? esResults : enResults;
+  } else {
+    results = enResults.length > 0 ? enResults : esResults;
+  }
+
   if (results.length === 0) {
     return { eventDate: null, eventTitle: null };
   }
@@ -261,7 +285,8 @@ app.post('/api/tasks', async (req, res) => {
     }
 
     const assigned_to = detectAssignee(message, default_assignee || 'manuel');
-    const { eventDate, eventTitle } = parseEventFromMessage(message.trim());
+    const tzOffset = typeof req.body.tz === 'number' ? req.body.tz : undefined;
+    const { eventDate, eventTitle } = parseEventFromMessage(message.trim(), tzOffset);
     const result = await pool.query(
       `INSERT INTO follow_up_items (message, assigned_to, source, event_date, event_title)
        VALUES ($1, $2, $3, $4, $5) RETURNING *`,

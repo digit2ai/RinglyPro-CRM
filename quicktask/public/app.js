@@ -62,7 +62,7 @@ async function createTask(message, source = 'text') {
     const res = await fetch(`${BASE}/api/tasks`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, source, default_assignee: defaultAssignee })
+      body: JSON.stringify({ message, source, default_assignee: defaultAssignee, tz: -new Date().getTimezoneOffset() })
     });
     const json = await res.json();
     if (json.success) {
