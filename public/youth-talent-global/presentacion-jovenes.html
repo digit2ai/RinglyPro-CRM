@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>El Tamano de tu Sueno | Visionarium</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+
+  :root {
+    --navy: #0b1d4a;
+    --navy-light: #17296b;
+    --navy-dark: #050f2d;
+    --teal: #3dcbca;
+    --teal-light: #8eeae8;
+    --coral: #ef6c57;
+    --coral-dark: #c94a38;
+    --gold: #d4a574;
+    --gold-light: #f5ead6;
+    --cream: #fafaf7;
+    --white: #ffffff;
+    --gray-200: #e9ecef;
+    --gray-500: #6c757d;
+    --gray-700: #374151;
+    --gray-900: #111827;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--navy-dark);
+    color: var(--white);
+  }
+
+  .deck {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 6vh 8vw;
+    text-align: center;
+    opacity: 0;
+    transition: opacity .35s ease;
+  }
+  .slide.active { display: flex; opacity: 1; }
+
+  /* backgrounds */
+  .bg-navy { background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy) 55%, var(--navy-light) 100%); }
+  .bg-coral { background: linear-gradient(135deg, #7a1f14 0%, var(--coral-dark) 55%, var(--coral) 100%); }
+  .bg-teal { background: linear-gradient(135deg, #063e3e 0%, #0c6e6c 55%, var(--teal) 100%); }
+  .bg-gold { background: linear-gradient(135deg, #3f2c14 0%, #8b6333 55%, var(--gold) 100%); color: var(--navy-dark); }
+  .bg-cream { background: var(--cream); color: var(--navy-dark); }
+  .bg-graph {
+    background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy) 100%);
+    position: relative;
+  }
+  .bg-graph::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(61,203,202,0.15) 0%, transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(239,108,87,0.12) 0%, transparent 40%);
+  }
+
+  .chip {
+    display: inline-block;
+    padding: 8px 22px;
+    border-radius: 30px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    background: rgba(212,165,116,0.15);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+  }
+  .chip.teal { background: rgba(61,203,202,0.15); border-color: var(--teal); color: var(--teal); }
+  .chip.coral { background: rgba(239,108,87,0.18); border-color: var(--coral); color: var(--coral); }
+
+  h1 {
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(48px, 7vw, 96px);
+    font-weight: 900;
+    line-height: 1.02;
+    letter-spacing: -2px;
+    margin-bottom: 24px;
+    max-width: 1100px;
+  }
+
+  h2 {
+    font-size: clamp(36px, 5vw, 72px);
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -1.5px;
+    margin-bottom: 24px;
+    max-width: 1100px;
+  }
+
+  h3 {
+    font-size: clamp(22px, 2.5vw, 32px);
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: var(--teal);
+    letter-spacing: -0.5px;
+  }
+
+  p.lead {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(20px, 2.2vw, 30px);
+    font-weight: 400;
+    line-height: 1.5;
+    max-width: 900px;
+    margin: 0 auto 28px;
+    color: rgba(255,255,255,0.9);
+  }
+  .bg-cream p.lead, .bg-gold p.lead { color: var(--gray-700); }
+
+  blockquote {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(24px, 3vw, 44px);
+    line-height: 1.3;
+    font-weight: 400;
+    max-width: 1100px;
+    margin: 0 auto;
+    position: relative;
+    padding: 0 60px;
+  }
+  blockquote::before, blockquote::after {
+    position: absolute;
+    font-size: 120px;
+    font-family: 'Source Serif 4', Georgia, serif;
+    color: var(--gold);
+    opacity: .5;
+    line-height: 1;
+  }
+  blockquote::before { content: '"'; top: -20px; left: 0; }
+  blockquote::after { content: '"'; bottom: -60px; right: 0; }
+
+  .attribution {
+    margin-top: 36px;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 600;
+  }
+
+  .pillars {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 18px;
+    max-width: 1400px;
+    width: 100%;
+    margin-top: 40px;
+  }
+  .pillar-card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 14px;
+    padding: 26px 18px;
+    text-align: left;
+    backdrop-filter: blur(8px);
+  }
+  .pillar-card .num {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--gold);
+    margin-bottom: 10px;
+  }
+  .pillar-card .title {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 10px;
+    color: var(--white);
+  }
+  .pillar-card .sub {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.75);
+    font-style: italic;
+  }
+
+  .big-number {
+    font-size: clamp(120px, 18vw, 260px);
+    font-weight: 900;
+    line-height: 0.9;
+    letter-spacing: -6px;
+    background: linear-gradient(180deg, var(--teal-light) 0%, var(--teal) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 30px;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    max-width: 1300px;
+    width: 100%;
+    align-items: center;
+    text-align: left;
+  }
+  .two-col .col-quote {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(22px, 2.4vw, 32px);
+    line-height: 1.4;
+    color: rgba(255,255,255,0.85);
+    padding-left: 28px;
+    border-left: 4px solid var(--gold);
+  }
+  .two-col h2 { font-size: clamp(32px, 4vw, 58px); text-align: left; margin: 0 0 20px; }
+  .two-col .col-body p { font-family: 'Source Serif 4', Georgia, serif; font-size: clamp(17px, 1.5vw, 21px); line-height: 1.65; color: rgba(255,255,255,0.88); margin-bottom: 14px; }
+  .bg-cream .two-col .col-quote { color: var(--gray-700); }
+  .bg-cream .two-col .col-body p { color: var(--gray-700); }
+
+  .action-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-width: 900px;
+    width: 100%;
+    margin-top: 30px;
+  }
+  .action-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    text-align: left;
+    padding: 18px 24px;
+    background: rgba(255,255,255,0.06);
+    border-left: 4px solid var(--teal);
+    border-radius: 6px;
+  }
+  .action-item .idx {
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--teal);
+    min-width: 44px;
+    line-height: 1;
+  }
+  .action-item .txt {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(16px, 1.5vw, 20px);
+    line-height: 1.5;
+    color: rgba(255,255,255,0.9);
+  }
+  .action-item .txt strong { color: var(--white); font-family: 'Inter', sans-serif; font-weight: 700; }
+
+  .tech-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    max-width: 1200px;
+    width: 100%;
+    margin-top: 30px;
+  }
+  .tech-card {
+    padding: 28px 22px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(61,203,202,0.3);
+    border-radius: 14px;
+    text-align: left;
+  }
+  .tech-card .ic {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--teal);
+    margin-bottom: 14px;
+  }
+  .tech-card .nm {
+    font-size: 22px;
+    font-weight: 800;
+    margin-bottom: 10px;
+    letter-spacing: -0.5px;
+  }
+  .tech-card .ds {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 15px;
+    line-height: 1.55;
+    color: rgba(255,255,255,0.78);
+  }
+
+  .cta-box {
+    margin-top: 40px;
+    padding: 30px 40px;
+    background: rgba(0,0,0,0.25);
+    border: 1px solid var(--gold);
+    border-radius: 14px;
+    max-width: 900px;
+  }
+  .cta-box .label { font-size: 12px; letter-spacing: 3px; color: var(--gold); font-weight: 700; margin-bottom: 12px; text-transform: uppercase; }
+  .cta-box .msg { font-family: 'Source Serif 4', Georgia, serif; font-size: clamp(18px, 1.8vw, 24px); line-height: 1.5; }
+
+  /* nav + counter */
+  .nav {
+    position: fixed;
+    bottom: 28px; right: 28px;
+    display: flex; gap: 10px; align-items: center;
+    z-index: 100;
+  }
+  .nav button {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: var(--white);
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all .2s;
+  }
+  .nav button:hover { background: var(--teal); border-color: var(--teal); color: var(--navy-dark); }
+  .counter {
+    position: fixed;
+    bottom: 34px; left: 28px;
+    font-size: 13px; letter-spacing: 2px;
+    color: rgba(255,255,255,0.5);
+    font-weight: 600;
+    z-index: 100;
+  }
+
+  .progress {
+    position: fixed;
+    top: 0; left: 0; height: 3px;
+    background: var(--teal);
+    transition: width .35s ease;
+    z-index: 100;
+  }
+
+  /* speaker notes */
+  .notes {
+    display: none;
+    position: fixed;
+    bottom: 90px; left: 28px; right: 28px;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px 28px;
+    background: rgba(0,0,0,0.85);
+    border-left: 4px solid var(--coral);
+    border-radius: 8px;
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--white);
+    z-index: 99;
+  }
+  .notes.visible { display: block; }
+  .notes .label { font-family: 'Inter', sans-serif; font-size: 11px; letter-spacing: 2px; color: var(--coral); font-weight: 700; text-transform: uppercase; margin-bottom: 8px; }
+
+  .hint {
+    position: fixed;
+    top: 28px; right: 28px;
+    font-size: 11px; letter-spacing: 2px;
+    color: rgba(255,255,255,0.4);
+    font-weight: 600;
+    z-index: 100;
+    text-transform: uppercase;
+  }
+
+  .logo-tag {
+    position: fixed;
+    top: 28px; left: 28px;
+    font-size: 13px; letter-spacing: 3px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.6);
+    text-transform: uppercase;
+    z-index: 100;
+  }
+  .bg-cream ~ .logo-tag, .bg-gold ~ .logo-tag { color: rgba(0,0,0,0.5); }
+
+  @media (max-width: 900px) {
+    .pillars { grid-template-columns: 1fr 1fr; }
+    .tech-grid { grid-template-columns: 1fr; }
+    .two-col { grid-template-columns: 1fr; gap: 30px; }
+    blockquote { padding: 0 30px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<div class="logo-tag">Visionarium</div>
+<div class="hint">Flechas para avanzar &middot; S = notas &middot; F = pantalla completa</div>
+<div class="counter" id="counter">01 / 14</div>
+
+<div class="deck" id="deck">
+
+  <!-- 1. PORTADA -->
+  <section class="slide bg-navy active" data-notes="Saludo breve. Pausa. Mirada a la sala. 'Hoy no les vengo a dar una charla motivacional. Les vengo a hacer una pregunta.' No lean el titulo; dejen que la sala lo lea.">
+    <div class="chip">Visionarium &middot; 2026</div>
+    <h1>El tamano de tu sueno</h1>
+    <p class="lead">Positivismo &middot; Imparable &middot; Mentalidad de CEO &middot; Inteligencia Emocional &middot; Tecnologia</p>
+    <div class="attribution">Una charla para jovenes que no aceptan el hambre como destino</div>
+  </section>
+
+  <!-- 2. HOOK: EL BERNABEU -->
+  <section class="slide bg-graph" data-notes="Empieza con la escena final, no con el origen. 'Imaginen un estadio con 80 mil personas gritando.' Pausa 3 segundos. Luego lean la frase. La sala ya esta enganchada.">
+    <div class="chip teal">9 de abril, 2026</div>
+    <h2>Anoche, en el Santiago Bernabeu, le marque un gol al Real Madrid en los cuartos de final de la Champions League.</h2>
+    <div class="attribution">&mdash; Luis "Lucho" Diaz</div>
+  </section>
+
+  <!-- 3. FLASHBACK -->
+  <section class="slide bg-coral" data-notes="Baja la voz aqui. Contraste total con la slide anterior. 'Pero para entender ese gol, tenemos que volver 20 anos atras.' Pausa larga antes de leer la cita.">
+    <div class="chip coral">Barrancas, La Guajira</div>
+    <blockquote>
+      Mi madre me veia con los ojos llenos de lagrimas porque no sabia si habria comida para mi al dia siguiente.
+    </blockquote>
+    <div class="attribution">&mdash; Lucho Diaz, sobre su infancia</div>
+  </section>
+
+  <!-- 4. LA FRASE ANCLA -->
+  <section class="slide bg-gold" data-notes="Esta es la frase que van a recordar toda su vida. Dejenla en pantalla. No hablen durante 5 segundos. Luego digan: 'Esta presentacion se trata de esto. Nada mas.'">
+    <blockquote>
+      El hambre no es un destino. Es una pagina en tu historia, no el final del libro.
+    </blockquote>
+    <div class="attribution" style="color: var(--navy-dark);">&mdash; Luis Diaz</div>
+  </section>
+
+  <!-- 5. LOS 5 PILARES -->
+  <section class="slide bg-navy" data-notes="Transicion. 'Lucho no llego al Bernabeu por suerte. Llego por cinco cosas muy concretas. Y las cinco las pueden aprender ustedes.' Presenta los pilares rapido &mdash; vas a desarrollar cada uno.">
+    <div class="chip">La formula</div>
+    <h2>Cinco cosas que Lucho desarrollo. Cinco cosas que tu puedes desarrollar.</h2>
+    <div class="pillars">
+      <div class="pillar-card"><div class="num">01</div><div class="title">Positivismo</div><div class="sub">Negarse a creer que el hambre define el futuro.</div></div>
+      <div class="pillar-card"><div class="num">02</div><div class="title">Imparable</div><div class="sub">Botas rotas, kilometros bajo el sol. Entrenar igual.</div></div>
+      <div class="pillar-card"><div class="num">03</div><div class="title">Mentalidad de CEO</div><div class="sub">Pensar como dueno de tu destino, no como victima.</div></div>
+      <div class="pillar-card"><div class="num">04</div><div class="title">Inteligencia Emocional</div><div class="sub">Convertir "flaco" en combustible, no en herida.</div></div>
+      <div class="pillar-card"><div class="num">05</div><div class="title">Tecnologia</div><div class="sub">Usar las herramientas que Lucho no tuvo, que tu si.</div></div>
+    </div>
+  </section>
+
+  <!-- 6. POSITIVISMO -->
+  <section class="slide bg-teal" data-notes="Positivismo no es sonreir todo el dia. Es elegir una interpretacion distinta de los mismos hechos. Los medicos dijeron 'no crecera.' Lucho dijo: 'el futbol no entiende de diagnosticos.' Pregunten a la sala: ¿quien les ha dicho que NO? ¿que dice tu cabeza cuando te lo dicen?">
+    <div class="chip" style="background: rgba(0,0,0,0.2); border-color: var(--navy-dark); color: var(--navy-dark);">Pilar 01</div>
+    <h2 style="color: var(--navy-dark);">Positivismo</h2>
+    <div class="two-col">
+      <div class="col-quote" style="color: var(--navy-dark); border-left-color: var(--navy-dark);">
+        Los medicos dijeron que quizas nunca creceria lo suficiente para ser futbolista. Pero el futbol no entiende de diagnosticos.
+      </div>
+      <div class="col-body">
+        <p style="color: var(--navy-dark);"><strong>Positivismo no es ignorar la realidad.</strong> Es leer la misma realidad con otro final.</p>
+        <p style="color: var(--navy-dark);">Cuando te digan "no puedes", preguntate: ¿quien lo dice? ¿con que datos? ¿y que pasa si se equivocan?</p>
+        <p style="color: var(--navy-dark);"><strong>Ejercicio:</strong> la proxima vez que alguien te diga "no vas a poder", escribelo. Debajo, escribe tres razones por las que si.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. IMPARABLE -->
+  <section class="slide bg-coral" data-notes="Imparable no es talento. Es constancia cuando nadie esta mirando. Kilometros bajo el sol, con botas rotas. Pregunta: ¿que estas dispuesto a hacer durante 5 anos sin que nadie te aplauda?">
+    <div class="chip coral">Pilar 02</div>
+    <h2>Imparable</h2>
+    <div class="two-col">
+      <div class="col-quote">
+        A los 15 anos todavia caminaba kilometros bajo el sol ardiente para entrenar con botas rotas y una pelota que apenas inflaba.
+      </div>
+      <div class="col-body">
+        <p>Ser imparable no es correr mas rapido. Es <strong>no parar</strong> cuando los demas paran.</p>
+        <p>Lucho entreno durante anos sin camaras, sin patrocinadores, sin nadie aplaudiendo. Esa es la verdadera formacion.</p>
+        <p><strong>Tu pregunta:</strong> ¿que harias cada dia durante cinco anos aunque nadie te aplauda?</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. MENTALIDAD DE CEO -->
+  <section class="slide bg-navy" data-notes="CEO no es tener una empresa. Es pensar como duenno de tu vida. Lucho no se pregunto '¿quien me va a ayudar?' Se pregunto '¿que depende de mi?' Introducir las 3 preguntas del CEO.">
+    <div class="chip">Pilar 03</div>
+    <h2>Mentalidad de CEO</h2>
+    <p class="lead">"La terquedad de un nino que se nego a creer que el hambre definia su futuro."</p>
+    <div class="action-list">
+      <div class="action-item"><div class="idx">01</div><div class="txt"><strong>Piensa en activos, no en excusas.</strong> Tu tiempo, tu enfoque, tus habilidades &mdash; son tu capital. ¿Lo estas invirtiendo o lo estas gastando?</div></div>
+      <div class="action-item"><div class="idx">02</div><div class="txt"><strong>Toma decisiones con datos, no con miedo.</strong> Un CEO no pregunta "¿y si sale mal?" &mdash; pregunta "¿cual es el peor escenario y puedo vivir con el?"</div></div>
+      <div class="action-item"><div class="idx">03</div><div class="txt"><strong>Responsabilidad total.</strong> Nadie viene a salvarte. Ese es el dia que empiezas a ganar.</div></div>
+    </div>
+  </section>
+
+  <!-- 9. INTELIGENCIA EMOCIONAL -->
+  <section class="slide bg-graph" data-notes="Aqui bajen el tono. Este es el pilar mas humano. A Lucho lo llamaban 'flaco' &mdash; y eso duele. Pero el uso el dolor como combustible, no como identidad. Pregunta a la sala: ¿cual es tu 'flaco'? ¿que te dicen que tu conviertes en motor?">
+    <div class="chip coral">Pilar 04</div>
+    <h2>Inteligencia Emocional</h2>
+    <div class="two-col">
+      <div class="col-quote">
+        Mis companeros me llamaban "flaco". No era un apodo carinoso. Era un recordatorio constante de lo que me faltaba.
+      </div>
+      <div class="col-body">
+        <p><strong>Inteligencia emocional no es no sentir.</strong> Es sentirlo, entenderlo, y decidir que hacer con eso.</p>
+        <p>Lucho no nego el dolor del apodo. Lo uso. Lo convirtio en combustible, no en identidad.</p>
+        <p><strong>Tres habilidades que desarrollar:</strong> reconocer lo que sientes, nombrar lo que sientes, y escoger como responder.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10. TECNOLOGIA -->
+  <section class="slide bg-teal" data-notes="Transicion fuerte. 'Lucho tenia botas rotas. Tu tienes herramientas que en 2005 ningun joven de La Guajira tenia.' Presenta las tres herramientas. No para presumir tecnologia &mdash; para demostrar que las excusas de hoy son mas dificiles de defender.">
+    <div class="chip" style="background: rgba(0,0,0,0.2); border-color: var(--navy-dark); color: var(--navy-dark);">Pilar 05</div>
+    <h2 style="color: var(--navy-dark);">Tecnologia</h2>
+    <p class="lead" style="color: var(--navy-dark); max-width: 1000px;">Lucho tenia una pelota que apenas inflaba. Tu tienes herramientas que ni los millonarios tenian hace 10 anos.</p>
+    <div class="tech-grid">
+      <div class="tech-card" style="background: rgba(11,29,74,0.08); border-color: var(--navy-dark);">
+        <div class="ic" style="color: var(--navy-dark);">Acceso</div>
+        <div class="nm" style="color: var(--navy-dark);">Internet + IA</div>
+        <div class="ds" style="color: var(--gray-700);">Todo lo que se sabe en el mundo, gratis, en tu bolsillo. Lo unico que falta es la decision de usarlo.</div>
+      </div>
+      <div class="tech-card" style="background: rgba(11,29,74,0.08); border-color: var(--navy-dark);">
+        <div class="ic" style="color: var(--navy-dark);">Mentor</div>
+        <div class="nm" style="color: var(--navy-dark);">Lina (IA bilingue)</div>
+        <div class="ds" style="color: var(--gray-700);">Un mentor personal 24/7 en espanol e ingles. Te ayuda a estudiar, a preparar entrevistas, a pensar. Esto no existia.</div>
+      </div>
+      <div class="tech-card" style="background: rgba(11,29,74,0.08); border-color: var(--navy-dark);">
+        <div class="ic" style="color: var(--navy-dark);">Plataforma</div>
+        <div class="nm" style="color: var(--navy-dark);">Visionarium</div>
+        <div class="ds" style="color: var(--gray-700);">Una comunidad global, gratis, para jovenes de 16 a 22. Mentoria, retos reales, acceso a patrocinadores.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11. LA PREGUNTA -->
+  <section class="slide bg-coral" data-notes="Pausa larga antes de esta slide. Mira a la sala. Lee la pregunta lento. NO DES LA RESPUESTA. Deja que se incomoden. 30 segundos de silencio valen mas que 30 minutos de palabras.">
+    <div class="chip coral">La pregunta</div>
+    <h1>¿De que tamano es tu sueno?</h1>
+    <p class="lead">No el que te dijeron que era "realista". El que te da miedo decir en voz alta.</p>
+  </section>
+
+  <!-- 12. LLAMADO A LA ACCION -->
+  <section class="slide bg-navy" data-notes="Ahora el cierre practico. Tres pasos concretos que pueden dar manana. No vaguedades. Cosas que caben en un mensaje de WhatsApp.">
+    <div class="chip teal">Tres pasos, esta semana</div>
+    <h2>No salgas de aqui con ganas. Sal con un plan.</h2>
+    <div class="action-list">
+      <div class="action-item"><div class="idx">01</div><div class="txt"><strong>Escribe tu sueno.</strong> El grande. El que te da verguenza. Ponlo en papel hoy, antes de dormir. Lo que no se escribe, no existe.</div></div>
+      <div class="action-item"><div class="idx">02</div><div class="txt"><strong>Identifica tu "flaco".</strong> ¿Que te dicen que te duele? Escribelo. Debajo, escribe: "esto es mi combustible, no mi identidad."</div></div>
+      <div class="action-item"><div class="idx">03</div><div class="txt"><strong>Aplica a Visionarium.</strong> Comunidad abierta, gratis, ahora. Fellowship con 40 becas completas en septiembre. Tu decides si entras.</div></div>
+    </div>
+  </section>
+
+  <!-- 13. VISIONARIUM CTA -->
+  <section class="slide bg-graph" data-notes="Enfasis. Esto no es una ONG mas. Es una comunidad bilingue con tecnologia de verdad. Miami como puerta de entrada. Lo que le faltaba a Lucho: una plataforma. Ahora existe.">
+    <div class="chip">Visionarium</div>
+    <h2>Del talento latinoamericano al liderazgo global.</h2>
+    <p class="lead">Comunidad abierta, gratis, de 16 a 22 anos. Fellowship selectivo de 9 meses, 40 becas completas al ano, 100% patrocinado.</p>
+    <div class="cta-box">
+      <div class="label">Proximo paso</div>
+      <div class="msg">Entra a <strong style="color: var(--teal);">aiagent.ringlypro.com/youth-talent-global</strong> y registrate en la comunidad abierta. Las aplicaciones al Fellowship abren en Q3 2026.</div>
+    </div>
+  </section>
+
+  <!-- 14. CIERRE -->
+  <section class="slide bg-gold" data-notes="El cierre. No agreguen nada despues de esta frase. Dejenla. Salgan del escenario en silencio. Que la frase quede en el aire.">
+    <blockquote style="color: var(--navy-dark);">
+      El tamano de tu sueno no tiene nada que ver con el tamano de tu estomago.
+    </blockquote>
+    <div class="attribution" style="color: var(--navy-dark); margin-top: 80px;">&mdash; Luis Diaz, Barrancas &rarr; Bernabeu</div>
+  </section>
+
+</div>
+
+<div class="notes" id="notes">
+  <div class="label">Notas del orador</div>
+  <div id="notes-text"></div>
+</div>
+
+<div class="nav">
+  <button id="prev" aria-label="Anterior">&larr;</button>
+  <button id="next" aria-label="Siguiente">&rarr;</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+  const notes = document.getElementById('notes');
+  const notesText = document.getElementById('notes-text');
+  let idx = 0;
+
+  function show(n) {
+    idx = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, i) => s.classList.toggle('active', i === idx));
+    const num = String(idx + 1).padStart(2, '0');
+    const tot = String(slides.length).padStart(2, '0');
+    counter.textContent = `${num} / ${tot}`;
+    progress.style.width = `${((idx + 1) / slides.length) * 100}%`;
+    notesText.textContent = slides[idx].dataset.notes || '';
+  }
+
+  document.getElementById('next').addEventListener('click', () => show(idx + 1));
+  document.getElementById('prev').addEventListener('click', () => show(idx - 1));
+
+  document.addEventListener('keydown', (e) => {
+    if (['ArrowRight', ' ', 'PageDown'].includes(e.key)) { e.preventDefault(); show(idx + 1); }
+    else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); show(idx - 1); }
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(slides.length - 1);
+    else if (e.key.toLowerCase() === 's') notes.classList.toggle('visible');
+    else if (e.key.toLowerCase() === 'f') {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+  });
+
+  show(0);
+</script>
+
+</body>
+</html>
