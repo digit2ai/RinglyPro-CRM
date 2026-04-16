@@ -58,8 +58,8 @@
   /* backgrounds */
   .bg-navy { background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy) 55%, var(--navy-light) 100%); }
   .bg-coral { background: linear-gradient(135deg, #7a1f14 0%, var(--coral-dark) 55%, var(--coral) 100%); }
-  .bg-teal { background: linear-gradient(135deg, #063e3e 0%, #0c6e6c 55%, var(--teal) 100%); }
-  .bg-gold { background: linear-gradient(135deg, #3f2c14 0%, #8b6333 55%, var(--gold) 100%); color: var(--navy-dark); }
+  .bg-teal { background: linear-gradient(135deg, #03181b 0%, #0a3f42 55%, #0f5c5e 100%); }
+  .bg-gold { background: linear-gradient(135deg, #1f1408 0%, #5a3f1c 55%, #8b6333 100%); }
   .bg-cream { background: var(--cream); color: var(--navy-dark); }
   .bg-graph {
     background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy) 100%);
@@ -406,6 +406,8 @@
     .tech-grid { grid-template-columns: 1fr; }
     .two-col { grid-template-columns: 1fr; gap: 30px; }
     blockquote { padding: 0 30px; }
+    .hint { display: none; }
+    .logo-tag img { height: 28px; }
   }
 </style>
 </head>
@@ -466,16 +468,16 @@
 
   <!-- 6. POSITIVISMO -->
   <section class="slide bg-teal" data-notes="Positivismo no es sonreir todo el dia. Es elegir una interpretacion distinta de los mismos hechos. Los medicos dijeron 'no crecera.' Lucho dijo: 'el futbol no entiende de diagnosticos.' Pregunten a la sala: ¿quien les ha dicho que NO? ¿que dice tu cabeza cuando te lo dicen?">
-    <div class="chip" style="background: rgba(0,0,0,0.2); border-color: var(--navy-dark); color: var(--navy-dark);">Pilar 01</div>
-    <h2 style="color: var(--navy-dark);">Positivismo</h2>
+    <div class="chip teal">Pilar 01</div>
+    <h2>Positivismo</h2>
     <div class="two-col">
-      <div class="col-quote" style="color: var(--navy-dark); border-left-color: var(--navy-dark);">
+      <div class="col-quote">
         Los medicos dijeron que quizas nunca creceria lo suficiente para ser futbolista. Pero el futbol no entiende de diagnosticos.
       </div>
       <div class="col-body">
-        <p style="color: var(--navy-dark);"><strong>Positivismo no es ignorar la realidad.</strong> Es leer la misma realidad con otro final.</p>
-        <p style="color: var(--navy-dark);">Cuando te digan "no puedes", preguntate: ¿quien lo dice? ¿con que datos? ¿y que pasa si se equivocan?</p>
-        <p style="color: var(--navy-dark);"><strong>Ejercicio:</strong> la proxima vez que alguien te diga "no vas a poder", escribelo. Debajo, escribe tres razones por las que si.</p>
+        <p><strong>Positivismo no es ignorar la realidad.</strong> Es leer la misma realidad con otro final.</p>
+        <p>Cuando te digan "no puedes", preguntate: ¿quien lo dice? ¿con que datos? ¿y que pasa si se equivocan?</p>
+        <p><strong>Ejercicio:</strong> la proxima vez que alguien te diga "no vas a poder", escribelo. Debajo, escribe tres razones por las que si.</p>
       </div>
     </div>
   </section>
@@ -526,24 +528,24 @@
 
   <!-- 10. TECNOLOGIA -->
   <section class="slide bg-teal" data-notes="Transicion fuerte. 'Lucho tenia botas rotas. Tu tienes herramientas que en 2005 ningun joven de La Guajira tenia.' Presenta las tres herramientas. No para presumir tecnologia &mdash; para demostrar que las excusas de hoy son mas dificiles de defender.">
-    <div class="chip" style="background: rgba(0,0,0,0.2); border-color: var(--navy-dark); color: var(--navy-dark);">Pilar 05</div>
-    <h2 style="color: var(--navy-dark);">Tecnologia</h2>
-    <p class="lead" style="color: var(--navy-dark); max-width: 1000px;">Lucho tenia una pelota que apenas inflaba. Tu tienes herramientas que ni los millonarios tenian hace 10 anos.</p>
+    <div class="chip teal">Pilar 05</div>
+    <h2>Tecnologia</h2>
+    <p class="lead" style="max-width: 1000px;">Lucho tenia una pelota que apenas inflaba. Tu tienes herramientas que ni los millonarios tenian hace 10 anos.</p>
     <div class="tech-grid">
-      <div class="tech-card" style="background: rgba(11,29,74,0.08); border-color: var(--navy-dark);">
-        <div class="ic" style="color: var(--navy-dark);">Acceso</div>
-        <div class="nm" style="color: var(--navy-dark);">Internet + IA</div>
-        <div class="ds" style="color: var(--gray-700);">Todo lo que se sabe en el mundo, gratis, en tu bolsillo. Lo unico que falta es la decision de usarlo.</div>
+      <div class="tech-card">
+        <div class="ic">Acceso</div>
+        <div class="nm">Internet + IA</div>
+        <div class="ds">Todo lo que se sabe en el mundo, gratis, en tu bolsillo. Lo unico que falta es la decision de usarlo.</div>
       </div>
-      <div class="tech-card" style="background: rgba(11,29,74,0.08); border-color: var(--navy-dark);">
-        <div class="ic" style="color: var(--navy-dark);">Mentor</div>
-        <div class="nm" style="color: var(--navy-dark);">Lina (IA bilingue)</div>
-        <div class="ds" style="color: var(--gray-700);">Un mentor personal 24/7 en espanol e ingles. Te ayuda a estudiar, a preparar entrevistas, a pensar. Esto no existia.</div>
+      <div class="tech-card">
+        <div class="ic">Mentor</div>
+        <div class="nm">Lina (IA bilingue)</div>
+        <div class="ds">Un mentor personal 24/7 en espanol e ingles. Te ayuda a estudiar, a preparar entrevistas, a pensar. Esto no existia.</div>
       </div>
-      <div class="tech-card" style="background: rgba(11,29,74,0.08); border-color: var(--navy-dark);">
-        <div class="ic" style="color: var(--navy-dark);">Plataforma</div>
-        <div class="nm" style="color: var(--navy-dark);">Visionarium</div>
-        <div class="ds" style="color: var(--gray-700);">Una comunidad global, gratis, para jovenes de 16 a 22. Mentoria, retos reales, acceso a patrocinadores.</div>
+      <div class="tech-card">
+        <div class="ic">Plataforma</div>
+        <div class="nm">Visionarium</div>
+        <div class="ds">Una comunidad global, gratis, para jovenes de 16 a 22. Mentoria, retos reales, acceso a patrocinadores.</div>
       </div>
     </div>
   </section>
@@ -579,10 +581,10 @@
 
   <!-- 14. CIERRE -->
   <section class="slide bg-gold" data-notes="El cierre. No agreguen nada despues de esta frase. Dejenla. Salgan del escenario en silencio. Que la frase quede en el aire.">
-    <blockquote style="color: var(--navy-dark);">
+    <blockquote>
       El tamano de tu sueno no tiene nada que ver con el tamano de tu estomago.
     </blockquote>
-    <div class="attribution" style="color: var(--navy-dark); margin-top: 80px;">&mdash; Luis Diaz, Barrancas &rarr; Bernabeu</div>
+    <div class="attribution" style="margin-top: 80px;">&mdash; Luis Diaz, Barrancas &rarr; Bernabeu</div>
   </section>
 
 </div>
