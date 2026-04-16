@@ -1672,7 +1672,10 @@
       if (onEnd) onEnd();
     };
 
-    audio.play().catch(() => {
+    audio.play().then(() => {
+      console.log('Playing slide', slideIndex + 1);
+    }).catch((err) => {
+      console.error('Audio play failed:', err);
       if (onEnd) onEnd();
     });
   }
@@ -1756,41 +1759,11 @@
   });
 
   // ============ PRE-PLAY OVERLAY ============
-  preplayBtn.addEventListener('click', () => {
-    // Must start audio in the direct click handler (browser autoplay policy)
-    preplayOverlay.classList.add('hidden');
-    preplayOverlay.style.pointerEvents = 'none';
+  preplayBtn.addEventListener('click', function handlePlay() {
+    // Remove overlay immediately
+    preplayOverlay.style.display = 'none';
     show(0);
-
-    // Unlock audio context with a silent play, then start narration
-    const unlock = new Audio(audioFiles[0]);
-    unlock.volume = 1.0;
-    unlock.play().then(() => {
-      unlock.pause();
-      unlock.currentTime = 0;
-      // Now audio is unlocked — start the real autoplay
-      setTimeout(() => {
-        preplayOverlay.style.display = 'none';
-        autoPlaying = true;
-        btnPlayPause.innerHTML = '&#10074;&#10074;';
-        recIndicator.classList.add('active');
-        // Narrate slide 0 with the already-loaded audio
-        narrateSlide(0, () => {
-          if (!autoPlaying) return;
-          autoAdvanceTimer = setTimeout(() => {
-            if (!autoPlaying) return;
-            if (idx < slides.length - 1) {
-              show(idx + 1);
-              autoNarrateCurrentSlide();
-            }
-          }, 2000);
-        });
-      }, 400);
-    }).catch(() => {
-      // Fallback: just show slides without audio
-      preplayOverlay.style.display = 'none';
-      startAutoPlay();
-    });
+    startAutoPlay();
   });
 
   // Lina voice powered by ElevenLabs — colombian accent, young, friendly
