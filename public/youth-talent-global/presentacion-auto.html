@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Visionarium // El Tamaño de tu Sueño — Auto-Narrada</title>
+<title>Visionarium // El Tamaño de tu Sueño — Narrado por Lina</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
@@ -1208,8 +1208,8 @@
 <!-- PRE-PLAY OVERLAY -->
 <div class="preplay-overlay" id="preplayOverlay">
   <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69dfd39cfcac588c6b2329f9.png" alt="Visionarium">
-  <div class="preplay-title">Presentaci&oacute;n Auto-Narrada</div>
-  <div class="preplay-subtitle">Presiona PLAY para iniciar</div>
+  <div class="preplay-title">Narrado por Lina // IA de Visionarium</div>
+  <div class="preplay-subtitle">Voz generada con ElevenLabs &middot; Presiona PLAY para iniciar</div>
   <button class="preplay-btn" id="preplayBtn" aria-label="Iniciar presentaci&oacute;n">&#9654;</button>
 </div>
 
@@ -1621,19 +1621,15 @@
     show(n);
   }
 
-  // ============ SPEECH SYNTHESIS / NARRATION ============
-  const synth = window.speechSynthesis;
+  // ============ LINA VOICE (ElevenLabs MP3) ============
   const narrationWave = document.getElementById('narrationWave');
-  let currentUtterance = null;
+  let currentAudio = null;
   let autoAdvanceTimer = null;
 
-  function getSpanishVoice() {
-    const voices = synth.getVoices();
-    // Prefer Mexican Spanish
-    let voice = voices.find(v => v.lang === 'es-MX');
-    if (!voice) voice = voices.find(v => v.lang.startsWith('es-'));
-    if (!voice) voice = voices.find(v => v.lang === 'es-ES');
-    return voice || null;
+  const audioFiles = [];
+  for (let i = 1; i <= 17; i++) {
+    const num = String(i).padStart(2, '0');
+    audioFiles.push(`assets/audio/slide-${num}.mp3`);
   }
 
   function cancelNarration() {
@@ -1641,52 +1637,44 @@
       clearTimeout(autoAdvanceTimer);
       autoAdvanceTimer = null;
     }
-    synth.cancel();
-    currentUtterance = null;
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+      currentAudio = null;
+    }
     narrationWave.classList.remove('active');
   }
 
   function narrateSlide(slideIndex, onEnd) {
     cancelNarration();
-    const slide = slides[slideIndex];
-    const text = slide.dataset.narration;
-    if (!text) {
+    if (slideIndex < 0 || slideIndex >= audioFiles.length) {
       if (onEnd) onEnd();
       return;
     }
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    const voice = getSpanishVoice();
-    if (voice) utterance.voice = voice;
-    utterance.lang = voice ? voice.lang : 'es-MX';
-    utterance.rate = 0.95;
-    utterance.pitch = 1.0;
-    utterance.volume = 1.0;
+    const audio = new Audio(audioFiles[slideIndex]);
+    audio.volume = 1.0;
+    currentAudio = audio;
 
-    utterance.onstart = () => {
+    audio.onplay = () => {
       narrationWave.classList.add('active');
     };
 
-    utterance.onend = () => {
+    audio.onended = () => {
       narrationWave.classList.remove('active');
-      currentUtterance = null;
+      currentAudio = null;
       if (onEnd) onEnd();
     };
 
-    utterance.onerror = (e) => {
+    audio.onerror = () => {
       narrationWave.classList.remove('active');
-      currentUtterance = null;
-      // Still auto-advance on error so the show continues
+      currentAudio = null;
       if (onEnd) onEnd();
     };
 
-    currentUtterance = utterance;
-
-    // Chrome bug workaround: resume synth if paused
-    synth.cancel();
-    setTimeout(() => {
-      synth.speak(utterance);
-    }, 50);
+    audio.play().catch(() => {
+      if (onEnd) onEnd();
+    });
   }
 
   // ============ AUTO-PLAY ENGINE ============
@@ -1777,15 +1765,7 @@
     }, 600);
   });
 
-  // ============ VOICE LOADING ============
-  // Voices may load asynchronously
-  if (synth.onvoiceschanged !== undefined) {
-    synth.onvoiceschanged = () => {
-      // Voices are now loaded
-    };
-  }
-  // Trigger initial voice load
-  synth.getVoices();
+  // Lina voice powered by ElevenLabs — colombian accent, young, friendly
 </script>
 
 </body>
