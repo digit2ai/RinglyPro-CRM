@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digit2Ai Projects — User Guide</title>
+<link rel="icon" type="image/png" href="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b1020;
+    --bg-card: #141a2e;
+    --bg-card-2: #1a2138;
+    --border: #2a3350;
+    --text: #e6e9f2;
+    --text-muted: #8a93a8;
+    --accent: #3b82f6;
+    --accent-2: #8b5cf6;
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    line-height: 1.65;
+  }
+  .wrap {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 100vh;
+  }
+  nav.toc {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 28px 20px;
+    border-right: 1px solid var(--border);
+    background: var(--bg-card);
+  }
+  nav.toc img { width: 120px; margin-bottom: 20px; }
+  nav.toc h3 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    margin: 20px 0 8px;
+  }
+  nav.toc a {
+    display: block;
+    padding: 6px 10px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 14px;
+    border-radius: 6px;
+    border-left: 2px solid transparent;
+  }
+  nav.toc a:hover, nav.toc a.active {
+    color: var(--text);
+    background: rgba(59,130,246,0.08);
+    border-left-color: var(--accent);
+  }
+  main {
+    max-width: 860px;
+    padding: 48px 56px;
+  }
+  h1 {
+    font-size: 36px;
+    font-weight: 800;
+    margin: 0 0 8px;
+    letter-spacing: -0.5px;
+  }
+  .subtitle {
+    color: var(--text-muted);
+    margin: 0 0 40px;
+    font-size: 16px;
+  }
+  h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 56px 0 12px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+  h2:first-of-type { border-top: 0; padding-top: 0; }
+  h3 {
+    font-size: 17px;
+    font-weight: 600;
+    margin: 28px 0 8px;
+    color: var(--text);
+  }
+  p { margin: 0 0 14px; color: #c9cfdd; }
+  ul, ol { padding-left: 22px; margin: 0 0 16px; color: #c9cfdd; }
+  li { margin-bottom: 6px; }
+  code {
+    background: var(--bg-card-2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: #a8e5ff;
+  }
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: rgba(59,130,246,0.06);
+    padding: 14px 18px;
+    margin: 18px 0;
+    border-radius: 0 8px 8px 0;
+  }
+  .callout.warning { border-left-color: var(--warning); background: rgba(245,158,11,0.06); }
+  .callout.success { border-left-color: var(--success); background: rgba(34,197,94,0.06); }
+  .callout strong { color: var(--text); }
+  .cmd-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0 18px;
+    font-size: 14px;
+  }
+  .cmd-table th, .cmd-table td {
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .cmd-table th {
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .cmd-table td:first-child code { white-space: nowrap; }
+  .chip {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .chip-blue { background: rgba(59,130,246,0.18); color: #7cc0ff; }
+  .chip-green { background: rgba(34,197,94,0.18); color: #86efac; }
+  .chip-amber { background: rgba(245,158,11,0.18); color: #fcd34d; }
+  .chip-red { background: rgba(239,68,68,0.18); color: #fca5a5; }
+  .chip-purple { background: rgba(139,92,246,0.18); color: #c4b5fd; }
+  .mobile-toc { display: none; }
+  @media (max-width: 840px) {
+    .wrap { grid-template-columns: 1fr; }
+    nav.toc { display: none; }
+    main { padding: 32px 20px; }
+    h1 { font-size: 28px; }
+  }
+  footer {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="toc">
+  <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png" alt="Digit2Ai">
+  <h3>Get Started</h3>
+  <a href="#intro">Introduction</a>
+  <a href="#login">Signing In</a>
+  <a href="#home">Home / Overview</a>
+  <h3>Core Areas</h3>
+  <a href="#people">People</a>
+  <a href="#projects">Projects</a>
+  <a href="#calendar">Calendar</a>
+  <a href="#tasks">To-Do List</a>
+  <a href="#staff">Staff &amp; Roles</a>
+  <a href="#alerts">Alerts</a>
+  <h3>Automation</h3>
+  <a href="#ai">Ask AI</a>
+  <a href="#history">History</a>
+  <a href="#settings">Settings</a>
+  <a href="#tips">Tips &amp; Tricks</a>
+</nav>
+<main>
+
+<h1>Digit2Ai Projects — User Guide</h1>
+<p class="subtitle">Everything you can do at <code>aiagent.ringlypro.com/projects</code> — contacts, projects, calendar, tasks, staff, and the Ask AI assistant.</p>
+
+<h2 id="intro">Introduction</h2>
+<p>Digit2Ai Projects is a workspace for running client projects end-to-end: a contact book of People, a project tracker with timelines and milestones, a calendar, a to-do list that syncs with the QuickTask voice app, and an Ask AI chat that understands plain English and Spanish commands.</p>
+<p>Everything lives in one workspace. Tasks you create show up on the Calendar automatically. Contacts link to Projects. Staff roles map to responsibilities. The AI assistant can create, search, and update almost anything without you touching a form.</p>
+
+<h2 id="login">Signing In</h2>
+<ol>
+  <li>Open <code>https://aiagent.ringlypro.com/projects</code>.</li>
+  <li>Enter the email and password you received from your admin.</li>
+  <li>On first login the app auto-provisions your access in the workspace with the <strong>admin</strong> role. Your email becomes your identity across all activity logs.</li>
+</ol>
+<div class="callout">If you forgot your password, ask your admin to reset it — passwords are stored hashed and cannot be recovered.</div>
+
+<h2 id="home">Home / Overview</h2>
+<p>The Home tab is your dashboard. It shows:</p>
+<ul>
+  <li><strong>Workspace counts</strong> — total projects, active tasks, contacts.</li>
+  <li><strong>Overdue tasks</strong> — pending items whose due date has passed.</li>
+  <li><strong>Stalled projects</strong> — projects with no updates in the last N days.</li>
+  <li><strong>Upcoming events</strong> — the next calendar events and task due dates.</li>
+  <li><strong>Recent activity</strong> — the last actions taken across the workspace (who did what, when).</li>
+</ul>
+<p>Click any item to jump straight to its detail page.</p>
+
+<h2 id="people">People</h2>
+<p>Your contact book. Each contact has a name, email, phone, company, title, tags, and notes. You can link contacts to projects (e.g., "John is the client sponsor on Project X").</p>
+<h3>Common actions</h3>
+<ul>
+  <li><strong>Add a contact</strong> — click <em>+ Create</em> or type <code>add contact John Smith</code> in Ask AI.</li>
+  <li><strong>Search</strong> — use the global search bar at the top of any page; contacts, projects, and tasks are all indexed.</li>
+  <li><strong>Link to a project</strong> — open the contact, scroll to <em>Projects</em>, click <em>+ Link</em>, and pick the project and role (Client, Sponsor, Stakeholder, etc.).</li>
+  <li><strong>Archive</strong> — contacts are never deleted. Archive hides them from default views; you can restore them anytime.</li>
+</ul>
+
+<h2 id="projects">Projects</h2>
+<p>The heart of the app. Every piece of work lives inside a Project.</p>
+
+<h3>Project anatomy</h3>
+<ul>
+  <li><strong>Name &amp; code</strong> — a unique auto-generated code (e.g., <code>VISION-UTDI</code>) for quick reference.</li>
+  <li><strong>Status</strong> — <span class="chip chip-blue">Planning</span> <span class="chip chip-purple">Active</span> <span class="chip chip-amber">In Progress</span> <span class="chip chip-amber">On Hold</span> <span class="chip chip-blue">Review</span> <span class="chip chip-green">Completed</span></li>
+  <li><strong>Priority</strong> — Low, Medium, High, Critical.</li>
+  <li><strong>Vertical &amp; Category</strong> — to segment projects by business area (Education, Healthcare, Logistics…).</li>
+  <li><strong>Start &amp; Due Date</strong> — anchor the Timeline chart.</li>
+  <li><strong>Progress (%)</strong> — set manually or auto-computed from milestone completion.</li>
+  <li><strong>Lead</strong> — the staff member responsible.</li>
+</ul>
+
+<h3>The Timeline chart</h3>
+<p>At the top of every project detail page, you see a horizontal Timeline:</p>
+<ul>
+  <li>The <strong>green/teal bar</strong> reflects your entered <em>Progress %</em>.</li>
+  <li>The <strong>translucent blue bar</strong> behind it reflects how much <em>calendar time</em> has elapsed. If blue is ahead of green, you are behind schedule; if green is ahead of blue, you are ahead.</li>
+  <li>The <strong>yellow vertical line</strong> marks today. It turns red when the project is overdue.</li>
+  <li><strong>Milestone dots</strong> sit on the bar at each milestone's due date. Green = completed, red = late, blue = upcoming. Hover for the name and date.</li>
+  <li>On the right, <code>X days left of Y</code> or <code>N days overdue</code>.</li>
+</ul>
+
+<h3>Milestones</h3>
+<p>Checkpoints inside a project. Each has a title, due date, and status. Click <em>+ Add</em> to create one, or <em>Complete</em> to mark it done. Milestones appear on the Timeline chart and help auto-calculate progress.</p>
+
+<h3>Tasks inside a project</h3>
+<p>Every task can optionally be linked to a project. On the project page, the <em>Tasks</em> section lists all linked to-dos with their status, priority, and assignee. Click any task to open its detail.</p>
+
+<h3>Updates</h3>
+<p>A lightweight changelog. Type a quick note in the <em>Updates</em> box and hit <em>Post</em> — a dated entry is added, attributed to you. Use this to keep stakeholders informed without writing a formal status email.</p>
+
+<h3>Editing a project</h3>
+<p>Click <em>Edit</em> on the project detail. The modal lets you change everything: name, vertical, status, priority, dates, progress, lead, description, blockers, next step, and notes. Save and the changes land immediately.</p>
+
+<div class="callout warning"><strong>Archive, don't delete.</strong> Completed or abandoned projects should be archived (the red <em>Archive</em> button). Archived projects are hidden by default but stay in the database for reporting and compliance.</div>
+
+<h2 id="calendar">Calendar</h2>
+<p>A month view showing:</p>
+<ul>
+  <li><strong>Calendar events</strong> you explicitly create (meetings, deadlines, follow-ups, milestones, generic events).</li>
+  <li><strong>Tasks with a due date</strong> — automatically merged in from the To-Do List as purple chips. You don't need to duplicate anything.</li>
+</ul>
+<p>Event colors: <span class="chip chip-blue">Meeting</span> <span class="chip chip-red">Deadline</span> <span class="chip chip-amber">Follow-up</span> <span class="chip chip-green">Milestone</span> <span class="chip chip-blue">Event</span> <span class="chip chip-purple">Task</span></p>
+
+<h3>Create a new event</h3>
+<ol>
+  <li>Click <em>+ New Event</em>.</li>
+  <li>Fill in title, type, start/end time, optional location, and link to a project or contact.</li>
+  <li>Save. The event appears on the day and in any "upcoming events" widgets.</li>
+</ol>
+
+<h3>Jumping to details</h3>
+<p>Click any chip. Events open the event detail (with <em>Edit</em> and <em>Delete</em>); task chips open the task detail.</p>
+
+<div class="callout"><strong>Timezone note.</strong> All dates render in your browser's local timezone. If you create a task for "tomorrow at 10 AM EDT", it will show at that local time even though the server stores it in UTC.</div>
+
+<h2 id="tasks">To-Do List</h2>
+<p>Your personal and team to-do inbox. Tasks have a title, description, type (Task / Reminder / Follow-up), priority, due date, and optional assignee and project link.</p>
+
+<h3>Working with tasks</h3>
+<ul>
+  <li><strong>Filter by Still To Do / All</strong> and by task type at the top.</li>
+  <li><strong>Done button</strong> flips the task status to completed; it will also sync the change back to the QuickTask voice PWA.</li>
+  <li><strong>Group by assignee</strong> is the default; collapse/expand each group with the arrow.</li>
+  <li><strong>Click the title</strong> to open the task detail.</li>
+</ul>
+
+<h3>QuickTask sync</h3>
+<p>Tasks you create here sync to <code>/quicktask/</code> (the voice-driven PWA) so your team can hear and dictate the same list. Status changes flow both ways.</p>
+
+<h2 id="staff">Staff &amp; Roles</h2>
+<p>The directory of your team.</p>
+<ul>
+  <li><strong>Staff members</strong> — name, email, phone, department, position, hire date, avatar.</li>
+  <li><strong>Roles</strong> — reusable job profiles (e.g., "Project Manager", "Developer", "Account Lead") with a list of Responsibilities underneath each.</li>
+  <li><strong>Assign staff to roles</strong> — one staff member can hold multiple roles; one role can cover multiple people.</li>
+</ul>
+<p>Use this to map your org: who is responsible for what, who leads which projects, and who picks up which task types.</p>
+
+<h2 id="alerts">Alerts</h2>
+<p>The notification inbox. Items show up here when:</p>
+<ul>
+  <li>A task is assigned to you.</li>
+  <li>A project you lead changes status or becomes overdue.</li>
+  <li>A reminder you set fires.</li>
+  <li>An external integration (like an email campaign) reports back.</li>
+</ul>
+<p>The small number badge in the sidebar shows unread alerts. Click into an alert to mark it read.</p>
+
+<h2 id="ai">Ask AI</h2>
+<p>The star feature: a chat that understands plain English and Spanish. Instead of clicking through menus you can type or dictate a sentence and the AI performs the action.</p>
+
+<h3>What it can do</h3>
+<table class="cmd-table">
+  <thead><tr><th>You type</th><th>What happens</th></tr></thead>
+  <tbody>
+    <tr><td><code>What do I need to do?</code></td><td>Lists your pending tasks with due dates.</td></tr>
+    <tr><td><code>Any overdue tasks?</code></td><td>Lists only past-due items needing attention.</td></tr>
+    <tr><td><code>Show my projects</code></td><td>Top 10 active projects, newest first.</td></tr>
+    <tr><td><code>Summarize high priority projects</code></td><td>Grouped breakdown with counts and statuses.</td></tr>
+    <tr><td><code>Create a new project called Marketing Campaign</code></td><td>Creates a project in Planning stage.</td></tr>
+    <tr><td><code>Add a task to call the supplier tomorrow</code></td><td>New task with tomorrow's date.</td></tr>
+    <tr><td><code>Change Visionarium due date to July 15</code></td><td>Updates the project's due date.</td></tr>
+    <tr><td><code>Move Website Redesign to completed</code></td><td>Changes project status.</td></tr>
+    <tr><td><code>Schedule a meeting with Lala next Friday</code></td><td>Creates a calendar event.</td></tr>
+    <tr><td><code>Link John Smith to project Visionarium</code></td><td>Adds a contact-to-project link.</td></tr>
+    <tr><td><code>Give me a summary</code></td><td>Workspace snapshot: projects, tasks, overdue counts.</td></tr>
+    <tr><td><code>What's coming up?</code></td><td>Next 7 days of events.</td></tr>
+  </tbody>
+</table>
+
+<h3>Dates it understands</h3>
+<p>Almost any natural phrasing: <code>tomorrow</code>, <code>next Friday</code>, <code>July 15</code>, <code>in 3 days</code>, <code>end of week</code>, <code>2026-08-01</code>, <code>8/1/26</code>. Spanish equivalents work too (<code>manana</code>, <code>el viernes</code>, <code>15 de julio</code>).</p>
+
+<div class="callout success"><strong>Tip.</strong> If the AI doesn't recognize your command, it responds with a short list of examples. You can also click any suggestion pill in the chat to run a common command instantly.</div>
+
+<h2 id="history">History</h2>
+<p>A chronological feed of every change made in the workspace: project created, status changed, task completed, contact linked, due date updated. Each entry shows the actor (email), action verb, entity, and timestamp. Useful for audits, handoffs, and answering "who changed what?".</p>
+
+<h2 id="settings">Settings</h2>
+<p>Workspace preferences: default vertical, notification thresholds, stalled-project window (how many days of inactivity before a project is flagged), and integrations (e.g., SendGrid for campaigns, ElevenLabs for voice).</p>
+
+<h2 id="tips">Tips &amp; Tricks</h2>
+<ul>
+  <li><strong>Global search</strong> is your fastest navigation tool — hit <kbd>/</kbd> to focus the search box on any page.</li>
+  <li><strong>Ask AI before clicking</strong> — if you know what you want, it's usually faster to type it.</li>
+  <li><strong>Archive aggressively.</strong> The dashboard only counts non-archived items; archive old projects to keep metrics accurate.</li>
+  <li><strong>Check the Timeline chart weekly.</strong> The gap between green (progress) and blue (elapsed time) is an early warning signal.</li>
+  <li><strong>Link contacts to projects</strong> even for internal work. It makes reporting and history reviews much richer.</li>
+  <li><strong>Install as a PWA</strong> — on mobile, use your browser's "Add to Home Screen" to install Digit2Ai Projects as an icon. Works offline for recently loaded pages.</li>
+</ul>
+
+<footer>
+  <p>Digit2Ai Projects &middot; Last updated 2026-04-16 &middot; Questions? Contact your workspace admin.</p>
+</footer>
+
+</main>
+</div>
+<script>
+  // Highlight active TOC link on scroll
+  const links = document.querySelectorAll('nav.toc a');
+  const headings = [...links].map(a => document.querySelector(a.getAttribute('href')));
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY + 120;
+    let active = 0;
+    headings.forEach((h, i) => { if (h && h.offsetTop <= y) active = i; });
+    links.forEach(l => l.classList.remove('active'));
+    links[active]?.classList.add('active');
+  });
+</script>
+</body>
+</html>
