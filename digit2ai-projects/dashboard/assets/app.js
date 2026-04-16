@@ -1772,6 +1772,53 @@ async function changeContactStage(contactId, newStage) {
   showContactDetail(contactId);
 }
 
+function renderProjectTimeline(p) {
+  if (!p.start_date && !p.due_date) return '';
+  const start = p.start_date ? new Date(p.start_date) : (p.created_at ? new Date(p.created_at) : null);
+  const end = p.due_date ? new Date(p.due_date) : null;
+  if (!start || !end || end <= start) return '';
+
+  const now = new Date();
+  const total = end - start;
+  const elapsed = Math.max(0, Math.min(total, now - start));
+  const timePct = (elapsed / total) * 100;
+  const progressPct = Math.max(0, Math.min(100, p.progress || 0));
+  const daysLeft = Math.ceil((end - now) / 86400000);
+  const totalDays = Math.ceil(total / 86400000);
+  const isOver = now > end;
+
+  const milestoneDots = (p.milestones || [])
+    .filter(m => m.due_date)
+    .map(m => {
+      const md = new Date(m.due_date);
+      const pct = Math.max(0, Math.min(100, ((md - start) / total) * 100));
+      const color = m.status === 'completed' ? 'var(--success)' : md < now ? 'var(--danger)' : 'var(--accent)';
+      return `<div title="${m.title} (${fmtDate(m.due_date)})" style="position:absolute;left:calc(${pct}% - 6px);top:-3px;width:12px;height:12px;border-radius:50%;background:${color};border:2px solid var(--bg-card);z-index:2;cursor:help"></div>`;
+    }).join('');
+
+  return `
+    <div class="detail-section" style="margin-bottom:24px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
+        <h4 style="margin:0">Timeline</h4>
+        <span style="font-size:12px;color:${isOver ? 'var(--danger)' : 'var(--text-muted)'}">
+          ${isOver ? `${Math.abs(daysLeft)} day${Math.abs(daysLeft) === 1 ? '' : 's'} overdue` : daysLeft === 0 ? 'Due today' : `${daysLeft} day${daysLeft === 1 ? '' : 's'} left of ${totalDays}`}
+        </span>
+      </div>
+      <div style="position:relative;height:12px;background:rgba(148,163,184,0.15);border-radius:6px;overflow:visible">
+        <div style="position:absolute;left:0;top:0;height:100%;width:${timePct}%;background:linear-gradient(90deg,rgba(59,130,246,0.25),rgba(59,130,246,0.45));border-radius:6px 0 0 6px"></div>
+        <div style="position:absolute;left:0;top:0;height:100%;width:${progressPct}%;background:linear-gradient(90deg,var(--accent),var(--success));border-radius:6px 0 0 6px;z-index:1"></div>
+        <div style="position:absolute;left:calc(${Math.min(100, timePct)}% - 1px);top:-4px;bottom:-4px;width:2px;background:${isOver ? 'var(--danger)' : 'var(--warning)'};z-index:3"></div>
+        ${milestoneDots}
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-top:8px">
+        <span>${fmtDate(start)} <span style="color:var(--text-secondary)">Start</span></span>
+        <span style="color:${isOver ? 'var(--danger)' : 'var(--warning)'}">Today</span>
+        <span><span style="color:var(--text-secondary)">Due</span> ${fmtDate(end)}</span>
+      </div>
+    </div>
+  `;
+}
+
 async function showProjectDetail(id) {
   const container = document.getElementById('view-container');
   container.innerHTML = '<div class="spinner"></div>';
@@ -1805,6 +1852,8 @@ async function showProjectDetail(id) {
       </div>
       <div class="progress-bar" style="margin-bottom:24px"><div class="progress-fill" style="width:${p.progress}%"></div></div>
       <p style="font-size:12px;color:var(--text-muted);margin-top:-16px;margin-bottom:24px">Progress: ${p.progress}%</p>
+
+      ${renderProjectTimeline(p)}
 
       <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px">
         <div>
