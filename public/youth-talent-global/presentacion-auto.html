@@ -1567,6 +1567,14 @@
   const notesText = document.getElementById('notes-text');
   let idx = 0;
 
+  // Get control elements early — needed by show()
+  const btnPlayPause = document.getElementById('btnPlayPause');
+  const btnStop = document.getElementById('btnStop');
+  const slideInfo = document.getElementById('slideInfo');
+  const recIndicator = document.getElementById('recIndicator');
+  const preplayOverlay = document.getElementById('preplayOverlay');
+  const preplayBtn = document.getElementById('preplayBtn');
+
   function show(n) {
     idx = Math.max(0, Math.min(slides.length - 1, n));
     slides.forEach((s, i) => s.classList.toggle('active', i === idx));
@@ -1682,13 +1690,6 @@
 
   // ============ AUTO-PLAY ENGINE ============
   let autoPlaying = false;
-  const btnPlayPause = document.getElementById('btnPlayPause');
-  const btnStop = document.getElementById('btnStop');
-  const slideInfo = document.getElementById('slideInfo');
-  const recIndicator = document.getElementById('recIndicator');
-  const preplayOverlay = document.getElementById('preplayOverlay');
-  const preplayBtn = document.getElementById('preplayBtn');
-
   function startAutoPlay() {
     autoPlaying = true;
     btnPlayPause.innerHTML = '&#10074;&#10074;'; // pause icon
