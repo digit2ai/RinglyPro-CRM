@@ -2208,7 +2208,7 @@ async function sendAICommand(target) {
 
   try {
     const res = await api('/nlp/command', { method: 'POST', body: JSON.stringify({ text }) });
-    const response = res.success ? (res.data?.response || 'Done.') : (res.error || 'Error');
+    const response = res.data?.response || res.error || (res.success ? 'Done.' : 'Sorry, I could not process that.');
     msgContainer.innerHTML += `<div class="nlp-msg system">${escHtml(response)}</div>`;
   } catch (err) {
     msgContainer.innerHTML += `<div class="nlp-msg system" style="color:var(--danger)">Error: ${err.message}</div>`;

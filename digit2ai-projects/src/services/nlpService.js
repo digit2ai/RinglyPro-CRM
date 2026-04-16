@@ -8,7 +8,7 @@ const { logActivity, createNotification } = require('./activityService');
 // Designed for non-technical users: supports casual, conversational language
 const INTENT_PATTERNS = [
   // Contact intents
-  { pattern: /^(create|add|new|register)\s+(a\s+)?contact/i, intent: 'create_contact' },
+  { pattern: /^(create|add|new|register)\s+(?:(?:a|the|another|new)\s+)*contact/i, intent: 'create_contact' },
   { pattern: /^(show|list|get|find|see|view|open)\s+(all\s+|my\s+)?contacts/i, intent: 'list_contacts' },
   { pattern: /^(show|list|get|find)\s+contacts?\s+(linked|assigned|for|in|under)\s+(.+)/i, intent: 'filter_contacts' },
   { pattern: /^(search|find|look\s*up|look\s+for)\s+(for\s+)?contact/i, intent: 'search_contacts' },
@@ -21,7 +21,7 @@ const INTENT_PATTERNS = [
   { pattern: /^(show|list|see|view)\s+high[\s-]?priority\s+projects/i, intent: 'high_priority_projects' },
   { pattern: /^(show|list|see|view)\s+(all\s+|my\s+)?urgent\s+projects/i, intent: 'high_priority_projects' },
   { pattern: /^(show|list|see|view)\s+(all\s+|my\s+)?critical\s+projects/i, intent: 'high_priority_projects' },
-  { pattern: /^(create|add|new|start|begin|launch)\s+(a\s+)?project/i, intent: 'create_project' },
+  { pattern: /^(create|add|new|start|begin|launch)\s+(?:(?:a|the|another|brand[-\s]?new|new)\s+)*project/i, intent: 'create_project' },
   { pattern: /^(show|list|get|find|see|view|open)\s+(all\s+|my\s+)?projects/i, intent: 'list_projects' },
   { pattern: /^(change|update|set|move)\s+(project\s+)?(.+?)\s+(?:project\s+)?(?:due\s+date|deadline|due)\s+(?:to|=)\s+(.+)/i, intent: 'update_project_due_date' },
   { pattern: /^(change|update|set)\s+(?:the\s+)?(?:due\s+date|deadline|due)\s+(?:of|for)\s+(?:project\s+)?(.+?)\s+(?:to|=)\s+(.+)/i, intent: 'update_project_due_date' },
@@ -35,7 +35,7 @@ const INTENT_PATTERNS = [
 
   // Task intents — specific first
   { pattern: /^(show|list|get|see|view)\s+(all\s+|my\s+)?overdue\s+tasks/i, intent: 'overdue_tasks' },
-  { pattern: /^(create|add|new|make)\s+(a\s+)?(task|todo|to[\s-]?do|reminder|follow[\s-]?up)/i, intent: 'create_task' },
+  { pattern: /^(create|add|new|make)\s+(?:(?:a|the|another|new)\s+)*(task|todo|to[\s-]?do|reminder|follow[\s-]?up)/i, intent: 'create_task' },
   { pattern: /^(show|list|get|see|view|open)\s+(all\s+|my\s+)?(pending\s+)?tasks/i, intent: 'list_tasks' },
   { pattern: /^(show|list|get|see|view)\s+(all\s+|my\s+)?to[\s-]?do/i, intent: 'list_tasks' },
   { pattern: /^what\s+(do\s+i\s+)?need\s+to\s+do/i, intent: 'list_tasks' },
@@ -45,7 +45,7 @@ const INTENT_PATTERNS = [
   { pattern: /^any\s+overdue\s+tasks/i, intent: 'overdue_tasks' },
 
   // Calendar intents
-  { pattern: /^(create|add|schedule|new|book|set\s+up)\s+(a\s+)?(meeting|event|appointment|calendar|call)/i, intent: 'create_event' },
+  { pattern: /^(create|add|schedule|new|book|set\s+up)\s+(?:(?:a|the|another|new)\s+)*(meeting|event|appointment|calendar|call)/i, intent: 'create_event' },
   { pattern: /^(show|list|get|what|see|view)\s+(are\s+)?(my\s+)?(upcoming|this week|today|next|calendar|schedule|events)/i, intent: 'upcoming_events' },
   { pattern: /^what.*coming\s+up/i, intent: 'upcoming_events' },
   { pattern: /^what.*my\s+(schedule|calendar|agenda)/i, intent: 'upcoming_events' },
@@ -589,7 +589,6 @@ async function executeCommand(inputText, userEmail) {
           `  "Give me a summary" — get a quick overview\n` +
           `  "Help" — see all available commands\n\n` +
           `Just type naturally, like you would talk to an assistant!`;
-        success = false;
     }
   } catch (err) {
     console.error('[D2AI NLP] Execution error:', err);
