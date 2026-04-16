@@ -3,26 +3,29 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>El Tamano de tu Sueno | Visionarium</title>
+<title>Visionarium // El Tamano de tu Sueno</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
   :root {
     --navy: #0b1d4a;
     --navy-light: #17296b;
-    --navy-dark: #050f2d;
+    --navy-dark: #030814;
+    --navy-blk: #010409;
     --teal: #3dcbca;
     --teal-light: #8eeae8;
+    --teal-neon: #2de8e6;
     --coral: #ef6c57;
+    --coral-neon: #ff7a63;
     --coral-dark: #c94a38;
     --gold: #d4a574;
-    --gold-light: #f5ead6;
-    --cream: #fafaf7;
+    --gold-neon: #e8c896;
     --white: #ffffff;
     --gray-200: #e9ecef;
     --gray-500: #6c757d;
     --gray-700: #374151;
     --gray-900: #111827;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -30,8 +33,10 @@
 
   body {
     font-family: 'Inter', sans-serif;
-    background: var(--navy-dark);
+    background: var(--navy-blk);
     color: var(--white);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   .deck {
@@ -48,139 +53,290 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 6vh 8vw;
+    padding: 7vh 7vw;
     text-align: center;
     opacity: 0;
-    transition: opacity .35s ease;
+    transition: opacity .45s ease;
+    overflow: hidden;
   }
   .slide.active { display: flex; opacity: 1; }
 
-  /* backgrounds */
-  .bg-navy { background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy) 55%, var(--navy-light) 100%); }
-  .bg-coral { background: linear-gradient(135deg, #7a1f14 0%, var(--coral-dark) 55%, var(--coral) 100%); }
-  .bg-teal { background: linear-gradient(135deg, #03181b 0%, #0a3f42 55%, #0f5c5e 100%); }
-  .bg-gold { background: linear-gradient(135deg, #1f1408 0%, #5a3f1c 55%, #8b6333 100%); }
-  .bg-cream { background: var(--cream); color: var(--navy-dark); }
-  .bg-graph {
-    background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy) 100%);
+  /* ANIMATED GRID OVERLAY — present on all slides */
+  .slide::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(61,203,202,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(61,203,202,0.06) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse at center, black 40%, transparent 90%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 40%, transparent 90%);
+    pointer-events: none;
+    z-index: 0;
+    animation: gridDrift 40s linear infinite;
+  }
+
+  @keyframes gridDrift {
+    from { background-position: 0 0, 0 0; }
+    to { background-position: 64px 64px, 64px 64px; }
+  }
+
+  /* FLOATING MESH GLOW */
+  .slide::after {
+    content: '';
+    position: absolute;
+    width: 900px; height: 900px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(61,203,202,0.14) 0%, rgba(61,203,202,0.04) 40%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    filter: blur(60px);
+    pointer-events: none;
+    z-index: 0;
+    animation: meshDrift 18s ease-in-out infinite;
+  }
+
+  @keyframes meshDrift {
+    0%, 100% { transform: translate(-60%, -55%) scale(1); }
+    50%      { transform: translate(-40%, -45%) scale(1.2); }
+  }
+
+  .slide > * { position: relative; z-index: 1; }
+
+  /* BACKGROUND VARIANTS */
+  .bg-navy { background: radial-gradient(ellipse at top, var(--navy) 0%, var(--navy-dark) 50%, var(--navy-blk) 100%); }
+  .bg-coral { background: radial-gradient(ellipse at top, #3a1509 0%, #200a05 50%, var(--navy-blk) 100%); }
+  .bg-coral::after { background: radial-gradient(circle, rgba(239,108,87,0.2) 0%, rgba(239,108,87,0.05) 40%, transparent 70%); }
+  .bg-teal { background: radial-gradient(ellipse at top, #05282a 0%, #021416 50%, var(--navy-blk) 100%); }
+  .bg-teal::after { background: radial-gradient(circle, rgba(61,203,202,0.22) 0%, rgba(61,203,202,0.06) 40%, transparent 70%); }
+  .bg-gold { background: radial-gradient(ellipse at top, #2e1f0d 0%, #180f06 50%, var(--navy-blk) 100%); }
+  .bg-gold::after { background: radial-gradient(circle, rgba(212,165,116,0.2) 0%, rgba(212,165,116,0.05) 40%, transparent 70%); }
+  .bg-purple { background: radial-gradient(ellipse at top, #1a0d3a 0%, #0a0520 50%, var(--navy-blk) 100%); }
+  .bg-purple::after { background: radial-gradient(circle, rgba(139,92,246,0.22) 0%, rgba(139,92,246,0.06) 40%, transparent 70%); }
+
+  /* ===== TECH HUD — CORNER METADATA ===== */
+  .hud-top-left, .hud-top-right, .hud-bot-left, .hud-bot-right {
+    position: absolute;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2.5px;
+    color: rgba(61,203,202,0.55);
+    font-weight: 500;
+    text-transform: uppercase;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .hud-top-left { top: 72px; left: 28px; }
+  .hud-top-right { top: 72px; right: 28px; }
+  .hud-bot-left { bottom: 24px; left: 28px; }
+  .hud-bot-right { bottom: 24px; right: 96px; }
+
+  .hud-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--teal-neon);
+    box-shadow: 0 0 10px var(--teal-neon);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  .hud-line {
+    display: inline-block;
+    height: 1px;
+    width: 32px;
+    background: linear-gradient(90deg, var(--teal) 0%, transparent 100%);
+  }
+
+  /* ===== CHIP (tech badge) ===== */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 36px;
+    background: rgba(61,203,202,0.08);
+    border: 1px solid rgba(61,203,202,0.4);
+    color: var(--teal-light);
+    backdrop-filter: blur(8px);
     position: relative;
   }
-  .bg-graph::before {
+  .chip::before {
     content: '';
-    position: absolute; inset: 0;
-    background-image:
-      radial-gradient(circle at 20% 30%, rgba(61,203,202,0.15) 0%, transparent 40%),
-      radial-gradient(circle at 80% 70%, rgba(239,108,87,0.12) 0%, transparent 40%);
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--teal-neon);
+    box-shadow: 0 0 8px var(--teal-neon);
   }
+  .chip.coral { background: rgba(239,108,87,0.08); border-color: rgba(239,108,87,0.4); color: var(--coral-neon); }
+  .chip.coral::before { background: var(--coral-neon); box-shadow: 0 0 8px var(--coral-neon); }
+  .chip.gold { background: rgba(212,165,116,0.08); border-color: rgba(212,165,116,0.4); color: var(--gold-neon); }
+  .chip.gold::before { background: var(--gold-neon); box-shadow: 0 0 8px var(--gold-neon); }
+  .chip.purple { background: rgba(139,92,246,0.08); border-color: rgba(139,92,246,0.4); color: #b8a3ff; }
+  .chip.purple::before { background: #b8a3ff; box-shadow: 0 0 8px #b8a3ff; }
 
-  .chip {
-    display: inline-block;
-    padding: 8px 22px;
-    border-radius: 30px;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 2.5px;
-    text-transform: uppercase;
-    margin-bottom: 32px;
-    background: rgba(212,165,116,0.15);
-    border: 1px solid var(--gold);
-    color: var(--gold);
-  }
-  .chip.teal { background: rgba(61,203,202,0.15); border-color: var(--teal); color: var(--teal); }
-  .chip.coral { background: rgba(239,108,87,0.18); border-color: var(--coral); color: var(--coral); }
-
+  /* ===== TYPOGRAPHY ===== */
   h1 {
     font-family: 'Inter', sans-serif;
-    font-size: clamp(48px, 7vw, 96px);
+    font-size: clamp(52px, 8vw, 112px);
     font-weight: 900;
-    line-height: 1.02;
-    letter-spacing: -2px;
-    margin-bottom: 24px;
-    max-width: 1100px;
+    line-height: 0.98;
+    letter-spacing: -3px;
+    margin-bottom: 28px;
+    max-width: 1200px;
+    background: linear-gradient(180deg, #ffffff 0%, #b8c4d1 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 80px rgba(61,203,202,0.2);
+  }
+
+  h1.glow-teal {
+    background: linear-gradient(180deg, #ffffff 0%, var(--teal-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   h2 {
-    font-size: clamp(36px, 5vw, 72px);
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(40px, 5.5vw, 80px);
     font-weight: 800;
-    line-height: 1.08;
-    letter-spacing: -1.5px;
-    margin-bottom: 24px;
-    max-width: 1100px;
+    line-height: 1.05;
+    letter-spacing: -2px;
+    margin-bottom: 28px;
+    max-width: 1200px;
+    background: linear-gradient(180deg, #ffffff 0%, #d1d9e3 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
-  h3 {
-    font-size: clamp(22px, 2.5vw, 32px);
-    font-weight: 600;
-    margin-bottom: 20px;
-    color: var(--teal);
-    letter-spacing: -0.5px;
+  h2.accent-teal {
+    background: linear-gradient(135deg, var(--teal-light) 0%, var(--teal) 50%, #ffffff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  h2.accent-coral {
+    background: linear-gradient(135deg, var(--coral-neon) 0%, var(--coral) 50%, #ffffff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  h2.accent-gold {
+    background: linear-gradient(135deg, var(--gold-neon) 0%, var(--gold) 50%, #ffffff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   p.lead {
     font-family: 'Source Serif 4', Georgia, serif;
     font-size: clamp(20px, 2.2vw, 30px);
     font-weight: 400;
-    line-height: 1.5;
+    line-height: 1.55;
     max-width: 900px;
-    margin: 0 auto 28px;
-    color: rgba(255,255,255,0.9);
+    margin: 0 auto 32px;
+    color: rgba(255,255,255,0.82);
   }
-  .bg-cream p.lead, .bg-gold p.lead { color: var(--gray-700); }
 
   blockquote {
     font-family: 'Source Serif 4', Georgia, serif;
     font-style: italic;
-    font-size: clamp(24px, 3vw, 44px);
+    font-size: clamp(28px, 3.4vw, 52px);
     line-height: 1.3;
     font-weight: 400;
-    max-width: 1100px;
+    max-width: 1200px;
     margin: 0 auto;
     position: relative;
-    padding: 0 60px;
+    padding: 0 80px;
+    color: rgba(255,255,255,0.95);
   }
   blockquote::before, blockquote::after {
     position: absolute;
-    font-size: 120px;
+    font-size: 140px;
     font-family: 'Source Serif 4', Georgia, serif;
-    color: var(--gold);
-    opacity: .5;
+    color: var(--teal);
+    opacity: .6;
     line-height: 1;
+    text-shadow: 0 0 30px rgba(61,203,202,0.5);
   }
-  blockquote::before { content: '"'; top: -20px; left: 0; }
-  blockquote::after { content: '"'; bottom: -60px; right: 0; }
+  blockquote::before { content: '"'; top: -30px; left: 0; }
+  blockquote::after { content: '"'; bottom: -80px; right: 0; }
+
+  .bg-coral blockquote::before, .bg-coral blockquote::after { color: var(--coral); text-shadow: 0 0 30px rgba(239,108,87,0.5); }
+  .bg-gold blockquote::before, .bg-gold blockquote::after { color: var(--gold); text-shadow: 0 0 30px rgba(212,165,116,0.5); }
 
   .attribution {
-    margin-top: 36px;
-    font-family: 'Inter', sans-serif;
-    font-size: 16px;
-    letter-spacing: 3px;
+    margin-top: 44px;
+    font-family: var(--mono);
+    font-size: 14px;
+    letter-spacing: 4px;
     text-transform: uppercase;
-    color: var(--gold);
-    font-weight: 600;
+    color: var(--teal);
+    font-weight: 500;
   }
+  .bg-coral .attribution { color: var(--coral-neon); }
+  .bg-gold .attribution { color: var(--gold-neon); }
 
+  /* ===== PILLAR CARDS ===== */
   .pillars {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 18px;
-    max-width: 1400px;
+    gap: 16px;
+    max-width: 1500px;
     width: 100%;
-    margin-top: 40px;
+    margin-top: 48px;
   }
   .pillar-card {
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 14px;
-    padding: 26px 18px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+    border: 1px solid rgba(61,203,202,0.2);
+    border-radius: 12px;
+    padding: 28px 20px;
     text-align: left;
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(12px);
+    position: relative;
+    overflow: hidden;
+    transition: all .3s ease;
+  }
+  .pillar-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, var(--teal-neon) 50%, transparent 100%);
+    opacity: 0.8;
   }
   .pillar-card .num {
-    font-size: 13px;
-    font-weight: 700;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
     letter-spacing: 2px;
-    color: var(--gold);
-    margin-bottom: 10px;
+    color: var(--teal);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .pillar-card .num::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--teal-neon);
+    box-shadow: 0 0 8px var(--teal-neon);
   }
   .pillar-card .title {
     font-size: 20px;
@@ -193,251 +349,520 @@
     font-family: 'Source Serif 4', Georgia, serif;
     font-size: 14px;
     line-height: 1.5;
-    color: rgba(255,255,255,0.75);
+    color: rgba(255,255,255,0.7);
     font-style: italic;
   }
 
+  /* ===== TWO COLUMN (pillar detail) ===== */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 72px;
+    max-width: 1400px;
+    width: 100%;
+    align-items: center;
+    text-align: left;
+  }
+  .two-col h2 {
+    font-size: clamp(34px, 4.5vw, 68px);
+    text-align: left;
+    margin: 0 0 24px;
+  }
+  .two-col .col-quote {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(22px, 2.4vw, 34px);
+    line-height: 1.4;
+    color: rgba(255,255,255,0.92);
+    padding: 20px 0 20px 32px;
+    border-left: 3px solid var(--teal);
+    position: relative;
+  }
+  .two-col .col-quote::before {
+    content: '';
+    position: absolute;
+    left: -3px; top: 0;
+    width: 3px; height: 40px;
+    background: var(--teal-neon);
+    box-shadow: 0 0 10px var(--teal-neon);
+  }
+  .bg-coral .two-col .col-quote { border-left-color: var(--coral); }
+  .bg-coral .two-col .col-quote::before { background: var(--coral-neon); box-shadow: 0 0 10px var(--coral-neon); }
+  .bg-gold .two-col .col-quote { border-left-color: var(--gold); }
+  .bg-gold .two-col .col-quote::before { background: var(--gold-neon); box-shadow: 0 0 10px var(--gold-neon); }
+
+  .two-col .col-body p {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(17px, 1.5vw, 21px);
+    line-height: 1.7;
+    color: rgba(255,255,255,0.9);
+    margin-bottom: 16px;
+  }
+  .two-col .col-body p strong {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    color: var(--white);
+  }
+
+  /* ===== ACTION LIST (numbered tech-style) ===== */
+  .action-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-width: 950px;
+    width: 100%;
+    margin-top: 32px;
+  }
+  .action-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 22px;
+    text-align: left;
+    padding: 20px 26px;
+    background: linear-gradient(90deg, rgba(61,203,202,0.08) 0%, rgba(255,255,255,0.02) 100%);
+    border: 1px solid rgba(61,203,202,0.25);
+    border-left: 3px solid var(--teal-neon);
+    border-radius: 8px;
+    backdrop-filter: blur(8px);
+    transition: all .3s ease;
+  }
+  .action-item:hover {
+    border-color: var(--teal);
+    box-shadow: 0 0 24px rgba(61,203,202,0.2);
+  }
+  .action-item .idx {
+    font-family: var(--mono);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--teal-neon);
+    min-width: 52px;
+    line-height: 1;
+    letter-spacing: -1px;
+  }
+  .action-item .txt {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(16px, 1.5vw, 20px);
+    line-height: 1.55;
+    color: rgba(255,255,255,0.92);
+  }
+  .action-item .txt strong {
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+  }
+
+  /* ===== TECH GRID (Tecnologia slide) ===== */
+  .tech-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    max-width: 1300px;
+    width: 100%;
+    margin-top: 36px;
+  }
+  .tech-card {
+    padding: 32px 26px;
+    background: linear-gradient(180deg, rgba(61,203,202,0.08) 0%, rgba(61,203,202,0.02) 100%);
+    border: 1px solid rgba(61,203,202,0.35);
+    border-radius: 14px;
+    text-align: left;
+    backdrop-filter: blur(12px);
+    position: relative;
+    overflow: hidden;
+  }
+  .tech-card::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: -1px; right: -1px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, var(--teal-neon) 50%, transparent 100%);
+  }
+  .tech-card .ic {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    color: var(--teal-neon);
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .tech-card .ic::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--teal-neon);
+    box-shadow: 0 0 8px var(--teal-neon);
+  }
+  .tech-card .nm {
+    font-size: 26px;
+    font-weight: 800;
+    margin-bottom: 12px;
+    letter-spacing: -0.5px;
+    color: var(--white);
+  }
+  .tech-card .ds {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 15px;
+    line-height: 1.6;
+    color: rgba(255,255,255,0.82);
+  }
+
+  /* ===== STACK SLIDE (new) ===== */
+  .stack-wrap {
+    width: 100%;
+    max-width: 1400px;
+    margin-top: 32px;
+    position: relative;
+  }
+  .stack-layers {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .stack-layer {
+    display: grid;
+    grid-template-columns: 120px 1fr 180px;
+    align-items: center;
+    gap: 24px;
+    padding: 18px 26px;
+    background: linear-gradient(90deg, rgba(61,203,202,0.1) 0%, rgba(255,255,255,0.02) 100%);
+    border: 1px solid rgba(61,203,202,0.25);
+    border-radius: 8px;
+    text-align: left;
+    backdrop-filter: blur(6px);
+  }
+  .stack-layer .lnum {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: var(--teal);
+    font-weight: 600;
+  }
+  .stack-layer .lname {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: -0.3px;
+  }
+  .stack-layer .lname span {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.55);
+    display: block;
+    margin-top: 4px;
+    letter-spacing: 0.5px;
+  }
+  .stack-layer .lstatus {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--teal-neon);
+    text-transform: uppercase;
+    font-weight: 500;
+    text-align: right;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .stack-layer .lstatus::after {
+    content: '';
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--teal-neon);
+    box-shadow: 0 0 10px var(--teal-neon);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  /* ===== BIG NUMBERS ===== */
   .big-number {
-    font-size: clamp(120px, 18vw, 260px);
-    font-weight: 900;
+    font-family: var(--mono);
+    font-size: clamp(100px, 14vw, 220px);
+    font-weight: 700;
     line-height: 0.9;
     letter-spacing: -6px;
     background: linear-gradient(180deg, var(--teal-light) 0%, var(--teal) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    margin-bottom: 30px;
+    margin-bottom: 28px;
+    text-shadow: 0 0 60px rgba(61,203,202,0.4);
   }
 
-  .two-col {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 60px;
-    max-width: 1300px;
-    width: 100%;
-    align-items: center;
-    text-align: left;
-  }
-  .two-col .col-quote {
-    font-family: 'Source Serif 4', Georgia, serif;
-    font-style: italic;
-    font-size: clamp(22px, 2.4vw, 32px);
-    line-height: 1.4;
-    color: rgba(255,255,255,0.85);
-    padding-left: 28px;
-    border-left: 4px solid var(--gold);
-  }
-  .two-col h2 { font-size: clamp(32px, 4vw, 58px); text-align: left; margin: 0 0 20px; }
-  .two-col .col-body p { font-family: 'Source Serif 4', Georgia, serif; font-size: clamp(17px, 1.5vw, 21px); line-height: 1.65; color: rgba(255,255,255,0.88); margin-bottom: 14px; }
-  .bg-cream .two-col .col-quote { color: var(--gray-700); }
-  .bg-cream .two-col .col-body p { color: var(--gray-700); }
-
-  .action-list {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    max-width: 900px;
-    width: 100%;
-    margin-top: 30px;
-  }
-  .action-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 20px;
-    text-align: left;
-    padding: 18px 24px;
-    background: rgba(255,255,255,0.06);
-    border-left: 4px solid var(--teal);
-    border-radius: 6px;
-  }
-  .action-item .idx {
-    font-size: 28px;
-    font-weight: 900;
-    color: var(--teal);
-    min-width: 44px;
-    line-height: 1;
-  }
-  .action-item .txt {
-    font-family: 'Source Serif 4', Georgia, serif;
-    font-size: clamp(16px, 1.5vw, 20px);
-    line-height: 1.5;
-    color: rgba(255,255,255,0.9);
-  }
-  .action-item .txt strong { color: var(--white); font-family: 'Inter', sans-serif; font-weight: 700; }
-
-  .tech-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
-    max-width: 1200px;
-    width: 100%;
-    margin-top: 30px;
-  }
-  .tech-card {
-    padding: 28px 22px;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(61,203,202,0.3);
-    border-radius: 14px;
-    text-align: left;
-  }
-  .tech-card .ic {
-    font-family: 'Inter', sans-serif;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    color: var(--teal);
-    margin-bottom: 14px;
-  }
-  .tech-card .nm {
-    font-size: 22px;
-    font-weight: 800;
-    margin-bottom: 10px;
-    letter-spacing: -0.5px;
-  }
-  .tech-card .ds {
-    font-family: 'Source Serif 4', Georgia, serif;
-    font-size: 15px;
-    line-height: 1.55;
-    color: rgba(255,255,255,0.78);
-  }
-
+  /* ===== CTA BOX ===== */
   .cta-box {
-    margin-top: 40px;
-    padding: 30px 40px;
-    background: rgba(0,0,0,0.25);
-    border: 1px solid var(--gold);
-    border-radius: 14px;
-    max-width: 900px;
+    margin-top: 44px;
+    padding: 32px 44px;
+    background: linear-gradient(135deg, rgba(61,203,202,0.12) 0%, rgba(11,29,74,0.6) 100%);
+    border: 1px solid rgba(61,203,202,0.4);
+    border-radius: 12px;
+    max-width: 950px;
+    backdrop-filter: blur(12px);
+    position: relative;
+    overflow: hidden;
   }
-  .cta-box .label { font-size: 12px; letter-spacing: 3px; color: var(--gold); font-weight: 700; margin-bottom: 12px; text-transform: uppercase; }
-  .cta-box .msg { font-family: 'Source Serif 4', Georgia, serif; font-size: clamp(18px, 1.8vw, 24px); line-height: 1.5; }
-
-  /* nav + counter */
-  .nav {
-    position: fixed;
-    bottom: 28px; right: 28px;
-    display: flex; gap: 10px; align-items: center;
-    z-index: 100;
+  .cta-box::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, var(--teal-neon) 50%, transparent 100%);
   }
-  .nav button {
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.2);
-    color: var(--white);
-    width: 42px; height: 42px;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 18px;
-    transition: all .2s;
-  }
-  .nav button:hover { background: var(--teal); border-color: var(--teal); color: var(--navy-dark); }
-  .counter {
-    position: fixed;
-    bottom: 34px; left: 28px;
-    font-size: 13px; letter-spacing: 2px;
-    color: rgba(255,255,255,0.5);
-    font-weight: 600;
-    z-index: 100;
-  }
-
-  .progress {
-    position: fixed;
-    top: 0; left: 0; height: 3px;
-    background: var(--teal);
-    transition: width .35s ease;
-    z-index: 100;
-  }
-
-  /* speaker notes */
-  .notes {
-    display: none;
-    position: fixed;
-    bottom: 90px; left: 28px; right: 28px;
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 20px 28px;
-    background: rgba(0,0,0,0.85);
-    border-left: 4px solid var(--coral);
-    border-radius: 8px;
-    font-family: 'Source Serif 4', Georgia, serif;
-    font-size: 15px;
-    line-height: 1.5;
-    color: var(--white);
-    z-index: 99;
-  }
-  .notes.visible { display: block; }
-  .notes .label { font-family: 'Inter', sans-serif; font-size: 11px; letter-spacing: 2px; color: var(--coral); font-weight: 700; text-transform: uppercase; margin-bottom: 8px; }
-
-  .hint {
-    position: fixed;
-    top: 28px; right: 28px;
-    font-size: 11px; letter-spacing: 2px;
-    color: rgba(255,255,255,0.4);
-    font-weight: 600;
-    z-index: 100;
+  .cta-box .label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--teal-neon);
+    font-weight: 500;
+    margin-bottom: 14px;
     text-transform: uppercase;
+    display: flex; align-items: center; gap: 10px;
   }
+  .cta-box .label::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--teal-neon);
+    box-shadow: 0 0 8px var(--teal-neon);
+  }
+  .cta-box .msg {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(18px, 1.8vw, 24px);
+    line-height: 1.55;
+    color: rgba(255,255,255,0.92);
+  }
+  .cta-box .msg a {
+    font-family: var(--mono);
+    color: var(--teal-neon);
+    text-decoration: none;
+    font-weight: 600;
+    padding: 0 4px;
+    border-bottom: 2px solid var(--teal-neon);
+    text-shadow: 0 0 12px rgba(45,232,230,0.6);
+    transition: all .2s ease;
+  }
+  .cta-box .msg a:hover { color: var(--white); border-color: var(--white); }
 
+  /* ===== LOGO / NAV ===== */
   .logo-tag {
     position: fixed;
     top: 24px; left: 28px;
     z-index: 100;
-    opacity: 0.85;
-    transition: opacity .2s;
+    opacity: 0.9;
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
   .logo-tag img {
-    height: 36px;
+    height: 32px;
     width: auto;
     display: block;
-    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
+    filter: drop-shadow(0 2px 12px rgba(61,203,202,0.4));
   }
-  .logo-tag:hover { opacity: 1; }
+  .logo-tag .mark {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: rgba(61,203,202,0.5);
+    font-weight: 500;
+    padding-left: 12px;
+    border-left: 1px solid rgba(61,203,202,0.3);
+    text-transform: uppercase;
+  }
 
   .cover-logo {
-    max-width: 320px;
-    width: 60%;
+    max-width: 340px;
+    width: 55%;
     height: auto;
-    margin: 0 auto 40px;
+    margin: 0 auto 44px;
     display: block;
-    filter: drop-shadow(0 8px 32px rgba(61,203,202,0.35));
+    filter: drop-shadow(0 8px 40px rgba(61,203,202,0.5));
+    animation: logoFloat 6s ease-in-out infinite;
+  }
+  @keyframes logoFloat {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-8px); }
   }
 
+  .nav {
+    position: fixed;
+    bottom: 24px; right: 28px;
+    display: flex; gap: 10px; align-items: center;
+    z-index: 100;
+  }
+  .nav button {
+    background: rgba(61,203,202,0.08);
+    border: 1px solid rgba(61,203,202,0.35);
+    color: var(--teal-light);
+    width: 42px; height: 42px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all .2s;
+    backdrop-filter: blur(8px);
+  }
+  .nav button:hover {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: var(--navy-dark);
+    box-shadow: 0 0 16px rgba(61,203,202,0.5);
+  }
+
+  .counter {
+    position: fixed;
+    bottom: 34px; left: 28px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: rgba(61,203,202,0.6);
+    font-weight: 500;
+    z-index: 100;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .counter::before {
+    content: 'SYS';
+    color: rgba(61,203,202,0.35);
+  }
+
+  .progress {
+    position: fixed;
+    top: 0; left: 0; height: 2px;
+    background: linear-gradient(90deg, var(--teal) 0%, var(--teal-neon) 100%);
+    box-shadow: 0 0 12px var(--teal-neon);
+    transition: width .45s ease;
+    z-index: 100;
+  }
+
+  .hint {
+    position: fixed;
+    top: 28px; right: 28px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(61,203,202,0.4);
+    font-weight: 500;
+    z-index: 100;
+    text-transform: uppercase;
+  }
+
+  /* SPEAKER NOTES */
+  .notes {
+    display: none;
+    position: fixed;
+    bottom: 90px; left: 28px; right: 28px;
+    max-width: 950px;
+    margin: 0 auto;
+    padding: 22px 30px;
+    background: rgba(3,8,20,0.92);
+    border-left: 3px solid var(--coral-neon);
+    border-radius: 8px;
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--white);
+    z-index: 99;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 -12px 60px rgba(0,0,0,0.6);
+  }
+  .notes.visible { display: block; }
+  .notes .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--coral-neon);
+    font-weight: 500;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  /* SLIDE ENTRANCE ANIMATION */
+  .slide.active h1,
+  .slide.active h2,
+  .slide.active blockquote,
+  .slide.active p.lead,
+  .slide.active .chip,
+  .slide.active .attribution,
+  .slide.active .pillars,
+  .slide.active .two-col,
+  .slide.active .action-list,
+  .slide.active .tech-grid,
+  .slide.active .stack-wrap,
+  .slide.active .cta-box,
+  .slide.active .big-number,
+  .slide.active .cover-logo {
+    animation: riseIn 0.7s cubic-bezier(.22,.61,.36,1) both;
+  }
+  .slide.active .chip { animation-delay: .05s; }
+  .slide.active h1, .slide.active h2 { animation-delay: .15s; }
+  .slide.active p.lead, .slide.active blockquote { animation-delay: .25s; }
+  .slide.active .two-col,
+  .slide.active .action-list,
+  .slide.active .tech-grid,
+  .slide.active .pillars,
+  .slide.active .stack-wrap,
+  .slide.active .cta-box,
+  .slide.active .big-number { animation-delay: .35s; }
+  .slide.active .attribution { animation-delay: .5s; }
+
+  @keyframes riseIn {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== RESPONSIVE ===== */
   @media (max-width: 900px) {
     .pillars { grid-template-columns: 1fr 1fr; }
     .tech-grid { grid-template-columns: 1fr; }
-    .two-col { grid-template-columns: 1fr; gap: 30px; }
-    blockquote { padding: 0 30px; }
+    .two-col { grid-template-columns: 1fr; gap: 36px; }
+    blockquote { padding: 0 36px; }
     .hint { display: none; }
-    .logo-tag img { height: 28px; }
+    .logo-tag img { height: 26px; }
+    .logo-tag .mark { display: none; }
+    .stack-layer { grid-template-columns: 80px 1fr 90px; gap: 14px; padding: 14px 18px; }
+    .stack-layer .lstatus { font-size: 9px; }
+    .hud-top-left, .hud-top-right, .hud-bot-left, .hud-bot-right { display: none; }
   }
 </style>
 </head>
 <body>
 
 <div class="progress" id="progress"></div>
-<div class="logo-tag"><img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69dfd39cfcac588c6b2329f9.png" alt="Visionarium"></div>
-<div class="hint">Flechas para avanzar &middot; S = notas &middot; F = pantalla completa</div>
-<div class="counter" id="counter">01 / 14</div>
+<div class="logo-tag">
+  <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69dfd39cfcac588c6b2329f9.png" alt="Visionarium">
+  <span class="mark">Fellowship // 2026</span>
+</div>
+<div class="hint">&#8592; &#8594; navegar &middot; S notas &middot; F fullscreen</div>
+<div class="counter" id="counter">01 / 15</div>
 
 <div class="deck" id="deck">
 
   <!-- 1. PORTADA -->
   <section class="slide bg-navy active" data-notes="Saludo breve. Pausa. Mirada a la sala. 'Hoy no les vengo a dar una charla motivacional. Les vengo a hacer una pregunta.' No lean el titulo; dejen que la sala lo lea.">
+    <div class="hud-top-left"><span class="hud-dot"></span> VSN // ONLINE</div>
+    <div class="hud-top-right">COHORT_01 // 2026-Q3 <span class="hud-line"></span></div>
     <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69dfd39cfcac588c6b2329f9.png" alt="Visionarium" class="cover-logo">
-    <div class="chip">Visionarium &middot; 2026</div>
-    <h1>El tamano de tu sueno</h1>
+    <div class="chip">Visionarium // Keynote v1.0</div>
+    <h1 class="glow-teal">El tamano de tu sueno</h1>
     <p class="lead">Positivismo &middot; Imparable &middot; Mentalidad de CEO &middot; Inteligencia Emocional &middot; Tecnologia</p>
-    <div class="attribution">Una charla para jovenes que no aceptan el hambre como destino</div>
+    <div class="attribution">Creadores de CEOs con tecnologia de frontera</div>
+    <div class="hud-bot-left">SYS.READY &nbsp; <span class="hud-dot"></span></div>
   </section>
 
   <!-- 2. HOOK: EL BERNABEU -->
-  <section class="slide bg-graph" data-notes="Empieza con la escena final, no con el origen. 'Imaginen un estadio con 80 mil personas gritando.' Pausa 3 segundos. Luego lean la frase. La sala ya esta enganchada.">
-    <div class="chip teal">9 de abril, 2026</div>
-    <h2>Anoche, en el Santiago Bernabeu, le marque un gol al Real Madrid en los cuartos de final de la Champions League.</h2>
+  <section class="slide bg-navy" data-notes="Empieza con la escena final, no con el origen. 'Imaginen un estadio con 80 mil personas gritando.' Pausa 3 segundos. Luego lean la frase. La sala ya esta enganchada.">
+    <div class="hud-top-left"><span class="hud-dot"></span> EVT.2026-04-09</div>
+    <div class="hud-top-right">BERNABEU // UCL_QF <span class="hud-line"></span></div>
+    <div class="chip">9 de abril, 2026</div>
+    <h2 class="accent-teal">Anoche, en el Santiago Bernabeu, le marque un gol al Real Madrid en los cuartos de final de la Champions League.</h2>
     <div class="attribution">&mdash; Luis "Lucho" Diaz</div>
   </section>
 
   <!-- 3. FLASHBACK -->
   <section class="slide bg-coral" data-notes="Baja la voz aqui. Contraste total con la slide anterior. 'Pero para entender ese gol, tenemos que volver 20 anos atras.' Pausa larga antes de leer la cita.">
+    <div class="hud-top-left"><span class="hud-dot" style="background: var(--coral-neon); box-shadow: 0 0 10px var(--coral-neon);"></span> ORIGIN.2005</div>
+    <div class="hud-top-right">LA_GUAJIRA // CO <span class="hud-line" style="background: linear-gradient(90deg, var(--coral) 0%, transparent 100%);"></span></div>
     <div class="chip coral">Barrancas, La Guajira</div>
     <blockquote>
       Mi madre me veia con los ojos llenos de lagrimas porque no sabia si habria comida para mi al dia siguiente.
@@ -445,38 +870,43 @@
     <div class="attribution">&mdash; Lucho Diaz, sobre su infancia</div>
   </section>
 
-  <!-- 4. LA FRASE ANCLA -->
+  <!-- 4. FRASE ANCLA -->
   <section class="slide bg-gold" data-notes="Esta es la frase que van a recordar toda su vida. Dejenla en pantalla. No hablen durante 5 segundos. Luego digan: 'Esta presentacion se trata de esto. Nada mas.'">
+    <div class="hud-top-left"><span class="hud-dot" style="background: var(--gold-neon); box-shadow: 0 0 10px var(--gold-neon);"></span> CORE.PRINCIPLE</div>
     <blockquote>
       El hambre no es un destino. Es una pagina en tu historia, no el final del libro.
     </blockquote>
-    <div class="attribution" style="color: var(--navy-dark);">&mdash; Luis Diaz</div>
+    <div class="attribution">&mdash; Luis Diaz</div>
   </section>
 
   <!-- 5. LOS 5 PILARES -->
-  <section class="slide bg-navy" data-notes="Transicion. 'Lucho no llego al Bernabeu por suerte. Llego por cinco cosas muy concretas. Y las cinco las pueden aprender ustedes.' Presenta los pilares rapido &mdash; vas a desarrollar cada uno.">
-    <div class="chip">La formula</div>
-    <h2>Cinco cosas que Lucho desarrollo. Cinco cosas que tu puedes desarrollar.</h2>
+  <section class="slide bg-navy" data-notes="Transicion. 'Lucho no llego al Bernabeu por suerte. Llego por cinco cosas muy concretas. Y las cinco las pueden aprender ustedes.' Presenta los pilares rapido — vas a desarrollar cada uno.">
+    <div class="hud-top-left"><span class="hud-dot"></span> FORMULA.LOADED</div>
+    <div class="hud-top-right">5 MODULES // ACTIVE <span class="hud-line"></span></div>
+    <div class="chip">La formula // 05 modulos</div>
+    <h2 class="accent-teal">Cinco cosas que Lucho desarrollo. Cinco cosas que tu puedes desarrollar.</h2>
     <div class="pillars">
-      <div class="pillar-card"><div class="num">01</div><div class="title">Positivismo</div><div class="sub">Negarse a creer que el hambre define el futuro.</div></div>
-      <div class="pillar-card"><div class="num">02</div><div class="title">Imparable</div><div class="sub">Botas rotas, kilometros bajo el sol. Entrenar igual.</div></div>
-      <div class="pillar-card"><div class="num">03</div><div class="title">Mentalidad de CEO</div><div class="sub">Pensar como dueno de tu destino, no como victima.</div></div>
-      <div class="pillar-card"><div class="num">04</div><div class="title">Inteligencia Emocional</div><div class="sub">Convertir "flaco" en combustible, no en herida.</div></div>
-      <div class="pillar-card"><div class="num">05</div><div class="title">Tecnologia</div><div class="sub">Usar las herramientas que Lucho no tuvo, que tu si.</div></div>
+      <div class="pillar-card"><div class="num">01 // POS</div><div class="title">Positivismo</div><div class="sub">Negarse a creer que el hambre define el futuro.</div></div>
+      <div class="pillar-card"><div class="num">02 // IMP</div><div class="title">Imparable</div><div class="sub">Botas rotas, kilometros bajo el sol. Entrenar igual.</div></div>
+      <div class="pillar-card"><div class="num">03 // CEO</div><div class="title">Mentalidad de CEO</div><div class="sub">Pensar como dueno de tu destino, no como victima.</div></div>
+      <div class="pillar-card"><div class="num">04 // IE</div><div class="title">Inteligencia Emocional</div><div class="sub">Convertir "flaco" en combustible, no en herida.</div></div>
+      <div class="pillar-card"><div class="num">05 // TECH</div><div class="title">Tecnologia</div><div class="sub">Usar las herramientas que Lucho no tuvo, que tu si.</div></div>
     </div>
   </section>
 
   <!-- 6. POSITIVISMO -->
-  <section class="slide bg-teal" data-notes="Positivismo no es sonreir todo el dia. Es elegir una interpretacion distinta de los mismos hechos. Los medicos dijeron 'no crecera.' Lucho dijo: 'el futbol no entiende de diagnosticos.' Pregunten a la sala: ¿quien les ha dicho que NO? ¿que dice tu cabeza cuando te lo dicen?">
-    <div class="chip teal">Pilar 01</div>
-    <h2>Positivismo</h2>
+  <section class="slide bg-teal" data-notes="Positivismo no es sonreir todo el dia. Es elegir una interpretacion distinta de los mismos hechos. Los medicos dijeron 'no crecera.' Lucho dijo: 'el futbol no entiende de diagnosticos.' Pregunta a la sala: ¿quien les ha dicho que NO? ¿que dice tu cabeza cuando te lo dicen?">
+    <div class="hud-top-left"><span class="hud-dot"></span> MODULE.01 // POS</div>
+    <div class="hud-top-right">READ.REALITY // REWRITE <span class="hud-line"></span></div>
+    <div class="chip">Pilar 01 // Positivismo</div>
+    <h2 class="accent-teal">Positivismo</h2>
     <div class="two-col">
       <div class="col-quote">
         Los medicos dijeron que quizas nunca creceria lo suficiente para ser futbolista. Pero el futbol no entiende de diagnosticos.
       </div>
       <div class="col-body">
         <p><strong>Positivismo no es ignorar la realidad.</strong> Es leer la misma realidad con otro final.</p>
-        <p>Cuando te digan "no puedes", preguntate: ¿quien lo dice? ¿con que datos? ¿y que pasa si se equivocan?</p>
+        <p>Cuando te digan "no puedes", preguntate: &iquest;quien lo dice? &iquest;con que datos? &iquest;y que pasa si se equivocan?</p>
         <p><strong>Ejercicio:</strong> la proxima vez que alguien te diga "no vas a poder", escribelo. Debajo, escribe tres razones por las que si.</p>
       </div>
     </div>
@@ -484,8 +914,10 @@
 
   <!-- 7. IMPARABLE -->
   <section class="slide bg-coral" data-notes="Imparable no es talento. Es constancia cuando nadie esta mirando. Kilometros bajo el sol, con botas rotas. Pregunta: ¿que estas dispuesto a hacer durante 5 anos sin que nadie te aplauda?">
-    <div class="chip coral">Pilar 02</div>
-    <h2>Imparable</h2>
+    <div class="hud-top-left"><span class="hud-dot" style="background: var(--coral-neon); box-shadow: 0 0 10px var(--coral-neon);"></span> MODULE.02 // IMP</div>
+    <div class="hud-top-right">PROTOCOL // DONT_STOP <span class="hud-line" style="background: linear-gradient(90deg, var(--coral) 0%, transparent 100%);"></span></div>
+    <div class="chip coral">Pilar 02 // Imparable</div>
+    <h2 class="accent-coral">Imparable</h2>
     <div class="two-col">
       <div class="col-quote">
         A los 15 anos todavia caminaba kilometros bajo el sol ardiente para entrenar con botas rotas y una pelota que apenas inflaba.
@@ -493,29 +925,33 @@
       <div class="col-body">
         <p>Ser imparable no es correr mas rapido. Es <strong>no parar</strong> cuando los demas paran.</p>
         <p>Lucho entreno durante anos sin camaras, sin patrocinadores, sin nadie aplaudiendo. Esa es la verdadera formacion.</p>
-        <p><strong>Tu pregunta:</strong> ¿que harias cada dia durante cinco anos aunque nadie te aplauda?</p>
+        <p><strong>Tu pregunta:</strong> &iquest;que harias cada dia durante cinco anos aunque nadie te aplauda?</p>
       </div>
     </div>
   </section>
 
   <!-- 8. MENTALIDAD DE CEO -->
-  <section class="slide bg-navy" data-notes="CEO no es tener una empresa. Es pensar como duenno de tu vida. Lucho no se pregunto '¿quien me va a ayudar?' Se pregunto '¿que depende de mi?' Introducir las 3 preguntas del CEO.">
-    <div class="chip">Pilar 03</div>
-    <h2>Mentalidad de CEO</h2>
+  <section class="slide bg-navy" data-notes="CEO no es tener una empresa. Es pensar como dueno de tu vida. Lucho no se pregunto '¿quien me va a ayudar?' Se pregunto '¿que depende de mi?' Introduce las 3 preguntas del CEO.">
+    <div class="hud-top-left"><span class="hud-dot"></span> MODULE.03 // CEO</div>
+    <div class="hud-top-right">OPERATING_SYSTEM // OWNER <span class="hud-line"></span></div>
+    <div class="chip">Pilar 03 // Mentalidad de CEO</div>
+    <h2 class="accent-teal">Mentalidad de CEO</h2>
     <p class="lead">"La terquedad de un nino que se nego a creer que el hambre definia su futuro."</p>
     <div class="action-list">
-      <div class="action-item"><div class="idx">01</div><div class="txt"><strong>Piensa en activos, no en excusas.</strong> Tu tiempo, tu enfoque, tus habilidades &mdash; son tu capital. ¿Lo estas invirtiendo o lo estas gastando?</div></div>
-      <div class="action-item"><div class="idx">02</div><div class="txt"><strong>Toma decisiones con datos, no con miedo.</strong> Un CEO no pregunta "¿y si sale mal?" &mdash; pregunta "¿cual es el peor escenario y puedo vivir con el?"</div></div>
+      <div class="action-item"><div class="idx">01</div><div class="txt"><strong>Piensa en activos, no en excusas.</strong> Tu tiempo, tu enfoque, tus habilidades &mdash; son tu capital. &iquest;Lo estas invirtiendo o lo estas gastando?</div></div>
+      <div class="action-item"><div class="idx">02</div><div class="txt"><strong>Toma decisiones con datos, no con miedo.</strong> Un CEO no pregunta "&iquest;y si sale mal?" &mdash; pregunta "&iquest;cual es el peor escenario y puedo vivir con el?"</div></div>
       <div class="action-item"><div class="idx">03</div><div class="txt"><strong>Responsabilidad total.</strong> Nadie viene a salvarte. Ese es el dia que empiezas a ganar.</div></div>
     </div>
   </section>
 
   <!-- 9. INTELIGENCIA EMOCIONAL -->
-  <section class="slide bg-graph" data-notes="Aqui bajen el tono. Este es el pilar mas humano. A Lucho lo llamaban 'flaco' &mdash; y eso duele. Pero el uso el dolor como combustible, no como identidad. Pregunta a la sala: ¿cual es tu 'flaco'? ¿que te dicen que tu conviertes en motor?">
-    <div class="chip coral">Pilar 04</div>
+  <section class="slide bg-purple" data-notes="Aqui bajen el tono. Este es el pilar mas humano. A Lucho lo llamaban 'flaco' — y eso duele. Pero el uso el dolor como combustible, no como identidad. Pregunta a la sala: ¿cual es tu 'flaco'? ¿que te dicen que tu conviertes en motor?">
+    <div class="hud-top-left"><span class="hud-dot" style="background: #b8a3ff; box-shadow: 0 0 10px #b8a3ff;"></span> MODULE.04 // IE</div>
+    <div class="hud-top-right">EMOTION // DATA_STREAM <span class="hud-line" style="background: linear-gradient(90deg, #b8a3ff 0%, transparent 100%);"></span></div>
+    <div class="chip purple">Pilar 04 // Inteligencia Emocional</div>
     <h2>Inteligencia Emocional</h2>
     <div class="two-col">
-      <div class="col-quote">
+      <div class="col-quote" style="border-left-color: #8b5cf6;">
         Mis companeros me llamaban "flaco". No era un apodo carinoso. Era un recordatorio constante de lo que me faltaba.
       </div>
       <div class="col-body">
@@ -527,70 +963,100 @@
   </section>
 
   <!-- 10. TECNOLOGIA -->
-  <section class="slide bg-teal" data-notes="Transicion fuerte. 'Lucho tenia botas rotas. Tu tienes herramientas que en 2005 ningun joven de La Guajira tenia.' Presenta las tres herramientas. No para presumir tecnologia &mdash; para demostrar que las excusas de hoy son mas dificiles de defender.">
-    <div class="chip teal">Pilar 05</div>
-    <h2>Tecnologia</h2>
-    <p class="lead" style="max-width: 1000px;">Lucho tenia una pelota que apenas inflaba. Tu tienes herramientas que ni los millonarios tenian hace 10 anos.</p>
+  <section class="slide bg-teal" data-notes="Transicion fuerte. 'Lucho tenia botas rotas. Tu tienes herramientas que en 2005 ningun joven de La Guajira tenia.' Presenta las tres herramientas. No para presumir tecnologia — para demostrar que las excusas de hoy son mas dificiles de defender.">
+    <div class="hud-top-left"><span class="hud-dot"></span> MODULE.05 // TECH</div>
+    <div class="hud-top-right">LEVERAGE // UNLOCKED <span class="hud-line"></span></div>
+    <div class="chip">Pilar 05 // Tecnologia</div>
+    <h2 class="accent-teal">Tecnologia</h2>
+    <p class="lead">Lucho tenia una pelota que apenas inflaba. Tu tienes herramientas que ni los millonarios tenian hace 10 anos.</p>
     <div class="tech-grid">
       <div class="tech-card">
-        <div class="ic">Acceso</div>
+        <div class="ic">01 &middot; ACCESO</div>
         <div class="nm">Internet + IA</div>
         <div class="ds">Todo lo que se sabe en el mundo, gratis, en tu bolsillo. Lo unico que falta es la decision de usarlo.</div>
       </div>
       <div class="tech-card">
-        <div class="ic">Mentor</div>
+        <div class="ic">02 &middot; MENTOR</div>
         <div class="nm">Lina (IA bilingue)</div>
-        <div class="ds">Un mentor personal 24/7 en espanol e ingles. Te ayuda a estudiar, a preparar entrevistas, a pensar. Esto no existia.</div>
+        <div class="ds">Mentor personal 24/7 en espanol e ingles. Te ayuda a estudiar, a preparar entrevistas, a pensar. Esto no existia.</div>
       </div>
       <div class="tech-card">
-        <div class="ic">Plataforma</div>
+        <div class="ic">03 &middot; PLATAFORMA</div>
         <div class="nm">Visionarium</div>
-        <div class="ds">Una comunidad global, gratis, para jovenes de 16 a 22. Mentoria, retos reales, acceso a patrocinadores.</div>
+        <div class="ds">Comunidad global, gratis, para jovenes de 16 a 22. Mentoria, retos reales, acceso a patrocinadores.</div>
       </div>
     </div>
   </section>
 
-  <!-- 11. LA PREGUNTA -->
+  <!-- 11. STACK / FABRICA DE CEOs — NEW -->
+  <section class="slide bg-navy" data-notes="Este es el slide que demuestra que no somos charla. Visionarium es una fabrica de CEOs con tecnologia real: 8 capas, todas activas. Lee cada capa con ritmo. No leas nombres en ingles — usa el nombre en espanol.">
+    <div class="hud-top-left"><span class="hud-dot"></span> STACK.VSN // v1.0</div>
+    <div class="hud-top-right">8 LAYERS // ALL_SYSTEMS_ACTIVE <span class="hud-line"></span></div>
+    <div class="chip">Infraestructura // Fabrica de CEOs</div>
+    <h2 class="accent-teal">No somos una charla. Somos una plataforma.</h2>
+    <p class="lead">Ocho capas de tecnologia disenadas para producir lideres globales bilingues.</p>
+    <div class="stack-wrap">
+      <div class="stack-layers">
+        <div class="stack-layer"><div class="lnum">LAYER_01</div><div class="lname">Identidad<span>Perfil digital portable del fellow</span></div><div class="lstatus">Active</div></div>
+        <div class="stack-layer"><div class="lnum">LAYER_02</div><div class="lname">Aprendizaje<span>Curriculo bilingue entregado a escala</span></div><div class="lstatus">Active</div></div>
+        <div class="stack-layer"><div class="lnum">LAYER_03</div><div class="lname">Mentor IA &middot; Lina<span>Voz + chat 24/7 en ES/EN</span></div><div class="lstatus">Active</div></div>
+        <div class="stack-layer"><div class="lnum">LAYER_04</div><div class="lname">Conexion Humana<span>Mentoria 1:1, foros, cohorte</span></div><div class="lstatus">Active</div></div>
+        <div class="stack-layer"><div class="lnum">LAYER_05</div><div class="lname">Ejecucion Real<span>Proyectos con briefs de patrocinadores</span></div><div class="lstatus">Active</div></div>
+        <div class="stack-layer"><div class="lnum">LAYER_06</div><div class="lname">Marketplace<span>Internships, becas, startup slots</span></div><div class="lstatus">Active</div></div>
+        <div class="stack-layer"><div class="lnum">LAYER_07</div><div class="lname">Credenciales<span>Reportes de impacto + certificaciones</span></div><div class="lstatus">Active</div></div>
+        <div class="stack-layer"><div class="lnum">LAYER_08</div><div class="lname">Operador<span>CRM, analytics, admisiones</span></div><div class="lstatus">Active</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12. LA PREGUNTA -->
   <section class="slide bg-coral" data-notes="Pausa larga antes de esta slide. Mira a la sala. Lee la pregunta lento. NO DES LA RESPUESTA. Deja que se incomoden. 30 segundos de silencio valen mas que 30 minutos de palabras.">
+    <div class="hud-top-left"><span class="hud-dot" style="background: var(--coral-neon); box-shadow: 0 0 10px var(--coral-neon);"></span> PROMPT // USER_INPUT</div>
+    <div class="hud-top-right">AWAITING_RESPONSE <span class="hud-line" style="background: linear-gradient(90deg, var(--coral) 0%, transparent 100%);"></span></div>
     <div class="chip coral">La pregunta</div>
-    <h1>¿De que tamano es tu sueno?</h1>
+    <h1 class="glow-teal">&iquest;De que tamano es tu sueno?</h1>
     <p class="lead">No el que te dijeron que era "realista". El que te da miedo decir en voz alta.</p>
   </section>
 
-  <!-- 12. LLAMADO A LA ACCION -->
+  <!-- 13. LLAMADO A LA ACCION -->
   <section class="slide bg-navy" data-notes="Ahora el cierre practico. Tres pasos concretos que pueden dar manana. No vaguedades. Cosas que caben en un mensaje de WhatsApp.">
-    <div class="chip teal">Tres pasos, esta semana</div>
-    <h2>No salgas de aqui con ganas. Sal con un plan.</h2>
+    <div class="hud-top-left"><span class="hud-dot"></span> EXEC.THIS_WEEK</div>
+    <div class="hud-top-right">3 STEPS // DEPLOY <span class="hud-line"></span></div>
+    <div class="chip">Tres pasos, esta semana</div>
+    <h2 class="accent-teal">No salgas de aqui con ganas. Sal con un plan.</h2>
     <div class="action-list">
       <div class="action-item"><div class="idx">01</div><div class="txt"><strong>Escribe tu sueno.</strong> El grande. El que te da verguenza. Ponlo en papel hoy, antes de dormir. Lo que no se escribe, no existe.</div></div>
-      <div class="action-item"><div class="idx">02</div><div class="txt"><strong>Identifica tu "flaco".</strong> ¿Que te dicen que te duele? Escribelo. Debajo, escribe: "esto es mi combustible, no mi identidad."</div></div>
+      <div class="action-item"><div class="idx">02</div><div class="txt"><strong>Identifica tu "flaco".</strong> &iquest;Que te dicen que te duele? Escribelo. Debajo, escribe: "esto es mi combustible, no mi identidad."</div></div>
       <div class="action-item"><div class="idx">03</div><div class="txt"><strong>Aplica a Visionarium.</strong> Comunidad abierta, gratis, ahora. Fellowship con 40 becas completas en septiembre. Tu decides si entras.</div></div>
     </div>
   </section>
 
-  <!-- 13. VISIONARIUM CTA -->
-  <section class="slide bg-graph" data-notes="Enfasis. Esto no es una ONG mas. Es una comunidad bilingue con tecnologia de verdad. Miami como puerta de entrada. Lo que le faltaba a Lucho: una plataforma. Ahora existe.">
-    <div class="chip">Visionarium</div>
-    <h2>Del talento latinoamericano al liderazgo global.</h2>
+  <!-- 14. VISIONARIUM CTA -->
+  <section class="slide bg-navy" data-notes="Enfasis. Esto no es una ONG mas. Es una comunidad bilingue con tecnologia de verdad. Miami como puerta de entrada. Lo que le faltaba a Lucho: una plataforma. Ahora existe.">
+    <div class="hud-top-left"><span class="hud-dot"></span> VSN.FELLOWSHIP</div>
+    <div class="hud-top-right">APPLICATIONS_OPEN // Q3_2026 <span class="hud-line"></span></div>
+    <div class="chip">Visionarium // Cohort 01</div>
+    <h2 class="accent-teal">Del talento latinoamericano al liderazgo global.</h2>
     <p class="lead">Comunidad abierta, gratis, de 16 a 22 anos. Fellowship selectivo de 9 meses, 40 becas completas al ano, 100% patrocinado.</p>
     <div class="cta-box">
       <div class="label">Proximo paso</div>
-      <div class="msg">Entra a <a href="https://www.visionarium.app" target="_blank" rel="noopener" style="color: var(--teal); text-decoration: none; font-weight: 700; border-bottom: 2px solid var(--teal);">https://www.visionarium.app</a> y registrate en la comunidad abierta. Las aplicaciones al Fellowship abren en Q3 2026.</div>
+      <div class="msg">Entra a <a href="https://www.visionarium.app" target="_blank" rel="noopener">https://www.visionarium.app</a> y registrate en la comunidad abierta. Las aplicaciones al Fellowship abren en Q3 2026.</div>
     </div>
   </section>
 
-  <!-- 14. CIERRE -->
+  <!-- 15. CIERRE -->
   <section class="slide bg-gold" data-notes="El cierre. No agreguen nada despues de esta frase. Dejenla. Salgan del escenario en silencio. Que la frase quede en el aire.">
+    <div class="hud-top-left"><span class="hud-dot" style="background: var(--gold-neon); box-shadow: 0 0 10px var(--gold-neon);"></span> END.OF.TRANSMISSION</div>
     <blockquote>
       El tamano de tu sueno no tiene nada que ver con el tamano de tu estomago.
     </blockquote>
-    <div class="attribution" style="margin-top: 80px;">&mdash; Luis Diaz, Barrancas &rarr; Bernabeu</div>
+    <div class="attribution" style="margin-top: 80px;">&mdash; Luis Diaz &nbsp;&middot;&nbsp; Barrancas &rarr; Bernabeu</div>
   </section>
 
 </div>
 
 <div class="notes" id="notes">
-  <div class="label">Notas del orador</div>
+  <div class="label">&gt; notas_del_orador</div>
   <div id="notes-text"></div>
 </div>
 
