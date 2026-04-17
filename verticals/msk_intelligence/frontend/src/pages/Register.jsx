@@ -44,10 +44,10 @@ export default function Register({ onLogin }) {
     <div className="min-h-screen bg-dark-950 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-5 mb-6">
-            <img src={mskLogo} alt="Digit2AI" className="h-24 w-auto object-contain drop-shadow-2xl" />
-            <div className="text-left ml-1">
-              <h1 className="text-2xl font-bold text-white">ImagingMind</h1>
+          <Link to="/" className="inline-flex flex-col items-center mb-6">
+            <img src={mskLogo} alt="ImagingMind" className="h-44 w-auto object-contain drop-shadow-2xl" />
+            <div className="text-center -mt-4">
+              <h1 className="text-3xl font-bold text-white">ImagingMind</h1>
               <p className="text-sm text-msk-400">AI Diagnostics Platform</p>
             </div>
           </Link>
