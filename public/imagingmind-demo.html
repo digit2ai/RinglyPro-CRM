@@ -1004,21 +1004,25 @@
   }
 
   // ============ AUDIO PLAYBACK ============
-  const ttsAudio = new Audio();
-  ttsAudio.volume = 1.0;
+  // CRITICAL FOR MOBILE: Single reusable Audio element.
+  // Mobile browsers only allow audio from elements unlocked by user gesture.
+  // Creating new Audio() per slide breaks this. Reusing one element works.
+  // NEVER call removeAttribute('src') or load() without src — this re-locks on iOS.
+  const linaAudio = new Audio();
+  linaAudio.volume = 1.0;
   let autoAdvanceTimer = null;
   let narrateOnEnd = null;
   let autoPlaying = false;
-  let narrationId = 0; // Unique ID per narration to prevent stale callbacks
+  let narrationId = 0;
 
-  ttsAudio.addEventListener('play', () => { narrationWave.classList.add('active'); });
-  ttsAudio.addEventListener('ended', () => {
+  linaAudio.addEventListener('play', () => { narrationWave.classList.add('active'); });
+  linaAudio.addEventListener('ended', () => {
     narrationWave.classList.remove('active');
     if (narrateOnEnd) { const cb = narrateOnEnd; narrateOnEnd = null; cb(); }
   });
-  ttsAudio.addEventListener('error', (e) => {
-    console.warn('[Audio] Error:', e.type, ttsAudio.src);
+  linaAudio.addEventListener('error', () => {
     narrationWave.classList.remove('active');
+    console.warn('[Audio] Error on:', linaAudio.src?.substring(0, 60));
     if (narrateOnEnd) { const cb = narrateOnEnd; narrateOnEnd = null; autoAdvanceTimer = setTimeout(cb, 3000); }
   });
 
@@ -1032,54 +1036,50 @@
   }
 
   function cancelNarration() {
-    narrationId++; // Invalidate any in-flight async narration
+    narrationId++;
     if (autoAdvanceTimer) { clearTimeout(autoAdvanceTimer); autoAdvanceTimer = null; }
     narrateOnEnd = null;
     if (window.speechSynthesis) speechSynthesis.cancel();
-    ttsAudio.pause();
-    ttsAudio.removeAttribute('src');
-    ttsAudio.load();
+    // MOBILE-SAFE: just pause, do NOT remove src or call load()
+    linaAudio.pause();
     narrationWave.classList.remove('active');
-  }
-
-  function playAudioUrl(url, slideIndex, onEnd) {
-    narrateOnEnd = () => { autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, 2000); };
-    ttsAudio.src = url;
-    ttsAudio.load();
-    ttsAudio.play().then(() => {
-      console.log('[Lina] Playing slide', slideIndex + 1, currentLang);
-    }).catch((err) => {
-      console.warn('[Lina] Play failed slide', slideIndex + 1, err.message);
-      narrateOnEnd = null;
-      fallbackSpeech(slideIndex, onEnd);
-    });
   }
 
   function narrateSlide(slideIndex, onEnd) {
     cancelNarration();
-    const myId = narrationId; // Capture current narration ID
-
-    // Check if audio is already cached (instant play)
+    const myId = narrationId;
     const cacheKey = `${slideIndex}:${currentLang}`;
+
+    // If audio URL is already cached, play immediately
     if (audioCache[cacheKey]) {
-      playAudioUrl(audioCache[cacheKey], slideIndex, onEnd);
+      narrateOnEnd = () => { autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, 2000); };
+      linaAudio.src = audioCache[cacheKey];
+      linaAudio.play().then(() => {
+        console.log('[Lina] Playing slide', slideIndex + 1, '(cached)');
+      }).catch(() => {
+        narrateOnEnd = null;
+        fallbackSpeech(slideIndex, onEnd);
+      });
       return;
     }
 
-    // Generate audio async, but guard against stale callbacks
+    // Generate audio async, guard against stale callbacks
     generateSlideAudio(slideIndex).then(audioUrl => {
-      // If narration was cancelled while we waited, abort
-      if (narrationId !== myId || !autoPlaying) {
-        console.log('[TTS] Narration cancelled during generation for slide', slideIndex + 1);
-        return;
-      }
+      if (narrationId !== myId) return; // Cancelled
       if (audioUrl) {
-        playAudioUrl(audioUrl, slideIndex, onEnd);
+        narrateOnEnd = () => { autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, 2000); };
+        linaAudio.src = audioUrl;
+        linaAudio.play().then(() => {
+          console.log('[Lina] Playing slide', slideIndex + 1, '(generated)');
+        }).catch(() => {
+          narrateOnEnd = null;
+          fallbackSpeech(slideIndex, onEnd);
+        });
       } else {
         fallbackSpeech(slideIndex, onEnd);
       }
     }).catch(() => {
-      if (narrationId !== myId || !autoPlaying) return;
+      if (narrationId !== myId) return;
       fallbackSpeech(slideIndex, onEnd);
     });
   }
@@ -1122,7 +1122,6 @@
     autoPlaying = true;
     btnPlayPause.innerHTML = '&#10074;&#10074;';
     recDot.classList.add('active');
-    // Prefetch all slides audio immediately
     prefetchAudio(0);
     autoNarrateCurrent();
   }
@@ -1165,7 +1164,7 @@
     else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); manualNav(idx - 1); }
     else if (e.key === 'Home') manualNav(0);
     else if (e.key === 'End') manualNav(TOTAL - 1);
-    else if (e.key.toLowerCase() === 'l') { langToggle.click(); } // L = toggle language
+    else if (e.key.toLowerCase() === 'l') { langToggle.click(); }
     else if (e.key.toLowerCase() === 'f') {
       if (!document.fullscreenElement) document.documentElement.requestFullscreen();
       else document.exitFullscreen();
@@ -1186,37 +1185,30 @@
     }
   }, { passive: true });
 
-  // ============ PRE-PLAY ============
-  // Mobile browsers ONLY allow audio.play() inside a direct user gesture handler.
-  // The key insight: we must call ttsAudio.play() INSIDE the click handler,
-  // not after an async fetch. Once unlocked, the same Audio element stays unlocked.
-  let audioUnlocked = false;
-
-  preplayBtn.addEventListener('click', async () => {
+  // ============ PRE-PLAY (MOBILE-SAFE) ============
+  // Uses exact same pattern as Visionarium game presentation which works on iOS/Android.
+  // Key rules: (1) play() in direct click handler, (2) reuse same Audio element,
+  // (3) never removeAttribute('src') or load() without src.
+  preplayBtn.addEventListener('click', function handlePlay() {
     preplay.style.display = 'none';
     show(0);
 
-    // Step 1: Unlock the audio element with silent MP3 (MUST be synchronous play in gesture)
-    try {
-      ttsAudio.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7v////////////////////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==';
-      ttsAudio.load();
-      await ttsAudio.play();
-      ttsAudio.pause();
-      ttsAudio.currentTime = 0;
-      audioUnlocked = true;
-      console.log('[Mobile] Audio element unlocked');
-    } catch (e) {
-      console.warn('[Mobile] Audio unlock failed:', e.message);
-    }
+    // Unlock the single linaAudio element in the direct click handler.
+    // Mobile browsers require play() to be called within user gesture.
+    // We fetch slide 1 audio first if available, otherwise use a silent MP3.
+    const cacheKey = `0:${currentLang}`;
+    const firstSrc = audioCache[cacheKey] || null;
 
-    // Step 2: Try to pre-fetch slide 1 audio RIGHT NOW while still in gesture context
-    // Then play it immediately if available
-    prefetchAudio(0);
-
-    try {
-      const slide1Url = await generateSlideAudio(0);
-      if (slide1Url && audioUnlocked) {
-        // Play slide 1 audio immediately — still within gesture promise chain
+    if (firstSrc) {
+      // Slide 1 audio already cached from prefetch — play it directly
+      linaAudio.src = firstSrc;
+      linaAudio.play().then(() => {
+        console.log('[Mobile] Audio unlocked + slide 1 playing');
+        autoPlaying = true;
+        btnPlayPause.innerHTML = '&#10074;&#10074;';
+        recDot.classList.add('active');
+        prefetchAudio(1);
+        // Set up the onEnd to advance to slide 2
         narrateOnEnd = () => {
           autoAdvanceTimer = setTimeout(() => {
             if (!autoPlaying) return;
@@ -1224,22 +1216,27 @@
             else pauseAutoPlay();
           }, 2000);
         };
-        ttsAudio.src = slide1Url;
-        ttsAudio.load();
-        await ttsAudio.play();
-        console.log('[Lina] Playing slide 1 (from preplay gesture)');
-        autoPlaying = true;
-        btnPlayPause.innerHTML = '&#10074;&#10074;';
-        recDot.classList.add('active');
-        narrationWave.classList.add('active');
-        return; // Audio ended event will trigger advance to slide 2
-      }
-    } catch (e) {
-      console.warn('[Mobile] Slide 1 direct play failed:', e.message);
+      }).catch(() => {
+        console.warn('[Mobile] Direct slide 1 play failed, using startAutoPlay');
+        startAutoPlay();
+      });
+    } else {
+      // No cached audio yet — unlock with silent MP3, then let autoplay fetch + play
+      linaAudio.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7v////////////////////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==';
+      linaAudio.play().then(() => {
+        // Audio context unlocked — pause and let autoplay engine take over
+        linaAudio.pause();
+        linaAudio.currentTime = 0;
+        console.log('[Mobile] Audio unlocked with silent MP3');
+        startAutoPlay();
+      }).catch(() => {
+        console.warn('[Mobile] Audio unlock failed, trying autoplay anyway');
+        startAutoPlay();
+      });
     }
 
-    // Fallback: start autoplay normally (audio element is at least unlocked now)
-    startAutoPlay();
+    // Start prefetching all audio in background
+    prefetchAudio(0);
   });
 
   // Load Web Speech voices
