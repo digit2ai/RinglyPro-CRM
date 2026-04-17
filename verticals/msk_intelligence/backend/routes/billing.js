@@ -4,14 +4,23 @@ const express = require('express');
 const router = express.Router();
 const { sequelize } = require('../middleware/auth');
 
-// Pricing tiers
+// Pricing — $99/mo base + metered per-image
+const PLATFORM_BASE = { name: 'ImagingMind Platform', cents: 9900, billing: 'monthly', description: 'Full platform access — all 6 modalities, AI Copilot, Lina, portal, messaging, billing tools' };
+
+const PER_STUDY_CENTS = {
+  'X-Ray':       5,   // $0.05
+  'CT':          43,  // $0.43
+  'MRI':         43,  // $0.43
+  'Mammography': 10,  // $0.10
+  'DEXA':        5,   // $0.05
+  'Dental':      5,   // $0.05
+  'Ultrasound':  10,  // $0.10
+  'PET':         43   // $0.43
+};
+
+// Legacy tiers kept for backward compatibility
 const PRICING_TIERS = {
-  imaging_review: { name: 'Imaging Review', minCents: 29900, maxCents: 49900, description: 'Upload existing imaging → specialist report within 24-48h' },
-  full_diagnostic: { name: 'Full Diagnostic', minCents: 79900, maxCents: 149900, description: 'Voice intake → imaging coordination → full report → video explanation' },
-  elite_concierge: { name: 'Elite Concierge', minCents: 299900, maxCents: 499900, description: 'Unlimited consultations, priority queue, direct specialist line, quarterly assessments', billing: 'monthly' },
-  team_basic: { name: 'Team Basic', minCents: 999900, maxCents: 1999900, description: 'Sports team bulk pricing, team dashboard', billing: 'monthly' },
-  team_premium: { name: 'Team Premium', minCents: 2999900, maxCents: 4999900, description: 'Full team coverage with seasonal screening', billing: 'monthly' },
-  clinic_partner: { name: 'Clinic Partner', minCents: 499900, maxCents: 999900, description: 'White-label diagnostic reports, referral partnerships', billing: 'monthly' }
+  platform: { name: PLATFORM_BASE.name, minCents: PLATFORM_BASE.cents, maxCents: PLATFORM_BASE.cents, description: PLATFORM_BASE.description, billing: 'monthly' }
 };
 
 // GET /api/v1/billing/pricing
