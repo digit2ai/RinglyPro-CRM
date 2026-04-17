@@ -967,6 +967,23 @@
   // ============ ELEVENLABS TTS (Lina voice) ============
   let audioCache = {}; // slideIndex:lang -> audioUrl
 
+  // CRITICAL: Start generating slide 1 audio IMMEDIATELY on page load.
+  // By the time user taps play (~2-5 seconds), the audio URL will be cached.
+  // This is what makes Mobile Safari work — we need a REAL HTTP URL in the
+  // click handler, not a data: URI. Safari won't unlock audio with data URIs.
+  (function preloadSlide1() {
+    // Small delay to let geolocation detection set currentLang first
+    setTimeout(() => {
+      console.log('[Preload] Generating slide 1 audio (' + currentLang + ')...');
+      generateSlideAudio(0).then(url => {
+        if (url) console.log('[Preload] Slide 1 audio ready:', url.substring(0, 50));
+        else console.warn('[Preload] Slide 1 audio generation returned null');
+        // Also prefetch slides 2-4
+        for (let i = 1; i <= 4; i++) generateSlideAudio(i).catch(() => {});
+      }).catch(err => console.warn('[Preload] Slide 1 failed:', err.message));
+    }, 1500);
+  })();
+
   async function generateSlideAudio(slideIndex) {
     const cacheKey = `${slideIndex}:${currentLang}`;
     if (audioCache[cacheKey]) return audioCache[cacheKey];
@@ -1054,6 +1071,7 @@
     if (audioCache[cacheKey]) {
       narrateOnEnd = () => { autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, 2000); };
       linaAudio.src = audioCache[cacheKey];
+      linaAudio.load(); // Safari needs load() when src changes
       linaAudio.play().then(() => {
         console.log('[Lina] Playing slide', slideIndex + 1, '(cached)');
       }).catch(() => {
@@ -1069,6 +1087,7 @@
       if (audioUrl) {
         narrateOnEnd = () => { autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, 2000); };
         linaAudio.src = audioUrl;
+        linaAudio.load(); // Safari needs load() when src changes
         linaAudio.play().then(() => {
           console.log('[Lina] Playing slide', slideIndex + 1, '(generated)');
         }).catch(() => {
@@ -1185,57 +1204,57 @@
     }
   }, { passive: true });
 
-  // ============ PRE-PLAY (MOBILE-SAFE) ============
-  // Uses exact same pattern as Visionarium game presentation which works on iOS/Android.
-  // Key rules: (1) play() in direct click handler, (2) reuse same Audio element,
-  // (3) never removeAttribute('src') or load() without src.
+  // ============ PRE-PLAY (MOBILE SAFARI SAFE) ============
+  // Mirrors EXACT Visionarium pattern that works on iOS Safari:
+  // 1. In click handler, set linaAudio.src to a REAL HTTP URL (not data: URI)
+  // 2. Call linaAudio.load() then linaAudio.play()
+  // 3. On success: pause, reset, let autoplay engine take over
+  // Safari does NOT unlock audio with data: URIs — must be a real URL.
+  // Slide 1 audio is pre-generated on page load so it's cached by tap time.
   preplayBtn.addEventListener('click', function handlePlay() {
     preplay.style.display = 'none';
     show(0);
 
-    // Unlock the single linaAudio element in the direct click handler.
-    // Mobile browsers require play() to be called within user gesture.
-    // We fetch slide 1 audio first if available, otherwise use a silent MP3.
-    const cacheKey = `0:${currentLang}`;
-    const firstSrc = audioCache[cacheKey] || null;
+    // Get the pre-generated slide 1 audio URL (cached from page load preload)
+    const firstSrc = audioCache[`0:${currentLang}`] || null;
 
     if (firstSrc) {
-      // Slide 1 audio already cached from prefetch — play it directly
+      // REAL HTTP URL available — this is the Safari-safe path
+      // Exact Visionarium pattern: src -> load -> play -> pause -> startAutoPlay
       linaAudio.src = firstSrc;
+      linaAudio.load();
       linaAudio.play().then(() => {
-        console.log('[Mobile] Audio unlocked + slide 1 playing');
-        autoPlaying = true;
-        btnPlayPause.innerHTML = '&#10074;&#10074;';
-        recDot.classList.add('active');
-        prefetchAudio(1);
-        // Set up the onEnd to advance to slide 2
-        narrateOnEnd = () => {
-          autoAdvanceTimer = setTimeout(() => {
-            if (!autoPlaying) return;
-            if (idx < TOTAL - 1) { show(idx + 1); autoNarrateCurrent(); }
-            else pauseAutoPlay();
-          }, 2000);
-        };
+        // Audio context unlocked with real URL — pause and let autoplay take over
+        linaAudio.pause();
+        linaAudio.currentTime = 0;
+        console.log('[Safari] Audio unlocked with real slide 1 URL');
+        startAutoPlay();
       }).catch(() => {
-        console.warn('[Mobile] Direct slide 1 play failed, using startAutoPlay');
+        console.warn('[Safari] Real URL play failed, starting autoplay anyway');
         startAutoPlay();
       });
     } else {
-      // No cached audio yet — unlock with silent MP3, then let autoplay fetch + play
-      linaAudio.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7v////////////////////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==';
-      linaAudio.play().then(() => {
-        // Audio context unlocked — pause and let autoplay engine take over
-        linaAudio.pause();
-        linaAudio.currentTime = 0;
-        console.log('[Mobile] Audio unlocked with silent MP3');
-        startAutoPlay();
-      }).catch(() => {
-        console.warn('[Mobile] Audio unlock failed, trying autoplay anyway');
-        startAutoPlay();
-      });
+      // Slide 1 audio not ready yet (TTS still generating)
+      // Try to generate it now and play once ready
+      console.warn('[Safari] Slide 1 audio not cached yet, generating now...');
+      generateSlideAudio(0).then(url => {
+        if (url) {
+          linaAudio.src = url;
+          linaAudio.load();
+          linaAudio.play().then(() => {
+            linaAudio.pause();
+            linaAudio.currentTime = 0;
+            console.log('[Safari] Audio unlocked (late generation)');
+            startAutoPlay();
+          }).catch(() => startAutoPlay());
+        } else {
+          // TTS completely failed — autoplay with Web Speech fallback
+          startAutoPlay();
+        }
+      }).catch(() => startAutoPlay());
     }
 
-    // Start prefetching all audio in background
+    // Prefetch remaining slides
     prefetchAudio(0);
   });
 
