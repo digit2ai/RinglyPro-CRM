@@ -329,8 +329,29 @@
   .flex-row { display: flex; gap: 16px; align-items: stretch; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 960px; }
 
   @media (max-width: 768px) {
-    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
-    .slide { padding: 50px 4vw 60px; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .grid-3, .grid-4 { grid-template-columns: 1fr 1fr; }
+    .slide { padding: 40px 4vw 56px; }
+    .ui-card { padding: 14px; }
+    .ui-card-inner { padding: 10px; }
+    .logo-mark img { height: 60px !important; }
+    .preplay .logo-mark img { height: 100px !important; }
+    .nav-bar { height: 44px; gap: 10px; }
+    .nav-btn { width: 32px; height: 32px; font-size: 14px; }
+    .preplay-btn { width: 80px; height: 80px; font-size: 28px; }
+    .roi-card { padding: 16px; }
+    .roi-num { font-size: clamp(24px, 8vw, 40px) !important; }
+    .analysis-impression { padding: 10px 12px; }
+    .timeline-item { padding-left: 12px; }
+  }
+  @media (max-width: 480px) {
+    .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .slide { padding: 36px 3vw 52px; }
+    .t-mega { font-size: 28px !important; }
+    .t-big { font-size: 22px !important; }
+    .t-mid { font-size: 18px !important; }
+    .pill { font-size: 10px; padding: 4px 10px; }
+    .ui-badge { font-size: 9px; padding: 2px 6px; }
   }
 
   /* Fade-in animation for elements */
@@ -385,8 +406,8 @@
   <div class="logo-mark">
     <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png" alt="ImagingMind" style="height:160px;">
   </div>
-  <p class="t-big" style="max-width:600px;">ImagingMind<br><span class="t-cyan">AI X-Ray Case Analytics</span></p>
-  <p class="t-small" style="max-width:500px; margin-top:8px;">Interactive product demo with voice narration.<br>Best experienced fullscreen with audio on.</p>
+  <p class="t-big" style="max-width:600px; padding:0 16px;">ImagingMind<br><span class="t-cyan">AI X-Ray Case Analytics</span></p>
+  <p class="t-small" style="max-width:500px; margin-top:8px; padding:0 16px;">Interactive product demo with voice narration.<br>Best experienced with audio on.</p>
   <div style="display:flex; gap:12px; margin-top:16px; align-items:center;">
     <button class="nav-btn" id="langToggle" style="width:auto; padding:6px 14px; font-size:13px; font-weight:600; letter-spacing:1px;" title="Switch language">EN</button>
     <span class="t-small" style="opacity:0.4;" id="langHint">Detecting location...</span>
@@ -1166,23 +1187,59 @@
   }, { passive: true });
 
   // ============ PRE-PLAY ============
-  preplayBtn.addEventListener('click', () => {
+  // Mobile browsers ONLY allow audio.play() inside a direct user gesture handler.
+  // The key insight: we must call ttsAudio.play() INSIDE the click handler,
+  // not after an async fetch. Once unlocked, the same Audio element stays unlocked.
+  let audioUnlocked = false;
+
+  preplayBtn.addEventListener('click', async () => {
     preplay.style.display = 'none';
     show(0);
 
-    // Unlock audio on user gesture (mobile)
-    ttsAudio.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7v////////////////////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==';
-    ttsAudio.load();
-    ttsAudio.play().then(() => {
+    // Step 1: Unlock the audio element with silent MP3 (MUST be synchronous play in gesture)
+    try {
+      ttsAudio.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7v////////////////////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==';
+      ttsAudio.load();
+      await ttsAudio.play();
       ttsAudio.pause();
       ttsAudio.currentTime = 0;
-      // Pre-generate audio for first 3 slides
-      prefetchAudio(0);
-      startAutoPlay();
-    }).catch(() => {
-      prefetchAudio(0);
-      startAutoPlay();
-    });
+      audioUnlocked = true;
+      console.log('[Mobile] Audio element unlocked');
+    } catch (e) {
+      console.warn('[Mobile] Audio unlock failed:', e.message);
+    }
+
+    // Step 2: Try to pre-fetch slide 1 audio RIGHT NOW while still in gesture context
+    // Then play it immediately if available
+    prefetchAudio(0);
+
+    try {
+      const slide1Url = await generateSlideAudio(0);
+      if (slide1Url && audioUnlocked) {
+        // Play slide 1 audio immediately — still within gesture promise chain
+        narrateOnEnd = () => {
+          autoAdvanceTimer = setTimeout(() => {
+            if (!autoPlaying) return;
+            if (idx < TOTAL - 1) { show(idx + 1); autoNarrateCurrent(); }
+            else pauseAutoPlay();
+          }, 2000);
+        };
+        ttsAudio.src = slide1Url;
+        ttsAudio.load();
+        await ttsAudio.play();
+        console.log('[Lina] Playing slide 1 (from preplay gesture)');
+        autoPlaying = true;
+        btnPlayPause.innerHTML = '&#10074;&#10074;';
+        recDot.classList.add('active');
+        narrationWave.classList.add('active');
+        return; // Audio ended event will trigger advance to slide 2
+      }
+    } catch (e) {
+      console.warn('[Mobile] Slide 1 direct play failed:', e.message);
+    }
+
+    // Fallback: start autoplay normally (audio element is at least unlocked now)
+    startAutoPlay();
   });
 
   // Load Web Speech voices
