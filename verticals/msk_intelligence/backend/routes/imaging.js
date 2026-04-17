@@ -393,6 +393,18 @@ router.get('/file/:fileId', async (req, res) => {
   }
 });
 
+// GET /api/v1/imaging/showcase/case/:caseId — public read-only case imaging + analysis for demo pages
+router.get('/showcase/case/:caseId', async (req, res) => {
+  try {
+    const [files] = await sequelize.query(`
+      SELECT id, file_name, file_type, mime_type, ai_analysis, ai_analyzed_at, created_at
+      FROM msk_imaging_files WHERE case_id = $1 ORDER BY created_at
+    `, { bind: [req.params.caseId] });
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.json({ success: true, data: files });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // GET /api/v1/imaging/analysis/:fileId — get AI analysis for a specific file
 router.get('/analysis/:fileId', async (req, res) => {
   try {
