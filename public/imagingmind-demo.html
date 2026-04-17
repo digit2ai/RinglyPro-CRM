@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ImagingMind // AI X-Ray Case Analytics Demo</title>
+<title>ImagingMind // AI Diagnostic Imaging Demo</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
@@ -405,7 +405,7 @@
 
 <!-- Pre-play overlay -->
 <div class="preplay" id="preplay">
-  <p class="t-big" style="max-width:600px; padding:0 16px;">ImagingMind<br><span class="t-cyan">AI X-Ray Case Analytics</span></p>
+  <p class="t-big" style="max-width:600px; padding:0 16px;">ImagingMind<br><span class="t-cyan">AI Diagnostic Imaging</span></p>
   <p class="t-small" style="max-width:500px; margin-top:4px; padding:0 16px;">Interactive product demo with voice narration.<br>Best experienced with audio on.</p>
   <div style="display:flex; gap:12px; margin-top:16px; align-items:center;">
     <button class="nav-btn" id="langToggle" style="width:auto; padding:6px 14px; font-size:13px; font-weight:600; letter-spacing:1px;" title="Switch language">EN</button>
@@ -427,7 +427,7 @@
   <div class="logo-mark fade-in">
     <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png" alt="ImagingMind" style="height:120px;">
   </div>
-  <h1 class="t-mega fade-in fade-in-d1">AI X-Ray<br><span class="t-grad">Case Analytics</span></h1>
+  <h1 class="t-mega fade-in fade-in-d1">AI Diagnostic<br><span class="t-grad">Imaging</span></h1>
   <p class="t-body fade-in fade-in-d2" style="max-width:600px; margin-top:16px;">
     Specialist-grade imaging diagnostics powered by ImagingMind AI.<br>Upload. Analyze. Report. In minutes.
   </p>
@@ -843,54 +843,57 @@
 </div>
 
 <!-- SLIDE 13: Pricing -->
-<div class="slide bg-cyan" data-notes="Three tiers. Solo for small clinics at fifteen hundred per month with 200 studies. Practice for mid-size groups at thirty-five hundred with 1,000 studies. And Enterprise for hospital networks with unlimited AI analysis. All plans pay for themselves within weeks." data-notes-es="Tres niveles. Solo para clinicas pequenas a mil quinientos dolares por mes con 200 estudios. Practice para grupos medianos a tres mil quinientos con mil estudios. Y Enterprise para redes hospitalarias con analisis ilimitado. Todos los planes se pagan solos en semanas.">
+<div class="slide bg-cyan" data-notes="Simple pricing. Ninety-nine dollars per month base, plus you pay only for what you analyze. X-rays start at 8 cents. CT and MRI at 45 cents. Volume discounts automatic. All features included." data-notes-es="Precio simple. Noventa y nueve dolares por mes de base, mas pagas solo por lo que analizas. Radiografias desde 8 centavos. CT y MRI desde 45 centavos. Descuentos por volumen automaticos. Todas las funciones incluidas.">
   <span class="pill pill-cyan" style="margin-bottom:12px;">PRICING</span>
-  <h2 class="t-mid fade-in" style="margin-bottom:24px;">Plans That <span class="t-cyan">Pay for Themselves</span></h2>
+  <h2 class="t-mid fade-in" style="margin-bottom:8px;">$99/mo <span class="t-cyan">+ Pay Per Study</span></h2>
+  <p class="t-small fade-in" style="margin-bottom:24px; max-width:500px;">All features. All 6 modalities. Pay only for what you analyze. Volume discounts automatic.</p>
 
   <div class="grid-3 fade-in fade-in-d1">
     <div class="ui-card" style="text-align:center;">
-      <p style="font-size:18px; font-weight:800; color:white;">Solo</p>
-      <p class="t-small" style="margin-bottom:12px;">1-2 radiologists</p>
-      <p style="font-size:36px; font-weight:900; color:white;">$1,500</p>
-      <p class="t-small">/month</p>
-      <div style="margin-top:16px; text-align:left; display:flex; flex-direction:column; gap:6px;">
-        <p style="font-size:12px; color:var(--gray-300);">&#10003; 200 AI-analyzed studies/mo</p>
-        <p style="font-size:12px; color:var(--gray-300);">&#10003; AI Copilot reports</p>
-        <p style="font-size:12px; color:var(--gray-300);">&#10003; Patient portal</p>
-        <p style="font-size:12px; color:var(--gray-300);">&#10003; Secure messaging</p>
-        <p style="font-size:12px; color:var(--gray-300);">&#10003; Voice AI intake</p>
+      <p style="font-size:16px; font-weight:800; color:white;">Starter</p>
+      <p class="t-small" style="margin-bottom:8px; font-size:11px;">&lt; 1,000 studies/mo</p>
+      <div style="display:flex; flex-direction:column; gap:4px; text-align:left; margin-top:12px;">
+        <div style="display:flex; justify-content:space-between;"><span style="font-size:12px; color:var(--gray-300);">X-Ray</span><span style="font-size:12px; font-weight:700; color:var(--cyan-neon);">$0.16</span></div>
+        <div style="display:flex; justify-content:space-between;"><span style="font-size:12px; color:var(--gray-300);">CT / MRI</span><span style="font-size:12px; font-weight:700; color:var(--cyan-neon);">$0.89</span></div>
+        <div style="display:flex; justify-content:space-between;"><span style="font-size:12px; color:var(--gray-300);">Mammography</span><span style="font-size:12px; font-weight:700; color:var(--cyan-neon);">$0.26</span></div>
+        <div style="display:flex; justify-content:space-between;"><span style="font-size:12px; color:var(--gray-300);">DEXA / Dental</span><span style="font-size:12px; font-weight:700; color:var(--cyan-neon);">$0.16</span></div>
+      </div>
+      <div style="margin-top:16px; padding:8px; border-radius:8px; background:rgba(255,255,255,0.06);">
+        <p style="font-size:11px; color:var(--gray-400);">500 X-rays =</p>
+        <p style="font-size:18px; font-weight:900; color:white;">$179<span style="font-size:12px; color:var(--gray-400); font-weight:400;">/mo</span></p>
       </div>
     </div>
     <div class="ui-card" style="text-align:center; border-color:var(--cyan); position:relative;">
-      <div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:var(--cyan); color:white; font-size:11px; font-weight:700; padding:3px 14px; border-radius:100px;">MOST POPULAR</div>
-      <p style="font-size:18px; font-weight:800; color:white;">Practice</p>
-      <p class="t-small" style="margin-bottom:12px;">3-10 radiologists</p>
-      <p style="font-size:36px; font-weight:900; color:white;">$3,500</p>
-      <p class="t-small">/month</p>
-      <div style="margin-top:16px; text-align:left; display:flex; flex-direction:column; gap:6px;">
-        <p style="font-size:12px; color:var(--cyan-neon);">Everything in Solo, plus:</p>
-        <p style="font-size:12px; color:var(--gray-300);">&#10003; 1,000 AI-analyzed studies/mo</p>
-        <p style="font-size:12px; color:var(--gray-300);">&#10003; FHIR R4 export</p>
-        <p style="font-size:12px; color:var(--gray-300);">&#10003; Insurance claims engine</p>
-        <p style="font-size:12px; color:var(--gray-300);">&#10003; Multi-provider dashboard</p>
-        <p style="font-size:12px; color:var(--gray-300);">&#10003; Priority support</p>
+      <div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:var(--cyan); color:white; font-size:11px; font-weight:700; padding:3px 14px; border-radius:100px;">BEST VALUE</div>
+      <p style="font-size:16px; font-weight:800; color:white;">Growth</p>
+      <p class="t-small" style="margin-bottom:8px; font-size:11px;">1K - 10K studies/mo</p>
+      <div style="display:flex; flex-direction:column; gap:4px; text-align:left; margin-top:12px;">
+        <div style="display:flex; justify-content:space-between;"><span style="font-size:12px; color:var(--gray-300);">X-Ray</span><span style="font-size:12px; font-weight:700; color:var(--cyan-neon);">$0.10</span></div>
+        <div style="display:flex; justify-content:space-between;"><span style="font-size:12px; color:var(--gray-300);">CT / MRI</span><span style="font-size:12px; font-weight:700; color:var(--cyan-neon);">$0.54</span></div>
+        <div style="display:flex; justify-content:space-between;"><span style="font-size:12px; color:var(--gray-300);">Mammography</span><span style="font-size:12px; font-weight:700; color:var(--cyan-neon);">$0.16</span></div>
+        <div style="display:flex; justify-content:space-between;"><span style="font-size:12px; color:var(--gray-300);">DEXA / Dental</span><span style="font-size:12px; font-weight:700; color:var(--cyan-neon);">$0.10</span></div>
+      </div>
+      <div style="margin-top:16px; padding:8px; border-radius:8px; background:rgba(255,255,255,0.06);">
+        <p style="font-size:11px; color:var(--gray-400);">3,000 X-rays =</p>
+        <p style="font-size:18px; font-weight:900; color:white;">$399<span style="font-size:12px; color:var(--gray-400); font-weight:400;">/mo</span></p>
       </div>
     </div>
     <div class="ui-card" style="text-align:center;">
-      <p style="font-size:18px; font-weight:800; color:white;">Enterprise</p>
-      <p class="t-small" style="margin-bottom:12px;">Hospital networks, 10+ sites</p>
-      <p style="font-size:36px; font-weight:900; color:white;">$8,000+</p>
-      <p class="t-small">/month</p>
-      <div style="margin-top:16px; text-align:left; display:flex; flex-direction:column; gap:6px;">
-        <p style="font-size:12px; color:var(--purple-light);">Everything in Practice, plus:</p>
-        <p style="font-size:12px; color:var(--gray-300);">&#10003; Unlimited AI studies</p>
-        <p style="font-size:12px; color:var(--gray-300);">&#10003; White-label branding</p>
-        <p style="font-size:12px; color:var(--gray-300);">&#10003; SLA guarantee</p>
-        <p style="font-size:12px; color:var(--gray-300);">&#10003; HIPAA BAA included</p>
-        <p style="font-size:12px; color:var(--gray-300);">&#10003; On-premise deployment</p>
+      <p style="font-size:16px; font-weight:800; color:white;">Scale</p>
+      <p class="t-small" style="margin-bottom:8px; font-size:11px;">10,000+ studies/mo</p>
+      <div style="display:flex; flex-direction:column; gap:4px; text-align:left; margin-top:12px;">
+        <div style="display:flex; justify-content:space-between;"><span style="font-size:12px; color:var(--gray-300);">X-Ray</span><span style="font-size:12px; font-weight:700; color:var(--cyan-neon);">$0.08</span></div>
+        <div style="display:flex; justify-content:space-between;"><span style="font-size:12px; color:var(--gray-300);">CT / MRI</span><span style="font-size:12px; font-weight:700; color:var(--cyan-neon);">$0.45</span></div>
+        <div style="display:flex; justify-content:space-between;"><span style="font-size:12px; color:var(--gray-300);">Mammography</span><span style="font-size:12px; font-weight:700; color:var(--cyan-neon);">$0.13</span></div>
+        <div style="display:flex; justify-content:space-between;"><span style="font-size:12px; color:var(--gray-300);">DEXA / Dental</span><span style="font-size:12px; font-weight:700; color:var(--cyan-neon);">$0.08</span></div>
+      </div>
+      <div style="margin-top:16px; padding:8px; border-radius:8px; background:rgba(255,255,255,0.06);">
+        <p style="font-size:11px; color:var(--gray-400);">15,000 mixed =</p>
+        <p style="font-size:18px; font-weight:900; color:white;">$3,249<span style="font-size:12px; color:var(--gray-400); font-weight:400;">/mo</span></p>
       </div>
     </div>
   </div>
+  <p class="t-small fade-in fade-in-d2" style="margin-top:16px; opacity:0.5; max-width:500px;">$99/mo base on all tiers. First 10 studies on us. HIPAA compliant. Billed via Stripe.</p>
 </div>
 
 <!-- SLIDE 14: CTA -->
@@ -900,7 +903,7 @@
   </div>
   <h2 class="t-mega fade-in fade-in-d1">See It <span class="t-grad">Live</span></h2>
   <p class="t-body fade-in fade-in-d2" style="max-width:550px; margin-top:12px;">
-    Upload your first X-ray. Get AI analysis in under 30 seconds.<br><strong>14 days free trial.</strong>
+    X-Ray, CT, MRI, Mammography, DEXA, Dental — all modalities, one platform.<br><strong>$99/mo + pay per study. First 10 studies on us.</strong>
   </p>
   <div style="display:flex; gap:12px; margin-top:28px;" class="fade-in fade-in-d3">
     <a href="/msk/register" class="ui-btn ui-btn-primary" style="font-size:16px; padding:14px 32px; text-decoration:none; border-radius:12px;">Start Free Trial</a>
