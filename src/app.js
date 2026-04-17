@@ -39,6 +39,26 @@ console.log('✅ Subscription webhook mounted at /webhooks/stripe (before body p
 app.use(express.json({ limit: '500mb' }));
 app.use(express.urlencoded({ extended: true, limit: '500mb' }));
 
+// Custom domain: imagingmind.app -> ImagingMind (/msk)
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase();
+  if (host === 'imagingmind.app' || host === 'www.imagingmind.app') {
+    const p = req.path;
+    // Already under /msk — pass through
+    if (p.startsWith('/msk')) return next();
+    // Static assets (audio, images) — pass through
+    if (p.startsWith('/audio/') || p.startsWith('/api/')) return next();
+    // Demo presentation — serve from public
+    if (p === '/demo' || p === '/demo/') {
+      req.url = '/imagingmind-demo.html';
+      return next();
+    }
+    // Rewrite root and all other paths to /msk
+    req.url = '/msk' + (p === '/' ? '/' : p);
+  }
+  next();
+});
+
 // Custom domain: visionarium.app -> Youth Talent Global whitepaper
 app.use((req, res, next) => {
   const host = (req.get('host') || '').toLowerCase();
