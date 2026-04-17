@@ -177,7 +177,12 @@ export default function Landing() {
                   'Appointment scheduling',
                   'AI Copilot reports',
                   'ROM assessment (camera)',
-                  'Lina voice assistant'
+                  'Lina voice assistant',
+                  'RPM billing (CPT 99453/99454)',
+                  'FHIR R4 export',
+                  'Workers\' comp module',
+                  'Multi-provider dashboard',
+                  'Insurance claims engine'
                 ],
                 highlight: false,
                 cta: 'Start Free Trial'
@@ -191,12 +196,11 @@ export default function Landing() {
                 features: [
                   'Up to 12,000 AI-analyzed studies/mo',
                   'Everything in Solo, plus:',
-                  'RPM billing (CPT 99453/99454)',
-                  'FHIR R4 export',
-                  'Workers\' comp module',
-                  'Multi-provider dashboard',
-                  'Insurance claims engine',
-                  'Priority support'
+                  'Priority support',
+                  'Dedicated onboarding',
+                  'Custom reporting templates',
+                  'Team analytics dashboard',
+                  'API access'
                 ],
                 highlight: true,
                 cta: 'Start Free Trial'
