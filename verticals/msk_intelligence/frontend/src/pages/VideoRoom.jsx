@@ -267,7 +267,7 @@ export default function VideoRoom() {
             <div className="text-center mb-8">
               <img src={mskLogo} alt="Digit2AI" className="h-28 w-auto object-contain mx-auto mb-4 drop-shadow-2xl" />
               <h1 className="text-2xl font-bold text-white">Video Consultation</h1>
-              <p className="text-dark-400 text-sm mt-2">MSK Intelligence Secure Video</p>
+              <p className="text-dark-400 text-sm mt-2">ImagingMind Secure Video</p>
             </div>
 
             {meetingInfo && (

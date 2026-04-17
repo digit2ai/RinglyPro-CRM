@@ -56,8 +56,8 @@ export default function Login({ onLogin }) {
           <Link to="/" className="inline-flex items-center gap-5 mb-6">
             <img src={mskLogo} alt="Digit2AI" className="h-24 w-auto object-contain drop-shadow-2xl" />
             <div className="text-left ml-1">
-              <h1 className="text-2xl font-bold text-white">MSK Intelligence</h1>
-              <p className="text-sm text-msk-400">Diagnostics Platform</p>
+              <h1 className="text-2xl font-bold text-white">ImagingMind</h1>
+              <p className="text-sm text-msk-400">AI Diagnostics Platform</p>
             </div>
           </Link>
           <h2 className="text-2xl font-bold text-white">Welcome back</h2>
@@ -115,9 +115,9 @@ export default function Login({ onLogin }) {
               <details>
                 <summary className="text-dark-500 text-xs text-center cursor-pointer hover:text-dark-300 transition-colors">Demo Access</summary>
                 <div className="space-y-2 text-xs text-dark-400 mt-3">
-                  <p><strong className="text-dark-300">Admin:</strong> {import.meta.env.VITE_MSK_DEMO_EMAIL_ADMIN || 'admin@msk-intelligence.com'}</p>
-                  <p><strong className="text-dark-300">Radiologist:</strong> {import.meta.env.VITE_MSK_DEMO_EMAIL_RAD || 'radiologist@msk-intelligence.com'}</p>
-                  <p><strong className="text-dark-300">Patient:</strong> {import.meta.env.VITE_MSK_DEMO_EMAIL_PATIENT || 'athlete@msk-intelligence.com'}</p>
+                  <p><strong className="text-dark-300">Admin:</strong> {import.meta.env.VITE_MSK_DEMO_EMAIL_ADMIN || 'admin@imagingmind.com'}</p>
+                  <p><strong className="text-dark-300">Radiologist:</strong> {import.meta.env.VITE_MSK_DEMO_EMAIL_RAD || 'radiologist@imagingmind.com'}</p>
+                  <p><strong className="text-dark-300">Patient:</strong> {import.meta.env.VITE_MSK_DEMO_EMAIL_PATIENT || 'athlete@imagingmind.com'}</p>
                   <p className="text-dark-500">Password: {import.meta.env.VITE_MSK_DEMO_PASSWORD || '********'}</p>
                 </div>
               </details>

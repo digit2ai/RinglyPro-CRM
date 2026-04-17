@@ -111,7 +111,7 @@ router.get('/availability/:providerId', authenticate, async (req, res) => {
 
     res.json({ success: true, data: { date, providerId, slots: allSlots } });
   } catch (err) {
-    console.error('[MSK Scheduling] availability error:', err.message);
+    console.error('[ImagingMind Scheduling] availability error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -173,7 +173,7 @@ router.post('/book', authenticate, async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('[MSK Scheduling] book error:', err.message);
+    console.error('[ImagingMind Scheduling] book error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -219,7 +219,7 @@ router.put('/:appointmentId/cancel', authenticate, async (req, res) => {
 
     res.json({ success: true, data: appointment });
   } catch (err) {
-    console.error('[MSK Scheduling] cancel error:', err.message);
+    console.error('[ImagingMind Scheduling] cancel error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -265,7 +265,7 @@ router.get('/upcoming', authenticate, async (req, res) => {
 
     res.json({ success: true, data: appointments });
   } catch (err) {
-    console.error('[MSK Scheduling] upcoming error:', err.message);
+    console.error('[ImagingMind Scheduling] upcoming error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -314,7 +314,7 @@ router.get('/calendar', authenticate, async (req, res) => {
 
     res.json({ success: true, data: appointments });
   } catch (err) {
-    console.error('[MSK Scheduling] calendar error:', err.message);
+    console.error('[ImagingMind Scheduling] calendar error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });

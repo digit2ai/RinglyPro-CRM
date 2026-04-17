@@ -68,7 +68,7 @@ IMPORTANT: This is an AI-assisted preliminary read — it must be reviewed and f
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     return jsonMatch ? JSON.parse(jsonMatch[0]) : { findings: text, modality: 'Unknown', impression: '', abnormalitiesDetected: [], confidenceLevel: 'Low' };
   } catch (err) {
-    console.error('[MSK Imaging] Claude Vision analysis error:', err.message);
+    console.error('[ImagingMind Imaging] Claude Vision analysis error:', err.message);
     return null;
   }
 }
@@ -186,7 +186,7 @@ router.post('/upload', upload.array('files', 20), async (req, res) => {
         if (fileBuffer.length < 20 * 1024 * 1024) {
           fileData = fileBuffer.toString('base64');
         }
-      } catch(e) { console.error('[MSK Imaging] Failed to read file for DB storage:', e.message); }
+      } catch(e) { console.error('[ImagingMind Imaging] Failed to read file for DB storage:', e.message); }
 
       const [result] = await sequelize.query(`
         INSERT INTO msk_imaging_files (imaging_order_id, case_id, file_name, file_type, file_size_bytes, storage_path, mime_type, uploaded_by, file_data)
@@ -249,10 +249,10 @@ router.post('/upload', upload.array('files', 20), async (req, res) => {
               INSERT INTO msk_case_timeline (case_id, event_type, event_title, event_description)
               VALUES ($1, 'ai_imaging_analysis', 'AI Image Analysis Complete', $2)
             `, { bind: [caseId, `${analysis.modality || 'Image'} analyzed — ${analysis.impression || 'Analysis complete'}`] });
-            console.log(`[MSK Imaging] AI analysis complete for file ${fileRecord.id}`);
+            console.log(`[ImagingMind Imaging] AI analysis complete for file ${fileRecord.id}`);
           }
         })
-        .catch(err => console.error('[MSK Imaging] Background analysis error:', err.message));
+        .catch(err => console.error('[ImagingMind Imaging] Background analysis error:', err.message));
     }
 
     res.status(201).json({ success: true, data: uploaded, count: uploaded.length });

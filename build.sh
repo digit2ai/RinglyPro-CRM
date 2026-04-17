@@ -352,43 +352,43 @@ fi
 
 echo ""
 echo "================================================"
-echo "Building MSK Intelligence Dashboard"
+echo "Building ImagingMind Dashboard"
 echo "================================================"
 
 if [ -d "verticals/msk_intelligence/frontend" ]; then
     cd verticals/msk_intelligence/frontend
-    echo "MSK Intelligence Dashboard directory: $(pwd)"
+    echo "ImagingMind Dashboard directory: $(pwd)"
 
     if [ -d "dist" ] && [ -f "dist/index.html" ]; then
-        echo "✅ MSK Intelligence dist folder already exists (pre-built), skipping build"
+        echo "✅ ImagingMind dist folder already exists (pre-built), skipping build"
         ls -lh dist/
         cd ../../..
     else
-        echo "📦 Installing MSK Intelligence dashboard dependencies..."
+        echo "📦 Installing ImagingMind dashboard dependencies..."
         NODE_ENV=development npm ci --include=dev || NODE_ENV=development npm install --include=dev
 
         echo ""
-        echo "🔨 Building MSK Intelligence dashboard with Vite..."
+        echo "🔨 Building ImagingMind dashboard with Vite..."
         set +e
         NODE_ENV=production npm run build 2>&1
         BUILD_EXIT_CODE=$?
         set -e
 
         if [ $BUILD_EXIT_CODE -ne 0 ]; then
-          echo "⚠️ MSK Intelligence build failed with exit code $BUILD_EXIT_CODE"
+          echo "⚠️ ImagingMind build failed with exit code $BUILD_EXIT_CODE"
         fi
 
         if [ -d "dist" ]; then
-            echo "✅ MSK Intelligence dist folder created!"
+            echo "✅ ImagingMind dist folder created!"
             ls -lh dist/
         else
-            echo "⚠️ MSK Intelligence dist folder not created"
+            echo "⚠️ ImagingMind dist folder not created"
         fi
 
         cd ../../..
     fi
 else
-    echo "⚠️ MSK Intelligence dashboard directory not found, skipping..."
+    echo "⚠️ ImagingMind dashboard directory not found, skipping..."
 fi
 
 echo ""
@@ -441,6 +441,6 @@ echo "✅ PINAXIS Dashboard built at: ./pinaxis/dashboard/dist"
 echo "✅ CW Carriers Dashboard built at: ./verticals/cw_carriers/frontend/dist"
 echo "✅ Logistics Dashboard built at: ./verticals/logistics/frontend/dist"
 echo "✅ Torna Idioma Dashboard built at: ./verticals/torna_idioma/frontend/dist"
-echo "✅ MSK Intelligence Dashboard built at: ./verticals/msk_intelligence/frontend/dist"
+echo "✅ ImagingMind Dashboard built at: ./verticals/msk_intelligence/frontend/dist"
 echo "✅ Intuitive Dashboard built at: ./verticals/intuitive/dashboard/dist"
 echo "================================================"

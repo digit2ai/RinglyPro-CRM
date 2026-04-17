@@ -142,7 +142,7 @@ router.post('/', async (req, res) => {
 
     res.status(201).json({ success: true, data: report });
   } catch (err) {
-    console.error('[MSK] Create report error:', err);
+    console.error('[ImagingMind] Create report error:', err);
     res.status(500).json({ error: err.message });
   }
 });

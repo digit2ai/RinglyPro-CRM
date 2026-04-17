@@ -21,8 +21,8 @@ export default function Landing() {
           <div className="flex items-center gap-3 min-w-0 flex-shrink">
             <img src={mskLogo} alt="Digit2AI" className="h-12 sm:h-16 lg:h-32 w-auto object-contain drop-shadow-2xl flex-shrink-0" />
             <div className="min-w-0 hidden sm:block">
-              <h1 className="text-base sm:text-lg lg:text-2xl font-bold text-white truncate">MSK Intelligence</h1>
-              <p className="text-xs sm:text-sm text-msk-400 truncate">Musculoskeletal Diagnostics</p>
+              <h1 className="text-base sm:text-lg lg:text-2xl font-bold text-white truncate">ImagingMind</h1>
+              <p className="text-xs sm:text-sm text-msk-400 truncate">AI Diagnostics Platform</p>
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
@@ -102,7 +102,7 @@ export default function Landing() {
           <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-dark-700">
             <img
               src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69c7fbd05eea837aca559a82.jpg"
-              alt="MSK Intelligence — Advanced Musculoskeletal Diagnostics"
+              alt="ImagingMind — Advanced Musculoskeletal Diagnostics"
               className="w-full h-auto object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-dark-950/60 via-transparent to-transparent" />
@@ -159,7 +159,7 @@ export default function Landing() {
       <section className="bg-dark-900/50 border-y border-dark-800">
         <div className="max-w-7xl mx-auto px-4 lg:px-6 py-16 lg:py-24">
           <h3 className="text-2xl sm:text-3xl font-bold text-white text-center mb-4">Subscription Plans</h3>
-          <p className="text-dark-400 text-center mb-12 lg:mb-16">AI-powered MSK diagnostics for clinics of every size</p>
+          <p className="text-dark-400 text-center mb-12 lg:mb-16">AI-powered imaging diagnostics for clinics of every size</p>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {[
@@ -282,7 +282,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <img src={mskLogo} alt="Digit2AI" className="h-16 w-auto object-contain" />
-            <span className="text-dark-400 text-sm">MSK Intelligence by RinglyPro</span>
+            <span className="text-dark-400 text-sm">ImagingMind by RinglyPro</span>
           </div>
           <p className="text-dark-500 text-sm">
             HIPAA Compliant | Encrypted | Board-Certified Specialists

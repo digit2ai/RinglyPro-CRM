@@ -248,7 +248,7 @@ router.post('/tools/call', async (req, res) => {
 
     res.json({ success: true, data: result });
   } catch (err) {
-    console.error('[MSK] MCP tool error:', err);
+    console.error('[ImagingMind] MCP tool error:', err);
     res.status(500).json({ error: err.message });
   }
 });

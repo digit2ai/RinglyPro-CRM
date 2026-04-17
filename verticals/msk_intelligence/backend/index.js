@@ -145,7 +145,7 @@ router.get('/health', async (req, res) => {
     await sequelize.authenticate();
     res.json({
       status: 'healthy',
-      service: 'MSK Intelligence',
+      service: 'ImagingMind',
       version: '1.0.0',
       database: 'connected',
       timestamp: new Date().toISOString()
@@ -159,7 +159,7 @@ router.get('/health', async (req, res) => {
 async function runMigrations() {
   try {
     await sequelize.authenticate();
-    console.log('[MSK] Database connected');
+    console.log('[ImagingMind] Database connected');
 
     // Users & Auth
     await sequelize.query(`
@@ -759,13 +759,13 @@ async function runMigrations() {
 
     // Seed default tenant
     const [existingTenant] = await sequelize.query(
-      `SELECT id FROM msk_tenants WHERE slug = 'msk-intelligence' LIMIT 1`
+      `SELECT id FROM msk_tenants WHERE slug = 'imagingmind' LIMIT 1`
     );
     if (existingTenant.length === 0) {
       await sequelize.query(`
-        INSERT INTO msk_tenants (slug, name, plan) VALUES ('msk-intelligence', 'MSK Intelligence', 'enterprise')
+        INSERT INTO msk_tenants (slug, name, plan) VALUES ('imagingmind', 'ImagingMind', 'enterprise')
       `);
-      console.log('[MSK] Default tenant seeded');
+      console.log('[ImagingMind] Default tenant seeded');
     }
 
     // Seed PROM instruments
@@ -781,7 +781,7 @@ async function runMigrations() {
         ('ODI', 'Oswestry Disability Index', 'Spine/back disability 10-section assessment', '[{"id":"o1","text":"Pain intensity right now","type":"scale","min":0,"max":5},{"id":"o2","text":"Personal care (washing, dressing)","type":"scale","min":0,"max":5},{"id":"o3","text":"Lifting","type":"scale","min":0,"max":5},{"id":"o4","text":"Walking","type":"scale","min":0,"max":5},{"id":"o5","text":"Sitting","type":"scale","min":0,"max":5}]', 'average'),
         ('PROMIS_PF', 'PROMIS Physical Function', 'General physical function short form', '[{"id":"pf1","text":"Are you able to do chores such as vacuuming or yard work?","type":"likert","options":["Without any difficulty","With a little difficulty","With some difficulty","With much difficulty","Unable to do"]},{"id":"pf2","text":"Are you able to go up and down stairs at a normal pace?","type":"likert","options":["Without any difficulty","With a little difficulty","With some difficulty","With much difficulty","Unable to do"]},{"id":"pf3","text":"Are you able to run errands and shop?","type":"likert","options":["Without any difficulty","With a little difficulty","With some difficulty","With much difficulty","Unable to do"]},{"id":"pf4","text":"Are you able to walk for 15 minutes?","type":"likert","options":["Without any difficulty","With a little difficulty","With some difficulty","With much difficulty","Unable to do"]}]', 'average')
       `);
-      console.log('[MSK] PROM instruments seeded');
+      console.log('[ImagingMind] PROM instruments seeded');
     }
 
     // Seed CPT codes
@@ -800,7 +800,7 @@ async function runMigrations() {
         ('72148', 'MRI lumbar spine without contrast', 'imaging', 328.00),
         ('73221', 'MRI shoulder joint without contrast', 'imaging', 286.00)
       `);
-      console.log('[MSK] CPT codes seeded');
+      console.log('[ImagingMind] CPT codes seeded');
     }
 
     // Phase 4: ROM Measurements
@@ -974,7 +974,7 @@ async function runMigrations() {
         ('Ankle Alphabet', 'Ankle mobility exercise', 'ankle', 'range_of_motion', 'Sit with foot elevated. Trace the alphabet in the air with your big toe. Complete A-Z.', 2, 1, NULL, 5, 'easy'),
         ('Calf Raises', 'Gastrocnemius strengthening', 'ankle', 'strengthening', 'Stand on edge of step. Rise up on toes. Hold 2 seconds. Lower slowly below step level.', 3, 15, 2, 4, 'moderate')
       `);
-      console.log('[MSK] Exercise library seeded (20 exercises)');
+      console.log('[ImagingMind] Exercise library seeded (20 exercises)');
     }
 
     // Seed provider availability for demo radiologist
@@ -993,7 +993,7 @@ async function runMigrations() {
             VALUES ($1, $2, '09:00', '17:00', 30, 5)
           `, { bind: [radId, day] });
         }
-        console.log('[MSK] Provider availability seeded');
+        console.log('[ImagingMind] Provider availability seeded');
       }
     }
 
@@ -1023,12 +1023,12 @@ async function runMigrations() {
           VALUES ($1, '1995-03-15', 'male', 'Motorsport', 'Team Alpha Racing', 'Driver', 178, 72)
         `, { bind: [newUser[0].id] });
       }
-      console.log('[MSK] Demo users seeded');
+      console.log('[ImagingMind] Demo users seeded');
     }
 
-    console.log('[MSK] Database migration complete');
+    console.log('[ImagingMind] Database migration complete');
   } catch (err) {
-    console.error('[MSK] Migration error:', err.message);
+    console.error('[ImagingMind] Migration error:', err.message);
   }
 }
 
@@ -1040,7 +1040,7 @@ const cron = require('node-cron');
 // Run every 6 hours — check for patients needing engagement nudges
 cron.schedule('0 */6 * * *', async () => {
   try {
-    console.log('[MSK] Running engagement nudge check...');
+    console.log('[ImagingMind] Running engagement nudge check...');
 
     // 1. Exercise compliance nudges — no session in 3+ days for active programs
     const [exerciseAlerts] = await sequelize.query(`
@@ -1082,9 +1082,9 @@ cron.schedule('0 */6 * * *', async () => {
       await sequelize.query(`UPDATE msk_appointments SET reminder_24h_sent = TRUE WHERE id = $1`, { bind: [appt.id] });
     }
 
-    console.log(`[MSK] Nudge check complete: ${exerciseAlerts.length} exercise, ${apptAlerts.length} appointment reminders`);
+    console.log(`[ImagingMind] Nudge check complete: ${exerciseAlerts.length} exercise, ${apptAlerts.length} appointment reminders`);
   } catch (err) {
-    console.error('[MSK] Nudge cron error:', err.message);
+    console.error('[ImagingMind] Nudge cron error:', err.message);
   }
 });
 

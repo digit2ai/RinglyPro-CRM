@@ -91,7 +91,7 @@ router.post('/join', async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('[MSK Video] Join error:', err);
+    console.error('[ImagingMind Video] Join error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -121,7 +121,7 @@ router.post('/signal', (req, res) => {
 
     res.json({ success: true });
   } catch (err) {
-    console.error('[MSK Video] Signal error:', err);
+    console.error('[ImagingMind Video] Signal error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -178,7 +178,7 @@ router.get('/poll', (req, res) => {
       data: { signals, participants, serverTime: Date.now() }
     });
   } catch (err) {
-    console.error('[MSK Video] Poll error:', err);
+    console.error('[ImagingMind Video] Poll error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -228,7 +228,7 @@ router.post('/leave', async (req, res) => {
 
     res.json({ success: true });
   } catch (err) {
-    console.error('[MSK Video] Leave error:', err);
+    console.error('[ImagingMind Video] Leave error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -260,7 +260,7 @@ router.get('/info/:meetingId', async (req, res) => {
 
     res.json({ success: true, data: consults[0] });
   } catch (err) {
-    console.error('[MSK Video] Info error:', err);
+    console.error('[ImagingMind Video] Info error:', err);
     res.status(500).json({ error: err.message });
   }
 });

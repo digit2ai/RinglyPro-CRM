@@ -47,8 +47,8 @@ export default function Register({ onLogin }) {
           <Link to="/" className="inline-flex items-center gap-5 mb-6">
             <img src={mskLogo} alt="Digit2AI" className="h-24 w-auto object-contain drop-shadow-2xl" />
             <div className="text-left ml-1">
-              <h1 className="text-2xl font-bold text-white">MSK Intelligence</h1>
-              <p className="text-sm text-msk-400">Diagnostics Platform</p>
+              <h1 className="text-2xl font-bold text-white">ImagingMind</h1>
+              <p className="text-sm text-msk-400">AI Diagnostics Platform</p>
             </div>
           </Link>
           <h2 className="text-2xl font-bold text-white">Create Account</h2>

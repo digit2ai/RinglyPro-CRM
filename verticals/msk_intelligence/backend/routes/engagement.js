@@ -70,7 +70,7 @@ router.get('/patient-engagement', authorize('admin', 'radiologist'), async (req,
       }
     });
   } catch (err) {
-    console.error('[MSK Engagement] patient-engagement error:', err.message);
+    console.error('[ImagingMind Engagement] patient-engagement error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -89,7 +89,7 @@ router.get('/provider-performance', authorize('admin', 'radiologist'), async (re
 
     res.json({ data: providers });
   } catch (err) {
-    console.error('[MSK Engagement] provider-performance error:', err.message);
+    console.error('[ImagingMind Engagement] provider-performance error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -127,7 +127,7 @@ router.get('/site-activity', authorize('admin', 'radiologist'), async (req, res)
       }
     });
   } catch (err) {
-    console.error('[MSK Engagement] site-activity error:', err.message);
+    console.error('[ImagingMind Engagement] site-activity error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -166,7 +166,7 @@ router.get('/compliance-alerts', authorize('admin', 'radiologist'), async (req, 
 
     res.json({ data: alerts });
   } catch (err) {
-    console.error('[MSK Engagement] compliance-alerts error:', err.message);
+    console.error('[ImagingMind Engagement] compliance-alerts error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -204,7 +204,7 @@ router.get('/outcome-correlation', authorize('admin', 'radiologist'), async (req
       }
     });
   } catch (err) {
-    console.error('[MSK Engagement] outcome-correlation error:', err.message);
+    console.error('[ImagingMind Engagement] outcome-correlation error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -237,7 +237,7 @@ router.post('/send-nudge', authorize('admin', 'radiologist'), async (req, res) =
 
     res.json({ success: true, patientName: patient.first_name + ' ' + patient.last_name, nudgeType });
   } catch (err) {
-    console.error('[MSK Engagement] send-nudge error:', err.message);
+    console.error('[ImagingMind Engagement] send-nudge error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });

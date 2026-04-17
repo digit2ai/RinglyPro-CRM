@@ -23,8 +23,8 @@ router.post('/setup', authenticate, async (req, res) => {
     }
 
     const secret = speakeasy.generateSecret({
-      name: `MSK Intelligence (${users[0].email})`,
-      issuer: 'MSK Intelligence'
+      name: `ImagingMind (${users[0].email})`,
+      issuer: 'ImagingMind'
     });
 
     // Store secret (not yet enabled)
@@ -42,7 +42,7 @@ router.post('/setup', authenticate, async (req, res) => {
       message: 'Scan the QR code with your authenticator app, then verify with a code.'
     });
   } catch (err) {
-    console.error('[MSK] MFA setup error:', err);
+    console.error('[ImagingMind] MFA setup error:', err);
     res.status(500).json({ error: 'MFA setup failed' });
   }
 });
@@ -88,7 +88,7 @@ router.post('/verify-setup', authenticate, async (req, res) => {
       message: 'MFA enabled. Save your backup codes in a safe place.'
     });
   } catch (err) {
-    console.error('[MSK] MFA verify-setup error:', err);
+    console.error('[ImagingMind] MFA verify-setup error:', err);
     res.status(500).json({ error: 'MFA verification failed' });
   }
 });
@@ -160,7 +160,7 @@ router.post('/challenge', async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('[MSK] MFA challenge error:', err);
+    console.error('[ImagingMind] MFA challenge error:', err);
     res.status(500).json({ error: 'MFA challenge failed' });
   }
 });
@@ -226,7 +226,7 @@ router.post('/backup', async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('[MSK] MFA backup error:', err);
+    console.error('[ImagingMind] MFA backup error:', err);
     res.status(500).json({ error: 'Backup code validation failed' });
   }
 });
@@ -260,7 +260,7 @@ router.post('/disable', authenticate, async (req, res) => {
 
     res.json({ success: true, message: 'MFA disabled' });
   } catch (err) {
-    console.error('[MSK] MFA disable error:', err);
+    console.error('[ImagingMind] MFA disable error:', err);
     res.status(500).json({ error: 'Failed to disable MFA' });
   }
 });

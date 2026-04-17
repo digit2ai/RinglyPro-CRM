@@ -42,7 +42,7 @@ router.get('/exercises', async (req, res) => {
 
     res.json({ success: true, data: exercises, count: parseInt(countResult[0].total) });
   } catch (err) {
-    console.error('[MSK] Exercise library error:', err);
+    console.error('[ImagingMind] Exercise library error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -101,7 +101,7 @@ router.post('/programs', async (req, res) => {
 
     res.status(201).json({ success: true, data: { ...program, exercises: programExercises } });
   } catch (err) {
-    console.error('[MSK] Create HEP program error:', err);
+    console.error('[ImagingMind] Create HEP program error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -140,7 +140,7 @@ router.get('/programs/:id', async (req, res) => {
 
     res.json({ success: true, data: { ...program, exercises } });
   } catch (err) {
-    console.error('[MSK] Program detail error:', err);
+    console.error('[ImagingMind] Program detail error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -184,7 +184,7 @@ router.put('/programs/:id', async (req, res) => {
 
     res.json({ success: true, data: updated[0] });
   } catch (err) {
-    console.error('[MSK] Update program error:', err);
+    console.error('[ImagingMind] Update program error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -217,7 +217,7 @@ router.post('/sessions', async (req, res) => {
 
     res.status(201).json({ success: true, data: sessionRows[0] });
   } catch (err) {
-    console.error('[MSK] Log session error:', err);
+    console.error('[ImagingMind] Log session error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -278,7 +278,7 @@ router.get('/compliance/:programId', async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('[MSK] Compliance error:', err);
+    console.error('[ImagingMind] Compliance error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -336,7 +336,7 @@ router.get('/my-program', async (req, res) => {
 
     res.json({ success: true, data: { ...program, exercises, recentSessions: sessions } });
   } catch (err) {
-    console.error('[MSK] My program error:', err);
+    console.error('[ImagingMind] My program error:', err);
     res.status(500).json({ error: err.message });
   }
 });

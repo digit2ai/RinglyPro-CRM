@@ -41,7 +41,7 @@ export default function VoiceIntake() {
       const tokenRes = await fetch('/msk/api/v1/voice/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dynamicVariables: { platform: 'MSK Intelligence Web' } })
+        body: JSON.stringify({ dynamicVariables: { platform: 'ImagingMind Web' } })
       });
 
       if (!tokenRes.ok) {
@@ -98,7 +98,7 @@ export default function VoiceIntake() {
   const statusConfig = {
     [STATUS.IDLE]: { color: 'bg-dark-600', text: 'Ready to start', pulse: false },
     [STATUS.CONNECTING]: { color: 'bg-yellow-500', text: 'Connecting...', pulse: true },
-    [STATUS.CONNECTED]: { color: 'bg-green-500', text: isSpeaking ? 'Dr. MSK is speaking...' : 'Listening...', pulse: true },
+    [STATUS.CONNECTED]: { color: 'bg-green-500', text: isSpeaking ? 'Dr. ImagingMind is speaking...' : 'Listening...', pulse: true },
     [STATUS.ERROR]: { color: 'bg-red-500', text: 'Error', pulse: false },
     [STATUS.ENDED]: { color: 'bg-msk-500', text: 'Conversation ended', pulse: false }
   };
@@ -113,7 +113,7 @@ export default function VoiceIntake() {
           <Link to="/" className="flex items-center gap-5">
             <img src={mskLogo} alt="Digit2AI" className="h-20 w-auto object-contain" />
             <div className="ml-1">
-              <h1 className="text-lg font-bold text-white">MSK Intelligence</h1>
+              <h1 className="text-lg font-bold text-white">ImagingMind</h1>
               <p className="text-xs text-msk-400">AI Voice Intake</p>
             </div>
           </Link>
@@ -224,7 +224,7 @@ export default function VoiceIntake() {
                           : 'bg-dark-800 text-dark-200 rounded-bl-sm'
                       }`}>
                         <p className="text-[10px] uppercase tracking-wider opacity-50 mb-1">
-                          {entry.role === 'user' ? 'You' : 'Dr. MSK'}
+                          {entry.role === 'user' ? 'You' : 'Dr. ImagingMind'}
                         </p>
                         {entry.text}
                       </div>

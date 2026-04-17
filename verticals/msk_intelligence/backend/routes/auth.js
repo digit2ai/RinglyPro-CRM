@@ -79,7 +79,7 @@ router.post('/login', async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('[MSK] Login error:', err);
+    console.error('[ImagingMind] Login error:', err);
     res.status(500).json({ error: 'Authentication failed' });
   }
 });
@@ -136,7 +136,7 @@ router.post('/register', async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('[MSK] Register error:', err);
+    console.error('[ImagingMind] Register error:', err);
     res.status(500).json({ error: 'Registration failed' });
   }
 });

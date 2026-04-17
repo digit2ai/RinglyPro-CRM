@@ -95,7 +95,7 @@ router.post('/intake', async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('[MSK] Voice intake error:', err);
+    console.error('[ImagingMind] Voice intake error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -105,9 +105,9 @@ router.post('/intake', async (req, res) => {
  */
 router.get('/agent-prompt', (req, res) => {
   res.json({
-    agentName: 'Dr. MSK',
+    agentName: 'Dr. ImagingMind',
     language: 'en',
-    systemPrompt: `You are Dr. MSK, the AI intake specialist for MSK Intelligence — a premium musculoskeletal diagnostics platform.
+    systemPrompt: `You are Dr. ImagingMind, the AI intake specialist for ImagingMind — a premium musculoskeletal diagnostics platform.
 
 Your role is to conduct a structured medical intake for patients calling about musculoskeletal complaints (bone, joint, muscle, tendon, ligament injuries).
 
@@ -119,7 +119,7 @@ Your role is to conduct a structured medical intake for patients calling about m
 
 ## Intake Flow
 
-1. GREETING: "Thank you for calling MSK Intelligence, the remote musculoskeletal diagnostics platform. I'm here to help you get started with a specialist evaluation. May I have your name?"
+1. GREETING: "Thank you for calling ImagingMind, the remote musculoskeletal diagnostics platform. I'm here to help you get started with a specialist evaluation. May I have your name?"
 
 2. PAIN LOCATION: "Can you describe where you're experiencing pain or discomfort? Be as specific as possible — for example, 'right knee, inner side' or 'lower back, left side.'"
 
@@ -144,7 +144,7 @@ Your role is to conduct a structured medical intake for patients calling about m
 
 10. CLOSING: "Thank you for providing that information. I've created your case file. A musculoskeletal specialist will review your intake and determine the best next step — whether that's ordering imaging, scheduling a video consultation, or both. You'll receive an update within [timeframe based on urgency]. Is there anything else you'd like to add?"
 
-## Data to Capture (POST to /msk/api/v1/voice/intake)
+## Data to Capture (POST to /imagingmind/api/v1/voice/intake)
 - callerPhone
 - callerName
 - painLocation
@@ -189,14 +189,14 @@ router.post('/token', async (req, res) => {
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error('[MSK Voice] ElevenLabs token error:', response.status, errText);
+      console.error('[ImagingMind Voice] ElevenLabs token error:', response.status, errText);
       return res.status(response.status).json({ success: false, error: 'Failed to get voice token' });
     }
 
     const data = await response.json();
     res.json({ success: true, signed_url: data.signed_url, agent_id: MSK_AGENT_ID });
   } catch (err) {
-    console.error('[MSK Voice] Token error:', err);
+    console.error('[ImagingMind Voice] Token error:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -221,14 +221,14 @@ router.post('/rachel-token', async (req, res) => {
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error('[MSK Voice] Rachel token error:', response.status, errText);
+      console.error('[ImagingMind Voice] Rachel token error:', response.status, errText);
       return res.status(response.status).json({ success: false, error: 'Failed to get Rachel token' });
     }
 
     const data = await response.json();
     res.json({ success: true, signed_url: data.signed_url, agent_id: RACHEL_AGENT_ID });
   } catch (err) {
-    console.error('[MSK Voice] Rachel token error:', err);
+    console.error('[ImagingMind Voice] Rachel token error:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -253,14 +253,14 @@ router.post('/image-analysis-presenter-token', async (req, res) => {
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error('[MSK Voice] Image analysis presenter token error:', response.status, errText);
+      console.error('[ImagingMind Voice] Image analysis presenter token error:', response.status, errText);
       return res.status(response.status).json({ success: false, error: 'Failed to get voice token' });
     }
 
     const data = await response.json();
     res.json({ success: true, signed_url: data.signed_url, agent_id: AGENT_ID });
   } catch (err) {
-    console.error('[MSK Voice] Image analysis presenter token error:', err);
+    console.error('[ImagingMind Voice] Image analysis presenter token error:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -404,7 +404,7 @@ router.post('/case-assistant-token', async (req, res) => {
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error('[MSK Voice] Case assistant token error:', response.status, errText);
+      console.error('[ImagingMind Voice] Case assistant token error:', response.status, errText);
       return res.status(response.status).json({ success: false, error: 'Failed to get voice token' });
     }
 
@@ -416,7 +416,7 @@ router.post('/case-assistant-token', async (req, res) => {
       dynamic_variables: dynamicVars
     });
   } catch (err) {
-    console.error('[MSK Voice] Case assistant token error:', err);
+    console.error('[ImagingMind Voice] Case assistant token error:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });

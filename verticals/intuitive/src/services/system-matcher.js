@@ -506,7 +506,7 @@ function computeRiskAssessment(p, results) {
     risks.push({ category: 'Volume', severity: 'high', description: 'Projected case volume may not justify system economics.', mitigation: 'Build referral network and surgeon pipeline before committing to capital purchase.' });
   }
   if (p.value_based_contract_pct > 30) {
-    risks.push({ category: 'Financial', severity: 'moderate', description: `${p.value_based_contract_pct}% value-based contracts. Per-case cost premium may impact margins under bundled payments.`, mitigation: 'Implement MSK Intelligence outcome tracking to demonstrate value-based ROI.' });
+    risks.push({ category: 'Financial', severity: 'moderate', description: `${p.value_based_contract_pct}% value-based contracts. Per-case cost premium may impact margins under bundled payments.`, mitigation: 'Implement ImagingMind outcome tracking to demonstrate value-based ROI.' });
   }
 
   const overallRisk = risks.some(r => r.severity === 'critical') ? 'critical' :

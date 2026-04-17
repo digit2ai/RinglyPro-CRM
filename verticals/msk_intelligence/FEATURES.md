@@ -1,6 +1,6 @@
-# MSK Intelligence — Platform Features
+# ImagingMind — Platform Features
 
-A complete reference for the 14 production features of the MSK Intelligence platform. Each feature is **live in production** at https://aiagent.ringlypro.com/msk/.
+A complete reference for the 14 production features of the ImagingMind platform. Each feature is **live in production** at https://aiagent.ringlypro.com/msk/.
 
 For each feature you will find:
 - **What it does** — plain-English description
@@ -12,15 +12,15 @@ For each feature you will find:
 ## 1. AI Voice Intake
 
 **Status:** Live
-**Tech:** ElevenLabs Conversational AI (Dr. MSK agent)
+**Tech:** ElevenLabs Conversational AI (Dr. ImagingMind agent)
 **Code:** `backend/routes/voice.js`, `frontend/src/pages/VoiceIntake.jsx`
 
 ### What it does
-A patient calls or opens the voice page and has a natural-language conversation with an AI doctor named **Dr. MSK**. The agent asks about pain location, severity, mechanism of injury, sport context, and prior history. At the end of the call, a structured patient case is automatically created in the database.
+A patient calls or opens the voice page and has a natural-language conversation with an AI doctor named **Dr. ImagingMind**. The agent asks about pain location, severity, mechanism of injury, sport context, and prior history. At the end of the call, a structured patient case is automatically created in the database.
 
 ### How it works
 1. The frontend uses the **`@11labs/client`** WebRTC SDK to open a real-time voice session with ElevenLabs.
-2. ElevenLabs runs a conversational agent prompt configured as **Dr. MSK**, a board-certified MSK specialist persona.
+2. ElevenLabs runs a conversational agent prompt configured as **Dr. ImagingMind**, a board-certified MSK specialist persona.
 3. As the conversation progresses, the agent extracts structured fields: `chiefComplaint`, `painLocation`, `injuryMechanism`, `severity`, `sportContext`, `urgency`.
 4. When the call ends, the frontend POSTs the extracted data to `POST /api/v1/voice/intake`.
 5. The backend creates an `msk_cases` record, generates a case number (`MSK-XXXXXXX`), and triggers the AI Triage Engine.
@@ -272,7 +272,7 @@ The platform speaks the universal language of healthcare data interoperability �
 4. **PDF Export** — `GET /api/v1/fhir/cases/:id/export/pdf` generates a professional PDF case report.
 
 ### Why it matters
-- **Hospital integration.** Any hospital using a modern EHR can pull MSK Intelligence reports directly into their system without manual data entry.
+- **Hospital integration.** Any hospital using a modern EHR can pull ImagingMind reports directly into their system without manual data entry.
 - **Insurance integration.** FHIR is the format insurers use for prior authorization and claims attachments.
 - **Compliance.** US Core profiles are required for ONC certification and Meaningful Use.
 - **Future-proof.** As the industry standardizes on FHIR R4, the platform is already there.
@@ -291,7 +291,7 @@ Generates a professional, printable diagnostic report PDF that looks like it cam
 ### How it works
 1. `GET /api/v1/fhir/cases/:id/export/pdf` triggers the report generator.
 2. The backend pulls the full case data: patient info, imaging files, finalized report, ROM measurements, PROM scores, AI copilot draft.
-3. Data is rendered into an HTML template with the MSK Intelligence letterhead.
+3. Data is rendered into an HTML template with the ImagingMind letterhead.
 4. The HTML is converted to PDF (current implementation can use `puppeteer`, `pdfkit`, or `html-pdf-node` — chosen at deployment time based on serverless constraints).
 5. The PDF is streamed back to the client with `Content-Type: application/pdf` and a descriptive filename.
 6. Every report generation is logged to `msk_audit_log` for HIPAA compliance.
@@ -340,7 +340,7 @@ The platform turns clinical activity into billable insurance claims automaticall
 **Code:** Throughout the schema (`tenant_id` foreign key) and middleware
 
 ### What it does
-A single deployment of the MSK Intelligence platform can host multiple completely separate organizations — a Philippines hospital network, a sports team in Brazil, and a workers' comp provider in Texas — without any of them seeing each other's data.
+A single deployment of the ImagingMind platform can host multiple completely separate organizations — a Philippines hospital network, a sports team in Brazil, and a workers' comp provider in Texas — without any of them seeing each other's data.
 
 ### How it works
 1. **Schema-level tenancy** — every table that contains user data has a `tenant_id` column (referenced from a `tenants` table with `name`, `domain`, `branding`, `settings`).
@@ -471,4 +471,4 @@ The platform is built from the ground up to meet **HIPAA Security Rule** require
 
 ---
 
-*MSK Intelligence is built and operated by **Digit2AI LLC**. Contact: mstagg@digit2ai.com*
+*ImagingMind is built and operated by **Digit2AI LLC**. Contact: mstagg@digit2ai.com*

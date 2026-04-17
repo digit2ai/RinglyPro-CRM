@@ -85,8 +85,8 @@ export default function Layout({ children, user, onLogout }) {
           <Link to="/dashboard" onClick={handleNavClick} className="flex items-center gap-3 min-w-0">
             <img src={mskLogo} alt="Digit2AI" className="h-12 w-auto object-contain drop-shadow-lg flex-shrink-0" />
             <div className="min-w-0">
-              <h1 className="text-base font-bold text-white leading-tight">MSK Intel</h1>
-              <p className="text-xs text-dark-400 truncate">Diagnostics</p>
+              <h1 className="text-base font-bold text-white leading-tight">ImagingMind</h1>
+              <p className="text-xs text-dark-400 truncate">AI Diagnostics</p>
             </div>
           </Link>
           {/* Close button on mobile */}

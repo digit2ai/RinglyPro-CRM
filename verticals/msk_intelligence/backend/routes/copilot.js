@@ -147,7 +147,7 @@ router.post('/generate-report', authenticate, authorize('admin', 'radiologist'),
         : 'Rule-based draft report ready for review (add ANTHROPIC_API_KEY for AI generation)'
     });
   } catch (err) {
-    console.error('[MSK Copilot] generate-report error:', err);
+    console.error('[ImagingMind Copilot] generate-report error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -190,7 +190,7 @@ router.put('/finalize-report/:reportId', authenticate, authorize('admin', 'radio
 
     res.json({ success: true, data: result[0] });
   } catch (err) {
-    console.error('[MSK Copilot] finalize error:', err);
+    console.error('[ImagingMind Copilot] finalize error:', err);
     res.status(500).json({ error: err.message });
   }
 });

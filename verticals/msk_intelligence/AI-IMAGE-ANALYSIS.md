@@ -1,8 +1,8 @@
-# MSK Intelligence — AI-Powered Medical Image Analysis
+# ImagingMind — AI-Powered Medical Image Analysis
 
 ## What It Is
 
-MSK Intelligence includes a built-in AI image analysis engine that reads uploaded medical images — X-rays, CT scans, MRIs, and ultrasound images — and generates a structured preliminary diagnostic report in seconds. The system acts as a tireless first reader that processes every uploaded image immediately, giving radiologists a head start and giving patients faster answers.
+ImagingMind includes a built-in AI image analysis engine that reads uploaded medical images — X-rays, CT scans, MRIs, and ultrasound images — and generates a structured preliminary diagnostic report in seconds. The system acts as a tireless first reader that processes every uploaded image immediately, giving radiologists a head start and giving patients faster answers.
 
 When a patient or provider uploads an image to a case, the AI engine automatically:
 
@@ -24,11 +24,11 @@ All of this happens automatically, in the background, within seconds of upload. 
 
 ### Step 1: Upload
 
-The patient (or their provider) opens their case on MSK Intelligence and drags an X-ray or scan image into the upload area. Standard image formats are supported: JPEG, PNG, and DICOM. Files up to 500MB are accepted.
+The patient (or their provider) opens their case on ImagingMind and drags an X-ray or scan image into the upload area. Standard image formats are supported: JPEG, PNG, and DICOM. Files up to 500MB are accepted.
 
 ### Step 2: Instant Analysis
 
-Within 10-30 seconds, the image is analyzed by the MSK Intelligence AI engine. A green "AI Analyzed" badge appears on the image thumbnail. The patient can click the image to see the full analysis.
+Within 10-30 seconds, the image is analyzed by the ImagingMind AI engine. A green "AI Analyzed" badge appears on the image thumbnail. The patient can click the image to see the full analysis.
 
 ### Step 3: View Results
 
@@ -70,7 +70,7 @@ Every AI-generated analysis follows the same structure: findings, impression, ab
 
 ### 4. Clinical Context Integration
 
-Unlike standalone image analysis tools, MSK Intelligence feeds the image findings into the full clinical picture. The AI knows the patient's chief complaint, mechanism of injury, pain severity, ROM measurements, and outcome scores when it analyzes the image. This means findings are interpreted in context — a knee effusion in a trauma patient is flagged differently than the same finding in a chronic pain patient.
+Unlike standalone image analysis tools, ImagingMind feeds the image findings into the full clinical picture. The AI knows the patient's chief complaint, mechanism of injury, pain severity, ROM measurements, and outcome scores when it analyzes the image. This means findings are interpreted in context — a knee effusion in a trauma patient is flagged differently than the same finding in a chronic pain patient.
 
 ### 5. ICD-10 Code Suggestions
 
@@ -90,7 +90,7 @@ Every AI analysis is timestamped, stored permanently, and linked to the case tim
 
 ### 1. Answers in Minutes, Not Weeks
 
-In traditional healthcare, a patient gets an X-ray and then waits 3-14 days for a radiologist to read it and send a report to their doctor. With MSK Intelligence, the AI analysis is available within seconds of upload. The patient can see preliminary findings immediately while waiting for the radiologist to review and finalize.
+In traditional healthcare, a patient gets an X-ray and then waits 3-14 days for a radiologist to read it and send a report to their doctor. With ImagingMind, the AI analysis is available within seconds of upload. The patient can see preliminary findings immediately while waiting for the radiologist to review and finalize.
 
 ### 2. Plain-Language Explanations
 
@@ -276,12 +276,12 @@ Additional views recommended for surgical planning.
 
 ## Summary
 
-MSK Intelligence AI Image Analysis transforms every uploaded medical image into a structured diagnostic starting point — automatically, in seconds, with full clinical context. It does not replace the radiologist. It makes the radiologist faster, more thorough, and more consistent. For patients, it means faster answers, clearer explanations, and access to specialist-level imaging interpretation regardless of where they live.
+ImagingMind AI Image Analysis transforms every uploaded medical image into a structured diagnostic starting point — automatically, in seconds, with full clinical context. It does not replace the radiologist. It makes the radiologist faster, more thorough, and more consistent. For patients, it means faster answers, clearer explanations, and access to specialist-level imaging interpretation regardless of where they live.
 
 Every image. Every case. Analyzed immediately.
 
 ---
 
-*MSK Intelligence is built and operated by Digit2AI LLC.*
+*ImagingMind is built and operated by Digit2AI LLC.*
 *AI-assisted preliminary reads must be reviewed and finalized by a qualified radiologist.*
 *Contact: mstagg@digit2ai.com*

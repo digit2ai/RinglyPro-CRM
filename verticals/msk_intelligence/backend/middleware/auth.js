@@ -5,7 +5,7 @@ const { Sequelize } = require('sequelize');
 
 const JWT_SECRET = process.env.MSK_JWT_SECRET || process.env.JWT_SECRET;
 if (!JWT_SECRET) {
-  console.error('FATAL: MSK_JWT_SECRET is not set. MSK Intelligence auth will not function.');
+  console.error('FATAL: MSK_JWT_SECRET is not set. ImagingMind auth will not function.');
 }
 
 const dbUrl = process.env.DATABASE_URL || 'postgres://localhost:5432/msk_dev';
@@ -88,7 +88,7 @@ async function logAudit(userId, action, resourceType, resourceId, req) {
     });
   } catch (err) {
     // Don't block requests for audit failures
-    console.error('[MSK] Audit log error:', err.message);
+    console.error('[ImagingMind] Audit log error:', err.message);
   }
 }
 

@@ -65,7 +65,7 @@ router.get('/', async (req, res) => {
 
     res.json({ success: true, data: cases, count: parseInt(countResult[0].total) });
   } catch (err) {
-    console.error('[MSK] Cases list error:', err);
+    console.error('[ImagingMind] Cases list error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -139,7 +139,7 @@ router.get('/:id', async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('[MSK] Case detail error:', err);
+    console.error('[ImagingMind] Case detail error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -200,7 +200,7 @@ router.post('/', async (req, res) => {
 
     res.status(201).json({ success: true, data: newCase });
   } catch (err) {
-    console.error('[MSK] Create case error:', err);
+    console.error('[ImagingMind] Create case error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -251,7 +251,7 @@ router.put('/:id', async (req, res) => {
 
     res.json({ success: true, data: result[0] });
   } catch (err) {
-    console.error('[MSK] Update case error:', err);
+    console.error('[ImagingMind] Update case error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -291,7 +291,7 @@ router.post('/:id/triage', async (req, res) => {
 
     res.json({ success: true, data: triageResult });
   } catch (err) {
-    console.error('[MSK] Triage error:', err);
+    console.error('[ImagingMind] Triage error:', err);
     res.status(500).json({ error: err.message });
   }
 });

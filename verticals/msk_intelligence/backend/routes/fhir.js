@@ -16,7 +16,7 @@ function buildPatientResource(user, patient) {
       lastUpdated: patient.updated_at || patient.created_at
     },
     identifier: [{
-      system: 'urn:msk-intelligence:patient-id',
+      system: 'urn:imagingmind:patient-id',
       value: String(patient.id)
     }],
     active: true,
@@ -33,19 +33,19 @@ function buildPatientResource(user, patient) {
     birthDate: patient.date_of_birth ? patient.date_of_birth.toISOString?.().slice(0, 10) || String(patient.date_of_birth).slice(0, 10) : undefined,
     extension: [
       ...(patient.sport ? [{
-        url: 'urn:msk-intelligence:sport',
+        url: 'urn:imagingmind:sport',
         valueString: patient.sport
       }] : []),
       ...(patient.team ? [{
-        url: 'urn:msk-intelligence:team',
+        url: 'urn:imagingmind:team',
         valueString: patient.team
       }] : []),
       ...(patient.height_cm ? [{
-        url: 'urn:msk-intelligence:height-cm',
+        url: 'urn:imagingmind:height-cm',
         valueDecimal: parseFloat(patient.height_cm)
       }] : []),
       ...(patient.weight_kg ? [{
-        url: 'urn:msk-intelligence:weight-kg',
+        url: 'urn:imagingmind:weight-kg',
         valueDecimal: parseFloat(patient.weight_kg)
       }] : [])
     ]
@@ -61,7 +61,7 @@ function buildDiagnosticReport(report) {
       lastUpdated: report.updated_at || report.created_at
     },
     identifier: [{
-      system: 'urn:msk-intelligence:report-id',
+      system: 'urn:imagingmind:report-id',
       value: String(report.id)
     }],
     status: mapReportStatus(report.status),
@@ -76,7 +76,7 @@ function buildDiagnosticReport(report) {
       coding: [{
         system: 'http://loinc.org',
         code: '36643-5',
-        display: 'MSK Diagnostic Report'
+        display: 'ImagingMind Diagnostic Report'
       }],
       text: report.report_type || 'diagnostic'
     },
@@ -97,23 +97,23 @@ function buildDiagnosticReport(report) {
     })) : [],
     extension: [
       ...(report.severity_grade ? [{
-        url: 'urn:msk-intelligence:severity-grade',
+        url: 'urn:imagingmind:severity-grade',
         valueString: report.severity_grade
       }] : []),
       ...(report.recovery_timeline_weeks ? [{
-        url: 'urn:msk-intelligence:recovery-timeline-weeks',
+        url: 'urn:imagingmind:recovery-timeline-weeks',
         valueInteger: parseInt(report.recovery_timeline_weeks)
       }] : []),
       ...(report.recovery_description ? [{
-        url: 'urn:msk-intelligence:recovery-description',
+        url: 'urn:imagingmind:recovery-description',
         valueString: report.recovery_description
       }] : []),
       ...(report.performance_impact ? [{
-        url: 'urn:msk-intelligence:performance-impact',
+        url: 'urn:imagingmind:performance-impact',
         valueString: report.performance_impact
       }] : []),
       ...(report.return_to_play_recommendation ? [{
-        url: 'urn:msk-intelligence:return-to-play',
+        url: 'urn:imagingmind:return-to-play',
         valueString: report.return_to_play_recommendation
       }] : [])
     ]
@@ -126,7 +126,7 @@ function buildConditionFromCase(caseData) {
     id: `case-${caseData.id}`,
     meta: { lastUpdated: caseData.updated_at || caseData.created_at },
     identifier: [{
-      system: 'urn:msk-intelligence:case-number',
+      system: 'urn:imagingmind:case-number',
       value: caseData.case_number
     }],
     clinicalStatus: {
@@ -157,15 +157,15 @@ function buildConditionFromCase(caseData) {
     } : undefined,
     extension: [
       ...(caseData.injury_mechanism ? [{
-        url: 'urn:msk-intelligence:injury-mechanism',
+        url: 'urn:imagingmind:injury-mechanism',
         valueString: caseData.injury_mechanism
       }] : []),
       ...(caseData.sport_context ? [{
-        url: 'urn:msk-intelligence:sport-context',
+        url: 'urn:imagingmind:sport-context',
         valueString: caseData.sport_context
       }] : []),
       ...(caseData.urgency ? [{
-        url: 'urn:msk-intelligence:urgency',
+        url: 'urn:imagingmind:urgency',
         valueString: caseData.urgency
       }] : [])
     ]
@@ -230,7 +230,7 @@ router.get('/Patient/:id', authenticate, async (req, res) => {
     res.set('Content-Type', 'application/fhir+json');
     res.json(resource);
   } catch (err) {
-    console.error('[MSK-FHIR] Patient error:', err);
+    console.error('[ImagingMind-FHIR] Patient error:', err);
     res.status(500).json({
       resourceType: 'OperationOutcome',
       issue: [{ severity: 'error', code: 'exception', diagnostics: err.message }]
@@ -262,7 +262,7 @@ router.get('/DiagnosticReport/:id', authenticate, async (req, res) => {
     res.set('Content-Type', 'application/fhir+json');
     res.json(resource);
   } catch (err) {
-    console.error('[MSK-FHIR] DiagnosticReport error:', err);
+    console.error('[ImagingMind-FHIR] DiagnosticReport error:', err);
     res.status(500).json({
       resourceType: 'OperationOutcome',
       issue: [{ severity: 'error', code: 'exception', diagnostics: err.message }]
@@ -321,13 +321,13 @@ router.get('/\\$export', authenticate, async (req, res) => {
 
     // Build Bundle
     const entries = [
-      { fullUrl: `urn:msk-intelligence:Patient/${patientId}`, resource: patientResource },
+      { fullUrl: `urn:imagingmind:Patient/${patientId}`, resource: patientResource },
       ...conditionResources.map(c => ({
-        fullUrl: `urn:msk-intelligence:Condition/${c.id}`,
+        fullUrl: `urn:imagingmind:Condition/${c.id}`,
         resource: c
       })),
       ...reportResources.map(r => ({
-        fullUrl: `urn:msk-intelligence:DiagnosticReport/${r.id}`,
+        fullUrl: `urn:imagingmind:DiagnosticReport/${r.id}`,
         resource: r
       }))
     ];
@@ -346,7 +346,7 @@ router.get('/\\$export', authenticate, async (req, res) => {
     res.set('Content-Type', 'application/fhir+json');
     res.json(bundle);
   } catch (err) {
-    console.error('[MSK-FHIR] $export error:', err);
+    console.error('[ImagingMind-FHIR] $export error:', err);
     res.status(500).json({
       resourceType: 'OperationOutcome',
       issue: [{ severity: 'error', code: 'exception', diagnostics: err.message }]
@@ -421,7 +421,7 @@ router.get('/cases/:id/export/pdf', authenticate, async (req, res) => {
     // ─── Build PDF ──────────────────────────────────────────────────────────────
     const doc = new PDFDocument({ size: 'LETTER', margins: { top: 50, bottom: 50, left: 60, right: 60 } });
 
-    const filename = `MSK-Case-${caseData.case_number || caseData.id}.pdf`;
+    const filename = `ImagingMind-Case-${caseData.case_number || caseData.id}.pdf`;
     res.set('Content-Type', 'application/pdf');
     res.set('Content-Disposition', `attachment; filename="${filename}"`);
     doc.pipe(res);
@@ -430,7 +430,7 @@ router.get('/cases/:id/export/pdf', authenticate, async (req, res) => {
 
     // ─── Letterhead ─────────────────────────────────────────────────────────────
     doc.fontSize(22).font('Helvetica-Bold').fillColor('#1a3c6e')
-      .text('MSK Intelligence', { align: 'center' });
+      .text('ImagingMind', { align: 'center' });
     doc.fontSize(10).font('Helvetica').fillColor('#555555')
       .text('Musculoskeletal Diagnostic Platform', { align: 'center' });
     doc.moveDown(0.3);
@@ -626,12 +626,12 @@ router.get('/cases/:id/export/pdf', authenticate, async (req, res) => {
       .stroke();
     doc.moveDown(0.4);
     doc.fontSize(8).font('Helvetica').fillColor('#999999')
-      .text(`Generated by MSK Intelligence on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`, { align: 'center' });
+      .text(`Generated by ImagingMind on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`, { align: 'center' });
     doc.text('This report is confidential and intended for authorized healthcare professionals only.', { align: 'center' });
 
     doc.end();
   } catch (err) {
-    console.error('[MSK-FHIR] PDF export error:', err);
+    console.error('[ImagingMind-FHIR] PDF export error:', err);
     if (!res.headersSent) {
       res.status(500).json({ error: err.message });
     }
