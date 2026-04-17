@@ -167,10 +167,10 @@ export default function Landing() {
               {
                 name: 'Solo',
                 target: '1-2 radiologists, small clinic',
-                price: '$499',
+                price: '$2,099',
                 period: '/month',
                 features: [
-                  'Up to 200 AI-analyzed studies/mo',
+                  'Up to 4,000 AI-analyzed studies/mo',
                   'Patient portal',
                   'Secure messaging',
                   'Appointment scheduling',
@@ -184,10 +184,10 @@ export default function Landing() {
               {
                 name: 'Practice',
                 target: '3-10 radiologists, mid-size group',
-                price: '$999',
+                price: '$9,999',
                 period: '/month',
                 features: [
-                  'Up to 1,000 AI-analyzed studies/mo',
+                  'Up to 20,000 AI-analyzed studies/mo',
                   'Everything in Solo, plus:',
                   'RPM billing (CPT 99453/99454)',
                   'FHIR R4 export',
@@ -202,8 +202,8 @@ export default function Landing() {
               {
                 name: 'Enterprise',
                 target: 'Hospital networks, 10+ sites',
-                price: '$1,999',
-                period: '/month',
+                price: 'Custom',
+                period: '',
                 features: [
                   'Unlimited AI-analyzed studies',
                   'Everything in Practice, plus:',
