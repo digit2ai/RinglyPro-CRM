@@ -17,12 +17,12 @@ export default function Landing() {
         <div className="absolute inset-0 bg-gradient-to-r from-dark-950/95 via-dark-950/80 to-dark-950/40" />
         <div className="absolute inset-0 bg-gradient-to-t from-dark-950 via-transparent to-transparent" />
 
-        <nav className="relative z-10 max-w-7xl mx-auto px-4 lg:px-6 py-4 lg:py-6 flex items-center justify-between gap-3">
-          <div className="flex flex-col items-center min-w-0 flex-shrink">
-            <img src={mskLogo} alt="ImagingMind" className="h-40 sm:h-56 lg:h-80 w-auto object-contain drop-shadow-2xl flex-shrink-0" />
-            <div className="min-w-0 -mt-8 sm:-mt-12 lg:-mt-16 text-center">
-              <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-white">ImagingMind</h1>
-              <p className="text-sm sm:text-base text-msk-400">AI Diagnostics Platform</p>
+        <nav className="relative z-10 max-w-7xl mx-auto px-4 lg:px-6 py-3 lg:py-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0 flex-shrink">
+            <img src={mskLogo} alt="ImagingMind" className="h-12 sm:h-14 lg:h-16 w-auto object-contain drop-shadow-xl flex-shrink-0" />
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-white leading-tight">ImagingMind</h1>
+              <p className="text-xs sm:text-sm text-msk-400">AI Diagnostics Platform</p>
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
