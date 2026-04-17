@@ -170,4 +170,18 @@ router.get('/me', authenticate, async (req, res) => {
   }
 });
 
+// Admin: promote user role (requires API key)
+router.post('/promote', async (req, res) => {
+  try {
+    const { email, role, specialty, credentials, apiKey } = req.body;
+    if (apiKey !== (process.env.WEBHOOK_API_KEY || 'admin-key')) return res.status(403).json({ error: 'Forbidden' });
+    if (!email || !role) return res.status(400).json({ error: 'email and role required' });
+    await sequelize.query(`UPDATE msk_users SET role = $1 WHERE email = $2`, { bind: [role, email] });
+    if (specialty) await sequelize.query(`UPDATE msk_users SET specialty = $1 WHERE email = $2`, { bind: [specialty, email] });
+    if (credentials) await sequelize.query(`UPDATE msk_users SET credentials = $1 WHERE email = $2`, { bind: [credentials, email] });
+    const [users] = await sequelize.query(`SELECT id, email, role, first_name, last_name, specialty, credentials FROM msk_users WHERE email = $1`, { bind: [email] });
+    res.json({ success: true, user: users[0] });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 module.exports = router;
