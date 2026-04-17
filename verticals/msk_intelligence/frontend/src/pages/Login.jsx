@@ -50,12 +50,11 @@ export default function Login({ onLogin }) {
   }
 
   return (
-    <div className="min-h-screen bg-dark-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-dark-950 flex flex-col items-center justify-center p-4 relative">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex flex-col items-center mb-6">
-            <img src={mskLogo} alt="ImagingMind" className="h-44 w-auto object-contain drop-shadow-2xl" />
-            <div className="text-center -mt-4">
+            <div className="text-center">
               <h1 className="text-3xl font-bold text-white">ImagingMind</h1>
               <p className="text-sm text-msk-400">AI Diagnostics Platform</p>
             </div>
@@ -124,6 +123,12 @@ export default function Login({ onLogin }) {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Powered by — bottom of page */}
+      <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-2">
+        <span className="text-[10px] tracking-[3px] uppercase text-white/30 font-mono">Powered by</span>
+        <img src={mskLogo} alt="Digit2ai" className="h-16 w-auto object-contain opacity-70" />
       </div>
     </div>
   );
