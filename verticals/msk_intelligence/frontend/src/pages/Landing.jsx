@@ -37,6 +37,16 @@ export default function Landing() {
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 lg:px-6 py-16 lg:py-36">
           <div className="max-w-3xl">
+            {/* Demo Play Button */}
+            <a href="/imagingmind-demo.html" className="group inline-flex items-center gap-3 mb-6 sm:mb-8">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-msk-400 to-msk-600 border-2 border-msk-300/50 flex items-center justify-center shadow-lg shadow-msk-500/30 group-hover:shadow-msk-500/50 group-hover:scale-105 transition-all duration-300">
+                <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </div>
+              <span className="text-msk-400 text-sm sm:text-base font-medium group-hover:text-msk-300 transition-colors">Watch AI Demo</span>
+            </a>
+
             <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-msk-600/10 border border-msk-600/20 text-msk-400 text-xs sm:text-sm font-medium mb-6 sm:mb-8">
               <span className="w-2 h-2 rounded-full bg-msk-500 animate-pulse" />
               Remote Musculoskeletal Intelligence
