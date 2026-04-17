@@ -167,7 +167,7 @@ export default function Landing() {
               {
                 name: 'Solo',
                 target: '1-2 radiologists, small clinic',
-                price: '$1,500',
+                price: '$299',
                 period: '/month',
                 features: [
                   'Up to 200 AI-analyzed studies/mo',
@@ -184,7 +184,7 @@ export default function Landing() {
               {
                 name: 'Practice',
                 target: '3-10 radiologists, mid-size group',
-                price: '$3,500',
+                price: '$699',
                 period: '/month',
                 features: [
                   'Up to 1,000 AI-analyzed studies/mo',
@@ -202,7 +202,7 @@ export default function Landing() {
               {
                 name: 'Enterprise',
                 target: 'Hospital networks, 10+ sites',
-                price: '$8,000+',
+                price: '$1,299',
                 period: '/month',
                 features: [
                   'Unlimited AI-analyzed studies',
