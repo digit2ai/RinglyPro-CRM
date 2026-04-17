@@ -69,6 +69,21 @@ router.get('/api/v1/imaging/showcase/:fileId', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// Public: list imaging files for a case (for demo pages to discover file IDs)
+router.get('/api/v1/imaging/showcase/case/:caseId', async (req, res) => {
+  try {
+    const [files] = await sequelize.query(
+      `SELECT id, file_name, file_type, mime_type, file_size_bytes,
+              (file_data IS NOT NULL) as has_data,
+              (storage_path IS NOT NULL) as has_disk,
+              ai_analyzed_at, created_at
+       FROM msk_imaging_files WHERE case_id = $1 ORDER BY id`,
+      { bind: [req.params.caseId] }
+    );
+    res.json({ success: true, files });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 router.use('/api/v1/auth', authRoutes);
 router.use('/api/v1/cases', authenticate, caseRoutes);
 router.use('/api/v1/patients', authenticate, patientRoutes);
