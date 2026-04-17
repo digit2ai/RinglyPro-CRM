@@ -18,12 +18,9 @@ export default function Landing() {
         <div className="absolute inset-0 bg-gradient-to-t from-dark-950 via-transparent to-transparent" />
 
         <nav className="relative z-10 max-w-7xl mx-auto px-4 lg:px-6 py-3 lg:py-4 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0 flex-shrink">
-            <img src={mskLogo} alt="ImagingMind" className="h-12 sm:h-14 lg:h-16 w-auto object-contain drop-shadow-xl flex-shrink-0" />
-            <div className="min-w-0">
-              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-white leading-tight">ImagingMind</h1>
-              <p className="text-xs sm:text-sm text-msk-400">AI Diagnostics Platform</p>
-            </div>
+          <div className="flex items-center gap-2 min-w-0 flex-shrink">
+            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-white leading-tight">ImagingMind</h1>
+            <span className="text-xs sm:text-sm text-msk-400 hidden sm:inline">| AI Diagnostics</span>
           </div>
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
             <Link to="/login" className="text-dark-300 hover:text-white transition-colors font-medium text-sm sm:text-base">
@@ -280,15 +277,15 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-dark-800 py-12">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <img src={mskLogo} alt="Digit2AI" className="h-16 w-auto object-contain" />
-            <span className="text-dark-400 text-sm">ImagingMind by RinglyPro</span>
-          </div>
+      <footer className="border-t border-dark-800 py-16">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col items-center gap-6">
           <p className="text-dark-500 text-sm">
             HIPAA Compliant | Encrypted | Board-Certified Specialists
           </p>
+          <div className="flex flex-col items-center gap-3 mt-4">
+            <span className="text-[11px] tracking-[3px] uppercase text-white/25 font-mono">Powered by</span>
+            <img src={mskLogo} alt="Digit2ai" className="h-28 sm:h-36 lg:h-44 w-auto object-contain opacity-80" />
+          </div>
         </div>
       </footer>
     </div>
