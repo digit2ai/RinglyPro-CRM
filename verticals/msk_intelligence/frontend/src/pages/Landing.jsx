@@ -120,29 +120,29 @@ export default function Landing() {
       <section className="max-w-7xl mx-auto px-4 lg:px-6 py-16 lg:py-24">
         <h3 className="text-2xl sm:text-3xl font-bold text-white text-center mb-4">How It Works</h3>
         <p className="text-dark-400 text-center mb-12 lg:mb-16 max-w-xl mx-auto px-4">
-          From intake to diagnosis in a streamlined, AI-orchestrated workflow
+          Upload. Analyze. Report. In minutes, not days.
         </p>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-8">
           {[
             {
-              step: '01', title: 'Intake',
-              desc: 'Call our AI receptionist or submit online. We capture your symptoms, injury history, and sport context.',
+              step: '01', title: 'Upload',
+              desc: 'Patient uploads X-rays directly through the web portal. Case details, chief complaint, and injury context are captured simultaneously.',
               color: 'from-blue-500 to-blue-600'
             },
             {
-              step: '02', title: 'AI Triage',
-              desc: 'Our decision engine determines if imaging is needed, recommends specific protocols, and routes your case.',
+              step: '02', title: 'AI Analysis',
+              desc: 'ImagingMind AI reads every image automatically. Structured findings, impressions, abnormality detection, and ICD-10 coding generated in seconds.',
               color: 'from-purple-500 to-purple-600'
             },
             {
-              step: '03', title: 'Specialist Review',
-              desc: 'A board-certified MSK radiologist reviews your imaging with advanced annotation tools.',
+              step: '03', title: 'AI Copilot Report',
+              desc: 'The platform creates a draft diagnostic report. Clinicians review, edit, and finalize with AI-assisted annotations and structured formatting.',
               color: 'from-cyan-500 to-cyan-600'
             },
             {
-              step: '04', title: 'Report & Recovery',
-              desc: 'Receive a detailed diagnostic report with recovery timeline, return-to-play guidance, and sport-specific analysis.',
+              step: '04', title: 'Export & Deliver',
+              desc: 'Export a professional PDF report with HIPAA compliance. Full audit trail with timestamps for uploads, analysis, and final approval. EMR-ready.',
               color: 'from-green-500 to-green-600'
             }
           ].map((item, i) => (
