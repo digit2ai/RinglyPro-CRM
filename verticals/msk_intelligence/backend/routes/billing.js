@@ -4,23 +4,43 @@ const express = require('express');
 const router = express.Router();
 const { sequelize } = require('../middleware/auth');
 
-// Pricing — $99/mo base + metered per-image
+// Pricing — $99/mo base + metered per-image (volume-tiered)
 const PLATFORM_BASE = { name: 'ImagingMind Platform', cents: 9900, billing: 'monthly', description: 'Full platform access — all 6 modalities, AI Copilot, Lina, portal, messaging, billing tools' };
 
+// Per-study rates in cents — tiered by monthly volume
+// Starter: <1,000 studies/mo (70% margin)
+// Growth: 1,000-10,000 studies/mo (50% margin)
+// Scale: 10,000+ studies/mo (40% margin)
 const PER_STUDY_CENTS = {
-  'X-Ray':       5,   // $0.05
-  'CT':          43,  // $0.43
-  'MRI':         43,  // $0.43
-  'Mammography': 10,  // $0.10
-  'DEXA':        5,   // $0.05
-  'Dental':      5,   // $0.05
-  'Ultrasound':  10,  // $0.10
-  'PET':         43   // $0.43
+  starter: { // <1,000 studies/mo
+    'X-Ray': 16, 'CT': 89, 'MRI': 89, 'Mammography': 26,
+    'DEXA': 16, 'Dental': 16, 'Ultrasound': 26, 'PET': 89
+  },
+  growth: { // 1,000-10,000 studies/mo
+    'X-Ray': 10, 'CT': 54, 'MRI': 54, 'Mammography': 16,
+    'DEXA': 10, 'Dental': 10, 'Ultrasound': 16, 'PET': 54
+  },
+  scale: { // 10,000+ studies/mo
+    'X-Ray': 8, 'CT': 45, 'MRI': 45, 'Mammography': 13,
+    'DEXA': 8, 'Dental': 8, 'Ultrasound': 13, 'PET': 45
+  }
 };
 
-// Legacy tiers kept for backward compatibility
+function getTierForVolume(monthlyStudies) {
+  if (monthlyStudies >= 10000) return 'scale';
+  if (monthlyStudies >= 1000) return 'growth';
+  return 'starter';
+}
+
+function getStudyRate(modality, monthlyVolume) {
+  const tier = getTierForVolume(monthlyVolume);
+  return PER_STUDY_CENTS[tier][modality] || PER_STUDY_CENTS[tier]['X-Ray'];
+}
+
 const PRICING_TIERS = {
-  platform: { name: PLATFORM_BASE.name, minCents: PLATFORM_BASE.cents, maxCents: PLATFORM_BASE.cents, description: PLATFORM_BASE.description, billing: 'monthly' }
+  starter: { name: 'Starter', maxStudies: 999, description: 'Up to 1,000 studies/mo — small clinics, solo practitioners' },
+  growth: { name: 'Growth', maxStudies: 9999, description: '1,000-10,000 studies/mo — mid-size groups, imaging centers' },
+  scale: { name: 'Scale', maxStudies: null, description: '10,000+ studies/mo — hospitals, large networks' }
 };
 
 // GET /api/v1/billing/pricing
