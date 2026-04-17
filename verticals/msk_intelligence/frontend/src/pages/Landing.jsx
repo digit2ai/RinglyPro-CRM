@@ -132,133 +132,90 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Pricing — $99 base + 3 volume tiers */}
+      {/* Pricing — Single Plan */}
       <section className="bg-dark-900/50 border-y border-dark-800">
         <div className="max-w-7xl mx-auto px-4 lg:px-6 py-16 lg:py-24">
           <h3 className="text-2xl sm:text-3xl font-bold text-white text-center mb-4">Simple, Transparent Pricing</h3>
-          <p className="text-dark-400 text-center mb-4 max-w-2xl mx-auto">$99/month base — all features included. Pay per study analyzed. The more you use, the lower your rate.</p>
-          <p className="text-dark-500 text-center mb-12 lg:mb-16 text-sm">All 6 modalities. All features. No hidden fees. Billed monthly via Stripe.</p>
+          <p className="text-dark-400 text-center mb-12 lg:mb-16 max-w-2xl mx-auto">One plan. All features. Pay only for what you analyze.</p>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {[
-              {
-                name: 'Starter',
-                volume: 'Up to 1,000 studies/mo',
-                target: 'Small clinics, solo practitioners',
-                base: '$99',
-                pitch: 'Start with zero commitment. A human teleradiologist charges $12-25 per X-ray read — you pay $0.16. That\'s 99% savings from day one.',
-                rates: [
-                  { mod: 'X-Ray', price: '$0.16' },
-                  { mod: 'CT', price: '$0.89' },
-                  { mod: 'MRI', price: '$0.89' },
-                  { mod: 'Mammography', price: '$0.26' },
-                  { mod: 'DEXA', price: '$0.16' },
-                  { mod: 'Dental', price: '$0.16' }
-                ],
-                example: { vol: '500 X-rays', total: '$179' },
-                highlight: false
-              },
-              {
-                name: 'Growth',
-                volume: '1,000 - 10,000 studies/mo',
-                target: 'Mid-size groups, imaging centers',
-                base: '$99',
-                pitch: 'Volume discount unlocked. At $0.10 per X-ray, a radiologist generating $25K/mo in reads pays less than 1% for AI-powered analysis on every case.',
-                rates: [
-                  { mod: 'X-Ray', price: '$0.10' },
-                  { mod: 'CT', price: '$0.54' },
-                  { mod: 'MRI', price: '$0.54' },
-                  { mod: 'Mammography', price: '$0.16' },
-                  { mod: 'DEXA', price: '$0.10' },
-                  { mod: 'Dental', price: '$0.10' }
-                ],
-                example: { vol: '3,000 X-rays', total: '$399' },
-                highlight: true
-              },
-              {
-                name: 'Scale',
-                volume: '10,000+ studies/mo',
-                target: 'Hospitals, large networks',
-                base: '$99',
-                pitch: 'Maximum volume, lowest rates. At $0.08 per X-ray and $0.45 for CT/MRI, this is the most cost-effective AI diagnostic imaging on the market.',
-                rates: [
-                  { mod: 'X-Ray', price: '$0.08' },
-                  { mod: 'CT', price: '$0.45' },
-                  { mod: 'MRI', price: '$0.45' },
-                  { mod: 'Mammography', price: '$0.13' },
-                  { mod: 'DEXA', price: '$0.08' },
-                  { mod: 'Dental', price: '$0.08' }
-                ],
-                example: { vol: '15,000 mixed', total: '$3,249' },
-                highlight: false
-              }
-            ].map((tier, i) => (
-              <div key={i} className={`card ${tier.highlight ? 'border-msk-500 ring-1 ring-msk-500/20 relative' : ''}`}>
-                {tier.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-msk-600 text-white text-xs font-bold px-4 py-1 rounded-full">
-                    BEST VALUE
-                  </div>
-                )}
-                <h4 className="text-lg font-bold text-white mb-1">{tier.name}</h4>
-                <p className="text-dark-500 text-xs mb-1">{tier.target}</p>
-                <p className="text-msk-400 text-xs font-medium mb-4">{tier.volume}</p>
-
-                <div className="mb-4">
-                  <span className="text-4xl font-bold text-white">{tier.base}</span>
-                  <span className="text-dark-400 ml-1">/mo base</span>
+          <div className="max-w-2xl mx-auto">
+            <div className="card border-msk-500 ring-1 ring-msk-500/20">
+              <div className="text-center mb-8">
+                <div className="inline-block bg-msk-600 text-white text-xs font-bold px-4 py-1 rounded-full mb-6">ALL-INCLUSIVE PLATFORM</div>
+                <div className="flex items-baseline justify-center gap-2 mb-2">
+                  <span className="text-6xl sm:text-7xl font-bold text-white">$99</span>
+                  <span className="text-dark-400 text-xl">/month</span>
                 </div>
-                <p className="text-dark-400 text-xs mb-1">+ per study analyzed:</p>
+                <p className="text-dark-400 text-lg">+ pay per image analyzed</p>
+              </div>
 
-                <div className="space-y-1.5 mb-6">
-                  {tier.rates.map((r, j) => (
-                    <div key={j} className="flex items-center justify-between py-1.5 px-2.5 rounded bg-dark-800/40 border border-dark-700/50">
-                      <span className="text-dark-300 text-xs">{r.mod}</span>
-                      <span className="text-msk-400 font-bold text-xs">{r.price}</span>
+              <div className="border-t border-dark-700 pt-8 mb-8">
+                <h4 className="text-sm font-bold text-msk-400 uppercase tracking-wider mb-4">Cost per study (billed monthly)</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {[
+                    { mod: 'X-Ray', price: '$0.16' },
+                    { mod: 'CT (2D slices)', price: '$0.89' },
+                    { mod: 'MRI (2D slices)', price: '$0.89' },
+                    { mod: 'Mammography', price: '$0.26' },
+                    { mod: 'DEXA', price: '$0.16' },
+                    { mod: 'Dental X-Ray', price: '$0.16' }
+                  ].map((m, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-dark-800/50 border border-dark-700">
+                      <span className="text-dark-300 text-sm">{m.mod}</span>
+                      <span className="text-msk-400 font-bold text-sm">{m.price}</span>
                     </div>
                   ))}
                 </div>
-
-                <div className="p-3 rounded-lg bg-msk-600/10 border border-msk-600/20 mb-6">
-                  <p className="text-dark-500 text-xs">Example: {tier.example.vol}/mo</p>
-                  <p className="text-white font-bold text-lg">{tier.example.total}<span className="text-dark-400 text-sm font-normal">/mo total</span></p>
-                </div>
-
-                <p className="text-dark-400 text-xs mb-6 leading-relaxed italic border-l-2 border-msk-500/30 pl-3">{tier.pitch}</p>
-
-                <Link to="/register" className={tier.highlight ? 'btn-primary w-full text-center block' : 'btn-secondary w-full text-center block'}>
-                  Start Free Trial
-                </Link>
               </div>
-            ))}
-          </div>
 
-          {/* Features included in all plans */}
-          <div className="mt-16 max-w-3xl mx-auto">
-            <h4 className="text-lg font-bold text-white text-center mb-6">Everything Included in Every Plan</h4>
-            <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-2">
-              {[
-                'All 6 modalities', 'AI Copilot reports', 'ICD-10 auto-coding', 'Patient portal',
-                'Secure messaging', 'Lina voice assistant', 'RPM billing', 'FHIR R4 export',
-                'Workers\' comp', 'Insurance claims', 'ROM assessment', 'HIPAA compliant',
-                'Full audit trail', 'EMR-ready export', 'Multi-provider', 'Appointment scheduling'
-              ].map((f, j) => (
-                <div key={j} className="flex items-center gap-2 text-xs text-dark-300 py-1.5 px-2">
-                  <span className="text-msk-500 flex-shrink-0">&#10003;</span> {f}
+              <div className="border-t border-dark-700 pt-8 mb-8">
+                <h4 className="text-sm font-bold text-msk-400 uppercase tracking-wider mb-4">What typical customers pay per month</h4>
+                <div className="space-y-3">
+                  {[
+                    { type: 'Small clinic', vol: '500 X-rays', total: '$179' },
+                    { type: 'Solo radiologist', vol: '1,500 X-rays', total: '$339' },
+                    { type: 'Mid-size group', vol: '3,000 X-rays', total: '$579' },
+                    { type: 'Hospital dept', vol: '5,000 mixed', total: '$1,799' }
+                  ].map((ex, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-dark-800/30 border border-dark-700/50">
+                      <div>
+                        <span className="text-white text-sm font-medium">{ex.type}</span>
+                        <span className="text-dark-500 text-xs ml-2">({ex.vol}/mo)</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-white font-bold">{ex.total}</span>
+                        <span className="text-dark-500 text-xs ml-1">/mo</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-            <p className="text-dark-500 text-xs text-center mt-6">First 10 studies on us. No credit card required to start.</p>
-          </div>
+              </div>
 
-          {/* Enterprise */}
-          <div className="mt-12 max-w-3xl mx-auto p-6 rounded-xl bg-dark-800/30 border border-dark-700 text-center">
-            <h4 className="text-white font-bold mb-2">Enterprise & Custom Pricing</h4>
-            <p className="text-dark-400 text-sm mb-4">
-              Processing 20,000+ studies per month? We offer custom volume rates, white-label branding, SLA guarantees, dedicated account management, and on-premise deployment.
-            </p>
-            <a href="mailto:mstagg@digit2ai.com?subject=ImagingMind%20%E2%80%94%20Enterprise%20Inquiry&body=Hi%20Manuel%2C%0A%0AI%E2%80%99m%20interested%20in%20ImagingMind%20enterprise%20pricing.%0A%0AOrganization%3A%20%0AModalities%20needed%3A%20%0AEstimated%20monthly%20studies%3A%20%0A%0ABest%20regards" className="text-msk-400 hover:text-msk-300 font-medium text-sm transition-colors">
-              Contact Sales &rarr;
-            </a>
+              <div className="border-t border-dark-700 pt-8 mb-8">
+                <h4 className="text-sm font-bold text-msk-400 uppercase tracking-wider mb-4">Everything included</h4>
+                <div className="grid sm:grid-cols-2 gap-2">
+                  {[
+                    'All 6 modalities', 'AI Copilot reports', 'ICD-10 auto-coding', 'Patient portal',
+                    'Secure messaging', 'Lina voice assistant', 'RPM billing (CPT 99453/99454)', 'FHIR R4 export',
+                    'Workers\' comp module', 'Insurance claims engine', 'ROM assessment (camera)', 'HIPAA compliant',
+                    'Full audit trail', 'EMR-ready export', 'Multi-provider dashboard', 'Appointment scheduling'
+                  ].map((f, j) => (
+                    <div key={j} className="flex items-center gap-2 text-sm text-dark-300 py-1">
+                      <span className="text-msk-500 flex-shrink-0">&#10003;</span> {f}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Link to="/register" className="btn-primary w-full text-center block text-lg py-4">Start Free Trial</Link>
+              <p className="text-dark-500 text-xs text-center mt-4">No credit card required. First 10 studies on us.</p>
+            </div>
+
+            <div className="mt-8 p-6 rounded-xl bg-dark-800/30 border border-dark-700 text-center">
+              <h4 className="text-white font-bold mb-2">Enterprise & Volume Discounts</h4>
+              <p className="text-dark-400 text-sm mb-4">Processing 10,000+ studies per month? We offer volume pricing, white-label branding, SLA guarantees, dedicated account management, and on-premise deployment.</p>
+              <a href="mailto:mstagg@digit2ai.com?subject=ImagingMind%20%E2%80%94%20Enterprise%20Inquiry" className="text-msk-400 hover:text-msk-300 font-medium text-sm transition-colors">Contact Sales &rarr;</a>
+            </div>
           </div>
         </div>
       </section>
