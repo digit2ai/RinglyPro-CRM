@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ImagingMind // AI X-Ray Case Analytics Demo</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root {
+    --bg-950: #0a0e17;
+    --bg-900: #111827;
+    --bg-800: #1e293b;
+    --bg-700: #334155;
+    --cyan: #0ea5e9;
+    --cyan-light: #7dd3fc;
+    --cyan-neon: #38bdf8;
+    --cyan-dark: #0369a1;
+    --purple: #a855f7;
+    --purple-light: #c084fc;
+    --green: #22c55e;
+    --green-light: #4ade80;
+    --red: #ef4444;
+    --red-light: #f87171;
+    --yellow: #eab308;
+    --yellow-light: #facc15;
+    --white: #ffffff;
+    --gray-200: #e2e8f0;
+    --gray-300: #cbd5e1;
+    --gray-400: #94a3b8;
+    --gray-500: #64748b;
+    --gray-600: #475569;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-950);
+    color: var(--white);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .deck { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+
+  .slide {
+    position: absolute; inset: 0;
+    display: none; flex-direction: column;
+    justify-content: center; align-items: center;
+    padding: 50px 5vw 60px;
+    text-align: center;
+    opacity: 0; transition: opacity .4s ease;
+    overflow-x: hidden; overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(14,165,233,0.3) transparent;
+  }
+  .slide::-webkit-scrollbar { width: 5px; }
+  .slide::-webkit-scrollbar-thumb { background: rgba(14,165,233,0.3); border-radius: 3px; }
+  .slide.active { display: flex; opacity: 1; }
+
+  /* Grid overlay */
+  .slide::before {
+    content: ''; position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(14,165,233,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(14,165,233,0.04) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 85%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 85%);
+    pointer-events: none; z-index: 0;
+    animation: gridDrift 40s linear infinite;
+  }
+  @keyframes gridDrift { from { background-position: 0 0; } to { background-position: 64px 64px; } }
+
+  /* Glow */
+  .slide::after {
+    content: ''; position: absolute;
+    width: 800px; height: 800px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(14,165,233,0.12) 0%, rgba(14,165,233,0.03) 40%, transparent 70%);
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+    filter: blur(60px); pointer-events: none; z-index: 0;
+    animation: meshDrift 18s ease-in-out infinite;
+  }
+  @keyframes meshDrift {
+    0%, 100% { transform: translate(-60%, -55%) scale(1); }
+    50%      { transform: translate(-40%, -45%) scale(1.15); }
+  }
+
+  .slide > * { position: relative; z-index: 1; }
+
+  /* BG variants */
+  .bg-dark { background: radial-gradient(ellipse at top, #0f172a 0%, #0a0e17 50%, #030712 100%); }
+  .bg-cyan { background: radial-gradient(ellipse at top, #082f49 0%, #0a0e17 55%, #030712 100%); }
+  .bg-cyan::after { background: radial-gradient(circle, rgba(14,165,233,0.18) 0%, rgba(14,165,233,0.04) 40%, transparent 70%); }
+  .bg-purple { background: radial-gradient(ellipse at top, #2e1065 0%, #0a0e17 55%, #030712 100%); }
+  .bg-purple::after { background: radial-gradient(circle, rgba(168,85,247,0.18) 0%, rgba(168,85,247,0.04) 40%, transparent 70%); }
+  .bg-green { background: radial-gradient(ellipse at top, #052e16 0%, #0a0e17 55%, #030712 100%); }
+  .bg-green::after { background: radial-gradient(circle, rgba(34,197,94,0.18) 0%, rgba(34,197,94,0.04) 40%, transparent 70%); }
+  .bg-red { background: radial-gradient(ellipse at top, #450a0a 0%, #0a0e17 55%, #030712 100%); }
+  .bg-red::after { background: radial-gradient(circle, rgba(239,68,68,0.15) 0%, rgba(239,68,68,0.03) 40%, transparent 70%); }
+
+  /* Particles */
+  .particles { position: fixed; inset: 0; z-index: 50; pointer-events: none; overflow: hidden; }
+  .particle {
+    position: absolute; width: 3px; height: 3px; border-radius: 50%;
+    background: var(--cyan-neon); opacity: 0;
+    animation: particleFloat linear infinite;
+  }
+  .particle:nth-child(1)  { left: 5%;  bottom: -10px; animation-duration: 14s; animation-delay: 0s; }
+  .particle:nth-child(2)  { left: 15%; bottom: -10px; animation-duration: 17s; animation-delay: 1s; }
+  .particle:nth-child(3)  { left: 25%; bottom: -10px; animation-duration: 12s; animation-delay: 3s; width: 2px; height: 2px; }
+  .particle:nth-child(4)  { left: 35%; bottom: -10px; animation-duration: 16s; animation-delay: 2s; }
+  .particle:nth-child(5)  { left: 45%; bottom: -10px; animation-duration: 13s; animation-delay: 5s; width: 2px; height: 2px; }
+  .particle:nth-child(6)  { left: 55%; bottom: -10px; animation-duration: 18s; animation-delay: 1.5s; }
+  .particle:nth-child(7)  { left: 65%; bottom: -10px; animation-duration: 14s; animation-delay: 4s; width: 2px; height: 2px; }
+  .particle:nth-child(8)  { left: 75%; bottom: -10px; animation-duration: 15s; animation-delay: 0.5s; }
+  .particle:nth-child(9)  { left: 85%; bottom: -10px; animation-duration: 12s; animation-delay: 6s; width: 2px; height: 2px; }
+  .particle:nth-child(10) { left: 92%; bottom: -10px; animation-duration: 16s; animation-delay: 3s; }
+
+  @keyframes particleFloat {
+    0%   { transform: translateY(0) translateX(0); opacity: 0; }
+    10%  { opacity: 0.5; }
+    90%  { opacity: 0.2; }
+    100% { transform: translateY(-100vh) translateX(15px); opacity: 0; }
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 4px; background: rgba(14,165,233,0.1);
+    z-index: 300;
+  }
+  .progress-fill {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--cyan) 0%, var(--cyan-neon) 100%);
+    transition: width 0.5s ease;
+    box-shadow: 0 0 12px var(--cyan-neon);
+  }
+
+  /* Nav */
+  .nav-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: 48px; background: rgba(3,7,18,0.9);
+    border-top: 1px solid rgba(14,165,233,0.15);
+    z-index: 300; display: flex; align-items: center;
+    justify-content: center; gap: 16px;
+    backdrop-filter: blur(8px);
+  }
+  .nav-btn {
+    background: rgba(14,165,233,0.1); border: 1px solid rgba(14,165,233,0.3);
+    color: var(--cyan-neon); width: 36px; height: 36px;
+    border-radius: 8px; cursor: pointer; font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .nav-btn:hover { background: rgba(14,165,233,0.25); border-color: var(--cyan-neon); }
+
+  .slide-counter {
+    font-family: var(--mono); font-size: 12px;
+    color: var(--gray-400); letter-spacing: 2px; min-width: 60px; text-align: center;
+  }
+
+  .rec-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--gray-600); margin-right: 8px;
+    transition: background 0.3s;
+  }
+  .rec-dot.active { background: var(--red); animation: recBlink 1s ease infinite; }
+  @keyframes recBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  /* Narration wave */
+  .narration-wave {
+    display: flex; gap: 3px; align-items: center; height: 20px;
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .narration-wave.active { opacity: 1; }
+  .narration-wave span {
+    width: 3px; border-radius: 2px;
+    background: var(--cyan-neon);
+    animation: waveBar 1.2s ease-in-out infinite;
+  }
+  .narration-wave span:nth-child(1) { height: 8px; animation-delay: 0s; }
+  .narration-wave span:nth-child(2) { height: 14px; animation-delay: 0.15s; }
+  .narration-wave span:nth-child(3) { height: 10px; animation-delay: 0.3s; }
+  .narration-wave span:nth-child(4) { height: 16px; animation-delay: 0.45s; }
+  .narration-wave span:nth-child(5) { height: 8px; animation-delay: 0.6s; }
+  @keyframes waveBar {
+    0%, 100% { transform: scaleY(0.5); }
+    50%      { transform: scaleY(1.2); }
+  }
+
+  /* Pre-play overlay */
+  .preplay {
+    position: fixed; inset: 0; z-index: 500;
+    background: var(--bg-950);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 24px;
+  }
+  .preplay-btn {
+    width: 100px; height: 100px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--cyan) 0%, var(--cyan-dark) 100%);
+    border: 3px solid var(--cyan-neon);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 36px; color: white;
+    box-shadow: 0 0 40px rgba(14,165,233,0.4), 0 0 80px rgba(14,165,233,0.2);
+    transition: all 0.3s;
+  }
+  .preplay-btn:hover { transform: scale(1.08); box-shadow: 0 0 60px rgba(14,165,233,0.5); }
+
+  /* ===== TYPOGRAPHY ===== */
+  .t-mega { font-size: clamp(36px, 6vw, 72px); font-weight: 900; line-height: 1.1; letter-spacing: -2px; }
+  .t-big  { font-size: clamp(24px, 4vw, 48px); font-weight: 800; line-height: 1.15; letter-spacing: -1px; }
+  .t-mid  { font-size: clamp(18px, 2.5vw, 32px); font-weight: 700; line-height: 1.3; }
+  .t-body { font-size: clamp(14px, 1.4vw, 20px); font-weight: 400; line-height: 1.6; color: var(--gray-300); }
+  .t-small { font-size: clamp(12px, 1.1vw, 16px); font-weight: 400; line-height: 1.5; color: var(--gray-400); }
+  .t-mono { font-family: var(--mono); }
+  .t-cyan { color: var(--cyan-neon); }
+  .t-purple { color: var(--purple-light); }
+  .t-green { color: var(--green-light); }
+  .t-red { color: var(--red-light); }
+  .t-yellow { color: var(--yellow-light); }
+  .t-grad { background: linear-gradient(135deg, var(--cyan-neon), var(--purple-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 16px; border-radius: 100px;
+    font-size: 13px; font-weight: 600; letter-spacing: 1px;
+  }
+  .pill-cyan { background: rgba(14,165,233,0.1); border: 1px solid rgba(14,165,233,0.3); color: var(--cyan-neon); }
+  .pill-purple { background: rgba(168,85,247,0.1); border: 1px solid rgba(168,85,247,0.3); color: var(--purple-light); }
+  .pill-green { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: var(--green-light); }
+
+  /* ===== SIMULATED UI COMPONENTS ===== */
+  .ui-card {
+    background: var(--bg-900); border: 1px solid var(--bg-700);
+    border-radius: 12px; padding: 20px; text-align: left;
+    width: 100%; max-width: 900px;
+  }
+  .ui-card-inner {
+    background: var(--bg-800); border: 1px solid var(--bg-700);
+    border-radius: 8px; padding: 16px;
+  }
+  .ui-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 100px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+  }
+  .ui-badge-green { background: rgba(34,197,94,0.15); color: var(--green-light); }
+  .ui-badge-red { background: rgba(239,68,68,0.15); color: var(--red-light); border: 1px solid rgba(239,68,68,0.2); }
+  .ui-badge-blue { background: rgba(14,165,233,0.15); color: var(--cyan-light); border: 1px solid rgba(14,165,233,0.2); }
+  .ui-badge-yellow { background: rgba(234,179,8,0.15); color: var(--yellow-light); }
+  .ui-badge-purple { background: rgba(168,85,247,0.15); color: var(--purple-light); }
+
+  .ui-label { font-size: 12px; color: var(--gray-400); font-weight: 500; }
+  .ui-value { font-size: 14px; color: var(--white); font-weight: 600; margin-top: 2px; }
+
+  .ui-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 8px;
+    font-size: 13px; font-weight: 600;
+    border: none; cursor: default;
+  }
+  .ui-btn-primary { background: linear-gradient(135deg, var(--cyan) 0%, var(--cyan-dark) 100%); color: white; }
+  .ui-btn-secondary { background: rgba(14,165,233,0.1); border: 1px solid rgba(14,165,233,0.3); color: var(--cyan-neon); }
+
+  /* Simulated X-ray placeholder */
+  .xray-placeholder {
+    background: linear-gradient(145deg, #0a0a0a 0%, #1a1a2e 40%, #16213e 100%);
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+  }
+  .xray-placeholder::after {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 45% 40%, rgba(200,200,220,0.08) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .xray-bone {
+    font-size: 80px; opacity: 0.15; filter: grayscale(1) brightness(2);
+  }
+
+  /* Drop zone sim */
+  .ui-dropzone {
+    border: 2px dashed var(--bg-600, #475569);
+    border-radius: 12px; padding: 32px;
+    text-align: center; background: rgba(17,24,39,0.5);
+    transition: border-color 0.3s;
+  }
+  .ui-dropzone.active-drop {
+    border-color: var(--cyan-neon);
+    background: rgba(14,165,233,0.05);
+  }
+
+  /* Analysis panel */
+  .analysis-impression {
+    background: rgba(30,41,59,0.5); border-radius: 8px;
+    padding: 12px 16px; border-left: 4px solid var(--cyan);
+  }
+
+  /* Timeline */
+  .timeline-item {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 8px 0; border-left: 2px solid var(--bg-700);
+    padding-left: 16px; position: relative;
+  }
+  .timeline-item::before {
+    content: ''; position: absolute; left: -5px; top: 12px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--cyan); border: 2px solid var(--bg-900);
+  }
+
+  /* ROI metrics */
+  .roi-card {
+    background: var(--bg-900); border: 1px solid var(--bg-700);
+    border-radius: 12px; padding: 24px; text-align: center;
+    flex: 1; min-width: 180px;
+  }
+  .roi-num {
+    font-size: clamp(32px, 5vw, 56px); font-weight: 900;
+    line-height: 1; margin-bottom: 4px;
+  }
+
+  /* Grid layouts */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; width: 100%; max-width: 900px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; width: 100%; max-width: 900px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; width: 100%; max-width: 900px; }
+  .flex-row { display: flex; gap: 16px; align-items: stretch; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 960px; }
+
+  @media (max-width: 768px) {
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .slide { padding: 50px 4vw 60px; }
+  }
+
+  /* Fade-in animation for elements */
+  .fade-in { animation: fadeUp 0.6s ease both; }
+  .fade-in-d1 { animation-delay: 0.15s; }
+  .fade-in-d2 { animation-delay: 0.3s; }
+  .fade-in-d3 { animation-delay: 0.45s; }
+  .fade-in-d4 { animation-delay: 0.6s; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Pulse ring */
+  .pulse-ring {
+    width: 12px; height: 12px; border-radius: 50%;
+    background: var(--green); position: relative;
+  }
+  .pulse-ring::after {
+    content: ''; position: absolute; inset: -4px;
+    border-radius: 50%; border: 2px solid var(--green);
+    animation: pulseRing 2s ease infinite;
+  }
+  @keyframes pulseRing {
+    0% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(2); opacity: 0; }
+  }
+
+  /* Logo area */
+  .logo-mark {
+    display: inline-flex; align-items: center; gap: 12px;
+    margin-bottom: 16px;
+  }
+  .logo-mark img { height: 48px; width: auto; }
+</style>
+</head>
+<body>
+
+<!-- Particles -->
+<div class="particles" id="particles">
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div>
+</div>
+
+<!-- Progress -->
+<div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+<!-- Pre-play overlay -->
+<div class="preplay" id="preplay">
+  <div class="logo-mark">
+    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png" alt="ImagingMind" style="height:80px;">
+  </div>
+  <p class="t-big" style="max-width:600px;">ImagingMind<br><span class="t-cyan">AI X-Ray Case Analytics</span></p>
+  <p class="t-small" style="max-width:500px; margin-top:8px;">Interactive product demo with voice narration.<br>Best experienced fullscreen with audio on.</p>
+  <button class="preplay-btn" id="preplayBtn">&#9654;</button>
+  <p class="t-small" style="opacity:0.5; font-size:12px;">Tap to start autoplay</p>
+</div>
+
+<!-- ===== SLIDES ===== -->
+<div class="deck" id="deck">
+
+<!-- SLIDE 1: Title -->
+<div class="slide bg-dark" data-notes="Welcome to ImagingMind. AI X-ray analysis that reads in seconds, not hours.">
+  <div class="logo-mark fade-in">
+    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png" alt="ImagingMind">
+  </div>
+  <h1 class="t-mega fade-in fade-in-d1">AI X-Ray<br><span class="t-grad">Case Analytics</span></h1>
+  <p class="t-body fade-in fade-in-d2" style="max-width:600px; margin-top:16px;">
+    Specialist-grade imaging diagnostics powered by Claude Vision AI.<br>Upload. Analyze. Report. In minutes.
+  </p>
+  <div style="display:flex; gap:12px; margin-top:24px;" class="fade-in fade-in-d3">
+    <span class="pill pill-cyan"><span class="pulse-ring" style="width:8px;height:8px;"></span> HIPAA Compliant</span>
+    <span class="pill pill-purple">Claude Sonnet 4 Vision</span>
+    <span class="pill pill-green">Board-Certified Review</span>
+  </div>
+</div>
+
+<!-- SLIDE 2: The Problem -->
+<div class="slide bg-red" data-notes="Radiology is in crisis. Burnout is high, backlogs grow, and missed findings cost lives. ImagingMind changes this.">
+  <span class="pill pill-cyan" style="margin-bottom:16px;">THE PROBLEM</span>
+  <h2 class="t-big fade-in">Radiology Bottleneck<br>Is <span class="t-red">Costing You</span></h2>
+  <div class="grid-3 fade-in fade-in-d1" style="margin-top:32px;">
+    <div class="roi-card">
+      <div class="roi-num t-red">36h</div>
+      <p class="t-small">Average X-ray report turnaround at community hospitals</p>
+    </div>
+    <div class="roi-card">
+      <div class="roi-num t-yellow">30%</div>
+      <p class="t-small">Of radiologists report burnout due to volume overload</p>
+    </div>
+    <div class="roi-card">
+      <div class="roi-num t-red">12%</div>
+      <p class="t-small">Of incidental findings missed in high-volume reading sessions</p>
+    </div>
+  </div>
+  <p class="t-small fade-in fade-in-d2" style="margin-top:24px; max-width:600px;">
+    Every hour of delay increases patient anxiety, postpones treatment, and reduces your practice's throughput.
+  </p>
+</div>
+
+<!-- SLIDE 3: Upload Flow (simulated UI) -->
+<div class="slide bg-cyan" data-notes="Step one: upload. Drag and drop any X-ray, DICOM, or standard image file. Up to 20 files at once, 500 megabytes each.">
+  <span class="pill pill-cyan" style="margin-bottom:12px;">STEP 1: UPLOAD</span>
+  <h2 class="t-mid fade-in" style="margin-bottom:20px;">Drag & Drop Your X-Rays</h2>
+
+  <!-- Simulated Upload UI -->
+  <div class="ui-card fade-in fade-in-d1">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+      <h3 style="font-size:16px; font-weight:700; color:white;">Upload Imaging</h3>
+      <span class="ui-badge ui-badge-green">Case #MSK-20260417-X4R2</span>
+    </div>
+    <div class="ui-dropzone active-drop">
+      <div style="font-size:36px; margin-bottom:8px;">&#128228;</div>
+      <p style="color:white; font-weight:600;">Drop imaging files here</p>
+      <p class="t-small" style="margin-top:4px;">or click to browse -- DICOM, JPEG, PNG, PDF (up to 500MB)</p>
+    </div>
+    <div style="margin-top:16px; display:flex; flex-direction:column; gap:8px;">
+      <div class="ui-card-inner" style="display:flex; align-items:center; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:20px;">&#129659;</span>
+          <div><p style="font-size:13px; color:white; font-weight:600;">left_hand_pa.dcm</p><p class="t-small" style="font-size:11px;">DICOM -- 12.4 MB</p></div>
+        </div>
+        <span style="color:var(--gray-500); font-size:12px; cursor:pointer;">Remove</span>
+      </div>
+      <div class="ui-card-inner" style="display:flex; align-items:center; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:20px;">&#128444;&#65039;</span>
+          <div><p style="font-size:13px; color:white; font-weight:600;">chest_xray_lateral.jpg</p><p class="t-small" style="font-size:11px;">JPEG -- 3.8 MB</p></div>
+        </div>
+        <span style="color:var(--gray-500); font-size:12px; cursor:pointer;">Remove</span>
+      </div>
+      <div class="ui-btn ui-btn-primary" style="width:100%; justify-content:center; margin-top:4px;">
+        Upload 2 files
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: AI Analysis Running -->
+<div class="slide bg-purple" data-notes="Instantly after upload, Claude Vision AI begins analyzing each image in the background. No manual trigger needed. The green badge appears within seconds.">
+  <span class="pill pill-purple" style="margin-bottom:12px;">STEP 2: AI ANALYSIS</span>
+  <h2 class="t-mid fade-in" style="margin-bottom:20px;">Claude Vision AI Reads <span class="t-purple">Every Image</span></h2>
+
+  <div class="ui-card fade-in fade-in-d1">
+    <h3 style="font-size:16px; font-weight:700; color:white; margin-bottom:16px;">Uploaded Imaging (3 files)</h3>
+    <div style="display:grid; grid-template-columns: repeat(3,1fr); gap:12px;">
+      <!-- Image 1: analyzed -->
+      <div style="position:relative;">
+        <div class="xray-placeholder" style="height:140px;">
+          <span class="xray-bone">&#129657;</span>
+        </div>
+        <div style="position:absolute; top:8px; right:8px;" class="ui-badge ui-badge-green">AI Analyzed</div>
+        <p class="t-small" style="margin-top:4px; font-size:11px;">left_hand_pa.dcm</p>
+      </div>
+      <!-- Image 2: analyzed -->
+      <div style="position:relative;">
+        <div class="xray-placeholder" style="height:140px;">
+          <span class="xray-bone">&#129657;</span>
+        </div>
+        <div style="position:absolute; top:8px; right:8px;" class="ui-badge ui-badge-green">AI Analyzed</div>
+        <p class="t-small" style="margin-top:4px; font-size:11px;">chest_lateral.jpg</p>
+      </div>
+      <!-- Image 3: analyzing -->
+      <div style="position:relative;">
+        <div class="xray-placeholder" style="height:140px;">
+          <span class="xray-bone" style="animation: pulse 2s ease infinite;">&#129657;</span>
+        </div>
+        <div style="position:absolute; top:8px; right:8px;" class="ui-badge ui-badge-yellow">Analyzing...</div>
+        <p class="t-small" style="margin-top:4px; font-size:11px;">knee_ap_oblique.png</p>
+      </div>
+    </div>
+    <p class="t-small" style="margin-top:12px; text-align:center;">
+      Analysis runs automatically in the background -- no manual trigger required
+    </p>
+  </div>
+  <style>@keyframes pulse { 0%, 100% { opacity: 0.15; } 50% { opacity: 0.3; } }</style>
+</div>
+
+<!-- SLIDE 5: Full Analysis Results -->
+<div class="slide bg-cyan" data-notes="Click any image to see the full AI analysis. ImagingMind detects the modality, body region, generates detailed findings, a clinical impression, and flags every abnormality with suggested ICD-10 codes.">
+  <span class="pill pill-cyan" style="margin-bottom:12px;">AI ANALYSIS RESULTS</span>
+  <h2 class="t-mid fade-in" style="margin-bottom:16px;">Structured Diagnostic Output</h2>
+
+  <div class="ui-card fade-in fade-in-d1" style="max-width:960px;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+      <h3 style="font-size:15px; font-weight:700; color:white; display:flex; align-items:center; gap:8px;">
+        <span class="t-purple">AI</span> Image Analysis
+      </h3>
+      <span class="ui-badge ui-badge-green">High Confidence</span>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+      <div><span class="ui-label">Modality:</span> <span class="ui-value">X-Ray</span></div>
+      <div><span class="ui-label">Body Region:</span> <span class="ui-value">Left Hand -- PA View</span></div>
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <p class="ui-label" style="margin-bottom:4px;">Findings</p>
+      <p style="font-size:13px; color:var(--gray-300); line-height:1.6;">
+        PA radiograph of the left hand demonstrates a non-displaced transverse fracture through the mid-shaft of the 5th metacarpal (boxer's fracture). Mild dorsal angulation of approximately 25 degrees is noted. No significant comminution. The remaining metacarpals and phalanges show normal alignment. Joint spaces are preserved. No soft tissue foreign body identified. Carpal bones are intact with normal alignment.
+      </p>
+    </div>
+
+    <div class="analysis-impression" style="margin-bottom:12px;">
+      <p class="ui-label" style="margin-bottom:4px;">Impression</p>
+      <p style="font-size:14px; color:white; font-weight:600;">
+        Non-displaced 5th metacarpal neck fracture (boxer's fracture) with mild dorsal angulation. No surgical intervention indicated at this angulation. Recommend immobilization and 4-week follow-up imaging.
+      </p>
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <p class="ui-label" style="margin-bottom:6px;">Abnormalities Detected</p>
+      <div style="display:flex; flex-wrap:wrap; gap:6px;">
+        <span class="ui-badge ui-badge-red">5th Metacarpal Fracture</span>
+        <span class="ui-badge ui-badge-red">25&#176; Dorsal Angulation</span>
+        <span class="ui-badge ui-badge-red">Soft Tissue Swelling</span>
+      </div>
+    </div>
+
+    <div>
+      <p class="ui-label" style="margin-bottom:6px;">Suggested ICD-10 Codes</p>
+      <div style="display:flex; flex-wrap:wrap; gap:6px;">
+        <span class="ui-badge ui-badge-blue"><strong>S62.326A</strong> &nbsp;Nondisplaced fracture of neck of 5th metacarpal</span>
+        <span class="ui-badge ui-badge-blue"><strong>S62.90XA</strong> &nbsp;Unspecified fracture of unspecified wrist/hand</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: Abnormality Detection Deep Dive -->
+<div class="slide bg-red" data-notes="ImagingMind flags every abnormality as a visual badge. Red for pathology, blue for ICD-10 codes. This means nothing gets missed, even in high-volume reading sessions. The AI acts as your safety net.">
+  <span class="pill pill-cyan" style="margin-bottom:12px;">ABNORMALITY DETECTION</span>
+  <h2 class="t-mid fade-in" style="margin-bottom:8px;">Nothing Gets <span class="t-red">Missed</span></h2>
+  <p class="t-body fade-in fade-in-d1" style="max-width:650px; margin-bottom:24px;">
+    Every finding is tagged, coded, and surfaced instantly. The AI acts as your second pair of eyes.
+  </p>
+
+  <div class="grid-2 fade-in fade-in-d2">
+    <div class="ui-card">
+      <p class="ui-label" style="margin-bottom:10px;">Abnormalities Flagged</p>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <span class="ui-badge ui-badge-red" style="justify-content:flex-start;">&#9888; Fracture Line -- 5th Metacarpal</span>
+        <span class="ui-badge ui-badge-red" style="justify-content:flex-start;">&#9888; Dorsal Angulation 25&#176;</span>
+        <span class="ui-badge ui-badge-red" style="justify-content:flex-start;">&#9888; Periosteal Soft Tissue Swelling</span>
+        <span class="ui-badge ui-badge-yellow" style="justify-content:flex-start;">&#9888; Mild Joint Space Narrowing DIP-4</span>
+      </div>
+    </div>
+    <div class="ui-card">
+      <p class="ui-label" style="margin-bottom:10px;">Auto-Generated ICD-10</p>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <span class="ui-badge ui-badge-blue" style="justify-content:flex-start;"><strong>S62.326A</strong>&nbsp; 5th Metacarpal Neck Fx</span>
+        <span class="ui-badge ui-badge-blue" style="justify-content:flex-start;"><strong>M19.042</strong>&nbsp; Primary OA, Left Hand</span>
+        <span class="ui-badge ui-badge-blue" style="justify-content:flex-start;"><strong>S62.90XA</strong>&nbsp; Unspecified Wrist/Hand Fx</span>
+      </div>
+      <p class="t-small" style="margin-top:12px; font-style:italic;">
+        Codes ready for billing -- copy directly into your EMR.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: Confidence Scoring -->
+<div class="slide bg-dark" data-notes="Every analysis includes a confidence level. High confidence means clear, diagnostic-quality imaging with strong findings. Moderate flags borderline quality. Low recommends additional views. This helps you prioritize your review queue.">
+  <span class="pill pill-cyan" style="margin-bottom:12px;">CONFIDENCE SCORING</span>
+  <h2 class="t-mid fade-in" style="margin-bottom:24px;">AI Knows When It's <span class="t-cyan">Certain</span></h2>
+
+  <div class="grid-3 fade-in fade-in-d1">
+    <div class="ui-card" style="text-align:center; border-color: rgba(34,197,94,0.3);">
+      <div style="width:64px; height:64px; border-radius:50%; background:rgba(34,197,94,0.15); margin:0 auto 12px; display:flex; align-items:center; justify-content:center;">
+        <span style="font-size:28px; color:var(--green-light);">&#10003;</span>
+      </div>
+      <p style="font-size:18px; font-weight:800; color:var(--green-light);">HIGH</p>
+      <p class="t-small" style="margin-top:8px;">Clear findings, diagnostic-quality image. Proceed with confidence.</p>
+    </div>
+    <div class="ui-card" style="text-align:center; border-color: rgba(234,179,8,0.3);">
+      <div style="width:64px; height:64px; border-radius:50%; background:rgba(234,179,8,0.15); margin:0 auto 12px; display:flex; align-items:center; justify-content:center;">
+        <span style="font-size:28px; color:var(--yellow-light);">&#9888;</span>
+      </div>
+      <p style="font-size:18px; font-weight:800; color:var(--yellow-light);">MODERATE</p>
+      <p class="t-small" style="margin-top:8px;">Borderline quality or subtle findings. Radiologist review recommended.</p>
+    </div>
+    <div class="ui-card" style="text-align:center; border-color: rgba(239,68,68,0.3);">
+      <div style="width:64px; height:64px; border-radius:50%; background:rgba(239,68,68,0.15); margin:0 auto 12px; display:flex; align-items:center; justify-content:center;">
+        <span style="font-size:28px; color:var(--red-light);">&#10007;</span>
+      </div>
+      <p style="font-size:18px; font-weight:800; color:var(--red-light);">LOW</p>
+      <p class="t-small" style="margin-top:8px;">Poor quality or ambiguous anatomy. Additional views recommended.</p>
+    </div>
+  </div>
+
+  <p class="t-small fade-in fade-in-d2" style="margin-top:20px; max-width:600px;">
+    Confidence scoring helps prioritize your worklist -- high-confidence cases can route directly, freeing you for complex reads.
+  </p>
+</div>
+
+<!-- SLIDE 8: Diagnostic Copilot -->
+<div class="slide bg-purple" data-notes="The AI Diagnostic Copilot generates a full structured report draft using all the image analyses, patient history, and clinical context. You review, edit, and finalize. One click.">
+  <span class="pill pill-purple" style="margin-bottom:12px;">STEP 3: AI COPILOT REPORT</span>
+  <h2 class="t-mid fade-in" style="margin-bottom:16px;">From Analysis to <span class="t-purple">Final Report</span></h2>
+
+  <div class="ui-card fade-in fade-in-d1" style="max-width:960px;">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+      <div style="width:32px; height:32px; border-radius:8px; background:rgba(168,85,247,0.2); display:flex; align-items:center; justify-content:center;">
+        <span style="color:var(--purple-light); font-size:16px;">&#9889;</span>
+      </div>
+      <div>
+        <p style="font-size:14px; font-weight:700; color:white;">AI-Generated Report Draft</p>
+        <p class="t-small" style="font-size:11px;">Review, edit, and finalize</p>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <div><span class="ui-label">Clinical Summary</span><p style="font-size:13px; color:var(--gray-300); margin-top:4px;">28-year-old male presents with acute left hand pain after striking a solid object. PA radiograph reveals non-displaced 5th metacarpal neck fracture with 25-degree dorsal angulation. No surgical intervention indicated.</p></div>
+
+      <div class="analysis-impression">
+        <span class="ui-label">Diagnostic Impression</span>
+        <p style="font-size:14px; color:white; font-weight:600; margin-top:4px;">Boxer's fracture (5th metacarpal neck) -- non-displaced, angulation within acceptable limits for conservative management. Recommend ulnar gutter splint immobilization for 4 weeks with repeat imaging at 2 and 4 weeks.</p>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div><span class="ui-label">Severity Grade</span><p style="font-size:16px; font-weight:800; color:var(--yellow-light); margin-top:4px;">Moderate</p></div>
+        <div><span class="ui-label">Recovery Timeline</span><p style="font-size:16px; font-weight:800; color:white; margin-top:4px;">4-6 weeks</p></div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:8px; margin-top:16px; padding-top:12px; border-top:1px solid var(--bg-700);">
+      <div class="ui-btn ui-btn-primary" style="flex:1; justify-content:center;">Approve & Finalize Report</div>
+      <div class="ui-btn ui-btn-secondary">Edit Draft</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 9: Case Timeline -->
+<div class="slide bg-dark" data-notes="Every action is logged in a HIPAA-compliant audit trail. From upload to AI analysis to finalized report, the complete case timeline gives you full accountability and compliance documentation.">
+  <span class="pill pill-cyan" style="margin-bottom:12px;">AUDIT TRAIL</span>
+  <h2 class="t-mid fade-in" style="margin-bottom:20px;">Complete Case <span class="t-cyan">Timeline</span></h2>
+
+  <div class="ui-card fade-in fade-in-d1" style="max-width:700px;">
+    <h3 style="font-size:15px; font-weight:700; color:white; margin-bottom:16px;">Case Timeline -- MSK-20260417-X4R2</h3>
+    <div style="display:flex; flex-direction:column;">
+      <div class="timeline-item">
+        <div><p style="font-size:13px; color:white; font-weight:600;">Case Created</p><p class="t-small" style="font-size:11px;">New case created via web portal</p><p class="t-small" style="font-size:10px; opacity:0.5;">Apr 17, 2026 9:14 AM</p></div>
+      </div>
+      <div class="timeline-item">
+        <div><p style="font-size:13px; color:white; font-weight:600;">X-Ray Uploaded</p><p class="t-small" style="font-size:11px;">3 imaging files uploaded (2 DICOM, 1 JPEG)</p><p class="t-small" style="font-size:10px; opacity:0.5;">Apr 17, 2026 9:15 AM</p></div>
+      </div>
+      <div class="timeline-item" style="border-left-color:var(--purple);">
+        <div><p style="font-size:13px; color:var(--purple-light); font-weight:600;">AI Image Analysis Complete</p><p class="t-small" style="font-size:11px;">Claude Vision analyzed 3 files -- High confidence</p><p class="t-small" style="font-size:10px; opacity:0.5;">Apr 17, 2026 9:15 AM (18 seconds)</p></div>
+      </div>
+      <div class="timeline-item" style="border-left-color:var(--purple);">
+        <div><p style="font-size:13px; color:var(--purple-light); font-weight:600;">AI Report Generated</p><p class="t-small" style="font-size:11px;">Diagnostic copilot generated draft report</p><p class="t-small" style="font-size:10px; opacity:0.5;">Apr 17, 2026 9:16 AM</p></div>
+      </div>
+      <div class="timeline-item" style="border-left-color:var(--green);">
+        <div><p style="font-size:13px; color:var(--green-light); font-weight:600;">Report Finalized</p><p class="t-small" style="font-size:11px;">Dr. Morrison approved and finalized diagnostic report</p><p class="t-small" style="font-size:10px; opacity:0.5;">Apr 17, 2026 9:22 AM</p></div>
+      </div>
+    </div>
+    <p class="t-small" style="margin-top:12px; font-style:italic; text-align:center;">
+      Total time from upload to finalized report: <strong style="color:var(--cyan-neon);">7 minutes</strong>
+    </p>
+  </div>
+</div>
+
+<!-- SLIDE 10: PDF Export -->
+<div class="slide bg-cyan" data-notes="One click exports a professional PDF with full letterhead, patient demographics, findings, ICD-10 codes, and recovery timeline. FHIR R4 compliant for interoperability with any EMR.">
+  <span class="pill pill-green" style="margin-bottom:12px;">DELIVERABLE</span>
+  <h2 class="t-mid fade-in" style="margin-bottom:20px;">Professional PDF Report <span class="t-cyan">Export</span></h2>
+
+  <div class="ui-card fade-in fade-in-d1" style="max-width:650px; background:white; color:#1a1a2e; border:none;">
+    <div style="text-align:center; border-bottom:2px solid #1a3c6e; padding-bottom:12px; margin-bottom:16px;">
+      <p style="font-size:22px; font-weight:800; color:#1a3c6e;">ImagingMind</p>
+      <p style="font-size:11px; color:#666;">AI-Powered Imaging Diagnostics Platform</p>
+      <p style="font-size:9px; color:#999; margin-top:4px;">CONFIDENTIAL -- HIPAA Protected Health Information</p>
+    </div>
+    <p style="font-size:14px; font-weight:700; color:#1a3c6e; margin-bottom:8px;">Case Report</p>
+    <p style="font-size:11px; color:#444; margin-bottom:4px;">Case Number: MSK-20260417-X4R2 &nbsp;&nbsp; Status: REPORT READY &nbsp;&nbsp; Date: April 17, 2026</p>
+    <div style="margin-top:12px; border-top:1px solid #dde4ee; padding-top:12px;">
+      <p style="font-size:12px; font-weight:700; color:#1a3c6e; margin-bottom:4px;">Diagnostic Impression</p>
+      <p style="font-size:11px; color:#333; line-height:1.5;">Non-displaced 5th metacarpal neck fracture. Conservative management with ulnar gutter splint recommended. Follow-up in 4 weeks.</p>
+    </div>
+    <div style="margin-top:8px;">
+      <p style="font-size:12px; font-weight:700; color:#1a3c6e; margin-bottom:4px;">ICD-10 Codes</p>
+      <p style="font-size:11px; color:#333;">S62.326A, M19.042, S62.90XA</p>
+    </div>
+    <div style="margin-top:12px; border-top:1px solid #eee; padding-top:8px; text-align:center;">
+      <p style="font-size:9px; color:#999;">Generated by ImagingMind -- Board-Certified Radiologist Reviewed -- FHIR R4 Compliant</p>
+    </div>
+  </div>
+
+  <div style="display:flex; gap:12px; margin-top:20px;" class="fade-in fade-in-d2">
+    <span class="pill pill-green">FHIR R4 Export</span>
+    <span class="pill pill-cyan">HIPAA Compliant</span>
+    <span class="pill pill-purple">EMR Integration Ready</span>
+  </div>
+</div>
+
+<!-- SLIDE 11: ROI -->
+<div class="slide bg-green" data-notes="Here's the return on investment. ImagingMind reduces reading time by 93 percent, doubles throughput, catches 12 percent more findings, and pays for itself in the first month.">
+  <span class="pill pill-green" style="margin-bottom:12px;">RETURN ON INVESTMENT</span>
+  <h2 class="t-big fade-in">The Numbers That <span class="t-green">Matter</span></h2>
+
+  <div class="grid-4 fade-in fade-in-d1" style="margin-top:28px;">
+    <div class="roi-card" style="border-color:rgba(34,197,94,0.3);">
+      <div class="roi-num t-green">93%</div>
+      <p style="font-size:14px; font-weight:700; color:white;">Faster Reads</p>
+      <p class="t-small" style="margin-top:6px;">45 min manual vs. 3 min AI-assisted per study</p>
+    </div>
+    <div class="roi-card" style="border-color:rgba(14,165,233,0.3);">
+      <div class="roi-num t-cyan">2x</div>
+      <p style="font-size:14px; font-weight:700; color:white;">Throughput</p>
+      <p class="t-small" style="margin-top:6px;">Double studies read per radiologist per day</p>
+    </div>
+    <div class="roi-card" style="border-color:rgba(168,85,247,0.3);">
+      <div class="roi-num t-purple">+12%</div>
+      <p style="font-size:14px; font-weight:700; color:white;">Findings Caught</p>
+      <p class="t-small" style="margin-top:6px;">AI catches incidentals missed in high-volume sessions</p>
+    </div>
+    <div class="roi-card" style="border-color:rgba(234,179,8,0.3);">
+      <div class="roi-num t-yellow">7 min</div>
+      <p style="font-size:14px; font-weight:700; color:white;">Upload to Report</p>
+      <p class="t-small" style="margin-top:6px;">vs. 36-hour average at community hospitals</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 12: ROI Calculator -->
+<div class="slide bg-dark" data-notes="Let's do the math for your practice. A radiologist reading 40 studies per day saves 28 hours per week with ImagingMind. That translates to 145 thousand dollars in annual revenue recovery through increased throughput alone.">
+  <span class="pill pill-green" style="margin-bottom:12px;">ROI CALCULATOR</span>
+  <h2 class="t-mid fade-in" style="margin-bottom:20px;">What ImagingMind Saves <span class="t-green">Your Practice</span></h2>
+
+  <div class="ui-card fade-in fade-in-d1" style="max-width:800px;">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
+      <div>
+        <p style="font-size:14px; font-weight:700; color:white; margin-bottom:16px; border-bottom:1px solid var(--bg-700); padding-bottom:8px;">Without ImagingMind</p>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div><span class="ui-label">Studies/day</span><span class="ui-value" style="margin-left:8px;">40</span></div>
+          <div><span class="ui-label">Time per study</span><span class="ui-value" style="margin-left:8px;">45 min</span></div>
+          <div><span class="ui-label">Daily reading hours</span><span class="ui-value" style="margin-left:8px; color:var(--red-light);">30h (impossible)</span></div>
+          <div><span class="ui-label">Avg report turnaround</span><span class="ui-value" style="margin-left:8px; color:var(--red-light);">36 hours</span></div>
+          <div><span class="ui-label">Missed findings rate</span><span class="ui-value" style="margin-left:8px; color:var(--red-light);">~12%</span></div>
+        </div>
+      </div>
+      <div>
+        <p style="font-size:14px; font-weight:700; color:var(--green-light); margin-bottom:16px; border-bottom:1px solid rgba(34,197,94,0.3); padding-bottom:8px;">With ImagingMind</p>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div><span class="ui-label">Studies/day</span><span class="ui-value" style="margin-left:8px;">80+</span></div>
+          <div><span class="ui-label">Time per study</span><span class="ui-value" style="margin-left:8px; color:var(--green-light);">3 min (AI) + 5 min review</span></div>
+          <div><span class="ui-label">Daily reading hours</span><span class="ui-value" style="margin-left:8px; color:var(--green-light);">8h (sustainable)</span></div>
+          <div><span class="ui-label">Avg report turnaround</span><span class="ui-value" style="margin-left:8px; color:var(--green-light);">7 minutes</span></div>
+          <div><span class="ui-label">Missed findings rate</span><span class="ui-value" style="margin-left:8px; color:var(--green-light);">~1%</span></div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--bg-700); text-align:center;">
+      <p style="font-size:13px; color:var(--gray-400);">Annual Revenue Recovery from Increased Throughput</p>
+      <p style="font-size:48px; font-weight:900; color:var(--green-light); line-height:1;">$145,000+</p>
+      <p class="t-small" style="margin-top:4px;">per radiologist per year</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 13: Pricing -->
+<div class="slide bg-cyan" data-notes="Three tiers. Solo for small clinics at fifteen hundred per month, Practice for mid-size groups at thirty-five hundred, and Enterprise for hospital networks. All include unlimited AI analysis, and all pay for themselves within weeks.">
+  <span class="pill pill-cyan" style="margin-bottom:12px;">PRICING</span>
+  <h2 class="t-mid fade-in" style="margin-bottom:24px;">Plans That <span class="t-cyan">Pay for Themselves</span></h2>
+
+  <div class="grid-3 fade-in fade-in-d1">
+    <div class="ui-card" style="text-align:center;">
+      <p style="font-size:18px; font-weight:800; color:white;">Solo</p>
+      <p class="t-small" style="margin-bottom:12px;">1-2 radiologists</p>
+      <p style="font-size:36px; font-weight:900; color:white;">$1,500</p>
+      <p class="t-small">/month</p>
+      <div style="margin-top:16px; text-align:left; display:flex; flex-direction:column; gap:6px;">
+        <p style="font-size:12px; color:var(--gray-300);">&#10003; 200 AI-analyzed studies/mo</p>
+        <p style="font-size:12px; color:var(--gray-300);">&#10003; AI Copilot reports</p>
+        <p style="font-size:12px; color:var(--gray-300);">&#10003; Patient portal</p>
+        <p style="font-size:12px; color:var(--gray-300);">&#10003; Secure messaging</p>
+        <p style="font-size:12px; color:var(--gray-300);">&#10003; Voice AI intake</p>
+      </div>
+    </div>
+    <div class="ui-card" style="text-align:center; border-color:var(--cyan); position:relative;">
+      <div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:var(--cyan); color:white; font-size:11px; font-weight:700; padding:3px 14px; border-radius:100px;">MOST POPULAR</div>
+      <p style="font-size:18px; font-weight:800; color:white;">Practice</p>
+      <p class="t-small" style="margin-bottom:12px;">3-10 radiologists</p>
+      <p style="font-size:36px; font-weight:900; color:white;">$3,500</p>
+      <p class="t-small">/month</p>
+      <div style="margin-top:16px; text-align:left; display:flex; flex-direction:column; gap:6px;">
+        <p style="font-size:12px; color:var(--cyan-neon);">Everything in Solo, plus:</p>
+        <p style="font-size:12px; color:var(--gray-300);">&#10003; 1,000 AI-analyzed studies/mo</p>
+        <p style="font-size:12px; color:var(--gray-300);">&#10003; FHIR R4 export</p>
+        <p style="font-size:12px; color:var(--gray-300);">&#10003; Insurance claims engine</p>
+        <p style="font-size:12px; color:var(--gray-300);">&#10003; Multi-provider dashboard</p>
+        <p style="font-size:12px; color:var(--gray-300);">&#10003; Priority support</p>
+      </div>
+    </div>
+    <div class="ui-card" style="text-align:center;">
+      <p style="font-size:18px; font-weight:800; color:white;">Enterprise</p>
+      <p class="t-small" style="margin-bottom:12px;">Hospital networks, 10+ sites</p>
+      <p style="font-size:36px; font-weight:900; color:white;">$8,000+</p>
+      <p class="t-small">/month</p>
+      <div style="margin-top:16px; text-align:left; display:flex; flex-direction:column; gap:6px;">
+        <p style="font-size:12px; color:var(--purple-light);">Everything in Practice, plus:</p>
+        <p style="font-size:12px; color:var(--gray-300);">&#10003; Unlimited AI studies</p>
+        <p style="font-size:12px; color:var(--gray-300);">&#10003; White-label branding</p>
+        <p style="font-size:12px; color:var(--gray-300);">&#10003; SLA guarantee</p>
+        <p style="font-size:12px; color:var(--gray-300);">&#10003; HIPAA BAA included</p>
+        <p style="font-size:12px; color:var(--gray-300);">&#10003; On-premise deployment</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 14: CTA -->
+<div class="slide bg-dark" data-notes="Start your free trial today. No credit card required. Upload your first X-ray and see the AI analysis in under 30 seconds. Visit imaging mind dot com or contact us directly." data-last-slide="true">
+  <div class="logo-mark fade-in">
+    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png" alt="ImagingMind" style="height:64px;">
+  </div>
+  <h2 class="t-mega fade-in fade-in-d1">See It <span class="t-grad">Live</span></h2>
+  <p class="t-body fade-in fade-in-d2" style="max-width:550px; margin-top:12px;">
+    Upload your first X-ray. Get AI analysis in under 30 seconds.<br>No credit card. No commitment.
+  </p>
+  <div style="display:flex; gap:12px; margin-top:28px;" class="fade-in fade-in-d3">
+    <a href="/msk/register" class="ui-btn ui-btn-primary" style="font-size:16px; padding:14px 32px; text-decoration:none; border-radius:12px;">Start Free Trial</a>
+    <a href="mailto:mstagg@digit2ai.com" class="ui-btn ui-btn-secondary" style="font-size:16px; padding:14px 32px; text-decoration:none; border-radius:12px;">Contact Sales</a>
+  </div>
+  <div style="margin-top:32px; display:flex; gap:20px;" class="fade-in fade-in-d4">
+    <span class="pill pill-cyan">aiagent.ringlypro.com/msk</span>
+  </div>
+  <p class="t-small fade-in fade-in-d4" style="margin-top:20px; opacity:0.4;">
+    HIPAA Compliant &bull; Encrypted &bull; Board-Certified Specialists &bull; SOC 2 Ready
+  </p>
+</div>
+
+</div><!-- /deck -->
+
+<!-- Navigation -->
+<div class="nav-bar">
+  <div class="rec-dot" id="recDot"></div>
+  <div class="narration-wave" id="narrationWave">
+    <span></span><span></span><span></span><span></span><span></span>
+  </div>
+  <button class="nav-btn" id="prev">&#9664;</button>
+  <span class="slide-counter" id="counter">01 / 14</span>
+  <button class="nav-btn" id="next">&#9654;</button>
+  <button class="nav-btn" id="btnPlayPause" title="Play/Pause autoplay">&#9654;</button>
+  <button class="nav-btn" id="btnStop" title="Stop and reset">&#9632;</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const TOTAL = slides.length;
+  let idx = 0;
+  const counter = document.getElementById('counter');
+  const progressFill = document.getElementById('progressFill');
+  const btnPlayPause = document.getElementById('btnPlayPause');
+  const btnStop = document.getElementById('btnStop');
+  const recDot = document.getElementById('recDot');
+  const preplay = document.getElementById('preplay');
+  const preplayBtn = document.getElementById('preplayBtn');
+  const narrationWave = document.getElementById('narrationWave');
+
+  // Reusable Audio element (critical for mobile)
+  const ttsAudio = new Audio();
+  ttsAudio.volume = 1.0;
+  let autoAdvanceTimer = null;
+  let narrateOnEnd = null;
+  let autoPlaying = false;
+
+  ttsAudio.addEventListener('play', () => { narrationWave.classList.add('active'); });
+  ttsAudio.addEventListener('ended', () => {
+    narrationWave.classList.remove('active');
+    if (narrateOnEnd) { const cb = narrateOnEnd; narrateOnEnd = null; cb(); }
+  });
+  ttsAudio.addEventListener('error', () => {
+    narrationWave.classList.remove('active');
+    if (narrateOnEnd) { const cb = narrateOnEnd; narrateOnEnd = null; autoAdvanceTimer = setTimeout(cb, 6000); }
+  });
+
+  function show(n) {
+    idx = Math.max(0, Math.min(TOTAL - 1, n));
+    slides.forEach((s, i) => s.classList.toggle('active', i === idx));
+    const num = String(idx + 1).padStart(2, '0');
+    counter.textContent = `${num} / ${String(TOTAL).padStart(2, '0')}`;
+    progressFill.style.width = `${((idx + 1) / TOTAL) * 100}%`;
+  }
+
+  function cancelNarration() {
+    if (autoAdvanceTimer) { clearTimeout(autoAdvanceTimer); autoAdvanceTimer = null; }
+    narrateOnEnd = null;
+    if (window.speechSynthesis) speechSynthesis.cancel();
+    ttsAudio.pause();
+    ttsAudio.removeAttribute('src');
+    ttsAudio.load();
+    narrationWave.classList.remove('active');
+  }
+
+  function narrateSlide(slideIndex, onEnd) {
+    cancelNarration();
+    const slide = slides[slideIndex];
+    const audioSrc = slide.dataset.audio || null;
+    const text = slide.dataset.notes || '';
+
+    // If external audio file provided, use it
+    if (audioSrc) {
+      narrateOnEnd = () => { autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, 2000); };
+      ttsAudio.src = audioSrc;
+      ttsAudio.load();
+      ttsAudio.play().catch(() => {
+        narrateOnEnd = null;
+        autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, 6000);
+      });
+      return;
+    }
+
+    // Fallback: Web Speech API
+    if (text && window.speechSynthesis) {
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.rate = 0.95;
+      utter.pitch = 1.0;
+      utter.lang = 'en-US';
+
+      // Try to pick a good voice
+      const voices = speechSynthesis.getVoices();
+      const preferred = voices.find(v => v.name.includes('Samantha') || v.name.includes('Daniel') || v.name.includes('Google US'));
+      if (preferred) utter.voice = preferred;
+
+      narrationWave.classList.add('active');
+
+      utter.onend = () => {
+        narrationWave.classList.remove('active');
+        autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, 2000);
+      };
+      utter.onerror = () => {
+        narrationWave.classList.remove('active');
+        autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, 6000);
+      };
+
+      speechSynthesis.speak(utter);
+      return;
+    }
+
+    // No audio, no text: auto-advance after fixed delay
+    autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, 6000);
+  }
+
+  function manualNav(n) {
+    if (autoPlaying) pauseAutoPlay();
+    cancelNarration();
+    show(n);
+  }
+
+  function startAutoPlay() {
+    autoPlaying = true;
+    btnPlayPause.innerHTML = '&#10074;&#10074;';
+    recDot.classList.add('active');
+    autoNarrateCurrent();
+  }
+
+  function pauseAutoPlay() {
+    autoPlaying = false;
+    btnPlayPause.innerHTML = '&#9654;';
+    recDot.classList.remove('active');
+    cancelNarration();
+  }
+
+  function stopAutoPlay() {
+    pauseAutoPlay();
+    show(0);
+  }
+
+  function autoNarrateCurrent() {
+    if (!autoPlaying) return;
+    const isLast = slides[idx].hasAttribute('data-last-slide');
+
+    setTimeout(() => {
+      if (!autoPlaying) return;
+      narrateSlide(idx, () => {
+        if (!autoPlaying) return;
+        if (isLast) {
+          autoAdvanceTimer = setTimeout(() => pauseAutoPlay(), 5000);
+          return;
+        }
+        autoAdvanceTimer = setTimeout(() => {
+          if (!autoPlaying) return;
+          if (idx < TOTAL - 1) { show(idx + 1); autoNarrateCurrent(); }
+          else pauseAutoPlay();
+        }, 2000);
+      });
+    }, 800);
+  }
+
+  // Event listeners
+  document.getElementById('next').addEventListener('click', () => manualNav(idx + 1));
+  document.getElementById('prev').addEventListener('click', () => manualNav(idx - 1));
+  btnPlayPause.addEventListener('click', () => { if (autoPlaying) pauseAutoPlay(); else startAutoPlay(); });
+  btnStop.addEventListener('click', () => stopAutoPlay());
+
+  document.addEventListener('keydown', (e) => {
+    if (['ArrowRight', ' ', 'PageDown'].includes(e.key)) { e.preventDefault(); manualNav(idx + 1); }
+    else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); manualNav(idx - 1); }
+    else if (e.key === 'Home') manualNav(0);
+    else if (e.key === 'End') manualNav(TOTAL - 1);
+    else if (e.key.toLowerCase() === 'f') {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+  });
+
+  // Touch swipe
+  let tStartX = 0, tStartY = 0, tStartT = 0;
+  const deck = document.getElementById('deck');
+  deck.addEventListener('touchstart', (e) => {
+    const t = e.changedTouches[0]; tStartX = t.clientX; tStartY = t.clientY; tStartT = Date.now();
+  }, { passive: true });
+  deck.addEventListener('touchend', (e) => {
+    const t = e.changedTouches[0];
+    const dx = t.clientX - tStartX, dy = t.clientY - tStartY, dt = Date.now() - tStartT;
+    if (dt < 600 && Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      if (dx < 0) manualNav(idx + 1); else manualNav(idx - 1);
+    }
+  }, { passive: true });
+
+  // Pre-play
+  preplayBtn.addEventListener('click', () => {
+    preplay.style.display = 'none';
+    show(0);
+
+    // Unlock audio context on user gesture (mobile requirement)
+    const firstText = slides[0].dataset.notes;
+    if (firstText && window.speechSynthesis) {
+      // Warm up speech synthesis
+      const warmup = new SpeechSynthesisUtterance('');
+      speechSynthesis.speak(warmup);
+    }
+    startAutoPlay();
+  });
+
+  // Load voices
+  if (window.speechSynthesis) {
+    speechSynthesis.getVoices();
+    speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+  }
+
+  show(0);
+</script>
+
+</body>
+</html>
