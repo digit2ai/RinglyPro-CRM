@@ -337,7 +337,7 @@ async function runMigrations() {
         phone VARCHAR(30),
         email VARCHAR(255),
         website VARCHAR(500),
-        modalities JSONB DEFAULT '["MRI","CT","Ultrasound","X-Ray"]',
+        modalities JSONB DEFAULT '["MRI","CT","Ultrasound","X-Ray","DEXA","Mammography","Dental"]',
         operating_hours JSONB DEFAULT '{}',
         accepts_direct_booking BOOLEAN DEFAULT false,
         partnership_tier VARCHAR(50),
@@ -356,7 +356,7 @@ async function runMigrations() {
         case_id INTEGER NOT NULL REFERENCES msk_cases(id) ON DELETE CASCADE,
         imaging_center_id INTEGER REFERENCES msk_imaging_centers(id),
         modality VARCHAR(50) NOT NULL
-          CHECK (modality IN ('MRI','CT','Ultrasound','X-Ray','DEXA','PET')),
+          CHECK (modality IN ('MRI','CT','Ultrasound','X-Ray','DEXA','PET','Mammography','Dental')),
         body_region VARCHAR(100) NOT NULL,
         protocol TEXT,
         clinical_indication TEXT,
