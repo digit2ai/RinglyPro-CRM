@@ -1119,61 +1119,24 @@
     audioCache = {};
   });
 
-  // ============ ELEVENLABS TTS (Lina voice) ============
-  let audioCache = {}; // slideIndex:lang -> audioUrl
-
-  // CRITICAL: Start generating slide 1 audio IMMEDIATELY on page load.
-  // By the time user taps play (~2-5 seconds), the audio URL will be cached.
-  // This is what makes Mobile Safari work — we need a REAL HTTP URL in the
-  // click handler, not a data: URI. Safari won't unlock audio with data URIs.
-  (function preloadSlide1() {
-    // Small delay to let geolocation detection set currentLang first
-    setTimeout(() => {
-      console.log('[Preload] Generating slide 1 audio (' + currentLang + ')...');
-      generateSlideAudio(0).then(url => {
-        if (url) console.log('[Preload] Slide 1 audio ready:', url.substring(0, 50));
-        else console.warn('[Preload] Slide 1 audio generation returned null');
-        // Also prefetch slides 2-4
-        for (let i = 1; i <= 4; i++) generateSlideAudio(i).catch(() => {});
-      }).catch(err => console.warn('[Preload] Slide 1 failed:', err.message));
-    }, 1500);
-  })();
-
-  async function generateSlideAudio(slideIndex) {
-    const cacheKey = `${slideIndex}:${currentLang}`;
-    if (audioCache[cacheKey]) return audioCache[cacheKey];
-
-    const slide = slides[slideIndex];
-    const text = currentLang === 'es'
-      ? (slide.dataset.notesEs || slide.dataset.notes || '')
-      : (slide.dataset.notes || '');
-
-    if (!text) return null;
-
-    try {
-      const res = await fetch('/api/imagingmind-tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, lang: currentLang })
-      });
-      if (!res.ok) throw new Error(`TTS API ${res.status}`);
-      const data = await res.json();
-      if (data.success && data.url) {
-        audioCache[cacheKey] = data.url;
-        return data.url;
-      }
-    } catch (err) {
-      console.warn('[TTS] ElevenLabs failed for slide', slideIndex + 1, err.message);
-    }
-    return null;
+  // ============ RACHEL PREMIUM VOICE (pre-generated MP3s) ============
+  // All 18 slides pre-generated with Rachel (ElevenLabs premium voice).
+  // No on-the-fly TTS — zero failures, zero robotic fallback.
+  const slideAudioFiles = [];
+  for (let i = 1; i <= TOTAL; i++) {
+    slideAudioFiles.push(`/audio/imagingmind-demo/slide-${String(i).padStart(2,'0')}.mp3`);
   }
 
-  // Pre-generate audio for upcoming slides (background, non-blocking)
   function prefetchAudio(fromIndex) {
-    for (let i = fromIndex; i < Math.min(fromIndex + 6, TOTAL); i++) {
-      generateSlideAudio(i).catch(() => {});
+    // Browser will cache these from HTTP — just touch them via Image trick or fetch
+    for (let i = fromIndex; i < Math.min(fromIndex + 4, TOTAL); i++) {
+      const a = new Audio();
+      a.preload = 'auto';
+      a.src = slideAudioFiles[i];
     }
   }
+  // Prefetch first 4 slides immediately
+  prefetchAudio(0);
 
   // ============ AUDIO PLAYBACK ============
   // CRITICAL FOR MOBILE: Single reusable Audio element.
@@ -1219,71 +1182,26 @@
 
   function narrateSlide(slideIndex, onEnd) {
     cancelNarration();
-    const myId = narrationId;
-    const cacheKey = `${slideIndex}:${currentLang}`;
 
-    // If audio URL is already cached, play immediately
-    if (audioCache[cacheKey]) {
-      narrateOnEnd = () => { autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, 2000); };
-      linaAudio.src = audioCache[cacheKey];
-      linaAudio.load(); // Safari needs load() when src changes
-      linaAudio.play().then(() => {
-        console.log('[Lina] Playing slide', slideIndex + 1, '(cached)');
-      }).catch(() => {
-        narrateOnEnd = null;
-        fallbackSpeech(slideIndex, onEnd);
-      });
+    if (slideIndex < 0 || slideIndex >= slideAudioFiles.length) {
+      if (onEnd) onEnd();
       return;
     }
 
-    // Generate audio async, guard against stale callbacks
-    generateSlideAudio(slideIndex).then(audioUrl => {
-      if (narrationId !== myId) return; // Cancelled
-      if (audioUrl) {
-        narrateOnEnd = () => { autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, 2000); };
-        linaAudio.src = audioUrl;
-        linaAudio.load(); // Safari needs load() when src changes
-        linaAudio.play().then(() => {
-          console.log('[Lina] Playing slide', slideIndex + 1, '(generated)');
-        }).catch(() => {
-          narrateOnEnd = null;
-          fallbackSpeech(slideIndex, onEnd);
-        });
-      } else {
-        fallbackSpeech(slideIndex, onEnd);
-      }
-    }).catch(() => {
-      if (narrationId !== myId) return;
-      fallbackSpeech(slideIndex, onEnd);
+    narrateOnEnd = () => { autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, 2000); };
+    linaAudio.src = slideAudioFiles[slideIndex];
+    linaAudio.load();
+    linaAudio.play().then(() => {
+      console.log('[Rachel] Playing slide', slideIndex + 1);
+    }).catch((err) => {
+      console.warn('[Rachel] Play failed slide', slideIndex + 1, err.message);
+      narrateOnEnd = null;
+      // Fallback: wait 8 seconds then advance (no robotic voice)
+      autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, 8000);
     });
   }
 
-  function fallbackSpeech(slideIndex, onEnd) {
-    const slide = slides[slideIndex];
-    const text = currentLang === 'es'
-      ? (slide.dataset.notesEs || slide.dataset.notes || '')
-      : (slide.dataset.notes || '');
-
-    if (text && window.speechSynthesis) {
-      const utter = new SpeechSynthesisUtterance(text);
-      utter.rate = 0.95; utter.pitch = 1.0;
-      utter.lang = currentLang === 'es' ? 'es-MX' : 'en-US';
-      const voices = speechSynthesis.getVoices();
-      if (currentLang === 'es') {
-        const esVoice = voices.find(v => v.lang.startsWith('es'));
-        if (esVoice) utter.voice = esVoice;
-      } else {
-        const enVoice = voices.find(v => v.name.includes('Samantha') || v.name.includes('Daniel') || v.name.includes('Google US'));
-        if (enVoice) utter.voice = enVoice;
-      }
-      narrationWave.classList.add('active');
-      utter.onend = () => { narrationWave.classList.remove('active'); autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, 2000); };
-      utter.onerror = () => { narrationWave.classList.remove('active'); autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, 3000); };
-      speechSynthesis.speak(utter);
-      return;
-    }
-    autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, 5000);
-  }
+  // Rachel premium voice only — no browser speechSynthesis fallback
 
   // ============ NAVIGATION ============
   function manualNav(n) {
@@ -1370,54 +1288,18 @@
     preplay.style.display = 'none';
     show(0);
 
-    // Get the pre-generated slide 1 audio URL (cached from page load preload)
-    const firstSrc = audioCache[`0:${currentLang}`] || null;
-
-    if (firstSrc) {
-      // REAL HTTP URL available — this is the Safari-safe path
-      // Exact Visionarium pattern: src -> load -> play -> pause -> startAutoPlay
-      linaAudio.src = firstSrc;
-      linaAudio.load();
-      linaAudio.play().then(() => {
-        // Audio context unlocked with real URL — pause and let autoplay take over
-        linaAudio.pause();
-        linaAudio.currentTime = 0;
-        console.log('[Safari] Audio unlocked with real slide 1 URL');
-        startAutoPlay();
-      }).catch(() => {
-        console.warn('[Safari] Real URL play failed, starting autoplay anyway');
-        startAutoPlay();
-      });
-    } else {
-      // Slide 1 audio not ready yet (TTS still generating)
-      // Try to generate it now and play once ready
-      console.warn('[Safari] Slide 1 audio not cached yet, generating now...');
-      generateSlideAudio(0).then(url => {
-        if (url) {
-          linaAudio.src = url;
-          linaAudio.load();
-          linaAudio.play().then(() => {
-            linaAudio.pause();
-            linaAudio.currentTime = 0;
-            console.log('[Safari] Audio unlocked (late generation)');
-            startAutoPlay();
-          }).catch(() => startAutoPlay());
-        } else {
-          // TTS completely failed — autoplay with Web Speech fallback
-          startAutoPlay();
-        }
-      }).catch(() => startAutoPlay());
-    }
-
-    // Prefetch remaining slides
-    prefetchAudio(0);
+    // Unlock audio with Rachel's pre-generated slide 1
+    linaAudio.src = slideAudioFiles[0];
+    linaAudio.load();
+    linaAudio.play().then(() => {
+      linaAudio.pause();
+      linaAudio.currentTime = 0;
+      console.log('[Rachel] Audio unlocked');
+      startAutoPlay();
+    }).catch(() => {
+      startAutoPlay();
+    });
   });
-
-  // Load Web Speech voices
-  if (window.speechSynthesis) {
-    speechSynthesis.getVoices();
-    speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
-  }
 
   show(0);
 </script>
