@@ -437,39 +437,53 @@
   </p>
 </div>
 
-<!-- SLIDE 3: Upload Flow (simulated UI) -->
-<div class="slide bg-cyan" data-notes="Step one: upload. Drag and drop any X-ray, DICOM, or standard image file. Up to 20 files at once, 500 megabytes each." data-notes-es="Paso uno: subir imagenes. Arrastra y suelta cualquier radiografia, archivo DICOM o imagen estandar. Hasta 20 archivos a la vez, 500 megabytes cada uno.">
-  <span class="pill pill-cyan" style="margin-bottom:12px;">STEP 1: UPLOAD</span>
-  <h2 class="t-mid fade-in" style="margin-bottom:20px;">Drag & Drop Your X-Rays</h2>
+<!-- SLIDE 3: Upload Flow — Real Case #16 (Unai Arozena) -->
+<div class="slide bg-cyan" data-notes="This is a real case. Patient Unai Arozena, a trauma injury. While cutting a tree, it fell and crushed his right index finger, causing comminuted fractures. He uploaded his X-rays directly through ImagingMind. Three images total." data-notes-es="Este es un caso real. El paciente Unai Arozena, una lesion traumatica. Mientras cortaba un arbol, este cayo y aplasto su dedo indice derecho, causando fracturas conminutas. Subio sus radiografias directamente a traves de ImagingMind. Tres imagenes en total.">
+  <span class="pill pill-cyan" style="margin-bottom:12px;">REAL CASE -- STEP 1: UPLOAD</span>
+  <h2 class="t-mid fade-in" style="margin-bottom:20px;">Patient Uploads X-Rays Directly</h2>
 
-  <!-- Simulated Upload UI -->
+  <!-- Simulated Upload UI with real case data -->
   <div class="ui-card fade-in fade-in-d1">
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
       <h3 style="font-size:16px; font-weight:700; color:white;">Upload Imaging</h3>
-      <span class="ui-badge ui-badge-green">Case #MSK-20260417-X4R2</span>
+      <span class="ui-badge ui-badge-green">Case #MSK-20260413-HL5J</span>
     </div>
-    <div class="ui-dropzone active-drop">
-      <div style="font-size:36px; margin-bottom:8px;">&#128228;</div>
-      <p style="color:white; font-weight:600;">Drop imaging files here</p>
-      <p class="t-small" style="margin-top:4px;">or click to browse -- DICOM, JPEG, PNG, PDF (up to 500MB)</p>
+    <div style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+      <div><span class="ui-label">Patient</span><span class="ui-value" style="margin-left:6px;">Unai Arozena</span></div>
+      <div><span class="ui-label">Type</span><span class="ui-value" style="margin-left:6px;">Fracture -- Trauma</span></div>
+      <div><span class="ui-label">Location</span><span class="ui-value" style="margin-left:6px;">Right Index Finger</span></div>
+      <div><span class="ui-label">Severity</span><span class="ui-value" style="margin-left:6px;">5/10</span></div>
+    </div>
+    <div class="ui-dropzone active-drop" style="padding:20px;">
+      <p style="color:white; font-weight:600; font-size:14px;">Chief Complaint</p>
+      <p style="font-size:12px; color:var(--gray-300); margin-top:6px; line-height:1.5; max-width:700px; text-align:left;">
+        "Was cutting a tree and put my hand inside it, and the tree suddenly fell. I was lucky to pull my hand out completely, but part of the tree crushed the outer side of the index finger on my right hand. As a result, I had internal fractures in several bones, along with wounds that covered the entire index finger."
+      </p>
     </div>
     <div style="margin-top:16px; display:flex; flex-direction:column; gap:8px;">
       <div class="ui-card-inner" style="display:flex; align-items:center; justify-content:space-between;">
         <div style="display:flex; align-items:center; gap:10px;">
-          <span style="font-size:20px;">&#129659;</span>
-          <div><p style="font-size:13px; color:white; font-weight:600;">left_hand_pa.dcm</p><p class="t-small" style="font-size:11px;">DICOM -- 12.4 MB</p></div>
+          <img src="/msk/api/v1/imaging/showcase/11" alt="CT scan" style="width:48px; height:48px; border-radius:6px; object-fit:cover; background:#111827;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+          <span style="font-size:24px; display:none; width:48px; height:48px; align-items:center; justify-content:center; background:var(--bg-800); border-radius:6px;">&#129659;</span>
+          <div><p style="font-size:13px; color:white; font-weight:600;">right_index_ct_scan.jpg</p><p class="t-small" style="font-size:11px;">CT Scan -- Right Hand</p></div>
         </div>
-        <span style="color:var(--gray-500); font-size:12px; cursor:pointer;">Remove</span>
+        <span class="ui-badge ui-badge-green" style="font-size:10px;">Uploaded Apr 13</span>
       </div>
       <div class="ui-card-inner" style="display:flex; align-items:center; justify-content:space-between;">
         <div style="display:flex; align-items:center; gap:10px;">
-          <span style="font-size:20px;">&#128444;&#65039;</span>
-          <div><p style="font-size:13px; color:white; font-weight:600;">chest_xray_lateral.jpg</p><p class="t-small" style="font-size:11px;">JPEG -- 3.8 MB</p></div>
+          <img src="/msk/api/v1/imaging/showcase/12" alt="X-ray AP" style="width:48px; height:48px; border-radius:6px; object-fit:cover; background:#111827;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+          <span style="font-size:24px; display:none; width:48px; height:48px; align-items:center; justify-content:center; background:var(--bg-800); border-radius:6px;">&#129659;</span>
+          <div><p style="font-size:13px; color:white; font-weight:600;">right_index_xray_ap.jpg</p><p class="t-small" style="font-size:11px;">X-Ray -- AP View</p></div>
         </div>
-        <span style="color:var(--gray-500); font-size:12px; cursor:pointer;">Remove</span>
+        <span class="ui-badge ui-badge-green" style="font-size:10px;">Uploaded Apr 13</span>
       </div>
-      <div class="ui-btn ui-btn-primary" style="width:100%; justify-content:center; margin-top:4px;">
-        Upload 2 files
+      <div class="ui-card-inner" style="display:flex; align-items:center; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <img src="/msk/api/v1/imaging/showcase/13" alt="X-ray lateral" style="width:48px; height:48px; border-radius:6px; object-fit:cover; background:#111827;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+          <span style="font-size:24px; display:none; width:48px; height:48px; align-items:center; justify-content:center; background:var(--bg-800); border-radius:6px;">&#129659;</span>
+          <div><p style="font-size:13px; color:white; font-weight:600;">right_index_xray_lateral.jpg</p><p class="t-small" style="font-size:11px;">X-Ray -- Lateral View</p></div>
+        </div>
+        <span class="ui-badge ui-badge-green" style="font-size:10px;">Uploaded Apr 13</span>
       </div>
     </div>
   </div>
@@ -481,38 +495,37 @@
   <h2 class="t-mid fade-in" style="margin-bottom:20px;">Claude Vision AI Reads <span class="t-purple">Every Image</span></h2>
 
   <div class="ui-card fade-in fade-in-d1">
-    <h3 style="font-size:16px; font-weight:700; color:white; margin-bottom:16px;">Uploaded Imaging (3 files)</h3>
+    <h3 style="font-size:16px; font-weight:700; color:white; margin-bottom:16px;">Case #MSK-20260413-HL5J -- Uploaded Imaging (3 files)</h3>
     <div style="display:grid; grid-template-columns: repeat(3,1fr); gap:12px;">
-      <!-- Image 1: analyzed -->
+      <!-- Real Image 1: CT scan — analyzed -->
       <div style="position:relative;">
-        <div class="xray-placeholder" style="height:140px;">
-          <span class="xray-bone">&#129657;</span>
+        <div style="height:160px; border-radius:8px; overflow:hidden; background:#0a0a0a;">
+          <img src="/msk/api/v1/imaging/showcase/11" alt="CT Right Index" style="width:100%; height:100%; object-fit:cover;" onerror="this.parentElement.innerHTML='<div class=\'xray-placeholder\' style=\'height:100%\'><span class=\'xray-bone\'>&#129657;</span></div>'" />
         </div>
         <div style="position:absolute; top:8px; right:8px;" class="ui-badge ui-badge-green">AI Analyzed</div>
-        <p class="t-small" style="margin-top:4px; font-size:11px;">left_hand_pa.dcm</p>
+        <p class="t-small" style="margin-top:4px; font-size:11px;">CT Scan -- Right Index Finger</p>
       </div>
-      <!-- Image 2: analyzed -->
+      <!-- Real Image 2: X-ray AP — analyzed -->
       <div style="position:relative;">
-        <div class="xray-placeholder" style="height:140px;">
-          <span class="xray-bone">&#129657;</span>
+        <div style="height:160px; border-radius:8px; overflow:hidden; background:#0a0a0a;">
+          <img src="/msk/api/v1/imaging/showcase/12" alt="X-ray AP" style="width:100%; height:100%; object-fit:cover;" onerror="this.parentElement.innerHTML='<div class=\'xray-placeholder\' style=\'height:100%\'><span class=\'xray-bone\'>&#129657;</span></div>'" />
         </div>
         <div style="position:absolute; top:8px; right:8px;" class="ui-badge ui-badge-green">AI Analyzed</div>
-        <p class="t-small" style="margin-top:4px; font-size:11px;">chest_lateral.jpg</p>
+        <p class="t-small" style="margin-top:4px; font-size:11px;">X-Ray -- AP View</p>
       </div>
-      <!-- Image 3: analyzing -->
+      <!-- Real Image 3: X-ray lateral — analyzed -->
       <div style="position:relative;">
-        <div class="xray-placeholder" style="height:140px;">
-          <span class="xray-bone" style="animation: pulse 2s ease infinite;">&#129657;</span>
+        <div style="height:160px; border-radius:8px; overflow:hidden; background:#0a0a0a;">
+          <img src="/msk/api/v1/imaging/showcase/13" alt="X-ray Lateral" style="width:100%; height:100%; object-fit:cover;" onerror="this.parentElement.innerHTML='<div class=\'xray-placeholder\' style=\'height:100%\'><span class=\'xray-bone\'>&#129657;</span></div>'" />
         </div>
-        <div style="position:absolute; top:8px; right:8px;" class="ui-badge ui-badge-yellow">Analyzing...</div>
-        <p class="t-small" style="margin-top:4px; font-size:11px;">knee_ap_oblique.png</p>
+        <div style="position:absolute; top:8px; right:8px;" class="ui-badge ui-badge-green">AI Analyzed</div>
+        <p class="t-small" style="margin-top:4px; font-size:11px;">X-Ray -- Lateral View</p>
       </div>
     </div>
     <p class="t-small" style="margin-top:12px; text-align:center;">
-      Analysis runs automatically in the background -- no manual trigger required
+      All 3 images analyzed in <strong style="color:var(--cyan-neon);">11 seconds</strong> -- no manual trigger required
     </p>
   </div>
-  <style>@keyframes pulse { 0%, 100% { opacity: 0.15; } 50% { opacity: 0.3; } }</style>
 </div>
 
 <!-- SLIDE 5: Full Analysis Results -->
@@ -529,29 +542,30 @@
     </div>
 
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
-      <div><span class="ui-label">Modality:</span> <span class="ui-value">X-Ray</span></div>
-      <div><span class="ui-label">Body Region:</span> <span class="ui-value">Left Hand -- PA View</span></div>
+      <div><span class="ui-label">Modality:</span> <span class="ui-value">X-Ray / CT</span></div>
+      <div><span class="ui-label">Body Region:</span> <span class="ui-value">Right Index Finger -- Proximal Phalanx</span></div>
     </div>
 
     <div style="margin-bottom:12px;">
       <p class="ui-label" style="margin-bottom:4px;">Findings</p>
       <p style="font-size:13px; color:var(--gray-300); line-height:1.6;">
-        PA radiograph of the left hand demonstrates a non-displaced transverse fracture through the mid-shaft of the 5th metacarpal (boxer's fracture). Mild dorsal angulation of approximately 25 degrees is noted. No significant comminution. The remaining metacarpals and phalanges show normal alignment. Joint spaces are preserved. No soft tissue foreign body identified. Carpal bones are intact with normal alignment.
+        Complete displaced transverse fracture of the proximal phalanx of the right index finger with significant dorsal angulation and shortening. Comminuted fracture pattern visible on CT with multiple fragment displacement. Soft tissue swelling surrounding the entire index finger. No other osseous abnormalities identified in the remaining hand structures. This injury pattern is consistent with the reported crush mechanism from tree trauma.
       </p>
     </div>
 
     <div class="analysis-impression" style="margin-bottom:12px;">
       <p class="ui-label" style="margin-bottom:4px;">Impression</p>
       <p style="font-size:14px; color:white; font-weight:600;">
-        Non-displaced 5th metacarpal neck fracture (boxer's fracture) with mild dorsal angulation. No surgical intervention indicated at this angulation. Recommend immobilization and 4-week follow-up imaging.
+        Displaced comminuted fracture of the proximal phalanx of the right index finger. The fracture pattern and displacement will likely require orthopedic surgical intervention for optimal alignment and healing.
       </p>
     </div>
 
     <div style="margin-bottom:12px;">
       <p class="ui-label" style="margin-bottom:6px;">Abnormalities Detected</p>
       <div style="display:flex; flex-wrap:wrap; gap:6px;">
-        <span class="ui-badge ui-badge-red">5th Metacarpal Fracture</span>
-        <span class="ui-badge ui-badge-red">25&#176; Dorsal Angulation</span>
+        <span class="ui-badge ui-badge-red">Comminuted Proximal Phalanx Fracture</span>
+        <span class="ui-badge ui-badge-red">Significant Dorsal Angulation</span>
+        <span class="ui-badge ui-badge-red">Fragment Displacement</span>
         <span class="ui-badge ui-badge-red">Soft Tissue Swelling</span>
       </div>
     </div>
@@ -559,8 +573,9 @@
     <div>
       <p class="ui-label" style="margin-bottom:6px;">Suggested ICD-10 Codes</p>
       <div style="display:flex; flex-wrap:wrap; gap:6px;">
-        <span class="ui-badge ui-badge-blue"><strong>S62.326A</strong> &nbsp;Nondisplaced fracture of neck of 5th metacarpal</span>
-        <span class="ui-badge ui-badge-blue"><strong>S62.90XA</strong> &nbsp;Unspecified fracture of unspecified wrist/hand</span>
+        <span class="ui-badge ui-badge-blue"><strong>S62.601A</strong> &nbsp;Fracture of proximal phalanx of right index finger</span>
+        <span class="ui-badge ui-badge-blue"><strong>S62.90XA</strong> &nbsp;Unspecified fracture of wrist and hand</span>
+        <span class="ui-badge ui-badge-blue"><strong>W20.8XXA</strong> &nbsp;Struck by other falling object</span>
       </div>
     </div>
   </div>
@@ -576,20 +591,20 @@
 
   <div class="grid-2 fade-in fade-in-d2">
     <div class="ui-card">
-      <p class="ui-label" style="margin-bottom:10px;">Abnormalities Flagged</p>
+      <p class="ui-label" style="margin-bottom:10px;">Abnormalities Flagged -- Case #16</p>
       <div style="display:flex; flex-direction:column; gap:8px;">
-        <span class="ui-badge ui-badge-red" style="justify-content:flex-start;">&#9888; Fracture Line -- 5th Metacarpal</span>
-        <span class="ui-badge ui-badge-red" style="justify-content:flex-start;">&#9888; Dorsal Angulation 25&#176;</span>
-        <span class="ui-badge ui-badge-red" style="justify-content:flex-start;">&#9888; Periosteal Soft Tissue Swelling</span>
-        <span class="ui-badge ui-badge-yellow" style="justify-content:flex-start;">&#9888; Mild Joint Space Narrowing DIP-4</span>
+        <span class="ui-badge ui-badge-red" style="justify-content:flex-start;">&#9888; Comminuted Fracture -- Proximal Phalanx</span>
+        <span class="ui-badge ui-badge-red" style="justify-content:flex-start;">&#9888; Significant Dorsal Angulation</span>
+        <span class="ui-badge ui-badge-red" style="justify-content:flex-start;">&#9888; Multiple Fragment Displacement</span>
+        <span class="ui-badge ui-badge-yellow" style="justify-content:flex-start;">&#9888; Extensive Soft Tissue Swelling</span>
       </div>
     </div>
     <div class="ui-card">
       <p class="ui-label" style="margin-bottom:10px;">Auto-Generated ICD-10</p>
       <div style="display:flex; flex-direction:column; gap:8px;">
-        <span class="ui-badge ui-badge-blue" style="justify-content:flex-start;"><strong>S62.326A</strong>&nbsp; 5th Metacarpal Neck Fx</span>
-        <span class="ui-badge ui-badge-blue" style="justify-content:flex-start;"><strong>M19.042</strong>&nbsp; Primary OA, Left Hand</span>
+        <span class="ui-badge ui-badge-blue" style="justify-content:flex-start;"><strong>S62.601A</strong>&nbsp; Fx Proximal Phalanx, R Index</span>
         <span class="ui-badge ui-badge-blue" style="justify-content:flex-start;"><strong>S62.90XA</strong>&nbsp; Unspecified Wrist/Hand Fx</span>
+        <span class="ui-badge ui-badge-blue" style="justify-content:flex-start;"><strong>W20.8XXA</strong>&nbsp; Struck by Falling Object</span>
       </div>
       <p class="t-small" style="margin-top:12px; font-style:italic;">
         Codes ready for billing -- copy directly into your EMR.
@@ -649,16 +664,16 @@
     </div>
 
     <div style="display:flex; flex-direction:column; gap:12px;">
-      <div><span class="ui-label">Clinical Summary</span><p style="font-size:13px; color:var(--gray-300); margin-top:4px;">28-year-old male presents with acute left hand pain after striking a solid object. PA radiograph reveals non-displaced 5th metacarpal neck fracture with 25-degree dorsal angulation. No surgical intervention indicated.</p></div>
+      <div><span class="ui-label">Clinical Summary</span><p style="font-size:13px; color:var(--gray-300); margin-top:4px;">Patient Unai Arozena presents with traumatic crush injury to the right index finger sustained when a tree fell during manual cutting. CT and X-ray imaging reveals displaced comminuted fracture of the proximal phalanx with significant dorsal angulation and fragment displacement. Surgical intervention likely required.</p></div>
 
       <div class="analysis-impression">
         <span class="ui-label">Diagnostic Impression</span>
-        <p style="font-size:14px; color:white; font-weight:600; margin-top:4px;">Boxer's fracture (5th metacarpal neck) -- non-displaced, angulation within acceptable limits for conservative management. Recommend ulnar gutter splint immobilization for 4 weeks with repeat imaging at 2 and 4 weeks.</p>
+        <p style="font-size:14px; color:white; font-weight:600; margin-top:4px;">Displaced comminuted fracture of the proximal phalanx, right index finger, consistent with crush mechanism. Fracture pattern and displacement indicate need for orthopedic evaluation for possible open reduction internal fixation (ORIF). Recommend urgent orthopedic referral.</p>
       </div>
 
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-        <div><span class="ui-label">Severity Grade</span><p style="font-size:16px; font-weight:800; color:var(--yellow-light); margin-top:4px;">Moderate</p></div>
-        <div><span class="ui-label">Recovery Timeline</span><p style="font-size:16px; font-weight:800; color:white; margin-top:4px;">4-6 weeks</p></div>
+        <div><span class="ui-label">Severity Grade</span><p style="font-size:16px; font-weight:800; color:var(--red-light); margin-top:4px;">Severe</p></div>
+        <div><span class="ui-label">Recovery Timeline</span><p style="font-size:16px; font-weight:800; color:white; margin-top:4px;">8-12 weeks</p></div>
       </div>
     </div>
 
@@ -675,26 +690,32 @@
   <h2 class="t-mid fade-in" style="margin-bottom:20px;">Complete Case <span class="t-cyan">Timeline</span></h2>
 
   <div class="ui-card fade-in fade-in-d1" style="max-width:700px;">
-    <h3 style="font-size:15px; font-weight:700; color:white; margin-bottom:16px;">Case Timeline -- MSK-20260417-X4R2</h3>
+    <h3 style="font-size:15px; font-weight:700; color:white; margin-bottom:16px;">Case Timeline -- MSK-20260413-HL5J (Real Data)</h3>
     <div style="display:flex; flex-direction:column;">
       <div class="timeline-item">
-        <div><p style="font-size:13px; color:white; font-weight:600;">Case Created</p><p class="t-small" style="font-size:11px;">New case created via web portal</p><p class="t-small" style="font-size:10px; opacity:0.5;">Apr 17, 2026 9:14 AM</p></div>
+        <div><p style="font-size:13px; color:white; font-weight:600;">Case Created</p><p class="t-small" style="font-size:11px;">Patient Unai Arozena -- fracture, trauma via web portal</p><p class="t-small" style="font-size:10px; opacity:0.5;">Apr 13, 2026 2:45 AM</p></div>
       </div>
       <div class="timeline-item">
-        <div><p style="font-size:13px; color:white; font-weight:600;">X-Ray Uploaded</p><p class="t-small" style="font-size:11px;">3 imaging files uploaded (2 DICOM, 1 JPEG)</p><p class="t-small" style="font-size:10px; opacity:0.5;">Apr 17, 2026 9:15 AM</p></div>
+        <div><p style="font-size:13px; color:white; font-weight:600;">CT Scan Uploaded</p><p class="t-small" style="font-size:11px;">1 file uploaded -- right index finger CT</p><p class="t-small" style="font-size:10px; opacity:0.5;">Apr 13, 2026 2:46 AM</p></div>
       </div>
       <div class="timeline-item" style="border-left-color:var(--purple);">
-        <div><p style="font-size:13px; color:var(--purple-light); font-weight:600;">AI Image Analysis Complete</p><p class="t-small" style="font-size:11px;">Claude Vision analyzed 3 files -- High confidence</p><p class="t-small" style="font-size:10px; opacity:0.5;">Apr 17, 2026 9:15 AM (18 seconds)</p></div>
+        <div><p style="font-size:13px; color:var(--purple-light); font-weight:600;">AI Analysis Complete</p><p class="t-small" style="font-size:11px;">CT analyzed -- Comminuted fracture of proximal phalanx consistent with crush injury</p><p class="t-small" style="font-size:10px; opacity:0.5;">Apr 13, 2026 2:46 AM (11 seconds)</p></div>
+      </div>
+      <div class="timeline-item">
+        <div><p style="font-size:13px; color:white; font-weight:600;">X-Rays Uploaded</p><p class="t-small" style="font-size:11px;">2 additional X-ray views uploaded (AP + Lateral)</p><p class="t-small" style="font-size:10px; opacity:0.5;">Apr 13, 2026 3:48 AM</p></div>
       </div>
       <div class="timeline-item" style="border-left-color:var(--purple);">
-        <div><p style="font-size:13px; color:var(--purple-light); font-weight:600;">AI Report Generated</p><p class="t-small" style="font-size:11px;">Diagnostic copilot generated draft report</p><p class="t-small" style="font-size:10px; opacity:0.5;">Apr 17, 2026 9:16 AM</p></div>
+        <div><p style="font-size:13px; color:var(--purple-light); font-weight:600;">AI Analysis Complete (x2)</p><p class="t-small" style="font-size:11px;">X-rays analyzed -- Displaced fracture with dorsal angulation confirmed</p><p class="t-small" style="font-size:10px; opacity:0.5;">Apr 13, 2026 3:49 AM (10 seconds each)</p></div>
+      </div>
+      <div class="timeline-item" style="border-left-color:var(--purple);">
+        <div><p style="font-size:13px; color:var(--purple-light); font-weight:600;">AI Copilot Report Generated</p><p class="t-small" style="font-size:11px;">Draft diagnostic report created from all imaging analyses</p><p class="t-small" style="font-size:10px; opacity:0.5;">Apr 13, 2026 3:53 AM</p></div>
       </div>
       <div class="timeline-item" style="border-left-color:var(--green);">
-        <div><p style="font-size:13px; color:var(--green-light); font-weight:600;">Report Finalized</p><p class="t-small" style="font-size:11px;">Dr. Morrison approved and finalized diagnostic report</p><p class="t-small" style="font-size:10px; opacity:0.5;">Apr 17, 2026 9:22 AM</p></div>
+        <div><p style="font-size:13px; color:var(--green-light); font-weight:600;">Report Finalized</p><p class="t-small" style="font-size:11px;">Dr. Morrison reviewed and approved diagnostic report</p><p class="t-small" style="font-size:10px; opacity:0.5;">Apr 13, 2026 3:42 PM</p></div>
       </div>
     </div>
     <p class="t-small" style="margin-top:12px; font-style:italic; text-align:center;">
-      Total time from upload to finalized report: <strong style="color:var(--cyan-neon);">7 minutes</strong>
+      AI analysis time: <strong style="color:var(--cyan-neon);">11 seconds per image</strong> &bull; Full case lifecycle captured in audit trail
     </p>
   </div>
 </div>
@@ -711,14 +732,14 @@
       <p style="font-size:9px; color:#999; margin-top:4px;">CONFIDENTIAL -- HIPAA Protected Health Information</p>
     </div>
     <p style="font-size:14px; font-weight:700; color:#1a3c6e; margin-bottom:8px;">Case Report</p>
-    <p style="font-size:11px; color:#444; margin-bottom:4px;">Case Number: MSK-20260417-X4R2 &nbsp;&nbsp; Status: REPORT READY &nbsp;&nbsp; Date: April 17, 2026</p>
+    <p style="font-size:11px; color:#444; margin-bottom:4px;">Case Number: MSK-20260413-HL5J &nbsp;&nbsp; Status: REPORT READY &nbsp;&nbsp; Date: April 17, 2026</p>
     <div style="margin-top:12px; border-top:1px solid #dde4ee; padding-top:12px;">
       <p style="font-size:12px; font-weight:700; color:#1a3c6e; margin-bottom:4px;">Diagnostic Impression</p>
-      <p style="font-size:11px; color:#333; line-height:1.5;">Non-displaced 5th metacarpal neck fracture. Conservative management with ulnar gutter splint recommended. Follow-up in 4 weeks.</p>
+      <p style="font-size:11px; color:#333; line-height:1.5;">Displaced comminuted fracture of the proximal phalanx, right index finger. Orthopedic surgical evaluation recommended for possible ORIF. Consistent with crush mechanism from tree trauma.</p>
     </div>
     <div style="margin-top:8px;">
       <p style="font-size:12px; font-weight:700; color:#1a3c6e; margin-bottom:4px;">ICD-10 Codes</p>
-      <p style="font-size:11px; color:#333;">S62.326A, M19.042, S62.90XA</p>
+      <p style="font-size:11px; color:#333;">S62.601A, S62.90XA, W20.8XXA</p>
     </div>
     <div style="margin-top:12px; border-top:1px solid #eee; padding-top:8px; text-align:center;">
       <p style="font-size:9px; color:#999;">Generated by ImagingMind -- Board-Certified Radiologist Reviewed -- FHIR R4 Compliant</p>
