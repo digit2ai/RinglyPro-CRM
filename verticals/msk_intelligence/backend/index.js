@@ -44,6 +44,31 @@ const workersCompRoutes = require('./routes/workerscomp');
 const engagementRoutes = require('./routes/engagement');
 const copilotRoutes = require('./routes/copilot');
 
+// Public showcase image serving (no auth) — for demo presentations
+router.get('/api/v1/imaging/showcase/:fileId', async (req, res) => {
+  try {
+    const [files] = await sequelize.query(
+      `SELECT storage_path, mime_type, file_name, file_data FROM msk_imaging_files WHERE id = $1`,
+      { bind: [req.params.fileId] }
+    );
+    if (files.length === 0) return res.status(404).json({ error: 'File not found' });
+    const file = files[0];
+    res.setHeader('Content-Type', file.mime_type || 'image/jpeg');
+    res.setHeader('Content-Disposition', `inline; filename="${file.file_name}"`);
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    const fs = require('fs');
+    if (file.storage_path && fs.existsSync(file.storage_path)) {
+      return fs.createReadStream(file.storage_path).pipe(res);
+    }
+    if (file.file_data) {
+      const buffer = Buffer.from(file.file_data, 'base64');
+      res.setHeader('Content-Length', buffer.length);
+      return res.end(buffer);
+    }
+    res.status(404).json({ error: 'Image data not available' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 router.use('/api/v1/auth', authRoutes);
 router.use('/api/v1/cases', authenticate, caseRoutes);
 router.use('/api/v1/patients', authenticate, patientRoutes);
