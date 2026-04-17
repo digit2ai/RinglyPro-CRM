@@ -87,7 +87,11 @@ router.post('/login', async (req, res) => {
 // POST /api/v1/auth/register
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, firstName, lastName, phone, role = 'patient' } = req.body;
+    const {
+      email, password, firstName, lastName, phone, role = 'patient',
+      dateOfBirth, gender, insuranceProvider, policyNumber, groupNumber,
+      hipaaConsent
+    } = req.body;
 
     if (!email || !password || !firstName || !lastName) {
       return res.status(400).json({ error: 'Email, password, first name, and last name required' });
@@ -117,9 +121,26 @@ router.post('/register', async (req, res) => {
 
     const user = result[0];
 
-    // Create patient profile
+    // Create patient profile with extended fields
     if (effectiveRole === 'patient') {
-      await sequelize.query(`INSERT INTO msk_patients (user_id) VALUES ($1)`, { bind: [user.id] });
+      await sequelize.query(`
+        INSERT INTO msk_patients (
+          user_id, date_of_birth, gender,
+          insurance_provider, policy_number, group_number,
+          hipaa_consent, hipaa_consent_date
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `, {
+        bind: [
+          user.id,
+          dateOfBirth || null,
+          gender || null,
+          insuranceProvider || null,
+          policyNumber || null,
+          groupNumber || null,
+          hipaaConsent ? true : false,
+          hipaaConsent ? new Date().toISOString() : null
+        ]
+      });
     }
 
     const token = generateToken({ ...user, id: user.id });

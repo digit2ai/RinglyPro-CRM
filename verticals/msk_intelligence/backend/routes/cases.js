@@ -151,16 +151,19 @@ router.post('/', async (req, res) => {
       chiefComplaint, painLocation, painLocationBodyMap,
       injuryMechanism, onsetDate, durationDescription,
       severity, functionalLimitations, sportContext,
-      priorImagingHistory, caseType, urgency, pricingTier, source
+      priorImagingHistory, caseType, urgency, pricingTier, source,
+      patientId: requestPatientId
     } = req.body;
 
     if (!chiefComplaint) {
       return res.status(400).json({ error: 'Chief complaint is required' });
     }
 
-    // Resolve patient
+    // Resolve patient — use provided patientId (staff/radiologist) or lookup from JWT (patient)
     let patientId = null;
-    if (req.user.role === 'patient') {
+    if (requestPatientId && ['radiologist', 'admin', 'staff'].includes(req.user.role)) {
+      patientId = requestPatientId;
+    } else if (req.user.role === 'patient') {
       const [patients] = await sequelize.query(
         `SELECT id FROM msk_patients WHERE user_id = $1`, { bind: [req.user.userId] }
       );

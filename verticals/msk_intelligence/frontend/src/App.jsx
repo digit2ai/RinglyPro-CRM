@@ -25,6 +25,7 @@ import EngagementDashboard from './pages/EngagementDashboard';
 import MyRehab from './pages/MyRehab';
 import CreateHEP from './pages/CreateHEP';
 import RPMDashboard from './pages/RPMDashboard';
+import RegisterPatient from './pages/RegisterPatient';
 import NotFound from './pages/NotFound';
 import Layout from './components/Layout';
 
@@ -66,6 +67,11 @@ export default function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/cases" element={<CaseList />} />
               <Route path="/cases/new" element={<NewCase />} />
+              <Route path="/patients/register" element={
+                <ProtectedRoute allowedRoles={['admin', 'radiologist', 'staff']}>
+                  <RegisterPatient />
+                </ProtectedRoute>
+              } />
               <Route path="/cases/:id" element={<CaseDetail />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/consultations" element={<Consultations />} />

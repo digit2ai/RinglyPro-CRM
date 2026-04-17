@@ -5,49 +5,52 @@ import NotificationBell from './NotificationBell';
 
 const NAV_ITEMS = {
   patient: [
-    { path: '/dashboard', label: 'Dashboard', icon: '📊' },
-    { path: '/cases', label: 'My Cases', icon: '📋' },
-    { path: '/cases/new', label: 'New Case', icon: '➕' },
-    { path: '/messages', label: 'Messages', icon: '💬' },
-    { path: '/appointments', label: 'Appointments', icon: '📅' },
-    { path: '/consultations', label: 'Video Consults', icon: '📹' },
-    { path: '/proms', label: 'Assessments', icon: '📝' },
-    { path: '/rehab', label: 'My Exercises', icon: '🏋️' },
-    { path: '/rpm', label: 'Monitoring', icon: '📱' },
-    { path: '/reports', label: 'Reports', icon: '📄' },
+    { path: '/dashboard', label: 'Dashboard' },
+    { path: '/cases', label: 'My Cases' },
+    { path: '/cases/new', label: 'New Case' },
+    { path: '/messages', label: 'Messages' },
+    { path: '/appointments', label: 'Appointments' },
+    { path: '/consultations', label: 'Video Consults' },
+    { path: '/proms', label: 'Assessments' },
+    { path: '/rehab', label: 'My Exercises' },
+    { path: '/rpm', label: 'Monitoring' },
+    { path: '/reports', label: 'Reports' },
   ],
   radiologist: [
-    { path: '/dashboard', label: 'Dashboard', icon: '📊' },
-    { path: '/cases', label: 'Case Queue', icon: '📋' },
-    { path: '/cases/new', label: 'New Case', icon: '➕' },
-    { path: '/messages', label: 'Messages', icon: '💬' },
-    { path: '/appointments', label: 'Schedule', icon: '📅' },
-    { path: '/consultations', label: 'Video Consults', icon: '📹' },
-    { path: '/reports', label: 'Reports', icon: '📄' },
-    { path: '/billing', label: 'Billing', icon: '💰' },
-    { path: '/engagement', label: 'Engagement', icon: '📊' },
-    { path: '/admin', label: 'Analytics', icon: '📈' },
+    { path: '/dashboard', label: 'Dashboard' },
+    { path: '/cases', label: 'Case Queue' },
+    { path: '/cases/new', label: 'New Case' },
+    { path: '/patients/register', label: 'Register Patient' },
+    { path: '/messages', label: 'Messages' },
+    { path: '/appointments', label: 'Schedule' },
+    { path: '/consultations', label: 'Video Consults' },
+    { path: '/reports', label: 'Reports' },
+    { path: '/billing', label: 'Billing' },
+    { path: '/engagement', label: 'Engagement' },
+    { path: '/admin', label: 'Analytics' },
   ],
   admin: [
-    { path: '/dashboard', label: 'Dashboard', icon: '📊' },
-    { path: '/cases', label: 'All Cases', icon: '📋' },
-    { path: '/cases/new', label: 'New Case', icon: '➕' },
-    { path: '/messages', label: 'Messages', icon: '💬' },
-    { path: '/appointments', label: 'Appointments', icon: '📅' },
-    { path: '/consultations', label: 'Video Consults', icon: '📹' },
-    { path: '/reports', label: 'Reports', icon: '📄' },
-    { path: '/billing', label: 'Billing', icon: '💰' },
-    { path: '/engagement', label: 'Engagement', icon: '📊' },
-    { path: '/admin', label: 'Admin', icon: '⚙️' },
+    { path: '/dashboard', label: 'Dashboard' },
+    { path: '/cases', label: 'All Cases' },
+    { path: '/cases/new', label: 'New Case' },
+    { path: '/patients/register', label: 'Register Patient' },
+    { path: '/messages', label: 'Messages' },
+    { path: '/appointments', label: 'Appointments' },
+    { path: '/consultations', label: 'Video Consults' },
+    { path: '/reports', label: 'Reports' },
+    { path: '/billing', label: 'Billing' },
+    { path: '/engagement', label: 'Engagement' },
+    { path: '/admin', label: 'Admin' },
   ],
   staff: [
-    { path: '/dashboard', label: 'Dashboard', icon: '📊' },
-    { path: '/cases', label: 'Cases', icon: '📋' },
-    { path: '/cases/new', label: 'New Case', icon: '➕' },
-    { path: '/messages', label: 'Messages', icon: '💬' },
-    { path: '/appointments', label: 'Appointments', icon: '📅' },
-    { path: '/consultations', label: 'Video Consults', icon: '📹' },
-    { path: '/reports', label: 'Reports', icon: '📄' },
+    { path: '/dashboard', label: 'Dashboard' },
+    { path: '/cases', label: 'Cases' },
+    { path: '/cases/new', label: 'New Case' },
+    { path: '/patients/register', label: 'Register Patient' },
+    { path: '/messages', label: 'Messages' },
+    { path: '/appointments', label: 'Appointments' },
+    { path: '/consultations', label: 'Video Consults' },
+    { path: '/reports', label: 'Reports' },
   ]
 };
 
@@ -116,7 +119,6 @@ export default function Layout({ children, user, onLogout }) {
                     ? 'bg-msk-600/20 text-msk-400 border-l-2 border-msk-500'
                     : 'text-dark-300 hover:text-white hover:bg-dark-800'}`}
               >
-                <span className="text-lg">{item.icon}</span>
                 <span className="font-medium">{item.label}</span>
               </Link>
             );
@@ -130,7 +132,7 @@ export default function Layout({ children, user, onLogout }) {
             <p className="text-xs text-dark-400 capitalize">{user?.role}</p>
           </div>
           <Link to="/settings/mfa" onClick={handleNavClick} className="block text-sm text-dark-400 hover:text-msk-400 transition-colors mb-2">
-            {user?.mfaEnabled ? '🔐 MFA Enabled' : '🔓 Setup MFA'}
+            {user?.mfaEnabled ? 'MFA Enabled' : 'Setup MFA'}
           </Link>
           <button onClick={onLogout} className="w-full text-left text-sm text-dark-400 hover:text-red-400 transition-colors">
             Sign Out

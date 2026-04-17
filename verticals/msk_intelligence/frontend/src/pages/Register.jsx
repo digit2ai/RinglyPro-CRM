@@ -5,11 +5,20 @@ const mskLogo = 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69
 
 export default function Register({ onLogin }) {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', password: '', confirmPassword: '' });
+  const [form, setForm] = useState({
+    firstName: '', lastName: '', email: '', phone: '',
+    password: '', confirmPassword: '',
+    dateOfBirth: '', gender: '',
+    insuranceProvider: '', policyNumber: '', groupNumber: '',
+    hipaaConsent: false
+  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (field) => (e) => setForm({ ...form, [field]: e.target.value });
+  const handleChange = (field) => (e) => {
+    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    setForm({ ...form, [field]: value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,6 +30,9 @@ export default function Register({ onLogin }) {
     if (form.password.length < 8) {
       return setError('Password must be at least 8 characters');
     }
+    if (!form.hipaaConsent) {
+      return setError('You must consent to HIPAA privacy practices to create an account');
+    }
 
     setLoading(true);
     try {
@@ -29,7 +41,13 @@ export default function Register({ onLogin }) {
         lastName: form.lastName,
         email: form.email,
         phone: form.phone,
-        password: form.password
+        password: form.password,
+        dateOfBirth: form.dateOfBirth || undefined,
+        gender: form.gender || undefined,
+        insuranceProvider: form.insuranceProvider || undefined,
+        policyNumber: form.policyNumber || undefined,
+        groupNumber: form.groupNumber || undefined,
+        hipaaConsent: form.hipaaConsent
       });
       onLogin(data.user);
       navigate('/dashboard');
@@ -81,7 +99,45 @@ export default function Register({ onLogin }) {
 
             <div>
               <label className="block text-sm font-medium text-dark-300 mb-1">Phone</label>
-              <input type="tel" value={form.phone} onChange={handleChange('phone')} className="input-field" />
+              <input type="tel" value={form.phone} onChange={handleChange('phone')} className="input-field" placeholder="(555) 123-4567" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-dark-300 mb-1">Date of Birth</label>
+                <input type="date" value={form.dateOfBirth} onChange={handleChange('dateOfBirth')} className="input-field" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-dark-300 mb-1">Gender</label>
+                <select value={form.gender} onChange={handleChange('gender')} className="input-field">
+                  <option value="">Select...</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                  <option value="prefer_not_to_say">Prefer not to say</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Insurance (optional for self-registration) */}
+            <div className="border-t border-dark-700 pt-4">
+              <p className="text-sm font-medium text-dark-300 mb-3">Insurance Information (optional)</p>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs text-dark-400 mb-1">Insurance Provider</label>
+                  <input type="text" value={form.insuranceProvider} onChange={handleChange('insuranceProvider')} className="input-field" placeholder="e.g., Blue Cross Blue Shield" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-dark-400 mb-1">Policy Number</label>
+                    <input type="text" value={form.policyNumber} onChange={handleChange('policyNumber')} className="input-field" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-dark-400 mb-1">Group Number</label>
+                    <input type="text" value={form.groupNumber} onChange={handleChange('groupNumber')} className="input-field" />
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div>
@@ -92,6 +148,24 @@ export default function Register({ onLogin }) {
             <div>
               <label className="block text-sm font-medium text-dark-300 mb-1">Confirm Password</label>
               <input type="password" value={form.confirmPassword} onChange={handleChange('confirmPassword')} className="input-field" required />
+            </div>
+
+            {/* HIPAA Consent */}
+            <div className="border-t border-dark-700 pt-4">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.hipaaConsent}
+                  onChange={handleChange('hipaaConsent')}
+                  className="mt-1 w-5 h-5 rounded border-dark-600 bg-dark-800 text-msk-500 focus:ring-msk-500"
+                  required
+                />
+                <span className="text-sm text-dark-300">
+                  <span className="font-medium text-white">HIPAA Consent *</span>
+                  <br />
+                  I have been informed of HIPAA privacy practices and consent to electronic health records management.
+                </span>
+              </label>
             </div>
 
             <button type="submit" disabled={loading} className="btn-primary w-full">

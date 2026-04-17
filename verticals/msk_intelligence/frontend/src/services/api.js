@@ -84,6 +84,27 @@ class ApiService {
   logout() {
     this.clearToken();
   }
+
+  // Patient management
+  searchPatients(query) {
+    return this.get(`/patients/search?q=${encodeURIComponent(query)}`);
+  }
+
+  registerPatient(data) {
+    return this.post('/patients/register', data);
+  }
+
+  getPatient(id) {
+    return this.get(`/patients/${id}`);
+  }
+
+  updatePatient(id, data) {
+    return this.put(`/patients/${id}`, data);
+  }
+
+  sendRegistrationLink(data) {
+    return this.post('/patients/send-registration-link', data);
+  }
 }
 
 export default new ApiService();

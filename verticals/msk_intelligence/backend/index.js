@@ -640,6 +640,20 @@ async function runMigrations() {
       CREATE INDEX IF NOT EXISTS idx_msk_audit_created ON msk_audit_log(created_at);
     `);
 
+    // Patient management columns
+    await sequelize.query(`
+      ALTER TABLE msk_patients ADD COLUMN IF NOT EXISTS phone VARCHAR(50);
+      ALTER TABLE msk_patients ADD COLUMN IF NOT EXISTS insurance_provider VARCHAR(200);
+      ALTER TABLE msk_patients ADD COLUMN IF NOT EXISTS policy_number VARCHAR(100);
+      ALTER TABLE msk_patients ADD COLUMN IF NOT EXISTS group_number VARCHAR(100);
+      ALTER TABLE msk_patients ADD COLUMN IF NOT EXISTS subscriber_name VARCHAR(200);
+      ALTER TABLE msk_patients ADD COLUMN IF NOT EXISTS insurance_card_front TEXT;
+      ALTER TABLE msk_patients ADD COLUMN IF NOT EXISTS insurance_card_back TEXT;
+      ALTER TABLE msk_patients ADD COLUMN IF NOT EXISTS hipaa_consent BOOLEAN DEFAULT false;
+      ALTER TABLE msk_patients ADD COLUMN IF NOT EXISTS hipaa_consent_date TIMESTAMPTZ;
+      ALTER TABLE msk_patients ADD COLUMN IF NOT EXISTS registered_by INTEGER REFERENCES msk_users(id);
+    `);
+
     // MFA columns
     await sequelize.query(`
       ALTER TABLE msk_users ADD COLUMN IF NOT EXISTS mfa_secret TEXT;
