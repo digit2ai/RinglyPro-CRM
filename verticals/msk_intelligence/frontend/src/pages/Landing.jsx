@@ -18,10 +18,10 @@ export default function Landing() {
         <div className="absolute inset-0 bg-gradient-to-t from-dark-950 via-transparent to-transparent" />
 
         <nav className="relative z-10 max-w-7xl mx-auto px-4 lg:px-6 py-4 lg:py-6 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0 flex-shrink">
-            <img src={mskLogo} alt="Digit2AI" className="h-12 sm:h-16 lg:h-32 w-auto object-contain drop-shadow-2xl flex-shrink-0" />
-            <div className="min-w-0 hidden sm:block">
-              <h1 className="text-base sm:text-lg lg:text-2xl font-bold text-white truncate">ImagingMind</h1>
+          <div className="flex flex-col items-start min-w-0 flex-shrink">
+            <img src={mskLogo} alt="ImagingMind" className="h-20 sm:h-28 lg:h-44 w-auto object-contain drop-shadow-2xl flex-shrink-0" />
+            <div className="min-w-0 mt-1">
+              <h1 className="text-lg sm:text-xl lg:text-3xl font-bold text-white truncate">ImagingMind</h1>
               <p className="text-xs sm:text-sm text-msk-400 truncate">AI Diagnostics Platform</p>
             </div>
           </div>
@@ -46,11 +46,6 @@ export default function Landing() {
               </div>
               <span className="text-msk-400 text-sm sm:text-base font-medium group-hover:text-msk-300 transition-colors">Watch AI Demo</span>
             </a>
-
-            <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-msk-600/10 border border-msk-600/20 text-msk-400 text-xs sm:text-sm font-medium mb-6 sm:mb-8">
-              <span className="w-2 h-2 rounded-full bg-msk-500 animate-pulse" />
-              Remote Musculoskeletal Intelligence
-            </div>
 
             <h2 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-white leading-tight mb-6">
               Specialist-grade
