@@ -874,7 +874,7 @@
   </p>
   <div style="display:flex; gap:12px; margin-top:28px;" class="fade-in fade-in-d3">
     <a href="/msk/register" class="ui-btn ui-btn-primary" style="font-size:16px; padding:14px 32px; text-decoration:none; border-radius:12px;">Start Free Trial</a>
-    <a href="mailto:mstagg@digit2ai.com" class="ui-btn ui-btn-secondary" style="font-size:16px; padding:14px 32px; text-decoration:none; border-radius:12px;">Contact Sales</a>
+    <a href="mailto:mstagg@digit2ai.com?subject=ImagingMind%20%E2%80%94%20Demo%20Follow-Up&body=Hi%20Manuel%2C%0A%0AI%20just%20watched%20the%20ImagingMind%20AI%20X-Ray%20demo%20and%20I%E2%80%99m%20interested.%0A%0AOrganization%3A%20%0ARole%3A%20%0ANumber%20of%20radiologists%3A%20%0AMonthly%20study%20volume%3A%20%0A%0APlease%20schedule%20a%20live%20demo%20and%20send%20pricing.%0A%0ABest%20regards" class="ui-btn ui-btn-secondary" style="font-size:16px; padding:14px 32px; text-decoration:none; border-radius:12px;">Contact Sales</a>
   </div>
   <div style="margin-top:32px; display:flex; gap:20px;" class="fade-in fade-in-d4">
     <span class="pill pill-cyan">ImagingMind.app</span>
@@ -985,7 +985,7 @@
 
   // Pre-generate audio for upcoming slides (background, non-blocking)
   function prefetchAudio(fromIndex) {
-    for (let i = fromIndex; i < Math.min(fromIndex + 3, TOTAL); i++) {
+    for (let i = fromIndex; i < Math.min(fromIndex + 6, TOTAL); i++) {
       generateSlideAudio(i).catch(() => {});
     }
   }
@@ -996,15 +996,17 @@
   let autoAdvanceTimer = null;
   let narrateOnEnd = null;
   let autoPlaying = false;
+  let narrationId = 0; // Unique ID per narration to prevent stale callbacks
 
   ttsAudio.addEventListener('play', () => { narrationWave.classList.add('active'); });
   ttsAudio.addEventListener('ended', () => {
     narrationWave.classList.remove('active');
     if (narrateOnEnd) { const cb = narrateOnEnd; narrateOnEnd = null; cb(); }
   });
-  ttsAudio.addEventListener('error', () => {
+  ttsAudio.addEventListener('error', (e) => {
+    console.warn('[Audio] Error:', e.type, ttsAudio.src);
     narrationWave.classList.remove('active');
-    if (narrateOnEnd) { const cb = narrateOnEnd; narrateOnEnd = null; autoAdvanceTimer = setTimeout(cb, 4000); }
+    if (narrateOnEnd) { const cb = narrateOnEnd; narrateOnEnd = null; autoAdvanceTimer = setTimeout(cb, 3000); }
   });
 
   function show(n) {
@@ -1017,6 +1019,7 @@
   }
 
   function cancelNarration() {
+    narrationId++; // Invalidate any in-flight async narration
     if (autoAdvanceTimer) { clearTimeout(autoAdvanceTimer); autoAdvanceTimer = null; }
     narrateOnEnd = null;
     if (window.speechSynthesis) speechSynthesis.cancel();
@@ -1026,27 +1029,46 @@
     narrationWave.classList.remove('active');
   }
 
-  async function narrateSlide(slideIndex, onEnd) {
-    cancelNarration();
+  function playAudioUrl(url, slideIndex, onEnd) {
+    narrateOnEnd = () => { autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, 2000); };
+    ttsAudio.src = url;
+    ttsAudio.load();
+    ttsAudio.play().then(() => {
+      console.log('[Lina] Playing slide', slideIndex + 1, currentLang);
+    }).catch((err) => {
+      console.warn('[Lina] Play failed slide', slideIndex + 1, err.message);
+      narrateOnEnd = null;
+      fallbackSpeech(slideIndex, onEnd);
+    });
+  }
 
-    // Try ElevenLabs first
-    const audioUrl = await generateSlideAudio(slideIndex);
-    if (audioUrl) {
-      narrateOnEnd = () => { autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, 2000); };
-      ttsAudio.src = audioUrl;
-      ttsAudio.load();
-      ttsAudio.play().then(() => {
-        console.log('[Lina] Playing slide', slideIndex + 1, currentLang);
-      }).catch(() => {
-        narrateOnEnd = null;
-        // Fallback to Web Speech
-        fallbackSpeech(slideIndex, onEnd);
-      });
+  function narrateSlide(slideIndex, onEnd) {
+    cancelNarration();
+    const myId = narrationId; // Capture current narration ID
+
+    // Check if audio is already cached (instant play)
+    const cacheKey = `${slideIndex}:${currentLang}`;
+    if (audioCache[cacheKey]) {
+      playAudioUrl(audioCache[cacheKey], slideIndex, onEnd);
       return;
     }
 
-    // Fallback: Web Speech API
-    fallbackSpeech(slideIndex, onEnd);
+    // Generate audio async, but guard against stale callbacks
+    generateSlideAudio(slideIndex).then(audioUrl => {
+      // If narration was cancelled while we waited, abort
+      if (narrationId !== myId || !autoPlaying) {
+        console.log('[TTS] Narration cancelled during generation for slide', slideIndex + 1);
+        return;
+      }
+      if (audioUrl) {
+        playAudioUrl(audioUrl, slideIndex, onEnd);
+      } else {
+        fallbackSpeech(slideIndex, onEnd);
+      }
+    }).catch(() => {
+      if (narrationId !== myId || !autoPlaying) return;
+      fallbackSpeech(slideIndex, onEnd);
+    });
   }
 
   function fallbackSpeech(slideIndex, onEnd) {
@@ -1069,11 +1091,11 @@
       }
       narrationWave.classList.add('active');
       utter.onend = () => { narrationWave.classList.remove('active'); autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, 2000); };
-      utter.onerror = () => { narrationWave.classList.remove('active'); autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, 4000); };
+      utter.onerror = () => { narrationWave.classList.remove('active'); autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, 3000); };
       speechSynthesis.speak(utter);
       return;
     }
-    autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, 6000);
+    autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, 5000);
   }
 
   // ============ NAVIGATION ============
@@ -1087,6 +1109,8 @@
     autoPlaying = true;
     btnPlayPause.innerHTML = '&#10074;&#10074;';
     recDot.classList.add('active');
+    // Prefetch all slides audio immediately
+    prefetchAudio(0);
     autoNarrateCurrent();
   }
 

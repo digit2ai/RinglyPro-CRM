@@ -272,10 +272,7 @@ export default function Landing() {
                 </span>
               ))}
             </div>
-            <a href="/msk-proposal.html" className="btn-primary inline-block mr-3">
-              View Full Proposal
-            </a>
-            <a href="mailto:contact@ringlypro.com" className="btn-secondary inline-block">
+            <a href="mailto:mstagg@digit2ai.com?subject=ImagingMind%20%E2%80%94%20Enterprise%20Inquiry&body=Hi%20Manuel%2C%0A%0AI%E2%80%99m%20interested%20in%20ImagingMind%20for%20our%20organization.%0A%0AOrganization%3A%20%0AType%20(clinic%20%2F%20sports%20team%20%2F%20hospital)%3A%20%0ANumber%20of%20radiologists%3A%20%0AEstimated%20monthly%20studies%3A%20%0A%0APlease%20send%20me%20pricing%20details%20and%20schedule%20a%20demo.%0A%0ABest%20regards" className="btn-primary inline-block">
               Contact Sales
             </a>
           </div>
