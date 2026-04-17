@@ -28,7 +28,7 @@ export default function NewCase() {
     priorImagingHistory: '',
     caseType: 'general',
     urgency: 'routine',
-    pricingTier: 'imaging_review'
+    pricingTier: 'platform'
   });
 
   const handleChange = (field) => (e) => setForm({ ...form, [field]: e.target.value });
@@ -202,30 +202,6 @@ export default function NewCase() {
             <div>
               <span className="text-dark-400">Case Type</span>
               <p className="text-white mt-1 capitalize">{form.caseType.replace('_', ' ')}</p>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-dark-300 mb-2">Service Tier</label>
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { value: 'imaging_review', label: 'Imaging Review', price: 'From $299' },
-                { value: 'full_diagnostic', label: 'Full Diagnostic', price: 'From $799' },
-                { value: 'elite_concierge', label: 'Elite Concierge', price: '$2,999/mo' }
-              ].map(t => (
-                <button
-                  key={t.value}
-                  type="button"
-                  onClick={() => setForm({ ...form, pricingTier: t.value })}
-                  className={`p-4 rounded-lg border text-center transition-all
-                    ${form.pricingTier === t.value
-                      ? 'border-msk-500 bg-msk-600/10'
-                      : 'border-dark-600 bg-dark-800 hover:border-dark-500'}`}
-                >
-                  <div className="font-medium text-white text-sm">{t.label}</div>
-                  <div className="text-xs text-msk-400 mt-1">{t.price}</div>
-                </button>
-              ))}
             </div>
           </div>
 

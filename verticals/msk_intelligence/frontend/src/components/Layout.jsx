@@ -19,6 +19,7 @@ const NAV_ITEMS = {
   radiologist: [
     { path: '/dashboard', label: 'Dashboard', icon: '📊' },
     { path: '/cases', label: 'Case Queue', icon: '📋' },
+    { path: '/cases/new', label: 'New Case', icon: '➕' },
     { path: '/messages', label: 'Messages', icon: '💬' },
     { path: '/appointments', label: 'Schedule', icon: '📅' },
     { path: '/consultations', label: 'Video Consults', icon: '📹' },

@@ -264,7 +264,7 @@ async function runMigrations() {
         case_type VARCHAR(50)
           CHECK (case_type IN ('joint','spine','soft_tissue','fracture','post_surgical','general')),
         chief_complaint TEXT,
-        pain_location VARCHAR(200),
+        pain_location TEXT,
         pain_location_body_map JSONB,
         injury_mechanism VARCHAR(50)
           CHECK (injury_mechanism IN ('trauma','overuse','acute','chronic','unknown')),
@@ -272,13 +272,12 @@ async function runMigrations() {
         duration_description TEXT,
         severity INTEGER CHECK (severity BETWEEN 1 AND 10),
         functional_limitations TEXT,
-        sport_context VARCHAR(200),
+        sport_context TEXT,
         prior_imaging_history TEXT,
         intake_data JSONB DEFAULT '{}',
         triage_result JSONB,
         ai_preliminary_assessment TEXT,
-        pricing_tier VARCHAR(50)
-          CHECK (pricing_tier IN ('imaging_review','full_diagnostic','elite_concierge')),
+        pricing_tier VARCHAR(50) DEFAULT 'platform',
         source VARCHAR(50) DEFAULT 'web'
           CHECK (source IN ('voice','web','b2b','referral','api')),
         created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -289,6 +288,14 @@ async function runMigrations() {
       CREATE INDEX IF NOT EXISTS idx_msk_cases_status ON msk_cases(status);
       CREATE INDEX IF NOT EXISTS idx_msk_cases_urgency ON msk_cases(urgency);
     `);
+
+    // Migrations: widen columns that were VARCHAR(200)
+    await sequelize.query(`
+      ALTER TABLE msk_cases ALTER COLUMN pain_location TYPE TEXT;
+      ALTER TABLE msk_cases ALTER COLUMN sport_context TYPE TEXT;
+      ALTER TABLE msk_cases DROP CONSTRAINT IF EXISTS msk_cases_pricing_tier_check;
+      ALTER TABLE msk_cases ALTER COLUMN pricing_tier SET DEFAULT 'platform';
+    `).catch(() => {}); // Ignore if already done
 
     // Case Timeline
     await sequelize.query(`
