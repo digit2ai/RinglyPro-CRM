@@ -82,11 +82,11 @@ export default function Layout({ children, user, onLogout }) {
       `}>
         {/* Logo */}
         <div className="p-4 border-b border-dark-700 flex items-center justify-between">
-          <Link to="/dashboard" onClick={handleNavClick} className="flex items-center gap-3 min-w-0">
-            <img src={mskLogo} alt="Digit2AI" className="h-12 w-auto object-contain drop-shadow-lg flex-shrink-0" />
-            <div className="min-w-0">
+          <Link to="/dashboard" onClick={handleNavClick} className="flex flex-col items-start min-w-0">
+            <img src={mskLogo} alt="ImagingMind" className="h-14 w-auto object-contain drop-shadow-lg flex-shrink-0" />
+            <div className="min-w-0 -mt-1">
               <h1 className="text-base font-bold text-white leading-tight">ImagingMind</h1>
-              <p className="text-xs text-dark-400 truncate">AI Diagnostics</p>
+              <p className="text-xs text-dark-400 truncate -mt-0.5">AI Diagnostics</p>
             </div>
           </Link>
           {/* Close button on mobile */}
