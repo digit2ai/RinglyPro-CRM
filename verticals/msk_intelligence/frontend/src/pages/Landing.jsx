@@ -167,10 +167,11 @@ export default function Landing() {
               {
                 name: 'Solo',
                 target: '1-2 radiologists, small clinic',
-                price: '$2,099',
+                price: '$1,349',
                 period: '/month',
+                pitch: 'Covers 1-2 radiologists at full capacity. A single radiologist generates $25K+/mo in reads — this costs just 5% of what they produce.',
                 features: [
-                  'Up to 4,000 AI-analyzed studies/mo',
+                  'Up to 2,500 AI-analyzed studies/mo',
                   'Patient portal',
                   'Secure messaging',
                   'Appointment scheduling',
@@ -184,10 +185,11 @@ export default function Landing() {
               {
                 name: 'Practice',
                 target: '3-10 radiologists, mid-size group',
-                price: '$9,999',
+                price: '$5,999',
                 period: '/month',
+                pitch: 'Covers your entire group. At $0.50/case, that\'s 98% cheaper than a human teleradiologist at $25/case.',
                 features: [
-                  'Up to 20,000 AI-analyzed studies/mo',
+                  'Up to 12,000 AI-analyzed studies/mo',
                   'Everything in Solo, plus:',
                   'RPM billing (CPT 99453/99454)',
                   'FHIR R4 export',
@@ -204,6 +206,7 @@ export default function Landing() {
                 target: 'Hospital networks, 10+ sites',
                 price: 'Custom',
                 period: '',
+                pitch: 'Unlimited volume. We sit down and build the right plan together — pricing scaled to your case load.',
                 features: [
                   'Unlimited AI-analyzed studies',
                   'Everything in Practice, plus:',
@@ -230,6 +233,7 @@ export default function Landing() {
                   <span className="text-4xl font-bold text-white">{tier.price}</span>
                   <span className="text-dark-400 ml-1">{tier.period}</span>
                 </div>
+                <p className="text-dark-400 text-sm mb-6 leading-relaxed italic border-l-2 border-msk-500/30 pl-3">{tier.pitch}</p>
                 <ul className="space-y-3 mb-8">
                   {tier.features.map((f, j) => (
                     <li key={j} className={`flex items-center gap-2 text-sm ${f.startsWith('Everything') ? 'text-msk-400 font-medium' : 'text-dark-300'}`}>
