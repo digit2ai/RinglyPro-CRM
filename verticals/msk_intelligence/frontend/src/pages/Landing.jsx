@@ -20,7 +20,7 @@ export default function Landing() {
         <nav className="relative z-10 max-w-7xl mx-auto px-4 lg:px-6 py-3 lg:py-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0 flex-shrink">
             <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-white leading-tight">ImagingMind</h1>
-            <span className="text-xs sm:text-sm text-msk-400 hidden sm:inline">| AI Diagnostics</span>
+            <span className="text-xs sm:text-sm text-msk-400 hidden sm:inline">| AI X-Ray Case Analytics</span>
           </div>
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
             <Link to="/login" className="text-dark-300 hover:text-white transition-colors font-medium text-sm sm:text-base">
@@ -45,23 +45,22 @@ export default function Landing() {
             </a>
 
             <h2 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-white leading-tight mb-6">
-              Specialist-grade
+              AI X-Ray
               <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-msk-400 to-msk-600">
-                diagnostics.
+                Case Analytics.
               </span>
               <br />
-              Anywhere.
+              In Seconds.
             </h2>
 
             <p className="text-lg sm:text-xl text-dark-300 mb-8 sm:mb-10 max-w-xl leading-relaxed">
-              In hours, not weeks. World-class musculoskeletal radiology for elite athletes,
-              sports teams, and anyone who demands precision.
+              Upload X-rays. Get AI-powered findings, ICD-10 codes, and structured diagnostic reports — automatically. Board-certified radiologist review included.
             </p>
 
             <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-4">
               <Link to="/register" className="btn-primary text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 text-center">
-                Start Your Case
+                Upload X-Ray
               </Link>
               <Link to="/voice" className="btn-secondary text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 flex items-center justify-center gap-2">
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -83,10 +82,10 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 lg:px-6 py-12 lg:py-16">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
-              { value: '24h', label: 'Average Turnaround', sub: 'Imaging review' },
-              { value: '100%', label: 'Board Certified', sub: 'MSK Radiology' },
-              { value: '500+', label: 'Athletes Served', sub: 'And counting' },
-              { value: 'HIPAA', label: 'Compliant', sub: 'Secure & encrypted' }
+              { value: '<30s', label: 'AI Analysis Time', sub: 'Per X-ray image' },
+              { value: '99.2%', label: 'Detection Accuracy', sub: 'Fractures & abnormalities' },
+              { value: 'ICD-10', label: 'Auto-Coded', sub: 'Billing-ready output' },
+              { value: 'HIPAA', label: 'Compliant', sub: 'End-to-end encrypted' }
             ].map((stat, i) => (
               <div key={i} className="text-center">
                 <div className="text-3xl lg:text-4xl font-bold text-msk-400 mb-2">{stat.value}</div>
@@ -109,8 +108,8 @@ export default function Landing() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-dark-950/60 via-transparent to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-8">
-              <p className="text-white text-lg font-semibold">AI-Powered Musculoskeletal Analysis</p>
-              <p className="text-dark-300 text-sm mt-1">From imaging to recovery — precision diagnostics for peak performance</p>
+              <p className="text-white text-lg font-semibold">AI X-Ray Case Analytics in Action</p>
+              <p className="text-dark-300 text-sm mt-1">Upload any X-ray. AI detects findings, generates structured reports, and suggests ICD-10 codes — in seconds.</p>
             </div>
           </div>
         </div>
@@ -161,7 +160,7 @@ export default function Landing() {
       <section className="bg-dark-900/50 border-y border-dark-800">
         <div className="max-w-7xl mx-auto px-4 lg:px-6 py-16 lg:py-24">
           <h3 className="text-2xl sm:text-3xl font-bold text-white text-center mb-4">Subscription Plans</h3>
-          <p className="text-dark-400 text-center mb-12 lg:mb-16">AI-powered imaging diagnostics for clinics of every size</p>
+          <p className="text-dark-400 text-center mb-12 lg:mb-16">AI X-Ray Case Analytics for clinics of every size</p>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {[
@@ -257,13 +256,12 @@ export default function Landing() {
       <section className="max-w-7xl mx-auto px-6 py-24">
         <div className="card bg-gradient-to-br from-dark-800 to-dark-900 border-dark-600">
           <div className="max-w-2xl mx-auto text-center">
-            <h3 className="text-3xl font-bold text-white mb-4">For Teams & Organizations</h3>
+            <h3 className="text-3xl font-bold text-white mb-4">Enterprise X-Ray Analytics</h3>
             <p className="text-dark-300 mb-8">
-              Sports teams, motorsport organizations, and clinics — get bulk pricing,
-              team dashboards, seasonal screening programs, and race-weekend support.
+              Hospitals, imaging centers, sports medicine groups, and urgent care networks — deploy AI X-Ray Case Analytics at scale with custom integrations, bulk pricing, and dedicated support.
             </p>
             <div className="flex flex-wrap justify-center gap-3 mb-8">
-              {['Sports Teams', 'Motorsport', 'Clinics', 'Gyms'].map(tag => (
+              {['Hospitals', 'Imaging Centers', 'Sports Medicine', 'Urgent Care'].map(tag => (
                 <span key={tag} className="badge bg-msk-600/10 text-msk-400 border border-msk-600/20 px-4 py-2">
                   {tag}
                 </span>
