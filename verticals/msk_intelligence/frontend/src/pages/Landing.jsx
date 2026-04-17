@@ -20,9 +20,9 @@ export default function Landing() {
         <nav className="relative z-10 max-w-7xl mx-auto px-4 lg:px-6 py-4 lg:py-6 flex items-center justify-between gap-3">
           <div className="flex flex-col items-start min-w-0 flex-shrink">
             <img src={mskLogo} alt="ImagingMind" className="h-40 sm:h-56 lg:h-80 w-auto object-contain drop-shadow-2xl flex-shrink-0" />
-            <div className="min-w-0 -mt-2 sm:-mt-3 lg:-mt-4">
+            <div className="min-w-0 -mt-8 sm:-mt-12 lg:-mt-16">
               <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-white truncate">ImagingMind</h1>
-              <p className="text-sm sm:text-base text-msk-400 truncate -mt-0.5">AI Diagnostics Platform</p>
+              <p className="text-sm sm:text-base text-msk-400 truncate">AI Diagnostics Platform</p>
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
