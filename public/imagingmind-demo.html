@@ -364,7 +364,7 @@
     display: inline-flex; align-items: center; gap: 12px;
     margin-bottom: 16px;
   }
-  .logo-mark img { height: 48px; width: auto; }
+  .logo-mark img { height: 120px; width: auto; }
 </style>
 </head>
 <body>
@@ -383,7 +383,7 @@
 <!-- Pre-play overlay -->
 <div class="preplay" id="preplay">
   <div class="logo-mark">
-    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png" alt="ImagingMind" style="height:80px;">
+    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png" alt="ImagingMind" style="height:160px;">
   </div>
   <p class="t-big" style="max-width:600px;">ImagingMind<br><span class="t-cyan">AI X-Ray Case Analytics</span></p>
   <p class="t-small" style="max-width:500px; margin-top:8px;">Interactive product demo with voice narration.<br>Best experienced fullscreen with audio on.</p>
@@ -401,7 +401,7 @@
 <!-- SLIDE 1: Title -->
 <div class="slide bg-dark" data-notes="Welcome to ImagingMind. AI X-ray analysis that reads in seconds, not hours." data-notes-es="Bienvenido a ImagingMind. Analisis de rayos X con inteligencia artificial que lee en segundos, no en horas.">
   <div class="logo-mark fade-in">
-    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png" alt="ImagingMind">
+    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png" alt="ImagingMind" style="height:120px;">
   </div>
   <h1 class="t-mega fade-in fade-in-d1">AI X-Ray<br><span class="t-grad">Case Analytics</span></h1>
   <p class="t-body fade-in fade-in-d2" style="max-width:600px; margin-top:16px;">
@@ -494,36 +494,30 @@
   <span class="pill pill-purple" style="margin-bottom:12px;">STEP 2: AI ANALYSIS</span>
   <h2 class="t-mid fade-in" style="margin-bottom:20px;">Claude Vision AI Reads <span class="t-purple">Every Image</span></h2>
 
-  <div class="ui-card fade-in fade-in-d1">
-    <h3 style="font-size:16px; font-weight:700; color:white; margin-bottom:16px;">Case #MSK-20260413-HL5J -- Uploaded Imaging (3 files)</h3>
-    <div style="display:grid; grid-template-columns: repeat(3,1fr); gap:12px;">
-      <!-- Real Image 1: CT scan — analyzed -->
+  <div class="ui-card fade-in fade-in-d1" style="max-width:960px;">
+    <h3 style="font-size:16px; font-weight:700; color:white; margin-bottom:16px;">Case #MSK-20260413-HL5J -- Uploaded X-Rays (2 files)</h3>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+      <!-- Real X-ray 1: AP View -->
       <div style="position:relative;">
-        <div style="height:160px; border-radius:8px; overflow:hidden; background:#0a0a0a;">
-          <img src="/msk/api/v1/imaging/showcase/11" alt="CT Right Index" style="width:100%; height:100%; object-fit:cover;" onerror="this.parentElement.innerHTML='<div class=\'xray-placeholder\' style=\'height:100%\'><span class=\'xray-bone\'>&#129657;</span></div>'" />
+        <div style="height:280px; border-radius:10px; overflow:hidden; background:#0a0a0a; border:2px solid var(--bg-700);">
+          <img src="/msk/api/v1/imaging/showcase/12" alt="X-ray AP View -- Right Index Finger" style="width:100%; height:100%; object-fit:contain;" onerror="this.parentElement.innerHTML='<div class=\'xray-placeholder\' style=\'height:100%;display:flex;align-items:center;justify-content:center\'><span style=\'font-size:60px;opacity:0.15\'>&#129657;</span></div>'" />
         </div>
-        <div style="position:absolute; top:8px; right:8px;" class="ui-badge ui-badge-green">AI Analyzed</div>
-        <p class="t-small" style="margin-top:4px; font-size:11px;">CT Scan -- Right Index Finger</p>
+        <div style="position:absolute; top:10px; right:10px;" class="ui-badge ui-badge-green">AI Analyzed</div>
+        <p style="font-size:13px; color:white; font-weight:600; margin-top:8px;">X-Ray -- AP View</p>
+        <p class="t-small" style="font-size:11px;">Right index finger, displaced fracture visible</p>
       </div>
-      <!-- Real Image 2: X-ray AP — analyzed -->
+      <!-- Real X-ray 2: Lateral View -->
       <div style="position:relative;">
-        <div style="height:160px; border-radius:8px; overflow:hidden; background:#0a0a0a;">
-          <img src="/msk/api/v1/imaging/showcase/12" alt="X-ray AP" style="width:100%; height:100%; object-fit:cover;" onerror="this.parentElement.innerHTML='<div class=\'xray-placeholder\' style=\'height:100%\'><span class=\'xray-bone\'>&#129657;</span></div>'" />
+        <div style="height:280px; border-radius:10px; overflow:hidden; background:#0a0a0a; border:2px solid var(--bg-700);">
+          <img src="/msk/api/v1/imaging/showcase/13" alt="X-ray Lateral View -- Right Index Finger" style="width:100%; height:100%; object-fit:contain;" onerror="this.parentElement.innerHTML='<div class=\'xray-placeholder\' style=\'height:100%;display:flex;align-items:center;justify-content:center\'><span style=\'font-size:60px;opacity:0.15\'>&#129657;</span></div>'" />
         </div>
-        <div style="position:absolute; top:8px; right:8px;" class="ui-badge ui-badge-green">AI Analyzed</div>
-        <p class="t-small" style="margin-top:4px; font-size:11px;">X-Ray -- AP View</p>
-      </div>
-      <!-- Real Image 3: X-ray lateral — analyzed -->
-      <div style="position:relative;">
-        <div style="height:160px; border-radius:8px; overflow:hidden; background:#0a0a0a;">
-          <img src="/msk/api/v1/imaging/showcase/13" alt="X-ray Lateral" style="width:100%; height:100%; object-fit:cover;" onerror="this.parentElement.innerHTML='<div class=\'xray-placeholder\' style=\'height:100%\'><span class=\'xray-bone\'>&#129657;</span></div>'" />
-        </div>
-        <div style="position:absolute; top:8px; right:8px;" class="ui-badge ui-badge-green">AI Analyzed</div>
-        <p class="t-small" style="margin-top:4px; font-size:11px;">X-Ray -- Lateral View</p>
+        <div style="position:absolute; top:10px; right:10px;" class="ui-badge ui-badge-green">AI Analyzed</div>
+        <p style="font-size:13px; color:white; font-weight:600; margin-top:8px;">X-Ray -- Lateral View</p>
+        <p class="t-small" style="font-size:11px;">Dorsal angulation and fragment displacement confirmed</p>
       </div>
     </div>
-    <p class="t-small" style="margin-top:12px; text-align:center;">
-      All 3 images analyzed in <strong style="color:var(--cyan-neon);">11 seconds</strong> -- no manual trigger required
+    <p class="t-small" style="margin-top:14px; text-align:center;">
+      Both images analyzed in <strong style="color:var(--cyan-neon);">11 seconds</strong> -- no manual trigger required
     </p>
   </div>
 </div>
@@ -872,7 +866,7 @@
 <!-- SLIDE 14: CTA -->
 <div class="slide bg-dark" data-notes="Start your 14-day free trial today. Upload your first X-ray and see the AI analysis in under 30 seconds. Visit ImagingMind dot app or contact us directly." data-notes-es="Comienza tu prueba gratuita de 14 dias hoy. Sube tu primera radiografia y ve el analisis de inteligencia artificial en menos de 30 segundos. Visita ImagingMind punto app o contactanos directamente." data-last-slide="true">
   <div class="logo-mark fade-in">
-    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png" alt="ImagingMind" style="height:64px;">
+    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png" alt="ImagingMind" style="height:100px;">
   </div>
   <h2 class="t-mega fade-in fade-in-d1">See It <span class="t-grad">Live</span></h2>
   <p class="t-body fade-in fade-in-d2" style="max-width:550px; margin-top:12px;">
