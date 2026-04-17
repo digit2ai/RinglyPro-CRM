@@ -387,15 +387,19 @@
   </div>
   <p class="t-big" style="max-width:600px;">ImagingMind<br><span class="t-cyan">AI X-Ray Case Analytics</span></p>
   <p class="t-small" style="max-width:500px; margin-top:8px;">Interactive product demo with voice narration.<br>Best experienced fullscreen with audio on.</p>
-  <button class="preplay-btn" id="preplayBtn">&#9654;</button>
-  <p class="t-small" style="opacity:0.5; font-size:12px;">Tap to start autoplay</p>
+  <div style="display:flex; gap:12px; margin-top:16px; align-items:center;">
+    <button class="nav-btn" id="langToggle" style="width:auto; padding:6px 14px; font-size:13px; font-weight:600; letter-spacing:1px;" title="Switch language">EN</button>
+    <span class="t-small" style="opacity:0.4;" id="langHint">Detecting location...</span>
+  </div>
+  <button class="preplay-btn" id="preplayBtn" style="margin-top:16px;">&#9654;</button>
+  <p class="t-small" style="opacity:0.5; font-size:12px;">Tap to start autoplay &bull; Lina AI Voice</p>
 </div>
 
 <!-- ===== SLIDES ===== -->
 <div class="deck" id="deck">
 
 <!-- SLIDE 1: Title -->
-<div class="slide bg-dark" data-notes="Welcome to ImagingMind. AI X-ray analysis that reads in seconds, not hours.">
+<div class="slide bg-dark" data-notes="Welcome to ImagingMind. AI X-ray analysis that reads in seconds, not hours." data-notes-es="Bienvenido a ImagingMind. Analisis de rayos X con inteligencia artificial que lee en segundos, no en horas.">
   <div class="logo-mark fade-in">
     <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png" alt="ImagingMind">
   </div>
@@ -411,7 +415,7 @@
 </div>
 
 <!-- SLIDE 2: The Problem -->
-<div class="slide bg-red" data-notes="Radiology is in crisis. Burnout is high, backlogs grow, and missed findings cost lives. ImagingMind changes this.">
+<div class="slide bg-red" data-notes="Radiology is in crisis. Burnout is high, backlogs grow, and missed findings cost lives. ImagingMind changes this." data-notes-es="La radiologia esta en crisis. El agotamiento es alto, las listas de espera crecen y los hallazgos perdidos cuestan vidas. ImagingMind cambia esto.">
   <span class="pill pill-cyan" style="margin-bottom:16px;">THE PROBLEM</span>
   <h2 class="t-big fade-in">Radiology Bottleneck<br>Is <span class="t-red">Costing You</span></h2>
   <div class="grid-3 fade-in fade-in-d1" style="margin-top:32px;">
@@ -434,7 +438,7 @@
 </div>
 
 <!-- SLIDE 3: Upload Flow (simulated UI) -->
-<div class="slide bg-cyan" data-notes="Step one: upload. Drag and drop any X-ray, DICOM, or standard image file. Up to 20 files at once, 500 megabytes each.">
+<div class="slide bg-cyan" data-notes="Step one: upload. Drag and drop any X-ray, DICOM, or standard image file. Up to 20 files at once, 500 megabytes each." data-notes-es="Paso uno: subir imagenes. Arrastra y suelta cualquier radiografia, archivo DICOM o imagen estandar. Hasta 20 archivos a la vez, 500 megabytes cada uno.">
   <span class="pill pill-cyan" style="margin-bottom:12px;">STEP 1: UPLOAD</span>
   <h2 class="t-mid fade-in" style="margin-bottom:20px;">Drag & Drop Your X-Rays</h2>
 
@@ -472,7 +476,7 @@
 </div>
 
 <!-- SLIDE 4: AI Analysis Running -->
-<div class="slide bg-purple" data-notes="Instantly after upload, Claude Vision AI begins analyzing each image in the background. No manual trigger needed. The green badge appears within seconds.">
+<div class="slide bg-purple" data-notes="Instantly after upload, Claude Vision AI begins analyzing each image in the background. No manual trigger needed. The green badge appears within seconds." data-notes-es="Inmediatamente despues de subir, la inteligencia artificial Claude Vision comienza a analizar cada imagen en segundo plano. Sin necesidad de activacion manual. La insignia verde aparece en segundos.">
   <span class="pill pill-purple" style="margin-bottom:12px;">STEP 2: AI ANALYSIS</span>
   <h2 class="t-mid fade-in" style="margin-bottom:20px;">Claude Vision AI Reads <span class="t-purple">Every Image</span></h2>
 
@@ -512,7 +516,7 @@
 </div>
 
 <!-- SLIDE 5: Full Analysis Results -->
-<div class="slide bg-cyan" data-notes="Click any image to see the full AI analysis. ImagingMind detects the modality, body region, generates detailed findings, a clinical impression, and flags every abnormality with suggested ICD-10 codes.">
+<div class="slide bg-cyan" data-notes="Click any image to see the full AI analysis. ImagingMind detects the modality, body region, generates detailed findings, a clinical impression, and flags every abnormality with suggested ICD-10 codes." data-notes-es="Haz clic en cualquier imagen para ver el analisis completo. ImagingMind detecta la modalidad, la region corporal, genera hallazgos detallados, una impresion clinica, y marca cada anomalia con codigos ICD-10 sugeridos.">
   <span class="pill pill-cyan" style="margin-bottom:12px;">AI ANALYSIS RESULTS</span>
   <h2 class="t-mid fade-in" style="margin-bottom:16px;">Structured Diagnostic Output</h2>
 
@@ -563,7 +567,7 @@
 </div>
 
 <!-- SLIDE 6: Abnormality Detection Deep Dive -->
-<div class="slide bg-red" data-notes="ImagingMind flags every abnormality as a visual badge. Red for pathology, blue for ICD-10 codes. This means nothing gets missed, even in high-volume reading sessions. The AI acts as your safety net.">
+<div class="slide bg-red" data-notes="ImagingMind flags every abnormality as a visual badge. Red for pathology, blue for ICD-10 codes. This means nothing gets missed, even in high-volume reading sessions. The AI acts as your safety net." data-notes-es="ImagingMind marca cada anomalia como una insignia visual. Rojo para patologias, azul para codigos ICD-10. Esto significa que nada se pierde, incluso en sesiones de lectura de alto volumen. La inteligencia artificial actua como tu red de seguridad.">
   <span class="pill pill-cyan" style="margin-bottom:12px;">ABNORMALITY DETECTION</span>
   <h2 class="t-mid fade-in" style="margin-bottom:8px;">Nothing Gets <span class="t-red">Missed</span></h2>
   <p class="t-body fade-in fade-in-d1" style="max-width:650px; margin-bottom:24px;">
@@ -595,7 +599,7 @@
 </div>
 
 <!-- SLIDE 7: Confidence Scoring -->
-<div class="slide bg-dark" data-notes="Every analysis includes a confidence level. High confidence means clear, diagnostic-quality imaging with strong findings. Moderate flags borderline quality. Low recommends additional views. This helps you prioritize your review queue.">
+<div class="slide bg-dark" data-notes="Every analysis includes a confidence level. High confidence means clear, diagnostic-quality imaging with strong findings. Moderate flags borderline quality. Low recommends additional views. This helps you prioritize your review queue." data-notes-es="Cada analisis incluye un nivel de confianza. Alta confianza significa imagenes claras de calidad diagnostica con hallazgos fuertes. Moderada indica calidad limitrofe. Baja recomienda vistas adicionales. Esto te ayuda a priorizar tu cola de revision.">
   <span class="pill pill-cyan" style="margin-bottom:12px;">CONFIDENCE SCORING</span>
   <h2 class="t-mid fade-in" style="margin-bottom:24px;">AI Knows When It's <span class="t-cyan">Certain</span></h2>
 
@@ -629,7 +633,7 @@
 </div>
 
 <!-- SLIDE 8: Diagnostic Copilot -->
-<div class="slide bg-purple" data-notes="The AI Diagnostic Copilot generates a full structured report draft using all the image analyses, patient history, and clinical context. You review, edit, and finalize. One click.">
+<div class="slide bg-purple" data-notes="The AI Diagnostic Copilot generates a full structured report draft using all the image analyses, patient history, and clinical context. You review, edit, and finalize. One click." data-notes-es="El Copiloto Diagnostico genera un borrador de informe estructurado completo usando todos los analisis de imagenes, historial del paciente y contexto clinico. Tu revisas, editas y finalizas. Un solo clic.">
   <span class="pill pill-purple" style="margin-bottom:12px;">STEP 3: AI COPILOT REPORT</span>
   <h2 class="t-mid fade-in" style="margin-bottom:16px;">From Analysis to <span class="t-purple">Final Report</span></h2>
 
@@ -666,7 +670,7 @@
 </div>
 
 <!-- SLIDE 9: Case Timeline -->
-<div class="slide bg-dark" data-notes="Every action is logged in a HIPAA-compliant audit trail. From upload to AI analysis to finalized report, the complete case timeline gives you full accountability and compliance documentation.">
+<div class="slide bg-dark" data-notes="Every action is logged in a HIPAA-compliant audit trail. From upload to AI analysis to finalized report, the complete case timeline gives you full accountability and compliance documentation." data-notes-es="Cada accion queda registrada en un rastro de auditoria compatible con HIPAA. Desde la carga hasta el analisis de inteligencia artificial y el informe finalizado, la linea de tiempo completa del caso te brinda total responsabilidad y documentacion de cumplimiento.">
   <span class="pill pill-cyan" style="margin-bottom:12px;">AUDIT TRAIL</span>
   <h2 class="t-mid fade-in" style="margin-bottom:20px;">Complete Case <span class="t-cyan">Timeline</span></h2>
 
@@ -696,7 +700,7 @@
 </div>
 
 <!-- SLIDE 10: PDF Export -->
-<div class="slide bg-cyan" data-notes="One click exports a professional PDF with full letterhead, patient demographics, findings, ICD-10 codes, and recovery timeline. FHIR R4 compliant for interoperability with any EMR.">
+<div class="slide bg-cyan" data-notes="One click exports a professional PDF with full letterhead, patient demographics, findings, ICD-10 codes, and recovery timeline. FHIR R4 compliant for interoperability with any EMR." data-notes-es="Un clic exporta un PDF profesional con membrete completo, datos demograficos del paciente, hallazgos, codigos ICD-10 y cronograma de recuperacion. Compatible con FHIR R4 para interoperabilidad con cualquier sistema de historia clinica electronica.">
   <span class="pill pill-green" style="margin-bottom:12px;">DELIVERABLE</span>
   <h2 class="t-mid fade-in" style="margin-bottom:20px;">Professional PDF Report <span class="t-cyan">Export</span></h2>
 
@@ -729,7 +733,7 @@
 </div>
 
 <!-- SLIDE 11: ROI -->
-<div class="slide bg-green" data-notes="Here's the return on investment. ImagingMind reduces reading time by 93 percent, doubles throughput, catches 12 percent more findings, and pays for itself in the first month.">
+<div class="slide bg-green" data-notes="Here's the return on investment. ImagingMind reduces reading time by 93 percent, doubles throughput, catches 12 percent more findings, and pays for itself in the first month." data-notes-es="Aqui esta el retorno de inversion. ImagingMind reduce el tiempo de lectura en un 93 por ciento, duplica el rendimiento, detecta un 12 por ciento mas de hallazgos, y se paga solo en el primer mes.">
   <span class="pill pill-green" style="margin-bottom:12px;">RETURN ON INVESTMENT</span>
   <h2 class="t-big fade-in">The Numbers That <span class="t-green">Matter</span></h2>
 
@@ -758,7 +762,7 @@
 </div>
 
 <!-- SLIDE 12: ROI Calculator -->
-<div class="slide bg-dark" data-notes="Let's do the math for your practice. A radiologist reading 40 studies per day saves 28 hours per week with ImagingMind. That translates to 145 thousand dollars in annual revenue recovery through increased throughput alone.">
+<div class="slide bg-dark" data-notes="Let's do the math for your practice. A radiologist reading 40 studies per day saves 28 hours per week with ImagingMind. That translates to 145 thousand dollars in annual revenue recovery through increased throughput alone." data-notes-es="Hagamos las cuentas para tu practica. Un radiologo que lee 40 estudios por dia ahorra 28 horas por semana con ImagingMind. Esto se traduce en 145 mil dolares de recuperacion de ingresos anuales solo por el aumento de rendimiento.">
   <span class="pill pill-green" style="margin-bottom:12px;">ROI CALCULATOR</span>
   <h2 class="t-mid fade-in" style="margin-bottom:20px;">What ImagingMind Saves <span class="t-green">Your Practice</span></h2>
 
@@ -794,7 +798,7 @@
 </div>
 
 <!-- SLIDE 13: Pricing -->
-<div class="slide bg-cyan" data-notes="Three tiers. Solo for small clinics at fifteen hundred per month, Practice for mid-size groups at thirty-five hundred, and Enterprise for hospital networks. All include unlimited AI analysis, and all pay for themselves within weeks.">
+<div class="slide bg-cyan" data-notes="Three tiers. Solo for small clinics at fifteen hundred per month, Practice for mid-size groups at thirty-five hundred, and Enterprise for hospital networks. All include unlimited AI analysis, and all pay for themselves within weeks." data-notes-es="Tres niveles. Solo para clinicas pequenas a mil quinientos dolares por mes, Practice para grupos medianos a tres mil quinientos, y Enterprise para redes hospitalarias. Todos incluyen analisis ilimitado con inteligencia artificial, y todos se pagan solos en semanas.">
   <span class="pill pill-cyan" style="margin-bottom:12px;">PRICING</span>
   <h2 class="t-mid fade-in" style="margin-bottom:24px;">Plans That <span class="t-cyan">Pay for Themselves</span></h2>
 
@@ -845,7 +849,7 @@
 </div>
 
 <!-- SLIDE 14: CTA -->
-<div class="slide bg-dark" data-notes="Start your free trial today. No credit card required. Upload your first X-ray and see the AI analysis in under 30 seconds. Visit imaging mind dot com or contact us directly." data-last-slide="true">
+<div class="slide bg-dark" data-notes="Start your free trial today. No credit card required. Upload your first X-ray and see the AI analysis in under 30 seconds. Visit imaging mind dot com or contact us directly." data-notes-es="Comienza tu prueba gratuita hoy. Sin tarjeta de credito. Sube tu primera radiografia y ve el analisis de inteligencia artificial en menos de 30 segundos. Visita ImagingMind punto com o contactanos directamente." data-last-slide="true">
   <div class="logo-mark fade-in">
     <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png" alt="ImagingMind" style="height:64px;">
   </div>
@@ -892,8 +896,86 @@
   const preplay = document.getElementById('preplay');
   const preplayBtn = document.getElementById('preplayBtn');
   const narrationWave = document.getElementById('narrationWave');
+  const langToggle = document.getElementById('langToggle');
+  const langHint = document.getElementById('langHint');
 
-  // Reusable Audio element (critical for mobile)
+  // ============ LANGUAGE / GEOLOCATION ============
+  let currentLang = 'en'; // default
+  const SPANISH_COUNTRIES = ['MX','CO','AR','ES','PE','CL','VE','EC','GT','CU','DO','HN','PY','SV','NI','CR','PA','UY','BO','PR'];
+
+  // Detect via IP geolocation (free API, no key needed)
+  fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(4000) })
+    .then(r => r.json())
+    .then(data => {
+      const country = (data.country_code || '').toUpperCase();
+      const browserLang = (navigator.language || '').substring(0, 2);
+      if (SPANISH_COUNTRIES.includes(country) || browserLang === 'es') {
+        currentLang = 'es';
+        langToggle.textContent = 'ES';
+        langHint.textContent = `${data.country_name || 'Spanish'} detected`;
+      } else {
+        langHint.textContent = `${data.country_name || 'English'} detected`;
+      }
+    })
+    .catch(() => {
+      // Fallback to browser language
+      if ((navigator.language || '').startsWith('es')) {
+        currentLang = 'es';
+        langToggle.textContent = 'ES';
+        langHint.textContent = 'Spanish (browser)';
+      } else {
+        langHint.textContent = 'English (default)';
+      }
+    });
+
+  langToggle.addEventListener('click', () => {
+    currentLang = currentLang === 'en' ? 'es' : 'en';
+    langToggle.textContent = currentLang.toUpperCase();
+    langHint.textContent = currentLang === 'es' ? 'Espanol' : 'English';
+    // Clear audio cache references so new language loads
+    audioCache = {};
+  });
+
+  // ============ ELEVENLABS TTS (Lina voice) ============
+  let audioCache = {}; // slideIndex:lang -> audioUrl
+
+  async function generateSlideAudio(slideIndex) {
+    const cacheKey = `${slideIndex}:${currentLang}`;
+    if (audioCache[cacheKey]) return audioCache[cacheKey];
+
+    const slide = slides[slideIndex];
+    const text = currentLang === 'es'
+      ? (slide.dataset.notesEs || slide.dataset.notes || '')
+      : (slide.dataset.notes || '');
+
+    if (!text) return null;
+
+    try {
+      const res = await fetch('/api/imagingmind-tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, lang: currentLang })
+      });
+      if (!res.ok) throw new Error(`TTS API ${res.status}`);
+      const data = await res.json();
+      if (data.success && data.url) {
+        audioCache[cacheKey] = data.url;
+        return data.url;
+      }
+    } catch (err) {
+      console.warn('[TTS] ElevenLabs failed for slide', slideIndex + 1, err.message);
+    }
+    return null;
+  }
+
+  // Pre-generate audio for upcoming slides (background, non-blocking)
+  function prefetchAudio(fromIndex) {
+    for (let i = fromIndex; i < Math.min(fromIndex + 3, TOTAL); i++) {
+      generateSlideAudio(i).catch(() => {});
+    }
+  }
+
+  // ============ AUDIO PLAYBACK ============
   const ttsAudio = new Audio();
   ttsAudio.volume = 1.0;
   let autoAdvanceTimer = null;
@@ -907,7 +989,7 @@
   });
   ttsAudio.addEventListener('error', () => {
     narrationWave.classList.remove('active');
-    if (narrateOnEnd) { const cb = narrateOnEnd; narrateOnEnd = null; autoAdvanceTimer = setTimeout(cb, 6000); }
+    if (narrateOnEnd) { const cb = narrateOnEnd; narrateOnEnd = null; autoAdvanceTimer = setTimeout(cb, 4000); }
   });
 
   function show(n) {
@@ -916,6 +998,7 @@
     const num = String(idx + 1).padStart(2, '0');
     counter.textContent = `${num} / ${String(TOTAL).padStart(2, '0')}`;
     progressFill.style.width = `${((idx + 1) / TOTAL) * 100}%`;
+    prefetchAudio(idx + 1);
   }
 
   function cancelNarration() {
@@ -928,55 +1011,57 @@
     narrationWave.classList.remove('active');
   }
 
-  function narrateSlide(slideIndex, onEnd) {
+  async function narrateSlide(slideIndex, onEnd) {
     cancelNarration();
-    const slide = slides[slideIndex];
-    const audioSrc = slide.dataset.audio || null;
-    const text = slide.dataset.notes || '';
 
-    // If external audio file provided, use it
-    if (audioSrc) {
+    // Try ElevenLabs first
+    const audioUrl = await generateSlideAudio(slideIndex);
+    if (audioUrl) {
       narrateOnEnd = () => { autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, 2000); };
-      ttsAudio.src = audioSrc;
+      ttsAudio.src = audioUrl;
       ttsAudio.load();
-      ttsAudio.play().catch(() => {
+      ttsAudio.play().then(() => {
+        console.log('[Lina] Playing slide', slideIndex + 1, currentLang);
+      }).catch(() => {
         narrateOnEnd = null;
-        autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, 6000);
+        // Fallback to Web Speech
+        fallbackSpeech(slideIndex, onEnd);
       });
       return;
     }
 
     // Fallback: Web Speech API
+    fallbackSpeech(slideIndex, onEnd);
+  }
+
+  function fallbackSpeech(slideIndex, onEnd) {
+    const slide = slides[slideIndex];
+    const text = currentLang === 'es'
+      ? (slide.dataset.notesEs || slide.dataset.notes || '')
+      : (slide.dataset.notes || '');
+
     if (text && window.speechSynthesis) {
       const utter = new SpeechSynthesisUtterance(text);
-      utter.rate = 0.95;
-      utter.pitch = 1.0;
-      utter.lang = 'en-US';
-
-      // Try to pick a good voice
+      utter.rate = 0.95; utter.pitch = 1.0;
+      utter.lang = currentLang === 'es' ? 'es-MX' : 'en-US';
       const voices = speechSynthesis.getVoices();
-      const preferred = voices.find(v => v.name.includes('Samantha') || v.name.includes('Daniel') || v.name.includes('Google US'));
-      if (preferred) utter.voice = preferred;
-
+      if (currentLang === 'es') {
+        const esVoice = voices.find(v => v.lang.startsWith('es'));
+        if (esVoice) utter.voice = esVoice;
+      } else {
+        const enVoice = voices.find(v => v.name.includes('Samantha') || v.name.includes('Daniel') || v.name.includes('Google US'));
+        if (enVoice) utter.voice = enVoice;
+      }
       narrationWave.classList.add('active');
-
-      utter.onend = () => {
-        narrationWave.classList.remove('active');
-        autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, 2000);
-      };
-      utter.onerror = () => {
-        narrationWave.classList.remove('active');
-        autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, 6000);
-      };
-
+      utter.onend = () => { narrationWave.classList.remove('active'); autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, 2000); };
+      utter.onerror = () => { narrationWave.classList.remove('active'); autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, 4000); };
       speechSynthesis.speak(utter);
       return;
     }
-
-    // No audio, no text: auto-advance after fixed delay
     autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, 6000);
   }
 
+  // ============ NAVIGATION ============
   function manualNav(n) {
     if (autoPlaying) pauseAutoPlay();
     cancelNarration();
@@ -997,10 +1082,7 @@
     cancelNarration();
   }
 
-  function stopAutoPlay() {
-    pauseAutoPlay();
-    show(0);
-  }
+  function stopAutoPlay() { pauseAutoPlay(); show(0); }
 
   function autoNarrateCurrent() {
     if (!autoPlaying) return;
@@ -1010,10 +1092,7 @@
       if (!autoPlaying) return;
       narrateSlide(idx, () => {
         if (!autoPlaying) return;
-        if (isLast) {
-          autoAdvanceTimer = setTimeout(() => pauseAutoPlay(), 5000);
-          return;
-        }
+        if (isLast) { autoAdvanceTimer = setTimeout(() => pauseAutoPlay(), 5000); return; }
         autoAdvanceTimer = setTimeout(() => {
           if (!autoPlaying) return;
           if (idx < TOTAL - 1) { show(idx + 1); autoNarrateCurrent(); }
@@ -1023,7 +1102,7 @@
     }, 800);
   }
 
-  // Event listeners
+  // ============ EVENT LISTENERS ============
   document.getElementById('next').addEventListener('click', () => manualNav(idx + 1));
   document.getElementById('prev').addEventListener('click', () => manualNav(idx - 1));
   btnPlayPause.addEventListener('click', () => { if (autoPlaying) pauseAutoPlay(); else startAutoPlay(); });
@@ -1034,6 +1113,7 @@
     else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); manualNav(idx - 1); }
     else if (e.key === 'Home') manualNav(0);
     else if (e.key === 'End') manualNav(TOTAL - 1);
+    else if (e.key.toLowerCase() === 'l') { langToggle.click(); } // L = toggle language
     else if (e.key.toLowerCase() === 'f') {
       if (!document.fullscreenElement) document.documentElement.requestFullscreen();
       else document.exitFullscreen();
@@ -1054,22 +1134,27 @@
     }
   }, { passive: true });
 
-  // Pre-play
+  // ============ PRE-PLAY ============
   preplayBtn.addEventListener('click', () => {
     preplay.style.display = 'none';
     show(0);
 
-    // Unlock audio context on user gesture (mobile requirement)
-    const firstText = slides[0].dataset.notes;
-    if (firstText && window.speechSynthesis) {
-      // Warm up speech synthesis
-      const warmup = new SpeechSynthesisUtterance('');
-      speechSynthesis.speak(warmup);
-    }
-    startAutoPlay();
+    // Unlock audio on user gesture (mobile)
+    ttsAudio.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7v////////////////////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==';
+    ttsAudio.load();
+    ttsAudio.play().then(() => {
+      ttsAudio.pause();
+      ttsAudio.currentTime = 0;
+      // Pre-generate audio for first 3 slides
+      prefetchAudio(0);
+      startAutoPlay();
+    }).catch(() => {
+      prefetchAudio(0);
+      startAutoPlay();
+    });
   });
 
-  // Load voices
+  // Load Web Speech voices
   if (window.speechSynthesis) {
     speechSynthesis.getVoices();
     speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();

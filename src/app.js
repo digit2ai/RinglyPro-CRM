@@ -1003,6 +1003,63 @@ app.get('/debug/torna-idioma-error', (req, res) => {
   });
 });
 
+// ── ImagingMind TTS — ElevenLabs Lina voice for demo narration ──
+const crypto = require('crypto');
+app.post('/api/imagingmind-tts', express.json(), async (req, res) => {
+  try {
+    const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
+    if (!ELEVENLABS_API_KEY) return res.status(500).json({ error: 'ElevenLabs API key not configured' });
+
+    const { text, lang } = req.body;
+    if (!text) return res.status(400).json({ error: 'text required' });
+
+    // Deterministic cache key based on text + lang
+    const hash = crypto.createHash('md5').update(`${lang || 'en'}:${text}`).digest('hex');
+    const audioDir = path.join(__dirname, '..', 'public', 'audio', 'imagingmind');
+    if (!fs.existsSync(audioDir)) fs.mkdirSync(audioDir, { recursive: true });
+
+    const cached = path.join(audioDir, `${hash}.mp3`);
+    if (fs.existsSync(cached)) {
+      return res.json({ success: true, url: `/audio/imagingmind/${hash}.mp3`, cached: true });
+    }
+
+    // Lina voice (Bella — bilingual EN/ES)
+    const LINA_VOICE_ID = 'EXAVITQu4vr4xnSDxMaL';
+    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${LINA_VOICE_ID}`, {
+      method: 'POST',
+      headers: {
+        'Accept': 'audio/mpeg',
+        'Content-Type': 'application/json',
+        'xi-api-key': ELEVENLABS_API_KEY
+      },
+      body: JSON.stringify({
+        text: text,
+        model_id: 'eleven_multilingual_v2',
+        voice_settings: {
+          stability: 0.55,
+          similarity_boost: 0.8,
+          style: 0.35,
+          use_speaker_boost: true
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error('[ImagingMind TTS] ElevenLabs error:', response.status, errText);
+      return res.status(response.status).json({ error: 'TTS generation failed' });
+    }
+
+    const buffer = Buffer.from(await response.arrayBuffer());
+    fs.writeFileSync(cached, buffer);
+    console.log(`[ImagingMind TTS] Generated ${lang || 'en'}: ${(buffer.length / 1024).toFixed(1)}KB -> ${hash}.mp3`);
+    res.json({ success: true, url: `/audio/imagingmind/${hash}.mp3`, cached: false });
+  } catch (err) {
+    console.error('[ImagingMind TTS] Error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── ImagingMind — AI-Powered Imaging Diagnostics Platform ──
 let imagingMindApp = null;
 let imagingMindError = null;
