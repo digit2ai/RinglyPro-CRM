@@ -99,13 +99,20 @@ export default function FellowDashboard() {
         </div>
 
         <h2 className="text-lg font-bold text-white mb-4">Opportunities</h2>
-        <div className="space-y-3">
+        <div className="space-y-3 mb-8">
           {opps.length === 0 ? <p className="text-white/30">No opportunities available yet</p> : opps.slice(0,5).map(o => (
             <div key={o.id} className="glass-card">
               <div className="font-semibold text-white">{o.title}</div>
               <div className="text-white/40 text-sm">{o.type} -- {o.location || 'Remote'}</div>
             </div>
           ))}
+        </div>
+
+        {/* Lina AI Coach */}
+        <h2 className="text-lg font-bold text-white mb-4">Lina -- Your AI Coach</h2>
+        <div className="glass-card mb-4">
+          <p className="text-white/60 text-sm mb-4">Talk to Lina, your bilingual AI mentor. She can help with goal setting, interview practice, technical questions, and more -- available 24/7 in English and Spanish.</p>
+          <elevenlabs-convai agent-id="agent_3301kp969e5tfcmb8jk2bam3exqa"></elevenlabs-convai>
         </div>
       </div>
     );
@@ -169,7 +176,7 @@ export default function FellowDashboard() {
 
       {/* Badges */}
       {badges.length > 0 && (
-        <div>
+        <div className="mb-8">
           <h2 className="text-lg font-bold text-white mb-4">Badges Earned</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {badges.map(b => (
@@ -181,6 +188,13 @@ export default function FellowDashboard() {
           </div>
         </div>
       )}
+
+      {/* Lina AI Coach */}
+      <h2 className="text-lg font-bold text-white mb-4">Lina -- Your AI Coach</h2>
+      <div className="glass-card">
+        <p className="text-white/60 text-sm mb-4">Talk to Lina, your bilingual AI mentor. She can help with goal setting, interview practice, technical questions, weekly reflections, and more -- available 24/7 in English and Spanish.</p>
+        <elevenlabs-convai agent-id="agent_3301kp969e5tfcmb8jk2bam3exqa"></elevenlabs-convai>
+      </div>
     </div>
   );
 }
