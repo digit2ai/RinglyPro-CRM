@@ -240,11 +240,8 @@ export default function Landing() {
       {/* Footer */}
       <footer className="border-t border-dark-800 py-16">
         <div className="max-w-7xl mx-auto px-6 flex flex-col items-center gap-6">
+          <img src={mskLogo} alt="ImagingMind AI Diagnostics" className="h-20 sm:h-24 lg:h-28 w-auto object-contain opacity-80" />
           <p className="text-dark-500 text-sm">HIPAA Compliant | Encrypted | Board-Certified Specialists</p>
-          <div className="flex flex-col items-center gap-3 mt-4">
-            <span className="text-[11px] tracking-[3px] uppercase text-white/25 font-mono">Powered by</span>
-            <img src={mskLogo} alt="Digit2ai" className="h-28 sm:h-36 lg:h-44 w-auto object-contain opacity-80" />
-          </div>
         </div>
       </footer>
     </div>

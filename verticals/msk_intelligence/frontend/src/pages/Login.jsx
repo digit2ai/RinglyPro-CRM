@@ -122,11 +122,6 @@ export default function Login({ onLogin }) {
         </div>
       </div>
 
-      {/* Powered by — bottom of page */}
-      <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-2">
-        <span className="text-[10px] tracking-[3px] uppercase text-white/30 font-mono">Powered by</span>
-        <img src={mskLogo} alt="Digit2ai" className="h-32 w-auto object-contain opacity-80" />
-      </div>
     </div>
   );
 }
