@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-const mskLogo = 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png';
+const mskLogo = 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69e2cb1b50b9a3263ab4677c.png';
 import NotificationBell from './NotificationBell';
 
 const NAV_ITEMS = {
@@ -86,12 +86,8 @@ export default function Layout({ children, user, onLogout }) {
       `}>
         {/* Logo */}
         <div className="p-4 border-b border-dark-700 flex items-center justify-between">
-          <Link to="/dashboard" onClick={handleNavClick} className="flex flex-col items-start min-w-0">
-            <img src={mskLogo} alt="ImagingMind" className="h-24 w-auto object-contain drop-shadow-lg flex-shrink-0" />
-            <div className="min-w-0 -mt-4">
-              <h1 className="text-base font-bold text-white leading-tight">ImagingMind</h1>
-              <p className="text-xs text-dark-400 truncate">AI Diagnostics</p>
-            </div>
+          <Link to="/dashboard" onClick={handleNavClick} className="min-w-0">
+            <img src={mskLogo} alt="ImagingMind AI Diagnostics" className="h-12 w-auto object-contain drop-shadow-lg" />
           </Link>
           {/* Close button on mobile */}
           <button

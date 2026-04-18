@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Conversation } from '@11labs/client';
-const mskLogo = 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png';
+const mskLogo = 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69e2cb1b50b9a3263ab4677c.png';
 
 const STATUS = {
   IDLE: 'idle',
@@ -110,12 +110,8 @@ export default function VoiceIntake() {
       {/* Nav */}
       <nav className="border-b border-dark-800 bg-dark-900/80 backdrop-blur-sm">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-5">
-            <img src={mskLogo} alt="Digit2AI" className="h-20 w-auto object-contain" />
-            <div className="ml-1">
-              <h1 className="text-lg font-bold text-white">ImagingMind</h1>
-              <p className="text-xs text-msk-400">AI Voice Intake</p>
-            </div>
+          <Link to="/" className="flex items-center">
+            <img src={mskLogo} alt="ImagingMind AI Diagnostics" className="h-12 w-auto object-contain" />
           </Link>
           <Link to="/login" className="text-dark-300 hover:text-white text-sm font-medium">
             Sign In

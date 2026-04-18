@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-const mskLogo = 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png';
+const mskLogo = 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69e2cb1b50b9a3263ab4677c.png';
 
 export default function Landing() {
   return (
@@ -14,9 +14,8 @@ export default function Landing() {
         <div className="absolute inset-0 bg-gradient-to-t from-dark-950 via-transparent to-transparent" />
 
         <nav className="relative z-10 max-w-7xl mx-auto px-4 lg:px-6 py-3 lg:py-4 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 min-w-0 flex-shrink">
-            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-white leading-tight">ImagingMind</h1>
-            <span className="text-xs sm:text-sm text-msk-400 hidden sm:inline">| AI Diagnostic Imaging</span>
+          <div className="flex items-center min-w-0 flex-shrink">
+            <img src={mskLogo} alt="ImagingMind AI Diagnostics" className="h-10 sm:h-12 lg:h-14 w-auto object-contain" />
           </div>
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
             <Link to="/login" className="text-dark-300 hover:text-white transition-colors font-medium text-sm sm:text-base">Sign In</Link>

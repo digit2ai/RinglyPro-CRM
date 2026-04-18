@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import MFAChallenge from './MFAChallenge';
-const mskLogo = 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png';
+const mskLogo = 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69e2cb1b50b9a3263ab4677c.png';
 
 export default function Login({ onLogin }) {
   const navigate = useNavigate();
@@ -53,11 +53,8 @@ export default function Login({ onLogin }) {
     <div className="min-h-screen bg-dark-950 flex flex-col items-center justify-center p-4 relative">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <Link to="/" className="inline-flex flex-col items-center mb-6">
-            <div className="text-center">
-              <h1 className="text-3xl font-bold text-white">ImagingMind</h1>
-              <p className="text-sm text-msk-400">AI Diagnostics Platform</p>
-            </div>
+          <Link to="/" className="inline-block mb-6">
+            <img src={mskLogo} alt="ImagingMind AI Diagnostics" className="h-20 w-auto object-contain mx-auto" />
           </Link>
           <h2 className="text-2xl font-bold text-white">Welcome back</h2>
           <p className="text-dark-400 mt-2">Sign in to access your dashboard</p>
