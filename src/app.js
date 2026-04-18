@@ -72,8 +72,8 @@ app.use((req, res, next) => {
     } else if (p === '/whitepaper-es.html' || p === '/es' || p === '/es/') {
       req.url = '/youth-talent-global/whitepaper-es.html' + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '');
     } else if (p === '/' || p === '') {
-      // Root: redirect to platform portal (browser redirect so React Router basename matches)
-      return res.redirect('/visionarium/');
+      // Root: serve whitepaper as landing page (mirrors /visionarium/)
+      req.url = '/youth-talent-global/whitepaper.html';
     }
   }
   next();

@@ -40,9 +40,15 @@ app.use('/api/v1/impact', require('./routes/impact'));
 app.use('/api/v1/lina', require('./routes/lina'));
 app.use('/api/v1/admin', require('./routes/admin'));
 
-// Serve React dashboard (built assets)
+// Serve React dashboard assets (login, register, admin, fellow, mentor, sponsor portals)
 const dashboardDist = path.join(__dirname, '..', 'dashboard', 'dist');
-app.use(express.static(dashboardDist));
+app.use('/login', express.static(dashboardDist));
+app.use('/register', express.static(dashboardDist));
+app.use('/admin', express.static(dashboardDist));
+app.use('/fellow', express.static(dashboardDist));
+app.use('/mentor', express.static(dashboardDist));
+app.use('/sponsor', express.static(dashboardDist));
+app.use('/assets', express.static(path.join(dashboardDist, 'assets')));
 
 // DB sync on startup
 const models = require('../models');
@@ -67,16 +73,24 @@ models.sequelize.sync({ alter: false })
   } catch (e) { /* table may not exist yet on first deploy */ }
 })();
 
-// SPA fallback -- serve index.html for all non-API, non-asset routes
-app.get('*', (req, res) => {
-  const indexPath = path.join(dashboardDist, 'index.html');
-  const fs = require('fs');
-  if (fs.existsSync(indexPath)) {
-    res.sendFile(indexPath);
-  } else {
-    // Fallback: redirect to whitepaper until dashboard is built
-    res.redirect('/youth-talent-global/whitepaper.html');
-  }
+// SPA routes -- serve React app for portal paths
+const spaRoutes = ['/login', '/register', '/admin', '/fellow', '/mentor', '/sponsor'];
+spaRoutes.forEach(route => {
+  app.get(`${route}*`, (req, res) => {
+    const indexPath = path.join(dashboardDist, 'index.html');
+    const fs = require('fs');
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.redirect('/youth-talent-global/whitepaper.html');
+    }
+  });
+});
+
+// Root: serve the whitepaper as the main landing page
+const whitepaperPath = path.join(__dirname, '..', '..', 'public', 'youth-talent-global', 'whitepaper.html');
+app.get('/', (req, res) => {
+  res.sendFile(whitepaperPath);
 });
 
 module.exports = app;
