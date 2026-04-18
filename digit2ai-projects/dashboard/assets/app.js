@@ -1134,7 +1134,7 @@ async function printProjectsPDF() {
 
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Projects Report</title>
     <style>
-      @page { size: portrait; margin: 0.5in; }
+      @page { size: landscape; margin: 0.5in; }
       body { font-family: -apple-system,Helvetica,Arial,sans-serif; color:#222; margin:0; padding:24px; }
       h1 { font-size:22px; margin:0 0 4px; }
       .meta { font-size:12px; color:#888; margin-bottom:12px; }
