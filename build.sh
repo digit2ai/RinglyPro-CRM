@@ -432,8 +432,49 @@ else
     echo "⚠️ Intuitive dashboard directory not found, skipping..."
 fi
 
+echo ""
 echo "================================================"
-echo "✅ Build completed successfully!"
+echo "Building Visionarium Dashboard"
+echo "================================================"
+
+if [ -d "visionarium/dashboard" ]; then
+    cd visionarium/dashboard
+    echo "Visionarium Dashboard directory: $(pwd)"
+
+    if [ -d "dist" ] && [ -f "dist/index.html" ]; then
+        echo "Visionarium dist folder already exists (pre-built), skipping build"
+        ls -lh dist/
+        cd ../..
+    else
+        echo "Installing Visionarium dashboard dependencies..."
+        NODE_ENV=development npm ci --include=dev || NODE_ENV=development npm install --include=dev
+
+        echo ""
+        echo "Building Visionarium dashboard with Vite..."
+        set +e
+        NODE_ENV=production npm run build 2>&1
+        BUILD_EXIT_CODE=$?
+        set -e
+
+        if [ $BUILD_EXIT_CODE -ne 0 ]; then
+          echo "Visionarium build failed with exit code $BUILD_EXIT_CODE"
+        fi
+
+        if [ -d "dist" ]; then
+            echo "Visionarium dist folder created!"
+            ls -lh dist/
+        else
+            echo "Visionarium dist folder not created"
+        fi
+
+        cd ../..
+    fi
+else
+    echo "Visionarium dashboard directory not found, skipping..."
+fi
+
+echo "================================================"
+echo "Build completed successfully!"
 echo "✅ Store Health AI Dashboard built at: ./store-health-ai-dashboard-dist"
 echo "✅ TunjoRacing Dashboard built at: ./tunjoracing/dashboard/dist"
 echo "✅ Web Call Center Dashboard built at: ./web-call-center/dashboard/dist"

@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background: #010409;
+  min-height: 100vh;
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/5 backdrop-blur-md border border-teal/20 rounded-xl p-6;
+  }
+  .btn-primary {
+    @apply bg-teal-neon text-navy-blk font-bold px-6 py-3 rounded-lg hover:shadow-lg hover:shadow-teal-neon/20 transition-all text-sm uppercase tracking-wider;
+  }
+  .btn-secondary {
+    @apply border-2 border-teal-neon text-teal-neon font-bold px-6 py-3 rounded-lg hover:bg-teal-neon/10 transition-all text-sm uppercase tracking-wider;
+  }
+  .btn-coral {
+    @apply bg-coral text-white font-bold px-4 py-2 rounded-lg hover:bg-coral-dark transition-all text-sm;
+  }
+  .input-field {
+    @apply w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/40 focus:border-teal-neon focus:outline-none focus:ring-1 focus:ring-teal-neon transition-all;
+  }
+  .stat-card {
+    @apply glass-card text-center;
+  }
+  .stat-value {
+    @apply text-3xl font-bold text-teal-neon font-mono;
+  }
+  .stat-label {
+    @apply text-white/60 text-sm mt-1 uppercase tracking-wider;
+  }
+  .sidebar-link {
+    @apply flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:text-teal-neon hover:bg-white/5 transition-all text-sm font-medium;
+  }
+  .sidebar-link.active {
+    @apply text-teal-neon bg-teal-neon/10 border-l-2 border-teal-neon;
+  }
+  .table-header {
+    @apply text-left text-xs uppercase tracking-wider text-white/50 font-semibold px-4 py-3;
+  }
+  .table-cell {
+    @apply px-4 py-3 text-sm text-white/80 border-t border-white/5;
+  }
+  .badge-pill {
+    @apply inline-block px-2 py-1 rounded-full text-xs font-semibold;
+  }
+}
