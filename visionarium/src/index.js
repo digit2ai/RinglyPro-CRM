@@ -42,7 +42,7 @@ app.use('/api/v1/admin', require('./routes/admin'));
 
 // Serve React dashboard (built assets)
 const dashboardDist = path.join(__dirname, '..', 'dashboard', 'dist');
-app.use('/assets', express.static(path.join(dashboardDist, 'assets')));
+app.use(express.static(dashboardDist));
 
 // DB sync on startup
 const models = require('../models');
