@@ -87,10 +87,17 @@ spaRoutes.forEach(route => {
   });
 });
 
-// Root: serve the whitepaper as the main landing page
-const whitepaperPath = path.join(__dirname, '..', '..', 'public', 'youth-talent-global', 'whitepaper.html');
-app.get('/', (req, res) => {
-  res.sendFile(whitepaperPath);
-});
+// Whitepaper routes -- serve as landing pages
+const whitepaperEN = path.join(__dirname, '..', '..', 'public', 'youth-talent-global', 'whitepaper.html');
+const whitepaperES = path.join(__dirname, '..', '..', 'public', 'youth-talent-global', 'whitepaper-es.html');
+
+app.get('/', (req, res) => res.sendFile(whitepaperEN));
+app.get('/whitepaper.html', (req, res) => res.sendFile(whitepaperEN));
+app.get('/whitepaper-es.html', (req, res) => res.sendFile(whitepaperES));
+app.get('/en', (req, res) => res.sendFile(whitepaperEN));
+app.get('/es', (req, res) => res.sendFile(whitepaperES));
+
+// Serve whitepaper assets (fonts, images, audio referenced by relative paths)
+app.use(express.static(path.join(__dirname, '..', '..', 'public', 'youth-talent-global')));
 
 module.exports = app;
