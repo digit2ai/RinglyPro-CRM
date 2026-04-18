@@ -73,6 +73,12 @@ models.sequelize.sync({ alter: false })
   } catch (e) { /* table may not exist yet on first deploy */ }
 })();
 
+// Seed badges on startup
+const { ensureBadgesSeeded } = require('./services/badge-service');
+(async () => {
+  try { await ensureBadgesSeeded(models); console.log('[Visionarium] Badges seeded'); } catch (e) { /* ignore */ }
+})();
+
 // SPA routes -- serve React app for portal paths
 const spaRoutes = ['/login', '/register', '/admin', '/fellow', '/mentor', '/sponsor'];
 spaRoutes.forEach(route => {

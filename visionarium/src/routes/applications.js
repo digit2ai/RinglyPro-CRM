@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { verifyToken, requireRole } = require('../middleware/auth');
+const { awardBadge } = require('../services/badge-service');
 
 // POST /api/v1/applications -- Submit application (community member)
 router.post('/', verifyToken, async (req, res) => {
@@ -33,6 +34,9 @@ router.post('/', verifyToken, async (req, res) => {
     await models.VisionariumCommunityMember.update({ tier: 'applicant' }, { where: { id: req.user.id } });
     // Update cohort applicant count
     await cohort.increment('total_applicants');
+
+    // Award applicant badge
+    awardBadge(models, req.user.id, 'applicant').catch(() => {});
 
     res.status(201).json({ success: true, application: app });
   } catch (err) {

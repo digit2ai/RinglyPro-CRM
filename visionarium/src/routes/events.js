@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { verifyToken, requireRole } = require('../middleware/auth');
+const { awardBadge } = require('../services/badge-service');
 
 // GET /api/v1/events/public -- Public events
 router.get('/public', async (req, res) => {
@@ -85,6 +86,9 @@ router.post('/:id/rsvp', verifyToken, async (req, res) => {
       return res.status(400).json({ error: 'Event is full' });
     }
     await event.increment('current_rsvps');
+    // Award first RSVP badge
+    awardBadge(models, req.user.id, 'first_rsvp').catch(() => {});
+
     res.json({ success: true, message: 'RSVP confirmed' });
   } catch (err) {
     res.status(500).json({ error: err.message });

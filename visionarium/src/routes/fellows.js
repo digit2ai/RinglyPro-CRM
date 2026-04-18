@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { verifyToken, requireRole } = require('../middleware/auth');
+const { awardBadge } = require('../services/badge-service');
 
 // GET /api/v1/fellows/me -- Fellow: my profile + passport
 router.get('/me', verifyToken, requireRole('fellow'), async (req, res) => {
@@ -150,6 +151,8 @@ router.post('/', verifyToken, requireRole('admin'), async (req, res) => {
     const fellow = await models.VisionariumFellow.create(req.body);
     // Update member tier
     await models.VisionariumCommunityMember.update({ tier: 'fellow' }, { where: { id: req.body.community_member_id } });
+    // Award accepted badge
+    awardBadge(models, req.body.community_member_id, 'fellow_accepted').catch(() => {});
     res.status(201).json({ success: true, fellow });
   } catch (err) {
     res.status(500).json({ error: err.message });

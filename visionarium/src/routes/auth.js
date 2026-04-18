@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const { generateToken, verifyToken } = require('../middleware/auth');
+const { awardBadge, checkAndAwardAll } = require('../services/badge-service');
 
 // POST /api/v1/auth/register -- Community member registration
 router.post('/register', async (req, res) => {
@@ -34,6 +35,10 @@ router.post('/register', async (req, res) => {
     });
 
     const token = generateToken({ id: member.id, email: member.email, role: 'community' });
+
+    // Auto-award first_login badge + check profile_complete
+    awardBadge(models, member.id, 'first_login').catch(() => {});
+    checkAndAwardAll(models, member.id).catch(() => {});
 
     res.status(201).json({
       success: true,
@@ -90,6 +95,10 @@ router.post('/login', async (req, res) => {
       if (member.tier === 'fellow' || member.tier === 'alumni') role = 'fellow';
 
       const token = generateToken({ id: member.id, email: member.email, role, tier: member.tier });
+
+      // Check badges on every login
+      checkAndAwardAll(models, member.id).catch(() => {});
+
       return res.json({
         success: true, token,
         user: { id: member.id, email: member.email, role, tier: member.tier, first_name: member.first_name, last_name: member.last_name }

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { verifyToken, requireRole } = require('../middleware/auth');
+const { checkAndAwardAll } = require('../services/badge-service');
 
 // POST /api/v1/lina/webhook -- ElevenLabs conversation webhook
 router.post('/webhook', async (req, res) => {
@@ -16,12 +17,14 @@ router.post('/webhook', async (req, res) => {
       duration_seconds
     });
 
-    // Update member stats
+    // Update member stats + check Lina badges
     if (community_member_id) {
       await models.VisionariumCommunityMember.update({
         lina_conversation_count: models.sequelize.literal('lina_conversation_count + 1'),
         last_lina_interaction: new Date()
       }, { where: { id: community_member_id } });
+
+      checkAndAwardAll(models, community_member_id).catch(() => {});
     }
 
     res.json({ success: true, conversation: convo });
