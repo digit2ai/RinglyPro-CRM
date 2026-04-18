@@ -34,9 +34,11 @@ function Sidebar({ user }) {
   if (user?.role === 'admin') {
     return (
       <aside className="w-64 min-h-screen bg-navy-dark/50 border-r border-white/5 p-4 flex flex-col">
-        <div className="mb-8">
-          <Link to="/" className="text-teal-neon font-bold text-lg tracking-wider">VISIONARIUM</Link>
-          <div className="text-white/40 text-xs mt-1">Admin Console</div>
+        <div className="mb-8 text-center">
+          <Link to="/">
+            <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69dfd39cfcac588c6b2329f9.png" alt="Visionarium" className="w-48 mx-auto mb-3" />
+          </Link>
+          <div className="text-white/40 text-xs tracking-widest uppercase">Admin Console</div>
         </div>
         <nav className="flex-1 space-y-1">
           <Link to="/admin" className={`sidebar-link ${isActive('/admin') && location.pathname === '/admin' ? 'active' : ''}`}>Dashboard</Link>
