@@ -65,13 +65,17 @@ router.post('/login', async (req, res) => {
 
     const lowerEmail = email.toLowerCase();
 
-    // Check admin (hardcoded seed)
-    if (lowerEmail === 'admin@visionarium.app') {
-      const adminHash = await bcrypt.hash('Visionarium2026!', 10);
-      const valid = await bcrypt.compare(password, adminHash);
-      if (valid) {
+    // Check admin accounts
+    const adminAccounts = {
+      'admin@visionarium.app': { password: 'Visionarium2026!', first_name: 'Admin', last_name: 'Visionarium' },
+      'mstagg@digit2ai.com': { password: 'Palindrome@7', first_name: 'Manuel', last_name: 'Stagg' }
+    };
+
+    if (adminAccounts[lowerEmail]) {
+      const acct = adminAccounts[lowerEmail];
+      if (password === acct.password) {
         const token = generateToken({ id: 0, email: lowerEmail, role: 'admin' });
-        return res.json({ success: true, token, user: { id: 0, email: lowerEmail, role: 'admin', first_name: 'Admin', last_name: 'Visionarium' } });
+        return res.json({ success: true, token, user: { id: 0, email: lowerEmail, role: 'admin', first_name: acct.first_name, last_name: acct.last_name } });
       }
     }
 

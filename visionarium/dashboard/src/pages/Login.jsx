@@ -25,8 +25,11 @@ export default function Login({ onLogin }) {
   return (
     <div className="min-h-screen flex items-center justify-center px-6">
       <div className="glass-card w-full max-w-md">
-        <h1 className="text-2xl font-bold text-white mb-2">Sign In</h1>
-        <p className="text-white/50 text-sm mb-6">Visionarium Foundation Portal</p>
+        <div className="flex justify-center mb-6">
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69dfd39cfcac588c6b2329f9.png" alt="Visionarium" className="h-24" />
+        </div>
+        <h1 className="text-2xl font-bold text-white mb-2 text-center">Sign In</h1>
+        <p className="text-white/50 text-sm mb-6 text-center">Visionarium Foundation Portal</p>
         {error && <div className="bg-coral/20 border border-coral text-coral px-4 py-2 rounded-lg mb-4 text-sm">{error}</div>}
         <form onSubmit={handleSubmit} className="space-y-4">
           <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} className="input-field" required />
