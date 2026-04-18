@@ -151,7 +151,7 @@ export default function Layout({ children, user, onLogout }) {
           </button>
           {/* Logo center */}
           <Link to="/dashboard" className="flex items-center gap-2">
-            <img src={mskLogo} alt="ImagingMind" className="h-16 lg:h-20 w-auto object-contain" />
+            <img src={mskLogo} alt="ImagingMind" className="h-48 lg:h-56 w-auto object-contain" />
           </Link>
           <NotificationBell />
         </div>
