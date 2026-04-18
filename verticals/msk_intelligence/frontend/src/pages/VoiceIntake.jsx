@@ -111,7 +111,7 @@ export default function VoiceIntake() {
       <nav className="border-b border-dark-800 bg-dark-900/80 backdrop-blur-sm">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center">
-            <img src={mskLogo} alt="ImagingMind AI Diagnostics" className="h-12 w-auto object-contain" />
+            <img src={mskLogo} alt="ImagingMind AI Diagnostics" className="h-20 w-auto object-contain" />
           </Link>
           <Link to="/login" className="text-dark-300 hover:text-white text-sm font-medium">
             Sign In
