@@ -24,6 +24,9 @@ export default function FellowDashboard() {
   if (isCommunity) {
     return (
       <div className="p-8">
+        <div className="flex justify-center mb-8">
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69dfd39cfcac588c6b2329f9.png" alt="Visionarium" className="h-32" />
+        </div>
         <h1 className="text-2xl font-bold text-white mb-4">Welcome, {user?.first_name}!</h1>
         <p className="text-white/60 mb-8">You are a member of the Visionarium Open Community. Explore events, earn badges, and apply for the Fellowship when applications open.</p>
 
@@ -52,6 +55,9 @@ export default function FellowDashboard() {
 
   return (
     <div className="p-8">
+      <div className="flex justify-center mb-8">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69dfd39cfcac588c6b2329f9.png" alt="Visionarium" className="h-32" />
+      </div>
       <h1 className="text-2xl font-bold text-white mb-8">Fellow Dashboard</h1>
 
       {fellow && (
