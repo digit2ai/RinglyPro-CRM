@@ -303,6 +303,54 @@
 
   /* CODE INLINE */
   code { font-family: var(--mono); font-size: 11px; color: var(--cyan); background: rgba(0,229,255,0.06); padding: 2px 6px; border-radius: 3px; }
+
+  /* ===== MOBILE RESPONSIVE ===== */
+  @media (max-width: 768px) {
+    .slide { padding: 70px 5vw 64px; }
+    h1 { font-size: clamp(32px,10vw,52px); letter-spacing: -2px; margin-bottom: 20px; }
+    h2 { font-size: clamp(26px,7vw,40px); letter-spacing: -1px; margin-bottom: 18px; }
+    p.lead { font-size: 15px; line-height: 1.55; margin-bottom: 20px; }
+    .chip { font-size: 9px; padding: 6px 14px; letter-spacing: 2.5px; margin-bottom: 24px; }
+    .stats { gap: 10px; }
+    .stat { padding: 16px 14px; min-width: 90px; border-radius: 10px; }
+    .stat .val { font-size: 22px; }
+    .stat .lbl { font-size: 9px; letter-spacing: 1px; }
+    .fgrid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .fcard { padding: 16px 14px; }
+    .fcard h4 { font-size: 13px; }
+    .fcard p { font-size: 11px; }
+    .fcard code { font-size: 9px; }
+    .arch { gap: 4px; }
+    .layer { padding: 14px 16px; border-radius: 10px; }
+    .layer .lt { font-size: 9px; letter-spacing: 2px; }
+    .layer .ld { font-size: 11px; }
+    .arch-arr { font-size: 11px; }
+    .hud { font-size: 8px; letter-spacing: 2px; }
+    .hud-tl { top: 14px; left: 16px; }
+    .hud-tr { top: 14px; right: 16px; }
+    .hud-bl { bottom: 58px; left: 16px; }
+    .bottom-bar { height: 46px; padding: 0 16px; }
+    .counter { font-size: 11px; }
+    .nav-arrows button { width: 30px; height: 30px; font-size: 12px; }
+    .autoplay-controls { top: 8px; right: 16px; gap: 6px; }
+    .autoplay-controls button { width: 32px; height: 32px; }
+    .slide-info { font-size: 10px; }
+    .preplay img { width: 140px; }
+    .preplay .headline { font-size: 20px; max-width: 320px; }
+    .preplay-btn { padding: 12px 32px; font-size: 13px; }
+    .slide-logo { height: 24px; top: 12px; left: 16px; }
+    .narration-wave { top: 10px; }
+  }
+
+  @media (max-width: 420px) {
+    .slide { padding: 64px 4vw 56px; }
+    h1 { font-size: 28px; }
+    h2 { font-size: 22px; }
+    p.lead { font-size: 14px; }
+    .fgrid { grid-template-columns: 1fr; }
+    .stats { flex-direction: column; align-items: center; }
+    .stat { width: 100%; max-width: 240px; }
+  }
 </style>
 </head>
 <body>
@@ -531,44 +579,164 @@
 
   function manualNav(n){if(autoPlaying)pauseAutoPlay();cancelNarration();show(n);}
 
-  const narrationWave=document.getElementById('narrationWave');
-  let currentAudio=null,autoAdvanceTimer=null;
-  const audioFiles=[];
-  for(let i=1;i<=slides.length;i++){audioFiles.push(`assets/audio/slide-${String(i).padStart(2,'0')}.mp3`);}
+  // ============ RACHEL VOICE — MOBILE-SAFE AUDIO ENGINE ============
+  // Single reusable Audio element — critical for mobile.
+  // Mobile browsers only allow audio from elements unlocked by user gesture.
+  // Creating new Audio() per slide breaks this. Reusing one element works.
+  // NEVER call removeAttribute('src') or load() without src — this re-locks on iOS.
+  const rachelAudio = new Audio();
+  rachelAudio.volume = 1.0;
 
-  function cancelNarration(){if(autoAdvanceTimer){clearTimeout(autoAdvanceTimer);autoAdvanceTimer=null;}if(currentAudio){currentAudio.pause();currentAudio.currentTime=0;currentAudio=null;}narrationWave.classList.remove('active');}
+  const narrationWave = document.getElementById('narrationWave');
+  let autoAdvanceTimer = null;
+  let narrateOnEnd = null;
+  const TOTAL = slides.length;
 
-  function narrateSlide(si,onEnd){
+  // Build audio file list
+  const audioFiles = [];
+  for (let i = 1; i <= TOTAL; i++) {
+    audioFiles.push('assets/audio/slide-' + String(i).padStart(2, '0') + '.mp3');
+  }
+
+  // Prefetch first 4 slides so they are cached by the time autoplay starts
+  function prefetchAudio(fromIndex) {
+    for (let i = fromIndex; i < Math.min(fromIndex + 4, TOTAL); i++) {
+      var a = new Audio();
+      a.preload = 'auto';
+      a.src = audioFiles[i];
+    }
+  }
+  prefetchAudio(0);
+
+  // Rachel audio event handlers — set once, never recreated
+  rachelAudio.addEventListener('play', function() {
+    narrationWave.classList.add('active');
+  });
+  rachelAudio.addEventListener('ended', function() {
+    narrationWave.classList.remove('active');
+    if (narrateOnEnd) { var cb = narrateOnEnd; narrateOnEnd = null; cb(); }
+  });
+  rachelAudio.addEventListener('error', function() {
+    narrationWave.classList.remove('active');
+    console.warn('[Rachel] Audio error on slide', idx + 1);
+    // Fallback: wait 8 seconds then advance
+    if (narrateOnEnd) {
+      var cb = narrateOnEnd;
+      narrateOnEnd = null;
+      autoAdvanceTimer = setTimeout(cb, 8000);
+    }
+  });
+
+  function cancelNarration() {
+    if (autoAdvanceTimer) { clearTimeout(autoAdvanceTimer); autoAdvanceTimer = null; }
+    narrateOnEnd = null;
+    // MOBILE-SAFE: just pause, do NOT remove src or call load() — re-locks iOS
+    rachelAudio.pause();
+    narrationWave.classList.remove('active');
+  }
+
+  function narrateSlide(slideIndex, onEnd) {
     cancelNarration();
-    if(si<0||si>=audioFiles.length){if(onEnd)onEnd();return;}
-    const a=new Audio(audioFiles[si]);a.volume=1;currentAudio=a;
-    a.onplay=()=>narrationWave.classList.add('active');
-    a.onended=()=>{narrationWave.classList.remove('active');currentAudio=null;if(onEnd)onEnd();};
-    a.onerror=()=>{narrationWave.classList.remove('active');currentAudio=null;if(onEnd)onEnd();};
-    a.play().catch(()=>{if(onEnd)onEnd();});
+    if (slideIndex < 0 || slideIndex >= audioFiles.length) { if (onEnd) onEnd(); return; }
+
+    // Store callback for the 'ended' event handler
+    narrateOnEnd = function() {
+      autoAdvanceTimer = setTimeout(function() { if (onEnd) onEnd(); }, 2000);
+    };
+
+    // Set src and load — Safari requires explicit load() when src changes
+    rachelAudio.src = audioFiles[slideIndex];
+    rachelAudio.load();
+    rachelAudio.play().then(function() {
+      console.log('[Rachel] Playing slide', slideIndex + 1);
+      // Prefetch upcoming slides
+      prefetchAudio(slideIndex + 1);
+    }).catch(function(err) {
+      console.warn('[Rachel] Play failed slide', slideIndex + 1, err.message);
+      narrationWave.classList.remove('active');
+      narrateOnEnd = null;
+      // Fallback: wait 8 seconds then advance
+      autoAdvanceTimer = setTimeout(function() { if (onEnd) onEnd(); }, 8000);
+    });
   }
 
-  let autoPlaying=false;
-  function startAutoPlay(){autoPlaying=true;btnPlayPause.innerHTML='&#10074;&#10074;';recIndicator.classList.add('active');autoNarrateCurrentSlide();}
-  function pauseAutoPlay(){autoPlaying=false;btnPlayPause.innerHTML='&#9654;';recIndicator.classList.remove('active');cancelNarration();}
-  function stopAutoPlay(){autoPlaying=false;btnPlayPause.innerHTML='&#9654;';recIndicator.classList.remove('active');cancelNarration();show(0);}
+  // ============ AUTO-PLAY ENGINE ============
+  let autoPlaying = false;
 
-  function autoNarrateCurrentSlide(){
-    if(!autoPlaying)return;
-    const last=slides[idx].hasAttribute('data-last-slide');
-    setTimeout(()=>{
-      if(!autoPlaying)return;
-      narrateSlide(idx,()=>{
-        if(!autoPlaying)return;
-        if(last){autoAdvanceTimer=setTimeout(()=>pauseAutoPlay(),5000);return;}
-        autoAdvanceTimer=setTimeout(()=>{if(!autoPlaying)return;if(idx<slides.length-1){show(idx+1);autoNarrateCurrentSlide();}else pauseAutoPlay();},2000);
+  function startAutoPlay() {
+    autoPlaying = true;
+    btnPlayPause.innerHTML = '&#10074;&#10074;';
+    recIndicator.classList.add('active');
+    autoNarrateCurrent();
+  }
+
+  function pauseAutoPlay() {
+    autoPlaying = false;
+    btnPlayPause.innerHTML = '&#9654;';
+    recIndicator.classList.remove('active');
+    cancelNarration();
+  }
+
+  function stopAutoPlay() {
+    autoPlaying = false;
+    btnPlayPause.innerHTML = '&#9654;';
+    recIndicator.classList.remove('active');
+    cancelNarration();
+    show(0);
+  }
+
+  function autoNarrateCurrent() {
+    if (!autoPlaying) return;
+    var isLast = slides[idx].hasAttribute('data-last-slide');
+
+    // 800ms delay after slide appears before narrating
+    setTimeout(function() {
+      if (!autoPlaying) return;
+      narrateSlide(idx, function() {
+        if (!autoPlaying) return;
+        if (isLast) {
+          autoAdvanceTimer = setTimeout(function() { pauseAutoPlay(); }, 5000);
+          return;
+        }
+        // 2-second pause between slides (already waited 2s in narrateOnEnd)
+        if (idx < TOTAL - 1) {
+          show(idx + 1);
+          autoNarrateCurrent();
+        } else {
+          pauseAutoPlay();
+        }
       });
-    },1000);
+    }, 800);
   }
 
-  btnPlayPause.addEventListener('click',()=>{if(autoPlaying)pauseAutoPlay();else startAutoPlay();});
-  btnStop.addEventListener('click',()=>stopAutoPlay());
-  preplayBtn.addEventListener('click',()=>{preplayOverlay.style.display='none';show(0);startAutoPlay();});
+  // ============ CONTROL EVENT LISTENERS ============
+  btnPlayPause.addEventListener('click', function() {
+    if (autoPlaying) pauseAutoPlay(); else startAutoPlay();
+  });
+  btnStop.addEventListener('click', function() { stopAutoPlay(); });
+
+  // ============ PRE-PLAY — MOBILE SAFARI SAFE ============
+  // Must unlock audio in the DIRECT click handler user gesture context.
+  // Safari does NOT unlock audio with data: URIs — must be real HTTP URL.
+  preplayBtn.addEventListener('click', function handlePlay() {
+    preplayOverlay.style.display = 'none';
+    show(0);
+
+    // Unlock the single rachelAudio element in the direct click handler.
+    // Mobile browsers require play() to be called within user gesture.
+    var firstSrc = audioFiles[0];
+    rachelAudio.src = firstSrc;
+    rachelAudio.load();
+    rachelAudio.play().then(function() {
+      // Audio context unlocked — pause and let autoplay engine take over
+      rachelAudio.pause();
+      rachelAudio.currentTime = 0;
+      startAutoPlay();
+    }).catch(function() {
+      // Even if play fails, try autoplay anyway
+      startAutoPlay();
+    });
+  });
 </script>
 </body>
 </html>
