@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ImagingMind AI — Technical Overview</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+  :root { --bg: #0a0e17; --card: #111827; --border: #1f2937; --text: #e5e7eb; --muted: #9ca3af; --accent: #3b82f6; --accent2: #8b5cf6; --green: #10b981; --red: #ef4444; --amber: #f59e0b; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; font-size: 16px; }
+  .container { max-width: 900px; margin: 0 auto; padding: 60px 32px; }
+  h1 { font-size: 42px; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 8px; color: #fff; }
+  h2 { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin: 56px 0 20px; color: #fff; padding-bottom: 12px; border-bottom: 2px solid var(--accent); }
+  h3 { font-size: 20px; font-weight: 700; margin: 32px 0 12px; color: #fff; }
+  h4 { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: var(--accent); margin: 28px 0 12px; }
+  p { margin-bottom: 16px; color: var(--text); }
+  .subtitle { font-size: 18px; color: var(--muted); margin-bottom: 40px; }
+  .badge { display: inline-block; padding: 4px 14px; border-radius: 100px; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+  .badge-blue { background: rgba(59,130,246,0.15); color: var(--accent); border: 1px solid rgba(59,130,246,0.3); }
+  .badge-purple { background: rgba(139,92,246,0.15); color: var(--accent2); border: 1px solid rgba(139,92,246,0.3); }
+  .badge-green { background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid rgba(16,185,129,0.3); }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 16px 0; }
+  .code { font-family: 'JetBrains Mono', monospace; background: #1a1f2e; border: 1px solid var(--border); border-radius: 8px; padding: 20px; font-size: 13px; overflow-x: auto; margin: 16px 0; color: #d1d5db; white-space: pre; line-height: 1.5; }
+  .code .comment { color: #6b7280; }
+  .code .key { color: var(--accent); }
+  .code .str { color: var(--green); }
+  .code .num { color: var(--amber); }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+  th { text-align: left; padding: 10px 14px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); background: rgba(59,130,246,0.08); border-bottom: 1px solid var(--border); }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--text); }
+  tr:last-child td { border-bottom: none; }
+  .flow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 20px 0; }
+  .flow-step { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; font-size: 13px; font-weight: 600; color: #fff; }
+  .flow-arrow { color: var(--accent); font-size: 18px; }
+  .highlight { background: rgba(59,130,246,0.08); border-left: 3px solid var(--accent); padding: 16px 20px; border-radius: 0 8px 8px 0; margin: 16px 0; }
+  .highlight p { margin-bottom: 0; }
+  ul { margin: 12px 0 16px 20px; }
+  li { margin-bottom: 8px; color: var(--text); font-size: 15px; }
+  li strong { color: #fff; }
+  .toc { margin: 32px 0 48px; }
+  .toc a { display: block; padding: 8px 0; color: var(--muted); text-decoration: none; font-size: 15px; border-bottom: 1px dashed rgba(255,255,255,0.08); transition: color 0.2s; }
+  .toc a:hover { color: var(--accent); }
+  .toc a span { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--accent); margin-right: 12px; }
+  .logo { height: 80px; margin-bottom: 32px; }
+  @media (max-width: 640px) { .container { padding: 32px 16px; } h1 { font-size: 28px; } h2 { font-size: 22px; } .flow { flex-direction: column; align-items: stretch; } .flow-arrow { text-align: center; transform: rotate(90deg); } }
+</style>
+</head>
+<body>
+<div class="container">
+
+<img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69e2cb1b50b9a3263ab4677c.png" alt="ImagingMind AI" class="logo">
+
+<h1>ImagingMind AI</h1>
+<p class="subtitle">Technical Overview — How the AI Diagnostic Engine Works</p>
+
+<div style="display:flex; gap:8px; margin-bottom:40px; flex-wrap:wrap;">
+  <span class="badge badge-blue">HIPAA Compliant</span>
+  <span class="badge badge-purple">Multi-Modality</span>
+  <span class="badge badge-green">Board-Certified Review</span>
+</div>
+
+<div class="toc">
+  <h4>Contents</h4>
+  <a href="#overview"><span>01</span> System Overview</a>
+  <a href="#engine"><span>02</span> ImagingMind AI Engine — How It Works</a>
+  <a href="#modalities"><span>03</span> Supported Modalities</a>
+  <a href="#analysis"><span>04</span> Image Analysis Pipeline</a>
+  <a href="#output"><span>05</span> Structured Output Schema</a>
+  <a href="#copilot"><span>06</span> AI Diagnostic Copilot (Report Generation)</a>
+  <a href="#confidence"><span>07</span> Confidence Scoring</a>
+  <a href="#dictation"><span>08</span> Medical Dictation</a>
+  <a href="#security"><span>09</span> Security & Compliance</a>
+  <a href="#architecture"><span>10</span> System Architecture</a>
+</div>
+
+<!-- 01 -->
+<h2 id="overview">01 — System Overview</h2>
+
+<p>ImagingMind AI is an artificial intelligence diagnostic imaging platform that analyzes medical images across six modalities. The system reads uploaded imaging studies, generates structured diagnostic findings, suggests ICD-10 codes, and produces draft reports — all in under 30 seconds per image.</p>
+
+<p>The platform is designed as a <strong>radiologist copilot</strong>, not a replacement. ImagingMind AI acts as a highly trained second pair of eyes that performs the initial read, flags abnormalities, and generates a structured draft that the radiologist reviews, edits (via typing or voice dictation), and finalizes.</p>
+
+<div class="flow">
+  <div class="flow-step">Upload Image</div>
+  <div class="flow-arrow">&rarr;</div>
+  <div class="flow-step">ImagingMind AI Analyzes</div>
+  <div class="flow-arrow">&rarr;</div>
+  <div class="flow-step">Structured Findings</div>
+  <div class="flow-arrow">&rarr;</div>
+  <div class="flow-step">AI Copilot Report</div>
+  <div class="flow-arrow">&rarr;</div>
+  <div class="flow-step">Radiologist Reviews</div>
+  <div class="flow-arrow">&rarr;</div>
+  <div class="flow-step">Finalized Report</div>
+</div>
+
+<!-- 02 -->
+<h2 id="engine">02 — ImagingMind AI Engine</h2>
+
+<p>The ImagingMind AI Engine is a multimodal vision-language model that has been trained on vast amounts of medical literature, radiology textbooks, clinical case studies, and imaging data. It processes medical images at the pixel level, identifying anatomical structures, detecting abnormalities, and correlating findings with clinical context.</p>
+
+<h3>How it reads an image</h3>
+
+<p>When a medical image is uploaded to ImagingMind, the AI Engine performs the following analysis in a single pass:</p>
+
+<ol style="margin: 12px 0 16px 20px;">
+  <li><strong>Modality Detection</strong> — Automatically identifies whether the image is an X-Ray, CT slice, MRI sequence, mammogram, DEXA scan, or dental radiograph. No manual selection required.</li>
+  <li><strong>Anatomical Mapping</strong> — Identifies the body region, orientation (AP, lateral, oblique), and specific anatomical structures visible in the image.</li>
+  <li><strong>Systematic Read</strong> — Evaluates the image following standard radiological reading patterns: alignment, bone density, joint spaces, soft tissue, cortical integrity, and surrounding structures.</li>
+  <li><strong>Abnormality Detection</strong> — Flags every abnormality found: fractures, dislocations, masses, calcifications, fluid collections, degenerative changes, and incidental findings.</li>
+  <li><strong>Clinical Correlation</strong> — Combines image findings with the patient's clinical context (chief complaint, injury mechanism, severity, history) to generate a clinically relevant impression.</li>
+  <li><strong>Coding</strong> — Suggests appropriate ICD-10 diagnostic codes based on the findings, ready for billing integration.</li>
+  <li><strong>Confidence Assessment</strong> — Assigns a confidence level (High, Moderate, Low) based on image quality, clarity of findings, and diagnostic certainty.</li>
+</ol>
+
+<div class="highlight">
+  <p><strong>Key distinction:</strong> ImagingMind AI performs all seven steps in a single inference pass — there is no multi-step pipeline, no separate detection model, and no rule-based post-processing. The entire analysis is done by one unified intelligence engine that understands both visual anatomy and clinical language simultaneously.</p>
+</div>
+
+<h3>The role of clinical context</h3>
+
+<p>Unlike generic image recognition, ImagingMind AI receives the patient's clinical context alongside the image. This includes:</p>
+
+<ul>
+  <li><strong>Chief complaint</strong> — What the patient reported (e.g., "sharp pain when lifting arm above shoulder height")</li>
+  <li><strong>Injury mechanism</strong> — How the injury occurred (trauma, overuse, acute, chronic)</li>
+  <li><strong>Pain location</strong> — Specific body region and laterality</li>
+  <li><strong>Severity</strong> — Patient-reported pain scale (1-10)</li>
+  <li><strong>Sport/activity context</strong> — Relevant if the patient is an athlete</li>
+  <li><strong>Prior imaging history</strong> — Whether previous studies exist for comparison</li>
+</ul>
+
+<p>This context allows the AI to prioritize its analysis. For example, if the clinical complaint is "crush injury to right index finger," the AI will focus its detailed assessment on the phalanges and metacarpals of the right hand, while still screening the rest of the visible anatomy for incidental findings.</p>
+
+<!-- 03 -->
+<h2 id="modalities">03 — Supported Modalities</h2>
+
+<table>
+  <tr><th>Modality</th><th>What ImagingMind AI Analyzes</th><th>Typical Study</th><th>Analysis Time</th></tr>
+  <tr><td><strong>X-Ray</strong></td><td>Fractures, alignment, bone density, joint spaces, soft tissue swelling, foreign bodies</td><td>2-4 views</td><td>&lt;30 seconds</td></tr>
+  <tr><td><strong>CT (2D slices)</strong></td><td>Cross-sectional anatomy, internal injuries, tumors, hemorrhage, fracture complexity</td><td>20-30 key slices</td><td>&lt;45 seconds</td></tr>
+  <tr><td><strong>MRI (2D slices)</strong></td><td>Soft tissue injury, ligament tears, meniscus damage, disc herniation, edema</td><td>20-30 key slices</td><td>&lt;45 seconds</td></tr>
+  <tr><td><strong>Mammography</strong></td><td>Masses, calcifications, architectural distortion, asymmetry, BI-RADS scoring</td><td>4 views (CC + MLO)</td><td>&lt;30 seconds</td></tr>
+  <tr><td><strong>DEXA</strong></td><td>Bone mineral density, T-score, Z-score, osteoporosis/osteopenia risk classification</td><td>1-2 regions</td><td>&lt;30 seconds</td></tr>
+  <tr><td><strong>Dental</strong></td><td>Caries, periapical lesions, root fractures, bone loss, implant assessment, impacted teeth</td><td>Panoramic or periapical</td><td>&lt;30 seconds</td></tr>
+</table>
+
+<h3>CT and MRI: Slice Selection</h3>
+
+<p>For volumetric modalities (CT and MRI), ImagingMind AI does not require the full DICOM dataset. Instead, the system accepts 20-30 diagnostically representative 2D slices exported as standard images (JPEG, PNG, WebP). The radiologist or technologist selects key slices, or the system's upload interface can guide selection based on the clinical question.</p>
+
+<p>Each slice is analyzed independently, and findings are correlated across all slices to produce a unified impression. For example, a CT study of the hand might show a fracture line on one slice and fragment displacement on another — ImagingMind AI will synthesize both into a single coherent finding.</p>
+
+<!-- 04 -->
+<h2 id="analysis">04 — Image Analysis Pipeline</h2>
+
+<h3>Step-by-step: What happens when an image is uploaded</h3>
+
+<div class="card">
+  <h4>1. Upload & Validation</h4>
+  <p>The image file is received via HTTPS (TLS 1.3 encrypted). The system validates file type (JPEG, PNG, WebP, GIF), checks file size (up to 20MB for database persistence), and assigns it to the case record.</p>
+</div>
+
+<div class="card">
+  <h4>2. Image Encoding</h4>
+  <p>The image is encoded to base64 format for transmission to the ImagingMind AI Engine. The original file is stored securely in the database (PostgreSQL with SSL) for audit trail and future reference.</p>
+</div>
+
+<div class="card">
+  <h4>3. AI Analysis (Non-Blocking)</h4>
+  <p>The analysis runs in the background immediately after upload. The user does not wait — they can continue uploading additional images or reviewing the case. A status indicator shows when analysis is complete (typically 10-30 seconds).</p>
+</div>
+
+<div class="card">
+  <h4>4. Structured Output</h4>
+  <p>The AI Engine returns a structured JSON response with modality, body region, findings, impression, abnormalities, ICD-10 codes, confidence level, and limitations. This structured data is stored alongside the image and made available to the AI Copilot for report generation.</p>
+</div>
+
+<div class="card">
+  <h4>5. Radiologist Notification</h4>
+  <p>The assigned radiologist receives a notification that analysis is complete. The case moves to "under review" status in their worklist. High-confidence cases can be flagged for expedited review.</p>
+</div>
+
+<!-- 05 -->
+<h2 id="output">05 — Structured Output Schema</h2>
+
+<p>Every image analysis produces a standardized JSON structure. This ensures consistent data across all modalities and enables downstream automation (billing, EMR export, FHIR R4 interoperability).</p>
+
+<div class="code"><span class="comment">// ImagingMind AI Engine — Structured Output per Image</span>
+{
+  <span class="key">"modality"</span>: <span class="str">"X-Ray"</span>,
+  <span class="key">"bodyRegion"</span>: <span class="str">"Right Index Finger — Proximal Phalanx"</span>,
+
+  <span class="key">"findings"</span>: <span class="str">"Complete displaced transverse fracture of the
+    proximal phalanx with significant dorsal angulation and
+    shortening. Comminuted fracture pattern with multiple
+    fragment displacement. Soft tissue swelling surrounding
+    the entire index finger."</span>,
+
+  <span class="key">"impression"</span>: <span class="str">"Displaced comminuted fracture of the proximal
+    phalanx, right index finger. Fracture pattern and
+    displacement will likely require orthopedic surgical
+    intervention for optimal alignment."</span>,
+
+  <span class="key">"abnormalitiesDetected"</span>: [
+    <span class="str">"Comminuted proximal phalanx fracture"</span>,
+    <span class="str">"Significant dorsal angulation"</span>,
+    <span class="str">"Fragment displacement"</span>,
+    <span class="str">"Soft tissue swelling"</span>
+  ],
+
+  <span class="key">"normalFindings"</span>: [
+    <span class="str">"No other osseous abnormalities in remaining hand"</span>,
+    <span class="str">"Carpal bones intact"</span>
+  ],
+
+  <span class="key">"icd10Suggestions"</span>: [
+    { <span class="key">"code"</span>: <span class="str">"S62.601A"</span>, <span class="key">"description"</span>: <span class="str">"Fx proximal phalanx, R index"</span> },
+    { <span class="key">"code"</span>: <span class="str">"W20.8XXA"</span>, <span class="key">"description"</span>: <span class="str">"Struck by falling object"</span> }
+  ],
+
+  <span class="key">"confidenceLevel"</span>: <span class="str">"High"</span>,
+  <span class="key">"recommendedFollowUp"</span>: <span class="str">"Orthopedic referral for surgical evaluation"</span>,
+  <span class="key">"limitations"</span>: <span class="str">"None — diagnostic quality images"</span>
+}</div>
+
+<!-- 06 -->
+<h2 id="copilot">06 — AI Diagnostic Copilot (Report Generation)</h2>
+
+<p>After individual images are analyzed, the AI Diagnostic Copilot generates a comprehensive report draft by synthesizing <strong>all available case data</strong> — not just the images.</p>
+
+<h3>Data sources for report generation</h3>
+
+<table>
+  <tr><th>Source</th><th>What it contributes</th></tr>
+  <tr><td>Image analyses</td><td>Findings, impressions, abnormalities, ICD-10 codes from each uploaded image</td></tr>
+  <tr><td>Patient intake</td><td>Chief complaint, injury mechanism, onset date, duration, severity</td></tr>
+  <tr><td>Triage assessment</td><td>AI triage decision, urgency classification, recommended protocols</td></tr>
+  <tr><td>ROM measurements</td><td>Range of motion data captured via camera-based assessment</td></tr>
+  <tr><td>PROM submissions</td><td>Patient-reported outcome measures (pain scales, function scores)</td></tr>
+  <tr><td>Case timeline</td><td>Chronological sequence of events for audit context</td></tr>
+  <tr><td>Patient messages</td><td>Any additional context from patient-provider communication</td></tr>
+</table>
+
+<h3>Report output structure</h3>
+
+<p>The AI Copilot produces a structured draft with these sections:</p>
+
+<ul>
+  <li><strong>Clinical Summary</strong> — 2-3 sentence overview of the case</li>
+  <li><strong>Detailed Findings</strong> — Comprehensive description of all imaging and clinical findings</li>
+  <li><strong>Diagnostic Impression</strong> — Primary diagnosis and differential considerations</li>
+  <li><strong>Severity Grade</strong> — Mild / Moderate / Severe classification</li>
+  <li><strong>Recovery Timeline</strong> — Estimated recovery duration in weeks</li>
+  <li><strong>Recovery Plan</strong> — Recommended treatment approach</li>
+  <li><strong>Performance Impact</strong> — How the condition affects daily/athletic function</li>
+  <li><strong>Return to Activity</strong> — Guidelines for resuming normal activity</li>
+  <li><strong>ICD-10 Codes</strong> — Billing-ready diagnostic codes</li>
+  <li><strong>Recommended Follow-Up</strong> — Next steps and additional imaging if needed</li>
+</ul>
+
+<div class="highlight">
+  <p><strong>Radiologist workflow:</strong> The draft appears in the case view. The radiologist can preview it, click "Edit" to modify any field (via keyboard or voice dictation), and then "Approve &amp; Finalize" to publish the report. The finalized report is exportable as a professional PDF with letterhead, HIPAA compliance notice, and FHIR R4 metadata.</p>
+</div>
+
+<!-- 07 -->
+<h2 id="confidence">07 — Confidence Scoring</h2>
+
+<p>Every analysis includes a confidence level that helps radiologists prioritize their worklist.</p>
+
+<div class="card" style="border-left: 3px solid var(--green);">
+  <h3 style="color: var(--green); margin-top: 0;">HIGH Confidence</h3>
+  <p>Clear, diagnostic-quality imaging with unambiguous findings. The AI has high certainty in its analysis. These cases can be reviewed and finalized quickly.</p>
+  <p><strong>Typical scenarios:</strong> Obvious fractures, large effusions, clear dislocations, normal studies with no abnormalities.</p>
+</div>
+
+<div class="card" style="border-left: 3px solid var(--amber);">
+  <h3 style="color: var(--amber); margin-top: 0;">MODERATE Confidence</h3>
+  <p>Borderline image quality or subtle findings that warrant careful radiologist review. The AI has identified potential abnormalities but recommends human confirmation.</p>
+  <p><strong>Typical scenarios:</strong> Hairline fractures, early degenerative changes, subtle soft tissue abnormalities, suboptimal positioning.</p>
+</div>
+
+<div class="card" style="border-left: 3px solid var(--red);">
+  <h3 style="color: var(--red); margin-top: 0;">LOW Confidence</h3>
+  <p>Poor image quality, ambiguous anatomy, or findings outside the AI's training distribution. Additional views or alternative modalities are recommended.</p>
+  <p><strong>Typical scenarios:</strong> Motion blur, incorrect exposure, non-standard views, heavily post-processed images.</p>
+</div>
+
+<p>Confidence scoring enables intelligent worklist routing: high-confidence cases can flow through quickly, freeing the radiologist to spend more time on complex, lower-confidence cases that truly need expert attention.</p>
+
+<!-- 08 -->
+<h2 id="dictation">08 — Medical Dictation</h2>
+
+<p>ImagingMind includes built-in voice dictation for editing the AI-generated report draft. When a radiologist clicks "Edit" on any report field, a microphone button appears.</p>
+
+<h3>How it works</h3>
+
+<ul>
+  <li><strong>Click the microphone icon</strong> on any field (Clinical Summary, Findings, Impression, etc.)</li>
+  <li><strong>Speak naturally</strong> — the system transcribes in real time with interim results</li>
+  <li><strong>Dictated text is appended</strong> to the existing AI-generated content, not replaced</li>
+  <li><strong>Click again to stop</strong> — the field retains both AI text and your dictated additions</li>
+  <li><strong>Continuous mode</strong> — speak as long as needed without re-clicking</li>
+</ul>
+
+<p>This approach means the radiologist starts with an AI draft that is 80-90% complete, and dictates only the corrections or additions. Compared to traditional dictation where the radiologist speaks the entire report from scratch, this reduces dictation time by an estimated 70-80%.</p>
+
+<div class="highlight">
+  <p><strong>Cost implication:</strong> Traditional dictation software like Nuance PowerScribe costs $5,000-8,000 per radiologist per year. ImagingMind's dictation uses the browser's built-in speech recognition (Web Speech API) at zero additional cost — and the radiologist is editing an AI draft, not dictating from a blank page.</p>
+</div>
+
+<!-- 09 -->
+<h2 id="security">09 — Security & Compliance</h2>
+
+<table>
+  <tr><th>Layer</th><th>Implementation</th></tr>
+  <tr><td>Data in transit</td><td>TLS 1.3 encryption on all connections (HTTPS)</td></tr>
+  <tr><td>Data at rest</td><td>PostgreSQL with SSL, images stored as encrypted base64</td></tr>
+  <tr><td>Authentication</td><td>JWT tokens with bcrypt password hashing (12 rounds)</td></tr>
+  <tr><td>MFA</td><td>TOTP-based multi-factor authentication for radiologist/admin accounts</td></tr>
+  <tr><td>HIPAA</td><td>PHI access logged in audit trail, BAA available for enterprise</td></tr>
+  <tr><td>Audit trail</td><td>Every action logged with timestamp, user ID, and event description</td></tr>
+  <tr><td>Role-based access</td><td>Patient, Radiologist, Staff, Admin — each with scoped permissions</td></tr>
+  <tr><td>Session management</td><td>24-hour token expiry, automatic logout on inactivity</td></tr>
+  <tr><td>Image handling</td><td>Images never leave the server — AI analysis happens server-side, results stored in DB</td></tr>
+  <tr><td>FHIR R4</td><td>Reports exportable in FHIR R4 format for EMR interoperability</td></tr>
+</table>
+
+<div class="highlight">
+  <p><strong>AI processing:</strong> Medical images are sent to the ImagingMind AI Engine via encrypted API call. The AI processes the image and returns structured findings. Images are not stored by the AI engine — they are processed in memory and discarded after analysis. Only the structured output (text findings, codes, confidence) is returned and stored in the ImagingMind database.</p>
+</div>
+
+<!-- 10 -->
+<h2 id="architecture">10 — System Architecture</h2>
+
+<div class="code"><span class="comment">// ImagingMind AI — System Architecture</span>
+
+<span class="key">LAYER 1: Client</span>
+  Browser (React SPA) / Mobile Web
+  &darr; HTTPS (TLS 1.3)
+
+<span class="key">LAYER 2: Application Server</span>
+  Node.js / Express
+  JWT Authentication + RBAC
+  REST API (/api/v1/*)
+  &darr;
+
+<span class="key">LAYER 3: AI Engine</span>
+  ImagingMind AI (Vision-Language Model)
+  - Image Analysis: base64 image + clinical context &rarr; structured JSON
+  - Report Generation: all case data &rarr; structured report draft
+  - Triage: patient intake &rarr; urgency + protocol recommendation
+  &darr;
+
+<span class="key">LAYER 4: Data</span>
+  PostgreSQL (SSL, encrypted)
+  - msk_users (auth, roles, MFA)
+  - msk_patients (demographics, insurance, HIPAA consent)
+  - msk_cases (intake, triage, status tracking)
+  - msk_imaging_files (images + AI analysis results)
+  - msk_reports (finalized diagnostic reports)
+  - msk_case_timeline (audit trail)
+  &darr;
+
+<span class="key">LAYER 5: Integrations</span>
+  - Stripe (metered billing: $99/mo + per study)
+  - ElevenLabs (Rachel/Lina voice agents)
+  - FHIR R4 (EMR export)
+  - PDF Generator (professional reports)
+  - Web Speech API (medical dictation)</div>
+
+<h3>Performance characteristics</h3>
+
+<table>
+  <tr><th>Metric</th><th>Value</th></tr>
+  <tr><td>Image analysis latency</td><td>10-30 seconds per image</td></tr>
+  <tr><td>Report generation latency</td><td>5-15 seconds per report</td></tr>
+  <tr><td>Concurrent analyses supported</td><td>Limited by API throughput (scalable)</td></tr>
+  <tr><td>Max image size</td><td>20MB per file (base64 DB persistence)</td></tr>
+  <tr><td>Max images per case</td><td>20 files per upload batch</td></tr>
+  <tr><td>Supported formats</td><td>JPEG, PNG, WebP, GIF</td></tr>
+  <tr><td>Database persistence</td><td>All images and analyses stored permanently</td></tr>
+</table>
+
+<div style="margin-top: 80px; padding-top: 32px; border-top: 1px solid var(--border); text-align: center;">
+  <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69e2cb1b50b9a3263ab4677c.png" alt="ImagingMind AI" style="height: 60px; opacity: 0.7; margin-bottom: 16px;">
+  <p style="color: var(--muted); font-size: 13px;">ImagingMind AI — Technical Overview v1.0<br>HIPAA Compliant | Board-Certified Review | $99/mo + Pay Per Study</p>
+  <p style="color: var(--muted); font-size: 12px; margin-top: 8px;">Confidential — For authorized recipients only</p>
+</div>
+
+</div>
+</body>
+</html>
