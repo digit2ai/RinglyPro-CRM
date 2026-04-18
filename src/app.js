@@ -59,15 +59,21 @@ app.use((req, res, next) => {
   next();
 });
 
-// Custom domain: visionarium.app -> Youth Talent Global whitepaper
+// Custom domain: visionarium.app -> Youth Talent Global whitepaper + platform
 app.use((req, res, next) => {
   const host = (req.get('host') || '').toLowerCase();
   if (host === 'visionarium.app' || host === 'www.visionarium.app') {
     const p = req.path;
-    if (p === '/' || p === '' || p === '/whitepaper.html' || p === '/en' || p === '/en/') {
+    // Pass through /visionarium API and dashboard routes
+    if (p.startsWith('/visionarium')) return next();
+    // Whitepaper routes
+    if (p === '/whitepaper.html' || p === '/en' || p === '/en/') {
       req.url = '/youth-talent-global/whitepaper.html' + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '');
     } else if (p === '/whitepaper-es.html' || p === '/es' || p === '/es/') {
       req.url = '/youth-talent-global/whitepaper-es.html' + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '');
+    } else if (p === '/' || p === '') {
+      // Root: redirect to platform portal
+      req.url = '/visionarium/';
     }
   }
   next();
@@ -2104,12 +2110,39 @@ app.get('/api/dashboard', async (req, res) => {
   }
 });
 
+// =====================================================
+// VISIONARIUM - Youth Leadership Fellowship Platform
+// =====================================================
+
+let visionariumApp = null;
+let visionariumError = null;
+try {
+  visionariumApp = require('../visionarium/src/index');
+  app.use('/visionarium', visionariumApp);
+  console.log('[Visionarium] Platform mounted at /visionarium');
+  console.log('   - Health Check: /visionarium/health');
+  console.log('   - API: /visionarium/api/v1/*');
+  console.log('   - Dashboard: /visionarium/');
+} catch (error) {
+  visionariumError = error;
+  console.log('[Visionarium] Not available:', error.message);
+}
+
+app.get('/debug/visionarium-error', (req, res) => {
+  res.json({
+    service: 'Visionarium Foundation Platform',
+    available: !visionariumError,
+    error: visionariumError ? { message: visionariumError.message, stack: visionariumError.stack } : null,
+    env: { NODE_ENV: process.env.NODE_ENV, hasDbUrl: !!process.env.DATABASE_URL }
+  });
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Server Error:', err.stack);
   // Show details for tunjoracing routes to help with debugging
   const fullPath = req.originalUrl || req.path;
-  const showDetails = process.env.NODE_ENV === 'development' || fullPath.startsWith('/tunjoracing') || fullPath.startsWith('/kanchoai') || fullPath.startsWith('/cw_carriers') || fullPath.startsWith('/Torna_Idioma');
+  const showDetails = process.env.NODE_ENV === 'development' || fullPath.startsWith('/tunjoracing') || fullPath.startsWith('/kanchoai') || fullPath.startsWith('/cw_carriers') || fullPath.startsWith('/Torna_Idioma') || fullPath.startsWith('/visionarium');
   res.status(500).json({
     success: false,
     error: showDetails ? err.message : 'Something went wrong!',
