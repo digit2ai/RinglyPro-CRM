@@ -1034,6 +1034,7 @@ async function renderProjects(container) {
           <option value="low">Low</option>
         </select>
       </div>
+      <button class="btn btn-ghost btn-sm" onclick="printProjectsPDF()" title="Print / Export PDF">Print PDF</button>
       <button class="btn btn-primary btn-sm" onclick="openProjectModal()">+ New Project</button>
     </div>
     <table class="data-table">
@@ -1057,6 +1058,65 @@ async function renderProjects(container) {
         </tr>`;
       }).join('')
     : '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted)">No projects yet.<br><br><button class="btn btn-primary" onclick="openProjectModal()">&#128203; Create Your First Project</button><br><span style="font-size:12px;margin-top:8px;display:block">or use the AI: "Start a new project called Website Redesign"</span></td></tr>';
+}
+
+// Print Projects as PDF
+async function printProjectsPDF() {
+  const res = await api('/projects');
+  if (!res.success || !res.data.length) { alert('No projects to print.'); return; }
+  const projects = res.data;
+  const now = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+
+  const rows = projects.map(p => {
+    const isOverdue = p.due_date && new Date(p.due_date) < new Date() && !['completed','cancelled'].includes(p.status);
+    return `
+      <tr>
+        <td style="padding:12px 10px;border-bottom:1px solid #ddd;vertical-align:top">
+          <strong style="font-size:14px">${p.name}</strong>
+          ${p.code ? '<br><span style="font-size:11px;color:#888">'+p.code+'</span>' : ''}
+        </td>
+        <td style="padding:12px 10px;border-bottom:1px solid #ddd;vertical-align:top;font-size:12px">${p.vertical?.name || '-'}</td>
+        <td style="padding:12px 10px;border-bottom:1px solid #ddd;vertical-align:top;font-size:12px;font-weight:600;color:${isOverdue?'#dc2626':p.status==='completed'?'#16a34a':'#333'}">
+          ${isOverdue ? 'OVERDUE' : p.status?.replace(/_/g,' ')}
+        </td>
+        <td style="padding:12px 10px;border-bottom:1px solid #ddd;vertical-align:top;font-size:12px">${p.priority}</td>
+        <td style="padding:12px 10px;border-bottom:1px solid #ddd;vertical-align:top;font-size:12px">${p.start_date ? new Date(p.start_date).toLocaleDateString() : '-'}</td>
+        <td style="padding:12px 10px;border-bottom:1px solid #ddd;vertical-align:top;font-size:12px">${p.due_date ? new Date(p.due_date).toLocaleDateString() : '-'}</td>
+        <td style="padding:12px 10px;border-bottom:1px solid #ddd;vertical-align:top;font-size:12px">${p.progress||0}%</td>
+      </tr>
+      ${p.description ? '<tr><td colspan="7" style="padding:6px 10px 16px;border-bottom:2px solid #ccc;font-size:12px;color:#555;line-height:1.5"><em>'+p.description+'</em></td></tr>' : ''}`;
+  }).join('');
+
+  const byStatus = {};
+  projects.forEach(p => { byStatus[p.status] = (byStatus[p.status]||0) + 1; });
+  const summaryLine = Object.entries(byStatus).map(([s,c]) => c + ' ' + s.replace(/_/g,' ')).join(' | ');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Projects Report</title>
+    <style>
+      @page { size: landscape; margin: 0.5in; }
+      body { font-family: -apple-system,Helvetica,Arial,sans-serif; color:#222; margin:0; padding:24px; }
+      table { width:100%; border-collapse:collapse; }
+      h1 { font-size:20px; margin:0 0 4px; }
+      .meta { font-size:12px; color:#888; margin-bottom:16px; }
+      .summary { font-size:12px; color:#555; margin-bottom:20px; padding:10px 14px; background:#f5f5f5; border-radius:6px; }
+      th { text-align:left; padding:8px 10px; border-bottom:2px solid #333; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:#555; }
+      @media print { body { padding:0; } }
+    </style></head><body>
+    <h1>Digit2Ai Projects Report</h1>
+    <p class="meta">Generated: ${now} | ${projects.length} project${projects.length===1?'':'s'}</p>
+    <div class="summary">${summaryLine}</div>
+    <table>
+      <thead><tr>
+        <th>Project</th><th>Vertical</th><th>Status</th><th>Priority</th><th>Start</th><th>Due</th><th>Progress</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </body></html>`;
+
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(() => w.print(), 400);
 }
 
 // =====================================================
