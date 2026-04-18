@@ -1,5 +1,80 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import api from '../services/api';
+
+// Microphone icon SVG
+const MicIcon = ({ active }) => (
+  <svg className={`w-4 h-4 ${active ? 'text-red-400' : 'text-msk-400'}`} fill="currentColor" viewBox="0 0 24 24">
+    <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+    <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
+  </svg>
+);
+
+// Dictation hook using Web Speech API
+function useDictation(onResult) {
+  const recognitionRef = useRef(null);
+  const [isListening, setIsListening] = useState(false);
+
+  const startListening = useCallback(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Speech recognition is not supported in this browser. Use Chrome or Edge.');
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    let finalTranscript = '';
+
+    recognition.onresult = (event) => {
+      let interim = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript + ' ';
+          onResult(finalTranscript.trim(), false);
+        } else {
+          interim += transcript;
+          onResult(finalTranscript + interim, true);
+        }
+      }
+    };
+
+    recognition.onerror = (event) => {
+      console.error('Speech recognition error:', event.error);
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      recognitionRef.current = null;
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsListening(true);
+  }, [onResult]);
+
+  const stopListening = useCallback(() => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    setIsListening(false);
+  }, []);
+
+  const toggleListening = useCallback(() => {
+    if (isListening) {
+      stopListening();
+    } else {
+      startListening();
+    }
+  }, [isListening, startListening, stopListening]);
+
+  return { isListening, toggleListening };
+}
 
 export default function DiagnosticCopilot({ caseId, onReportGenerated }) {
   const [generating, setGenerating] = useState(false);
@@ -27,7 +102,6 @@ export default function DiagnosticCopilot({ caseId, onReportGenerated }) {
   const finalizeReport = async () => {
     setFinalizing(true);
     try {
-      // Get report ID
       const genData = await api.post('/copilot/generate-report', { caseId });
       await api.put(`/copilot/finalize-report/${genData.reportId}`, editData);
       setFinalized(true);
@@ -117,8 +191,14 @@ export default function DiagnosticCopilot({ caseId, onReportGenerated }) {
 
       {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
 
+      {editing && (
+        <div className="mb-4 p-3 bg-msk-600/10 border border-msk-500/20 rounded-lg flex items-center gap-2">
+          <MicIcon active={false} />
+          <p className="text-msk-400 text-xs">Dictation enabled — click the microphone icon on any field to dictate. Speech is appended to existing text.</p>
+        </div>
+      )}
+
       <div className="space-y-4">
-        {/* Summary */}
         <ReportField
           label="Clinical Summary"
           value={editData.summary}
@@ -126,7 +206,6 @@ export default function DiagnosticCopilot({ caseId, onReportGenerated }) {
           onChange={v => handleEdit('summary', v)}
         />
 
-        {/* Detailed Findings */}
         <ReportField
           label="Detailed Findings"
           value={editData.detailedFindings}
@@ -135,7 +214,6 @@ export default function DiagnosticCopilot({ caseId, onReportGenerated }) {
           multiline
         />
 
-        {/* Impression */}
         <ReportField
           label="Diagnostic Impression"
           value={editData.impression}
@@ -145,7 +223,6 @@ export default function DiagnosticCopilot({ caseId, onReportGenerated }) {
           highlight
         />
 
-        {/* Severity + Recovery */}
         <div className="grid grid-cols-2 gap-4">
           <div>
             <span className="text-dark-400 text-xs font-medium">Severity Grade</span>
@@ -171,7 +248,6 @@ export default function DiagnosticCopilot({ caseId, onReportGenerated }) {
           </div>
         </div>
 
-        {/* Recovery Plan */}
         <ReportField
           label="Recovery Plan"
           value={editData.recoveryDescription}
@@ -180,7 +256,6 @@ export default function DiagnosticCopilot({ caseId, onReportGenerated }) {
           multiline
         />
 
-        {/* Performance + Return to Play */}
         <ReportField
           label="Performance Impact"
           value={editData.performanceImpact}
@@ -195,7 +270,6 @@ export default function DiagnosticCopilot({ caseId, onReportGenerated }) {
           multiline
         />
 
-        {/* Sport Notes */}
         {editData.sportSpecificNotes && (
           <ReportField
             label="Sport-Specific Notes"
@@ -205,7 +279,6 @@ export default function DiagnosticCopilot({ caseId, onReportGenerated }) {
           />
         )}
 
-        {/* ICD-10 */}
         {editData.icd10Codes?.length > 0 && (
           <div>
             <span className="text-dark-400 text-xs font-medium">ICD-10 Codes</span>
@@ -220,7 +293,6 @@ export default function DiagnosticCopilot({ caseId, onReportGenerated }) {
           </div>
         )}
 
-        {/* Follow-up */}
         {editData.recommendedFollowUp && (
           <ReportField
             label="Recommended Follow-Up"
@@ -245,15 +317,61 @@ export default function DiagnosticCopilot({ caseId, onReportGenerated }) {
 }
 
 function ReportField({ label, value, editing, onChange, multiline, highlight }) {
+  const handleDictation = useCallback((transcript, isInterim) => {
+    // Append dictated text to existing value
+    if (!isInterim) {
+      const existing = value || '';
+      const separator = existing && !existing.endsWith(' ') ? ' ' : '';
+      onChange(existing + separator + transcript);
+    }
+  }, [value, onChange]);
+
+  const { isListening, toggleListening } = useDictation(handleDictation);
+
   return (
     <div>
-      <span className="text-dark-400 text-xs font-medium">{label}</span>
+      <div className="flex items-center justify-between">
+        <span className="text-dark-400 text-xs font-medium">{label}</span>
+        {editing && (
+          <button
+            onClick={toggleListening}
+            className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs transition-all ${
+              isListening
+                ? 'bg-red-500/20 border border-red-500/40 text-red-400'
+                : 'bg-dark-800 border border-dark-600 text-dark-300 hover:text-msk-400 hover:border-msk-500/30'
+            }`}
+            title={isListening ? 'Stop dictation' : 'Start dictation'}
+          >
+            <MicIcon active={isListening} />
+            {isListening ? (
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+                Listening...
+              </span>
+            ) : (
+              'Dictate'
+            )}
+          </button>
+        )}
+      </div>
       {editing ? (
-        multiline ? (
-          <textarea value={value || ''} onChange={e => onChange(e.target.value)} className="input-field mt-1 text-sm" rows={3} />
-        ) : (
-          <input type="text" value={value || ''} onChange={e => onChange(e.target.value)} className="input-field mt-1 text-sm" />
-        )
+        <div className="relative mt-1">
+          {multiline ? (
+            <textarea
+              value={value || ''}
+              onChange={e => onChange(e.target.value)}
+              className={`input-field text-sm w-full ${isListening ? 'ring-2 ring-red-500/50 border-red-500/30' : ''}`}
+              rows={3}
+            />
+          ) : (
+            <input
+              type="text"
+              value={value || ''}
+              onChange={e => onChange(e.target.value)}
+              className={`input-field text-sm w-full ${isListening ? 'ring-2 ring-red-500/50 border-red-500/30' : ''}`}
+            />
+          )}
+        </div>
       ) : (
         <p className={`mt-1 text-sm ${highlight ? 'text-white font-medium bg-dark-800 rounded-lg p-3' : 'text-dark-200'}`}>
           {value || '—'}
