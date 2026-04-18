@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { fellows, opportunities as oppsApi, events as eventsApi, auth } from '../../api';
+import { fellows, opportunities as oppsApi, events as eventsApi, auth, cohorts as cohortsApi, applications as appsApi } from '../../api';
 
 export default function FellowDashboard() {
   const [fellow, setFellow] = useState(null);
+  const [cohortsList, setCohortsList] = useState([]);
+  const [myApps, setMyApps] = useState([]);
+  const [applying, setApplying] = useState(false);
+  const [appForm, setAppForm] = useState({ cohort_id:'', track_preference:'', written_vision:'', scholarship_requested: false });
+  const [appMsg, setAppMsg] = useState('');
   const [schedule, setSchedule] = useState(null);
   const [badges, setBadges] = useState([]);
   const [opps, setOpps] = useState([]);
@@ -19,6 +24,8 @@ export default function FellowDashboard() {
     }
     oppsApi.list({}).then(d => setOpps(d.opportunities || [])).catch(() => {});
     eventsApi.pub().then(d => setEvts(d.events || [])).catch(() => {});
+    cohortsApi.list().then(d => setCohortsList(d.cohorts || [])).catch(() => {});
+    appsApi.mine().then(d => setMyApps(d.applications || [])).catch(() => {});
   }, []);
 
   if (isCommunity) {
@@ -29,6 +36,57 @@ export default function FellowDashboard() {
         </div>
         <h1 className="text-2xl font-bold text-white mb-4">Welcome, {user?.first_name}!</h1>
         <p className="text-white/60 mb-8">You are a member of the Visionarium Open Community. Explore events, earn badges, and apply for the Fellowship when applications open.</p>
+
+        {/* Fellowship Application */}
+        <h2 className="text-lg font-bold text-white mb-4">Fellowship Application</h2>
+        {myApps.length > 0 ? (
+          <div className="space-y-3 mb-8">
+            {myApps.map(a => (
+              <div key={a.id} className="glass-card flex justify-between items-center">
+                <div>
+                  <div className="font-semibold text-white">{a.cohort?.name || `Cohort ${a.cohort_id}`}</div>
+                  <div className="text-white/40 text-sm">Track: {a.track_preference || 'Not specified'}</div>
+                </div>
+                <span className={`badge-pill ${a.status === 'accepted' ? 'bg-green-500/20 text-green-400' : a.status === 'rejected' ? 'bg-coral/20 text-coral' : 'bg-teal/20 text-teal-neon'}`}>{a.status}</span>
+              </div>
+            ))}
+          </div>
+        ) : applying ? (
+          <form onSubmit={async (e) => {
+            e.preventDefault(); setAppMsg('');
+            try {
+              await appsApi.submit({ ...appForm, cohort_id: parseInt(appForm.cohort_id) });
+              setAppMsg('Application submitted!');
+              setApplying(false);
+              appsApi.mine().then(d => setMyApps(d.applications || []));
+            } catch(err) { setAppMsg(err.message); }
+          }} className="glass-card mb-8 space-y-4">
+            <select value={appForm.cohort_id} onChange={e => setAppForm(f => ({...f, cohort_id: e.target.value}))} className="input-field" required>
+              <option value="">Select Cohort</option>
+              {cohortsList.map(c => <option key={c.id} value={c.id}>{c.name} ({c.status})</option>)}
+            </select>
+            <select value={appForm.track_preference} onChange={e => setAppForm(f => ({...f, track_preference: e.target.value}))} className="input-field">
+              <option value="">Select Track</option>
+              <option value="explorer">Explorer (16-18)</option>
+              <option value="builder">Builder (18-22)</option>
+            </select>
+            <textarea placeholder="Your vision -- Why do you want to join Visionarium?" value={appForm.written_vision} onChange={e => setAppForm(f => ({...f, written_vision: e.target.value}))} className="input-field min-h-[120px]" required />
+            <label className="flex items-center gap-2 text-white/60 text-sm">
+              <input type="checkbox" checked={appForm.scholarship_requested} onChange={e => setAppForm(f => ({...f, scholarship_requested: e.target.checked}))} className="accent-teal-neon" />
+              I would like to request a scholarship
+            </label>
+            {appMsg && <div className="text-coral text-sm">{appMsg}</div>}
+            <div className="flex gap-3">
+              <button type="submit" className="btn-primary">Submit Application</button>
+              <button type="button" onClick={() => setApplying(false)} className="btn-secondary">Cancel</button>
+            </div>
+          </form>
+        ) : (
+          <div className="mb-8">
+            <button onClick={() => setApplying(true)} className="btn-primary">Apply for Fellowship</button>
+            {appMsg && <div className="text-green-400 text-sm mt-2">{appMsg}</div>}
+          </div>
+        )}
 
         <h2 className="text-lg font-bold text-white mb-4">Upcoming Events</h2>
         <div className="space-y-3 mb-8">
