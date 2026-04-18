@@ -7,6 +7,7 @@ import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import AdminDashboard from './pages/admin/Dashboard';
+import AdminCommunity from './pages/admin/Community';
 import AdminCohorts from './pages/admin/Cohorts';
 import AdminFellows from './pages/admin/Fellows';
 import AdminMentors from './pages/admin/Mentors';
@@ -42,6 +43,7 @@ function Sidebar({ user }) {
         </div>
         <nav className="flex-1 space-y-1">
           <Link to="/admin" className={`sidebar-link ${isActive('/admin') && location.pathname === '/admin' ? 'active' : ''}`}>Dashboard</Link>
+          <Link to="/admin/community" className={`sidebar-link ${isActive('/admin/community')}`}>Community</Link>
           <Link to="/admin/cohorts" className={`sidebar-link ${isActive('/admin/cohorts')}`}>Cohorts</Link>
           <Link to="/admin/applications" className={`sidebar-link ${isActive('/admin/applications')}`}>Applications</Link>
           <Link to="/admin/fellows" className={`sidebar-link ${isActive('/admin/fellows')}`}>Fellows</Link>
@@ -96,6 +98,7 @@ export default function App() {
 
           {/* Admin */}
           <Route path="/admin" element={<ProtectedRoute roles={['admin']}><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/community" element={<ProtectedRoute roles={['admin']}><AdminCommunity /></ProtectedRoute>} />
           <Route path="/admin/cohorts" element={<ProtectedRoute roles={['admin']}><AdminCohorts /></ProtectedRoute>} />
           <Route path="/admin/fellows" element={<ProtectedRoute roles={['admin']}><AdminFellows /></ProtectedRoute>} />
           <Route path="/admin/mentors" element={<ProtectedRoute roles={['admin']}><AdminMentors /></ProtectedRoute>} />
