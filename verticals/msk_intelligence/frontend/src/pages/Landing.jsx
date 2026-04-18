@@ -15,7 +15,7 @@ export default function Landing() {
 
         <nav className="relative z-10 max-w-7xl mx-auto px-4 lg:px-6 py-3 lg:py-4 flex items-center justify-between gap-3">
           <div className="flex items-center min-w-0 flex-shrink">
-            <img src={mskLogo} alt="ImagingMind AI Diagnostics" className="h-16 sm:h-20 lg:h-24 w-auto object-contain" />
+            <img src={mskLogo} alt="ImagingMind AI Diagnostics" className="h-28 sm:h-36 lg:h-44 w-auto object-contain" />
           </div>
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
             <Link to="/login" className="text-dark-300 hover:text-white transition-colors font-medium text-sm sm:text-base">Sign In</Link>

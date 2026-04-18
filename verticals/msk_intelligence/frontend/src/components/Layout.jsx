@@ -87,7 +87,7 @@ export default function Layout({ children, user, onLogout }) {
         {/* Logo */}
         <div className="p-4 border-b border-dark-700 flex items-center justify-between">
           <Link to="/dashboard" onClick={handleNavClick} className="min-w-0">
-            <img src={mskLogo} alt="ImagingMind AI Diagnostics" className="h-20 w-auto object-contain drop-shadow-lg" />
+            <img src={mskLogo} alt="ImagingMind AI Diagnostics" className="h-32 w-auto object-contain drop-shadow-lg" />
           </Link>
           {/* Close button on mobile */}
           <button
@@ -151,7 +151,7 @@ export default function Layout({ children, user, onLogout }) {
           </button>
           {/* Mobile logo center */}
           <Link to="/dashboard" className="lg:hidden flex items-center gap-2">
-            <img src={mskLogo} alt="ImagingMind" className="h-14 w-auto object-contain" />
+            <img src={mskLogo} alt="ImagingMind" className="h-24 w-auto object-contain" />
           </Link>
           <NotificationBell />
         </div>

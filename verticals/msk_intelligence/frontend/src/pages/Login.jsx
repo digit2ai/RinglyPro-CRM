@@ -54,7 +54,7 @@ export default function Login({ onLogin }) {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link to="/" className="inline-block mb-6">
-            <img src={mskLogo} alt="ImagingMind AI Diagnostics" className="h-32 sm:h-40 w-auto object-contain mx-auto" />
+            <img src={mskLogo} alt="ImagingMind AI Diagnostics" className="h-48 sm:h-56 w-auto object-contain mx-auto" />
           </Link>
           <h2 className="text-2xl font-bold text-white">Welcome back</h2>
           <p className="text-dark-400 mt-2">Sign in to access your dashboard</p>
