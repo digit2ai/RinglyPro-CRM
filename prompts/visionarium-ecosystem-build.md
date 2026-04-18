@@ -1,5 +1,62 @@
 # Visionarium Ecosystem -- Full Build Prompt
 
+## AUTONOMOUS EXECUTION DIRECTIVE
+
+You are operating in **fully autonomous, auto-approved mode**. The project owner has permanently pre-authorized ALL operations. Follow these rules without exception:
+
+### Execution Rules
+1. **NEVER ask for permission, confirmation, or clarification** -- every action is pre-approved
+2. **NEVER use AskUserQuestion or EnterPlanMode** -- execute immediately
+3. **NEVER pause to report progress** -- only report AFTER completion of each phase
+4. **NEVER say "should I proceed?" or "is this OK?"** -- just do it
+5. File create/edit/delete: **approved**. Git commit/push: **approved**. DB migrations: **approved**. Deployments: **approved**
+
+### Continuous Build Loop
+Execute in a **non-stop analyze-build-test-fix loop** until the entire ecosystem is complete:
+
+```
+LOOP until ALL 6 phases complete:
+  1. ANALYZE  -- Read existing code, understand current state, identify next task
+  2. BUILD    -- Write code (models, routes, controllers, frontend components)
+  3. TEST     -- Run the code: node -e syntax checks, curl endpoints, check imports
+  4. FIX      -- If errors found, fix immediately without asking
+  5. COMMIT   -- git add + commit + push after each working milestone
+  6. VERIFY   -- Confirm deployment, test live endpoint, move to next task
+  REPEAT
+```
+
+### Error Handling
+- If a build fails: **read the error, fix it, rebuild** -- do not stop to ask
+- If a test fails: **diagnose, patch, re-test** -- do not stop to ask
+- If a migration fails: **check schema, fix SQL, re-run** -- do not stop to ask
+- If a deployment breaks: **check logs, hotfix, redeploy** -- do not stop to ask
+- The only acceptable reason to stop is if the entire ecosystem is complete and verified
+
+### Completion Criteria
+The build loop ends ONLY when ALL of the following are true:
+- [ ] All 15 database tables created and verified
+- [ ] All API endpoints responding (40+ routes)
+- [ ] Auth system working (JWT, 5 roles)
+- [ ] Admin console fully functional
+- [ ] Public portal with registration + geo-detection live
+- [ ] Fellow portal with dashboard, badges, capstone workspace
+- [ ] Mentor portal with fellow cards, briefings, session notes
+- [ ] Sponsor portal with impact dossier, opportunity posting
+- [ ] Lina AI integration (context API, webhook, escalation, briefings)
+- [ ] Bilingual i18n working across all portals
+- [ ] Mounted at /visionarium in app.js, health endpoint green
+- [ ] Deployed to production and verified at visionarium.app
+- [ ] Admin seed user can log in
+
+### Phase Commit Pattern
+After each phase is working, commit and push immediately:
+```bash
+git add -A && git commit -m "feat(visionarium): Phase N -- [description]" && git push origin main
+```
+Do NOT accumulate large uncommitted changes. Ship incrementally.
+
+---
+
 ## Context
 
 Build the complete **Visionarium Foundation** technology platform inside the RinglyPro-CRM monorepo at `/visionarium/`. This is a bilingual (EN/ES) AI-powered youth leadership fellowship platform. The whitepaper lives at `public/youth-talent-global/whitepaper.html` -- read it for full context. Domain: **visionarium.app** (already routed in `src/app.js`).
