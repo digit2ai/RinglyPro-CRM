@@ -987,49 +987,200 @@
         <h2>The MCP Architecture: A Universal Connector for Banking</h2>
 
         <p>
-            The Model Context Protocol (MCP) is an open standard released by Anthropic in 2024 that provides a universal way for AI systems to connect to external data sources, tools, and services. Often described as <strong>"USB-C for AI"</strong>, MCP has been adopted across major technology platforms and is rapidly becoming the standard for enterprise AI integration, with Moody's, Stacklok, and others publishing financial services validation studies.
+            The Model Context Protocol (MCP) is an open standard released by Anthropic in November 2024 that provides a universal, standardized way for AI systems to connect to external data sources, tools, and services. Often described as <strong>"USB-C for AI"</strong> -- a single connector replacing dozens of proprietary ones -- MCP has been adopted by Claude, ChatGPT, VS Code, Cursor, and major enterprise platforms. Moody's, Stacklok (in its "State of MCP in Financial Services 2026" survey), and The Digital Fifth have published validation studies confirming MCP as the protocol of choice for enterprise financial data systems.
         </p>
 
+        <h3>The Three-Tier Architecture</h3>
+        <p>
+            MCP follows a <strong>Host / Client / Server</strong> model built on JSON-RPC 2.0 -- the same reliable messaging protocol used in enterprise systems worldwide. Understanding each tier is essential for banking executives evaluating this architecture:
+        </p>
+
+        <!-- DETAILED ARCHITECTURE DIAGRAM -->
         <div class="arch-diagram">
-            <div class="diagram-title">Neural Intelligence MCP Architecture for Global Banking</div>
+            <div class="diagram-title">Neural Intelligence -- Complete MCP Architecture for Global Banking Compliance</div>
             <div class="arch-layers">
                 <div class="arch-layer ai-layer">
-                    <div class="arch-layer-title">AI Reasoning Layer (Host)</div>
-                    <div class="arch-layer-items">Neural Intelligence Engine -- Contextual reasoning across all data sources and jurisdictions</div>
+                    <div class="arch-layer-title">Layer 1 -- Host (Banking Compliance Application)</div>
+                    <div class="arch-layer-items">Neural Intelligence Engine | Creates &amp; manages all MCP clients | Enforces security policies &amp; consent | Controls cross-server data flow | Coordinates AI reasoning | Single point of governance &amp; audit</div>
                 </div>
-                <div class="arch-arrow">|</div>
+                <div class="arch-arrow">&#9660; &#9660; &#9660; &#9660; &#9660; &#9660; &#9660; &#9660;</div>
                 <div class="arch-layer mcp-layer">
-                    <div class="arch-layer-title">MCP Client Layer</div>
-                    <div class="arch-layer-items">Isolated 1:1 connections -- Each client maintains security boundaries per jurisdiction</div>
+                    <div class="arch-layer-title">Layer 2 -- MCP Clients (Isolated 1:1 Connections)</div>
+                    <div class="arch-layer-items">Client 1 [Core Banking] | Client 2 [Sanctions] | Client 3 [KYC/CDD] | Client 4 [Txn Monitoring] | Client 5 [Case Mgmt] | Client 6 [Regulatory Filing] | Client 7 [Document Mgmt] | Client 8 [Adverse Media]</div>
                 </div>
-                <div class="arch-arrow">|</div>
+                <div class="arch-arrow">&#9660; &#9660; &#9660; &#9660; &#9660; &#9660; &#9660; &#9660;</div>
                 <div class="arch-layer server-layer">
-                    <div class="arch-layer-title">MCP Server Layer</div>
-                    <div class="arch-layer-items">Core Banking | KYC/CDD | Sanctions (OFAC+UN+EU+AMLC) | Transaction Monitoring | Case Mgmt | Regulatory Filing</div>
+                    <div class="arch-layer-title">Layer 3 -- MCP Servers (Standardized Wrappers)</div>
+                    <div class="arch-layer-items">Each server exposes Tools + Resources + Prompts via JSON-RPC 2.0 | OAuth 2.1 authentication | Independent deployment &amp; updates | Immutable audit logging | Read-only or read-write per server</div>
                 </div>
-                <div class="arch-arrow">|</div>
+                <div class="arch-arrow">&#9660; &#9660; &#9660; &#9660; &#9660; &#9660; &#9660; &#9660;</div>
                 <div class="arch-layer data-layer">
-                    <div class="arch-layer-title">Banking Systems &amp; Global Data Sources</div>
-                    <div class="arch-layer-items">FIS/Fiserv/Jack Henry | OFAC SDN | UN SCSL | EU Consolidated | AMLC | FINTRAC | UIF Mexico | COAF Brazil | goAML UAE</div>
+                    <div class="arch-layer-title">Layer 4 -- Banking Systems &amp; Global Data Sources</div>
+                    <div class="arch-layer-items">Core Banking (FIS / Fiserv / Jack Henry / Temenos) | OFAC SDN | UN SCSL | EU Consolidated | UK OFSI | AMLC Philippines | FINTRAC Canada | UIF Mexico | COAF Brazil | UIAF Colombia | goAML UAE | Credit Bureaus | Corporate Registries | Adverse Media Feeds | Document Management</div>
                 </div>
             </div>
         </div>
 
-        <h3>Three Protocol Primitives</h3>
+        <h4>Layer 1: The Host -- Your Banking Compliance Application</h4>
+        <p>
+            The Host is the banking compliance application itself -- the single point of governance. It creates and manages all MCP client connections, controls permissions, enforces security policies, and coordinates the AI engine's access to data. Critically, <strong>cross-server data flow is controlled exclusively by the Host</strong>. The KYC server cannot see what the transaction monitoring server is processing unless the Host explicitly orchestrates that data flow. This gives compliance officers and IT security teams complete control over what information flows where.
+        </p>
+
+        <h4>Layer 2: MCP Clients -- Isolated Security Boundaries</h4>
+        <p>
+            Each MCP Client maintains an <strong>isolated, one-to-one connection</strong> with a specific MCP Server. This isolation is critical for regulated banking:
+        </p>
+        <ul>
+            <li>The Sanctions Server cannot read data from the Customer Profile Server</li>
+            <li>The Transaction Monitoring Server cannot access the Document Management Server</li>
+            <li>Each connection is independently authenticated and scoped</li>
+            <li>Protocol negotiation during initialization declares exactly which capabilities each server supports -- no ambiguity</li>
+        </ul>
+
+        <h4>Layer 3: MCP Servers -- Standardized Wrappers for Every System</h4>
+        <p>
+            MCP Servers are lightweight programs that <strong>wrap existing banking systems</strong> and expose them through standardized interfaces. A server wrapping the core banking system allows the AI to look up customer information. A server wrapping the OFAC database enables real-time sanctions screening. Each server operates independently and can be updated, scaled, or replaced without affecting any other component.
+        </p>
+
+        <h4>Layer 4: Banking Systems -- Your Existing Infrastructure</h4>
+        <p>
+            MCP connects to <strong>systems you already have</strong>. No rip-and-replace required. Your core banking platform (FIS, Fiserv, Jack Henry, Temenos), your compliance databases, your case management tools, your document repositories -- each gets an MCP Server wrapper that translates between the standardized protocol and the system's native API.
+        </p>
+
+        <h3>The Three Protocol Primitives</h3>
+        <p>Every MCP Server exposes capabilities through three standardized primitives:</p>
+
         <div class="pillar-grid">
             <div class="pillar-card">
                 <h4>Tools</h4>
-                <p>Executable functions: <em>run_sanctions_check()</em>, <em>get_transaction_history()</em>, <em>file_sar()</em>, <em>submit_str_amlc()</em>, <em>check_ubo_registry()</em>. Every invocation logged for audit.</p>
+                <p><strong>Model-controlled functions</strong> the AI can invoke. The AI decides when and how to call them based on context.<br><br>
+                <em>Examples:</em><br>
+                run_sanctions_check(name, dob, nationality)<br>
+                get_transaction_history(account, date_range)<br>
+                file_sar(case_id, narrative)<br>
+                submit_str_amlc(customer_id, findings)<br>
+                check_ubo_registry(entity, jurisdiction)<br>
+                calculate_risk_score(customer_id)<br><br>
+                Every invocation is logged with timestamp, parameters, user identity, and results.</p>
             </div>
             <div class="pillar-card">
                 <h4>Resources</h4>
-                <p>Read-only data access: customer profiles, regulatory rule sets across jurisdictions, risk scoring models, FATF/APG/GAFILAT mutual evaluation data.</p>
+                <p><strong>Application-controlled data</strong> the server exposes -- the "read" side. Can be static (regulatory rule sets, configuration) or dynamic (real-time customer profiles, account balances).<br><br>
+                <em>Examples:</em><br>
+                customer://profiles/{customer_id}<br>
+                sanctions://ofac/sdn-list<br>
+                regulatory://fatf/high-risk-jurisdictions<br>
+                risk://models/transaction-scoring-v3<br>
+                registry://ubo/{jurisdiction}/{entity_id}<br><br>
+                The host application decides when and how resources are exposed to the AI.</p>
             </div>
             <div class="pillar-card">
                 <h4>Prompts</h4>
-                <p>Structured templates for SAR/STR/ROS narratives, EDD reports, and compliance recommendations -- formatted per jurisdiction (FinCEN, AMLC, UIF, COAF, FIU).</p>
+                <p><strong>Reusable templates</strong> that structure AI interactions -- ensuring consistent, audit-ready output regardless of which analyst or system triggers them.<br><br>
+                <em>Examples:</em><br>
+                SAR Narrative Template (FinCEN format)<br>
+                STR Report Template (AMLC Philippines)<br>
+                ROS Report Template (UIF Mexico)<br>
+                EDD Investigation Summary<br>
+                Risk Assessment Memo<br>
+                Sanctions Match Analysis<br><br>
+                Standardized formats ensure regulatory compliance and examiner readability.</p>
             </div>
         </div>
+
+        <h3>MCP Server Inventory for Banking Compliance</h3>
+        <p>
+            A complete Neural Intelligence deployment uses 8 specialized MCP Servers, each independently deployable and updatable:
+        </p>
+
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>MCP Server</th>
+                    <th>Function</th>
+                    <th>Connected Systems</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Core Banking</strong></td>
+                    <td>Customer lookup, account details, relationship history, linked accounts</td>
+                    <td>FIS, Fiserv, Jack Henry, Temenos, or any core banking API</td>
+                </tr>
+                <tr>
+                    <td><strong>Sanctions &amp; PEP</strong></td>
+                    <td>Real-time screening against all global sanctions lists; PEP database checks; entity resolution</td>
+                    <td>OFAC SDN, UN SCSL, EU Consolidated, UK OFSI, AMLC TFS, Dow Jones, World-Check</td>
+                </tr>
+                <tr>
+                    <td><strong>KYC / CDD</strong></td>
+                    <td>Identity verification, document authentication, risk-based CDD tier assignment, UBO verification</td>
+                    <td>Credit bureaus, PhilSys, national ID systems, corporate registries (SEC, Companies House, EU BORIS)</td>
+                </tr>
+                <tr>
+                    <td><strong>Transaction Monitoring</strong></td>
+                    <td>Real-time behavioral analytics, network graph analysis, typology detection, alert generation</td>
+                    <td>Payment rails (SWIFT, ACH, PIX, SEPA, InstaPay, FedNow), card processors</td>
+                </tr>
+                <tr>
+                    <td><strong>Case Management</strong></td>
+                    <td>Case creation, assignment, escalation, investigation workflow, evidence management</td>
+                    <td>Existing case management (Hummingbird, Unit21, Actimize) or internal systems</td>
+                </tr>
+                <tr>
+                    <td><strong>Regulatory Filing</strong></td>
+                    <td>SAR/STR/CTR/ROS preparation and e-filing per jurisdiction; deadline tracking</td>
+                    <td>FinCEN BSA E-Filing, AMLC portal, UIF, COAF, goAML, NCA SAR Online</td>
+                </tr>
+                <tr>
+                    <td><strong>Document Management</strong></td>
+                    <td>OCR processing, document authentication, retrieval, retention management</td>
+                    <td>SharePoint, DMS platforms, cloud storage, scanned document archives</td>
+                </tr>
+                <tr>
+                    <td><strong>Adverse Media</strong></td>
+                    <td>NLP-driven news scanning in 20+ languages; court records; regulatory actions</td>
+                    <td>News APIs, LexisNexis, ComplyAdvantage, public records, social media OSINT</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Data Flow: How a Compliance Decision Happens</h3>
+        <p>
+            When a wire transfer arrives for screening, the Neural Intelligence engine orchestrates the following through MCP -- simultaneously, in milliseconds:
+        </p>
+        <div class="process-flow">
+            <div class="process-step">
+                <div class="process-step-number">1</div>
+                <div class="process-step-title">Transaction Received</div>
+                <div class="process-step-desc">Transaction MCP Server receives wire transfer data from payment rail (SWIFT/ACH/PIX/SEPA)</div>
+            </div>
+            <div class="process-step">
+                <div class="process-step-number">2</div>
+                <div class="process-step-title">Sanctions Screen</div>
+                <div class="process-step-desc">Sanctions MCP Server checks originator + beneficiary against OFAC, UN, EU, AMLC, OFSI -- with AI entity resolution</div>
+            </div>
+            <div class="process-step">
+                <div class="process-step-number">3</div>
+                <div class="process-step-title">Context Enrichment</div>
+                <div class="process-step-desc">Core Banking + KYC MCP Servers provide customer profile, risk rating, transaction baseline, CDD status</div>
+            </div>
+            <div class="process-step">
+                <div class="process-step-number">4</div>
+                <div class="process-step-title">AI Reasoning</div>
+                <div class="process-step-desc">Neural Intelligence engine reasons across ALL data: Is this consistent with customer profile? Peer group norms? Known typologies?</div>
+            </div>
+            <div class="process-step">
+                <div class="process-step-number">5</div>
+                <div class="process-step-title">Decision + Audit</div>
+                <div class="process-step-desc">Clear / Alert / Block -- with full reasoning chain logged. If alert: Case MCP Server creates investigation; if SAR needed: Filing MCP Server prepares draft</div>
+            </div>
+        </div>
+
+        <h3>The N-to-M Problem -- Solved</h3>
+        <p>
+            Traditional integration requires custom connectors between each AI application and each backend system. With 5 AI applications and 10 backend systems, that is <strong>50 custom integrations</strong> to build, maintain, and secure. MCP reduces this to <strong>10 standardized servers</strong> that any application can use. When a backend API changes, only its MCP server needs updating -- all AI applications continue working without modification.
+        </p>
 
         <h3>Why MCP Matters for Global Banks</h3>
 
@@ -1044,21 +1195,49 @@
             <tbody>
                 <tr><td>Setup time per system</td><td class="legacy">3-6 weeks</td><td class="ai">Hours to days</td></tr>
                 <tr><td>Adding a new jurisdiction</td><td class="legacy">Rebuild integrations</td><td class="ai">Deploy one new MCP server</td></tr>
-                <tr><td>Authentication</td><td class="legacy">Custom per API</td><td class="ai">Standardized OAuth 2.1</td></tr>
-                <tr><td>Audit logging</td><td class="legacy">Must build per integration</td><td class="ai">Built into protocol</td></tr>
-                <tr><td>Vendor lock-in</td><td class="legacy">High -- proprietary formats</td><td class="ai">None -- open standard</td></tr>
+                <tr><td>Authentication</td><td class="legacy">Custom per API</td><td class="ai">Standardized OAuth 2.1 with PKCE</td></tr>
+                <tr><td>Audit logging</td><td class="legacy">Must build per integration</td><td class="ai">Built into protocol (every call logged)</td></tr>
+                <tr><td>Vendor lock-in</td><td class="legacy">High -- proprietary formats</td><td class="ai">None -- open standard (swap AI providers freely)</td></tr>
                 <tr><td>Multi-jurisdiction reporting</td><td class="legacy">Separate systems per country</td><td class="ai">Unified platform, jurisdiction-specific MCP servers</td></tr>
+                <tr><td>Backend API changes</td><td class="legacy">Update every connected application</td><td class="ai">Update one MCP server</td></tr>
+                <tr><td>Explainability for examiners</td><td class="legacy">Must reconstruct from logs</td><td class="ai">Structured reasoning chain per decision</td></tr>
             </tbody>
         </table>
 
-        <h3>Security Model</h3>
+        <h3>Transport &amp; Deployment</h3>
+        <p>
+            MCP supports two transport mechanisms, both relevant for banking:
+        </p>
         <ul>
-            <li><strong>OAuth 2.1 with PKCE:</strong> Tokens scoped per MCP server using Resource Indicators (RFC 8707) -- a sanctions server token cannot access the customer data server</li>
-            <li><strong>Data isolation:</strong> Servers cannot see into other servers; cross-server flow controlled by the host</li>
-            <li><strong>Immutable audit trails:</strong> Every tool invocation logged -- meets SOC 2, ISO 27001, BSP Circular 1085, OCC 2011-12, and EU AI Act requirements</li>
-            <li><strong>PII protection:</strong> Input/output filtering for GDPR, Philippine Data Privacy Act (RA 10173), Brazil's LGPD, and PCI-DSS compliance</li>
-            <li><strong>Read-only options:</strong> Servers can be configured so AI queries but never modifies production banking data</li>
+            <li><strong>Streamable HTTP (recommended for banking):</strong> MCP Servers operate as independent cloud services. Uses HTTP POST for client-to-server messages and Server-Sent Events (SSE) for streaming responses. Session management via <code>Mcp-Session-Id</code> headers ensures request continuity. Supports multiple simultaneous connections and connection resumability. This is the pattern for production banking deployments -- each MCP Server runs as a secure microservice behind your API gateway.</li>
+            <li><strong>stdio (for local/dev):</strong> Client launches the MCP Server as a subprocess; messages flow over stdin/stdout. Best for development, testing, and on-premise deployments where all components run on the same machine.</li>
         </ul>
+
+        <h3>Security Model -- Compliance-Grade by Design</h3>
+
+        <div class="pillar-grid">
+            <div class="pillar-card">
+                <h4>OAuth 2.1 + PKCE</h4>
+                <p>Mandatory for all clients. Tokens scoped per server using Resource Indicators (RFC 8707) -- a sanctions server token cannot access customer data. Incremental scope requests prevent over-permissioning.</p>
+            </div>
+            <div class="pillar-card">
+                <h4>Data Isolation</h4>
+                <p>Servers cannot read the full conversation. Servers cannot see into other servers. Cross-server flow controlled exclusively by the Host. Each connection maintains strict security boundaries at the protocol level.</p>
+            </div>
+            <div class="pillar-card">
+                <h4>Immutable Audit Trails</h4>
+                <p>Every tool invocation logged with: timestamp, user identity, tool parameters, execution results. Meets SOC 2, ISO 27001, BSP Circular 1085, OCC 2011-12, EU AI Act, and NIST AI RMF requirements.</p>
+            </div>
+            <div class="pillar-card">
+                <h4>PII Protection</h4>
+                <p>Input/output filtering redacts sensitive data before it reaches the AI engine. Supports GDPR (EU), Data Privacy Act RA 10173 (Philippines), LGPD (Brazil), PIPEDA (Canada), and PCI-DSS compliance.</p>
+            </div>
+        </div>
+
+        <div class="highlight-box">
+            <div class="highlight-title">MCP Gateways for Regulated Industries</div>
+            <p>A new category of "MCP Gateways" has emerged specifically for regulated industries, providing centralized policy enforcement, token validation, audit logging, and compliance monitoring across all MCP server connections. These gateways sit between the Host and the MCP Servers, adding an additional governance layer that banking compliance teams and examiners can monitor independently of the AI engine itself.</p>
+        </div>
     </div>
 
     <!-- ==================== SECTION 5: ACCOUNT OPENING ==================== -->
