@@ -1067,10 +1067,14 @@ async function printProjectsPDF() {
   const now = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
 
   // Fetch full detail + tasks for each project in parallel
-  const details = await Promise.all(listRes.data.map(async p => {
+  const detailsUnsorted = await Promise.all(listRes.data.map(async p => {
     const [det, tasksRes] = await Promise.all([api(`/projects/${p.id}`), api(`/tasks?project_id=${p.id}`)]);
     return { ...(det.success ? det.data : p), tasks: tasksRes.success ? tasksRes.data : [] };
   }));
+
+  // Sort by priority: critical > high > medium > low
+  const prioOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+  const details = detailsUnsorted.sort((a, b) => (prioOrder[a.priority] ?? 9) - (prioOrder[b.priority] ?? 9));
 
   const fmtD = d => d ? new Date(d).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '-';
   const esc = s => (s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
