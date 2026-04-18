@@ -1060,63 +1060,97 @@ async function renderProjects(container) {
     : '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted)">No projects yet.<br><br><button class="btn btn-primary" onclick="openProjectModal()">&#128203; Create Your First Project</button><br><span style="font-size:12px;margin-top:8px;display:block">or use the AI: "Start a new project called Website Redesign"</span></td></tr>';
 }
 
-// Print Projects as PDF
+// Print Projects as PDF — full detail for every project
 async function printProjectsPDF() {
-  const res = await api('/projects');
-  if (!res.success || !res.data.length) { alert('No projects to print.'); return; }
-  const projects = res.data;
+  const listRes = await api('/projects');
+  if (!listRes.success || !listRes.data.length) { alert('No projects to print.'); return; }
   const now = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
 
-  const rows = projects.map(p => {
-    const isOverdue = p.due_date && new Date(p.due_date) < new Date() && !['completed','cancelled'].includes(p.status);
-    return `
-      <tr>
-        <td style="padding:12px 10px;border-bottom:1px solid #ddd;vertical-align:top">
-          <strong style="font-size:14px">${p.name}</strong>
-          ${p.code ? '<br><span style="font-size:11px;color:#888">'+p.code+'</span>' : ''}
-        </td>
-        <td style="padding:12px 10px;border-bottom:1px solid #ddd;vertical-align:top;font-size:12px">${p.vertical?.name || '-'}</td>
-        <td style="padding:12px 10px;border-bottom:1px solid #ddd;vertical-align:top;font-size:12px;font-weight:600;color:${isOverdue?'#dc2626':p.status==='completed'?'#16a34a':'#333'}">
-          ${isOverdue ? 'OVERDUE' : p.status?.replace(/_/g,' ')}
-        </td>
-        <td style="padding:12px 10px;border-bottom:1px solid #ddd;vertical-align:top;font-size:12px">${p.priority}</td>
-        <td style="padding:12px 10px;border-bottom:1px solid #ddd;vertical-align:top;font-size:12px">${p.start_date ? new Date(p.start_date).toLocaleDateString() : '-'}</td>
-        <td style="padding:12px 10px;border-bottom:1px solid #ddd;vertical-align:top;font-size:12px">${p.due_date ? new Date(p.due_date).toLocaleDateString() : '-'}</td>
-        <td style="padding:12px 10px;border-bottom:1px solid #ddd;vertical-align:top;font-size:12px">${p.progress||0}%</td>
-      </tr>
-      ${p.description ? '<tr><td colspan="7" style="padding:6px 10px 16px;border-bottom:2px solid #ccc;font-size:12px;color:#555;line-height:1.5"><em>'+p.description+'</em></td></tr>' : ''}`;
-  }).join('');
+  // Fetch full detail + tasks for each project in parallel
+  const details = await Promise.all(listRes.data.map(async p => {
+    const [det, tasksRes] = await Promise.all([api(`/projects/${p.id}`), api(`/tasks?project_id=${p.id}`)]);
+    return { ...(det.success ? det.data : p), tasks: tasksRes.success ? tasksRes.data : [] };
+  }));
+
+  const fmtD = d => d ? new Date(d).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '-';
+  const esc = s => (s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
   const byStatus = {};
-  projects.forEach(p => { byStatus[p.status] = (byStatus[p.status]||0) + 1; });
+  details.forEach(p => { byStatus[p.status] = (byStatus[p.status]||0) + 1; });
   const summaryLine = Object.entries(byStatus).map(([s,c]) => c + ' ' + s.replace(/_/g,' ')).join(' | ');
+
+  const cards = details.map(p => {
+    const isOverdue = p.due_date && new Date(p.due_date) < new Date() && !['completed','cancelled'].includes(p.status);
+    const milestones = (p.milestones||[]).map(m => {
+      const mOver = m.due_date && new Date(m.due_date) < new Date() && m.status !== 'completed';
+      return `<li style="margin-bottom:4px;color:${m.status==='completed'?'#16a34a':mOver?'#dc2626':'#333'}">${esc(m.title)} <span style="color:#888">[${m.status}${m.due_date ? ' - '+fmtD(m.due_date):''}]</span></li>`;
+    }).join('');
+    const tasks = (p.tasks||[]).map(t => {
+      const tOver = t.due_date && new Date(t.due_date) < new Date() && t.status === 'pending';
+      return `<li style="margin-bottom:4px;color:${t.status==='completed'?'#16a34a':tOver?'#dc2626':'#333'}">${esc(t.title)} <span style="color:#888">[${t.status}${t.priority?' - '+t.priority:''}${t.due_date?' - '+fmtD(t.due_date):''}${t.assignee?' - '+t.assignee.first_name+' '+(t.assignee.last_name||''):''}]</span></li>`;
+    }).join('');
+    const contacts = (p.contacts||[]).map(c => `<li>${esc(c.first_name+' '+(c.last_name||''))}${c.ProjectContact?.role?' <span style="color:#888">('+c.ProjectContact.role+')</span>':''}</li>`).join('');
+    const updates = (p.updates||[]).slice(0,5).map(u => `<li style="margin-bottom:4px">${esc(u.content)} <span style="color:#888">- ${u.user_email||''} ${fmtD(u.created_at)}</span></li>`).join('');
+
+    return `
+      <div style="page-break-inside:avoid;border:1px solid #ddd;border-radius:8px;padding:20px;margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+          <div>
+            <h2 style="margin:0;font-size:18px">${esc(p.name)}</h2>
+            ${p.code ? '<span style="font-size:11px;color:#888">'+esc(p.code)+'</span>' : ''}
+          </div>
+          <div style="text-align:right;font-size:12px">
+            <span style="display:inline-block;padding:3px 10px;border-radius:12px;font-weight:600;font-size:11px;color:white;background:${isOverdue?'#dc2626':p.status==='completed'?'#16a34a':p.status==='active'||p.status==='in_progress'?'#2563eb':'#888'}">${isOverdue?'OVERDUE':p.status?.replace(/_/g,' ').toUpperCase()}</span>
+            <span style="display:inline-block;padding:3px 10px;border-radius:12px;font-weight:600;font-size:11px;margin-left:4px;color:white;background:${p.priority==='critical'?'#dc2626':p.priority==='high'?'#ea580c':p.priority==='medium'?'#2563eb':'#888'}">${p.priority?.toUpperCase()}</span>
+          </div>
+        </div>
+
+        <table style="width:100%;font-size:12px;margin-bottom:12px;border-collapse:collapse">
+          <tr>
+            <td style="padding:4px 0;color:#888;width:100px">Vertical:</td><td style="padding:4px 0">${esc(p.vertical?.name||'-')}</td>
+            <td style="padding:4px 0;color:#888;width:100px">Category:</td><td style="padding:4px 0">${esc(p.category||'-')}</td>
+          </tr>
+          <tr>
+            <td style="padding:4px 0;color:#888">Start:</td><td style="padding:4px 0">${fmtD(p.start_date)}</td>
+            <td style="padding:4px 0;color:#888">Due:</td><td style="padding:4px 0;font-weight:${isOverdue?'700':'400'};color:${isOverdue?'#dc2626':'#222'}">${fmtD(p.due_date)}</td>
+          </tr>
+          <tr>
+            <td style="padding:4px 0;color:#888">Progress:</td><td style="padding:4px 0">${p.progress||0}%</td>
+            <td style="padding:4px 0;color:#888">Lead:</td><td style="padding:4px 0">${p.lead ? esc(p.lead.first_name+' '+(p.lead.last_name||'')) : '-'}</td>
+          </tr>
+        </table>
+
+        ${p.description ? '<div style="margin-bottom:10px"><strong style="font-size:12px;color:#555">Description</strong><p style="font-size:12px;margin:4px 0;line-height:1.5;color:#333">'+esc(p.description)+'</p></div>' : ''}
+        ${p.next_step ? '<div style="margin-bottom:10px"><strong style="font-size:12px;color:#16a34a">Next Step</strong><p style="font-size:12px;margin:4px 0;color:#333">'+esc(p.next_step)+'</p></div>' : ''}
+        ${p.blockers ? '<div style="margin-bottom:10px"><strong style="font-size:12px;color:#dc2626">Blockers</strong><p style="font-size:12px;margin:4px 0;color:#333">'+esc(p.blockers)+'</p></div>' : ''}
+        ${p.notes ? '<div style="margin-bottom:10px"><strong style="font-size:12px;color:#555">Notes</strong><p style="font-size:12px;margin:4px 0;color:#333;white-space:pre-wrap">'+esc(p.notes)+'</p></div>' : ''}
+
+        ${milestones ? '<div style="margin-bottom:10px"><strong style="font-size:12px;color:#555">Milestones ('+p.milestones.length+')</strong><ul style="font-size:12px;margin:4px 0;padding-left:18px">'+milestones+'</ul></div>' : ''}
+        ${tasks ? '<div style="margin-bottom:10px"><strong style="font-size:12px;color:#555">Tasks ('+p.tasks.length+')</strong><ul style="font-size:12px;margin:4px 0;padding-left:18px">'+tasks+'</ul></div>' : ''}
+        ${contacts ? '<div style="margin-bottom:10px"><strong style="font-size:12px;color:#555">Linked Contacts</strong><ul style="font-size:12px;margin:4px 0;padding-left:18px">'+contacts+'</ul></div>' : ''}
+        ${updates ? '<div><strong style="font-size:12px;color:#555">Recent Updates</strong><ul style="font-size:12px;margin:4px 0;padding-left:18px">'+updates+'</ul></div>' : ''}
+      </div>`;
+  }).join('');
 
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Projects Report</title>
     <style>
-      @page { size: landscape; margin: 0.5in; }
+      @page { size: portrait; margin: 0.5in; }
       body { font-family: -apple-system,Helvetica,Arial,sans-serif; color:#222; margin:0; padding:24px; }
-      table { width:100%; border-collapse:collapse; }
-      h1 { font-size:20px; margin:0 0 4px; }
-      .meta { font-size:12px; color:#888; margin-bottom:16px; }
+      h1 { font-size:22px; margin:0 0 4px; }
+      .meta { font-size:12px; color:#888; margin-bottom:12px; }
       .summary { font-size:12px; color:#555; margin-bottom:20px; padding:10px 14px; background:#f5f5f5; border-radius:6px; }
-      th { text-align:left; padding:8px 10px; border-bottom:2px solid #333; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:#555; }
       @media print { body { padding:0; } }
     </style></head><body>
     <h1>Digit2Ai Projects Report</h1>
-    <p class="meta">Generated: ${now} | ${projects.length} project${projects.length===1?'':'s'}</p>
+    <p class="meta">Generated: ${now} | ${details.length} project${details.length===1?'':'s'}</p>
     <div class="summary">${summaryLine}</div>
-    <table>
-      <thead><tr>
-        <th>Project</th><th>Vertical</th><th>Status</th><th>Priority</th><th>Start</th><th>Due</th><th>Progress</th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
+    ${cards}
   </body></html>`;
 
   const w = window.open('', '_blank');
   w.document.write(html);
   w.document.close();
-  setTimeout(() => w.print(), 400);
+  setTimeout(() => w.print(), 500);
 }
 
 // =====================================================
