@@ -22,6 +22,9 @@ export default function SponsorDashboard() {
 
   return (
     <div className="p-8">
+      <div className="flex justify-center mb-8">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69dfd39cfcac588c6b2329f9.png" alt="Visionarium" className="h-32" />
+      </div>
       <h1 className="text-2xl font-bold text-white mb-8">Sponsor Dashboard</h1>
 
       {sponsor && (
