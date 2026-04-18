@@ -149,9 +149,9 @@ export default function Layout({ children, user, onLogout }) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          {/* Mobile logo center */}
-          <Link to="/dashboard" className="lg:hidden flex items-center gap-2">
-            <img src={mskLogo} alt="ImagingMind" className="h-24 w-auto object-contain" />
+          {/* Logo center */}
+          <Link to="/dashboard" className="flex items-center gap-2">
+            <img src={mskLogo} alt="ImagingMind" className="h-16 lg:h-20 w-auto object-contain" />
           </Link>
           <NotificationBell />
         </div>
