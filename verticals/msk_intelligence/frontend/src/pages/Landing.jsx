@@ -131,6 +131,350 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* The Problem */}
+      <section className="bg-dark-900/50 border-y border-dark-800">
+        <div className="max-w-7xl mx-auto px-4 lg:px-6 py-16 lg:py-24">
+          <div className="text-center mb-12">
+            <span className="text-msk-400 font-mono text-sm font-bold tracking-wider">THE PROBLEM</span>
+            <h3 className="text-2xl sm:text-3xl font-bold text-white mt-3">Radiology Bottleneck Is Costing You</h3>
+          </div>
+          <div className="grid sm:grid-cols-3 gap-6 lg:gap-8 mb-10">
+            {[
+              { value: '36h', label: 'Average imaging report turnaround at community hospitals' },
+              { value: '30%', label: 'Of radiologists report burnout due to volume overload' },
+              { value: '12%', label: 'Of incidental findings missed in high-volume reading sessions' }
+            ].map((stat, i) => (
+              <div key={i} className="card text-center">
+                <div className="text-4xl lg:text-5xl font-bold text-msk-400 mb-3">{stat.value}</div>
+                <p className="text-dark-400 text-sm leading-relaxed">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-dark-300 text-center max-w-2xl mx-auto leading-relaxed">
+            Every hour of delay increases patient anxiety, postpones treatment, and reduces your practice's throughput.
+          </p>
+        </div>
+      </section>
+
+      {/* Advanced Modalities — CT & MRI */}
+      <section className="max-w-7xl mx-auto px-4 lg:px-6 py-16 lg:py-24">
+        <div className="text-center mb-12">
+          <span className="text-msk-400 font-mono text-sm font-bold tracking-wider">ADVANCED IMAGING</span>
+          <h3 className="text-2xl sm:text-3xl font-bold text-white mt-3">CT & MRI: Slice-by-Slice AI</h3>
+        </div>
+        <div className="grid md:grid-cols-2 gap-6 lg:gap-8 mb-8">
+          <div className="card group hover:border-dark-500 transition-all duration-300">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm mb-4 shadow-lg">CT</div>
+            <h4 className="text-lg font-bold text-white mb-4">CT Scan</h4>
+            <div className="space-y-3">
+              {[
+                { label: 'Slices analyzed', value: '20-30 key slices' },
+                { label: 'Analysis time', value: '<45 seconds' },
+                { label: 'Slice selection', value: 'AI-optimized' },
+                { label: 'Output', value: 'Structured findings + ICD-10' },
+                { label: 'Use cases', value: 'Trauma, tumors, fractures' }
+              ].map((row, i) => (
+                <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-dark-800/50 border border-dark-700">
+                  <span className="text-dark-400 text-sm">{row.label}</span>
+                  <span className="text-white text-sm font-medium">{row.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="card group hover:border-dark-500 transition-all duration-300">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center text-white font-bold text-sm mb-4 shadow-lg">MRI</div>
+            <h4 className="text-lg font-bold text-white mb-4">MRI</h4>
+            <div className="space-y-3">
+              {[
+                { label: 'Slices analyzed', value: '20-30 key slices' },
+                { label: 'Analysis time', value: '<45 seconds' },
+                { label: 'Sequence support', value: 'T1, T2, FLAIR, DWI' },
+                { label: 'Output', value: 'Structured findings + ICD-10' },
+                { label: 'Use cases', value: 'ACL tears, meniscus, spine' }
+              ].map((row, i) => (
+                <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-dark-800/50 border border-dark-700">
+                  <span className="text-dark-400 text-sm">{row.label}</span>
+                  <span className="text-white text-sm font-medium">{row.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <p className="text-dark-400 text-center text-sm">DICOM and standard image formats supported. AI selects diagnostically relevant slices automatically.</p>
+      </section>
+
+      {/* Specialized Modalities */}
+      <section className="bg-dark-900/50 border-y border-dark-800">
+        <div className="max-w-7xl mx-auto px-4 lg:px-6 py-16 lg:py-24">
+          <div className="text-center mb-12">
+            <span className="text-msk-400 font-mono text-sm font-bold tracking-wider">SPECIALIZED MODALITIES</span>
+            <h3 className="text-2xl sm:text-3xl font-bold text-white mt-3">Mammography. DEXA. Dental.</h3>
+          </div>
+          <div className="grid sm:grid-cols-3 gap-6 lg:gap-8 mb-8">
+            {[
+              {
+                title: 'Mammography',
+                color: 'from-pink-500 to-pink-600',
+                rows: [
+                  { label: 'Views', value: 'CC + MLO (4 standard)' },
+                  { label: 'AI output', value: 'BI-RADS scoring' },
+                  { label: 'Detects', value: 'Masses, calcifications, asymmetry' },
+                  { label: 'Time', value: '<30 seconds' }
+                ]
+              },
+              {
+                title: 'DEXA Scan',
+                color: 'from-amber-500 to-amber-600',
+                rows: [
+                  { label: 'Regions', value: 'Spine, hip, forearm' },
+                  { label: 'AI output', value: 'T-score, Z-score, BMD' },
+                  { label: 'Detects', value: 'Osteoporosis, osteopenia risk' },
+                  { label: 'Time', value: '<30 seconds' }
+                ]
+              },
+              {
+                title: 'Dental X-Ray',
+                color: 'from-teal-500 to-teal-600',
+                rows: [
+                  { label: 'Types', value: 'Panoramic, periapical, bitewing' },
+                  { label: 'AI output', value: 'Tooth-by-tooth findings' },
+                  { label: 'Detects', value: 'Caries, fractures, periapical lesions' },
+                  { label: 'Time', value: '<30 seconds' }
+                ]
+              }
+            ].map((mod, i) => (
+              <div key={i} className="card group hover:border-dark-500 transition-all duration-300">
+                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${mod.color} flex items-center justify-center text-white font-bold text-xs mb-4 shadow-lg`}>{String(i + 4).padStart(2, '0')}</div>
+                <h4 className="text-lg font-bold text-white mb-4">{mod.title}</h4>
+                <div className="space-y-3">
+                  {mod.rows.map((row, j) => (
+                    <div key={j} className="flex items-center justify-between p-3 rounded-lg bg-dark-800/50 border border-dark-700">
+                      <span className="text-dark-400 text-sm">{row.label}</span>
+                      <span className="text-white text-sm font-medium">{row.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-dark-400 text-center text-sm">All modalities generate structured findings, clinical impressions, and ICD-10 codes.</p>
+        </div>
+      </section>
+
+      {/* Real Case Study */}
+      <section className="max-w-7xl mx-auto px-4 lg:px-6 py-16 lg:py-24">
+        <div className="text-center mb-12">
+          <span className="text-msk-400 font-mono text-sm font-bold tracking-wider">REAL CASE STUDY</span>
+          <h3 className="text-2xl sm:text-3xl font-bold text-white mt-3">From Upload to Diagnosis in 7 Minutes</h3>
+        </div>
+        <div className="grid lg:grid-cols-2 gap-6 lg:gap-8 mb-8">
+          {/* Case Details */}
+          <div className="card">
+            <h4 className="text-sm font-bold text-msk-400 uppercase tracking-wider mb-4">Case Details</h4>
+            <div className="space-y-3">
+              {[
+                { label: 'Case', value: '#MSK-20260413-HL5J' },
+                { label: 'Patient', value: 'Unai Arozena' },
+                { label: 'Injury', value: 'Crush trauma -- right index finger' },
+                { label: 'Modalities', value: 'X-Ray (AP + Lateral) + CT' }
+              ].map((row, i) => (
+                <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-dark-800/50 border border-dark-700">
+                  <span className="text-dark-400 text-sm">{row.label}</span>
+                  <span className="text-white text-sm font-medium">{row.value}</span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 p-4 rounded-lg bg-dark-800/30 border border-dark-700/50">
+              <p className="text-dark-400 text-xs uppercase tracking-wider mb-2">Chief Complaint</p>
+              <p className="text-dark-300 text-sm italic leading-relaxed">"Was cutting a tree and the tree suddenly fell, crushing the outer side of the index finger on my right hand."</p>
+            </div>
+          </div>
+          {/* AI Findings */}
+          <div className="card">
+            <h4 className="text-sm font-bold text-msk-400 uppercase tracking-wider mb-4">AI Findings</h4>
+            <div className="p-4 rounded-lg bg-dark-800/50 border border-dark-700 mb-4">
+              <p className="text-white text-sm leading-relaxed">Complete displaced transverse fracture of the proximal phalanx with significant dorsal angulation and shortening</p>
+            </div>
+            <div className="space-y-3 mb-4">
+              {[
+                { label: 'Confidence', value: 'HIGH', valueClass: 'text-green-400' },
+                { label: 'AI Analysis Time', value: '11 seconds per image' },
+                { label: 'Abnormalities', value: 'Comminuted fracture, dorsal angulation, fragment displacement, soft tissue swelling' }
+              ].map((row, i) => (
+                <div key={i} className="flex items-start justify-between p-3 rounded-lg bg-dark-800/50 border border-dark-700 gap-4">
+                  <span className="text-dark-400 text-sm flex-shrink-0">{row.label}</span>
+                  <span className={`text-sm font-medium text-right ${row.valueClass || 'text-white'}`}>{row.value}</span>
+                </div>
+              ))}
+            </div>
+            <h4 className="text-sm font-bold text-msk-400 uppercase tracking-wider mb-3">ICD-10 Codes</h4>
+            <div className="flex flex-wrap gap-2">
+              {[
+                'S62.601A -- Fracture of proximal phalanx, right index finger',
+                'S62.90XA -- Unspecified fracture of wrist and hand',
+                'W20.8XXA -- Struck by other falling object'
+              ].map((code, i) => (
+                <span key={i} className="badge bg-msk-600/10 text-msk-400 border border-msk-600/20 px-3 py-1.5 text-xs">{code}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* AI Copilot Report */}
+      <section className="bg-dark-900/50 border-y border-dark-800">
+        <div className="max-w-7xl mx-auto px-4 lg:px-6 py-16 lg:py-24">
+          <div className="text-center mb-12">
+            <span className="text-msk-400 font-mono text-sm font-bold tracking-wider">AI COPILOT</span>
+            <h3 className="text-2xl sm:text-3xl font-bold text-white mt-3">From Analysis to Final Report</h3>
+            <p className="text-dark-400 mt-4 max-w-2xl mx-auto">The AI Diagnostic Copilot generates a full structured report draft using all image analyses, patient history, and clinical context. Radiologists review, edit, and finalize.</p>
+          </div>
+          <div className="max-w-3xl mx-auto">
+            <div className="card border-dark-600 bg-dark-900/80">
+              <div className="border-b border-dark-700 pb-4 mb-4 flex items-center gap-3">
+                <img src={mskLogo} alt="ImagingMind" className="h-8 w-auto object-contain opacity-70" />
+                <div>
+                  <p className="text-white text-sm font-bold">AI Diagnostic Report -- Draft</p>
+                  <p className="text-dark-500 text-xs">Generated by ImagingMind AI Copilot</p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-dark-400 text-xs uppercase tracking-wider mb-1">Clinical Summary</p>
+                  <p className="text-dark-300 text-sm leading-relaxed">Patient Unai Arozena presents with traumatic crush injury... surgical intervention likely required.</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-3 rounded-lg bg-dark-800/50 border border-dark-700">
+                    <p className="text-dark-400 text-xs uppercase tracking-wider mb-1">Severity</p>
+                    <p className="text-red-400 text-sm font-bold">Severe</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-dark-800/50 border border-dark-700">
+                    <p className="text-dark-400 text-xs uppercase tracking-wider mb-1">Recovery Timeline</p>
+                    <p className="text-white text-sm font-bold">8-12 weeks</p>
+                  </div>
+                </div>
+                <div className="p-3 rounded-lg bg-dark-800/50 border border-dark-700">
+                  <p className="text-dark-400 text-xs uppercase tracking-wider mb-1">Recommendation</p>
+                  <p className="text-white text-sm leading-relaxed">Urgent orthopedic referral for possible ORIF</p>
+                </div>
+              </div>
+            </div>
+            <p className="text-dark-400 text-center text-sm mt-6">One-click PDF export with full letterhead, ICD-10 codes, FHIR R4 compliant, EMR-ready.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Confidence Scoring */}
+      <section className="max-w-7xl mx-auto px-4 lg:px-6 py-16 lg:py-24">
+        <div className="text-center mb-12">
+          <span className="text-msk-400 font-mono text-sm font-bold tracking-wider">AI CONFIDENCE</span>
+          <h3 className="text-2xl sm:text-3xl font-bold text-white mt-3">AI Knows When It's Certain</h3>
+        </div>
+        <div className="grid sm:grid-cols-3 gap-6 lg:gap-8 mb-8">
+          <div className="card border-green-500/30 hover:border-green-500/50 transition-all duration-300">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center mb-4 shadow-lg">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+            </div>
+            <h4 className="text-lg font-bold text-green-400 mb-2">HIGH</h4>
+            <p className="text-dark-300 text-sm mb-2">Clear findings, diagnostic-quality image</p>
+            <p className="text-dark-400 text-sm">Proceed with confidence</p>
+          </div>
+          <div className="card border-amber-500/30 hover:border-amber-500/50 transition-all duration-300">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center mb-4 shadow-lg">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </div>
+            <h4 className="text-lg font-bold text-amber-400 mb-2">MODERATE</h4>
+            <p className="text-dark-300 text-sm mb-2">Borderline quality or subtle findings</p>
+            <p className="text-dark-400 text-sm">Radiologist review recommended</p>
+          </div>
+          <div className="card border-red-500/30 hover:border-red-500/50 transition-all duration-300">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center mb-4 shadow-lg">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </div>
+            <h4 className="text-lg font-bold text-red-400 mb-2">LOW</h4>
+            <p className="text-dark-300 text-sm mb-2">Poor quality or ambiguous anatomy</p>
+            <p className="text-dark-400 text-sm">Additional views recommended</p>
+          </div>
+        </div>
+        <p className="text-dark-400 text-center text-sm max-w-2xl mx-auto">Confidence scoring helps prioritize your worklist -- high-confidence cases route directly, freeing you for complex reads.</p>
+      </section>
+
+      {/* ROI Calculator */}
+      <section className="bg-dark-900/50 border-y border-dark-800">
+        <div className="max-w-7xl mx-auto px-4 lg:px-6 py-16 lg:py-24">
+          <div className="text-center mb-12">
+            <span className="text-msk-400 font-mono text-sm font-bold tracking-wider">ROI</span>
+            <h3 className="text-2xl sm:text-3xl font-bold text-white mt-3">What ImagingMind Saves Your Practice</h3>
+          </div>
+          <div className="max-w-3xl mx-auto">
+            {/* Comparison Table */}
+            <div className="card mb-8">
+              <div className="grid grid-cols-3 gap-0">
+                <div className="p-3 border-b border-dark-700" />
+                <div className="p-3 border-b border-l border-dark-700 text-center">
+                  <span className="text-dark-400 text-sm font-bold">Without</span>
+                </div>
+                <div className="p-3 border-b border-l border-dark-700 text-center">
+                  <span className="text-msk-400 text-sm font-bold">With ImagingMind</span>
+                </div>
+                {[
+                  { metric: 'Studies/day', without: '40', withIM: '80+' },
+                  { metric: 'Time per study', without: '45 min', withIM: '8 min' },
+                  { metric: 'Report turnaround', without: '36 hours', withIM: '7 minutes' },
+                  { metric: 'Missed findings', without: '~12%', withIM: '~1%' }
+                ].map((row, i) => (
+                  <React.Fragment key={i}>
+                    <div className="p-3 border-b border-dark-700/50">
+                      <span className="text-dark-300 text-sm">{row.metric}</span>
+                    </div>
+                    <div className="p-3 border-b border-l border-dark-700/50 text-center">
+                      <span className="text-dark-400 text-sm">{row.without}</span>
+                    </div>
+                    <div className="p-3 border-b border-l border-dark-700/50 text-center">
+                      <span className="text-white text-sm font-bold">{row.withIM}</span>
+                    </div>
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+            {/* Revenue Recovery */}
+            <div className="card border-msk-500/20">
+              <h4 className="text-sm font-bold text-msk-400 uppercase tracking-wider mb-4">Revenue Recovery Calculation</h4>
+              <div className="space-y-2 font-mono text-sm">
+                <div className="flex justify-between p-2 rounded bg-dark-800/50">
+                  <span className="text-dark-400">+40 additional studies/day</span>
+                  <span className="text-dark-300">40</span>
+                </div>
+                <div className="flex justify-between p-2 rounded bg-dark-800/50">
+                  <span className="text-dark-400">x 250 working days/year</span>
+                  <span className="text-dark-300">250</span>
+                </div>
+                <div className="flex justify-between p-2 rounded bg-dark-800/30 border border-dark-700">
+                  <span className="text-dark-300">= Extra studies/year</span>
+                  <span className="text-white font-bold">10,000</span>
+                </div>
+                <div className="flex justify-between p-2 rounded bg-dark-800/50">
+                  <span className="text-dark-400">x $30 avg professional fee</span>
+                  <span className="text-dark-300">$30</span>
+                </div>
+                <div className="flex justify-between p-2 rounded bg-dark-800/30 border border-dark-700">
+                  <span className="text-dark-300">= Gross revenue</span>
+                  <span className="text-white font-bold">$300,000</span>
+                </div>
+                <div className="flex justify-between p-2 rounded bg-dark-800/50">
+                  <span className="text-dark-400">x 75% net billable</span>
+                  <span className="text-dark-300">75%</span>
+                </div>
+                <div className="flex justify-between p-3 rounded-lg bg-msk-600/10 border border-msk-500/30 mt-2">
+                  <span className="text-msk-400 font-bold">= Net revenue recovery / radiologist / year</span>
+                  <span className="text-msk-400 font-bold text-lg">$225,000+</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Pricing — Single Plan */}
       <section className="bg-dark-900/50 border-y border-dark-800">
         <div className="max-w-7xl mx-auto px-4 lg:px-6 py-16 lg:py-24">
