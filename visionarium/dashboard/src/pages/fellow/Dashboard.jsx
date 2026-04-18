@@ -31,8 +31,10 @@ export default function FellowDashboard() {
   if (isCommunity) {
     return (
       <div className="p-8">
-        <div className="flex justify-center mb-8">
-          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69dfd39cfcac588c6b2329f9.png" alt="Visionarium" className="h-32" />
+        <div className="flex flex-col items-center mb-8">
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69dfd39cfcac588c6b2329f9.png" alt="Visionarium" className="h-32 mb-4" />
+          <elevenlabs-convai agent-id="agent_3301kp969e5tfcmb8jk2bam3exqa"></elevenlabs-convai>
+          <p className="text-teal-neon text-xs mt-2 tracking-wider uppercase">Lina -- AI Coach -- 24/7 Bilingual</p>
         </div>
         <h1 className="text-2xl font-bold text-white mb-4">Welcome, {user?.first_name}!</h1>
         <p className="text-white/60 mb-8">You are a member of the Visionarium Open Community. Explore events, earn badges, and apply for the Fellowship when applications open.</p>
@@ -108,20 +110,16 @@ export default function FellowDashboard() {
           ))}
         </div>
 
-        {/* Lina AI Coach */}
-        <h2 className="text-lg font-bold text-white mb-4">Lina -- Your AI Coach</h2>
-        <div className="glass-card mb-4">
-          <p className="text-white/60 text-sm mb-4">Talk to Lina, your bilingual AI mentor. She can help with goal setting, interview practice, technical questions, and more -- available 24/7 in English and Spanish.</p>
-          <elevenlabs-convai agent-id="agent_3301kp969e5tfcmb8jk2bam3exqa"></elevenlabs-convai>
-        </div>
       </div>
     );
   }
 
   return (
     <div className="p-8">
-      <div className="flex justify-center mb-8">
-        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69dfd39cfcac588c6b2329f9.png" alt="Visionarium" className="h-32" />
+      <div className="flex flex-col items-center mb-8">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69dfd39cfcac588c6b2329f9.png" alt="Visionarium" className="h-32 mb-4" />
+        <elevenlabs-convai agent-id="agent_3301kp969e5tfcmb8jk2bam3exqa"></elevenlabs-convai>
+        <p className="text-teal-neon text-xs mt-2 tracking-wider uppercase">Lina -- AI Coach -- 24/7 Bilingual</p>
       </div>
       <h1 className="text-2xl font-bold text-white mb-8">Fellow Dashboard</h1>
 
@@ -189,12 +187,6 @@ export default function FellowDashboard() {
         </div>
       )}
 
-      {/* Lina AI Coach */}
-      <h2 className="text-lg font-bold text-white mb-4">Lina -- Your AI Coach</h2>
-      <div className="glass-card">
-        <p className="text-white/60 text-sm mb-4">Talk to Lina, your bilingual AI mentor. She can help with goal setting, interview practice, technical questions, weekly reflections, and more -- available 24/7 in English and Spanish.</p>
-        <elevenlabs-convai agent-id="agent_3301kp969e5tfcmb8jk2bam3exqa"></elevenlabs-convai>
-      </div>
     </div>
   );
 }
