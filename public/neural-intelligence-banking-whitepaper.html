@@ -1,0 +1,1728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Intelligence for Banking Compliance | White Paper</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap');
+
+        :root {
+            --navy: #0a1628;
+            --navy-light: #132040;
+            --navy-mid: #1a2d55;
+            --gold: #c8a45e;
+            --gold-light: #dfc07f;
+            --gold-dark: #a88a3e;
+            --white: #ffffff;
+            --gray-100: #f7f8fa;
+            --gray-200: #e8ecf2;
+            --gray-300: #c5cdd8;
+            --gray-400: #8a96a8;
+            --gray-500: #5a6577;
+            --blue-accent: #3a7bd5;
+            --green-accent: #2ecc71;
+            --red-accent: #e74c3c;
+            --orange-accent: #e67e22;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--white);
+            color: var(--navy);
+            line-height: 1.7;
+            font-size: 16px;
+        }
+
+        /* ==================== COVER PAGE ==================== */
+        .cover-page {
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 50%, #1e3a6e 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 60px 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cover-page::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(ellipse at 20% 50%, rgba(200, 164, 94, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(58, 123, 213, 0.06) 0%, transparent 40%),
+                radial-gradient(ellipse at 60% 80%, rgba(200, 164, 94, 0.05) 0%, transparent 40%);
+        }
+
+        .cover-page::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c8a45e' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.5;
+        }
+
+        .cover-content {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+        }
+
+        .cover-badge {
+            display: inline-block;
+            padding: 8px 24px;
+            border: 1px solid var(--gold);
+            border-radius: 30px;
+            color: var(--gold);
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 40px;
+        }
+
+        .cover-title {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 56px;
+            font-weight: 800;
+            color: var(--white);
+            line-height: 1.15;
+            margin-bottom: 24px;
+        }
+
+        .cover-title .gold {
+            color: var(--gold);
+        }
+
+        .cover-subtitle {
+            font-size: 22px;
+            color: var(--gray-300);
+            font-weight: 300;
+            max-width: 700px;
+            margin: 0 auto 50px;
+            line-height: 1.6;
+        }
+
+        .cover-divider {
+            width: 80px;
+            height: 2px;
+            background: var(--gold);
+            margin: 0 auto 40px;
+        }
+
+        .cover-meta {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+
+        .cover-meta-item {
+            text-align: center;
+        }
+
+        .cover-meta-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--gold);
+            margin-bottom: 6px;
+        }
+
+        .cover-meta-value {
+            font-size: 15px;
+            color: var(--gray-200);
+            font-weight: 400;
+        }
+
+        /* ==================== NAVIGATION / TOC ==================== */
+        .toc-section {
+            background: var(--gray-100);
+            padding: 80px 40px;
+        }
+
+        .toc-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .toc-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .toc-header h2 {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 36px;
+            color: var(--navy);
+            margin-bottom: 10px;
+        }
+
+        .toc-list {
+            list-style: none;
+        }
+
+        .toc-list li {
+            display: flex;
+            align-items: baseline;
+            padding: 14px 0;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .toc-number {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--gold);
+            min-width: 50px;
+        }
+
+        .toc-text {
+            font-size: 17px;
+            color: var(--navy);
+            font-weight: 500;
+        }
+
+        .toc-text a {
+            color: var(--navy);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .toc-text a:hover {
+            color: var(--gold-dark);
+        }
+
+        .toc-dots {
+            flex: 1;
+            border-bottom: 1px dotted var(--gray-300);
+            margin: 0 12px;
+            min-width: 40px;
+        }
+
+        .toc-page {
+            font-size: 14px;
+            color: var(--gray-400);
+            font-weight: 500;
+        }
+
+        /* ==================== MAIN CONTENT ==================== */
+        .content-wrapper {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 80px 40px;
+        }
+
+        .section {
+            margin-bottom: 70px;
+            page-break-inside: avoid;
+        }
+
+        .section-number {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--gold);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .section h2 {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 34px;
+            color: var(--navy);
+            line-height: 1.25;
+            margin-bottom: 24px;
+        }
+
+        .section h3 {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--navy);
+            margin-top: 40px;
+            margin-bottom: 16px;
+        }
+
+        .section h4 {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--navy-mid);
+            margin-top: 28px;
+            margin-bottom: 12px;
+        }
+
+        .section p {
+            margin-bottom: 18px;
+            color: var(--gray-500);
+            font-size: 16px;
+        }
+
+        .section ul, .section ol {
+            margin: 0 0 20px 24px;
+            color: var(--gray-500);
+        }
+
+        .section li {
+            margin-bottom: 10px;
+        }
+
+        .section strong {
+            color: var(--navy);
+            font-weight: 600;
+        }
+
+        /* ==================== EXECUTIVE SUMMARY BANNER ==================== */
+        .exec-summary {
+            background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%);
+            padding: 80px 40px;
+            color: var(--white);
+        }
+
+        .exec-summary-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        .exec-summary .section-number {
+            color: var(--gold);
+        }
+
+        .exec-summary h2 {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 34px;
+            color: var(--white);
+            margin-bottom: 24px;
+        }
+
+        .exec-summary p {
+            color: var(--gray-200);
+            font-size: 17px;
+            line-height: 1.8;
+            margin-bottom: 18px;
+        }
+
+        .exec-summary strong {
+            color: var(--gold-light);
+        }
+
+        /* ==================== STAT BOXES ==================== */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .stat-box {
+            background: var(--gray-100);
+            border-radius: 12px;
+            padding: 28px 24px;
+            text-align: center;
+            border: 1px solid var(--gray-200);
+        }
+
+        .exec-summary .stat-box {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(200, 164, 94, 0.2);
+        }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: 800;
+            color: var(--gold);
+            line-height: 1.1;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--gray-400);
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .exec-summary .stat-label {
+            color: var(--gray-300);
+        }
+
+        /* ==================== HIGHLIGHT BOX ==================== */
+        .highlight-box {
+            background: linear-gradient(135deg, #f8f5ef 0%, #faf7f0 100%);
+            border-left: 4px solid var(--gold);
+            border-radius: 0 12px 12px 0;
+            padding: 28px 32px;
+            margin: 30px 0;
+        }
+
+        .highlight-box p {
+            color: var(--navy);
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 0;
+        }
+
+        .highlight-box .highlight-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--gold-dark);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 10px;
+        }
+
+        /* ==================== INFO BOX ==================== */
+        .info-box {
+            background: #f0f4fa;
+            border: 1px solid #d0daea;
+            border-radius: 12px;
+            padding: 28px 32px;
+            margin: 30px 0;
+        }
+
+        .info-box .info-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--blue-accent);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 10px;
+        }
+
+        .info-box p, .info-box li {
+            color: var(--navy);
+            font-size: 15px;
+        }
+
+        /* ==================== COMPARISON TABLE ==================== */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 30px 0;
+            font-size: 15px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        .comparison-table thead th {
+            background: var(--navy);
+            color: var(--white);
+            padding: 16px 20px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+        }
+
+        .comparison-table thead th:first-child {
+            min-width: 200px;
+        }
+
+        .comparison-table tbody td {
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--gray-200);
+            color: var(--gray-500);
+        }
+
+        .comparison-table tbody tr:nth-child(even) {
+            background: var(--gray-100);
+        }
+
+        .comparison-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table .legacy {
+            color: var(--red-accent);
+            font-weight: 600;
+        }
+
+        .comparison-table .ai {
+            color: var(--green-accent);
+            font-weight: 600;
+        }
+
+        /* ==================== ARCHITECTURE DIAGRAM ==================== */
+        .arch-diagram {
+            background: var(--navy);
+            border-radius: 16px;
+            padding: 40px;
+            margin: 30px 0;
+            color: var(--white);
+            overflow-x: auto;
+        }
+
+        .arch-diagram .diagram-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--gold);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .arch-layers {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .arch-layer {
+            border-radius: 10px;
+            padding: 18px 24px;
+            text-align: center;
+        }
+
+        .arch-layer.ai-layer {
+            background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold) 100%);
+            color: var(--navy);
+        }
+
+        .arch-layer.mcp-layer {
+            background: rgba(58, 123, 213, 0.2);
+            border: 1px solid rgba(58, 123, 213, 0.4);
+        }
+
+        .arch-layer.server-layer {
+            background: rgba(200, 164, 94, 0.1);
+            border: 1px solid rgba(200, 164, 94, 0.3);
+        }
+
+        .arch-layer.data-layer {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .arch-layer-title {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 6px;
+        }
+
+        .arch-layer-items {
+            font-size: 14px;
+            opacity: 0.85;
+        }
+
+        .arch-arrow {
+            text-align: center;
+            color: var(--gold);
+            font-size: 20px;
+            line-height: 1;
+        }
+
+        /* ==================== PROCESS FLOW ==================== */
+        .process-flow {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin: 30px 0;
+        }
+
+        .process-step {
+            background: var(--white);
+            border: 2px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 24px 18px;
+            text-align: center;
+            position: relative;
+        }
+
+        .process-step-number {
+            width: 32px;
+            height: 32px;
+            background: var(--gold);
+            color: var(--navy);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+
+        .process-step-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--navy);
+            margin-bottom: 6px;
+        }
+
+        .process-step-desc {
+            font-size: 13px;
+            color: var(--gray-400);
+            line-height: 1.5;
+        }
+
+        /* ==================== PILLAR CARDS ==================== */
+        .pillar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .pillar-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 14px;
+            padding: 30px 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .pillar-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .pillar-icon {
+            font-size: 28px;
+            margin-bottom: 16px;
+        }
+
+        .pillar-card h4 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--navy);
+            margin-bottom: 10px;
+            margin-top: 0;
+        }
+
+        .pillar-card p {
+            font-size: 14px;
+            color: var(--gray-400);
+            margin-bottom: 0;
+            line-height: 1.6;
+        }
+
+        /* ==================== ROI SECTION ==================== */
+        .roi-banner {
+            background: linear-gradient(135deg, var(--navy) 0%, #1e3a6e 100%);
+            border-radius: 16px;
+            padding: 50px 40px;
+            margin: 30px 0;
+            color: var(--white);
+        }
+
+        .roi-banner h3 {
+            color: var(--gold);
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 28px;
+            margin-bottom: 30px;
+            text-align: center;
+            margin-top: 0;
+        }
+
+        .roi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+        }
+
+        .roi-item {
+            text-align: center;
+        }
+
+        .roi-value {
+            font-size: 42px;
+            font-weight: 800;
+            color: var(--gold);
+            line-height: 1.1;
+        }
+
+        .roi-desc {
+            font-size: 14px;
+            color: var(--gray-300);
+            margin-top: 8px;
+            line-height: 1.5;
+        }
+
+        /* ==================== CTA SECTION ==================== */
+        .cta-section {
+            background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%);
+            padding: 80px 40px;
+            text-align: center;
+        }
+
+        .cta-section h2 {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 36px;
+            color: var(--white);
+            margin-bottom: 20px;
+        }
+
+        .cta-section p {
+            color: var(--gray-300);
+            font-size: 18px;
+            max-width: 600px;
+            margin: 0 auto 40px;
+            line-height: 1.7;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 16px 40px;
+            background: var(--gold);
+            color: var(--navy);
+            font-size: 16px;
+            font-weight: 700;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: background 0.2s, transform 0.2s;
+        }
+
+        .cta-button:hover {
+            background: var(--gold-light);
+            transform: translateY(-1px);
+        }
+
+        /* ==================== FOOTER ==================== */
+        .wp-footer {
+            background: var(--navy);
+            padding: 40px;
+            text-align: center;
+            color: var(--gray-400);
+            font-size: 13px;
+        }
+
+        .wp-footer .disclaimer {
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.7;
+        }
+
+        /* ==================== PRINT STYLES ==================== */
+        @media print {
+            .cover-page { min-height: auto; padding: 60px 40px; page-break-after: always; }
+            .toc-section { page-break-after: always; }
+            .section { page-break-inside: avoid; }
+            body { font-size: 11pt; }
+        }
+
+        /* ==================== RESPONSIVE ==================== */
+        @media (max-width: 768px) {
+            .cover-title { font-size: 36px; }
+            .cover-subtitle { font-size: 18px; }
+            .section h2 { font-size: 28px; }
+            .content-wrapper { padding: 50px 24px; }
+            .stat-grid { grid-template-columns: repeat(2, 1fr); }
+            .arch-diagram { padding: 24px 16px; }
+            .cover-meta { gap: 24px; }
+        }
+
+        /* ==================== DOWNLOAD BUTTON ==================== */
+        .download-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 22, 40, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 14px 40px;
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            z-index: 100;
+            border-top: 1px solid rgba(200, 164, 94, 0.2);
+        }
+
+        .download-btn {
+            padding: 10px 28px;
+            background: var(--gold);
+            color: var(--navy);
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .download-btn:hover {
+            background: var(--gold-light);
+        }
+
+        .download-btn.outline {
+            background: transparent;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+        }
+
+        .download-btn.outline:hover {
+            background: rgba(200, 164, 94, 0.1);
+        }
+
+        /* Bottom padding so content isn't hidden behind download bar */
+        body { padding-bottom: 70px; }
+    </style>
+</head>
+<body>
+
+<!-- ==================== COVER PAGE ==================== -->
+<div class="cover-page">
+    <div class="cover-content">
+        <div class="cover-badge">White Paper -- 2026</div>
+        <h1 class="cover-title">
+            <span class="gold">Neural Intelligence</span><br>
+            for Banking Compliance
+        </h1>
+        <p class="cover-subtitle">
+            How MCP-Powered AI Transforms Account Opening, KYC, Enhanced Due Diligence, Sanctions Screening, and Transaction Monitoring for Small &amp; Medium-Sized Banks
+        </p>
+        <div class="cover-divider"></div>
+        <div class="cover-meta">
+            <div class="cover-meta-item">
+                <div class="cover-meta-label">Prepared By</div>
+                <div class="cover-meta-value">RinglyPro Neural Intelligence Division</div>
+            </div>
+            <div class="cover-meta-item">
+                <div class="cover-meta-label">Classification</div>
+                <div class="cover-meta-value">Confidential -- For Executive Review</div>
+            </div>
+            <div class="cover-meta-item">
+                <div class="cover-meta-label">Date</div>
+                <div class="cover-meta-value">April 2026</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== TABLE OF CONTENTS ==================== -->
+<div class="toc-section" id="toc">
+    <div class="toc-container">
+        <div class="toc-header">
+            <h2>Table of Contents</h2>
+        </div>
+        <ol class="toc-list">
+            <li>
+                <span class="toc-number">01</span>
+                <span class="toc-text"><a href="#exec-summary">Executive Summary</a></span>
+                <span class="toc-dots"></span>
+            </li>
+            <li>
+                <span class="toc-number">02</span>
+                <span class="toc-text"><a href="#problem">The Compliance Crisis Facing Small &amp; Medium Banks</a></span>
+                <span class="toc-dots"></span>
+            </li>
+            <li>
+                <span class="toc-number">03</span>
+                <span class="toc-text"><a href="#neural-intelligence">What Is Neural Intelligence?</a></span>
+                <span class="toc-dots"></span>
+            </li>
+            <li>
+                <span class="toc-number">04</span>
+                <span class="toc-text"><a href="#mcp">The MCP Architecture: A Universal Connector for Banking</a></span>
+                <span class="toc-dots"></span>
+            </li>
+            <li>
+                <span class="toc-number">05</span>
+                <span class="toc-text"><a href="#account-opening">Pillar I -- Account Opening &amp; Digital Onboarding</a></span>
+                <span class="toc-dots"></span>
+            </li>
+            <li>
+                <span class="toc-number">06</span>
+                <span class="toc-text"><a href="#kyc">Pillar II -- Know Your Customer (KYC)</a></span>
+                <span class="toc-dots"></span>
+            </li>
+            <li>
+                <span class="toc-number">07</span>
+                <span class="toc-text"><a href="#edd">Pillar III -- Enhanced Due Diligence (EDD)</a></span>
+                <span class="toc-dots"></span>
+            </li>
+            <li>
+                <span class="toc-number">08</span>
+                <span class="toc-text"><a href="#sanctions">Pillar IV -- Sanctions Screening Program</a></span>
+                <span class="toc-dots"></span>
+            </li>
+            <li>
+                <span class="toc-number">09</span>
+                <span class="toc-text"><a href="#txn-monitoring">Pillar V -- Transaction Monitoring &amp; AML</a></span>
+                <span class="toc-dots"></span>
+            </li>
+            <li>
+                <span class="toc-number">10</span>
+                <span class="toc-text"><a href="#regulatory">Regulatory Landscape &amp; AI Acceptance</a></span>
+                <span class="toc-dots"></span>
+            </li>
+            <li>
+                <span class="toc-number">11</span>
+                <span class="toc-text"><a href="#roi">Return on Investment &amp; Implementation Roadmap</a></span>
+                <span class="toc-dots"></span>
+            </li>
+            <li>
+                <span class="toc-number">12</span>
+                <span class="toc-text"><a href="#conclusion">Conclusion &amp; Call to Action</a></span>
+                <span class="toc-dots"></span>
+            </li>
+        </ol>
+    </div>
+</div>
+
+<!-- ==================== EXECUTIVE SUMMARY ==================== -->
+<div class="exec-summary" id="exec-summary">
+    <div class="exec-summary-inner">
+        <div class="section-number">Section 01</div>
+        <h2>Executive Summary</h2>
+        <p>
+            Small and medium-sized banks in the United States face a compliance crisis that threatens their viability. Regulatory costs for BSA/AML and KYC compliance consume <strong>5-10% of operating expenses</strong> -- roughly double the burden carried by large banks with economies of scale. Legacy rule-based monitoring systems generate <strong>false positive rates of 95-99%</strong>, overwhelming compliance teams with tens of thousands of fruitless investigations annually. Meanwhile, enforcement penalties have never been higher: TD Bank's <strong>$3 billion BSA/AML penalty</strong> in 2024 sent shockwaves through the industry, and even a $5-10 million fine can represent an entire year of net income for a community bank.
+        </p>
+        <p>
+            This white paper introduces <strong>Neural Intelligence</strong> -- a new architectural approach that combines advanced AI reasoning with the <strong>Model Context Protocol (MCP)</strong>, an open standard for connecting AI systems to banking data sources and compliance tools. Unlike legacy systems that apply static rules to individual transactions, Neural Intelligence reasons across multiple data sources simultaneously, the way a senior compliance officer would -- but at machine scale, in real time, and with complete audit trails.
+        </p>
+        <p>
+            Across five critical compliance pillars -- Account Opening, KYC, Enhanced Due Diligence, Sanctions Screening, and Transaction Monitoring -- this architecture delivers measurable results: <strong>50-75% reduction in false positives</strong>, <strong>70% automation of compliance workflows</strong>, and <strong>implementation timelines of 90 days to first results</strong>, at price points accessible to institutions with $500 million to $10 billion in assets.
+        </p>
+
+        <div class="stat-grid">
+            <div class="stat-box">
+                <div class="stat-number">$46B</div>
+                <div class="stat-label">Annual US spending on AML/KYC compliance</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">95%+</div>
+                <div class="stat-label">False positive rate in legacy transaction monitoring</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">4.6M</div>
+                <div class="stat-label">SARs filed with FinCEN in 2023 alone</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">90 Days</div>
+                <div class="stat-label">Time to first measurable results with MCP architecture</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== SECTION 2: THE PROBLEM ==================== -->
+<div class="content-wrapper">
+
+    <div class="section" id="problem">
+        <div class="section-number">Section 02</div>
+        <h2>The Compliance Crisis Facing Small &amp; Medium Banks</h2>
+
+        <p>
+            The Bank Secrecy Act (BSA), the USA PATRIOT Act, and a growing body of FinCEN, OCC, FDIC, and Federal Reserve regulations have created a compliance infrastructure that was designed for the largest institutions but is required of all banks, regardless of size. For community and mid-size banks, the result is an asymmetric burden that strains budgets, talent pipelines, and operational capacity.
+        </p>
+
+        <h3>The Cost Problem</h3>
+        <p>
+            According to the LexisNexis "True Cost of AML Compliance" study, US financial institutions collectively spend <strong>$35-46 billion annually</strong> on AML/KYC compliance. While the largest banks absorb this cost across massive revenue bases, smaller institutions face a disproportionate impact:
+        </p>
+        <ul>
+            <li><strong>Compliance staff:</strong> A bank with $1-10 billion in assets typically employs 8-20 full-time BSA/AML compliance professionals, at a fully-loaded cost of $75,000-$95,000 per analyst per year.</li>
+            <li><strong>Technology:</strong> Enterprise compliance platforms (NICE Actimize, Oracle OFSAA, SAS AML) cost $500,000-$5 million annually -- often exceeding a community bank's entire technology budget for compliance.</li>
+            <li><strong>Per-customer costs:</strong> KYC onboarding costs average $25-50 per retail customer and $150-500+ per commercial customer. Complex corporate relationships can cost $2,000-$25,000+ each.</li>
+            <li><strong>Opportunity cost:</strong> 25-40% of prospective customers abandon digital account opening processes that take longer than 10 minutes, driving revenue to faster competitors.</li>
+        </ul>
+
+        <h3>The False Positive Epidemic</h3>
+        <p>
+            The core operational problem in banking compliance is not detection failure -- it is noise. Industry-wide data consistently shows:
+        </p>
+
+        <div class="stat-grid">
+            <div class="stat-box">
+                <div class="stat-number">95-99%</div>
+                <div class="stat-label">Transaction monitoring false positives</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">90-98%</div>
+                <div class="stat-label">Sanctions screening false positives</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">20-45 min</div>
+                <div class="stat-label">Analyst time per false positive alert</div>
+            </div>
+        </div>
+
+        <p>
+            Consider a mid-size bank processing 50,000 transaction monitoring alerts per year with a 95% false positive rate. That means <strong>47,500 wasted investigations</strong>, consuming 15,000-35,000 analyst-hours annually -- the equivalent of 8-18 full-time employees doing nothing but clearing false alerts. The real threats are buried in the noise, and analyst fatigue leads to genuine risks being missed.
+        </p>
+
+        <h3>The Enforcement Reality</h3>
+        <p>
+            Regulators have made clear that inadequate BSA/AML programs carry existential risk. In a typical year, the FDIC issues 15-30 BSA-related enforcement actions against smaller institutions. The penalties can be devastating: a $5-10 million fine against a bank with $500 million in assets can wipe out an entire year of net income. Beyond fines, consent orders impose costly remediation requirements -- additional staffing, third-party audits, enhanced reporting -- that can persist for years.
+        </p>
+
+        <div class="highlight-box">
+            <div class="highlight-title">The Core Challenge</div>
+            <p>Small and medium-sized banks need enterprise-grade compliance capabilities at community bank price points. They need systems that reduce false positives rather than generating them, that adapt to evolving threats rather than relying on static rules, and that integrate with existing infrastructure without requiring armies of IT consultants. Neural Intelligence with MCP is architected to solve exactly this problem.</p>
+        </div>
+    </div>
+
+    <!-- ==================== SECTION 3: NEURAL INTELLIGENCE ==================== -->
+    <div class="section" id="neural-intelligence">
+        <div class="section-number">Section 03</div>
+        <h2>What Is Neural Intelligence?</h2>
+
+        <p>
+            Neural Intelligence is an architectural paradigm that places an AI reasoning layer at the center of banking compliance operations, connected to every relevant data source and tool through the Model Context Protocol (MCP). It represents a fundamental shift from rule-based automation to contextual reasoning.
+        </p>
+
+        <h3>From Rules to Reasoning</h3>
+        <p>
+            Traditional compliance systems operate on predetermined rules: <em>"If transaction exceeds $10,000, flag it." "If name matches sanctions list with >80% similarity, generate alert."</em> These rules are transparent and easy to audit, but they are also rigid, unable to adapt to evolving criminal typologies, and generators of massive false positive volumes.
+        </p>
+        <p>
+            Neural Intelligence operates differently. When evaluating a transaction or customer, it simultaneously considers:
+        </p>
+        <ul>
+            <li>The customer's complete transaction history and behavioral baseline</li>
+            <li>Peer group norms -- how similar customers in similar businesses typically transact</li>
+            <li>Real-time sanctions and PEP database status</li>
+            <li>Adverse media signals from global news sources</li>
+            <li>Corporate ownership structures and beneficial ownership chains</li>
+            <li>Geographic risk factors and jurisdictional context</li>
+            <li>Historical typology patterns from known money laundering cases</li>
+        </ul>
+        <p>
+            It reasons across all of these dimensions simultaneously, the way a seasoned BSA officer with 20 years of experience would -- but at machine speed, across every customer and every transaction, 24 hours a day.
+        </p>
+
+        <h3>The Hybrid Architecture Advantage</h3>
+        <p>
+            Neural Intelligence does not replace deterministic compliance checks -- it enhances them. Critical operations like sanctions matching and threshold-based reporting (CTRs for cash transactions over $10,000) remain deterministic. The AI layer adds contextual reasoning on top: determining whether a sanctions match is a true positive, whether a pattern of transactions constitutes structuring, or whether a customer's activity is genuinely inconsistent with their stated business purpose.
+        </p>
+
+        <div class="info-box">
+            <div class="info-title">Key Distinction</div>
+            <p><strong>Rule-based systems detect known patterns.</strong> Neural Intelligence identifies unknown risks by reasoning about context across multiple data sources simultaneously. The rules catch what you already know to look for; the AI catches what you have not seen before.</p>
+        </div>
+
+        <h3>What Makes It "Neural"</h3>
+        <p>
+            The term "Neural" reflects three capabilities that distinguish this approach from conventional AI applications in banking:
+        </p>
+        <div class="pillar-grid">
+            <div class="pillar-card">
+                <h4>Multi-Source Reasoning</h4>
+                <p>Like neural pathways connecting different brain regions, MCP connects the AI to every relevant data source simultaneously, enabling holistic analysis rather than siloed checks.</p>
+            </div>
+            <div class="pillar-card">
+                <h4>Pattern Recognition</h4>
+                <p>Graph neural networks and ML models detect subtle patterns -- structuring across accounts, timing anomalies, behavioral shifts -- that static rules cannot capture.</p>
+            </div>
+            <div class="pillar-card">
+                <h4>Adaptive Learning</h4>
+                <p>The system continuously refines its understanding of normal vs. suspicious activity based on analyst feedback, new typologies, and evolving regulatory guidance.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SECTION 4: MCP ARCHITECTURE ==================== -->
+    <div class="section" id="mcp">
+        <div class="section-number">Section 04</div>
+        <h2>The MCP Architecture: A Universal Connector for Banking</h2>
+
+        <p>
+            The Model Context Protocol (MCP) is an open standard released by Anthropic in 2024 that provides a universal, standardized way for AI systems to connect to external data sources, tools, and services. Often described as <strong>"USB-C for AI"</strong> -- a single connector that replaces dozens of proprietary integrations -- MCP has been adopted by major technology companies and is rapidly becoming the standard for enterprise AI integration.
+        </p>
+
+        <h3>Architecture Overview</h3>
+        <p>
+            MCP follows a three-tier architecture built on JSON-RPC 2.0, the same reliable messaging protocol used in enterprise systems worldwide:
+        </p>
+
+        <div class="arch-diagram">
+            <div class="diagram-title">Neural Intelligence MCP Architecture for Banking</div>
+            <div class="arch-layers">
+                <div class="arch-layer ai-layer">
+                    <div class="arch-layer-title">AI Reasoning Layer (Host)</div>
+                    <div class="arch-layer-items">Neural Intelligence Engine -- Contextual reasoning across all data sources</div>
+                </div>
+                <div class="arch-arrow">|</div>
+                <div class="arch-layer mcp-layer">
+                    <div class="arch-layer-title">MCP Client Layer</div>
+                    <div class="arch-layer-items">Isolated 1:1 connections -- Each client maintains security boundaries</div>
+                </div>
+                <div class="arch-arrow">|</div>
+                <div class="arch-layer server-layer">
+                    <div class="arch-layer-title">MCP Server Layer</div>
+                    <div class="arch-layer-items">Core Banking | KYC/CDD | Sanctions | Transaction Monitoring | Case Management | Regulatory Filing</div>
+                </div>
+                <div class="arch-arrow">|</div>
+                <div class="arch-layer data-layer">
+                    <div class="arch-layer-title">Banking Systems &amp; Data Sources</div>
+                    <div class="arch-layer-items">FIS/Fiserv/Jack Henry | OFAC SDN | FinCEN | Credit Bureaus | Adverse Media | Document Management</div>
+                </div>
+            </div>
+        </div>
+
+        <h4>Host</h4>
+        <p>The banking compliance application itself. It creates and manages MCP client connections, controls permissions, enforces security policies, and coordinates the AI engine's access to data. The host is the single point of governance and audit.</p>
+
+        <h4>Clients</h4>
+        <p>Each MCP client maintains an isolated, one-to-one connection with a specific MCP server. This isolation is critical for banking: the KYC server cannot see what the transaction monitoring server is processing, and cross-server data flow is controlled exclusively by the host. Each connection is authenticated and scoped.</p>
+
+        <h4>Servers</h4>
+        <p>MCP servers are lightweight programs that wrap existing banking systems and expose them through standardized interfaces. A server wrapping the core banking system allows the AI to look up customer information and transaction history. A server wrapping the OFAC database enables real-time sanctions screening. Each server operates independently and can be updated without affecting others.</p>
+
+        <h3>Three Protocol Primitives</h3>
+        <div class="pillar-grid">
+            <div class="pillar-card">
+                <h4>Tools</h4>
+                <p>Executable functions the AI can invoke: <em>run_sanctions_check()</em>, <em>get_transaction_history()</em>, <em>file_sar()</em>. Every invocation is logged with timestamps and parameters for full auditability.</p>
+            </div>
+            <div class="pillar-card">
+                <h4>Resources</h4>
+                <p>Read-only data the AI can access: customer profiles, regulatory rule sets, risk scoring models, historical case data. The application controls when and how resources are exposed.</p>
+            </div>
+            <div class="pillar-card">
+                <h4>Prompts</h4>
+                <p>Structured templates that guide AI interactions: standardized formats for SAR narratives, risk assessment reports, and compliance recommendations -- ensuring consistent, audit-ready output.</p>
+            </div>
+        </div>
+
+        <h3>Why MCP Matters for Small &amp; Medium Banks</h3>
+
+        <p>
+            The traditional approach to connecting AI to banking systems is custom API integration: one bespoke connector for each AI application to each backend system. For a bank running 5 AI-enabled applications against 10 backend systems, that is 50 custom integrations to build, maintain, and secure. MCP reduces this to 10 standardized servers that any application can use.
+        </p>
+
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>Dimension</th>
+                    <th>Custom API Integration</th>
+                    <th>MCP Architecture</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Setup time per system</td>
+                    <td class="legacy">3-6 weeks</td>
+                    <td class="ai">Hours to days</td>
+                </tr>
+                <tr>
+                    <td>Adding a new AI application</td>
+                    <td class="legacy">Rebuild all integrations</td>
+                    <td class="ai">Zero -- reuses existing servers</td>
+                </tr>
+                <tr>
+                    <td>Authentication</td>
+                    <td class="legacy">Custom per API</td>
+                    <td class="ai">Standardized OAuth 2.1</td>
+                </tr>
+                <tr>
+                    <td>Audit logging</td>
+                    <td class="legacy">Must build per integration</td>
+                    <td class="ai">Built into protocol</td>
+                </tr>
+                <tr>
+                    <td>Vendor lock-in</td>
+                    <td class="legacy">High -- proprietary formats</td>
+                    <td class="ai">None -- open standard</td>
+                </tr>
+                <tr>
+                    <td>Backend API changes</td>
+                    <td class="legacy">Update every application</td>
+                    <td class="ai">Update one MCP server</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Security Model</h3>
+        <p>
+            MCP's security architecture addresses the stringent requirements of regulated financial institutions:
+        </p>
+        <ul>
+            <li><strong>OAuth 2.1 with PKCE:</strong> Mandatory for all client types, preventing code interception attacks. Tokens are tightly scoped using Resource Indicators (RFC 8707) -- a token issued for the transaction monitoring server cannot be used against the customer data server.</li>
+            <li><strong>Data isolation by design:</strong> Servers cannot read the full conversation or see into other servers. Cross-server data flow is controlled exclusively by the host application.</li>
+            <li><strong>Immutable audit trails:</strong> Every tool invocation is logged with timestamps, user identity, parameters, and results -- meeting SOC 2, ISO 27001, and regulatory examination requirements.</li>
+            <li><strong>PII protection:</strong> Input/output filtering can redact sensitive data before it reaches the AI engine, supporting PCI-DSS and privacy compliance.</li>
+            <li><strong>Read-only server options:</strong> Servers can be configured so the AI can query data but never modify it -- a critical safeguard for production banking systems.</li>
+        </ul>
+    </div>
+
+    <!-- ==================== SECTION 5: ACCOUNT OPENING ==================== -->
+    <div class="section" id="account-opening">
+        <div class="section-number">Section 05</div>
+        <h2>Pillar I -- Account Opening &amp; Digital Onboarding</h2>
+
+        <h3>The Current Challenge</h3>
+        <p>
+            Traditional account opening at community and mid-size banks takes 5-15 business days for retail accounts and 30+ days for complex commercial accounts. The process involves physical document collection, manual data entry into core banking systems, and sequential verification against government databases. This creates two critical problems: customer abandonment (25-40% drop-off when onboarding exceeds 10 minutes) and fraud exposure ($6 billion annually in synthetic identity fraud alone, per Federal Reserve estimates).
+        </p>
+
+        <h3>How Neural Intelligence Transforms Account Opening</h3>
+
+        <div class="process-flow">
+            <div class="process-step">
+                <div class="process-step-number">1</div>
+                <div class="process-step-title">Document Ingestion</div>
+                <div class="process-step-desc">AI-powered OCR processes government IDs, utility bills, and corporate documents in seconds</div>
+            </div>
+            <div class="process-step">
+                <div class="process-step-number">2</div>
+                <div class="process-step-title">Identity Verification</div>
+                <div class="process-step-desc">ML models cross-reference against credit bureaus, phone carriers, and public records</div>
+            </div>
+            <div class="process-step">
+                <div class="process-step-number">3</div>
+                <div class="process-step-title">Risk Scoring</div>
+                <div class="process-step-desc">Device fingerprint, behavioral biometrics, and geolocation analysis produce real-time fraud scores</div>
+            </div>
+            <div class="process-step">
+                <div class="process-step-number">4</div>
+                <div class="process-step-title">Compliance Check</div>
+                <div class="process-step-desc">Simultaneous CIP, sanctions, PEP, and adverse media screening via MCP servers</div>
+            </div>
+            <div class="process-step">
+                <div class="process-step-number">5</div>
+                <div class="process-step-title">Decision</div>
+                <div class="process-step-desc">Approve, escalate, or decline -- with full audit trail and explainable reasoning</div>
+            </div>
+        </div>
+
+        <h4>MCP Integration Pattern</h4>
+        <p>
+            During account opening, the Neural Intelligence engine connects through multiple MCP servers simultaneously:
+        </p>
+        <ul>
+            <li><strong>Core Banking MCP Server</strong> -- checks for existing relationships, linked accounts, and prior application history</li>
+            <li><strong>Identity Verification MCP Server</strong> -- connects to credit bureaus, phone carrier databases, and public records for non-documentary CIP verification</li>
+            <li><strong>Sanctions/PEP MCP Server</strong> -- real-time screening against OFAC SDN, UN, EU, and PEP databases</li>
+            <li><strong>Adverse Media MCP Server</strong> -- NLP-driven scanning of news sources in multiple languages</li>
+            <li><strong>Document MCP Server</strong> -- OCR processing and document authentication</li>
+        </ul>
+
+        <h4>CIP Compliance (Section 326, USA PATRIOT Act)</h4>
+        <p>
+            The Neural Intelligence system fully satisfies Customer Identification Program requirements by collecting and verifying the four required elements (name, date of birth, address, identification number) through automated document processing and multi-source verification. Every verification step is logged through MCP audit trails, creating the documentation required for the 5-year record retention mandate. FinCEN's 2024 guidance explicitly affirms that digital and non-documentary verification methods are acceptable when risk-based and documented.
+        </p>
+
+        <div class="highlight-box">
+            <div class="highlight-title">Result</div>
+            <p>Account opening reduced from days to minutes. Fraud detection improved through multi-dimensional analysis. Customer abandonment reduced through frictionless digital experience. Full CIP compliance with automated audit trails.</p>
+        </div>
+    </div>
+
+    <!-- ==================== SECTION 6: KYC ==================== -->
+    <div class="section" id="kyc">
+        <div class="section-number">Section 06</div>
+        <h2>Pillar II -- Know Your Customer (KYC)</h2>
+
+        <h3>The Scale of the KYC Challenge</h3>
+        <p>
+            KYC is not a one-time event -- it is an ongoing obligation that requires banks to maintain current knowledge of every customer relationship throughout its lifecycle. For a mid-size bank with 100,000 customer relationships, the traditional approach of periodic manual reviews (annual for high-risk, biennial for medium-risk, triennial for standard-risk) creates an enormous operational burden:
+        </p>
+
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>KYC Metric</th>
+                    <th>Legacy Approach</th>
+                    <th>Neural Intelligence</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Retail customer onboarding cost</td>
+                    <td class="legacy">$25-50</td>
+                    <td class="ai">$5-10</td>
+                </tr>
+                <tr>
+                    <td>Corporate customer onboarding cost</td>
+                    <td class="legacy">$150-500+</td>
+                    <td class="ai">$30-75</td>
+                </tr>
+                <tr>
+                    <td>Name screening false positives</td>
+                    <td class="legacy">85-95%</td>
+                    <td class="ai">20-40%</td>
+                </tr>
+                <tr>
+                    <td>Review cycle</td>
+                    <td class="legacy">Annual/biennial batch</td>
+                    <td class="ai">Continuous (event-driven)</td>
+                </tr>
+                <tr>
+                    <td>Time to complete corporate KYC</td>
+                    <td class="legacy">2-6 weeks</td>
+                    <td class="ai">Hours to 2 days</td>
+                </tr>
+                <tr>
+                    <td>Analyst time per review</td>
+                    <td class="legacy">15-30 minutes</td>
+                    <td class="ai">2-5 minutes (review AI findings)</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Perpetual KYC (pKYC): The New Standard</h3>
+        <p>
+            Neural Intelligence enables a shift from periodic batch KYC reviews to <strong>Perpetual KYC (pKYC)</strong> -- continuous, event-driven monitoring of every customer relationship. Rather than reviewing a customer once every 1-3 years and hoping nothing changed in between, the system monitors for trigger events in real time:
+        </p>
+        <ul>
+            <li>Sanctions list additions or removals</li>
+            <li>Changes in PEP status (election, appointment, departure from office)</li>
+            <li>Adverse media mentions (new lawsuits, regulatory actions, criminal investigations)</li>
+            <li>Corporate ownership changes (UBO modifications, new subsidiaries)</li>
+            <li>Significant changes in transaction patterns</li>
+            <li>Address or contact information changes</li>
+            <li>Changes in country risk ratings for customer jurisdictions</li>
+        </ul>
+
+        <h3>MCP-Enabled KYC Workflow</h3>
+        <p>
+            The Neural Intelligence engine maintains persistent connections through MCP servers to:
+        </p>
+        <ul>
+            <li><strong>Customer Data MCP Server</strong> -- real-time access to CRM, account, and relationship data from the core banking system</li>
+            <li><strong>Corporate Registry MCP Server</strong> -- automated queries to state/national corporate registries and SEC filings for beneficial ownership verification</li>
+            <li><strong>Risk Scoring MCP Server</strong> -- dynamic risk scoring incorporating hundreds of variables (jurisdiction, business type, transaction volume, PEP proximity, media signals)</li>
+            <li><strong>Case Management MCP Server</strong> -- automated case creation, assignment, and escalation when trigger events are detected</li>
+        </ul>
+
+        <div class="highlight-box">
+            <div class="highlight-title">Regulatory Alignment</div>
+            <p>FinCEN's Customer Due Diligence (CDD) Rule requires banks to identify and verify beneficial owners of legal entity customers. The Corporate Transparency Act further strengthens beneficial ownership requirements. Neural Intelligence automates the collection, verification, and ongoing monitoring of beneficial ownership data -- a task that has historically been one of the most labor-intensive aspects of KYC compliance.</p>
+        </div>
+    </div>
+
+    <!-- ==================== SECTION 7: EDD ==================== -->
+    <div class="section" id="edd">
+        <div class="section-number">Section 07</div>
+        <h2>Pillar III -- Enhanced Due Diligence (EDD)</h2>
+
+        <h3>When EDD Is Required</h3>
+        <p>
+            Enhanced Due Diligence is the deeper investigation triggered by elevated risk indicators. FATF Recommendation 12 and US regulatory guidance require EDD for:
+        </p>
+        <ul>
+            <li><strong>Politically Exposed Persons (PEPs):</strong> Heads of state, senior politicians, government officials, military leaders, and their families and close associates</li>
+            <li><strong>High-risk jurisdictions:</strong> FATF grey/black list countries, OFAC-sanctioned nations, and jurisdictions flagged in the bank's own risk assessment</li>
+            <li><strong>Complex ownership structures:</strong> Multi-layered corporate entities, trusts, shell companies, nominee shareholders</li>
+            <li><strong>High-risk business types:</strong> Money service businesses, cash-intensive enterprises, cryptocurrency exchanges, gambling, arms/defense</li>
+            <li><strong>Adverse media:</strong> Negative coverage related to financial crime, corruption, or terrorism</li>
+        </ul>
+
+        <h3>The Manual EDD Burden</h3>
+        <p>
+            Manual EDD is one of the most expensive compliance activities. A single individual EDD case takes <strong>4-8 hours</strong> of analyst time; a complex corporate entity can require <strong>16-40+ hours</strong>. Analysts must search multiple databases (Dow Jones, World-Check, LexisNexis), review open-source intelligence, analyze corporate registries, map ownership structures, and document findings in narrative reports. At an average cost of $50-150 per individual case and $500-$2,500+ per complex corporate case, EDD consumes a disproportionate share of compliance budgets.
+        </p>
+
+        <h3>Neural Intelligence EDD Automation</h3>
+
+        <div class="pillar-grid">
+            <div class="pillar-card">
+                <h4>Adverse Media Screening</h4>
+                <p>NLP models scan millions of articles, court records, and regulatory actions in multiple languages. AI distinguishes suspects from victims and reporters, reducing false matches by up to 80% vs. keyword searches.</p>
+            </div>
+            <div class="pillar-card">
+                <h4>UBO Identification</h4>
+                <p>Graph analytics trace ownership chains through corporate registries, SEC filings, and annual reports. Hidden connections and circular ownership structures are automatically detected and visualized.</p>
+            </div>
+            <div class="pillar-card">
+                <h4>Dynamic Risk Scoring</h4>
+                <p>ML models assign quantified risk ratings based on hundreds of variables, replacing subjective manual assessments. Scores update in real time as new information emerges.</p>
+            </div>
+            <div class="pillar-card">
+                <h4>Automated Reporting</h4>
+                <p>AI drafts EDD narrative reports summarizing findings, risk factors, and recommendations. Analysts review and approve rather than research and write, reducing case time by 60-70%.</p>
+            </div>
+        </div>
+
+        <h4>MCP Integration for EDD</h4>
+        <p>
+            When a trigger event escalates a customer to EDD, the Neural Intelligence engine simultaneously queries:
+        </p>
+        <ul>
+            <li><strong>PEP Database MCP Server</strong> -- real-time PEP status across global databases</li>
+            <li><strong>Adverse Media MCP Server</strong> -- NLP-driven news and legal document analysis</li>
+            <li><strong>Corporate Registry MCP Server</strong> -- ownership chain mapping and UBO verification</li>
+            <li><strong>Transaction History MCP Server</strong> -- pattern analysis for the customer's complete transaction history</li>
+            <li><strong>Document Management MCP Server</strong> -- retrieval and analysis of all documents on file for the relationship</li>
+        </ul>
+        <p>
+            The AI synthesizes findings from all sources into a structured EDD report with clear risk indicators and supporting evidence. The compliance officer reviews a complete, sourced analysis rather than starting from scratch -- transforming a multi-day investigation into a focused review session.
+        </p>
+    </div>
+
+    <!-- ==================== SECTION 8: SANCTIONS ==================== -->
+    <div class="section" id="sanctions">
+        <div class="section-number">Section 08</div>
+        <h2>Pillar IV -- Sanctions Screening Program</h2>
+
+        <h3>The Sanctions Landscape</h3>
+        <p>
+            US banks must screen all customers and transactions against a complex web of sanctions lists. OFAC's Specially Designated Nationals (SDN) list alone contains over 12,000 entries -- individuals, entities, vessels, and aircraft -- and is updated multiple times per month. Banks typically screen against 30-50+ sanctions and watchlists simultaneously, including OFAC SDN, OFAC Consolidated, UN Security Council, EU Consolidated, and UK HMT lists.
+        </p>
+        <p>
+            OFAC violations carry <strong>strict liability</strong> -- no intent is required. A bank that processes a transaction with a sanctioned party faces enforcement action regardless of whether the match was missed due to a name transliteration issue, a data entry error, or a system limitation. This makes accurate screening existentially important.
+        </p>
+
+        <h3>The Name Matching Problem</h3>
+        <p>
+            Sanctions screening is fundamentally a name matching challenge, and names are inherently ambiguous:
+        </p>
+        <ul>
+            <li><strong>Transliteration:</strong> Arabic, Chinese, and Cyrillic names have multiple valid English transliterations. "Muammar Gaddafi" has 30+ documented English spellings.</li>
+            <li><strong>Name order:</strong> East Asian naming conventions (family name first), Arabic patronymic systems, and cultural variations in name ordering create matching complexity.</li>
+            <li><strong>Common names:</strong> A name like "Mohammed Ali" generates enormous false match volumes against the SDN list.</li>
+            <li><strong>Aliases:</strong> SDN entries include known aliases, but not all aliases are known at the time of listing.</li>
+            <li><strong>Data quality:</strong> Customer data entry errors, misspellings, and incomplete names compound the problem.</li>
+        </ul>
+        <p>
+            The result is the industry's worst false positive rate: <strong>90-98%</strong>. A mid-size bank screening 100,000 wire transfers per month might generate 2,000-5,000 alerts, of which only 50-100 require genuine escalation. Each false positive requires 5-15 minutes of analyst disposition time.
+        </p>
+
+        <h3>Neural Intelligence Sanctions Screening</h3>
+        <p>
+            The AI engine transforms sanctions screening from string matching to entity resolution:
+        </p>
+        <ul>
+            <li><strong>Contextual matching:</strong> Beyond name similarity, the AI considers date of birth, nationality, address, transaction counterparties, and other contextual data to determine true match probability.</li>
+            <li><strong>Multilingual NLP:</strong> Purpose-built models handle Arabic-to-Latin, Chinese pinyin, Cyrillic romanization, and other transliteration challenges natively, rather than relying on generic phonetic algorithms.</li>
+            <li><strong>Entity resolution:</strong> Probabilistic matching across multiple attributes determines whether records refer to the same real-world entity, distinguishing "Mohammed Al-Rahman the sanctioned arms dealer" from "Mohammad Al Rahman the local restaurant owner."</li>
+            <li><strong>Real-time list updates:</strong> MCP servers connected to OFAC and other list publishers incorporate updates within hours of publication, not days.</li>
+        </ul>
+
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>Screening Metric</th>
+                    <th>Rule-Based Systems</th>
+                    <th>Neural Intelligence</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>False positive rate</td>
+                    <td class="legacy">90-98%</td>
+                    <td class="ai">30-50%</td>
+                </tr>
+                <tr>
+                    <td>True match detection rate</td>
+                    <td>85-90%</td>
+                    <td class="ai">97-99%</td>
+                </tr>
+                <tr>
+                    <td>Alert disposition time</td>
+                    <td class="legacy">5-15 min per alert</td>
+                    <td class="ai">Auto-cleared (true negatives)</td>
+                </tr>
+                <tr>
+                    <td>List update incorporation</td>
+                    <td class="legacy">24-48 hours</td>
+                    <td class="ai">Near real-time</td>
+                </tr>
+                <tr>
+                    <td>Transliteration handling</td>
+                    <td class="legacy">Soundex/Metaphone</td>
+                    <td class="ai">ML-trained multilingual models</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="highlight-box">
+            <div class="highlight-title">OFAC Compliance Note</div>
+            <p>OFAC requires screening at the point of transaction -- not batch/overnight. Neural Intelligence meets this requirement through real-time screening via the Sanctions MCP Server, with sub-second response times for wire transfer and payment screening. Every screening decision is logged with full explainability for examiner review.</p>
+        </div>
+    </div>
+
+    <!-- ==================== SECTION 9: TRANSACTION MONITORING ==================== -->
+    <div class="section" id="txn-monitoring">
+        <div class="section-number">Section 09</div>
+        <h2>Pillar V -- Transaction Monitoring &amp; AML</h2>
+
+        <h3>The SAR Filing Imperative</h3>
+        <p>
+            Banks must file Suspicious Activity Reports (SARs) with FinCEN for transactions of $5,000+ that the bank suspects involve illegal funds, evade BSA reporting requirements, lack apparent business purpose, or facilitate criminal activity. SAR filings have grown 77% in five years -- from 2.6 million in 2018 to 4.6 million in 2023 -- reflecting both increased regulatory pressure and improved detection. The filing deadline is 30 calendar days from initial detection.
+        </p>
+
+        <h3>Why Legacy Systems Fail</h3>
+        <p>
+            Current rule-based transaction monitoring systems (NICE Actimize SAM, Oracle Mantas, FIS MISER) operate on predetermined scenarios and thresholds. While transparent and auditor-friendly, they suffer from a fundamental limitation: <strong>they can only detect patterns they are programmed to look for</strong>.
+        </p>
+        <p>
+            The result is the worst false positive rate in compliance: <strong>95-99%</strong>. Less than 2% of transaction monitoring alerts result in SAR filings (McKinsey). Each false positive alert consumes 20-45 minutes of L1 analyst review, with escalated cases taking 2-4 hours. For a bank generating 50,000 alerts per year, this means 47,500+ wasted investigations and exhausted analysts who are more likely to miss genuine threats.
+        </p>
+
+        <h3>Neural Intelligence Transaction Monitoring</h3>
+        <p>
+            The AI engine applies three complementary analytical methods:
+        </p>
+
+        <h4>1. Behavioral Analytics</h4>
+        <p>
+            Rather than applying universal thresholds, the system builds a behavioral baseline for each customer and their peer group. A $50,000 wire transfer is unremarkable for a mid-size import/export business but alarming for a sole proprietor who typically deposits $3,000 per month. The AI detects deviations from established patterns without requiring explicit rules for every scenario.
+        </p>
+
+        <h4>2. Network Graph Analysis</h4>
+        <p>
+            Graph neural networks map relationships between customers, accounts, counterparties, and transactions to identify structures invisible to traditional monitoring: fraud rings, layering patterns, structuring across related accounts, and professional money laundering networks. The AI identifies suspicious flows before funds exit the institution, shifting from reactive to preventive compliance.
+        </p>
+
+        <h4>3. Typology Learning</h4>
+        <p>
+            The system learns from historical SARs, known criminal typologies, and FinCEN advisories to recognize the signatures of specific money laundering methods: trade-based laundering, funnel accounts, cryptocurrency mixing, shell company layering, and emerging techniques. Unlike static rules, these models evolve as criminal methods evolve.
+        </p>
+
+        <h3>MCP-Enabled Monitoring Architecture</h3>
+        <p>
+            Transaction monitoring requires the broadest data access of any compliance function. Through MCP, the Neural Intelligence engine connects to:
+        </p>
+        <ul>
+            <li><strong>Transaction Processing MCP Server</strong> -- real-time access to wire transfers, ACH, checks, card transactions, and internal transfers</li>
+            <li><strong>Customer Profile MCP Server</strong> -- account details, stated business purpose, expected activity levels, risk ratings</li>
+            <li><strong>KYC/CDD MCP Server</strong> -- current CDD status, beneficial ownership, PEP/sanctions screening results</li>
+            <li><strong>Case Management MCP Server</strong> -- prior investigations, SAR history, examiner notes</li>
+            <li><strong>Regulatory Filing MCP Server</strong> -- automated SAR preparation and e-filing with FinCEN</li>
+        </ul>
+
+        <div class="stat-grid">
+            <div class="stat-box">
+                <div class="stat-number">50-70%</div>
+                <div class="stat-label">Reduction in false positives while maintaining SAR filing rates</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">3x</div>
+                <div class="stat-label">Improvement in alert-to-SAR conversion ratio</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">60%</div>
+                <div class="stat-label">Reduction in analyst time per investigation</div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <div class="info-title">SAR Quality Enhancement</div>
+            <p>Beyond alert generation, Neural Intelligence assists with SAR preparation by drafting narrative sections based on the investigation findings, attaching supporting transaction data, and suggesting FinCEN suspicious activity categories. Analysts review and refine AI-drafted SARs rather than writing from scratch, improving both quality and consistency while reducing preparation time from 2-4 hours to 30-60 minutes per filing.</p>
+        </div>
+    </div>
+
+    <!-- ==================== SECTION 10: REGULATORY ==================== -->
+    <div class="section" id="regulatory">
+        <div class="section-number">Section 10</div>
+        <h2>Regulatory Landscape &amp; AI Acceptance</h2>
+
+        <h3>Regulators Are Encouraging Innovation</h3>
+        <p>
+            A common concern among banking executives is whether regulators will accept AI-driven compliance. The answer is unambiguously yes -- and increasingly, regulators are signaling that continued reliance on ineffective legacy systems is itself a risk.
+        </p>
+
+        <h4>Joint Regulatory Statement (2018, Reaffirmed Through 2024)</h4>
+        <p>
+            FinCEN, OCC, FDIC, the Federal Reserve, and NCUA issued a joint statement explicitly encouraging banks to explore innovative approaches to BSA/AML compliance, including AI and machine learning. The statement declared: <em>"The agencies will not penalize or criticize a bank that makes good-faith efforts to test or implement innovative approaches."</em> This remains the foundational regulatory endorsement of AI in compliance.
+        </p>
+
+        <h4>Anti-Money Laundering Act of 2020 (AMLA)</h4>
+        <p>
+            Section 6208 of the AMLA explicitly encourages the use of "innovative approaches" including AI, digital identity, and emerging technologies for BSA/AML compliance. It directs FinCEN to establish guidelines for such approaches -- a legislative mandate to support innovation.
+        </p>
+
+        <h4>FinCEN's Proposed Effectiveness Rule (2024)</h4>
+        <p>
+            FinCEN's proposed shift from checklist compliance to risk-based effectiveness fundamentally favors AI-driven approaches. Under an effectiveness framework, a system that detects genuine suspicious activity with fewer false positives is superior to one that generates 50,000 alerts and dutifully reviews each one. This aligns perfectly with Neural Intelligence's value proposition.
+        </p>
+
+        <h3>Model Risk Management Requirements</h3>
+        <p>
+            While regulators encourage AI adoption, they require robust governance. OCC Bulletin 2011-12 (supplemented by SR 11-7) establishes the Model Risk Management (MRM) framework that any AI/ML model used in compliance must satisfy:
+        </p>
+        <ul>
+            <li><strong>Model documentation:</strong> Complete documentation of architecture, training data, feature engineering, and assumptions</li>
+            <li><strong>Independent validation:</strong> Validation by parties not involved in development, before deployment and periodically thereafter (typically annually)</li>
+            <li><strong>Ongoing monitoring:</strong> Defined performance metrics -- precision, recall, false positive rate, alert-to-SAR conversion rate -- with regular reporting</li>
+            <li><strong>Explainability:</strong> The ability to explain why a specific alert was generated or why a transaction was not flagged, including what data inputs drove the decision</li>
+            <li><strong>Change management:</strong> Formal processes for model updates, with champion-challenger testing before deployment</li>
+            <li><strong>Board reporting:</strong> Board-level visibility into model risk and performance</li>
+        </ul>
+
+        <div class="highlight-box">
+            <div class="highlight-title">MCP's Governance Advantage</div>
+            <p>The MCP architecture provides inherent support for model governance requirements. Every tool invocation is logged with full parameters and results, creating the audit trail examiners require. The structured protocol makes it straightforward to demonstrate exactly what data the AI accessed and how it reached its conclusions. This explainability is built into the architecture rather than retrofitted after deployment.</p>
+        </div>
+
+        <h3>NIST AI Risk Management Framework</h3>
+        <p>
+            Banking regulators have pointed to the NIST AI Risk Management Framework (AI RMF) as a reference for AI governance in financial services. Neural Intelligence's architecture aligns with NIST AI RMF's trustworthiness characteristics: valid and reliable (validated against historical data), safe (human-in-the-loop for critical decisions), secure (MCP security model), accountable (immutable audit trails), transparent (protocol-level logging), explainable (structured reasoning chains), privacy-enhanced (PII filtering), and fair (bias testing in model validation).
+        </p>
+    </div>
+
+    <!-- ==================== SECTION 11: ROI ==================== -->
+    <div class="section" id="roi">
+        <div class="section-number">Section 11</div>
+        <h2>Return on Investment &amp; Implementation Roadmap</h2>
+
+        <div class="roi-banner">
+            <h3>Projected Financial Impact</h3>
+            <div class="roi-grid">
+                <div class="roi-item">
+                    <div class="roi-value">40-60%</div>
+                    <div class="roi-desc">Reduction in compliance operating costs within 18-24 months</div>
+                </div>
+                <div class="roi-item">
+                    <div class="roi-value">70%</div>
+                    <div class="roi-desc">Automation of routine compliance workflows</div>
+                </div>
+                <div class="roi-item">
+                    <div class="roi-value">50-75%</div>
+                    <div class="roi-desc">Reduction in false positive alerts across all screening</div>
+                </div>
+                <div class="roi-item">
+                    <div class="roi-value">90 Days</div>
+                    <div class="roi-desc">Time to first measurable results with phased deployment</div>
+                </div>
+            </div>
+        </div>
+
+        <h3>Cost-Benefit Analysis: A Mid-Size Bank Example</h3>
+        <p>
+            Consider a bank with $3 billion in assets, 150,000 customer relationships, 12 BSA/AML compliance staff, and $1.8 million in annual compliance technology spending:
+        </p>
+
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>Cost Category</th>
+                    <th>Current Annual Cost</th>
+                    <th>With Neural Intelligence</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>False positive investigation labor</td>
+                    <td>$540,000 (6 FTEs)</td>
+                    <td class="ai">$180,000 (2 FTEs)</td>
+                </tr>
+                <tr>
+                    <td>EDD case preparation</td>
+                    <td>$320,000</td>
+                    <td class="ai">$110,000</td>
+                </tr>
+                <tr>
+                    <td>Periodic KYC review cycles</td>
+                    <td>$280,000</td>
+                    <td class="ai">$70,000 (pKYC automation)</td>
+                </tr>
+                <tr>
+                    <td>SAR preparation and filing</td>
+                    <td>$180,000</td>
+                    <td class="ai">$60,000</td>
+                </tr>
+                <tr>
+                    <td>Technology licensing</td>
+                    <td>$480,000 (legacy platform)</td>
+                    <td>$360,000 (Neural Intelligence)</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 700;">Total</td>
+                    <td style="font-weight: 700;">$1,800,000</td>
+                    <td class="ai" style="font-weight: 700;">$780,000</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>
+            <strong>Projected annual savings: $1,020,000</strong> -- a 57% reduction in total compliance cost. This does not include the harder-to-quantify benefits: reduced regulatory risk, improved detection quality, faster customer onboarding, and freed analyst capacity for higher-value investigative work.
+        </p>
+
+        <h3>Phased Implementation Roadmap</h3>
+        <p>
+            Neural Intelligence is designed for incremental deployment. Each MCP server is independent and can be deployed without disrupting existing operations. The recommended phased approach:
+        </p>
+
+        <div class="process-flow">
+            <div class="process-step">
+                <div class="process-step-number">1</div>
+                <div class="process-step-title">Phase 1: Sanctions (Weeks 1-6)</div>
+                <div class="process-step-desc">Deploy Sanctions MCP Server. AI-enhanced screening runs in parallel with existing system. Measure false positive reduction.</div>
+            </div>
+            <div class="process-step">
+                <div class="process-step-number">2</div>
+                <div class="process-step-title">Phase 2: KYC/CDD (Weeks 6-14)</div>
+                <div class="process-step-desc">Deploy Customer Data and Risk Scoring MCP Servers. Enable Perpetual KYC. Migrate from periodic to event-driven reviews.</div>
+            </div>
+            <div class="process-step">
+                <div class="process-step-number">3</div>
+                <div class="process-step-title">Phase 3: Transaction Monitoring (Weeks 12-20)</div>
+                <div class="process-step-desc">Deploy Transaction and Case Management MCP Servers. AI overlay on existing monitoring. Validate against historical SARs.</div>
+            </div>
+            <div class="process-step">
+                <div class="process-step-number">4</div>
+                <div class="process-step-title">Phase 4: Full Integration (Weeks 18-26)</div>
+                <div class="process-step-desc">Connect all MCP Servers for unified Neural Intelligence. EDD automation. SAR assistance. Account opening AI.</div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <div class="info-title">Risk Mitigation</div>
+            <p>Each phase runs the Neural Intelligence system in <strong>parallel</strong> with existing compliance tools before cutover. The AI system's decisions are compared against the legacy system and human analyst outcomes, building the validation dataset required for model risk management documentation. This "shadow mode" approach satisfies regulatory expectations for champion-challenger testing while eliminating deployment risk.</p>
+        </div>
+    </div>
+
+    <!-- ==================== SECTION 12: CONCLUSION ==================== -->
+    <div class="section" id="conclusion">
+        <div class="section-number">Section 12</div>
+        <h2>Conclusion</h2>
+
+        <p>
+            The compliance landscape will not become simpler. Regulatory expectations continue to intensify, criminal typologies continue to evolve, and the cost of both compliance and non-compliance continues to rise. For small and medium-sized banks, the question is not whether to adopt AI for compliance, but how quickly and how effectively.
+        </p>
+        <p>
+            Neural Intelligence with MCP offers a path that is architecturally sound, regulatorily aligned, and economically accessible:
+        </p>
+        <ul>
+            <li><strong>Architecturally sound</strong> -- The MCP protocol provides standardized, secure, auditable connections between AI and banking systems, with built-in isolation, authentication, and governance.</li>
+            <li><strong>Regulatorily aligned</strong> -- Joint agency statements, the AMLA, and FinCEN's innovation initiatives explicitly encourage the adoption of AI in compliance. The architecture's inherent explainability and audit capabilities satisfy model risk management requirements.</li>
+            <li><strong>Economically accessible</strong> -- Modular MCP-based deployment eliminates the $1M+ implementation costs and 12-24 month timelines of enterprise platforms. Phased deployment delivers measurable ROI within 90 days.</li>
+        </ul>
+        <p>
+            The banks that adopt Neural Intelligence will not simply reduce costs -- they will transform compliance from a cost center into a competitive advantage. Faster onboarding attracts customers. Better detection protects the charter. Freed analyst capacity enables higher-value work. And an architecture built on open standards ensures that the investment compounds over time rather than creating vendor dependency.
+        </p>
+        <p>
+            The technology exists. The regulatory framework supports it. The economic case is clear. The question for banking leadership is no longer <em>"Should we?"</em> but <em>"How soon can we start?"</em>
+        </p>
+    </div>
+
+</div>
+
+<!-- ==================== CTA SECTION ==================== -->
+<div class="cta-section">
+    <h2>Ready to Transform Your Compliance Operations?</h2>
+    <p>
+        Schedule a confidential briefing with our Neural Intelligence team to discuss your institution's specific compliance challenges and receive a customized ROI analysis.
+    </p>
+    <a href="mailto:digitalinformation2ai@gmail.com?subject=Neural%20Intelligence%20Banking%20Compliance%20-%20Executive%20Briefing%20Request" class="cta-button">Request Executive Briefing</a>
+</div>
+
+<!-- ==================== FOOTER ==================== -->
+<div class="wp-footer">
+    <div class="disclaimer">
+        <p><strong>Disclaimer:</strong> This white paper is provided for informational purposes only and does not constitute legal, regulatory, or financial advice. Statistics cited are drawn from publicly available industry research and may not reflect the specific circumstances of any individual institution. Banks should consult with their legal counsel and regulatory advisors before implementing changes to their BSA/AML compliance programs. All projected savings and performance improvements are estimates based on industry benchmarks and should be validated through institution-specific analysis.</p>
+        <br>
+        <p>&copy; 2026 RinglyPro Neural Intelligence Division. All rights reserved.</p>
+    </div>
+</div>
+
+<!-- ==================== DOWNLOAD BAR ==================== -->
+<div class="download-bar">
+    <button class="download-btn" onclick="window.print()">Print / Save as PDF</button>
+    <button class="download-btn outline" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">Back to Top</button>
+</div>
+
+</body>
+</html>
