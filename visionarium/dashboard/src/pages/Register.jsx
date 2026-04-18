@@ -34,7 +34,7 @@ export default function Register({ lang }) {
     <div className="min-h-screen flex items-center justify-center px-6 py-12">
       <div className="glass-card w-full max-w-lg">
         <div className="flex justify-center mb-6">
-          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69dfd39cfcac588c6b2329f9.png" alt="Visionarium" className="h-24" />
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69dfd39cfcac588c6b2329f9.png" alt="Visionarium" className="h-44" />
         </div>
         <h1 className="text-2xl font-bold text-white mb-2 text-center">{isES ? 'Registro - Comunidad Abierta' : 'Register - Open Community'}</h1>
         <p className="text-white/50 text-sm mb-6 text-center">{isES ? 'Gratis. Sin aplicacion. Sin limite.' : 'Free. No application. No cap.'}</p>
