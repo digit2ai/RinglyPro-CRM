@@ -1022,6 +1022,70 @@
     line-height: 1.6;
   }
 
+  .cover-cta {
+    display: inline-block;
+    background: var(--teal-neon);
+    color: var(--navy-blk);
+    padding: 18px 48px;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: 6px;
+    border: 2px solid var(--teal-neon);
+    margin-top: 36px;
+    transition: all 0.25s;
+    box-shadow: 0 0 24px rgba(45,232,230,0.25);
+  }
+
+  .cover-cta:hover {
+    background: transparent;
+    color: var(--teal-neon);
+    box-shadow: 0 0 32px rgba(45,232,230,0.4);
+    text-shadow: 0 0 8px rgba(45,232,230,0.3);
+  }
+
+  .geo-banner {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 200;
+    background: rgba(15,23,41,0.94);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--teal);
+    border-radius: 10px;
+    padding: 14px 22px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: rgba(255,255,255,0.85);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    display: none;
+    max-width: 340px;
+    line-height: 1.5;
+  }
+
+  .geo-banner strong { color: var(--teal-neon); }
+
+  .geo-banner a {
+    color: var(--teal-neon);
+    text-decoration: underline;
+    font-weight: 600;
+  }
+
+  .geo-banner .geo-close {
+    position: absolute;
+    top: 6px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.5);
+    font-size: 18px;
+    cursor: pointer;
+    line-height: 1;
+  }
+
   .footer-cta {
     display: inline-block;
     background: transparent;
@@ -1142,7 +1206,14 @@
       <div><strong>Nueva Sede</strong> Miami, Florida</div>
       <div><strong>Primera Cohorte Formalizada</strong> Oto&ntilde;o 2026</div>
     </div>
+    <a href="mailto:Lalag16@gmail.com?subject=Registro%20%E2%80%94%20Fundaci%C3%B3n%20Visionarium&body=Hola%20Lala%2C%0A%0AQuiero%20registrarme%20en%20el%20programa%20de%20la%20Fundaci%C3%B3n%20Visionarium.%0A%0ASobre%20m%C3%AD%3A%0A%0ANombre%20completo%3A%20%0AEdad%3A%20%0ACorreo%20electr%C3%B3nico%3A%20%0ATel%C3%A9fono%3A%20%0APa%C3%ADs%2FCiudad%3A%20%0AEscuela%20o%20universidad%20actual%3A%20%0A%C3%81rea%20de%20estudio%20%2F%20inter%C3%A9s%3A%20%0A%0A%C2%BFC%C3%B3mo%20te%20enteraste%20de%20Visionarium%3F%0A%0A%0A%C2%BFPor%20qu%C3%A9%20quiero%20unirme%3F%0A%0A%0AGracias%2C%0A" class="cover-cta">Reg&iacute;strate Ahora</a>
   </div>
+</div>
+
+<!-- Geo-detection banner -->
+<div class="geo-banner" id="geoBanner">
+  <button class="geo-close" onclick="document.getElementById('geoBanner').style.display='none'">&times;</button>
+  <span id="geoMessage"></span>
 </div>
 
 <!-- ============ TOC ============ -->
@@ -2048,6 +2119,37 @@
 
 <elevenlabs-convai agent-id="agent_3301kp969e5tfcmb8jk2bam3exqa"></elevenlabs-convai>
 <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+
+<script>
+(function() {
+  // Geolocation detection
+  fetch('https://ipapi.co/json/')
+    .then(function(r) { return r.json(); })
+    .then(function(geo) {
+      var banner = document.getElementById('geoBanner');
+      var msg = document.getElementById('geoMessage');
+      var city = geo.city || '';
+      var country = geo.country_name || '';
+      var loc = city ? (city + ', ' + country) : country;
+      var spanishCountries = [
+        'MX','CO','AR','PE','CL','EC','GT','CU','BO','DO','HN','PY',
+        'SV','NI','CR','PA','UY','VE','ES','GQ'
+      ];
+      var isSpanish = spanishCountries.indexOf(geo.country_code) !== -1;
+
+      if (!isSpanish) {
+        msg.innerHTML = 'Connecting from <strong>' + loc + '</strong>. ' +
+          'This white paper is also available in English. ' +
+          '<a href="whitepaper.html">View in English</a>';
+      } else {
+        msg.innerHTML = 'Conectando desde <strong>' + loc + '</strong>. ' +
+          'Bienvenido/a a la Fundacion Visionarium.';
+      }
+      banner.style.display = 'block';
+    })
+    .catch(function() { /* silent fail */ });
+})();
+</script>
 
 </body>
 </html>
