@@ -80,7 +80,8 @@ const clinicalEvidenceRoutes = require('./routes/clinical-evidence');
 const drgRoutes = require('./routes/drg');
 const proformaTrackingRoutes = require('./routes/proforma-tracking');
 const surveyPublicRoutes = require('./routes/survey-public');
-const aiResearchRoutes = require('./routes/ai-research');
+let aiResearchRoutes;
+try { aiResearchRoutes = require('./routes/ai-research'); } catch (e) { console.error('  INTUITIVE: ai-research route load error:', e.message); }
 
 app.use(`${BASE_PATH}/health`, healthRoutes);
 app.use(`${BASE_PATH}/api/v1/projects`, projectRoutes);
@@ -94,7 +95,7 @@ app.use(`${BASE_PATH}/api/v1/clinical-evidence`, clinicalEvidenceRoutes);
 app.use(`${BASE_PATH}/api/v1/drg`, drgRoutes);
 app.use(`${BASE_PATH}/api/v1/tracking`, proformaTrackingRoutes);
 app.use(`${BASE_PATH}/survey`, surveyPublicRoutes);
-app.use(`${BASE_PATH}/api/v1/ai-research`, aiResearchRoutes);
+if (aiResearchRoutes) app.use(`${BASE_PATH}/api/v1/ai-research`, aiResearchRoutes);
 
 // ============================================================================
 // STANDALONE PROPOSAL PAGE (NO LOGIN REQUIRED — must be before SPA catch-all)

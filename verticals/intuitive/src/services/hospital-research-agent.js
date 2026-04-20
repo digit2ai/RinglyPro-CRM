@@ -6,9 +6,14 @@
  * and returns a structured hospital profile for the SurgicalMind intake form.
  */
 
-const OpenAI = require('openai');
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+let _openai = null;
+function getOpenAI() {
+  if (!_openai) {
+    const OpenAI = require('openai');
+    _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  }
+  return _openai;
+}
 
 // Industry benchmarks used when specific data isn't found
 const INDUSTRY_BENCHMARKS = {
@@ -137,7 +142,7 @@ IMPORTANT:
 
   let researchData;
   try {
-    const completion = await openai.chat.completions.create({
+    const completion = await getOpenAI().chat.completions.create({
       model: 'gpt-4o',
       messages: [
         { role: 'system', content: 'You are a hospital business intelligence analyst with deep knowledge of US hospital systems, robotic surgery programs, and healthcare operations. Provide factual data when known, and realistic estimates based on hospital size/type/location when specific data is unavailable. Return only valid JSON.' },
