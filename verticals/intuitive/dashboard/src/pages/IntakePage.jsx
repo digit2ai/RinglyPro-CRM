@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 
@@ -13,6 +13,57 @@ export default function IntakePage({ onProjectCreated, currentProject }) {
   const [loading, setLoading] = useState(false)
   const [demoLoading, setDemoLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [aiHospitalName, setAiHospitalName] = useState('')
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiJobId, setAiJobId] = useState(null)
+  const [aiProgress, setAiProgress] = useState([])
+  const [aiStep, setAiStep] = useState(null)
+  const aiPollRef = useRef(null)
+
+  // Poll AI research job status
+  useEffect(() => {
+    if (!aiJobId) return
+    aiPollRef.current = setInterval(async () => {
+      try {
+        const res = await api.getResearchStatus(aiJobId)
+        const data = res.data
+        setAiProgress(data.progress || [])
+        // Extract current step
+        const lastStep = [...(data.progress || [])].reverse().find(p => p.message?.startsWith('step:'))
+        if (lastStep) setAiStep(lastStep.message.replace('step:', ''))
+
+        if (data.status === 'completed') {
+          clearInterval(aiPollRef.current)
+          setAiLoading(false)
+          setAiJobId(null)
+          if (data.result?.project_id) {
+            onProjectCreated(data.result.project_id)
+            navigate(`/analysis/${data.result.project_id}`)
+          }
+        } else if (data.status === 'error') {
+          clearInterval(aiPollRef.current)
+          setAiLoading(false)
+          setAiJobId(null)
+          setError('AI Research error: ' + (data.error || 'Unknown error'))
+        }
+      } catch (e) {
+        // ignore polling errors
+      }
+    }, 2000)
+    return () => clearInterval(aiPollRef.current)
+  }, [aiJobId])
+
+  async function handleAiResearch() {
+    if (!aiHospitalName.trim()) { setError('Enter a hospital name'); return }
+    setAiLoading(true); setError(null); setAiProgress([]); setAiStep(null)
+    try {
+      const res = await api.startResearch(aiHospitalName.trim())
+      setAiJobId(res.job_id)
+    } catch (err) {
+      setError(err.message)
+      setAiLoading(false)
+    }
+  }
   const [form, setForm] = useState({
     hospital_name: '', contact_name: '', contact_email: '', contact_title: '',
     hospital_type: '', bed_count: '', state: '', country: 'United States',
@@ -93,11 +144,85 @@ export default function IntakePage({ onProjectCreated, currentProject }) {
         Enter hospital data to match the optimal da Vinci system configuration, calculate ROI, and generate a placement recommendation.
       </p>
 
+      {/* AI Research Agent Card */}
+      <div className="bg-gradient-to-r from-violet-950/50 to-indigo-950/40 border border-violet-700/40 rounded-xl p-6 mb-6">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          </div>
+          <div>
+            <h3 className="text-white font-bold text-lg">AI Business Analyst Agent</h3>
+            <p className="text-violet-300/70 text-xs">Powered by GPT-4o -- researches any hospital and auto-generates the full 7-step pipeline</p>
+          </div>
+        </div>
+        <p className="text-slate-400 text-sm mb-4">Type a hospital name and the AI agent will research its annual report, bed count, surgical volumes, specialty mix, robotic program, payer mix, and competitive landscape -- then auto-fill intake, run all 16 analyses, match a da Vinci system, create a business plan with clinical dollarization, and set up a surgeon survey template.</p>
+        <div className="flex gap-3">
+          <input
+            type="text"
+            value={aiHospitalName}
+            onChange={e => setAiHospitalName(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && !aiLoading && handleAiResearch()}
+            placeholder="e.g. Orlando Health, Tampa General, Mayo Clinic Jacksonville..."
+            disabled={aiLoading}
+            className="flex-1 bg-slate-900 border border-violet-700/40 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent text-sm disabled:opacity-50"
+          />
+          <button
+            type="button"
+            disabled={aiLoading || !aiHospitalName.trim()}
+            onClick={handleAiResearch}
+            className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold py-3 px-8 rounded-lg text-sm transition-all whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {aiLoading ? 'Researching...' : 'Generate Report'}
+          </button>
+        </div>
+
+        {/* AI Progress Display */}
+        {aiLoading && (
+          <div className="mt-5">
+            {/* Step indicators */}
+            <div className="flex gap-2 mb-4 flex-wrap">
+              {[
+                { key: 'research', label: 'AI Research' },
+                { key: 'project', label: 'Create Project' },
+                { key: 'analysis', label: '16 Analyses' },
+                { key: 'businessplan', label: 'Business Plan' },
+                { key: 'dollarization', label: 'Dollarization' },
+                { key: 'survey', label: 'Survey Template' },
+              ].map(step => {
+                const isActive = aiStep === step.key
+                const isPast = aiStep && ['research','project','analysis','businessplan','dollarization','survey','complete']
+                  .indexOf(aiStep) > ['research','project','analysis','businessplan','dollarization','survey','complete'].indexOf(step.key)
+                return (
+                  <div key={step.key} className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                    isActive ? 'bg-violet-600 text-white animate-pulse' :
+                    isPast ? 'bg-green-900/60 text-green-400 border border-green-700/40' :
+                    'bg-slate-800 text-slate-500 border border-slate-700'
+                  }`}>
+                    {isPast ? '>> ' : ''}{step.label}{isActive ? '...' : ''}
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Progress log */}
+            <div className="bg-slate-950/60 border border-slate-800 rounded-lg p-3 max-h-40 overflow-y-auto">
+              {aiProgress.filter(p => !p.message?.startsWith('step:')).map((p, i) => (
+                <div key={i} className="text-xs text-slate-400 py-0.5 font-mono">
+                  <span className="text-slate-600 mr-2">{new Date(p.timestamp).toLocaleTimeString()}</span>
+                  {p.message}
+                </div>
+              ))}
+              {aiProgress.length === 0 && <div className="text-xs text-slate-500 animate-pulse">Initializing AI agent...</div>}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Demo Generation Card */}
-      <div className="bg-gradient-to-r from-intuitive-900/40 to-slate-900/60 border border-intuitive-700/40 rounded-xl p-5 mb-8 flex items-center justify-between">
+      <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5 mb-8 flex items-center justify-between">
         <div>
-          <h3 className="text-white font-semibold">Demo Mode -- Generate Sample Hospitals</h3>
-          <p className="text-slate-400 text-sm mt-1">Generate 5 realistic hospital profiles (academic, community, specialty, VA) with full analysis and da Vinci system matching.</p>
+          <h3 className="text-slate-300 font-semibold text-sm">Demo Mode -- Generate Sample Hospitals</h3>
+          <p className="text-slate-500 text-xs mt-1">Generate 5 preset hospital profiles with analysis and system matching.</p>
         </div>
         <button
           type="button"
@@ -113,7 +238,7 @@ export default function IntakePage({ onProjectCreated, currentProject }) {
             } catch (err) { setError(err.message) }
             finally { setDemoLoading(false) }
           }}
-          className="bg-intuitive-600 hover:bg-intuitive-700 text-white font-semibold py-2.5 px-6 rounded-lg text-sm transition-all whitespace-nowrap disabled:opacity-50"
+          className="bg-slate-700 hover:bg-slate-600 text-slate-300 font-semibold py-2 px-5 rounded-lg text-xs transition-all whitespace-nowrap disabled:opacity-50"
         >
           {demoLoading ? 'Generating...' : 'Generate Demo'}
         </button>

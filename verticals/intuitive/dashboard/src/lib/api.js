@@ -70,6 +70,11 @@ export const api = {
   saveClinicalOutcomes: (planId, hospitalCaseData, cmsData, options) => request(`/clinical-evidence/business-plan/${planId}/outcomes`, { method: 'POST', body: JSON.stringify({ hospital_case_data: hospitalCaseData, cms_data: cmsData, options }) }),
   getClinicalOutcomes: (planId) => request(`/clinical-evidence/business-plan/${planId}/outcomes`),
 
+  // AI Research
+  startResearch: (hospitalName) => request('/ai-research/generate', { method: 'POST', body: JSON.stringify({ hospital_name: hospitalName }) }),
+  getResearchStatus: (jobId) => request(`/ai-research/status/${jobId}`),
+  researchOnly: (hospitalName) => request('/ai-research/research-only', { method: 'POST', body: JSON.stringify({ hospital_name: hospitalName }) }),
+
   // Proforma Tracking
   importActuals: (planId, data) => request(`/tracking/${planId}/actuals`, { method: 'POST', body: JSON.stringify(data) }),
   getActuals: (planId) => request(`/tracking/${planId}/actuals`),
