@@ -321,6 +321,13 @@ console.log('🧪 E2E Test routes mounted at /api/e2e-test');
 app.use('/api/photo-uploads', photoUploadRoutes); // Photo upload handling for all services
 console.log('✅ Photo Upload routes mounted at /api/photo-uploads');
 
+// TTS route for presentation narration
+try {
+  const presentationTTSRoutes = require('./routes/presentation-tts');
+  app.use('/api/tts', presentationTTSRoutes);
+  console.log('✅ Presentation TTS routes mounted at /api/tts');
+} catch (e) { console.log('⚠️ Presentation TTS routes not loaded:', e.message); }
+
 // Mount Google Calendar OAuth routes
 app.use('/api/google-oauth', googleOAuthRoutes); // Google Calendar OAuth integration
 console.log('🗓️ Google Calendar OAuth routes mounted at /api/google-oauth');

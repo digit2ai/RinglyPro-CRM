@@ -1639,10 +1639,6 @@
   <div class="slide-info" id="slideInfo">01 / 16</div>
 </div>
 
-<!-- ElevenLabs ConvAI Widget -->
-<elevenlabs-convai agent-id="agent_5001kn4s9jsqernanpgc4ejh1a0e"></elevenlabs-convai>
-<script src="https://elevenlabs.io/convai-widget/index.js" async type="text/javascript"></script>
-
 <script>
   // ============ SLIDE ENGINE ============
   const slides = document.querySelectorAll('.slide');
@@ -1659,6 +1655,132 @@
   const narrationWave = document.getElementById('narrationWave');
 
   let autoAdvanceTimer = null;
+
+  // ============ RACHEL TTS NARRATION SCRIPTS ============
+  const NARRATIONS = [
+    // Slide 0: Title
+    "Welcome to SurgicalMind AI. The comprehensive business planning platform for da Vinci robotic surgery. Powered by Claude Sonnet 4 and built by Digit2AI. Tap Start or press Play to begin the presentation.",
+    // Slide 1: The Challenge
+    "Here is the one point five million dollar question nobody can answer. Four systemic problems face every da Vinci sales team today. First, business plans are inconsistent because skill levels vary and there is no standard methodology. Second, surgeon data is fragmented across field notes, emails, and survey monkey. Third, clinical outcomes are never dollarized, even though thousands of published studies prove da Vinci superiority. And fourth, after the robot is placed, there is zero tracking of projected versus actual performance.",
+    // Slide 2: The Platform
+    "SurgicalMind AI solves all four problems with four integrated modules in one platform. Problem one, consistency, is solved by a deterministic analysis engine. Problem two, surgeon data, is solved by a digital survey engine. Problem three, clinical outcomes, is solved by a dollarization engine backed by sixty eight published studies. And problem four, tracking, is solved by a proforma versus actual tracker with executive reporting.",
+    // Slide 3: AI Research Agent
+    "Module one is the AI Business Analyst Agent, powered by Claude Sonnet 4. You type a hospital name, like Orlando Health, and the agent researches everything: bed count, surgical volumes, specialty mix, robotic program history, payer mix, and competitive landscape. It auto-fills over forty data points and runs the entire analysis pipeline in under twenty five seconds.",
+    // Slide 4: 3-Layer Analysis
+    "Every slide in SurgicalMind tells the CFO story in three layers. Layer one shows total hospital surgical volume. Layer two shows current robotic cases. Layer three shows the incremental da Vinci opportunity. For example, a hospital doing twelve thousand surgeries at fifteen percent robotic has a path to forty five percent robotic, adding thirty six hundred new da Vinci cases per year.",
+    // Slide 5: 16 Modules
+    "The analysis engine runs sixteen computational modules. Five cover volume and scheduling, including procedure pareto analysis and monthly seasonality. Five cover system matching, scoring each da Vinci configuration on a hundred point scale. And six cover financial and risk analysis, including total cost of ownership, breakeven curves, and growth extrapolation under three scenarios.",
+    // Slide 6: DRG Library
+    "Module three is the DRG Reimbursement Library. Twenty eight procedures across eight specialties, each with real DRG codes and payer specific rates. A radical prostatectomy reimburses sixteen thousand three hundred thirteen dollars blended. A lobectomy, twenty five thousand two hundred fifty three. The system takes each hospital's actual payer mix and calculates a weighted rate per case.",
+    // Slide 7: Surgeon Survey
+    "Module four is the Surgeon Survey Engine. Eight questions go directly to the surgeon by email, SMS, or shareable link. No login required. The surgeon tells us how many more cases they would do with da Vinci access, what procedures, what barriers they face, and how many cases they are currently taking to competitor hospitals. Responses auto import into the business plan with zero manual transcription.",
+    // Slide 8: Clinical Evidence
+    "Module five is the Clinical Outcome Dollarization Engine. Sixty eight peer reviewed studies from JAMA Surgery, Annals of Surgery, European Urology, and more. Forty four outcome metrics across eight surgical specialties. Each metric has open surgery rates, laparoscopic rates, and robotic rates, with the cost per adverse event. This is the data that turns clinical superiority into dollars.",
+    // Slide 9: Dollarization Example
+    "Here is what two million dollars in clinical savings looks like. Take a hospital with eight hundred colorectal and twelve hundred urology cases. The colorectal department alone saves one point seven million dollars annually from reduced surgical site infections, shorter length of stay, and fewer readmissions. Urology adds another two hundred ninety five thousand. Every dollar is backed by a peer reviewed citation.",
+    // Slide 10: Proforma Tracker
+    "Module six is the Proforma versus Actual Tracker. After the robot is placed, the business plan becomes a living document. Import actual surgeon volumes monthly or quarterly. The system calculates variance at the individual surgeon level. Generate executive summaries showing the hospital CFO exactly how the investment is performing. The investment does not end at placement. Neither does SurgicalMind.",
+    // Slide 11: Business Plan Output
+    "The final output is a three layer business plan. Layer one is the dollar ROI from surgeon incremental volume commitments multiplied by DRG reimbursement rates. Layer two is the dollar savings from clinical outcome improvements based on sixty eight published studies. Layer three is the combined ROI with payback period. One plan. Three revenue streams. Fully defensible.",
+    // Slide 12: da Vinci Systems
+    "SurgicalMind supports all six da Vinci system configurations. The da Vinci five and five Dual Console for flagship and academic programs. The Xi and Xi Dual Console as the proven workhorse. The X as the entry level platform. And the SP for single port urology and head and neck procedures. Each system is matched based on volume, specialty mix, budget, and infrastructure.",
+    // Slide 13: Demo Data
+    "Real results. Cleveland Clinic Florida. Twelve thousand annual surgeries, currently fifteen percent robotic. SurgicalMind recommended the da Vinci five with a ninety out of one hundred fit score. The platform identified thirty six hundred thirty incremental da Vinci cases and eighteen point three million dollars in annual clinical savings. All generated automatically from a single hospital name input.",
+    // Slide 14: Workflow
+    "The platform guides users through a seven step workflow. Hospital intake with AI research. Sixteen module analysis. System matching. Voice narrated presentation. Business plan with DRG reimbursement. Surgeon surveys. And plan tracking. All live today at aiagent dot ringlypro dot com slash intuitive.",
+    // Slide 15: CTA
+    "Ready to see SurgicalMind AI build a business plan for your hospital? One demo. One hospital name. Complete business plan in under sixty seconds. Contact us at manuel at digit2ai dot com. Digit2AI. Powering the intelligence layer for robotic surgery."
+  ];
+
+  // ============ TTS AUDIO ENGINE ============
+  var rachelAudio = new Audio();
+  rachelAudio.volume = 1.0;
+  var ttsCache = {}; // hash -> blob URL
+  var currentNarrationEnd = null;
+
+  rachelAudio.addEventListener('play', function() { narrationWave.classList.add('active'); });
+  rachelAudio.addEventListener('ended', function() {
+    narrationWave.classList.remove('active');
+    if (currentNarrationEnd) { var cb = currentNarrationEnd; currentNarrationEnd = null; cb(); }
+  });
+  rachelAudio.addEventListener('error', function() {
+    narrationWave.classList.remove('active');
+    console.error('Audio error');
+    if (currentNarrationEnd) {
+      var cb = currentNarrationEnd;
+      currentNarrationEnd = null;
+      // Fallback to timed advance
+      var ms = slides[idx].dataset.autoAdvance ? parseInt(slides[idx].dataset.autoAdvance) : 8000;
+      autoAdvanceTimer = setTimeout(cb, ms);
+    }
+  });
+
+  function cancelNarration() {
+    currentNarrationEnd = null;
+    rachelAudio.pause();
+    rachelAudio.removeAttribute('src');
+    rachelAudio.load();
+    narrationWave.classList.remove('active');
+  }
+
+  async function fetchTTS(text) {
+    var hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    var hashHex = Array.from(new Uint8Array(hash)).map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+
+    if (ttsCache[hashHex]) return ttsCache[hashHex];
+
+    try {
+      var resp = await fetch('/api/tts/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text })
+      });
+      if (!resp.ok) throw new Error('TTS failed: ' + resp.status);
+      var blob = await resp.blob();
+      var url = URL.createObjectURL(blob);
+      ttsCache[hashHex] = url;
+      return url;
+    } catch (e) {
+      console.error('TTS fetch error:', e);
+      return null;
+    }
+  }
+
+  async function narrateSlide(slideIndex, onEnd) {
+    cancelNarration();
+    cancelAutoAdvance();
+
+    var text = NARRATIONS[slideIndex];
+    if (!text) {
+      // No narration for this slide -- use timed advance
+      var ms = slides[slideIndex].dataset.autoAdvance ? parseInt(slides[slideIndex].dataset.autoAdvance) : 8000;
+      autoAdvanceTimer = setTimeout(function() { if (onEnd) onEnd(); }, ms);
+      return;
+    }
+
+    currentNarrationEnd = onEnd;
+    narrationWave.classList.add('active'); // show wave while loading
+
+    var audioUrl = await fetchTTS(text);
+    if (!autoPlaying) { narrationWave.classList.remove('active'); return; } // stopped while loading
+
+    if (audioUrl) {
+      rachelAudio.src = audioUrl;
+      rachelAudio.play().catch(function(err) {
+        console.error('Audio play failed:', err.message);
+        narrationWave.classList.remove('active');
+        currentNarrationEnd = null;
+        var ms = slides[slideIndex].dataset.autoAdvance ? parseInt(slides[slideIndex].dataset.autoAdvance) : 8000;
+        autoAdvanceTimer = setTimeout(function() { if (onEnd) onEnd(); }, ms);
+      });
+    } else {
+      // TTS unavailable -- fall back to timed advance
+      narrationWave.classList.remove('active');
+      currentNarrationEnd = null;
+      var ms = slides[slideIndex].dataset.autoAdvance ? parseInt(slides[slideIndex].dataset.autoAdvance) : 8000;
+      autoAdvanceTimer = setTimeout(function() { if (onEnd) onEnd(); }, ms);
+    }
+  }
 
   function show(n) {
     idx = Math.max(0, Math.min(TOTAL - 1, n));
@@ -1710,6 +1832,7 @@
   function manualNav(n) {
     if (autoPlaying) pauseAutoPlay();
     cancelAutoAdvance();
+    cancelNarration();
     show(n);
   }
 
@@ -1718,17 +1841,16 @@
       clearTimeout(autoAdvanceTimer);
       autoAdvanceTimer = null;
     }
-    narrationWave.classList.remove('active');
   }
 
-  // ============ AUTO-PLAY ENGINE ============
+  // ============ AUTO-PLAY ENGINE WITH TTS ============
   var autoPlaying = false;
 
   function startAutoPlay() {
     autoPlaying = true;
     btnPlayPause.innerHTML = '&#10074;&#10074;';
     recIndicator.classList.add('active');
-    autoAdvanceCurrentSlide();
+    autoNarrateCurrentSlide();
   }
 
   function pauseAutoPlay() {
@@ -1736,6 +1858,7 @@
     btnPlayPause.innerHTML = '&#9654;';
     recIndicator.classList.remove('active');
     cancelAutoAdvance();
+    cancelNarration();
   }
 
   function stopAutoPlay() {
@@ -1743,43 +1866,30 @@
     btnPlayPause.innerHTML = '&#9654;';
     recIndicator.classList.remove('active');
     cancelAutoAdvance();
+    cancelNarration();
     show(0);
   }
 
-  function autoAdvanceCurrentSlide() {
+  function autoNarrateCurrentSlide() {
     if (!autoPlaying) return;
 
-    var slide = slides[idx];
-    var ms = slide.dataset.autoAdvance ? parseInt(slide.dataset.autoAdvance) : 8000;
-    var isLast = slide.hasAttribute('data-last-slide');
+    var isLast = slides[idx].hasAttribute('data-last-slide');
 
-    // Show waveform indicator during autoplay
-    narrationWave.classList.add('active');
-
-    // Wait for slide entrance animation, then schedule advance
-    setTimeout(function() {
+    narrateSlide(idx, function() {
       if (!autoPlaying) return;
 
       if (isLast) {
-        // Last slide: show for full duration then stop
-        autoAdvanceTimer = setTimeout(function() {
-          narrationWave.classList.remove('active');
-          pauseAutoPlay();
-        }, ms);
+        pauseAutoPlay();
         return;
       }
 
-      autoAdvanceTimer = setTimeout(function() {
-        if (!autoPlaying) return;
-        narrationWave.classList.remove('active');
-        if (idx < TOTAL - 1) {
-          show(idx + 1);
-          autoAdvanceCurrentSlide();
-        } else {
-          pauseAutoPlay();
-        }
-      }, ms);
-    }, 800);
+      if (idx < TOTAL - 1) {
+        show(idx + 1);
+        autoNarrateCurrentSlide();
+      } else {
+        pauseAutoPlay();
+      }
+    });
   }
 
   // ============ CONTROL EVENT LISTENERS ============
