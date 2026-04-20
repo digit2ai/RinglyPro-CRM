@@ -445,6 +445,29 @@ try {
     console.log('HISPATEC routes not available:', error.message);
 }
 
+// Chamber Template Ecosystem (cookie-cutter chamber instances)
+try {
+    const fs = require('fs');
+    const path = require('path');
+    const createChamberRouter = require('../chamber-template/routes/index');
+    const configsDir = path.join(__dirname, '..', 'configs');
+    if (fs.existsSync(configsDir)) {
+        const configFiles = fs.readdirSync(configsDir).filter(f => f.endsWith('.json'));
+        for (const file of configFiles) {
+            try {
+                const config = JSON.parse(fs.readFileSync(path.join(configsDir, file), 'utf-8'));
+                const mountPath = config.mount_path || `/chamber/${config.slug}`;
+                app.use(`${mountPath}/api`, createChamberRouter(config));
+                console.log(`Chamber [${config.short_name || config.slug}] mounted at ${mountPath}/api`);
+            } catch (e) {
+                console.error(`Chamber config ${file} failed:`, e.message);
+            }
+        }
+    }
+} catch (error) {
+    console.log('Chamber template not available:', error.message);
+}
+
 // ElevenLabs Conversational AI tools routes
 if (elevenlabsToolsRoutes) {
     app.use('/api/elevenlabs/tools', elevenlabsToolsRoutes);

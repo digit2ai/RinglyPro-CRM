@@ -1,0 +1,87 @@
+{
+  "slug": "pcci",
+  "name": "Philippine Chamber of Commerce and Industry",
+  "short_name": "PCCI",
+  "tagline": "Empowering Filipino Business Worldwide",
+  "description": "The premier business network connecting Filipino entrepreneurs, professionals, and enterprises across the globe. Building bridges between Philippine talent, international markets, and strategic partnerships.",
+  "language": "en",
+  "colors": {
+    "primary": "#0038A8",
+    "primary_dark": "#002B80",
+    "primary_light": "#E6EDF8",
+    "secondary": "#CE1126",
+    "secondary_dark": "#A00D1E",
+    "accent": "#FCD116",
+    "accent_light": "#FFF4CC",
+    "accent_dark": "#C9A60E",
+    "navy": "#1A2332",
+    "navy_light": "#2D3A4D",
+    "white": "#FFFFFF",
+    "gray_50": "#F8F9FA"
+  },
+  "db_prefix": "pcci",
+  "mount_path": "/chamber/pcci",
+  "jwt_secret": "pcci-chamber-jwt-2026",
+  "regions": [
+    { "id": 1, "name": "NCR / Metro Manila" },
+    { "id": 2, "name": "Luzon" },
+    { "id": 3, "name": "Visayas" },
+    { "id": 4, "name": "Mindanao" },
+    { "id": 5, "name": "International / OFW" }
+  ],
+  "sectors": [
+    "manufacturing", "agriculture", "BPO", "tourism", "fintech",
+    "logistics", "retail", "energy", "construction", "mining",
+    "fisheries", "IT", "healthcare", "education", "real_estate",
+    "food_processing", "textiles", "automotive", "telecommunications", "consulting"
+  ],
+  "membership_tiers": {
+    "regular": { "monthly": 15, "annual": 144, "label": "Regular Member" },
+    "corporate": { "monthly": 75, "annual": 720, "label": "Corporate Member" },
+    "patron": { "monthly": 150, "annual": 1440, "label": "Patron Member" },
+    "founding": { "monthly": 0, "annual": 0, "label": "Founding Member (by invitation)" }
+  },
+  "membership_scores": {
+    "regular": 0.4, "corporate": 0.6, "patron": 0.8, "founding": 1.0
+  },
+  "governance_roles": [
+    "superadmin",
+    "president", "vp", "secretary_general", "treasurer", "board_member",
+    "chapter_president", "chapter_secretary", "chapter_treasurer", "chapter_board",
+    "member"
+  ],
+  "pillar_labels": {
+    "equity": "Equity",
+    "trust": "Trust",
+    "network": "Network",
+    "projects": "Projects",
+    "activation": "Activation"
+  },
+  "features": {
+    "matching": true,
+    "exchange": true,
+    "mcp": true,
+    "payments": true,
+    "monte_carlo": true,
+    "trust_rank": true
+  },
+  "admin_account": {
+    "email": "admin@pcci.chamber",
+    "password": "PCCI-Admin-2026!",
+    "first_name": "PCCI",
+    "last_name": "Administrator"
+  },
+  "execution_order": [
+    "1. CREATE_TABLES     -- Run SQL to create all {prefix}_* tables in PostgreSQL",
+    "2. SEED_REGIONS      -- Insert regions from config.regions into {prefix}_regions",
+    "3. GENERATE_LANDING  -- Render landing page HTML from template + config to public/chamber/{slug}/",
+    "4. GENERATE_DASHBOARD-- Render dashboard SPA from template + config to public/chamber/{slug}/dashboard/",
+    "5. MOUNT_ROUTES      -- Register chamber routes in src/app.js at /chamber/{slug}/api",
+    "6. CREATE_ADMIN      -- Insert superadmin account into {prefix}_members",
+    "7. VERIFY_LOCAL      -- Hit /chamber/{slug}/api/health and confirm all modules respond",
+    "8. GIT_COMMIT        -- git add + commit",
+    "9. GIT_PUSH          -- git push origin main (triggers Render deploy)",
+    "10. VERIFY_PRODUCTION -- Wait 90s, then curl production health endpoint",
+    "11. REPORT            -- Output summary: URL, admin credentials, table count, module status"
+  ]
+}

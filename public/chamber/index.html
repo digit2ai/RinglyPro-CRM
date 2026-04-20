@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chamber Network -- Powered by RinglyPro</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #1A2332;
+  --white: #FFFFFF;
+  --gray-50: #F8F9FA;
+  --gray-100: #F1F3F5;
+  --gray-500: #6C757D;
+  --gray-700: #495057;
+  --gray-900: #212529;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Inter',sans-serif; background:var(--gray-50); color:var(--gray-900); min-height:100vh; }
+.header {
+  background:var(--navy); color:var(--white); padding:24px 32px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.header h1 { font-size:24px; font-weight:800; letter-spacing:2px; }
+.header .powered { font-size:13px; color:rgba(255,255,255,0.5); }
+.container { max-width:1100px; margin:0 auto; padding:48px 24px; }
+.intro { text-align:center; margin-bottom:48px; }
+.intro h2 { font-size:28px; font-weight:700; margin-bottom:12px; }
+.intro p { color:var(--gray-700); font-size:16px; line-height:1.6; max-width:700px; margin:0 auto; }
+.grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:24px; }
+.card {
+  background:var(--white); border-radius:12px; overflow:hidden;
+  box-shadow:0 2px 12px rgba(0,0,0,0.06); transition:transform 0.2s, box-shadow 0.2s;
+}
+.card:hover { transform:translateY(-4px); box-shadow:0 8px 24px rgba(0,0,0,0.1); }
+.card-banner { height:8px; }
+.card-body { padding:24px; }
+.card-body h3 { font-size:20px; font-weight:700; margin-bottom:4px; }
+.card-body .short-name { font-size:13px; color:var(--gray-500); font-weight:600; letter-spacing:2px; margin-bottom:12px; }
+.card-body .tagline { font-size:15px; color:var(--gray-700); margin-bottom:16px; line-height:1.5; }
+.card-body .meta { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:16px; }
+.card-body .meta span { font-size:12px; color:var(--gray-500); background:var(--gray-100); padding:4px 10px; border-radius:20px; }
+.card-actions { display:flex; gap:12px; }
+.btn {
+  display:inline-block; padding:10px 20px; border-radius:8px; font-size:14px;
+  font-weight:600; text-decoration:none; transition:opacity 0.2s; text-align:center;
+}
+.btn:hover { opacity:0.85; }
+.footer {
+  text-align:center; padding:32px 24px; color:var(--gray-500); font-size:13px;
+  border-top:1px solid var(--gray-100); margin-top:48px;
+}
+@media (max-width:600px) {
+  .header { flex-direction:column; gap:8px; text-align:center; }
+  .grid { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>CHAMBER NETWORK</h1>
+  <div class="powered">Powered by RinglyPro AI Platform</div>
+</div>
+
+<div class="container">
+  <div class="intro">
+    <h2>Global Chamber of Commerce Ecosystem</h2>
+    <p>Each chamber operates as an independent, confidential network with its own member database, AI matching engine, project management, and business exchange. Built on shared technology, isolated by design.</p>
+  </div>
+
+  <div class="grid" id="chamberGrid">
+    <!-- PCCI -->
+    <div class="card">
+      <div class="card-banner" style="background:linear-gradient(90deg, #0038A8, #CE1126, #FCD116);"></div>
+      <div class="card-body">
+        <h3>Philippine Chamber of Commerce and Industry</h3>
+        <div class="short-name">PCCI</div>
+        <div class="tagline">Empowering Filipino Business Worldwide -- connecting entrepreneurs, professionals, and enterprises across the Philippine archipelago and global diaspora.</div>
+        <div class="meta">
+          <span>5 Regions</span>
+          <span>12 Sectors</span>
+          <span>AI Matching</span>
+          <span>Monte Carlo</span>
+        </div>
+        <div class="card-actions">
+          <a href="/chamber/pcci/" class="btn" style="background:#0038A8;color:#FFF;">Visit Portal</a>
+          <a href="/chamber/pcci/dashboard/" class="btn" style="background:#FCD116;color:#1A2332;">Member Dashboard</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Coming Soon: USHCC -->
+    <div class="card" style="opacity:0.6;">
+      <div class="card-banner" style="background:linear-gradient(90deg, #002868, #BF0A30, #FFFFFF);"></div>
+      <div class="card-body">
+        <h3>United States Hispanic Chamber of Commerce</h3>
+        <div class="short-name">USHCC</div>
+        <div class="tagline">Coming soon -- the nation's largest Hispanic business organization representing 5+ million Hispanic-owned businesses.</div>
+        <div class="meta">
+          <span>Coming Soon</span>
+        </div>
+        <div class="card-actions">
+          <span class="btn" style="background:var(--gray-100);color:var(--gray-500);cursor:default;">Coming Soon</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  Chamber Network &copy; 2026 -- Powered by <a href="https://aiagent.ringlypro.com" style="color:var(--gray-700);text-decoration:underline;">RinglyPro AI Platform</a> | <a href="https://digit2ai.com" style="color:var(--gray-700);text-decoration:underline;">Digit2AI LLC</a>
+</div>
+</body>
+</html>
