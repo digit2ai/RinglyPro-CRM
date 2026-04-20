@@ -156,20 +156,30 @@ async function storeResult(models, projectId, analysisType, resultData) {
 }
 
 // ─── VOLUME PROJECTION ───
+// CFO-focused: shows total hospital volume, current approach mix, and da Vinci opportunity
 function computeVolumeProjection(p) {
   const totalSurgical = p.annual_surgical_volume || 0;
   const currentRobotic = p.current_robotic_cases || 0;
+
+  // Current approach breakdown (estimate if not provided)
+  const currentRoboticPct = totalSurgical > 0 ? Math.round((currentRobotic / totalSurgical) * 100) : 0;
+  const currentOpenPct = Math.max(0, Math.round((100 - currentRoboticPct) * 0.55)); // ~55% of non-robotic is open
+  const currentLapPct = Math.max(0, 100 - currentRoboticPct - currentOpenPct);
+
+  const currentOpen = Math.round(totalSurgical * currentOpenPct / 100);
+  const currentLap = Math.round(totalSurgical * currentLapPct / 100);
+
   const convertibleLap = p.convertible_lap_cases || Math.round(totalSurgical * 0.3);
 
-  // Specialty-weighted conversion rates
+  // Specialty-weighted conversion rates -- what % of each specialty CAN go robotic
   const conversionRates = {
-    urology: 0.85,      // Prostatectomy is almost entirely robotic now
-    gynecology: 0.45,    // Growing but contested
-    general: 0.25,       // Hernia, cholecystectomy — moderate adoption
-    thoracic: 0.30,      // Lobectomy, mediastinal
-    colorectal: 0.35,    // Growing especially in rectal cancer
-    head_neck: 0.20,     // Transoral — niche
-    cardiac: 0.15        // Still early
+    urology: 0.85,
+    gynecology: 0.45,
+    general: 0.25,
+    thoracic: 0.30,
+    colorectal: 0.35,
+    head_neck: 0.20,
+    cardiac: 0.15
   };
 
   const specialties = {
@@ -189,35 +199,75 @@ function computeVolumeProjection(p) {
   for (const [spec, pct] of Object.entries(specialties)) {
     if (pct > 0) {
       const specVolume = Math.round(totalSurgical * (pct / 100));
-      const convertible = Math.round(specVolume * conversionRates[spec]);
-      bySpecialty[spec] = { volume: specVolume, convertible, rate: conversionRates[spec], pct };
+      const maxConvertible = Math.round(specVolume * conversionRates[spec]);
+      // Current robotic in this specialty (proportional to overall robotic rate)
+      const specCurrentRobotic = Math.round(specVolume * currentRoboticPct / 100);
+      const specCurrentOpen = Math.round(specVolume * currentOpenPct / 100);
+      const specCurrentLap = specVolume - specCurrentRobotic - specCurrentOpen;
+      // Incremental opportunity = convertible minus what's already robotic
+      const incrementalOpportunity = Math.max(0, maxConvertible - specCurrentRobotic);
+
+      bySpecialty[spec] = {
+        total_volume: specVolume,
+        current_open: specCurrentOpen,
+        current_lap: Math.max(0, specCurrentLap),
+        current_robotic: specCurrentRobotic,
+        max_convertible: maxConvertible,
+        incremental_opportunity: incrementalOpportunity,
+        conversion_rate: conversionRates[spec],
+        pct
+      };
       weightedConversion += conversionRates[spec] * (pct / 100);
       totalPct += pct;
     }
   }
 
-  // Ramp-up projections (year 1-5)
-  const year1Adoption = 0.4;  // 40% of convertible in year 1
+  const totalIncrementalOpportunity = Object.values(bySpecialty).reduce((s, v) => s + v.incremental_opportunity, 0);
+
+  // 5-year ramp-up from current state
+  const year1Adoption = 0.4;
   const projections = [];
   for (let yr = 1; yr <= 5; yr++) {
     const adoptionRate = Math.min(1.0, year1Adoption + (yr - 1) * 0.15);
-    const projectedRobotic = Math.round(convertibleLap * adoptionRate);
+    const newRoboticCases = Math.round(totalIncrementalOpportunity * adoptionRate);
+    const totalRobotic = currentRobotic + newRoboticCases;
+    const remainingOpen = Math.max(0, currentOpen - Math.round(newRoboticCases * 0.6));
+    const remainingLap = Math.max(0, totalSurgical - totalRobotic - remainingOpen);
     projections.push({
       year: yr,
       adoption_rate: Math.round(adoptionRate * 100),
-      projected_cases: projectedRobotic,
-      cases_per_week: Math.round(projectedRobotic / 50 * 10) / 10
+      total_surgical: totalSurgical,
+      current_robotic: currentRobotic,
+      new_robotic_cases: newRoboticCases,
+      total_robotic: totalRobotic,
+      remaining_open: remainingOpen,
+      remaining_lap: remainingLap,
+      robotic_pct: totalSurgical > 0 ? Math.round((totalRobotic / totalSurgical) * 100) : 0,
+      cases_per_week: Math.round(totalRobotic / 50 * 10) / 10
     });
   }
 
   return {
+    // Hospital totals -- what the CFO sees first
     total_surgical: totalSurgical,
-    current_robotic: currentRobotic,
+    current_approach_mix: {
+      open: { cases: currentOpen, pct: currentOpenPct },
+      laparoscopic: { cases: currentLap, pct: currentLapPct },
+      robotic: { cases: currentRobotic, pct: currentRoboticPct }
+    },
+    // da Vinci opportunity
+    total_incremental_opportunity: totalIncrementalOpportunity,
     convertible_laparoscopic: convertibleLap,
     weighted_conversion_rate: Math.round(weightedConversion * 100),
+    // Per-specialty breakdown
     by_specialty: bySpecialty,
+    // 5-year projection
     projections,
-    design_year_cases: projections[2]?.projected_cases || 0 // Year 3 = steady state
+    // Design year = Year 3 total robotic (current + incremental)
+    design_year_cases: projections[2]?.total_robotic || 0,
+    design_year_new_cases: projections[2]?.new_robotic_cases || 0,
+    // Current state
+    current_robotic: currentRobotic
   };
 }
 
@@ -596,64 +646,65 @@ async function generateRecommendations(models, projectId, p, results) {
 }
 
 // ─── PROCEDURE PARETO (ABC ANALYSIS) ───
+// CFO-focused: shows TOTAL hospital volume per procedure with open/lap/robotic breakdown
+// and da Vinci conversion opportunity
 function computeProcedurePareto(p, volumeProj) {
-  // Realistic procedure names by specialty with relative frequency weights
   const PROCEDURE_CATALOG = {
     urology: [
-      { name: 'Radical Prostatectomy', weight: 0.35 },
-      { name: 'Partial Nephrectomy', weight: 0.20 },
-      { name: 'Radical Nephrectomy', weight: 0.12 },
-      { name: 'Cystectomy', weight: 0.10 },
-      { name: 'Pyeloplasty', weight: 0.08 },
-      { name: 'Nephroureterectomy', weight: 0.06 },
-      { name: 'Adrenalectomy', weight: 0.05 },
-      { name: 'Ureteral Reimplant', weight: 0.04 }
+      { name: 'Radical Prostatectomy', weight: 0.35, robotic_eligible_pct: 95 },
+      { name: 'Partial Nephrectomy', weight: 0.20, robotic_eligible_pct: 85 },
+      { name: 'Radical Nephrectomy', weight: 0.12, robotic_eligible_pct: 80 },
+      { name: 'Cystectomy', weight: 0.10, robotic_eligible_pct: 75 },
+      { name: 'Pyeloplasty', weight: 0.08, robotic_eligible_pct: 90 },
+      { name: 'Nephroureterectomy', weight: 0.06, robotic_eligible_pct: 70 },
+      { name: 'Adrenalectomy', weight: 0.05, robotic_eligible_pct: 65 },
+      { name: 'Ureteral Reimplant', weight: 0.04, robotic_eligible_pct: 60 }
     ],
     gynecology: [
-      { name: 'Hysterectomy (Benign)', weight: 0.30 },
-      { name: 'Hysterectomy (Oncologic)', weight: 0.15 },
-      { name: 'Myomectomy', weight: 0.18 },
-      { name: 'Sacrocolpopexy', weight: 0.12 },
-      { name: 'Endometriosis Excision', weight: 0.10 },
-      { name: 'Oophorectomy', weight: 0.08 },
-      { name: 'Lymph Node Dissection (GYN)', weight: 0.07 }
+      { name: 'Hysterectomy (Benign)', weight: 0.30, robotic_eligible_pct: 80 },
+      { name: 'Hysterectomy (Oncologic)', weight: 0.15, robotic_eligible_pct: 70 },
+      { name: 'Myomectomy', weight: 0.18, robotic_eligible_pct: 65 },
+      { name: 'Sacrocolpopexy', weight: 0.12, robotic_eligible_pct: 85 },
+      { name: 'Endometriosis Excision', weight: 0.10, robotic_eligible_pct: 50 },
+      { name: 'Oophorectomy', weight: 0.08, robotic_eligible_pct: 40 },
+      { name: 'Lymph Node Dissection (GYN)', weight: 0.07, robotic_eligible_pct: 60 }
     ],
     general: [
-      { name: 'Inguinal Hernia Repair', weight: 0.25 },
-      { name: 'Cholecystectomy', weight: 0.20 },
-      { name: 'Ventral Hernia Repair', weight: 0.15 },
-      { name: 'Nissen Fundoplication', weight: 0.12 },
-      { name: 'Heller Myotomy', weight: 0.08 },
-      { name: 'Gastric Bypass', weight: 0.10 },
-      { name: 'Sleeve Gastrectomy', weight: 0.10 }
+      { name: 'Inguinal Hernia Repair', weight: 0.25, robotic_eligible_pct: 45 },
+      { name: 'Cholecystectomy', weight: 0.20, robotic_eligible_pct: 20 },
+      { name: 'Ventral Hernia Repair', weight: 0.15, robotic_eligible_pct: 55 },
+      { name: 'Nissen Fundoplication', weight: 0.12, robotic_eligible_pct: 60 },
+      { name: 'Heller Myotomy', weight: 0.08, robotic_eligible_pct: 70 },
+      { name: 'Gastric Bypass', weight: 0.10, robotic_eligible_pct: 30 },
+      { name: 'Sleeve Gastrectomy', weight: 0.10, robotic_eligible_pct: 25 }
     ],
     thoracic: [
-      { name: 'Lobectomy', weight: 0.35 },
-      { name: 'Segmentectomy', weight: 0.20 },
-      { name: 'Thymectomy', weight: 0.15 },
-      { name: 'Mediastinal Mass Resection', weight: 0.15 },
-      { name: 'Esophagectomy', weight: 0.15 }
+      { name: 'Lobectomy', weight: 0.35, robotic_eligible_pct: 65 },
+      { name: 'Segmentectomy', weight: 0.20, robotic_eligible_pct: 60 },
+      { name: 'Thymectomy', weight: 0.15, robotic_eligible_pct: 70 },
+      { name: 'Mediastinal Mass Resection', weight: 0.15, robotic_eligible_pct: 50 },
+      { name: 'Esophagectomy', weight: 0.15, robotic_eligible_pct: 35 }
     ],
     colorectal: [
-      { name: 'Low Anterior Resection', weight: 0.30 },
-      { name: 'Right Hemicolectomy', weight: 0.22 },
-      { name: 'Left Hemicolectomy', weight: 0.15 },
-      { name: 'Sigmoid Colectomy', weight: 0.13 },
-      { name: 'Total Colectomy', weight: 0.08 },
-      { name: 'Rectopexy', weight: 0.07 },
-      { name: 'Abdominoperineal Resection', weight: 0.05 }
+      { name: 'Low Anterior Resection', weight: 0.30, robotic_eligible_pct: 70 },
+      { name: 'Right Hemicolectomy', weight: 0.22, robotic_eligible_pct: 55 },
+      { name: 'Left Hemicolectomy', weight: 0.15, robotic_eligible_pct: 55 },
+      { name: 'Sigmoid Colectomy', weight: 0.13, robotic_eligible_pct: 50 },
+      { name: 'Total Colectomy', weight: 0.08, robotic_eligible_pct: 30 },
+      { name: 'Rectopexy', weight: 0.07, robotic_eligible_pct: 75 },
+      { name: 'Abdominoperineal Resection', weight: 0.05, robotic_eligible_pct: 40 }
     ],
     head_neck: [
-      { name: 'TORS - Oropharyngeal', weight: 0.40 },
-      { name: 'TORS - Base of Tongue', weight: 0.25 },
-      { name: 'TORS - Supraglottic Laryngectomy', weight: 0.15 },
-      { name: 'Thyroidectomy', weight: 0.20 }
+      { name: 'TORS - Oropharyngeal', weight: 0.40, robotic_eligible_pct: 90 },
+      { name: 'TORS - Base of Tongue', weight: 0.25, robotic_eligible_pct: 90 },
+      { name: 'TORS - Supraglottic Laryngectomy', weight: 0.15, robotic_eligible_pct: 80 },
+      { name: 'Thyroidectomy', weight: 0.20, robotic_eligible_pct: 30 }
     ],
     cardiac: [
-      { name: 'Mitral Valve Repair', weight: 0.35 },
-      { name: 'CABG (Robotic Harvest)', weight: 0.25 },
-      { name: 'Atrial Septal Defect Repair', weight: 0.20 },
-      { name: 'Cardiac Tumor Resection', weight: 0.20 }
+      { name: 'Mitral Valve Repair', weight: 0.35, robotic_eligible_pct: 40 },
+      { name: 'CABG (Robotic Harvest)', weight: 0.25, robotic_eligible_pct: 35 },
+      { name: 'Atrial Septal Defect Repair', weight: 0.20, robotic_eligible_pct: 45 },
+      { name: 'Cardiac Tumor Resection', weight: 0.20, robotic_eligible_pct: 25 }
     ]
   };
 
@@ -668,41 +719,75 @@ function computeProcedurePareto(p, volumeProj) {
     cardiac: p.specialty_cardiac || 0
   };
 
-  const totalSurgical = volumeProj.design_year_cases || p.annual_surgical_volume || 500;
+  // Use TOTAL hospital surgical volume, not just projected robotic
+  const totalSurgical = p.annual_surgical_volume || 500;
+  const currentRoboticPct = totalSurgical > 0 ? ((p.current_robotic_cases || 0) / totalSurgical) * 100 : 0;
 
   for (const [spec, pct] of Object.entries(specialties)) {
     if (pct <= 0 || !PROCEDURE_CATALOG[spec]) continue;
     const specVolume = Math.round(totalSurgical * (pct / 100));
     for (const proc of PROCEDURE_CATALOG[spec]) {
-      const cases = Math.round(specVolume * proc.weight);
-      if (cases > 0) {
-        procedures.push({ procedure_name: proc.name, specialty: spec, cases });
-      }
+      const totalCases = Math.round(specVolume * proc.weight);
+      if (totalCases <= 0) continue;
+
+      // Current approach breakdown for this procedure
+      const currentRobotic = Math.round(totalCases * currentRoboticPct / 100);
+      const currentOpen = Math.round((totalCases - currentRobotic) * 0.55);
+      const currentLap = totalCases - currentRobotic - currentOpen;
+
+      // da Vinci opportunity
+      const maxRobotic = Math.round(totalCases * proc.robotic_eligible_pct / 100);
+      const incrementalOpportunity = Math.max(0, maxRobotic - currentRobotic);
+
+      procedures.push({
+        procedure_name: proc.name,
+        specialty: spec,
+        // Total hospital volume for this procedure
+        total_cases: totalCases,
+        // Current approach mix
+        current_open: currentOpen,
+        current_lap: Math.max(0, currentLap),
+        current_robotic: currentRobotic,
+        // da Vinci opportunity
+        robotic_eligible_pct: proc.robotic_eligible_pct,
+        max_robotic_cases: maxRobotic,
+        incremental_opportunity: incrementalOpportunity,
+        // For backward compatibility
+        cases: totalCases
+      });
     }
   }
 
-  // Sort descending by volume
-  procedures.sort((a, b) => b.cases - a.cases);
-  const totalCases = procedures.reduce((s, p) => s + p.cases, 0);
+  // Sort by incremental opportunity (what the CFO cares about)
+  procedures.sort((a, b) => b.incremental_opportunity - a.incremental_opportunity);
+  const totalCases = procedures.reduce((s, p) => s + p.total_cases, 0);
+  const totalOpportunity = procedures.reduce((s, p) => s + p.incremental_opportunity, 0);
+  const totalCurrentRobotic = procedures.reduce((s, p) => s + p.current_robotic, 0);
 
-  // Build Lorenz curve and ABC classification
-  let cumulativeVolume = 0;
-  const lorenz_curve = [];
+  // ABC classification by incremental opportunity (not total volume)
+  let cumulativeOpp = 0;
   const classified = [];
   procedures.forEach((proc, idx) => {
-    cumulativeVolume += proc.cases;
-    const cumItemsPct = ((idx + 1) / procedures.length) * 100;
-    const cumVolPct = (cumulativeVolume / totalCases) * 100;
-    const abc_class = cumVolPct <= 80 ? 'A' : cumVolPct <= 95 ? 'B' : 'C';
-    lorenz_curve.push({ cumulative_items_pct: Math.round(cumItemsPct * 10) / 10, cumulative_volume_pct: Math.round(cumVolPct * 10) / 10, procedure_name: proc.procedure_name, abc_class });
-    classified.push({ ...proc, cumulative_volume_pct: cumVolPct, abc_class });
+    cumulativeOpp += proc.incremental_opportunity;
+    const cumPct = totalOpportunity > 0 ? (cumulativeOpp / totalOpportunity) * 100 : 0;
+    const abc_class = cumPct <= 80 ? 'A' : cumPct <= 95 ? 'B' : 'C';
+    classified.push({ ...proc, cumulative_opportunity_pct: cumPct, abc_class });
   });
 
-  // Gini coefficient (trapezoidal rule on the Lorenz curve)
-  // Since procedures are sorted descending (largest first), the curve bows above diagonal.
-  // We compute area above the diagonal and normalize.
+  // Lorenz curve on opportunity
+  let cumulativeVolume = 0;
+  const lorenz_curve = classified.map((proc, idx) => {
+    cumulativeVolume += proc.incremental_opportunity;
+    return {
+      cumulative_items_pct: Math.round(((idx + 1) / classified.length) * 1000) / 10,
+      cumulative_volume_pct: totalOpportunity > 0 ? Math.round((cumulativeVolume / totalOpportunity) * 1000) / 10 : 0,
+      procedure_name: proc.procedure_name,
+      abc_class: proc.abc_class
+    };
+  });
+
+  const n = classified.length;
   let areaUnderLorenz = 0;
-  const n = procedures.length;
   for (let i = 0; i < n; i++) {
     const x0 = i / n;
     const x1 = (i + 1) / n;
@@ -710,37 +795,50 @@ function computeProcedurePareto(p, volumeProj) {
     const y1 = lorenz_curve[i].cumulative_volume_pct / 100;
     areaUnderLorenz += (x1 - x0) * (y0 + y1) / 2;
   }
-  // Area above diagonal = areaUnderLorenz - 0.5 (the diagonal has area 0.5)
-  // Gini = 2 * (areaAboveDiagonal) = 2 * (areaUnderLorenz - 0.5)
   const gini_coefficient = Math.round(Math.abs(2 * areaUnderLorenz - 1) * 1000) / 1000;
 
-  // Classes summary
   const classA = classified.filter(c => c.abc_class === 'A');
   const classB = classified.filter(c => c.abc_class === 'B');
   const classC = classified.filter(c => c.abc_class === 'C');
   const classes = {
-    A: { count: classA.length, pct: n > 0 ? Math.round((classA.length / n) * 1000) / 10 : 0, volume_pct: classA.reduce((s, c) => s + c.cases, 0) / totalCases * 100 },
-    B: { count: classB.length, pct: n > 0 ? Math.round((classB.length / n) * 1000) / 10 : 0, volume_pct: classB.reduce((s, c) => s + c.cases, 0) / totalCases * 100 },
-    C: { count: classC.length, pct: n > 0 ? Math.round((classC.length / n) * 1000) / 10 : 0, volume_pct: classC.reduce((s, c) => s + c.cases, 0) / totalCases * 100 }
+    A: { count: classA.length, pct: n > 0 ? Math.round((classA.length / n) * 1000) / 10 : 0, opportunity: classA.reduce((s, c) => s + c.incremental_opportunity, 0) },
+    B: { count: classB.length, pct: n > 0 ? Math.round((classB.length / n) * 1000) / 10 : 0, opportunity: classB.reduce((s, c) => s + c.incremental_opportunity, 0) },
+    C: { count: classC.length, pct: n > 0 ? Math.round((classC.length / n) * 1000) / 10 : 0, opportunity: classC.reduce((s, c) => s + c.incremental_opportunity, 0) }
   };
 
-  return { procedures: classified, lorenz_curve, gini_coefficient, classes, total_procedures: n, total_cases: totalCases };
+  return {
+    procedures: classified,
+    lorenz_curve,
+    gini_coefficient,
+    classes,
+    total_procedures: n,
+    // CFO summary
+    total_hospital_cases: totalCases,
+    total_current_robotic: totalCurrentRobotic,
+    total_incremental_opportunity: totalOpportunity,
+    current_robotic_pct: totalCases > 0 ? Math.round((totalCurrentRobotic / totalCases) * 100) : 0,
+    projected_robotic_pct: totalCases > 0 ? Math.round(((totalCurrentRobotic + totalOpportunity) / totalCases) * 100) : 0,
+    // backward compat
+    total_cases: totalCases
+  };
 }
 
 // ─── MONTHLY SEASONALITY ───
+// CFO-focused: shows total surgical volume, current robotic, and projected robotic per month
 function computeMonthlySeasonality(p, volumeProj) {
-  const annualCases = volumeProj.design_year_cases || p.annual_surgical_volume || 500;
-  // Realistic monthly weights (surgical seasonality)
+  const totalAnnual = p.annual_surgical_volume || 500;
+  const currentRobotic = p.current_robotic_cases || 0;
+  const projectedTotalRobotic = volumeProj.design_year_cases || 0;
+  const incrementalRobotic = Math.max(0, projectedTotalRobotic - currentRobotic);
+
   const monthWeights = {
     Jan: 1.12, Feb: 1.08, Mar: 1.10, Apr: 1.02, May: 0.98,
     Jun: 0.92, Jul: 0.85, Aug: 0.88, Sep: 1.05, Oct: 1.08,
     Nov: 0.98, Dec: 0.74
   };
   const totalWeight = Object.values(monthWeights).reduce((s, w) => s + w, 0);
-  const roboticPct = (volumeProj.weighted_conversion_rate || 40) / 100;
 
-  // Add some noise
-  const seed = (p.annual_surgical_volume || 500) + (p.bed_count || 200);
+  const seed = (totalAnnual) + (p.bed_count || 200);
   const pseudoRandom = (i) => {
     const x = Math.sin(seed * 9301 + i * 49297) * 49297;
     return x - Math.floor(x);
@@ -748,44 +846,87 @@ function computeMonthlySeasonality(p, volumeProj) {
 
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const monthly_data = months.map((month, i) => {
-    const baseCases = Math.round((annualCases * monthWeights[month]) / totalWeight);
-    const noise = Math.round(baseCases * (pseudoRandom(i) - 0.5) * 0.12);
-    const cases = Math.max(1, baseCases + noise);
-    const robotic_cases = Math.round(cases * roboticPct);
-    const utilization_pct = Math.round(Math.min(100, (cases / (annualCases / 12)) * 100 * (0.7 + pseudoRandom(i + 100) * 0.25)));
-    return { month, cases, robotic_cases, utilization_pct };
+    const w = monthWeights[month] / totalWeight;
+    const noise = 1 + (pseudoRandom(i) - 0.5) * 0.12;
+
+    const total_cases = Math.max(1, Math.round(totalAnnual * w * noise));
+    const current_robotic = Math.round(currentRobotic * w * noise);
+    const projected_robotic = Math.round(projectedTotalRobotic * w * noise);
+    const incremental = Math.max(0, projected_robotic - current_robotic);
+    const open_lap = Math.max(0, total_cases - projected_robotic);
+
+    return {
+      month,
+      total_cases,
+      current_robotic,
+      projected_robotic,
+      incremental_davinci: incremental,
+      remaining_open_lap: open_lap,
+      // backward compat
+      cases: total_cases,
+      robotic_cases: projected_robotic,
+      utilization_pct: Math.round(Math.min(100, (total_cases / (totalAnnual / 12)) * 100 * (0.7 + pseudoRandom(i + 100) * 0.25)))
+    };
   });
 
-  // CoV calculation
-  const casesArr = monthly_data.map(m => m.cases);
+  const casesArr = monthly_data.map(m => m.total_cases);
   const mean = casesArr.reduce((s, v) => s + v, 0) / casesArr.length;
   const variance = casesArr.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / casesArr.length;
   const stdDev = Math.sqrt(variance);
   const coefficient_of_variation = Math.round((stdDev / mean) * 1000) / 10;
-
   const seasonality_class = coefficient_of_variation < 15 ? 'X' : coefficient_of_variation < 30 ? 'Y' : 'Z';
   const seasonality_label = seasonality_class === 'X' ? 'Stable' : seasonality_class === 'Y' ? 'Seasonal' : 'Erratic';
 
-  return { monthly_data, coefficient_of_variation, seasonality_class, seasonality_label, annual_total: casesArr.reduce((s, v) => s + v, 0), mean_monthly: Math.round(mean) };
+  return {
+    monthly_data,
+    coefficient_of_variation,
+    seasonality_class,
+    seasonality_label,
+    annual_total: totalAnnual,
+    annual_current_robotic: currentRobotic,
+    annual_projected_robotic: projectedTotalRobotic,
+    annual_incremental: incrementalRobotic,
+    mean_monthly: Math.round(mean)
+  };
 }
 
 // ─── WEEKDAY DISTRIBUTION ───
+// CFO-focused: shows total, current robotic, and projected robotic per day
 function computeWeekdayDistribution(p, volumeProj) {
-  const annualCases = volumeProj.design_year_cases || p.annual_surgical_volume || 500;
-  const weeklyAvg = annualCases / 50;
-  const roboticPct = (volumeProj.weighted_conversion_rate || 40) / 100;
+  const totalAnnual = p.annual_surgical_volume || 500;
+  const currentRobotic = p.current_robotic_cases || 0;
+  const projectedTotalRobotic = volumeProj.design_year_cases || 0;
+  const weeklyTotal = totalAnnual / 50;
+  const weeklyCurrentRobotic = currentRobotic / 50;
+  const weeklyProjectedRobotic = projectedTotalRobotic / 50;
 
-  // Realistic day weights: Mon-Fri heavy (Tue/Wed peak), minimal Sat, zero Sun
   const dayWeights = { Mon: 0.21, Tue: 0.24, Wed: 0.23, Thu: 0.19, Fri: 0.11, Sat: 0.02, Sun: 0.00 };
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   return {
     weekday_data: days.map(day => {
-      const cases = Math.round(weeklyAvg * dayWeights[day]);
-      return { day, cases, robotic_cases: Math.round(cases * roboticPct), robotic_pct: Math.round(roboticPct * 100) };
+      const total = Math.round(weeklyTotal * dayWeights[day]);
+      const currentRob = Math.round(weeklyCurrentRobotic * dayWeights[day]);
+      const projectedRob = Math.round(weeklyProjectedRobotic * dayWeights[day]);
+      const incremental = Math.max(0, projectedRob - currentRob);
+      return {
+        day,
+        total_cases: total,
+        current_robotic: currentRob,
+        projected_robotic: projectedRob,
+        incremental_davinci: incremental,
+        remaining_open_lap: Math.max(0, total - projectedRob),
+        // backward compat
+        cases: total,
+        robotic_cases: projectedRob,
+        robotic_pct: total > 0 ? Math.round((projectedRob / total) * 100) : 0
+      };
     }),
     peak_day: 'Tue',
-    operating_days_per_week: 5.5
+    operating_days_per_week: 5.5,
+    weekly_total: Math.round(weeklyTotal),
+    weekly_current_robotic: Math.round(weeklyCurrentRobotic),
+    weekly_projected_robotic: Math.round(weeklyProjectedRobotic)
   };
 }
 
