@@ -134,4 +134,20 @@ router.put('/:id/archive', async (req, res) => {
   }
 });
 
+// DELETE /api/v1/contacts/:id - Permanently delete contact
+router.delete('/:id', async (req, res) => {
+  try {
+    const contact = await Contact.findOne({ where: { id: req.params.id, workspace_id: 1 } });
+    if (!contact) return res.status(404).json({ success: false, error: 'Contact not found' });
+
+    // Remove project links first
+    await ProjectContact.destroy({ where: { contact_id: contact.id } });
+    await contact.destroy();
+    await logActivity(req.user?.email, 'deleted', 'contact', contact.id, `${contact.first_name} ${contact.last_name || ''}`);
+    res.json({ success: true, message: 'Contact deleted' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 module.exports = router;

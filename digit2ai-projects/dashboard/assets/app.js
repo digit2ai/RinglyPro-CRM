@@ -1797,6 +1797,7 @@ async function showContactDetail(id) {
         <div style="display:flex;gap:8px">
           <button class="btn btn-ghost btn-sm" onclick="openContactModal(${JSON.stringify(c).replace(/"/g,'&quot;')})">Edit</button>
           <button class="btn btn-danger btn-sm" onclick="archiveContact(${c.id})">Archive</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteContact(${c.id})" title="Permanently delete">Delete</button>
         </div>
       </div>
       <div class="detail-meta">
@@ -2035,6 +2036,7 @@ async function showProjectDetail(id) {
 }
 
 async function archiveContact(id) { if (confirm('Archive this contact?')) { await api(`/contacts/${id}/archive`, { method: 'PUT' }); navigateTo('contacts'); } }
+async function deleteContact(id) { if (confirm('Permanently delete this contact? This cannot be undone.')) { await api(`/contacts/${id}`, { method: 'DELETE' }); navigateTo('contacts'); } }
 async function archiveProject(id) { if (confirm('Archive this project?')) { await api(`/projects/${id}/archive`, { method: 'PUT' }); navigateTo('projects'); } }
 
 async function completeMilestone(projectId, milestoneId) {
