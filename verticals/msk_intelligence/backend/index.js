@@ -43,6 +43,10 @@ const rpmRoutes = require('./routes/rpm');
 const workersCompRoutes = require('./routes/workerscomp');
 const engagementRoutes = require('./routes/engagement');
 const copilotRoutes = require('./routes/copilot');
+const pacsRoutes = require('./routes/pacs');
+const referringRoutes = require('./routes/referring');
+const teleradiologyRoutes = require('./routes/teleradiology');
+const reportDeliveryRoutes = require('./routes/report-delivery');
 
 // Public showcase image serving (no auth) — for demo presentations
 router.get('/api/v1/imaging/showcase/:fileId', async (req, res) => {
@@ -107,6 +111,10 @@ router.use('/api/v1/rpm', authenticate, rpmRoutes);
 router.use('/api/v1/workerscomp', authenticate, workersCompRoutes);
 router.use('/api/v1/engagement', authenticate, engagementRoutes);
 router.use('/api/v1/copilot', copilotRoutes);
+router.use('/api/v1/pacs', authenticate, authorize('admin', 'radiologist'), pacsRoutes);
+router.use('/api/v1/referring', authenticate, referringRoutes);
+router.use('/api/v1/teleradiology', authenticate, authorize('admin', 'radiologist'), teleradiologyRoutes);
+router.use('/api/v1/report-delivery', authenticate, authorize('admin', 'radiologist'), reportDeliveryRoutes);
 
 // Notifications API
 router.get('/api/v1/notifications', authenticate, async (req, res) => {
@@ -1007,6 +1015,205 @@ async function runMigrations() {
       CREATE INDEX IF NOT EXISTS idx_msk_rpm_readings ON msk_rpm_readings(enrollment_id, recorded_at);
     `);
 
+    // ── PACS Integration & Teleradiology migrations ──────────────────
+    // ALTER TABLE: msk_patients + MRN fields
+    await sequelize.query(`
+      ALTER TABLE msk_patients ADD COLUMN IF NOT EXISTS mrn VARCHAR(100);
+      ALTER TABLE msk_patients ADD COLUMN IF NOT EXISTS mrn_issuer VARCHAR(200);
+      ALTER TABLE msk_patients ADD COLUMN IF NOT EXISTS alternate_mrns JSONB DEFAULT '[]';
+    `).catch(() => {});
+
+    // ALTER TABLE: msk_imaging_orders + DICOM/referring fields
+    await sequelize.query(`
+      ALTER TABLE msk_imaging_orders ADD COLUMN IF NOT EXISTS accession_number VARCHAR(100);
+      ALTER TABLE msk_imaging_orders ADD COLUMN IF NOT EXISTS referring_provider_id INTEGER;
+      ALTER TABLE msk_imaging_orders ADD COLUMN IF NOT EXISTS ordering_physician_npi VARCHAR(20);
+      ALTER TABLE msk_imaging_orders ADD COLUMN IF NOT EXISTS ordering_physician_name VARCHAR(200);
+      ALTER TABLE msk_imaging_orders ADD COLUMN IF NOT EXISTS laterality VARCHAR(20);
+      ALTER TABLE msk_imaging_orders ADD COLUMN IF NOT EXISTS clinical_history TEXT;
+      ALTER TABLE msk_imaging_orders ADD COLUMN IF NOT EXISTS icd10_ordering JSONB;
+      ALTER TABLE msk_imaging_orders ADD COLUMN IF NOT EXISTS performed_date TIMESTAMPTZ;
+      ALTER TABLE msk_imaging_orders ADD COLUMN IF NOT EXISTS hl7_order_id VARCHAR(100);
+      ALTER TABLE msk_imaging_orders ADD COLUMN IF NOT EXISTS fhir_service_request_id VARCHAR(200);
+    `).catch(() => {});
+
+    // ALTER TABLE: msk_imaging_files + DICOM metadata
+    await sequelize.query(`
+      ALTER TABLE msk_imaging_files ADD COLUMN IF NOT EXISTS study_instance_uid VARCHAR(255);
+      ALTER TABLE msk_imaging_files ADD COLUMN IF NOT EXISTS series_instance_uid VARCHAR(255);
+      ALTER TABLE msk_imaging_files ADD COLUMN IF NOT EXISTS sop_instance_uid VARCHAR(255);
+      ALTER TABLE msk_imaging_files ADD COLUMN IF NOT EXISTS modality_dicom VARCHAR(20);
+      ALTER TABLE msk_imaging_files ADD COLUMN IF NOT EXISTS body_part_examined VARCHAR(100);
+      ALTER TABLE msk_imaging_files ADD COLUMN IF NOT EXISTS view_position VARCHAR(50);
+      ALTER TABLE msk_imaging_files ADD COLUMN IF NOT EXISTS image_laterality VARCHAR(10);
+      ALTER TABLE msk_imaging_files ADD COLUMN IF NOT EXISTS pixel_rows INTEGER;
+      ALTER TABLE msk_imaging_files ADD COLUMN IF NOT EXISTS pixel_columns INTEGER;
+      ALTER TABLE msk_imaging_files ADD COLUMN IF NOT EXISTS slice_thickness DECIMAL;
+      ALTER TABLE msk_imaging_files ADD COLUMN IF NOT EXISTS slice_location DECIMAL;
+      ALTER TABLE msk_imaging_files ADD COLUMN IF NOT EXISTS institution_name VARCHAR(200);
+      ALTER TABLE msk_imaging_files ADD COLUMN IF NOT EXISTS station_name VARCHAR(100);
+      ALTER TABLE msk_imaging_files ADD COLUMN IF NOT EXISTS manufacturer VARCHAR(200);
+      ALTER TABLE msk_imaging_files ADD COLUMN IF NOT EXISTS device_model VARCHAR(200);
+      ALTER TABLE msk_imaging_files ADD COLUMN IF NOT EXISTS study_date DATE;
+      ALTER TABLE msk_imaging_files ADD COLUMN IF NOT EXISTS study_time TIME;
+      ALTER TABLE msk_imaging_files ADD COLUMN IF NOT EXISTS series_number INTEGER;
+      ALTER TABLE msk_imaging_files ADD COLUMN IF NOT EXISTS instance_number INTEGER;
+      ALTER TABLE msk_imaging_files ADD COLUMN IF NOT EXISTS dicom_source VARCHAR(50);
+      ALTER TABLE msk_imaging_files ADD COLUMN IF NOT EXISTS ai_analysis_ms INTEGER;
+    `).catch(() => {});
+
+    // CREATE TABLE: msk_referring_providers
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS msk_referring_providers (
+        id SERIAL PRIMARY KEY,
+        tenant_id INTEGER REFERENCES msk_tenants(id),
+        provider_name VARCHAR(200) NOT NULL,
+        npi VARCHAR(20),
+        specialty VARCHAR(100),
+        facility_name VARCHAR(200),
+        facility_address TEXT,
+        phone VARCHAR(30),
+        fax VARCHAR(30),
+        email VARCHAR(255),
+        preferred_report_format VARCHAR(20) DEFAULT 'pdf',
+        preferred_delivery_method VARCHAR(30) DEFAULT 'fax',
+        notes TEXT,
+        is_active BOOLEAN DEFAULT TRUE,
+        total_referrals INTEGER DEFAULT 0,
+        last_referral_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_msk_referring_tenant ON msk_referring_providers(tenant_id);
+      CREATE INDEX IF NOT EXISTS idx_msk_referring_npi ON msk_referring_providers(npi);
+    `);
+
+    // CREATE TABLE: msk_pacs_connections
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS msk_pacs_connections (
+        id SERIAL PRIMARY KEY,
+        tenant_id INTEGER REFERENCES msk_tenants(id),
+        name VARCHAR(200) NOT NULL,
+        ae_title VARCHAR(100),
+        host VARCHAR(255) NOT NULL,
+        port INTEGER DEFAULT 4242,
+        protocol VARCHAR(20) DEFAULT 'dicomweb'
+          CHECK (protocol IN ('dicomweb','dimse','orthanc','google_chc')),
+        base_url TEXT,
+        polling_interval_seconds INTEGER DEFAULT 300,
+        auto_import BOOLEAN DEFAULT TRUE,
+        auto_analyze BOOLEAN DEFAULT TRUE,
+        match_strategy VARCHAR(30) DEFAULT 'mrn_accession'
+          CHECK (match_strategy IN ('mrn','accession','mrn_accession','name_dob')),
+        auth_type VARCHAR(20) DEFAULT 'none'
+          CHECK (auth_type IN ('none','basic','bearer','oauth2','certificate')),
+        auth_credentials JSONB DEFAULT '{}',
+        status VARCHAR(20) DEFAULT 'inactive'
+          CHECK (status IN ('active','inactive','error','testing')),
+        last_poll_at TIMESTAMPTZ,
+        last_poll_status VARCHAR(20),
+        studies_imported INTEGER DEFAULT 0,
+        errors_count INTEGER DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_msk_pacs_tenant ON msk_pacs_connections(tenant_id);
+      CREATE INDEX IF NOT EXISTS idx_msk_pacs_status ON msk_pacs_connections(status);
+    `);
+
+    // CREATE TABLE: msk_dicom_studies
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS msk_dicom_studies (
+        id SERIAL PRIMARY KEY,
+        tenant_id INTEGER REFERENCES msk_tenants(id),
+        pacs_connection_id INTEGER REFERENCES msk_pacs_connections(id),
+        patient_id INTEGER REFERENCES msk_patients(id),
+        case_id INTEGER REFERENCES msk_cases(id),
+        study_instance_uid VARCHAR(255) UNIQUE NOT NULL,
+        accession_number VARCHAR(100),
+        study_date DATE,
+        study_time TIME,
+        modality VARCHAR(20),
+        study_description TEXT,
+        patient_dicom_id VARCHAR(100),
+        patient_dicom_name VARCHAR(200),
+        referring_physician_name VARCHAR(200),
+        number_of_series INTEGER,
+        number_of_instances INTEGER,
+        institution_name VARCHAR(200),
+        import_status VARCHAR(20) DEFAULT 'discovered'
+          CHECK (import_status IN ('discovered','importing','imported','analyzed','error')),
+        import_error TEXT,
+        discovered_at TIMESTAMPTZ DEFAULT NOW(),
+        imported_at TIMESTAMPTZ,
+        analyzed_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_msk_dicom_uid ON msk_dicom_studies(study_instance_uid);
+      CREATE INDEX IF NOT EXISTS idx_msk_dicom_patient ON msk_dicom_studies(patient_id);
+      CREATE INDEX IF NOT EXISTS idx_msk_dicom_case ON msk_dicom_studies(case_id);
+      CREATE INDEX IF NOT EXISTS idx_msk_dicom_accession ON msk_dicom_studies(accession_number);
+      CREATE INDEX IF NOT EXISTS idx_msk_dicom_date ON msk_dicom_studies(study_date);
+    `);
+
+    // CREATE TABLE: msk_teleradiology_requests
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS msk_teleradiology_requests (
+        id SERIAL PRIMARY KEY,
+        tenant_id INTEGER REFERENCES msk_tenants(id),
+        case_id INTEGER REFERENCES msk_cases(id),
+        dicom_study_id INTEGER REFERENCES msk_dicom_studies(id),
+        referring_provider_id INTEGER REFERENCES msk_referring_providers(id),
+        assigned_radiologist_id INTEGER REFERENCES msk_users(id),
+        priority VARCHAR(20) DEFAULT 'routine'
+          CHECK (priority IN ('routine','priority','urgent','stat')),
+        modality VARCHAR(20),
+        body_part VARCHAR(100),
+        clinical_info TEXT,
+        status VARCHAR(20) DEFAULT 'pending'
+          CHECK (status IN ('pending','assigned','in_progress','completed','cancelled')),
+        sla_hours INTEGER DEFAULT 24,
+        sla_deadline TIMESTAMPTZ,
+        started_at TIMESTAMPTZ,
+        completed_at TIMESTAMPTZ,
+        report_id INTEGER REFERENCES msk_reports(id),
+        notes TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_msk_telerad_tenant ON msk_teleradiology_requests(tenant_id, status);
+      CREATE INDEX IF NOT EXISTS idx_msk_telerad_priority ON msk_teleradiology_requests(priority, created_at);
+      CREATE INDEX IF NOT EXISTS idx_msk_telerad_sla ON msk_teleradiology_requests(sla_deadline);
+      CREATE INDEX IF NOT EXISTS idx_msk_telerad_radiologist ON msk_teleradiology_requests(assigned_radiologist_id);
+    `);
+
+    // CREATE TABLE: msk_report_deliveries
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS msk_report_deliveries (
+        id SERIAL PRIMARY KEY,
+        tenant_id INTEGER REFERENCES msk_tenants(id),
+        report_id INTEGER REFERENCES msk_reports(id),
+        referring_provider_id INTEGER REFERENCES msk_referring_providers(id),
+        delivery_method VARCHAR(30) NOT NULL
+          CHECK (delivery_method IN ('fax','email','hl7','fhir','portal','print','dicom_sr')),
+        recipient_address TEXT,
+        format VARCHAR(20) DEFAULT 'pdf'
+          CHECK (format IN ('pdf','hl7_oru','fhir_diagnostic_report','dicom_sr','plain_text')),
+        delivery_status VARCHAR(20) DEFAULT 'pending'
+          CHECK (delivery_status IN ('pending','in_transit','delivered','failed','cancelled')),
+        attempts INTEGER DEFAULT 0,
+        last_attempt_at TIMESTAMPTZ,
+        delivered_at TIMESTAMPTZ,
+        error_message TEXT,
+        notes TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_msk_delivery_report ON msk_report_deliveries(report_id);
+      CREATE INDEX IF NOT EXISTS idx_msk_delivery_status ON msk_report_deliveries(delivery_status);
+      CREATE INDEX IF NOT EXISTS idx_msk_delivery_provider ON msk_report_deliveries(referring_provider_id);
+    `);
+
     // Seed exercise library
     const [existingExercises] = await sequelize.query(
       `SELECT id FROM msk_exercise_library LIMIT 1`
@@ -1148,6 +1355,12 @@ cron.schedule('0 */6 * * *', async () => {
     console.error('[ImagingMind] Nudge cron error:', err.message);
   }
 });
+
+// ── PACS Poller Initialization ──────────────────────────────────────
+const PACSPoller = require('./services/pacsPoller');
+const pacsPoller = new PACSPoller(sequelize);
+// Start polling after migrations complete (delayed to allow tables to be created)
+setTimeout(() => { pacsPoller.start(); }, 15000);
 
 // Export sequelize for use in routes
 router.sequelize = sequelize;

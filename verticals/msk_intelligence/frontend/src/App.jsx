@@ -26,6 +26,9 @@ import MyRehab from './pages/MyRehab';
 import CreateHEP from './pages/CreateHEP';
 import RPMDashboard from './pages/RPMDashboard';
 import RegisterPatient from './pages/RegisterPatient';
+import PACSSettings from './pages/PACSSettings';
+import ReferringProviders from './pages/ReferringProviders';
+import TeleradiologyQueue from './pages/TeleradiologyQueue';
 import NotFound from './pages/NotFound';
 import Layout from './components/Layout';
 
@@ -87,6 +90,21 @@ export default function App() {
                 </ProtectedRoute>
               } />
               <Route path="/rpm" element={<RPMDashboard />} />
+              <Route path="/pacs-settings" element={
+                <ProtectedRoute allowedRoles={['admin', 'radiologist']}>
+                  <PACSSettings />
+                </ProtectedRoute>
+              } />
+              <Route path="/referring-providers" element={
+                <ProtectedRoute allowedRoles={['admin', 'radiologist', 'staff']}>
+                  <ReferringProviders />
+                </ProtectedRoute>
+              } />
+              <Route path="/teleradiology" element={
+                <ProtectedRoute allowedRoles={['admin', 'radiologist']}>
+                  <TeleradiologyQueue />
+                </ProtectedRoute>
+              } />
               <Route path="/settings/mfa" element={<MFASetup />} />
               <Route path="/billing" element={
                 <ProtectedRoute allowedRoles={['admin', 'radiologist', 'staff']}>

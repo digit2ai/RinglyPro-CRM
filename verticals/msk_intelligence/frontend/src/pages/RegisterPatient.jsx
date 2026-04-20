@@ -14,6 +14,8 @@ export default function RegisterPatient() {
     phone: '',
     dateOfBirth: '',
     gender: '',
+    mrn: '',
+    mrnIssuer: '',
     insuranceProvider: '',
     policyNumber: '',
     groupNumber: '',
@@ -51,9 +53,9 @@ export default function RegisterPatient() {
   const handleReset = () => {
     setForm({
       firstName: '', lastName: '', email: '', phone: '',
-      dateOfBirth: '', gender: '', insuranceProvider: '',
-      policyNumber: '', groupNumber: '', subscriberName: '',
-      hipaaConsent: false
+      dateOfBirth: '', gender: '', mrn: '', mrnIssuer: '',
+      insuranceProvider: '', policyNumber: '', groupNumber: '',
+      subscriberName: '', hipaaConsent: false
     });
     setSuccess(null);
     setError('');
@@ -190,6 +192,33 @@ export default function RegisterPatient() {
                 <option value="other">Other</option>
                 <option value="prefer_not_to_say">Prefer not to say</option>
               </select>
+            </div>
+          </div>
+
+          {/* MRN section */}
+          <div className="border-t border-dark-700 pt-5">
+            <h3 className="text-lg font-semibold text-white mb-4">Medical Record Number (MRN)</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-dark-300 mb-1">MRN</label>
+                <input
+                  type="text"
+                  value={form.mrn}
+                  onChange={handleChange('mrn')}
+                  className="input-field"
+                  placeholder="e.g., MRN-123456"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-dark-300 mb-1">MRN Issuer</label>
+                <input
+                  type="text"
+                  value={form.mrnIssuer}
+                  onChange={handleChange('mrnIssuer')}
+                  className="input-field"
+                  placeholder="e.g., City Hospital"
+                />
+              </div>
             </div>
           </div>
 

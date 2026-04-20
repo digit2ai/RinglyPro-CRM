@@ -31,6 +31,12 @@ export default function NewCase() {
   const [selectedPatient, setSelectedPatient] = useState(preselected);
   const debounceRef = useRef(null);
 
+  // Referring provider search
+  const [refSearch, setRefSearch] = useState('');
+  const [refResults, setRefResults] = useState([]);
+  const [selectedReferring, setSelectedReferring] = useState(null);
+  const refDebounceRef = useRef(null);
+
   const [form, setForm] = useState({
     chiefComplaint: '',
     painLocation: '',
@@ -43,7 +49,10 @@ export default function NewCase() {
     priorImagingHistory: '',
     caseType: 'general',
     urgency: 'routine',
-    pricingTier: 'platform'
+    pricingTier: 'platform',
+    accessionNumber: '',
+    clinicalHistory: '',
+    laterality: ''
   });
 
   const handleChange = (field) => (e) => setForm({ ...form, [field]: e.target.value });
@@ -93,6 +102,19 @@ export default function NewCase() {
     setSearchResults([]);
   };
 
+  // Referring provider search
+  const handleRefSearch = useCallback((query) => {
+    setRefSearch(query);
+    if (refDebounceRef.current) clearTimeout(refDebounceRef.current);
+    if (!query || query.length < 2) { setRefResults([]); return; }
+    refDebounceRef.current = setTimeout(async () => {
+      try {
+        const data = await api.searchReferringProviders(query);
+        setRefResults(data.data || []);
+      } catch (err) { console.error(err); }
+    }, 300);
+  }, []);
+
   const handleSubmit = async () => {
     if (!form.chiefComplaint) return setError('Please describe the chief complaint');
 
@@ -102,6 +124,9 @@ export default function NewCase() {
       const body = { ...form };
       if (selectedPatient?.patientId) {
         body.patientId = selectedPatient.patientId;
+      }
+      if (selectedReferring?.id) {
+        body.referringProviderId = selectedReferring.id;
       }
       const data = await api.post('/cases', body);
       navigate(`/cases/${data.data.id}`);
@@ -330,6 +355,63 @@ export default function NewCase() {
               <option value="post_surgical">Post-Surgical</option>
             </select>
           </div>
+
+          {/* PACS / Referring fields (staff only) */}
+          {isStaff && (
+            <div className="border-t border-dark-700 pt-5 space-y-4">
+              <h4 className="text-sm font-semibold text-dark-200">PACS / Referral Information</h4>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-dark-300 mb-1">Accession Number</label>
+                  <input type="text" value={form.accessionNumber} onChange={handleChange('accessionNumber')} className="input-field" placeholder="e.g., ACC-2026-001234" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-dark-300 mb-1">Laterality</label>
+                  <select value={form.laterality} onChange={handleChange('laterality')} className="input-field">
+                    <option value="">N/A</option>
+                    <option value="left">Left</option>
+                    <option value="right">Right</option>
+                    <option value="bilateral">Bilateral</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-dark-300 mb-1">Clinical History</label>
+                <textarea value={form.clinicalHistory} onChange={handleChange('clinicalHistory')} className="input-field h-16" placeholder="Relevant clinical history for the radiologist..." />
+              </div>
+
+              {/* Referring Provider */}
+              <div>
+                <label className="block text-sm font-medium text-dark-300 mb-1">Referring Provider</label>
+                {selectedReferring ? (
+                  <div className="p-3 bg-msk-600/10 border border-msk-500/30 rounded-lg flex items-center justify-between">
+                    <div>
+                      <p className="text-white text-sm font-medium">{selectedReferring.provider_name}</p>
+                      <p className="text-dark-400 text-xs">{selectedReferring.npi && `NPI: ${selectedReferring.npi}`} {selectedReferring.facility_name && `| ${selectedReferring.facility_name}`}</p>
+                    </div>
+                    <button onClick={() => { setSelectedReferring(null); setRefSearch(''); }} className="text-dark-400 hover:text-red-400 text-xs">Change</button>
+                  </div>
+                ) : (
+                  <div>
+                    <input type="text" value={refSearch} onChange={(e) => handleRefSearch(e.target.value)} className="input-field" placeholder="Search by name or NPI..." />
+                    {refResults.length > 0 && (
+                      <div className="mt-2 space-y-1 max-h-40 overflow-y-auto">
+                        {refResults.map(r => (
+                          <button key={r.id} onClick={() => { setSelectedReferring(r); setRefSearch(''); setRefResults([]); }}
+                            className="w-full text-left p-2 bg-dark-800 border border-dark-600 rounded hover:border-msk-500 text-sm">
+                            <span className="text-white">{r.provider_name}</span>
+                            <span className="text-dark-400 ml-2 text-xs">{r.npi && `NPI: ${r.npi}`} {r.specialty && `| ${r.specialty}`}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="flex justify-between">
             <button onClick={() => setStep(1)} className="btn-secondary">Back</button>

@@ -105,6 +105,33 @@ class ApiService {
   sendRegistrationLink(data) {
     return this.post('/patients/send-registration-link', data);
   }
+
+  // PACS
+  getPACSConnections() { return this.get('/pacs/connections'); }
+  createPACSConnection(data) { return this.post('/pacs/connections', data); }
+  updatePACSConnection(id, data) { return this.put(`/pacs/connections/${id}`, data); }
+  deletePACSConnection(id) { return this.del(`/pacs/connections/${id}`); }
+  pollPACSConnection(id) { return this.post(`/pacs/connections/${id}/poll`); }
+  getDICOMStudies(params) { return this.get(`/pacs/studies${params ? '?' + params : ''}`); }
+
+  // Referring Providers
+  getReferringProviders(params) { return this.get(`/referring/providers${params ? '?' + params : ''}`); }
+  createReferringProvider(data) { return this.post('/referring/providers', data); }
+  updateReferringProvider(id, data) { return this.put(`/referring/providers/${id}`, data); }
+  deleteReferringProvider(id) { return this.del(`/referring/providers/${id}`); }
+  searchReferringProviders(q) { return this.get(`/referring/search?q=${encodeURIComponent(q)}`); }
+
+  // Teleradiology
+  getTeleradiologyRequests(params) { return this.get(`/teleradiology/requests${params ? '?' + params : ''}`); }
+  createTeleradiologyRequest(data) { return this.post('/teleradiology/requests', data); }
+  updateTeleradiologyRequest(id, data) { return this.put(`/teleradiology/requests/${id}`, data); }
+  getTeleradiologyStats() { return this.get('/teleradiology/stats'); }
+
+  // Report Delivery
+  getReportDeliveries(params) { return this.get(`/report-delivery${params ? '?' + params : ''}`); }
+  createReportDelivery(data) { return this.post('/report-delivery', data); }
+  updateReportDelivery(id, data) { return this.put(`/report-delivery/${id}`, data); }
+  retryReportDelivery(id) { return this.post(`/report-delivery/${id}/retry`); }
 }
 
 export default new ApiService();
