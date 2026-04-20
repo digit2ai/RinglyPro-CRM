@@ -690,6 +690,18 @@
         <div class="highlight-box">
             <p><strong>Example:</strong> Input "Orlando Health" --> Output: 808 beds, 40,000 annual surgeries, academic medical center, Florida market, multi-specialty robotic program, da Vinci 5 recommended based on volume and specialty mix.</p>
         </div>
+
+        <div class="card" style="border-left: 4px solid var(--accent);">
+            <h4>How It's Done -- Technical Implementation</h4>
+            <p>1. The user types a hospital name into the search field on the Hospital Intake page and clicks <strong>"Generate Report"</strong>.</p>
+            <p>2. The backend sends the hospital name to <strong>Claude Sonnet 4</strong> (Anthropic API, model <code>claude-sonnet-4-20250514</code>) with a structured prompt requesting 40+ data points in JSON format -- bed count, surgical volumes, specialty percentages, current robotic program details, payer mix, competitive landscape, and infrastructure.</p>
+            <p>3. Claude researches from its training knowledge (hospital websites, annual reports, CMS databases, news articles, industry reports) and returns a structured JSON with a <strong>confidence rating</strong> (high/medium/low) and notes on which fields are confirmed vs. estimated.</p>
+            <p>4. A <strong>validation and enrichment layer</strong> checks every field. Missing or zero values are filled using hospital-type-specific industry benchmarks (academic, community, specialty, VA). Specialty percentages are normalized to sum to 100%. Payer mix is validated.</p>
+            <p>5. The validated profile is saved as an <strong>IntuitiveProject</strong> in PostgreSQL (Sequelize ORM), then the 16-module analysis engine is triggered automatically.</p>
+            <p>6. The entire pipeline -- research, validation, project creation, 16 analyses, business plan, clinical dollarization, and survey template -- runs as an <strong>async background job</strong> with real-time progress polling from the frontend (2-second interval).</p>
+            <p>7. Total execution time: <strong>15-25 seconds</strong> depending on Claude's response speed.</p>
+            <p><strong>Tech stack:</strong> <code>@anthropic-ai/sdk</code> --> Express.js async route --> Sequelize PostgreSQL --> system-matcher.js pipeline --> React frontend with polling.</p>
+        </div>
     </div>
 
     <!-- Section 5: 16-Module Analysis Engine -->
@@ -717,6 +729,17 @@
             <div class="module-item"><span class="module-num">14</span><span class="module-name">Growth Extrapolation</span><span class="module-desc"> -- 3 scenarios (conservative, base, aggressive)</span></div>
             <div class="module-item"><span class="module-num">15</span><span class="module-name">Competitive Analysis</span><span class="module-desc"> -- market position vs Medtronic Hugo, J&J Ottava</span></div>
             <div class="module-item"><span class="module-num">16</span><span class="module-name">Risk Assessment</span><span class="module-desc"> -- adoption barriers, regulatory, financial risks scored</span></div>
+        </div>
+
+        <div class="card" style="border-left: 4px solid var(--accent);">
+            <h4>How It's Done -- Technical Implementation</h4>
+            <p>1. All 16 modules live in a single service file: <code>system-matcher.js</code> (~1,100 lines). The <code>runAll()</code> function executes them sequentially, feeding each module's output into the next where dependencies exist.</p>
+            <p>2. <strong>Volume Projection</strong> applies specialty-specific robotic conversion rates (e.g., urology 85%, cardiac 15%) to the hospital's total surgical volume, then models a 5-year adoption ramp starting at 40% of convertible cases in Year 1, adding 15% per year.</p>
+            <p>3. <strong>Procedure Pareto</strong> uses a catalog of 50+ named procedures (e.g., Radical Prostatectomy, Low Anterior Resection) with per-procedure weights and <code>robotic_eligible_pct</code>. Each procedure shows: total hospital volume, current open/lap/robotic breakdown, and incremental da Vinci opportunity. ABC classification is based on conversion opportunity, not total volume -- so the CFO sees which procedures drive the most ROI.</p>
+            <p>4. <strong>Model Matching</strong> scores each of the 6 da Vinci configurations on a 0-100 scale across 5 dimensions: Volume Fit (30 pts), Specialty Coverage (25 pts), Budget Fit (20 pts), Infrastructure (15 pts), Hospital Type Bonus (10 pts). The highest scorer becomes the primary recommendation.</p>
+            <p>5. <strong>3-Layer CFO View</strong>: Every module now outputs three data layers: (a) total hospital surgical volume, (b) current robotic cases, (c) projected da Vinci cases after conversion. Monthly and weekday distributions show stacked bars with all three layers so the CFO can visualize the growth opportunity.</p>
+            <p>6. Results are stored as <strong>JSONB records</strong> in <code>intuitive_analysis_results</code> (one row per analysis type per project), enabling re-runs and historical comparison.</p>
+            <p><strong>Tech stack:</strong> Pure JavaScript computation (no external API calls) --> Sequelize PostgreSQL --> Results served via REST API --> Recharts visualization in React dashboard.</p>
         </div>
     </div>
 
@@ -789,6 +812,16 @@
                 </tr>
             </tbody>
         </table>
+
+        <div class="card" style="border-left: 4px solid var(--accent);">
+            <h4>How It's Done -- Technical Implementation</h4>
+            <p>1. The DRG library is a static data service (<code>drg-reimbursement.js</code>) containing 28 procedure entries, each with: DRG code, procedure name, procedure type slug, specialty, Medicare reimbursement, Commercial reimbursement (1.5-2.2x Medicare depending on complexity), Medicaid (0.7x), self-pay (0.85x), and a pre-calculated blended rate.</p>
+            <p>2. When a surgeon commitment is entered with a procedure type, the system calls <code>lookupByProcedure()</code> to auto-populate the reimbursement rate -- no manual lookup needed.</p>
+            <p>3. The <code>calculateReimbursement(procedureType, payerMix)</code> function takes the hospital's actual payer mix (e.g., 35% Medicare, 40% Commercial, 15% Medicaid, 5% self-pay) and returns a <strong>weighted average</strong> reimbursement specific to that hospital. This means two hospitals with the same procedure volume but different payer mixes will get different revenue projections -- exactly how it works in reality.</p>
+            <p>4. Managers can <strong>override any rate</strong> with actual negotiated amounts from the hospital's contract. The override is stored per surgeon commitment, not globally, so different contracts at the same hospital can be reflected.</p>
+            <p>5. The library is served via REST API at <code>/intuitive/api/v1/drg/procedures</code> for full listing, <code>/drg/lookup?procedure_type=X</code> for individual lookup, and <code>/drg/calculate-reimbursement</code> for payer-weighted calculations.</p>
+            <p><strong>Tech stack:</strong> Static JavaScript data module --> Express REST API --> React frontend auto-lookup on procedure type selection.</p>
+        </div>
     </div>
 
     <!-- Section 7: Surgeon Survey Engine -->
@@ -820,6 +853,17 @@
             <li>Eliminates manual transcription errors entirely</li>
             <li>Real-time response tracking dashboard</li>
         </ul>
+
+        <div class="card" style="border-left: 4px solid var(--accent);">
+            <h4>How It's Done -- Technical Implementation</h4>
+            <p>1. A manager creates a survey from the dashboard, selecting the hospital and da Vinci system type. The system generates a <strong>unique 64-character token</strong> (cryptographically random) for the survey URL.</p>
+            <p>2. Surgeon recipients are added individually or in bulk. Each recipient gets their own <strong>personal token</strong> so responses are linked to specific surgeons and can be tracked (pending -> sent -> opened -> completed).</p>
+            <p>3. The public survey page is served at <code>/intuitive/survey/{token}</code> -- a standalone HTML page with dark SurgicalMind theme, no login required, mobile-responsive. Questions are rendered dynamically from the survey's <code>questions</code> JSONB field, with template variables (<code>{hospital_name}</code>, <code>{system_type}</code>) replaced at render time.</p>
+            <p>4. On submission, the response is stored in <code>intuitive_survey_responses</code> with structured fields: <code>incremental_cases_monthly</code>, <code>procedure_breakdown</code> (array of procedure type + percentage), <code>barriers</code>, <code>competitive_leakage_cases</code>, <code>willing_to_commit</code>.</p>
+            <p>5. The <strong>"Import to Plan"</strong> endpoint (<code>POST /surveys/:id/import-to-plan</code>) reads all responses, cross-references each procedure type with the DRG library to get reimbursement rates, and creates <code>IntuitiveSurgeonCommitment</code> records linked to the business plan -- with <code>source: 'survey'</code> so the origin is always clear.</p>
+            <p>6. Committed surgeons (those who answered "Yes" to the commitment question) are auto-set to <code>status: 'confirmed'</code>.</p>
+            <p><strong>Tech stack:</strong> Sequelize models (Survey, SurveyRecipient, SurveyResponse) --> Express REST API + standalone HTML renderer --> React SurveyManagerPage for admin --> Crypto tokens for URL security.</p>
+        </div>
     </div>
 
     <!-- Section 8: Clinical Outcome Dollarization Engine -->
@@ -897,6 +941,21 @@
                 </tr>
             </tbody>
         </table>
+
+        <div class="card" style="border-left: 4px solid var(--accent);">
+            <h4>How It's Done -- Technical Implementation</h4>
+            <p>1. The Clinical Evidence Library (<code>clinical-evidence.js</code>) is a structured JavaScript data module containing 44 outcome metrics across 8 specialties, each with: <code>open_rate_pct</code>, <code>laparoscopic_rate_pct</code>, <code>robotic_rate_pct</code>, <code>cost_per_event</code>, <code>unit</code> (percentage or days), and <code>sources</code> (array of journal citations).</p>
+            <p>2. The Dollarization Engine (<code>clinical-dollarization.js</code>) takes hospital case data as input: <code>{ colorectal: { annual_cases: 800, open_pct: 45, lap_pct: 40, robotic_pct: 15 } }</code>. For each specialty, it:</p>
+            <p>&nbsp;&nbsp;&nbsp;a. Calculates the <strong>projected robotic percentage</strong> (default: current + 50% of remaining headroom)</p>
+            <p>&nbsp;&nbsp;&nbsp;b. Converts open cases first (larger clinical delta vs. robotic), then laparoscopic</p>
+            <p>&nbsp;&nbsp;&nbsp;c. For <strong>rate-based metrics</strong> (SSI, readmission): <code>events_avoided = (current_events - projected_events)</code>, then <code>savings = events_avoided x cost_per_event</code></p>
+            <p>&nbsp;&nbsp;&nbsp;d. For <strong>LOS metrics</strong>: <code>savings = cases_converted x (open_LOS - robotic_LOS) x cost_per_day</code></p>
+            <p>&nbsp;&nbsp;&nbsp;e. Mortality is tracked but excluded from dollar calculations by default (can be opted in)</p>
+            <p>3. An <strong>adapter layer</strong> (<code>_adaptEvidenceMetrics</code>) bridges the evidence library format (outcomes object with <code>_pct</code> suffixed rates) to the engine's format (array with decimal rates), converting percentages to decimals automatically.</p>
+            <p>4. The output includes per-specialty breakdown with per-metric savings, total savings, all cited sources, and a methodology statement. This is stored in <code>intuitive_clinical_outcomes</code> and linked to the business plan.</p>
+            <p>5. The <code>generateSummaryReport()</code> function produces a formatted text summary suitable for the executive section of the business plan document.</p>
+            <p><strong>Tech stack:</strong> Pure JavaScript computation engine --> Express REST API (<code>/clinical-evidence/dollarize</code>) --> Sequelize PostgreSQL storage --> React ClinicalOutcomesPanel in BusinessPlanPage.</p>
+        </div>
     </div>
 
     <!-- Section 9: Proforma vs Actual Tracker -->
@@ -924,6 +983,18 @@
             <p>3. System auto-calculates variance and generates exception reports</p>
             <p>4. Quarterly: executive summary generated for CFO/CMO review meeting</p>
             <p>5. Annual: full ROI validation report with recommendations for expansion</p>
+        </div>
+
+        <div class="card" style="border-left: 4px solid var(--accent);">
+            <h4>How It's Done -- Technical Implementation</h4>
+            <p>1. When a business plan is finalized, its status changes to <code>'tracking'</code> upon the first actuals import.</p>
+            <p>2. Actuals are imported via <code>POST /tracking/:planId/actuals</code> with a period (start/end dates) and an array of surgeon-level actual cases: <code>{ surgeon_name, procedure_type, actual_cases }</code>.</p>
+            <p>3. The system automatically looks up each surgeon's <strong>original commitment</strong> from <code>intuitive_surgeon_commitments</code>, prorates the annual projection to the period length, and calculates variance: <code>actual - projected</code> and <code>variance_pct</code>.</p>
+            <p>4. The <strong>comparison endpoint</strong> (<code>GET /tracking/:planId/comparison</code>) aggregates all periods into a timeline with cumulative actual vs. projected cases, per-surgeon tracking (who is delivering, who isn't), and an ROI tracking percentage showing what fraction of projected revenue has materialized.</p>
+            <p>5. <strong>Plan snapshots</strong> (<code>POST /tracking/:planId/snapshot</code>) capture the full state of the business plan at a point in time -- surgeon commitments, clinical outcomes, actuals -- as a JSONB record. This creates an audit trail showing how projections evolved.</p>
+            <p>6. The <strong>executive summary</strong> endpoint (<code>GET /tracking/:planId/executive-summary</code>) generates a structured report with: hospital name, plan status, surgeon count (committed vs. total), incremental cases, revenue, clinical savings, combined ROI, and tracking status (On Track / At Risk / Below Target based on 90%/70% thresholds).</p>
+            <p>7. The React <strong>TrackingDashboardPage</strong> visualizes this with Recharts: a dual-line chart (projected vs. actual), surgeon performance table with color-coded variance, summary cards, and an import form with date pickers and dynamic surgeon rows.</p>
+            <p><strong>Tech stack:</strong> Sequelize models (PlanActual, PlanSnapshot) --> Express REST API --> Recharts LineChart/BarChart --> Prorated annual-to-period projection math.</p>
         </div>
     </div>
 
@@ -976,6 +1047,17 @@
                 <span class="summary-label">Payback Period</span>
                 <span class="summary-value">11 days</span>
             </div>
+        </div>
+
+        <div class="card" style="border-left: 4px solid var(--accent);">
+            <h4>How It's Done -- Technical Implementation</h4>
+            <p>1. The business plan is created via <code>POST /business-plans</code> with system configuration (type, negotiated price, service cost, quantity, acquisition model) and metadata (prepared by/for, presentation date).</p>
+            <p>2. The <strong>calculate endpoint</strong> (<code>POST /business-plans/:id/calculate</code>) aggregates all surgeon commitments (<code>total_incremental_annual</code>, <code>total_revenue_impact</code>) and clinical outcome savings (<code>total_clinical_savings_annual</code>) into a combined ROI.</p>
+            <p>3. <strong>Payback calculation:</strong> <code>system_cost x quantity / (annual_combined_ROI - annual_service_cost) x 12 = months to payback</code>. For lease models, the capital cost is zero and annual lease payments are subtracted instead.</p>
+            <p>4. <strong>Five-year net benefit:</strong> <code>(annual_net_benefit x 5) - capital_cost</code>, giving the CFO a clear long-term value picture.</p>
+            <p>5. All data is stored in <code>intuitive_business_plans</code> with status lifecycle: <code>draft -> finalized -> tracking -> archived</code>. Finalization timestamps the plan and locks the version.</p>
+            <p>6. The full plan with all related data (surgeon commitments, clinical outcomes, actuals, snapshots, surveys) is retrievable via a single <code>GET /business-plans/:id</code> call with Sequelize eager loading.</p>
+            <p><strong>Tech stack:</strong> Sequelize model with 6 associations --> Express CRUD API --> React BusinessPlanPage with inline surgeon entry, DRG auto-lookup, collapsible dollarization panel, and plan action buttons.</p>
         </div>
     </div>
 
