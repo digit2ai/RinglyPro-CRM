@@ -6,13 +6,13 @@
  * and returns a structured hospital profile for the SurgicalMind intake form.
  */
 
-let _openai = null;
-function getOpenAI() {
-  if (!_openai) {
-    const OpenAI = require('openai');
-    _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+let _anthropic = null;
+function getAnthropic() {
+  if (!_anthropic) {
+    const Anthropic = require('@anthropic-ai/sdk');
+    _anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   }
-  return _openai;
+  return _anthropic;
 }
 
 // Industry benchmarks used when specific data isn't found
@@ -79,7 +79,7 @@ async function researchHospital(hospitalName, progressCallback) {
 
   progress('Starting AI research for: ' + hospitalName);
 
-  // Step 1: Use GPT-4o with web search to gather hospital data
+  // Step 1: Use Claude Sonnet 4 to gather hospital data
   progress('Searching for hospital data, annual reports, CMS metrics...');
 
   const researchPrompt = `You are a hospital business analyst researching "${hospitalName}" to build a da Vinci robotic surgery business plan.
@@ -142,25 +142,25 @@ IMPORTANT:
 
   let researchData;
   try {
-    const completion = await getOpenAI().chat.completions.create({
-      model: 'gpt-4o',
+    const systemPrompt = 'You are a hospital business intelligence analyst with deep knowledge of US hospital systems, robotic surgery programs, and healthcare operations. You have expertise in da Vinci robotic surgical systems by Intuitive Surgical. Provide factual data when known, and realistic estimates based on hospital size/type/location when specific data is unavailable. Return only valid JSON -- no markdown, no code fences, no explanation.';
+
+    const message = await getAnthropic().messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 4096,
+      system: systemPrompt,
       messages: [
-        { role: 'system', content: 'You are a hospital business intelligence analyst with deep knowledge of US hospital systems, robotic surgery programs, and healthcare operations. Provide factual data when known, and realistic estimates based on hospital size/type/location when specific data is unavailable. Return only valid JSON.' },
         { role: 'user', content: researchPrompt }
-      ],
-      temperature: 0.3,
-      max_tokens: 4000
+      ]
     });
 
-    const content = completion.choices[0].message.content.trim();
+    const content = (message.content[0]?.text || '').trim();
     // Strip markdown code fences if present
     const jsonStr = content.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
     researchData = JSON.parse(jsonStr);
-    progress('AI research complete -- found ' + (researchData.confidence_level || 'medium') + ' confidence data');
+    progress('AI research complete (Claude Sonnet 4) -- ' + (researchData.confidence_level || 'medium') + ' confidence');
   } catch (err) {
-    console.error('GPT-4o research error:', err);
+    console.error('Claude research error:', err);
     progress('AI research encountered an error, using fallback approach...');
-    // Fallback: create a reasonable profile from the name
     researchData = buildFallbackProfile(hospitalName);
   }
 
