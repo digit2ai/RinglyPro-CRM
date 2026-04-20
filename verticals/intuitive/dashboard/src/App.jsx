@@ -4,6 +4,9 @@ import IntakePage from './pages/IntakePage'
 import AnalysisPage from './pages/AnalysisPage'
 import RecommendationsPage from './pages/RecommendationsPage'
 import PresentationPage from './pages/PresentationPage'
+import BusinessPlanPage from './pages/BusinessPlanPage'
+import SurveyManagerPage from './pages/SurveyManagerPage'
+import TrackingDashboardPage from './pages/TrackingDashboardPage'
 
 // Dynamic Rachel context builder -- generates presentation context from live project data
 function buildPresentationContext(project, analysisData, recommendations) {
@@ -122,6 +125,9 @@ const NAV_STEPS = [
   { to: '/analysis', label: 'Analysis', num: 2, icon: 'A' },
   { to: '/recommendations', label: 'System Match', num: 3, icon: 'M' },
   { to: '/presentation', label: 'Presentation', num: 4, icon: 'P' },
+  { to: '/business-plan', label: 'Business Plan', num: 5, icon: 'B' },
+  { to: '/surveys', label: 'Surgeon Surveys', num: 6, icon: 'S' },
+  { to: '/tracking', label: 'Plan Tracking', num: 7, icon: 'T' },
 ]
 
 export default function App() {
@@ -226,6 +232,12 @@ export default function App() {
           <Route path="/recommendations/:projectId" element={<RecommendationsPage />} />
           <Route path="/presentation" element={<PresentationPage />} />
           <Route path="/presentation/:projectId" element={<PresentationPage />} />
+          <Route path="/business-plan" element={<BusinessPlanPage projectId={currentProject} />} />
+          <Route path="/business-plan/:projectId" element={<BusinessPlanPage />} />
+          <Route path="/surveys" element={<SurveyManagerPage projectId={currentProject} />} />
+          <Route path="/surveys/:projectId" element={<SurveyManagerPage />} />
+          <Route path="/tracking" element={<TrackingDashboardPage />} />
+          <Route path="/tracking/:planId" element={<TrackingDashboardPage />} />
         </Routes>
       </main>
     </div>

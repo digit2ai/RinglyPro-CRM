@@ -74,6 +74,12 @@ const demoRoutes = require('./routes/demo');
 const healthRoutes = require('./routes/health');
 const { router: proposalRoutes, proposalJobs, buildSlideHTML, buildNarrationScripts, buildChartData, AUDIO_DIR } = require('./routes/proposal');
 const voiceAgentRoutes = require('./routes/voice-agent');
+const businessPlanRoutes = require('./routes/business-plans');
+const surveyRoutes = require('./routes/surveys');
+const clinicalEvidenceRoutes = require('./routes/clinical-evidence');
+const drgRoutes = require('./routes/drg');
+const proformaTrackingRoutes = require('./routes/proforma-tracking');
+const surveyPublicRoutes = require('./routes/survey-public');
 
 app.use(`${BASE_PATH}/health`, healthRoutes);
 app.use(`${BASE_PATH}/api/v1/projects`, projectRoutes);
@@ -81,6 +87,12 @@ app.use(`${BASE_PATH}/api/v1/analysis`, analysisRoutes);
 app.use(`${BASE_PATH}/api/v1/demo`, demoRoutes);
 app.use(`${BASE_PATH}/api/v1/proposal`, proposalRoutes);
 app.use(`${BASE_PATH}/api/v1/voice`, voiceAgentRoutes);
+app.use(`${BASE_PATH}/api/v1/business-plans`, businessPlanRoutes);
+app.use(`${BASE_PATH}/api/v1/surveys`, surveyRoutes);
+app.use(`${BASE_PATH}/api/v1/clinical-evidence`, clinicalEvidenceRoutes);
+app.use(`${BASE_PATH}/api/v1/drg`, drgRoutes);
+app.use(`${BASE_PATH}/api/v1/tracking`, proformaTrackingRoutes);
+app.use(`${BASE_PATH}/survey`, surveyPublicRoutes);
 
 // ============================================================================
 // STANDALONE PROPOSAL PAGE (NO LOGIN REQUIRED — must be before SPA catch-all)
@@ -305,7 +317,7 @@ if (fs.existsSync(dashboardDistPath)) {
   app.use(`${BASE_PATH}/`, express.static(dashboardDistPath));
 
   app.get(`${BASE_PATH}/*`, (req, res, next) => {
-    if (req.path.startsWith(`${BASE_PATH}/api/`) || req.path.startsWith(`${BASE_PATH}/health`) || req.path.startsWith(`${BASE_PATH}/proposal/`)) {
+    if (req.path.startsWith(`${BASE_PATH}/api/`) || req.path.startsWith(`${BASE_PATH}/health`) || req.path.startsWith(`${BASE_PATH}/proposal/`) || req.path.startsWith(`${BASE_PATH}/survey/`)) {
       return next();
     }
     const indexPath = path.join(dashboardDistPath, 'index.html');

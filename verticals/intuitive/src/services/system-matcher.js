@@ -70,6 +70,38 @@ const SYSTEMS = {
     training_weeks: 5,
     setup_time_min: 20,
     description: 'Single-port system for transoral and minimally invasive urologic procedures'
+  },
+  dV5_Dual: {
+    name: 'da Vinci 5 Dual Console',
+    price_range: [2800000, 3400000],
+    lease_annual: [500000, 650000],
+    service_annual: 0,
+    instrument_cost_per_case: 2200,
+    min_or_sqft: 700,
+    min_ceiling_ft: 10,
+    capabilities: ['multi_quadrant', 'force_feedback', 'case_insights', 'cloud_analytics', 'advanced_imaging', 'dual_console', 'training_console'],
+    specialties: ['urology', 'gynecology', 'general', 'thoracic', 'colorectal', 'cardiac', 'head_neck'],
+    ideal_volume: 350,
+    min_volume: 200,
+    training_weeks: 4,
+    setup_time_min: 15,
+    description: 'Flagship dual-console system enabling proctoring, training, and collaborative surgery with full dV5 capabilities'
+  },
+  Xi_Dual: {
+    name: 'da Vinci Xi Dual Console',
+    price_range: [1800000, 2400000],
+    lease_annual: [320000, 480000],
+    service_annual: 200000,
+    instrument_cost_per_case: 1800,
+    min_or_sqft: 650,
+    min_ceiling_ft: 10,
+    capabilities: ['multi_quadrant', 'firefly', 'integrated_table_motion', 'dual_console', 'training_console'],
+    specialties: ['urology', 'gynecology', 'general', 'thoracic', 'colorectal'],
+    ideal_volume: 300,
+    min_volume: 150,
+    training_weeks: 3,
+    setup_time_min: 20,
+    description: 'Dual-console Xi system for surgeon training programs and collaborative procedures'
   }
 };
 

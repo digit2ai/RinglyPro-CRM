@@ -89,6 +89,10 @@ module.exports = (sequelize, DataTypes) => {
   Project.associate = (models) => {
     Project.hasMany(models.IntuitiveAnalysisResult, { foreignKey: 'project_id', as: 'results' });
     Project.hasMany(models.IntuitiveSystemRecommendation, { foreignKey: 'project_id', as: 'recommendations' });
+    Project.hasMany(models.IntuitiveBusinessPlan, { foreignKey: 'project_id', as: 'businessPlans' });
+    Project.hasMany(models.IntuitiveSurgeonCommitment, { foreignKey: 'project_id', as: 'surgeonCommitments' });
+    Project.hasMany(models.IntuitiveSurvey, { foreignKey: 'project_id', as: 'surveys' });
+    Project.hasMany(models.IntuitiveClinicalOutcome, { foreignKey: 'project_id', as: 'clinicalOutcomes' });
   };
 
   return Project;
