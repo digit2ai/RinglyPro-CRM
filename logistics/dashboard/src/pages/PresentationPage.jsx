@@ -248,24 +248,17 @@ export default function PresentationPage() {
       title: 'PINAXIS Warehouse Analytics',
       content: (
         <div className="flex flex-col items-center justify-center h-full text-center space-y-8">
-          <div className="w-32 h-32 rounded-2xl overflow-hidden shadow-lg shadow-blue-600/20">
-            <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69b02d62034886f7c9e996d9.png" alt="PINAXIS" className="w-full h-full object-contain" />
-          </div>
           <div>
             <h1 className="text-4xl font-bold text-white mb-3">Dashboard Playbook</h1>
             <p className="text-xl text-slate-300">{companyName}</p>
-            <p className="text-sm text-slate-500 mt-4">PINAXIS Warehouse Automation</p>
+            <p className="text-sm text-slate-500 mt-4">PINAXIS Warehouse Analytics</p>
             {dateRange.from && dateRange.to && (
               <p className="text-xs text-slate-500 mt-2">Data range: {dateRange.from} to {dateRange.to}</p>
             )}
           </div>
-          <div className="flex items-center gap-3 mt-8">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-sm text-emerald-400">Rachel Voice AI Ready — Click the widget to begin</span>
-          </div>
           {!hasData && !loading && (
             <div className="p-4 rounded-lg bg-yellow-900/20 border border-yellow-500/30 max-w-md">
-              <p className="text-sm text-yellow-300">{projectId ? 'Analysis not yet complete. Run the analysis first from the Analysis page.' : 'Select a project from the sidebar to load presentation data.'}</p>
+              <p className="text-sm text-yellow-300">{projectId ? 'Analysis not yet complete. Run the analysis first from the Analysis page.' : 'Select a project from the Data Intake page to load presentation data.'}</p>
             </div>
           )}
         </div>

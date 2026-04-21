@@ -254,7 +254,7 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS }) {
       <p style={{ textAlign: 'center', color: '#475569', fontSize: '10pt', marginBottom: '2em' }}>
         This Enterprise Services Agreement ("Agreement") is entered into as of{' '}
         <strong>{form.effective_date || '___'}</strong> ("Effective Date") by and between:<br /><br />
-        <strong>Digit2AI LLC d/b/a RinglyPro</strong> ("Provider")<br />
+        <strong>PINAXIS Analytics</strong> ("Provider")<br />
         and<br />
         <strong>{form.client_name || '_______________'}</strong> ("Client")<br />
         {form.client_address}
@@ -263,7 +263,7 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS }) {
       <H2>1. DEFINITIONS</H2>
       <ol style={{ paddingLeft: '1.2em' }}>
         <li><strong>"Services"</strong> means the AI-powered analytics, automation, and consulting services described in Exhibit A.</li>
-        <li><strong>"Platform"</strong> means Provider's proprietary RinglyPro AI platform, including all AI agents, MCP tools, dashboards, and integrations.</li>
+        <li><strong>"Platform"</strong> means Provider's proprietary PINAXIS AI platform, including all AI agents, MCP tools, dashboards, and integrations.</li>
         <li><strong>"Consumption Units"</strong> means the aggregate usage of AI model tokens, API calls, workflow executions, and compute resources consumed through the Platform on Client's behalf, as metered by Provider's automated usage tracking system.</li>
         <li><strong>"Documented Savings"</strong> means the measurable, verifiable cost reduction and value improvement attributable to the Platform, calculated as the difference between the pre-implementation Baseline (Section 5) and actual post-implementation performance across the Outcome Categories defined in Exhibit B.</li>
         <li><strong>"Baseline"</strong> means the pre-implementation performance metrics measured during the first {form.baseline_period_days} days of the Agreement, establishing the reference point against which Documented Savings are calculated.</li>
@@ -380,7 +380,7 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS }) {
       {/* Signature blocks */}
       <div style={{ marginTop: '3em', display: 'flex', justifyContent: 'space-between' }}>
         <div style={{ width: '45%' }}>
-          <div style={sigLine}><strong>Digit2AI LLC d/b/a RinglyPro</strong></div>
+          <div style={sigLine}><strong>PINAXIS Analytics</strong></div>
           <br /><div style={sigLine}>Authorized Signature</div>
           <br /><div style={sigLine}>Name & Title</div>
           <br /><div style={sigLine}>Date</div>
@@ -398,7 +398,7 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS }) {
         <H2>EXHIBIT A — SCOPE OF SERVICES</H2>
         <p><strong>A1. Platform Services:</strong></p>
         <ol style={{ paddingLeft: '1.2em' }}>
-          <li>Full access to the RinglyPro AI platform, including all AI agents, dashboards, analytics, and integrations.</li>
+          <li>Full access to the PINAXIS AI platform, including all AI agents, dashboards, analytics, and integrations.</li>
           <li>Data intake, analysis, and AI-powered optimization recommendations.</li>
           <li>Automated usage metering with real-time consumption dashboards.</li>
           <li>Real-time monitoring, anomaly detection, and automated alerting.</li>

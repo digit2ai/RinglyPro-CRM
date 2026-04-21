@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 
 const DISCLOSING = {
-  company: 'DIGIT2AI LLC',
+  company: 'PINAXIS',
   name: 'Manuel Stagg',
   title: 'CEO'
 }
@@ -13,7 +13,7 @@ const NDA_FULL_TEXT = `NON-DISCLOSURE AGREEMENT
 
 This Non-Disclosure Agreement ("Agreement") is entered into as of the Effective Date signed below between:
 
-  Disclosing Party: DIGIT2AI LLC (Florida, USA)
+  Disclosing Party: PINAXIS (Florida, USA)
   Receiving Party:  As identified and signed below
 
 1. PURPOSE
@@ -25,7 +25,7 @@ The Receiving Party wishes to receive certain confidential information from the 
   • Software, source code, algorithms, and technical specifications
   • Customer lists, pricing, and financial data
   • Trade secrets and proprietary processes
-  • Any information related to the RinglyPro platform, AI systems, or integrations
+  • Any information related to the PINAXIS platform, AI systems, or integrations
 
 3. OBLIGATIONS OF RECEIVING PARTY
 The Receiving Party agrees to:
@@ -416,7 +416,7 @@ export default function NDAPage() {
           <pre className="text-xs text-slate-300 whitespace-pre-wrap font-sans leading-relaxed max-h-80 overflow-y-auto pr-2">{NDA_FULL_TEXT}</pre>
         ) : (
           <div className="text-xs text-slate-400 leading-relaxed space-y-1">
-            <p>Governs confidential exchange of information between <span className="text-slate-200 font-medium">DIGIT2AI LLC</span> and the Receiving Party.</p>
+            <p>Governs confidential exchange of information between <span className="text-slate-200 font-medium">PINAXIS</span> and the Receiving Party.</p>
             <p className="flex flex-wrap gap-x-4 gap-y-1 pt-1">
               <span>· 1-year term</span><span>· Florida law</span><span>· No license granted</span><span>· Equitable remedies</span><span>· E-SIGN / UETA compliant</span>
             </p>

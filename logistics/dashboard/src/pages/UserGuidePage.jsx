@@ -1445,7 +1445,7 @@ SKU-003;2024-01-14;500;REC-503;Supplier Alpha`}</CodeBlock>
             directly via the Production API. First generate an API key from the
             <strong className="text-white"> API Integration</strong> page, then use curl or any HTTP client.
           </p>
-          <CodeBlock label="Example: Ingest item master via JSON API">{`curl -X POST https://aiagent.ringlypro.com/logistics/api/v1/ingest/{projectId}/item-master \\
+          <CodeBlock label="Example: Ingest item master via JSON API">{`curl -X POST https://your-pinaxis-instance.com/pinaxis/api/v1/ingest/{projectId}/item-master \\
   -H "X-API-Key: pnx_your_key_here" \\
   -H "Content-Type: application/json" \\
   -d '{
