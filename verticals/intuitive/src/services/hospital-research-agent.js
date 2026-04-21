@@ -133,16 +133,19 @@ Return ONLY a valid JSON object (no markdown, no code fences) with these exact f
 }
 
 IMPORTANT:
+- BED COUNT ACCURACY IS CRITICAL. Do NOT underestimate. Check licensed beds, not just staffed beds. Many hospitals have expanded recently. If unsure, estimate HIGH not low. Community hospitals in growing suburban markets (Florida, Texas, etc.) often have 150-300+ beds. AdventHealth, HCA, and similar systems typically have 150-400 beds per facility.
 - specialty percentages must sum to 100
 - Be realistic -- large academic centers like Orlando Health have 800+ beds and 40,000+ surgeries/year
 - Community hospitals typically have 150-300 beds and 3,000-8,000 surgeries/year
+- Suburban growth hospitals (AdventHealth, HCA, etc.) in Florida/Texas often have 200-400 beds
 - If the hospital is known to have da Vinci systems, reflect that
 - Consider the competitive landscape in the hospital's market
+- annual_surgical_volume should be proportional to bed count: roughly 20-40 surgeries per bed per year depending on hospital type
 - Return ONLY the JSON object, nothing else`;
 
   let researchData;
   try {
-    const systemPrompt = 'You are a hospital business intelligence analyst with deep knowledge of US hospital systems, robotic surgery programs, and healthcare operations. You have expertise in da Vinci robotic surgical systems by Intuitive Surgical. Provide factual data when known, and realistic estimates based on hospital size/type/location when specific data is unavailable. Return only valid JSON -- no markdown, no code fences, no explanation.';
+    const systemPrompt = 'You are a hospital business intelligence analyst with deep knowledge of US hospital systems, robotic surgery programs, and healthcare operations. You have expertise in da Vinci robotic surgical systems by Intuitive Surgical. ACCURACY IS PARAMOUNT -- this data will be presented to hospital CFOs. For bed counts, use licensed bed counts (not staffed), and account for recent expansions. For surgical volumes, use realistic numbers proportional to bed count (20-40 surgeries/bed/year). When estimating, always err on the side of realistic-to-high rather than low. Clearly note what is confirmed vs estimated in your data_notes field. Return only valid JSON -- no markdown, no code fences, no explanation.';
 
     const message = await getAnthropic().messages.create({
       model: 'claude-sonnet-4-20250514',
