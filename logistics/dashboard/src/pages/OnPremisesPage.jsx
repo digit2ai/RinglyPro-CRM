@@ -614,93 +614,152 @@ export default function OnPremisesPage() {
       {/* 8. Responsibility Matrix */}
       <Section title="9. Responsibility Matrix (RACI)" accent="amber">
         <p className="text-sm text-slate-300 leading-relaxed mb-4">
-          Clear ownership for every deployment activity. Pinaxis IT provisions the environment;
-          the PINAXIS platform team handles code deployment, migration, and configuration.
+          Clear ownership for every deployment activity across three parties.
+          Digit2AI designed and built the platform as SaaS software. Pinaxis is deploying it on-premises
+          so they can resell it to their own end customers as a managed service.
         </p>
+
+        {/* Party Legend */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+          <div className="bg-blue-500/8 border border-blue-500/25 rounded-lg p-3">
+            <div className="text-xs font-mono text-blue-400 font-bold mb-1">DIGIT2AI</div>
+            <div className="text-[11px] text-slate-400">Platform developer. Delivers code, executes deployment, runs migrations, provides ongoing support and updates.</div>
+          </div>
+          <div className="bg-emerald-500/8 border border-emerald-500/25 rounded-lg p-3">
+            <div className="text-xs font-mono text-emerald-400 font-bold mb-1">PINAXIS IT</div>
+            <div className="text-[11px] text-slate-400">Client infrastructure. Provisions servers, manages firewall/network, operates the platform day-to-day, resells to end customers.</div>
+          </div>
+          <div className="bg-amber-500/8 border border-amber-500/25 rounded-lg p-3">
+            <div className="text-xs font-mono text-amber-400 font-bold mb-1">END CUSTOMER</div>
+            <div className="text-[11px] text-slate-400">Pinaxis's customer. Uses the platform, provides warehouse data, validates results, signs off on go-live.</div>
+          </div>
+        </div>
+
         <div className="bg-slate-800/50 rounded-lg p-4 overflow-x-auto mb-4">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-[10px] text-slate-500 uppercase tracking-wider">
                 <th className="pb-2 pr-4">Activity</th>
-                <th className="pb-2 pr-4 text-center">Pinaxis IT</th>
-                <th className="pb-2 pr-4 text-center">PINAXIS Platform</th>
-                <th className="pb-2 text-center">Customer IT</th>
+                <th className="pb-2 pr-4 text-center text-blue-400">Digit2AI</th>
+                <th className="pb-2 pr-4 text-center text-emerald-400">Pinaxis IT</th>
+                <th className="pb-2 text-center text-amber-400">End Customer</th>
               </tr>
             </thead>
             <tbody className="text-slate-300">
               <tr className="border-t border-slate-700/50">
                 <td className="py-2 pr-4">Server provisioning (VM/bare metal)</td>
-                <td className="py-2 pr-4 text-center font-bold text-emerald-400">R</td>
                 <td className="py-2 pr-4 text-center text-slate-500">C</td>
+                <td className="py-2 pr-4 text-center font-bold text-emerald-400">R</td>
                 <td className="py-2 text-center text-slate-500">I</td>
               </tr>
               <tr className="border-t border-slate-700/50">
                 <td className="py-2 pr-4">Network & firewall configuration</td>
-                <td className="py-2 pr-4 text-center font-bold text-emerald-400">R</td>
                 <td className="py-2 pr-4 text-center text-slate-500">C</td>
-                <td className="py-2 text-center text-slate-500">A</td>
+                <td className="py-2 pr-4 text-center font-bold text-emerald-400">R</td>
+                <td className="py-2 text-center text-slate-500">I</td>
               </tr>
               <tr className="border-t border-slate-700/50">
                 <td className="py-2 pr-4">Docker / runtime installation</td>
-                <td className="py-2 pr-4 text-center font-bold text-emerald-400">R</td>
                 <td className="py-2 pr-4 text-center text-slate-500">C</td>
+                <td className="py-2 pr-4 text-center font-bold text-emerald-400">R</td>
                 <td className="py-2 text-center text-slate-500">I</td>
               </tr>
               <tr className="border-t border-slate-700/50">
                 <td className="py-2 pr-4">TLS certificates & DNS</td>
-                <td className="py-2 pr-4 text-center font-bold text-emerald-400">R</td>
                 <td className="py-2 pr-4 text-center text-slate-500">I</td>
-                <td className="py-2 text-center text-slate-500">A</td>
+                <td className="py-2 pr-4 text-center font-bold text-emerald-400">R</td>
+                <td className="py-2 text-center text-slate-500">I</td>
               </tr>
               <tr className="border-t border-slate-700/50">
-                <td className="py-2 pr-4">PINAXIS code deployment</td>
-                <td className="py-2 pr-4 text-center text-slate-500">I</td>
+                <td className="py-2 pr-4">Platform code delivery (containers/source)</td>
                 <td className="py-2 pr-4 text-center font-bold text-blue-400">R</td>
+                <td className="py-2 pr-4 text-center text-slate-500">I</td>
+                <td className="py-2 text-center text-slate-500">I</td>
+              </tr>
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4">Platform deployment & configuration</td>
+                <td className="py-2 pr-4 text-center font-bold text-blue-400">R</td>
+                <td className="py-2 pr-4 text-center text-slate-500">C</td>
                 <td className="py-2 text-center text-slate-500">I</td>
               </tr>
               <tr className="border-t border-slate-700/50">
                 <td className="py-2 pr-4">Database schema migration</td>
-                <td className="py-2 pr-4 text-center text-slate-500">I</td>
                 <td className="py-2 pr-4 text-center font-bold text-blue-400">R</td>
+                <td className="py-2 pr-4 text-center text-slate-500">I</td>
                 <td className="py-2 text-center text-slate-500">I</td>
               </tr>
               <tr className="border-t border-slate-700/50">
-                <td className="py-2 pr-4">Data migration (projects, analysis)</td>
-                <td className="py-2 pr-4 text-center text-slate-500">C</td>
+                <td className="py-2 pr-4">Data migration (SaaS to on-prem)</td>
                 <td className="py-2 pr-4 text-center font-bold text-blue-400">R</td>
+                <td className="py-2 pr-4 text-center text-slate-500">C</td>
                 <td className="py-2 text-center text-slate-500">I</td>
               </tr>
               <tr className="border-t border-slate-700/50">
                 <td className="py-2 pr-4">SSO / LDAP integration</td>
-                <td className="py-2 pr-4 text-center font-bold text-emerald-400">R</td>
                 <td className="py-2 pr-4 text-center font-bold text-blue-400">R</td>
-                <td className="py-2 text-center text-slate-500">A</td>
+                <td className="py-2 pr-4 text-center font-bold text-emerald-400">R</td>
+                <td className="py-2 text-center text-slate-500">I</td>
               </tr>
               <tr className="border-t border-slate-700/50">
                 <td className="py-2 pr-4">WMS/ERP connector setup</td>
-                <td className="py-2 pr-4 text-center text-slate-500">C</td>
                 <td className="py-2 pr-4 text-center font-bold text-blue-400">R</td>
+                <td className="py-2 pr-4 text-center text-slate-500">C</td>
                 <td className="py-2 text-center font-bold text-amber-400">R</td>
+              </tr>
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4">Multi-tenant configuration for resale</td>
+                <td className="py-2 pr-4 text-center font-bold text-blue-400">R</td>
+                <td className="py-2 pr-4 text-center font-bold text-emerald-400">A</td>
+                <td className="py-2 text-center text-slate-500">I</td>
+              </tr>
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4">White-label branding & customization</td>
+                <td className="py-2 pr-4 text-center font-bold text-blue-400">R</td>
+                <td className="py-2 pr-4 text-center font-bold text-emerald-400">A</td>
+                <td className="py-2 text-center text-slate-500">I</td>
+              </tr>
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4">User training & documentation</td>
+                <td className="py-2 pr-4 text-center font-bold text-blue-400">R</td>
+                <td className="py-2 pr-4 text-center text-slate-500">C</td>
+                <td className="py-2 text-center text-slate-500">I</td>
               </tr>
               <tr className="border-t border-slate-700/50">
                 <td className="py-2 pr-4">UAT & go-live sign-off</td>
                 <td className="py-2 pr-4 text-center text-slate-500">C</td>
-                <td className="py-2 pr-4 text-center text-slate-500">C</td>
-                <td className="py-2 text-center font-bold text-amber-400">A</td>
+                <td className="py-2 pr-4 text-center font-bold text-emerald-400">A</td>
+                <td className="py-2 text-center text-slate-500">I</td>
               </tr>
               <tr className="border-t border-slate-700/50">
-                <td className="py-2 pr-4">Ongoing updates & patches</td>
-                <td className="py-2 pr-4 text-center text-slate-500">I</td>
+                <td className="py-2 pr-4">Ongoing updates, patches & new features</td>
                 <td className="py-2 pr-4 text-center font-bold text-blue-400">R</td>
-                <td className="py-2 text-center text-slate-500">A</td>
+                <td className="py-2 pr-4 text-center text-slate-500">C</td>
+                <td className="py-2 text-center text-slate-500">I</td>
+              </tr>
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4">Day-2 operations & monitoring</td>
+                <td className="py-2 pr-4 text-center text-slate-500">C</td>
+                <td className="py-2 pr-4 text-center font-bold text-emerald-400">R</td>
+                <td className="py-2 text-center text-slate-500">I</td>
+              </tr>
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4">End-customer onboarding & support</td>
+                <td className="py-2 pr-4 text-center text-slate-500">C</td>
+                <td className="py-2 pr-4 text-center font-bold text-emerald-400">R</td>
+                <td className="py-2 text-center text-slate-500">I</td>
+              </tr>
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4">Bug fixes & L3 escalation</td>
+                <td className="py-2 pr-4 text-center font-bold text-blue-400">R</td>
+                <td className="py-2 pr-4 text-center text-slate-500">I</td>
+                <td className="py-2 text-center text-slate-500">I</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div className="flex gap-4 flex-wrap text-xs text-slate-500">
-          <span><span className="text-emerald-400 font-bold">R</span> = Responsible</span>
-          <span><span className="text-blue-400 font-bold">R</span> = Responsible</span>
-          <span><span className="text-amber-400 font-bold">A</span> = Accountable</span>
+        <div className="flex gap-5 flex-wrap text-xs text-slate-500">
+          <span><span className="font-bold text-blue-400">R</span> = Responsible (does the work)</span>
+          <span><span className="font-bold text-emerald-400">A</span> = Accountable (owns the outcome)</span>
           <span>C = Consulted</span>
           <span>I = Informed</span>
         </div>
@@ -710,7 +769,7 @@ export default function OnPremisesPage() {
       <Section title="10. Code & Data Migration Procedures" accent="blue">
         <p className="text-sm text-slate-300 leading-relaxed mb-4">
           Complete migration procedure for transferring the PINAXIS platform from cloud to on-premises.
-          The PINAXIS platform team executes all migration steps; Pinaxis IT provides infrastructure access.
+          Digit2AI executes all migration steps; Pinaxis IT provides infrastructure access.
         </p>
 
         <h4 className="text-sm font-semibold text-white mb-3">10.1 Code Delivery</h4>
@@ -764,7 +823,7 @@ export default function OnPremisesPage() {
 
         <h4 className="text-sm font-semibold text-white mb-3">10.4 Environment Configuration</h4>
         <div className="bg-slate-900/60 rounded-lg p-5 font-mono text-xs text-slate-400 leading-loose mb-4">
-          <div className="text-blue-400 mb-2">{'// .env.production -- provided by PINAXIS platform team'}</div>
+          <div className="text-blue-400 mb-2">{'// .env.production -- provided by Digit2AI'}</div>
           <div className="text-slate-300">DATABASE_URL=postgresql://pinaxis:****@db:5432/pinaxis_onprem</div>
           <div className="text-slate-300">NODE_ENV=production</div>
           <div className="text-slate-300">PORT=3000</div>
@@ -816,56 +875,58 @@ export default function OnPremisesPage() {
           duration="Week 1-2"
           accent="blue"
           items={[
-            'Pinaxis IT provisions servers per Section 5 specs',
+            'Pinaxis IT provisions servers per Section 4 specs',
             'Pinaxis IT configures network, firewall, and DNS per Section 5',
             'Pinaxis IT installs Docker/Podman, PostgreSQL, Nginx',
             'Pinaxis IT generates TLS certificates (internal CA)',
-            'Pinaxis IT provides SSH/VPN access to PINAXIS platform team',
+            'Pinaxis IT provides SSH/VPN access to Digit2AI team',
           ]}
         />
         <Phase
           number={2}
-          title="Platform Deployment (PINAXIS Platform Team)"
+          title="Platform Deployment (Digit2AI)"
           duration="Week 2-3"
           accent="green"
           items={[
-            'PINAXIS team delivers container images (registry or offline)',
-            'PINAXIS team runs docker-compose up / kubectl apply',
-            'PINAXIS team executes database schema migration (Section 10.2)',
-            'PINAXIS team seeds reference data (product catalog, configs)',
-            'PINAXIS team configures Nginx reverse proxy + TLS termination',
-            'PINAXIS team validates health, API, and dashboard endpoints',
+            'Digit2AI delivers container images (registry or offline)',
+            'Digit2AI runs docker-compose up / kubectl apply',
+            'Digit2AI executes database schema migration (Section 10.2)',
+            'Digit2AI seeds reference data (product catalog, configs)',
+            'Digit2AI configures Nginx reverse proxy + TLS termination',
+            'Digit2AI validates health, API, and dashboard endpoints',
+            'Digit2AI configures multi-tenant setup for Pinaxis resale model',
           ]}
         />
         <Phase
           number={3}
-          title="Integration & Data Migration (Joint)"
+          title="Integration & Customization (Joint)"
           duration="Week 3-5"
           accent="amber"
           items={[
             'Pinaxis IT provides WMS/ERP test credentials and endpoints',
-            'PINAXIS team configures data ingestion connectors',
-            'PINAXIS team migrates existing project data if needed (Section 10.2 Step 4)',
-            'Joint: set up OEE webhook receiver for PLC/MES',
-            'Joint: configure SSO/LDAP integration (Section 8)',
+            'Digit2AI configures data ingestion connectors',
+            'Digit2AI migrates existing SaaS project data if needed (Section 10.2)',
+            'Digit2AI + Pinaxis IT: set up OEE webhook receiver for PLC/MES',
+            'Digit2AI + Pinaxis IT: configure SSO/LDAP integration (Section 8)',
+            'Digit2AI applies white-label branding per Pinaxis requirements',
             'Joint: end-to-end test with real warehouse data sample',
-            'PINAXIS team validates all 12 analysis modules',
+            'Digit2AI validates all 12 analysis modules',
             'Pinaxis IT runs security/penetration testing',
           ]}
         />
         <Phase
           number={4}
-          title="Go-Live & Handover"
+          title="Go-Live & Handover to Pinaxis"
           duration="Week 6-8"
           accent="purple"
           items={[
             'Production data load and first full analysis run',
-            'PINAXIS team conducts user training (Admin, Analyst, Viewer)',
-            'PINAXIS team sets up monitoring (Prometheus/Grafana) and alerting',
-            'PINAXIS team configures automated backups (pg_dump + WAL)',
-            'PINAXIS team delivers runbook (troubleshooting, scaling, upgrades)',
-            'Handover to Pinaxis IT ops with 4-week support period',
-            'Pinaxis IT assumes Day 2 operations with PINAXIS support contract',
+            'Digit2AI conducts admin training for Pinaxis operations team',
+            'Digit2AI sets up monitoring (Prometheus/Grafana) and alerting',
+            'Digit2AI configures automated backups (pg_dump + WAL)',
+            'Digit2AI delivers operations runbook to Pinaxis IT',
+            'Pinaxis IT assumes Day 2 operations (end-customer onboarding, L1/L2 support)',
+            'Digit2AI provides ongoing L3 support, updates, and new features per contract',
           ]}
         />
       </Section>
