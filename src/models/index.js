@@ -164,6 +164,26 @@ try {
   console.log('ProductionRun model not found:', error.message);
 }
 
+// Import Medical Tracker models
+let MedicalPatient, MedicalDiagnosis, MedicalMedication, MedicalAppointmentModel;
+let MedicalLabOrder, MedicalImagingOrder, MedicalProvider, MedicalFollowUp, MedicalVital, MedicalNote;
+
+try {
+  MedicalPatient = require('./MedicalPatient');
+  MedicalDiagnosis = require('./MedicalDiagnosis');
+  MedicalMedication = require('./MedicalMedication');
+  MedicalAppointmentModel = require('./MedicalAppointment');
+  MedicalLabOrder = require('./MedicalLabOrder');
+  MedicalImagingOrder = require('./MedicalImagingOrder');
+  MedicalProvider = require('./MedicalProvider');
+  MedicalFollowUp = require('./MedicalFollowUp');
+  MedicalVital = require('./MedicalVital');
+  MedicalNote = require('./MedicalNote');
+  console.log('Medical Tracker models imported successfully');
+} catch (error) {
+  console.log('Medical Tracker models not found:', error.message);
+}
+
 // Initialize models object
 const models = {
   sequelize
@@ -188,6 +208,16 @@ if (NeuralInsight) models.NeuralInsight = NeuralInsight;
 if (Machine) models.Machine = Machine;
 if (MachineEvent) models.MachineEvent = MachineEvent;
 if (ProductionRun) models.ProductionRun = ProductionRun;
+if (MedicalPatient) models.MedicalPatient = MedicalPatient;
+if (MedicalDiagnosis) models.MedicalDiagnosis = MedicalDiagnosis;
+if (MedicalMedication) models.MedicalMedication = MedicalMedication;
+if (MedicalAppointmentModel) models.MedicalAppointmentModel = MedicalAppointmentModel;
+if (MedicalLabOrder) models.MedicalLabOrder = MedicalLabOrder;
+if (MedicalImagingOrder) models.MedicalImagingOrder = MedicalImagingOrder;
+if (MedicalProvider) models.MedicalProvider = MedicalProvider;
+if (MedicalFollowUp) models.MedicalFollowUp = MedicalFollowUp;
+if (MedicalVital) models.MedicalVital = MedicalVital;
+if (MedicalNote) models.MedicalNote = MedicalNote;
 
 // Set up associations if models exist
 if (Contact && Message) {

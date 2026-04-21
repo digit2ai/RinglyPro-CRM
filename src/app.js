@@ -477,6 +477,15 @@ try {
     console.log('⚠️ OEE Tracking routes not available:', error.message);
 }
 
+// Medical Tracker (personal health records)
+try {
+    const medicalTrackerRoutes = require('./routes/medical-tracker');
+    app.use('/api/medical-tracker', medicalTrackerRoutes);
+    console.log('Medical Tracker routes mounted at /api/medical-tracker');
+} catch (error) {
+    console.log('Medical Tracker routes not available:', error.message);
+}
+
 // HISPATEC Digital Ecosystem
 try {
     const hispatecRoutes = require('./routes/hispatec');
