@@ -423,6 +423,81 @@ async function runFullPipeline(hospitalName, models, progressCallback) {
   });
   progress('Business plan created');
 
+  // Step 4b: Auto-populate surgeon commitments from analysis data
+  progress('Generating sample surgeon commitments from analysis...');
+  try {
+    const procedurePareto = analysisResults.procedure_pareto || {};
+    const topProcs = (procedurePareto.procedures || []).slice(0, 12);
+    const surgeonCount = projectData.credentialed_robotic_surgeons || Math.max(3, Math.round((projectData.bed_count || 200) / 60));
+    const specNames = { urology: 'Urology', gynecology: 'Gynecology', general: 'General Surgery', thoracic: 'Thoracic', colorectal: 'Colorectal', head_neck: 'ENT/Head & Neck', cardiac: 'Cardiac' };
+    const surgeonNames = ['Dr. A. Martinez', 'Dr. S. Patel', 'Dr. R. Johnson', 'Dr. L. Chen', 'Dr. M. Williams', 'Dr. K. Thompson', 'Dr. J. Davis', 'Dr. N. Rodriguez', 'Dr. P. Lee', 'Dr. C. Anderson'];
+
+    // Group procedures by specialty, assign each surgeon 1-3 specialties
+    const specProcs = {};
+    topProcs.forEach(p => {
+      const spec = p.specialty || 'general';
+      if (!specProcs[spec]) specProcs[spec] = [];
+      specProcs[spec].push(p);
+    });
+
+    const specKeys = Object.keys(specProcs);
+    const numSurgeons = Math.min(surgeonCount, surgeonNames.length, specKeys.length + 2);
+
+    for (let i = 0; i < numSurgeons; i++) {
+      const surgeonSpec = specKeys[i % specKeys.length];
+      const procs = specProcs[surgeonSpec] || [];
+      const surgeonProcs = procs.slice(0, 2).map(p => {
+        const monthlyCases = Math.max(1, Math.round((p.incremental_opportunity || Math.round((p.total_cases || p.cases || 10) * 0.2)) / 12));
+        let reimbursement = 12000;
+        if (drgLib) {
+          const allDRG = drgLib.getAllProcedures ? drgLib.getAllProcedures() : [];
+          const procName = (p.procedure_name || '').toLowerCase();
+          const match = allDRG.find(d => procName.includes(d.procedure_name.toLowerCase().split(' ')[0]));
+          if (match) reimbursement = match.avg_blended_rate || 12000;
+        }
+        return {
+          procedure_type: (p.procedure_name || '').toLowerCase().replace(/[^a-z0-9]/g, '_'),
+          procedure_name: p.procedure_name || 'General Procedure',
+          incremental_cases_monthly: monthlyCases,
+          incremental_cases_annual: monthlyCases * 12,
+          reimbursement_rate: reimbursement,
+          current_monthly_volume: Math.round(monthlyCases * 2.5),
+          competitive_leakage_cases: Math.round(monthlyCases * 0.3)
+        };
+      });
+
+      const totalAnnual = surgeonProcs.reduce((s, p) => s + p.incremental_cases_annual, 0);
+      const totalRevenue = surgeonProcs.reduce((s, p) => s + (p.incremental_cases_annual * p.reimbursement_rate), 0);
+
+      await models.IntuitiveSurgeonCommitment.create({
+        business_plan_id: plan.id,
+        project_id: project.id,
+        surgeon_name: surgeonNames[i],
+        surgeon_specialty: specNames[surgeonSpec] || surgeonSpec,
+        hospital_affiliation: projectData.hospital_name,
+        procedures: surgeonProcs,
+        total_incremental_annual: totalAnnual,
+        total_revenue_impact: totalRevenue,
+        source: 'ai_generated',
+        status: 'draft'
+      });
+    }
+
+    // Recalculate plan totals
+    const allCommitments = await models.IntuitiveSurgeonCommitment.findAll({ where: { business_plan_id: plan.id } });
+    const totalCases = allCommitments.reduce((s, c) => s + (c.total_incremental_annual || 0), 0);
+    const totalRev = allCommitments.reduce((s, c) => s + (parseFloat(c.total_revenue_impact) || 0), 0);
+    await plan.update({
+      total_incremental_cases_annual: totalCases,
+      total_incremental_revenue: totalRev,
+      total_combined_roi: totalRev + (parseFloat(plan.total_clinical_outcome_savings) || 0)
+    });
+
+    progress('Generated ' + numSurgeons + ' surgeon commitments with ' + totalCases + ' incremental cases/yr, $' + Math.round(totalRev).toLocaleString() + ' revenue');
+  } catch (e) {
+    progress('Surgeon commitment generation (non-fatal): ' + e.message);
+  }
+
   // Step 5: Clinical outcome dollarization
   progress('step:dollarization');
   progress('Running clinical outcome dollarization...');
@@ -471,9 +546,10 @@ async function runFullPipeline(hospitalName, models, progressCallback) {
         computed_at: new Date()
       });
 
+      const currentRevenue = parseFloat(plan.total_incremental_revenue) || 0;
       await plan.update({
         total_clinical_outcome_savings: dollarResults.total_clinical_savings_annual || 0,
-        total_combined_roi: dollarResults.total_clinical_savings_annual || 0
+        total_combined_roi: currentRevenue + (dollarResults.total_clinical_savings_annual || 0)
       });
 
       progress('Clinical dollarization complete: $' + (dollarResults.total_clinical_savings_annual || 0).toLocaleString() + ' annual savings');
