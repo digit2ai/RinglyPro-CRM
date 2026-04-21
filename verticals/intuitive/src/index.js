@@ -110,13 +110,13 @@ const { requireAuth } = require('./middleware/auth');
 app.use(`${BASE_PATH}/health`, healthRoutes);
 app.use(`${BASE_PATH}/api/v1/auth`, authRoutes);
 app.use(`${BASE_PATH}/survey`, surveyPublicRoutes);
+app.use(`${BASE_PATH}/api/v1/proposal`, proposalRoutes); // public: standalone proposals are shareable
+app.use(`${BASE_PATH}/api/v1/voice`, voiceAgentRoutes); // public: voice agent briefings
 
 // Protected API routes (require JWT)
 app.use(`${BASE_PATH}/api/v1/projects`, requireAuth, projectRoutes);
 app.use(`${BASE_PATH}/api/v1/analysis`, requireAuth, analysisRoutes);
 app.use(`${BASE_PATH}/api/v1/demo`, requireAuth, demoRoutes);
-app.use(`${BASE_PATH}/api/v1/proposal`, requireAuth, proposalRoutes);
-app.use(`${BASE_PATH}/api/v1/voice`, requireAuth, voiceAgentRoutes);
 app.use(`${BASE_PATH}/api/v1/business-plans`, requireAuth, businessPlanRoutes);
 app.use(`${BASE_PATH}/api/v1/surveys`, requireAuth, surveyRoutes);
 app.use(`${BASE_PATH}/api/v1/clinical-evidence`, requireAuth, clinicalEvidenceRoutes);
