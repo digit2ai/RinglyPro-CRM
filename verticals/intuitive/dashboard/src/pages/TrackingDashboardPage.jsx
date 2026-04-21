@@ -126,6 +126,14 @@ export default function TrackingDashboardPage({ planId: propPlanId }) {
   const [execLoading, setExecLoading] = useState(false)
   const [error, setError] = useState(null)
   const [importSuccess, setImportSuccess] = useState(false)
+  const [robotSyncLoading, setRobotSyncLoading] = useState(false)
+  const [robotSyncResult, setRobotSyncResult] = useState(null)
+  const [robotForm, setRobotForm] = useState({
+    period_start: '',
+    period_end: '',
+    period_label: '',
+    robot_serial: ''
+  })
 
   // Import form state
   const [importForm, setImportForm] = useState({
@@ -220,6 +228,30 @@ export default function TrackingDashboardPage({ planId: propPlanId }) {
       setError(err.message)
     } finally {
       setImportLoading(false)
+    }
+  }
+
+  // ─── Robot Data Sync ───────────────────────────────────────
+
+  const handleRobotSync = async (e) => {
+    e.preventDefault()
+    setRobotSyncLoading(true)
+    setRobotSyncResult(null)
+    try {
+      const res = await api.syncRobotToPlan(planId, {
+        period_start: robotForm.period_start,
+        period_end: robotForm.period_end,
+        period_label: robotForm.period_label || undefined,
+        robot_serial: robotForm.robot_serial || undefined
+      })
+      setRobotSyncResult(res.sync_summary || res)
+      setRobotForm({ period_start: '', period_end: '', period_label: '', robot_serial: '' })
+      await loadData()
+    } catch (err) {
+      console.error('Robot sync failed:', err)
+      setError(err.message)
+    } finally {
+      setRobotSyncLoading(false)
     }
   }
 
@@ -463,8 +495,77 @@ export default function TrackingDashboardPage({ planId: propPlanId }) {
         )}
       </SectionCard>
 
-      {/* ── 5. Import Actuals Form ────────────────────────────── */}
-      <SectionCard title="Import Actuals" subtitle="Record actual case volumes for a reporting period">
+      {/* ── 5. Sync from da Vinci Robot ──────────────────────── */}
+      <SectionCard title="Sync from da Vinci Robot" subtitle="Pull actual case data directly from Intuitive's robot telemetry" collapsible defaultOpen={true}>
+        <form onSubmit={handleRobotSync} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 mb-1">Period Start</label>
+              <input type="date" value={robotForm.period_start} onChange={e => setRobotForm(f => ({...f, period_start: e.target.value}))}
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" required />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 mb-1">Period End</label>
+              <input type="date" value={robotForm.period_end} onChange={e => setRobotForm(f => ({...f, period_end: e.target.value}))}
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" required />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 mb-1">Period Label</label>
+              <input type="text" placeholder="e.g. Q1 2026" value={robotForm.period_label} onChange={e => setRobotForm(f => ({...f, period_label: e.target.value}))}
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 mb-1">Robot Serial (optional)</label>
+              <input type="text" placeholder="Auto-match by hospital" value={robotForm.robot_serial} onChange={e => setRobotForm(f => ({...f, robot_serial: e.target.value}))}
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600" />
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button type="submit" disabled={robotSyncLoading || !robotForm.period_start || !robotForm.period_end}
+              className="px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold transition-all flex items-center gap-2">
+              {robotSyncLoading ? (
+                <><svg className="animate-spin w-4 h-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg> Syncing...</>
+              ) : 'Sync Robot Data'}
+            </button>
+            <span className="text-xs text-slate-500">Matches robot cases to committed surgeons automatically</span>
+          </div>
+        </form>
+
+        {robotSyncResult && (
+          <div className={`mt-4 p-4 rounded-lg border ${robotSyncResult.robot_cases_found > 0 ? 'bg-emerald-900/20 border-emerald-800' : 'bg-slate-800 border-slate-700'}`}>
+            <div className="text-sm font-semibold text-white mb-2">Sync Results</div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+              <div>
+                <div className="text-lg font-bold text-intuitive-400">{robotSyncResult.robot_cases_found}</div>
+                <div className="text-[10px] text-slate-500 uppercase">Robot Cases Found</div>
+              </div>
+              <div>
+                <div className="text-lg font-bold text-emerald-400">{robotSyncResult.surgeons_matched}</div>
+                <div className="text-[10px] text-slate-500 uppercase">Surgeons Matched</div>
+              </div>
+              <div>
+                <div className="text-lg font-bold text-yellow-400">{robotSyncResult.unmatched_cases}</div>
+                <div className="text-[10px] text-slate-500 uppercase">Unmatched Cases</div>
+              </div>
+              <div>
+                <div className={`text-lg font-bold ${robotSyncResult.variance_pct >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {robotSyncResult.variance_pct >= 0 ? '+' : ''}{robotSyncResult.variance_pct}%
+                </div>
+                <div className="text-[10px] text-slate-500 uppercase">vs Projected</div>
+              </div>
+            </div>
+            {robotSyncResult.unmatched_details && robotSyncResult.unmatched_details.length > 0 && (
+              <div className="mt-3 text-xs text-slate-400">
+                <span className="font-semibold">Unmatched surgeons:</span>{' '}
+                {[...new Set(robotSyncResult.unmatched_details.map(d => d.surgeon_name))].join(', ')}
+              </div>
+            )}
+          </div>
+        )}
+      </SectionCard>
+
+      {/* ── 6. Import Actuals Form (Manual) ──────────────────── */}
+      <SectionCard title="Manual Import" subtitle="Manually enter case volumes if robot data is unavailable" collapsible defaultOpen={false}>
         <form onSubmit={handleImportActuals} className="space-y-5">
           {/* Period info */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

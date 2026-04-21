@@ -144,8 +144,8 @@ const NAV_STEPS = [
   { to: '/analysis', label: 'Analysis', num: 2, icon: 'A' },
   { to: '/recommendations', label: 'System Match', num: 3, icon: 'M' },
   { to: '/presentation', label: 'Presentation', num: 4, icon: 'P' },
-  { to: '/business-plan', label: 'Business Plan', num: 5, icon: 'B' },
-  { to: '/surveys', label: 'Surgeon Surveys', num: 6, icon: 'S' },
+  { to: '/surveys', label: 'Surgeon Surveys', num: 5, icon: 'S' },
+  { to: '/business-plan', label: 'Business Plan', num: 6, icon: 'B' },
   { to: '/tracking', label: 'Plan Tracking', num: 7, icon: 'T' },
 ]
 

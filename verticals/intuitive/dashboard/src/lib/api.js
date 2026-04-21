@@ -92,6 +92,11 @@ export const api = {
   computeOutcomeSavings: (projectId, options) => request(`/intelligence/${projectId}/outcome-savings/compute`, { method: 'POST', body: JSON.stringify({ options }) }),
   getOutcomeSavings: (projectId) => request(`/intelligence/${projectId}/outcome-savings`),
 
+  // Robot Data
+  getRobotCases: (params) => request(`/robot-data/cases?${new URLSearchParams(params)}`),
+  getRobotSummary: (params) => request(`/robot-data/summary?${new URLSearchParams(params || {})}`),
+  syncRobotToPlan: (planId, data) => request(`/robot-data/sync-to-plan/${planId}`, { method: 'POST', body: JSON.stringify(data) }),
+
   // Proforma Tracking
   importActuals: (planId, data) => request(`/tracking/${planId}/actuals`, { method: 'POST', body: JSON.stringify(data) }),
   uploadActualsCsv: (planId, csvText) => request(`/tracking/${planId}/actuals/upload`, { method: 'POST', body: JSON.stringify({ csv_text: csvText }) }),

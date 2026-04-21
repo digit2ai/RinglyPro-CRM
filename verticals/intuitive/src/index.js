@@ -100,6 +100,7 @@ const surveyRoutes = require('./routes/surveys');
 const clinicalEvidenceRoutes = require('./routes/clinical-evidence');
 const drgRoutes = require('./routes/drg');
 const proformaTrackingRoutes = require('./routes/proforma-tracking');
+const robotDataRoutes = require('./routes/robot-data');
 const surveyPublicRoutes = require('./routes/survey-public');
 let aiResearchRoutes;
 try { aiResearchRoutes = require('./routes/ai-research'); } catch (e) { console.error('  INTUITIVE: ai-research route load error:', e.message); }
@@ -114,6 +115,7 @@ app.use(`${BASE_PATH}/api/v1/auth`, authRoutes);
 app.use(`${BASE_PATH}/survey`, surveyPublicRoutes);
 app.use(`${BASE_PATH}/api/v1/proposal`, proposalRoutes); // public: standalone proposals are shareable
 app.use(`${BASE_PATH}/api/v1/voice`, voiceAgentRoutes); // public: voice agent briefings
+app.use(`${BASE_PATH}/api/v1/robot-data/ingest`, robotDataRoutes); // public: robot telemetry uses API key auth
 
 // Protected API routes (require JWT)
 app.use(`${BASE_PATH}/api/v1/projects`, requireAuth, projectRoutes);
@@ -124,6 +126,7 @@ app.use(`${BASE_PATH}/api/v1/surveys`, requireAuth, surveyRoutes);
 app.use(`${BASE_PATH}/api/v1/clinical-evidence`, requireAuth, clinicalEvidenceRoutes);
 app.use(`${BASE_PATH}/api/v1/drg`, requireAuth, drgRoutes);
 app.use(`${BASE_PATH}/api/v1/tracking`, requireAuth, proformaTrackingRoutes);
+app.use(`${BASE_PATH}/api/v1/robot-data`, requireAuth, robotDataRoutes);
 if (aiResearchRoutes) app.use(`${BASE_PATH}/api/v1/ai-research`, requireAuth, aiResearchRoutes);
 if (intelligenceRoutes) app.use(`${BASE_PATH}/api/v1/intelligence`, requireAuth, intelligenceRoutes);
 
