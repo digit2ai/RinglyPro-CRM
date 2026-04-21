@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SurgicalMind -- Greg Walkthrough Notes</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; line-height: 1.7; }
+  .header { background: linear-gradient(135deg, #0ea5e9, #6366f1); padding: 32px 24px; text-align: center; position: sticky; top: 0; z-index: 10; }
+  .header h1 { font-size: 24px; font-weight: 800; color: white; }
+  .header p { font-size: 14px; color: rgba(255,255,255,0.8); margin-top: 4px; }
+  .container { max-width: 800px; margin: 0 auto; padding: 24px 16px 80px; }
+
+  .prep-box { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 24px; }
+  .prep-box h2 { font-size: 16px; color: #0ea5e9; margin-bottom: 8px; }
+  .prep-box ul { margin-left: 20px; font-size: 14px; color: #94a3b8; }
+  .prep-box li { margin: 4px 0; }
+
+  .step { background: #1e293b; border: 1px solid #334155; border-radius: 12px; margin-bottom: 20px; overflow: hidden; }
+  .step-header { padding: 16px 20px; cursor: pointer; display: flex; align-items: center; gap: 14px; }
+  .step-header:hover { background: #1e293b; }
+  .step-num { width: 36px; height: 36px; border-radius: 50%; background: #0ea5e9; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; color: white; flex-shrink: 0; }
+  .step-title { font-size: 17px; font-weight: 700; color: white; }
+  .step-subtitle { font-size: 13px; color: #64748b; margin-top: 2px; }
+  .step-arrow { margin-left: auto; color: #475569; font-size: 20px; transition: transform 0.2s; flex-shrink: 0; }
+  .step.open .step-arrow { transform: rotate(180deg); }
+  .step-body { display: none; padding: 0 20px 20px; }
+  .step.open .step-body { display: block; }
+
+  .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin: 16px 0 8px; }
+  .section-label.how { color: #0ea5e9; }
+  .section-label.show { color: #10b981; }
+  .section-label.say { color: #f59e0b; }
+
+  .step-body ul { margin-left: 18px; font-size: 14px; color: #cbd5e1; }
+  .step-body li { margin: 5px 0; }
+
+  .say-box { background: #1a2332; border-left: 3px solid #f59e0b; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 8px 0; font-size: 14px; color: #fbbf24; font-style: italic; }
+
+  .closing { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+  .closing h2 { font-size: 17px; color: #10b981; margin-bottom: 10px; }
+  .closing p { font-size: 14px; color: #cbd5e1; margin: 6px 0; }
+
+  .objection { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+  .objection h2 { font-size: 17px; color: #f59e0b; margin-bottom: 12px; }
+  .objection h3 { font-size: 14px; color: #e2e8f0; margin: 14px 0 6px; }
+  .objection p, .objection li { font-size: 14px; color: #94a3b8; }
+  .objection ul { margin-left: 18px; }
+  .objection li { margin: 4px 0; }
+
+  .pitch { background: linear-gradient(135deg, #0f172a, #1e293b); border: 1px solid #0ea5e9; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+  .pitch h2 { font-size: 17px; color: #0ea5e9; margin-bottom: 12px; }
+  .pitch h3 { font-size: 14px; color: #e2e8f0; margin: 14px 0 6px; }
+  .pitch p, .pitch li { font-size: 14px; color: #cbd5e1; }
+  .pitch ul { margin-left: 18px; }
+  .pitch li { margin: 4px 0; }
+  .pitch strong { color: #0ea5e9; }
+
+  .email-section { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+  .email-section h2 { font-size: 17px; color: #6366f1; margin-bottom: 12px; }
+  .email-body { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 16px; font-size: 14px; color: #cbd5e1; white-space: pre-wrap; line-height: 1.8; }
+  .email-body strong { color: #e2e8f0; }
+
+  @media (max-width: 600px) {
+    .header h1 { font-size: 20px; }
+    .step-title { font-size: 15px; }
+    .container { padding: 16px 12px 60px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>SurgicalMind -- Greg Walkthrough</h1>
+  <p>Demo script, objection handling, and email reply</p>
+</div>
+
+<div class="container">
+
+<!-- PREP -->
+<div class="prep-box">
+  <h2>Before the Call</h2>
+  <ul>
+    <li>Open <strong>SurgicalMind.app</strong> and log in</li>
+    <li>Have a real hospital name ready (one Greg would recognize)</li>
+    <li>Have 2-3 surgeon email addresses ready for the survey demo (can use test emails)</li>
+  </ul>
+</div>
+
+<!-- STEP 1 -->
+<div class="step open" onclick="this.classList.toggle('open')">
+  <div class="step-header">
+    <div class="step-num">1</div>
+    <div>
+      <div class="step-title">Hospital Intake</div>
+      <div class="step-subtitle">Creates the hospital profile that everything builds from</div>
+    </div>
+    <div class="step-arrow">&#9660;</div>
+  </div>
+  <div class="step-body">
+    <div class="section-label how">How the system does it</div>
+    <ul>
+      <li>Manager types a hospital name into a single text field</li>
+      <li>System creates a project record in the database with a unique ID</li>
+      <li>That project ID links every analysis, recommendation, survey, business plan, and tracking record together</li>
+      <li>No other input needed -- the AI takes over from here</li>
+    </ul>
+    <div class="section-label show">How to show Greg</div>
+    <ul>
+      <li>Type the hospital name</li>
+      <li>Click create</li>
+      <li>Move on immediately -- keep it fast</li>
+    </ul>
+    <div class="say-box">"Greg, this is where your Manager starts. They type in a hospital name. That's it. One input."</div>
+  </div>
+</div>
+
+<!-- STEP 2 -->
+<div class="step" onclick="this.classList.toggle('open')">
+  <div class="step-header">
+    <div class="step-num">2</div>
+    <div>
+      <div class="step-title">Analysis</div>
+      <div class="step-subtitle">AI researches the hospital -- replaces days of manual work</div>
+    </div>
+    <div class="step-arrow">&#9660;</div>
+  </div>
+  <div class="step-body">
+    <div class="section-label how">How the system does it</div>
+    <ul>
+      <li>AI agent sends the hospital name to Claude with a structured research prompt</li>
+      <li>Claude searches its training data for bed count, surgical volumes, specialties, robotic program history, and market positioning</li>
+      <li>System queries CMS Hospital Compare API for that specific hospital -- pulls readmission rates, mortality rates, infection rates, and length of stay data</li>
+      <li>System ingests the hospital's annual report (PDF upload or URL) and extracts procedure counts, revenue data, robotic surgery stats, and surgeon counts using AI document analysis</li>
+      <li>System calculates: total surgical volume, approach breakdown by specialty (% open, % laparoscopic, % robotic), procedure pareto, monthly seasonality, weekday OR distribution, hourly utilization, surgeon capacity modeling, and competitive landscape</li>
+      <li>All results stored as structured JSON linked to the project ID</li>
+    </ul>
+    <div class="section-label show">How to show Greg</div>
+    <ul>
+      <li>Click run analysis</li>
+      <li>Walk through results: procedure volumes, approach mix percentages, CMS outcomes</li>
+    </ul>
+    <div class="say-box">"This is the hospital's own published data. The AI pulled it in seconds. Your Manager didn't Google anything, didn't read an annual report, didn't search CMS. It's done."</div>
+  </div>
+</div>
+
+<!-- STEP 3 -->
+<div class="step" onclick="this.classList.toggle('open')">
+  <div class="step-header">
+    <div class="step-num">3</div>
+    <div>
+      <div class="step-title">System Match</div>
+      <div class="step-subtitle">AI recommends which da Vinci system fits this hospital</div>
+    </div>
+    <div class="step-arrow">&#9660;</div>
+  </div>
+  <div class="step-body">
+    <div class="section-label how">How the system does it</div>
+    <ul>
+      <li>Loads the complete da Vinci catalog with specs for each model (Xi, Xi Dual Console, dV5, dV5 Dual Console, SP, X)</li>
+      <li>Pulls the hospital's analysis data: surgical volume, specialty mix, OR count, growth trajectory, budget range</li>
+      <li>Runs a weighted scoring algorithm: volume capacity, specialty coverage, infrastructure fit, growth headroom, budget alignment, competitive positioning</li>
+      <li>Produces a ranked recommendation with scores and reasoning for each system</li>
+    </ul>
+    <div class="section-label show">How to show Greg</div>
+    <ul>
+      <li>Show the recommendation with scoring</li>
+    </ul>
+    <div class="say-box">"Based on the data, the AI recommends the Xi for this hospital. Here's why. Your Manager didn't have to figure this out -- the data made the decision."</div>
+  </div>
+</div>
+
+<!-- STEP 4 -->
+<div class="step" onclick="this.classList.toggle('open')">
+  <div class="step-header">
+    <div class="step-num">4</div>
+    <div>
+      <div class="step-title">Presentation</div>
+      <div class="step-subtitle">AI generates a slide deck with voice narration</div>
+    </div>
+    <div class="step-arrow">&#9660;</div>
+  </div>
+  <div class="step-body">
+    <div class="section-label how">How the system does it</div>
+    <ul>
+      <li>Pulls all analysis results for the project</li>
+      <li>Builds slide content programmatically from the actual data (not templates with placeholders)</li>
+      <li>Slides include: hospital profile, procedure volumes with charts, approach mix, seasonality, system recommendation, financial projections, competitive analysis</li>
+      <li>Charts rendered using Chart.js with real data</li>
+      <li>AI voice narration scripts generated per slide</li>
+      <li>ElevenLabs text-to-speech converts each script to audio</li>
+      <li>Presentation is a shareable web page with slide navigation, auto-play, and audio sync -- no login required to view</li>
+    </ul>
+    <div class="section-label show">How to show Greg</div>
+    <ul>
+      <li>Play 2-3 slides with the voice narration</li>
+    </ul>
+    <div class="say-box">"Your Manager walks into the CEO's office with this ready. No PowerPoint. No formatting. This took zero hours to build. It used to take how long?"</div>
+  </div>
+</div>
+
+<!-- STEP 5 -->
+<div class="step" onclick="this.classList.toggle('open')">
+  <div class="step-header">
+    <div class="step-num">5</div>
+    <div>
+      <div class="step-title">Surgeon Surveys</div>
+      <div class="step-subtitle">Replaces Survey Monkey -- emails surgeons, collects commitments</div>
+    </div>
+    <div class="step-arrow">&#9660;</div>
+  </div>
+  <div class="step-body">
+    <div class="section-label how">How the system does it</div>
+    <ul>
+      <li>Manager creates a survey -- system type and hospital name pre-filled from previous steps</li>
+      <li>Default questions auto-loaded: incremental volumes, procedure breakdown, barriers, competitive leakage, formal commitment</li>
+      <li>Manager adds surgeon recipients -- name, email, specialty (single or CSV bulk upload)</li>
+      <li>Each recipient gets a unique personal token stored in the database</li>
+      <li>Manager clicks "Send via Email" -- system calls SendGrid API for each recipient</li>
+      <li>Surgeon receives a branded HTML email with a personal link to a secure web form</li>
+      <li>Survey form asks: How many more procedures per month? What procedure types and breakdown? What prevents more cases? How many cases going to competitors? Will you formally commit?</li>
+      <li>Surgeon fills it out in 3 minutes -- no login required</li>
+      <li>Response stored in the database: surgeon name, specialty, monthly cases, procedure breakdown, barriers, competitive leakage, commitment status</li>
+      <li>Manager sees all responses with completion tracking</li>
+    </ul>
+    <div class="section-label show">How to show Greg</div>
+    <ul>
+      <li>Create a survey</li>
+      <li>Add 2-3 surgeon recipients</li>
+      <li>Click "Send via Email"</li>
+      <li>Show the email that goes out</li>
+      <li>Open the public survey link to show what the surgeon sees</li>
+    </ul>
+    <div class="say-box">"The surgeon gets this email, clicks the link, fills out the form. When they submit, their numbers are sitting right here. No Survey Monkey. No manual compilation. No re-typing into a spreadsheet."</div>
+  </div>
+</div>
+
+<!-- STEP 6 -->
+<div class="step" onclick="this.classList.toggle('open')">
+  <div class="step-header">
+    <div class="step-num">6</div>
+    <div>
+      <div class="step-title">Business Plan</div>
+      <div class="step-subtitle">Two ROI layers: surgeon volume revenue + clinical outcome savings</div>
+    </div>
+    <div class="step-arrow">&#9660;</div>
+  </div>
+  <div class="step-body">
+    <div class="section-label how">How the system does it -- Surgeon Volume ROI</div>
+    <ul>
+      <li>Manager clicks "Import from Survey" -- all surgeon responses convert into commitments in the business plan</li>
+      <li>Monthly case count split across procedure types using the surgeon's percentage breakdown</li>
+      <li>System queries DRG reimbursement database for each procedure type -- returns average blended rate (Medicare + commercial payer mix)</li>
+      <li>Annual cases = monthly x 12</li>
+      <li>Revenue per surgeon = annual cases x DRG rate per procedure</li>
+      <li>Surgeon who said "yes" to commitment gets status "confirmed"</li>
+      <li>Total incremental revenue summed across all surgeons and procedures</li>
+      <li>Manual entry also available for field conversations</li>
+    </ul>
+    <div class="section-label how">How the system does it -- Clinical Outcome ROI</div>
+    <ul>
+      <li>System pulls volume_projection from Step 2 analysis -- annual cases by specialty, % open, % lap, % robotic</li>
+      <li>Case data auto-populates the dollarization table (no manual entry)</li>
+      <li>Manager clicks "Calculate Savings"</li>
+      <li>Engine loads clinical evidence library -- peer-reviewed studies by specialty</li>
+      <li>For each specialty calculates: LOS savings (days reduced x cost/day), complication savings (rate reduction x cost/complication), readmission savings (rate reduction x cost/readmission), transfusion savings (rate reduction x cost/unit)</li>
+      <li>Results include citations to published studies</li>
+    </ul>
+    <div class="section-label how">How the system does it -- Combined Totals</div>
+    <ul>
+      <li>Manager clicks "Recalculate Totals"</li>
+      <li>Incremental Cases/Year = sum of all surgeon commitments</li>
+      <li>Incremental Revenue = sum of all DRG-calculated revenue</li>
+      <li>Clinical Outcome Savings = sum of all dollarization savings</li>
+      <li>Combined ROI = revenue + clinical savings</li>
+      <li>Payback Period = (system price x quantity) / annual net benefit x 12 months</li>
+      <li>Five-Year Net Benefit = (annual net benefit x 5) minus system cost</li>
+    </ul>
+    <div class="section-label show">How to show Greg</div>
+    <ul>
+      <li>Click "Import from Survey" -- show surgeon commitments populate with revenue</li>
+      <li>Show clinical dollarization auto-populated from analysis</li>
+      <li>Click "Calculate Savings" -- show results by specialty</li>
+      <li>Click "Recalculate Totals" -- show combined ROI</li>
+    </ul>
+    <div class="say-box">"The surgeon said 8 cases a month of radical prostatectomy. The system looked up the DRG rate, multiplied by 12, and that's the annual revenue. No spreadsheet."</div>
+    <div class="say-box">"This is the hospital's own CMS data cross-referenced with published clinical evidence. We're using their own numbers. With citations."</div>
+    <div class="say-box">"Two ROI layers. Surgeon volume plus clinical outcomes. Payback period. Five-year net benefit. Every Manager gets the same output."</div>
+  </div>
+</div>
+
+<!-- STEP 7 -->
+<div class="step" onclick="this.classList.toggle('open')">
+  <div class="step-header">
+    <div class="step-num">7</div>
+    <div>
+      <div class="step-title">Plan Tracking</div>
+      <div class="step-subtitle">Compares actual surgeon performance vs. business plan projections</div>
+    </div>
+    <div class="step-arrow">&#9660;</div>
+  </div>
+  <div class="step-body">
+    <div class="section-label how">How the system does it</div>
+    <ul>
+      <li>Every da Vinci robot logs case data: robot serial, surgeon name, procedure type, date, console time, instruments used</li>
+      <li>Intuitive's internal systems push data to the SurgicalMind Robot Data API (POST endpoint, batch case records, API key auth)</li>
+      <li>Each case stored with unique constraint to prevent duplicates</li>
+      <li>Manager clicks "Sync Robot Data" and selects a time period</li>
+      <li>System queries all robot cases for that hospital and date range</li>
+      <li>Fuzzy-matches each case to committed surgeons in the business plan</li>
+      <li>Calculates projected cases for period: annual commitment prorated to months in period</li>
+      <li>Calculates variance: actual minus projected (absolute and percentage)</li>
+      <li>Creates actuals record with per-surgeon breakdown</li>
+      <li>Dashboard shows: timeline chart (projected vs actual over time), per-surgeon table, summary cards, color coding (green/yellow/red), ROI realization %</li>
+      <li>Executive summary generates text report for customer follow-up</li>
+      <li>Snapshot feature saves point-in-time records for historical comparison</li>
+    </ul>
+    <div class="section-label show">How to show Greg</div>
+    <ul>
+      <li>Show the tracking dashboard</li>
+      <li>Show "Sync from da Vinci Robot"</li>
+      <li>Show variance tracking and per-surgeon breakdown</li>
+    </ul>
+    <div class="say-box">"Your robots already log every case. That data feeds directly into this dashboard. It matches each case to the surgeon's original commitment."</div>
+    <div class="say-box">"Six months after the sale, your Manager goes back to the CFO and says: here's exactly how the investment is performing. Dr. Smith committed to 96 cases a year, he's done 84 so far, he's on track. That's the conversation that sells the next system."</div>
+  </div>
+</div>
+
+<!-- CLOSING -->
+<div class="closing">
+  <h2>Closing</h2>
+  <div class="say-box">"Greg, everything in your email is built and working. The AI handles the research, the data pulls, the DRG lookups, the clinical evidence, the dollarization math, the survey distribution, the data compilation, and the proforma tracking. Your Managers stop building spreadsheets and start spending that time in front of customers. About 80% of the admin work is automated."</div>
+  <div class="say-box" style="margin-top: 12px;">"What do you want to test first?"</div>
+</div>
+
+<!-- GREG'S INTERNAL PITCH -->
+<div class="pitch">
+  <h2>When Greg Asks: "How Do We Get This Into Intuitive?"</h2>
+  <p style="color: #64748b; font-size: 13px; margin-bottom: 12px;">Greg is a Senior Director. He reports to someone who reports to the CEO. He can champion this internally but needs ammunition to sell it up the chain.</p>
+
+  <h3>For Greg's pitch to his boss:</h3>
+  <div class="say-box">"Greg, here's how I'd position this for your leadership."</div>
+  <ul>
+    <li><strong>It compresses the sales cycle.</strong> Your Managers spend weeks building a single business plan. This does it in minutes. That's more hospitals per quarter per Manager.</li>
+    <li><strong>It standardizes the output.</strong> Your newest hire produces the same quality business plan as your best Director. The variability problem goes away.</li>
+    <li><strong>It closes the accountability loop.</strong> You've never had a way to validate ROI after the sale. Now you do. That's the conversation that sells the second and third system.</li>
+  </ul>
+
+  <h3>For the executive above Greg:</h3>
+  <div class="say-box">"One da Vinci system is a $1.5-2M deal. If this tool helps your team close even one additional system per quarter that they would have lost to a weak business plan, the ROI pays for itself 50 times over."</div>
+
+  <h3>What to offer Greg:</h3>
+  <ul>
+    <li><strong>Pilot first.</strong> Greg's region. 5-10 Managers. 90 days. Measure business plans built, time savings, close rates. Real numbers for national rollout case.</li>
+    <li><strong>White-label it.</strong> Intuitive branding replaces SurgicalMind. Their team sees it as their own tool.</li>
+    <li><strong>Data stays internal.</strong> Hospital data, surgeon commitments, business plans -- stored securely. Nothing leaves their ecosystem.</li>
+    <li><strong>Robot data integration.</strong> Their IT connects the telemetry API once. Tracking runs automatically.</li>
+  </ul>
+
+  <h3>What you need from Greg:</h3>
+  <ul>
+    <li>A real hospital to run end-to-end as a live test</li>
+    <li>2-3 surgeon contacts willing to fill out a test survey</li>
+    <li>System type and pricing for the demo</li>
+    <li>Introduction to the vendor approval process if the pilot goes well</li>
+  </ul>
+</div>
+
+<!-- OBJECTIONS -->
+<div class="objection">
+  <h2>Objection Handling</h2>
+
+  <h3>If Greg asks about pricing:</h3>
+  <div class="say-box">"Let's not start with pricing. Let's start with a pilot using your team. We prove the value with real numbers, then we talk about what it's worth."</div>
+
+  <h3>If Greg asks about timeline:</h3>
+  <div class="say-box">"The platform is live today. We can start a pilot this week."</div>
+
+  <h3>If Greg asks about competitors:</h3>
+  <div class="say-box">"Nothing else connects hospital name to validated ROI tracking in one workflow. There are point solutions for pieces of it. Nothing does all four problems in one connected system."</div>
+
+  <h3>If Greg asks about customization:</h3>
+  <div class="say-box">"Everything is adjustable. If a Manager gets better numbers from a field conversation, they can override any value. The AI gives the starting point, the human makes the final call."</div>
+
+  <h3>If Greg asks about security:</h3>
+  <div class="say-box">"Each user has their own login. Business plans are stored per hospital. Data is encrypted in transit and at rest on secure cloud infrastructure."</div>
+</div>
+
+<!-- EMAIL REPLY -->
+<div class="email-section">
+  <h2>Email Reply to Greg</h2>
+  <div class="email-body">Greg,
+
+All four problems are solved and built into the platform at SurgicalMind.app. Here's the status:
+
+<strong>Problem 1 -- Business Plan Consistency: SOLVED</strong>
+
+Built a standardized business plan builder. Manager selects system type, enters price and service cost. DRG reimbursement rates auto-lookup per procedure. Revenue, ROI, payback period, and 5-year net benefit calculate automatically. Same formula every time regardless of who builds the plan.
+
+<strong>Problem 2 -- Surgeon Surveys: SOLVED</strong>
+
+Built a survey system that replaces Survey Monkey. Manager adds surgeon emails, clicks send. Surgeons receive a branded email with a link to a web form asking incremental volumes, procedure breakdown, barriers, and competitive leakage. When responses come back, one click imports them directly into the business plan. No manual re-entry. Surgeon's own numbers feed the financial model. Manual entry also available for field conversations.
+
+<strong>Problem 3 -- Clinical Outcome Dollarization: SOLVED</strong>
+
+Built a dollarization engine that pulls the hospital's annual report data and CMS clinical outcomes, then cross-references with published clinical evidence across all specialties. Calculates dollar savings from reduced length of stay, fewer complications, fewer readmissions, and reduced transfusions. Auto-populates hospital case mix from the analysis. Adds a second ROI layer to the business plan with evidence citations.
+
+<strong>Problem 4 -- Proforma vs. Actual Tracking: SOLVED</strong>
+
+Built a tracking dashboard that stores every business plan and compares projected vs. actual performance. Since Intuitive has real-time robot case data, we built an API to receive that data and automatically match it to surgeon commitments. Dashboard shows per-surgeon variance, cumulative tracking, ROI realization, and executive summaries for customer follow-up.
+
+<strong>What This Really Is:</strong>
+
+This is an AI agent that handles about 80% of the admin work your Managers and Directors are doing manually today. The hospital research, the CMS data pull, the clinical evidence cross-referencing, the DRG lookups, the dollarization math, the ROI calculations, the survey distribution, the data compilation, the proforma tracking -- all automated. Your people stop spending weeks building spreadsheets and start spending that time in front of customers.
+
+<strong>How The SurgicalMind Ecosystem Works:</strong>
+
+1. Manager enters a hospital name
+2. AI researches the hospital -- CMS data, annual reports, procedure volumes, clinical outcomes
+3. AI recommends which da Vinci system fits the hospital
+4. AI generates a presentation deck with voice narration for the hospital pitch
+5. Manager sends surgeon surveys -- surgeons respond via email with volume commitments
+6. Survey responses import directly into the business plan with one click
+7. Clinical dollarization auto-runs using the hospital's own data and published evidence
+8. Complete business plan generates -- surgeon volume ROI + clinical outcome ROI + payback period
+9. Manager presents to hospital CEO/CFO
+10. Hospital purchases the system
+11. Robot case data syncs in automatically
+12. Dashboard tracks actual vs. projected and validates the investment
+
+Ready to walk you through it live whenever you have 30 minutes.
+
+Manny</div>
+</div>
+
+</div>
+
+<script>
+// All steps start collapsed except step 1
+document.querySelectorAll('.step').forEach((s, i) => { if (i > 0) s.classList.remove('open'); });
+</script>
+</body>
+</html>
