@@ -867,15 +867,16 @@
     background: rgba(0,163,224,0.1);
     border: 1px solid rgba(0,163,224,0.4);
     color: var(--teal-light);
-    width: 38px;
-    height: 38px;
-    border-radius: 6px;
+    padding: 8px 20px;
+    border-radius: 8px;
     cursor: pointer;
     font-size: 16px;
+    font-family: var(--mono);
     transition: all .2s;
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 6px;
   }
   .autoplay-controls button:hover {
     background: var(--teal);
@@ -1632,11 +1633,11 @@
 <div class="autoplay-controls" id="autoplayControls">
   <div class="rec-indicator" id="recIndicator">
     <div class="rec-dot"></div>
-    <span>REC</span>
+    <span>LIVE</span>
   </div>
-  <button id="btnPlayPause" aria-label="Play / Pause" title="Play / Pause">&#9654;</button>
-  <button id="btnStop" aria-label="Stop" title="Stop">&#9632;</button>
-  <div class="slide-info" id="slideInfo">01 / 16</div>
+  <button id="btnPlayPause" aria-label="Play / Pause" title="Play / Pause" style="display:flex;align-items:center;gap:6px"><span id="playIcon">&#9654;</span><span style="font-size:10px;letter-spacing:1px">PLAY</span></button>
+  <button id="btnStop" aria-label="Stop" title="Stop" style="display:flex;align-items:center;gap:6px"><span>&#9632;</span><span style="font-size:10px;letter-spacing:1px">STOP</span></button>
+  <div class="slide-info" id="slideInfo">01 / 20</div>
 </div>
 
 <script>
@@ -1848,14 +1849,14 @@
 
   function startAutoPlay() {
     autoPlaying = true;
-    btnPlayPause.innerHTML = '&#10074;&#10074;';
+    btnPlayPause.innerHTML = '<span>&#10074;&#10074;</span><span style="font-size:10px;letter-spacing:1px">PAUSE</span>';
     recIndicator.classList.add('active');
     autoNarrateCurrentSlide();
   }
 
   function pauseAutoPlay() {
     autoPlaying = false;
-    btnPlayPause.innerHTML = '&#9654;';
+    btnPlayPause.innerHTML = '<span>&#9654;</span><span style="font-size:10px;letter-spacing:1px">PLAY</span>';
     recIndicator.classList.remove('active');
     cancelAutoAdvance();
     cancelNarration();
@@ -1863,7 +1864,7 @@
 
   function stopAutoPlay() {
     autoPlaying = false;
-    btnPlayPause.innerHTML = '&#9654;';
+    btnPlayPause.innerHTML = '<span>&#9654;</span><span style="font-size:10px;letter-spacing:1px">PLAY</span>';
     recIndicator.classList.remove('active');
     cancelAutoAdvance();
     cancelNarration();
