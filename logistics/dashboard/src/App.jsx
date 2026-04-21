@@ -14,6 +14,7 @@ import NDAPage from './pages/NDAPage'
 import ContractBuilderPage from './pages/ContractBuilderPage'
 import PresentationPage from './pages/PresentationPage'
 import WarehouseMindPage from './pages/WarehouseMindPage'
+import OnPremisesPage from './pages/OnPremisesPage'
 const warehouseMindSubItems = [
   { path: '/warehousemind/command-center', label: 'MCP Command Center', icon: MCPIcon },
   { path: '/warehousemind/neural', label: 'Neural Intelligence', icon: NeuralIcon },
@@ -27,7 +28,8 @@ const docsSubItems = [
   { path: '/user-guide', label: 'User Guide', icon: BookIcon, noProject: true },
   { path: '/proposals/LOGISTICS-System-Architecture-Document.html', label: 'MCP Architecture', icon: ArchitectureIcon, external: true },
   { path: '/nda', label: 'NDA', icon: NDAIcon, noProject: true },
-  { path: '/contract-builder', label: 'Services Agreement', icon: ContractIcon, noProject: true }
+  { path: '/contract-builder', label: 'Services Agreement', icon: ContractIcon, noProject: true },
+  { path: '/on-premises', label: 'On-Premises Plan', icon: ServerIcon, noProject: true }
 ]
 
 const steps = [
@@ -147,6 +149,14 @@ function ContractIcon({ className }) {
   )
 }
 
+function ServerIcon({ className }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.737 5.1a3.375 3.375 0 012.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 01.9 2.7m0 0a3 3 0 01-3 3m0 3h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008zm-3 6h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008z" />
+    </svg>
+  )
+}
+
 function BrainIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -247,6 +257,7 @@ export default function App({ onLogout, userEmail }) {
     if (location.pathname.startsWith('/observability')) return 8
     if (location.pathname.startsWith('/nda')) return 8
     if (location.pathname.startsWith('/contract-builder')) return 8
+    if (location.pathname.startsWith('/on-premises')) return 8
     return 1
   }
 
@@ -284,7 +295,7 @@ export default function App({ onLogout, userEmail }) {
             const Icon = step.icon
             const isActive = getCurrentStep() === index
             const isWmSubActive = step.path === '/warehousemind' && location.pathname.startsWith('/warehousemind')
-            const isDocsSubActive = step.path === '/docs' && ['/api-integration', '/user-guide', '/nda', '/contract-builder'].some(p => location.pathname.startsWith(p))
+            const isDocsSubActive = step.path === '/docs' && ['/api-integration', '/user-guide', '/nda', '/contract-builder', '/on-premises'].some(p => location.pathname.startsWith(p))
 
             if (step.collapsible) {
               const isWm = step.path === '/warehousemind'
@@ -451,6 +462,7 @@ export default function App({ onLogout, userEmail }) {
             <Route path="/user-guide" element={<UserGuidePage />} />
             <Route path="/nda" element={<NDAPage />} />
             <Route path="/contract-builder" element={<ContractBuilderPage />} />
+            <Route path="/on-premises" element={<OnPremisesPage />} />
             <Route path="/presentation/:projectId" element={<PresentationPage />} />
             <Route path="/presentation" element={<PresentationPage />} />
           </Routes>
