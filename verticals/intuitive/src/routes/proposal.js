@@ -647,9 +647,11 @@ function buildSlideHTML(analysis, hospitalName) {
     // Slide 16: Competitive Landscape (NEW)
     { title: 'Competitive Landscape', html: (() => {
       const pressureColor = marketPressure === 'high' ? '#ef4444' : marketPressure === 'moderate' ? '#eab308' : '#10b981';
-      const compDetails = [];
+      // Extract competitor count from the text (count hospital/facility names)
+      const compCountEstimate = competitorDetailsStr ? (competitorDetailsStr.match(/hospital|center|medical|clinic|health/gi) || []).length : 0;
+      const positionShort = competitorNearby ? 'Differentiate' : 'First Mover';
       return `
-      <div class="metrics-grid">${metric('Competitors Nearby', competitorNearby ? 'Yes' : 'No', competitorNearby ? '#ef4444' : '#10b981')}${metric('Market Pressure', esc(marketPressure.charAt(0).toUpperCase() + marketPressure.slice(1)), pressureColor)}${metric('Competitor Count', fmt(compDetails.length))}${metric('Positioning', esc(compPositioning || 'First Mover'), '#0ea5e9')}</div>
+      <div class="metrics-grid">${metric('Competitors Nearby', competitorNearby ? 'Yes' : 'No', competitorNearby ? '#ef4444' : '#10b981')}${metric('Market Pressure', esc(marketPressure.charAt(0).toUpperCase() + marketPressure.slice(1)), pressureColor)}${metric('Competitor Count', competitorNearby ? '~' + Math.max(1, compCountEstimate) : '0', competitorNearby ? '#eab308' : '#10b981')}${metric('Strategy', positionShort, '#0ea5e9')}</div>
       ${competitorDetailsStr ? `<div class="info-box"><strong>Competitor Intelligence:</strong> ${esc(competitorDetailsStr)}</div>` : '<div class="info-box">No detailed competitor data available for this market area.</div>'}
       ${compRecommendation ? `<div class="info-box" style="border-color:#0ea5e9;background:rgba(14,165,233,0.1)"><strong>Strategic Recommendation:</strong> ${esc(compRecommendation)}</div>` : ''}
       <div class="info-box"><strong>Market Context:</strong> ${competitorNearby ? 'Competitor presence increases urgency for program launch to capture market share and recruit surgeons.' : 'Limited competition presents a first-mover advantage -- early adoption positions your facility as the regional robotic surgery center of excellence.'}</div>`;
