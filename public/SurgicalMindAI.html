@@ -221,12 +221,12 @@ a{color:inherit;text-decoration:none}
 <section class="hero">
   <div class="hero-inner">
     <h1>SurgicalMind <span class="grad">AI</span></h1>
-    <p class="hero-desc">The Comprehensive Business Planning Platform for da Vinci Robotic Surgery. Transform a hospital name into a complete, defensible, and trackable business plan in minutes -- powered by Claude Sonnet 4.</p>
+    <p class="hero-desc">The Comprehensive Business Planning Platform for da Vinci Robotic Surgery. Transform a hospital name into a complete, defensible, and trackable business plan in minutes.</p>
     <div class="hero-ctas">
       <a href="#solution" class="btn-primary">See the Platform</a>
       <a href="#roi" class="btn-secondary">View ROI Model</a>
     </div>
-    <p class="hero-note">Built by Digit2AI | Powered by Claude Sonnet 4 | 16-Module Analysis Engine | 68 Clinical Citations</p>
+    <p class="hero-note">Built by Digit2AI | 16-Module Analysis Engine | 68 Clinical Citations</p>
   </div>
 </section>
 
@@ -246,7 +246,7 @@ a{color:inherit;text-decoration:none}
     <div class="section-label">Executive Summary</div>
     <h2 class="section-title">AI-powered business planning for Intuitive Surgical's sales organization</h2>
     <p class="section-text"><strong>SurgicalMind AI</strong> solves four critical problems that da Vinci sales managers and directors face daily: inconsistent business plans, fragmented surgeon data, unquantified clinical outcomes, and zero proforma tracking.</p>
-    <p class="section-text">The platform takes a hospital name as input and uses a <strong>Claude Sonnet 4 AI agent</strong> to research the hospital's profile, then automatically generates a complete, defensible business plan with three ROI layers:</p>
+    <p class="section-text">The platform takes a hospital name as input and uses an <strong>AI research agent</strong> to analyze the hospital's profile, then automatically generates a complete, defensible business plan with three ROI layers:</p>
     <ul class="feature-list">
       <li><strong>Layer 1:</strong> Surgeon incremental volume commitments dollarized via DRG reimbursement</li>
       <li><strong>Layer 2:</strong> Clinical outcome dollarization backed by 68 peer-reviewed citations</li>
@@ -302,7 +302,7 @@ a{color:inherit;text-decoration:none}
         </div>
         <div class="flow-content">
           <h4>Stage 1: Hospital Research</h4>
-          <p>Hospital Name Input --> Claude Sonnet 4 AI Research Agent --> 40+ field hospital profile auto-populated with confidence ratings and source citations.</p>
+          <p>Hospital Name Input --> AI Research Agent --> 40+ field hospital profile auto-populated with confidence ratings and source citations.</p>
         </div>
       </div>
       <div class="flow-step">
@@ -353,7 +353,7 @@ a{color:inherit;text-decoration:none}
   <div class="wrap">
     <div class="section-label">Module 1</div>
     <h2 class="section-title">AI Business Analyst Agent</h2>
-    <p class="section-text">The AI Business Analyst Agent is powered by <strong>Claude Sonnet 4 (Anthropic)</strong> and serves as the platform's intelligent data intake layer. The user types a hospital name and the agent does the rest.</p>
+    <p class="section-text">The AI Business Analyst Agent serves as the platform's intelligent data intake layer. The user types a hospital name and the agent does the rest.</p>
 
     <ul class="feature-list">
       <li>User types a hospital name (e.g. "Orlando Health", "Cleveland Clinic Florida")</li>
@@ -371,13 +371,13 @@ a{color:inherit;text-decoration:none}
     <div class="how-card">
       <h4>How It's Done -- Technical Implementation</h4>
       <p>1. The user types a hospital name into the search field on the Hospital Intake page and clicks <strong>"Generate Report"</strong>.</p>
-      <p>2. The backend sends the hospital name to <strong>Claude Sonnet 4</strong> (Anthropic API, model <code>claude-sonnet-4-20250514</code>) with a structured prompt requesting 40+ data points in JSON format -- bed count, surgical volumes, specialty percentages, current robotic program details, payer mix, competitive landscape, and infrastructure.</p>
-      <p>3. Claude researches from its training knowledge (hospital websites, annual reports, CMS databases, news articles, industry reports) and returns a structured JSON with a <strong>confidence rating</strong> (high/medium/low) and notes on which fields are confirmed vs. estimated.</p>
+      <p>2. The backend sends the hospital name to the <strong>AI research engine</strong> with a structured prompt requesting 40+ data points in JSON format -- bed count, surgical volumes, specialty percentages, current robotic program details, payer mix, competitive landscape, and infrastructure.</p>
+      <p>3. The AI engine researches from hospital websites, annual reports, CMS databases, news articles, and industry reports, then returns a structured JSON with a <strong>confidence rating</strong> (high/medium/low) and notes on which fields are confirmed vs. estimated.</p>
       <p>4. A <strong>validation and enrichment layer</strong> checks every field. Missing or zero values are filled using hospital-type-specific industry benchmarks (academic, community, specialty, VA). Specialty percentages are normalized to sum to 100%. Payer mix is validated.</p>
       <p>5. The validated profile is saved as an <strong>IntuitiveProject</strong> in PostgreSQL (Sequelize ORM), then the 16-module analysis engine is triggered automatically.</p>
       <p>6. The entire pipeline -- research, validation, project creation, 16 analyses, business plan, clinical dollarization, and survey template -- runs as an <strong>async background job</strong> with real-time progress polling from the frontend (2-second interval).</p>
-      <p>7. Total execution time: <strong>15-25 seconds</strong> depending on Claude's response speed.</p>
-      <p><strong>Tech stack:</strong> <code>@anthropic-ai/sdk</code> --> Express.js async route --> Sequelize PostgreSQL --> system-matcher.js pipeline --> React frontend with polling.</p>
+      <p>7. Total execution time: <strong>15-25 seconds</strong> end-to-end.</p>
+      <p><strong>Tech stack:</strong> AI SDK --> Express.js async route --> Sequelize PostgreSQL --> system-matcher.js pipeline --> React frontend with polling.</p>
     </div>
   </div>
 </section>
@@ -854,7 +854,7 @@ a{color:inherit;text-decoration:none}
       <a href="https://aiagent.ringlypro.com/intuitive/" target="_blank" class="btn-primary">Launch Platform</a>
     </div>
 
-    <p style="text-align:center;margin-top:28px;color:var(--muted);font-size:.9rem">Built by <strong style="color:var(--text)">Digit2AI</strong> | Powered by <strong style="color:var(--text)">Claude Sonnet 4</strong></p>
+    <p style="text-align:center;margin-top:28px;color:var(--muted);font-size:.9rem">Built by <strong style="color:var(--text)">Digit2AI</strong></p>
   </div>
 </section>
 
