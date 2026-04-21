@@ -2,7 +2,20 @@ const express = require('express');
 const router = express.Router();
 const path = require('path');
 const fs = require('fs');
+const multer = require('multer');
 const sequelize = require('../config/database');
+const MedicalDocumentAI = require('../services/medicalDocumentAI');
+
+// Multer config -- memory storage, accept images + PDFs
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 25 * 1024 * 1024, files: 10 },
+  fileFilter: (req, file, cb) => {
+    const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/heic', 'image/heif', 'image/webp', 'application/pdf'];
+    if (allowed.includes(file.mimetype.toLowerCase())) cb(null, true);
+    else cb(new Error('Only images (JPEG, PNG, HEIC, WebP) and PDFs are accepted'), false);
+  }
+});
 
 // Import models
 const MedicalPatient = require('../models/MedicalPatient');
@@ -44,6 +57,194 @@ router.post('/migrate', async (req, res) => {
     res.json({ success: true, message: 'Medical tracker tables created' });
   } catch (error) {
     console.error('Migration error:', error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ==================== DOCUMENT UPLOAD & AI EXTRACTION ====================
+
+// Upload documents, extract data with Claude Vision, return structured preview
+router.post('/upload/extract', upload.array('documents', 10), async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ success: false, error: 'No files uploaded' });
+    }
+
+    const ai = new MedicalDocumentAI();
+    const patientId = req.body.patient_id || 1;
+
+    // Build existing context so AI can merge intelligently
+    let existingContext = '';
+    try {
+      const patient = await MedicalPatient.findByPk(patientId);
+      if (patient) {
+        existingContext = `Patient: ${patient.name}, MRN: ${patient.mrn}, DOB: ${patient.dob}`;
+      }
+    } catch (e) { /* no context available */ }
+
+    const results = [];
+    for (const file of req.files) {
+      try {
+        const base64 = file.buffer.toString('base64');
+        let extracted;
+        if (file.mimetype === 'application/pdf') {
+          extracted = await ai.extractFromPDF(base64, existingContext);
+        } else {
+          extracted = await ai.extractFromImage(base64, file.mimetype, existingContext);
+        }
+        results.push({
+          filename: file.originalname,
+          size: file.size,
+          type: file.mimetype,
+          extracted,
+          status: 'success'
+        });
+      } catch (err) {
+        console.error('Extraction error for', file.originalname, ':', err.message);
+        results.push({
+          filename: file.originalname,
+          size: file.size,
+          type: file.mimetype,
+          extracted: null,
+          status: 'error',
+          error: err.message
+        });
+      }
+    }
+
+    res.json({ success: true, data: results });
+  } catch (error) {
+    console.error('Upload error:', error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Confirm and save extracted data to the database
+router.post('/upload/confirm', async (req, res) => {
+  try {
+    const { patient_id, extracted } = req.body;
+    if (!extracted) return res.status(400).json({ success: false, error: 'No extracted data provided' });
+
+    const pid = patient_id || 1;
+    const saved = { diagnoses: 0, medications: 0, appointments: 0, lab_orders: 0, imaging_orders: 0, providers: 0, followups: 0, vitals: 0, notes: 0 };
+
+    // Update patient info if provided
+    if (extracted.patient) {
+      const patient = await MedicalPatient.findByPk(pid);
+      if (patient) {
+        const updates = {};
+        const p = extracted.patient;
+        // Only update non-null fields
+        for (const key of Object.keys(p)) {
+          if (p[key] && p[key] !== '' && p[key] !== null) updates[key] = p[key];
+        }
+        if (Object.keys(updates).length > 0) await patient.update(updates);
+      }
+    }
+
+    // Save each section
+    if (extracted.diagnoses) {
+      for (const d of extracted.diagnoses) {
+        if (!d.condition_name) continue;
+        const [, created] = await MedicalDiagnosis.findOrCreate({
+          where: { patient_id: pid, icd_code: d.icd_code || d.condition_name },
+          defaults: { ...d, patient_id: pid }
+        });
+        if (created) saved.diagnoses++;
+      }
+    }
+
+    if (extracted.medications) {
+      for (const m of extracted.medications) {
+        if (!m.medication_name) continue;
+        const [, created] = await MedicalMedication.findOrCreate({
+          where: { patient_id: pid, medication_name: m.medication_name },
+          defaults: { ...m, patient_id: pid }
+        });
+        if (created) saved.medications++;
+      }
+    }
+
+    if (extracted.appointments) {
+      for (const a of extracted.appointments) {
+        if (!a.appointment_date && !a.doctor_name) continue;
+        const [, created] = await MedicalAppointment.findOrCreate({
+          where: { patient_id: pid, appointment_date: a.appointment_date || null, doctor_name: a.doctor_name || 'Unknown' },
+          defaults: { ...a, patient_id: pid }
+        });
+        if (created) saved.appointments++;
+      }
+    }
+
+    if (extracted.lab_orders) {
+      for (const l of extracted.lab_orders) {
+        if (!l.test_name) continue;
+        const [, created] = await MedicalLabOrder.findOrCreate({
+          where: { patient_id: pid, test_name: l.test_name, order_date: l.order_date || null },
+          defaults: { ...l, patient_id: pid }
+        });
+        if (created) saved.lab_orders++;
+      }
+    }
+
+    if (extracted.imaging_orders) {
+      for (const i of extracted.imaging_orders) {
+        if (!i.imaging_test) continue;
+        const [, created] = await MedicalImagingOrder.findOrCreate({
+          where: { patient_id: pid, imaging_test: i.imaging_test, order_date: i.order_date || null },
+          defaults: { ...i, patient_id: pid }
+        });
+        if (created) saved.imaging_orders++;
+      }
+    }
+
+    if (extracted.providers) {
+      for (const p of extracted.providers) {
+        if (!p.provider_name) continue;
+        const [, created] = await MedicalProvider.findOrCreate({
+          where: { patient_id: pid, provider_name: p.provider_name },
+          defaults: { ...p, patient_id: pid }
+        });
+        if (created) saved.providers++;
+      }
+    }
+
+    if (extracted.followups) {
+      for (const f of extracted.followups) {
+        if (!f.item) continue;
+        const [, created] = await MedicalFollowUp.findOrCreate({
+          where: { patient_id: pid, item: f.item },
+          defaults: { ...f, patient_id: pid }
+        });
+        if (created) saved.followups++;
+      }
+    }
+
+    if (extracted.vitals) {
+      for (const v of extracted.vitals) {
+        if (!v.measured_date) continue;
+        const [, created] = await MedicalVital.findOrCreate({
+          where: { patient_id: pid, measured_date: v.measured_date },
+          defaults: { ...v, patient_id: pid }
+        });
+        if (created) saved.vitals++;
+      }
+    }
+
+    if (extracted.notes) {
+      for (const n of extracted.notes) {
+        if (!n.note_text) continue;
+        const [, created] = await MedicalNote.findOrCreate({
+          where: { patient_id: pid, note_text: n.note_text },
+          defaults: { ...n, patient_id: pid }
+        });
+        if (created) saved.notes++;
+      }
+    }
+
+    res.json({ success: true, message: 'Data saved to tracker', saved });
+  } catch (error) {
+    console.error('Confirm save error:', error.message);
     res.status(500).json({ success: false, error: error.message });
   }
 });
