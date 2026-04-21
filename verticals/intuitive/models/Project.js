@@ -93,6 +93,9 @@ module.exports = (sequelize, DataTypes) => {
     Project.hasMany(models.IntuitiveSurgeonCommitment, { foreignKey: 'project_id', as: 'surgeonCommitments' });
     Project.hasMany(models.IntuitiveSurvey, { foreignKey: 'project_id', as: 'surveys' });
     Project.hasMany(models.IntuitiveClinicalOutcome, { foreignKey: 'project_id', as: 'clinicalOutcomes' });
+    if (models.IntuitiveSurgeon) {
+      Project.hasMany(models.IntuitiveSurgeon, { foreignKey: 'project_id', as: 'surgeons' });
+    }
   };
 
   return Project;
