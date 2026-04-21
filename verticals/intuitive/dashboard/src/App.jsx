@@ -186,6 +186,11 @@ export default function App() {
     if (saved) setCurrentProject(parseInt(saved))
   }, [])
 
+  function selectProject(id) {
+    setCurrentProject(id)
+    localStorage.setItem('intuitive_project_id', id)
+  }
+
   function handleLogin(userData, token) {
     setUser(userData)
   }
@@ -196,27 +201,9 @@ export default function App() {
     localStorage.removeItem('intuitive_user')
   }
 
-  // Show loading while checking auth
-  if (!authChecked) {
-    return (
-      <div className="min-h-screen bg-[#0a1628] flex items-center justify-center">
-        <div className="text-slate-400 text-sm">Loading...</div>
-      </div>
-    )
-  }
-
-  // Show login if not authenticated
-  if (!user) {
-    return <LoginPage onLogin={handleLogin} />
-  }
-
-  function selectProject(id) {
-    setCurrentProject(id)
-    localStorage.setItem('intuitive_project_id', id)
-  }
-
   // Dynamically pass context to ElevenLabs widget based on current page
   useEffect(() => {
+    if (!user) return
     const widget = document.querySelector('elevenlabs-convai')
     if (!widget) return
 
@@ -224,9 +211,11 @@ export default function App() {
     const pid = anyProjectId || currentProject
 
     if (pid) {
+      const token = localStorage.getItem('intuitive_token')
+      const headers = token ? { 'Authorization': 'Bearer ' + token } : {}
       Promise.all([
-        fetch(`/intuitive/api/v1/projects/${pid}`).then(r => r.json()).catch(() => null),
-        fetch(`/intuitive/api/v1/analysis/${pid}/all`).then(r => r.json()).catch(() => null),
+        fetch(`/intuitive/api/v1/projects/${pid}`, { headers }).then(r => r.json()).catch(() => null),
+        fetch(`/intuitive/api/v1/analysis/${pid}/all`, { headers }).then(r => r.json()).catch(() => null),
       ]).then(([projRes, analysisRes]) => {
         const proj = projRes?.data || projRes
         let analysisMap = {}
@@ -245,7 +234,21 @@ export default function App() {
     } else {
       widget.removeAttribute('context')
     }
-  }, [location.pathname, currentProject])
+  }, [location.pathname, currentProject, user])
+
+  // Show loading while checking auth
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen bg-[#0a1628] flex items-center justify-center">
+        <div className="text-slate-400 text-sm">Loading...</div>
+      </div>
+    )
+  }
+
+  // Show login if not authenticated
+  if (!user) {
+    return <LoginPage onLogin={handleLogin} />
+  }
 
   return (
     <div className="flex min-h-screen">
