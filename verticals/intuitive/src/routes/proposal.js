@@ -572,7 +572,21 @@ function buildSlideHTML(analysis, hospitalName) {
       <div class="info-box" style="border-color:#8b5cf6;background:rgba(139,92,246,0.08);margin-bottom:16px"><strong>Evidence-Based Savings:</strong> Quantified clinical outcome improvements from robotic surgery, derived from peer-reviewed literature and applied to your hospital's case volume.</div>
       <div class="metrics-grid">${metric('Total Clinical Savings', totalClinicalSavings > 0 ? '$' + fmt(Math.round(totalClinicalSavings)) : '--', '#10b981')}${metric('Specialties Analyzed', fmt(specialtiesAnalyzed), '#0ea5e9')}${metric('Outcome Metrics', fmt(outcomeMetrics), '#eab308')}${metric('Journal Citations', fmt(journalCitations), '#8b5cf6')}</div>
       ${hasData ? chartBox('chartDollarization', 240) : ''}
-      ${dollarSpecialties.length > 0 ? `<table class="data-table"><tr><th>Specialty</th><th>Metric</th><th>Open Rate</th><th>Robotic Rate</th><th>Events Avoided</th><th>Annual Savings</th></tr>${dollarSpecialties.slice(0, 10).map(s => `<tr><td>${esc(s.specialty || s.name || '')}</td><td>${esc(s.metric || s.outcome_metric || '')}</td><td>${s.open_rate != null ? s.open_rate + '%' : '--'}</td><td>${s.robotic_rate != null ? s.robotic_rate + '%' : '--'}</td><td>${fmt(s.events_avoided || s.adverse_events_avoided || 0)}</td><td style="color:#10b981;font-weight:600">$${fmt(Math.round(s.savings || s.annual_savings || 0))}</td></tr>`).join('')}</table>` : '<div class="info-box">Dollarization engine will populate detailed per-specialty savings when clinical evidence library is available. Contact your SurgicalMind representative for the full clinical dollarization report.</div>'}`;
+      ${(() => {
+        // Flatten: for each specialty, show top 2 metrics + subtotal
+        const rows = [];
+        dollarSpecialties.forEach(s => {
+          const metricEntries = Object.entries(s.details || {});
+          const topMetrics = metricEntries.sort((a, b) => (b[1].savings || 0) - (a[1].savings || 0)).slice(0, 2);
+          topMetrics.forEach(([key, m]) => {
+            rows.push(`<tr><td>${esc(s.specialty)}</td><td>${esc(m.metric_name || key)}</td><td>${m.current_weighted_avg != null ? m.current_weighted_avg + ' days' : (m.current_events != null ? fmt(Math.round(m.current_events)) + ' events' : '--')}</td><td>${m.projected_weighted_avg != null ? m.projected_weighted_avg + ' days' : (m.projected_events != null ? fmt(Math.round(m.projected_events)) + ' events' : '--')}</td><td>${m.events_avoided != null ? fmt(Math.round(m.events_avoided)) : (m.total_days_avoided != null ? fmt(Math.round(m.total_days_avoided)) + ' days' : '--')}</td><td style="color:#10b981;font-weight:600">$${fmt(Math.round(m.savings || 0))}</td></tr>`);
+          });
+          if (metricEntries.length > 2) {
+            rows.push(`<tr style="background:rgba(16,185,129,0.05)"><td><strong>${esc(s.specialty)}</strong></td><td colspan="4" style="text-align:right"><em>${metricEntries.length} metrics total</em></td><td style="color:#10b981;font-weight:700">$${fmt(Math.round(s.savings))}</td></tr>`);
+          }
+        });
+        return rows.length > 0 ? `<table class="data-table"><tr><th>Specialty</th><th>Top Metric</th><th>Current</th><th>Projected</th><th>Reduction</th><th>Annual Savings</th></tr>${rows.join('')}</table>` : '<div class="info-box">Dollarization engine will populate detailed per-specialty savings when clinical evidence library is available.</div>';
+      })()}`;
     })() },
 
     // Slide 13: Combined 3-Layer ROI (NEW)
