@@ -279,7 +279,7 @@ export default function App({ onLogout, userEmail }) {
         </div>
 
         {/* Nav row: horizontal steps (desktop) */}
-        <nav className="hidden lg:flex items-center gap-1 px-4 pb-2 overflow-x-auto scrollbar-thin">
+        <nav className="hidden lg:flex items-center gap-1 px-4 pb-2 flex-wrap">
           {steps.map((step, index) => {
             const Icon = step.icon
             const isActive = getCurrentStep() === index
