@@ -53,6 +53,27 @@ models.sequelize.sync({ alter: false }).then(async () => {
   } catch (e) {
     console.log('  INTUITIVE table check:', e.message);
   }
+
+  // Seed admin user if not exists
+  try {
+    const bcrypt = require('bcryptjs');
+    const { IntuitiveUser } = models;
+    const adminEmail = 'mstagg@digit2ai.com';
+    const existing = await IntuitiveUser.findOne({ where: { email: adminEmail } });
+    if (!existing) {
+      const hash = await bcrypt.hash('Palindrome@7', 12);
+      await IntuitiveUser.create({
+        name: 'Manuel Stagg',
+        email: adminEmail,
+        password_hash: hash,
+        role: 'admin',
+        is_active: true
+      });
+      console.log('  INTUITIVE admin user seeded:', adminEmail);
+    }
+  } catch (e) {
+    console.log('  INTUITIVE admin seed:', e.message);
+  }
 }).catch(err => {
   console.error('  INTUITIVE DB sync error:', err.message);
 });
@@ -82,20 +103,26 @@ const proformaTrackingRoutes = require('./routes/proforma-tracking');
 const surveyPublicRoutes = require('./routes/survey-public');
 let aiResearchRoutes;
 try { aiResearchRoutes = require('./routes/ai-research'); } catch (e) { console.error('  INTUITIVE: ai-research route load error:', e.message); }
+const authRoutes = require('./routes/auth');
+const { requireAuth } = require('./middleware/auth');
 
+// Public routes (no auth)
 app.use(`${BASE_PATH}/health`, healthRoutes);
-app.use(`${BASE_PATH}/api/v1/projects`, projectRoutes);
-app.use(`${BASE_PATH}/api/v1/analysis`, analysisRoutes);
-app.use(`${BASE_PATH}/api/v1/demo`, demoRoutes);
-app.use(`${BASE_PATH}/api/v1/proposal`, proposalRoutes);
-app.use(`${BASE_PATH}/api/v1/voice`, voiceAgentRoutes);
-app.use(`${BASE_PATH}/api/v1/business-plans`, businessPlanRoutes);
-app.use(`${BASE_PATH}/api/v1/surveys`, surveyRoutes);
-app.use(`${BASE_PATH}/api/v1/clinical-evidence`, clinicalEvidenceRoutes);
-app.use(`${BASE_PATH}/api/v1/drg`, drgRoutes);
-app.use(`${BASE_PATH}/api/v1/tracking`, proformaTrackingRoutes);
+app.use(`${BASE_PATH}/api/v1/auth`, authRoutes);
 app.use(`${BASE_PATH}/survey`, surveyPublicRoutes);
-if (aiResearchRoutes) app.use(`${BASE_PATH}/api/v1/ai-research`, aiResearchRoutes);
+
+// Protected API routes (require JWT)
+app.use(`${BASE_PATH}/api/v1/projects`, requireAuth, projectRoutes);
+app.use(`${BASE_PATH}/api/v1/analysis`, requireAuth, analysisRoutes);
+app.use(`${BASE_PATH}/api/v1/demo`, requireAuth, demoRoutes);
+app.use(`${BASE_PATH}/api/v1/proposal`, requireAuth, proposalRoutes);
+app.use(`${BASE_PATH}/api/v1/voice`, requireAuth, voiceAgentRoutes);
+app.use(`${BASE_PATH}/api/v1/business-plans`, requireAuth, businessPlanRoutes);
+app.use(`${BASE_PATH}/api/v1/surveys`, requireAuth, surveyRoutes);
+app.use(`${BASE_PATH}/api/v1/clinical-evidence`, requireAuth, clinicalEvidenceRoutes);
+app.use(`${BASE_PATH}/api/v1/drg`, requireAuth, drgRoutes);
+app.use(`${BASE_PATH}/api/v1/tracking`, requireAuth, proformaTrackingRoutes);
+if (aiResearchRoutes) app.use(`${BASE_PATH}/api/v1/ai-research`, requireAuth, aiResearchRoutes);
 
 // ============================================================================
 // STANDALONE PROPOSAL PAGE (NO LOGIN REQUIRED — must be before SPA catch-all)

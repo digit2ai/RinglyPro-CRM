@@ -1,10 +1,18 @@
 const BASE = '/intuitive/api/v1';
 
 async function request(path, opts = {}) {
-  const res = await fetch(`${BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...opts.headers },
-    ...opts
-  });
+  const token = localStorage.getItem('intuitive_token');
+  const headers = { 'Content-Type': 'application/json', ...opts.headers };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+
+  const res = await fetch(`${BASE}${path}`, { ...opts, headers });
+  if (res.status === 401) {
+    // Token expired or invalid -- force logout
+    localStorage.removeItem('intuitive_token');
+    localStorage.removeItem('intuitive_user');
+    window.location.reload();
+    throw new Error('Session expired. Please sign in again.');
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error(err.error || res.statusText);

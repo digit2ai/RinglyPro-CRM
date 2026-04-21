@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Routes, Route, NavLink, useLocation } from 'react-router-dom'
+import LoginPage from './pages/LoginPage'
 import IntakePage from './pages/IntakePage'
 import AnalysisPage from './pages/AnalysisPage'
 import RecommendationsPage from './pages/RecommendationsPage'
@@ -133,11 +134,63 @@ const NAV_STEPS = [
 export default function App() {
   const location = useLocation()
   const [currentProject, setCurrentProject] = useState(null)
+  const [user, setUser] = useState(null)
+  const [authChecked, setAuthChecked] = useState(false)
+
+  // Check for existing session on mount
+  useEffect(() => {
+    const token = localStorage.getItem('intuitive_token')
+    const savedUser = localStorage.getItem('intuitive_user')
+    if (token && savedUser) {
+      // Verify token is still valid
+      fetch('/intuitive/api/v1/auth/me', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      }).then(r => r.json()).then(data => {
+        if (data.success && data.user) {
+          setUser(data.user)
+        } else {
+          localStorage.removeItem('intuitive_token')
+          localStorage.removeItem('intuitive_user')
+        }
+        setAuthChecked(true)
+      }).catch(() => {
+        localStorage.removeItem('intuitive_token')
+        localStorage.removeItem('intuitive_user')
+        setAuthChecked(true)
+      })
+    } else {
+      setAuthChecked(true)
+    }
+  }, [])
 
   useEffect(() => {
     const saved = localStorage.getItem('intuitive_project_id')
     if (saved) setCurrentProject(parseInt(saved))
   }, [])
+
+  function handleLogin(userData, token) {
+    setUser(userData)
+  }
+
+  function handleLogout() {
+    setUser(null)
+    localStorage.removeItem('intuitive_token')
+    localStorage.removeItem('intuitive_user')
+  }
+
+  // Show loading while checking auth
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen bg-[#0a1628] flex items-center justify-center">
+        <div className="text-slate-400 text-sm">Loading...</div>
+      </div>
+    )
+  }
+
+  // Show login if not authenticated
+  if (!user) {
+    return <LoginPage onLogin={handleLogin} />
+  }
 
   function selectProject(id) {
     setCurrentProject(id)
@@ -216,9 +269,15 @@ export default function App() {
           ))}
         </nav>
 
-        <div className="p-4 pb-20 border-t border-slate-800 text-[10px] text-slate-600">
-          Powered by RinglyPro<br />
-          SurgicalMind AI v1.0
+        <div className="p-4 pb-20 border-t border-slate-800">
+          <div className="text-xs text-slate-400 mb-2 truncate">{user?.name || user?.email}</div>
+          <button
+            onClick={handleLogout}
+            className="w-full text-left text-[11px] text-slate-500 hover:text-red-400 transition-colors"
+          >
+            Sign Out
+          </button>
+          <div className="text-[10px] text-slate-700 mt-3">SurgicalMind AI v2.0</div>
         </div>
       </aside>
 
