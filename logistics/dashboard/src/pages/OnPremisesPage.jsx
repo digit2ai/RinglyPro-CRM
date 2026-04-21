@@ -344,46 +344,246 @@ export default function OnPremisesPage() {
         </div>
       </Section>
 
-      {/* 8. Deployment Phases */}
-      <Section title="8. Deployment Roadmap" accent="green">
+      {/* 8. Responsibility Matrix */}
+      <Section title="8. Responsibility Matrix (RACI)" accent="amber">
+        <p className="text-sm text-slate-300 leading-relaxed mb-4">
+          Clear ownership for every deployment activity. Pinaxis IT provisions the environment;
+          the PINAXIS platform team handles code deployment, migration, and configuration.
+        </p>
+        <div className="bg-slate-800/50 rounded-lg p-4 overflow-x-auto mb-4">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-[10px] text-slate-500 uppercase tracking-wider">
+                <th className="pb-2 pr-4">Activity</th>
+                <th className="pb-2 pr-4 text-center">Pinaxis IT</th>
+                <th className="pb-2 pr-4 text-center">PINAXIS Platform</th>
+                <th className="pb-2 text-center">Customer IT</th>
+              </tr>
+            </thead>
+            <tbody className="text-slate-300">
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4">Server provisioning (VM/bare metal)</td>
+                <td className="py-2 pr-4 text-center font-bold text-emerald-400">R</td>
+                <td className="py-2 pr-4 text-center text-slate-500">C</td>
+                <td className="py-2 text-center text-slate-500">I</td>
+              </tr>
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4">Network & firewall configuration</td>
+                <td className="py-2 pr-4 text-center font-bold text-emerald-400">R</td>
+                <td className="py-2 pr-4 text-center text-slate-500">C</td>
+                <td className="py-2 text-center text-slate-500">A</td>
+              </tr>
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4">Docker / runtime installation</td>
+                <td className="py-2 pr-4 text-center font-bold text-emerald-400">R</td>
+                <td className="py-2 pr-4 text-center text-slate-500">C</td>
+                <td className="py-2 text-center text-slate-500">I</td>
+              </tr>
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4">TLS certificates & DNS</td>
+                <td className="py-2 pr-4 text-center font-bold text-emerald-400">R</td>
+                <td className="py-2 pr-4 text-center text-slate-500">I</td>
+                <td className="py-2 text-center text-slate-500">A</td>
+              </tr>
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4">PINAXIS code deployment</td>
+                <td className="py-2 pr-4 text-center text-slate-500">I</td>
+                <td className="py-2 pr-4 text-center font-bold text-blue-400">R</td>
+                <td className="py-2 text-center text-slate-500">I</td>
+              </tr>
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4">Database schema migration</td>
+                <td className="py-2 pr-4 text-center text-slate-500">I</td>
+                <td className="py-2 pr-4 text-center font-bold text-blue-400">R</td>
+                <td className="py-2 text-center text-slate-500">I</td>
+              </tr>
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4">Data migration (projects, analysis)</td>
+                <td className="py-2 pr-4 text-center text-slate-500">C</td>
+                <td className="py-2 pr-4 text-center font-bold text-blue-400">R</td>
+                <td className="py-2 text-center text-slate-500">I</td>
+              </tr>
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4">SSO / LDAP integration</td>
+                <td className="py-2 pr-4 text-center font-bold text-emerald-400">R</td>
+                <td className="py-2 pr-4 text-center font-bold text-blue-400">R</td>
+                <td className="py-2 text-center text-slate-500">A</td>
+              </tr>
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4">WMS/ERP connector setup</td>
+                <td className="py-2 pr-4 text-center text-slate-500">C</td>
+                <td className="py-2 pr-4 text-center font-bold text-blue-400">R</td>
+                <td className="py-2 text-center font-bold text-amber-400">R</td>
+              </tr>
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4">UAT & go-live sign-off</td>
+                <td className="py-2 pr-4 text-center text-slate-500">C</td>
+                <td className="py-2 pr-4 text-center text-slate-500">C</td>
+                <td className="py-2 text-center font-bold text-amber-400">A</td>
+              </tr>
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4">Ongoing updates & patches</td>
+                <td className="py-2 pr-4 text-center text-slate-500">I</td>
+                <td className="py-2 pr-4 text-center font-bold text-blue-400">R</td>
+                <td className="py-2 text-center text-slate-500">A</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div className="flex gap-4 flex-wrap text-xs text-slate-500">
+          <span><span className="text-emerald-400 font-bold">R</span> = Responsible</span>
+          <span><span className="text-blue-400 font-bold">R</span> = Responsible</span>
+          <span><span className="text-amber-400 font-bold">A</span> = Accountable</span>
+          <span>C = Consulted</span>
+          <span>I = Informed</span>
+        </div>
+      </Section>
+
+      {/* 9. Code & Data Migration */}
+      <Section title="9. Code & Data Migration Procedures" accent="blue">
+        <p className="text-sm text-slate-300 leading-relaxed mb-4">
+          Complete migration procedure for transferring the PINAXIS platform from cloud to on-premises.
+          The PINAXIS platform team executes all migration steps; Pinaxis IT provides infrastructure access.
+        </p>
+
+        <h4 className="text-sm font-semibold text-white mb-3">9.1 Code Delivery</h4>
+        <div className="bg-slate-900/60 rounded-lg p-5 font-mono text-xs text-slate-400 leading-loose mb-4">
+          <div className="text-blue-400 mb-2">{'// Option A: Private Container Registry (recommended)'}</div>
+          <div className="text-slate-300">docker pull registry.pinaxis.internal/pinaxis-api:latest</div>
+          <div className="text-slate-300">docker pull registry.pinaxis.internal/pinaxis-dashboard:latest</div>
+          <div className="text-slate-300">docker pull registry.pinaxis.internal/pinaxis-worker:latest</div>
+          <div className="text-slate-600 mt-2 mb-3">{'// Images are signed and scanned before publish'}</div>
+          <div className="text-amber-400 mb-2">{'// Option B: Air-Gapped (offline transfer)'}</div>
+          <div className="text-slate-300">{'// PINAXIS team exports images to encrypted USB/secure transfer'}</div>
+          <div className="text-slate-300">docker load &lt; pinaxis-bundle-v2.4.0.tar.gz</div>
+          <div className="text-slate-600 mt-2 mb-3">{'// SHA-256 checksums provided for integrity verification'}</div>
+          <div className="text-emerald-400 mb-2">{'// Option C: Git Repository Mirror'}</div>
+          <div className="text-slate-300">git clone git@git.pinaxis.internal:pinaxis/platform.git</div>
+          <div className="text-slate-300">npm ci --production && npm run build</div>
+          <div className="text-slate-600 mt-2">{'// Source code delivered for audit, built on-site'}</div>
+        </div>
+
+        <h4 className="text-sm font-semibold text-white mb-3">9.2 Database Migration</h4>
+        <div className="bg-slate-900/60 rounded-lg p-5 font-mono text-xs text-slate-400 leading-loose mb-4">
+          <div className="text-blue-400 mb-2">{'// Step 1: Export schema + seed data from cloud'}</div>
+          <div className="text-slate-300">pg_dump --schema-only -d pinaxis_prod &gt; schema.sql</div>
+          <div className="text-slate-300">pg_dump --data-only -t logistics_product_catalog \</div>
+          <div className="text-slate-300">{'  -t logistics_analysis_configs -d pinaxis_prod > seed.sql'}</div>
+          <div className="text-slate-600 mt-2 mb-3">{'// Only reference data migrated -- customer data stays clean'}</div>
+          <div className="text-emerald-400 mb-2">{'// Step 2: Import on target server'}</div>
+          <div className="text-slate-300">psql -h localhost -U pinaxis -d pinaxis_onprem &lt; schema.sql</div>
+          <div className="text-slate-300">psql -h localhost -U pinaxis -d pinaxis_onprem &lt; seed.sql</div>
+          <div className="text-slate-600 mt-2 mb-3">{'// Step 3: Run application migrations (idempotent)'}</div>
+          <div className="text-slate-300">node migrate.js --env=production</div>
+          <div className="text-slate-600 mt-2 mb-3">{'// Validates all tables, indexes, and constraints'}</div>
+          <div className="text-amber-400 mb-2">{'// Step 4: (Optional) Migrate existing project data'}</div>
+          <div className="text-slate-300">pg_dump --data-only -t logistics_projects \</div>
+          <div className="text-slate-300">{'  -t logistics_uploaded_files -t logistics_item_master \\'}</div>
+          <div className="text-slate-300">{'  -t logistics_inventory_data -t logistics_goods_in_data \\'}</div>
+          <div className="text-slate-300">{'  -t logistics_goods_out_data -t logistics_analysis_results \\'}</div>
+          <div className="text-slate-300">{'  -t logistics_product_recommendations \\'}</div>
+          <div className="text-slate-300">{'  -d pinaxis_cloud > project_data.sql'}</div>
+          <div className="text-slate-300 mt-1">psql -h localhost -U pinaxis -d pinaxis_onprem &lt; project_data.sql</div>
+          <div className="text-slate-600 mt-2">{'// Full project history preserved including analysis results'}</div>
+        </div>
+
+        <h4 className="text-sm font-semibold text-white mb-3">9.3 File Storage Migration</h4>
+        <div className="bg-slate-800/50 rounded-lg p-4 mb-4">
+          <Row label="Uploaded data files (CSV, Excel)" value="rsync or secure transfer to NFS/S3-compatible volume" />
+          <Row label="Generated reports (PDF, DOCX)" value="Migrated with project data or regenerated on-site" />
+          <Row label="TTS audio cache" value="Regenerated on first access (not migrated)" />
+          <Row label="Proposal audio files" value="Regenerated per project on demand" />
+        </div>
+
+        <h4 className="text-sm font-semibold text-white mb-3">9.4 Environment Configuration</h4>
+        <div className="bg-slate-900/60 rounded-lg p-5 font-mono text-xs text-slate-400 leading-loose mb-4">
+          <div className="text-blue-400 mb-2">{'// .env.production -- provided by PINAXIS platform team'}</div>
+          <div className="text-slate-300">DATABASE_URL=postgresql://pinaxis:****@db:5432/pinaxis_onprem</div>
+          <div className="text-slate-300">NODE_ENV=production</div>
+          <div className="text-slate-300">PORT=3000</div>
+          <div className="text-slate-300">WEBHOOK_API_KEY=pnx_****  <span className="text-slate-600">{'// for PLC/MES webhooks'}</span></div>
+          <div className="text-slate-300">CORS_ORIGIN=https://pinaxis.yourcompany.com</div>
+          <div className="text-slate-300 mt-2"><span className="text-slate-600">{'// AI Layer (Option A: local)'}</span></div>
+          <div className="text-slate-300">LLM_BASE_URL=http://ollama:11434</div>
+          <div className="text-slate-300">LLM_MODEL=llama3.1:70b</div>
+          <div className="text-slate-300 mt-2"><span className="text-slate-600">{'// AI Layer (Option B: proxy)'}</span></div>
+          <div className="text-slate-300">ANTHROPIC_API_KEY=sk-ant-****</div>
+          <div className="text-slate-300">ANTHROPIC_PROXY_URL=http://egress-proxy:8080</div>
+          <div className="text-slate-300 mt-2"><span className="text-slate-600">{'// SSO (example: Azure AD)'}</span></div>
+          <div className="text-slate-300">SSO_PROVIDER=saml</div>
+          <div className="text-slate-300">SSO_ENTRY_POINT=https://login.microsoftonline.com/.../saml2</div>
+          <div className="text-slate-300">SSO_CERT_PATH=/etc/pinaxis/sso-cert.pem</div>
+        </div>
+
+        <h4 className="text-sm font-semibold text-white mb-3">9.5 Validation Checklist</h4>
+        <div className="bg-slate-800/50 rounded-lg p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {[
+              'Health endpoint returns 200',
+              'Dashboard loads and login works',
+              'File upload processes correctly',
+              'All 12 analysis modules complete',
+              'Product recommendations generate',
+              'Proposal PDF export works',
+              'OEE webhook receives events',
+              'API key authentication works',
+              'SSO login redirects correctly',
+              'Backup script runs successfully',
+              'Monitoring dashboards populated',
+              'TLS certificate validates',
+            ].map((item, i) => (
+              <div key={i} className="flex items-center gap-2 text-sm text-slate-300 py-1">
+                <div className="w-4 h-4 rounded border border-slate-600 flex-shrink-0" />
+                <span>{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Section>
+
+      {/* 10. Deployment Roadmap */}
+      <Section title="10. Deployment Roadmap" accent="green">
         <Phase
           number={1}
-          title="Infrastructure Provisioning"
+          title="Environment Provisioning (Pinaxis IT)"
           duration="Week 1-2"
           accent="blue"
           items={[
-            'Provision application and database servers per Section 3',
-            'Configure network rules and firewall per Section 4',
-            'Install Docker/Podman and PostgreSQL',
-            'Set up TLS certificates (internal CA or Let\'s Encrypt)',
-            'Configure LDAP/SSO integration',
+            'Pinaxis IT provisions servers per Section 3 specs',
+            'Pinaxis IT configures network, firewall, and DNS per Section 4',
+            'Pinaxis IT installs Docker/Podman, PostgreSQL, Nginx',
+            'Pinaxis IT generates TLS certificates (internal CA)',
+            'Pinaxis IT provides SSH/VPN access to PINAXIS platform team',
           ]}
         />
         <Phase
           number={2}
-          title="Platform Deployment"
+          title="Platform Deployment (PINAXIS Platform Team)"
           duration="Week 2-3"
           accent="green"
           items={[
-            'Deploy PINAXIS containers via Docker Compose or Kubernetes',
-            'Run database migrations and seed reference data',
-            'Configure Nginx reverse proxy with TLS termination',
-            'Validate health endpoints and API connectivity',
-            'Connect to WMS/ERP test environment for data flow validation',
+            'PINAXIS team delivers container images (registry or offline)',
+            'PINAXIS team runs docker-compose up / kubectl apply',
+            'PINAXIS team executes database schema migration (Section 9.2)',
+            'PINAXIS team seeds reference data (product catalog, configs)',
+            'PINAXIS team configures Nginx reverse proxy + TLS termination',
+            'PINAXIS team validates health, API, and dashboard endpoints',
           ]}
         />
         <Phase
           number={3}
-          title="Integration & Testing"
+          title="Integration & Data Migration (Joint)"
           duration="Week 3-5"
           accent="amber"
           items={[
-            'Configure WMS/ERP data ingestion (item master, inventory, inbound/outbound)',
-            'Set up OEE webhook receiver for PLC/MES integration',
-            'Run end-to-end test with real warehouse data sample',
-            'Validate all 12 analysis modules produce correct results',
-            'Performance testing: 50K+ SKU dataset, concurrent users',
-            'Security penetration testing (internal team or vendor)',
+            'Pinaxis IT provides WMS/ERP test credentials and endpoints',
+            'PINAXIS team configures data ingestion connectors',
+            'PINAXIS team migrates existing project data if needed (Section 9.2 Step 4)',
+            'Joint: set up OEE webhook receiver for PLC/MES',
+            'Joint: configure SSO/LDAP integration (Section 7)',
+            'Joint: end-to-end test with real warehouse data sample',
+            'PINAXIS team validates all 12 analysis modules',
+            'Pinaxis IT runs security/penetration testing',
           ]}
         />
         <Phase
@@ -392,18 +592,19 @@ export default function OnPremisesPage() {
           duration="Week 6-8"
           accent="purple"
           items={[
-            'Production data migration and initial analysis run',
-            'User training sessions (Admin, Analyst, Viewer roles)',
-            'Monitoring setup: Prometheus/Grafana dashboards',
-            'Backup automation: daily pg_dump + WAL archiving',
-            'Runbook handover: troubleshooting, scaling, upgrades',
-            'Post-deployment support period (4 weeks)',
+            'Production data load and first full analysis run',
+            'PINAXIS team conducts user training (Admin, Analyst, Viewer)',
+            'PINAXIS team sets up monitoring (Prometheus/Grafana) and alerting',
+            'PINAXIS team configures automated backups (pg_dump + WAL)',
+            'PINAXIS team delivers runbook (troubleshooting, scaling, upgrades)',
+            'Handover to Pinaxis IT ops with 4-week support period',
+            'Pinaxis IT assumes Day 2 operations with PINAXIS support contract',
           ]}
         />
       </Section>
 
-      {/* 9. AI Layer Options */}
-      <Section title="9. AI Layer Configuration" accent="purple">
+      {/* 11. AI Layer Options */}
+      <Section title="11. AI Layer Configuration" accent="purple">
         <p className="text-sm text-slate-300 leading-relaxed mb-4">
           The WarehouseMind AI features can operate in three modes depending on your security requirements.
           The core analytics engine (12 modules) runs fully offline with zero AI dependency.
@@ -445,8 +646,8 @@ export default function OnPremisesPage() {
         </div>
       </Section>
 
-      {/* 10. Support & Maintenance */}
-      <Section title="10. Support & Maintenance" accent="teal">
+      {/* 12. Support & Maintenance */}
+      <Section title="12. Support & Maintenance" accent="teal">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div className="bg-slate-800/50 rounded-lg p-4">
             <h4 className="text-sm font-semibold text-teal-400 mb-2">Update Delivery</h4>
