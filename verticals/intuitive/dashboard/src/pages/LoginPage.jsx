@@ -20,7 +20,8 @@ export default function LoginPage({ onLogin }) {
       if (!res.ok) throw new Error(data.error || 'Login failed')
       localStorage.setItem('intuitive_token', data.token)
       localStorage.setItem('intuitive_user', JSON.stringify(data.user))
-      onLogin(data.user, data.token)
+      // Reload to ensure all components pick up the token
+      window.location.reload()
     } catch (err) {
       setError(err.message)
     } finally {
