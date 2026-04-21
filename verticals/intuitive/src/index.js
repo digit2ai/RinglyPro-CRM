@@ -197,7 +197,7 @@ body{background:#0f172a;color:#e2e8f0;font-family:'Inter',system-ui,-apple-syste
 </head>
 <body>
 <div class="splash" id="splash">
-  <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro" style="width:100px;height:100px;border-radius:20px;box-shadow:0 8px 32px rgba(14,165,233,0.3)">
+  <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69e6c537c56ad279084e2bb6.png" alt="RinglyPro" style="width:100px;height:100px;border-radius:20px;box-shadow:0 8px 32px rgba(14,165,233,0.3)">
   <h1>${hospitalName}</h1>
   <p>SurgicalMind AI &mdash; da Vinci System Assessment</p>
   <button onclick="startPresentation()">Tap to Start</button>

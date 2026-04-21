@@ -311,7 +311,7 @@ function buildSlideHTML(analysis, hospitalName) {
     { title: 'SurgicalMind AI — System Assessment', html: `
       <div style="text-align:center;padding:40px 0">
         <div style="display:inline-flex;align-items:center;gap:16px;margin-bottom:30px">
-          <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="RinglyPro" style="width:80px;height:80px;border-radius:16px;box-shadow:0 8px 32px rgba(14,165,233,0.3)">
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69e6c537c56ad279084e2bb6.png" alt="RinglyPro" style="width:80px;height:80px;border-radius:16px;box-shadow:0 8px 32px rgba(14,165,233,0.3)">
         </div>
         <h1 style="font-size:min(42px,7vw);margin:0;color:#f8fafc">${esc(hospitalName)}</h1>
         <p style="color:#94a3b8;margin-top:12px;font-size:min(18px,4vw)">SurgicalMind AI &mdash; da Vinci System Assessment</p>

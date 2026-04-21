@@ -115,7 +115,7 @@ function buildSurveyHTML(survey, questionsJSON, hospitalName, systemType, surgeo
 body{background:#0f172a;color:#e2e8f0;font-family:'Inter',system-ui,sans-serif;min-height:100vh;padding:20px}
 .container{max-width:680px;margin:0 auto}
 .header{text-align:center;padding:32px 0;border-bottom:1px solid #1e293b;margin-bottom:32px}
-.header img{width:56px;height:56px;border-radius:12px;margin-bottom:12px}
+.header img{width:80px;height:80px;border-radius:16px;margin-bottom:12px}
 .header h1{font-size:22px;margin-bottom:8px}
 .header p{color:#94a3b8;font-size:14px}
 .badge{display:inline-block;padding:4px 12px;border-radius:999px;background:rgba(14,165,233,0.1);border:1px solid rgba(14,165,233,0.3);color:#0ea5e9;font-size:12px;font-weight:600;margin-top:8px}
@@ -156,7 +156,7 @@ textarea{min-height:100px;resize:vertical}
 
 <div class="container" id="surveyForm">
   <div class="header">
-    <img src="https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/68ec2cfb385c9833a43e685f.png" alt="SurgicalMind AI">
+    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69e6c537c56ad279084e2bb6.png" alt="SurgicalMind AI">
     <h1>${survey.title}</h1>
     <p>Surgical Volume Assessment for ${hospitalName}</p>
     <div class="badge">${systemType} System Evaluation</div>
