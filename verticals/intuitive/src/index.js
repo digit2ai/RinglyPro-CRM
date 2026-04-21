@@ -233,11 +233,16 @@ body{background:#0f172a;color:#e2e8f0;font-family:'Inter',system-ui,-apple-syste
   <div class="header">
     <h2>SurgicalMind AI &mdash; ${hospitalName}</h2>
     <div class="controls">
+      <button id="btnPlay" onclick="toggleAuto()" style="background:#10b981;border-color:#10b981;color:#fff;display:flex;align-items:center;gap:6px;padding:6px 16px">
+        <span id="playIcon">&#9654;</span><span id="playLabel" style="font-size:12px;letter-spacing:1px">PLAY</span>
+      </button>
+      <button id="btnStop" onclick="stopPresentation()" style="display:flex;align-items:center;gap:6px;padding:6px 16px">
+        <span>&#9632;</span><span style="font-size:12px;letter-spacing:1px">STOP</span>
+      </button>
       <button id="btnPrev" onclick="prevSlide()">&larr;</button>
       <span class="slide-counter" id="counter">1 / ${slides.length}</span>
       <button id="btnNext" onclick="nextSlide()">&rarr;</button>
-      <button id="btnAuto" onclick="toggleAuto()">Auto</button>
-      <div class="voice-indicator"><div class="dot"></div>Rachel</div>
+      <div class="voice-indicator"><div class="dot" id="voiceDot"></div>Rachel</div>
     </div>
   </div>
   <div class="slide-area"><div class="slide" id="slideContent"></div></div>
@@ -267,11 +272,20 @@ function render(){
   for(let i=0;i<slides.length;i++){const d=document.createElement('div');d.className='dot'+(i===cur?' active':'');d.onclick=()=>{cur=i;render();playAudio()};dots.appendChild(d)}
   renderCharts()
 }
-function nextSlide(){if(cur<slides.length-1){cur++;render();playAudio()}}
-function prevSlide(){if(cur>0){cur--;render();playAudio()}}
-function toggleAuto(){auto=!auto;document.getElementById('btnAuto').classList.toggle('active',auto);if(auto)playAudio()}
+function nextSlide(){if(auto){auto=false;updatePlayBtn()}audio.pause();if(cur<slides.length-1){cur++;render();if(!auto){}}}
+function prevSlide(){if(auto){auto=false;updatePlayBtn()}audio.pause();if(cur>0){cur--;render()}}
+function toggleAuto(){auto=!auto;updatePlayBtn();if(auto)playAudio()}
+function stopPresentation(){auto=false;updatePlayBtn();audio.pause();cur=0;render()}
+function updatePlayBtn(){
+  var btn=document.getElementById('btnPlay');
+  var icon=document.getElementById('playIcon');
+  var label=document.getElementById('playLabel');
+  var dot=document.getElementById('voiceDot');
+  if(auto){btn.style.background='#eab308';btn.style.borderColor='#eab308';icon.innerHTML='&#10074;&#10074;';label.textContent='PAUSE';if(dot)dot.style.animation='pulse 1.5s infinite'}
+  else{btn.style.background='#10b981';btn.style.borderColor='#10b981';icon.innerHTML='&#9654;';label.textContent='PLAY';if(dot)dot.style.animation='none'}
+}
 function playAudio(){audio.src=audioBase+'/'+cur;audio.play().catch(()=>{})}
-audio.onended=function(){if(auto&&cur<slides.length-1){cur++;render();playAudio()}}
+audio.onended=function(){if(auto&&cur<slides.length-1){cur++;render();playAudio()}else if(auto){auto=false;updatePlayBtn()}}
 
 function renderCharts(){
   Object.values(charts).forEach(c=>{if(c&&c.destroy)c.destroy()});charts={};
