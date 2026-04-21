@@ -1,6 +1,24 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Component } from 'react'
 import { Routes, Route, NavLink, useLocation } from 'react-router-dom'
 import LoginPage from './pages/LoginPage'
+
+class ErrorBoundary extends Component {
+  constructor(props) { super(props); this.state = { hasError: false, error: null } }
+  static getDerivedStateFromError(error) { return { hasError: true, error } }
+  componentDidCatch(error, info) { console.error('SurgicalMind Error:', error, info) }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{padding:'40px',color:'#ef4444',background:'#1a1a2e',minHeight:'100vh'}}>
+          <h2>Something went wrong</h2>
+          <pre style={{color:'#94a3b8',marginTop:'16px',fontSize:'13px',whiteSpace:'pre-wrap'}}>{this.state.error?.toString()}</pre>
+          <button onClick={() => { this.setState({ hasError: false }); window.location.reload() }} style={{marginTop:'16px',background:'#6366f1',color:'#fff',border:'none',padding:'8px 20px',borderRadius:'8px',cursor:'pointer'}}>Reload</button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
 import IntakePage from './pages/IntakePage'
 import AnalysisPage from './pages/AnalysisPage'
 import RecommendationsPage from './pages/RecommendationsPage'
@@ -283,6 +301,7 @@ export default function App() {
 
       {/* Main Content */}
       <main className="flex-1 ml-56 min-h-screen relative">
+        <ErrorBoundary>
         <Routes>
           <Route path="/" element={<IntakePage onProjectCreated={selectProject} currentProject={currentProject} />} />
           <Route path="/analysis" element={<AnalysisPage projectId={currentProject} />} />
@@ -298,6 +317,7 @@ export default function App() {
           <Route path="/tracking" element={<TrackingDashboardPage />} />
           <Route path="/tracking/:planId" element={<TrackingDashboardPage />} />
         </Routes>
+        </ErrorBoundary>
       </main>
     </div>
   )
