@@ -10,16 +10,22 @@
 
     .header {
       background: linear-gradient(135deg, #0984e3 0%, #6c5ce7 100%);
-      color: white; padding: 18px 28px; display: flex; align-items: center; justify-content: space-between;
+      color: white; padding: 18px 28px;
       position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     }
+    .header-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
     .header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
     .header-sub { font-size: 13px; opacity: 0.85; }
-    .header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .header-actions button { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 7px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; transition: background 0.2s; }
     .header-actions button:hover { background: rgba(255,255,255,0.35); }
-    .header-actions .btn-upload { background: rgba(255,255,255,0.9); color: #6c5ce7; border-color: white; font-weight: 700; }
-    .header-actions .btn-upload:hover { background: white; }
+    .upload-bar {
+      margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.2);
+      display: flex; align-items: center; gap: 12px;
+    }
+    .btn-upload { background: white !important; color: #6c5ce7 !important; border-color: white !important; font-weight: 700 !important; font-size: 14px !important; padding: 10px 24px !important; border-radius: 8px !important; }
+    .btn-upload:hover { background: #f0f0f0 !important; }
+    .upload-hint { font-size: 12px; opacity: 0.75; }
 
     .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
 
@@ -135,22 +141,29 @@
       .tab { padding: 8px 10px; font-size: 12px; }
       .data-table { font-size: 12px; }
       .data-table th, .data-table td { padding: 6px 6px; }
-      .header { flex-direction: column; gap: 10px; }
+      .header-row { flex-direction: column; align-items: flex-start; }
+      .upload-bar { flex-direction: column; align-items: flex-start; }
+      .btn-upload { width: 100%; text-align: center; }
     }
   </style>
 </head>
 <body>
 
 <div class="header">
-  <div>
-    <h1>Medical Tracker</h1>
-    <div class="header-sub" id="headerSub">Loading...</div>
+  <div class="header-row">
+    <div>
+      <h1>Medical Tracker</h1>
+      <div class="header-sub" id="headerSub">Loading...</div>
+    </div>
+    <div class="header-actions">
+      <button onclick="initSystem()">Setup DB</button>
+      <button onclick="seedData()">Seed Data</button>
+      <button onclick="loadDashboard()">Refresh</button>
+    </div>
   </div>
-  <div class="header-actions">
+  <div class="upload-bar">
     <button class="btn-upload" onclick="showUploadPanel()">Upload Documents</button>
-    <button onclick="initSystem()">Setup DB</button>
-    <button onclick="seedData()">Seed Data</button>
-    <button onclick="loadDashboard()">Refresh</button>
+    <span class="upload-hint">Drop images or PDFs of medical documents -- AI extracts and organizes everything</span>
   </div>
 </div>
 
