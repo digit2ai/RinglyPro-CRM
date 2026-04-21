@@ -553,9 +553,66 @@ function ClinicalDollarizationSection({ planId, plan }) {
   const [citations, setCitations] = useState([])
   const [calculating, setCalculating] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [loadingAnalysis, setLoadingAnalysis] = useState(false)
+  const [analysisLoaded, setAnalysisLoaded] = useState(false)
   const [error, setError] = useState(null)
 
-  // Load existing outcomes on mount
+  // Map analysis specialty keys to display names
+  const SPEC_MAP = {
+    urology: 'Urology',
+    gynecology: 'Gynecology',
+    general: 'General Surgery',
+    thoracic: 'Thoracic',
+    colorectal: 'Colorectal',
+    head_neck: 'Head & Neck',
+    cardiac: 'Cardiac'
+  }
+
+  // Load from Analysis results (auto or manual)
+  const loadFromAnalysis = useCallback(async () => {
+    const projectId = plan?.project_id
+    if (!projectId) return false
+    setLoadingAnalysis(true)
+    try {
+      const res = await api.getResults(projectId)
+      const analysisResults = res.results || res
+      const volProj = analysisResults?.volume_projection
+      if (!volProj?.bySpecialty) {
+        setLoadingAnalysis(false)
+        return false
+      }
+
+      const totalVol = volProj.total_surgical || 0
+      setCaseData(prev => prev.map(row => {
+        // Find matching specialty in analysis data
+        const specKey = Object.keys(SPEC_MAP).find(k => SPEC_MAP[k] === row.specialty)
+        const specData = specKey ? volProj.bySpecialty[specKey] : null
+        if (!specData || !specData.total_volume) return row
+
+        const total = specData.total_volume
+        const pctOpen = total > 0 ? Math.round((specData.current_open / total) * 100) : 0
+        const pctLap = total > 0 ? Math.round((specData.current_lap / total) * 100) : 0
+        const pctRobotic = total > 0 ? Math.round((specData.current_robotic / total) * 100) : 0
+
+        return {
+          ...row,
+          annual_cases: total,
+          pct_open: pctOpen,
+          pct_laparoscopic: pctLap,
+          pct_robotic: pctRobotic
+        }
+      }))
+      setAnalysisLoaded(true)
+      setLoadingAnalysis(false)
+      return true
+    } catch (e) {
+      console.error('Failed to load analysis for dollarization:', e)
+      setLoadingAnalysis(false)
+      return false
+    }
+  }, [plan?.project_id])
+
+  // Load existing outcomes on mount, then auto-populate from analysis if empty
   useEffect(() => {
     if (!planId) return
     api.getClinicalOutcomes(planId)
@@ -563,16 +620,23 @@ function ClinicalDollarizationSection({ planId, plan }) {
         const data = res.outcomes || res.data
         if (data?.results) setResults(data.results)
         if (data?.citations) setCitations(data.citations)
-        if (data?.hospital_case_data) {
+        if (data?.hospital_case_data && data.hospital_case_data.length > 0) {
+          // Existing dollarization data -- use it
           setCaseData(prev => {
             const map = {}
             ;(data.hospital_case_data || []).forEach(d => { map[d.specialty] = d })
             return prev.map(s => map[s.specialty] ? { ...s, ...map[s.specialty] } : s)
           })
+        } else {
+          // No existing data -- auto-load from analysis
+          loadFromAnalysis()
         }
       })
-      .catch(() => {})
-  }, [planId])
+      .catch(() => {
+        // No outcomes saved yet -- auto-load from analysis
+        loadFromAnalysis()
+      })
+  }, [planId, loadFromAnalysis])
 
   function updateCase(idx, key, value) {
     setCaseData(prev => {
@@ -617,6 +681,26 @@ function ClinicalDollarizationSection({ planId, plan }) {
       subtitle="Quantify clinical savings from robotic surgery adoption"
     >
       {error && <div className="mt-4 p-3 bg-red-900/40 border border-red-800 rounded-lg text-red-300 text-sm">{error}</div>}
+
+      {analysisLoaded && (
+        <div className="mt-4 p-3 bg-emerald-900/30 border border-emerald-800 rounded-lg text-emerald-300 text-sm flex items-center justify-between">
+          <span>Case data auto-populated from hospital analysis (Step 2). You can adjust values if needed.</span>
+          <button onClick={loadFromAnalysis} disabled={loadingAnalysis}
+            className="ml-3 px-3 py-1 text-xs bg-emerald-800 hover:bg-emerald-700 rounded text-emerald-200 whitespace-nowrap">
+            {loadingAnalysis ? 'Loading...' : 'Reload from Analysis'}
+          </button>
+        </div>
+      )}
+
+      {!analysisLoaded && (
+        <div className="mt-4 flex items-center gap-3">
+          <button onClick={loadFromAnalysis} disabled={loadingAnalysis}
+            className="px-4 py-2 text-sm bg-intuitive-600 hover:bg-intuitive-500 disabled:opacity-50 rounded-lg text-white font-semibold transition-colors">
+            {loadingAnalysis ? 'Loading...' : 'Auto-Fill from Hospital Analysis'}
+          </button>
+          <span className="text-xs text-slate-500">or enter case data manually below</span>
+        </div>
+      )}
 
       {/* Case Data Input */}
       <div className="mt-4 overflow-x-auto">
