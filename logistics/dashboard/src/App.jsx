@@ -29,7 +29,7 @@ const docsSubItems = [
   { path: '/proposals/LOGISTICS-System-Architecture-Document.html', label: 'MCP Architecture', icon: ArchitectureIcon, external: true },
   { path: '/nda', label: 'NDA', icon: NDAIcon, noProject: true },
   { path: '/contract-builder', label: 'Services Agreement', icon: ContractIcon, noProject: true },
-  { path: '/on-premises', label: 'On-Premises Plan', icon: ServerIcon, noProject: true }
+  { path: '/on-premises', label: 'Integration Plan', icon: ServerIcon, noProject: true }
 ]
 
 const steps = [

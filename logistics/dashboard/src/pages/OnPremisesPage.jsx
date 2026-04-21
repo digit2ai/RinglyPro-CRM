@@ -79,11 +79,11 @@ export default function OnPremisesPage() {
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <ShieldIcon className="w-7 h-7 text-blue-400" />
-          <h1 className="text-2xl font-bold text-white">On-Premises Integration Plan</h1>
+          <h1 className="text-2xl font-bold text-white">Strategic Integration Plan</h1>
         </div>
         <p className="text-slate-400 text-sm">
-          Strategic deployment of the PINAXIS Warehouse Analytics Platform inside your corporate firewall.
-          Full data sovereignty, zero external dependencies, enterprise-grade security.
+          Deployment options for the PINAXIS Warehouse Analytics Platform.
+          Choose the model that fits your security, performance, and operational requirements.
         </p>
         <div className="flex gap-3 mt-4 flex-wrap">
           <span className="px-3 py-1 rounded-full text-[11px] font-mono bg-blue-500/10 border border-blue-500/30 text-blue-400">CONFIDENTIAL</span>
@@ -92,17 +92,284 @@ export default function OnPremisesPage() {
         </div>
       </div>
 
-      {/* 1. Executive Summary */}
-      <Section title="1. Executive Summary" accent="blue">
+      {/* Deployment Options Overview */}
+      <Section title="1. Deployment Options" accent="blue">
+        <p className="text-sm text-slate-300 leading-relaxed mb-6">
+          PINAXIS offers four deployment models. Each option provides the full 8-step warehouse analytics
+          workflow -- the difference is where data lives and how it gets into the platform.
+        </p>
+
+        {/* Option A: SaaS Upload */}
+        <div className="border border-blue-500/30 rounded-xl p-5 mb-4 bg-blue-500/5">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center text-white text-sm font-bold">A</div>
+            <div>
+              <h4 className="text-white font-bold">SaaS Upload</h4>
+              <span className="text-[11px] text-blue-400 font-mono">FASTEST TO START</span>
+            </div>
+          </div>
+          <p className="text-sm text-slate-300 mb-4">
+            Fully managed cloud platform. Users upload warehouse data files (CSV, Excel) through the
+            PINAXIS dashboard. Zero infrastructure required from the customer.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+            <div className="bg-slate-800/60 rounded-lg p-3">
+              <div className="text-[10px] text-blue-400 font-mono uppercase mb-2">How It Works</div>
+              <ul className="text-xs text-slate-300 space-y-1">
+                <li>-- Log in to pinaxis.com dashboard</li>
+                <li>-- Drag & drop Item Master, Inventory, Inbound/Outbound files</li>
+                <li>-- PINAXIS auto-detects format and runs analysis</li>
+                <li>-- Results, proposals, presentations available immediately</li>
+              </ul>
+            </div>
+            <div className="bg-slate-800/60 rounded-lg p-3">
+              <div className="text-[10px] text-blue-400 font-mono uppercase mb-2">Best For</div>
+              <ul className="text-xs text-slate-300 space-y-1">
+                <li>-- Quick proof-of-concept projects</li>
+                <li>-- Sales teams running prospect analyses</li>
+                <li>-- Companies without dedicated IT infra</li>
+                <li>-- One-time warehouse assessments</li>
+              </ul>
+            </div>
+          </div>
+          <div className="flex gap-4 flex-wrap text-xs">
+            <span className="text-emerald-400">Setup: same day</span>
+            <span className="text-slate-500">|</span>
+            <span className="text-slate-400">Data: encrypted at rest + in transit</span>
+            <span className="text-slate-500">|</span>
+            <span className="text-slate-400">Infra: none required</span>
+          </div>
+        </div>
+
+        {/* Option B: SaaS API */}
+        <div className="border border-emerald-500/30 rounded-xl p-5 mb-4 bg-emerald-500/5">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-lg bg-emerald-600 flex items-center justify-center text-white text-sm font-bold">B</div>
+            <div>
+              <h4 className="text-white font-bold">SaaS API</h4>
+              <span className="text-[11px] text-emerald-400 font-mono">AUTOMATED PIPELINE</span>
+            </div>
+          </div>
+          <p className="text-sm text-slate-300 mb-4">
+            Cloud-hosted PINAXIS with automated data ingestion via REST API. Your WMS/ERP pushes data
+            directly into PINAXIS on a schedule -- no manual uploads, no user intervention.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+            <div className="bg-slate-800/60 rounded-lg p-3">
+              <div className="text-[10px] text-emerald-400 font-mono uppercase mb-2">How It Works</div>
+              <ul className="text-xs text-slate-300 space-y-1">
+                <li>-- Generate API key from PINAXIS dashboard</li>
+                <li>-- WMS/ERP sends data via POST /api/v1/ingest/*</li>
+                <li>-- Scheduled or event-driven ingestion</li>
+                <li>-- OEE webhooks for real-time machine status</li>
+                <li>-- Analysis triggers automatically on new data</li>
+              </ul>
+            </div>
+            <div className="bg-slate-800/60 rounded-lg p-3">
+              <div className="text-[10px] text-emerald-400 font-mono uppercase mb-2">Best For</div>
+              <ul className="text-xs text-slate-300 space-y-1">
+                <li>-- Ongoing warehouse monitoring</li>
+                <li>-- Multi-site deployments</li>
+                <li>-- Companies with integration middleware (n8n, MuleSoft)</li>
+                <li>-- Continuous OEE tracking with PLC webhooks</li>
+              </ul>
+            </div>
+          </div>
+          <div className="bg-slate-900/60 rounded-lg p-3 font-mono text-xs text-slate-400 mb-3">
+            <div className="text-emerald-400 mb-1">{'// Example: automated nightly ingest from SAP'}</div>
+            <div className="text-slate-300">curl -X POST https://pinaxis.yourcompany.com/api/v1/ingest/42/item-master \</div>
+            <div className="text-slate-300 ml-4">-H "X-API-Key: pnx_live_****" \</div>
+            <div className="text-slate-300 ml-4">-H "Content-Type: application/json" \</div>
+            <div className="text-slate-300 ml-4">-d @sap_export.json</div>
+          </div>
+          <div className="flex gap-4 flex-wrap text-xs">
+            <span className="text-emerald-400">Setup: 1-2 weeks</span>
+            <span className="text-slate-500">|</span>
+            <span className="text-slate-400">Data: API-key authenticated, TLS encrypted</span>
+            <span className="text-slate-500">|</span>
+            <span className="text-slate-400">Infra: WMS/ERP connectivity only</span>
+          </div>
+        </div>
+
+        {/* Option C: Hybrid */}
+        <div className="border border-amber-500/30 rounded-xl p-5 mb-4 bg-amber-500/5">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-lg bg-amber-600 flex items-center justify-center text-white text-sm font-bold">C</div>
+            <div>
+              <h4 className="text-white font-bold">Hybrid</h4>
+              <span className="text-[11px] text-amber-400 font-mono">DATA LOCAL, ANALYTICS CLOUD</span>
+            </div>
+          </div>
+          <p className="text-sm text-slate-300 mb-4">
+            Raw warehouse data stays inside your firewall. A lightweight on-premises agent extracts,
+            anonymizes, and pushes only aggregated/analytical data to the PINAXIS cloud for processing.
+            Results are synced back to your local dashboard.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+            <div className="bg-slate-800/60 rounded-lg p-3">
+              <div className="text-[10px] text-amber-400 font-mono uppercase mb-2">How It Works</div>
+              <ul className="text-xs text-slate-300 space-y-1">
+                <li>-- PINAXIS Agent installed on-premises (Docker container)</li>
+                <li>-- Agent connects to WMS/ERP inside the firewall</li>
+                <li>-- Data is aggregated and anonymized locally</li>
+                <li>-- Only analytical summaries sent to PINAXIS cloud</li>
+                <li>-- No raw SKU data, customer names, or PII leaves the network</li>
+              </ul>
+            </div>
+            <div className="bg-slate-800/60 rounded-lg p-3">
+              <div className="text-[10px] text-amber-400 font-mono uppercase mb-2">Best For</div>
+              <ul className="text-xs text-slate-300 space-y-1">
+                <li>-- Companies with strict data residency requirements</li>
+                <li>-- Regulated industries (pharma, defense, food)</li>
+                <li>-- Want cloud analytics without exposing raw data</li>
+                <li>-- Gradual migration path to full on-premises</li>
+              </ul>
+            </div>
+          </div>
+          <div className="bg-slate-900/60 rounded-lg p-3 font-mono text-xs text-slate-400 mb-3">
+            <div className="text-amber-400 mb-1">{'// Data flow'}</div>
+            <div className="text-slate-300">WMS/ERP {'-->'} PINAXIS Agent (on-prem) {'-->'} Aggregate {'-->'} PINAXIS Cloud</div>
+            <div className="text-slate-300">PINAXIS Cloud {'-->'} Analysis Results {'-->'} Local Dashboard</div>
+            <div className="text-slate-600 mt-1">{'// Raw data NEVER leaves the firewall'}</div>
+          </div>
+          <div className="flex gap-4 flex-wrap text-xs">
+            <span className="text-amber-400">Setup: 2-4 weeks</span>
+            <span className="text-slate-500">|</span>
+            <span className="text-slate-400">Data: raw stays local, aggregated in cloud</span>
+            <span className="text-slate-500">|</span>
+            <span className="text-slate-400">Infra: 1 Docker host + filtered egress</span>
+          </div>
+        </div>
+
+        {/* Option D: On-Premises */}
+        <div className="border border-purple-500/30 rounded-xl p-5 mb-4 bg-purple-500/5">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center text-white text-sm font-bold">D</div>
+            <div>
+              <h4 className="text-white font-bold">On-Premises</h4>
+              <span className="text-[11px] text-purple-400 font-mono">FULL DATA SOVEREIGNTY</span>
+            </div>
+          </div>
+          <p className="text-sm text-slate-300 mb-4">
+            The entire PINAXIS platform runs inside your data center. Zero cloud dependency, zero external
+            data transfer. Full control over infrastructure, updates, and security policies.
+            Detailed deployment plan follows in Sections 3-13 below.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+            <div className="bg-slate-800/60 rounded-lg p-3">
+              <div className="text-[10px] text-purple-400 font-mono uppercase mb-2">How It Works</div>
+              <ul className="text-xs text-slate-300 space-y-1">
+                <li>-- PINAXIS deployed as Docker containers on your servers</li>
+                <li>-- PostgreSQL database on your infrastructure</li>
+                <li>-- All processing happens inside the firewall</li>
+                <li>-- Optional: local LLM for AI features (no internet)</li>
+                <li>-- Updates delivered via private registry or offline</li>
+              </ul>
+            </div>
+            <div className="bg-slate-800/60 rounded-lg p-3">
+              <div className="text-[10px] text-purple-400 font-mono uppercase mb-2">Best For</div>
+              <ul className="text-xs text-slate-300 space-y-1">
+                <li>-- Air-gapped or classified environments</li>
+                <li>-- Full audit and compliance control</li>
+                <li>-- Organizations that mandate on-premises software</li>
+                <li>-- Long-term strategic platform ownership</li>
+              </ul>
+            </div>
+          </div>
+          <div className="flex gap-4 flex-wrap text-xs">
+            <span className="text-purple-400">Setup: 6-8 weeks</span>
+            <span className="text-slate-500">|</span>
+            <span className="text-slate-400">Data: 100% on-premises, zero external transfer</span>
+            <span className="text-slate-500">|</span>
+            <span className="text-slate-400">Infra: full stack (see Section 3)</span>
+          </div>
+        </div>
+
+        {/* Comparison Table */}
+        <h4 className="text-sm font-semibold text-white mb-3 mt-6">Comparison Matrix</h4>
+        <div className="bg-slate-800/50 rounded-lg p-4 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-[10px] text-slate-500 uppercase tracking-wider">
+                <th className="pb-2 pr-4"></th>
+                <th className="pb-2 pr-4 text-center text-blue-400">A: SaaS Upload</th>
+                <th className="pb-2 pr-4 text-center text-emerald-400">B: SaaS API</th>
+                <th className="pb-2 pr-4 text-center text-amber-400">C: Hybrid</th>
+                <th className="pb-2 text-center text-purple-400">D: On-Prem</th>
+              </tr>
+            </thead>
+            <tbody className="text-slate-300 text-xs">
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4 text-slate-400">Setup Time</td>
+                <td className="py-2 pr-4 text-center">Same day</td>
+                <td className="py-2 pr-4 text-center">1-2 weeks</td>
+                <td className="py-2 pr-4 text-center">2-4 weeks</td>
+                <td className="py-2 text-center">6-8 weeks</td>
+              </tr>
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4 text-slate-400">Data Location</td>
+                <td className="py-2 pr-4 text-center">Cloud</td>
+                <td className="py-2 pr-4 text-center">Cloud</td>
+                <td className="py-2 pr-4 text-center">Raw local, agg cloud</td>
+                <td className="py-2 text-center">100% local</td>
+              </tr>
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4 text-slate-400">Infra Required</td>
+                <td className="py-2 pr-4 text-center">None</td>
+                <td className="py-2 pr-4 text-center">API connectivity</td>
+                <td className="py-2 pr-4 text-center">1 Docker host</td>
+                <td className="py-2 text-center">Full stack</td>
+              </tr>
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4 text-slate-400">Data Ingestion</td>
+                <td className="py-2 pr-4 text-center">Manual upload</td>
+                <td className="py-2 pr-4 text-center">Automated API</td>
+                <td className="py-2 pr-4 text-center">Agent-based</td>
+                <td className="py-2 text-center">API + upload</td>
+              </tr>
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4 text-slate-400">Real-Time OEE</td>
+                <td className="py-2 pr-4 text-center text-slate-600">--</td>
+                <td className="py-2 pr-4 text-center text-emerald-400">Yes</td>
+                <td className="py-2 pr-4 text-center text-emerald-400">Yes</td>
+                <td className="py-2 text-center text-emerald-400">Yes</td>
+              </tr>
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4 text-slate-400">AI Features</td>
+                <td className="py-2 pr-4 text-center text-emerald-400">Full</td>
+                <td className="py-2 pr-4 text-center text-emerald-400">Full</td>
+                <td className="py-2 pr-4 text-center text-emerald-400">Full</td>
+                <td className="py-2 text-center">Local LLM or proxy</td>
+              </tr>
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4 text-slate-400">Updates</td>
+                <td className="py-2 pr-4 text-center">Automatic</td>
+                <td className="py-2 pr-4 text-center">Automatic</td>
+                <td className="py-2 pr-4 text-center">Agent auto-updates</td>
+                <td className="py-2 text-center">Managed releases</td>
+              </tr>
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4 text-slate-400">Air-Gap Support</td>
+                <td className="py-2 pr-4 text-center text-slate-600">--</td>
+                <td className="py-2 pr-4 text-center text-slate-600">--</td>
+                <td className="py-2 pr-4 text-center text-slate-600">--</td>
+                <td className="py-2 text-center text-emerald-400">Yes</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </Section>
+
+      {/* 2. On-Premises Executive Summary */}
+      <Section title="2. Option D: On-Premises -- Executive Summary" accent="purple">
         <p className="text-sm text-slate-300 leading-relaxed mb-4">
-          This document outlines the strategic plan for deploying the PINAXIS Warehouse Analytics Platform
-          as an on-premises solution within your corporate infrastructure. The deployment ensures complete
-          data sovereignty -- all warehouse data, analysis results, and AI processing remain inside your
-          firewall with zero dependency on external cloud services.
+          The remainder of this document details the full on-premises deployment plan (Option D).
+          This is the most comprehensive option, providing complete data sovereignty -- all warehouse data,
+          analysis results, and AI processing remain inside your firewall with zero dependency on external cloud services.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
           <div className="bg-slate-800/50 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-blue-400 font-mono">100%</div>
+            <div className="text-2xl font-bold text-purple-400 font-mono">100%</div>
             <div className="text-xs text-slate-500 mt-1">Data Sovereignty</div>
           </div>
           <div className="bg-slate-800/50 rounded-lg p-4 text-center">
@@ -117,7 +384,7 @@ export default function OnPremisesPage() {
       </Section>
 
       {/* 2. Architecture Overview */}
-      <Section title="2. Architecture Overview" accent="teal">
+      <Section title="3. Architecture Overview" accent="teal">
         <p className="text-sm text-slate-300 leading-relaxed mb-4">
           The on-premises deployment mirrors the PINAXIS cloud architecture but runs entirely within your
           data center or private cloud infrastructure. All components are containerized for consistent deployment.
@@ -153,8 +420,8 @@ export default function OnPremisesPage() {
       </Section>
 
       {/* 3. Infrastructure Requirements */}
-      <Section title="3. Infrastructure Requirements" accent="green">
-        <h4 className="text-sm font-semibold text-white mb-3">3.1 Minimum Hardware</h4>
+      <Section title="4. Infrastructure Requirements" accent="green">
+        <h4 className="text-sm font-semibold text-white mb-3">4.1 Minimum Hardware</h4>
         <div className="bg-slate-800/50 rounded-lg p-4 mb-4">
           <Row label="Application Server" value="4 vCPU, 16 GB RAM, 100 GB SSD" />
           <Row label="Database Server" value="4 vCPU, 16 GB RAM, 500 GB SSD (RAID)" />
@@ -163,7 +430,7 @@ export default function OnPremisesPage() {
           <Row label="Network" value="1 Gbps internal, 100 Mbps to WMS/ERP" />
         </div>
 
-        <h4 className="text-sm font-semibold text-white mb-3">3.2 Software Stack</h4>
+        <h4 className="text-sm font-semibold text-white mb-3">4.2 Software Stack</h4>
         <div className="bg-slate-800/50 rounded-lg p-4 mb-4">
           <Row label="OS" value="RHEL 8+, Ubuntu 22.04+, or Windows Server 2022" />
           <Row label="Container Runtime" value="Docker 24+ or Podman 4+" />
@@ -173,7 +440,7 @@ export default function OnPremisesPage() {
           <Row label="Node.js" value="v20 LTS or v22 LTS" />
         </div>
 
-        <h4 className="text-sm font-semibold text-white mb-3">3.3 Recommended Production</h4>
+        <h4 className="text-sm font-semibold text-white mb-3">4.3 Recommended Production</h4>
         <div className="bg-slate-800/50 rounded-lg p-4">
           <Row label="Application (HA)" value="2x servers, load-balanced" />
           <Row label="Database (HA)" value="Primary + streaming replica" />
@@ -184,13 +451,13 @@ export default function OnPremisesPage() {
       </Section>
 
       {/* 4. Network & Firewall Configuration */}
-      <Section title="4. Network & Firewall Configuration" accent="red">
+      <Section title="5. Network & Firewall Configuration" accent="red">
         <p className="text-sm text-slate-300 leading-relaxed mb-4">
           PINAXIS operates entirely within the internal network. The only optional outbound connection
           is for AI model API calls, which can be disabled for fully air-gapped deployments.
         </p>
 
-        <h4 className="text-sm font-semibold text-white mb-3">4.1 Inbound Rules (Internal Only)</h4>
+        <h4 className="text-sm font-semibold text-white mb-3">5.1 Inbound Rules (Internal Only)</h4>
         <div className="bg-slate-800/50 rounded-lg p-4 mb-4 overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -210,7 +477,7 @@ export default function OnPremisesPage() {
           </table>
         </div>
 
-        <h4 className="text-sm font-semibold text-white mb-3">4.2 Outbound Rules</h4>
+        <h4 className="text-sm font-semibold text-white mb-3">5.2 Outbound Rules</h4>
         <div className="bg-slate-800/50 rounded-lg p-4">
           <Row label="AI API Proxy (optional)" value="api.anthropic.com:443 or api.openai.com:443" />
           <Row label="TTS API (optional)" value="api.elevenlabs.io:443" />
@@ -220,7 +487,7 @@ export default function OnPremisesPage() {
       </Section>
 
       {/* 5. Data Security & Compliance */}
-      <Section title="5. Data Security & Compliance" accent="purple">
+      <Section title="6. Data Security & Compliance" accent="purple">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div className="bg-slate-800/50 rounded-lg p-4">
             <h4 className="text-sm font-semibold text-purple-400 mb-2">Encryption</h4>
@@ -262,7 +529,7 @@ export default function OnPremisesPage() {
       </Section>
 
       {/* 6. System Integration */}
-      <Section title="6. System Integration Map" accent="amber">
+      <Section title="7. System Integration Map" accent="amber">
         <p className="text-sm text-slate-300 leading-relaxed mb-4">
           PINAXIS connects to your existing warehouse systems through standard protocols.
           All integrations run within the firewall.
@@ -294,7 +561,7 @@ export default function OnPremisesPage() {
           </div>
         </div>
 
-        <h4 className="text-sm font-semibold text-white mb-3">6.1 API Endpoints (Internal)</h4>
+        <h4 className="text-sm font-semibold text-white mb-3">7.1 API Endpoints (Internal)</h4>
         <div className="bg-slate-800/50 rounded-lg p-4 overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -317,7 +584,7 @@ export default function OnPremisesPage() {
       </Section>
 
       {/* 7. Authentication & SSO */}
-      <Section title="7. Authentication & SSO" accent="blue">
+      <Section title="8. Authentication & SSO" accent="blue">
         <p className="text-sm text-slate-300 leading-relaxed mb-4">
           PINAXIS supports multiple authentication methods for enterprise environments.
           The recommended setup uses your existing identity provider.
@@ -345,7 +612,7 @@ export default function OnPremisesPage() {
       </Section>
 
       {/* 8. Responsibility Matrix */}
-      <Section title="8. Responsibility Matrix (RACI)" accent="amber">
+      <Section title="9. Responsibility Matrix (RACI)" accent="amber">
         <p className="text-sm text-slate-300 leading-relaxed mb-4">
           Clear ownership for every deployment activity. Pinaxis IT provisions the environment;
           the PINAXIS platform team handles code deployment, migration, and configuration.
@@ -440,13 +707,13 @@ export default function OnPremisesPage() {
       </Section>
 
       {/* 9. Code & Data Migration */}
-      <Section title="9. Code & Data Migration Procedures" accent="blue">
+      <Section title="10. Code & Data Migration Procedures" accent="blue">
         <p className="text-sm text-slate-300 leading-relaxed mb-4">
           Complete migration procedure for transferring the PINAXIS platform from cloud to on-premises.
           The PINAXIS platform team executes all migration steps; Pinaxis IT provides infrastructure access.
         </p>
 
-        <h4 className="text-sm font-semibold text-white mb-3">9.1 Code Delivery</h4>
+        <h4 className="text-sm font-semibold text-white mb-3">10.1 Code Delivery</h4>
         <div className="bg-slate-900/60 rounded-lg p-5 font-mono text-xs text-slate-400 leading-loose mb-4">
           <div className="text-blue-400 mb-2">{'// Option A: Private Container Registry (recommended)'}</div>
           <div className="text-slate-300">docker pull registry.pinaxis.internal/pinaxis-api:latest</div>
@@ -463,7 +730,7 @@ export default function OnPremisesPage() {
           <div className="text-slate-600 mt-2">{'// Source code delivered for audit, built on-site'}</div>
         </div>
 
-        <h4 className="text-sm font-semibold text-white mb-3">9.2 Database Migration</h4>
+        <h4 className="text-sm font-semibold text-white mb-3">10.2 Database Migration</h4>
         <div className="bg-slate-900/60 rounded-lg p-5 font-mono text-xs text-slate-400 leading-loose mb-4">
           <div className="text-blue-400 mb-2">{'// Step 1: Export schema + seed data from cloud'}</div>
           <div className="text-slate-300">pg_dump --schema-only -d pinaxis_prod &gt; schema.sql</div>
@@ -487,7 +754,7 @@ export default function OnPremisesPage() {
           <div className="text-slate-600 mt-2">{'// Full project history preserved including analysis results'}</div>
         </div>
 
-        <h4 className="text-sm font-semibold text-white mb-3">9.3 File Storage Migration</h4>
+        <h4 className="text-sm font-semibold text-white mb-3">10.3 File Storage Migration</h4>
         <div className="bg-slate-800/50 rounded-lg p-4 mb-4">
           <Row label="Uploaded data files (CSV, Excel)" value="rsync or secure transfer to NFS/S3-compatible volume" />
           <Row label="Generated reports (PDF, DOCX)" value="Migrated with project data or regenerated on-site" />
@@ -495,7 +762,7 @@ export default function OnPremisesPage() {
           <Row label="Proposal audio files" value="Regenerated per project on demand" />
         </div>
 
-        <h4 className="text-sm font-semibold text-white mb-3">9.4 Environment Configuration</h4>
+        <h4 className="text-sm font-semibold text-white mb-3">10.4 Environment Configuration</h4>
         <div className="bg-slate-900/60 rounded-lg p-5 font-mono text-xs text-slate-400 leading-loose mb-4">
           <div className="text-blue-400 mb-2">{'// .env.production -- provided by PINAXIS platform team'}</div>
           <div className="text-slate-300">DATABASE_URL=postgresql://pinaxis:****@db:5432/pinaxis_onprem</div>
@@ -515,7 +782,7 @@ export default function OnPremisesPage() {
           <div className="text-slate-300">SSO_CERT_PATH=/etc/pinaxis/sso-cert.pem</div>
         </div>
 
-        <h4 className="text-sm font-semibold text-white mb-3">9.5 Validation Checklist</h4>
+        <h4 className="text-sm font-semibold text-white mb-3">10.5 Validation Checklist</h4>
         <div className="bg-slate-800/50 rounded-lg p-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {[
@@ -542,15 +809,15 @@ export default function OnPremisesPage() {
       </Section>
 
       {/* 10. Deployment Roadmap */}
-      <Section title="10. Deployment Roadmap" accent="green">
+      <Section title="11. Deployment Roadmap" accent="green">
         <Phase
           number={1}
           title="Environment Provisioning (Pinaxis IT)"
           duration="Week 1-2"
           accent="blue"
           items={[
-            'Pinaxis IT provisions servers per Section 3 specs',
-            'Pinaxis IT configures network, firewall, and DNS per Section 4',
+            'Pinaxis IT provisions servers per Section 5 specs',
+            'Pinaxis IT configures network, firewall, and DNS per Section 5',
             'Pinaxis IT installs Docker/Podman, PostgreSQL, Nginx',
             'Pinaxis IT generates TLS certificates (internal CA)',
             'Pinaxis IT provides SSH/VPN access to PINAXIS platform team',
@@ -564,7 +831,7 @@ export default function OnPremisesPage() {
           items={[
             'PINAXIS team delivers container images (registry or offline)',
             'PINAXIS team runs docker-compose up / kubectl apply',
-            'PINAXIS team executes database schema migration (Section 9.2)',
+            'PINAXIS team executes database schema migration (Section 10.2)',
             'PINAXIS team seeds reference data (product catalog, configs)',
             'PINAXIS team configures Nginx reverse proxy + TLS termination',
             'PINAXIS team validates health, API, and dashboard endpoints',
@@ -578,9 +845,9 @@ export default function OnPremisesPage() {
           items={[
             'Pinaxis IT provides WMS/ERP test credentials and endpoints',
             'PINAXIS team configures data ingestion connectors',
-            'PINAXIS team migrates existing project data if needed (Section 9.2 Step 4)',
+            'PINAXIS team migrates existing project data if needed (Section 10.2 Step 4)',
             'Joint: set up OEE webhook receiver for PLC/MES',
-            'Joint: configure SSO/LDAP integration (Section 7)',
+            'Joint: configure SSO/LDAP integration (Section 8)',
             'Joint: end-to-end test with real warehouse data sample',
             'PINAXIS team validates all 12 analysis modules',
             'Pinaxis IT runs security/penetration testing',
@@ -604,7 +871,7 @@ export default function OnPremisesPage() {
       </Section>
 
       {/* 11. AI Layer Options */}
-      <Section title="11. AI Layer Configuration" accent="purple">
+      <Section title="12. AI Layer Configuration" accent="purple">
         <p className="text-sm text-slate-300 leading-relaxed mb-4">
           The WarehouseMind AI features can operate in three modes depending on your security requirements.
           The core analytics engine (12 modules) runs fully offline with zero AI dependency.
@@ -647,7 +914,7 @@ export default function OnPremisesPage() {
       </Section>
 
       {/* 12. Support & Maintenance */}
-      <Section title="12. Support & Maintenance" accent="teal">
+      <Section title="13. Support & Maintenance" accent="teal">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div className="bg-slate-800/50 rounded-lg p-4">
             <h4 className="text-sm font-semibold text-teal-400 mb-2">Update Delivery</h4>
