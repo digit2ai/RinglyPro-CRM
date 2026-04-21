@@ -105,6 +105,8 @@ let aiResearchRoutes;
 try { aiResearchRoutes = require('./routes/ai-research'); } catch (e) { console.error('  INTUITIVE: ai-research route load error:', e.message); }
 const authRoutes = require('./routes/auth');
 const { requireAuth } = require('./middleware/auth');
+let intelligenceRoutes;
+try { intelligenceRoutes = require('./routes/intelligence'); } catch (e) { console.error('  INTUITIVE: intelligence route load error:', e.message); }
 
 // Public routes (no auth)
 app.use(`${BASE_PATH}/health`, healthRoutes);
@@ -123,6 +125,7 @@ app.use(`${BASE_PATH}/api/v1/clinical-evidence`, requireAuth, clinicalEvidenceRo
 app.use(`${BASE_PATH}/api/v1/drg`, requireAuth, drgRoutes);
 app.use(`${BASE_PATH}/api/v1/tracking`, requireAuth, proformaTrackingRoutes);
 if (aiResearchRoutes) app.use(`${BASE_PATH}/api/v1/ai-research`, requireAuth, aiResearchRoutes);
+if (intelligenceRoutes) app.use(`${BASE_PATH}/api/v1/intelligence`, requireAuth, intelligenceRoutes);
 
 // ============================================================================
 // STANDALONE PROPOSAL PAGE (NO LOGIN REQUIRED — must be before SPA catch-all)

@@ -97,7 +97,7 @@ router.post('/:id/recipients', async (req, res) => {
   }
 });
 
-// POST /api/v1/surveys/:id/send - Activate survey and generate links
+// POST /api/v1/surveys/:id/send - Distribute survey via email/sms/voice/link
 router.post('/:id/send', async (req, res) => {
   try {
     const { IntuitiveSurvey, IntuitiveSurveyRecipient } = req.models;
@@ -106,24 +106,50 @@ router.post('/:id/send', async (req, res) => {
     });
     if (!survey) return res.status(404).json({ error: 'Survey not found' });
 
+    const channel = req.body.channel || survey.distribution_method || 'link';
+    const surgeonIds = req.body.surgeon_ids; // optional: only send to specific recipients
+
     await survey.update({ status: 'active' });
 
-    // Generate links for each recipient
-    const baseUrl = `${req.protocol}://${req.get('host')}/intuitive/survey`;
-    const links = [];
+    let distribution;
+    try { distribution = require('../services/survey-distribution'); } catch (e) {}
 
-    for (const recipient of survey.recipients) {
-      const link = `${baseUrl}/${recipient.personal_token}`;
-      await recipient.update({ status: 'sent', sent_at: new Date() });
+    const baseUrl = process.env.SURGICALMIND_BASE_URL || `${req.protocol}://${req.get('host')}/intuitive`;
+    const links = [];
+    const sendResults = [];
+
+    const recipientsToSend = surgeonIds
+      ? survey.recipients.filter(r => surgeonIds.includes(r.id))
+      : survey.recipients;
+
+    for (const recipient of recipientsToSend) {
+      const link = `${baseUrl}/survey/${recipient.personal_token}`;
+
+      // Try distributing via the requested channel
+      let sendResult = { channel: 'link', success: true, message: 'Link generated (manual distribution)' };
+
+      if (distribution && channel !== 'link') {
+        try {
+          sendResult = await distribution.distributeToRecipient(survey, recipient, channel);
+        } catch (e) {
+          sendResult = { channel, success: false, error: e.message };
+        }
+      }
+
+      await recipient.update({ status: sendResult.success ? 'sent' : 'pending', sent_at: sendResult.success ? new Date() : null });
+
       links.push({
         surgeon_name: recipient.surgeon_name,
         surgeon_email: recipient.surgeon_email,
         survey_link: link,
-        personal_token: recipient.personal_token
+        personal_token: recipient.personal_token,
+        distribution: sendResult
       });
+      sendResults.push(sendResult);
     }
 
-    await survey.update({ sent_count: links.length });
+    const successCount = sendResults.filter(r => r.success).length;
+    await survey.update({ sent_count: successCount });
 
     // Also provide the general survey link
     const generalLink = `${baseUrl}/${survey.survey_url_token}`;
@@ -242,6 +268,71 @@ router.patch('/:id', async (req, res) => {
     await survey.update(updates);
     res.json({ success: true, data: survey });
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/v1/surveys/voice-webhook - ElevenLabs posts transcript + structured data
+router.post('/voice-webhook', async (req, res) => {
+  try {
+    const { IntuitiveSurveyResponse, IntuitiveSurveyRecipient } = req.models;
+    const { response_code, transcript, structured_answers, call_sid } = req.body;
+
+    if (!response_code && !call_sid) {
+      return res.status(400).json({ error: 'response_code or call_sid required' });
+    }
+
+    // Find the recipient by response code or call reference
+    let recipient = null;
+    if (response_code) {
+      recipient = await IntuitiveSurveyRecipient.findOne({ where: { personal_token: response_code } });
+    }
+
+    if (!recipient) {
+      // Log the webhook data even if we can't match a recipient
+      console.log('[Voice Webhook] Unmatched call:', { call_sid, response_code, transcript: (transcript || '').substring(0, 200) });
+      return res.json({ success: true, message: 'Webhook received, recipient not matched' });
+    }
+
+    // Parse structured answers if available
+    const answers = structured_answers || {};
+    const commitments = answers.incremental_commitments || [];
+
+    // Create or update the survey response
+    const [response, created] = await IntuitiveSurveyResponse.findOrCreate({
+      where: { survey_id: recipient.survey_id, recipient_id: recipient.id },
+      defaults: {
+        surgeon_name: recipient.surgeon_name,
+        surgeon_email: recipient.surgeon_email,
+        surgeon_specialty: recipient.surgeon_specialty,
+        answers: answers,
+        incremental_cases_monthly: answers.incremental_cases_monthly || commitments.reduce((s, c) => s + (c.cases || 0), 0),
+        procedure_breakdown: commitments,
+        barriers: answers.barriers || transcript || '',
+        competitive_leakage_cases: answers.competitive_volume_lost || 0,
+        willing_to_commit: answers.willing_to_commit || false,
+        additional_comments: transcript || '',
+        completed_via: 'voice',
+        completed_at: new Date()
+      }
+    });
+
+    if (!created) {
+      await response.update({
+        answers, additional_comments: transcript || '',
+        completed_via: 'voice', completed_at: new Date()
+      });
+    }
+
+    await recipient.update({ status: 'completed', completed_at: new Date() });
+
+    // Increment survey response count
+    const { IntuitiveSurvey } = req.models;
+    await IntuitiveSurvey.increment('response_count', { where: { id: recipient.survey_id } });
+
+    res.json({ success: true, message: 'Voice survey response recorded' });
+  } catch (err) {
+    console.error('[Voice Webhook] Error:', err);
     res.status(500).json({ error: err.message });
   }
 });

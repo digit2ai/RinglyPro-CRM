@@ -83,8 +83,18 @@ export const api = {
   getResearchStatus: (jobId) => request(`/ai-research/status/${jobId}`),
   researchOnly: (hospitalName) => request('/ai-research/research-only', { method: 'POST', body: JSON.stringify({ hospital_name: hospitalName }) }),
 
+  // Intelligence (PDF + CMS)
+  uploadAnnualReport: (projectId, base64, filename) => request(`/intelligence/${projectId}/annual-report/upload`, { method: 'POST', body: JSON.stringify({ file_base64: base64, filename }) }),
+  ingestAnnualReportUrl: (projectId, url) => request(`/intelligence/${projectId}/annual-report/url`, { method: 'POST', body: JSON.stringify({ url }) }),
+  getAnnualReports: (projectId) => request(`/intelligence/${projectId}/annual-report`),
+  fetchCMSMetrics: (projectId, hospitalName, state) => request(`/intelligence/${projectId}/cms/fetch`, { method: 'POST', body: JSON.stringify({ hospital_name: hospitalName, state }) }),
+  getCMSMetrics: (projectId) => request(`/intelligence/${projectId}/cms`),
+  computeOutcomeSavings: (projectId, options) => request(`/intelligence/${projectId}/outcome-savings/compute`, { method: 'POST', body: JSON.stringify({ options }) }),
+  getOutcomeSavings: (projectId) => request(`/intelligence/${projectId}/outcome-savings`),
+
   // Proforma Tracking
   importActuals: (planId, data) => request(`/tracking/${planId}/actuals`, { method: 'POST', body: JSON.stringify(data) }),
+  uploadActualsCsv: (planId, csvText) => request(`/tracking/${planId}/actuals/upload`, { method: 'POST', body: JSON.stringify({ csv_text: csvText }) }),
   getActuals: (planId) => request(`/tracking/${planId}/actuals`),
   getComparison: (planId) => request(`/tracking/${planId}/comparison`),
   takeSnapshot: (planId, data) => request(`/tracking/${planId}/snapshot`, { method: 'POST', body: JSON.stringify(data || {}) }),

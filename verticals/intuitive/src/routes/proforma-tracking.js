@@ -287,4 +287,60 @@ router.get('/:planId/executive-summary', async (req, res) => {
   }
 });
 
+// POST /api/v1/tracking/:planId/actuals/upload - CSV upload
+router.post('/:planId/actuals/upload', async (req, res) => {
+  try {
+    const { IntuitiveBusinessPlan } = req.models;
+    const plan = await IntuitiveBusinessPlan.findByPk(req.params.planId);
+    if (!plan) return res.status(404).json({ error: 'Business plan not found' });
+
+    let csvIngester;
+    try { csvIngester = require('../services/actuals-csv-ingester'); } catch (e) {
+      return res.status(500).json({ error: 'CSV ingester not available: ' + e.message });
+    }
+
+    // Accept CSV as raw body or base64 in JSON
+    let csvBuffer;
+    if (req.headers['content-type']?.includes('text/csv')) {
+      const chunks = [];
+      await new Promise((resolve, reject) => {
+        req.on('data', chunk => chunks.push(chunk));
+        req.on('end', resolve);
+        req.on('error', reject);
+      });
+      csvBuffer = Buffer.concat(chunks);
+    } else if (req.body?.csv_base64) {
+      csvBuffer = Buffer.from(req.body.csv_base64, 'base64');
+    } else if (req.body?.csv_text) {
+      csvBuffer = Buffer.from(req.body.csv_text, 'utf8');
+    } else {
+      return res.status(400).json({ error: 'Send CSV as raw body (Content-Type: text/csv), or as JSON { csv_base64 } or { csv_text }' });
+    }
+
+    const result = await csvIngester.ingestCsv(plan.project_id, csvBuffer, req.body?.imported_by || 'csv_upload');
+
+    // Update plan status
+    if (plan.status === 'finalized') {
+      await plan.update({ status: 'tracking' });
+    }
+
+    res.json({ success: true, data: result });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/v1/tracking/template.csv - Download CSV template
+router.get('/template.csv', (req, res) => {
+  let csvIngester;
+  try { csvIngester = require('../services/actuals-csv-ingester'); } catch (e) {}
+
+  const template = csvIngester?.generateTemplate ? csvIngester.generateTemplate() :
+    'surgeon_name,procedure_type,period_start,period_end,cases\nDr. Jane Smith,radical_prostatectomy,2026-01-01,2026-01-31,12\nDr. Jane Smith,partial_nephrectomy,2026-01-01,2026-01-31,4\n';
+
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', 'attachment; filename="surgicalmind-actuals-template.csv"');
+  res.send(template);
+});
+
 module.exports = router;
