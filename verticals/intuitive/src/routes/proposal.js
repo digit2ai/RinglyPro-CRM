@@ -326,15 +326,15 @@ function buildSlideHTML(analysis, hospitalName) {
   }));
   const abcClasses = procedurePareto.classes || {};
 
-  // Approach mix data
+  // Approach mix data -- extract from 3-layer volume projection
   const approachMix = volProj.current_approach_mix || {};
   const totalHospitalVol = proj.annual_surgical_volume || totalCases;
-  const openCases = approachMix.open_cases || Math.round(totalHospitalVol * (approachMix.open_pct || 40) / 100);
-  const lapCases = approachMix.lap_cases || Math.round(totalHospitalVol * (approachMix.lap_pct || 35) / 100);
-  const roboticCases = approachMix.robotic_cases || (proj.current_robotic_cases || Math.round(totalHospitalVol * (approachMix.robotic_pct || 25) / 100));
-  const openPct = approachMix.open_pct || (totalHospitalVol > 0 ? Math.round(openCases / totalHospitalVol * 100) : 40);
-  const lapPct = approachMix.lap_pct || (totalHospitalVol > 0 ? Math.round(lapCases / totalHospitalVol * 100) : 35);
-  const roboticPct = approachMix.robotic_pct || (totalHospitalVol > 0 ? Math.round(roboticCases / totalHospitalVol * 100) : 25);
+  const openCases = (approachMix.open && approachMix.open.cases) || Math.round(totalHospitalVol * 0.40);
+  const lapCases = (approachMix.laparoscopic && approachMix.laparoscopic.cases) || Math.round(totalHospitalVol * 0.35);
+  const roboticCases = (approachMix.robotic && approachMix.robotic.cases) || proj.current_robotic_cases || Math.round(totalHospitalVol * 0.15);
+  const openPct = (approachMix.open && approachMix.open.pct) || (totalHospitalVol > 0 ? Math.round(openCases / totalHospitalVol * 100) : 40);
+  const lapPct = (approachMix.laparoscopic && approachMix.laparoscopic.pct) || (totalHospitalVol > 0 ? Math.round(lapCases / totalHospitalVol * 100) : 35);
+  const roboticPct = (approachMix.robotic && approachMix.robotic.pct) || (totalHospitalVol > 0 ? Math.round(roboticCases / totalHospitalVol * 100) : 15);
   const totalIncrementalOpp = volProj.total_incremental_opportunity || procedurePareto.total_incremental_opportunity || 0;
 
   // Monthly -- compute peak
@@ -388,31 +388,49 @@ function buildSlideHTML(analysis, hospitalName) {
   if (proj.specialty_head_neck) specialties.push({ name: 'Head & Neck', pct: proj.specialty_head_neck });
   if (proj.specialty_cardiac) specialties.push({ name: 'Cardiac', pct: proj.specialty_cardiac });
 
-  // DRG data
-  let drgProcedures = drgRevenue.procedures || [];
-  if (drgProcedures.length === 0 && drgLib && allProcs.length > 0) {
-    try {
-      drgProcedures = allProcs.slice(0, 8).map(p => {
-        const lookup = drgLib.lookup ? drgLib.lookup(p.procedure_name || p.name || p.procedure || '') : null;
-        return {
-          procedure: p.procedure_name || p.name || p.procedure || '',
-          drg_code: lookup ? lookup.drg_code : '--',
-          medicare_rate: lookup ? lookup.medicare_rate : 0,
-          commercial_rate: lookup ? lookup.commercial_rate : 0,
-          blended_rate: lookup ? lookup.blended_rate : 0,
-          incremental_cases: p.incremental_opportunity || Math.round((p.cases || 0) * 0.15),
-          annual_revenue_impact: lookup ? (lookup.blended_rate * (p.incremental_opportunity || Math.round((p.cases || 0) * 0.15))) : 0
-        };
-      });
-    } catch(e) {}
+  // DRG data -- lookup each procedure's DRG code and reimbursement rates
+  let drgProcedures = [];
+  if (drgLib && allProcs.length > 0) {
+    const allDRG = drgLib.getAllProcedures ? drgLib.getAllProcedures() : [];
+    drgProcedures = allProcs.slice(0, 8).map(p => {
+      const procName = (p.procedure_name || p.name || p.procedure || '').toLowerCase();
+      // Try exact lookup first, then fuzzy match
+      let lookup = null;
+      if (drgLib.lookupByProcedure) {
+        // Try with procedure_type slug
+        const slug = procName.replace(/[^a-z0-9]/g, '_');
+        lookup = drgLib.lookupByProcedure(slug);
+      }
+      if (!lookup && allDRG.length > 0) {
+        // Fuzzy match by name
+        lookup = allDRG.find(d => procName.includes(d.procedure_name.toLowerCase().split(' ')[0]) || d.procedure_name.toLowerCase().includes(procName.split(' ')[0]));
+      }
+      const incrCases = p.incremental_opportunity || Math.round((p.total_cases || p.cases || 0) * 0.3);
+      const blended = lookup ? (lookup.avg_blended_rate || 0) : 12000;
+      return {
+        procedure: p.procedure_name || p.name || p.procedure || '',
+        drg_code: lookup ? lookup.drg_code : '--',
+        medicare_rate: lookup ? (lookup.avg_medicare_reimbursement || 0) : 0,
+        commercial_rate: lookup ? (lookup.avg_commercial_reimbursement || 0) : 0,
+        blended_rate: blended,
+        incremental_cases: incrCases,
+        annual_revenue_impact: blended * incrCases
+      };
+    });
   }
 
-  // Dollarization specialty results
-  const dollarSpecialties = clinDollar.specialties || clinDollar.specialty_results || [];
-  const totalClinicalSavings = clinDollar.total_annual_savings || clinDollar.total_savings || 0;
-  const specialtiesAnalyzed = dollarSpecialties.length || clinDollar.specialties_analyzed || 0;
-  const outcomeMetrics = clinDollar.outcome_metrics || clinDollar.metrics_count || 0;
-  const journalCitations = clinDollar.journal_citations || 68;
+  // Dollarization specialty results -- extract from computed results
+  const bySpecialty = clinDollar.by_specialty || {};
+  const dollarSpecialties = Object.entries(bySpecialty).map(([spec, data]) => ({
+    specialty: spec,
+    savings: data.total_specialty_savings || 0,
+    metrics: data.savings_by_metric ? Object.keys(data.savings_by_metric).length : 0,
+    details: data.savings_by_metric || {}
+  }));
+  const totalClinicalSavings = clinDollar.total_clinical_savings_annual || clinDollar.total_annual_savings || dollarSpecialties.reduce((s, d) => s + d.savings, 0) || 0;
+  const specialtiesAnalyzed = dollarSpecialties.length;
+  const outcomeMetrics = dollarSpecialties.reduce((s, d) => s + d.metrics, 0);
+  const journalCitations = (clinDollar.all_citations || []).length || 68;
 
   // Infrastructure
   const readinessScore = infraAssess.readiness_score || 0;
@@ -421,18 +439,19 @@ function buildSlideHTML(analysis, hospitalName) {
   const estRenovationCost = infraAssess.estimated_renovation_cost || infraAssess.renovation_cost || 0;
 
   // Competitive
-  const competitorNearby = compAnalysis.competitor_nearby || compAnalysis.competitors_nearby || false;
-  const competitorDetails = compAnalysis.competitor_details || volProj.competitor_details || [];
-  const marketPressure = compAnalysis.market_pressure || 'moderate';
-  const compRecommendation = compAnalysis.recommendation || '';
-  const compPositioning = compAnalysis.positioning || '';
+  const competitorNearby = compAnalysis.competitor_nearby || proj.competitor_robot_nearby || false;
+  const competitorDetailsStr = proj.competitor_details || compAnalysis.competitor_details || '';
+  const marketPressure = compAnalysis.market_pressure || (competitorNearby ? 'high' : 'low');
+  const compRecommendation = compAnalysis.recommendation || (competitorNearby ? 'Competitive urgency: nearby hospital has robotic capability. Delay risks surgical volume migration.' : 'First-mover advantage in the region. Early adoption builds market position.');
+  const compPositioning = compAnalysis.positioning || (competitorNearby ? 'Match or exceed competitor capability. Recommend flagship system for differentiation.' : 'Establish regional robotic surgery center of excellence.');
 
   // Combined ROI calculations
-  const avgReimbursement = roiCalc.avg_reimbursement || drgRevenue.avg_blended_rate || 12000;
+  const avgDrgBlended = drgProcedures.length > 0 ? Math.round(drgProcedures.reduce((s, d) => s + d.blended_rate, 0) / drgProcedures.length) : 12000;
+  const avgReimbursement = roiCalc.avg_reimbursement || avgDrgBlended;
   const incrementalRevenue = totalIncrementalOpp > 0 ? totalIncrementalOpp * avgReimbursement : (roiCalc.incremental_revenue || 0);
   const combinedAnnualBenefit = incrementalRevenue + totalClinicalSavings;
-  const systemInvestment = roiCalc.system_cost || tco.acquisition_cost || financialDeep.system_acquisition_cost || 0;
-  const annualOperatingCost = roiCalc.annual_operating_cost || tco.annual_service || financialDeep.annual_operating_cost || 0;
+  const systemInvestment = roiCalc.capital_cost || tco.system_acquisition || tco.acquisition_cost || financialDeep.system_acquisition_cost || (primaryRec.specs ? ((primaryRec.specs.price_range[0] + primaryRec.specs.price_range[1]) / 2) : 0) || 0;
+  const annualOperatingCost = roiCalc.annual_costs?.total || tco.annual_service || financialDeep.annual_operating_cost || 0;
   const combinedPayback = combinedAnnualBenefit > 0 ? Math.round(systemInvestment / (combinedAnnualBenefit / 12)) : 0;
   const fiveYearNetBenefit = (combinedAnnualBenefit * 5) - systemInvestment - (annualOperatingCost * 5);
 
