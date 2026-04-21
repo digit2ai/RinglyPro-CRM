@@ -59,10 +59,19 @@ app.use((req, res, next) => {
   next();
 });
 
-// Custom domain: surgicalmind.app -> SurgicalMind AI platform
+// Custom domain: surgicalmind.app -> redirect naked to www for consistent API calls
 app.use((req, res, next) => {
   const host = (req.get('host') || '').toLowerCase();
-  if (host === 'surgicalmind.app' || host === 'www.surgicalmind.app') {
+  if (host === 'surgicalmind.app') {
+    return res.redirect(301, 'https://www.surgicalmind.app' + req.originalUrl);
+  }
+  next();
+});
+
+// Custom domain: www.surgicalmind.app -> SurgicalMind AI platform
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase();
+  if (host === 'www.surgicalmind.app') {
     const p = req.path;
     // Pass through /intuitive API and dashboard routes
     if (p.startsWith('/intuitive')) return next();
