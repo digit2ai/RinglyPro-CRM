@@ -186,6 +186,9 @@
       <div class="header-sub" id="headerSub">Loading...</div>
     </div>
     <div class="header-actions">
+      <select id="patientSelect" onchange="switchPatient(this.value)" style="background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.3);padding:6px 8px;border-radius:6px;font-size:12px;font-weight:500;max-width:140px;">
+        <option value="">Select Patient</option>
+      </select>
       <button onclick="initSystem()">Setup</button>
       <button onclick="seedData()">Seed</button>
       <button onclick="loadDashboard()">Refresh</button>
@@ -245,6 +248,21 @@ let DATA = {};
 let CURRENT_TAB = 'appointments';
 let selectedFiles = [];
 let extractedResults = [];
+
+async function loadPatientList() {
+  try {
+    const r = await api('GET','/patients?_list=1');
+    if(!r.success) return;
+    const sel = document.getElementById('patientSelect');
+    const patients = r.data || [];
+    sel.innerHTML = '<option value="">Select Patient</option>' + patients.map(p => `<option value="${p.id}" ${p.id==PATIENT_ID?'selected':''}>${p.name}</option>`).join('');
+  } catch(e) {}
+}
+function switchPatient(id) {
+  if(!id) return;
+  PATIENT_ID = parseInt(id);
+  loadDashboard();
+}
 
 const TABS = [
   { key: 'appointments', label: 'Appts' },
@@ -371,7 +389,13 @@ function dismissResult(idx) { extractedResults.splice(idx,1); renderPreview(); }
 
 // ===== INIT / SEED / DASHBOARD =====
 async function initSystem() { toast('Creating tables...'); const r = await api('POST','/migrate'); toast(r.success ? 'Tables created' : 'Error: '+r.error); }
-async function seedData() { toast('Seeding...'); const r = await api('POST','/seed/initial'); if(r.success){PATIENT_ID=r.patient_id;toast('Data seeded');loadDashboard();}else toast('Error: '+r.error); }
+async function seedData() {
+  const choice = prompt('Seed data for:\n1 = Manuel Stagg\n2 = Lina Stagg\n3 = Both\nEnter 1, 2, or 3:');
+  if(!choice) return;
+  if(choice==='1'||choice==='3') { toast('Seeding Manuel...'); const r = await api('POST','/seed/initial'); if(!r.success) toast('Error: '+r.error); }
+  if(choice==='2'||choice==='3') { toast('Seeding Lina...'); const r = await api('POST','/seed/lina-stagg'); if(r.success){PATIENT_ID=r.patient_id;}else{toast('Error: '+r.error);return;} }
+  toast('Data seeded'); loadDashboard();
+}
 
 async function loadDashboard() {
   try {
@@ -379,6 +403,7 @@ async function loadDashboard() {
     if(!r.success){toast('Error: '+r.error);return;}
     DATA = r.data; renderPatientCard(); renderVitals(); renderAlerts(); renderTabs(); renderTabContent();
     document.getElementById('headerSub').textContent = DATA.patient.name+' | MRN: '+DATA.patient.mrn;
+    loadPatientList();
   } catch(e) { toast('Failed to load dashboard'); }
 }
 
