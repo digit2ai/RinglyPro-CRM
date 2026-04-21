@@ -14,110 +14,6 @@ import NDAPage from './pages/NDAPage'
 import ContractBuilderPage from './pages/ContractBuilderPage'
 import PresentationPage from './pages/PresentationPage'
 import WarehouseMindPage from './pages/WarehouseMindPage'
-import StepIndicator from './components/StepIndicator'
-
-// Dynamic Rachel context builder — generates presentation context from live project data
-function buildPresentationContext(analysisData, companyName, recommendations, benefits) {
-  const a = analysisData || {}
-  const ov = a.overview_kpis || {}
-  const skus = ov.skus || {}
-  const orders = ov.orders || {}
-  const dateRange = ov.date_range || {}
-  const fit = a.fit_analysis || {}
-  const abc = a.abc_classification || {}
-  const xyz = a.xyz_classification || {}
-  const dailyPerc = a.daily_percentiles || {}
-  const extrap = a.extrapolation || {}
-  const orderStruct = a.order_structure || {}
-  const hourly = a.throughput_hourly || {}
-  const dailyVals = dailyPerc.daily_values || {}
-  const avgDay = dailyVals.average || {}
-  const p75Day = dailyVals.p75 || {}
-  const maxDay = dailyVals.max || {}
-  const y5 = (extrap.projections || []).find(p => p.year === 5) || {}
-  const recs = Array.isArray(recommendations) ? recommendations : recommendations?.recommendations || []
-  const ben = benefits || {}
-  const fmt = n => n != null ? Number(n).toLocaleString() : '—'
-
-  return `You are Rachel, the PINAXIS Voice AI assistant. You are presenting the Dashboard Playbook for ${companyName || 'the prospect warehouse'}. Speak confidently, reference specific numbers. You represent PINAXIS Warehouse Automation.
-
-Here is the full presentation content you should be able to discuss:
-
-SLIDE 1 — TITLE: PINAXIS Dashboard Playbook for ${companyName || 'the prospect warehouse'}.
-
-SLIDE 2 — DATA ANALYSIS OVERVIEW:
-- Total SKUs: ${fmt(skus.total)} | Moved SKUs: ${fmt(skus.active)} | Total Orders: ${fmt(orders.total_orders)} | Order Lines: ${fmt(orders.total_orderlines)}
-- Total Pick Units: ${fmt(orders.total_units)} | Avg Lines/Order: ${orders.avg_lines_per_order || '—'}
-- Bin Capable: ${skus.bin_capable_pct || '—'}% of SKUs
-- Data range: ${dateRange.from || '—'} to ${dateRange.to || '—'} (${dailyPerc.days || '—'} operating days)
-- Order Type Breakdown: ${(ov.by_order_type || []).map(d => `${d.name}: ${d.pct_units}% of pick units`).join(', ') || 'N/A'}
-- Picking Unit Breakdown: ${(ov.by_picking_unit || []).map(d => `${d.name}: ${d.pct_units}% of pick units`).join(', ') || 'N/A'}
-- Temperature Zone: ${(ov.by_temperature || []).map(d => `${d.name}: ${d.pct_units}% of pick units`).join(', ') || 'N/A'}
-
-SLIDE 3 — FIT / NO-FIT ANALYSIS:
-- Total Items: ${fmt(fit.total_items)} | With Dimensions: ${fmt(fit.items_with_dimensions)} | Missing Dimensions: ${fmt(fit.items_without_dimensions)}
-${(fit.bins || []).map(b => `- Bin ${b.name}: ${fmt(b.fit_count)} fit (${b.fit_pct}% of dimensioned, ${b.fit_pct_total}% of total)`).join('\n')}
-
-SLIDE 4 — ABC CLASSIFICATION (Pareto Analysis):
-- Gini Coefficient: ${abc.gini || '—'} (${abc.gini >= 0.7 ? 'highly concentrated — strong ABC separation ideal for automation' : 'moderate concentration'})
-- Total Active SKUs: ${fmt(abc.total_skus)} | Dead Stock (D items): ${fmt(abc.dead_stock_count)} | Total Including Dead: ${fmt(abc.total_skus_including_dead)}
-- Total Order Lines: ${fmt(abc.total_order_lines)} | Total Pick Units: ${fmt(abc.total_picks)} | Total Orders: ${fmt(abc.total_orders)}
-${Object.entries(abc.classes || {}).map(([cls, d]) => {
-  const labels = { A: 'Fast Movers', B: 'Medium Movers', C: 'Slow Movers', D: 'Dead Stock' };
-  return `- ${cls} (${labels[cls]}): ${fmt(d.count)} SKUs (${d.pct}% of total) — ${d.pct_lines != null ? d.pct_lines : d.volume_pct}% of Order Lines, ${d.pct_picks != null ? d.pct_picks : d.volume_pct}% of Pick Units, ${d.pct_orders != null ? d.pct_orders : '0'}% of Orders | Threshold: ${d.threshold_label || 'N/A'}`;
-}).join('\n')}
-- The ABC curve shows a steep Pareto rise: a small fraction of SKUs drives the vast majority of volume — this is the key indicator for goods-to-person automation zones
-- Design Day (P75): ${fmt(p75Day.order_lines)} order lines | Design Hour: ${fmt(Math.round((p75Day.order_lines || 0) / (dailyPerc.working_hours || 12)))} lines/hr
-
-SLIDE 5 — XYZ SEASONALITY:
-- Total Moved SKUs: ${fmt(xyz.total_moved_skus)}
-${(xyz.classes || []).map(c => `- ${c.class} Items: ${fmt(c.moved_skus)} (${c.pct_moved_skus}%) — ${c.pct_lines}% Lines, ${c.pct_picks}% Picks, ${c.pct_orders}% Orders`).join('\n')}
-
-SLIDE 6 — ORDER PROFILE:
-- Total Orders: ${fmt(orderStruct.total_orders)} | Single-Line: ${orderStruct.single_line_pct || '—'}% (${fmt(orderStruct.single_line_orders)}) | Multi-Line: ${orderStruct.multi_line_pct || '—'}% (${fmt(orderStruct.multi_line_orders)})
-- Avg Lines/Order: ${orders.avg_lines_per_order || '—'}
-- Histogram: ${(orderStruct.histogram || []).map(h => `${h.label} lines: ${fmt(h.count)} orders (${h.pct}%)`).join(', ')}
-- ${orderStruct.multi_line_pct > 50 ? 'Predominantly multi-line orders — complex fulfillment suited for zone-based or wave picking automation' : 'Balanced mix suitable for flexible automation'}
-
-SLIDE 7 — PERCENTILES (Design Basis, ${dailyPerc.working_hours || 12}h working, ${dailyPerc.days || '—'} operating days):
-- Average Day: ${fmt(avgDay.order_lines)} lines, ${fmt(avgDay.pick_units)} picks, ${fmt(avgDay.orders)} orders
-- 75th Percentile (DESIGN DAY): ${fmt(p75Day.order_lines)} lines (${fmt(Math.round((p75Day.order_lines || 0) / (dailyPerc.working_hours || 12)))}/hr), ${fmt(p75Day.pick_units)} picks (${fmt(Math.round((p75Day.pick_units || 0) / (dailyPerc.working_hours || 12)))}/hr), ${fmt(p75Day.orders)} orders
-- Maximum: ${fmt(maxDay.order_lines)} lines, ${fmt(maxDay.pick_units)} picks, ${fmt(maxDay.orders)} orders
-- The 75th percentile ensures the system handles peak demand 75% of the time
-
-SLIDE 8 — ${extrap.years || 5}-YEAR GROWTH EXTRAPOLATION (${extrap.growth_rate_pct || 5}% annual):
-${y5.design_day ? `- Year 5: ${fmt(y5.design_day.order_lines)} lines/day (${fmt(y5.design_day.lines_per_hour)}/hr), ${fmt(y5.design_day.pick_units)} picks/day, ${fmt(y5.design_day.orders)} orders/day` : '- Run analysis for projections'}
-${extrap.baseline ? `- Baseline (Year 0): ${fmt(extrap.baseline.order_lines)} lines/day, ${fmt(extrap.baseline.pick_units)} picks/day, ${fmt(extrap.baseline.skus)} SKUs` : ''}
-- Growth factor Year 5: x${y5.growth_factor || '—'}
-
-SLIDE 9 — PRODUCT RECOMMENDATIONS:
-${recs.length > 0 ? recs.map(r => `- ${r.product_name} (${r.product_category}): Fit Score ${Math.round(r.fit_score || 0)}/100 — ${r.description || r.rationale || ''}`).join('\n') : '- No product recommendations computed yet'}
-
-SLIDE 10 — CLIENT BENEFIT PROJECTIONS:
-${ben.summary ? `- Automation Readiness Score: ${ben.summary.automation_readiness_score || 0}/100
-- Est. Annual Savings: €${Math.round((ben.summary.annual_savings_high || 0) / 1000)}K
-- Payback Period: ${ben.summary.payback_months_low || '—'}–${ben.summary.payback_months_high || '—'} months` : '- No benefit projections computed yet'}
-${(ben.projections || []).map(p => `- ${p.title}: +${p.improvement_pct}% improvement (${p.confidence} confidence)`).join('\n')}
-
-SLIDE 11 — HOURLY THROUGHPUT:
-${(hourly.hours || []).filter(h => h.orderlines > 0).map(h => `- ${h.label}: ${fmt(h.orderlines)} orderlines`).join('\n') || '- No hourly data available'}
-
-SLIDE 12 — TOP 10 SKUs:
-${(abc.top_skus || []).slice(0, 10).map((s, i) => `- #${i + 1} SKU ${s.sku}: ${fmt(Math.round(s.picks))} picks (${s.pct}%, Class ${s.class})`).join('\n')}
-
-SLIDE 13 — NEXT STEPS: 1) Review Concept Designs, 2) Simulation & Layout, 3) Commercial Proposal, 4) API Integration, 5) Implementation with PINAXIS engineering support.
-
-SPEAKING GUIDELINES:
-- Always say "PINAXIS" when referring to the company and its automation solutions
-- Reference the specific numbers above — they are from this client's actual warehouse data
-- The 75th percentile design day is the key planning metric for automation dimensioning
-- Emphasize bin-capable percentage as automation potential indicator
-- When asked about ABC, explain the Pareto principle: a small % of SKUs drives most volume — ideal for goods-to-person zones
-- When asked about specific slides, give the detailed numbers from that section
-- You can discuss any of the 13 slides in detail using the data above
-`
-}
-
 const warehouseMindSubItems = [
   { path: '/warehousemind/command-center', label: 'MCP Command Center', icon: MCPIcon },
   { path: '/warehousemind/neural', label: 'Neural Intelligence', icon: NeuralIcon },
@@ -325,16 +221,9 @@ function CloseIcon({ className }) {
 
 export default function App({ onLogout, userEmail }) {
   const location = useLocation()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [wmExpanded, setWmExpanded] = useState(() => location.pathname.startsWith('/warehousemind'))
-  const [docsExpanded, setDocsExpanded] = useState(() => ['/api-integration', '/user-guide', '/nda', '/contract-builder'].some(p => location.pathname.startsWith(p)))
-
-  // Auto-expand WarehouseMind section when navigating to it
-  useEffect(() => {
-    if (location.pathname.startsWith('/warehousemind')) {
-      setWmExpanded(true)
-    }
-  }, [location.pathname])
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [wmExpanded, setWmExpanded] = useState(false)
+  const [docsExpanded, setDocsExpanded] = useState(false)
 
   // Extract projectId from current URL for sidebar navigation
   const getProjectId = () => {
@@ -361,126 +250,81 @@ export default function App({ onLogout, userEmail }) {
     return 1
   }
 
-  const closeSidebar = () => setSidebarOpen(false)
-
-  // Dynamically pass context to ElevenLabs widget based on current page
-  useEffect(() => {
-    const widget = document.querySelector('elevenlabs-convai')
-    if (!widget) return
-
-    // Extract project ID from any route
-    const anyProjectId = location.pathname.match(/\/(?:analysis|products|simulation|benefits|report|api-integration|presentation|observability)\/(\d+)/)?.[1]
-
-    if (anyProjectId) {
-      // Fetch all project data for Rachel's full context
-      Promise.all([
-        fetch(`/pinaxis/api/v1/projects/${anyProjectId}`).then(r => r.json()).catch(() => null),
-        fetch(`/pinaxis/api/v1/analysis/${anyProjectId}/all`).then(r => r.json()).catch(() => null),
-        fetch(`/pinaxis/api/v1/recommendations/${anyProjectId}`).then(r => r.json()).catch(() => null),
-        fetch(`/pinaxis/api/v1/benefits/${anyProjectId}`).then(r => r.json()).catch(() => null)
-      ]).then(([projRes, analysisRes, recsRes, benRes]) => {
-        const proj = projRes?.data || projRes
-        const analysis = analysisRes?.data || analysisRes
-        const recs = recsRes?.data || recsRes?.recommendations || recsRes || []
-        const benefits = benRes?.data || benRes
-        const companyName = proj?.company_name || 'the prospect'
-        const ctx = buildPresentationContext(analysis, companyName, recs, benefits)
-        widget.setAttribute('context', ctx)
-      })
-    } else {
-      widget.removeAttribute('context')
-    }
-  }, [location.pathname])
+  const closeMenu = () => setMobileMenuOpen(false)
 
   return (
-    <div className="min-h-screen flex">
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
-          onClick={closeSidebar}
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside className={`w-64 bg-slate-800 border-r border-slate-700 flex flex-col fixed h-full z-30 transition-transform duration-300 lg:translate-x-0 ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
-        {/* Logo — bigger, with top padding for voice widget clearance */}
-        <div className="pt-20 pb-3 px-4 border-b border-slate-700">
-          <div className="flex flex-col items-center text-center gap-0">
-            <div className="w-40 h-40 flex items-center justify-center overflow-hidden">
-              <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69b02d62034886f7c9e996d9.png" alt="PINAXIS" className="w-full h-full object-contain" />
-            </div>
-            <div className="-mt-2">
-              <h1 className="text-lg font-bold text-white tracking-tight">PINAXIS</h1>
-              <p className="text-[10px] text-slate-400">Warehouse Analytics</p>
-            </div>
+    <div className="min-h-screen flex flex-col">
+      {/* Top Navigation Bar */}
+      <header className="bg-slate-800 border-b border-slate-700 sticky top-0 z-30">
+        {/* Top row: brand + user */}
+        <div className="flex items-center justify-between px-4 sm:px-6 py-2">
+          <NavLink to="/" className="flex items-center gap-2">
+            <h1 className="text-base font-bold text-white tracking-tight">PINAXIS</h1>
+            <span className="text-[10px] text-slate-500 hidden sm:inline">Warehouse Analytics</span>
+          </NavLink>
+          <div className="flex items-center gap-3">
+            {userEmail && <span className="text-[11px] text-slate-500 hidden sm:inline truncate max-w-[160px]">{userEmail}</span>}
+            {userEmail && (
+              <button onClick={onLogout} className="text-[11px] text-slate-500 hover:text-red-400 transition-colors">
+                Sign out
+              </button>
+            )}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-1.5 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg"
+            >
+              {mobileMenuOpen ? <CloseIcon className="w-5 h-5" /> : <MenuIcon className="w-5 h-5" />}
+            </button>
           </div>
-          <button
-            onClick={closeSidebar}
-            className="lg:hidden absolute top-3 right-3 p-1 text-slate-400 hover:text-white"
-          >
-            <CloseIcon className="w-5 h-5" />
-          </button>
         </div>
 
-        {/* Navigation — compact, smaller fonts */}
-        <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto">
+        {/* Nav row: horizontal steps (desktop) */}
+        <nav className="hidden lg:flex items-center gap-1 px-4 pb-2 overflow-x-auto scrollbar-thin">
           {steps.map((step, index) => {
             const Icon = step.icon
             const isActive = getCurrentStep() === index
             const isWmSubActive = step.path === '/warehousemind' && location.pathname.startsWith('/warehousemind')
             const isDocsSubActive = step.path === '/docs' && ['/api-integration', '/user-guide', '/nda', '/contract-builder'].some(p => location.pathname.startsWith(p))
 
-            // Collapsible groups (WarehouseMind + Docs)
             if (step.collapsible) {
               const isWm = step.path === '/warehousemind'
-              const isDocs = step.path === '/docs'
               const expanded = isWm ? wmExpanded : docsExpanded
               const toggleExpanded = isWm ? () => setWmExpanded(!wmExpanded) : () => setDocsExpanded(!docsExpanded)
               const subActive = isWm ? isWmSubActive : isDocsSubActive
-              const accentBg = isWm ? 'bg-purple-600/20 text-purple-400 border border-purple-500/30' : 'bg-slate-700/40 text-slate-300 border border-slate-600/30'
-              const accentNum = isWm ? 'bg-purple-600 text-white' : 'bg-slate-600 text-white'
 
               return (
-                <div key={step.path}>
+                <div key={step.path} className="relative group">
                   <button
                     onClick={toggleExpanded}
-                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 group text-xs ${
-                      subActive ? accentBg : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all text-[11px] whitespace-nowrap ${
+                      subActive
+                        ? (isWm ? 'bg-purple-600/20 text-purple-400 border border-purple-500/30' : 'bg-slate-700/40 text-slate-300 border border-slate-600/30')
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
                     }`}
                   >
-                    <div className={`w-6 h-6 rounded flex items-center justify-center text-[10px] font-medium ${
-                      subActive ? accentNum : 'bg-slate-700 text-slate-400 group-hover:bg-slate-600'
-                    }`}>
-                      {index + 1}
-                    </div>
-                    <span className="font-medium text-left flex-1">{step.label}</span>
-                    <ChevronIcon className="w-3 h-3 text-slate-500" expanded={expanded} />
+                    <Icon className="w-3.5 h-3.5" />
+                    <span className="font-medium">{step.label}</span>
+                    <ChevronIcon className="w-2.5 h-2.5 text-slate-500" expanded={expanded} />
                   </button>
-                  <div className={`overflow-hidden transition-all duration-200 ${expanded ? 'max-h-80 opacity-100 mt-0.5' : 'max-h-0 opacity-0'}`}>
-                    <div className="ml-5 pl-3 border-l border-slate-700/60 space-y-0.5">
+                  {expanded && (
+                    <div className="absolute top-full left-0 mt-1 bg-slate-800 border border-slate-700 rounded-lg shadow-xl py-1 min-w-[180px] z-50">
                       {step.subItems.map((sub) => {
                         const SubIcon = sub.icon
                         const subItemActive = location.pathname.startsWith(sub.path?.split('/')[1] ? '/' + sub.path.split('/')[1] : sub.path)
-
                         if (sub.external) {
                           return (
-                            <a key={sub.path} href={sub.path} target="_blank" rel="noopener noreferrer" onClick={closeSidebar}
-                              className="flex items-center gap-2 px-2 py-1.5 rounded text-[11px] text-slate-500 hover:text-slate-300 hover:bg-slate-700/30 transition-all">
+                            <a key={sub.path} href={sub.path} target="_blank" rel="noopener noreferrer"
+                              className="flex items-center gap-2 px-3 py-1.5 text-[11px] text-slate-500 hover:text-slate-300 hover:bg-slate-700/30 transition-all">
                               <SubIcon className="w-3 h-3 text-slate-600" />
                               <span>{sub.label}</span>
                             </a>
                           )
                         }
-
                         const projId = getProjectId()
                         const subPath = projId && !sub.noProject ? `${sub.path}/${projId}` : sub.path
-
                         return (
-                          <NavLink key={sub.path} to={subPath} onClick={closeSidebar}
-                            className={`flex items-center gap-2 px-2 py-1.5 rounded text-[11px] transition-all ${
+                          <NavLink key={sub.path} to={subPath} onClick={() => { setWmExpanded(false); setDocsExpanded(false); }}
+                            className={`flex items-center gap-2 px-3 py-1.5 text-[11px] transition-all ${
                               subItemActive ? (isWm ? 'bg-purple-600/15 text-purple-400' : 'bg-logistics-600/15 text-logistics-400') : 'text-slate-500 hover:text-slate-300 hover:bg-slate-700/30'
                             }`}>
                             <SubIcon className={`w-3 h-3 ${subItemActive ? (isWm ? 'text-purple-400' : 'text-logistics-400') : 'text-slate-600'}`} />
@@ -489,18 +333,17 @@ export default function App({ onLogout, userEmail }) {
                         )
                       })}
                     </div>
-                  </div>
+                  )}
                 </div>
               )
             }
 
             if (step.external) {
               return (
-                <a key={step.path} href={step.path} target="_blank" rel="noopener noreferrer" onClick={closeSidebar}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 group text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-700/50">
-                  <div className="w-6 h-6 rounded flex items-center justify-center text-[10px] font-medium bg-slate-700 text-slate-400 group-hover:bg-slate-600">{index + 1}</div>
+                <a key={step.path} href={step.path} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all text-[11px] text-slate-400 hover:text-slate-200 hover:bg-slate-700/50 whitespace-nowrap">
+                  <Icon className="w-3.5 h-3.5" />
                   <span className="font-medium">{step.label}</span>
-                  <Icon className="w-3.5 h-3.5 ml-auto text-slate-600" />
                 </a>
               )
             }
@@ -509,65 +352,88 @@ export default function App({ onLogout, userEmail }) {
             const basePath = step.path === '/' ? '/' : (projectId && !step.noProject ? `${step.path}/${projectId}` : step.path)
 
             return (
-              <NavLink key={step.path} to={basePath} onClick={closeSidebar}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 group text-xs ${
+              <NavLink key={step.path} to={basePath}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all text-[11px] whitespace-nowrap ${
                   isActive ? 'bg-logistics-600/20 text-logistics-500 border border-logistics-500/30' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
                 }`}>
-                <div className={`w-6 h-6 rounded flex items-center justify-center text-[10px] font-medium ${
-                  isActive ? 'bg-logistics-600 text-white' : 'bg-slate-700 text-slate-400 group-hover:bg-slate-600'
-                }`}>
-                  {index + 1}
-                </div>
+                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-logistics-400' : 'text-slate-600'}`} />
                 <span className="font-medium">{step.label}</span>
-                <Icon className={`w-3.5 h-3.5 ml-auto ${isActive ? 'text-logistics-400' : 'text-slate-600'}`} />
               </NavLink>
             )
           })}
         </nav>
 
-        {/* Footer */}
-        <div className="p-4 border-t border-slate-700">
-          {userEmail && (
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs text-slate-400 truncate">{userEmail}</span>
-              <button
-                onClick={onLogout}
-                className="text-xs text-slate-500 hover:text-red-400 transition-colors"
-              >
-                Sign out
-              </button>
-            </div>
-          )}
-          <div className="text-xs text-slate-500 text-center">
-            <p>Powered by Pinaxis</p>
-            <p className="mt-1">PINAXIS Analytics v1.0</p>
-          </div>
-        </div>
-      </aside>
+        {/* Mobile dropdown menu */}
+        {mobileMenuOpen && (
+          <nav className="lg:hidden border-t border-slate-700 px-3 py-2 space-y-0.5 max-h-[60vh] overflow-y-auto">
+            {steps.map((step, index) => {
+              const Icon = step.icon
+              const isActive = getCurrentStep() === index
+
+              if (step.collapsible) {
+                const isWm = step.path === '/warehousemind'
+                const expanded = isWm ? wmExpanded : docsExpanded
+                const toggleExpanded = isWm ? () => setWmExpanded(!wmExpanded) : () => setDocsExpanded(!docsExpanded)
+                return (
+                  <div key={step.path}>
+                    <button onClick={toggleExpanded}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-700/50">
+                      <Icon className="w-3.5 h-3.5" />
+                      <span className="font-medium flex-1 text-left">{step.label}</span>
+                      <ChevronIcon className="w-3 h-3 text-slate-500" expanded={expanded} />
+                    </button>
+                    {expanded && (
+                      <div className="ml-6 pl-3 border-l border-slate-700/60 space-y-0.5 mt-0.5">
+                        {step.subItems.map((sub) => {
+                          const SubIcon = sub.icon
+                          if (sub.external) {
+                            return (
+                              <a key={sub.path} href={sub.path} target="_blank" rel="noopener noreferrer" onClick={closeMenu}
+                                className="flex items-center gap-2 px-2 py-1.5 rounded text-[11px] text-slate-500 hover:text-slate-300 hover:bg-slate-700/30">
+                                <SubIcon className="w-3 h-3 text-slate-600" />
+                                <span>{sub.label}</span>
+                              </a>
+                            )
+                          }
+                          const projId = getProjectId()
+                          const subPath = projId && !sub.noProject ? `${sub.path}/${projId}` : sub.path
+                          return (
+                            <NavLink key={sub.path} to={subPath} onClick={closeMenu}
+                              className="flex items-center gap-2 px-2 py-1.5 rounded text-[11px] text-slate-500 hover:text-slate-300 hover:bg-slate-700/30">
+                              <SubIcon className="w-3 h-3 text-slate-600" />
+                              <span>{sub.label}</span>
+                            </NavLink>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )
+              }
+
+              const projectId = getProjectId()
+              const basePath = step.path === '/' ? '/' : (projectId && !step.noProject ? `${step.path}/${projectId}` : step.path)
+              return (
+                <NavLink key={step.path} to={basePath} onClick={closeMenu}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${
+                    isActive ? 'bg-logistics-600/20 text-logistics-500' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+                  }`}>
+                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-logistics-400' : 'text-slate-600'}`} />
+                  <span className="font-medium">{step.label}</span>
+                </NavLink>
+              )
+            })}
+          </nav>
+        )}
+      </header>
+
+      {/* Click-away to close dropdowns */}
+      {(wmExpanded || docsExpanded) && (
+        <div className="fixed inset-0 z-20" onClick={() => { setWmExpanded(false); setDocsExpanded(false); }} />
+      )}
 
       {/* Main Content */}
-      <main className="flex-1 lg:ml-64 min-w-0">
-        {/* Top Bar */}
-        <header className="bg-slate-800/50 border-b border-slate-700 px-4 sm:px-8 py-4 backdrop-blur-sm sticky top-0 z-10">
-          <div className="flex items-center gap-3">
-            {/* Hamburger button - mobile only */}
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 -ml-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg"
-            >
-              <MenuIcon className="w-5 h-5" />
-            </button>
-            <div className="hidden sm:block flex-1">
-              <StepIndicator currentStep={getCurrentStep()} steps={steps.map(s => s.label)} />
-            </div>
-            {/* Mobile: show current step name */}
-            <span className="sm:hidden text-sm font-medium text-white">
-              {steps[getCurrentStep()]?.label || 'PINAXIS'}
-            </span>
-          </div>
-        </header>
-
-        {/* Page Content */}
+      <main className="flex-1 min-w-0">
         <div className="p-4 sm:p-6 lg:p-8">
           <Routes>
             <Route path="/warehousemind" element={<WarehouseMindPage />} />
@@ -590,9 +456,6 @@ export default function App({ onLogout, userEmail }) {
           </Routes>
         </div>
       </main>
-
-      {/* ElevenLabs Voice Agent Widget */}
-      <elevenlabs-convai agent-id="agent_1801kjx55tabedbvx4y7x4eptbz4"></elevenlabs-convai>
     </div>
   )
 }
