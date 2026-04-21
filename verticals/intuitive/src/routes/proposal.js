@@ -633,10 +633,10 @@ function buildSlideHTML(analysis, hospitalName) {
     // Slide 16: Competitive Landscape (NEW)
     { title: 'Competitive Landscape', html: (() => {
       const pressureColor = marketPressure === 'high' ? '#ef4444' : marketPressure === 'moderate' ? '#eab308' : '#10b981';
-      const compDetails = Array.isArray(competitorDetails) ? competitorDetails : [];
+      const compDetails = [];
       return `
       <div class="metrics-grid">${metric('Competitors Nearby', competitorNearby ? 'Yes' : 'No', competitorNearby ? '#ef4444' : '#10b981')}${metric('Market Pressure', esc(marketPressure.charAt(0).toUpperCase() + marketPressure.slice(1)), pressureColor)}${metric('Competitor Count', fmt(compDetails.length))}${metric('Positioning', esc(compPositioning || 'First Mover'), '#0ea5e9')}</div>
-      ${compDetails.length > 0 ? `<table class="data-table"><tr><th>Facility</th><th>System</th><th>Distance</th><th>Cases/Year</th><th>Specialties</th></tr>${compDetails.slice(0, 6).map(c => `<tr><td>${esc(c.name || c.facility || '')}</td><td>${esc(c.system || c.robot_model || '--')}</td><td>${c.distance ? c.distance + ' mi' : '--'}</td><td>${fmt(c.annual_cases || c.cases || 0)}</td><td>${esc(c.specialties || c.primary_specialty || '--')}</td></tr>`).join('')}</table>` : '<div class="info-box">No competitor data available for this market area.</div>'}
+      ${competitorDetailsStr ? `<div class="info-box"><strong>Competitor Intelligence:</strong> ${esc(competitorDetailsStr)}</div>` : '<div class="info-box">No detailed competitor data available for this market area.</div>'}
       ${compRecommendation ? `<div class="info-box" style="border-color:#0ea5e9;background:rgba(14,165,233,0.1)"><strong>Strategic Recommendation:</strong> ${esc(compRecommendation)}</div>` : ''}
       <div class="info-box"><strong>Market Context:</strong> ${competitorNearby ? 'Competitor presence increases urgency for program launch to capture market share and recruit surgeons.' : 'Limited competition presents a first-mover advantage -- early adoption positions your facility as the regional robotic surgery center of excellence.'}</div>`;
     })() },
