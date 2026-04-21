@@ -2,148 +2,178 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <title>Medical Tracker</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f6fa; color: #2d3436; min-height: 100vh; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f6fa; color: #2d3436; min-height: 100vh; -webkit-font-smoothing: antialiased; }
 
+    /* ===== HEADER ===== */
     .header {
       background: linear-gradient(135deg, #0984e3 0%, #6c5ce7 100%);
-      color: white; padding: 18px 28px;
+      color: white; padding: 14px 16px;
       position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     }
-    .header-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
-    .header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
-    .header-sub { font-size: 13px; opacity: 0.85; }
-    .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    .header-actions button { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 7px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; transition: background 0.2s; }
-    .header-actions button:hover { background: rgba(255,255,255,0.35); }
-    .upload-bar {
-      margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.2);
-      display: flex; align-items: center; gap: 12px;
-    }
-    .btn-upload { background: white !important; color: #6c5ce7 !important; border-color: white !important; font-weight: 700 !important; font-size: 14px !important; padding: 10px 24px !important; border-radius: 8px !important; }
-    .btn-upload:hover { background: #f0f0f0 !important; }
-    .upload-hint { font-size: 12px; opacity: 0.75; }
+    .header-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .header h1 { font-size: 18px; font-weight: 700; }
+    .header-sub { font-size: 12px; opacity: 0.85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+    .header-actions { display: flex; gap: 6px; }
+    .header-actions button { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; }
+    .upload-bar { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; gap: 10px; }
+    .btn-upload { background: white !important; color: #6c5ce7 !important; border: none !important; font-weight: 700 !important; font-size: 14px !important; padding: 10px 20px !important; border-radius: 8px !important; flex-shrink: 0; }
+    .upload-hint { font-size: 11px; opacity: 0.7; display: none; }
 
-    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    /* ===== CONTAINER ===== */
+    .container { max-width: 1200px; margin: 0 auto; padding: 12px; }
 
+    /* ===== PATIENT CARD ===== */
     .patient-card {
-      background: white; border-radius: 12px; padding: 20px 24px; margin-bottom: 20px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06); display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;
+      background: white; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06); display: grid; grid-template-columns: 1fr; gap: 8px;
     }
-    .patient-card h2 { grid-column: 1 / -1; font-size: 18px; color: #0984e3; margin-bottom: 4px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
-    .pf { font-size: 13px; line-height: 1.7; }
+    .patient-card h2 { font-size: 17px; color: #0984e3; border-bottom: 1px solid #eee; padding-bottom: 6px; }
+    .patient-card .pf-grid { display: grid; grid-template-columns: 1fr; gap: 2px; }
+    .pf { font-size: 13px; line-height: 1.6; }
     .pf .label { color: #636e72; font-weight: 600; }
 
-    .vitals-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 20px; }
-    .vital-chip { background: white; border-radius: 10px; padding: 12px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-    .vital-chip .val { font-size: 20px; font-weight: 700; }
-    .vital-chip .lbl { font-size: 11px; color: #636e72; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+    /* ===== VITALS ===== */
+    .vitals-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; }
+    .vital-chip { background: white; border-radius: 8px; padding: 8px 4px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .vital-chip .val { font-size: 16px; font-weight: 700; }
+    .vital-chip .lbl { font-size: 9px; color: #636e72; text-transform: uppercase; letter-spacing: 0.3px; margin-top: 1px; }
     .vital-chip.warn .val { color: #d63031; }
     .vital-chip.ok .val { color: #00b894; }
     .vital-chip.neutral .val { color: #0984e3; }
 
-    .alert-banner { background: #fff3cd; border: 1px solid #ffc107; border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; font-size: 14px; }
+    /* ===== ALERTS ===== */
+    .alert-banner { background: #fff3cd; border: 1px solid #ffc107; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; font-size: 13px; }
     .alert-banner strong { color: #856404; }
-    .alert-banner ul { margin: 8px 0 0 18px; }
-    .alert-banner li { margin: 3px 0; }
+    .alert-banner ul { margin: 6px 0 0 16px; padding: 0; }
+    .alert-banner li { margin: 4px 0; line-height: 1.4; }
 
-    .tabs { display: flex; gap: 2px; background: #dfe6e9; border-radius: 10px 10px 0 0; padding: 3px 3px 0; overflow-x: auto; }
-    .tab { padding: 10px 16px; font-size: 13px; font-weight: 600; cursor: pointer; border-radius: 8px 8px 0 0; background: transparent; border: none; color: #636e72; white-space: nowrap; transition: all 0.2s; }
+    /* ===== TABS ===== */
+    .tabs {
+      display: flex; gap: 2px; background: #dfe6e9; border-radius: 10px 10px 0 0; padding: 3px 3px 0;
+      overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab {
+      padding: 9px 12px; font-size: 12px; font-weight: 600; cursor: pointer; border-radius: 8px 8px 0 0;
+      background: transparent; border: none; color: #636e72; white-space: nowrap; min-width: fit-content;
+      -webkit-tap-highlight-color: transparent;
+    }
     .tab.active { background: white; color: #0984e3; }
-    .tab:hover:not(.active) { background: rgba(255,255,255,0.5); }
-    .tab .badge { background: #0984e3; color: white; font-size: 10px; padding: 1px 6px; border-radius: 8px; margin-left: 4px; }
-    .tab-content { background: white; border-radius: 0 0 12px 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); min-height: 200px; }
+    .tab .badge { background: #0984e3; color: white; font-size: 9px; padding: 1px 5px; border-radius: 8px; margin-left: 3px; }
+    .tab-content { background: white; border-radius: 0 0 12px 12px; padding: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); min-height: 150px; }
 
+    /* ===== DATA TABLE (desktop) ===== */
     .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
     .data-table th { text-align: left; padding: 8px 10px; background: #f8f9fa; color: #636e72; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #dfe6e9; }
     .data-table td { padding: 10px; border-bottom: 1px solid #f1f2f6; vertical-align: top; }
     .data-table tr:hover { background: #f8f9fa; }
     .data-table tr:last-child td { border-bottom: none; }
 
+    /* ===== MOBILE CARDS (replaces tables on small screens) ===== */
+    .card-list { display: flex; flex-direction: column; gap: 10px; }
+    .record-card {
+      background: #f8f9fa; border: 1px solid #eee; border-radius: 10px; padding: 12px 14px;
+      position: relative;
+    }
+    .record-card .card-title { font-size: 14px; font-weight: 700; color: #2d3436; margin-bottom: 6px; padding-right: 70px; }
+    .record-card .card-row { font-size: 12px; line-height: 1.6; color: #636e72; }
+    .record-card .card-row b { color: #2d3436; font-weight: 600; }
+    .record-card .card-status { position: absolute; top: 12px; right: 12px; }
+    .record-card .card-actions { display: flex; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee; }
+
+    /* ===== STATUS ===== */
     .status { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
     .status-Active, .status-Scheduled { background: #dfe6fd; color: #0984e3; }
     .status-Completed { background: #d4edda; color: #155724; }
     .status-Ordered, .status-Pending, .status-Started { background: #fff3cd; color: #856404; }
     .status-Cancelled, .status-Inactive { background: #f5c6cb; color: #721c24; }
 
-    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; }
-    .modal-overlay.show { display: flex; }
-    .modal { background: white; border-radius: 12px; padding: 24px; max-width: 700px; width: 95%; max-height: 85vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
-    .modal h3 { margin-bottom: 16px; color: #0984e3; }
-    .modal label { display: block; font-size: 12px; font-weight: 600; color: #636e72; margin: 10px 0 4px; text-transform: uppercase; }
-    .modal input, .modal select, .modal textarea { width: 100%; padding: 8px 10px; border: 1px solid #dfe6e9; border-radius: 6px; font-size: 14px; font-family: inherit; }
-    .modal textarea { resize: vertical; min-height: 60px; }
-    .modal-btns { display: flex; gap: 8px; margin-top: 16px; justify-content: flex-end; }
-    .btn { padding: 8px 18px; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    /* ===== BUTTONS ===== */
+    .btn { padding: 8px 18px; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-tap-highlight-color: transparent; }
     .btn-primary { background: #0984e3; color: white; }
-    .btn-primary:hover { background: #0873c4; }
     .btn-danger { background: #d63031; color: white; }
-    .btn-danger:hover { background: #b52627; }
     .btn-secondary { background: #dfe6e9; color: #2d3436; }
-    .btn-secondary:hover { background: #c8d6db; }
-    .btn-sm { padding: 4px 10px; font-size: 12px; }
     .btn-success { background: #00b894; color: white; }
-    .btn-success:hover { background: #00a17e; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
     .row-actions { display: flex; gap: 4px; }
-    .loading-state { text-align: center; padding: 40px; color: #636e72; }
-    .empty-state { text-align: center; padding: 30px; color: #b2bec3; font-size: 14px; }
-    .toast { position: fixed; bottom: 20px; right: 20px; background: #2d3436; color: white; padding: 12px 20px; border-radius: 8px; font-size: 14px; z-index: 300; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
-    .toast.show { opacity: 1; }
 
-    /* Upload zone */
+    /* ===== MODAL ===== */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: flex-end; justify-content: center; }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: white; border-radius: 16px 16px 0 0; padding: 20px 16px; padding-bottom: calc(20px + env(safe-area-inset-bottom));
+      width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 -4px 32px rgba(0,0,0,0.2);
+    }
+    .modal h3 { margin-bottom: 12px; color: #0984e3; font-size: 16px; }
+    .modal label { display: block; font-size: 11px; font-weight: 600; color: #636e72; margin: 8px 0 3px; text-transform: uppercase; }
+    .modal input, .modal select, .modal textarea { width: 100%; padding: 10px 12px; border: 1px solid #dfe6e9; border-radius: 8px; font-size: 16px; font-family: inherit; -webkit-appearance: none; }
+    .modal textarea { resize: vertical; min-height: 60px; }
+    .modal-btns { display: flex; gap: 8px; margin-top: 14px; }
+    .modal-btns .btn { flex: 1; padding: 12px; font-size: 14px; }
+
+    /* ===== UPLOAD ===== */
     .upload-zone {
-      border: 2px dashed #b2bec3; border-radius: 12px; padding: 40px 24px; text-align: center;
-      cursor: pointer; transition: all 0.3s; background: #fafbfc; margin-bottom: 20px;
+      border: 2px dashed #b2bec3; border-radius: 12px; padding: 30px 16px; text-align: center;
+      cursor: pointer; background: #fafbfc; margin-bottom: 16px;
     }
-    .upload-zone:hover, .upload-zone.dragover { border-color: #0984e3; background: #eef5ff; }
-    .upload-zone h3 { font-size: 16px; color: #636e72; margin-bottom: 6px; }
-    .upload-zone p { font-size: 13px; color: #b2bec3; }
+    .upload-zone.dragover { border-color: #0984e3; background: #eef5ff; }
+    .upload-zone h3 { font-size: 15px; color: #636e72; margin-bottom: 4px; }
+    .upload-zone p { font-size: 12px; color: #b2bec3; }
     .upload-zone input[type="file"] { display: none; }
-
-    /* File list */
-    .file-list { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0; }
-    .file-chip {
-      display: flex; align-items: center; gap: 8px; background: #f1f2f6; padding: 6px 12px; border-radius: 8px; font-size: 13px;
-    }
-    .file-chip .remove { cursor: pointer; color: #d63031; font-weight: 700; }
-
-    /* Preview section */
-    .preview-section { margin: 16px 0; }
-    .preview-card {
-      background: #f8f9fa; border: 1px solid #dfe6e9; border-radius: 10px; padding: 16px; margin-bottom: 12px;
-    }
-    .preview-card h4 { font-size: 14px; color: #0984e3; margin-bottom: 8px; }
-    .preview-card .doc-summary { font-size: 13px; color: #636e72; margin-bottom: 10px; font-style: italic; }
-    .preview-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
-    .preview-table th { text-align: left; padding: 4px 8px; background: #e9ecef; font-size: 11px; text-transform: uppercase; color: #636e72; }
-    .preview-table td { padding: 4px 8px; border-bottom: 1px solid #e9ecef; }
-    .section-header { font-size: 12px; font-weight: 700; color: #6c5ce7; margin: 12px 0 4px; text-transform: uppercase; }
-
+    .file-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+    .file-chip { display: flex; align-items: center; gap: 6px; background: #f1f2f6; padding: 6px 10px; border-radius: 8px; font-size: 12px; }
+    .file-chip .remove { cursor: pointer; color: #d63031; font-weight: 700; padding: 4px; }
+    .preview-card { background: #f8f9fa; border: 1px solid #dfe6e9; border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+    .preview-card h4 { font-size: 13px; color: #0984e3; margin-bottom: 6px; }
+    .preview-card .doc-summary { font-size: 12px; color: #636e72; margin-bottom: 8px; font-style: italic; }
+    .preview-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 6px; }
+    .preview-table th { text-align: left; padding: 3px 6px; background: #e9ecef; font-size: 10px; text-transform: uppercase; color: #636e72; }
+    .preview-table td { padding: 3px 6px; border-bottom: 1px solid #e9ecef; word-break: break-word; }
+    .section-header { font-size: 11px; font-weight: 700; color: #6c5ce7; margin: 10px 0 3px; text-transform: uppercase; }
     .action-items { list-style: none; padding: 0; }
-    .action-items li { padding: 4px 0; font-size: 13px; }
+    .action-items li { padding: 3px 0; font-size: 12px; }
     .action-items li::before { content: '-->'; margin-right: 6px; color: #0984e3; font-weight: 700; }
-
-    .processing-bar {
-      background: #eef5ff; border: 1px solid #0984e3; border-radius: 10px; padding: 20px; text-align: center; margin: 16px 0;
-    }
-    .processing-bar .spinner { width: 36px; height: 36px; border: 3px solid #dfe6e9; border-top-color: #0984e3; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 10px; }
+    .processing-bar { background: #eef5ff; border: 1px solid #0984e3; border-radius: 10px; padding: 20px; text-align: center; margin: 12px 0; }
+    .processing-bar .spinner { width: 32px; height: 32px; border: 3px solid #dfe6e9; border-top-color: #0984e3; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 8px; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    .save-summary { background: #d4edda; border: 1px solid #28a745; border-radius: 10px; padding: 16px; margin: 16px 0; font-size: 14px; }
-    .save-summary strong { color: #155724; }
+    .loading-state { text-align: center; padding: 30px; color: #636e72; font-size: 14px; }
+    .empty-state { text-align: center; padding: 24px; color: #b2bec3; font-size: 13px; }
+    .toast { position: fixed; bottom: calc(20px + env(safe-area-inset-bottom)); left: 12px; right: 12px; background: #2d3436; color: white; padding: 12px 16px; border-radius: 10px; font-size: 14px; z-index: 300; opacity: 0; transition: opacity 0.3s; pointer-events: none; text-align: center; }
+    .toast.show { opacity: 1; }
 
+    /* ===== DESKTOP OVERRIDES ===== */
+    @media (min-width: 769px) {
+      .header { padding: 18px 28px; }
+      .header h1 { font-size: 20px; }
+      .header-sub { max-width: none; }
+      .header-actions button { padding: 7px 14px; font-size: 13px; }
+      .upload-hint { display: inline; }
+      .container { padding: 20px; }
+      .patient-card { grid-template-columns: 1fr 1fr 1fr; gap: 16px; padding: 20px 24px; }
+      .patient-card h2 { grid-column: 1 / -1; }
+      .vitals-bar { grid-template-columns: repeat(7, 1fr); gap: 10px; }
+      .vital-chip { padding: 12px; }
+      .vital-chip .val { font-size: 20px; }
+      .vital-chip .lbl { font-size: 11px; }
+      .tab { padding: 10px 16px; font-size: 13px; }
+      .tab-content { padding: 20px; }
+      .mobile-cards { display: none; }
+      .desktop-table { display: block; }
+      .modal-overlay { align-items: center; }
+      .modal { border-radius: 12px; max-width: 700px; width: 95%; padding-bottom: 24px; }
+      .modal input, .modal select, .modal textarea { font-size: 14px; }
+      .toast { left: auto; right: 20px; bottom: 20px; max-width: 400px; }
+    }
     @media (max-width: 768px) {
-      .patient-card { grid-template-columns: 1fr; }
-      .tabs { flex-wrap: nowrap; }
-      .tab { padding: 8px 10px; font-size: 12px; }
-      .data-table { font-size: 12px; }
-      .data-table th, .data-table td { padding: 6px 6px; }
-      .header-row { flex-direction: column; align-items: flex-start; }
-      .upload-bar { flex-direction: column; align-items: flex-start; }
-      .btn-upload { width: 100%; text-align: center; }
+      .mobile-cards { display: block; }
+      .desktop-table { display: none; }
     }
   </style>
 </head>
@@ -156,8 +186,8 @@
       <div class="header-sub" id="headerSub">Loading...</div>
     </div>
     <div class="header-actions">
-      <button onclick="initSystem()">Setup DB</button>
-      <button onclick="seedData()">Seed Data</button>
+      <button onclick="initSystem()">Setup</button>
+      <button onclick="seedData()">Seed</button>
       <button onclick="loadDashboard()">Refresh</button>
     </div>
   </div>
@@ -168,40 +198,33 @@
 </div>
 
 <div class="container">
-  <!-- Upload Panel (hidden by default) -->
   <div id="uploadPanel" style="display:none;">
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 12px;">
-      <h2 style="font-size:18px; color:#6c5ce7;">Upload Medical Documents</h2>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 10px;">
+      <h2 style="font-size:16px; color:#6c5ce7;">Upload Medical Documents</h2>
       <button class="btn btn-secondary btn-sm" onclick="hideUploadPanel()">Close</button>
     </div>
-
     <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
-      <h3>Drop files here or click to browse</h3>
-      <p>Supports JPEG, PNG, WebP, HEIC images and PDF documents (max 25MB each, up to 10 files)</p>
+      <h3>Drop files here or tap to browse</h3>
+      <p>Images (JPEG, PNG, WebP, HEIC) and PDFs -- max 25MB, up to 10 files</p>
       <input type="file" id="fileInput" multiple accept="image/*,.pdf,application/pdf">
     </div>
-
     <div class="file-list" id="fileList"></div>
-
-    <div id="uploadActions" style="display:none; margin-bottom:16px;">
-      <button class="btn btn-primary" id="extractBtn" onclick="extractDocuments()">Extract Data with AI</button>
+    <div id="uploadActions" style="display:none; margin-bottom:12px;">
+      <button class="btn btn-primary" id="extractBtn" onclick="extractDocuments()" style="width:100%;padding:12px;">Extract Data with AI</button>
     </div>
-
     <div id="processingArea"></div>
     <div id="previewArea"></div>
   </div>
 
-  <!-- Patient Overview -->
   <div class="patient-card" id="patientCard" style="display:none;"></div>
   <div class="vitals-bar" id="vitalsBar" style="display:none;"></div>
   <div class="alert-banner" id="alertBanner" style="display:none;"></div>
   <div class="tabs" id="tabBar"></div>
   <div class="tab-content" id="tabContent">
-    <div class="loading-state">Click "Setup DB" then "Seed Data" to initialize, or "Refresh" if already set up.</div>
+    <div class="loading-state">Tap "Setup" then "Seed" to initialize, or "Refresh" if already set up.</div>
   </div>
 </div>
 
-<!-- Edit Modal -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
     <h3 id="modalTitle">Edit</h3>
@@ -224,11 +247,11 @@ let selectedFiles = [];
 let extractedResults = [];
 
 const TABS = [
-  { key: 'appointments', label: 'Appointments' },
-  { key: 'labOrders', label: 'Lab Orders' },
+  { key: 'appointments', label: 'Appts' },
+  { key: 'labOrders', label: 'Labs' },
   { key: 'imagingOrders', label: 'Imaging' },
-  { key: 'medications', label: 'Medications' },
-  { key: 'diagnoses', label: 'Diagnoses' },
+  { key: 'medications', label: 'Meds' },
+  { key: 'diagnoses', label: 'Dx' },
   { key: 'followups', label: 'Follow-Ups' },
   { key: 'providers', label: 'Providers' },
   { key: 'vitals', label: 'Vitals' },
@@ -242,535 +265,317 @@ const RESOURCE_MAP = {
 };
 
 function toast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
+  const t = document.getElementById('toast'); t.textContent = msg;
+  t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000);
 }
-
 async function api(method, path, body) {
   const opts = { method, headers: { 'Content-Type': 'application/json' } };
   if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(API + path, opts);
-  return res.json();
+  return (await fetch(API + path, opts)).json();
 }
 
-// ==================== UPLOAD MODULE ====================
-function showUploadPanel() {
-  document.getElementById('uploadPanel').style.display = 'block';
-  selectedFiles = [];
-  extractedResults = [];
-  renderFileList();
-  document.getElementById('previewArea').innerHTML = '';
-  document.getElementById('processingArea').innerHTML = '';
-}
+// ===== UPLOAD =====
+function showUploadPanel() { document.getElementById('uploadPanel').style.display = 'block'; selectedFiles = []; extractedResults = []; renderFileList(); document.getElementById('previewArea').innerHTML = ''; document.getElementById('processingArea').innerHTML = ''; }
+function hideUploadPanel() { document.getElementById('uploadPanel').style.display = 'none'; }
 
-function hideUploadPanel() {
-  document.getElementById('uploadPanel').style.display = 'none';
-}
-
-// Drag and drop
 const dropZone = document.getElementById('dropZone');
 dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-dropZone.addEventListener('drop', e => {
-  e.preventDefault();
-  dropZone.classList.remove('dragover');
-  addFiles(e.dataTransfer.files);
-});
-
-document.getElementById('fileInput').addEventListener('change', e => {
-  addFiles(e.target.files);
-  e.target.value = '';
-});
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('dragover'); addFiles(e.dataTransfer.files); });
+document.getElementById('fileInput').addEventListener('change', e => { addFiles(e.target.files); e.target.value = ''; });
 
 function addFiles(fileList) {
   for (const f of fileList) {
     if (selectedFiles.length >= 10) { toast('Max 10 files'); break; }
-    if (f.size > 25 * 1024 * 1024) { toast(f.name + ' exceeds 25MB limit'); continue; }
-    // Avoid duplicates
-    if (!selectedFiles.find(s => s.name === f.name && s.size === f.size)) {
-      selectedFiles.push(f);
-    }
+    if (f.size > 25*1024*1024) { toast(f.name+' exceeds 25MB'); continue; }
+    if (!selectedFiles.find(s => s.name===f.name && s.size===f.size)) selectedFiles.push(f);
   }
   renderFileList();
 }
-
-function removeFile(idx) {
-  selectedFiles.splice(idx, 1);
-  renderFileList();
-}
-
+function removeFile(idx) { selectedFiles.splice(idx,1); renderFileList(); }
 function renderFileList() {
-  const el = document.getElementById('fileList');
-  const actions = document.getElementById('uploadActions');
-  if (selectedFiles.length === 0) {
-    el.innerHTML = '';
-    actions.style.display = 'none';
-    return;
-  }
+  const el = document.getElementById('fileList'), actions = document.getElementById('uploadActions');
+  if (!selectedFiles.length) { el.innerHTML = ''; actions.style.display = 'none'; return; }
   actions.style.display = 'block';
-  el.innerHTML = selectedFiles.map((f, i) =>
-    `<div class="file-chip">
-      <span>${f.name} (${(f.size/1024).toFixed(0)}KB)</span>
-      <span class="remove" onclick="removeFile(${i})">x</span>
-    </div>`
-  ).join('');
+  el.innerHTML = selectedFiles.map((f,i) => `<div class="file-chip"><span>${f.name} (${(f.size/1024).toFixed(0)}KB)</span><span class="remove" onclick="removeFile(${i})">x</span></div>`).join('');
 }
 
 async function extractDocuments() {
-  if (selectedFiles.length === 0) return;
-
-  const btn = document.getElementById('extractBtn');
-  btn.disabled = true;
-  btn.textContent = 'Processing...';
-
-  document.getElementById('processingArea').innerHTML = `
-    <div class="processing-bar">
-      <div class="spinner"></div>
-      <div>Analyzing ${selectedFiles.length} document${selectedFiles.length > 1 ? 's' : ''} with AI...</div>
-      <div style="font-size:12px;color:#636e72;margin-top:4px;">This may take 10-30 seconds per document</div>
-    </div>`;
+  if (!selectedFiles.length) return;
+  const btn = document.getElementById('extractBtn'); btn.disabled = true; btn.textContent = 'Processing...';
+  document.getElementById('processingArea').innerHTML = `<div class="processing-bar"><div class="spinner"></div><div>Analyzing ${selectedFiles.length} document${selectedFiles.length>1?'s':''} with AI...</div><div style="font-size:11px;color:#636e72;margin-top:4px;">10-30 seconds per document</div></div>`;
   document.getElementById('previewArea').innerHTML = '';
-
-  const formData = new FormData();
-  formData.append('patient_id', PATIENT_ID);
+  const formData = new FormData(); formData.append('patient_id', PATIENT_ID);
   selectedFiles.forEach(f => formData.append('documents', f));
-
   try {
-    const res = await fetch(API + '/upload/extract', { method: 'POST', body: formData });
+    const res = await fetch(API+'/upload/extract', { method: 'POST', body: formData });
     const json = await res.json();
-
-    if (!json.success) {
-      toast('Error: ' + json.error);
-      document.getElementById('processingArea').innerHTML = '';
-      btn.disabled = false;
-      btn.textContent = 'Extract Data with AI';
-      return;
-    }
-
-    extractedResults = json.data;
-    document.getElementById('processingArea').innerHTML = '';
-    renderPreview();
-  } catch (err) {
-    toast('Upload failed: ' + err.message);
-    document.getElementById('processingArea').innerHTML = '';
-  }
-
-  btn.disabled = false;
-  btn.textContent = 'Extract Data with AI';
+    if (!json.success) { toast('Error: '+json.error); } else { extractedResults = json.data; renderPreview(); }
+  } catch (err) { toast('Upload failed: '+err.message); }
+  document.getElementById('processingArea').innerHTML = '';
+  btn.disabled = false; btn.textContent = 'Extract Data with AI';
 }
 
 function renderPreview() {
   const area = document.getElementById('previewArea');
-  if (extractedResults.length === 0) { area.innerHTML = ''; return; }
-
-  let html = '<h3 style="font-size:16px;margin-bottom:12px;color:#2d3436;">Extracted Data Preview</h3>';
-
-  extractedResults.forEach((r, idx) => {
-    if (r.status === 'error') {
-      html += `<div class="preview-card" style="border-color:#d63031;">
-        <h4>${r.filename}</h4>
-        <div style="color:#d63031;">Error: ${r.error}</div>
-      </div>`;
-      return;
-    }
-
+  if (!extractedResults.length) { area.innerHTML = ''; return; }
+  let html = '<h3 style="font-size:15px;margin-bottom:10px;">Extracted Data Preview</h3>';
+  extractedResults.forEach((r,idx) => {
+    if (r.status === 'error') { html += `<div class="preview-card" style="border-color:#d63031;"><h4>${r.filename}</h4><div style="color:#d63031;font-size:12px;">Error: ${r.error}</div></div>`; return; }
+    if (r.status === 'saved') { html += `<div class="preview-card" style="border-color:#00b894;"><h4>${r.filename}</h4><div style="color:#155724;font-size:12px;">Saved to tracker</div></div>`; return; }
     const e = r.extracted;
-    html += `<div class="preview-card">
-      <h4>${r.filename} -- ${e.document_type || 'Unknown type'}</h4>
-      <div class="doc-summary">${e.summary || ''}</div>`;
-
-    // Patient info
-    if (e.patient && Object.values(e.patient).some(v => v)) {
-      html += '<div class="section-header">Patient Info Updates</div>';
-      html += '<div style="font-size:12px;color:#636e72;">';
-      for (const [k, v] of Object.entries(e.patient)) {
-        if (v) html += `<span style="margin-right:12px;"><b>${k.replace(/_/g,' ')}:</b> ${v}</span>`;
-      }
+    html += `<div class="preview-card"><h4>${r.filename} -- ${e.document_type||'Unknown'}</h4><div class="doc-summary">${e.summary||''}</div>`;
+    if (e.patient && Object.values(e.patient).some(v=>v)) {
+      html += '<div class="section-header">Patient Info</div><div style="font-size:11px;color:#636e72;">';
+      for (const [k,v] of Object.entries(e.patient)) { if(v) html += `<b>${k.replace(/_/g,' ')}:</b> ${v} &nbsp; `; }
       html += '</div>';
     }
-
-    // Sections
     const sections = [
-      { key: 'diagnoses', label: 'Diagnoses', cols: ['condition_name', 'icd_code', 'status'] },
-      { key: 'medications', label: 'Medications', cols: ['medication_name', 'dose', 'instructions', 'status'] },
-      { key: 'appointments', label: 'Appointments', cols: ['appointment_date', 'appointment_time', 'doctor_name', 'reason', 'status'] },
-      { key: 'lab_orders', label: 'Lab Orders', cols: ['test_name', 'facility', 'ordering_doctor', 'status'] },
-      { key: 'imaging_orders', label: 'Imaging Orders', cols: ['imaging_test', 'body_area', 'contrast', 'status'] },
-      { key: 'providers', label: 'Providers', cols: ['provider_name', 'specialty', 'phone'] },
-      { key: 'vitals', label: 'Vitals', cols: ['measured_date', 'blood_pressure', 'pulse', 'weight', 'bmi'] },
-      { key: 'followups', label: 'Follow-Ups', cols: ['item', 'due_date', 'status'] },
-      { key: 'notes', label: 'Notes', cols: ['note_text', 'category'] }
+      {key:'diagnoses',label:'Diagnoses',cols:['condition_name','icd_code','status']},
+      {key:'medications',label:'Medications',cols:['medication_name','dose','status']},
+      {key:'appointments',label:'Appointments',cols:['appointment_date','doctor_name','status']},
+      {key:'lab_orders',label:'Lab Orders',cols:['test_name','facility','status']},
+      {key:'imaging_orders',label:'Imaging',cols:['imaging_test','body_area','status']},
+      {key:'providers',label:'Providers',cols:['provider_name','specialty']},
+      {key:'vitals',label:'Vitals',cols:['measured_date','blood_pressure','pulse']},
+      {key:'followups',label:'Follow-Ups',cols:['item','due_date','status']},
+      {key:'notes',label:'Notes',cols:['note_text','category']}
     ];
-
     sections.forEach(s => {
-      const items = e[s.key];
-      if (!items || items.length === 0) return;
-      html += `<div class="section-header">${s.label} (${items.length})</div>`;
-      html += `<table class="preview-table"><thead><tr>${s.cols.map(c => `<th>${c.replace(/_/g,' ')}</th>`).join('')}</tr></thead><tbody>`;
-      items.forEach(item => {
-        html += '<tr>' + s.cols.map(c => `<td>${item[c] || '--'}</td>`).join('') + '</tr>';
-      });
+      const items = e[s.key]; if(!items||!items.length) return;
+      html += `<div class="section-header">${s.label} (${items.length})</div><table class="preview-table"><thead><tr>${s.cols.map(c=>`<th>${c.replace(/_/g,' ')}</th>`).join('')}</tr></thead><tbody>`;
+      items.forEach(item => { html += '<tr>'+s.cols.map(c=>`<td>${item[c]||'--'}</td>`).join('')+'</tr>'; });
       html += '</tbody></table>';
     });
-
-    // Action items
-    if (e.action_items && e.action_items.length > 0) {
-      html += '<div class="section-header">Action Items</div>';
-      html += '<ul class="action-items">' + e.action_items.map(a => `<li>${a}</li>`).join('') + '</ul>';
-    }
-
-    html += `<div style="margin-top:12px;">
-      <button class="btn btn-success btn-sm" onclick="confirmSave(${idx})">Save to Tracker</button>
-      <button class="btn btn-secondary btn-sm" onclick="dismissResult(${idx})">Dismiss</button>
-    </div></div>`;
+    if (e.action_items && e.action_items.length) { html += '<div class="section-header">Action Items</div><ul class="action-items">'+e.action_items.map(a=>`<li>${a}</li>`).join('')+'</ul>'; }
+    html += `<div style="margin-top:10px;display:flex;gap:6px;"><button class="btn btn-success btn-sm" style="flex:1;" onclick="confirmSave(${idx})">Save to Tracker</button><button class="btn btn-secondary btn-sm" onclick="dismissResult(${idx})">Dismiss</button></div></div>`;
   });
-
-  // Save all button
-  const successCount = extractedResults.filter(r => r.status === 'success').length;
-  if (successCount > 1) {
-    html += `<div style="margin-top:12px;"><button class="btn btn-success" onclick="confirmSaveAll()">Save All ${successCount} Documents to Tracker</button></div>`;
-  }
-
+  const ok = extractedResults.filter(r=>r.status==='success').length;
+  if (ok > 1) html += `<button class="btn btn-success" style="width:100%;padding:12px;margin-top:8px;" onclick="confirmSaveAll()">Save All ${ok} Documents</button>`;
   area.innerHTML = html;
 }
 
 async function confirmSave(idx) {
-  const r = extractedResults[idx];
-  if (!r || r.status !== 'success') return;
-
+  const r = extractedResults[idx]; if(!r||r.status!=='success') return;
   try {
-    const res = await api('POST', '/upload/confirm', { patient_id: PATIENT_ID, extracted: r.extracted });
+    const res = await api('POST','/upload/confirm',{patient_id:PATIENT_ID,extracted:r.extracted});
     if (res.success) {
-      const s = res.saved;
-      const counts = Object.entries(s).filter(([,v]) => v > 0).map(([k,v]) => `${v} ${k}`).join(', ');
-      toast(counts ? 'Saved: ' + counts : 'No new records (data already exists)');
-      extractedResults[idx] = { ...r, status: 'saved' };
-      renderPreview();
-      loadDashboard();
-    } else {
-      toast('Error: ' + res.error);
-    }
-  } catch (err) {
-    toast('Save failed: ' + err.message);
-  }
+      const counts = Object.entries(res.saved).filter(([,v])=>v>0).map(([k,v])=>`${v} ${k}`).join(', ');
+      toast(counts ? 'Saved: '+counts : 'No new records (already exists)');
+      extractedResults[idx] = {...r, status:'saved'}; renderPreview(); loadDashboard();
+    } else toast('Error: '+res.error);
+  } catch(err) { toast('Save failed: '+err.message); }
 }
+async function confirmSaveAll() { for(let i=0;i<extractedResults.length;i++) if(extractedResults[i].status==='success') await confirmSave(i); }
+function dismissResult(idx) { extractedResults.splice(idx,1); renderPreview(); }
 
-async function confirmSaveAll() {
-  for (let i = 0; i < extractedResults.length; i++) {
-    if (extractedResults[i].status === 'success') {
-      await confirmSave(i);
-    }
-  }
-}
-
-function dismissResult(idx) {
-  extractedResults.splice(idx, 1);
-  renderPreview();
-}
-
-// ==================== INIT / SEED / DASHBOARD ====================
-async function initSystem() {
-  toast('Creating tables...');
-  const r = await api('POST', '/migrate');
-  toast(r.success ? 'Tables created' : 'Error: ' + r.error);
-}
-
-async function seedData() {
-  toast('Seeding data...');
-  const r = await api('POST', '/seed/initial');
-  if (r.success) {
-    PATIENT_ID = r.patient_id;
-    toast('Data seeded - patient ID: ' + PATIENT_ID);
-    loadDashboard();
-  } else { toast('Error: ' + r.error); }
-}
+// ===== INIT / SEED / DASHBOARD =====
+async function initSystem() { toast('Creating tables...'); const r = await api('POST','/migrate'); toast(r.success ? 'Tables created' : 'Error: '+r.error); }
+async function seedData() { toast('Seeding...'); const r = await api('POST','/seed/initial'); if(r.success){PATIENT_ID=r.patient_id;toast('Data seeded');loadDashboard();}else toast('Error: '+r.error); }
 
 async function loadDashboard() {
   try {
-    const r = await api('GET', '/dashboard/' + PATIENT_ID);
-    if (!r.success) { toast('Error loading: ' + r.error); return; }
-    DATA = r.data;
-    renderPatientCard();
-    renderVitals();
-    renderAlerts();
-    renderTabs();
-    renderTabContent();
-    document.getElementById('headerSub').textContent = DATA.patient.name + ' | MRN: ' + DATA.patient.mrn;
-  } catch (e) { toast('Failed to load dashboard'); }
+    const r = await api('GET','/dashboard/'+PATIENT_ID);
+    if(!r.success){toast('Error: '+r.error);return;}
+    DATA = r.data; renderPatientCard(); renderVitals(); renderAlerts(); renderTabs(); renderTabContent();
+    document.getElementById('headerSub').textContent = DATA.patient.name+' | MRN: '+DATA.patient.mrn;
+  } catch(e) { toast('Failed to load dashboard'); }
 }
 
 function renderPatientCard() {
-  const p = DATA.patient;
-  const el = document.getElementById('patientCard');
+  const p = DATA.patient, el = document.getElementById('patientCard');
   el.style.display = 'grid';
-  el.innerHTML = `
-    <h2>${p.name}</h2>
+  el.innerHTML = `<h2>${p.name}</h2>
     <div class="pf">
       <div><span class="label">DOB:</span> ${fmtDate(p.dob)}</div>
-      <div><span class="label">Sex:</span> ${p.sex || 'Unknown'}</div>
+      <div><span class="label">Sex:</span> ${p.sex||'--'}</div>
       <div><span class="label">MRN:</span> ${p.mrn}</div>
-      <div><span class="label">Phone:</span> ${p.phone}</div>
+      <div><span class="label">Phone:</span> <a href="tel:${p.phone}" style="color:#0984e3;">${p.phone}</a></div>
       <div><span class="label">Address:</span> ${p.address}</div>
     </div>
     <div class="pf">
-      <div><span class="label">Primary Clinic:</span> ${p.primary_clinic || 'Unknown'}</div>
-      <div><span class="label">Primary Doctor:</span> ${p.primary_doctor || 'Unknown'}</div>
+      <div><span class="label">Clinic:</span> ${p.primary_clinic||'--'}</div>
+      <div><span class="label">Doctor:</span> ${p.primary_doctor||'--'}</div>
       <div><span class="label">Allergies:</span> ${p.allergies}</div>
-      <div><span class="label">Pharmacy:</span> ${p.pharmacy_name || 'Unknown'}</div>
+      <div><span class="label">Pharmacy:</span> ${p.pharmacy_name||'--'}</div>
     </div>
     <div class="pf">
-      <div><span class="label">Insurance:</span> ${p.insurance_name || 'Unknown'}</div>
-      <div><span class="label">Policy #:</span> ${p.insurance_policy || 'Unknown'}</div>
-      <div><span class="label">Group #:</span> ${p.insurance_group || 'Unknown'}</div>
-      <div><span class="label">Plan:</span> ${p.insurance_plan || 'Unknown'}</div>
+      <div><span class="label">Insurance:</span> ${p.insurance_name||'--'}</div>
+      <div><span class="label">Policy:</span> ${p.insurance_policy||'--'}</div>
+      <div><span class="label">Group:</span> ${p.insurance_group||'--'}</div>
+      <div><span class="label">Plan:</span> ${p.insurance_plan||'--'}</div>
     </div>`;
 }
 
 function renderVitals() {
   const el = document.getElementById('vitalsBar');
-  if (!DATA.vitals || DATA.vitals.length === 0) { el.style.display = 'none'; return; }
-  el.style.display = 'grid';
-  const v = DATA.vitals[0];
+  if(!DATA.vitals||!DATA.vitals.length){el.style.display='none';return;}
+  el.style.display = 'grid'; const v = DATA.vitals[0];
   el.innerHTML = `
-    <div class="vital-chip ${v.blood_pressure && parseInt(v.blood_pressure) >= 130 ? 'warn' : 'ok'}"><div class="val">${v.blood_pressure || '--'}</div><div class="lbl">BP</div></div>
-    <div class="vital-chip ok"><div class="val">${v.pulse || '--'}</div><div class="lbl">Pulse</div></div>
-    <div class="vital-chip ok"><div class="val">${v.oxygen_saturation || '--'}</div><div class="lbl">O2 Sat</div></div>
-    <div class="vital-chip neutral"><div class="val">${v.weight || '--'}</div><div class="lbl">Weight</div></div>
-    <div class="vital-chip neutral"><div class="val">${v.height || '--'}</div><div class="lbl">Height</div></div>
-    <div class="vital-chip ${v.bmi >= 30 ? 'warn' : v.bmi >= 25 ? 'neutral' : 'ok'}"><div class="val">${v.bmi || '--'}</div><div class="lbl">BMI</div></div>
-    <div class="vital-chip neutral"><div class="val">${fmtDate(v.measured_date)}</div><div class="lbl">As of</div></div>`;
+    <div class="vital-chip ${v.blood_pressure&&parseInt(v.blood_pressure)>=130?'warn':'ok'}"><div class="val">${v.blood_pressure||'--'}</div><div class="lbl">BP</div></div>
+    <div class="vital-chip ok"><div class="val">${v.pulse||'--'}</div><div class="lbl">Pulse</div></div>
+    <div class="vital-chip ok"><div class="val">${v.oxygen_saturation||'--'}</div><div class="lbl">O2</div></div>
+    <div class="vital-chip neutral"><div class="val">${v.weight?v.weight.split(' ')[0]:'--'}</div><div class="lbl">Wt (lb)</div></div>
+    <div class="vital-chip neutral"><div class="val">${v.height||'--'}</div><div class="lbl">Ht</div></div>
+    <div class="vital-chip ${v.bmi>=30?'warn':v.bmi>=25?'neutral':'ok'}"><div class="val">${v.bmi||'--'}</div><div class="lbl">BMI</div></div>
+    <div class="vital-chip neutral"><div class="val">${fmtDateShort(v.measured_date)}</div><div class="lbl">Date</div></div>`;
 }
 
 function renderAlerts() {
-  const el = document.getElementById('alertBanner');
-  const items = [];
-  (DATA.appointments || []).forEach(a => {
-    if (a.status === 'Scheduled' && a.appointment_date) {
-      const diff = Math.ceil((new Date(a.appointment_date) - new Date()) / 86400000);
-      if (diff >= 0 && diff <= 30) items.push(`Appointment with ${a.doctor_name} on ${fmtDate(a.appointment_date)} at ${a.appointment_time}${a.arrive_by ? ' (arrive by ' + a.arrive_by + ')' : ''}`);
+  const el = document.getElementById('alertBanner'), items = [];
+  (DATA.appointments||[]).forEach(a => {
+    if(a.status==='Scheduled'&&a.appointment_date){
+      const diff = Math.ceil((new Date(a.appointment_date)-new Date())/86400000);
+      if(diff>=0&&diff<=30) items.push(`Appt: ${a.doctor_name} on ${fmtDate(a.appointment_date)} at ${a.appointment_time}${a.arrive_by?' (arrive '+a.arrive_by+')':''}`);
     }
   });
-  (DATA.followups || []).filter(f => f.status === 'Pending').forEach(f => { items.push(`Pending: ${f.item}${f.due_date ? ' (due ' + fmtDate(f.due_date) + ')' : ''}`); });
-  (DATA.labOrders || []).filter(l => l.status === 'Ordered').forEach(l => { items.push(`Lab ordered: ${l.test_name} at ${l.facility} -- not yet completed`); });
-  (DATA.imagingOrders || []).filter(i => i.status === 'Ordered').forEach(i => { items.push(`Imaging ordered: ${i.imaging_test} ${i.body_area} -- not yet scheduled`); });
-  if (items.length === 0) { el.style.display = 'none'; return; }
-  el.style.display = 'block';
-  el.innerHTML = `<strong>Action Items & Upcoming</strong><ul>${items.map(i => `<li>${i}</li>`).join('')}</ul>`;
+  (DATA.followups||[]).filter(f=>f.status==='Pending').forEach(f=>items.push(`Pending: ${f.item}${f.due_date?' (due '+fmtDate(f.due_date)+')':''}`));
+  (DATA.labOrders||[]).filter(l=>l.status==='Ordered').forEach(l=>items.push(`Lab: ${l.test_name} -- not completed`));
+  (DATA.imagingOrders||[]).filter(i=>i.status==='Ordered').forEach(i=>items.push(`Imaging: ${i.imaging_test} ${i.body_area} -- not scheduled`));
+  if(!items.length){el.style.display='none';return;}
+  el.style.display='block';
+  el.innerHTML=`<strong>Action Items</strong><ul>${items.map(i=>`<li>${i}</li>`).join('')}</ul>`;
 }
 
 function renderTabs() {
-  document.getElementById('tabBar').innerHTML = TABS.map(t => {
-    const count = (DATA[t.key] || []).length;
-    return `<button class="tab ${t.key === CURRENT_TAB ? 'active' : ''}" onclick="switchTab('${t.key}')">${t.label}${count ? '<span class="badge">' + count + '</span>' : ''}</button>`;
+  const el = document.getElementById('tabBar');
+  el.innerHTML = TABS.map(t => {
+    const c = (DATA[t.key]||[]).length;
+    return `<button class="tab ${t.key===CURRENT_TAB?'active':''}" onclick="switchTab('${t.key}')">${t.label}${c?'<span class="badge">'+c+'</span>':''}</button>`;
   }).join('');
+  // Auto-scroll active tab into view
+  setTimeout(() => { const active = el.querySelector('.tab.active'); if(active) active.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'}); }, 50);
 }
-
-function switchTab(key) { CURRENT_TAB = key; renderTabs(); renderTabContent(); }
+function switchTab(key) { CURRENT_TAB=key; renderTabs(); renderTabContent(); }
 
 function renderTabContent() {
-  const el = document.getElementById('tabContent');
-  const items = DATA[CURRENT_TAB] || [];
-  const resource = RESOURCE_MAP[CURRENT_TAB];
-  if (items.length === 0) {
-    el.innerHTML = `<div class="empty-state">No ${CURRENT_TAB} recorded yet.</div><div style="text-align:center;margin-top:12px;"><button class="btn btn-primary btn-sm" onclick="openAdd('${resource}')">+ Add</button></div>`;
-    return;
-  }
-  const addBtn = `<div style="margin-bottom:12px;"><button class="btn btn-primary btn-sm" onclick="openAdd('${resource}')">+ Add</button></div>`;
-  switch (CURRENT_TAB) {
-    case 'appointments': el.innerHTML = addBtn + renderAppointments(items); break;
-    case 'labOrders': el.innerHTML = addBtn + renderLabOrders(items); break;
-    case 'imagingOrders': el.innerHTML = addBtn + renderImagingOrders(items); break;
-    case 'medications': el.innerHTML = addBtn + renderMedications(items); break;
-    case 'diagnoses': el.innerHTML = addBtn + renderDiagnoses(items); break;
-    case 'followups': el.innerHTML = addBtn + renderFollowups(items); break;
-    case 'providers': el.innerHTML = addBtn + renderProviders(items); break;
-    case 'vitals': el.innerHTML = addBtn + renderVitalsTable(items); break;
-    case 'notes': el.innerHTML = addBtn + renderNotes(items); break;
-  }
+  const el = document.getElementById('tabContent'), items = DATA[CURRENT_TAB]||[], resource = RESOURCE_MAP[CURRENT_TAB];
+  if(!items.length) { el.innerHTML = `<div class="empty-state">No records yet.</div><div style="text-align:center;margin-top:10px;"><button class="btn btn-primary" style="width:100%;max-width:300px;padding:12px;" onclick="openAdd('${resource}')">+ Add</button></div>`; return; }
+  const addBtn = `<div style="margin-bottom:10px;"><button class="btn btn-primary btn-sm" onclick="openAdd('${resource}')">+ Add</button></div>`;
+  // Desktop table + mobile cards
+  el.innerHTML = addBtn + `<div class="desktop-table">${renderTable(CURRENT_TAB, items)}</div><div class="mobile-cards">${renderCards(CURRENT_TAB, items)}</div>`;
 }
 
-function statusBadge(s) { return `<span class="status status-${(s||'').replace(/\s/g,'')}">${s || 'Unknown'}</span>`; }
-function fmtDate(d) { if (!d) return '--'; const dt = new Date(d + 'T00:00:00'); return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
-function actionBtns(resource, id) {
-  return `<div class="row-actions"><button class="btn btn-secondary btn-sm" onclick="openEdit('${resource}', ${id})">Edit</button><button class="btn btn-danger btn-sm" onclick="deleteItem('${resource}', ${id})">Del</button></div>`;
-}
+// ===== HELPERS =====
+function statusBadge(s) { return `<span class="status status-${(s||'').replace(/\s/g,'')}">${s||'Unknown'}</span>`; }
+function fmtDate(d) { if(!d) return '--'; return new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+function fmtDateShort(d) { if(!d) return '--'; return new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
+function actionBtns(resource, id) { return `<div class="row-actions"><button class="btn btn-secondary btn-sm" onclick="openEdit('${resource}',${id})">Edit</button><button class="btn btn-danger btn-sm" onclick="deleteItem('${resource}',${id})">Del</button></div>`; }
 
-function renderAppointments(items) {
-  return `<table class="data-table"><thead><tr><th>Date</th><th>Time</th><th>Type</th><th>Doctor</th><th>Location</th><th>Reason</th><th>Status</th><th>Notes</th><th></th></tr></thead><tbody>` +
-    items.map(a => `<tr><td>${fmtDate(a.appointment_date)}</td><td>${a.appointment_time||'--'}</td><td>${a.appointment_type}</td><td>${a.doctor_name||'--'}</td><td>${a.location||'--'}</td><td>${a.reason||'--'}</td><td>${statusBadge(a.status)}</td><td>${a.notes||''}</td><td>${actionBtns('appointments',a.id)}</td></tr>`).join('') + '</tbody></table>';
-}
-function renderLabOrders(items) {
-  return `<table class="data-table"><thead><tr><th>Order Date</th><th>Test</th><th>Code</th><th>Facility</th><th>Doctor</th><th>Reason</th><th>Status</th><th></th></tr></thead><tbody>` +
-    items.map(l => `<tr><td>${fmtDate(l.order_date)}</td><td>${l.test_name}</td><td>${l.test_code||'--'}</td><td>${l.facility||'--'}</td><td>${l.ordering_doctor||'--'}</td><td>${l.diagnosis_reason||'--'}</td><td>${statusBadge(l.status)}</td><td>${actionBtns('lab_orders',l.id)}</td></tr>`).join('') + '</tbody></table>';
-}
-function renderImagingOrders(items) {
-  return `<table class="data-table"><thead><tr><th>Order Date</th><th>Test</th><th>Body Area</th><th>Contrast</th><th>Doctor</th><th>Reason</th><th>Expires</th><th>Status</th><th></th></tr></thead><tbody>` +
-    items.map(i => `<tr><td>${fmtDate(i.order_date)}</td><td>${i.imaging_test}</td><td>${i.body_area||'--'}</td><td>${i.contrast||'--'}</td><td>${i.ordering_doctor||'--'}</td><td>${i.reason||'--'}</td><td>${fmtDate(i.expiration_date)}</td><td>${statusBadge(i.status)}</td><td>${actionBtns('imaging_orders',i.id)}</td></tr>`).join('') + '</tbody></table>';
-}
-function renderMedications(items) {
-  return `<table class="data-table"><thead><tr><th>Medication</th><th>Brand</th><th>Dose</th><th>Instructions</th><th>Prescriber</th><th>Started</th><th>Status</th><th></th></tr></thead><tbody>` +
-    items.map(m => `<tr><td>${m.medication_name}</td><td>${m.brand_name||'--'}</td><td>${m.dose||'--'}</td><td>${m.instructions||'--'}</td><td>${m.prescribing_doctor||'--'}</td><td>${fmtDate(m.start_date)}</td><td>${statusBadge(m.status)}</td><td>${actionBtns('medications',m.id)}</td></tr>`).join('') + '</tbody></table>';
-}
-function renderDiagnoses(items) {
-  return `<table class="data-table"><thead><tr><th>Condition</th><th>ICD Code</th><th>Diagnosed</th><th>Notes</th><th>Status</th><th></th></tr></thead><tbody>` +
-    items.map(d => `<tr><td>${d.condition_name}</td><td>${d.icd_code||'--'}</td><td>${fmtDate(d.diagnosed_date)}</td><td>${d.notes||'--'}</td><td>${statusBadge(d.status)}</td><td>${actionBtns('diagnoses',d.id)}</td></tr>`).join('') + '</tbody></table>';
-}
-function renderFollowups(items) {
-  return `<table class="data-table"><thead><tr><th>Item</th><th>Due Date</th><th>Related To</th><th>Status</th><th>Notes</th><th></th></tr></thead><tbody>` +
-    items.map(f => `<tr><td>${f.item}</td><td>${fmtDate(f.due_date)}</td><td>${f.related_to||'--'}</td><td>${statusBadge(f.status)}</td><td>${f.notes||'--'}</td><td>${actionBtns('followups',f.id)}</td></tr>`).join('') + '</tbody></table>';
-}
-function renderProviders(items) {
-  return `<table class="data-table"><thead><tr><th>Provider</th><th>Specialty</th><th>Clinic</th><th>Phone</th><th>Fax</th><th>NPI</th><th></th></tr></thead><tbody>` +
-    items.map(p => `<tr><td>${p.provider_name}</td><td>${p.specialty||'--'}</td><td>${p.clinic||'--'}</td><td>${p.phone||'--'}</td><td>${p.fax||'--'}</td><td>${p.npi||'--'}</td><td>${actionBtns('providers',p.id)}</td></tr>`).join('') + '</tbody></table>';
-}
-function renderVitalsTable(items) {
-  return `<table class="data-table"><thead><tr><th>Date</th><th>BP</th><th>Pulse</th><th>O2</th><th>Weight</th><th>Height</th><th>BMI</th><th>Notes</th><th></th></tr></thead><tbody>` +
-    items.map(v => `<tr><td>${fmtDate(v.measured_date)}</td><td>${v.blood_pressure||'--'}</td><td>${v.pulse||'--'}</td><td>${v.oxygen_saturation||'--'}</td><td>${v.weight||'--'}</td><td>${v.height||'--'}</td><td>${v.bmi||'--'}</td><td>${v.notes||'--'}</td><td>${actionBtns('vitals',v.id)}</td></tr>`).join('') + '</tbody></table>';
-}
-function renderNotes(items) {
-  return `<table class="data-table"><thead><tr><th>Note</th><th>Category</th><th>Source</th><th>Date</th><th></th></tr></thead><tbody>` +
-    items.map(n => `<tr><td>${n.note_text}</td><td>${n.category||'--'}</td><td>${n.source_document||'--'}</td><td>${fmtDate(n.created_at?n.created_at.split('T')[0]:null)}</td><td>${actionBtns('notes',n.id)}</td></tr>`).join('') + '</tbody></table>';
-}
-
-// ==================== MODAL (Add/Edit) ====================
-const FIELD_DEFS = {
-  appointments: [
-    { key: 'appointment_type', label: 'Type', type: 'select', options: ['doctor','test','lab','imaging','procedure'] },
-    { key: 'appointment_date', label: 'Date', type: 'date' },
-    { key: 'appointment_time', label: 'Time', type: 'text' },
-    { key: 'arrive_by', label: 'Arrive By', type: 'text' },
-    { key: 'doctor_name', label: 'Doctor', type: 'text' },
-    { key: 'specialty', label: 'Specialty', type: 'text' },
-    { key: 'location', label: 'Location', type: 'text' },
-    { key: 'reason', label: 'Reason', type: 'textarea' },
-    { key: 'status', label: 'Status', type: 'select', options: ['Scheduled','Completed','Cancelled','Rescheduled'] },
-    { key: 'notes', label: 'Notes', type: 'textarea' }
-  ],
-  lab_orders: [
-    { key: 'order_date', label: 'Order Date', type: 'date' },
-    { key: 'test_name', label: 'Test Name', type: 'text' },
-    { key: 'test_code', label: 'Test Code', type: 'text' },
-    { key: 'facility', label: 'Facility', type: 'text' },
-    { key: 'ordering_doctor', label: 'Ordering Doctor', type: 'text' },
-    { key: 'diagnosis_reason', label: 'Diagnosis / Reason', type: 'textarea' },
-    { key: 'specimen_source', label: 'Specimen Source', type: 'text' },
-    { key: 'status', label: 'Status', type: 'select', options: ['Ordered','Completed','Cancelled'] },
-    { key: 'result_value', label: 'Result', type: 'textarea' },
-    { key: 'result_date', label: 'Result Date', type: 'date' },
-    { key: 'notes', label: 'Notes', type: 'textarea' }
-  ],
-  imaging_orders: [
-    { key: 'order_date', label: 'Order Date', type: 'date' },
-    { key: 'imaging_test', label: 'Test', type: 'text' },
-    { key: 'body_area', label: 'Body Area', type: 'text' },
-    { key: 'contrast', label: 'Contrast', type: 'text' },
-    { key: 'facility', label: 'Facility', type: 'text' },
-    { key: 'ordering_doctor', label: 'Ordering Doctor', type: 'text' },
-    { key: 'reason', label: 'Reason', type: 'textarea' },
-    { key: 'priority', label: 'Priority', type: 'select', options: ['Routine','Urgent','STAT'] },
-    { key: 'expiration_date', label: 'Expiration', type: 'date' },
-    { key: 'status', label: 'Status', type: 'select', options: ['Ordered','Scheduled','Completed','Cancelled'] },
-    { key: 'notes', label: 'Notes', type: 'textarea' }
-  ],
-  medications: [
-    { key: 'medication_name', label: 'Medication', type: 'text' },
-    { key: 'brand_name', label: 'Brand Name', type: 'text' },
-    { key: 'dose', label: 'Dose', type: 'text' },
-    { key: 'instructions', label: 'Instructions', type: 'textarea' },
-    { key: 'prescribing_doctor', label: 'Prescriber', type: 'text' },
-    { key: 'start_date', label: 'Start Date', type: 'date' },
-    { key: 'end_date', label: 'End Date', type: 'date' },
-    { key: 'status', label: 'Status', type: 'select', options: ['Active','Started','Discontinued','On Hold'] },
-    { key: 'notes', label: 'Notes', type: 'textarea' }
-  ],
-  diagnoses: [
-    { key: 'condition_name', label: 'Condition', type: 'text' },
-    { key: 'icd_code', label: 'ICD Code', type: 'text' },
-    { key: 'diagnosed_date', label: 'Diagnosed Date', type: 'date' },
-    { key: 'status', label: 'Status', type: 'select', options: ['Active','Resolved','Chronic','Inactive'] },
-    { key: 'notes', label: 'Notes', type: 'textarea' }
-  ],
-  followups: [
-    { key: 'item', label: 'Item', type: 'textarea' },
-    { key: 'due_date', label: 'Due Date', type: 'date' },
-    { key: 'related_to', label: 'Related To', type: 'text' },
-    { key: 'status', label: 'Status', type: 'select', options: ['Pending','Scheduled','Completed','Cancelled'] },
-    { key: 'notes', label: 'Notes', type: 'textarea' }
-  ],
-  providers: [
-    { key: 'provider_name', label: 'Provider Name', type: 'text' },
-    { key: 'specialty', label: 'Specialty', type: 'text' },
-    { key: 'clinic', label: 'Clinic', type: 'text' },
-    { key: 'phone', label: 'Phone', type: 'text' },
-    { key: 'fax', label: 'Fax', type: 'text' },
-    { key: 'npi', label: 'NPI', type: 'text' },
-    { key: 'notes', label: 'Notes', type: 'textarea' }
-  ],
-  vitals: [
-    { key: 'measured_date', label: 'Date', type: 'date' },
-    { key: 'blood_pressure', label: 'Blood Pressure', type: 'text' },
-    { key: 'pulse', label: 'Pulse', type: 'text' },
-    { key: 'oxygen_saturation', label: 'O2 Saturation', type: 'text' },
-    { key: 'weight', label: 'Weight', type: 'text' },
-    { key: 'height', label: 'Height', type: 'text' },
-    { key: 'bmi', label: 'BMI', type: 'text' },
-    { key: 'notes', label: 'Notes', type: 'textarea' }
-  ],
-  notes: [
-    { key: 'note_text', label: 'Note', type: 'textarea' },
-    { key: 'category', label: 'Category', type: 'select', options: ['General','Clinical','Action Item','Insurance','Other'] },
-    { key: 'source_document', label: 'Source Document', type: 'text' }
-  ]
+// ===== CARD RENDERERS (mobile) =====
+const CARD_DEFS = {
+  appointments: { title: a => `${a.doctor_name||'Unknown'} - ${a.appointment_type}`, status: 'status', fields: [
+    {l:'Date', v:a=>fmtDate(a.appointment_date)}, {l:'Time', v:a=>a.appointment_time||'--'}, {l:'Arrive', v:a=>a.arrive_by||'--'},
+    {l:'Location', v:a=>a.location||'--'}, {l:'Reason', v:a=>a.reason||'--'}, {l:'Notes', v:a=>a.notes||'--'}
+  ]},
+  labOrders: { title: l => l.test_name, status: 'status', fields: [
+    {l:'Ordered', v:l=>fmtDate(l.order_date)}, {l:'Code', v:l=>l.test_code||'--'}, {l:'Facility', v:l=>l.facility||'--'},
+    {l:'Doctor', v:l=>l.ordering_doctor||'--'}, {l:'Reason', v:l=>l.diagnosis_reason||'--'}
+  ]},
+  imagingOrders: { title: i => `${i.imaging_test} - ${i.body_area||''}`, status: 'status', fields: [
+    {l:'Ordered', v:i=>fmtDate(i.order_date)}, {l:'Contrast', v:i=>i.contrast||'--'}, {l:'Doctor', v:i=>i.ordering_doctor||'--'},
+    {l:'Reason', v:i=>i.reason||'--'}, {l:'Expires', v:i=>fmtDate(i.expiration_date)}
+  ]},
+  medications: { title: m => `${m.medication_name}${m.brand_name?' ('+m.brand_name+')':''}`, status: 'status', fields: [
+    {l:'Dose', v:m=>m.dose||'--'}, {l:'Instructions', v:m=>m.instructions||'--'}, {l:'Prescriber', v:m=>m.prescribing_doctor||'--'},
+    {l:'Started', v:m=>fmtDate(m.start_date)}
+  ]},
+  diagnoses: { title: d => d.condition_name, status: 'status', fields: [
+    {l:'ICD', v:d=>d.icd_code||'--'}, {l:'Diagnosed', v:d=>fmtDate(d.diagnosed_date)}, {l:'Notes', v:d=>d.notes||'--'}
+  ]},
+  followups: { title: f => f.item, status: 'status', fields: [
+    {l:'Due', v:f=>fmtDate(f.due_date)}, {l:'Related', v:f=>f.related_to||'--'}, {l:'Notes', v:f=>f.notes||'--'}
+  ]},
+  providers: { title: p => p.provider_name, status: null, fields: [
+    {l:'Specialty', v:p=>p.specialty||'--'}, {l:'Clinic', v:p=>p.clinic||'--'},
+    {l:'Phone', v:p=>p.phone?`<a href="tel:${p.phone}" style="color:#0984e3;">${p.phone}</a>`:'--'},
+    {l:'Fax', v:p=>p.fax||'--'}, {l:'NPI', v:p=>p.npi||'--'}
+  ]},
+  vitals: { title: v => 'Vitals - '+fmtDate(v.measured_date), status: null, fields: [
+    {l:'BP', v:v=>v.blood_pressure||'--'}, {l:'Pulse', v:v=>v.pulse||'--'}, {l:'O2', v:v=>v.oxygen_saturation||'--'},
+    {l:'Weight', v:v=>v.weight||'--'}, {l:'Height', v:v=>v.height||'--'}, {l:'BMI', v:v=>v.bmi||'--'}
+  ]},
+  notes: { title: n => (n.note_text||'').substring(0,60)+'...', status: null, fields: [
+    {l:'Category', v:n=>n.category||'--'}, {l:'Source', v:n=>n.source_document||'--'}, {l:'Full Note', v:n=>n.note_text||'--'}
+  ]}
 };
 
-let modalState = { mode: null, resource: null, id: null };
+function renderCards(tab, items) {
+  const def = CARD_DEFS[tab]; if(!def) return '';
+  const resource = RESOURCE_MAP[tab];
+  return `<div class="card-list">${items.map(item => {
+    const statusField = def.status ? item[def.status] : null;
+    return `<div class="record-card">
+      <div class="card-title">${def.title(item)}</div>
+      ${statusField ? `<div class="card-status">${statusBadge(statusField)}</div>` : ''}
+      ${def.fields.map(f => `<div class="card-row"><b>${f.l}:</b> ${f.v(item)}</div>`).join('')}
+      <div class="card-actions">${actionBtns(resource, item.id)}</div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+// ===== TABLE RENDERERS (desktop) =====
+function renderTable(tab, items) {
+  switch(tab) {
+    case 'appointments': return `<table class="data-table"><thead><tr><th>Date</th><th>Time</th><th>Type</th><th>Doctor</th><th>Location</th><th>Reason</th><th>Status</th><th>Notes</th><th></th></tr></thead><tbody>`+items.map(a=>`<tr><td>${fmtDate(a.appointment_date)}</td><td>${a.appointment_time||'--'}</td><td>${a.appointment_type}</td><td>${a.doctor_name||'--'}</td><td>${a.location||'--'}</td><td>${a.reason||'--'}</td><td>${statusBadge(a.status)}</td><td>${a.notes||''}</td><td>${actionBtns('appointments',a.id)}</td></tr>`).join('')+'</tbody></table>';
+    case 'labOrders': return `<table class="data-table"><thead><tr><th>Date</th><th>Test</th><th>Code</th><th>Facility</th><th>Doctor</th><th>Reason</th><th>Status</th><th></th></tr></thead><tbody>`+items.map(l=>`<tr><td>${fmtDate(l.order_date)}</td><td>${l.test_name}</td><td>${l.test_code||'--'}</td><td>${l.facility||'--'}</td><td>${l.ordering_doctor||'--'}</td><td>${l.diagnosis_reason||'--'}</td><td>${statusBadge(l.status)}</td><td>${actionBtns('lab_orders',l.id)}</td></tr>`).join('')+'</tbody></table>';
+    case 'imagingOrders': return `<table class="data-table"><thead><tr><th>Date</th><th>Test</th><th>Area</th><th>Contrast</th><th>Doctor</th><th>Reason</th><th>Expires</th><th>Status</th><th></th></tr></thead><tbody>`+items.map(i=>`<tr><td>${fmtDate(i.order_date)}</td><td>${i.imaging_test}</td><td>${i.body_area||'--'}</td><td>${i.contrast||'--'}</td><td>${i.ordering_doctor||'--'}</td><td>${i.reason||'--'}</td><td>${fmtDate(i.expiration_date)}</td><td>${statusBadge(i.status)}</td><td>${actionBtns('imaging_orders',i.id)}</td></tr>`).join('')+'</tbody></table>';
+    case 'medications': return `<table class="data-table"><thead><tr><th>Medication</th><th>Brand</th><th>Dose</th><th>Instructions</th><th>Prescriber</th><th>Started</th><th>Status</th><th></th></tr></thead><tbody>`+items.map(m=>`<tr><td>${m.medication_name}</td><td>${m.brand_name||'--'}</td><td>${m.dose||'--'}</td><td>${m.instructions||'--'}</td><td>${m.prescribing_doctor||'--'}</td><td>${fmtDate(m.start_date)}</td><td>${statusBadge(m.status)}</td><td>${actionBtns('medications',m.id)}</td></tr>`).join('')+'</tbody></table>';
+    case 'diagnoses': return `<table class="data-table"><thead><tr><th>Condition</th><th>ICD</th><th>Diagnosed</th><th>Notes</th><th>Status</th><th></th></tr></thead><tbody>`+items.map(d=>`<tr><td>${d.condition_name}</td><td>${d.icd_code||'--'}</td><td>${fmtDate(d.diagnosed_date)}</td><td>${d.notes||'--'}</td><td>${statusBadge(d.status)}</td><td>${actionBtns('diagnoses',d.id)}</td></tr>`).join('')+'</tbody></table>';
+    case 'followups': return `<table class="data-table"><thead><tr><th>Item</th><th>Due</th><th>Related</th><th>Status</th><th>Notes</th><th></th></tr></thead><tbody>`+items.map(f=>`<tr><td>${f.item}</td><td>${fmtDate(f.due_date)}</td><td>${f.related_to||'--'}</td><td>${statusBadge(f.status)}</td><td>${f.notes||'--'}</td><td>${actionBtns('followups',f.id)}</td></tr>`).join('')+'</tbody></table>';
+    case 'providers': return `<table class="data-table"><thead><tr><th>Provider</th><th>Specialty</th><th>Clinic</th><th>Phone</th><th>Fax</th><th>NPI</th><th></th></tr></thead><tbody>`+items.map(p=>`<tr><td>${p.provider_name}</td><td>${p.specialty||'--'}</td><td>${p.clinic||'--'}</td><td>${p.phone||'--'}</td><td>${p.fax||'--'}</td><td>${p.npi||'--'}</td><td>${actionBtns('providers',p.id)}</td></tr>`).join('')+'</tbody></table>';
+    case 'vitals': return `<table class="data-table"><thead><tr><th>Date</th><th>BP</th><th>Pulse</th><th>O2</th><th>Weight</th><th>Height</th><th>BMI</th><th>Notes</th><th></th></tr></thead><tbody>`+items.map(v=>`<tr><td>${fmtDate(v.measured_date)}</td><td>${v.blood_pressure||'--'}</td><td>${v.pulse||'--'}</td><td>${v.oxygen_saturation||'--'}</td><td>${v.weight||'--'}</td><td>${v.height||'--'}</td><td>${v.bmi||'--'}</td><td>${v.notes||'--'}</td><td>${actionBtns('vitals',v.id)}</td></tr>`).join('')+'</tbody></table>';
+    case 'notes': return `<table class="data-table"><thead><tr><th>Note</th><th>Category</th><th>Source</th><th>Date</th><th></th></tr></thead><tbody>`+items.map(n=>`<tr><td>${n.note_text}</td><td>${n.category||'--'}</td><td>${n.source_document||'--'}</td><td>${fmtDate(n.created_at?n.created_at.split('T')[0]:null)}</td><td>${actionBtns('notes',n.id)}</td></tr>`).join('')+'</tbody></table>';
+    default: return '';
+  }
+}
+
+// ===== MODAL =====
+const FIELD_DEFS = {
+  appointments: [{key:'appointment_type',label:'Type',type:'select',options:['doctor','test','lab','imaging','procedure']},{key:'appointment_date',label:'Date',type:'date'},{key:'appointment_time',label:'Time',type:'text'},{key:'arrive_by',label:'Arrive By',type:'text'},{key:'doctor_name',label:'Doctor',type:'text'},{key:'specialty',label:'Specialty',type:'text'},{key:'location',label:'Location',type:'text'},{key:'reason',label:'Reason',type:'textarea'},{key:'status',label:'Status',type:'select',options:['Scheduled','Completed','Cancelled','Rescheduled']},{key:'notes',label:'Notes',type:'textarea'}],
+  lab_orders: [{key:'order_date',label:'Order Date',type:'date'},{key:'test_name',label:'Test Name',type:'text'},{key:'test_code',label:'Test Code',type:'text'},{key:'facility',label:'Facility',type:'text'},{key:'ordering_doctor',label:'Doctor',type:'text'},{key:'diagnosis_reason',label:'Reason',type:'textarea'},{key:'specimen_source',label:'Specimen',type:'text'},{key:'status',label:'Status',type:'select',options:['Ordered','Completed','Cancelled']},{key:'result_value',label:'Result',type:'textarea'},{key:'result_date',label:'Result Date',type:'date'},{key:'notes',label:'Notes',type:'textarea'}],
+  imaging_orders: [{key:'order_date',label:'Order Date',type:'date'},{key:'imaging_test',label:'Test',type:'text'},{key:'body_area',label:'Body Area',type:'text'},{key:'contrast',label:'Contrast',type:'text'},{key:'facility',label:'Facility',type:'text'},{key:'ordering_doctor',label:'Doctor',type:'text'},{key:'reason',label:'Reason',type:'textarea'},{key:'priority',label:'Priority',type:'select',options:['Routine','Urgent','STAT']},{key:'expiration_date',label:'Expiration',type:'date'},{key:'status',label:'Status',type:'select',options:['Ordered','Scheduled','Completed','Cancelled']},{key:'notes',label:'Notes',type:'textarea'}],
+  medications: [{key:'medication_name',label:'Medication',type:'text'},{key:'brand_name',label:'Brand',type:'text'},{key:'dose',label:'Dose',type:'text'},{key:'instructions',label:'Instructions',type:'textarea'},{key:'prescribing_doctor',label:'Prescriber',type:'text'},{key:'start_date',label:'Start Date',type:'date'},{key:'end_date',label:'End Date',type:'date'},{key:'status',label:'Status',type:'select',options:['Active','Started','Discontinued','On Hold']},{key:'notes',label:'Notes',type:'textarea'}],
+  diagnoses: [{key:'condition_name',label:'Condition',type:'text'},{key:'icd_code',label:'ICD Code',type:'text'},{key:'diagnosed_date',label:'Date',type:'date'},{key:'status',label:'Status',type:'select',options:['Active','Resolved','Chronic','Inactive']},{key:'notes',label:'Notes',type:'textarea'}],
+  followups: [{key:'item',label:'Item',type:'textarea'},{key:'due_date',label:'Due Date',type:'date'},{key:'related_to',label:'Related To',type:'text'},{key:'status',label:'Status',type:'select',options:['Pending','Scheduled','Completed','Cancelled']},{key:'notes',label:'Notes',type:'textarea'}],
+  providers: [{key:'provider_name',label:'Name',type:'text'},{key:'specialty',label:'Specialty',type:'text'},{key:'clinic',label:'Clinic',type:'text'},{key:'phone',label:'Phone',type:'text'},{key:'fax',label:'Fax',type:'text'},{key:'npi',label:'NPI',type:'text'},{key:'notes',label:'Notes',type:'textarea'}],
+  vitals: [{key:'measured_date',label:'Date',type:'date'},{key:'blood_pressure',label:'BP',type:'text'},{key:'pulse',label:'Pulse',type:'text'},{key:'oxygen_saturation',label:'O2',type:'text'},{key:'weight',label:'Weight',type:'text'},{key:'height',label:'Height',type:'text'},{key:'bmi',label:'BMI',type:'text'},{key:'notes',label:'Notes',type:'textarea'}],
+  notes: [{key:'note_text',label:'Note',type:'textarea'},{key:'category',label:'Category',type:'select',options:['General','Clinical','Action Item','Insurance','Other']},{key:'source_document',label:'Source',type:'text'}]
+};
+let modalState = {};
 
 function openAdd(resource) {
-  modalState = { mode: 'add', resource, id: null };
-  document.getElementById('modalTitle').textContent = 'Add ' + resource.replace(/_/g, ' ');
-  renderModalFields(resource, {});
-  document.getElementById('modal').classList.add('show');
+  modalState = {mode:'add',resource,id:null};
+  document.getElementById('modalTitle').textContent = 'Add '+resource.replace(/_/g,' ');
+  renderModalFields(resource, {}); document.getElementById('modal').classList.add('show');
 }
-
 async function openEdit(resource, id) {
-  const r = await api('GET', `/${resource}/${id}`);
-  if (!r.success) { toast('Error loading record'); return; }
-  modalState = { mode: 'edit', resource, id };
-  document.getElementById('modalTitle').textContent = 'Edit ' + resource.replace(/_/g, ' ');
-  renderModalFields(resource, r.data);
-  document.getElementById('modal').classList.add('show');
+  const r = await api('GET',`/${resource}/${id}`); if(!r.success){toast('Error');return;}
+  modalState = {mode:'edit',resource,id};
+  document.getElementById('modalTitle').textContent = 'Edit '+resource.replace(/_/g,' ');
+  renderModalFields(resource, r.data); document.getElementById('modal').classList.add('show');
 }
-
 function renderModalFields(resource, data) {
-  const fields = FIELD_DEFS[resource] || [];
+  const fields = FIELD_DEFS[resource]||[];
   document.getElementById('modalBody').innerHTML = fields.map(f => {
-    const val = data[f.key] || '';
-    if (f.type === 'select') return `<label>${f.label}</label><select id="field_${f.key}">${f.options.map(o => `<option value="${o}" ${val===o?'selected':''}>${o}</option>`).join('')}</select>`;
-    if (f.type === 'textarea') return `<label>${f.label}</label><textarea id="field_${f.key}">${val}</textarea>`;
+    const val = data[f.key]||'';
+    if(f.type==='select') return `<label>${f.label}</label><select id="field_${f.key}">${f.options.map(o=>`<option value="${o}" ${val===o?'selected':''}>${o}</option>`).join('')}</select>`;
+    if(f.type==='textarea') return `<label>${f.label}</label><textarea id="field_${f.key}">${val}</textarea>`;
     return `<label>${f.label}</label><input type="${f.type}" id="field_${f.key}" value="${val}">`;
   }).join('');
 }
-
 function closeModal() { document.getElementById('modal').classList.remove('show'); }
-
 async function saveModal() {
-  const fields = FIELD_DEFS[modalState.resource] || [];
-  const body = { patient_id: PATIENT_ID };
-  fields.forEach(f => { const el = document.getElementById('field_'+f.key); if (el) body[f.key] = el.value; });
-  const r = modalState.mode === 'add'
-    ? await api('POST', `/${modalState.resource}`, body)
-    : await api('PUT', `/${modalState.resource}/${modalState.id}`, body);
-  if (r.success) { toast(modalState.mode === 'add' ? 'Created' : 'Updated'); closeModal(); loadDashboard(); }
-  else toast('Error: ' + r.error);
+  const fields = FIELD_DEFS[modalState.resource]||[], body = {patient_id:PATIENT_ID};
+  fields.forEach(f=>{const el=document.getElementById('field_'+f.key);if(el)body[f.key]=el.value;});
+  const r = modalState.mode==='add' ? await api('POST',`/${modalState.resource}`,body) : await api('PUT',`/${modalState.resource}/${modalState.id}`,body);
+  if(r.success){toast(modalState.mode==='add'?'Created':'Updated');closeModal();loadDashboard();}
+  else toast('Error: '+r.error);
 }
-
 async function deleteItem(resource, id) {
-  if (!confirm('Delete this record?')) return;
-  const r = await api('DELETE', `/${resource}/${id}`);
-  if (r.success) { toast('Deleted'); loadDashboard(); }
-  else toast('Error: ' + r.error);
+  if(!confirm('Delete?')) return;
+  const r = await api('DELETE',`/${resource}/${id}`);
+  if(r.success){toast('Deleted');loadDashboard();}else toast('Error: '+r.error);
 }
 
 loadDashboard();
