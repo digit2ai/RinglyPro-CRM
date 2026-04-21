@@ -192,7 +192,18 @@ export default function SurveyManagerPage({ projectId: propId }) {
     if (panel === 'links') {
       try {
         const res = await api.getSurvey(surveyId)
-        setSurveyLinks(res.survey || res)
+        const survey = res.data || res.survey || res
+        const baseUrl = window.location.origin + '/intuitive'
+        setSurveyLinks({
+          general_link: survey.survey_url_token ? `${baseUrl}/survey/${survey.survey_url_token}` : null,
+          recipients: (survey.recipients || []).map(r => ({
+            id: r.id,
+            name: r.surgeon_name,
+            email: r.surgeon_email,
+            link: r.personal_token ? `${baseUrl}/survey/${r.personal_token}` : null,
+            status: r.status || 'pending'
+          }))
+        })
       } catch (e) { console.error(e) }
     }
   }
@@ -201,9 +212,15 @@ export default function SurveyManagerPage({ projectId: propId }) {
     if (!recipientForm.name || !recipientForm.email) return
     setAddingRecipients(true)
     try {
-      await api.addRecipients(selectedSurveyId, [recipientForm])
+      await api.addRecipients(selectedSurveyId, [{
+        surgeon_name: recipientForm.name,
+        surgeon_email: recipientForm.email,
+        surgeon_phone: recipientForm.phone || null,
+        surgeon_specialty: recipientForm.specialty || null
+      }])
       const res = await api.getSurvey(selectedSurveyId)
-      setRecipients(res.survey?.recipients || res.recipients || [])
+      const survey = res.data || res.survey || res
+      setRecipients(survey.recipients || [])
       setRecipientForm({ name: '', email: '', phone: '', specialty: '' })
     } catch (e) { setError(e.message) }
     finally { setAddingRecipients(false) }
@@ -214,18 +231,19 @@ export default function SurveyManagerPage({ projectId: propId }) {
     const parsed = lines.map(line => {
       const parts = line.split(',').map(s => s.trim())
       return {
-        name: parts[0] || '',
-        email: parts[1] || '',
-        specialty: parts[2] || '',
+        surgeon_name: parts[0] || '',
+        surgeon_email: parts[1] || '',
+        surgeon_specialty: parts[2] || '',
       }
-    }).filter(r => r.name && r.email)
+    }).filter(r => r.surgeon_name && r.surgeon_email)
 
     if (parsed.length === 0) return
     setAddingRecipients(true)
     try {
       await api.addRecipients(selectedSurveyId, parsed)
       const res = await api.getSurvey(selectedSurveyId)
-      setRecipients(res.survey?.recipients || res.recipients || [])
+      const survey = res.data || res.survey || res
+      setRecipients(survey.recipients || [])
       setBulkText('')
       setBulkMode(false)
     } catch (e) { setError(e.message) }
@@ -236,7 +254,20 @@ export default function SurveyManagerPage({ projectId: propId }) {
     setSendingLinks(true)
     try {
       const res = await api.sendSurvey(surveyId)
-      setSurveyLinks(res.survey || res)
+      // Normalize backend response: data.recipient_links -> recipients for UI
+      const sendData = res.data || res.survey || res
+      const normalized = {
+        general_link: sendData.general_link,
+        total_sent: sendData.total_sent,
+        recipients: (sendData.recipient_links || sendData.recipients || []).map(r => ({
+          id: r.personal_token,
+          name: r.surgeon_name || r.name,
+          email: r.surgeon_email || r.email,
+          link: r.survey_link || r.link || r.personal_link,
+          status: r.distribution?.success ? 'sent' : 'pending'
+        }))
+      }
+      setSurveyLinks(normalized)
       await loadSurveys()
       setSelectedSurveyId(surveyId)
       setActivePanel('links')
@@ -445,7 +476,7 @@ export default function SurveyManagerPage({ projectId: propId }) {
                         disabled={sendingLinks}
                         className="px-3 py-1.5 text-xs font-medium rounded-lg bg-green-800/60 hover:bg-green-700/60 text-green-200 transition-colors disabled:opacity-50"
                       >
-                        {sendingLinks && selectedSurveyId === survey.id ? 'Sending...' : 'Activate & Get Links'}
+                        {sendingLinks && selectedSurveyId === survey.id ? 'Sending Emails...' : 'Send via Email'}
                       </button>
                       <button
                         onClick={() => handleSelectPanel(survey.id, 'responses')}
@@ -578,10 +609,10 @@ export default function SurveyManagerPage({ projectId: propId }) {
                           <tbody>
                             {recipients.map((r, i) => (
                               <tr key={r.id || i} className="border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors">
-                                <td className="py-2 px-2 text-white">{r.name}</td>
-                                <td className="py-2 px-2 text-slate-300">{r.email}</td>
-                                <td className="py-2 px-2 text-slate-400">{r.phone || '--'}</td>
-                                <td className="py-2 px-2 text-slate-400">{r.specialty || '--'}</td>
+                                <td className="py-2 px-2 text-white">{r.surgeon_name || r.name}</td>
+                                <td className="py-2 px-2 text-slate-300">{r.surgeon_email || r.email}</td>
+                                <td className="py-2 px-2 text-slate-400">{r.surgeon_phone || r.phone || '--'}</td>
+                                <td className="py-2 px-2 text-slate-400">{r.surgeon_specialty || r.specialty || '--'}</td>
                                 <td className="py-2 px-2"><StatusBadge status={r.status || 'pending'} /></td>
                               </tr>
                             ))}
@@ -649,7 +680,7 @@ export default function SurveyManagerPage({ projectId: propId }) {
                     )}
 
                     {!surveyLinks.general_link && (!surveyLinks.recipients || surveyLinks.recipients.length === 0) && (
-                      <p className="text-slate-500 text-xs text-center py-3">No links generated yet. Click "Activate & Get Links" to send the survey.</p>
+                      <p className="text-slate-500 text-xs text-center py-3">No links generated yet. Click "Send via Email" to distribute the survey.</p>
                     )}
                   </div>
                 )}

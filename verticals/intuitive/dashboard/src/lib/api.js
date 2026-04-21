@@ -60,7 +60,7 @@ export const api = {
   getSurvey: (id) => request(`/surveys/${id}`),
   updateSurvey: (id, data) => request(`/surveys/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   addRecipients: (surveyId, recipients) => request(`/surveys/${surveyId}/recipients`, { method: 'POST', body: JSON.stringify({ recipients }) }),
-  sendSurvey: (surveyId) => request(`/surveys/${surveyId}/send`, { method: 'POST' }),
+  sendSurvey: (surveyId) => request(`/surveys/${surveyId}/send`, { method: 'POST', body: JSON.stringify({ channel: 'email' }) }),
   getSurveyResponses: (surveyId) => request(`/surveys/${surveyId}/responses`),
   importSurveyToPlan: (surveyId, businessPlanId) => request(`/surveys/${surveyId}/import-to-plan`, { method: 'POST', body: JSON.stringify({ business_plan_id: businessPlanId }) }),
 
