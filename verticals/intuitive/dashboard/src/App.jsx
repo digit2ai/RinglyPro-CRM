@@ -256,7 +256,7 @@ export default function App() {
       <aside className="w-56 bg-[#0a1628] border-r border-slate-800 flex flex-col fixed h-full z-50">
         <div className="p-5 border-b border-slate-800">
           <div className="flex items-center gap-3 mb-1">
-            <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69e6c537c56ad279084e2bb6.png" alt="SurgicalMind AI" className="w-12 h-12 rounded-lg" />
+            <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69e6c537c56ad279084e2bb6.png" alt="SurgicalMind AI" className="w-36 h-auto" />
             <div>
               <div className="text-white font-bold text-sm tracking-tight">SurgicalMind</div>
               <div className="text-slate-500 text-[10px] tracking-widest uppercase">AI System Matcher</div>
