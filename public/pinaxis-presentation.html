@@ -1,0 +1,1808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PINAXIS -- The AI-Powered Warehouse Data Analytics Platform</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root {
+    --navy: #0b1d4a;
+    --navy-light: #17296b;
+    --navy-dark: #030814;
+    --navy-blk: #010409;
+    --teal: #00A3E0;
+    --teal-light: #66c7f0;
+    --teal-neon: #3dcbca;
+    --gold: #C5A55A;
+    --gold-neon: #dfc07a;
+    --gold-dark: #a08542;
+    --orange: #f97316;
+    --orange-light: #fb923c;
+    --white: #ffffff;
+    --gray-200: #e9ecef;
+    --gray-500: #6c757d;
+    --gray-700: #374151;
+    --gray-900: #111827;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--navy-blk);
+    color: var(--white);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .deck {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 7vw 80px;
+    text-align: center;
+    opacity: 0;
+    transition: opacity .45s ease;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,163,224,0.3) transparent;
+  }
+  .slide::-webkit-scrollbar { width: 6px; }
+  .slide::-webkit-scrollbar-track { background: transparent; }
+  .slide::-webkit-scrollbar-thumb { background: rgba(0,163,224,0.3); border-radius: 3px; }
+  .slide.active { display: flex; opacity: 1; }
+
+  .slide::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,163,224,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,163,224,0.05) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse at center, black 40%, transparent 90%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 40%, transparent 90%);
+    pointer-events: none;
+    z-index: 0;
+    animation: gridDrift 40s linear infinite;
+  }
+
+  @keyframes gridDrift {
+    from { background-position: 0 0, 0 0; }
+    to { background-position: 64px 64px, 64px 64px; }
+  }
+
+  .slide::after {
+    content: '';
+    position: absolute;
+    width: 900px; height: 900px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,163,224,0.12) 0%, rgba(0,163,224,0.03) 40%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    filter: blur(60px);
+    pointer-events: none;
+    z-index: 0;
+    animation: meshDrift 18s ease-in-out infinite;
+  }
+
+  @keyframes meshDrift {
+    0%, 100% { transform: translate(-60%, -55%) scale(1); }
+    50%      { transform: translate(-40%, -45%) scale(1.2); }
+  }
+
+  .slide > * { position: relative; z-index: 1; }
+
+  .bg-navy { background: radial-gradient(ellipse at top, var(--navy) 0%, var(--navy-dark) 50%, var(--navy-blk) 100%); }
+  .bg-teal { background: radial-gradient(ellipse at top, #032a38 0%, #011218 50%, var(--navy-blk) 100%); }
+  .bg-teal::after { background: radial-gradient(circle, rgba(0,163,224,0.2) 0%, rgba(0,163,224,0.05) 40%, transparent 70%); }
+  .bg-gold { background: radial-gradient(ellipse at top, #2e2210 0%, #181008 50%, var(--navy-blk) 100%); }
+  .bg-gold::after { background: radial-gradient(circle, rgba(197,165,90,0.18) 0%, rgba(197,165,90,0.04) 40%, transparent 70%); }
+  .bg-deep { background: radial-gradient(ellipse at top, #0a1535 0%, #050b1c 50%, var(--navy-blk) 100%); }
+  .bg-deep::after { background: radial-gradient(circle, rgba(61,203,202,0.16) 0%, rgba(61,203,202,0.04) 40%, transparent 70%); }
+  .bg-orange { background: radial-gradient(ellipse at top, #2e1a08 0%, #180d04 50%, var(--navy-blk) 100%); }
+  .bg-orange::after { background: radial-gradient(circle, rgba(249,115,22,0.18) 0%, rgba(249,115,22,0.04) 40%, transparent 70%); }
+
+  /* PARTICLES */
+  .particles {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .particle {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--teal-neon);
+    opacity: 0;
+    animation: particleFloat linear infinite;
+  }
+  .particle:nth-child(1)  { left: 5%;  bottom: -10px; width: 2px; height: 2px; animation-duration: 12s; animation-delay: 0s; }
+  .particle:nth-child(2)  { left: 12%; bottom: -10px; width: 3px; height: 3px; animation-duration: 15s; animation-delay: 1s; }
+  .particle:nth-child(3)  { left: 20%; bottom: -10px; width: 2px; height: 2px; animation-duration: 11s; animation-delay: 3s; }
+  .particle:nth-child(4)  { left: 28%; bottom: -10px; width: 4px; height: 4px; animation-duration: 14s; animation-delay: 2s; }
+  .particle:nth-child(5)  { left: 35%; bottom: -10px; width: 2px; height: 2px; animation-duration: 16s; animation-delay: 4s; }
+  .particle:nth-child(6)  { left: 42%; bottom: -10px; width: 3px; height: 3px; animation-duration: 13s; animation-delay: 0.5s; }
+  .particle:nth-child(7)  { left: 50%; bottom: -10px; width: 2px; height: 2px; animation-duration: 17s; animation-delay: 5s; }
+  .particle:nth-child(8)  { left: 58%; bottom: -10px; width: 3px; height: 3px; animation-duration: 12s; animation-delay: 1.5s; }
+  .particle:nth-child(9)  { left: 65%; bottom: -10px; width: 2px; height: 2px; animation-duration: 14s; animation-delay: 3.5s; }
+  .particle:nth-child(10) { left: 72%; bottom: -10px; width: 4px; height: 4px; animation-duration: 15s; animation-delay: 2.5s; }
+  .particle:nth-child(11) { left: 78%; bottom: -10px; width: 2px; height: 2px; animation-duration: 11s; animation-delay: 6s; }
+  .particle:nth-child(12) { left: 85%; bottom: -10px; width: 3px; height: 3px; animation-duration: 16s; animation-delay: 0.8s; }
+  .particle:nth-child(13) { left: 90%; bottom: -10px; width: 2px; height: 2px; animation-duration: 13s; animation-delay: 4.5s; }
+  .particle:nth-child(14) { left: 95%; bottom: -10px; width: 3px; height: 3px; animation-duration: 18s; animation-delay: 1.2s; }
+  .particle:nth-child(15) { left: 8%;  bottom: -10px; width: 2px; height: 2px; animation-duration: 14s; animation-delay: 7s; }
+  .particle:nth-child(16) { left: 38%; bottom: -10px; width: 3px; height: 3px; animation-duration: 12s; animation-delay: 5.5s; }
+  .particle:nth-child(17) { left: 55%; bottom: -10px; width: 2px; height: 2px; animation-duration: 15s; animation-delay: 8s; }
+  .particle:nth-child(18) { left: 68%; bottom: -10px; width: 4px; height: 4px; animation-duration: 13s; animation-delay: 3.2s; }
+
+  @keyframes particleFloat {
+    0%   { transform: translateY(0) translateX(0); opacity: 0; }
+    10%  { opacity: 0.5; }
+    90%  { opacity: 0.2; }
+    100% { transform: translateY(-100vh) translateX(20px); opacity: 0; }
+  }
+
+  /* PROGRESS BAR */
+  .progress {
+    position: fixed;
+    top: 0; left: 0; height: 3px;
+    background: linear-gradient(90deg, var(--teal) 0%, var(--teal-neon) 100%);
+    box-shadow: 0 0 12px var(--teal-neon);
+    transition: width .45s ease;
+    z-index: 300;
+  }
+
+  /* CHIP */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    background: rgba(0,163,224,0.08);
+    border: 1px solid rgba(0,163,224,0.4);
+    color: var(--teal-light);
+    backdrop-filter: blur(8px);
+  }
+  .chip::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--teal-neon);
+    box-shadow: 0 0 8px var(--teal-neon);
+  }
+  .chip.gold { background: rgba(197,165,90,0.08); border-color: rgba(197,165,90,0.4); color: var(--gold-neon); }
+  .chip.gold::before { background: var(--gold-neon); box-shadow: 0 0 8px var(--gold-neon); }
+  .chip.orange { background: rgba(249,115,22,0.08); border-color: rgba(249,115,22,0.4); color: var(--orange-light); }
+  .chip.orange::before { background: var(--orange); box-shadow: 0 0 8px var(--orange); }
+
+  /* TYPOGRAPHY */
+  h1 {
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(42px, 7vw, 96px);
+    font-weight: 900;
+    line-height: 0.98;
+    letter-spacing: -3px;
+    margin-bottom: 24px;
+    max-width: 1200px;
+    background: linear-gradient(180deg, #ffffff 0%, #b8c4d1 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  h2 {
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(32px, 5vw, 72px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -2px;
+    margin-bottom: 24px;
+    max-width: 1200px;
+    background: linear-gradient(180deg, #ffffff 0%, #d1d9e3 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  h2.accent-teal {
+    background: linear-gradient(135deg, var(--teal-light) 0%, var(--teal) 50%, #ffffff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  h2.accent-gold {
+    background: linear-gradient(135deg, var(--gold-neon) 0%, var(--gold) 50%, #ffffff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  h3 {
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(22px, 3vw, 40px);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -1px;
+    margin-bottom: 16px;
+    color: var(--white);
+  }
+
+  p.lead {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(18px, 2vw, 26px);
+    font-weight: 400;
+    line-height: 1.55;
+    max-width: 900px;
+    margin: 0 auto 28px;
+    color: rgba(255,255,255,0.82);
+  }
+
+  .powered-by {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.35);
+    text-transform: uppercase;
+    margin-top: 28px;
+  }
+
+  /* PROBLEM GRID */
+  .problem-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    max-width: 1000px;
+    width: 100%;
+    margin-top: 32px;
+  }
+  .problem-card {
+    padding: 28px 24px;
+    background: linear-gradient(180deg, rgba(255,60,60,0.06) 0%, rgba(255,60,60,0.02) 100%);
+    border: 1px solid rgba(255,80,80,0.25);
+    border-left: 3px solid rgba(255,80,80,0.6);
+    border-radius: 10px;
+    text-align: left;
+    backdrop-filter: blur(12px);
+  }
+  .problem-card .pc-icon {
+    font-family: var(--mono);
+    font-size: 24px;
+    margin-bottom: 12px;
+    color: rgba(255,100,100,0.8);
+  }
+  .problem-card .pc-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--white);
+  }
+  .problem-card .pc-desc {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.6);
+  }
+
+  /* SOLUTION GRID */
+  .solution-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    max-width: 1200px;
+    width: 100%;
+    margin-top: 32px;
+  }
+  .solution-card {
+    padding: 24px 20px;
+    background: linear-gradient(180deg, rgba(0,163,224,0.08) 0%, rgba(0,163,224,0.02) 100%);
+    border: 1px solid rgba(0,163,224,0.3);
+    border-radius: 10px;
+    text-align: center;
+    backdrop-filter: blur(12px);
+    position: relative;
+  }
+  .solution-card::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: -1px; right: -1px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, var(--teal-neon) 50%, transparent 100%);
+  }
+  .solution-card .sc-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--teal-neon);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+  .solution-card .sc-problem {
+    font-size: 13px;
+    color: rgba(255,100,100,0.7);
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+  .solution-card .sc-arrow {
+    font-size: 18px;
+    color: var(--teal-neon);
+    margin-bottom: 12px;
+  }
+  .solution-card .sc-solution {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--white);
+  }
+
+  /* MODULE CARD */
+  .module-card {
+    max-width: 1000px;
+    width: 100%;
+    padding: 36px 40px;
+    background: linear-gradient(135deg, rgba(0,163,224,0.06) 0%, rgba(11,29,74,0.4) 100%);
+    border: 1px solid rgba(0,163,224,0.3);
+    border-radius: 12px;
+    text-align: left;
+    margin-top: 24px;
+    position: relative;
+  }
+  .module-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--teal-neon), transparent);
+  }
+
+  /* FLOW STEPS */
+  .flow-steps {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 24px;
+    max-width: 1000px;
+  }
+  .flow-step {
+    padding: 12px 20px;
+    background: rgba(0,163,224,0.1);
+    border: 1px solid rgba(0,163,224,0.35);
+    border-radius: 8px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: var(--teal-light);
+    font-weight: 500;
+  }
+  .flow-arrow {
+    font-size: 20px;
+    color: var(--teal-neon);
+  }
+
+  /* LAYER STACK */
+  .layer-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 900px;
+    width: 100%;
+    margin-top: 28px;
+  }
+  .layer-row {
+    display: grid;
+    grid-template-columns: 120px 1fr 120px;
+    gap: 16px;
+    align-items: center;
+    padding: 20px 24px;
+    border-radius: 10px;
+    text-align: left;
+  }
+  .layer-row.l1 {
+    background: rgba(0,163,224,0.08);
+    border: 1px solid rgba(0,163,224,0.3);
+  }
+  .layer-row.l2 {
+    background: rgba(197,165,90,0.08);
+    border: 1px solid rgba(197,165,90,0.3);
+  }
+  .layer-row.l3 {
+    background: rgba(61,203,202,0.08);
+    border: 1px solid rgba(61,203,202,0.3);
+  }
+  .layer-row .lr-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .layer-row.l1 .lr-label { color: var(--teal); }
+  .layer-row.l2 .lr-label { color: var(--gold); }
+  .layer-row.l3 .lr-label { color: var(--teal-neon); }
+  .layer-row .lr-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.9);
+  }
+  .layer-row .lr-num {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 700;
+    text-align: right;
+  }
+  .layer-row.l1 .lr-num { color: var(--teal); }
+  .layer-row.l2 .lr-num { color: var(--gold); }
+  .layer-row.l3 .lr-num { color: var(--teal-neon); }
+
+  /* MINI GRID */
+  .mini-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    max-width: 1000px;
+    width: 100%;
+    margin-top: 24px;
+  }
+  .mini-item {
+    padding: 14px 12px;
+    background: rgba(0,163,224,0.06);
+    border: 1px solid rgba(0,163,224,0.2);
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    color: rgba(255,255,255,0.75);
+    text-align: center;
+  }
+  .mini-group-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--teal-neon);
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-top: 20px;
+    margin-bottom: 8px;
+  }
+
+  /* BIG NUMBER */
+  .big-number {
+    font-family: var(--mono);
+    font-size: clamp(48px, 10vw, 120px);
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 16px;
+  }
+  .big-number.teal { color: var(--teal-neon); text-shadow: 0 0 40px rgba(61,203,202,0.4); }
+  .big-number.gold { color: var(--gold-neon); text-shadow: 0 0 40px rgba(197,165,90,0.4); }
+
+  /* METRIC CARDS */
+  .metric-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 24px;
+    max-width: 900px;
+  }
+  .metric-card {
+    padding: 20px 24px;
+    background: rgba(0,163,224,0.06);
+    border: 1px solid rgba(0,163,224,0.25);
+    border-radius: 10px;
+    text-align: center;
+    min-width: 180px;
+    flex: 1;
+  }
+  .metric-card .mc-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--teal-neon);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .metric-card .mc-vals {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    align-items: baseline;
+  }
+  .metric-card .mc-old {
+    font-size: 20px;
+    font-weight: 600;
+    color: rgba(255,100,100,0.7);
+    text-decoration: line-through;
+  }
+  .metric-card .mc-new {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--teal-neon);
+  }
+
+  /* SAVINGS GRID */
+  .savings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    max-width: 900px;
+    width: 100%;
+    margin-top: 24px;
+  }
+  .savings-box {
+    padding: 24px;
+    background: rgba(197,165,90,0.06);
+    border: 1px solid rgba(197,165,90,0.25);
+    border-radius: 10px;
+    text-align: left;
+  }
+  .savings-box .sb-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 12px;
+  }
+  .savings-box .sb-total {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--gold-neon);
+    margin-bottom: 12px;
+  }
+  .savings-box .sb-items {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 13px;
+    line-height: 1.8;
+    color: rgba(255,255,255,0.65);
+  }
+
+  /* DEMO RESULTS */
+  .demo-results {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    max-width: 800px;
+    width: 100%;
+    margin-top: 24px;
+  }
+  .demo-stat {
+    padding: 20px;
+    background: rgba(61,203,202,0.06);
+    border: 1px solid rgba(61,203,202,0.25);
+    border-radius: 10px;
+    text-align: center;
+  }
+  .demo-stat .ds-val {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--teal-neon);
+    margin-bottom: 6px;
+  }
+  .demo-stat .ds-label {
+    font-size: 13px;
+    color: rgba(255,255,255,0.6);
+  }
+
+  /* SYSTEM CARDS */
+  .system-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    max-width: 900px;
+    width: 100%;
+    margin-top: 24px;
+  }
+  .system-card {
+    padding: 20px 16px;
+    background: rgba(0,163,224,0.06);
+    border: 1px solid rgba(0,163,224,0.25);
+    border-radius: 10px;
+    text-align: center;
+  }
+  .system-card .sys-name {
+    font-family: var(--mono);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--teal-neon);
+    margin-bottom: 6px;
+  }
+  .system-card .sys-desc {
+    font-size: 13px;
+    color: rgba(255,255,255,0.5);
+  }
+
+  /* WORKFLOW */
+  .workflow-steps {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 1000px;
+    margin-top: 24px;
+  }
+  .wf-step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 18px;
+    background: rgba(0,163,224,0.08);
+    border: 1px solid rgba(0,163,224,0.3);
+    border-radius: 8px;
+  }
+  .wf-step .wf-num {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--teal-neon);
+    min-width: 22px;
+  }
+  .wf-step .wf-label {
+    font-size: 13px;
+    color: rgba(255,255,255,0.8);
+    font-weight: 500;
+  }
+  .wf-arrow {
+    font-size: 18px;
+    color: rgba(0,163,224,0.4);
+  }
+
+  /* SURVEY LIST */
+  .survey-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    max-width: 800px;
+    width: 100%;
+    margin-top: 24px;
+  }
+  .survey-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: rgba(0,163,224,0.06);
+    border: 1px solid rgba(0,163,224,0.2);
+    border-radius: 8px;
+    text-align: left;
+  }
+  .survey-item .si-icon {
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--teal-neon);
+    min-width: 24px;
+    text-align: center;
+  }
+  .survey-item .si-text {
+    font-size: 14px;
+    color: rgba(255,255,255,0.8);
+  }
+
+  /* LAYER BIZ STACK */
+  .layer-biz-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-width: 900px;
+    width: 100%;
+    margin-top: 28px;
+  }
+  .biz-layer {
+    padding: 22px 28px;
+    border-radius: 10px;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .biz-layer .bl-icon {
+    font-family: var(--mono);
+    font-size: 24px;
+    font-weight: 700;
+    min-width: 60px;
+  }
+  .biz-layer .bl-text {
+    font-size: 15px;
+    color: rgba(255,255,255,0.85);
+    line-height: 1.5;
+  }
+  .biz-layer.bl1 { background: rgba(0,163,224,0.08); border: 1px solid rgba(0,163,224,0.3); }
+  .biz-layer.bl1 .bl-icon { color: var(--teal); }
+  .biz-layer.bl2 { background: rgba(197,165,90,0.08); border: 1px solid rgba(197,165,90,0.3); }
+  .biz-layer.bl2 .bl-icon { color: var(--gold); }
+  .biz-layer.bl3 { background: rgba(61,203,202,0.1); border: 1px solid rgba(61,203,202,0.4); }
+  .biz-layer.bl3 .bl-icon { color: var(--teal-neon); }
+
+  /* CTA BOX */
+  .cta-box {
+    max-width: 800px;
+    width: 100%;
+    padding: 36px 40px;
+    background: linear-gradient(135deg, rgba(0,163,224,0.08) 0%, rgba(11,29,74,0.5) 100%);
+    border: 2px solid var(--teal-neon);
+    border-radius: 14px;
+    margin-top: 32px;
+    box-shadow: 0 0 40px rgba(61,203,202,0.15);
+  }
+  .cta-box .cta-text {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(18px, 2vw, 24px);
+    line-height: 1.55;
+    color: rgba(255,255,255,0.9);
+    margin-bottom: 20px;
+  }
+  .cta-box .cta-email {
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--teal-neon);
+    letter-spacing: 1px;
+    text-decoration: none;
+  }
+  .cta-box .cta-email:hover { text-decoration: underline; }
+
+  /* GROWTH BAR */
+  .growth-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 24px;
+    padding: 16px 28px;
+    background: rgba(61,203,202,0.06);
+    border: 1px solid rgba(61,203,202,0.2);
+    border-radius: 8px;
+    max-width: 500px;
+    width: 100%;
+  }
+  .growth-bar .gb-from {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 700;
+    color: rgba(255,100,100,0.7);
+  }
+  .growth-bar .gb-arrow { font-size: 24px; color: var(--teal-neon); }
+  .growth-bar .gb-to {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--teal-neon);
+  }
+  .growth-bar .gb-label { font-size: 13px; color: rgba(255,255,255,0.5); }
+
+  /* ANIMATIONS */
+  .slide.active h1,
+  .slide.active h2,
+  .slide.active h3,
+  .slide.active p.lead,
+  .slide.active .chip,
+  .slide.active .powered-by,
+  .slide.active .problem-grid,
+  .slide.active .solution-grid,
+  .slide.active .module-card,
+  .slide.active .flow-steps,
+  .slide.active .layer-stack,
+  .slide.active .mini-grid,
+  .slide.active .mini-group-label,
+  .slide.active .survey-list,
+  .slide.active .big-number,
+  .slide.active .metric-row,
+  .slide.active .savings-grid,
+  .slide.active .system-grid,
+  .slide.active .demo-results,
+  .slide.active .workflow-steps,
+  .slide.active .cta-box,
+  .slide.active .layer-biz-stack,
+  .slide.active .growth-bar,
+  .slide.active .convai-prompt {
+    animation: riseIn 0.7s cubic-bezier(.22,.61,.36,1) both;
+  }
+  .slide.active .chip { animation-delay: .05s; }
+  .slide.active h1, .slide.active h2 { animation-delay: .15s; }
+  .slide.active p.lead, .slide.active h3 { animation-delay: .25s; }
+  .slide.active .problem-grid,
+  .slide.active .solution-grid,
+  .slide.active .module-card,
+  .slide.active .flow-steps,
+  .slide.active .layer-stack,
+  .slide.active .mini-grid,
+  .slide.active .survey-list,
+  .slide.active .metric-row,
+  .slide.active .savings-grid,
+  .slide.active .system-grid,
+  .slide.active .demo-results,
+  .slide.active .workflow-steps,
+  .slide.active .cta-box,
+  .slide.active .layer-biz-stack,
+  .slide.active .growth-bar { animation-delay: .35s; }
+  .slide.active .powered-by { animation-delay: .5s; }
+
+  @keyframes riseIn {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* AUTO-PLAY CONTROLS */
+  .autoplay-controls {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    background: rgba(3,8,20,0.85);
+    border: 1px solid rgba(0,163,224,0.35);
+    border-radius: 10px;
+    backdrop-filter: blur(16px);
+    z-index: 200;
+    font-family: var(--mono);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .autoplay-controls .rec-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+    font-weight: 600;
+    min-width: 52px;
+  }
+  .autoplay-controls .rec-indicator.active { color: #ff4444; }
+  .autoplay-controls .rec-indicator .rec-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.2);
+  }
+  .autoplay-controls .rec-indicator.active .rec-dot {
+    background: #ff4444;
+    box-shadow: 0 0 10px #ff4444;
+    animation: recPulse 1s ease-in-out infinite;
+  }
+  @keyframes recPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+  .autoplay-controls button {
+    background: rgba(0,163,224,0.1);
+    border: 1px solid rgba(0,163,224,0.4);
+    color: var(--teal-light);
+    padding: 8px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-family: var(--mono);
+    transition: all .2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .autoplay-controls button:hover {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: var(--navy-dark);
+    box-shadow: 0 0 16px rgba(0,163,224,0.5);
+  }
+  .autoplay-controls .slide-info {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(0,163,224,0.6);
+    min-width: 60px;
+    text-align: center;
+  }
+
+  /* NAV ARROWS */
+  .nav {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    display: flex;
+    gap: 10px;
+    z-index: 200;
+  }
+  .nav button {
+    width: 42px; height: 42px;
+    border-radius: 8px;
+    background: rgba(3,8,20,0.7);
+    border: 1px solid rgba(0,163,224,0.3);
+    color: var(--teal-light);
+    font-size: 18px;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition: all .2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .nav button:hover {
+    background: var(--teal);
+    color: var(--navy-dark);
+    border-color: var(--teal);
+  }
+
+  /* PREPLAY OVERLAY */
+  .preplay-overlay {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, var(--navy) 0%, var(--navy-dark) 40%, var(--navy-blk) 100%);
+    z-index: 500;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 28px;
+    transition: opacity 0.6s ease;
+  }
+  .preplay-overlay.hidden { opacity: 0; pointer-events: none; }
+  .preplay-overlay .preplay-logo {
+    font-family: var(--mono);
+    font-size: clamp(14px, 2.5vw, 22px);
+    letter-spacing: 8px;
+    color: var(--teal-neon);
+    text-transform: uppercase;
+    font-weight: 700;
+    text-shadow: 0 0 20px rgba(61,203,202,0.5);
+  }
+  .preplay-overlay .preplay-title {
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(28px, 5vw, 56px);
+    font-weight: 900;
+    letter-spacing: -2px;
+    text-align: center;
+    max-width: 700px;
+    background: linear-gradient(180deg, #ffffff 0%, #b8c4d1 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .preplay-overlay .preplay-subtitle {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 16px;
+    color: rgba(255,255,255,0.45);
+    font-style: italic;
+    text-align: center;
+    max-width: 500px;
+  }
+  .preplay-overlay .preplay-btn {
+    width: 90px; height: 90px;
+    border-radius: 50%;
+    background: rgba(0,163,224,0.12);
+    border: 2px solid var(--teal);
+    color: var(--teal-neon);
+    font-size: 36px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 40px rgba(0,163,224,0.2);
+    margin-top: 12px;
+  }
+  .preplay-overlay .preplay-btn:hover {
+    background: var(--teal);
+    color: var(--navy-dark);
+    box-shadow: 0 0 60px rgba(0,163,224,0.5);
+    transform: scale(1.08);
+  }
+  .preplay-overlay .preplay-hint {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.25);
+    text-transform: uppercase;
+  }
+
+  /* NARRATION WAVEFORM */
+  .narration-wave {
+    position: fixed;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    height: 20px;
+    z-index: 200;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .narration-wave.active { opacity: 1; }
+  .narration-wave .bar {
+    width: 3px;
+    background: var(--teal-neon);
+    border-radius: 2px;
+    animation: waveBar 0.8s ease-in-out infinite;
+  }
+  .narration-wave .bar:nth-child(1) { height: 8px; animation-delay: 0s; }
+  .narration-wave .bar:nth-child(2) { height: 14px; animation-delay: 0.1s; }
+  .narration-wave .bar:nth-child(3) { height: 10px; animation-delay: 0.2s; }
+  .narration-wave .bar:nth-child(4) { height: 18px; animation-delay: 0.3s; }
+  .narration-wave .bar:nth-child(5) { height: 12px; animation-delay: 0.15s; }
+  .narration-wave .bar:nth-child(6) { height: 16px; animation-delay: 0.25s; }
+  .narration-wave .bar:nth-child(7) { height: 8px; animation-delay: 0.35s; }
+
+  @keyframes waveBar {
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(0.3); }
+  }
+
+  .convai-prompt {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 15px;
+    color: rgba(255,255,255,0.5);
+    font-style: italic;
+    margin-top: 20px;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .slide { padding: 50px 5vw 80px; }
+    .problem-grid { grid-template-columns: 1fr; }
+    .solution-grid { grid-template-columns: 1fr 1fr; }
+    .mini-grid { grid-template-columns: repeat(2, 1fr); }
+    .survey-list { grid-template-columns: 1fr; }
+    .savings-grid { grid-template-columns: 1fr; }
+    .system-grid { grid-template-columns: repeat(2, 1fr); }
+    .demo-results { grid-template-columns: 1fr; }
+    .layer-row { grid-template-columns: 80px 1fr 80px; gap: 10px; padding: 14px 16px; }
+    .layer-row .lr-num { font-size: 18px; }
+    .layer-row .lr-text { font-size: 14px; }
+    h1 { font-size: clamp(32px, 8vw, 56px); letter-spacing: -1.5px; }
+    h2 { font-size: clamp(26px, 6vw, 44px); letter-spacing: -1px; }
+    p.lead { font-size: clamp(15px, 3.5vw, 20px); }
+    .chip { font-size: 10px; padding: 8px 16px; letter-spacing: 2px; margin-bottom: 20px; }
+    .autoplay-controls { padding: 8px 14px; gap: 8px; bottom: 16px; }
+    .autoplay-controls button { width: 34px; height: 34px; font-size: 14px; }
+    .autoplay-controls .slide-info { font-size: 9px; }
+    .autoplay-controls .rec-indicator { font-size: 9px; min-width: 44px; }
+    .nav { bottom: 18px; right: 16px; gap: 8px; }
+    .nav button { width: 36px; height: 36px; font-size: 15px; }
+    .flow-steps { gap: 8px; }
+    .flow-step { padding: 8px 12px; font-size: 10px; }
+    .module-card { padding: 24px 22px; }
+    .cta-box { padding: 24px 24px; }
+    .biz-layer { padding: 16px 18px; gap: 14px; }
+    .biz-layer .bl-icon { font-size: 20px; min-width: 48px; }
+    .biz-layer .bl-text { font-size: 13px; }
+  }
+  @media (max-width: 560px) {
+    .solution-grid { grid-template-columns: 1fr; }
+    .mini-grid { grid-template-columns: 1fr 1fr; }
+    .system-grid { grid-template-columns: 1fr; }
+    .workflow-steps { flex-direction: column; align-items: center; }
+    .wf-arrow { display: none; }
+  }
+  @media print {
+    .particles, .nav, .autoplay-controls, .preplay-overlay, .progress, .narration-wave { display: none !important; }
+    .slide { position: relative !important; display: flex !important; opacity: 1 !important; page-break-after: always; height: auto; min-height: 100vh; }
+    html, body { overflow: visible; height: auto; }
+    .deck { height: auto; overflow: visible; }
+  }
+</style>
+</head>
+<body>
+
+<!-- FLOATING PARTICLES -->
+<div class="particles" id="particles">
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+</div>
+
+<!-- PRE-PLAY OVERLAY -->
+<div class="preplay-overlay" id="preplayOverlay">
+  <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69b02d62034886f7c9e996d9.png" alt="PINAXIS" style="width:120px;height:120px;border-radius:20px;box-shadow:0 8px 40px rgba(0,163,224,0.3);">
+  <div class="preplay-logo">PINAXIS</div>
+  <div class="preplay-title">The AI-Powered Warehouse Data Analytics Platform</div>
+  <div class="preplay-subtitle">Powered by Claude AI &middot; Digit2AI</div>
+  <button class="preplay-btn" id="preplayBtn" aria-label="Start presentation">&#9654;</button>
+  <div class="preplay-hint">Tap to Start</div>
+</div>
+
+<!-- NARRATION WAVEFORM -->
+<div class="narration-wave" id="narrationWave">
+  <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+  <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+</div>
+
+<!-- PROGRESS BAR -->
+<div class="progress" id="progress"></div>
+
+<!-- ===== SLIDE DECK ===== -->
+<div class="deck" id="deck">
+
+<!-- SLIDE 0: TITLE -->
+<div class="slide bg-navy active" data-auto-advance="6000">
+  <div class="chip">PINAXIS Platform</div>
+  <h1>PINAXIS</h1>
+  <p class="lead">The AI-Powered Warehouse Data Analytics Platform. Upload warehouse data, get automated analysis, product recommendations, and investment-grade proposals -- in minutes.</p>
+  <div class="powered-by">Powered by Claude AI &middot; Digit2AI</div>
+</div>
+
+<!-- SLIDE 1: THE CHALLENGE -->
+<div class="slide bg-deep" data-auto-advance="10000">
+  <div class="chip" style="background:rgba(255,80,80,0.08);border-color:rgba(255,80,80,0.4);color:#ff8888;">
+    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#ff6666;box-shadow:0 0 8px #ff6666;margin-right:4px;"></span>
+    The Problem
+  </div>
+  <h2>The Warehouse Automation Bottleneck</h2>
+  <div class="problem-grid">
+    <div class="problem-card">
+      <div class="pc-icon">[X]</div>
+      <div class="pc-title">Manual Data Collection</div>
+      <div class="pc-desc">Warehouse data lives in spreadsheets, ERPs, and printed reports. Extracting actionable insights takes weeks of consultant time.</div>
+    </div>
+    <div class="problem-card">
+      <div class="pc-icon">[X]</div>
+      <div class="pc-title">No Standardized Analysis</div>
+      <div class="pc-desc">Every project starts from scratch. ABC classification, fit analysis, and throughput profiling are done inconsistently or not at all.</div>
+    </div>
+    <div class="problem-card">
+      <div class="pc-icon">[X]</div>
+      <div class="pc-title">Unquantified ROI</div>
+      <div class="pc-desc">Automation benefits are estimated by gut feel. No systematic calculation of labor savings, error reduction, or throughput gains.</div>
+    </div>
+    <div class="problem-card">
+      <div class="pc-icon">[X]</div>
+      <div class="pc-title">Slow Proposal Turnaround</div>
+      <div class="pc-desc">From first data upload to a boardroom-ready proposal takes months. Prospects lose momentum and deals stall.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 2: THE PLATFORM -->
+<div class="slide bg-navy" data-auto-advance="8000">
+  <div class="chip">One Platform</div>
+  <h2 class="accent-teal">4 Problems. 8 Steps. 1 Platform.</h2>
+  <div class="solution-grid">
+    <div class="solution-card">
+      <div class="sc-num">Step 1</div>
+      <div class="sc-problem">Manual Collection</div>
+      <div class="sc-arrow">--></div>
+      <div class="sc-solution">AI Data Intake</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-num">Step 2-3</div>
+      <div class="sc-problem">No Standard Analysis</div>
+      <div class="sc-arrow">--></div>
+      <div class="sc-solution">Automated Analytics Engine</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-num">Step 4-5</div>
+      <div class="sc-problem">Unquantified ROI</div>
+      <div class="sc-arrow">--></div>
+      <div class="sc-solution">Simulation + Commercial</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-num">Step 6-8</div>
+      <div class="sc-problem">Slow Turnaround</div>
+      <div class="sc-arrow">--></div>
+      <div class="sc-solution">AI Proposal + Presentation</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 3: DATA INTAKE -->
+<div class="slide bg-teal" data-auto-advance="10000">
+  <div class="chip">Step 1 -- Data Intake</div>
+  <h2>Upload Data. Get Intelligence.</h2>
+  <p class="lead">Drag and drop your warehouse data files. PINAXIS auto-detects the format and begins analysis immediately.</p>
+  <div class="flow-steps">
+    <div class="flow-step">Item Master</div>
+    <div class="flow-arrow">--></div>
+    <div class="flow-step">Inventory Snapshot</div>
+    <div class="flow-arrow">--></div>
+    <div class="flow-step">Goods In/Out</div>
+    <div class="flow-arrow">--></div>
+    <div class="flow-step">OEE Data</div>
+  </div>
+  <div class="module-card">
+    <p style="font-family:'Source Serif 4',Georgia,serif;font-size:16px;line-height:1.7;color:rgba(255,255,255,0.8);">
+      <strong style="color:var(--teal-neon);">Supports:</strong> CSV, Excel, JSON, and direct API ingestion. Auto-detects column mapping for SKU, quantity, dates, dimensions, and pick units. Real-time validation with immediate error feedback.
+    </p>
+  </div>
+</div>
+
+<!-- SLIDE 4: ANALYSIS ENGINE -->
+<div class="slide bg-navy" data-auto-advance="10000">
+  <div class="chip">Step 2 -- Analysis</div>
+  <h2>12 Computational Analyses</h2>
+  <div class="mini-group-label">Volume Profiling (4)</div>
+  <div class="mini-grid">
+    <div class="mini-item">ABC Classification</div>
+    <div class="mini-item">XYZ Seasonality</div>
+    <div class="mini-item">Lorenz / Gini Curve</div>
+    <div class="mini-item">Dead Stock Detection</div>
+  </div>
+  <div class="mini-group-label">Order Intelligence (4)</div>
+  <div class="mini-grid">
+    <div class="mini-item">Order Size Distribution</div>
+    <div class="mini-item">Pick Unit Breakdown</div>
+    <div class="mini-item">Hourly Throughput</div>
+    <div class="mini-item">Weekday Patterns</div>
+  </div>
+  <div class="mini-group-label">Design & Projection (4)</div>
+  <div class="mini-grid">
+    <div class="mini-item">Design Day (P75)</div>
+    <div class="mini-item">Fit / No-Fit Analysis</div>
+    <div class="mini-item">5-Year Extrapolation</div>
+    <div class="mini-item">Throughput Capacity</div>
+  </div>
+</div>
+
+<!-- SLIDE 5: ABC CLASSIFICATION -->
+<div class="slide bg-deep" data-auto-advance="10000">
+  <div class="chip">ABC / Pareto Analysis</div>
+  <h2>The Pareto Principle at Work</h2>
+  <p class="lead">A small fraction of SKUs drives the vast majority of volume -- the key indicator for goods-to-person automation zones.</p>
+  <div class="layer-stack">
+    <div class="layer-row l1">
+      <div class="lr-label">A Items</div>
+      <div class="lr-text">Fast Movers -- 80% of volume</div>
+      <div class="lr-num">~15%</div>
+    </div>
+    <div class="layer-row l2">
+      <div class="lr-label">B Items</div>
+      <div class="lr-text">Medium Movers -- 15% of volume</div>
+      <div class="lr-num">~25%</div>
+    </div>
+    <div class="layer-row l3">
+      <div class="lr-label">C Items</div>
+      <div class="lr-text">Slow Movers -- 5% of volume</div>
+      <div class="lr-num">~60%</div>
+    </div>
+  </div>
+  <div class="growth-bar">
+    <div class="gb-from">Manual</div>
+    <div class="gb-arrow">--></div>
+    <div class="gb-to">GTP Zone</div>
+    <div class="gb-label">A-items drive automation ROI</div>
+  </div>
+</div>
+
+<!-- SLIDE 6: FIT ANALYSIS & CONCEPTS -->
+<div class="slide bg-teal" data-auto-advance="10000">
+  <div class="chip">Step 3 -- Concepts</div>
+  <h2>Fit Analysis + Product Matching</h2>
+  <p class="lead">Every SKU is scored against automation bin sizes. Items with dimensions are classified as Fit or No-Fit for each system.</p>
+  <div class="demo-results">
+    <div class="demo-stat">
+      <div class="ds-val">85%</div>
+      <div class="ds-label">Bin-Capable SKUs (typical)</div>
+    </div>
+    <div class="demo-stat">
+      <div class="ds-val">92%</div>
+      <div class="ds-label">Volume Fit Rate</div>
+    </div>
+    <div class="demo-stat">
+      <div class="ds-val">3-5</div>
+      <div class="ds-label">Product Recommendations</div>
+    </div>
+    <div class="demo-stat">
+      <div class="ds-val">100</div>
+      <div class="ds-label">Fit Score (max)</div>
+    </div>
+  </div>
+  <div class="module-card">
+    <p style="font-family:'Source Serif 4',Georgia,serif;font-size:16px;line-height:1.7;color:rgba(255,255,255,0.8);">
+      <strong style="color:var(--teal-neon);">Automated matching:</strong> Shuttle systems, AutoStore, miniload, goods-to-person stations, and pick towers -- each scored on volume fit, SKU count, throughput demand, and temperature zone requirements.
+    </p>
+  </div>
+</div>
+
+<!-- SLIDE 7: SIMULATION -->
+<div class="slide bg-orange" data-auto-advance="10000">
+  <div class="chip orange">Step 4 -- Simulation</div>
+  <h2>What-If Scenario Modeling</h2>
+  <p class="lead">Run growth scenarios and capacity simulations before committing to a concept design.</p>
+  <div class="survey-list">
+    <div class="survey-item"><div class="si-icon">01</div><div class="si-text">5-year volume growth extrapolation</div></div>
+    <div class="survey-item"><div class="si-icon">02</div><div class="si-text">Adjustable growth rates (3-10%)</div></div>
+    <div class="survey-item"><div class="si-icon">03</div><div class="si-text">Design Day vs Average Day comparison</div></div>
+    <div class="survey-item"><div class="si-icon">04</div><div class="si-text">Peak hour throughput modeling</div></div>
+    <div class="survey-item"><div class="si-icon">05</div><div class="si-text">Capacity ceiling identification</div></div>
+    <div class="survey-item"><div class="si-icon">06</div><div class="si-text">Multi-scenario comparison reports</div></div>
+  </div>
+  <p class="lead" style="margin-top:20px;font-size:15px;color:rgba(255,255,255,0.45);">All projections auto-feed into the commercial model and proposal generator.</p>
+</div>
+
+<!-- SLIDE 8: COMMERCIAL -->
+<div class="slide bg-gold" data-auto-advance="10000">
+  <div class="chip gold">Step 5 -- Commercial</div>
+  <h2 class="accent-gold">ROI That Speaks the CFO's Language</h2>
+  <p class="lead">Automated benefit projections with quantified savings across every operational metric.</p>
+  <div class="savings-grid">
+    <div class="savings-box">
+      <div class="sb-title">Labor Efficiency</div>
+      <div class="sb-total">+40%</div>
+      <div class="sb-items">
+        Picks per hour increase<br>
+        Walk time elimination<br>
+        Shift optimization<br>
+        Error rate reduction
+      </div>
+    </div>
+    <div class="savings-box">
+      <div class="sb-title">Operational Savings</div>
+      <div class="sb-total">30-50%</div>
+      <div class="sb-items">
+        Space utilization gain<br>
+        Inventory accuracy improvement<br>
+        Throughput capacity increase<br>
+        Return processing speed
+      </div>
+    </div>
+  </div>
+  <p class="lead" style="margin-top:20px;font-size:15px;color:rgba(255,255,255,0.5);">Automation Readiness Score, payback period, and annual savings -- all computed from actual warehouse data.</p>
+</div>
+
+<!-- SLIDE 9: DESIGN METRICS -->
+<div class="slide bg-navy" data-auto-advance="10000">
+  <div class="chip">Design Basis</div>
+  <h2>Design Day Engineering</h2>
+  <p class="lead">The 75th percentile design day ensures the system handles peak demand 75% of the time.</p>
+  <div class="metric-row">
+    <div class="metric-card">
+      <div class="mc-label">Order Lines/Day</div>
+      <div class="mc-vals">
+        <div class="mc-old">Avg</div>
+        <div class="mc-new">P75 Design</div>
+      </div>
+    </div>
+    <div class="metric-card">
+      <div class="mc-label">Pick Units/Day</div>
+      <div class="mc-vals">
+        <div class="mc-old">Avg</div>
+        <div class="mc-new">P75 Design</div>
+      </div>
+    </div>
+    <div class="metric-card">
+      <div class="mc-label">Orders/Day</div>
+      <div class="mc-vals">
+        <div class="mc-old">Avg</div>
+        <div class="mc-new">P75 Design</div>
+      </div>
+    </div>
+  </div>
+  <div class="module-card" style="margin-top:24px;text-align:center;">
+    <p style="font-family:'Source Serif 4',Georgia,serif;font-size:16px;line-height:1.7;color:rgba(255,255,255,0.8);">
+      <strong style="color:var(--teal-neon);">Design Hour</strong> = Design Day / Working Hours. This is the critical throughput requirement for automation dimensioning. PINAXIS computes it automatically from your goods-out data.
+    </p>
+  </div>
+</div>
+
+<!-- SLIDE 10: PROPOSAL & PRESENTATION -->
+<div class="slide bg-teal" data-auto-advance="10000">
+  <div class="chip">Steps 6-8 -- Proposal + Presentation</div>
+  <h2>From Data to Boardroom in Minutes</h2>
+  <p class="lead">PINAXIS generates a complete voice-narrated presentation with charts, metrics, and product recommendations.</p>
+  <div class="system-grid">
+    <div class="system-card">
+      <div class="sys-name">PDF Report</div>
+      <div class="sys-desc">Full analysis + recommendations</div>
+    </div>
+    <div class="system-card">
+      <div class="sys-name">Voice Presentation</div>
+      <div class="sys-desc">Rachel AI narrates each slide</div>
+    </div>
+    <div class="system-card">
+      <div class="sys-name">Interactive Dashboard</div>
+      <div class="sys-desc">Live charts + drill-down</div>
+    </div>
+    <div class="system-card">
+      <div class="sys-name">NDA Generator</div>
+      <div class="sys-desc">Digital signature workflow</div>
+    </div>
+    <div class="system-card">
+      <div class="sys-name">Contract Builder</div>
+      <div class="sys-desc">Enterprise services agreement</div>
+    </div>
+    <div class="system-card">
+      <div class="sys-name">API Integration</div>
+      <div class="sys-desc">Connect to WMS/ERP/MES</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 11: WAREHOUSEMIND AI -->
+<div class="slide bg-deep" data-auto-advance="10000">
+  <div class="chip">WarehouseMind AI</div>
+  <h2>The Intelligence Layer</h2>
+  <p class="lead">WarehouseMind is the AI brain behind PINAXIS -- powering real-time monitoring, voice interaction, and autonomous decision-making.</p>
+  <div class="layer-biz-stack">
+    <div class="biz-layer bl1">
+      <div class="bl-icon">MCP</div>
+      <div class="bl-text"><strong style="color:var(--white);">Command Center</strong> -- MCP protocol orchestration. Every tool, every query, every action flows through the WarehouseMind gateway.</div>
+    </div>
+    <div class="biz-layer bl2">
+      <div class="bl-icon">AI</div>
+      <div class="bl-text"><strong style="color:var(--white);">Neural Intelligence</strong> -- Claude AI powers pattern recognition, anomaly detection, and natural language queries across all warehouse data.</div>
+    </div>
+    <div class="biz-layer bl3">
+      <div class="bl-icon">OEE</div>
+      <div class="bl-text"><strong style="color:var(--white);">Live OEE Dashboard</strong> -- Real-time Overall Equipment Effectiveness monitoring. Availability x Performance x Quality, tracked per machine.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 12: LIVE DEMO -->
+<div class="slide bg-teal" data-auto-advance="10000">
+  <div class="chip">Live Demo</div>
+  <h2>Real Results: POC Warehouse</h2>
+  <p class="lead">Uploaded 4 data files. Full analysis in under 30 seconds.</p>
+  <div class="demo-results">
+    <div class="demo-stat">
+      <div class="ds-val">12,450</div>
+      <div class="ds-label">Total SKUs Analyzed</div>
+    </div>
+    <div class="demo-stat">
+      <div class="ds-val">0.82</div>
+      <div class="ds-label">Gini Coefficient</div>
+    </div>
+    <div class="demo-stat">
+      <div class="ds-val">85%</div>
+      <div class="ds-label">Bin-Capable SKUs</div>
+    </div>
+    <div class="demo-stat">
+      <div class="ds-val">4,200</div>
+      <div class="ds-label">Design Day Order Lines</div>
+    </div>
+  </div>
+  <div style="margin-top:20px;padding:16px 24px;background:rgba(197,165,90,0.1);border:1px solid rgba(197,165,90,0.3);border-radius:8px;max-width:400px;">
+    <div style="font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--gold-neon);text-transform:uppercase;margin-bottom:6px;">Automation Readiness</div>
+    <div style="font-family:var(--mono);font-size:32px;font-weight:700;color:var(--gold-neon);">87 / 100</div>
+  </div>
+</div>
+
+<!-- SLIDE 13: WORKFLOW -->
+<div class="slide bg-navy" data-auto-advance="8000">
+  <div class="chip">Workflow</div>
+  <h2>8-Step Workflow</h2>
+  <div class="workflow-steps">
+    <div class="wf-step"><div class="wf-num">1</div><div class="wf-label">Data Intake</div></div>
+    <div class="wf-arrow">--></div>
+    <div class="wf-step"><div class="wf-num">2</div><div class="wf-label">Analysis</div></div>
+    <div class="wf-arrow">--></div>
+    <div class="wf-step"><div class="wf-num">3</div><div class="wf-label">Concepts</div></div>
+    <div class="wf-arrow">--></div>
+    <div class="wf-step"><div class="wf-num">4</div><div class="wf-label">Simulation</div></div>
+    <div class="wf-arrow">--></div>
+    <div class="wf-step"><div class="wf-num">5</div><div class="wf-label">Commercial</div></div>
+    <div class="wf-arrow">--></div>
+    <div class="wf-step"><div class="wf-num">6</div><div class="wf-label">Proposal</div></div>
+    <div class="wf-arrow">--></div>
+    <div class="wf-step"><div class="wf-num">7</div><div class="wf-label">Presentation</div></div>
+    <div class="wf-arrow">--></div>
+    <div class="wf-step"><div class="wf-num">8</div><div class="wf-label">WarehouseMind</div></div>
+  </div>
+  <div class="module-card" style="margin-top:32px;text-align:center;">
+    <p style="font-family:var(--mono);font-size:14px;color:var(--teal-neon);letter-spacing:1px;">
+      Live at <a href="https://aiagent.ringlypro.com/pinaxis/" style="color:var(--teal-neon);text-decoration:underline;" target="_blank">aiagent.ringlypro.com/pinaxis</a>
+    </p>
+  </div>
+</div>
+
+<!-- SLIDE 14: CTA / FINAL -->
+<div class="slide bg-navy" data-auto-advance="12000" data-last-slide>
+  <div class="chip gold">Let's Talk</div>
+  <h2 class="accent-gold">Ready to see PINAXIS analyze YOUR warehouse?</h2>
+  <p class="lead">One upload. One analysis. Complete proposal with voice narration in under 60 seconds.</p>
+  <div class="cta-box">
+    <div class="cta-text">
+      PINAXIS transforms how warehouse automation projects are analyzed, designed, and sold.
+      From raw data to boardroom-ready proposal -- powered by AI.
+    </div>
+    <a href="mailto:mstagg@digit2ai.com" class="cta-email">mstagg@digit2ai.com</a>
+  </div>
+  <div class="powered-by" style="margin-top:36px;">Digit2AI -- Powering the Intelligence Layer for Warehouse Automation</div>
+  <div class="convai-prompt" style="margin-top:24px;">Click the microphone to ask Rachel any question about PINAXIS</div>
+</div>
+
+</div><!-- /deck -->
+
+<!-- NAVIGATION -->
+<div class="nav">
+  <button id="prev" aria-label="Previous">&larr;</button>
+  <button id="next" aria-label="Next">&rarr;</button>
+</div>
+
+<!-- AUTO-PLAY CONTROLS -->
+<div class="autoplay-controls" id="autoplayControls">
+  <div class="rec-indicator" id="recIndicator">
+    <div class="rec-dot"></div>
+    <span>LIVE</span>
+  </div>
+  <button id="btnPlayPause" aria-label="Play / Pause" title="Play / Pause" style="display:flex;align-items:center;gap:6px"><span id="playIcon">&#9654;</span><span style="font-size:10px;letter-spacing:1px">PLAY</span></button>
+  <button id="btnStop" aria-label="Stop" title="Stop" style="display:flex;align-items:center;gap:6px"><span>&#9632;</span><span style="font-size:10px;letter-spacing:1px">STOP</span></button>
+  <div class="slide-info" id="slideInfo">01 / 15</div>
+</div>
+
+<!-- ElevenLabs Voice Widget -->
+<script src="https://unpkg.com/@elevenlabs/convai-widget-embed@latest/dist/index.js" async type="text/javascript"></script>
+<elevenlabs-convai agent-id="agent_1801kjx55tabedbvx4y7x4eptbz4"></elevenlabs-convai>
+
+<script>
+  // ============ SLIDE ENGINE ============
+  const slides = document.querySelectorAll('.slide');
+  const TOTAL = slides.length;
+  const progress = document.getElementById('progress');
+  let idx = 0;
+
+  const btnPlayPause = document.getElementById('btnPlayPause');
+  const btnStop = document.getElementById('btnStop');
+  const slideInfo = document.getElementById('slideInfo');
+  const recIndicator = document.getElementById('recIndicator');
+  const preplayOverlay = document.getElementById('preplayOverlay');
+  const preplayBtn = document.getElementById('preplayBtn');
+  const narrationWave = document.getElementById('narrationWave');
+
+  let autoAdvanceTimer = null;
+
+  // ============ RACHEL TTS NARRATION SCRIPTS ============
+  const NARRATIONS = [
+    // Slide 0: Title
+    "Welcome to PINAXIS. The AI-powered warehouse data analytics platform. Upload your warehouse data and get automated analysis, product recommendations, and investment-grade proposals in minutes. Powered by Claude AI and built by Digit2AI.",
+
+    // Slide 1: The Challenge
+    "Here is the warehouse automation bottleneck that every integrator faces. Four systemic problems slow down every project. First, manual data collection. Warehouse data lives in spreadsheets, ERP exports, and printed reports. Extracting actionable insights takes weeks of consultant time. Second, there is no standardized analysis. Every project starts from scratch. ABC classification, fit analysis, and throughput profiling are done inconsistently or not at all. Third, the ROI is unquantified. Automation benefits are estimated by gut feel, with no systematic calculation of labor savings, error reduction, or throughput gains. And fourth, proposal turnaround is painfully slow. From first data upload to a boardroom-ready proposal takes months. Prospects lose momentum and deals stall.",
+
+    // Slide 2: The Platform
+    "PINAXIS solves all four problems with one integrated platform and an eight step workflow. Step one replaces manual collection with AI data intake. Steps two and three replace ad-hoc analysis with a twelve module automated analytics engine. Steps four and five replace unquantified ROI with simulation modeling and commercial benefit projections. And steps six through eight replace slow turnaround with AI-generated proposals and voice-narrated presentations. All in minutes, not months.",
+
+    // Slide 3: Data Intake
+    "Step one is data intake. Drag and drop your warehouse data files and PINAXIS auto-detects the format. It supports item master files, inventory snapshots, goods in and goods out records, and OEE machine data. Formats include CSV, Excel, JSON, and direct API ingestion. The system auto-maps columns for SKU, quantity, dates, dimensions, and pick units. Real-time validation gives you immediate feedback on data quality.",
+
+    // Slide 4: Analysis Engine
+    "Step two is the analysis engine. PINAXIS runs twelve computational analyses automatically. Four cover volume profiling: ABC classification, XYZ seasonality, Lorenz and Gini curve analysis, and dead stock detection. Four cover order intelligence: order size distribution, pick unit breakdown, hourly throughput patterns, and weekday volume patterns. And four cover design and projection: the P75 design day calculation, fit and no-fit analysis against bin sizes, five year growth extrapolation, and throughput capacity modeling.",
+
+    // Slide 5: ABC Classification
+    "The ABC classification reveals the Pareto principle at work in every warehouse. A small fraction of SKUs drives the vast majority of volume. This is the key indicator for goods-to-person automation zones. Typically, A items represent about fifteen percent of SKUs but eighty percent of volume. B items are twenty five percent of SKUs with fifteen percent of volume. And C items are sixty percent of SKUs but only five percent of volume. The Gini coefficient quantifies this concentration. A coefficient above zero point seven indicates highly concentrated volume, ideal for automation.",
+
+    // Slide 6: Fit Analysis & Concepts
+    "Step three is fit analysis and product matching. Every SKU is scored against automation bin sizes. Items with known dimensions are classified as fit or no-fit for each system type. In a typical warehouse, eighty five percent of SKUs are bin-capable and ninety two percent of volume fits automation. PINAXIS then generates three to five product recommendations, each scored on a hundred point scale. It evaluates shuttle systems, AutoStore, miniload, goods-to-person stations, and pick towers, scoring each on volume fit, SKU count, throughput demand, and temperature zone requirements.",
+
+    // Slide 7: Simulation
+    "Step four is simulation and what-if scenario modeling. Run growth scenarios and capacity simulations before committing to a concept design. The system projects five year volume growth, lets you adjust growth rates from three to ten percent, compares design day versus average day performance, models peak hour throughput requirements, identifies capacity ceilings, and generates multi-scenario comparison reports. All projections automatically feed into the commercial model and proposal generator.",
+
+    // Slide 8: Commercial
+    "Step five is the commercial analysis. PINAXIS speaks the CFO's language. Automated benefit projections quantify savings across every operational metric. Labor efficiency gains of forty percent or more through increased picks per hour, eliminated walk time, shift optimization, and reduced error rates. Operational savings of thirty to fifty percent from improved space utilization, better inventory accuracy, increased throughput capacity, and faster return processing. The system calculates an automation readiness score, payback period, and annual savings, all computed from actual warehouse data, not estimates.",
+
+    // Slide 9: Design Metrics
+    "The design basis is built on the 75th percentile design day. This ensures the automation system handles peak demand seventy five percent of the time, which is the industry standard for dimensioning. PINAXIS computes the design day for order lines per day, pick units per day, and orders per day. Then it calculates the design hour by dividing by working hours. This is the critical throughput requirement that determines which automation system fits and at what scale. All of this is computed automatically from your goods-out data.",
+
+    // Slide 10: Proposal & Presentation
+    "Steps six through eight take you from data to boardroom in minutes. PINAXIS generates a full PDF report with analysis and recommendations, a voice-narrated presentation where Rachel AI speaks each slide, an interactive dashboard with live charts and drill-down capability, an NDA generator with digital signature workflow, a contract builder for enterprise services agreements, and API integration documentation for connecting to your WMS, ERP, or MES. Everything a prospect needs, generated automatically.",
+
+    // Slide 11: WarehouseMind AI
+    "WarehouseMind is the AI brain behind PINAXIS. It powers three critical layers. First, the MCP Command Center, where every tool, query, and action flows through the WarehouseMind gateway using the Model Context Protocol. Second, Neural Intelligence, where Claude AI powers pattern recognition, anomaly detection, and natural language queries across all warehouse data. And third, the live OEE Dashboard for real-time Overall Equipment Effectiveness monitoring. Availability times performance times quality, tracked per machine, per shift, with automatic downtime categorization.",
+
+    // Slide 12: Live Demo
+    "Real results from our POC warehouse. We uploaded four data files and got a full analysis in under thirty seconds. Twelve thousand four hundred fifty SKUs analyzed. A Gini coefficient of zero point eight two, indicating highly concentrated volume ideal for automation. Eighty five percent of SKUs are bin-capable. And four thousand two hundred order lines per design day. The automation readiness score: eighty seven out of one hundred.",
+
+    // Slide 13: Workflow
+    "The platform guides users through an eight step workflow. Data intake with AI format detection. Twelve-module automated analysis. Concept design with product matching. Simulation and capacity modeling. Commercial benefit projections. Proposal generation with PDF export. Voice-narrated presentation. And WarehouseMind AI for ongoing intelligence. All live today at aiagent dot ringlypro dot com slash pinaxis.",
+
+    // Slide 14: CTA
+    "Ready to see PINAXIS analyze your warehouse? One upload. One analysis. Complete proposal with voice narration in under sixty seconds. Contact us at mstagg at digit2ai dot com. PINAXIS by Digit2AI. Powering the intelligence layer for warehouse automation."
+  ];
+
+  // ============ TTS AUDIO ENGINE ============
+  var rachelAudio = new Audio();
+  rachelAudio.volume = 1.0;
+  var ttsCache = {};
+  var currentNarrationEnd = null;
+
+  rachelAudio.addEventListener('play', function() { narrationWave.classList.add('active'); });
+  rachelAudio.addEventListener('ended', function() {
+    narrationWave.classList.remove('active');
+    if (currentNarrationEnd) { var cb = currentNarrationEnd; currentNarrationEnd = null; cb(); }
+  });
+  rachelAudio.addEventListener('error', function() {
+    narrationWave.classList.remove('active');
+    console.error('Audio error');
+    if (currentNarrationEnd) {
+      var cb = currentNarrationEnd;
+      currentNarrationEnd = null;
+      var ms = slides[idx].dataset.autoAdvance ? parseInt(slides[idx].dataset.autoAdvance) : 8000;
+      autoAdvanceTimer = setTimeout(cb, ms);
+    }
+  });
+
+  function cancelNarration() {
+    currentNarrationEnd = null;
+    rachelAudio.pause();
+    rachelAudio.removeAttribute('src');
+    rachelAudio.load();
+    narrationWave.classList.remove('active');
+  }
+
+  async function fetchTTS(text) {
+    var hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    var hashHex = Array.from(new Uint8Array(hash)).map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+    if (ttsCache[hashHex]) return ttsCache[hashHex];
+    try {
+      var resp = await fetch('/api/tts/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text })
+      });
+      if (!resp.ok) throw new Error('TTS failed: ' + resp.status);
+      var blob = await resp.blob();
+      var url = URL.createObjectURL(blob);
+      ttsCache[hashHex] = url;
+      return url;
+    } catch (e) {
+      console.error('TTS fetch error:', e);
+      return null;
+    }
+  }
+
+  async function narrateSlide(slideIndex, onEnd) {
+    cancelNarration();
+    cancelAutoAdvance();
+    var text = NARRATIONS[slideIndex];
+    if (!text) {
+      var ms = slides[slideIndex].dataset.autoAdvance ? parseInt(slides[slideIndex].dataset.autoAdvance) : 8000;
+      autoAdvanceTimer = setTimeout(function() { if (onEnd) onEnd(); }, ms);
+      return;
+    }
+    currentNarrationEnd = onEnd;
+    narrationWave.classList.add('active');
+    var audioUrl = await fetchTTS(text);
+    if (!autoPlaying) { narrationWave.classList.remove('active'); return; }
+    if (audioUrl) {
+      rachelAudio.src = audioUrl;
+      rachelAudio.play().catch(function(err) {
+        console.error('Audio play failed:', err.message);
+        narrationWave.classList.remove('active');
+        currentNarrationEnd = null;
+        var ms = slides[slideIndex].dataset.autoAdvance ? parseInt(slides[slideIndex].dataset.autoAdvance) : 8000;
+        autoAdvanceTimer = setTimeout(function() { if (onEnd) onEnd(); }, ms);
+      });
+    } else {
+      narrationWave.classList.remove('active');
+      currentNarrationEnd = null;
+      var ms = slides[slideIndex].dataset.autoAdvance ? parseInt(slides[slideIndex].dataset.autoAdvance) : 8000;
+      autoAdvanceTimer = setTimeout(function() { if (onEnd) onEnd(); }, ms);
+    }
+  }
+
+  function show(n) {
+    idx = Math.max(0, Math.min(TOTAL - 1, n));
+    slides.forEach(function(s, i) { s.classList.toggle('active', i === idx); });
+    var num = String(idx + 1).padStart(2, '0');
+    var tot = String(TOTAL).padStart(2, '0');
+    slideInfo.textContent = num + ' / ' + tot;
+    progress.style.width = ((idx + 1) / TOTAL * 100) + '%';
+  }
+
+  document.getElementById('next').addEventListener('click', function() { manualNav(idx + 1); });
+  document.getElementById('prev').addEventListener('click', function() { manualNav(idx - 1); });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); manualNav(idx + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); manualNav(idx - 1); }
+    else if (e.key === ' ') { e.preventDefault(); if (autoPlaying) pauseAutoPlay(); else startAutoPlay(); }
+    else if (e.key === 'Home') manualNav(0);
+    else if (e.key === 'End') manualNav(TOTAL - 1);
+    else if (e.key.toLowerCase() === 'f') {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+  });
+
+  // Touch swipe
+  var tStartX = 0, tStartY = 0, tStartT = 0;
+  var deck = document.getElementById('deck');
+  deck.addEventListener('touchstart', function(e) {
+    var t = e.changedTouches[0];
+    tStartX = t.clientX; tStartY = t.clientY; tStartT = Date.now();
+  }, { passive: true });
+  deck.addEventListener('touchend', function(e) {
+    var t = e.changedTouches[0];
+    var dx = t.clientX - tStartX;
+    var dy = t.clientY - tStartY;
+    var dt = Date.now() - tStartT;
+    if (dt < 600 && Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      if (dx < 0) manualNav(idx + 1); else manualNav(idx - 1);
+    }
+  }, { passive: true });
+
+  show(0);
+
+  // ============ MANUAL NAV ============
+  function manualNav(n) {
+    if (autoPlaying) pauseAutoPlay();
+    cancelAutoAdvance();
+    cancelNarration();
+    show(n);
+  }
+
+  function cancelAutoAdvance() {
+    if (autoAdvanceTimer) { clearTimeout(autoAdvanceTimer); autoAdvanceTimer = null; }
+  }
+
+  // ============ AUTO-PLAY ENGINE WITH TTS ============
+  var autoPlaying = false;
+
+  function startAutoPlay() {
+    autoPlaying = true;
+    btnPlayPause.innerHTML = '<span>&#10074;&#10074;</span><span style="font-size:10px;letter-spacing:1px">PAUSE</span>';
+    recIndicator.classList.add('active');
+    autoNarrateCurrentSlide();
+  }
+
+  function pauseAutoPlay() {
+    autoPlaying = false;
+    btnPlayPause.innerHTML = '<span>&#9654;</span><span style="font-size:10px;letter-spacing:1px">PLAY</span>';
+    recIndicator.classList.remove('active');
+    cancelAutoAdvance();
+    cancelNarration();
+  }
+
+  function stopAutoPlay() {
+    autoPlaying = false;
+    btnPlayPause.innerHTML = '<span>&#9654;</span><span style="font-size:10px;letter-spacing:1px">PLAY</span>';
+    recIndicator.classList.remove('active');
+    cancelAutoAdvance();
+    cancelNarration();
+    show(0);
+  }
+
+  function autoNarrateCurrentSlide() {
+    if (!autoPlaying) return;
+    var isLast = slides[idx].hasAttribute('data-last-slide');
+    narrateSlide(idx, function() {
+      if (!autoPlaying) return;
+      if (isLast) { pauseAutoPlay(); return; }
+      if (idx < TOTAL - 1) { show(idx + 1); autoNarrateCurrentSlide(); }
+      else { pauseAutoPlay(); }
+    });
+  }
+
+  // ============ CONTROL EVENT LISTENERS ============
+  btnPlayPause.addEventListener('click', function() {
+    if (autoPlaying) pauseAutoPlay(); else startAutoPlay();
+  });
+  btnStop.addEventListener('click', function() { stopAutoPlay(); });
+
+  // ============ PRE-PLAY OVERLAY ============
+  preplayBtn.addEventListener('click', function() {
+    preplayOverlay.style.display = 'none';
+    show(0);
+    startAutoPlay();
+  });
+</script>
+
+</body>
+</html>

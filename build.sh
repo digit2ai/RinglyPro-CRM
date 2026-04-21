@@ -224,8 +224,44 @@ fi
 
 echo ""
 echo "================================================"
-echo "PINAXIS section removed — renamed to logistics/"
+echo "Building PINAXIS (Logistics) Dashboard"
 echo "================================================"
+
+if [ -d "logistics/dashboard" ]; then
+    cd logistics/dashboard
+    echo "PINAXIS Dashboard directory: $(pwd)"
+
+    if [ -d "dist" ] && [ -f "dist/index.html" ]; then
+        echo "PINAXIS dist folder already exists (pre-built), skipping build"
+        ls -lh dist/
+        cd ../..
+    else
+        echo "Installing PINAXIS dashboard dependencies..."
+        NODE_ENV=development npm ci --include=dev || NODE_ENV=development npm install --include=dev
+
+        echo ""
+        echo "Building PINAXIS dashboard with Vite..."
+        set +e
+        NODE_ENV=production npm run build 2>&1
+        BUILD_EXIT_CODE=$?
+        set -e
+
+        if [ $BUILD_EXIT_CODE -ne 0 ]; then
+          echo "PINAXIS build failed with exit code $BUILD_EXIT_CODE"
+        fi
+
+        if [ -d "dist" ]; then
+            echo "PINAXIS dist folder created!"
+            ls -lh dist/
+        else
+            echo "PINAXIS dist folder not created"
+        fi
+
+        cd ../..
+    fi
+else
+    echo "PINAXIS dashboard directory not found, skipping..."
+fi
 
 echo ""
 echo "================================================"
