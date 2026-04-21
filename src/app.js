@@ -59,6 +59,31 @@ app.use((req, res, next) => {
   next();
 });
 
+// Custom domain: surgicalmind.app -> SurgicalMind AI platform
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase();
+  if (host === 'surgicalmind.app' || host === 'www.surgicalmind.app') {
+    const p = req.path;
+    // Pass through /intuitive API and dashboard routes
+    if (p.startsWith('/intuitive')) return next();
+    if (p.startsWith('/api/tts')) return next();
+    // Presentation
+    if (p === '/presentation' || p === '/presentation/') {
+      req.url = '/surgicalmind-presentation.html';
+    // Whitepaper
+    } else if (p === '/whitepaper' || p === '/whitepaper/') {
+      req.url = '/surgicalmind-whitepaper.html';
+    // Platform dashboard
+    } else if (p === '/platform' || p === '/platform/' || p === '/dashboard' || p === '/dashboard/') {
+      return res.redirect(301, '/intuitive/');
+    // Root: serve the main landing page
+    } else if (p === '/' || p === '') {
+      req.url = '/SurgicalMindAI.html';
+    }
+  }
+  next();
+});
+
 // Custom domain: visionarium.app -> Youth Talent Global whitepaper + platform
 app.use((req, res, next) => {
   const host = (req.get('host') || '').toLowerCase();
