@@ -700,16 +700,36 @@ function buildChartData(analysis) {
 
   const totalCasesCD = procedurePareto.total_cases || (procedurePareto.procedures || []).reduce((s, p) => s + (p.cases || 0), 0) || 1;
 
-  // Approach mix data
+  // Approach mix data -- extract from the 3-layer volume projection
   const approachMix = volProj.current_approach_mix || {};
   const totalHospitalVol = proj.annual_surgical_volume || totalCasesCD;
-  const openCases = approachMix.open_cases || Math.round(totalHospitalVol * (approachMix.open_pct || 40) / 100);
-  const lapCases = approachMix.lap_cases || Math.round(totalHospitalVol * (approachMix.lap_pct || 35) / 100);
-  const roboticCases = approachMix.robotic_cases || (proj.current_robotic_cases || Math.round(totalHospitalVol * (approachMix.robotic_pct || 25) / 100));
+  const openCases = (approachMix.open && approachMix.open.cases) || Math.round(totalHospitalVol * ((approachMix.open && approachMix.open.pct) || 40) / 100);
+  const lapCases = (approachMix.laparoscopic && approachMix.laparoscopic.cases) || Math.round(totalHospitalVol * ((approachMix.laparoscopic && approachMix.laparoscopic.pct) || 35) / 100);
+  const roboticCases = (approachMix.robotic && approachMix.robotic.cases) || proj.current_robotic_cases || Math.round(totalHospitalVol * ((approachMix.robotic && approachMix.robotic.pct) || 15) / 100);
 
-  // Dollarization data
-  const clinDollar = a.clinical_dollarization || {};
-  const dollarSpecialties = clinDollar.specialties || clinDollar.specialty_results || [];
+  // Dollarization data -- compute on the fly if not stored
+  let dollarSpecialties = [];
+  try {
+    const dollarizationEngine = require('../services/clinical-dollarization');
+    const hospitalCaseData = {};
+    const specMapCD = { urology: proj.specialty_urology, gynecology: proj.specialty_gynecology, general_surgery: proj.specialty_general, thoracic: proj.specialty_thoracic, colorectal: proj.specialty_colorectal, ent_head_neck: proj.specialty_head_neck, cardiac: proj.specialty_cardiac };
+    const currentRoboticPctCD = (proj.annual_surgical_volume > 0) ? Math.round(((proj.current_robotic_cases || 0) / proj.annual_surgical_volume) * 100) : 5;
+    for (const [spec, pct] of Object.entries(specMapCD)) {
+      if (pct > 0) {
+        const cases = Math.round((proj.annual_surgical_volume || 0) * pct / 100);
+        hospitalCaseData[spec] = { annual_cases: cases, open_pct: Math.max(0, 100 - currentRoboticPctCD * 2 - 30), lap_pct: 30, robotic_pct: Math.min(100, currentRoboticPctCD * 2) };
+        const total = hospitalCaseData[spec].open_pct + hospitalCaseData[spec].lap_pct + hospitalCaseData[spec].robotic_pct;
+        if (total !== 100) hospitalCaseData[spec].open_pct += (100 - total);
+      }
+    }
+    const dollarResults = dollarizationEngine.calculateDollarization(hospitalCaseData);
+    if (dollarResults && dollarResults.by_specialty) {
+      dollarSpecialties = Object.entries(dollarResults.by_specialty).map(([spec, data]) => ({
+        specialty: spec,
+        savings: data.total_specialty_savings || 0
+      }));
+    }
+  } catch (e) { /* dollarization not available */ }
 
   return {
     specialtyPie: specialties.filter(s => s.value > 0),
