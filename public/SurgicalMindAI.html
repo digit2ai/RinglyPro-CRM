@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SurgicalMind AI -- The Intelligence Layer for Robotic Surgery</title>
+<title>SurgicalMind AI -- Comprehensive Business Planning for da Vinci Robotic Surgery</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -16,31 +16,37 @@
   --teal:#2dd4bf;--gold:#f59e0b;
 }
 html{scroll-behavior:smooth}
-body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden;font-size:16px}
 a{color:inherit;text-decoration:none}
 
 /* NAV */
-.nav{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(7,9,15,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--line);height:64px;display:flex;align-items:center}
+.nav{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(7,9,15,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--line);height:64px;display:flex;align-items:center}
 .nav-inner{max-width:1200px;margin:0 auto;padding:0 24px;width:100%;display:flex;align-items:center;justify-content:space-between}
-.nav-brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.1rem}
-.nav-brand svg{width:32px;height:32px}
-.nav-tag{font-size:.7rem;padding:3px 8px;border-radius:999px;border:1px solid var(--accent);color:var(--accent);letter-spacing:.08em;text-transform:uppercase;font-weight:600}
-.nav-cta{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;padding:10px 24px;border-radius:8px;font-weight:600;font-size:.88rem;border:none;cursor:pointer;transition:all .2s}
+.nav-brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.1rem;color:var(--white)}
+.nav-brand img{height:44px;width:auto}
+.nav-links{display:flex;align-items:center;gap:14px}
+.nav-link{color:var(--muted);font-size:.88rem;font-weight:500;transition:color .2s}
+.nav-link:hover{color:var(--white)}
+.nav-btn-outline{background:transparent;border:1px solid var(--line2);color:var(--text);padding:8px 20px;border-radius:8px;font-weight:600;font-size:.85rem;transition:all .2s;cursor:pointer}
+.nav-btn-outline:hover{border-color:var(--accent);background:rgba(99,102,241,0.06)}
+.nav-cta{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;padding:10px 24px;border-radius:8px;font-weight:600;font-size:.88rem;border:none;cursor:pointer;transition:all .2s;display:inline-block}
 .nav-cta:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(99,102,241,0.4)}
 
 /* HERO */
 .hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:100px 24px 60px;position:relative;overflow:hidden}
 .hero::before{content:'';position:absolute;top:-20%;left:50%;transform:translateX(-50%);width:140%;height:80%;background:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(99,102,241,0.10) 0%,transparent 70%);pointer-events:none}
 .hero-inner{max-width:860px;position:relative;z-index:1}
+.hero-logo{width:120px;height:auto;margin:0 auto 28px;display:block}
 .hero-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 18px;border-radius:999px;border:1px solid var(--line2);background:var(--panel);font-size:.78rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;font-weight:600;margin-bottom:28px}
 .hero-badge .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
-.hero h1{font-size:clamp(2.4rem,5vw,3.8rem);font-weight:800;line-height:1.1;letter-spacing:-.5px;margin-bottom:20px}
+.hero h1{font-size:clamp(2.4rem,5vw,3.8rem);font-weight:800;line-height:1.1;letter-spacing:-.5px;margin-bottom:20px;color:var(--white)}
 .hero h1 .grad{background:linear-gradient(135deg,var(--accent),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.hero p{font-size:clamp(1.05rem,2vw,1.25rem);color:var(--muted);max-width:640px;margin:0 auto 36px;line-height:1.7}
+.hero p.hero-desc{font-size:clamp(1.05rem,2vw,1.25rem);color:var(--muted);max-width:680px;margin:0 auto 36px;line-height:1.7}
+.hero-note{font-size:.82rem;color:var(--muted);margin-top:20px;opacity:.7}
 .hero-ctas{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
 .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;padding:14px 36px;border-radius:10px;font-weight:700;font-size:1rem;border:none;cursor:pointer;transition:all .25s;display:inline-flex;align-items:center;gap:8px}
 .btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(99,102,241,0.45)}
-.btn-secondary{background:transparent;color:var(--text);padding:14px 36px;border-radius:10px;font-weight:600;font-size:1rem;border:1px solid var(--line2);cursor:pointer;transition:all .25s}
+.btn-secondary{background:transparent;color:var(--text);padding:14px 36px;border-radius:10px;font-weight:600;font-size:1rem;border:1px solid var(--line2);cursor:pointer;transition:all .25s;display:inline-flex;align-items:center;gap:8px}
 .btn-secondary:hover{border-color:var(--accent);background:rgba(99,102,241,0.06);transform:translateY(-2px)}
 
 /* STATS BAR */
@@ -51,92 +57,147 @@ a{color:inherit;text-decoration:none}
 
 /* SECTIONS */
 .section{padding:80px 24px}
+.section-alt{background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 .wrap{max-width:1100px;margin:0 auto}
 .section-label{font-size:.75rem;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:700;margin-bottom:12px}
-.section-title{font-size:clamp(1.6rem,3vw,2.4rem);font-weight:800;line-height:1.15;margin-bottom:16px;letter-spacing:-.3px}
-.section-sub{color:var(--muted);font-size:1.05rem;max-width:600px;margin-bottom:48px;line-height:1.7}
+.section-title{font-size:clamp(1.6rem,3vw,2.4rem);font-weight:800;line-height:1.15;margin-bottom:16px;letter-spacing:-.3px;color:var(--white)}
+.section-sub{color:var(--muted);font-size:1.05rem;max-width:700px;margin-bottom:48px;line-height:1.7}
+.section-text{color:var(--muted);font-size:.95rem;line-height:1.7;margin-bottom:16px}
+.section-text strong{color:var(--text)}
 
-/* PROBLEM */
-.problem-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px}
-.problem-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:28px;transition:all .25s}
+/* PROBLEM CARDS */
+.problem-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+.problem-card{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--red);border-radius:12px;padding:28px;transition:all .25s}
 .problem-card:hover{border-color:var(--red);transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,0.3)}
-.problem-icon{width:44px;height:44px;border-radius:12px;background:rgba(239,68,68,0.08);display:flex;align-items:center;justify-content:center;margin-bottom:16px;font-size:1.3rem}
-.problem-card h3{font-size:1.05rem;font-weight:700;margin-bottom:8px}
-.problem-card p{font-size:.9rem;color:var(--muted);line-height:1.65}
+.problem-num{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:700;color:var(--red);margin-bottom:8px}
+.problem-card h3{font-size:1.05rem;font-weight:700;margin-bottom:10px;color:var(--white)}
+.problem-card p{font-size:.88rem;color:var(--muted);line-height:1.65}
 
-/* SOLUTION CARDS */
-.solution-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:20px}
-.solution-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:32px;transition:all .25s;position:relative;overflow:hidden}
-.solution-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--teal));opacity:0;transition:opacity .25s}
-.solution-card:hover{border-color:var(--accent);transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,0.3)}
-.solution-card:hover::before{opacity:1}
-.solution-tier{font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;font-weight:700;padding:4px 10px;border-radius:999px;display:inline-block;margin-bottom:14px}
-.tier-p1{color:var(--accent);border:1px solid rgba(99,102,241,0.3);background:rgba(99,102,241,0.06)}
-.tier-p2{color:var(--teal);border:1px solid rgba(45,212,191,0.3);background:rgba(45,212,191,0.06)}
-.tier-p3{color:var(--gold);border:1px solid rgba(245,158,11,0.3);background:rgba(245,158,11,0.06)}
-.tier-p4{color:var(--green);border:1px solid rgba(52,211,153,0.3);background:rgba(52,211,153,0.06)}
-.solution-card h3{font-size:1.1rem;font-weight:700;margin-bottom:8px}
-.solution-card p{font-size:.88rem;color:var(--muted);line-height:1.65;margin-bottom:14px}
-.tool-list{display:flex;flex-wrap:wrap;gap:6px}
-.tool-tag{font-size:.72rem;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,0.04);border:1px solid var(--line);color:var(--muted);font-weight:500}
+/* FLOW DIAGRAM */
+.flow-container{display:flex;flex-direction:column;gap:0;margin-top:32px}
+.flow-step{display:flex;align-items:stretch;gap:20px}
+.flow-line{display:flex;flex-direction:column;align-items:center;width:40px;flex-shrink:0}
+.flow-dot{width:14px;height:14px;border-radius:50%;background:var(--accent);border:3px solid rgba(99,102,241,0.3);flex-shrink:0;margin-top:20px}
+.flow-connector{width:2px;flex:1;background:var(--line)}
+.flow-content{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px 24px;margin-bottom:12px;flex:1;transition:all .25s}
+.flow-content:hover{border-color:var(--accent);transform:translateX(4px)}
+.flow-content h4{color:var(--white);font-size:.95rem;margin-bottom:6px}
+.flow-content p{font-size:.88rem;color:var(--muted);margin:0;line-height:1.6}
 
-/* ARCHITECTURE */
-.arch-flow{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;padding:40px 0}
-.arch-box{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 24px;text-align:center;min-width:160px;transition:all .25s}
-.arch-box:hover{border-color:var(--accent);transform:translateY(-2px)}
-.arch-box .label{font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:600;margin-bottom:4px}
-.arch-box .value{font-weight:700;font-size:.95rem}
-.arch-arrow{color:var(--accent);font-size:1.4rem;font-weight:700}
+/* CARDS */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:28px;margin-bottom:20px}
+.card h4{color:var(--white);margin-bottom:12px;font-size:1rem}
+.card p{margin-bottom:8px;font-size:.9rem;color:var(--muted);line-height:1.65}
+.card p strong{color:var(--text)}
+.card code{background:rgba(99,102,241,0.12);color:var(--accent);padding:2px 6px;border-radius:4px;font-size:.82rem}
 
-/* DATA GRID */
-.data-section{background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-.data-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
-.data-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:28px;transition:all .25s}
-.data-card:hover{border-color:var(--green);transform:translateY(-4px)}
-.data-card h3{font-size:1.05rem;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px}
-.data-card ul{list-style:none;padding:0}
-.data-card li{font-size:.88rem;color:var(--muted);padding:6px 0;border-bottom:1px solid var(--line);line-height:1.5}
-.data-card li:last-child{border:none}
-.data-card li strong{color:var(--text)}
+/* HOW IT'S DONE CARD */
+.how-card{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--teal);border-radius:0 12px 12px 0;padding:28px;margin:24px 0}
+.how-card h4{color:var(--teal);margin-bottom:14px;font-size:1rem;font-weight:700}
+.how-card p{margin-bottom:10px;font-size:.88rem;color:var(--muted);line-height:1.65}
+.how-card p strong{color:var(--text)}
+.how-card code{background:rgba(45,212,191,0.1);color:var(--teal);padding:2px 6px;border-radius:4px;font-size:.82rem}
 
-/* ROI */
-.roi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px}
-.roi-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:28px;text-align:center;transition:all .25s}
-.roi-card:hover{border-color:var(--green);transform:translateY(-4px)}
-.roi-num{font-size:2rem;font-weight:800;color:var(--green);margin-bottom:4px}
-.roi-card h4{font-weight:700;margin-bottom:6px;font-size:.95rem}
-.roi-card p{font-size:.82rem;color:var(--muted)}
+/* HIGHLIGHT BOX */
+.highlight-box{background:rgba(99,102,241,0.06);border-left:4px solid var(--accent);padding:20px 24px;border-radius:0 12px 12px 0;margin:20px 0}
+.highlight-box p{color:var(--text);font-size:.92rem;line-height:1.65}
+.highlight-box p strong{color:var(--white)}
 
-/* NEURAL 3-LAYER */
-.neural-section{background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-.neural-layers{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-.neural-layer{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:32px;text-align:center;transition:all .25s}
-.neural-layer:hover{border-color:var(--green);transform:translateY(-4px)}
-.neural-num{font-size:2.4rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
-.neural-layer h3{font-size:1.05rem;font-weight:700;margin-bottom:8px}
-.neural-layer p{font-size:.88rem;color:var(--muted);line-height:1.6}
+/* FEATURE LIST */
+.feature-list{list-style:none;padding:0;margin:16px 0}
+.feature-list li{padding:8px 0 8px 24px;position:relative;font-size:.9rem;color:var(--muted);line-height:1.6}
+.feature-list li::before{content:'';position:absolute;left:0;top:16px;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.feature-list li strong{color:var(--text)}
+
+/* MODULE LIST */
+.module-list{margin-top:24px}
+.module-item{display:flex;align-items:baseline;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)}
+.module-item:last-child{border-bottom:none}
+.module-num{color:var(--accent);font-weight:700;font-size:.88rem;min-width:32px;flex-shrink:0}
+.module-name{font-weight:600;color:var(--white);font-size:.92rem}
+.module-desc{color:var(--muted);font-size:.88rem}
+
+/* DATA TABLES */
+.data-table{width:100%;border-collapse:collapse;margin:24px 0;font-size:.88rem;border-radius:12px;overflow:hidden}
+.data-table th{background:rgba(99,102,241,0.15);color:var(--white);padding:14px 16px;text-align:left;font-weight:600;font-size:.82rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--line)}
+.data-table td{padding:12px 16px;border-bottom:1px solid var(--line);color:var(--muted)}
+.data-table td strong{color:var(--text)}
+.data-table tr:nth-child(even) td{background:rgba(255,255,255,0.015)}
+.data-table tr:hover td{background:rgba(99,102,241,0.04)}
+
+/* SUMMARY CARD */
+.summary-card{background:rgba(99,102,241,0.05);border:2px solid var(--accent);border-radius:16px;padding:32px;margin:28px 0}
+.summary-card h3{color:var(--white);margin-bottom:20px;font-size:1.15rem}
+.summary-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(99,102,241,0.15)}
+.summary-row:last-child{border-bottom:none}
+.summary-label{color:var(--muted);font-size:.9rem}
+.summary-value{color:var(--white);font-weight:600;font-size:.9rem}
+
+/* SYSTEM GRID */
+.system-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:28px}
+.system-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px;transition:all .25s}
+.system-card:hover{border-color:var(--accent);transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,0.3)}
+.system-card h4{color:var(--white);font-size:1rem;margin-bottom:8px}
+.system-card .price{color:var(--teal);font-weight:700;font-size:.95rem;margin-bottom:10px}
+.system-card p{font-size:.84rem;color:var(--muted);line-height:1.55}
+
+/* WORKFLOW CARD */
+.workflow-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:32px;margin:24px 0}
+.workflow-card h4{color:var(--white);font-size:1.05rem;margin-bottom:16px}
+.workflow-step{padding:10px 0;border-bottom:1px solid var(--line);font-size:.9rem;color:var(--muted);line-height:1.6}
+.workflow-step:last-child{border-bottom:none}
+.workflow-step strong{color:var(--text)}
+
+/* LIVE SECTION */
+.live-section{background:linear-gradient(135deg,rgba(99,102,241,0.1),rgba(45,212,191,0.05));border:1px solid var(--accent);border-radius:16px;padding:48px;text-align:center;margin-top:32px}
+.live-section h3{color:var(--white);font-size:1.4rem;margin-bottom:12px}
+.live-section p{color:var(--muted);margin-bottom:28px;font-size:1rem}
 
 /* CTA */
 .cta-section{text-align:center;padding:100px 24px;position:relative}
 .cta-section::before{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:120%;height:60%;background:radial-gradient(ellipse 50% 80% at 50% 100%,rgba(99,102,241,0.08) 0%,transparent 70%);pointer-events:none}
 .cta-inner{position:relative;z-index:1}
-.cta-section h2{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;margin-bottom:16px;line-height:1.15}
-.cta-section p{color:var(--muted);font-size:1.1rem;margin-bottom:36px;max-width:540px;margin-left:auto;margin-right:auto}
+.cta-section h2{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;margin-bottom:16px;line-height:1.15;color:var(--white)}
+.cta-section p{color:var(--muted);font-size:1.1rem;margin-bottom:16px;max-width:540px;margin-left:auto;margin-right:auto}
+.cta-email{color:var(--accent);font-weight:600;font-size:1.05rem;margin-bottom:36px;display:block}
 
 /* FOOTER */
-.footer{border-top:1px solid var(--line);padding:32px 24px;text-align:center;font-size:.8rem;color:var(--muted)}
+.footer{border-top:1px solid var(--line);padding:32px 24px;text-align:center;font-size:.82rem;color:var(--muted)}
 .footer a{color:var(--accent)}
 
 /* RESPONSIVE */
+@media(max-width:900px){
+  .system-grid{grid-template-columns:repeat(2,1fr)}
+}
 @media(max-width:768px){
   .stats-inner{grid-template-columns:repeat(2,1fr)}
-  .neural-layers{grid-template-columns:1fr}
-  .arch-flow{flex-direction:column}
-  .arch-arrow{transform:rotate(90deg)}
+  .problem-grid{grid-template-columns:1fr}
+  .system-grid{grid-template-columns:1fr}
+  .flow-step{flex-direction:column;gap:0}
+  .flow-line{display:none}
+  .section{padding:60px 20px}
+  .nav-links{gap:8px}
+  .nav-link{display:none}
+  .data-table{font-size:.78rem}
+  .data-table th,.data-table td{padding:8px 10px}
 }
 @media(max-width:480px){
   .hero-ctas{flex-direction:column;align-items:center}
   .btn-primary,.btn-secondary{width:100%;justify-content:center}
+  .nav-btn-outline{display:none}
+}
+
+/* PRINT */
+@media print{
+  .nav{display:none}
+  .hero{min-height:auto;padding:60px 24px}
+  body{background:#fff;color:#1a1a2e}
+  .section,.section-alt{background:#fff;border:none}
+  .section-title,.card h4,.how-card h4{color:#1a1a2e}
+  .problem-card,.card,.how-card,.system-card,.flow-content{background:#f8f9fa;border-color:#e2e8f0}
+  .stat-num{color:var(--accent);-webkit-text-fill-color:var(--accent)}
+  .data-table th{background:#e2e8f0;color:#1a1a2e}
+  .cta-section::before{display:none}
 }
 </style>
 </head>
@@ -146,18 +207,12 @@ a{color:inherit;text-decoration:none}
 <nav class="nav">
   <div class="nav-inner">
     <div class="nav-brand">
-      <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="32" height="32" rx="8" fill="url(#g1)"/>
-        <path d="M16 7L10 13h4v6h4v-6h4L16 7z" fill="#fff" opacity=".9"/>
-        <path d="M10 21h12v3H10z" fill="#fff" opacity=".6" rx="1.5"/>
-        <defs><linearGradient id="g1" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#2dd4bf"/></linearGradient></defs>
-      </svg>
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69e6c537c56ad279084e2bb6.png" alt="SurgicalMind AI" />
       SurgicalMind AI
-      <span class="nav-tag">Platform</span>
     </div>
-    <div style="display:flex;align-items:center;gap:12px">
-      <a href="/surgicalmind-presentation.html" style="color:var(--muted);font-size:.88rem;font-weight:500;transition:color .2s;text-decoration:none" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--muted)'">AI Presentation</a>
-      <a href="/intuitive/" style="background:transparent;border:1px solid var(--line2);color:var(--text);padding:8px 20px;border-radius:8px;font-weight:600;font-size:.85rem;transition:all .2s;text-decoration:none" onmouseover="this.style.borderColor='var(--accent)';this.style.background='rgba(99,102,241,0.06)'" onmouseout="this.style.borderColor='var(--line2)';this.style.background='transparent'">Login</a>
+    <div class="nav-links">
+      <a href="/surgicalmind-presentation.html" class="nav-link">AI Presentation</a>
+      <a href="/intuitive/" class="nav-btn-outline">Login</a>
       <a href="#demo" class="nav-cta">Request Demo</a>
     </div>
   </div>
@@ -166,405 +221,653 @@ a{color:inherit;text-decoration:none}
 <!-- HERO -->
 <section class="hero">
   <div class="hero-inner">
-    <div class="hero-badge"><span class="dot"></span> AI-Powered Business Planning for Robotic Surgery</div>
-    <h1>You sell the robot.<br><span class="grad">We build the business case that proves it was worth buying.</span></h1>
-    <p>SurgicalMind AI is a comprehensive Business Planning platform that gives da Vinci sales teams surgeon-validated ROI models, clinical outcome dollarization, and real-time proforma tracking -- all in one system.</p>
+    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69e6c537c56ad279084e2bb6.png" alt="SurgicalMind AI" class="hero-logo" />
+    <div class="hero-badge"><span class="dot"></span> Confidential -- Strategic Technology Brief</div>
+    <h1>SurgicalMind <span class="grad">AI</span></h1>
+    <p class="hero-desc">The Comprehensive Business Planning Platform for da Vinci Robotic Surgery. Transform a hospital name into a complete, defensible, and trackable business plan in minutes -- powered by Claude Sonnet 4.</p>
     <div class="hero-ctas">
-      <a href="#solution" class="btn-primary">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
-        See the Platform
-      </a>
+      <a href="#solution" class="btn-primary">See the Platform</a>
       <a href="#roi" class="btn-secondary">View ROI Model</a>
     </div>
+    <p class="hero-note">Built by Digit2AI | Powered by Claude Sonnet 4 | 16-Module Analysis Engine | 68 Clinical Citations</p>
   </div>
 </section>
 
-<!-- STATS -->
+<!-- STATS BAR -->
 <div class="stats">
   <div class="stats-inner">
-    <div><div class="stat-num">28</div><div class="stat-label">DRG Procedures Covered</div></div>
+    <div><div class="stat-num">28</div><div class="stat-label">DRG Procedures</div></div>
     <div><div class="stat-num">8</div><div class="stat-label">Surgical Specialties</div></div>
     <div><div class="stat-num">68</div><div class="stat-label">Clinical Citations</div></div>
-    <div><div class="stat-num">6</div><div class="stat-label">da Vinci System Configs</div></div>
+    <div><div class="stat-num">6</div><div class="stat-label">da Vinci Configs</div></div>
   </div>
 </div>
 
-<!-- THE 4 PROBLEMS -->
+<!-- EXECUTIVE SUMMARY -->
 <section class="section">
   <div class="wrap">
-    <div class="section-label">The Problem</div>
-    <h2 class="section-title">Four challenges that cost deals and slow robot placements</h2>
-    <p class="section-sub">Sales managers and directors struggle with inconsistent business plans, fragmented surgeon data, unquantified clinical outcomes, and zero proforma tracking.</p>
+    <div class="section-label">Executive Summary</div>
+    <h2 class="section-title">AI-powered business planning for Intuitive Surgical's sales organization</h2>
+    <p class="section-text"><strong>SurgicalMind AI</strong> solves four critical problems that da Vinci sales managers and directors face daily: inconsistent business plans, fragmented surgeon data, unquantified clinical outcomes, and zero proforma tracking.</p>
+    <p class="section-text">The platform takes a hospital name as input and uses a <strong>Claude Sonnet 4 AI agent</strong> to research the hospital's profile, then automatically generates a complete, defensible business plan with three ROI layers:</p>
+    <ul class="feature-list">
+      <li><strong>Layer 1:</strong> Surgeon incremental volume commitments dollarized via DRG reimbursement</li>
+      <li><strong>Layer 2:</strong> Clinical outcome dollarization backed by 68 peer-reviewed citations</li>
+      <li><strong>Layer 3:</strong> Ongoing proforma tracking with variance reporting and executive summaries</li>
+    </ul>
+    <p class="section-text">The result is a platform that transforms a hospital name into a complete, defensible, and trackable business plan in minutes rather than weeks.</p>
+  </div>
+</section>
+
+<!-- THE FOUR PROBLEMS -->
+<section class="section section-alt">
+  <div class="wrap">
+    <div class="section-label">The Four Problems</div>
+    <h2 class="section-title">Four systemic challenges facing Intuitive Surgical's field organization</h2>
+    <p class="section-sub">Each erodes credibility, slows the sales cycle, and leaves value undocumented.</p>
     <div class="problem-grid">
       <div class="problem-card">
-        <div class="problem-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
-        <h3>1. Inconsistent Business Plans</h3>
-        <p>Too much variability in how plans are built. Skill levels vary, it takes too long to learn, and the result is inaccurate ROI projections that erode credibility with hospital C-suites.</p>
+        <div class="problem-num">Problem 1</div>
+        <h3>Consistency and Accuracy in Business Plan Development</h3>
+        <p>Managers and Directors struggle to build good business plans. Too much variability in how plans are created, it takes too long to learn, too long to complete, and skill levels vary significantly. This leads to inaccurate plans that erode credibility with hospital C-suites. Currently plans are built by meeting with surgeons to quantify incremental volume, then dollarizing based on procedure types and DRG reimbursement.</p>
       </div>
       <div class="problem-card">
-        <div class="problem-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
-        <h3>2. Surgeon Data Gaps</h3>
-        <p>Incremental volume commitments from surgeons are gathered ad-hoc -- field conversations, emailed surveys, scattered spreadsheets. Data never flows directly into the business plan.</p>
+        <div class="problem-num">Problem 2</div>
+        <h3>Gathering Surgeon Data</h3>
+        <p>Incremental surgical volume commitments from surgeons are gathered ad-hoc -- field conversations, emailed surveys (Survey Monkey), scattered notes. Data never flows directly into the business plan. When it does, it's often inaccurately transcribed by the manager.</p>
       </div>
       <div class="problem-card">
-        <div class="problem-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
-        <h3>3. Clinical Outcomes Not Dollarized</h3>
-        <p>da Vinci delivers superior clinical outcomes -- lower infections, shorter stays, fewer readmissions. But nobody is quantifying the dollar value and adding it to the ROI model.</p>
-      </div>
-      <div class="problem-card">
-        <div class="problem-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round"><path d="M23 6l-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/></svg></div>
-        <h3>4. No Proforma Tracking</h3>
-        <p>After the robot is placed, there is no system to compare projected vs. actual surgeon volumes. Managers cannot validate the investment or demonstrate ongoing ROI to customers.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- THE SOLUTION -->
-<section id="solution" class="section neural-section">
-  <div class="wrap">
-    <div class="section-label">The Solution -- 4 Integrated Modules</div>
-    <h2 class="section-title">SurgicalMind AI: A Complete Business Planning Platform for da Vinci</h2>
-    <p class="section-sub">Each module solves a specific problem. Together they produce a comprehensive, validated, trackable business plan for every robot placement.</p>
-    <div class="solution-grid">
-      <div class="solution-card">
-        <span class="solution-tier tier-p1">Problem 1 -- Solved</span>
-        <h3>Deterministic Business Plan Engine</h3>
-        <p>Structured surgeon-level input with DRG-based reimbursement auto-lookup. Every plan uses the same methodology, eliminating variability regardless of who builds it.</p>
-        <div class="tool-list">
-          <span class="tool-tag">28 DRG Procedures</span>
-          <span class="tool-tag">8 Specialties</span>
-          <span class="tool-tag">6 da Vinci Configs</span>
-          <span class="tool-tag">Custom Pricing</span>
-          <span class="tool-tag">Payer Mix Adjustment</span>
-        </div>
-      </div>
-      <div class="solution-card">
-        <span class="solution-tier tier-p2">Problem 2 -- Solved</span>
-        <h3>Surgeon Survey Engine</h3>
-        <p>Digital surveys distributed directly to surgeons -- by email, SMS, or shareable link. Captures incremental volume commitments, procedure breakdown, barriers, and competitive leakage. Responses auto-import into the business plan.</p>
-        <div class="tool-list">
-          <span class="tool-tag">8 Default Questions</span>
-          <span class="tool-tag">Personal Survey Links</span>
-          <span class="tool-tag">No Login Required</span>
-          <span class="tool-tag">Auto-Import to Plan</span>
-          <span class="tool-tag">Response Tracking</span>
-        </div>
-      </div>
-      <div class="solution-card">
-        <span class="solution-tier tier-p3">Problem 3 -- Solved</span>
+        <div class="problem-num">Problem 3</div>
         <h3>Clinical Outcome Dollarization</h3>
-        <p>Cross-references the hospital's published case volumes with 68 peer-reviewed clinical studies to dollarize the savings from robotic surgery -- infections avoided, shorter stays, fewer readmissions, reduced blood loss. Adds a separate ROI layer backed by real evidence.</p>
-        <div class="tool-list">
-          <span class="tool-tag">44 Outcome Metrics</span>
-          <span class="tool-tag">68 Journal Citations</span>
-          <span class="tool-tag">CMS Quality Measures</span>
-          <span class="tool-tag">Per-Specialty Breakdown</span>
-          <span class="tool-tag">Open vs Lap vs Robotic</span>
+        <p>da Vinci delivers superior clinical outcomes (lower infections, shorter LOS, fewer readmissions) documented in thousands of published studies. But nobody is quantifying the dollar value and adding it to the ROI model. Individual hospital clinical outcome data is published by CMS, but cross-referencing this with published evidence to dollarize benefits is manual and rarely done.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-num">Problem 4</div>
+        <h3>Proforma vs Actual Tracking</h3>
+        <p>After the robot is placed, there is no effective way to track how the business plan is performing. Managers can pull surgeon volume reports but have no system to compare projected vs actual. This means they can't validate the investment or demonstrate ongoing ROI to customers.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SOLUTION ARCHITECTURE -->
+<section id="solution" class="section">
+  <div class="wrap">
+    <div class="section-label">Solution Architecture</div>
+    <h2 class="section-title">End-to-end pipeline: hospital name to tracked business plan</h2>
+    <p class="section-sub">SurgicalMind AI transforms a hospital name into a validated, tracked business plan. Each stage feeds the next automatically.</p>
+
+    <div class="flow-container">
+      <div class="flow-step">
+        <div class="flow-line">
+          <div class="flow-dot"></div>
+          <div class="flow-connector"></div>
+        </div>
+        <div class="flow-content">
+          <h4>Stage 1: Hospital Research</h4>
+          <p>Hospital Name Input --> Claude Sonnet 4 AI Research Agent --> 40+ field hospital profile auto-populated with confidence ratings and source citations.</p>
         </div>
       </div>
-      <div class="solution-card">
-        <span class="solution-tier tier-p4">Problem 4 -- Solved</span>
-        <h3>Proforma vs. Actual Tracker</h3>
-        <p>After robot placement, import actual surgeon volumes by period. Compare projected vs. actual at the surgeon level. Generate executive summaries showing the hospital exactly how the investment is performing.</p>
-        <div class="tool-list">
-          <span class="tool-tag">Surgeon-Level Variance</span>
-          <span class="tool-tag">Period Tracking</span>
-          <span class="tool-tag">ROI Validation</span>
-          <span class="tool-tag">Executive Summaries</span>
-          <span class="tool-tag">Plan Snapshots</span>
+      <div class="flow-step">
+        <div class="flow-line">
+          <div class="flow-dot"></div>
+          <div class="flow-connector"></div>
+        </div>
+        <div class="flow-content">
+          <h4>Stage 2: 16-Module Analysis</h4>
+          <p>Volume Projection, Procedure Pareto, System Matching, ROI Calculation, and 12 additional analytical modules generate the quantitative foundation.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-line">
+          <div class="flow-dot"></div>
+          <div class="flow-connector"></div>
+        </div>
+        <div class="flow-content">
+          <h4>Stage 3: Business Plan Builder</h4>
+          <p>Surgeon Commitments (captured via digital survey or manual entry) combined with DRG Reimbursement rates to calculate incremental revenue.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-line">
+          <div class="flow-dot"></div>
+          <div class="flow-connector"></div>
+        </div>
+        <div class="flow-content">
+          <h4>Stage 4: Clinical Evidence Engine</h4>
+          <p>44 Outcome Metrics across 8 Specialties cross-referenced with 68 peer-reviewed citations feed the Dollarization Engine to quantify clinical savings.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-line">
+          <div class="flow-dot" style="background:var(--green);border-color:rgba(52,211,153,0.3)"></div>
+        </div>
+        <div class="flow-content">
+          <h4>Stage 5: Proforma Tracker</h4>
+          <p>Actuals Import --> Variance Reporting --> Executive Summary. Continuous validation of the business plan post-placement.</p>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- da Vinci SYSTEM CATALOG -->
+<!-- MODULE 1: AI BUSINESS ANALYST AGENT -->
+<section class="section section-alt">
+  <div class="wrap">
+    <div class="section-label">Module 1</div>
+    <h2 class="section-title">AI Business Analyst Agent</h2>
+    <p class="section-text">The AI Business Analyst Agent is powered by <strong>Claude Sonnet 4 (Anthropic)</strong> and serves as the platform's intelligent data intake layer. The user types a hospital name and the agent does the rest.</p>
+
+    <ul class="feature-list">
+      <li>User types a hospital name (e.g. "Orlando Health", "Cleveland Clinic Florida")</li>
+      <li>AI agent researches: bed count, surgical volumes, specialty mix, current robotic program, payer mix, competitive landscape</li>
+      <li>Falls back to industry benchmarks when specific data is unavailable</li>
+      <li>Auto-fills all 40+ intake fields with structured data</li>
+      <li>Confidence rating (high / medium / low) with source citations for each field</li>
+      <li>Full transparency -- the manager can override any AI-populated field</li>
+    </ul>
+
+    <div class="highlight-box">
+      <p><strong>Example:</strong> Input "Orlando Health" --> Output: 808 beds, 40,000 annual surgeries, academic medical center, Florida market, multi-specialty robotic program, da Vinci 5 recommended based on volume and specialty mix.</p>
+    </div>
+
+    <div class="how-card">
+      <h4>How It's Done -- Technical Implementation</h4>
+      <p>1. The user types a hospital name into the search field on the Hospital Intake page and clicks <strong>"Generate Report"</strong>.</p>
+      <p>2. The backend sends the hospital name to <strong>Claude Sonnet 4</strong> (Anthropic API, model <code>claude-sonnet-4-20250514</code>) with a structured prompt requesting 40+ data points in JSON format -- bed count, surgical volumes, specialty percentages, current robotic program details, payer mix, competitive landscape, and infrastructure.</p>
+      <p>3. Claude researches from its training knowledge (hospital websites, annual reports, CMS databases, news articles, industry reports) and returns a structured JSON with a <strong>confidence rating</strong> (high/medium/low) and notes on which fields are confirmed vs. estimated.</p>
+      <p>4. A <strong>validation and enrichment layer</strong> checks every field. Missing or zero values are filled using hospital-type-specific industry benchmarks (academic, community, specialty, VA). Specialty percentages are normalized to sum to 100%. Payer mix is validated.</p>
+      <p>5. The validated profile is saved as an <strong>IntuitiveProject</strong> in PostgreSQL (Sequelize ORM), then the 16-module analysis engine is triggered automatically.</p>
+      <p>6. The entire pipeline -- research, validation, project creation, 16 analyses, business plan, clinical dollarization, and survey template -- runs as an <strong>async background job</strong> with real-time progress polling from the frontend (2-second interval).</p>
+      <p>7. Total execution time: <strong>15-25 seconds</strong> depending on Claude's response speed.</p>
+      <p><strong>Tech stack:</strong> <code>@anthropic-ai/sdk</code> --> Express.js async route --> Sequelize PostgreSQL --> system-matcher.js pipeline --> React frontend with polling.</p>
+    </div>
+  </div>
+</section>
+
+<!-- MODULE 2: 16-MODULE ANALYSIS ENGINE -->
+<section class="section">
+  <div class="wrap">
+    <div class="section-label">Module 2</div>
+    <h2 class="section-title">16-Module Analysis Engine</h2>
+    <p class="section-text">Once the hospital profile is populated, the 16-module engine generates a comprehensive analytical foundation. Every module now shows the CFO story: <strong>Total Hospital Volume --> Current Approach (Open/Lap/Robotic) --> da Vinci Opportunity.</strong></p>
+
+    <div class="module-list">
+      <div class="module-item"><span class="module-num">01</span><span class="module-name">Volume Projection</span><span class="module-desc"> -- 3-layer: total surgical / current robotic / incremental opportunity</span></div>
+      <div class="module-item"><span class="module-num">02</span><span class="module-name">Procedure Pareto ABC</span><span class="module-desc"> -- ranked by da Vinci conversion opportunity, not total volume</span></div>
+      <div class="module-item"><span class="module-num">03</span><span class="module-name">Monthly Seasonality</span><span class="module-desc"> -- demand patterns for OR scheduling and staffing</span></div>
+      <div class="module-item"><span class="module-num">04</span><span class="module-name">Weekday Distribution</span><span class="module-desc"> -- identifies peak utilization days</span></div>
+      <div class="module-item"><span class="module-num">05</span><span class="module-name">Hourly OR Utilization</span><span class="module-desc"> -- block time optimization analysis</span></div>
+      <div class="module-item"><span class="module-num">06</span><span class="module-name">Design Day Analysis</span><span class="module-desc"> -- P50-P99 capacity planning for peak demand</span></div>
+      <div class="module-item"><span class="module-num">07</span><span class="module-name">Model Matching</span><span class="module-desc"> -- 0-100 scoring across dV5, Xi, X, SP + Dual Console variants</span></div>
+      <div class="module-item"><span class="module-num">08</span><span class="module-name">Robot Compatibility Matrix</span><span class="module-desc"> -- procedure-to-system fit mapping</span></div>
+      <div class="module-item"><span class="module-num">09</span><span class="module-name">Utilization Forecast</span><span class="module-desc"> -- projected cases/day with growth trajectory</span></div>
+      <div class="module-item"><span class="module-num">10</span><span class="module-name">Surgeon Capacity</span><span class="module-desc"> -- credentialed surgeons vs required capacity</span></div>
+      <div class="module-item"><span class="module-num">11</span><span class="module-name">Infrastructure Assessment</span><span class="module-desc"> -- OR size, power, networking, storage requirements</span></div>
+      <div class="module-item"><span class="module-num">12</span><span class="module-name">ROI Calculation</span><span class="module-desc"> -- payback period with multiple scenario modeling</span></div>
+      <div class="module-item"><span class="module-num">13</span><span class="module-name">Financial Deep Dive</span><span class="module-desc"> -- TCO, breakeven, payer mix impact analysis</span></div>
+      <div class="module-item"><span class="module-num">14</span><span class="module-name">Growth Extrapolation</span><span class="module-desc"> -- 3 scenarios (conservative, base, aggressive)</span></div>
+      <div class="module-item"><span class="module-num">15</span><span class="module-name">Competitive Analysis</span><span class="module-desc"> -- market position vs Medtronic Hugo, J&J Ottava</span></div>
+      <div class="module-item"><span class="module-num">16</span><span class="module-name">Risk Assessment</span><span class="module-desc"> -- adoption barriers, regulatory, financial risks scored</span></div>
+    </div>
+
+    <div class="how-card">
+      <h4>How It's Done -- Technical Implementation</h4>
+      <p>1. All 16 modules live in a single service file: <code>system-matcher.js</code> (~1,100 lines). The <code>runAll()</code> function executes them sequentially, feeding each module's output into the next where dependencies exist.</p>
+      <p>2. <strong>Volume Projection</strong> applies specialty-specific robotic conversion rates (e.g., urology 85%, cardiac 15%) to the hospital's total surgical volume, then models a 5-year adoption ramp starting at 40% of convertible cases in Year 1, adding 15% per year.</p>
+      <p>3. <strong>Procedure Pareto</strong> uses a catalog of 50+ named procedures (e.g., Radical Prostatectomy, Low Anterior Resection) with per-procedure weights and <code>robotic_eligible_pct</code>. Each procedure shows: total hospital volume, current open/lap/robotic breakdown, and incremental da Vinci opportunity. ABC classification is based on conversion opportunity, not total volume -- so the CFO sees which procedures drive the most ROI.</p>
+      <p>4. <strong>Model Matching</strong> scores each of the 6 da Vinci configurations on a 0-100 scale across 5 dimensions: Volume Fit (30 pts), Specialty Coverage (25 pts), Budget Fit (20 pts), Infrastructure (15 pts), Hospital Type Bonus (10 pts). The highest scorer becomes the primary recommendation.</p>
+      <p>5. <strong>3-Layer CFO View</strong>: Every module now outputs three data layers: (a) total hospital surgical volume, (b) current robotic cases, (c) projected da Vinci cases after conversion. Monthly and weekday distributions show stacked bars with all three layers so the CFO can visualize the growth opportunity.</p>
+      <p>6. Results are stored as <strong>JSONB records</strong> in <code>intuitive_analysis_results</code> (one row per analysis type per project), enabling re-runs and historical comparison.</p>
+      <p><strong>Tech stack:</strong> Pure JavaScript computation (no external API calls) --> Sequelize PostgreSQL --> Results served via REST API --> Recharts visualization in React dashboard.</p>
+    </div>
+  </div>
+</section>
+
+<!-- MODULE 3: DRG REIMBURSEMENT LIBRARY -->
+<section class="section section-alt">
+  <div class="wrap">
+    <div class="section-label">Module 3</div>
+    <h2 class="section-title">DRG Reimbursement Library</h2>
+    <p class="section-text">The DRG Reimbursement Library contains <strong>28 procedures across 8 specialties</strong> with real DRG codes and payer-specific rates. This eliminates the need for managers to manually research reimbursement -- it's built into the platform.</p>
+
+    <ul class="feature-list">
+      <li>Real DRG codes with Medicare, Commercial, Medicaid, and blended rates</li>
+      <li>Payer mix weighting: takes hospital's actual payer mix to calculate weighted reimbursement per case</li>
+      <li>Managers can override with actual negotiated rates from the hospital</li>
+    </ul>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Procedure</th>
+          <th>DRG Code</th>
+          <th>Medicare</th>
+          <th>Commercial</th>
+          <th>Blended</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Radical Prostatectomy</td>
+          <td>DRG 714</td>
+          <td>$12,800</td>
+          <td>$28,500</td>
+          <td>$19,200</td>
+        </tr>
+        <tr>
+          <td>Partial Nephrectomy</td>
+          <td>DRG 673</td>
+          <td>$14,200</td>
+          <td>$31,000</td>
+          <td>$21,100</td>
+        </tr>
+        <tr>
+          <td>Hysterectomy (Benign)</td>
+          <td>DRG 742</td>
+          <td>$9,400</td>
+          <td>$22,800</td>
+          <td>$15,100</td>
+        </tr>
+        <tr>
+          <td>Low Anterior Resection</td>
+          <td>DRG 329</td>
+          <td>$16,500</td>
+          <td>$38,200</td>
+          <td>$25,800</td>
+        </tr>
+        <tr>
+          <td>Lobectomy (Thoracic)</td>
+          <td>DRG 163</td>
+          <td>$18,900</td>
+          <td>$42,500</td>
+          <td>$28,600</td>
+        </tr>
+        <tr>
+          <td>Inguinal Hernia Repair</td>
+          <td>DRG 353</td>
+          <td>$6,800</td>
+          <td>$16,200</td>
+          <td>$10,900</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="how-card">
+      <h4>How It's Done -- Technical Implementation</h4>
+      <p>1. The DRG library is a static data service (<code>drg-reimbursement.js</code>) containing 28 procedure entries, each with: DRG code, procedure name, procedure type slug, specialty, Medicare reimbursement, Commercial reimbursement (1.5-2.2x Medicare depending on complexity), Medicaid (0.7x), self-pay (0.85x), and a pre-calculated blended rate.</p>
+      <p>2. When a surgeon commitment is entered with a procedure type, the system calls <code>lookupByProcedure()</code> to auto-populate the reimbursement rate -- no manual lookup needed.</p>
+      <p>3. The <code>calculateReimbursement(procedureType, payerMix)</code> function takes the hospital's actual payer mix (e.g., 35% Medicare, 40% Commercial, 15% Medicaid, 5% self-pay) and returns a <strong>weighted average</strong> reimbursement specific to that hospital. This means two hospitals with the same procedure volume but different payer mixes will get different revenue projections -- exactly how it works in reality.</p>
+      <p>4. Managers can <strong>override any rate</strong> with actual negotiated amounts from the hospital's contract. The override is stored per surgeon commitment, not globally, so different contracts at the same hospital can be reflected.</p>
+      <p>5. The library is served via REST API at <code>/intuitive/api/v1/drg/procedures</code> for full listing, <code>/drg/lookup?procedure_type=X</code> for individual lookup, and <code>/drg/calculate-reimbursement</code> for payer-weighted calculations.</p>
+      <p><strong>Tech stack:</strong> Static JavaScript data module --> Express REST API --> React frontend auto-lookup on procedure type selection.</p>
+    </div>
+  </div>
+</section>
+
+<!-- MODULE 4: SURGEON SURVEY ENGINE -->
+<section class="section">
+  <div class="wrap">
+    <div class="section-label">Module 4</div>
+    <h2 class="section-title">Surgeon Survey Engine</h2>
+    <p class="section-text">This module directly solves <strong>Problem 2</strong> by replacing ad-hoc data collection with structured digital surveys that feed directly into the business plan.</p>
+
+    <div class="card">
+      <h4>Default Survey Questions (8 Questions)</h4>
+      <ul class="feature-list">
+        <li>What is your current monthly surgical volume (all approaches)?</li>
+        <li>How many additional cases/month would you perform if given dedicated da Vinci access?</li>
+        <li>What procedure types would you convert to robotic?</li>
+        <li>What are your current barriers to robotic adoption?</li>
+        <li>Are you losing cases to competing hospitals with robotic programs?</li>
+        <li>What is your current monthly robotic volume (if any)?</li>
+        <li>Would you commit to a minimum monthly robotic case volume?</li>
+        <li>What training or support would accelerate your adoption?</li>
+      </ul>
+    </div>
+
+    <ul class="feature-list">
+      <li>Personal survey links per surgeon (no login required)</li>
+      <li>Distribution via email, SMS, or shareable link</li>
+      <li>Responses auto-import directly into the business plan as surgeon commitments</li>
+      <li>Eliminates manual transcription errors entirely</li>
+      <li>Real-time response tracking dashboard</li>
+    </ul>
+
+    <div class="how-card">
+      <h4>How It's Done -- Technical Implementation</h4>
+      <p>1. A manager creates a survey from the dashboard, selecting the hospital and da Vinci system type. The system generates a <strong>unique 64-character token</strong> (cryptographically random) for the survey URL.</p>
+      <p>2. Surgeon recipients are added individually or in bulk. Each recipient gets their own <strong>personal token</strong> so responses are linked to specific surgeons and can be tracked (pending -> sent -> opened -> completed).</p>
+      <p>3. The public survey page is served at <code>/intuitive/survey/{token}</code> -- a standalone HTML page with dark SurgicalMind theme, no login required, mobile-responsive. Questions are rendered dynamically from the survey's <code>questions</code> JSONB field, with template variables (<code>{hospital_name}</code>, <code>{system_type}</code>) replaced at render time.</p>
+      <p>4. On submission, the response is stored in <code>intuitive_survey_responses</code> with structured fields: <code>incremental_cases_monthly</code>, <code>procedure_breakdown</code> (array of procedure type + percentage), <code>barriers</code>, <code>competitive_leakage_cases</code>, <code>willing_to_commit</code>.</p>
+      <p>5. The <strong>"Import to Plan"</strong> endpoint (<code>POST /surveys/:id/import-to-plan</code>) reads all responses, cross-references each procedure type with the DRG library to get reimbursement rates, and creates <code>IntuitiveSurgeonCommitment</code> records linked to the business plan -- with <code>source: 'survey'</code> so the origin is always clear.</p>
+      <p>6. Committed surgeons (those who answered "Yes" to the commitment question) are auto-set to <code>status: 'confirmed'</code>.</p>
+      <p><strong>Tech stack:</strong> Sequelize models (Survey, SurveyRecipient, SurveyResponse) --> Express REST API + standalone HTML renderer --> React SurveyManagerPage for admin --> Crypto tokens for URL security.</p>
+    </div>
+  </div>
+</section>
+
+<!-- MODULE 5: CLINICAL OUTCOME DOLLARIZATION -->
+<section class="section section-alt">
+  <div class="wrap">
+    <div class="section-label">Module 5</div>
+    <h2 class="section-title">Clinical Outcome Dollarization Engine</h2>
+    <p class="section-text">This module directly solves <strong>Problem 3</strong>. It is the first platform to systematically quantify the financial value of robotic surgery's clinical superiority.</p>
+
+    <ul class="feature-list">
+      <li><strong>Clinical Evidence Library:</strong> 44 outcome metrics across 8 specialties</li>
+      <li><strong>68 peer-reviewed citations</strong> from JAMA Surgery, Annals of Surgery, European Urology, Journal of Clinical Oncology, and others</li>
+      <li><strong>Specialties covered:</strong> Colorectal, Urology, Gynecology, GYN Oncology, Thoracic, General Surgery, Cardiac, ENT/Head & Neck</li>
+      <li><strong>Metrics tracked per specialty:</strong> SSI rate, length of stay, readmission rate, blood loss, conversion to open, mortality, complications</li>
+      <li>Each metric includes: open surgery rate, laparoscopic rate, robotic rate, cost per adverse event</li>
+    </ul>
+
+    <div class="highlight-box">
+      <p><strong>Example -- Colorectal Department:</strong> A colorectal department with 800 annual cases (45% open / 40% lap / 15% robotic). Converting to 65% robotic saves $1.7M/year across 6 outcome metrics: reduced SSI (-$480K), shorter LOS (-$640K), fewer readmissions (-$290K), reduced blood loss/transfusions (-$120K), fewer conversions to open (-$95K), and lower complication rates (-$75K).</p>
+    </div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Colorectal Metric</th>
+          <th>Open Rate</th>
+          <th>Robotic Rate</th>
+          <th>Cost/Event</th>
+          <th>Annual Savings</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Surgical Site Infection</td>
+          <td>12.4%</td>
+          <td>4.8%</td>
+          <td>$25,500</td>
+          <td><strong>$480,000</strong></td>
+        </tr>
+        <tr>
+          <td>Extended LOS (>5 days)</td>
+          <td>38%</td>
+          <td>14%</td>
+          <td>$3,200/day</td>
+          <td><strong>$640,000</strong></td>
+        </tr>
+        <tr>
+          <td>30-Day Readmission</td>
+          <td>14.2%</td>
+          <td>6.1%</td>
+          <td>$18,400</td>
+          <td><strong>$290,000</strong></td>
+        </tr>
+        <tr>
+          <td>Blood Transfusion Required</td>
+          <td>8.6%</td>
+          <td>2.1%</td>
+          <td>$4,800</td>
+          <td><strong>$120,000</strong></td>
+        </tr>
+        <tr>
+          <td>Conversion to Open</td>
+          <td>N/A</td>
+          <td>3.2%</td>
+          <td>$12,000</td>
+          <td><strong>$95,000</strong></td>
+        </tr>
+        <tr>
+          <td>Major Complication (Clavien 3+)</td>
+          <td>9.8%</td>
+          <td>5.4%</td>
+          <td>$32,000</td>
+          <td><strong>$75,000</strong></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="how-card">
+      <h4>How It's Done -- Technical Implementation</h4>
+      <p>1. The Clinical Evidence Library (<code>clinical-evidence.js</code>) is a structured JavaScript data module containing 44 outcome metrics across 8 specialties, each with: <code>open_rate_pct</code>, <code>laparoscopic_rate_pct</code>, <code>robotic_rate_pct</code>, <code>cost_per_event</code>, <code>unit</code> (percentage or days), and <code>sources</code> (array of journal citations).</p>
+      <p>2. The Dollarization Engine (<code>clinical-dollarization.js</code>) takes hospital case data as input: <code>{ colorectal: { annual_cases: 800, open_pct: 45, lap_pct: 40, robotic_pct: 15 } }</code>. For each specialty, it:</p>
+      <p>&nbsp;&nbsp;&nbsp;a. Calculates the <strong>projected robotic percentage</strong> (default: current + 50% of remaining headroom)</p>
+      <p>&nbsp;&nbsp;&nbsp;b. Converts open cases first (larger clinical delta vs. robotic), then laparoscopic</p>
+      <p>&nbsp;&nbsp;&nbsp;c. For <strong>rate-based metrics</strong> (SSI, readmission): <code>events_avoided = (current_events - projected_events)</code>, then <code>savings = events_avoided x cost_per_event</code></p>
+      <p>&nbsp;&nbsp;&nbsp;d. For <strong>LOS metrics</strong>: <code>savings = cases_converted x (open_LOS - robotic_LOS) x cost_per_day</code></p>
+      <p>&nbsp;&nbsp;&nbsp;e. Mortality is tracked but excluded from dollar calculations by default (can be opted in)</p>
+      <p>3. An <strong>adapter layer</strong> (<code>_adaptEvidenceMetrics</code>) bridges the evidence library format (outcomes object with <code>_pct</code> suffixed rates) to the engine's format (array with decimal rates), converting percentages to decimals automatically.</p>
+      <p>4. The output includes per-specialty breakdown with per-metric savings, total savings, all cited sources, and a methodology statement. This is stored in <code>intuitive_clinical_outcomes</code> and linked to the business plan.</p>
+      <p>5. The <code>generateSummaryReport()</code> function produces a formatted text summary suitable for the executive section of the business plan document.</p>
+      <p><strong>Tech stack:</strong> Pure JavaScript computation engine --> Express REST API (<code>/clinical-evidence/dollarize</code>) --> Sequelize PostgreSQL storage --> React ClinicalOutcomesPanel in BusinessPlanPage.</p>
+    </div>
+  </div>
+</section>
+
+<!-- MODULE 6: PROFORMA TRACKER -->
+<section class="section">
+  <div class="wrap">
+    <div class="section-label">Module 6</div>
+    <h2 class="section-title">Proforma vs Actual Tracker</h2>
+    <p class="section-text">This module directly solves <strong>Problem 4</strong>. After the robot is placed, the business plan becomes a living document that tracks actual performance against projections.</p>
+
+    <ul class="feature-list">
+      <li>Import actual surgeon volumes by period (monthly, quarterly)</li>
+      <li>System compares projected vs actual at the individual surgeon level</li>
+      <li>Variance reporting: who is delivering on commitments, who is underperforming</li>
+      <li>ROI validation: what percentage of projected ROI has been realized to date</li>
+      <li>Executive summary generator for C-suite follow-up meetings</li>
+      <li>Plan snapshots for historical state tracking -- see how the plan has evolved</li>
+      <li>Timeline chart showing projected vs actual over time with trend lines</li>
+    </ul>
+
+    <div class="card">
+      <h4>Post-Placement Workflow</h4>
+      <p><strong>1.</strong> Robot placed at hospital --> Business plan becomes "active"</p>
+      <p><strong>2.</strong> Monthly: import actual case volumes per surgeon from hospital EMR or manual entry</p>
+      <p><strong>3.</strong> System auto-calculates variance and generates exception reports</p>
+      <p><strong>4.</strong> Quarterly: executive summary generated for CFO/CMO review meeting</p>
+      <p><strong>5.</strong> Annual: full ROI validation report with recommendations for expansion</p>
+    </div>
+
+    <div class="how-card">
+      <h4>How It's Done -- Technical Implementation</h4>
+      <p>1. When a business plan is finalized, its status changes to <code>'tracking'</code> upon the first actuals import.</p>
+      <p>2. Actuals are imported via <code>POST /tracking/:planId/actuals</code> with a period (start/end dates) and an array of surgeon-level actual cases: <code>{ surgeon_name, procedure_type, actual_cases }</code>.</p>
+      <p>3. The system automatically looks up each surgeon's <strong>original commitment</strong> from <code>intuitive_surgeon_commitments</code>, prorates the annual projection to the period length, and calculates variance: <code>actual - projected</code> and <code>variance_pct</code>.</p>
+      <p>4. The <strong>comparison endpoint</strong> (<code>GET /tracking/:planId/comparison</code>) aggregates all periods into a timeline with cumulative actual vs. projected cases, per-surgeon tracking (who is delivering, who isn't), and an ROI tracking percentage showing what fraction of projected revenue has materialized.</p>
+      <p>5. <strong>Plan snapshots</strong> (<code>POST /tracking/:planId/snapshot</code>) capture the full state of the business plan at a point in time -- surgeon commitments, clinical outcomes, actuals -- as a JSONB record. This creates an audit trail showing how projections evolved.</p>
+      <p>6. The <strong>executive summary</strong> endpoint (<code>GET /tracking/:planId/executive-summary</code>) generates a structured report with: hospital name, plan status, surgeon count (committed vs. total), incremental cases, revenue, clinical savings, combined ROI, and tracking status (On Track / At Risk / Below Target based on 90%/70% thresholds).</p>
+      <p>7. The React <strong>TrackingDashboardPage</strong> visualizes this with Recharts: a dual-line chart (projected vs. actual), surgeon performance table with color-coded variance, summary cards, and an import form with date pickers and dynamic surgeon rows.</p>
+      <p><strong>Tech stack:</strong> Sequelize models (PlanActual, PlanSnapshot) --> Express REST API --> Recharts LineChart/BarChart --> Prorated annual-to-period projection math.</p>
+    </div>
+  </div>
+</section>
+
+<!-- BUSINESS PLAN OUTPUT -->
+<section id="roi" class="section section-alt">
+  <div class="wrap">
+    <div class="section-label">Business Plan Output</div>
+    <h2 class="section-title">Three-layer ROI model in a single defensible document</h2>
+    <p class="section-text">The comprehensive business plan combines three ROI layers into a single document suitable for hospital C-suite presentation:</p>
+
+    <div class="card">
+      <h4>Three-Layer ROI Model</h4>
+      <p><strong>Layer 1 -- Incremental Volume ROI ($):</strong> Surgeon-validated case commitments multiplied by DRG reimbursement rates, weighted by hospital payer mix.</p>
+      <p><strong>Layer 2 -- Clinical Outcome Savings ($):</strong> Dollarized from 68 published studies. Events avoided multiplied by cost per event equals annual savings.</p>
+      <p><strong>Layer 3 -- Combined ROI + Payback:</strong> System acquisition cost vs combined annual benefit from both revenue layers. Net present value over 5-year horizon.</p>
+    </div>
+
+    <div class="summary-card">
+      <h3>Sample Business Plan Summary -- Cleveland Clinic Florida</h3>
+      <div class="summary-row">
+        <span class="summary-label">Hospital</span>
+        <span class="summary-value">Cleveland Clinic Florida</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Recommended System</span>
+        <span class="summary-value">da Vinci 5 (Score: 90/100)</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Incremental Cases (Year 1)</span>
+        <span class="summary-value">3,630 cases/year</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Incremental Revenue (Layer 1)</span>
+        <span class="summary-value">$69.8M/year</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Clinical Outcome Savings (Layer 2)</span>
+        <span class="summary-value">$18.3M/year</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Combined Annual Benefit</span>
+        <span class="summary-value">$88.1M/year</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">System Investment</span>
+        <span class="summary-value">$2.5M</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Payback Period</span>
+        <span class="summary-value">11 days</span>
+      </div>
+    </div>
+
+    <div class="how-card">
+      <h4>How It's Done -- Technical Implementation</h4>
+      <p>1. The business plan is created via <code>POST /business-plans</code> with system configuration (type, negotiated price, service cost, quantity, acquisition model) and metadata (prepared by/for, presentation date).</p>
+      <p>2. The <strong>calculate endpoint</strong> (<code>POST /business-plans/:id/calculate</code>) aggregates all surgeon commitments (<code>total_incremental_annual</code>, <code>total_revenue_impact</code>) and clinical outcome savings (<code>total_clinical_savings_annual</code>) into a combined ROI.</p>
+      <p>3. <strong>Payback calculation:</strong> <code>system_cost x quantity / (annual_combined_ROI - annual_service_cost) x 12 = months to payback</code>. For lease models, the capital cost is zero and annual lease payments are subtracted instead.</p>
+      <p>4. <strong>Five-year net benefit:</strong> <code>(annual_net_benefit x 5) - capital_cost</code>, giving the CFO a clear long-term value picture.</p>
+      <p>5. All data is stored in <code>intuitive_business_plans</code> with status lifecycle: <code>draft -> finalized -> tracking -> archived</code>. Finalization timestamps the plan and locks the version.</p>
+      <p>6. The full plan with all related data (surgeon commitments, clinical outcomes, actuals, snapshots, surveys) is retrievable via a single <code>GET /business-plans/:id</code> call with Sequelize eager loading.</p>
+      <p><strong>Tech stack:</strong> Sequelize model with 6 associations --> Express CRUD API --> React BusinessPlanPage with inline surgeon entry, DRG auto-lookup, collapsible dollarization panel, and plan action buttons.</p>
+    </div>
+  </div>
+</section>
+
+<!-- DA VINCI SYSTEM COVERAGE -->
 <section class="section">
   <div class="wrap">
     <div class="section-label">System Coverage</div>
-    <h2 class="section-title">Every da Vinci configuration -- including Dual Console</h2>
-    <p class="section-sub">Business plans support all 6 system configurations with actual negotiated pricing and service costs.</p>
-    <div class="data-grid">
-      <div class="data-card">
-        <h3>da Vinci 5</h3>
-        <ul>
-          <li><strong>$2.3 -- 2.8M</strong> purchase</li>
-          <li>All 7 specialties + cardiac</li>
-          <li>Force feedback, Case Insights</li>
-          <li>$2,200/case instruments</li>
-        </ul>
+    <h2 class="section-title">All 6 da Vinci system configurations</h2>
+    <p class="section-sub">SurgicalMind AI supports all current da Vinci systems, with intelligent matching based on hospital volume, specialty mix, and budget constraints.</p>
+
+    <div class="system-grid">
+      <div class="system-card">
+        <h4>da Vinci 5</h4>
+        <div class="price">$2.3M - $2.8M</div>
+        <p>Latest generation. All specialties. Ideal for 1,500+ annual robotic cases. Force feedback, smaller footprint, fastest setup.</p>
       </div>
-      <div class="data-card">
-        <h3>da Vinci 5 Dual Console</h3>
-        <ul>
-          <li><strong>$2.8 -- 3.4M</strong> purchase</li>
-          <li>Training + collaborative surgery</li>
-          <li>Full dV5 capabilities</li>
-          <li>$2,200/case instruments</li>
-        </ul>
+      <div class="system-card">
+        <h4>da Vinci 5 Dual Console</h4>
+        <div class="price">$2.8M - $3.4M</div>
+        <p>Training-focused. Academic centers. Two surgeons operate simultaneously. Essential for residency programs building robotic curricula.</p>
       </div>
-      <div class="data-card">
-        <h3>da Vinci Xi</h3>
-        <ul>
-          <li><strong>$1.5 -- 2.0M</strong> purchase</li>
-          <li>5 specialties</li>
-          <li>Firefly, Table Motion</li>
-          <li>$1,800/case instruments</li>
-        </ul>
+      <div class="system-card">
+        <h4>da Vinci Xi</h4>
+        <div class="price">$1.5M - $2.0M</div>
+        <p>Proven workhorse. Multi-quadrant capability. Ideal for 800-1,500 annual cases. Largest installed base worldwide.</p>
       </div>
-      <div class="data-card">
-        <h3>da Vinci Xi Dual Console</h3>
-        <ul>
-          <li><strong>$1.8 -- 2.4M</strong> purchase</li>
-          <li>Surgeon training programs</li>
-          <li>Full Xi capabilities</li>
-          <li>$1,800/case instruments</li>
-        </ul>
+      <div class="system-card">
+        <h4>da Vinci Xi Dual Console</h4>
+        <div class="price">$1.8M - $2.4M</div>
+        <p>Training variant of Xi. Community hospitals with teaching affiliations. Proctoring and mentorship capabilities.</p>
       </div>
-      <div class="data-card">
-        <h3>da Vinci X</h3>
-        <ul>
-          <li><strong>$800K -- 1.2M</strong> purchase</li>
-          <li>Entry-level platform</li>
-          <li>Urology, GYN, General</li>
-          <li>$1,800/case instruments</li>
-        </ul>
+      <div class="system-card">
+        <h4>da Vinci X</h4>
+        <div class="price">$800K - $1.2M</div>
+        <p>Value entry point. Single-quadrant focus. Ideal for community hospitals with 400-800 annual cases in 1-2 specialties.</p>
       </div>
-      <div class="data-card">
-        <h3>da Vinci SP</h3>
-        <ul>
-          <li><strong>$1.5 -- 1.8M</strong> purchase</li>
-          <li>Single-port access</li>
-          <li>Urology, Head & Neck</li>
-          <li>$2,000/case instruments</li>
-        </ul>
+      <div class="system-card">
+        <h4>da Vinci SP (Single Port)</h4>
+        <div class="price">$1.5M - $1.8M</div>
+        <p>Single-incision platform. Urology and ENT/transoral focus. Unique clinical differentiator for specialized programs.</p>
       </div>
     </div>
+
+    <table class="data-table" style="margin-top:32px">
+      <thead>
+        <tr>
+          <th>System</th>
+          <th>Instrument Cost/Case</th>
+          <th>Ideal Annual Volume</th>
+          <th>Top Specialties</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>da Vinci 5</td>
+          <td>$1,800 - $2,200</td>
+          <td>1,500+</td>
+          <td>All (multi-specialty)</td>
+        </tr>
+        <tr>
+          <td>da Vinci 5 Dual</td>
+          <td>$1,800 - $2,200</td>
+          <td>1,500+</td>
+          <td>Academic / Training</td>
+        </tr>
+        <tr>
+          <td>da Vinci Xi</td>
+          <td>$2,000 - $2,500</td>
+          <td>800 - 1,500</td>
+          <td>General, GYN, Urology</td>
+        </tr>
+        <tr>
+          <td>da Vinci Xi Dual</td>
+          <td>$2,000 - $2,500</td>
+          <td>800 - 1,500</td>
+          <td>Teaching hospitals</td>
+        </tr>
+        <tr>
+          <td>da Vinci X</td>
+          <td>$2,200 - $2,800</td>
+          <td>400 - 800</td>
+          <td>Urology, GYN</td>
+        </tr>
+        <tr>
+          <td>da Vinci SP</td>
+          <td>$2,400 - $3,000</td>
+          <td>300 - 600</td>
+          <td>Urology, ENT</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </section>
 
-<!-- CLINICAL EVIDENCE -->
-<section class="section data-section">
+<!-- LIVE PLATFORM -->
+<section class="section section-alt">
   <div class="wrap">
-    <div class="section-label">Clinical Evidence Library</div>
-    <h2 class="section-title">44 outcome metrics across 8 specialties -- backed by 68 published studies</h2>
-    <p class="section-sub">Every clinical savings calculation is grounded in peer-reviewed evidence from leading surgical journals.</p>
-    <div class="data-grid">
-      <div class="data-card">
-        <h3>Colorectal</h3>
-        <ul>
-          <li>SSI: <strong>15% open vs 2% robotic</strong> -- $25K/event</li>
-          <li>LOS: <strong>7.2 vs 3.8 days</strong> -- $2,500/day</li>
-          <li>Readmission: <strong>12.5% vs 5.5%</strong> -- $15K/event</li>
-          <li>Blood transfusion, ileus, conversion</li>
-        </ul>
-      </div>
-      <div class="data-card">
-        <h3>Urology</h3>
-        <ul>
-          <li>Incontinence 12mo: <strong>20% open vs 8% robotic</strong></li>
-          <li>Positive margins: <strong>22% vs 12%</strong> -- $20K</li>
-          <li>Blood loss >500ml: <strong>30% vs 5%</strong></li>
-          <li>LOS: <strong>3.5 vs 1.5 days</strong></li>
-        </ul>
-      </div>
-      <div class="data-card">
-        <h3>Gynecology</h3>
-        <ul>
-          <li>Blood loss: <strong>8% vs 1.5%</strong></li>
-          <li>LOS: <strong>3.2 vs 1.2 days</strong></li>
-          <li>Wound complications: <strong>5% vs 1%</strong></li>
-          <li>VTE: <strong>2% vs 0.5%</strong></li>
-        </ul>
-      </div>
-      <div class="data-card">
-        <h3>Thoracic</h3>
-        <ul>
-          <li>Air leak: <strong>15% vs 6%</strong></li>
-          <li>LOS: <strong>7 vs 3.5 days</strong></li>
-          <li>Pulmonary complications: <strong>18% vs 7%</strong></li>
-          <li>Chest tube days: <strong>5.2 vs 2.5</strong></li>
-        </ul>
-      </div>
-      <div class="data-card">
-        <h3>General Surgery</h3>
-        <ul>
-          <li>Hernia recurrence 2yr: <strong>12% vs 2%</strong></li>
-          <li>SSI: <strong>6% vs 1.2%</strong> -- $15K/event</li>
-          <li>Chronic pain 6mo: <strong>15% vs 4%</strong></li>
-          <li>LOS: <strong>2.5 vs 0.8 days</strong></li>
-        </ul>
-      </div>
-      <div class="data-card">
-        <h3>+ Cardiac, ENT, GYN Oncology</h3>
-        <ul>
-          <li>Cardiac: ICU days, stroke, wound infection</li>
-          <li>ENT: tracheostomy, swallowing function, margins</li>
-          <li>GYN Onc: node counts, time to adjuvant therapy</li>
-          <li>All with published sources</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</section>
+    <div class="section-label">Live Platform</div>
+    <h2 class="section-title">Live and accessible today -- 7-step workflow</h2>
+    <p class="section-text">SurgicalMind AI guides users through a complete workflow from initial hospital intake to ongoing plan tracking.</p>
 
-<!-- DRG REIMBURSEMENT -->
-<section class="section">
-  <div class="wrap">
-    <div class="section-label">DRG Reimbursement Library</div>
-    <h2 class="section-title">28 procedure-specific DRG codes with payer-adjusted rates</h2>
-    <p class="section-sub">Every surgeon commitment is dollarized using real DRG reimbursement rates -- Medicare, Commercial, Medicaid, and blended.</p>
-    <div class="arch-flow">
-      <div class="arch-box"><div class="label">Surgeon Input</div><div class="value">Procedure + Volume</div></div>
-      <span class="arch-arrow">&rarr;</span>
-      <div class="arch-box"><div class="label">DRG Lookup</div><div class="value">28 Codes</div></div>
-      <span class="arch-arrow">&rarr;</span>
-      <div class="arch-box" style="border-color:var(--accent)"><div class="label">Payer Mix</div><div class="value">Weighted Rate</div></div>
-      <span class="arch-arrow">&rarr;</span>
-      <div class="arch-box" style="border-color:var(--green)"><div class="label">Revenue</div><div class="value">$ Per Case</div></div>
+    <div class="workflow-card">
+      <h4>7-Step Workflow</h4>
+      <div class="workflow-step"><strong>Step 1: Hospital Intake</strong> -- AI agent populates 40+ fields from hospital name</div>
+      <div class="workflow-step"><strong>Step 2: Analysis</strong> -- 16-module engine generates quantitative foundation</div>
+      <div class="workflow-step"><strong>Step 3: System Match</strong> -- Intelligent scoring across all 6 da Vinci configurations</div>
+      <div class="workflow-step"><strong>Step 4: Presentation</strong> -- Voice-narrated 13-slide proposals with Rachel AI</div>
+      <div class="workflow-step"><strong>Step 5: Business Plan</strong> -- Three-layer ROI model with DRG reimbursement</div>
+      <div class="workflow-step"><strong>Step 6: Surgeon Surveys</strong> -- Digital collection of incremental volume commitments</div>
+      <div class="workflow-step"><strong>Step 7: Plan Tracking</strong> -- Proforma vs actual with executive reporting</div>
     </div>
-    <div style="text-align:center;margin-top:24px">
-      <p style="color:var(--muted);font-size:.9rem">Example: Radical Prostatectomy (DRG 714) -- Medicare $12,500 | Commercial $21,875 | Blended $16,313</p>
-    </div>
-  </div>
-</section>
 
-<!-- HOW IT WORKS -->
-<section class="section neural-section">
-  <div class="wrap">
-    <div class="section-label">The Business Plan Output</div>
-    <h2 class="section-title">Three ROI layers. One comprehensive plan.</h2>
-    <p class="section-sub">The final business plan combines all three layers into a single, defensible document for hospital C-suites.</p>
-    <div class="neural-layers">
-      <div class="neural-layer">
-        <div class="neural-num">$</div>
-        <h3>Layer 1: Incremental Volume ROI</h3>
-        <p>Surgeon-validated case commitments (from survey or manual entry) x DRG-based reimbursement rates. Direct revenue impact the hospital can expect from the da Vinci investment.</p>
-      </div>
-      <div class="neural-layer">
-        <div class="neural-num">$$</div>
-        <h3>Layer 2: Clinical Outcome Savings</h3>
-        <p>The hospital's own published case volumes cross-referenced with 68 clinical studies. Fewer infections, shorter stays, lower readmissions = quantified dollar savings by specialty.</p>
-      </div>
-      <div class="neural-layer">
-        <div class="neural-num">$$$</div>
-        <h3>Layer 3: Proforma Tracking</h3>
-        <p>After placement, import actual surgeon volumes. Compare to projections at the surgeon level. Validate the investment is delivering. Generate executive reports for follow-up meetings.</p>
-      </div>
+    <div class="live-section">
+      <h3>Access SurgicalMind AI</h3>
+      <p>Experience the full platform with live AI analysis</p>
+      <a href="https://aiagent.ringlypro.com/intuitive/" target="_blank" class="btn-primary">Launch Platform</a>
     </div>
-  </div>
-</section>
 
-<!-- ROI MODEL -->
-<section id="roi" class="section">
-  <div class="wrap">
-    <div class="section-label">Sample Output</div>
-    <h2 class="section-title">What a dollarization looks like</h2>
-    <p class="section-sub">Sample analysis: 200-bed hospital with 800 colorectal + 1,200 urology cases annually.</p>
-    <div class="roi-grid">
-      <div class="roi-card">
-        <div class="roi-num">$2.0M</div>
-        <h4>Clinical Outcome Savings</h4>
-        <p>Annual savings from reduced SSI, shorter LOS, fewer readmissions across colorectal + urology</p>
-      </div>
-      <div class="roi-card">
-        <div class="roi-num">$1.7M</div>
-        <h4>Colorectal Savings</h4>
-        <p>6 outcome metrics: SSI ($600K), LOS ($380K), readmission ($270K), blood transfusion, ileus, conversion</p>
-      </div>
-      <div class="roi-card">
-        <div class="roi-num">$295K</div>
-        <h4>Urology Savings</h4>
-        <p>6 outcome metrics: incontinence, positive margins, blood loss, LOS, transfusion, ED rates</p>
-      </div>
-      <div class="roi-card">
-        <div class="roi-num">68</div>
-        <h4>Published Citations</h4>
-        <p>Every number backed by peer-reviewed evidence from JAMA Surgery, Annals of Surgery, European Urology, and more</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- 16 ANALYSIS ENGINE -->
-<section class="section data-section">
-  <div class="wrap">
-    <div class="section-label">Under the Hood</div>
-    <h2 class="section-title">16-Module Hospital Analysis Engine</h2>
-    <p class="section-sub">Beyond business planning, SurgicalMind runs a full hospital assessment with 16 computational analyses and a voice-narrated 13-slide proposal.</p>
-    <div class="data-grid">
-      <div class="data-card">
-        <h3>Volume & Scheduling</h3>
-        <ul>
-          <li>Volume Projection (5-year ramp)</li>
-          <li>Procedure Pareto ABC Analysis</li>
-          <li>Monthly Seasonality + CoV</li>
-          <li>Weekday & Hourly Distribution</li>
-          <li>Design Day (P50-P99)</li>
-        </ul>
-      </div>
-      <div class="data-card">
-        <h3>System Matching</h3>
-        <ul>
-          <li>Model Matching (0-100 scoring)</li>
-          <li>Robot Compatibility Matrix</li>
-          <li>Infrastructure Assessment</li>
-          <li>Surgeon Capacity Analysis</li>
-          <li>Utilization Forecast</li>
-        </ul>
-      </div>
-      <div class="data-card">
-        <h3>Financial & Risk</h3>
-        <ul>
-          <li>ROI Calculation (payback, 5-yr)</li>
-          <li>Financial Deep Dive (TCO, breakeven)</li>
-          <li>Growth Extrapolation (3 scenarios)</li>
-          <li>Competitive Analysis</li>
-          <li>Risk Assessment (multi-category)</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ARCHITECTURE -->
-<section class="section">
-  <div class="wrap">
-    <div class="section-label">Platform Architecture</div>
-    <h2 class="section-title">End-to-end: from surgeon survey to C-suite presentation</h2>
-    <div class="arch-flow">
-      <div class="arch-box"><div class="label">Surgeon Survey</div><div class="value">Volume Commitments</div></div>
-      <span class="arch-arrow">&rarr;</span>
-      <div class="arch-box"><div class="label">Business Plan</div><div class="value">DRG + Payer Mix</div></div>
-      <span class="arch-arrow">&rarr;</span>
-      <div class="arch-box" style="border-color:var(--gold)"><div class="label">Clinical Evidence</div><div class="value">68 Studies</div></div>
-      <span class="arch-arrow">&rarr;</span>
-      <div class="arch-box" style="border-color:var(--accent)"><div class="label">Dollarization</div><div class="value">44 Metrics</div></div>
-      <span class="arch-arrow">&rarr;</span>
-      <div class="arch-box" style="border-color:var(--green)"><div class="label">Business Plan</div><div class="value">3-Layer ROI</div></div>
-    </div>
-    <div class="arch-flow" style="padding-top:20px">
-      <div class="arch-box"><div class="label">Robot Placed</div><div class="value">Go-Live</div></div>
-      <span class="arch-arrow">&rarr;</span>
-      <div class="arch-box"><div class="label">Actuals Import</div><div class="value">Surgeon Volumes</div></div>
-      <span class="arch-arrow">&rarr;</span>
-      <div class="arch-box" style="border-color:var(--green)"><div class="label">Proforma Tracker</div><div class="value">Projected vs Actual</div></div>
-      <span class="arch-arrow">&rarr;</span>
-      <div class="arch-box" style="border-color:var(--accent)"><div class="label">Executive Report</div><div class="value">ROI Validated</div></div>
-    </div>
+    <p style="text-align:center;margin-top:28px;color:var(--muted);font-size:.9rem">Built by <strong style="color:var(--text)">Digit2AI</strong> | Powered by <strong style="color:var(--text)">Claude Sonnet 4</strong></p>
   </div>
 </section>
 
 <!-- CTA -->
 <section id="demo" class="cta-section">
   <div class="cta-inner">
-    <h2>Ready to see SurgicalMind AI<br>build a business plan in real time?</h2>
-    <p>One demo. One hospital profile. And you will see exactly how the platform transforms raw surgeon data into a defensible, dollarized business case.</p>
-    <a href="mailto:manuel@digit2ai.com?subject=SurgicalMind%20AI%20Demo%20Request" class="btn-primary">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M4 4h16v16H4z"/><path d="M4 4l8 8 8-8"/></svg>
-      Request a Demo
-    </a>
+    <h2>Ready to see SurgicalMind AI<br>build a business plan?</h2>
+    <p>One demo. One hospital profile. See exactly how the platform transforms raw surgeon data into a defensible, dollarized business case.</p>
+    <span class="cta-email">mstagg@digit2ai.com</span>
+    <a href="mailto:mstagg@digit2ai.com?subject=SurgicalMind%20AI%20Demo%20Request" class="btn-primary">Request a Demo</a>
   </div>
 </section>
 
