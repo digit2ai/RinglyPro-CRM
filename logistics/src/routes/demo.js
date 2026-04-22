@@ -203,13 +203,12 @@ async function generateFullDemo(models, seq, pid) {
   ]);
 
   // ====================================================================
-  // GOODS OUT — EXACT Pinaxis numbers
-  //   60,016 orders / 637,002 lines / 370 days
-  //   Avg lines/order: 10.6 (637002/60016)
-  //   Total pick units: 89,533,743 → avg ~140.5 per line
-  //   43,680 unique moved SKUs must appear
-  //   ABC: A=785 → 80% vol, B=785 → 15%, C=rest → 5%
+  // GOODS OUT — Lite scale (same proportions as full 228K)
+  //   3,000 orders / 30,000 lines / 90 days
+  //   Avg lines/order: 10 | 2,000 moved SKUs | ABC 80/15/5
   // ====================================================================
+  console.log(`${label} Starting goods_out generation...`);
+  try {
   const TARGET_ORDERS = 3000;
   const TARGET_LINES = 30000;
   const TARGET_PICK_UNITS = 4200000;
@@ -435,6 +434,10 @@ async function generateFullDemo(models, seq, pid) {
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   console.log(`${label} Complete in ${elapsed}s — project ${pid}: ${TOTAL_SKUS} items, ${totalOrders} orders, ${totalLines} lines`);
+  } catch (goErr) {
+    console.error(`${label} GOODS_OUT/ANALYSIS ERROR for project ${pid}:`, goErr.message, goErr.stack);
+    throw goErr;
+  }
 }
 
 // POST /api/v1/demo/regenerate/:projectId — Wipe and regenerate a project with fresh POC data
