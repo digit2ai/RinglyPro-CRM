@@ -36,9 +36,8 @@ export default function LoginPage({ onLogin }) {
           <img
             src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69e6c537c56ad279084e2bb6.png"
             alt="SurgicalMind AI"
-            className="w-48 mx-auto mb-6"
+            className="w-80 mx-auto mb-4"
           />
-          <h1 className="text-2xl font-bold text-white mb-2">SurgicalMind AI</h1>
           <p className="text-slate-400 text-sm">Business Planning Platform for da Vinci Robotic Surgery</p>
         </div>
 
@@ -84,7 +83,7 @@ export default function LoginPage({ onLogin }) {
           </button>
 
           <p className="text-center text-slate-500 text-xs mt-6">
-            Powered by Digit2AI | Claude Sonnet 4
+            Powered by Digit2AI
           </p>
         </form>
       </div>
