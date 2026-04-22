@@ -564,21 +564,8 @@ async function researchHospital(hospitalName, progressCallback) {
     researchData = buildFallbackProfile(hospitalName);
   }
 
-  // Retry on low confidence
-  if (researchData.confidence_level === 'low' && !researchData._retried) {
-    progress('Low confidence detected -- running retry pass...');
-    researchData._retried = true;
-    try {
-      const retryData = await researchHospital(hospitalName + ' hospital', progress);
-      if (retryData.confidence_level !== 'low') {
-        retryData.hospital_name = researchData.hospital_name || hospitalName;
-        researchData = retryData;
-        progress('Retry improved confidence to: ' + researchData.confidence_level);
-      }
-    } catch (e) {
-      progress('Retry failed (non-fatal): ' + e.message);
-    }
-  }
+  // Note: retry disabled to prevent infinite loops on API failures.
+  // Low-confidence profiles proceed with fallback benchmarks.
 
   // Build final project data and cache
   const projectData = buildProjectData(researchData);
