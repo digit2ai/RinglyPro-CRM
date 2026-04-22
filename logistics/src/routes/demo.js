@@ -520,21 +520,23 @@ router.post('/instant', async (req, res) => {
       WHERE project_id = ${sourceId}
     `);
 
-    // Clone product recommendations
-    await seq.query(`
-      INSERT INTO logistics_product_recommendations (project_id, product_name, product_category, description, fit_score, rationale, specs, created_at, updated_at)
-      SELECT ${newId}, product_name, product_category, description, fit_score, rationale, specs, NOW(), NOW()
-      FROM logistics_product_recommendations
-      WHERE project_id = ${sourceId}
-    `);
+    // Clone product recommendations (select only columns that exist)
+    try {
+      const [recCols] = await seq.query(`SELECT column_name FROM information_schema.columns WHERE table_name = 'logistics_product_recommendations' AND column_name NOT IN ('id','project_id','created_at','updated_at') ORDER BY ordinal_position`);
+      if (recCols.length > 0) {
+        const cols = recCols.map(c => c.column_name).join(', ');
+        await seq.query(`INSERT INTO logistics_product_recommendations (project_id, ${cols}, created_at, updated_at) SELECT ${newId}, ${cols}, NOW(), NOW() FROM logistics_product_recommendations WHERE project_id = ${sourceId}`);
+      }
+    } catch (e) { console.log('[INSTANT] Product recs clone skipped:', e.message); }
 
     // Clone file records (metadata only, not actual data rows)
-    await seq.query(`
-      INSERT INTO logistics_uploaded_files (project_id, file_type, original_filename, file_size, mime_type, row_count, column_count, parse_status, created_at, updated_at)
-      SELECT ${newId}, file_type, original_filename, file_size, mime_type, row_count, column_count, 'parsed', NOW(), NOW()
-      FROM logistics_uploaded_files
-      WHERE project_id = ${sourceId}
-    `);
+    try {
+      const [fileCols] = await seq.query(`SELECT column_name FROM information_schema.columns WHERE table_name = 'logistics_uploaded_files' AND column_name NOT IN ('id','project_id','created_at','updated_at') ORDER BY ordinal_position`);
+      if (fileCols.length > 0) {
+        const cols = fileCols.map(c => c.column_name).join(', ');
+        await seq.query(`INSERT INTO logistics_uploaded_files (project_id, ${cols}, created_at, updated_at) SELECT ${newId}, ${cols}, NOW(), NOW() FROM logistics_uploaded_files WHERE project_id = ${sourceId}`);
+      }
+    } catch (e) { console.log('[INSTANT] File records clone skipped:', e.message); }
 
     // Mark complete
     await project.update({ status: 'completed', analysis_started_at: new Date(), analysis_completed_at: new Date() });
