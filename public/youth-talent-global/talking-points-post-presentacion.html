@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Talking Points Post-Presentacion — Lala</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #f8f9fa;
+    color: #1a1a2e;
+    line-height: 1.7;
+    padding: 0;
+  }
+
+  .email-container {
+    max-width: 720px;
+    margin: 0 auto;
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+  }
+
+  .email-header {
+    background: linear-gradient(135deg, #0b1d4a 0%, #17296b 100%);
+    padding: 40px 48px;
+    color: #fff;
+  }
+
+  .email-header .logo-line {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #3dcbca;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+
+  .email-header h1 {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+
+  .email-header .subtitle {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 15px;
+    color: rgba(255,255,255,0.7);
+    font-style: italic;
+  }
+
+  .email-body {
+    padding: 40px 48px;
+  }
+
+  .email-body h2 {
+    font-size: 20px;
+    font-weight: 800;
+    color: #0b1d4a;
+    margin: 36px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #3dcbca;
+    letter-spacing: -0.3px;
+  }
+
+  .email-body h2:first-child {
+    margin-top: 0;
+  }
+
+  .email-body h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #17296b;
+    margin: 24px 0 10px;
+  }
+
+  .email-body p {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 15px;
+    line-height: 1.75;
+    color: #333;
+    margin-bottom: 14px;
+  }
+
+  .email-body p strong {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    color: #0b1d4a;
+  }
+
+  .talking-point {
+    margin-bottom: 24px;
+    padding: 20px 24px;
+    background: #f0fafa;
+    border-left: 4px solid #3dcbca;
+    border-radius: 0 8px 8px 0;
+  }
+
+  .talking-point .tp-number {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #3dcbca;
+    margin-bottom: 6px;
+  }
+
+  .talking-point .tp-title {
+    font-size: 17px;
+    font-weight: 800;
+    color: #0b1d4a;
+    margin-bottom: 8px;
+    letter-spacing: -0.3px;
+  }
+
+  .talking-point .tp-script {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 15px;
+    line-height: 1.7;
+    color: #333;
+    font-style: italic;
+  }
+
+  .talking-point .tp-script strong {
+    font-family: 'Inter', sans-serif;
+    font-style: normal;
+    font-weight: 700;
+    color: #0b1d4a;
+  }
+
+  .talking-point .tp-note {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: #666;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px dashed #ccc;
+  }
+
+  .faq-item {
+    margin-bottom: 20px;
+    padding: 18px 22px;
+    background: #fafafa;
+    border: 1px solid #eee;
+    border-radius: 8px;
+  }
+
+  .faq-item .faq-q {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0b1d4a;
+    margin-bottom: 8px;
+  }
+
+  .faq-item .faq-a {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #444;
+  }
+
+  .faq-item .faq-a strong {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    color: #0b1d4a;
+  }
+
+  .cta-block {
+    margin: 32px 0;
+    padding: 28px 32px;
+    background: linear-gradient(135deg, #0b1d4a 0%, #17296b 100%);
+    border-radius: 12px;
+    color: #fff;
+    text-align: center;
+  }
+
+  .cta-block .cta-title {
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 10px;
+  }
+
+  .cta-block .cta-text {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 14px;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 16px;
+  }
+
+  .cta-block a {
+    display: inline-block;
+    padding: 12px 32px;
+    background: #3dcbca;
+    color: #0b1d4a;
+    font-weight: 800;
+    font-size: 14px;
+    letter-spacing: 1px;
+    text-decoration: none;
+    border-radius: 6px;
+    text-transform: uppercase;
+  }
+
+  .email-footer {
+    padding: 24px 48px;
+    background: #f0f0f0;
+    font-size: 12px;
+    color: #888;
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #3dcbca, transparent);
+    margin: 32px 0;
+  }
+
+  .highlight-box {
+    padding: 16px 20px;
+    background: #fff8f0;
+    border-left: 4px solid #ef6c57;
+    border-radius: 0 8px 8px 0;
+    margin: 16px 0;
+  }
+
+  .highlight-box p {
+    margin-bottom: 0;
+    font-size: 14px;
+  }
+
+  ul {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 14px;
+    line-height: 1.8;
+    color: #444;
+    padding-left: 20px;
+    margin-bottom: 14px;
+  }
+
+  ul li {
+    margin-bottom: 4px;
+  }
+
+  @media print {
+    body { background: #fff; }
+    .email-container { border: none; max-width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="email-container">
+
+  <!-- HEADER -->
+  <div class="email-header">
+    <div class="logo-line">Visionarium // Post-Presentacion Notes</div>
+    <h1>Talking Points para Lala</h1>
+    <div class="subtitle">Guion persuasivo + FAQ para despues de la presentacion auto-play "Visionarium Quest"</div>
+  </div>
+
+  <!-- BODY -->
+  <div class="email-body">
+
+    <h2>Apertura (30 segundos)</h2>
+
+    <div class="talking-point">
+      <div class="tp-number">Apertura</div>
+      <div class="tp-title">Reconectar con la sala despues del auto-play</div>
+      <div class="tp-script">
+        "Gracias por acompanarme en este recorrido. Lo que acaban de ver no es solo la historia de Lucho Diaz. Es un espejo. Cada uno de ustedes tiene un nivel que todavia no ha desbloqueado. <strong>Y yo estoy aqui para decirles que eso cambia hoy.</strong>"
+      </div>
+      <div class="tp-note">TONO: Calido pero firme. Contacto visual directo. Dejar que el silencio post-presentacion trabaje a tu favor antes de hablar.</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <h2>5 Talking Points Clave</h2>
+
+    <!-- TP1 -->
+    <div class="talking-point">
+      <div class="tp-number">Talking Point 01</div>
+      <div class="tp-title">Esto no es motivacion. Esto es infraestructura.</div>
+      <div class="tp-script">
+        "Se que han escuchado charlas motivacionales antes. Les dicen 'tu puedes', les ponen musica bonita, y el lunes todo se olvida. <strong>Visionarium no es eso.</strong> Lo que vieron en la presentacion — la IA mentora Lina, la plataforma con 8 capas de tecnologia, el fellowship con 40 becas completas — eso ya existe. Ya esta construido. Ya funciona. No es una promesa. Es un producto real que esta esperandolos del otro lado de una pantalla."
+      </div>
+      <div class="tp-note">CLAVE: Diferenciarse de toda charla motivacional que hayan escuchado. La palabra "infraestructura" es deliberada — suena solida, concreta, diferente.</div>
+    </div>
+
+    <!-- TP2 -->
+    <div class="talking-point">
+      <div class="tp-number">Talking Point 02</div>
+      <div class="tp-title">Lina no es un chatbot. Es el mentor que Lucho nunca tuvo.</div>
+      <div class="tp-script">
+        "Cuando Lucho tenia 14 anos y caminaba bajo el sol de La Guajira con botas rotas, no habia nadie que le dijera: 'Oye, hay una beca en Barranquilla. Te ayudo a llenar la solicitud.' No habia nadie disponible a las 11 de la noche cuando la duda lo atacaba. <strong>Lina es esa persona.</strong> Habla espanol e ingles. Esta disponible 24 horas. Y no juzga. Le puedes decir 'no se que quiero hacer con mi vida' y ella te va a ayudar a descubrirlo. Gratis. Hoy."
+      </div>
+      <div class="tp-note">CLAVE: Humanizar la IA. No hablar de tecnologia — hablar de soledad y de tener a alguien disponible cuando mas se necesita.</div>
+    </div>
+
+    <!-- TP3 -->
+    <div class="talking-point">
+      <div class="tp-number">Talking Point 03</div>
+      <div class="tp-title">40 becas completas. Septiembre 2026. La puerta esta abierta.</div>
+      <div class="tp-script">
+        "En septiembre de este ano, Visionarium abre su primer Fellowship global. 40 jovenes de 16 a 22 anos van a recibir beca completa: acceso a la plataforma, mentoria 1:1, proyectos reales con patrocinadores, y un portafolio que van a poder mostrar a cualquier universidad o empleador del mundo. <strong>La unica condicion es que apliquen.</strong> No necesitan dinero. No necesitan conexiones. Solo necesitan la decision de levantar la mano y decir: 'Yo quiero esto.'"
+      </div>
+      <div class="tp-note">CLAVE: Urgencia + accesibilidad. Eliminar todas las barreras mentales. La unica barrera es la decision de aplicar.</div>
+    </div>
+
+    <!-- TP4 -->
+    <div class="talking-point">
+      <div class="tp-number">Talking Point 04</div>
+      <div class="tp-title">No construimos esto para nosotros. Lo construimos para ustedes.</div>
+      <div class="tp-script">
+        "Quiero ser honesta con ustedes. Llevo mas de 30 anos trabajando con jovenes. He visto el talento que hay en nuestras comunidades. Y he visto como ese talento se pierde — no por falta de capacidad, sino por falta de acceso. Por eso fundamos Visionarium. Manuel y su equipo en Digit2ai construyeron toda la tecnologia. La misma IA que opera en fabricas, hospitales y flotas de camiones a nivel empresarial, <strong>ahora esta al servicio de ustedes.</strong> Eso no es normal. Eso no existe en ningun otro programa para jovenes en America Latina. Y es suyo."
+      </div>
+      <div class="tp-note">CLAVE: Credibilidad + generosidad. Mostrar que la tecnologia es de nivel enterprise (no un juguete) y que esta disponible para ellos sin costo.</div>
+    </div>
+
+    <!-- TP5 -->
+    <div class="talking-point">
+      <div class="tp-number">Talking Point 05</div>
+      <div class="tp-title">El cierre: "La unica pregunta que importa"</div>
+      <div class="tp-script">
+        "Les voy a hacer una sola pregunta. Y quiero que la contesten en silencio, adentro, donde nadie los escucha. <strong>Si tuvieras acceso a un mentor disponible 24 horas, una comunidad global de jovenes como tu, proyectos reales con empresas reales, y 40 becas completas... y lo unico que tuvieras que hacer fuera registrarte gratis en una pagina web... lo harias?</strong> [Pausa 3 segundos] Porque si la respuesta es si, entonces lo unico que queda entre tu y esa oportunidad son 30 segundos en visionarium.app."
+      </div>
+      <div class="tp-note">CLAVE: Cierre tipo "inevitable conclusion". No estas pidiendo — estas eliminando la ultima excusa. Si la respuesta es si, no hay razon logica para no actuar.</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <h2>Transicion al Q&A</h2>
+
+    <div class="talking-point">
+      <div class="tp-number">Puente</div>
+      <div class="tp-title">Abrir el espacio para preguntas</div>
+      <div class="tp-script">
+        "Antes de irnos, quiero abrir un espacio para ustedes. Se que cuando uno escucha algo nuevo, la mente genera preguntas. Algunas las dicen en voz alta. Otras se las guardan. <strong>Hoy quiero que no se guarden nada.</strong> Pregunten lo que quieran. No hay preguntas tontas. Solo hay oportunidades que se pierden por no preguntar."
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <h2>FAQ — Preguntas Frecuentes</h2>
+
+    <div class="faq-item">
+      <div class="faq-q">1. Esto suena muy bonito, pero... es real? Realmente es gratis?</div>
+      <div class="faq-a">"Entiendo la pregunta. Estamos acostumbrados a que lo bueno tiene truco. <strong>Visionarium es 100% real y la plataforma es gratuita.</strong> El Fellowship de 40 becas completas abre en septiembre 2026. No hay letra pequena. Nuestro modelo se financia con patrocinadores corporativos y tecnologia que ya genera ingresos en otros sectores. Tu no pagas nada. Nunca."</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">2. Que es Lina exactamente? Es como ChatGPT?</div>
+      <div class="faq-a">"Lina es una inteligencia artificial construida especificamente para jovenes latinos bilingues. A diferencia de un chatbot generico, <strong>Lina entiende tu contexto.</strong> Habla espanol e ingles con naturalidad. Puede ayudarte a preparar una entrevista de trabajo, a practicar ingles, a investigar becas, a pensar en tu plan de carrera, o simplemente a organizar tus ideas cuando todo parece confuso. Esta disponible 24/7. Y aprende de tus conversaciones para darte mejor orientacion cada vez."</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">3. Tengo 15 / tengo 24... puedo participar?</div>
+      <div class="faq-a">"La plataforma Visionarium esta abierta para todos. <strong>El Fellowship con las 40 becas completas esta disenado para jovenes de 16 a 22 anos.</strong> Si tienes 15, te recomiendo registrarte ahora, empezar a trabajar con Lina y aplicar cuando cumplas 16. Si tienes mas de 22, aun puedes usar la plataforma y conectarte con la comunidad. Lo importante es que empieces hoy."</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">4. No hablo ingles. Puedo participar igual?</div>
+      <div class="faq-a">"<strong>Por supuesto.</strong> De hecho, uno de los objetivos centrales de Visionarium es ayudarte a ser bilingue. Lina habla espanol perfectamente. El curriculo incluye formacion en ingles. No necesitas saber ingles para empezar — necesitas querer aprenderlo. Y nosotros te damos las herramientas para lograrlo."</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">5. Como aplico al Fellowship?</div>
+      <div class="faq-a">"<strong>Paso 1:</strong> Entra a visionarium.app y crea tu cuenta. Es gratis y toma menos de 2 minutos. <strong>Paso 2:</strong> Empieza a explorar la plataforma y a hablar con Lina. <strong>Paso 3:</strong> Cuando abramos las aplicaciones al Fellowship (Q3 2026), recibiras una notificacion. El proceso de seleccion valora tu historia, tu determinacion y tu compromiso — no tu promedio academico ni tu situacion economica."</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">6. Esto funciona solo en Miami o tambien en mi pais?</div>
+      <div class="faq-a">"<strong>Visionarium es 100% digital y global.</strong> No importa si estas en Bogota, Ciudad de Mexico, Lima, Buenos Aires o un pueblo pequeno donde nadie ha escuchado de IA. Solo necesitas un telefono con internet. La plataforma, Lina, la comunidad, los mentores — todo esta disponible desde cualquier lugar del mundo."</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">7. Que pasa despues del Fellowship? Me dejan solo?</div>
+      <div class="faq-a">"No. <strong>Visionarium es una comunidad, no un curso.</strong> Despues del Fellowship, sigues conectado con tu cohorte, con los mentores, y con la red de patrocinadores. Nuestro objetivo es que cada Fellow salga con un portafolio real, conexiones profesionales, y un camino claro — ya sea hacia la universidad, un empleo, o tu propio emprendimiento. No te dejamos en el aire."</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">8. Mis papas quieren saber mas. Donde pueden informarse?</div>
+      <div class="faq-a">"Perfecto. Que tus padres entren a <strong>visionarium.app</strong> — ahi encontraran toda la informacion. Tambien pueden escribirnos directamente. Este programa esta disenado para que los padres se sientan tranquilos: es seguro, es gratuito, y esta respaldado por tecnologia de nivel empresarial. Si quieren hablar conmigo personalmente, me pueden contactar a traves de la pagina."</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">9. Quien esta detras de esto? Como se que no es una estafa?</div>
+      <div class="faq-a">"Gran pregunta. <strong>Visionarium fue fundado en 2015 en Nueva York</strong> como incubadora de creatividad y liderazgo. Yo soy Maria Clara Garcia — llevo mas de 30 anos trabajando con jovenes. El socio tecnologico es Digit2ai, liderado por Manuel Stagg, cuyo equipo ya opera inteligencia artificial en manufactura, logistica, salud y voz a nivel enterprise. No somos una startup de garaje. Somos un equipo real con tecnologia real que ya funciona en produccion todos los dias."</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">10. No se si tengo talento suficiente. Esto es para los "mejores"?</div>
+      <div class="faq-a">"Dejame decirte algo: <strong>Lucho Diaz no era el mejor.</strong> No era el mas rapido, ni el mas alto, ni el mas fuerte. Era el que no se rendia. Visionarium no busca a los 'mejores' segun los estandares que el mundo te puso. Busca a los que tienen hambre — hambre de aprender, de crecer, de construir algo. Si estas aqui hoy escuchando esto, ya tienes lo mas importante: curiosidad. Eso es suficiente para empezar."</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <h2>Cierre Final</h2>
+
+    <div class="talking-point">
+      <div class="tp-number">Cierre</div>
+      <div class="tp-title">Ultima palabra antes de despedirse</div>
+      <div class="tp-script">
+        "Antes de irme, quiero que recuerden una cosa. No la presentacion. No los numeros. No la tecnologia. Recuerden esto: <strong>el tamano de tu sueno no tiene nada que ver con el tamano de tu estomago.</strong> Lucho lo demostro. Y ahora, por primera vez, las herramientas que el no tuvo estan en tus manos. Lo unico que falta eres tu. Nos vemos en visionarium.app."
+      </div>
+      <div class="tp-note">TONO: Voz baja, pausada. Contacto visual. Dejar que la frase final resuene. No agregar nada despues. Salir con dignidad.</div>
+    </div>
+
+    <div class="cta-block">
+      <div class="cta-title">Tu proximo paso</div>
+      <div class="cta-text">Registrate gratis. Habla con Lina. Aplica al Fellowship en septiembre 2026.</div>
+      <a href="https://www.visionarium.app" target="_blank" rel="noopener">Entrar a Visionarium</a>
+    </div>
+
+    <div class="divider"></div>
+
+    <h2>Notas Tecnicas para Lala</h2>
+
+    <div class="highlight-box">
+      <p><strong>Duracion sugerida de talking points:</strong> 5-7 minutos. No mas de 10.</p>
+    </div>
+
+    <div class="highlight-box">
+      <p><strong>Duracion sugerida de Q&A:</strong> 10-15 minutos. Dejar que fluya si hay energia en la sala.</p>
+    </div>
+
+    <p><strong>Tips de delivery:</strong></p>
+    <ul>
+      <li>Despues de la presentacion auto-play, espera 3-5 segundos en silencio antes de hablar. Deja que el impacto emocional trabaje.</li>
+      <li>Habla en primera persona. "Yo he visto", "yo funde", "yo creo". La autenticidad es tu mayor activo.</li>
+      <li>Si alguien hace una pregunta dificil, agradecela. "Gracias por esa pregunta" desarma al esceptico.</li>
+      <li>Tener el celular listo con visionarium.app abierto para mostrar la plataforma en vivo si alguien lo pide.</li>
+      <li>Si es posible, hacer una demo rapida de Lina en vivo: "Miren, le voy a preguntar algo ahora mismo..."</li>
+      <li>Al final, estar disponible para fotos y conversaciones 1:1. Los mas timidos se acercan despues, no durante el Q&A.</li>
+    </ul>
+
+  </div>
+
+  <!-- FOOTER -->
+  <div class="email-footer">
+    Visionarium -- visionarium.app -- Preparado para Maria Clara Garcia<br>
+    Documento interno -- Talking Points Post-Presentacion "Visionarium Quest"<br>
+    Confidencial -- No distribuir sin autorizacion
+  </div>
+
+</div>
+
+</body>
+</html>
