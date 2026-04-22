@@ -24,6 +24,7 @@ function Section({ title, children, accent = 'blue' }) {
     purple: 'border-purple-500/30 bg-purple-500/5',
     red: 'border-red-500/30 bg-red-500/5',
     teal: 'border-teal-500/30 bg-teal-500/5',
+    gold: 'border-yellow-500/30 bg-yellow-500/5',
   }
   return (
     <div className={`border rounded-xl p-6 mb-6 ${colors[accent]}`}>
@@ -1000,10 +1001,192 @@ export default function OnPremisesPage() {
         </div>
       </Section>
 
+      {/* 14. Commercial Terms */}
+      <Section title="14. Commercial & Licensing" accent="gold">
+        <p className="text-sm text-slate-300 leading-relaxed mb-6">
+          The PINAXIS platform is licensed by Digit2AI under a white-label annual license model.
+          Pinaxis operates the platform under their own brand and resells to end customers,
+          with Digit2AI receiving a revenue share on every customer sale.
+        </p>
+
+        {/* License Structure */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-6">
+          <div className="bg-gradient-to-b from-blue-500/10 to-blue-500/3 border border-blue-500/30 rounded-xl p-6">
+            <div className="text-[10px] font-mono text-blue-400 uppercase tracking-widest mb-3">Annual Platform License</div>
+            <div className="text-4xl font-bold text-white font-mono mb-1">$140,000</div>
+            <div className="text-sm text-slate-400 mb-4">per year</div>
+            <ul className="text-sm text-slate-300 space-y-2">
+              <li className="flex items-start gap-2"><span className="text-blue-400 mt-0.5">--</span> Full platform source code & container images</li>
+              <li className="flex items-start gap-2"><span className="text-blue-400 mt-0.5">--</span> White-label rights (Pinaxis branding, custom domain)</li>
+              <li className="flex items-start gap-2"><span className="text-blue-400 mt-0.5">--</span> On-premises deployment & configuration by Digit2AI</li>
+              <li className="flex items-start gap-2"><span className="text-blue-400 mt-0.5">--</span> All 12 analysis modules + WarehouseMind AI</li>
+              <li className="flex items-start gap-2"><span className="text-blue-400 mt-0.5">--</span> Unlimited internal users (Pinaxis staff)</li>
+              <li className="flex items-start gap-2"><span className="text-blue-400 mt-0.5">--</span> Quarterly feature releases & security patches</li>
+              <li className="flex items-start gap-2"><span className="text-blue-400 mt-0.5">--</span> L3 engineering support from Digit2AI</li>
+              <li className="flex items-start gap-2"><span className="text-blue-400 mt-0.5">--</span> Database migrations & upgrade assistance</li>
+            </ul>
+          </div>
+
+          <div className="bg-gradient-to-b from-emerald-500/10 to-emerald-500/3 border border-emerald-500/30 rounded-xl p-6">
+            <div className="text-[10px] font-mono text-emerald-400 uppercase tracking-widest mb-3">Revenue Share on Customer Sales</div>
+            <div className="text-4xl font-bold text-white font-mono mb-1">50%</div>
+            <div className="text-sm text-slate-400 mb-4">of end-customer revenue</div>
+            <ul className="text-sm text-slate-300 space-y-2">
+              <li className="flex items-start gap-2"><span className="text-emerald-400 mt-0.5">--</span> Applies to every end customer Pinaxis onboards</li>
+              <li className="flex items-start gap-2"><span className="text-emerald-400 mt-0.5">--</span> Covers SaaS subscriptions, per-project fees, and one-time setups</li>
+              <li className="flex items-start gap-2"><span className="text-emerald-400 mt-0.5">--</span> Monthly or quarterly settlement</li>
+              <li className="flex items-start gap-2"><span className="text-emerald-400 mt-0.5">--</span> Transparent reporting via shared dashboard</li>
+              <li className="flex items-start gap-2"><span className="text-emerald-400 mt-0.5">--</span> Digit2AI continues developing new features</li>
+              <li className="flex items-start gap-2"><span className="text-emerald-400 mt-0.5">--</span> Aligned incentives: Digit2AI earns more when Pinaxis sells more</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Revenue Model Example */}
+        <h4 className="text-sm font-semibold text-white mb-3">Revenue Projection Example</h4>
+        <div className="bg-slate-800/50 rounded-lg p-4 overflow-x-auto mb-5">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-[10px] text-slate-500 uppercase tracking-wider">
+                <th className="pb-2 pr-4">Scenario</th>
+                <th className="pb-2 pr-4 text-center">End Customers</th>
+                <th className="pb-2 pr-4 text-center">Avg Revenue/Customer</th>
+                <th className="pb-2 pr-4 text-center">Gross Revenue</th>
+                <th className="pb-2 pr-4 text-center">Pinaxis Share (50%)</th>
+                <th className="pb-2 text-center">Digit2AI Share (50%)</th>
+              </tr>
+            </thead>
+            <tbody className="text-slate-300">
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4 text-slate-400">Year 1 - Ramp</td>
+                <td className="py-2 pr-4 text-center">5</td>
+                <td className="py-2 pr-4 text-center">$48,000/yr</td>
+                <td className="py-2 pr-4 text-center font-mono">$240,000</td>
+                <td className="py-2 pr-4 text-center font-mono text-emerald-400">$120,000</td>
+                <td className="py-2 text-center font-mono text-blue-400">$120,000</td>
+              </tr>
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4 text-slate-400">Year 2 - Growth</td>
+                <td className="py-2 pr-4 text-center">12</td>
+                <td className="py-2 pr-4 text-center">$60,000/yr</td>
+                <td className="py-2 pr-4 text-center font-mono">$720,000</td>
+                <td className="py-2 pr-4 text-center font-mono text-emerald-400">$360,000</td>
+                <td className="py-2 text-center font-mono text-blue-400">$360,000</td>
+              </tr>
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4 text-slate-400">Year 3 - Scale</td>
+                <td className="py-2 pr-4 text-center">25</td>
+                <td className="py-2 pr-4 text-center">$72,000/yr</td>
+                <td className="py-2 pr-4 text-center font-mono">$1,800,000</td>
+                <td className="py-2 pr-4 text-center font-mono text-emerald-400">$900,000</td>
+                <td className="py-2 text-center font-mono text-blue-400">$900,000</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* Total Digit2AI Revenue */}
+        <h4 className="text-sm font-semibold text-white mb-3">Digit2AI Total Revenue Summary</h4>
+        <div className="bg-slate-800/50 rounded-lg p-4 overflow-x-auto mb-5">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-[10px] text-slate-500 uppercase tracking-wider">
+                <th className="pb-2 pr-4"></th>
+                <th className="pb-2 pr-4 text-center">Annual License</th>
+                <th className="pb-2 pr-4 text-center">50% Rev Share</th>
+                <th className="pb-2 text-center text-blue-400">Total to Digit2AI</th>
+              </tr>
+            </thead>
+            <tbody className="text-slate-300">
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4 text-slate-400">Year 1</td>
+                <td className="py-2 pr-4 text-center font-mono">$140,000</td>
+                <td className="py-2 pr-4 text-center font-mono">$120,000</td>
+                <td className="py-2 text-center font-mono font-bold text-blue-400">$260,000</td>
+              </tr>
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4 text-slate-400">Year 2</td>
+                <td className="py-2 pr-4 text-center font-mono">$140,000</td>
+                <td className="py-2 pr-4 text-center font-mono">$360,000</td>
+                <td className="py-2 text-center font-mono font-bold text-blue-400">$500,000</td>
+              </tr>
+              <tr className="border-t border-slate-700/50">
+                <td className="py-2 pr-4 text-slate-400">Year 3</td>
+                <td className="py-2 pr-4 text-center font-mono">$140,000</td>
+                <td className="py-2 pr-4 text-center font-mono">$900,000</td>
+                <td className="py-2 text-center font-mono font-bold text-blue-400">$1,040,000</td>
+              </tr>
+              <tr className="border-t border-slate-700/50 bg-blue-500/5">
+                <td className="py-3 pr-4 font-bold text-white">3-Year Total</td>
+                <td className="py-3 pr-4 text-center font-mono font-bold">$420,000</td>
+                <td className="py-3 pr-4 text-center font-mono font-bold">$1,380,000</td>
+                <td className="py-3 text-center font-mono font-bold text-blue-400 text-lg">$1,800,000</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* What's Included */}
+        <h4 className="text-sm font-semibold text-white mb-3">What's Included in the License</h4>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+          <div className="bg-slate-800/50 rounded-lg p-4">
+            <h5 className="text-xs font-mono text-blue-400 uppercase mb-2">Platform</h5>
+            <ul className="text-xs text-slate-300 space-y-1">
+              <li>-- 12-module analysis engine</li>
+              <li>-- WarehouseMind AI (MCP, Neural, OEE)</li>
+              <li>-- Voice-narrated presentations</li>
+              <li>-- Proposal & report generator</li>
+              <li>-- Simulation engine</li>
+              <li>-- NDA & contract builder</li>
+              <li>-- Production ingestion API (62 endpoints)</li>
+            </ul>
+          </div>
+          <div className="bg-slate-800/50 rounded-lg p-4">
+            <h5 className="text-xs font-mono text-emerald-400 uppercase mb-2">White-Label</h5>
+            <ul className="text-xs text-slate-300 space-y-1">
+              <li>-- Full Pinaxis branding throughout</li>
+              <li>-- Custom domain deployment</li>
+              <li>-- Removable "Powered by" attribution</li>
+              <li>-- Custom color scheme support</li>
+              <li>-- Pinaxis logo integration</li>
+              <li>-- End-customer multi-tenancy</li>
+              <li>-- Resale rights worldwide</li>
+            </ul>
+          </div>
+          <div className="bg-slate-800/50 rounded-lg p-4">
+            <h5 className="text-xs font-mono text-amber-400 uppercase mb-2">Services</h5>
+            <ul className="text-xs text-slate-300 space-y-1">
+              <li>-- On-premises deployment (6-8 weeks)</li>
+              <li>-- SaaS-to-on-prem data migration</li>
+              <li>-- SSO/LDAP integration</li>
+              <li>-- Admin training</li>
+              <li>-- Quarterly releases & patches</li>
+              <li>-- L3 engineering support</li>
+              <li>-- Annual architecture review</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Key Terms */}
+        <h4 className="text-sm font-semibold text-white mb-3">Key Terms</h4>
+        <div className="bg-slate-800/50 rounded-lg p-4">
+          <Row label="License Term" value="12 months, auto-renewing" />
+          <Row label="Payment" value="Annual upfront or quarterly installments" />
+          <Row label="Revenue Share Settlement" value="Monthly or quarterly, net-30" />
+          <Row label="Revenue Share Scope" value="All end-customer fees (SaaS, per-project, setup, support)" />
+          <Row label="Audit Rights" value="Digit2AI may audit end-customer revenue quarterly" />
+          <Row label="IP Ownership" value="Digit2AI retains all platform IP. Pinaxis receives perpetual usage license." />
+          <Row label="Exclusivity" value="Negotiable by territory or vertical" />
+          <Row label="Termination" value="90-day notice; wind-down period for active customers" />
+          <Row label="Non-Compete" value="Pinaxis may not develop competing warehouse analytics platform" />
+          <Row label="Source Code Escrow" value="Available upon request for business continuity" />
+        </div>
+      </Section>
+
       {/* Footer */}
       <div className="text-center py-8 border-t border-slate-700/50 mt-8">
-        <p className="text-xs text-slate-500 font-mono">PINAXIS ON-PREMISES INTEGRATION PLAN -- CONFIDENTIAL</p>
-        <p className="text-xs text-slate-600 mt-1">Prepared for internal distribution. Contact your PINAXIS representative for deployment scheduling.</p>
+        <p className="text-xs text-slate-500 font-mono">PINAXIS STRATEGIC INTEGRATION PLAN -- CONFIDENTIAL</p>
+        <p className="text-xs text-slate-600 mt-1">Prepared by Digit2AI for Pinaxis. Contact mstagg@digit2ai.com for licensing discussions.</p>
       </div>
     </div>
   )
