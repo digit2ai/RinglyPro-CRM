@@ -480,12 +480,19 @@ router.post('/instant', async (req, res) => {
     const seq = req.models.sequelize;
     const crypto = require('crypto');
 
-    // Find the most recent completed project with analysis results to clone from
+    // Find the best completed project to clone from — must have real data (non-zero orders)
     const [sources] = await seq.query(`
       SELECT p.id, p.company_name, COUNT(a.id) as analysis_count
       FROM logistics_projects p
       JOIN logistics_analysis_results a ON a.project_id = p.id
       WHERE p.status = 'completed'
+        AND EXISTS (
+          SELECT 1 FROM logistics_analysis_results ar
+          WHERE ar.project_id = p.id
+            AND ar.analysis_type = 'overview_kpis'
+            AND ar.result_data::text LIKE '%"total_orders":%'
+            AND ar.result_data::text NOT LIKE '%"total_orders":0%'
+        )
       GROUP BY p.id, p.company_name
       HAVING COUNT(a.id) >= 10
       ORDER BY p.id DESC
