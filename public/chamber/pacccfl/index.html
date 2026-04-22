@@ -1284,44 +1284,6 @@
   </div>
 </section>
 
-<!-- ═══════ PLATFORM ACCESS TIERS ═══════ -->
-<section class="section" id="membership">
-  <div class="accent-line"></div>
-  <h2 class="section-title">Platform Access Tiers</h2>
-  <p class="section-subtitle">Every tier gets full platform access. Higher tiers unlock premium analytics and governance roles.</p>
-  <div class="tiers-grid">
-
-    <div class="tier-card tier-individual">
-      <h3>Individual</h3>
-      <div class="tier-price">$10<small>/mo</small></div>
-      <div class="tier-subtitle">For Professionals</div>
-      <p>For professionals and entrepreneurs. Access to networking events, sector forums, business directory listing, and the AI-powered business matching platform.</p>
-    </div>
-
-    <div class="tier-card tier-business">
-      <h3>Business</h3>
-      <div class="tier-price">$25<small>/mo</small></div>
-      <div class="tier-subtitle">Small & Mid-Size</div>
-      <p>For small to mid-size businesses. Priority event access, enhanced directory listing, trade mission invitations, and the Business Mastermind Series.</p>
-    </div>
-
-    <div class="tier-card tier-corporate">
-      <h3>Corporate</h3>
-      <div class="tier-price">$75<small>/mo</small></div>
-      <div class="tier-subtitle">Established Enterprises</div>
-      <p>For established enterprises and sponsors. Full platform access, sponsorship visibility, advisory committee seats, and premium analytics dashboard.</p>
-    </div>
-
-    <div class="tier-card tier-founding">
-      <h3>Founding</h3>
-      <div class="tier-price">Invite<small> only</small></div>
-      <div class="tier-subtitle">Charter Members</div>
-      <p>Charter members since 1995 with permanent governance voice. Lifetime access, founding board participation, and legacy recognition in all PACC-CFL initiatives.</p>
-    </div>
-
-  </div>
-</section>
-
 <!-- ═══════ DATA ISOLATION ═══════ -->
 <section class="section section-dark section-full">
   <div class="section-inner">
@@ -1637,45 +1599,74 @@
     var btn = form.querySelector('.btn-submit');
     var msg = document.getElementById('formMsg');
     btn.disabled = true;
-    btn.textContent = 'Registering...';
+    btn.textContent = 'Creating account...';
     msg.className = 'form-msg';
     msg.style.display = 'none';
 
-    var data = {
+    var regData = {
       first_name: form.first_name.value.trim(),
       last_name: form.last_name.value.trim(),
       email: form.email.value.trim(),
       password: form.password.value,
-      region: form.region.value,
+      region_id: form.region.value || null,
       sector: form.sector.value,
+      company_name: form.company_name ? form.company_name.value.trim() : null,
       membership_type: form.membership_type.value
     };
 
+    // Step 1: Create account
     fetch('/chamber/pacccfl/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      body: JSON.stringify(regData)
     })
-    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+    .then(function(r) { return r.json(); })
     .then(function(res) {
-      if (res.ok && res.data.token) {
+      if (res.success && res.data && res.data.token) {
         localStorage.setItem('pacccfl_token', res.data.token);
+        var memberId = res.data.member ? res.data.member.id : '';
         msg.className = 'form-msg success';
-        msg.textContent = 'Registration successful. Redirecting to dashboard...';
-        form.reset();
-        setTimeout(function() { window.location.href = '/chamber/pacccfl/dashboard/'; }, 1500);
+        msg.textContent = 'Account created! Redirecting to payment...';
+        btn.textContent = 'Redirecting to Stripe...';
+
+        // Step 2: Create Stripe Checkout session
+        fetch('/chamber/pacccfl/api/payments/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: regData.email,
+            member_id: memberId,
+            first_name: regData.first_name,
+            last_name: regData.last_name
+          })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(checkoutRes) {
+          if (checkoutRes.success && checkoutRes.data && checkoutRes.data.checkout_url) {
+            window.location.href = checkoutRes.data.checkout_url;
+          } else {
+            // Stripe checkout failed but account was created -- go to dashboard
+            msg.textContent = 'Account created! Redirecting to dashboard...';
+            setTimeout(function() { window.location.href = '/chamber/pacccfl/dashboard/'; }, 1500);
+          }
+        })
+        .catch(function() {
+          // Stripe unavailable -- still go to dashboard
+          msg.textContent = 'Account created! Redirecting to dashboard...';
+          setTimeout(function() { window.location.href = '/chamber/pacccfl/dashboard/'; }, 1500);
+        });
       } else {
         msg.className = 'form-msg error';
-        msg.textContent = res.data.error || res.data.message || 'Registration error. Please try again.';
+        msg.textContent = res.error || 'Registration error. Please try again.';
+        btn.disabled = false;
+        btn.textContent = 'Activate Account -- $25 Setup + $10/mo';
       }
     })
     .catch(function() {
       msg.className = 'form-msg error';
       msg.textContent = 'Connection error. Please try again.';
-    })
-    .finally(function() {
       btn.disabled = false;
-      btn.textContent = 'Join PACC-CFL';
+      btn.textContent = 'Activate Account -- $25 Setup + $10/mo';
     });
   };
 

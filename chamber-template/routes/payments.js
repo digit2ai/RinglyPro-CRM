@@ -94,5 +94,50 @@ module.exports = function createPaymentRoutes(config) {
     res.json({ success: true, data: MEMBERSHIP_PRICES });
   });
 
+  // POST /checkout -- Create Stripe Checkout session ($25 setup + $10/mo)
+  router.post('/checkout', async (req, res) => {
+    try {
+      const { email, member_id, first_name, last_name } = req.body;
+      if (!email) return res.status(400).json({ success: false, error: 'Email required' });
+
+      const chamberName = config.short_name || config.name;
+      const mountPath = config.mount_path || `/chamber/${config.slug}`;
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        customer_email: email,
+        metadata: { chamber: config.slug, member_id: String(member_id || ''), member_name: `${first_name || ''} ${last_name || ''}`.trim() },
+        line_items: [
+          {
+            price_data: {
+              currency: 'usd',
+              product_data: { name: `${chamberName} -- One-Time Setup Fee`, description: 'Account provisioning, onboarding, and platform activation' },
+              unit_amount: 2500
+            },
+            quantity: 1
+          },
+          {
+            price_data: {
+              currency: 'usd',
+              product_data: { name: `${chamberName} -- Monthly Membership`, description: 'Full ecosystem access: AI matching, directory, projects, exchange, analytics, MCP' },
+              unit_amount: 1000,
+              recurring: { interval: 'month' }
+            },
+            quantity: 1
+          }
+        ],
+        mode: 'subscription',
+        success_url: `${baseUrl}${mountPath}/dashboard/?payment=success`,
+        cancel_url: `${baseUrl}${mountPath}/#register`
+      });
+
+      res.json({ success: true, data: { checkout_url: session.url, session_id: session.id } });
+    } catch (error) {
+      console.error(`[${config.slug}-payments] Checkout error:`, error.message);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
   return router;
 };
