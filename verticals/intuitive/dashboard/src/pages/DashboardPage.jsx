@@ -99,6 +99,7 @@ export default function DashboardPage() {
   const [error, setError] = useState(null)
 
   // Filters
+  const [hospitalFilter, setHospitalFilter] = useState('')
   const [stageFilter, setStageFilter] = useState('All')
   const [typeFilter, setTypeFilter] = useState('All')
   const [stateFilter, setStateFilter] = useState('')
@@ -127,6 +128,10 @@ export default function DashboardPage() {
     if (!data?.hospitals) return []
     let list = [...data.hospitals]
 
+    if (hospitalFilter.trim()) {
+      const words = hospitalFilter.trim().toLowerCase().split(/\s+/)
+      list = list.filter(h => words.every(w => (h.hospital_name || '').toLowerCase().includes(w)))
+    }
     if (stageFilter !== 'All') {
       list = list.filter(h => h.pipeline_stage === stageFilter)
     }
@@ -166,7 +171,7 @@ export default function DashboardPage() {
     })
 
     return list
-  }, [data, stageFilter, typeFilter, stateFilter, sortCol, sortDir])
+  }, [data, hospitalFilter, stageFilter, typeFilter, stateFilter, sortCol, sortDir])
 
   const toggleSort = (col) => {
     if (sortCol === col) {
@@ -258,6 +263,16 @@ export default function DashboardPage() {
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-3 mb-4">
+          <div className="relative">
+            <svg className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input
+              type="text"
+              value={hospitalFilter}
+              onChange={e => setHospitalFilter(e.target.value)}
+              placeholder="Filter hospitals..."
+              className="bg-slate-800 border border-slate-700 text-slate-200 text-sm rounded-lg pl-9 pr-3 py-2 w-56 focus:outline-none focus:border-intuitive-500"
+            />
+          </div>
           <select
             value={stageFilter}
             onChange={e => setStageFilter(e.target.value)}
@@ -279,9 +294,9 @@ export default function DashboardPage() {
             onChange={e => setStateFilter(e.target.value)}
             className="bg-slate-800 border border-slate-700 text-slate-200 text-sm rounded-lg px-3 py-2 w-44 focus:outline-none focus:border-intuitive-500 placeholder-slate-500"
           />
-          {(stageFilter !== 'All' || typeFilter !== 'All' || stateFilter) && (
+          {(hospitalFilter || stageFilter !== 'All' || typeFilter !== 'All' || stateFilter) && (
             <button
-              onClick={() => { setStageFilter('All'); setTypeFilter('All'); setStateFilter('') }}
+              onClick={() => { setHospitalFilter(''); setStageFilter('All'); setTypeFilter('All'); setStateFilter('') }}
               className="text-xs text-slate-500 hover:text-slate-300 transition-colors underline"
             >
               Clear filters

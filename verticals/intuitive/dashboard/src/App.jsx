@@ -288,51 +288,7 @@ export default function App() {
           <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69e6c537c56ad279084e2bb6.png" alt="SurgicalMind AI" className="w-44 h-auto" />
         </div>
 
-        {/* Search Bar */}
-        <div className="px-3 pt-3 pb-1 relative" ref={searchRef}>
-          <div className="relative">
-            <svg className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              onFocus={() => searchQuery.length >= 2 && setSearchOpen(true)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && searchResults.length > 0) {
-                  selectProject(searchResults[0].id)
-                  navigate(`/analysis/${searchResults[0].id}`)
-                  setSearchOpen(false); setSearchQuery('')
-                } else if (e.key === 'Enter' && searchQuery.length >= 2 && searchResults.length === 0) {
-                  navigate(`/intake?q=${encodeURIComponent(searchQuery)}`)
-                  setSearchOpen(false); setSearchQuery('')
-                } else if (e.key === 'Escape') { setSearchOpen(false) }
-              }}
-              placeholder="Search hospitals..."
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-intuitive-600 focus:border-transparent"
-            />
-          </div>
-          {searchOpen && (
-            <div className="absolute left-3 right-3 top-full mt-1 bg-slate-800 border border-slate-600 rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto">
-              {searchResults.length > 0 ? searchResults.map(h => (
-                <button key={h.id} onClick={() => { selectProject(h.id); navigate(`/analysis/${h.id}`); setSearchOpen(false); setSearchQuery('') }}
-                  className="w-full text-left px-3 py-2.5 hover:bg-slate-700 transition-colors border-b border-slate-700/50 last:border-0">
-                  <div className="text-xs text-white font-medium truncate">{h.hospital_name}</div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">{h.hospital_type} | {h.bed_count || '--'} beds | {h.state || '--'}</div>
-                </button>
-              )) : (
-                <div className="p-3">
-                  <div className="text-xs text-slate-400 mb-2">No hospitals found for "{searchQuery}"</div>
-                  <button onClick={() => { navigate(`/intake?q=${encodeURIComponent(searchQuery)}`); setSearchOpen(false); setSearchQuery('') }}
-                    className="w-full bg-intuitive-600 hover:bg-intuitive-700 text-white text-xs font-semibold py-2 rounded-lg transition-colors">
-                    Generate Report for "{searchQuery}"
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        <nav className="flex-1 py-2 px-3 space-y-0.5 overflow-y-auto">
+        <nav className="flex-1 py-3 px-3 space-y-0.5 overflow-y-auto">
           {NAV_STEPS.filter(s => s.section === 'main').map(step => (
             <NavLink key={step.to} to={step.to} end={step.to === '/'}
               className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${isActive ? 'bg-intuitive-900/60 text-intuitive-300 font-semibold' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'}`}>

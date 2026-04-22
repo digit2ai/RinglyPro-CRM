@@ -121,6 +121,38 @@ router.patch('/:id', async (req, res) => {
   }
 });
 
+// DELETE /:id - Delete a project and all related data
+router.delete('/:id', async (req, res) => {
+  try {
+    const { IntuitiveProject } = req.models;
+    const project = await IntuitiveProject.findByPk(req.params.id);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    // Delete related data from all tables
+    const seq = req.models.sequelize;
+    const pid = project.id;
+    const tables = ['intuitive_survey_responses','intuitive_survey_recipients','intuitive_surveys','intuitive_surgeon_commitments','intuitive_clinical_outcomes','intuitive_plan_actuals','intuitive_plan_snapshots','intuitive_business_plans','intuitive_analysis_results','intuitive_system_recommendations','intuitive_cms_metrics','intuitive_hospital_reports','intuitive_surgeons'];
+    for (const table of tables) {
+      try { await seq.query(`DELETE FROM ${table} WHERE project_id = :pid`, { replacements: { pid } }); } catch(e) {}
+    }
+    // Delete business plan related via business_plan_id
+    try {
+      const [plans] = await seq.query('SELECT id FROM intuitive_business_plans WHERE project_id = :pid', { replacements: { pid } });
+      if (plans.length > 0) {
+        const planIds = plans.map(p => p.id);
+        for (const t of ['intuitive_surgeon_commitments','intuitive_clinical_outcomes','intuitive_plan_actuals','intuitive_plan_snapshots','intuitive_surveys']) {
+          try { await seq.query(`DELETE FROM ${t} WHERE business_plan_id IN (:planIds)`, { replacements: { planIds } }); } catch(e) {}
+        }
+      }
+    } catch(e) {}
+
+    await project.destroy();
+    res.json({ success: true, message: 'Project and all related data deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /search?q=moffit&limit=10 - Fuzzy search hospitals
 router.get('/search', async (req, res) => {
   try {
