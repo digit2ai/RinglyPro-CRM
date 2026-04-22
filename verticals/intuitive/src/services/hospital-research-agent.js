@@ -143,26 +143,87 @@ IMPORTANT:
 - annual_surgical_volume should be proportional to bed count: roughly 20-40 surgeries per bed per year depending on hospital type
 - Return ONLY the JSON object, nothing else`;
 
+  // ============================================================
+  // MAKER-CHECKER ARCHITECTURE (Dual-Pass Validation)
+  // Pass 1 (MAKER): Opus researches and produces initial hospital profile
+  // Pass 2 (CHECKER): Opus reviews the maker's output, cross-references
+  //   for accuracy, flags inconsistencies, and corrects errors
+  // ============================================================
+
   let researchData;
   try {
-    const systemPrompt = 'You are a hospital business intelligence analyst with deep knowledge of US hospital systems, robotic surgery programs, and healthcare operations. You have expertise in da Vinci robotic surgical systems by Intuitive Surgical. ACCURACY IS PARAMOUNT -- this data will be presented to hospital CFOs. For bed counts, use licensed bed counts (not staffed), and account for recent expansions. For surgical volumes, use realistic numbers proportional to bed count (20-40 surgeries/bed/year). When estimating, always err on the side of realistic-to-high rather than low. Clearly note what is confirmed vs estimated in your data_notes field. Return only valid JSON -- no markdown, no code fences, no explanation.';
+    const OPUS_MODEL = 'claude-opus-4-20250514';
 
-    const message = await getAnthropic().messages.create({
-      model: 'claude-sonnet-4-20250514',
+    // ── PASS 1: MAKER ──────────────────────────────────────────
+    progress('Pass 1 (Maker): Opus researching hospital data...');
+
+    const makerSystemPrompt = 'You are a senior hospital business intelligence analyst with 20+ years of experience in US hospital systems, robotic surgery programs, and healthcare operations. You have deep expertise in da Vinci robotic surgical systems by Intuitive Surgical. ACCURACY IS PARAMOUNT -- this data will be presented to hospital CFOs and Intuitive Surgical executives. For bed counts, use LICENSED bed counts (not staffed), and account for recent expansions announced in press releases or annual reports. For surgical volumes, use realistic numbers proportional to bed count (20-40 surgeries/bed/year for community, 30-50 for academic). When you KNOW a fact, mark it confirmed. When you ESTIMATE, mark it estimated and explain your reasoning. Return only valid JSON -- no markdown, no code fences, no explanation.';
+
+    const makerMessage = await getAnthropic().messages.create({
+      model: OPUS_MODEL,
       max_tokens: 4096,
-      system: systemPrompt,
+      system: makerSystemPrompt,
       messages: [
         { role: 'user', content: researchPrompt }
       ]
     });
 
-    const content = (message.content[0]?.text || '').trim();
-    // Strip markdown code fences if present
-    const jsonStr = content.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
-    researchData = JSON.parse(jsonStr);
-    progress('AI research complete (Claude Sonnet 4) -- ' + (researchData.confidence_level || 'medium') + ' confidence');
+    const makerContent = (makerMessage.content[0]?.text || '').trim();
+    const makerJsonStr = makerContent.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
+    const makerData = JSON.parse(makerJsonStr);
+    progress('Pass 1 complete -- initial profile: ' + (makerData.hospital_name || hospitalName) + ', ' + (makerData.bed_count || '?') + ' beds, confidence: ' + (makerData.confidence_level || 'unknown'));
+
+    // ── PASS 2: CHECKER ────────────────────────────────────────
+    progress('Pass 2 (Checker): Opus validating and cross-referencing...');
+
+    const checkerPrompt = `You are a QUALITY ASSURANCE REVIEWER for hospital business intelligence data. A research analyst produced the following hospital profile for "${hospitalName}". Your job is to:
+
+1. VERIFY each data point for plausibility and internal consistency
+2. FLAG any values that seem wrong (e.g., bed count too low for hospital type, surgical volume inconsistent with bed count, specialty percentages don't match hospital's known programs)
+3. CORRECT any errors with better estimates and explain your corrections
+4. CHECK that:
+   - bed_count is the LICENSED bed count (not staffed), accounting for recent expansions
+   - annual_surgical_volume is proportional (community: 20-30/bed, academic: 30-50/bed)
+   - specialty percentages sum to exactly 100
+   - current_robotic_cases is realistic for the hospital's known robotic program
+   - payer_mix percentages sum to ~100
+   - competitive landscape reflects the actual market
+
+ORIGINAL RESEARCH DATA:
+${JSON.stringify(makerData, null, 2)}
+
+Return the CORRECTED JSON object with the same exact fields. Add a "checker_corrections" field (array of strings) listing every correction you made and why. If no corrections needed, set it to an empty array. Also update "confidence_level" based on your review (high = most fields verified, medium = some estimated, low = many unknowns).
+
+Return ONLY valid JSON -- no markdown, no code fences, no explanation.`;
+
+    const checkerMessage = await getAnthropic().messages.create({
+      model: OPUS_MODEL,
+      max_tokens: 4096,
+      system: 'You are a meticulous quality assurance reviewer for hospital data. Your role is to catch errors, inconsistencies, and implausible values in hospital profiles. You are the last line of defense before this data is presented to hospital CFOs. Be thorough but fair -- only correct values that are clearly wrong or implausible. Return only valid JSON.',
+      messages: [
+        { role: 'user', content: checkerPrompt }
+      ]
+    });
+
+    const checkerContent = (checkerMessage.content[0]?.text || '').trim();
+    const checkerJsonStr = checkerContent.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
+    const checkerData = JSON.parse(checkerJsonStr);
+
+    const corrections = checkerData.checker_corrections || [];
+    if (corrections.length > 0) {
+      progress('Pass 2 found ' + corrections.length + ' correction(s): ' + corrections.slice(0, 3).join('; '));
+    } else {
+      progress('Pass 2 complete -- all values validated, no corrections needed');
+    }
+
+    // Use checker's corrected data as final output
+    researchData = checkerData;
+    researchData.data_notes = (researchData.data_notes || '') + ' | Maker-Checker validated. ' + (corrections.length > 0 ? corrections.length + ' corrections applied.' : 'No corrections needed.');
+    researchData.research_sources = [...(makerData.research_sources || []), ...(checkerData.research_sources || [])].filter((v, i, a) => a.indexOf(v) === i);
+
+    progress('Maker-Checker complete (Opus) -- final confidence: ' + (researchData.confidence_level || 'medium'));
   } catch (err) {
-    console.error('Claude research error:', err);
+    console.error('Opus research error:', err);
     progress('AI research encountered an error, using fallback approach...');
     researchData = buildFallbackProfile(hospitalName);
   }

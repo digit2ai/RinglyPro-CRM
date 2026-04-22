@@ -152,7 +152,7 @@ export default function IntakePage({ onProjectCreated, currentProject }) {
           </div>
           <div>
             <h3 className="text-white font-bold text-lg">AI Business Analyst Agent</h3>
-            <p className="text-violet-300/70 text-xs">Powered by Claude Sonnet 4 -- researches any hospital and auto-generates the full 7-step pipeline</p>
+            <p className="text-violet-300/70 text-xs">Maker-Checker validated -- dual-pass AI research with cross-referencing for CFO-grade accuracy</p>
           </div>
         </div>
         <p className="text-slate-400 text-sm mb-4">Type a hospital name and the AI agent will research its annual report, bed count, surgical volumes, specialty mix, robotic program, payer mix, and competitive landscape -- then auto-fill intake, run all 16 analyses, match a da Vinci system, create a business plan with clinical dollarization, and set up a surgeon survey template.</p>
