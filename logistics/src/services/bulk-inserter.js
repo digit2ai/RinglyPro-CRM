@@ -2,7 +2,7 @@
 
 /**
  * Shared bulk insert engine — used by both Generate Demo and Upload routes.
- * Uses raw SQL multi-value INSERT for maximum throughput.
+ * Uses raw SQL multi-value INSERT with parallel chunk execution for maximum throughput.
  *
  * @param {Sequelize} sequelize  - Sequelize instance
  * @param {string}    tableName  - Target table (e.g. 'logistics_item_master')
@@ -10,13 +10,15 @@
  * @param {Array[]}   rows       - Array of value-arrays, one per row, in column order
  * @param {object}    options
  * @param {number}    options.projectId  - Prepended to every row
- * @param {number}    options.chunkSize  - Rows per INSERT (default 2000)
+ * @param {number}    options.chunkSize  - Rows per INSERT (default 5000)
+ * @param {number}    options.concurrency - Parallel INSERT statements (default 4)
  * @param {string}    options.label      - Log prefix (e.g. '[DEMO]')
  * @returns {{ inserted: number, elapsed_ms: number }}
  */
 async function bulkInsert(sequelize, tableName, columns, rows, options = {}) {
   const startTime = Date.now();
-  const chunkSize = options.chunkSize || 2000;
+  const chunkSize = options.chunkSize || 5000;
+  const concurrency = options.concurrency || 4;
   const label = options.label || '[BULK]';
   const projectId = options.projectId;
   const now = new Date().toISOString();
@@ -28,58 +30,63 @@ async function bulkInsert(sequelize, tableName, columns, rows, options = {}) {
   const totalChunks = Math.ceil(rows.length / chunkSize);
   let inserted = 0;
 
+  // Build all chunk SQL strings first
+  const chunks = [];
   for (let ci = 0; ci < rows.length; ci += chunkSize) {
     const chunk = rows.slice(ci, ci + chunkSize);
     const valueParts = [];
 
     for (const row of chunk) {
       const vals = [
-        projectId,                           // project_id
-        ...row,                              // user-supplied values
-        `'${now}'`,                          // created_at  (pre-quoted)
-        `'${now}'`                           // updated_at  (pre-quoted)
+        projectId,
+        ...row,
+        `'${now}'`,
+        `'${now}'`
       ];
-
-      // Format each value for raw SQL
       const formatted = vals.map((v, i) => {
-        // Timestamps are already quoted
         if (i === vals.length - 1 || i === vals.length - 2) return v;
         return sqlLiteral(v);
       });
-
       valueParts.push(`(${formatted.join(',')})`);
     }
 
-    const sql = `INSERT INTO ${tableName} (${colList}) VALUES ${valueParts.join(',')}`;
-    await sequelize.query(sql);
-    inserted += chunk.length;
+    chunks.push({ sql: `INSERT INTO ${tableName} (${colList}) VALUES ${valueParts.join(',')}`, count: chunk.length });
+  }
 
-    const chunkNum = Math.floor(ci / chunkSize) + 1;
-    if (chunkNum % 10 === 0 || chunkNum === totalChunks) {
-      console.log(`${label} ${tableName}: chunk ${chunkNum}/${totalChunks} (${inserted}/${rows.length} rows, ${Date.now() - startTime}ms)`);
+  // Execute chunks in parallel batches
+  for (let ci = 0; ci < chunks.length; ci += concurrency) {
+    const batch = chunks.slice(ci, ci + concurrency);
+    await Promise.all(batch.map(c => sequelize.query(c.sql)));
+    inserted += batch.reduce((s, c) => s + c.count, 0);
+
+    const batchEnd = Math.min(ci + concurrency, chunks.length);
+    if (batchEnd % 10 === 0 || batchEnd === chunks.length) {
+      console.log(`${label} ${tableName}: ${batchEnd}/${totalChunks} chunks (${inserted}/${rows.length} rows, ${Date.now() - startTime}ms)`);
     }
   }
 
   const elapsed_ms = Date.now() - startTime;
-  console.log(`${label} ${tableName}: done — ${inserted} rows in ${elapsed_ms}ms`);
+  console.log(`${label} ${tableName}: done — ${inserted} rows in ${elapsed_ms}ms (${totalChunks} chunks, concurrency=${concurrency})`);
   return { inserted, elapsed_ms };
 }
 
 /**
  * Streaming variant — accepts a generator/iterator instead of a full array.
  * This avoids building huge arrays in memory (e.g. 637K goods_out lines).
+ * Uses parallel execution: builds N chunks then fires them concurrently.
  *
  * @param {Sequelize}  sequelize
  * @param {string}     tableName
  * @param {string[]}   columns
- * @param {Function}   generatorFn  - function*(batchIndex) => yields value-arrays
+ * @param {Function}   generatorFn  - function*() => yields value-arrays
  * @param {number}     totalEstimate - approximate total for logging
  * @param {object}     options       - same as bulkInsert
  * @returns {{ inserted: number, elapsed_ms: number }}
  */
 async function bulkInsertStreaming(sequelize, tableName, columns, generatorFn, totalEstimate, options = {}) {
   const startTime = Date.now();
-  const chunkSize = options.chunkSize || 2000;
+  const chunkSize = options.chunkSize || 5000;
+  const concurrency = options.concurrency || 4;
   const label = options.label || '[BULK]';
   const projectId = options.projectId;
   const now = new Date().toISOString();
@@ -90,6 +97,14 @@ async function bulkInsertStreaming(sequelize, tableName, columns, generatorFn, t
   let inserted = 0;
   let chunkNum = 0;
   let valueParts = [];
+  let pendingChunks = [];
+
+  async function flushPending() {
+    if (pendingChunks.length === 0) return;
+    await Promise.all(pendingChunks.map(c => sequelize.query(c.sql)));
+    inserted += pendingChunks.reduce((s, c) => s + c.count, 0);
+    pendingChunks = [];
+  }
 
   for (const row of generatorFn()) {
     const vals = [
@@ -108,14 +123,20 @@ async function bulkInsertStreaming(sequelize, tableName, columns, generatorFn, t
 
     if (valueParts.length >= chunkSize) {
       chunkNum++;
-      const sql = `INSERT INTO ${tableName} (${colList}) VALUES ${valueParts.join(',')}`;
-      await sequelize.query(sql);
-      inserted += valueParts.length;
+      pendingChunks.push({
+        sql: `INSERT INTO ${tableName} (${colList}) VALUES ${valueParts.join(',')}`,
+        count: valueParts.length
+      });
       valueParts = [];
 
-      if (chunkNum % 10 === 0) {
-        const pct = totalEstimate > 0 ? ((inserted / totalEstimate) * 100).toFixed(1) : '?';
-        console.log(`${label} ${tableName}: chunk ${chunkNum} — ${inserted} rows (${pct}%, ${Date.now() - startTime}ms)`);
+      // Fire when we have enough parallel chunks
+      if (pendingChunks.length >= concurrency) {
+        await flushPending();
+
+        if (chunkNum % 10 === 0) {
+          const pct = totalEstimate > 0 ? ((inserted / totalEstimate) * 100).toFixed(1) : '?';
+          console.log(`${label} ${tableName}: chunk ${chunkNum} — ${inserted} rows (${pct}%, ${Date.now() - startTime}ms)`);
+        }
       }
     }
   }
@@ -123,13 +144,15 @@ async function bulkInsertStreaming(sequelize, tableName, columns, generatorFn, t
   // Flush remainder
   if (valueParts.length > 0) {
     chunkNum++;
-    const sql = `INSERT INTO ${tableName} (${colList}) VALUES ${valueParts.join(',')}`;
-    await sequelize.query(sql);
-    inserted += valueParts.length;
+    pendingChunks.push({
+      sql: `INSERT INTO ${tableName} (${colList}) VALUES ${valueParts.join(',')}`,
+      count: valueParts.length
+    });
   }
+  await flushPending();
 
   const elapsed_ms = Date.now() - startTime;
-  console.log(`${label} ${tableName}: done — ${inserted} rows in ${chunkNum} chunks (${elapsed_ms}ms)`);
+  console.log(`${label} ${tableName}: done — ${inserted} rows in ${chunkNum} chunks (${elapsed_ms}ms, concurrency=${concurrency})`);
   return { inserted, elapsed_ms };
 }
 
