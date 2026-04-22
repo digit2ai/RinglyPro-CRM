@@ -154,6 +154,14 @@ export default function UploadPage() {
     }
   }, [projectId])
 
+  // Row limits per file type
+  const ROW_LIMITS = {
+    item_master: 50000,
+    inventory: 50000,
+    goods_in: 20000,
+    goods_out: 100000
+  }
+
   const handleFileDrop = useCallback(async (fileType, acceptedFiles) => {
     if (!acceptedFiles.length || !projectId) return
 
@@ -165,12 +173,19 @@ export default function UploadPage() {
 
     try {
       const result = await uploadFile(projectId, fileType, file)
+      const rowCount = result.row_count || result.rows_parsed || result.rows || 0
+      const limit = ROW_LIMITS[fileType]
+      const warnings = [...(result.warnings || [])]
+
+      if (limit && rowCount > limit) {
+        warnings.unshift(`File contains ${rowCount.toLocaleString()} rows (max ${limit.toLocaleString()}). Only the first ${limit.toLocaleString()} rows will be processed.`)
+      }
 
       // Check if backend returned "parsing" status (large file, async processing)
       if (result.status === 'parsing') {
         setFiles(prev => ({
           ...prev,
-          [fileType]: { file, status: 'uploading', rows: 0, warnings: ['Large file — parsing in background...'] }
+          [fileType]: { file, status: 'uploading', rows: 0, warnings: ['Large file -- parsing in background...'] }
         }))
         // Start polling for completion
         pollStatus(fileType, file)
@@ -180,8 +195,8 @@ export default function UploadPage() {
           [fileType]: {
             file,
             status: 'success',
-            rows: result.row_count || result.rows_parsed || result.rows || 0,
-            warnings: result.warnings || []
+            rows: rowCount,
+            warnings
           }
         }))
       }
@@ -529,9 +544,28 @@ export default function UploadPage() {
               <div className="w-8 h-8 bg-logistics-600 rounded-lg flex items-center justify-center text-white text-sm font-bold">2</div>
               <h2 className="text-xl font-semibold text-white">Upload Data Files</h2>
             </div>
-            <p className="text-sm text-slate-400 ml-11 mb-6">
+            <p className="text-sm text-slate-400 ml-11 mb-3">
               Upload CSV or Excel files. Item Master and Goods Out are required for warehouse analysis. {uploadedCount} files uploaded.
             </p>
+
+            {/* Limits & Requirements Notice */}
+            <div className="ml-11 mb-6 p-3 rounded-lg bg-slate-700/30 border border-slate-600/40">
+              <div className="flex items-start gap-2">
+                <svg className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                </svg>
+                <div>
+                  <p className="text-xs text-slate-300 font-medium mb-1">File Requirements & Limits</p>
+                  <ul className="text-[11px] text-slate-400 space-y-0.5">
+                    <li>-- <span className="text-slate-300">Item Master</span>: max 50,000 rows | Required columns: sku, description</li>
+                    <li>-- <span className="text-slate-300">Inventory</span>: max 50,000 rows | Required columns: sku, stock</li>
+                    <li>-- <span className="text-slate-300">Goods In</span>: max 20,000 rows | Required columns: sku, quantity, receipt_date</li>
+                    <li>-- <span className="text-slate-300">Goods Out</span>: max 100,000 rows | Required columns: order_id, sku, quantity, ship_date</li>
+                    <li>-- Supported formats: CSV (.csv), Excel (.xlsx, .xls)</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {FILE_TYPES.map(ft => (
@@ -550,64 +584,6 @@ export default function UploadPage() {
                   onDrop={acceptedFiles => handleFileDrop(ft.key, acceptedFiles)}
                 />
               ))}
-            </div>
-          </div>
-
-          {/* OEE Equipment Data */}
-          <div className="card">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center text-white text-sm font-bold">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z" />
-                </svg>
-              </div>
-              <h2 className="text-xl font-semibold text-white">OEE / Equipment Data</h2>
-              <span className="text-xs text-slate-500 bg-slate-700 px-2 py-0.5 rounded">Optional</span>
-            </div>
-            <p className="text-sm text-slate-400 ml-11 mb-6">
-              Upload equipment data to enable OEE (Overall Equipment Effectiveness) analysis. Upload machines first, then events and production runs.
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <FileUploader
-                fileType="oee_machines"
-                label="OEE Machines"
-                description="Equipment registry: names, lines, cycle times"
-                icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17l-5.1-5.1M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-1.5 3H6m3 12h0" /></svg>}
-                required={false}
-                status={files.oee_machines.status}
-                fileName={files.oee_machines.file?.name}
-                fileSize={files.oee_machines.file?.size}
-                rowCount={files.oee_machines.rows}
-                warnings={files.oee_machines.warnings}
-                onDrop={acceptedFiles => handleFileDrop('oee_machines', acceptedFiles)}
-              />
-              <FileUploader
-                fileType="oee_machine_events"
-                label="Machine Events"
-                description="Status stream: running, stopped, idle, fault"
-                icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>}
-                required={false}
-                status={files.oee_machine_events.status}
-                fileName={files.oee_machine_events.file?.name}
-                fileSize={files.oee_machine_events.file?.size}
-                rowCount={files.oee_machine_events.rows}
-                warnings={files.oee_machine_events.warnings}
-                onDrop={acceptedFiles => handleFileDrop('oee_machine_events', acceptedFiles)}
-              />
-              <FileUploader
-                fileType="oee_production_runs"
-                label="Production Runs"
-                description="Shift output: planned time, total/good parts"
-                icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>}
-                required={false}
-                status={files.oee_production_runs.status}
-                fileName={files.oee_production_runs.file?.name}
-                fileSize={files.oee_production_runs.file?.size}
-                rowCount={files.oee_production_runs.rows}
-                warnings={files.oee_production_runs.warnings}
-                onDrop={acceptedFiles => handleFileDrop('oee_production_runs', acceptedFiles)}
-              />
             </div>
           </div>
 
