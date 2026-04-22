@@ -1,0 +1,1800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PACC-CFL -- Member Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #003DA5;
+  --primary-dark: #002D7A;
+  --primary-light: #E6EEF8;
+  --secondary: #CE1126;
+  --accent: #FCD116;
+  --accent-light: #FFF4CC;
+  --accent-dark: #C9A500;
+  --navy: #1A2332;
+  --navy-light: #2d3a4d;
+  --white: #ffffff;
+  --gray-50: #f8f9fa;
+  --gray-100: #f1f3f5;
+  --gray-200: #e9ecef;
+  --gray-300: #dee2e6;
+  --gray-400: #ced4da;
+  --gray-500: #6c757d;
+  --gray-700: #495057;
+  --gray-900: #212529;
+  --red: #dc3545;
+  --green: #28a745;
+  --blue: #007bff;
+  --sidebar-w: 260px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; }
+body {
+  font-family:'Inter',sans-serif;
+  color:var(--gray-900);
+  background:var(--gray-50);
+  font-size:14px;
+  line-height:1.5;
+}
+a { text-decoration:none; color:inherit; }
+button { cursor:pointer; font-family:inherit; }
+input, select, textarea { font-family:inherit; font-size:14px; }
+
+/* Layout */
+.app { display:flex; min-height:100vh; }
+
+/* Sidebar */
+.sidebar {
+  width:var(--sidebar-w);
+  background:var(--navy);
+  color:var(--white);
+  display:flex;
+  flex-direction:column;
+  position:fixed;
+  top:0; left:0; bottom:0;
+  z-index:100;
+  transition:transform 0.3s;
+}
+.sidebar-logo {
+  padding:24px 20px 20px;
+  font-weight:800;
+  font-size:20px;
+  letter-spacing:3px;
+  border-bottom:1px solid var(--navy-light);
+}
+.sidebar-logo span { color:var(--accent); }
+.sidebar-nav { flex:1; padding:12px 0; overflow-y:auto; }
+.sidebar-nav-item {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:12px 20px;
+  color:rgba(255,255,255,0.7);
+  font-size:14px;
+  font-weight:500;
+  cursor:pointer;
+  transition:all 0.2s;
+  border-left:3px solid transparent;
+}
+.sidebar-nav-item:hover {
+  background:rgba(255,255,255,0.06);
+  color:var(--white);
+}
+.sidebar-nav-item.active {
+  background:rgba(0,61,165,0.25);
+  color:var(--accent);
+  border-left-color:var(--accent);
+}
+.sidebar-nav-item svg { width:18px; height:18px; flex-shrink:0; }
+.sidebar-footer {
+  padding:16px 20px;
+  border-top:1px solid var(--navy-light);
+  font-size:13px;
+}
+.sidebar-footer .member-name {
+  font-weight:600;
+  color:var(--white);
+  margin-bottom:4px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.sidebar-footer .member-type {
+  color:var(--accent);
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  margin-bottom:10px;
+}
+.btn-logout {
+  background:none;
+  border:1px solid rgba(255,255,255,0.2);
+  color:rgba(255,255,255,0.7);
+  padding:6px 14px;
+  border-radius:4px;
+  font-size:12px;
+  transition:all 0.2s;
+  width:100%;
+}
+.btn-logout:hover { border-color:var(--red); color:var(--red); }
+
+/* Main */
+.main {
+  flex:1;
+  margin-left:var(--sidebar-w);
+  padding:28px 32px;
+  min-height:100vh;
+}
+.main-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:24px;
+}
+.main-header h1 {
+  font-size:22px;
+  font-weight:700;
+  color:var(--navy);
+}
+.hamburger {
+  display:none;
+  background:none;
+  border:none;
+  padding:8px;
+  cursor:pointer;
+}
+.hamburger svg { width:24px; height:24px; }
+
+/* Overlay */
+.sidebar-overlay {
+  display:none;
+  position:fixed;
+  top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,0.5);
+  z-index:99;
+}
+
+/* Cards */
+.stat-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:28px; }
+.stat-card {
+  background:var(--white);
+  border-radius:10px;
+  padding:20px;
+  box-shadow:0 1px 4px rgba(0,0,0,0.06);
+}
+.stat-card .label { font-size:12px; color:var(--gray-500); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
+.stat-card .value { font-size:28px; font-weight:700; color:var(--navy); }
+.stat-card .value.primary { color:var(--primary); }
+.stat-card .value.accent { color:var(--accent-dark); }
+
+/* Panel */
+.panel {
+  background:var(--white);
+  border-radius:10px;
+  padding:24px;
+  box-shadow:0 1px 4px rgba(0,0,0,0.06);
+  margin-bottom:20px;
+}
+.panel h2 { font-size:16px; font-weight:700; margin-bottom:16px; color:var(--navy); }
+.panel h3 { font-size:14px; font-weight:600; margin-bottom:12px; color:var(--gray-700); }
+
+/* Forms */
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.form-group { display:flex; flex-direction:column; gap:4px; }
+.form-group.full { grid-column:1/-1; }
+.form-group label { font-size:12px; font-weight:600; color:var(--gray-700); text-transform:uppercase; letter-spacing:0.3px; }
+.form-group input, .form-group select, .form-group textarea {
+  padding:9px 12px;
+  border:1px solid var(--gray-300);
+  border-radius:6px;
+  outline:none;
+  transition:border 0.2s;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:var(--primary); }
+.form-group textarea { resize:vertical; min-height:80px; }
+
+/* Buttons */
+.btn {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:9px 18px;
+  border-radius:6px;
+  font-size:13px;
+  font-weight:600;
+  border:none;
+  transition:all 0.2s;
+}
+.btn-primary { background:var(--primary); color:var(--white); }
+.btn-primary:hover { background:var(--primary-dark); }
+.btn-accent { background:var(--accent); color:var(--navy); }
+.btn-accent:hover { background:var(--accent-dark); }
+.btn-outline { background:none; border:1px solid var(--gray-300); color:var(--gray-700); }
+.btn-outline:hover { border-color:var(--primary); color:var(--primary); }
+.btn-sm { padding:6px 12px; font-size:12px; }
+.btn-danger { background:var(--red); color:var(--white); }
+
+/* Table */
+.table-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th { text-align:left; padding:10px 12px; background:var(--gray-100); color:var(--gray-700); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; }
+td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
+
+/* Badge */
+.badge {
+  display:inline-block;
+  padding:3px 10px;
+  border-radius:20px;
+  font-size:11px;
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+}
+.badge-gray { background:var(--gray-200); color:var(--gray-700); }
+.badge-blue { background:var(--primary-light); color:var(--primary-dark); }
+.badge-gold { background:var(--accent-light); color:var(--accent-dark); }
+.badge-teal { background:#e0f2f1; color:#00695c; }
+.badge-green { background:#d4edda; color:#155724; }
+.badge-red { background:#f8d7da; color:#721c24; }
+
+/* Search bar */
+.search-bar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px; }
+.search-bar input, .search-bar select {
+  padding:9px 12px;
+  border:1px solid var(--gray-300);
+  border-radius:6px;
+  outline:none;
+  font-size:13px;
+}
+.search-bar input { flex:1; min-width:200px; }
+.search-bar select { min-width:140px; }
+
+/* Result cards */
+.result-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; }
+.result-card {
+  background:var(--white);
+  border:1px solid var(--gray-200);
+  border-radius:8px;
+  padding:16px;
+  cursor:pointer;
+  transition:all 0.2s;
+}
+.result-card:hover { border-color:var(--primary); box-shadow:0 2px 8px rgba(0,61,165,0.1); }
+.result-card .rc-name { font-weight:700; font-size:15px; color:var(--navy); margin-bottom:2px; }
+.result-card .rc-company { font-size:13px; color:var(--gray-500); margin-bottom:6px; }
+.result-card .rc-meta { display:flex; gap:8px; flex-wrap:wrap; font-size:12px; color:var(--gray-700); }
+.result-card .rc-score { display:flex; gap:12px; margin-top:8px; font-size:12px; }
+.result-card .rc-score span { color:var(--primary); font-weight:600; }
+
+/* Modal */
+.modal-overlay {
+  display:none;
+  position:fixed;
+  top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,0.5);
+  z-index:200;
+  align-items:center;
+  justify-content:center;
+}
+.modal-overlay.show { display:flex; }
+.modal {
+  background:var(--white);
+  border-radius:12px;
+  width:90%;
+  max-width:600px;
+  max-height:85vh;
+  overflow-y:auto;
+  padding:28px;
+  position:relative;
+}
+.modal-close {
+  position:absolute;
+  top:12px;right:16px;
+  background:none;
+  border:none;
+  font-size:22px;
+  color:var(--gray-500);
+  cursor:pointer;
+}
+
+/* Tabs */
+.tabs { display:flex; gap:0; margin-bottom:18px; border-bottom:2px solid var(--gray-200); }
+.tab-btn {
+  padding:10px 20px;
+  font-size:13px;
+  font-weight:600;
+  color:var(--gray-500);
+  background:none;
+  border:none;
+  border-bottom:2px solid transparent;
+  margin-bottom:-2px;
+  transition:all 0.2s;
+}
+.tab-btn.active { color:var(--primary); border-bottom-color:var(--primary); }
+.tab-btn:hover { color:var(--primary); }
+
+/* Gauge */
+.gauge-wrap { display:flex; align-items:center; justify-content:center; padding:20px; }
+.gauge {
+  width:180px; height:180px;
+  border-radius:50%;
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.gauge-inner {
+  width:130px; height:130px;
+  border-radius:50%;
+  background:var(--white);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  z-index:1;
+}
+.gauge-value { font-size:32px; font-weight:800; color:var(--navy); }
+.gauge-label { font-size:11px; color:var(--gray-500); text-transform:uppercase; }
+
+/* Bar chart */
+.bar-chart { padding:8px 0; }
+.bar-row { display:flex; align-items:center; margin-bottom:10px; gap:10px; }
+.bar-label { width:140px; font-size:12px; color:var(--gray-700); text-align:right; flex-shrink:0; }
+.bar-track { flex:1; height:22px; background:var(--gray-100); border-radius:4px; position:relative; overflow:hidden; }
+.bar-fill { height:100%; border-radius:4px; transition:width 0.6s; display:flex; align-items:center; padding-left:8px; }
+.bar-fill span { font-size:11px; font-weight:600; color:var(--white); }
+
+/* Lifecycle dots */
+.lifecycle-dots { display:flex; align-items:center; gap:4px; margin:12px 0; }
+.lifecycle-dot {
+  width:28px; height:28px;
+  border-radius:50%;
+  border:2px solid var(--gray-300);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:10px;
+  font-weight:700;
+  color:var(--gray-400);
+}
+.lifecycle-dot.active { border-color:var(--primary); background:var(--primary); color:var(--white); }
+.lifecycle-dot.done { border-color:var(--green); background:var(--green); color:var(--white); }
+.lifecycle-line { width:20px; height:2px; background:var(--gray-300); }
+.lifecycle-line.done { background:var(--green); }
+
+/* Pricing table */
+.pricing-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; }
+.pricing-card {
+  border:2px solid var(--gray-200);
+  border-radius:10px;
+  padding:20px;
+  text-align:center;
+  transition:all 0.2s;
+}
+.pricing-card.current { border-color:var(--accent); }
+.pricing-card .tier-name { font-size:16px; font-weight:700; color:var(--navy); margin-bottom:4px; }
+.pricing-card .tier-desc { font-size:12px; color:var(--gray-500); margin-bottom:12px; }
+.pricing-card .tier-price { font-size:28px; font-weight:800; color:var(--primary); }
+.pricing-card .tier-period { font-size:12px; color:var(--gray-500); margin-bottom:14px; }
+
+/* Trust component list */
+.trust-components { display:flex; flex-direction:column; gap:10px; }
+.trust-row { display:flex; align-items:center; gap:10px; }
+.trust-row .tr-label { width:100px; font-size:12px; font-weight:600; color:var(--gray-700); }
+.trust-row .tr-bar { flex:1; height:16px; background:var(--gray-100); border-radius:4px; overflow:hidden; }
+.trust-row .tr-fill { height:100%; border-radius:4px; background:var(--primary); }
+.trust-row .tr-val { width:50px; text-align:right; font-size:12px; font-weight:600; color:var(--gray-700); }
+
+/* Loading / Error */
+.loading { text-align:center; padding:40px; color:var(--gray-500); font-size:14px; }
+.error-msg { color:var(--red); font-size:13px; padding:10px 0; }
+.success-msg { color:var(--green); font-size:13px; padding:10px 0; }
+
+/* Utilities */
+.mt-12 { margin-top:12px; }
+.mt-16 { margin-top:16px; }
+.mt-20 { margin-top:20px; }
+.mb-12 { margin-bottom:12px; }
+.mb-16 { margin-bottom:16px; }
+.flex-between { display:flex; align-items:center; justify-content:space-between; }
+.text-muted { color:var(--gray-500); }
+.text-sm { font-size:12px; }
+
+/* Responsive */
+@media (max-width:768px) {
+  .sidebar { transform:translateX(-100%); }
+  .sidebar.open { transform:translateX(0); }
+  .sidebar-overlay.show { display:block; }
+  .main { margin-left:0; padding:16px; }
+  .hamburger { display:block; }
+  .form-grid { grid-template-columns:1fr; }
+  .stat-cards { grid-template-columns:1fr 1fr; }
+  .result-cards { grid-template-columns:1fr; }
+  .pricing-grid { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Sidebar Overlay (mobile) -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">PACC-<span>CFL</span></div>
+    <nav class="sidebar-nav" id="sidebarNav">
+      <div class="sidebar-nav-item active" data-page="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </div>
+      <div class="sidebar-nav-item" data-page="profile">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        My Profile
+      </div>
+      <div class="sidebar-nav-item" data-page="directory">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        Directory
+      </div>
+      <div class="sidebar-nav-item" data-page="matching">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        AI Matching
+      </div>
+      <div class="sidebar-nav-item" data-page="projects">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+        Projects
+      </div>
+      <div class="sidebar-nav-item" data-page="exchange">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
+        Exchange
+      </div>
+      <div class="sidebar-nav-item" data-page="metrics">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+        Metrics
+      </div>
+      <div class="sidebar-nav-item" data-page="payments">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        Payments
+      </div>
+      <div class="sidebar-nav-item" data-page="admin" id="adminNavItem" style="display:none;border-top:1px solid rgba(255,255,255,0.1);margin-top:8px;padding-top:16px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        <span style="color:var(--accent);font-weight:600;">Admin</span>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="member-name" id="sidebarName">--</div>
+      <div class="member-type" id="sidebarType">--</div>
+      <button class="btn-logout" id="btnLogout">Sign Out</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="main-header">
+      <button class="hamburger" id="btnHamburger">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <h1 id="pageTitle">Dashboard</h1>
+      <div></div>
+    </div>
+    <div id="pageContent">
+      <div class="loading">Loading...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <button class="modal-close" id="modalClose">&times;</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // -- State --
+  const API = '/chamber/pacccfl/api';
+  let currentMember = null;
+  let currentPage = 'dashboard';
+
+  // -- Auth --
+  function getToken() { return localStorage.getItem('pacccfl_token'); }
+
+  function decodeJWT(token) {
+    try {
+      const payload = token.split('.')[1];
+      return JSON.parse(atob(payload.replace(/-/g,'+').replace(/_/g,'/')));
+    } catch(e) { return null; }
+  }
+
+  function logout() {
+    localStorage.removeItem('pacccfl_token');
+    window.location.href = '/chamber/pacccfl/#registro';
+  }
+
+  async function apiFetch(path, methodOrOpts, body) {
+    var opts = {};
+    if (typeof methodOrOpts === 'string') {
+      opts = { method: methodOrOpts };
+      if (body) opts.body = JSON.stringify(body);
+    } else if (methodOrOpts) {
+      opts = methodOrOpts;
+    }
+    var token = getToken();
+    var headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    var res = await fetch(API + path, { ...opts, headers });
+    var data = await res.json();
+    if (res.status === 401) { logout(); throw new Error('Session expired'); }
+    return data;
+  }
+
+  // -- Init --
+  async function init() {
+    var token = getToken();
+    if (!token) { window.location.href = '/chamber/pacccfl/#registro'; return; }
+
+    var decoded = decodeJWT(token);
+    if (!decoded) { logout(); return; }
+
+    try {
+      var res = await apiFetch('/auth/me');
+      if (!res.success) { logout(); return; }
+      currentMember = res.data;
+      currentMember.member_id = currentMember.id;
+    } catch(e) {
+      logout(); return;
+    }
+
+    document.getElementById('sidebarName').textContent = currentMember.first_name + ' ' + currentMember.last_name;
+    var roleLabel = currentMember.governance_role && currentMember.governance_role !== 'member'
+      ? currentMember.governance_role.replace(/_/g, ' ') : currentMember.membership_type || 'individual';
+    document.getElementById('sidebarType').textContent = roleLabel;
+
+    // Show admin nav if user has admin access
+    if (['superadmin', 'admin_global', 'admin_regional'].includes(currentMember.access_level)) {
+      document.getElementById('adminNavItem').style.display = 'flex';
+    }
+
+    setupNav();
+    setupHamburger();
+    setupModal();
+    document.getElementById('btnLogout').addEventListener('click', logout);
+    navigate('dashboard');
+  }
+
+  // -- Navigation --
+  function setupNav() {
+    document.querySelectorAll('.sidebar-nav-item').forEach(function(item) {
+      item.addEventListener('click', function() {
+        navigate(this.dataset.page);
+        closeSidebar();
+      });
+    });
+  }
+
+  function navigate(page) {
+    currentPage = page;
+    document.querySelectorAll('.sidebar-nav-item').forEach(function(i) {
+      i.classList.toggle('active', i.dataset.page === page);
+    });
+    var titles = {
+      dashboard:'Dashboard', profile:'My Profile', directory:'Directory',
+      matching:'AI Matching', projects:'Projects', exchange:'Exchange',
+      metrics:'Metrics', payments:'Payments', admin:'Administration'
+    };
+    document.getElementById('pageTitle').textContent = titles[page] || page;
+    document.getElementById('pageContent').innerHTML = '<div class="loading">Loading...</div>';
+    var renderers = {
+      dashboard:renderDashboard, profile:renderProfile, directory:renderDirectory,
+      matching:renderMatching, projects:renderProjects, exchange:renderExchange,
+      metrics:renderMetrics, payments:renderPayments, admin:renderAdmin
+    };
+    if (renderers[page]) renderers[page]();
+  }
+
+  // -- Hamburger --
+  function setupHamburger() {
+    document.getElementById('btnHamburger').addEventListener('click', function() {
+      document.getElementById('sidebar').classList.add('open');
+      document.getElementById('sidebarOverlay').classList.add('show');
+    });
+    document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
+  }
+  function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('show');
+  }
+
+  // -- Modal --
+  function setupModal() {
+    document.getElementById('modalClose').addEventListener('click', closeModal);
+    document.getElementById('modalOverlay').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+  }
+  function openModal(html) {
+    document.getElementById('modalContent').innerHTML = html;
+    document.getElementById('modalOverlay').classList.add('show');
+  }
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('show');
+  }
+
+  // -- Helpers --
+  function esc(s) { if (s == null) return ''; var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
+  function formatDate(d) { if (!d) return '--'; return new Date(d).toLocaleDateString('en-US',{day:'2-digit',month:'short',year:'numeric'}); }
+  function pct(v) { return Math.round((v || 0) * 100); }
+  function badgeClass(type) {
+    var m = {individual:'badge-gray',business:'badge-blue',corporate:'badge-gold',founding:'badge-teal'};
+    return m[type] || 'badge-gray';
+  }
+  function statusBadge(status) {
+    var m = {
+      proposal:'badge-gray', analysis:'badge-blue', team:'badge-teal',
+      resources:'badge-gold', execution:'badge-green', completed:'badge-green',
+      cancelled:'badge-red', open:'badge-green', awarded:'badge-gold', closed:'badge-gray'
+    };
+    return '<span class="badge '+(m[status]||'badge-gray')+'">'+esc(status)+'</span>';
+  }
+
+  // -- Sectors list --
+  var SECTORS = ['healthcare','real_estate','food_service','technology','retail','construction','professional_services','education','finance','hospitality','logistics','manufacturing','media','legal','automotive','beauty_wellness','insurance','consulting','cybersecurity','marketing'];
+
+  function sectorOptions(selected) {
+    var h = '<option value="">All sectors</option>';
+    SECTORS.forEach(function(s) { h += '<option value="'+s+'"'+(selected===s?' selected':'')+'>'+s.charAt(0).toUpperCase()+s.slice(1).replace(/_/g,' ')+'</option>'; });
+    return h;
+  }
+
+  var REGIONS = [
+    {id:1,name:'Orlando Metro'},{id:2,name:'Tampa Bay Area'},{id:3,name:'South Florida'},
+    {id:4,name:'North / Central FL'},{id:5,name:'International / Philippines'}
+  ];
+
+  function regionOptions(selected) {
+    var h = '<option value="">All regions</option>';
+    REGIONS.forEach(function(r) { h += '<option value="'+r.id+'"'+(selected==r.id?' selected':'')+'>'+r.name+'</option>'; });
+    return h;
+  }
+
+  // ================================================================
+  // PAGE: Dashboard
+  // ================================================================
+  async function renderDashboard() {
+    var el = document.getElementById('pageContent');
+    try {
+      var res = await apiFetch('/metrics/dashboard');
+      if (!res.success) { el.innerHTML = '<div class="error-msg">Error loading dashboard</div>'; return; }
+      var d = res.data;
+      var c = d.current;
+      var hciVal = '--';
+      if (d.history && d.history.length > 0) {
+        var last = d.history[d.history.length - 1];
+        hciVal = (last.hci_score != null) ? (parseFloat(last.hci_score) * 100).toFixed(1) + '%' : '--';
+      }
+
+      var html = '';
+      html += '<p style="font-size:16px;color:var(--gray-700);margin-bottom:20px;">Welcome, <strong>'+esc(currentMember.first_name)+'</strong>. Here is your network overview.</p>';
+      html += '<div class="stat-cards">';
+      html += '<div class="stat-card"><div class="label">Active Members</div><div class="value primary">'+(c.members||0)+'</div></div>';
+      html += '<div class="stat-card"><div class="label">Active Projects</div><div class="value">'+(c.active_projects||0)+'</div></div>';
+      html += '<div class="stat-card"><div class="label">Open RFQs</div><div class="value accent">'+(c.open_rfqs||0)+'</div></div>';
+      html += '<div class="stat-card"><div class="label">HCI Score</div><div class="value primary">'+hciVal+'</div></div>';
+      html += '</div>';
+
+      // Members by region
+      if (d.members_by_region && d.members_by_region.length) {
+        html += '<div class="panel"><h2>Members by Region</h2><div class="bar-chart">';
+        var maxR = Math.max.apply(null, d.members_by_region.map(function(r){return parseInt(r.count)||0;})) || 1;
+        d.members_by_region.forEach(function(r) {
+          var cnt = parseInt(r.count)||0;
+          var w = Math.max((cnt/maxR)*100, 2);
+          html += '<div class="bar-row"><div class="bar-label">'+esc(r.name)+'</div><div class="bar-track"><div class="bar-fill" style="width:'+w+'%;background:var(--primary);"><span>'+cnt+'</span></div></div></div>';
+        });
+        html += '</div></div>';
+      }
+
+      // Members by type
+      if (d.members_by_type && d.members_by_type.length) {
+        html += '<div class="panel"><h2>Membership Distribution</h2><div class="bar-chart">';
+        var maxT = Math.max.apply(null, d.members_by_type.map(function(t){return parseInt(t.count)||0;})) || 1;
+        d.members_by_type.forEach(function(t) {
+          var cnt = parseInt(t.count)||0;
+          var w = Math.max((cnt/maxT)*100, 2);
+          html += '<div class="bar-row"><div class="bar-label">'+esc(t.membership_type)+'</div><div class="bar-track"><div class="bar-fill" style="width:'+w+'%;background:var(--accent);"><span>'+cnt+'</span></div></div></div>';
+        });
+        html += '</div></div>';
+      }
+
+      // Recent history
+      if (d.history && d.history.length > 0) {
+        html += '<div class="panel"><h2>Recent Network Activity</h2><div class="table-wrap"><table><thead><tr><th>Date</th><th>Members</th><th>Active</th><th>Gini</th><th>Trust</th><th>HCI</th></tr></thead><tbody>';
+        d.history.slice(-10).reverse().forEach(function(h2) {
+          html += '<tr><td>'+formatDate(h2.date)+'</td><td>'+h2.total_members+'</td><td>'+h2.active_members+'</td><td>'+h2.gini_regional+'</td><td>'+parseFloat(h2.avg_trust).toFixed(3)+'</td><td>'+(parseFloat(h2.hci_score)*100).toFixed(1)+'%</td></tr>';
+        });
+        html += '</tbody></table></div></div>';
+      }
+
+      el.innerHTML = html;
+    } catch(e) {
+      el.innerHTML = '<div class="error-msg">Error: '+esc(e.message)+'</div>';
+    }
+  }
+
+  // ================================================================
+  // PAGE: Profile
+  // ================================================================
+  async function renderProfile() {
+    var el = document.getElementById('pageContent');
+    try {
+      var m = currentMember;
+      var langs = m.languages || [];
+      if (typeof langs === 'string') { try { langs = JSON.parse(langs); } catch(e2) { langs = langs.replace(/[{}]/g,'').split(',').filter(Boolean); } }
+
+      var html = '<div class="panel"><h2>Personal Information</h2>';
+      html += '<div id="profileMsg"></div>';
+      html += '<form id="profileForm" class="form-grid">';
+      html += '<div class="form-group"><label>First Name</label><input name="first_name" value="'+esc(m.first_name)+'"></div>';
+      html += '<div class="form-group"><label>Last Name</label><input name="last_name" value="'+esc(m.last_name)+'"></div>';
+      html += '<div class="form-group"><label>Country</label><input name="country" value="'+esc(m.country||'')+'"></div>';
+      html += '<div class="form-group"><label>Sector</label><select name="sector">'+sectorOptions(m.sector)+'</select></div>';
+      html += '<div class="form-group"><label>Sub-specialty</label><input name="sub_specialty" value="'+esc(m.sub_specialty||'')+'"></div>';
+      html += '<div class="form-group"><label>Years of Experience</label><input name="years_experience" type="number" value="'+(m.years_experience||'')+'"></div>';
+      html += '<div class="form-group"><label>Languages (comma-separated)</label><input name="languages" value="'+esc(langs.join(', '))+'"></div>';
+      html += '<div class="form-group"><label>Company</label><input name="company_name" value="'+esc(m.company_name||'')+'"></div>';
+      html += '<div class="form-group full"><label>Bio</label><textarea name="bio" rows="3">'+esc(m.bio||'')+'</textarea></div>';
+      html += '<div class="form-group"><label>Phone</label><input name="phone" value="'+esc(m.phone||'')+'"></div>';
+      html += '<div class="form-group"><label>LinkedIn URL</label><input name="linkedin_url" value="'+esc(m.linkedin_url||'')+'"></div>';
+      html += '<div class="form-group"><label>Website URL</label><input name="website_url" value="'+esc(m.website_url||'')+'"></div>';
+      html += '<div class="form-group"><label>Membership</label><div><span class="badge '+badgeClass(m.membership_type)+'">'+esc(m.membership_type||'individual')+'</span></div></div>';
+      html += '<div class="form-group full mt-12"><button type="submit" class="btn btn-primary">Save Changes</button></div>';
+      html += '</form></div>';
+
+      // Trust Score section
+      html += '<div class="panel" id="trustPanel"><h2>Trust Score</h2><div class="loading">Loading...</div></div>';
+
+      el.innerHTML = html;
+
+      // Profile form submit
+      document.getElementById('profileForm').addEventListener('submit', async function(ev) {
+        ev.preventDefault();
+        var fd = new FormData(this);
+        var body = {};
+        fd.forEach(function(v,k){ body[k] = v; });
+        body.years_experience = body.years_experience ? parseInt(body.years_experience) : null;
+        body.languages = body.languages ? body.languages.split(',').map(function(l){return l.trim();}).filter(Boolean) : [];
+        if (!body.sector) delete body.sector;
+        var msgEl = document.getElementById('profileMsg');
+        msgEl.innerHTML = '<div class="text-muted text-sm">Saving...</div>';
+        try {
+          var res = await apiFetch('/members/'+currentMember.id, { method:'PUT', body:JSON.stringify(body) });
+          if (res.success) {
+            msgEl.innerHTML = '<div class="success-msg">Profile updated successfully.</div>';
+            currentMember = res.data;
+            currentMember.member_id = currentMember.id;
+            document.getElementById('sidebarName').textContent = currentMember.first_name + ' ' + currentMember.last_name;
+          } else {
+            msgEl.innerHTML = '<div class="error-msg">'+(res.error||'Error saving profile')+'</div>';
+          }
+        } catch(e2) {
+          msgEl.innerHTML = '<div class="error-msg">Error: '+esc(e2.message)+'</div>';
+        }
+      });
+
+      // Load trust score
+      loadTrustScore(currentMember.id, 'trustPanel');
+
+    } catch(e) {
+      el.innerHTML = '<div class="error-msg">Error: '+esc(e.message)+'</div>';
+    }
+  }
+
+  async function loadTrustScore(memberId, containerId) {
+    var container = document.getElementById(containerId);
+    if (!container) return;
+    try {
+      var res = await apiFetch('/metrics/trust/'+memberId);
+      if (!res.success) { container.innerHTML = '<h2>Trust Score</h2><div class="error-msg">Not available</div>'; return; }
+      var d = res.data;
+      var html = '<h2>Trust Score: <span style="color:var(--primary)">'+((d.trust_score != null ? d.trust_score : d.trust_base_calculated) || 0).toFixed(3)+'</span></h2>';
+      html += '<div class="trust-components mt-12">';
+      if (d.components) {
+        var comps = d.components;
+        var items = [
+          {label:'Verification', val:comps.verification?comps.verification.value:0, w:comps.verification?comps.verification.weight:0},
+          {label:'References', val:comps.references?comps.references.value:0, w:comps.references?comps.references.weight:0},
+          {label:'Projects', val:comps.projects?comps.projects.value:0, w:comps.projects?comps.projects.weight:0},
+          {label:'Tenure', val:comps.tenure?comps.tenure.value:0, w:comps.tenure?comps.tenure.weight:0},
+          {label:'Membership', val:comps.membership?comps.membership.value:0, w:comps.membership?comps.membership.weight:0}
+        ];
+        items.forEach(function(it) {
+          var pctV = Math.round(it.val * 100);
+          html += '<div class="trust-row"><div class="tr-label">'+it.label+' ('+Math.round(it.w*100)+'%)</div><div class="tr-bar"><div class="tr-fill" style="width:'+pctV+'%"></div></div><div class="tr-val">'+pctV+'%</div></div>';
+        });
+      }
+      html += '</div>';
+      container.innerHTML = html;
+    } catch(e) {
+      container.innerHTML = '<h2>Trust Score</h2><div class="error-msg">Error loading data</div>';
+    }
+  }
+
+  // ================================================================
+  // PAGE: Directory
+  // ================================================================
+  async function renderDirectory() {
+    var el = document.getElementById('pageContent');
+    var html = '<div class="search-bar">';
+    html += '<input type="text" id="dirSearch" placeholder="Search by name or company...">';
+    html += '<select id="dirRegion">'+regionOptions()+'</select>';
+    html += '<select id="dirSector">'+sectorOptions()+'</select>';
+    html += '<button class="btn btn-primary" id="dirBtn">Search</button>';
+    html += '</div>';
+    html += '<div id="dirResults"><div class="loading">Loading...</div></div>';
+    el.innerHTML = html;
+
+    async function searchDir() {
+      var params = new URLSearchParams();
+      var s = document.getElementById('dirSearch').value.trim();
+      var r = document.getElementById('dirRegion').value;
+      var sec = document.getElementById('dirSector').value;
+      if (s) params.set('search', s);
+      if (r) params.set('region_id', r);
+      if (sec) params.set('sector', sec);
+      params.set('limit', '50');
+
+      var out = document.getElementById('dirResults');
+      out.innerHTML = '<div class="loading">Loading...</div>';
+      try {
+        var res = await apiFetch('/members?' + params.toString());
+        if (!res.success) { out.innerHTML = '<div class="error-msg">Error searching</div>'; return; }
+        var members = res.data.members || [];
+        if (members.length === 0) { out.innerHTML = '<p class="text-muted">No members found.</p>'; return; }
+        var h = '<div class="result-cards">';
+        members.forEach(function(m) {
+          h += '<div class="result-card" data-member-id="'+m.id+'">';
+          h += '<div class="rc-name">'+esc(m.first_name)+' '+esc(m.last_name)+'</div>';
+          h += '<div class="rc-company">'+esc(m.company_name||'--')+' <span class="badge '+badgeClass(m.membership_type)+'">'+esc(m.membership_type)+'</span></div>';
+          h += '<div class="rc-meta"><span>'+esc(m.sector||'--')+'</span><span>'+esc(m.country||'--')+'</span>';
+          if (m.years_experience) h += '<span>'+m.years_experience+' yrs exp.</span>';
+          h += '</div></div>';
+        });
+        h += '</div>';
+        if (res.data.pagination) h += '<p class="text-muted text-sm mt-12">'+res.data.pagination.total+' members found (page '+res.data.pagination.page+' of '+res.data.pagination.total_pages+')</p>';
+        out.innerHTML = h;
+
+        out.querySelectorAll('.result-card').forEach(function(card) {
+          card.addEventListener('click', function() { showMemberModal(this.dataset.memberId); });
+        });
+      } catch(e) {
+        out.innerHTML = '<div class="error-msg">Error: '+esc(e.message)+'</div>';
+      }
+    }
+
+    document.getElementById('dirBtn').addEventListener('click', searchDir);
+    document.getElementById('dirSearch').addEventListener('keypress', function(e){ if(e.key==='Enter') searchDir(); });
+    searchDir();
+  }
+
+  async function showMemberModal(id) {
+    openModal('<div class="loading">Loading profile...</div>');
+    try {
+      var res = await apiFetch('/members/'+id);
+      if (!res.success) { openModal('<div class="error-msg">Error loading profile</div>'); return; }
+      var m = res.data;
+      var langs = m.languages || [];
+      if (typeof langs === 'string') { try { langs = JSON.parse(langs); } catch(e) { langs = langs.replace(/[{}]/g,'').split(',').filter(Boolean); } }
+      var html = '<h2 style="margin-bottom:16px">'+esc(m.first_name)+' '+esc(m.last_name)+'</h2>';
+      html += '<span class="badge '+badgeClass(m.membership_type)+'">'+esc(m.membership_type)+'</span>';
+      if (m.verification_level) html += ' <span class="badge badge-green">'+esc(m.verification_level)+'</span>';
+      html += '<table style="margin-top:16px;width:100%">';
+      html += '<tr><td style="font-weight:600;padding:6px 12px 6px 0;color:var(--gray-500)">Company</td><td>'+esc(m.company_name||'--')+'</td></tr>';
+      html += '<tr><td style="font-weight:600;padding:6px 12px 6px 0;color:var(--gray-500)">Sector</td><td>'+esc(m.sector||'--')+'</td></tr>';
+      html += '<tr><td style="font-weight:600;padding:6px 12px 6px 0;color:var(--gray-500)">Country</td><td>'+esc(m.country||'--')+'</td></tr>';
+      html += '<tr><td style="font-weight:600;padding:6px 12px 6px 0;color:var(--gray-500)">Sub-specialty</td><td>'+esc(m.sub_specialty||'--')+'</td></tr>';
+      html += '<tr><td style="font-weight:600;padding:6px 12px 6px 0;color:var(--gray-500)">Experience</td><td>'+(m.years_experience ? m.years_experience+' years' : '--')+'</td></tr>';
+      html += '<tr><td style="font-weight:600;padding:6px 12px 6px 0;color:var(--gray-500)">Languages</td><td>'+esc(langs.join(', ')||'--')+'</td></tr>';
+      html += '<tr><td style="font-weight:600;padding:6px 12px 6px 0;color:var(--gray-500)">Email</td><td>'+esc(m.email)+'</td></tr>';
+      if (m.linkedin_url) html += '<tr><td style="font-weight:600;padding:6px 12px 6px 0;color:var(--gray-500)">LinkedIn</td><td><a href="'+esc(m.linkedin_url)+'" target="_blank" style="color:var(--primary)">View profile</a></td></tr>';
+      if (m.website_url) html += '<tr><td style="font-weight:600;padding:6px 12px 6px 0;color:var(--gray-500)">Website</td><td><a href="'+esc(m.website_url)+'" target="_blank" style="color:var(--primary)">Visit</a></td></tr>';
+      html += '<tr><td style="font-weight:600;padding:6px 12px 6px 0;color:var(--gray-500)">Member since</td><td>'+formatDate(m.created_at)+'</td></tr>';
+      html += '</table>';
+      if (m.bio) html += '<div style="margin-top:14px;padding:12px;background:var(--gray-50);border-radius:6px;font-size:13px;color:var(--gray-700)">'+esc(m.bio)+'</div>';
+      openModal(html);
+    } catch(e) {
+      openModal('<div class="error-msg">Error: '+esc(e.message)+'</div>');
+    }
+  }
+
+  // ================================================================
+  // PAGE: AI Matching
+  // ================================================================
+  async function renderMatching() {
+    var el = document.getElementById('pageContent');
+    var html = '<div class="panel"><h2>Intelligent Partner Search</h2>';
+    html += '<p class="text-muted mb-16">Describe what you need and our AI engine will find the best candidates, corrected for Gini equity.</p>';
+    html += '<div class="form-grid">';
+    html += '<div class="form-group full"><label>Describe what you need</label><textarea id="matchQuery" rows="3" placeholder="E.g.: I need a healthcare partner in Orlando with insurance billing experience"></textarea></div>';
+    html += '<div class="form-group"><label>Sector</label><select id="matchSector">'+sectorOptions()+'</select></div>';
+    html += '<div class="form-group"><label>Region</label><select id="matchRegion">'+regionOptions()+'</select></div>';
+    html += '<div class="form-group"><label>Country</label><input id="matchCountry" placeholder="e.g. United States"></div>';
+    html += '<div class="form-group"><button class="btn btn-primary mt-16" id="matchBtn" style="margin-top:20px">Search</button></div>';
+    html += '</div></div>';
+    html += '<div id="matchResults"></div>';
+    el.innerHTML = html;
+
+    document.getElementById('matchBtn').addEventListener('click', async function() {
+      var out = document.getElementById('matchResults');
+      out.innerHTML = '<div class="loading">Searching for matches...</div>';
+      var body = {
+        query_text: document.getElementById('matchQuery').value.trim(),
+        sector: document.getElementById('matchSector').value || undefined,
+        region_id: document.getElementById('matchRegion').value || undefined,
+        country: document.getElementById('matchCountry').value.trim() || undefined,
+        limit: 10
+      };
+      try {
+        var res = await apiFetch('/match', { method:'POST', body:JSON.stringify(body) });
+        if (!res.success) { out.innerHTML = '<div class="error-msg">'+(res.error||'Search error')+'</div>'; return; }
+        var results = res.data.results || [];
+        if (results.length === 0) { out.innerHTML = '<div class="panel"><p class="text-muted">No matches found.</p></div>'; return; }
+        var h = '<div class="panel"><h2>Results ('+results.length+' of '+res.data.total_candidates+' candidates)</h2><div class="result-cards">';
+        results.forEach(function(r, idx) {
+          h += '<div class="result-card">';
+          h += '<div style="display:flex;justify-content:space-between;align-items:flex-start">';
+          h += '<div><div class="rc-name">#'+(idx+1)+' '+esc(r.first_name)+' '+esc(r.last_name)+'</div>';
+          h += '<div class="rc-company">'+esc(r.company_name||'--')+'</div></div>';
+          h += '<div style="text-align:right;font-size:22px;font-weight:800;color:var(--primary)">'+((r.final_score||0)*100).toFixed(0)+'</div>';
+          h += '</div>';
+          h += '<div class="rc-meta mt-12"><span>'+esc(r.sector||'--')+'</span><span>'+esc(r.country||'--')+'</span><span>'+esc(r.region_name||'--')+'</span></div>';
+          h += '<div class="rc-score"><span>Similarity: '+((r.similarity_score||0)*100).toFixed(0)+'%</span>';
+          h += '<span>Trust: '+((r.trust_score||0)*100).toFixed(0)+'%</span>';
+          h += '<span>Gini: '+(r.gini_correction||1).toFixed(3)+'</span></div>';
+          h += '</div>';
+        });
+        h += '</div></div>';
+        out.innerHTML = h;
+      } catch(e) {
+        out.innerHTML = '<div class="error-msg">Error: '+esc(e.message)+'</div>';
+      }
+    });
+  }
+
+  // ================================================================
+  // PAGE: Projects
+  // ================================================================
+  var LIFECYCLE = ['proposal','analysis','team','resources','execution','completed'];
+
+  function lifecycleDots(status) {
+    var idx = LIFECYCLE.indexOf(status);
+    if (idx === -1) idx = 0;
+    var h = '<div class="lifecycle-dots">';
+    for (var i = 0; i < LIFECYCLE.length; i++) {
+      if (i > 0) h += '<div class="lifecycle-line'+(i<=idx?' done':'')+'"></div>';
+      var cls = i < idx ? 'done' : (i === idx ? 'active' : '');
+      h += '<div class="lifecycle-dot '+cls+'" title="'+LIFECYCLE[i]+'">'+(i+1)+'</div>';
+    }
+    h += '</div>';
+    return h;
+  }
+
+  async function renderProjects() {
+    var el = document.getElementById('pageContent');
+    el.innerHTML = '<div class="flex-between mb-16"><div></div><button class="btn btn-primary" id="newProjectBtn">+ New Project</button></div><div id="projectList"><div class="loading">Loading...</div></div>';
+
+    document.getElementById('newProjectBtn').addEventListener('click', showNewProjectForm);
+    loadProjects();
+  }
+
+  async function loadProjects() {
+    var out = document.getElementById('projectList');
+    try {
+      var res = await apiFetch('/projects?limit=50');
+      if (!res.success) { out.innerHTML = '<div class="error-msg">Error loading projects</div>'; return; }
+      var projects = res.data.projects || [];
+      if (projects.length === 0) { out.innerHTML = '<div class="panel"><p class="text-muted">No projects yet. Create your first one.</p></div>'; return; }
+      var h = '<div class="result-cards">';
+      projects.forEach(function(p) {
+        h += '<div class="result-card" data-project-id="'+p.id+'">';
+        h += '<div class="flex-between"><div class="rc-name">'+esc(p.title)+'</div>'+statusBadge(p.status)+'</div>';
+        h += '<div class="rc-company">'+esc(p.proposer_name||'--')+' | '+esc(p.sector||'--')+'</div>';
+        h += lifecycleDots(p.status);
+        if (p.budget_est) h += '<div class="text-sm text-muted">Est. budget: $'+Number(p.budget_est).toLocaleString()+'</div>';
+        h += '</div>';
+      });
+      h += '</div>';
+      out.innerHTML = h;
+
+      out.querySelectorAll('.result-card').forEach(function(card) {
+        card.addEventListener('click', function(){ showProjectDetail(this.dataset.projectId); });
+      });
+    } catch(e) {
+      out.innerHTML = '<div class="error-msg">Error: '+esc(e.message)+'</div>';
+    }
+  }
+
+  function showNewProjectForm() {
+    var html = '<h2 style="margin-bottom:16px">New Project</h2><div id="newProjMsg"></div>';
+    html += '<form id="newProjForm" class="form-grid">';
+    html += '<div class="form-group full"><label>Title</label><input name="title" required></div>';
+    html += '<div class="form-group full"><label>Description</label><textarea name="description" rows="3" required></textarea></div>';
+    html += '<div class="form-group"><label>Sector</label><select name="sector" required>'+sectorOptions()+'</select></div>';
+    html += '<div class="form-group"><label>Pilot Type</label><select name="pilot_type"><option value="">Select</option><option value="commercial">Commercial</option><option value="technical">Technical</option><option value="research">Research</option></select></div>';
+    html += '<div class="form-group"><label>Countries (comma-separated)</label><input name="countries" placeholder="US, PH, SG"></div>';
+    html += '<div class="form-group"><label>Budget Min (USD)</label><input name="budget_min" type="number"></div>';
+    html += '<div class="form-group"><label>Budget Est (USD)</label><input name="budget_est" type="number"></div>';
+    html += '<div class="form-group"><label>Budget Max (USD)</label><input name="budget_max" type="number"></div>';
+    html += '<div class="form-group"><label>Timeline Min (months)</label><input name="timeline_min_months" type="number"></div>';
+    html += '<div class="form-group"><label>Timeline Est (months)</label><input name="timeline_est_months" type="number"></div>';
+    html += '<div class="form-group"><label>Timeline Max (months)</label><input name="timeline_max_months" type="number"></div>';
+    html += '<div class="form-group full mt-12"><button type="submit" class="btn btn-primary">Create Project</button></div>';
+    html += '</form>';
+    openModal(html);
+
+    document.getElementById('newProjForm').addEventListener('submit', async function(ev) {
+      ev.preventDefault();
+      var fd = new FormData(this);
+      var body = {};
+      fd.forEach(function(v,k){ body[k] = v; });
+      body.countries = body.countries ? body.countries.split(',').map(function(c){return c.trim();}).filter(Boolean) : [];
+      ['budget_min','budget_est','budget_max','timeline_min_months','timeline_est_months','timeline_max_months'].forEach(function(f){
+        body[f] = body[f] ? parseFloat(body[f]) : undefined;
+      });
+      var msg = document.getElementById('newProjMsg');
+      msg.innerHTML = '<div class="text-muted text-sm">Creating project...</div>';
+      try {
+        var res = await apiFetch('/projects', { method:'POST', body:JSON.stringify(body) });
+        if (res.success) {
+          closeModal();
+          loadProjects();
+        } else {
+          msg.innerHTML = '<div class="error-msg">'+(res.error||'Error creating project')+'</div>';
+        }
+      } catch(e) {
+        msg.innerHTML = '<div class="error-msg">Error: '+esc(e.message)+'</div>';
+      }
+    });
+  }
+
+  async function showProjectDetail(id) {
+    openModal('<div class="loading">Loading project...</div>');
+    try {
+      var res = await apiFetch('/projects/'+id);
+      if (!res.success) { openModal('<div class="error-msg">Error loading project</div>'); return; }
+      var p = res.data;
+      var html = '<h2 style="margin-bottom:8px">'+esc(p.title)+'</h2>';
+      html += '<div style="margin-bottom:12px">'+statusBadge(p.status)+' <span class="text-muted text-sm"> | Proposed by '+esc(p.proposer_name||'--')+'</span></div>';
+      html += lifecycleDots(p.status);
+      html += '<p style="margin:12px 0;font-size:13px;color:var(--gray-700)">'+esc(p.description||'')+'</p>';
+      html += '<table style="width:100%;margin-bottom:16px">';
+      html += '<tr><td style="font-weight:600;padding:4px 12px 4px 0;color:var(--gray-500);font-size:13px">Sector</td><td style="font-size:13px">'+esc(p.sector||'--')+'</td></tr>';
+      if (p.countries) html += '<tr><td style="font-weight:600;padding:4px 12px 4px 0;color:var(--gray-500);font-size:13px">Countries</td><td style="font-size:13px">'+esc((p.countries||[]).join(', '))+'</td></tr>';
+      if (p.budget_est) html += '<tr><td style="font-weight:600;padding:4px 12px 4px 0;color:var(--gray-500);font-size:13px">Budget</td><td style="font-size:13px">$'+Number(p.budget_min||0).toLocaleString()+' - $'+Number(p.budget_est||0).toLocaleString()+' - $'+Number(p.budget_max||0).toLocaleString()+'</td></tr>';
+      if (p.timeline_est_months) html += '<tr><td style="font-weight:600;padding:4px 12px 4px 0;color:var(--gray-500);font-size:13px">Timeline</td><td style="font-size:13px">'+p.timeline_min_months+' - '+p.timeline_est_months+' - '+p.timeline_max_months+' months</td></tr>';
+      html += '</table>';
+
+      // Team
+      html += '<h3>Team ('+(p.team?p.team.length:0)+' members)</h3>';
+      if (p.team && p.team.length > 0) {
+        html += '<div style="margin-bottom:12px">';
+        p.team.forEach(function(t) {
+          html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--gray-200);font-size:13px"><strong>'+esc(t.first_name)+' '+esc(t.last_name)+'</strong><span class="text-muted">'+esc(t.role||'collaborator')+'</span><span class="text-muted">'+esc(t.sector||'')+'</span></div>';
+        });
+        html += '</div>';
+      } else {
+        html += '<p class="text-muted text-sm mb-12">No team members yet.</p>';
+      }
+
+      // Action buttons
+      html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">';
+      if (p.status !== 'completed') {
+        html += '<button class="btn btn-primary btn-sm" id="advanceBtn">Advance Phase</button>';
+        html += '<button class="btn btn-outline btn-sm" id="joinBtn">Join Team</button>';
+      }
+      html += '<button class="btn btn-accent btn-sm" id="evaluateBtn">Evaluate Risk</button>';
+      html += '</div>';
+      html += '<div id="projActionMsg" style="margin-top:10px"></div>';
+
+      openModal(html);
+
+      var advBtn = document.getElementById('advanceBtn');
+      if (advBtn) advBtn.addEventListener('click', async function() {
+        var msg = document.getElementById('projActionMsg');
+        msg.innerHTML = '<div class="text-muted text-sm">Advancing phase...</div>';
+        try {
+          var r = await apiFetch('/projects/'+id+'/advance', { method:'POST' });
+          if (r.success) { msg.innerHTML = '<div class="success-msg">Advanced to: '+esc(r.data.status)+'</div>'; loadProjects(); } else { msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>'; }
+        } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
+      });
+
+      var joinBtn = document.getElementById('joinBtn');
+      if (joinBtn) joinBtn.addEventListener('click', async function() {
+        var msg = document.getElementById('projActionMsg');
+        msg.innerHTML = '<div class="text-muted text-sm">Joining...</div>';
+        try {
+          var r = await apiFetch('/projects/'+id+'/join', { method:'POST', body:JSON.stringify({role:'collaborator'}) });
+          if (r.success) { msg.innerHTML = '<div class="success-msg">You have joined the project.</div>'; } else { msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>'; }
+        } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
+      });
+
+      var evalBtn = document.getElementById('evaluateBtn');
+      if (evalBtn) evalBtn.addEventListener('click', async function() {
+        var msg = document.getElementById('projActionMsg');
+        msg.innerHTML = '<div class="text-muted text-sm">Evaluating risk (Monte Carlo)...</div>';
+        try {
+          var r = await apiFetch('/projects/'+id+'/evaluate', { method:'POST' });
+          if (r.success) {
+            var ev = r.data;
+            var h = '<div class="success-msg">Evaluation complete</div>';
+            h += '<div style="background:var(--gray-50);padding:12px;border-radius:6px;font-size:12px;margin-top:8px">';
+            h += '<strong>Success probability:</strong> '+(ev.success_probability*100)+'% | <strong>Risk:</strong> '+esc(ev.risk_score)+'<br>';
+            h += '<strong>Budget P50:</strong> $'+Number(ev.budget.p50).toLocaleString()+' | <strong>P90:</strong> $'+Number(ev.budget.p90).toLocaleString()+'<br>';
+            h += '<strong>Timeline P50:</strong> '+ev.timeline_months.p50+' months | <strong>P90:</strong> '+ev.timeline_months.p90+' months';
+            h += '</div>';
+            msg.innerHTML = h;
+          } else { msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>'; }
+        } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
+      });
+
+    } catch(e) {
+      openModal('<div class="error-msg">Error: '+esc(e.message)+'</div>');
+    }
+  }
+
+  // ================================================================
+  // PAGE: Exchange
+  // ================================================================
+  async function renderExchange() {
+    var el = document.getElementById('pageContent');
+    var html = '<div class="tabs"><button class="tab-btn active" data-tab="companies">Companies</button><button class="tab-btn" data-tab="rfqs">RFQs</button><button class="tab-btn" data-tab="opportunities">Opportunities</button></div>';
+    html += '<div id="exchangeContent"><div class="loading">Loading...</div></div>';
+    el.innerHTML = html;
+
+    el.querySelectorAll('.tab-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        el.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});
+        this.classList.add('active');
+        if (this.dataset.tab === 'companies') loadCompanies();
+        else if (this.dataset.tab === 'rfqs') loadRFQs();
+        else loadOpportunities();
+      });
+    });
+
+    loadCompanies();
+  }
+
+  async function loadCompanies() {
+    var out = document.getElementById('exchangeContent');
+    out.innerHTML = '<div class="flex-between mb-16"><div></div><button class="btn btn-primary btn-sm" id="newCompanyBtn">+ Register Company</button></div><div id="companyList"><div class="loading">Loading...</div></div>';
+
+    document.getElementById('newCompanyBtn').addEventListener('click', showNewCompanyForm);
+
+    try {
+      var res = await apiFetch('/exchange/companies?limit=50');
+      if (!res.success) { document.getElementById('companyList').innerHTML = '<div class="error-msg">Error</div>'; return; }
+      var companies = res.data.companies || [];
+      var list = document.getElementById('companyList');
+      if (companies.length === 0) { list.innerHTML = '<p class="text-muted">No companies registered yet.</p>'; return; }
+      var h = '<div class="table-wrap"><table><thead><tr><th>Company</th><th>Sector</th><th>Employees</th><th>Countries</th><th>Verified</th><th>Created</th></tr></thead><tbody>';
+      companies.forEach(function(c) {
+        h += '<tr><td><strong>'+esc(c.name)+'</strong></td><td>'+esc(c.sector||'--')+'</td><td>'+(c.employee_count||'--')+'</td><td>'+esc((c.countries_served||[]).join(', ')||'--')+'</td><td>'+(c.verified?'<span class="badge badge-green">Yes</span>':'<span class="badge badge-gray">No</span>')+'</td><td>'+formatDate(c.created_at)+'</td></tr>';
+      });
+      h += '</tbody></table></div>';
+      list.innerHTML = h;
+    } catch(e) {
+      document.getElementById('companyList').innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>';
+    }
+  }
+
+  function showNewCompanyForm() {
+    var html = '<h2 style="margin-bottom:16px">Register Company</h2><div id="compMsg"></div>';
+    html += '<form id="compForm" class="form-grid">';
+    html += '<div class="form-group"><label>Name</label><input name="name" required></div>';
+    html += '<div class="form-group"><label>Sector</label><select name="sector" required>'+sectorOptions()+'</select></div>';
+    html += '<div class="form-group full"><label>Description</label><textarea name="description" rows="2"></textarea></div>';
+    html += '<div class="form-group"><label>Employees</label><input name="employee_count" type="number"></div>';
+    html += '<div class="form-group"><label>Revenue Range</label><select name="annual_revenue_range"><option value="">Select</option><option value="<100K">&lt;100K</option><option value="100K-1M">100K-1M</option><option value="1M-10M">1M-10M</option><option value="10M+">10M+</option></select></div>';
+    html += '<div class="form-group"><label>Countries (comma-separated)</label><input name="countries_served" placeholder="US, PH, SG"></div>';
+    html += '<div class="form-group"><label>Website</label><input name="website"></div>';
+    html += '<div class="form-group"><label>Capabilities (comma-separated)</label><input name="capabilities" placeholder="logistics, distribution"></div>';
+    html += '<div class="form-group"><label>Certifications (comma-separated)</label><input name="certifications" placeholder="ISO 9001, HACCP"></div>';
+    html += '<div class="form-group full mt-12"><button type="submit" class="btn btn-primary">Register</button></div>';
+    html += '</form>';
+    openModal(html);
+
+    document.getElementById('compForm').addEventListener('submit', async function(ev) {
+      ev.preventDefault();
+      var fd = new FormData(this);
+      var body = {};
+      fd.forEach(function(v,k){ body[k] = v; });
+      body.countries_served = body.countries_served ? body.countries_served.split(',').map(function(c){return c.trim();}).filter(Boolean) : [];
+      body.capabilities = body.capabilities ? body.capabilities.split(',').map(function(c){return c.trim();}).filter(Boolean) : [];
+      body.certifications = body.certifications ? body.certifications.split(',').map(function(c){return c.trim();}).filter(Boolean) : [];
+      body.employee_count = body.employee_count ? parseInt(body.employee_count) : null;
+      var msg = document.getElementById('compMsg');
+      msg.innerHTML = '<div class="text-muted text-sm">Registering...</div>';
+      try {
+        var res = await apiFetch('/exchange/companies', { method:'POST', body:JSON.stringify(body) });
+        if (res.success) { closeModal(); loadCompanies(); } else { msg.innerHTML = '<div class="error-msg">'+(res.error||'Error')+'</div>'; }
+      } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
+    });
+  }
+
+  async function loadRFQs() {
+    var out = document.getElementById('exchangeContent');
+    out.innerHTML = '<div class="flex-between mb-16"><div></div><button class="btn btn-primary btn-sm" id="newRFQBtn">+ Create RFQ</button></div><div id="rfqList"><div class="loading">Loading...</div></div>';
+
+    document.getElementById('newRFQBtn').addEventListener('click', showNewRFQForm);
+
+    try {
+      var res = await apiFetch('/exchange/rfqs?limit=50');
+      if (!res.success) { document.getElementById('rfqList').innerHTML = '<div class="error-msg">Error</div>'; return; }
+      var rfqs = res.data.rfqs || [];
+      var list = document.getElementById('rfqList');
+      if (rfqs.length === 0) { list.innerHTML = '<p class="text-muted">No open RFQs.</p>'; return; }
+      var h = '<div class="result-cards">';
+      rfqs.forEach(function(r) {
+        h += '<div class="result-card" data-rfq-id="'+r.id+'">';
+        h += '<div class="flex-between"><div class="rc-name">'+esc(r.title)+'</div>'+statusBadge(r.status)+'</div>';
+        h += '<div class="rc-company">'+esc(r.requester_name||'--')+' | '+esc(r.company_name||'No company')+'</div>';
+        h += '<div class="rc-meta mt-12"><span>'+esc(r.sector||'--')+'</span>';
+        if (r.budget_range) h += '<span>'+esc(r.budget_range)+'</span>';
+        if (r.deadline) h += '<span>Deadline: '+formatDate(r.deadline)+'</span>';
+        h += '</div></div>';
+      });
+      h += '</div>';
+      list.innerHTML = h;
+
+      list.querySelectorAll('.result-card').forEach(function(card) {
+        card.addEventListener('click', function(){ showRFQDetail(this.dataset.rfqId); });
+      });
+    } catch(e) {
+      document.getElementById('rfqList').innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>';
+    }
+  }
+
+  function showNewRFQForm() {
+    var html = '<h2 style="margin-bottom:16px">Create RFQ</h2><div id="rfqMsg"></div>';
+    html += '<form id="rfqForm" class="form-grid">';
+    html += '<div class="form-group full"><label>Title</label><input name="title" required></div>';
+    html += '<div class="form-group full"><label>Description</label><textarea name="description" rows="3" required></textarea></div>';
+    html += '<div class="form-group"><label>Sector</label><select name="sector" required>'+sectorOptions()+'</select></div>';
+    html += '<div class="form-group"><label>Budget Range</label><input name="budget_range" placeholder="$10K - $50K"></div>';
+    html += '<div class="form-group"><label>Deadline</label><input name="deadline" type="date"></div>';
+    html += '<div class="form-group"><label>Target Countries (comma)</label><input name="countries_target" placeholder="US, PH"></div>';
+    html += '<div class="form-group full mt-12"><button type="submit" class="btn btn-primary">Publish RFQ</button></div>';
+    html += '</form>';
+    openModal(html);
+
+    document.getElementById('rfqForm').addEventListener('submit', async function(ev) {
+      ev.preventDefault();
+      var fd = new FormData(this);
+      var body = {};
+      fd.forEach(function(v,k){ body[k] = v; });
+      body.countries_target = body.countries_target ? body.countries_target.split(',').map(function(c){return c.trim();}).filter(Boolean) : [];
+      body.deadline = body.deadline || null;
+      var msg = document.getElementById('rfqMsg');
+      msg.innerHTML = '<div class="text-muted text-sm">Publishing...</div>';
+      try {
+        var res = await apiFetch('/exchange/rfqs', { method:'POST', body:JSON.stringify(body) });
+        if (res.success) { closeModal(); loadRFQs(); } else { msg.innerHTML = '<div class="error-msg">'+(res.error||'Error')+'</div>'; }
+      } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
+    });
+  }
+
+  async function showRFQDetail(id) {
+    openModal('<div class="loading">Loading RFQ...</div>');
+    try {
+      var res = await apiFetch('/exchange/rfqs/'+id);
+      if (!res.success) { openModal('<div class="error-msg">Error loading RFQ</div>'); return; }
+      var r = res.data;
+      var html = '<h2 style="margin-bottom:8px">'+esc(r.title)+'</h2>';
+      html += '<div style="margin-bottom:12px">'+statusBadge(r.status)+' <span class="text-muted text-sm">by '+esc(r.requester_name||'--')+'</span></div>';
+      html += '<p style="font-size:13px;color:var(--gray-700);margin-bottom:12px">'+esc(r.description||'')+'</p>';
+      html += '<div class="rc-meta mb-16"><span>Sector: '+esc(r.sector||'--')+'</span>';
+      if (r.budget_range) html += '<span>Budget: '+esc(r.budget_range)+'</span>';
+      if (r.deadline) html += '<span>Deadline: '+formatDate(r.deadline)+'</span>';
+      html += '</div>';
+
+      // Responses
+      var responses = r.responses || [];
+      html += '<h3>Responses ('+responses.length+')</h3>';
+      if (responses.length > 0) {
+        responses.forEach(function(rr) {
+          html += '<div style="border:1px solid var(--gray-200);border-radius:6px;padding:12px;margin-bottom:8px">';
+          html += '<div class="flex-between"><strong style="font-size:13px">'+esc(rr.responder_name||'--')+'</strong>'+statusBadge(rr.status)+'</div>';
+          if (rr.responder_company) html += '<div class="text-sm text-muted">'+esc(rr.responder_company)+'</div>';
+          html += '<p style="font-size:12px;margin-top:6px">'+esc(rr.proposal_text||'')+'</p>';
+          if (rr.price_quote) html += '<div class="text-sm" style="margin-top:4px"><strong>Quote:</strong> $'+Number(rr.price_quote).toLocaleString()+' '+esc(rr.currency||'USD')+'</div>';
+          html += '</div>';
+        });
+      } else {
+        html += '<p class="text-muted text-sm mb-12">No responses yet.</p>';
+      }
+
+      // Respond form
+      if (r.status === 'open') {
+        html += '<h3 style="margin-top:16px">Submit Proposal</h3><div id="rfqResMsg"></div>';
+        html += '<form id="rfqResForm" class="form-grid">';
+        html += '<div class="form-group full"><label>Proposal</label><textarea name="proposal_text" rows="3" required></textarea></div>';
+        html += '<div class="form-group"><label>Quote (USD)</label><input name="price_quote" type="number" step="0.01"></div>';
+        html += '<div class="form-group"><label>Delivery Timeline</label><input name="delivery_timeline" placeholder="30 days"></div>';
+        html += '<div class="form-group full mt-12"><button type="submit" class="btn btn-primary btn-sm">Submit Proposal</button></div>';
+        html += '</form>';
+      }
+
+      openModal(html);
+
+      var resForm = document.getElementById('rfqResForm');
+      if (resForm) {
+        resForm.addEventListener('submit', async function(ev) {
+          ev.preventDefault();
+          var fd = new FormData(this);
+          var body = {};
+          fd.forEach(function(v,k){ body[k] = v; });
+          body.price_quote = body.price_quote ? parseFloat(body.price_quote) : null;
+          var msg = document.getElementById('rfqResMsg');
+          msg.innerHTML = '<div class="text-muted text-sm">Submitting...</div>';
+          try {
+            var rr = await apiFetch('/exchange/rfqs/'+id+'/respond', { method:'POST', body:JSON.stringify(body) });
+            if (rr.success) { msg.innerHTML = '<div class="success-msg">Proposal submitted successfully.</div>'; } else { msg.innerHTML = '<div class="error-msg">'+(rr.error||'Error')+'</div>'; }
+          } catch(e2) { msg.innerHTML = '<div class="error-msg">'+esc(e2.message)+'</div>'; }
+        });
+      }
+    } catch(e) {
+      openModal('<div class="error-msg">Error: '+esc(e.message)+'</div>');
+    }
+  }
+
+  async function loadOpportunities() {
+    var out = document.getElementById('exchangeContent');
+    out.innerHTML = '<div class="flex-between mb-16"><div></div><button class="btn btn-primary btn-sm" id="newOppBtn">+ Post Opportunity</button></div><div id="oppList"><div class="loading">Loading...</div></div>';
+
+    document.getElementById('newOppBtn').addEventListener('click', showNewOpportunityForm);
+
+    try {
+      var res = await apiFetch('/exchange/opportunities?limit=50');
+      if (!res.success) { document.getElementById('oppList').innerHTML = '<div class="error-msg">Error</div>'; return; }
+      var opps = res.data.opportunities || [];
+      var list = document.getElementById('oppList');
+      if (opps.length === 0) { list.innerHTML = '<p class="text-muted">No opportunities posted yet.</p>'; return; }
+      var h = '<div class="result-cards">';
+      opps.forEach(function(o) {
+        h += '<div class="result-card">';
+        h += '<div class="flex-between"><div class="rc-name">'+esc(o.title)+'</div>'+statusBadge(o.status||'open')+'</div>';
+        h += '<div class="rc-company">'+esc(o.poster_name||'--')+' | '+esc(o.sector||'--')+'</div>';
+        h += '<div class="rc-meta mt-12">';
+        if (o.location) h += '<span>'+esc(o.location)+'</span>';
+        if (o.type) h += '<span>'+esc(o.type)+'</span>';
+        h += '</div></div>';
+      });
+      h += '</div>';
+      list.innerHTML = h;
+    } catch(e) {
+      document.getElementById('oppList').innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>';
+    }
+  }
+
+  function showNewOpportunityForm() {
+    var html = '<h2 style="margin-bottom:16px">Post Opportunity</h2><div id="oppMsg"></div>';
+    html += '<form id="oppForm" class="form-grid">';
+    html += '<div class="form-group full"><label>Title</label><input name="title" required></div>';
+    html += '<div class="form-group full"><label>Description</label><textarea name="description" rows="3" required></textarea></div>';
+    html += '<div class="form-group"><label>Sector</label><select name="sector" required>'+sectorOptions()+'</select></div>';
+    html += '<div class="form-group"><label>Type</label><select name="type"><option value="partnership">Partnership</option><option value="investment">Investment</option><option value="employment">Employment</option><option value="joint_venture">Joint Venture</option></select></div>';
+    html += '<div class="form-group"><label>Location</label><input name="location" placeholder="Orlando, FL"></div>';
+    html += '<div class="form-group full mt-12"><button type="submit" class="btn btn-primary">Publish</button></div>';
+    html += '</form>';
+    openModal(html);
+
+    document.getElementById('oppForm').addEventListener('submit', async function(ev) {
+      ev.preventDefault();
+      var fd = new FormData(this);
+      var body = {};
+      fd.forEach(function(v,k){ body[k] = v; });
+      var msg = document.getElementById('oppMsg');
+      msg.innerHTML = '<div class="text-muted text-sm">Publishing...</div>';
+      try {
+        var res = await apiFetch('/exchange/opportunities', { method:'POST', body:JSON.stringify(body) });
+        if (res.success) { closeModal(); loadOpportunities(); } else { msg.innerHTML = '<div class="error-msg">'+(res.error||'Error')+'</div>'; }
+      } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
+    });
+  }
+
+  // ================================================================
+  // PAGE: Metrics
+  // ================================================================
+  async function renderMetrics() {
+    var el = document.getElementById('pageContent');
+    el.innerHTML = '<div id="metricsHCI" class="panel"><h2>HCI Score</h2><div class="loading">Loading...</div></div>' +
+      '<div id="metricsGini" class="panel"><h2>Gini Coefficient by Region</h2><div class="loading">Loading...</div></div>' +
+      '<div id="metricsNetwork" class="panel"><h2>Network Value</h2><div class="loading">Loading...</div></div>' +
+      '<div id="metricsTrust" class="panel"><h2>My Trust Score</h2><div class="loading">Loading...</div></div>';
+
+    loadHCI();
+    loadGini();
+    loadNetworkValue();
+    loadTrustScore(currentMember.id, 'metricsTrust');
+  }
+
+  async function loadHCI() {
+    var container = document.getElementById('metricsHCI');
+    try {
+      var res = await apiFetch('/metrics/hci');
+      if (!res.success) { container.innerHTML = '<h2>HCI Score</h2><div class="error-msg">Error loading</div>'; return; }
+      var d = res.data;
+      var hciPct = Math.round(d.hci * 100);
+      var targetPct = Math.round(d.target * 100);
+      var angle = hciPct * 3.6;
+      var bgGrad = 'conic-gradient(var(--primary) 0deg, var(--primary) '+angle+'deg, var(--gray-200) '+angle+'deg)';
+
+      var html = '<h2>PACC-CFL Composite Index (HCI)</h2>';
+      html += '<div class="gauge-wrap"><div class="gauge" style="background:'+bgGrad+'"><div class="gauge-inner"><div class="gauge-value">'+hciPct+'%</div><div class="gauge-label">HCI Score</div></div></div></div>';
+      html += '<p class="text-muted text-sm" style="text-align:center">Target: '+targetPct+'%</p>';
+
+      // Components
+      html += '<div style="margin-top:16px"><h3>Components</h3><div class="trust-components">';
+      var comps = d.components;
+      var items = [
+        {label:'Equity (1-Gini)', val:comps.equity.value, w:comps.equity.weight},
+        {label:'Trust', val:comps.trust.value, w:comps.trust.weight},
+        {label:'Network Value', val:comps.network.value, w:comps.network.weight},
+        {label:'Projects', val:comps.projects.value, w:comps.projects.weight},
+        {label:'Activation', val:comps.activation.value, w:comps.activation.weight}
+      ];
+      items.forEach(function(it) {
+        var p = Math.round(it.val * 100);
+        html += '<div class="trust-row"><div class="tr-label">'+it.label+' ('+Math.round(it.w*100)+'%)</div><div class="tr-bar"><div class="tr-fill" style="width:'+p+'%"></div></div><div class="tr-val">'+p+'%</div></div>';
+      });
+      html += '</div></div>';
+      container.innerHTML = html;
+    } catch(e) {
+      container.innerHTML = '<h2>HCI Score</h2><div class="error-msg">Error: '+esc(e.message)+'</div>';
+    }
+  }
+
+  async function loadGini() {
+    var container = document.getElementById('metricsGini');
+    try {
+      var res = await apiFetch('/metrics/gini?dimension=regional&metric=opportunities');
+      if (!res.success) { container.innerHTML = '<h2>Gini</h2><div class="error-msg">Error</div>'; return; }
+      var d = res.data;
+      var html = '<h2>Gini Coefficient by Region</h2>';
+      html += '<div style="display:flex;gap:20px;align-items:center;margin-bottom:16px">';
+      html += '<div><span style="font-size:28px;font-weight:800;color:'+(d.gini>d.threshold?'var(--red)':'var(--primary)')+'">'+d.gini+'</span><div class="text-sm text-muted">Gini (threshold: '+d.threshold+')</div></div>';
+      html += '<div class="badge '+(d.correction_active?'badge-red':'badge-green')+'">'+(d.correction_active?'Correction active':'Balanced')+'</div>';
+      html += '</div>';
+
+      if (d.details && d.details.length) {
+        var maxVal = Math.max.apply(null, d.details.map(function(r){return r.value||0;})) || 1;
+        html += '<div class="bar-chart">';
+        d.details.forEach(function(r) {
+          var w = Math.max((r.value/maxVal)*100, 2);
+          var color = r.correction_factor > 1.05 ? 'var(--accent)' : 'var(--primary)';
+          html += '<div class="bar-row"><div class="bar-label">'+esc(r.name)+'</div><div class="bar-track"><div class="bar-fill" style="width:'+w+'%;background:'+color+'"><span>'+r.value+'</span></div></div><div style="width:60px;text-align:right;font-size:11px;color:var(--gray-500)">x'+r.correction_factor+'</div></div>';
+        });
+        html += '</div>';
+      }
+      container.innerHTML = html;
+    } catch(e) {
+      container.innerHTML = '<h2>Gini</h2><div class="error-msg">Error: '+esc(e.message)+'</div>';
+    }
+  }
+
+  async function loadNetworkValue() {
+    var container = document.getElementById('metricsNetwork');
+    try {
+      var res = await apiFetch('/metrics/network-value');
+      if (!res.success) { container.innerHTML = '<h2>Network Value</h2><div class="error-msg">Error</div>'; return; }
+      var d = res.data;
+      var html = '<h2>Network Value (Metcalfe)</h2>';
+      html += '<div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:12px">';
+      html += '<div class="stat-card" style="flex:1;min-width:150px"><div class="label">Network Value</div><div class="value primary">'+Number(d.network_value).toLocaleString()+'</div></div>';
+      html += '<div class="stat-card" style="flex:1;min-width:150px"><div class="label">Active Members</div><div class="value">'+d.active_members+'</div></div>';
+      html += '<div class="stat-card" style="flex:1;min-width:150px"><div class="label">Average Trust</div><div class="value accent">'+(d.avg_trust*100).toFixed(1)+'%</div></div>';
+      html += '</div>';
+      html += '<p class="text-sm text-muted mt-12">Formula: V = k * n_active^2 * avg_trust (k='+d.k+')</p>';
+      container.innerHTML = html;
+    } catch(e) {
+      container.innerHTML = '<h2>Network Value</h2><div class="error-msg">Error: '+esc(e.message)+'</div>';
+    }
+  }
+
+  // ================================================================
+  // PAGE: Payments
+  // ================================================================
+  async function renderPayments() {
+    var el = document.getElementById('pageContent');
+    var html = '<div class="panel" id="currentPlan"><h2>My Current Plan</h2>';
+    html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px"><span class="badge '+badgeClass(currentMember.membership_type)+'" style="font-size:14px;padding:6px 16px">'+esc(currentMember.membership_type||'individual')+'</span></div>';
+    html += '</div>';
+
+    html += '<div class="panel"><h2>Available Plans</h2><div id="pricingGrid"><div class="loading">Loading...</div></div></div>';
+    html += '<div class="panel"><h2>Transaction History</h2><div id="txnHistory"><div class="loading">Loading...</div></div></div>';
+    el.innerHTML = html;
+
+    loadPricing();
+    loadTxnHistory();
+  }
+
+  async function loadPricing() {
+    var container = document.getElementById('pricingGrid');
+    try {
+      var res = await apiFetch('/payments/pricing');
+      if (!res.success) { container.innerHTML = '<div class="error-msg">Error</div>'; return; }
+      var data = res.data;
+      var tiers = ['individual','business','corporate','founding'];
+      var descs = {
+        individual:'Individual Membership -- Basic network access, directory, and matching.',
+        business:'Business Membership -- Advanced features, RFQ priority, company profile.',
+        corporate:'Corporate Membership -- Full access, escrow, Monte Carlo evaluation.',
+        founding:'Founding Membership -- Founding member, governance voting, special rates.'
+      };
+      var h = '<div class="pricing-grid">';
+      tiers.forEach(function(t) {
+        var p = data[t];
+        if (!p) return;
+        var isCurrent = currentMember.membership_type === t;
+        h += '<div class="pricing-card'+(isCurrent?' current':'')+'">';
+        h += '<div class="tier-name">'+t.charAt(0).toUpperCase()+t.slice(1)+'</div>';
+        h += '<div class="tier-desc">'+descs[t]+'</div>';
+        h += '<div class="tier-price">$'+p.monthly+'</div>';
+        h += '<div class="tier-period">USD / month (annual: $'+p.annual+')</div>';
+        if (isCurrent) {
+          h += '<span class="badge badge-blue">Current Plan</span>';
+        } else {
+          h += '<button class="btn btn-outline btn-sm change-plan-btn" data-type="'+t+'">Switch to '+t.charAt(0).toUpperCase()+t.slice(1)+'</button>';
+        }
+        h += '</div>';
+      });
+      h += '</div>';
+      container.innerHTML = h;
+
+      container.querySelectorAll('.change-plan-btn').forEach(function(btn) {
+        btn.addEventListener('click', async function() {
+          var type = this.dataset.type;
+          if (!confirm('Switch your membership to '+type+'?')) return;
+          try {
+            var res = await apiFetch('/payments/membership', { method:'POST', body:JSON.stringify({ membership_type:type, billing_period:'monthly' }) });
+            if (res.success) {
+              currentMember.membership_type = type;
+              document.getElementById('sidebarType').textContent = type;
+              navigate('payments');
+            } else {
+              alert(res.error||'Error switching plan');
+            }
+          } catch(e) { alert('Error: '+e.message); }
+        });
+      });
+    } catch(e) {
+      container.innerHTML = '<div class="error-msg">Error: '+esc(e.message)+'</div>';
+    }
+  }
+
+  async function loadTxnHistory() {
+    var container = document.getElementById('txnHistory');
+    try {
+      var res = await apiFetch('/payments/history?limit=20');
+      if (!res.success) { container.innerHTML = '<div class="error-msg">Error</div>'; return; }
+      var txns = res.data || [];
+      if (txns.length === 0) { container.innerHTML = '<p class="text-muted">No transactions recorded.</p>'; return; }
+      var h = '<div class="table-wrap"><table><thead><tr><th>Date</th><th>Type</th><th>Description</th><th>Amount</th><th>Status</th></tr></thead><tbody>';
+      txns.forEach(function(t) {
+        var statusCls = t.status === 'completed' ? 'badge-green' : (t.status === 'held' ? 'badge-gold' : 'badge-gray');
+        h += '<tr><td>'+formatDate(t.created_at)+'</td><td>'+esc(t.type)+'</td><td>'+esc(t.description||t.project_title||'--')+'</td><td>$'+Number(t.amount||0).toLocaleString()+' '+esc(t.currency||'USD')+'</td><td><span class="badge '+statusCls+'">'+esc(t.status)+'</span></td></tr>';
+      });
+      h += '</tbody></table></div>';
+      container.innerHTML = h;
+    } catch(e) {
+      container.innerHTML = '<div class="error-msg">Error: '+esc(e.message)+'</div>';
+    }
+  }
+
+  // ================================================================
+  // PAGE: Admin
+  // ================================================================
+  async function renderAdmin() {
+    var c = document.getElementById('pageContent');
+    var al = currentMember.access_level;
+    if (!['superadmin','admin_global','admin_regional'].includes(al)) {
+      c.innerHTML = '<div class="error-msg">Access denied. Administrator level required.</div>';
+      return;
+    }
+
+    var isSuperadmin = al === 'superadmin';
+    var isGlobalAdmin = ['superadmin','admin_global'].includes(al);
+
+    c.innerHTML = '<div class="admin-tabs" style="display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;"></div><div id="adminContent"></div>';
+    var tabs = [
+      { id:'members', label:'Member Management', access:true },
+      { id:'governance', label:'Board of Directors', access:isGlobalAdmin },
+      { id:'regions', label:'Regional Delegations', access:true },
+      { id:'system', label:'System', access:isSuperadmin }
+    ];
+    var tabBar = c.querySelector('.admin-tabs');
+    tabs.forEach(function(t) {
+      if (!t.access) return;
+      var btn = document.createElement('button');
+      btn.className = 'btn' + (t.id === 'members' ? ' btn-primary' : ' btn-outline');
+      btn.textContent = t.label;
+      btn.style.cssText = 'padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:2px solid var(--primary);' + (t.id === 'members' ? 'background:var(--primary);color:white;' : 'background:transparent;color:var(--primary);');
+      btn.onclick = function() {
+        tabBar.querySelectorAll('button').forEach(function(b) { b.style.background = 'transparent'; b.style.color = 'var(--primary)'; });
+        btn.style.background = 'var(--primary)'; btn.style.color = 'white';
+        loadAdminTab(t.id);
+      };
+      tabBar.appendChild(btn);
+    });
+    loadAdminTab('members');
+  }
+
+  async function loadAdminTab(tab) {
+    var ac = document.getElementById('adminContent');
+    ac.innerHTML = '<div class="loading">Loading...</div>';
+
+    if (tab === 'members') {
+      try {
+        var res = await apiFetch('/admin/members?limit=100');
+        if (!res.success) { ac.innerHTML = '<div class="error-msg">' + esc(res.error) + '</div>'; return; }
+        var members = res.data.members || [];
+        var h = '<div style="margin-bottom:16px;"><input type="text" id="adminSearch" placeholder="Search member..." style="padding:10px 14px;border:1px solid var(--gray-300);border-radius:8px;width:300px;font-size:14px;"></div>';
+        h += '<div class="table-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Country</th><th>Region</th><th>Sector</th><th>Type</th><th>Role</th><th>Access</th><th>Trust</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+        members.forEach(function(m) {
+          var roleBadge = m.governance_role !== 'member' ? '<span class="badge badge-gold">' + esc(m.governance_role.replace(/_/g,' ')) + '</span>' : '<span class="badge badge-gray">member</span>';
+          var accessBadge = m.access_level === 'superadmin' ? '<span class="badge badge-red">superadmin</span>' : m.access_level === 'admin_global' ? '<span class="badge badge-gold">global</span>' : m.access_level === 'admin_regional' ? '<span class="badge badge-green">regional</span>' : '<span class="badge badge-gray">member</span>';
+          var sBadge = m.status === 'active' ? '<span class="badge badge-green">active</span>' : '<span class="badge badge-red">' + esc(m.status) + '</span>';
+          h += '<tr data-name="' + esc(m.first_name + ' ' + m.last_name + ' ' + m.email).toLowerCase() + '">';
+          h += '<td>' + m.id + '</td><td><strong>' + esc(m.first_name) + ' ' + esc(m.last_name) + '</strong></td><td>' + esc(m.email) + '</td>';
+          h += '<td>' + esc(m.country||'--') + '</td><td>' + esc(m.region_name||'--') + '</td><td>' + esc(m.sector||'--') + '</td>';
+          h += '<td>' + esc(m.membership_type) + '</td><td>' + roleBadge + '</td><td>' + accessBadge + '</td>';
+          h += '<td>' + Number(m.trust_score||0).toFixed(2) + '</td><td>' + sBadge + '</td>';
+          h += '<td style="white-space:nowrap;">';
+          h += '<button class="btn-sm" onclick="adminVerify(' + m.id + ')" title="Verify" style="padding:4px 8px;font-size:11px;background:var(--primary);color:white;border:none;border-radius:4px;cursor:pointer;margin:2px;">Verify</button>';
+          if (currentMember.access_level === 'superadmin' || currentMember.access_level === 'admin_global') {
+            h += '<button class="btn-sm" onclick="adminRole(' + m.id + ',\'' + esc(m.first_name) + ' ' + esc(m.last_name) + '\')" title="Assign Role" style="padding:4px 8px;font-size:11px;background:var(--accent);color:var(--navy);border:none;border-radius:4px;cursor:pointer;margin:2px;">Role</button>';
+          }
+          h += '<button class="btn-sm" onclick="adminToggleStatus(' + m.id + ',\'' + m.status + '\')" title="Toggle Status" style="padding:4px 8px;font-size:11px;background:' + (m.status==='active'?'var(--red)':'var(--green)') + ';color:white;border:none;border-radius:4px;cursor:pointer;margin:2px;">' + (m.status==='active'?'Suspend':'Activate') + '</button>';
+          h += '</td></tr>';
+        });
+        h += '</tbody></table></div>';
+        h += '<p style="margin-top:12px;color:var(--gray-500);font-size:13px;">Total: ' + members.length + ' members</p>';
+        ac.innerHTML = h;
+        document.getElementById('adminSearch').addEventListener('input', function() {
+          var q = this.value.toLowerCase();
+          ac.querySelectorAll('tbody tr').forEach(function(row) {
+            row.style.display = (row.dataset.name || '').includes(q) ? '' : 'none';
+          });
+        });
+      } catch(e) { ac.innerHTML = '<div class="error-msg">Error: ' + esc(e.message) + '</div>'; }
+
+    } else if (tab === 'governance') {
+      try {
+        var res = await apiFetch('/admin/roles');
+        if (!res.success) { ac.innerHTML = '<div class="error-msg">' + esc(res.error) + '</div>'; return; }
+        var board = res.data.governance_board || [];
+        var h = '<h3 style="margin-bottom:16px;font-size:18px;">Current Board of Directors</h3>';
+        if (board.length === 0) {
+          h += '<p class="text-muted">No governance roles assigned yet.</p>';
+        } else {
+          h += '<div class="table-wrap"><table><thead><tr><th>Member</th><th>Role</th><th>Access</th><th>Region</th><th>Membership</th><th>Action</th></tr></thead><tbody>';
+          board.forEach(function(m) {
+            h += '<tr><td><strong>' + esc(m.first_name) + ' ' + esc(m.last_name) + '</strong><br><span style="font-size:12px;color:var(--gray-500);">' + esc(m.email) + '</span></td>';
+            h += '<td><span class="badge badge-gold">' + esc(m.governance_role.replace(/_/g,' ')) + '</span></td>';
+            h += '<td>' + esc(m.access_level) + '</td><td>' + esc(m.region_name||'Global') + '</td><td>' + esc(m.membership_type) + '</td>';
+            h += '<td><button onclick="adminRemoveRole(' + m.id + ')" style="padding:4px 10px;font-size:12px;background:var(--red);color:white;border:none;border-radius:4px;cursor:pointer;">Remove</button></td></tr>';
+          });
+          h += '</tbody></table></div>';
+        }
+        h += '<div style="margin-top:24px;padding:20px;background:var(--gray-50);border-radius:8px;">';
+        h += '<h4 style="margin-bottom:12px;">Available roles:</h4>';
+        h += '<p style="font-size:13px;color:var(--gray-700);line-height:1.8;">';
+        (res.data.available_roles || []).forEach(function(r) {
+          h += '<span class="badge badge-gray" style="margin:2px;">' + r.replace(/_/g,' ') + '</span> ';
+        });
+        h += '</p></div>';
+        ac.innerHTML = h;
+      } catch(e) { ac.innerHTML = '<div class="error-msg">Error: ' + esc(e.message) + '</div>'; }
+
+    } else if (tab === 'regions') {
+      try {
+        var res = await apiFetch('/admin/regions');
+        if (!res.success) { ac.innerHTML = '<div class="error-msg">' + esc(res.error) + '</div>'; return; }
+        var regions = res.data || [];
+        var h = '<div class="stat-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;">';
+        regions.forEach(function(r) {
+          h += '<div class="stat-card" style="text-align:left;">';
+          h += '<h4 style="color:var(--primary);margin-bottom:12px;">' + esc(r.name) + '</h4>';
+          h += '<p style="font-size:13px;color:var(--gray-500);margin-bottom:8px;">' + esc(r.description||'') + '</p>';
+          h += '<div style="font-size:14px;line-height:2;">';
+          h += '<strong>Members:</strong> ' + (r.member_count||0) + '<br>';
+          h += '<strong>President:</strong> ' + esc(r.president_name||'-- Vacant --') + '<br>';
+          h += '<strong>Secretary:</strong> ' + esc(r.secretary_name||'-- Vacant --') + '<br>';
+          h += '<strong>Treasurer:</strong> ' + esc(r.treasurer_name||'-- Vacant --') + '<br>';
+          h += '<strong>Gini:</strong> ' + Number(r.gini_score||0).toFixed(4) + '<br>';
+          h += '<strong>Opportunities:</strong> ' + (r.opportunity_count||0);
+          h += '</div></div>';
+        });
+        h += '</div>';
+        ac.innerHTML = h;
+      } catch(e) { ac.innerHTML = '<div class="error-msg">Error: ' + esc(e.message) + '</div>'; }
+
+    } else if (tab === 'system') {
+      try {
+        var res = await apiFetch('/admin/system/stats');
+        if (!res.success) { ac.innerHTML = '<div class="error-msg">' + esc(res.error) + '</div>'; return; }
+        var d = res.data.overview;
+        var h = '<h3 style="margin-bottom:16px;">System Statistics</h3>';
+        h += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;">';
+        var items = [
+          ['Total Members', d.total_members], ['Active Members', d.active_members],
+          ['Governance Roles', d.governance_roles_assigned], ['Projects', d.total_projects],
+          ['Companies', d.total_companies], ['Open RFQs', d.open_rfqs],
+          ['Transactions', d.total_transactions], ['Total Revenue', '$'+Number(d.total_revenue||0).toLocaleString()],
+          ['Matchings', d.total_matches], ['Trust References', d.total_references],
+          ['Opportunities', d.active_opportunities], ['Events', d.total_events]
+        ];
+        items.forEach(function(i) {
+          h += '<div class="stat-card"><div class="value" style="font-size:20px;">' + i[1] + '</div><div class="label">' + i[0] + '</div></div>';
+        });
+        h += '</div>';
+        h += '<h4 style="margin-top:24px;margin-bottom:12px;">Members by Access Level</h4>';
+        h += '<div class="table-wrap"><table><thead><tr><th>Level</th><th>Count</th></tr></thead><tbody>';
+        (res.data.members_by_access||[]).forEach(function(r) {
+          h += '<tr><td>' + esc(r.access_level) + '</td><td>' + r.count + '</td></tr>';
+        });
+        h += '</tbody></table></div>';
+        h += '<h4 style="margin-top:24px;margin-bottom:12px;">Database Tables</h4>';
+        h += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+        (res.data.database_tables||[]).forEach(function(t) {
+          h += '<span class="badge badge-gray" style="font-family:monospace;font-size:12px;">' + t + '</span>';
+        });
+        h += '</div>';
+        ac.innerHTML = h;
+      } catch(e) { ac.innerHTML = '<div class="error-msg">Error: ' + esc(e.message) + '</div>'; }
+    }
+  }
+
+  // Admin action functions (global scope)
+  window.adminVerify = async function(id) {
+    if (!confirm('Verify member #' + id + ' with full verification level?')) return;
+    var res = await apiFetch('/admin/members/' + id + '/verify', 'PUT', { verification_level: 'id_complete' });
+    alert(res.success ? 'Member verified' : 'Error: ' + (res.error||''));
+    if (res.success) loadAdminTab('members');
+  };
+  window.adminToggleStatus = async function(id, current) {
+    var newStatus = current === 'active' ? 'suspended' : 'active';
+    if (!confirm('Change status to ' + newStatus + '?')) return;
+    var res = await apiFetch('/admin/members/' + id + '/status', 'PUT', { status: newStatus });
+    alert(res.success ? 'Status updated' : 'Error: ' + (res.error||''));
+    if (res.success) loadAdminTab('members');
+  };
+  window.adminRole = async function(id, name) {
+    var role = prompt('Assign governance role to ' + name + ':\n\nOptions: president_general, vp_founding, secretary_general, treasurer_general, board_member, president_regional, secretary_regional, treasurer_regional, regional_director, member');
+    if (!role) return;
+    var res = await apiFetch('/admin/roles/' + id, 'PUT', { governance_role: role });
+    alert(res.success ? 'Role assigned: ' + role : 'Error: ' + (res.error||''));
+    if (res.success) loadAdminTab('members');
+  };
+  window.adminRemoveRole = async function(id) {
+    if (!confirm('Remove governance role?')) return;
+    var res = await apiFetch('/admin/roles/' + id, 'DELETE');
+    alert(res.success ? 'Role removed' : 'Error: ' + (res.error||''));
+    if (res.success) loadAdminTab('governance');
+  };
+
+  // -- Boot --
+  init();
+
+})();
+</script>
+</body>
+</html>
