@@ -473,7 +473,7 @@ router.post('/regenerate/:projectId', async (req, res) => {
 });
 
 // POST /api/v1/demo/instant — Clone a completed project's analysis results (< 3 seconds)
-// This is the "Instant Demo" for live presentations — no data generation, just clones results.
+// Instant Demo for live presentations — no data generation, just clones results.
 router.post('/instant', async (req, res) => {
   try {
     const { company_name } = req.body;
