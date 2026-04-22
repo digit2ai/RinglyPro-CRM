@@ -171,7 +171,7 @@ async function gatherExternalData(hospitalName, state, progress) {
 
     for (const query of searchQueries) {
       try {
-        // Try Brave Search API if available
+        // Try Brave Search API first if available
         if (process.env.BRAVE_SEARCH_API_KEY) {
           const resp = await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=3`, {
             headers: { 'X-Subscription-Token': process.env.BRAVE_SEARCH_API_KEY, 'Accept': 'application/json' }
@@ -179,8 +179,25 @@ async function gatherExternalData(hospitalName, state, progress) {
           if (resp.ok) {
             const data = await resp.json();
             const snippets = (data.web?.results || []).map(r => r.title + ': ' + r.description).join('\n');
-            if (snippets) searchResults.push({ query, snippets });
+            if (snippets) { searchResults.push({ query, snippets }); continue; }
           }
+        }
+
+        // Fallback: DuckDuckGo HTML search (no API key needed)
+        const ddgResp = await fetch(`https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`, {
+          headers: { 'User-Agent': 'SurgicalMind AI Research Agent/1.0' }
+        });
+        if (ddgResp.ok) {
+          const html = await ddgResp.text();
+          // Extract result snippets from DDG HTML response
+          const snippetMatches = html.match(/class="result__snippet"[^>]*>(.*?)<\//g) || [];
+          const titleMatches = html.match(/class="result__a"[^>]*>(.*?)<\//g) || [];
+          const snippets = snippetMatches.slice(0, 5).map((s, i) => {
+            const title = (titleMatches[i] || '').replace(/<[^>]+>/g, '').replace(/class="[^"]*"/g, '').trim();
+            const snippet = s.replace(/<[^>]+>/g, '').replace(/class="[^"]*"/g, '').trim();
+            return (title ? title + ': ' : '') + snippet;
+          }).filter(s => s.length > 10).join('\n');
+          if (snippets) searchResults.push({ query, snippets, source: 'duckduckgo' });
         }
       } catch (e) { /* search failed, continue */ }
     }
@@ -189,7 +206,7 @@ async function gatherExternalData(hospitalName, state, progress) {
       externalData.web_search_results = searchResults;
       progress('Pass 0: Web search found ' + searchResults.length + ' result sets');
     } else {
-      progress('Pass 0: Web search -- no results (Brave API key not configured or no matches)');
+      progress('Pass 0: Web search -- no results found');
     }
   } catch (e) {
     progress('Pass 0: Web search skipped');
