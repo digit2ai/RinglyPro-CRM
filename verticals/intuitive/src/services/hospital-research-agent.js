@@ -737,44 +737,98 @@ async function runFullPipeline(hospitalName, models, progressCallback) {
     notes: 'Auto-generated (4-pass validated) on ' + new Date().toISOString().split('T')[0]
   });
 
-  // Auto-populate surgeon commitments
-  progress('Generating surgeon commitments...');
+  // Auto-populate surgeon commitments with REAL surgeons from AI research
+  progress('Researching real surgeons at ' + projectData.hospital_name + '...');
   try {
-    const topProcs = (analysisResults.procedure_pareto?.procedures || []).slice(0, 12);
-    const specNames = { urology: 'Urology', gynecology: 'Gynecology', general: 'General Surgery', thoracic: 'Thoracic', colorectal: 'Colorectal', head_neck: 'ENT/Head & Neck', cardiac: 'Cardiac' };
-    const surgeonNames = ['Dr. A. Martinez', 'Dr. S. Patel', 'Dr. R. Johnson', 'Dr. L. Chen', 'Dr. M. Williams', 'Dr. K. Thompson', 'Dr. J. Davis', 'Dr. N. Rodriguez'];
-    const specProcs = {};
-    topProcs.forEach(p => { const s = p.specialty || 'general'; if (!specProcs[s]) specProcs[s] = []; specProcs[s].push(p); });
-    const specKeys = Object.keys(specProcs);
-    const numSurgeons = Math.min(projectData.credentialed_robotic_surgeons || 4, surgeonNames.length, specKeys.length + 2);
+    // Ask Opus to find real surgeons at this hospital
+    const surgeonResearchPrompt = `Research the robotic surgery program at "${projectData.hospital_name}" (${projectData.state}).
 
-    for (let i = 0; i < numSurgeons; i++) {
-      const spec = specKeys[i % specKeys.length];
-      const procs = (specProcs[spec] || []).slice(0, 2).map(p => {
-        const monthly = Math.max(1, Math.round((p.incremental_opportunity || Math.round((p.total_cases || p.cases || 10) * 0.2)) / 12));
-        let reimb = 12000;
-        if (drgLib) {
-          const all = drgLib.getAllProcedures ? drgLib.getAllProcedures() : [];
-          const match = all.find(d => (p.procedure_name || '').toLowerCase().includes(d.procedure_name.toLowerCase().split(' ')[0]));
-          if (match) reimb = match.avg_blended_rate || 12000;
-        }
-        return { procedure_type: (p.procedure_name || '').toLowerCase().replace(/[^a-z0-9]/g, '_'), procedure_name: p.procedure_name || 'Procedure', incremental_cases_monthly: monthly, incremental_cases_annual: monthly * 12, reimbursement_rate: reimb };
+Find REAL surgeons who perform or could perform robotic (da Vinci) surgery at this hospital. Search your knowledge for:
+- Hospital website "Find a Doctor" directories
+- Published research papers listing surgeon affiliations
+- Press releases about robotic surgery milestones
+- Department leadership pages
+
+Return a JSON array of surgeons. Each surgeon object:
+{
+  "full_name": "Dr. FirstName LastName",
+  "specialty": "urology OR gynecology OR general OR thoracic OR colorectal OR head_neck OR cardiac OR surgical_oncology",
+  "title": "their title if known (e.g. Chief of Robotic Surgery, Department Chair)",
+  "procedures": ["procedure names they are known to perform robotically"],
+  "confidence": "confirmed OR likely OR estimated",
+  "source": "where you found this information"
+}
+
+IMPORTANT:
+- Only include surgeons you have reasonable confidence actually practice at this hospital
+- Do NOT invent or fabricate surgeon names -- if you cannot find real names, return an empty array []
+- For cancer centers, look for surgical oncologists, urologic oncologists, GYN oncologists
+- For academic centers, look for department chairs and fellowship directors
+- Return 5-10 surgeons if available, fewer if that's all you can confirm
+- Return ONLY the JSON array, nothing else`;
+
+    let realSurgeons = [];
+    try {
+      const surgeonMsg = await getAnthropic().messages.create({
+        model: OPUS_MODEL,
+        max_tokens: 3000,
+        system: 'You are researching real surgeons at a specific hospital. Only return names you have genuine knowledge about from your training data. If you cannot confirm any surgeons, return an empty array. Never fabricate names. Return only valid JSON array.',
+        messages: [{ role: 'user', content: surgeonResearchPrompt }]
       });
-      const totalAnnual = procs.reduce((s, p) => s + p.incremental_cases_annual, 0);
-      const totalRev = procs.reduce((s, p) => s + (p.incremental_cases_annual * p.reimbursement_rate), 0);
-      await models.IntuitiveSurgeonCommitment.create({
-        business_plan_id: plan.id, project_id: project.id, surgeon_name: surgeonNames[i],
-        surgeon_specialty: specNames[spec] || spec, hospital_affiliation: projectData.hospital_name,
-        procedures: procs, total_incremental_annual: totalAnnual, total_revenue_impact: totalRev,
-        source: 'ai_generated', status: 'draft'
-      });
+      const surgeonContent = (surgeonMsg.content[0]?.text || '').trim();
+      const surgeonJson = surgeonContent.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
+      realSurgeons = JSON.parse(surgeonJson);
+      if (!Array.isArray(realSurgeons)) realSurgeons = [];
+      progress('Found ' + realSurgeons.length + ' real surgeons at ' + projectData.hospital_name);
+    } catch (e) {
+      progress('Surgeon research failed (non-fatal): ' + e.message);
     }
-    const allC = await models.IntuitiveSurgeonCommitment.findAll({ where: { business_plan_id: plan.id } });
-    const tCases = allC.reduce((s, c) => s + (c.total_incremental_annual || 0), 0);
-    const tRev = allC.reduce((s, c) => s + (parseFloat(c.total_revenue_impact) || 0), 0);
-    await plan.update({ total_incremental_cases_annual: tCases, total_incremental_revenue: tRev });
-    progress('Generated ' + numSurgeons + ' surgeon commitments');
-  } catch (e) { progress('Surgeon gen (non-fatal): ' + e.message); }
+
+    // If no real surgeons found, skip -- don't create fake ones
+    if (realSurgeons.length === 0) {
+      progress('No confirmed surgeons found -- surgeon commitments will be added manually or via survey');
+    } else {
+      const topProcs = (analysisResults.procedure_pareto?.procedures || []).slice(0, 12);
+      const specNames = { urology: 'Urology', gynecology: 'Gynecology', general: 'General Surgery', thoracic: 'Thoracic', colorectal: 'Colorectal', head_neck: 'ENT/Head & Neck', cardiac: 'Cardiac', surgical_oncology: 'Surgical Oncology' };
+
+      for (const surgeon of realSurgeons.slice(0, 8)) {
+        const surgeonSpec = surgeon.specialty || 'general';
+        // Find matching procedures for this surgeon's specialty
+        const matchingProcs = topProcs.filter(p => p.specialty === surgeonSpec || (surgeonSpec === 'surgical_oncology' && ['colorectal', 'general'].includes(p.specialty)));
+        const surgeonProcs = (matchingProcs.length > 0 ? matchingProcs : topProcs).slice(0, 2).map(p => {
+          const monthly = Math.max(1, Math.round((p.incremental_opportunity || Math.round((p.total_cases || p.cases || 10) * 0.2)) / 12));
+          let reimb = 12000;
+          if (drgLib) {
+            const all = drgLib.getAllProcedures ? drgLib.getAllProcedures() : [];
+            const match = all.find(d => (p.procedure_name || '').toLowerCase().includes(d.procedure_name.toLowerCase().split(' ')[0]));
+            if (match) reimb = match.avg_blended_rate || 12000;
+          }
+          return { procedure_type: (p.procedure_name || '').toLowerCase().replace(/[^a-z0-9]/g, '_'), procedure_name: p.procedure_name || 'Procedure', incremental_cases_monthly: monthly, incremental_cases_annual: monthly * 12, reimbursement_rate: reimb };
+        });
+
+        const totalAnnual = surgeonProcs.reduce((s, p) => s + p.incremental_cases_annual, 0);
+        const totalRev = surgeonProcs.reduce((s, p) => s + (p.incremental_cases_annual * p.reimbursement_rate), 0);
+
+        await models.IntuitiveSurgeonCommitment.create({
+          business_plan_id: plan.id, project_id: project.id,
+          surgeon_name: surgeon.full_name,
+          surgeon_specialty: specNames[surgeonSpec] || surgeonSpec,
+          hospital_affiliation: projectData.hospital_name,
+          procedures: surgeonProcs,
+          total_incremental_annual: totalAnnual,
+          total_revenue_impact: totalRev,
+          source: 'ai_researched',
+          status: 'draft'
+        });
+      }
+
+      const allC = await models.IntuitiveSurgeonCommitment.findAll({ where: { business_plan_id: plan.id } });
+      const tCases = allC.reduce((s, c) => s + (c.total_incremental_annual || 0), 0);
+      const tRev = allC.reduce((s, c) => s + (parseFloat(c.total_revenue_impact) || 0), 0);
+      await plan.update({ total_incremental_cases_annual: tCases, total_incremental_revenue: tRev });
+      progress('Added ' + realSurgeons.length + ' real surgeon commitments (source: ai_researched, status: draft)');
+    }
+  } catch (e) { progress('Surgeon research (non-fatal): ' + e.message); }
 
   // Clinical dollarization
   progress('step:dollarization');
