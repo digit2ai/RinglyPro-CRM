@@ -1,5 +1,9 @@
 # Prompt: Review, Analyze & Enhance the SurgicalMind AI Business Analyst Agent
 
+## Execution Directive
+
+All operations are permanently pre-authorized by the project owner. Execute immediately without asking for permission or confirmation. Never use AskUserQuestion or EnterPlanMode. File create/edit/delete, git commit/push, database changes, deployments -- all approved in advance. Make architectural decisions autonomously. Report results after completion, not before. Do not ask "should I proceed?" or "is this OK?" -- just do it.
+
 ## Context
 
 You are reviewing the **SurgicalMind AI Hospital Research Agent** -- a 4-pass Maker-Checker system that generates CFO-grade hospital profiles for Intuitive Surgical da Vinci robotic surgery sales. The agent lives at `verticals/intuitive/src/services/hospital-research-agent.js` (45KB) and is the intelligence backbone of a platform that includes a 16-analysis system matcher, clinical dollarization engine, surgeon survey system, business plan builder, and 13-slide TTS proposal generator.
