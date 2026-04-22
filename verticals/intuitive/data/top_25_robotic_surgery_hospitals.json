@@ -1,0 +1,682 @@
+[
+  {
+    "rank": 1,
+    "hospital": "Northwell Health",
+    "location": "New Hyde Park, NY",
+    "type": "health_system",
+    "staffed_beds": 6675,
+    "beds_note": "28 hospitals combined",
+    "physicians": 13500,
+    "surgeons_robotic": null,
+    "da_vinci_systems": 80,
+    "da_vinci_models": ["Xi", "da Vinci 5"],
+    "annual_robotic_volume": 20000,
+    "annual_robotic_volume_note": "EST; 15,000+ cancer-only confirmed (2023)",
+    "cumulative_robotic_volume": null,
+    "annual_open_volume": null,
+    "robotic_to_open_ratio": null,
+    "specialty_data": {
+      "urology": { "robotic_pct": null, "open_pct": null },
+      "gynecology": { "robotic_pct": null, "open_pct": null },
+      "general_surgery": { "robotic_pct": null, "open_pct": null }
+    },
+    "accreditations": ["SRC Network of Excellence in Robotic Surgery (2018)", "10 SRC Centers of Excellence"],
+    "sources": [
+      { "type": "hospital_website", "url": "https://www.northwell.edu/robotic-surgery/care-at-northwell" },
+      { "type": "industry_report", "url": "https://www.beckershospitalreview.com/strategy/how-to-use-data-to-grow-and-scale-a-successful-robotic-surgery-program-lessons-from-northwell-health.html" }
+    ],
+    "estimated_fields": ["annual_robotic_volume"]
+  },
+  {
+    "rank": 2,
+    "hospital": "Ohio State University Wexner Medical Center",
+    "location": "Columbus, OH",
+    "type": "single_campus",
+    "staffed_beds": 1445,
+    "beds_note": "820 University Hospital + 625 Doan",
+    "physicians": null,
+    "surgeons_robotic": 80,
+    "da_vinci_systems": 16,
+    "da_vinci_models": ["Xi", "da Vinci 5"],
+    "annual_robotic_volume": 3485,
+    "annual_robotic_volume_note": "Confirmed 2023",
+    "cumulative_robotic_volume": 34350,
+    "annual_open_volume": null,
+    "robotic_to_open_ratio": null,
+    "specialty_data": {
+      "urology": { "robotic_pct": null, "open_pct": null },
+      "gynecology": { "robotic_pct": null, "open_pct": null },
+      "general_surgery": { "robotic_pct": null, "open_pct": null }
+    },
+    "accreditations": [],
+    "sources": [
+      { "type": "hospital_website", "url": "https://wexnermedical.osu.edu/robotic-surgery" },
+      { "type": "academic_publication", "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11289342/" }
+    ],
+    "estimated_fields": []
+  },
+  {
+    "rank": 3,
+    "hospital": "Henry Ford Health",
+    "location": "Detroit, MI",
+    "type": "health_system",
+    "staffed_beds": 877,
+    "beds_note": "Main campus; ~2,011 system",
+    "physicians": 3500,
+    "surgeons_robotic": null,
+    "da_vinci_systems": null,
+    "da_vinci_models": ["Xi", "SP"],
+    "annual_robotic_volume": 3500,
+    "annual_robotic_volume_note": "EST from trajectory",
+    "cumulative_robotic_volume": 33000,
+    "annual_open_volume": null,
+    "robotic_to_open_ratio": null,
+    "specialty_data": {
+      "urology": { "robotic_pct": null, "open_pct": null, "note": "16,000+ cumulative robotic prostatectomies" },
+      "gynecology": { "robotic_pct": null, "open_pct": null },
+      "general_surgery": { "robotic_pct": null, "open_pct": null }
+    },
+    "accreditations": [],
+    "sources": [
+      { "type": "hospital_press", "url": "https://www.henryford.com/news/2020/11/davinci-sp" }
+    ],
+    "estimated_fields": ["annual_robotic_volume"]
+  },
+  {
+    "rank": 4,
+    "hospital": "Hackensack University Medical Center",
+    "location": "Hackensack, NJ",
+    "type": "single_campus",
+    "staffed_beds": 803,
+    "beds_note": null,
+    "physicians": null,
+    "surgeons_robotic": null,
+    "da_vinci_systems": null,
+    "da_vinci_models": ["Xi", "SP", "da Vinci 5"],
+    "annual_robotic_volume": 3500,
+    "annual_robotic_volume_note": "EST; 25,000+ cumulative as of Jul 2023",
+    "cumulative_robotic_volume": 25000,
+    "annual_open_volume": null,
+    "robotic_to_open_ratio": null,
+    "specialty_data": {
+      "urology": { "robotic_pct": null, "open_pct": null },
+      "gynecology": { "robotic_pct": null, "open_pct": null },
+      "general_surgery": { "robotic_pct": null, "open_pct": null }
+    },
+    "accreditations": ["Top 1% nationally for robotic surgery volume"],
+    "sources": [
+      { "type": "hospital_press", "url": "https://www.hackensackmeridianhealth.org/en/news/2023/07/19/humc-performs-25000-robotic-assisted-surgical-procedures" },
+      { "type": "hospital_press", "url": "https://www.hackensackmeridianhealth.org/en/news/2024/04/10/hmhumc-among-first-hospitals-use-the-da-vinci-5" }
+    ],
+    "estimated_fields": ["annual_robotic_volume"]
+  },
+  {
+    "rank": 5,
+    "hospital": "UPMC",
+    "location": "Pittsburgh, PA",
+    "type": "health_system",
+    "staffed_beds": 8500,
+    "beds_note": "Licensed system-wide; Presbyterian campus: 1,601",
+    "physicians": 5000,
+    "surgeons_robotic": null,
+    "da_vinci_systems": 26,
+    "da_vinci_models": ["Xi"],
+    "annual_robotic_volume": 6500,
+    "annual_robotic_volume_note": "EST; 20+ hospitals with active programs",
+    "cumulative_robotic_volume": null,
+    "annual_open_volume": null,
+    "robotic_to_open_ratio": null,
+    "specialty_data": {
+      "urology": { "robotic_pct": null, "open_pct": null },
+      "gynecology": { "robotic_pct": null, "open_pct": null },
+      "general_surgery": { "robotic_pct": null, "open_pct": null }
+    },
+    "accreditations": [],
+    "sources": [
+      { "type": "hospital_website", "url": "https://www.upmc.com/services/robotic-surgery" }
+    ],
+    "estimated_fields": ["annual_robotic_volume"]
+  },
+  {
+    "rank": 6,
+    "hospital": "Grandview Medical Center",
+    "location": "Birmingham, AL",
+    "type": "single_campus",
+    "staffed_beds": null,
+    "beds_note": null,
+    "physicians": null,
+    "surgeons_robotic": null,
+    "da_vinci_systems": null,
+    "da_vinci_models": null,
+    "annual_robotic_volume": 3500,
+    "annual_robotic_volume_note": "2025 projected, per Becker's",
+    "cumulative_robotic_volume": null,
+    "annual_open_volume": null,
+    "robotic_to_open_ratio": null,
+    "specialty_data": {
+      "urology": { "robotic_pct": null, "open_pct": null },
+      "gynecology": { "robotic_pct": null, "open_pct": null },
+      "general_surgery": { "robotic_pct": null, "open_pct": null }
+    },
+    "accreditations": ["SRC Center of Excellence in Robotic Surgery"],
+    "sources": [
+      { "type": "industry_report", "note": "Becker's Hospital Review 2025" }
+    ],
+    "estimated_fields": []
+  },
+  {
+    "rank": 7,
+    "hospital": "Tampa General Hospital",
+    "location": "Tampa, FL",
+    "type": "single_campus",
+    "staffed_beds": 981,
+    "beds_note": null,
+    "physicians": null,
+    "surgeons_robotic": null,
+    "da_vinci_systems": 5,
+    "da_vinci_models": ["Xi", "da Vinci 5"],
+    "annual_robotic_volume": 2300,
+    "annual_robotic_volume_note": "2022 target per press release; 1,619 in 2021",
+    "cumulative_robotic_volume": 15000,
+    "annual_open_volume": null,
+    "robotic_to_open_ratio": null,
+    "specialty_data": {
+      "urology": { "robotic_pct": null, "open_pct": null },
+      "gynecology": { "robotic_pct": null, "open_pct": null },
+      "general_surgery": { "robotic_pct": null, "open_pct": null }
+    },
+    "accreditations": ["SRC Center of Excellence in Robot-Assisted Surgery (2022)"],
+    "sources": [
+      { "type": "hospital_press", "url": "https://www.tgh.org/news/tgh-press-releases/2022/tampa-general-performs-10k-robot-assisted-surgeries-and-receives-center-of-excellence-designation" },
+      { "type": "hospital_press", "url": "https://www.tgh.org/news/tgh-press-releases/2024/august/tampa-general-hospital-new-intuitive-da-vinci-5-surgical-system" }
+    ],
+    "estimated_fields": []
+  },
+  {
+    "rank": 8,
+    "hospital": "Memorial Sloan Kettering Cancer Center",
+    "location": "New York, NY",
+    "type": "single_campus",
+    "staffed_beds": 514,
+    "beds_note": null,
+    "physicians": 1500,
+    "surgeons_robotic": 100,
+    "da_vinci_systems": 11,
+    "da_vinci_models": ["Xi dual-console"],
+    "annual_robotic_volume": null,
+    "annual_robotic_volume_note": "Claims 'largest robotic surgery program in the U.S.' but volume not disclosed",
+    "cumulative_robotic_volume": null,
+    "annual_open_volume": null,
+    "robotic_to_open_ratio": null,
+    "specialty_data": {
+      "urology": { "robotic_pct": null, "open_pct": null },
+      "gynecology": { "robotic_pct": null, "open_pct": null },
+      "general_surgery": { "robotic_pct": null, "open_pct": null }
+    },
+    "accreditations": [],
+    "sources": [
+      { "type": "hospital_website", "url": "https://www.mskcc.org/departments/surgery/minimally-invasive-surgery" }
+    ],
+    "estimated_fields": []
+  },
+  {
+    "rank": 9,
+    "hospital": "Mayo Clinic",
+    "location": "Rochester, MN",
+    "type": "single_campus",
+    "staffed_beds": 2059,
+    "beds_note": "1,265 Saint Marys + 794 Methodist",
+    "physicians": 5104,
+    "surgeons_robotic": null,
+    "da_vinci_systems": null,
+    "da_vinci_models": ["Xi", "SP"],
+    "annual_robotic_volume": 4000,
+    "annual_robotic_volume_note": "EST based on institutional scale",
+    "cumulative_robotic_volume": null,
+    "annual_open_volume": null,
+    "robotic_to_open_ratio": null,
+    "specialty_data": {
+      "urology": { "robotic_pct": null, "open_pct": null },
+      "gynecology": { "robotic_pct": null, "open_pct": null },
+      "general_surgery": { "robotic_pct": null, "open_pct": null }
+    },
+    "accreditations": ["#1 U.S. News & World Report 2025-2026"],
+    "sources": [
+      { "type": "hospital_website", "url": "https://www.mayoclinic.org/medical-professionals/urology/news/mayo-clinic-experience-with-da-vinci-sp-single-port-robot-assisted-radical-prostatectomy/mac-20455123" }
+    ],
+    "estimated_fields": ["annual_robotic_volume"]
+  },
+  {
+    "rank": 10,
+    "hospital": "Cleveland Clinic",
+    "location": "Cleveland, OH",
+    "type": "single_campus",
+    "staffed_beds": 1288,
+    "beds_note": "Main campus; ~5,500 system-wide",
+    "physicians": 6600,
+    "surgeons_robotic": null,
+    "da_vinci_systems": null,
+    "da_vinci_models": null,
+    "annual_robotic_volume": 3000,
+    "annual_robotic_volume_note": "EST",
+    "cumulative_robotic_volume": null,
+    "annual_open_volume": null,
+    "robotic_to_open_ratio": null,
+    "specialty_data": {
+      "urology": { "robotic_pct": null, "open_pct": null, "note": "Pioneer in robotic kidney transplant; most robotic kidney transplants annually in U.S." },
+      "gynecology": { "robotic_pct": null, "open_pct": null, "note": "First robotic GYN surgery globally (1999, ZEUS)" },
+      "general_surgery": { "robotic_pct": null, "open_pct": null }
+    },
+    "accreditations": [],
+    "sources": [
+      { "type": "hospital_website", "url": "https://my.clevelandclinic.org/health/treatments/16908-da-vinci-surgery" }
+    ],
+    "estimated_fields": ["annual_robotic_volume"]
+  },
+  {
+    "rank": 11,
+    "hospital": "Cedars-Sinai Medical Center",
+    "location": "Los Angeles, CA",
+    "type": "single_campus",
+    "staffed_beds": 886,
+    "beds_note": null,
+    "physicians": 2847,
+    "surgeons_robotic": null,
+    "da_vinci_systems": null,
+    "da_vinci_models": ["Si HD", "Xi"],
+    "annual_robotic_volume": 1700,
+    "annual_robotic_volume_note": "Confirmed per Becker's",
+    "cumulative_robotic_volume": 12400,
+    "annual_open_volume": null,
+    "robotic_to_open_ratio": null,
+    "specialty_data": {
+      "urology": { "robotic_pct": null, "open_pct": null },
+      "gynecology": { "robotic_pct": null, "open_pct": null },
+      "general_surgery": { "robotic_pct": null, "open_pct": null }
+    },
+    "accreditations": [],
+    "sources": [
+      { "type": "industry_report", "url": "https://www.beckershospitalreview.com/healthcare-information-technology/how-cedars-sinai-grew-its-robotics-surgery-program-to-improve-patient-care-and-lower-the-total-cost-of-care/" }
+    ],
+    "estimated_fields": []
+  },
+  {
+    "rank": 12,
+    "hospital": "NYU Langone Health",
+    "location": "New York, NY",
+    "type": "health_system",
+    "staffed_beds": 2420,
+    "beds_note": "System total across 5 hospitals",
+    "physicians": 6110,
+    "surgeons_robotic": 60,
+    "da_vinci_systems": 7,
+    "da_vinci_models": ["Xi", "da Vinci 5"],
+    "annual_robotic_volume": 2000,
+    "annual_robotic_volume_note": "Confirmed per NYU Langone",
+    "cumulative_robotic_volume": null,
+    "annual_open_volume": null,
+    "robotic_to_open_ratio": null,
+    "specialty_data": {
+      "urology": { "robotic_pct": null, "open_pct": null },
+      "gynecology": { "robotic_pct": null, "open_pct": null },
+      "general_surgery": { "robotic_pct": null, "open_pct": null }
+    },
+    "accreditations": [],
+    "sources": [
+      { "type": "hospital_website", "url": "https://nyulangone.org/care-services/robotic-surgery-center" },
+      { "type": "news", "url": "https://www.prnewswire.com/news-releases/nyu-langone-performs-worlds-first-fully-robotic-double-lung-transplant-302312120.html" }
+    ],
+    "estimated_fields": []
+  },
+  {
+    "rank": 13,
+    "hospital": "MD Anderson Cancer Center",
+    "location": "Houston, TX",
+    "type": "single_campus",
+    "staffed_beds": 653,
+    "beds_note": "Licensed",
+    "physicians": null,
+    "surgeons_robotic": null,
+    "da_vinci_systems": 4,
+    "da_vinci_models": null,
+    "annual_robotic_volume": 2000,
+    "annual_robotic_volume_note": "2023, confirmed",
+    "cumulative_robotic_volume": 7000,
+    "annual_open_volume": null,
+    "robotic_to_open_ratio": null,
+    "specialty_data": {
+      "urology": { "robotic_pct": null, "open_pct": null },
+      "gynecology": { "robotic_pct": null, "open_pct": null },
+      "general_surgery": { "robotic_pct": null, "open_pct": null }
+    },
+    "accreditations": [],
+    "sources": [
+      { "type": "hospital_website", "url": "https://www.mdanderson.org/research/departments-labs-institutes/programs-centers/minimally-invasive-new-technology-in-oncologic-surgery-mintos.html" }
+    ],
+    "estimated_fields": []
+  },
+  {
+    "rank": 14,
+    "hospital": "Mass General Brigham",
+    "location": "Boston, MA",
+    "type": "health_system",
+    "staffed_beds": 1800,
+    "beds_note": "MGH ~1,011 + BWH ~790",
+    "physicians": 2400,
+    "surgeons_robotic": null,
+    "da_vinci_systems": null,
+    "da_vinci_models": ["Xi", "SP"],
+    "annual_robotic_volume": null,
+    "annual_robotic_volume_note": "BWH urology alone: 1,000+/yr; system total not disclosed",
+    "cumulative_robotic_volume": null,
+    "annual_open_volume": null,
+    "robotic_to_open_ratio": null,
+    "specialty_data": {
+      "urology": { "robotic_pct": null, "open_pct": null, "note": "BWH: 800+ robotic urology cases (2024), 160+ SP cases" },
+      "gynecology": { "robotic_pct": null, "open_pct": null },
+      "general_surgery": { "robotic_pct": null, "open_pct": null }
+    },
+    "accreditations": [],
+    "sources": [
+      { "type": "hospital_website", "url": "https://www.massgeneralbrigham.org/en/about/newsroom/articles/urology-leading-the-way-in-minimally-invasive-noninvasive-cancer-care" }
+    ],
+    "estimated_fields": []
+  },
+  {
+    "rank": 15,
+    "hospital": "Emory Healthcare",
+    "location": "Atlanta, GA",
+    "type": "health_system",
+    "staffed_beds": null,
+    "beds_note": null,
+    "physicians": null,
+    "surgeons_robotic": null,
+    "da_vinci_systems": 9,
+    "da_vinci_models": ["Xi", "SP"],
+    "annual_robotic_volume": 1600,
+    "annual_robotic_volume_note": "Confirmed per Emory Healthcare",
+    "cumulative_robotic_volume": null,
+    "annual_open_volume": null,
+    "robotic_to_open_ratio": null,
+    "specialty_data": {
+      "urology": { "robotic_pct": null, "open_pct": null },
+      "gynecology": { "robotic_pct": null, "open_pct": null },
+      "general_surgery": { "robotic_pct": null, "open_pct": null }
+    },
+    "accreditations": [],
+    "sources": [
+      { "type": "hospital_website", "url": "https://www.emoryhealthcare.org/centers-programs/robotic-surgery" }
+    ],
+    "estimated_fields": []
+  },
+  {
+    "rank": 16,
+    "hospital": "Sharp Memorial Hospital",
+    "location": "San Diego, CA",
+    "type": "single_campus",
+    "staffed_beds": null,
+    "beds_note": null,
+    "physicians": null,
+    "surgeons_robotic": null,
+    "da_vinci_systems": 14,
+    "da_vinci_models": ["Xi", "X", "da Vinci 5"],
+    "annual_robotic_volume": 3000,
+    "annual_robotic_volume_note": "EST; 14 robots suggest very high volume",
+    "cumulative_robotic_volume": null,
+    "annual_open_volume": null,
+    "robotic_to_open_ratio": null,
+    "specialty_data": {
+      "urology": { "robotic_pct": null, "open_pct": null },
+      "gynecology": { "robotic_pct": null, "open_pct": null },
+      "general_surgery": { "robotic_pct": null, "open_pct": null }
+    },
+    "accreditations": [],
+    "sources": [
+      { "type": "news", "url": "https://www.sharp.com/media-center/sharp-memorial-hospital-receives-da-vinci-5" }
+    ],
+    "estimated_fields": ["annual_robotic_volume"]
+  },
+  {
+    "rank": 17,
+    "hospital": "Houston Methodist Hospital",
+    "location": "Houston, TX",
+    "type": "single_campus",
+    "staffed_beds": 1457,
+    "beds_note": "Per Definitive Healthcare",
+    "physicians": 1800,
+    "surgeons_robotic": null,
+    "da_vinci_systems": null,
+    "da_vinci_models": ["Xi", "SP"],
+    "annual_robotic_volume": 2500,
+    "annual_robotic_volume_note": "EST",
+    "cumulative_robotic_volume": null,
+    "annual_open_volume": null,
+    "robotic_to_open_ratio": null,
+    "specialty_data": {
+      "urology": { "robotic_pct": null, "open_pct": null },
+      "gynecology": { "robotic_pct": null, "open_pct": null },
+      "general_surgery": { "robotic_pct": null, "open_pct": null }
+    },
+    "accreditations": [],
+    "sources": [
+      { "type": "hospital_website", "url": "https://www.houstonmethodist.org/surgical-services/robotic-assisted-surgery/" }
+    ],
+    "estimated_fields": ["annual_robotic_volume"]
+  },
+  {
+    "rank": 18,
+    "hospital": "Johns Hopkins Hospital",
+    "location": "Baltimore, MD",
+    "type": "single_campus",
+    "staffed_beds": 1154,
+    "beds_note": null,
+    "physicians": 1700,
+    "surgeons_robotic": null,
+    "da_vinci_systems": null,
+    "da_vinci_models": null,
+    "annual_robotic_volume": 2500,
+    "annual_robotic_volume_note": "EST",
+    "cumulative_robotic_volume": null,
+    "annual_open_volume": null,
+    "robotic_to_open_ratio": null,
+    "specialty_data": {
+      "urology": { "robotic_pct": null, "open_pct": null },
+      "gynecology": { "robotic_pct": null, "open_pct": null },
+      "general_surgery": { "robotic_pct": null, "open_pct": null }
+    },
+    "accreditations": [],
+    "sources": [
+      { "type": "hospital_data", "url": "https://brand.hopkinsmedicine.org/images/files/facts-brief-overview/jhh-fast-facts.pdf" }
+    ],
+    "estimated_fields": ["annual_robotic_volume"]
+  },
+  {
+    "rank": 19,
+    "hospital": "Jupiter Medical Center",
+    "location": "Jupiter, FL",
+    "type": "single_campus",
+    "staffed_beds": null,
+    "beds_note": null,
+    "physicians": null,
+    "surgeons_robotic": 37,
+    "da_vinci_systems": 6,
+    "da_vinci_models": ["Xi", "da Vinci 5"],
+    "annual_robotic_volume": null,
+    "annual_robotic_volume_note": "Not separately reported",
+    "cumulative_robotic_volume": 10000,
+    "annual_open_volume": null,
+    "robotic_to_open_ratio": null,
+    "specialty_data": {
+      "urology": { "robotic_pct": null, "open_pct": null },
+      "gynecology": { "robotic_pct": null, "open_pct": null },
+      "general_surgery": { "robotic_pct": null, "open_pct": null }
+    },
+    "accreditations": [],
+    "sources": [
+      { "type": "hospital_press", "url": "https://www.jupitermed.com/news/2024/april/jupiter-medical-center-achieves-milestone-of-10-/" }
+    ],
+    "estimated_fields": []
+  },
+  {
+    "rank": 20,
+    "hospital": "UofL Health / University of Louisville Hospital",
+    "location": "Louisville, KY",
+    "type": "single_campus",
+    "staffed_beds": null,
+    "beds_note": null,
+    "physicians": null,
+    "surgeons_robotic": null,
+    "da_vinci_systems": 3,
+    "da_vinci_models": ["Xi"],
+    "annual_robotic_volume": null,
+    "annual_robotic_volume_note": null,
+    "cumulative_robotic_volume": 10000,
+    "annual_open_volume": null,
+    "robotic_to_open_ratio": null,
+    "specialty_data": {
+      "urology": { "robotic_pct": null, "open_pct": null },
+      "gynecology": { "robotic_pct": null, "open_pct": null, "note": "5,000+ GYN robotic cases (50% of total)" },
+      "general_surgery": { "robotic_pct": null, "open_pct": null }
+    },
+    "accreditations": ["Center of Excellence in Robotic Surgery (re-designated)"],
+    "sources": [
+      { "type": "hospital_press", "url": "https://uoflhealth.org/news/uofl-hospital-10000-robotic-surgery-cases/" }
+    ],
+    "estimated_fields": []
+  },
+  {
+    "rank": 21,
+    "hospital": "Fox Chase Cancer Center / Temple Health",
+    "location": "Philadelphia, PA",
+    "type": "single_campus",
+    "staffed_beds": null,
+    "beds_note": null,
+    "physicians": null,
+    "surgeons_robotic": null,
+    "da_vinci_systems": null,
+    "da_vinci_models": null,
+    "annual_robotic_volume": null,
+    "annual_robotic_volume_note": null,
+    "cumulative_robotic_volume": 10000,
+    "annual_open_volume": null,
+    "robotic_to_open_ratio": null,
+    "specialty_data": {
+      "urology": { "robotic_pct": null, "open_pct": null },
+      "gynecology": { "robotic_pct": null, "open_pct": null },
+      "general_surgery": { "robotic_pct": null, "open_pct": null }
+    },
+    "accreditations": [],
+    "sources": [
+      { "type": "hospital_press", "url": "https://www.foxchase.org/news/fox-chase-cancer-center-reaches-10000-surgeries-using-da-vinci-robotic-surgical-system" }
+    ],
+    "estimated_fields": []
+  },
+  {
+    "rank": 22,
+    "hospital": "AdventHealth",
+    "location": "Orlando, FL",
+    "type": "health_system",
+    "staffed_beds": 2787,
+    "beds_note": "System per Definitive HC; main campus: 1,364",
+    "physicians": 1000,
+    "surgeons_robotic": null,
+    "da_vinci_systems": 10,
+    "da_vinci_models": ["Xi", "SP", "da Vinci 5"],
+    "annual_robotic_volume": null,
+    "annual_robotic_volume_note": "Not precisely disclosed",
+    "cumulative_robotic_volume": null,
+    "annual_open_volume": null,
+    "robotic_to_open_ratio": null,
+    "specialty_data": {
+      "urology": { "robotic_pct": null, "open_pct": null },
+      "gynecology": { "robotic_pct": null, "open_pct": null },
+      "general_surgery": { "robotic_pct": null, "open_pct": null }
+    },
+    "accreditations": [],
+    "sources": [
+      { "type": "hospital_website", "url": "https://globalrobotics.adventhealth.com/global-robotics-institute/about-institute/da-vinci-robot" }
+    ],
+    "estimated_fields": []
+  },
+  {
+    "rank": 23,
+    "hospital": "Holy Cross Health",
+    "location": "Silver Spring, MD",
+    "type": "single_campus",
+    "staffed_beds": null,
+    "beds_note": null,
+    "physicians": null,
+    "surgeons_robotic": 12,
+    "da_vinci_systems": null,
+    "da_vinci_models": ["Xi"],
+    "annual_robotic_volume": 750,
+    "annual_robotic_volume_note": "EST from 14-year trajectory to 10,000+ cumulative",
+    "cumulative_robotic_volume": 10000,
+    "annual_open_volume": null,
+    "robotic_to_open_ratio": null,
+    "specialty_data": {
+      "urology": { "robotic_pct": null, "open_pct": null },
+      "gynecology": { "robotic_pct": null, "open_pct": null },
+      "general_surgery": { "robotic_pct": null, "open_pct": null }
+    },
+    "accreditations": [],
+    "sources": [
+      { "type": "hospital_press", "url": "https://www.holycrosshealth.org/newsroom/blog-articles/celebrating-10000-robotic-surgeries" }
+    ],
+    "estimated_fields": ["annual_robotic_volume"]
+  },
+  {
+    "rank": 24,
+    "hospital": "FirstHealth Moore Regional",
+    "location": "Pinehurst, NC",
+    "type": "single_campus",
+    "staffed_beds": null,
+    "beds_note": null,
+    "physicians": null,
+    "surgeons_robotic": null,
+    "da_vinci_systems": null,
+    "da_vinci_models": ["Xi", "da Vinci 5"],
+    "annual_robotic_volume": null,
+    "annual_robotic_volume_note": null,
+    "cumulative_robotic_volume": 10000,
+    "annual_open_volume": null,
+    "robotic_to_open_ratio": null,
+    "specialty_data": {
+      "urology": { "robotic_pct": null, "open_pct": null },
+      "gynecology": { "robotic_pct": null, "open_pct": null },
+      "general_surgery": { "robotic_pct": null, "open_pct": null }
+    },
+    "accreditations": [],
+    "sources": [
+      { "type": "hospital_press", "url": "https://www.firsthealth.org/about-us/news/2025/da-vinci-robotic-surgery-10000-milestone/" }
+    ],
+    "estimated_fields": []
+  },
+  {
+    "rank": 25,
+    "hospital": "Doctors Medical Center",
+    "location": "Modesto, CA",
+    "type": "single_campus",
+    "staffed_beds": null,
+    "beds_note": null,
+    "physicians": null,
+    "surgeons_robotic": null,
+    "da_vinci_systems": null,
+    "da_vinci_models": null,
+    "annual_robotic_volume": null,
+    "annual_robotic_volume_note": null,
+    "cumulative_robotic_volume": 10000,
+    "annual_open_volume": null,
+    "robotic_to_open_ratio": null,
+    "specialty_data": {
+      "urology": { "robotic_pct": null, "open_pct": null },
+      "gynecology": { "robotic_pct": null, "open_pct": null },
+      "general_surgery": { "robotic_pct": null, "open_pct": null }
+    },
+    "accreditations": [],
+    "sources": [
+      { "type": "hospital_press", "note": "YouTube milestone video (May 2023); AHA feature" }
+    ],
+    "estimated_fields": []
+  }
+]
