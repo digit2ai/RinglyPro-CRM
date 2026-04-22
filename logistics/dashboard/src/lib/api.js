@@ -122,6 +122,17 @@ export async function generateDemo(companyName) {
 }
 
 /**
+ * Instant demo — clones a completed project's analysis results (< 3 seconds)
+ * Backend: POST /demo/instant
+ */
+export async function instantDemo(companyName) {
+  return request('/demo/instant', {
+    method: 'POST',
+    body: JSON.stringify({ company_name: companyName || 'Pinaxis POC Warehouse' })
+  })
+}
+
+/**
  * Generate PDF report for a project
  * Backend: POST /reports/:projectId/generate
  */

@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import FileUploader from '../components/FileUploader'
-import { createProject, uploadFile, getUploadStatus, generateDemo, runAnalysis, getProject } from '../lib/api'
+import { createProject, uploadFile, getUploadStatus, generateDemo, instantDemo, runAnalysis, getProject } from '../lib/api'
 
 const FILE_TYPES = [
   {
@@ -211,7 +211,24 @@ export default function UploadPage() {
   }
 
   const [demoStatus, setDemoStatus] = useState('')
+  const [instantLoading, setInstantLoading] = useState(false)
 
+  // Instant Demo — clones completed analysis in < 3 seconds
+  const handleInstantDemo = async () => {
+    setInstantLoading(true)
+    setError(null)
+    try {
+      const result = await instantDemo()
+      const demoId = result.project_id || result.id
+      navigate(`/analysis/${demoId}`)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setInstantLoading(false)
+    }
+  }
+
+  // Full POC — generates 228K items from scratch (5-8 min)
   const handleGenerateDemo = async () => {
     setDemoLoading(true)
     setError(null)
@@ -220,9 +237,8 @@ export default function UploadPage() {
       const result = await generateDemo()
       const demoId = result.project_id || result.id
 
-      // Poll project status until completed
       setDemoStatus('Generating 228K items + 637K order lines...')
-      for (let attempt = 0; attempt < 300; attempt++) { // up to 25 min
+      for (let attempt = 0; attempt < 300; attempt++) {
         await new Promise(r => setTimeout(r, 5000))
         try {
           const proj = await getProject(demoId)
@@ -265,38 +281,57 @@ export default function UploadPage() {
         </p>
       </div>
 
-      {/* POC Button */}
+      {/* POC Buttons */}
       <div className="card mb-8 bg-gradient-to-r from-logistics-900/50 to-slate-800 border-logistics-700/50">
         <div>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h3 className="text-lg font-semibold text-white mb-1">Proof of Concept — Full Pinaxis Scale</h3>
+              <h3 className="text-lg font-semibold text-white mb-1">Proof of Concept</h3>
               <p className="text-sm text-slate-400">
-                Generate a full-scale Proof of Concept with Pinaxis data (228K items, 60K orders, 637K lines).
+                Full Pinaxis-scale warehouse analysis (228K items, 60K orders, 637K lines, 12 analysis modules).
               </p>
             </div>
-            <button
-              onClick={handleGenerateDemo}
-              disabled={demoLoading}
-              className="btn-primary whitespace-nowrap flex items-center gap-2"
-            >
-              {demoLoading ? (
-                <>
-                  <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-                  </svg>
-                  Generate POC
-                </>
-              )}
-            </button>
+            <div className="flex gap-2 flex-shrink-0">
+              <button
+                onClick={handleInstantDemo}
+                disabled={instantLoading || demoLoading}
+                className="btn-primary whitespace-nowrap flex items-center gap-2"
+              >
+                {instantLoading ? (
+                  <>
+                    <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                    </svg>
+                    Instant Demo
+                  </>
+                )}
+              </button>
+              <button
+                onClick={handleGenerateDemo}
+                disabled={demoLoading || instantLoading}
+                className="px-4 py-2 rounded-lg text-sm font-medium border border-slate-600 text-slate-400 hover:text-slate-200 hover:bg-slate-700/50 transition-all whitespace-nowrap flex items-center gap-2"
+              >
+                {demoLoading ? (
+                  <>
+                    <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Generating...
+                  </>
+                ) : (
+                  'Regenerate Data'
+                )}
+              </button>
+            </div>
           </div>
           {demoStatus && (
             <div className="mt-3 p-3 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-300 text-sm flex items-center gap-2">

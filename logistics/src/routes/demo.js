@@ -472,4 +472,88 @@ router.post('/regenerate/:projectId', async (req, res) => {
   }
 });
 
+// POST /api/v1/demo/instant — Clone a completed project's analysis results (< 3 seconds)
+// This is the "Instant Demo" for live presentations — no data generation, just clones results.
+router.post('/instant', async (req, res) => {
+  try {
+    const { company_name } = req.body;
+    const seq = req.models.sequelize;
+    const crypto = require('crypto');
+
+    // Find the most recent completed project with analysis results to clone from
+    const [sources] = await seq.query(`
+      SELECT p.id, p.company_name, COUNT(a.id) as analysis_count
+      FROM logistics_projects p
+      JOIN logistics_analysis_results a ON a.project_id = p.id
+      WHERE p.status = 'completed'
+      GROUP BY p.id, p.company_name
+      HAVING COUNT(a.id) >= 10
+      ORDER BY p.id DESC
+      LIMIT 1
+    `);
+
+    if (!sources.length) {
+      return res.status(404).json({ success: false, error: 'No completed demo project found to clone. Run Generate POC first.' });
+    }
+
+    const sourceId = sources[0].id;
+    console.log(`[INSTANT] Cloning from project ${sourceId} (${sources[0].company_name}, ${sources[0].analysis_count} analyses)`);
+
+    // Create new project
+    const project = await req.models.LogisticsProject.create({
+      project_code: `LOGISTICS-${new Date().getFullYear()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`,
+      company_name: company_name || 'Pinaxis POC Warehouse',
+      contact_name: 'Demo User',
+      contact_email: 'demo@pinaxis.com',
+      industry: '3PL / Logistics',
+      country: 'Germany',
+      business_info: { warehouse_size_sqm: 12000, employees: 85, shifts_per_day: 2, operating_days_per_week: 6, growth_forecast_pct: 5 },
+      status: 'analyzing'
+    });
+    const newId = project.id;
+
+    // Clone analysis results (the expensive part is already computed)
+    await seq.query(`
+      INSERT INTO logistics_analysis_results (project_id, analysis_type, result_data, created_at, updated_at)
+      SELECT ${newId}, analysis_type, result_data, NOW(), NOW()
+      FROM logistics_analysis_results
+      WHERE project_id = ${sourceId}
+    `);
+
+    // Clone product recommendations
+    await seq.query(`
+      INSERT INTO logistics_product_recommendations (project_id, product_name, product_category, description, fit_score, rationale, specs, created_at, updated_at)
+      SELECT ${newId}, product_name, product_category, description, fit_score, rationale, specs, NOW(), NOW()
+      FROM logistics_product_recommendations
+      WHERE project_id = ${sourceId}
+    `);
+
+    // Clone file records (metadata only, not actual data rows)
+    await seq.query(`
+      INSERT INTO logistics_uploaded_files (project_id, file_type, original_filename, file_size, mime_type, row_count, column_count, parse_status, created_at, updated_at)
+      SELECT ${newId}, file_type, original_filename, file_size, mime_type, row_count, column_count, 'parsed', NOW(), NOW()
+      FROM logistics_uploaded_files
+      WHERE project_id = ${sourceId}
+    `);
+
+    // Mark complete
+    await project.update({ status: 'completed', analysis_started_at: new Date(), analysis_completed_at: new Date() });
+
+    console.log(`[INSTANT] Project ${newId} ready — cloned from ${sourceId}`);
+    res.status(201).json({
+      success: true,
+      data: {
+        project_id: newId,
+        project_code: project.project_code,
+        status: 'completed',
+        cloned_from: sourceId,
+        message: 'Instant demo ready — analysis results cloned.'
+      }
+    });
+  } catch (error) {
+    console.error('[INSTANT] Error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 module.exports = router;
