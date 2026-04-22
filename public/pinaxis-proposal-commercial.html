@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PINAXIS Platform -- Commercial Proposal & Purchase Order</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:wght@400;600;700&display=swap');
+  :root { --navy:#0b1d4a; --dark:#030814; --teal:#00A3E0; --teal-neon:#3dcbca; --gold:#C5A55A; --gold-neon:#dfc07a; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',sans-serif; background:#fafbfc; color:#1a1a2e; line-height:1.6; }
+  .page { max-width:800px; margin:0 auto; padding:48px 56px; background:white; min-height:100vh; }
+
+  /* Header */
+  .header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:48px; padding-bottom:24px; border-bottom:3px solid var(--navy); }
+  .header-left h1 { font-size:28px; font-weight:800; color:var(--navy); letter-spacing:-1px; }
+  .header-left p { font-size:12px; color:#64748b; margin-top:4px; }
+  .header-right { text-align:right; font-size:12px; color:#64748b; line-height:1.8; }
+  .header-right strong { color:var(--navy); }
+
+  /* Badge */
+  .badge { display:inline-block; padding:4px 12px; border-radius:4px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; font-weight:600; }
+  .badge-conf { background:#fef3c7; color:#92400e; border:1px solid #fbbf24; }
+  .badge-po { background:#dbeafe; color:#1e40af; border:1px solid #60a5fa; }
+
+  /* Sections */
+  h2 { font-size:18px; font-weight:700; color:var(--navy); margin:32px 0 16px; padding-bottom:8px; border-bottom:1px solid #e2e8f0; }
+  h3 { font-size:14px; font-weight:700; color:#334155; margin:20px 0 10px; }
+
+  p { font-size:14px; color:#475569; margin-bottom:12px; }
+  p.serif { font-family:'Source Serif 4',Georgia,serif; font-size:15px; color:#334155; }
+
+  /* Tables */
+  table { width:100%; border-collapse:collapse; margin:12px 0 20px; font-size:13px; }
+  th { text-align:left; padding:10px 12px; background:#f1f5f9; border:1px solid #e2e8f0; font-size:10px; text-transform:uppercase; letter-spacing:1px; color:#64748b; font-weight:600; }
+  td { padding:10px 12px; border:1px solid #e2e8f0; color:#334155; }
+  td.mono { font-family:'JetBrains Mono',monospace; font-weight:600; }
+  tr.total td { background:#f8fafc; font-weight:700; }
+  tr.highlight td { background:#eff6ff; }
+  .right { text-align:right; }
+
+  /* Signature */
+  .sig-grid { display:grid; grid-template-columns:1fr 1fr; gap:40px; margin-top:40px; }
+  .sig-block { padding-top:16px; }
+  .sig-line { border-top:1px solid #94a3b8; margin-top:60px; padding-top:8px; }
+  .sig-label { font-size:11px; color:#64748b; margin-top:4px; }
+  .sig-name { font-size:14px; font-weight:600; color:#1a1a2e; }
+
+  /* PO Box */
+  .po-box { border:2px solid var(--navy); border-radius:8px; padding:24px 28px; margin:24px 0; }
+  .po-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+  .po-number { font-family:'JetBrains Mono',monospace; font-size:20px; font-weight:700; color:var(--navy); }
+
+  /* List */
+  ul { padding-left:20px; margin:8px 0 16px; }
+  li { font-size:13px; color:#475569; margin-bottom:6px; }
+
+  /* Print */
+  @media print {
+    body { background:white; }
+    .page { padding:32px 40px; box-shadow:none; }
+    .no-print { display:none; }
+  }
+  @media screen {
+    body { padding:20px; }
+    .page { box-shadow:0 1px 3px rgba(0,0,0,0.1); border-radius:4px; margin:20px auto; }
+  }
+
+  .page-break { page-break-before:always; }
+</style>
+</head>
+<body>
+
+<!-- PAGE 1: COMMERCIAL PROPOSAL -->
+<div class="page">
+  <div class="header">
+    <div class="header-left">
+      <h1>PINAXIS Platform</h1>
+      <p>Commercial Proposal & Purchase Order</p>
+    </div>
+    <div class="header-right">
+      <span class="badge badge-conf">CONFIDENTIAL</span><br><br>
+      <strong>Digit2AI LLC</strong><br>
+      Florida, USA<br>
+      mstagg@digit2ai.com<br>
+      <br>
+      <strong>Date:</strong> April 21, 2026<br>
+      <strong>Valid Until:</strong> May 31, 2026
+    </div>
+  </div>
+
+  <h2>1. Executive Summary</h2>
+  <p class="serif">
+    Digit2AI proposes to license the PINAXIS Warehouse Analytics Platform to Pinaxis under a
+    white-label annual license. Pinaxis will operate the platform under their own brand and
+    resell warehouse analytics services to end customers worldwide.
+  </p>
+  <p class="serif">
+    The platform is production-ready today, with 12 analysis modules, AI-powered proposals,
+    voice-narrated presentations, OEE tracking, and a full REST API -- all built and tested
+    over the past 7 weeks.
+  </p>
+
+  <h2>2. Parties</h2>
+  <table>
+    <tr>
+      <td style="width:30%"><strong>Provider</strong></td>
+      <td>Digit2AI LLC, Florida, USA ("Digit2AI")<br>Contact: Manuel Stagg, CEO -- mstagg@digit2ai.com</td>
+    </tr>
+    <tr>
+      <td><strong>Client</strong></td>
+      <td>Pinaxis, Germany ("Pinaxis")<br>Contact: Jurgen, CEO / Sven Diedrich, Technology & Transformation Chief</td>
+    </tr>
+  </table>
+
+  <h2>3. License & Pricing</h2>
+
+  <h3>3.1 Annual Platform License</h3>
+  <table>
+    <thead>
+      <tr><th>Item</th><th>Description</th><th class="right">Amount</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Annual License Fee</strong></td>
+        <td>Full PINAXIS platform, white-label rights, unlimited Pinaxis internal users, quarterly releases, L3 support</td>
+        <td class="right mono">$140,000/yr</td>
+      </tr>
+      <tr>
+        <td><strong>On-Premises Deployment</strong></td>
+        <td>Installation, configuration, data migration, SSO integration, training (6-8 weeks)</td>
+        <td class="right mono">Included*</td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr class="total">
+        <td colspan="2"><strong>Total Annual License</strong></td>
+        <td class="right mono">$140,000</td>
+      </tr>
+    </tfoot>
+  </table>
+  <p style="font-size:11px;color:#94a3b8;">*On-premises deployment scope and pricing open for discussion.</p>
+
+  <h3>3.2 Revenue Share</h3>
+  <table>
+    <thead>
+      <tr><th>Model</th><th>Description</th><th class="right">Split</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>End-Customer Revenue Share</strong></td>
+        <td>50/50 split on all revenue collected from Pinaxis's end customers (SaaS subscriptions, per-project fees, setup fees, support contracts)</td>
+        <td class="right mono">50% / 50%</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>3.3 What's Included</h3>
+  <table>
+    <tr><td style="width:35%">12-Module Analysis Engine</td><td>ABC, XYZ, Fit, Percentiles, Extrapolation, Order Profile, Hourly, Design Day, etc.</td></tr>
+    <tr><td>WarehouseMind AI</td><td>MCP Command Center, Neural Intelligence, OEE Dashboard</td></tr>
+    <tr><td>Proposal & Presentation</td><td>Voice-narrated slides, PDF reports, interactive dashboards</td></tr>
+    <tr><td>API Layer</td><td>62 REST endpoints, API key auth, webhook receiver for PLC/MES</td></tr>
+    <tr><td>White-Label Rights</td><td>Full Pinaxis branding, custom domain, removable attribution</td></tr>
+    <tr><td>Multi-Tenant Support</td><td>End-customer isolation, per-customer projects</td></tr>
+    <tr><td>NDA & Contract Builder</td><td>Digital NDA signatures, enterprise services agreement generator</td></tr>
+    <tr><td>Simulation Engine</td><td>What-if scenarios, 5-year growth modeling, capacity planning</td></tr>
+    <tr><td>Quarterly Releases</td><td>New features, security patches, database migrations</td></tr>
+    <tr><td>L3 Engineering Support</td><td>Bug fixes, escalation, architecture guidance</td></tr>
+  </table>
+
+  <h2>4. Good-Faith Deposit</h2>
+  <p class="serif">
+    To formalize the partnership and secure Digit2AI's commitment to the on-premises migration,
+    Pinaxis will issue a good-faith deposit of <strong>$15,000</strong>, credited in full against
+    the first year's license fee.
+  </p>
+  <table>
+    <thead>
+      <tr><th>Milestone</th><th>Description</th><th class="right">Amount</th></tr>
+    </thead>
+    <tbody>
+      <tr class="highlight">
+        <td><strong>Good-Faith Deposit</strong></td>
+        <td>Due upon agreement. Credited against Year 1 license. Triggers on-premises deployment work.</td>
+        <td class="right mono">$15,000</td>
+      </tr>
+      <tr>
+        <td><strong>License Balance</strong></td>
+        <td>Due Net-30 from platform go-live on Pinaxis infrastructure.</td>
+        <td class="right mono">$125,000</td>
+      </tr>
+      <tr class="total">
+        <td colspan="2"><strong>Year 1 Total</strong></td>
+        <td class="right mono">$140,000</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>5. Revenue Projection</h2>
+  <p>Illustrative projection based on Pinaxis reselling to end customers:</p>
+  <table>
+    <thead>
+      <tr><th></th><th class="right">Customers</th><th class="right">Gross Revenue</th><th class="right">Pinaxis (50%)</th><th class="right">Digit2AI (50%)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Year 1</td><td class="right">5</td><td class="right mono">$240,000</td><td class="right mono">$120,000</td><td class="right mono">$120,000</td></tr>
+      <tr><td>Year 2</td><td class="right">12</td><td class="right mono">$720,000</td><td class="right mono">$360,000</td><td class="right mono">$360,000</td></tr>
+      <tr><td>Year 3</td><td class="right">25</td><td class="right mono">$1,800,000</td><td class="right mono">$900,000</td><td class="right mono">$900,000</td></tr>
+    </tbody>
+  </table>
+
+  <h2>6. Key Terms</h2>
+  <ul>
+    <li><strong>IP Ownership:</strong> Digit2AI retains all intellectual property. Pinaxis receives a perpetual usage and resale license for the duration of the agreement.</li>
+    <li><strong>License Term:</strong> 12 months, auto-renewing with 90-day cancellation notice.</li>
+    <li><strong>Revenue Share Settlement:</strong> Monthly, Net-30, with transparent reporting.</li>
+    <li><strong>Exclusivity:</strong> Open for discussion by territory or vertical.</li>
+    <li><strong>Source Code Escrow:</strong> Available upon request for business continuity.</li>
+    <li><strong>Non-Compete:</strong> Pinaxis agrees not to develop a competing warehouse analytics platform during the term.</li>
+  </ul>
+
+  <!-- PURCHASE ORDER -->
+  <div class="page-break"></div>
+  <div style="margin-top:32px;">
+    <div class="po-box">
+      <div class="po-header">
+        <div>
+          <span class="badge badge-po">PURCHASE ORDER</span>
+        </div>
+        <div class="po-number">PO-PINAXIS-2026-001</div>
+      </div>
+
+      <table>
+        <tr>
+          <td style="width:30%;background:#f8fafc"><strong>Vendor</strong></td>
+          <td>Digit2AI LLC<br>Florida, USA<br>mstagg@digit2ai.com</td>
+        </tr>
+        <tr>
+          <td style="background:#f8fafc"><strong>Bill To</strong></td>
+          <td>Pinaxis<br>Germany<br>Attn: Jurgen, CEO</td>
+        </tr>
+        <tr>
+          <td style="background:#f8fafc"><strong>PO Date</strong></td>
+          <td>_______________, 2026</td>
+        </tr>
+        <tr>
+          <td style="background:#f8fafc"><strong>Payment Terms</strong></td>
+          <td>Net-15 from PO execution</td>
+        </tr>
+      </table>
+
+      <h3 style="margin-top:24px;">Line Items</h3>
+      <table>
+        <thead>
+          <tr><th>#</th><th>Description</th><th class="right">Qty</th><th class="right">Amount</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td><strong>Good-Faith Deposit -- PINAXIS Platform License</strong><br>
+              <span style="font-size:11px;color:#64748b;">Advance payment credited against Year 1 Annual License Fee ($140,000).
+              Triggers on-premises deployment and migration work by Digit2AI.</span>
+            </td>
+            <td class="right">1</td>
+            <td class="right mono">$15,000.00</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr class="total">
+            <td colspan="3"><strong>Total Due</strong></td>
+            <td class="right mono" style="font-size:16px;">$15,000.00</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <p style="font-size:11px;color:#64748b;margin-top:12px;">
+        This deposit is non-refundable and will be credited in full against the Year 1 Annual License Fee
+        of $140,000. The remaining balance of $125,000 is due Net-30 from platform go-live on Pinaxis infrastructure.
+      </p>
+
+      <div class="sig-grid">
+        <div class="sig-block">
+          <div class="sig-name">Digit2AI LLC</div>
+          <div class="sig-line"></div>
+          <div class="sig-label">Manuel Stagg, CEO</div>
+          <div class="sig-label">Date: _______________</div>
+        </div>
+        <div class="sig-block">
+          <div class="sig-name">Pinaxis</div>
+          <div class="sig-line"></div>
+          <div class="sig-label">Jurgen, CEO</div>
+          <div class="sig-label">Date: _______________</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 2: CONTRACT -->
+<div class="page page-break">
+  <div class="header">
+    <div class="header-left">
+      <h1>Platform License Agreement</h1>
+      <p>White-Label Annual License & Revenue Share</p>
+    </div>
+    <div class="header-right">
+      <span class="badge badge-conf">DRAFT</span><br><br>
+      <strong>Effective Date:</strong><br>
+      _______________, 2026
+    </div>
+  </div>
+
+  <p class="serif">
+    This Platform License Agreement ("Agreement") is entered into as of the Effective Date
+    by and between:
+  </p>
+  <table>
+    <tr><td style="width:30%"><strong>Provider</strong></td><td>Digit2AI LLC, a Florida limited liability company ("Digit2AI")</td></tr>
+    <tr><td><strong>Licensee</strong></td><td>Pinaxis, a company organized under the laws of Germany ("Pinaxis")</td></tr>
+  </table>
+
+  <h2>1. Definitions</h2>
+  <ul>
+    <li><strong>"Platform"</strong> means the PINAXIS Warehouse Analytics software, including all source code, container images, databases, APIs, dashboards, analysis modules, and documentation developed by Digit2AI.</li>
+    <li><strong>"White-Label Rights"</strong> means the right to rebrand, customize, and operate the Platform under Pinaxis's own brand identity.</li>
+    <li><strong>"End Customer"</strong> means any third party to whom Pinaxis provides access to or services based on the Platform.</li>
+    <li><strong>"End-Customer Revenue"</strong> means all fees, subscriptions, setup charges, per-project fees, and support revenue collected by Pinaxis from End Customers in connection with the Platform.</li>
+    <li><strong>"License Term"</strong> means the initial 12-month period from the Effective Date, and each subsequent 12-month renewal period.</li>
+  </ul>
+
+  <h2>2. Grant of License</h2>
+  <p>2.1. <strong>License.</strong> Digit2AI grants Pinaxis a non-exclusive, non-transferable, worldwide license to use, operate, modify (for branding purposes), and sublicense the Platform to End Customers during the License Term.</p>
+  <p>2.2. <strong>White-Label.</strong> Pinaxis may operate the Platform under its own brand, remove Digit2AI attribution, and customize visual elements. Pinaxis may not represent itself as the developer of the Platform's core technology.</p>
+  <p>2.3. <strong>Deployment.</strong> Pinaxis may deploy the Platform on its own infrastructure (on-premises), cloud, or hybrid environments. Digit2AI will assist with the initial deployment as described in Section 5.</p>
+
+  <h2>3. Fees & Payment</h2>
+  <p>3.1. <strong>Annual License Fee.</strong> Pinaxis shall pay Digit2AI an annual license fee of <strong>$140,000 USD</strong> per License Term ("License Fee").</p>
+  <p>3.2. <strong>Good-Faith Deposit.</strong> Upon execution of this Agreement, Pinaxis shall pay a good-faith deposit of <strong>$15,000 USD</strong>, which shall be credited against the first License Fee. The deposit is non-refundable.</p>
+  <p>3.3. <strong>License Balance.</strong> The remaining <strong>$125,000 USD</strong> of the first License Fee is due Net-30 from platform go-live on Pinaxis infrastructure ("Go-Live Date").</p>
+  <p>3.4. <strong>Revenue Share.</strong> Pinaxis shall pay Digit2AI <strong>fifty percent (50%)</strong> of all End-Customer Revenue. Revenue share payments are due monthly, Net-30, accompanied by a revenue report detailing each End Customer, fees collected, and applicable period.</p>
+  <p>3.5. <strong>Renewal.</strong> Subsequent License Terms renew automatically at $140,000 USD per year unless either party provides 90-day written notice of non-renewal.</p>
+  <p>3.6. <strong>Late Payment.</strong> Overdue amounts bear interest at 1.5% per month or the maximum rate permitted by law, whichever is less.</p>
+
+  <h2>4. Intellectual Property</h2>
+  <p>4.1. <strong>Ownership.</strong> Digit2AI retains all right, title, and interest in and to the Platform, including all source code, algorithms, architectures, databases, and documentation. This Agreement does not transfer any IP ownership to Pinaxis.</p>
+  <p>4.2. <strong>Pinaxis Customizations.</strong> Any branding, visual modifications, or configurations made by Pinaxis are owned by Pinaxis. Any modifications to core Platform functionality require Digit2AI's written approval.</p>
+  <p>4.3. <strong>End-Customer Data.</strong> All data uploaded or generated by End Customers is owned by the respective End Customer. Neither Digit2AI nor Pinaxis may use End-Customer data for purposes outside of providing the Platform services.</p>
+
+  <h2>5. Deployment & Support</h2>
+  <p>5.1. <strong>Initial Deployment.</strong> Digit2AI will deploy the Platform on Pinaxis's designated infrastructure within 6-8 weeks of receiving infrastructure access. Deployment includes schema migration, configuration, SSO integration, and admin training.</p>
+  <p>5.2. <strong>On-Premises Installation.</strong> Scope and pricing for on-premises installation services are subject to mutual agreement and may be included within or in addition to the License Fee, as agreed by the parties.</p>
+  <p>5.3. <strong>Updates.</strong> Digit2AI will deliver quarterly feature releases and security patches via private container registry or offline delivery. Digit2AI will provide database migration scripts and release notes for each update.</p>
+  <p>5.4. <strong>Support Tiers.</strong> L3 engineering support (bug fixes, escalation, architecture guidance) is included in the License Fee. L1/L2 end-customer support is Pinaxis's responsibility.</p>
+
+  <h2>6. Revenue Reporting & Audit</h2>
+  <p>6.1. <strong>Monthly Reports.</strong> Pinaxis shall provide Digit2AI with a monthly revenue report within 15 days of each month-end, detailing End-Customer names, fees collected, and services rendered.</p>
+  <p>6.2. <strong>Audit Rights.</strong> Digit2AI may, upon 30 days' written notice, audit Pinaxis's books and records related to End-Customer Revenue, no more than once per calendar year. If an audit reveals underpayment exceeding 5%, Pinaxis shall bear the cost of the audit.</p>
+  <p>6.3. <strong>Shared Dashboard.</strong> The parties agree to maintain a shared revenue tracking dashboard for real-time transparency, to be implemented within 90 days of Go-Live.</p>
+
+  <h2>7. Confidentiality</h2>
+  <p>7.1. Each party agrees to maintain the confidentiality of the other party's proprietary information, including but not limited to source code, pricing, customer lists, and business strategies.</p>
+  <p>7.2. This obligation survives termination for a period of 3 years.</p>
+
+  <h2>8. Non-Compete</h2>
+  <p>8.1. During the License Term and for 12 months following termination, Pinaxis shall not develop, commission, or acquire a competing warehouse data analytics platform that replicates the core functionality of the Platform.</p>
+  <p>8.2. This clause does not restrict Pinaxis from using third-party analytics tools that do not directly compete with the Platform's core warehouse analysis capabilities.</p>
+
+  <h2>9. Term & Termination</h2>
+  <p>9.1. <strong>Term.</strong> This Agreement begins on the Effective Date and continues for successive 12-month License Terms unless terminated.</p>
+  <p>9.2. <strong>Termination for Convenience.</strong> Either party may terminate by providing 90 days' written notice before the end of the current License Term.</p>
+  <p>9.3. <strong>Termination for Cause.</strong> Either party may terminate immediately upon written notice if the other party materially breaches and fails to cure within 30 days of written notice.</p>
+  <p>9.4. <strong>Effect of Termination.</strong> Upon termination: (a) Pinaxis's license to the Platform ceases; (b) Pinaxis shall wind down End-Customer access within 90 days; (c) all outstanding revenue share payments become immediately due; (d) Pinaxis shall return or destroy all Platform materials.</p>
+  <p>9.5. <strong>Survival.</strong> Sections 4, 6, 7, 8, and 10 survive termination.</p>
+
+  <h2>10. Limitation of Liability</h2>
+  <p>10.1. Neither party shall be liable for indirect, incidental, consequential, or punitive damages.</p>
+  <p>10.2. Digit2AI's total aggregate liability under this Agreement shall not exceed the License Fees paid by Pinaxis in the 12 months preceding the claim.</p>
+
+  <h2>11. General Provisions</h2>
+  <p>11.1. <strong>Governing Law.</strong> This Agreement is governed by the laws of the State of Florida, USA.</p>
+  <p>11.2. <strong>Dispute Resolution.</strong> Any disputes shall be resolved by binding arbitration in Miami, Florida, under the rules of the American Arbitration Association.</p>
+  <p>11.3. <strong>Entire Agreement.</strong> This Agreement constitutes the entire agreement between the parties and supersedes all prior discussions, proposals, and agreements.</p>
+  <p>11.4. <strong>Amendments.</strong> Amendments must be in writing and signed by both parties.</p>
+  <p>11.5. <strong>Severability.</strong> If any provision is found unenforceable, the remaining provisions continue in full force.</p>
+  <p>11.6. <strong>Assignment.</strong> Neither party may assign this Agreement without the other party's written consent, except in connection with a merger or acquisition.</p>
+
+  <h2>12. Source Code Escrow</h2>
+  <p>12.1. Upon Pinaxis's request, Digit2AI shall deposit the Platform source code with a mutually agreed-upon escrow agent. Release conditions include: (a) Digit2AI ceases business operations; (b) Digit2AI materially breaches and fails to cure.</p>
+
+  <h2>Signatures</h2>
+  <p style="margin-top:8px;font-size:13px;color:#64748b;">IN WITNESS WHEREOF, the parties have executed this Agreement as of the Effective Date.</p>
+
+  <div class="sig-grid" style="margin-top:32px;">
+    <div class="sig-block">
+      <div class="sig-name">DIGIT2AI LLC</div>
+      <div class="sig-line"></div>
+      <div class="sig-label">Name: Manuel Stagg</div>
+      <div class="sig-label">Title: Chief Executive Officer</div>
+      <div class="sig-label">Date: _______________</div>
+    </div>
+    <div class="sig-block">
+      <div class="sig-name">PINAXIS</div>
+      <div class="sig-line"></div>
+      <div class="sig-label">Name: _______________</div>
+      <div class="sig-label">Title: _______________</div>
+      <div class="sig-label">Date: _______________</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
