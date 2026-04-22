@@ -1,0 +1,68 @@
+{
+  "slug": "pacccfl",
+  "name": "Philippine American Chamber of Commerce - Central Florida",
+  "short_name": "PACC-CFL",
+  "tagline": "Connecting Filipino-American Business in Central Florida",
+  "description": "Founded in 1995, PACC-CFL is a vibrant hub connecting local, regional and overseas Filipino-American businesses. We empower entrepreneurs and businesses by fostering a collaborative environment for growth and success.",
+  "language": "en",
+  "colors": {
+    "primary": "#003DA5",
+    "primary_dark": "#002D7A",
+    "primary_light": "#E6EEF8",
+    "secondary": "#CE1126",
+    "secondary_dark": "#A00D1E",
+    "accent": "#FCD116",
+    "accent_light": "#FFF4CC",
+    "accent_dark": "#C9A60E",
+    "navy": "#1A2332",
+    "navy_light": "#2D3A4D",
+    "white": "#FFFFFF",
+    "gray_50": "#F8F9FA"
+  },
+  "db_prefix": "pacccfl",
+  "mount_path": "/chamber/pacccfl",
+  "jwt_secret": "pacccfl-chamber-jwt-2026",
+  "regions": [
+    { "id": 1, "name": "Orlando Metro" },
+    { "id": 2, "name": "Tampa Bay Area" },
+    { "id": 3, "name": "South Florida" },
+    { "id": 4, "name": "North / Central FL" },
+    { "id": 5, "name": "International / Philippines" }
+  ],
+  "sectors": [
+    "healthcare", "real_estate", "food_service", "technology", "retail",
+    "construction", "professional_services", "education", "finance",
+    "hospitality", "logistics", "manufacturing", "media", "legal",
+    "automotive", "beauty_wellness", "insurance", "consulting",
+    "cybersecurity", "marketing"
+  ],
+  "membership_tiers": {
+    "individual": { "monthly": 10, "annual": 96, "label": "Individual Member" },
+    "business": { "monthly": 25, "annual": 240, "label": "Business Member" },
+    "corporate": { "monthly": 75, "annual": 720, "label": "Corporate Member" },
+    "founding": { "monthly": 0, "annual": 0, "label": "Founding Member (by invitation)" }
+  },
+  "membership_scores": {
+    "individual": 0.3, "business": 0.5, "corporate": 0.8, "founding": 1.0
+  },
+  "governance_roles": [
+    "superadmin",
+    "president", "vp", "secretary", "treasurer", "board_member",
+    "committee_chair", "committee_member",
+    "member"
+  ],
+  "features": {
+    "matching": true,
+    "exchange": true,
+    "mcp": true,
+    "payments": true,
+    "monte_carlo": true,
+    "trust_rank": true
+  },
+  "admin_account": {
+    "email": "admin@pacccfl.chamber",
+    "password": "PACCCFL-Admin-2026!",
+    "first_name": "PACC-CFL",
+    "last_name": "Administrator"
+  }
+}

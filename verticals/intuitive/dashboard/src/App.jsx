@@ -239,6 +239,33 @@ export default function App() {
     }
   }, [location.pathname, currentProject, user])
 
+  // Sidebar search state -- must be before early returns (React hooks rule)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState([])
+  const [searchOpen, setSearchOpen] = useState(false)
+  const searchRef = React.useRef(null)
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!user) return
+    if (!searchQuery || searchQuery.length < 2) { setSearchResults([]); setSearchOpen(false); return }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await api.searchHospitals(searchQuery)
+        setSearchResults(res.data || [])
+        setSearchOpen(true)
+      } catch (e) { setSearchResults([]) }
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchQuery, user])
+
+  useEffect(() => {
+    if (!user) return
+    function handleClick(e) { if (searchRef.current && !searchRef.current.contains(e.target)) setSearchOpen(false) }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [user])
+
   // Show loading while checking auth
   if (!authChecked) {
     return (
@@ -252,33 +279,6 @@ export default function App() {
   if (!user) {
     return <LoginPage onLogin={handleLogin} />
   }
-
-  // Sidebar search state
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState([])
-  const [searchOpen, setSearchOpen] = useState(false)
-  const searchRef = React.useRef(null)
-
-  useEffect(() => {
-    if (!searchQuery || searchQuery.length < 2) { setSearchResults([]); setSearchOpen(false); return }
-    const timer = setTimeout(async () => {
-      try {
-        const res = await api.searchHospitals(searchQuery)
-        setSearchResults(res.data || [])
-        setSearchOpen(true)
-      } catch (e) { setSearchResults([]) }
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [searchQuery])
-
-  // Close search dropdown on outside click
-  useEffect(() => {
-    function handleClick(e) { if (searchRef.current && !searchRef.current.contains(e.target)) setSearchOpen(false) }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
-
-  const navigate = useNavigate()
 
   return (
     <div className="flex min-h-screen">
