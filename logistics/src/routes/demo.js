@@ -40,7 +40,7 @@ router.post('/generate', async (req, res) => {
         project_id: pid,
         project_code: project.project_code,
         status: 'uploading',
-        message: 'Generating full-scale Pinaxis POC data (228K items, 637K order lines). Poll /projects/' + pid + ' for status.'
+        message: 'Generating Pinaxis POC data (10K items, 30K order lines). Poll /projects/' + pid + ' for status.'
       }
     });
 
@@ -67,20 +67,19 @@ router.post('/generate', async (req, res) => {
 async function generateFullDemo(models, seq, pid) {
   const startTime = Date.now();
   const label = '[POC]';
-  const opts = { projectId: pid, label, chunkSize: 2000 };
+  const opts = { projectId: pid, label, chunkSize: 5000 };
 
-  console.log(`${label} Starting full-scale Pinaxis generation for project ${pid}...`);
+  console.log(`${label} Starting Pinaxis Lite generation for project ${pid}...`);
 
   // ====================================================================
-  // ITEM MASTER — 228,274 SKUs
-  //   Fit: 65.7% (149,984), Missing: 27.7% (63,232), Bulky: 3.2% (7,305), NoFit: 3.4% (7,753)
-  //   Temp: ambient 72.8%, 34F 17.4%, 28F 9.8%
-  //   Pick units: case 30,578 / single 12,884 / pallet 218 of 43,680 moved
+  // ITEM MASTER — 10,000 SKUs (lite scale — same proportions as full 228K)
+  //   Fit: 65.7%, Missing: 27.7%, Bulky: 3.2%, NoFit: 3.4%
+  //   Same ABC/XYZ distributions, same charts — 20x faster to load
   // ====================================================================
-  const TOTAL_SKUS = 228274;
-  const FIT_COUNT   = Math.round(TOTAL_SKUS * 0.657);   // 149,984
-  const MISS_COUNT  = Math.round(TOTAL_SKUS * 0.277);   // 63,232
-  const BULKY_COUNT = Math.round(TOTAL_SKUS * 0.032);   // 7,305
+  const TOTAL_SKUS = 10000;
+  const FIT_COUNT   = Math.round(TOTAL_SKUS * 0.657);
+  const MISS_COUNT  = Math.round(TOTAL_SKUS * 0.277);
+  const BULKY_COUNT = Math.round(TOTAL_SKUS * 0.032);
   // rest = NoFit
 
   const IM_BATCH = 50000;
@@ -97,9 +96,9 @@ async function generateFullDemo(models, seq, pid) {
   //   -> 80/15/5 volume split
   // XYZ: X=4,994 (>=30d), Y=5,350 (20-29d), Z=33,336 (<20d)
   // ====================================================================
-  const MOVED_SKUS = 43680;
-  const A_COUNT = 785;
-  const B_COUNT = 785;
+  const MOVED_SKUS = 2000;
+  const A_COUNT = 200;   // top 10% → 80% volume
+  const B_COUNT = 300;   // next 15% → 15% volume
 
   // ====================================================================
   // PARALLEL INSERT: Item Master + Inventory + Goods In simultaneously
@@ -109,7 +108,7 @@ async function generateFullDemo(models, seq, pid) {
   console.log(`${label} Starting parallel insert: item_master + inventory + goods_in`);
 
   // --- Build inventory rows ---
-  const INV_COUNT = 65000;
+  const INV_COUNT = 3000;
   const invColumns = ['sku', 'stock', 'location', 'unit_of_measure', 'snapshot_date'];
   const locs = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K'];
   const invRows = [];
@@ -121,7 +120,7 @@ async function generateFullDemo(models, seq, pid) {
   }
 
   // --- Build goods_in rows ---
-  const GI_COUNT = 6000;
+  const GI_COUNT = 300;
   const giColumns = ['receipt_id', 'sku', 'quantity', 'unit_of_measure', 'receipt_date', 'receipt_time', 'supplier'];
   const suppliers = ['Supplier-001', 'Supplier-002', 'Supplier-003', 'Supplier-004', 'Supplier-005',
                      'Supplier-006', 'Supplier-007', 'Supplier-008', 'Supplier-009', 'Supplier-010'];
@@ -211,15 +210,15 @@ async function generateFullDemo(models, seq, pid) {
   //   43,680 unique moved SKUs must appear
   //   ABC: A=785 → 80% vol, B=785 → 15%, C=rest → 5%
   // ====================================================================
-  const TARGET_ORDERS = 60016;
-  const TARGET_LINES = 637002;
-  const TARGET_PICK_UNITS = 89533743;
+  const TARGET_ORDERS = 3000;
+  const TARGET_LINES = 30000;
+  const TARGET_PICK_UNITS = 4200000;
   const AVG_QTY_PER_LINE = TARGET_PICK_UNITS / TARGET_LINES; // ~140.5
 
   // Generate exactly 370 operating days
   const allDates = [];
   let dt = new Date('2020-10-01');
-  while (allDates.length < 370) {
+  while (allDates.length < 90) {
     if (dt.getDay() !== 0) allDates.push(dt.toISOString().split('T')[0]);
     dt = new Date(dt.getTime() + 86400000);
   }

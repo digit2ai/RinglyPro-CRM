@@ -237,7 +237,7 @@ export default function UploadPage() {
       const result = await generateDemo()
       const demoId = result.project_id || result.id
 
-      setDemoStatus('Generating 228K items + 637K order lines...')
+      setDemoStatus('Generating 10K items + 30K order lines...')
       for (let attempt = 0; attempt < 300; attempt++) {
         await new Promise(r => setTimeout(r, 5000))
         try {
@@ -288,7 +288,7 @@ export default function UploadPage() {
             <div>
               <h3 className="text-lg font-semibold text-white mb-1">Proof of Concept</h3>
               <p className="text-sm text-slate-400">
-                Full Pinaxis-scale warehouse analysis (228K items, 60K orders, 637K lines, 12 analysis modules).
+                Warehouse analysis with 10K items, 3K orders, 30K lines, 12 analysis modules.
               </p>
             </div>
             <div className="flex gap-2 flex-shrink-0">
