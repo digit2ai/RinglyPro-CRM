@@ -1,11 +1,20 @@
 'use strict';
 
 /**
- * AI Business Analyst Agent
- * Takes a hospital name, researches it via web search + AI analysis,
- * and returns a structured hospital profile for the SurgicalMind intake form.
+ * AI Business Analyst Agent — 4-Pass Maker-Checker Architecture
+ *
+ * Pass 0: DATA GATHERER (code) — CMS API + web search + cache + reference data
+ * Pass 1: MAKER (Opus) — researches hospital with real-time context
+ * Pass 2: CHECKER (Opus) — validates maker output against reference data
+ * Pass 3: DETERMINISTIC VALIDATOR (code) — hard math rules, normalization
+ *
+ * Designed for CFO-grade accuracy in hospital profiling.
  */
 
+const fs = require('fs');
+const path = require('path');
+
+// ── Lazy-loaded dependencies ──────────────────────────────────────────
 let _anthropic = null;
 function getAnthropic() {
   if (!_anthropic) {
@@ -15,91 +24,258 @@ function getAnthropic() {
   return _anthropic;
 }
 
-// Industry benchmarks used when specific data isn't found
+const OPUS_MODEL = 'claude-opus-4-20250514';
+
+// ── Research Cache (7-day TTL) ────────────────────────────────────────
+const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const researchCache = new Map();
+
+function normalizeHospitalName(name) {
+  return (name || '').toLowerCase().replace(/[^a-z0-9]/g, '').trim();
+}
+
+function getCachedResearch(hospitalName) {
+  const key = normalizeHospitalName(hospitalName);
+  const cached = researchCache.get(key);
+  if (cached && (Date.now() - cached.timestamp) < CACHE_TTL_MS) {
+    return cached.data;
+  }
+  researchCache.delete(key);
+  return null;
+}
+
+function setCachedResearch(hospitalName, data) {
+  const key = normalizeHospitalName(hospitalName);
+  researchCache.set(key, { data, timestamp: Date.now() });
+}
+
+// ── Industry Benchmarks ───────────────────────────────────────────────
 const INDUSTRY_BENCHMARKS = {
   academic: {
-    annual_surgical_volume_per_bed: 35,
+    volume_per_bed: { min: 30, typical: 40, max: 55 },
     robotic_adoption_pct: 25,
     specialty_mix: { urology: 20, gynecology: 20, general: 25, thoracic: 10, colorectal: 10, head_neck: 5, cardiac: 10 },
-    credentialed_surgeons_per_100_beds: 2.5,
-    interested_surgeons_per_100_beds: 4,
+    surgeons_per_100_beds: { credentialed: 2.5, interested: 4 },
+    or_per_100_beds: 3,
     robot_ready_or_pct: 30,
-    avg_or_count_per_100_beds: 3,
-    avg_los_days: 4.5,
-    complication_rate_pct: 4.5,
-    readmission_rate_pct: 12,
-    payer_mix: { medicare: 35, commercial: 40, medicaid: 15, self_pay: 5 }
+    los_days: 4.5, complication_pct: 4.5, readmission_pct: 12,
+    payer: { medicare: 35, commercial: 40, medicaid: 15, self_pay: 5 }
   },
   community: {
-    annual_surgical_volume_per_bed: 25,
+    volume_per_bed: { min: 18, typical: 25, max: 35 },
     robotic_adoption_pct: 15,
     specialty_mix: { urology: 25, gynecology: 25, general: 30, thoracic: 5, colorectal: 10, head_neck: 3, cardiac: 2 },
-    credentialed_surgeons_per_100_beds: 1.5,
-    interested_surgeons_per_100_beds: 3,
+    surgeons_per_100_beds: { credentialed: 1.5, interested: 3 },
+    or_per_100_beds: 2.5,
     robot_ready_or_pct: 20,
-    avg_or_count_per_100_beds: 2.5,
-    avg_los_days: 3.8,
-    complication_rate_pct: 5,
-    readmission_rate_pct: 13,
-    payer_mix: { medicare: 40, commercial: 35, medicaid: 15, self_pay: 10 }
+    los_days: 3.8, complication_pct: 5, readmission_pct: 13,
+    payer: { medicare: 40, commercial: 35, medicaid: 15, self_pay: 10 }
   },
   specialty: {
-    annual_surgical_volume_per_bed: 50,
+    volume_per_bed: { min: 35, typical: 50, max: 70 },
     robotic_adoption_pct: 30,
     specialty_mix: { urology: 15, gynecology: 15, general: 20, thoracic: 15, colorectal: 10, head_neck: 10, cardiac: 15 },
-    credentialed_surgeons_per_100_beds: 3,
-    interested_surgeons_per_100_beds: 5,
+    surgeons_per_100_beds: { credentialed: 3, interested: 5 },
+    or_per_100_beds: 4,
     robot_ready_or_pct: 40,
-    avg_or_count_per_100_beds: 4,
-    avg_los_days: 3.5,
-    complication_rate_pct: 3.5,
-    readmission_rate_pct: 10,
-    payer_mix: { medicare: 30, commercial: 50, medicaid: 10, self_pay: 10 }
+    los_days: 3.5, complication_pct: 3.5, readmission_pct: 10,
+    payer: { medicare: 30, commercial: 50, medicaid: 10, self_pay: 10 }
   },
   VA: {
-    annual_surgical_volume_per_bed: 20,
+    volume_per_bed: { min: 15, typical: 20, max: 28 },
     robotic_adoption_pct: 10,
     specialty_mix: { urology: 30, gynecology: 5, general: 35, thoracic: 10, colorectal: 10, head_neck: 5, cardiac: 5 },
-    credentialed_surgeons_per_100_beds: 1,
-    interested_surgeons_per_100_beds: 2,
+    surgeons_per_100_beds: { credentialed: 1, interested: 2 },
+    or_per_100_beds: 2,
     robot_ready_or_pct: 15,
-    avg_or_count_per_100_beds: 2,
-    avg_los_days: 5,
-    complication_rate_pct: 5.5,
-    readmission_rate_pct: 14,
-    payer_mix: { medicare: 0, commercial: 0, medicaid: 0, self_pay: 0 }
+    los_days: 5, complication_pct: 5.5, readmission_pct: 14,
+    payer: { medicare: 0, commercial: 0, medicaid: 0, self_pay: 0 }
+  },
+  rural: {
+    volume_per_bed: { min: 10, typical: 15, max: 22 },
+    robotic_adoption_pct: 5,
+    specialty_mix: { urology: 20, gynecology: 25, general: 40, thoracic: 3, colorectal: 7, head_neck: 2, cardiac: 3 },
+    surgeons_per_100_beds: { credentialed: 0.5, interested: 1.5 },
+    or_per_100_beds: 1.5,
+    robot_ready_or_pct: 10,
+    los_days: 3.5, complication_pct: 5.5, readmission_pct: 14,
+    payer: { medicare: 45, commercial: 25, medicaid: 20, self_pay: 10 }
   }
 };
 
-/**
- * Research a hospital and return a structured profile
- */
-async function researchHospital(hospitalName, progressCallback) {
-  const progress = progressCallback || (() => {});
+// National robotic-to-open ratios (from top_25 reference data)
+const NATIONAL_ROBOTIC_RATIOS = {
+  urology: { robotic_pct: 42, source: 'AUA 2024 -- prostatectomy 94.8% robotic, overall urology ~40-45%' },
+  gynecology: { robotic_pct: 28, source: 'AAGL/PMC -- hysterectomy ~61% robotic, overall GYN ~25-30%' },
+  general: { robotic_pct: 22, source: 'iData Research 2025 -- hernia/chole fastest growing' },
+  thoracic: { robotic_pct: 18, source: 'STS Database -- lobectomy growing robotic adoption' },
+  colorectal: { robotic_pct: 17, source: 'PMC -- colectomy grew from 1.5% (2012) to ~15-20% (2024)' },
+  head_neck: { robotic_pct: 12, source: 'TORS adoption estimates' },
+  cardiac: { robotic_pct: 8, source: 'STS -- CABG/mitral valve still early robotic adoption' }
+};
 
-  progress('Starting AI research for: ' + hospitalName);
+// Known hospital system sizes for validation
+const KNOWN_SYSTEMS = {
+  'adventhealth': { min_beds: 100, max_beds: 500, type: 'community', typical_beds: 250 },
+  'hca': { min_beds: 100, max_beds: 600, type: 'community', typical_beds: 300 },
+  'ascension': { min_beds: 100, max_beds: 500, type: 'community', typical_beds: 250 },
+  'commonspirit': { min_beds: 100, max_beds: 500, type: 'community', typical_beds: 250 },
+  'mayo clinic': { min_beds: 200, max_beds: 2000, type: 'academic', typical_beds: 600 },
+  'cleveland clinic': { min_beds: 200, max_beds: 1400, type: 'academic', typical_beds: 500 },
+  'johns hopkins': { min_beds: 800, max_beds: 1200, type: 'academic', typical_beds: 1000 },
+  'orlando health': { min_beds: 600, max_beds: 1000, type: 'academic', typical_beds: 808 },
+  'tampa general': { min_beds: 900, max_beds: 1200, type: 'academic', typical_beds: 1041 },
+  'memorial hermann': { min_beds: 200, max_beds: 700, type: 'community', typical_beds: 400 },
+  'baptist health': { min_beds: 150, max_beds: 600, type: 'community', typical_beds: 300 },
+  'mount sinai': { min_beds: 800, max_beds: 1200, type: 'academic', typical_beds: 1000 },
+  'northwell': { min_beds: 200, max_beds: 900, type: 'academic', typical_beds: 500 },
+  'intermountain': { min_beds: 100, max_beds: 500, type: 'community', typical_beds: 250 }
+};
 
-  // Step 1: Use Claude Sonnet 4 to gather hospital data
-  progress('Searching for hospital data, annual reports, CMS metrics...');
+// ══════════════════════════════════════════════════════════════════════
+// PASS 0: DATA GATHERER (code, no AI)
+// ══════════════════════════════════════════════════════════════════════
+async function gatherExternalData(hospitalName, state, progress) {
+  const externalData = {
+    cms_metrics: null,
+    cms_provider: null,
+    web_search_results: null,
+    known_system_bounds: null,
+    national_ratios: NATIONAL_ROBOTIC_RATIOS
+  };
 
-  const researchPrompt = `You are a hospital business analyst researching "${hospitalName}" to build a da Vinci robotic surgery business plan.
+  // 1. CMS Hospital Compare lookup
+  progress('Pass 0: Fetching CMS Hospital Compare data...');
+  try {
+    const cmsClient = require('./cms-hospital-compare');
+    const cmsResult = await cmsClient.fetchAllForHospital(hospitalName, state || '');
+    if (cmsResult && cmsResult.provider) {
+      externalData.cms_provider = cmsResult.provider;
+      externalData.cms_metrics = cmsResult.metrics || [];
+      progress('Pass 0: CMS data found -- provider ID: ' + (cmsResult.provider.provider_id || 'N/A') + ', ' + (cmsResult.metrics || []).length + ' metrics');
+    } else {
+      progress('Pass 0: CMS lookup -- hospital not found in CMS database');
+    }
+  } catch (e) {
+    progress('Pass 0: CMS fetch skipped (' + e.message + ')');
+  }
 
-Research and provide the following data points. Use your training knowledge about this hospital. If you know specific facts, provide them. If you must estimate, use realistic values based on the hospital's known size, type, and location.
+  // 2. Web search for recent data (Brave Search or fallback)
+  progress('Pass 0: Searching web for recent hospital data...');
+  try {
+    const searchQueries = [
+      `"${hospitalName}" licensed beds 2024 2025 2026`,
+      `"${hospitalName}" da Vinci robotic surgery program`
+    ];
+    const searchResults = [];
 
-Return ONLY a valid JSON object (no markdown, no code fences) with these exact fields:
+    for (const query of searchQueries) {
+      try {
+        // Try Brave Search API if available
+        if (process.env.BRAVE_SEARCH_API_KEY) {
+          const resp = await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=3`, {
+            headers: { 'X-Subscription-Token': process.env.BRAVE_SEARCH_API_KEY, 'Accept': 'application/json' }
+          });
+          if (resp.ok) {
+            const data = await resp.json();
+            const snippets = (data.web?.results || []).map(r => r.title + ': ' + r.description).join('\n');
+            if (snippets) searchResults.push({ query, snippets });
+          }
+        }
+      } catch (e) { /* search failed, continue */ }
+    }
+
+    if (searchResults.length > 0) {
+      externalData.web_search_results = searchResults;
+      progress('Pass 0: Web search found ' + searchResults.length + ' result sets');
+    } else {
+      progress('Pass 0: Web search -- no results (Brave API key not configured or no matches)');
+    }
+  } catch (e) {
+    progress('Pass 0: Web search skipped');
+  }
+
+  // 3. Check known hospital system bounds
+  const nameLower = hospitalName.toLowerCase();
+  for (const [system, bounds] of Object.entries(KNOWN_SYSTEMS)) {
+    if (nameLower.includes(system)) {
+      externalData.known_system_bounds = { system_name: system, ...bounds };
+      progress('Pass 0: Matched known system "' + system + '" -- typical beds: ' + bounds.typical_beds);
+      break;
+    }
+  }
+
+  return externalData;
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// PASS 1: MAKER (Opus -- research with real-time context)
+// ══════════════════════════════════════════════════════════════════════
+async function runMaker(hospitalName, externalData, progress) {
+  progress('Pass 1 (Maker): Opus researching hospital with real-time data context...');
+
+  // Build context from Pass 0
+  let contextBlock = '';
+
+  if (externalData.cms_provider) {
+    contextBlock += `\n\nCMS HOSPITAL COMPARE DATA (verified, use this):\n`;
+    contextBlock += `Provider ID: ${externalData.cms_provider.provider_id || 'N/A'}\n`;
+    contextBlock += `Official Name: ${externalData.cms_provider.hospital_name || 'N/A'}\n`;
+    contextBlock += `Address: ${externalData.cms_provider.address || ''}, ${externalData.cms_provider.city || ''}, ${externalData.cms_provider.state || ''}\n`;
+    contextBlock += `Hospital Type: ${externalData.cms_provider.hospital_type || 'N/A'}\n`;
+    contextBlock += `Ownership: ${externalData.cms_provider.ownership || 'N/A'}\n`;
+    if (externalData.cms_provider.overall_rating) contextBlock += `CMS Overall Rating: ${externalData.cms_provider.overall_rating}/5 stars\n`;
+  }
+
+  if (externalData.cms_metrics && externalData.cms_metrics.length > 0) {
+    contextBlock += `\nCMS QUALITY METRICS (${externalData.cms_metrics.length} measures):\n`;
+    externalData.cms_metrics.slice(0, 10).forEach(m => {
+      contextBlock += `- ${m.measure_name || m.measure_id}: score=${m.score}, national_avg=${m.national_avg}, comparison=${m.comparison}\n`;
+    });
+  }
+
+  if (externalData.web_search_results && externalData.web_search_results.length > 0) {
+    contextBlock += `\nRECENT WEB SEARCH RESULTS:\n`;
+    externalData.web_search_results.forEach(r => {
+      contextBlock += `Query: "${r.query}"\n${r.snippets}\n\n`;
+    });
+  }
+
+  if (externalData.known_system_bounds) {
+    const ksb = externalData.known_system_bounds;
+    contextBlock += `\nKNOWN HOSPITAL SYSTEM DATA:\n`;
+    contextBlock += `System: ${ksb.system_name} -- typical beds per facility: ${ksb.typical_beds} (range: ${ksb.min_beds}-${ksb.max_beds}), typical type: ${ksb.type}\n`;
+  }
+
+  contextBlock += `\nNATIONAL ROBOTIC-TO-OPEN RATIOS (use for specialty robotic estimates):\n`;
+  for (const [spec, data] of Object.entries(NATIONAL_ROBOTIC_RATIOS)) {
+    contextBlock += `- ${spec}: ~${data.robotic_pct}% robotic nationally (${data.source})\n`;
+  }
+
+  const researchPrompt = `You are researching "${hospitalName}" to build a da Vinci robotic surgery business plan.
+
+${contextBlock}
+
+Using the VERIFIED DATA above (CMS, web search, known system data) AND your training knowledge, provide the following. For each field, indicate if the value is CONFIRMED (from CMS/verified source) or ESTIMATED (your best assessment).
+
+Return ONLY a valid JSON object with these exact fields:
 
 {
   "hospital_name": "Official full name",
   "hospital_type": "academic OR community OR specialty OR rural OR VA OR military",
   "bed_count": number,
+  "bed_count_confidence": "confirmed OR estimated",
+  "bed_count_source": "where this number comes from",
   "state": "2-letter state code",
   "country": "United States",
-  "annual_surgical_volume": number (total surgeries per year),
-  "current_robotic_cases": number (current annual robotic cases, 0 if none),
+  "annual_surgical_volume": number,
+  "annual_surgical_volume_confidence": "confirmed OR estimated",
+  "current_robotic_cases": number,
+  "current_robotic_cases_confidence": "confirmed OR estimated",
   "current_system": "none OR dV5 OR Xi OR X OR SP OR Si OR competitor",
   "current_system_count": number,
   "current_system_age_years": number or null,
-  "specialty_urology": number (% of surgical volume),
+  "specialty_urology": number,
   "specialty_gynecology": number,
   "specialty_general": number,
   "specialty_thoracic": number,
@@ -107,11 +283,11 @@ Return ONLY a valid JSON object (no markdown, no code fences) with these exact f
   "specialty_head_neck": number,
   "specialty_cardiac": number,
   "credentialed_robotic_surgeons": number,
-  "surgeons_interested": number (surgeons who could adopt robotic but haven't yet),
-  "convertible_lap_cases": number (laparoscopic cases that could go robotic),
+  "surgeons_interested": number,
+  "convertible_lap_cases": number,
   "total_or_count": number,
   "robot_ready_ors": number,
-  "or_sqft": number (average OR square footage),
+  "or_sqft": number,
   "ceiling_height_ft": number,
   "capital_budget": "<1M OR 1-2M OR 2-3M OR 3M+",
   "acquisition_preference": "purchase OR lease OR usage_based",
@@ -124,295 +300,363 @@ Return ONLY a valid JSON object (no markdown, no code fences) with these exact f
   "payer_self_pay_pct": number,
   "value_based_contract_pct": number,
   "competitor_robot_nearby": boolean,
-  "competitor_details": "string describing nearby competitor robotic programs",
+  "competitor_details": "string",
   "primary_goal": "volume_growth OR cost_reduction OR competitive OR quality OR recruitment",
-  "notes": "Key facts about this hospital: # of campuses, recent expansions, robotic surgery program history, notable specialties, awards, Magnet status, etc.",
-  "research_sources": ["list of sources/knowledge used"],
+  "notes": "Key facts, recent expansions, robotic program history, Magnet status",
+  "research_sources": ["list"],
   "confidence_level": "high OR medium OR low",
-  "data_notes": "What was estimated vs. confirmed from known data"
+  "data_notes": "What was confirmed vs estimated",
+  "field_confidence": {}
 }
+
+The "field_confidence" object should map each major field to "confirmed" or "estimated":
+{ "bed_count": "confirmed", "annual_surgical_volume": "estimated", ... }
 
 IMPORTANT:
-- BED COUNT ACCURACY IS CRITICAL. Do NOT underestimate. Check licensed beds, not just staffed beds. Many hospitals have expanded recently. If unsure, estimate HIGH not low. Community hospitals in growing suburban markets (Florida, Texas, etc.) often have 150-300+ beds. AdventHealth, HCA, and similar systems typically have 150-400 beds per facility.
-- specialty percentages must sum to 100
-- Be realistic -- large academic centers like Orlando Health have 800+ beds and 40,000+ surgeries/year
-- Community hospitals typically have 150-300 beds and 3,000-8,000 surgeries/year
-- Suburban growth hospitals (AdventHealth, HCA, etc.) in Florida/Texas often have 200-400 beds
-- If the hospital is known to have da Vinci systems, reflect that
-- Consider the competitive landscape in the hospital's market
-- annual_surgical_volume should be proportional to bed count: roughly 20-40 surgeries per bed per year depending on hospital type
-- Return ONLY the JSON object, nothing else`;
+- USE CMS DATA when available -- it is the most reliable source
+- Specialty percentages MUST sum to exactly 100
+- Bed count: use LICENSED beds, account for recent expansions
+- Surgical volume must be proportional to bed count (20-50/bed/year)
+- Return ONLY the JSON object`;
 
-  // ============================================================
-  // MAKER-CHECKER ARCHITECTURE (Dual-Pass Validation)
-  // Pass 1 (MAKER): Opus researches and produces initial hospital profile
-  // Pass 2 (CHECKER): Opus reviews the maker's output, cross-references
-  //   for accuracy, flags inconsistencies, and corrects errors
-  // ============================================================
+  const message = await getAnthropic().messages.create({
+    model: OPUS_MODEL,
+    max_tokens: 5000,
+    system: 'You are a senior hospital business intelligence analyst. ACCURACY IS PARAMOUNT -- this data will be presented to hospital CFOs. Use the verified CMS and web data provided. When data is confirmed from a source, mark it confirmed. When you estimate, explain your reasoning. Return only valid JSON.',
+    messages: [{ role: 'user', content: researchPrompt }]
+  });
 
-  let researchData;
-  try {
-    const OPUS_MODEL = 'claude-opus-4-20250514';
+  const content = (message.content[0]?.text || '').trim();
+  const jsonStr = content.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
+  const makerData = JSON.parse(jsonStr);
 
-    // ── PASS 1: MAKER ──────────────────────────────────────────
-    progress('Pass 1 (Maker): Opus researching hospital data...');
+  const confirmedFields = Object.values(makerData.field_confidence || {}).filter(v => v === 'confirmed').length;
+  const totalFields = Object.keys(makerData.field_confidence || {}).length;
+  progress('Pass 1 complete -- ' + (makerData.hospital_name || hospitalName) + ', ' + makerData.bed_count + ' beds, ' + confirmedFields + '/' + totalFields + ' fields confirmed');
 
-    const makerSystemPrompt = 'You are a senior hospital business intelligence analyst with 20+ years of experience in US hospital systems, robotic surgery programs, and healthcare operations. You have deep expertise in da Vinci robotic surgical systems by Intuitive Surgical. ACCURACY IS PARAMOUNT -- this data will be presented to hospital CFOs and Intuitive Surgical executives. For bed counts, use LICENSED bed counts (not staffed), and account for recent expansions announced in press releases or annual reports. For surgical volumes, use realistic numbers proportional to bed count (20-40 surgeries/bed/year for community, 30-50 for academic). When you KNOW a fact, mark it confirmed. When you ESTIMATE, mark it estimated and explain your reasoning. Return only valid JSON -- no markdown, no code fences, no explanation.';
+  return makerData;
+}
 
-    const makerMessage = await getAnthropic().messages.create({
-      model: OPUS_MODEL,
-      max_tokens: 4096,
-      system: makerSystemPrompt,
-      messages: [
-        { role: 'user', content: researchPrompt }
-      ]
-    });
+// ══════════════════════════════════════════════════════════════════════
+// PASS 2: CHECKER (Opus -- validate against reference data)
+// ══════════════════════════════════════════════════════════════════════
+async function runChecker(hospitalName, makerData, externalData, progress) {
+  progress('Pass 2 (Checker): Opus validating against reference data...');
 
-    const makerContent = (makerMessage.content[0]?.text || '').trim();
-    const makerJsonStr = makerContent.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
-    const makerData = JSON.parse(makerJsonStr);
-    progress('Pass 1 complete -- initial profile: ' + (makerData.hospital_name || hospitalName) + ', ' + (makerData.bed_count || '?') + ' beds, confidence: ' + (makerData.confidence_level || 'unknown'));
+  const bench = INDUSTRY_BENCHMARKS[makerData.hospital_type] || INDUSTRY_BENCHMARKS.community;
 
-    // ── PASS 2: CHECKER ────────────────────────────────────────
-    progress('Pass 2 (Checker): Opus validating and cross-referencing...');
+  const checkerPrompt = `You are a QUALITY ASSURANCE REVIEWER for hospital business intelligence. Review this profile for "${hospitalName}".
 
-    const checkerPrompt = `You are a QUALITY ASSURANCE REVIEWER for hospital business intelligence data. A research analyst produced the following hospital profile for "${hospitalName}". Your job is to:
-
-1. VERIFY each data point for plausibility and internal consistency
-2. FLAG any values that seem wrong (e.g., bed count too low for hospital type, surgical volume inconsistent with bed count, specialty percentages don't match hospital's known programs)
-3. CORRECT any errors with better estimates and explain your corrections
-4. CHECK that:
-   - bed_count is the LICENSED bed count (not staffed), accounting for recent expansions
-   - annual_surgical_volume is proportional (community: 20-30/bed, academic: 30-50/bed)
-   - specialty percentages sum to exactly 100
-   - current_robotic_cases is realistic for the hospital's known robotic program
-   - payer_mix percentages sum to ~100
-   - competitive landscape reflects the actual market
-
-ORIGINAL RESEARCH DATA:
+MAKER'S OUTPUT:
 ${JSON.stringify(makerData, null, 2)}
 
-Return the CORRECTED JSON object with the same exact fields. Add a "checker_corrections" field (array of strings) listing every correction you made and why. If no corrections needed, set it to an empty array. Also update "confidence_level" based on your review (high = most fields verified, medium = some estimated, low = many unknowns).
+VALIDATION REFERENCE DATA:
 
-Return ONLY valid JSON -- no markdown, no code fences, no explanation.`;
+1. INDUSTRY BENCHMARKS for "${makerData.hospital_type}" hospitals:
+   - Surgical volume/bed: ${bench.volume_per_bed.min}-${bench.volume_per_bed.max} (typical: ${bench.volume_per_bed.typical})
+   - Robotic adoption: ~${bench.robotic_adoption_pct}%
+   - Surgeons/100 beds: ${bench.surgeons_per_100_beds.credentialed} credentialed
+   - ORs/100 beds: ${bench.or_per_100_beds}
 
-    const checkerMessage = await getAnthropic().messages.create({
-      model: OPUS_MODEL,
-      max_tokens: 4096,
-      system: 'You are a meticulous quality assurance reviewer for hospital data. Your role is to catch errors, inconsistencies, and implausible values in hospital profiles. You are the last line of defense before this data is presented to hospital CFOs. Be thorough but fair -- only correct values that are clearly wrong or implausible. Return only valid JSON.',
-      messages: [
-        { role: 'user', content: checkerPrompt }
-      ]
-    });
+2. KNOWN SYSTEM BOUNDS: ${externalData.known_system_bounds ? JSON.stringify(externalData.known_system_bounds) : 'None matched'}
 
-    const checkerContent = (checkerMessage.content[0]?.text || '').trim();
-    const checkerJsonStr = checkerContent.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
-    const checkerData = JSON.parse(checkerJsonStr);
+3. CMS VERIFIED DATA: ${externalData.cms_provider ? 'Provider found: ' + (externalData.cms_provider.hospital_name || 'N/A') : 'No CMS match'}
 
-    const corrections = checkerData.checker_corrections || [];
-    if (corrections.length > 0) {
-      progress('Pass 2 found ' + corrections.length + ' correction(s): ' + corrections.slice(0, 3).join('; '));
-    } else {
-      progress('Pass 2 complete -- all values validated, no corrections needed');
-    }
+4. NATIONAL ROBOTIC RATIOS:
+${Object.entries(NATIONAL_ROBOTIC_RATIOS).map(([s, d]) => `   - ${s}: ~${d.robotic_pct}% robotic`).join('\n')}
 
-    // Use checker's corrected data as final output
-    researchData = checkerData;
-    researchData.data_notes = (researchData.data_notes || '') + ' | Maker-Checker validated. ' + (corrections.length > 0 ? corrections.length + ' corrections applied.' : 'No corrections needed.');
-    researchData.research_sources = [...(makerData.research_sources || []), ...(checkerData.research_sources || [])].filter((v, i, a) => a.indexOf(v) === i);
+YOUR VALIDATION CHECKLIST:
+- bed_count: Is it within the known system bounds? Is it licensed (not staffed)?
+- annual_surgical_volume / bed_count = ${makerData.annual_surgical_volume || 0} / ${makerData.bed_count || 1} = ${Math.round((makerData.annual_surgical_volume || 0) / Math.max(makerData.bed_count || 1, 1))} surgeries/bed. Is this in the ${bench.volume_per_bed.min}-${bench.volume_per_bed.max} range?
+- Specialty percentages sum: ${['specialty_urology', 'specialty_gynecology', 'specialty_general', 'specialty_thoracic', 'specialty_colorectal', 'specialty_head_neck', 'specialty_cardiac'].reduce((s, f) => s + (makerData[f] || 0), 0)}. Must be exactly 100.
+- Payer percentages sum: ${(makerData.payer_medicare_pct || 0) + (makerData.payer_commercial_pct || 0) + (makerData.payer_medicaid_pct || 0) + (makerData.payer_self_pay_pct || 0)}. Should be ~100.
+- current_robotic_cases (${makerData.current_robotic_cases || 0}) <= annual_surgical_volume * 0.8 (${Math.round((makerData.annual_surgical_volume || 0) * 0.8)})?
+- robot_ready_ors (${makerData.robot_ready_ors || 0}) <= total_or_count (${makerData.total_or_count || 0})?
+- credentialed_robotic_surgeons (${makerData.credentialed_robotic_surgeons || 0}) * 400 >= current_robotic_cases (${makerData.current_robotic_cases || 0})? Each surgeon maxes ~350-400 cases/yr.
 
-    progress('Maker-Checker complete (Opus) -- final confidence: ' + (researchData.confidence_level || 'medium'));
-  } catch (err) {
-    console.error('Opus research error:', err);
-    progress('AI research encountered an error, using fallback approach...');
-    researchData = buildFallbackProfile(hospitalName);
+CORRECT any values that fail these checks. Return the corrected JSON with a "checker_corrections" field (array of strings).
+Return ONLY valid JSON.`;
+
+  const message = await getAnthropic().messages.create({
+    model: OPUS_MODEL,
+    max_tokens: 5000,
+    system: 'You are a meticulous QA reviewer. Catch errors using the reference data and math checks provided. Only correct values that are clearly wrong. Return only valid JSON.',
+    messages: [{ role: 'user', content: checkerPrompt }]
+  });
+
+  const content = (message.content[0]?.text || '').trim();
+  const jsonStr = content.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
+  const checkerData = JSON.parse(jsonStr);
+
+  const corrections = checkerData.checker_corrections || [];
+  if (corrections.length > 0) {
+    progress('Pass 2 found ' + corrections.length + ' correction(s): ' + corrections.slice(0, 2).join('; '));
+  } else {
+    progress('Pass 2 -- all values validated, no corrections needed');
   }
 
-  // Step 2: Validate and fill gaps with industry benchmarks
-  progress('Validating data and filling gaps with industry benchmarks...');
-  const validated = validateAndEnrich(researchData);
-
-  // Step 3: Build the project data
-  progress('Building structured hospital profile...');
-  const projectData = buildProjectData(validated);
-
-  progress('Research complete for ' + projectData.hospital_name);
-  return projectData;
+  return checkerData;
 }
 
-/**
- * Build a fallback profile when AI research fails
- */
-function buildFallbackProfile(hospitalName) {
-  const nameLower = hospitalName.toLowerCase();
-  let type = 'community';
-  let beds = 250;
-
-  if (nameLower.includes('university') || nameLower.includes('academic') || nameLower.includes('medical center')) {
-    type = 'academic'; beds = 600;
-  } else if (nameLower.includes('va ') || nameLower.includes('veterans')) {
-    type = 'VA'; beds = 200;
-  } else if (nameLower.includes('children') || nameLower.includes('specialty') || nameLower.includes('cancer')) {
-    type = 'specialty'; beds = 150;
-  } else if (nameLower.includes('regional') || nameLower.includes('general')) {
-    type = 'community'; beds = 300;
-  }
-
-  // Try to extract state from common patterns
-  const stateMatch = hospitalName.match(/\b([A-Z]{2})\b/);
-  const state = stateMatch ? stateMatch[1] : 'FL';
-
-  const bench = INDUSTRY_BENCHMARKS[type] || INDUSTRY_BENCHMARKS.community;
-
-  return {
-    hospital_name: hospitalName,
-    hospital_type: type,
-    bed_count: beds,
-    state: state,
-    country: 'United States',
-    annual_surgical_volume: Math.round(beds * bench.annual_surgical_volume_per_bed),
-    current_robotic_cases: Math.round(beds * bench.annual_surgical_volume_per_bed * bench.robotic_adoption_pct / 100),
-    current_system: bench.robotic_adoption_pct > 15 ? 'Xi' : 'none',
-    current_system_count: bench.robotic_adoption_pct > 15 ? Math.ceil(beds / 300) : 0,
-    current_system_age_years: bench.robotic_adoption_pct > 15 ? 4 : null,
-    ...bench.specialty_mix,
-    specialty_urology: bench.specialty_mix.urology,
-    specialty_gynecology: bench.specialty_mix.gynecology,
-    specialty_general: bench.specialty_mix.general,
-    specialty_thoracic: bench.specialty_mix.thoracic,
-    specialty_colorectal: bench.specialty_mix.colorectal,
-    specialty_head_neck: bench.specialty_mix.head_neck,
-    specialty_cardiac: bench.specialty_mix.cardiac,
-    credentialed_robotic_surgeons: Math.round(beds * bench.credentialed_surgeons_per_100_beds / 100),
-    surgeons_interested: Math.round(beds * bench.interested_surgeons_per_100_beds / 100),
-    convertible_lap_cases: Math.round(beds * bench.annual_surgical_volume_per_bed * 0.3),
-    total_or_count: Math.round(beds * bench.avg_or_count_per_100_beds / 100),
-    robot_ready_ors: Math.max(1, Math.round(beds * bench.avg_or_count_per_100_beds / 100 * bench.robot_ready_or_pct / 100)),
-    or_sqft: 600,
-    ceiling_height_ft: 10,
-    capital_budget: beds > 400 ? '3M+' : beds > 200 ? '2-3M' : '1-2M',
-    acquisition_preference: 'purchase',
-    avg_los_days: bench.avg_los_days,
-    complication_rate_pct: bench.complication_rate_pct,
-    readmission_rate_pct: bench.readmission_rate_pct,
-    payer_medicare_pct: bench.payer_mix.medicare,
-    payer_commercial_pct: bench.payer_mix.commercial,
-    payer_medicaid_pct: bench.payer_mix.medicaid,
-    payer_self_pay_pct: bench.payer_mix.self_pay,
-    value_based_contract_pct: 20,
-    competitor_robot_nearby: true,
-    competitor_details: 'Market analysis pending',
-    primary_goal: 'volume_growth',
-    notes: 'Profile generated from industry benchmarks. Recommend validating with hospital contact.',
-    research_sources: ['Industry benchmarks', 'Hospital name analysis'],
-    confidence_level: 'low',
-    data_notes: 'All values estimated from industry averages based on hospital type and size.'
-  };
-}
-
-/**
- * Validate AI output and fill gaps with benchmarks
- */
-function validateAndEnrich(data) {
+// ══════════════════════════════════════════════════════════════════════
+// PASS 3: DETERMINISTIC VALIDATOR (code, no AI)
+// ══════════════════════════════════════════════════════════════════════
+function runDeterministicValidator(data, progress) {
+  progress('Pass 3 (Validator): Running deterministic math checks...');
+  const issues = [];
   const type = data.hospital_type || 'community';
   const bench = INDUSTRY_BENCHMARKS[type] || INDUSTRY_BENCHMARKS.community;
-  const beds = data.bed_count || 250;
+  const beds = data.bed_count || 200;
 
-  // Ensure specialty mix sums to 100
+  // 1. Specialty percentages must sum to exactly 100
   const specFields = ['specialty_urology', 'specialty_gynecology', 'specialty_general',
     'specialty_thoracic', 'specialty_colorectal', 'specialty_head_neck', 'specialty_cardiac'];
   let specSum = specFields.reduce((s, f) => s + (data[f] || 0), 0);
   if (specSum === 0) {
-    // Use benchmarks
-    data.specialty_urology = bench.specialty_mix.urology;
-    data.specialty_gynecology = bench.specialty_mix.gynecology;
-    data.specialty_general = bench.specialty_mix.general;
-    data.specialty_thoracic = bench.specialty_mix.thoracic;
-    data.specialty_colorectal = bench.specialty_mix.colorectal;
-    data.specialty_head_neck = bench.specialty_mix.head_neck;
-    data.specialty_cardiac = bench.specialty_mix.cardiac;
-  } else if (Math.abs(specSum - 100) > 5) {
-    // Normalize to 100
+    const bm = bench.specialty_mix;
+    specFields.forEach(f => { data[f] = bm[f.replace('specialty_', '')] || 0; });
+    issues.push('FIXED: Specialty mix was all zeros -- applied ' + type + ' benchmarks');
+    specSum = 100;
+  } else if (Math.abs(specSum - 100) > 0.5) {
     const factor = 100 / specSum;
-    for (const f of specFields) {
-      data[f] = Math.round((data[f] || 0) * factor);
-    }
-    // Fix rounding
+    specFields.forEach(f => { data[f] = Math.round((data[f] || 0) * factor); });
     const newSum = specFields.reduce((s, f) => s + data[f], 0);
     data.specialty_general = (data.specialty_general || 0) + (100 - newSum);
+    issues.push('FIXED: Specialty sum was ' + specSum + ' -- normalized to 100');
   }
 
-  // Fill missing numeric fields with benchmarks
-  if (!data.annual_surgical_volume) data.annual_surgical_volume = Math.round(beds * bench.annual_surgical_volume_per_bed);
-  if (!data.total_or_count) data.total_or_count = Math.max(4, Math.round(beds * bench.avg_or_count_per_100_beds / 100));
-  if (!data.robot_ready_ors) data.robot_ready_ors = Math.max(1, Math.round(data.total_or_count * bench.robot_ready_or_pct / 100));
-  if (!data.or_sqft) data.or_sqft = 600;
-  if (!data.ceiling_height_ft) data.ceiling_height_ft = 10;
-  if (!data.avg_los_days) data.avg_los_days = bench.avg_los_days;
-  if (!data.complication_rate_pct) data.complication_rate_pct = bench.complication_rate_pct;
-  if (!data.readmission_rate_pct) data.readmission_rate_pct = bench.readmission_rate_pct;
-  if (!data.credentialed_robotic_surgeons && data.credentialed_robotic_surgeons !== 0) {
-    data.credentialed_robotic_surgeons = Math.round(beds * bench.credentialed_surgeons_per_100_beds / 100);
-  }
-  if (!data.surgeons_interested) data.surgeons_interested = Math.round(beds * bench.interested_surgeons_per_100_beds / 100);
-  if (!data.convertible_lap_cases) data.convertible_lap_cases = Math.round(data.annual_surgical_volume * 0.3);
-
-  // Ensure payer mix sums to ~100
+  // 2. Payer mix must sum to ~100
   const payerSum = (data.payer_medicare_pct || 0) + (data.payer_commercial_pct || 0) +
     (data.payer_medicaid_pct || 0) + (data.payer_self_pay_pct || 0);
   if (payerSum === 0) {
-    data.payer_medicare_pct = bench.payer_mix.medicare;
-    data.payer_commercial_pct = bench.payer_mix.commercial;
-    data.payer_medicaid_pct = bench.payer_mix.medicaid;
-    data.payer_self_pay_pct = bench.payer_mix.self_pay;
+    data.payer_medicare_pct = bench.payer.medicare;
+    data.payer_commercial_pct = bench.payer.commercial;
+    data.payer_medicaid_pct = bench.payer.medicaid;
+    data.payer_self_pay_pct = bench.payer.self_pay;
+    issues.push('FIXED: Payer mix was all zeros -- applied ' + type + ' benchmarks');
+  } else if (Math.abs(payerSum - 100) > 10) {
+    const factor = 100 / payerSum;
+    data.payer_medicare_pct = Math.round((data.payer_medicare_pct || 0) * factor);
+    data.payer_commercial_pct = Math.round((data.payer_commercial_pct || 0) * factor);
+    data.payer_medicaid_pct = Math.round((data.payer_medicaid_pct || 0) * factor);
+    data.payer_self_pay_pct = 100 - data.payer_medicare_pct - data.payer_commercial_pct - data.payer_medicaid_pct;
+    issues.push('FIXED: Payer sum was ' + payerSum + ' -- normalized to 100');
   }
 
+  // 3. Surgical volume proportional to bed count
+  const volumePerBed = beds > 0 ? Math.round(data.annual_surgical_volume / beds) : 0;
+  if (!data.annual_surgical_volume || data.annual_surgical_volume === 0) {
+    data.annual_surgical_volume = Math.round(beds * bench.volume_per_bed.typical);
+    issues.push('FIXED: Surgical volume was 0 -- set to ' + data.annual_surgical_volume + ' (' + bench.volume_per_bed.typical + '/bed)');
+  } else if (volumePerBed < bench.volume_per_bed.min * 0.7) {
+    const corrected = Math.round(beds * bench.volume_per_bed.min);
+    issues.push('FLAG: Volume/bed ratio (' + volumePerBed + ') below minimum (' + bench.volume_per_bed.min + '). Was ' + data.annual_surgical_volume + ', corrected to ' + corrected);
+    data.annual_surgical_volume = corrected;
+  } else if (volumePerBed > bench.volume_per_bed.max * 1.3) {
+    const corrected = Math.round(beds * bench.volume_per_bed.max);
+    issues.push('FLAG: Volume/bed ratio (' + volumePerBed + ') above maximum (' + bench.volume_per_bed.max + '). Was ' + data.annual_surgical_volume + ', corrected to ' + corrected);
+    data.annual_surgical_volume = corrected;
+  }
+
+  // 4. Robotic cases cannot exceed 80% of total volume
+  if (data.current_robotic_cases > data.annual_surgical_volume * 0.8) {
+    const corrected = Math.round(data.annual_surgical_volume * 0.4);
+    issues.push('FIXED: Robotic cases (' + data.current_robotic_cases + ') > 80% of volume. Set to ' + corrected);
+    data.current_robotic_cases = corrected;
+  }
+
+  // 5. Robot-ready ORs cannot exceed total ORs
+  if (!data.total_or_count) data.total_or_count = Math.max(4, Math.round(beds * bench.or_per_100_beds / 100));
+  if (!data.robot_ready_ors) data.robot_ready_ors = Math.max(1, Math.round(data.total_or_count * bench.robot_ready_or_pct / 100));
+  if (data.robot_ready_ors > data.total_or_count) {
+    issues.push('FIXED: Robot-ready ORs (' + data.robot_ready_ors + ') > total ORs (' + data.total_or_count + ')');
+    data.robot_ready_ors = Math.min(data.robot_ready_ors, data.total_or_count);
+  }
+
+  // 6. Surgeon capacity check
+  if (!data.credentialed_robotic_surgeons) {
+    data.credentialed_robotic_surgeons = Math.max(1, Math.round(beds * bench.surgeons_per_100_beds.credentialed / 100));
+  }
+  if (data.current_robotic_cases > 0 && data.credentialed_robotic_surgeons * 400 < data.current_robotic_cases) {
+    const needed = Math.ceil(data.current_robotic_cases / 350);
+    issues.push('FLAG: ' + data.credentialed_robotic_surgeons + ' surgeons cannot do ' + data.current_robotic_cases + ' cases (max ~350/surgeon/yr). Adjusted to ' + needed);
+    data.credentialed_robotic_surgeons = needed;
+  }
+  if (!data.surgeons_interested) data.surgeons_interested = Math.round(beds * bench.surgeons_per_100_beds.interested / 100);
+
+  // 7. Fill remaining gaps
+  if (!data.convertible_lap_cases) data.convertible_lap_cases = Math.round(data.annual_surgical_volume * 0.3);
+  if (!data.or_sqft) data.or_sqft = 600;
+  if (!data.ceiling_height_ft) data.ceiling_height_ft = 10;
+  if (!data.avg_los_days) data.avg_los_days = bench.los_days;
+  if (!data.complication_rate_pct) data.complication_rate_pct = bench.complication_pct;
+  if (!data.readmission_rate_pct) data.readmission_rate_pct = bench.readmission_pct;
   if (!data.capital_budget) data.capital_budget = beds > 400 ? '3M+' : beds > 200 ? '2-3M' : '1-2M';
   if (!data.acquisition_preference) data.acquisition_preference = 'purchase';
   if (!data.primary_goal) data.primary_goal = 'volume_growth';
   if (!data.value_based_contract_pct) data.value_based_contract_pct = 20;
 
+  // 8. Compute final per-field confidence
+  const fieldConfidence = data.field_confidence || {};
+  const confirmedCount = Object.values(fieldConfidence).filter(v => v === 'confirmed').length;
+  const totalMajorFields = 10; // bed_count, volume, robotic, system, specialties, surgeons, ORs, payer, LOS, readmission
+  if (confirmedCount >= 7) data.confidence_level = 'high';
+  else if (confirmedCount >= 4) data.confidence_level = 'medium';
+  else data.confidence_level = 'low';
+
+  if (issues.length > 0) {
+    progress('Pass 3 applied ' + issues.length + ' fix(es): ' + issues.slice(0, 2).join('; '));
+  } else {
+    progress('Pass 3 -- all math checks passed');
+  }
+
+  data.deterministic_fixes = issues;
   return data;
 }
 
-/**
- * Convert validated research data into the project creation format
- */
+// ══════════════════════════════════════════════════════════════════════
+// MAIN: researchHospital (4-pass orchestrator)
+// ══════════════════════════════════════════════════════════════════════
+async function researchHospital(hospitalName, progressCallback) {
+  const progress = progressCallback || (() => {});
+  progress('Starting 4-pass research for: ' + hospitalName);
+
+  // Check cache first
+  const cached = getCachedResearch(hospitalName);
+  if (cached) {
+    progress('Cache hit -- using cached research (< 7 days old)');
+    return cached;
+  }
+
+  let researchData;
+  try {
+    // Pass 0: Gather external data
+    const externalData = await gatherExternalData(hospitalName, null, progress);
+
+    // Pass 1: Maker
+    const makerData = await runMaker(hospitalName, externalData, progress);
+
+    // Pass 2: Checker
+    const checkerData = await runChecker(hospitalName, makerData, externalData, progress);
+
+    // Pass 3: Deterministic validator
+    researchData = runDeterministicValidator(checkerData, progress);
+
+    // Merge sources
+    researchData.research_sources = [
+      ...(makerData.research_sources || []),
+      ...(checkerData.research_sources || []),
+      ...(externalData.cms_provider ? ['CMS Hospital Compare API'] : []),
+      ...(externalData.web_search_results ? ['Web search results'] : [])
+    ].filter((v, i, a) => a.indexOf(v) === i);
+
+    // Add validation metadata
+    researchData.data_notes = (researchData.data_notes || '') +
+      ' | 4-Pass validated: Pass 0 (data gather), Pass 1 (Opus maker), Pass 2 (Opus checker' +
+      (researchData.checker_corrections?.length ? ', ' + researchData.checker_corrections.length + ' corrections' : '') +
+      '), Pass 3 (deterministic' +
+      (researchData.deterministic_fixes?.length ? ', ' + researchData.deterministic_fixes.length + ' fixes' : '') + ')';
+
+    progress('4-pass research complete -- confidence: ' + (researchData.confidence_level || 'medium'));
+  } catch (err) {
+    console.error('4-pass research error:', err);
+    progress('Research error, using fallback: ' + err.message);
+    researchData = buildFallbackProfile(hospitalName);
+  }
+
+  // Retry on low confidence
+  if (researchData.confidence_level === 'low' && !researchData._retried) {
+    progress('Low confidence detected -- running retry pass...');
+    researchData._retried = true;
+    try {
+      const retryData = await researchHospital(hospitalName + ' hospital', progress);
+      if (retryData.confidence_level !== 'low') {
+        retryData.hospital_name = researchData.hospital_name || hospitalName;
+        researchData = retryData;
+        progress('Retry improved confidence to: ' + researchData.confidence_level);
+      }
+    } catch (e) {
+      progress('Retry failed (non-fatal): ' + e.message);
+    }
+  }
+
+  // Build final project data and cache
+  const projectData = buildProjectData(researchData);
+  setCachedResearch(hospitalName, projectData);
+
+  progress('Research complete for ' + projectData.hospital_name);
+  return projectData;
+}
+
+// ── Fallback Profile ──────────────────────────────────────────────────
+function buildFallbackProfile(hospitalName) {
+  const nameLower = hospitalName.toLowerCase();
+  let type = 'community', beds = 250;
+
+  if (nameLower.includes('university') || nameLower.includes('academic') || nameLower.includes('medical center')) { type = 'academic'; beds = 600; }
+  else if (nameLower.includes('va ') || nameLower.includes('veterans')) { type = 'VA'; beds = 200; }
+  else if (nameLower.includes('children') || nameLower.includes('specialty') || nameLower.includes('cancer')) { type = 'specialty'; beds = 150; }
+
+  // Check known systems
+  for (const [system, bounds] of Object.entries(KNOWN_SYSTEMS)) {
+    if (nameLower.includes(system)) { beds = bounds.typical_beds; type = bounds.type; break; }
+  }
+
+  const bench = INDUSTRY_BENCHMARKS[type] || INDUSTRY_BENCHMARKS.community;
+  return {
+    hospital_name: hospitalName, hospital_type: type, bed_count: beds,
+    state: 'FL', country: 'United States',
+    annual_surgical_volume: Math.round(beds * bench.volume_per_bed.typical),
+    current_robotic_cases: Math.round(beds * bench.volume_per_bed.typical * bench.robotic_adoption_pct / 100),
+    current_system: bench.robotic_adoption_pct > 15 ? 'Xi' : 'none',
+    current_system_count: bench.robotic_adoption_pct > 15 ? Math.ceil(beds / 300) : 0,
+    specialty_urology: bench.specialty_mix.urology, specialty_gynecology: bench.specialty_mix.gynecology,
+    specialty_general: bench.specialty_mix.general, specialty_thoracic: bench.specialty_mix.thoracic,
+    specialty_colorectal: bench.specialty_mix.colorectal, specialty_head_neck: bench.specialty_mix.head_neck,
+    specialty_cardiac: bench.specialty_mix.cardiac,
+    credentialed_robotic_surgeons: Math.round(beds * bench.surgeons_per_100_beds.credentialed / 100),
+    surgeons_interested: Math.round(beds * bench.surgeons_per_100_beds.interested / 100),
+    convertible_lap_cases: Math.round(beds * bench.volume_per_bed.typical * 0.3),
+    total_or_count: Math.max(4, Math.round(beds * bench.or_per_100_beds / 100)),
+    robot_ready_ors: Math.max(1, Math.round(beds * bench.or_per_100_beds / 100 * bench.robot_ready_or_pct / 100)),
+    or_sqft: 600, ceiling_height_ft: 10,
+    capital_budget: beds > 400 ? '3M+' : beds > 200 ? '2-3M' : '1-2M',
+    acquisition_preference: 'purchase',
+    avg_los_days: bench.los_days, complication_rate_pct: bench.complication_pct, readmission_rate_pct: bench.readmission_pct,
+    payer_medicare_pct: bench.payer.medicare, payer_commercial_pct: bench.payer.commercial,
+    payer_medicaid_pct: bench.payer.medicaid, payer_self_pay_pct: bench.payer.self_pay,
+    value_based_contract_pct: 20, competitor_robot_nearby: true, competitor_details: 'Market analysis pending',
+    primary_goal: 'volume_growth', notes: 'Fallback profile from benchmarks. Validate with hospital contact.',
+    research_sources: ['Industry benchmarks', 'Known system data'], confidence_level: 'low',
+    data_notes: 'All values estimated. Recommend manual validation.', field_confidence: {}
+  };
+}
+
+// ── Build Project Data ────────────────────────────────────────────────
 function buildProjectData(data) {
   return {
-    hospital_name: data.hospital_name,
-    hospital_type: data.hospital_type,
-    bed_count: data.bed_count,
-    state: data.state,
-    country: data.country || 'United States',
+    hospital_name: data.hospital_name, hospital_type: data.hospital_type,
+    bed_count: data.bed_count, state: data.state, country: data.country || 'United States',
     annual_surgical_volume: data.annual_surgical_volume,
     current_robotic_cases: data.current_robotic_cases || 0,
     current_system: data.current_system || 'none',
     current_system_count: data.current_system_count || 0,
     current_system_age_years: data.current_system_age_years || null,
-    specialty_urology: data.specialty_urology || 0,
-    specialty_gynecology: data.specialty_gynecology || 0,
-    specialty_general: data.specialty_general || 0,
-    specialty_thoracic: data.specialty_thoracic || 0,
-    specialty_colorectal: data.specialty_colorectal || 0,
-    specialty_head_neck: data.specialty_head_neck || 0,
+    specialty_urology: data.specialty_urology || 0, specialty_gynecology: data.specialty_gynecology || 0,
+    specialty_general: data.specialty_general || 0, specialty_thoracic: data.specialty_thoracic || 0,
+    specialty_colorectal: data.specialty_colorectal || 0, specialty_head_neck: data.specialty_head_neck || 0,
     specialty_cardiac: data.specialty_cardiac || 0,
     credentialed_robotic_surgeons: data.credentialed_robotic_surgeons || 0,
     surgeons_interested: data.surgeons_interested || 0,
     convertible_lap_cases: data.convertible_lap_cases || 0,
-    total_or_count: data.total_or_count || 0,
-    robot_ready_ors: data.robot_ready_ors || 0,
-    or_sqft: data.or_sqft || 600,
-    ceiling_height_ft: data.ceiling_height_ft || 10,
+    total_or_count: data.total_or_count || 0, robot_ready_ors: data.robot_ready_ors || 0,
+    or_sqft: data.or_sqft || 600, ceiling_height_ft: data.ceiling_height_ft || 10,
     capital_budget: data.capital_budget || '2-3M',
     acquisition_preference: data.acquisition_preference || 'purchase',
-    avg_los_days: data.avg_los_days || 4,
-    complication_rate_pct: data.complication_rate_pct || 5,
+    avg_los_days: data.avg_los_days || 4, complication_rate_pct: data.complication_rate_pct || 5,
     readmission_rate_pct: data.readmission_rate_pct || 12,
-    payer_medicare_pct: data.payer_medicare_pct || 35,
-    payer_commercial_pct: data.payer_commercial_pct || 40,
-    payer_medicaid_pct: data.payer_medicaid_pct || 15,
-    payer_self_pay_pct: data.payer_self_pay_pct || 5,
+    payer_medicare_pct: data.payer_medicare_pct || 35, payer_commercial_pct: data.payer_commercial_pct || 40,
+    payer_medicaid_pct: data.payer_medicaid_pct || 15, payer_self_pay_pct: data.payer_self_pay_pct || 5,
     value_based_contract_pct: data.value_based_contract_pct || 20,
     competitor_robot_nearby: data.competitor_robot_nearby || false,
     competitor_details: data.competitor_details || '',
@@ -420,229 +664,164 @@ function buildProjectData(data) {
     notes: data.notes || '',
     extended_data: {
       ai_researched: true,
+      architecture: '4-pass-maker-checker',
       research_sources: data.research_sources || [],
       confidence_level: data.confidence_level || 'medium',
+      field_confidence: data.field_confidence || {},
+      checker_corrections: data.checker_corrections || [],
+      deterministic_fixes: data.deterministic_fixes || [],
       data_notes: data.data_notes || '',
       researched_at: new Date().toISOString()
     }
   };
 }
 
-/**
- * Full pipeline: research + create project + run analysis + create business plan
- */
+// ── Full Pipeline ─────────────────────────────────────────────────────
 async function runFullPipeline(hospitalName, models, progressCallback) {
   const progress = progressCallback || (() => {});
   const systemMatcher = require('./system-matcher');
-  let drgLib;
-  try { drgLib = require('./drg-reimbursement'); } catch (e) {}
-  let dollarizationEngine;
-  try { dollarizationEngine = require('./clinical-dollarization'); } catch (e) {}
+  let drgLib; try { drgLib = require('./drg-reimbursement'); } catch (e) {}
+  let dollarizationEngine; try { dollarizationEngine = require('./clinical-dollarization'); } catch (e) {}
 
-  // Step 1: Research
   progress('step:research');
   const projectData = await researchHospital(hospitalName, progress);
 
-  // Step 2: Create project
   progress('step:project');
   progress('Creating project for ' + projectData.hospital_name + '...');
   const projectCode = 'INTV-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random() * 90000) + 10000);
-  const project = await models.IntuitiveProject.create({
-    project_code: projectCode,
-    ...projectData
-  });
+  const project = await models.IntuitiveProject.create({ project_code: projectCode, ...projectData });
   progress('Project created: ' + project.project_code);
 
-  // Step 3: Run 16 analyses
+  // Store CMS metrics if available
+  try {
+    const cmsClient = require('./cms-hospital-compare');
+    const cmsResult = await cmsClient.fetchAllForHospital(projectData.hospital_name, projectData.state);
+    if (cmsResult?.metrics?.length > 0 && models.IntuitiveCMSMetrics) {
+      for (const m of cmsResult.metrics.slice(0, 20)) {
+        await models.IntuitiveCMSMetrics.create({
+          project_id: project.id, cms_provider_id: cmsResult.provider?.provider_id,
+          measure_id: m.measure_id, measure_name: m.measure_name, measure_category: m.category,
+          score: m.score, national_avg: m.national_avg, comparison: m.comparison,
+          reporting_period: m.reporting_period, fetched_at: new Date()
+        });
+      }
+      progress('Stored ' + Math.min(cmsResult.metrics.length, 20) + ' CMS metrics');
+    }
+  } catch (e) { /* CMS storage non-fatal */ }
+
   progress('step:analysis');
   progress('Running 16-module analysis engine...');
   const analysisResults = await systemMatcher.runAll(models, project.id);
-  progress('Analysis complete -- all 16 modules processed');
+  progress('Analysis complete');
 
-  // Step 4: Create business plan
   progress('step:businessplan');
   progress('Creating business plan...');
-
   const modelMatch = analysisResults.model_matching;
   const recommended = modelMatch?.primary_recommendation;
   const systemType = recommended?.model || 'Xi';
-  const systemCatalog = systemMatcher.SYSTEMS;
-  const sys = systemCatalog[systemType];
+  const sys = systemMatcher.SYSTEMS[systemType];
   const avgPrice = sys ? (sys.price_range[0] + sys.price_range[1]) / 2 : 1750000;
 
   const plan = await models.IntuitiveBusinessPlan.create({
     project_id: project.id,
     plan_name: projectData.hospital_name + ' - da Vinci Business Plan',
-    system_type: systemType,
-    system_price: avgPrice,
+    system_type: systemType, system_price: avgPrice,
     annual_service_cost: sys ? sys.service_annual : 175000,
     system_quantity: analysisResults.utilization_forecast?.systems_needed || 1,
     acquisition_model: projectData.acquisition_preference || 'purchase',
-    prepared_by: 'SurgicalMind AI',
-    prepared_for: projectData.hospital_name + ' Leadership',
-    notes: 'Auto-generated from AI research on ' + new Date().toISOString().split('T')[0]
+    prepared_by: 'SurgicalMind AI', prepared_for: projectData.hospital_name + ' Leadership',
+    notes: 'Auto-generated (4-pass validated) on ' + new Date().toISOString().split('T')[0]
   });
-  progress('Business plan created');
 
-  // Step 4b: Auto-populate surgeon commitments from analysis data
-  progress('Generating sample surgeon commitments from analysis...');
+  // Auto-populate surgeon commitments
+  progress('Generating surgeon commitments...');
   try {
-    const procedurePareto = analysisResults.procedure_pareto || {};
-    const topProcs = (procedurePareto.procedures || []).slice(0, 12);
-    const surgeonCount = projectData.credentialed_robotic_surgeons || Math.max(3, Math.round((projectData.bed_count || 200) / 60));
+    const topProcs = (analysisResults.procedure_pareto?.procedures || []).slice(0, 12);
     const specNames = { urology: 'Urology', gynecology: 'Gynecology', general: 'General Surgery', thoracic: 'Thoracic', colorectal: 'Colorectal', head_neck: 'ENT/Head & Neck', cardiac: 'Cardiac' };
-    const surgeonNames = ['Dr. A. Martinez', 'Dr. S. Patel', 'Dr. R. Johnson', 'Dr. L. Chen', 'Dr. M. Williams', 'Dr. K. Thompson', 'Dr. J. Davis', 'Dr. N. Rodriguez', 'Dr. P. Lee', 'Dr. C. Anderson'];
-
-    // Group procedures by specialty, assign each surgeon 1-3 specialties
+    const surgeonNames = ['Dr. A. Martinez', 'Dr. S. Patel', 'Dr. R. Johnson', 'Dr. L. Chen', 'Dr. M. Williams', 'Dr. K. Thompson', 'Dr. J. Davis', 'Dr. N. Rodriguez'];
     const specProcs = {};
-    topProcs.forEach(p => {
-      const spec = p.specialty || 'general';
-      if (!specProcs[spec]) specProcs[spec] = [];
-      specProcs[spec].push(p);
-    });
-
+    topProcs.forEach(p => { const s = p.specialty || 'general'; if (!specProcs[s]) specProcs[s] = []; specProcs[s].push(p); });
     const specKeys = Object.keys(specProcs);
-    const numSurgeons = Math.min(surgeonCount, surgeonNames.length, specKeys.length + 2);
+    const numSurgeons = Math.min(projectData.credentialed_robotic_surgeons || 4, surgeonNames.length, specKeys.length + 2);
 
     for (let i = 0; i < numSurgeons; i++) {
-      const surgeonSpec = specKeys[i % specKeys.length];
-      const procs = specProcs[surgeonSpec] || [];
-      const surgeonProcs = procs.slice(0, 2).map(p => {
-        const monthlyCases = Math.max(1, Math.round((p.incremental_opportunity || Math.round((p.total_cases || p.cases || 10) * 0.2)) / 12));
-        let reimbursement = 12000;
+      const spec = specKeys[i % specKeys.length];
+      const procs = (specProcs[spec] || []).slice(0, 2).map(p => {
+        const monthly = Math.max(1, Math.round((p.incremental_opportunity || Math.round((p.total_cases || p.cases || 10) * 0.2)) / 12));
+        let reimb = 12000;
         if (drgLib) {
-          const allDRG = drgLib.getAllProcedures ? drgLib.getAllProcedures() : [];
-          const procName = (p.procedure_name || '').toLowerCase();
-          const match = allDRG.find(d => procName.includes(d.procedure_name.toLowerCase().split(' ')[0]));
-          if (match) reimbursement = match.avg_blended_rate || 12000;
+          const all = drgLib.getAllProcedures ? drgLib.getAllProcedures() : [];
+          const match = all.find(d => (p.procedure_name || '').toLowerCase().includes(d.procedure_name.toLowerCase().split(' ')[0]));
+          if (match) reimb = match.avg_blended_rate || 12000;
         }
-        return {
-          procedure_type: (p.procedure_name || '').toLowerCase().replace(/[^a-z0-9]/g, '_'),
-          procedure_name: p.procedure_name || 'General Procedure',
-          incremental_cases_monthly: monthlyCases,
-          incremental_cases_annual: monthlyCases * 12,
-          reimbursement_rate: reimbursement,
-          current_monthly_volume: Math.round(monthlyCases * 2.5),
-          competitive_leakage_cases: Math.round(monthlyCases * 0.3)
-        };
+        return { procedure_type: (p.procedure_name || '').toLowerCase().replace(/[^a-z0-9]/g, '_'), procedure_name: p.procedure_name || 'Procedure', incremental_cases_monthly: monthly, incremental_cases_annual: monthly * 12, reimbursement_rate: reimb };
       });
-
-      const totalAnnual = surgeonProcs.reduce((s, p) => s + p.incremental_cases_annual, 0);
-      const totalRevenue = surgeonProcs.reduce((s, p) => s + (p.incremental_cases_annual * p.reimbursement_rate), 0);
-
+      const totalAnnual = procs.reduce((s, p) => s + p.incremental_cases_annual, 0);
+      const totalRev = procs.reduce((s, p) => s + (p.incremental_cases_annual * p.reimbursement_rate), 0);
       await models.IntuitiveSurgeonCommitment.create({
-        business_plan_id: plan.id,
-        project_id: project.id,
-        surgeon_name: surgeonNames[i],
-        surgeon_specialty: specNames[surgeonSpec] || surgeonSpec,
-        hospital_affiliation: projectData.hospital_name,
-        procedures: surgeonProcs,
-        total_incremental_annual: totalAnnual,
-        total_revenue_impact: totalRevenue,
-        source: 'ai_generated',
-        status: 'draft'
+        business_plan_id: plan.id, project_id: project.id, surgeon_name: surgeonNames[i],
+        surgeon_specialty: specNames[spec] || spec, hospital_affiliation: projectData.hospital_name,
+        procedures: procs, total_incremental_annual: totalAnnual, total_revenue_impact: totalRev,
+        source: 'ai_generated', status: 'draft'
       });
     }
+    const allC = await models.IntuitiveSurgeonCommitment.findAll({ where: { business_plan_id: plan.id } });
+    const tCases = allC.reduce((s, c) => s + (c.total_incremental_annual || 0), 0);
+    const tRev = allC.reduce((s, c) => s + (parseFloat(c.total_revenue_impact) || 0), 0);
+    await plan.update({ total_incremental_cases_annual: tCases, total_incremental_revenue: tRev });
+    progress('Generated ' + numSurgeons + ' surgeon commitments');
+  } catch (e) { progress('Surgeon gen (non-fatal): ' + e.message); }
 
-    // Recalculate plan totals
-    const allCommitments = await models.IntuitiveSurgeonCommitment.findAll({ where: { business_plan_id: plan.id } });
-    const totalCases = allCommitments.reduce((s, c) => s + (c.total_incremental_annual || 0), 0);
-    const totalRev = allCommitments.reduce((s, c) => s + (parseFloat(c.total_revenue_impact) || 0), 0);
-    await plan.update({
-      total_incremental_cases_annual: totalCases,
-      total_incremental_revenue: totalRev,
-      total_combined_roi: totalRev + (parseFloat(plan.total_clinical_outcome_savings) || 0)
-    });
-
-    progress('Generated ' + numSurgeons + ' surgeon commitments with ' + totalCases + ' incremental cases/yr, $' + Math.round(totalRev).toLocaleString() + ' revenue');
-  } catch (e) {
-    progress('Surgeon commitment generation (non-fatal): ' + e.message);
-  }
-
-  // Step 5: Clinical outcome dollarization
+  // Clinical dollarization
   progress('step:dollarization');
   progress('Running clinical outcome dollarization...');
-
   if (dollarizationEngine) {
-    // Build hospital case data from the project
     const hospitalCaseData = {};
-    const specMap = {
-      urology: projectData.specialty_urology,
-      gynecology: projectData.specialty_gynecology,
-      general_surgery: projectData.specialty_general,
-      thoracic: projectData.specialty_thoracic,
-      colorectal: projectData.specialty_colorectal,
-      ent_head_neck: projectData.specialty_head_neck,
-      cardiac: projectData.specialty_cardiac
-    };
-
+    const specMap = { urology: projectData.specialty_urology, gynecology: projectData.specialty_gynecology, general_surgery: projectData.specialty_general, thoracic: projectData.specialty_thoracic, colorectal: projectData.specialty_colorectal, ent_head_neck: projectData.specialty_head_neck, cardiac: projectData.specialty_cardiac };
+    const crPct = projectData.annual_surgical_volume > 0 ? Math.round((projectData.current_robotic_cases / projectData.annual_surgical_volume) * 100) : 5;
     for (const [spec, pct] of Object.entries(specMap)) {
       if (pct > 0) {
-        const specCases = Math.round(projectData.annual_surgical_volume * pct / 100);
-        const currentRoboticPct = projectData.current_robotic_cases > 0
-          ? Math.round((projectData.current_robotic_cases / projectData.annual_surgical_volume) * 100) : 5;
-        hospitalCaseData[spec] = {
-          annual_cases: specCases,
-          open_pct: Math.max(0, 100 - currentRoboticPct * 2 - 30),
-          lap_pct: 30,
-          robotic_pct: Math.min(100, currentRoboticPct * 2)
-        };
-        // Normalize
-        const total = hospitalCaseData[spec].open_pct + hospitalCaseData[spec].lap_pct + hospitalCaseData[spec].robotic_pct;
-        if (total !== 100) {
-          hospitalCaseData[spec].open_pct += (100 - total);
-        }
+        const cases = Math.round(projectData.annual_surgical_volume * pct / 100);
+        hospitalCaseData[spec] = { annual_cases: cases, open_pct: Math.max(0, 100 - crPct * 2 - 30), lap_pct: 30, robotic_pct: Math.min(100, crPct * 2) };
+        const t = hospitalCaseData[spec].open_pct + hospitalCaseData[spec].lap_pct + hospitalCaseData[spec].robotic_pct;
+        if (t !== 100) hospitalCaseData[spec].open_pct += (100 - t);
       }
     }
-
     try {
-      const dollarResults = dollarizationEngine.calculateDollarization(hospitalCaseData);
+      const dr = dollarizationEngine.calculateDollarization(hospitalCaseData);
       await models.IntuitiveClinicalOutcome.create({
-        business_plan_id: plan.id,
-        project_id: project.id,
-        hospital_case_data: hospitalCaseData,
-        dollarization_results: dollarResults,
-        total_clinical_savings_annual: dollarResults.total_clinical_savings_annual || 0,
-        citations: dollarResults.all_citations || [],
-        computed_at: new Date()
+        business_plan_id: plan.id, project_id: project.id, hospital_case_data: hospitalCaseData,
+        dollarization_results: dr, total_clinical_savings_annual: dr.total_clinical_savings_annual || 0,
+        citations: dr.all_citations || [], computed_at: new Date()
       });
-
-      const currentRevenue = parseFloat(plan.total_incremental_revenue) || 0;
-      await plan.update({
-        total_clinical_outcome_savings: dollarResults.total_clinical_savings_annual || 0,
-        total_combined_roi: currentRevenue + (dollarResults.total_clinical_savings_annual || 0)
-      });
-
-      progress('Clinical dollarization complete: $' + (dollarResults.total_clinical_savings_annual || 0).toLocaleString() + ' annual savings');
-    } catch (e) {
-      progress('Dollarization error (non-fatal): ' + e.message);
-    }
+      const curRev = parseFloat(plan.total_incremental_revenue) || 0;
+      await plan.update({ total_clinical_outcome_savings: dr.total_clinical_savings_annual || 0, total_combined_roi: curRev + (dr.total_clinical_savings_annual || 0) });
+      progress('Dollarization: $' + (dr.total_clinical_savings_annual || 0).toLocaleString() + ' annual savings');
+    } catch (e) { progress('Dollarization error: ' + e.message); }
   }
 
-  // Step 6: Create survey template
+  // Survey template
   progress('step:survey');
-  progress('Creating surgeon survey template...');
   const survey = await models.IntuitiveSurvey.create({
-    project_id: project.id,
-    business_plan_id: plan.id,
+    project_id: project.id, business_plan_id: plan.id,
     title: projectData.hospital_name + ' - Surgeon Volume Assessment',
     hospital_name: projectData.hospital_name,
-    system_type: systemType === 'dV5' ? 'da Vinci 5' : systemType === 'Xi' ? 'da Vinci Xi' : 'da Vinci ' + systemType,
+    system_type: systemType === 'dV5' ? 'da Vinci 5' : 'da Vinci ' + systemType,
     status: 'draft'
   });
-  progress('Survey template created (ready for surgeon recipients)');
 
   progress('step:complete');
   progress('Full pipeline complete for ' + projectData.hospital_name);
 
   return {
-    project,
-    analysis: analysisResults,
-    businessPlan: plan,
-    survey,
+    project, analysis: analysisResults, businessPlan: plan, survey,
     research: {
+      architecture: '4-pass-maker-checker',
       confidence_level: projectData.extended_data?.confidence_level,
       sources: projectData.extended_data?.research_sources,
+      checker_corrections: projectData.extended_data?.checker_corrections,
+      deterministic_fixes: projectData.extended_data?.deterministic_fixes,
+      field_confidence: projectData.extended_data?.field_confidence,
       data_notes: projectData.extended_data?.data_notes
     }
   };
