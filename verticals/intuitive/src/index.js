@@ -129,6 +129,7 @@ app.use(`${BASE_PATH}/api/v1/tracking`, requireAuth, proformaTrackingRoutes);
 app.use(`${BASE_PATH}/api/v1/robot-data`, requireAuth, robotDataRoutes);
 if (aiResearchRoutes) app.use(`${BASE_PATH}/api/v1/ai-research`, requireAuth, aiResearchRoutes);
 if (intelligenceRoutes) app.use(`${BASE_PATH}/api/v1/intelligence`, requireAuth, intelligenceRoutes);
+try { app.use(`${BASE_PATH}/api/v1/dashboard`, requireAuth, require('./routes/dashboard')); } catch (e) { console.error('Dashboard route load error:', e.message); }
 
 // ============================================================================
 // STANDALONE PROPOSAL PAGE (NO LOGIN REQUIRED — must be before SPA catch-all)

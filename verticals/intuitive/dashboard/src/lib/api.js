@@ -21,6 +21,10 @@ async function request(path, opts = {}) {
 }
 
 export const api = {
+  // Dashboard
+  getDashboardOverview: () => request('/dashboard/overview'),
+  searchHospitals: (query) => request(`/projects/search?q=${encodeURIComponent(query)}&limit=10`),
+
   // Projects
   createProject: (data) => request('/projects', { method: 'POST', body: JSON.stringify(data) }),
   listProjects: () => request('/projects'),

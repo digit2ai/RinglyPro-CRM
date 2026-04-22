@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../lib/api'
 
 const HOSPITAL_TYPES = ['academic', 'community', 'rural', 'specialty', 'VA', 'military']
@@ -13,7 +13,8 @@ export default function IntakePage({ onProjectCreated, currentProject }) {
   const [loading, setLoading] = useState(false)
   const [demoLoading, setDemoLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [aiHospitalName, setAiHospitalName] = useState('')
+  const [searchParams] = useSearchParams()
+  const [aiHospitalName, setAiHospitalName] = useState(searchParams.get('q') || '')
   const [aiLoading, setAiLoading] = useState(false)
   const [aiJobId, setAiJobId] = useState(null)
   const [aiProgress, setAiProgress] = useState([])

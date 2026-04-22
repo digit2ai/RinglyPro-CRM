@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Component } from 'react'
-import { Routes, Route, NavLink, useLocation } from 'react-router-dom'
+import { Routes, Route, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import LoginPage from './pages/LoginPage'
 
 class ErrorBoundary extends Component {
@@ -19,6 +19,7 @@ class ErrorBoundary extends Component {
     return this.props.children
   }
 }
+import DashboardPage from './pages/DashboardPage'
 import IntakePage from './pages/IntakePage'
 import AnalysisPage from './pages/AnalysisPage'
 import RecommendationsPage from './pages/RecommendationsPage'
@@ -26,6 +27,7 @@ import PresentationPage from './pages/PresentationPage'
 import BusinessPlanPage from './pages/BusinessPlanPage'
 import SurveyManagerPage from './pages/SurveyManagerPage'
 import TrackingDashboardPage from './pages/TrackingDashboardPage'
+import { api } from './lib/api'
 
 // Dynamic Rachel context builder -- generates presentation context from live project data
 function buildPresentationContext(project, analysisData, recommendations) {
@@ -140,13 +142,14 @@ SPEAKING GUIDELINES:
 }
 
 const NAV_STEPS = [
-  { to: '/', label: 'Hospital Intake', num: 1, icon: 'H' },
-  { to: '/analysis', label: 'Analysis', num: 2, icon: 'A' },
-  { to: '/recommendations', label: 'System Match', num: 3, icon: 'M' },
-  { to: '/presentation', label: 'Presentation', num: 4, icon: 'P' },
-  { to: '/surveys', label: 'Surgeon Surveys', num: 5, icon: 'S' },
-  { to: '/business-plan', label: 'Business Plan', num: 6, icon: 'B' },
-  { to: '/tracking', label: 'Plan Tracking', num: 7, icon: 'T' },
+  { to: '/', label: 'Dashboard', num: 0, icon: 'D', section: 'main' },
+  { to: '/intake', label: 'Hospital Intake', num: 1, icon: 'H', section: 'main' },
+  { to: '/analysis', label: 'Analysis', num: 2, icon: 'A', section: 'project' },
+  { to: '/recommendations', label: 'System Match', num: 3, icon: 'M', section: 'project' },
+  { to: '/presentation', label: 'Presentation', num: 4, icon: 'P', section: 'project' },
+  { to: '/business-plan', label: 'Business Plan', num: 5, icon: 'B', section: 'project' },
+  { to: '/surveys', label: 'Surgeon Surveys', num: 6, icon: 'S', section: 'project' },
+  { to: '/tracking', label: 'Plan Tracking', num: 7, icon: 'T', section: 'project' },
 ]
 
 export default function App() {
@@ -250,57 +253,121 @@ export default function App() {
     return <LoginPage onLogin={handleLogin} />
   }
 
+  // Sidebar search state
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState([])
+  const [searchOpen, setSearchOpen] = useState(false)
+  const searchRef = React.useRef(null)
+
+  useEffect(() => {
+    if (!searchQuery || searchQuery.length < 2) { setSearchResults([]); setSearchOpen(false); return }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await api.searchHospitals(searchQuery)
+        setSearchResults(res.data || [])
+        setSearchOpen(true)
+      } catch (e) { setSearchResults([]) }
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  // Close search dropdown on outside click
+  useEffect(() => {
+    function handleClick(e) { if (searchRef.current && !searchRef.current.contains(e.target)) setSearchOpen(false) }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  const navigate = useNavigate()
+
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
-      <aside className="w-56 bg-[#0a1628] border-r border-slate-800 flex flex-col fixed h-full z-50">
+      <aside className="w-60 bg-[#0a1628] border-r border-slate-800 flex flex-col fixed h-full z-50">
         <div className="p-4 border-b border-slate-800 flex justify-center">
           <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69e6c537c56ad279084e2bb6.png" alt="SurgicalMind AI" className="w-44 h-auto" />
         </div>
 
-        <nav className="flex-1 py-4 px-3 space-y-1">
-          {NAV_STEPS.map(step => (
-            <NavLink
-              key={step.to}
-              to={step.to}
-              end={step.to === '/'}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
-                  isActive
-                    ? 'bg-intuitive-900/60 text-intuitive-300 font-semibold'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
-                }`
-              }
-            >
-              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                location.pathname === step.to || (step.to !== '/' && location.pathname.startsWith(step.to))
-                  ? 'bg-intuitive-600 text-white'
-                  : 'bg-slate-700 text-slate-400'
-              }`}>
-                {step.num}
-              </span>
+        {/* Search Bar */}
+        <div className="px-3 pt-3 pb-1 relative" ref={searchRef}>
+          <div className="relative">
+            <svg className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              onFocus={() => searchQuery.length >= 2 && setSearchOpen(true)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && searchResults.length > 0) {
+                  selectProject(searchResults[0].id)
+                  navigate(`/analysis/${searchResults[0].id}`)
+                  setSearchOpen(false); setSearchQuery('')
+                } else if (e.key === 'Enter' && searchQuery.length >= 2 && searchResults.length === 0) {
+                  navigate(`/intake?q=${encodeURIComponent(searchQuery)}`)
+                  setSearchOpen(false); setSearchQuery('')
+                } else if (e.key === 'Escape') { setSearchOpen(false) }
+              }}
+              placeholder="Search hospitals..."
+              className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-intuitive-600 focus:border-transparent"
+            />
+          </div>
+          {searchOpen && (
+            <div className="absolute left-3 right-3 top-full mt-1 bg-slate-800 border border-slate-600 rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto">
+              {searchResults.length > 0 ? searchResults.map(h => (
+                <button key={h.id} onClick={() => { selectProject(h.id); navigate(`/analysis/${h.id}`); setSearchOpen(false); setSearchQuery('') }}
+                  className="w-full text-left px-3 py-2.5 hover:bg-slate-700 transition-colors border-b border-slate-700/50 last:border-0">
+                  <div className="text-xs text-white font-medium truncate">{h.hospital_name}</div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">{h.hospital_type} | {h.bed_count || '--'} beds | {h.state || '--'}</div>
+                </button>
+              )) : (
+                <div className="p-3">
+                  <div className="text-xs text-slate-400 mb-2">No hospitals found for "{searchQuery}"</div>
+                  <button onClick={() => { navigate(`/intake?q=${encodeURIComponent(searchQuery)}`); setSearchOpen(false); setSearchQuery('') }}
+                    className="w-full bg-intuitive-600 hover:bg-intuitive-700 text-white text-xs font-semibold py-2 rounded-lg transition-colors">
+                    Generate Report for "{searchQuery}"
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <nav className="flex-1 py-2 px-3 space-y-0.5 overflow-y-auto">
+          {NAV_STEPS.filter(s => s.section === 'main').map(step => (
+            <NavLink key={step.to} to={step.to} end={step.to === '/'}
+              className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${isActive ? 'bg-intuitive-900/60 text-intuitive-300 font-semibold' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'}`}>
+              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold ${location.pathname === step.to ? 'bg-intuitive-600 text-white' : 'bg-slate-700 text-slate-400'}`}>{step.icon}</span>
               {step.label}
             </NavLink>
           ))}
+
+          {currentProject && (
+            <>
+              <div className="border-t border-slate-800 my-2"></div>
+              <div className="px-3 py-1 text-[9px] text-slate-600 uppercase tracking-widest">Hospital Workflow</div>
+              {NAV_STEPS.filter(s => s.section === 'project').map(step => (
+                <NavLink key={step.to} to={step.to} end={false}
+                  className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${isActive ? 'bg-intuitive-900/60 text-intuitive-300 font-semibold' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'}`}>
+                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold ${location.pathname.startsWith(step.to) ? 'bg-intuitive-600 text-white' : 'bg-slate-700 text-slate-400'}`}>{step.num}</span>
+                  {step.label}
+                </NavLink>
+              ))}
+            </>
+          )}
         </nav>
 
-        <div className="p-4 pb-20 border-t border-slate-800">
-          <div className="text-xs text-slate-400 mb-2 truncate">{user?.name || user?.email}</div>
-          <button
-            onClick={handleLogout}
-            className="w-full text-left text-[11px] text-slate-500 hover:text-red-400 transition-colors"
-          >
-            Sign Out
-          </button>
-          <div className="text-[10px] text-slate-700 mt-3">SurgicalMind AI v2.0</div>
+        <div className="p-3 pb-20 border-t border-slate-800">
+          <div className="text-xs text-slate-400 mb-1 truncate">{user?.name || user?.email}</div>
+          <button onClick={handleLogout} className="w-full text-left text-[10px] text-slate-500 hover:text-red-400 transition-colors">Sign Out</button>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 ml-56 min-h-screen relative">
+      <main className="flex-1 ml-60 min-h-screen relative">
         <ErrorBoundary>
         <Routes>
-          <Route path="/" element={<IntakePage onProjectCreated={selectProject} currentProject={currentProject} />} />
+          <Route path="/" element={<DashboardPage onSelectProject={selectProject} />} />
+          <Route path="/intake" element={<IntakePage onProjectCreated={selectProject} currentProject={currentProject} />} />
           <Route path="/analysis" element={<AnalysisPage projectId={currentProject} />} />
           <Route path="/analysis/:projectId" element={<AnalysisPage />} />
           <Route path="/recommendations" element={<RecommendationsPage projectId={currentProject} />} />

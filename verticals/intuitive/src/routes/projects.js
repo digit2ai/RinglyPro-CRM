@@ -121,4 +121,49 @@ router.patch('/:id', async (req, res) => {
   }
 });
 
+// GET /search?q=moffit&limit=10 - Fuzzy search hospitals
+router.get('/search', async (req, res) => {
+  try {
+    const { IntuitiveProject } = req.models;
+    const { Op } = require('sequelize');
+    const q = (req.query.q || '').trim();
+    const limit = Math.min(parseInt(req.query.limit) || 10, 50);
+
+    if (!q || q.length < 2) {
+      return res.json({ success: true, data: [] });
+    }
+
+    // Split query into words for fuzzy matching
+    const words = q.split(/\s+/).filter(w => w.length >= 2);
+
+    // Build WHERE conditions: each word must appear in hospital_name
+    const conditions = words.map(word => ({
+      hospital_name: { [Op.iLike]: '%' + word + '%' }
+    }));
+
+    // Also try exact match on project_code
+    const codeCondition = { project_code: { [Op.iLike]: '%' + q + '%' } };
+
+    const results = await IntuitiveProject.findAll({
+      where: {
+        [Op.or]: [
+          { [Op.and]: conditions },
+          codeCondition
+        ]
+      },
+      attributes: ['id', 'hospital_name', 'project_code', 'status', 'bed_count', 'state', 'hospital_type', 'created_at', 'updated_at'],
+      order: [
+        // Exact matches first (hospital_name starts with query)
+        [req.models.sequelize.literal(`CASE WHEN LOWER(hospital_name) LIKE '${q.toLowerCase().replace(/'/g, "''")}%' THEN 0 ELSE 1 END`), 'ASC'],
+        ['updated_at', 'DESC']
+      ],
+      limit
+    });
+
+    res.json({ success: true, data: results });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
