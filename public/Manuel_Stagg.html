@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manuel Stagg - Senior IT Project Manager & AI Solutions Architect</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1a365d;
+            --primary-light: #2c5282;
+            --accent: #3182ce;
+            --accent-light: #63b3ed;
+            --text: #2d3748;
+            --text-light: #718096;
+            --bg: #f7fafc;
+            --white: #ffffff;
+            --border: #e2e8f0;
+            --gradient: linear-gradient(135deg, #1a365d 0%, #2c5282 50%, #3182ce 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background: var(--gradient);
+            color: var(--white);
+            padding: 60px 0 80px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            position: relative;
+        }
+
+        .header-content {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .avatar {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-light), var(--accent));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 72px;
+            font-weight: 700;
+            color: var(--white);
+            border: 4px solid rgba(255,255,255,0.3);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+
+        .header-text h1 {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header-text .title {
+            font-size: 20px;
+            font-weight: 400;
+            opacity: 0.95;
+            margin-bottom: 20px;
+        }
+
+        .contact-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            font-size: 14px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .contact-item i {
+            width: 18px;
+            opacity: 0.8;
+        }
+
+        .contact-item a {
+            color: var(--white);
+            text-decoration: none;
+        }
+
+        .contact-item a:hover {
+            text-decoration: underline;
+        }
+
+        /* Main Content */
+        .main {
+            margin-top: -40px;
+            padding-bottom: 60px;
+        }
+
+        .card {
+            background: var(--white);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+
+        .card-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-title i {
+            color: var(--accent);
+            font-size: 20px;
+        }
+
+        /* Summary */
+        .summary-text {
+            font-size: 16px;
+            color: var(--text);
+            line-height: 1.8;
+        }
+
+        /* Skills */
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .skill-category h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .skill-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .skill-tag {
+            background: var(--bg);
+            color: var(--text);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+
+        .skill-tag:hover {
+            background: var(--accent);
+            color: var(--white);
+            border-color: var(--accent);
+        }
+
+        /* Experience */
+        .timeline {
+            position: relative;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-left: 32px;
+            padding-bottom: 32px;
+            border-left: 2px solid var(--border);
+        }
+
+        .timeline-item:last-child {
+            border-left: 2px solid transparent;
+            padding-bottom: 0;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 0;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--accent);
+            border: 3px solid var(--white);
+            box-shadow: 0 0 0 2px var(--accent);
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .timeline-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .timeline-role {
+            font-size: 15px;
+            color: var(--accent);
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .timeline-date {
+            font-size: 13px;
+            color: var(--text-light);
+            background: var(--bg);
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
+        .timeline-bullets {
+            list-style: none;
+            margin-top: 12px;
+        }
+
+        .timeline-bullets li {
+            position: relative;
+            padding-left: 20px;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: var(--text);
+        }
+
+        .timeline-bullets li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        /* Education */
+        .education-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .education-item {
+            background: var(--bg);
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .education-item h4 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .education-item p {
+            font-size: 13px;
+            color: var(--text-light);
+        }
+
+        /* Certifications */
+        .cert-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .cert-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: var(--white);
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .cert-badge i {
+            color: var(--accent-light);
+        }
+
+        /* Leadership */
+        .leadership-text {
+            font-size: 15px;
+            color: var(--text);
+            line-height: 1.8;
+        }
+
+        .leadership-text li {
+            margin-bottom: 12px;
+            padding-left: 8px;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--primary);
+            color: var(--white);
+            text-align: center;
+            padding: 32px;
+        }
+
+        .footer p {
+            opacity: 0.8;
+            font-size: 14px;
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .social-links a {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .social-links a:hover {
+            background: var(--accent);
+            transform: translateY(-3px);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .avatar {
+                margin: 0 auto;
+                width: 140px;
+                height: 140px;
+                font-size: 56px;
+            }
+
+            .header-text h1 {
+                font-size: 32px;
+            }
+
+            .contact-row {
+                justify-content: center;
+            }
+
+            .timeline-header {
+                flex-direction: column;
+            }
+
+            .skills-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            .header {
+                background: var(--primary) !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .card {
+                box-shadow: none;
+                border: 1px solid var(--border);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="avatar">MS</div>
+                <div class="header-text">
+                    <h1>Manuel Stagg</h1>
+                    <p class="title">Senior IT Project Manager Lead & AI Solutions Architect</p>
+                    <div class="contact-row">
+                        <div class="contact-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Wesley Chapel, FL 33543</span>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-phone"></i>
+                            <a href="tel:+16566001400">(656) 600-1400</a>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-envelope"></i>
+                            <a href="mailto:manuelstagg@gmail.com">manuelstagg@gmail.com</a>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fab fa-linkedin"></i>
+                            <a href="https://linkedin.com/in/manuelstagg" target="_blank">LinkedIn</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <!-- Professional Summary -->
+            <section class="card">
+                <h2 class="card-title"><i class="fas fa-user-tie"></i> Professional Summary</h2>
+                <p class="summary-text">
+                    Highly accomplished and versatile Project Manager and Senior IT Lead with <strong>over two decades of experience</strong> driving complex enterprise-level transformations and technological initiatives within global financial institutions. Currently serving as an Individual Contributor SME in Process Intelligence Technical Architecture Engineering, specializing in <strong>Citi Enterprise Architecture Methodology (CEAM)</strong> Services and Business processes.
+                </p>
+                <p class="summary-text" style="margin-top: 16px;">
+                    My work involves building new incremental and/or integrations into CEAM, focusing on the design and delivery of tooling capabilities for attestation of Conceptual (Target) state process models and application mapping. I ensure CEAM artifacts are accurate and complete through robust change management, adopting and contributing to <strong>Citi's enterprise-wide Operating Model and Artificial Intelligence (OM/AI) Initiative</strong>. Adept at cross-functional collaboration with strong firsthand skills in full-stack development, cloud infrastructure, and AI/ML integrations.
+                </p>
+            </section>
+
+            <!-- Skills -->
+            <section class="card">
+                <h2 class="card-title"><i class="fas fa-cogs"></i> Technical Skills</h2>
+                <div class="skills-grid">
+                    <div class="skill-category">
+                        <h4>Project & Program Management</h4>
+                        <div class="skill-tags">
+                            <span class="skill-tag">PMP</span>
+                            <span class="skill-tag">PSPO</span>
+                            <span class="skill-tag">Agile Scrum</span>
+                            <span class="skill-tag">Release Planning</span>
+                            <span class="skill-tag">Roadmap Building</span>
+                            <span class="skill-tag">SDLC</span>
+                            <span class="skill-tag">Jira</span>
+                            <span class="skill-tag">ServiceNow</span>
+                        </div>
+                    </div>
+                    <div class="skill-category">
+                        <h4>AI & Automation Technologies</h4>
+                        <div class="skill-tags">
+                            <span class="skill-tag">Generative AI</span>
+                            <span class="skill-tag">AI/ML Models</span>
+                            <span class="skill-tag">Claude API</span>
+                            <span class="skill-tag">OpenAI API</span>
+                            <span class="skill-tag">Prompt Engineering</span>
+                            <span class="skill-tag">RPA</span>
+                            <span class="skill-tag">Multi-Agent Workflows</span>
+                            <span class="skill-tag">RAG</span>
+                        </div>
+                    </div>
+                    <div class="skill-category">
+                        <h4>Backend Development</h4>
+                        <div class="skill-tags">
+                            <span class="skill-tag">Node.js</span>
+                            <span class="skill-tag">Express.js</span>
+                            <span class="skill-tag">REST APIs</span>
+                            <span class="skill-tag">JWT</span>
+                            <span class="skill-tag">WebSockets</span>
+                            <span class="skill-tag">Apache Kafka</span>
+                        </div>
+                    </div>
+                    <div class="skill-category">
+                        <h4>Frontend Development</h4>
+                        <div class="skill-tags">
+                            <span class="skill-tag">JavaScript</span>
+                            <span class="skill-tag">ES6</span>
+                            <span class="skill-tag">Tailwind CSS</span>
+                            <span class="skill-tag">PWA</span>
+                            <span class="skill-tag">React</span>
+                        </div>
+                    </div>
+                    <div class="skill-category">
+                        <h4>Databases & ORM</h4>
+                        <div class="skill-tags">
+                            <span class="skill-tag">PostgreSQL</span>
+                            <span class="skill-tag">Sequelize ORM</span>
+                            <span class="skill-tag">Oracle Database</span>
+                            <span class="skill-tag">MySQL</span>
+                            <span class="skill-tag">MS SQL Server</span>
+                            <span class="skill-tag">Multi-tenant Architecture</span>
+                        </div>
+                    </div>
+                    <div class="skill-category">
+                        <h4>Cloud & DevOps</h4>
+                        <div class="skill-tags">
+                            <span class="skill-tag">AWS S3</span>
+                            <span class="skill-tag">Render</span>
+                            <span class="skill-tag">CI/CD Pipeline</span>
+                            <span class="skill-tag">SendGrid</span>
+                            <span class="skill-tag">Git</span>
+                        </div>
+                    </div>
+                    <div class="skill-category">
+                        <h4>Integrations & Platforms</h4>
+                        <div class="skill-tags">
+                            <span class="skill-tag">Twilio</span>
+                            <span class="skill-tag">WhatsApp</span>
+                            <span class="skill-tag">ElevenLabs TTS</span>
+                            <span class="skill-tag">Stripe</span>
+                            <span class="skill-tag">Zoho CRM</span>
+                            <span class="skill-tag">GoHighLevel</span>
+                            <span class="skill-tag">HubSpot</span>
+                            <span class="skill-tag">Splunk</span>
+                        </div>
+                    </div>
+                    <div class="skill-category">
+                        <h4>Risk & Compliance</h4>
+                        <div class="skill-tags">
+                            <span class="skill-tag">KYC</span>
+                            <span class="skill-tag">AML</span>
+                            <span class="skill-tag">OFAC</span>
+                            <span class="skill-tag">BSA</span>
+                            <span class="skill-tag">Model Validation</span>
+                            <span class="skill-tag">UNSC Compliance</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Professional Experience -->
+            <section class="card">
+                <h2 class="card-title"><i class="fas fa-briefcase"></i> Professional Experience</h2>
+                <div class="timeline">
+                    <!-- Citi Current -->
+                    <div class="timeline-item">
+                        <div class="timeline-header">
+                            <div>
+                                <h3 class="timeline-title">Citi Process Intelligence Technical Architecture Engineering</h3>
+                                <p class="timeline-role">Senior IT Project Manager Lead / Individual Contributor SME</p>
+                            </div>
+                            <span class="timeline-date">January 2023 - Present</span>
+                        </div>
+                        <ul class="timeline-bullets">
+                            <li>Contributed as an Individual Contributor SME to Citi's enterprise-wide Operating Model and AI Initiative</li>
+                            <li>Specialized in Citi Enterprise Architecture Methodology (CEAM) process models, designing and delivering tooling capabilities for periodic attestation of Conceptual (Target) state process models and application mapping</li>
+                            <li>Managed and actively monitored Dataverse ingestion processes for over 18,110 critical data feeds, achieving significant SLA breach rate reduction from 1.82% to 0.72% (Q3 to Q4 2025)</li>
+                            <li>Provided critical SME guidance and technical input within cross-functional Agile Pods, collaborating with Process Owners, Tech Leads, and external consultants to align CEAM with strategic Citi objectives</li>
+                            <li>Documented evidence and audit trails supporting attestation of target state process models and associated application mapping for CEAM and OM/AI compliance</li>
+                        </ul>
+                    </div>
+
+                    <!-- Solomon Edwards -->
+                    <div class="timeline-item">
+                        <div class="timeline-header">
+                            <div>
+                                <h3 class="timeline-title">Solomon Edwards – SVB Financial Crime Risk Management</h3>
+                                <p class="timeline-role">Senior IT Project Manager Lead (Contract)</p>
+                            </div>
+                            <span class="timeline-date">December 2021 - December 2022</span>
+                        </div>
+                        <ul class="timeline-bullets">
+                            <li>Executed initiative leadership for FCRM/Compliance Value Streams (BSA, Sanctions Compliance, KYC, AML Advisory, OFSAA, Risk and Control)</li>
+                            <li>Provided project management expertise, leading FCRM Business project efforts related to product delivery and advising on risks in compliance programs</li>
+                            <li>Developed FCRM initiative leadership-level roadmap views, tracking, and reporting, ensuring alignment across cross-geographical teams</li>
+                            <li>Gathered requirements and obtained business stakeholder sign-off for data mapping of payments gateways (SWIFT, Fedwire, ISO20022, SEPA)</li>
+                        </ul>
+                    </div>
+
+                    <!-- Citi AML -->
+                    <div class="timeline-item">
+                        <div class="timeline-header">
+                            <div>
+                                <h3 class="timeline-title">CITI AML Global Data Intelligence</h3>
+                                <p class="timeline-role">AML Data Intelligence Business Analyst (FTE)</p>
+                            </div>
+                            <span class="timeline-date">August 2012 - December 2021</span>
+                        </div>
+                        <ul class="timeline-bullets">
+                            <li>Worked on periodically tuning and below-the-line / above-the-line testing of Oracle Mantas to comply with regulatory requirements</li>
+                            <li>Translated complex statistical and mathematical approaches and resulted data sets into actionable recommendations</li>
+                            <li>Designed, developed, and implemented the Data Intelligence Global Tracker "DIGT," a live traceability requirements/project tracking application</li>
+                            <li>Served as liaison between Citi Global AML Monitoring Risk Management and Global AML Sanctions for integrating Global Sanctions Name Screening System with Oracle Mantas</li>
+                        </ul>
+                    </div>
+
+                    <!-- Citi Global Sanctions -->
+                    <div class="timeline-item">
+                        <div class="timeline-header">
+                            <div>
+                                <h3 class="timeline-title">CITI Global Sanctions</h3>
+                                <p class="timeline-role">Senior Business Systems Analyst (FTE)</p>
+                            </div>
+                            <span class="timeline-date">July 2011 - July 2012</span>
+                        </div>
+                        <ul class="timeline-bullets">
+                            <li>Managed Global Sanctions ruleset according to regulatory bodies' ordinances for new ruleset creation, modification, and maintenance in Global Interdict (Citi Screening 2.5) and Actimize</li>
+                            <li>Supported ongoing optimization of Actimize entity screening systems, scenarios, and rulesets</li>
+                            <li>Tracked changes to OFAC and non-OFAC data sources, generating OFAC derived global lists to enhance detection</li>
+                        </ul>
+                    </div>
+
+                    <!-- Citi ICG Credit Risk -->
+                    <div class="timeline-item">
+                        <div class="timeline-header">
+                            <div>
+                                <h3 class="timeline-title">CITI ICG-Credit Risk</h3>
+                                <p class="timeline-role">Senior Business Systems Analyst (Contract)</p>
+                            </div>
+                            <span class="timeline-date">August 2010 - June 2011</span>
+                        </div>
+                        <ul class="timeline-bullets">
+                            <li>Drove and collected project requirements, preparing Minor Development Documents (MDD) and Business Requirements Documents (BRD)</li>
+                            <li>Wrote User Acceptance Testing (UAT) plans, moderated project status meetings, and coordinated UAT cycles</li>
+                        </ul>
+                    </div>
+
+                    <!-- KUAIMA.NET -->
+                    <div class="timeline-item">
+                        <div class="timeline-header">
+                            <div>
+                                <h3 class="timeline-title">KUAIMA.NET</h3>
+                                <p class="timeline-role">General Manager</p>
+                            </div>
+                            <span class="timeline-date">February 2008 - August 2010</span>
+                        </div>
+                        <ul class="timeline-bullets">
+                            <li>Managed day-to-day operations of a web development and internet marketing services company</li>
+                            <li>Led a team of designers for interactive website design and development using Dreamweaver, Fireworks, FrontPage, and Adobe Photoshop</li>
+                            <li>Created project development proposals for government and public bids</li>
+                        </ul>
+                    </div>
+
+                    <!-- Citi Payment Services -->
+                    <div class="timeline-item">
+                        <div class="timeline-header">
+                            <div>
+                                <h3 class="timeline-title">CITI Payment Services</h3>
+                                <p class="timeline-role">Business Analyst</p>
+                            </div>
+                            <span class="timeline-date">July 2002 - January 2008</span>
+                        </div>
+                        <ul class="timeline-bullets">
+                            <li>Maintained analytical ability and creativity to address business problems, translating operational and risk control requirements into technical designs</li>
+                            <li>Implemented ASIA – APDB portal for invoice tracking and US eInvoice tracking workflow database</li>
+                            <li>Implemented Citigroup payment services global website for Panama, Puerto Rico, Brazil, Asia, and EMEA</li>
+                        </ul>
+                    </div>
+
+                    <!-- Citi Global Trade -->
+                    <div class="timeline-item">
+                        <div class="timeline-header">
+                            <div>
+                                <h3 class="timeline-title">CITI Global Trade</h3>
+                                <p class="timeline-role">Lead Technical Analyst</p>
+                            </div>
+                            <span class="timeline-date">August 1998 - August 2000</span>
+                        </div>
+                        <ul class="timeline-bullets">
+                            <li>Provided firsthand problem resolution and technical support to two hundred end-users in a production operational environment</li>
+                            <li>Installed and implemented imaging software in a client/server environment for international clients across 15 Latin American Countries</li>
+                            <li>Coordinated and administered a help desk system support group of five technicians</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Education & Certifications -->
+            <section class="card">
+                <h2 class="card-title"><i class="fas fa-graduation-cap"></i> Education & Certifications</h2>
+
+                <div class="education-grid" style="margin-bottom: 24px;">
+                    <div class="education-item">
+                        <h4>Bachelor of Art, Finance</h4>
+                        <p>Universidad Nacional Experimental Politécnica "Antonio José de Sucre"</p>
+                        <p>Maracaibo, Venezuela</p>
+                    </div>
+                </div>
+
+                <h4 style="font-size: 14px; font-weight: 600; color: var(--primary); margin-bottom: 16px; text-transform: uppercase;">Professional Certifications</h4>
+                <div class="cert-grid">
+                    <div class="cert-badge"><i class="fas fa-certificate"></i> Project Manager Professional (PMP)</div>
+                    <div class="cert-badge"><i class="fas fa-certificate"></i> Professional Scrum Product Owner (PSPO)</div>
+                    <div class="cert-badge"><i class="fas fa-certificate"></i> Data Management Professional</div>
+                    <div class="cert-badge"><i class="fas fa-certificate"></i> Business Intelligence Analyst</div>
+                    <div class="cert-badge"><i class="fas fa-certificate"></i> Business Analysis Modeling</div>
+                    <div class="cert-badge"><i class="fas fa-certificate"></i> SWIFT Messages Type</div>
+                    <div class="cert-badge"><i class="fas fa-certificate"></i> ISO20022 MX Messages</div>
+                    <div class="cert-badge"><i class="fas fa-certificate"></i> TOGAF Part 1 & Part 2</div>
+                </div>
+            </section>
+
+            <!-- Leadership Characteristics -->
+            <section class="card">
+                <h2 class="card-title"><i class="fas fa-star"></i> Leadership Characteristics</h2>
+                <ul class="leadership-text">
+                    <li><strong>Technical Problem-Solving:</strong> Demonstrated excellence in technical problem-solving, adept at detecting discrepancies and challenges, and skilled in mobilizing collaborative efforts to address them efficiently.</li>
+                    <li><strong>Strategic Partnership:</strong> Demonstrated leadership in fostering internal partnerships and strategically engaging various stakeholders (e.g., business units, support functions) to successfully guide and implement sustained change management initiatives.</li>
+                    <li><strong>Cross-Functional Collaboration:</strong> Adept at cross-functional collaboration and delivering measurable outcomes in dynamic, high-impact environments, with strong firsthand skills in full-stack development, cloud infrastructure, and AI/ML integrations.</li>
+                </ul>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2026 Manuel Stagg. All rights reserved.</p>
+        <div class="social-links">
+            <a href="mailto:manuelstagg@gmail.com" title="Email"><i class="fas fa-envelope"></i></a>
+            <a href="tel:+16566001400" title="Phone"><i class="fas fa-phone"></i></a>
+            <a href="https://linkedin.com/in/manuelstagg" target="_blank" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+        </div>
+    </footer>
+</body>
+</html>
