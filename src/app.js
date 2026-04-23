@@ -39,6 +39,21 @@ console.log('✅ Subscription webhook mounted at /webhooks/stripe (before body p
 app.use(express.json({ limit: '500mb' }));
 app.use(express.urlencoded({ extended: true, limit: '500mb' }));
 
+// Custom domain: camaravirtual.app -> HispaMind (/chamber/hispamind)
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase();
+  if (host === 'camaravirtual.app' || host === 'www.camaravirtual.app') {
+    const p = req.path;
+    // Already under /chamber/hispamind — pass through
+    if (p.startsWith('/chamber/hispamind')) return next();
+    // Static assets and API — pass through
+    if (p.startsWith('/audio/') || p.startsWith('/api/')) return next();
+    // Rewrite root and all other paths to /chamber/hispamind
+    req.url = '/chamber/hispamind' + (p === '/' ? '/' : p);
+  }
+  next();
+});
+
 // Custom domain: imagingmind.app -> ImagingMind (/msk)
 app.use((req, res, next) => {
   const host = (req.get('host') || '').toLowerCase();

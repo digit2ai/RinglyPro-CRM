@@ -500,8 +500,12 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
 (function() {
   'use strict';
 
+  // -- Dynamic base path for custom domain support --
+  var isCustomDomain = location.hostname === 'camaravirtual.app' || location.hostname === 'www.camaravirtual.app';
+  var BASE = isCustomDomain ? '' : '/chamber/hispamind';
+
   // -- State --
-  const API = '/chamber/hispamind/api';
+  const API = BASE + '/api';
   let currentMember = null;
   let currentPage = 'dashboard';
 
@@ -517,7 +521,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
 
   function logout() {
     localStorage.removeItem('hispamind_token');
-    window.location.href = '/chamber/hispamind/#registro';
+    window.location.href = BASE + '/#registro';
   }
 
   async function apiFetch(path, methodOrOpts, body) {
@@ -540,7 +544,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   // -- Init --
   async function init() {
     var token = getToken();
-    if (!token) { window.location.href = '/chamber/hispamind/#registro'; return; }
+    if (!token) { window.location.href = BASE + '/#registro'; return; }
 
     var decoded = decodeJWT(token);
     if (!decoded) { logout(); return; }
