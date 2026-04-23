@@ -1683,7 +1683,7 @@
   <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69dfd39cfcac588c6b2329f9.png" alt="Visionarium">
   <div class="preplay-title">Visionarium // Quest</div>
   <div class="preplay-subtitle">5 Niveles. 1 Misi&oacute;n. Tu futuro.</div>
-  <div class="preplay-subtitle2">Voz en tiempo real con ElevenLabs &middot; Narrado por Lina</div>
+  <div class="preplay-subtitle2">Voz generada con ElevenLabs &middot; Narrado por Lina</div>
   <button class="preplay-btn" id="preplayBtn" aria-label="Iniciar presentaci&oacute;n">&#9654;</button>
 </div>
 
@@ -2477,18 +2477,15 @@
     show(n);
   }
 
-  // ============ LINA VOICE (ElevenLabs Real-Time TTS) ============
+  // ============ LINA VOICE (ElevenLabs MP3) ============
   // Single reusable Audio element — critical for mobile.
   // Mobile browsers only allow audio from elements unlocked by user gesture.
+  // Creating new Audio() per slide breaks this. Reusing one element works.
   const linaAudio = new Audio();
   linaAudio.volume = 1.0;
   const narrationWave = document.getElementById('narrationWave');
   let autoAdvanceTimer = null;
   let narrateOnEnd = null;
-  let ttsAbortController = null;
-
-  // TTS audio blob cache — avoids re-fetching the same narration
-  const ttsBlobCache = {};
 
   linaAudio.addEventListener('play', () => {
     narrationWave.classList.add('active');
@@ -2518,10 +2515,6 @@
       clearTimeout(autoAdvanceTimer);
       autoAdvanceTimer = null;
     }
-    if (ttsAbortController) {
-      ttsAbortController.abort();
-      ttsAbortController = null;
-    }
     narrateOnEnd = null;
     linaAudio.pause();
     linaAudio.removeAttribute('src');
@@ -2529,37 +2522,15 @@
     narrationWave.classList.remove('active');
   }
 
-  // Generate TTS audio via backend API (Bella Spanish voice)
-  async function generateTTS(text) {
-    const cacheKey = text;
-    if (ttsBlobCache[cacheKey]) return ttsBlobCache[cacheKey];
-
-    ttsAbortController = new AbortController();
-    const resp = await fetch('/api/tts/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, voice: 'bella', lang: 'es' }),
-      signal: ttsAbortController.signal
-    });
-    ttsAbortController = null;
-
-    if (!resp.ok) throw new Error('TTS API error: ' + resp.status);
-    const blob = await resp.blob();
-    const url = URL.createObjectURL(blob);
-    ttsBlobCache[cacheKey] = url;
-    return url;
-  }
-
-  async function narrateSlide(slideIndex, onEnd) {
+  function narrateSlide(slideIndex, onEnd) {
     cancelNarration();
 
     const slide = slides[slideIndex];
-    const narrationText = slide.dataset.narration || null;
-    const audioFallback = slide.dataset.audio || null;
+    const audioSrc = slide.dataset.audio || null;
     const autoAdvanceMs = slide.dataset.autoAdvance ? parseInt(slide.dataset.autoAdvance) : null;
 
-    // No narration and no audio for this slide
-    if (!narrationText && !audioFallback) {
+    // No audio file for this slide
+    if (!audioSrc) {
       if (autoAdvanceMs) {
         autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, autoAdvanceMs);
       } else {
@@ -2577,27 +2548,7 @@
       }
     };
 
-    // Try real-time TTS first, fall back to pre-recorded MP3
-    let audioUrl = null;
-    if (narrationText) {
-      try {
-        audioUrl = await generateTTS(narrationText);
-        console.log('TTS generated for slide', slideIndex + 1);
-      } catch (err) {
-        if (err.name === 'AbortError') return; // cancelled
-        console.warn('TTS failed for slide', slideIndex + 1, err.message, '— falling back to MP3');
-        audioUrl = audioFallback;
-      }
-    } else {
-      audioUrl = audioFallback;
-    }
-
-    if (!audioUrl) {
-      if (narrateOnEnd) { const cb = narrateOnEnd; narrateOnEnd = null; cb(); }
-      return;
-    }
-
-    linaAudio.src = audioUrl;
+    linaAudio.src = audioSrc;
     linaAudio.load();
     linaAudio.play().then(() => {
       console.log('Playing slide', slideIndex + 1);
@@ -2705,7 +2656,7 @@
     }
   });
 
-  // Lina voice powered by ElevenLabs Bella — Spanish (colombian accent), real-time TTS via /api/tts/generate
+  // Lina voice powered by ElevenLabs — Colombian female accent, pre-recorded MP3s
 </script>
 
 </body>
