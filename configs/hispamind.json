@@ -1,0 +1,69 @@
+{
+  "slug": "hispamind",
+  "name": "HispaMind -- Camara de Comercio para el Mundo Hispanohablante",
+  "short_name": "HispaMind",
+  "tagline": "Inteligencia de Negocios para el Mundo Hispano",
+  "description": "HispaMind es la primera camara de comercio digital impulsada por inteligencia artificial para conectar empresarios y profesionales de habla hispana en todo el mundo. Desde Mexico hasta Argentina, desde Madrid hasta Miami -- una red de negocios sin fronteras.",
+  "language": "es",
+  "colors": {
+    "primary": "#003DA5",
+    "primary_dark": "#002D7A",
+    "primary_light": "#E6EEF8",
+    "secondary": "#CE1126",
+    "secondary_dark": "#A00D1E",
+    "accent": "#FCD116",
+    "accent_light": "#FFF4CC",
+    "accent_dark": "#C9A60E",
+    "navy": "#1A2332",
+    "navy_light": "#2D3A4D",
+    "white": "#FFFFFF",
+    "gray_50": "#F8F9FA"
+  },
+  "db_prefix": "hispamind",
+  "mount_path": "/chamber/hispamind",
+  "jwt_secret": "hispamind-chamber-jwt-2026",
+  "regions": [
+    { "id": 1, "name": "Mexico y Centroamerica" },
+    { "id": 2, "name": "Sudamerica - Region Andina" },
+    { "id": 3, "name": "Sudamerica - Cono Sur" },
+    { "id": 4, "name": "Caribe Hispano" },
+    { "id": 5, "name": "Espana y Europa" },
+    { "id": 6, "name": "Estados Unidos (Hispanos)" }
+  ],
+  "sectors": [
+    "tecnologia", "salud", "bienes_raices", "alimentos_bebidas", "comercio_exterior",
+    "construccion", "servicios_profesionales", "educacion", "finanzas",
+    "hoteleria_turismo", "logistica", "manufactura", "medios_comunicacion", "legal",
+    "automotriz", "belleza_bienestar", "seguros", "consultoria",
+    "ciberseguridad", "marketing_digital", "agricultura", "energia", "mineria", "textil"
+  ],
+  "membership_tiers": {
+    "emprendedor": { "monthly": 10, "annual": 96, "label": "Miembro Emprendedor" },
+    "empresarial": { "monthly": 25, "annual": 240, "label": "Miembro Empresarial" },
+    "corporativo": { "monthly": 75, "annual": 720, "label": "Miembro Corporativo" },
+    "fundador": { "monthly": 0, "annual": 0, "label": "Miembro Fundador (por invitacion)" }
+  },
+  "membership_scores": {
+    "emprendedor": 0.3, "empresarial": 0.5, "corporativo": 0.8, "fundador": 1.0
+  },
+  "governance_roles": [
+    "superadmin",
+    "presidente", "vicepresidente", "secretario", "tesorero", "vocal",
+    "coordinador_comite", "miembro_comite",
+    "miembro"
+  ],
+  "features": {
+    "matching": true,
+    "exchange": true,
+    "mcp": true,
+    "payments": true,
+    "monte_carlo": true,
+    "trust_rank": true
+  },
+  "admin_account": {
+    "email": "admin@hispamind.chamber",
+    "password": "HispaMind-Admin-2026!",
+    "first_name": "HispaMind",
+    "last_name": "Administrador"
+  }
+}

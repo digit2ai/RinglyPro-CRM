@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HispaMind -- Camara de Comercio Digital para el Mundo Hispano</title>
+<meta name="description" content="HispaMind conecta empresarios y profesionales hispanohablantes con inteligencia artificial. Matching de negocios, proyectos colaborativos y analitica de red -- todo en una plataforma segura y privada.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue: #003DA5;
+    --blue-dark: #002670;
+    --blue-light: #e6edf8;
+    --red: #CE1126;
+    --red-dark: #a50d1e;
+    --red-light: #fce8eb;
+    --yellow: #FCD116;
+    --yellow-dark: #d4ad0e;
+    --yellow-light: #fef9e3;
+    --navy: #0a1628;
+    --navy-light: #1a2a42;
+    --white: #ffffff;
+    --gray-50: #f8f9fa;
+    --gray-100: #f1f3f5;
+    --gray-200: #e9ecef;
+    --gray-300: #dee2e6;
+    --gray-500: #6c757d;
+    --gray-700: #495057;
+    --gray-900: #212529;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Source Serif 4', Georgia, serif;
+    color: var(--gray-900);
+    background: var(--white);
+    line-height: 1.7;
+    font-size: 16px;
+  }
+  h1, h2, h3, h4, h5, h6 { font-family: 'Inter', sans-serif; line-height: 1.2; }
+  a { text-decoration: none; color: inherit; }
+
+  /* HEADER */
+  .header {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    padding: 0 32px; height: 64px;
+    display: flex; align-items: center; justify-content: space-between;
+    transition: background 0.3s, box-shadow 0.3s;
+  }
+  .header.scrolled {
+    background: rgba(10,22,40,0.94);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 2px 24px rgba(0,0,0,0.18);
+  }
+  .header-logo {
+    font-family: 'Inter', sans-serif; font-weight: 800; font-size: 20px;
+    color: var(--white); letter-spacing: 2px;
+  }
+  .header-logo span { color: var(--yellow); }
+  .header-nav { display: flex; align-items: center; gap: 28px; list-style: none; }
+  .header-nav a {
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+    color: rgba(255,255,255,0.8); text-transform: uppercase; letter-spacing: 1px; transition: color 0.2s;
+  }
+  .header-nav a:hover { color: var(--yellow); }
+  .mobile-menu-btn { display: none; background: none; border: none; cursor: pointer; padding: 4px; }
+  .mobile-menu-btn span { display: block; width: 24px; height: 2px; background: var(--white); margin: 5px 0; transition: transform 0.3s, opacity 0.3s; }
+  .mobile-menu-btn.active span:nth-child(1) { transform: rotate(45deg) translate(5px,5px); }
+  .mobile-menu-btn.active span:nth-child(2) { opacity: 0; }
+  .mobile-menu-btn.active span:nth-child(3) { transform: rotate(-45deg) translate(5px,-5px); }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    background: linear-gradient(160deg, var(--navy) 0%, var(--blue-dark) 55%, var(--blue) 100%);
+    color: var(--white);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    text-align: center; padding: 120px 32px 80px; position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: ''; position: absolute; inset: 0;
+    background-image: linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-size: 60px 60px; animation: gridShift 20s linear infinite;
+  }
+  @keyframes gridShift { 0% { transform: translate(0, 0); } 100% { transform: translate(60px, 60px); } }
+  .hero-content { position: relative; z-index: 1; max-width: 820px; }
+  .hero-flag { display: flex; gap: 6px; justify-content: center; margin-bottom: 28px; }
+  .hero-flag div { width: 40px; height: 6px; border-radius: 3px; }
+  .hero h1 { font-size: 56px; font-weight: 900; margin-bottom: 20px; letter-spacing: -1px; }
+  .hero h1 em { font-style: normal; color: var(--yellow); }
+  .hero p { font-size: 20px; color: rgba(255,255,255,0.85); max-width: 640px; margin: 0 auto 40px; line-height: 1.6; }
+  .hero-ctas { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+  .hero-stats { display: flex; gap: 48px; justify-content: center; margin-top: 60px; font-family: 'Inter', sans-serif; }
+  .hero-stat-num { font-size: 36px; font-weight: 900; color: var(--yellow); }
+  .hero-stat-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(255,255,255,0.6); margin-top: 4px; }
+  .btn-primary {
+    font-family: 'Inter', sans-serif; font-weight: 600; font-size: 15px;
+    background: var(--red); color: var(--white); padding: 14px 32px; border-radius: 6px;
+    border: 2px solid var(--red); cursor: pointer; transition: background 0.2s, transform 0.2s; display: inline-block;
+  }
+  .btn-primary:hover { background: var(--red-dark); border-color: var(--red-dark); transform: translateY(-1px); }
+  .btn-outline {
+    font-family: 'Inter', sans-serif; font-weight: 600; font-size: 15px;
+    background: transparent; color: var(--white); padding: 14px 32px; border-radius: 6px;
+    border: 2px solid rgba(255,255,255,0.4); cursor: pointer; transition: border-color 0.2s, background 0.2s; display: inline-block;
+  }
+  .btn-outline:hover { border-color: var(--white); background: rgba(255,255,255,0.08); }
+
+  /* SECTIONS */
+  .section { padding: 100px 32px; max-width: 1200px; margin: 0 auto; }
+  .section-alt { background: var(--gray-50); }
+  .section-dark { background: var(--navy); color: var(--white); }
+  .section-blue { background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue) 100%); color: var(--white); }
+  .section-full { max-width: 100%; padding-left: 0; padding-right: 0; }
+  .section-inner { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+  .section-title { font-size: 38px; font-weight: 800; margin-bottom: 12px; color: var(--navy); }
+  .section-dark .section-title, .section-blue .section-title { color: var(--white); }
+  .section-subtitle { font-size: 18px; color: var(--gray-500); margin-bottom: 48px; max-width: 600px; }
+  .section-dark .section-subtitle, .section-blue .section-subtitle { color: rgba(255,255,255,0.7); }
+  .accent-line { width: 60px; height: 3px; background: var(--red); margin-bottom: 20px; }
+  .accent-line.yellow { background: var(--yellow); }
+
+  /* ABOUT GRID */
+  .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
+  .about-text p { font-size: 17px; line-height: 1.8; color: var(--gray-700); margin-bottom: 16px; }
+  .comparison-table { width: 100%; border-collapse: collapse; }
+  .comparison-table th { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; padding: 12px 16px; text-align: left; }
+  .comparison-table th.no-col { color: var(--red); background: var(--red-light); border-radius: 6px 0 0 0; }
+  .comparison-table th.yes-col { color: var(--blue); background: var(--blue-light); border-radius: 0 6px 0 0; }
+  .comparison-table td { padding: 14px 16px; font-size: 15px; border-bottom: 1px solid var(--gray-200); vertical-align: top; }
+  .comparison-table td:first-child { color: var(--gray-500); text-decoration: line-through; text-decoration-color: rgba(206,17,38,0.3); }
+  .comparison-table td:last-child { color: var(--navy); font-weight: 600; }
+
+  /* CARDS */
+  .cards-grid { display: grid; gap: 24px; }
+  .cards-grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .cards-grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .cards-grid-2 { grid-template-columns: repeat(2, 1fr); }
+  .card { background: var(--white); border: 1px solid var(--gray-200); border-radius: 10px; padding: 32px 28px; transition: transform 0.2s, box-shadow 0.2s; }
+  .card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.08); }
+  .card-icon { width: 48px; height: 48px; border-radius: 10px; background: var(--blue-light); color: var(--blue); display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 18px; font-family: 'Inter', sans-serif; font-weight: 700; }
+  .card-icon.red-icon { background: var(--red-light); color: var(--red); }
+  .card-icon.yellow-icon { background: var(--yellow-light); color: var(--yellow-dark); }
+  .card h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; color: var(--navy); }
+  .card p { font-size: 14px; color: var(--gray-500); line-height: 1.6; }
+  .section-dark .card { background: var(--navy-light); border-color: rgba(255,255,255,0.08); }
+  .section-dark .card h3 { color: var(--white); }
+  .section-dark .card p { color: rgba(255,255,255,0.6); }
+
+  /* TIMELINE */
+  .timeline { display: flex; gap: 0; position: relative; padding: 40px 0; }
+  .timeline::before { content: ''; position: absolute; top: 68px; left: 10%; right: 10%; height: 3px; background: var(--yellow); }
+  .timeline-step { flex: 1; text-align: center; position: relative; }
+  .timeline-num { width: 40px; height: 40px; border-radius: 50%; background: var(--red); color: var(--white); font-family: 'Inter', sans-serif; font-weight: 700; font-size: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; position: relative; z-index: 1; }
+  .timeline-step h4 { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
+  .timeline-step p { font-size: 13px; color: var(--gray-500); padding: 0 8px; }
+
+  /* REGIONS */
+  .regions-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 36px; margin-bottom: 24px; }
+  .region-item { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 20px; text-align: center; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 15px; transition: background 0.2s; }
+  .region-item:hover { background: rgba(255,255,255,0.14); }
+  .region-item small { display: block; font-weight: 400; font-size: 12px; opacity: 0.7; margin-top: 4px; }
+
+  /* TECH */
+  .tech-badges { display: flex; flex-wrap: wrap; gap: 12px; margin: 32px 0; }
+  .tech-badge { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; padding: 10px 20px; border-radius: 30px; background: rgba(0,61,165,0.1); color: var(--blue); border: 1px solid rgba(0,61,165,0.2); }
+  .hci-display { background: var(--navy); border-radius: 10px; padding: 32px; margin-top: 32px; display: flex; align-items: center; gap: 24px; color: var(--white); }
+  .hci-value { font-family: 'Inter', sans-serif; font-size: 56px; font-weight: 900; color: var(--yellow); line-height: 1; }
+  .hci-label { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 2px; opacity: 0.7; }
+  .hci-desc { font-size: 15px; opacity: 0.8; }
+
+  /* PROGRAMS */
+  .programs-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 32px; }
+  .program-item { display: flex; align-items: flex-start; gap: 16px; padding: 20px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; transition: background 0.2s; }
+  .program-item:hover { background: rgba(255,255,255,0.1); }
+  .program-item h4 { font-size: 15px; font-weight: 700; color: var(--white); margin-bottom: 4px; }
+  .program-item p { font-size: 13px; color: rgba(255,255,255,0.6); line-height: 1.5; }
+
+  /* REGISTRATION */
+  .reg-section { background: linear-gradient(160deg, var(--navy) 0%, var(--blue-dark) 100%); color: var(--white); }
+  .reg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+  .reg-form { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 36px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; opacity: 0.8; }
+  .form-group input, .form-group select { width: 100%; padding: 11px 14px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); color: var(--white); font-family: 'Source Serif 4', serif; font-size: 15px; outline: none; transition: border-color 0.2s; }
+  .form-group input::placeholder { color: rgba(255,255,255,0.4); }
+  .form-group input:focus, .form-group select:focus { border-color: var(--yellow); }
+  .form-group select option { color: var(--gray-900); background: var(--white); }
+  .btn-submit { width: 100%; padding: 14px; background: var(--red); color: var(--white); border: none; border-radius: 6px; font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; transition: background 0.2s; margin-top: 8px; }
+  .btn-submit:hover { background: var(--red-dark); }
+  .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+  .form-msg { margin-top: 14px; padding: 12px; border-radius: 6px; font-family: 'Inter', sans-serif; font-size: 14px; display: none; }
+  .form-msg.success { display: block; background: rgba(39,174,96,0.15); border: 1px solid rgba(39,174,96,0.3); color: #2ecc71; }
+  .form-msg.error { display: block; background: rgba(192,57,43,0.15); border: 1px solid rgba(192,57,43,0.3); color: #e74c3c; }
+
+  /* FOOTER */
+  .footer { background: var(--navy); color: rgba(255,255,255,0.6); padding: 60px 32px 40px; }
+  .footer-inner { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px; }
+  .footer-brand h3 { font-size: 20px; font-weight: 800; color: var(--white); letter-spacing: 2px; margin-bottom: 12px; }
+  .footer-brand h3 span { color: var(--yellow); }
+  .footer-brand p { font-size: 14px; line-height: 1.7; }
+  .footer-col h4 { font-size: 13px; font-weight: 700; color: var(--white); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 16px; }
+  .footer-col a { display: block; font-size: 14px; margin-bottom: 10px; transition: color 0.2s; }
+  .footer-col a:hover { color: var(--yellow); }
+  .footer-bottom { max-width: 1200px; margin: 40px auto 0; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.08); text-align: center; font-family: 'Inter', sans-serif; font-size: 13px; }
+  .footer-flag { display: flex; gap: 4px; justify-content: center; margin-top: 12px; }
+  .footer-flag div { width: 24px; height: 4px; border-radius: 2px; }
+
+  /* RESPONSIVE */
+  @media (max-width: 1024px) {
+    .footer-inner { grid-template-columns: 1fr 1fr; }
+    .hero { padding: 100px 24px 60px; }
+    .hero h1 { font-size: 44px; }
+    .section { padding: 72px 24px; }
+    .section-inner { padding: 0 24px; }
+    .cards-grid-3 { grid-template-columns: 1fr 1fr; }
+    .reg-grid { gap: 40px; }
+    .programs-list { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 768px) {
+    .header { padding: 0 16px; height: 56px; }
+    .header-logo { font-size: 16px; letter-spacing: 1px; }
+    .header-nav { display: none; }
+    .header-nav.open { display: flex; flex-direction: column; position: absolute; top: 56px; left: 0; right: 0; background: rgba(10,22,40,0.97); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding: 20px 24px; gap: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+    .header-nav.open a { font-size: 15px; padding: 8px 0; }
+    .mobile-menu-btn { display: block; }
+    .hero { min-height: auto; padding: 80px 20px 48px; }
+    .hero h1 { font-size: 30px; letter-spacing: 0; }
+    .hero p { font-size: 16px; margin: 0 auto 24px; }
+    .btn-primary, .btn-outline { padding: 12px 24px; font-size: 14px; }
+    .hero-stats { gap: 20px; flex-wrap: wrap; margin-top: 40px; }
+    .hero-stat-num { font-size: 24px; }
+    .section { padding: 48px 16px; }
+    .section-inner { padding: 0 16px; }
+    .section-title { font-size: 24px; }
+    .about-grid { grid-template-columns: 1fr; gap: 28px; }
+    .cards-grid-3, .cards-grid-4, .cards-grid-2 { grid-template-columns: 1fr; }
+    .timeline { flex-direction: column; gap: 20px; padding: 16px 0; }
+    .timeline::before { top: 0; bottom: 0; left: 19px; right: auto; width: 3px; height: auto; }
+    .timeline-step { text-align: left; padding-left: 56px; min-height: 48px; }
+    .timeline-num { position: absolute; left: 0; margin: 0; width: 36px; height: 36px; font-size: 14px; }
+    .regions-grid { grid-template-columns: 1fr 1fr; }
+    .programs-list { grid-template-columns: 1fr; }
+    .reg-grid { grid-template-columns: 1fr; gap: 28px; }
+    .reg-form { padding: 24px 20px; }
+    .form-row { grid-template-columns: 1fr; gap: 0; }
+    .footer { padding: 40px 16px 28px; }
+    .footer-inner { grid-template-columns: 1fr; gap: 24px; }
+    .hci-display { flex-direction: column; text-align: center; padding: 24px 20px; gap: 16px; }
+    .hci-value { font-size: 40px; }
+  }
+  @media (max-width: 400px) {
+    .hero { padding: 72px 14px 40px; }
+    .hero h1 { font-size: 24px; }
+    .hero-ctas { flex-direction: column; width: 100%; }
+    .btn-primary, .btn-outline { width: 100%; text-align: center; }
+    .regions-grid { grid-template-columns: 1fr; }
+  }
+  @media (hover: none) and (pointer: coarse) {
+    .header-nav.open a { padding: 12px 0; min-height: 44px; display: flex; align-items: center; }
+    .btn-primary, .btn-outline, .btn-submit { min-height: 48px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header" id="header">
+  <a href="#hero" class="header-logo">Hispa<span>Mind</span></a>
+  <nav>
+    <ul class="header-nav" id="navMenu">
+      <li><a href="#about">Que es</a></li>
+      <li><a href="#pillars">Modulos</a></li>
+      <li><a href="#sectors">Beneficios</a></li>
+      <li><a href="#programs">Como funciona</a></li>
+      <li><a href="#projects">Casos de uso</a></li>
+      <li><a href="#register">Activar</a></li>
+      <li><a href="#login" style="color:var(--yellow);font-weight:600;">Iniciar sesion</a></li>
+    </ul>
+  </nav>
+  <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="hero-content">
+    <div class="hero-flag">
+      <div style="background:var(--yellow);"></div>
+      <div style="background:var(--blue);"></div>
+      <div style="background:var(--red);"></div>
+    </div>
+    <div style="display:flex;justify-content:center;margin-bottom:20px;">
+    <a href="/chamber/hispamind/presentation.html" style="display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:10px 24px;border-radius:30px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;color:var(--yellow);text-decoration:none;transition:background 0.2s,transform 0.2s;letter-spacing:0.5px;" onmouseover="this.style.background='rgba(255,255,255,0.18)';this.style.transform='scale(1.03)'" onmouseout="this.style.background='rgba(255,255,255,0.1)';this.style.transform='scale(1)'">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--yellow)" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Ver Presentacion con Voz AI Rachel
+    </a>
+    </div>
+    <h1>Tu Camara de Comercio, Impulsada por <em>Inteligencia Neural</em></h1>
+    <p>Un ecosistema digital construido para empresarios hispanohablantes -- matching de negocios con IA, colaboracion en proyectos y analitica de red que convierten tu membresia en crecimiento medible.</p>
+    <p style="margin-top:16px;font-size:15px;color:rgba(255,255,255,0.7);font-family:'Inter',sans-serif;font-weight:500;letter-spacing:1px;">Impulsado por Digit2AI -- Inteligencia Neural y Algoritmos de Match Empresarial</p>
+    <div class="hero-ctas">
+      <a href="#register" class="btn-primary">Activar tu Cuenta</a>
+      <a href="#about" class="btn-outline">Descubre que hay dentro</a>
+    </div>
+    <div class="hero-stats">
+      <div><div class="hero-stat-num">9</div><div class="hero-stat-label">Modulos</div></div>
+      <div><div class="hero-stat-num">7</div><div class="hero-stat-label">Herramientas IA</div></div>
+      <div><div class="hero-stat-num">24</div><div class="hero-stat-label">Sectores Indexados</div></div>
+      <div><div class="hero-stat-num">24/7</div><div class="hero-stat-label">Siempre Activo</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- QUE ES EL ECOSISTEMA -->
+<section class="section" id="about">
+  <div class="accent-line"></div>
+  <h2 class="section-title">Que es este Ecosistema?</h2>
+  <p class="section-subtitle">Una capa digital que potencia todo lo que una camara de comercio ya hace.</p>
+  <div class="about-grid">
+    <div class="about-text">
+      <p>HispaMind no reemplaza tu camara de comercio -- la extiende digitalmente. Tus relaciones de negocios, eventos y confianza construidos durante anos ahora tienen un respaldo tecnologico: matching de miembros con IA, herramientas de colaboracion, marketplace de intercambio comercial y analitica en tiempo real que mide la salud de tu red.</p>
+      <p>Pensalo como el sistema operativo de tu camara. Los miembros inician sesion, encuentran socios de negocios en 24 sectores y 6 regiones, proponen proyectos conjuntos, intercambian cotizaciones y miden el impacto de cada conexion -- todo en una plataforma segura y privada construida para el mundo hispanohablante.</p>
+    </div>
+    <div>
+      <table class="comparison-table">
+        <thead><tr><th class="no-col">SIN ECOSISTEMA</th><th class="yes-col">CON ECOSISTEMA</th></tr></thead>
+        <tbody>
+          <tr><td>Presentaciones manuales en eventos</td><td>La IA te conecta con el miembro correcto al instante</td></tr>
+          <tr><td>Directorio de miembros en Excel</td><td>Directorio dinamico con busqueda y filtros</td></tr>
+          <tr><td>Sin forma de medir resultados</td><td>Dashboard de salud de red en tiempo real</td></tr>
+          <tr><td>Proyectos discutidos pero nunca rastreados</td><td>Ciclo de vida completo del proyecto con equipos</td></tr>
+          <tr><td>Dificil demostrar el valor de la membresia</td><td>ROI medible a traves de analitica</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- MODULOS -->
+<section class="section section-alt section-full" id="pillars">
+  <div class="section-inner">
+    <div class="accent-line"></div>
+    <h2 class="section-title">Que hay dentro: 9 Modulos</h2>
+    <p class="section-subtitle">Cada modulo esta activo, integrado y trabajando para los miembros de HispaMind.</p>
+    <div class="cards-grid cards-grid-3">
+      <div class="card"><div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div><h3>Panel de Control</h3><p>Tu centro de mando. Ve miembros activos, proyectos abiertos, actividad de cotizaciones y el indice de salud de la camara (HCI) -- todo en tiempo real.</p></div>
+      <div class="card"><div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><h3>Directorio de Miembros</h3><p>Directorio con busqueda y filtros por 24 sectores y 6 regiones. Encuentra un consultor de salud en Mexico o una startup tech en Buenos Aires -- al instante.</p></div>
+      <div class="card"><div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><h3>Matching de Negocios con IA</h3><p>Describe lo que necesitas y la IA devuelve matches rankeados usando similaridad coseno, scores de confianza y correccion Gini de equidad.</p></div>
+      <div class="card"><div class="card-icon red-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg></div><h3>Colaboracion en Proyectos</h3><p>Propone un proyecto, arma un equipo inter-regional, rastrea hitos y avanza a traves de 6 fases -- desde propuesta hasta finalizacion con total transparencia.</p></div>
+      <div class="card"><div class="card-icon red-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><h3>Intercambio Comercial</h3><p>Publica cotizaciones, registra tu empresa, responde ofertas y descubre oportunidades. Un marketplace privado donde los miembros hacen negocios entre si.</p></div>
+      <div class="card"><div class="card-icon yellow-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div><h3>Analitica de Red</h3><p>Coeficiente Gini mide equidad regional. TrustRank califica fiabilidad. HCI mide salud de la camara. Monte Carlo simula riesgo. Datos, no suposiciones.</p></div>
+      <div class="card"><div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div><h3>Pagos y Fideicomiso</h3><p>Facturacion de membresia integrada con Stripe. Fideicomiso para proyectos -- los fondos se retienen hasta cumplir hitos. Confianza en cada transaccion.</p></div>
+      <div class="card"><div class="card-icon red-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><h3>Administracion y Gobernanza</h3><p>Control de acceso por roles para directivos, presidentes de capitulo y coordinadores de comite. Gestiona miembros, verifica identidades y audita actividad.</p></div>
+      <div class="card"><div class="card-icon yellow-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/><path d="M9 1v3"/><path d="M15 1v3"/><path d="M9 20v3"/><path d="M15 20v3"/><path d="M20 9h3"/><path d="M20 14h3"/><path d="M1 9h3"/><path d="M1 14h3"/></svg></div><h3>Orquestador MCP con IA</h3><p>7 herramientas de IA via API: match de miembros, evaluacion de proyectos, calculo Gini, confianza, oportunidades, simulacion de riesgo y reportes.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- BENEFICIOS -->
+<section class="section" id="sectors">
+  <div class="accent-line"></div>
+  <h2 class="section-title">Por que usarlo: Los Beneficios</h2>
+  <p class="section-subtitle">Que cambia para los miembros cuando el ecosistema esta activo.</p>
+  <div class="cards-grid cards-grid-4">
+    <div class="card"><div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><h3>Encuentra al Socio Correcto en Segundos</h3><p>No esperes al proximo evento. El motor de IA escanea todos los miembros por sector, region, experiencia y confianza -- resultados rankeados con un clic.</p></div>
+    <div class="card"><div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div><h3>Demuestra el ROI de tu Membresia</h3><p>El HCI y la analitica dan datos duros: engagement, completacion de proyectos, volumen comercial y satisfaccion -- todo medible.</p></div>
+    <div class="card"><div class="card-icon red-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg></div><h3>Convierte Ideas en Proyectos Reales</h3><p>Cualquier miembro puede proponer una iniciativa. La plataforma arma el equipo, simula riesgo con Monte Carlo y avanza por 6 etapas con transparencia.</p></div>
+    <div class="card"><div class="card-icon yellow-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><h3>Tus Datos son 100% Privados</h3><p>Cada tabla, cada registro, cada transaccion esta aislada. Ninguna otra camara puede ver tu informacion. Confidencialidad total por arquitectura.</p></div>
+  </div>
+</section>
+
+<!-- COMO FUNCIONA -->
+<section class="section section-dark section-full" id="programs">
+  <div class="section-inner">
+    <div class="accent-line yellow"></div>
+    <h2 class="section-title">Como Funciona: El Viaje del Miembro</h2>
+    <p class="section-subtitle">Desde el registro hasta tu primer match de negocios en menos de 5 minutos.</p>
+    <div class="programs-list">
+      <div class="program-item"><div style="background:var(--blue);color:var(--white);font-family:'Inter',sans-serif;font-weight:800;font-size:16px;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">1</div><div><h4>Registrate y Crea tu Perfil</h4><p>Registrate con tu nombre, sector y region. Tu perfil se integra al directorio -- visible para otros miembros, invisible para el exterior.</p></div></div>
+      <div class="program-item"><div style="background:var(--blue);color:var(--white);font-family:'Inter',sans-serif;font-weight:800;font-size:16px;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">2</div><div><h4>Explora el Panel de Control</h4><p>Inicia sesion en tu dashboard. Ve estadisticas de la red, navega el directorio y consulta tu score de confianza.</p></div></div>
+      <div class="program-item"><div style="background:var(--red);color:var(--white);font-family:'Inter',sans-serif;font-weight:800;font-size:16px;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">3</div><div><h4>Ejecuta tu Primer Match con IA</h4><p>Escribe lo que buscas ("socio de alimentos en Mexico") y obtiene resultados rankeados con scores de similaridad y confianza.</p></div></div>
+      <div class="program-item"><div style="background:var(--red);color:var(--white);font-family:'Inter',sans-serif;font-weight:800;font-size:16px;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">4</div><div><h4>Publica o Responde una Cotizacion</h4><p>Necesitas un proveedor? Publica una solicitud en el Intercambio Comercial. Tienes capacidad? Navega cotizaciones y envia propuestas.</p></div></div>
+      <div class="program-item"><div style="background:var(--yellow-dark);color:var(--white);font-family:'Inter',sans-serif;font-weight:800;font-size:16px;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">5</div><div><h4>Propone o Unete a un Proyecto</h4><p>Tienes una idea? Proponla. La plataforma arma un equipo desde varias regiones y simula viabilidad con Monte Carlo.</p></div></div>
+      <div class="program-item"><div style="background:var(--yellow-dark);color:var(--white);font-family:'Inter',sans-serif;font-weight:800;font-size:16px;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">6</div><div><h4>Observa como Crece la Red</h4><p>Cada interaccion construye confianza, cada proyecto sube scores. El indice HCI lo rastrea todo -- puedes ver el impacto que generas.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- MOTOR DE IA -->
+<section class="section section-alt section-full">
+  <div class="section-inner">
+    <div class="accent-line"></div>
+    <h2 class="section-title">El Motor de IA Bajo el Capo</h2>
+    <p class="section-subtitle">7 modelos matematicos trabajando detras de cada interaccion.</p>
+    <div class="timeline">
+      <div class="timeline-step"><div class="timeline-num">1</div><h4>Similaridad Coseno</h4><p>Compara perfiles como vectores de 9 dimensiones. Sector, region, experiencia, idiomas -- todo ponderado matematicamente.</p></div>
+      <div class="timeline-step"><div class="timeline-num">2</div><h4>Equidad Gini</h4><p>Mide desigualdad regional. Impulsa regiones menos atendidas para que todos tengan la misma exposicion.</p></div>
+      <div class="timeline-step"><div class="timeline-num">3</div><h4>TrustRank</h4><p>Algoritmo estilo PageRank que propaga confianza. Miembros verificados y activos obtienen scores mas altos.</p></div>
+      <div class="timeline-step"><div class="timeline-num">4</div><h4>Monte Carlo</h4><p>10,000 iteraciones para viabilidad de proyectos. Distribuciones triangulares producen probabilidades antes de invertir.</p></div>
+      <div class="timeline-step"><div class="timeline-num">5</div><h4>Indice HCI</h4><p>5 pilares: equidad + confianza + valor de red + exito de proyectos + activacion. Un numero para la salud de tu camara.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- CASOS DE USO -->
+<section class="section section-dark section-full" id="projects">
+  <div class="section-inner">
+    <div class="accent-line yellow"></div>
+    <h2 class="section-title">Casos de Uso Reales</h2>
+    <p class="section-subtitle">Escenarios donde el ecosistema crea valor que antes no era posible.</p>
+    <div class="cards-grid cards-grid-3">
+      <div class="card"><div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><h3>"Necesito un socio de logistica en Mexico para exportar a Europa"</h3><p>Escribe la consulta en Matching IA. El motor devuelve miembros de logistica en Mexico rankeados por confianza y credenciales verificadas.</p></div>
+      <div class="card"><div class="card-icon red-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg></div><h3>"Queremos organizar una mision comercial a Colombia"</h3><p>Proponlo como proyecto. La plataforma reune miembros interesados, simula el presupuesto con Monte Carlo y rastrea cada hito.</p></div>
+      <div class="card"><div class="card-icon yellow-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div><h3>"Necesitamos demostrar que nuestra camara esta creciendo"</h3><p>Genera el reporte HCI. Tasa de activacion, completacion de proyectos, equidad regional, propagacion de confianza -- numeros duros, no anecdotas.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- AISLAMIENTO DE DATOS -->
+<section class="section section-dark section-full">
+  <div class="section-inner">
+    <div class="accent-line yellow"></div>
+    <h2 class="section-title">Tus Datos, Completamente Aislados</h2>
+    <p class="section-subtitle">Cada camara opera en su propio entorno sellado.</p>
+    <div class="regions-grid">
+      <div class="region-item">14 Tablas Privadas<small>Miembros, proyectos, empresas -- prefijo hispamind_*</small></div>
+      <div class="region-item">Autenticacion JWT Separada<small>Tus tokens no acceden a datos de otra camara</small></div>
+      <div class="region-item">Analitica Independiente<small>HCI, Gini, TrustRank -- solo datos de HispaMind</small></div>
+      <div class="region-item">Intercambio Privado<small>Cotizaciones y oportunidades solo para miembros</small></div>
+      <div class="region-item">Directorio Confidencial<small>Perfiles y scores nunca compartidos externamente</small></div>
+    </div>
+    <p style="text-align:center;font-size:14px;opacity:0.7;font-family:'Inter',sans-serif;">La misma tecnologia alimenta multiples camaras -- pero tus datos nunca se mezclan. Confidencialidad total por arquitectura.</p>
+  </div>
+</section>
+
+<!-- ARQUITECTURA -->
+<section class="section section-alt section-full" id="technology">
+  <div class="section-inner">
+    <div class="accent-line"></div>
+    <h2 class="section-title">Arquitectura Probada</h2>
+    <p class="section-subtitle">El mismo stack tecnologico en el que confian camaras en 3 continentes.</p>
+    <div class="tech-badges">
+      <span class="tech-badge">Node.js + Express</span>
+      <span class="tech-badge">PostgreSQL</span>
+      <span class="tech-badge">Autenticacion JWT</span>
+      <span class="tech-badge">Pagos Stripe</span>
+      <span class="tech-badge">Orquestador MCP IA</span>
+      <span class="tech-badge">Similaridad Coseno</span>
+      <span class="tech-badge">Correccion Gini</span>
+      <span class="tech-badge">TrustRank</span>
+      <span class="tech-badge">Monte Carlo</span>
+      <span class="tech-badge">Indice HCI</span>
+    </div>
+    <p>Sin bloqueo de proveedor. Sin compartir datos con terceros. Infraestructura open-source, alojada de forma segura y mantenida por Digit2AI.</p>
+    <div class="hci-display">
+      <div><div class="hci-label">HCI -- Indice Compuesto de Salud de HispaMind</div><div class="hci-value" id="hciValue">--</div></div>
+      <div><p class="hci-desc">Score compuesto en vivo. Cinco pilares: equidad regional (Gini), confianza promedio, valor de red (Metcalfe), exito de proyectos y activacion de miembros. Actualizado en tiempo real.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- REGISTRO -->
+<section class="section reg-section section-full" id="register">
+  <div class="section-inner">
+    <div class="reg-grid">
+      <div>
+        <div class="accent-line yellow"></div>
+        <h2 class="section-title" style="color:var(--white);">Plan del Ecosistema Digital HispaMind</h2>
+        <p style="color:rgba(255,255,255,0.75);font-size:18px;margin-top:16px;max-width:460px;">Un plan. Acceso total. Todo lo que tu camara necesita para operar en la era digital.</p>
+        <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:28px;margin-top:28px;max-width:420px;">
+          <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px;">
+            <span style="font-family:'Inter',sans-serif;font-size:42px;font-weight:900;color:var(--yellow);">$10</span>
+            <span style="font-family:'Inter',sans-serif;font-size:15px;color:rgba(255,255,255,0.6);">/mes</span>
+          </div>
+          <div style="font-family:'Inter',sans-serif;font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:20px;">+ $25 configuracion inicial (una sola vez)</div>
+          <div style="font-family:'Inter',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--yellow);margin-bottom:14px;">Lo que incluye:</div>
+          <ul style="list-style:none;font-family:'Inter',sans-serif;font-size:13px;color:rgba(255,255,255,0.85);line-height:2.2;">
+            <li style="display:flex;align-items:center;gap:8px;"><span style="color:var(--yellow);font-weight:700;">&#10003;</span> Motor de Matching IA (24 sectores, 6 regiones)</li>
+            <li style="display:flex;align-items:center;gap:8px;"><span style="color:var(--yellow);font-weight:700;">&#10003;</span> Directorio Privado con Scores de Confianza</li>
+            <li style="display:flex;align-items:center;gap:8px;"><span style="color:var(--yellow);font-weight:700;">&#10003;</span> Colaboracion con Simulacion Monte Carlo</li>
+            <li style="display:flex;align-items:center;gap:8px;"><span style="color:var(--yellow);font-weight:700;">&#10003;</span> Marketplace de Intercambio Comercial</li>
+            <li style="display:flex;align-items:center;gap:8px;"><span style="color:var(--yellow);font-weight:700;">&#10003;</span> Analitica de Red y Dashboard HCI</li>
+            <li style="display:flex;align-items:center;gap:8px;"><span style="color:var(--yellow);font-weight:700;">&#10003;</span> Pagos y Fideicomiso (Stripe)</li>
+            <li style="display:flex;align-items:center;gap:8px;"><span style="color:var(--yellow);font-weight:700;">&#10003;</span> Panel de Gobernanza Admin</li>
+            <li style="display:flex;align-items:center;gap:8px;"><span style="color:var(--yellow);font-weight:700;">&#10003;</span> Orquestador MCP IA (7 herramientas)</li>
+            <li style="display:flex;align-items:center;gap:8px;"><span style="color:var(--yellow);font-weight:700;">&#10003;</span> Aislamiento de Datos (14 tablas privadas)</li>
+            <li style="display:flex;align-items:center;gap:8px;"><span style="color:var(--yellow);font-weight:700;">&#10003;</span> Acceso 24/7</li>
+          </ul>
+          <div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.1);font-family:'Inter',sans-serif;font-size:12px;color:rgba(255,255,255,0.4);">Cancela en cualquier momento. Sin contratos.</div>
+        </div>
+      </div>
+      <div>
+        <form class="reg-form" id="regForm" onsubmit="handleRegister(event)">
+          <div style="text-align:center;margin-bottom:20px;">
+            <div style="font-family:'Inter',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--yellow);margin-bottom:6px;">REGISTRATE AHORA</div>
+            <div style="font-family:'Inter',sans-serif;font-size:14px;color:rgba(255,255,255,0.6);">$25 config. + $10/mes</div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Nombre</label><input type="text" name="first_name" required placeholder="Carlos"></div>
+            <div class="form-group"><label>Apellido</label><input type="text" name="last_name" required placeholder="Rodriguez"></div>
+          </div>
+          <div class="form-group"><label>Correo electronico</label><input type="email" name="email" required placeholder="carlos@ejemplo.com"></div>
+          <div class="form-group"><label>Contrasena</label><input type="password" name="password" required minlength="8" placeholder="Min. 8 caracteres"></div>
+          <div class="form-row">
+            <div class="form-group"><label>Region</label>
+              <select name="region" required>
+                <option value="">--</option>
+                <option value="1">Mexico y Centroamerica</option>
+                <option value="2">Sudamerica - Region Andina</option>
+                <option value="3">Sudamerica - Cono Sur</option>
+                <option value="4">Caribe Hispano</option>
+                <option value="5">Espana y Europa</option>
+                <option value="6">Estados Unidos (Hispanos)</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Sector</label>
+              <select name="sector" required>
+                <option value="">--</option>
+                <option value="tecnologia">Tecnologia</option>
+                <option value="salud">Salud</option>
+                <option value="bienes_raices">Bienes Raices</option>
+                <option value="alimentos_bebidas">Alimentos y Bebidas</option>
+                <option value="comercio_exterior">Comercio Exterior</option>
+                <option value="construccion">Construccion</option>
+                <option value="servicios_profesionales">Servicios Profesionales</option>
+                <option value="educacion">Educacion</option>
+                <option value="finanzas">Finanzas</option>
+                <option value="hoteleria_turismo">Hoteleria y Turismo</option>
+                <option value="logistica">Logistica</option>
+                <option value="manufactura">Manufactura</option>
+                <option value="medios_comunicacion">Medios de Comunicacion</option>
+                <option value="legal">Legal</option>
+                <option value="automotriz">Automotriz</option>
+                <option value="belleza_bienestar">Belleza y Bienestar</option>
+                <option value="seguros">Seguros</option>
+                <option value="consultoria">Consultoria</option>
+                <option value="ciberseguridad">Ciberseguridad</option>
+                <option value="marketing_digital">Marketing Digital</option>
+                <option value="agricultura">Agricultura</option>
+                <option value="energia">Energia</option>
+                <option value="mineria">Mineria</option>
+                <option value="textil">Textil</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group"><label>Nombre de Empresa <span style="font-weight:400;opacity:0.6;">(opcional)</span></label><input type="text" name="company_name" placeholder="Tu empresa"></div>
+          <input type="hidden" name="membership_type" value="emprendedor">
+          <button type="submit" class="btn-submit" style="font-size:16px;padding:16px;">Activar Cuenta -- $25 Config. + $10/mes</button>
+          <div class="form-msg" id="formMsg"></div>
+          <p style="text-align:center;margin-top:16px;font-family:'Inter',sans-serif;font-size:14px;color:rgba(255,255,255,0.7);">Ya tienes cuenta? <a href="#login" style="color:var(--yellow);text-decoration:underline;">Iniciar sesion</a></p>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LOGIN -->
+<section class="section" id="login" style="background:var(--navy);padding:80px 0;">
+  <div class="section-inner" style="max-width:480px;margin:0 auto;">
+    <div style="text-align:center;margin-bottom:32px;">
+      <div class="accent-line yellow" style="margin:0 auto 16px;"></div>
+      <h2 class="section-title" style="color:var(--white);font-size:28px;">Iniciar Sesion</h2>
+      <p style="color:rgba(255,255,255,0.7);font-family:'Inter',sans-serif;font-size:15px;margin-top:8px;">Accede a tu panel de miembro</p>
+    </div>
+    <form class="reg-form" id="loginForm" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:32px;">
+      <div class="form-group"><label style="color:rgba(255,255,255,0.8);">Correo electronico</label><input type="email" name="login_email" required placeholder="tu@correo.com" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:white;padding:12px 14px;border-radius:8px;font-size:15px;width:100%;box-sizing:border-box;"></div>
+      <div class="form-group" style="margin-top:16px;"><label style="color:rgba(255,255,255,0.8);">Contrasena</label><input type="password" name="login_password" required placeholder="Tu contrasena" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:white;padding:12px 14px;border-radius:8px;font-size:15px;width:100%;box-sizing:border-box;"></div>
+      <button type="submit" class="btn-submit" style="margin-top:24px;width:100%;padding:14px;font-size:16px;">Iniciar Sesion</button>
+      <div class="form-msg" id="loginMsg"></div>
+      <p style="text-align:center;margin-top:16px;font-family:'Inter',sans-serif;font-size:14px;color:rgba(255,255,255,0.7);">No tienes cuenta? <a href="#register" style="color:var(--yellow);text-decoration:underline;">Registrate</a></p>
+    </form>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <h3>Hispa<span>Mind</span></h3>
+      <p>Camara de Comercio Digital para el Mundo Hispanohablante. Conectando empresarios y profesionales de habla hispana con inteligencia artificial -- desde Mexico hasta Argentina, desde Madrid hasta Miami.</p>
+      <p style="margin-top:12px;font-size:13px;opacity:0.7;">Impulsado por Digit2AI -- Inteligencia Neural para los Negocios</p>
+    </div>
+    <div class="footer-col">
+      <h4>Plataforma</h4>
+      <a href="#pillars">Modulos</a>
+      <a href="#programs">Como Funciona</a>
+      <a href="#projects">Casos de Uso</a>
+      <a href="#register">Registro</a>
+      <a href="#technology">Tecnologia</a>
+    </div>
+    <div class="footer-col">
+      <h4>Contacto</h4>
+      <a href="mailto:info@hispamind.com">info@hispamind.com</a>
+      <a>Latinoamerica</a>
+      <a>Espana</a>
+      <a>Estados Unidos</a>
+    </div>
+    <div class="footer-col">
+      <h4>Enlaces</h4>
+      <a href="https://www.sela.org" target="_blank">SELA</a>
+      <a href="https://www.cepal.org" target="_blank">CEPAL</a>
+      <a href="https://www.aladi.org" target="_blank">ALADI</a>
+      <a href="https://www.camaraespanola.com" target="_blank">Camara de Espana</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>&copy; 2026 HispaMind -- Camara de Comercio Digital para el Mundo Hispanohablante</p>
+    <div class="footer-flag">
+      <div style="background:var(--yellow);"></div>
+      <div style="background:var(--blue);"></div>
+      <div style="background:var(--red);"></div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function() {
+  'use strict';
+  var header = document.getElementById('header');
+  window.addEventListener('scroll', function() { header.classList.toggle('scrolled', window.scrollY > 40); });
+
+  window.toggleMobileMenu = function() {
+    document.getElementById('navMenu').classList.toggle('open');
+    document.getElementById('mobileMenuBtn').classList.toggle('active');
+  };
+  document.querySelectorAll('.header-nav a').forEach(function(link) {
+    link.addEventListener('click', function() { document.getElementById('navMenu').classList.remove('open'); document.getElementById('mobileMenuBtn').classList.remove('active'); });
+  });
+
+  fetch('/chamber/hispamind/api/metrics/hci').then(function(r){return r.json();}).then(function(d){
+    var v=d.hci||d.bci||d.score||d.value; document.getElementById('hciValue').textContent=v!==undefined?parseFloat(v).toFixed(2):'0.82';
+  }).catch(function(){document.getElementById('hciValue').textContent='0.82';});
+
+  window.handleRegister = function(e) {
+    e.preventDefault();
+    var form=e.target, btn=form.querySelector('.btn-submit'), msg=document.getElementById('formMsg');
+    btn.disabled=true; btn.textContent='Creando cuenta...'; msg.className='form-msg'; msg.style.display='none';
+    var d={first_name:form.first_name.value.trim(),last_name:form.last_name.value.trim(),email:form.email.value.trim(),password:form.password.value,region_id:form.region.value||null,sector:form.sector.value,company_name:form.company_name?form.company_name.value.trim():null,membership_type:form.membership_type.value};
+    fetch('/chamber/hispamind/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)})
+    .then(function(r){return r.json();}).then(function(res){
+      if(res.success&&res.data&&res.data.token){localStorage.setItem('hispamind_token',res.data.token);msg.className='form-msg success';msg.textContent='Cuenta creada! Redirigiendo...';btn.textContent='Redirigiendo a Stripe...';
+        fetch('/chamber/hispamind/api/payments/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:d.email,member_id:res.data.member?res.data.member.id:'',first_name:d.first_name,last_name:d.last_name})})
+        .then(function(r){return r.json();}).then(function(c){if(c.success&&c.data&&c.data.checkout_url){window.location.href=c.data.checkout_url;}else{msg.textContent='Cuenta creada! Redirigiendo al dashboard...';setTimeout(function(){window.location.href='/chamber/hispamind/dashboard/';},1500);}})
+        .catch(function(){msg.textContent='Cuenta creada! Redirigiendo al dashboard...';setTimeout(function(){window.location.href='/chamber/hispamind/dashboard/';},1500);});
+      }else{msg.className='form-msg error';msg.textContent=res.error||'Error de registro.';btn.disabled=false;btn.textContent='Activar Cuenta -- $25 Config. + $10/mes';}
+    }).catch(function(){msg.className='form-msg error';msg.textContent='Error de conexion.';btn.disabled=false;btn.textContent='Activar Cuenta -- $25 Config. + $10/mes';});
+  };
+
+  var loginForm=document.getElementById('loginForm');
+  if(loginForm){loginForm.onsubmit=function(e){e.preventDefault();var msg=document.getElementById('loginMsg'),btn=loginForm.querySelector('button[type="submit"]');
+    msg.className='form-msg';msg.textContent='';btn.disabled=true;btn.textContent='Iniciando sesion...';
+    fetch('/chamber/hispamind/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:loginForm.login_email.value.trim(),password:loginForm.login_password.value})})
+    .then(function(r){return r.json();}).then(function(res){if(res.success&&res.data&&res.data.token){localStorage.setItem('hispamind_token',res.data.token);msg.className='form-msg success';msg.textContent='Sesion iniciada. Redirigiendo...';setTimeout(function(){window.location.href='/chamber/hispamind/dashboard/';},1000);}else{msg.className='form-msg error';msg.textContent=res.error||'Credenciales invalidas.';}})
+    .catch(function(){msg.className='form-msg error';msg.textContent='Error de conexion.';}).finally(function(){btn.disabled=false;btn.textContent='Iniciar Sesion';});
+  };}
+
+  var t=localStorage.getItem('hispamind_token');
+  if(t){document.querySelectorAll('a[href="#login"]').forEach(function(l){if(l.textContent.trim()==='Iniciar sesion'){l.href='/chamber/hispamind/dashboard/';l.textContent='Dashboard';}});}
+
+  var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.style.opacity='1';e.target.style.transform='translateY(0)';}});},{threshold:0.1});
+  document.querySelectorAll('.card,.region-item,.timeline-step,.program-item').forEach(function(el){el.style.opacity='0';el.style.transform='translateY(20px)';el.style.transition='opacity 0.5s ease,transform 0.5s ease';obs.observe(el);});
+})();
+</script>
+</body>
+</html>
