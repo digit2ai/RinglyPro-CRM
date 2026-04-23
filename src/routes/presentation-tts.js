@@ -8,19 +8,24 @@ const crypto = require('crypto');
 const AUDIO_CACHE_DIR = path.join(__dirname, '../../.tts-cache');
 if (!fs.existsSync(AUDIO_CACHE_DIR)) fs.mkdirSync(AUDIO_CACHE_DIR, { recursive: true });
 
-const VOICE_ID = '21m00Tcm4TlvDq8ikWAM'; // Rachel
+const VOICES = {
+  rachel: '21m00Tcm4TlvDq8ikWAM',   // Rachel — English
+  bella: 'EXAVITQu4vr4xnSDxMaL'     // Bella — Spanish (Lina)
+};
 
 // POST /api/tts/generate - Generate TTS audio from text
 router.post('/generate', async (req, res) => {
   try {
-    const { text } = req.body;
+    const { text, voice, lang } = req.body;
     if (!text) return res.status(400).json({ error: 'text required' });
 
     const apiKey = process.env.ELEVENLABS_API_KEY;
     if (!apiKey) return res.status(500).json({ error: 'ELEVENLABS_API_KEY not configured' });
 
-    // Check cache
-    const hash = crypto.createHash('md5').update(text).digest('hex');
+    const voiceId = VOICES[voice] || VOICES.bella; // default to Spanish Bella
+
+    // Include voice+lang in cache key so different voices don't collide
+    const hash = crypto.createHash('md5').update(voiceId + '|' + (lang || 'es') + '|' + text).digest('hex');
     const cachePath = path.join(AUDIO_CACHE_DIR, hash + '.mp3');
 
     if (fs.existsSync(cachePath)) {
@@ -30,7 +35,7 @@ router.post('/generate', async (req, res) => {
     }
 
     // Generate via ElevenLabs API
-    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`, {
+    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
       method: 'POST',
       headers: {
         'xi-api-key': apiKey,
@@ -39,6 +44,7 @@ router.post('/generate', async (req, res) => {
       body: JSON.stringify({
         text,
         model_id: 'eleven_multilingual_v2',
+        language_code: lang || 'es',
         voice_settings: {
           stability: 0.78,
           similarity_boost: 0.75,
