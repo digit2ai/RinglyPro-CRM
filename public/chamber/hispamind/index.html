@@ -710,14 +710,26 @@
       members_count:form.members_count.value,
       message:form.message?form.message.value.trim():''
     };
-    // Send demo request via mailto fallback (no backend endpoint needed)
-    var subject=encodeURIComponent('Demo Request - CamaraVirtual.app - '+d.chamber_name);
-    var body=encodeURIComponent('Nombre: '+d.first_name+' '+d.last_name+'\nEmail: '+d.email+'\nCamara: '+d.chamber_name+'\nRegion: '+d.region+'\nMiembros: '+d.members_count+'\nMensaje: '+d.message);
-    window.location.href='mailto:mstagg@digit2ai.com?subject='+subject+'&body='+body;
-    msg.className='form-msg success';
-    msg.textContent='Solicitud enviada. Nos pondremos en contacto contigo pronto.';
-    btn.disabled=false;
-    btn.textContent='Solicitar Demo';
+    fetch(BASE+'/api/demo-requests',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)})
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.success){
+        msg.className='form-msg success';
+        msg.textContent='Solicitud recibida. Nos pondremos en contacto contigo pronto.';
+        form.reset();
+      } else {
+        msg.className='form-msg error';
+        msg.textContent=res.error||'Error al enviar. Intenta de nuevo.';
+      }
+    })
+    .catch(function(){
+      msg.className='form-msg error';
+      msg.textContent='Error de conexion. Intenta de nuevo.';
+    })
+    .finally(function(){
+      btn.disabled=false;
+      btn.textContent='Solicitar Demo';
+    });
   };
 
   var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.style.opacity='1';e.target.style.transform='translateY(0)';}});},{threshold:0.1});

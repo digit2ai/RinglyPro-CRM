@@ -510,6 +510,15 @@ try {
     console.log('HISPATEC routes not available:', error.message);
 }
 
+// CamaraVirtual.app Platform Admin (demo requests + ecosystem provisioning)
+try {
+    const camaravirtualAdmin = require('./routes/camaravirtual-admin');
+    app.use('/chamber/hispamind/api', camaravirtualAdmin);
+    console.log('CamaraVirtual admin routes mounted at /chamber/hispamind/api');
+} catch (error) {
+    console.log('CamaraVirtual admin routes not available:', error.message);
+}
+
 // Chamber Template Ecosystem (cookie-cutter chamber instances)
 try {
     const fs = require('fs');
