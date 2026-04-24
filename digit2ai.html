@@ -98,25 +98,7 @@
 }
 .dnx-hdr-inner { display:flex; align-items:center; justify-content:space-between; }
 .dnx-brand { display:flex; align-items:center; gap:10px; }
-.dnx-brand-mark {
-  width:32px; height:32px; border-radius:9px;
-  background:var(--grad-primary);
-  position:relative; overflow:hidden;
-  box-shadow:0 0 24px -4px rgba(59,130,246,0.5);
-}
-.dnx-brand-mark::after {
-  content:""; position:absolute; inset:2px; border-radius:7px;
-  background:linear-gradient(135deg,#05070e 0%,#0b0e1a 100%);
-}
-.dnx-brand-mark::before {
-  content:"D"; position:absolute; inset:0; z-index:2;
-  display:flex; align-items:center; justify-content:center;
-  font-family:var(--font-display); font-size:22px; font-style:italic;
-  color:transparent; background:var(--grad-primary); -webkit-background-clip:text; background-clip:text;
-  font-weight:400;
-}
-.dnx-brand-text { font-size:16px; font-weight:600; letter-spacing:-0.02em; }
-.dnx-brand-text em { font-family:var(--font-display); font-style:italic; font-weight:400; color:var(--accent-cyan); }
+.dnx-brand-logo { height:40px; width:auto; display:block; }
 .dnx-nav { display:flex; align-items:center; gap:4px; }
 .dnx-nav a {
   padding:8px 14px; border-radius:10px; font-size:14px; font-weight:500;
@@ -578,8 +560,7 @@
     <header class="dnx-hdr">
       <div class="dnx-wrap dnx-hdr-inner">
         <a href="#top" class="dnx-brand">
-          <div class="dnx-brand-mark"></div>
-          <span class="dnx-brand-text">DIGIT2AI<em>.</em></span>
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png" alt="DIGIT2AI" class="dnx-brand-logo">
         </a>
         <nav class="dnx-nav" id="dnxNav">
           <a href="#opportunity">Opportunity</a>
@@ -1259,8 +1240,7 @@
         <div class="dnx-ftr-grid">
           <div class="dnx-ftr-col">
             <div class="dnx-ftr-brand">
-              <div class="dnx-brand-mark"></div>
-              <span class="dnx-brand-text">DIGIT2AI<em>.</em></span>
+              <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png" alt="DIGIT2AI" class="dnx-brand-logo">
             </div>
             <p class="dnx-ftr-tag">AI-native platforms for the 33 million small businesses big tech ignores. Building the operating system of vertical AI.</p>
           </div>
