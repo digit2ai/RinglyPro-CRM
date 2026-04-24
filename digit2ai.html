@@ -98,9 +98,10 @@
 }
 .dnx-hdr-inner { display:flex; align-items:center; justify-content:space-between; }
 .dnx-brand { display:flex; align-items:center; gap:10px; }
-.dnx-brand-logo { height:200px; width:auto; display:block; }
-@media (max-width:720px) { .dnx-brand-logo { height:120px; } }
-@media (max-width:480px) { .dnx-brand-logo { height:80px; } }
+.dnx-brand-logo { height:200px; width:auto; display:block; max-width:60vw; object-fit:contain; }
+@media (max-width:920px) { .dnx-brand-logo { height:96px; } }
+@media (max-width:640px) { .dnx-brand-logo { height:56px; } }
+@media (max-width:420px) { .dnx-brand-logo { height:44px; } }
 /* elevenlabs widget hide powered-by */
 .dnx-convai-mount { position:fixed; bottom:20px; right:20px; z-index:9998; }
 elevenlabs-convai a[href*="elevenlabs"],
@@ -112,6 +113,8 @@ elevenlabs-convai [class*="Powered"] { display:none !important; height:0 !import
   color:var(--text-dim); transition:color 160ms ease, background 160ms ease;
 }
 .dnx-nav a:hover { color:var(--text); background:var(--bg-card); }
+.dnx-nav-signin { display:none; }
+@media (max-width:920px) { .dnx-nav-signin { display:block; } }
 .dnx-hdr-cta { display:flex; align-items:center; gap:10px; }
 .dnx-lang {
   padding:7px 12px; border-radius:999px; font-size:12px; font-weight:600;
@@ -141,7 +144,12 @@ elevenlabs-convai [class*="Powered"] { display:none !important; height:0 !import
   .dnx-nav.dnx-open { display:flex; }
   .dnx-nav a { padding:12px 16px; }
   .dnx-menubtn { display:flex; }
-  .dnx-hdr-cta .dnx-btn { display:none; }
+  /* compact sign-in on tablet */
+  .dnx-hdr-cta .dnx-btn-primary { padding:8px 14px; font-size:13px; }
+}
+@media (max-width:560px) {
+  /* hide sign-in button in header on small screens — it's in the nav menu */
+  .dnx-hdr-cta .dnx-btn-primary { display:none; }
 }
 
 /* ============================================================
@@ -555,6 +563,114 @@ elevenlabs-convai [class*="Powered"] { display:none !important; height:0 !import
   .dnx-reveal { opacity:1; transform:none; transition:none; }
   .dnx-marquee-track, .dnx-cta::before { animation:none; }
 }
+
+/* ============================================================
+   MOBILE TUNING
+   ============================================================ */
+@media (max-width:920px) {
+  .dnx-wrap { padding:0 20px; }
+  .dnx-hdr { padding:8px 0; }
+  .dnx-hero { padding:56px 0 48px; }
+  .dnx-sec { padding:72px 0; }
+  .dnx-sec-head { margin-bottom:40px; }
+  .dnx-panel { padding:28px; }
+  .dnx-panel-title { font-size:32px; }
+  .dnx-cta { padding:48px 28px; }
+  .dnx-marquee-item { font-size:18px; }
+  .dnx-marquee-track { gap:48px; }
+}
+
+@media (max-width:640px) {
+  .dnx {
+    /* no horizontal overflow */
+    max-width:100vw;
+  }
+  .dnx-wrap { padding:0 16px; }
+  .dnx-hdr { padding:6px 0; }
+  .dnx-hdr-cta { gap:6px; }
+  .dnx-lang { padding:6px 10px; font-size:11px; }
+  .dnx-btn { padding:9px 14px; font-size:13px; }
+  .dnx-btn-lg { padding:12px 20px; font-size:14px; }
+  .dnx-menubtn { width:38px; height:38px; }
+
+  .dnx-hero { padding:40px 0 36px; }
+  .dnx-hero-pill { padding:6px 12px; font-size:11.5px; margin-bottom:20px; }
+  .dnx-hero h1 { font-size:clamp(32px, 9vw, 48px); margin-bottom:18px; line-height:1.05; }
+  .dnx-hero-sub { font-size:15px; margin-bottom:28px; }
+  .dnx-hero-ctas { margin-bottom:32px; gap:10px; }
+  .dnx-hero-ctas .dnx-btn { flex:1 1 auto; justify-content:center; }
+  .dnx-hero-meta { grid-template-columns:repeat(2, 1fr); gap:20px; padding-top:24px; }
+  .dnx-meta-num { font-size:34px; }
+  .dnx-meta-lbl { font-size:11px; }
+
+  .dnx-marquee { padding:28px 0; }
+  .dnx-marquee-lbl { font-size:10px; letter-spacing:0.15em; margin-bottom:18px; }
+  .dnx-marquee-item { font-size:16px; gap:10px; }
+  .dnx-marquee-track { gap:36px; }
+
+  .dnx-sec { padding:56px 0; }
+  .dnx-sec-head { margin-bottom:32px; }
+  .dnx-kicker { font-size:10.5px; margin-bottom:14px; }
+  .dnx-sec-title { font-size:clamp(26px, 7vw, 36px); margin-bottom:14px; line-height:1.1; }
+  .dnx-sec-sub { font-size:15px; }
+
+  .dnx-card { padding:22px; border-radius:18px; }
+  .dnx-card h3 { font-size:16px; }
+  .dnx-card p { font-size:13.5px; }
+
+  .dnx-stat-card { padding:26px 22px; border-radius:18px; }
+  .dnx-stat-num { font-size:42px; }
+  .dnx-stat-lbl { font-size:13px; }
+  .dnx-stat-desc { font-size:12.5px; }
+
+  .dnx-bento { gap:10px; }
+  .dnx-tile { padding:20px; min-height:200px; border-radius:18px; }
+  .dnx-tile.flagship h3 { font-size:24px; }
+  .dnx-tile.flagship p { font-size:14px; }
+  .dnx-tile.flagship, .dnx-tile.tall { min-height:260px; }
+  .dnx-tile h3 { font-size:19px; }
+  .dnx-tile p { font-size:13px; }
+
+  .dnx-panel { padding:24px; border-radius:22px; }
+  .dnx-panel-title { font-size:28px; }
+  .dnx-panel-item h4 { font-size:14.5px; }
+  .dnx-panel-item p { font-size:13px; }
+
+  .dnx-faq-q { padding:18px 20px; font-size:14.5px; gap:14px; }
+  .dnx-faq-item.open .dnx-faq-a { padding:0 20px 18px; }
+  .dnx-faq-a { padding:0 20px; font-size:13.5px; }
+
+  .dnx-cta { padding:40px 22px; border-radius:22px; }
+  .dnx-cta h2 { font-size:clamp(26px, 7vw, 36px); margin-bottom:12px; }
+  .dnx-cta p { font-size:14.5px; margin-bottom:24px; }
+  .dnx-cta-contacts { gap:8px; }
+  .dnx-cta-contact { padding:9px 14px; font-size:12.5px; }
+
+  .dnx-ftr { padding:48px 0 32px; }
+  .dnx-ftr-grid { gap:28px; margin-bottom:32px; }
+  .dnx-ftr-bot { font-size:12px; }
+  .dnx-ftr-bot a { margin-left:0; margin-right:16px; }
+  .dnx-ftr-brand img.dnx-brand-logo { height:72px; }
+
+  /* ElevenLabs widget — lift slightly above iOS safe-area */
+  elevenlabs-convai { bottom:max(16px, env(safe-area-inset-bottom)) !important; right:12px !important; }
+}
+
+@media (max-width:420px) {
+  .dnx-wrap { padding:0 14px; }
+  .dnx-hero h1 { font-size:clamp(28px, 8.5vw, 40px); }
+  .dnx-hero-sub { font-size:14px; }
+  .dnx-meta-num { font-size:30px; }
+  .dnx-sec-title { font-size:clamp(24px, 7vw, 32px); }
+  .dnx-stat-num { font-size:36px; }
+  .dnx-tile.flagship h3 { font-size:22px; }
+  .dnx-panel-title { font-size:24px; }
+  .dnx-hero-ctas { flex-direction:column; }
+  .dnx-hero-ctas .dnx-btn { width:100%; }
+}
+
+/* prevent horizontal scroll from ambient layer on tiny screens */
+html, body { max-width:100%; overflow-x:hidden; }
 </style>
 
 <div class="dnx">
@@ -576,6 +692,7 @@ elevenlabs-convai [class*="Powered"] { display:none !important; height:0 !import
           <a href="#traction">Traction</a>
           <a href="#faq">FAQ</a>
           <a href="#contact">Contact</a>
+          <a href="https://aiagent.ringlypro.com/verticals/" class="dnx-nav-signin" style="color:var(--accent-cyan); font-weight:600;">Sign in →</a>
         </nav>
         <div class="dnx-hdr-cta">
           <a href="https://aiagent.ringlypro.com/digit2ai-es" class="dnx-lang">ES</a>
