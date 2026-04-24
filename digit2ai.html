@@ -98,7 +98,14 @@
 }
 .dnx-hdr-inner { display:flex; align-items:center; justify-content:space-between; }
 .dnx-brand { display:flex; align-items:center; gap:10px; }
-.dnx-brand-logo { height:40px; width:auto; display:block; }
+.dnx-brand-logo { height:200px; width:auto; display:block; }
+@media (max-width:720px) { .dnx-brand-logo { height:120px; } }
+@media (max-width:480px) { .dnx-brand-logo { height:80px; } }
+/* elevenlabs widget hide powered-by */
+.dnx-convai-mount { position:fixed; bottom:20px; right:20px; z-index:9998; }
+elevenlabs-convai a[href*="elevenlabs"],
+elevenlabs-convai [class*="powered" i],
+elevenlabs-convai [class*="Powered"] { display:none !important; height:0 !important; overflow:hidden !important; }
 .dnx-nav { display:flex; align-items:center; gap:4px; }
 .dnx-nav a {
   padding:8px 14px; border-radius:10px; font-size:14px; font-weight:500;
@@ -1295,6 +1302,37 @@
 
   </div>
 </div>
+
+<!-- ELEVENLABS VOICE AGENT (branding removed) -->
+<elevenlabs-convai agent-id="agent_1001kdge3jz0ejj8a8g5d7vkqr8f"></elevenlabs-convai>
+<script src="https://unpkg.com/@elevenlabs/convai-widget-embed@latest/dist/index.js" async type="text/javascript"></script>
+<script>
+(function hideElevenLabsBranding(){
+  function scrub(){
+    var el = document.querySelector('elevenlabs-convai');
+    if (!el) return;
+    var root = el.shadowRoot;
+    if (!root) return;
+    if (!root.querySelector('style[data-dnx-hide]')) {
+      var s = document.createElement('style');
+      s.setAttribute('data-dnx-hide','1');
+      s.textContent =
+        'a[href*="elevenlabs"]{display:none!important;height:0!important;margin:0!important;padding:0!important;line-height:0!important;font-size:0!important;overflow:hidden!important;}' +
+        'div:has(>a[href*="elevenlabs"]){display:none!important;height:0!important;}' +
+        'span:has(>a[href*="elevenlabs"]){display:none!important;}' +
+        'p:has(>a[href*="elevenlabs"]){display:none!important;}' +
+        '[class*="powered" i]{display:none!important;height:0!important;}';
+      root.appendChild(s);
+    }
+  }
+  var attempts = 0;
+  var iv = setInterval(function(){
+    attempts++;
+    scrub();
+    if (attempts > 40) clearInterval(iv);
+  }, 500);
+})();
+</script>
 
 <script>
 (function(){
