@@ -1748,28 +1748,40 @@ app.get('/marketing-guidelines', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/marketing-guidelines.html'));
 });
 
-// DIGIT2AI — permanent redirect to digit2ai.com (public domain)
-// Preserves query string + preview (?preview=1 bypasses for staging access to raw HTML).
+// DIGIT2AI investor page with Open Graph meta tags
+// Served via iframe from digit2ai.com (GHL). Keep X-Frame-Options OFF for this route.
 app.get('/digit2ai', (req, res) => {
-  if (req.query.preview === '1') {
-    const contentPath = path.join(__dirname, '../digit2ai.html');
-    const content = fs.readFileSync(contentPath, 'utf8');
-    const ogImage = 'https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6993610c54da04ac2f53e10e.png';
-    return res.send(`<!DOCTYPE html>
+  const contentPath = path.join(__dirname, '../digit2ai.html');
+  const content = fs.readFileSync(contentPath, 'utf8');
+  const ogImage = 'https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6993610c54da04ac2f53e10e.png';
+  // Allow framing from digit2ai.com
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', "frame-ancestors 'self' https://digit2ai.com https://*.digit2ai.com https://*.gohighlevel.com https://*.msgsndr.com https://*.leadconnectorhq.com;");
+  const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DIGIT2AI - Preview</title>
+<title>DIGIT2AI - AI-Native Platforms for Small Business</title>
+<meta name="description" content="DIGIT2AI builds and scales AI-powered vertical platforms. 21 live products across 22 industries. The operating system of vertical AI.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://digit2ai.com">
+<meta property="og:title" content="DIGIT2AI — AI-Native Platforms for Small Business">
+<meta property="og:description" content="21 live AI-powered platforms across 22 industry verticals. Voice agents, vertical SaaS, and automation.">
 <meta property="og:image" content="${ogImage}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="DIGIT2AI — AI-Native Platforms for Small Business">
+<meta name="twitter:description" content="21 live AI-powered platforms across 22 industry verticals.">
+<meta name="twitter:image" content="${ogImage}">
+<style>html,body{margin:0;padding:0;background:#05070e;}</style>
 </head>
-<body style="margin:0;padding:0;background:#05070e;">
+<body>
 ${content}
 </body>
-</html>`);
-  }
-  const qs = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
-  return res.redirect(301, 'https://digit2ai.com/' + qs);
+</html>`;
+  res.send(html);
 });
 
 // DIGIT2AI investor page (Spanish) with Open Graph meta tags
