@@ -270,7 +270,7 @@
 
 <!-- HEADER -->
 <header class="header" id="header">
-  <a href="#hero" class="header-logo" style="display:flex;align-items:center;gap:10px;"><img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69eaaab7bd268b0120ace515.png" alt="CamaraVirtual.app" style="height:54px;width:auto;border-radius:6px;">Camara<span>Virtual</span>.app</a>
+  <a href="#hero" class="header-logo" style="display:flex;align-items:center;gap:10px;"><img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69eabcf7e2566498366b9306.png" alt="CamaraVirtual.app" style="height:54px;width:auto;border-radius:6px;">Camara<span>Virtual</span>.app</a>
   <nav>
     <ul class="header-nav" id="navMenu">
       <li><a href="#about">Que es</a></li>
@@ -280,6 +280,7 @@
       <li><a href="#projects">Casos de uso</a></li>
       <li><a href="#screening">Screening</a></li>
       <li><a href="#register" style="color:var(--yellow);font-weight:600;">Solicitar Demo</a></li>
+      <li><a id="adminLink" href="/chamber/hispamind/platform-admin/" style="font-size:11px;opacity:0.5;">Admin</a></li>
     </ul>
   </nav>
   <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()">
@@ -290,7 +291,7 @@
 <!-- HERO -->
 <section class="hero" id="hero">
   <div class="hero-content">
-    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69eaaab7bd268b0120ace515.png" alt="CamaraVirtual.app Logo" style="width:220px;height:auto;margin-bottom:20px;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,0.3);">
+    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69eabcf7e2566498366b9306.png" alt="CamaraVirtual.app Logo" style="width:220px;height:auto;margin-bottom:20px;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,0.3);">
     <div class="hero-flag">
       <div style="background:var(--yellow);"></div>
       <div style="background:var(--blue);"></div>
@@ -681,6 +682,10 @@
   // Fix presentation link
   var presLink = document.getElementById('presentationLink');
   if (presLink) presLink.href = BASE + '/presentation.html';
+
+  // Fix admin link
+  var adminLink = document.getElementById('adminLink');
+  if (adminLink) adminLink.href = BASE + '/platform-admin/';
 
   var header = document.getElementById('header');
   window.addEventListener('scroll', function() { header.classList.toggle('scrolled', window.scrollY > 40); });

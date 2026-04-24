@@ -89,11 +89,15 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); vertical-align:
 <body>
 
 <div class="topbar">
-  <div>
-    <h1>Camara<span>Virtual</span>.app</h1>
-    <div class="subtitle">Platform Admin -- Ecosystem Management</div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69eabcf7e2566498366b9306.png" alt="CamaraVirtual" style="height:40px;border-radius:6px;">
+    <div>
+      <h1>Camara<span>Virtual</span>.app</h1>
+      <div class="subtitle">Platform Admin -- Ecosystem Management</div>
+    </div>
   </div>
-  <div id="logoutArea" class="hidden">
+  <div id="logoutArea" class="hidden" style="display:flex;align-items:center;gap:12px;">
+    <span id="adminName" style="color:rgba(255,255,255,0.7);font-size:13px;"></span>
     <button class="btn btn-outline" style="color:rgba(255,255,255,0.7);border-color:rgba(255,255,255,0.3);" onclick="logout()">Cerrar sesion</button>
   </div>
 </div>
@@ -101,9 +105,13 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); vertical-align:
 <!-- AUTH -->
 <div id="authView">
   <div class="auth-box">
-    <h2>Admin Access</h2>
-    <input type="password" id="adminKeyInput" placeholder="Admin Key" onkeydown="if(event.key==='Enter')doLogin()">
-    <button onclick="doLogin()">Acceder</button>
+    <div style="text-align:center;margin-bottom:16px;">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69eabcf7e2566498366b9306.png" alt="CamaraVirtual" style="height:60px;border-radius:8px;">
+    </div>
+    <h2>Platform Admin</h2>
+    <input type="email" id="adminEmailInput" placeholder="Email" onkeydown="if(event.key==='Enter')document.getElementById('adminPassInput').focus()">
+    <input type="password" id="adminPassInput" placeholder="Contrasena" onkeydown="if(event.key==='Enter')doLogin()">
+    <button onclick="doLogin()">Iniciar Sesion</button>
     <div id="authMsg"></div>
   </div>
 </div>
@@ -219,27 +227,36 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); vertical-align:
 
   var BASE = (location.hostname === 'camaravirtual.app' || location.hostname === 'www.camaravirtual.app') ? '' : '/chamber/hispamind';
   var API = BASE + '/api';
-  var adminKey = '';
+  var token = '';
   var allRequests = [];
 
   function headers() {
-    return { 'Content-Type': 'application/json', 'x-admin-key': adminKey };
+    return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token };
+  }
+
+  function showMain(adminData) {
+    document.getElementById('authView').classList.add('hidden');
+    document.getElementById('mainView').classList.remove('hidden');
+    document.getElementById('logoutArea').classList.remove('hidden');
+    document.getElementById('logoutArea').style.display = 'flex';
+    if (adminData && adminData.name) document.getElementById('adminName').textContent = adminData.name;
+    loadAll();
   }
 
   // AUTH
   window.doLogin = function() {
-    adminKey = document.getElementById('adminKeyInput').value.trim();
-    fetch(API + '/admin/demo-requests', { headers: headers() })
+    var email = document.getElementById('adminEmailInput').value.trim();
+    var password = document.getElementById('adminPassInput').value;
+    if (!email || !password) { document.getElementById('authMsg').innerHTML = '<div class="msg msg-error">Ingresa email y contrasena</div>'; return; }
+    fetch(API + '/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email, password: password }) })
       .then(function(r) { return r.json(); })
       .then(function(res) {
-        if (res.success) {
-          document.getElementById('authView').classList.add('hidden');
-          document.getElementById('mainView').classList.remove('hidden');
-          document.getElementById('logoutArea').classList.remove('hidden');
-          localStorage.setItem('cv_admin_key', adminKey);
-          loadAll();
+        if (res.success && res.data && res.data.token) {
+          token = res.data.token;
+          localStorage.setItem('cv_admin_token', token);
+          showMain(res.data.admin);
         } else {
-          document.getElementById('authMsg').innerHTML = '<div class="msg msg-error">Clave invalida</div>';
+          document.getElementById('authMsg').innerHTML = '<div class="msg msg-error">' + (res.error || 'Credenciales invalidas') + '</div>';
         }
       })
       .catch(function() {
@@ -248,18 +265,24 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); vertical-align:
   };
 
   window.logout = function() {
-    adminKey = '';
-    localStorage.removeItem('cv_admin_key');
+    token = '';
+    localStorage.removeItem('cv_admin_token');
     document.getElementById('authView').classList.remove('hidden');
     document.getElementById('mainView').classList.add('hidden');
     document.getElementById('logoutArea').classList.add('hidden');
   };
 
-  // AUTO-LOGIN
-  var savedKey = localStorage.getItem('cv_admin_key');
-  if (savedKey) {
-    document.getElementById('adminKeyInput').value = savedKey;
-    doLogin();
+  // AUTO-LOGIN with saved token
+  var savedToken = localStorage.getItem('cv_admin_token');
+  if (savedToken) {
+    token = savedToken;
+    fetch(API + '/admin/demo-requests', { headers: headers() })
+      .then(function(r) { return r.json(); })
+      .then(function(res) {
+        if (res.success) { showMain(); }
+        else { token = ''; localStorage.removeItem('cv_admin_token'); }
+      })
+      .catch(function() { token = ''; localStorage.removeItem('cv_admin_token'); });
   }
 
   // TABS

@@ -5,6 +5,8 @@
 const express = require('express');
 const router = express.Router();
 const { Sequelize, QueryTypes } = require('sequelize');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
@@ -15,9 +17,9 @@ const sequelize = new Sequelize(process.env.CRM_DATABASE_URL || process.env.DATA
   logging: false
 });
 
-const ADMIN_KEY = process.env.CAMARAVIRTUAL_ADMIN_KEY || 'cv-admin-2026';
+const JWT_SECRET = process.env.CAMARAVIRTUAL_JWT_SECRET || 'cv-platform-jwt-2026-secret';
 
-// Auto-create table on load
+// Auto-create tables on load
 (async () => {
   try {
     await sequelize.query(`
@@ -37,19 +39,63 @@ const ADMIN_KEY = process.env.CAMARAVIRTUAL_ADMIN_KEY || 'cv-admin-2026';
         updated_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
-    console.log('CamaraVirtual demo_requests table ready');
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS camaravirtual_admins (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        name VARCHAR(200),
+        role VARCHAR(50) DEFAULT 'admin',
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    // Seed default admin if not exists
+    const [existing] = await sequelize.query(
+      `SELECT id FROM camaravirtual_admins WHERE email = 'mstagg@digit2ai.com' LIMIT 1`,
+      { type: QueryTypes.SELECT }
+    );
+    if (!existing) {
+      const hash = await bcrypt.hash('Palindrome@7', 10);
+      await sequelize.query(
+        `INSERT INTO camaravirtual_admins (email, password_hash, name, role) VALUES ('mstagg@digit2ai.com', :hash, 'Manuel Stagg', 'superadmin')`,
+        { replacements: { hash } }
+      );
+      console.log('CamaraVirtual default admin seeded');
+    }
+    console.log('CamaraVirtual tables ready');
   } catch (e) {
     console.error('CamaraVirtual table creation failed:', e.message);
   }
 })();
 
-// --- AUTH MIDDLEWARE (simple API key for admin) ---
-function adminAuth(req, res, next) {
-  const key = req.headers['x-admin-key'] || req.query.key;
-  if (key !== ADMIN_KEY) {
-    return res.status(401).json({ success: false, error: 'Admin key required' });
+// --- AUTH ---
+router.post('/admin/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) return res.json({ success: false, error: 'Email y contrasena requeridos' });
+    const [admin] = await sequelize.query(
+      `SELECT * FROM camaravirtual_admins WHERE email = :email LIMIT 1`,
+      { replacements: { email: email.toLowerCase().trim() }, type: QueryTypes.SELECT }
+    );
+    if (!admin) return res.json({ success: false, error: 'Credenciales invalidas' });
+    const valid = await bcrypt.compare(password, admin.password_hash);
+    if (!valid) return res.json({ success: false, error: 'Credenciales invalidas' });
+    const token = jwt.sign({ admin_id: admin.id, email: admin.email, role: admin.role, name: admin.name }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ success: true, data: { token, admin: { id: admin.id, email: admin.email, name: admin.name, role: admin.role } } });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
-  next();
+});
+
+function adminAuth(req, res, next) {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ success: false, error: 'Token required' });
+  try {
+    req.admin = jwt.verify(token, JWT_SECRET);
+    next();
+  } catch (e) {
+    return res.status(401).json({ success: false, error: 'Invalid or expired token' });
+  }
 }
 
 // ========================================
