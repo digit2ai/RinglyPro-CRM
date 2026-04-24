@@ -46,9 +46,9 @@ app.use((req, res, next) => {
     const p = req.path;
     // Already under /chamber/hispamind — pass through
     if (p.startsWith('/chamber/hispamind')) return next();
-    // Static assets and API — pass through
-    if (p.startsWith('/audio/') || p.startsWith('/api/')) return next();
-    // Rewrite root and all other paths to /chamber/hispamind
+    // Global static assets only — pass through
+    if (p.startsWith('/audio/')) return next();
+    // Rewrite all paths (including /api/) to /chamber/hispamind
     req.url = '/chamber/hispamind' + (p === '/' ? '/' : p);
   }
   next();
