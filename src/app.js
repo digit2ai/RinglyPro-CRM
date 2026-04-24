@@ -1748,35 +1748,28 @@ app.get('/marketing-guidelines', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/marketing-guidelines.html'));
 });
 
-// DIGIT2AI investor page with Open Graph meta tags
+// DIGIT2AI — permanent redirect to digit2ai.com (public domain)
+// Preserves query string + preview (?preview=1 bypasses for staging access to raw HTML).
 app.get('/digit2ai', (req, res) => {
-  const contentPath = path.join(__dirname, '../digit2ai.html');
-  const content = fs.readFileSync(contentPath, 'utf8');
-  const ogImage = 'https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6993610c54da04ac2f53e10e.png';
-  const html = `<!DOCTYPE html>
+  if (req.query.preview === '1') {
+    const contentPath = path.join(__dirname, '../digit2ai.html');
+    const content = fs.readFileSync(contentPath, 'utf8');
+    const ogImage = 'https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6993610c54da04ac2f53e10e.png';
+    return res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DIGIT2AI - Investment Opportunity | AI-Powered Vertical SaaS Portfolio</title>
-<meta name="description" content="DIGIT2AI builds and scales AI-powered vertical platforms. 12 live products across 11 industries. Investment opportunity in the future of AI automation.">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://aiagent.ringlypro.com/digit2ai">
-<meta property="og:title" content="DIGIT2AI Investment Opportunity">
-<meta property="og:description" content="12 live AI-powered platforms across 11 industry verticals. Voice agents, vertical SaaS, and automation -- ready to scale across every underserved market.">
+<title>DIGIT2AI - Preview</title>
 <meta property="og:image" content="${ogImage}">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="DIGIT2AI Investment Opportunity">
-<meta name="twitter:description" content="12 live AI-powered platforms across 11 industry verticals. Voice agents, vertical SaaS, and automation -- ready to scale.">
-<meta name="twitter:image" content="${ogImage}">
 </head>
-<body style="margin:0;padding:0;">
+<body style="margin:0;padding:0;background:#05070e;">
 ${content}
 </body>
-</html>`;
-  res.send(html);
+</html>`);
+  }
+  const qs = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
+  return res.redirect(301, 'https://digit2ai.com/' + qs);
 });
 
 // DIGIT2AI investor page (Spanish) with Open Graph meta tags
