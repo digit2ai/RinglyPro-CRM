@@ -1346,16 +1346,15 @@
     <div class="reg-grid">
       <div>
         <div class="accent-line yellow"></div>
-        <h2 class="section-title" style="color:var(--white);">PACC-CFL Digital Ecosystem Plan</h2>
-        <p style="color:rgba(255,255,255,0.75);font-size:18px;margin-top:16px;max-width:460px;">One plan. Full access. Everything your chamber needs to operate in the digital age.</p>
+        <h2 class="section-title" style="color:var(--white);">PACC-CFL Digital Ecosystem</h2>
+        <p style="color:rgba(255,255,255,0.75);font-size:18px;margin-top:16px;max-width:460px;">Full access. All 9 modules. Free for PACC-CFL members as our Pilot Chamber.</p>
 
         <!-- Pricing Card -->
         <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:28px;margin-top:28px;max-width:420px;">
           <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px;">
-            <span style="font-family:'Inter',sans-serif;font-size:42px;font-weight:900;color:var(--yellow);">$10</span>
-            <span style="font-family:'Inter',sans-serif;font-size:15px;color:rgba(255,255,255,0.6);">/month</span>
+            <span style="font-family:'Inter',sans-serif;font-size:42px;font-weight:900;color:var(--yellow);">FREE</span>
           </div>
-          <div style="font-family:'Inter',sans-serif;font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:20px;">+ $25 one-time setup fee</div>
+          <div style="font-family:'Inter',sans-serif;font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:20px;">Pilot Chamber -- no setup fee, no monthly charge</div>
 
           <div style="font-family:'Inter',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--yellow);margin-bottom:14px;">What you get:</div>
           <ul style="list-style:none;font-family:'Inter',sans-serif;font-size:13px;color:rgba(255,255,255,0.85);line-height:2.2;">
@@ -1400,14 +1399,14 @@
               24/7 Platform Access -- No Downtime
             </li>
           </ul>
-          <div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.1);font-family:'Inter',sans-serif;font-size:12px;color:rgba(255,255,255,0.4);">Cancel anytime. No contracts. Setup fee covers account provisioning and onboarding.</div>
+          <div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.1);font-family:'Inter',sans-serif;font-size:12px;color:rgba(255,255,255,0.4);">PACC-CFL is our Pilot Chamber. All members get full ecosystem access at no cost as we build and refine the platform together.</div>
         </div>
       </div>
       <div>
         <form class="reg-form" id="regForm" onsubmit="handleRegister(event)">
           <div style="text-align:center;margin-bottom:20px;">
             <div style="font-family:'Inter',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--yellow);margin-bottom:6px;">REGISTER NOW</div>
-            <div style="font-family:'Inter',sans-serif;font-size:14px;color:rgba(255,255,255,0.6);">$25 setup + $10/month</div>
+            <div style="font-family:'Inter',sans-serif;font-size:14px;color:rgba(255,255,255,0.6);">Free -- Pilot Chamber Access</div>
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -1471,7 +1470,7 @@
             <input type="text" name="company_name" placeholder="Your business name">
           </div>
           <input type="hidden" name="membership_type" value="individual">
-          <button type="submit" class="btn-submit" style="font-size:16px;padding:16px;">Activate Account -- $25 Setup + $10/mo</button>
+          <button type="submit" class="btn-submit" style="font-size:16px;padding:16px;">Activate Free Account</button>
           <div class="form-msg" id="formMsg"></div>
           <p style="text-align:center;margin-top:16px;font-family:'Inter',sans-serif;font-size:14px;color:rgba(255,255,255,0.7);">
             Already have an account?
@@ -1630,49 +1629,22 @@
     .then(function(res) {
       if (res.success && res.data && res.data.token) {
         localStorage.setItem('pacccfl_token', res.data.token);
-        var memberId = res.data.member ? res.data.member.id : '';
         msg.className = 'form-msg success';
-        msg.textContent = 'Account created! Redirecting to payment...';
-        btn.textContent = 'Redirecting to Stripe...';
-
-        // Step 2: Create Stripe Checkout session
-        fetch('/chamber/pacccfl/api/payments/checkout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: regData.email,
-            member_id: memberId,
-            first_name: regData.first_name,
-            last_name: regData.last_name
-          })
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(checkoutRes) {
-          if (checkoutRes.success && checkoutRes.data && checkoutRes.data.checkout_url) {
-            window.location.href = checkoutRes.data.checkout_url;
-          } else {
-            // Stripe checkout failed but account was created -- go to dashboard
-            msg.textContent = 'Account created! Redirecting to dashboard...';
-            setTimeout(function() { window.location.href = '/chamber/pacccfl/dashboard/'; }, 1500);
-          }
-        })
-        .catch(function() {
-          // Stripe unavailable -- still go to dashboard
-          msg.textContent = 'Account created! Redirecting to dashboard...';
-          setTimeout(function() { window.location.href = '/chamber/pacccfl/dashboard/'; }, 1500);
-        });
+        msg.textContent = 'Account created! Redirecting to dashboard...';
+        form.reset();
+        setTimeout(function() { window.location.href = '/chamber/pacccfl/dashboard/'; }, 1500);
       } else {
         msg.className = 'form-msg error';
         msg.textContent = res.error || 'Registration error. Please try again.';
         btn.disabled = false;
-        btn.textContent = 'Activate Account -- $25 Setup + $10/mo';
+        btn.textContent = 'Activate Free Account';
       }
     })
     .catch(function() {
       msg.className = 'form-msg error';
       msg.textContent = 'Connection error. Please try again.';
       btn.disabled = false;
-      btn.textContent = 'Activate Account -- $25 Setup + $10/mo';
+      btn.textContent = 'Activate Free Account';
     });
   };
 
