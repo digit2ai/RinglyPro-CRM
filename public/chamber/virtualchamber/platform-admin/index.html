@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VirtualChamber.app -- Platform Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #003DA5;
+  --primary-dark: #002D7A;
+  --accent: #FCD116;
+  --accent-dark: #C9A500;
+  --red: #CE1126;
+  --navy: #1A2332;
+  --navy-light: #2d3a4d;
+  --white: #fff;
+  --gray-50: #f8f9fa;
+  --gray-100: #f1f3f5;
+  --gray-200: #e9ecef;
+  --gray-300: #dee2e6;
+  --gray-500: #6c757d;
+  --gray-700: #495057;
+  --gray-900: #212529;
+  --green: #28a745;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Inter',sans-serif; background:var(--gray-50); color:var(--gray-900); font-size:14px; }
+.topbar { background:var(--navy); color:var(--white); padding:16px 32px; display:flex; align-items:center; justify-content:space-between; }
+.topbar h1 { font-size:18px; font-weight:800; letter-spacing:2px; }
+.topbar h1 span { color:var(--accent); }
+.topbar .subtitle { font-size:12px; color:rgba(255,255,255,0.5); }
+.container { max-width:1200px; margin:0 auto; padding:24px; }
+.auth-box { max-width:400px; margin:80px auto; background:var(--white); border-radius:12px; padding:32px; box-shadow:0 2px 12px rgba(0,0,0,0.08); }
+.auth-box h2 { font-size:18px; margin-bottom:16px; color:var(--navy); }
+.auth-box input { width:100%; padding:10px 14px; border:1px solid var(--gray-300); border-radius:6px; font-size:14px; margin-bottom:12px; }
+.auth-box button { width:100%; padding:12px; background:var(--primary); color:var(--white); border:none; border-radius:6px; font-weight:700; font-size:14px; cursor:pointer; }
+.auth-box button:hover { background:var(--primary-dark); }
+.tabs { display:flex; gap:0; border-bottom:2px solid var(--gray-200); margin-bottom:24px; }
+.tab { padding:12px 24px; font-size:14px; font-weight:600; color:var(--gray-500); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; }
+.tab.active { color:var(--primary); border-bottom-color:var(--primary); }
+.tab:hover { color:var(--primary); }
+.panel { background:var(--white); border-radius:10px; padding:24px; box-shadow:0 1px 4px rgba(0,0,0,0.06); margin-bottom:20px; }
+.panel h2 { font-size:16px; font-weight:700; margin-bottom:16px; color:var(--navy); }
+.stat-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:16px; margin-bottom:24px; }
+.stat-card { background:var(--white); border-radius:10px; padding:20px; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
+.stat-card .label { font-size:11px; color:var(--gray-500); text-transform:uppercase; letter-spacing:0.5px; }
+.stat-card .value { font-size:28px; font-weight:700; color:var(--navy); margin-top:4px; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th { text-align:left; padding:10px 12px; background:var(--gray-100); color:var(--gray-700); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; }
+td { padding:10px 12px; border-bottom:1px solid var(--gray-200); vertical-align:top; }
+.badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; text-transform:uppercase; }
+.badge-new { background:#e3f2fd; color:#1565c0; }
+.badge-contacted { background:#fff3e0; color:#e65100; }
+.badge-demo_scheduled { background:#f3e5f5; color:#7b1fa2; }
+.badge-provisioned { background:#e8f5e9; color:#2e7d32; }
+.badge-declined { background:#fce4ec; color:#c62828; }
+.btn { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:6px; font-size:12px; font-weight:600; border:none; cursor:pointer; }
+.btn-sm { padding:5px 10px; font-size:11px; }
+.btn-primary { background:var(--primary); color:var(--white); }
+.btn-primary:hover { background:var(--primary-dark); }
+.btn-accent { background:var(--accent); color:var(--navy); }
+.btn-accent:hover { background:var(--accent-dark); }
+.btn-danger { background:var(--red); color:var(--white); }
+.btn-outline { background:none; border:1px solid var(--gray-300); color:var(--gray-700); }
+.btn-outline:hover { border-color:var(--primary); color:var(--primary); }
+.actions { display:flex; gap:6px; flex-wrap:wrap; }
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200; align-items:center; justify-content:center; }
+.modal-overlay.show { display:flex; }
+.modal { background:var(--white); border-radius:12px; width:90%; max-width:640px; max-height:85vh; overflow-y:auto; padding:28px; position:relative; }
+.modal-close { position:absolute; top:12px; right:16px; background:none; border:none; font-size:22px; color:var(--gray-500); cursor:pointer; }
+.modal h2 { font-size:18px; margin-bottom:16px; }
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.form-group { margin-bottom:12px; }
+.form-group.full { grid-column:1/-1; }
+.form-group label { display:block; font-size:11px; font-weight:600; color:var(--gray-700); text-transform:uppercase; margin-bottom:4px; }
+.form-group input, .form-group select, .form-group textarea { width:100%; padding:9px 12px; border:1px solid var(--gray-300); border-radius:6px; font-size:13px; }
+.form-group textarea { min-height:60px; resize:vertical; }
+.eco-card { border:1px solid var(--gray-200); border-radius:8px; padding:16px; display:flex; align-items:center; justify-content:space-between; }
+.eco-card .eco-name { font-weight:700; font-size:15px; color:var(--navy); }
+.eco-card .eco-meta { font-size:12px; color:var(--gray-500); margin-top:2px; }
+.eco-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:14px; }
+.hidden { display:none; }
+.msg { padding:12px; border-radius:6px; font-size:13px; margin-top:12px; }
+.msg-success { background:#e8f5e9; color:#2e7d32; border:1px solid #c8e6c9; }
+.msg-error { background:#fce4ec; color:#c62828; border:1px solid #f8bbd0; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:12px;">
+    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69eacc56821e8babd85501cc.png" alt="VirtualChamber" style="height:40px;border-radius:6px;">
+    <div>
+      <h1>VirtualChamber<span>.app</span></h1>
+      <div class="subtitle">Platform Admin -- Ecosystem Management</div>
+    </div>
+  </div>
+  <div id="logoutArea" class="hidden" style="display:flex;align-items:center;gap:12px;">
+    <span id="adminName" style="color:rgba(255,255,255,0.7);font-size:13px;"></span>
+    <button class="btn btn-outline" style="color:rgba(255,255,255,0.7);border-color:rgba(255,255,255,0.3);" onclick="logout()">Sign Out</button>
+  </div>
+</div>
+
+<!-- AUTH -->
+<div id="authView">
+  <div class="auth-box">
+    <div style="text-align:center;margin-bottom:16px;">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69eacc56821e8babd85501cc.png" alt="VirtualChamber" style="height:60px;border-radius:8px;">
+    </div>
+    <h2>Platform Admin</h2>
+    <input type="email" id="adminEmailInput" placeholder="Email" onkeydown="if(event.key==='Enter')document.getElementById('adminPassInput').focus()">
+    <input type="password" id="adminPassInput" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button onclick="doLogin()">Sign In</button>
+    <div id="authMsg"></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="mainView" class="hidden">
+  <div class="container">
+    <div class="stat-row" id="statsRow"></div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="requests" onclick="switchTab('requests')">Demo Requests</div>
+      <div class="tab" data-tab="ecosystems" onclick="switchTab('ecosystems')">Active Ecosystems</div>
+    </div>
+
+    <!-- REQUESTS TAB -->
+    <div id="tab-requests">
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <h2>Demo Requests</h2>
+          <button class="btn btn-outline" onclick="loadRequests()">Refresh</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Chamber</th>
+                <th>Region</th>
+                <th>Members</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="requestsBody">
+              <tr><td colspan="9" style="text-align:center;color:var(--gray-500);padding:40px;">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ECOSYSTEMS TAB -->
+    <div id="tab-ecosystems" class="hidden">
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <h2>Active Ecosystems</h2>
+          <button class="btn btn-accent" onclick="openCreateModal()">+ Create Ecosystem</button>
+        </div>
+        <div class="eco-grid" id="ecosGrid">
+          <div style="text-align:center;color:var(--gray-500);padding:40px;">Loading...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Create Ecosystem -->
+<div class="modal-overlay" id="createModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('createModal')">&times;</button>
+    <h2>Create New Ecosystem</h2>
+    <div class="form-grid">
+      <div class="form-group"><label>Slug (URL)</label><input id="ecoSlug" placeholder="my-chamber"></div>
+      <div class="form-group"><label>Short Name</label><input id="ecoShort" placeholder="MiChamber"></div>
+      <div class="form-group full"><label>Full Name</label><input id="ecoName" placeholder="Chamber de Comercio de..."></div>
+      <div class="form-group full"><label>Tagline</label><input id="ecoTagline" placeholder="Connecting entrepreneurs from..."></div>
+      <div class="form-group full"><label>Description</label><textarea id="ecoDesc" placeholder="Ecosystem description..."></textarea></div>
+      <div class="form-group"><label>Language</label><select id="ecoLang"><option value="es">Spanish</option><option value="en">English</option></select></div>
+      <div class="form-group"><label>From Request ID</label><input id="ecoRequestId" placeholder="(opcional)"></div>
+      <div class="form-group full"><label>Regions (comma-separated)</label><input id="ecoRegions" placeholder="Region North, Region South, Region Central"></div>
+      <div class="form-group full"><label>Sectors (comma-separated)</label><input id="ecoSectors" placeholder="technology, healthcare, finance, education"></div>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:12px;">
+      <button class="btn btn-primary" onclick="createEcosystem()">Create Ecosystem</button>
+      <button class="btn btn-outline" onclick="closeModal('createModal')">Cancel</button>
+    </div>
+    <div id="createMsg"></div>
+  </div>
+</div>
+
+<!-- MODAL: Update Request -->
+<div class="modal-overlay" id="updateModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('updateModal')">&times;</button>
+    <h2>Update Request <span id="updateReqId"></span></h2>
+    <div class="form-grid">
+      <div class="form-group"><label>Status</label>
+        <select id="updateStatus">
+          <option value="new">New</option>
+          <option value="contacted">Contacted</option>
+          <option value="demo_scheduled">Demo Scheduled</option>
+          <option value="provisioned">Provisioned</option>
+          <option value="declined">Declined</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Ecosystem Slug</label><input id="updateSlug" placeholder="(if provisioned)"></div>
+      <div class="form-group full"><label>Notes</label><textarea id="updateNotes"></textarea></div>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:12px;">
+      <button class="btn btn-primary" onclick="updateRequest()">Save</button>
+      <button class="btn btn-outline" onclick="closeModal('updateModal')">Cancel</button>
+    </div>
+    <div id="updateMsg"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  var BASE = (location.hostname === 'virtualchamber.app' || location.hostname === 'www.virtualchamber.app') ? '' : '/chamber/virtualchamber';
+  var API = BASE + '/api';
+  var token = '';
+  var allRequests = [];
+
+  function headers() {
+    return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token };
+  }
+
+  function showMain(adminData) {
+    document.getElementById('authView').classList.add('hidden');
+    document.getElementById('mainView').classList.remove('hidden');
+    document.getElementById('logoutArea').classList.remove('hidden');
+    document.getElementById('logoutArea').style.display = 'flex';
+    if (adminData && adminData.name) document.getElementById('adminName').textContent = adminData.name;
+    loadAll();
+  }
+
+  // AUTH
+  window.doLogin = function() {
+    var email = document.getElementById('adminEmailInput').value.trim();
+    var password = document.getElementById('adminPassInput').value;
+    if (!email || !password) { document.getElementById('authMsg').innerHTML = '<div class="msg msg-error">Enter email and password</div>'; return; }
+    fetch(API + '/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email, password: password }) })
+      .then(function(r) { return r.json(); })
+      .then(function(res) {
+        if (res.success && res.data && res.data.token) {
+          token = res.data.token;
+          localStorage.setItem('vc_admin_token', token);
+          showMain(res.data.admin);
+        } else {
+          document.getElementById('authMsg').innerHTML = '<div class="msg msg-error">' + (res.error || 'Invalid credentials') + '</div>';
+        }
+      })
+      .catch(function() {
+        document.getElementById('authMsg').innerHTML = '<div class="msg msg-error">Connection error</div>';
+      });
+  };
+
+  window.logout = function() {
+    token = '';
+    localStorage.removeItem('vc_admin_token');
+    document.getElementById('authView').classList.remove('hidden');
+    document.getElementById('mainView').classList.add('hidden');
+    document.getElementById('logoutArea').classList.add('hidden');
+  };
+
+  // AUTO-LOGIN with saved token
+  var savedToken = localStorage.getItem('vc_admin_token');
+  if (savedToken) {
+    token = savedToken;
+    fetch(API + '/admin/demo-requests', { headers: headers() })
+      .then(function(r) { return r.json(); })
+      .then(function(res) {
+        if (res.success) { showMain(); }
+        else { token = ''; localStorage.removeItem('vc_admin_token'); }
+      })
+      .catch(function() { token = ''; localStorage.removeItem('vc_admin_token'); });
+  }
+
+  // TABS
+  window.switchTab = function(tab) {
+    document.querySelectorAll('.tab').forEach(function(t) { t.classList.toggle('active', t.dataset.tab === tab); });
+    document.getElementById('tab-requests').classList.toggle('hidden', tab !== 'requests');
+    document.getElementById('tab-ecosystems').classList.toggle('hidden', tab !== 'ecosystems');
+  };
+
+  // LOAD ALL
+  function loadAll() {
+    loadRequests();
+    loadEcosystems();
+  }
+
+  // REQUESTS
+  window.loadRequests = function() {
+    fetch(API + '/admin/demo-requests', { headers: headers() })
+      .then(function(r) { return r.json(); })
+      .then(function(res) {
+        if (!res.success) return;
+        allRequests = res.data;
+        renderRequests(res.data);
+        renderStats(res.data);
+      });
+  };
+
+  function renderStats(data) {
+    var total = data.length;
+    var newCount = data.filter(function(r) { return r.status === 'new'; }).length;
+    var prov = data.filter(function(r) { return r.status === 'provisioned'; }).length;
+    var contacted = data.filter(function(r) { return r.status === 'contacted' || r.status === 'demo_scheduled'; }).length;
+    document.getElementById('statsRow').innerHTML =
+      '<div class="stat-card"><div class="label">Total Requests</div><div class="value">' + total + '</div></div>' +
+      '<div class="stat-card"><div class="label">New</div><div class="value" style="color:var(--primary);">' + newCount + '</div></div>' +
+      '<div class="stat-card"><div class="label">In Progress</div><div class="value" style="color:#e65100;">' + contacted + '</div></div>' +
+      '<div class="stat-card"><div class="label">Provisioned</div><div class="value" style="color:var(--green);">' + prov + '</div></div>';
+  }
+
+  function renderRequests(data) {
+    if (!data.length) {
+      document.getElementById('requestsBody').innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--gray-500);padding:40px;">No requests</td></tr>';
+      return;
+    }
+    var html = '';
+    data.forEach(function(r) {
+      var date = new Date(r.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+      html += '<tr>' +
+        '<td><strong>' + r.id + '</strong></td>' +
+        '<td>' + r.first_name + ' ' + r.last_name + '</td>' +
+        '<td><a href="mailto:' + r.email + '" style="color:var(--primary);">' + r.email + '</a></td>' +
+        '<td><strong>' + r.chamber_name + '</strong></td>' +
+        '<td>' + (r.region || '--') + '</td>' +
+        '<td>' + (r.members_count || '--') + '</td>' +
+        '<td><span class="badge badge-' + r.status + '">' + r.status + '</span></td>' +
+        '<td>' + date + '</td>' +
+        '<td><div class="actions">' +
+          '<button class="btn btn-sm btn-primary" onclick="openUpdateModal(' + r.id + ')">Edit</button>' +
+          '<button class="btn btn-sm btn-accent" onclick="provisionFromRequest(' + r.id + ')">Create Eco</button>' +
+          '<button class="btn btn-sm btn-danger" onclick="deleteRequest(' + r.id + ')">X</button>' +
+        '</div></td>' +
+        '</tr>';
+    });
+    document.getElementById('requestsBody').innerHTML = html;
+  }
+
+  // UPDATE REQUEST
+  var currentUpdateId = null;
+  window.openUpdateModal = function(id) {
+    currentUpdateId = id;
+    var req = allRequests.find(function(r) { return r.id === id; });
+    if (!req) return;
+    document.getElementById('updateReqId').textContent = '#' + id;
+    document.getElementById('updateStatus').value = req.status || 'new';
+    document.getElementById('updateSlug').value = req.ecosystem_slug || '';
+    document.getElementById('updateNotes').value = req.notes || '';
+    document.getElementById('updateMsg').innerHTML = '';
+    document.getElementById('updateModal').classList.add('show');
+  };
+
+  window.updateRequest = function() {
+    var data = {
+      status: document.getElementById('updateStatus').value,
+      notes: document.getElementById('updateNotes').value,
+      ecosystem_slug: document.getElementById('updateSlug').value || undefined
+    };
+    fetch(API + '/admin/demo-requests/' + currentUpdateId, { method: 'PUT', headers: headers(), body: JSON.stringify(data) })
+      .then(function(r) { return r.json(); })
+      .then(function(res) {
+        if (res.success) {
+          document.getElementById('updateMsg').innerHTML = '<div class="msg msg-success">Updated</div>';
+          loadRequests();
+          setTimeout(function() { closeModal('updateModal'); }, 800);
+        } else {
+          document.getElementById('updateMsg').innerHTML = '<div class="msg msg-error">' + (res.error || 'Error') + '</div>';
+        }
+      });
+  };
+
+  window.deleteRequest = function(id) {
+    if (!confirm('Delete request #' + id + '?')) return;
+    fetch(API + '/admin/demo-requests/' + id, { method: 'DELETE', headers: headers() })
+      .then(function(r) { return r.json(); })
+      .then(function(res) { if (res.success) loadRequests(); });
+  };
+
+  // PROVISION FROM REQUEST
+  window.provisionFromRequest = function(id) {
+    var req = allRequests.find(function(r) { return r.id === id; });
+    if (!req) return;
+    var slug = req.chamber_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    document.getElementById('ecoSlug').value = slug;
+    document.getElementById('ecoShort').value = req.chamber_name.split(' ').map(function(w) { return w.charAt(0).toUpperCase() + w.slice(1); }).join('').substring(0, 20);
+    document.getElementById('ecoName').value = req.chamber_name;
+    document.getElementById('ecoRequestId').value = id;
+    document.getElementById('ecoTagline').value = '';
+    document.getElementById('ecoDesc').value = '';
+    document.getElementById('ecoRegions').value = '';
+    document.getElementById('ecoSectors').value = '';
+    document.getElementById('createMsg').innerHTML = '';
+    document.getElementById('createModal').classList.add('show');
+  };
+
+  // ECOSYSTEMS
+  function loadEcosystems() {
+    fetch(API + '/admin/ecosystems', { headers: headers() })
+      .then(function(r) { return r.json(); })
+      .then(function(res) {
+        if (!res.success) return;
+        renderEcosystems(res.data);
+      });
+  }
+
+  function renderEcosystems(data) {
+    if (!data.length) {
+      document.getElementById('ecosGrid').innerHTML = '<div style="text-align:center;color:var(--gray-500);padding:40px;">No ecosystems</div>';
+      return;
+    }
+    var html = '';
+    data.forEach(function(e) {
+      html += '<div class="eco-card">' +
+        '<div><div class="eco-name">' + e.short_name + '</div><div class="eco-meta">' + e.name + '</div>' +
+        '<div class="eco-meta">' + e.regions_count + ' regions -- ' + e.sectors_count + ' sectors -- ' + e.mount_path + '</div></div>' +
+        '<a href="' + e.mount_path + '/" target="_blank" class="btn btn-sm btn-outline">Visit</a>' +
+        '</div>';
+    });
+    document.getElementById('ecosGrid').innerHTML = html;
+  }
+
+  // CREATE ECOSYSTEM
+  window.openCreateModal = function() {
+    document.getElementById('ecoSlug').value = '';
+    document.getElementById('ecoShort').value = '';
+    document.getElementById('ecoName').value = '';
+    document.getElementById('ecoTagline').value = '';
+    document.getElementById('ecoDesc').value = '';
+    document.getElementById('ecoRequestId').value = '';
+    document.getElementById('ecoRegions').value = '';
+    document.getElementById('ecoSectors').value = '';
+    document.getElementById('createMsg').innerHTML = '';
+    document.getElementById('createModal').classList.add('show');
+  };
+
+  window.createEcosystem = function() {
+    var regionsStr = document.getElementById('ecoRegions').value.trim();
+    var sectorsStr = document.getElementById('ecoSectors').value.trim();
+    var regions = regionsStr ? regionsStr.split(',').map(function(r, i) { return { id: i + 1, name: r.trim() }; }) : undefined;
+    var sectors = sectorsStr ? sectorsStr.split(',').map(function(s) { return s.trim().toLowerCase().replace(/\s+/g, '_'); }) : undefined;
+
+    var data = {
+      slug: document.getElementById('ecoSlug').value.trim(),
+      name: document.getElementById('ecoName').value.trim(),
+      short_name: document.getElementById('ecoShort').value.trim() || undefined,
+      tagline: document.getElementById('ecoTagline').value.trim() || undefined,
+      description: document.getElementById('ecoDesc').value.trim() || undefined,
+      language: document.getElementById('ecoLang').value,
+      request_id: document.getElementById('ecoRequestId').value.trim() || undefined,
+      regions: regions,
+      sectors: sectors
+    };
+
+    fetch(API + '/admin/create-ecosystem', { method: 'POST', headers: headers(), body: JSON.stringify(data) })
+      .then(function(r) { return r.json(); })
+      .then(function(res) {
+        if (res.success) {
+          document.getElementById('createMsg').innerHTML = '<div class="msg msg-success">Ecosistema creado: ' + res.data.mount_path + '<br>Admin: ' + res.data.admin_email + '<br><strong>' + res.data.note + '</strong></div>';
+          loadEcosystems();
+          loadRequests();
+        } else {
+          document.getElementById('createMsg').innerHTML = '<div class="msg msg-error">' + (res.error || 'Error') + '</div>';
+        }
+      })
+      .catch(function(err) {
+        document.getElementById('createMsg').innerHTML = '<div class="msg msg-error">Error: ' + err.message + '</div>';
+      });
+  };
+
+  // MODAL HELPERS
+  window.closeModal = function(id) {
+    document.getElementById(id).classList.remove('show');
+  };
+
+  // Close modal on overlay click
+  document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) overlay.classList.remove('show');
+    });
+  });
+})();
+</script>
+</body>
+</html>

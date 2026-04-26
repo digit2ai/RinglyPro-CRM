@@ -1,0 +1,69 @@
+{
+  "slug": "virtualchamber",
+  "name": "VirtualChamber.app -- Digital Chamber of Commerce",
+  "short_name": "VirtualChamber",
+  "tagline": "Neural Intelligence for Chambers of Commerce",
+  "description": "VirtualChamber.app is the AI-powered digital chamber of commerce platform connecting entrepreneurs and professionals worldwide -- from New York to London, from Singapore to Sao Paulo. The English-language ecosystem.",
+  "language": "en",
+  "colors": {
+    "primary": "#003DA5",
+    "primary_dark": "#002D7A",
+    "primary_light": "#E6EEF8",
+    "secondary": "#CE1126",
+    "secondary_dark": "#A00D1E",
+    "accent": "#FCD116",
+    "accent_light": "#FFF4CC",
+    "accent_dark": "#C9A60E",
+    "navy": "#1A2332",
+    "navy_light": "#2D3A4D",
+    "white": "#FFFFFF",
+    "gray_50": "#F8F9FA"
+  },
+  "db_prefix": "virtualchamber",
+  "mount_path": "/chamber/virtualchamber",
+  "jwt_secret": "virtualchamber-chamber-jwt-2026",
+  "regions": [
+    { "id": 1, "name": "North America" },
+    { "id": 2, "name": "Latin America" },
+    { "id": 3, "name": "Europe" },
+    { "id": 4, "name": "Middle East / Africa" },
+    { "id": 5, "name": "Asia Pacific" },
+    { "id": 6, "name": "Other" }
+  ],
+  "sectors": [
+    "technology", "healthcare", "real_estate", "food_beverage", "international_trade",
+    "construction", "professional_services", "education", "finance",
+    "hospitality_tourism", "logistics", "manufacturing", "media", "legal",
+    "automotive", "beauty_wellness", "insurance", "consulting",
+    "cybersecurity", "digital_marketing", "agriculture", "energy", "mining", "textile"
+  ],
+  "membership_tiers": {
+    "entrepreneur": { "monthly": 10, "annual": 96, "label": "Entrepreneur Member" },
+    "business": { "monthly": 25, "annual": 240, "label": "Business Member" },
+    "corporate": { "monthly": 75, "annual": 720, "label": "Corporate Member" },
+    "founder": { "monthly": 0, "annual": 0, "label": "Founding Member (by invitation)" }
+  },
+  "membership_scores": {
+    "entrepreneur": 0.3, "business": 0.5, "corporate": 0.8, "founder": 1.0
+  },
+  "governance_roles": [
+    "superadmin",
+    "president", "vice_president", "secretary", "treasurer", "board_member",
+    "committee_chair", "committee_member",
+    "member"
+  ],
+  "features": {
+    "matching": true,
+    "exchange": true,
+    "mcp": true,
+    "payments": true,
+    "monte_carlo": true,
+    "trust_rank": true
+  },
+  "admin_account": {
+    "email": "admin@virtualchamber.chamber",
+    "password": "VirtualChamber-Admin-2026!",
+    "first_name": "VirtualChamber",
+    "last_name": "Administrator"
+  }
+}

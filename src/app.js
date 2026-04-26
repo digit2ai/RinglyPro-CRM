@@ -54,6 +54,18 @@ app.use((req, res, next) => {
   next();
 });
 
+// Custom domain: virtualchamber.app -> VirtualChamber English (/chamber/virtualchamber)
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase();
+  if (host === 'virtualchamber.app' || host === 'www.virtualchamber.app') {
+    const p = req.path;
+    if (p.startsWith('/chamber/virtualchamber')) return next();
+    if (p.startsWith('/audio/')) return next();
+    req.url = '/chamber/virtualchamber' + (p === '/' ? '/' : p);
+  }
+  next();
+});
+
 // Custom domain: imagingmind.app -> ImagingMind (/msk)
 app.use((req, res, next) => {
   const host = (req.get('host') || '').toLowerCase();
@@ -510,11 +522,12 @@ try {
     console.log('HISPATEC routes not available:', error.message);
 }
 
-// CamaraVirtual.app Platform Admin (demo requests + ecosystem provisioning)
+// CamaraVirtual.app / VirtualChamber.app Platform Admin (demo requests + ecosystem provisioning)
 try {
     const camaravirtualAdmin = require('./routes/camaravirtual-admin');
     app.use('/chamber/hispamind/api', camaravirtualAdmin);
-    console.log('CamaraVirtual admin routes mounted at /chamber/hispamind/api');
+    app.use('/chamber/virtualchamber/api', camaravirtualAdmin);
+    console.log('CamaraVirtual admin routes mounted at /chamber/hispamind/api and /chamber/virtualchamber/api');
 } catch (error) {
     console.log('CamaraVirtual admin routes not available:', error.message);
 }

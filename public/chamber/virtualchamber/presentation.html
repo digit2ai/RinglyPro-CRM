@@ -1,0 +1,2514 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VirtualChamber.app // Digital Ecosystem -- Chamber of Commerce for the Modern World</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root {
+    --blue: #003DA5;
+    --blue-light: #1a5cc8;
+    --blue-neon: #4da6ff;
+    --red: #CE1126;
+    --red-light: #e8384f;
+    --red-neon: #ff4d6a;
+    --yellow: #FCD116;
+    --yellow-light: #ffe44d;
+    --yellow-neon: #ffe44d;
+    --navy: #0a1628;
+    --navy-dark: #030814;
+    --navy-blk: #010409;
+    --white: #ffffff;
+    --gray-200: #e9ecef;
+    --gray-500: #6c757d;
+    --gray-700: #374151;
+    --gray-900: #111827;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--navy-blk);
+    color: var(--white);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .deck {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 90px 7vw 80px;
+    text-align: center;
+    opacity: 0;
+    transition: opacity .45s ease;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(77,166,255,0.3) transparent;
+  }
+  .slide::-webkit-scrollbar { width: 6px; }
+  .slide::-webkit-scrollbar-track { background: transparent; }
+  .slide::-webkit-scrollbar-thumb { background: rgba(77,166,255,0.3); border-radius: 3px; }
+  .slide.active { display: flex; opacity: 1; }
+
+  /* ANIMATED GRID OVERLAY */
+  .slide::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(77,166,255,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(77,166,255,0.06) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse at center, black 40%, transparent 90%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 40%, transparent 90%);
+    pointer-events: none;
+    z-index: 0;
+    animation: gridDrift 40s linear infinite;
+  }
+
+  @keyframes gridDrift {
+    from { background-position: 0 0, 0 0; }
+    to { background-position: 64px 64px, 64px 64px; }
+  }
+
+  /* FLOATING MESH GLOW */
+  .slide::after {
+    content: '';
+    position: absolute;
+    width: 900px; height: 900px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(77,166,255,0.14) 0%, rgba(252,209,22,0.06) 40%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    filter: blur(60px);
+    pointer-events: none;
+    z-index: 0;
+    animation: meshDrift 18s ease-in-out infinite;
+  }
+
+  @keyframes meshDrift {
+    0%, 100% { transform: translate(-60%, -55%) scale(1); }
+    50%      { transform: translate(-40%, -45%) scale(1.2); }
+  }
+
+  .slide > * { position: relative; z-index: 1; }
+
+  /* BACKGROUND VARIANTS */
+  .bg-navy { background: radial-gradient(ellipse at top, var(--navy) 0%, var(--navy-dark) 50%, var(--navy-blk) 100%); }
+  .bg-blue { background: radial-gradient(ellipse at top, #0a1d4a 0%, #050e28 50%, var(--navy-blk) 100%); }
+  .bg-blue::after { background: radial-gradient(circle, rgba(0,61,165,0.22) 0%, rgba(77,166,255,0.06) 40%, transparent 70%); }
+  .bg-red { background: radial-gradient(ellipse at top, #3a0a10 0%, #200508 50%, var(--navy-blk) 100%); }
+  .bg-red::after { background: radial-gradient(circle, rgba(206,17,38,0.2) 0%, rgba(255,77,106,0.05) 40%, transparent 70%); }
+  .bg-yellow { background: radial-gradient(ellipse at top, #2e2a0d 0%, #181506 50%, var(--navy-blk) 100%); }
+  .bg-yellow::after { background: radial-gradient(circle, rgba(252,209,22,0.2) 0%, rgba(255,228,77,0.05) 40%, transparent 70%); }
+
+  /* ===== FLOATING PARTICLES ===== */
+  .particles {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .particle {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--blue-neon);
+    opacity: 0;
+    animation: particleFloat linear infinite;
+  }
+  .particle:nth-child(odd) { background: var(--yellow-neon); }
+  .particle:nth-child(3n) { background: var(--red-neon); }
+  .particle:nth-child(1)  { left: 5%;  bottom: -10px; width: 2px; height: 2px; animation-duration: 12s; animation-delay: 0s; }
+  .particle:nth-child(2)  { left: 12%; bottom: -10px; width: 3px; height: 3px; animation-duration: 15s; animation-delay: 1s; }
+  .particle:nth-child(3)  { left: 20%; bottom: -10px; width: 2px; height: 2px; animation-duration: 11s; animation-delay: 3s; }
+  .particle:nth-child(4)  { left: 28%; bottom: -10px; width: 4px; height: 4px; animation-duration: 14s; animation-delay: 2s; }
+  .particle:nth-child(5)  { left: 35%; bottom: -10px; width: 2px; height: 2px; animation-duration: 16s; animation-delay: 4s; }
+  .particle:nth-child(6)  { left: 42%; bottom: -10px; width: 3px; height: 3px; animation-duration: 13s; animation-delay: 0.5s; }
+  .particle:nth-child(7)  { left: 50%; bottom: -10px; width: 2px; height: 2px; animation-duration: 17s; animation-delay: 5s; }
+  .particle:nth-child(8)  { left: 58%; bottom: -10px; width: 3px; height: 3px; animation-duration: 12s; animation-delay: 1.5s; }
+  .particle:nth-child(9)  { left: 65%; bottom: -10px; width: 2px; height: 2px; animation-duration: 14s; animation-delay: 3.5s; }
+  .particle:nth-child(10) { left: 72%; bottom: -10px; width: 4px; height: 4px; animation-duration: 15s; animation-delay: 2.5s; }
+  .particle:nth-child(11) { left: 78%; bottom: -10px; width: 2px; height: 2px; animation-duration: 11s; animation-delay: 6s; }
+  .particle:nth-child(12) { left: 85%; bottom: -10px; width: 3px; height: 3px; animation-duration: 16s; animation-delay: 0.8s; }
+  .particle:nth-child(13) { left: 90%; bottom: -10px; width: 2px; height: 2px; animation-duration: 13s; animation-delay: 4.5s; }
+  .particle:nth-child(14) { left: 95%; bottom: -10px; width: 3px; height: 3px; animation-duration: 18s; animation-delay: 1.2s; }
+  .particle:nth-child(15) { left: 8%;  bottom: -10px; width: 2px; height: 2px; animation-duration: 14s; animation-delay: 7s; }
+  .particle:nth-child(16) { left: 38%; bottom: -10px; width: 3px; height: 3px; animation-duration: 12s; animation-delay: 5.5s; }
+  .particle:nth-child(17) { left: 55%; bottom: -10px; width: 2px; height: 2px; animation-duration: 15s; animation-delay: 8s; }
+  .particle:nth-child(18) { left: 68%; bottom: -10px; width: 4px; height: 4px; animation-duration: 13s; animation-delay: 3.2s; }
+
+  @keyframes particleFloat {
+    0%   { transform: translateY(0) translateX(0); opacity: 0; }
+    10%  { opacity: 0.6; }
+    90%  { opacity: 0.3; }
+    100% { transform: translateY(-100vh) translateX(20px); opacity: 0; }
+  }
+
+  .particles.explosion .particle {
+    animation-duration: 4s !important;
+    opacity: 0.8;
+    width: 4px !important;
+    height: 4px !important;
+    box-shadow: 0 0 6px var(--yellow-neon);
+  }
+
+  /* ===== PHILIPPINE-AMERICAN FLAG BARS ===== */
+  .flag-bars {
+    display: flex;
+    width: 280px;
+    height: 6px;
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 24px auto 0;
+  }
+  .flag-bars .bar-blue { flex: 1; background: var(--blue); }
+  .flag-bars .bar-red { flex: 1; background: var(--red); }
+  .flag-bars .bar-yellow { flex: 1; background: var(--yellow); }
+
+  .flag-bars-wide {
+    display: flex;
+    width: 100%;
+    max-width: 600px;
+    height: 4px;
+    border-radius: 2px;
+    overflow: hidden;
+    margin: 32px auto 0;
+  }
+  .flag-bars-wide .bar-blue { flex: 1; background: var(--blue); }
+  .flag-bars-wide .bar-red { flex: 1; background: var(--red); }
+  .flag-bars-wide .bar-yellow { flex: 1; background: var(--yellow); }
+
+  /* ===== XP BAR ===== */
+  .xp-bar-wrap {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 28px;
+    background: rgba(3,8,20,0.9);
+    border-bottom: 1px solid rgba(77,166,255,0.2);
+    z-index: 300;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    backdrop-filter: blur(8px);
+  }
+  .xp-bar-track {
+    flex: 1;
+    height: 10px;
+    background: rgba(77,166,255,0.1);
+    border: 1px solid rgba(77,166,255,0.3);
+    border-radius: 5px;
+    position: relative;
+    overflow: hidden;
+    margin-right: 12px;
+  }
+  .xp-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--blue) 0%, var(--blue-neon) 50%, var(--yellow) 100%);
+    border-radius: 5px;
+    transition: width 0.6s ease;
+    box-shadow: 0 0 10px var(--blue-neon), inset 0 1px 0 rgba(255,255,255,0.3);
+    position: relative;
+  }
+  .xp-bar-fill::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 20px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4));
+    border-radius: 0 5px 5px 0;
+  }
+  .xp-bar-marks {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .xp-bar-marks .mark {
+    position: absolute;
+    top: -1px;
+    bottom: -1px;
+    width: 2px;
+    background: rgba(255,255,255,0.3);
+  }
+  .xp-bar-marks .mark:nth-child(1) { left: 16.6%; }
+  .xp-bar-marks .mark:nth-child(2) { left: 33.3%; }
+  .xp-bar-marks .mark:nth-child(3) { left: 50%; }
+  .xp-bar-marks .mark:nth-child(4) { left: 66.6%; }
+  .xp-bar-marks .mark:nth-child(5) { left: 83.3%; }
+
+  .xp-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--blue-neon);
+    font-weight: 700;
+    min-width: 80px;
+    text-align: right;
+    text-shadow: 0 0 8px rgba(77,166,255,0.5);
+  }
+
+  /* ===== POWER LEVEL COUNTER ===== */
+  .pwr-counter {
+    position: fixed;
+    top: 36px;
+    right: 28px;
+    z-index: 200;
+    font-family: var(--mono);
+    text-align: right;
+  }
+  .pwr-counter .pwr-label {
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: rgba(77,166,255,0.5);
+    font-weight: 500;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+  .pwr-counter .pwr-num {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--yellow-neon);
+    text-shadow: 0 0 20px var(--yellow-neon), 0 0 40px rgba(252,209,22,0.3);
+    line-height: 1;
+    letter-spacing: -1px;
+  }
+
+  /* ===== LEVEL TRANSITION INTERSTITIAL ===== */
+  .level-transition {
+    position: relative;
+  }
+  .level-transition .level-num {
+    font-family: var(--mono);
+    font-size: clamp(80px, 15vw, 200px);
+    font-weight: 700;
+    line-height: 0.9;
+    letter-spacing: -4px;
+    margin-bottom: 16px;
+    animation: glitch 0.8s ease-in-out infinite;
+  }
+  .level-transition .level-name {
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(28px, 5vw, 64px);
+    font-weight: 900;
+    letter-spacing: 8px;
+    text-transform: uppercase;
+    animation: glitch 1s ease-in-out infinite;
+    animation-delay: 0.1s;
+  }
+  .level-transition .level-sep {
+    font-family: var(--mono);
+    font-size: clamp(20px, 3vw, 36px);
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 8px;
+    margin: 8px 0;
+  }
+
+  /* Scan lines overlay */
+  .scan-lines::before {
+    content: '' !important;
+    position: absolute !important;
+    inset: 0 !important;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.15) 2px,
+      rgba(0,0,0,0.15) 4px
+    ) !important;
+    pointer-events: none !important;
+    z-index: 3 !important;
+    animation: scanFlicker 4s linear infinite !important;
+  }
+
+  @keyframes scanFlicker {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.6; }
+  }
+
+  /* ===== GLITCH TEXT ===== */
+  @keyframes glitch {
+    0%, 100% { text-shadow: 2px 0 #CE1126, -2px 0 #003DA5; transform: translate(0); }
+    20% { text-shadow: -3px 0 #CE1126, 3px 0 #003DA5; transform: translate(-2px, 1px); }
+    40% { text-shadow: 3px 0 #CE1126, -3px 0 #003DA5; transform: translate(2px, -1px); }
+    60% { text-shadow: -2px 0 #CE1126, 2px 0 #003DA5; transform: translate(1px, 2px); }
+    80% { text-shadow: 2px 0 #CE1126, -2px 0 #003DA5; transform: translate(-1px, -2px); }
+  }
+
+  /* ===== SCREEN SHAKE ===== */
+  @keyframes shake {
+    0%, 100% { transform: translate(0); }
+    10% { transform: translate(-4px, 2px); }
+    30% { transform: translate(4px, -2px); }
+    50% { transform: translate(-2px, 4px); }
+    70% { transform: translate(2px, -4px); }
+    90% { transform: translate(-4px, -2px); }
+  }
+  .slide.shake-active {
+    animation: shake 0.5s ease-in-out;
+  }
+
+  /* ===== TYPING EFFECT ===== */
+  @keyframes typing {
+    from { width: 0; }
+    to { width: 100%; }
+  }
+  @keyframes blink {
+    0%, 100% { border-color: var(--yellow-neon); }
+    50% { border-color: transparent; }
+  }
+  .typing-wrap {
+    display: inline-block;
+    max-width: 100%;
+  }
+  .typing-text {
+    display: inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+    border-right: 3px solid var(--yellow-neon);
+    width: 0;
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(22px, 2.6vw, 42px);
+    line-height: 1.3;
+    color: rgba(255,255,255,0.95);
+  }
+  .slide.active .typing-text {
+    animation: typing 3s steps(50) 0.5s forwards, blink 0.7s step-end 0.5s infinite;
+  }
+
+  /* ===== ACHIEVEMENT BADGE ===== */
+  @keyframes badgeBounce {
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.2); }
+    70% { transform: scale(0.9); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .achievement-badge {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 28px 44px;
+    background: linear-gradient(135deg, rgba(77,166,255,0.15) 0%, rgba(10,22,40,0.8) 100%);
+    border: 2px solid var(--blue-neon);
+    border-radius: 16px;
+    margin-top: 36px;
+    transform: scale(0);
+    opacity: 0;
+    box-shadow: 0 0 40px rgba(77,166,255,0.3), inset 0 0 20px rgba(77,166,255,0.05);
+  }
+  .slide.active .achievement-badge {
+    animation: badgeBounce 0.8s cubic-bezier(.22,.61,.36,1) 0.6s forwards;
+  }
+  .achievement-badge .badge-check {
+    font-size: 48px;
+    line-height: 1;
+  }
+  .achievement-badge .badge-title {
+    font-family: var(--mono);
+    font-size: 14px;
+    letter-spacing: 3px;
+    color: var(--blue-neon);
+    font-weight: 700;
+    text-transform: uppercase;
+    text-shadow: 0 0 12px rgba(77,166,255,0.5);
+  }
+  .achievement-badge .badge-sub {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.6);
+    text-transform: uppercase;
+  }
+  .achievement-badge.red { border-color: var(--red-neon); box-shadow: 0 0 40px rgba(255,77,106,0.3), inset 0 0 20px rgba(255,77,106,0.05); }
+  .achievement-badge.red .badge-title { color: var(--red-neon); text-shadow: 0 0 12px rgba(255,77,106,0.5); }
+  .achievement-badge.yellow { border-color: var(--yellow-neon); box-shadow: 0 0 40px rgba(255,228,77,0.3), inset 0 0 20px rgba(255,228,77,0.05); }
+  .achievement-badge.yellow .badge-title { color: var(--yellow-neon); text-shadow: 0 0 12px rgba(255,228,77,0.5); }
+
+  /* ===== LEVEL MAP CARDS ===== */
+  .level-map {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 16px;
+    max-width: 1500px;
+    width: 100%;
+    margin-top: 48px;
+  }
+  .level-card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+    border: 1px solid rgba(77,166,255,0.15);
+    border-radius: 12px;
+    padding: 28px 16px;
+    text-align: center;
+    backdrop-filter: blur(12px);
+    position: relative;
+    overflow: hidden;
+    transition: all .3s ease;
+  }
+  .level-card.locked {
+    opacity: 0.5;
+  }
+  .level-card.unlocked {
+    border-color: var(--yellow-neon);
+    opacity: 1;
+    box-shadow: 0 0 20px rgba(252,209,22,0.15);
+  }
+  .level-card .lock-icon {
+    font-size: 28px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
+  .level-card.unlocked .lock-icon {
+    opacity: 1;
+  }
+  .level-card .lc-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    color: var(--blue-neon);
+    margin-bottom: 8px;
+  }
+  .level-card .lc-title {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    margin-bottom: 8px;
+    color: var(--white);
+  }
+  .level-card .lc-sub {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 12px;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.6);
+    font-style: italic;
+  }
+
+  /* ===== MINI BADGES ROW ===== */
+  .badges-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 32px;
+  }
+  .mini-badge {
+    padding: 12px 20px;
+    background: rgba(77,166,255,0.08);
+    border: 1px solid var(--blue-neon);
+    border-radius: 8px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--blue-neon);
+    text-transform: uppercase;
+    font-weight: 600;
+    transform: scale(0);
+    opacity: 0;
+  }
+  .slide.active .mini-badge {
+    animation: badgeBounce 0.6s cubic-bezier(.22,.61,.36,1) forwards;
+  }
+  .slide.active .mini-badge:nth-child(1) { animation-delay: 0.3s; }
+  .slide.active .mini-badge:nth-child(2) { animation-delay: 0.5s; }
+  .slide.active .mini-badge:nth-child(3) { animation-delay: 0.7s; }
+  .slide.active .mini-badge:nth-child(4) { animation-delay: 0.9s; }
+  .slide.active .mini-badge:nth-child(5) { animation-delay: 1.1s; }
+  .slide.active .mini-badge:nth-child(6) { animation-delay: 1.3s; }
+
+  /* ===== MISSION FRAME ===== */
+  .mission-frame {
+    max-width: 900px;
+    width: 100%;
+    padding: 40px 48px;
+    background: linear-gradient(135deg, rgba(77,166,255,0.06) 0%, rgba(10,22,40,0.4) 100%);
+    border: 1px solid rgba(77,166,255,0.35);
+    border-radius: 4px;
+    position: relative;
+    text-align: left;
+  }
+  .mission-frame::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--blue-neon), transparent);
+  }
+  .mission-frame::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--blue-neon), transparent);
+  }
+  .mission-frame .mf-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--blue-neon);
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .mission-frame .mf-label::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--blue-neon);
+    box-shadow: 0 0 8px var(--blue-neon);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  .mission-frame .mf-text {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(20px, 2.2vw, 28px);
+    line-height: 1.6;
+    color: rgba(255,255,255,0.9);
+  }
+
+  /* ===== TECH HUD ===== */
+  .hud-top-left, .hud-top-right, .hud-bot-left, .hud-bot-right {
+    position: absolute;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2.5px;
+    color: rgba(77,166,255,0.55);
+    font-weight: 500;
+    text-transform: uppercase;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .hud-top-left { top: 72px; left: 28px; }
+  .hud-top-right { top: 72px; right: 28px; }
+  .hud-bot-left { bottom: 24px; left: 28px; }
+  .hud-bot-right { bottom: 24px; right: 96px; }
+
+  .hud-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--blue-neon);
+    box-shadow: 0 0 10px var(--blue-neon);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  .hud-line {
+    display: inline-block;
+    height: 1px;
+    width: 32px;
+    background: linear-gradient(90deg, var(--blue-neon) 0%, transparent 100%);
+  }
+
+  /* ===== CHIP ===== */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 36px;
+    background: rgba(77,166,255,0.08);
+    border: 1px solid rgba(77,166,255,0.4);
+    color: var(--blue-neon);
+    backdrop-filter: blur(8px);
+    position: relative;
+  }
+  .chip::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--blue-neon);
+    box-shadow: 0 0 8px var(--blue-neon);
+  }
+  .chip.red { background: rgba(206,17,38,0.08); border-color: rgba(255,77,106,0.4); color: var(--red-neon); }
+  .chip.red::before { background: var(--red-neon); box-shadow: 0 0 8px var(--red-neon); }
+  .chip.yellow { background: rgba(252,209,22,0.08); border-color: rgba(255,228,77,0.4); color: var(--yellow-neon); }
+  .chip.yellow::before { background: var(--yellow-neon); box-shadow: 0 0 8px var(--yellow-neon); }
+
+  /* ===== TYPOGRAPHY ===== */
+  h1 {
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(52px, 8vw, 112px);
+    font-weight: 900;
+    line-height: 0.98;
+    letter-spacing: -3px;
+    margin-bottom: 28px;
+    max-width: 1200px;
+    background: linear-gradient(180deg, #ffffff 0%, #b8c4d1 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 80px rgba(77,166,255,0.2);
+  }
+
+  h1.glow-blue {
+    background: linear-gradient(180deg, #ffffff 0%, var(--blue-neon) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  h1.glow-yellow {
+    background: linear-gradient(180deg, var(--yellow) 0%, var(--yellow-neon) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  h2 {
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(40px, 5.5vw, 80px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -2px;
+    margin-bottom: 28px;
+    max-width: 1200px;
+    background: linear-gradient(180deg, #ffffff 0%, #d1d9e3 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  h2.accent-blue {
+    background: linear-gradient(135deg, var(--blue-neon) 0%, var(--blue) 50%, #ffffff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  h2.accent-red {
+    background: linear-gradient(135deg, var(--red-neon) 0%, var(--red) 50%, #ffffff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  h2.accent-yellow {
+    background: linear-gradient(135deg, var(--yellow-neon) 0%, var(--yellow) 50%, #ffffff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  p.lead {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(20px, 2.2vw, 30px);
+    font-weight: 400;
+    line-height: 1.55;
+    max-width: 900px;
+    margin: 0 auto 32px;
+    color: rgba(255,255,255,0.82);
+  }
+
+  blockquote {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(28px, 3.4vw, 52px);
+    line-height: 1.3;
+    font-weight: 400;
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    padding: 0 80px;
+    color: rgba(255,255,255,0.95);
+  }
+  blockquote::before, blockquote::after {
+    position: absolute;
+    font-size: 140px;
+    font-family: 'Source Serif 4', Georgia, serif;
+    color: var(--blue-neon);
+    opacity: .6;
+    line-height: 1;
+    text-shadow: 0 0 30px rgba(77,166,255,0.5);
+  }
+  blockquote::before { content: '\201C'; top: -30px; left: 0; }
+  blockquote::after { content: '\201D'; bottom: -80px; right: 0; }
+
+  .attribution {
+    margin-top: 44px;
+    font-family: var(--mono);
+    font-size: 14px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--blue-neon);
+    font-weight: 500;
+  }
+
+  /* ===== TWO COLUMN ===== */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 72px;
+    max-width: 1400px;
+    width: 100%;
+    align-items: center;
+    text-align: left;
+  }
+  .two-col h2 {
+    font-size: clamp(34px, 4.5vw, 68px);
+    text-align: left;
+    margin: 0 0 24px;
+  }
+  .two-col .col-quote {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(22px, 2.4vw, 34px);
+    line-height: 1.4;
+    color: rgba(255,255,255,0.92);
+    padding: 20px 0 20px 32px;
+    border-left: 3px solid var(--blue-neon);
+    position: relative;
+  }
+  .two-col .col-quote::before {
+    content: '';
+    position: absolute;
+    left: -3px; top: 0;
+    width: 3px; height: 40px;
+    background: var(--blue-neon);
+    box-shadow: 0 0 10px var(--blue-neon);
+  }
+  .two-col .col-body p {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(17px, 1.5vw, 21px);
+    line-height: 1.7;
+    color: rgba(255,255,255,0.9);
+    margin-bottom: 16px;
+  }
+  .two-col .col-body p strong {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    color: var(--white);
+  }
+
+  /* ===== ACTION LIST ===== */
+  .action-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-width: 950px;
+    width: 100%;
+    margin-top: 32px;
+  }
+  .action-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 22px;
+    text-align: left;
+    padding: 20px 26px;
+    background: linear-gradient(90deg, rgba(77,166,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+    border: 1px solid rgba(77,166,255,0.25);
+    border-left: 3px solid var(--blue-neon);
+    border-radius: 8px;
+    backdrop-filter: blur(8px);
+    transition: all .3s ease;
+  }
+  .action-item:hover {
+    border-color: var(--blue-neon);
+    box-shadow: 0 0 24px rgba(77,166,255,0.2);
+  }
+  .action-item .idx {
+    font-family: var(--mono);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--blue-neon);
+    min-width: 52px;
+    line-height: 1;
+    letter-spacing: -1px;
+  }
+  .action-item .txt {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(16px, 1.5vw, 20px);
+    line-height: 1.55;
+    color: rgba(255,255,255,0.92);
+  }
+  .action-item .txt strong {
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+  }
+
+  /* ===== TECH GRID ===== */
+  .tech-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    max-width: 1300px;
+    width: 100%;
+    margin-top: 36px;
+  }
+  .tech-card {
+    padding: 32px 26px;
+    background: linear-gradient(180deg, rgba(77,166,255,0.08) 0%, rgba(77,166,255,0.02) 100%);
+    border: 1px solid rgba(77,166,255,0.35);
+    border-radius: 14px;
+    text-align: left;
+    backdrop-filter: blur(12px);
+    position: relative;
+    overflow: hidden;
+  }
+  .tech-card::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: -1px; right: -1px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, var(--blue-neon) 50%, transparent 100%);
+  }
+  .tech-card .ic {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    color: var(--blue-neon);
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .tech-card .ic::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--blue-neon);
+    box-shadow: 0 0 8px var(--blue-neon);
+  }
+  .tech-card .nm {
+    font-size: 22px;
+    font-weight: 800;
+    margin-bottom: 12px;
+    letter-spacing: -0.5px;
+    color: var(--white);
+  }
+  .tech-card .ds {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: rgba(255,255,255,0.82);
+  }
+
+  /* ===== STAT CARDS ===== */
+  .stat-row {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 36px;
+    max-width: 1000px;
+  }
+  .stat-card {
+    flex: 1;
+    min-width: 200px;
+    max-width: 280px;
+    padding: 32px 24px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+    border: 1px solid rgba(255,77,106,0.3);
+    border-radius: 12px;
+    text-align: center;
+  }
+  .stat-card .stat-num {
+    font-family: var(--mono);
+    font-size: 42px;
+    font-weight: 700;
+    color: var(--red-neon);
+    line-height: 1;
+    margin-bottom: 8px;
+    text-shadow: 0 0 16px rgba(255,77,106,0.4);
+  }
+  .stat-card .stat-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.6);
+    text-transform: uppercase;
+  }
+
+  /* ===== REGION CARDS ===== */
+  .region-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+    max-width: 1400px;
+    width: 100%;
+    margin-top: 36px;
+  }
+  .region-card {
+    padding: 28px 18px;
+    background: linear-gradient(180deg, rgba(77,166,255,0.06) 0%, rgba(77,166,255,0.01) 100%);
+    border: 1px solid rgba(77,166,255,0.25);
+    border-radius: 12px;
+    text-align: center;
+    backdrop-filter: blur(8px);
+  }
+  .region-card .region-icon { font-size: 32px; margin-bottom: 12px; }
+  .region-card .region-name {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--white);
+    margin-bottom: 8px;
+  }
+  .region-card .region-desc {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 13px;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.7);
+    font-style: italic;
+  }
+
+  /* ===== PIPELINE / FLOW ===== */
+  .pipeline {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 32px;
+    max-width: 1200px;
+  }
+  .pipeline-step {
+    padding: 16px 24px;
+    background: rgba(77,166,255,0.08);
+    border: 1px solid rgba(77,166,255,0.3);
+    border-radius: 8px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: var(--blue-neon);
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .pipeline-arrow {
+    font-size: 20px;
+    color: rgba(77,166,255,0.4);
+  }
+
+  /* ===== BIG NUMBERS ===== */
+  .big-number {
+    font-family: var(--mono);
+    font-size: clamp(100px, 14vw, 220px);
+    font-weight: 700;
+    line-height: 0.9;
+    letter-spacing: -6px;
+    background: linear-gradient(180deg, var(--yellow) 0%, var(--yellow-neon) 50%, var(--blue-neon) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 28px;
+    text-shadow: 0 0 60px rgba(252,209,22,0.4);
+  }
+
+  /* ===== CTA BOX ===== */
+  .cta-box {
+    margin-top: 44px;
+    padding: 32px 44px;
+    background: linear-gradient(135deg, rgba(77,166,255,0.12) 0%, rgba(10,22,40,0.6) 100%);
+    border: 1px solid rgba(77,166,255,0.4);
+    border-radius: 12px;
+    max-width: 950px;
+    backdrop-filter: blur(12px);
+    position: relative;
+    overflow: hidden;
+  }
+  .cta-box::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, var(--yellow-neon) 50%, transparent 100%);
+  }
+  .cta-box .label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--yellow-neon);
+    font-weight: 500;
+    margin-bottom: 14px;
+    text-transform: uppercase;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .cta-box .label::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--yellow-neon);
+    box-shadow: 0 0 8px var(--yellow-neon);
+  }
+  .cta-box .msg {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(18px, 1.8vw, 24px);
+    line-height: 1.55;
+    color: rgba(255,255,255,0.92);
+  }
+  .cta-box .msg a {
+    font-family: var(--mono);
+    color: var(--yellow-neon);
+    text-decoration: none;
+    font-weight: 600;
+    padding: 0 4px;
+    border-bottom: 2px solid var(--yellow-neon);
+    text-shadow: 0 0 12px rgba(252,209,22,0.6);
+    transition: all .2s ease;
+  }
+  .cta-box .msg a:hover { color: var(--white); border-color: var(--white); }
+
+  /* ===== BENEFITS LIST ===== */
+  .benefits-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 36px;
+    max-width: 900px;
+    width: 100%;
+    margin-top: 28px;
+    text-align: left;
+  }
+  .benefit-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(14px, 1.3vw, 18px);
+    line-height: 1.5;
+    color: rgba(255,255,255,0.88);
+  }
+  .benefit-item .check {
+    color: var(--yellow-neon);
+    font-size: 18px;
+    flex-shrink: 0;
+    text-shadow: 0 0 8px rgba(252,209,22,0.5);
+  }
+
+  /* ===== LOGO / NAV ===== */
+  .logo-tag {
+    position: fixed;
+    top: 36px; left: 28px;
+    z-index: 100;
+    opacity: 0.9;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo-tag .logo-text {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--blue-neon);
+    text-shadow: 0 0 12px rgba(77,166,255,0.4);
+  }
+  .logo-tag .mark {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: rgba(77,166,255,0.5);
+    font-weight: 500;
+    padding-left: 12px;
+    border-left: 1px solid rgba(77,166,255,0.3);
+    text-transform: uppercase;
+  }
+
+  .nav {
+    position: fixed;
+    bottom: 24px; right: 28px;
+    display: flex; gap: 10px; align-items: center;
+    z-index: 100;
+  }
+  .nav button {
+    background: rgba(77,166,255,0.08);
+    border: 1px solid rgba(77,166,255,0.35);
+    color: var(--blue-neon);
+    width: 42px; height: 42px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all .2s;
+    backdrop-filter: blur(8px);
+  }
+  .nav button:hover {
+    background: var(--blue-neon);
+    border-color: var(--blue-neon);
+    color: var(--navy-dark);
+    box-shadow: 0 0 16px rgba(77,166,255,0.5);
+  }
+
+  .counter {
+    position: fixed;
+    bottom: 34px; left: 28px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: rgba(77,166,255,0.6);
+    font-weight: 500;
+    z-index: 100;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .counter::before {
+    content: 'SYS';
+    color: rgba(77,166,255,0.35);
+  }
+
+  .progress {
+    position: fixed;
+    top: 28px; left: 0; height: 2px;
+    background: linear-gradient(90deg, var(--blue) 0%, var(--blue-neon) 50%, var(--yellow) 100%);
+    box-shadow: 0 0 12px var(--blue-neon);
+    transition: width .45s ease;
+    z-index: 100;
+  }
+
+  .hint {
+    position: fixed;
+    top: 36px; right: 180px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(77,166,255,0.4);
+    font-weight: 500;
+    z-index: 100;
+    text-transform: uppercase;
+  }
+
+  /* SPEAKER NOTES */
+  .notes {
+    display: none;
+    position: fixed;
+    bottom: 90px; left: 28px; right: 28px;
+    max-width: 950px;
+    margin: 0 auto;
+    padding: 22px 30px;
+    background: rgba(3,8,20,0.92);
+    border-left: 3px solid var(--red-neon);
+    border-radius: 8px;
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--white);
+    z-index: 99;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 -12px 60px rgba(0,0,0,0.6);
+  }
+  .notes.visible { display: block; }
+  .notes .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--red-neon);
+    font-weight: 500;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  /* SLIDE ENTRANCE ANIMATION */
+  .slide.active h1,
+  .slide.active h2,
+  .slide.active blockquote,
+  .slide.active p.lead,
+  .slide.active .chip,
+  .slide.active .attribution,
+  .slide.active .level-map,
+  .slide.active .two-col,
+  .slide.active .action-list,
+  .slide.active .tech-grid,
+  .slide.active .cta-box,
+  .slide.active .big-number,
+  .slide.active .powered-by,
+  .slide.active .mission-frame,
+  .slide.active .stat-row,
+  .slide.active .region-grid,
+  .slide.active .pipeline,
+  .slide.active .flag-bars,
+  .slide.active .flag-bars-wide,
+  .slide.active .benefits-list {
+    animation: riseIn 0.7s cubic-bezier(.22,.61,.36,1) both;
+  }
+  .slide.active .chip { animation-delay: .05s; }
+  .slide.active h1, .slide.active h2 { animation-delay: .15s; }
+  .slide.active p.lead, .slide.active blockquote { animation-delay: .25s; }
+  .slide.active .two-col,
+  .slide.active .action-list,
+  .slide.active .tech-grid,
+  .slide.active .level-map,
+  .slide.active .cta-box,
+  .slide.active .big-number,
+  .slide.active .mission-frame,
+  .slide.active .stat-row,
+  .slide.active .region-grid,
+  .slide.active .pipeline,
+  .slide.active .benefits-list { animation-delay: .35s; }
+  .slide.active .powered-by { animation-delay: .5s; }
+  .slide.active .attribution { animation-delay: .5s; }
+  .slide.active .flag-bars, .slide.active .flag-bars-wide { animation-delay: .55s; }
+
+  .level-transition.active .level-num,
+  .level-transition.active .level-name,
+  .level-transition.active .level-sep {
+    animation: none;
+  }
+
+  @keyframes riseIn {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== AUTO-PLAY CONTROLS ===== */
+  .autoplay-controls {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    background: rgba(3,8,20,0.85);
+    border: 1px solid rgba(77,166,255,0.35);
+    border-radius: 10px;
+    backdrop-filter: blur(16px);
+    z-index: 200;
+    font-family: var(--mono);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+
+  .autoplay-controls .rec-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+    font-weight: 600;
+    min-width: 52px;
+  }
+  .autoplay-controls .rec-indicator.active {
+    color: #ff4444;
+  }
+  .autoplay-controls .rec-indicator .rec-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+  }
+  .autoplay-controls .rec-indicator.active .rec-dot {
+    background: #ff4444;
+    box-shadow: 0 0 10px #ff4444;
+    animation: recPulse 1s ease-in-out infinite;
+  }
+
+  @keyframes recPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  .autoplay-controls button {
+    background: rgba(77,166,255,0.1);
+    border: 1px solid rgba(77,166,255,0.4);
+    color: var(--blue-neon);
+    width: 38px;
+    height: 38px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all .2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .autoplay-controls button:hover {
+    background: var(--blue-neon);
+    border-color: var(--blue-neon);
+    color: var(--navy-dark);
+    box-shadow: 0 0 16px rgba(77,166,255,0.5);
+  }
+
+  .autoplay-controls .slide-info {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(77,166,255,0.6);
+    min-width: 60px;
+    text-align: center;
+  }
+
+  /* ===== PRE-PLAY OVERLAY ===== */
+  .preplay-overlay {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, var(--navy) 0%, var(--navy-dark) 40%, var(--navy-blk) 100%);
+    z-index: 500;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 32px;
+    transition: opacity 0.6s ease;
+  }
+  .preplay-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .preplay-overlay::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(77,166,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(77,166,255,0.04) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+    pointer-events: none;
+    animation: gridDrift 40s linear infinite;
+  }
+
+  .preplay-overlay .preplay-logo-img {
+    width: 120px;
+    height: auto;
+    position: relative;
+    z-index: 1;
+    filter: drop-shadow(0 0 20px rgba(77,166,255,0.3));
+  }
+
+  .preplay-overlay .preplay-title {
+    font-family: var(--mono);
+    font-size: 18px;
+    letter-spacing: 6px;
+    color: var(--yellow-neon);
+    text-transform: uppercase;
+    font-weight: 700;
+    position: relative;
+    z-index: 1;
+    text-shadow: 0 0 20px rgba(252,209,22,0.5);
+  }
+
+  .preplay-overlay .preplay-subtitle {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 18px;
+    color: rgba(255,255,255,0.5);
+    font-style: italic;
+    position: relative;
+    z-index: 1;
+  }
+  .preplay-overlay .preplay-subtitle2 {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.3);
+    position: relative;
+    z-index: 1;
+    text-transform: uppercase;
+  }
+
+  .preplay-overlay .preplay-btn {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: rgba(77,166,255,0.12);
+    border: 2px solid var(--blue-neon);
+    color: var(--blue-neon);
+    font-size: 36px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 0 40px rgba(77,166,255,0.2);
+  }
+  .preplay-overlay .preplay-btn:hover {
+    background: var(--blue-neon);
+    color: var(--navy-dark);
+    box-shadow: 0 0 60px rgba(77,166,255,0.5);
+    transform: scale(1.08);
+  }
+
+  .preplay-overlay .preplay-flag {
+    display: flex;
+    width: 200px;
+    height: 4px;
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+  }
+  .preplay-overlay .preplay-flag div { flex: 1; }
+  .preplay-overlay .preplay-flag .pf-blue { background: var(--blue); }
+  .preplay-overlay .preplay-flag .pf-red { background: var(--red); }
+  .preplay-overlay .preplay-flag .pf-yellow { background: var(--yellow); }
+
+  /* Narration waveform indicator */
+  .narration-wave {
+    position: fixed;
+    top: 36px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    height: 20px;
+    z-index: 200;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .narration-wave.active { opacity: 1; }
+  .narration-wave .bar {
+    width: 3px;
+    background: var(--blue-neon);
+    border-radius: 2px;
+    animation: waveBar 0.8s ease-in-out infinite;
+  }
+  .narration-wave .bar:nth-child(1) { height: 8px; animation-delay: 0s; }
+  .narration-wave .bar:nth-child(2) { height: 14px; animation-delay: 0.1s; }
+  .narration-wave .bar:nth-child(3) { height: 10px; animation-delay: 0.2s; }
+  .narration-wave .bar:nth-child(4) { height: 18px; animation-delay: 0.3s; }
+  .narration-wave .bar:nth-child(5) { height: 12px; animation-delay: 0.15s; }
+  .narration-wave .bar:nth-child(6) { height: 16px; animation-delay: 0.25s; }
+  .narration-wave .bar:nth-child(7) { height: 8px; animation-delay: 0.35s; }
+
+  @keyframes waveBar {
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(0.3); }
+  }
+
+  .powered-by {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 32px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+  }
+  .powered-by img { height: 24px; width: auto; opacity: 0.85; filter: brightness(1.1); }
+
+  /* ===== COVER LOGO ===== */
+  .cover-logo {
+    width: 100px;
+    height: auto;
+    margin-bottom: 24px;
+    filter: drop-shadow(0 0 20px rgba(77,166,255,0.3));
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 900px) {
+    .slide { padding: 72px 5vw 80px; }
+    .level-map { grid-template-columns: 1fr 1fr; gap: 12px; }
+    .tech-grid { grid-template-columns: 1fr; }
+    .tech-card { padding: 22px 20px; }
+    .tech-card .nm { font-size: 20px; }
+    .two-col { grid-template-columns: 1fr; gap: 28px; }
+    .two-col .col-quote { font-size: clamp(18px, 4.5vw, 26px); padding: 14px 0 14px 22px; }
+    .two-col .col-body p { font-size: clamp(15px, 4vw, 18px); }
+    blockquote { padding: 0 30px; font-size: clamp(20px, 5.5vw, 34px); }
+    blockquote::before, blockquote::after { font-size: 80px; }
+    blockquote::before { top: -14px; }
+    blockquote::after { bottom: -50px; }
+    h1 { font-size: clamp(34px, 9vw, 62px); letter-spacing: -1.5px; }
+    h2 { font-size: clamp(28px, 7vw, 52px); letter-spacing: -1px; }
+    p.lead { font-size: clamp(16px, 4vw, 22px); }
+    .chip { font-size: 10px; padding: 8px 16px; letter-spacing: 2px; margin-bottom: 24px; }
+    .attribution { font-size: 11px; letter-spacing: 2.5px; margin-top: 32px; }
+    .hint { display: none; }
+    .logo-tag { top: 36px; left: 16px; }
+    .logo-tag .mark { display: none; }
+    .counter { bottom: 20px; left: 16px; font-size: 10px; letter-spacing: 2px; }
+    .nav { bottom: 16px; right: 16px; gap: 8px; }
+    .nav button { width: 38px; height: 38px; font-size: 16px; }
+    .hud-top-left, .hud-top-right, .hud-bot-left, .hud-bot-right { display: none; }
+    .action-item { padding: 14px 16px; gap: 14px; }
+    .action-item .idx { font-size: 20px; min-width: 36px; }
+    .action-item .txt { font-size: clamp(14px, 3.8vw, 17px); }
+    .cta-box { padding: 22px 22px; margin-top: 28px; }
+    .cta-box .msg { font-size: clamp(16px, 4vw, 20px); word-break: break-word; }
+    .cta-box .msg a { word-break: break-all; }
+    .powered-by { font-size: 9px; letter-spacing: 2px; margin-top: 20px; }
+    .powered-by img { height: 20px; }
+    .autoplay-controls { padding: 8px 14px; gap: 8px; bottom: 16px; }
+    .autoplay-controls button { width: 34px; height: 34px; font-size: 14px; }
+    .autoplay-controls .slide-info { font-size: 9px; }
+    .autoplay-controls .rec-indicator { font-size: 9px; min-width: 44px; }
+    .pwr-counter { top: 36px; right: 16px; }
+    .pwr-counter .pwr-num { font-size: 24px; }
+    .xp-bar-wrap { height: 24px; padding: 0 10px; }
+    .xp-label { font-size: 9px; min-width: 65px; }
+    .mission-frame { padding: 28px 24px; }
+    .achievement-badge { padding: 20px 28px; }
+    .level-transition .level-num { font-size: clamp(60px, 12vw, 140px); }
+    .level-transition .level-name { font-size: clamp(22px, 5vw, 44px); letter-spacing: 4px; }
+    .badges-row { gap: 10px; }
+    .mini-badge { padding: 8px 14px; font-size: 9px; }
+    .region-grid { grid-template-columns: 1fr 1fr; }
+    .stat-row { gap: 16px; }
+    .stat-card { min-width: 140px; padding: 20px 16px; }
+    .stat-card .stat-num { font-size: 32px; }
+    .benefits-list { grid-template-columns: 1fr; }
+    .cover-logo { width: 70px; }
+  }
+
+  @media (max-width: 560px) {
+    .level-map { grid-template-columns: 1fr; }
+    .region-grid { grid-template-columns: 1fr; }
+    .pipeline { flex-direction: column; }
+    .pipeline-arrow { transform: rotate(90deg); }
+  }
+</style>
+</head>
+<body>
+
+<!-- FLOATING PARTICLES -->
+<div class="particles" id="particles">
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+</div>
+
+<!-- PRE-PLAY OVERLAY -->
+<div class="preplay-overlay" id="preplayOverlay">
+  <div class="preplay-flag">
+    <div class="pf-blue"></div>
+    <div class="pf-red"></div>
+    <div class="pf-yellow"></div>
+  </div>
+  <img class="preplay-logo-img" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69eacc56821e8babd85501cc.png" alt="VirtualChamber Logo">
+  <div class="preplay-title">VirtualChamber.app // Presentation</div>
+  <div class="preplay-subtitle">Voice generated with ElevenLabs Voz generada con ElevenLabs &middot; Narrado por Lilymiddot; Narrated by Sarah</div>
+  <div class="preplay-subtitle2">Powered by Digit2AI -- Neural Intelligence</div>
+  <button class="preplay-btn" id="preplayBtn" aria-label="Start presentation">&#9654;</button>
+  <div class="preplay-flag">
+    <div class="pf-blue"></div>
+    <div class="pf-red"></div>
+    <div class="pf-yellow"></div>
+  </div>
+</div>
+
+<!-- NARRATION WAVEFORM -->
+<div class="narration-wave" id="narrationWave">
+  <div class="bar"></div>
+  <div class="bar"></div>
+  <div class="bar"></div>
+  <div class="bar"></div>
+  <div class="bar"></div>
+  <div class="bar"></div>
+  <div class="bar"></div>
+</div>
+
+<!-- XP BAR -->
+<div class="xp-bar-wrap" id="xpBarWrap">
+  <div class="xp-bar-track">
+    <div class="xp-bar-fill" id="xpBarFill"></div>
+    <div class="xp-bar-marks">
+      <div class="mark"></div>
+      <div class="mark"></div>
+      <div class="mark"></div>
+      <div class="mark"></div>
+      <div class="mark"></div>
+    </div>
+  </div>
+  <div class="xp-label" id="xpLabel">XP: 0/100</div>
+</div>
+
+<!-- POWER LEVEL COUNTER -->
+<div class="pwr-counter" id="pwrCounter">
+  <div class="pwr-label">Nivel de Poder</div>
+  <div class="pwr-num" id="pwrNum">00</div>
+</div>
+
+<div class="progress" id="progress"></div>
+<div class="logo-tag">
+  <span class="logo-text">VirtualChamber.app</span>
+  <span class="mark">Digital Ecosystem // 2026</span>
+</div>
+<div class="hint">&#8592; &#8594; navigate navegar &middot; S notas &middot; F pantalla completamiddot; S notes navegar &middot; S notas &middot; F pantalla completamiddot; F fullscreen</div>
+<div class="counter" id="counter">01 / 20</div>
+
+<div class="deck" id="deck">
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 1: COVER -->
+  <!-- ============================================================ -->
+  <section class="slide bg-navy active"
+    data-notes="Cinematic opening. HispaMind logo centered. Let the title sit. The audience sees this is not a typical chamber pitch deck. XP bar at zero."
+    data-audio="assets/audio/virtualchamber-01.mp3">
+    <div class="hud-top-left"><span class="hud-dot"></span> CAMARAVIRTUAL // ECOSISTEMA_DIGITAL</div>
+    <div class="hud-top-right">SESSION_01 // 2026-Q2 <span class="hud-line"></span></div>
+    <img class="cover-logo" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69eacc56821e8babd85501cc.png" alt="VirtualChamber Logo">
+    <div class="chip">VirtualChamber.app // Digital Ecosystem v1.0</div>
+    <h1 class="glow-blue">VirtualChamber.app // Digital Ecosystem</h1>
+    <p class="lead">Your Chamber of Commerce, Powered by Neural Intelligence</p>
+    <div class="attribution">Digit2AI</div>
+    <div class="flag-bars">
+      <div class="bar-blue"></div>
+      <div class="bar-red"></div>
+      <div class="bar-yellow"></div>
+    </div>
+    <div class="hud-bot-left">SYS.CHAMBER_READY &nbsp; <span class="hud-dot"></span></div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 2: THE CONTEXT -->
+  <!-- ============================================================ -->
+  <section class="slide bg-navy"
+    data-notes="Establish HispaMind's credibility. 30+ years of trust-building in Latinoamerica. Now it is time to digitize that legacy."
+    data-audio="assets/audio/virtualchamber-02.mp3">
+    <div class="hud-top-left"><span class="hud-dot"></span> CONTEXT // LEGACY</div>
+    <div class="hud-top-right">EST.2026 // GLOBAL <span class="hud-line"></span></div>
+    <div class="chip">The Context</div>
+    <h2 class="accent-blue">A Connected Global World</h2>
+    <p class="lead" style="font-size: clamp(28px, 3.5vw, 48px); font-weight: 700; margin-bottom: 16px;">Every Chamber, Every Region. One Platform.</p>
+    <div class="mission-frame">
+      <div class="mf-label">Vision</div>
+      <div class="mf-text">
+        VirtualChamber.app nace para conectar empresarios hispanohablantes de todo el mundo. Desde Mexico hasta Argentina, desde Madrid hasta Miami &mdash; emprendedores de habla hispana crecen juntos bajo una misma plataforma digital con inteligencia artificial.
+      </div>
+    </div>
+    <div class="flag-bars" style="margin-top: 28px;">
+      <div class="bar-blue"></div>
+      <div class="bar-red"></div>
+      <div class="bar-yellow"></div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 3: THE PROBLEM -->
+  <!-- ============================================================ -->
+  <section class="slide bg-red"
+    data-notes="Present the problem with urgency. Real pain points that every chamber member recognizes. The infrastructure gap."
+    data-audio="assets/audio/virtualchamber-03.mp3">
+    <div class="hud-top-left"><span class="hud-dot" style="background: var(--red-neon); box-shadow: 0 0 10px var(--red-neon);"></span> CHALLENGE // IDENTIFIED</div>
+    <div class="hud-top-right">INFRASTRUCTURE_GAP // CRITICAL <span class="hud-line" style="background: linear-gradient(90deg, var(--red-neon) 0%, transparent 100%);"></span></div>
+    <div class="chip red">The Problem</div>
+    <h2 class="accent-red">Connections Exist. Infrastructure Does Not.</h2>
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-num">0%</div>
+        <div class="stat-label">Outcome Tracking</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">Manual</div>
+        <div class="stat-label">Introductions</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">?</div>
+        <div class="stat-label">Membership ROI</div>
+      </div>
+    </div>
+    <p class="lead" style="margin-top: 36px;">Spreadsheet directories. No outcome tracking. Membership ROI hard to prove.</p>
+    <p class="lead" style="font-style: italic; color: var(--yellow-neon); font-size: clamp(18px, 2vw, 26px);">The relationships are real. The tools are not.</p>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 4: THE SOLUTION (screen shake) -->
+  <!-- ============================================================ -->
+  <section class="slide bg-navy" data-shake="true"
+    data-notes="Screen shake for impact. This is the answer slide. Let the typing effect run completely before speaking."
+    data-audio="assets/audio/virtualchamber-04.mp3">
+    <div class="hud-top-left"><span class="hud-dot"></span> SOLUTION // DEPLOYED</div>
+    <div class="hud-top-right">PLATFORM_STATUS // ACTIVE <span class="hud-line"></span></div>
+    <div class="chip yellow">The Solution</div>
+    <div class="typing-wrap">
+      <div class="typing-text">9 modules. 24 sectors. 6 regions. 24/7.</div>
+    </div>
+    <p class="lead" style="margin-top: 48px;">VirtualChamber.app is the digital backbone that connects every entrepreneur, professional, and business worldwide.</p>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 5: LEVEL MAP -->
+  <!-- ============================================================ -->
+  <section class="slide bg-navy"
+    data-notes="Present the 6 modules as a game map. All start locked. As we progress through the presentation, they unlock one by one. Gamification at work."
+    data-audio="assets/audio/virtualchamber-05.mp3">
+    <div class="hud-top-left"><span class="hud-dot"></span> MODULE.MAP // LOADED</div>
+    <div class="hud-top-right">6 MODULES // ALL_LOCKED <span class="hud-line"></span></div>
+    <div class="chip">Module Map // 6 Modules</div>
+    <h2 class="accent-blue">6 Modules to Unlock</h2>
+    <p class="lead">Six core modules that power the VirtualChamber.app Digital Ecosystem.</p>
+    <div class="level-map" id="levelMap">
+      <div class="level-card locked" id="lvl1"><div class="lock-icon">&#128274;</div><div class="lc-num">MODULE 01</div><div class="lc-title">Dashboard</div><div class="lc-sub">Command center for your network</div></div>
+      <div class="level-card locked" id="lvl2"><div class="lock-icon">&#128274;</div><div class="lc-num">MODULE 02</div><div class="lc-title">AI Matching</div><div class="lc-sub">Neural business connections</div></div>
+      <div class="level-card locked" id="lvl3"><div class="lock-icon">&#128274;</div><div class="lc-num">MODULE 03</div><div class="lc-title">Projects</div><div class="lc-sub">From proposal to execution</div></div>
+      <div class="level-card locked" id="lvl4"><div class="lock-icon">&#128274;</div><div class="lc-num">MODULE 04</div><div class="lc-title">Exchange</div><div class="lc-sub">Private marketplace and RFQs</div></div>
+      <div class="level-card locked" id="lvl5"><div class="lock-icon">&#128274;</div><div class="lc-num">MODULE 05</div><div class="lc-title">Analytics</div><div class="lc-sub">Network intelligence and HCI</div></div>
+      <div class="level-card locked" id="lvl6"><div class="lock-icon">&#128274;</div><div class="lc-num">MODULE 06</div><div class="lc-title">MCP</div><div class="lc-sub">AI orchestration layer (7 tools)</div></div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 6: MODULE 1 TRANSITION -- Member Dashboard -->
+  <!-- ============================================================ -->
+  <section class="slide bg-blue level-transition scan-lines"
+    data-auto-advance="3000" data-unlock="1"
+    data-notes="Auto-advance 3 seconds. Glitch + scan lines. No narration. Achievement unlocks Module 1.">
+    <div class="level-num" style="background: linear-gradient(180deg, var(--blue-neon) 0%, var(--blue) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">01</div>
+    <div class="level-sep">//</div>
+    <div class="level-name" style="color: var(--blue-neon);">Member Dashboard</div>
+    <div class="achievement-badge">
+      <div class="badge-check">&#10003;</div>
+      <div class="badge-title">Module 1 Unlocked</div>
+      <div class="badge-sub">Member Dashboard</div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 7: MODULE 1 DEEP DIVE -->
+  <!-- ============================================================ -->
+  <section class="slide bg-blue"
+    data-notes="The Member Dashboard is the command center. Active members, open projects, RFQ activity, and HCI health index at a glance. Real-time data, not static reports."
+    data-audio="assets/audio/virtualchamber-07.mp3">
+    <div class="hud-top-left"><span class="hud-dot"></span> MODULE.01 // DASHBOARD</div>
+    <div class="hud-top-right">COMMAND_CENTER // ACTIVE <span class="hud-line"></span></div>
+    <div class="chip">Module 01 // Member Dashboard</div>
+    <h2 class="accent-blue">Member Dashboard</h2>
+    <div class="two-col">
+      <div class="col-quote">
+        Your command center Tu centro de mando &mdash; conoce el estado de tu red de un vistazo. Sin hojas de calculo, sin suposiciones, sin esperar reportes trimestrales.mdash; know the state of your network at a glance. No spreadsheets, no guesswork, no waiting for quarterly reports.
+      </div>
+      <div class="col-body">
+        <p><strong>Active Members Count</strong> <strong>Conteo de Miembros Activos</strong> &mdash; visibilidad en tiempo real de quien esta activo, quien es nuevo y quien necesita reactivacion.mdash; real-time visibility into who is engaged, who is new, and who needs re-activation.</p>
+        <p><strong>Open Projects</strong> <strong>Proyectos Abiertos</strong> &mdash; pipeline en vivo de proyectos colaborativos con indicadores de estado y asignacion de equipos.mdash; live pipeline of collaborative projects with status indicators and team assignments.</p>
+        <p><strong>RFQ Activity</strong> <strong>Actividad de Cotizaciones</strong> &mdash; rastrea las solicitudes de cotizacion entre miembros en tiempo real.mdash; track requests for quotation flowing between members in real time.</p>
+        <p><strong>HCI Health Index</strong> <strong>Indice de Salud HCI</strong> &mdash; un score compuesto que mide la vitalidad general de tu red de camara.mdash; a composite score measuring the overall vitality of your chamber network.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 8: MODULE 2 TRANSITION -- AI Business Matching -->
+  <!-- ============================================================ -->
+  <section class="slide bg-yellow level-transition scan-lines"
+    data-auto-advance="3000" data-unlock="2"
+    data-notes="Auto-advance 3 seconds. Glitch + scan lines. No narration. Achievement unlocks Module 2.">
+    <div class="level-num" style="background: linear-gradient(180deg, var(--yellow) 0%, var(--yellow-neon) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">02</div>
+    <div class="level-sep">//</div>
+    <div class="level-name" style="color: var(--yellow-neon);">AI Business Matching</div>
+    <div class="achievement-badge yellow">
+      <div class="badge-check">&#10003;</div>
+      <div class="badge-title">Module 2 Unlocked</div>
+      <div class="badge-sub">AI Business Matching</div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 9: MODULE 2 DEEP DIVE -->
+  <!-- ============================================================ -->
+  <section class="slide bg-yellow"
+    data-notes="AI Matching uses cosine similarity with Gini fairness correction. Show the practical example: a member needs a catering partner in Tampa. The AI finds the best match with trust scores."
+    data-audio="assets/audio/virtualchamber-09.mp3">
+    <div class="hud-top-left"><span class="hud-dot" style="background: var(--yellow-neon); box-shadow: 0 0 10px var(--yellow-neon);"></span> MODULE.02 // AI_MATCHING</div>
+    <div class="hud-top-right">NEURAL_ENGINE // ACTIVE <span class="hud-line" style="background: linear-gradient(90deg, var(--yellow) 0%, transparent 100%);"></span></div>
+    <div class="chip yellow">Module 02 // AI Business Matching</div>
+    <h2 class="accent-yellow">AI Business Matching</h2>
+    <div class="two-col">
+      <div class="col-quote" style="border-left-color: var(--yellow-neon);">
+        &ldquo;Necesito un socio de logistica en Mexico para exportar a Europa.&rdquo; &mdash; La IA encuentra el mejor match en segundos, rankeado por scores de confianza y afinidad sectorial.ldquo;I need a logistics partner in Texas to export to Europe.&ldquo;Necesito un socio de logistica en Mexico para exportar a Europa.&rdquo; &mdash; La IA encuentra el mejor match en segundos, rankeado por scores de confianza y afinidad sectorial.rdquo; &ldquo;Necesito un socio de logistica en Mexico para exportar a Europa.&rdquo; &mdash; La IA encuentra el mejor match en segundos, rankeado por scores de confianza y afinidad sectorial.mdash; The AI finds the best match in seconds, ranked by trust scores and sector fit.
+      </div>
+      <div class="col-body">
+        <p><strong>Cosine Similarity</strong> measures how closely aligned two member profiles are across sectors, skills, location, and project history.</p>
+        <p><strong>Gini Fairness Correction</strong> ensures opportunities are distributed equitably <strong>Correccion de Equidad Gini</strong> asegura que las oportunidades se distribuyan equitativamente &mdash; no solo a los miembros mas conectados.mdash; not just to the most connected members.</p>
+        <p><strong>Trust Scores</strong> derived from transaction history, peer endorsements, and project completion rates provide ranked, reliable results.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 10: MODULE 3 TRANSITION -- Project Collaboration -->
+  <!-- ============================================================ -->
+  <section class="slide bg-blue level-transition scan-lines"
+    data-auto-advance="3000" data-unlock="3"
+    data-notes="Auto-advance 3 seconds. Glitch + scan lines. No narration. Achievement unlocks Module 3.">
+    <div class="level-num" style="background: linear-gradient(180deg, #ffffff 0%, var(--blue-neon) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">03</div>
+    <div class="level-sep">//</div>
+    <div class="level-name" style="color: var(--blue-neon);">Project Collaboration</div>
+    <div class="achievement-badge">
+      <div class="badge-check">&#10003;</div>
+      <div class="badge-title">Module 3 Unlocked</div>
+      <div class="badge-sub">Project Collaboration</div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 11: MODULE 3 DEEP DIVE -->
+  <!-- ============================================================ -->
+  <section class="slide bg-blue"
+    data-notes="Project lifecycle from proposal to completion. Monte Carlo simulation runs 10,000 iterations for probability scoring. Cross-regional team assembly across Latinoamerica."
+    data-audio="assets/audio/virtualchamber-11.mp3">
+    <div class="hud-top-left"><span class="hud-dot"></span> MODULE.03 // PROJECTS</div>
+    <div class="hud-top-right">LIFECYCLE // ACTIVE <span class="hud-line"></span></div>
+    <div class="chip">Module 03 // Project Collaboration</div>
+    <h2 class="accent-blue">Project Collaboration</h2>
+    <p class="lead">Six lifecycle phases. Data-driven viability. Cross-regional team assembly.</p>
+    <div class="pipeline">
+      <div class="pipeline-step">Proposal</div>
+      <div class="pipeline-arrow">&rarr;</div>
+      <div class="pipeline-step">Analysis</div>
+      <div class="pipeline-arrow">&rarr;</div>
+      <div class="pipeline-step">Team</div>
+      <div class="pipeline-arrow">&rarr;</div>
+      <div class="pipeline-step">Resources</div>
+      <div class="pipeline-arrow">&rarr;</div>
+      <div class="pipeline-step">Execution</div>
+      <div class="pipeline-arrow">&rarr;</div>
+      <div class="pipeline-step">Completed</div>
+    </div>
+    <div class="action-list" style="margin-top: 36px;">
+      <div class="action-item"><div class="idx">01</div><div class="txt"><strong>Monte Carlo Simulation.</strong> Every project runs through 10,000 probabilistic iterations before a single dollar is committed. Probability scores guide decision-making.</div></div>
+      <div class="action-item"><div class="idx">02</div><div class="txt"><strong>Cross-Regional Teams.</strong> Assemble the right talent from across regions <strong>Equipos Inter-Regionales.</strong> Ensambla el talento correcto desde Mexico, Colombia, Argentina, Espana o Estados Unidos &mdash; la IA conecta habilidades con necesidades del proyecto.mdash; the AI matches skills to project needs.</div></div>
+      <div class="action-item"><div class="idx">03</div><div class="txt"><strong>Transparent Governance.</strong> Every stakeholder sees the same data, the same timeline, the same KPIs. No surprises.</div></div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 12: MODULE 4 TRANSITION -- Business Exchange -->
+  <!-- ============================================================ -->
+  <section class="slide bg-red level-transition scan-lines"
+    data-auto-advance="3000" data-unlock="4"
+    data-notes="Auto-advance 3 seconds. Glitch + scan lines. Red theme. Achievement unlocks Module 4.">
+    <div class="level-num" style="background: linear-gradient(180deg, var(--red-neon) 0%, var(--red) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">04</div>
+    <div class="level-sep">//</div>
+    <div class="level-name" style="color: var(--red-neon);">Business Exchange</div>
+    <div class="achievement-badge red">
+      <div class="badge-check">&#10003;</div>
+      <div class="badge-title">Module 4 Unlocked</div>
+      <div class="badge-sub">Business Exchange</div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 13: MODULE 4 DEEP DIVE -->
+  <!-- ============================================================ -->
+  <section class="slide bg-red"
+    data-notes="Business Exchange is the private marketplace for HispaMind members. RFQs, company directory, proposals, bid management. Stripe escrow for project funding."
+    data-audio="assets/audio/virtualchamber-13.mp3">
+    <div class="hud-top-left"><span class="hud-dot" style="background: var(--red-neon); box-shadow: 0 0 10px var(--red-neon);"></span> MODULE.04 // EXCHANGE</div>
+    <div class="hud-top-right">MARKETPLACE // ACTIVE <span class="hud-line" style="background: linear-gradient(90deg, var(--red-neon) 0%, transparent 100%);"></span></div>
+    <div class="chip red">Module 04 // Business Exchange</div>
+    <h2 class="accent-red">Business Exchange</h2>
+    <div class="two-col">
+      <div class="col-quote" style="border-left-color: var(--red-neon);">
+        A private marketplace exclusively for VirtualChamber.app members. Post RFQs, browse the company directory, submit proposals, and manage bids Un marketplace privado exclusivamente para miembros de VirtualChamber.app. Publica cotizaciones, navega el directorio de empresas, envia propuestas y gestiona ofertas &mdash; todo dentro de tu red de confianza.mdash; all within your trusted network.
+      </div>
+      <div class="col-body">
+        <p><strong>RFQs <strong>Cotizaciones y Propuestas</strong> &mdash; los miembros publican solicitudes de cotizacion y reciben propuestas de empresas verificadas de la camara.amp; Proposals</strong> <strong>Cotizaciones y Propuestas</strong> &mdash; los miembros publican solicitudes de cotizacion y reciben propuestas de empresas verificadas de la camara.mdash; members post requests for quotation and receive proposals from vetted chamber businesses.</p>
+        <p><strong>Company Directory</strong> <strong>Directorio de Empresas</strong> &mdash; buscable, filtrable, siempre actualizado. Cada perfil enriquecido con datos de sector, habilidades y confianza.mdash; searchable, filterable, always current. Every member profile enriched with sector, skills, and trust data.</p>
+        <p><strong>Bid Management</strong> <strong>Gestion de Ofertas</strong> &mdash; compara propuestas lado a lado con criterios de evaluacion y rastrea el historial de adjudicaciones.mdash; compare proposals side-by-side with scoring criteria and track award history.</p>
+        <p><strong>Stripe Escrow</strong> <strong>Fideicomiso Stripe</strong> &mdash; financiamiento seguro de proyectos con pagos respaldados por fideicomiso. Fondos liberados al cumplir hitos.mdash; secure project funding with escrow-backed payments. Funds released on milestone completion.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 14: MODULE 5 TRANSITION -- Network Analytics -->
+  <!-- ============================================================ -->
+  <section class="slide bg-yellow level-transition scan-lines"
+    data-auto-advance="3000" data-unlock="5"
+    data-notes="Auto-advance 3 seconds. Glitch + scan lines. Yellow theme. Achievement unlocks Module 5.">
+    <div class="level-num" style="background: linear-gradient(180deg, var(--yellow) 0%, var(--yellow-neon) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">05</div>
+    <div class="level-sep">//</div>
+    <div class="level-name" style="color: var(--yellow-neon);">Network Analytics</div>
+    <div class="achievement-badge yellow">
+      <div class="badge-check">&#10003;</div>
+      <div class="badge-title">Module 5 Unlocked</div>
+      <div class="badge-sub">Network Analytics</div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 15: MODULE 5+6 DEEP DIVE (TECHNOLOGY STACK) -->
+  <!-- ============================================================ -->
+  <section class="slide bg-navy"
+    data-notes="Technology showcase. Six tools that power the platform. AI Matching Engine, TrustRank, Monte Carlo, MCP Orchestrator, HCI Composite, Gini Fairness. This is what makes HispaMind different. Module 6 also unlocks here."
+    data-audio="assets/audio/virtualchamber-15.mp3" data-unlock="6">
+    <div class="hud-top-left"><span class="hud-dot"></span> MODULE.05+06 // TECH_STACK</div>
+    <div class="hud-top-right">NEURAL_SYSTEMS // ONLINE <span class="hud-line"></span></div>
+    <div class="chip">Modules 05+06 // Analytics <div class="chip">Modulos 05+06 // Analitica y MCP</div>amp; MCP</div>
+    <h2 class="accent-blue">Technology Stack</h2>
+    <div class="tech-grid">
+      <div class="tech-card">
+        <div class="ic">01 <div class="ic">01 &middot; Matching</div>middot; Matching</div>
+        <div class="nm">AI Matching Engine</div>
+        <div class="ds">Cosine Similarity + Gini coefficient for optimal member-to-opportunity pairing across 24 sectors.</div>
+      </div>
+      <div class="tech-card">
+        <div class="ic">02 <div class="ic">02 &middot; Confianza</div>middot; Trust</div>
+        <div class="nm">TrustRank (PageRank)</div>
+        <div class="ds">PageRank-inspired algorithm scoring member reliability based on transaction history and peer endorsements.</div>
+      </div>
+      <div class="tech-card">
+        <div class="ic">03 <div class="ic">03 &middot; Simulacion</div>middot; Simulation</div>
+        <div class="nm">Monte Carlo Simulation</div>
+        <div class="ds">10,000-iteration probabilistic simulation for project viability scoring before capital commitment.</div>
+      </div>
+      <div class="tech-card">
+        <div class="ic">04 <div class="ic">04 &middot; Orquestacion</div>middot; Orchestration</div>
+        <div class="nm">MCP Orchestrator</div>
+        <div class="ds">7-tool Model Context Protocol layer enabling AI agents to query, analyze, and act on chamber data.</div>
+      </div>
+      <div class="tech-card">
+        <div class="ic">05 <div class="ic">05 &middot; Indice</div>middot; Index</div>
+        <div class="nm">HCI Composite Index</div>
+        <div class="ds">Human Capital Index combining education, experience, sector depth, and network centrality into one score.</div>
+      </div>
+      <div class="tech-card">
+        <div class="ic">06 <div class="ic">06 &middot; Equidad</div>middot; Fairness</div>
+        <div class="nm">Gini Fairness</div>
+        <div class="ds">Mathematical correction ensuring opportunities are distributed equitably across the member network.</div>
+      </div>
+    </div>
+    <div class="powered-by" style="margin-top: 28px;">
+      <span>&gt; Powered by</span>
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png" alt="Digit2AI">
+      <span>Digit2AI Neural Intelligence</span>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 16: DATA ISOLATION -->
+  <!-- ============================================================ -->
+  <section class="slide bg-navy"
+    data-notes="Data isolation is critical. 14 private hispamind tables. Separate JWT authentication. Independent analytics. No other chamber can see HispaMind data."
+    data-audio="assets/audio/virtualchamber-16.mp3">
+    <div class="hud-top-left"><span class="hud-dot"></span> SECURITY // DATA_ISOLATION</div>
+    <div class="hud-top-right">TENANT_BOUNDARY // ENFORCED <span class="hud-line"></span></div>
+    <div class="chip">Data Isolation</div>
+    <h2 class="accent-blue">Your Data is Yours</h2>
+    <p class="lead">Complete tenant isolation. No data leakage. No shared analytics. No compromises.</p>
+    <div class="action-list">
+      <div class="action-item"><div class="idx">14</div><div class="txt"><strong>Private virtualchamber_* tables.</strong> Every table prefixed and isolated. Member data, projects, RFQs, analytics  Cada tabla con prefijo y aislada. Datos de miembros, proyectos, cotizaciones, analitica &mdash; todo en tu propio namespace.mdash; all in your own namespace.</div></div>
+      <div class="action-item"><div class="idx">JWT</div><div class="txt"><strong>Separate JWT authentication.</strong> Your tokens, your sessions, your access control. Independent from every other chamber on the platform.</div></div>
+      <div class="action-item"><div class="idx">AI</div><div class="txt"><strong>Independent analytics.</strong> Your AI models train on your data only. Your matching engine learns from your members. Your insights stay private.</div></div>
+    </div>
+    <p class="lead" style="margin-top: 28px; font-style: italic; color: var(--yellow-neon); font-size: clamp(18px, 2vw, 26px);">Your data is yours. No other chamber can see it.</p>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 17: POWER LEVEL 100 (particle explosion) -->
+  <!-- ============================================================ -->
+  <section class="slide bg-navy" data-power100="true"
+    data-notes="Celebration moment. All modules unlocked. Nivel de Poder 100. Particle explosion. All 6 badges appear in a row. Let the energy build."
+    data-audio="assets/audio/virtualchamber-17.mp3">
+    <div class="chip yellow">Ecosystem // Fully Activated</div>
+    <div class="big-number">100</div>
+    <h2 class="accent-yellow">All Modules Activated</h2>
+    <p class="lead">Power Level: 100. The VirtualChamber.app Digital Ecosystem is fully online.</p>
+    <div class="badges-row">
+      <div class="mini-badge">01 Dashboard</div>
+      <div class="mini-badge">02 AI Matching</div>
+      <div class="mini-badge">03 Projects</div>
+      <div class="mini-badge">04 Exchange</div>
+      <div class="mini-badge">05 Analytics</div>
+      <div class="mini-badge">06 MCP</div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 18: THE PLAN (screen shake) -->
+  <!-- ============================================================ -->
+  <section class="slide bg-navy" data-shake="true"
+    data-notes="Screen shake for impact. The pricing slide. $25 setup + $10/month. Full access, all 9 modules, cancel anytime. Let the benefits list land."
+    data-audio="assets/audio/virtualchamber-18.mp3">
+    <div class="hud-top-left"><span class="hud-dot" style="background: var(--yellow-neon); box-shadow: 0 0 10px var(--yellow-neon);"></span> PLAN // PRICING</div>
+    <div class="hud-top-right">ACTIVATION_READY <span class="hud-line" style="background: linear-gradient(90deg, var(--yellow-neon) 0%, transparent 100%);"></span></div>
+    <div class="chip yellow">The Plan</div>
+    <h2 class="accent-yellow">Request a Demo</h2>
+    <p class="lead">Full access. All 9 modules. Configurable subscription.</p>
+    <div class="benefits-list">
+      <div class="benefit-item"><span class="check"><div class="benefit-item"><span class="check">&#10003;</span> Matching de Negocios con IA</div>#10003;</span> AI Business Matching</div>
+      <div class="benefit-item"><span class="check"><div class="benefit-item"><span class="check">&#10003;</span> Panel de Control</div>#10003;</span> Member Dashboard</div>
+      <div class="benefit-item"><span class="check"><div class="benefit-item"><span class="check">&#10003;</span> Colaboracion en Proyectos</div>#10003;</span> Project Collaboration</div>
+      <div class="benefit-item"><span class="check"><div class="benefit-item"><span class="check">&#10003;</span> Intercambio Comercial y Cotizaciones</div>#10003;</span> Business Exchange <div class="benefit-item"><span class="check">&#10003;</span> Intercambio Comercial y Cotizaciones</div>amp; RFQs</div>
+      <div class="benefit-item"><span class="check"><div class="benefit-item"><span class="check">&#10003;</span> Analitica de Red</div>#10003;</span> Network Analytics</div>
+      <div class="benefit-item"><span class="check"><div class="benefit-item"><span class="check">&#10003;</span> Orquestador MCP IA</div>#10003;</span> MCP AI Orchestrator</div>
+      <div class="benefit-item"><span class="check"><div class="benefit-item"><span class="check">&#10003;</span> Scoring TrustRank</div>#10003;</span> TrustRank Scoring</div>
+      <div class="benefit-item"><span class="check"><div class="benefit-item"><span class="check">&#10003;</span> Simulacion Monte Carlo</div>#10003;</span> Monte Carlo Simulation</div>
+      <div class="benefit-item"><span class="check"><div class="benefit-item"><span class="check">&#10003;</span> Pagos Seguros con Stripe</div>#10003;</span> Stripe-Secured Payments</div>
+      <div class="benefit-item"><span class="check"><div class="benefit-item"><span class="check">&#10003;</span> Asistente IA de Voz 24/7</div>#10003;</span> 24/7 AI Voice Assistant</div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 19: CALL TO ACTION -->
+  <!-- ============================================================ -->
+  <section class="slide bg-navy"
+    data-notes="Practical close. Three concrete steps. The CTA is to activate your account today. URL visible and clickable."
+    data-audio="assets/audio/virtualchamber-19.mp3">
+    <div class="hud-top-left"><span class="hud-dot"></span> EXEC.TODAY</div>
+    <div class="hud-top-right">3 STEPS // ACTIVATE <span class="hud-line"></span></div>
+    <div class="chip">Activate Your Account Today</div>
+    <h2 class="accent-blue">Three Steps to Activate</h2>
+    <div class="action-list">
+      <div class="action-item"><div class="idx">01</div><div class="txt"><strong>Register at the portal.</strong> Create your profile at virtualchamber.app <strong>Registrate en el portal.</strong> Crea tu perfil en virtualchamber.app &mdash; toma menos de 3 minutos.mdash; takes less than 3 minutes.</div></div>
+      <div class="action-item"><div class="idx">02</div><div class="txt"><strong>Complete your profile.</strong> Add your sector, skills, location, and what you are looking for. The AI matching engine activates immediately.</div></div>
+      <div class="action-item"><div class="idx">03</div><div class="txt"><strong>Ejecuta tu primer match con IA.</strong> En minutos, recibe tu primera conexion de negocios curada por IA dentro de la red de VirtualChamber.app.</div></div>
+    </div>
+    <div class="cta-box" style="margin-top: 32px;">
+      <div class="label">Your Next Step</div>
+      <div class="msg">Visit <a href="https://virtualchamber.app" target="_blank" rel="noopener">virtualchamber.app</a> and activate the digital ecosystem for chambers of commerce worldwide.</div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 20: FOUNDERS -->
+  <!-- ============================================================ -->
+  <section class="slide bg-navy"
+    data-notes="Las personas detras de VirtualChamber.app. Maria Clara Garcia (Lalas), fundadora de Visionarium. Numeriano Bouffard, fundador de PACC-CFL. Manuel Stagg, arquitecto tecnologico de Digit2AI."
+    data-audio="assets/audio/virtualchamber-founders.mp3">
+    <div class="hud-top-left"><span class="hud-dot"></span> FOUNDERS // LIVE</div>
+    <div class="hud-top-right">WE_ARE_HERE <span class="hud-line"></span></div>
+
+    <div class="chip">Who We Are</div>
+    <h2 class="accent-blue" style="font-size: clamp(22px, 3vw, 38px);">We are here to empower your chamber of commerce.</h2>
+
+    <div style="display: flex; gap: 28px; max-width: 1300px; width: 100%; margin-top: 32px; justify-content: center; flex-wrap: wrap;">
+
+      <!-- MARIA CLARA GARCIA (LALAS) -->
+      <div style="flex: 1; min-width: 260px; max-width: 400px; text-align: center;">
+        <div style="width: 140px; height: 140px; border-radius: 50%; overflow: hidden; margin: 0 auto 16px; border: 3px solid var(--yellow-neon); box-shadow: 0 0 24px rgba(252,209,22,0.4); position: relative;">
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69df82addb7c222f714d3ff1.png" alt="Maria Clara Garcia" style="width: 100%; height: 100%; object-fit: cover; object-position: center center;">
+        </div>
+        <div style="font-family: 'Inter', sans-serif; font-size: 20px; font-weight: 800; color: var(--white); letter-spacing: -0.5px;">Maria Clara Garcia</div>
+        <div style="font-family: var(--mono); font-size: 10px; letter-spacing: 2px; color: var(--yellow-neon); margin: 8px 0 12px; text-transform: uppercase;">Founder Fundadora &middot; Visionarium.appmiddot; Visionarium.app</div>
+        <p style="font-family: 'Source Serif 4', Georgia, serif; font-size: 14px; line-height: 1.55; color: rgba(255,255,255,0.82); text-align: left;">Founder of Visionarium in 2015 in New York as a Leadership and Creativity incubator for Latin American youth. Over 30 years transforming young people into leaders through bilingual mentorship, Fellowship programs, and global community. Today leads the Visionarium expansion headquartered in Miami as a bridge between Latin America and the United States.</p>
+      </div>
+
+      <!-- NUMERIANO BOUFFARD -->
+      <div style="flex: 1; min-width: 260px; max-width: 400px; text-align: center;">
+        <div style="width: 140px; height: 140px; border-radius: 50%; overflow: hidden; margin: 0 auto 16px; border: 3px solid var(--blue-neon); box-shadow: 0 0 24px rgba(77,166,255,0.4); position: relative;">
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69ebca94717d5dd4e1b8a445.jpg" alt="Numeriano Bouffard" style="width: 100%; height: 100%; object-fit: cover; object-position: center center;">
+        </div>
+        <div style="font-family: 'Inter', sans-serif; font-size: 20px; font-weight: 800; color: var(--white); letter-spacing: -0.5px;">Numeriano Bouffard</div>
+        <div style="font-family: var(--mono); font-size: 10px; letter-spacing: 2px; color: var(--blue-neon); margin: 8px 0 12px; text-transform: uppercase;">Founder Fundador &middot; PACC-CFL Pilot Chambermiddot; PACC-CFL Pilot Chamber</div>
+        <p style="font-family: 'Source Serif 4', Georgia, serif; font-size: 14px; line-height: 1.55; color: rgba(255,255,255,0.82); text-align: left;">Founded PACC-CFL in 1995 and grew it into the leading Filipino-American business network in Central Florida. President of the FPACC Foundation. Over three decades connecting entrepreneurs, facilitating trade, and promoting international business. PACC-CFL is the first pilot chamber of the VirtualChamber.app ecosystem.</p>
+      </div>
+
+      <!-- MANUEL STAGG -->
+      <div style="flex: 1; min-width: 260px; max-width: 400px; text-align: center;">
+        <div style="width: 140px; height: 140px; border-radius: 50%; overflow: hidden; margin: 0 auto 16px; border: 3px solid var(--red-neon); box-shadow: 0 0 24px rgba(255,77,106,0.4); position: relative;">
+          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69df832b80b446d0fbac3ed4.jpg" alt="Manuel Stagg" style="width: 100%; height: 100%; object-fit: cover; object-position: center 20%;">
+        </div>
+        <div style="font-family: 'Inter', sans-serif; font-size: 20px; font-weight: 800; color: var(--white); letter-spacing: -0.5px;">Manuel Stagg</div>
+        <div style="font-family: var(--mono); font-size: 10px; letter-spacing: 2px; color: var(--red-neon); margin: 8px 0 12px; text-transform: uppercase;">Technology Architect Arquitecto Tecnologico &middot; CEO Digit2AImiddot; CEO Digit2AI</div>
+        <p style="font-family: 'Source Serif 4', Georgia, serif; font-size: 14px; line-height: 1.55; color: rgba(255,255,255,0.82); text-align: left;">CEO of Digit2AI, the company that builds the entire VirtualChamber.app ecosystem: the AI matching engine, the MCP orchestrator, the analytics platform, and the voice AI agents powering this presentation. Neural Intelligence for chambers of commerce worldwide. Headquartered in Tampa, Florida.</p>
+      </div>
+
+    </div>
+
+    <div class="cta-box" style="margin-top: 24px; max-width: 900px; padding: 18px 24px;">
+      <div class="label" style="font-size: 11px;">Tu Siguiente Paso</div>
+      <div class="msg" style="font-size: clamp(14px, 1.4vw, 18px); line-height: 1.5;">Talk to us. Visit <a href="https://virtualchamber.app" target="_blank" rel="noopener">virtualchamber.app</a> Habla con nosotros. Visita <a href="https://virtualchamber.app" target="_blank" rel="noopener">virtualchamber.app</a> &mdash; listos para ayudar a tu camara a crecer.mdash; ready to help your chamber grow.</div>
+    </div>
+
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 21: CLOSING -->
+  <!-- ============================================================ -->
+  <section class="slide bg-navy"
+    data-last-slide="true"
+    data-notes="Final slide. Let it breathe. Logo, tagline, credits. Do not add anything after this."
+    data-audio="assets/audio/virtualchamber-20.mp3">
+    <div class="hud-top-left"><span class="hud-dot"></span> END.OF.TRANSMISSION</div>
+    <div class="hud-top-right">FORWARD <span class="hud-line"></span></div>
+    <img class="cover-logo" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69eacc56821e8babd85501cc.png" alt="VirtualChamber Logo">
+    <div class="chip yellow">VirtualChamber.app // Digital Ecosystem</div>
+    <h1 class="glow-blue">Your Chamber. Your Data. Your Growth.</h1>
+    <p class="lead" style="margin-top: 16px;">Powered by Digit2AI</p>
+    <div class="flag-bars-wide">
+      <div class="bar-blue"></div>
+      <div class="bar-red"></div>
+      <div class="bar-yellow"></div>
+    </div>
+    <div class="powered-by" style="margin-top: 48px;">
+      <span><span>&gt; Technology</span>gt; Technology</span>
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png" alt="Digit2AI">
+      <span>Digit2AI &middot; RinglyPro</span>
+    </div>
+    <p class="lead" style="font-size: clamp(12px, 1vw, 14px); color: rgba(255,255,255,0.3); margin-top: 16px;">VirtualChamber.app VirtualChamber.app &middot; Camara de Comercio Digital para el Mundo Hispano &middot; 2026middot; Digital Chamber of Commerce for the Modern World VirtualChamber.app &middot; Camara de Comercio Digital para el Mundo Hispano &middot; 2026middot; 2026</p>
+  </section>
+
+</div>
+
+<div class="notes" id="notes">
+  <div class="label">&gt; speaker_notes</div>
+  <div id="notes-text"></div>
+</div>
+
+<div class="nav">
+  <button id="prev" aria-label="Previous">&larr;</button>
+  <button id="next" aria-label="Next">&rarr;</button>
+</div>
+
+<!-- AUTO-PLAY CONTROLS -->
+<div class="autoplay-controls" id="autoplayControls">
+  <div class="rec-indicator" id="recIndicator">
+    <div class="rec-dot"></div>
+    <span>REC</span>
+  </div>
+  <button id="btnPlayPause" aria-label="Play / Pause" title="Play / Pause">&#9654;</button>
+  <button id="btnStop" aria-label="Stop" title="Stop">&#9632;</button>
+  <div class="slide-info" id="slideInfo">01 / 20</div>
+</div>
+
+<!-- Sarah voice narration powered by ElevenLabs TTS -->
+<script>
+  // ============ SLIDE ENGINE ============
+  const slides = document.querySelectorAll('.slide');
+  const TOTAL = slides.length;
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+  const notes = document.getElementById('notes');
+  const notesText = document.getElementById('notes-text');
+  const xpBarFill = document.getElementById('xpBarFill');
+  const xpLabel = document.getElementById('xpLabel');
+  const pwrNum = document.getElementById('pwrNum');
+  const particlesContainer = document.getElementById('particles');
+  let idx = 0;
+
+  const btnPlayPause = document.getElementById('btnPlayPause');
+  const btnStop = document.getElementById('btnStop');
+  const slideInfo = document.getElementById('slideInfo');
+  const recIndicator = document.getElementById('recIndicator');
+  const preplayOverlay = document.getElementById('preplayOverlay');
+  const preplayBtn = document.getElementById('preplayBtn');
+
+  // XP and power level calculation
+  function getXP(slideIndex) {
+    return Math.round((slideIndex / (TOTAL - 1)) * 100);
+  }
+
+  function getPowerLevel(slideIndex) {
+    // Power level increases at key milestones
+    // 6 modules unlock at slides 5(map), 6(m1), 8(m2), 10(m3), 12(m4), 14(m5), 15(m6=tech)
+    // Unlock slides: 6, 8, 10, 12, 14, 15
+    let pwr = 0;
+    if (slideIndex >= 16) pwr = 100;       // power100 slide or beyond
+    else if (slideIndex >= 15) pwr = 100;  // all 6 unlocked
+    else if (slideIndex >= 14) pwr = 83 + Math.round(((slideIndex - 14) / 1) * 10);
+    else if (slideIndex >= 12) pwr = 66 + Math.round(((slideIndex - 12) / 2) * 17);
+    else if (slideIndex >= 10) pwr = 50 + Math.round(((slideIndex - 10) / 2) * 16);
+    else if (slideIndex >= 8)  pwr = 33 + Math.round(((slideIndex - 8) / 2) * 17);
+    else if (slideIndex >= 6)  pwr = 16 + Math.round(((slideIndex - 6) / 2) * 17);
+    else pwr = Math.round((slideIndex / 6) * 16);
+    return Math.min(100, pwr);
+  }
+
+  // Level card unlock tracking
+  const unlockMap = { 1: 'lvl1', 2: 'lvl2', 3: 'lvl3', 4: 'lvl4', 5: 'lvl5', 6: 'lvl6' };
+  const unlockedLevels = new Set();
+
+  function updateLevelCards() {
+    for (const [level, id] of Object.entries(unlockMap)) {
+      const card = document.getElementById(id);
+      if (card && unlockedLevels.has(parseInt(level))) {
+        card.classList.remove('locked');
+        card.classList.add('unlocked');
+        card.querySelector('.lock-icon').innerHTML = '&#128275;';
+      }
+    }
+  }
+
+  function show(n) {
+    idx = Math.max(0, Math.min(TOTAL - 1, n));
+    slides.forEach((s, i) => s.classList.toggle('active', i === idx));
+    const num = String(idx + 1).padStart(2, '0');
+    const tot = String(TOTAL).padStart(2, '0');
+    counter.textContent = `${num} / ${tot}`;
+    slideInfo.textContent = `${num} / ${tot}`;
+    progress.style.width = `${((idx + 1) / TOTAL) * 100}%`;
+    notesText.textContent = slides[idx].dataset.notes || '';
+
+    // Update XP bar
+    const xp = getXP(idx);
+    xpBarFill.style.width = xp + '%';
+    xpLabel.textContent = `XP: ${xp}/100`;
+
+    // Update power level
+    const pwr = getPowerLevel(idx);
+    pwrNum.textContent = String(pwr).padStart(2, '0');
+
+    // Check for unlock
+    const unlockLevel = slides[idx].dataset.unlock;
+    if (unlockLevel) {
+      unlockedLevels.add(parseInt(unlockLevel));
+      updateLevelCards();
+    }
+
+    // Screen shake
+    if (slides[idx].dataset.shake === 'true') {
+      slides[idx].classList.add('shake-active');
+      setTimeout(() => slides[idx].classList.remove('shake-active'), 500);
+    }
+
+    // Particle explosion for power100 slide
+    if (slides[idx].dataset.power100 === 'true') {
+      particlesContainer.classList.add('explosion');
+    } else {
+      particlesContainer.classList.remove('explosion');
+    }
+  }
+
+  document.getElementById('next').addEventListener('click', () => { manualNav(idx + 1); });
+  document.getElementById('prev').addEventListener('click', () => { manualNav(idx - 1); });
+
+  document.addEventListener('keydown', (e) => {
+    if (['ArrowRight', ' ', 'PageDown'].includes(e.key)) { e.preventDefault(); manualNav(idx + 1); }
+    else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); manualNav(idx - 1); }
+    else if (e.key === 'Home') manualNav(0);
+    else if (e.key === 'End') manualNav(TOTAL - 1);
+    else if (e.key.toLowerCase() === 's') notes.classList.toggle('visible');
+    else if (e.key.toLowerCase() === 'f') {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+  });
+
+  // Touch swipe navigation
+  let tStartX = 0, tStartY = 0, tStartT = 0;
+  const deck = document.getElementById('deck');
+  deck.addEventListener('touchstart', (e) => {
+    const t = e.changedTouches[0];
+    tStartX = t.clientX; tStartY = t.clientY; tStartT = Date.now();
+  }, { passive: true });
+  deck.addEventListener('touchend', (e) => {
+    const t = e.changedTouches[0];
+    const dx = t.clientX - tStartX;
+    const dy = t.clientY - tStartY;
+    const dt = Date.now() - tStartT;
+    if (dt < 600 && Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      if (dx < 0) manualNav(idx + 1); else manualNav(idx - 1);
+    }
+  }, { passive: true });
+
+  show(0);
+
+  // ============ MANUAL NAV ============
+  function manualNav(n) {
+    if (autoPlaying) {
+      pauseAutoPlay();
+    }
+    cancelNarration();
+    show(n);
+  }
+
+  // ============ RACHEL VOICE (ElevenLabs MP3) ============
+  // Single reusable Audio element -- critical for mobile.
+  const linaAudio = new Audio();
+  linaAudio.volume = 1.0;
+  const narrationWave = document.getElementById('narrationWave');
+  let autoAdvanceTimer = null;
+  let narrateOnEnd = null;
+
+  linaAudio.addEventListener('play', () => {
+    narrationWave.classList.add('active');
+  });
+
+  linaAudio.addEventListener('ended', () => {
+    narrationWave.classList.remove('active');
+    if (narrateOnEnd) {
+      const cb = narrateOnEnd;
+      narrateOnEnd = null;
+      cb();
+    }
+  });
+
+  linaAudio.addEventListener('error', () => {
+    narrationWave.classList.remove('active');
+    console.error('Audio error for', linaAudio.src);
+    if (narrateOnEnd) {
+      const cb = narrateOnEnd;
+      narrateOnEnd = null;
+      autoAdvanceTimer = setTimeout(cb, 8000);
+    }
+  });
+
+  function cancelNarration() {
+    if (autoAdvanceTimer) {
+      clearTimeout(autoAdvanceTimer);
+      autoAdvanceTimer = null;
+    }
+    narrateOnEnd = null;
+    linaAudio.pause();
+    linaAudio.removeAttribute('src');
+    linaAudio.load();
+    narrationWave.classList.remove('active');
+  }
+
+  function narrateSlide(slideIndex, onEnd) {
+    cancelNarration();
+
+    const slide = slides[slideIndex];
+    const audioSrc = slide.dataset.audio || null;
+    const autoAdvanceMs = slide.dataset.autoAdvance ? parseInt(slide.dataset.autoAdvance) : null;
+
+    if (!audioSrc) {
+      if (autoAdvanceMs) {
+        autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, autoAdvanceMs);
+      } else {
+        if (onEnd) onEnd();
+      }
+      return;
+    }
+
+    narrateOnEnd = () => {
+      if (autoAdvanceMs) {
+        autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, autoAdvanceMs);
+      } else {
+        if (onEnd) onEnd();
+      }
+    };
+
+    linaAudio.src = audioSrc;
+    linaAudio.load();
+    linaAudio.play().then(() => {
+      console.log('Playing slide', slideIndex + 1);
+    }).catch((err) => {
+      console.error('Audio play failed for slide', slideIndex + 1, err.message);
+      narrationWave.classList.remove('active');
+      narrateOnEnd = null;
+      const waitMs = autoAdvanceMs || 8000;
+      autoAdvanceTimer = setTimeout(() => { if (onEnd) onEnd(); }, waitMs);
+    });
+  }
+
+  // ============ AUTO-PLAY ENGINE ============
+  let autoPlaying = false;
+  function startAutoPlay() {
+    autoPlaying = true;
+    btnPlayPause.innerHTML = '&#10074;&#10074;';
+    recIndicator.classList.add('active');
+    autoNarrateCurrentSlide();
+  }
+
+  function pauseAutoPlay() {
+    autoPlaying = false;
+    btnPlayPause.innerHTML = '&#9654;';
+    recIndicator.classList.remove('active');
+    cancelNarration();
+  }
+
+  function stopAutoPlay() {
+    autoPlaying = false;
+    btnPlayPause.innerHTML = '&#9654;';
+    recIndicator.classList.remove('active');
+    cancelNarration();
+    show(0);
+  }
+
+  function autoNarrateCurrentSlide() {
+    if (!autoPlaying) return;
+
+    const isLastSlide = slides[idx].hasAttribute('data-last-slide');
+
+    setTimeout(() => {
+      if (!autoPlaying) return;
+
+      narrateSlide(idx, () => {
+        if (!autoPlaying) return;
+
+        if (isLastSlide) {
+          autoAdvanceTimer = setTimeout(() => {
+            pauseAutoPlay();
+          }, 5000);
+          return;
+        }
+
+        autoAdvanceTimer = setTimeout(() => {
+          if (!autoPlaying) return;
+          if (idx < TOTAL - 1) {
+            show(idx + 1);
+            autoNarrateCurrentSlide();
+          } else {
+            pauseAutoPlay();
+          }
+        }, 2000);
+      });
+    }, 1000);
+  }
+
+  // ============ CONTROL EVENT LISTENERS ============
+  btnPlayPause.addEventListener('click', () => {
+    if (autoPlaying) {
+      pauseAutoPlay();
+    } else {
+      startAutoPlay();
+    }
+  });
+
+  btnStop.addEventListener('click', () => {
+    stopAutoPlay();
+  });
+
+  // ============ PRE-PLAY OVERLAY ============
+  preplayBtn.addEventListener('click', function handlePlay() {
+    preplayOverlay.style.display = 'none';
+    show(0);
+
+    // Unlock audio context on user gesture for mobile
+    const firstSrc = slides[0].dataset.audio;
+    if (firstSrc) {
+      linaAudio.src = firstSrc;
+      linaAudio.load();
+      linaAudio.play().then(() => {
+        linaAudio.pause();
+        linaAudio.currentTime = 0;
+        startAutoPlay();
+      }).catch(() => {
+        startAutoPlay();
+      });
+    } else {
+      startAutoPlay();
+    }
+  });
+
+  // Rachel voice powered by ElevenLabs -- English narration
+</script>
+
+</body>
+</html>
