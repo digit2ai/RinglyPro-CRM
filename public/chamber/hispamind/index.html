@@ -705,7 +705,7 @@
   window.handleDemo = function(e) {
     e.preventDefault();
     var form=e.target, btn=form.querySelector('.btn-submit'), msg=document.getElementById('formMsg');
-    btn.disabled=true; btn.textContent='Enviando solicitud...'; msg.className='form-msg'; msg.style.display='none';
+    btn.disabled=true; btn.textContent='Enviando solicitud...'; msg.className='form-msg'; msg.style.display='';
     var d={
       first_name:form.first_name.value.trim(),
       last_name:form.last_name.value.trim(),
