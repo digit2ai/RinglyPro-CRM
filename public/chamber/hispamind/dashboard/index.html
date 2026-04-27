@@ -1064,19 +1064,43 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
 
   async function renderProjects() {
     var el = document.getElementById('pageContent');
-    el.innerHTML = '<div class="flex-between mb-16"><div></div><button class="btn btn-primary" id="newProjectBtn">+ New Project</button></div><div id="projectList"><div class="loading">Loading...</div></div>';
+    var activeTab = window._projectsTab || 'all';
+    var tabBtn = function(id, label) {
+      var active = activeTab === id;
+      return '<button class="btn '+(active?'btn-primary':'btn-outline')+' btn-sm" data-tab="'+id+'" style="margin-right:6px">'+label+'</button>';
+    };
+    el.innerHTML =
+      '<div class="flex-between mb-16">' +
+        '<div>' + tabBtn('all','All') + tabBtn('mine','My Projects') + tabBtn('invited','Invited / Joined') + '</div>' +
+        '<button class="btn btn-primary" id="newProjectBtn">+ New Project</button>' +
+      '</div>' +
+      '<div id="projectList"><div class="loading">Loading...</div></div>';
 
     document.getElementById('newProjectBtn').addEventListener('click', showNewProjectForm);
+    el.querySelectorAll('button[data-tab]').forEach(function(b) {
+      b.addEventListener('click', function() {
+        window._projectsTab = this.dataset.tab;
+        renderProjects();
+      });
+    });
     loadProjects();
   }
 
   async function loadProjects() {
     var out = document.getElementById('projectList');
+    var tab = window._projectsTab || 'all';
+    var qs = 'limit=50' + (tab === 'mine' ? '&scope=mine' : tab === 'invited' ? '&scope=invited' : '');
     try {
-      var res = await apiFetch('/projects?limit=50');
+      var res = await apiFetch('/projects?' + qs);
       if (!res.success) { out.innerHTML = '<div class="error-msg">Error loading projects</div>'; return; }
       var projects = res.data.projects || [];
-      if (projects.length === 0) { out.innerHTML = '<div class="panel"><p class="text-muted">No projects yet. Create your first one.</p></div>'; return; }
+      if (projects.length === 0) {
+        var emptyMsg = tab === 'mine' ? 'You have not proposed any projects yet. Click + New Project to start one.' :
+                       tab === 'invited' ? 'No invitations or memberships yet. When a proposer invites you, projects show up here.' :
+                       'No projects yet. Create your first one.';
+        out.innerHTML = '<div class="panel"><p class="text-muted">'+emptyMsg+'</p></div>';
+        return;
+      }
       var h = '<div class="result-cards">';
       projects.forEach(function(p) {
         h += '<div class="result-card" data-project-id="'+p.id+'" style="position:relative">';
@@ -1088,7 +1112,11 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         }
         h += '<div class="flex-between" style="padding-right:90px"><div class="rc-name">'+esc(p.title)+(p.is_stub?' &#128274;':'')+'</div></div>';
         var planStatus = p.plan_status ? '<span style="background:var(--accent-light);color:var(--accent-dark);padding:2px 6px;border-radius:3px;font-size:10px;text-transform:uppercase;font-weight:700;margin-right:6px">'+esc(p.plan_status)+'</span>' : '';
-        h += '<div class="rc-company">'+planStatus+esc(p.proposer_name||'--')+' | '+esc(p.sector||'--')+'</div>';
+        var roleBadge = '';
+        if (p.is_mine) roleBadge = '<span style="background:#1a3d8f;color:white;padding:2px 6px;border-radius:3px;font-size:10px;text-transform:uppercase;font-weight:700;margin-right:6px">Proposer</span>';
+        else if (p.is_participant) roleBadge = '<span style="background:#28a745;color:white;padding:2px 6px;border-radius:3px;font-size:10px;text-transform:uppercase;font-weight:700;margin-right:6px">Member</span>';
+        else if (p.has_invite) roleBadge = '<span style="background:#e65100;color:white;padding:2px 6px;border-radius:3px;font-size:10px;text-transform:uppercase;font-weight:700;margin-right:6px">Invited</span>';
+        h += '<div class="rc-company">'+roleBadge+planStatus+esc(p.proposer_name||'--')+' | '+esc(p.sector||'--')+'</div>';
         if (p.is_stub) {
           h += '<div class="text-sm text-muted" style="font-style:italic">In private execution -- participants only</div>';
         } else {

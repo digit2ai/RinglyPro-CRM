@@ -31,13 +31,23 @@ module.exports = function createProjectRoutes(config) {
   // GET /
   router.get('/', authMiddleware, async (req, res) => {
     try {
-      const { status, sector, country, plan_status, page = 1, limit = 20 } = req.query;
+      const { status, sector, country, plan_status, scope, page = 1, limit = 20 } = req.query;
       const offset = (Math.max(1, parseInt(page)) - 1) * parseInt(limit);
       const conditions = []; const replacements = { current_member_id: req.member.id };
       if (status) { conditions.push('p.status = :status'); replacements.status = status; }
       if (sector) { conditions.push('p.sector = :sector'); replacements.sector = sector; }
       if (country) { conditions.push(':country = ANY(p.countries)'); replacements.country = country; }
       if (plan_status) { conditions.push('p.plan_status = :plan_status'); replacements.plan_status = plan_status; }
+
+      // scope filter: mine | invited | all (default)
+      if (scope === 'mine') {
+        conditions.push('p.proposer_member_id = :current_member_id');
+      } else if (scope === 'invited') {
+        conditions.push(`(
+          EXISTS (SELECT 1 FROM ${t}_project_invitations i WHERE i.project_id = p.id AND i.member_id = :current_member_id)
+          OR EXISTS (SELECT 1 FROM ${t}_project_members pmx WHERE pmx.project_id = p.id AND pmx.member_id = :current_member_id)
+        )`);
+      }
 
       // Look up viewer's access level
       const [viewer] = await sequelize.query(
@@ -67,6 +77,8 @@ module.exports = function createProjectRoutes(config) {
                 p.budget_min, p.budget_est, p.budget_max,
                 p.timeline_min_months, p.timeline_est_months, p.timeline_max_months,
                 p.status, p.plan_status, p.visibility, p.proposer_member_id,
+                p.recruitment_deadline, p.recruitment_closed_at, p.recruitment_closed_by,
+                p.monte_carlo_result,
                 p.created_at, p.updated_at,
                 CASE
                   WHEN p.visibility = 'participants_only' AND p.proposer_member_id != :current_member_id
@@ -75,7 +87,10 @@ module.exports = function createProjectRoutes(config) {
                   THEN NULL
                   ELSE p.plan_json
                 END AS plan_json,
-                m.first_name || ' ' || m.last_name AS proposer_name
+                m.first_name || ' ' || m.last_name AS proposer_name,
+                (p.proposer_member_id = :current_member_id) AS is_mine,
+                EXISTS (SELECT 1 FROM ${t}_project_members pm2 WHERE pm2.project_id = p.id AND pm2.member_id = :current_member_id) AS is_participant,
+                EXISTS (SELECT 1 FROM ${t}_project_invitations i2 WHERE i2.project_id = p.id AND i2.member_id = :current_member_id) AS has_invite
          FROM ${t}_projects p LEFT JOIN ${t}_members m ON m.id = p.proposer_member_id ${where}
          ORDER BY p.created_at DESC LIMIT :limit OFFSET :offset`,
         { replacements: { ...replacements, limit: parseInt(limit), offset }, type: QueryTypes.SELECT }
