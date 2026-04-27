@@ -1033,12 +1033,27 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     }
   }
 
-  function showMemberEditor(m) {
+  async function showMemberEditor(m) {
     var langs = m.languages || [];
     if (typeof langs === 'string') { try { langs = JSON.parse(langs); } catch(e) { langs = langs.replace(/[{}]/g,'').split(',').filter(Boolean); } }
     var isAdmin = currentMember && ['superadmin','admin_global','admin_regional','admin'].includes(currentMember.access_level);
+    var canGlobal = currentMember && ['superadmin','admin_global'].includes(currentMember.access_level);
+    var isSelf = currentMember && currentMember.id === m.id;
+
+    // Pull governance role list + region list for the dropdowns when admin
+    var availableRoles = [];
+    var availableRegions = [];
+    if (canGlobal) {
+      try {
+        var rRes = await apiFetch('/admin/roles');
+        if (rRes && rRes.success) availableRoles = rRes.data.available_roles || [];
+        var regRes = await apiFetch('/admin/regions');
+        if (regRes && regRes.success) availableRegions = regRes.data || [];
+      } catch (e) { /* fall back to no dropdown */ }
+    }
+
     var html = '<h2>Edit '+esc(m.first_name)+' '+esc(m.last_name)+'</h2>';
-    if (isAdmin && currentMember.id !== m.id) html += '<div class="text-sm text-muted" style="margin-bottom:8px">Admin edit - changes apply to '+esc(m.email)+'</div>';
+    if (isAdmin && !isSelf) html += '<div class="text-sm text-muted" style="margin-bottom:8px">Admin edit - changes apply to '+esc(m.email)+'</div>';
     html += '<div id="memEditMsg"></div>';
     html += '<form id="memEditForm" class="form-grid">';
     html += '<div class="form-group"><label>First Name</label><input name="first_name" value="'+esc(m.first_name||'')+'"></div>';
@@ -1053,6 +1068,39 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     html += '<div class="form-group"><label>Phone</label><input name="phone" value="'+esc(m.phone||'')+'"></div>';
     html += '<div class="form-group"><label>LinkedIn URL</label><input name="linkedin_url" value="'+esc(m.linkedin_url||'')+'"></div>';
     html += '<div class="form-group full"><label>Website URL</label><input name="website_url" value="'+esc(m.website_url||'')+'"></div>';
+
+    // Admin-only: governance role + access level + region
+    if (canGlobal) {
+      html += '<div class="form-group full" style="margin-top:18px;padding-top:14px;border-top:2px solid var(--gray-200)"><h3 style="margin:0 0 10px 0;font-size:14px;color:var(--primary);text-transform:uppercase;letter-spacing:0.5px">Admin Settings</h3></div>';
+      html += '<div class="form-group"><label>Governance Role</label><select name="governance_role">';
+      var currentRole = m.governance_role || 'member';
+      availableRoles.forEach(function(r) {
+        html += '<option value="'+r+'"'+(r===currentRole?' selected':'')+'>'+r.replace(/_/g,' ')+'</option>';
+      });
+      html += '</select></div>';
+
+      var currentAccess = m.access_level || 'member';
+      var levels = ['member','admin_regional','admin_global'];
+      if (currentMember.access_level === 'superadmin') levels.push('superadmin');
+      html += '<div class="form-group"><label>Access Level</label><select name="access_level">';
+      levels.forEach(function(l) {
+        html += '<option value="'+l+'"'+(l===currentAccess?' selected':'')+'>'+l.replace(/_/g,' ')+'</option>';
+      });
+      html += '</select></div>';
+
+      html += '<div class="form-group"><label>Region</label><select name="region_id"><option value="">-- Global / None --</option>';
+      availableRegions.forEach(function(r) {
+        html += '<option value="'+r.id+'"'+(r.id==m.region_id?' selected':'')+'>'+esc(r.name)+'</option>';
+      });
+      html += '</select></div>';
+
+      html += '<div class="form-group"><label>Membership Type</label><select name="membership_type">';
+      ['individual','empresarial','corporativo','fundador'].forEach(function(mt) {
+        html += '<option value="'+mt+'"'+(mt===(m.membership_type||'individual')?' selected':'')+'>'+mt+'</option>';
+      });
+      html += '</select></div>';
+    }
+
     html += '<div class="form-group full mt-12" style="display:flex;gap:8px"><button type="submit" class="btn btn-primary">Save</button><button type="button" class="btn btn-outline" id="memEditCancel">Cancel</button></div>';
     html += '</form>';
     openModal(html);
@@ -1063,16 +1111,44 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       fd.forEach(function(v,k){ body[k] = v; });
       body.years_experience = body.years_experience ? parseInt(body.years_experience) : null;
       body.languages = body.languages ? body.languages.split(',').map(function(l){return l.trim();}).filter(Boolean) : [];
+
+      // Pull admin-only fields out (sent to a different endpoint)
+      var adminFields = null;
+      if (canGlobal && (body.governance_role !== undefined || body.access_level !== undefined || body.region_id !== undefined || body.membership_type !== undefined)) {
+        adminFields = {
+          governance_role: body.governance_role,
+          access_level: body.access_level,
+          region_id: body.region_id ? parseInt(body.region_id) : null,
+          membership_type: body.membership_type
+        };
+        delete body.governance_role; delete body.access_level; delete body.region_id; delete body.membership_type;
+      }
+
       var msgEl = document.getElementById('memEditMsg');
       msgEl.innerHTML = '<div class="text-muted text-sm">Saving...</div>';
       try {
         var res = await apiFetch('/members/'+m.id, { method:'PUT', body:JSON.stringify(body) });
-        if (res.success) {
-          msgEl.innerHTML = '<div class="success-msg">Saved.</div>';
-          setTimeout(function() { showMemberModal(m.id); }, 800);
-        } else {
-          msgEl.innerHTML = '<div class="error-msg">'+(res.error||'Error')+'</div>';
+        if (!res.success) {
+          msgEl.innerHTML = '<div class="error-msg">'+(res.error||'Error saving profile')+'</div>';
+          return;
         }
+        if (adminFields) {
+          // governance_role + access_level + region_id all in one call
+          var aRes = await apiFetch('/admin/members/'+m.id+'/access', 'PUT', {
+            governance_role: adminFields.governance_role,
+            access_level: adminFields.access_level,
+            region_id: adminFields.region_id
+          });
+          if (!aRes.success) {
+            msgEl.innerHTML = '<div class="error-msg">Profile saved, but admin settings failed: '+(aRes.error||'')+'</div>';
+            return;
+          }
+          if (adminFields.membership_type) {
+            await apiFetch('/admin/members/'+m.id+'/membership', 'PUT', { membership_type: adminFields.membership_type });
+          }
+        }
+        msgEl.innerHTML = '<div class="success-msg">Saved.</div>';
+        setTimeout(function() { showMemberModal(m.id); if (currentPage === 'admin') loadAdminTab('members'); }, 800);
       } catch(e) { msgEl.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
     });
   }
@@ -3536,12 +3612,8 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
           h += '<td>' + esc(m.membership_type) + '</td><td>' + roleBadge + '</td><td>' + accessBadge + '</td>';
           h += '<td>' + Number(m.trust_score||0).toFixed(2) + '</td><td>' + sBadge + '</td>';
           h += '<td style="white-space:nowrap;">';
-          h += '<button class="btn-sm" onclick="adminEditProfile(' + m.id + ')" title="Edit profile" style="padding:4px 8px;font-size:11px;background:var(--accent);color:var(--navy);border:none;border-radius:4px;cursor:pointer;margin:2px;">Edit</button>';
+          h += '<button class="btn-sm" onclick="adminEditProfile(' + m.id + ')" title="Edit profile (incl. role + access)" style="padding:4px 8px;font-size:11px;background:var(--accent);color:var(--navy);border:none;border-radius:4px;cursor:pointer;margin:2px;">Edit</button>';
           h += '<button class="btn-sm" onclick="adminVerify(' + m.id + ')" title="Verify" style="padding:4px 8px;font-size:11px;background:var(--primary);color:white;border:none;border-radius:4px;cursor:pointer;margin:2px;">Verify</button>';
-          if (canGlobal) {
-            h += '<button class="btn-sm" onclick="adminRole(' + m.id + ',\'' + esc(m.first_name) + ' ' + esc(m.last_name) + '\')" title="Governance role" style="padding:4px 8px;font-size:11px;background:#7b1fa2;color:white;border:none;border-radius:4px;cursor:pointer;margin:2px;">Role</button>';
-            h += '<button class="btn-sm" onclick="adminAccess(' + m.id + ',\'' + esc(m.access_level) + '\',' + (m.region_id||'null') + ')" title="Access level" style="padding:4px 8px;font-size:11px;background:#1565c0;color:white;border:none;border-radius:4px;cursor:pointer;margin:2px;">Access</button>';
-          }
           h += '<button class="btn-sm" onclick="adminToggleStatus(' + m.id + ',\'' + m.status + '\')" title="Toggle status" style="padding:4px 8px;font-size:11px;background:' + (m.status==='active'?'#e65100':'var(--green)') + ';color:white;border:none;border-radius:4px;cursor:pointer;margin:2px;">' + (m.status==='active'?'Suspend':'Activate') + '</button>';
           if (canGlobal && m.id !== currentMember.id) {
             h += '<button class="btn-sm" onclick="adminDeleteMember(' + m.id + ',\'' + esc(m.email) + '\')" title="Delete" style="padding:4px 8px;font-size:11px;background:var(--red);color:white;border:none;border-radius:4px;cursor:pointer;margin:2px;">Delete</button>';

@@ -159,12 +159,13 @@ module.exports = function createAdminRoutes(config) {
     }
   });
 
-  // PUT /members/:id/access -- set access level + region (separate from governance role)
+  // PUT /members/:id/access -- set access level + region + governance role in one call
   router.put('/members/:id/access', authMiddleware, requireAccess('superadmin', 'admin_global'), async (req, res) => {
     try {
       const memberId = parseInt(req.params.id);
-      const { access_level, region_id } = req.body;
+      const { access_level, region_id, governance_role } = req.body;
       if (access_level && !ACCESS_LEVELS.includes(access_level)) return res.status(400).json({ success: false, error: 'Invalid access_level' });
+      if (governance_role && !GOVERNANCE_ROLES.includes(governance_role)) return res.status(400).json({ success: false, error: 'Invalid governance_role' });
       // Only superadmin can grant superadmin
       if (access_level === 'superadmin' && req.memberAccess.access_level !== 'superadmin') {
         return res.status(403).json({ success: false, error: 'Only superadmin can grant superadmin' });
@@ -172,8 +173,9 @@ module.exports = function createAdminRoutes(config) {
       const setClauses = ['updated_at = NOW()']; const replacements = { id: memberId };
       if (access_level !== undefined) { setClauses.push('access_level = :access'); replacements.access = access_level; }
       if (region_id !== undefined) { setClauses.push('region_id = :region'); replacements.region = region_id ? parseInt(region_id) : null; }
+      if (governance_role !== undefined) { setClauses.push('governance_role = :role'); replacements.role = governance_role; }
       await sequelize.query(`UPDATE ${t}_members SET ${setClauses.join(', ')} WHERE id = :id`, { replacements });
-      res.json({ success: true, data: { member_id: memberId, access_level, region_id } });
+      res.json({ success: true, data: { member_id: memberId, access_level, region_id, governance_role } });
     } catch (err) {
       return res.status(500).json({ success: false, error: err.message });
     }
