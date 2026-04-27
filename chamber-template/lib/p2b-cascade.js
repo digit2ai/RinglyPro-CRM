@@ -64,31 +64,9 @@ async function runCascade(sequelize, t, projectId) {
   const plan = proj.plan_json;
   const teamRoles = Array.isArray(plan.team_roles_required) ? plan.team_roles_required : [];
 
-  // 1) Check must_have roles
-  const filled = await sequelize.query(
-    `SELECT role_index, COUNT(*) AS n FROM ${t}_project_members
-     WHERE project_id = :p AND role_index IS NOT NULL GROUP BY role_index`,
-    { replacements: { p: projectId }, type: QueryTypes.SELECT }
-  );
-  const filledMap = {};
-  filled.forEach(r => { filledMap[r.role_index] = parseInt(r.n); });
-
-  const mustHaveIndices = teamRoles
-    .map((r, i) => ({ ...r, idx: i }))
-    .filter(r => r.must_have);
-  const missing = mustHaveIndices.filter(r => !filledMap[r.idx] || filledMap[r.idx] < 1);
-
-  if (missing.length > 0) {
-    await sequelize.query(
-      `UPDATE ${t}_projects SET plan_status = 'recruitment_failed', updated_at = NOW() WHERE id = :id`,
-      { replacements: { id: projectId } }
-    );
-    return {
-      status: 'recruitment_failed',
-      missing_roles: missing.map(r => r.role_title),
-      message: 'Recruitment closed but ' + missing.length + ' must-have role(s) unfilled'
-    };
-  }
+  // Whoever accepted is in, whoever didn't is out -- no must_have gating.
+  // Project proceeds regardless of role coverage; Monte Carlo and the
+  // proposer judge whether the team they have is sufficient.
 
   // 2) Run real Monte Carlo
   const teamMembers = await sequelize.query(

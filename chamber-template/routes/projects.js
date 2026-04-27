@@ -539,6 +539,51 @@ module.exports = function createProjectRoutes(config) {
     }
   });
 
+  // POST /:id/reopen-recruitment -- proposer reopens bidding
+  // (recruitment_closed_at and recruitment_closed_by reset, deadline extended,
+  // status back to 'recruiting'). Useful after a manual close or auto-expiry.
+  router.post('/:id/reopen-recruitment', authMiddleware, async (req, res) => {
+    try {
+      const days = Math.max(1, Math.min(60, parseInt(req.body && req.body.days_extension) || 14));
+      const [project] = await sequelize.query(
+        `SELECT id, proposer_member_id, plan_status FROM ${t}_projects WHERE id = :id`,
+        { replacements: { id: req.params.id }, type: QueryTypes.SELECT }
+      );
+      if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+
+      const [viewer] = await sequelize.query(
+        `SELECT access_level FROM ${t}_members WHERE id = :m`,
+        { replacements: { m: req.member.id }, type: QueryTypes.SELECT }
+      );
+      const isSuperadmin = viewer && viewer.access_level === 'superadmin';
+      if (project.proposer_member_id !== req.member.id && !isSuperadmin) {
+        return res.status(403).json({ success: false, error: 'Only proposer or superadmin can reopen recruitment' });
+      }
+      if (!['recruitment_failed', 'fully_staffed', 'pending_signoff'].includes(project.plan_status)) {
+        return res.status(400).json({ success: false, error: `Cannot reopen from status: ${project.plan_status}` });
+      }
+
+      const newDeadline = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+      await sequelize.query(
+        `UPDATE ${t}_projects
+         SET plan_status = 'recruiting',
+             recruitment_closed_at = NULL,
+             recruitment_closed_by = NULL,
+             recruitment_deadline = :dl,
+             monte_carlo_result = NULL,
+             monte_carlo_at = NULL,
+             updated_at = NOW()
+         WHERE id = :id`,
+        { replacements: { id: req.params.id, dl: newDeadline } }
+      );
+
+      return res.json({ success: true, data: { plan_status: 'recruiting', recruitment_deadline: newDeadline, days_extension: days } });
+    } catch (err) {
+      console.error('[reopen-recruitment]', err);
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
   // ========================================================
   // P2B STAGE 1 -- Recruitment via published plan
   // ========================================================
@@ -750,13 +795,15 @@ module.exports = function createProjectRoutes(config) {
           );
         }
 
-        // Check fully_staffed: all must_have roles covered?
+        // Auto-trigger cascade only when EVERY role has at least 1 member
+        // (early lock-in -- saves the proposer from waiting the full 30 days).
+        // No must_have gating: roles are descriptive, not blocking.
         const [proj] = await sequelize.query(
           `SELECT plan_json FROM ${t}_projects WHERE id = :id`,
           { replacements: { id: req.params.id }, type: QueryTypes.SELECT }
         );
         const plan = proj && proj.plan_json;
-        if (plan && Array.isArray(plan.team_roles_required)) {
+        if (plan && Array.isArray(plan.team_roles_required) && plan.team_roles_required.length > 0) {
           const filled = await sequelize.query(
             `SELECT role_index, COUNT(*) AS n FROM ${t}_project_members
              WHERE project_id = :p AND role_index IS NOT NULL GROUP BY role_index`,
@@ -764,10 +811,10 @@ module.exports = function createProjectRoutes(config) {
           );
           const filledMap = {};
           filled.forEach(r => { filledMap[r.role_index] = parseInt(r.n); });
-          const allMustHaveFilled = plan.team_roles_required.every((r, i) =>
-            !r.must_have || (filledMap[i] && filledMap[i] >= 1)
+          const allRolesFilled = plan.team_roles_required.every((r, i) =>
+            filledMap[i] && filledMap[i] >= 1
           );
-          if (allMustHaveFilled) {
+          if (allRolesFilled) {
             // Mark recruitment closed + run cascade (Monte Carlo + Final Meeting)
             await sequelize.query(
               `UPDATE ${t}_projects

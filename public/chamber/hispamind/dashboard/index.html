@@ -2446,6 +2446,11 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         html += '<button class="btn btn-danger btn-sm" id="closeRecruitmentBtn" style="background:var(--red);color:white">Close Bidding Now</button>';
       }
 
+      // Reopen for recruitment_failed projects (proposer only)
+      if ((vr.is_proposer || vr.is_superadmin) && p.plan_status === 'recruitment_failed') {
+        html += '<button class="btn btn-primary btn-sm" id="reopenBtn" style="background:#28a745;color:white">Re-Open Bidding (+14 days)</button>';
+      }
+
       // Stage 2 -- sign-off (Final Meeting auto-booked, no manual button needed)
       if (['pending_signoff','fully_staffed'].includes(p.plan_status) && (vr.is_proposer || vr.is_participant)) {
         html += '<button class="btn btn-primary btn-sm" id="signoffBtn" style="background:#28a745">Sign Off Plan</button>';
@@ -2520,6 +2525,21 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
           if (r.success) {
             msg.innerHTML = '<div class="success-msg">Plan published. Project is now visible to all chamber members.</div>';
             setTimeout(function(){ showProjectDetail(id); }, 1200);
+          } else { msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>'; }
+        } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
+      });
+
+      // Re-open bidding (recovers a recruitment_failed project)
+      var reopenBtn = document.getElementById('reopenBtn');
+      if (reopenBtn) reopenBtn.addEventListener('click', async function() {
+        if (!confirm('Re-open bidding for 14 more days? Anyone still in pending invitations can accept; cascade will fire when window closes.')) return;
+        var msg = document.getElementById('projActionMsg');
+        msg.innerHTML = '<div class="text-muted text-sm">Re-opening bidding window...</div>';
+        try {
+          var r = await apiFetch('/projects/'+id+'/reopen-recruitment', { method:'POST', body:JSON.stringify({ days_extension: 14 }) });
+          if (r.success) {
+            msg.innerHTML = '<div class="success-msg">Bidding re-opened. New deadline: '+new Date(r.data.recruitment_deadline).toLocaleString()+'</div>';
+            setTimeout(function(){ showProjectDetail(id); loadProjects(); }, 1500);
           } else { msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>'; }
         } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
       });
