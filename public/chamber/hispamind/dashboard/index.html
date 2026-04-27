@@ -1086,56 +1086,325 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   }
 
   function showNewProjectForm() {
-    var html = '<h2 style="margin-bottom:16px">New Project</h2><div id="newProjMsg"></div>';
+    // P2B Stage 0 Wizard - Step 1: Vision input
+    var html = '<h2 style="margin-bottom:8px">New P2B Project</h2>';
+    html += '<p class="text-muted text-sm mb-16">Step 1 of 2 -- Tell us your vision. Claude will draft a complete business plan you can edit.</p>';
+    html += '<div id="newProjMsg"></div>';
     html += '<form id="newProjForm" class="form-grid">';
-    html += '<div class="form-group full"><label>Title</label><input name="title" required></div>';
-    html += '<div class="form-group full"><label>Description</label><textarea name="description" rows="3" required></textarea></div>';
+    html += '<div class="form-group full"><label>Vision (50-1500 chars, ~2 paragraphs)</label>';
+    html += '<textarea name="vision" rows="6" required minlength="50" maxlength="1500" ';
+    html += 'placeholder="Paragraph 1: What are you building? Why now?\nParagraph 2: Who is it for? How does it scale through the chamber network?"></textarea></div>';
     html += '<div class="form-group"><label>Sector</label><select name="sector" required>'+sectorOptions()+'</select></div>';
-    html += '<div class="form-group"><label>Pilot Type</label><select name="pilot_type"><option value="">Select</option><option value="commercial">Commercial</option><option value="technical">Technical</option><option value="research">Research</option></select></div>';
-    html += '<div class="form-group"><label>Countries (comma-separated)</label><input name="countries" placeholder="US, PH, SG"></div>';
-    html += '<div class="form-group"><label>Budget Min (USD)</label><input name="budget_min" type="number"></div>';
-    html += '<div class="form-group"><label>Budget Est (USD)</label><input name="budget_est" type="number"></div>';
-    html += '<div class="form-group"><label>Budget Max (USD)</label><input name="budget_max" type="number"></div>';
-    html += '<div class="form-group"><label>Timeline Min (months)</label><input name="timeline_min_months" type="number"></div>';
-    html += '<div class="form-group"><label>Timeline Est (months)</label><input name="timeline_est_months" type="number"></div>';
-    html += '<div class="form-group"><label>Timeline Max (months)</label><input name="timeline_max_months" type="number"></div>';
-    html += '<div class="form-group full mt-12"><button type="submit" class="btn btn-primary">Create Project</button></div>';
+    html += '<div class="form-group"><label>Budget Tier</label><select name="budget_tier" required>';
+    html += '<option value="small">Small ($50k-$200k)</option>';
+    html += '<option value="medium" selected>Medium ($200k-$1M)</option>';
+    html += '<option value="large">Large ($1M+)</option></select></div>';
+    html += '<div class="form-group full"><label>Countries (comma-separated)</label><input name="countries" placeholder="USA, Mexico, Espana, Argentina"></div>';
+    html += '<div class="form-group full mt-12"><button type="submit" class="btn btn-primary" id="generateBtn">Generate Business Plan with AI</button></div>';
     html += '</form>';
     openModal(html);
 
     document.getElementById('newProjForm').addEventListener('submit', async function(ev) {
       ev.preventDefault();
       var fd = new FormData(this);
-      var body = {};
-      fd.forEach(function(v,k){ body[k] = v; });
-      body.countries = body.countries ? body.countries.split(',').map(function(c){return c.trim();}).filter(Boolean) : [];
-      ['budget_min','budget_est','budget_max','timeline_min_months','timeline_est_months','timeline_max_months'].forEach(function(f){
-        body[f] = body[f] ? parseFloat(body[f]) : undefined;
-      });
+      var body = {
+        vision: fd.get('vision'),
+        sector: fd.get('sector'),
+        budget_tier: fd.get('budget_tier'),
+        countries: fd.get('countries') ? fd.get('countries').split(',').map(function(c){return c.trim();}).filter(Boolean) : []
+      };
       var msg = document.getElementById('newProjMsg');
-      msg.innerHTML = '<div class="text-muted text-sm">Creating project...</div>';
+      var btn = document.getElementById('generateBtn');
+      btn.disabled = true;
+      btn.textContent = 'Claude is drafting your plan...';
+      msg.innerHTML = '<div class="text-muted text-sm" style="padding:12px 0;">Generating structured business plan with Claude (15-30 seconds)...</div>';
+
       try {
-        var res = await apiFetch('/projects', { method:'POST', body:JSON.stringify(body) });
+        var res = await apiFetch('/projects/draft', { method:'POST', body:JSON.stringify(body) });
         if (res.success) {
-          closeModal();
-          loadProjects();
+          showPlanEditor(res.data.project_id, res.data.plan_json);
         } else {
-          msg.innerHTML = '<div class="error-msg">'+(res.error||'Error creating project')+'</div>';
+          msg.innerHTML = '<div class="error-msg">'+(res.error||'Error generating plan')+'</div>';
+          btn.disabled = false;
+          btn.textContent = 'Generate Business Plan with AI';
         }
       } catch(e) {
         msg.innerHTML = '<div class="error-msg">Error: '+esc(e.message)+'</div>';
+        btn.disabled = false;
+        btn.textContent = 'Generate Business Plan with AI';
       }
     });
+  }
+
+  function showPlanEditor(projectId, planJson) {
+    window._currentDraftPlan = JSON.parse(JSON.stringify(planJson));
+    window._currentDraftProjectId = projectId;
+    renderPlanEditor();
+  }
+
+  function renderPlanEditor() {
+    var p = window._currentDraftPlan;
+    var pid = window._currentDraftProjectId;
+    var h = '<div style="position:sticky;top:0;background:var(--white);padding-bottom:12px;border-bottom:1px solid var(--gray-200);margin:-28px -28px 16px;padding:20px 28px 12px;z-index:5;">';
+    h += '<div class="flex-between"><h2 style="margin:0">Business Plan Editor</h2>';
+    h += '<div><button class="btn btn-outline btn-sm" id="savePlanBtn">Save Draft</button> ';
+    h += '<button class="btn btn-primary btn-sm" id="publishPlanBtn">Publish Plan</button></div></div>';
+    h += '<p class="text-muted text-sm" style="margin-top:6px">Step 2 of 2 -- Review and edit before publishing. Click any text to edit inline.</p>';
+    h += '<div id="planMsg" style="margin-top:8px"></div></div>';
+
+    h += planSection('Title', '<h3 contenteditable data-plan-key="title">'+esc(p.title||'')+'</h3>');
+    h += planSection('Executive Summary', '<p contenteditable data-plan-key="executive_summary" style="white-space:pre-wrap">'+esc(p.executive_summary||'')+'</p>');
+
+    if (p.problem_market) {
+      var pm = p.problem_market;
+      h += planSection('Problem & Market',
+        '<p contenteditable data-plan-key="problem_market.problem_statement" style="white-space:pre-wrap;margin-bottom:8px">'+esc(pm.problem_statement||'')+'</p>'+
+        '<table style="width:100%;font-size:13px"><tr><td><strong>TAM:</strong></td><td>$'+Number(pm.tam_usd||0).toLocaleString()+'</td></tr>'+
+        '<tr><td><strong>SAM:</strong></td><td>$'+Number(pm.sam_usd||0).toLocaleString()+'</td></tr>'+
+        '<tr><td><strong>SOM:</strong></td><td>$'+Number(pm.som_usd||0).toLocaleString()+'</td></tr></table>'+
+        '<div style="margin-top:8px"><strong>Target Segments:</strong> '+(pm.target_segments||[]).map(esc).join(', ')+'</div>'
+      );
+    }
+
+    if (p.solution) {
+      h += planSection('Solution',
+        '<p contenteditable data-plan-key="solution.description" style="white-space:pre-wrap">'+esc(p.solution.description||'')+'</p>'+
+        '<div style="margin-top:8px"><strong>Differentiators:</strong><ul style="margin:6px 0 0 20px">'+
+          (p.solution.key_differentiators||[]).map(function(d){return '<li>'+esc(d)+'</li>';}).join('')+'</ul></div>'+
+        '<div style="margin-top:8px"><strong>Tech Stack:</strong> '+(p.solution.tech_stack_or_methodology||[]).map(esc).join(', ')+'</div>'
+      );
+    }
+
+    if (p.go_to_market) {
+      h += planSection('Go-to-Market', renderGTM(p.go_to_market));
+    }
+
+    if (p.revenue_model) {
+      var rm = p.revenue_model;
+      var pricing = (rm.pricing_tiers||[]).map(function(t){
+        return '<li><strong>'+esc(t.name)+':</strong> $'+Number(t.price_usd||0).toLocaleString()+' / '+esc(t.period||'')+'</li>';
+      }).join('');
+      h += planSection('Revenue Model',
+        '<ul style="margin:0 0 8px 20px">'+pricing+'</ul>'+
+        '<div><strong>Year 1 Revenue:</strong> $'+Number(rm.year1_revenue_estimate_usd||0).toLocaleString()+'</div>'+
+        '<div><strong>Year 3 Revenue:</strong> $'+Number(rm.year3_revenue_estimate_usd||0).toLocaleString()+'</div>'
+      );
+    }
+
+    if (Array.isArray(p.team_roles_required)) {
+      var roles = p.team_roles_required.map(function(r,i){
+        return '<div style="border:1px solid var(--gray-200);border-radius:6px;padding:10px;margin-bottom:8px">'+
+          '<div style="font-weight:700">'+esc(r.role_title||'Role '+(i+1))+(r.must_have?' <span style="background:var(--red);color:white;padding:2px 6px;border-radius:3px;font-size:10px;margin-left:6px">MUST-HAVE</span>':'')+'</div>'+
+          '<div class="text-sm text-muted" style="margin:4px 0">Skills: '+(r.required_skills||[]).map(esc).join(', ')+'</div>'+
+          '<div class="text-sm text-muted">Sectors: '+(r.preferred_sectors||[]).map(esc).join(', ')+' | Regions: '+(r.preferred_regions||[]).map(esc).join(', ')+'</div>'+
+          '<div class="text-sm" style="margin-top:4px">Commitment: '+(r.commitment_pct||0)+'%</div>'+
+          '</div>';
+      }).join('');
+      h += planSection('Team Roles Required ('+p.team_roles_required.length+')', roles);
+    }
+
+    if (Array.isArray(p.budget_breakdown)) {
+      var rows = p.budget_breakdown.map(function(b){
+        return '<tr><td>'+esc(b.category||'')+'</td><td>'+esc(b.phase||'')+'</td><td style="text-align:right">$'+Number(b.amount_usd||0).toLocaleString()+'</td></tr>';
+      }).join('');
+      var tot = p.budget_breakdown.reduce(function(s,b){return s+(b.amount_usd||0);},0);
+      h += planSection('Budget Breakdown',
+        '<table style="width:100%;font-size:13px"><thead><tr><th style="text-align:left">Category</th><th style="text-align:left">Phase</th><th style="text-align:right">Amount</th></tr></thead><tbody>'+
+          rows+'<tr style="font-weight:700;border-top:2px solid var(--gray-300)"><td colspan="2">TOTAL</td><td style="text-align:right">$'+Number(tot).toLocaleString()+'</td></tr></tbody></table>'
+      );
+    }
+
+    if (Array.isArray(p.timeline_milestones)) {
+      var ms = p.timeline_milestones.map(function(m){
+        return '<div style="display:flex;gap:12px;padding:6px 0;border-bottom:1px solid var(--gray-100)"><div style="font-weight:700;min-width:60px">M'+(m.month||0)+'</div><div><div style="font-weight:600">'+esc(m.milestone||'')+'</div><div class="text-sm text-muted">'+esc(m.deliverable||'')+'</div></div></div>';
+      }).join('');
+      h += planSection('Timeline Milestones', ms);
+    }
+
+    if (Array.isArray(p.risks)) {
+      var rk = p.risks.map(function(r){
+        var col = r.likelihood==='high'?'var(--red)':(r.likelihood==='medium'?'#e65100':'#28a745');
+        return '<div style="padding:8px 0;border-bottom:1px solid var(--gray-100)"><div><strong>'+esc(r.risk||'')+'</strong> <span style="color:'+col+';font-size:11px;text-transform:uppercase;font-weight:700;margin-left:6px">'+esc(r.likelihood||'')+'</span></div><div class="text-sm text-muted">Mitigation: '+esc(r.mitigation||'')+'</div></div>';
+      }).join('');
+      h += planSection('Risks', rk);
+    }
+
+    if (Array.isArray(p.success_kpis)) {
+      var k = p.success_kpis.map(function(x){
+        return '<tr><td style="font-weight:600">'+esc(x.kpi||'')+'</td><td>'+esc(x.target||'')+'</td><td class="text-muted text-sm">'+esc(x.measurement_period||'')+'</td></tr>';
+      }).join('');
+      h += planSection('Success KPIs', '<table style="width:100%;font-size:13px"><thead><tr><th style="text-align:left">KPI</th><th style="text-align:left">Target</th><th style="text-align:left">Period</th></tr></thead><tbody>'+k+'</tbody></table>');
+    }
+
+    openModal(h);
+
+    // Wire content-editable changes back to plan object
+    document.querySelectorAll('[contenteditable][data-plan-key]').forEach(function(el) {
+      el.addEventListener('blur', function() {
+        var path = this.dataset.planKey.split('.');
+        var v = this.textContent;
+        var obj = window._currentDraftPlan;
+        for (var i = 0; i < path.length - 1; i++) obj = obj[path[i]];
+        obj[path[path.length - 1]] = v;
+      });
+    });
+
+    document.getElementById('savePlanBtn').addEventListener('click', async function() {
+      var msg = document.getElementById('planMsg');
+      msg.innerHTML = '<div class="text-muted text-sm">Saving draft...</div>';
+      try {
+        var r = await apiFetch('/projects/'+pid+'/plan', { method:'PUT', body:JSON.stringify({ plan_json: window._currentDraftPlan }) });
+        if (r.success) msg.innerHTML = '<div class="success-msg">Draft saved.</div>';
+        else msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>';
+      } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
+    });
+
+    document.getElementById('publishPlanBtn').addEventListener('click', async function() {
+      var msg = document.getElementById('planMsg');
+      msg.innerHTML = '<div class="text-muted text-sm">Saving + publishing...</div>';
+      try {
+        var save = await apiFetch('/projects/'+pid+'/plan', { method:'PUT', body:JSON.stringify({ plan_json: window._currentDraftPlan }) });
+        if (!save.success) { msg.innerHTML = '<div class="error-msg">'+(save.error||'Save failed')+'</div>'; return; }
+        var r = await apiFetch('/projects/'+pid+'/publish', { method:'POST' });
+        if (r.success) {
+          msg.innerHTML = '<div class="success-msg">Plan published. Project is now live in the feed.</div>';
+          setTimeout(function() { closeModal(); loadProjects(); }, 1200);
+        } else {
+          msg.innerHTML = '<div class="error-msg">'+(r.error||'Publish failed')+'</div>';
+        }
+      } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
+    });
+  }
+
+  function planSection(title, body) {
+    return '<details open style="border:1px solid var(--gray-200);border-radius:8px;margin-bottom:10px"><summary style="padding:10px 14px;cursor:pointer;font-weight:700;background:var(--gray-50);border-radius:8px 8px 0 0">'+esc(title)+'</summary><div style="padding:14px">'+body+'</div></details>';
+  }
+
+  function renderGTM(gtm) {
+    var phases = (gtm.phases||[]).map(function(ph){
+      return '<div style="margin-bottom:8px;padding:8px;background:var(--gray-50);border-radius:6px"><strong>'+esc(ph.name||'')+'</strong> <span class="text-muted text-sm">('+(ph.duration_months||0)+' months)</span><ul style="margin:4px 0 0 20px">'+(ph.activities||[]).map(function(a){return '<li>'+esc(a)+'</li>';}).join('')+'</ul></div>';
+    }).join('');
+    var regions = (gtm.regional_priorities||[]).map(function(r){
+      return '<li><strong>'+esc(r.region||'')+':</strong> '+esc(r.rationale||'')+'</li>';
+    }).join('');
+    return phases +
+      '<div style="margin-top:8px"><strong>Channel Strategy:</strong> '+esc(gtm.channel_strategy||'')+'</div>'+
+      '<div style="margin-top:8px"><strong>Regional Priorities:</strong><ul style="margin:4px 0 0 20px">'+regions+'</ul></div>';
+  }
+
+  function renderFullPlan(plan, fillStatus) {
+    if (!plan) return '';
+    var h = '<h3 style="margin:24px 0 12px;border-top:2px solid var(--gray-200);padding-top:18px">Business Plan</h3>';
+
+    if (plan.executive_summary) {
+      h += planSection('Executive Summary', '<p style="white-space:pre-wrap;font-size:14px">'+esc(plan.executive_summary)+'</p>');
+    }
+    if (plan.problem_market) {
+      var pm = plan.problem_market;
+      h += planSection('Problem & Market',
+        '<p style="white-space:pre-wrap;margin-bottom:8px">'+esc(pm.problem_statement||'')+'</p>'+
+        '<table style="width:100%;font-size:13px"><tr><td><strong>TAM:</strong></td><td>$'+Number(pm.tam_usd||0).toLocaleString()+'</td></tr>'+
+        '<tr><td><strong>SAM:</strong></td><td>$'+Number(pm.sam_usd||0).toLocaleString()+'</td></tr>'+
+        '<tr><td><strong>SOM:</strong></td><td>$'+Number(pm.som_usd||0).toLocaleString()+'</td></tr></table>'+
+        (pm.target_segments ? '<div style="margin-top:8px"><strong>Target Segments:</strong> '+(pm.target_segments||[]).map(esc).join(', ')+'</div>' : '')
+      );
+    }
+    if (plan.solution) {
+      h += planSection('Solution',
+        '<p style="white-space:pre-wrap">'+esc(plan.solution.description||'')+'</p>'+
+        '<div style="margin-top:8px"><strong>Differentiators:</strong><ul style="margin:6px 0 0 20px">'+
+          (plan.solution.key_differentiators||[]).map(function(d){return '<li>'+esc(d)+'</li>';}).join('')+'</ul></div>'+
+        '<div style="margin-top:8px"><strong>Tech Stack:</strong> '+(plan.solution.tech_stack_or_methodology||[]).map(esc).join(', ')+'</div>'
+      );
+    }
+    if (plan.go_to_market) h += planSection('Go-to-Market', renderGTM(plan.go_to_market));
+    if (plan.revenue_model) {
+      var rm = plan.revenue_model;
+      var pricing = (rm.pricing_tiers||[]).map(function(t){
+        return '<li><strong>'+esc(t.name)+':</strong> $'+Number(t.price_usd||0).toLocaleString()+' / '+esc(t.period||'')+'</li>';
+      }).join('');
+      h += planSection('Revenue Model',
+        '<ul style="margin:0 0 8px 20px">'+pricing+'</ul>'+
+        '<div><strong>Year 1 Revenue Estimate:</strong> $'+Number(rm.year1_revenue_estimate_usd||0).toLocaleString()+'</div>'+
+        '<div><strong>Year 3 Revenue Estimate:</strong> $'+Number(rm.year3_revenue_estimate_usd||0).toLocaleString()+'</div>'
+      );
+    }
+    if (Array.isArray(plan.team_roles_required)) {
+      var roles = plan.team_roles_required.map(function(r,i){
+        var fillInfo = '';
+        if (fillStatus && fillStatus[i]) {
+          var fs = fillStatus[i];
+          if (fs.filled_count > 0) {
+            fillInfo = '<div style="margin-top:6px;color:#28a745;font-size:11px;font-weight:700">FILLED by '+fs.filled_by.map(function(f){return esc(f.name);}).join(', ')+'</div>';
+          } else {
+            fillInfo = '<div style="margin-top:6px;color:var(--accent-dark);font-size:11px;font-weight:700">OPEN</div>';
+          }
+        }
+        return '<div style="border:1px solid var(--gray-200);border-radius:6px;padding:10px;margin-bottom:8px">'+
+          '<div style="font-weight:700">'+esc(r.role_title||'Role '+(i+1))+(r.must_have?' <span style="background:var(--red);color:white;padding:2px 6px;border-radius:3px;font-size:10px;margin-left:6px">MUST-HAVE</span>':'')+'</div>'+
+          '<div class="text-sm text-muted" style="margin:4px 0">Skills: '+(r.required_skills||[]).map(esc).join(', ')+'</div>'+
+          '<div class="text-sm text-muted">Sectors: '+(r.preferred_sectors||[]).map(esc).join(', ')+' | Regions: '+(r.preferred_regions||[]).map(esc).join(', ')+'</div>'+
+          '<div class="text-sm" style="margin-top:4px">Commitment: '+(r.commitment_pct||0)+'%</div>'+
+          fillInfo +
+          '</div>';
+      }).join('');
+      h += planSection('Team Roles ('+plan.team_roles_required.length+')', roles);
+    }
+    if (Array.isArray(plan.budget_breakdown)) {
+      var rows = plan.budget_breakdown.map(function(b){
+        return '<tr><td>'+esc(b.category||'')+'</td><td>'+esc(b.phase||'')+'</td><td style="text-align:right">$'+Number(b.amount_usd||0).toLocaleString()+'</td></tr>';
+      }).join('');
+      var tot = plan.budget_breakdown.reduce(function(s,b){return s+(b.amount_usd||0);},0);
+      h += planSection('Budget Breakdown',
+        '<table style="width:100%;font-size:13px"><thead><tr><th style="text-align:left">Category</th><th style="text-align:left">Phase</th><th style="text-align:right">Amount</th></tr></thead><tbody>'+
+          rows+'<tr style="font-weight:700;border-top:2px solid var(--gray-300)"><td colspan="2">TOTAL</td><td style="text-align:right">$'+Number(tot).toLocaleString()+'</td></tr></tbody></table>'
+      );
+    }
+    if (Array.isArray(plan.timeline_milestones)) {
+      var ms = plan.timeline_milestones.map(function(m){
+        return '<div style="display:flex;gap:12px;padding:6px 0;border-bottom:1px solid var(--gray-100)"><div style="font-weight:700;min-width:60px">M'+(m.month||0)+'</div><div><div style="font-weight:600">'+esc(m.milestone||'')+'</div><div class="text-sm text-muted">'+esc(m.deliverable||'')+'</div></div></div>';
+      }).join('');
+      h += planSection('Timeline Milestones', ms);
+    }
+    if (Array.isArray(plan.risks)) {
+      var rk = plan.risks.map(function(r){
+        var col = r.likelihood==='high'?'var(--red)':(r.likelihood==='medium'?'#e65100':'#28a745');
+        return '<div style="padding:8px 0;border-bottom:1px solid var(--gray-100)"><div><strong>'+esc(r.risk||'')+'</strong> <span style="color:'+col+';font-size:11px;text-transform:uppercase;font-weight:700;margin-left:6px">'+esc(r.likelihood||'')+'</span></div><div class="text-sm text-muted">Mitigation: '+esc(r.mitigation||'')+'</div></div>';
+      }).join('');
+      h += planSection('Risks', rk);
+    }
+    if (Array.isArray(plan.success_kpis)) {
+      var k = plan.success_kpis.map(function(x){
+        return '<tr><td style="font-weight:600">'+esc(x.kpi||'')+'</td><td>'+esc(x.target||'')+'</td><td class="text-muted text-sm">'+esc(x.measurement_period||'')+'</td></tr>';
+      }).join('');
+      h += planSection('Success KPIs', '<table style="width:100%;font-size:13px"><thead><tr><th style="text-align:left">KPI</th><th style="text-align:left">Target</th><th style="text-align:left">Period</th></tr></thead><tbody>'+k+'</tbody></table>');
+    }
+    return h;
   }
 
   async function showProjectDetail(id) {
     openModal('<div class="loading">Loading project...</div>');
     try {
       var res = await apiFetch('/projects/'+id);
-      if (!res.success) { openModal('<div class="error-msg">Error loading project</div>'); return; }
+      if (!res.success) { openModal('<div class="error-msg">'+(res.error||'Error loading project')+'</div>'); return; }
       var p = res.data;
+
+      // STUB view (private project, viewer is not a participant)
+      if (p.is_stub) {
+        var stubHtml = '<h2 style="margin-bottom:8px">'+esc(p.title)+'</h2>';
+        stubHtml += '<div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px;padding:24px;text-align:center;margin-top:16px">';
+        stubHtml += '<div style="font-size:42px;margin-bottom:12px">&#128274;</div>';
+        stubHtml += '<div style="font-weight:700;margin-bottom:6px">Private Project</div>';
+        stubHtml += '<div class="text-muted text-sm">Status: '+statusBadge(p.status||'executing')+'</div>';
+        stubHtml += '<p class="text-muted text-sm" style="margin-top:12px">This project has been signed off and is now in private execution. Only participants can see the full plan and workspace.</p>';
+        stubHtml += '</div>';
+        openModal(stubHtml);
+        return;
+      }
+
       var html = '<h2 style="margin-bottom:8px">'+esc(p.title)+'</h2>';
-      html += '<div style="margin-bottom:12px">'+statusBadge(p.status)+' <span class="text-muted text-sm"> | Proposed by '+esc(p.proposer_name||'--')+'</span></div>';
+      var planStatusLabel = p.plan_status ? '<span style="background:var(--accent-light);color:var(--accent-dark);padding:3px 8px;border-radius:4px;font-size:11px;text-transform:uppercase;font-weight:700;margin-left:6px">'+esc(p.plan_status)+'</span>' : '';
+      html += '<div style="margin-bottom:12px">'+statusBadge(p.status)+planStatusLabel+' <span class="text-muted text-sm"> | Proposed by '+esc(p.proposer_name||'--')+'</span></div>';
       html += lifecycleDots(p.status);
       html += '<p style="margin:12px 0;font-size:13px;color:var(--gray-700)">'+esc(p.description||'')+'</p>';
       html += '<table style="width:100%;margin-bottom:16px">';
@@ -1144,6 +1413,11 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       if (p.budget_est) html += '<tr><td style="font-weight:600;padding:4px 12px 4px 0;color:var(--gray-500);font-size:13px">Budget</td><td style="font-size:13px">$'+Number(p.budget_min||0).toLocaleString()+' - $'+Number(p.budget_est||0).toLocaleString()+' - $'+Number(p.budget_max||0).toLocaleString()+'</td></tr>';
       if (p.timeline_est_months) html += '<tr><td style="font-weight:600;padding:4px 12px 4px 0;color:var(--gray-500);font-size:13px">Timeline</td><td style="font-size:13px">'+p.timeline_min_months+' - '+p.timeline_est_months+' - '+p.timeline_max_months+' months</td></tr>';
       html += '</table>';
+
+      // === Render full business plan if present ===
+      if (p.plan_json) {
+        html += renderFullPlan(p.plan_json, p.fill_status);
+      }
 
       // Team
       html += '<h3>Team ('+(p.team?p.team.length:0)+' members)</h3>';
