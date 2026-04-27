@@ -1158,7 +1158,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     };
     el.innerHTML =
       '<div class="flex-between mb-16">' +
-        '<div>' + tabBtn('all','All') + tabBtn('mine','My Projects') + tabBtn('invited','Invited / Joined') + tabBtn('open_rfq','Open RFQs (Match)') + '</div>' +
+        '<div>' + tabBtn('all','All') + tabBtn('mine','My Projects') + tabBtn('invited','Invited / Joined') + tabBtn('open_rfq','Matching RFQs & Roles') + '</div>' +
         '<button class="btn btn-primary" id="newProjectBtn">+ New Project</button>' +
       '</div>' +
       '<div id="projectList"><div class="loading">Loading...</div></div>';
@@ -1181,15 +1181,49 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       var res = await apiFetch('/projects?' + qs);
       if (!res.success) { out.innerHTML = '<div class="error-msg">Error loading projects</div>'; return; }
       var projects = res.data.projects || [];
-      if (projects.length === 0) {
+
+      // For Matching tab, also pull Exchange RFQs matching the viewer's sector
+      var matchingRFQs = [];
+      if (tab === 'open_rfq' && currentMember && currentMember.sector) {
+        try {
+          var rfqRes = await apiFetch('/exchange/rfqs?limit=100');
+          if (rfqRes && rfqRes.success && rfqRes.data && Array.isArray(rfqRes.data.rfqs)) {
+            matchingRFQs = rfqRes.data.rfqs.filter(function(r) {
+              return r.sector === currentMember.sector && r.requester_member_id !== currentMember.id;
+            });
+          }
+        } catch (e) { /* exchange optional, ignore */ }
+      }
+
+      if (projects.length === 0 && matchingRFQs.length === 0) {
         var emptyMsg = tab === 'mine' ? 'You have not proposed any projects yet. Click + New Project to start one.' :
                        tab === 'invited' ? 'No invitations or memberships yet. When a proposer invites you, projects show up here.' :
-                       tab === 'open_rfq' ? 'No open RFQs match your profile right now. Update your sector/skills in My Profile to surface more matches, or check back later.' :
+                       tab === 'open_rfq' ? 'Nothing matches your profile right now. Update your sector in My Profile, or check back later. (This view shows project roles you can bid on + Exchange RFQs in your sector.)' :
                        'No projects yet. Create your first one.';
         out.innerHTML = '<div class="panel"><p class="text-muted">'+emptyMsg+'</p></div>';
         return;
       }
-      var h = '<div class="result-cards">';
+      var h = '';
+      if (tab === 'open_rfq' && matchingRFQs.length > 0) {
+        h += '<div style="margin-bottom:18px"><h3 style="margin:0 0 8px 0">Exchange RFQs matching your sector ('+matchingRFQs.length+')</h3>';
+        h += '<div class="result-cards">';
+        matchingRFQs.forEach(function(r) {
+          h += '<div class="result-card" style="border-left:4px solid #28a745;cursor:default">';
+          h += '<div class="rc-name">'+esc(r.title)+'</div>';
+          h += '<div class="rc-company"><span style="background:#28a745;color:white;padding:2px 6px;border-radius:3px;font-size:10px;text-transform:uppercase;font-weight:700;margin-right:6px">Exchange RFQ</span>'+esc(r.requester_name||'--')+(r.company_name?' &middot; '+esc(r.company_name):'')+'</div>';
+          h += '<div class="rc-meta mt-12"><span>'+esc(r.sector||'--')+'</span>';
+          if (r.budget_range) h += '<span>'+esc(r.budget_range)+'</span>';
+          if (r.deadline) h += '<span>Deadline: '+formatDate(r.deadline)+'</span>';
+          h += '</div>';
+          h += '<div style="margin-top:8px"><button class="btn btn-primary btn-sm openRfqBtn" data-rid="'+r.id+'" style="background:#28a745">View / Respond</button></div>';
+          h += '</div>';
+        });
+        h += '</div></div>';
+      }
+      if (projects.length > 0) {
+        if (tab === 'open_rfq') h += '<h3 style="margin:0 0 8px 0">Project roles you can bid on ('+projects.length+')</h3>';
+      }
+      h += '<div class="result-cards">';
       projects.forEach(function(p) {
         h += '<div class="result-card" data-project-id="'+p.id+'" style="position:relative">';
         // Countdown badge top-right
@@ -1238,6 +1272,14 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
 
       out.querySelectorAll('.result-card').forEach(function(card) {
         card.addEventListener('click', function(){ showProjectDetail(this.dataset.projectId); });
+      });
+      out.querySelectorAll('.openRfqBtn').forEach(function(btn) {
+        btn.addEventListener('click', function(ev) {
+          ev.stopPropagation();
+          var rid = this.dataset.rid;
+          if (typeof showRFQDetail === 'function') showRFQDetail(rid);
+          else navigate('exchange');
+        });
       });
       out.querySelectorAll('.bidBtn').forEach(function(btn) {
         btn.addEventListener('click', async function(ev) {
