@@ -1714,6 +1714,112 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   }
 
   // ============================================================
+  // PR-B -- Amend Plan (after Final Meeting)
+  // ============================================================
+  function showAmendPlanEditor(projectId, planJson) {
+    window._amendingPlan = JSON.parse(JSON.stringify(planJson));
+    window._amendingProjectId = projectId;
+    var p = window._amendingPlan;
+    var h = '<div style="position:sticky;top:0;background:var(--white);padding:18px 28px 12px;margin:-28px -28px 16px;border-bottom:2px solid #7b1fa2;z-index:5">';
+    h += '<div class="flex-between"><h2 style="margin:0;color:#7b1fa2">Amend Plan</h2>';
+    h += '<div><button class="btn btn-outline btn-sm" id="amendCancelBtn">Cancel</button> ';
+    h += '<button class="btn btn-primary btn-sm" id="amendSubmitBtn" style="background:#7b1fa2">Submit Amendment</button></div></div>';
+    h += '<p class="text-muted text-sm" style="margin-top:6px"><strong>Warning:</strong> Submitting this amendment will invalidate ALL existing signatures. All participants must re-sign the new version.</p>';
+    h += '<div class="form-group" style="margin-top:8px"><label style="font-weight:600">Reason for amendment (will be visible in version history)</label><textarea id="amendReason" rows="2" required style="width:100%" placeholder="e.g., Adjusted budget after Final Meeting feedback; tightened timeline by 1 month"></textarea></div>';
+    h += '<div id="amendMsg"></div></div>';
+
+    h += planSection('Title', '<input type="text" data-pe-path="title" value="'+esc(p.title||'')+'" style="width:100%;padding:6px 8px;border:1px solid var(--gray-300);border-radius:4px;font-size:13px">');
+    h += planSection('Executive Summary', '<textarea data-pe-path="executive_summary" rows="4" style="width:100%;padding:6px 8px;border:1px solid var(--gray-300);border-radius:4px;font-size:13px;resize:vertical">'+esc(p.executive_summary||'')+'</textarea>');
+
+    if (p.problem_market) {
+      var pm = p.problem_market;
+      var pmh = '<label class="text-sm" style="font-weight:600">Problem Statement</label><textarea data-pe-path="problem_market.problem_statement" rows="3" style="width:100%;padding:6px 8px;border:1px solid var(--gray-300);border-radius:4px;font-size:13px">'+esc(pm.problem_statement||'')+'</textarea>';
+      pmh += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">';
+      pmh += '<div><label class="text-sm" style="font-weight:600">TAM (USD)</label><input type="number" data-pe-path="problem_market.tam_usd" data-pe-type="number" value="'+(pm.tam_usd||0)+'" style="width:100%;padding:6px 8px;border:1px solid var(--gray-300);border-radius:4px;font-size:13px"></div>';
+      pmh += '<div><label class="text-sm" style="font-weight:600">SAM (USD)</label><input type="number" data-pe-path="problem_market.sam_usd" data-pe-type="number" value="'+(pm.sam_usd||0)+'" style="width:100%;padding:6px 8px;border:1px solid var(--gray-300);border-radius:4px;font-size:13px"></div>';
+      pmh += '<div><label class="text-sm" style="font-weight:600">SOM (USD)</label><input type="number" data-pe-path="problem_market.som_usd" data-pe-type="number" value="'+(pm.som_usd||0)+'" style="width:100%;padding:6px 8px;border:1px solid var(--gray-300);border-radius:4px;font-size:13px"></div>';
+      pmh += '</div>';
+      h += planSection('Problem & Market', pmh);
+    }
+
+    if (p.solution) {
+      h += planSection('Solution',
+        '<label class="text-sm" style="font-weight:600">Description</label>'+
+        '<textarea data-pe-path="solution.description" rows="3" style="width:100%;padding:6px 8px;border:1px solid var(--gray-300);border-radius:4px;font-size:13px">'+esc(p.solution.description||'')+'</textarea>'
+      );
+    }
+
+    if (Array.isArray(p.team_roles_required)) {
+      var th = '<div>';
+      p.team_roles_required.forEach(function(r, i) {
+        th += '<div style="border:1px solid var(--gray-200);border-radius:6px;padding:10px;margin-bottom:8px">';
+        th += '<div style="display:flex;gap:6px;align-items:start;margin-bottom:6px">';
+        th += '<div style="flex:1"><label class="text-sm" style="font-weight:600">Role Title</label><input type="text" data-pe-path="team_roles_required.'+i+'.role_title" value="'+esc(r.role_title||'')+'" style="width:100%;padding:6px 8px;border:1px solid var(--gray-300);border-radius:4px;font-size:13px"></div>';
+        th += '<div style="flex:0 0 90px"><label class="text-sm">Commit %</label><input type="number" data-pe-path="team_roles_required.'+i+'.commitment_pct" data-pe-type="number" value="'+(r.commitment_pct||0)+'" style="width:100%;padding:6px 8px;border:1px solid var(--gray-300);border-radius:4px;font-size:13px"></div>';
+        th += '<div style="flex:0 0 110px;align-self:end;padding-bottom:4px"><label style="display:inline-flex;align-items:center;gap:6px;font-size:13px"><input type="checkbox" data-pe-path="team_roles_required.'+i+'.must_have" data-pe-type="bool"'+(r.must_have?' checked':'')+'> Must-have</label></div>';
+        th += '</div></div>';
+      });
+      th += '</div>';
+      h += planSection('Team Roles ('+p.team_roles_required.length+')', th);
+    }
+
+    openModal(h);
+
+    function setByPath(obj, path, value) {
+      var parts = path.split('.');
+      var cur = obj;
+      for (var i = 0; i < parts.length - 1; i++) {
+        var key = parts[i];
+        if (/^\d+$/.test(key)) key = parseInt(key);
+        if (cur[key] === undefined || cur[key] === null) cur[key] = /^\d+$/.test(parts[i+1]) ? [] : {};
+        cur = cur[key];
+      }
+      var lastKey = parts[parts.length - 1];
+      if (/^\d+$/.test(lastKey)) lastKey = parseInt(lastKey);
+      cur[lastKey] = value;
+    }
+
+    document.querySelectorAll('[data-pe-path]').forEach(function(el) {
+      el.addEventListener('input', function() {
+        var t = this.dataset.peType;
+        var v = t === 'number' ? parseFloat(this.value) || 0 : (t === 'bool' ? this.checked : this.value);
+        setByPath(window._amendingPlan, this.dataset.pePath, v);
+      });
+      el.addEventListener('change', function() {
+        var t = this.dataset.peType;
+        var v = t === 'number' ? parseFloat(this.value) || 0 : (t === 'bool' ? this.checked : this.value);
+        setByPath(window._amendingPlan, this.dataset.pePath, v);
+      });
+    });
+
+    document.getElementById('amendCancelBtn').addEventListener('click', function() {
+      showProjectDetail(projectId);
+    });
+
+    document.getElementById('amendSubmitBtn').addEventListener('click', async function() {
+      var reason = document.getElementById('amendReason').value.trim();
+      if (reason.length < 10) {
+        document.getElementById('amendMsg').innerHTML = '<div class="error-msg">Please provide a reason (at least 10 characters)</div>';
+        return;
+      }
+      var msg = document.getElementById('amendMsg');
+      msg.innerHTML = '<div class="text-muted text-sm">Submitting amendment + invalidating signatures...</div>';
+      try {
+        var r = await apiFetch('/projects/'+projectId+'/amend-plan', {
+          method: 'POST',
+          body: JSON.stringify({ plan_json: window._amendingPlan, reason })
+        });
+        if (r.success) {
+          msg.innerHTML = '<div class="success-msg">Amendment submitted. '+r.data.signatures_invalidated+' signatures invalidated. Re-sign required.</div>';
+          setTimeout(function(){ closeModal(); showProjectDetail(projectId); }, 2000);
+        } else {
+          msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>';
+        }
+      } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
+    });
+  }
+
+  // ============================================================
   // STAGE 3 -- Private PM Workspace UI
   // ============================================================
 
@@ -2216,6 +2322,11 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         html += '<button class="btn btn-primary btn-sm" id="signoffBtn" style="background:#28a745">Sign Off Plan</button>';
         html += '<button class="btn btn-outline btn-sm" id="signoffStatusBtn">Sign-off Status</button>';
       }
+      // Amend plan (PR-B) -- proposer/superadmin only, between team-lock and full sign-off
+      if ((vr.is_proposer || vr.is_superadmin) && ['fully_staffed','pending_signoff'].includes(p.plan_status)) {
+        html += '<button class="btn btn-outline btn-sm" id="amendPlanBtn" style="border-color:#7b1fa2;color:#7b1fa2">Amend Plan (re-sign)</button>';
+        html += '<button class="btn btn-outline btn-sm" id="planVersionsBtn">Plan Versions</button>';
+      }
 
       // Stage 3 -- workspace (auto-init on signoff, button is just shortcut)
       if (['executing','signed_off','completed'].includes(p.plan_status) && (vr.is_proposer || vr.is_participant || vr.is_superadmin)) {
@@ -2372,6 +2483,37 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
 
       var openWsBtn = document.getElementById('openWorkspaceBtn');
       if (openWsBtn) openWsBtn.addEventListener('click', function() { openWorkspaceModal(id); });
+
+      // Amend Plan (PR-B)
+      var amendBtn = document.getElementById('amendPlanBtn');
+      if (amendBtn) amendBtn.addEventListener('click', function() {
+        if (!confirm('Amending the plan will INVALIDATE ALL existing signatures. All participants will need to re-sign the new version. Continue?')) return;
+        showAmendPlanEditor(id, p.plan_json);
+      });
+
+      var versionsBtn = document.getElementById('planVersionsBtn');
+      if (versionsBtn) versionsBtn.addEventListener('click', async function() {
+        var msg = document.getElementById('projActionMsg');
+        msg.innerHTML = '<div class="text-muted text-sm">Loading versions...</div>';
+        try {
+          var r = await apiFetch('/projects/'+id+'/plan-versions');
+          if (r.success) {
+            var versions = r.data || [];
+            if (versions.length === 0) { msg.innerHTML = '<div class="text-muted text-sm">No prior versions. The plan has not been amended yet.</div>'; return; }
+            var h = '<div style="background:var(--gray-50);padding:12px;border-radius:6px;font-size:12px;margin-top:8px;max-height:300px;overflow-y:auto">';
+            h += '<div style="font-weight:700;margin-bottom:8px">Plan Version History ('+versions.length+')</div>';
+            versions.forEach(function(v) {
+              h += '<div style="padding:6px 0;border-bottom:1px solid var(--gray-200)">';
+              h += '<div><strong>v'+v.id+'</strong> &middot; '+new Date(v.created_at).toLocaleString()+' &middot; by '+esc(v.created_by_name||'unknown')+'</div>';
+              if (v.amendment_reason) h += '<div class="text-muted text-sm" style="margin-top:2px">Reason: '+esc(v.amendment_reason)+'</div>';
+              h += '<div class="text-muted text-sm" style="font-family:monospace;font-size:10px">hash: '+esc(v.plan_version_hash.substring(0,20))+'...</div>';
+              h += '</div>';
+            });
+            h += '</div>';
+            msg.innerHTML = h;
+          } else { msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>'; }
+        } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
+      });
 
       var signStatBtn = document.getElementById('signoffStatusBtn');
       if (signStatBtn) signStatBtn.addEventListener('click', async function() {

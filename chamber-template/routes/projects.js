@@ -1153,5 +1153,132 @@ module.exports = function createProjectRoutes(config) {
     }
   });
 
+  // ========================================================
+  // P2B PR-B -- Plan amendment + version history
+  // ========================================================
+
+  // POST /:id/amend-plan -- proposer amends plan after Final Meeting,
+  // invalidating all existing signatures (re-sign required)
+  router.post('/:id/amend-plan', authMiddleware, async (req, res) => {
+    try {
+      const { plan_json, reason } = req.body;
+      if (!plan_json) return res.status(400).json({ success: false, error: 'plan_json required' });
+      const validation = planGenerator.validatePlan(plan_json);
+      if (!validation.ok) return res.status(400).json({ success: false, error: validation.error });
+
+      const [project] = await sequelize.query(
+        `SELECT * FROM ${t}_projects WHERE id = :id`,
+        { replacements: { id: req.params.id }, type: QueryTypes.SELECT }
+      );
+      if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+
+      const [viewer] = await sequelize.query(
+        `SELECT access_level FROM ${t}_members WHERE id = :m`,
+        { replacements: { m: req.member.id }, type: QueryTypes.SELECT }
+      );
+      const isSuperadmin = viewer && viewer.access_level === 'superadmin';
+      if (project.proposer_member_id !== req.member.id && !isSuperadmin) {
+        return res.status(403).json({ success: false, error: 'Only proposer or superadmin can amend' });
+      }
+      if (!['fully_staffed', 'pending_signoff'].includes(project.plan_status)) {
+        return res.status(400).json({ success: false, error: `Cannot amend in status: ${project.plan_status}. Amendments allowed only between team-lock and full sign-off.` });
+      }
+
+      // Save current plan to version history
+      const oldHash = crypto.createHash('sha256').update(JSON.stringify(project.plan_json || {})).digest('hex');
+      await sequelize.query(
+        `INSERT INTO ${t}_project_plan_versions
+         (project_id, plan_json, plan_version_hash, created_by_member_id, amendment_reason, created_at)
+         VALUES (:p, :pj, :h, :m, :r, NOW())`,
+        {
+          replacements: {
+            p: req.params.id,
+            pj: JSON.stringify(project.plan_json || {}),
+            h: oldHash,
+            m: req.member.id,
+            r: reason || 'Amendment'
+          }
+        }
+      );
+
+      // Update plan + reset to pending_signoff
+      await sequelize.query(
+        `UPDATE ${t}_projects
+         SET plan_json = :pj, plan_status = 'pending_signoff', updated_at = NOW()
+         WHERE id = :id`,
+        { replacements: { id: req.params.id, pj: JSON.stringify(plan_json) } }
+      );
+
+      // Invalidate all signatures
+      const [{ count: signaturesInvalidated }] = await sequelize.query(
+        `WITH d AS (DELETE FROM ${t}_project_signoffs WHERE project_id = :p RETURNING id)
+         SELECT COUNT(*) AS count FROM d`,
+        { replacements: { p: req.params.id }, type: QueryTypes.SELECT }
+      );
+
+      // Post system message in workspace discussion (if workspace exists)
+      try {
+        await sequelize.query(
+          `INSERT INTO ${t}_project_messages (project_id, member_id, body, created_at)
+           VALUES (:p, :m, :b, NOW())`,
+          {
+            replacements: {
+              p: req.params.id,
+              m: req.member.id,
+              b: '[SYSTEM] Plan amended. All previous signatures invalidated. All participants must re-sign the new version.\n\nReason: ' + (reason || '(no reason provided)')
+            }
+          }
+        );
+      } catch(e) { /* table may not exist yet, ignore */ }
+
+      return res.json({
+        success: true,
+        data: {
+          message: 'Plan amended. All signatures invalidated.',
+          signatures_invalidated: parseInt(signaturesInvalidated),
+          new_status: 'pending_signoff',
+          re_sign_required: true
+        }
+      });
+    } catch (err) {
+      console.error('[amend-plan]', err);
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // GET /:id/plan-versions -- history of plan amendments
+  router.get('/:id/plan-versions', authMiddleware, async (req, res) => {
+    try {
+      const versions = await sequelize.query(
+        `SELECT v.id, v.plan_version_hash, v.created_at, v.amendment_reason,
+                m.first_name || ' ' || m.last_name AS created_by_name
+         FROM ${t}_project_plan_versions v
+         LEFT JOIN ${t}_members m ON m.id = v.created_by_member_id
+         WHERE v.project_id = :p ORDER BY v.created_at DESC`,
+        { replacements: { p: req.params.id }, type: QueryTypes.SELECT }
+      );
+      return res.json({ success: true, data: versions });
+    } catch (err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // GET /:id/plan-versions/:vid -- single version detail (full plan_json)
+  router.get('/:id/plan-versions/:vid', authMiddleware, async (req, res) => {
+    try {
+      const [v] = await sequelize.query(
+        `SELECT v.*, m.first_name || ' ' || m.last_name AS created_by_name
+         FROM ${t}_project_plan_versions v
+         LEFT JOIN ${t}_members m ON m.id = v.created_by_member_id
+         WHERE v.project_id = :p AND v.id = :vid`,
+        { replacements: { p: req.params.id, vid: req.params.vid }, type: QueryTypes.SELECT }
+      );
+      if (!v) return res.status(404).json({ success: false, error: 'Version not found' });
+      return res.json({ success: true, data: v });
+    } catch (err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
   return router;
 };
