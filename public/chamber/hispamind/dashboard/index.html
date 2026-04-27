@@ -1235,110 +1235,308 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     renderPlanEditor();
   }
 
+  // Helper: edit-everything builders
+  function peTextInput(path, val, opts) {
+    opts = opts || {};
+    var styleStr = opts.style || 'width:100%;padding:6px 8px;border:1px solid var(--gray-300);border-radius:4px;font-size:13px';
+    return '<input type="text" data-pe-path="'+esc(path)+'" value="'+esc(val||'')+'" style="'+styleStr+'">';
+  }
+  function peTextArea(path, val, rows) {
+    return '<textarea data-pe-path="'+esc(path)+'" rows="'+(rows||3)+'" style="width:100%;padding:6px 8px;border:1px solid var(--gray-300);border-radius:4px;font-size:13px;resize:vertical;font-family:inherit">'+esc(val||'')+'</textarea>';
+  }
+  function peNumberInput(path, val) {
+    return '<input type="number" data-pe-path="'+esc(path)+'" data-pe-type="number" value="'+(val||0)+'" style="width:100%;padding:6px 8px;border:1px solid var(--gray-300);border-radius:4px;font-size:13px">';
+  }
+  function peCheckbox(path, val, label) {
+    return '<label style="display:inline-flex;align-items:center;gap:6px;font-size:13px"><input type="checkbox" data-pe-path="'+esc(path)+'" data-pe-type="bool"'+(val?' checked':'')+'> '+esc(label||'')+'</label>';
+  }
+  function peSelect(path, val, options) {
+    return '<select data-pe-path="'+esc(path)+'" style="padding:6px 8px;border:1px solid var(--gray-300);border-radius:4px;font-size:13px">'+
+      options.map(function(o){return '<option value="'+esc(o)+'"'+(val===o?' selected':'')+'>'+esc(o)+'</option>';}).join('')+'</select>';
+  }
+  function peStringArrayList(arrPath, arr, placeholder) {
+    var listId = 'list-'+arrPath.replace(/[^a-z0-9]/gi,'_');
+    var items = (arr||[]).map(function(v, i){
+      return '<div data-pe-arr-row="'+arrPath+'.'+i+'" style="display:flex;gap:6px;margin-bottom:4px">'+
+        '<input type="text" data-pe-path="'+arrPath+'.'+i+'" value="'+esc(v||'')+'" style="flex:1;padding:6px 8px;border:1px solid var(--gray-300);border-radius:4px;font-size:13px">'+
+        '<button type="button" class="btn btn-outline btn-sm" data-pe-remove="'+arrPath+'.'+i+'" style="padding:2px 8px">x</button></div>';
+    }).join('');
+    return '<div id="'+listId+'">'+items+'</div>'+
+      '<button type="button" class="btn btn-outline btn-sm" data-pe-add="'+arrPath+'" data-pe-add-type="string" style="margin-top:4px">+ Add item</button>';
+  }
+
   function renderPlanEditor() {
     var p = window._currentDraftPlan;
     var pid = window._currentDraftProjectId;
     var h = '<div style="position:sticky;top:0;background:var(--white);padding-bottom:12px;border-bottom:1px solid var(--gray-200);margin:-28px -28px 16px;padding:20px 28px 12px;z-index:5;">';
     h += '<div class="flex-between"><h2 style="margin:0">Business Plan Editor</h2>';
     h += '<div><button class="btn btn-outline btn-sm" id="savePlanBtn">Save Draft</button> ';
-    h += '<button class="btn btn-primary btn-sm" id="publishPlanBtn">Publish Plan</button></div></div>';
-    h += '<p class="text-muted text-sm" style="margin-top:6px">Step 2 of 2 -- Review and edit before publishing. Click any text to edit inline.</p>';
+    h += '<button class="btn btn-primary btn-sm" id="publishPlanBtn" style="background:#28a745">Publish Plan</button></div></div>';
+    h += '<p class="text-muted text-sm" style="margin-top:6px">Edit every field below. Click <strong>Save Draft</strong> to keep changes private. Click <strong>Publish Plan</strong> when ready to share with the chamber.</p>';
     h += '<div id="planMsg" style="margin-top:8px"></div></div>';
 
-    h += planSection('Title', '<h3 contenteditable data-plan-key="title">'+esc(p.title||'')+'</h3>');
-    h += planSection('Executive Summary', '<p contenteditable data-plan-key="executive_summary" style="white-space:pre-wrap">'+esc(p.executive_summary||'')+'</p>');
+    // === Title ===
+    h += planSection('Title', peTextInput('title', p.title));
 
+    // === Executive Summary ===
+    h += planSection('Executive Summary', peTextArea('executive_summary', p.executive_summary, 4));
+
+    // === Problem & Market ===
     if (p.problem_market) {
       var pm = p.problem_market;
-      h += planSection('Problem & Market',
-        '<p contenteditable data-plan-key="problem_market.problem_statement" style="white-space:pre-wrap;margin-bottom:8px">'+esc(pm.problem_statement||'')+'</p>'+
-        '<table style="width:100%;font-size:13px"><tr><td><strong>TAM:</strong></td><td>$'+Number(pm.tam_usd||0).toLocaleString()+'</td></tr>'+
-        '<tr><td><strong>SAM:</strong></td><td>$'+Number(pm.sam_usd||0).toLocaleString()+'</td></tr>'+
-        '<tr><td><strong>SOM:</strong></td><td>$'+Number(pm.som_usd||0).toLocaleString()+'</td></tr></table>'+
-        '<div style="margin-top:8px"><strong>Target Segments:</strong> '+(pm.target_segments||[]).map(esc).join(', ')+'</div>'
-      );
+      var pmh = '<label class="text-sm" style="font-weight:600">Problem Statement</label>'+peTextArea('problem_market.problem_statement', pm.problem_statement, 3);
+      pmh += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">';
+      pmh += '<div><label class="text-sm" style="font-weight:600">TAM (USD)</label>'+peNumberInput('problem_market.tam_usd', pm.tam_usd)+'</div>';
+      pmh += '<div><label class="text-sm" style="font-weight:600">SAM (USD)</label>'+peNumberInput('problem_market.sam_usd', pm.sam_usd)+'</div>';
+      pmh += '<div><label class="text-sm" style="font-weight:600">SOM (USD)</label>'+peNumberInput('problem_market.som_usd', pm.som_usd)+'</div>';
+      pmh += '</div>';
+      pmh += '<div style="margin-top:8px"><label class="text-sm" style="font-weight:600">Target Segments</label>';
+      pmh += peStringArrayList('problem_market.target_segments', pm.target_segments)+'</div>';
+      h += planSection('Problem & Market', pmh);
     }
 
+    // === Solution ===
     if (p.solution) {
-      h += planSection('Solution',
-        '<p contenteditable data-plan-key="solution.description" style="white-space:pre-wrap">'+esc(p.solution.description||'')+'</p>'+
-        '<div style="margin-top:8px"><strong>Differentiators:</strong><ul style="margin:6px 0 0 20px">'+
-          (p.solution.key_differentiators||[]).map(function(d){return '<li>'+esc(d)+'</li>';}).join('')+'</ul></div>'+
-        '<div style="margin-top:8px"><strong>Tech Stack:</strong> '+(p.solution.tech_stack_or_methodology||[]).map(esc).join(', ')+'</div>'
-      );
+      var sh = '<label class="text-sm" style="font-weight:600">Description</label>'+peTextArea('solution.description', p.solution.description, 3);
+      sh += '<div style="margin-top:8px"><label class="text-sm" style="font-weight:600">Key Differentiators</label>';
+      sh += peStringArrayList('solution.key_differentiators', p.solution.key_differentiators)+'</div>';
+      sh += '<div style="margin-top:8px"><label class="text-sm" style="font-weight:600">Tech Stack / Methodology</label>';
+      sh += peStringArrayList('solution.tech_stack_or_methodology', p.solution.tech_stack_or_methodology)+'</div>';
+      h += planSection('Solution', sh);
     }
 
+    // === Go-to-Market ===
     if (p.go_to_market) {
-      h += planSection('Go-to-Market', renderGTM(p.go_to_market));
+      var gtm = p.go_to_market;
+      var gh = '';
+      // Phases
+      gh += '<label class="text-sm" style="font-weight:600">Phases</label>';
+      gh += '<div data-pe-arr-list="go_to_market.phases">';
+      (gtm.phases||[]).forEach(function(ph, i) {
+        gh += '<div data-pe-arr-row="go_to_market.phases.'+i+'" style="border:1px solid var(--gray-200);border-radius:6px;padding:8px;margin-bottom:6px">';
+        gh += '<div style="display:flex;gap:6px;margin-bottom:4px">';
+        gh += '<div style="flex:2"><label class="text-sm">Name</label>'+peTextInput('go_to_market.phases.'+i+'.name', ph.name)+'</div>';
+        gh += '<div style="flex:1"><label class="text-sm">Months</label>'+peNumberInput('go_to_market.phases.'+i+'.duration_months', ph.duration_months)+'</div>';
+        gh += '<button type="button" class="btn btn-outline btn-sm" data-pe-remove="go_to_market.phases.'+i+'" style="align-self:end;height:32px">x</button>';
+        gh += '</div>';
+        gh += '<label class="text-sm">Activities</label>'+peStringArrayList('go_to_market.phases.'+i+'.activities', ph.activities);
+        gh += '</div>';
+      });
+      gh += '</div><button type="button" class="btn btn-outline btn-sm" data-pe-add="go_to_market.phases" data-pe-add-type="phase" style="margin-bottom:8px">+ Add phase</button>';
+
+      // Channel strategy
+      gh += '<div style="margin-top:8px"><label class="text-sm" style="font-weight:600">Channel Strategy</label>'+peTextArea('go_to_market.channel_strategy', gtm.channel_strategy, 2)+'</div>';
+
+      // Regional priorities
+      gh += '<div style="margin-top:8px"><label class="text-sm" style="font-weight:600">Regional Priorities</label>';
+      gh += '<div data-pe-arr-list="go_to_market.regional_priorities">';
+      (gtm.regional_priorities||[]).forEach(function(r, i) {
+        gh += '<div data-pe-arr-row="go_to_market.regional_priorities.'+i+'" style="border:1px solid var(--gray-200);border-radius:6px;padding:8px;margin-bottom:6px;display:flex;gap:6px">';
+        gh += '<div style="flex:1"><label class="text-sm">Region</label>'+peTextInput('go_to_market.regional_priorities.'+i+'.region', r.region)+'</div>';
+        gh += '<div style="flex:2"><label class="text-sm">Rationale</label>'+peTextInput('go_to_market.regional_priorities.'+i+'.rationale', r.rationale)+'</div>';
+        gh += '<button type="button" class="btn btn-outline btn-sm" data-pe-remove="go_to_market.regional_priorities.'+i+'" style="align-self:end;height:32px">x</button>';
+        gh += '</div>';
+      });
+      gh += '</div><button type="button" class="btn btn-outline btn-sm" data-pe-add="go_to_market.regional_priorities" data-pe-add-type="region">+ Add region</button></div>';
+
+      h += planSection('Go-to-Market', gh);
     }
 
+    // === Revenue Model ===
     if (p.revenue_model) {
       var rm = p.revenue_model;
-      var pricing = (rm.pricing_tiers||[]).map(function(t){
-        return '<li><strong>'+esc(t.name)+':</strong> $'+Number(t.price_usd||0).toLocaleString()+' / '+esc(t.period||'')+'</li>';
-      }).join('');
-      h += planSection('Revenue Model',
-        '<ul style="margin:0 0 8px 20px">'+pricing+'</ul>'+
-        '<div><strong>Year 1 Revenue:</strong> $'+Number(rm.year1_revenue_estimate_usd||0).toLocaleString()+'</div>'+
-        '<div><strong>Year 3 Revenue:</strong> $'+Number(rm.year3_revenue_estimate_usd||0).toLocaleString()+'</div>'
-      );
+      var rh = '<label class="text-sm" style="font-weight:600">Pricing Tiers</label>';
+      rh += '<div data-pe-arr-list="revenue_model.pricing_tiers">';
+      (rm.pricing_tiers||[]).forEach(function(t, i) {
+        rh += '<div data-pe-arr-row="revenue_model.pricing_tiers.'+i+'" style="display:grid;grid-template-columns:2fr 1fr 1fr 32px;gap:6px;margin-bottom:4px">';
+        rh += '<div><label class="text-sm">Name</label>'+peTextInput('revenue_model.pricing_tiers.'+i+'.name', t.name)+'</div>';
+        rh += '<div><label class="text-sm">Price (USD)</label>'+peNumberInput('revenue_model.pricing_tiers.'+i+'.price_usd', t.price_usd)+'</div>';
+        rh += '<div><label class="text-sm">Period</label>'+peTextInput('revenue_model.pricing_tiers.'+i+'.period', t.period)+'</div>';
+        rh += '<button type="button" class="btn btn-outline btn-sm" data-pe-remove="revenue_model.pricing_tiers.'+i+'" style="align-self:end;height:32px">x</button>';
+        rh += '</div>';
+      });
+      rh += '</div><button type="button" class="btn btn-outline btn-sm" data-pe-add="revenue_model.pricing_tiers" data-pe-add-type="pricing_tier" style="margin-bottom:8px">+ Add tier</button>';
+      rh += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">';
+      rh += '<div><label class="text-sm" style="font-weight:600">Year 1 Revenue (USD)</label>'+peNumberInput('revenue_model.year1_revenue_estimate_usd', rm.year1_revenue_estimate_usd)+'</div>';
+      rh += '<div><label class="text-sm" style="font-weight:600">Year 3 Revenue (USD)</label>'+peNumberInput('revenue_model.year3_revenue_estimate_usd', rm.year3_revenue_estimate_usd)+'</div>';
+      rh += '</div>';
+      h += planSection('Revenue Model', rh);
     }
 
+    // === Team Roles Required ===
     if (Array.isArray(p.team_roles_required)) {
-      var roles = p.team_roles_required.map(function(r,i){
-        return '<div style="border:1px solid var(--gray-200);border-radius:6px;padding:10px;margin-bottom:8px">'+
-          '<div style="font-weight:700">'+esc(r.role_title||'Role '+(i+1))+(r.must_have?' <span style="background:var(--red);color:white;padding:2px 6px;border-radius:3px;font-size:10px;margin-left:6px">MUST-HAVE</span>':'')+'</div>'+
-          '<div class="text-sm text-muted" style="margin:4px 0">Skills: '+(r.required_skills||[]).map(esc).join(', ')+'</div>'+
-          '<div class="text-sm text-muted">Sectors: '+(r.preferred_sectors||[]).map(esc).join(', ')+' | Regions: '+(r.preferred_regions||[]).map(esc).join(', ')+'</div>'+
-          '<div class="text-sm" style="margin-top:4px">Commitment: '+(r.commitment_pct||0)+'%</div>'+
-          '</div>';
-      }).join('');
-      h += planSection('Team Roles Required ('+p.team_roles_required.length+')', roles);
+      var th = '<div data-pe-arr-list="team_roles_required">';
+      p.team_roles_required.forEach(function(r, i) {
+        th += '<div data-pe-arr-row="team_roles_required.'+i+'" style="border:1px solid var(--gray-200);border-left:3px solid '+(r.must_have?'var(--red)':'#999')+';border-radius:6px;padding:10px;margin-bottom:8px">';
+        th += '<div style="display:flex;gap:6px;align-items:start;margin-bottom:6px">';
+        th += '<div style="flex:1"><label class="text-sm" style="font-weight:600">Role Title</label>'+peTextInput('team_roles_required.'+i+'.role_title', r.role_title)+'</div>';
+        th += '<div style="flex:0 0 90px"><label class="text-sm">Commit %</label>'+peNumberInput('team_roles_required.'+i+'.commitment_pct', r.commitment_pct)+'</div>';
+        th += '<div style="flex:0 0 110px;align-self:end;padding-bottom:4px">'+peCheckbox('team_roles_required.'+i+'.must_have', r.must_have, 'Must-have')+'</div>';
+        th += '<button type="button" class="btn btn-outline btn-sm" data-pe-remove="team_roles_required.'+i+'" style="align-self:end;height:32px">x</button>';
+        th += '</div>';
+        th += '<label class="text-sm" style="font-weight:600">Responsibilities</label>'+peStringArrayList('team_roles_required.'+i+'.responsibilities', r.responsibilities);
+        th += '<label class="text-sm" style="font-weight:600;margin-top:6px;display:block">Required Skills</label>'+peStringArrayList('team_roles_required.'+i+'.required_skills', r.required_skills);
+        th += '<label class="text-sm" style="font-weight:600;margin-top:6px;display:block">Preferred Sectors</label>'+peStringArrayList('team_roles_required.'+i+'.preferred_sectors', r.preferred_sectors);
+        th += '<label class="text-sm" style="font-weight:600;margin-top:6px;display:block">Preferred Regions</label>'+peStringArrayList('team_roles_required.'+i+'.preferred_regions', r.preferred_regions);
+        th += '</div>';
+      });
+      th += '</div><button type="button" class="btn btn-outline btn-sm" data-pe-add="team_roles_required" data-pe-add-type="role">+ Add role</button>';
+      h += planSection('Team Roles Required ('+p.team_roles_required.length+')', th);
     }
 
+    // === Budget Breakdown ===
     if (Array.isArray(p.budget_breakdown)) {
-      var rows = p.budget_breakdown.map(function(b){
-        return '<tr><td>'+esc(b.category||'')+'</td><td>'+esc(b.phase||'')+'</td><td style="text-align:right">$'+Number(b.amount_usd||0).toLocaleString()+'</td></tr>';
-      }).join('');
-      var tot = p.budget_breakdown.reduce(function(s,b){return s+(b.amount_usd||0);},0);
-      h += planSection('Budget Breakdown',
-        '<table style="width:100%;font-size:13px"><thead><tr><th style="text-align:left">Category</th><th style="text-align:left">Phase</th><th style="text-align:right">Amount</th></tr></thead><tbody>'+
-          rows+'<tr style="font-weight:700;border-top:2px solid var(--gray-300)"><td colspan="2">TOTAL</td><td style="text-align:right">$'+Number(tot).toLocaleString()+'</td></tr></tbody></table>'
-      );
+      var bh = '<div data-pe-arr-list="budget_breakdown">';
+      p.budget_breakdown.forEach(function(b, i) {
+        bh += '<div data-pe-arr-row="budget_breakdown.'+i+'" style="display:grid;grid-template-columns:2fr 2fr 1fr 32px;gap:6px;margin-bottom:4px">';
+        bh += '<div><label class="text-sm">Category</label>'+peTextInput('budget_breakdown.'+i+'.category', b.category)+'</div>';
+        bh += '<div><label class="text-sm">Phase</label>'+peTextInput('budget_breakdown.'+i+'.phase', b.phase)+'</div>';
+        bh += '<div><label class="text-sm">Amount (USD)</label>'+peNumberInput('budget_breakdown.'+i+'.amount_usd', b.amount_usd)+'</div>';
+        bh += '<button type="button" class="btn btn-outline btn-sm" data-pe-remove="budget_breakdown.'+i+'" style="align-self:end;height:32px">x</button>';
+        bh += '</div>';
+      });
+      bh += '</div><button type="button" class="btn btn-outline btn-sm" data-pe-add="budget_breakdown" data-pe-add-type="budget">+ Add line item</button>';
+      var tot = p.budget_breakdown.reduce(function(s,b){return s+(parseFloat(b.amount_usd)||0);},0);
+      bh += '<div style="margin-top:8px;font-weight:700;text-align:right">Current total: $'+Number(tot).toLocaleString()+'</div>';
+      h += planSection('Budget Breakdown', bh);
     }
 
+    // === Timeline Milestones ===
     if (Array.isArray(p.timeline_milestones)) {
-      var ms = p.timeline_milestones.map(function(m){
-        return '<div style="display:flex;gap:12px;padding:6px 0;border-bottom:1px solid var(--gray-100)"><div style="font-weight:700;min-width:60px">M'+(m.month||0)+'</div><div><div style="font-weight:600">'+esc(m.milestone||'')+'</div><div class="text-sm text-muted">'+esc(m.deliverable||'')+'</div></div></div>';
-      }).join('');
-      h += planSection('Timeline Milestones', ms);
+      var mh = '<div data-pe-arr-list="timeline_milestones">';
+      p.timeline_milestones.forEach(function(m, i) {
+        mh += '<div data-pe-arr-row="timeline_milestones.'+i+'" style="border:1px solid var(--gray-200);border-radius:6px;padding:8px;margin-bottom:6px;display:grid;grid-template-columns:80px 1fr 32px;gap:6px">';
+        mh += '<div><label class="text-sm">Month</label>'+peNumberInput('timeline_milestones.'+i+'.month', m.month)+'</div>';
+        mh += '<div><label class="text-sm">Milestone</label>'+peTextInput('timeline_milestones.'+i+'.milestone', m.milestone)+
+              '<label class="text-sm" style="margin-top:4px;display:block">Deliverable</label>'+peTextArea('timeline_milestones.'+i+'.deliverable', m.deliverable, 2)+'</div>';
+        mh += '<button type="button" class="btn btn-outline btn-sm" data-pe-remove="timeline_milestones.'+i+'" style="align-self:start;height:32px">x</button>';
+        mh += '</div>';
+      });
+      mh += '</div><button type="button" class="btn btn-outline btn-sm" data-pe-add="timeline_milestones" data-pe-add-type="milestone">+ Add milestone</button>';
+      h += planSection('Timeline Milestones', mh);
     }
 
+    // === Risks ===
     if (Array.isArray(p.risks)) {
-      var rk = p.risks.map(function(r){
-        var col = r.likelihood==='high'?'var(--red)':(r.likelihood==='medium'?'#e65100':'#28a745');
-        return '<div style="padding:8px 0;border-bottom:1px solid var(--gray-100)"><div><strong>'+esc(r.risk||'')+'</strong> <span style="color:'+col+';font-size:11px;text-transform:uppercase;font-weight:700;margin-left:6px">'+esc(r.likelihood||'')+'</span></div><div class="text-sm text-muted">Mitigation: '+esc(r.mitigation||'')+'</div></div>';
-      }).join('');
-      h += planSection('Risks', rk);
+      var rkh = '<div data-pe-arr-list="risks">';
+      p.risks.forEach(function(r, i) {
+        rkh += '<div data-pe-arr-row="risks.'+i+'" style="border:1px solid var(--gray-200);border-radius:6px;padding:8px;margin-bottom:6px">';
+        rkh += '<div style="display:flex;gap:6px;align-items:start">';
+        rkh += '<div style="flex:2"><label class="text-sm">Risk</label>'+peTextInput('risks.'+i+'.risk', r.risk)+'</div>';
+        rkh += '<div style="flex:0 0 110px"><label class="text-sm">Likelihood</label>'+peSelect('risks.'+i+'.likelihood', r.likelihood||'medium', ['low','medium','high'])+'</div>';
+        rkh += '<button type="button" class="btn btn-outline btn-sm" data-pe-remove="risks.'+i+'" style="align-self:end;height:32px">x</button>';
+        rkh += '</div>';
+        rkh += '<label class="text-sm" style="margin-top:4px;display:block">Mitigation</label>'+peTextArea('risks.'+i+'.mitigation', r.mitigation, 2);
+        rkh += '</div>';
+      });
+      rkh += '</div><button type="button" class="btn btn-outline btn-sm" data-pe-add="risks" data-pe-add-type="risk">+ Add risk</button>';
+      h += planSection('Risks', rkh);
     }
 
+    // === Success KPIs ===
     if (Array.isArray(p.success_kpis)) {
-      var k = p.success_kpis.map(function(x){
-        return '<tr><td style="font-weight:600">'+esc(x.kpi||'')+'</td><td>'+esc(x.target||'')+'</td><td class="text-muted text-sm">'+esc(x.measurement_period||'')+'</td></tr>';
-      }).join('');
-      h += planSection('Success KPIs', '<table style="width:100%;font-size:13px"><thead><tr><th style="text-align:left">KPI</th><th style="text-align:left">Target</th><th style="text-align:left">Period</th></tr></thead><tbody>'+k+'</tbody></table>');
+      var kh = '<div data-pe-arr-list="success_kpis">';
+      p.success_kpis.forEach(function(k, i) {
+        kh += '<div data-pe-arr-row="success_kpis.'+i+'" style="display:grid;grid-template-columns:2fr 2fr 1fr 32px;gap:6px;margin-bottom:4px">';
+        kh += '<div><label class="text-sm">KPI</label>'+peTextInput('success_kpis.'+i+'.kpi', k.kpi)+'</div>';
+        kh += '<div><label class="text-sm">Target</label>'+peTextInput('success_kpis.'+i+'.target', k.target)+'</div>';
+        kh += '<div><label class="text-sm">Period</label>'+peTextInput('success_kpis.'+i+'.measurement_period', k.measurement_period)+'</div>';
+        kh += '<button type="button" class="btn btn-outline btn-sm" data-pe-remove="success_kpis.'+i+'" style="align-self:end;height:32px">x</button>';
+        kh += '</div>';
+      });
+      kh += '</div><button type="button" class="btn btn-outline btn-sm" data-pe-add="success_kpis" data-pe-add-type="kpi">+ Add KPI</button>';
+      h += planSection('Success KPIs', kh);
     }
 
     openModal(h);
 
-    // Wire content-editable changes back to plan object
-    document.querySelectorAll('[contenteditable][data-plan-key]').forEach(function(el) {
-      el.addEventListener('blur', function() {
-        var path = this.dataset.planKey.split('.');
-        var v = this.textContent;
-        var obj = window._currentDraftPlan;
-        for (var i = 0; i < path.length - 1; i++) obj = obj[path[i]];
-        obj[path[path.length - 1]] = v;
+    // === Wire all field changes ===
+    function setByPath(obj, path, value) {
+      var parts = path.split('.');
+      var cur = obj;
+      for (var i = 0; i < parts.length - 1; i++) {
+        var key = parts[i];
+        // numeric -> array index
+        if (/^\d+$/.test(key)) key = parseInt(key);
+        if (cur[key] === undefined || cur[key] === null) {
+          cur[key] = /^\d+$/.test(parts[i+1]) ? [] : {};
+        }
+        cur = cur[key];
+      }
+      var lastKey = parts[parts.length - 1];
+      if (/^\d+$/.test(lastKey)) lastKey = parseInt(lastKey);
+      cur[lastKey] = value;
+    }
+
+    document.querySelectorAll('[data-pe-path]').forEach(function(el) {
+      el.addEventListener('input', function() {
+        var path = this.dataset.pePath;
+        var t = this.dataset.peType;
+        var v;
+        if (t === 'number') v = parseFloat(this.value) || 0;
+        else if (t === 'bool') v = this.checked;
+        else v = this.value;
+        setByPath(window._currentDraftPlan, path, v);
+      });
+      el.addEventListener('change', function() {
+        var path = this.dataset.pePath;
+        var t = this.dataset.peType;
+        var v;
+        if (t === 'number') v = parseFloat(this.value) || 0;
+        else if (t === 'bool') v = this.checked;
+        else v = this.value;
+        setByPath(window._currentDraftPlan, path, v);
+      });
+    });
+
+    // Add buttons
+    document.querySelectorAll('[data-pe-add]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var path = this.dataset.peAdd;
+        var type = this.dataset.peAddType;
+        var newItem;
+        switch (type) {
+          case 'string': newItem = ''; break;
+          case 'phase': newItem = { name: 'New phase', duration_months: 1, activities: [] }; break;
+          case 'region': newItem = { region: '', rationale: '' }; break;
+          case 'pricing_tier': newItem = { name: '', price_usd: 0, period: 'monthly' }; break;
+          case 'role': newItem = { role_title: 'New Role', responsibilities: [], required_skills: [], preferred_sectors: [], preferred_regions: [], commitment_pct: 50, must_have: false }; break;
+          case 'budget': newItem = { category: '', phase: '', amount_usd: 0 }; break;
+          case 'milestone': newItem = { month: 1, milestone: '', deliverable: '' }; break;
+          case 'risk': newItem = { risk: '', likelihood: 'medium', mitigation: '' }; break;
+          case 'kpi': newItem = { kpi: '', target: '', measurement_period: 'monthly' }; break;
+          default: newItem = '';
+        }
+        // Navigate to the array and push
+        var parts = path.split('.');
+        var cur = window._currentDraftPlan;
+        for (var i = 0; i < parts.length; i++) {
+          if (cur[parts[i]] === undefined) cur[parts[i]] = [];
+          cur = cur[parts[i]];
+        }
+        if (!Array.isArray(cur)) {
+          // Re-navigate
+          cur = window._currentDraftPlan;
+          for (var j = 0; j < parts.length - 1; j++) cur = cur[parts[j]];
+          if (!Array.isArray(cur[parts[parts.length-1]])) cur[parts[parts.length-1]] = [];
+          cur[parts[parts.length-1]].push(newItem);
+        } else {
+          cur.push(newItem);
+        }
+        renderPlanEditor();
+      });
+    });
+
+    // Remove buttons
+    document.querySelectorAll('[data-pe-remove]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var path = this.dataset.peRemove; // e.g. "team_roles_required.2"
+        var parts = path.split('.');
+        var idx = parseInt(parts.pop());
+        var cur = window._currentDraftPlan;
+        for (var i = 0; i < parts.length; i++) cur = cur[parts[i]];
+        if (Array.isArray(cur)) cur.splice(idx, 1);
+        renderPlanEditor();
       });
     });
 
@@ -1347,12 +1545,13 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       msg.innerHTML = '<div class="text-muted text-sm">Saving draft...</div>';
       try {
         var r = await apiFetch('/projects/'+pid+'/plan', { method:'PUT', body:JSON.stringify({ plan_json: window._currentDraftPlan }) });
-        if (r.success) msg.innerHTML = '<div class="success-msg">Draft saved.</div>';
+        if (r.success) msg.innerHTML = '<div class="success-msg">Draft saved. Stays private to you until you click Publish Plan.</div>';
         else msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>';
       } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
     });
 
     document.getElementById('publishPlanBtn').addEventListener('click', async function() {
+      if (!confirm('Publish plan? It will become visible to all chamber members. You can no longer edit privately after this.')) return;
       var msg = document.getElementById('planMsg');
       msg.innerHTML = '<div class="text-muted text-sm">Saving + publishing...</div>';
       try {
