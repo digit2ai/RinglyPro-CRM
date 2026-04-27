@@ -107,9 +107,17 @@ async function generatePlan({ vision, sector, countries, budget_tier }) {
   try {
     plan = JSON.parse(jsonStr);
   } catch (e) {
-    const err = new Error('Plan generator returned invalid JSON: ' + e.message);
-    err.raw = text.substring(0, 500);
-    throw err;
+    // Defensive cleanup: trailing commas, unquoted keys
+    let cleaned = jsonStr
+      .replace(/,(\s*[}\]])/g, '$1')          // strip trailing commas before } or ]
+      .replace(/([\{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":');  // quote unquoted keys
+    try {
+      plan = JSON.parse(cleaned);
+    } catch (e2) {
+      const err = new Error('Plan generator returned invalid JSON: ' + e.message);
+      err.raw = text.substring(0, 500);
+      throw err;
+    }
   }
 
   // Minimal validation
