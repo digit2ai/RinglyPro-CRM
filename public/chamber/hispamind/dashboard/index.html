@@ -1927,6 +1927,11 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         html += '<button class="btn btn-outline btn-sm" id="joinBtn">Join Team</button>';
       }
       html += '<button class="btn btn-accent btn-sm" id="evaluateBtn">Evaluate Risk</button>';
+      // Stage 0 -- proposer-only: Edit/Publish draft
+      if ((vr.is_proposer || vr.is_superadmin) && p.plan_status === 'draft' && p.plan_json) {
+        html += '<button class="btn btn-primary btn-sm" id="editPlanBtn" style="background:var(--accent);color:var(--navy)">Edit Plan</button>';
+        html += '<button class="btn btn-primary btn-sm" id="publishDraftBtn" style="background:#28a745">Publish Plan</button>';
+      }
       // Stage 1 -- proposer-only: Invite AI matches
       if ((vr.is_proposer || vr.is_superadmin) && p.plan_status && ['published','recruiting'].includes(p.plan_status)) {
         html += '<button class="btn btn-primary btn-sm" id="inviteMatchesBtn" style="background:var(--accent);color:var(--navy)">+ Invite AI Matches</button>';
@@ -1987,6 +1992,25 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
             h += '<strong>Timeline P50:</strong> '+ev.timeline_months.p50+' months | <strong>P90:</strong> '+ev.timeline_months.p90+' months';
             h += '</div>';
             msg.innerHTML = h;
+          } else { msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>'; }
+        } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
+      });
+
+      // P2B Stage 0 -- Edit/Publish draft
+      var editPlanBtn = document.getElementById('editPlanBtn');
+      if (editPlanBtn) editPlanBtn.addEventListener('click', function() {
+        showPlanEditor(id, p.plan_json);
+      });
+
+      var publishDraftBtn = document.getElementById('publishDraftBtn');
+      if (publishDraftBtn) publishDraftBtn.addEventListener('click', async function() {
+        var msg = document.getElementById('projActionMsg');
+        msg.innerHTML = '<div class="text-muted text-sm">Publishing plan...</div>';
+        try {
+          var r = await apiFetch('/projects/'+id+'/publish', { method:'POST' });
+          if (r.success) {
+            msg.innerHTML = '<div class="success-msg">Plan published. Project is now visible to all chamber members.</div>';
+            setTimeout(function(){ showProjectDetail(id); }, 1200);
           } else { msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>'; }
         } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
       });
