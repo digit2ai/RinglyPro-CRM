@@ -384,5 +384,324 @@ module.exports = function createProjectRoutes(config) {
     }
   });
 
+  // ========================================================
+  // P2B STAGE 1 -- Recruitment via published plan
+  // ========================================================
+
+  // Simple text-based scoring against a role spec
+  function scoreMember(member, role) {
+    let score = 0;
+    let denom = 0;
+
+    // Sector match (0-1)
+    if (role.preferred_sectors && role.preferred_sectors.length > 0) {
+      const sectorList = role.preferred_sectors.map(s => String(s).toLowerCase().trim());
+      const ms = String(member.sector || '').toLowerCase();
+      score += sectorList.some(s => ms.includes(s) || s.includes(ms)) ? 0.4 : 0;
+      denom += 0.4;
+    }
+
+    // Region match by country / region_id (0-1)
+    if (role.preferred_regions && role.preferred_regions.length > 0) {
+      const regionList = role.preferred_regions.map(r => String(r).toLowerCase().trim());
+      const mc = String(member.country || '').toLowerCase();
+      const regionId = member.region_id;
+      const match = regionList.some(r => mc.includes(r) || r.includes(mc) || `region${regionId}` === r);
+      score += match ? 0.3 : 0;
+      denom += 0.3;
+    }
+
+    // Skills overlap with required_skills against bio + sub_specialty (0-1)
+    if (role.required_skills && role.required_skills.length > 0) {
+      const haystack = (
+        (member.bio || '') + ' ' +
+        (member.sub_specialty || '') + ' ' +
+        (member.company_name || '')
+      ).toLowerCase();
+      const hits = role.required_skills.filter(s =>
+        haystack.includes(String(s).toLowerCase().substring(0, 8))
+      ).length;
+      const ratio = hits / role.required_skills.length;
+      score += ratio * 0.2;
+      denom += 0.2;
+    }
+
+    // Trust score baseline (0-1)
+    score += parseFloat(member.trust_score || 0.7) * 0.1;
+    denom += 0.1;
+
+    return denom > 0 ? Math.min(1, score / denom) : 0;
+  }
+
+  // POST /:id/invite-matches -- AI-cosine match for each role + create invitations
+  router.post('/:id/invite-matches', authMiddleware, async (req, res) => {
+    try {
+      const projects = await sequelize.query(
+        `SELECT id, proposer_member_id, plan_json, plan_status FROM ${t}_projects WHERE id = :id`,
+        { replacements: { id: req.params.id }, type: QueryTypes.SELECT }
+      );
+      if (projects.length === 0) return res.status(404).json({ success: false, error: 'Project not found' });
+      const project = projects[0];
+      if (project.proposer_member_id !== req.member.id) {
+        return res.status(403).json({ success: false, error: 'Only the proposer can invite' });
+      }
+      if (project.plan_status !== 'published' && project.plan_status !== 'recruiting') {
+        return res.status(400).json({ success: false, error: 'Plan must be published before inviting' });
+      }
+      const plan = project.plan_json;
+      if (!plan || !Array.isArray(plan.team_roles_required) || plan.team_roles_required.length === 0) {
+        return res.status(400).json({ success: false, error: 'Plan has no team_roles_required' });
+      }
+
+      // Fetch all potential members (excluding proposer + already-invited)
+      const members = await sequelize.query(
+        `SELECT id, first_name, last_name, email, country, region_id, sector,
+                sub_specialty, bio, company_name, trust_score
+         FROM ${t}_members
+         WHERE id != :proposer AND status = 'active'`,
+        { replacements: { proposer: project.proposer_member_id }, type: QueryTypes.SELECT }
+      );
+
+      const N = parseInt(req.body.top_n || 3);
+      const byRole = [];
+      let invitationsCreated = 0;
+
+      for (let i = 0; i < plan.team_roles_required.length; i++) {
+        const role = plan.team_roles_required[i];
+        const ranked = members
+          .map(m => ({ member: m, score: scoreMember(m, role) }))
+          .sort((a, b) => b.score - a.score)
+          .slice(0, N);
+
+        const invited = [];
+        for (const r of ranked) {
+          // Skip if already exists
+          const [existing] = await sequelize.query(
+            `SELECT id, status FROM ${t}_project_invitations
+             WHERE project_id = :p AND member_id = :m AND role_index = :i`,
+            { replacements: { p: req.params.id, m: r.member.id, i }, type: QueryTypes.SELECT }
+          );
+          if (existing) {
+            invited.push({ member_id: r.member.id, name: `${r.member.first_name} ${r.member.last_name}`, score: r.score, status: existing.status, existing: true });
+            continue;
+          }
+
+          await sequelize.query(
+            `INSERT INTO ${t}_project_invitations
+             (project_id, member_id, role_index, role_title, status, match_score, invited_by_member_id, invited_at)
+             VALUES (:p, :m, :i, :rt, 'pending', :s, :inv, NOW())`,
+            {
+              replacements: {
+                p: req.params.id,
+                m: r.member.id,
+                i,
+                rt: role.role_title || `Role ${i+1}`,
+                s: r.score.toFixed(3),
+                inv: req.member.id
+              }
+            }
+          );
+          invitationsCreated++;
+          invited.push({ member_id: r.member.id, name: `${r.member.first_name} ${r.member.last_name}`, score: r.score, status: 'pending' });
+        }
+
+        byRole.push({
+          role_index: i,
+          role_title: role.role_title,
+          must_have: !!role.must_have,
+          invitees: invited
+        });
+      }
+
+      // Move plan_status to 'recruiting' if it was 'published'
+      if (project.plan_status === 'published') {
+        await sequelize.query(
+          `UPDATE ${t}_projects SET plan_status = 'recruiting', updated_at = NOW() WHERE id = :id`,
+          { replacements: { id: req.params.id } }
+        );
+      }
+
+      return res.json({ success: true, data: { invitations_created: invitationsCreated, by_role: byRole } });
+    } catch (err) {
+      console.error('[invite-matches]', err);
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // GET /invitations -- list invitations for the current member
+  router.get('/invitations/inbox', authMiddleware, async (req, res) => {
+    try {
+      const inv = await sequelize.query(
+        `SELECT i.*, p.title AS project_title, p.plan_status,
+                m.first_name || ' ' || m.last_name AS invited_by_name
+         FROM ${t}_project_invitations i
+         JOIN ${t}_projects p ON p.id = i.project_id
+         LEFT JOIN ${t}_members m ON m.id = i.invited_by_member_id
+         WHERE i.member_id = :me
+         ORDER BY i.invited_at DESC`,
+        { replacements: { me: req.member.id }, type: QueryTypes.SELECT }
+      );
+      return res.json({ success: true, data: inv });
+    } catch (err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // POST /:id/invitations/:inv_id/respond -- accept or decline
+  router.post('/:id/invitations/:inv_id/respond', authMiddleware, async (req, res) => {
+    try {
+      const { action, message } = req.body;
+      if (!['accept', 'decline'].includes(action)) {
+        return res.status(400).json({ success: false, error: 'action must be accept or decline' });
+      }
+
+      const [inv] = await sequelize.query(
+        `SELECT * FROM ${t}_project_invitations WHERE id = :inv AND project_id = :p`,
+        { replacements: { inv: req.params.inv_id, p: req.params.id }, type: QueryTypes.SELECT }
+      );
+      if (!inv) return res.status(404).json({ success: false, error: 'Invitation not found' });
+      if (inv.member_id !== req.member.id) {
+        return res.status(403).json({ success: false, error: 'Not your invitation' });
+      }
+      if (inv.status !== 'pending') {
+        return res.status(400).json({ success: false, error: `Invitation already ${inv.status}` });
+      }
+
+      const newStatus = action === 'accept' ? 'accepted' : 'declined';
+      await sequelize.query(
+        `UPDATE ${t}_project_invitations
+         SET status = :s, responded_at = NOW(), message = :msg
+         WHERE id = :id`,
+        { replacements: { s: newStatus, msg: message || null, id: req.params.inv_id } }
+      );
+
+      if (action === 'accept') {
+        // Add to project_members
+        const [exists] = await sequelize.query(
+          `SELECT id FROM ${t}_project_members WHERE project_id = :p AND member_id = :m`,
+          { replacements: { p: req.params.id, m: req.member.id }, type: QueryTypes.SELECT }
+        );
+        if (!exists) {
+          await sequelize.query(
+            `INSERT INTO ${t}_project_members
+             (project_id, member_id, role, role_title, role_index, invitation_id, joined_at)
+             VALUES (:p, :m, 'collaborator', :rt, :ri, :inv, NOW())`,
+            {
+              replacements: {
+                p: req.params.id, m: req.member.id,
+                rt: inv.role_title, ri: inv.role_index, inv: inv.id
+              }
+            }
+          );
+        }
+
+        // Check fully_staffed: all must_have roles covered?
+        const [proj] = await sequelize.query(
+          `SELECT plan_json FROM ${t}_projects WHERE id = :id`,
+          { replacements: { id: req.params.id }, type: QueryTypes.SELECT }
+        );
+        const plan = proj && proj.plan_json;
+        if (plan && Array.isArray(plan.team_roles_required)) {
+          const filled = await sequelize.query(
+            `SELECT role_index, COUNT(*) AS n FROM ${t}_project_members
+             WHERE project_id = :p AND role_index IS NOT NULL GROUP BY role_index`,
+            { replacements: { p: req.params.id }, type: QueryTypes.SELECT }
+          );
+          const filledMap = {};
+          filled.forEach(r => { filledMap[r.role_index] = parseInt(r.n); });
+          const allMustHaveFilled = plan.team_roles_required.every((r, i) =>
+            !r.must_have || (filledMap[i] && filledMap[i] >= 1)
+          );
+          if (allMustHaveFilled) {
+            await sequelize.query(
+              `UPDATE ${t}_projects SET plan_status = 'fully_staffed', updated_at = NOW()
+               WHERE id = :id AND plan_status IN ('published','recruiting')`,
+              { replacements: { id: req.params.id } }
+            );
+          }
+        }
+      }
+
+      return res.json({ success: true, data: { invitation_id: inv.id, status: newStatus } });
+    } catch (err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // POST /:id/request-join -- self-nominate for a role (creates pending invitation)
+  router.post('/:id/request-join', authMiddleware, async (req, res) => {
+    try {
+      const { role_index, message } = req.body;
+      if (typeof role_index !== 'number') {
+        return res.status(400).json({ success: false, error: 'role_index required' });
+      }
+      const [proj] = await sequelize.query(
+        `SELECT plan_json, plan_status FROM ${t}_projects WHERE id = :id`,
+        { replacements: { id: req.params.id }, type: QueryTypes.SELECT }
+      );
+      if (!proj) return res.status(404).json({ success: false, error: 'Project not found' });
+      if (!['published', 'recruiting'].includes(proj.plan_status)) {
+        return res.status(400).json({ success: false, error: `Cannot request join in status: ${proj.plan_status}` });
+      }
+      const role = proj.plan_json && proj.plan_json.team_roles_required &&
+                   proj.plan_json.team_roles_required[role_index];
+      if (!role) return res.status(400).json({ success: false, error: 'Invalid role_index' });
+
+      const [existing] = await sequelize.query(
+        `SELECT id, status FROM ${t}_project_invitations
+         WHERE project_id = :p AND member_id = :m AND role_index = :i`,
+        { replacements: { p: req.params.id, m: req.member.id, i: role_index }, type: QueryTypes.SELECT }
+      );
+      if (existing) {
+        return res.status(409).json({ success: false, error: `Already ${existing.status} for this role` });
+      }
+
+      await sequelize.query(
+        `INSERT INTO ${t}_project_invitations
+         (project_id, member_id, role_index, role_title, status, match_score, message, invited_at)
+         VALUES (:p, :m, :i, :rt, 'pending', NULL, :msg, NOW())`,
+        {
+          replacements: {
+            p: req.params.id, m: req.member.id, i: role_index,
+            rt: role.role_title, msg: message || 'Self-nominated'
+          }
+        }
+      );
+      return res.status(201).json({ success: true, data: { message: 'Request submitted; awaiting proposer review' } });
+    } catch (err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // GET /:id/invitations -- list invitations for the project (proposer)
+  router.get('/:id/invitations', authMiddleware, async (req, res) => {
+    try {
+      const [proj] = await sequelize.query(
+        `SELECT proposer_member_id FROM ${t}_projects WHERE id = :id`,
+        { replacements: { id: req.params.id }, type: QueryTypes.SELECT }
+      );
+      if (!proj) return res.status(404).json({ success: false, error: 'Project not found' });
+      const [viewer] = await sequelize.query(
+        `SELECT access_level FROM ${t}_members WHERE id = :id`,
+        { replacements: { id: req.member.id }, type: QueryTypes.SELECT }
+      );
+      const isSuperadmin = viewer && viewer.access_level === 'superadmin';
+      if (proj.proposer_member_id !== req.member.id && !isSuperadmin) {
+        return res.status(403).json({ success: false, error: 'Not authorized' });
+      }
+      const inv = await sequelize.query(
+        `SELECT i.*, m.first_name, m.last_name, m.email, m.sector, m.country
+         FROM ${t}_project_invitations i
+         JOIN ${t}_members m ON m.id = i.member_id
+         WHERE i.project_id = :p
+         ORDER BY i.role_index, i.match_score DESC NULLS LAST, i.invited_at DESC`,
+        { replacements: { p: req.params.id }, type: QueryTypes.SELECT }
+      );
+      return res.json({ success: true, data: inv });
+    } catch (err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
   return router;
 };

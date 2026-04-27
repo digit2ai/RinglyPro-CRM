@@ -449,6 +449,10 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
         Projects
       </div>
+      <div class="sidebar-nav-item" data-page="invitations">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        Invitations <span id="invBadge" style="margin-left:auto;background:var(--red);color:white;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;display:none">0</span>
+      </div>
       <div class="sidebar-nav-item" data-page="exchange">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
         Exchange
@@ -632,6 +636,8 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     setupModal();
     document.getElementById('btnLogout').addEventListener('click', logout);
     navigate('dashboard');
+    loadInvBadge();
+    setInterval(loadInvBadge, 60000); // refresh badge every minute
   }
 
   // -- Navigation --
@@ -651,15 +657,15 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     });
     var titles = {
       dashboard:'Dashboard', profile:'My Profile', directory:'Directory',
-      matching:'AI Matching', projects:'Projects', exchange:'Exchange',
-      metrics:'Metrics', payments:'Payments', admin:'Administration'
+      matching:'AI Matching', projects:'Projects', invitations:'Invitations',
+      exchange:'Exchange', metrics:'Metrics', payments:'Payments', admin:'Administration'
     };
     document.getElementById('pageTitle').textContent = titles[page] || page;
     document.getElementById('pageContent').innerHTML = '<div class="loading">Loading...</div>';
     var renderers = {
       dashboard:renderDashboard, profile:renderProfile, directory:renderDirectory,
-      matching:renderMatching, projects:renderProjects, exchange:renderExchange,
-      metrics:renderMetrics, payments:renderPayments, admin:renderAdmin
+      matching:renderMatching, projects:renderProjects, invitations:renderInvitations,
+      exchange:renderExchange, metrics:renderMetrics, payments:renderPayments, admin:renderAdmin
     };
     if (renderers[page]) renderers[page]();
   }
@@ -1068,10 +1074,15 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       var h = '<div class="result-cards">';
       projects.forEach(function(p) {
         h += '<div class="result-card" data-project-id="'+p.id+'">';
-        h += '<div class="flex-between"><div class="rc-name">'+esc(p.title)+'</div>'+statusBadge(p.status)+'</div>';
-        h += '<div class="rc-company">'+esc(p.proposer_name||'--')+' | '+esc(p.sector||'--')+'</div>';
-        h += lifecycleDots(p.status);
-        if (p.budget_est) h += '<div class="text-sm text-muted">Est. budget: $'+Number(p.budget_est).toLocaleString()+'</div>';
+        h += '<div class="flex-between"><div class="rc-name">'+esc(p.title)+(p.is_stub?' &#128274;':'')+'</div>'+statusBadge(p.status)+'</div>';
+        var planStatus = p.plan_status ? '<span style="background:var(--accent-light);color:var(--accent-dark);padding:2px 6px;border-radius:3px;font-size:10px;text-transform:uppercase;font-weight:700;margin-right:6px">'+esc(p.plan_status)+'</span>' : '';
+        h += '<div class="rc-company">'+planStatus+esc(p.proposer_name||'--')+' | '+esc(p.sector||'--')+'</div>';
+        if (p.is_stub) {
+          h += '<div class="text-sm text-muted" style="font-style:italic">In private execution -- participants only</div>';
+        } else {
+          h += lifecycleDots(p.status);
+          if (p.budget_est) h += '<div class="text-sm text-muted">Est. budget: $'+Number(p.budget_est).toLocaleString()+'</div>';
+        }
         h += '</div>';
       });
       h += '</div>';
@@ -1083,6 +1094,88 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     } catch(e) {
       out.innerHTML = '<div class="error-msg">Error: '+esc(e.message)+'</div>';
     }
+  }
+
+  async function renderInvitations() {
+    var el = document.getElementById('pageContent');
+    el.innerHTML = '<div id="invList"><div class="loading">Loading invitations...</div></div>';
+    try {
+      var res = await apiFetch('/projects/invitations/inbox');
+      if (!res.success) { document.getElementById('invList').innerHTML = '<div class="error-msg">Error loading invitations</div>'; return; }
+      var inv = res.data || [];
+      if (inv.length === 0) {
+        document.getElementById('invList').innerHTML = '<div class="panel"><p class="text-muted">No invitations yet. Members will see project role invitations here.</p></div>';
+        return;
+      }
+      var h = '<div class="result-cards">';
+      inv.forEach(function(i) {
+        var statusColor = { pending:'var(--primary)', accepted:'#28a745', declined:'#999', withdrawn:'#999' }[i.status] || '#999';
+        h += '<div class="panel" style="margin-bottom:12px">';
+        h += '<div class="flex-between" style="margin-bottom:8px">';
+        h += '<div><div style="font-weight:700">'+esc(i.project_title||'Project #'+i.project_id)+'</div>';
+        h += '<div class="text-sm text-muted">Role: <strong>'+esc(i.role_title||'--')+'</strong>';
+        if (i.match_score) h += ' &middot; Match score: '+Math.round(parseFloat(i.match_score)*100)+'%';
+        h += '</div></div>';
+        h += '<div><span style="background:'+statusColor+';color:white;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;text-transform:uppercase">'+esc(i.status)+'</span></div>';
+        h += '</div>';
+        if (i.invited_by_name) h += '<div class="text-sm text-muted">Invited by: '+esc(i.invited_by_name)+'</div>';
+        if (i.message) h += '<div class="text-sm" style="margin-top:6px;font-style:italic">"'+esc(i.message)+'"</div>';
+
+        if (i.status === 'pending') {
+          h += '<div style="margin-top:10px;display:flex;gap:8px">';
+          h += '<button class="btn btn-primary btn-sm" data-action="accept" data-pid="'+i.project_id+'" data-iid="'+i.id+'">Accept</button>';
+          h += '<button class="btn btn-outline btn-sm" data-action="decline" data-pid="'+i.project_id+'" data-iid="'+i.id+'">Decline</button>';
+          h += '<button class="btn btn-outline btn-sm" data-action="view" data-pid="'+i.project_id+'">View Plan</button>';
+          h += '</div>';
+        }
+        h += '<div class="invMsg-'+i.id+'" style="margin-top:8px"></div>';
+        h += '</div>';
+      });
+      h += '</div>';
+      document.getElementById('invList').innerHTML = h;
+
+      document.querySelectorAll('button[data-action]').forEach(function(btn) {
+        btn.addEventListener('click', async function() {
+          var act = this.dataset.action;
+          var pid = this.dataset.pid;
+          var iid = this.dataset.iid;
+          if (act === 'view') { showProjectDetail(pid); return; }
+          var msg = document.querySelector('.invMsg-'+iid);
+          msg.innerHTML = '<div class="text-muted text-sm">Sending '+act+'...</div>';
+          try {
+            var r = await apiFetch('/projects/'+pid+'/invitations/'+iid+'/respond', {
+              method:'POST', body:JSON.stringify({ action: act })
+            });
+            if (r.success) {
+              msg.innerHTML = '<div class="success-msg">'+esc(act)+'ed.</div>';
+              setTimeout(renderInvitations, 800);
+              loadInvBadge();
+            } else {
+              msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>';
+            }
+          } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
+        });
+      });
+    } catch(e) {
+      document.getElementById('invList').innerHTML = '<div class="error-msg">Error: '+esc(e.message)+'</div>';
+    }
+  }
+
+  async function loadInvBadge() {
+    try {
+      var res = await apiFetch('/projects/invitations/inbox');
+      if (!res.success) return;
+      var pending = (res.data || []).filter(function(i){ return i.status === 'pending'; }).length;
+      var badge = document.getElementById('invBadge');
+      if (badge) {
+        if (pending > 0) {
+          badge.textContent = pending;
+          badge.style.display = 'inline-block';
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+    } catch(e) { /* swallow */ }
   }
 
   function showNewProjectForm() {
@@ -1433,11 +1526,17 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
 
       // Action buttons
       html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">';
+      var vr = p.viewer_role || {};
       if (p.status !== 'completed') {
         html += '<button class="btn btn-primary btn-sm" id="advanceBtn">Advance Phase</button>';
         html += '<button class="btn btn-outline btn-sm" id="joinBtn">Join Team</button>';
       }
       html += '<button class="btn btn-accent btn-sm" id="evaluateBtn">Evaluate Risk</button>';
+      // Stage 1 -- proposer-only: Invite AI matches
+      if ((vr.is_proposer || vr.is_superadmin) && p.plan_status && ['published','recruiting'].includes(p.plan_status)) {
+        html += '<button class="btn btn-primary btn-sm" id="inviteMatchesBtn" style="background:var(--accent);color:var(--navy)">+ Invite AI Matches</button>';
+        html += '<button class="btn btn-outline btn-sm" id="viewInvitationsBtn">View Invitations</button>';
+      }
       html += '</div>';
       html += '<div id="projActionMsg" style="margin-top:10px"></div>';
 
@@ -1476,6 +1575,66 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
             h += '<strong>Success probability:</strong> '+(ev.success_probability*100)+'% | <strong>Risk:</strong> '+esc(ev.risk_score)+'<br>';
             h += '<strong>Budget P50:</strong> $'+Number(ev.budget.p50).toLocaleString()+' | <strong>P90:</strong> $'+Number(ev.budget.p90).toLocaleString()+'<br>';
             h += '<strong>Timeline P50:</strong> '+ev.timeline_months.p50+' months | <strong>P90:</strong> '+ev.timeline_months.p90+' months';
+            h += '</div>';
+            msg.innerHTML = h;
+          } else { msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>'; }
+        } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
+      });
+
+      // P2B Stage 1 -- Invite AI Matches
+      var inviteBtn = document.getElementById('inviteMatchesBtn');
+      if (inviteBtn) inviteBtn.addEventListener('click', async function() {
+        var msg = document.getElementById('projActionMsg');
+        msg.innerHTML = '<div class="text-muted text-sm">Running AI matching across the chamber...</div>';
+        try {
+          var r = await apiFetch('/projects/'+id+'/invite-matches', { method:'POST', body:JSON.stringify({ top_n: 3 }) });
+          if (r.success) {
+            var d = r.data;
+            var h = '<div class="success-msg">Invited '+d.invitations_created+' members across '+d.by_role.length+' roles.</div>';
+            h += '<div style="background:var(--gray-50);padding:12px;border-radius:6px;font-size:12px;margin-top:8px;max-height:280px;overflow-y:auto">';
+            d.by_role.forEach(function(rl) {
+              h += '<div style="margin-bottom:10px"><strong>'+esc(rl.role_title||'Role')+'</strong>'+(rl.must_have?' <span style="background:var(--red);color:white;padding:1px 6px;border-radius:3px;font-size:9px">MUST</span>':'')+'</div>';
+              rl.invitees.forEach(function(inv) {
+                h += '<div class="text-sm" style="margin-left:12px">&middot; '+esc(inv.name)+' ('+(Math.round(inv.score*100))+'% match)'+(inv.existing?' <em>[already invited]</em>':'')+'</div>';
+              });
+            });
+            h += '</div>';
+            msg.innerHTML = h;
+            setTimeout(function(){ showProjectDetail(id); }, 2000);
+          } else { msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>'; }
+        } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
+      });
+
+      var viewInvBtn = document.getElementById('viewInvitationsBtn');
+      if (viewInvBtn) viewInvBtn.addEventListener('click', async function() {
+        var msg = document.getElementById('projActionMsg');
+        msg.innerHTML = '<div class="text-muted text-sm">Loading invitations...</div>';
+        try {
+          var r = await apiFetch('/projects/'+id+'/invitations');
+          if (r.success) {
+            var data = r.data || [];
+            if (data.length === 0) {
+              msg.innerHTML = '<div class="text-muted">No invitations yet. Click "Invite AI Matches" to send some.</div>';
+              return;
+            }
+            // Group by role
+            var byRole = {};
+            data.forEach(function(inv) {
+              var key = inv.role_index;
+              if (!byRole[key]) byRole[key] = { role_title: inv.role_title, invs: [] };
+              byRole[key].invs.push(inv);
+            });
+            var h = '<div style="background:var(--gray-50);padding:12px;border-radius:6px;font-size:12px;margin-top:8px;max-height:340px;overflow-y:auto">';
+            Object.keys(byRole).forEach(function(k) {
+              var grp = byRole[k];
+              h += '<div style="margin-bottom:10px"><strong>'+esc(grp.role_title||'Role '+k)+'</strong></div>';
+              grp.invs.forEach(function(inv) {
+                var col = { pending:'var(--primary)', accepted:'#28a745', declined:'#999' }[inv.status] || '#999';
+                h += '<div class="text-sm" style="margin-left:12px;display:flex;justify-content:space-between;padding:4px 0">'+
+                  '<span>&middot; '+esc(inv.first_name)+' '+esc(inv.last_name)+' &mdash; '+esc(inv.sector||'--')+' / '+esc(inv.country||'--')+(inv.match_score?' &mdash; '+Math.round(parseFloat(inv.match_score)*100)+'%':'')+'</span>'+
+                  '<span style="background:'+col+';color:white;padding:1px 8px;border-radius:10px;font-size:10px;text-transform:uppercase">'+esc(inv.status)+'</span></div>';
+              });
+            });
             h += '</div>';
             msg.innerHTML = h;
           } else { msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>'; }
