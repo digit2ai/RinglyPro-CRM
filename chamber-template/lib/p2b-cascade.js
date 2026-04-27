@@ -47,6 +47,20 @@ async function runCascade(sequelize, t, projectId) {
   if (!proj) throw new Error('Project not found');
   if (!proj.plan_json) throw new Error('Project has no plan_json');
 
+  // Idempotency: if Monte Carlo already ran and we're past fully_staffed, just return cached
+  if (proj.monte_carlo_result && ['pending_signoff', 'signed_off', 'executing', 'completed'].includes(proj.plan_status)) {
+    const [meeting] = await sequelize.query(
+      `SELECT * FROM ${t}_project_meetings WHERE project_id = :p AND meeting_type = 'final_review' ORDER BY created_at DESC LIMIT 1`,
+      { replacements: { p: projectId }, type: QueryTypes.SELECT }
+    );
+    return {
+      status: proj.plan_status,
+      monte_carlo: proj.monte_carlo_result,
+      meeting,
+      cached: true
+    };
+  }
+
   const plan = proj.plan_json;
   const teamRoles = Array.isArray(plan.team_roles_required) ? plan.team_roles_required : [];
 

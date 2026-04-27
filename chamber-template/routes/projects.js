@@ -501,20 +501,21 @@ module.exports = function createProjectRoutes(config) {
       if (project.proposer_member_id !== req.member.id && !isSuperadmin) {
         return res.status(403).json({ success: false, error: 'Only proposer or superadmin can close recruitment' });
       }
-      if (project.plan_status !== 'recruiting') {
+      if (!['recruiting', 'fully_staffed'].includes(project.plan_status)) {
         return res.status(400).json({ success: false, error: `Cannot close from status: ${project.plan_status}` });
       }
-      if (project.recruitment_closed_at) {
-        return res.status(400).json({ success: false, error: 'Recruitment already closed' });
+
+      // Idempotent close
+      if (!project.recruitment_closed_at) {
+        await sequelize.query(
+          `UPDATE ${t}_projects
+           SET recruitment_closed_at = NOW(), recruitment_closed_by = 'manual', updated_at = NOW()
+           WHERE id = :id`,
+          { replacements: { id: req.params.id } }
+        );
       }
 
-      await sequelize.query(
-        `UPDATE ${t}_projects
-         SET recruitment_closed_at = NOW(), recruitment_closed_by = 'manual', updated_at = NOW()
-         WHERE id = :id`,
-        { replacements: { id: req.params.id } }
-      );
-
+      // Run cascade (idempotent: it transitions through statuses)
       const cascadeResult = await runCascade(sequelize, t, req.params.id);
       return res.json({ success: true, data: cascadeResult });
     } catch (err) {
@@ -752,11 +753,22 @@ module.exports = function createProjectRoutes(config) {
             !r.must_have || (filledMap[i] && filledMap[i] >= 1)
           );
           if (allMustHaveFilled) {
+            // Mark recruitment closed + run cascade (Monte Carlo + Final Meeting)
             await sequelize.query(
-              `UPDATE ${t}_projects SET plan_status = 'fully_staffed', updated_at = NOW()
+              `UPDATE ${t}_projects
+               SET plan_status = 'fully_staffed',
+                   recruitment_closed_at = COALESCE(recruitment_closed_at, NOW()),
+                   recruitment_closed_by = COALESCE(recruitment_closed_by, 'auto_team_locked'),
+                   updated_at = NOW()
                WHERE id = :id AND plan_status IN ('published','recruiting')`,
               { replacements: { id: req.params.id } }
             );
+            // Trigger cascade asynchronously (best-effort; don't fail the response)
+            try {
+              await runCascade(sequelize, t, req.params.id);
+            } catch (cascadeErr) {
+              console.error('[respond auto-cascade]', cascadeErr.message);
+            }
           }
         }
       }
