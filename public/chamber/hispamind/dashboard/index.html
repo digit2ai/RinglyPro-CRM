@@ -1071,7 +1071,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     };
     el.innerHTML =
       '<div class="flex-between mb-16">' +
-        '<div>' + tabBtn('all','All') + tabBtn('mine','My Projects') + tabBtn('invited','Invited / Joined') + '</div>' +
+        '<div>' + tabBtn('all','All') + tabBtn('mine','My Projects') + tabBtn('invited','Invited / Joined') + tabBtn('open_rfq','Open RFQs (Match)') + '</div>' +
         '<button class="btn btn-primary" id="newProjectBtn">+ New Project</button>' +
       '</div>' +
       '<div id="projectList"><div class="loading">Loading...</div></div>';
@@ -1089,7 +1089,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   async function loadProjects() {
     var out = document.getElementById('projectList');
     var tab = window._projectsTab || 'all';
-    var qs = 'limit=50' + (tab === 'mine' ? '&scope=mine' : tab === 'invited' ? '&scope=invited' : '');
+    var qs = 'limit=50' + (tab === 'mine' ? '&scope=mine' : tab === 'invited' ? '&scope=invited' : tab === 'open_rfq' ? '&scope=open_rfq' : '');
     try {
       var res = await apiFetch('/projects?' + qs);
       if (!res.success) { out.innerHTML = '<div class="error-msg">Error loading projects</div>'; return; }
@@ -1097,6 +1097,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       if (projects.length === 0) {
         var emptyMsg = tab === 'mine' ? 'You have not proposed any projects yet. Click + New Project to start one.' :
                        tab === 'invited' ? 'No invitations or memberships yet. When a proposer invites you, projects show up here.' :
+                       tab === 'open_rfq' ? 'No open RFQs match your profile right now. Update your sector/skills in My Profile to surface more matches, or check back later.' :
                        'No projects yet. Create your first one.';
         out.innerHTML = '<div class="panel"><p class="text-muted">'+emptyMsg+'</p></div>';
         return;
@@ -1127,6 +1128,22 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
             h += '<div class="text-sm" style="margin-top:4px"><span style="color:'+probColor+';font-weight:700">'+prob+'% viability</span> <span class="text-muted">(Monte Carlo)</span></div>';
           }
         }
+        // Open RFQ tab: show matched roles + Bid buttons
+        if (tab === 'open_rfq' && Array.isArray(p.matched_roles) && p.matched_roles.length > 0) {
+          h += '<div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--gray-300)">';
+          h += '<div class="text-sm" style="font-weight:700;margin-bottom:6px">Roles matching your profile:</div>';
+          p.matched_roles.forEach(function(r) {
+            var pct = Math.round(r.score * 100);
+            var pcol = pct >= 60 ? '#28a745' : pct >= 40 ? '#e65100' : 'var(--gray-700)';
+            h += '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0">';
+            h += '<div class="text-sm"><strong>'+esc(r.role_title)+'</strong>';
+            if (r.commitment_pct) h += ' <span class="text-muted">('+r.commitment_pct+'%)</span>';
+            h += ' <span style="color:'+pcol+';font-weight:700;margin-left:6px">'+pct+'% match</span></div>';
+            h += '<button class="btn btn-primary btn-sm bidBtn" data-pid="'+p.id+'" data-ridx="'+r.role_index+'" data-rt="'+esc(r.role_title)+'" style="background:#28a745;padding:4px 12px;font-size:12px" onclick="event.stopPropagation()">Submit Bid</button>';
+            h += '</div>';
+          });
+          h += '</div>';
+        }
         h += '</div>';
       });
       h += '</div>';
@@ -1134,6 +1151,37 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
 
       out.querySelectorAll('.result-card').forEach(function(card) {
         card.addEventListener('click', function(){ showProjectDetail(this.dataset.projectId); });
+      });
+      out.querySelectorAll('.bidBtn').forEach(function(btn) {
+        btn.addEventListener('click', async function(ev) {
+          ev.stopPropagation();
+          var pid = this.dataset.pid;
+          var ridx = parseInt(this.dataset.ridx);
+          var rt = this.dataset.rt;
+          var note = prompt('Submit bid for role: '+rt+'\n\nOptional message to the proposer (why you are a fit):', '');
+          if (note === null) return;
+          this.disabled = true;
+          this.textContent = 'Submitting...';
+          try {
+            var r = await apiFetch('/projects/'+pid+'/request-join', {
+              method: 'POST',
+              body: JSON.stringify({ role_index: ridx, message: note || 'Self-nominated via Open RFQs' })
+            });
+            if (r.success) {
+              this.textContent = 'Bid Submitted';
+              this.style.background = '#999';
+              setTimeout(loadProjects, 1200);
+            } else {
+              this.disabled = false;
+              this.textContent = 'Submit Bid';
+              alert(r.error || 'Bid failed');
+            }
+          } catch(e) {
+            this.disabled = false;
+            this.textContent = 'Submit Bid';
+            alert(e.message);
+          }
+        });
       });
       updateCountdowns();
       if (window._countdownInterval) clearInterval(window._countdownInterval);

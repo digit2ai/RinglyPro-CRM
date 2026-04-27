@@ -39,7 +39,7 @@ module.exports = function createProjectRoutes(config) {
       if (country) { conditions.push(':country = ANY(p.countries)'); replacements.country = country; }
       if (plan_status) { conditions.push('p.plan_status = :plan_status'); replacements.plan_status = plan_status; }
 
-      // scope filter: mine | invited | all (default)
+      // scope filter: mine | invited | open_rfq | all (default)
       if (scope === 'mine') {
         conditions.push('p.proposer_member_id = :current_member_id');
       } else if (scope === 'invited') {
@@ -47,6 +47,13 @@ module.exports = function createProjectRoutes(config) {
           EXISTS (SELECT 1 FROM ${t}_project_invitations i WHERE i.project_id = p.id AND i.member_id = :current_member_id)
           OR EXISTS (SELECT 1 FROM ${t}_project_members pmx WHERE pmx.project_id = p.id AND pmx.member_id = :current_member_id)
         )`);
+      } else if (scope === 'open_rfq') {
+        // Open RFQs: recruiting, not closed, not mine, no invite, not yet a member
+        conditions.push(`p.plan_status = 'recruiting'`);
+        conditions.push(`p.recruitment_closed_at IS NULL`);
+        conditions.push(`p.proposer_member_id != :current_member_id`);
+        conditions.push(`NOT EXISTS (SELECT 1 FROM ${t}_project_invitations i WHERE i.project_id = p.id AND i.member_id = :current_member_id)`);
+        conditions.push(`NOT EXISTS (SELECT 1 FROM ${t}_project_members pmx WHERE pmx.project_id = p.id AND pmx.member_id = :current_member_id)`);
       }
 
       // Look up viewer's access level
@@ -96,13 +103,43 @@ module.exports = function createProjectRoutes(config) {
         { replacements: { ...replacements, limit: parseInt(limit), offset }, type: QueryTypes.SELECT }
       );
 
+      // For open_rfq scope: score each role in each project against the viewer's profile,
+      // attach matched_roles[] sorted by score (only roles with score >= 0.25 surface as bid-able)
+      let viewerProfile = null;
+      if (scope === 'open_rfq' && projects.length > 0) {
+        const [vp] = await sequelize.query(
+          `SELECT id, country, region_id, sector, sub_specialty, bio, company_name, trust_score
+           FROM ${t}_members WHERE id = :id`,
+          { replacements: { id: req.member.id }, type: QueryTypes.SELECT }
+        );
+        viewerProfile = vp;
+      }
+
       // Mark stubs (private projects the viewer is not part of) as is_stub
       const enriched = projects.map(p => {
         const isStub = (p.visibility === 'participants_only' && p.plan_json === null && !isSuperadmin);
-        return { ...p, is_stub: isStub };
+        let matched_roles = null;
+        if (scope === 'open_rfq' && viewerProfile && p.plan_json && Array.isArray(p.plan_json.team_roles_required)) {
+          matched_roles = p.plan_json.team_roles_required
+            .map((role, idx) => ({
+              role_index: idx,
+              role_title: role.role_title,
+              must_have: !!role.must_have,
+              commitment_pct: role.commitment_pct || null,
+              required_skills: role.required_skills || [],
+              score: scoreMember(viewerProfile, role)
+            }))
+            .filter(r => r.score >= 0.25)
+            .sort((a, b) => b.score - a.score);
+        }
+        return { ...p, is_stub: isStub, matched_roles };
       });
+      // For open_rfq, drop projects with no matched roles
+      const finalProjects = scope === 'open_rfq'
+        ? enriched.filter(p => p.matched_roles && p.matched_roles.length > 0)
+        : enriched;
 
-      return res.json({ success: true, data: { projects: enriched, pagination: { page: parseInt(page), limit: parseInt(limit), total, pages: Math.ceil(total / parseInt(limit)) } } });
+      return res.json({ success: true, data: { projects: finalProjects, pagination: { page: parseInt(page), limit: parseInt(limit), total, pages: Math.ceil(total / parseInt(limit)) } } });
     } catch (err) {
       return res.status(500).json({ success: false, error: err.message });
     }
