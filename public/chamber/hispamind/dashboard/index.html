@@ -1019,10 +1019,62 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       html += '<tr><td style="font-weight:600;padding:6px 12px 6px 0;color:var(--gray-500)">Member since</td><td>'+formatDate(m.created_at)+'</td></tr>';
       html += '</table>';
       if (m.bio) html += '<div style="margin-top:14px;padding:12px;background:var(--gray-50);border-radius:6px;font-size:13px;color:var(--gray-700)">'+esc(m.bio)+'</div>';
+      // Admin/superadmin: edit any member; self: edit your own
+      var isAdmin = currentMember && ['superadmin','admin_global','admin_regional','admin'].includes(currentMember.access_level);
+      var isSelf = currentMember && currentMember.id === m.id;
+      if (isAdmin || isSelf) {
+        html += '<div style="margin-top:16px;display:flex;gap:8px"><button class="btn btn-primary btn-sm" id="dirEditBtn" data-mid="'+m.id+'">'+(isSelf?'Edit My Profile':'Edit (Admin)')+'</button></div>';
+      }
       openModal(html);
+      var ebtn = document.getElementById('dirEditBtn');
+      if (ebtn) ebtn.addEventListener('click', function() { showMemberEditor(m); });
     } catch(e) {
       openModal('<div class="error-msg">Error: '+esc(e.message)+'</div>');
     }
+  }
+
+  function showMemberEditor(m) {
+    var langs = m.languages || [];
+    if (typeof langs === 'string') { try { langs = JSON.parse(langs); } catch(e) { langs = langs.replace(/[{}]/g,'').split(',').filter(Boolean); } }
+    var isAdmin = currentMember && ['superadmin','admin_global','admin_regional','admin'].includes(currentMember.access_level);
+    var html = '<h2>Edit '+esc(m.first_name)+' '+esc(m.last_name)+'</h2>';
+    if (isAdmin && currentMember.id !== m.id) html += '<div class="text-sm text-muted" style="margin-bottom:8px">Admin edit - changes apply to '+esc(m.email)+'</div>';
+    html += '<div id="memEditMsg"></div>';
+    html += '<form id="memEditForm" class="form-grid">';
+    html += '<div class="form-group"><label>First Name</label><input name="first_name" value="'+esc(m.first_name||'')+'"></div>';
+    html += '<div class="form-group"><label>Last Name</label><input name="last_name" value="'+esc(m.last_name||'')+'"></div>';
+    html += '<div class="form-group"><label>Country</label><input name="country" value="'+esc(m.country||'')+'"></div>';
+    html += '<div class="form-group"><label>Sector</label><select name="sector">'+sectorOptions(m.sector,'-- Select sector --')+'</select></div>';
+    html += '<div class="form-group"><label>Sub-specialty</label><input name="sub_specialty" value="'+esc(m.sub_specialty||'')+'"></div>';
+    html += '<div class="form-group"><label>Years of Experience</label><input name="years_experience" type="number" value="'+(m.years_experience||'')+'"></div>';
+    html += '<div class="form-group"><label>Languages (comma-separated)</label><input name="languages" value="'+esc(langs.join(', '))+'"></div>';
+    html += '<div class="form-group"><label>Company</label><input name="company_name" value="'+esc(m.company_name||'')+'"></div>';
+    html += '<div class="form-group full"><label>Bio</label><textarea name="bio" rows="3">'+esc(m.bio||'')+'</textarea></div>';
+    html += '<div class="form-group"><label>Phone</label><input name="phone" value="'+esc(m.phone||'')+'"></div>';
+    html += '<div class="form-group"><label>LinkedIn URL</label><input name="linkedin_url" value="'+esc(m.linkedin_url||'')+'"></div>';
+    html += '<div class="form-group full"><label>Website URL</label><input name="website_url" value="'+esc(m.website_url||'')+'"></div>';
+    html += '<div class="form-group full mt-12" style="display:flex;gap:8px"><button type="submit" class="btn btn-primary">Save</button><button type="button" class="btn btn-outline" id="memEditCancel">Cancel</button></div>';
+    html += '</form>';
+    openModal(html);
+    document.getElementById('memEditCancel').addEventListener('click', function() { showMemberModal(m.id); });
+    document.getElementById('memEditForm').addEventListener('submit', async function(ev) {
+      ev.preventDefault();
+      var fd = new FormData(this); var body = {};
+      fd.forEach(function(v,k){ body[k] = v; });
+      body.years_experience = body.years_experience ? parseInt(body.years_experience) : null;
+      body.languages = body.languages ? body.languages.split(',').map(function(l){return l.trim();}).filter(Boolean) : [];
+      var msgEl = document.getElementById('memEditMsg');
+      msgEl.innerHTML = '<div class="text-muted text-sm">Saving...</div>';
+      try {
+        var res = await apiFetch('/members/'+m.id, { method:'PUT', body:JSON.stringify(body) });
+        if (res.success) {
+          msgEl.innerHTML = '<div class="success-msg">Saved.</div>';
+          setTimeout(function() { showMemberModal(m.id); }, 800);
+        } else {
+          msgEl.innerHTML = '<div class="error-msg">'+(res.error||'Error')+'</div>';
+        }
+      } catch(e) { msgEl.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
+    });
   }
 
   // ================================================================

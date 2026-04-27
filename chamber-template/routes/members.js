@@ -71,7 +71,15 @@ module.exports = function createMemberRoutes(config) {
     try {
       const memberId = parseInt(req.params.id);
       if (isNaN(memberId)) return res.status(400).json({ success: false, error: 'Invalid member ID' });
-      if (req.member.id !== memberId) return res.status(403).json({ success: false, error: 'You can only update your own profile' });
+      // Self-edit, OR admin/superadmin editing any member
+      if (req.member.id !== memberId) {
+        const [viewer] = await sequelize.query(
+          `SELECT access_level FROM ${t}_members WHERE id = :id`,
+          { replacements: { id: req.member.id }, type: QueryTypes.SELECT }
+        );
+        const isAdmin = viewer && ['superadmin','admin_global','admin_regional','admin'].includes(viewer.access_level);
+        if (!isAdmin) return res.status(403).json({ success: false, error: 'You can only update your own profile' });
+      }
       const allowedFields = ['first_name', 'last_name', 'country', 'region_id', 'sector', 'sub_specialty', 'years_experience', 'languages', 'company_name', 'bio', 'phone', 'linkedin_url', 'website_url'];
       const setClauses = []; const replacements = { id: memberId };
       for (const field of allowedFields) {
