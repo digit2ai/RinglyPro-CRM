@@ -3,7 +3,7 @@ module.exports = function createMemberRoutes(config) {
   const express = require('express');
   const router = express.Router();
   const jwt = require('jsonwebtoken');
-  const { Sequelize } = require('sequelize');
+  const { Sequelize, QueryTypes } = require('sequelize');
   require('dotenv').config();
 
   const sequelize = new Sequelize(process.env.CRM_DATABASE_URL || process.env.DATABASE_URL, {
