@@ -1475,6 +1475,58 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     return h;
   }
 
+  function showSignoffModal(projectId, planJson, projectMeta) {
+    var planTitle = (planJson && planJson.title) || (projectMeta && projectMeta.title) || 'Business Plan';
+    var h = '<h2 style="margin-bottom:12px">Sign Off on Business Plan</h2>';
+    h += '<div class="text-sm text-muted mb-12">By signing, you agree to the business plan as written. Your signature is hashed (SHA-256) against the plan version and stored permanently.</div>';
+    h += '<div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px;padding:14px;max-height:300px;overflow-y:auto;margin-bottom:14px">';
+    h += '<div style="font-weight:700;margin-bottom:8px">'+esc(planTitle)+'</div>';
+    if (planJson && planJson.executive_summary) {
+      h += '<div class="text-sm" style="white-space:pre-wrap">'+esc(planJson.executive_summary)+'</div>';
+    }
+    if (planJson && Array.isArray(planJson.team_roles_required)) {
+      h += '<div style="margin-top:8px"><strong>Team Roles:</strong> '+planJson.team_roles_required.map(function(r){return esc(r.role_title);}).join(', ')+'</div>';
+    }
+    h += '</div>';
+    h += '<form id="signoffForm">';
+    h += '<div class="form-group full" style="margin-bottom:12px"><label style="display:flex;align-items:center;gap:8px;cursor:pointer">';
+    h += '<input type="checkbox" name="agreed" id="signAgreed" required style="width:auto"> ';
+    h += 'I agree to the business plan as written and commit to the role I have accepted.';
+    h += '</label></div>';
+    h += '<div class="form-group full"><label>Type your full name to sign</label>';
+    h += '<input type="text" name="typed_name" id="signTypedName" required minlength="3" placeholder="Your full legal name"></div>';
+    h += '<div id="signMsg" style="margin-top:10px"></div>';
+    h += '<div style="margin-top:14px;display:flex;gap:8px"><button type="submit" class="btn btn-primary">Sign Off</button>';
+    h += '<button type="button" class="btn btn-outline" id="signCancel">Cancel</button></div>';
+    h += '</form>';
+    openModal(h);
+
+    document.getElementById('signCancel').addEventListener('click', function() { showProjectDetail(projectId); });
+    document.getElementById('signoffForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      var msg = document.getElementById('signMsg');
+      var agreed = document.getElementById('signAgreed').checked;
+      var name = document.getElementById('signTypedName').value.trim();
+      if (!agreed || name.length < 3) { msg.innerHTML = '<div class="error-msg">Check the box and type your full name</div>'; return; }
+      msg.innerHTML = '<div class="text-muted text-sm">Recording signature...</div>';
+      try {
+        var r = await apiFetch('/projects/'+projectId+'/signoff', { method:'POST', body:JSON.stringify({ typed_name: name, agreed: true }) });
+        if (r.success) {
+          var d = r.data;
+          var ok = '<div class="success-msg">Sign-off recorded. '+d.signed_count+' of '+d.total_participants+' signed.</div>';
+          if (d.all_signed) {
+            ok += '<div style="background:#e8f5e9;color:#2e7d32;padding:12px;border-radius:6px;margin-top:8px;font-weight:700">'+
+              '&#10003; All participants have signed. Project moved to private workspace (signed_off).</div>';
+          }
+          msg.innerHTML = ok;
+          setTimeout(function() { showProjectDetail(projectId); }, 2500);
+        } else {
+          msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>';
+        }
+      } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
+    });
+  }
+
   async function showProjectDetail(id) {
     openModal('<div class="loading">Loading project...</div>');
     try {
@@ -1512,6 +1564,24 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         html += renderFullPlan(p.plan_json, p.fill_status);
       }
 
+      // === Final Meeting card (Stage 2) ===
+      if (['pending_signoff','fully_staffed','signed_off','executing','completed'].includes(p.plan_status)) {
+        try {
+          var mtgRes = await apiFetch('/projects/'+id+'/meetings');
+          if (mtgRes.success && mtgRes.data && mtgRes.data.length > 0) {
+            var m = mtgRes.data[0];
+            var when = new Date(m.scheduled_at).toLocaleString();
+            html += '<div style="border:2px solid #7b1fa2;border-radius:8px;padding:14px;margin:18px 0;background:#f3e5f5">';
+            html += '<div style="font-weight:700;color:#4a148c;margin-bottom:6px">&#128197; Final Meeting Scheduled</div>';
+            html += '<div class="text-sm"><strong>When:</strong> '+esc(when)+' ('+m.duration_minutes+' min)</div>';
+            html += '<div class="text-sm" style="margin-top:4px"><strong>Status:</strong> '+esc(m.status)+'</div>';
+            html += '<div class="text-sm" style="margin-top:4px"><strong>Video:</strong> <a href="'+esc(m.video_link)+'" target="_blank" style="color:#4a148c;text-decoration:underline">'+esc(m.video_link)+'</a></div>';
+            html += '<div style="margin-top:8px"><a href="'+API+'/projects/'+id+'/meetings/'+m.id+'/ics" target="_blank" class="btn btn-outline btn-sm">Download .ics</a></div>';
+            html += '</div>';
+          }
+        } catch(e) { /* ignore */ }
+      }
+
       // Team
       html += '<h3>Team ('+(p.team?p.team.length:0)+' members)</h3>';
       if (p.team && p.team.length > 0) {
@@ -1536,6 +1606,14 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       if ((vr.is_proposer || vr.is_superadmin) && p.plan_status && ['published','recruiting'].includes(p.plan_status)) {
         html += '<button class="btn btn-primary btn-sm" id="inviteMatchesBtn" style="background:var(--accent);color:var(--navy)">+ Invite AI Matches</button>';
         html += '<button class="btn btn-outline btn-sm" id="viewInvitationsBtn">View Invitations</button>';
+      }
+      // Stage 2 -- Final Meeting + Sign-off
+      if ((vr.is_proposer || vr.is_superadmin) && p.plan_status === 'fully_staffed') {
+        html += '<button class="btn btn-primary btn-sm" id="bookMeetingBtn" style="background:#7b1fa2">Book Final Meeting</button>';
+      }
+      if (['pending_signoff','fully_staffed'].includes(p.plan_status) && (vr.is_proposer || vr.is_participant)) {
+        html += '<button class="btn btn-primary btn-sm" id="signoffBtn" style="background:#28a745">Sign Off Plan</button>';
+        html += '<button class="btn btn-outline btn-sm" id="signoffStatusBtn">Sign-off Status</button>';
       }
       html += '</div>';
       html += '<div id="projActionMsg" style="margin-top:10px"></div>';
@@ -1601,6 +1679,58 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
             h += '</div>';
             msg.innerHTML = h;
             setTimeout(function(){ showProjectDetail(id); }, 2000);
+          } else { msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>'; }
+        } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
+      });
+
+      // Stage 2 handlers
+      var bookBtn = document.getElementById('bookMeetingBtn');
+      if (bookBtn) bookBtn.addEventListener('click', async function() {
+        var msg = document.getElementById('projActionMsg');
+        msg.innerHTML = '<div class="text-muted text-sm">Booking Final Meeting (default: 7 days from now, 14:00 UTC)...</div>';
+        try {
+          var r = await apiFetch('/projects/'+id+'/book-final-meeting', { method:'POST', body:JSON.stringify({}) });
+          if (r.success) {
+            var d = r.data;
+            var when = new Date(d.meeting.scheduled_at).toLocaleString();
+            var h = '<div class="success-msg">Final Meeting scheduled for '+esc(when)+'</div>';
+            h += '<div style="background:var(--gray-50);padding:12px;border-radius:6px;font-size:12px;margin-top:8px">';
+            h += '<div><strong>Video link:</strong> <a href="'+esc(d.meeting.video_link)+'" target="_blank">'+esc(d.meeting.video_link)+'</a></div>';
+            h += '<div style="margin-top:6px"><strong>Attendees ('+d.attendee_count+'):</strong> '+d.attendees.map(function(a){return esc(a.name);}).join(', ')+'</div>';
+            h += '<div style="margin-top:8px"><a href="'+API+'/projects/'+id+'/meetings/'+d.meeting.id+'/ics" class="btn btn-outline btn-sm" target="_blank">Download .ics calendar invite</a></div>';
+            h += '</div>';
+            msg.innerHTML = h;
+            setTimeout(function(){ showProjectDetail(id); }, 2500);
+          } else { msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>'; }
+        } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
+      });
+
+      var signBtn = document.getElementById('signoffBtn');
+      if (signBtn) signBtn.addEventListener('click', function() {
+        showSignoffModal(id, p.plan_json, p);
+      });
+
+      var signStatBtn = document.getElementById('signoffStatusBtn');
+      if (signStatBtn) signStatBtn.addEventListener('click', async function() {
+        var msg = document.getElementById('projActionMsg');
+        msg.innerHTML = '<div class="text-muted text-sm">Loading sign-off status...</div>';
+        try {
+          var r = await apiFetch('/projects/'+id+'/signoff-status');
+          if (r.success) {
+            var d = r.data;
+            var pct = d.total_participants > 0 ? Math.round((d.signed_count/d.total_participants)*100) : 0;
+            var h = '<div style="background:var(--gray-50);padding:12px;border-radius:6px;font-size:12px;margin-top:8px">';
+            h += '<div style="font-weight:700;margin-bottom:8px">'+d.signed_count+' of '+d.total_participants+' signed ('+pct+'%)</div>';
+            h += '<div style="height:8px;background:var(--gray-200);border-radius:4px;overflow:hidden;margin-bottom:12px"><div style="height:100%;width:'+pct+'%;background:#28a745"></div></div>';
+            d.participants.forEach(function(pp) {
+              var icon = pp.signed ? '<span style="color:#28a745;font-weight:700">&#10003;</span>' : '<span style="color:#999">&#9711;</span>';
+              h += '<div style="padding:4px 0;display:flex;justify-content:space-between"><span>'+icon+' '+esc(pp.name)+'</span>';
+              if (pp.signed) h += '<span class="text-muted text-sm">'+new Date(pp.signed_at).toLocaleDateString()+'</span>';
+              else h += '<span class="text-muted text-sm">Pending</span>';
+              h += '</div>';
+            });
+            h += '</div>';
+            msg.innerHTML = h;
           } else { msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>'; }
         } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
       });

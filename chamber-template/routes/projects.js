@@ -1,5 +1,7 @@
 // Chamber Template - Projects Routes Factory
 const planGenerator = require('../lib/plan-generator');
+const ical = require('../lib/ical');
+const crypto = require('crypto');
 
 module.exports = function createProjectRoutes(config) {
   const express = require('express');
@@ -698,6 +700,307 @@ module.exports = function createProjectRoutes(config) {
         { replacements: { p: req.params.id }, type: QueryTypes.SELECT }
       );
       return res.json({ success: true, data: inv });
+    } catch (err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // ========================================================
+  // P2B STAGE 2 -- Final Meeting & Digital Sign-off
+  // ========================================================
+
+  // POST /:id/book-final-meeting -- auto-book or manual
+  router.post('/:id/book-final-meeting', authMiddleware, async (req, res) => {
+    try {
+      const [proj] = await sequelize.query(
+        `SELECT * FROM ${t}_projects WHERE id = :id`,
+        { replacements: { id: req.params.id }, type: QueryTypes.SELECT }
+      );
+      if (!proj) return res.status(404).json({ success: false, error: 'Project not found' });
+
+      const [viewer] = await sequelize.query(
+        `SELECT access_level FROM ${t}_members WHERE id = :id`,
+        { replacements: { id: req.member.id }, type: QueryTypes.SELECT }
+      );
+      const isSuperadmin = viewer && viewer.access_level === 'superadmin';
+      if (proj.proposer_member_id !== req.member.id && !isSuperadmin) {
+        return res.status(403).json({ success: false, error: 'Only proposer or superadmin can book' });
+      }
+      if (proj.plan_status !== 'fully_staffed' && proj.plan_status !== 'pending_signoff') {
+        return res.status(400).json({ success: false, error: `Cannot book in status: ${proj.plan_status}` });
+      }
+
+      // Get participants
+      const participants = await sequelize.query(
+        `SELECT pm.member_id, m.first_name, m.last_name, m.email
+         FROM ${t}_project_members pm
+         JOIN ${t}_members m ON m.id = pm.member_id
+         WHERE pm.project_id = :p`,
+        { replacements: { p: req.params.id }, type: QueryTypes.SELECT }
+      );
+      // Always include proposer
+      const [proposer] = await sequelize.query(
+        `SELECT id AS member_id, first_name, last_name, email FROM ${t}_members WHERE id = :id`,
+        { replacements: { id: proj.proposer_member_id }, type: QueryTypes.SELECT }
+      );
+      const allAttendees = [...participants];
+      if (proposer && !participants.some(p => p.member_id === proposer.member_id)) {
+        allAttendees.push(proposer);
+      }
+      const attendeeIds = allAttendees.map(a => a.member_id);
+
+      const proposed = req.body.proposed_datetime
+        ? new Date(req.body.proposed_datetime)
+        : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      // Snap default to 14:00 UTC if no time was specified
+      if (!req.body.proposed_datetime) {
+        proposed.setUTCHours(14, 0, 0, 0);
+      }
+      const duration = parseInt(req.body.duration_minutes) || 60;
+
+      const uid = ical.generateUID(req.params.id, 'final_review');
+      const videoLink = ical.generateJitsiLink(req.params.id);
+
+      // Build iCal
+      const planTitle = (proj.plan_json && proj.plan_json.title) || proj.title;
+      const icsBody = ical.buildICal({
+        uid,
+        startsAt: proposed,
+        durationMinutes: duration,
+        summary: `Final Review -- ${planTitle}`,
+        description: `Final review and digital sign-off of the business plan for "${planTitle}".\n\nVideo link: ${videoLink}\n\nAll participants must review the plan and digitally sign off before the project enters execution.`,
+        location: videoLink,
+        organizerEmail: 'noreply@camaravirtual.app',
+        organizerName: 'CamaraVirtual.app',
+        attendees: allAttendees.map(a => ({ email: a.email, name: `${a.first_name} ${a.last_name}` }))
+      });
+
+      // Insert
+      const [meeting] = await sequelize.query(
+        `INSERT INTO ${t}_project_meetings
+         (project_id, meeting_type, scheduled_at, duration_minutes, video_link, ical_event_uid, attendees, status, created_at, updated_at)
+         VALUES (:p, 'final_review', :sa, :d, :vl, :uid, :att::int[], 'scheduled', NOW(), NOW())
+         RETURNING *`,
+        {
+          replacements: {
+            p: req.params.id, sa: proposed, d: duration, vl: videoLink, uid,
+            att: '{' + attendeeIds.join(',') + '}'
+          },
+          type: QueryTypes.SELECT
+        }
+      );
+
+      // Transition status -> pending_signoff
+      await sequelize.query(
+        `UPDATE ${t}_projects SET plan_status = 'pending_signoff', updated_at = NOW() WHERE id = :id`,
+        { replacements: { id: req.params.id } }
+      );
+
+      return res.status(201).json({
+        success: true,
+        data: {
+          meeting,
+          ics: icsBody,
+          attendee_count: allAttendees.length,
+          attendees: allAttendees.map(a => ({ email: a.email, name: `${a.first_name} ${a.last_name}` }))
+        }
+      });
+    } catch (err) {
+      console.error('[book-meeting]', err);
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // GET /:id/meetings -- list scheduled meetings for project
+  router.get('/:id/meetings', authMiddleware, async (req, res) => {
+    try {
+      const meetings = await sequelize.query(
+        `SELECT * FROM ${t}_project_meetings WHERE project_id = :p ORDER BY scheduled_at DESC`,
+        { replacements: { p: req.params.id }, type: QueryTypes.SELECT }
+      );
+      return res.json({ success: true, data: meetings });
+    } catch (err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // GET /:id/meetings/:mid/ics -- download .ics file for a meeting
+  router.get('/:id/meetings/:mid/ics', async (req, res) => {
+    try {
+      const [meeting] = await sequelize.query(
+        `SELECT m.*, p.title, p.plan_json
+         FROM ${t}_project_meetings m JOIN ${t}_projects p ON p.id = m.project_id
+         WHERE m.id = :mid AND m.project_id = :p`,
+        { replacements: { mid: req.params.mid, p: req.params.id }, type: QueryTypes.SELECT }
+      );
+      if (!meeting) return res.status(404).send('Meeting not found');
+
+      const attendees = await sequelize.query(
+        `SELECT id, first_name, last_name, email FROM ${t}_members
+         WHERE id = ANY(:ids::int[])`,
+        { replacements: { ids: '{' + meeting.attendees.join(',') + '}' }, type: QueryTypes.SELECT }
+      );
+
+      const planTitle = (meeting.plan_json && meeting.plan_json.title) || meeting.title;
+      const ics = ical.buildICal({
+        uid: meeting.ical_event_uid,
+        startsAt: new Date(meeting.scheduled_at),
+        durationMinutes: meeting.duration_minutes,
+        summary: `Final Review -- ${planTitle}`,
+        description: `Final review and digital sign-off of the business plan.\n\nVideo link: ${meeting.video_link}`,
+        location: meeting.video_link,
+        organizerEmail: 'noreply@camaravirtual.app',
+        organizerName: 'CamaraVirtual.app',
+        attendees: attendees.map(a => ({ email: a.email, name: `${a.first_name} ${a.last_name}` }))
+      });
+
+      res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="final-review-${req.params.id}.ics"`);
+      return res.send(ics);
+    } catch (err) {
+      return res.status(500).send(err.message);
+    }
+  });
+
+  // POST /:id/signoff -- digital sign-off by participant
+  router.post('/:id/signoff', authMiddleware, async (req, res) => {
+    try {
+      const { typed_name, agreed } = req.body;
+      if (!agreed) return res.status(400).json({ success: false, error: 'Must agree to plan' });
+      if (!typed_name || typed_name.trim().length < 3) {
+        return res.status(400).json({ success: false, error: 'Type your full name to sign' });
+      }
+
+      const [proj] = await sequelize.query(
+        `SELECT * FROM ${t}_projects WHERE id = :id`,
+        { replacements: { id: req.params.id }, type: QueryTypes.SELECT }
+      );
+      if (!proj) return res.status(404).json({ success: false, error: 'Project not found' });
+      if (!['pending_signoff', 'fully_staffed'].includes(proj.plan_status)) {
+        return res.status(400).json({ success: false, error: `Cannot sign off in status: ${proj.plan_status}` });
+      }
+
+      // Verify member is participant or proposer
+      const isProposer = proj.proposer_member_id === req.member.id;
+      let isParticipant = isProposer;
+      if (!isParticipant) {
+        const [pm] = await sequelize.query(
+          `SELECT 1 FROM ${t}_project_members WHERE project_id = :p AND member_id = :m`,
+          { replacements: { p: req.params.id, m: req.member.id }, type: QueryTypes.SELECT }
+        );
+        isParticipant = !!pm;
+      }
+      if (!isParticipant) return res.status(403).json({ success: false, error: 'Not a project participant' });
+
+      // Hash the plan_json at time of signing
+      const planVersionHash = crypto.createHash('sha256')
+        .update(JSON.stringify(proj.plan_json || {}))
+        .digest('hex');
+
+      // Insert (upsert: if already signed, update)
+      const [existing] = await sequelize.query(
+        `SELECT id FROM ${t}_project_signoffs WHERE project_id = :p AND member_id = :m`,
+        { replacements: { p: req.params.id, m: req.member.id }, type: QueryTypes.SELECT }
+      );
+      if (existing) {
+        return res.status(409).json({ success: false, error: 'Already signed' });
+      }
+
+      await sequelize.query(
+        `INSERT INTO ${t}_project_signoffs
+         (project_id, member_id, signed_at, plan_version_hash, signature_method, signature_payload, ip_address, user_agent)
+         VALUES (:p, :m, NOW(), :h, 'typed_name', :sig, :ip, :ua)`,
+        {
+          replacements: {
+            p: req.params.id,
+            m: req.member.id,
+            h: planVersionHash,
+            sig: typed_name.trim(),
+            ip: req.ip || req.connection.remoteAddress || null,
+            ua: (req.headers['user-agent'] || '').substring(0, 500)
+          }
+        }
+      );
+
+      // Compute participants (proposer + project_members), then check unanimous
+      const [{ count: participantCount }] = await sequelize.query(
+        `SELECT COUNT(*) AS count FROM (
+           SELECT proposer_member_id AS member_id FROM ${t}_projects WHERE id = :p
+           UNION
+           SELECT member_id FROM ${t}_project_members WHERE project_id = :p
+         ) sub`,
+        { replacements: { p: req.params.id }, type: QueryTypes.SELECT }
+      );
+      const [{ count: signedCount }] = await sequelize.query(
+        `SELECT COUNT(*) AS count FROM ${t}_project_signoffs WHERE project_id = :p`,
+        { replacements: { p: req.params.id }, type: QueryTypes.SELECT }
+      );
+
+      const allSigned = parseInt(signedCount) >= parseInt(participantCount);
+      let newStatus = 'pending_signoff';
+      if (allSigned) {
+        newStatus = 'signed_off';
+        await sequelize.query(
+          `UPDATE ${t}_projects SET plan_status = 'signed_off', visibility = 'participants_only', updated_at = NOW()
+           WHERE id = :id`,
+          { replacements: { id: req.params.id } }
+        );
+      }
+
+      return res.json({
+        success: true,
+        data: {
+          signed: true,
+          all_signed: allSigned,
+          signed_count: parseInt(signedCount),
+          total_participants: parseInt(participantCount),
+          new_status: newStatus
+        }
+      });
+    } catch (err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // GET /:id/signoff-status
+  router.get('/:id/signoff-status', authMiddleware, async (req, res) => {
+    try {
+      const [proj] = await sequelize.query(
+        `SELECT id, proposer_member_id, plan_status FROM ${t}_projects WHERE id = :id`,
+        { replacements: { id: req.params.id }, type: QueryTypes.SELECT }
+      );
+      if (!proj) return res.status(404).json({ success: false, error: 'Project not found' });
+
+      const participants = await sequelize.query(
+        `SELECT DISTINCT m.id, m.first_name, m.last_name, m.email
+         FROM ${t}_members m
+         WHERE m.id = :proposer
+            OR m.id IN (SELECT member_id FROM ${t}_project_members WHERE project_id = :p)`,
+        { replacements: { proposer: proj.proposer_member_id, p: req.params.id }, type: QueryTypes.SELECT }
+      );
+      const signoffs = await sequelize.query(
+        `SELECT member_id, signed_at, signature_payload FROM ${t}_project_signoffs WHERE project_id = :p`,
+        { replacements: { p: req.params.id }, type: QueryTypes.SELECT }
+      );
+      const signedSet = new Set(signoffs.map(s => s.member_id));
+      const result = participants.map(p => ({
+        member_id: p.id,
+        name: `${p.first_name} ${p.last_name}`,
+        email: p.email,
+        signed: signedSet.has(p.id),
+        signed_at: signoffs.find(s => s.member_id === p.id)?.signed_at || null
+      }));
+
+      return res.json({
+        success: true,
+        data: {
+          plan_status: proj.plan_status,
+          total_participants: participants.length,
+          signed_count: signoffs.length,
+          all_signed: signoffs.length >= participants.length,
+          participants: result
+        }
+      });
     } catch (err) {
       return res.status(500).json({ success: false, error: err.message });
     }
