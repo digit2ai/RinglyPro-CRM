@@ -878,7 +878,16 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     if (!container) return;
     try {
       var res = await apiFetch('/metrics/trust/'+memberId);
-      if (!res.success) { container.innerHTML = '<h2>Trust Score</h2><div class="error-msg">Not available</div>'; return; }
+      if (!res.success) {
+        // Fallback: show the stored value from currentMember if endpoint failed
+        var stored = currentMember && currentMember.trust_score;
+        if (stored != null) {
+          container.innerHTML = '<h2>Trust Score: <span style="color:var(--primary)">'+parseFloat(stored).toFixed(3)+'</span></h2><div class="text-sm text-muted">Stored value (component breakdown unavailable)</div>';
+        } else {
+          container.innerHTML = '<h2>Trust Score</h2><div class="error-msg">Not available</div>';
+        }
+        return;
+      }
       var d = res.data;
       var html = '<h2>Trust Score: <span style="color:var(--primary)">'+((d.trust_score != null ? d.trust_score : d.trust_base_calculated) || 0).toFixed(3)+'</span></h2>';
       html += '<div class="trust-components mt-12">';

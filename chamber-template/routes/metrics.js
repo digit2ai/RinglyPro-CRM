@@ -89,9 +89,21 @@ module.exports = function createMetricsRoutes(config) {
       const memberId = parseInt(req.params.id);
       const [member] = await sequelize.query(`SELECT id, first_name, last_name, trust_score, verified, verification_level, membership_type, created_at FROM ${t}_members WHERE id = :id`, { replacements: { id: memberId }, type: QueryTypes.SELECT });
       if (!member) return res.status(404).json({ success: false, error: 'Member not found' });
-      const references = await sequelize.query(`SELECT AVG(collaboration_quality) as avg_quality, COUNT(*) as count FROM ${t}_trust_references WHERE to_member_id = :id`, { replacements: { id: memberId }, type: QueryTypes.SELECT });
-      const [projectStats] = await sequelize.query(`SELECT COUNT(*) as total, COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed FROM ${t}_project_members WHERE member_id = :id`, { replacements: { id: memberId }, type: QueryTypes.SELECT });
-      const V = member.verification_level === 'id_complete' ? 1.0 : member.verification_level === 'email' ? 0.5 : 0;
+      // trust_references table may not exist on all chamber instances -- guard it
+      let references = [{ avg_quality: 0, count: 0 }];
+      try {
+        references = await sequelize.query(`SELECT AVG(collaboration_quality) as avg_quality, COUNT(*) as count FROM ${t}_trust_references WHERE to_member_id = :id`, { replacements: { id: memberId }, type: QueryTypes.SELECT });
+      } catch (e) { /* table missing -- ignore, R stays 0 */ }
+      const [projectStats] = await sequelize.query(
+        `SELECT COUNT(*) as total,
+                COUNT(CASE WHEN p.plan_status = 'completed' THEN 1 END) as completed
+         FROM ${t}_project_members pm
+         LEFT JOIN ${t}_projects p ON p.id = pm.project_id
+         WHERE pm.member_id = :id`,
+        { replacements: { id: memberId }, type: QueryTypes.SELECT }
+      );
+      const V = (member.verification_level === 'id_complete' || member.verification_level === 'verified') ? 1.0
+              : member.verification_level === 'email' ? 0.5 : 0;
       const R = parseFloat(references[0].avg_quality) || 0;
       const projTotal = parseInt(projectStats.total) || 0;
       const P = projTotal > 0 ? (parseInt(projectStats.completed) || 0) / projTotal : 0;
@@ -101,7 +113,10 @@ module.exports = function createMetricsRoutes(config) {
       const M = mScores[member.membership_type] || 0.4;
       const trustBase = 0.30 * V + 0.25 * R + 0.20 * P + 0.15 * A + 0.10 * M;
       res.json({ success: true, data: { member_id: memberId, name: `${member.first_name} ${member.last_name}`, trust_score: parseFloat(member.trust_score), trust_base_calculated: Math.round(trustBase * 10000) / 10000, components: { verification: { value: V, weight: 0.30 }, references: { value: Math.round(R * 1000) / 1000, weight: 0.25, count: parseInt(references[0].count) }, projects: { value: Math.round(P * 1000) / 1000, weight: 0.20 }, tenure: { value: Math.round(A * 1000) / 1000, weight: 0.15 }, membership: { value: M, weight: 0.10, type: member.membership_type } } } });
-    } catch (error) { res.status(500).json({ success: false, error: error.message }); }
+    } catch (error) {
+      console.error('[GET /metrics/trust/:id]', error.message, error.stack);
+      res.status(500).json({ success: false, error: error.message });
+    }
   });
 
   // GET /dashboard

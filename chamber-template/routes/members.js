@@ -76,8 +76,24 @@ module.exports = function createMemberRoutes(config) {
       const setClauses = []; const replacements = { id: memberId };
       for (const field of allowedFields) {
         if (req.body[field] !== undefined) {
-          if (field === 'languages' && Array.isArray(req.body[field])) {
-            setClauses.push(`${field} = :${field}`); replacements[field] = JSON.stringify(req.body[field]);
+          if (field === 'languages') {
+            // Postgres TEXT[] expects ARRAY[...] literal, not JSON
+            const arr = Array.isArray(req.body[field])
+              ? req.body[field]
+              : (typeof req.body[field] === 'string' ? req.body[field].split(',').map(s => s.trim()).filter(Boolean) : []);
+            if (arr.length === 0) {
+              setClauses.push(`languages = ARRAY[]::TEXT[]`);
+            } else {
+              const placeholders = arr.map((_, i) => `:lang${i}`).join(',');
+              setClauses.push(`languages = ARRAY[${placeholders}]::TEXT[]`);
+              arr.forEach((v, i) => { replacements[`lang${i}`] = v; });
+            }
+          } else if (field === 'years_experience' || field === 'region_id') {
+            // Coerce to int or null (frontend may send '' for empty)
+            const v = req.body[field];
+            const num = (v === '' || v === null || v === undefined) ? null : parseInt(v);
+            setClauses.push(`${field} = :${field}`);
+            replacements[field] = (Number.isNaN(num) ? null : num);
           } else {
             setClauses.push(`${field} = :${field}`); replacements[field] = req.body[field];
           }
@@ -86,13 +102,14 @@ module.exports = function createMemberRoutes(config) {
       if (setClauses.length === 0) return res.status(400).json({ success: false, error: 'No fields to update' });
       setClauses.push('updated_at = NOW()');
       const [results] = await sequelize.query(
-        `UPDATE ${t}_members SET ${setClauses.join(', ')} WHERE id = :id RETURNING id, email, first_name, last_name, country, region_id, sector, sub_specialty, years_experience, languages, company_name, membership_type, bio, phone, linkedin_url, website_url, verification_level, created_at, updated_at`,
+        `UPDATE ${t}_members SET ${setClauses.join(', ')} WHERE id = :id RETURNING id, email, first_name, last_name, country, region_id, sector, sub_specialty, years_experience, languages, company_name, membership_type, bio, phone, linkedin_url, website_url, verification_level, trust_score, created_at, updated_at`,
         { replacements }
       );
       if (!results[0]) return res.status(404).json({ success: false, error: 'Member not found' });
       return res.json({ success: true, data: results[0], error: null });
     } catch (err) {
-      return res.status(500).json({ success: false, error: 'Internal error' });
+      console.error('[PUT /members/:id]', err.message, err.stack);
+      return res.status(500).json({ success: false, error: err.message || 'Internal error' });
     }
   });
 
