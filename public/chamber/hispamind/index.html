@@ -280,7 +280,7 @@
       <li><a href="#projects">Casos de uso</a></li>
       <li><a href="#screening">Screening</a></li>
       <li><a href="#register" style="color:var(--yellow);font-weight:600;">Solicitar Demo</a></li>
-      <li><a id="adminLink" href="/chamber/hispamind/platform-admin/" style="font-size:11px;opacity:0.5;">Admin</a></li>
+      <li><a id="loginLink" href="/chamber/hispamind/dashboard/">Login</a></li>
     </ul>
   </nav>
   <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()">
@@ -684,8 +684,8 @@
   if (presLink) presLink.href = BASE + '/presentation.html';
 
   // Fix admin link
-  var adminLink = document.getElementById('adminLink');
-  if (adminLink) adminLink.href = BASE + '/platform-admin/';
+  var loginLink = document.getElementById("loginLink");
+  if (loginLink) loginLink.href = BASE + "/dashboard/";
 
   var header = document.getElementById('header');
   window.addEventListener('scroll', function() { header.classList.toggle('scrolled', window.scrollY > 40); });
