@@ -82,7 +82,7 @@ async function generatePlan({ vision, sector, countries, budget_tier }) {
 
   const response = await anthropic.messages.create({
     model: MODEL,
-    max_tokens: 8000,
+    max_tokens: 16000,
     system: [
       { type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }
     ],
