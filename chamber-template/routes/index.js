@@ -47,6 +47,15 @@ function createChamberRouter(config) {
     }
   }
 
+  // P2B Stage 3 -- private workspace (mounted under /projects/:id/workspace)
+  try {
+    const createWorkspaceRoutes = require('./workspace');
+    router.use('/projects/:id/workspace', createWorkspaceRoutes(config));
+    console.log(`  [${slug.toUpperCase()}] Workspace (P2B Stage 3) routes mounted`);
+  } catch (e) {
+    console.error(`  [${slug.toUpperCase()}] Workspace routes failed:`, e.message);
+  }
+
   return router;
 }
 
