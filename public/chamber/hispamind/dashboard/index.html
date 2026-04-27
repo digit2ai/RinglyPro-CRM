@@ -696,6 +696,12 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   }
   function closeModal() {
     document.getElementById('modalOverlay').classList.remove('show');
+    // Auto-refresh the active page so any DB changes show up immediately
+    if (currentPage === 'projects' && typeof loadProjects === 'function') {
+      loadProjects();
+    } else if (currentPage === 'invitations' && typeof renderInvitations === 'function') {
+      renderInvitations();
+    }
   }
 
   // -- Helpers --
@@ -1254,6 +1260,8 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       try {
         var res = await apiFetch('/projects/draft', { method:'POST', body:JSON.stringify(body) });
         if (res.success) {
+          // Refresh project list in background so the draft shows up if user closes editor
+          loadProjects();
           showPlanEditor(res.data.project_id, res.data.plan_json);
         } else {
           msg.innerHTML = '<div class="error-msg">'+(res.error||'Error generating plan')+'</div>';
