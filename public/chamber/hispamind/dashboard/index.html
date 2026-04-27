@@ -1860,25 +1860,35 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   // ============================================================
 
   async function openWorkspaceModal(projectId) {
+    // Close the project detail modal if open, then render workspace as a full page
+    closeModal();
     window._wsProjectId = projectId;
     window._wsActiveTab = 'overview';
-    var h = renderWorkspaceShell(projectId);
-    openModal(h);
+    currentPage = 'workspace';
+    document.querySelectorAll('.sidebar-nav-item').forEach(function(i) { i.classList.remove('active'); });
+    document.getElementById('pageTitle').textContent = 'Project Workspace #' + projectId;
+    document.getElementById('pageContent').innerHTML = renderWorkspaceShell(projectId);
     wireWorkspaceTabs();
     loadWorkspaceTab('overview');
   }
 
   function renderWorkspaceShell(projectId) {
-    var h = '<div style="position:sticky;top:0;background:var(--white);padding:16px 28px 0;margin:-28px -28px 16px;border-bottom:1px solid var(--gray-200);z-index:5">';
-    h += '<div class="flex-between"><h2 style="margin:0">Project Workspace #'+projectId+'</h2>';
-    h += '<span class="text-sm text-muted">Private &middot; participants only</span></div>';
-    h += '<div class="tabs" style="margin-top:12px;border-bottom:none">';
+    var h = '<div style="background:var(--white);padding:14px 18px;border:1px solid var(--gray-200);border-radius:8px;margin-bottom:14px">';
+    h += '<div class="flex-between" style="margin-bottom:10px">';
+    h += '<button class="btn btn-outline btn-sm" id="wsBackBtn">&larr; Back to Projects</button>';
+    h += '<span class="text-sm text-muted">Project #'+projectId+' &middot; Private &middot; participants only</span>';
+    h += '</div>';
+    h += '<div class="tabs" style="border-bottom:none;flex-wrap:wrap">';
     var tabs = ['overview','tasks','milestones','discussion','documents','team','plan'];
     tabs.forEach(function(t, i) {
       h += '<button class="tab-btn'+(i===0?' active':'')+'" data-ws-tab="'+t+'">'+t.charAt(0).toUpperCase()+t.slice(1)+'</button>';
     });
     h += '</div></div>';
     h += '<div id="wsContent"><div class="loading">Loading...</div></div>';
+    setTimeout(function() {
+      var b = document.getElementById('wsBackBtn');
+      if (b) b.addEventListener('click', function() { navigate('projects'); });
+    }, 0);
     return h;
   }
 
