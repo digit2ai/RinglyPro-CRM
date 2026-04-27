@@ -51,6 +51,26 @@ module.exports = function createWorkspaceRoutes(config) {
     }
   }
 
+  // PR-C: Project Owner = proposer OR superadmin (admin rights in workspace)
+  async function requireProjectOwner(req, res, next) {
+    try {
+      const projectId = parseInt(req.params.id);
+      const memberId = req.member.id;
+      const [row] = await sequelize.query(
+        `SELECT 1 AS ok FROM ${t}_projects WHERE id = :p AND proposer_member_id = :m
+         UNION
+         SELECT 1 FROM ${t}_members WHERE id = :m AND access_level = 'superadmin'
+         LIMIT 1`,
+        { replacements: { p: projectId, m: memberId }, type: QueryTypes.SELECT }
+      );
+      if (!row) return res.status(403).json({ success: false, error: 'Project Owner only (proposer or superadmin)' });
+      req.isProjectOwner = true;
+      next();
+    } catch (err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  }
+
   // ============ OVERVIEW ============
   router.get('/overview', authMiddleware, requireProjectParticipant, async (req, res) => {
     try {
@@ -84,7 +104,43 @@ module.exports = function createWorkspaceRoutes(config) {
          ORDER BY created_at DESC LIMIT 10`,
         { replacements: { p: projectId }, type: QueryTypes.SELECT }
       );
-      return res.json({ success: true, data: { tasks: taskStats, milestones: msStats, recent_activity: recent } });
+      // PR-C: ownership info for the viewer
+      const [proj] = await sequelize.query(
+        `SELECT proposer_member_id FROM ${t}_projects WHERE id = :p`,
+        { replacements: { p: projectId }, type: QueryTypes.SELECT }
+      );
+      const [viewer] = await sequelize.query(
+        `SELECT access_level FROM ${t}_members WHERE id = :m`,
+        { replacements: { m: req.member.id }, type: QueryTypes.SELECT }
+      );
+      const isOwner = (proj && proj.proposer_member_id === req.member.id) || (viewer && viewer.access_level === 'superadmin');
+
+      // My assigned milestones
+      const myMilestones = await sequelize.query(
+        `SELECT id, title, status, target_month FROM ${t}_project_milestones
+         WHERE project_id = :p AND :m = ANY(lead_member_ids)`,
+        { replacements: { p: projectId, m: req.member.id }, type: QueryTypes.SELECT }
+      );
+
+      // My assigned tasks
+      const [myTasks] = await sequelize.query(
+        `SELECT COUNT(*) FILTER (WHERE status != 'done') AS open,
+                COUNT(*) FILTER (WHERE status = 'done') AS done
+         FROM ${t}_project_tasks WHERE project_id = :p AND assignee_member_id = :m`,
+        { replacements: { p: projectId, m: req.member.id }, type: QueryTypes.SELECT }
+      );
+
+      return res.json({
+        success: true,
+        data: {
+          tasks: taskStats,
+          milestones: msStats,
+          recent_activity: recent,
+          viewer: { is_owner: isOwner, member_id: req.member.id },
+          my_milestones: myMilestones,
+          my_tasks: myTasks
+        }
+      });
     } catch (err) {
       return res.status(500).json({ success: false, error: err.message });
     }
@@ -133,29 +189,57 @@ module.exports = function createWorkspaceRoutes(config) {
 
   router.put('/tasks/:tid', authMiddleware, requireProjectParticipant, async (req, res) => {
     try {
-      const allowed = ['title', 'description', 'status', 'assignee_member_id', 'milestone_id', 'priority', 'due_date'];
+      const [task] = await sequelize.query(
+        `SELECT * FROM ${t}_project_tasks WHERE id = :id AND project_id = :p`,
+        { replacements: { id: req.params.tid, p: req.params.id }, type: QueryTypes.SELECT }
+      );
+      if (!task) return res.status(404).json({ success: false, error: 'Task not found' });
+
+      const [proj] = await sequelize.query(
+        `SELECT proposer_member_id FROM ${t}_projects WHERE id = :p`,
+        { replacements: { p: req.params.id }, type: QueryTypes.SELECT }
+      );
+      const [viewer] = await sequelize.query(
+        `SELECT access_level FROM ${t}_members WHERE id = :m`,
+        { replacements: { m: req.member.id }, type: QueryTypes.SELECT }
+      );
+      const isOwner = (proj && proj.proposer_member_id === req.member.id) || (viewer && viewer.access_level === 'superadmin');
+      const isAssignee = task.assignee_member_id === req.member.id;
+      const isCreator = task.created_by_member_id === req.member.id;
+
+      if (!isOwner && !isAssignee && !isCreator) {
+        return res.status(403).json({ success: false, error: 'Only owner, creator, or assignee can update' });
+      }
+
+      // Owner can change anything; non-owner can change status, description, due_date but not assignee
+      let allowed;
+      if (isOwner) {
+        allowed = ['title', 'description', 'status', 'assignee_member_id', 'milestone_id', 'priority', 'due_date'];
+      } else {
+        allowed = ['status', 'description', 'due_date'];
+        // assignee can also self-assign (already self-assigned, so no-op typically)
+        if (isAssignee || isCreator) allowed.push('priority');
+      }
+
       const sets = []; const repl = { id: req.params.tid, p: req.params.id };
       for (const k of allowed) {
-        if (k in req.body) {
-          sets.push(`${k} = :${k}`);
-          repl[k] = req.body[k];
-        }
+        if (k in req.body) { sets.push(`${k} = :${k}`); repl[k] = req.body[k]; }
       }
-      if (sets.length === 0) return res.status(400).json({ success: false, error: 'No fields to update' });
+      if (sets.length === 0) return res.status(400).json({ success: false, error: 'No fields (or insufficient permissions)' });
       sets.push('updated_at = NOW()');
       if (req.body.status === 'done') sets.push('completed_at = NOW()');
       const [updated] = await sequelize.query(
         `UPDATE ${t}_project_tasks SET ${sets.join(', ')} WHERE id = :id AND project_id = :p RETURNING *`,
         { replacements: repl, type: QueryTypes.SELECT }
       );
-      if (!updated) return res.status(404).json({ success: false, error: 'Task not found' });
       return res.json({ success: true, data: updated });
     } catch (err) {
       return res.status(500).json({ success: false, error: err.message });
     }
   });
 
-  router.delete('/tasks/:tid', authMiddleware, requireProjectParticipant, async (req, res) => {
+  // Task delete: Owner only
+  router.delete('/tasks/:tid', authMiddleware, requireProjectParticipant, requireProjectOwner, async (req, res) => {
     try {
       await sequelize.query(
         `DELETE FROM ${t}_project_tasks WHERE id = :id AND project_id = :p`,
@@ -171,7 +255,11 @@ module.exports = function createWorkspaceRoutes(config) {
   router.get('/milestones', authMiddleware, requireProjectParticipant, async (req, res) => {
     try {
       const m = await sequelize.query(
-        `SELECT * FROM ${t}_project_milestones WHERE project_id = :p ORDER BY target_month NULLS LAST, target_date`,
+        `SELECT m.*,
+          (SELECT array_agg(json_build_object('id', mb.id, 'name', mb.first_name || ' ' || mb.last_name))
+           FROM ${t}_members mb WHERE mb.id = ANY(m.lead_member_ids)) AS leads
+         FROM ${t}_project_milestones m
+         WHERE m.project_id = :p ORDER BY m.target_month NULLS LAST, m.target_date`,
         { replacements: { p: req.params.id }, type: QueryTypes.SELECT }
       );
       return res.json({ success: true, data: m });
@@ -180,7 +268,38 @@ module.exports = function createWorkspaceRoutes(config) {
     }
   });
 
-  router.post('/milestones', authMiddleware, requireProjectParticipant, async (req, res) => {
+  // Project Owner only: assign leads to a milestone
+  router.put('/milestones/:mid/assign', authMiddleware, requireProjectParticipant, requireProjectOwner, async (req, res) => {
+    try {
+      const { lead_member_ids } = req.body;
+      if (!Array.isArray(lead_member_ids)) {
+        return res.status(400).json({ success: false, error: 'lead_member_ids must be an array' });
+      }
+      // Validate all are participants
+      const valid = await sequelize.query(
+        `SELECT id FROM ${t}_members
+         WHERE id = ANY(:ids::int[])
+           AND (id IN (SELECT member_id FROM ${t}_project_members WHERE project_id = :p)
+                OR id IN (SELECT proposer_member_id FROM ${t}_projects WHERE id = :p))`,
+        { replacements: { ids: '{' + lead_member_ids.join(',') + '}', p: req.params.id }, type: QueryTypes.SELECT }
+      );
+      const validIds = valid.map(v => v.id);
+      if (validIds.length !== lead_member_ids.length) {
+        return res.status(400).json({ success: false, error: 'Some member_ids are not participants' });
+      }
+      const [updated] = await sequelize.query(
+        `UPDATE ${t}_project_milestones SET lead_member_ids = :ids::int[]
+         WHERE id = :mid AND project_id = :p RETURNING *`,
+        { replacements: { ids: '{' + validIds.join(',') + '}', mid: req.params.mid, p: req.params.id }, type: QueryTypes.SELECT }
+      );
+      if (!updated) return res.status(404).json({ success: false, error: 'Milestone not found' });
+      return res.json({ success: true, data: updated });
+    } catch (err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  router.post('/milestones', authMiddleware, requireProjectParticipant, requireProjectOwner, async (req, res) => {
     try {
       const { title, description, target_month, target_date, budget_allocation_usd, status } = req.body;
       if (!title) return res.status(400).json({ success: false, error: 'title required' });
@@ -206,18 +325,54 @@ module.exports = function createWorkspaceRoutes(config) {
 
   router.put('/milestones/:mid', authMiddleware, requireProjectParticipant, async (req, res) => {
     try {
-      const allowed = ['title', 'description', 'target_month', 'target_date', 'budget_allocation_usd', 'status', 'escrow_status', 'stripe_escrow_id'];
+      // Permission: Owner can update anything; lead can update status only on their own milestone
+      const [milestone] = await sequelize.query(
+        `SELECT * FROM ${t}_project_milestones WHERE id = :id AND project_id = :p`,
+        { replacements: { id: req.params.mid, p: req.params.id }, type: QueryTypes.SELECT }
+      );
+      if (!milestone) return res.status(404).json({ success: false, error: 'Milestone not found' });
+
+      const [proj] = await sequelize.query(
+        `SELECT proposer_member_id FROM ${t}_projects WHERE id = :p`,
+        { replacements: { p: req.params.id }, type: QueryTypes.SELECT }
+      );
+      const [viewer] = await sequelize.query(
+        `SELECT access_level FROM ${t}_members WHERE id = :m`,
+        { replacements: { m: req.member.id }, type: QueryTypes.SELECT }
+      );
+      const isOwner = (proj && proj.proposer_member_id === req.member.id) || (viewer && viewer.access_level === 'superadmin');
+      const isLead = Array.isArray(milestone.lead_member_ids) && milestone.lead_member_ids.includes(req.member.id);
+
+      if (!isOwner && !isLead) {
+        return res.status(403).json({ success: false, error: 'Only Project Owner or assigned milestone lead can update' });
+      }
+
+      // Leads can only update status; Owner can update everything
+      let allowed;
+      if (isOwner) {
+        allowed = ['title', 'description', 'target_month', 'target_date', 'budget_allocation_usd', 'status', 'escrow_status', 'stripe_escrow_id', 'lead_member_ids'];
+      } else {
+        allowed = ['status'];
+      }
+
       const sets = []; const repl = { id: req.params.mid, p: req.params.id };
       for (const k of allowed) {
-        if (k in req.body) { sets.push(`${k} = :${k}`); repl[k] = req.body[k]; }
+        if (k in req.body) {
+          if (k === 'lead_member_ids' && Array.isArray(req.body[k])) {
+            sets.push(`${k} = :${k}::int[]`);
+            repl[k] = '{' + req.body[k].join(',') + '}';
+          } else {
+            sets.push(`${k} = :${k}`);
+            repl[k] = req.body[k];
+          }
+        }
       }
-      if (sets.length === 0) return res.status(400).json({ success: false, error: 'No fields' });
+      if (sets.length === 0) return res.status(400).json({ success: false, error: 'No fields (or insufficient permissions for fields requested)' });
       if (req.body.status === 'completed') sets.push('completed_at = NOW()');
       const [updated] = await sequelize.query(
         `UPDATE ${t}_project_milestones SET ${sets.join(', ')} WHERE id = :id AND project_id = :p RETURNING *`,
         { replacements: repl, type: QueryTypes.SELECT }
       );
-      if (!updated) return res.status(404).json({ success: false, error: 'Milestone not found' });
       return res.json({ success: true, data: updated });
     } catch (err) {
       return res.status(500).json({ success: false, error: err.message });

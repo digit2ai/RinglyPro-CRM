@@ -1878,12 +1878,39 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     var r = await apiFetch('/projects/'+pid+'/workspace/overview');
     if (!r.success) { el.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>'; return; }
     var d = r.data;
-    var h = '<div class="stat-cards">';
+    window._wsIsOwner = d.viewer && d.viewer.is_owner;
+
+    var h = '';
+    if (d.viewer && d.viewer.is_owner) {
+      h += '<div style="background:linear-gradient(135deg,#1565c0,#1976d2);color:white;border-radius:8px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">&#128081;</span><div><div style="font-weight:700">You are the Project Owner</div><div style="font-size:12px;opacity:0.85">You can assign leads, manage milestones, edit/delete anything in this workspace</div></div></div>';
+    }
+
+    h += '<div class="stat-cards">';
     h += '<div class="stat-card"><div class="label">Total Tasks</div><div class="value">'+d.tasks.total+'</div></div>';
     h += '<div class="stat-card"><div class="label">In Progress</div><div class="value primary">'+d.tasks.doing+'</div></div>';
     h += '<div class="stat-card"><div class="label">Done</div><div class="value" style="color:#28a745">'+d.tasks.done+'</div></div>';
     h += '<div class="stat-card"><div class="label">Milestones</div><div class="value">'+d.milestones.completed+' / '+d.milestones.total+'</div></div>';
     h += '</div>';
+
+    // My Tasks widget (every participant)
+    if (d.my_tasks) {
+      h += '<div class="stat-cards" style="margin-top:8px">';
+      h += '<div class="stat-card" style="border-left:3px solid var(--primary)"><div class="label">My Open Tasks</div><div class="value primary">'+(d.my_tasks.open||0)+'</div></div>';
+      h += '<div class="stat-card" style="border-left:3px solid #28a745"><div class="label">My Completed</div><div class="value" style="color:#28a745">'+(d.my_tasks.done||0)+'</div></div>';
+      h += '</div>';
+    }
+
+    // My Assigned Milestones widget
+    if (Array.isArray(d.my_milestones) && d.my_milestones.length > 0) {
+      h += '<div class="panel"><h2>My Assigned Milestones</h2>';
+      d.my_milestones.forEach(function(m) {
+        var col = m.status === 'completed' ? '#28a745' : (m.status === 'in_progress' ? 'var(--primary)' : '#999');
+        h += '<div style="padding:8px 0;border-bottom:1px solid var(--gray-200);display:flex;justify-content:space-between"><span><strong>M'+(m.target_month||'?')+': '+esc(m.title)+'</strong></span>';
+        h += '<span style="background:'+col+';color:white;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700">'+esc(m.status)+'</span></div>';
+      });
+      h += '</div>';
+    }
+
     h += '<div class="panel"><h2>Recent Activity</h2>';
     if (d.recent_activity.length === 0) {
       h += '<p class="text-muted text-sm">No activity yet.</p>';
@@ -2008,6 +2035,8 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     var r = await apiFetch('/projects/'+pid+'/workspace/milestones');
     if (!r.success) { el.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>'; return; }
     var ms = r.data || [];
+    var isOwner = window._wsIsOwner === true;
+
     var h = '';
     if (ms.length === 0) {
       h = '<div class="panel"><p class="text-muted">No milestones yet. Initialize the workspace from the plan to auto-generate.</p></div>';
@@ -2019,13 +2048,27 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         h += '<div class="flex-between"><div><strong>M'+(m.target_month||'?')+': '+esc(m.title)+'</strong></div>';
         h += '<span style="background:'+col+';color:white;padding:3px 10px;border-radius:12px;font-size:11px;text-transform:uppercase;font-weight:700">'+esc(m.status)+'</span></div>';
         if (m.description) h += '<div class="text-sm text-muted" style="margin-top:6px">'+esc(m.description)+'</div>';
+
+        // Leads
+        var leadsHtml = '<div class="text-sm" style="margin-top:6px"><strong>Leads:</strong> ';
+        if (Array.isArray(m.leads) && m.leads.length > 0) {
+          leadsHtml += m.leads.map(function(l){ return '<span style="background:#e3f2fd;color:#1565c0;padding:2px 8px;border-radius:10px;font-size:11px;margin-right:4px">'+esc(l.name)+'</span>'; }).join('');
+        } else {
+          leadsHtml += '<span class="text-muted">No leads assigned</span>';
+        }
+        if (isOwner) {
+          leadsHtml += ' <button class="btn btn-outline btn-sm" data-assign-mid="'+m.id+'" style="padding:2px 8px;font-size:10px">Assign Leads</button>';
+        }
+        leadsHtml += '</div>';
+        h += leadsHtml;
+
         if (m.budget_allocation_usd) h += '<div class="text-sm" style="margin-top:6px"><strong>Budget:</strong> $'+Number(m.budget_allocation_usd).toLocaleString()+'</div>';
         if (m.escrow_status) h += '<div class="text-sm" style="margin-top:4px"><strong>Escrow:</strong> '+esc(m.escrow_status)+(m.stripe_escrow_id?' ('+esc(m.stripe_escrow_id)+')':'')+'</div>';
-        h += '<div style="margin-top:8px;display:flex;gap:6px">';
-        if (m.escrow_status !== 'funded' && m.escrow_status !== 'released' && m.budget_allocation_usd) {
+        h += '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">';
+        if (isOwner && m.escrow_status !== 'funded' && m.escrow_status !== 'released' && m.budget_allocation_usd) {
           h += '<button class="btn btn-outline btn-sm" data-fund="'+m.id+'">Fund Escrow</button>';
         }
-        if (m.escrow_status === 'funded') {
+        if (isOwner && m.escrow_status === 'funded') {
           h += '<button class="btn btn-primary btn-sm" data-release="'+m.id+'">Release Escrow + Mark Complete</button>';
         }
         if (m.status !== 'completed') {
@@ -2037,6 +2080,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       h += '</div>';
     }
     el.innerHTML = h;
+
     document.querySelectorAll('button[data-fund]').forEach(function(b) {
       b.addEventListener('click', async function() {
         await apiFetch('/projects/'+pid+'/workspace/milestones/'+this.dataset.fund+'/fund-escrow', { method:'POST' });
@@ -2054,6 +2098,55 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         await apiFetch('/projects/'+pid+'/workspace/milestones/'+this.dataset.mid, { method:'PUT', body:JSON.stringify({ status: this.dataset.status }) });
         loadWorkspaceTab('milestones');
       });
+    });
+    document.querySelectorAll('button[data-assign-mid]').forEach(function(b) {
+      b.addEventListener('click', function() { showAssignLeadsModal(pid, this.dataset.assignMid); });
+    });
+  }
+
+  async function showAssignLeadsModal(pid, mid) {
+    // Fetch project team
+    var r = await apiFetch('/projects/'+pid);
+    if (!r.success) return;
+    var team = r.data.team || [];
+
+    // Fetch current milestone
+    var ms = await apiFetch('/projects/'+pid+'/workspace/milestones');
+    var m = (ms.data || []).find(function(x){ return x.id == mid; });
+    if (!m) return;
+    var currentLeads = m.lead_member_ids || [];
+
+    var h = '<h2>Assign Milestone Leads</h2>';
+    h += '<p class="text-muted text-sm mb-12">Select one or more participants to lead "<strong>'+esc(m.title)+'</strong>"</p>';
+    h += '<div id="assignChecklist" style="max-height:300px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:6px;padding:10px;margin-bottom:12px">';
+    team.forEach(function(p) {
+      var checked = currentLeads.indexOf(p.member_id) >= 0 ? ' checked' : '';
+      h += '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--gray-100);cursor:pointer">';
+      h += '<input type="checkbox" data-pmid="'+p.member_id+'"'+checked+' style="width:auto"> ';
+      h += '<div><strong>'+esc(p.first_name)+' '+esc(p.last_name)+'</strong>'+(p.role_title?' &middot; <em>'+esc(p.role_title)+'</em>':'')+'<br><span class="text-muted text-sm">'+esc(p.sector||'--')+' / '+esc(p.country||'--')+'</span></div>';
+      h += '</label>';
+    });
+    h += '</div>';
+    h += '<div id="assignMsg"></div>';
+    h += '<div style="display:flex;gap:8px"><button class="btn btn-primary btn-sm" id="assignSaveBtn">Save Assignment</button> <button class="btn btn-outline btn-sm" id="assignCancelBtn">Cancel</button></div>';
+    openModal(h);
+
+    document.getElementById('assignCancelBtn').addEventListener('click', function() { openWorkspaceModal(pid); window._wsActiveTab='milestones'; setTimeout(function(){document.querySelectorAll('button[data-ws-tab]').forEach(function(b){b.classList.toggle('active', b.dataset.wsTab==='milestones');}); loadWorkspaceTab('milestones');},100); });
+
+    document.getElementById('assignSaveBtn').addEventListener('click', async function() {
+      var ids = [];
+      document.querySelectorAll('#assignChecklist input[data-pmid]:checked').forEach(function(cb) {
+        ids.push(parseInt(cb.dataset.pmid));
+      });
+      var msg = document.getElementById('assignMsg');
+      msg.innerHTML = '<div class="text-muted text-sm">Saving...</div>';
+      try {
+        var r = await apiFetch('/projects/'+pid+'/workspace/milestones/'+mid+'/assign', { method:'PUT', body:JSON.stringify({ lead_member_ids: ids }) });
+        if (r.success) {
+          msg.innerHTML = '<div class="success-msg">Saved.</div>';
+          setTimeout(function() { openWorkspaceModal(pid); window._wsActiveTab='milestones'; setTimeout(function(){document.querySelectorAll('button[data-ws-tab]').forEach(function(b){b.classList.toggle('active', b.dataset.wsTab==='milestones');}); loadWorkspaceTab('milestones');},100); }, 800);
+        } else { msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>'; }
+      } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
     });
   }
 
