@@ -108,6 +108,127 @@ module.exports = function createAdminRoutes(config) {
     } catch (error) { res.status(500).json({ success: false, error: error.message }); }
   });
 
+  // POST /members -- admin creates a new member account (email-based invite)
+  router.post('/members', authMiddleware, requireAccess('superadmin', 'admin_global', 'admin_regional'), async (req, res) => {
+    try {
+      const bcrypt = require('bcryptjs');
+      const { email, first_name, last_name, country, sector, region_id, membership_type, governance_role, access_level, password } = req.body;
+      if (!email || !first_name || !last_name) return res.status(400).json({ success: false, error: 'email, first_name, last_name required' });
+      const [existing] = await sequelize.query(`SELECT id FROM ${t}_members WHERE email = :email`, { replacements: { email }, type: QueryTypes.SELECT });
+      if (existing) return res.status(409).json({ success: false, error: 'A member with this email already exists' });
+      // Regional admins can only create within their region
+      let finalRegion = region_id ? parseInt(region_id) : null;
+      if (req.memberAccess.access_level === 'admin_regional') finalRegion = req.memberAccess.region_id;
+      const finalAccess = (req.memberAccess.access_level === 'admin_regional') ? 'member'
+                        : (ACCESS_LEVELS.includes(access_level) ? access_level : 'member');
+      const finalRole = (governance_role && GOVERNANCE_ROLES.includes(governance_role)) ? governance_role : 'member';
+      const tempPwd = password || Math.random().toString(36).slice(-12) + 'A1';
+      const hash = await bcrypt.hash(tempPwd, 10);
+      const result = await sequelize.query(
+        `INSERT INTO ${t}_members (email, password_hash, first_name, last_name, country, sector, region_id, membership_type, governance_role, access_level, verification_level, status, trust_score, created_at, updated_at)
+         VALUES (:email, :hash, :fn, :ln, :country, :sector, :region, :mtype, :role, :access, 'email', 'active', 0.7, NOW(), NOW())
+         RETURNING id, email, first_name, last_name, country, sector, region_id, membership_type, governance_role, access_level, status`,
+        { replacements: { email, hash, fn: first_name, ln: last_name, country: country || null, sector: sector || null, region: finalRegion, mtype: membership_type || 'individual', role: finalRole, access: finalAccess }, type: QueryTypes.SELECT }
+      );
+      return res.status(201).json({ success: true, data: { ...result[0], temporary_password: password ? undefined : tempPwd } });
+    } catch (err) {
+      console.error('[POST /admin/members]', err.message);
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // DELETE /members/:id -- soft delete by setting status='deleted', keeps row for audit
+  router.delete('/members/:id', authMiddleware, requireAccess('superadmin', 'admin_global'), async (req, res) => {
+    try {
+      const memberId = parseInt(req.params.id);
+      if (memberId === req.member.id) return res.status(400).json({ success: false, error: 'Cannot delete yourself' });
+      const [target] = await sequelize.query(`SELECT access_level FROM ${t}_members WHERE id = :id`, { replacements: { id: memberId }, type: QueryTypes.SELECT });
+      if (target && target.access_level === 'superadmin' && req.memberAccess.access_level !== 'superadmin') {
+        return res.status(403).json({ success: false, error: 'Only superadmin can remove a superadmin' });
+      }
+      const hard = req.query.hard === 'true' && req.memberAccess.access_level === 'superadmin';
+      if (hard) {
+        await sequelize.query(`DELETE FROM ${t}_members WHERE id = :id`, { replacements: { id: memberId } });
+      } else {
+        await sequelize.query(`UPDATE ${t}_members SET status = 'deleted', access_level = 'member', governance_role = 'member', updated_at = NOW() WHERE id = :id`, { replacements: { id: memberId } });
+      }
+      res.json({ success: true, data: { member_id: memberId, hard_delete: hard } });
+    } catch (err) {
+      console.error('[DELETE /admin/members/:id]', err.message);
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // PUT /members/:id/access -- set access level + region (separate from governance role)
+  router.put('/members/:id/access', authMiddleware, requireAccess('superadmin', 'admin_global'), async (req, res) => {
+    try {
+      const memberId = parseInt(req.params.id);
+      const { access_level, region_id } = req.body;
+      if (access_level && !ACCESS_LEVELS.includes(access_level)) return res.status(400).json({ success: false, error: 'Invalid access_level' });
+      // Only superadmin can grant superadmin
+      if (access_level === 'superadmin' && req.memberAccess.access_level !== 'superadmin') {
+        return res.status(403).json({ success: false, error: 'Only superadmin can grant superadmin' });
+      }
+      const setClauses = ['updated_at = NOW()']; const replacements = { id: memberId };
+      if (access_level !== undefined) { setClauses.push('access_level = :access'); replacements.access = access_level; }
+      if (region_id !== undefined) { setClauses.push('region_id = :region'); replacements.region = region_id ? parseInt(region_id) : null; }
+      await sequelize.query(`UPDATE ${t}_members SET ${setClauses.join(', ')} WHERE id = :id`, { replacements });
+      res.json({ success: true, data: { member_id: memberId, access_level, region_id } });
+    } catch (err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // POST /regions -- create a new regional delegation
+  router.post('/regions', authMiddleware, requireAccess('superadmin', 'admin_global'), async (req, res) => {
+    try {
+      const { name, description, country_code } = req.body;
+      if (!name) return res.status(400).json({ success: false, error: 'name required' });
+      const result = await sequelize.query(
+        `INSERT INTO ${t}_regions (name, description, country_code, created_at, updated_at)
+         VALUES (:name, :description, :country_code, NOW(), NOW()) RETURNING *`,
+        { replacements: { name, description: description || null, country_code: country_code || null }, type: QueryTypes.SELECT }
+      );
+      res.status(201).json({ success: true, data: result[0] });
+    } catch (err) {
+      console.error('[POST /admin/regions]', err.message);
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // PUT /regions/:id -- edit a region
+  router.put('/regions/:id', authMiddleware, requireAccess('superadmin', 'admin_global'), async (req, res) => {
+    try {
+      const regionId = parseInt(req.params.id);
+      const { name, description, country_code } = req.body;
+      const setClauses = ['updated_at = NOW()']; const replacements = { id: regionId };
+      if (name !== undefined) { setClauses.push('name = :name'); replacements.name = name; }
+      if (description !== undefined) { setClauses.push('description = :description'); replacements.description = description; }
+      if (country_code !== undefined) { setClauses.push('country_code = :country_code'); replacements.country_code = country_code; }
+      const result = await sequelize.query(
+        `UPDATE ${t}_regions SET ${setClauses.join(', ')} WHERE id = :id RETURNING *`,
+        { replacements, type: QueryTypes.SELECT }
+      );
+      if (!result[0]) return res.status(404).json({ success: false, error: 'Region not found' });
+      res.json({ success: true, data: result[0] });
+    } catch (err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // DELETE /regions/:id -- delete only if no members assigned
+  router.delete('/regions/:id', authMiddleware, requireAccess('superadmin', 'admin_global'), async (req, res) => {
+    try {
+      const regionId = parseInt(req.params.id);
+      const [{ count }] = await sequelize.query(`SELECT COUNT(*) as count FROM ${t}_members WHERE region_id = :id AND status != 'deleted'`, { replacements: { id: regionId }, type: QueryTypes.SELECT });
+      if (parseInt(count) > 0) return res.status(400).json({ success: false, error: `Cannot delete: ${count} active members in this region. Reassign them first.` });
+      await sequelize.query(`DELETE FROM ${t}_regions WHERE id = :id`, { replacements: { id: regionId } });
+      res.json({ success: true, data: { region_id: regionId, deleted: true } });
+    } catch (err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
   // PUT /members/:id/membership
   router.put('/members/:id/membership', authMiddleware, requireAccess('superadmin', 'admin_global'), async (req, res) => {
     try {

@@ -3522,7 +3522,9 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         var res = await apiFetch('/admin/members?limit=100');
         if (!res.success) { ac.innerHTML = '<div class="error-msg">' + esc(res.error) + '</div>'; return; }
         var members = res.data.members || [];
-        var h = '<div style="margin-bottom:16px;"><input type="text" id="adminSearch" placeholder="Search member..." style="padding:10px 14px;border:1px solid var(--gray-300);border-radius:8px;width:300px;font-size:14px;"></div>';
+        var canGlobal = currentMember.access_level === 'superadmin' || currentMember.access_level === 'admin_global';
+        var h = '<div class="flex-between mb-16"><input type="text" id="adminSearch" placeholder="Search member..." style="padding:10px 14px;border:1px solid var(--gray-300);border-radius:8px;width:300px;font-size:14px;">';
+        h += '<button class="btn btn-primary" onclick="adminAddMember()">+ Add Member</button></div>';
         h += '<div class="table-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Country</th><th>Region</th><th>Sector</th><th>Type</th><th>Role</th><th>Access</th><th>Trust</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
         members.forEach(function(m) {
           var roleBadge = m.governance_role !== 'member' ? '<span class="badge badge-gold">' + esc(m.governance_role.replace(/_/g,' ')) + '</span>' : '<span class="badge badge-gray">member</span>';
@@ -3534,11 +3536,16 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
           h += '<td>' + esc(m.membership_type) + '</td><td>' + roleBadge + '</td><td>' + accessBadge + '</td>';
           h += '<td>' + Number(m.trust_score||0).toFixed(2) + '</td><td>' + sBadge + '</td>';
           h += '<td style="white-space:nowrap;">';
+          h += '<button class="btn-sm" onclick="adminEditProfile(' + m.id + ')" title="Edit profile" style="padding:4px 8px;font-size:11px;background:var(--accent);color:var(--navy);border:none;border-radius:4px;cursor:pointer;margin:2px;">Edit</button>';
           h += '<button class="btn-sm" onclick="adminVerify(' + m.id + ')" title="Verify" style="padding:4px 8px;font-size:11px;background:var(--primary);color:white;border:none;border-radius:4px;cursor:pointer;margin:2px;">Verify</button>';
-          if (currentMember.access_level === 'superadmin' || currentMember.access_level === 'admin_global') {
-            h += '<button class="btn-sm" onclick="adminRole(' + m.id + ',\'' + esc(m.first_name) + ' ' + esc(m.last_name) + '\')" title="Assign Role" style="padding:4px 8px;font-size:11px;background:var(--accent);color:var(--navy);border:none;border-radius:4px;cursor:pointer;margin:2px;">Role</button>';
+          if (canGlobal) {
+            h += '<button class="btn-sm" onclick="adminRole(' + m.id + ',\'' + esc(m.first_name) + ' ' + esc(m.last_name) + '\')" title="Governance role" style="padding:4px 8px;font-size:11px;background:#7b1fa2;color:white;border:none;border-radius:4px;cursor:pointer;margin:2px;">Role</button>';
+            h += '<button class="btn-sm" onclick="adminAccess(' + m.id + ',\'' + esc(m.access_level) + '\',' + (m.region_id||'null') + ')" title="Access level" style="padding:4px 8px;font-size:11px;background:#1565c0;color:white;border:none;border-radius:4px;cursor:pointer;margin:2px;">Access</button>';
           }
-          h += '<button class="btn-sm" onclick="adminToggleStatus(' + m.id + ',\'' + m.status + '\')" title="Toggle Status" style="padding:4px 8px;font-size:11px;background:' + (m.status==='active'?'var(--red)':'var(--green)') + ';color:white;border:none;border-radius:4px;cursor:pointer;margin:2px;">' + (m.status==='active'?'Suspend':'Activate') + '</button>';
+          h += '<button class="btn-sm" onclick="adminToggleStatus(' + m.id + ',\'' + m.status + '\')" title="Toggle status" style="padding:4px 8px;font-size:11px;background:' + (m.status==='active'?'#e65100':'var(--green)') + ';color:white;border:none;border-radius:4px;cursor:pointer;margin:2px;">' + (m.status==='active'?'Suspend':'Activate') + '</button>';
+          if (canGlobal && m.id !== currentMember.id) {
+            h += '<button class="btn-sm" onclick="adminDeleteMember(' + m.id + ',\'' + esc(m.email) + '\')" title="Delete" style="padding:4px 8px;font-size:11px;background:var(--red);color:white;border:none;border-radius:4px;cursor:pointer;margin:2px;">Delete</button>';
+          }
           h += '</td></tr>';
         });
         h += '</tbody></table></div>';
@@ -3585,18 +3592,30 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         var res = await apiFetch('/admin/regions');
         if (!res.success) { ac.innerHTML = '<div class="error-msg">' + esc(res.error) + '</div>'; return; }
         var regions = res.data || [];
-        var h = '<div class="stat-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;">';
+        var canGlobal = currentMember.access_level === 'superadmin' || currentMember.access_level === 'admin_global';
+        var h = '<div class="flex-between mb-16"><h3 style="margin:0">Regional Delegations</h3>';
+        if (canGlobal) h += '<button class="btn btn-primary" onclick="adminAddRegion()">+ Add Region</button>';
+        h += '</div>';
+        h += '<div class="stat-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;">';
         regions.forEach(function(r) {
-          h += '<div class="stat-card" style="text-align:left;">';
-          h += '<h4 style="color:var(--primary);margin-bottom:12px;">' + esc(r.name) + '</h4>';
+          h += '<div class="stat-card" style="text-align:left;position:relative">';
+          if (canGlobal) {
+            h += '<div style="position:absolute;top:8px;right:8px;display:flex;gap:4px">';
+            h += '<button class="btn-sm" onclick="adminEditRegion('+r.id+',\''+esc(r.name).replace(/\x27/g,"&#39;")+'\',\''+esc(r.description||'').replace(/\x27/g,"&#39;").replace(/\n/g,' ')+'\')" style="padding:2px 8px;font-size:11px;background:var(--accent);color:var(--navy);border:none;border-radius:4px;cursor:pointer">Edit</button>';
+            h += '<button class="btn-sm" onclick="adminDeleteRegion('+r.id+',\''+esc(r.name).replace(/\x27/g,"&#39;")+'\')" style="padding:2px 8px;font-size:11px;background:var(--red);color:white;border:none;border-radius:4px;cursor:pointer">X</button>';
+            h += '</div>';
+          }
+          h += '<h4 style="color:var(--primary);margin-bottom:12px;padding-right:80px">' + esc(r.name) + '</h4>';
           h += '<p style="font-size:13px;color:var(--gray-500);margin-bottom:8px;">' + esc(r.description||'') + '</p>';
           h += '<div style="font-size:14px;line-height:2;">';
           h += '<strong>Members:</strong> ' + (r.member_count||0) + '<br>';
-          h += '<strong>President:</strong> ' + esc(r.president_name||'-- Vacant --') + '<br>';
-          h += '<strong>Secretary:</strong> ' + esc(r.secretary_name||'-- Vacant --') + '<br>';
-          h += '<strong>Treasurer:</strong> ' + esc(r.treasurer_name||'-- Vacant --') + '<br>';
-          h += '<strong>Gini:</strong> ' + Number(r.gini_score||0).toFixed(4) + '<br>';
-          h += '<strong>Opportunities:</strong> ' + (r.opportunity_count||0);
+          if (r.president_name !== undefined) {
+            h += '<strong>President:</strong> ' + esc(r.president_name||'-- Vacant --') + '<br>';
+            h += '<strong>Secretary:</strong> ' + esc(r.secretary_name||'-- Vacant --') + '<br>';
+            h += '<strong>Treasurer:</strong> ' + esc(r.treasurer_name||'-- Vacant --') + '<br>';
+          }
+          if (r.gini_score !== undefined) h += '<strong>Gini:</strong> ' + Number(r.gini_score||0).toFixed(4) + '<br>';
+          if (r.opportunity_count !== undefined) h += '<strong>Opportunities:</strong> ' + (r.opportunity_count||0);
           h += '</div></div>';
         });
         h += '</div>';
@@ -3665,6 +3684,109 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     var res = await apiFetch('/admin/roles/' + id, 'DELETE');
     alert(res.success ? 'Role removed' : 'Error: ' + (res.error||''));
     if (res.success) loadAdminTab('governance');
+  };
+
+  window.adminEditProfile = async function(id) {
+    var res = await apiFetch('/members/'+id);
+    if (!res.success) { alert('Error: '+(res.error||'')); return; }
+    showMemberEditor(res.data);
+  };
+
+  window.adminAccess = async function(id, current, currentRegion) {
+    var levels = ['member','admin_regional','admin_global','superadmin'];
+    var prompt1 = 'Set access level for member #' + id + '\n\nOptions:\n' + levels.map(function(l,i){return (i+1)+'. '+l + (l===current?' (current)':'');}).join('\n') + '\n\nEnter 1-4:';
+    var ans = prompt(prompt1);
+    if (!ans) return;
+    var level = levels[parseInt(ans)-1];
+    if (!level) { alert('Invalid choice'); return; }
+    var body = { access_level: level };
+    if (level === 'admin_regional') {
+      var regRes = await apiFetch('/admin/regions');
+      if (regRes.success) {
+        var rid = prompt('Region for this regional admin:\n\n' + regRes.data.map(function(r){return r.id+'. '+r.name;}).join('\n') + '\n\nEnter region id:', currentRegion||'');
+        if (rid) body.region_id = parseInt(rid);
+      }
+    }
+    var r = await apiFetch('/admin/members/'+id+'/access', 'PUT', body);
+    alert(r.success ? 'Access level updated to ' + level : 'Error: '+(r.error||''));
+    if (r.success) loadAdminTab('members');
+  };
+
+  window.adminAddMember = function() {
+    var html = '<h2>Add New Member</h2><div id="newMemMsg"></div>';
+    html += '<form id="newMemForm" class="form-grid">';
+    html += '<div class="form-group"><label>Email *</label><input name="email" type="email" required></div>';
+    html += '<div class="form-group"><label>Temporary Password (leave blank to auto-generate)</label><input name="password"></div>';
+    html += '<div class="form-group"><label>First Name *</label><input name="first_name" required></div>';
+    html += '<div class="form-group"><label>Last Name *</label><input name="last_name" required></div>';
+    html += '<div class="form-group"><label>Country</label><input name="country"></div>';
+    html += '<div class="form-group"><label>Sector</label><select name="sector">'+sectorOptions(null,'-- Select sector --')+'</select></div>';
+    html += '<div class="form-group"><label>Region</label><select name="region_id" id="newMemRegion"><option value="">-- Global --</option></select></div>';
+    html += '<div class="form-group"><label>Membership Type</label><select name="membership_type"><option value="individual">Individual</option><option value="empresarial">Empresarial</option><option value="corporativo">Corporativo</option><option value="fundador">Fundador</option></select></div>';
+    var canGlobal = currentMember.access_level === 'superadmin' || currentMember.access_level === 'admin_global';
+    if (canGlobal) {
+      html += '<div class="form-group"><label>Access Level</label><select name="access_level"><option value="member">Member</option><option value="admin_regional">Regional Admin</option><option value="admin_global">Global Admin</option>'+(currentMember.access_level==='superadmin'?'<option value="superadmin">Superadmin</option>':'')+'</select></div>';
+      html += '<div class="form-group"><label>Governance Role</label><input name="governance_role" placeholder="member"></div>';
+    }
+    html += '<div class="form-group full mt-12" style="display:flex;gap:8px"><button type="submit" class="btn btn-primary">Create Member</button><button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button></div>';
+    html += '</form>';
+    openModal(html);
+    apiFetch('/admin/regions').then(function(r) {
+      if (r.success) {
+        var sel = document.getElementById('newMemRegion');
+        r.data.forEach(function(reg) { sel.innerHTML += '<option value="'+reg.id+'">'+esc(reg.name)+'</option>'; });
+      }
+    });
+    document.getElementById('newMemForm').addEventListener('submit', async function(ev) {
+      ev.preventDefault();
+      var fd = new FormData(this); var body = {};
+      fd.forEach(function(v,k){ if (v) body[k] = v; });
+      if (body.region_id) body.region_id = parseInt(body.region_id);
+      var msg = document.getElementById('newMemMsg');
+      msg.innerHTML = '<div class="text-muted text-sm">Creating...</div>';
+      var r = await apiFetch('/admin/members', 'POST', body);
+      if (r.success) {
+        var info = 'Member created: ' + r.data.email;
+        if (r.data.temporary_password) info += '\n\nTemporary password: ' + r.data.temporary_password + '\n\n(Save this -- shown only once)';
+        alert(info);
+        closeModal(); loadAdminTab('members');
+      } else {
+        msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>';
+      }
+    });
+  };
+
+  window.adminDeleteMember = async function(id, email) {
+    if (!confirm('Delete member ' + email + '?\n\nThis sets status to "deleted" (soft delete). The row stays for audit purposes.')) return;
+    var r = await apiFetch('/admin/members/'+id, 'DELETE');
+    alert(r.success ? 'Member deleted' : 'Error: '+(r.error||''));
+    if (r.success) loadAdminTab('members');
+  };
+
+  window.adminAddRegion = async function() {
+    var name = prompt('Region name (e.g. "Madrid Metro"):');
+    if (!name) return;
+    var description = prompt('Description (optional):', '') || '';
+    var country_code = prompt('Country code (e.g. ES, MX, US, optional):', '') || '';
+    var r = await apiFetch('/admin/regions', 'POST', { name: name, description: description, country_code: country_code });
+    alert(r.success ? 'Region created' : 'Error: '+(r.error||''));
+    if (r.success) loadAdminTab('regions');
+  };
+
+  window.adminEditRegion = async function(id, currentName, currentDesc) {
+    var name = prompt('Region name:', currentName);
+    if (!name) return;
+    var description = prompt('Description:', currentDesc || '');
+    var r = await apiFetch('/admin/regions/'+id, 'PUT', { name: name, description: description });
+    alert(r.success ? 'Region updated' : 'Error: '+(r.error||''));
+    if (r.success) loadAdminTab('regions');
+  };
+
+  window.adminDeleteRegion = async function(id, name) {
+    if (!confirm('Delete region "' + name + '"?\n\nFails if any active members are assigned to it.')) return;
+    var r = await apiFetch('/admin/regions/'+id, 'DELETE');
+    alert(r.success ? 'Region deleted' : 'Error: '+(r.error||''));
+    if (r.success) loadAdminTab('regions');
   };
 
   // -- Boot --
