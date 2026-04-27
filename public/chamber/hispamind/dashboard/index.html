@@ -2909,14 +2909,99 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       var companies = res.data.companies || [];
       var list = document.getElementById('companyList');
       if (companies.length === 0) { list.innerHTML = '<p class="text-muted">No companies registered yet.</p>'; return; }
-      var h = '<div class="table-wrap"><table><thead><tr><th>Company</th><th>Sector</th><th>Employees</th><th>Countries</th><th>Verified</th><th>Created</th></tr></thead><tbody>';
+      var isAdmin = currentMember && ['superadmin','admin_global','admin_regional','admin'].includes(currentMember.access_level);
+      var h = '<div class="table-wrap"><table><thead><tr><th>Company</th><th>Sector</th><th>Employees</th><th>Countries</th><th>Verified</th><th>Created</th><th></th></tr></thead><tbody>';
       companies.forEach(function(c) {
-        h += '<tr><td><strong>'+esc(c.name)+'</strong></td><td>'+esc(c.sector||'--')+'</td><td>'+(c.employee_count||'--')+'</td><td>'+esc((c.countries_served||[]).join(', ')||'--')+'</td><td>'+(c.verified?'<span class="badge badge-green">Yes</span>':'<span class="badge badge-gray">No</span>')+'</td><td>'+formatDate(c.created_at)+'</td></tr>';
+        var canEdit = isAdmin || (currentMember && c.owner_member_id === currentMember.id);
+        var actions = canEdit ? '<button class="btn btn-outline btn-sm compEditBtn" data-cid="'+c.id+'" style="padding:2px 8px;font-size:11px">Edit</button>' : '';
+        if (isAdmin) {
+          var vlabel = c.verified ? 'Unverify' : 'Verify';
+          actions += ' <button class="btn btn-primary btn-sm compVerifyBtn" data-cid="'+c.id+'" data-curr="'+(c.verified?'1':'0')+'" style="padding:2px 8px;font-size:11px;background:'+(c.verified?'#999':'#28a745')+'">'+vlabel+'</button>';
+        }
+        h += '<tr><td><strong>'+esc(c.name)+'</strong></td><td>'+esc(c.sector||'--')+'</td><td>'+(c.employee_count||'--')+'</td><td>'+esc((c.countries_served||[]).join(', ')||'--')+'</td><td>'+(c.verified?'<span class="badge badge-green">Yes</span>':'<span class="badge badge-gray">No</span>')+'</td><td>'+formatDate(c.created_at)+'</td><td>'+actions+'</td></tr>';
       });
       h += '</tbody></table></div>';
       list.innerHTML = h;
+
+      list.querySelectorAll('.compEditBtn').forEach(function(b) {
+        b.addEventListener('click', function() { showCompanyEditor(parseInt(this.dataset.cid)); });
+      });
+      list.querySelectorAll('.compVerifyBtn').forEach(function(b) {
+        b.addEventListener('click', async function() {
+          var cid = parseInt(this.dataset.cid);
+          var current = this.dataset.curr === '1';
+          this.disabled = true;
+          try {
+            var r = await apiFetch('/exchange/companies/'+cid, { method:'PUT', body:JSON.stringify({ verified: !current }) });
+            if (r.success) loadCompanies();
+            else { this.disabled = false; alert(r.error || 'Error'); }
+          } catch(e) { this.disabled = false; alert(e.message); }
+        });
+      });
     } catch(e) {
       document.getElementById('companyList').innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>';
+    }
+  }
+
+  async function showCompanyEditor(companyId) {
+    openModal('<div class="loading">Loading...</div>');
+    try {
+      var res = await apiFetch('/exchange/companies/'+companyId);
+      if (!res.success) { openModal('<div class="error-msg">'+(res.error||'Error')+'</div>'); return; }
+      var c = res.data;
+      var isAdmin = currentMember && ['superadmin','admin_global','admin_regional','admin'].includes(currentMember.access_level);
+      var html = '<h2 style="margin-bottom:8px">Edit Company</h2>';
+      html += '<div class="text-sm text-muted" style="margin-bottom:12px">'+esc(c.name)+(c.owner_name?' &middot; owner: '+esc(c.owner_name):'')+'</div>';
+      html += '<div id="compEditMsg"></div>';
+      html += '<form id="compEditForm" class="form-grid">';
+      html += '<div class="form-group"><label>Name</label><input name="name" value="'+esc(c.name||'')+'" required></div>';
+      html += '<div class="form-group"><label>Sector</label><select name="sector">'+sectorOptions(c.sector,'-- Select sector --')+'</select></div>';
+      html += '<div class="form-group full"><label>Description</label><textarea name="description" rows="2">'+esc(c.description||'')+'</textarea></div>';
+      html += '<div class="form-group"><label>Employees</label><input name="employee_count" type="number" value="'+(c.employee_count||'')+'"></div>';
+      html += '<div class="form-group"><label>Revenue Range</label><select name="annual_revenue_range">'+
+        ['','<100K','100K-1M','1M-10M','10M+'].map(function(v){return '<option value="'+v+'"'+(c.annual_revenue_range===v?' selected':'')+'>'+(v||'Select')+'</option>';}).join('')+
+        '</select></div>';
+      html += '<div class="form-group"><label>Countries (comma-separated)</label><input name="countries_served" value="'+esc((c.countries_served||[]).join(', '))+'"></div>';
+      html += '<div class="form-group"><label>Website</label><input name="website" value="'+esc(c.website||'')+'"></div>';
+      html += '<div class="form-group"><label>Capabilities (comma-separated)</label><input name="capabilities" value="'+esc((c.capabilities||[]).join(', '))+'"></div>';
+      html += '<div class="form-group"><label>Certifications (comma-separated)</label><input name="certifications" value="'+esc((c.certifications||[]).join(', '))+'"></div>';
+      if (isAdmin) {
+        html += '<div class="form-group full"><label><input type="checkbox" name="verified" '+(c.verified?'checked':'')+'> Verified by chamber (admin only)</label></div>';
+      }
+      html += '<div class="form-group full mt-12" style="display:flex;gap:8px"><button type="submit" class="btn btn-primary">Save</button><button type="button" class="btn btn-outline" id="compEditCancel">Cancel</button>';
+      if (isAdmin) html += '<button type="button" class="btn btn-danger" id="compDelBtn" style="margin-left:auto;background:var(--red);color:white">Delete</button>';
+      html += '</div></form>';
+      openModal(html);
+
+      document.getElementById('compEditCancel').addEventListener('click', function(){ closeModal(); });
+      var delBtn = document.getElementById('compDelBtn');
+      if (delBtn) delBtn.addEventListener('click', async function() {
+        if (!confirm('Delete '+c.name+' permanently? This cannot be undone.')) return;
+        try {
+          var r = await apiFetch('/exchange/companies/'+companyId, { method:'DELETE' });
+          if (r.success) { closeModal(); loadCompanies(); }
+          else alert(r.error || 'Error');
+        } catch(e) { alert(e.message); }
+      });
+      document.getElementById('compEditForm').addEventListener('submit', async function(ev) {
+        ev.preventDefault();
+        var fd = new FormData(this); var body = {};
+        fd.forEach(function(v,k){ body[k] = v; });
+        body.countries_served = body.countries_served ? body.countries_served.split(',').map(function(s){return s.trim();}).filter(Boolean) : [];
+        body.capabilities = body.capabilities ? body.capabilities.split(',').map(function(s){return s.trim();}).filter(Boolean) : [];
+        body.certifications = body.certifications ? body.certifications.split(',').map(function(s){return s.trim();}).filter(Boolean) : [];
+        body.employee_count = body.employee_count ? parseInt(body.employee_count) : null;
+        body.verified = !!fd.get('verified');
+        var msg = document.getElementById('compEditMsg');
+        msg.innerHTML = '<div class="text-muted text-sm">Saving...</div>';
+        try {
+          var r = await apiFetch('/exchange/companies/'+companyId, { method:'PUT', body:JSON.stringify(body) });
+          if (r.success) { closeModal(); loadCompanies(); }
+          else msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>';
+        } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
+      });
+    } catch(e) {
+      openModal('<div class="error-msg">'+esc(e.message)+'</div>');
     }
   }
 

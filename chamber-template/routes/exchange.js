@@ -66,6 +66,72 @@ module.exports = function createExchangeRoutes(config) {
     } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
   });
 
+  // PUT /companies/:id -- owner or admin can edit
+  router.put('/companies/:id', authMiddleware, async (req, res) => {
+    try {
+      const [company] = await sequelize.query(`SELECT owner_member_id FROM ${t}_companies WHERE id = :id`, { replacements: { id: req.params.id }, type: QueryTypes.SELECT });
+      if (!company) return res.status(404).json({ success: false, error: 'Company not found' });
+
+      const [viewer] = await sequelize.query(`SELECT access_level FROM ${t}_members WHERE id = :id`, { replacements: { id: req.member.id }, type: QueryTypes.SELECT });
+      const isAdmin = viewer && ['superadmin','admin_global','admin_regional','admin'].includes(viewer.access_level);
+      const isOwner = company.owner_member_id === req.member.id;
+      if (!isAdmin && !isOwner) return res.status(403).json({ success: false, error: 'Only the owner or chamber admin can edit this company' });
+
+      const { name, description, sector, capabilities, certifications, countries_served, employee_count, annual_revenue_range, website, verified } = req.body;
+      const setClauses = []; const replacements = { id: req.params.id };
+      if (name !== undefined) { setClauses.push('name = :name'); replacements.name = name; }
+      if (description !== undefined) { setClauses.push('description = :description'); replacements.description = description; }
+      if (sector !== undefined) { setClauses.push('sector = :sector'); replacements.sector = sector; }
+      if (employee_count !== undefined) { setClauses.push('employee_count = :employee_count'); replacements.employee_count = employee_count === '' ? null : parseInt(employee_count); }
+      if (annual_revenue_range !== undefined) { setClauses.push('annual_revenue_range = :annual_revenue_range'); replacements.annual_revenue_range = annual_revenue_range || null; }
+      if (website !== undefined) { setClauses.push('website = :website'); replacements.website = website || null; }
+      if (Array.isArray(capabilities)) {
+        const s = buildArraySql(capabilities, 'cap');
+        setClauses.push(`capabilities = ${s.sql}`); Object.assign(replacements, s.reps);
+      }
+      if (Array.isArray(certifications)) {
+        const s = buildArraySql(certifications, 'cert');
+        setClauses.push(`certifications = ${s.sql}`); Object.assign(replacements, s.reps);
+      }
+      if (Array.isArray(countries_served)) {
+        const s = buildArraySql(countries_served, 'cs');
+        setClauses.push(`countries_served = ${s.sql}`); Object.assign(replacements, s.reps);
+      }
+      // Only admins can flip verified
+      if (verified !== undefined && isAdmin) {
+        setClauses.push('verified = :verified'); replacements.verified = !!verified;
+      }
+      if (setClauses.length === 0) return res.status(400).json({ success: false, error: 'No fields to update' });
+      setClauses.push('updated_at = NOW()');
+
+      const result = await sequelize.query(
+        `UPDATE ${t}_companies SET ${setClauses.join(', ')} WHERE id = :id RETURNING *`,
+        { replacements, type: QueryTypes.SELECT }
+      );
+      return res.json({ success: true, data: result[0] });
+    } catch (err) {
+      console.error('[PUT /companies/:id]', err.message);
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // DELETE /companies/:id -- owner or admin
+  router.delete('/companies/:id', authMiddleware, async (req, res) => {
+    try {
+      const [company] = await sequelize.query(`SELECT owner_member_id FROM ${t}_companies WHERE id = :id`, { replacements: { id: req.params.id }, type: QueryTypes.SELECT });
+      if (!company) return res.status(404).json({ success: false, error: 'Company not found' });
+      const [viewer] = await sequelize.query(`SELECT access_level FROM ${t}_members WHERE id = :id`, { replacements: { id: req.member.id }, type: QueryTypes.SELECT });
+      const isAdmin = viewer && ['superadmin','admin_global','admin_regional','admin'].includes(viewer.access_level);
+      if (!isAdmin && company.owner_member_id !== req.member.id) {
+        return res.status(403).json({ success: false, error: 'Only the owner or chamber admin can delete this company' });
+      }
+      await sequelize.query(`DELETE FROM ${t}_companies WHERE id = :id`, { replacements: { id: req.params.id } });
+      return res.json({ success: true, data: { deleted: true } });
+    } catch (err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
   // RFQS
   router.get('/rfqs', async (req, res) => {
     try {
