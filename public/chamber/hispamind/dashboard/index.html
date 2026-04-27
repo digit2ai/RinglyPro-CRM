@@ -722,11 +722,37 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   }
 
   // -- Sectors list --
-  var SECTORS = ['healthcare','real_estate','food_service','technology','retail','construction','professional_services','education','finance','hospitality','logistics','manufacturing','media','legal','automotive','beauty_wellness','insurance','consulting','cybersecurity','marketing'];
+  var SECTORS = [
+    {v:'agricultura',label:'Agricultura'},
+    {v:'alimentos_bebidas',label:'Alimentos y Bebidas'},
+    {v:'automotriz',label:'Automotriz'},
+    {v:'belleza_bienestar',label:'Belleza y Bienestar'},
+    {v:'bienes_raices',label:'Bienes Raices'},
+    {v:'ciberseguridad',label:'Ciberseguridad'},
+    {v:'comercio_exterior',label:'Comercio Exterior'},
+    {v:'construccion',label:'Construccion'},
+    {v:'consultoria',label:'Consultoria'},
+    {v:'educacion',label:'Educacion'},
+    {v:'energia',label:'Energia'},
+    {v:'finanzas',label:'Finanzas'},
+    {v:'hoteleria_turismo',label:'Hoteleria y Turismo'},
+    {v:'legal',label:'Legal'},
+    {v:'logistica',label:'Logistica'},
+    {v:'manufactura',label:'Manufactura'},
+    {v:'marketing_digital',label:'Marketing Digital'},
+    {v:'medios_comunicacion',label:'Medios de Comunicacion'},
+    {v:'mineria',label:'Mineria'},
+    {v:'retail',label:'Retail'},
+    {v:'salud',label:'Salud'},
+    {v:'seguros',label:'Seguros'},
+    {v:'servicios_profesionales',label:'Servicios Profesionales'},
+    {v:'tecnologia',label:'Tecnologia'},
+    {v:'textil',label:'Textil'}
+  ];
 
-  function sectorOptions(selected) {
-    var h = '<option value="">All sectors</option>';
-    SECTORS.forEach(function(s) { h += '<option value="'+s+'"'+(selected===s?' selected':'')+'>'+s.charAt(0).toUpperCase()+s.slice(1).replace(/_/g,' ')+'</option>'; });
+  function sectorOptions(selected, placeholder) {
+    var h = '<option value="">'+(placeholder||'All sectors')+'</option>';
+    SECTORS.forEach(function(s) { h += '<option value="'+s.v+'"'+(selected===s.v?' selected':'')+'>'+s.label+'</option>'; });
     return h;
   }
 
@@ -821,7 +847,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       html += '<div class="form-group"><label>First Name</label><input name="first_name" value="'+esc(m.first_name)+'"></div>';
       html += '<div class="form-group"><label>Last Name</label><input name="last_name" value="'+esc(m.last_name)+'"></div>';
       html += '<div class="form-group"><label>Country</label><input name="country" value="'+esc(m.country||'')+'"></div>';
-      html += '<div class="form-group"><label>Sector</label><select name="sector">'+sectorOptions(m.sector)+'</select></div>';
+      html += '<div class="form-group"><label>Sector</label><select name="sector">'+sectorOptions(m.sector,'-- Select your sector --')+'</select></div>';
       html += '<div class="form-group"><label>Sub-specialty</label><input name="sub_specialty" value="'+esc(m.sub_specialty||'')+'"></div>';
       html += '<div class="form-group"><label>Years of Experience</label><input name="years_experience" type="number" value="'+(m.years_experience||'')+'"></div>';
       html += '<div class="form-group"><label>Languages (comma-separated)</label><input name="languages" value="'+esc(langs.join(', '))+'"></div>';
@@ -847,7 +873,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         fd.forEach(function(v,k){ body[k] = v; });
         body.years_experience = body.years_experience ? parseInt(body.years_experience) : null;
         body.languages = body.languages ? body.languages.split(',').map(function(l){return l.trim();}).filter(Boolean) : [];
-        if (!body.sector) delete body.sector;
+        // empty sector saves as null (clears the field) instead of being silently dropped
         var msgEl = document.getElementById('profileMsg');
         msgEl.innerHTML = '<div class="text-muted text-sm">Saving...</div>';
         try {
