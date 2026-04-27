@@ -38,6 +38,16 @@ function createChamberRouter(config) {
     { path: '/admin', factory: require('./admin'), label: 'Admin' }
   ];
 
+  // P2B Stage 3 -- private workspace MUST mount BEFORE projects
+  // because /projects/:id/workspace shares the /projects prefix
+  try {
+    const createWorkspaceRoutes = require('./workspace');
+    router.use('/projects/:id/workspace', createWorkspaceRoutes(config));
+    console.log(`  [${slug.toUpperCase()}] Workspace (P2B Stage 3) routes mounted`);
+  } catch (e) {
+    console.error(`  [${slug.toUpperCase()}] Workspace routes failed:`, e.message);
+  }
+
   for (const mod of modules) {
     try {
       router.use(mod.path, mod.factory(config));
@@ -45,15 +55,6 @@ function createChamberRouter(config) {
     } catch (e) {
       console.error(`  [${slug.toUpperCase()}] ${mod.label} routes failed:`, e.message);
     }
-  }
-
-  // P2B Stage 3 -- private workspace (mounted under /projects/:id/workspace)
-  try {
-    const createWorkspaceRoutes = require('./workspace');
-    router.use('/projects/:id/workspace', createWorkspaceRoutes(config));
-    console.log(`  [${slug.toUpperCase()}] Workspace (P2B Stage 3) routes mounted`);
-  } catch (e) {
-    console.error(`  [${slug.toUpperCase()}] Workspace routes failed:`, e.message);
   }
 
   return router;
