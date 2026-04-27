@@ -1073,15 +1073,25 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       if (projects.length === 0) { out.innerHTML = '<div class="panel"><p class="text-muted">No projects yet. Create your first one.</p></div>'; return; }
       var h = '<div class="result-cards">';
       projects.forEach(function(p) {
-        h += '<div class="result-card" data-project-id="'+p.id+'">';
-        h += '<div class="flex-between"><div class="rc-name">'+esc(p.title)+(p.is_stub?' &#128274;':'')+'</div>'+statusBadge(p.status)+'</div>';
+        h += '<div class="result-card" data-project-id="'+p.id+'" style="position:relative">';
+        // Countdown badge top-right
+        if (p.recruitment_deadline && p.plan_status === 'recruiting' && !p.recruitment_closed_at) {
+          h += '<div class="countdown-badge" data-deadline="'+esc(p.recruitment_deadline)+'" style="position:absolute;top:8px;right:8px;background:#28a745;color:white;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;text-align:center;line-height:1.2"><div class="countdown-time">--</div><div style="opacity:0.85;font-weight:500;font-size:9px;text-transform:uppercase;letter-spacing:0.5px">left in bidding</div></div>';
+        } else if (p.recruitment_closed_at) {
+          h += '<div style="position:absolute;top:8px;right:8px;background:#999;color:white;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700">CLOSED</div>';
+        }
+        h += '<div class="flex-between" style="padding-right:90px"><div class="rc-name">'+esc(p.title)+(p.is_stub?' &#128274;':'')+'</div></div>';
         var planStatus = p.plan_status ? '<span style="background:var(--accent-light);color:var(--accent-dark);padding:2px 6px;border-radius:3px;font-size:10px;text-transform:uppercase;font-weight:700;margin-right:6px">'+esc(p.plan_status)+'</span>' : '';
         h += '<div class="rc-company">'+planStatus+esc(p.proposer_name||'--')+' | '+esc(p.sector||'--')+'</div>';
         if (p.is_stub) {
           h += '<div class="text-sm text-muted" style="font-style:italic">In private execution -- participants only</div>';
         } else {
-          h += lifecycleDots(p.status);
           if (p.budget_est) h += '<div class="text-sm text-muted">Est. budget: $'+Number(p.budget_est).toLocaleString()+'</div>';
+          if (p.monte_carlo_result && p.monte_carlo_result.success_probability) {
+            var prob = Math.round(p.monte_carlo_result.success_probability * 100);
+            var probColor = prob >= 70 ? '#28a745' : prob >= 45 ? '#e65100' : 'var(--red)';
+            h += '<div class="text-sm" style="margin-top:4px"><span style="color:'+probColor+';font-weight:700">'+prob+'% viability</span> <span class="text-muted">(Monte Carlo)</span></div>';
+          }
         }
         h += '</div>';
       });
@@ -1091,9 +1101,38 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       out.querySelectorAll('.result-card').forEach(function(card) {
         card.addEventListener('click', function(){ showProjectDetail(this.dataset.projectId); });
       });
+      updateCountdowns();
+      if (window._countdownInterval) clearInterval(window._countdownInterval);
+      window._countdownInterval = setInterval(updateCountdowns, 60000);
     } catch(e) {
       out.innerHTML = '<div class="error-msg">Error: '+esc(e.message)+'</div>';
     }
+  }
+
+  function updateCountdowns() {
+    var now = Date.now();
+    document.querySelectorAll('.countdown-badge').forEach(function(badge) {
+      var deadline = new Date(badge.dataset.deadline).getTime();
+      var ms = deadline - now;
+      var timeEl = badge.querySelector('.countdown-time');
+      if (ms <= 0) {
+        timeEl.textContent = 'EXPIRED';
+        badge.style.background = '#999';
+        return;
+      }
+      var d = Math.floor(ms / 86400000);
+      var h = Math.floor((ms % 86400000) / 3600000);
+      var m = Math.floor((ms % 3600000) / 60000);
+      var label;
+      if (d > 0) label = d + 'd ' + h + 'h ' + m + 'm';
+      else if (h > 0) label = h + 'h ' + m + 'm';
+      else label = m + 'm';
+      timeEl.textContent = label;
+      // Color band: green > 7d, yellow 1-7d, red < 1d
+      if (d > 7) badge.style.background = '#28a745';
+      else if (d >= 1) badge.style.background = '#e65100';
+      else badge.style.background = 'var(--red)';
+    });
   }
 
   async function renderInvitations() {
@@ -2118,36 +2157,67 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         html += '<p class="text-muted text-sm mb-12">No team members yet.</p>';
       }
 
-      // Action buttons
-      html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">';
       var vr = p.viewer_role || {};
-      if (p.status !== 'completed') {
-        html += '<button class="btn btn-primary btn-sm" id="advanceBtn">Advance Phase</button>';
-        html += '<button class="btn btn-outline btn-sm" id="joinBtn">Join Team</button>';
+
+      // === Auction-style countdown clock ===
+      if (p.recruitment_deadline && p.plan_status === 'recruiting' && !p.recruitment_closed_at) {
+        var ms = new Date(p.recruitment_deadline).getTime() - Date.now();
+        var dd = Math.max(0, Math.floor(ms / 86400000));
+        var hh = Math.max(0, Math.floor((ms % 86400000) / 3600000));
+        var mm = Math.max(0, Math.floor((ms % 3600000) / 60000));
+        var ccol = dd > 7 ? '#28a745' : (dd >= 1 ? '#e65100' : 'var(--red)');
+        html += '<div style="background:'+ccol+';color:white;border-radius:8px;padding:14px;text-align:center;margin:14px 0">';
+        html += '<div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;opacity:0.85">Recruitment Window Open</div>';
+        html += '<div style="font-size:28px;font-weight:800;margin:6px 0">'+dd+'d '+hh+'h '+mm+'m left</div>';
+        html += '<div style="font-size:11px;opacity:0.85">Auto-closes when timer expires; proposer can close manually anytime</div>';
+        html += '</div>';
+      } else if (p.recruitment_closed_at) {
+        html += '<div style="background:var(--gray-100);color:var(--gray-700);border-radius:8px;padding:10px;text-align:center;margin:14px 0;font-size:13px">';
+        html += 'Recruitment closed '+(p.recruitment_closed_by==='auto_expired'?'automatically when timer expired':'manually by proposer')+' at '+new Date(p.recruitment_closed_at).toLocaleString();
+        html += '</div>';
       }
-      html += '<button class="btn btn-accent btn-sm" id="evaluateBtn">Evaluate Risk</button>';
-      // Stage 0 -- proposer-only: Edit/Publish draft
+
+      // === Monte Carlo card (auto-computed at team-lock) ===
+      if (p.monte_carlo_result) {
+        var mc = p.monte_carlo_result;
+        var prob = Math.round((mc.success_probability||mc.viabilityScore||0) * 100);
+        var probColor = prob >= 70 ? '#28a745' : prob >= 45 ? '#e65100' : 'var(--red)';
+        html += '<div style="border:2px solid '+probColor+';border-radius:8px;padding:12px;margin-bottom:14px;background:#f8f9fa">';
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-weight:700;color:'+probColor+'">Monte Carlo Risk Assessment <span class="text-muted text-sm">(auto-computed at team-lock)</span></div>';
+        html += '<div style="font-size:24px;font-weight:900;color:'+probColor+'">'+prob+'%</div></div>';
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:12px">';
+        if (mc.budget) html += '<div><strong>Budget:</strong> $'+Number(mc.budget.p10||0).toLocaleString()+' / $'+Number(mc.budget.p50||0).toLocaleString()+' / $'+Number(mc.budget.p90||0).toLocaleString()+'<br><span class="text-muted">P10/P50/P90</span></div>';
+        if (mc.timeline_months) html += '<div><strong>Timeline:</strong> '+(mc.timeline_months.p10||0)+'/'+(mc.timeline_months.p50||0)+'/'+(mc.timeline_months.p90||0)+' months<br><span class="text-muted">P10/P50/P90</span></div>';
+        if (mc.team_size) html += '<div><strong>Team:</strong> '+mc.team_size+' members<br><span class="text-muted">avg trust '+(mc.avg_trust||0).toFixed(2)+'</span></div>';
+        html += '</div></div>';
+      }
+
+      // === Action buttons ===
+      html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">';
+
+      // Stage 0 -- Edit/Publish draft (proposer-only)
       if ((vr.is_proposer || vr.is_superadmin) && p.plan_status === 'draft' && p.plan_json) {
         html += '<button class="btn btn-primary btn-sm" id="editPlanBtn" style="background:var(--accent);color:var(--navy)">Edit Plan</button>';
-        html += '<button class="btn btn-primary btn-sm" id="publishDraftBtn" style="background:#28a745">Publish Plan</button>';
+        html += '<button class="btn btn-primary btn-sm" id="publishDraftBtn" style="background:#28a745">Publish Plan (starts 30-day countdown)</button>';
       }
-      // Stage 1 -- proposer-only: Invite AI matches
-      if ((vr.is_proposer || vr.is_superadmin) && p.plan_status && ['published','recruiting'].includes(p.plan_status)) {
-        html += '<button class="btn btn-primary btn-sm" id="inviteMatchesBtn" style="background:var(--accent);color:var(--navy)">+ Invite AI Matches</button>';
+
+      // Stage 1 -- recruiting
+      if (p.plan_status === 'recruiting' && !p.recruitment_closed_at && !vr.is_proposer && !vr.is_participant) {
+        html += '<button class="btn btn-outline btn-sm" id="joinBtn">Join Team</button>';
+      }
+      if ((vr.is_proposer || vr.is_superadmin) && p.plan_status === 'recruiting' && !p.recruitment_closed_at) {
+        html += '<button class="btn btn-primary btn-sm" id="inviteMatchesBtn" style="background:var(--accent);color:var(--navy)">Re-run AI Matches</button>';
         html += '<button class="btn btn-outline btn-sm" id="viewInvitationsBtn">View Invitations</button>';
+        html += '<button class="btn btn-danger btn-sm" id="closeRecruitmentBtn" style="background:var(--red);color:white">Close Bidding Now</button>';
       }
-      // Stage 2 -- Final Meeting + Sign-off
-      if ((vr.is_proposer || vr.is_superadmin) && p.plan_status === 'fully_staffed') {
-        html += '<button class="btn btn-primary btn-sm" id="bookMeetingBtn" style="background:#7b1fa2">Book Final Meeting</button>';
-      }
+
+      // Stage 2 -- sign-off (Final Meeting auto-booked, no manual button needed)
       if (['pending_signoff','fully_staffed'].includes(p.plan_status) && (vr.is_proposer || vr.is_participant)) {
         html += '<button class="btn btn-primary btn-sm" id="signoffBtn" style="background:#28a745">Sign Off Plan</button>';
         html += '<button class="btn btn-outline btn-sm" id="signoffStatusBtn">Sign-off Status</button>';
       }
-      // Stage 3 -- Private Workspace
-      if (p.plan_status === 'signed_off' && (vr.is_proposer || vr.is_superadmin)) {
-        html += '<button class="btn btn-primary btn-sm" id="initWorkspaceBtn" style="background:#1565c0">Initialize Workspace</button>';
-      }
+
+      // Stage 3 -- workspace (auto-init on signoff, button is just shortcut)
       if (['executing','signed_off','completed'].includes(p.plan_status) && (vr.is_proposer || vr.is_participant || vr.is_superadmin)) {
         html += '<button class="btn btn-primary btn-sm" id="openWorkspaceBtn" style="background:#1565c0">Open Workspace</button>';
       }
@@ -2215,6 +2285,27 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       });
 
       // P2B Stage 1 -- Invite AI Matches
+      // Close recruitment (Stage A -> Cascade)
+      var closeRecBtn = document.getElementById('closeRecruitmentBtn');
+      if (closeRecBtn) closeRecBtn.addEventListener('click', async function() {
+        if (!confirm('Close recruitment now? System will run Monte Carlo and book Final Meeting automatically. Cannot be undone.')) return;
+        var msg = document.getElementById('projActionMsg');
+        msg.innerHTML = '<div class="text-muted text-sm">Closing recruitment + running auto-cascade (Monte Carlo + Final Meeting)...</div>';
+        try {
+          var r = await apiFetch('/projects/'+id+'/close-recruitment', { method:'POST' });
+          if (r.success) {
+            var d = r.data;
+            if (d.status === 'recruitment_failed') {
+              msg.innerHTML = '<div class="error-msg">Recruitment failed: '+esc(d.message)+'<br>Missing: '+esc((d.missing_roles||[]).join(', '))+'</div>';
+            } else {
+              var prob = Math.round((d.monte_carlo.success_probability||0)*100);
+              msg.innerHTML = '<div class="success-msg">Cascade complete. Monte Carlo: '+prob+'% viable. Final Meeting booked for '+(d.meeting?new Date(d.meeting.scheduled_at).toLocaleString():'7 days')+'</div>';
+              setTimeout(function(){ showProjectDetail(id); }, 2500);
+            }
+          } else { msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>'; }
+        } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
+      });
+
       var inviteBtn = document.getElementById('inviteMatchesBtn');
       if (inviteBtn) inviteBtn.addEventListener('click', async function() {
         var msg = document.getElementById('projActionMsg');

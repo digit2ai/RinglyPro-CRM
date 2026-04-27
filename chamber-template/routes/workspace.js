@@ -1,5 +1,7 @@
 // Chamber Template - P2B Stage 3 Private Workspace Routes
 // Mounted at /api/projects/:id/workspace -- participants-only access
+const { autoInitWorkspaceFromPlan } = require('../lib/workspace-init');
+
 module.exports = function createWorkspaceRoutes(config) {
   const express = require('express');
   const router = express.Router({ mergeParams: true });
@@ -331,10 +333,11 @@ module.exports = function createWorkspaceRoutes(config) {
   });
 
   // ============ INITIALIZE FROM PLAN ============
+  // Manual trigger -- but PR-A also auto-fires this on /signoff completion.
   router.post('/initialize-from-plan', authMiddleware, requireProjectParticipant, async (req, res) => {
     try {
       const [proj] = await sequelize.query(
-        `SELECT id, plan_json, plan_status, proposer_member_id FROM ${t}_projects WHERE id = :p`,
+        `SELECT proposer_member_id FROM ${t}_projects WHERE id = :p`,
         { replacements: { p: req.params.id }, type: QueryTypes.SELECT }
       );
       if (!proj) return res.status(404).json({ success: false, error: 'Project not found' });
@@ -347,100 +350,12 @@ module.exports = function createWorkspaceRoutes(config) {
       if (proj.proposer_member_id !== req.member.id && !isSuperadmin) {
         return res.status(403).json({ success: false, error: 'Only proposer or superadmin can initialize' });
       }
-      if (!proj.plan_json) return res.status(400).json({ success: false, error: 'No plan to initialize from' });
 
-      // Check if already initialized
-      const [{ count }] = await sequelize.query(
-        `SELECT COUNT(*) AS count FROM ${t}_project_milestones WHERE project_id = :p`,
-        { replacements: { p: req.params.id }, type: QueryTypes.SELECT }
-      );
-      if (parseInt(count) > 0) {
-        return res.status(409).json({ success: false, error: 'Workspace already initialized' });
+      const result = await autoInitWorkspaceFromPlan(sequelize, t, req.params.id, req.member.id);
+      if (result.skipped) {
+        return res.status(409).json({ success: false, error: result.reason });
       }
-
-      const plan = proj.plan_json;
-      const created = { milestones: 0, tasks: 0 };
-
-      // Create milestones from timeline_milestones
-      if (Array.isArray(plan.timeline_milestones)) {
-        for (const m of plan.timeline_milestones) {
-          // Derive budget allocation from budget_breakdown if any phase matches
-          let budget = null;
-          if (Array.isArray(plan.budget_breakdown)) {
-            const matchingBudget = plan.budget_breakdown
-              .filter(b => b.phase && (m.milestone || '').toLowerCase().includes(String(b.phase).toLowerCase()))
-              .reduce((s, b) => s + (b.amount_usd || 0), 0);
-            budget = matchingBudget || null;
-          }
-          const [mr] = await sequelize.query(
-            `INSERT INTO ${t}_project_milestones
-             (project_id, title, description, target_month, budget_allocation_usd, status, created_at)
-             VALUES (:p, :t, :d, :tm, :b, 'planned', NOW()) RETURNING id`,
-            {
-              replacements: {
-                p: req.params.id, t: m.milestone || `Milestone M${m.month||0}`,
-                d: m.deliverable || null, tm: m.month || null, b: budget
-              },
-              type: QueryTypes.SELECT
-            }
-          );
-          created.milestones++;
-
-          // Create one task per milestone deliverable
-          if (m.deliverable) {
-            await sequelize.query(
-              `INSERT INTO ${t}_project_tasks
-               (project_id, title, description, status, milestone_id, priority, created_by_member_id, created_at, updated_at)
-               VALUES (:p, :t, :d, 'todo', :mid, 'high', :c, NOW(), NOW())`,
-              {
-                replacements: {
-                  p: req.params.id,
-                  t: `Deliverable: ${m.deliverable}`,
-                  d: `Auto-generated from plan milestone "${m.milestone}" (Month ${m.month||0})`,
-                  mid: mr.id, c: req.member.id
-                }
-              }
-            );
-            created.tasks++;
-          }
-        }
-      }
-
-      // Create one task per team role (kickoff onboarding)
-      if (Array.isArray(plan.team_roles_required)) {
-        for (let i = 0; i < plan.team_roles_required.length; i++) {
-          const role = plan.team_roles_required[i];
-          // Find assignee from project_members
-          const [pm] = await sequelize.query(
-            `SELECT member_id FROM ${t}_project_members WHERE project_id = :p AND role_index = :i LIMIT 1`,
-            { replacements: { p: req.params.id, i }, type: QueryTypes.SELECT }
-          );
-          await sequelize.query(
-            `INSERT INTO ${t}_project_tasks
-             (project_id, title, description, status, assignee_member_id, priority, created_by_member_id, created_at, updated_at)
-             VALUES (:p, :t, :d, 'todo', :a, 'medium', :c, NOW(), NOW())`,
-            {
-              replacements: {
-                p: req.params.id,
-                t: `Kickoff: ${role.role_title || `Role ${i+1}`}`,
-                d: `Onboarding tasks for the ${role.role_title} role.\nResponsibilities: ${(role.responsibilities||[]).join(', ')}`,
-                a: pm ? pm.member_id : null,
-                c: req.member.id
-              }
-            }
-          );
-          created.tasks++;
-        }
-      }
-
-      // Transition to executing
-      await sequelize.query(
-        `UPDATE ${t}_projects SET plan_status = 'executing', status = 'execution', updated_at = NOW()
-         WHERE id = :p AND plan_status = 'signed_off'`,
-        { replacements: { p: req.params.id } }
-      );
-
-      return res.json({ success: true, data: created });
+      return res.json({ success: true, data: result });
     } catch (err) {
       console.error('[init-from-plan]', err);
       return res.status(500).json({ success: false, error: err.message });

@@ -2,6 +2,8 @@
 const planGenerator = require('../lib/plan-generator');
 const ical = require('../lib/ical');
 const crypto = require('crypto');
+const { runCascade, maybeAutoClose } = require('../lib/p2b-cascade');
+const { autoInitWorkspaceFromPlan } = require('../lib/workspace-init');
 
 module.exports = function createProjectRoutes(config) {
   const express = require('express');
@@ -113,13 +115,23 @@ module.exports = function createProjectRoutes(config) {
   // GET /:id
   router.get('/:id', authMiddleware, async (req, res) => {
     try {
-      const projects = await sequelize.query(
+      let projects = await sequelize.query(
         `SELECT p.*, m.first_name || ' ' || m.last_name AS proposer_name
          FROM ${t}_projects p LEFT JOIN ${t}_members m ON m.id = p.proposer_member_id
          WHERE p.id = :id`,
         { replacements: { id: req.params.id }, type: QueryTypes.SELECT }
       );
       if (projects.length === 0) return res.status(404).json({ success: false, error: 'Project not found' });
+
+      // Lazy auto-close if recruitment deadline expired
+      await maybeAutoClose(sequelize, t, projects[0]);
+      // Re-read in case state changed
+      projects = await sequelize.query(
+        `SELECT p.*, m.first_name || ' ' || m.last_name AS proposer_name
+         FROM ${t}_projects p LEFT JOIN ${t}_members m ON m.id = p.proposer_member_id
+         WHERE p.id = :id`,
+        { replacements: { id: req.params.id }, type: QueryTypes.SELECT }
+      );
       const project = projects[0];
 
       // Visibility check for participants_only projects
@@ -250,21 +262,59 @@ module.exports = function createProjectRoutes(config) {
     }
   });
 
-  // POST /:id/evaluate
+  // POST /:id/evaluate -- now reads cached monte_carlo_result if present, else computes
   router.post('/:id/evaluate', authMiddleware, async (req, res) => {
     try {
-      const projects = await sequelize.query(`SELECT * FROM ${t}_projects WHERE id = :id`, { replacements: { id: req.params.id }, type: QueryTypes.SELECT });
-      if (projects.length === 0) return res.status(404).json({ success: false, error: 'Project not found' });
-      const project = projects[0];
-      const budgetEst = parseFloat(project.budget_est) || 100000;
-      const timelineEst = parseInt(project.timeline_est_months) || 12;
-      const mockResult = {
-        simulation: 'monte_carlo', iterations: 10000,
-        budget: { p10: Math.round(budgetEst * 0.8), p50: Math.round(budgetEst), p90: Math.round(budgetEst * 1.4), mean: Math.round(budgetEst * 1.05) },
-        timeline_months: { p10: Math.round(timelineEst * 0.85), p50: timelineEst, p90: Math.round(timelineEst * 1.35) },
-        success_probability: 0.72, risk_score: 'medium'
+      const [project] = await sequelize.query(`SELECT * FROM ${t}_projects WHERE id = :id`, { replacements: { id: req.params.id }, type: QueryTypes.SELECT });
+      if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+
+      // Return cached result if available
+      if (project.monte_carlo_result) {
+        return res.json({ success: true, data: project.monte_carlo_result, cached: true });
+      }
+
+      // Otherwise force-run cascade evaluation in-line (won't transition status)
+      const { monteCarloProject } = require('../chamber-math');
+      const teamMembers = await sequelize.query(
+        `SELECT pm.member_id, m.trust_score FROM ${t}_project_members pm
+         JOIN ${t}_members m ON m.id = pm.member_id WHERE pm.project_id = :p`,
+        { replacements: { p: req.params.id }, type: QueryTypes.SELECT }
+      );
+      const teamSize = teamMembers.length || 1;
+      const avgTrust = teamMembers.length > 0
+        ? teamMembers.reduce((s, m) => s + parseFloat(m.trust_score || 0.7), 0) / teamMembers.length
+        : 0.7;
+      const teamRoles = (project.plan_json && project.plan_json.team_roles_required) || [];
+      const teamScore = Math.min(1, teamSize / Math.max(1, teamRoles.length || 1));
+
+      const budgetEst = parseFloat(project.budget_est) || 200000;
+      const budgetMin = parseFloat(project.budget_min) || budgetEst * 0.75;
+      const budgetMax = parseFloat(project.budget_max) || budgetEst * 1.5;
+      const timeEst = parseInt(project.timeline_est_months) || 6;
+      const timeMin = parseInt(project.timeline_min_months) || Math.max(2, Math.floor(timeEst * 0.7));
+      const timeMax = parseInt(project.timeline_max_months) || Math.ceil(timeEst * 1.5);
+
+      const mc = monteCarloProject({
+        budget_min: budgetMin, budget_est: budgetEst, budget_max: budgetMax,
+        budget_available: budgetMax,
+        timeline_min: timeMin, timeline_est: timeEst, timeline_max: timeMax,
+        deadline_months: timeMax,
+        team_score: teamScore, alignment_score: avgTrust
+      }, 10000);
+
+      const result = {
+        ...mc,
+        success_probability: mc.viabilityScore,
+        risk_score: mc.semaphore.toLowerCase(),
+        iterations: 10000,
+        budget: { p10: Math.round(mc.percentiles.p10), p50: Math.round(mc.percentiles.p50), p90: Math.round(mc.percentiles.p90), mean: Math.round(mc.percentiles.p50) },
+        timeline_months: { p10: timeMin, p50: timeEst, p90: timeMax },
+        team_size: teamSize,
+        avg_trust: avgTrust,
+        cached: false
       };
-      return res.json({ success: true, data: mockResult });
+
+      return res.json({ success: true, data: result });
     } catch (err) {
       return res.status(500).json({ success: false, error: err.message });
     }
@@ -358,30 +408,117 @@ module.exports = function createProjectRoutes(config) {
     }
   });
 
-  // POST /:id/publish -- transition draft -> published
+  // POST /:id/publish -- draft -> recruiting + 30-day deadline + auto-invite AI matches
   router.post('/:id/publish', authMiddleware, async (req, res) => {
     try {
       const projects = await sequelize.query(
-        `SELECT id, proposer_member_id, plan_status, plan_json FROM ${t}_projects WHERE id = :id`,
+        `SELECT * FROM ${t}_projects WHERE id = :id`,
         { replacements: { id: req.params.id }, type: QueryTypes.SELECT }
       );
       if (projects.length === 0) return res.status(404).json({ success: false, error: 'Project not found' });
-      if (projects[0].proposer_member_id !== req.member.id) {
+      const project = projects[0];
+      if (project.proposer_member_id !== req.member.id) {
         return res.status(403).json({ success: false, error: 'Only the proposer can publish' });
       }
-      if (projects[0].plan_status !== 'draft') {
-        return res.status(400).json({ success: false, error: `Already ${projects[0].plan_status}` });
+      if (project.plan_status !== 'draft') {
+        return res.status(400).json({ success: false, error: `Already ${project.plan_status}` });
       }
-      const validation = planGenerator.validatePlan(projects[0].plan_json);
+      const validation = planGenerator.validatePlan(project.plan_json);
       if (!validation.ok) return res.status(400).json({ success: false, error: validation.error });
 
-      const result = await sequelize.query(
-        `UPDATE ${t}_projects SET plan_status = 'published', visibility = 'public_plan', updated_at = NOW()
+      // Set 30-day deadline and transition straight to 'recruiting'
+      const deadline = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      const [updated] = await sequelize.query(
+        `UPDATE ${t}_projects
+         SET plan_status = 'recruiting',
+             visibility = 'public_plan',
+             recruitment_deadline = :dl,
+             updated_at = NOW()
          WHERE id = :id RETURNING *`,
+        { replacements: { id: req.params.id, dl: deadline }, type: QueryTypes.SELECT }
+      );
+
+      // Auto-invite AI matches (in-process, best-effort)
+      let invitationsCreated = 0;
+      try {
+        const plan = project.plan_json;
+        if (Array.isArray(plan.team_roles_required)) {
+          const members = await sequelize.query(
+            `SELECT id, first_name, last_name, email, country, region_id, sector,
+                    sub_specialty, bio, company_name, trust_score
+             FROM ${t}_members
+             WHERE id != :proposer AND status = 'active'`,
+            { replacements: { proposer: project.proposer_member_id }, type: QueryTypes.SELECT }
+          );
+          const N = 3;
+          for (let i = 0; i < plan.team_roles_required.length; i++) {
+            const role = plan.team_roles_required[i];
+            const ranked = members
+              .map(m => ({ member: m, score: scoreMember(m, role) }))
+              .sort((a, b) => b.score - a.score)
+              .slice(0, N);
+            for (const r of ranked) {
+              const [existing] = await sequelize.query(
+                `SELECT id FROM ${t}_project_invitations
+                 WHERE project_id = :p AND member_id = :m AND role_index = :i`,
+                { replacements: { p: req.params.id, m: r.member.id, i }, type: QueryTypes.SELECT }
+              );
+              if (existing) continue;
+              await sequelize.query(
+                `INSERT INTO ${t}_project_invitations
+                 (project_id, member_id, role_index, role_title, status, match_score, invited_by_member_id, invited_at)
+                 VALUES (:p, :m, :i, :rt, 'pending', :s, :inv, NOW())`,
+                { replacements: { p: req.params.id, m: r.member.id, i, rt: role.role_title || `Role ${i+1}`, s: r.score.toFixed(3), inv: req.member.id } }
+              );
+              invitationsCreated++;
+            }
+          }
+        }
+      } catch (invErr) {
+        console.error('[publish auto-invite]', invErr.message);
+      }
+
+      return res.json({ success: true, data: { ...updated, invitations_created: invitationsCreated } });
+    } catch (err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // POST /:id/close-recruitment -- proposer hits "Close Bidding Now"
+  router.post('/:id/close-recruitment', authMiddleware, async (req, res) => {
+    try {
+      const [project] = await sequelize.query(
+        `SELECT id, proposer_member_id, plan_status, recruitment_closed_at FROM ${t}_projects WHERE id = :id`,
         { replacements: { id: req.params.id }, type: QueryTypes.SELECT }
       );
-      return res.json({ success: true, data: result[0] });
+      if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+
+      const [viewer] = await sequelize.query(
+        `SELECT access_level FROM ${t}_members WHERE id = :m`,
+        { replacements: { m: req.member.id }, type: QueryTypes.SELECT }
+      );
+      const isSuperadmin = viewer && viewer.access_level === 'superadmin';
+      if (project.proposer_member_id !== req.member.id && !isSuperadmin) {
+        return res.status(403).json({ success: false, error: 'Only proposer or superadmin can close recruitment' });
+      }
+      if (project.plan_status !== 'recruiting') {
+        return res.status(400).json({ success: false, error: `Cannot close from status: ${project.plan_status}` });
+      }
+      if (project.recruitment_closed_at) {
+        return res.status(400).json({ success: false, error: 'Recruitment already closed' });
+      }
+
+      await sequelize.query(
+        `UPDATE ${t}_projects
+         SET recruitment_closed_at = NOW(), recruitment_closed_by = 'manual', updated_at = NOW()
+         WHERE id = :id`,
+        { replacements: { id: req.params.id } }
+      );
+
+      const cascadeResult = await runCascade(sequelize, t, req.params.id);
+      return res.json({ success: true, data: cascadeResult });
     } catch (err) {
+      console.error('[close-recruitment]', err);
       return res.status(500).json({ success: false, error: err.message });
     }
   });
@@ -938,6 +1075,7 @@ module.exports = function createProjectRoutes(config) {
 
       const allSigned = parseInt(signedCount) >= parseInt(participantCount);
       let newStatus = 'pending_signoff';
+      let workspaceInit = null;
       if (allSigned) {
         newStatus = 'signed_off';
         await sequelize.query(
@@ -945,6 +1083,14 @@ module.exports = function createProjectRoutes(config) {
            WHERE id = :id`,
           { replacements: { id: req.params.id } }
         );
+
+        // Auto-initialize workspace from plan (no manual click needed)
+        try {
+          workspaceInit = await autoInitWorkspaceFromPlan(sequelize, t, req.params.id, req.member.id);
+          if (!workspaceInit.skipped) newStatus = 'executing';
+        } catch (initErr) {
+          console.error('[auto-init workspace]', initErr.message);
+        }
       }
 
       return res.json({
@@ -954,7 +1100,8 @@ module.exports = function createProjectRoutes(config) {
           all_signed: allSigned,
           signed_count: parseInt(signedCount),
           total_participants: parseInt(participantCount),
-          new_status: newStatus
+          new_status: newStatus,
+          workspace_init: workspaceInit
         }
       });
     } catch (err) {
