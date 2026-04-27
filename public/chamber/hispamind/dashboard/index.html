@@ -521,7 +521,66 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
 
   function logout() {
     localStorage.removeItem('hispamind_token');
-    window.location.href = BASE + '/#registro';
+    showLoginScreen();
+  }
+
+  function showLoginScreen(errorMsg) {
+    document.body.innerHTML = `
+      <style>
+        .login-wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(160deg,#0a1628 0%,#002670 55%,#003DA5 100%); font-family:'Inter',sans-serif; padding:20px; }
+        .login-card { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:36px 32px; max-width:420px; width:100%; backdrop-filter:blur(12px); }
+        .login-card h2 { color:#fff; font-size:24px; font-weight:800; margin-bottom:8px; text-align:center; }
+        .login-card p { color:rgba(255,255,255,0.7); font-size:14px; text-align:center; margin-bottom:24px; }
+        .login-card label { display:block; font-size:11px; font-weight:600; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+        .login-card input { width:100%; padding:12px 14px; border-radius:8px; border:1px solid rgba(255,255,255,0.18); background:rgba(255,255,255,0.06); color:#fff; font-size:15px; outline:none; margin-bottom:16px; box-sizing:border-box; }
+        .login-card input:focus { border-color:#FCD116; }
+        .login-card button { width:100%; padding:14px; background:#CE1126; color:#fff; border:none; border-radius:8px; font-size:15px; font-weight:700; cursor:pointer; }
+        .login-card button:hover { background:#a50d1e; }
+        .login-card button:disabled { opacity:0.6; cursor:not-allowed; }
+        .login-msg { margin-top:14px; padding:10px; border-radius:6px; font-size:13px; text-align:center; }
+        .login-msg.error { background:rgba(192,57,43,0.18); color:#ff8b8b; border:1px solid rgba(192,57,43,0.4); }
+        .login-back { display:block; text-align:center; margin-top:18px; font-size:13px; color:rgba(255,255,255,0.6); text-decoration:none; }
+        .login-back:hover { color:#FCD116; }
+      </style>
+      <div class="login-wrap">
+        <div class="login-card">
+          <h2>CamaraVirtual.app</h2>
+          <p>Accede al panel de miembros</p>
+          <form id="dashLoginForm">
+            <label>Correo electronico</label>
+            <input type="email" id="loginEmail" required placeholder="tu@correo.com" autocomplete="email">
+            <label>Contrasena</label>
+            <input type="password" id="loginPass" required placeholder="Tu contrasena" autocomplete="current-password">
+            <button type="submit" id="loginBtn">Iniciar Sesion</button>
+            ${errorMsg ? '<div class="login-msg error">' + errorMsg + '</div>' : '<div id="loginMsg"></div>'}
+          </form>
+          <a href="${BASE || '/'}" class="login-back">&larr; Volver al sitio</a>
+        </div>
+      </div>
+    `;
+    document.getElementById('dashLoginForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      var email = document.getElementById('loginEmail').value.trim();
+      var pass = document.getElementById('loginPass').value;
+      var btn = document.getElementById('loginBtn');
+      btn.disabled = true; btn.textContent = 'Iniciando sesion...';
+      try {
+        var res = await fetch(API + '/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, password: pass })
+        });
+        var data = await res.json();
+        if (data.success && data.data && data.data.token) {
+          localStorage.setItem('hispamind_token', data.data.token);
+          location.reload();
+        } else {
+          showLoginScreen(data.error || 'Credenciales invalidas');
+        }
+      } catch(e) {
+        showLoginScreen('Error de conexion. Intenta de nuevo.');
+      }
+    });
   }
 
   async function apiFetch(path, methodOrOpts, body) {
@@ -544,7 +603,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   // -- Init --
   async function init() {
     var token = getToken();
-    if (!token) { window.location.href = BASE + '/#registro'; return; }
+    if (!token) { showLoginScreen(); return; }
 
     var decoded = decodeJWT(token);
     if (!decoded) { logout(); return; }
