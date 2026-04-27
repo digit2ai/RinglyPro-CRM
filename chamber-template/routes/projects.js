@@ -156,13 +156,13 @@ module.exports = function createProjectRoutes(config) {
       );
       const isSuperadmin = viewer && viewer.access_level === 'superadmin';
       const isProposer = project.proposer_member_id === req.member.id;
-      let isParticipant = false;
+      // Always check membership -- needed for action-button gating regardless of visibility
+      const [pmRow] = await sequelize.query(
+        `SELECT 1 FROM ${t}_project_members WHERE project_id = :p AND member_id = :m`,
+        { replacements: { p: req.params.id, m: req.member.id }, type: QueryTypes.SELECT }
+      );
+      const isParticipant = !!pmRow;
       if (project.visibility === 'participants_only') {
-        const [pmRow] = await sequelize.query(
-          `SELECT 1 FROM ${t}_project_members WHERE project_id = :p AND member_id = :m`,
-          { replacements: { p: req.params.id, m: req.member.id }, type: QueryTypes.SELECT }
-        );
-        isParticipant = !!pmRow;
         if (!isParticipant && !isSuperadmin && !isProposer) {
           // Return stub only
           return res.json({
