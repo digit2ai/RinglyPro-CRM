@@ -2930,12 +2930,36 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         b.addEventListener('click', async function() {
           var cid = parseInt(this.dataset.cid);
           var current = this.dataset.curr === '1';
+          var origText = this.textContent;
           this.disabled = true;
+          this.textContent = 'Saving...';
+          this.style.opacity = '0.6';
           try {
             var r = await apiFetch('/exchange/companies/'+cid, { method:'PUT', body:JSON.stringify({ verified: !current }) });
-            if (r.success) loadCompanies();
-            else { this.disabled = false; alert(r.error || 'Error'); }
-          } catch(e) { this.disabled = false; alert(e.message); }
+            if (r.success && r.data && r.data.verified === !current) {
+              // Optimistic UI flip -- update the badge cell + button without full reload
+              var row = this.closest('tr');
+              if (row) {
+                var verifiedCell = row.children[4];
+                verifiedCell.innerHTML = (!current) ? '<span class="badge badge-green">Yes</span>' : '<span class="badge badge-gray">No</span>';
+              }
+              this.textContent = (!current) ? 'Unverify' : 'Verify';
+              this.dataset.curr = (!current) ? '1' : '0';
+              this.style.background = (!current) ? '#999' : '#28a745';
+              this.style.opacity = '1';
+              this.disabled = false;
+            } else {
+              this.disabled = false;
+              this.textContent = origText;
+              this.style.opacity = '1';
+              alert((r && r.error) ? r.error : 'Save failed -- backend did not confirm new value');
+            }
+          } catch(e) {
+            this.disabled = false;
+            this.textContent = origText;
+            this.style.opacity = '1';
+            alert('Network error: ' + e.message);
+          }
         });
       });
     } catch(e) {
