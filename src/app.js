@@ -52,6 +52,10 @@ app.use((req, res, next) => {
     // as internally rewritten so the legacy /chamber/<prefix>/ redirect skips it.
     if (p === '/' || p === '') {
       req._skipLegacyRedirect = true;
+      // Prevent browsers from re-using the old cached 301 to /cv-1/
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
       req.url = '/chamber/hispamind/index.html';
       return next();
     }
@@ -88,6 +92,9 @@ app.use((req, res, next) => {
     const p = req.path;
     if (p === '/' || p === '') {
       req._skipLegacyRedirect = true;
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
       req.url = '/chamber/virtualchamber/index.html';
       return next();
     }
