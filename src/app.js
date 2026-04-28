@@ -555,6 +555,20 @@ try {
     console.log('Chamber template not available:', error.message);
 }
 
+// Multi-Tenant Unified Chamber Routes (cv-* / vc-* slugs)
+// Mounted under /:chamber_slug/api/* with chamber-resolver middleware.
+// Chambers using the unified schema (cv-1, cv-2, cv-3, and any cv-101+ / vc-101+
+// created via /signup) flow through here. Legacy /chamber/<prefix>/api/* routes
+// above stay live for backwards compatibility until cutover.
+try {
+    const { resolveChamberFromSlug } = require('../chamber-template/lib/chamber-resolver');
+    const unifiedChamberRouter = require('./routes/unified-chamber');
+    app.use('/:chamber_slug/api', resolveChamberFromSlug, unifiedChamberRouter);
+    console.log('🏛️ Unified chamber routes mounted at /:chamber_slug/api/*');
+} catch (error) {
+    console.log('Unified chamber router not available:', error.message);
+}
+
 // ElevenLabs Conversational AI tools routes
 if (elevenlabsToolsRoutes) {
     app.use('/api/elevenlabs/tools', elevenlabsToolsRoutes);
