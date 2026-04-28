@@ -40,30 +40,25 @@ app.use(express.json({ limit: '500mb' }));
 app.use(express.urlencoded({ extended: true, limit: '500mb' }));
 
 // Custom domain: camaravirtual.app
-// Multi-tenant SaaS: pass through per-chamber slugs (cv-N/, vc-N/), the
-// signup wizard (/signup/), shared API endpoints, and the chamber-landing
-// statics. Only the BARE root and legacy /chamber/hispamind paths still
-// rewrite to the original Spanish HispaMind landing.
+// Root '/' serves the Spanish marketing landing DIRECTLY (no rewrite to
+// /chamber/hispamind/, which would now bounce through the legacy 301
+// redirect). Other paths pass through unchanged so per-chamber slugs,
+// signup, API, and static assets all work normally.
 app.use((req, res, next) => {
   const host = (req.get('host') || '').toLowerCase();
   if (host === 'camaravirtual.app' || host === 'www.camaravirtual.app') {
     const p = req.path;
-    // Pass through unified per-chamber URLs
-    if (/^\/(cv|vc)-\d+(\/|$)/.test(p)) return next();
-    // Pass through signup wizard
-    if (p === '/signup' || p === '/signup/' || p.startsWith('/signup/')) {
-      // Serve Spanish wizard from camaravirtual.app/signup
-      if (p === '/signup' || p === '/signup/') { req.url = '/signup/index.html'; }
+    // Root: serve the Spanish marketing landing directly
+    if (p === '/' || p === '') {
+      req.url = '/chamber/hispamind/index.html';
       return next();
     }
-    // Pass through API + static assets
-    if (p.startsWith('/api/')) return next();
-    if (p.startsWith('/audio/') || p.startsWith('/img/') || p.startsWith('/chamber-landing/')) return next();
-    if (p.startsWith('/dashboard/')) return next();
-    // Already under /chamber/hispamind — pass through
-    if (p.startsWith('/chamber/hispamind')) return next();
-    // Default: rewrite root → /chamber/hispamind/ (Spanish marketing landing)
-    req.url = '/chamber/hispamind' + (p === '/' ? '/' : p);
+    // Signup wizard root → Spanish wizard
+    if (p === '/signup' || p === '/signup/') {
+      req.url = '/signup/index.html';
+      return next();
+    }
+    // Everything else (cv-*/vc-*/api/dashboard/static) flows through normally
   }
   next();
 });
@@ -73,14 +68,14 @@ app.use((req, res, next) => {
   const host = (req.get('host') || '').toLowerCase();
   if (host === 'virtualchamber.app' || host === 'www.virtualchamber.app') {
     const p = req.path;
-    if (/^\/(cv|vc)-\d+(\/|$)/.test(p)) return next();
-    if (p === '/signup' || p === '/signup/') { req.url = '/signup/en.html'; return next(); }
-    if (p.startsWith('/signup/')) return next();
-    if (p.startsWith('/api/')) return next();
-    if (p.startsWith('/audio/') || p.startsWith('/img/') || p.startsWith('/chamber-landing/')) return next();
-    if (p.startsWith('/dashboard/')) return next();
-    if (p.startsWith('/chamber/virtualchamber')) return next();
-    req.url = '/chamber/virtualchamber' + (p === '/' ? '/' : p);
+    if (p === '/' || p === '') {
+      req.url = '/chamber/virtualchamber/index.html';
+      return next();
+    }
+    if (p === '/signup' || p === '/signup/') {
+      req.url = '/signup/en.html';
+      return next();
+    }
   }
   next();
 });
