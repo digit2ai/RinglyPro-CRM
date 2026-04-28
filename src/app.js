@@ -555,6 +555,15 @@ try {
     console.log('Chamber template not available:', error.message);
 }
 
+// Multi-Tenant Chamber Signup + Stripe Billing
+try {
+    const chamberSignupRouter = require('./routes/chamber-signup');
+    app.use('/api/chambers', chamberSignupRouter);
+    console.log('💳 Chamber signup + Stripe billing mounted at /api/chambers/*');
+} catch (error) {
+    console.log('Chamber signup not available:', error.message);
+}
+
 // Multi-Tenant Unified Chamber Routes (cv-* / vc-* slugs)
 // Mounted under /:chamber_slug/api/* with chamber-resolver middleware.
 // Chambers using the unified schema (cv-1, cv-2, cv-3, and any cv-101+ / vc-101+

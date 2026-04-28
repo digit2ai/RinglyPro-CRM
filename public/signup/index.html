@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registra tu Camara - CamaraVirtual.app</title>
+<script src="https://js.stripe.com/v3/"></script>
+<style>
+  :root {
+    --primary: #1a3d8f;
+    --accent: #ffc107;
+    --accent-dark: #b8860b;
+    --red: #dc2626;
+    --green: #16a34a;
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-300: #cbd5e1;
+    --gray-500: #64748b;
+    --gray-700: #334155;
+    --gray-900: #0f172a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, system-ui, sans-serif;
+    background: linear-gradient(135deg, var(--primary) 0%, #2855ab 100%);
+    min-height: 100vh;
+    color: var(--gray-900);
+  }
+  .container {
+    max-width: 720px;
+    margin: 40px auto;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+  }
+  .header {
+    background: linear-gradient(135deg, var(--primary), #2855ab);
+    color: white;
+    padding: 40px 32px;
+    text-align: center;
+  }
+  .header h1 { font-size: 28px; margin-bottom: 8px; }
+  .header p { font-size: 16px; opacity: 0.9; }
+  .pricing-banner {
+    background: var(--accent);
+    color: var(--gray-900);
+    padding: 14px 20px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .form { padding: 36px 32px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+  .form-group { margin-bottom: 16px; }
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid var(--gray-300);
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: inherit;
+    transition: border-color 0.15s;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    outline: none; border-color: var(--primary);
+  }
+  .stripe-element {
+    padding: 12px 14px;
+    border: 1.5px solid var(--gray-300);
+    border-radius: 8px;
+    background: white;
+  }
+  .btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 12px;
+    transition: background 0.15s;
+  }
+  .btn:hover { background: #142d6b; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .msg { margin-top: 16px; padding: 12px; border-radius: 8px; font-size: 14px; }
+  .msg.error { background: #fee2e2; color: var(--red); }
+  .msg.success { background: #d1fae5; color: var(--green); }
+  .footer { padding: 20px 32px; text-align: center; font-size: 13px; color: var(--gray-500); border-top: 1px solid var(--gray-200); }
+  .footer a { color: var(--primary); text-decoration: none; }
+  @media (max-width: 540px) { .form-row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Registra tu Camara</h1>
+    <p>Lanza tu plataforma digital para miembros en menos de 60 segundos</p>
+  </div>
+  <div class="pricing-banner">
+    $150 USD pago unico de configuracion + $99 USD/mes &middot; Cancela cuando quieras
+  </div>
+  <form id="signupForm" class="form">
+    <h2 style="margin-bottom:18px;color:var(--primary)">Datos de la Camara</h2>
+    <div class="form-group">
+      <label>Nombre de la Camara *</label>
+      <input name="chamber_name" required placeholder="Camara de Comercio Hispano-Madrid">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Pais</label>
+        <input name="country" placeholder="Espana">
+      </div>
+      <div class="form-group">
+        <label>Email de Contacto *</label>
+        <input name="contact_email" type="email" required placeholder="contacto@tucamara.com">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Descripcion (opcional)</label>
+      <textarea name="description" rows="2" placeholder="Apoyamos a empresarios hispanos en..."></textarea>
+    </div>
+
+    <h2 style="margin:24px 0 18px;color:var(--primary)">Datos del Administrador</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Nombre *</label>
+        <input name="owner_first_name" required>
+      </div>
+      <div class="form-group">
+        <label>Apellido *</label>
+        <input name="owner_last_name" required>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Contrasena (minimo 8 caracteres) *</label>
+      <input name="owner_password" type="password" required minlength="8">
+    </div>
+
+    <h2 style="margin:24px 0 18px;color:var(--primary)">Pago</h2>
+    <div class="form-group">
+      <label>Tarjeta de Credito *</label>
+      <div id="card-element" class="stripe-element"></div>
+    </div>
+
+    <button type="submit" class="btn" id="submitBtn">
+      Crear mi Camara &mdash; $150 + $99/mes
+    </button>
+    <div id="msg"></div>
+  </form>
+  <div class="footer">
+    Al continuar aceptas los <a href="/terms">terminos</a> y <a href="/privacy">privacidad</a>.<br>
+    &copy; CamaraVirtual.app
+  </div>
+</div>
+
+<script>
+const STRIPE_PUBLISHABLE = (window.STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder');
+const stripe = Stripe(STRIPE_PUBLISHABLE);
+const elements = stripe.elements();
+const card = elements.create('card', {
+  style: { base: { fontSize: '15px', color: '#0f172a', '::placeholder': { color: '#94a3b8' } } }
+});
+card.mount('#card-element');
+
+const form = document.getElementById('signupForm');
+const submitBtn = document.getElementById('submitBtn');
+const msg = document.getElementById('msg');
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  msg.innerHTML = '';
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Procesando pago...';
+
+  try {
+    const { paymentMethod, error: stripeErr } = await stripe.createPaymentMethod({ type: 'card', card });
+    if (stripeErr) {
+      msg.innerHTML = '<div class="msg error">' + stripeErr.message + '</div>';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Crear mi Camara — $150 + $99/mes';
+      return;
+    }
+
+    const fd = new FormData(form);
+    const body = {};
+    fd.forEach((v, k) => body[k] = v);
+    body.brand_domain = 'camaravirtual.app';
+    body.stripe_payment_method_id = paymentMethod.id;
+
+    const res = await fetch('/api/chambers/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Source-Domain': 'camaravirtual.app' },
+      body: JSON.stringify(body)
+    });
+    const json = await res.json();
+
+    if (json.success) {
+      msg.innerHTML = '<div class="msg success">Camara creada: <strong>' + json.data.chamber.slug + '</strong>. Redirigiendo...</div>';
+      localStorage.setItem('chamber_token', json.data.token);
+      localStorage.setItem('chamber_slug', json.data.chamber.slug);
+      setTimeout(() => {
+        window.location.href = json.data.chamber.dashboard_url;
+      }, 1500);
+    } else {
+      msg.innerHTML = '<div class="msg error">' + (json.error || 'Error en la creacion') + '</div>';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Crear mi Camara — $150 + $99/mes';
+    }
+  } catch (err) {
+    msg.innerHTML = '<div class="msg error">Error: ' + err.message + '</div>';
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Crear mi Camara — $150 + $99/mes';
+  }
+});
+</script>
+</body>
+</html>

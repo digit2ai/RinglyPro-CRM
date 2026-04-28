@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register Your Chamber - VirtualChamber.app</title>
+<script src="https://js.stripe.com/v3/"></script>
+<style>
+  :root {
+    --primary: #1a3d8f;
+    --accent: #ffc107;
+    --red: #dc2626;
+    --green: #16a34a;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-300: #cbd5e1;
+    --gray-500: #64748b;
+    --gray-700: #334155;
+    --gray-900: #0f172a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, system-ui, sans-serif;
+    background: linear-gradient(135deg, var(--primary) 0%, #2855ab 100%);
+    min-height: 100vh;
+    color: var(--gray-900);
+  }
+  .container { max-width: 720px; margin: 40px auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+  .header { background: linear-gradient(135deg, var(--primary), #2855ab); color: white; padding: 40px 32px; text-align: center; }
+  .header h1 { font-size: 28px; margin-bottom: 8px; }
+  .header p { font-size: 16px; opacity: 0.9; }
+  .pricing-banner { background: var(--accent); color: var(--gray-900); padding: 14px 20px; text-align: center; font-weight: 700; font-size: 15px; }
+  .form { padding: 36px 32px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--gray-700); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 14px; border: 1.5px solid var(--gray-300); border-radius: 8px; font-size: 15px; font-family: inherit; transition: border-color 0.15s; }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--primary); }
+  .stripe-element { padding: 12px 14px; border: 1.5px solid var(--gray-300); border-radius: 8px; background: white; }
+  .btn { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 12px; transition: background 0.15s; }
+  .btn:hover { background: #142d6b; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .msg { margin-top: 16px; padding: 12px; border-radius: 8px; font-size: 14px; }
+  .msg.error { background: #fee2e2; color: var(--red); }
+  .msg.success { background: #d1fae5; color: var(--green); }
+  .footer { padding: 20px 32px; text-align: center; font-size: 13px; color: var(--gray-500); border-top: 1px solid var(--gray-200); }
+  .footer a { color: var(--primary); text-decoration: none; }
+  @media (max-width: 540px) { .form-row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Register Your Chamber</h1>
+    <p>Launch your digital member platform in under 60 seconds</p>
+  </div>
+  <div class="pricing-banner">
+    $150 USD one-time setup + $99 USD/month &middot; Cancel anytime
+  </div>
+  <form id="signupForm" class="form">
+    <h2 style="margin-bottom:18px;color:var(--primary)">Chamber Details</h2>
+    <div class="form-group">
+      <label>Chamber Name *</label>
+      <input name="chamber_name" required placeholder="Greater London Hispanic Chamber">
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Country</label><input name="country" placeholder="United Kingdom"></div>
+      <div class="form-group"><label>Contact Email *</label><input name="contact_email" type="email" required placeholder="info@yourchamber.org"></div>
+    </div>
+    <div class="form-group"><label>Description (optional)</label><textarea name="description" rows="2" placeholder="We support entrepreneurs in..."></textarea></div>
+
+    <h2 style="margin:24px 0 18px;color:var(--primary)">Administrator Account</h2>
+    <div class="form-row">
+      <div class="form-group"><label>First Name *</label><input name="owner_first_name" required></div>
+      <div class="form-group"><label>Last Name *</label><input name="owner_last_name" required></div>
+    </div>
+    <div class="form-group"><label>Password (min 8 characters) *</label><input name="owner_password" type="password" required minlength="8"></div>
+
+    <h2 style="margin:24px 0 18px;color:var(--primary)">Payment</h2>
+    <div class="form-group"><label>Credit Card *</label><div id="card-element" class="stripe-element"></div></div>
+
+    <button type="submit" class="btn" id="submitBtn">Create My Chamber &mdash; $150 + $99/mo</button>
+    <div id="msg"></div>
+  </form>
+  <div class="footer">
+    By continuing you agree to our <a href="/terms">terms</a> and <a href="/privacy">privacy</a>.<br>
+    &copy; VirtualChamber.app
+  </div>
+</div>
+<script>
+const STRIPE_PUBLISHABLE = (window.STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder');
+const stripe = Stripe(STRIPE_PUBLISHABLE);
+const elements = stripe.elements();
+const card = elements.create('card', { style: { base: { fontSize: '15px', color: '#0f172a' } } });
+card.mount('#card-element');
+
+const form = document.getElementById('signupForm');
+const submitBtn = document.getElementById('submitBtn');
+const msg = document.getElementById('msg');
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  msg.innerHTML = '';
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Processing payment...';
+
+  try {
+    const { paymentMethod, error: stripeErr } = await stripe.createPaymentMethod({ type: 'card', card });
+    if (stripeErr) {
+      msg.innerHTML = '<div class="msg error">' + stripeErr.message + '</div>';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Create My Chamber — $150 + $99/mo';
+      return;
+    }
+
+    const fd = new FormData(form);
+    const body = {};
+    fd.forEach((v, k) => body[k] = v);
+    body.brand_domain = 'virtualchamber.app';
+    body.stripe_payment_method_id = paymentMethod.id;
+
+    const res = await fetch('/api/chambers/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Source-Domain': 'virtualchamber.app' },
+      body: JSON.stringify(body)
+    });
+    const json = await res.json();
+
+    if (json.success) {
+      msg.innerHTML = '<div class="msg success">Chamber created: <strong>' + json.data.chamber.slug + '</strong>. Redirecting...</div>';
+      localStorage.setItem('chamber_token', json.data.token);
+      localStorage.setItem('chamber_slug', json.data.chamber.slug);
+      setTimeout(() => { window.location.href = json.data.chamber.dashboard_url; }, 1500);
+    } else {
+      msg.innerHTML = '<div class="msg error">' + (json.error || 'Signup failed') + '</div>';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Create My Chamber — $150 + $99/mo';
+    }
+  } catch (err) {
+    msg.innerHTML = '<div class="msg error">Error: ' + err.message + '</div>';
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Create My Chamber — $150 + $99/mo';
+  }
+});
+</script>
+</body>
+</html>
