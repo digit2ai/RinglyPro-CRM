@@ -60,7 +60,23 @@ app.use((req, res, next) => {
       req.url = '/signup/index.html';
       return next();
     }
-    // Everything else (cv-*/vc-*/api/dashboard/static) flows through normally
+    // Marketing-landing static fallbacks: /presentation.html, /script.js, etc.
+    // anything that's not a chamber slug or known route should look under
+    // public/chamber/hispamind/ for legacy assets the landing page references.
+    const isSlug = /^\/(cv|vc)-\d+(\/|$)/.test(p);
+    const isKnownRoute = p.startsWith('/api/') || p.startsWith('/chamber/') ||
+                         p.startsWith('/signup/') || p.startsWith('/dashboard/') ||
+                         p.startsWith('/audio/') || p.startsWith('/img/') ||
+                         p.startsWith('/chamber-landing/') || p.startsWith('/all-in-one/');
+    if (!isSlug && !isKnownRoute && /\.(html|css|js|png|jpg|jpeg|gif|svg|webp|ico|mp4|webm|pdf)$/i.test(p)) {
+      const fs = require('fs');
+      const candidate = path.join(__dirname, '..', 'public', 'chamber', 'hispamind', p);
+      if (fs.existsSync(candidate)) {
+        req._skipLegacyRedirect = true;
+        req.url = '/chamber/hispamind' + p;
+        return next();
+      }
+    }
   }
   next();
 });
@@ -78,6 +94,21 @@ app.use((req, res, next) => {
     if (p === '/signup' || p === '/signup/') {
       req.url = '/signup/en.html';
       return next();
+    }
+    // Marketing-landing static fallbacks for English landing
+    const isSlug = /^\/(cv|vc)-\d+(\/|$)/.test(p);
+    const isKnownRoute = p.startsWith('/api/') || p.startsWith('/chamber/') ||
+                         p.startsWith('/signup/') || p.startsWith('/dashboard/') ||
+                         p.startsWith('/audio/') || p.startsWith('/img/') ||
+                         p.startsWith('/chamber-landing/') || p.startsWith('/all-in-one/');
+    if (!isSlug && !isKnownRoute && /\.(html|css|js|png|jpg|jpeg|gif|svg|webp|ico|mp4|webm|pdf)$/i.test(p)) {
+      const fs = require('fs');
+      const candidate = path.join(__dirname, '..', 'public', 'chamber', 'virtualchamber', p);
+      if (fs.existsSync(candidate)) {
+        req._skipLegacyRedirect = true;
+        req.url = '/chamber/virtualchamber' + p;
+        return next();
+      }
     }
   }
   next();
