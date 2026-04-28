@@ -504,9 +504,11 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
 (function() {
   'use strict';
 
-  // -- Dynamic base path for custom domain support --
-  var isCustomDomain = location.hostname === 'camaravirtual.app' || location.hostname === 'www.camaravirtual.app';
-  var BASE = isCustomDomain ? '' : '/chamber/hispamind';
+  // -- Dynamic base path for multi-tenant routing --
+  var pathParts = location.pathname.split('/').filter(Boolean);
+  var slugMatch = pathParts[0] && /^(cv|vc)-\d+$/.test(pathParts[0]) ? pathParts[0] : null;
+  var BASE = slugMatch ? ('/' + slugMatch)
+           : (pathParts[0] === 'chamber' && pathParts[1] ? '/chamber/' + pathParts[1] : '');
 
   // -- State --
   const API = BASE + '/api';

@@ -181,8 +181,8 @@
 
   /* REGISTRATION */
   .reg-section { background: linear-gradient(160deg, var(--navy) 0%, var(--blue-dark) 100%); color: var(--white); }
-  .reg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
-  .reg-form { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 36px; }
+  .reg-grid { display: grid; grid-template-columns: 0.85fr 1.15fr; gap: 48px; align-items: center; }
+  .reg-form { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 28px 32px; max-width: 640px; margin-left: auto; }
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   .form-group { margin-bottom: 16px; }
   .form-group label { display: block; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; opacity: 0.8; }
@@ -608,13 +608,21 @@
           <div class="form-group">
             <label>Contrasena (minimo 8 caracteres) *</label>
             <div style="position:relative">
-              <input type="password" name="owner_password" id="ownerPwd" required minlength="8" placeholder="Crea una contrasena segura" style="padding-right:60px;width:100%">
+              <input type="password" name="owner_password" id="ownerPwd" required minlength="8" placeholder="Crea una contrasena segura" style="padding-right:64px;width:100%">
               <button type="button" id="pwdToggle" tabindex="-1" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:rgba(255,255,255,0.6);font-size:12px;font-weight:600;cursor:pointer;padding:6px 10px">VER</button>
             </div>
             <div style="margin-top:6px;height:6px;border-radius:3px;background:rgba(255,255,255,0.08);overflow:hidden">
               <div id="pwdBar" style="height:100%;width:0%;transition:width 0.2s,background 0.2s;background:#dc2626"></div>
             </div>
             <div id="pwdLabel" style="font-size:11px;margin-top:4px;color:rgba(255,255,255,0.5);font-family:'Inter',sans-serif">&nbsp;</div>
+          </div>
+          <div class="form-group">
+            <label>Confirmar contrasena *</label>
+            <div style="position:relative">
+              <input type="password" name="owner_password_confirm" id="ownerPwdConfirm" required placeholder="Repite la contrasena" style="padding-right:64px;width:100%">
+              <button type="button" id="pwdToggleConfirm" tabindex="-1" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:rgba(255,255,255,0.6);font-size:12px;font-weight:600;cursor:pointer;padding:6px 10px">VER</button>
+            </div>
+            <div id="pwdMatchLabel" style="font-size:11px;margin-top:4px;color:rgba(255,255,255,0.5);font-family:'Inter',sans-serif">&nbsp;</div>
           </div>
           <button type="submit" class="btn-submit" style="font-size:16px;padding:16px;">Crear mi Camara &mdash; Gratis</button>
           <div class="form-msg" id="formMsg"></div>
@@ -698,15 +706,33 @@
     var v=d.hci||d.bci||d.score||d.value; document.getElementById('hciValue').textContent=v!==undefined?parseFloat(v).toFixed(2):'0.82';
   }).catch(function(){document.getElementById('hciValue').textContent='0.82';});
 
-  // Password show/hide toggle
-  var pwdInput = document.getElementById('ownerPwd');
-  var pwdToggle = document.getElementById('pwdToggle');
-  if (pwdToggle && pwdInput) {
-    pwdToggle.addEventListener('click', function() {
-      var isPwd = pwdInput.type === 'password';
-      pwdInput.type = isPwd ? 'text' : 'password';
-      pwdToggle.textContent = isPwd ? 'OCULTAR' : 'VER';
+  // Password show/hide toggle (both fields)
+  function wirePwdToggle(inputId, btnId) {
+    var input = document.getElementById(inputId);
+    var btn = document.getElementById(btnId);
+    if (!input || !btn) return;
+    btn.addEventListener('click', function() {
+      var isPwd = input.type === 'password';
+      input.type = isPwd ? 'text' : 'password';
+      btn.textContent = isPwd ? 'OCULTAR' : 'VER';
     });
+  }
+  wirePwdToggle('ownerPwd', 'pwdToggle');
+  wirePwdToggle('ownerPwdConfirm', 'pwdToggleConfirm');
+
+  // Live password-match indicator
+  var pwdInput = document.getElementById('ownerPwd');
+  var pwdConfirm = document.getElementById('ownerPwdConfirm');
+  var pwdMatchLabel = document.getElementById('pwdMatchLabel');
+  function checkMatch() {
+    if (!pwdInput || !pwdConfirm || !pwdMatchLabel) return;
+    if (!pwdConfirm.value) { pwdMatchLabel.textContent = ' '; pwdMatchLabel.style.color = 'rgba(255,255,255,0.5)'; return; }
+    if (pwdInput.value === pwdConfirm.value) { pwdMatchLabel.textContent = '✓ Las contrasenas coinciden'; pwdMatchLabel.style.color = '#16a34a'; }
+    else { pwdMatchLabel.textContent = '✗ Las contrasenas no coinciden'; pwdMatchLabel.style.color = '#dc2626'; }
+  }
+  if (pwdInput && pwdConfirm) {
+    pwdInput.addEventListener('input', checkMatch);
+    pwdConfirm.addEventListener('input', checkMatch);
   }
 
   // Password strength meter
