@@ -605,7 +605,17 @@
             <div class="form-group"><label>Tu nombre *</label><input type="text" name="owner_first_name" required placeholder="Carlos"></div>
             <div class="form-group"><label>Tu apellido *</label><input type="text" name="owner_last_name" required placeholder="Rodriguez"></div>
           </div>
-          <div class="form-group"><label>Contrasena (minimo 8 caracteres) *</label><input type="password" name="owner_password" required minlength="8" placeholder="Crea una contrasena segura"></div>
+          <div class="form-group">
+            <label>Contrasena (minimo 8 caracteres) *</label>
+            <div style="position:relative">
+              <input type="password" name="owner_password" id="ownerPwd" required minlength="8" placeholder="Crea una contrasena segura" style="padding-right:60px;width:100%">
+              <button type="button" id="pwdToggle" tabindex="-1" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:rgba(255,255,255,0.6);font-size:12px;font-weight:600;cursor:pointer;padding:6px 10px">VER</button>
+            </div>
+            <div style="margin-top:6px;height:6px;border-radius:3px;background:rgba(255,255,255,0.08);overflow:hidden">
+              <div id="pwdBar" style="height:100%;width:0%;transition:width 0.2s,background 0.2s;background:#dc2626"></div>
+            </div>
+            <div id="pwdLabel" style="font-size:11px;margin-top:4px;color:rgba(255,255,255,0.5);font-family:'Inter',sans-serif">&nbsp;</div>
+          </div>
           <button type="submit" class="btn-submit" style="font-size:16px;padding:16px;">Crear mi Camara &mdash; Gratis</button>
           <div class="form-msg" id="formMsg"></div>
           <div style="font-size:11px;color:rgba(255,255,255,0.55);text-align:center;margin-top:10px;">
@@ -687,6 +697,47 @@
   fetch(BASE+'/api/metrics/hci').then(function(r){return r.json();}).then(function(d){
     var v=d.hci||d.bci||d.score||d.value; document.getElementById('hciValue').textContent=v!==undefined?parseFloat(v).toFixed(2):'0.82';
   }).catch(function(){document.getElementById('hciValue').textContent='0.82';});
+
+  // Password show/hide toggle
+  var pwdInput = document.getElementById('ownerPwd');
+  var pwdToggle = document.getElementById('pwdToggle');
+  if (pwdToggle && pwdInput) {
+    pwdToggle.addEventListener('click', function() {
+      var isPwd = pwdInput.type === 'password';
+      pwdInput.type = isPwd ? 'text' : 'password';
+      pwdToggle.textContent = isPwd ? 'OCULTAR' : 'VER';
+    });
+  }
+
+  // Password strength meter
+  function scorePwd(p) {
+    if (!p) return { pct: 0, label: '', color: '#dc2626' };
+    var score = 0;
+    if (p.length >= 8) score++;
+    if (p.length >= 12) score++;
+    if (/[a-z]/.test(p) && /[A-Z]/.test(p)) score++;
+    if (/\d/.test(p)) score++;
+    if (/[^a-zA-Z0-9]/.test(p)) score++;
+    var pct = Math.min(100, score * 20);
+    var label, color;
+    if (score <= 1) { label = 'Muy debil'; color = '#dc2626'; }
+    else if (score === 2) { label = 'Debil'; color = '#ea580c'; }
+    else if (score === 3) { label = 'Aceptable'; color = '#ca8a04'; }
+    else if (score === 4) { label = 'Fuerte'; color = '#16a34a'; }
+    else { label = 'Muy fuerte'; color = '#15803d'; }
+    return { pct: pct, label: label, color: color };
+  }
+  var pwdBar = document.getElementById('pwdBar');
+  var pwdLabel = document.getElementById('pwdLabel');
+  if (pwdInput && pwdBar && pwdLabel) {
+    pwdInput.addEventListener('input', function() {
+      var s = scorePwd(this.value);
+      pwdBar.style.width = s.pct + '%';
+      pwdBar.style.background = s.color;
+      pwdLabel.textContent = s.label || ' ';
+      pwdLabel.style.color = s.color;
+    });
+  }
 
   // Free chamber registration -- no payment required
   window.handleSignup = function(e) {

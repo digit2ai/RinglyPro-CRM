@@ -104,7 +104,7 @@ router.post('/signup', async (req, res) => {
                              setup_fee_paid_at, subscription_status, monthly_amount_cents, setup_fee_cents,
                              created_at, updated_at)
        VALUES (:slug, :name, :domain, :lang, :country, :desc, :logo, :email, 'active',
-               NULL, NULL, NULL, 'free_chamber_registration', 0, 0, NOW(), NOW())
+               NULL, NULL, NULL, 'free', 0, 0, NOW(), NOW())
        RETURNING *`,
       {
         replacements: {
