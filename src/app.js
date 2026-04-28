@@ -712,6 +712,22 @@ try {
         return require('express').static(path.join(__dirname, '..', 'public', 'chamber', 'hispamind', 'dashboard'))(req, res, next);
     });
 
+    // Per-chamber member signup page (linked from the landing page).
+    // Posts to /:chamber_slug/api/auth/signup-member which already exists in
+    // the unified router.
+    app.get('/:chamber_slug/signup-member', async (req, res, next) => {
+        const slug = req.params.chamber_slug;
+        if (!isChamberSlug(slug)) return next();
+        try {
+            const chamber = await lookupChamber(slug);
+            if (!chamber) return res.status(404).send('Chamber not found');
+            const file = chamber.primary_language === 'en' ? 'en.html' : 'index.html';
+            return res.sendFile(path.join(__dirname, '..', 'public', 'signup-member', file));
+        } catch (e) {
+            return next(e);
+        }
+    });
+
     // Per-chamber login page (separate static file)
     app.get('/:chamber_slug/login', async (req, res, next) => {
         const slug = req.params.chamber_slug;

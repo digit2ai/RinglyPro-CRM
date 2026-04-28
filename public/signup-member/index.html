@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Registro de Miembro - CamaraVirtual</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; font-family:'Inter',sans-serif; background:linear-gradient(160deg,#0a1628 0%,#002670 55%,#003DA5 100%); display:flex; align-items:center; justify-content:center; padding:24px; color:#fff; }
+  .card { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:16px; padding:36px 32px; max-width:520px; width:100%; backdrop-filter:blur(12px); }
+  .logo { display:block; margin:0 auto 14px; height:96px; width:96px; border-radius:16px; background:white; padding:6px; object-fit:cover; box-shadow:0 4px 14px rgba(0,0,0,0.35); }
+  h1 { font-size:24px; font-weight:800; margin:0 0 6px; text-align:center; }
+  p.tagline { color:rgba(255,255,255,0.7); font-size:14px; text-align:center; margin:0 0 22px; }
+  label { display:block; font-size:11px; font-weight:600; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+  input, select, textarea { width:100%; padding:11px 13px; border-radius:8px; border:1px solid rgba(255,255,255,0.18); background:rgba(255,255,255,0.06); color:#fff; font-size:15px; outline:none; margin-bottom:14px; font-family:inherit; }
+  input:focus, select:focus, textarea:focus { border-color:#FCD116; }
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  button { width:100%; padding:14px; background:#CE1126; color:#fff; border:none; border-radius:8px; font-size:15px; font-weight:700; cursor:pointer; margin-top:6px; }
+  button:hover { background:#a50d1e; }
+  button:disabled { opacity:0.55; cursor:not-allowed; }
+  .msg { margin-top:14px; padding:11px; border-radius:7px; font-size:13px; text-align:center; }
+  .msg.error { background:rgba(192,57,43,0.18); color:#ff8b8b; border:1px solid rgba(192,57,43,0.4); }
+  .msg.ok { background:rgba(39,174,96,0.18); color:#7ee2a0; border:1px solid rgba(39,174,96,0.4); }
+  .links { margin-top:18px; text-align:center; font-size:13px; color:rgba(255,255,255,0.7); }
+  .links a { color:#FCD116; text-decoration:none; margin:0 6px; }
+  .links a:hover { text-decoration:underline; }
+</style>
+</head>
+<body>
+<div class="card">
+  <img class="logo" id="brandLogo"
+       src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69eacc56821e8babd85501cc.png"
+       alt="CamaraVirtual">
+  <h1 id="chamberName">Registro de Miembro</h1>
+  <p class="tagline" id="chamberTagline">Crea tu cuenta para acceder al directorio y matching IA.</p>
+
+  <form id="signupForm">
+    <div class="row">
+      <div>
+        <label for="first_name">Nombre</label>
+        <input type="text" id="first_name" required autocomplete="given-name">
+      </div>
+      <div>
+        <label for="last_name">Apellido</label>
+        <input type="text" id="last_name" required autocomplete="family-name">
+      </div>
+    </div>
+    <label for="email">Correo electronico</label>
+    <input type="email" id="email" required autocomplete="email">
+    <label for="password">Contrasena (min 8 caracteres)</label>
+    <input type="password" id="password" required minlength="8" autocomplete="new-password">
+    <div class="row">
+      <div>
+        <label for="country">Pais</label>
+        <input type="text" id="country" placeholder="Mexico">
+      </div>
+      <div>
+        <label for="sector">Sector</label>
+        <input type="text" id="sector" placeholder="Tecnologia">
+      </div>
+    </div>
+    <label for="company_name">Empresa (opcional)</label>
+    <input type="text" id="company_name">
+    <button type="submit" id="submitBtn">Crear cuenta</button>
+    <div id="msgBox"></div>
+  </form>
+
+  <div class="links">
+    <a id="loginLink" href="#">Iniciar sesion</a> |
+    <a id="backLink" href="#">Volver a la camara</a>
+  </div>
+</div>
+
+<script>
+(function() {
+  var path = window.location.pathname.replace(/\/$/, '');
+  var slug = path.split('/').filter(Boolean)[0];
+  if (!slug) {
+    document.getElementById('chamberName').textContent = 'Camara no encontrada';
+    return;
+  }
+  var API = '/' + slug + '/api';
+  document.getElementById('loginLink').href = '/' + slug + '/login';
+  document.getElementById('backLink').href = '/' + slug;
+
+  // Hydrate chamber name + logo
+  fetch(API + '/public/info')
+    .then(r => r.json())
+    .then(j => {
+      if (!j.success || !j.data) return;
+      document.title = 'Registro - ' + j.data.name;
+      document.getElementById('chamberName').textContent = 'Unete a ' + j.data.name;
+      if (j.data.logo_url) document.getElementById('brandLogo').src = j.data.logo_url;
+    })
+    .catch(() => {});
+
+  function showMsg(text, kind) {
+    var box = document.getElementById('msgBox');
+    box.innerHTML = '<div class="msg ' + (kind || 'error') + '">' + text + '</div>';
+  }
+
+  document.getElementById('signupForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var btn = document.getElementById('submitBtn');
+    btn.disabled = true; btn.textContent = 'Creando cuenta...';
+    var body = {
+      email: document.getElementById('email').value.trim().toLowerCase(),
+      password: document.getElementById('password').value,
+      first_name: document.getElementById('first_name').value.trim(),
+      last_name: document.getElementById('last_name').value.trim(),
+      country: document.getElementById('country').value.trim() || null,
+      sector: document.getElementById('sector').value.trim() || null,
+      company_name: document.getElementById('company_name').value.trim() || null
+    };
+    try {
+      var res = await fetch(API + '/auth/signup-member', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      var data = await res.json();
+      if (data.success && data.data && data.data.token) {
+        try { localStorage.setItem('cv_' + slug + '_token', data.data.token); } catch(_) {}
+        showMsg('Cuenta creada. Redirigiendo al panel...', 'ok');
+        setTimeout(function() { window.location.href = '/' + slug + '/dashboard/'; }, 800);
+      } else {
+        showMsg(data.error || 'Error al crear la cuenta');
+        btn.disabled = false; btn.textContent = 'Crear cuenta';
+      }
+    } catch(err) {
+      showMsg('Error de conexion. Intenta de nuevo.');
+      btn.disabled = false; btn.textContent = 'Crear cuenta';
+    }
+  });
+})();
+</script>
+</body>
+</html>
