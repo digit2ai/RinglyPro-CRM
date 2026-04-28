@@ -309,4 +309,269 @@ router.get('/regions', authMiddleware, async (req, res) => {
   }
 });
 
+// =====================================================================
+// EXCHANGE -- Companies / RFQs / Opportunities (read-mostly, chamber-scoped)
+// =====================================================================
+router.get('/exchange/companies', authMiddleware, async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit) || 50, 200);
+    const companies = await sequelize.query(
+      `SELECT c.*, m.first_name || ' ' || m.last_name AS owner_name
+       FROM companies c LEFT JOIN members m ON m.id = c.owner_member_id
+       WHERE c.chamber_id = :c ORDER BY c.created_at DESC LIMIT :limit`,
+      { replacements: { c: req.chamber_id, limit }, type: QueryTypes.SELECT }
+    );
+    return res.json({ success: true, data: { companies, pagination: { total: companies.length } } });
+  } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
+});
+
+router.get('/exchange/rfqs', authMiddleware, async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit) || 50, 200);
+    const rfqs = await sequelize.query(
+      `SELECT r.*, m.first_name || ' ' || m.last_name AS requester_name, co.name AS company_name
+       FROM rfqs r LEFT JOIN members m ON m.id = r.requester_member_id
+       LEFT JOIN companies co ON co.id = r.company_id
+       WHERE r.chamber_id = :c ORDER BY r.created_at DESC LIMIT :limit`,
+      { replacements: { c: req.chamber_id, limit }, type: QueryTypes.SELECT }
+    );
+    return res.json({ success: true, data: { rfqs, pagination: { total: rfqs.length } } });
+  } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
+});
+
+router.get('/exchange/opportunities', authMiddleware, async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit) || 50, 200);
+    const opportunities = await sequelize.query(
+      `SELECT o.*, m.first_name || ' ' || m.last_name AS posted_by_name
+       FROM opportunities o LEFT JOIN members m ON m.id = o.posted_by_member_id
+       WHERE o.chamber_id = :c ORDER BY o.created_at DESC LIMIT :limit`,
+      { replacements: { c: req.chamber_id, limit }, type: QueryTypes.SELECT }
+    );
+    return res.json({ success: true, data: { opportunities, pagination: { total: opportunities.length } } });
+  } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
+});
+
+// =====================================================================
+// PROJECT INVITATIONS (inbox)
+// =====================================================================
+router.get('/projects/invitations/inbox', authMiddleware, async (req, res) => {
+  try {
+    const inv = await sequelize.query(
+      `SELECT i.*, p.title AS project_title, ib.first_name || ' ' || ib.last_name AS invited_by_name
+       FROM project_invitations i
+       LEFT JOIN projects p ON p.id = i.project_id
+       LEFT JOIN members ib ON ib.id = i.invited_by_member_id
+       WHERE i.chamber_id = :c AND i.member_id = :me
+       ORDER BY i.invited_at DESC`,
+      { replacements: { c: req.chamber_id, me: req.member.id }, type: QueryTypes.SELECT }
+    );
+    return res.json({ success: true, data: inv });
+  } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
+});
+
+// =====================================================================
+// METRICS
+// =====================================================================
+router.get('/metrics/dashboard', authMiddleware, async (req, res) => {
+  try {
+    const [s] = await sequelize.query(
+      `SELECT
+         (SELECT COUNT(*) FROM members WHERE chamber_id = :c AND status = 'active') AS active_members,
+         (SELECT COUNT(*) FROM projects WHERE chamber_id = :c) AS total_projects,
+         (SELECT COUNT(*) FROM rfqs WHERE chamber_id = :c AND status = 'open') AS open_rfqs,
+         (SELECT COUNT(*) FROM opportunities WHERE chamber_id = :c AND status = 'active') AS active_opportunities,
+         (SELECT COALESCE(AVG(trust_score), 0.7) FROM members WHERE chamber_id = :c AND status = 'active') AS avg_trust,
+         (SELECT COUNT(*) FROM regions WHERE chamber_id = :c) AS region_count`,
+      { replacements: { c: req.chamber_id }, type: QueryTypes.SELECT }
+    );
+    return res.json({ success: true, data: { ...s, network: { ...s } } });
+  } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
+});
+
+router.get('/metrics/hci', authMiddleware, async (req, res) => {
+  try {
+    const [r] = await sequelize.query(
+      `SELECT COALESCE(AVG(trust_score), 0.7) AS hci, COUNT(*) AS members
+       FROM members WHERE chamber_id = :c AND status = 'active'`,
+      { replacements: { c: req.chamber_id }, type: QueryTypes.SELECT }
+    );
+    const hci = parseFloat(r.hci) || 0.7;
+    return res.json({ success: true, data: { hci, score: hci, value: hci, members: parseInt(r.members) } });
+  } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
+});
+
+router.get('/metrics/gini', authMiddleware, async (req, res) => {
+  try {
+    // Simple Gini approximation using member-per-region distribution
+    const rows = await sequelize.query(
+      `SELECT region_id, COUNT(*) AS n FROM members WHERE chamber_id = :c AND status='active' GROUP BY region_id`,
+      { replacements: { c: req.chamber_id }, type: QueryTypes.SELECT }
+    );
+    const counts = rows.map(r => parseInt(r.n)).sort((a, b) => a - b);
+    let gini = 0;
+    if (counts.length > 1) {
+      const n = counts.length;
+      const total = counts.reduce((s, x) => s + x, 0);
+      let acc = 0;
+      counts.forEach((x, i) => { acc += (i + 1) * x; });
+      gini = total > 0 ? (2 * acc) / (n * total) - (n + 1) / n : 0;
+    }
+    return res.json({ success: true, data: { gini: Math.max(0, gini), dimension: req.query.dimension || 'regional', metric: req.query.metric || 'members' } });
+  } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
+});
+
+router.get('/metrics/network-value', authMiddleware, async (req, res) => {
+  try {
+    const [s] = await sequelize.query(
+      `SELECT COUNT(*) AS members, (SELECT COUNT(*) FROM projects WHERE chamber_id = :c) AS projects
+       FROM members WHERE chamber_id = :c AND status='active'`,
+      { replacements: { c: req.chamber_id }, type: QueryTypes.SELECT }
+    );
+    const m = parseInt(s.members) || 0;
+    // Metcalfe's Law approximation: value ∝ n²
+    return res.json({ success: true, data: { members: m, projects: parseInt(s.projects) || 0, network_value: m * m, formula: 'metcalfe_n_squared' } });
+  } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
+});
+
+router.get('/metrics/trust/:id', authMiddleware, async (req, res) => {
+  try {
+    const [m] = await sequelize.query(
+      `SELECT id, first_name, last_name, trust_score, verified, verification_level, membership_type, created_at
+       FROM members WHERE chamber_id = :c AND id = :id`,
+      { replacements: { c: req.chamber_id, id: parseInt(req.params.id) }, type: QueryTypes.SELECT }
+    );
+    if (!m) return res.status(404).json({ success: false, error: 'Member not found' });
+    return res.json({
+      success: true,
+      data: {
+        member_id: m.id,
+        name: `${m.first_name} ${m.last_name}`,
+        trust_score: parseFloat(m.trust_score),
+        components: {}
+      }
+    });
+  } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
+});
+
+// =====================================================================
+// PAYMENTS (stubs returning empty arrays so dashboard doesn't error)
+// =====================================================================
+router.get('/payments/plans', authMiddleware, async (req, res) => {
+  return res.json({
+    success: true,
+    data: [
+      { id: 'individual', name: 'Individual', price: 0, period: 'month', features: ['Basic directory access', 'AI matching'] },
+      { id: 'empresarial', name: 'Empresarial', price: 49, period: 'month', features: ['All Individual', 'Project participation', 'Exchange listings'] },
+      { id: 'corporativo', name: 'Corporativo', price: 199, period: 'month', features: ['All Empresarial', 'Priority matching', 'Trust acceleration'] }
+    ]
+  });
+});
+
+router.get('/payments/history', authMiddleware, async (req, res) => {
+  try {
+    const tx = await sequelize.query(
+      `SELECT * FROM transactions WHERE chamber_id = :c AND member_id = :me ORDER BY created_at DESC LIMIT 20`,
+      { replacements: { c: req.chamber_id, me: req.member.id }, type: QueryTypes.SELECT }
+    );
+    return res.json({ success: true, data: tx });
+  } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
+});
+
+// =====================================================================
+// ADMIN (member management) -- minimal compatibility surface
+// =====================================================================
+function requireAdmin(req, res, next) {
+  if (!req.member || !['superadmin', 'admin_global', 'admin_regional'].includes(req.member.access_level)) {
+    return res.status(403).json({ success: false, error: 'Admin access required' });
+  }
+  next();
+}
+
+router.get('/admin/members', authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit) || 100, 500);
+    const members = await sequelize.query(
+      `SELECT m.*, r.name AS region_name FROM members m
+       LEFT JOIN regions r ON r.id = m.region_id
+       WHERE m.chamber_id = :c ORDER BY m.created_at DESC LIMIT :limit`,
+      { replacements: { c: req.chamber_id, limit }, type: QueryTypes.SELECT }
+    );
+    return res.json({ success: true, data: { members, pagination: { total: members.length } } });
+  } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
+});
+
+router.get('/admin/roles', authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const board = await sequelize.query(
+      `SELECT m.id, m.first_name, m.last_name, m.email, m.governance_role, m.access_level,
+              m.region_id, m.membership_type, r.name AS region_name
+       FROM members m LEFT JOIN regions r ON r.id = m.region_id
+       WHERE m.chamber_id = :c AND m.governance_role != 'member'
+       ORDER BY m.governance_role, m.last_name`,
+      { replacements: { c: req.chamber_id }, type: QueryTypes.SELECT }
+    );
+    const available_roles = ['superadmin', 'president', 'vp', 'secretary_general', 'treasurer', 'board_member', 'chapter_president', 'chapter_secretary', 'chapter_treasurer', 'chapter_board', 'member'];
+    return res.json({ success: true, data: { governance_board: board, available_roles, access_levels: ['superadmin', 'admin_global', 'admin_regional', 'member'] } });
+  } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
+});
+
+router.get('/admin/regions', authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const regions = await sequelize.query(
+      `SELECT r.*, (SELECT COUNT(*) FROM members m WHERE m.region_id = r.id AND m.status = 'active' AND m.chamber_id = :c) AS member_count
+       FROM regions r WHERE r.chamber_id = :c ORDER BY r.id`,
+      { replacements: { c: req.chamber_id }, type: QueryTypes.SELECT }
+    );
+    return res.json({ success: true, data: regions });
+  } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
+});
+
+router.get('/admin/system/stats', authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const [stats] = await sequelize.query(
+      `SELECT
+         (SELECT COUNT(*) FROM members WHERE chamber_id = :c) AS total_members,
+         (SELECT COUNT(*) FROM members WHERE chamber_id = :c AND status='active') AS active_members,
+         (SELECT COUNT(*) FROM members WHERE chamber_id = :c AND governance_role != 'member') AS governance_roles_assigned,
+         (SELECT COUNT(*) FROM projects WHERE chamber_id = :c) AS total_projects,
+         (SELECT COUNT(*) FROM companies WHERE chamber_id = :c) AS total_companies,
+         (SELECT COUNT(*) FROM rfqs WHERE chamber_id = :c AND status='open') AS open_rfqs,
+         (SELECT COUNT(*) FROM transactions WHERE chamber_id = :c) AS total_transactions,
+         (SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE chamber_id = :c AND status='completed') AS total_revenue,
+         (SELECT COUNT(*) FROM matches WHERE chamber_id = :c) AS total_matches,
+         (SELECT COUNT(*) FROM trust_references WHERE chamber_id = :c) AS total_references,
+         (SELECT COUNT(*) FROM opportunities WHERE chamber_id = :c AND status='active') AS active_opportunities,
+         (SELECT COUNT(*) FROM events WHERE chamber_id = :c) AS total_events`,
+      { replacements: { c: req.chamber_id }, type: QueryTypes.SELECT }
+    );
+    return res.json({ success: true, data: { overview: stats, members_by_access: [], database_tables: [] } });
+  } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
+});
+
+// =====================================================================
+// AI MATCHING (simple wrapper -- delegates scoring to chamber-template logic later)
+// =====================================================================
+router.post('/match', authMiddleware, async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.body.limit) || 10, 50);
+    // Lightweight: return top members by trust_score in same chamber
+    const members = await sequelize.query(
+      `SELECT id AS member_id, first_name, last_name, email, company_name, sector, country,
+              trust_score, membership_type, region_id
+       FROM members WHERE chamber_id = :c AND status='active' AND id != :me
+       ORDER BY trust_score DESC LIMIT :limit`,
+      { replacements: { c: req.chamber_id, me: req.member.id, limit }, type: QueryTypes.SELECT }
+    );
+    const results = members.map(m => ({
+      ...m,
+      trust_score: parseFloat(m.trust_score),
+      similarity_score: 0.5,
+      gini_correction: 1.0,
+      final_score: parseFloat(m.trust_score)
+    }));
+    return res.json({ success: true, data: { results, total_candidates: results.length } });
+  } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
+});
+
 module.exports = router;
