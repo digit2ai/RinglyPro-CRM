@@ -78,7 +78,7 @@
 <body>
 <div class="topbar">
   <div class="brand">
-    <img id="brandLogo" src="/img/camaravirtual-logo.png" alt="" onerror="this.style.display='none'">
+    <img id="brandLogo" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69eacc56821e8babd85501cc.png" alt="CamaraVirtual" style="height:44px;width:44px;border-radius:8px;object-fit:cover;box-shadow:0 2px 6px rgba(0,0,0,0.3)" onerror="this.style.display='none'">
     <span id="brandName">Camara<span>Virtual</span></span>
   </div>
   <nav>
@@ -88,6 +88,7 @@
 </div>
 
 <section class="hero">
+  <img id="heroLogo" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69eacc56821e8babd85501cc.png" alt="CamaraVirtual" style="width:120px;height:120px;border-radius:18px;object-fit:cover;margin-bottom:24px;box-shadow:0 8px 28px rgba(0,0,0,0.3)" onerror="this.style.display='none'">
   <h1 id="chamberName">Cargando camara...</h1>
   <p id="chamberDescription">Plataforma digital para conectar empresarios y proyectos.</p>
   <div class="actions">
@@ -160,7 +161,12 @@
         document.getElementById('chamberDescription').textContent =
           'Camara digital de ' + d.country + ' para conectar miembros y oportunidades de negocio.';
       }
-      if (d.logo_url) document.getElementById('brandLogo').src = d.logo_url;
+      // Use chamber's custom logo when set, otherwise keep parent CamaraVirtual logo
+      if (d.logo_url) {
+        document.getElementById('brandLogo').src = d.logo_url;
+        var hl = document.getElementById('heroLogo');
+        if (hl) hl.src = d.logo_url;
+      }
 
       document.getElementById('stMembers').textContent = d.member_count || 0;
       document.getElementById('stProjects').textContent = d.recent_projects?.length || 0;
