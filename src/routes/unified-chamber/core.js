@@ -67,6 +67,13 @@ router.post('/auth/login', async (req, res) => {
     if (member.status === 'deleted' || member.status === 'suspended') {
       return res.status(403).json({ success: false, error: 'Account ' + member.status });
     }
+    if (member.status === 'pending_payment') {
+      return res.status(402).json({
+        success: false,
+        error: 'Membership payment incomplete. Please finish checkout to activate your account.',
+        code: 'PAYMENT_REQUIRED'
+      });
+    }
     const ok = await bcrypt.compare(password, member.password_hash);
     if (!ok) return res.status(401).json({ success: false, error: 'Invalid credentials' });
 
@@ -98,43 +105,241 @@ router.post('/auth/login', async (req, res) => {
   }
 });
 
+// Member signup. Creates the row with status='pending_payment' and returns a
+// Stripe Checkout session URL. The member cannot log in or use /auth/me until
+// the Stripe webhook (or the success_url verification call) flips their
+// status to 'active' after the $25 setup + $10/mo recurring subscription
+// payment succeeds.
 router.post('/auth/signup-member', async (req, res) => {
   try {
     const { email, password, first_name, last_name, country, sector, company_name } = req.body;
     if (!email || !password || !first_name || !last_name) {
       return res.status(400).json({ success: false, error: 'email, password, first_name, last_name required' });
     }
+    if (password.length < 8) {
+      return res.status(400).json({ success: false, error: 'Password must be at least 8 characters' });
+    }
+    const lowerEmail = email.toLowerCase().trim();
+
+    // Idempotent: if the email exists with status='pending_payment', reuse the
+    // row and let them try checkout again. If it exists active, refuse.
     const [existing] = await sequelize.query(
-      `SELECT id FROM members WHERE chamber_id = :c AND email = :email`,
-      { replacements: { c: req.chamber_id, email: email.toLowerCase() }, type: QueryTypes.SELECT }
+      `SELECT id, status FROM members WHERE chamber_id = :c AND email = :email`,
+      { replacements: { c: req.chamber_id, email: lowerEmail }, type: QueryTypes.SELECT }
     );
-    if (existing) return res.status(409).json({ success: false, error: 'Email already registered in this chamber' });
-    const hash = await bcrypt.hash(password, 10);
-    const [row] = await sequelize.query(
-      `INSERT INTO members (chamber_id, email, password_hash, first_name, last_name, country, sector, company_name,
-                            membership_type, governance_role, access_level, verification_level, status, trust_score, created_at, updated_at)
-       VALUES (:c, :email, :hash, :fn, :ln, :country, :sector, :company,
-               'individual', 'member', 'member', 'email', 'active', 0.7, NOW(), NOW())
-       RETURNING id, email, first_name, last_name, membership_type, access_level`,
-      {
-        replacements: {
-          c: req.chamber_id, email: email.toLowerCase(), hash,
-          fn: first_name, ln: last_name,
-          country: country || null, sector: sector || null, company: company_name || null
+    if (existing && existing.status !== 'pending_payment') {
+      return res.status(409).json({ success: false, error: 'Email already registered in this chamber' });
+    }
+
+    let memberRow;
+    if (existing) {
+      // Update password + profile, keep status pending_payment
+      const hash = await bcrypt.hash(password, 10);
+      const [updated] = await sequelize.query(
+        `UPDATE members
+         SET password_hash = :hash, first_name = :fn, last_name = :ln,
+             country = :country, sector = :sector, company_name = :company,
+             updated_at = NOW()
+         WHERE chamber_id = :c AND id = :id
+         RETURNING id, email, first_name, last_name, membership_type, access_level, status`,
+        {
+          replacements: {
+            c: req.chamber_id, id: existing.id, hash,
+            fn: first_name, ln: last_name,
+            country: country || null, sector: sector || null, company: company_name || null
+          },
+          type: QueryTypes.SELECT
+        }
+      );
+      memberRow = updated;
+    } else {
+      const hash = await bcrypt.hash(password, 10);
+      const [row] = await sequelize.query(
+        `INSERT INTO members (chamber_id, email, password_hash, first_name, last_name, country, sector, company_name,
+                              membership_type, governance_role, access_level, verification_level, status, trust_score, created_at, updated_at)
+         VALUES (:c, :email, :hash, :fn, :ln, :country, :sector, :company,
+                 'individual', 'member', 'member', 'email', 'pending_payment', 0.7, NOW(), NOW())
+         RETURNING id, email, first_name, last_name, membership_type, access_level, status`,
+        {
+          replacements: {
+            c: req.chamber_id, email: lowerEmail, hash,
+            fn: first_name, ln: last_name,
+            country: country || null, sector: sector || null, company: company_name || null
+          },
+          type: QueryTypes.SELECT
+        }
+      );
+      memberRow = row;
+    }
+
+    // Create Stripe Checkout session
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeKey) {
+      return res.status(500).json({ success: false, error: 'Stripe is not configured. Contact support.' });
+    }
+    const stripe = require('stripe')(stripeKey);
+
+    // Determine the absolute base URL for redirect URLs. Honour the request's
+    // host so the same code works on aiagent.ringlypro.com and camaravirtual.app.
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const slug = req.chamber.slug;
+    const chamberName = req.chamber.name;
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      customer_email: lowerEmail,
+      metadata: {
+        chamber_id: String(req.chamber_id),
+        chamber_slug: slug,
+        member_id: String(memberRow.id),
+        member_email: lowerEmail,
+        flow: 'member_signup'
+      },
+      subscription_data: {
+        metadata: {
+          chamber_id: String(req.chamber_id),
+          chamber_slug: slug,
+          member_id: String(memberRow.id)
+        }
+      },
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: `${chamberName} -- One-Time Setup Fee`,
+              description: 'Account provisioning, onboarding, and platform activation'
+            },
+            unit_amount: 2500
+          },
+          quantity: 1
         },
-        type: QueryTypes.SELECT
-      }
-    );
-    const token = signToken({
-      member_id: row.id, chamber_id: req.chamber_id, chamber_slug: req.chamber.slug,
-      email: row.email, access_level: 'member', governance_role: 'member'
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: `${chamberName} -- Monthly Membership`,
+              description: 'Full ecosystem access: AI matching, directory, projects, exchange, analytics'
+            },
+            unit_amount: 1000,
+            recurring: { interval: 'month' }
+          },
+          quantity: 1
+        }
+      ],
+      mode: 'subscription',
+      success_url: `${baseUrl}/${slug}/dashboard/?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/${slug}/signup-member?payment=cancelled`
     });
+
+    // Stash the checkout session id on the row so the success-URL verifier can
+    // double-check it matches before flipping status.
+    await sequelize.query(
+      `UPDATE members SET stripe_customer_id = :cs, updated_at = NOW()
+       WHERE chamber_id = :c AND id = :id`,
+      { replacements: { c: req.chamber_id, id: memberRow.id, cs: session.id } }
+    );
+
     return res.status(201).json({
       success: true,
-      data: { token, member: row, chamber: { slug: req.chamber.slug, name: req.chamber.name } }
+      data: {
+        member_id: memberRow.id,
+        email: memberRow.email,
+        status: 'pending_payment',
+        checkout_url: session.url,
+        checkout_session_id: session.id,
+        chamber: { slug: req.chamber.slug, name: req.chamber.name }
+      }
     });
   } catch (err) {
-    console.error('[/auth/signup-member]', err.message);
+    console.error('[/auth/signup-member]', err.message, err.stack);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Verify Stripe Checkout completion using the session_id from the success URL.
+// Flips member status to 'active', records the customer + subscription IDs,
+// and returns a real auth token.
+router.post('/auth/complete-signup-payment', async (req, res) => {
+  try {
+    const { session_id } = req.body;
+    if (!session_id) return res.status(400).json({ success: false, error: 'session_id required' });
+
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeKey) return res.status(500).json({ success: false, error: 'Stripe is not configured' });
+    const stripe = require('stripe')(stripeKey);
+
+    const session = await stripe.checkout.sessions.retrieve(session_id, { expand: ['subscription'] });
+    if (!session) return res.status(404).json({ success: false, error: 'Checkout session not found' });
+    if (session.payment_status !== 'paid') {
+      return res.status(402).json({ success: false, error: `Payment not completed (status: ${session.payment_status})` });
+    }
+
+    const meta = session.metadata || {};
+    if (String(meta.chamber_id) !== String(req.chamber_id)) {
+      return res.status(403).json({ success: false, error: 'Session does not belong to this chamber' });
+    }
+    const memberId = parseInt(meta.member_id);
+    if (!memberId) return res.status(400).json({ success: false, error: 'Session missing member_id metadata' });
+
+    const [member] = await sequelize.query(
+      `SELECT id, email, first_name, last_name, membership_type, governance_role, access_level, status
+       FROM members WHERE chamber_id = :c AND id = :id`,
+      { replacements: { c: req.chamber_id, id: memberId }, type: QueryTypes.SELECT }
+    );
+    if (!member) return res.status(404).json({ success: false, error: 'Member not found' });
+
+    const subscriptionId = session.subscription && (session.subscription.id || session.subscription);
+    const customerId = session.customer;
+
+    await sequelize.query(
+      `UPDATE members
+       SET status = 'active',
+           stripe_customer_id = :cust,
+           stripe_subscription_id = :sub,
+           updated_at = NOW()
+       WHERE chamber_id = :c AND id = :id`,
+      {
+        replacements: {
+          c: req.chamber_id, id: memberId,
+          cust: customerId || null, sub: subscriptionId || null
+        }
+      }
+    );
+    await sequelize.query(
+      `INSERT INTO transactions
+       (chamber_id, type, from_member_id, amount, currency, status, description, created_at)
+       VALUES (:c, 'membership_signup', :m, :amt, 'USD', 'completed', :desc, NOW())`,
+      {
+        replacements: {
+          c: req.chamber_id, m: memberId,
+          amt: (session.amount_total || 3500) / 100,
+          desc: `Initial setup ($25) + first month ($10) -- session ${session.id}`
+        }
+      }
+    );
+
+    const token = signToken({
+      member_id: member.id, chamber_id: req.chamber_id, chamber_slug: req.chamber.slug,
+      email: member.email,
+      access_level: member.access_level || 'member',
+      governance_role: member.governance_role || 'member'
+    });
+
+    return res.json({
+      success: true,
+      data: {
+        token,
+        member: {
+          id: member.id, email: member.email,
+          first_name: member.first_name, last_name: member.last_name,
+          membership_type: member.membership_type, status: 'active'
+        },
+        chamber: { slug: req.chamber.slug, name: req.chamber.name }
+      }
+    });
+  } catch (err) {
+    console.error('[/auth/complete-signup-payment]', err.message);
     return res.status(500).json({ success: false, error: err.message });
   }
 });

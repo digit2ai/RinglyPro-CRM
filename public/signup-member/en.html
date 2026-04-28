@@ -34,6 +34,10 @@
        alt="VirtualChamber">
   <h1 id="chamberName">Member Signup</h1>
   <p class="tagline" id="chamberTagline">Create your account to access the directory and AI matching.</p>
+  <div style="background:rgba(252,209,22,0.1); border:1px solid rgba(252,209,22,0.35); border-radius:10px; padding:12px 14px; margin-bottom:18px; text-align:center; font-size:13px; color:#FCD116;">
+    <strong>$25 USD</strong> initial setup + <strong>$10 USD/month</strong> membership.<br>
+    Secure checkout powered by Stripe.
+  </div>
 
   <form id="signupForm">
     <div class="row">
@@ -62,7 +66,7 @@
     </div>
     <label for="company_name">Company (optional)</label>
     <input type="text" id="company_name">
-    <button type="submit" id="submitBtn">Create account</button>
+    <button type="submit" id="submitBtn">Continue to secure checkout</button>
     <div id="msgBox"></div>
   </form>
 
@@ -99,10 +103,14 @@
     box.innerHTML = '<div class="msg ' + (kind || 'error') + '">' + text + '</div>';
   }
 
+  if (new URLSearchParams(location.search).get('payment') === 'cancelled') {
+    showMsg('Payment cancelled. Complete the form to retry.', 'error');
+  }
+
   document.getElementById('signupForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     var btn = document.getElementById('submitBtn');
-    btn.disabled = true; btn.textContent = 'Creating account...';
+    btn.disabled = true; btn.textContent = 'Processing...';
     var body = {
       email: document.getElementById('email').value.trim().toLowerCase(),
       password: document.getElementById('password').value,
@@ -119,17 +127,17 @@
         body: JSON.stringify(body)
       });
       var data = await res.json();
-      if (data.success && data.data && data.data.token) {
-        try { localStorage.setItem('cv_' + slug + '_token', data.data.token); } catch(_) {}
-        showMsg('Account created. Redirecting to dashboard...', 'ok');
-        setTimeout(function() { window.location.href = '/' + slug + '/dashboard/'; }, 800);
-      } else {
-        showMsg(data.error || 'Could not create the account');
-        btn.disabled = false; btn.textContent = 'Create account';
+      if (data.success && data.data && data.data.checkout_url) {
+        showMsg('Redirecting to Stripe for secure payment...', 'ok');
+        try { sessionStorage.setItem('pending_signup_slug', slug); } catch(_) {}
+        window.location.href = data.data.checkout_url;
+        return;
       }
+      showMsg(data.error || 'Could not start checkout');
+      btn.disabled = false; btn.textContent = 'Continue to secure checkout';
     } catch(err) {
       showMsg('Connection error. Please try again.');
-      btn.disabled = false; btn.textContent = 'Create account';
+      btn.disabled = false; btn.textContent = 'Continue to secure checkout';
     }
   });
 })();

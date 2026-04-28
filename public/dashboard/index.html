@@ -646,8 +646,42 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     return data;
   }
 
+  // -- Stripe Checkout return-url handler --
+  // After a successful member-signup checkout, Stripe redirects to
+  // /<slug>/dashboard/?payment=success&session_id=cs_... -- we exchange that
+  // session for an auth token and proceed into the dashboard.
+  async function handleStripeReturn() {
+    var qs = new URLSearchParams(location.search);
+    if (qs.get('payment') !== 'success') return false;
+    var sid = qs.get('session_id');
+    if (!sid) return false;
+    try {
+      var res = await fetch(API + '/auth/complete-signup-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sid })
+      });
+      var data = await res.json();
+      if (data.success && data.data && data.data.token) {
+        setToken(data.data.token);
+        // Strip the query string so a refresh doesn't re-verify
+        history.replaceState({}, '', location.pathname);
+        return true;
+      }
+      // Not paid yet -- show a friendly message + retry button
+      document.body.innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0a1628;color:#fff;font-family:Inter,sans-serif;padding:24px;text-align:center"><div><h2 style="margin-bottom:14px">Pago pendiente</h2><p style="opacity:0.7;margin-bottom:16px">' + (data.error || 'No se pudo confirmar el pago.') + '</p><a href="/" style="color:#FCD116">Volver al inicio</a></div></div>';
+      return true;
+    } catch (e) {
+      console.error('[stripe verify]', e);
+      return false;
+    }
+  }
+
   // -- Init --
   async function init() {
+    if (await handleStripeReturn()) {
+      // Token now stored; fall through to normal flow
+    }
     var token = getToken();
     if (!token) { showLoginScreen(); return; }
 

@@ -34,6 +34,10 @@
        alt="CamaraVirtual">
   <h1 id="chamberName">Registro de Miembro</h1>
   <p class="tagline" id="chamberTagline">Crea tu cuenta para acceder al directorio y matching IA.</p>
+  <div style="background:rgba(252,209,22,0.1); border:1px solid rgba(252,209,22,0.35); border-radius:10px; padding:12px 14px; margin-bottom:18px; text-align:center; font-size:13px; color:#FCD116;">
+    <strong>$25 USD</strong> registro inicial + <strong>$10 USD/mes</strong> de membresia.<br>
+    Pago seguro procesado por Stripe.
+  </div>
 
   <form id="signupForm">
     <div class="row">
@@ -62,7 +66,7 @@
     </div>
     <label for="company_name">Empresa (opcional)</label>
     <input type="text" id="company_name">
-    <button type="submit" id="submitBtn">Crear cuenta</button>
+    <button type="submit" id="submitBtn">Continuar al pago seguro</button>
     <div id="msgBox"></div>
   </form>
 
@@ -100,10 +104,15 @@
     box.innerHTML = '<div class="msg ' + (kind || 'error') + '">' + text + '</div>';
   }
 
+  // If Stripe redirected back here with ?payment=cancelled, show a soft note.
+  if (new URLSearchParams(location.search).get('payment') === 'cancelled') {
+    showMsg('Pago cancelado. Completa el formulario para reintentar.', 'error');
+  }
+
   document.getElementById('signupForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     var btn = document.getElementById('submitBtn');
-    btn.disabled = true; btn.textContent = 'Creando cuenta...';
+    btn.disabled = true; btn.textContent = 'Procesando...';
     var body = {
       email: document.getElementById('email').value.trim().toLowerCase(),
       password: document.getElementById('password').value,
@@ -120,17 +129,18 @@
         body: JSON.stringify(body)
       });
       var data = await res.json();
-      if (data.success && data.data && data.data.token) {
-        try { localStorage.setItem('cv_' + slug + '_token', data.data.token); } catch(_) {}
-        showMsg('Cuenta creada. Redirigiendo al panel...', 'ok');
-        setTimeout(function() { window.location.href = '/' + slug + '/dashboard/'; }, 800);
-      } else {
-        showMsg(data.error || 'Error al crear la cuenta');
-        btn.disabled = false; btn.textContent = 'Crear cuenta';
+      if (data.success && data.data && data.data.checkout_url) {
+        showMsg('Redirigiendo a Stripe para completar el pago...', 'ok');
+        // Stash the slug + member id so the dashboard knows what to verify
+        try { sessionStorage.setItem('pending_signup_slug', slug); } catch(_) {}
+        window.location.href = data.data.checkout_url;
+        return;
       }
+      showMsg(data.error || 'No se pudo iniciar el pago');
+      btn.disabled = false; btn.textContent = 'Continuar al pago seguro';
     } catch(err) {
       showMsg('Error de conexion. Intenta de nuevo.');
-      btn.disabled = false; btn.textContent = 'Crear cuenta';
+      btn.disabled = false; btn.textContent = 'Continuar al pago seguro';
     }
   });
 })();
