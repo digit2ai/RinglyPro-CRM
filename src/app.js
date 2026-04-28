@@ -39,28 +39,47 @@ console.log('✅ Subscription webhook mounted at /webhooks/stripe (before body p
 app.use(express.json({ limit: '500mb' }));
 app.use(express.urlencoded({ extended: true, limit: '500mb' }));
 
-// Custom domain: camaravirtual.app -> HispaMind (/chamber/hispamind)
+// Custom domain: camaravirtual.app
+// Multi-tenant SaaS: pass through per-chamber slugs (cv-N/, vc-N/), the
+// signup wizard (/signup/), shared API endpoints, and the chamber-landing
+// statics. Only the BARE root and legacy /chamber/hispamind paths still
+// rewrite to the original Spanish HispaMind landing.
 app.use((req, res, next) => {
   const host = (req.get('host') || '').toLowerCase();
   if (host === 'camaravirtual.app' || host === 'www.camaravirtual.app') {
     const p = req.path;
+    // Pass through unified per-chamber URLs
+    if (/^\/(cv|vc)-\d+(\/|$)/.test(p)) return next();
+    // Pass through signup wizard
+    if (p === '/signup' || p === '/signup/' || p.startsWith('/signup/')) {
+      // Serve Spanish wizard from camaravirtual.app/signup
+      if (p === '/signup' || p === '/signup/') { req.url = '/signup/index.html'; }
+      return next();
+    }
+    // Pass through API + static assets
+    if (p.startsWith('/api/')) return next();
+    if (p.startsWith('/audio/') || p.startsWith('/img/') || p.startsWith('/chamber-landing/')) return next();
+    if (p.startsWith('/dashboard/')) return next();
     // Already under /chamber/hispamind — pass through
     if (p.startsWith('/chamber/hispamind')) return next();
-    // Global static assets only — pass through
-    if (p.startsWith('/audio/')) return next();
-    // Rewrite all paths (including /api/) to /chamber/hispamind
+    // Default: rewrite root → /chamber/hispamind/ (Spanish marketing landing)
     req.url = '/chamber/hispamind' + (p === '/' ? '/' : p);
   }
   next();
 });
 
-// Custom domain: virtualchamber.app -> VirtualChamber English (/chamber/virtualchamber)
+// Custom domain: virtualchamber.app
 app.use((req, res, next) => {
   const host = (req.get('host') || '').toLowerCase();
   if (host === 'virtualchamber.app' || host === 'www.virtualchamber.app') {
     const p = req.path;
+    if (/^\/(cv|vc)-\d+(\/|$)/.test(p)) return next();
+    if (p === '/signup' || p === '/signup/') { req.url = '/signup/en.html'; return next(); }
+    if (p.startsWith('/signup/')) return next();
+    if (p.startsWith('/api/')) return next();
+    if (p.startsWith('/audio/') || p.startsWith('/img/') || p.startsWith('/chamber-landing/')) return next();
+    if (p.startsWith('/dashboard/')) return next();
     if (p.startsWith('/chamber/virtualchamber')) return next();
-    if (p.startsWith('/audio/')) return next();
     req.url = '/chamber/virtualchamber' + (p === '/' ? '/' : p);
   }
   next();
@@ -554,6 +573,30 @@ try {
 } catch (error) {
     console.log('Chamber template not available:', error.message);
 }
+
+// Legacy chamber URL redirects -- /chamber/<old_prefix>/* → /<new_slug>/*
+// Preserves bookmarks, email links, and external SEO from the prefix-based era.
+// Permanent 301s; new slugs are: hispamind→cv-1, pacccfl→cv-2, pcci→cv-3.
+const LEGACY_CHAMBER_MAP = {
+    'hispamind': 'cv-1',
+    'pacccfl':   'cv-2',
+    'pcci':      'cv-3',
+    'virtualchamber': 'cv-1' // virtualchamber alias was used as duplicate of hispamind admin endpoints
+};
+app.use('/chamber/:legacy_slug', (req, res, next) => {
+    const newSlug = LEGACY_CHAMBER_MAP[req.params.legacy_slug];
+    if (!newSlug) return next();
+    // Skip redirect for /chamber/<slug>/api/* if the legacy chamber-template router still wants it.
+    // We only redirect non-/api browser navigation. This keeps cv-1/api/* the canonical path while
+    // letting legacy /chamber/hispamind/api/* paths still reach the prefix-based router below
+    // until smoke test passes (PR-8 drops legacy tables and we can remove the legacy router).
+    if (req.path === '' || req.path === '/' || !req.path.startsWith('/api')) {
+        const dest = '/' + newSlug + req.path + (req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '');
+        return res.redirect(301, dest);
+    }
+    return next();
+});
+console.log('🔁 Legacy /chamber/<prefix>/ redirects active for hispamind→cv-1, pacccfl→cv-2, pcci→cv-3');
 
 // Multi-Tenant Chamber Signup + Stripe Billing
 try {
