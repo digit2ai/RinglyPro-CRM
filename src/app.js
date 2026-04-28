@@ -48,8 +48,10 @@ app.use((req, res, next) => {
   const host = (req.get('host') || '').toLowerCase();
   if (host === 'camaravirtual.app' || host === 'www.camaravirtual.app') {
     const p = req.path;
-    // Root: serve the Spanish marketing landing directly
+    // Root: serve the Spanish marketing landing directly. Mark the request
+    // as internally rewritten so the legacy /chamber/<prefix>/ redirect skips it.
     if (p === '/' || p === '') {
+      req._skipLegacyRedirect = true;
       req.url = '/chamber/hispamind/index.html';
       return next();
     }
@@ -69,6 +71,7 @@ app.use((req, res, next) => {
   if (host === 'virtualchamber.app' || host === 'www.virtualchamber.app') {
     const p = req.path;
     if (p === '/' || p === '') {
+      req._skipLegacyRedirect = true;
       req.url = '/chamber/virtualchamber/index.html';
       return next();
     }
@@ -158,6 +161,10 @@ app.use((req, res, next) => {
 // fires for /chamber/hispamind/* before static serves the bundled HTML
 const LEGACY_CHAMBER_MAP_EARLY = { hispamind: 'cv-1', pacccfl: 'cv-2', pcci: 'cv-3' };
 app.use('/chamber/:legacy_slug', (req, res, next) => {
+    // Skip if request was internally rewritten by the custom-domain
+    // middleware (root → marketing landing). Only redirect actual external
+    // /chamber/<prefix>/* requests.
+    if (req._skipLegacyRedirect) return next();
     const newSlug = LEGACY_CHAMBER_MAP_EARLY[req.params.legacy_slug];
     if (!newSlug) return next();
     // Don't redirect API paths -- legacy chamber-template routes still need them
