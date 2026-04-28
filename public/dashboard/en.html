@@ -554,12 +554,13 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   }
 
   async function showLoginScreen(errorMsg) {
+    // Default to the CamaraVirtual house logo when chambers.logo_url is null
+    // so every /cv-N/login screen renders with a real image.
+    var DEFAULT_LOGO = 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69eacc56821e8babd85501cc.png';
     var info = await loadChamberInfo();
     var chamberName = (info && info.name) || 'CamaraVirtual.app';
-    var chamberLogo = (info && info.logo_url) || '';
-    var logoHtml = chamberLogo
-      ? '<img src="' + chamberLogo + '" alt="' + chamberName + '" style="height:64px;width:64px;border-radius:12px;object-fit:cover;background:white;padding:4px;display:block;margin:0 auto 12px">'
-      : '';
+    var chamberLogo = (info && info.logo_url) || DEFAULT_LOGO;
+    var logoHtml = '<img src="' + chamberLogo + '" alt="' + chamberName + '" style="height:64px;width:64px;border-radius:12px;object-fit:cover;background:white;padding:4px;display:block;margin:0 auto 12px">';
     document.body.innerHTML = `
       <style>
         .login-wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(160deg,#0a1628 0%,#002670 55%,#003DA5 100%); font-family:'Inter',sans-serif; padding:20px; }
