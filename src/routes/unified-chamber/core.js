@@ -312,17 +312,47 @@ router.get('/exchange/opportunities', authMiddleware, async (req, res) => {
 // =====================================================================
 router.get('/metrics/dashboard', authMiddleware, async (req, res) => {
   try {
-    const [s] = await sequelize.query(
+    const [counts] = await sequelize.query(
       `SELECT
-         (SELECT COUNT(*) FROM members WHERE chamber_id = :c AND status = 'active') AS active_members,
-         (SELECT COUNT(*) FROM projects WHERE chamber_id = :c) AS total_projects,
+         (SELECT COUNT(*) FROM members WHERE chamber_id = :c AND status = 'active') AS members,
+         (SELECT COUNT(*) FROM projects WHERE chamber_id = :c AND status NOT IN ('completed','cancelled')) AS active_projects,
+         (SELECT COUNT(*) FROM companies WHERE chamber_id = :c) AS companies,
          (SELECT COUNT(*) FROM rfqs WHERE chamber_id = :c AND status = 'open') AS open_rfqs,
-         (SELECT COUNT(*) FROM opportunities WHERE chamber_id = :c AND status = 'active') AS active_opportunities,
-         (SELECT COALESCE(AVG(trust_score), 0.7) FROM members WHERE chamber_id = :c AND status = 'active') AS avg_trust,
-         (SELECT COUNT(*) FROM regions WHERE chamber_id = :c) AS region_count`,
+         (SELECT COUNT(*) FROM opportunities WHERE chamber_id = :c AND status = 'active') AS opportunities,
+         (SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE chamber_id = :c AND status = 'completed') AS total_revenue`,
       { replacements: { c: req.chamber_id }, type: QueryTypes.SELECT }
     );
-    return res.json({ success: true, data: { ...s, network: { ...s } } });
+    const membersByRegion = await sequelize.query(
+      `SELECT r.name, COUNT(m.id) AS count
+       FROM regions r LEFT JOIN members m
+         ON m.region_id = r.id AND m.chamber_id = r.chamber_id AND m.status = 'active'
+       WHERE r.chamber_id = :c
+       GROUP BY r.id, r.name ORDER BY r.id`,
+      { replacements: { c: req.chamber_id }, type: QueryTypes.SELECT }
+    );
+    const membersByType = await sequelize.query(
+      `SELECT membership_type, COUNT(*) AS count FROM members
+       WHERE chamber_id = :c AND status = 'active'
+       GROUP BY membership_type ORDER BY count DESC`,
+      { replacements: { c: req.chamber_id }, type: QueryTypes.SELECT }
+    );
+    // network_metrics history is optional -- table may not be populated for new chambers.
+    let history = [];
+    try {
+      history = await sequelize.query(
+        `SELECT * FROM network_metrics WHERE chamber_id = :c ORDER BY date DESC LIMIT 30`,
+        { replacements: { c: req.chamber_id }, type: QueryTypes.SELECT }
+      );
+    } catch (e) { /* table absent or empty -- fine */ }
+    return res.json({
+      success: true,
+      data: {
+        current: counts,
+        members_by_region: membersByRegion,
+        members_by_type: membersByType,
+        history: history.reverse()
+      }
+    });
   } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
