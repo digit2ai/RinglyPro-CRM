@@ -433,31 +433,109 @@ router.get('/metrics/trust/:id', authMiddleware, async (req, res) => {
 
 // =====================================================================
 // PAYMENTS
+// Dashboard expects /pricing (dict keyed by tier slug) + /history (joined
+// with projects). Match the legacy chamber-template contract so the existing
+// dashboard JS renders without a rewrite.
 // =====================================================================
+const DEFAULT_TIERS = {
+  individual:   { monthly: 0,   annual: 0,    label: 'Individual' },
+  emprendedor:  { monthly: 10,  annual: 96,   label: 'Emprendedor' },
+  business:     { monthly: 25,  annual: 240,  label: 'Business' },
+  empresarial:  { monthly: 25,  annual: 240,  label: 'Empresarial' },
+  corporate:    { monthly: 75,  annual: 720,  label: 'Corporate' },
+  corporativo:  { monthly: 75,  annual: 720,  label: 'Corporativo' },
+  founding:     { monthly: 0,   annual: 0,    label: 'Founding' },
+  fundador:     { monthly: 0,   annual: 0,    label: 'Fundador' }
+};
+
+router.get('/payments/pricing', authMiddleware, async (req, res) => {
+  // Theme override hook: chambers.theme_config.membership_tiers wins if set.
+  const theme = (req.chamber && req.chamber.theme_config) || {};
+  const tiers = (theme && theme.membership_tiers) || DEFAULT_TIERS;
+  return res.json({ success: true, data: tiers });
+});
+
+// /payments/plans alias kept for any older callers (returns the same dict).
 router.get('/payments/plans', authMiddleware, async (req, res) => {
-  return res.json({
-    success: true,
-    data: [
-      { id: 'individual', name: 'Individual', price: 0, period: 'month',
-        features: ['Basic directory access', 'AI matching'] },
-      { id: 'empresarial', name: 'Empresarial', price: 49, period: 'month',
-        features: ['All Individual', 'Project participation', 'Exchange listings'] },
-      { id: 'corporativo', name: 'Corporativo', price: 199, period: 'month',
-        features: ['All Empresarial', 'Priority matching', 'Trust acceleration'] }
-    ]
-  });
+  const theme = (req.chamber && req.chamber.theme_config) || {};
+  const tiers = (theme && theme.membership_tiers) || DEFAULT_TIERS;
+  return res.json({ success: true, data: tiers });
+});
+
+router.post('/payments/membership', authMiddleware, async (req, res) => {
+  try {
+    const { membership_type, billing_period = 'monthly' } = req.body;
+    const theme = (req.chamber && req.chamber.theme_config) || {};
+    const tiers = (theme && theme.membership_tiers) || DEFAULT_TIERS;
+    const pricing = tiers[membership_type];
+    if (!pricing) return res.status(400).json({ success: false, error: 'Invalid membership type' });
+    const amount = billing_period === 'annual' ? pricing.annual : pricing.monthly;
+
+    const [member] = await sequelize.query(
+      `SELECT id, email, first_name, last_name, stripe_customer_id
+       FROM members WHERE chamber_id = :c AND id = :id`,
+      { replacements: { c: req.chamber_id, id: req.member.id }, type: QueryTypes.SELECT }
+    );
+    if (!member) return res.status(404).json({ success: false, error: 'Member not found' });
+
+    await sequelize.query(
+      `INSERT INTO transactions
+       (chamber_id, type, from_member_id, amount, currency, status, description, created_at)
+       VALUES (:c, 'membership', :m, :amt, 'USD', 'pending', :desc, NOW())`,
+      {
+        replacements: {
+          c: req.chamber_id, m: req.member.id, amt: amount,
+          desc: `${pricing.label || membership_type} - ${billing_period}`
+        }
+      }
+    );
+    await sequelize.query(
+      `UPDATE members SET membership_type = :type, updated_at = NOW()
+       WHERE chamber_id = :c AND id = :id`,
+      { replacements: { c: req.chamber_id, type: membership_type, id: req.member.id } }
+    );
+
+    return res.json({
+      success: true,
+      data: {
+        membership_type, billing_period, amount, currency: 'USD',
+        stripe_customer_id: member.stripe_customer_id || null,
+        pricing: tiers
+      }
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 router.get('/payments/history', authMiddleware, async (req, res) => {
   try {
-    const tx = await sequelize.query(
-      `SELECT * FROM transactions
-       WHERE chamber_id = :c AND member_id = :me
-       ORDER BY created_at DESC LIMIT 20`,
-      { replacements: { c: req.chamber_id, me: req.member.id }, type: QueryTypes.SELECT }
+    const { type, status, page = 1, limit = 20 } = req.query;
+    const offset = (Math.max(1, parseInt(page)) - 1) * parseInt(limit);
+    const conditions = ['t.chamber_id = :c', '(t.from_member_id = :me OR t.to_member_id = :me)'];
+    const replacements = { c: req.chamber_id, me: req.member.id, limit: parseInt(limit), offset };
+    if (type) { conditions.push('t.type = :type'); replacements.type = type; }
+    if (status) { conditions.push('t.status = :status'); replacements.status = status; }
+    const where = 'WHERE ' + conditions.join(' AND ');
+
+    const transactions = await sequelize.query(
+      `SELECT t.*, p.title AS project_title
+       FROM transactions t LEFT JOIN projects p ON p.id = t.project_id AND p.chamber_id = t.chamber_id
+       ${where}
+       ORDER BY t.created_at DESC LIMIT :limit OFFSET :offset`,
+      { replacements, type: QueryTypes.SELECT }
     );
-    return res.json({ success: true, data: tx });
-  } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
+    const [{ count }] = await sequelize.query(
+      `SELECT COUNT(*) AS count FROM transactions t ${where}`,
+      { replacements, type: QueryTypes.SELECT }
+    );
+    return res.json({
+      success: true, data: transactions,
+      pagination: { page: parseInt(page), limit: parseInt(limit), total: parseInt(count) }
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // =====================================================================
