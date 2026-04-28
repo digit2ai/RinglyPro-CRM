@@ -70,7 +70,7 @@ module.exports = function createMatchingRoutes(config) {
         const trustFactor = parseFloat(m.trust_score) || 0.5;
         const giniFactor = giniCorrections[m.region_id] || 1;
         return {
-          member_id: m.id, first_name: m.first_name, last_name: m.last_name, company_name: m.company_name,
+          member_id: m.id, first_name: m.first_name, last_name: m.last_name, email: m.email, company_name: m.company_name,
           sector: m.sector, country: m.country, region_name: m.region_name, years_experience: m.years_experience,
           trust_score: parseFloat(m.trust_score), membership_type: m.membership_type,
           similarity_score: Math.round(similarity * 1000) / 1000,

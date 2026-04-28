@@ -1185,9 +1185,11 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         if (!res.success) { out.innerHTML = '<div class="error-msg">'+(res.error||'Search error')+'</div>'; return; }
         var results = res.data.results || [];
         if (results.length === 0) { out.innerHTML = '<div class="panel"><p class="text-muted">No matches found.</p></div>'; return; }
-        var h = '<div class="panel"><h2>Results ('+results.length+' of '+res.data.total_candidates+' candidates)</h2><div class="result-cards">';
+        var h = '<div class="panel"><h2>Results ('+results.length+' of '+res.data.total_candidates+' candidates)</h2>';
+        h += '<p class="text-sm text-muted" style="margin:0 0 12px 0">Click any candidate card to see full profile details.</p>';
+        h += '<div class="result-cards">';
         results.forEach(function(r, idx) {
-          h += '<div class="result-card">';
+          h += '<div class="result-card matchCard" data-mid="'+r.member_id+'" style="cursor:pointer;transition:transform 0.1s,box-shadow 0.1s" onmouseover="this.style.transform=\'translateY(-2px)\';this.style.boxShadow=\'0 4px 12px rgba(0,0,0,0.1)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'\'">';
           h += '<div style="display:flex;justify-content:space-between;align-items:flex-start">';
           h += '<div><div class="rc-name">#'+(idx+1)+' '+esc(r.first_name)+' '+esc(r.last_name)+'</div>';
           h += '<div class="rc-company">'+esc(r.company_name||'--')+'</div></div>';
@@ -1197,10 +1199,21 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
           h += '<div class="rc-score"><span>Similarity: '+((r.similarity_score||0)*100).toFixed(0)+'%</span>';
           h += '<span>Trust: '+((r.trust_score||0)*100).toFixed(0)+'%</span>';
           h += '<span>Gini: '+(r.gini_correction||1).toFixed(3)+'</span></div>';
+          h += '<div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">';
+          h += '<button class="btn btn-primary btn-sm matchViewBtn" data-mid="'+r.member_id+'" style="padding:4px 10px;font-size:12px" onclick="event.stopPropagation()">View Profile</button>';
+          if (r.email) h += '<a class="btn btn-outline btn-sm" href="mailto:'+esc(r.email)+'" onclick="event.stopPropagation()" style="padding:4px 10px;font-size:12px;text-decoration:none">Email</a>';
+          h += '</div>';
           h += '</div>';
         });
         h += '</div></div>';
         out.innerHTML = h;
+        // Wire card + view button to open the directory member modal (which has full details + admin Edit)
+        out.querySelectorAll('.matchCard').forEach(function(card) {
+          card.addEventListener('click', function() { showMemberModal(this.dataset.mid); });
+        });
+        out.querySelectorAll('.matchViewBtn').forEach(function(b) {
+          b.addEventListener('click', function(ev) { ev.stopPropagation(); showMemberModal(this.dataset.mid); });
+        });
       } catch(e) {
         out.innerHTML = '<div class="error-msg">Error: '+esc(e.message)+'</div>';
       }
