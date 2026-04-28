@@ -517,7 +517,28 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   let currentPage = 'dashboard';
 
   // -- Auth --
-  function getToken() { return localStorage.getItem('hispamind_token'); }
+  // Token storage namespaced per-chamber to avoid collision when a member
+  // belongs to multiple chambers in the same browser. Falls back to legacy
+  // `hispamind_token` so existing sessions stay valid through the rollout.
+  const TOKEN_KEY = slugMatch ? ('cv_' + slugMatch + '_token') : 'hispamind_token';
+  let _chamberInfo = null;
+
+  function getToken() {
+    return localStorage.getItem(TOKEN_KEY) || localStorage.getItem('hispamind_token');
+  }
+  function setToken(token) {
+    localStorage.setItem(TOKEN_KEY, token);
+    if (TOKEN_KEY !== 'hispamind_token') localStorage.removeItem('hispamind_token');
+  }
+  async function loadChamberInfo() {
+    if (_chamberInfo) return _chamberInfo;
+    try {
+      var res = await fetch(API + '/public/info');
+      var data = await res.json();
+      if (data && data.success && data.data) _chamberInfo = data.data;
+    } catch(e) {}
+    return _chamberInfo;
+  }
 
   function decodeJWT(token) {
     try {
@@ -527,11 +548,18 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   }
 
   function logout() {
+    localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem('hispamind_token');
     showLoginScreen();
   }
 
-  function showLoginScreen(errorMsg) {
+  async function showLoginScreen(errorMsg) {
+    var info = await loadChamberInfo();
+    var chamberName = (info && info.name) || 'CamaraVirtual.app';
+    var chamberLogo = (info && info.logo_url) || '';
+    var logoHtml = chamberLogo
+      ? '<img src="' + chamberLogo + '" alt="' + chamberName + '" style="height:64px;width:64px;border-radius:12px;object-fit:cover;background:white;padding:4px;display:block;margin:0 auto 12px">'
+      : '';
     document.body.innerHTML = `
       <style>
         .login-wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(160deg,#0a1628 0%,#002670 55%,#003DA5 100%); font-family:'Inter',sans-serif; padding:20px; }
@@ -551,8 +579,9 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       </style>
       <div class="login-wrap">
         <div class="login-card">
-          <h2>CamaraVirtual.app</h2>
-          <p>Accede al panel de miembros</p>
+          ${logoHtml}
+          <h2>${chamberName}</h2>
+          <p>Sign in to your member panel</p>
           <form id="dashLoginForm">
             <label>Correo electronico</label>
             <input type="email" id="loginEmail" required placeholder="tu@correo.com" autocomplete="email">
@@ -579,7 +608,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         });
         var data = await res.json();
         if (data.success && data.data && data.data.token) {
-          localStorage.setItem('hispamind_token', data.data.token);
+          setToken(data.data.token);
           location.reload();
         } else {
           showLoginScreen(data.error || 'Credenciales invalidas');

@@ -519,7 +519,22 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   let currentPage = 'dashboard';
 
   // -- Auth --
-  function getToken() { return localStorage.getItem('hispamind_token'); }
+  // Token storage is namespaced per-chamber so a member who belongs to several
+  // chambers in the same browser doesn't have their tokens collide. We also read
+  // the legacy `hispamind_token` key as a fallback so existing sessions survive.
+  const TOKEN_KEY = slugMatch ? ('cv_' + slugMatch + '_token') : 'hispamind_token';
+  let _chamberInfo = null; // populated by /public/info before login screen renders
+
+  function getToken() {
+    return localStorage.getItem(TOKEN_KEY) || localStorage.getItem('hispamind_token');
+  }
+
+  function setToken(token) {
+    localStorage.setItem(TOKEN_KEY, token);
+    // Clear the legacy global key so cross-chamber pollution stops the moment
+    // a member logs in to the new namespaced flow.
+    if (TOKEN_KEY !== 'hispamind_token') localStorage.removeItem('hispamind_token');
+  }
 
   function decodeJWT(token) {
     try {
@@ -529,11 +544,30 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   }
 
   function logout() {
+    localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem('hispamind_token');
     showLoginScreen();
   }
 
-  function showLoginScreen(errorMsg) {
+  async function loadChamberInfo() {
+    if (_chamberInfo) return _chamberInfo;
+    try {
+      var res = await fetch(API + '/public/info');
+      var data = await res.json();
+      if (data && data.success && data.data) _chamberInfo = data.data;
+    } catch(e) { /* offline / 404 -- fall through to defaults */ }
+    return _chamberInfo;
+  }
+
+  async function showLoginScreen(errorMsg) {
+    // Pull chamber name + logo so the login screen reflects the chamber the
+    // visitor actually clicked into, not a generic CamaraVirtual.app shell.
+    var info = await loadChamberInfo();
+    var chamberName = (info && info.name) || 'CamaraVirtual.app';
+    var chamberLogo = (info && info.logo_url) || '';
+    var logoHtml = chamberLogo
+      ? '<img src="' + chamberLogo + '" alt="' + chamberName + '" style="height:64px;width:64px;border-radius:12px;object-fit:cover;background:white;padding:4px;display:block;margin:0 auto 12px">'
+      : '';
     document.body.innerHTML = `
       <style>
         .login-wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(160deg,#0a1628 0%,#002670 55%,#003DA5 100%); font-family:'Inter',sans-serif; padding:20px; }
@@ -553,7 +587,8 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       </style>
       <div class="login-wrap">
         <div class="login-card">
-          <h2>CamaraVirtual.app</h2>
+          ${logoHtml}
+          <h2>${chamberName}</h2>
           <p>Accede al panel de miembros</p>
           <form id="dashLoginForm">
             <label>Correo electronico</label>
@@ -581,7 +616,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         });
         var data = await res.json();
         if (data.success && data.data && data.data.token) {
-          localStorage.setItem('hispamind_token', data.data.token);
+          setToken(data.data.token);
           location.reload();
         } else {
           showLoginScreen(data.error || 'Credenciales invalidas');

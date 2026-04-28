@@ -1,50 +1,15 @@
 /**
- * Unified Chamber Router
- *
- * Mounted at /:chamber_slug/api/* by src/app.js (after resolveChamberFromSlug
- * middleware). Every handler scopes queries by req.chamber_id.
- *
- * This is the new entrypoint for chambers using the unified schema
- * (cv-101+ and migrated cv-1/2/3). Legacy /chamber/<prefix>/api/* routes
- * stay live for backwards compatibility until cutover.
+ * Unified core router: public info, auth, members, regions, exchange,
+ * metrics, payments, admin, match. Preserves the previous unified-chamber.js
+ * surface and adds admin write paths.
  */
 const express = require('express');
+const { sequelize, QueryTypes, bcrypt, signToken, authMiddleware, requireAdmin } = require('./lib/shared');
+
 const router = express.Router();
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
-const { Sequelize, QueryTypes } = require('sequelize');
-require('dotenv').config();
-
-const sequelize = new Sequelize(process.env.CRM_DATABASE_URL || process.env.DATABASE_URL, {
-  dialect: 'postgres',
-  dialectOptions: { ssl: { require: true, rejectUnauthorized: false } },
-  logging: false
-});
-
-const JWT_SECRET = process.env.CHAMBER_JWT_SECRET || 'chamber-multitenant-secret-change-me';
-
-function signToken(payload) {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '30d' });
-}
-
-function authMiddleware(req, res, next) {
-  const token = req.headers.authorization?.replace('Bearer ', '');
-  if (!token) return res.status(401).json({ success: false, error: 'Token required' });
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    if (decoded.chamber_id !== req.chamber_id) {
-      return res.status(403).json({ success: false, error: 'Token does not match this chamber' });
-    }
-    req.member = decoded;
-    req.member.id = decoded.member_id;
-    next();
-  } catch (e) {
-    return res.status(401).json({ success: false, error: 'Invalid or expired token' });
-  }
-}
 
 // =====================================================================
-// PUBLIC -- chamber landing info (no auth)
+// PUBLIC -- chamber landing info
 // =====================================================================
 router.get('/public/info', async (req, res) => {
   try {
@@ -55,15 +20,13 @@ router.get('/public/info', async (req, res) => {
     );
     const projects = await sequelize.query(
       `SELECT id, title, sector, plan_status, created_at
-       FROM projects
-       WHERE chamber_id = :c AND visibility = 'public_plan'
+       FROM projects WHERE chamber_id = :c AND visibility = 'public_plan'
        ORDER BY created_at DESC LIMIT 3`,
       { replacements: { c: req.chamber_id }, type: QueryTypes.SELECT }
     );
     const rfqs = await sequelize.query(
       `SELECT id, title, sector, budget_range, deadline
-       FROM rfqs
-       WHERE chamber_id = :c AND status = 'open'
+       FROM rfqs WHERE chamber_id = :c AND status = 'open'
        ORDER BY created_at DESC LIMIT 3`,
       { replacements: { c: req.chamber_id }, type: QueryTypes.SELECT }
     );
@@ -76,16 +39,10 @@ router.get('/public/info', async (req, res) => {
     return res.json({
       success: true,
       data: {
-        slug: chamber.slug,
-        name: chamber.name,
-        brand_domain: chamber.brand_domain,
-        primary_language: chamber.primary_language,
-        country: chamber.country,
-        logo_url: chamber.logo_url,
-        member_count: parseInt(memberCount),
-        recent_projects: projects,
-        open_rfqs: rfqs,
-        top_sectors: sectors
+        slug: chamber.slug, name: chamber.name, brand_domain: chamber.brand_domain,
+        primary_language: chamber.primary_language, country: chamber.country,
+        logo_url: chamber.logo_url, member_count: parseInt(memberCount),
+        recent_projects: projects, open_rfqs: rfqs, top_sectors: sectors
       }
     });
   } catch (err) {
@@ -114,15 +71,11 @@ router.post('/auth/login', async (req, res) => {
     if (!ok) return res.status(401).json({ success: false, error: 'Invalid credentials' });
 
     const token = signToken({
-      member_id: member.id,
-      chamber_id: req.chamber_id,
-      chamber_slug: req.chamber.slug,
+      member_id: member.id, chamber_id: req.chamber_id, chamber_slug: req.chamber.slug,
       email: member.email,
       access_level: member.access_level || 'member',
       governance_role: member.governance_role || 'member'
     });
-
-    // Update last_active_at
     await sequelize.query(`UPDATE members SET last_active_at = NOW() WHERE id = :id`, { replacements: { id: member.id } });
 
     return res.json({
@@ -130,19 +83,13 @@ router.post('/auth/login', async (req, res) => {
       data: {
         token,
         member: {
-          id: member.id,
-          email: member.email,
-          first_name: member.first_name,
-          last_name: member.last_name,
+          id: member.id, email: member.email,
+          first_name: member.first_name, last_name: member.last_name,
           membership_type: member.membership_type,
           governance_role: member.governance_role,
           access_level: member.access_level
         },
-        chamber: {
-          slug: req.chamber.slug,
-          name: req.chamber.name,
-          primary_language: req.chamber.primary_language
-        }
+        chamber: { slug: req.chamber.slug, name: req.chamber.name, primary_language: req.chamber.primary_language }
       }
     });
   } catch (err) {
@@ -166,11 +113,13 @@ router.post('/auth/signup-member', async (req, res) => {
     const [row] = await sequelize.query(
       `INSERT INTO members (chamber_id, email, password_hash, first_name, last_name, country, sector, company_name,
                             membership_type, governance_role, access_level, verification_level, status, trust_score, created_at, updated_at)
-       VALUES (:c, :email, :hash, :fn, :ln, :country, :sector, :company, 'individual', 'member', 'member', 'email', 'active', 0.7, NOW(), NOW())
+       VALUES (:c, :email, :hash, :fn, :ln, :country, :sector, :company,
+               'individual', 'member', 'member', 'email', 'active', 0.7, NOW(), NOW())
        RETURNING id, email, first_name, last_name, membership_type, access_level`,
       {
         replacements: {
-          c: req.chamber_id, email: email.toLowerCase(), hash, fn: first_name, ln: last_name,
+          c: req.chamber_id, email: email.toLowerCase(), hash,
+          fn: first_name, ln: last_name,
           country: country || null, sector: sector || null, company: company_name || null
         },
         type: QueryTypes.SELECT
@@ -205,8 +154,7 @@ router.get('/auth/me', authMiddleware, async (req, res) => {
     );
     if (!member) return res.status(404).json({ success: false, error: 'Member not found' });
     return res.json({
-      success: true,
-      data: member,
+      success: true, data: member,
       chamber: { slug: req.chamber.slug, name: req.chamber.name, primary_language: req.chamber.primary_language }
     });
   } catch (err) {
@@ -215,7 +163,7 @@ router.get('/auth/me', authMiddleware, async (req, res) => {
 });
 
 // =====================================================================
-// MEMBERS (list + get)
+// MEMBERS
 // =====================================================================
 router.get('/members', authMiddleware, async (req, res) => {
   try {
@@ -263,31 +211,36 @@ router.get('/members/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// =====================================================================
-// PROJECTS (list + get)
-// =====================================================================
-router.get('/projects', authMiddleware, async (req, res) => {
+// PUT /members/:id -- self profile update OR admin/superadmin can update anyone in their chamber
+router.put('/members/:id', authMiddleware, async (req, res) => {
   try {
-    const { plan_status, sector, page = 1, limit = 50 } = req.query;
-    const offset = (Math.max(1, parseInt(page)) - 1) * parseInt(limit);
-    const conditions = ['p.chamber_id = :c', `(p.visibility != 'archived' AND (p.plan_status NOT IN ('draft') OR p.proposer_member_id = :me))`];
-    const replacements = { c: req.chamber_id, me: req.member.id, limit: parseInt(limit), offset };
-    if (plan_status) { conditions.push('p.plan_status = :plan_status'); replacements.plan_status = plan_status; }
-    if (sector) { conditions.push('p.sector = :sector'); replacements.sector = sector; }
-    const where = 'WHERE ' + conditions.join(' AND ');
-    const projects = await sequelize.query(
-      `SELECT p.id, p.title, p.description, p.sector, p.countries, p.plan_status, p.visibility,
-              p.budget_min, p.budget_est, p.budget_max, p.timeline_min_months, p.timeline_est_months,
-              p.timeline_max_months, p.recruitment_deadline, p.recruitment_closed_at, p.recruitment_closed_by,
-              p.monte_carlo_result, p.proposer_member_id, p.created_at,
-              m.first_name || ' ' || m.last_name AS proposer_name,
-              (p.proposer_member_id = :me) AS is_mine
-       FROM projects p LEFT JOIN members m ON m.id = p.proposer_member_id
-       ${where}
-       ORDER BY p.created_at DESC LIMIT :limit OFFSET :offset`,
-      { replacements, type: QueryTypes.SELECT }
+    const targetId = parseInt(req.params.id);
+    const isSelf = targetId === req.member.id;
+    const isAdmin = ['superadmin', 'admin_global', 'admin_regional'].includes(req.member.access_level);
+    if (!isSelf && !isAdmin) {
+      return res.status(403).json({ success: false, error: 'Cannot edit other members' });
+    }
+    const [exists] = await sequelize.query(
+      `SELECT id FROM members WHERE chamber_id = :c AND id = :id`,
+      { replacements: { c: req.chamber_id, id: targetId }, type: QueryTypes.SELECT }
     );
-    return res.json({ success: true, data: { projects } });
+    if (!exists) return res.status(404).json({ success: false, error: 'Member not found' });
+
+    const allowed = ['first_name', 'last_name', 'country', 'region_id', 'sector', 'sub_specialty',
+                     'years_experience', 'languages', 'company_name', 'bio', 'phone',
+                     'linkedin_url', 'website_url'];
+    if (isAdmin) allowed.push('membership_type', 'governance_role', 'verified', 'verification_level');
+    const sets = []; const r = { c: req.chamber_id, id: targetId };
+    for (const k of allowed) {
+      if (k in req.body) { sets.push(`${k} = :${k}`); r[k] = req.body[k]; }
+    }
+    if (sets.length === 0) return res.status(400).json({ success: false, error: 'No fields to update' });
+    sets.push('updated_at = NOW()');
+    const [updated] = await sequelize.query(
+      `UPDATE members SET ${sets.join(', ')} WHERE chamber_id = :c AND id = :id RETURNING *`,
+      { replacements: r, type: QueryTypes.SELECT }
+    );
+    return res.json({ success: true, data: updated });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
   }
@@ -299,7 +252,9 @@ router.get('/projects', authMiddleware, async (req, res) => {
 router.get('/regions', authMiddleware, async (req, res) => {
   try {
     const regions = await sequelize.query(
-      `SELECT r.*, (SELECT COUNT(*) FROM members m WHERE m.region_id = r.id AND m.status = 'active') AS member_count
+      `SELECT r.*,
+        (SELECT COUNT(*) FROM members m
+         WHERE m.chamber_id = :c AND m.region_id = r.id AND m.status = 'active') AS member_count
        FROM regions r WHERE r.chamber_id = :c ORDER BY r.id`,
       { replacements: { c: req.chamber_id }, type: QueryTypes.SELECT }
     );
@@ -310,7 +265,7 @@ router.get('/regions', authMiddleware, async (req, res) => {
 });
 
 // =====================================================================
-// EXCHANGE -- Companies / RFQs / Opportunities (read-mostly, chamber-scoped)
+// EXCHANGE
 // =====================================================================
 router.get('/exchange/companies', authMiddleware, async (req, res) => {
   try {
@@ -353,24 +308,6 @@ router.get('/exchange/opportunities', authMiddleware, async (req, res) => {
 });
 
 // =====================================================================
-// PROJECT INVITATIONS (inbox)
-// =====================================================================
-router.get('/projects/invitations/inbox', authMiddleware, async (req, res) => {
-  try {
-    const inv = await sequelize.query(
-      `SELECT i.*, p.title AS project_title, ib.first_name || ' ' || ib.last_name AS invited_by_name
-       FROM project_invitations i
-       LEFT JOIN projects p ON p.id = i.project_id
-       LEFT JOIN members ib ON ib.id = i.invited_by_member_id
-       WHERE i.chamber_id = :c AND i.member_id = :me
-       ORDER BY i.invited_at DESC`,
-      { replacements: { c: req.chamber_id, me: req.member.id }, type: QueryTypes.SELECT }
-    );
-    return res.json({ success: true, data: inv });
-  } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
-});
-
-// =====================================================================
 // METRICS
 // =====================================================================
 router.get('/metrics/dashboard', authMiddleware, async (req, res) => {
@@ -403,9 +340,9 @@ router.get('/metrics/hci', authMiddleware, async (req, res) => {
 
 router.get('/metrics/gini', authMiddleware, async (req, res) => {
   try {
-    // Simple Gini approximation using member-per-region distribution
     const rows = await sequelize.query(
-      `SELECT region_id, COUNT(*) AS n FROM members WHERE chamber_id = :c AND status='active' GROUP BY region_id`,
+      `SELECT region_id, COUNT(*) AS n FROM members
+       WHERE chamber_id = :c AND status='active' GROUP BY region_id`,
       { replacements: { c: req.chamber_id }, type: QueryTypes.SELECT }
     );
     const counts = rows.map(r => parseInt(r.n)).sort((a, b) => a - b);
@@ -417,20 +354,30 @@ router.get('/metrics/gini', authMiddleware, async (req, res) => {
       counts.forEach((x, i) => { acc += (i + 1) * x; });
       gini = total > 0 ? (2 * acc) / (n * total) - (n + 1) / n : 0;
     }
-    return res.json({ success: true, data: { gini: Math.max(0, gini), dimension: req.query.dimension || 'regional', metric: req.query.metric || 'members' } });
+    return res.json({
+      success: true,
+      data: {
+        gini: Math.max(0, gini),
+        dimension: req.query.dimension || 'regional',
+        metric: req.query.metric || 'members'
+      }
+    });
   } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
 router.get('/metrics/network-value', authMiddleware, async (req, res) => {
   try {
     const [s] = await sequelize.query(
-      `SELECT COUNT(*) AS members, (SELECT COUNT(*) FROM projects WHERE chamber_id = :c) AS projects
+      `SELECT COUNT(*) AS members,
+              (SELECT COUNT(*) FROM projects WHERE chamber_id = :c) AS projects
        FROM members WHERE chamber_id = :c AND status='active'`,
       { replacements: { c: req.chamber_id }, type: QueryTypes.SELECT }
     );
     const m = parseInt(s.members) || 0;
-    // Metcalfe's Law approximation: value ∝ n²
-    return res.json({ success: true, data: { members: m, projects: parseInt(s.projects) || 0, network_value: m * m, formula: 'metcalfe_n_squared' } });
+    return res.json({
+      success: true,
+      data: { members: m, projects: parseInt(s.projects) || 0, network_value: m * m, formula: 'metcalfe_n_squared' }
+    });
   } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
@@ -455,15 +402,18 @@ router.get('/metrics/trust/:id', authMiddleware, async (req, res) => {
 });
 
 // =====================================================================
-// PAYMENTS (stubs returning empty arrays so dashboard doesn't error)
+// PAYMENTS
 // =====================================================================
 router.get('/payments/plans', authMiddleware, async (req, res) => {
   return res.json({
     success: true,
     data: [
-      { id: 'individual', name: 'Individual', price: 0, period: 'month', features: ['Basic directory access', 'AI matching'] },
-      { id: 'empresarial', name: 'Empresarial', price: 49, period: 'month', features: ['All Individual', 'Project participation', 'Exchange listings'] },
-      { id: 'corporativo', name: 'Corporativo', price: 199, period: 'month', features: ['All Empresarial', 'Priority matching', 'Trust acceleration'] }
+      { id: 'individual', name: 'Individual', price: 0, period: 'month',
+        features: ['Basic directory access', 'AI matching'] },
+      { id: 'empresarial', name: 'Empresarial', price: 49, period: 'month',
+        features: ['All Individual', 'Project participation', 'Exchange listings'] },
+      { id: 'corporativo', name: 'Corporativo', price: 199, period: 'month',
+        features: ['All Empresarial', 'Priority matching', 'Trust acceleration'] }
     ]
   });
 });
@@ -471,7 +421,9 @@ router.get('/payments/plans', authMiddleware, async (req, res) => {
 router.get('/payments/history', authMiddleware, async (req, res) => {
   try {
     const tx = await sequelize.query(
-      `SELECT * FROM transactions WHERE chamber_id = :c AND member_id = :me ORDER BY created_at DESC LIMIT 20`,
+      `SELECT * FROM transactions
+       WHERE chamber_id = :c AND member_id = :me
+       ORDER BY created_at DESC LIMIT 20`,
       { replacements: { c: req.chamber_id, me: req.member.id }, type: QueryTypes.SELECT }
     );
     return res.json({ success: true, data: tx });
@@ -479,15 +431,8 @@ router.get('/payments/history', authMiddleware, async (req, res) => {
 });
 
 // =====================================================================
-// ADMIN (member management) -- minimal compatibility surface
+// ADMIN
 // =====================================================================
-function requireAdmin(req, res, next) {
-  if (!req.member || !['superadmin', 'admin_global', 'admin_regional'].includes(req.member.access_level)) {
-    return res.status(403).json({ success: false, error: 'Admin access required' });
-  }
-  next();
-}
-
 router.get('/admin/members', authMiddleware, requireAdmin, async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 100, 500);
@@ -511,15 +456,22 @@ router.get('/admin/roles', authMiddleware, requireAdmin, async (req, res) => {
        ORDER BY m.governance_role, m.last_name`,
       { replacements: { c: req.chamber_id }, type: QueryTypes.SELECT }
     );
-    const available_roles = ['superadmin', 'president', 'vp', 'secretary_general', 'treasurer', 'board_member', 'chapter_president', 'chapter_secretary', 'chapter_treasurer', 'chapter_board', 'member'];
-    return res.json({ success: true, data: { governance_board: board, available_roles, access_levels: ['superadmin', 'admin_global', 'admin_regional', 'member'] } });
+    const available_roles = ['superadmin', 'president', 'vp', 'secretary_general', 'treasurer',
+      'board_member', 'chapter_president', 'chapter_secretary', 'chapter_treasurer',
+      'chapter_board', 'member'];
+    return res.json({
+      success: true,
+      data: { governance_board: board, available_roles, access_levels: ['superadmin', 'admin_global', 'admin_regional', 'member'] }
+    });
   } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
 router.get('/admin/regions', authMiddleware, requireAdmin, async (req, res) => {
   try {
     const regions = await sequelize.query(
-      `SELECT r.*, (SELECT COUNT(*) FROM members m WHERE m.region_id = r.id AND m.status = 'active' AND m.chamber_id = :c) AS member_count
+      `SELECT r.*,
+        (SELECT COUNT(*) FROM members m
+         WHERE m.region_id = r.id AND m.status = 'active' AND m.chamber_id = :c) AS member_count
        FROM regions r WHERE r.chamber_id = :c ORDER BY r.id`,
       { replacements: { c: req.chamber_id }, type: QueryTypes.SELECT }
     );
@@ -549,17 +501,61 @@ router.get('/admin/system/stats', authMiddleware, requireAdmin, async (req, res)
   } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
+// PUT /admin/members/:id/access -- update access_level
+router.put('/admin/members/:id/access', authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const targetId = parseInt(req.params.id);
+    const { access_level } = req.body;
+    const valid = ['superadmin', 'admin_global', 'admin_regional', 'member'];
+    if (!valid.includes(access_level)) {
+      return res.status(400).json({ success: false, error: 'Invalid access_level' });
+    }
+    if (access_level === 'superadmin' && req.member.access_level !== 'superadmin') {
+      return res.status(403).json({ success: false, error: 'Only superadmin can grant superadmin' });
+    }
+    const [updated] = await sequelize.query(
+      `UPDATE members SET access_level = :al, updated_at = NOW()
+       WHERE chamber_id = :c AND id = :id RETURNING id, access_level`,
+      { replacements: { c: req.chamber_id, id: targetId, al: access_level }, type: QueryTypes.SELECT }
+    );
+    if (!updated) return res.status(404).json({ success: false, error: 'Member not found' });
+    return res.json({ success: true, data: updated });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// PUT /admin/members/:id/membership -- update membership_type
+router.put('/admin/members/:id/membership', authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const targetId = parseInt(req.params.id);
+    const { membership_type } = req.body;
+    if (!membership_type) {
+      return res.status(400).json({ success: false, error: 'membership_type required' });
+    }
+    const [updated] = await sequelize.query(
+      `UPDATE members SET membership_type = :mt, updated_at = NOW()
+       WHERE chamber_id = :c AND id = :id RETURNING id, membership_type`,
+      { replacements: { c: req.chamber_id, id: targetId, mt: membership_type }, type: QueryTypes.SELECT }
+    );
+    if (!updated) return res.status(404).json({ success: false, error: 'Member not found' });
+    return res.json({ success: true, data: updated });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // =====================================================================
-// AI MATCHING (simple wrapper -- delegates scoring to chamber-template logic later)
+// AI MATCHING
 // =====================================================================
 router.post('/match', authMiddleware, async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.body.limit) || 10, 50);
-    // Lightweight: return top members by trust_score in same chamber
     const members = await sequelize.query(
       `SELECT id AS member_id, first_name, last_name, email, company_name, sector, country,
               trust_score, membership_type, region_id
-       FROM members WHERE chamber_id = :c AND status='active' AND id != :me
+       FROM members
+       WHERE chamber_id = :c AND status='active' AND id != :me
        ORDER BY trust_score DESC LIMIT :limit`,
       { replacements: { c: req.chamber_id, me: req.member.id, limit }, type: QueryTypes.SELECT }
     );
