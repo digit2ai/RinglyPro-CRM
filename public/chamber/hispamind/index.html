@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://js.stripe.com/v3/"></script>
 <style>
   :root {
     --blue: #003DA5;
@@ -279,7 +280,7 @@
       <li><a href="#programs">Como funciona</a></li>
       <li><a href="#projects">Casos de uso</a></li>
       <li><a href="#screening">Screening</a></li>
-      <li><a href="#register" style="color:var(--yellow);font-weight:600;">Solicitar Demo</a></li>
+      <li><a href="#register" style="color:var(--yellow);font-weight:600;">Registrar mi Camara</a></li>
       <li><a id="loginLink" href="/chamber/hispamind/dashboard/">Login</a></li>
     </ul>
   </nav>
@@ -307,7 +308,7 @@
     <p>Neural Intelligence AI habilita tu camara digital en minutos, no en semanas, conectando empresarios y oportunidades mediante matching inteligente, colaboracion estrategica y analitica de red que convierte tu membresia en crecimiento medible.</p>
     <p style="margin-top:16px;font-size:15px;color:rgba(255,255,255,0.7);font-family:'Inter',sans-serif;font-weight:500;letter-spacing:1px;">Impulsado por Digit2AI -- Inteligencia Neural y Algoritmos de Match Empresarial</p>
     <div class="hero-ctas">
-      <a href="#register" class="btn-primary">Solicitar Demo</a>
+      <a href="#register" class="btn-primary">Registrar mi Camara</a>
       <a href="#about" class="btn-outline">Descubre que hay dentro</a>
     </div>
     <div class="hero-stats">
@@ -588,43 +589,30 @@
         </div>
       </div>
       <div>
-        <form class="reg-form" id="demoForm" onsubmit="handleDemo(event)">
-          <div style="text-align:center;margin-bottom:24px;">
-            <div style="font-family:'Inter',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--yellow);margin-bottom:6px;">SOLICITAR DEMO</div>
-            <div style="font-family:'Inter',sans-serif;font-size:14px;color:rgba(255,255,255,0.6);">Te mostramos como funciona en vivo</div>
+        <form class="reg-form" id="signupForm" onsubmit="handleSignup(event)">
+          <div style="text-align:center;margin-bottom:18px;">
+            <div style="font-family:'Inter',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--yellow);margin-bottom:6px;">REGISTRAR MI CAMARA</div>
+            <div style="font-family:'Inter',sans-serif;font-size:14px;color:rgba(255,255,255,0.6);">Tu camara digital, lista en menos de 90 segundos</div>
+          </div>
+          <div style="background:var(--yellow);color:var(--blue-dark);padding:10px 14px;border-radius:8px;text-align:center;font-weight:700;font-size:13px;margin-bottom:18px;">
+            $150 USD pago unico de configuracion + $99 USD/mes &middot; Cancela cuando quieras
+          </div>
+          <div class="form-group"><label>Nombre de la Camara *</label><input type="text" name="chamber_name" required placeholder="Camara de Comercio de Madrid"></div>
+          <div class="form-row">
+            <div class="form-group"><label>Pais</label><input type="text" name="country" placeholder="Espana"></div>
+            <div class="form-group"><label>Email de contacto *</label><input type="email" name="contact_email" required placeholder="contacto@tucamara.org"></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Nombre</label><input type="text" name="first_name" required placeholder="Carlos"></div>
-            <div class="form-group"><label>Apellido</label><input type="text" name="last_name" required placeholder="Rodriguez"></div>
+            <div class="form-group"><label>Tu nombre *</label><input type="text" name="owner_first_name" required placeholder="Carlos"></div>
+            <div class="form-group"><label>Tu apellido *</label><input type="text" name="owner_last_name" required placeholder="Rodriguez"></div>
           </div>
-          <div class="form-group"><label>Correo electronico</label><input type="email" name="email" required placeholder="carlos@camara.org"></div>
-          <div class="form-group"><label>Nombre de la Camara de Comercio</label><input type="text" name="chamber_name" required placeholder="Camara de Comercio de..."></div>
-          <div class="form-row">
-            <div class="form-group"><label>Pais / Region</label>
-              <select name="region" required>
-                <option value="">--</option>
-                <option value="mexico_ca">Mexico y Centroamerica</option>
-                <option value="andina">Sudamerica - Region Andina</option>
-                <option value="cono_sur">Sudamerica - Cono Sur</option>
-                <option value="caribe">Caribe Hispano</option>
-                <option value="espana_europa">Espana y Europa</option>
-                <option value="usa_hispano">Estados Unidos (Hispanos)</option>
-              </select>
-            </div>
-            <div class="form-group"><label>Numero de Miembros</label>
-              <select name="members_count" required>
-                <option value="">--</option>
-                <option value="1-50">1 - 50</option>
-                <option value="51-200">51 - 200</option>
-                <option value="201-500">201 - 500</option>
-                <option value="501-1000">501 - 1,000</option>
-                <option value="1000+">1,000+</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-group"><label>Mensaje <span style="font-weight:400;opacity:0.6;">(opcional)</span></label><input type="text" name="message" placeholder="Cuentanos sobre tu camara..."></div>
-          <button type="submit" class="btn-submit" style="font-size:16px;padding:16px;">Solicitar Demo</button>
+          <div class="form-group"><label>Contrasena (minimo 8 caracteres) *</label><input type="password" name="owner_password" required minlength="8" placeholder="Crea una contrasena segura"></div>
+          <div class="form-group"><label>Tarjeta de credito *</label><div id="card-element" style="background:white;padding:12px 14px;border-radius:8px;"></div></div>
+          <button type="submit" class="btn-submit" style="font-size:16px;padding:16px;">Crear mi Camara &mdash; $150 + $99/mes</button>
           <div class="form-msg" id="formMsg"></div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.55);text-align:center;margin-top:10px;">
+            Al continuar aceptas los terminos del servicio. Pago seguro procesado por Stripe.
+          </div>
         </form>
       </div>
     </div>
@@ -644,7 +632,7 @@
       <a href="#pillars">Modulos</a>
       <a href="#programs">Como Funciona</a>
       <a href="#projects">Casos de Uso</a>
-      <a href="#register">Solicitar Demo</a>
+      <a href="#register">Registrar mi Camara</a>
       <a href="#technology">Tecnologia</a>
     </div>
     <div class="footer-col">
@@ -702,39 +690,68 @@
     var v=d.hci||d.bci||d.score||d.value; document.getElementById('hciValue').textContent=v!==undefined?parseFloat(v).toFixed(2):'0.82';
   }).catch(function(){document.getElementById('hciValue').textContent='0.82';});
 
-  window.handleDemo = function(e) {
+  // Stripe-integrated chamber registration
+  var STRIPE_PUBLISHABLE_KEY = window.STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder';
+  var stripe = null, cardElement = null;
+  if (typeof Stripe !== 'undefined') {
+    stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+    var elements = stripe.elements();
+    cardElement = elements.create('card', { style: { base: { fontSize: '15px', color: '#0f172a', '::placeholder': { color: '#94a3b8' } } } });
+    cardElement.mount('#card-element');
+  }
+
+  window.handleSignup = function(e) {
     e.preventDefault();
-    var form=e.target, btn=form.querySelector('.btn-submit'), msg=document.getElementById('formMsg');
-    btn.disabled=true; btn.textContent='Enviando solicitud...'; msg.className='form-msg'; msg.style.display='';
-    var d={
-      first_name:form.first_name.value.trim(),
-      last_name:form.last_name.value.trim(),
-      email:form.email.value.trim(),
-      chamber_name:form.chamber_name.value.trim(),
-      region:form.region.value,
-      members_count:form.members_count.value,
-      message:form.message?form.message.value.trim():''
-    };
-    fetch(BASE+'/api/demo-requests',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)})
-    .then(function(r){return r.json();})
-    .then(function(res){
-      if(res.success){
-        msg.className='form-msg success';
-        msg.textContent='Solicitud recibida. Nos pondremos en contacto contigo pronto.';
-        form.reset();
-      } else {
-        msg.className='form-msg error';
-        msg.textContent=res.error||'Error al enviar. Intenta de nuevo.';
-      }
-    })
-    .catch(function(){
-      msg.className='form-msg error';
-      msg.textContent='Error de conexion. Intenta de nuevo.';
-    })
-    .finally(function(){
-      btn.disabled=false;
-      btn.textContent='Solicitar Demo';
-    });
+    var form = e.target;
+    var btn = form.querySelector('.btn-submit');
+    var msg = document.getElementById('formMsg');
+    var origLabel = 'Crear mi Camara &mdash; $150 + $99/mes';
+    btn.disabled = true;
+    btn.textContent = 'Procesando pago...';
+    msg.className = 'form-msg';
+    msg.style.display = '';
+
+    function fail(text) {
+      msg.className = 'form-msg error';
+      msg.textContent = text;
+      btn.disabled = false;
+      btn.innerHTML = origLabel;
+    }
+
+    if (!stripe || !cardElement) {
+      return fail('Sistema de pago no disponible. Recarga la pagina e intenta de nuevo.');
+    }
+
+    stripe.createPaymentMethod({ type: 'card', card: cardElement }).then(function(r) {
+      if (r.error) return fail(r.error.message);
+      var body = {
+        chamber_name: form.chamber_name.value.trim(),
+        country: form.country.value.trim(),
+        contact_email: form.contact_email.value.trim().toLowerCase(),
+        owner_first_name: form.owner_first_name.value.trim(),
+        owner_last_name: form.owner_last_name.value.trim(),
+        owner_password: form.owner_password.value,
+        brand_domain: 'camaravirtual.app',
+        stripe_payment_method_id: r.paymentMethod.id
+      };
+      return fetch('/api/chambers/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Source-Domain': 'camaravirtual.app' },
+        body: JSON.stringify(body)
+      }).then(function(res) { return res.json(); }).then(function(json) {
+        if (json.success) {
+          msg.className = 'form-msg success';
+          msg.innerHTML = 'Camara creada: <strong>' + json.data.chamber.slug + '</strong>. Redirigiendo a tu panel...';
+          try {
+            localStorage.setItem('chamber_token', json.data.token);
+            localStorage.setItem('chamber_slug', json.data.chamber.slug);
+          } catch (e) {}
+          setTimeout(function() { window.location.href = json.data.chamber.dashboard_url || ('/' + json.data.chamber.slug + '/dashboard/'); }, 1500);
+        } else {
+          fail(json.error || 'Error al crear la camara. Intenta de nuevo.');
+        }
+      });
+    }).catch(function(err) { fail('Error: ' + (err.message || 'desconocido')); });
   };
 
   var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.style.opacity='1';e.target.style.transform='translateY(0)';}});},{threshold:0.1});
