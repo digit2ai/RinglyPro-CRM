@@ -72,7 +72,7 @@ app.use((req, res, next) => {
                          p.startsWith('/signup/') || p.startsWith('/dashboard/') ||
                          p.startsWith('/audio/') || p.startsWith('/img/') ||
                          p.startsWith('/chamber-landing/') || p.startsWith('/all-in-one/');
-    if (!isSlug && !isKnownRoute && /\.(html|css|js|png|jpg|jpeg|gif|svg|webp|ico|mp4|webm|pdf)$/i.test(p)) {
+    if (!isSlug && !isKnownRoute && /\.(html|css|js|png|jpg|jpeg|gif|svg|webp|ico|mp4|webm|pdf|mp3|m4a|ogg|wav|woff|woff2|ttf|otf|json)$/i.test(p)) {
       const fs = require('fs');
       const candidate = path.join(__dirname, '..', 'public', 'chamber', 'hispamind', p);
       if (fs.existsSync(candidate)) {
@@ -108,7 +108,7 @@ app.use((req, res, next) => {
                          p.startsWith('/signup/') || p.startsWith('/dashboard/') ||
                          p.startsWith('/audio/') || p.startsWith('/img/') ||
                          p.startsWith('/chamber-landing/') || p.startsWith('/all-in-one/');
-    if (!isSlug && !isKnownRoute && /\.(html|css|js|png|jpg|jpeg|gif|svg|webp|ico|mp4|webm|pdf)$/i.test(p)) {
+    if (!isSlug && !isKnownRoute && /\.(html|css|js|png|jpg|jpeg|gif|svg|webp|ico|mp4|webm|pdf|mp3|m4a|ogg|wav|woff|woff2|ttf|otf|json)$/i.test(p)) {
       const fs = require('fs');
       const candidate = path.join(__dirname, '..', 'public', 'chamber', 'virtualchamber', p);
       if (fs.existsSync(candidate)) {
