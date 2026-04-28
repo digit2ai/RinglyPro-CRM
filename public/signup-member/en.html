@@ -15,6 +15,11 @@
   label { display:block; font-size:11px; font-weight:600; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
   input, select, textarea { width:100%; padding:11px 13px; border-radius:8px; border:1px solid rgba(255,255,255,0.18); background:rgba(255,255,255,0.06); color:#fff; font-size:15px; outline:none; margin-bottom:14px; font-family:inherit; }
   input:focus { border-color:#FCD116; }
+  .pw-wrap { position:relative; margin-bottom:14px; }
+  .pw-wrap input { margin-bottom:0; padding-right:64px; }
+  .pw-toggle { position:absolute; top:50%; right:10px; transform:translateY(-50%); background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18); color:rgba(255,255,255,0.8); font-size:11px; font-weight:600; padding:5px 9px; border-radius:6px; cursor:pointer; letter-spacing:0.5px; text-transform:uppercase; }
+  .pw-toggle:hover { background:rgba(255,255,255,0.16); color:#fff; }
+  .pw-mismatch { color:#ff8b8b; font-size:12px; margin:-8px 0 12px; min-height:14px; }
   .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   button { width:100%; padding:14px; background:#CE1126; color:#fff; border:none; border-radius:8px; font-size:15px; font-weight:700; cursor:pointer; margin-top:6px; }
   button:hover { background:#a50d1e; }
@@ -53,7 +58,16 @@
     <label for="email">Email</label>
     <input type="email" id="email" required autocomplete="email">
     <label for="password">Password (min 8 chars)</label>
-    <input type="password" id="password" required minlength="8" autocomplete="new-password">
+    <div class="pw-wrap">
+      <input type="password" id="password" required minlength="8" autocomplete="new-password">
+      <button type="button" class="pw-toggle" data-target="password" aria-label="Show password">Show</button>
+    </div>
+    <label for="password_confirm">Confirm password</label>
+    <div class="pw-wrap">
+      <input type="password" id="password_confirm" required minlength="8" autocomplete="new-password">
+      <button type="button" class="pw-toggle" data-target="password_confirm" aria-label="Show password">Show</button>
+    </div>
+    <div class="pw-mismatch" id="pwMismatch"></div>
     <div class="row">
       <div>
         <label for="country">Country</label>
@@ -107,13 +121,41 @@
     showMsg('Payment cancelled. Complete the form to retry.', 'error');
   }
 
+  document.querySelectorAll('.pw-toggle').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var input = document.getElementById(this.dataset.target);
+      if (!input) return;
+      var showing = input.type === 'text';
+      input.type = showing ? 'password' : 'text';
+      this.textContent = showing ? 'Show' : 'Hide';
+    });
+  });
+
+  function checkMatch() {
+    var p1 = document.getElementById('password').value;
+    var p2 = document.getElementById('password_confirm').value;
+    var box = document.getElementById('pwMismatch');
+    if (p2.length === 0) { box.textContent = ''; return true; }
+    if (p1 !== p2) { box.textContent = 'Passwords do not match'; return false; }
+    box.textContent = '';
+    return true;
+  }
+  document.getElementById('password').addEventListener('input', checkMatch);
+  document.getElementById('password_confirm').addEventListener('input', checkMatch);
+
   document.getElementById('signupForm').addEventListener('submit', async function(e) {
     e.preventDefault();
+    var pw = document.getElementById('password').value;
+    var pw2 = document.getElementById('password_confirm').value;
+    if (pw !== pw2) {
+      document.getElementById('pwMismatch').textContent = 'Passwords do not match';
+      return;
+    }
     var btn = document.getElementById('submitBtn');
     btn.disabled = true; btn.textContent = 'Processing...';
     var body = {
       email: document.getElementById('email').value.trim().toLowerCase(),
-      password: document.getElementById('password').value,
+      password: pw,
       first_name: document.getElementById('first_name').value.trim(),
       last_name: document.getElementById('last_name').value.trim(),
       country: document.getElementById('country').value.trim() || null,
