@@ -159,6 +159,18 @@ app.use((req, res, next) => {
   next();
 });
 
+// Legacy chamber URL redirects -- BEFORE express.static so the redirect
+// fires for /chamber/hispamind/* before static serves the bundled HTML
+const LEGACY_CHAMBER_MAP_EARLY = { hispamind: 'cv-1', pacccfl: 'cv-2', pcci: 'cv-3' };
+app.use('/chamber/:legacy_slug', (req, res, next) => {
+    const newSlug = LEGACY_CHAMBER_MAP_EARLY[req.params.legacy_slug];
+    if (!newSlug) return next();
+    // Don't redirect API paths -- legacy chamber-template routes still need them
+    if (req.path.startsWith('/api')) return next();
+    const search = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
+    return res.redirect(301, '/' + newSlug + req.path + search);
+});
+
 app.use(express.static(path.join(__dirname, '../public')));
 
 // Serve all-in-one landing page (LaunchStack)
