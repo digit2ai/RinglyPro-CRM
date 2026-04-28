@@ -564,6 +564,79 @@ try {
     console.log('Chamber signup not available:', error.message);
 }
 
+// Multi-Tenant Per-Chamber Routing (cv-* / vc-* slugs)
+// Serves the per-chamber landing page + dashboard based on chamber.primary_language.
+// Mounted BEFORE legacy /chamber/<prefix>/ routes so the unified slugs win.
+try {
+    const path = require('path');
+    const fs = require('fs');
+    const { lookupChamber } = require('../chamber-template/lib/chamber-resolver');
+    const SLUG_PATTERN = /^(cv|vc)-\d+$/;
+
+    function isChamberSlug(s) { return typeof s === 'string' && SLUG_PATTERN.test(s); }
+
+    // Per-chamber landing page (root: /<slug>/ or /<slug>)
+    app.get(['/:chamber_slug', '/:chamber_slug/'], async (req, res, next) => {
+        const slug = req.params.chamber_slug;
+        if (!isChamberSlug(slug)) return next();
+        try {
+            const chamber = await lookupChamber(slug);
+            if (!chamber) return res.status(404).send('Chamber not found');
+            const file = chamber.primary_language === 'en' ? 'en.html' : 'index.html';
+            return res.sendFile(path.join(__dirname, '..', 'public', 'chamber-landing', file));
+        } catch (e) {
+            return next(e);
+        }
+    });
+
+    // Per-chamber dashboard (/<slug>/dashboard or /<slug>/dashboard/...)
+    app.get(['/:chamber_slug/dashboard', '/:chamber_slug/dashboard/'], async (req, res, next) => {
+        const slug = req.params.chamber_slug;
+        if (!isChamberSlug(slug)) return next();
+        try {
+            const chamber = await lookupChamber(slug);
+            if (!chamber) return res.status(404).send('Chamber not found');
+            const file = chamber.primary_language === 'en' ? 'en.html' : 'index.html';
+            // Try dashboard/<file>; fall back to existing chamber dashboard if dashboard/ doesn't exist yet
+            const targetPath = path.join(__dirname, '..', 'public', 'dashboard', file);
+            if (fs.existsSync(targetPath)) return res.sendFile(targetPath);
+            // Fallback: hispamind dashboard (Spanish original)
+            return res.sendFile(path.join(__dirname, '..', 'public', 'chamber', 'hispamind', 'dashboard', 'index.html'));
+        } catch (e) {
+            return next(e);
+        }
+    });
+
+    // Per-chamber static assets under /<slug>/dashboard/* (CSS, images)
+    app.use('/:chamber_slug/dashboard', (req, res, next) => {
+        if (!isChamberSlug(req.params.chamber_slug)) return next();
+        const dashDir = path.join(__dirname, '..', 'public', 'dashboard');
+        if (fs.existsSync(dashDir)) {
+            return require('express').static(dashDir)(req, res, next);
+        }
+        return require('express').static(path.join(__dirname, '..', 'public', 'chamber', 'hispamind', 'dashboard'))(req, res, next);
+    });
+
+    // Per-chamber login page (separate static file)
+    app.get('/:chamber_slug/login', async (req, res, next) => {
+        const slug = req.params.chamber_slug;
+        if (!isChamberSlug(slug)) return next();
+        try {
+            const chamber = await lookupChamber(slug);
+            if (!chamber) return res.status(404).send('Chamber not found');
+            // Chamber login page is the dashboard's same login -- redirects to /dashboard/ which handles auth
+            const file = chamber.primary_language === 'en' ? 'en.html' : 'index.html';
+            const dashFile = path.join(__dirname, '..', 'public', 'dashboard', file);
+            if (fs.existsSync(dashFile)) return res.sendFile(dashFile);
+            return res.sendFile(path.join(__dirname, '..', 'public', 'chamber', 'hispamind', 'dashboard', 'index.html'));
+        } catch (e) { return next(e); }
+    });
+
+    console.log('🏛️ Per-chamber routing active for cv-*/vc-* slugs (landing + dashboard + login)');
+} catch (error) {
+    console.log('Per-chamber routing not available:', error.message);
+}
+
 // Multi-Tenant Unified Chamber Routes (cv-* / vc-* slugs)
 // Mounted under /:chamber_slug/api/* with chamber-resolver middleware.
 // Chambers using the unified schema (cv-1, cv-2, cv-3, and any cv-101+ / vc-101+

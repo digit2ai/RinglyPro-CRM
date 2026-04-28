@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Camara Virtual</title>
+<style>
+  :root {
+    --primary: #1a3d8f;
+    --accent: #ffc107;
+    --accent-dark: #b8860b;
+    --red: #dc2626;
+    --green: #16a34a;
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-300: #cbd5e1;
+    --gray-500: #64748b;
+    --gray-700: #334155;
+    --gray-900: #0f172a;
+    --navy: #0a1f4a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, system-ui, sans-serif; color: var(--gray-900); background: var(--gray-50); }
+
+  .topbar { background: var(--navy); color: white; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; }
+  .topbar .brand { display: flex; align-items: center; gap: 12px; }
+  .topbar .brand img { height: 40px; }
+  .topbar .brand span { font-weight: 700; font-size: 18px; }
+  .topbar .brand span span { color: var(--accent); }
+  .topbar nav a { color: white; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; margin-left: 8px; }
+  .topbar nav a.cta { background: var(--accent); color: var(--navy); }
+  .topbar nav a:hover:not(.cta) { background: rgba(255,255,255,0.1); }
+
+  .hero { background: linear-gradient(135deg, var(--primary) 0%, #2855ab 100%); color: white; padding: 80px 24px 60px; text-align: center; }
+  .hero h1 { font-size: 42px; margin-bottom: 16px; line-height: 1.2; }
+  .hero p { font-size: 18px; opacity: 0.92; max-width: 700px; margin: 0 auto 24px; }
+  .hero .actions { margin-top: 28px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .hero .btn { padding: 14px 28px; border-radius: 8px; font-weight: 700; font-size: 15px; text-decoration: none; display: inline-block; transition: all 0.15s; }
+  .hero .btn-primary { background: var(--accent); color: var(--navy); }
+  .hero .btn-primary:hover { background: #ffd54f; transform: translateY(-2px); }
+  .hero .btn-outline { border: 2px solid white; color: white; }
+  .hero .btn-outline:hover { background: white; color: var(--primary); }
+
+  .stats { background: white; padding: 40px 24px; border-bottom: 1px solid var(--gray-200); }
+  .stats-grid { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+  .stat-card { text-align: center; padding: 20px; }
+  .stat-card .value { font-size: 36px; font-weight: 800; color: var(--primary); }
+  .stat-card .label { font-size: 13px; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+
+  .section { max-width: 1100px; margin: 0 auto; padding: 60px 24px; }
+  .section h2 { font-size: 28px; color: var(--primary); margin-bottom: 24px; text-align: center; }
+  .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+  .card { background: white; padding: 24px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); border-left: 4px solid var(--accent); }
+  .card h3 { font-size: 17px; margin-bottom: 8px; color: var(--gray-900); }
+  .card p { font-size: 14px; color: var(--gray-700); line-height: 1.5; }
+  .card .meta { margin-top: 10px; font-size: 12px; color: var(--gray-500); display: flex; gap: 12px; flex-wrap: wrap; }
+  .card .meta span { background: var(--gray-100); padding: 3px 8px; border-radius: 4px; }
+
+  .cta-section { background: var(--navy); color: white; padding: 60px 24px; text-align: center; }
+  .cta-section h2 { color: var(--accent); font-size: 28px; margin-bottom: 12px; }
+  .cta-section p { font-size: 16px; opacity: 0.85; margin-bottom: 24px; }
+  .cta-section .btn { padding: 16px 36px; background: var(--accent); color: var(--navy); border-radius: 8px; font-weight: 700; text-decoration: none; font-size: 16px; }
+
+  .footer { background: var(--navy); color: rgba(255,255,255,0.7); padding: 24px; text-align: center; font-size: 13px; border-top: 1px solid rgba(255,255,255,0.1); }
+  .footer a { color: var(--accent); text-decoration: none; }
+
+  .loading { text-align: center; padding: 40px; color: var(--gray-500); }
+  .empty { text-align: center; padding: 30px; color: var(--gray-500); font-style: italic; }
+
+  @media (max-width: 640px) {
+    .hero h1 { font-size: 28px; }
+    .hero p { font-size: 15px; }
+    .topbar nav a { padding: 6px 10px; font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">
+    <img id="brandLogo" src="/img/camaravirtual-logo.png" alt="" onerror="this.style.display='none'">
+    <span id="brandName">Camara<span>Virtual</span></span>
+  </div>
+  <nav>
+    <a href="#" id="loginLink">Iniciar Sesion</a>
+    <a href="#" id="signupLink" class="cta">Unirse a la Camara</a>
+  </nav>
+</div>
+
+<section class="hero">
+  <h1 id="chamberName">Cargando camara...</h1>
+  <p id="chamberDescription">Plataforma digital para conectar empresarios y proyectos.</p>
+  <div class="actions">
+    <a id="signupBtn" href="#" class="btn btn-primary">Unete Ahora</a>
+    <a id="loginBtn" href="#" class="btn btn-outline">Iniciar Sesion</a>
+  </div>
+</section>
+
+<section class="stats">
+  <div class="stats-grid">
+    <div class="stat-card"><div class="value" id="stMembers">--</div><div class="label">Miembros Activos</div></div>
+    <div class="stat-card"><div class="value" id="stProjects">--</div><div class="label">Proyectos</div></div>
+    <div class="stat-card"><div class="value" id="stRfqs">--</div><div class="label">RFQs Abiertas</div></div>
+    <div class="stat-card"><div class="value" id="stSectors">--</div><div class="label">Sectores</div></div>
+  </div>
+</section>
+
+<section class="section">
+  <h2>Proyectos Recientes</h2>
+  <div id="projectList" class="grid-3"><div class="loading">Cargando...</div></div>
+</section>
+
+<section class="section" style="background:white;border-radius:12px;margin:0 auto 40px;">
+  <h2>Solicitudes de Cotizacion (RFQs) Abiertas</h2>
+  <div id="rfqList" class="grid-3"><div class="loading">Cargando...</div></div>
+</section>
+
+<section class="cta-section">
+  <h2>Listo para Unirte?</h2>
+  <p>Conecta con empresarios, descubre oportunidades y construye proyectos juntos.</p>
+  <a id="ctaSignup" href="#" class="btn">Crear mi Perfil de Miembro</a>
+</section>
+
+<div class="footer">
+  Esta camara opera en la plataforma <a href="https://camaravirtual.app" target="_blank">CamaraVirtual.app</a>.<br>
+  &copy; <span id="copyYear"></span> CamaraVirtual.app &middot; Plataforma SaaS para Camaras de Comercio
+</div>
+
+<script>
+(function() {
+  document.getElementById('copyYear').textContent = new Date().getFullYear();
+  const path = window.location.pathname.replace(/\/$/, '');
+  const slug = path.split('/').filter(Boolean)[0];
+  if (!slug) {
+    document.getElementById('chamberName').textContent = 'Camara no encontrada';
+    return;
+  }
+
+  // Wire URLs
+  const loginUrl = '/' + slug + '/login';
+  const signupUrl = '/' + slug + '/signup-member';
+  const dashUrl = '/' + slug + '/dashboard/';
+  document.getElementById('loginLink').href = loginUrl;
+  document.getElementById('signupLink').href = signupUrl;
+  document.getElementById('signupBtn').href = signupUrl;
+  document.getElementById('loginBtn').href = loginUrl;
+  document.getElementById('ctaSignup').href = signupUrl;
+
+  fetch('/' + slug + '/api/public/info')
+    .then(r => r.json())
+    .then(json => {
+      if (!json.success) {
+        document.getElementById('chamberName').textContent = 'Camara no disponible';
+        return;
+      }
+      const d = json.data;
+      document.title = d.name + ' - CamaraVirtual';
+      document.getElementById('chamberName').textContent = d.name;
+      if (d.country) {
+        document.getElementById('chamberDescription').textContent =
+          'Camara digital de ' + d.country + ' para conectar miembros y oportunidades de negocio.';
+      }
+      if (d.logo_url) document.getElementById('brandLogo').src = d.logo_url;
+
+      document.getElementById('stMembers').textContent = d.member_count || 0;
+      document.getElementById('stProjects').textContent = d.recent_projects?.length || 0;
+      document.getElementById('stRfqs').textContent = d.open_rfqs?.length || 0;
+      document.getElementById('stSectors').textContent = d.top_sectors?.length || 0;
+
+      // Projects
+      const projEl = document.getElementById('projectList');
+      if (!d.recent_projects || d.recent_projects.length === 0) {
+        projEl.innerHTML = '<div class="empty">No hay proyectos publicos por el momento.</div>';
+      } else {
+        projEl.innerHTML = d.recent_projects.map(p =>
+          '<div class="card"><h3>' + esc(p.title) + '</h3>' +
+          '<p>' + esc((p.description||'').substring(0, 140)) + '...</p>' +
+          '<div class="meta"><span>' + esc(p.sector || '--') + '</span><span>' + esc(p.plan_status || '--') + '</span></div>' +
+          '</div>'
+        ).join('');
+      }
+
+      // RFQs
+      const rfqEl = document.getElementById('rfqList');
+      if (!d.open_rfqs || d.open_rfqs.length === 0) {
+        rfqEl.innerHTML = '<div class="empty">No hay RFQs abiertas en este momento.</div>';
+      } else {
+        rfqEl.innerHTML = d.open_rfqs.map(r =>
+          '<div class="card" style="border-left-color:var(--green)"><h3>' + esc(r.title) + '</h3>' +
+          '<div class="meta"><span>' + esc(r.sector || '--') + '</span>' +
+          (r.budget_range ? '<span>' + esc(r.budget_range) + '</span>' : '') +
+          (r.deadline ? '<span>Fecha limite: ' + new Date(r.deadline).toLocaleDateString() + '</span>' : '') +
+          '</div></div>'
+        ).join('');
+      }
+    })
+    .catch(e => {
+      document.getElementById('chamberName').textContent = 'Error al cargar camara';
+      console.error(e);
+    });
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+})();
+</script>
+</body>
+</html>
