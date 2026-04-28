@@ -8,7 +8,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
-<script src="https://js.stripe.com/v3/"></script>
 <style>
   :root {
     --blue: #003DA5;
@@ -595,7 +594,7 @@
             <div style="font-family:'Inter',sans-serif;font-size:14px;color:rgba(255,255,255,0.6);">Tu camara digital, lista en menos de 90 segundos</div>
           </div>
           <div style="background:var(--yellow);color:var(--blue-dark);padding:10px 14px;border-radius:8px;text-align:center;font-weight:700;font-size:13px;margin-bottom:18px;">
-            $150 USD pago unico de configuracion + $99 USD/mes &middot; Cancela cuando quieras
+            Registro de Camara GRATIS &middot; Cada miembro paga su propia suscripcion
           </div>
           <div class="form-group"><label>Nombre de la Camara *</label><input type="text" name="chamber_name" required placeholder="Camara de Comercio de Madrid"></div>
           <div class="form-row">
@@ -607,11 +606,10 @@
             <div class="form-group"><label>Tu apellido *</label><input type="text" name="owner_last_name" required placeholder="Rodriguez"></div>
           </div>
           <div class="form-group"><label>Contrasena (minimo 8 caracteres) *</label><input type="password" name="owner_password" required minlength="8" placeholder="Crea una contrasena segura"></div>
-          <div class="form-group"><label>Tarjeta de credito *</label><div id="card-element" style="background:white;padding:12px 14px;border-radius:8px;"></div></div>
-          <button type="submit" class="btn-submit" style="font-size:16px;padding:16px;">Crear mi Camara &mdash; $150 + $99/mes</button>
+          <button type="submit" class="btn-submit" style="font-size:16px;padding:16px;">Crear mi Camara &mdash; Gratis</button>
           <div class="form-msg" id="formMsg"></div>
           <div style="font-size:11px;color:rgba(255,255,255,0.55);text-align:center;margin-top:10px;">
-            Al continuar aceptas los terminos del servicio. Pago seguro procesado por Stripe.
+            Al continuar aceptas los terminos del servicio. Sin tarjeta de credito requerida.
           </div>
         </form>
       </div>
@@ -690,24 +688,15 @@
     var v=d.hci||d.bci||d.score||d.value; document.getElementById('hciValue').textContent=v!==undefined?parseFloat(v).toFixed(2):'0.82';
   }).catch(function(){document.getElementById('hciValue').textContent='0.82';});
 
-  // Stripe-integrated chamber registration
-  var STRIPE_PUBLISHABLE_KEY = window.STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder';
-  var stripe = null, cardElement = null;
-  if (typeof Stripe !== 'undefined') {
-    stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
-    var elements = stripe.elements();
-    cardElement = elements.create('card', { style: { base: { fontSize: '15px', color: '#0f172a', '::placeholder': { color: '#94a3b8' } } } });
-    cardElement.mount('#card-element');
-  }
-
+  // Free chamber registration -- no payment required
   window.handleSignup = function(e) {
     e.preventDefault();
     var form = e.target;
     var btn = form.querySelector('.btn-submit');
     var msg = document.getElementById('formMsg');
-    var origLabel = 'Crear mi Camara &mdash; $150 + $99/mes';
+    var origLabel = 'Crear mi Camara &mdash; Gratis';
     btn.disabled = true;
-    btn.textContent = 'Procesando pago...';
+    btn.textContent = 'Creando tu camara...';
     msg.className = 'form-msg';
     msg.style.display = '';
 
@@ -718,40 +707,36 @@
       btn.innerHTML = origLabel;
     }
 
-    if (!stripe || !cardElement) {
-      return fail('Sistema de pago no disponible. Recarga la pagina e intenta de nuevo.');
-    }
+    var body = {
+      chamber_name: form.chamber_name.value.trim(),
+      country: form.country.value.trim(),
+      contact_email: form.contact_email.value.trim().toLowerCase(),
+      owner_first_name: form.owner_first_name.value.trim(),
+      owner_last_name: form.owner_last_name.value.trim(),
+      owner_password: form.owner_password.value,
+      brand_domain: 'camaravirtual.app'
+    };
 
-    stripe.createPaymentMethod({ type: 'card', card: cardElement }).then(function(r) {
-      if (r.error) return fail(r.error.message);
-      var body = {
-        chamber_name: form.chamber_name.value.trim(),
-        country: form.country.value.trim(),
-        contact_email: form.contact_email.value.trim().toLowerCase(),
-        owner_first_name: form.owner_first_name.value.trim(),
-        owner_last_name: form.owner_last_name.value.trim(),
-        owner_password: form.owner_password.value,
-        brand_domain: 'camaravirtual.app',
-        stripe_payment_method_id: r.paymentMethod.id
-      };
-      return fetch('/api/chambers/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Source-Domain': 'camaravirtual.app' },
-        body: JSON.stringify(body)
-      }).then(function(res) { return res.json(); }).then(function(json) {
-        if (json.success) {
-          msg.className = 'form-msg success';
-          msg.innerHTML = 'Camara creada: <strong>' + json.data.chamber.slug + '</strong>. Redirigiendo a tu panel...';
-          try {
-            localStorage.setItem('chamber_token', json.data.token);
-            localStorage.setItem('chamber_slug', json.data.chamber.slug);
-          } catch (e) {}
-          setTimeout(function() { window.location.href = json.data.chamber.dashboard_url || ('/' + json.data.chamber.slug + '/dashboard/'); }, 1500);
-        } else {
-          fail(json.error || 'Error al crear la camara. Intenta de nuevo.');
-        }
-      });
-    }).catch(function(err) { fail('Error: ' + (err.message || 'desconocido')); });
+    fetch('/api/chambers/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Source-Domain': 'camaravirtual.app' },
+      body: JSON.stringify(body)
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(json) {
+      if (json.success) {
+        msg.className = 'form-msg success';
+        msg.innerHTML = 'Camara creada: <strong>' + json.data.chamber.slug + '</strong>. Redirigiendo a tu panel...';
+        try {
+          localStorage.setItem('chamber_token', json.data.token);
+          localStorage.setItem('chamber_slug', json.data.chamber.slug);
+        } catch (e) {}
+        setTimeout(function() { window.location.href = json.data.chamber.dashboard_url || ('/' + json.data.chamber.slug + '/dashboard/'); }, 1500);
+      } else {
+        fail(json.error || 'Error al crear la camara. Intenta de nuevo.');
+      }
+    })
+    .catch(function(err) { fail('Error: ' + (err.message || 'desconocido')); });
   };
 
   var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.style.opacity='1';e.target.style.transform='translateY(0)';}});},{threshold:0.1});

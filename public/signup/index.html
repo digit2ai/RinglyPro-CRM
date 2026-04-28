@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Registra tu Camara - CamaraVirtual.app</title>
-<script src="https://js.stripe.com/v3/"></script>
 <style>
   :root {
     --primary: #1a3d8f;
@@ -111,7 +110,7 @@
     <p>Lanza tu plataforma digital para miembros en menos de 60 segundos</p>
   </div>
   <div class="pricing-banner">
-    $150 USD pago unico de configuracion + $99 USD/mes &middot; Cancela cuando quieras
+    Registro de Camara GRATIS &middot; Cada miembro paga su propia suscripcion
   </div>
   <form id="signupForm" class="form">
     <h2 style="margin-bottom:18px;color:var(--primary)">Datos de la Camara</h2>
@@ -150,14 +149,8 @@
       <input name="owner_password" type="password" required minlength="8">
     </div>
 
-    <h2 style="margin:24px 0 18px;color:var(--primary)">Pago</h2>
-    <div class="form-group">
-      <label>Tarjeta de Credito *</label>
-      <div id="card-element" class="stripe-element"></div>
-    </div>
-
     <button type="submit" class="btn" id="submitBtn">
-      Crear mi Camara &mdash; $150 + $99/mes
+      Crear mi Camara &mdash; Gratis
     </button>
     <div id="msg"></div>
   </form>
@@ -168,14 +161,6 @@
 </div>
 
 <script>
-const STRIPE_PUBLISHABLE = (window.STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder');
-const stripe = Stripe(STRIPE_PUBLISHABLE);
-const elements = stripe.elements();
-const card = elements.create('card', {
-  style: { base: { fontSize: '15px', color: '#0f172a', '::placeholder': { color: '#94a3b8' } } }
-});
-card.mount('#card-element');
-
 const form = document.getElementById('signupForm');
 const submitBtn = document.getElementById('submitBtn');
 const msg = document.getElementById('msg');
@@ -184,22 +169,13 @@ form.addEventListener('submit', async (e) => {
   e.preventDefault();
   msg.innerHTML = '';
   submitBtn.disabled = true;
-  submitBtn.textContent = 'Procesando pago...';
+  submitBtn.textContent = 'Creando tu camara...';
 
   try {
-    const { paymentMethod, error: stripeErr } = await stripe.createPaymentMethod({ type: 'card', card });
-    if (stripeErr) {
-      msg.innerHTML = '<div class="msg error">' + stripeErr.message + '</div>';
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Crear mi Camara — $150 + $99/mes';
-      return;
-    }
-
     const fd = new FormData(form);
     const body = {};
     fd.forEach((v, k) => body[k] = v);
     body.brand_domain = 'camaravirtual.app';
-    body.stripe_payment_method_id = paymentMethod.id;
 
     const res = await fetch('/api/chambers/signup', {
       method: 'POST',
@@ -212,18 +188,16 @@ form.addEventListener('submit', async (e) => {
       msg.innerHTML = '<div class="msg success">Camara creada: <strong>' + json.data.chamber.slug + '</strong>. Redirigiendo...</div>';
       localStorage.setItem('chamber_token', json.data.token);
       localStorage.setItem('chamber_slug', json.data.chamber.slug);
-      setTimeout(() => {
-        window.location.href = json.data.chamber.dashboard_url;
-      }, 1500);
+      setTimeout(() => { window.location.href = json.data.chamber.dashboard_url; }, 1500);
     } else {
       msg.innerHTML = '<div class="msg error">' + (json.error || 'Error en la creacion') + '</div>';
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Crear mi Camara — $150 + $99/mes';
+      submitBtn.textContent = 'Crear mi Camara — Gratis';
     }
   } catch (err) {
     msg.innerHTML = '<div class="msg error">Error: ' + err.message + '</div>';
     submitBtn.disabled = false;
-    submitBtn.textContent = 'Crear mi Camara — $150 + $99/mes';
+    submitBtn.textContent = 'Crear mi Camara — Gratis';
   }
 });
 </script>

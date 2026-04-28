@@ -81,59 +81,14 @@ router.post('/signup', async (req, res) => {
     const primaryLanguage = finalDomain === 'virtualchamber.app' ? 'en' : 'es';
     const slugPrefix = finalDomain === 'virtualchamber.app' ? 'vc' : 'cv';
 
-    // ---- Stripe charge ----
+    // ---- Chamber registration is FREE ----
+    // No setup fee, no recurring subscription. Members will pay their own
+    // individual subscriptions inside the chamber later. Stripe billing is
+    // wired but disabled at signup time -- can be re-enabled by passing a
+    // stripe_payment_method_id (kept for future paid-tier support).
     let stripeCustomer = null;
     let stripeSubscription = null;
     let setupChargeId = null;
-
-    if (stripe && stripe_payment_method_id) {
-      try {
-        // 1. Create customer
-        stripeCustomer = await stripe.customers.create({
-          email: contact_email,
-          name: chamber_name,
-          payment_method: stripe_payment_method_id,
-          invoice_settings: { default_payment_method: stripe_payment_method_id },
-          metadata: { chamber_name, brand_domain: finalDomain, signup_source: 'chamber_self_signup' }
-        });
-
-        // 2. One-time setup fee $150
-        const setupCharge = await stripe.paymentIntents.create({
-          amount: 15000,
-          currency: 'usd',
-          customer: stripeCustomer.id,
-          payment_method: stripe_payment_method_id,
-          confirm: true,
-          off_session: true,
-          description: `Chamber setup fee -- ${chamber_name}`,
-          metadata: { type: 'setup_fee', chamber_name }
-        });
-        setupChargeId = setupCharge.id;
-        if (setupCharge.status !== 'succeeded') {
-          throw new Error(`Setup payment status: ${setupCharge.status}`);
-        }
-
-        // 3. Monthly subscription $99
-        if (STRIPE_PRICE_MONTHLY) {
-          stripeSubscription = await stripe.subscriptions.create({
-            customer: stripeCustomer.id,
-            items: [{ price: STRIPE_PRICE_MONTHLY }],
-            default_payment_method: stripe_payment_method_id,
-            metadata: { chamber_name }
-          });
-        } else {
-          console.warn('STRIPE_PRICE_MONTHLY not set -- skipping recurring subscription');
-        }
-      } catch (stripeErr) {
-        await trans.rollback();
-        console.error('[signup] Stripe error:', stripeErr.message);
-        return res.status(402).json({
-          success: false,
-          error: `Payment failed: ${stripeErr.message}`,
-          stripe_error_code: stripeErr.code
-        });
-      }
-    }
 
     // ---- Generate slug from sequence ----
     const [{ next_seq }] = await sequelize.query(
@@ -142,24 +97,20 @@ router.post('/signup', async (req, res) => {
     );
     const slug = `${slugPrefix}-${next_seq}`;
 
-    // ---- Insert chamber ----
+    // ---- Insert chamber (FREE registration; Stripe fields stay nullable) ----
     const [chamber] = await sequelize.query(
       `INSERT INTO chambers (slug, name, brand_domain, primary_language, country, description, logo_url,
                              contact_email, status, stripe_customer_id, stripe_subscription_id,
                              setup_fee_paid_at, subscription_status, monthly_amount_cents, setup_fee_cents,
                              created_at, updated_at)
        VALUES (:slug, :name, :domain, :lang, :country, :desc, :logo, :email, 'active',
-               :sc, :ss, :paid_at, :sub_status, 9900, 15000, NOW(), NOW())
+               NULL, NULL, NULL, 'free_chamber_registration', 0, 0, NOW(), NOW())
        RETURNING *`,
       {
         replacements: {
           slug, name: chamber_name, domain: finalDomain, lang: primaryLanguage,
           country: country || null, desc: description || null, logo: logo_url || null,
-          email: contact_email,
-          sc: stripeCustomer?.id || null,
-          ss: stripeSubscription?.id || null,
-          paid_at: setupChargeId ? new Date() : null,
-          sub_status: stripeSubscription?.status || (stripe ? 'active' : 'test_mode')
+          email: contact_email
         },
         type: QueryTypes.SELECT,
         transaction: trans
@@ -210,9 +161,8 @@ router.post('/signup', async (req, res) => {
         },
         owner: { id: owner.id, email: owner.email, name: `${owner.first_name} ${owner.last_name}` },
         billing: {
-          setup_fee_paid: setupChargeId ? '$150.00' : 'TEST MODE -- no charge',
-          monthly_subscription: stripeSubscription ? '$99.00/mo active' : 'TEST MODE -- no subscription',
-          stripe_customer_id: stripeCustomer?.id || null
+          chamber_registration: 'FREE',
+          note: 'Members will pay individual subscriptions inside the chamber'
         },
         token
       }
@@ -282,6 +232,8 @@ router.post('/stripe/webhook', express.raw({ type: 'application/json' }), async 
 router.get('/signup/health', async (req, res) => {
   res.json({
     success: true,
+    chamber_registration: 'FREE',
+    member_subscriptions: 'individual_per_member',
     stripe_configured: !!stripe,
     stripe_recurring_price: !!STRIPE_PRICE_MONTHLY,
     webhook_secret_set: !!STRIPE_WEBHOOK_SECRET,
