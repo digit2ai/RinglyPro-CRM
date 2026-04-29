@@ -696,32 +696,63 @@ body {
    MOBILE-SPECIFIC CALENDAR (phones, < 640px)
    =========================================== */
 @media (max-width: 640px) {
-  /* Section header buttons wrap onto multiple lines and shrink */
-  .section-header { gap: 8px; flex-wrap: wrap; }
-  .section-header h3 { font-size: 16px; min-width: 0 !important; }
-  .section-header .btn-sm { padding: 6px 10px; font-size: 12px; }
+  /* Force the page to never scroll horizontally on mobile */
+  body, .content, .view-container { overflow-x: hidden; max-width: 100vw; }
 
-  /* Calendar body: use most of the screen height, no horizontal scroll */
-  .cal-week-body { max-height: 75vh; }
+  /* Section header: stack vertically, full-width children, no min-width
+     on the title (the 220px min-width was pushing the row past the viewport
+     and forcing the whole calendar grid below it into horizontal scroll). */
+  .section-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px;
+  }
+  .section-header > div {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    justify-content: center !important;
+    width: 100%;
+  }
+  .section-header h3 {
+    flex: 1 0 100%;
+    text-align: center;
+    min-width: 0 !important;
+    font-size: 15px;
+    margin: 0 !important;
+  }
+  .section-header .btn-sm { padding: 5px 9px; font-size: 11px; }
+  .section-header > .btn-primary { width: 100%; }
+
+  /* Calendar body: shorter so the controls + calendar both fit one screen */
+  .cal-week-body { max-height: calc(100vh - 240px); }
 
   /* Time gutter narrower so day columns get more room */
-  .cal-time-gutter { width: 44px; }
-  .cal-hour-label { font-size: 10px; padding-right: 4px; }
-  .cal-week-headers { grid-template-columns: 44px 1fr !important; }
-  .cal-week-body { grid-template-columns: 44px 1fr !important; }
-  .cal-allday-row { grid-template-columns: 44px 1fr !important; }
+  .cal-time-gutter { width: 40px; }
+  .cal-hour-label { font-size: 10px; padding-right: 3px; }
+  .cal-week-headers { grid-template-columns: 40px 1fr !important; }
+  .cal-week-body { grid-template-columns: 40px 1fr !important; }
+  .cal-allday-row { grid-template-columns: 40px 1fr !important; }
   .cal-allday-label { font-size: 9px; padding: 4px; }
+  .cal-week-day-header { padding: 6px 1px !important; }
+  .cal-week-day-header > div:first-child { font-size: 9px !important; }
+  .cal-week-day-header > div:last-child { font-size: 14px !important; }
 
-  /* Larger touch targets for slot interaction */
-  .cal-slot { min-height: 24px; }
+  /* Slots & events: bigger touch + readable text */
+  .cal-slot { min-height: 22px; }
+  .cal-event { left: 2px; right: 2px; padding: 2px 4px; }
+  .cal-event-title { font-size: 10px; }
+  .cal-event-time { font-size: 9px; }
 
-  /* Month-view cells: smaller minimum so a phone fits 6 weeks vertically */
-  .calendar-cell { min-height: 56px; padding: 3px; }
-  .calendar-day { font-size: 11px; margin-bottom: 2px; }
-  .calendar-event-dot { font-size: 9px; padding: 1px 4px; }
-  .calendar-header-cell { padding: 6px 0; font-size: 10px; }
+  /* Month-view: shrink cells, single-letter day headers */
+  .calendar-cell { min-height: 48px; padding: 2px; }
+  .calendar-day { font-size: 10px; margin-bottom: 1px; }
+  .calendar-event-dot { font-size: 8px; padding: 1px 3px; line-height: 1.2; }
+  .calendar-header-cell { padding: 5px 0; font-size: 9px; }
+  /* Replace SUN/MON/TUE with S/M/T on phones — visual only */
+  .calendar-header-cell { font-size: 0; }
+  .calendar-header-cell::first-letter { font-size: 11px; font-weight: 600; }
 
-  /* Drag-ghost label should not overflow */
+  /* Drag-ghost label */
   .cal-drag-label { font-size: 10px; padding: 2px 4px; }
 
   /* New Event modal: form rows stack vertically */
