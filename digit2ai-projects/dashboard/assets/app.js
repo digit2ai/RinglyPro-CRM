@@ -1506,27 +1506,84 @@ function _touchToMouseEvent(touchEvent, type) {
     type: type
   };
 }
+// Long-press pattern so vertical scrolling stays the default touch
+// behaviour. The user must hold a finger still for ~350 ms on a slot
+// before drag-to-create activates. A short tap still creates a 30-min
+// slot via the existing single-tap path. Any move within the threshold
+// cancels the long press so the page can scroll normally.
+const LONG_PRESS_MS = 350;
+const TOUCH_MOVE_TOLERANCE = 8; // px before we treat the gesture as scroll
+let _calTouchTimer = null;
+let _calTouchStartXY = null;
+let _calPendingTouch = null;
+
+function _clearLongPressTimer() {
+  if (_calTouchTimer) { clearTimeout(_calTouchTimer); _calTouchTimer = null; }
+}
+
 function _onCalTouchStart(e) {
   if (e.touches.length !== 1) return;
-  // Don't start drag on existing event
-  const target = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
-  if (target && target.closest('.cal-event')) return;
-  e.preventDefault();
-  _onCalMouseDown(_touchToMouseEvent(e, 'mousedown'));
+  const t = e.touches[0];
+  const target = document.elementFromPoint(t.clientX, t.clientY);
+  if (target && target.closest('.cal-event')) return; // tapping an existing event
+  // Don't preventDefault yet -- let the browser scroll until the long press fires
+  _calTouchStartXY = { x: t.clientX, y: t.clientY };
+  _calPendingTouch = e;
+  _clearLongPressTimer();
+  _calTouchTimer = setTimeout(() => {
+    _calTouchTimer = null;
+    if (!_calPendingTouch) return;
+    if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
+    _onCalMouseDown(_touchToMouseEvent(_calPendingTouch, 'mousedown'));
+  }, LONG_PRESS_MS);
   document.addEventListener('touchmove', _onCalTouchMove, { passive: false });
   document.addEventListener('touchend', _onCalTouchEnd);
   document.addEventListener('touchcancel', _onCalTouchEnd);
 }
+
 function _onCalTouchMove(e) {
-  if (!_calDrag) return;
+  // If we haven't activated a drag yet, watch for a move that signals scroll
+  if (!_calDrag) {
+    if (_calTouchStartXY) {
+      const t = e.touches[0];
+      const dx = Math.abs(t.clientX - _calTouchStartXY.x);
+      const dy = Math.abs(t.clientY - _calTouchStartXY.y);
+      if (dx > TOUCH_MOVE_TOLERANCE || dy > TOUCH_MOVE_TOLERANCE) {
+        // User is scrolling -- cancel the long press and let the browser handle it
+        _clearLongPressTimer();
+        _calPendingTouch = null;
+        _calTouchStartXY = null;
+        document.removeEventListener('touchmove', _onCalTouchMove);
+        document.removeEventListener('touchend', _onCalTouchEnd);
+        document.removeEventListener('touchcancel', _onCalTouchEnd);
+      }
+    }
+    return;
+  }
   e.preventDefault();
   _onCalMouseMove(_touchToMouseEvent(e, 'mousemove'));
 }
+
 function _onCalTouchEnd(e) {
   document.removeEventListener('touchmove', _onCalTouchMove);
   document.removeEventListener('touchend', _onCalTouchEnd);
   document.removeEventListener('touchcancel', _onCalTouchEnd);
-  _onCalMouseUp(_touchToMouseEvent(e, 'mouseup'));
+  if (_calTouchTimer) {
+    // Tap ended before long-press fired -> treat as a single-slot tap
+    _clearLongPressTimer();
+    if (_calPendingTouch) {
+      _onCalMouseDown(_touchToMouseEvent(_calPendingTouch, 'mousedown'));
+      _onCalMouseUp(_touchToMouseEvent(_calPendingTouch, 'mouseup'));
+    }
+    _calPendingTouch = null;
+    _calTouchStartXY = null;
+    return;
+  }
+  if (_calDrag) {
+    _onCalMouseUp(_touchToMouseEvent(e, 'mouseup'));
+  }
+  _calPendingTouch = null;
+  _calTouchStartXY = null;
 }
 
 function _onCalMouseDown(e) {
