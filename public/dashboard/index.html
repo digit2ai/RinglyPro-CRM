@@ -3555,15 +3555,8 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   // ================================================================
   async function renderPayments() {
     var el = document.getElementById('pageContent');
-    var html = '<div class="panel" id="currentPlan"><h2>My Current Plan</h2>';
-    html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px"><span class="badge '+badgeClass(currentMember.membership_type)+'" style="font-size:14px;padding:6px 16px">'+esc(currentMember.membership_type||'individual')+'</span></div>';
-    html += '</div>';
-
-    html += '<div class="panel"><h2>Available Plans</h2><div id="pricingGrid"><div class="loading">Loading...</div></div></div>';
-    html += '<div class="panel"><h2>Transaction History</h2><div id="txnHistory"><div class="loading">Loading...</div></div></div>';
+    var html = '<div class="panel"><h2>Transaction History</h2><div id="txnHistory"><div class="loading">Loading...</div></div></div>';
     el.innerHTML = html;
-
-    loadPricing();
     loadTxnHistory();
   }
 
