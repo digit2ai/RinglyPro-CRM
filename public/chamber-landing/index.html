@@ -68,6 +68,25 @@
   .loading { text-align: center; padding: 40px; color: var(--gray-500); }
   .empty { text-align: center; padding: 30px; color: var(--gray-500); font-style: italic; }
 
+  /* How It Works -- member journey */
+  .how-it-works { background:#0a1628; color:#fff; padding:56px 32px; border-radius:16px; margin:0 auto 40px; }
+  .hiw-eyebrow { width:48px; height:3px; background:#FCD116; margin:0 0 18px; border-radius:2px; }
+  .hiw-title { font-size:34px; font-weight:800; margin:0 0 10px; color:#fff; line-height:1.15; }
+  .hiw-sub { font-size:16px; color:rgba(255,255,255,0.65); margin:0 0 36px; max-width:640px; }
+  .hiw-grid { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:18px; }
+  .hiw-card { display:flex; gap:18px; align-items:flex-start; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:20px 22px; }
+  .hiw-card h3 { color:#fff; font-size:17px; font-weight:700; margin:0 0 6px; }
+  .hiw-card p { color:rgba(255,255,255,0.65); font-size:14px; line-height:1.5; margin:0; }
+  .hiw-num { flex:none; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:15px; color:#fff; }
+  .hiw-blue { background:#003DA5; }
+  .hiw-red { background:#CE1126; }
+  .hiw-gold { background:#FCD116; color:#0a1628; }
+  @media (max-width: 760px) {
+    .hiw-grid { grid-template-columns: 1fr; }
+    .how-it-works { padding:36px 22px; }
+    .hiw-title { font-size:26px; }
+  }
+
   @media (max-width: 640px) {
     .hero h1 { font-size: 28px; }
     .hero p { font-size: 15px; }
@@ -114,6 +133,20 @@
 <section class="section" style="background:white;border-radius:12px;margin:0 auto 40px;">
   <h2>Solicitudes de Cotizacion (RFQs) Abiertas</h2>
   <div id="rfqList" class="grid-3"><div class="loading">Cargando...</div></div>
+</section>
+
+<section class="section how-it-works">
+  <div class="hiw-eyebrow"></div>
+  <h2 class="hiw-title">Como Funciona: El Viaje del Miembro</h2>
+  <p class="hiw-sub">Desde el registro hasta tu primer match de negocios en menos de 5 minutos.</p>
+  <div class="hiw-grid">
+    <div class="hiw-card"><div class="hiw-num hiw-blue">1</div><div><h3>Registrate y Crea tu Perfil</h3><p>Registrate con tu nombre, sector y region. Tu perfil se integra al directorio -- visible para otros miembros, invisible para el exterior.</p></div></div>
+    <div class="hiw-card"><div class="hiw-num hiw-blue">2</div><div><h3>Explora el Panel de Control</h3><p>Inicia sesion en tu dashboard. Ve estadisticas de la red, navega el directorio y consulta tu score de confianza.</p></div></div>
+    <div class="hiw-card"><div class="hiw-num hiw-red">3</div><div><h3>Ejecuta tu Primer Match con IA</h3><p>Escribe lo que buscas ("socio de alimentos en Mexico") y obtiene resultados rankeados con scores de similaridad y confianza.</p></div></div>
+    <div class="hiw-card"><div class="hiw-num hiw-red">4</div><div><h3>Publica o Responde una Cotizacion</h3><p>Necesitas un proveedor? Publica una solicitud en el Intercambio Comercial. Tienes capacidad? Navega cotizaciones y envia propuestas.</p></div></div>
+    <div class="hiw-card"><div class="hiw-num hiw-gold">5</div><div><h3>Propone o Unete a un Proyecto</h3><p>Tienes una idea? Proponla. La plataforma arma un equipo desde varias regiones y simula viabilidad con Monte Carlo.</p></div></div>
+    <div class="hiw-card"><div class="hiw-num hiw-gold">6</div><div><h3>Observa como Crece la Red</h3><p>Cada interaccion construye confianza, cada proyecto sube scores. El indice HCI lo rastrea todo -- puedes ver el impacto que generas.</p></div></div>
+  </div>
 </section>
 
 <section class="cta-section">

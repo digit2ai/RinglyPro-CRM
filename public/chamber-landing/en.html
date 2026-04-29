@@ -59,6 +59,24 @@
   .footer a { color: var(--accent); text-decoration: none; }
   .loading { text-align: center; padding: 40px; color: var(--gray-500); }
   .empty { text-align: center; padding: 30px; color: var(--gray-500); font-style: italic; }
+  /* How It Works -- member journey */
+  .how-it-works { background:#0a1628; color:#fff; padding:56px 32px; border-radius:16px; margin:0 auto 40px; }
+  .hiw-eyebrow { width:48px; height:3px; background:#FCD116; margin:0 0 18px; border-radius:2px; }
+  .hiw-title { font-size:34px; font-weight:800; margin:0 0 10px; color:#fff; line-height:1.15; }
+  .hiw-sub { font-size:16px; color:rgba(255,255,255,0.65); margin:0 0 36px; max-width:640px; }
+  .hiw-grid { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:18px; }
+  .hiw-card { display:flex; gap:18px; align-items:flex-start; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:20px 22px; }
+  .hiw-card h3 { color:#fff; font-size:17px; font-weight:700; margin:0 0 6px; }
+  .hiw-card p { color:rgba(255,255,255,0.65); font-size:14px; line-height:1.5; margin:0; }
+  .hiw-num { flex:none; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:15px; color:#fff; }
+  .hiw-blue { background:#003DA5; }
+  .hiw-red { background:#CE1126; }
+  .hiw-gold { background:#FCD116; color:#0a1628; }
+  @media (max-width: 760px) {
+    .hiw-grid { grid-template-columns: 1fr; }
+    .how-it-works { padding:36px 22px; }
+    .hiw-title { font-size:26px; }
+  }
   @media (max-width: 640px) { .hero h1 { font-size: 28px; } .hero p { font-size: 15px; } }
 </style>
 </head>
@@ -101,6 +119,20 @@
 <section class="section" style="background:white;border-radius:12px;margin:0 auto 40px;">
   <h2>Open Requests for Quotes (RFQs)</h2>
   <div id="rfqList" class="grid-3"><div class="loading">Loading...</div></div>
+</section>
+
+<section class="section how-it-works">
+  <div class="hiw-eyebrow"></div>
+  <h2 class="hiw-title">How It Works: The Member Journey</h2>
+  <p class="hiw-sub">From signup to your first business match in under 5 minutes.</p>
+  <div class="hiw-grid">
+    <div class="hiw-card"><div class="hiw-num hiw-blue">1</div><div><h3>Sign Up & Build Your Profile</h3><p>Register with your name, sector, and region. Your profile joins the directory -- visible to other members, invisible to outsiders.</p></div></div>
+    <div class="hiw-card"><div class="hiw-num hiw-blue">2</div><div><h3>Explore the Dashboard</h3><p>Sign in to your dashboard. View network statistics, browse the directory, and check your trust score.</p></div></div>
+    <div class="hiw-card"><div class="hiw-num hiw-red">3</div><div><h3>Run Your First AI Match</h3><p>Type what you're looking for ("food partner in Mexico") and get ranked results with similarity and confidence scores.</p></div></div>
+    <div class="hiw-card"><div class="hiw-num hiw-red">4</div><div><h3>Post or Respond to a Quote</h3><p>Need a vendor? Post a request on the Trade Exchange. Have capacity? Browse RFQs and submit proposals.</p></div></div>
+    <div class="hiw-card"><div class="hiw-num hiw-gold">5</div><div><h3>Propose or Join a Project</h3><p>Have an idea? Propose it. The platform assembles a multi-region team and simulates viability with Monte Carlo.</p></div></div>
+    <div class="hiw-card"><div class="hiw-num hiw-gold">6</div><div><h3>Watch the Network Grow</h3><p>Every interaction builds trust, every project lifts scores. The HCI index tracks it all -- you can see the impact you generate.</p></div></div>
+  </div>
 </section>
 
 <section class="cta-section">
