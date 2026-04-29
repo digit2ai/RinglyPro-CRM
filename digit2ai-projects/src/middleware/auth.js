@@ -42,6 +42,17 @@ const authenticateToken = async (req, res, next) => {
       console.log('[D2AI] User access tracking skipped:', accessErr.message);
     }
 
+    // Enforce calendar_only role: deny anything that isn't calendar-related
+    if (req.userAccess && req.userAccess.role === 'calendar_only') {
+      // baseUrl gives the prefix mounted at app.use('/api/v1/<thing>', ...) so we
+      // need to inspect the original URL path for gating.
+      const fullPath = req.baseUrl + req.path;
+      const allowed = /^\/api\/v1\/(calendar|me)(\/|$)/.test(fullPath);
+      if (!allowed) {
+        return res.status(403).json({ success: false, error: 'This account is limited to the Calendar module' });
+      }
+    }
+
     next();
   } catch (error) {
     if (error.name === 'TokenExpiredError') {

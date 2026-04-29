@@ -38,10 +38,30 @@ function showLogin() {
   document.getElementById('main-app').classList.add('hidden');
 }
 
-function showApp() {
+async function showApp() {
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('main-app').classList.remove('hidden');
   document.getElementById('user-info').textContent = USER?.email || '';
+
+  // Resolve role + apply per-role nav restrictions before loading anything heavy
+  let role = 'admin';
+  try {
+    const meRes = await api('/me');
+    if (meRes && meRes.success) role = meRes.data.role || 'admin';
+  } catch (e) {}
+  USER = USER || {}; USER.role = role;
+  localStorage.setItem('d2ai_user', JSON.stringify(USER));
+
+  if (role === 'calendar_only') {
+    // Hide every nav item except Calendar
+    document.querySelectorAll('.nav li[data-view]').forEach(li => {
+      if (li.getAttribute('data-view') !== 'calendar') li.style.display = 'none';
+    });
+    // Skip the heavy loaders that hit forbidden endpoints
+    navigateTo('calendar');
+    return;
+  }
+
   loadVerticals();
   loadStaff();
   loadRoles();

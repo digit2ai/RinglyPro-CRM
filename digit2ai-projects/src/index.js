@@ -59,6 +59,20 @@ app.get('/sw.js', (req, res) => {
 // Mounted BEFORE the authenticated routes so /health and /share/*/identify stay public
 app.use('/api/v1/intake', intakeRoutes);
 
+// /api/v1/me — returns the caller's role + identity (used by the dashboard
+// to decide which tabs to show). Honored even for calendar_only role.
+app.get('/api/v1/me', authenticateToken, (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      email: req.user.email,
+      name: req.userAccess ? (req.userAccess.display_name || req.user.email) : req.user.email,
+      role: req.userAccess ? req.userAccess.role : 'admin',
+      businessName: req.user.businessName || null
+    }
+  });
+});
+
 // Serve intake static pages (dark dashboard, no build step)
 app.use('/intake', express.static(path.join(dashboardPath, 'intake')));
 
