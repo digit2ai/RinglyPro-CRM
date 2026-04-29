@@ -101,6 +101,8 @@ const SHARE_TOKEN = params.get('token') || '';
 let SESSION = null;
 let BATCH = null;
 let PROJECTS = [];
+const OPEN_PROJECTS = new Set();   // project IDs whose card is expanded
+const DRAFTS = new Map();           // element_id -> text (preserved across re-renders)
 
 function storeKey(suffix) { return STORAGE_PREFIX + SHARE_TOKEN + '_' + suffix; }
 
@@ -143,6 +145,7 @@ function authHeaders() {
 
 async function loadBatch() {
   if (!SESSION) return;
+  captureUiState();
   document.getElementById('who').textContent = SESSION.name + ' (' + SESSION.email + ')';
   const r = await fetch('/projects/api/v1/intake/batches/' + SESSION.batch_id, { headers: authHeaders() });
   if (r.status === 401 || r.status === 403) { logout(); return; }
@@ -157,11 +160,58 @@ async function loadBatch() {
   render();
 }
 
+function userIsTyping() {
+  const a = document.activeElement;
+  return a && (a.tagName === 'TEXTAREA' || a.tagName === 'INPUT' || a.isContentEditable);
+}
+
+function captureUiState() {
+  // Save which cards are open
+  document.querySelectorAll('#projects details[data-pid]').forEach(d => {
+    const pid = Number(d.dataset.pid);
+    if (d.open) OPEN_PROJECTS.add(pid); else OPEN_PROJECTS.delete(pid);
+  });
+  // Save draft text in any textarea inside #projects
+  document.querySelectorAll('#projects textarea[id], #projects input[type="text"][id]').forEach(el => {
+    if (el.value && el.value.length) DRAFTS.set(el.id, el.value);
+  });
+}
+
+function restoreUiState() {
+  DRAFTS.forEach((val, id) => {
+    const el = document.getElementById(id);
+    if (el && !el.value) el.value = val;
+  });
+}
+
 function render() {
   const wrap = document.getElementById('projects');
   if (!PROJECTS.length) { document.getElementById('empty').classList.remove('hidden'); wrap.innerHTML=''; return; }
   document.getElementById('empty').classList.add('hidden');
-  wrap.innerHTML = PROJECTS.map((pi, idx) => renderCard(pi, idx)).join('');
+
+  // First-time render: open the first 3 by default
+  if (!OPEN_PROJECTS.size && !wrap.children.length) {
+    PROJECTS.slice(0, 3).forEach(pi => OPEN_PROJECTS.add(pi.project.id));
+  }
+
+  wrap.innerHTML = PROJECTS.map(pi => renderCard(pi)).join('');
+  restoreUiState();
+
+  // Wire <details> toggle so we remember what's open
+  wrap.querySelectorAll('details[data-pid]').forEach(d => {
+    d.addEventListener('toggle', () => {
+      const pid = Number(d.dataset.pid);
+      if (d.open) OPEN_PROJECTS.add(pid); else OPEN_PROJECTS.delete(pid);
+    });
+  });
+
+  // Persist drafts on every keystroke (in-memory; survives polls)
+  wrap.querySelectorAll('textarea[id], input[type="text"][id]').forEach(el => {
+    el.addEventListener('input', () => {
+      if (el.value) DRAFTS.set(el.id, el.value);
+      else DRAFTS.delete(el.id);
+    });
+  });
 }
 
 function chipClass(level) {
@@ -173,14 +223,16 @@ function escapeHtml(s) {
   return (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
 
-function renderCard(pi, idx) {
+function renderCard(pi) {
   const p = pi.project;
   const intake = pi;
   const myVote = (p.priority_votes || []).find(v => v.voter_email === SESSION.email);
   const avg = intake.priority_avg ? Number(intake.priority_avg).toFixed(2) : '-';
   const voteCount = (p.priority_votes || []).length;
+  const idx = PROJECTS.indexOf(pi);
+  const isOpen = OPEN_PROJECTS.has(p.id);
   return `
-    <details class="card rounded-xl border border-slate-800 hover:border-cyan-700/50 transition" ${idx<3?'open':''}>
+    <details data-pid="${p.id}" class="card rounded-xl border border-slate-800 hover:border-cyan-700/50 transition" ${isOpen?'open':''}>
       <summary class="p-5 flex items-center gap-4">
         <div class="text-2xl font-bold text-slate-700 w-8">${idx+1}</div>
         <div class="flex-1 min-w-0">
@@ -327,7 +379,13 @@ async function init() {
 }
 
 function pollLoop() {
-  setInterval(() => { if (SESSION && !document.hidden) loadBatch(); }, 15000);
+  // Slower poll, and skip if the user is typing or the tab is hidden
+  setInterval(() => {
+    if (!SESSION) return;
+    if (document.hidden) return;
+    if (userIsTyping()) return;
+    loadBatch();
+  }, 30000);
 }
 
 init();
