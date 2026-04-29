@@ -1412,7 +1412,7 @@ async function renderTimeGrid(numDays) {
 
   body.innerHTML = `
     ${headerRow}
-    <div class="cal-week-body" style="grid-template-columns: 60px repeat(${numDays}, 1fr)">
+    <div class="cal-week-body" style="grid-template-columns: 60px 1fr">
       <div class="cal-time-gutter">${timeLabels.join('')}</div>
       <div class="cal-week-columns" style="grid-template-columns: repeat(${numDays}, 1fr); height:${gridHeight}px; position:relative">
         ${dayColumnsHTML}
