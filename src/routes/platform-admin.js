@@ -125,6 +125,9 @@ router.put('/admin/chambers/:id', platformAdminAuth, async (req, res) => {
 
     const allowed = ['name', 'brand_domain', 'primary_language', 'country',
                      'logo_url', 'contact_email', 'status', 'subscription_status'];
+    // Columns that are NOT NULL in the chambers schema -- never write null.
+    // If the operator clears these fields, preserve the existing value.
+    const NOT_NULL_COLS = new Set(['name', 'brand_domain', 'primary_language', 'contact_email', 'status']);
     const VALID_STATUS = ['pending', 'active', 'suspended', 'archived'];
     const VALID_LANG = ['es', 'en'];
 
@@ -133,7 +136,10 @@ router.put('/admin/chambers/:id', platformAdminAuth, async (req, res) => {
       if (!(k in req.body)) continue;
       let v = req.body[k];
       if (typeof v === 'string') v = v.trim();
-      if (v === '' ) v = null;
+      if (v === '') v = null;
+      // Skip blanking a NOT NULL column -- this preserves the existing value
+      // rather than trying to write NULL and hitting a DB constraint error.
+      if (v === null && NOT_NULL_COLS.has(k)) continue;
       if (k === 'status' && v && !VALID_STATUS.includes(v)) {
         return res.status(400).json({ success: false, error: `status must be one of ${VALID_STATUS.join(', ')}` });
       }
