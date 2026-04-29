@@ -1568,6 +1568,34 @@ function openEventModalRange(startISO, endISO) {
 
 function escapeHtml(s) { return (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
+// ----- Timezone helpers (datetime-local <-> UTC ISO) -----
+// datetime-local inputs use the BROWSER's local time but emit a string
+// without an offset; the server stores TIMESTAMPTZ in UTC. Convert both
+// ways so the user always sees / enters the wall-clock time they expect.
+function isoToLocalInput(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d)) return '';
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function localInputToIso(s) {
+  if (!s) return null;
+  const d = new Date(s); // JS parses 'YYYY-MM-DDTHH:MM' as local time
+  if (isNaN(d)) return null;
+  return d.toISOString();
+}
+function shiftIsoForRecurrence(iso, mode, n) {
+  if (!iso || !n) return iso;
+  const d = new Date(iso);
+  if (mode === 'daily') d.setDate(d.getDate() + n);
+  else if (mode === 'weekly') d.setDate(d.getDate() + n*7);
+  else if (mode === 'biweekly') d.setDate(d.getDate() + n*14);
+  else if (mode === 'monthly') d.setMonth(d.getMonth() + n);
+  else return iso;
+  return d.toISOString();
+}
+
 // Open New-Event modal pre-filled with a clicked time slot
 // isoSlot format: "YYYY-MM-DDTHH:MM"
 function openEventModalAt(isoSlot) {
@@ -1660,8 +1688,8 @@ async function openEventEditModal(id) {
       <div class="form-group"><label>Location</label><input type="text" id="m-elocation" value="${e.location || ''}"></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Start *</label><input type="datetime-local" id="m-estart" value="${e.start_time ? e.start_time.substring(0,16) : ''}"></div>
-      <div class="form-group"><label>End</label><input type="datetime-local" id="m-eend" value="${e.end_time ? e.end_time.substring(0,16) : ''}"></div>
+      <div class="form-group"><label>Start *</label><input type="datetime-local" id="m-estart" value="${isoToLocalInput(e.start_time)}"></div>
+      <div class="form-group"><label>End</label><input type="datetime-local" id="m-eend" value="${isoToLocalInput(e.end_time)}"></div>
     </div>
     <div class="form-group"><label>Description</label><textarea id="m-edesc">${e.description || ''}</textarea></div>
   `, async () => {
@@ -1669,8 +1697,8 @@ async function openEventEditModal(id) {
       title: document.getElementById('m-etitle').value.trim(),
       event_type: document.getElementById('m-etype').value,
       location: document.getElementById('m-elocation').value.trim(),
-      start_time: document.getElementById('m-estart').value || null,
-      end_time: document.getElementById('m-eend').value || null,
+      start_time: localInputToIso(document.getElementById('m-estart').value),
+      end_time: localInputToIso(document.getElementById('m-eend').value),
       description: document.getElementById('m-edesc').value.trim()
     };
     if (!data.title) { alert('Title is required'); return; }
@@ -2634,18 +2662,43 @@ function openEventModal() {
       <div class="form-group"><label>Start *</label><input type="datetime-local" id="m-estart"></div>
       <div class="form-group"><label>End</label><input type="datetime-local" id="m-eend"></div>
     </div>
+    <div class="form-row">
+      <div class="form-group"><label>Repeat</label>
+        <select id="m-erecur" onchange="document.getElementById('m-ecount-wrap').style.display=this.value==='none'?'none':'block'">
+          <option value="none">Does not repeat</option>
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="biweekly">Every 2 weeks</option>
+          <option value="monthly">Monthly</option>
+        </select>
+      </div>
+      <div class="form-group" id="m-ecount-wrap" style="display:none">
+        <label>Number of occurrences</label>
+        <input type="number" id="m-ecount" value="4" min="1" max="52">
+      </div>
+    </div>
     <div class="form-group"><label>Description</label><textarea id="m-edesc"></textarea></div>
   `, async () => {
-    const data = {
+    const baseStart = localInputToIso(document.getElementById('m-estart').value);
+    const baseEnd   = localInputToIso(document.getElementById('m-eend').value);
+    const recur = document.getElementById('m-erecur').value;
+    const count = recur === 'none' ? 1 : Math.max(1, Math.min(52, Number(document.getElementById('m-ecount').value) || 1));
+    const base = {
       title: document.getElementById('m-etitle').value.trim(),
       event_type: document.getElementById('m-etype').value,
       location: document.getElementById('m-elocation').value.trim(),
-      start_time: document.getElementById('m-estart').value,
-      end_time: document.getElementById('m-eend').value || null,
       description: document.getElementById('m-edesc').value.trim()
     };
-    if (!data.title || !data.start_time) { alert('Title and start time required'); return; }
-    await api('/calendar', { method: 'POST', body: JSON.stringify(data) });
+    if (!base.title || !baseStart) { alert('Title and start time required'); return; }
+    const calls = [];
+    for (let i = 0; i < count; i++) {
+      calls.push(api('/calendar', { method: 'POST', body: JSON.stringify({
+        ...base,
+        start_time: shiftIsoForRecurrence(baseStart, recur, i),
+        end_time: baseEnd ? shiftIsoForRecurrence(baseEnd, recur, i) : null
+      }) }));
+    }
+    await Promise.all(calls);
     closeModal();
     navigateTo('calendar');
   });
