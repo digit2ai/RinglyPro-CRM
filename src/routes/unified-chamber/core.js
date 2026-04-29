@@ -470,9 +470,52 @@ router.put('/members/:id', authMiddleware, async (req, res) => {
                      'years_experience', 'languages', 'company_name', 'bio', 'phone',
                      'linkedin_url', 'website_url'];
     if (isAdmin) allowed.push('membership_type', 'governance_role', 'verified', 'verification_level');
+
+    // Type-aware coercion. Empty strings become NULL so blanks clear the
+    // column rather than write '' (which Postgres rejects for typed columns
+    // like integer/text[]). Arrays and integers get explicit casts so raw
+    // SQL parameter binding doesn't blow up with 'syntax error at or near ,'.
+    const INT_FIELDS = new Set(['region_id', 'years_experience']);
+    const ARRAY_FIELDS = new Set(['languages']);
+    const URL_FIELDS = new Set(['linkedin_url', 'website_url']);
+
+    function normalize(key, val) {
+      if (val === undefined) return undefined;
+      if (val === null) return null;
+      if (typeof val === 'string' && val.trim() === '') return null;
+      if (INT_FIELDS.has(key)) {
+        const n = parseInt(val);
+        return Number.isFinite(n) ? n : null;
+      }
+      if (URL_FIELDS.has(key) && typeof val === 'string') {
+        const t = val.trim();
+        return /^https?:\/\//i.test(t) ? t : 'https://' + t;
+      }
+      if (ARRAY_FIELDS.has(key)) {
+        // Accept either a JS array or a comma-separated string and emit a
+        // postgres array literal -- bound with explicit ::text[] cast.
+        let arr;
+        if (Array.isArray(val)) arr = val;
+        else if (typeof val === 'string') arr = val.split(',');
+        else return null;
+        arr = arr.map(s => String(s).trim()).filter(Boolean);
+        if (arr.length === 0) return '{}';
+        return '{' + arr.map(s => '"' + s.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"').join(',') + '}';
+      }
+      return val;
+    }
+
     const sets = []; const r = { c: req.chamber_id, id: targetId };
     for (const k of allowed) {
-      if (k in req.body) { sets.push(`${k} = :${k}`); r[k] = req.body[k]; }
+      if (!(k in req.body)) continue;
+      const v = normalize(k, req.body[k]);
+      if (v === undefined) continue;
+      if (ARRAY_FIELDS.has(k)) {
+        sets.push(`${k} = :${k}::text[]`);
+      } else {
+        sets.push(`${k} = :${k}`);
+      }
+      r[k] = v;
     }
     if (sets.length === 0) return res.status(400).json({ success: false, error: 'No fields to update' });
     sets.push('updated_at = NOW()');
