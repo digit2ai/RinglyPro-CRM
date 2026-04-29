@@ -117,6 +117,55 @@ router.get('/admin/me', platformAdminAuth, async (req, res) => {
   return res.json({ success: true, data: req.admin });
 });
 
+// PUT /platform/admin/chambers/:id -- edit chamber metadata
+router.put('/admin/chambers/:id', platformAdminAuth, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (!id) return res.status(400).json({ success: false, error: 'Invalid chamber id' });
+
+    const allowed = ['name', 'brand_domain', 'primary_language', 'country',
+                     'logo_url', 'contact_email', 'status', 'subscription_status'];
+    const VALID_STATUS = ['pending', 'active', 'suspended', 'archived'];
+    const VALID_LANG = ['es', 'en'];
+
+    const sets = []; const r = { id };
+    for (const k of allowed) {
+      if (!(k in req.body)) continue;
+      let v = req.body[k];
+      if (typeof v === 'string') v = v.trim();
+      if (v === '' ) v = null;
+      if (k === 'status' && v && !VALID_STATUS.includes(v)) {
+        return res.status(400).json({ success: false, error: `status must be one of ${VALID_STATUS.join(', ')}` });
+      }
+      if (k === 'primary_language' && v && !VALID_LANG.includes(v)) {
+        return res.status(400).json({ success: false, error: `primary_language must be one of ${VALID_LANG.join(', ')}` });
+      }
+      sets.push(`${k} = :${k}`);
+      r[k] = v;
+    }
+    if (sets.length === 0) return res.status(400).json({ success: false, error: 'No fields to update' });
+    sets.push('updated_at = NOW()');
+
+    const [updated] = await sequelize.query(
+      `UPDATE chambers SET ${sets.join(', ')} WHERE id = :id RETURNING *`,
+      { replacements: r, type: QueryTypes.SELECT }
+    );
+    if (!updated) return res.status(404).json({ success: false, error: 'Chamber not found' });
+
+    // Invalidate the resolver cache so the change shows up immediately on
+    // /<slug>/* requests without a 60s wait.
+    try {
+      const { invalidateCache } = require('../../chamber-template/lib/chamber-resolver');
+      invalidateCache(updated.slug);
+    } catch (_) {}
+
+    return res.json({ success: true, data: updated });
+  } catch (err) {
+    console.error('[/platform/admin/chambers PUT]', err.message);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // GET /platform/admin/chambers -- every chamber with member counts
 router.get('/admin/chambers', platformAdminAuth, async (req, res) => {
   try {

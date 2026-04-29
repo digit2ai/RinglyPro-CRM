@@ -57,7 +57,27 @@
   td.actions a.dash:hover { background:#002670; }
   td.actions a.land { background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.16); }
   td.actions a.land:hover { background:rgba(255,255,255,0.16); }
+  td.actions button.edit { background:#FCD116; color:#0a1628; border:0; padding:6px 11px; font-size:12px; font-weight:700; border-radius:6px; cursor:pointer; margin-right:6px; }
+  td.actions button.edit:hover { background:#ffd84d; }
   .loading, .empty { text-align:center; padding:30px; color:rgba(255,255,255,0.55); font-style:italic; }
+
+  /* Edit modal */
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.65); display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px; }
+  .modal { background:#0f1d36; border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:28px; max-width:520px; width:100%; max-height:90vh; overflow-y:auto; }
+  .modal h2 { font-size:18px; margin:0 0 4px; color:#FCD116; }
+  .modal .modal-sub { color:rgba(255,255,255,0.55); font-size:12px; margin:0 0 18px; font-family:Menlo,monospace; }
+  .modal label { display:block; font-size:11px; font-weight:600; color:rgba(255,255,255,0.65); text-transform:uppercase; letter-spacing:1px; margin:12px 0 6px; }
+  .modal input, .modal select { width:100%; padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.18); background:rgba(255,255,255,0.06); color:#fff; font-size:14px; outline:none; font-family:inherit; box-sizing:border-box; }
+  .modal input:focus, .modal select:focus { border-color:#FCD116; }
+  .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:22px; }
+  .modal-actions button { padding:10px 18px; border-radius:7px; font-size:13px; font-weight:700; cursor:pointer; border:0; }
+  .modal-actions .save { background:#003DA5; color:#fff; }
+  .modal-actions .save:hover { background:#002670; }
+  .modal-actions .cancel { background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.16); }
+  .modal-actions .cancel:hover { background:rgba(255,255,255,0.14); }
+  .modal-msg { margin-top:12px; padding:10px; border-radius:6px; font-size:12px; }
+  .modal-msg.error { background:rgba(192,57,43,0.18); color:#ff8b8b; border:1px solid rgba(192,57,43,0.4); }
+  .modal-msg.ok { background:rgba(39,174,96,0.18); color:#7ee2a0; border:1px solid rgba(39,174,96,0.4); }
 
   @media (max-width: 720px) {
     .container { padding:20px 14px; }
@@ -226,6 +246,8 @@
         tbody.innerHTML = '<tr><td colspan="8" class="empty">No chambers yet.</td></tr>';
         return;
       }
+      window._chambersById = {};
+      chambers.forEach(function(c) { window._chambersById[c.id] = c; });
       tbody.innerHTML = chambers.map(function(c) {
         return '<tr>' +
           '<td class="slug" data-label="Slug">' + esc(c.slug) + '</td>' +
@@ -238,14 +260,107 @@
           '<td data-label="Status">' + statusBadge(c.status) + '</td>' +
           '<td data-label="Created">' + fmtDate(c.created_at) + '</td>' +
           '<td data-label="Actions" class="actions">' +
+            '<button class="edit" data-id="' + c.id + '">Edit</button>' +
             '<a class="dash" href="' + esc(c.dashboard_url) + '" target="_blank" rel="noopener">Dashboard</a>' +
             '<a class="land" href="' + esc(c.landing_url) + '" target="_blank" rel="noopener">Landing</a>' +
           '</td>' +
         '</tr>';
       }).join('');
+
+      // Wire Edit buttons
+      tbody.querySelectorAll('button.edit').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = parseInt(this.dataset.id);
+          var c = window._chambersById && window._chambersById[id];
+          if (c) openEditModal(c);
+        });
+      });
     } catch(e) {
       tbody.innerHTML = '<tr><td colspan="8" class="empty">Error: ' + esc(e.message) + '</td></tr>';
     }
+  }
+
+  function openEditModal(c) {
+    // Remove any prior modal
+    var prev = document.getElementById('editModalOverlay');
+    if (prev) prev.remove();
+
+    var statusOptions = ['pending', 'active', 'suspended', 'archived'].map(function(s) {
+      return '<option value="' + s + '"' + (c.status === s ? ' selected' : '') + '>' + s + '</option>';
+    }).join('');
+    var langOptions = [['es','Espanol'],['en','English']].map(function(p) {
+      return '<option value="' + p[0] + '"' + (c.primary_language === p[0] ? ' selected' : '') + '>' + p[1] + '</option>';
+    }).join('');
+
+    var html =
+      '<div class="modal-overlay" id="editModalOverlay">' +
+        '<div class="modal">' +
+          '<h2>Edit Chamber</h2>' +
+          '<p class="modal-sub">' + esc(c.slug) + ' &middot; id ' + c.id + '</p>' +
+          '<form id="editForm">' +
+            '<label for="ed-name">Name</label>' +
+            '<input id="ed-name" required value="' + esc(c.name || '') + '">' +
+            '<label for="ed-brand">Brand domain</label>' +
+            '<input id="ed-brand" value="' + esc(c.brand_domain || '') + '" placeholder="camaravirtual.app">' +
+            '<label for="ed-lang">Primary language</label>' +
+            '<select id="ed-lang">' + langOptions + '</select>' +
+            '<label for="ed-country">Country</label>' +
+            '<input id="ed-country" value="' + esc(c.country || '') + '">' +
+            '<label for="ed-logo">Logo URL (optional)</label>' +
+            '<input id="ed-logo" value="' + esc(c.logo_url || '') + '" placeholder="https://...">' +
+            '<label for="ed-contact">Contact email (optional)</label>' +
+            '<input id="ed-contact" type="email" value="' + esc(c.contact_email || '') + '">' +
+            '<label for="ed-status">Status</label>' +
+            '<select id="ed-status">' + statusOptions + '</select>' +
+            '<div id="modalMsg"></div>' +
+            '<div class="modal-actions">' +
+              '<button type="button" class="cancel" id="cancelBtn">Cancel</button>' +
+              '<button type="submit" class="save" id="saveBtn">Save</button>' +
+            '</div>' +
+          '</form>' +
+        '</div>' +
+      '</div>';
+    document.body.insertAdjacentHTML('beforeend', html);
+
+    var overlay = document.getElementById('editModalOverlay');
+    function close() { overlay.remove(); }
+    document.getElementById('cancelBtn').addEventListener('click', close);
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) close(); });
+
+    document.getElementById('editForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      var save = document.getElementById('saveBtn');
+      save.disabled = true; save.textContent = 'Saving...';
+      var msg = document.getElementById('modalMsg');
+      msg.innerHTML = '';
+      var body = {
+        name: document.getElementById('ed-name').value.trim(),
+        brand_domain: document.getElementById('ed-brand').value.trim(),
+        primary_language: document.getElementById('ed-lang').value,
+        country: document.getElementById('ed-country').value.trim(),
+        logo_url: document.getElementById('ed-logo').value.trim(),
+        contact_email: document.getElementById('ed-contact').value.trim(),
+        status: document.getElementById('ed-status').value
+      };
+      try {
+        var res = await fetch('/api/platform/admin/chambers/' + c.id, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+          body: JSON.stringify(body)
+        });
+        var data = await res.json();
+        if (data.success) {
+          msg.innerHTML = '<div class="modal-msg ok">Saved. Refreshing list...</div>';
+          setTimeout(function() { close(); loadChambers(); }, 600);
+        } else {
+          msg.innerHTML = '<div class="modal-msg error">' + esc(data.error || 'Save failed') + '</div>';
+          save.disabled = false; save.textContent = 'Save';
+        }
+      } catch (err) {
+        msg.innerHTML = '<div class="modal-msg error">Connection error: ' + esc(err.message) + '</div>';
+        save.disabled = false; save.textContent = 'Save';
+      }
+    });
   }
 
   // Boot
