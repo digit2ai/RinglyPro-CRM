@@ -600,7 +600,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       var email = document.getElementById('loginEmail').value.trim();
       var pass = document.getElementById('loginPass').value;
       var btn = document.getElementById('loginBtn');
-      btn.disabled = true; btn.textContent = 'Iniciando sesion...';
+      btn.disabled = true; btn.textContent = 'Signing in...';
       try {
         var res = await fetch(API + '/auth/login', {
           method: 'POST',
