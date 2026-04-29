@@ -642,7 +642,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     if (token) headers['Authorization'] = 'Bearer ' + token;
     var res = await fetch(API + path, { ...opts, headers });
     var data = await res.json();
-    if (res.status === 401) { logout(); throw new Error('Session expired'); }
+    if (res.status === 401) { logout(); throw new Error('Sesion expirada'); }
     return data;
   }
 
@@ -850,7 +850,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     var el = document.getElementById('pageContent');
     try {
       var res = await apiFetch('/metrics/dashboard');
-      if (!res.success) { el.innerHTML = '<div class="error-msg">Error loading dashboard</div>'; return; }
+      if (!res.success) { el.innerHTML = '<div class="error-msg">Error cargando el panel</div>'; return; }
       var d = res.data;
       var c = d.current;
       var hciVal = '--';
@@ -951,16 +951,16 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         body.languages = body.languages ? body.languages.split(',').map(function(l){return l.trim();}).filter(Boolean) : [];
         // empty sector saves as null (clears the field) instead of being silently dropped
         var msgEl = document.getElementById('profileMsg');
-        msgEl.innerHTML = '<div class="text-muted text-sm">Saving...</div>';
+        msgEl.innerHTML = '<div class="text-muted text-sm">Guardando...</div>';
         try {
           var res = await apiFetch('/members/'+currentMember.id, { method:'PUT', body:JSON.stringify(body) });
           if (res.success) {
-            msgEl.innerHTML = '<div class="success-msg">Profile updated successfully.</div>';
+            msgEl.innerHTML = '<div class="success-msg">Perfil actualizado con exito.</div>';
             currentMember = res.data;
             currentMember.member_id = currentMember.id;
             document.getElementById('sidebarName').textContent = currentMember.first_name + ' ' + currentMember.last_name;
           } else {
-            msgEl.innerHTML = '<div class="error-msg">'+(res.error||'Error saving profile')+'</div>';
+            msgEl.innerHTML = '<div class="error-msg">'+(res.error||'Error guardando el perfil')+'</div>';
           }
         } catch(e2) {
           msgEl.innerHTML = '<div class="error-msg">Error: '+esc(e2.message)+'</div>';
@@ -1010,7 +1010,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       html += '</div>';
       container.innerHTML = html;
     } catch(e) {
-      container.innerHTML = '<h2>Puntaje de Confianza</h2><div class="error-msg">Error loading data</div>';
+      container.innerHTML = '<h2>Puntaje de Confianza</h2><div class="error-msg">Error cargando datos</div>';
     }
   }
 
@@ -1075,7 +1075,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     openModal('<div class="loading">Loading profile...</div>');
     try {
       var res = await apiFetch('/members/'+id);
-      if (!res.success) { openModal('<div class="error-msg">Error loading profile</div>'); return; }
+      if (!res.success) { openModal('<div class="error-msg">Error cargando el perfil</div>'); return; }
       var m = res.data;
       var langs = m.languages || [];
       if (typeof langs === 'string') { try { langs = JSON.parse(langs); } catch(e) { langs = langs.replace(/[{}]/g,'').split(',').filter(Boolean); } }
@@ -1147,8 +1147,8 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
 
     // Admin-only: governance role + access level + region
     if (canGlobal) {
-      html += '<div class="form-group full" style="margin-top:18px;padding-top:14px;border-top:2px solid var(--gray-200)"><h3 style="margin:0 0 10px 0;font-size:14px;color:var(--primary);text-transform:uppercase;letter-spacing:0.5px">Admin Settings</h3></div>';
-      html += '<div class="form-group"><label>Governance Role</label><select name="governance_role">';
+      html += '<div class="form-group full" style="margin-top:18px;padding-top:14px;border-top:2px solid var(--gray-200)"><h3 style="margin:0 0 10px 0;font-size:14px;color:var(--primary);text-transform:uppercase;letter-spacing:0.5px">Configuracion de Admin</h3></div>';
+      html += '<div class="form-group"><label>Rol de Gobernanza</label><select name="governance_role">';
       var currentRole = m.governance_role || 'member';
       availableRoles.forEach(function(r) {
         html += '<option value="'+r+'"'+(r===currentRole?' selected':'')+'>'+r.replace(/_/g,' ')+'</option>';
@@ -1158,7 +1158,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       var currentAccess = m.access_level || 'member';
       var levels = ['member','admin_regional','admin_global'];
       if (currentMember.access_level === 'superadmin') levels.push('superadmin');
-      html += '<div class="form-group"><label>Access Level</label><select name="access_level">';
+      html += '<div class="form-group"><label>Nivel de Acceso</label><select name="access_level">';
       levels.forEach(function(l) {
         html += '<option value="'+l+'"'+(l===currentAccess?' selected':'')+'>'+l.replace(/_/g,' ')+'</option>';
       });
@@ -1170,7 +1170,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       });
       html += '</select></div>';
 
-      html += '<div class="form-group"><label>Membership Type</label><select name="membership_type">';
+      html += '<div class="form-group"><label>Tipo de Membresia</label><select name="membership_type">';
       ['individual','empresarial','corporativo','fundador'].forEach(function(mt) {
         html += '<option value="'+mt+'"'+(mt===(m.membership_type||'individual')?' selected':'')+'>'+mt+'</option>';
       });
@@ -1201,11 +1201,11 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       }
 
       var msgEl = document.getElementById('memEditMsg');
-      msgEl.innerHTML = '<div class="text-muted text-sm">Saving...</div>';
+      msgEl.innerHTML = '<div class="text-muted text-sm">Guardando...</div>';
       try {
         var res = await apiFetch('/members/'+m.id, { method:'PUT', body:JSON.stringify(body) });
         if (!res.success) {
-          msgEl.innerHTML = '<div class="error-msg">'+(res.error||'Error saving profile')+'</div>';
+          msgEl.innerHTML = '<div class="error-msg">'+(res.error||'Error guardando el perfil')+'</div>';
           return;
         }
         if (adminFields) {
@@ -1248,7 +1248,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
 
     document.getElementById('matchBtn').addEventListener('click', async function() {
       var out = document.getElementById('matchResults');
-      out.innerHTML = '<div class="loading">Searching for matches...</div>';
+      out.innerHTML = '<div class="loading">Buscando coincidencias...</div>';
       var body = {
         query_text: document.getElementById('matchQuery').value.trim(),
         sector: document.getElementById('matchSector').value || undefined,
@@ -1258,7 +1258,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       };
       try {
         var res = await apiFetch('/match', { method:'POST', body:JSON.stringify(body) });
-        if (!res.success) { out.innerHTML = '<div class="error-msg">'+(res.error||'Search error')+'</div>'; return; }
+        if (!res.success) { out.innerHTML = '<div class="error-msg">'+(res.error||'Error de busqueda')+'</div>'; return; }
         var results = res.data.results || [];
         if (results.length === 0) { out.innerHTML = '<div class="panel"><p class="text-muted">No matches found.</p></div>'; return; }
         var h = '<div class="panel"><h2>Results ('+results.length+' of '+res.data.total_candidates+' candidates)</h2>';
@@ -1344,7 +1344,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     var qs = 'limit=50' + (tab === 'mine' ? '&scope=mine' : tab === 'invited' ? '&scope=invited' : tab === 'open_rfq' ? '&scope=open_rfq' : '');
     try {
       var res = await apiFetch('/projects?' + qs);
-      if (!res.success) { out.innerHTML = '<div class="error-msg">Error loading projects</div>'; return; }
+      if (!res.success) { out.innerHTML = '<div class="error-msg">Error cargando proyectos</div>'; return; }
       var projects = res.data.projects || [];
 
       // For Matching tab, also pull Exchange RFQs matching the viewer's sector
@@ -1375,7 +1375,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         matchingRFQs.forEach(function(r) {
           h += '<div class="result-card" style="border-left:4px solid #28a745;cursor:default">';
           h += '<div class="rc-name">'+esc(r.title)+'</div>';
-          h += '<div class="rc-company"><span style="background:#28a745;color:white;padding:2px 6px;border-radius:3px;font-size:10px;text-transform:uppercase;font-weight:700;margin-right:6px">Exchange RFQ</span>'+esc(r.requester_name||'--')+(r.company_name?' &middot; '+esc(r.company_name):'')+'</div>';
+          h += '<div class="rc-company"><span style="background:#28a745;color:white;padding:2px 6px;border-radius:3px;font-size:10px;text-transform:uppercase;font-weight:700;margin-right:6px">Cotizacion del Intercambio</span>'+esc(r.requester_name||'--')+(r.company_name?' &middot; '+esc(r.company_name):'')+'</div>';
           h += '<div class="rc-meta mt-12"><span>'+esc(r.sector||'--')+'</span>';
           if (r.budget_range) h += '<span>'+esc(r.budget_range)+'</span>';
           if (r.deadline) h += '<span>Deadline: '+formatDate(r.deadline)+'</span>';
@@ -1425,7 +1425,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
             h += '<div class="text-sm"><strong>'+esc(r.role_title)+'</strong>';
             if (r.commitment_pct) h += ' <span class="text-muted">('+r.commitment_pct+'%)</span>';
             h += ' <span style="color:'+pcol+';font-weight:700;margin-left:6px">'+pct+'% match</span></div>';
-            h += '<button class="btn btn-primary btn-sm bidBtn" data-pid="'+p.id+'" data-ridx="'+r.role_index+'" data-rt="'+esc(r.role_title)+'" style="background:#28a745;padding:4px 12px;font-size:12px" onclick="event.stopPropagation()">Submit Bid</button>';
+            h += '<button class="btn btn-primary btn-sm bidBtn" data-pid="'+p.id+'" data-ridx="'+r.role_index+'" data-rt="'+esc(r.role_title)+'" style="background:#28a745;padding:4px 12px;font-size:12px" onclick="event.stopPropagation()">Enviar Oferta</button>';
             h += '</div>';
           });
           h += '</div>';
@@ -1459,20 +1459,20 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
           try {
             var r = await apiFetch('/projects/'+pid+'/request-join', {
               method: 'POST',
-              body: JSON.stringify({ role_index: ridx, message: note || 'Self-nominated via Open RFQs' })
+              body: JSON.stringify({ role_index: ridx, message: note || 'Self-nominated via Cotizaciones Abiertas' })
             });
             if (r.success) {
-              this.textContent = 'Bid Submitted';
+              this.textContent = 'Oferta Enviada';
               this.style.background = '#999';
               setTimeout(loadProjects, 1200);
             } else {
               this.disabled = false;
-              this.textContent = 'Submit Bid';
-              alert(r.error || 'Bid failed');
+              this.textContent = 'Enviar Oferta';
+              alert(r.error || 'Oferta fallida');
             }
           } catch(e) {
             this.disabled = false;
-            this.textContent = 'Submit Bid';
+            this.textContent = 'Enviar Oferta';
             alert(e.message);
           }
         });
@@ -1516,7 +1516,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     el.innerHTML = '<div id="invList"><div class="loading">Loading invitations...</div></div>';
     try {
       var res = await apiFetch('/projects/invitations/inbox');
-      if (!res.success) { document.getElementById('invList').innerHTML = '<div class="error-msg">Error loading invitations</div>'; return; }
+      if (!res.success) { document.getElementById('invList').innerHTML = '<div class="error-msg">Error cargando invitaciones</div>'; return; }
       var inv = res.data || [];
       if (inv.length === 0) {
         document.getElementById('invList').innerHTML = '<div class="panel"><p class="text-muted">No invitations yet. Members will see project role invitations here.</p></div>';
@@ -1695,8 +1695,8 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     // === Title ===
     h += planSection('Title', peTextInput('title', p.title));
 
-    // === Executive Summary ===
-    h += planSection('Executive Summary', peTextArea('executive_summary', p.executive_summary, 4));
+    // === Resumen Ejecutivo ===
+    h += planSection('Resumen Ejecutivo', peTextArea('executive_summary', p.executive_summary, 4));
 
     // === Problem & Market ===
     if (p.problem_market) {
@@ -1715,7 +1715,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     // === Solution ===
     if (p.solution) {
       var sh = '<label class="text-sm" style="font-weight:600">Description</label>'+peTextArea('solution.description', p.solution.description, 3);
-      sh += '<div style="margin-top:8px"><label class="text-sm" style="font-weight:600">Key Differentiators</label>';
+      sh += '<div style="margin-top:8px"><label class="text-sm" style="font-weight:600">Diferenciadores Clave</label>';
       sh += peStringArrayList('solution.key_differentiators', p.solution.key_differentiators)+'</div>';
       sh += '<div style="margin-top:8px"><label class="text-sm" style="font-weight:600">Tech Stack / Methodology</label>';
       sh += peStringArrayList('solution.tech_stack_or_methodology', p.solution.tech_stack_or_methodology)+'</div>';
@@ -1742,7 +1742,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       gh += '</div><button type="button" class="btn btn-outline btn-sm" data-pe-add="go_to_market.phases" data-pe-add-type="phase" style="margin-bottom:8px">+ Add phase</button>';
 
       // Channel strategy
-      gh += '<div style="margin-top:8px"><label class="text-sm" style="font-weight:600">Channel Strategy</label>'+peTextArea('go_to_market.channel_strategy', gtm.channel_strategy, 2)+'</div>';
+      gh += '<div style="margin-top:8px"><label class="text-sm" style="font-weight:600">Estrategia de Canal</label>'+peTextArea('go_to_market.channel_strategy', gtm.channel_strategy, 2)+'</div>';
 
       // Regional priorities
       gh += '<div style="margin-top:8px"><label class="text-sm" style="font-weight:600">Regional Priorities</label>';
@@ -1759,10 +1759,10 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       h += planSection('Go-to-Market', gh);
     }
 
-    // === Revenue Model ===
+    // === Modelo de Ingresos ===
     if (p.revenue_model) {
       var rm = p.revenue_model;
-      var rh = '<label class="text-sm" style="font-weight:600">Pricing Tiers</label>';
+      var rh = '<label class="text-sm" style="font-weight:600">Niveles de Precio</label>';
       rh += '<div data-pe-arr-list="revenue_model.pricing_tiers">';
       (rm.pricing_tiers||[]).forEach(function(t, i) {
         rh += '<div data-pe-arr-row="revenue_model.pricing_tiers.'+i+'" style="display:grid;grid-template-columns:2fr 1fr 1fr 32px;gap:6px;margin-bottom:4px">';
@@ -1777,7 +1777,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       rh += '<div><label class="text-sm" style="font-weight:600">Year 1 Revenue (USD)</label>'+peNumberInput('revenue_model.year1_revenue_estimate_usd', rm.year1_revenue_estimate_usd)+'</div>';
       rh += '<div><label class="text-sm" style="font-weight:600">Year 3 Revenue (USD)</label>'+peNumberInput('revenue_model.year3_revenue_estimate_usd', rm.year3_revenue_estimate_usd)+'</div>';
       rh += '</div>';
-      h += planSection('Revenue Model', rh);
+      h += planSection('Modelo de Ingresos', rh);
     }
 
     // === Team Roles Required ===
@@ -1801,7 +1801,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       h += planSection('Team Roles Required ('+p.team_roles_required.length+')', th);
     }
 
-    // === Budget Breakdown ===
+    // === Desglose del Presupuesto ===
     if (Array.isArray(p.budget_breakdown)) {
       var bh = '<div data-pe-arr-list="budget_breakdown">';
       p.budget_breakdown.forEach(function(b, i) {
@@ -1815,10 +1815,10 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       bh += '</div><button type="button" class="btn btn-outline btn-sm" data-pe-add="budget_breakdown" data-pe-add-type="budget">+ Add line item</button>';
       var tot = p.budget_breakdown.reduce(function(s,b){return s+(parseFloat(b.amount_usd)||0);},0);
       bh += '<div style="margin-top:8px;font-weight:700;text-align:right">Current total: $'+Number(tot).toLocaleString()+'</div>';
-      h += planSection('Budget Breakdown', bh);
+      h += planSection('Desglose del Presupuesto', bh);
     }
 
-    // === Timeline Milestones ===
+    // === Hitos del Cronograma ===
     if (Array.isArray(p.timeline_milestones)) {
       var mh = '<div data-pe-arr-list="timeline_milestones">';
       p.timeline_milestones.forEach(function(m, i) {
@@ -1830,7 +1830,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         mh += '</div>';
       });
       mh += '</div><button type="button" class="btn btn-outline btn-sm" data-pe-add="timeline_milestones" data-pe-add-type="milestone">+ Add milestone</button>';
-      h += planSection('Timeline Milestones', mh);
+      h += planSection('Hitos del Cronograma', mh);
     }
 
     // === Risks ===
@@ -1850,7 +1850,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       h += planSection('Risks', rkh);
     }
 
-    // === Success KPIs ===
+    // === KPIs de Exito ===
     if (Array.isArray(p.success_kpis)) {
       var kh = '<div data-pe-arr-list="success_kpis">';
       p.success_kpis.forEach(function(k, i) {
@@ -1862,7 +1862,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         kh += '</div>';
       });
       kh += '</div><button type="button" class="btn btn-outline btn-sm" data-pe-add="success_kpis" data-pe-add-type="kpi">+ Add KPI</button>';
-      h += planSection('Success KPIs', kh);
+      h += planSection('KPIs de Exito', kh);
     }
 
     openModal(h);
@@ -1973,13 +1973,13 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       msg.innerHTML = '<div class="text-muted text-sm">Saving + publishing...</div>';
       try {
         var save = await apiFetch('/projects/'+pid+'/plan', { method:'PUT', body:JSON.stringify({ plan_json: window._currentDraftPlan }) });
-        if (!save.success) { msg.innerHTML = '<div class="error-msg">'+(save.error||'Save failed')+'</div>'; return; }
+        if (!save.success) { msg.innerHTML = '<div class="error-msg">'+(save.error||'Guardado fallido')+'</div>'; return; }
         var r = await apiFetch('/projects/'+pid+'/publish', { method:'POST' });
         if (r.success) {
           msg.innerHTML = '<div class="success-msg">Plan published. Project is now live in the feed.</div>';
           setTimeout(function() { closeModal(); loadProjects(); }, 1200);
         } else {
-          msg.innerHTML = '<div class="error-msg">'+(r.error||'Publish failed')+'</div>';
+          msg.innerHTML = '<div class="error-msg">'+(r.error||'Publicacion fallida')+'</div>';
         }
       } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
     });
@@ -2006,7 +2006,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     var h = '<h3 style="margin:24px 0 12px;border-top:2px solid var(--gray-200);padding-top:18px">Business Plan</h3>';
 
     if (plan.executive_summary) {
-      h += planSection('Executive Summary', '<p style="white-space:pre-wrap;font-size:14px">'+esc(plan.executive_summary)+'</p>');
+      h += planSection('Resumen Ejecutivo', '<p style="white-space:pre-wrap;font-size:14px">'+esc(plan.executive_summary)+'</p>');
     }
     if (plan.problem_market) {
       var pm = plan.problem_market;
@@ -2032,7 +2032,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       var pricing = (rm.pricing_tiers||[]).map(function(t){
         return '<li><strong>'+esc(t.name)+':</strong> $'+Number(t.price_usd||0).toLocaleString()+' / '+esc(t.period||'')+'</li>';
       }).join('');
-      h += planSection('Revenue Model',
+      h += planSection('Modelo de Ingresos',
         '<ul style="margin:0 0 8px 20px">'+pricing+'</ul>'+
         '<div><strong>Year 1 Revenue Estimate:</strong> $'+Number(rm.year1_revenue_estimate_usd||0).toLocaleString()+'</div>'+
         '<div><strong>Year 3 Revenue Estimate:</strong> $'+Number(rm.year3_revenue_estimate_usd||0).toLocaleString()+'</div>'
@@ -2064,7 +2064,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         return '<tr><td>'+esc(b.category||'')+'</td><td>'+esc(b.phase||'')+'</td><td style="text-align:right">$'+Number(b.amount_usd||0).toLocaleString()+'</td></tr>';
       }).join('');
       var tot = plan.budget_breakdown.reduce(function(s,b){return s+(b.amount_usd||0);},0);
-      h += planSection('Budget Breakdown',
+      h += planSection('Desglose del Presupuesto',
         '<table style="width:100%;font-size:13px"><thead><tr><th style="text-align:left">Category</th><th style="text-align:left">Phase</th><th style="text-align:right">Amount</th></tr></thead><tbody>'+
           rows+'<tr style="font-weight:700;border-top:2px solid var(--gray-300)"><td colspan="2">TOTAL</td><td style="text-align:right">$'+Number(tot).toLocaleString()+'</td></tr></tbody></table>'
       );
@@ -2073,7 +2073,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       var ms = plan.timeline_milestones.map(function(m){
         return '<div style="display:flex;gap:12px;padding:6px 0;border-bottom:1px solid var(--gray-100)"><div style="font-weight:700;min-width:60px">M'+(m.month||0)+'</div><div><div style="font-weight:600">'+esc(m.milestone||'')+'</div><div class="text-sm text-muted">'+esc(m.deliverable||'')+'</div></div></div>';
       }).join('');
-      h += planSection('Timeline Milestones', ms);
+      h += planSection('Hitos del Cronograma', ms);
     }
     if (Array.isArray(plan.risks)) {
       var rk = plan.risks.map(function(r){
@@ -2086,7 +2086,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       var k = plan.success_kpis.map(function(x){
         return '<tr><td style="font-weight:600">'+esc(x.kpi||'')+'</td><td>'+esc(x.target||'')+'</td><td class="text-muted text-sm">'+esc(x.measurement_period||'')+'</td></tr>';
       }).join('');
-      h += planSection('Success KPIs', '<table style="width:100%;font-size:13px"><thead><tr><th style="text-align:left">KPI</th><th style="text-align:left">Target</th><th style="text-align:left">Period</th></tr></thead><tbody>'+k+'</tbody></table>');
+      h += planSection('KPIs de Exito', '<table style="width:100%;font-size:13px"><thead><tr><th style="text-align:left">KPI</th><th style="text-align:left">Target</th><th style="text-align:left">Period</th></tr></thead><tbody>'+k+'</tbody></table>');
     }
     return h;
   }
@@ -2107,7 +2107,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     h += '<div id="amendMsg"></div></div>';
 
     h += planSection('Title', '<input type="text" data-pe-path="title" value="'+esc(p.title||'')+'" style="width:100%;padding:6px 8px;border:1px solid var(--gray-300);border-radius:4px;font-size:13px">');
-    h += planSection('Executive Summary', '<textarea data-pe-path="executive_summary" rows="4" style="width:100%;padding:6px 8px;border:1px solid var(--gray-300);border-radius:4px;font-size:13px;resize:vertical">'+esc(p.executive_summary||'')+'</textarea>');
+    h += planSection('Resumen Ejecutivo', '<textarea data-pe-path="executive_summary" rows="4" style="width:100%;padding:6px 8px;border:1px solid var(--gray-300);border-radius:4px;font-size:13px;resize:vertical">'+esc(p.executive_summary||'')+'</textarea>');
 
     if (p.problem_market) {
       var pm = p.problem_market;
@@ -2275,7 +2275,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
 
     h += '<div class="stat-cards">';
     h += '<div class="stat-card"><div class="label">Total Tasks</div><div class="value">'+d.tasks.total+'</div></div>';
-    h += '<div class="stat-card"><div class="label">In Progress</div><div class="value primary">'+d.tasks.doing+'</div></div>';
+    h += '<div class="stat-card"><div class="label">En Progreso</div><div class="value primary">'+d.tasks.doing+'</div></div>';
     h += '<div class="stat-card"><div class="label">Done</div><div class="value" style="color:#28a745">'+d.tasks.done+'</div></div>';
     h += '<div class="stat-card"><div class="label">Milestones</div><div class="value">'+d.milestones.completed+' / '+d.milestones.total+'</div></div>';
     h += '</div>';
@@ -2283,8 +2283,8 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     // My Tasks widget (every participant)
     if (d.my_tasks) {
       h += '<div class="stat-cards" style="margin-top:8px">';
-      h += '<div class="stat-card" style="border-left:3px solid var(--primary)"><div class="label">My Open Tasks</div><div class="value primary">'+(d.my_tasks.open||0)+'</div></div>';
-      h += '<div class="stat-card" style="border-left:3px solid #28a745"><div class="label">My Completed</div><div class="value" style="color:#28a745">'+(d.my_tasks.done||0)+'</div></div>';
+      h += '<div class="stat-card" style="border-left:3px solid var(--primary)"><div class="label">Mis Tareas Abiertas</div><div class="value primary">'+(d.my_tasks.open||0)+'</div></div>';
+      h += '<div class="stat-card" style="border-left:3px solid #28a745"><div class="label">Mis Completadas</div><div class="value" style="color:#28a745">'+(d.my_tasks.done||0)+'</div></div>';
       h += '</div>';
     }
 
@@ -2352,7 +2352,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     h += '<div class="form-group full"><label>Description</label><textarea name="description" rows="3"></textarea></div>';
     h += '<div class="form-group"><label>Status</label><select name="status"><option value="todo">To Do</option><option value="doing">Doing</option><option value="review">Review</option><option value="done">Done</option><option value="blocked">Blocked</option></select></div>';
     h += '<div class="form-group"><label>Priority</label><select name="priority"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option><option value="critical">Critical</option></select></div>';
-    h += '<div class="form-group"><label>Due Date</label><input name="due_date" type="date"></div>';
+    h += '<div class="form-group"><label>Fecha Limite</label><input name="due_date" type="date"></div>';
     h += '<div class="form-group full mt-12"><button type="submit" class="btn btn-primary">Crear Tarea</button> <button type="button" class="btn btn-outline" id="cancelTaskBtn">Cancelar</button></div>';
     h += '<div id="newTaskMsg"></div></form>';
     openModal(h);
@@ -2445,7 +2445,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
           leadsHtml += '<span class="text-muted">No leads assigned</span>';
         }
         if (isOwner) {
-          leadsHtml += ' <button class="btn btn-outline btn-sm" data-assign-mid="'+m.id+'" style="padding:2px 8px;font-size:10px">Assign Leads</button>';
+          leadsHtml += ' <button class="btn btn-outline btn-sm" data-assign-mid="'+m.id+'" style="padding:2px 8px;font-size:10px">Asignar Lideres</button>';
         }
         leadsHtml += '</div>';
         h += leadsHtml;
@@ -2454,7 +2454,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         if (m.escrow_status) h += '<div class="text-sm" style="margin-top:4px"><strong>Escrow:</strong> '+esc(m.escrow_status)+(m.stripe_escrow_id?' ('+esc(m.stripe_escrow_id)+')':'')+'</div>';
         h += '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">';
         if (isOwner && m.escrow_status !== 'funded' && m.escrow_status !== 'released' && m.budget_allocation_usd) {
-          h += '<button class="btn btn-outline btn-sm" data-fund="'+m.id+'">Fund Escrow</button>';
+          h += '<button class="btn btn-outline btn-sm" data-fund="'+m.id+'">Fondear Escrow</button>';
         }
         if (isOwner && m.escrow_status === 'funded') {
           h += '<button class="btn btn-primary btn-sm" data-release="'+m.id+'">Release Escrow + Mark Complete</button>';
@@ -2504,7 +2504,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     if (!m) return;
     var currentLeads = m.lead_member_ids || [];
 
-    var h = '<h2>Assign Milestone Leads</h2>';
+    var h = '<h2>Asignar Lideres del Hito</h2>';
     h += '<p class="text-muted text-sm mb-12">Select one or more participants to lead "<strong>'+esc(m.title)+'</strong>"</p>';
     h += '<div id="assignChecklist" style="max-height:300px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:6px;padding:10px;margin-bottom:12px">';
     team.forEach(function(p) {
@@ -2527,7 +2527,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         ids.push(parseInt(cb.dataset.pmid));
       });
       var msg = document.getElementById('assignMsg');
-      msg.innerHTML = '<div class="text-muted text-sm">Saving...</div>';
+      msg.innerHTML = '<div class="text-muted text-sm">Guardando...</div>';
       try {
         var r = await apiFetch('/projects/'+pid+'/workspace/milestones/'+mid+'/assign', { method:'PUT', body:JSON.stringify({ lead_member_ids: ids }) });
         if (r.success) {
@@ -2681,7 +2681,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     openModal('<div class="loading">Loading project...</div>');
     try {
       var res = await apiFetch('/projects/'+id);
-      if (!res.success) { openModal('<div class="error-msg">'+(res.error||'Error loading project')+'</div>'); return; }
+      if (!res.success) { openModal('<div class="error-msg">'+(res.error||'Error cargando proyecto')+'</div>'); return; }
       var p = res.data;
 
       // STUB view (private project, viewer is not a participant)
@@ -2784,18 +2784,18 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
 
       // Stage 0 -- Edit/Publish draft (proposer-only)
       if ((vr.is_proposer || vr.is_superadmin) && p.plan_status === 'draft' && p.plan_json) {
-        html += '<button class="btn btn-primary btn-sm" id="editPlanBtn" style="background:var(--accent);color:var(--navy)">Edit Plan</button>';
+        html += '<button class="btn btn-primary btn-sm" id="editPlanBtn" style="background:var(--accent);color:var(--navy)">Editar Plan</button>';
         html += '<button class="btn btn-primary btn-sm" id="publishDraftBtn" style="background:#28a745">Publish Plan (starts 30-day countdown)</button>';
       }
 
       // Stage 1 -- recruiting
       if (p.plan_status === 'recruiting' && !p.recruitment_closed_at && !vr.is_proposer && !vr.is_participant) {
-        html += '<button class="btn btn-outline btn-sm" id="joinBtn">Join Team</button>';
+        html += '<button class="btn btn-outline btn-sm" id="joinBtn">Unirse al Equipo</button>';
       }
       if ((vr.is_proposer || vr.is_superadmin) && p.plan_status === 'recruiting' && !p.recruitment_closed_at) {
         html += '<button class="btn btn-primary btn-sm" id="inviteMatchesBtn" style="background:var(--accent);color:var(--navy)">Re-run AI Matches</button>';
         html += '<button class="btn btn-outline btn-sm" id="viewInvitationsBtn">View Invitations</button>';
-        html += '<button class="btn btn-danger btn-sm" id="closeRecruitmentBtn" style="background:var(--red);color:white">Close Bidding Now</button>';
+        html += '<button class="btn btn-danger btn-sm" id="closeRecruitmentBtn" style="background:var(--red);color:white">Cerrar Cotizacion Ahora</button>';
       }
 
       // Reopen for recruitment_failed projects (proposer only)
@@ -2816,7 +2816,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
 
       // Stage 3 -- workspace (auto-init on signoff, button is just shortcut)
       if (['executing','signed_off','completed'].includes(p.plan_status) && (vr.is_proposer || vr.is_participant || vr.is_superadmin)) {
-        html += '<button class="btn btn-primary btn-sm" id="openWorkspaceBtn" style="background:#1565c0">Open Workspace</button>';
+        html += '<button class="btn btn-primary btn-sm" id="openWorkspaceBtn" style="background:#1565c0">Abrir Workspace</button>';
       }
       html += '</div>';
       html += '<div id="projActionMsg" style="margin-top:10px"></div>';
@@ -3106,7 +3106,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
 
   async function loadCompanies() {
     var out = document.getElementById('exchangeContent');
-    out.innerHTML = '<div class="flex-between mb-16"><div></div><button class="btn btn-primary btn-sm" id="newCompanyBtn">+ Register Company</button></div><div id="companyList"><div class="loading">Cargando...</div></div>';
+    out.innerHTML = '<div class="flex-between mb-16"><div></div><button class="btn btn-primary btn-sm" id="newCompanyBtn">+ Registrar Empresa</button></div><div id="companyList"><div class="loading">Cargando...</div></div>';
 
     document.getElementById('newCompanyBtn').addEventListener('click', showNewCompanyForm);
 
@@ -3139,7 +3139,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
           var current = this.dataset.curr === '1';
           var origText = this.textContent;
           this.disabled = true;
-          this.textContent = 'Saving...';
+          this.textContent = 'Guardando...';
           this.style.opacity = '0.6';
           try {
             var r = await apiFetch('/exchange/companies/'+cid, { method:'PUT', body:JSON.stringify({ verified: !current }) });
@@ -3159,7 +3159,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
               this.disabled = false;
               this.textContent = origText;
               this.style.opacity = '1';
-              alert((r && r.error) ? r.error : 'Save failed -- backend did not confirm new value');
+              alert((r && r.error) ? r.error : 'Guardado fallido -- backend did not confirm new value');
             }
           } catch(e) {
             this.disabled = false;
@@ -3181,7 +3181,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       if (!res.success) { openModal('<div class="error-msg">'+(res.error||'Error')+'</div>'); return; }
       var c = res.data;
       var isAdmin = currentMember && ['superadmin','admin_global','admin_regional','admin'].includes(currentMember.access_level);
-      var html = '<h2 style="margin-bottom:8px">Edit Company</h2>';
+      var html = '<h2 style="margin-bottom:8px">Editar Empresa</h2>';
       html += '<div class="text-sm text-muted" style="margin-bottom:12px">'+esc(c.name)+(c.owner_name?' &middot; owner: '+esc(c.owner_name):'')+'</div>';
       html += '<div id="compEditMsg"></div>';
       html += '<form id="compEditForm" class="form-grid">';
@@ -3224,7 +3224,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         body.employee_count = body.employee_count ? parseInt(body.employee_count) : null;
         body.verified = !!fd.get('verified');
         var msg = document.getElementById('compEditMsg');
-        msg.innerHTML = '<div class="text-muted text-sm">Saving...</div>';
+        msg.innerHTML = '<div class="text-muted text-sm">Guardando...</div>';
         try {
           var r = await apiFetch('/exchange/companies/'+companyId, { method:'PUT', body:JSON.stringify(body) });
           if (r.success) { closeModal(); loadCompanies(); }
@@ -3237,7 +3237,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   }
 
   function showNewCompanyForm() {
-    var html = '<h2 style="margin-bottom:16px">Register Company</h2><div id="compMsg"></div>';
+    var html = '<h2 style="margin-bottom:16px">Registrar Empresa</h2><div id="compMsg"></div>';
     html += '<form id="compForm" class="form-grid">';
     html += '<div class="form-group"><label>Name</label><input name="name" required></div>';
     html += '<div class="form-group"><label>Sector</label><select name="sector" required>'+sectorOptions()+'</select></div>';
@@ -3286,7 +3286,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       rfqs.forEach(function(r) {
         h += '<div class="result-card" data-rfq-id="'+r.id+'">';
         h += '<div class="flex-between"><div class="rc-name">'+esc(r.title)+'</div>'+statusBadge(r.status)+'</div>';
-        h += '<div class="rc-company">'+esc(r.requester_name||'--')+' | '+esc(r.company_name||'No company')+'</div>';
+        h += '<div class="rc-company">'+esc(r.requester_name||'--')+' | '+esc(r.company_name||'Sin empresa')+'</div>';
         h += '<div class="rc-meta mt-12"><span>'+esc(r.sector||'--')+'</span>';
         if (r.budget_range) h += '<span>'+esc(r.budget_range)+'</span>';
         if (r.deadline) h += '<span>Deadline: '+formatDate(r.deadline)+'</span>';
@@ -3304,12 +3304,12 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   }
 
   function showNewRFQForm() {
-    var html = '<h2 style="margin-bottom:16px">Create RFQ</h2><div id="rfqMsg"></div>';
+    var html = '<h2 style="margin-bottom:16px">Crear Cotizacion</h2><div id="rfqMsg"></div>';
     html += '<form id="rfqForm" class="form-grid">';
     html += '<div class="form-group full"><label>Title</label><input name="title" required></div>';
     html += '<div class="form-group full"><label>Description</label><textarea name="description" rows="3" required></textarea></div>';
     html += '<div class="form-group"><label>Sector</label><select name="sector" required>'+sectorOptions()+'</select></div>';
-    html += '<div class="form-group"><label>Budget Range</label><input name="budget_range" placeholder="$10K - $50K"></div>';
+    html += '<div class="form-group"><label>Rango de Presupuesto</label><input name="budget_range" placeholder="$10K - $50K"></div>';
     html += '<div class="form-group"><label>Deadline</label><input name="deadline" type="date"></div>';
     html += '<div class="form-group"><label>Target Countries (comma)</label><input name="countries_target" placeholder="US, PH"></div>';
     html += '<div class="form-group full mt-12"><button type="submit" class="btn btn-primary">Publish RFQ</button></div>';
@@ -3336,7 +3336,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     openModal('<div class="loading">Loading RFQ...</div>');
     try {
       var res = await apiFetch('/exchange/rfqs/'+id);
-      if (!res.success) { openModal('<div class="error-msg">Error loading RFQ</div>'); return; }
+      if (!res.success) { openModal('<div class="error-msg">Error cargando RFQ</div>'); return; }
       var r = res.data;
       var html = '<h2 style="margin-bottom:8px">'+esc(r.title)+'</h2>';
       html += '<div style="margin-bottom:12px">'+statusBadge(r.status)+' <span class="text-muted text-sm">by '+esc(r.requester_name||'--')+'</span></div>';
@@ -3364,12 +3364,12 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
 
       // Respond form
       if (r.status === 'open') {
-        html += '<h3 style="margin-top:16px">Submit Proposal</h3><div id="rfqResMsg"></div>';
+        html += '<h3 style="margin-top:16px">Enviar Propuesta</h3><div id="rfqResMsg"></div>';
         html += '<form id="rfqResForm" class="form-grid">';
         html += '<div class="form-group full"><label>Proposal</label><textarea name="proposal_text" rows="3" required></textarea></div>';
         html += '<div class="form-group"><label>Quote (USD)</label><input name="price_quote" type="number" step="0.01"></div>';
-        html += '<div class="form-group"><label>Delivery Timeline</label><input name="delivery_timeline" placeholder="30 days"></div>';
-        html += '<div class="form-group full mt-12"><button type="submit" class="btn btn-primary btn-sm">Submit Proposal</button></div>';
+        html += '<div class="form-group"><label>Cronograma de Entrega</label><input name="delivery_timeline" placeholder="30 days"></div>';
+        html += '<div class="form-group full mt-12"><button type="submit" class="btn btn-primary btn-sm">Enviar Propuesta</button></div>';
         html += '</form>';
       }
 
@@ -3426,7 +3426,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   }
 
   function showNewOpportunityForm() {
-    var html = '<h2 style="margin-bottom:16px">Post Opportunity</h2><div id="oppMsg"></div>';
+    var html = '<h2 style="margin-bottom:16px">Publicar Oportunidad</h2><div id="oppMsg"></div>';
     html += '<form id="oppForm" class="form-grid">';
     html += '<div class="form-group full"><label>Title</label><input name="title" required></div>';
     html += '<div class="form-group full"><label>Description</label><textarea name="description" rows="3" required></textarea></div>';
@@ -3456,10 +3456,10 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   // ================================================================
   async function renderMetrics() {
     var el = document.getElementById('pageContent');
-    el.innerHTML = '<div id="metricsHCI" class="panel"><h2>HCI Score</h2><div class="loading">Cargando...</div></div>' +
+    el.innerHTML = '<div id="metricsHCI" class="panel"><h2>Puntaje HCI</h2><div class="loading">Cargando...</div></div>' +
       '<div id="metricsGini" class="panel"><h2>Gini Coefficient by Region</h2><div class="loading">Cargando...</div></div>' +
-      '<div id="metricsNetwork" class="panel"><h2>Network Value</h2><div class="loading">Cargando...</div></div>' +
-      '<div id="metricsTrust" class="panel"><h2>My Trust Score</h2><div class="loading">Cargando...</div></div>';
+      '<div id="metricsNetwork" class="panel"><h2>Valor de Red</h2><div class="loading">Cargando...</div></div>' +
+      '<div id="metricsTrust" class="panel"><h2>Mi Puntaje de Confianza</h2><div class="loading">Cargando...</div></div>';
 
     loadHCI();
     loadGini();
@@ -3471,7 +3471,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     var container = document.getElementById('metricsHCI');
     try {
       var res = await apiFetch('/metrics/hci');
-      if (!res.success) { container.innerHTML = '<h2>HCI Score</h2><div class="error-msg">Error loading</div>'; return; }
+      if (!res.success) { container.innerHTML = '<h2>Puntaje HCI</h2><div class="error-msg">Error loading</div>'; return; }
       var d = res.data;
       var hciPct = Math.round(d.hci * 100);
       var targetPct = Math.round(d.target * 100);
@@ -3479,7 +3479,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       var bgGrad = 'conic-gradient(var(--primary) 0deg, var(--primary) '+angle+'deg, var(--gray-200) '+angle+'deg)';
 
       var html = '<h2>CamaraVirtual.app -- Indice Compuesto (HCI)</h2>';
-      html += '<div class="gauge-wrap"><div class="gauge" style="background:'+bgGrad+'"><div class="gauge-inner"><div class="gauge-value">'+hciPct+'%</div><div class="gauge-label">HCI Score</div></div></div></div>';
+      html += '<div class="gauge-wrap"><div class="gauge" style="background:'+bgGrad+'"><div class="gauge-inner"><div class="gauge-value">'+hciPct+'%</div><div class="gauge-label">Puntaje HCI</div></div></div></div>';
       html += '<p class="text-muted text-sm" style="text-align:center">Target: '+targetPct+'%</p>';
 
       // Components
@@ -3499,7 +3499,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       html += '</div></div>';
       container.innerHTML = html;
     } catch(e) {
-      container.innerHTML = '<h2>HCI Score</h2><div class="error-msg">Error: '+esc(e.message)+'</div>';
+      container.innerHTML = '<h2>Puntaje HCI</h2><div class="error-msg">Error: '+esc(e.message)+'</div>';
     }
   }
 
@@ -3535,18 +3535,18 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     var container = document.getElementById('metricsNetwork');
     try {
       var res = await apiFetch('/metrics/network-value');
-      if (!res.success) { container.innerHTML = '<h2>Network Value</h2><div class="error-msg">Error</div>'; return; }
+      if (!res.success) { container.innerHTML = '<h2>Valor de Red</h2><div class="error-msg">Error</div>'; return; }
       var d = res.data;
-      var html = '<h2>Network Value (Metcalfe)</h2>';
+      var html = '<h2>Valor de Red (Metcalfe)</h2>';
       html += '<div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:12px">';
       html += '<div class="stat-card" style="flex:1;min-width:150px"><div class="label">Network Value</div><div class="value primary">'+Number(d.network_value).toLocaleString()+'</div></div>';
-      html += '<div class="stat-card" style="flex:1;min-width:150px"><div class="label">Active Members</div><div class="value">'+d.active_members+'</div></div>';
-      html += '<div class="stat-card" style="flex:1;min-width:150px"><div class="label">Average Trust</div><div class="value accent">'+(d.avg_trust*100).toFixed(1)+'%</div></div>';
+      html += '<div class="stat-card" style="flex:1;min-width:150px"><div class="label">Miembros Activos</div><div class="value">'+d.active_members+'</div></div>';
+      html += '<div class="stat-card" style="flex:1;min-width:150px"><div class="label">Confianza Promedio</div><div class="value accent">'+(d.avg_trust*100).toFixed(1)+'%</div></div>';
       html += '</div>';
       html += '<p class="text-sm text-muted mt-12">Formula: V = k * n_active^2 * avg_trust (k='+d.k+')</p>';
       container.innerHTML = html;
     } catch(e) {
-      container.innerHTML = '<h2>Network Value</h2><div class="error-msg">Error: '+esc(e.message)+'</div>';
+      container.innerHTML = '<h2>Valor de Red</h2><div class="error-msg">Error: '+esc(e.message)+'</div>';
     }
   }
 
@@ -3604,7 +3604,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
               document.getElementById('sidebarType').textContent = type;
               navigate('payments');
             } else {
-              alert(res.error||'Error switching plan');
+              alert(res.error||'Error cambiando el plan');
             }
           } catch(e) { alert('Error: '+e.message); }
         });
@@ -3649,9 +3649,9 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
 
     c.innerHTML = '<div class="admin-tabs" style="display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;"></div><div id="adminContent"></div>';
     var tabs = [
-      { id:'members', label:'Member Management', access:true },
+      { id:'members', label:'Gestion de Miembros', access:true },
       { id:'governance', label:'Board of Directors', access:isGlobalAdmin },
-      { id:'regions', label:'Regional Delegations', access:true },
+      { id:'regions', label:'Delegaciones Regionales', access:true },
       { id:'system', label:'System', access:isSuperadmin }
     ];
     var tabBar = c.querySelector('.admin-tabs');
@@ -3747,7 +3747,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         if (!res.success) { ac.innerHTML = '<div class="error-msg">' + esc(res.error) + '</div>'; return; }
         var regions = res.data || [];
         var canGlobal = currentMember.access_level === 'superadmin' || currentMember.access_level === 'admin_global';
-        var h = '<div class="flex-between mb-16"><h3 style="margin:0">Regional Delegations</h3>';
+        var h = '<div class="flex-between mb-16"><h3 style="margin:0">Delegaciones Regionales</h3>';
         if (canGlobal) h += '<button class="btn btn-primary" onclick="adminAddRegion()">+ Add Region</button>';
         h += '</div>';
         h += '<div class="stat-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;">';
@@ -3781,14 +3781,14 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         var res = await apiFetch('/admin/system/stats');
         if (!res.success) { ac.innerHTML = '<div class="error-msg">' + esc(res.error) + '</div>'; return; }
         var d = res.data.overview;
-        var h = '<h3 style="margin-bottom:16px;">System Statistics</h3>';
+        var h = '<h3 style="margin-bottom:16px;">Estadisticas del Sistema</h3>';
         h += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;">';
         var items = [
-          ['Total Members', d.total_members], ['Active Members', d.active_members],
-          ['Governance Roles', d.governance_roles_assigned], ['Projects', d.total_projects],
-          ['Companies', d.total_companies], ['Open RFQs', d.open_rfqs],
+          ['Total de Miembros', d.total_members], ['Miembros Activos', d.active_members],
+          ['Roles de Gobernanza', d.governance_roles_assigned], ['Projects', d.total_projects],
+          ['Companies', d.total_companies], ['Cotizaciones Abiertas', d.open_rfqs],
           ['Transactions', d.total_transactions], ['Total Revenue', '$'+Number(d.total_revenue||0).toLocaleString()],
-          ['Matchings', d.total_matches], ['Trust References', d.total_references],
+          ['Matchings', d.total_matches], ['Referencias de Confianza', d.total_references],
           ['Opportunities', d.active_opportunities], ['Events', d.total_events]
         ];
         items.forEach(function(i) {
@@ -3801,7 +3801,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
           h += '<tr><td>' + esc(r.access_level) + '</td><td>' + r.count + '</td></tr>';
         });
         h += '</tbody></table></div>';
-        h += '<h4 style="margin-top:24px;margin-bottom:12px;">Database Tables</h4>';
+        h += '<h4 style="margin-top:24px;margin-bottom:12px;">Tablas de Base de Datos</h4>';
         h += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
         (res.data.database_tables||[]).forEach(function(t) {
           h += '<span class="badge badge-gray" style="font-family:monospace;font-size:12px;">' + t + '</span>';
@@ -3816,14 +3816,14 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   window.adminVerify = async function(id) {
     if (!confirm('Verify member #' + id + ' with full verification level?')) return;
     var res = await apiFetch('/admin/members/' + id + '/verify', 'PUT', { verification_level: 'id_complete' });
-    alert(res.success ? 'Member verified' : 'Error: ' + (res.error||''));
+    alert(res.success ? 'Miembro verificado' : 'Error: ' + (res.error||''));
     if (res.success) loadAdminTab('members');
   };
   window.adminToggleStatus = async function(id, current) {
     var newStatus = current === 'active' ? 'suspended' : 'active';
     if (!confirm('Change status to ' + newStatus + '?')) return;
     var res = await apiFetch('/admin/members/' + id + '/status', 'PUT', { status: newStatus });
-    alert(res.success ? 'Status updated' : 'Error: ' + (res.error||''));
+    alert(res.success ? 'Estado actualizado' : 'Error: ' + (res.error||''));
     if (res.success) loadAdminTab('members');
   };
   window.adminRole = async function(id, name) {
@@ -3836,7 +3836,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   window.adminRemoveRole = async function(id) {
     if (!confirm('Remove governance role?')) return;
     var res = await apiFetch('/admin/roles/' + id, 'DELETE');
-    alert(res.success ? 'Role removed' : 'Error: ' + (res.error||''));
+    alert(res.success ? 'Rol eliminado' : 'Error: ' + (res.error||''));
     if (res.success) loadAdminTab('governance');
   };
 
@@ -3852,7 +3852,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     var ans = prompt(prompt1);
     if (!ans) return;
     var level = levels[parseInt(ans)-1];
-    if (!level) { alert('Invalid choice'); return; }
+    if (!level) { alert('Opcion invalida'); return; }
     var body = { access_level: level };
     if (level === 'admin_regional') {
       var regRes = await apiFetch('/admin/regions');
@@ -3867,7 +3867,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   };
 
   window.adminAddMember = function() {
-    var html = '<h2>Add New Member</h2><div id="newMemMsg"></div>';
+    var html = '<h2>Agregar Nuevo Miembro</h2><div id="newMemMsg"></div>';
     html += '<form id="newMemForm" class="form-grid">';
     html += '<div class="form-group"><label>Email *</label><input name="email" type="email" required></div>';
     html += '<div class="form-group"><label>Temporary Password (leave blank to auto-generate)</label><input name="password"></div>';
@@ -3876,13 +3876,13 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     html += '<div class="form-group"><label>Pais</label><input name="country"></div>';
     html += '<div class="form-group"><label>Sector</label><select name="sector">'+sectorOptions(null,'-- Selecciona sector --')+'</select></div>';
     html += '<div class="form-group"><label>Region</label><select name="region_id" id="newMemRegion"><option value="">-- Global --</option></select></div>';
-    html += '<div class="form-group"><label>Membership Type</label><select name="membership_type"><option value="individual">Individual</option><option value="empresarial">Empresarial</option><option value="corporativo">Corporativo</option><option value="fundador">Fundador</option></select></div>';
+    html += '<div class="form-group"><label>Tipo de Membresia</label><select name="membership_type"><option value="individual">Individual</option><option value="empresarial">Empresarial</option><option value="corporativo">Corporativo</option><option value="fundador">Fundador</option></select></div>';
     var canGlobal = currentMember.access_level === 'superadmin' || currentMember.access_level === 'admin_global';
     if (canGlobal) {
-      html += '<div class="form-group"><label>Access Level</label><select name="access_level"><option value="member">Member</option><option value="admin_regional">Regional Admin</option><option value="admin_global">Global Admin</option>'+(currentMember.access_level==='superadmin'?'<option value="superadmin">Superadmin</option>':'')+'</select></div>';
-      html += '<div class="form-group"><label>Governance Role</label><input name="governance_role" placeholder="member"></div>';
+      html += '<div class="form-group"><label>Nivel de Acceso</label><select name="access_level"><option value="member">Member</option><option value="admin_regional">Regional Admin</option><option value="admin_global">Admin Global</option>'+(currentMember.access_level==='superadmin'?'<option value="superadmin">Superadmin</option>':'')+'</select></div>';
+      html += '<div class="form-group"><label>Rol de Gobernanza</label><input name="governance_role" placeholder="member"></div>';
     }
-    html += '<div class="form-group full mt-12" style="display:flex;gap:8px"><button type="submit" class="btn btn-primary">Create Member</button><button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button></div>';
+    html += '<div class="form-group full mt-12" style="display:flex;gap:8px"><button type="submit" class="btn btn-primary">Crear Miembro</button><button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button></div>';
     html += '</form>';
     openModal(html);
     apiFetch('/admin/regions').then(function(r) {
@@ -3913,7 +3913,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   window.adminDeleteMember = async function(id, email) {
     if (!confirm('Delete member ' + email + '?\n\nThis sets status to "deleted" (soft delete). The row stays for audit purposes.')) return;
     var r = await apiFetch('/admin/members/'+id, 'DELETE');
-    alert(r.success ? 'Member deleted' : 'Error: '+(r.error||''));
+    alert(r.success ? 'Miembro eliminado' : 'Error: '+(r.error||''));
     if (r.success) loadAdminTab('members');
   };
 
@@ -3923,7 +3923,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     var description = prompt('Description (optional):', '') || '';
     var country_code = prompt('Country code (e.g. ES, MX, US, optional):', '') || '';
     var r = await apiFetch('/admin/regions', 'POST', { name: name, description: description, country_code: country_code });
-    alert(r.success ? 'Region created' : 'Error: '+(r.error||''));
+    alert(r.success ? 'Region creada' : 'Error: '+(r.error||''));
     if (r.success) loadAdminTab('regions');
   };
 
@@ -3932,14 +3932,14 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     if (!name) return;
     var description = prompt('Description:', currentDesc || '');
     var r = await apiFetch('/admin/regions/'+id, 'PUT', { name: name, description: description });
-    alert(r.success ? 'Region updated' : 'Error: '+(r.error||''));
+    alert(r.success ? 'Region actualizada' : 'Error: '+(r.error||''));
     if (r.success) loadAdminTab('regions');
   };
 
   window.adminDeleteRegion = async function(id, name) {
     if (!confirm('Delete region "' + name + '"?\n\nFails if any active members are assigned to it.')) return;
     var r = await apiFetch('/admin/regions/'+id, 'DELETE');
-    alert(r.success ? 'Region deleted' : 'Error: '+(r.error||''));
+    alert(r.success ? 'Region eliminada' : 'Error: '+(r.error||''));
     if (r.success) loadAdminTab('regions');
   };
 
