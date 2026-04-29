@@ -155,11 +155,27 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE /api/v1/calendar/:id - Delete event
+// Optional ?scope=series  -> deletes every event sharing the recurrence_group_id
 router.delete('/:id', async (req, res) => {
   try {
-    await CalendarEvent.destroy({ where: { id: req.params.id, workspace_id: 1 } });
-    res.json({ success: true, message: 'Event deleted' });
+    const scope = req.query.scope;
+    if (scope === 'series') {
+      const event = await CalendarEvent.findOne({ where: { id: req.params.id, workspace_id: 1 } });
+      if (!event) return res.status(404).json({ success: false, error: 'Event not found' });
+      if (event.recurrence_group_id) {
+        const removed = await CalendarEvent.destroy({
+          where: { workspace_id: 1, recurrence_group_id: event.recurrence_group_id }
+        });
+        return res.json({ success: true, deleted: removed, scope: 'series' });
+      }
+      await event.destroy();
+      return res.json({ success: true, deleted: 1, scope: 'single' });
+    }
+    const removed = await CalendarEvent.destroy({ where: { id: req.params.id, workspace_id: 1 } });
+    if (!removed) return res.status(404).json({ success: false, error: 'Event not found' });
+    res.json({ success: true, deleted: removed, scope: 'single' });
   } catch (error) {
+    console.error('[D2AI] calendar delete error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

@@ -1670,13 +1670,14 @@ async function showEventDetail(id) {
         </div>
         <div style="display:flex;gap:8px">
           <button class="btn btn-ghost btn-sm" onclick="openEventEditModal(${e.id})">Edit</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteEvent(${e.id})">Delete</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteEvent(${e.id}, ${e.recurrence_group_id ? 'true' : 'false'})">Delete</button>
         </div>
       </div>
       <div class="detail-meta">
         <span class="status-badge" style="background:${typeColors[e.event_type] || '#2563eb'}20;color:${typeColors[e.event_type] || '#2563eb'}">${e.event_type || 'event'}</span>
         ${isPast ? '<span class="status-badge status-completed">Past</span>' : '<span class="status-badge status-active">Upcoming</span>'}
         ${e.all_day ? '<span class="status-badge status-planning">All Day</span>' : ''}
+        ${e.recurrence_group_id ? '<span class="status-badge" style="background:rgba(167,139,250,.15);color:#c4b5fd">Recurring</span>' : ''}
       </div>
 
       <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;margin-top:24px">
@@ -1746,10 +1747,27 @@ async function openEventEditModal(id) {
   });
 }
 
-async function deleteEvent(id) {
-  if (!confirm('Delete this event permanently?')) return;
-  await api(`/calendar/${id}`, { method: 'DELETE' });
-  navigateTo('calendar');
+async function deleteEvent(id, hasSeries) {
+  let scope = '';
+  if (hasSeries) {
+    const choice = prompt(
+      'This event is part of a recurring series.\n\n' +
+      'Type "1" to delete ONLY this occurrence,\n' +
+      'or  "2" to delete the ENTIRE series,\n' +
+      'or leave blank to cancel.', '1');
+    if (choice === null || choice.trim() === '') return;
+    if (choice.trim() === '2') scope = '?scope=series';
+    else if (choice.trim() !== '1') return;
+  } else {
+    if (!confirm('Delete this event permanently?')) return;
+  }
+  try {
+    const r = await api(`/calendar/${id}${scope}`, { method: 'DELETE' });
+    if (r && r.success === false) { alert('Delete failed: ' + (r.error || 'unknown')); return; }
+    navigateTo('calendar');
+  } catch (err) {
+    alert('Delete failed: ' + (err && err.message ? err.message : err));
+  }
 }
 
 // =====================================================
@@ -2727,12 +2745,16 @@ function openEventModal() {
       description: document.getElementById('m-edesc').value.trim()
     };
     if (!base.title || !baseStart) { alert('Title and start time required'); return; }
+    // Stamp all occurrences of a recurrence with the same group id so the
+    // backend can recognise and bulk-delete the whole series later.
+    const groupId = (count > 1 && typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : null;
     const calls = [];
     for (let i = 0; i < count; i++) {
       calls.push(api('/calendar', { method: 'POST', body: JSON.stringify({
         ...base,
         start_time: shiftIsoForRecurrence(baseStart, recur, i),
-        end_time: baseEnd ? shiftIsoForRecurrence(baseEnd, recur, i) : null
+        end_time: baseEnd ? shiftIsoForRecurrence(baseEnd, recur, i) : null,
+        recurrence_group_id: groupId
       }) }));
     }
     await Promise.all(calls);

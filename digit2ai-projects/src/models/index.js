@@ -192,7 +192,8 @@ const CalendarEvent = sequelize.define('CalendarEvent', {
   all_day: { type: DataTypes.BOOLEAN, defaultValue: false },
   location: DataTypes.STRING(500),
   reminder_minutes: { type: DataTypes.INTEGER, defaultValue: 30 },
-  reminder_sent: { type: DataTypes.BOOLEAN, defaultValue: false }
+  reminder_sent: { type: DataTypes.BOOLEAN, defaultValue: false },
+  recurrence_group_id: { type: DataTypes.UUID, allowNull: true }
 }, { tableName: 'd2_calendar_events' });
 
 // =====================================================

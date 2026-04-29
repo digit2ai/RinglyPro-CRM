@@ -369,6 +369,14 @@ app.get('*', (req, res) => {
     }
     console.log('[D2AI-Projects] Pipeline & workflow tables ready');
 
+    // Calendar: recurrence_group_id column for linked-recurring-events support
+    try {
+      await sequelize.query('ALTER TABLE d2_calendar_events ADD COLUMN IF NOT EXISTS recurrence_group_id UUID');
+      await sequelize.query('CREATE INDEX IF NOT EXISTS idx_d2_calendar_recurrence_group ON d2_calendar_events(recurrence_group_id)');
+    } catch (e) {
+      console.log('[D2AI-Projects] recurrence column notice:', e.message.substring(0, 120));
+    }
+
     // Migration 002 — Project Intake & Discussion module
     const intakeMigrationPath = path.join(__dirname, '..', 'migrations', '002_intake.sql');
     if (fs.existsSync(intakeMigrationPath)) {
