@@ -3,7 +3,6 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-const { Op } = require('sequelize');
 const {
   sequelize,
   Company,
@@ -15,8 +14,7 @@ const {
   QuestionResponse,
   ProjectComment,
   PriorityVote,
-  CompanyAccessToken,
-  UserAccess
+  CompanyAccessToken
 } = require('../models');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
@@ -134,16 +132,21 @@ async function intakeAuth(req, res, next) {
   }
 }
 
+function isAdminIdentity(req) {
+  return !!req.identity && (req.identity.source === 'admin' || req.identity.role === 'admin');
+}
+
 function requireAdmin(req, res, next) {
-  if (req.identity && req.identity.source === 'admin') return next();
+  if (isAdminIdentity(req)) return next();
   return res.status(403).json({ success: false, error: 'Admin access required' });
 }
 
 // Verify the requested resource belongs to the identity's company scope.
-// For admin: always allowed. For share: company_id must match.
+// Admin (CRM JWT or admin-role share token): always allowed.
+// Reviewer share token: company_id must match.
 function assertCompanyScope(req, resourceCompanyId) {
   if (!req.identity) return false;
-  if (req.identity.source === 'admin') return true;
+  if (isAdminIdentity(req)) return true;
   return Number(resourceCompanyId) === Number(req.identity.company_id);
 }
 

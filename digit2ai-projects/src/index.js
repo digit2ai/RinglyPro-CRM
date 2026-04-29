@@ -84,6 +84,49 @@ app.post('/api/v1/webhooks/sendgrid', express.json({ limit: '5mb' }), (req, res,
   campaignRoute.handle(req, res, next);
 });
 
+// Admin token mint (gated by INTAKE_SEED_SECRET) — issues an admin-role
+// share token scoped to a company that overrides company-scope checks.
+app.post('/api/v1/intake-seed/admin', express.json(), async (req, res) => {
+  try {
+    const secret = req.query.secret || req.body.secret;
+    if (!secret || secret !== (process.env.INTAKE_SEED_SECRET || 'd2ai-larry-ting-2026')) {
+      return res.status(401).json({ success: false, error: 'Bad seed secret' });
+    }
+    const { Company, IntakeBatch, CompanyAccessToken } = require('./models');
+    const company_name = req.body.company_name || 'Company ABC';
+    const grantee_email = req.body.grantee_email || 'manuel@digit2ai.com';
+    const grantee_name = req.body.grantee_name || 'Manuel Stagg';
+    const company = await Company.findOne({ where: { workspace_id: 1, name: company_name } });
+    if (!company) return res.status(404).json({ success: false, error: 'Company not found: ' + company_name });
+    const batch = await IntakeBatch.findOne({ where: { company_id: company.id }, order: [['created_at', 'DESC']] });
+    let token = await CompanyAccessToken.findOne({ where: { company_id: company.id, grantee_email, role: 'admin' } });
+    if (!token) {
+      token = await CompanyAccessToken.create({
+        company_id: company.id,
+        batch_id: batch ? batch.id : null,
+        grantee_email,
+        grantee_name,
+        role: 'admin'
+      });
+    }
+    const baseUrl = process.env.PUBLIC_BASE_URL || 'https://aiagent.ringlypro.com';
+    res.json({
+      success: true,
+      company_id: company.id,
+      batch_id: batch ? batch.id : null,
+      grantee_email,
+      grantee_name,
+      role: 'admin',
+      token: token.token,
+      admin_url: `${baseUrl}/projects/intake/admin.html?token=${token.token}`,
+      reviewer_url: `${baseUrl}/projects/intake/batch.html?token=${token.token}`
+    });
+  } catch (err) {
+    console.error('[D2AI-Projects] admin mint error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Seed trigger (gated by INTAKE_SEED_SECRET) — idempotent Larry & Ting batch
 app.post('/api/v1/intake-seed/larry-ting', express.json(), async (req, res) => {
   try {

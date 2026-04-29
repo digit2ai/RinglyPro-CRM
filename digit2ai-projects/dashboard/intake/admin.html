@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intake Admin Console - Digit2AI</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { background:#05060f; color:#e6edf3; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
+  .grad-title { background:linear-gradient(90deg,#38bdf8,#a78bfa,#f472b6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .card { background:linear-gradient(180deg,rgba(15,23,42,.85),rgba(2,6,23,.85)); }
+  .chip { padding:2px 10px; border-radius:999px; font-size:11px; font-weight:600; letter-spacing:.04em; }
+  .chip.high { background:rgba(16,185,129,.14); color:#34d399; border:1px solid rgba(16,185,129,.4); }
+  .chip.medium { background:rgba(251,191,36,.14); color:#fbbf24; border:1px solid rgba(251,191,36,.4); }
+  .chip.low  { background:rgba(244,63,94,.14); color:#fb7185; border:1px solid rgba(244,63,94,.4); }
+  .chip.unknown { background:rgba(100,116,139,.14); color:#94a3b8; border:1px solid rgba(100,116,139,.4); }
+  .chip.discussion { background:rgba(56,189,248,.12); color:#7dd3fc; border:1px solid rgba(56,189,248,.4); }
+  .chip.reviewed { background:rgba(167,139,250,.12); color:#c4b5fd; border:1px solid rgba(167,139,250,.4); }
+  .chip.approved { background:rgba(16,185,129,.14); color:#34d399; border:1px solid rgba(16,185,129,.4); }
+  .chip.rejected { background:rgba(244,63,94,.14); color:#fb7185; border:1px solid rgba(244,63,94,.4); }
+  .chip.converted { background:rgba(217,70,239,.14); color:#e879f9; border:1px solid rgba(217,70,239,.4); }
+  textarea, input[type=text], input[type=email], input[type=number], input[type=date], select {
+    background:#0b1220; border:1px solid #1e293b; color:#e6edf3; border-radius:8px; padding:8px 12px; width:100%;
+  }
+  select option { background:#0b1220; }
+  textarea:focus, input:focus, select:focus { outline:none; border-color:#38bdf8; box-shadow:0 0 0 2px rgba(56,189,248,.15); }
+  .btn { padding:8px 16px; border-radius:8px; font-weight:600; font-size:13px; transition:all .15s; cursor:pointer; }
+  .btn-primary { background:#38bdf8; color:#020617; border:1px solid #38bdf8; }
+  .btn-primary:hover { background:#0ea5e9; }
+  .btn-success { background:#10b981; color:#020617; border:1px solid #10b981; }
+  .btn-success:hover { background:#059669; }
+  .btn-ghost { background:transparent; color:#94a3b8; border:1px solid #1e293b; }
+  .btn-ghost:hover { color:#e6edf3; border-color:#38bdf8; }
+  .btn-danger { background:transparent; color:#fb7185; border:1px solid #7f1d1d; }
+  .btn-danger:hover { background:rgba(244,63,94,.1); }
+  .heatcell { transition: all .2s; }
+  .heatcell:hover { transform:scale(1.04); }
+  .tab { padding:10px 16px; font-size:13px; font-weight:600; color:#64748b; border-bottom:2px solid transparent; cursor:pointer; transition:all .15s; }
+  .tab.active { color:#38bdf8; border-bottom-color:#38bdf8; }
+  .tab:hover { color:#e6edf3; }
+  details > summary { list-style:none; cursor:pointer; }
+  details > summary::-webkit-details-marker { display:none; }
+</style>
+</head>
+<body class="min-h-screen pb-12">
+
+<!-- ZOOM BAR -->
+<div class="bg-gradient-to-r from-cyan-600/20 via-indigo-600/20 to-fuchsia-600/20 border-b border-cyan-500/30">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-2 flex items-center justify-between gap-3">
+    <div class="text-xs sm:text-sm text-slate-200">
+      <span class="font-semibold text-cyan-300">Admin Console</span>
+      <span class="text-slate-400 ml-2">Drive the meeting -- vote, score, decide live</span>
+    </div>
+    <a href="https://zoom.us/j/7269045564" target="_blank" rel="noopener"
+       class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold whitespace-nowrap transition">
+      Join Zoom
+    </a>
+  </div>
+</div>
+
+<!-- IDENTITY GATE -->
+<div id="gate" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div class="card border border-cyan-500/30 rounded-2xl p-8 max-w-md w-full" style="box-shadow:0 0 40px rgba(56,189,248,.18);">
+    <h2 class="text-2xl font-bold grad-title mb-2">Admin Login</h2>
+    <p class="text-sm text-slate-400 mb-6">Identify yourself to take admin actions on this batch.</p>
+    <div class="space-y-3">
+      <input id="g_name" type="text" placeholder="Your full name" />
+      <input id="g_email" type="email" placeholder="Your email" />
+      <button onclick="identify()" class="btn btn-primary w-full">Enter admin console</button>
+      <p id="g_err" class="text-xs text-rose-400 hidden"></p>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header class="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/80 backdrop-blur">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+    <div class="min-w-0">
+      <h1 id="batch_title" class="text-lg sm:text-xl font-bold grad-title truncate">Loading...</h1>
+      <p id="batch_meta" class="text-xs text-slate-500 truncate"></p>
+    </div>
+    <div class="flex gap-2 shrink-0">
+      <a id="reviewer_link" href="#" target="_blank" class="btn btn-ghost text-xs">Reviewer view</a>
+      <button onclick="logout()" class="btn btn-ghost text-xs">Switch user</button>
+    </div>
+  </div>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 flex gap-1 border-t border-slate-900">
+    <div class="tab active" data-tab="board" onclick="switchTab('board')">Decision Board</div>
+    <div class="tab" data-tab="heatmap" onclick="switchTab('heatmap')">Heat Map</div>
+    <div class="tab" data-tab="tokens" onclick="switchTab('tokens')">Reviewers</div>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+
+  <!-- DECISION BOARD -->
+  <section id="tab_board">
+    <div class="grid sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-5">
+      <div class="card border border-slate-800 rounded-xl p-3">
+        <div class="text-xs text-slate-500 uppercase tracking-wider">Total</div>
+        <div id="kpi_total" class="text-2xl font-bold text-slate-100">-</div>
+      </div>
+      <div class="card border border-cyan-700/30 rounded-xl p-3">
+        <div class="text-xs text-cyan-400 uppercase tracking-wider">Discussion</div>
+        <div id="kpi_discussion" class="text-2xl font-bold text-slate-100">-</div>
+      </div>
+      <div class="card border border-purple-700/30 rounded-xl p-3">
+        <div class="text-xs text-purple-300 uppercase tracking-wider">Reviewed</div>
+        <div id="kpi_reviewed" class="text-2xl font-bold text-slate-100">-</div>
+      </div>
+      <div class="card border border-emerald-700/30 rounded-xl p-3">
+        <div class="text-xs text-emerald-400 uppercase tracking-wider">Approved</div>
+        <div id="kpi_approved" class="text-2xl font-bold text-slate-100">-</div>
+      </div>
+      <div class="card border border-rose-700/30 rounded-xl p-3">
+        <div class="text-xs text-rose-400 uppercase tracking-wider">Rejected</div>
+        <div id="kpi_rejected" class="text-2xl font-bold text-slate-100">-</div>
+      </div>
+    </div>
+    <div id="board" class="space-y-3"></div>
+  </section>
+
+  <!-- HEAT MAP -->
+  <section id="tab_heatmap" class="hidden">
+    <div class="card border border-slate-800 rounded-xl p-6 mb-6">
+      <h2 class="text-lg font-semibold mb-1">Feasibility &times; Risk Quadrant</h2>
+      <p class="text-xs text-slate-500 mb-4">Cell colour = average priority score. Top-left (high feas / low risk) is the green zone.</p>
+      <div id="heat_grid" class="grid grid-cols-4 gap-1 text-center text-xs">
+        <!-- header -->
+        <div></div>
+        <div class="font-semibold text-slate-400 py-2">RISK: LOW</div>
+        <div class="font-semibold text-slate-400 py-2">RISK: MEDIUM</div>
+        <div class="font-semibold text-slate-400 py-2">RISK: HIGH</div>
+      </div>
+    </div>
+    <div class="card border border-slate-800 rounded-xl p-6">
+      <h2 class="text-lg font-semibold mb-4">Priority Ranking (live)</h2>
+      <div id="ranked"></div>
+    </div>
+  </section>
+
+  <!-- REVIEWERS / TOKENS -->
+  <section id="tab_tokens" class="hidden">
+    <div class="card border border-slate-800 rounded-xl p-6">
+      <h2 class="text-lg font-semibold mb-4">Reviewer share links</h2>
+      <p class="text-xs text-slate-500 mb-4">Anyone with one of these links can comment, answer questions, and score priority for this company. Add more reviewers as needed.</p>
+      <div id="tokens_list" class="space-y-2 mb-6"></div>
+      <div class="border-t border-slate-800 pt-4">
+        <h3 class="text-sm font-semibold mb-3">Invite a new reviewer</h3>
+        <div class="grid sm:grid-cols-3 gap-2">
+          <input id="new_token_name" type="text" placeholder="Name" />
+          <input id="new_token_email" type="email" placeholder="Email" />
+          <button onclick="createToken()" class="btn btn-primary">Generate share link</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+const STORAGE_PREFIX = 'd2ai_admin_';
+const params = new URLSearchParams(window.location.search);
+const SHARE_TOKEN = params.get('token') || '';
+let SESSION = null;
+let BATCH = null;
+let PROJECTS = [];
+let TOKENS = [];
+
+function storeKey(s) { return STORAGE_PREFIX + SHARE_TOKEN + '_' + s; }
+function showGate() { document.getElementById('gate').classList.remove('hidden'); }
+function hideGate() { document.getElementById('gate').classList.add('hidden'); }
+function authHeaders() { return { 'Content-Type':'application/json', 'Authorization':'Bearer ' + SESSION.jwt }; }
+function escapeHtml(s) { return (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+async function identify() {
+  const name = document.getElementById('g_name').value.trim();
+  const email = document.getElementById('g_email').value.trim();
+  const err = document.getElementById('g_err');
+  err.classList.add('hidden');
+  if (!name || !email) { err.textContent='Name and email required'; err.classList.remove('hidden'); return; }
+  try {
+    const r = await fetch('/projects/api/v1/intake/share/'+SHARE_TOKEN+'/identify', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name,email})
+    });
+    const d = await r.json();
+    if (!d.success) throw new Error(d.error || 'Identification failed');
+    if (d.role !== 'admin') throw new Error('This token is not an admin token. Use your admin URL.');
+    SESSION = d;
+    localStorage.setItem(storeKey('session'), JSON.stringify(d));
+    hideGate();
+    await loadAll();
+  } catch (e) {
+    err.textContent = e.message; err.classList.remove('hidden');
+  }
+}
+
+function logout() {
+  localStorage.removeItem(storeKey('session'));
+  location.reload();
+}
+
+async function loadAll() {
+  await loadBatch();
+  await loadTokens();
+}
+
+async function loadBatch() {
+  const r = await fetch('/projects/api/v1/intake/batches/' + SESSION.batch_id, { headers: authHeaders() });
+  if (r.status === 401 || r.status === 403) { logout(); return; }
+  const d = await r.json();
+  if (!d.success) { alert('Failed to load: '+ (d.error || r.status)); return; }
+  BATCH = d.data.batch;
+  PROJECTS = d.data.projects;
+  document.getElementById('batch_title').textContent = BATCH.title;
+  const company = BATCH.company ? BATCH.company.name : '';
+  document.getElementById('batch_meta').textContent = company + (BATCH.meeting_date ? ' - ' + BATCH.meeting_date : '') + ' - ' + BATCH.status;
+  renderBoard();
+  renderHeat();
+  renderRanked();
+}
+
+async function loadTokens() {
+  if (!BATCH) return;
+  const r = await fetch('/projects/api/v1/intake/companies/' + BATCH.company_id + '/tokens', { headers: authHeaders() });
+  const d = await r.json();
+  if (d.success) { TOKENS = d.data; renderTokens(); }
+}
+
+function renderBoard() {
+  const counts = { total: PROJECTS.length, discussion:0, reviewed:0, approved:0, rejected:0, converted:0 };
+  PROJECTS.forEach(pi => { counts[pi.intake_status] = (counts[pi.intake_status]||0)+1; });
+  document.getElementById('kpi_total').textContent = counts.total;
+  document.getElementById('kpi_discussion').textContent = counts.discussion || 0;
+  document.getElementById('kpi_reviewed').textContent = counts.reviewed || 0;
+  document.getElementById('kpi_approved').textContent = counts.approved || 0;
+  document.getElementById('kpi_rejected').textContent = counts.rejected || 0;
+
+  const board = document.getElementById('board');
+  board.innerHTML = PROJECTS.map(pi => renderRow(pi)).join('');
+}
+
+function renderRow(pi) {
+  const p = pi.project;
+  const avg = pi.priority_avg ? Number(pi.priority_avg).toFixed(2) : '-';
+  const voteCount = (p.priority_votes||[]).length;
+  const cmtCount = (p.comments||[]).length;
+  const qaCount = (p.questions||[]).reduce((s,q)=> s + (q.responses||[]).length, 0);
+  const showConvert = pi.intake_status === 'approved';
+  return `
+    <details class="card border border-slate-800 rounded-xl">
+      <summary class="p-4 flex items-center gap-3 hover:border-cyan-700/50">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <h3 class="text-sm sm:text-base font-semibold truncate text-slate-100">${escapeHtml(p.name)}</h3>
+            <span class="chip ${(pi.feasibility||'unknown').toLowerCase()}">FEAS: ${pi.feasibility||'?'}</span>
+            <span class="chip ${(pi.risk_level||'unknown').toLowerCase()}">RISK: ${pi.risk_level||'?'}</span>
+            <span class="chip ${pi.intake_status}">${pi.intake_status}</span>
+          </div>
+          <div class="text-xs text-slate-500 mt-1">
+            avg priority <span class="text-cyan-400 font-mono">${avg}</span>
+            <span class="mx-1">-</span> ${voteCount} vote${voteCount===1?'':'s'}
+            <span class="mx-1">-</span> ${cmtCount} comment${cmtCount===1?'':'s'}
+            <span class="mx-1">-</span> ${qaCount} answer${qaCount===1?'':'s'}
+          </div>
+        </div>
+      </summary>
+      <div class="px-4 pb-4 border-t border-slate-800/60 pt-4 space-y-4">
+        <div class="grid sm:grid-cols-3 gap-3">
+          <div>
+            <label class="text-xs text-slate-500 uppercase tracking-wider">Status</label>
+            <select onchange="updateField(${p.id}, 'intake_status', this.value)">
+              ${['discussion','reviewed','approved','rejected','converted'].map(s =>
+                `<option value="${s}" ${pi.intake_status===s?'selected':''}>${s}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 uppercase tracking-wider">Feasibility</label>
+            <select onchange="updateField(${p.id}, 'feasibility', this.value)">
+              <option value="">-</option>
+              ${['HIGH','MEDIUM','LOW'].map(s =>
+                `<option value="${s}" ${pi.feasibility===s?'selected':''}>${s}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 uppercase tracking-wider">Risk</label>
+            <select onchange="updateField(${p.id}, 'risk_level', this.value)">
+              <option value="">-</option>
+              ${['HIGH','MEDIUM','LOW'].map(s =>
+                `<option value="${s}" ${pi.risk_level===s?'selected':''}>${s}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        ${showConvert ? `
+          <div class="border border-emerald-700/30 rounded-lg p-3 bg-emerald-950/20">
+            <h4 class="text-sm font-semibold text-emerald-300 mb-2">Convert to Plan</h4>
+            <div class="grid sm:grid-cols-2 gap-2 mb-2">
+              <input id="kick_${p.id}" type="date" placeholder="Kickoff" />
+              <input id="due_${p.id}" type="date" placeholder="Target" />
+            </div>
+            <textarea id="ms_${p.id}" rows="3" placeholder="Milestones, one per line: 'Title | YYYY-MM-DD'"></textarea>
+            <button onclick="convertToPlan(${p.id})" class="btn btn-success mt-2">Convert &amp; create milestones</button>
+          </div>
+        ` : ''}
+        ${pi.intake_status === 'converted' ? `
+          <div class="text-xs text-fuchsia-300">Converted to active project on ${pi.converted_at ? new Date(pi.converted_at).toLocaleString() : '?'}.
+            <a href="/projects/" target="_blank" class="underline">View in tracker</a></div>
+        ` : ''}
+        <div>
+          <h4 class="text-xs uppercase tracking-wider text-slate-500 mb-1">Discussion (${(p.comments||[]).length})</h4>
+          <div class="space-y-1.5 max-h-48 overflow-y-auto">
+            ${(p.comments||[]).map(c => `
+              <div class="text-xs bg-slate-900/60 border border-slate-800 rounded p-2">
+                <div class="text-slate-500 mb-1">${escapeHtml(c.author_name||c.author_email)} - ${new Date(c.created_at).toLocaleString()}</div>
+                <div class="text-slate-200 whitespace-pre-line">${escapeHtml(c.body)}</div>
+              </div>`).join('') || '<div class="text-slate-600 text-xs italic">No comments yet</div>'}
+          </div>
+        </div>
+        <div>
+          <h4 class="text-xs uppercase tracking-wider text-slate-500 mb-1">Votes (${(p.priority_votes||[]).length})</h4>
+          <div class="space-y-1.5">
+            ${(p.priority_votes||[]).map(v => `
+              <div class="flex items-start gap-3 text-xs bg-slate-900/60 border border-slate-800 rounded p-2">
+                <div class="text-2xl font-mono text-cyan-400 w-10 text-center">${v.score}</div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-slate-300 font-semibold">${escapeHtml(v.voter_name||v.voter_email)}</div>
+                  <div class="text-slate-400">${escapeHtml(v.rationale||'(no rationale)')}</div>
+                </div>
+              </div>`).join('') || '<div class="text-slate-600 text-xs italic">No votes yet</div>'}
+          </div>
+        </div>
+      </div>
+    </details>
+  `;
+}
+
+async function updateField(projectId, field, value) {
+  const body = {};
+  body[field] = value || null;
+  const r = await fetch('/projects/api/v1/intake/projects/'+projectId+'/intake', {
+    method:'PATCH', headers: authHeaders(), body: JSON.stringify(body)
+  });
+  const d = await r.json();
+  if (!d.success) { alert('Update failed: '+d.error); return; }
+  await loadBatch();
+}
+
+async function convertToPlan(projectId) {
+  const kick = document.getElementById('kick_'+projectId).value;
+  const due = document.getElementById('due_'+projectId).value;
+  const raw = document.getElementById('ms_'+projectId).value.trim();
+  const milestones = raw.split('\n').map(line => line.trim()).filter(Boolean).map(line => {
+    const parts = line.split('|').map(s => s.trim());
+    return { title: parts[0], due_date: parts[1] || null };
+  });
+  if (!milestones.length) { if (!confirm('No milestones provided. Convert anyway?')) return; }
+  const r = await fetch('/projects/api/v1/intake/projects/'+projectId+'/convert', {
+    method:'POST', headers: authHeaders(),
+    body: JSON.stringify({ kickoff_date: kick||null, due_date: due||null, milestones })
+  });
+  const d = await r.json();
+  if (!d.success) { alert('Convert failed: '+d.error); return; }
+  alert('Converted -- check the project tracker at /projects/');
+  await loadBatch();
+}
+
+// HEAT MAP
+function renderHeat() {
+  const grid = document.getElementById('heat_grid');
+  // Keep only the first 4 children (header row)
+  while (grid.children.length > 4) grid.removeChild(grid.lastChild);
+  const feasLevels = ['HIGH','MEDIUM','LOW'];
+  const riskLevels = ['LOW','MEDIUM','HIGH'];
+  for (const f of feasLevels) {
+    const head = document.createElement('div');
+    head.className = 'font-semibold text-slate-400 py-2';
+    head.textContent = 'FEAS: ' + f;
+    grid.appendChild(head);
+    for (const r of riskLevels) {
+      const cell = document.createElement('div');
+      const matches = PROJECTS.filter(pi => pi.feasibility===f && pi.risk_level===r);
+      const avg = matches.length ? matches.reduce((s,m)=> s + (Number(m.priority_avg)||0), 0) / matches.length : 0;
+      const intensity = Math.min(1, avg/10);
+      const color = f==='HIGH' && r==='LOW' ? `rgba(16,185,129,${0.15+intensity*0.5})`
+                   : f==='LOW' && r==='HIGH' ? `rgba(244,63,94,${0.15+intensity*0.5})`
+                   : `rgba(56,189,248,${0.10+intensity*0.4})`;
+      cell.className = 'heatcell rounded-lg p-3 border border-slate-800 cursor-default';
+      cell.style.background = color;
+      cell.innerHTML = `
+        <div class="text-2xl font-bold text-slate-100">${matches.length}</div>
+        <div class="text-[10px] text-slate-300">avg priority</div>
+        <div class="text-base font-mono text-cyan-300">${avg ? avg.toFixed(2) : '-'}</div>
+        <div class="text-[10px] text-slate-400 mt-1 truncate">${matches.slice(0,3).map(m=> m.project.name.split('.')[0]||'').join(', ')}</div>
+      `;
+      grid.appendChild(cell);
+    }
+  }
+}
+
+function renderRanked() {
+  const ranked = [...PROJECTS].sort((a,b) => (Number(b.priority_avg)||0) - (Number(a.priority_avg)||0));
+  document.getElementById('ranked').innerHTML = ranked.map((pi, i) => {
+    const p = pi.project;
+    const avg = pi.priority_avg ? Number(pi.priority_avg).toFixed(2) : '-';
+    const pct = pi.priority_avg ? (Number(pi.priority_avg)/10*100) : 0;
+    return `
+      <div class="flex items-center gap-3 mb-2">
+        <div class="text-slate-600 text-sm w-6 text-right">${i+1}</div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-sm text-slate-200 truncate">${escapeHtml(p.name)}</span>
+            <span class="chip ${pi.intake_status}">${pi.intake_status}</span>
+          </div>
+          <div class="bg-slate-900 rounded-full h-2 overflow-hidden">
+            <div class="bg-gradient-to-r from-cyan-500 to-emerald-400 h-full" style="width:${pct}%"></div>
+          </div>
+        </div>
+        <div class="text-cyan-400 font-mono text-sm w-12 text-right">${avg}</div>
+      </div>`;
+  }).join('');
+}
+
+function renderTokens() {
+  const list = document.getElementById('tokens_list');
+  if (!TOKENS.length) { list.innerHTML = '<div class="text-xs text-slate-500 italic">No reviewers invited yet.</div>'; return; }
+  list.innerHTML = TOKENS.map(t => {
+    const url = `${location.origin}/projects/intake/batch.html?token=${t.token}`;
+    return `
+      <div class="border border-slate-800 rounded-lg p-3 flex items-center gap-3">
+        <div class="flex-1 min-w-0">
+          <div class="text-sm text-slate-200 font-semibold">${escapeHtml(t.grantee_name||t.grantee_email||'(unclaimed)')}</div>
+          <div class="text-xs text-slate-500 truncate">${escapeHtml(t.grantee_email||'')} -- role: ${t.role}</div>
+          <div class="text-[10px] text-slate-600 mt-1 font-mono truncate">${url}</div>
+        </div>
+        <button onclick="navigator.clipboard.writeText('${url}'); this.textContent='Copied'" class="btn btn-ghost text-xs">Copy link</button>
+      </div>`;
+  }).join('');
+}
+
+async function createToken() {
+  const name = document.getElementById('new_token_name').value.trim();
+  const email = document.getElementById('new_token_email').value.trim();
+  if (!email) { alert('Email required'); return; }
+  const r = await fetch('/projects/api/v1/intake/companies/'+BATCH.company_id+'/tokens', {
+    method:'POST', headers: authHeaders(),
+    body: JSON.stringify({ batch_id: BATCH.id, grantee_email:email, grantee_name:name||email, role:'reviewer' })
+  });
+  const d = await r.json();
+  if (!d.success) { alert('Token create failed: '+d.error); return; }
+  document.getElementById('new_token_name').value = '';
+  document.getElementById('new_token_email').value = '';
+  await loadTokens();
+}
+
+function switchTab(t) {
+  document.querySelectorAll('.tab').forEach(el => el.classList.toggle('active', el.dataset.tab===t));
+  document.getElementById('tab_board').classList.toggle('hidden', t!=='board');
+  document.getElementById('tab_heatmap').classList.toggle('hidden', t!=='heatmap');
+  document.getElementById('tab_tokens').classList.toggle('hidden', t!=='tokens');
+}
+
+async function init() {
+  if (!SHARE_TOKEN) {
+    document.body.innerHTML = '<div class="p-12 text-center"><h1 class="text-2xl text-rose-400">Missing admin token</h1><p class="text-slate-400 mt-2">Mint one at /api/v1/intake-seed/admin (gated by INTAKE_SEED_SECRET).</p></div>';
+    return;
+  }
+  document.getElementById('reviewer_link').href = '/projects/intake/batch.html?token=' + SHARE_TOKEN;
+  const cached = localStorage.getItem(storeKey('session'));
+  if (cached) {
+    try {
+      SESSION = JSON.parse(cached);
+      const r = await fetch('/projects/api/v1/intake/batches/' + SESSION.batch_id, { headers: authHeaders() });
+      if (r.ok) { hideGate(); await loadAll(); poll(); return; }
+    } catch (e) {}
+  }
+  showGate();
+  poll();
+}
+
+function poll() {
+  setInterval(() => { if (SESSION && !document.hidden) loadBatch(); }, 15000);
+}
+
+init();
+</script>
+</body>
+</html>
