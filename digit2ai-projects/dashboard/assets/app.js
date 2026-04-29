@@ -65,7 +65,7 @@ async function showApp() {
   loadVerticals();
   loadStaff();
   loadRoles();
-  navigateTo('overview');
+  navigateTo('calendar');
 }
 
 async function doLogin() {
@@ -1184,7 +1184,7 @@ let calYear, calMonth;
 // =====================================================
 // CALENDAR (Outlook-style Month / Week / Day views)
 // =====================================================
-let calView = localStorage.getItem('cal_view') || 'day';
+let calView = localStorage.getItem('cal_view') || 'month';
 let calCursor = null; // YYYY-MM-DD anchor date for week/day views
 
 const TYPE_COLORS = {
