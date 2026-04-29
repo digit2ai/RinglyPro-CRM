@@ -112,7 +112,13 @@ router.post('/auth/login', async (req, res) => {
 // payment succeeds.
 router.post('/auth/signup-member', async (req, res) => {
   try {
-    const { email, password, first_name, last_name, country, sector, company_name } = req.body;
+    const {
+      email, password, first_name, last_name,
+      country, sector, company_name,
+      // Business + matching fields
+      sub_specialty, bio, years_experience, languages,
+      linkedin_url, website_url, phone
+    } = req.body;
     if (!email || !password || !first_name || !last_name) {
       return res.status(400).json({ success: false, error: 'email, password, first_name, last_name required' });
     }
@@ -120,6 +126,25 @@ router.post('/auth/signup-member', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Password must be at least 8 characters' });
     }
     const lowerEmail = email.toLowerCase().trim();
+
+    // Normalise inputs that need light shaping before persistence.
+    let langArray = null;
+    if (Array.isArray(languages)) {
+      langArray = languages.filter(l => l && String(l).trim()).map(l => String(l).trim());
+    } else if (typeof languages === 'string' && languages.trim()) {
+      langArray = languages.split(',').map(l => l.trim()).filter(Boolean);
+    }
+    const yrs = years_experience !== undefined && years_experience !== null && String(years_experience).trim() !== ''
+      ? parseInt(years_experience) : null;
+    function urlOk(u) {
+      if (!u) return null;
+      const trimmed = String(u).trim();
+      if (!trimmed) return null;
+      // Add https:// if missing
+      return /^https?:\/\//i.test(trimmed) ? trimmed : 'https://' + trimmed;
+    }
+    const linkedin = urlOk(linkedin_url);
+    const website = urlOk(website_url);
 
     // Idempotent: if the email exists with status='pending_payment', reuse the
     // row and let them try checkout again. If it exists active, refuse.
@@ -131,23 +156,29 @@ router.post('/auth/signup-member', async (req, res) => {
       return res.status(409).json({ success: false, error: 'Email already registered in this chamber' });
     }
 
+    const baseReplacements = {
+      c: req.chamber_id, fn: first_name, ln: last_name,
+      country: country || null, sector: sector || null, company: company_name || null,
+      sub: sub_specialty || null, bio: bio || null, yrs,
+      langs: langArray && langArray.length > 0 ? '{' + langArray.map(l => '"' + l.replace(/"/g, '\\"') + '"').join(',') + '}' : null,
+      linkedin, website, phone: phone || null
+    };
+
     let memberRow;
     if (existing) {
-      // Update password + profile, keep status pending_payment
       const hash = await bcrypt.hash(password, 10);
       const [updated] = await sequelize.query(
         `UPDATE members
          SET password_hash = :hash, first_name = :fn, last_name = :ln,
              country = :country, sector = :sector, company_name = :company,
+             sub_specialty = :sub, bio = :bio, years_experience = :yrs,
+             languages = COALESCE(:langs::text[], languages),
+             linkedin_url = :linkedin, website_url = :website, phone = :phone,
              updated_at = NOW()
          WHERE chamber_id = :c AND id = :id
          RETURNING id, email, first_name, last_name, membership_type, access_level, status`,
         {
-          replacements: {
-            c: req.chamber_id, id: existing.id, hash,
-            fn: first_name, ln: last_name,
-            country: country || null, sector: sector || null, company: company_name || null
-          },
+          replacements: { ...baseReplacements, id: existing.id, hash },
           type: QueryTypes.SELECT
         }
       );
@@ -155,17 +186,21 @@ router.post('/auth/signup-member', async (req, res) => {
     } else {
       const hash = await bcrypt.hash(password, 10);
       const [row] = await sequelize.query(
-        `INSERT INTO members (chamber_id, email, password_hash, first_name, last_name, country, sector, company_name,
-                              membership_type, governance_role, access_level, verification_level, status, trust_score, created_at, updated_at)
-         VALUES (:c, :email, :hash, :fn, :ln, :country, :sector, :company,
-                 'individual', 'member', 'member', 'email', 'pending_payment', 0.7, NOW(), NOW())
+        `INSERT INTO members
+         (chamber_id, email, password_hash, first_name, last_name,
+          country, sector, company_name, sub_specialty, bio, years_experience,
+          languages, linkedin_url, website_url, phone,
+          membership_type, governance_role, access_level, verification_level,
+          status, trust_score, created_at, updated_at)
+         VALUES
+         (:c, :email, :hash, :fn, :ln,
+          :country, :sector, :company, :sub, :bio, :yrs,
+          COALESCE(:langs::text[], '{}'::text[]), :linkedin, :website, :phone,
+          'individual', 'member', 'member', 'email',
+          'pending_payment', 0.7, NOW(), NOW())
          RETURNING id, email, first_name, last_name, membership_type, access_level, status`,
         {
-          replacements: {
-            c: req.chamber_id, email: lowerEmail, hash,
-            fn: first_name, ln: last_name,
-            country: country || null, sector: sector || null, company: company_name || null
-          },
+          replacements: { ...baseReplacements, email: lowerEmail, hash },
           type: QueryTypes.SELECT
         }
       );

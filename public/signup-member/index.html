@@ -25,6 +25,10 @@
   .pw-toggle.is-visible .icon-show { display:none; }
   .pw-toggle.is-visible .icon-hide { display:block; }
   .pw-mismatch { color:#ff8b8b; font-size:12px; margin:-8px 0 12px; min-height:14px; }
+  .section { border-top:1px solid rgba(255,255,255,0.10); margin:20px 0 14px; padding-top:18px; }
+  .section h3 { font-size:13px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:#FCD116; margin:0 0 4px; }
+  .section p.section-help { color:rgba(255,255,255,0.55); font-size:12px; margin:0 0 14px; }
+  textarea { min-height:90px; resize:vertical; }
   .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   button { width:100%; padding:14px; background:#CE1126; color:#fff; border:none; border-radius:8px; font-size:15px; font-weight:700; cursor:pointer; margin-top:6px; }
   button:hover { background:#a50d1e; }
@@ -86,11 +90,71 @@
       </div>
       <div>
         <label for="sector">Sector</label>
-        <input type="text" id="sector" placeholder="Tecnologia">
+        <select id="sector">
+          <option value="">Selecciona un sector</option>
+          <option value="agricultura">Agricultura</option>
+          <option value="alimentos_bebidas">Alimentos y Bebidas</option>
+          <option value="automotriz">Automotriz</option>
+          <option value="belleza_bienestar">Belleza y Bienestar</option>
+          <option value="bienes_raices">Bienes Raices</option>
+          <option value="ciberseguridad">Ciberseguridad</option>
+          <option value="comercio_exterior">Comercio Exterior</option>
+          <option value="construccion">Construccion</option>
+          <option value="consultoria">Consultoria</option>
+          <option value="educacion">Educacion</option>
+          <option value="energia">Energia</option>
+          <option value="finanzas">Finanzas</option>
+          <option value="hoteleria_turismo">Hoteleria y Turismo</option>
+          <option value="legal">Legal</option>
+          <option value="logistica">Logistica</option>
+          <option value="manufactura">Manufactura</option>
+          <option value="marketing_digital">Marketing Digital</option>
+          <option value="medios_comunicacion">Medios de Comunicacion</option>
+          <option value="mineria">Mineria</option>
+          <option value="retail">Retail</option>
+          <option value="salud">Salud</option>
+          <option value="seguros">Seguros</option>
+          <option value="servicios_profesionales">Servicios Profesionales</option>
+          <option value="tecnologia">Tecnologia</option>
+          <option value="textil">Textil</option>
+        </select>
       </div>
     </div>
+
+    <div class="section">
+      <h3>Informacion del Negocio</h3>
+      <p class="section-help">Estos campos alimentan el motor de matching IA. Mientras mas detalle, mejores conexiones recibiras.</p>
+    </div>
+
     <label for="company_name">Empresa (opcional)</label>
-    <input type="text" id="company_name">
+    <input type="text" id="company_name" placeholder="Nombre de tu empresa">
+
+    <label for="sub_specialty">Sub-especialidad / Enfoque</label>
+    <input type="text" id="sub_specialty" placeholder="Ej: SaaS B2B, ingenieria backend, comercio exterior LATAM">
+
+    <label for="bio">Descripcion del negocio / Bio profesional</label>
+    <textarea id="bio" placeholder="Describe tu negocio, expertise, productos/servicios, y tipo de clientes ideales. Este texto se usa para el matching IA -- entre mas habilidades y palabras clave incluyas, mejores resultados."></textarea>
+
+    <div class="row">
+      <div>
+        <label for="years_experience">Anos de experiencia</label>
+        <input type="number" id="years_experience" min="0" max="80" placeholder="10">
+      </div>
+      <div>
+        <label for="languages">Idiomas (separados por coma)</label>
+        <input type="text" id="languages" placeholder="Espanol, Ingles">
+      </div>
+    </div>
+
+    <label for="website_url">Sitio web (opcional)</label>
+    <input type="url" id="website_url" placeholder="https://tuempresa.com">
+
+    <label for="linkedin_url">LinkedIn (opcional)</label>
+    <input type="url" id="linkedin_url" placeholder="https://linkedin.com/in/tu-perfil">
+
+    <label for="phone">Telefono (opcional)</label>
+    <input type="tel" id="phone" placeholder="+52 55 1234 5678">
+
     <button type="submit" id="submitBtn">Continuar al pago seguro</button>
     <div id="msgBox"></div>
   </form>
@@ -174,8 +238,15 @@
       first_name: document.getElementById('first_name').value.trim(),
       last_name: document.getElementById('last_name').value.trim(),
       country: document.getElementById('country').value.trim() || null,
-      sector: document.getElementById('sector').value.trim() || null,
-      company_name: document.getElementById('company_name').value.trim() || null
+      sector: document.getElementById('sector').value || null,
+      company_name: document.getElementById('company_name').value.trim() || null,
+      sub_specialty: document.getElementById('sub_specialty').value.trim() || null,
+      bio: document.getElementById('bio').value.trim() || null,
+      years_experience: document.getElementById('years_experience').value || null,
+      languages: document.getElementById('languages').value.trim() || null,
+      website_url: document.getElementById('website_url').value.trim() || null,
+      linkedin_url: document.getElementById('linkedin_url').value.trim() || null,
+      phone: document.getElementById('phone').value.trim() || null
     };
     try {
       var res = await fetch(API + '/auth/signup-member', {
