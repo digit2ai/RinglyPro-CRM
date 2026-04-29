@@ -665,6 +665,27 @@ body {
   background: var(--danger);
 }
 
+.cal-drag-ghost {
+  position: absolute; left: 4px; right: 4px;
+  background: rgba(37,99,235,0.28);
+  border: 2px dashed var(--accent);
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 5;
+  transition: none;
+}
+.cal-drag-label {
+  font-size: 11px; color: white; padding: 4px 8px;
+  font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+  white-space: nowrap;
+}
+
+/* While dragging, prevent text selection across the calendar */
+.cal-week-columns:active, .cal-week-columns.cal-dragging,
+.cal-week-columns:active *, .cal-week-columns.cal-dragging * {
+  user-select: none;
+}
+
 @media (max-width: 768px) {
   .cal-week-day-header { padding: 6px 2px; font-size: 10px; }
   .cal-event-title { font-size: 11px; }

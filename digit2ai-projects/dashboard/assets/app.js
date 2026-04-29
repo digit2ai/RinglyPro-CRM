@@ -1413,13 +1413,10 @@ async function renderTimeGrid(numDays) {
   const dayColumnsHTML = dayCols.map((c, idx) => {
     const slots = [];
     for (let h = HOUR_START; h < HOUR_END; h++) {
-      const isoSlot = `${c.dateStr}T${String(h).padStart(2,'0')}:00`;
-      const isoSlot30 = `${c.dateStr}T${String(h).padStart(2,'0')}:30`;
+      // Drag-to-create handled by .cal-day-col mousedown -- slots are visual hover guides only
       slots.push(`
-        <div class="cal-slot cal-slot-half" style="top:${(h-HOUR_START)*PX_PER_HOUR}px;height:${PX_PER_HOUR/2}px"
-             onclick="event.stopPropagation();openEventModalAt('${isoSlot}')"></div>
-        <div class="cal-slot cal-slot-half" style="top:${(h-HOUR_START)*PX_PER_HOUR + PX_PER_HOUR/2}px;height:${PX_PER_HOUR/2}px"
-             onclick="event.stopPropagation();openEventModalAt('${isoSlot30}')"></div>
+        <div class="cal-slot cal-slot-half" style="top:${(h-HOUR_START)*PX_PER_HOUR}px;height:${PX_PER_HOUR/2}px"></div>
+        <div class="cal-slot cal-slot-half" style="top:${(h-HOUR_START)*PX_PER_HOUR + PX_PER_HOUR/2}px;height:${PX_PER_HOUR/2}px"></div>
       `);
     }
     // Position events (timed only — spanning multi-day events render in the all-day row)
@@ -1440,7 +1437,7 @@ async function renderTimeGrid(numDays) {
       </div>`;
     }).join('');
     const isToday = c.dateStr === ymd(new Date());
-    return `<div class="cal-day-col${isToday?' is-today':''}" style="height:${gridHeight}px">${slots.join('')}${evHTML}</div>`;
+    return `<div class="cal-day-col${isToday?' is-today':''}" data-date-str="${c.dateStr}" style="height:${gridHeight}px">${slots.join('')}${evHTML}</div>`;
   }).join('');
 
   // Now-line indicator
@@ -1466,6 +1463,107 @@ async function renderTimeGrid(numDays) {
   // Auto-scroll so 8 AM is near the top
   const scrollWrap = body.querySelector('.cal-week-body');
   if (scrollWrap) scrollWrap.scrollTop = (8 - HOUR_START) * PX_PER_HOUR - 10;
+
+  setupCalendarDrag();
+}
+
+// =====================================================
+// Drag-to-create (Outlook-style) on Week / Day views
+// =====================================================
+let _calDrag = null;
+
+function _calClampY(y) {
+  const max = (HOUR_END - HOUR_START) * PX_PER_HOUR;
+  return Math.max(0, Math.min(max, y));
+}
+function _calSnapDown(y) { return Math.floor(y / (PX_PER_HOUR/2)) * (PX_PER_HOUR/2); }
+function _calSnapUp(y)   { return Math.ceil (y / (PX_PER_HOUR/2)) * (PX_PER_HOUR/2); }
+
+function _fmtMinLabel(m) {
+  const h = Math.floor(m/60), min = m % 60;
+  const ap = h < 12 ? 'AM' : 'PM';
+  const hh = h % 12 === 0 ? 12 : h % 12;
+  return `${hh}:${String(min).padStart(2,'0')} ${ap}`;
+}
+
+function setupCalendarDrag() {
+  const wrap = document.querySelector('.cal-week-columns');
+  if (!wrap) return;
+  wrap.addEventListener('mousedown', _onCalMouseDown);
+}
+
+function _onCalMouseDown(e) {
+  if (e.button !== 0) return; // left click only
+  if (e.target.closest('.cal-event')) return; // clicking an existing event
+  const dayCol = e.target.closest('.cal-day-col');
+  if (!dayCol) return;
+  const dateStr = dayCol.dataset.dateStr;
+  if (!dateStr) return;
+
+  const rect = dayCol.getBoundingClientRect();
+  const startY = _calClampY(e.clientY - rect.top);
+
+  const ghost = document.createElement('div');
+  ghost.className = 'cal-drag-ghost';
+  dayCol.appendChild(ghost);
+
+  _calDrag = { dateStr, dayCol, startY, currentY: startY, ghost };
+  _updateCalGhost();
+
+  e.preventDefault();
+  document.addEventListener('mousemove', _onCalMouseMove);
+  document.addEventListener('mouseup', _onCalMouseUp);
+}
+
+function _onCalMouseMove(e) {
+  if (!_calDrag) return;
+  const rect = _calDrag.dayCol.getBoundingClientRect();
+  _calDrag.currentY = _calClampY(e.clientY - rect.top);
+  _updateCalGhost();
+}
+
+function _updateCalGhost() {
+  const { startY, currentY, ghost } = _calDrag;
+  const top = _calSnapDown(Math.min(startY, currentY));
+  const bot = _calSnapUp(Math.max(startY, currentY));
+  const height = Math.max(PX_PER_HOUR/2, bot - top);
+  ghost.style.top = top + 'px';
+  ghost.style.height = height + 'px';
+  const startMin = HOUR_START*60 + (top / (PX_PER_HOUR/2)) * 30;
+  const endMin = startMin + (height / (PX_PER_HOUR/2)) * 30;
+  ghost.innerHTML = `<div class="cal-drag-label">${_fmtMinLabel(startMin)} - ${_fmtMinLabel(endMin)}</div>`;
+}
+
+function _onCalMouseUp(e) {
+  if (!_calDrag) return;
+  document.removeEventListener('mousemove', _onCalMouseMove);
+  document.removeEventListener('mouseup', _onCalMouseUp);
+
+  const { dateStr, startY, currentY, ghost } = _calDrag;
+  const top = _calSnapDown(Math.min(startY, currentY));
+  const bot = _calSnapUp(Math.max(startY, currentY));
+  const startSlot = top / (PX_PER_HOUR/2);
+  const endSlot = Math.max(startSlot + 1, bot / (PX_PER_HOUR/2));
+  const startMin = HOUR_START * 60 + startSlot * 30;
+  const endMin   = HOUR_START * 60 + endSlot   * 30;
+
+  if (ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost);
+  _calDrag = null;
+
+  const pad = n => String(n).padStart(2,'0');
+  const startISO = `${dateStr}T${pad(Math.floor(startMin/60))}:${pad(startMin%60)}`;
+  const endISO   = `${dateStr}T${pad(Math.floor(endMin/60))}:${pad(endMin%60)}`;
+  openEventModalRange(startISO, endISO);
+}
+
+function openEventModalRange(startISO, endISO) {
+  openEventModal();
+  setTimeout(() => {
+    const startEl = document.getElementById('m-estart');
+    const endEl = document.getElementById('m-eend');
+    if (startEl) startEl.value = startISO;
+    if (endEl) endEl.value = endISO;
+  }, 50);
 }
 
 function escapeHtml(s) { return (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
