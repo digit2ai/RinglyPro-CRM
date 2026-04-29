@@ -795,8 +795,10 @@ try {
 try {
     const { resolveChamberFromSlug } = require('../chamber-template/lib/chamber-resolver');
     const unifiedChamberRouter = require('./routes/unified-chamber');
-    app.use('/:chamber_slug/api', resolveChamberFromSlug, unifiedChamberRouter);
-    console.log('🏛️ Unified chamber routes mounted at /:chamber_slug/api/*');
+    // Constrain slug to (cv|vc)-<digits> so non-chamber paths like
+    // /projects/api/* fall through to their own subapps.
+    app.use('/:chamber_slug(cv-[0-9]+|vc-[0-9]+)/api', resolveChamberFromSlug, unifiedChamberRouter);
+    console.log('🏛️ Unified chamber routes mounted at /:chamber_slug/api/* (cv-N / vc-N only)');
 } catch (error) {
     console.log('Unified chamber router not available:', error.message);
 }
