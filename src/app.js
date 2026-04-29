@@ -68,6 +68,16 @@ app.use((req, res, next) => {
       req.url = '/chamber/hispamind/index.html';
       return next();
     }
+    // Bare /dashboard/ and /login -- old links/bookmarks. Without a chamber
+    // slug the dashboard JS computes BASE='' and login POSTs hit /api/auth/login
+    // which does not exist. 301 to /cv-1/* (HispaMind, the original chamber
+    // on this domain) so credentials work.
+    if (p === '/dashboard' || p === '/dashboard/') {
+      return res.redirect(301, '/cv-1/dashboard/');
+    }
+    if (p === '/login' || p === '/login/') {
+      return res.redirect(301, '/cv-1/login');
+    }
     // Signup wizard root → Spanish wizard
     if (p === '/signup' || p === '/signup/') {
       req.url = '/signup/index.html';
@@ -106,6 +116,14 @@ app.use((req, res, next) => {
       res.set('Expires', '0');
       req.url = '/chamber/virtualchamber/index.html';
       return next();
+    }
+    // Bare /dashboard/ and /login -- 301 to the original VirtualChamber
+    // chamber slug so the dashboard JS gets a real chamber to scope to.
+    if (p === '/dashboard' || p === '/dashboard/') {
+      return res.redirect(301, '/cv-1/dashboard/');
+    }
+    if (p === '/login' || p === '/login/') {
+      return res.redirect(301, '/cv-1/login');
     }
     if (p === '/signup' || p === '/signup/') {
       req.url = '/signup/en.html';
