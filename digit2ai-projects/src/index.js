@@ -22,6 +22,7 @@ const staffRoutes = require('./routes/staff');
 const pipelineRoutes = require('./routes/pipeline');
 const campaignRoutes = require('./routes/campaigns');
 const workflowRoutes = require('./routes/workflows');
+const intakeRoutes = require('./routes/intake');
 
 const app = express();
 
@@ -54,6 +55,13 @@ app.get('/sw.js', (req, res) => {
   res.sendFile(path.join(dashboardPath, 'sw.js'));
 });
 
+// Intake module — uses its own auth (admin JWT or share-token JWT)
+// Mounted BEFORE the authenticated routes so /health and /share/*/identify stay public
+app.use('/api/v1/intake', intakeRoutes);
+
+// Serve intake static pages (dark dashboard, no build step)
+app.use('/intake', express.static(path.join(dashboardPath, 'intake')));
+
 // API routes (authenticated)
 app.use('/api/v1/dashboard', authenticateToken, dashboardRoutes);
 app.use('/api/v1/contacts', authenticateToken, contactsRoutes);
@@ -76,8 +84,33 @@ app.post('/api/v1/webhooks/sendgrid', express.json({ limit: '5mb' }), (req, res,
   campaignRoute.handle(req, res, next);
 });
 
-// SPA catch-all: serve dashboard for all non-API routes
+// Seed trigger (gated by INTAKE_SEED_SECRET) — idempotent Larry & Ting batch
+app.post('/api/v1/intake-seed/larry-ting', express.json(), async (req, res) => {
+  try {
+    const secret = req.query.secret || req.body.secret;
+    if (!secret || secret !== (process.env.INTAKE_SEED_SECRET || 'd2ai-larry-ting-2026')) {
+      return res.status(401).json({ success: false, error: 'Bad seed secret' });
+    }
+    const seed = require('../scripts/seed-larry');
+    const out = await seed({
+      larry_email: req.body.larry_email || 'larry@iqbiz.net',
+      larry_name: req.body.larry_name || 'Larry',
+      ting_email: req.body.ting_email || 'ting@iqbiz.net',
+      ting_name: req.body.ting_name || 'Ting'
+    });
+    res.json({ success: true, ...out });
+  } catch (err) {
+    console.error('[D2AI-Projects] seed error:', err);
+    res.status(500).json({ success: false, error: err.message, stack: err.stack });
+  }
+});
+
+// SPA catch-all: serve dashboard for all non-API, non-intake routes
 app.get('*', (req, res) => {
+  // Don't catch the intake static directory (already served above) or API
+  if (req.path.startsWith('/intake/') || req.path.startsWith('/api/')) {
+    return res.status(404).json({ success: false, error: 'Not found' });
+  }
   const indexPath = path.join(dashboardPath, 'index.html');
   if (fs.existsSync(indexPath)) {
     res.sendFile(indexPath);
@@ -278,6 +311,27 @@ app.get('*', (req, res) => {
       }
     }
     console.log('[D2AI-Projects] Pipeline & workflow tables ready');
+
+    // Migration 002 — Project Intake & Discussion module
+    const intakeMigrationPath = path.join(__dirname, '..', 'migrations', '002_intake.sql');
+    if (fs.existsSync(intakeMigrationPath)) {
+      try {
+        // pgcrypto for gen_random_uuid()
+        await sequelize.query('CREATE EXTENSION IF NOT EXISTS pgcrypto;');
+        const sql = fs.readFileSync(intakeMigrationPath, 'utf8');
+        const statements = sql.split(';').map(s => s.trim()).filter(s => s.length > 0);
+        for (const stmt of statements) {
+          try { await sequelize.query(stmt + ';'); } catch (e) {
+            if (!e.message.includes('already exists') && !e.message.includes('duplicate')) {
+              console.log('[D2AI-Projects] 002_intake notice:', e.message.substring(0, 200));
+            }
+          }
+        }
+        console.log('[D2AI-Projects] 002_intake migration applied');
+      } catch (mErr) {
+        console.log('[D2AI-Projects] 002_intake error:', mErr.message);
+      }
+    }
 
     // Sync models (safe - won't drop existing)
     await sequelize.sync({ alter: false });

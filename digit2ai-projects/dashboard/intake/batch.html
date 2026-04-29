@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Discussion - Digit2AI</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { background: #05060f; color: #e6edf3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  .glow-cyan   { box-shadow: 0 0 24px rgba(56,189,248,.18); border-color: rgba(56,189,248,.4); }
+  .glow-amber  { box-shadow: 0 0 24px rgba(251,191,36,.18); border-color: rgba(251,191,36,.4); }
+  .glow-emerald{ box-shadow: 0 0 24px rgba(16,185,129,.18); border-color: rgba(16,185,129,.4); }
+  .glow-rose   { box-shadow: 0 0 24px rgba(244,63,94,.20);  border-color: rgba(244,63,94,.4);  }
+  .glow-magenta{ box-shadow: 0 0 24px rgba(217,70,239,.18); border-color: rgba(217,70,239,.4); }
+  .chip { padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: .04em; }
+  .chip.high { background: rgba(16,185,129,.14); color:#34d399; border:1px solid rgba(16,185,129,.4); }
+  .chip.medium { background: rgba(251,191,36,.14); color:#fbbf24; border:1px solid rgba(251,191,36,.4); }
+  .chip.low  { background: rgba(244,63,94,.14);  color:#fb7185; border:1px solid rgba(244,63,94,.4); }
+  .chip.unknown { background: rgba(100,116,139,.14); color:#94a3b8; border:1px solid rgba(100,116,139,.4); }
+  .card { background: linear-gradient(180deg, rgba(15,23,42,.85), rgba(2,6,23,.85)); }
+  details > summary { list-style: none; cursor: pointer; }
+  details > summary::-webkit-details-marker { display: none; }
+  .grad-title { background: linear-gradient(90deg,#38bdf8,#a78bfa,#f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  input[type=range] { accent-color: #38bdf8; }
+  textarea, input[type=text], input[type=email], select {
+    background:#0b1220; border:1px solid #1e293b; color:#e6edf3; border-radius:8px; padding:8px 12px; width:100%;
+  }
+  textarea:focus, input:focus, select:focus { outline:none; border-color:#38bdf8; box-shadow:0 0 0 2px rgba(56,189,248,.15); }
+  .btn { padding:8px 16px; border-radius:8px; font-weight:600; font-size:13px; transition:all .15s; cursor:pointer; }
+  .btn-primary { background:#38bdf8; color:#020617; border:1px solid #38bdf8; }
+  .btn-primary:hover { background:#0ea5e9; }
+  .btn-ghost { background:transparent; color:#94a3b8; border:1px solid #1e293b; }
+  .btn-ghost:hover { color:#e6edf3; border-color:#38bdf8; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- IDENTITY GATE -->
+<div id="gate" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div class="card border border-cyan-500/30 rounded-2xl p-8 max-w-md w-full glow-cyan">
+    <h2 class="text-2xl font-bold grad-title mb-2">Welcome</h2>
+    <p class="text-sm text-slate-400 mb-6">Identify yourself to access this project discussion.</p>
+    <div class="space-y-3">
+      <input id="g_name" type="text" placeholder="Your full name" />
+      <input id="g_email" type="email" placeholder="Your email" />
+      <button onclick="identify()" class="btn btn-primary w-full">Enter discussion</button>
+      <p id="g_err" class="text-xs text-rose-400 hidden"></p>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header class="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/80 backdrop-blur">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+    <div>
+      <h1 id="batch_title" class="text-lg sm:text-xl font-bold grad-title">Loading...</h1>
+      <p id="batch_meta" class="text-xs text-slate-500"></p>
+    </div>
+    <div class="text-right">
+      <p id="who" class="text-xs text-slate-400"></p>
+      <button onclick="logout()" class="text-[10px] text-slate-600 hover:text-slate-300 underline">Switch user</button>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+  <div id="projects" class="space-y-4"></div>
+  <div id="empty" class="text-center text-slate-500 py-16 hidden">No projects yet in this discussion.</div>
+</main>
+
+<script>
+const STORAGE_PREFIX = 'd2ai_intake_';
+const params = new URLSearchParams(window.location.search);
+const SHARE_TOKEN = params.get('token') || '';
+let SESSION = null;
+let BATCH = null;
+let PROJECTS = [];
+
+function storeKey(suffix) { return STORAGE_PREFIX + SHARE_TOKEN + '_' + suffix; }
+
+function showGate() {
+  document.getElementById('gate').classList.remove('hidden');
+}
+function hideGate() {
+  document.getElementById('gate').classList.add('hidden');
+}
+
+async function identify() {
+  const name = document.getElementById('g_name').value.trim();
+  const email = document.getElementById('g_email').value.trim();
+  const err = document.getElementById('g_err');
+  err.classList.add('hidden');
+  if (!name || !email) { err.textContent='Name and email required'; err.classList.remove('hidden'); return; }
+  try {
+    const r = await fetch('/projects/api/v1/intake/share/' + SHARE_TOKEN + '/identify', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name,email})
+    });
+    const d = await r.json();
+    if (!d.success) throw new Error(d.error || 'Identification failed');
+    SESSION = d;
+    localStorage.setItem(storeKey('session'), JSON.stringify(d));
+    hideGate();
+    await loadBatch();
+  } catch (e) {
+    err.textContent = e.message; err.classList.remove('hidden');
+  }
+}
+
+function logout() {
+  localStorage.removeItem(storeKey('session'));
+  location.reload();
+}
+
+function authHeaders() {
+  return { 'Content-Type':'application/json', 'Authorization': 'Bearer ' + SESSION.jwt };
+}
+
+async function loadBatch() {
+  if (!SESSION) return;
+  document.getElementById('who').textContent = SESSION.name + ' (' + SESSION.email + ')';
+  const r = await fetch('/projects/api/v1/intake/batches/' + SESSION.batch_id, { headers: authHeaders() });
+  if (r.status === 401 || r.status === 403) { logout(); return; }
+  const d = await r.json();
+  if (!d.success) { alert('Failed to load: '+ (d.error || r.status)); return; }
+  BATCH = d.data.batch;
+  PROJECTS = d.data.projects;
+  document.getElementById('batch_title').textContent = BATCH.title;
+  const company = BATCH.company ? BATCH.company.name : '';
+  document.getElementById('batch_meta').textContent =
+    company + (BATCH.meeting_date ? ' - ' + BATCH.meeting_date : '') + ' - ' + BATCH.status;
+  render();
+}
+
+function render() {
+  const wrap = document.getElementById('projects');
+  if (!PROJECTS.length) { document.getElementById('empty').classList.remove('hidden'); wrap.innerHTML=''; return; }
+  document.getElementById('empty').classList.add('hidden');
+  wrap.innerHTML = PROJECTS.map((pi, idx) => renderCard(pi, idx)).join('');
+}
+
+function chipClass(level) {
+  if (!level) return 'unknown';
+  return level.toLowerCase();
+}
+
+function escapeHtml(s) {
+  return (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function renderCard(pi, idx) {
+  const p = pi.project;
+  const intake = pi;
+  const myVote = (p.priority_votes || []).find(v => v.voter_email === SESSION.email);
+  const avg = intake.priority_avg ? Number(intake.priority_avg).toFixed(2) : '-';
+  const voteCount = (p.priority_votes || []).length;
+  return `
+    <details class="card rounded-xl border border-slate-800 hover:border-cyan-700/50 transition" ${idx<3?'open':''}>
+      <summary class="p-5 flex items-center gap-4">
+        <div class="text-2xl font-bold text-slate-700 w-8">${idx+1}</div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 flex-wrap mb-1">
+            <h3 class="text-base sm:text-lg font-semibold text-slate-100 truncate">${escapeHtml(p.name)}</h3>
+            <span class="chip ${chipClass(intake.feasibility)}">FEAS: ${intake.feasibility || '?'}</span>
+            <span class="chip ${chipClass(intake.risk_level)}">RISK: ${intake.risk_level || '?'}</span>
+            <span class="chip unknown">${intake.intake_status}</span>
+          </div>
+          <p class="text-xs text-slate-500">Priority avg: <span class="text-cyan-400 font-mono">${avg}</span> from ${voteCount} vote${voteCount===1?'':'s'}</p>
+        </div>
+        <div class="text-slate-600 text-xs">click to expand</div>
+      </summary>
+      <div class="px-5 pb-5 border-t border-slate-800/60 pt-4 space-y-5">
+
+        <!-- Description -->
+        <div>
+          <h4 class="text-xs uppercase tracking-wider text-slate-500 mb-2">Description</h4>
+          <p class="text-sm text-slate-300 whitespace-pre-line">${escapeHtml(p.description || '')}</p>
+        </div>
+
+        <!-- Risk + Contacts grid -->
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <h4 class="text-xs uppercase tracking-wider text-slate-500 mb-2">Risk Notes</h4>
+            <p class="text-sm text-slate-300 whitespace-pre-line">${escapeHtml(intake.risk_notes || '-')}</p>
+          </div>
+          <div>
+            <h4 class="text-xs uppercase tracking-wider text-slate-500 mb-2">Contacts / Counterparties</h4>
+            <p class="text-sm text-slate-300 whitespace-pre-line">${escapeHtml(intake.contacts_notes || '-')}</p>
+          </div>
+        </div>
+
+        <!-- Questions -->
+        <div>
+          <h4 class="text-xs uppercase tracking-wider text-slate-500 mb-2">Questions</h4>
+          <div class="space-y-3">
+            ${(p.questions || []).map(q => renderQuestion(q)).join('')}
+          </div>
+        </div>
+
+        <!-- Priority Vote -->
+        <div class="border border-slate-800 rounded-lg p-4 bg-slate-950/40">
+          <h4 class="text-xs uppercase tracking-wider text-slate-500 mb-3">Your Priority Score (1 = skip, 10 = ship now)</h4>
+          <div class="flex items-center gap-3">
+            <input type="range" min="1" max="10" value="${myVote ? myVote.score : 5}" id="vote_${p.id}" class="flex-1" oninput="document.getElementById('vote_label_${p.id}').textContent=this.value">
+            <span id="vote_label_${p.id}" class="text-2xl font-mono w-10 text-cyan-400">${myVote ? myVote.score : 5}</span>
+          </div>
+          <textarea id="vote_reason_${p.id}" placeholder="Why this score? (optional)" class="mt-2" rows="2">${escapeHtml(myVote ? (myVote.rationale||'') : '')}</textarea>
+          <button onclick="submitVote(${p.id})" class="btn btn-primary mt-2">${myVote ? 'Update vote' : 'Submit vote'}</button>
+        </div>
+
+        <!-- Comments -->
+        <div>
+          <h4 class="text-xs uppercase tracking-wider text-slate-500 mb-2">Discussion (${(p.comments||[]).length})</h4>
+          <div id="comments_${p.id}" class="space-y-2 mb-3">
+            ${(p.comments||[]).map(c => renderComment(c)).join('')}
+          </div>
+          <textarea id="cmt_${p.id}" rows="2" placeholder="Add a comment..."></textarea>
+          <button onclick="submitComment(${p.id})" class="btn btn-ghost mt-2">Post comment</button>
+        </div>
+
+      </div>
+    </details>
+  `;
+}
+
+function renderQuestion(q) {
+  const responses = q.responses || [];
+  return `
+    <div class="border border-slate-800 rounded-lg p-3">
+      <p class="text-sm font-medium text-amber-300 mb-2">Q: ${escapeHtml(q.question_text)}</p>
+      <div class="space-y-1.5 mb-2">
+        ${responses.map(r => `
+          <div class="text-xs bg-slate-900/60 border border-slate-800 rounded p-2">
+            <div class="text-slate-500 mb-1">${escapeHtml(r.responder_name || r.responder_email)} - ${new Date(r.created_at).toLocaleString()}</div>
+            <div class="text-slate-200 whitespace-pre-line">${escapeHtml(r.response_text)}</div>
+          </div>`).join('')}
+      </div>
+      <textarea id="qr_${q.id}" rows="2" placeholder="Your answer..."></textarea>
+      <button onclick="submitResponse(${q.id})" class="btn btn-ghost mt-2">Submit answer</button>
+    </div>
+  `;
+}
+
+function renderComment(c) {
+  return `
+    <div class="text-xs bg-slate-900/60 border border-slate-800 rounded p-2">
+      <div class="text-slate-500 mb-1">${escapeHtml(c.author_name || c.author_email)} - ${new Date(c.created_at).toLocaleString()}</div>
+      <div class="text-slate-200 whitespace-pre-line">${escapeHtml(c.body)}</div>
+    </div>`;
+}
+
+async function submitVote(projectId) {
+  const score = Number(document.getElementById('vote_'+projectId).value);
+  const rationale = document.getElementById('vote_reason_'+projectId).value;
+  const r = await fetch('/projects/api/v1/intake/projects/'+projectId+'/votes', {
+    method:'POST', headers: authHeaders(), body: JSON.stringify({score, rationale})
+  });
+  const d = await r.json();
+  if (!d.success) { alert('Vote failed: '+d.error); return; }
+  await loadBatch();
+}
+
+async function submitComment(projectId) {
+  const ta = document.getElementById('cmt_'+projectId);
+  const body = ta.value.trim();
+  if (!body) return;
+  const r = await fetch('/projects/api/v1/intake/projects/'+projectId+'/comments', {
+    method:'POST', headers: authHeaders(), body: JSON.stringify({body})
+  });
+  const d = await r.json();
+  if (!d.success) { alert('Comment failed: '+d.error); return; }
+  ta.value=''; await loadBatch();
+}
+
+async function submitResponse(questionId) {
+  const ta = document.getElementById('qr_'+questionId);
+  const response_text = ta.value.trim();
+  if (!response_text) return;
+  const r = await fetch('/projects/api/v1/intake/questions/'+questionId+'/responses', {
+    method:'POST', headers: authHeaders(), body: JSON.stringify({response_text})
+  });
+  const d = await r.json();
+  if (!d.success) { alert('Response failed: '+d.error); return; }
+  ta.value=''; await loadBatch();
+}
+
+async function init() {
+  if (!SHARE_TOKEN) {
+    document.body.innerHTML = '<div class="p-12 text-center"><h1 class="text-2xl text-rose-400">Missing share token</h1><p class="text-slate-400 mt-2">This URL is incomplete. Use the link sent to you by Manuel.</p></div>';
+    return;
+  }
+  const cached = localStorage.getItem(storeKey('session'));
+  if (cached) {
+    try {
+      SESSION = JSON.parse(cached);
+      const r = await fetch('/projects/api/v1/intake/batches/' + SESSION.batch_id, { headers: authHeaders() });
+      if (r.ok) { hideGate(); await loadBatch(); pollLoop(); return; }
+    } catch (e) {}
+  }
+  showGate();
+  pollLoop();
+}
+
+function pollLoop() {
+  setInterval(() => { if (SESSION && !document.hidden) loadBatch(); }, 15000);
+}
+
+init();
+</script>
+</body>
+</html>

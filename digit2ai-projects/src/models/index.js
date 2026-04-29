@@ -372,6 +372,100 @@ const WorkflowRun = sequelize.define('WorkflowRun', {
 }, { tableName: 'd2_workflow_runs' });
 
 // =====================================================
+// INTAKE BATCH (Project Intake & Discussion Module)
+// =====================================================
+const IntakeBatch = sequelize.define('IntakeBatch', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  workspace_id: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
+  company_id: { type: DataTypes.INTEGER, allowNull: false },
+  title: { type: DataTypes.STRING(500), allowNull: false },
+  meeting_date: DataTypes.DATEONLY,
+  submitted_by_email: DataTypes.STRING(255),
+  submitted_by_name: DataTypes.STRING(255),
+  status: { type: DataTypes.STRING(30), defaultValue: 'draft' },
+  share_token: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, unique: true },
+  notes: DataTypes.TEXT
+}, { tableName: 'd2_intake_batches' });
+
+// =====================================================
+// PROJECT INTAKE (one-to-one extension of Project)
+// =====================================================
+const ProjectIntake = sequelize.define('ProjectIntake', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  project_id: { type: DataTypes.INTEGER, allowNull: false, unique: true },
+  batch_id: { type: DataTypes.INTEGER, allowNull: false },
+  feasibility: DataTypes.STRING(20),
+  feasibility_notes: DataTypes.TEXT,
+  risk_level: DataTypes.STRING(20),
+  risk_notes: DataTypes.TEXT,
+  contacts_notes: DataTypes.TEXT,
+  intake_status: { type: DataTypes.STRING(30), defaultValue: 'discussion' },
+  priority_avg: DataTypes.DECIMAL(4, 2),
+  converted_at: DataTypes.DATE
+}, { tableName: 'd2_project_intake' });
+
+// =====================================================
+// PROJECT QUESTION
+// =====================================================
+const ProjectQuestion = sequelize.define('ProjectQuestion', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  project_id: { type: DataTypes.INTEGER, allowNull: false },
+  question_text: { type: DataTypes.TEXT, allowNull: false },
+  position: { type: DataTypes.INTEGER, defaultValue: 0 },
+  created_by_email: DataTypes.STRING(255)
+}, { tableName: 'd2_project_questions' });
+
+// =====================================================
+// QUESTION RESPONSE
+// =====================================================
+const QuestionResponse = sequelize.define('QuestionResponse', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  question_id: { type: DataTypes.INTEGER, allowNull: false },
+  responder_email: DataTypes.STRING(255),
+  responder_name: DataTypes.STRING(255),
+  response_text: { type: DataTypes.TEXT, allowNull: false }
+}, { tableName: 'd2_question_responses' });
+
+// =====================================================
+// PROJECT COMMENT
+// =====================================================
+const ProjectComment = sequelize.define('ProjectComment', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  project_id: { type: DataTypes.INTEGER, allowNull: false },
+  parent_comment_id: DataTypes.INTEGER,
+  author_email: DataTypes.STRING(255),
+  author_name: DataTypes.STRING(255),
+  body: { type: DataTypes.TEXT, allowNull: false }
+}, { tableName: 'd2_project_comments' });
+
+// =====================================================
+// PRIORITY VOTE
+// =====================================================
+const PriorityVote = sequelize.define('PriorityVote', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  project_id: { type: DataTypes.INTEGER, allowNull: false },
+  voter_email: { type: DataTypes.STRING(255), allowNull: false },
+  voter_name: DataTypes.STRING(255),
+  score: { type: DataTypes.INTEGER, allowNull: false },
+  rationale: DataTypes.TEXT
+}, { tableName: 'd2_priority_votes' });
+
+// =====================================================
+// COMPANY ACCESS TOKEN (magic-link)
+// =====================================================
+const CompanyAccessToken = sequelize.define('CompanyAccessToken', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  company_id: { type: DataTypes.INTEGER, allowNull: false },
+  batch_id: DataTypes.INTEGER,
+  token: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, unique: true },
+  grantee_email: DataTypes.STRING(255),
+  grantee_name: DataTypes.STRING(255),
+  role: { type: DataTypes.STRING(20), defaultValue: 'reviewer' },
+  expires_at: DataTypes.DATE,
+  last_used_at: DataTypes.DATE
+}, { tableName: 'd2_company_access_tokens' });
+
+// =====================================================
 // ASSOCIATIONS
 // =====================================================
 
@@ -455,6 +549,46 @@ WorkflowRun.belongsTo(Workflow, { foreignKey: 'workflow_id', as: 'workflow' });
 Contact.hasMany(WorkflowRun, { foreignKey: 'contact_id', as: 'workflow_runs' });
 WorkflowRun.belongsTo(Contact, { foreignKey: 'contact_id', as: 'contact' });
 
+// =====================================================
+// INTAKE ASSOCIATIONS
+// =====================================================
+
+// Company <-> IntakeBatches
+Company.hasMany(IntakeBatch, { foreignKey: 'company_id', as: 'intake_batches' });
+IntakeBatch.belongsTo(Company, { foreignKey: 'company_id', as: 'company' });
+
+// IntakeBatch <-> ProjectIntake (and through it -> Project)
+IntakeBatch.hasMany(ProjectIntake, { foreignKey: 'batch_id', as: 'project_intakes' });
+ProjectIntake.belongsTo(IntakeBatch, { foreignKey: 'batch_id', as: 'batch' });
+
+// Project <-> ProjectIntake (one-to-one)
+Project.hasOne(ProjectIntake, { foreignKey: 'project_id', as: 'intake' });
+ProjectIntake.belongsTo(Project, { foreignKey: 'project_id', as: 'project' });
+
+// Project <-> Questions
+Project.hasMany(ProjectQuestion, { foreignKey: 'project_id', as: 'questions' });
+ProjectQuestion.belongsTo(Project, { foreignKey: 'project_id', as: 'project' });
+
+// ProjectQuestion <-> Responses
+ProjectQuestion.hasMany(QuestionResponse, { foreignKey: 'question_id', as: 'responses' });
+QuestionResponse.belongsTo(ProjectQuestion, { foreignKey: 'question_id', as: 'question' });
+
+// Project <-> Comments
+Project.hasMany(ProjectComment, { foreignKey: 'project_id', as: 'comments' });
+ProjectComment.belongsTo(Project, { foreignKey: 'project_id', as: 'project' });
+
+// Project <-> Priority Votes
+Project.hasMany(PriorityVote, { foreignKey: 'project_id', as: 'priority_votes' });
+PriorityVote.belongsTo(Project, { foreignKey: 'project_id', as: 'project' });
+
+// Company <-> Access Tokens
+Company.hasMany(CompanyAccessToken, { foreignKey: 'company_id', as: 'access_tokens' });
+CompanyAccessToken.belongsTo(Company, { foreignKey: 'company_id', as: 'company' });
+
+// IntakeBatch <-> Access Tokens
+IntakeBatch.hasMany(CompanyAccessToken, { foreignKey: 'batch_id', as: 'access_tokens' });
+CompanyAccessToken.belongsTo(IntakeBatch, { foreignKey: 'batch_id', as: 'batch' });
+
 module.exports = {
   sequelize,
   Workspace,
@@ -479,5 +613,12 @@ module.exports = {
   EmailCampaign,
   EmailSend,
   Workflow,
-  WorkflowRun
+  WorkflowRun,
+  IntakeBatch,
+  ProjectIntake,
+  ProjectQuestion,
+  QuestionResponse,
+  ProjectComment,
+  PriorityVote,
+  CompanyAccessToken
 };

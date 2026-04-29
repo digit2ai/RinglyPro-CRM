@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intake Discussions - Digit2AI</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { background:#05060f; color:#e6edf3; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
+  .grad-title { background:linear-gradient(90deg,#38bdf8,#a78bfa,#f472b6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .card { background:linear-gradient(180deg,rgba(15,23,42,.85),rgba(2,6,23,.85)); }
+</style>
+</head>
+<body class="min-h-screen">
+<header class="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-30">
+  <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+    <h1 class="text-xl font-bold grad-title">Intake Discussions</h1>
+    <div class="text-xs text-slate-500">Admin view</div>
+  </div>
+</header>
+<main class="max-w-6xl mx-auto px-6 py-8">
+  <p class="text-slate-500 mb-6 text-sm">Admin login required. Open the project in batch view, manage company access tokens, and convert approved projects into execution plans.</p>
+  <div class="card border border-slate-800 rounded-xl p-6">
+    <h2 class="text-lg font-semibold mb-2">Quick links</h2>
+    <ul class="text-sm space-y-2 text-cyan-400">
+      <li><a href="/projects/" class="hover:underline">Main projects dashboard</a></li>
+      <li><a href="/projects/api/v1/intake/health" class="hover:underline">Intake API health</a></li>
+    </ul>
+    <p class="text-xs text-slate-500 mt-4">Direct discussion links (per company / batch) are sent to participants individually.</p>
+  </div>
+</main>
+</body>
+</html>
