@@ -42,12 +42,12 @@ const authenticateToken = async (req, res, next) => {
       console.log('[D2AI] User access tracking skipped:', accessErr.message);
     }
 
-    // Enforce calendar_only role: deny anything that isn't calendar-related
+    // Enforce calendar_only role: deny anything that isn't calendar-related.
+    // The digit2ai-projects router is mounted at /projects in the parent app,
+    // so the resolved path can be either '/api/v1/...' or '/projects/api/v1/...'.
     if (req.userAccess && req.userAccess.role === 'calendar_only') {
-      // baseUrl gives the prefix mounted at app.use('/api/v1/<thing>', ...) so we
-      // need to inspect the original URL path for gating.
-      const fullPath = req.baseUrl + req.path;
-      const allowed = /^\/api\/v1\/(calendar|me)(\/|$)/.test(fullPath);
+      const path = (req.originalUrl || '').split('?')[0];
+      const allowed = /\/api\/v1\/(calendar|me)(\/|$)/.test(path);
       if (!allowed) {
         return res.status(403).json({ success: false, error: 'This account is limited to the Calendar module' });
       }
